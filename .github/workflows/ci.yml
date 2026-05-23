@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  python:
+    name: Python smoke
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install package
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev,eval]"
+      - name: Syntax check
+        run: |
+          python -m py_compile train.py scripts/*.py ndm/triton/*.py ndm/models/e88_fused.py ndm/models/e88_fla_hybrid.py ndm/models/m2rnn_baseline.py ndm/models/mamba2_baseline.py ndm/models/fla_gated_delta.py
+      - name: Unit smoke
+        run: python -m pytest tests -m "not gpu"
+
+  lean:
+    name: Lean trusted core
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: leanprover/lean-action@v1
+        with:
+          lake-package-directory: formal/lean
+          build: true
+          test: false
+      - name: Check trusted proof boundary
+        working-directory: formal/lean
+        run: |
+          scripts/check_paper_core.sh
+          scripts/check_trusted_no_placeholders.sh ElmanProofs.lean

@@ -1,0 +1,72 @@
+import pytest
+import torch
+import torch.nn.functional as F
+
+from ndm.triton.e88_triton_backward import e88_triton
+from ndm.triton.e88_triton_forward import e88_torch_reference
+
+
+pytestmark = [
+    pytest.mark.gpu,
+    pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA is required for Triton kernel tests"),
+]
+
+
+def _inputs(seed=0, requires_grad=False):
+    torch.manual_seed(seed)
+    device = torch.device("cuda")
+    T, B, H, N, V = 16, 1, 64, 4, 4
+
+    S0 = 0.05 * torch.randn(B, H, N, V, device=device)
+    k = 0.20 * torch.randn(T, B, H, N, device=device)
+    v = 0.20 * torch.randn(T, B, H, V, device=device)
+    q = 0.20 * torch.randn(T, B, H, N, device=device)
+    decay = 0.35 + 0.55 * torch.rand(T, B, H, device=device)
+
+    tensors = (S0, k, v, q, decay)
+    if requires_grad:
+        tensors = tuple(t.detach().clone().requires_grad_(True) for t in tensors)
+    return tensors
+
+
+def _l2(x):
+    return x / x.norm(dim=-1, keepdim=True).clamp_min(1e-6)
+
+
+def test_e88_triton_forward_matches_reference():
+    S0, k, v, q, decay = _inputs(seed=1)
+
+    out_tri, S_tri = e88_triton(S0, k, v, q, decay)
+    out_ref, S_ref, _ = e88_torch_reference(S0, k, v, q, decay)
+
+    torch.testing.assert_close(out_tri, out_ref, rtol=2e-4, atol=2e-4)
+    torch.testing.assert_close(S_tri, S_ref, rtol=2e-4, atol=2e-4)
+
+
+def test_e88_triton_fused_norm_and_gate_match_reference():
+    S0, k, v, q, decay = _inputs(seed=2)
+    gate = 0.20 * torch.randn_like(v)
+
+    out_tri, S_tri = e88_triton(S0, k, v, q, decay, g=gate, normalize_kq=True)
+    out_ref, S_ref, _ = e88_torch_reference(S0, _l2(k), v, _l2(q), decay)
+    out_ref = F.silu(gate) * out_ref
+
+    torch.testing.assert_close(out_tri, out_ref, rtol=3e-4, atol=3e-4)
+    torch.testing.assert_close(S_tri, S_ref, rtol=3e-4, atol=3e-4)
+
+
+def test_e88_triton_backward_matches_reference():
+    tri_inputs = _inputs(seed=3, requires_grad=True)
+    ref_inputs = tuple(t.detach().clone().requires_grad_(True) for t in tri_inputs)
+
+    out_tri, S_tri = e88_triton(*tri_inputs)
+    out_ref, S_ref, _ = e88_torch_reference(*ref_inputs)
+
+    loss_tri = out_tri.float().square().mean() + 0.3 * S_tri.float().square().mean()
+    loss_ref = out_ref.float().square().mean() + 0.3 * S_ref.float().square().mean()
+
+    grads_tri = torch.autograd.grad(loss_tri, tri_inputs)
+    grads_ref = torch.autograd.grad(loss_ref, ref_inputs)
+
+    for grad_tri, grad_ref in zip(grads_tri, grads_ref):
+        torch.testing.assert_close(grad_tri, grad_ref, rtol=5e-3, atol=2e-3)

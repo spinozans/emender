@@ -1,9 +1,9 @@
-"""Triton forward kernel for E88 FLA-Hybrid recurrence.
+"""Triton forward kernel for the E88/NDM matrix-state recurrence.
 
-This is Phase 1 of a Triton port of the existing CUDA E88 kernel (see
-``elman/cuda/lib/e88_fla_hybrid_gpu.cu.cc``) — forward only, no backward
-yet. The aim is parity with the PyTorch reference (the slow fallback in
-``ndm.models.e88_fla_hybrid``).
+This is the portable Triton implementation of the production E88/NDM recurrence
+used by ``ndm.models.e88_fla_hybrid``. The paired backward kernel lives in
+``ndm.triton.e88_triton_backward``. The PyTorch reference below defines the
+same recurrence for correctness tests.
 
 Per timestep, for each (batch, head):
     r_t = S_{t-1}.T @ k_t                # retrieve  [V]

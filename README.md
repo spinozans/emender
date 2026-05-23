@@ -1,65 +1,67 @@
 # Nonlinear Delta Memory
 
-This is the paper-facing repository for **Nonlinear Delta Memory** (NDM), a
-family of pure nonlinear recurrent language models with matrix-valued state and
-delta-correcting updates.
+**Nonlinear Delta Memory** (NDM) is a pure recurrent language-model
+architecture built from many matrix-valued memory heads. Each head is a small
+nonlinear program that reads a key, computes a correction, writes the correction
+back into its matrix state, and emits a query readout.
 
-The current production NDM instance is still named `E88` in some code paths.
-That name is historical: it is the optimized NDM implementation developed in
-the `ekg/elman` research repository. The purpose of this repository is to keep
-the paper artifact focused on the claims that survived the experimental and
-formal audit.
+For one head, the core update is:
 
-## Current Claim Surface
+```text
+r_t       = S_{t-1}^T k_t
+delta_t   = v_t - r_t
+S_t       = tanh(d_t S_{t-1} + k_t delta_t^T)
+y_t       = S_t^T q_t
+```
 
-- Pure nonlinear recurrent stacks can be trained at 1.27B-parameter scale
-  without attention or hybridization.
-- Once the nonlinear recurrence is engineered and tuned, next-token loss tracks
-  useful wallclock compute more closely than raw steps or raw tokens processed.
-- NDM/E88 sits in the same LM-loss regime as strong linear recurrent baselines
-  while exposing a different computational profile.
-- Controlled S5/noncommutative state-tracking experiments separate NDM from
-  linear recurrent baselines and from M2RNN-style raw-write matrix updates.
-- Broad closed-book QA and natural-language reasoning benchmarks are tracked as
-  auxiliary probes, not as the main NDM claim.
+The important operation is the **nonlinear delta correction**: the write is not
+a raw outer product, but a learned correction to what the memory already
+retrieves. This gives the state a self-correcting, latch-like dynamics while
+remaining a strictly recurrent model: no attention layers are required.
 
-## Repository Layout
+## Multi-Programming Recurrence
 
-- `ndm/`: model code, including the E88/NDM implementation, Triton kernels, and
-  comparison baselines used by the current experiments.
-- `experiments/expressivity_tasks/`: controlled algorithmic and S5-style
-  expressivity tasks.
-- `scripts/`: checkpoint evaluation, knowledge/reasoning panel builders, and
-  data-preparation helpers.
-- `formal/lean/`: Lean formalization imported from `elman-proofs`. The Lean
-  namespace is intentionally still `ElmanProofs` until the trusted proof chain
-  is renamed deliberately.
-- `docs/`: architecture, stability, M2RNN comparison, and Frontier training
-  notes.
-- `paper/`: working paper notes.
-- `provenance/`: source-repository commit anchors for the migration.
+Pure recurrence is serial along time, but it does not have to be serial across
+the machine. NDM trains by changing the parallelization axis: instead of making
+one sequence operation massively parallel with attention, it runs thousands of
+small recurrent memory programs in parallel across batch elements, heads,
+and state tiles.
 
-## Provenance
+The current optimized implementation, **E88/NDM**, uses a fused Triton kernel
+for the matrix-state recurrence. The kernel keeps each head's state in fast
+local storage, fuses the delta update, L2 key/query normalization, output gate,
+and sparse checkpointing, and exposes enough independent programs to keep GPUs
+busy even though each individual program scans time sequentially.
 
-This repository is curated from:
+This is the practical point of the repository: serial nonlinear RNNs can be
+trained at modern scale when the system is organized as a multi-programmed
+recurrent workload.
 
-- `ekg/elman` at `6f0724feae9fc82bd235408ac5c3ae61f2b17c79`
-- `ekg/elman-proofs` at `5082610c9cdabf0b31e11dd14ee078273d486333`
+## What Is Here
 
-The historical repositories remain the paper trail for when the architecture,
-kernel, experiment, and proof work happened. This repository is the focused
-artifact for reproduction and presentation.
+- `ndm/`: NDM model code, E88/NDM Triton kernels, and comparison baselines.
+- `train.py`: byte-level and tokenized language-model training entry point.
+- `experiments/expressivity_tasks/`: controlled state-tracking tasks, including
+  noncommutative S5-style permutation composition.
+- `scripts/`: evaluation-panel builders, checkpoint probes, sample generation,
+  and data-stream preparation tools.
+- `formal/lean/`: trusted Lean proof core for the update-family resource
+  separation and S5 tracker formalization.
+- `docs/`: architecture, kernel, stability, distributed-training, and M2RNN
+  comparison notes.
+- `paper/`: working notes for the NDM paper.
 
-## Minimal Checks
+Large training checkpoints and raw campaign outputs are not stored in git.
+Frozen model checkpoints should be published separately with model cards,
+dataset notes, and exact commit references.
 
-Python import/syntax smoke:
+## Quick Checks
+
+Python import and syntax smoke:
 
 ```bash
+python -m pytest tests -m "not gpu"
 python -m py_compile train.py scripts/*.py ndm/triton/*.py ndm/models/e88_fused.py
-python - <<'PY'
-from ndm.models.e88_fused import E88FusedLM
-print(E88FusedLM.__name__)
-PY
 ```
 
 Lean trusted-core check:
@@ -70,5 +72,22 @@ scripts/check_paper_core.sh
 scripts/check_trusted_no_placeholders.sh ElmanProofs.lean
 ```
 
-The Lean target still contains historical sketch modules outside the trusted
-surface. The trusted checks define the paper-facing boundary.
+CUDA/Triton recurrence parity smoke:
+
+```bash
+CUDA_VISIBLE_DEVICES=0 python -m pytest tests/test_e88_triton.py -m gpu
+```
+
+The CUDA smoke compares the E88/NDM Triton recurrence with the PyTorch
+reference for forward outputs, fused L2/gate behavior, and backward gradients.
+
+## Provenance
+
+NDM was developed in the open in the historical research repositories:
+
+- `ekg/elman` at `6f0724feae9fc82bd235408ac5c3ae61f2b17c79`
+- `ekg/elman-proofs` at `5082610c9cdabf0b31e11dd14ee078273d486333`
+
+Those repositories preserve the development trail. This repository is the
+clean implementation, experiment, and proof artifact for Nonlinear Delta
+Memory.
