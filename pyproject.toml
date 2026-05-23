@@ -1,0 +1,69 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ndm"
+version = "0.1.0"
+description = "Nonlinear Delta Memory: pure nonlinear recurrent language models and expressivity experiments"
+readme = "README.md"
+license = {text = "Apache-2.0"}
+authors = [
+    {name = "Erik Garrison", email = "erik.garrison@gmail.com"}
+]
+requires-python = ">=3.10"
+keywords = ["rnn", "language-modeling", "triton", "recurrent-neural-networks", "state-tracking"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "torch>=2.0",
+    "numpy",
+    "einops",
+    "tqdm",
+    "triton",
+]
+
+[project.optional-dependencies]
+eval = [
+    "datasets",
+    "tiktoken",
+]
+baselines = [
+    "mamba-ssm",
+]
+dev = [
+    "pytest>=7.0",
+    "pytest-timeout",
+]
+
+[project.urls]
+Repository = "https://github.com/ekg/ndm"
+Provenance = "https://github.com/ekg/elman"
+Proofs = "https://github.com/ekg/elman-proofs"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["ndm*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::UserWarning",
+]
+markers = [
+    "gpu: mark test as requiring GPU",
+    "cuda: mark test as requiring CUDA kernels",
+    "slow: mark test as slow running",
+]
