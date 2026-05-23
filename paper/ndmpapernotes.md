@@ -1,103 +1,156 @@
-# NDM Paper Notes
+# NDM Paper Design
 
-NDM means **Nonlinear Delta Memory**.
+Working title:
 
-These notes collect the current paper spine, reviewer feedback, formal boundary,
-and empirical story. They are a working document, not polished prose.
+> **Nonlinear Delta Memory: Scaling Pure Recurrent Language Models by
+> Multi-Programming**
 
-## Current Thesis
+## One-Sentence Thesis
 
-Pure nonlinear recurrent models can be trained at serious scale when the
-recurrent state update is the right resource. The decisive ingredient is not
-matrix state alone and not temporal nonlinearity alone. The evidence points to
-the **delta-correcting matrix-state update**.
+Pure nonlinear recurrent language models can be trained at billion-parameter
+scale when the recurrent computation is organized as a multi-programmed GPU
+workload, and the useful memory resource is a nonlinear delta-correcting matrix
+update rather than matrix state or temporal nonlinearity alone.
 
-E88 is the current production implementation lineage of NDM. The paper should
-present NDM as the model family and E88 as an implementation/configuration, not
-as the core scientific name.
+## Abstract Shape
 
-## Claim Register
+Modern sequence models are usually made efficient by parallelizing the sequence
+operation itself: attention, convolution, linear scan, or hybrid mixtures. We
+study a different route. Nonlinear Delta Memory (NDM) keeps recurrence serial
+along time, but exposes massive parallelism across many small memory programs:
+heads, state tiles, and batch elements. The resulting architecture is a
+pure recurrent language model with matrix-valued state and a nonlinear
+delta-correcting update.
 
-Say:
+The paper has three linked claims. First, architecture search over recurrent
+geometry finds many-head shapes that train smoothly at 1.27B parameters. Second,
+an optimized Triton implementation makes the nonlinear recurrence competitive
+with hand-tuned recurrent baselines in wallclock training. Third, controlled
+state-tracking tasks identify the mechanism: NDM's read-then-delta write
+outperforms both linear recurrent baselines and M2RNN-style raw-write matrix
+updates on S5 permutation composition.
 
-- NDM/E88 and M2RNN are distinct one-step transition families.
-- M2RNN's fixed-right raw-write update cannot implement NDM's mixed-key delta
-  correction in one step without an extra read-then-delta path.
-- With that extra path, M2RNN can embed one NDM step. This is a resource
-  separation, not an absolute computability separation.
-- Fixed-width, finite-precision recurrent recognizers are finite-state. The
-  ceiling is regular languages, hence inside NC1.
-- S5 permutation composition is the right non-solvable witness task; parity
-  and modular counters are useful solvable-control probes.
-- The S5 tracker and exact finite transition-memory realization are now
-  machine-checked.
-- The empirical S5 curve supports the delta-correction mechanism: E88 wins,
-  M2RNN underperforms despite being nonlinear and matrix-state.
+The formal contribution is deliberately bounded: a checked update-family
+resource separation between NDM and M2RNN, a finite-state ceiling for
+fixed-precision recurrence, and a formalized S5 tracker. The empirical result is
+that a pure nonlinear recurrent stack can be trained in the same loss regime as
+strong linear recurrent models while exposing a different state-tracking
+profile.
 
-Do not say:
+## Audience
 
-- NDM/E88 exceeds NC1 at fixed width and fixed precision.
-- This is the first nonlinear matrix-state RNN.
-- The Lean core proves a linear/scan lower bound for S5.
-- Nonlinearity in general is enough. M2RNN is the counterexample in our own
-  data.
+The first audience is an ML systems/modeling reader who knows Mamba, DeltaNet,
+Gated DeltaNet, hybrid recurrent-attention models, and the current assumption
+that pure serial RNNs cannot compete at scale.
 
-## Formal Core
+The paper should not read like a repo history. It should read as an answer to a
+field-level question:
 
-The trusted proof surface is enforced by:
+> Did pure nonlinear recurrence fail because it was the wrong computation, or
+> because it was parallelized along the wrong axis?
 
-```bash
-scripts/check_paper_core.sh
-scripts/check_trusted_no_placeholders.sh ElmanProofs.lean
+## Main Contributions
+
+1. **Architecture:** NDM, a pure recurrent matrix-memory architecture with a
+   nonlinear delta-correcting update.
+2. **Training geometry:** CMA-ES and follow-up search identify many-head,
+   multi-programmed recurrent shapes that train at 1.27B parameters.
+3. **Systems:** a fused Triton recurrence kernel with L2 key/query
+   normalization, sparse checkpointing, output gating, and portable CUDA/ROCm
+   semantics.
+4. **Language modeling:** 1.27B pure recurrent NDM enters the same wallclock
+   loss regime as strong linear recurrent baselines under matched training.
+5. **Expressivity:** S3/S5 state-tracking tasks show that NDM separates from
+   FLA-GDN, Mamba2-style linear recurrence, and M2RNN-style raw-write matrix
+   updates.
+6. **Formal core:** a Lean-checked resource separation between NDM and M2RNN
+   update families, plus a checked S5 tracker and finite transition-memory
+   realization.
+
+## Model Families In The Paper
+
+| Name | Role | Key property |
+| --- | --- | --- |
+| NDM/E88 | main model | nonlinear delta-correcting matrix memory |
+| FLA-GDN | linear recurrent baseline | delta-style memory with linear temporal state |
+| Mamba2 | selective SSM baseline | strong linear-time recurrent baseline |
+| M2RNN-paper | related nonlinear matrix RNN | raw-write matrix-state update in published geometry |
+| M2RNN-CMA | searched M2RNN control | M2RNN-style update reshaped toward many independent programs |
+| NDM hybrids | control | tests whether mixing with GDN/attention helps or hurts |
+
+The M2RNN comparison should be written carefully. The paper should concede that
+M2RNN validates the broad nonlinear matrix-state direction. The NDM claim is
+narrower and more useful: the delta correction and many-program geometry are
+the resources that make pure recurrence train and track state.
+
+## The Core Update
+
+One NDM head has matrix state `S`. Per token:
+
+```text
+r_t       = S_{t-1}^T k_t
+delta_t   = v_t - r_t
+S_t       = tanh(d_t S_{t-1} + k_t delta_t^T)
+y_t       = S_t^T q_t
 ```
 
-Current state:
+Interpretation:
 
-- `check_paper_core.sh` passes.
-- The paper core rejects `sorry`, `admit`, explicit `axiom`, `opaque`, and
-  `native_decide` in the trusted import closure.
-- Old TC0/parity files are explicitly marked historical sketches.
+- `k_t` addresses memory.
+- `r_t` is what the memory currently returns at that address.
+- `delta_t` is the correction required to make the memory return `v_t`.
+- `k_t delta_t^T` writes the correction.
+- `tanh` bounds the state after the write.
+- `q_t` reads from the updated memory.
 
-Trusted content:
+Contrast:
 
-- NDM/M2RNN update-family resource separation.
-- M2RNN read-then-delta embedding of one NDM step.
-- NDM/E88 1.27B many-program production geometry.
-- S5 witness facts: S3 has 6 states, S5 has 120 states, S5 is non-solvable.
-- Explicit S5 tracker over adjacent transpositions.
-- Proof that the Python tuple-swap update matches the Lean tracker transition.
-- Exact finite transition-memory realization for every finite online
-  recognizer and specifically for S5, with `120 * 4 = 480` transition keys.
+```text
+M2RNN: H_t = f_t H_{t-1} + (1 - f_t) tanh(H_{t-1} W + k_t v_t^T)
+GDN:   delta-style update, but linear temporal state
+```
 
-Still external or unproven:
+This contrast makes the mechanism testable. If "nonlinear matrix state" were
+enough, M2RNN should also win the state-tracking tasks. If "delta correction"
+is the useful resource, NDM should separate from raw-write M2RNN.
 
-Theory gaps:
+## CMA-ES And Geometry Search
 
-- Barrington / NC1-completeness.
-- Linear/scan/solvable lower bound for S5.
-- Trained real-valued NDM learns the exact table robustly.
+CMA-ES should be presented as part of the scientific method, not as incidental
+hyperparameter hacking. The search object is recurrent geometry:
 
-Implementation/formal-hygiene gaps:
+- number of heads;
+- state dimension per head;
+- depth and model width;
+- expansion ratio;
+- key/query normalization;
+- decay law;
+- output/write gates;
+- M2RNN q/k head sharing versus many independent address programs.
 
-- Exact Python `itertools.permutations` lexicographic class-id numbering.
-- Separate proof that adjacent transpositions generate all of S5.
+The important empirical pattern is that the same update family can look weak or
+strong depending on geometry. Paper-shaped M2RNN is brittle under the local
+schedule-free language-modeling setup. The tied/CMA-ES-shaped M2RNN trains much
+more smoothly. E88/NDM is the current optimized point in the nonlinear
+delta-memory family.
 
-## Reviewer-Calibrated Response
+This supports the multi-programming thesis: recurrence becomes trainable when
+the model exposes many independent address/memory programs to the hardware and
+to the optimizer.
 
-Use this register:
+## Evidence Stack
 
-> The trusted formal core is green. The formal contribution is a checked
-> NDM-vs-M2RNN update-rule resource separation plus an honest finite-state
-> ceiling. Since the initial review, we also formalized the S5 tracker and an
-> exact finite transition-memory realization. We do not claim a Lean lower
-> bound for linear scan models. The S5 separation is currently empirical,
-> backed by a checked task formalization.
+### Figure 1: Mechanism And S5
 
-This is the right tone: honest, aggressive, and hard to unwind.
+This is the first figure to build.
 
-## S5 Empirical Core
+Panel A: update schematic comparing NDM, M2RNN, and GDN.
 
-Current 8M matched S3/S5 run, three seeds, train length 128:
+Panel B: train-length S3/S5 bars.
+
+Panel C: S5 length-extrapolation curves.
+
+Current matched 8M S3/S5 run, three seeds, train length 128:
 
 | Task | Model | Mean acc | Min | Max | Baseline |
 | --- | --- | ---: | ---: | ---: | ---: |
@@ -121,130 +174,182 @@ Length extrapolation on S5:
 
 Interpretation:
 
-- E88/NDM separates at train length, not only under extrapolation.
-- E88/NDM also remains ahead under length extrapolation.
-- Length extrapolation still degrades for all models. Do not blur this with
-  train-length performance.
-- M2RNN being below FLA-GDN is not awkward if the mechanism is framed
-  correctly. It supports the claim that delta correction, not nonlinear
-  matrix state in general, is the decisive state-tracking resource.
+- NDM separates at the training length, not only under extrapolation.
+- NDM remains ahead under extrapolation, but all models degrade.
+- M2RNN underperformance supports the update-rule claim: nonlinear matrix
+  state alone is not enough.
 
-## First Figure To Build
+### Figure 2: CMA-ES Geometry
 
-Figure 1 should be the S5/S3 mechanism figure:
+Show how the searched geometry differs from naive or paper-shaped settings:
 
-- Panel A: train-length bars for S3 and S5, four models.
-- Panel B: S5 length-extrapolation curves for T=128,256,512,1024.
-- Panel C, optional: mechanism schematic:
-  - NDM: `H_t = tanh(lambda H_{t-1} + k_t (v_t - H_{t-1}^T k_t)^T)`
-  - M2RNN: `H_t = f H_{t-1} + (1-f) tanh(H_{t-1} W + k_t v_t^T)`
-  - GDN: delta-style but linear temporal state.
+- many independent heads;
+- stable q/k address programs;
+- state size per head;
+- depth/width tradeoff;
+- relation to GPU occupancy and recurrent program count.
 
-The caption should say that S5 tests non-solvable finite-state tracking, not
-language-model perplexity.
+The point is not that CMA-ES is magic. The point is that recurrent models have
+non-obvious geometry, and search found shapes that make serial recurrence
+trainable.
+
+### Figure 3: 1.27B Language-Model Racers
+
+Plot loss or bits-per-byte versus wallclock for:
+
+- E88/NDM;
+- FLA-GDN;
+- Mamba2;
+- M2RNN-CMA;
+- M2RNN-paper where appropriate as a negative/stability control.
+
+Use smoothed windows such as last 5K, 10K, and 50K steps. Avoid last-100-step
+noise. The central plot should show time-to-loss, not just step count or token
+count.
+
+Caption claim:
+
+> Once recurrent geometry and kernels are optimized, pure nonlinear recurrence
+> trains in the same wallclock loss band as strong linear recurrent baselines.
+
+### Figure 4: Systems
+
+Show kernel and end-to-end training improvements:
+
+- fused L2 norm;
+- `num_warps=1` at high head count;
+- sparse forward checkpointing;
+- avoiding unnecessary contiguous copies;
+- fused output gate;
+- bf16 scratch and block-size tuning.
+
+Frame this as making multi-programmed recurrence practical, not as a standalone
+kernel brag.
+
+## Formal Section
+
+The trusted Lean core is a guardrail against overclaiming.
+
+Checked:
+
+- NDM and M2RNN are distinct one-step update families.
+- M2RNN cannot implement the NDM mixed-key delta correction in one step without
+  an extra read-then-delta path.
+- With the extra read-then-delta resource, M2RNN can embed one NDM step.
+- Fixed-width, finite-precision recurrent recognizers are finite-state.
+- The S5 tracker and exact finite transition-memory realization are checked.
+
+Not checked:
+
+- a lower bound proving all linear scan models fail S5;
+- Barrington/NC1 completeness inside Lean;
+- robust learning of the exact transition table by trained real-valued NDM.
+
+Paper wording:
+
+> The formal result is a resource separation between update families, not an
+> absolute computability separation. The S5 lower-bound story is theoretical
+> background and empirical evidence, not a completed Lean lower bound.
 
 ## Paper Outline
 
 ### 1. Introduction
 
-- Modern sequence models are mostly linear-scan, attention, or hybrids.
-- Matrix state is not the novelty. Nonlinear matrix-state RNNs now exist in
-  related work.
-- The key question is which update resource trains and tracks state.
-- NDM proposes a pure nonlinear delta-correcting recurrent stack.
-- Contributions:
-  - formal NDM/M2RNN update-family resource separation;
-  - checked finite-state/S5 task formalization;
-  - empirical S5 separation identifying delta correction as the mechanism;
-  - 1.27B pure recurrent LM training competitive with leading linear models;
-  - optimized Triton implementation making this practical.
+Motivate the field assumption: pure serial RNNs are expressive but impractical.
+State the counter-hypothesis: the missing ingredient is multi-programming, not
+attention or linear scan.
 
-### 2. Background And Related Work
+End with contributions:
 
-- Linear SSMs, Mamba2, Gated DeltaNet.
-- M2RNN and nonlinear matrix-state RNNs.
-- Barrington/S5 motivation, stated as cited background not Lean-proven.
-- Computational expressivity tasks and state tracking.
+- NDM architecture;
+- CMA-ES discovered recurrent geometry;
+- Triton implementation;
+- billion-scale language modeling racers;
+- S5/state-tracking separation;
+- Lean-checked update-family core.
 
-### 3. NDM Architecture
+### 2. Background
 
-- Define Nonlinear Delta Memory.
-- E88 as current implementation lineage.
-- Many-program recurrent geometry.
-- Delta-correcting associative memory intuition.
-- Contrast with:
-  - raw-write M2RNN;
-  - linear delta GDN;
-  - Mamba2 diagonal/selective SSM.
+Cover Mamba2, Gated DeltaNet, linear scans, hybrid models, M2RNN, and
+state-tracking theory. Matrix state is background, not novelty.
 
-### 4. Formal Results
+### 3. Nonlinear Delta Memory
 
-- Trusted proof surface and no-sorry policy.
-- Fixed finite-precision ceiling: finite-state, regular, inside NC1.
-- NDM/M2RNN resource separation.
-- M2RNN read-then-delta embedding, preventing overclaim.
-- S5 tracker formalization and exact finite transition-memory realization.
-- What is not proved: lower bound and Barrington formalization.
+Define the update. Explain the delta correction. Explain many-head state and
+multi-programmed execution. Distinguish NDM from raw-write matrix RNNs and from
+linear temporal updates.
 
-### 5. Synthetic Expressivity Experiments
+### 4. Searching Recurrent Geometry
 
-- Task suite overview.
-- S3/S5 construction.
-- Matched 8M model settings.
-- Figure 1: S3/S5 bars and S5 extrapolation curves.
-- Main result: E88/NDM wins; M2RNN underperforms, isolating delta correction.
+Describe CMA-ES and follow-up ablations. Present the searched shapes for
+NDM/E88 and M2RNN-CMA. Explain why paper-shaped M2RNN is a useful but brittle
+control.
 
-### 6. Language Modeling At Scale
+### 5. Efficient Triton Recurrence
 
-- 1.27B E88/NDM pure recurrent training.
-- Context curriculum / 2K racers / later 64K scaling.
-- Compare E88/NDM, FLA-GDN, Mamba2, M2RNN.
-- Bits per byte / loss trajectories.
-- Claim carefully: competitive with best linear recurrent baselines, not yet
-  claiming released frontier-quality text model.
+Describe the E88/NDM kernel, sparse checkpointing, fused normalization, fused
+gate, and ROCm portability. Show throughput and memory results.
 
-### 7. Systems Contribution
+### 6. Language Modeling
 
-- Triton E88 kernel.
-- Fused L2 norm, warp tuning, sparse checkpointing, fewer copies, output gate.
-- End-to-end throughput vs CUDA and memory parity.
-- ROCm portability.
+Describe dataset stream, byte/token setup, schedule-free optimizer, context
+curriculum, and 1.27B racers. Main plot: wallclock loss and bpb.
 
-### 8. Discussion
+### 7. Expressivity And State Tracking
 
-- Pure recurrence can be practical.
-- Hybridization is not automatically right.
-- Delta correction appears to be the key state-tracking resource.
-- Biological / multiprogramming intuition, if used, should be restrained and
-  downstream of the data.
+Describe task suite, S3/S5, and length extrapolation. Main point: NDM separates
+from raw-write M2RNN and linear recurrent baselines on the task class that
+motivates nonlinear recurrence.
 
-### 9. Limitations
+### 8. Formal Results
 
-- No formal lower bound yet for linear/scan models on S5.
-- S5 length extrapolation is not solved; E88 starts higher and remains ahead,
-  but all models degrade.
-- Training runs are still research-scale, not released foundation models.
-- M2RNN reproduction depends on available implementation details and our
-  faithful implementation choices.
+State the Lean-checked claims and the explicit non-claims. Put the formal core
+in service of the empirical mechanism, not as a detached proof exercise.
 
-## Mechanical Cleanup Later
+### 9. Discussion
 
-Do not do this before stabilizing the paper notes and figures, but track it:
+Pure recurrence is viable when shaped as a many-program workload. Hybridization
+is not automatically better. The open question is how far nonlinear recurrent
+reasoning can scale once memory, geometry, and systems are co-designed.
 
-- Rename presentation away from "Elman" toward NDM.
-- Clarify that E88 is an implementation/configuration, not the family name.
-- Update READMEs and docs:
-  - NDM = Nonlinear Delta Memory.
-  - Pure nonlinear recurrent stack.
-  - Delta-correcting matrix-state update.
-- Decide repo/project naming. Avoid losing history.
-- Audit old docs for stale "TC0" and "first matrix-state" claims.
+### 10. Limitations
 
-## Immediate Next Actions
+- No completed lower bound for all linear scan models on S5.
+- S5 length extrapolation is not solved.
+- Results depend on careful geometry and kernel optimization.
+- Large checkpoints need separate release and documentation.
+- M2RNN comparisons rely on the available implementation details and faithful
+  local reproduction choices.
 
-1. Build Figure 1 from `s5_witness_8m_20260521`.
-2. Generate a compact markdown report for the S3/S5 run.
-3. Add the report and figure scripts to version control if clean.
-4. Start paper outline as prose only after Figure 1 exists.
-5. Consider a longer/curriculum S5 run to test whether E88 can improve length
-   generalization, but do not block paper framing on that.
+## Claim Register
+
+Strong claims to make:
+
+- NDM is a pure nonlinear recurrent architecture trained at 1.27B-parameter
+  scale.
+- Multi-programming is a viable parallelization strategy for serial recurrent
+  models.
+- Delta-correcting matrix memory separates empirically from raw-write nonlinear
+  matrix memory on S5 state tracking.
+- The trusted Lean core proves an update-family resource separation and checks
+  the S5 tracker surface.
+
+Claims to avoid:
+
+- "First nonlinear matrix-state RNN."
+- "Fixed-width NDM exceeds NC1."
+- "Lean proves linear scan lower bounds."
+- "Nonlinearity alone explains the results."
+- "M2RNN fails" as a broad claim. The accurate statement is that paper-shaped
+  M2RNN is brittle here, while CMA-ES-shaped M2RNN trains better but still does
+  not match NDM on the S5 evidence.
+
+## Immediate Work
+
+1. Build Figure 1 from the S3/S5 run.
+2. Build a model-geometry table for NDM/E88, FLA-GDN, Mamba2, M2RNN-paper, and
+   M2RNN-CMA.
+3. Generate wallclock racer plots using 5K, 10K, and 50K smoothing windows.
+4. Add a compact results report under `paper/` once the first figures exist.
+5. Prepare a checkpoint release plan for Hugging Face only after freezing model
+   hashes, dataset notes, and exact training commits.
