@@ -1,38 +1,70 @@
 // Nonlinear Delta Memory — main paper source
 // Format: Typst (https://typst.app), NOT LaTeX.
 // Build: bash paper/build.sh  →  paper/Garrison_2026_NDM-<commit>.pdf
+//
+// Template: arkheion 0.1.2 (the de-facto Typst arxiv-preprint template).
+// See paper/template_choice_v7.md for rationale and the porting notes.
 
-#set document(
+#import "@preview/arkheion:0.1.2": arkheion, arkheion-appendices
+
+#show: arkheion.with(
   title: "Pure Nonlinear Recurrent Language Models",
-  author: ("Erik Garrison"),
+  authors: (
+    (
+      name: "Erik Garrison",
+      email: "erik.garrison@gmail.com",
+      affiliation: "Poietic PBC; Department of Genetics, Genomics and Informatics, University of Tennessee Health Science Center, Memphis, TN 38163, USA",
+      orcid: "0000-0003-3821-631X",
+    ),
+  ),
+  abstract: [
+    Recurrent language models are presumed to require linearisation
+    (selective state-space models, gated linear attention, delta-rule
+    linear scans) or hybrid attention bolt-ons to scale; pure nonlinear
+    matrix-state recurrence has been treated as wall-clock-impractical at
+    the billion-parameter band. This paper introduces *Pure Nonlinear
+    Recurrent Language Models* (PNR) — recurrent language models with
+    nonlinear matrix-valued state, no attention layers, no linearisation
+    tricks, and no hybrid bolt-ons — and trains two PNR instances,
+    *NDM* (delta-correcting update $S <- tanh(d S + k(v - S^T k)^T)$) and
+    *M²RNN-CMA* (raw-write update $tanh(H W + k v^T)$), at 1.27 B
+    parameters under per-architecture CMA-ES hyperparameter optimisation,
+    alongside *Mamba2* and *Gated DeltaNet* (GDN) as frontier-class
+    linear-recurrent baselines. Empirically, PNR matches the linear
+    baselines on the shared wall-clock scaling curve: NDM tracks Mamba2 and
+    GDN through training and eventually outscales Mamba2, with a
+    215-sampled-hour contiguous NDM-ahead stretch from $h = 180$ to
+    $h = 394$ (≈ 214 wall-clock hours); under the same matched-CMA-ES protocol M²RNN-CMA is
+    strictly below NDM and below Mamba2 throughout training, isolating the
+    delta-correcting update rule as the within-PNR differentiator. The
+    *one-step representational* counterpart of the within-PNR gap is
+    formalised in Lean 4 — `NDMRealizesS5.ndm_realizes_s5_tracker`
+    realises the $S_5$ tracker through the delta-correcting update, and
+    `RecurrentResourceFormalism.ndm_m2rnn_one_step_resource_separation_embeds`
+    proves no fixed-weight raw-write parameterisation can match it; the
+    predicate `RecurrentResourceFormalism.multiProgrammed_admits_m2rnn_and_ndm`
+    places both PNR instances in a common multi-programmed parallelism
+    class, and `RecurrentResourceFormalism.ndm_m2rnn_flop_class_equiv`
+    shows their per-token FLOP counts share a common $c_1 d^2 + c_2 d$
+    envelope. These results establish PNR as a viable architecture class
+    for scalable language modelling and exhibit one strict expressivity
+    instance within it (delta-correct $>$ raw-write); whether the
+    within-PNR ordering extends to a partial order with an
+    NC#super[1] ceiling is the open next-paper question. The trusted Lean
+    4 core has no `sorry`/`admit`/`axiom`/`opaque`/`native_decide` in the
+    import closure.
+  ],
+  keywords: (
+    "recurrent neural networks",
+    "language modelling",
+    "nonlinear recurrence",
+    "state-space models",
+    "expressivity",
+    "Lean 4",
+  ),
 )
 
-#set page(
-  paper: "us-letter",
-  margin: (x: 0.75in, y: 0.75in),
-  numbering: "1",
-)
-
-// Sans-serif body throughout — Helvetica/Arial register, matching the
-// author's NIH R01 grant template (/home/erikg/pgwas_R01/template/nih-r01.typ).
-// Intended fallback chain, in order of preference:
-//   Helvetica → Arial → Liberation Sans → Nimbus Sans → Inter → DejaVu Sans
-// where Liberation Sans is the metric-compatible free Arial replacement
-// (Red Hat, ships on most Linux distros) and Nimbus Sans plays the same
-// role for Helvetica. Only DejaVu Sans is installed on the current build
-// host, so the chain here lists only DejaVu Sans to keep the build
-// warning-free; on a host with Liberation Sans / Helvetica / Arial
-// installed, prepend them to the chain to pick them up. (Same pattern
-// the grant template uses; see its comment block for the rationale.)
-#let body-font = "DejaVu Sans"
-#let mono-font = "DejaVu Sans Mono"
-#let math-font = "New Computer Modern Math"
-
-#set text(font: body-font, size: 10.5pt)
-#set par(justify: true, leading: 0.55em, first-line-indent: 0pt, spacing: 0.7em)
-#show math.equation: set text(font: math-font)
-#show raw: set text(font: mono-font, size: 0.92em)
-
+// ── Porting shims (preserve current paper's typographic conventions) ─────────
 // Italic-as-bold fix: the author wrote `*…*` throughout intending italic
 // emphasis, but in Typst `*…*` is the strong (bold) form. Override at the
 // template level so every `*…*` renders as italic. Genuine bold survives
@@ -41,98 +73,33 @@
 // the `strong` element.
 #show strong: it => emph(it.body)
 
-#set heading(numbering: "1.1")
-#show heading.where(level: 1): it => {
-  v(0.9em)
-  set text(size: 12pt, weight: "bold", font: body-font)
-  it
-  v(0.35em)
-}
-#show heading.where(level: 2): it => {
-  v(0.6em)
-  set text(size: 10.5pt, weight: "bold", font: body-font)
-  it
-  v(0.25em)
-}
-#show heading.where(level: 3): it => {
-  v(0.4em)
-  set text(size: 10.5pt, weight: "bold", style: "italic", font: body-font)
-  it
-  v(0.2em)
-}
-
+// Bibliography heading is unnumbered (References, not "12. References").
 #show bibliography: set heading(numbering: none)
 
+// Display-math numbering: arkheion turns on "(1)"-style equation numbers by
+// default. The current paper has zero `<eq:…>` labels and zero `@eq:…`
+// cross-references, so adding visible (1)…(N) markers would be a content
+// change. Restore the unnumbered display-equation style.
+#set math.equation(numbering: none)
+
+// Figure captions: smaller than body text (9pt vs ~11pt body) with visible
+// vertical breathing room above and below. The "Figure 1:" label is rendered
+// in semibold to match a polished arxiv preprint and to separate the label
+// from the caption text. Addresses the author's "massive figure captions"
+// feedback.
+#show figure.caption: it => block(
+  inset: (top: 0.4em, bottom: 0.6em, x: 0.5em),
+  text(size: 9pt, [
+    #text(weight: "semibold")[#it.supplement #context it.counter.display(it.numbering):]
+    #h(0.35em)
+    #it.body
+  ]),
+)
+
+// Math shortcuts used throughout the body.
 #let nd = $upright("NDM")$
 #let s5 = $S_5$
 #let s3 = $S_3$
-
-// ── Title block ───────────────────────────────────────────────────────────────
-#align(center)[
-  #text(size: 17pt, weight: "bold", tracking: -0.01em)[
-    Pure Nonlinear Recurrent Language Models
-  ]
-  #v(0.5em)
-  #text(size: 11.5pt)[Erik Garrison]
-  #v(0.25em)
-  #text(size: 9.5pt)[
-    Poietic PBC \
-    Department of Genetics, Genomics and Informatics, University of Tennessee Health Science Center, Memphis, TN 38163, USA \
-    #link("mailto:erik.garrison@gmail.com")[erik.garrison\@gmail.com] · ORCID #link("https://orcid.org/0000-0003-3821-631X")[0000-0003-3821-631X]
-  ]
-  #v(0.8em)
-]
-
-// ── Abstract ─────────────────────────────────────────────────────────────────
-// Abstract is set in a compact sans-serif block so the (deliberately long)
-// prose fits on page 1. Reduced font size, leading, and side margins are
-// what create the visual contraction; the prose itself is unchanged.
-#align(center)[#text(size: 10.5pt, weight: "bold", tracking: 0.05em)[ABSTRACT]]
-#v(0.3em)
-
-#block(inset: (x: 2.5em), [
-#set text(size: 9pt)
-#set par(justify: true, leading: 0.5em, first-line-indent: 0pt, spacing: 0.55em)
-Recurrent language models are presumed to require linearisation
-(selective state-space models, gated linear attention, delta-rule
-linear scans) or hybrid attention bolt-ons to scale; pure nonlinear
-matrix-state recurrence has been treated as wall-clock-impractical at
-the billion-parameter band. This paper introduces *Pure Nonlinear
-Recurrent Language Models* (PNR) — recurrent language models with
-nonlinear matrix-valued state, no attention layers, no linearisation
-tricks, and no hybrid bolt-ons — and trains two PNR instances,
-*NDM* (delta-correcting update $S <- tanh(d S + k(v - S^T k)^T)$) and
-*M²RNN-CMA* (raw-write update $tanh(H W + k v^T)$), at 1.27 B
-parameters under per-architecture CMA-ES hyperparameter optimisation,
-alongside *Mamba2* and *Gated DeltaNet* (GDN) as frontier-class
-linear-recurrent baselines. Empirically, PNR matches the linear
-baselines on the shared wall-clock scaling curve: NDM tracks Mamba2 and
-GDN through training and eventually outscales Mamba2, with a
-215-sampled-hour contiguous NDM-ahead stretch from $h = 180$ to
-$h = 394$ (≈ 214 wall-clock hours); under the same matched-CMA-ES protocol M²RNN-CMA is
-strictly below NDM and below Mamba2 throughout training, isolating the
-delta-correcting update rule as the within-PNR differentiator. The
-*one-step representational* counterpart of the within-PNR gap is
-formalised in Lean 4 — `NDMRealizesS5.ndm_realizes_s5_tracker`
-realises the $S_5$ tracker through the delta-correcting update, and
-`RecurrentResourceFormalism.ndm_m2rnn_one_step_resource_separation_embeds`
-proves no fixed-weight raw-write parameterisation can match it; the
-predicate `RecurrentResourceFormalism.multiProgrammed_admits_m2rnn_and_ndm`
-places both PNR instances in a common multi-programmed parallelism
-class, and `RecurrentResourceFormalism.ndm_m2rnn_flop_class_equiv`
-shows their per-token FLOP counts share a common $c_1 d^2 + c_2 d$
-envelope. These results establish PNR as a viable architecture class
-for scalable language modelling and exhibit one strict expressivity
-instance within it (delta-correct $>$ raw-write); whether the
-within-PNR ordering extends to a partial order with an
-NC#super[1] ceiling is the open next-paper question. The trusted Lean
-4 core has no `sorry`/`admit`/`axiom`/`opaque`/`native_decide` in the
-import closure.
-])
-
-#v(1em)
-#line(length: 100%)
-#v(0.5em)
 
 // ── 1. Introduction ───────────────────────────────────────────────────────────
 = Introduction <sec:intro>
@@ -451,6 +418,7 @@ y_h &= "silu"(g_h) dot.o S_h^T q_h
 $
 
 #figure(
+  kind: image,
   block(width: 100%, [
     #align(center)[
       #stack(dir: ltr, spacing: 1.5em,
@@ -1113,6 +1081,7 @@ $T in {128, 256, 512, 1024}$, three seeds.
 ) <tab_s5>
 
 #figure(
+  kind: image,
   block(width: 100%, [
     #align(center)[
       #stack(dir: ltr, spacing: 1em,
@@ -1237,6 +1206,7 @@ pattern $[upright("NDM"), upright("NDM"), upright("GDN"), upright("GDN")]$
 *hybridisation degrades state tracking below either pure family*:
 
 #figure(
+  kind: image,
   block(width: 100%, [
     #align(center)[
       #stack(dir: ttb, spacing: 0.4em,
