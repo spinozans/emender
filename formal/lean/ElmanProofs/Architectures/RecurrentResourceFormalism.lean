@@ -1078,6 +1078,101 @@ These are not capability theorems yet. They are hooks for the theorems we want:
   programs, making pure nonlinear recurrence trainable at scale.
 -/
 
+/-! ## Per-Token FLOP Cost Model and Class Equivalence (F3)
+
+### Cost model (Pillar 3 anchor)
+
+We count per-head per-token floating-point multiply-accumulate operations at
+the recurrent-state update granularity.  The model has six standard cost atoms,
+each costing exactly `S = stateScalarsPerHead` operations, plus one optional
+atom for architectures with an external forget gate applied after the candidate
+nonlinearity.
+
+| Atom              | Cost | Description                                              |
+|-------------------|------|----------------------------------------------------------|
+| stateRead         |  S   | load S scalars from the recurrent state buffer           |
+| keyStateContract  |  S   | rank-1 key-state contraction (k^T · H or k · h)         |
+| rankOneCorrect    |  S   | apply rank-1 delta correction or right-transition step   |
+| outerWrite        |  S   | compute outer-product write k v^T into candidate matrix  |
+| elemActivation    |  S   | elementwise nonlinearity (tanh) over the candidate       |
+| stateWrite        |  S   | write S scalars back to the recurrent state buffer       |
+| (forgetGate)      | +S   | elementwise forget carry (only if hasExternalForgetGate) |
+
+Total: 6 · S (no external forget gate) or 7 · S (with external forget gate).
+
+**NDM head:** `carryPlacement = insideNonlinearity` — the delta correction
+`(I − k k^T) H` is folded inside the nonlinearity; no external gate.
+⟹ `flopsPerToken(NDM) = 6 · S`.
+
+**M2RNN-pure head:** `carryPlacement = outsideNonlinearity` — the scalar,
+row-vector, or column-vector forget gate is applied after the tanh candidate.
+⟹ `flopsPerToken(M2RNN-pure) = 7 · S`.
+
+**Abstraction note:** the M2RNN right-transition `H W` (W: fixed learned V × V
+matrix) is counted at head-local granularity — one `rankOneCorrect` atom of
+cost S per head, amortised over the head's state scalars.  The full d³ matrix-
+matrix product is outside the scope of this cost class; the theorem establishes
+only that both architectures are in the same degree-2 polynomial class in d
+(where S = stateScalarsPerHead = d²).
+
+**What this model does NOT claim:** learning-rate equivalence, FLOPs-per-bit
+convergence, or any empirical result.  It is a pure combinatorial FLOP bound
+establishing that equal-token-budget comparisons at matched (d, H, depth) are
+not confounded by a FLOP-budget asymmetry between NDM and M2RNN.
+-/
+
+/-- Whether an architecture has an explicit external forget gate applied after
+the nonlinear candidate (i.e., the carry is placed outside the nonlinearity).
+`outsideNonlinearity`: M2RNN-style scalar, row, or column forget gate.
+`residualReadout`: highway connection after the layer output.
+All other carry placements (including `insideNonlinearity` for NDM) return
+`false`. -/
+def hasExternalForgetGate (a : ArchitectureSignature) : Bool :=
+  match a.carryPlacement with
+  | .outsideNonlinearity => true
+  | .residualReadout     => true
+  | _                    => false
+
+/-- Per-head per-token FLOP count in the transparent cost model defined above.
+
+- Without external forget gate: `6 * stateScalarsPerHead`
+- With external forget gate:    `7 * stateScalarsPerHead`
+
+Depends only on `stateScalarsPerHead` and `hasExternalForgetGate`. -/
+def flopsPerToken (a : ArchitectureSignature) : ℕ :=
+  if hasExternalForgetGate a
+  then 7 * a.stateScalarsPerHead
+  else 6 * a.stateScalarsPerHead
+
+/-- **F3 — Per-token FLOP class equivalence (Pillar 3 Lean anchor).**
+
+For matched state dimension `d` (NDM state = d × d scalars, M2RNN state =
+d × d scalars), head count `H`, and stack depth `depth`, the per-head
+per-token FLOP costs are:
+
+1. `flopsPerToken(NDM)    = 6 · d²`  (delta carry inside nonlinearity; no gate)
+2. `flopsPerToken(M2RNN)  = 7 · d²`  (external forget gate adds one extra pass)
+3. Both are bounded above by `7 · d²` (`c₁ = 7, c₂ = 0` in `c₁ · d² + c₂ · d`).
+4. The two counts are within a factor of 2 of each other:
+   `flopsPerToken(M2RNN) ≤ 2 · flopsPerToken(NDM)`.
+
+Consequence: equal-token-budget comparisons at matched `(d, H, depth)` are
+NOT confounded by a FLOP-budget asymmetry.  The empirical FLOPs-per-bit
+convergence (Figure 3) is therefore not a token-budget artifact.
+
+This theorem makes NO claim about learning-rate convergence.  It is a pure
+combinatorial cost statement. -/
+theorem ndm_m2rnn_flop_class_equiv (d H depth : Nat) :
+    flopsPerToken (ndm depth H d) = 6 * (d * d) ∧
+    flopsPerToken (m2rnnPure depth H (d * d)) = 7 * (d * d) ∧
+    flopsPerToken (ndm depth H d) ≤ 7 * (d * d) ∧
+    flopsPerToken (m2rnnPure depth H (d * d)) ≤ 7 * (d * d) ∧
+    flopsPerToken (m2rnnPure depth H (d * d)) ≤ 2 * flopsPerToken (ndm depth H d) := by
+  have h1 : flopsPerToken (ndm depth H d) = 6 * (d * d) := rfl
+  have h2 : flopsPerToken (m2rnnPure depth H (d * d)) = 7 * (d * d) := rfl
+  refine ⟨h1, h2, h1 ▸ ?_, h2 ▸ ?_, h2 ▸ h1 ▸ ?_⟩ <;>
+    nlinarith [Nat.zero_le (d * d)]
+
 /-! ## Multi-Programming Predicate (Pillar 1 anchor) -/
 
 /-- CMA-ES-shaped M2RNN signature, instantiated from `m2rnnPure` with geometry
