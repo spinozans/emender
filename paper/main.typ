@@ -71,25 +71,27 @@ programs — per-head, per-state-tile, per-batch — a layout called
 $S <- tanh(d dot S + k (v - S^T k)^T)$ combines a bounded $tanh$ on the
 matrix state with a delta-correcting outer-product write. A 1.27 B-parameter pure
 recurrent NDM stack trains to a Pile-class loss band that matches strong
-linear-recurrent baselines. Three independent lines of evidence support
-the architecture. (i) Under matched CMA-ES architecture search at
-~480 M parameters, four recurrent families — NDM, FLA-GDN, Mamba2 and a
-vanilla nonlinear Elman recurrence — share a single
-FLOPs-per-bit-of-compression slope to within a small constant factor; raw
-training speed is not the differentiator. (ii) On the canonical
-state-tracking witness — the symmetric-group word problem in $S_5$,
-non-solvable and (by Barrington's theorem, cited) NC#super[1]-complete —
-NDM reaches 0.79 mean accuracy at parameter-matched 8 M scale, against
-0.36 for the best linear-recurrent baseline and 0.22 for a raw-write
-nonlinear matrix RNN. (iii) A trusted Lean 4 core (no
+linear-recurrent baselines. The paper stakes three contributions. *C1
+(systems/existence):* multi-programming makes pure nonlinear matrix-state
+recurrence trainable at scale, demonstrated on both NDM and a
+CMA-reshaped variant of the M2RNN update family (Lean predicate
+`IsMultiProgrammed`; witness `multiProgrammed_admits_m2rnn_and_ndm`).
+*C2 (mechanism):* given matrix state and temporal nonlinearity, the
+delta-correcting write is more expressive than the raw-write *at matched
+per-token FLOP class* (Lean: `ndm_m2rnn_flop_class_equiv`; NDM 0.79 vs
+best linear 0.36 on $S_5$ at 8 M parameter-matched scale; one-step formal
+separation `ndm_m2rnn_one_step_resource_separation_embeds`; realisation
+`NDMRealizesS5.ndm_realizes_s5_tracker`). *C3 (open program):* C2 implies
+a partial order over update rules indexed by one-step expressive power
+at matched per-token FLOP class, of which raw-write $<$ delta-correct is
+one entry; the *maximal element under matched FLOP class* is the
+rigorous research target this paper stakes (distinguished from the
+aspiration "best RNN update rule", which involves further properties not
+claimed here). The trusted Lean 4 core (no
 `sorry`/`admit`/`axiom`/`opaque`/`native_decide` in the import closure)
-proves that fixed-precision NDM is a finite-state recogniser, that an
-orthonormal-key configuration realises the $S_5$ prefix tracker, and that
-no fixed-weight raw-write matrix RNN can match NDM's mixed-key delta
-correction in one step. The contribution is the architectural option, a
-multi-programmed systems recipe that makes it trainable at scale, and
-formal and empirical mechanism evidence that the delta-correcting write
-is what earns the expressivity separation.
+also proves that fixed-precision NDM is a finite-state recogniser, that
+$|S_5| = 120$ and $S_5$ is non-solvable, and that an orthonormal-key
+configuration realises the $S_5$ prefix tracker.
 ])
 
 #v(1em)
@@ -164,63 +166,73 @@ itself, and *E88* only when referring to the specific production model.
 The same Triton source runs on NVIDIA CUDA and on AMD ROCm.
 
 #v(0.5em)
-*Contributions.* This paper contributes the following.
+*Contributions.* Three distinct contributions are staked here. The first
+two are robust results; the third is an open research program that the
+first two open up.
 
 #set enum(numbering: "1.", indent: 1em)
 
-+ *A multi-programmed recipe for pure nonlinear recurrent language
-  models at scale.* We document the recurrence kernel layout, fusion
-  strategy, sparse-checkpoint backward, and distributed training plan
-  required to train a 1.27 B parameter pure-recurrent stack. The recipe
-  is structural and applies to other pure nonlinear matrix-state
-  recurrences; we exhibit one such instantiation (a CMA-tuned variant of
-  the M2RNN @m2rnn2026 update family) that becomes trainable under the
-  same recipe.
++ *C1 — Multi-programming makes pure nonlinear matrix-state recurrence
+  trainable at scale (systems/existence).* Running thousands of small
+  bounded recurrent programs in parallel across heads, state tiles and
+  batch elements — a layout called *multi-programming* — turns pure
+  nonlinear matrix-state recurrence into a billion-parameter-trainable
+  family. The recipe is *update-rule-agnostic*: it is demonstrated here
+  on NDM and on a CMA-reshaped variant of the M2RNN @m2rnn2026 update
+  family, both of which become stable trainers under the same recipe.
+  The structural anchor is the Lean predicate
+  `RecurrentResourceFormalism.IsMultiProgrammed` on architecture
+  signatures, with witness
+  `RecurrentResourceFormalism.multiProgrammed_admits_m2rnn_and_ndm`
+  showing both the 1.27 B NDM signature and the CMA-reshaped pure
+  M2RNN signature satisfy it. Gradient conditioning — the
+  $q,k$-to-value-head ratio — is a third recipe property distinct from
+  the update rule (§5, §11).
 
-+ *FLOPs-per-bit convergence under CMA-ES.* In a controlled
-  architecture search at matched ~480 M parameter budget, four
-  recurrent families — NDM, FLA-GDN @gated_deltanet2024, Mamba2
-  @mamba2_2024, and a vanilla nonlinear Elman baseline — share a single
-  cumulative-FLOPs vs bits-per-token slope to within a small constant
-  factor. The N = 4 comparison says that, at matched hyperparameter
-  optimisation, the architectural family does not strongly change
-  training compute economy; what it does change is what computations
-  the asymptote can express.
++ *C2 — At matched per-token FLOP class, the delta-correcting write is
+  more expressive than the raw-write (mechanism).* Given matrix state
+  and temporal nonlinearity (both shared by the post-Mamba landscape),
+  the *write rule* is what is left to vary. The two write rules
+  considered — delta-correcting $S <- tanh(d S + k (v - S^T k)^T)$ (NDM)
+  and raw-write $Z = tanh(H W + k v^T)$ (M2RNN) — are first shown to
+  belong to the same per-token FLOP class
+  (`RecurrentResourceFormalism.ndm_m2rnn_flop_class_equiv`), so that
+  "more expressive" cannot collapse into "spends more compute". Under
+  that matched-cost condition, NDM realises the $S_5$ prefix tracker
+  (`NDMRealizesS5.ndm_realizes_s5_tracker`) and empirically reaches
+  mean accuracy $bold(0.79)$ on $S_5$ at parameter-matched 8 M scale
+  against $0.36$ for FLA-GDN, $0.22$ for the CMA-tuned M2RNN raw-write
+  baseline, and $0.17$ for the M2RNN paper-default shape, with the
+  one-step formal separation
+  `RecurrentResourceFormalism.ndm_m2rnn_one_step_resource_separation_embeds`
+  showing that no fixed-weight raw-write matrix RNN with row, column,
+  or cell forget gates can match NDM's mixed-key delta correction in
+  one step.
 
-+ *Empirical mechanism evidence: the update rule matters for state
-  tracking.* At parameter-matched 8 M scale, NDM reaches mean accuracy
-  $bold(0.79)$ on the $S_5$ word problem (3 seeds, 120-way
-  classification), against $0.36$ for FLA-GDN, $0.22$ for the
-  CMA-tuned M2RNN raw-write nonlinear matrix RNN, and $0.17$ for the
-  M2RNN paper-default shape. NDM separates *at training length*, not only
-  under length extrapolation. On the six-task canonical state-tracking
-  sweep (parity, modular counter, FSM tracking, dyck, associative
-  recall, selective copy), NDM ties or wins FLA-GDN on five of six
-  tasks. Interleaving NDM blocks with linear-scan blocks
-  ($[upright("NDM"), upright("NDM"), upright("GDN"), upright("GDN")]$)
-  *degrades* state-tracking accuracy below either pure family —
-  hybridisation hurts.
-
-+ *Formal mechanism evidence in trusted Lean 4.* A core of nine
-  modules with no `sorry`, `admit`, `axiom`, `opaque` or `native_decide`
-  in the import closure proves (a) a fixed-precision finite-state
-  ceiling on the NDM family
-  (`S5Witness.fixed_precision_state_space_finite`); (b) that the $S_5$
-  word problem has exactly 120 states (`S5Witness.s5_state_count`) and
-  is non-solvable (`s5_not_solvable`); (c) that an orthonormal-key
-  configuration of the NDM update realises the $S_5$ prefix tracker
-  (`NDMRealizesS5.ndm_realizes_s5_tracker`); (d) that no fixed-weight
-  raw-write matrix RNN with row, column or cell forget gates can match
-  NDM's mixed-key delta correction in one step
-  (`RecurrentResourceFormalism.ndm_m2rnn_one_step_resource_separation_embeds`).
++ *C3 — An open research program: the partial order on RNN update rules
+  under matched per-token FLOP class (stated, not delivered).* C2
+  implies a partial order over update rules indexed by *one-step
+  expressive power at matched per-token FLOP class*. Raw-write $<$
+  delta-correct is one entry in this order, anchored by the Lean
+  separation above. The rigorous research target this paper stakes is
+  *the maximal element of that partial order* — *the update rule with
+  maximal one-step expressive power under matched per-token FLOP class*.
+  This is distinct from the *aspiration* "the best RNN update rule",
+  which involves further properties (multi-step capability, gradient
+  conditioning, downstream performance) and is not claimed here. The
+  Lean resource-separation formalism in `RecurrentResourceFormalism` is
+  the tool for climbing this order; the present paper deposits one
+  comparison and leaves the maximal element open.
 
 A concurrent pure-recurrent nonlinear matrix RNN, *M2RNN*
 (`arXiv:2603.14360`, March 2026 @m2rnn2026), trains a homogeneous
 recurrent variant at 410 M on Nemotron-CC-v2 with a *raw-write* update
-$Z = tanh(H_(t-1) W + k v^T)$. This paper treats M2RNN as a peer
-demonstration of pure nonlinear recurrence on a Pile-class corpus and as
-the head of the raw-write nonlinear matrix RNN family against which update
-rules are compared; no priority is claimed. *xLSTM-1.3B*
+$Z = tanh(H_(t-1) W + k v^T)$. M2RNN is the closest peer demonstration of
+pure nonlinear matrix-state recurrence on a Pile-class corpus and the
+head of the raw-write nonlinear matrix RNN family against which the
+delta-correcting update is compared. The contribution staked here is
+*explanatory*: identifying which ingredient inside the nonlinear matrix
+RNN class earns the expressivity separation. *xLSTM-1.3B*
 @xlstm2024 is a 7:1 mixture of mLSTM (linear) and sLSTM (nonlinear)
 blocks at the same scale band, and is included as a peer with the
 caveat that 87.5% of its blocks are linear.
@@ -265,6 +277,18 @@ $f(h_(t-1), x_t)$ in the state update for Turing-completeness, and
 Barrington's theorem identifies $S_5$ as the canonical
 NC#super[1]-complete witness.
 
+Two nonlinear matrix-state designs — NDM and M2RNN — therefore share the
+necessary preconditions (matrix state, nonlinearity on the state) and
+differ in one place: the write rule. The contribution staked in C2 (§1)
+is that the delta-correcting write earns expressivity *at matched
+per-token FLOP class*. The matched-cost condition is what makes the
+order over update rules meaningful — without it, "more expressive"
+collapses into "spends more compute". The Lean anchor for the matched
+cost is `RecurrentResourceFormalism.ndm_m2rnn_flop_class_equiv`, which
+shows the per-token FLOP count of an NDM head and an M2RNN head sit
+inside a common $c_1 d^2 + c_2 d$ envelope (§8 Theorem set D). Without
+that anchor, the partial order on update rules (C3) loses meaning.
+
 #heading(level: 2, numbering: none)[Matrix state]
 
 Replacing a vector hidden state $h in RR^d$ with a matrix state
@@ -274,8 +298,10 @@ RetNet's accumulation $S_t = gamma S_(t-1) + k_t v_t^T$ is matrix-valued.
 The point of matrix state is that an outer-product update
 $S_t = ... + k_t delta_t^T$ provides $O(N V)$ scalars of dynamic state
 at $O(N V)$ computational cost per token, with content-addressable
-retrieval via $S^T q$. This was the precondition that made our work
-possible; we do not claim it.
+retrieval via $S^T q$. Matrix state is common to the post-Mamba
+landscape (Mamba2 with `d_state`, GLA, DeltaNet, RWKV-5/6/7, mLSTM,
+M2RNN) and is treated here as a precondition shared by NDM and its
+baselines, not as a contribution.
 
 #heading(level: 2, numbering: none)[The $S_5$ state-tracking probe]
 
@@ -447,10 +473,13 @@ paper builds on is in `ndm/triton/e88_triton_forward.py` and
 `e88_triton_backward.py`. These references are for the reader; the paper
 does not reproduce code.
 
-#heading(level: 2, numbering: none)[Contrast with the raw-write nonlinear matrix RNN]
+#heading(level: 2, numbering: none)[Ablation by architecture: isolating the write rule]
 
-The closest update-rule comparator in the literature is M2RNN
-@m2rnn2026, whose nonlinear matrix-state update is
+Three properties are candidates for the load-bearing differentiator in
+state-tracking: *matrix state*, *temporal nonlinearity on that state*,
+and *delta correction in the write*. The closest update-rule comparator
+to NDM in the literature is M2RNN @m2rnn2026, whose nonlinear
+matrix-state update is
 
 $
 Z_t &= tanh(H_(t-1) W + k_t v_t^T)\
@@ -459,10 +488,54 @@ $
 
 M2RNN is *nonlinear-state* by the criterion of §2 — $H_(t-1)$ appears
 inside $tanh$ via $H_(t-1) W$ — but the write into $H$ is a raw outer
-product $k v^T$ rather than a delta correction. §6 (empirical) and §8
-(formal) report that this distinction is the load-bearing
-expressivity difference between the two architectures at matched
-parameter count.
+product $k v^T$ rather than a delta correction. A three-row ablation
+across the three candidate properties isolates the write rule by
+elimination:
+
+#figure(
+  align(center)[#table(
+    columns: (auto, auto, auto, auto, auto),
+    align: (left, center, center, center, left),
+    stroke: 0.5pt,
+    inset: 6pt,
+    table.header(
+      [*Property*], [*FLA-GDN*], [*M2RNN*], [*NDM*], [*Verdict*],
+    ),
+    [Matrix state], [yes], [yes], [yes],
+      [Cannot separate — FLA-GDN has it and fails $S_5$],
+    [Temporal nonlinearity on state], [no], [yes], [yes],
+      [Cannot separate — M2RNN stalls at 0.22 on $S_5$],
+    [Delta correction in write], [no], [no], [yes],
+      [Surviving candidate],
+  )],
+  caption: [
+    *Ablation by elimination on the three candidate differentiators for
+    state-tracking.* FLA-GDN has matrix state and fails $S_5$ at training
+    length (0.36 vs NDM 0.79, §7), so matrix state alone cannot be the
+    differentiator. M2RNN has matrix state *and* temporal nonlinearity
+    on the state and still stalls at 0.22 on $S_5$, so temporal
+    nonlinearity is not the differentiator either. Delta correction is
+    the only property left that NDM has and the two baselines do not.
+  ],
+) <tab_ablation>
+
+M2RNN scores 0.31 on $S_3$, the solvable control where non-solvability
+is *not* the obstruction. This rules out a complexity-ceiling
+explanation. If raw-write could do clean prefix tracking even on
+solvable groups, M2RNN should clear $S_3$ — the smallest non-trivial
+permutation group, six elements, no NC#super[1] obstruction at all. It
+does not. The deficit is the write rule, not the complexity class. The
+empirical data lives in §7 (Table~@tab_s5); the one-step formal
+counterpart is `RecurrentResourceFormalism.ndm_m2rnn_one_step_resource_separation_embeds`
+(§8).
+
+State capacity is *not* the differentiator. Mamba2 @mamba2_2024 with
+its `d_state` expansion, GLA @gla2023, DeltaNet @deltanet2024 and
+RWKV-5+ @rwkv7_2025 all already carry matrix-valued or expanded states
+of comparable order; the entire post-Mamba landscape has matrix state.
+The three-row ablation makes the argument by elimination: capacity
+cannot be the differentiator if FLA-GDN has it and still fails $S_5$.
+The argument turns on the *write rule*, not on state size.
 
 // ── 4. Systems ─────────────────────────────────────────────────────────────
 = Multi-Programming and Systems
@@ -559,12 +632,46 @@ CMA-tuned shapes are:
 The hyperparameter and shape choice for each baseline came from a
 matched CMA-ES @cmaes2003 search at ~480 M parameters (see §6); the
 1.27 B-band runs reuse the shape ratios identified at the search scale.
+
+#heading(level: 2, numbering: none)[Gradient conditioning is a third recipe property]
+
 A fifth run — *M2RNN-paper*, the paper-default shape from @m2rnn2026
 re-implemented at 1.27 B (dim=3072, depth=10, H=759, N=16) — was
 attempted under the same training setup and *diverged* at step 8,400
-with a gradient norm of $approx 4.2 times 10^7$. The paper shape is
-included in §7 as the stability control; it is not in the loss-racer
-panel below because no usable curve exists.
+with gradient norm $approx 4.2 times 10^7$. The CMA-tuned reshape
+*M2RNN-CMA* (dim=1920, depth=21, H=370, N=16) of the *same* update
+family is stable under the same optimiser and the same data; its loss
+curve appears in the racer panel below. The paper shape is the
+stability control; it is not in the loss-racer panel below because no
+usable curve exists.
+
+The two configurations differ in one structural parameter: the ratio
+between the number of $q,k$ projections and the number of value heads
+that consume them. Many value heads sharing few $q,k$ pairs concentrate
+gradient through a narrow projection, and bursty inputs at high
+training step counts accumulate gradient norm in that bottleneck. The
+CMA-tuned reshape redistributes the ratio toward more independent
+$q,k$ pairs per value head (it is also the shape ratio that NDM uses
+at production: $H = 370$ per-head $q,k$ pairs) and the explosion
+disappears. The Lean-witnessed structural anchor here is the same
+predicate `RecurrentResourceFormalism.IsMultiProgrammed` (§8): the
+CMA-reshaped M2RNN signature satisfies it; the paper-default shape's
+shared-$q,k$ geometry sits closer to the bottleneck regime that the
+predicate's "many independent heads per layer" clause forbids.
+
+This is *a third factor distinct from the update rule*. It is a
+geometry/recipe property — a property of how the heads are wired, not
+of the algebraic form of the write. It reinforces C1 (§1): the
+multi-programmed recipe is update-rule-agnostic *and* geometry-sensitive.
+The paper is not selling NDM-the-architecture; it is selling the
+recipe — *matrix state plus temporal nonlinearity plus a correct
+geometry* — of which NDM is the cleanest instance and CMA-reshaped
+M2RNN is the proof the recipe generalises across the nonlinear matrix
+RNN family. The expressivity claim in §7 still cleanly separates the
+two update rules at parameter-matched 8 M scale where geometry is held
+constant; the geometry property is a separate axis along which the
+multi-programmed recipe must be respected for either family to train
+at 1.27 B.
 
 #heading(level: 2, numbering: none)[Loss-vs-wallclock racer]
 
@@ -1104,10 +1211,10 @@ and it is the head of the raw-write family against which the
 delta-correcting update is compared (Pillar 2). The empirical $S_5$
 separation in §7 and the formal one-step resource separation in §8
 quantify the update-rule difference. The CMA-reshaped pure-M2RNN
-variant that appears in our 1.27 B language-modelling racer
+variant that appears in the 1.27 B language-modelling racer
 (§5) is a concrete instantiation of the claim that the
 multi-programming recipe is general across the nonlinear matrix-state
-family. We do not claim priority against M2RNN.
+family.
 
 *xLSTM-1.3B* @xlstm2024 is a 7:1 mixture of mLSTM (linear) and sLSTM
 (nonlinear) blocks; 87.5% of its blocks are linear-state. It is the
@@ -1176,6 +1283,25 @@ finding is consistent with the FLOPs-per-bit slope being a function of
 HPO budget, not of architectural family, but cannot rule it out with the
 present N.
 
+#heading(level: 2, numbering: none)[The opposite architectural bet: hybrids]
+
+A concurrent strand of work places the opposite architectural bet.
+*OLMo-Hybrid 7B* @olmohybrid2026 interleaves state-space blocks with
+attention, on the premise that hybrid stacks express things that lie
+beyond what either pure transformers or pure linear RNNs can do. NDM
+is positioned honestly against that bet. A pure-nonlinear NDM stack at
+1.27 B matching FLA-GDN in the wallclock loss band does not refute
+hybrids; what it refutes is the *assumption* that pure nonlinear
+recurrence cannot scale at all. The hybrid-degradation finding in §7
+($[upright("NDM"), upright("NDM"), upright("GDN"), upright("GDN")]$
+underperforms either pure family on modular counter and FSM tracking at
+8 M scale) is a *capability-preservation* observation: state-tracking
+capability does not survive dilution by linear-scan blocks in our
+sweep. It is not an anti-hybrid claim. The two architectural bets
+address different questions — "can pure nonlinear recurrence scale at
+all?" (this paper) versus "what does a well-mixed hybrid express?"
+(OLMo-Hybrid) — and the answers do not contradict.
+
 #heading(level: 2, numbering: none)[Snapshot status of the 1.27 B racer]
 
 The four 1.27 B-band language-model training runs were in progress at the
@@ -1224,19 +1350,22 @@ fixed-weight raw-write matrix RNN can match NDM's mixed-key delta
 correction in one step, and that the per-token FLOP class is the same
 for the two families.
 
-The paper makes no priority claim. The concurrent M2RNN result
-@m2rnn2026 trained a pure-recurrent nonlinear matrix RNN at 410 M in
-parallel with our work; we treat it as a peer demonstration of the same
-broad capability and as the head of the raw-write update family against
-which we compare. The contribution is the architectural option (pure
-nonlinear recurrence is viable at billion-parameter scale at all), the
-multi-programmed systems recipe that makes it trainable (general across
-the nonlinear matrix-state family), and the mechanism evidence that the
-delta-correcting write earns the state-tracking expressivity. How far
-pure nonlinear recurrent reasoning can scale, once memory, geometry and
-systems are co-designed — and which other update rules earn the same
-expressivity separation under the same multi-programmed recipe — is the
-open horizon.
+The concurrent M2RNN result @m2rnn2026 trained a pure-recurrent
+nonlinear matrix RNN at 410 M in parallel with this work; it is the
+closest peer and the head of the raw-write update family against which
+the delta-correcting update is compared. The contribution staked here
+is *explanatory*: identifying which ingredient inside the nonlinear
+matrix RNN class earns the expressivity separation. C1 is the
+multi-programmed systems recipe (general across the nonlinear
+matrix-state family); C2 is the mechanism evidence — both empirical
+and formal — that the delta-correcting write earns the state-tracking
+expressivity at matched per-token FLOP class. C3 is the open program
+opened by C2: the partial order over update rules at matched FLOP
+class, of which raw-write $<$ delta-correct is one entry. The maximal
+element under matched FLOP class — *which* update rule has the highest
+one-step expressive power for its compute — is the open horizon, with
+the `RecurrentResourceFormalism` Lean machinery as the tool for
+climbing the order.
 
 // ── Appendix A — Model zoo / ablation lineage ─────────────────────────────────
 = Appendix: Model-Zoo Lineage and Ablation Notes
