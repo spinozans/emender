@@ -762,9 +762,16 @@ at 1.27 B.
     raw training loss (nats per token). Mamba2 is at 0.934 B parameters;
     NDM at 1.273 B; FLA-GDN at 1.352 B; M²RNN-CMA at 1.307 B. Training
     is in progress at the time of writing — this snapshot covers
-    approximately 8–15 GPU-days per model. The four pure-recurrent
-    families sit in the same wallclock loss band at matched compute;
-    the paper-shape M²RNN baseline (not shown) diverged at step 8,400.
+    approximately 8–15 GPU-days per model. *Panel A:* full curve on
+    log-wallclock from h = 1. *Panel B:* tail (h ≥ 40) on linear
+    wallclock. The strict wall-clock order in the tail is
+    M²RNN-CMA > Mamba2 > NDM at every sampled hour from h = 2 to h ≈ 360
+    (180 / 180 vs NDM, 179 / 180 vs Mamba2 — only h ≈ 1 warm-up
+    inverts vs Mamba2; see `wall-clock-comparison` task log).
+    FLA-GDN and NDM are nearly co-linear through the bulk of training.
+    The paper-shape M²RNN baseline (not shown) diverged at step 8,400.
+    Color convention used throughout the paper: NDM = blue,
+    FLA-GDN = orange, Mamba2 = green, M²RNN-CMA = red.
   ],
 ) <fig_lm_racers>
 
@@ -826,18 +833,25 @@ differs.
     *FLOPs-per-bit-of-compression convergence under CMA-ES architecture
     search (N = 4 families).* Each curve is one CMA-tuned recurrent
     architecture replayed at the matched ~480 M parameter target. *Panel
-    A:* bits-per-token versus cumulative training FLOPs (log-$x$). The
-    four curves share a slope; the linear pair (FLA-GDN, Mamba2) sits
-    approximately 0.15 bits below the nonlinear pair (NDM, vanilla
-    Elman) through the bulk of training. *Panel B:* running
-    FLOPs-per-bit-of-compression-delivered, log–log. Over more than two
-    decades of FLOPs the four traces visually collapse onto a single
-    line. At the tight threshold (1.80 bits/token) NDM uses
-    approximately $1.55 times$ the FLOPs of the leading linear pair to
-    reach the same loss; vanilla Elman does not cross 1.80 inside the
-    wall-clock budget at all. *N = 4 caveat:* this is four model
-    families, not four seeds; differences smaller than the gap between
-    "linear" and "nonlinear" pairs should not be over-interpreted.
+    A:* training loss (nats per token, smoothed) versus cumulative
+    training FLOPs (log-$x$). The four curves share a slope; the linear
+    pair (FLA-GDN, Mamba2) sits approximately 0.10 nats (≈ 0.15 bits)
+    below the nonlinear pair (NDM, vanilla Elman) through the bulk of
+    training. *Panel B:* running FLOPs-per-bit-of-compression-delivered,
+    log–log. Over more than two decades of FLOPs the four traces
+    visually collapse onto a single line. At the tight threshold
+    (1.80 bits/token) NDM uses approximately $1.55 times$ the FLOPs of
+    the leading linear pair to reach the same loss; vanilla Elman does
+    not cross 1.80 inside the wall-clock budget at all. *Color
+    convention* (shared with Figure~@fig_lm_racers): NDM = blue,
+    FLA-GDN = orange, Mamba2 = green, Elman = grey. *M²RNN-CMA is
+    absent from this 480 M CMA sweep* and therefore does not appear in
+    Panel A or Panel B; the FLOPs-per-bit collapse is asserted only for
+    the four families that are present (§Limitations, also Figure~@fig_lm_racers
+    for the wall-clock comparison that does include M²RNN-CMA).
+    *N = 4 caveat:* this is four model families, not four seeds;
+    differences smaller than the gap between "linear" and "nonlinear"
+    pairs should not be over-interpreted.
   ],
 ) <fig_cma>
 
