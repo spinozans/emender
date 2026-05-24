@@ -38,9 +38,10 @@ jobs:
             | tar -xJ --strip-components=1 -C /usr/local/bin typst-x86_64-unknown-linux-musl/typst
           typst --version
       - name: Build paper
-        run: bash paper/build.sh
-      - name: Verify PDF produced
-        run: test -f paper/main.pdf && echo "paper/main.pdf OK"
+        run: |
+          PDF=$(bash paper/build.sh)
+          echo "PDF: $PDF"
+          test -f "$PDF"
 
   lean:
     name: Lean trusted core
