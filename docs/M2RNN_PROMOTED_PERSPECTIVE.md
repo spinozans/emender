@@ -372,58 +372,49 @@ answers.
 
 ## §4 Recommended Response Strategy for v2
 
-The M2RNN paper makes two large promoted claims that NDM v2 must engage
-directly: (a) that the historical underperformance of nonlinear RNNs was a
-state-capacity issue, not an inherent flaw of non-linearity; and (b) that
-M2RNN is a scalable drop-in layer for hybrid architectures, with even a single
-layer yielding meaningful gains.
+The M2RNN paper makes two large promoted claims NDM v2 must engage directly:
+(a) that the historical underperformance of nonlinear RNNs was a state-capacity
+issue, not an inherent flaw of non-linearity; and (b) that M2RNN is a scalable
+drop-in layer for hybrid architectures, with even a single layer yielding
+meaningful gains.
 
 **Should v2 directly quote M2RNN's promoted framings, or paraphrase them?**
-v2 should quote verbatim — specifically the two signature phrases: "a
-state-capacity issue, not an inherent flaw of non-linearity itself" and "a
-scalable, highly expressive drop-in layer for modern hybrid architectures."
-These are the framings that are most clearly engaged by NDM's evidence, and
-verbatim quotation avoids the risk of the paper appearing to attack a strawman.
-The quotes are short and memorable, and they appear in both the paper and the
-promotional blog, indicating they are the authors' own intended framing, not
-editorial embellishment.
+Quote verbatim — specifically the two signature phrases: "a state-capacity
+issue, not an inherent flaw of non-linearity itself" and "a scalable, highly
+expressive drop-in layer for modern hybrid architectures." These appear in both
+the paper and the promotional blog, making them the authors' own intended
+framing. Verbatim quotation removes any risk of attacking a strawman; both
+phrases are short and directly engaged by NDM's evidence.
 
 **Which specific NDM findings most cleanly contradict the state-capacity
 framing?**
-The $S_3$ result is the cleanest single data point: M2RNN-CMA, which already
-has matrix-valued state, achieves only 0.31 on $S_3$ (solvable group control)
-at matched parameter count — a task M2RNN's own paper claims to solve to
-$\geq 99.5\%$ accuracy. NDM achieves 1.00 on the same task. The state-capacity
-framing predicts no gap between NDM and M2RNN on solvable groups, since both
-have matrix state. The gap is 1.00 vs. 0.31. The $S_5$ result (0.79 vs. 0.22)
-strengthens this, but $S_3$ is the cleaner rebuttal because it is solvable —
-solvable groups should be within reach of any sufficiently capable
-state-tracking model. A model that has matrix state but cannot solve $S_3$ at
-training length is not failing because of capacity; it is failing because of
-update rule.
+The $S_3$ result at matched parameter count: M2RNN-CMA already has
+matrix-valued state but achieves only 0.31 on $S_3$ (solvable group control,
+6 elements) while NDM achieves 1.00. The state-capacity framing predicts no gap
+between the two on solvable groups, since both have matrix state; the observed
+gap is 1.00 vs. 0.31. $S_3$ is the cleaner rebuttal than $S_5$ precisely
+because it is solvable — if state capacity were the binding constraint, a matrix
+RNN should clear this task. The $S_5$ separation (0.79 vs. 0.22) adds evidence
+but is a harder target; the $S_3$ failure is the diagnostic crux.
 
-**Is the §8 hybrid degradation result the right rebuttal to the drop-in-layer
+**Is the §7 hybrid degradation result the right rebuttal to the drop-in-layer
 recommendation, or is something else stronger?**
-The hybrid degradation result is the right structural rebuttal to the drop-in
-recommendation, because it establishes the principle from the experimental
-side: state-tracking capability is not a property that a strong nonlinear block
-can lend to surrounding linear blocks. However, v2 should position this result
-carefully. The NDM hybrid test uses NDM+GDN, not M2RNN+attention. The rebuttal
-is therefore not "M2RNN's hybrid gains are fake" but rather "the drop-in-layer
-framing implies that expressivity is a property of individual layers; NDM's
-hybrid degradation result shows it is a property of the stack's composition."
-The stronger single finding is probably the stability result: the paper-default
-M2RNN diverges under the same training setup where NDM is stable, which
-undercuts the "scalable" half of the "scalable, highly expressive drop-in layer"
-claim. A layer that cannot train stably in the paper-default shape under
-standard schedule-free LM training is not yet a drop-in layer.
+The hybrid degradation result is the correct structural rebuttal: it shows
+empirically that state-tracking capability is not a property a nonlinear block
+lends to neighbouring linear blocks. Position it carefully — the NDM test uses
+NDM+GDN, not M2RNN+attention, so the claim is not "M2RNN's hybrid gains are
+fabricated" but "expressivity is a property of the whole stack, not individual
+layers." The stability finding is the stronger practical rebuttal: the
+paper-default M2RNN diverges at step 8,400 (grad norm $\approx 4.2 \times
+10^7$) under the same training setup where NDM is stable. A layer that cannot
+train stably in its published configuration is not yet a drop-in layer.
 
 **What is the cleanest one-sentence summary of NDM's diagnostic disagreement
 with M2RNN?**
 *M2RNN attributes the historical failure of nonlinear RNNs to insufficient
 state capacity, but NDM's evidence shows that a nonlinear matrix-state RNN
 using M2RNN's update rule still fails on solvable-group control tasks at
-matched parameter count — indicating that the update rule, not the state
+matched parameter count — indicating that the update rule, not state
 dimensionality, is the load-bearing distinction.*
 
 ---
