@@ -284,10 +284,19 @@ first two open up.
 
 A concurrent pure-recurrent nonlinear matrix RNN, *M²RNN*
 (`arXiv:2603.14360`, March 2026 @m2rnn2026), trains a homogeneous
-recurrent variant at 410 M on Nemotron-CC-v2 with a *raw-write* update
-$Z = tanh(H_(t-1) W + k v^T)$. M²RNN is the closest peer demonstration of
-pure nonlinear matrix-state recurrence on a Pile-class corpus and the
-head of the raw-write nonlinear matrix RNN family against which the
+recurrent variant at 410 M dense and 7 B MoE on Nemotron-CC-v2 with a
+*raw-write* update $Z = tanh(H_(t-1) W + k v^T)$, and additionally
+reports favourable hybrid configurations against Mamba-2 and Gated
+DeltaNet at matched parameter and token budgets under a uniform
+fixed-hyperparameter protocol (their §5.2: shared optimiser, learning
+rate, weight decay and gradient clipping across all compared
+architectures, varying only the sequence-mixing block). The comparative
+ranking is established at those matched budgets but without
+per-architecture hyperparameter search, reported seed variance, or
+hybrid-layer position search, so the hybrid-superiority margin is read
+here as preliminary. M²RNN is the closest peer demonstration of pure
+nonlinear matrix-state recurrence on a Pile-class corpus and the head of
+the raw-write nonlinear matrix RNN family against which the
 delta-correcting update is compared. The contribution staked here is
 *explanatory*: identifying which ingredient inside the nonlinear matrix
 RNN class earns the expressivity separation. *xLSTM-1.3B*
@@ -711,6 +720,29 @@ The hyperparameter and shape choice for each baseline came from a
 matched CMA-ES @cmaes2003 search at ~480 M parameters (see §6); the
 1.27 B-band runs reuse the shape ratios identified at the search scale.
 
+#heading(level: 2, numbering: none)[Per-architecture CMA-ES versus uniform fixed-recipe]
+
+All four 1.27 B baselines above carry a *per-family CMA-ES winner shape*
+identified at the 480 M search scale (§6) and rescaled to the 1.27 B
+band — NDM, FLA-GDN, Mamba2 and M²RNN-CMA each receive their own
+canonical-best configuration at the chosen search scale rather than a
+shared fixed recipe. This contrasts with the protocol of the concurrent
+M²RNN paper (Mishra et al. @m2rnn2026 §5.2), in which model width, MLP
+width, layer count, optimiser, learning rate, weight decay and gradient
+clipping are held *uniform* across all compared architectures and only
+the sequence-mixing block is varied — fair-by-uniformity but not
+per-architecture best-tuning. Under the matched-CMA-ES protocol the
+wallclock training curves separate cleanly: NDM, Mamba2 and FLA-GDN
+track the same loss-vs-wallclock band and trade leadership through
+training (Figure~@fig_lm_racers), while M²RNN-CMA sits strictly below
+all three at $180/180$ sampled training-hour budgets across
+$h in [2, 360]$. The §7 mechanism reading is what isolates the source of
+this separation — matrix state plus temporal nonlinearity is competitive
+with frontier-class linear recurrence under matched per-architecture
+tuning, and the *delta-correcting* write is what places NDM at parity
+with Mamba2 and FLA-GDN, its absence what places M²RNN-CMA strictly
+below.
+
 #heading(level: 2, numbering: none)[Gradient conditioning is a third recipe property]
 
 A fifth run — *M²RNN-paper*, the paper-default shape from @m2rnn2026
@@ -1092,6 +1124,18 @@ is solvable. The gap between NDM and the next-best baseline shrinks
 under length extrapolation but does not close: at $T = 512$ NDM is at
 0.215 and FLA-GDN at 0.097.
 
+The $S_3$/$S_5$ split is also where the scope of the M²RNN paper's own
+state-tracking evaluation matters. Mishra et al. @m2rnn2026 §3.2 report
+length generalisation on $S_3$ alone — the smallest non-trivial
+*solvable* group, which lives inside TC#super[0] — and do not evaluate
+$S_5$ or any other non-solvable group. The unhedged "perfect
+state-tracking generalisation" framing in that paper therefore does not
+bear on the NC#super[1] regime: NDM's $0.79$ at parameter-matched 8 M
+scale against the paper-default M²RNN's $0.17$ on $S_5$ at training
+length is direct evidence that length generalisation on $S_3$ does not
+extend across the TC#super[0]/NC#super[1] boundary under the raw-write
+update.
+
 #heading(level: 2, numbering: none)[The six-task canonical sweep]
 
 To verify that the $S_5$ result is not a single-task artefact we run a
@@ -1438,7 +1482,13 @@ quantify the update-rule difference. The CMA-reshaped pure-M²RNN
 variant that appears in the 1.27 B language-modelling racer
 (§5) is a concrete instantiation of the claim that the
 multi-programming recipe is general across the nonlinear matrix-state
-family.
+family. Mishra et al. additionally report hybrid M²RNN configurations
+favourably against Mamba-2 and Gated DeltaNet hybrids at matched
+parameter and token budgets under a uniform fixed-hyperparameter
+protocol (their §5.2); those numbers are read here as preliminary in
+light of the single-seed, no-per-architecture-HPO, no-position-search
+protocol disclosed, and downstream inferences in this paper are not
+chained through them.
 
 *xLSTM-1.3B* @xlstm2024 is a 7:1 mixture of mLSTM (linear) and sLSTM
 (nonlinear) blocks; 87.5% of its blocks are linear-state. It is the
