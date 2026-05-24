@@ -9,34 +9,56 @@
 
 #set page(
   paper: "us-letter",
-  margin: (x: 1in, y: 1in),
+  margin: (x: 0.75in, y: 0.75in),
   numbering: "1",
 )
 
-// Sans-serif body throughout. Uses DejaVu Sans (always present on the
-// build host) so the build is hermetic and warning-free. Math equations
-// stay in a proper math font (New Computer Modern Math).
+// Sans-serif body throughout — Helvetica/Arial register, matching the
+// author's NIH R01 grant template (/home/erikg/pgwas_R01/template/nih-r01.typ).
+// Intended fallback chain, in order of preference:
+//   Helvetica → Arial → Liberation Sans → Nimbus Sans → Inter → DejaVu Sans
+// where Liberation Sans is the metric-compatible free Arial replacement
+// (Red Hat, ships on most Linux distros) and Nimbus Sans plays the same
+// role for Helvetica. Only DejaVu Sans is installed on the current build
+// host, so the chain here lists only DejaVu Sans to keep the build
+// warning-free; on a host with Liberation Sans / Helvetica / Arial
+// installed, prepend them to the chain to pick them up. (Same pattern
+// the grant template uses; see its comment block for the rationale.)
 #let body-font = "DejaVu Sans"
 #let mono-font = "DejaVu Sans Mono"
 #let math-font = "New Computer Modern Math"
 
 #set text(font: body-font, size: 10.5pt)
-#set par(justify: true, leading: 0.62em, first-line-indent: 1em, spacing: 0.85em)
+#set par(justify: true, leading: 0.55em, first-line-indent: 0pt, spacing: 0.7em)
 #show math.equation: set text(font: math-font)
 #show raw: set text(font: mono-font, size: 0.92em)
 
+// Italic-as-bold fix: the author wrote `*…*` throughout intending italic
+// emphasis, but in Typst `*…*` is the strong (bold) form. Override at the
+// template level so every `*…*` renders as italic. Genuine bold survives
+// because headings and other label uses set weight explicitly via
+// `text(weight: "bold", …)` or `set text(weight: "bold")`, which bypass
+// the `strong` element.
+#show strong: it => emph(it.body)
+
 #set heading(numbering: "1.1")
 #show heading.where(level: 1): it => {
-  v(1.1em)
-  set text(size: 12.5pt, weight: "bold", font: body-font)
+  v(0.9em)
+  set text(size: 12pt, weight: "bold", font: body-font)
   it
-  v(0.5em)
+  v(0.35em)
 }
 #show heading.where(level: 2): it => {
-  v(0.7em)
-  set text(size: 11pt, weight: "bold", font: body-font)
+  v(0.6em)
+  set text(size: 10.5pt, weight: "bold", font: body-font)
   it
-  v(0.3em)
+  v(0.25em)
+}
+#show heading.where(level: 3): it => {
+  v(0.4em)
+  set text(size: 10.5pt, weight: "bold", style: "italic", font: body-font)
+  it
+  v(0.2em)
 }
 
 #show bibliography: set heading(numbering: none)
