@@ -21,19 +21,23 @@ import matplotlib.pyplot as plt
 
 OUT = Path(__file__).parent
 
+# Shared with paper/results/figure_3/plot_normalized.py — same color = same
+# architecture everywhere in the paper.
 LABELS = {
     "e88":     "NDM (E88) — nonlinear delta, matrix state",
     "fla-gdn": "FLA-GDN — linear gated delta-net",
     "mamba2":  "Mamba2 — linear selective SSM",
-    "e1":      "E1 — vanilla nonlinear Elman, dense W_h",
+    "e1":      "Elman — vanilla nonlinear, dense W_h",
 }
 COLORS = {
-    "e88":     "#d62728",  # NDM red
-    "fla-gdn": "#1f77b4",  # blue
-    "mamba2":  "#2ca02c",  # green
-    "e1":      "#9467bd",  # purple
+    "e88":     "#1f77b4",  # NDM blue (matches figure 3)
+    "fla-gdn": "#ff7f0e",  # FLA-GDN orange
+    "mamba2":  "#2ca02c",  # Mamba2 green
+    "e1":      "#7f7f7f",  # vanilla Elman grey (low-baseline witness)
 }
 ORDER = ["e88", "fla-gdn", "mamba2", "e1"]
+
+LN2 = math.log(2)
 
 
 def load_overlay():
@@ -63,9 +67,9 @@ def main():
         # Skip the very early warm-up where bits/token is meaningless.
         rows = [r for r in rows if r["bits"] < 6.0 and r["step"] >= 20]
         flops = [r["flops"] for r in rows]
-        bits = [r["bits"] for r in rows]
+        nats = [r["bits"] * LN2 for r in rows]   # bits → nats for shared y-axis
         fpb = [r["fpb"] for r in rows]
-        axA.plot(flops, bits, label=LABELS[model], color=COLORS[model], lw=1.6)
+        axA.plot(flops, nats, label=LABELS[model], color=COLORS[model], lw=1.6)
         axB.plot(flops, fpb, label=LABELS[model], color=COLORS[model], lw=1.6)
 
     for ax in axes:
@@ -73,21 +77,26 @@ def main():
         ax.grid(True, which="both", alpha=0.3)
         ax.set_xlabel("Cumulative training FLOPs (= 6 · N · tokens)")
 
-    axA.set_ylabel("Validation loss (bits / token, smoothed)")
+    axA.set_ylabel("Training loss (nats / token, smoothed)")
     axA.set_title("A. Loss vs FLOPs — CMA-tuned best config per model family")
-    axA.set_ylim(1.4, 4.0)
+    axA.set_ylim(1.4 * LN2, 4.0 * LN2)
 
     axB.set_yscale("log")
     axB.set_ylabel("FLOPs per bit of compression\n(cumulative FLOPs / bits saved vs uniform baseline)")
     axB.set_title("B. FLOPs-per-bit rate — four families collapse to one curve")
 
-    # Single combined legend
+    # Single combined legend, with an explicit note that M²RNN-CMA is absent
+    # from this matched-480M CMA sweep (per cma_flop_rate/SOURCES.md).
     handles, labels = axA.get_legend_handles_labels()
-    fig.legend(handles, labels, loc="lower center", ncol=2,
+    # Add a non-data legend entry calling out the absence.
+    from matplotlib.lines import Line2D
+    handles.append(Line2D([], [], color="none", marker="", linestyle=""))
+    labels.append("M²RNN-CMA: not in 480 M CMA sweep")
+    fig.legend(handles, labels, loc="lower center", ncol=3,
                bbox_to_anchor=(0.5, -0.02), frameon=False, fontsize=10)
     fig.suptitle(
         "CMA-tuned recurrent baselines converge to a common FLOPs-per-bit rate "
-        "(N=4 model families, ~480M parameters each)", y=1.02,
+        "(N=4 families, ~480 M parameters each; M²RNN-CMA absent — see §6 Limitations)", y=1.02,
     )
     fig.tight_layout(rect=[0, 0.06, 1, 1])
 
