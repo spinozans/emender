@@ -1,0 +1,55 @@
+## Trust Gate Post-Execution Check — 2026-05-24
+
+Run after F1/F3/F4/F5 batch landed.
+
+### check_trusted_no_placeholders.sh ElmanProofs.lean
+
+$ cd formal/lean && bash scripts/check_trusted_no_placeholders.sh ElmanProofs.lean
+trusted check passed: 2 project source files
+EXIT: 0
+
+### check_paper_core.sh ElmanProofs/PaperCore.lean
+
+$ bash scripts/check_paper_core.sh ElmanProofs/PaperCore.lean
+trusted check passed: 9 project source files
+paper core check passed: 9 project source files, no native_decide
+EXIT: 0
+
+### 9 project source files in PaperCore closure
+
+ElmanProofs/Architectures/M2RNNComparison.lean
+ElmanProofs/Architectures/OnlineMemory.lean
+ElmanProofs/Architectures/RecurrentResourceFormalism.lean
+ElmanProofs/Expressivity/E88ExceedsE1HCapacity.lean
+ElmanProofs/Expressivity/NDMRealizesS5.lean
+ElmanProofs/Expressivity/S5NDMRealization.lean
+ElmanProofs/Expressivity/S5Tracker.lean
+ElmanProofs/Expressivity/S5Witness.lean
+ElmanProofs/PaperCore.lean
+
+### Theorem verification
+
+NDMRealizesS5.ndm_realizes_s5_tracker (F1):
+  File: ElmanProofs/Expressivity/NDMRealizesS5.lean:391
+  Status: PROVED — no sorry/admit in file
+
+RecurrentResourceFormalism.ndm_m2rnn_flop_class_equiv (F3):
+  File: ElmanProofs/Architectures/RecurrentResourceFormalism.lean:1165
+  Status: PROVED — no sorry/admit in file
+
+RecurrentResourceFormalism.multiProgrammed_admits_m2rnn_and_ndm (F4):
+  File: ElmanProofs/Architectures/RecurrentResourceFormalism.lean:1264
+  Status: PROVED — no sorry/admit in file
+
+### lake build ElmanProofs.PaperCore
+
+Built 2198 modules (full Mathlib + all project modules) with exit code 0.
+
+Final project modules built:
+  [2194/2198] ElmanProofs.Activations.Lipschitz
+  [2195/2198] ElmanProofs.Expressivity.E1HDefinition
+  [2196/2198] ElmanProofs.Architectures.RecurrentResourceFormalism
+  [2197/2198] ElmanProofs.Expressivity.E88ExceedsE1HCapacity
+  [2198/2198] ElmanProofs.PaperCore
+Build completed successfully (2198 jobs).
+EXIT: 0
