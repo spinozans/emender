@@ -6,6 +6,7 @@ import ElmanProofs.Architectures.M2RNNComparison
 import ElmanProofs.Architectures.OnlineMemory
 import ElmanProofs.Architectures.RecurrentResourceFormalism
 import ElmanProofs.Expressivity.E88ExceedsE1HCapacity
+import ElmanProofs.Expressivity.NDMRealizesS5
 import ElmanProofs.Expressivity.S5NDMRealization
 import ElmanProofs.Expressivity.S5Tracker
 import ElmanProofs.Expressivity.S5Witness
@@ -41,6 +42,11 @@ paper-space claims:
   matches the Python tuple-swap task semantics.
 * Every finite fixed-precision recognizer has an exact finite transition-table
   realization; the S5 tracker instance uses 480 state/input keys.
+* NDM-architecture parameters (orthonormal generator keys at `d = 12`, one-hot
+  value family, `λ = 1`) realize the S5 transition memory: the NDM delta core
+  loads an orthonormal table whose readout, decoded and composed with any
+  input state, reproduces `s5TransitionMemory.read` on every `(state, generator)`
+  pair (`NDMRealizesS5.ndm_realizes_s5_tracker`).
 
 Use `scripts/check_paper_core.sh` to reject unfinished proof holes, explicit
 assumptions, opaque declarations, and kernel-bypassing computation in this
