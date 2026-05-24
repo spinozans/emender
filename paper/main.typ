@@ -87,12 +87,16 @@ separation, formalised in Lean 4 (`NDMRealizesS5.ndm_realizes_s5_tracker`,
 (ii) the structural *trainability* failure of raw-write matrix-state
 recurrence on $S_3$ at 0.31 with 8 M parameters — a regime where
 capacity is non-binding ($log_2 6 approx 2.6$ bits required against
-$approx 10^8$ bits available at fp16), so the residual is inductive
-bias, not budget; and (iii) NDM reaching 0.79 on $S_5$ at the same
+$approx 10^6$ recurrent-state scalars per token at the probe shape,
+and independently $approx 1.3 times 10^8$ parameter bits at fp16), so
+the residual is inductive bias, not budget; and (iii) NDM reaching 0.79 on $S_5$ at the same
 probe scale. *C3 (open program):* C2 implies
-a partial order over update rules indexed by one-step expressive power
-at matched per-token FLOP class, of which raw-write $<$ delta-correct is
-one entry; the *maximal element under matched FLOP class* is the
+a *comparison relation* over update rules indexed by one-step expressive
+power at matched *asymptotic* per-token FLOP class
+(`ndm_m2rnn_flop_class_equiv`), of which raw-write $<$ delta-correct is
+the one strict instance established here; whether the relation extends
+to a partial order on the broader space of recurrent update rules is
+open. The *maximal element under matched asymptotic FLOP class* is the
 rigorous research target this paper stakes (distinguished from the
 aspiration "best RNN update rule", which involves further properties not
 claimed here). The trusted Lean 4 core (no
@@ -225,25 +229,37 @@ first two open up.
   paper-default shape. (c) A *capacity-non-binding* control on $S_3$:
   M2RNN-CMA stalls at $0.31$ on the six-element solvable group at the
   same 8 M scale, where representing $S_3$ requires $log_2 6 approx 2.6$
-  bits per state against $approx 10^8$ bits available at fp16 — so the
-  failure is *trainability under the raw-write inductive bias*, not a
-  capacity ceiling. The Lean theorems anchor (a); the probes deliver
+  bits per state against $approx 10^6$ recurrent-state scalars per
+  token at the probe shape (independently, $approx 1.3 times 10^8$
+  parameter bits at fp16) — so the failure is *trainability under the
+  raw-write inductive bias*, not a capacity ceiling. The Lean theorems anchor (a); the probes deliver
   (b) and (c).
 
-+ *C3 — An open research program: the partial order on RNN update rules
-  under matched per-token FLOP class (stated, not delivered).* C2
-  implies a partial order over update rules indexed by *one-step
-  expressive power at matched per-token FLOP class*. Raw-write $<$
-  delta-correct is one entry in this order, anchored by the Lean
-  separation above. The rigorous research target this paper stakes is
-  *the maximal element of that partial order* — *the update rule with
-  maximal one-step expressive power under matched per-token FLOP class*.
-  This is distinct from the *aspiration* "the best RNN update rule",
-  which involves further properties (multi-step capability, gradient
-  conditioning, downstream performance) and is not claimed here. The
-  Lean resource-separation formalism in `RecurrentResourceFormalism` is
-  the tool for climbing this order; the present paper deposits one
-  comparison and leaves the maximal element open.
++ *C3 — An open research program: a comparison relation on RNN update
+  rules under matched per-token FLOP class (stated, not delivered).* C2
+  implies a *comparison relation* — of which one strict instance is
+  established here — over update rules indexed by *one-step expressive
+  power at matched asymptotic per-token FLOP class*. The matched-cost
+  condition is over the asymptotic equivalence class
+  $c_1 d^2 + c_2 d$ proved in
+  `RecurrentResourceFormalism.ndm_m2rnn_flop_class_equiv`, not over
+  exact FLOP counts: the empirical $approx 1.55 times$ constant by
+  which NDM exceeds the leading linear pair at the tight threshold
+  (Table~@tab_thresholds) lies within this common class and does not
+  contradict it. Raw-write $<$ delta-correct is the one strict instance,
+  anchored by the Lean separation above. Whether this relation extends
+  to a partial order on the broader space of recurrent update rules —
+  in particular, whether antisymmetry and transitivity hold over the
+  full space — is open. The rigorous research target this paper stakes
+  is *the maximal element under matched asymptotic FLOP class* — the
+  update rule with maximal one-step expressive power for its compute
+  class. This is distinct from the *aspiration* "the best RNN update
+  rule", which involves further properties (multi-step capability,
+  gradient conditioning, downstream performance) and is not claimed
+  here. The Lean resource-separation formalism in
+  `RecurrentResourceFormalism` is the tool for climbing this relation;
+  the present paper deposits one comparison and leaves the maximal
+  element open.
 
 A concurrent pure-recurrent nonlinear matrix RNN, *M2RNN*
 (`arXiv:2603.14360`, March 2026 @m2rnn2026), trains a homogeneous
@@ -547,12 +563,20 @@ is *not* the obstruction. This rules out a complexity-ceiling
 explanation. If raw-write could do clean prefix tracking even on
 solvable groups, M2RNN should clear $S_3$ — the smallest non-trivial
 permutation group, six elements, no NC#super[1] obstruction at all. It
-does not. Nor is the failure a capacity ceiling: representing $S_3$
-requires only $log_2 6 approx 2.6$ bits per state, against the
-$approx 10^8$ bits of state available at 8 M parameters in fp16. With
-capacity non-binding by roughly eight orders of magnitude, the
-residual must be inductive bias — the raw-write update does not, under
-SGD at this scale, find a configuration that prefix-tracks $S_3$. The
+does not. Nor is the failure a capacity ceiling. Two distinct
+non-binding bounds make this point. (i) At the 8 M probe shape
+($N times V times H times "depth" = 32 times 32 times 32 times 4
+approx 1.3 times 10^6$), the per-token recurrent state already carries
+on the order of $10^6$ scalars — six orders of magnitude above the
+$log_2 6 approx 2.6$-bit information-theoretic floor for representing
+the $S_3$ prefix-tracking table. (ii) Independently, the learned
+function is encoded in $approx 8 times 10^6 times 16 approx 1.3 times
+10^8$ parameter bits at fp16 — eight orders of magnitude above the same
+floor. Either bound suffices to render capacity non-binding; the
+recurrent-state bound is the relevant one for the prefix-tracking table
+itself. With capacity non-binding on both accountings, the residual must
+be inductive bias — the raw-write update does not, under SGD at this
+scale, find a configuration that prefix-tracks $S_3$. The
 deficit is therefore a *trainability* failure of the raw-write update,
 not a representability impossibility (M2RNN's matrix state can in
 principle store an $S_3$ table) and not a complexity-class ceiling.
@@ -824,6 +848,13 @@ architecture changes is the asymptote and the expressivity ceiling
     *FLOPs spent per bit of compression delivered* at three matched
     bits-per-token thresholds. CMA-tuned configurations at the matched
     ~480 M parameter target. Source: `paper/results/cma_flop_rate/thresholds.csv`.
+    The empirical $approx 1.55 times$ constant separating NDM from the
+    leading linear pair at the 1.80-bit threshold sits within the
+    common $c_1 d^2 + c_2 d$ per-token FLOP class proved in
+    `RecurrentResourceFormalism.ndm_m2rnn_flop_class_equiv` (§8,
+    Theorem set D); the asymptotic-class claim and the deployment-scale
+    constant are at different levels of abstraction and are not in
+    tension.
   ],
 ) <tab_thresholds>
 
@@ -858,6 +889,25 @@ not strongly change *training economy*. What it does change is the
 probes at 8 M parameter-matched scale (dim = 384, depth = 4,
 $H = 32, N = 32$, schedule-free AdamW, 10K–20K steps per task, three
 seeds). FLA-GDN uses dim = 640 to match parameter count.
+
+#heading(level: 2, numbering: none)[Matched no-tuning across architectures at 8 M]
+
+The 8 M probe scale received no probe-specific hyperparameter search and
+no seed sweep for any family in the comparison. NDM ran on its E88
+lineage default configuration carried down from the production stack;
+M2RNN-CMA ran on the analogous default from its own lineage; FLA-GDN and
+the M2RNN-paper shape ran on their respective published defaults. The
+8 M probe is therefore *matched no-tuning across architectures* — each
+family is evaluated on the reasonable-defaults configuration it would
+arrive at without probe-targeted optimisation — not matched-after-HPO.
+This is the appropriate baseline for a mechanism claim: under matched
+no-tuning conditions, any accuracy gap reflects the architecture's
+inductive bias, not differential HPO investment. The capacity argument
+below (a separate non-binding bound on what the recurrent state can in
+principle hold) rules out the third confound, leaving the write rule as
+the load-bearing differentiator. Reading the gap as evidence of
+undertraining on one side would require asymmetric tuning that did not
+occur on either side.
 
 #heading(level: 2, numbering: none)[Headline: $S_5$ permutation composition]
 
@@ -1061,9 +1111,11 @@ the same parameter count. Matrix state plus temporal nonlinearity *alone*
 $v - S^T k$ is the load-bearing piece. The $S_3$ probe is the cleaner
 control for reading this as a *trainability* claim. $S_3$ has six
 elements; storing its transition table requires $log_2 6 approx 2.6$
-bits of state and an 8 M-parameter fp16 model carries on the order of
-$10^8$ bits — capacity is non-binding by roughly eight orders of
-magnitude, and M2RNN's matrix state can in principle hold an $S_3$
+bits of state. At the probe shape the per-token recurrent state has
+$N V H "depth" approx 10^6$ scalars (and independently the learned
+function is encoded in $approx 1.3 times 10^8$ parameter bits at fp16),
+so capacity is non-binding by many orders of magnitude on either
+accounting, and M2RNN's matrix state can in principle hold an $S_3$
 prefix-tracker. M2RNN's 0.31 is therefore evidence that SGD under the
 raw-write inductive bias *does not find* such a configuration at this
 scale, not that one fails to exist; the failure is empirical
@@ -1073,7 +1125,17 @@ conclusion from the other side: linear-scan blocks cannot inherit
 state-tracking capability from neighbouring NDM blocks. The Lean
 formalisation of §8 provides the *representational* counterpart — a
 per-step separation at fixed precision and width — not a global
-trainability claim about the M2RNN family.
+trainability claim about the M2RNN family. Reconciling §3 with §8: the
+Lean result
+(`RecurrentResourceFormalism.ndm_m2rnn_one_step_resource_separation_embeds`)
+bounds a *one-step specification* — the precise mixed-key delta
+overwrite that NDM performs at each step, which no fixed-weight
+raw-write update can reproduce — while the §3 $S_3$ argument concerns
+*eventual representability across an unbounded number of steps*, for
+which raw-write has the capacity in principle but for which SGD under
+the raw-write inductive bias does not, at the 8 M probe scale, locate a
+configuration that prefix-tracks. These are distinct claims about
+different timescales of expressivity, both indicting the write rule.
 
 #heading(level: 2, numbering: none)[QA and reasoning panel at 1.27 B]
 
@@ -1387,8 +1449,10 @@ architectural family. On state-tracking probes, NDM separates from
 linear-recurrent and raw-write nonlinear matrix RNN baselines on the
 canonical $S_5$ word problem and on a five-of-six canonical sweep,
 including on $S_3$, where capacity is non-binding ($log_2 6 approx 2.6$
-bits required against $approx 10^8$ bits at 8 M parameters in fp16) and
-the raw-write 0.31 reads as a *trainability* failure of the update,
+bits required against $approx 10^6$ recurrent-state scalars per token
+at the probe shape, and independently $approx 1.3 times 10^8$ parameter
+bits at fp16) and the raw-write 0.31 reads as a *trainability* failure
+of the update,
 not a representability ceiling — the delta-correcting update is the
 load-bearing mechanism for making prefix-tracking learnable in practice.
 A trusted Lean 4 core (no
@@ -1409,10 +1473,14 @@ multi-programmed systems recipe (general across the nonlinear
 matrix-state family); C2 is the mechanism evidence — both empirical
 and formal — that the delta-correcting write earns the state-tracking
 expressivity at matched per-token FLOP class. C3 is the open program
-opened by C2: the partial order over update rules at matched FLOP
-class, of which raw-write $<$ delta-correct is one entry. The maximal
-element under matched FLOP class — *which* update rule has the highest
-one-step expressive power for its compute — is the open horizon, with
+opened by C2: a *comparison relation* over update rules at matched
+*asymptotic* per-token FLOP class
+(`ndm_m2rnn_flop_class_equiv`), of which raw-write $<$ delta-correct
+is the one strict instance established here, with whether the relation
+extends to a partial order on the broader space of update rules left
+open. The maximal element under matched asymptotic FLOP class —
+*which* update rule has the highest one-step expressive power for its
+compute class — is the open horizon, with
 the `RecurrentResourceFormalism` Lean machinery as the tool for
 climbing the order.
 
