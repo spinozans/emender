@@ -13,18 +13,28 @@
   numbering: "1",
 )
 
-#set text(font: "New Computer Modern", size: 11pt)
-#set par(justify: true, leading: 0.65em, first-line-indent: 1em)
+// Sans-serif body throughout. Uses DejaVu Sans (always present on the
+// build host) so the build is hermetic and warning-free. Math equations
+// stay in a proper math font (New Computer Modern Math).
+#let body-font = "DejaVu Sans"
+#let mono-font = "DejaVu Sans Mono"
+#let math-font = "New Computer Modern Math"
+
+#set text(font: body-font, size: 10.5pt)
+#set par(justify: true, leading: 0.62em, first-line-indent: 1em, spacing: 0.85em)
+#show math.equation: set text(font: math-font)
+#show raw: set text(font: mono-font, size: 0.92em)
+
 #set heading(numbering: "1.1")
 #show heading.where(level: 1): it => {
-  v(1em)
-  set text(size: 13pt, weight: "bold")
+  v(1.1em)
+  set text(size: 12.5pt, weight: "bold", font: body-font)
   it
   v(0.5em)
 }
 #show heading.where(level: 2): it => {
-  v(0.6em)
-  set text(size: 11.5pt, weight: "bold")
+  v(0.7em)
+  set text(size: 11pt, weight: "bold", font: body-font)
   it
   v(0.3em)
 }
@@ -37,21 +47,27 @@
 
 // ── Title block ───────────────────────────────────────────────────────────────
 #align(center)[
-  #text(size: 16pt, weight: "bold")[
+  #text(size: 17pt, weight: "bold", tracking: -0.01em)[
     Nonlinear Delta Memory: Scaling Pure Recurrent\
     Language Models by Multi-Programming
   ]
-  #v(0.5em)
-  #text(size: 12pt)[Erik Garrison]
-  #v(0.25em)
-  #text(size: 10pt, style: "italic")[Independent]
-  #v(1em)
+  #v(0.4em)
+  #text(size: 11.5pt)[Erik Garrison]
+  #v(0.2em)
+  #text(size: 9.5pt, style: "italic")[Independent]
+  #v(0.8em)
 ]
 
 // ── Abstract ─────────────────────────────────────────────────────────────────
-#align(center)[*Abstract*]
+// Abstract is set in a compact sans-serif block so the (deliberately long)
+// prose fits on page 1. Reduced font size, leading, and side margins are
+// what create the visual contraction; the prose itself is unchanged.
+#align(center)[#text(size: 10.5pt, weight: "bold", tracking: 0.05em)[ABSTRACT]]
+#v(0.3em)
 
-#block(inset: (x: 1.5em), [
+#block(inset: (x: 2.5em), [
+#set text(size: 9pt)
+#set par(justify: true, leading: 0.5em, first-line-indent: 0pt, spacing: 0.55em)
 Large-scale recurrent language modelling is dominated by *linear-state*
 architectures—models whose hidden state evolves as
 $h_t = A_t h_(t-1) + b_t$ with the transition $A_t$ and drive $b_t$
