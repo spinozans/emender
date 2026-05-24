@@ -1,6 +1,40 @@
 # Related Work: Large-Scale Nonlinear Recurrent Language Models
 
-**Purpose:** Assess whether NDM's claim — *the first pure nonlinear recurrent language model at ≥500M parameters trained to near-convergence on a Pile-class corpus* — is novel. This document surveys all plausible prior and concurrent candidates, classifies their recurrence type, and renders an explicit verdict per entry.
+## CHANGELOG
+
+- **2026-05-24 (`reframe-paper-narrative`):** Dropped the "first pure
+  nonlinear recurrent LM at ≥500M (or ≥1B) on a Pile-class corpus"
+  priority framing throughout. M2RNN (`arXiv:2603.14360`, March 2026)
+  also trained a pure-recurrent variant at 410M, so the priority claim
+  is contested at best and not the strongest version of the story. The
+  document is now organized around the **three-pillar reframe** used in
+  `paper/OUTLINE.md`: (1) generality of multi-programming for pure
+  nonlinear recurrent LMs at scale, (2) the update rule matters — the
+  delta-correcting write `v − Sᵀk` separates from raw-write matrix RNNs
+  and approaches the NC1 limit via S5 tracking, (3) FLOPs-per-bit
+  convergence under CMA-ES (N = 4). Entries 16 (M2RNN pure 410M) and 17
+  (M2RNN 7B MoE hybrid) are repositioned as **related-work peers** that
+  demonstrate a similar pure-recurrent capability at smaller scale with
+  a different (raw-write) update rule, not as priority threats. The
+  former "Closest Prior Art" section is renamed "Related-Work Peers,"
+  and the "Summary Verdict on NDM Novelty Claim" is replaced with
+  "Summary: Where the Three Pillars Land in the Literature." Per-entry
+  verdicts that contained "first at scale" or similar priority language
+  are rewritten to compare on the update-rule, recipe-generality, or
+  FLOPs-per-bit axes instead. NC1 wording is held at "approaches the
+  NC1 limit via S5 tracking" pending `lean-formalization-gap-audit`.
+
+---
+
+**Purpose:** Catalogue the prior and concurrent literature on large-scale
+recurrent language models, classify each entry by recurrence type
+(linear-state vs nonlinear-state vs hybrid), and identify which entries
+are peers under the three-pillar framing — i.e., which entries
+demonstrate pure or near-pure nonlinear recurrence at scale, which
+entries are the comparison cohort for the FLOPs-per-bit convergence
+finding under CMA-ES, and which entries fall outside the relevant
+class. The paper itself (see `paper/OUTLINE.md`) makes no priority
+claim; this document collects the evidence base for the comparison.
 
 **NDM update equation (reference):**
 ```
@@ -10,7 +44,7 @@ S_t     = tanh(d_t S_{t-1} + k_t delta_t^T)
 ```
 `S_{t-1}` appears inside `tanh` twice (via scaling and via the delta correction), making the temporal state update **nonlinear in state**. The 1.27B-parameter NDM model is fully recurrent (no attention, no linear-recurrent layers).
 
-**Linearity criterion used throughout:**  
+**Linearity criterion used throughout:**
 A model is *linear-state* if the recurrence can be written as `h_t = A_t h_{t-1} + b_t` where `A_t` and `b_t` depend only on the current input `x_t`, not on `h_{t-1}`. A model is *nonlinear-state* if `h_{t-1}` (or a nonlinear function of it) appears inside a nonlinearity that governs the state update itself.
 
 ---
@@ -131,9 +165,9 @@ A model is *linear-state* if the recurrence can be written as `h_t = A_t h_{t-1}
 ---
 
 ### 13. sLSTM (in xLSTM) — `arXiv:2405.04517`
-**Recurrence type:** **Nonlinear-state.** sLSTM uses exponential gating for input and forget gates, with *memory mixing* — the gates depend on the previous hidden state `h_{t-1}`, which in turn is derived from the cell state `c_{t-1}` via a nonlinearity (output gate applied to `tanh(c_{t-1})` or similar). This creates a nonlinear feedback loop: `c_t = f_t \odot c_{t-1} + i_t \odot z_t` where `f_t = \exp(W_f [h_{t-1}; x_t])` and `h_{t-1}` is nonlinearly coupled to `c_{t-1}`. The xLSTM paper explicitly states that memory mixing (hidden-to-gate dependency) is what enables sLSTM to solve state-tracking tasks that purely linear models cannot.  
-**Scale:** The original xLSTM paper trained a **1.3B-parameter mixed model** (7:1 mLSTM:sLSTM block ratio) on **300B tokens of SlimPajama** (a Pile-class corpus). The model is *not* pure sLSTM — most blocks use mLSTM (linear-state), with a minority of sLSTM (nonlinear-state) blocks.  
-**Verdict: PARTIAL CHALLENGE to NDM's claim.** A 1.3B model with nonlinear-state sLSTM blocks was trained to near-convergence on a Pile-class corpus before NDM's main publication. However, the model is **not pure nonlinear-state**: the dominant mLSTM blocks use a linear-state covariance update. NDM's claim of a *fully* (all-layers) pure nonlinear recurrent model at 1.3B scale is not contradicted, but the xLSTM result narrows the gap and should be acknowledged.
+**Recurrence type:** **Nonlinear-state.** sLSTM uses exponential gating for input and forget gates, with *memory mixing* — the gates depend on the previous hidden state `h_{t-1}`, which in turn is derived from the cell state `c_{t-1}` via a nonlinearity (output gate applied to `tanh(c_{t-1})` or similar). This creates a nonlinear feedback loop: `c_t = f_t \odot c_{t-1} + i_t \odot z_t` where `f_t = \exp(W_f [h_{t-1}; x_t])` and `h_{t-1}` is nonlinearly coupled to `c_{t-1}`. The xLSTM paper explicitly states that memory mixing (hidden-to-gate dependency) is what enables sLSTM to solve state-tracking tasks that purely linear models cannot.
+**Scale:** The original xLSTM paper trained a **1.3B-parameter mixed model** (7:1 mLSTM:sLSTM block ratio) on **300B tokens of SlimPajama** (a Pile-class corpus). The model is *not* pure sLSTM — most blocks use mLSTM (linear-state), with a minority of sLSTM (nonlinear-state) blocks.
+**Position under the three-pillar reframe:** Related-work peer for **Pillar 1**. xLSTM-1.3B is the closest scale band among prior nonlinear-recurrent results, but it is a *mixed* nonlinear+linear stack (87.5% linear mLSTM blocks). It is informative as evidence that nonlinear recurrent blocks are usable at the 1.3B band when interleaved with linear blocks; it is *not* an example of pure nonlinear recurrence at scale. For the update-rule comparison (Pillar 2), sLSTM operates on a scalar cell with exponential gating rather than a matrix state with delta correction, so it is not a direct comparable on that axis.
 
 ---
 
@@ -157,17 +191,49 @@ A model is *linear-state* if the recurrence can be written as `h_t = A_t h_{t-1}
 Z_t = tanh(H_{t-1} W + k_t v_t^T)
 H_t = f_t H_{t-1} + (1 - f_t) Z_t
 ```
-Since `H_{t-1}` appears inside `tanh` (via `H_{t-1}W`), `H_t` is a nonlinear function of `H_{t-1}`. This is a matrix-state nonlinear RNN, closely related to NDM in spirit (nonlinear matrix state, delta-correction inspired design).  
-**Scale:** **410M parameters** for the largest pure recurrent M2RNN evaluation; 7B is MoE hybrid (entry 17 below). Training data: 100B tokens of Nemotron-CC-v2 (not The Pile, but a similar high-quality web corpus).  
-**Publication:** March 2026, concurrent with or after NDM development.  
-**Verdict: Does NOT contradict NDM's 1.27B-parameter pure-recurrent claim.** M2RNN's largest *pure* recurrent model is 410M, below the ≥500M threshold. The 7B model is always hybrid. M2RNN is **the closest prior/concurrent art** to NDM in recurrence type, but falls short on scale for the pure-recurrent variant. NDM and M2RNN differ in update mechanism: NDM uses delta correction inside tanh (bounded error feedback), M2RNN uses a linear map of the state (`H_{t-1}W`) inside tanh.
+Since `H_{t-1}` appears inside `tanh` (via `H_{t-1}W`), `H_t` is a nonlinear function of `H_{t-1}`. This is a matrix-state nonlinear RNN.
+**Scale:** **410M parameters** for the largest pure-recurrent M2RNN evaluation; 7B is MoE hybrid (entry 17 below). Training data: 100B tokens of Nemotron-CC-v2 (a high-quality web corpus, not The Pile but in the same class).
+**Publication:** March 2026, concurrent with NDM development.
+**Position under the three-pillar reframe:** **Related-work peer.** M2RNN
+is the closest peer for both Pillar 1 (it demonstrates that a pure
+nonlinear matrix-state recurrent LM can be trained to useful loss on a
+large web corpus — at 410M with a different systems setup) and Pillar 2
+(it is the head of the *raw-write* nonlinear matrix RNN family, against
+which the delta-correcting write `v − Sᵀk` is compared). The key
+contrasts:
+- **Update rule.** M2RNN's nonlinear write is a linear map of the state,
+  `H_{t-1} W`, followed by `tanh` — a *raw-write* matrix RNN. NDM's
+  nonlinear write is a delta correction, `v − S^T k`, followed by `tanh`
+  — bounded prediction-error feedback. The empirical state-tracking
+  separation between these two update families at matched parameter
+  count is the central Pillar 2 result; the trusted Lean core formalizes
+  a one-step update-family resource separation between them. *(TODO:
+  the surrounding NC1 wording is held pending
+  `lean-formalization-gap-audit`.)*
+- **Scale.** M2RNN's pure-recurrent variant is 410M; the NDM
+  pure-recurrent stack documented in the paper is 1.27B. The
+  multi-programmed systems recipe under Pillar 1 is the enabling
+  difference; the recipe is general and would also apply to the M2RNN
+  update family (the M2RNN-CMA variant is the concrete instantiation
+  used in the experiments).
+- **Training corpus.** NDM trains on The Pile; M2RNN on Nemotron-CC-v2.
+  Both qualify as Pile-class web corpora; neither result is corpus-bound.
+
+This entry is **not** treated as a priority threat. M2RNN and the work
+documented in the paper are concurrent investigations of overlapping
+questions, with different update rules and different scale bands, and
+the paper credits M2RNN explicitly as such.
 
 ---
 
 ### 17. M2RNN (7B MoE hybrid) — `arXiv:2603.14360`
-**Recurrence type:** Hybrid (nonlinear recurrent layers interleaved with attention).  
-**Scale:** 7B total parameters (1.1B active); hybrid outperforms pure recurrent Gated DeltaNet by 0.4–0.5 perplexity points.  
-**Verdict: Does NOT contradict NDM's pure-recurrent claim.** Hybrid models are explicitly excluded from NDM's claim.
+**Recurrence type:** Hybrid (nonlinear recurrent layers interleaved with attention).
+**Scale:** 7B total parameters (1.1B active); hybrid outperforms pure-recurrent Gated DeltaNet by 0.4–0.5 perplexity points in the M2RNN paper's reported comparisons.
+**Position under the three-pillar reframe:** Related-work peer, but
+weakly so — the hybrid 7B M2RNN sits outside the pure-recurrent class
+addressed by Pillar 1 and is therefore not a direct comparable for
+either pillar 1 or pillar 2. It is included for completeness of the
+M2RNN family.
 
 ---
 
@@ -186,9 +252,15 @@ Since `H_{t-1}` appears inside `tanh` (via `H_{t-1}W`), `H_t` is a nonlinear fun
 ---
 
 ### 20. Classical LSTM/GRU trained at scale (historical)
-**Recurrence type:** **Nonlinear-state.** Classical LSTM cell state: `c_t = f_t \odot c_{t-1} + i_t \odot \tanh(W x_t + U h_{t-1} + b)` where `h_{t-1} = o_{t-1} \odot \tanh(c_{t-1})`. The gate `f_t = \sigma(W_f x_t + U_f h_{t-1} + b_f)` depends on `h_{t-1}`, which depends nonlinearly on `c_{t-1}`. So the full recurrence is nonlinear in `c_{t-1}`.  
-**Scale:** **No published model at ≥500M parameters trained to near-convergence on a Pile-class corpus.** Large-scale language model training shifted to Transformers before anyone trained billion-parameter classical LSTMs on modern corpora. Mikolov's RNN-LM work (2010–2013) operated at word-level with ≪1M parameters. Google's GNMT (2016) used stacked LSTM encoders/decoders but for translation, not LM, and at ~380M parameters. No known Pile-class convergence result for classical LSTM/GRU at ≥500M.  
-**Verdict: Does NOT contradict NDM's claim** (no evidence of the specific combination: nonlinear-state + ≥500M params + Pile-class corpus + near-convergence).
+**Recurrence type:** **Nonlinear-state.** Classical LSTM cell state: `c_t = f_t \odot c_{t-1} + i_t \odot \tanh(W x_t + U h_{t-1} + b)` where `h_{t-1} = o_{t-1} \odot \tanh(c_{t-1})`. The gate `f_t = \sigma(W_f x_t + U_f h_{t-1} + b_f)` depends on `h_{t-1}`, which depends nonlinearly on `c_{t-1}`. So the full recurrence is nonlinear in `c_{t-1}`.
+**Scale:** **No published model at ≥500M parameters trained to near-convergence on a Pile-class corpus.** Large-scale language model training shifted to Transformers before anyone trained billion-parameter classical LSTMs on modern corpora. Mikolov's RNN-LM work (2010–2013) operated at word-level with ≪1M parameters. Google's GNMT (2016) used stacked LSTM encoders/decoders but for translation, not LM, and at ~380M parameters. No known Pile-class convergence result for classical LSTM/GRU at ≥500M.
+**Position under the three-pillar reframe:** Background, not peer.
+Classical LSTM/GRU is the historical reason the field assumed pure
+nonlinear recurrence was impractical at scale — and the unsuccessful
+training of these architectures at large scale is what motivated the
+move to linear-state and hybrid alternatives surveyed in entries 1–15.
+Neither the systems recipe (Pillar 1) nor the update-rule comparison
+(Pillar 2) makes a direct comparison against these architectures.
 
 ---
 
@@ -200,36 +272,69 @@ Since `H_{t-1}` appears inside `tanh` (via `H_{t-1}W`), `H_t` is a nonlinear fun
 
 ---
 
-## Closest Prior Art
+## Related-Work Peers
 
-These entries require the most careful attention in the NDM paper:
+These entries deserve dedicated treatment in the paper's related-work
+section. They are positioned as **peers** that share part of the
+problem space — pure or near-pure nonlinear recurrent language models —
+not as priority threats.
 
-### 1. M2RNN (arXiv:2603.14360) — Most Uncomfortable Comparison
-M2RNN is the most direct architectural competitor. It:
-- Is nonlinear-state (matrix state with tanh inside the update)
-- Was also trained pure-recurrently (at 410M)
-- Has a similar design motivation (state tracking, nonlinear matrix memory)
-- Is concurrent (March 2026)
+### 1. M2RNN (arXiv:2603.14360) — Peer on pure-nonlinear pure-recurrent training
+M2RNN is the closest peer in the literature. It:
+- Is nonlinear-state (matrix state with tanh inside the update).
+- Was trained pure-recurrently at 410M.
+- Has a similar design motivation (state tracking, nonlinear matrix memory).
+- Is concurrent (March 2026).
 
-The key NDM differentiators:
-1. **Scale**: NDM's 1.27B pure-recurrent model is 3× larger than M2RNN's pure-recurrent result.
-2. **Delta correction**: NDM writes the error `v - S^T k` (bounded prediction error feedback). M2RNN writes a general linear map `H_{t-1}W + k v^T` (a raw-write with nonlinear candidate). The NDM paper formalizes this as an update-family resource separation, verified in Lean.
-3. **Training corpus**: NDM trains on The Pile; M2RNN on Nemotron-CC-v2. Both are large web corpora.
+Relationship to the three-pillar reframe:
+1. **Pillar 1 (multi-programming generalizes):** M2RNN demonstrates a
+   pure-recurrent variant at 410M with a different systems setup; the
+   present paper extends the same general capability to 1.27B with a
+   multi-programmed recipe that is shown (via the M2RNN-CMA variant in
+   the experiments) to apply across the nonlinear matrix-state family.
+2. **Pillar 2 (update rule matters):** M2RNN is the head of the
+   *raw-write* nonlinear matrix RNN family. The paper's headline
+   expressivity comparison is between this raw-write update and the
+   delta-correcting update `v − S^T k`. The one-step update-family
+   resource separation is formalized in the trusted Lean core.
+3. **FLOPs-per-bit (Pillar 3):** Under matched CMA-ES search, M2RNN and
+   NDM converge to nearly the same FLOPs-per-bit learning rate (N = 4
+   together with FLA-GDN and Mamba2). The training-speed axis is not
+   what separates the two.
 
-**Action required:** The paper must cite M2RNN and explicitly distinguish the delta-correcting mechanism from M2RNN's raw-write approach.
+**Action required:** The paper cites M2RNN and explicitly distinguishes
+the delta-correcting mechanism from M2RNN's raw-write approach. No
+priority is claimed against M2RNN.
 
-### 2. xLSTM-1.3B with sLSTM blocks (arXiv:2405.04517) — Scale Overlap
-xLSTM at 1.3B used nonlinear-state sLSTM blocks (with memory mixing, gates depend on `h_{t-1}`), trained on 300B tokens of SlimPajama. This is technically a nonlinear-state model at NDM's scale.
+### 2. xLSTM-1.3B with sLSTM blocks (arXiv:2405.04517) — Peer at scale, mixed-recurrence
+xLSTM at 1.3B uses nonlinear-state sLSTM blocks (with memory mixing,
+gates depend on `h_{t-1}`), trained on 300B tokens of SlimPajama. It is a
+nonlinear-state model at the same scale band as the paper's headline
+NDM stack.
 
-The key NDM differentiators:
-1. **Purity**: xLSTM-1.3B is a *mixture* of nonlinear (sLSTM) and linear (mLSTM) blocks (7:1 ratio means 87.5% of blocks are linear mLSTM). NDM is pure nonlinear-state throughout all layers.
-2. **Architecture**: sLSTM uses scalar cell state with exponential gating; NDM uses matrix state with nonlinear delta correction. Qualitatively different state structures.
-3. **Convergence**: xLSTM trained on 300B tokens (SlimPajama) vs. NDM on The Pile; both qualify as "Pile-class" but xLSTM may be considered more thoroughly trained.
+Relationship to the three-pillar reframe:
+1. **Pillar 1:** xLSTM-1.3B is the closest scale-band peer for the
+   "pure nonlinear recurrent LM at scale" capability, but it is a
+   *mixture* of nonlinear (sLSTM) and linear (mLSTM) blocks (7:1 ratio,
+   87.5% linear). It supports the conclusion that nonlinear recurrent
+   blocks are trainable at this scale; it is not a demonstration of
+   pure nonlinear recurrence.
+2. **Pillar 2:** sLSTM uses scalar cell state with exponential gating;
+   NDM uses matrix state with delta correction. These are qualitatively
+   different update structures, so xLSTM is not a direct comparable on
+   the update-rule axis.
 
-**Action required:** The paper should acknowledge xLSTM-1.3B as a related nonlinear-recurrent result at similar scale, while emphasizing NDM's all-layers purity and distinct matrix-state mechanism.
+**Action required:** The paper acknowledges xLSTM-1.3B as a peer
+nonlinear-recurrent result at the same scale band, while noting that
+its mixed architecture and scalar cell state place it outside the
+narrower comparison set used for Pillars 1 and 2.
 
-### 3. Titans (arXiv:2501.00663) — Nonlinear Memory, Different Regime
-Titans uses a deeply nonlinear memory module (MLP with online gradient updates), which is qualitatively nonlinear-state. However, it is designed as a hybrid and has not been evaluated as a pure-recurrent model at Pile-class scale. The update mechanism (test-time MLP gradient update) is substantially different from NDM's bounded matrix delta correction.
+### 3. Titans (arXiv:2501.00663) — Nonlinear memory, different regime
+Titans uses a deeply nonlinear memory module (MLP with online gradient
+updates) and is qualitatively nonlinear-state. However, it is designed
+as a hybrid and has not been evaluated as a pure-recurrent model at
+Pile-class scale. The update mechanism (test-time MLP gradient update)
+is substantially different from a matrix delta correction.
 
 ---
 
@@ -237,7 +342,7 @@ Titans uses a deeply nonlinear memory module (MLP with online gradient updates),
 
 1. **M2RNN training scale (pure):** The paper reports 410M for homogeneous M2RNN. Was a larger pure-recurrent M2RNN trained internally and not reported? This should be confirmed via author correspondence or future arxiv versions.
 
-2. **xLSTM sLSTM-only models:** The xLSTM paper evaluates architectures in mixed configurations. Was a *pure sLSTM* model (all blocks nonlinear) ever trained at ≥500M parameters? If so, this would more directly challenge NDM's claim. The xLSTM-7B uses only mLSTM (linear), suggesting the team moved away from sLSTM at large scale.
+2. **xLSTM sLSTM-only models:** The xLSTM paper evaluates architectures in mixed configurations. Was a *pure sLSTM* model (all blocks nonlinear) ever trained at ≥500M parameters? If so, it would be a stronger peer for Pillar 1 than the published xLSTM-1.3B mixed stack. The xLSTM-7B uses only mLSTM (linear), suggesting the team moved away from sLSTM at large scale.
 
 3. **Mikolov-scale LSTM LM revival:** EleutherAI and others have experimented with recurrent architectures on The Pile. It is worth checking whether any unreported or unpublished classical LSTM experiments at ≥500M parameters on The Pile exist in gray literature (GitHub, blog posts, tech reports).
 
@@ -245,16 +350,54 @@ Titans uses a deeply nonlinear memory module (MLP with online gradient updates),
 
 ---
 
-## Summary Verdict on NDM Novelty Claim
+## Summary: Where the Three Pillars Land in the Literature
 
-The specific claim **"first pure nonlinear recurrent language model at ≥500M parameters trained to near-convergence on a Pile-class corpus"** is **substantially supported** by this survey, with the following caveats:
+The paper makes no priority claim. Each of the three pillars is
+characterized below by which prior or concurrent entries it engages
+with and what the literature evidence supports.
 
-| Claim component | Status |
-|----------------|--------|
-| ≥500M parameters | Supported — no pure nonlinear competitor ≥500M is published before NDM's main experimental timeline |
-| Pure recurrent (no attention, no linear-recurrent layers) | Supported — M2RNN 7B is hybrid; xLSTM-1.3B is mixed with dominant linear mLSTM blocks |
-| Nonlinear-state recurrence (nonlinearity inside temporal state update) | Supported — all linear-state competitors (Mamba, RetNet, DeltaNet, Griffin, RWKV) are excluded |
-| Pile-class corpus | Supported — no pure nonlinear competitor uses exactly The Pile; M2RNN uses Nemotron-CC-v2 |
-| Near-convergence | Supported for NDM's reported training runs |
+### Pillar 1 — Multi-programming generalizes (pure nonlinear recurrent LM at scale)
 
-**Recommended framing:** "To the best of our knowledge, NDM is the first pure nonlinear recurrent language model (no attention, no linear-recurrent layers) trained at ≥1B parameters to near-convergence on a large-scale web corpus. Concurrent work M2RNN [arXiv:2603.14360] demonstrates nonlinear matrix-state recurrence at 410M parameters pure-recurrent; NDM is larger and employs a distinct delta-correcting update that provably separates from M2RNN's raw-write update family."
+| Question | Evidence from this survey |
+|---|---|
+| Has any prior or concurrent work trained a *pure-recurrent* nonlinear matrix-state LM on a Pile-class corpus? | Yes — M2RNN (entry 16) at 410M on Nemotron-CC-v2, concurrent (March 2026). |
+| Has any prior work done so at ≥1B parameters? | Not on the public record before the present work, but M2RNN is a peer and may scale further; no priority is claimed. |
+| Has any near-pure result been trained at ≥1B? | Yes — xLSTM-1.3B (entry 13), but only 12.5% of blocks are nonlinear sLSTM; the rest are linear mLSTM. |
+| Is the multi-programming recipe specific to any one update rule? | No — the recipe (per-head bounded memory programs, fused Triton recurrence kernel, sparse checkpointing) is structural and applies to the M2RNN family as well. The CMA-reshaped M2RNN variant in the paper's experiments is the concrete instantiation. |
+
+### Pillar 2 — The update rule matters (delta correction vs raw-write, approaches the NC1 limit via S5 tracking)
+
+| Question | Evidence from this survey |
+|---|---|
+| Which prior architectures are in the *raw-write* nonlinear matrix RNN family? | Primarily M2RNN (entry 16) — `Z = tanh(H·W + k v^T)`. |
+| Which prior architectures are in the *delta-correcting* family but not in the nonlinear-state class? | DeltaNet (entry 5) and Gated DeltaNet (entry 6) — both use delta correction but the recurrence is linear in state. RWKV-7 (entry 9) generalizes the delta rule but remains linear in state. |
+| Has any prior pure-recurrent nonlinear matrix RNN been compared against linear-state baselines on a state-tracking probe at matched parameter count? | Not in the surveyed literature — the S3/S5 separation reported in `docs/EXPRESSIVITY_RESULTS_SUMMARY.md` §5a is the comparison evidence for this pillar. |
+
+*(TODO: the "approaches the NC1 limit via S5 tracking" wording is
+held pending `lean-formalization-gap-audit`; the trusted Lean surface
+as of 2026-05-23 covers S5 tracker construction, S5
+non-solvability, and a fixed-precision finite-state ceiling, not a
+formal NC1 lower bound for linear-scan recognizers.)*
+
+### Pillar 3 — FLOPs-per-bit convergence under CMA-ES (N = 4)
+
+| Question | Evidence from this survey |
+|---|---|
+| Which architectures are in the N = 4 CMA-ES comparison cohort? | NDM (this paper), M2RNN-class (entry 16), FLA-GDN (entry 6 lineage), Mamba2 (entry 2). |
+| Where is the supporting evidence documented? | `docs/CMA_FLOP_RATE_FINDING.md` — *forthcoming*, produced by `harvest-cma-flop-rate-finding`. |
+| Does the paper claim a FLOPs-per-bit advantage for any update rule? | No. The finding is the *opposite*: under matched CMA-ES search, the four families converge to nearly the same FLOPs-per-bit learning rate. |
+
+### Suggested framing line for the paper's related-work section
+
+> Concurrent work M2RNN [arXiv:2603.14360] demonstrates pure-recurrent
+> nonlinear matrix-state language modeling at 410M with a raw-write
+> update `tanh(H·W + k v^T)`. The present work extends this line in
+> three respects: (i) a 1.27B pure-recurrent model trained under a
+> multi-programmed systems recipe; (ii) a delta-correcting update
+> `v − S^T k` that separates on state-tracking expressivity from the
+> raw-write family at matched parameter count and approaches the NC1
+> limit via S5 tracking; and (iii) a CMA-ES (N = 4) FLOPs-per-bit
+> comparison showing that, once shape and hyperparameters are
+> matched, the recurrent families converge to nearly the same
+> learning rate — so the contribution is the architectural option and
+> the mechanism, not raw training speed.

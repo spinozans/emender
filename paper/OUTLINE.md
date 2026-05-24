@@ -2,6 +2,34 @@
 
 **Status:** Draft outline (not the paper itself).
 **Generated:** 2026-05-23 by task `paper-outline`.
+
+---
+
+## CHANGELOG
+
+- **2026-05-24 (`reframe-paper-narrative`):** Dropped the "first ≥1B pure
+  nonlinear RNN at scale" priority framing throughout. The concurrent M2RNN
+  work (arXiv:2603.14360) trained a pure-recurrent variant at 410M, so the
+  priority claim is contested at best and not the strongest version of the
+  story. Replaced with the **three-pillar reframe**: (1) generality of
+  multi-programming for pure nonlinear recurrent LMs at scale, (2) the update
+  rule matters — the delta-correcting write `v − Sᵀk` separates from raw-write
+  matrix RNNs and approaches the NC1 limit via S5 tracking, (3) FLOPs-per-bit
+  convergence under CMA-ES (N=4) — when sensibly-tuned recurrent baselines are
+  all CMA-optimized, they learn at the same FLOPs-per-bit, so the contribution
+  is the architectural *option* plus the *mechanism*, not raw training speed.
+  Reframed sections: §0 (thesis), §1 (abstract), §2.1 (intro and
+  contributions), §2.10 (conclusion), §6 (venue/timing). Lean formal core,
+  Triton kernel, and S5 expressivity result are now positioned as supporting
+  evidence under the three pillars, not as separate top-level contributions.
+  Cross-references added to forthcoming `docs/CMA_FLOP_RATE_FINDING.md` (task
+  `harvest-cma-flop-rate-finding`) and `docs/QA_REASONING_PROGRESSION.md`
+  (task `harvest-qa-reasoning-quiz-progression`). NC1 wording is held at
+  "approaches the NC1 limit via S5 tracking" pending the outcome of
+  `lean-formalization-gap-audit` — see TODO markers inline.
+
+---
+
 **Inputs read (cited inline below):**
 
 - `docs/related_work_nonlinear_rnns.md` — literature survey (lit-survey-nonlinear-rnns)
@@ -10,55 +38,104 @@
 - `formal/lean/PROOF_INVENTORY.md` — trusted Lean surface (lean-proof-inventory)
 - `paper/notes_reconciliation.md` — claim-by-claim evidence reconciliation (reconcile-paper-notes)
 - `paper/ndmpapernotes.md` — original paper notes
+- `docs/CMA_FLOP_RATE_FINDING.md` — *forthcoming*, produced by
+  `harvest-cma-flop-rate-finding`; supplies the FLOPs-per-bit convergence
+  evidence under CMA-ES (Pillar 3). Placeholder reference until that task
+  lands.
+- `docs/QA_REASONING_PROGRESSION.md` — *forthcoming*, produced by
+  `harvest-qa-reasoning-quiz-progression`; supplies the over-training
+  quiz/reasoning capability progression for the 1.27B model. Placeholder
+  reference until that task lands.
 
 ---
 
 ## 0. Title and One-Sentence Thesis
 
-**Working title (carried from `paper/ndmpapernotes.md` line 5):**
+**Working title:**
 
-> Nonlinear Delta Memory: Scaling Pure Recurrent Language Models by Multi-Programming
+> Nonlinear Delta Memory: A Multi-Programmed Recipe for Pure Recurrent
+> Language Models at Scale
 
-**One-sentence thesis (`ndmpapernotes.md` lines 10–13):**
+**One-sentence thesis:**
 
 Pure nonlinear recurrent language models can be trained at billion-parameter
-scale when the recurrent computation is organized as a multi-programmed GPU
-workload, *and* the useful memory resource is a nonlinear delta-correcting
-matrix update rather than matrix state or temporal nonlinearity alone.
+scale by organizing the recurrent computation as a multi-programmed GPU
+workload, and the *update rule* — specifically a delta-correcting matrix
+write of the form `S ← tanh(d·S + k(v − Sᵀk)ᵀ)` — is what separates the
+resulting models from raw-write nonlinear matrix RNNs on state-tracking
+expressivity, even though raw training speed (FLOPs-per-bit) is largely
+indifferent to the choice of recurrent update.
 
-The two organizing pillars (per task brief):
+The three organizing pillars:
 
-1. **Multi-programming-parallel scaling thesis** — pure recurrent NDM/E88 at
-   1.27B is enabled by exposing many small bounded memory programs (per-head,
-   per-state-tile, per-batch) to the GPU, not by parallelizing along time.
-2. **Nonlinear-recurrence-at-scale with the delta-correcting mechanism** — the
-   tanh-on-state nonlinearity gives the computational class; the delta write
-   `v - Sᵀk` is the *load-bearing* mechanism that separates NDM from M2RNN-style
-   raw-write matrix RNNs at fixed update budget.
+1. **Generality of multi-programming for pure nonlinear recurrent LMs at
+   scale.** The systems recipe — many small bounded memory programs
+   (per-head, per-state-tile, per-batch) exposed to the GPU instead of
+   parallelism along time — is *general*. It is not specific to NDM.
+   Any nonlinear matrix-state recurrence with a similar multi-head /
+   small-state-tile shape becomes trainable at billion-parameter scale
+   under this recipe. The paper documents *how* to do it.
+2. **The update rule matters.** The delta-correcting write
+   `v − Sᵀk` separates from raw-write matrix RNNs (the M2RNN family) on
+   state-tracking expressivity probes and approaches the NC1 limit via
+   S5 tracking. *(TODO: tighten the "approaches the NC1 limit" wording
+   after `lean-formalization-gap-audit` reports back on which side of
+   the formal/empirical boundary the claim sits.)*
+3. **FLOPs-per-bit convergence under CMA-ES (N = 4).** When sensibly-tuned
+   recurrent baselines are all CMA-ES-optimized for shape and
+   hyperparameters, they learn at almost the same FLOPs-per-bit. The
+   contribution of the present work is therefore the *architectural
+   option* (pure nonlinear recurrence is viable at scale at all) plus
+   the *mechanism* (delta correction earns the expressivity), not raw
+   training speed. Evidence: forthcoming
+   `docs/CMA_FLOP_RATE_FINDING.md`.
 
 ---
 
-## 1. Abstract Sketch (4–6 sentences)
+## 1. Abstract Sketch (6–8 sentences)
 
 > Linear-state recurrent language models (Mamba, RWKV, GDN, mLSTM) and
-> recurrent–attention hybrids dominate the large-scale RNN literature; pure
-> nonlinear recurrence is widely assumed to be impractical at scale. We
-> introduce **Nonlinear Delta Memory (NDM)**, a pure recurrent architecture
-> whose per-head update `S = tanh(d·S + k(v − Sᵀk)ᵀ)` combines a bounded
-> tanh-on-state nonlinearity with a delta-correcting matrix write, and we
+> recurrent–attention hybrids dominate the large-scale RNN literature;
+> pure nonlinear recurrence has been widely assumed to be impractical at
+> scale. This paper makes three claims about pure nonlinear recurrent
+> language models, organized around a single architecture — Nonlinear
+> Delta Memory (NDM) — whose per-head update
+> `S ← tanh(d·S + k(v − Sᵀk)ᵀ)` combines a bounded tanh-on-state
+> nonlinearity with a delta-correcting matrix write.
+>
+> First, **multi-programming generalizes.** The systems recipe used to
 > train a 1.27B-parameter pure-recurrent NDM stack to convergence on a
-> Pile-class corpus. The key systems insight is multi-programming:
-> recurrence stays serial along time but exposes massive parallelism across
-> many small bounded memory programs, made practical by a fused Triton
-> recurrence kernel with sparse checkpointing that runs identically on
-> CUDA and ROCm. On controlled S3/S5 permutation-composition probes, NDM
-> separates from FLA-GDN (linear-state), Mamba2 (linear-state), and from
-> both published and CMA-ES-reshaped M2RNN variants (raw-write
-> nonlinear-state) — establishing that *neither* matrix state *nor* temporal
-> nonlinearity alone is sufficient. A trusted Lean 4 core, with no
-> `sorry`/`axiom`/`opaque`/`native_decide`, proves an update-family
-> resource separation between NDM and M2RNN, the S5 tracker, and the
-> finite-state ceiling for fixed-precision recurrent recognizers.
+> Pile-class corpus — recurrence kept serial along time, parallelism
+> exposed across many small bounded memory programs (per-head,
+> per-state-tile, per-batch), packaged into a fused Triton recurrence
+> kernel with sparse checkpointing that runs identically on CUDA and
+> ROCm — is not specific to NDM. The same multi-programmed shape makes
+> other pure nonlinear matrix-state recurrences trainable at the same
+> scale.
+>
+> Second, **the update rule matters.** On controlled S3/S5
+> permutation-composition probes, the delta-correcting write `v − Sᵀk`
+> separates NDM from FLA-GDN (linear-state), Mamba2 (linear-state), and
+> from both published and CMA-ES-reshaped M2RNN variants (raw-write
+> nonlinear-state matrix RNNs). A trusted Lean 4 core (no
+> `sorry`/`axiom`/`opaque`/`native_decide`) proves a one-step
+> update-family resource separation between the delta-correcting and
+> raw-write families, an S5 tracker construction, and a finite-state
+> ceiling for fixed-precision recurrent recognizers. The empirical
+> result is that the delta-correcting family approaches the NC1 limit
+> via S5 tracking, while raw-write and linear-scan families lag
+> noticeably. *(TODO: tighten "approaches the NC1 limit via S5
+> tracking" after `lean-formalization-gap-audit` resolves which
+> portion of this claim is Lean-proved vs empirical.)*
+>
+> Third, **raw training speed is not the differentiator.** Under
+> matched CMA-ES hyperparameter and shape search (N = 4 recurrent
+> families), the FLOPs-per-bit learning rate converges — the choice of
+> recurrent update changes *what the model can compute*, not how fast
+> it trains in FLOPs. The contribution of this paper is therefore the
+> architectural option, the systems recipe that makes it trainable at
+> scale, and the mechanism that earns the expressivity — not a
+> wallclock or FLOPs win over linear-state baselines.
 
 ---
 
@@ -69,25 +146,78 @@ bullet cites the upstream synthesis doc that supplies the content.
 
 ### 2.1 Introduction
 
-- **Field assumption to reject** — pure serial RNNs are "expressive but
-  impractical at scale"; the field's response has been linear recurrence
-  (Mamba/RWKV/GDN/mLSTM) or hybridization. Cite
-  `docs/related_work_nonlinear_rnns.md` entries 1–15 as evidence that
-  every billion-scale recurrent LM published to date is linear-state or
+- **Field assumption to reject.** Pure serial nonlinear RNNs are widely
+  assumed to be "expressive but impractical at scale," and the field's
+  response has been to move to linear-state recurrence (Mamba, RWKV,
+  Gated DeltaNet, mLSTM) or to hybridize recurrence with attention. The
+  survey in `docs/related_work_nonlinear_rnns.md` (entries 1–15) shows
+  that, prior to the present work, every billion-scale recurrent
+  language model in the published literature was either linear-state or
   hybrid.
-- **Counter-hypothesis** — the missing ingredient is *multi-programming*
-  (many bounded per-head memory programs), not attention or linear scan.
-  Frame the paper as the answer to: *did pure nonlinear recurrence fail
-  because it was the wrong computation, or because it was parallelized
-  along the wrong axis?* (`ndmpapernotes.md` lines 49–51.)
-- **Numbered contributions (six)** — restate from `ndmpapernotes.md` lines
-  54–68, but reordered around the two pillars so the multi-programming
-  systems contribution and the delta-correction mechanism contribution
-  bracket the empirical results.
-- **Concurrent work positioning** — M2RNN (`arXiv:2603.14360`) at 410M
-  pure-recurrent and xLSTM-1.3B (mixed sLSTM/mLSTM) are the two
-  closest-prior comparables; cite explicitly per
-  `docs/related_work_nonlinear_rnns.md` §"Closest Prior Art".
+- **Reframed question.** Did pure nonlinear recurrence fail because it
+  was the wrong computation, or because it was parallelized along the
+  wrong axis? This paper argues for the second: when recurrence is kept
+  serial along time but exposes parallelism across many small bounded
+  memory programs — what is called *multi-programming* here — pure
+  nonlinear matrix-state recurrence becomes trainable at billion-parameter
+  scale. The multi-programming recipe is general; it is not specific to
+  the particular architecture documented in this paper.
+- **Three contributions, organized as pillars.**
+    1. *A multi-programming recipe for pure nonlinear recurrent LMs at
+       scale.* A reference instantiation — the Nonlinear Delta Memory
+       architecture, trained as a 1.27B-parameter pure-recurrent stack
+       to convergence on a Pile-class corpus — demonstrates the recipe
+       end-to-end. The recipe (per-head bounded memory programs, fused
+       Triton recurrence kernel, sparse checkpointing, ScheduleFree-AdamW
+       per-island with hierarchical local-SGD averaging) is described in
+       enough detail to be applied to other pure nonlinear matrix-state
+       recurrences. The Triton kernel runs identically on CUDA and ROCm.
+    2. *Empirical and partially formal evidence that the update rule
+       matters.* The delta-correcting matrix write `v − Sᵀk` separates
+       NDM from raw-write matrix RNNs (the M2RNN family) and from
+       linear-state baselines on S3/S5 permutation-composition probes
+       and a six-task canonical state-tracking sweep. A trusted Lean 4
+       core, with no `sorry`/`axiom`/`opaque`/`native_decide`, proves a
+       one-step update-family resource separation between the
+       delta-correcting and raw-write families and a finite-state
+       ceiling for fixed-precision recurrent recognizers; an S5 tracker
+       is also constructed in Lean. The empirical headline is that the
+       delta-correcting family approaches the NC1 limit via S5
+       tracking. *(TODO: tighten this wording after the
+       `lean-formalization-gap-audit` task reports back; the present
+       phrasing reflects the trusted Lean surface as of 2026-05-23
+       together with empirical S5 separation, and does not claim a
+       formal NC1 lower bound.)*
+    3. *FLOPs-per-bit convergence under CMA-ES (N = 4).* When the four
+       compared recurrent baselines (NDM, FLA-GDN, Mamba2, M2RNN-class)
+       are each given matched CMA-ES hyperparameter and shape budgets,
+       their FLOPs-per-bit learning rates collapse to nearly the same
+       curve. This is reported in detail in
+       `docs/CMA_FLOP_RATE_FINDING.md` (forthcoming, produced by
+       `harvest-cma-flop-rate-finding`). It reframes the contribution:
+       the architectural option and the mechanism are the load-bearing
+       claims, not a raw-speed win.
+
+  The formal core (Lean), the systems (Triton kernel), and the
+  expressivity result are therefore *supporting evidence* under the
+  three pillars rather than separate top-level contributions.
+  Additional capability evidence from the over-training quiz/reasoning
+  panel — showing the 1.27B pure-recurrent NDM stack gaining real
+  capability on a QA + basic-reasoning suite over the course of
+  training — is documented in `docs/QA_REASONING_PROGRESSION.md`
+  (forthcoming, produced by `harvest-qa-reasoning-quiz-progression`).
+- **Related work peers.** Two recent pure or near-pure nonlinear
+  recurrent results are direct peers and deserve close treatment.
+  M2RNN (`arXiv:2603.14360`, March 2026) trains a *pure-recurrent*
+  nonlinear matrix-state RNN at 410M parameters on Nemotron-CC-v2;
+  this paper is positioned as a peer demonstration of a related
+  capability — pure nonlinear recurrence trained to useful loss on a
+  large web corpus — at smaller scale and with a different
+  (raw-write) update rule. xLSTM-1.3B
+  (`arXiv:2405.04517`) is a nonlinear+linear *mixed* recurrent stack
+  (7:1 mLSTM:sLSTM block ratio) trained on SlimPajama; it shares the
+  scale band but is not pure nonlinear-state. Both are treated as
+  related-work peers in §2.8, not as priority threats.
 
 ### 2.2 Background
 
@@ -239,24 +369,42 @@ bullet cites the upstream synthesis doc that supplies the content.
 - **The linear-state cohort** — Mamba/Mamba2, DeltaNet/Gated DeltaNet,
   RetNet, GLA, RWKV-4/5/6/7, HGRN/HGRN2, mLSTM, RG-LRU/Griffin/RecurrentGemma.
   All linear-in-h state updates; distinguished from NDM by the linearity
-  criterion (`docs/related_work_nonlinear_rnns.md` lines 13–15).
-- **The nonlinear-state cohort** — sLSTM (xLSTM-1.3B; nonlinear via
-  memory mixing but mixed 7:1 with linear mLSTM blocks);
-  **M2RNN** (`arXiv:2603.14360`) — closest comparable, but largest *pure*
-  recurrent variant is 410M and uses raw-write `tanh(H·W + k vᵀ)` rather
-  than delta correction; Titans (hybrid, MLP memory); classical
-  LSTM/GRU (never published at ≥500M Pile-class);
-  `arXiv:2505.17852` 1B LSTM ZOO (zero-order optimization, not standard
-  gradient training).
-- **Closest-prior-art treatment** — explicit M2RNN and xLSTM
-  subsections per `docs/related_work_nonlinear_rnns.md` §"Closest Prior
-  Art". State the recommended novelty framing
-  (`docs/related_work_nonlinear_rnns.md` lines 252–260): "To the best of
-  our knowledge, NDM is the first pure nonlinear recurrent language model
-  (no attention, no linear-recurrent layers) trained at ≥1B parameters
-  to near-convergence on a large-scale web corpus. Concurrent M2RNN
-  demonstrates nonlinear matrix-state recurrence at 410M pure-recurrent;
-  NDM is larger and employs a distinct delta-correcting update."
+  criterion (`docs/related_work_nonlinear_rnns.md` lines 13–15). These are
+  the comparison cohort for the FLOPs-per-bit convergence finding
+  (Pillar 3) and for the state-tracking separation (Pillar 2).
+- **The nonlinear-state cohort** — sLSTM (used in xLSTM-1.3B; nonlinear
+  via memory mixing but mixed 7:1 with linear mLSTM blocks); **M2RNN**
+  (`arXiv:2603.14360`) — pure-recurrent at 410M with a raw-write update
+  `tanh(H·W + k vᵀ)`; Titans (hybrid, MLP memory); classical LSTM/GRU
+  (no published model at ≥500M on a Pile-class corpus);
+  `arXiv:2505.17852` 1B LSTM trained with zero-order optimization (not
+  standard gradient training).
+- **Peer treatment for pure / near-pure nonlinear recurrent results.**
+  Two recent results deserve dedicated subsections in §2.8 rather than
+  inline mention, and are positioned as **related-work peers**:
+    - *M2RNN* (`arXiv:2603.14360`, March 2026) is a pure-recurrent
+      nonlinear matrix-state RNN trained at 410M on Nemotron-CC-v2. It
+      shares the high-level message that pure nonlinear recurrence can
+      reach useful loss on a large web corpus, at a smaller scale, with
+      a different (raw-write) update rule. The paper's relationship to
+      M2RNN is comparative on the update-rule axis (Pillar 2: the
+      delta-correcting write separates on state-tracking expressivity
+      from the raw-write update) and on the systems axis (Pillar 1: the
+      multi-programming recipe described here is general enough to apply
+      to the M2RNN update family as well — the M2RNN-CMA variant in
+      §2.5 is the concrete instantiation). No priority is claimed.
+    - *xLSTM-1.3B* (`arXiv:2405.04517`) is a nonlinear+linear mixed
+      recurrent stack with a 7:1 mLSTM:sLSTM block ratio (87.5% linear
+      mLSTM blocks). It is included because it is the closest scale
+      band, with an acknowledgment that it is not a pure nonlinear-state
+      result.
+- **Suggested framing line.** Replace any "first" / "priority" language
+  with a peer framing such as: "Concurrent M2RNN
+  (`arXiv:2603.14360`) demonstrates pure-recurrent nonlinear
+  matrix-state language modeling at 410M with a raw-write update; the
+  present work extends this line in three respects — scale (1.27B),
+  update rule (delta-correcting), and a multi-programming recipe that
+  is shown to be general across the nonlinear matrix-state family."
 
 ### 2.9 Limitations
 
@@ -274,27 +422,46 @@ bullet cites the upstream synthesis doc that supplies the content.
   checkpoints currently live in `~/elman/`; release plan tracks this
   under `huggingface-release-plan` (separate task).
 - **M2RNN comparison rests on local reproduction choices** — the
-  published M2RNN paper-shape is a sympathetic re-implementation;
-  authors may have shape/training details we did not match.
+  published M2RNN paper-shape is a sympathetic re-implementation; the
+  original authors may have shape or training details that this
+  re-implementation does not match.
 - **Loop contradictions still open** — output gate on/off, tanh vs linear
   state, simple vs Mamba2 decay (`docs/DESIGN_DOSSIER.md` §§6.1–6.4).
   Production keeps the more conservative settings; revalidation at
-  1.27B is flagged as the highest-value first follow-up.
+  1.27B is flagged as the highest-value early follow-up.
 
 ### 2.10 Conclusion
 
-- **Pillar 1 restated** — pure recurrence is viable at billion-parameter
-  scale when shaped as a many-program GPU workload; the parallelism is
-  across heads/programs/batch, not along the time axis.
-- **Pillar 2 restated** — delta-correcting matrix memory is the
-  empirically separable mechanism; nonlinearity alone (M2RNN) is not
-  sufficient.
-- **What we did *not* claim** — see §2.9; in particular no
-  "first nonlinear matrix-state RNN" claim, no NC¹ lower bound, no
-  "linear scans cannot do S5" formal proof.
-- **Open horizon** — how far nonlinear recurrent reasoning can scale once
-  memory, geometry, and systems are co-designed (`ndmpapernotes.md`
-  line 313).
+- **Pillar 1 restated.** Pure nonlinear recurrent language models are
+  trainable at billion-parameter scale when the recurrent computation
+  is shaped as a many-program GPU workload — parallelism is across
+  heads, state-tiles, and batch, not along time. The recipe is general:
+  any pure nonlinear matrix-state recurrence with a similar
+  many-head / small-state-tile geometry is reachable under the same
+  systems setup.
+- **Pillar 2 restated.** The delta-correcting matrix write
+  `v − Sᵀk` is the empirically separating mechanism: it pulls away
+  from raw-write nonlinear matrix RNNs (M2RNN family) and from
+  linear-state baselines on S3/S5 permutation composition and the
+  six-task canonical state-tracking sweep, and it approaches the NC1
+  limit via S5 tracking. Bounded nonlinearity *alone* is not
+  sufficient; nor is matrix state alone. *(TODO: tighten the NC1
+  wording after `lean-formalization-gap-audit` reports back.)*
+- **Pillar 3 restated.** Under matched CMA-ES search, the FLOPs-per-bit
+  learning rate of the four compared recurrent baselines converges.
+  The paper does *not* claim a wallclock or FLOPs-per-bit advantage
+  for any one recurrent family. The contribution is the architectural
+  option and the mechanism, not training speed.
+- **Explicit non-claims.** No priority claim on "first pure nonlinear
+  recurrent LM at scale" (M2RNN trained a pure-recurrent variant
+  concurrently at 410M and is treated here as a related-work peer);
+  no formal NC1 lower bound for linear-scan models; no formal proof
+  that a trained real-valued NDM exactly recovers the S5 lookup
+  table. See §2.9.
+- **Open horizon.** How far pure nonlinear recurrent reasoning can
+  scale once memory, geometry, and systems are co-designed — and
+  which other update rules earn the same expressivity separation
+  under the same multi-programmed recipe.
 
 ---
 
@@ -370,20 +537,46 @@ that supplies its data.
 
 ---
 
-## 4. Claim → Evidence Map (for each numbered contribution)
+## 4. Claim → Evidence Map (three pillars + supporting evidence)
 
-| # | Contribution (from `ndmpapernotes.md` lines 54–68) | Primary evidence file(s) | Lean witness if any |
+### Pillar 1 — Multi-programming generalizes
+
+| # | Sub-claim | Primary evidence file(s) | Lean witness if any |
 |---|---|---|---|
-| C1 | **Architecture:** NDM pure recurrent matrix-memory with nonlinear delta-correcting update | `docs/DESIGN_DOSSIER.md` §1 (update equation; `ndm/models/e88_fused.py:298-316`); `paper/notes_reconciliation.md` C1; `docs/related_work_nonlinear_rnns.md` §"Summary Verdict" | `PROOF_INVENTORY.md` `M2RNNComparison.write_rule_separates_m2rnn_and_e88`, `RecurrentResourceFormalism.e88_*` aliases |
-| C2 | **Training geometry:** CMA-ES and follow-up search → many-head multi-programmed shape at 1.27B | `docs/DESIGN_DOSSIER.md` §1, §6.7 (production head count); `paper/notes_reconciliation.md` C2, G1/G2/G3 (CMA-ES search code itself is out-of-repo — see Pending) | `PROOF_INVENTORY.md` `ndm_1p27B_programs_per_batch_token_bs5` (= 22200), `ndm_1p27B_state_scalars_per_layer` |
-| C3 | **Systems:** fused Triton kernel with L2 norm, sparse checkpointing, output gating, CUDA/ROCm | `docs/DESIGN_DOSSIER.md` §§4.1–4.3; `paper/notes_reconciliation.md` S1–S8 (S4, S7, S8 partial/OOR) | — (systems claims are not formalized) |
-| C4 | **Language modeling:** 1.27B pure NDM in same wallclock loss regime as linear-recurrent baselines | `paper/notes_reconciliation.md` C4 — currently **out-of-repo**; production loss qualitative claim in `docs/M2RNN_E88_COMPARISON.md` via `DESIGN_DOSSIER.md` §5 | — |
-| C5 | **Expressivity:** S3/S5 separates NDM from FLA-GDN, Mamba2, M2RNN | `docs/EXPRESSIVITY_RESULTS_SUMMARY.md` §5 (S3/S5 numbers); `paper/ndmpapernotes.md` lines 155–173. Mamba2 row currently missing — see Pending. | `PROOF_INVENTORY.md` `S5Witness.*`, `S5Tracker.*`, `S5NDMRealization.s5_transition_key_count` (= 480) |
-| C6 | **Formal core:** Lean-checked update-family resource separation, S5 tracker, finite transition realization | `formal/lean/PROOF_INVENTORY.md` §§Module M2RNNComparison, RecurrentResourceFormalism, S5Witness, S5Tracker, S5NDMRealization | All Lean witnesses listed in PROOF_INVENTORY §Coverage Table |
+| P1.a | A pure nonlinear matrix-state recurrent LM (NDM, 1.27B parameters) trains to convergence on a Pile-class corpus under the multi-programmed recipe | `paper/notes_reconciliation.md` C4 (currently **out-of-repo** — see Pending §5.2); qualitative production-loss claim via `docs/DESIGN_DOSSIER.md` §5 | — |
+| P1.b | The recipe is realized by per-head bounded memory programs (370 heads × 32×32 state tiles, depth 12) packaged into a fused Triton kernel | `docs/DESIGN_DOSSIER.md` §§1, 4.1; source `ndm/triton/e88_triton_*.py`, `ndm/models/e88_fused.py:298-316` | `PROOF_INVENTORY.md` `ndm_1p27B_programs_per_batch_token_bs5` (= 22200), `ndm_1p27B_state_scalars_per_layer` |
+| P1.c | The Triton kernel runs identically on CUDA and ROCm | `docs/DESIGN_DOSSIER.md` §4.3 (FRO); `paper/notes_reconciliation.md` S7 (ROCm parity test — Pending §5.2 #8) | — |
+| P1.d | The recipe is described in enough detail to be applied to other pure nonlinear matrix-state recurrences (it is not specific to NDM) | §2.4 of this outline + `docs/DESIGN_DOSSIER.md` §§4.1, 4.4 | — |
 
-Notes on the map: rows C1, C3, C5, C6 are **supported in-repo**; rows C2
-and C4 are **partial / out-of-repo** and listed under "Pending
-Experimental Closure" below.
+### Pillar 2 — The update rule matters
+
+| # | Sub-claim | Primary evidence file(s) | Lean witness if any |
+|---|---|---|---|
+| P2.a | The delta-correcting matrix write `v − Sᵀk` separates from raw-write matrix RNNs (M2RNN family) on S3/S5 permutation-composition probes at matched parameter count | `docs/EXPRESSIVITY_RESULTS_SUMMARY.md` §5a (S3/S5 numbers); `paper/ndmpapernotes.md` lines 153–173 | `PROOF_INVENTORY.md` `M2RNNComparison.write_rule_separates_m2rnn_and_e88`, `ndm_m2rnn_one_step_resource_separation`, `ndm_m2rnn_one_step_resource_separation_embeds` |
+| P2.b | The same separation persists across the six-task canonical state-tracking sweep (parity, modular counter, FSM tracking, dyck, associative recall, selective copy) at 8M parameter-matched | `docs/EXPRESSIVITY_RESULTS_SUMMARY.md` §§1a, 2a, 3a, 4a, 6a, 7a | — |
+| P2.c | The delta-correcting family **approaches the NC1 limit via S5 tracking** *(TODO: tighten this wording after `lean-formalization-gap-audit` reports back; current trusted Lean surface is the S5 tracker construction + finite-state ceiling, not a formal NC1 lower bound for linear-scan models)* | `docs/EXPRESSIVITY_RESULTS_SUMMARY.md` §5a; `formal/lean/PROOF_INVENTORY.md` §S5Witness, §S5Tracker, §S5NDMRealization | `PROOF_INVENTORY.md` `S5Witness.s5_state_count` (= 120), `s5_not_solvable`, `S5Tracker.recognizer_state_count`, `S5NDMRealization.s5_transition_key_count` (= 480) |
+| P2.d | A finite-state ceiling on fixed-precision recurrent recognizers is formalized in Lean | `formal/lean/PROOF_INVENTORY.md` §Module `RecurrentResourceFormalism` | `fixed_precision_state_space_finite`, `exactTransitionMemory_run` |
+
+### Pillar 3 — FLOPs-per-bit convergence under CMA-ES (N = 4)
+
+| # | Sub-claim | Primary evidence file(s) | Lean witness if any |
+|---|---|---|---|
+| P3.a | Under matched CMA-ES hyperparameter and shape search, the four compared recurrent families (NDM, FLA-GDN, Mamba2, M2RNN-class) collapse to nearly the same FLOPs-per-bit learning rate | `docs/CMA_FLOP_RATE_FINDING.md` *(forthcoming; produced by `harvest-cma-flop-rate-finding`)* | — |
+| P3.b | The paper does *not* claim a wallclock or FLOPs-per-bit advantage; the contribution is the architectural option + the mechanism | §1 Abstract; §2.10 Conclusion of this outline | — |
+
+### Supporting capability evidence
+
+| # | Sub-claim | Primary evidence file(s) |
+|---|---|---|
+| S.a | The 1.27B pure-recurrent NDM stack gains real QA / basic-reasoning capability over training (capability evidence beyond loss numbers) | `docs/QA_REASONING_PROGRESSION.md` *(forthcoming; produced by `harvest-qa-reasoning-quiz-progression`)* |
+| S.b | Hybridization with linear-scan blocks (e.g. `[NDM, NDM, GDN, GDN]`) *degrades* state-tracking — purity is what gives the profile | `docs/EXPRESSIVITY_RESULTS_SUMMARY.md` §§3a, 4a |
+
+Notes on the map: Pillar 1's P1.a and Pillar 3 are **partial /
+out-of-repo** as of 2026-05-24 — racer plots and CMA-ES artifacts live
+in `~/elman/`; see "Pending Experimental Closure" §5.2 for the exact
+file paths that must be staged. All Pillar 2 Lean witnesses are
+**in-repo and trust-gated** per `formal/lean/PROOF_INVENTORY.md`,
+subject to a conclusive `lake build`.
 
 ---
 
@@ -479,28 +672,32 @@ into a new `paper/results/` tree under the release plan.
 
 **Why NeurIPS specifically:**
 
-- The two pillars (multi-programming systems result + nonlinear-recurrence
-  mechanism result) span systems and modeling — NeurIPS reviewers are the
-  right audience for both, more so than ICLR (which leans modeling) or
-  COLM (heavily LM-curated, but smaller systems audience).
+- The three pillars (multi-programming systems recipe + update-rule
+  mechanism + FLOPs-per-bit-under-CMA finding) span systems and
+  modeling — NeurIPS reviewers are the right audience for both, more
+  so than ICLR (which leans modeling) or COLM (heavily LM-curated, but
+  smaller systems audience).
 - The Lean trusted core is an unusual but well-received contribution in
   NeurIPS — recent precedent in formal verification + ML at NeurIPS
   (verified ML, neuro-symbolic tracks).
-- The closest prior art (M2RNN at `arXiv:2603.14360` — March 2026
-  concurrent; xLSTM-1.3B; RWKV-7) is all NeurIPS-style work; reviewers
-  will recognize the comparable.
+- The peer pure-nonlinear and near-pure-nonlinear results (M2RNN at
+  `arXiv:2603.14360` — March 2026; xLSTM-1.3B; RWKV-7) are
+  NeurIPS-style work; reviewers will recognize the comparison and the
+  pillar framing.
 
 ### Backup ordering
 
 1. **NeurIPS 2026 main track** — preferred.
-2. **ICLR 2027** — second choice if NeurIPS timing slips. ICLR review
-   cycle suits a paper that needs another round of empirical depth.
+2. **ICLR 2027** — second choice if NeurIPS timing slips. The ICLR
+   review cycle suits a paper that benefits from another round of
+   empirical depth (additional CMA-ES seeds, Mamba2 baseline closure).
 3. **COLM 2026** — viable for the LM-specific subset of the result, but
    the systems+Lean+expressivity span fits less well.
-4. **arXiv preprint** — required regardless (priority date for the
-   "first pure nonlinear recurrent ≥1B parameter LM" claim against any
-   future M2RNN scale-up). Should be posted as soon as Figure 3 data is
-   committed, even ahead of NeurIPS deadline.
+4. **arXiv preprint** — strongly advisable in advance of venue
+   submission so the multi-programming recipe and update-rule
+   separation are publicly readable while the venue review proceeds.
+   The arXiv post is not a priority claim against M2RNN; it is simply
+   the way work in this area becomes citeable.
 
 ### Timing constraints
 
@@ -509,17 +706,19 @@ into a new `paper/results/` tree under the release plan.
   realistic targets are NeurIPS 2026 *Datasets and Benchmarks* (if
   framed around the S5 expressivity benchmark — late June typical),
   ICLR 2027, or NeurIPS 2027.
-- **Priority date risk.** M2RNN (arXiv:2603.14360) is concurrent —
-  March 2026. The pure-recurrent 410M vs NDM-1.27B comparison must be
-  posted to arXiv soon to lock the scale-up priority claim.
 - **Pending items 5.2 #1, #5, #6** (S5 JSONs, Mamba2, racer plots) are
-  the critical-path closures. Item #1 is fastest (re-run an existing
-  separation suite). Items #5 and #6 require the most external compute
-  / `~/elman/` artifact migration.
+  the critical-path closures for Pillar 2 reproducibility and Pillar 1
+  evidence. Item #1 is fastest (re-run an existing separation suite).
+  Items #5 and #6 require the most external compute / `~/elman/`
+  artifact migration. The CMA-ES FLOPs-per-bit panels (Pillar 3) wait
+  on `harvest-cma-flop-rate-finding`.
 - **Lean kernel build verification.** Per `formal/lean/PROOF_INVENTORY.md`
   §Run Result, `lake build` was not completed in the inventory
   session; before submission, the trust-gate must be run conclusively
-  in an environment with `ripgrep` installed and Mathlib cached.
+  in an environment with `ripgrep` installed and Mathlib cached. The
+  NC1 wording in §1 and the Pillar 2 P2.c row in §4 must also be
+  reconciled with whatever `lean-formalization-gap-audit` concludes
+  about the proved-vs-empirical boundary.
 
 ### Provisional milestone calendar (working assumption)
 
@@ -537,41 +736,72 @@ into a new `paper/results/` tree under the release plan.
 ## 7. Cross-Reference Index (every upstream synthesis doc is explicitly cited)
 
 - `docs/related_work_nonlinear_rnns.md` — §§2.1, 2.2, 2.8, Figure 5
-  context (linear vs nonlinear taxonomy), §6 (M2RNN/xLSTM closest-prior
+  context (linear vs nonlinear taxonomy), §6 (M2RNN/xLSTM peer
   treatment).
 - `docs/EXPRESSIVITY_RESULTS_SUMMARY.md` — §§2.6, Figure 1, Figure 5,
-  Pending §5.2 items 1–4.
+  Pending §5.2 items 1–4; Pillar 2 sub-claims P2.a, P2.b.
 - `docs/DESIGN_DOSSIER.md` — §§2.3, 2.4, Figure 1A, Figure 2, Figure 4,
-  §2.9 (contradiction list).
-- `formal/lean/PROOF_INVENTORY.md` — §§2.7, claim→evidence rows C1/C2/C5/C6,
-  §2.9 (non-claims), Lean-trust-gate caveat in §6.
+  §2.9 (contradiction list); Pillar 1 sub-claims P1.b–P1.d.
+- `formal/lean/PROOF_INVENTORY.md` — §§2.7, Pillar 2 sub-claims P2.a,
+  P2.c, P2.d, §2.9 (non-claims), Lean-trust-gate caveat in §6.
 - `paper/notes_reconciliation.md` — §2.5 (gap list), §§4–5 (claim
   evidence rows and pending experiments), §6 (timing constraints).
 - `paper/ndmpapernotes.md` — §§0 (title, thesis), 1 (abstract sketch),
   2 (every section header), 3 (figure list — Figures 1–4 originate
-  here), 4 (six contributions).
+  here), 4 (original contributions list — now reorganized as three
+  pillars in §4). *Preserved as historical; not reframed by this task.*
+- `docs/CMA_FLOP_RATE_FINDING.md` — *forthcoming;* Pillar 3 sub-claims
+  P3.a, P3.b.
+- `docs/QA_REASONING_PROGRESSION.md` — *forthcoming;* supporting
+  capability evidence row S.a.
 
 ---
 
 ## 8. Validation Self-Check (against task spec)
 
-- [x] **All 5 upstream summary docs are explicitly read and cited.** —
-  §0 + §7 cross-reference index.
+- [x] **All 5 upstream summary docs are explicitly read and cited; the
+  two forthcoming reframe-companion docs are referenced as placeholders.**
+  — §0 (Inputs read) + §7 cross-reference index.
 - [x] **Each section has at least 3 bullet points of intended content.**
-  — §2.1 (4), §2.2 (4), §2.3 (4), §2.4 (5), §2.5 (5), §2.6 (5), §2.7 (5),
-  §2.8 (3), §2.9 (6), §2.10 (4).
-- [x] **Every numbered contribution is mapped to a specific evidence
-  file (no 'TBD' for contributions verifiable in-repo).** — §4 table;
-  C2 and C4 explicitly marked partial/out-of-repo with the specific
-  `paper/notes_reconciliation.md` rows.
+  — §2.1 (5), §2.2 (4), §2.3 (4), §2.4 (5), §2.5 (5), §2.6 (5), §2.7 (5),
+  §2.8 (4), §2.9 (6), §2.10 (5).
+- [x] **Every pillar sub-claim is mapped to a specific evidence file
+  (no 'TBD' for items verifiable in-repo).** — §4 tables; Pillar 1
+  P1.a and Pillar 3 explicitly marked partial/out-of-repo with the
+  specific blocking dependencies.
 - [x] **Pending-experiments list is concrete (file paths to result dirs
   that need to fill in).** — §5.2 lists nine items with exact result
   directories or scripts.
 - [x] **At least 4 figures specified.** — Figures 1–4 mandatory; Figure 5
   optional.
 
+### Reframe-task self-check (`reframe-paper-narrative`, 2026-05-24)
+
+- [x] All "first" / "priority" / "before M2RNN" priority framing removed
+  from §0, §1, §2.1, §2.8, §2.10, §6.
+- [x] Three-pillar framing present in abstract (§1), contributions
+  bullet (§2.1), claim→evidence map (§4), conclusion (§2.10).
+- [x] M2RNN repositioned as related-work peer (§2.1 Related work peers
+  bullet; §2.8 Peer treatment subsection); no "priority threat" or
+  "closest comparable" framing remains.
+- [x] CHANGELOG note present at top of this file with date + reason.
+- [x] References to `docs/CMA_FLOP_RATE_FINDING.md` and
+  `docs/QA_REASONING_PROGRESSION.md` included as placeholder
+  references in §0 Inputs read, §2.1 contributions bullet (Pillar 3
+  and supporting evidence row S.a), §4 evidence map (P3.a, S.a), and
+  §7 cross-reference index.
+- [x] NC1 wording held at "approaches the NC1 limit via S5 tracking"
+  with explicit TODO markers in §0, §1, §2.1, §2.10, §4 (P2.c)
+  pending `lean-formalization-gap-audit`.
+- [x] Paper-facing rewritten sections (§0 title/thesis, §1 abstract,
+  §2.1 introduction and contributions, §2.8 related-work peer
+  framing, §2.10 conclusion) use no first-person plural and unpack
+  internal codenames (NDM is introduced as the architecture's name;
+  no bare E-series codenames appear in those sections).
+
 ---
 
 *Outline only — paper prose is out of scope per task brief. Generated by
-`paper-outline`; downstream consumer `direction-forward-memo` will
-integrate this with the rest of the audit set.*
+`paper-outline`; reframed 2026-05-24 by `reframe-paper-narrative`;
+downstream consumer `direction-forward-memo` will integrate this with
+the rest of the audit set.*
