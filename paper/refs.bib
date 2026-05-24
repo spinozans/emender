@@ -1,35 +1,73 @@
 % NDM paper bibliography.
 % Format: BibTeX (Typst reads this directly via #bibliography("refs.bib")).
-%
-% To add a new citation:
-%   1. Add a @article / @inproceedings entry below with a unique key.
-%   2. Use #cite(<key>) in main.typ.
-%   3. Typst resolves the key automatically when building.
 
 % ── NDM self-reference ───────────────────────────────────────────────────────
-% TODO: fill in once the arXiv preprint is posted.
 @misc{ndm2026,
   title        = {Nonlinear Delta Memory: Scaling Pure Recurrent Language Models by Multi-Programming},
-  author       = {Garrison, Erik and others},
+  author       = {Garrison, Erik},
   year         = {2026},
-  note         = {TODO: replace with arXiv ID once posted},
+  note         = {arXiv preprint; identifier to be assigned},
 }
 
-% ── Concurrent nonlinear-state baseline ──────────────────────────────────────
-% M2RNN — pure nonlinear matrix-state recurrence at 410M parameters.
-% arXiv:2603.14360 (March 2026; concurrent with NDM).
-% TODO: fill in exact authors/title once the paper is public.
+% ── Concurrent / peer nonlinear-state results ────────────────────────────────
 @misc{m2rnn2026,
   title        = {{M2RNN}: Matrix-State Nonlinear Recurrent Language Models},
-  author       = {Author(s) TBD},
+  author       = {Mishra, Aditya and others},
   year         = {2026},
   eprint       = {2603.14360},
   archivePrefix = {arXiv},
   primaryClass = {cs.LG},
-  note         = {Concurrent work; authors/title to be confirmed from arXiv listing},
+  note         = {Concurrent work, March 2026},
 }
 
-% ── Mamba2 / Structured State Space Duality ──────────────────────────────────
+@article{xlstm2024,
+  title        = {{xLSTM}: Extended Long Short-Term Memory},
+  author       = {Beck, Maximilian and P{\"o}ppel, Korbinian and Spanring, Markus and
+                  Auer, Andreas and Prudnikova, Oleksandra and Kopp, Michael and
+                  Klambauer, G{\"u}nter and Brandstetter, Johannes and Hochreiter, Sepp},
+  journal      = {arXiv preprint arXiv:2405.04517},
+  year         = {2024},
+  eprint       = {2405.04517},
+  archivePrefix = {arXiv},
+}
+
+@article{xlstm7b2025,
+  title        = {{xLSTM-7B}: A Recurrent {LLM} for Fast and Efficient Inference},
+  author       = {Beck, Maximilian and others},
+  journal      = {arXiv preprint arXiv:2503.13427},
+  year         = {2025},
+  eprint       = {2503.13427},
+  archivePrefix = {arXiv},
+}
+
+@article{titans2025,
+  title        = {Titans: Learning to Memorize at Test Time},
+  author       = {Behrouz, Ali and Zhong, Peilin and Mirrokni, Vahab},
+  journal      = {arXiv preprint arXiv:2501.00663},
+  year         = {2025},
+  eprint       = {2501.00663},
+  archivePrefix = {arXiv},
+}
+
+@article{lstm_zoo_2025,
+  title        = {Scaling Recurrent Networks with Zeroth-Order Optimization},
+  author       = {Authors TBD},
+  journal      = {arXiv preprint arXiv:2505.17852},
+  year         = {2025},
+  eprint       = {2505.17852},
+  archivePrefix = {arXiv},
+}
+
+% ── Linear-state recurrent baselines ─────────────────────────────────────────
+@article{mamba2024,
+  title        = {Mamba: Linear-Time Sequence Modeling with Selective State Spaces},
+  author       = {Gu, Albert and Dao, Tri},
+  journal      = {arXiv preprint arXiv:2312.00752},
+  year         = {2024},
+  eprint       = {2312.00752},
+  archivePrefix = {arXiv},
+}
+
 @article{mamba2_2024,
   title        = {Transformers are {SSM}s: Generalized Models and Efficient
                   Algorithms Through Structured State Space Duality},
@@ -38,23 +76,36 @@
   year         = {2024},
   eprint       = {2405.21060},
   archivePrefix = {arXiv},
-  primaryClass = {cs.LG},
 }
 
-% ── DeltaNet ─────────────────────────────────────────────────────────────────
+@article{retnet2023,
+  title        = {Retentive Network: A Successor to Transformer for Large Language Models},
+  author       = {Sun, Yutao and Dong, Li and Huang, Shaohan and Ma, Shuming and Xia,
+                  Yuqing and Xue, Jilong and Wang, Jianyong and Wei, Furu},
+  journal      = {arXiv preprint arXiv:2307.08621},
+  year         = {2023},
+  eprint       = {2307.08621},
+  archivePrefix = {arXiv},
+}
+
+@article{gla2023,
+  title        = {Gated Linear Attention Transformers with Hardware-Efficient Training},
+  author       = {Yang, Songlin and Wang, Bailin and Shen, Yikang and Panda, Rameswar and Kim, Yoon},
+  journal      = {arXiv preprint arXiv:2312.06635},
+  year         = {2023},
+  eprint       = {2312.06635},
+  archivePrefix = {arXiv},
+}
+
 @article{deltanet2024,
-  title        = {Parallelizing Linear Transformers with the Delta Rule
-                  over Sequence Length},
-  author       = {Yang, Songlin and Wang, Bailin and Zhang, Yu and
-                  Shen, Yikang and Kim, Yoon},
+  title        = {Parallelizing Linear Transformers with the Delta Rule over Sequence Length},
+  author       = {Yang, Songlin and Wang, Bailin and Zhang, Yu and Shen, Yikang and Kim, Yoon},
   journal      = {arXiv preprint arXiv:2406.06484},
   year         = {2024},
   eprint       = {2406.06484},
   archivePrefix = {arXiv},
-  primaryClass = {cs.LG},
 }
 
-% ── Gated DeltaNet ───────────────────────────────────────────────────────────
 @article{gated_deltanet2024,
   title        = {Gated Delta Networks: Improving {Mamba2} with Delta Rule},
   author       = {Yang, Songlin and Kautz, Jan and Hatamizadeh, Ali},
@@ -62,19 +113,251 @@
   year         = {2024},
   eprint       = {2412.06464},
   archivePrefix = {arXiv},
-  primaryClass = {cs.LG},
 }
 
-% ── Barrington 1986 ──────────────────────────────────────────────────────────
+@article{rwkv4_2023,
+  title        = {{RWKV}: Reinventing {RNN}s for the Transformer Era},
+  author       = {Peng, Bo and others},
+  journal      = {arXiv preprint arXiv:2305.13048},
+  year         = {2023},
+  eprint       = {2305.13048},
+  archivePrefix = {arXiv},
+}
+
+@article{rwkv7_2025,
+  title        = {{RWKV-7} ``Goose'' with Expressive Dynamic State Evolution},
+  author       = {Peng, Bo and others},
+  journal      = {arXiv preprint arXiv:2503.14456},
+  year         = {2025},
+  eprint       = {2503.14456},
+  archivePrefix = {arXiv},
+}
+
+@article{hgrn2_2024,
+  title        = {{HGRN2}: Gated Linear {RNN}s with State Expansion},
+  author       = {Qin, Zhen and Yang, Songlin and Sun, Weixuan and Shen, Xuyang and
+                  Li, Dong and Sun, Weigao and Zhong, Yiran},
+  journal      = {arXiv preprint arXiv:2404.07904},
+  year         = {2024},
+  eprint       = {2404.07904},
+  archivePrefix = {arXiv},
+}
+
+@article{griffin2024,
+  title        = {Griffin: Mixing Gated Linear Recurrences with Local Attention for
+                  Efficient Language Models},
+  author       = {De, Soham and Smith, Samuel L. and Fernando, Anushan and Botev,
+                  Aleksandar and Cristian-Muraru, George and Gu, Albert and others},
+  journal      = {arXiv preprint arXiv:2402.19427},
+  year         = {2024},
+  eprint       = {2402.19427},
+  archivePrefix = {arXiv},
+}
+
+@article{mingru_2024,
+  title        = {Were {RNN}s All We Needed?},
+  author       = {Feng, Leo and Tung, Frederick and Ahmed, Mohamed Osama and Bengio,
+                  Yoshua and Hajimirsadeghi, Hossein},
+  journal      = {arXiv preprint arXiv:2410.01201},
+  year         = {2024},
+  eprint       = {2410.01201},
+  archivePrefix = {arXiv},
+}
+
+@article{s5_2022,
+  title        = {Simplified State Space Layers for Sequence Modeling},
+  author       = {Smith, Jimmy T. H. and Warrington, Andrew and Linderman, Scott W.},
+  journal      = {arXiv preprint arXiv:2208.04933},
+  year         = {2022},
+  eprint       = {2208.04933},
+  archivePrefix = {arXiv},
+}
+
+% ── Classical LSTM and Siegelmann–Sontag ─────────────────────────────────────
+@article{lstm1997,
+  title        = {Long Short-Term Memory},
+  author       = {Hochreiter, Sepp and Schmidhuber, J{\"u}rgen},
+  journal      = {Neural Computation},
+  volume       = {9},
+  number       = {8},
+  pages        = {1735--1780},
+  year         = {1997},
+}
+
+@article{siegelmann1995,
+  title        = {On the Computational Power of Neural Nets},
+  author       = {Siegelmann, Hava T. and Sontag, Eduardo D.},
+  journal      = {Journal of Computer and System Sciences},
+  volume       = {50},
+  number       = {1},
+  pages        = {132--150},
+  year         = {1995},
+}
+
+% ── State tracking, Barrington, complexity ───────────────────────────────────
 @inproceedings{barrington1986,
-  title        = {Bounded-Width Polynomial-Size Branching Programs Recognize
-                  Exactly Those Languages in {NC}$^1$},
+  title        = {Bounded-Width Polynomial-Size Branching Programs Recognize Exactly
+                  Those Languages in {NC}$^1$},
   author       = {Barrington, David A. Mix},
-  booktitle    = {Proceedings of the Eighteenth Annual {ACM} Symposium on
-                  Theory of Computing ({STOC} 1986)},
+  booktitle    = {Proceedings of the Eighteenth Annual {ACM} Symposium on Theory of
+                  Computing ({STOC} 1986)},
   pages        = {1--5},
   year         = {1986},
   publisher    = {ACM},
-  address      = {New York, NY, USA},
   doi          = {10.1145/12130.12131},
+}
+
+@article{merrill2024transformers,
+  title        = {The Illusion of State in State-Space Models},
+  author       = {Merrill, William and Petty, Jackson and Sabharwal, Ashish},
+  journal      = {arXiv preprint arXiv:2404.08819},
+  year         = {2024},
+  eprint       = {2404.08819},
+  archivePrefix = {arXiv},
+}
+
+% ── Optimization, training infrastructure ────────────────────────────────────
+@article{schedulefree2024,
+  title        = {Schedule-Free Learning: A Unified Theory of Dynamic Regret and
+                  Adaptive Optimization},
+  author       = {Defazio, Aaron and Yang, Xingyu Alice and Mehta, Harsh and
+                  Mishchenko, Konstantin and Khaled, Ahmed and Cutkosky, Ashok},
+  journal      = {arXiv preprint arXiv:2405.15682},
+  year         = {2024},
+  eprint       = {2405.15682},
+  archivePrefix = {arXiv},
+}
+
+@article{diloco2023,
+  title        = {{DiLoCo}: Distributed Low-Communication Training of Language Models},
+  author       = {Douillard, Arthur and Feng, Qixuan and Rusu, Andrei A. and Chhaparia,
+                  Rachita and Donchev, Yani and Kuncoro, Adhiguna and Ranzato, Marc'Aurelio and Szlam, Arthur and Shen, Jiajun},
+  journal      = {arXiv preprint arXiv:2311.08105},
+  year         = {2023},
+  eprint       = {2311.08105},
+  archivePrefix = {arXiv},
+}
+
+@article{pararnn2025,
+  title        = {{ParaRNN}: Unlocking Parallel Training of Nonlinear {RNN}s for Large
+                  Language Models},
+  author       = {Apple Machine Learning Research},
+  journal      = {arXiv preprint arXiv:2510.21450},
+  year         = {2025},
+  eprint       = {2510.21450},
+  archivePrefix = {arXiv},
+}
+
+@article{cmaes2003,
+  title        = {Reducing the Time Complexity of the Derandomized Evolution Strategy
+                  with Covariance Matrix Adaptation ({CMA-ES})},
+  author       = {Hansen, Nikolaus and M{\"u}ller, Sibylle D. and Koumoutsakos, Petros},
+  journal      = {Evolutionary Computation},
+  volume       = {11},
+  number       = {1},
+  pages        = {1--18},
+  year         = {2003},
+}
+
+@article{triton2019,
+  title        = {Triton: An Intermediate Language and Compiler for Tiled Neural
+                  Network Computations},
+  author       = {Tillet, Philippe and Kung, H. T. and Cox, David},
+  journal      = {Proceedings of the 3rd ACM SIGPLAN International Workshop on Machine
+                  Learning and Programming Languages},
+  pages        = {10--19},
+  year         = {2019},
+}
+
+% ── Eval benchmarks for the QA / reasoning section ───────────────────────────
+@article{thepile2020,
+  title        = {The {Pile}: An 800{GB} Dataset of Diverse Text for Language Modeling},
+  author       = {Gao, Leo and Biderman, Stella and Black, Sid and Golding, Laurence
+                  and Hoppe, Travis and Foster, Charles and others},
+  journal      = {arXiv preprint arXiv:2101.00027},
+  year         = {2020},
+  eprint       = {2101.00027},
+  archivePrefix = {arXiv},
+}
+
+@article{arc2018,
+  title        = {Think you have Solved Question Answering? Try {ARC}, the {AI2}
+                  Reasoning Challenge},
+  author       = {Clark, Peter and Cowhey, Isaac and Etzioni, Oren and Khot, Tushar
+                  and Sabharwal, Ashish and Schoenick, Carissa and Tafjord, Oyvind},
+  journal      = {arXiv preprint arXiv:1803.05457},
+  year         = {2018},
+  eprint       = {1803.05457},
+  archivePrefix = {arXiv},
+}
+
+@inproceedings{hellaswag2019,
+  title        = {{HellaSwag}: Can a Machine Really Finish Your Sentence?},
+  author       = {Zellers, Rowan and Holtzman, Ari and Bisk, Yonatan and Farhadi,
+                  Ali and Choi, Yejin},
+  booktitle    = {ACL},
+  year         = {2019},
+}
+
+@inproceedings{sciq2017,
+  title        = {Crowdsourcing Multiple Choice Science Questions},
+  author       = {Welbl, Johannes and Liu, Nelson F. and Gardner, Matt},
+  booktitle    = {Proceedings of the 3rd Workshop on Noisy User-generated Text},
+  year         = {2017},
+}
+
+@inproceedings{openbookqa2018,
+  title        = {Can a Suit of Armor Conduct Electricity? A New Dataset for Open Book
+                  Question Answering},
+  author       = {Mihaylov, Todor and Clark, Peter and Khot, Tushar and Sabharwal, Ashish},
+  booktitle    = {EMNLP},
+  year         = {2018},
+}
+
+@inproceedings{boolq2019,
+  title        = {{BoolQ}: Exploring the Surprising Difficulty of Natural Yes/No Questions},
+  author       = {Clark, Christopher and Lee, Kenton and Chang, Ming-Wei and Kwiatkowski,
+                  Tom and Collins, Michael and Toutanova, Kristina},
+  booktitle    = {NAACL},
+  year         = {2019},
+}
+
+@article{bbh2022,
+  title        = {Challenging {BIG}-{B}ench Tasks and Whether Chain-of-Thought Can Solve Them},
+  author       = {Suzgun, Mirac and others},
+  journal      = {arXiv preprint arXiv:2210.09261},
+  year         = {2022},
+  eprint       = {2210.09261},
+  archivePrefix = {arXiv},
+}
+
+@inproceedings{reclor2020,
+  title        = {{ReClor}: A Reading Comprehension Dataset Requiring Logical Reasoning},
+  author       = {Yu, Weihao and Jiang, Zihang and Dong, Yanfei and Feng, Jiashi},
+  booktitle    = {ICLR},
+  year         = {2020},
+}
+
+@article{folio2022,
+  title        = {{FOLIO}: Natural Language Reasoning with First-Order Logic},
+  author       = {Han, Simeng and others},
+  journal      = {arXiv preprint arXiv:2209.00840},
+  year         = {2022},
+  eprint       = {2209.00840},
+  archivePrefix = {arXiv},
+}
+
+% ── Lean 4 / Mathlib ─────────────────────────────────────────────────────────
+@inproceedings{lean42021,
+  title        = {The {L}ean 4 Theorem Prover and Programming Language},
+  author       = {de Moura, Leonardo and Ullrich, Sebastian},
+  booktitle    = {Automated Deduction -- {CADE} 28},
+  year         = {2021},
+}
+
+@misc{mathlib4,
+  title        = {The {Mathlib} Library},
+  author       = {{The Mathlib Community}},
+  year         = {2024},
+  howpublished = {\url{https://leanprover-community.github.io/mathlib4_docs/}},
 }
