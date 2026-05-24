@@ -73,13 +73,6 @@ All symbols exported from `ndm.__init__`:
 
 ## Known issues
 
-### Version mismatch: pyproject.toml vs `__version__`
-
-- `pyproject.toml` declares `version = "0.1.0"`
-- `ndm/__init__.py` exports `__version__ = "0.2.0"`
-
-These are out of sync. The installed package metadata reports `0.1.0` (`pip show ndm`), while the runtime attribute returns `0.2.0`. One of these should be updated before publishing.
-
 ### `LadderLM` CPU usage requires `mamba_ssm` to be absent
 
 When `mamba_ssm` is installed in the same environment (it is a development dependency, not listed in `pyproject.toml`), `LadderLM` auto-selects its Triton fused-norm kernel which requires CUDA tensors. A clean `pip install ndm` without `mamba_ssm` falls back to `torch.nn.RMSNorm` and runs fine on CPU.
