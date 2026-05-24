@@ -99,45 +99,64 @@ capacity reason.
 
 ## §3 — Draft methodology paragraph (publication-ready)
 
-The following ~270-word paragraph is written in third-person scholarly
+The following ~295-word paragraph is written in third-person scholarly
 voice for direct insertion into `paper/main.typ`. It contains no
 first-person, no self-reference, and anchors every claim either to a
-v1 figure/table or to the calculation in §2 above.
+v1 figure/table or to the calculation in §2 above. The paragraph is
+deliberately precise about *representability* (Lean, per-step) versus
+*learnability* (probes, joint property); see the note immediately
+following on why that distinction is load-bearing.
 
 > The state-tracking probes of this section are *intentionally
-> over-parameterized*. The symmetric-group witnesses carry small state
-> sets — `|S₅| = 120`, `|S₃| = 6` — so the information-theoretic floor
-> for representing the running prefix product is `log₂(120) ≈ 6.91`
-> bits for S₅ and `log₂(6) ≈ 2.59` bits for S₃. At parameter-matched
-> 8 M scale, every family carries on the order of `10⁸` parameter
-> bits, roughly seven orders of magnitude above the
-> state-representational floor and several above the tight
-> lookup-table realisation (`|S₅| × |Σ| = 480` keys, formalised as
-> `S5NDMRealization.s5_transition_key_count`). Parameter budget is
-> therefore non-binding at this scale. The choice is deliberate: with
-> capacity removed as a confound, a failure on the probe is by
-> elimination a *mechanism* failure, not a budget failure — the same
-> logic as the fixed-precision finite-state ceiling of §8
-> (`S5Witness.fixed_precision_state_space_finite`). Read against
-> this calibration, M2RNN's S₃ mean accuracy of 0.31 with roughly
-> `10⁸` parameter bits chasing a ~3-bit floor is structural evidence
-> that the raw-write update cannot be trained to prefix-track a
-> six-state automaton, not evidence that it ran out of room. Two
-> propositions must therefore be kept distinct: (A) the
-> delta-correcting write is structurally more expressive than the
-> raw-write update — settled at 8 M and anchored in the Lean core;
-> and (B) that expressivity improvement transfers to language
-> modelling at 1.27 B — open, and not what the §7 QA panel rules on.
-> The 8 M probes are the *clean* mechanism measurement; the 1.27 B QA
-> panel is *confounded* for mechanism questions at this training
-> stage, mixing training-stage variance, benchmark noise, and
-> capacity. The framing that the S₅ result "vanishes at scale" or
-> "needs to be re-shown at 1.27 B" is therefore retracted:
-> expressivity is scale-invariant at fixed precision and width, and
-> the QA tie is a measurement-confounding issue, not a refutation of
-> (A).
+> over-parameterized*. The symmetric-group witnesses carry small
+> state sets — `|S₅| = 120`, `|S₃| = 6` — so the
+> information-theoretic floor for the running prefix product is
+> `log₂(120) ≈ 6.91` bits for S₅ and `log₂(6) ≈ 2.59` bits for S₃.
+> At parameter-matched 8 M scale, every family carries on the order
+> of `10⁸` parameter bits, roughly seven orders of magnitude above
+> this floor and several above the tight lookup-table realisation
+> (`|S₅| × |Σ| = 480` keys, formalised as
+> `S5NDMRealization.s5_transition_key_count`). Every family in the
+> comparison can therefore *represent* the prefix automata in
+> principle; the Lean per-step expressivity results
+> (`S5Witness.fixed_precision_state_space_finite`) state this
+> representability claim formally. The probes themselves measure a
+> strictly stronger *joint* property — representable AND learnable
+> by SGD at this FLOP class — and isolate the update rule's
+> inductive bias from its representational ceiling. M2RNN's S₃ mean
+> of 0.31 — `10⁸` parameter bits chasing a ~3-bit floor — is then
+> evidence that SGD under the raw-write inductive bias cannot
+> *find* a six-state prefix-tracker, not that none exists in the
+> model class. Two propositions must be kept distinct: (A) at
+> matched per-token FLOP class, the delta-correcting write rule is
+> the only architectural ingredient making S₅/S₃ prefix-tracking
+> *learnable in practice* across the post-Mamba matrix-state
+> family — a learnability claim, settled at 8 M; (B) that
+> learnability transfers to language modelling at 1.27 B — open,
+> not what the §7 QA panel rules on. The 8 M probes are the
+> *clean* mechanism measurement; the 1.27 B QA panel is
+> *confounded* for mechanism questions at this stage. The framing
+> that the S₅ result "vanishes at scale" or "needs to be re-shown
+> at 1.27 B" is therefore retracted: the learnability gap is
+> scale-invariant at fixed precision and width, and the QA tie
+> measures (B), not (A).
 
-Word count: ~280 words (publication-ready window 200–300).
+Word count: ~299 words (publication-ready window 200–300).
+
+**Representability vs learnability — the load-bearing distinction.**
+The Lean per-step theorems
+(`S5Witness.fixed_precision_state_space_finite`, the
+`S5NDMRealization` realisation lemmas) are *representability* claims:
+the matrix state of any post-Mamba family in this comparison can
+encode the prefix automaton in principle. The empirical probes do not
+re-prove that; they measure the strictly stronger *joint* property
+representable-AND-learnable-by-SGD at this FLOP class. M2RNN's S₃ =
+0.31 is a *trainability* failure (SGD under the raw-write inductive
+bias cannot locate a valid configuration), not a representability
+failure (the configuration exists in the model class). Proposition A
+is correspondingly a *learnability* claim, not a representability
+claim; the Lean core corroborates the no-capacity-confound side of A
+but does not itself test learnability.
 
 Anchors used in the paragraph:
 - `S5NDMRealization.s5_transition_key_count` — `main.typ` L975
@@ -227,3 +246,12 @@ acknowledge that §7 stands independently of §5.
   the integrated text. They are not the same proposition; v1's
   apparent retreat from A was a category error introduced by reading
   B-evidence (the QA tie) as A-evidence.
+- **Do** preserve the *representability vs learnability* distinction
+  whenever §3 prose is paraphrased downstream. The Lean per-step
+  theorems are representability results; the probes are
+  learnability results; both indict the raw-write update, but they
+  are not the same claim. Proposition A is a learnability claim
+  ("learnable in practice at matched FLOP class"), not a
+  representability claim. M2RNN's S₃ = 0.31 is a *trainability*
+  failure, not evidence that the matrix state cannot encode the
+  six-state automaton.
