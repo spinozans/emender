@@ -18,8 +18,8 @@
     ),
   ),
   abstract: [
-    We train four pure-recurrent language models at 1.27 billion
-    parameters under per-architecture CMA-ES hyperparameter search: two
+    We train four pure-recurrent language models at 1.27 B parameters
+    under per-architecture CMA-ES hyperparameter search: two
     with nonlinear time recurrence — *NDM* (delta-correcting update
     $S <- tanh(d S + k(v - S^T k)^T)$) and *M²RNN-CMA* (raw-write update
     $tanh(H W + k v^T)$) — and two with linear time recurrence,
@@ -472,10 +472,9 @@ elimination:
 M²RNN scores 0.31 on $S_3$, the solvable control where non-solvability
 is *not* the obstruction. This rules out a complexity-ceiling
 explanation. If raw-write could do clean prefix tracking even on
-solvable groups, M²RNN should clear $S_3$ — the smallest non-trivial
-permutation group, six elements, no NC#super[1] obstruction at all. It
-does not. Nor is the failure a capacity ceiling. Two distinct
-non-binding bounds make this point. (i) At the 8 M probe shape
+solvable groups, M²RNN should clear $S_3$. It does not. Nor is the
+failure a capacity ceiling. Two distinct non-binding bounds make this
+point. (i) At the 8 M probe shape
 ($N times V times H times "depth" = 32 times 32 times 32 times 4
 approx 1.3 times 10^6$), the per-token recurrent state already carries
 on the order of $10^6$ scalars — six orders of magnitude above the
@@ -588,7 +587,7 @@ DDP, and inter-island synchronisation averages model weights every
 $H = 250$ local steps (an empirically-chosen interval; see §Limitations
 for the open question on $H$). Because parallelism is across programs
 rather than along time, NDM does not require sequence parallelism to be
-competitive at 1.27 B; this is a notable simplification relative to
+competitive at 1.27 B; this is a simplification relative to
 chunked-scan implementations of linear-state recurrences. A speculative
 high-risk path — ParaRNN @pararnn2025 — would parallelise the time loop
 itself via Newton's method on a block-bidiagonal Jacobian, but its
@@ -1040,12 +1039,11 @@ trainability claim about the M²RNN family. Reconciling §3 with §7: the
 Lean result
 (`RecurrentResourceFormalism.ndm_m2rnn_one_step_resource_separation_embeds`)
 bounds a *one-step specification* — the precise mixed-key delta
-overwrite that NDM performs at each step, which no fixed-weight
-raw-write update can reproduce — while the §3 $S_3$ argument concerns
-*eventual representability across an unbounded number of steps*, for
-which raw-write has the capacity in principle but for which SGD under
-the raw-write inductive bias does not, at the 8 M probe scale, locate a
-configuration that prefix-tracks. These are distinct claims about
+overwrite that NDM performs at each step — while the §3 $S_3$ argument
+concerns *eventual representability across an unbounded number of
+steps*, for which raw-write has the capacity in principle but for which
+SGD under the raw-write inductive bias does not, at the 8 M probe scale,
+locate a configuration that prefix-tracks. These are distinct claims about
 different timescales of expressivity, both indicting the write rule.
 
 #heading(level: 2, numbering: none)[QA and reasoning panel at 1.27 B]
@@ -1252,7 +1250,7 @@ NDM under matched per-architecture CMA-ES. The empirical separation in
 update-rule difference between delta-correcting (NDM) and raw-write
 (M²RNN-CMA) within the pure-nonlinear-recurrent class. Mishra et al.
 additionally report hybrid M²RNN configurations favourably against
-Mamba-2 and Gated DeltaNet hybrids at matched parameter and token
+Mamba2 and Gated DeltaNet hybrids at matched parameter and token
 budgets under a uniform fixed-hyperparameter protocol (their §5.2);
 those hybrid configurations fall outside the pure-nonlinear-recurrent
 class (the inserted attention layers violate the no-hybrid-bolt-ons
