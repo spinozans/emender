@@ -1,6 +1,6 @@
 // Nonlinear Delta Memory — main paper source
 // Format: Typst (https://typst.app), NOT LaTeX.
-// Build: bash paper/build.sh  →  paper/Garrison_2026_NDM-<commit>.pdf
+// Build: bash paper/build.sh  →  paper/Garrison_2026_PNR-<commit>.pdf
 //
 // Template: arkheion 0.1.2 (the de-facto Typst arxiv-preprint template).
 // See paper/template_choice_v7.md for rationale and the porting notes.
@@ -68,27 +68,32 @@ CMA-ES configs, and the Triton kernel released.
     ),
   ),
   abstract: [
-    We train three pure-recurrent language models at 1.27–1.35 B
-    parameters on The Pile and find that nonlinearity in time is not
-    a cost: two nonlinear-in-time recurrences — *NDM* (delta-correcting
+    *Pure Nonlinear Recurrent (PNR) language models* — pure-recurrent,
+    time-serial, attention-free architectures with a nonlinearity on
+    the recurrent state itself — have been treated as off-limits at
+    foundation-model scale because they foreclose the time-axis
+    parallel scan that linear-recurrent variants rely on for GPU
+    throughput. We test this verdict by training two PNR instances at
+    1.27–1.35 B parameters on The Pile: *NDM* (this work; delta-correcting
     update $S <- tanh(d S + k(v - S^T k)^T)$) and *M²RNN-CMA*
-    (raw-write update $tanh(H W + k v^T)$) — land in the same
-    loss-vs-wallclock band as the linear-recurrent baseline *Gated
-    DeltaNet*, each tuned under per-architecture CMA-ES. This
-    contradicts the field's operating verdict that
-    pure-nonlinear-in-time recurrence cannot reach foundation-model
-    scale on competitive wallclock, because it forecloses the
-    time-axis parallel scan. The verdict is an artefact of that
-    axis: we recover throughput on the width axis instead, via
-    *multi-programming* — replicating the recurrence across many
-    independent heads while the time loop stays serial inside each.
-    Within the pure-nonlinear class, NDM trains consistently ahead
-    of M²RNN-CMA; a one-step representability separation between
-    the two update rules, formalised in Lean 4, is confirmed
-    empirically on capacity-overparameterised state-tracking probes
-    ($S_5$, $S_3$). We will release the three 1.27–1.35 B checkpoints,
-    the per-architecture CMA-ES configurations, and the Triton
-    multi-programming kernel at publication; the trusted Lean 4 core has no
+    (a CMA-reshaped pure-recurrent variant of M²RNN; raw-write update
+    $tanh(H W + k v^T)$), alongside the linear-recurrent baseline
+    *Gated DeltaNet*. Each architecture is tuned under per-architecture
+    CMA-ES. All three land in the same loss-vs-wallclock band:
+    *nonlinearity in time is not a cost* at this scale, and the
+    status-quo verdict on the PNR class is an artefact of the axis the
+    field chose to parallelise over. We recover throughput on the
+    width axis instead, via *multi-programming* — replicating the
+    recurrence across many independent heads while the time loop stays
+    serial inside each. Within the PNR class, NDM (this work's
+    delta-correct instance) trains consistently ahead of M²RNN-CMA;
+    a one-step representability separation between the two update
+    rules, formalised in Lean 4, is confirmed empirically on
+    capacity-overparameterised state-tracking probes ($S_5$, $S_3$).
+    We will release PNR checkpoints (NDM and M²RNN-CMA) together
+    with the GDN baseline, the per-architecture CMA-ES
+    configurations, and the Triton multi-programming kernel on
+    HuggingFace at publication; the trusted Lean 4 core has no
     `sorry`/`admit`/`axiom`/`opaque`/`native_decide` in its import
     closure.
   ],
@@ -158,15 +163,17 @@ Newton iteration on a block-bidiagonal Jacobian, and M²RNN @m2rnn2026
 (Mishra, Tan, Stoica, Gonzalez, Dao 2026) trains nonlinear matrix-state
 recurrence at 7 B MoE in *hybrid form* (nonlinear-recurrent layers
 interleaved with attention layers). The operating verdict that
-remains is sharper: *pure nonlinear recurrence cannot reach competitive
+remains is sharper, and is about a class rather than any single
+architecture: *Pure Nonlinear Recurrent (PNR) language models —
+pure-recurrent, time-serial, attention-free architectures with a
+nonlinearity on the recurrent state itself — cannot reach competitive
 wallclock at foundation-model scale without either a time-axis
 parallelisation trick or hybridisation with attention.* The
 nonlinearity is treated as the obstruction; time-axis parallelisation
 (Newton iteration, parallel scan, associative reduction) or attention
 hybridisation is treated as the unavoidable concession. Either route
-preserves the modern throughput frontier; the pure-recurrent,
-time-serial, attention-free alternative has been treated as off the
-table. This work shows that sharper verdict is an illusion, in the
+preserves the modern throughput frontier; the PNR alternative has been
+treated as off the table. This work shows that sharper verdict is an illusion, in the
 same sense that Merrill, Petty and Sabharwal @merrill2024transformers
 showed the apparent state-tracking expressivity of state-space models
 was an artefact of analysis: there, an apparent expressivity property
@@ -201,38 +208,40 @@ attention-free variant has not been demonstrated at LLM scale. This
 work takes that variant and puts it head-to-head with a delta-correct
 alternative under matched conditions.
 
-Three pure-recurrent 1.27–1.35 B language models are trained on
-The Pile @thepile2020: NDM (this work, with a delta-correct update
-rule $S <- tanh(d S + k(v - S^T k)^T)$) and M²RNN-CMA (a CMA-reshaped
+This paper establishes the PNR class as viable at foundation-model
+scale, by training two PNR instances at the 1.27–1.35 B parameter
+band and comparing them head-to-head with a linear-recurrent baseline. The two PNR instances are NDM (this
+work; delta-correct update rule
+$S <- tanh(d S + k(v - S^T k)^T)$) and M²RNN-CMA (a CMA-reshaped
 pure-recurrent variant of the M²RNN architecture, with a raw-write
-update $tanh(H W + k v^T)$) as the two pure-nonlinear-recurrent
-instances, plus Gated DeltaNet (GDN @gated_deltanet2024) as the
-linear-recurrent baseline. All three received per-architecture
+update $tanh(H W + k v^T)$); the linear-recurrent baseline is
+Gated DeltaNet (GDN @gated_deltanet2024). All three architectures are
+trained on The Pile @thepile2020 and received per-architecture
 CMA-ES @cmaes2003 hyperparameter and shape search, with range
 repositioning when limits were hit, so every architecture was
 evaluated under its best-effort configuration at matched search
 effort. All three land in the same loss-vs-wallclock band on The
 Pile. *Nonlinearity in time is not a cost.* The sharper status-quo
-verdict — that pure-nonlinear-recurrent language models cannot reach
-this regime without a time-axis parallelisation trick or attention
-hybridisation — is, at minimum at 1.27–1.35 B on The Pile under
-matched wallclock, not supported by the data. The class of
-pure-nonlinear-recurrent (PNR) language models is therefore open
-for exploration; to our knowledge, NDM and M²RNN-CMA are the first
-foundation-model-class *pure-recurrent, time-serial,
-attention-free* PNR language models trained at this scale.
+verdict — that PNR language models cannot reach this regime without
+a time-axis parallelisation trick or attention hybridisation — is,
+at minimum at 1.27–1.35 B on The Pile under matched wallclock, not
+supported by the data. The PNR class is therefore open for
+exploration; to our knowledge, NDM and M²RNN-CMA are the first
+foundation-model-class PNR language models trained at this scale.
 
-Within the pure-nonlinear-recurrent class, NDM trains consistently
-ahead of M²RNN-CMA across the sampled wallclock window. The paper
-proceeds as follows. §2 and §3 set up the linear-state versus
-nonlinear-state classification and the NDM architecture; §4 covers the
-multi-programming systems contribution; §5 presents the 1.27 B
-wallclock racer with the per-architecture CMA-ES protocol; §6 reports
-the 8 M expressivity probes with the capacity-non-binding justification;
-§7 the Lean 4 formalisation; §8 related work; §9 limitations; §10
-conclusion; §11 future work. The three 1.27–1.35 B checkpoints, the
-per-architecture CMA-ES configurations, and the Triton multi-programming
-kernel will be released on HuggingFace at publication.
+Within the PNR class, NDM (this work's delta-correct instance)
+trains consistently ahead of M²RNN-CMA across the sampled wallclock
+window. The paper proceeds as follows. §2 and §3 set up the
+linear-state versus nonlinear-state classification and the NDM
+architecture (this work's contribution within the PNR class); §4
+covers the multi-programming systems contribution; §5 presents the
+1.27 B wallclock racer with the per-architecture CMA-ES protocol;
+§6 reports the 8 M expressivity probes with the
+capacity-non-binding justification; §7 the Lean 4 formalisation; §8
+related work; §9 limitations; §10 conclusion; §11 future work. We
+will release PNR checkpoints (NDM and M²RNN-CMA), the GDN baseline,
+the per-architecture CMA-ES configurations, and the Triton
+multi-programming kernel on HuggingFace at publication.
 
 // ── 2. Background ─────────────────────────────────────────────────────────────
 = Background <sec:background>
@@ -743,6 +752,22 @@ geometry is held constant; the geometry property is a separate axis
 along which the multi-programmed recipe must be respected for either
 family to train at 1.27 B.
 
+Two consequences of this geometry sensitivity bear on how the §5 racer
+should be read. First, the M²RNN-CMA configuration used here is *not*
+M²RNN's published hyperparameter shape; per-architecture CMA-ES was
+applied to the M²RNN update rule itself and selected a geometry that
+trains stably across the full sampled wallclock window. The
+paper-default shape diverged at step 8,400 under the same matched
+protocol and is therefore not in the racer. Second, this reshape is
+*charitable* to the M²RNN update rule, not adversarial: the rule is
+evaluated under a CMA-optimised geometry, which is more favorable to
+the rule than its own published geometry, which did not survive
+matched-protocol training in our hands. The within-PNR ordering
+recorded in §5 is therefore an ordering between NDM under its
+CMA-optimised geometry and the M²RNN update rule under *its* (more
+favorable than published) CMA-optimised geometry, at matched
+per-architecture search effort.
+
 #heading(level: 2, numbering: none)[Loss-vs-wallclock racer]
 
 #figure(
@@ -1236,9 +1261,12 @@ three multi-programming features (many independent heads per layer,
 per-head state tile, per-batch independence). The 1.27 B NDM signature
 and a CMA-reshaped pure M²RNN signature both satisfy the predicate, and
 a non-trivial hybrid signature *fails* it. This is the small formal
-anchor for the claim that *multi-programming is not specific to NDM*:
-the same structural property is also satisfied by the M²RNN update
-family when CMA-reshaped.
+anchor for the *class-level* claim of §1: multi-programming is a
+property of the PNR class shared across both PNR instances trained
+here, not specific to NDM. The trusted core formalises the PNR class
+through two instances (NDM and M²RNN-CMA), with NDM as the
+delta-correct contribution of this work and M²RNN-CMA as the raw-write
+comparator.
 
 #heading(level: 2, numbering: none)[NC#super[1] paragraph (verbatim)]
 
@@ -1477,10 +1505,12 @@ update solves $S_3$ to ceiling and reaches 0.79 on the non-solvable
 $S_5$ probe. The trusted Lean 4 core has no
 `sorry`/`admit`/`axiom`/`opaque`/`native_decide` in the import closure.
 
-*Release.* The three 1.27–1.35 B model checkpoints (NDM, M²RNN-CMA,
-and the Gated DeltaNet baseline) will be released on HuggingFace at
-publication, alongside the per-architecture CMA-ES configurations, the
-training protocol, and the Triton multi-programming kernel source.
+*Release.* PNR checkpoints — NDM (this work's delta-correct instance)
+and M²RNN-CMA (the CMA-reshaped raw-write instance) — together with
+the Gated DeltaNet baseline will be released on HuggingFace at
+publication, alongside the per-architecture CMA-ES configurations,
+the training protocol, and the Triton multi-programming kernel
+source.
 
 = Future Work <sec:future_work>
 
