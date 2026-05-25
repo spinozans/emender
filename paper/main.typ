@@ -68,29 +68,37 @@ CMA-ES configs, and the Triton kernel released.
     ),
   ),
   abstract: [
-    *Emendation* is an update-rule innovation for nonlinear recurrent
-    state: at each step the model reads what memory predicts at the
-    addressed key, computes the prediction error, and writes the
-    *correction* against the existing slot rather than a raw additive
-    overwrite — $S <- tanh(d S + k(v - S^T k)^T)$. We demonstrate
-    emendation in the attention-free, time-serial recurrent setting
-    where comparisons are cleanest, by training the *Emender* (this
-    work) and the raw-write *M²RNN-CMA* baseline at 1.27–1.35 B
-    parameters on The Pile, alongside the linear-recurrent baseline
-    *Gated DeltaNet*. Each architecture is tuned under per-architecture
-    CMA-ES. All three land in the same loss-vs-wallclock band:
-    *nonlinearity in time is not a cost* at this scale. We recover
-    throughput on the width axis via *multi-programming* — 22,200
-    small independent recurrent programs per token at the production
-    shape, with the time loop kept serial inside each. The Emender
-    trains consistently ahead of M²RNN-CMA across the sampled window;
-    a one-step representability separation between the two update
-    rules and its $k$-step extension for every $k >= 1$ — both
-    machine-checked in Lean 4 (§7) — are confirmed empirically on
-    capacity-overparameterised state-tracking probes ($S_5$, $S_3$). Emendation is one response to the recurrent
-    state-tracking problem; hybrid architectures that recover state
-    tracking by interleaving attention with recurrent state (M²RNN,
-    Titans, Griffin, OLMo-Hybrid) are a complementary response. We
+    *The update rule of a nonlinear recurrent network is one design
+    choice in a space of maps, not a single locked decision.* This
+    paper introduces that space, a machine-checked method for ordering
+    it (Lean 4, §7), and the systems substrate — *multi-programming*
+    — that makes any point in the space trainable at foundation-model
+    scale. The Lean core is the methodological anchor: the rules are
+    *provably distinct as computational objects* and the order is
+    derivable rather than asserted; the trusted import closure of
+    `ElmanProofs.PaperCore` has no
+    `sorry`/`admit`/`axiom`/`opaque`/`native_decide`. We place the
+    first rule in the order: *delta correction* writes against what
+    the existing slot already predicts —
+    $S <- tanh(d S + k(v - S^T k)^T)$ — and is proved one-step and
+    $k$-step distinct from raw write for every $k >= 1$ (Theorem sets
+    C and C′, §7). The empirical shadow: we train one delta-correct
+    instance (the *Emender*, this work) and one raw-write instance
+    (*M²RNN-CMA*) at 1.27–1.35 B on The Pile alongside the
+    linear-recurrent baseline *Gated DeltaNet* under per-architecture
+    CMA-ES; all three land in the same loss-vs-wallclock band —
+    *nonlinearity in time is not a cost* — recovered on the width
+    axis through 22,200 small independent recurrent programs per
+    token, with the time loop kept serial inside each. The Emender
+    trains consistently ahead of M²RNN-CMA across the sampled window
+    and clears state-tracking probes ($S_5$, $S_3$) where both
+    baselines stall under matched no-tuning at parameter-matched 8 M
+    scale. The cross-class M²RNN-CMA gap is the within-class evidence
+    available today; the cleanest within-class probe — ablating the
+    delta-correction rule out of the Emender's exact geometry, one
+    knob, matched FLOPs by Theorem D — is named as the next
+    experiment. The Emender is one element of the rule space; the
+    contribution is *the space and the method for ordering it*. We
     will release Emender checkpoints together with M²RNN-CMA and the
     GDN baseline, the per-architecture CMA-ES configurations, and the
     Triton multi-programming kernel on HuggingFace at publication.
@@ -196,6 +204,41 @@ linear-recurrent models, but it is not necessary for scaling; the width
 axis is an alternative the field has under-explored for
 pure-nonlinear-recurrent models specifically.
 
+#heading(level: 2, numbering: none)[The space of update rules and the method for ordering it]
+
+A recurrent network's update rule is one design choice in a *space*
+of nonlinear maps, not a fixed canonical decision. *The contribution
+of this paper is the space and the method for ordering it.* Two
+moves make that space tractable. (i) *Lean 4 as the methodological
+core* (§7): the rules are computational objects whose per-step
+behaviour can be machine-checked, so distinctions between rules
+become *derivable* — at fixed precision and width, in the
+multi-programmed signature — rather than asserted. The trusted
+import closure of `ElmanProofs.PaperCore` contains no
+`sorry`/`admit`/`axiom`/`opaque`/`native_decide`. (ii)
+*Multi-programming as the systems substrate* (§4): width-axis
+parallelism across many small bounded heads makes any point in the
+space trainable at foundation-model scale without resorting to a
+time-axis linearisation trick or attention hybridisation; the recipe
+is *update-rule-agnostic*
+(`RecurrentResourceFormalism.multiProgrammed_admits_m2rnn_and_emender`,
+§7).
+
+Within that frame, *delta correction* — write the correction against
+what the slot already predicts — is the first rule we place in the
+order. Its companion is *raw write* (the M²RNN family's update).
+The one-step and $k$-step Lean separations (§7, Theorem sets C and
+C′) prove the two rules are *distinct as computational objects* for
+every finite $k$ on the constructed witness alphabet; the
+length-extrapolation curves of §6 are the empirical shadow on
+natural-language-shaped sequences. Whether the relation extends to a
+*partial order* on the broader pure-nonlinear-recurrent space —
+antisymmetric, transitive, with an NC#super[1] ceiling
+@barrington1986 — is the open horizon named in §12; the
+`RecurrentResourceFormalism` Lean machinery is the tool for climbing
+that order. One trajectory at 1.27 B is *not* "my architecture wins";
+it is the first datum after that order is opened.
+
 #heading(level: 2, numbering: none)[Emendation is one response; hybrids are another]
 
 The recurrent state-tracking problem — how does a fixed-width recurrent
@@ -244,12 +287,35 @@ alternative under matched conditions.
 
 #heading(level: 2, numbering: none)[Contribution]
 
-This paper's contribution is a *synthesis* of five components. The
-synthesis — a working, trainable foundation-model-scale architecture —
-is what has not been done before. We demonstrate the synthesis in the
-attention-free PNR arena (see §1 "Emendation is one response..."),
-where each component is most legible; the emendation piece in
-particular is a general update-rule technique not bound to that arena.
+The paper's load-bearing claims, in order of evidence cleanliness:
+
+#set list(indent: 1em)
+- *Methodological core (Lean 4, §7).* Machine-checked one-step and
+  $k$-step separations between the delta-correcting and raw-write
+  update families, plus the multi-programming predicate that both
+  pure-nonlinear-recurrent instances satisfy. This evidence does not
+  depend on a trajectory, a seed, or an optimiser.
+
+- *Within-class evidence (matched geometry, §6).* At
+  parameter-matched 8 M scale under matched no-tuning, the
+  delta-correcting Emender clears $S_5$/$S_3$ where the raw-write
+  M²RNN-CMA stalls; the cleanest variant — ablating the
+  delta-correction rule out of the Emender's *exact* geometry, one
+  knob, matched FLOPs by Theorem D (§7) — is named below as the next
+  experiment.
+
+- *Cross-architecture corroboration (§5).* At 1.27–1.35 B under
+  per-architecture CMA-ES, three architectures (the Emender,
+  M²RNN-CMA, Gated DeltaNet) land in the same loss-vs-wallclock band
+  on The Pile; the Emender trains consistently ahead of M²RNN-CMA
+  across the sampled window. This is a single trajectory per
+  architecture and is read as *corroboration* under the §5
+  geometry-sensitivity caveat, not as a head-to-head verdict.
+
+#set list(indent: 0em)
+
+The five-component *synthesis* described below is the working stack
+at which all three lines of evidence are anchored.
 
 #set enum(numbering: "1.")
 
@@ -917,6 +983,71 @@ differentiator. Source: smoothed CSVs and snapshot table under
 // ── 6. Expressivity Results ───────────────────────────────────────────────────
 = Expressivity Results <sec:expressivity>
 
+#heading(level: 2, numbering: none)[Ordering the evidence by cleanliness]
+
+A within-class claim about the *update rule* is cleanest when the
+geometry around it is held fixed. The cleanest possible variant is a
+single-knob ablation in the Emender's *exact* geometry:
+
+#block(inset: (x: 1.5em), [
+*Take the Emender stack at 1.27 B (dim=1664, depth=12, H=370,
+N=V=32), CMA-tuned. Substitute the delta-correcting write
+$delta = v - S^T k$ with the raw-write $delta = v$. Keep everything
+else fixed — gating, $L^2$ normalisation, decay parameterisation,
+optimiser, tokenizer, data, search budget. Re-tune under matched
+CMA-ES. By Theorem set D (§7) the two heads sit inside the same
+$c_1 d^2 + c_2 d$ FLOP envelope, so the comparison is FLOP-matched
+by construction.*
+])
+
+That experiment is *designed and infrastructure-ready*: a
+documented protocol exists, the Triton kernel exposes a
+`RAW_WRITE` flag, and the per-architecture CMA-ES driver carries an
+`e88-raw` model entry. Compute scheduling places the result outside
+this paper's training-data window. *This is the within-class probe
+named as the next experiment in §11.*
+
+What §6 reports is the within-class and cross-architecture evidence
+that *is* available today, ordered by how cleanly each isolates the
+update rule:
+
+#set list(indent: 1em)
++ *Lean (no trajectory, no seed; §7).* The one-step resource
+  separation and the $k$-step persistence on the constructed witness
+  alphabet (`emender_m2rnn_one_step_resource_separation_embeds`,
+  `emender_m2rnn_k_step_separation`). This is the methodological
+  spine, independent of any training run; the empirical sections
+  below are its *shadow*.
+
++ *Matched-no-tuning, parameter-matched 8 M state-tracking probes
+  (this section).* Each family is evaluated on the
+  reasonable-defaults configuration it would arrive at without
+  probe-targeted optimisation. The Emender clears $S_5$ and $S_3$
+  where M²RNN-CMA and M²RNN-paper stall; geometry differs across
+  families, so this is *cross-architecture under matched no-tuning*,
+  not single-knob.
+
++ *Cross-architecture corroboration: 1.27 B loss racer (§5) and
+  length extrapolation (this section).* The 1.27 B M²RNN-CMA-vs-Emender
+  gap holds across an independent codebase and at chinchilla-scale
+  training, with the §5 geometry-sensitivity caveat made explicit:
+  M²RNN-CMA is the CMA-reshaped M²RNN, not the published one, so the
+  comparison reads the *update rule under its own CMA-optimised
+  geometry* against the Emender's. This is corroboration, not
+  ablation.
+
+#set list(indent: 0em)
+
+Across the two scales: the update-rule gap is large at the 8 M
+state-tracking probes (Emender 0.79 vs M²RNN-CMA 0.22 on $S_5$ at
+training length) and small at the 1.27 B language-modelling loss
+(Emender 2.66 vs M²RNN-CMA 2.77 after $tilde 14$ days under per-arch
+CMA-ES). The two are different metrics on different tasks; the
+honest reading is that *the write rule is load-bearing for prefix
+tracking and contributes a fractional-nat margin on Pile loss*. The
+cleanest within-class number is the one the named experiment above
+will deliver.
+
 #heading(level: 2, numbering: none)[Capacity is non-binding at 8 M parameters for these probes]
 
 The state-tracking probes in this section are run at 8 M
@@ -1165,6 +1296,34 @@ states the prediction explicitly.
 
 // ── 8. Formal Results ─────────────────────────────────────────────────────────
 = Formal Results <sec:formal>
+
+#heading(level: 2, numbering: none)[Lean 4 as the methodological core]
+
+The Lean 4 development of this section is the paper's *methodological
+spine*, not a corroborating appendix. The results below do not depend
+on a trajectory, a seed, an optimiser, or a tokenizer; they make the
+rule-space claim of §1 a *derivable* property of the update map
+rather than an artefact of any one training run. Two consequences
+follow.
+
+#set list(indent: 1em)
+- *The update families are computational objects.* Delta correction
+  and raw write are, at fixed precision and width, distinct under
+  every fixed-weight parameterisation with row, column or cell
+  external forget gates (set C). The distinction *does not wash out*
+  across $k$ steps on the constructed witness alphabet for every
+  $k >= 1$ (set C′). These are sharp computational facts about the
+  rules, not properties of a trained instance.
+
+- *The order is derivable in the multi-programmed signature.*
+  Theorem set E names the structural predicate `IsMultiProgrammed`,
+  shows that the 1.27 B Emender and the CMA-reshaped M²RNN both
+  satisfy it, and that a non-trivial hybrid does not. The
+  rule-ordering machinery (`RecurrentResourceFormalism`) is the tool
+  for climbing the partial order on the broader PNR space §12 names
+  as the open horizon.
+
+#set list(indent: 0em)
 
 We have a trusted Lean 4 @lean42021 core built on Mathlib
 @mathlib4. The import closure of the `ElmanProofs.PaperCore` module
@@ -1576,21 +1735,28 @@ keeps the conservative settings.
 // ── 10. Conclusion ────────────────────────────────────────────────────────────
 = Conclusion <sec:conclusion>
 
-This paper demonstrates that pure-nonlinear-recurrent language models
-can be trained at the 1.27–1.35 B-parameter band into the same loss-vs-
-wallclock band as a frontier-class linear-recurrent baseline. Three
-pure-recurrent architectures (the Emender and M²RNN-CMA, nonlinear in time;
-Gated DeltaNet, linear in time) receive per-architecture CMA-ES
-hyperparameter search and converge into a shared wallclock band on
-The Pile. *Nonlinearity in time is not a cost* for language modelling
-at this scale; the choice of recurrence linearity is washed out by
-per-architecture tuning. To our knowledge, the Emender and M²RNN-CMA are the
-first foundation-model-class pure-nonlinear-recurrent language models
-trained at 1.27–1.35 B parameters. M²RNN (Mishra et al. @m2rnn2026)
-is the closest prior art and demonstrates nonlinear matrix-state
-recurrence at 7 B MoE scale in *hybrid form*; the pure-recurrent
-variant trained here, M²RNN-CMA, is the head-to-head datapoint inside
-the pure-nonlinear-recurrent class.
+The update rule of a nonlinear recurrent network is one design choice
+in a space of maps. This paper opens that space, places the first
+rule in the order, and supplies the substrate that makes any point in
+the space trainable. The Lean 4 development of §7 is the
+methodological core: the rules are computational objects, the order
+is derivable rather than asserted, and the trusted import closure of
+`ElmanProofs.PaperCore` has no
+`sorry`/`admit`/`axiom`/`opaque`/`native_decide`.
+
+The empirical demonstration is the systems claim. Three pure-recurrent
+architectures (the Emender and M²RNN-CMA, nonlinear in time; Gated
+DeltaNet, linear in time) receive per-architecture CMA-ES hyperparameter
+search and converge into a shared wallclock band on The Pile.
+*Nonlinearity in time is not a cost* for language modelling at this
+scale; the choice of recurrence linearity is washed out by
+per-architecture tuning. To our knowledge, the Emender and M²RNN-CMA are
+the first foundation-model-class pure-nonlinear-recurrent language
+models trained at 1.27–1.35 B parameters. M²RNN (Mishra et al.
+@m2rnn2026) is the closest prior art and demonstrates nonlinear
+matrix-state recurrence at 7 B MoE scale in *hybrid form*; the
+pure-recurrent variant trained here, M²RNN-CMA, is the head-to-head
+datapoint inside the pure-nonlinear-recurrent class.
 
 The technical discovery that makes pure nonlinear recurrence practical
 at scale is *multi-programming*: width-axis parallelism across many
@@ -1604,22 +1770,30 @@ trained here satisfy the same multi-programming predicate at 1.27 B
 (Lean: `multiProgrammed_admits_m2rnn_and_emender`).
 
 Within the pure-nonlinear-recurrent class, the delta-correcting update
-rule (the Emender) trains consistently ahead of the raw-write update rule
-(M²RNN-CMA) across the sampled wallclock window. The within-class gap
-is explained by a one-step representability separation, formalised in
-Lean 4: an orthonormal-key Emender configuration realises the $S_5$ tracker
-(`EmenderRealizesS5.emender_realizes_s5_tracker`), and no fixed-weight
+rule (the Emender) trains consistently ahead of the raw-write update
+rule (M²RNN-CMA) across the sampled wallclock window. The cleanest
+within-class probe is the *single-knob ablation in the Emender's own
+geometry* (substitute $delta = v - S^T k$ with $delta = v$, re-tune
+under matched CMA-ES; protocol documented, infrastructure ready); that
+experiment is named as the next probe in §11 / §12. The cross-architecture
+gap reported here — the 1.27 B M²RNN-CMA-vs-Emender trail across the
+sampled window and the 8 M parameter-matched $S_5$/$S_3$ split — is
+corroboration of the formal separation, with the §5 geometry caveat
+explicit, not a head-to-head verdict on a single trajectory. The
+formal separation itself is unconditional on geometry and on training:
+an orthonormal-key Emender configuration realises the $S_5$ tracker
+(`EmenderRealizesS5.emender_realizes_s5_tracker`); no fixed-weight
 raw-write matrix RNN with row, column, or cell forget gates can match
 the Emender's mixed-key delta correction in one recurrent step
-(`emender_m2rnn_one_step_resource_separation_embeds`); the per-token FLOP
-class is the same for the two PNR instances
-(`emender_m2rnn_flop_class_equiv`). The trainability shadow of the formal
-separation is direct: at 8 M parameters, with capacity non-binding by
-many orders of magnitude, raw-write stalls at 0.31 on the
-six-element solvable-group $S_3$ control while the delta-correcting
-update solves $S_3$ to ceiling and reaches 0.79 on the non-solvable
-$S_5$ probe. The trusted Lean 4 core has no
-`sorry`/`admit`/`axiom`/`opaque`/`native_decide` in the import closure.
+(`emender_m2rnn_one_step_resource_separation_embeds`); the gap does
+not wash out across $k$ steps for any $k >= 1$ on the constructed
+witness alphabet (`emender_m2rnn_k_step_separation`); the per-token
+FLOP class is the same for the two PNR instances
+(`emender_m2rnn_flop_class_equiv`). The trainability shadow at 8 M:
+with capacity non-binding by many orders of magnitude, raw-write stalls
+at 0.31 on the six-element solvable-group $S_3$ control while the
+delta-correcting update solves $S_3$ to ceiling and reaches 0.79 on
+the non-solvable $S_5$ probe.
 
 *Release.* Emender checkpoints — the Emender (this work's delta-correct instance)
 and M²RNN-CMA (the CMA-reshaped raw-write instance) — together with
@@ -1686,6 +1860,21 @@ training rounds can falsify them.
   underperforms either constituent at matched budget on the combined
   benchmark.
 
+- *Ablating the delta correction out of the Emender's exact geometry
+  degrades the run.* The cleanest within-class probe (named in §12):
+  take the production Emender at 1.27 B, substitute
+  $delta = v - S^T k$ with the raw-write $delta = v$, keep everything
+  else fixed, re-tune under matched per-architecture CMA-ES. By
+  Theorem set D the comparison is FLOP-matched by construction. The
+  prediction is that the resulting `e88-raw` configuration trains
+  measurably behind the delta-correcting Emender — both on Pile loss
+  at $tilde 14$ days and on the §6 state-tracking probes carried
+  down from the 1.27 B shape. Falsified if `e88-raw` matches the
+  Emender within fractional-nat loss *and* matches it on $S_5$/$S_3$
+  under matched-no-tuning. The protocol is documented; the Triton
+  kernel exposes a `RAW_WRITE` flag; the per-architecture CMA-ES
+  driver carries an `e88-raw` entry.
+
 #set list(indent: 0em)
 
 These predictions are neutrally stated. Some will falsify, and the
@@ -1741,14 +1930,28 @@ The wallclock-band convergence is observed at 1.27 B parameters on
 The Pile. Whether the same band convergence holds at larger scale, on
 larger corpora, or under longer training is open.
 
-#heading(level: 2, numbering: none)[Cleanest within-class HPO follow-up]
+#heading(level: 2, numbering: none)[Cleanest within-class ablation: delta-rule out of the Emender's exact geometry]
 
-The cleanest within-PNR comparison would be a side-by-side run of the Emender
-and M²RNN-CMA under further per-family CMA-ES generations at 1.27 B
-beyond the current protocol, to test whether wider search closes the
-within-PNR gap. This is the highest-value follow-up for distinguishing
-"under the per-architecture CMA-ES protocol used here" from "under any
-matched search effort."
+The within-class evidence reported in this paper compares *different
+architectures* (the Emender vs the CMA-reshaped M²RNN); the geometry
+differs even when the parameter count and search effort do not. The
+cleanest within-class probe is a *single-knob ablation in the
+Emender's own geometry*: take the production Emender stack at 1.27 B
+(dim=1664, depth=12, $H=370$, $N=V=32$), substitute the
+delta-correcting write $delta = v - S^T k$ with the raw-write
+$delta = v$, keep gating, $L^2$ normalisation, decay parameterisation,
+optimiser, tokenizer, data, and search budget fixed, and re-tune
+under matched per-architecture CMA-ES. By Theorem set D (§7) the two
+heads share a common $c_1 d^2 + c_2 d$ per-token FLOP envelope, so
+the comparison is FLOP-matched by construction. The protocol is
+documented; the Triton kernel exposes a `RAW_WRITE` flag; the
+per-architecture CMA-ES driver carries an `e88-raw` model entry. This
+is the named next experiment.
+
+A second within-class follow-up — further per-family CMA-ES
+generations at 1.27 B beyond the current protocol — would
+additionally distinguish "under the per-architecture CMA-ES protocol
+used here" from "under any matched search effort".
 
 // ── Appendix A — E63→E88 lineage and ablation notes ────────────────────────────
 = Appendix: Lineage of the E63 $arrow$ E88 experimental program <sec:appendix>
