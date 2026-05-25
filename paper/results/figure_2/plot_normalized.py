@@ -128,11 +128,6 @@ def main():
     axB.set_title("B. Tail (h ≥ 40) — strict wall-clock order is M²RNN-CMA > Mamba2 > NDM", fontsize=10)
     axB.grid(True, which="both", alpha=0.3)
 
-    fig.suptitle(
-        "Figure 3 — 1.27 B language-model loss vs wall-clock  "
-        "(Pile, ctx=2048, schedule-free AdamW, bf16, as of 2026-05-24)",
-        fontsize=11, y=1.00,
-    )
     out = OUT / "figure_2_draft.png"
     fig.tight_layout()
     fig.savefig(out, dpi=160, bbox_inches="tight")

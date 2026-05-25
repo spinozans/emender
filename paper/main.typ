@@ -86,9 +86,9 @@ the Triton kernel released.
     of M²RNN-CMA; a one-step representability separation between
     the two update rules, formalised in Lean 4, is confirmed
     empirically on capacity-overparameterised state-tracking probes
-    ($S_5$, $S_3$). We release the four 1.27 B checkpoints, the
+    ($S_5$, $S_3$). We will release the four 1.27 B checkpoints, the
     per-architecture CMA-ES configurations, and the Triton
-    multi-programming kernel; the trusted Lean 4 core has no
+    multi-programming kernel at publication; the trusted Lean 4 core has no
     `sorry`/`admit`/`axiom`/`opaque`/`native_decide` in its import
     closure.
   ],
@@ -606,7 +606,7 @@ $T$-step loop. The following pieces are fused into the same Triton
 program: $tanh$/$"silu"$ activations on input projections, $L^2$
 normalisation of $q, k$, the recurrent delta write, and the output
 gate. Each fusion removes one to two `torch.cuda` launches per layer
-call; at depth 14 production the aggregate saving is approximately
+call; at depth 12 production the aggregate saving is approximately
 50–60 ms per step.
 
 #heading(level: 2, numbering: none)[Sparse-checkpoint backward]
