@@ -8,9 +8,9 @@ figure_2_draft.png.
 Normalized presentation conventions (shared with cma_flop_rate/plot.py):
   x-axis : wall-clock training hours (log scale)
   y-axis : training loss in nats per token (10K-step centred moving average)
-  colors : NDM = #1f77b4 (blue)
-           FLA-GDN = #ff7f0e (orange)
-           M2RNN-CMA = #d62728 (red) — emphasises strict-above (worse) position
+  colors : NΔM = #1f77b4 (blue)
+           GDN = #ff7f0e (orange)
+           M²RNN-CMA = #d62728 (red) — emphasises strict-above (worse) position
 """
 from __future__ import annotations
 import csv
@@ -25,25 +25,25 @@ OUT = Path(__file__).parent
 
 # Shared palette across all loss-vs-X panels in the paper.
 COLORS = {
-    "NDM":       "#1f77b4",
-    "FLA-GDN":   "#ff7f0e",
-    "M2RNN-CMA": "#d62728",
+    "NΔM":        "#1f77b4",
+    "GDN":        "#ff7f0e",
+    "M²RNN-CMA":  "#d62728",
 }
 
-# Plot in an order that draws M2RNN-CMA on top so its strict-above position
+# Plot in an order that draws M²RNN-CMA on top so its strict-above position
 # is unambiguous when curves get close near the data-entropy floor.
-ORDER = ["FLA-GDN", "NDM", "M2RNN-CMA"]
+ORDER = ["GDN", "NΔM", "M²RNN-CMA"]
 
 FILES = {
-    "NDM":       OUT / "E88_NDM.csv",
-    "FLA-GDN":   OUT / "FLA_GDN.csv",
-    "M2RNN-CMA": OUT / "M2RNN_CMA.csv",
+    "NΔM":        OUT / "E88_NDM.csv",
+    "GDN":        OUT / "FLA_GDN.csv",
+    "M²RNN-CMA":  OUT / "M2RNN_CMA.csv",
 }
 
 PARAMS = {
-    "NDM":       "1.27 B",
-    "FLA-GDN":   "1.35 B",
-    "M2RNN-CMA": "1.31 B",
+    "NΔM":        "1.27 B",
+    "GDN":        "1.35 B",
+    "M²RNN-CMA":  "1.31 B",
 }
 
 
@@ -121,7 +121,7 @@ def main():
     axB.set_ylim(2.63, 3.05)
     axB.set_xlabel("Wall-clock training hours", fontsize=11)
     axB.set_ylabel("Training loss (nats / token)", fontsize=11)
-    axB.set_title("B. Tail (h ≥ 40) — strict wall-clock order is M²RNN-CMA > GDN ≈ NDM", fontsize=10)
+    axB.set_title("B. Tail (h ≥ 40) — strict wall-clock order is M²RNN-CMA > GDN ≈ NΔM", fontsize=10)
     axB.grid(True, which="both", alpha=0.3)
 
     out = OUT / "figure_2_draft.png"
