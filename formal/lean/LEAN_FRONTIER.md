@@ -1,6 +1,6 @@
 # Lean Multi-Step Separation: Frontier Document
 
-**Last updated:** 2026-05-25 (v16-lean-extend, agent-203)
+**Last updated:** 2026-05-25 (v18-lean-autopoetic, agent-224)
 
 This file documents the state of the multi-step extension of the NΔM vs
 fixed-right raw-write M2RNN separation, in Lean. It is a status snapshot, not a
@@ -111,7 +111,123 @@ the "wash-out over composition" failure mode the reviewer worried about.
 * **No existing theorems renamed.** New theorems live in a new module.
 * **`paper/` directory untouched.**
 
-## What did NOT land — the "S₅-coset inseparability with explicit T(d)" target
+## What v18-lean-autopoetic landed
+
+### Milestone — Existential S₅ capacity inseparability (**clean**)
+
+**File:** `formal/lean/ElmanProofs/Architectures/S5Inseparability.lean`
+
+**Headline theorem:** `emender_m2rnn_s5_inseparability` — the existential
+capacity form of the v18 target.
+
+```
+theorem emender_m2rnn_s5_inseparability :
+    (∀ (R : RealizesS5Tracker.{0}), 120 ≤ Fintype.card R.M.State) ∧
+    (∃ (R : RealizesS5Tracker.{0}), Fintype.card R.M.State = 120)
+```
+
+The bound is tight:
+
+* **Necessity** (`capacity_lower_bound_120`): any finite-state recognizer
+  with a state-decoder reproducing `S5Tracker.run` on every input word has
+  at least 120 states.
+* **Sufficiency** (`trackerRealizer`, `trackerRealizer_card_eq_120`): the
+  concrete `S5Tracker.recognizer` (state space `S5`, identity decoder) is
+  a realizer with exactly 120 states.
+
+**Strategy.** Pure state-counting / pigeonhole.
+
+1. **Surjectivity of `S5Tracker.run`** onto `S5 = Equiv.Perm (Fin 5)`. The
+   four adjacent generators map to `swap i.castSucc i.succ` for `i : Fin 4`,
+   and Mathlib's `Equiv.Perm.mclosure_swap_castSucc_succ 4` says these
+   generate `Equiv.Perm (Fin 5)` as a submonoid. `Submonoid.dense_induction`
+   then gives a word for every S5 element.
+2. **Section** `wordOf : S5 → List AdjacentGenerator` with
+   `run (wordOf g) = g` via `Classical.choose`.
+3. **Capacity bound:** For any recognizer `R : RealizesS5Tracker` with
+   decoder `decode`, the map `g ↦ R.M.run (wordOf g)` is injective on S5
+   (since `decode` left-inverts it via the realization equation), so
+   `Fintype.card R.M.State ≥ Fintype.card S5 = 120`.
+
+**Supporting theorems landed in the module:**
+
+* `run_surjective` — surjectivity of the tracker onto S5.
+* `wordOf` + `run_wordOf` — non-constructive section `S5 → List AdjacentGenerator`
+  with `run (wordOf g) = g`.
+* `capacity_lower_bound_120` — any realizing recognizer has ≥ 120 states.
+* `emender_m2rnn_s5_inseparability_existential` — `False` form: any
+  recognizer with `< 120` states leads to contradiction.
+* `small_recognizer_cannot_realize_s5` — corollary form for general decoders.
+* `exists_distinguishing_word_pair` — pigeonhole-witness form: any recognizer
+  with < 120 states admits two words it cannot tell apart but the S5 tracker
+  does.
+* `exists_T_distinguishing_word_pair` — existential `T` form: a finite
+  length `T` and two length-`≤ T` words witnessing the distinguishing pair.
+* `emender_m2rnn_s5_inseparability_two_sided` — paper-facing conjunction
+  of the negative side (capacity bound) and positive side (S5 tracker
+  recognizer has exactly 120 states).
+* `trackerRealizer` — concrete `RealizesS5Tracker` witness using
+  `S5Tracker.recognizer` and identity decode.
+* `trackerRealizer_card_eq_120` — the concrete witness has exactly 120
+  states.
+* `emender_m2rnn_s5_inseparability` — the tight bound headline conjunction:
+  any realizer has `≥ 120` states, and an explicit `120`-state realizer
+  exists.
+
+### Verification
+
+* **Trust gate passes.** `formal/lean/scripts/check_paper_core.sh
+  ElmanProofs/PaperCore.lean` reports:
+  `trusted check passed: 11 project source files` (was 10 before
+  v18-lean-autopoetic) and
+  `paper core check passed: 11 project source files, no native_decide`.
+* **No `sorry`, no `axiom`, no `opaque`, no `unsafe`, no `native_decide`** in
+  any merged file.
+* **No existing theorems renamed.** New theorems live in a new module.
+* **`paper/` directory untouched.**
+
+### What this is — and what it is not
+
+**What this is.** A clean, paper-relevant state-counting lower bound: the
+S5 transition-table state space has exactly 120 reachable cosets, so any
+recognizer that realizes the tracker via a state-decoder must have ≥ 120
+distinct states. The argument is universal over recognizer architectures
+— it depends only on finite-state cardinality, not on architectural
+details.
+
+**What this is not.** This is **not** the explicit `T(d)` polynomial
+bound for bounded-precision raw-write RNNs originally targeted. The
+raw-write resource class `FixedRightRawExternalForget2` of
+`RecurrentResourceFormalism` has a continuous-valued (uncountable) state
+space; the finite-state pigeonhole here does not directly apply.
+
+### What bridges to the explicit `T(d)` bound
+
+Two remaining infrastructure pieces would close the gap:
+
+1. **Bounded-precision raw-write class.** Define an explicit
+   `BoundedPrecisionRawWrite d k_precision` predicate (each weight a
+   `k_precision`-bit fixed-point number), wire it through
+   `FixedRightRawExternalForget`, and show that the reachable state space
+   from any initial state has cardinality ≤ `2^(k_precision · d²)`. The
+   existing capacity bound then gives:
+   `2^(k_precision · d²) ≥ 120` as a necessary condition for tracking S5,
+   i.e., `k_precision · d² ≥ log₂(120) ≈ 7`. Below that, the recognizer
+   cannot track.
+2. **Diameter bound on the S5 Cayley graph.** Prove that for every
+   `g : S5`, there is a word `w` with `length w ≤ 10 = C(5, 2)` and
+   `run w = g`. Then `T(d) = 10` is the explicit length bound for the
+   distinguishing-pair theorem. Without the diameter bound, the
+   existential `T` we obtain is not effectively bounded as a function of
+   recognizer state count.
+
+The first piece is the heavier lift; the second is mechanical Coxeter-length
+work (the `Fin n.castSucc-Fin n.succ` adjacent transposition is the
+canonical Coxeter generator of `Equiv.Perm (Fin (n+1))`, and reduced word
+length equals the number of inversions of the permutation, which for S5 is
+at most 10).
+
+## What did NOT land — the explicit `T(d)` target (still open after v18)
 
 The brief's Milestone 2 ambition was a theorem of the form:
 
@@ -274,7 +390,13 @@ What remains open:
   separation.
 * No explicit `T(d)` bound is in hand.
 
-## Roadmap for v17+ (research-grade, not deadline-driven)
+## Roadmap for v19+ (research-grade, not deadline-driven)
+
+**Important note**: v18-lean-autopoetic landed the existential capacity form
+(see "What v18-lean-autopoetic landed" above). The roadmap items below were
+written for v17+ and remain relevant for the bridging work still required.
+
+
 
 Possible directions, in rough order of decreasing leverage and increasing
 mechanization cost:
@@ -312,6 +434,28 @@ mechanization cost:
    matched state dim `d`, NΔM tracks S₅ at length `T(d)` while M²RNN-pure does
    not. The FLOP equivalence is already proved; the capacity separation is
    the remaining gap.
+
+## Files in v18-lean-autopoetic
+
+* `formal/lean/ElmanProofs/Architectures/S5Inseparability.lean` — **new**
+  module landing the existential capacity inseparability bound. Imports
+  `ElmanProofs.Expressivity.S5Tracker`, `Mathlib.GroupTheory.Perm.Sign`,
+  `Mathlib.Tactic.FinCases`. Key theorems:
+  `run_surjective`, `wordOf`, `run_wordOf`, `RealizesS5Tracker`,
+  `capacity_lower_bound_120`,
+  `emender_m2rnn_s5_inseparability_existential`,
+  `small_recognizer_cannot_realize_s5`,
+  `exists_distinguishing_word_pair`,
+  `exists_T_distinguishing_word_pair`,
+  `emender_m2rnn_s5_inseparability_two_sided`,
+  `trackerRealizer`, `trackerRealizer_card_eq_120`,
+  `emender_m2rnn_s5_inseparability` (headline).
+
+* `formal/lean/ElmanProofs/PaperCore.lean` — one-line import addition only.
+
+* `formal/lean/LEAN_FRONTIER.md` — this file, updated with v18 progress.
+
+* `formal/lean/scripts/check_paper_core.sh` — **unchanged**.
 
 ## Files in v16-lean-extend
 

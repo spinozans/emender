@@ -6,6 +6,7 @@ import ElmanProofs.Architectures.M2RNNComparison
 import ElmanProofs.Architectures.MultiStepSeparation
 import ElmanProofs.Architectures.OnlineMemory
 import ElmanProofs.Architectures.RecurrentResourceFormalism
+import ElmanProofs.Architectures.S5Inseparability
 import ElmanProofs.Expressivity.E88ExceedsE1HCapacity
 import ElmanProofs.Expressivity.NDMRealizesS5
 import ElmanProofs.Expressivity.S5NDMRealization
