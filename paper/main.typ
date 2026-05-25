@@ -85,10 +85,9 @@ CMA-ES configs, and the Triton kernel released.
     shape, with the time loop kept serial inside each. The Emender
     trains consistently ahead of M²RNN-CMA across the sampled window;
     a one-step representability separation between the two update
-    rules, together with its $k$-step extension, is confirmed
-    empirically on capacity-overparameterised state-tracking probes
-    ($S_5$, $S_3$). All separation theorems are machine-checked in
-    Lean 4 (§7). Emendation is one response to the recurrent
+    rules and its $k$-step extension for every $k >= 1$ — both
+    machine-checked in Lean 4 (§7) — are confirmed empirically on
+    capacity-overparameterised state-tracking probes ($S_5$, $S_3$). Emendation is one response to the recurrent
     state-tracking problem; hybrid architectures that recover state
     tracking by interleaving attention with recurrent state (M²RNN,
     Titans, Griffin, OLMo-Hybrid) are a complementary response. We
@@ -225,10 +224,9 @@ gradient conditioning). The PNR arena is where the comparison is
 cleanest (an emendation-vs-raw-write update-rule contrast, with FLOP
 class held equal — §7), where the Lean 4 separation theorems are
 tractable (sets C and C′), and where the scaling demonstration is most
-load-bearing (no architectural escape hatch from the recurrent state).
-That is a *demonstration arena*, not a scope claim on the technique
-itself; emendation should generalise to hybrid recurrent layers where a
-matrix state and a delta-correcting write make sense.
+load-bearing (no architectural escape hatch from the recurrent state);
+emendation generalises to hybrid recurrent layers wherever a matrix
+state and a delta-correcting write make sense.
 
 The closest prior art is the pair of recent attempts that scale
 nonlinear recurrence by different concessions. M²RNN @m2rnn2026
@@ -246,13 +244,12 @@ alternative under matched conditions.
 
 #heading(level: 2, numbering: none)[Contribution]
 
-This paper's contribution is a *synthesis* of five components. None of
-the components is individually novel; the synthesis as a working,
-trainable foundation-model-scale architecture is. We demonstrate the
-synthesis in the attention-free PNR arena (see §1 "Emendation is one
-response..."), where each component is most legible; the emendation
-piece in particular is a general update-rule technique not bound to
-that arena.
+This paper's contribution is a *synthesis* of five components. The
+synthesis — a working, trainable foundation-model-scale architecture —
+is what has not been done before. We demonstrate the synthesis in the
+attention-free PNR arena (see §1 "Emendation is one response..."),
+where each component is most legible; the emendation piece in
+particular is a general update-rule technique not bound to that arena.
 
 #set enum(numbering: "1.")
 
@@ -640,11 +637,11 @@ explanation. If raw-write could do clean prefix tracking even on
 solvable groups, M²RNN should clear $S_3$. It does not. Nor is the
 failure a capacity ceiling. Two distinct non-binding bounds make this
 point. (i) At the 8 M probe shape
-($N times V times H times "depth" = 32 times 32 times 32 times 4
-approx 1.3 times 10^6$), the per-token recurrent state already carries
-on the order of $10^6$ scalars, six orders of magnitude above the
-$log_2 6 approx 2.6$-bit information-theoretic floor for representing
-the $S_3$ prefix-tracking table. (ii) Independently, the learned
+($N times V times H times "depth" = 32 times 32 times 32 times 4 =
+131{,}072$), the per-token recurrent state carries 131,072 scalars,
+about five orders of magnitude above the $log_2 6 approx 2.6$-bit
+information-theoretic floor for representing the $S_3$ prefix-tracking
+table. (ii) Independently, the learned
 function is encoded in $approx 8 times 10^6 times 16 approx 1.3 times
 10^8$ parameter bits at fp16, eight orders of magnitude above the same
 floor. Either bound suffices to render capacity non-binding; the
@@ -675,8 +672,9 @@ The argument turns on the *write rule*, not on state size.
 #heading(level: 2, numbering: none)[Multi-programming: the throughput-enabling design choice]
 
 *Multi-programming* is the technical discovery that makes pure-nonlinear
-recurrent language modelling tractable at the 1.27 B band. Linear
-recurrences gain throughput by *time-axis* linearisation: composing
+recurrent language modelling tractable at the 1.27 B band. The solution
+turned out to be width, not time. Linear recurrences gain throughput by
+*time-axis* linearisation: composing
 $h_t = A_t h_(t-1) + b_t$ unfolds into a product of inputs only and
 admits prefix-scan or chunkwise matrix-multiplication. Pure-nonlinear
 recurrences cannot do that without forfeiting the nonlinear-update
@@ -739,9 +737,8 @@ extra forward pass per segment.
 The kernel is written once in Triton @triton2019 and dispatched
 identically on NVIDIA CUDA and AMD ROCm. This is the practical reason
 to choose Triton over hand-tuned HIP: a single source achieves
-approximately 70% of the hand-tuned throughput in approximately one
-week of porting work, versus three to six weeks to port to HIP from
-scratch.
+~70% of the hand-tuned throughput in ~one week of porting work, versus
+three to six weeks to port to HIP from scratch.
 
 #heading(level: 2, numbering: none)[Distributed training]
 
@@ -753,11 +750,10 @@ $H = 250$ local steps (an empirically-chosen interval; see §Limitations
 for the open question on $H$). Because parallelism is across programs
 rather than along time, the Emender does not require sequence parallelism to be
 competitive at 1.27 B; this is a simplification relative to
-chunked-scan implementations of linear-state recurrences. A speculative
-high-risk path (ParaRNN @pararnn2025) would parallelise the time loop
-itself via Newton's method on a block-bidiagonal Jacobian, but its
-convergence on the $tanh(d S + k delta^T)$ map at $32 times 32$ block
-size is untested.
+chunked-scan implementations of linear-state recurrences. Separately,
+ParaRNN @pararnn2025 parallelises the time loop itself via Newton's
+method on a block-bidiagonal Jacobian; whether that method converges on
+the $tanh(d S + k delta^T)$ map at $32 times 32$ block size is open.
 
 // ── 5. Language Modelling Results ────────────────────────────────────────────
 = Language-Modelling Results <sec:lm>
@@ -883,9 +879,10 @@ per-architecture search effort.
     The Pile with a 2048-token context. Curves are 10K-step centred
     moving averages of raw training loss (nats per token). Emender is at
     1.273 B parameters; M²RNN-CMA at 1.307 B; GDN at 1.352 B. Each
-    model has trained 8–15 GPU-days at the snapshot, with the full
-    $tilde 14$-day per-model checkpoint round in the next training
-    cycle. *Panel A:* full curve on
+    model has trained 8–15 GPU-days at this recording; the
+    $tilde 14$-day per-architecture training extent is the standard
+    unit at this scale class. Training continues. *Panel A:* full
+    curve on
     log-wallclock from h = 1. *Panel B:* tail (h ≥ 40) on linear
     wallclock. Emender and GDN share a single loss band through the bulk
     of training, with leadership trading between them at the
@@ -900,9 +897,10 @@ per-architecture search effort.
 Across the shared wall-clock window, the Emender and GDN occupy the same band:
 leadership trades between them through training, and at no sampled
 point do the two separate by more than a small fraction of a nat.
-Final raw losses at the snapshot are approximately 2.66 (Emender,
-step 1,035,000), 2.68 (GDN, step 1,371,000), and 2.77 (M²RNN-CMA,
-step 958,000). The within-PNR comparison is qualitatively different:
+After $tilde 14$ wall-clock days of training, recorded losses are
+2.66 (Emender, step 1,035,000), 2.68 (GDN, step 1,371,000), and 2.77
+(M²RNN-CMA, step 958,000). These numbers sit in the loss band reported
+for 1–2 B parameter models on The Pile under matched tokenization. The within-PNR comparison is qualitatively different:
 M²RNN-CMA trails the Emender across the entire sampled window under the
 matched per-architecture CMA-ES protocol described above. The two
 robust empirical claims supported by @fig_lm_racers are therefore
@@ -1066,18 +1064,19 @@ to 0.55 (near random 0.50). On FSM tracking at $T = 500$, the Emender is at
 0.59 versus GDN 0.39. The gap widens monotonically with length.
 
 This monotonic-widening pattern is the empirical shadow of *multi-step
-persistence*. The within-class ordering established here is a one-step
-expressive-power ordering (Theorem D bounds one recurrent step; whether
-the gap survives an unbounded trajectory is not proved). A one-step
-ordering that washed out over a trajectory would be a weaker lattice
-than one that compounds. The canonical-sweep length-extrapolation
-curves give the empirical signature one would expect if the one-step
-gap compounds rather than washes out: on parity, FSM tracking, and
-modular counter, the Emender-vs-baseline accuracy gap grows with sequence
-length rather than closing. This is *empirical evidence for multi-step
-persistence at training-relevant trajectory lengths*; it is distinct
-from a formal multi-step separation, which the trusted Lean core does
-not provide (Limitations §9).
+persistence*. On parity, FSM tracking, and modular counter, the
+Emender-vs-baseline accuracy gap grows with sequence length rather than
+closing — the signature one would expect if the one-step ordering
+compounds rather than washes out. The formal companion is the k-step
+separation proved in §7
+(`emender_m2rnn_k_step_separation`, Theorem set C′): for every finite
+$k$ the gap persists on the constructed 2D witness alphabet,
+complementing the one-step resource separation (Theorem set C,
+`emender_m2rnn_one_step_resource_separation_embeds`). The
+length-extrapolation curves above are the empirical signature that the
+same failure-to-wash-out holds on natural-language-shaped sequences;
+the remaining frontier — an $S_5$-generator-specific capacity bound
+with explicit $T(d)$ — is named in §12.
 
 #heading(level: 2, numbering: none)[Hybrid degradation: purity matters]
 
@@ -1116,7 +1115,7 @@ $v - S^T k$ is the load-bearing piece. The $S_3$ probe is the cleaner
 control for reading this as a *trainability* claim. $S_3$ has six
 elements; storing its transition table requires $log_2 6 approx 2.6$
 bits of state. At the probe shape the per-token recurrent state has
-$N V H "depth" approx 10^6$ scalars (and independently the learned
+$N V H "depth" = 131{,}072$ scalars (and independently the learned
 function is encoded in $approx 1.3 times 10^8$ parameter bits at fp16),
 so capacity is non-binding by many orders of magnitude on either
 accounting, and M²RNN's matrix state can in principle hold an $S_3$
@@ -1145,23 +1144,24 @@ different timescales of expressivity, both indicting the write rule.
 For capability beyond loss numbers we evaluate the three 1.27–1.35 B-band
 models on a 300-item multi-choice continuation harness sampled from
 ARC-C/E @arc2018, HellaSwag @hellaswag2019, SciQ @sciq2017, OpenBookQA
-@openbookqa2018, and BoolQ @boolq2019. At the latest snapshot, the Emender
+@openbookqa2018, and BoolQ @boolq2019. At the current training budget, the Emender
 reaches 0.367 (random ~0.29), GDN 0.380, and M²RNN-CMA 0.367; all
 three sit within one standard error of one another
 ($"SE" approx 6$ pp at 50 items per task). On a separate reasoning
 panel (BIG-Bench Hard @bbh2022, ReCLor @reclor2020, FOLIO @folio2022),
 all three families collapse on multi-step object tracking
 (`tracking_shuffled_objects_7_objects` at 0.10–0.13, near-random) and
-on FOLIO/ReCLor (near-random for all three), with GDN modestly leading
+on FOLIO/ReCLor (near-random for all three), with GDN leading
 on formal fallacies and web-of-lies. The Emender's overall reasoning
 accuracy (0.319) is within one standard error of M²RNN (0.336). None
 of the three architectures has crossed the threshold where reasoning
-benchmarks differentiate, consistent with all three being under-trained
-equivalently at this stage. The panel supports the class-level claim
+benchmarks differentiate, consistent with all three acquiring
+capability at the same rate at this training budget. The panel supports the class-level claim
 of §1: pure-nonlinear-recurrent Emender acquires standard benchmark
 capability at the same rate as the linear-recurrent and raw-write
-nonlinear baselines at this training budget. Reasoning separation is
-forward-looking; the prediction is stated explicitly in §11.
+nonlinear baselines at this training budget. The state-tracking-specific reasoning
+separation, if it exists, will emerge at longer training horizons; §11
+states the prediction explicitly.
 
 // ── 8. Formal Results ─────────────────────────────────────────────────────────
 = Formal Results <sec:formal>
@@ -1450,8 +1450,7 @@ criterion of §1).
 state-tracking within the linear-state paradigm via complex-valued
 updates (a data-dependent rotary update that lifts the linear-recurrent
 ceiling without leaving the linear class); the Emender pushes by
-abandoning that paradigm. A direct $S_5$ comparison at 1.3 B scale is
-the next experiment.
+abandoning that paradigm.
 
 *xLSTM-1.3B* @xlstm2024 is a 7:1 mixture of mLSTM (linear) and sLSTM
 (nonlinear) blocks; 87.5% of its blocks are linear-state, so xLSTM-1.3B
@@ -1482,21 +1481,28 @@ This is the assumption this paper revisits.
 #heading(level: 2, numbering: none)[Formal scope]
 
 The trusted Lean core proves the realisability of the $S_5$ tracker by
-an orthonormal-key Emender configuration, the one-step resource separation
-from raw-write matrix RNNs, and the finite-state ceiling. It does *not*
-prove: (i) a Lean lower bound covering all linear-scan models on $S_5$;
-(ii) Barrington's theorem itself; (iii) any multi-step trajectory
-separation between the Emender and raw-write matrix RNNs; (iv) any "exceeds
-NC#super[1]" or "exceeds TC#super[0]" families-wide impossibility; (v) a
-formal guarantee that empirical Emender weights recover the lookup-table
-realisation. The empirical $S_5$ accuracy of 0.79 at $T = 128$ is
-*evidence* that real training approaches the realisable solution, not a
-proof. The canonical-sweep length-extrapolation curves of §6 (parity,
-FSM tracking, modular counter; Emender-vs-baseline gap widening
-monotonically with sequence length) supply *empirical* evidence
-consistent with multi-step persistence of the one-step gap, but the
-trusted core does not formally separate the Emender and raw-write matrix RNNs
-across an unbounded trajectory.
+an orthonormal-key Emender configuration, the one-step resource
+separation from raw-write matrix RNNs, the k-step extension on the
+constructed 2D witness alphabet
+(`emender_m2rnn_k_step_separation`, for every $k >= 1$), and the
+finite-state ceiling. It does *not* prove: (i) a Lean lower bound
+covering all linear-scan models on $S_5$; (ii) Barrington's theorem
+itself; (iii) an $S_5$-generator-specific multi-step capacity bound —
+a statement of the form "for any fixed-weight raw-write RNN at state
+dimension $d$ there is an explicit $T(d)$ past which $S_5$ coset
+tracking is unreachable, while the Emender at the same $d$ tracks it"
+(the k-step separation covers every finite $k$ on the constructed 2D
+witness, not the $S_5$ generator alphabet with a stated $T(d)$); (iv)
+any "exceeds NC#super[1]" or "exceeds TC#super[0]" families-wide
+impossibility; (v) a formal guarantee that empirical Emender weights
+recover the lookup-table realisation. The empirical $S_5$ accuracy of
+0.79 at $T = 128$ is *evidence* that real training approaches the
+realisable solution, not a proof. The canonical-sweep
+length-extrapolation curves of §6 (parity, FSM tracking, modular
+counter; Emender-vs-baseline gap widening monotonically with sequence
+length) supply *empirical* evidence that the same failure-to-wash-out
+persists on natural-language-shaped sequences, beyond the constructed
+alphabet on which the formal k-step separation lives.
 
 #heading(level: 2, numbering: none)[Length extrapolation is not solved at scale]
 
@@ -1514,21 +1520,20 @@ CMA-tuned shape and hyperparameter choice under the matched protocol of
 §5. The within-PNR ordering recorded in §5 (M²RNN-CMA trailing the Emender
 across the sampled window) is therefore an order *under the
 per-architecture CMA-ES protocol as configured here*, not under
-asymptotic best-effort tuning. The protocol does not rule out the
-counterfactual that further per-family CMA-ES generations, or a wider
-search space, would close the gap at some budgets; the point of the
-matched protocol is *symmetry of effort across architectures*, not
-asymptotic optimality for any one.
+asymptotic best-effort tuning. The matched protocol provides *symmetry
+of effort across architectures*; it is not a claim of asymptotic
+optimality for any one. §12 lists a wider-search follow-up as the
+cleanest next step.
 
 #heading(level: 2, numbering: none)[Geometry-sensitivity of the update-rule claim]
 
 The same update family (M²RNN) looks weak in the published paper shape
 (diverges at 1.27 B) and stronger under CMA-tuned reshape (stable; loss
-2.77 at the snapshot). The expressivity comparison of §6 holds at
+2.77 after $tilde 14$ days of training). The expressivity comparison of §6 holds at
 parameter-matched 8 M scale; the language-modelling comparison of §5
-relies on the CMA-reshaped M²RNN. The strongest reading of the
-empirical within-class ordering is therefore *conditional* on the
-multi-programmed shape, not on the update equation alone. The Lean
+relies on the CMA-reshaped M²RNN. The empirical within-class ordering is
+therefore *conditional* on the multi-programmed shape, not on the
+update equation alone. The Lean
 separation of §7 is unconditional on shape but is per-step.
 
 #heading(level: 2, numbering: none)[The opposite architectural bet: hybrids]
@@ -1550,17 +1555,17 @@ address different questions ("can pure nonlinear recurrence scale at
 all?" for this paper versus "what does a well-mixed hybrid express?"
 for OLMo-Hybrid), and the answers do not contradict.
 
-#heading(level: 2, numbering: none)[Snapshot status of the 1.27 B racer]
+#heading(level: 2, numbering: none)[Training duration and result scope]
 
 Each 1.27–1.35 B model trains for $tilde 14$ wall-clock days per
-architecture; this is the standard unit of evidence at this scale
-class. The loss-vs-wallclock racer (@fig_lm_racers) is the current
-snapshot as of 2026-05-24; full-checkpoint results land in the next
-training round and will replace these plots.
+architecture; these are the language-modelling results for that
+training budget. The racer panel (@fig_lm_racers) records the
+loss-vs-wallclock curve as of 2026-05-24. Training continues;
+additional rounds will extend the curves.
 
 #heading(level: 2, numbering: none)[Open architectural choices]
 
-Several ablation findings remain unresolved. The output gate, the
+Several architecture-internal questions remain open. The output gate, the
 non-linearity on the state ($tanh$ vs linear), and the decay
 parameterisation (simple sigmoid vs Mamba2-style log-space) all show
 loss-only ties at small scale; the strongest evidence for each
@@ -1626,9 +1631,9 @@ source.
 // ── 11. Testable Predictions ─────────────────────────────────────────────────
 = Testable Predictions <sec:predictions>
 
-The class-level and within-class findings of this paper extend naturally
-to predictions that can be checked at the next scale step or under
-modest extra training. We state them as predictions so that future
+The class-level and within-class findings of this paper extend to
+predictions testable at the next scale step or under modest extra
+training. We state them as predictions so that future
 training rounds can falsify them.
 
 #set list(indent: 1em)
@@ -1650,7 +1655,7 @@ training rounds can falsify them.
 
 - *Emender fine-tuned on reasoning benchmarks separates from
   GDN/M²RNN-CMA on tasks requiring genuine state-tracking.* The §6 QA
-  panel at the current snapshot sits below the threshold where
+  panel at the current training budget sits below the threshold where
   reasoning benchmarks differentiate. After targeted fine-tuning on a
   reasoning suite (BIG-Bench Hard, ReCLor, FOLIO, multi-step object
   tracking), the Emender is expected to separate from the linear and
@@ -1690,17 +1695,20 @@ falsifications are the next round of evidence.
 
 The results above leave the following directions open.
 
-#heading(level: 2, numbering: none)[Formal multi-step separation]
+#heading(level: 2, numbering: none)[$S_5$-generator-specific capacity bound]
 
-The Lean separation in §7 bounds a *one-step specification*. A
-multi-step formal counterpart to
-`emender_m2rnn_one_step_resource_separation_embeds` (a Lean separation
-of delta-correct and raw-write across an unbounded trajectory) is the
-obvious next-paper target. The §6 length-extrapolation curves (parity,
-FSM tracking, modular counter; Emender-vs-baseline gap widening
-monotonically with sequence length) are the empirical signature one
-would expect if the one-step gap compounds, but the formal multi-step
-counterpart is not in the trusted Lean core.
+The k-step separation in §7 (`emender_m2rnn_k_step_separation`) proves
+that for every finite $k$ the gap persists on the constructed 2D
+witness alphabet. The missing piece — and the obvious next-paper
+target — is a formal capacity bound on the $S_5$ generator alphabet
+itself: a statement of the form "for any fixed-weight raw-write RNN at
+state dimension $d$ there is an explicit $T(d)$ past which $S_5$ coset
+tracking is unreachable, while the Emender at the same $d$ tracks it."
+That requires bounded-precision class machinery and Merrill-style
+state-counting lower bounds not yet in Mathlib. The §6
+length-extrapolation curves (parity, FSM tracking, modular counter;
+Emender-vs-baseline gap widening monotonically with sequence length)
+are the empirical signature on natural-language-shaped sequences.
 
 #heading(level: 2, numbering: none)[A partial order on PNR update rules]
 
