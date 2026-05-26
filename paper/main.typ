@@ -76,12 +76,13 @@ CMA-ES configs, and the Triton kernel released.
     days, reaching 1 bit per byte on The Pile. The architecture, the
     Emender, is a residual stack of recurrent layers, each pairing a
     matrix-state memory with a delta-correcting update rule wrapped in
-    a tanh that bounds and latches each slot. In a Lean 4 trusted core
-    we prove three latching properties — saturation insensitivity,
-    sign-preserving hold, and counter-delta release — and in the same
-    core prove that delta-correcting and raw-write updates separate at
-    one step and at every $k$-step composition at matched per-token
-    FLOP cost. We confirm the separation empirically. The training
+    a tanh that bounds and latches each slot. The matrix-state $R times
+    N$ update is modulated by a delta-correcting term $k(v - S^T k)^T$
+    under a saturating nonlinearity, so slots latch until a
+    counter-aligned key arrives. A machine-verified formalism
+    establishes the latching dynamics and a per-step separation from
+    the raw-write baseline at matched per-token FLOP cost. We confirm
+    the separation empirically. The training
     speed comes from intra-step parallelism pushed orders of magnitude
     beyond what is typically tested: 22,200 small recurrent programs
     per token. The Emender matches the wallclock loss band of Gated
@@ -92,8 +93,8 @@ CMA-ES configs, and the Triton kernel released.
     Gated DeltaNet and 0.22 for the raw-write baseline. We provide the
     models, code, and an account of how the search for fair
     inter-model comparison drove these findings. The lever for scaling
-    serial recurrence is parallelism within each time step, not across
-    it.
+    serial nonlinear recurrence is parallelism within each time step,
+    not across it.
   ],
   keywords: (
     "recurrent neural networks",
