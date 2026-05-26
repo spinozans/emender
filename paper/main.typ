@@ -86,7 +86,7 @@ CMA-ES configs, and the Triton kernel released.
     trains consistently ahead of M²RNN-CMA across the sampled window;
     a one-step representability separation between the two update
     rules and its $k$-step extension for every $k >= 1$ — both
-    machine-checked in Lean 4 (§7) — are confirmed empirically on
+    proved in Lean 4 (§7) and observed empirically on
     capacity-overparameterised state-tracking probes ($S_5$, $S_3$). Emendation is one response to the recurrent
     state-tracking problem; hybrid architectures that recover state
     tracking by interleaving attention with recurrent state (M²RNN,
