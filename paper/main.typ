@@ -432,9 +432,11 @@ need.
 
 #heading(level: 2, numbering: none)[Per-head update]
 
-We introduce the Emender, a pure nonlinear recurrent language model whose
-update rule reads the current state, computes the prediction error, and
-writes the delta correction. Each Emender layer maintains $H$ independent heads. Each head $h$ owns a
+We introduce the Emender#footnote[The name arrived as a correction to a
+prior internal handle; the architecture emended its own name by the same
+process it performs on memory.], a pure nonlinear recurrent language
+model whose update rule reads the current state, computes the prediction
+error, and writes the delta correction. Each Emender layer maintains $H$ independent heads. Each head $h$ owns a
 matrix state $S_h in RR^(N times V)$; at production scale, $N = V = 32$.
 The trusted-core theorems of §7 use $d$ for the common matrix dimension;
 with $d = N = V = 32$, the matrix memory is $d times d$.
@@ -556,6 +558,16 @@ Three ingredients are load-bearing.
   update $S <- S + k v^T$ (the M²RNN family) accumulates without
   correction and cannot, with fixed weights, satisfy a uniform one-step
   overwrite specification (§Formal Results).
+
++ *Saturation latching of the $tanh$ bound.* A slot driven near
+  $plus.minus 1$ is insensitive to further bounded writes, sub-threshold
+  counter-input leaves the sign unchanged, and a sufficient
+  counter-delta releases the slot. Together these properties let a
+  binding persist across many irrelevant tokens while keeping the
+  memory revisable when the data demand it. §7's Theorem set F
+  (saturation insensitivity, sign-preserving hold, counter-delta
+  release) formalises all three as slot-wise statements on the full
+  Emender update.
 
 + *Many small heads, not one large matrix.* Production Emender at 1.27 B
   uses $H = 370$ heads of $32 times 32$ each (Lean-witnessed:
@@ -1455,6 +1467,31 @@ proved.
 
 // ── 9. Related Work ───────────────────────────────────────────────────────────
 = Related Work <sec:related>
+
+#heading(level: 2, numbering: none)[Ancestry: the fast-weight line on delta correction]
+
+The Emender update belongs to a long line that treats memory as a
+structure to correct rather than to refill. The earliest formulation is
+Widrow and Hoff's least-mean-square rule @widrow_hoff_1960, which writes
+the error between target and current output back into the weight vector
+of an adaptive linear element. Schmidhuber recast the same idea in a
+recurrent setting under the name *fast-weight programmers*
+@schmidhuber_1992_fastweights: a slow controller emits keys and values
+that update a fast-weight matrix online, with the update being a
+correction against what the matrix currently predicts at the addressed
+slot. Schlag, Irie, and Schmidhuber made the bridge to modern attention
+explicit @schlag_irie_schmidhuber_2021, showing that linear-transformer
+kernels with cumulative outer-product updates *are* fast-weight
+programmers with a raw additive write, and proposing the delta-rule
+write as a stability and capacity fix. DeltaNet @deltanet2024 carried
+the delta rule into a parallelisable linear-recurrent language model,
+demonstrating the rule at billion-parameter scale in the linear-state
+regime. The Emender extends this line with three properties the linear
+instantiations forfeit: a nonlinear matrix state, the saturation
+latching of §3 ingredient (b′) that turns slot-wise overwrite
+into persistent binding, and width-axis parallelism via
+multi-programming that recovers throughput without time-axis
+linearisation.
 
 #heading(level: 2, numbering: none)[Linear-state recurrent language models]
 
