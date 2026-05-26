@@ -437,6 +437,8 @@ We introduce the Emender, a pure nonlinear recurrent language model whose
 update rule reads the current state, computes the prediction error, and
 writes the delta correction. Each Emender layer maintains $H$ independent heads. Each head $h$ owns a
 matrix state $S_h in RR^(N times V)$; at production scale, $N = V = 32$.
+The trusted-core theorems of §7 use $d$ for the common matrix dimension;
+with $d = N = V = 32$, the matrix memory is $d times d$.
 Per token, the input gives projections $k_h, q_h in RR^N$,
 $v_h in RR^V$, and a scalar input-dependent decay
 $d_h in (0,1)$ and gate $g_h in RR^V$. The recurrent step is
@@ -617,7 +619,7 @@ elimination:
     [Matrix state], [yes], [yes], [yes],
       [Cannot separate: GDN has it and fails $S_5$],
     [Temporal nonlinearity on state], [no], [yes], [yes],
-      [Cannot separate: M²RNN stalls at 0.22 on $S_5$],
+      [Cannot separate: M²RNN-CMA stalls at 0.22 on $S_5$],
     [Delta correction in write], [no], [no], [yes],
       [Surviving candidate],
   )],
@@ -625,14 +627,14 @@ elimination:
     *Ablation by elimination on the three candidate differentiators for
     state-tracking.* GDN has matrix state and fails $S_5$ at training
     length (0.36 vs Emender 0.79, §6), so matrix state alone cannot be the
-    differentiator. M²RNN has matrix state *and* temporal nonlinearity
+    differentiator. M²RNN-CMA has matrix state *and* temporal nonlinearity
     on the state and still stalls at 0.22 on $S_5$, so temporal
     nonlinearity is not the differentiator either. Delta correction is
     the only property left that the Emender has and the two baselines do not.
   ],
 ) <tab_ablation>
 
-M²RNN scores 0.31 on $S_3$, the solvable control where non-solvability
+M²RNN-CMA scores 0.31 on $S_3$, the solvable control where non-solvability
 is *not* the obstruction. This rules out a complexity-ceiling
 explanation. If raw-write could do clean prefix tracking even on
 solvable groups, M²RNN should clear $S_3$. It does not. Nor is the
@@ -1107,7 +1109,7 @@ pattern $[upright("Emender"), upright("Emender"), upright("GDN"), upright("GDN")
   ],
 ) <fig_hybrid>
 
-The mechanism interpretation. M²RNN underperforms both at the $S_5$
+The mechanism interpretation. M²RNN-CMA underperforms both at the $S_5$
 training length (0.22 vs Emender 0.79) and on $S_3$ (0.31 vs Emender 1.00) at
 the same parameter count. Matrix state plus temporal nonlinearity
 *alone* (what the Emender and M²RNN share) is not sufficient; the delta
@@ -1120,7 +1122,7 @@ $N V H "depth" = 131{,}072$ scalars (and independently the learned
 function is encoded in $approx 1.3 times 10^8$ parameter bits at fp16),
 so capacity is non-binding by many orders of magnitude on either
 accounting, and M²RNN's matrix state can in principle hold an $S_3$
-prefix-tracker. M²RNN's 0.31 is therefore evidence that SGD under the
+prefix-tracker. M²RNN-CMA's 0.31 is therefore evidence that SGD under the
 raw-write inductive bias *does not find* such a configuration at this
 scale, not that one fails to exist; the failure is empirical
 learnability under the raw-write rule, not representational
@@ -1154,7 +1156,7 @@ all three families collapse on multi-step object tracking
 (`tracking_shuffled_objects_7_objects` at 0.10–0.13, near-random) and
 on FOLIO/ReCLor (near-random for all three), with GDN leading
 on formal fallacies and web-of-lies. The Emender's overall reasoning
-accuracy (0.319) is within one standard error of M²RNN (0.336). None
+accuracy (0.319) is within one standard error of M²RNN-CMA (0.336). None
 of the three architectures has crossed the threshold where reasoning
 benchmarks differentiate, consistent with all three acquiring
 capability at the same rate at this training budget. The panel supports the class-level claim
@@ -1374,6 +1376,56 @@ here, not specific to the Emender. The trusted core formalises the PNR class
 through two instances (the Emender and M²RNN-CMA), with the Emender as the
 delta-correct contribution of this work and M²RNN-CMA as the raw-write
 comparator.
+
+#heading(level: 2, numbering: none)[Theorem set F: latching]
+
+These three results formalise the latching half of the Emender primitive:
+saturation makes a slot insensitive to further bounded writes, sign is
+preserved under sub-threshold counter-input, and a sufficient
+counter-delta releases the latch. All three are slot-wise statements on
+the full Emender update
+$S' = tanh(lambda dot S + k (v - S^T k)^T)$
+at slot $(i,j)$, with $W := k_i (v_j - (S^T k)_j)$ the write contribution
+into that slot. The proofs run through the standard tanh-perturbation
+foundation.
+
+#set list(indent: 1em)
+- *Saturation insensitivity.* If the slot is saturated in the sense
+  $|S'_(i,j)| > 1 - epsilon$, and a perturbation $delta$ to the
+  pre-activation entry has $|delta| <= M$ with $epsilon + M < 1$, then
+  the post-tanh slot moves by at most $2(epsilon + M) |delta|$. The
+  bound shrinks linearly in both the saturation slack $epsilon$ and the
+  perturbation magnitude $M$; at deep saturation a bounded write barely
+  moves the slot. Lean:
+  `EmenderLatching.emender_saturation_insensitivity`. A two-input
+  corollary `EmenderLatching.emender_saturation_two_inputs_close` lifts
+  the bound to two value vectors sharing one key.
+
+- *Sign-preserving hold.* With $lambda >= 1$ and a bounded write
+  $|W| <= T < lambda (1 - eta)$ at slot $(i,j)$, a slot already
+  saturated with $|S_(i,j)| > 1 - eta$ keeps its sign after one Emender
+  step and stays bounded below in magnitude by
+  $tanh(lambda (1 - eta) - T)$. For $lambda > 1$ and small $eta, T$ the
+  argument $lambda (1 - eta) - T$ exceeds $1$, so the lower bound
+  exceeds $tanh 1 approx 0.76$ and the latch holds comfortably. The
+  hypothesis $T < lambda (1 - eta)$ is the "no sufficient counter-delta"
+  clause; counter-delta release is the next result. Lean:
+  `EmenderLatching.emender_latch_holds_by_default`.
+
+- *Counter-delta release.* With $lambda > 0$, $S_(i,j) > 0$, and a write
+  contribution $W < -lambda S_(i,j)$ in the opposite sign, the
+  post-update slot is strictly negative — the latch flips out of its
+  basin in one step. Symmetrically for the negative basin. The release
+  threshold is $T^* := lambda |S_(i,j)|$; any counter-delta exceeding
+  $T^*$ in the opposite sign suffices. Lean:
+  `EmenderLatching.emender_latch_releases_on_counter_delta`. The
+  quantitative companion
+  `EmenderLatching.emender_latch_release_quantitative` shows that if the
+  counter-delta exceeds the threshold by margin $mu > 0$, the
+  post-update slot lies on the opposite side of the origin with
+  magnitude at least $tanh mu$.
+
+#set list(indent: 0em)
 
 #heading(level: 2, numbering: none)[NC#super[1] paragraph (verbatim)]
 
