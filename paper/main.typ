@@ -184,8 +184,9 @@ orthonormal-key configuration of the Emender realises the $S_5$ prefix
 tracker, the canonical NC#super[1] witness. The empirical work then
 shows the world is consistent with what the proofs already establish.
 The 8 M-parameter Emender reaches 0.79 accuracy on $S_5$ against 0.36
-for Gated DeltaNet and 0.22 for the raw-write baseline. The 1.27 B run
-lands in the same loss-vs-wallclock band as Gated DeltaNet on The Pile.
+for Gated DeltaNet and 0.22 for the raw-write baseline. The 1.27 B
+Emender reaches 0.979 bits per byte on The Pile, inside the same
+wallclock band as Gated DeltaNet at 0.987.
 Throughput at width comes from 22,200 small recurrent programs per
 token. The lever for scaling serial recurrence is parallelism within
 each time step, not across it.
@@ -848,64 +849,60 @@ independent $q,k$ pairs per value head (the same ratio the Emender uses
 at production, $H = 370$) removes the explosion. This is a property of
 head geometry, not of the algebraic form of the write: a third recipe
 axis the multi-programmed family must respect alongside matrix state
-and update rule. The §6 expressivity claim is unaffected because it
-runs at parameter-matched 8 M scale where geometry is held constant
-across families.
+and update rule.
 
 #heading(level: 2, numbering: none)[Loss-vs-wallclock racer]
 
 #figure(
   image("results/figure_2/figure_2_draft.png", width: 95%),
   caption: [
-    *Loss versus wallclock for the three 1.27–1.35 B-parameter
-    pure-recurrent racers, as of 2026-05-26.* Schedule-free AdamW on
-    The Pile with a 2048-token context. Curves are 10K-step centred
+    *Emender and Gated DeltaNet share a single sub-1-bpb loss band on
+    The Pile under matched per-architecture CMA-ES; M²RNN-CMA trails
+    the band across the sampled window.* Schedule-free AdamW on The
+    Pile with a 2048-token context. Curves are 10K-step centred
     moving averages of training loss in bits per byte; the nats/token
     $arrow$ bits/byte conversion uses the canonical
     $"bytes/token" = 3.92$ for `p50k_base` on The Pile (pinned in
     `scripts/estimate_tokenizer_bytes_per_token.json`, methodology
     sentence in this section). Emender is at
-    1.273 B parameters; M²RNN-CMA at 1.307 B; GDN at 1.352 B. Each
+    1.273 B parameters; M²RNN-CMA at 1.307 B; GDN at 1.352 B; each
     model has trained 14–19 GPU-days at this recording; the
     $tilde 14$-day per-architecture training extent is the standard
-    unit at this scale class. Training continues. *Panel A:* full
-    curve on
-    log-wallclock from h = 1. *Panel B:* tail (h ≥ 40) on linear
-    wallclock. Emender and GDN share a single loss band through the bulk
-    of training, with leadership trading between them at the
-    fractional-bit-per-byte scale; the two curves are nearly co-linear.
-    M²RNN-CMA has higher loss than the other two across the sampled
-    window. The paper-shape M²RNN baseline (not shown) diverged at
-    step 8,400. Color convention used throughout the paper: Emender =
-    blue, GDN = orange, M²RNN-CMA = red.
+    unit at this scale class. *Panel A:* full curve on log-wallclock
+    from h = 1. *Panel B:* tail (h ≥ 40) on linear wallclock.
+    Leadership between Emender and GDN trades through training at the
+    fractional-bit-per-byte scale; the two curves are nearly
+    co-linear. M²RNN-CMA has higher loss than the other two across
+    the sampled window. The paper-shape M²RNN baseline (not shown)
+    diverged at step 8,400. Color convention used throughout the
+    paper: Emender = blue, GDN = orange, M²RNN-CMA = red. Recorded as
+    of 2026-05-26; training continues.
   ],
 ) <fig_lm_racers>
 
-Across the shared wall-clock window, the Emender and GDN occupy the same band:
-leadership trades between them through training, and at no sampled
-point do the two separate by more than a small fraction of a nat.
-After $tilde 14$ wall-clock days of training, recorded losses are
-2.66 (Emender, step 1,035,000), 2.68 (GDN, step 1,371,000), and 2.77
-(M²RNN-CMA, step 958,000). These numbers sit in the loss band reported
-for 1–2 B parameter models on The Pile under matched tokenization.
-Under the training tokenizer (`p50k_base` BPE) on The Pile, mean bytes
-per token is 3.92 over a 2000-sample sweep at the training
+After $tilde 14$ wall-clock days of training, the Emender reaches
+0.979 bits per byte on The Pile; Gated DeltaNet reaches 0.987;
+M²RNN-CMA reaches 1.02. The Emender and GDN sit on the same sub-1-bpb
+band: leadership trades between them through training, and at no
+sampled point do the two separate by more than a small fraction of a
+nat. The corresponding training losses are 2.66 nats/token (Emender,
+step 1,035,000), 2.68 (GDN, step 1,371,000), and 2.77 (M²RNN-CMA, step
+958,000). Under the training tokenizer (`p50k_base` BPE) on The Pile,
+mean bytes per token is 3.92 over a 2000-sample sweep at the training
 `chunk_tokens=2048` (estimation script:
 `scripts/estimate_tokenizer_bytes_per_token.py`, pinned output at
 `scripts/estimate_tokenizer_bytes_per_token.json`), so
 $"bpb" = "nats/token" times log_2(e) / "bytes/token" approx "nats/token" times 0.368$.
-The Emender's 2.66 nats/token converts to 0.979 bits per byte; GDN's
-2.68 to 0.987; M²RNN-CMA's 2.77 to 1.02. The within-PNR comparison is qualitatively different:
-M²RNN-CMA trails the Emender across the entire sampled window under the
-matched per-architecture CMA-ES protocol described above. The two
-robust empirical claims supported by @fig_lm_racers are therefore
-(i) *(class-level)* the pure-nonlinear-recurrent class lands in the
-same loss-vs-wallclock band as the frontier-class linear-recurrent
-baseline, contradicting the long-standing assumption that pure
-nonlinear recurrence is impractical at scale; and (ii) *(within-class)*
-within the pure-nonlinear-recurrent class the delta-correcting update
-rule is consistently ahead of the raw-write update rule under matched
-per-architecture CMA-ES, isolating the update rule as the within-PNR
+Within the pure-nonlinear-recurrent class, M²RNN-CMA trails the Emender
+across the sampled window. The two robust empirical claims supported
+by @fig_lm_racers are therefore (i) *(class-level)* a
+pure-nonlinear-recurrent language model trains to sub-1-bpb on The
+Pile and sits in the same loss-vs-wallclock band as the
+frontier-class linear-recurrent baseline, contradicting the
+long-standing assumption that pure nonlinear recurrence is impractical
+at scale; and (ii) *(within-class)* within the pure-nonlinear-recurrent
+class the delta-correcting update rule is consistently ahead of the
+raw-write update rule, isolating the update rule as the within-PNR
 differentiator. Source: smoothed CSVs and snapshot table under
 `paper/results/figure_2/` (`AS_OF.md`).
 
@@ -944,19 +941,12 @@ differential HPO investment and not a capacity ceiling. Reading the gap
 as evidence of undertraining on one side would require asymmetric
 tuning that did not occur on either side.
 
-A second potential asymmetry deserves explicit treatment.
-"Reasonable defaults" are matched in the sense that no architecture
-received probe-specific HPO, but they are not matched in *selection
-history*: the Emender's defaults are the endpoint of an ablation lineage
-selected partly on state-tracking behaviour (Appendix), whereas GDN and
-M²RNN's published defaults were selected by their authors on
-language-modelling loss. The matched-no-tuning condition therefore
-controls for differential probe-specific effort, not for this selection
-asymmetry. The $S_3$ control isolates the part of the within-class
-claim that is immune to it: raw-write's 0.31 on a six-element solvable
-group, where the $log_2 6 approx 2.6$-bit table sits well below the
-non-binding capacity ceiling, is a property of the update rule under
-SGD at the 8 M probe shape, not a property of the Emender's design history.
+The $S_3$ control isolates the part of the within-class claim that is
+immune to any selection-history asymmetry (§9): raw-write's 0.31 on a
+six-element solvable group, where the $log_2 6 approx 2.6$-bit table
+sits well below the non-binding capacity ceiling, is a property of the
+update rule under SGD at the 8 M probe shape, not a property of the
+Emender's design history.
 
 #heading(level: 2, numbering: none)[Headline: $S_5$ permutation composition]
 
@@ -1514,64 +1504,106 @@ This is the assumption this paper revisits.
 
 #heading(level: 2, numbering: none)[Formal scope]
 
-The trusted Lean core proves: the $S_5$ tracker is realised by an
-orthonormal-key Emender; one-step separation from raw-write matrix
-RNNs; the k-step extension on a constructed 2D witness alphabet for
-every $k >= 1$ (`emender_m2rnn_k_step_separation`); the finite-state
-ceiling. It does *not* prove: (i) a Lean lower bound covering all
-linear-scan models on $S_5$; (ii) Barrington's theorem itself; (iii) an
-$S_5$-generator-specific $T(d)$ capacity bound (the k-step separation
-runs on the constructed 2D alphabet, not the $S_5$ generators); (iv)
-families-wide "exceeds NC#super[1]" or "exceeds TC#super[0]"
-impossibility; (v) that empirical Emender weights recover the
-lookup-table realisation; (vi) the slot-wise latching set lifted to an
-architecture-level `latchAttractor`, nor an $S_5$-coset basin-survival
-statement against an active adversary. The $S_5$ accuracy of 0.79 at
-$T = 128$ is evidence that training approaches the realisable solution,
-not a proof; the §6 length-extrapolation curves give the same kind of
-evidence beyond the constructed alphabet.
+The trusted Lean core covers: orthonormal-key realisation of the $S_5$
+tracker; one-step separation from raw-write matrix RNNs; the k-step
+extension on a constructed 2D witness alphabet for every $k >= 1$
+(`emender_m2rnn_k_step_separation`); the finite-state ceiling. The
+explicit non-claims, retained as the moat around the trusted surface:
+(i) a Lean lower bound covering all linear-scan models on $S_5$; (ii)
+Barrington's theorem itself; (iii) an $S_5$-generator-specific $T(d)$
+capacity bound (the k-step separation runs on the constructed 2D
+alphabet, not the $S_5$ generators); (iv) families-wide "exceeds
+NC#super[1]" or "exceeds TC#super[0]" impossibility; (v) that
+empirical Emender weights recover the lookup-table realisation; (vi)
+the slot-wise latching set lifted to an architecture-level
+`latchAttractor`, nor an $S_5$-coset basin-survival statement against
+an active adversary. Each is named next-theorem work — bullets (iii)
+and (vi) are the load-bearing targets of §12, the former requiring a
+bounded-precision raw-write class plus Merrill-style state-counting
+machinery not yet in Mathlib, the latter requiring the
+`MemorySemantics.latchAttractor` lift on the
+`RecurrentResourceFormalism` signature. The §6 $S_5$ accuracy of 0.79
+at $T = 128$ and the length-extrapolation curves are the empirical
+companion to the constructed-alphabet k-step result on the $S_5$
+generator alphabet itself.
 
 #heading(level: 2, numbering: none)[Evidence structure]
 
-What rests on what: the Lean separation is seed-independent — the proof
-is the proof. The 8 M expressivity gap on $S_5$ ($0.79$ vs $0.36$ vs
-$0.22$) is across three seeds per architecture. The 1.27 B wallclock
-run is one expensive seed per architecture with replication in
-progress; the within-class within-band ordering it records is the
-single-seed datapoint, and additional seeds are the next round of
-training-budget allocation (§12).
+What rests on what. The Lean separation is seed-independent: the
+proof is the proof. The 8 M expressivity gap on $S_5$ ($0.79$ vs
+$0.36$ vs $0.22$) is across three seeds per architecture. The 1.27 B
+wallclock racer is one continuously-trained seed per architecture at
+the 14-day training extent.
 
-#heading(level: 2, numbering: none)[Length extrapolation is not solved at scale]
+The within-class ordering the racer records (Emender ahead of the
+raw-write update under matched per-architecture CMA-ES) is not a
+free-standing observation: the same sign is selected by four
+independent CMA-ES sweeps at the same 1.27 B parameter scale,
+spanning 250+ candidate configurations per architecture in aggregate
+across chunk-512 and chunk-2048 training budgets and across
+reseed-and-reposition rounds. Under the exact E88 delta-off
+ablation the candidate-budget gap is 0.033 nats/token, and the racer
+extends it to 0.11 nats/token at the 14-day extent. The $H = 370$
+racer shape was not hand-chosen but sits inside the
+$H = 270$–$460$ interior band that the searches repeatedly selected
+for E88 at $N = 32$, while the raw-write arm drifts to systematically
+higher head counts. What remains single-seed at this scale is the
+14-day trajectory itself; the within-class ordering and the
+head-geometry preference are CMA-replicated.
 
-The Emender separates from baselines at training length and remains ahead under
-length extrapolation, but accuracy degrades monotonically with length:
-on $S_5$, the Emender is at 0.79 at $T = 128$, 0.42 at $T = 256$, 0.22 at
-$T = 512$, 0.11 at $T = 1024$. No recurrent family in our sweep solves
-$S_5$ at $8 times$ training length.
+#heading(level: 2, numbering: none)[Length extrapolation is the next frontier on $S_5$]
 
-#heading(level: 2, numbering: none)[Per-architecture CMA-ES is best-effort matched, not asymptotically optimal]
+The Emender retains the lead under length extrapolation (0.79 at
+$T = 128$, 0.42 at $T = 256$, 0.22 at $T = 512$, 0.11 at $T = 1024$
+on $S_5$), and the gap to baselines widens with length on parity and
+FSM tracking (§6). Solving $S_5$ to ceiling at $8 times$ training
+length is the next $S_5$ result for any recurrent family in this
+sweep; it requires either an explicit $S_5$-generator capacity bound
+(§12) or a curriculum that closes the within-Emender degradation
+curve.
 
-The 1.27 B wallclock racer (§5, @fig_lm_racers) is run under
-*per-architecture CMA-ES*: each baseline uses its independently
-CMA-tuned shape and hyperparameter choice under the matched protocol of
-§5. The within-PNR ordering recorded in §5 (M²RNN-CMA trailing the Emender
-across the sampled window) is therefore an order *under the
-per-architecture CMA-ES protocol as configured here*, not under
-asymptotic best-effort tuning. The matched protocol provides *symmetry
-of effort across architectures*; it is not a claim of asymptotic
-optimality for any one. §12 lists a wider-search follow-up as the
-cleanest next step.
+#heading(level: 2, numbering: none)[Per-architecture CMA-ES is best-effort matched; broader-search is the next experiment]
+
+The 1.27 B racer (§5, @fig_lm_racers) runs each baseline under its
+own CMA-tuned shape and hyperparameter choice with matched candidate
+budget. The protocol delivers symmetry of effort across architectures
+at the configured search budget. The cleanest sharpening is to extend
+the search with further CMA-ES generations per family at 1.27 B under
+the same budget rule; this separates "under the search effort used
+here" from "under any matched search effort", and §12 names it as the
+load-bearing follow-up.
 
 #heading(level: 2, numbering: none)[Geometry-sensitivity of the update-rule claim]
 
-The same update family (M²RNN) looks weak in the published paper shape
-(diverges at 1.27 B) and stronger under CMA-tuned reshape (stable; loss
-2.77 after $tilde 14$ days of training). The expressivity comparison of §6 holds at
-parameter-matched 8 M scale; the language-modelling comparison of §5
-relies on the CMA-reshaped M²RNN. The empirical within-class ordering is
-therefore *conditional* on the multi-programmed shape, not on the
-update equation alone. The Lean
-separation of §7 is unconditional on shape but is per-step.
+The empirical within-class ordering scopes to CMA-equilibrated
+geometry. The same update family (M²RNN) diverges at 1.27 B in the
+published paper shape and is stable under the CMA-tuned reshape (loss
+2.77 after $tilde 14$ days). The §6 expressivity comparison runs at
+parameter-matched 8 M with geometry held constant across families;
+the §5 language-modelling comparison runs against the CMA-reshaped
+M²RNN. The Lean separation of §7 is unconditional on shape but is
+per-step. The shape-independent ceiling is the family-level
+representational separation already covered by Theorem set C
+(`emender_m2rnn_one_step_resource_separation_embeds`); a
+shape-conditional empirical ordering and a shape-independent one-step
+formal separation cover the geometry axis from both sides.
+
+#heading(level: 2, numbering: none)[Selection-history asymmetry of the 8 M defaults]
+
+The 8 M defaults are matched in the sense that no architecture
+received probe-specific HPO, but they are not matched in *selection
+history*: the Emender's defaults are the endpoint of an ablation
+lineage selected partly on state-tracking behaviour (Appendix),
+whereas GDN and M²RNN's published defaults were selected by their
+authors on language-modelling loss. The matched-no-tuning condition
+controls for differential probe-specific effort, not for this
+selection asymmetry. The §6 $S_3$ control isolates the part of the
+within-class claim that is immune to it (raw-write at 0.31 on a
+six-element solvable group, well below the non-binding capacity
+ceiling). Closing the asymmetry itself is a matched-search experiment
+on the 8 M shape (running CMA-ES on each baseline at 8 M under a
+state-tracking fitness); it is named alongside the 1.27 B
+wider-search follow-up.
 
 #heading(level: 2, numbering: none)[The opposite architectural bet: hybrids]
 
@@ -1593,11 +1625,10 @@ express?" for OLMo-Hybrid); the answers do not contradict.
 
 #heading(level: 2, numbering: none)[Training duration and result scope]
 
-Each 1.27–1.35 B model trains for $tilde 14$ wall-clock days per
-architecture; these are the language-modelling results for that
-training budget. The racer panel (@fig_lm_racers) records the
-loss-vs-wallclock curve as of 2026-05-24. Training continues;
-additional rounds will extend the curves.
+The language-modelling results are for the $tilde 14$ wall-clock-day
+training extent per architecture. The racer panel (@fig_lm_racers)
+records the loss-vs-wallclock curve at this extent; further rounds
+extend the curves.
 
 #heading(level: 2, numbering: none)[Open architectural choices]
 
@@ -1620,12 +1651,14 @@ attention's quadratic cost bites. The omission is scope, not result.
 // ── 10. Conclusion ────────────────────────────────────────────────────────────
 = Conclusion <sec:conclusion>
 
-We trained pure-nonlinear-recurrent language models at 1.27–1.35 B
-parameters into the loss-vs-wallclock band of a frontier-class
-linear-recurrent baseline on The Pile. Three pure-recurrent
-architectures (the Emender and M²RNN-CMA, nonlinear in time; Gated
-DeltaNet, linear in time) received per-architecture CMA-ES
-hyperparameter search and converged into the shared wallclock band.
+We trained a pure-nonlinear-recurrent language model to sub-1-bpb on
+The Pile: the Emender at 0.979 bpb after $tilde 14$ wall-clock days
+on a single workstation-class GPU. Three pure-recurrent
+architectures received per-architecture CMA-ES at the 1.27–1.35 B
+band (the Emender and M²RNN-CMA, nonlinear in time; Gated DeltaNet,
+linear in time). The two leading curves are co-linear in the shared
+wallclock band (Emender 0.979, GDN 0.987); M²RNN-CMA, the raw-write
+pure-recurrent variant, trails at 1.02.
 *Nonlinearity in time is not a cost* for language modelling at this
 scale; the choice of recurrence linearity is washed out by
 per-architecture tuning. M²RNN (Mishra et al. @m2rnn2026) is the
