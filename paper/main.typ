@@ -1503,29 +1503,32 @@ This is the assumption this paper revisits.
 
 #heading(level: 2, numbering: none)[Formal scope]
 
-The trusted Lean core proves the realisability of the $S_5$ tracker by
-an orthonormal-key Emender configuration, the one-step resource
-separation from raw-write matrix RNNs, the k-step extension on the
-constructed 2D witness alphabet
-(`emender_m2rnn_k_step_separation`, for every $k >= 1$), and the
-finite-state ceiling. It does *not* prove: (i) a Lean lower bound
-covering all linear-scan models on $S_5$; (ii) Barrington's theorem
-itself; (iii) an $S_5$-generator-specific multi-step capacity bound —
-a statement of the form "for any fixed-weight raw-write RNN at state
-dimension $d$ there is an explicit $T(d)$ past which $S_5$ coset
-tracking is unreachable, while the Emender at the same $d$ tracks it"
-(the k-step separation covers every finite $k$ on the constructed 2D
-witness, not the $S_5$ generator alphabet with a stated $T(d)$); (iv)
-any "exceeds NC#super[1]" or "exceeds TC#super[0]" families-wide
-impossibility; (v) a formal guarantee that empirical Emender weights
-recover the lookup-table realisation. The empirical $S_5$ accuracy of
-0.79 at $T = 128$ is *evidence* that real training approaches the
-realisable solution, not a proof. The canonical-sweep
-length-extrapolation curves of §6 (parity, FSM tracking, modular
-counter; Emender-vs-baseline gap widening monotonically with sequence
-length) supply *empirical* evidence that the same failure-to-wash-out
-persists on natural-language-shaped sequences, beyond the constructed
-alphabet on which the formal k-step separation lives.
+The trusted Lean core proves: the $S_5$ tracker is realised by an
+orthonormal-key Emender; one-step separation from raw-write matrix
+RNNs; the k-step extension on a constructed 2D witness alphabet for
+every $k >= 1$ (`emender_m2rnn_k_step_separation`); the finite-state
+ceiling. It does *not* prove: (i) a Lean lower bound covering all
+linear-scan models on $S_5$; (ii) Barrington's theorem itself; (iii) an
+$S_5$-generator-specific $T(d)$ capacity bound (the k-step separation
+runs on the constructed 2D alphabet, not the $S_5$ generators); (iv)
+families-wide "exceeds NC#super[1]" or "exceeds TC#super[0]"
+impossibility; (v) that empirical Emender weights recover the
+lookup-table realisation; (vi) the slot-wise latching set lifted to an
+architecture-level `latchAttractor`, nor an $S_5$-coset basin-survival
+statement against an active adversary. The $S_5$ accuracy of 0.79 at
+$T = 128$ is evidence that training approaches the realisable solution,
+not a proof; the §6 length-extrapolation curves give the same kind of
+evidence beyond the constructed alphabet.
+
+#heading(level: 2, numbering: none)[Evidence structure]
+
+What rests on what: the Lean separation is seed-independent — the proof
+is the proof. The 8 M expressivity gap on $S_5$ ($0.79$ vs $0.36$ vs
+$0.22$) is across three seeds per architecture. The 1.27 B wallclock
+run is one expensive seed per architecture with replication in
+progress; the within-class within-band ordering it records is the
+single-seed datapoint, and additional seeds are the next round of
+training-budget allocation (§12).
 
 #heading(level: 2, numbering: none)[Length extrapolation is not solved at scale]
 
@@ -1563,20 +1566,19 @@ separation of §7 is unconditional on shape but is per-step.
 
 A concurrent strand of work places the opposite architectural bet.
 *OLMo-Hybrid 7B* @olmohybrid2026 interleaves state-space blocks with
-attention, on the premise that hybrid stacks express things that lie
-beyond what either pure transformers or pure linear RNNs can do. The
-Emender is positioned against that bet without contradicting it: a
-pure-nonlinear Emender stack at 1.27 B matching GDN in the wallclock
-loss band does not refute hybrids; what it refutes is the *assumption*
-that pure nonlinear recurrence cannot scale at all. The hybrid-degradation finding in §6
+attention, on the premise that hybrid stacks express things beyond
+what either pure transformers or pure linear RNNs can do. The Emender
+takes the other bet: a pure-nonlinear Emender stack at 1.27 B matches
+GDN in the wallclock loss band, which refutes the assumption that
+pure nonlinear recurrence cannot scale at all. The hybrid-degradation
+finding in §6
 ($[upright("Emender"), upright("Emender"), upright("GDN"), upright("GDN")]$
-underperforms either pure family on modular counter and FSM tracking at
-8 M scale) is a *capability-preservation* observation: state-tracking
+underperforms either pure family on modular counter and FSM tracking
+at 8 M scale) is a capability-preservation observation: state-tracking
 capability does not survive dilution by linear-scan blocks in our
-sweep. It is not an anti-hybrid claim. The two architectural bets
-address different questions ("can pure nonlinear recurrence scale at
-all?" for this paper versus "what does a well-mixed hybrid express?"
-for OLMo-Hybrid), and the answers do not contradict.
+sweep. The two bets answer different questions ("can pure nonlinear
+recurrence scale at all?" here versus "what does a well-mixed hybrid
+express?" for OLMo-Hybrid); the answers do not contradict.
 
 #heading(level: 2, numbering: none)[Training duration and result scope]
 
@@ -1588,32 +1590,38 @@ additional rounds will extend the curves.
 
 #heading(level: 2, numbering: none)[Open architectural choices]
 
-Several architecture-internal questions remain open. The output gate, the
-non-linearity on the state ($tanh$ vs linear), and the decay
-parameterisation (simple sigmoid vs Mamba2-style log-space) all show
-loss-only ties at small scale; the strongest evidence for each
-production choice is the empirical state-tracking and stability data
-rather than a clean ablation at 1.27 B. The production architecture
-keeps the conservative settings.
+Several internal questions remain open: the output gate, the
+state non-linearity ($tanh$ vs linear), and the decay parameterisation
+(simple sigmoid vs Mamba2-style log-space). All three tie on loss at
+small scale; the production architecture keeps the conservative
+settings on the strength of state-tracking and stability data, not a
+clean ablation at 1.27 B.
+
+#heading(level: 2, numbering: none)[Transformer comparison]
+
+A matched-scale transformer is not on the rack here, and a 1.27 B
+attention baseline trained under the same protocol is deferred to
+future work. At the 2 K context this paper trains on, attention is
+likely competitive or better; the Emender's case is about full
+nonlinear-recurrent expressivity and the long-sequence regimes where
+attention's quadratic cost bites. The omission is scope, not result.
 
 // ── 10. Conclusion ────────────────────────────────────────────────────────────
 = Conclusion <sec:conclusion>
 
-This paper demonstrates that pure-nonlinear-recurrent language models
-can be trained at the 1.27–1.35 B-parameter band into the same loss-vs-
-wallclock band as a frontier-class linear-recurrent baseline. Three
-pure-recurrent architectures (the Emender and M²RNN-CMA, nonlinear in time;
-Gated DeltaNet, linear in time) receive per-architecture CMA-ES
-hyperparameter search and converge into a shared wallclock band on
-The Pile. *Nonlinearity in time is not a cost* for language modelling
-at this scale; the choice of recurrence linearity is washed out by
-per-architecture tuning. To our knowledge, the Emender and M²RNN-CMA are the
-first foundation-model-class pure-nonlinear-recurrent language models
-trained at 1.27–1.35 B parameters. M²RNN (Mishra et al. @m2rnn2026)
-is the closest prior art and demonstrates nonlinear matrix-state
-recurrence at 7 B MoE scale in *hybrid form*; the pure-recurrent
-variant trained here, M²RNN-CMA, is the head-to-head datapoint inside
-the pure-nonlinear-recurrent class.
+We trained pure-nonlinear-recurrent language models at 1.27–1.35 B
+parameters into the loss-vs-wallclock band of a frontier-class
+linear-recurrent baseline on The Pile. Three pure-recurrent
+architectures (the Emender and M²RNN-CMA, nonlinear in time; Gated
+DeltaNet, linear in time) received per-architecture CMA-ES
+hyperparameter search and converged into the shared wallclock band.
+*Nonlinearity in time is not a cost* for language modelling at this
+scale; the choice of recurrence linearity is washed out by
+per-architecture tuning. M²RNN (Mishra et al. @m2rnn2026) is the
+closest prior art and demonstrates nonlinear matrix-state recurrence
+at 7 B MoE scale in *hybrid form*; the pure-recurrent variant trained
+here, M²RNN-CMA, is the head-to-head datapoint inside the
+pure-nonlinear-recurrent class.
 
 The technical discovery that makes pure nonlinear recurrence practical
 at scale is *multi-programming*: width-axis parallelism across many
@@ -1644,12 +1652,11 @@ update solves $S_3$ to ceiling and reaches 0.79 on the non-solvable
 $S_5$ probe. The trusted Lean 4 core has no
 `sorry`/`admit`/`axiom`/`opaque`/`native_decide` in the import closure.
 
-*Release.* Emender checkpoints — the Emender (this work's delta-correct instance)
-and M²RNN-CMA (the CMA-reshaped raw-write instance) — together with
-the Gated DeltaNet baseline will be released on HuggingFace at
-publication, alongside the per-architecture CMA-ES configurations,
-the training protocol, and the Triton multi-programming kernel
-source.
+*Release.* We will release on HuggingFace at publication: the Emender
+checkpoint (delta-correcting), the M²RNN-CMA checkpoint (CMA-reshaped
+raw-write), and the Gated DeltaNet baseline. Released alongside are
+the per-architecture CMA-ES configurations, the training protocol,
+and the Triton multi-programming kernel source.
 
 // ── 11. Testable Predictions ─────────────────────────────────────────────────
 = Testable Predictions <sec:predictions>
