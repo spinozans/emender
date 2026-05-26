@@ -1694,14 +1694,14 @@ training rounds can falsify them.
   remain within standard error on state-tracking-shaped subsets after
   matched fine-tuning.
 
-- *The Triton kernel substrate makes update-rule variants quick to
-  prototype.* The fused forward/backward Triton kernel
-  (§4) is parameterised by the update map and the gating; a new
+- *PNR update-rule variants are per-step-body edits under the
+  multi-programmed kernel.* The fused forward/backward Triton kernel
+  (§4) is parameterised by the update map and the gating. A different
   PNR update rule at the same matrix-state signature should be
-  expressible by editing the per-step body and re-running the
-  multi-programmed time loop. Falsified if a representative new update
-  rule (e.g., a higher-order delta with two-step memory) requires
-  fundamental kernel rewrites rather than per-step edits.
+  expressible by editing the per-step body, with the multi-programmed
+  time loop unchanged. Falsified if a representative variant (e.g., a
+  higher-order delta with two-step memory) requires kernel rewrites
+  beyond the per-step body.
 
 - *Emender combined with hybrid attention should outperform either
   alone.* The §6 hybrid-degradation result (Emender/GDN AABB
@@ -1714,6 +1714,17 @@ training rounds can falsify them.
   matched parameter and token budgets. Falsified if the hybrid
   underperforms either constituent at matched budget on the combined
   benchmark.
+
+- *A broadened CMA-ES sweep places the head-count interior optimum
+  above $H = 370$.* The §5 per-architecture search arrived at $H = 370$
+  after successive bound repositionings against persistent upward
+  pressure from the optimiser. The conjecture is that the same fairness
+  search under broader bounds, subject only to the kernel-occupancy
+  ceiling of the multi-programmed substrate, returns an interior
+  optimum strictly above 370 on the Emender at 1.27 B; $H tilde 1000$
+  is the next bracket worth testing. Falsified if a broadened CMA-ES
+  sweep under matched per-token compute returns an interior optimum at
+  or below $H = 370$.
 
 #set list(indent: 0em)
 
@@ -1772,12 +1783,31 @@ larger corpora, or under longer training is open.
 
 #heading(level: 2, numbering: none)[Cleanest within-class HPO follow-up]
 
-The cleanest within-PNR comparison would be a side-by-side run of the Emender
-and M²RNN-CMA under further per-family CMA-ES generations at 1.27 B
-beyond the current protocol, to test whether wider search closes the
-within-PNR gap. This is the highest-value follow-up for distinguishing
-"under the per-architecture CMA-ES protocol used here" from "under any
-matched search effort."
+The within-PNR ordering reported here is conditional on the
+per-architecture CMA-ES protocol of §5. Extending that protocol with
+further CMA-ES generations per family at 1.27 B, under the same budget
+rule, separates the conditional reading "under the search effort used
+here" from the family-level reading "under any matched search effort."
+It is the sharpest single experiment for fixing where the
+Emender-vs-M²RNN-CMA gap actually sits.
+
+#heading(level: 2, numbering: none)[Latching-to-$S_5$-basin bridge and `latchAttractor` refinement]
+
+The §7 latching set establishes the slot-level half of the Emender
+primitive, with three theorems covering saturation insensitivity,
+default hold under bounded delta, and release on counter-delta. Two
+formal targets sit on top of that set. The architecture-level lift
+promotes the slot-wise latching theorems to a
+`MemorySemantics.latchAttractor` label on the Emender signature in the
+`RecurrentResourceFormalism`, making slot-level behaviour a statement
+about the matrix-state attractor structure of the whole layer. The
+basin-survival bridge takes an $S_5$-coset realised in an
+orthonormal-key Emender and shows it survives an adversary whose
+per-slot perturbation budget sits below the §7 release threshold,
+lifting the slot-level theorems to a coset-level guarantee on the
+state-tracking task. The first is a formalism refinement; the second
+is a Lean-targeted theorem that connects §7 to the §6 state-tracking
+empirics.
 
 // ── Appendix A — E63→E88 lineage and ablation notes ────────────────────────────
 = Appendix: Lineage of the E63 $arrow$ E88 experimental program <sec:appendix>
