@@ -416,7 +416,7 @@ a common $c_1 d^2 + c_2 d$ envelope (§7 Theorem set D).
 #heading(level: 2, numbering: none)[Matrix state]
 
 Replacing a vector hidden state $h in RR^d$ with a matrix state
-$S in RR^(N times V)$ is not novel to the Emender. Linear-state designs
+$S in RR^(N times V)$ is not specific to the Emender. Linear-state designs
 (mLSTM, RWKV-5/6, DeltaNet) already use matrix or expanded states;
 RetNet's accumulation $S_t = gamma S_(t-1) + k_t v_t^T$ is matrix-valued.
 The point of matrix state is that an outer-product update
@@ -1111,7 +1111,7 @@ nonlinear baselines at this training budget. The state-tracking-specific reasoni
 separation, if it exists, will emerge at longer training horizons; §11
 states the prediction explicitly.
 
-// ── 8. Formal Results ─────────────────────────────────────────────────────────
+// ── 7. Formal Results ─────────────────────────────────────────────────────────
 = Formal Results <sec:formal>
 
 We have a trusted Lean 4 @lean42021 core built on Mathlib
@@ -1119,17 +1119,19 @@ We have a trusted Lean 4 @lean42021 core built on Mathlib
 (ten source files at the time of writing) contains no `sorry`, no
 `admit`, no `axiom`, no `opaque`, and no `native_decide`. Each result
 below is identified by its exact theorem name so that the reader can
-locate it in the source. The headline §7 result is the *k-step
-separation*
-(`emender_m2rnn_k_step_separation`, theorem set C′ below): for every
-$k >= 1$ and every fixed-right raw-write resource with row/column/cell
-external forget gates, there is an explicit $k$-token input sequence on
-which the $k$-step trajectories disagree. This is the machine-checked
-answer to the reviewer-of-record concern that *"a one-step advantage
-could in principle wash out over a trajectory or compound"*: the gap
+locate it in the source. Two results carry the spine of the argument.
+The *k-step separation*
+(`emender_m2rnn_k_step_separation`, theorem set C′ below) shows that
+for every $k >= 1$ and every fixed-right raw-write resource with
+row/column/cell external forget gates, there is an explicit $k$-token
+input sequence on which the $k$-step trajectories disagree: the gap
 strictly persists for every finite $k$ on the constructed witness
-alphabet. The scope of what is and is not proved is summarised under
-"Frontier and unproven targets" below.
+alphabet rather than washing out under composition. The *latching set*
+(theorem set F below) formalises the saturation half of the Emender
+primitive, with three slot-wise statements covering saturation
+insensitivity, sign-preserving hold under sub-threshold counter-input,
+and counter-delta release. The scope of what is and is not proved is
+summarised under "Frontier and unproven targets" below.
 
 #heading(level: 2, numbering: none)[Theorem set A: finite-state ceiling and $S_5$ tracker]
 
@@ -1156,8 +1158,7 @@ alphabet. The scope of what is and is not proved is summarised under
 #heading(level: 2, numbering: none)[Theorem set B: Emender realises $S_5$]
 
 The bridge from the abstract lookup-table realisation to the Emender update
-equation is closed by the new result
-`EmenderRealizesS5.emender_realizes_s5_tracker`: there exist an integer $d$, an
+equation is `EmenderRealizesS5.emender_realizes_s5_tracker`: there exist an integer $d$, an
 orthonormal family of keys ${k_g}$ indexed by the adjacent-transposition
 generators, a value family ${v_g}$ and a decay scalar $lambda = 1$
 such that the Emender update
@@ -1210,9 +1211,7 @@ $k$-step trajectory by a margin bounded away from zero (Lean:
 `emender_m2rnn_k_step_separation`).*
 ])
 
-This is the direct, machine-checked answer to the reviewer-of-record
-concern that the one-step advantage might compound away over a
-trajectory. The witness alphabet is the 2-dimensional construction from
+The witness alphabet is the 2-dimensional construction from
 set C composed with zero-input filler tokens
 (`kStepWitnessInputs k = (mixedKey, 0) :: zeroSteps (k - 1)`); the
 proof inducts on the tail, using the row-0 preservation lemma
@@ -1223,15 +1222,13 @@ nonzero by injectivity of $tanh$. The existential form
 `emender_m2rnn_k_step_separation_exists` packages the same statement
 existentially over $k$-step input sequences. The two-step case is
 exposed separately (`emender_m2rnn_two_step_separation`) as the
-inductive base. All three live in the new module
+inductive base. All three live in
 `ElmanProofs.Architectures.MultiStepSeparation`, which is part of the
-trusted import closure of `PaperCore`. The result rules out the
-"wash-out over composition" failure mode the reviewer worried about,
-for the resource class covered by set C, on the constructed witness.
-The §6 length-extrapolation curves (parity, FSM tracking, modular
-counter; Emender-vs-baseline gap widening monotonically with sequence
-length) are the empirical companion of this formal multi-step
-persistence on a different — natural-language-shaped — alphabet.
+trusted import closure of `PaperCore`. The §6 length-extrapolation
+curves (parity, FSM tracking, modular counter; Emender-vs-baseline gap
+widening monotonically with sequence length) are the empirical
+companion of this formal multi-step persistence on a
+natural-language-shaped alphabet.
 
 #heading(level: 2, numbering: none)[Frontier and unproven targets]
 
@@ -1399,7 +1396,7 @@ A formal proof that a trained real-valued Emender with empirically learned
 weights exactly recovers the lookup table; only the realisability is
 proved.
 
-// ── 9. Related Work ───────────────────────────────────────────────────────────
+// ── 8. Related Work ───────────────────────────────────────────────────────────
 = Related Work <sec:related>
 
 #heading(level: 2, numbering: none)[Ancestry: the fast-weight line on delta correction]
