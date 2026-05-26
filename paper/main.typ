@@ -145,111 +145,103 @@ CMA-ES configs, and the Triton kernel released.
 // ── 1. Introduction ───────────────────────────────────────────────────────────
 = Introduction <sec:intro>
 
-The recurrent language model lineage runs from Elman networks
-@elman1990 and the LSTM @lstm1997 through the modern linear-recurrent
-variants: state-space models such as Mamba and Mamba2 @mamba2024
-@mamba2_2024, gated linear attention @gla2023, and the delta rule
-@deltanet2024. Each step in this lineage traded some expressive power
-for time-axis parallelism, because nonlinear-in-time recurrence resisted
-the parallel scan that makes GPU throughput tractable at modern scale.
-Gated DeltaNet @gated_deltanet2024 is the linear-recurrent model
-Mamba-3 @mamba3_2026 measures itself against and beats by
-$tilde 0.6$ points downstream; we treat it as the wall-clock bar to
-clear.
+The field has long held that nonlinear-in-time recurrent language
+models cannot be trained to the loss and wallclock band of
+contemporary frontier systems. That verdict took the nonlinearity
+itself as the obstruction. Time-axis parallel scans, Newton iteration
+on a block-bidiagonal Jacobian @pararnn2025, and hybridisation with
+attention @m2rnn2026 @olmohybrid2026 @titans2025 @griffin2024 have all
+been offered as concessions extracted to keep recurrence trainable at
+scale. The verdict is contingent on the axis chosen for parallelism.
+Parallelise width and the obstruction dissolves: throughput comes from
+many small recurrent programs running side by side, while each program
+runs its time loop serially. Trained on a single workstation-class GPU
+over fifteen days, the Emender, a pure-nonlinear-recurrent language
+model at 1.27 billion parameters, reaches 1 bit per byte on The Pile
+@thepile2020 and matches the wallclock loss band of Gated DeltaNet
+@gated_deltanet2024, the current frontier linear-recurrent learner.
 
-The field's current operating verdict is more specific than
-"sequential models cannot scale". Recent work has already softened the
-broad form: ParaRNN @pararnn2025 trains nonlinear-recurrent (LSTM and
-GRU) language models at 7 B by parallelising the time loop itself via
-Newton iteration on a block-bidiagonal Jacobian, and M²RNN @m2rnn2026
-(Mishra, Tan, Stoica, Gonzalez, Dao 2026) trains nonlinear matrix-state
+The architecture is a residual stack of recurrent layers. Each layer
+pairs a matrix-state memory with a write rule that has two halves.
+*Delta correction* is the first half. The layer reads what the memory
+predicts at the addressed slot, computes the prediction error, and
+writes the correction. Memory can change its mind, retracting a stale
+binding when the evidence forces it. *Tanh-with-latching* is the second
+half. A slot driven near $plus.minus 1$ becomes insensitive to further
+bounded writes, sub-threshold counter-input leaves the sign unchanged,
+and a sufficient counter-delta releases the slot. Memory can stand
+firm, holding a commitment across many irrelevant tokens, and remains
+revisable when the data demand it. State tracking needs both. A memory
+that can only add accumulates without correction; a memory that can
+only correct cannot hold a fact long enough to use it.
+
+A Lean 4 trusted core is the spine of the argument. The core proves
+that delta-correcting and raw-write updates separate at one step and at
+every $k$-step composition at matched per-token FLOP cost; it proves
+the three latching properties — saturation insensitivity,
+sign-preserving hold, and counter-delta release; it proves that an
+orthonormal-key configuration of the Emender realises the $S_5$ prefix
+tracker, the canonical NC#super[1] witness. The empirical work then
+shows the world is consistent with what the proofs already establish.
+The 8 M-parameter Emender reaches 0.79 accuracy on $S_5$ against 0.36
+for Gated DeltaNet and 0.22 for the raw-write baseline. The 1.27 B run
+lands in the same loss-vs-wallclock band as Gated DeltaNet on The Pile.
+Throughput at width comes from 22,200 small recurrent programs per
+token. The lever for scaling serial recurrence is parallelism within
+each time step, not across it.
+
+#heading(level: 2, numbering: none)[Delta correction is one response; hybrids are another]
+
+The recurrent state-tracking problem admits more than one architectural
+response. *Hybrid* architectures interleave recurrent layers with
+attention layers and recover much of what attention-free recurrence
+loses on state tracking and long-range mixing. M²RNN @m2rnn2026,
+OLMo-Hybrid @olmohybrid2026, Titans @titans2025, and Griffin
+@griffin2024 are recent instances, and the limit-of-pure-recurrence
+story is documented by Merrill, Petty and Sabharwal
+@merrill2024transformers. *Delta correction* is a different response.
+It does not add cross-token mixing; it changes what the recurrent state
+writes at each step from a raw additive overwrite to a correction
+against the existing slot. The two responses are complementary, not
+rival: a hybrid stack can use any update rule in its recurrent layers,
+and delta correction is well-defined wherever a matrix-state recurrent
+layer is.
+
+We evaluate delta correction in the attention-free, time-serial
+recurrent arena, the *pure nonlinear recurrent* (PNR) setting in the
+sense of "no cross-token attention mechanism"; gating, projections,
+normalisations and other intra-token nonlinear operations are
+permitted and load-bearing (§3 ingredient (c) and §5 on gradient
+conditioning). The PNR arena is where the contrast is cleanest (a
+delta-vs-raw-write contrast at matched per-token FLOP class, §7),
+where the Lean 4 separation theorems are tractable (sets C and C′),
+and where the scaling demonstration leaves no architectural escape
+hatch from the recurrent state. Delta correction generalises to
+hybrid recurrent layers wherever a matrix state and a corrective
+write make sense.
+
+The two recent attempts to scale nonlinear recurrence each took a
+different concession. M²RNN @m2rnn2026 trains nonlinear matrix-state
 recurrence at 7 B MoE in *hybrid form* (nonlinear-recurrent layers
-interleaved with attention layers). The operating verdict that
-remains is sharper, and is about a class rather than any single
-architecture: *Pure Nonlinear Recurrent (PNR) language models —
-pure-recurrent, time-serial, attention-free architectures with a
-nonlinearity on the recurrent state itself — cannot reach competitive
-wallclock at foundation-model scale without either a time-axis
-parallelisation trick or hybridisation with attention.* The
-nonlinearity is treated as the obstruction; time-axis parallelisation
-(Newton iteration, parallel scan, associative reduction) or attention
-hybridisation is treated as the unavoidable concession. Either route
-preserves the modern throughput frontier; the PNR alternative has been
-treated as off the table. This work shows that sharper verdict is an illusion, in the
-same sense that Merrill, Petty and Sabharwal @merrill2024transformers
-showed the apparent state-tracking expressivity of state-space models
-was an artefact of analysis: there, an apparent expressivity property
-of SSMs turned out to be an artefact of how the class was analysed;
-here, an apparent computational bound on pure-nonlinear-recurrent
-scaling turns out to be an artefact of the axis the field chose to
-parallelise over. The bound that has been read as fundamental is in
-fact contingent on parallelising the time axis. Parallelise a
-different axis and the bound vanishes.
-
-That assumption has not been directly tested under modern width-axis
-optimisation. Width-axis parallelism, which we call *multi-programming*,
-replicates the recurrent computation across many independent heads and
-keeps the time loop serial inside each head; throughput comes from the
-number of heads, not from linearisation of the recurrence. The
-time-axis-parallelism trick is sufficient for throughput in
-linear-recurrent models, but it is not necessary for scaling; the width
-axis is an alternative the field has under-explored for
-pure-nonlinear-recurrent models specifically.
-
-#heading(level: 2, numbering: none)[Emendation is one response; hybrids are another]
-
-The recurrent state-tracking problem — how does a fixed-width recurrent
-layer maintain enough state to track structured prefixes like the $S_5$
-word problem? — admits more than one architectural response. *Hybrid*
-architectures interleave recurrent layers with attention layers and
-recover much of what attention-free recurrence loses on state tracking
-and long-range mixing; M²RNN @m2rnn2026, OLMo-Hybrid @olmohybrid2026,
-Titans @titans2025, and Griffin @griffin2024 are recent instances, and
-the formal limit-of-pure-recurrence story is documented by Merrill,
-Petty and Sabharwal @merrill2024transformers. *Emendation* — the
-update-rule innovation introduced in this paper — is a different
-response: it does not add cross-token mixing, but it changes what the
-recurrent state writes at each step from a raw additive overwrite to a
-delta correction against the existing slot. The two responses are
-complementary, not rival: a hybrid stack can in principle use any update
-rule in its recurrent layers, and emendation is well-defined wherever a
-matrix-state recurrent layer is.
-
-For this paper, we evaluate emendation in the attention-free,
-time-serial recurrent arena — the *pure nonlinear recurrent (PNR)*
-setting in the sense of "no cross-token attention mechanism"; gating,
-projections, normalisations and other intra-token nonlinear operations
-are permitted and indeed load-bearing (see §3, ingredient (c) and §5 on
-gradient conditioning). The PNR arena is where the comparison is
-cleanest (an emendation-vs-raw-write update-rule contrast, with FLOP
-class held equal — §7), where the Lean 4 separation theorems are
-tractable (sets C and C′), and where the scaling demonstration is most
-load-bearing (no architectural escape hatch from the recurrent state);
-emendation generalises to hybrid recurrent layers wherever a matrix
-state and a delta-correcting write make sense.
-
-The closest prior art is the pair of recent attempts that scale
-nonlinear recurrence by different concessions. M²RNN @m2rnn2026
-demonstrates that nonlinear matrix-state recurrence trains at 7 B MoE
-scale in *hybrid form* (nonlinear-recurrent layers interleaved with
-attention layers); ParaRNN @pararnn2025 demonstrates that
-nonlinear-recurrent LSTM and GRU train at 7 B by parallelising the time
-loop via Newton iteration on a block-bidiagonal Jacobian. Both define
-the boundary of the sharper verdict above: each scales pure
-nonlinearity at LLM scale by either hybridising with attention or
-parallelising the time axis. The pure-recurrent, time-serial,
-attention-free variant has not been demonstrated at LLM scale. This
-work takes that variant and puts it head-to-head with a delta-correct
-alternative under matched conditions.
+interleaved with attention layers); ParaRNN @pararnn2025 trains
+nonlinear-recurrent LSTM and GRU at 7 B by parallelising the time loop
+via Newton iteration on a block-bidiagonal Jacobian. A capable team
+working concurrently on nonlinear matrix-state recurrence (the M²RNN
+authors) chose hybrid-with-attention rather than pure recurrence; that
+documented choice, by builders with every incentive to go pure if pure
+were tractable, is the evidence that the pure-recurrent slot was hard
+to fill. This work takes that slot and puts a delta-correcting
+instance head-to-head with a raw-write instance under matched
+conditions.
 
 #heading(level: 2, numbering: none)[Contribution]
 
-This paper's contribution is a *synthesis* of five components. The
-synthesis — a working, trainable foundation-model-scale architecture —
-is what has not been done before. We demonstrate the synthesis in the
-attention-free PNR arena (see §1 "Emendation is one response..."),
-where each component is most legible; the emendation piece in
-particular is a general update-rule technique not bound to that arena.
+This paper's contribution is a *synthesis* of six components. The
+synthesis is a working, trainable foundation-model-scale architecture.
+We demonstrate it in the attention-free PNR arena (see §1 "Delta
+correction is one response..."), where each component is most legible;
+the delta-correction piece in particular is a general update-rule
+technique not bound to that arena.
 
 #set enum(numbering: "1.")
 
@@ -262,81 +254,114 @@ particular is a general update-rule technique not bound to that arena.
   that monolithic large-state RNNs forfeit. Lean-witnessed by
   `emender_1p27B_programs_per_batch_token_bs5`.
 
-+ *Emendation / delta correction.* The general update-rule innovation:
++ *Delta correction.* The update rule
   $S <- tanh(d S + k (v - S^T k)^T)$ writes the *correction* against
   the existing slot rather than a raw additive overwrite. With
   orthonormal keys this gives exact overwrite at one slot while
   preserving the others; with arbitrary keys it gives bounded
   error-correcting binding (§3, Theorem sets C and C′ in §7).
-  Emendation is well-defined wherever a matrix-state recurrent layer
-  is; the PNR demonstration here is the cleanest comparison setting,
-  not the technique's scope.
+  Delta correction is well-defined wherever a matrix-state recurrent
+  layer is; the PNR demonstration here is the cleanest comparison
+  setting, not the technique's scope.
 
 + *Gating, with the ablation that says it matters.* Earlier
   non-gated 'E-version' prototypes (the E63–E75 lineage; Appendix) were
-  *not* amenders in the operational sense — they accumulated
+  *not* amenders in the operational sense; they accumulated
   uncorrected drift. The SiLU output gate is load-bearing under the
   ablation lineage that produced the production stack; removing it
   costs accuracy on state tracking.
 
-+ *Triton kernel — portable, performant foundation.* The fused
-  forward and sparse-checkpoint backward kernels are written once in
-  Triton @triton2019 and dispatched identically on NVIDIA CUDA and
-  AMD ROCm. Moving off CUDA-specific paths to Triton gives portability
-  at $approx 70%$ of hand-tuned HIP throughput in $approx 1$ week of
++ *Triton kernel, portable and performant.* The fused forward and
+  sparse-checkpoint backward kernels are written once in Triton
+  @triton2019 and dispatched identically on NVIDIA CUDA and AMD ROCm.
+  Moving off CUDA-specific paths to Triton gives portability at
+  $approx 70%$ of hand-tuned HIP throughput in $approx 1$ week of
   porting work (versus 3–6 weeks for a HIP rewrite). The kernel is
   released as the foundation for further update-rule research, not as
   a one-off for this paper.
 
++ *Stability and single-GPU access.* The 1.27 B Emender trains
+  stably under schedule-free AdamW and reaches 1 bit per byte on The
+  Pile in 15 days on a single workstation-class GPU, with no cluster
+  and no sequence parallelism. Sparse checkpointing keeps the
+  activation and gradient footprint modest, so memory is not the
+  binding constraint. The substrate puts from-scratch foundation-scale
+  training within reach of a single-node configuration.
+
 + *Synthesis: Emender 88 (E88).* "Emender 88" (E88) is the specific
   version handle within the Emender family for the integration of
-  (1)+(2)+(3)+(4) at 1.27 B parameters. The contribution is the
+  (1)+(2)+(3)+(4)+(5) at 1.27 B parameters. The contribution is the
   integration: each component is small or known; together they
   constitute the first foundation-model-scale demonstration of
-  emendation in the PNR arena.
+  delta-correcting pure-nonlinear recurrence.
 
 #set enum(numbering: "(a)")
 
 This paper establishes the PNR class as viable at foundation-model
 scale, by training two PNR instances at the 1.27–1.35 B parameter
-band and comparing them head-to-head with a linear-recurrent baseline. The two PNR instances are the Emender (this
-work; delta-correct update rule
-$S <- tanh(d S + k(v - S^T k)^T)$) and M²RNN-CMA (a CMA-reshaped
+band and comparing them head-to-head with a linear-recurrent baseline.
+The two PNR instances are the Emender (this work; delta-correct update
+rule $S <- tanh(d S + k(v - S^T k)^T)$) and M²RNN-CMA (a CMA-reshaped
 pure-recurrent variant of the M²RNN architecture, with a raw-write
-update $tanh(H W + k v^T)$); the linear-recurrent baseline is
-Gated DeltaNet (GDN @gated_deltanet2024). All three architectures are
-trained on The Pile @thepile2020 and received per-architecture
-CMA-ES @cmaes2003 hyperparameter and shape search, with range
-repositioning when limits were hit, so every architecture was
-evaluated under its best-effort configuration at matched search
-effort. All three land in the same loss-vs-wallclock band on The
-Pile. *Nonlinearity in time is not a cost.* The sharper status-quo
-verdict — that PNR language models cannot reach this regime without
-a time-axis parallelisation trick or attention hybridisation — is,
-at minimum at 1.27–1.35 B on The Pile under matched wallclock, not
-supported by the data. The PNR class is therefore open for
-exploration; to our knowledge, the Emender and M²RNN-CMA are the first
-foundation-model-class PNR language models trained at this scale.
+update $tanh(H W + k v^T)$); the linear-recurrent baseline is Gated
+DeltaNet (GDN @gated_deltanet2024). All three architectures are trained
+on The Pile @thepile2020 and received per-architecture CMA-ES
+@cmaes2003 hyperparameter and shape search, with range repositioning
+when limits were hit, so every architecture was evaluated under its
+best-effort configuration at matched search effort. All three land in
+the same loss-vs-wallclock band on The Pile. *Nonlinearity in time is
+not a cost.* The status-quo verdict that PNR language models cannot
+reach this regime without a time-axis parallelisation trick or
+attention hybridisation is, at minimum at 1.27–1.35 B on The Pile
+under matched wallclock, not supported by the data. Within the PNR
+class, the Emender trains consistently ahead of M²RNN-CMA across the
+sampled wallclock window.
 
-Within the PNR class, the Emender (this work's delta-correct instance)
-trains consistently ahead of M²RNN-CMA across the sampled wallclock
-window. The paper proceeds as follows. §2 and §3 set up the
-linear-state versus nonlinear-state classification and the Emender
-architecture (this work's contribution within the PNR class); §4
-covers the multi-programming systems contribution; §5 presents the
-1.27 B wallclock racer with the per-architecture CMA-ES protocol;
-§6 reports the 8 M expressivity probes with the
-capacity-non-binding justification; §7 the Lean 4 formalisation; §8
-related work; §9 limitations; §10 conclusion; §11 testable predictions;
-§12 future work. We
-will release Emender checkpoints together with M²RNN-CMA, the GDN baseline,
-the per-architecture CMA-ES configurations, and the Triton
-multi-programming kernel on HuggingFace at publication.
+The paper proceeds as follows. §2 and §3 set up the linear-state
+versus nonlinear-state classification and the Emender architecture;
+§4 covers the multi-programming systems contribution; §5 presents the
+1.27 B wallclock racer with the per-architecture CMA-ES protocol; §6
+reports the 8 M expressivity probes with the capacity-non-binding
+justification; §7 the Lean 4 formalisation, including Theorem set F
+on saturation latching alongside the separation, $S_5$-realisation,
+and FLOP-class theorems; §8 related work, opening with the ancestry of
+the delta-correction line from Widrow–Hoff through fast-weight
+programmers to DeltaNet; §9 limitations; §10 conclusion; §11 testable
+predictions; §12 future work. We release Emender checkpoints together
+with M²RNN-CMA, the GDN baseline, the per-architecture CMA-ES
+configurations, and the Triton multi-programming kernel on HuggingFace
+at publication.
 
 // ── 2. Background ─────────────────────────────────────────────────────────────
 = Background <sec:background>
 
+The work began against a workload. Pangenomic sequence data runs to
+terabases per study @hprc2023 @guarracino2023acrocentric @pggb2024,
+and existing modelling approaches require ingesting trillions of
+tokens to do any operation on the data, which is not practical for
+routine downstream use. Linear-recurrent byte-level foundation models
+were the first thing we tried, and they failed to scale reliably for
+this regime. The Merrill–Petty–Sabharwal results
+@merrill2024transformers made the limitation legible: linear-in-time
+recurrence sits inside a complexity class that the substrate of the
+actual world does not. A nonlinear-in-time foundation model was
+needed, and no off-the-shelf candidate could ingest the workload. The
+Emender is what we built to fill that gap; the rest of this paper
+documents what the construction required.
+
 #heading(level: 2, numbering: none)[Linear-state and nonlinear-state recurrence]
+
+The recurrent language model lineage runs from Elman networks
+@elman1990 and the LSTM @lstm1997 through the modern linear-recurrent
+variants: state-space models such as Mamba and Mamba2 @mamba2024
+@mamba2_2024, gated linear attention @gla2023, and the delta rule
+@deltanet2024. Each step in this lineage traded some expressive power
+for time-axis parallelism, because nonlinear-in-time recurrence resisted
+the parallel scan that makes GPU throughput tractable at modern scale.
+Gated DeltaNet @gated_deltanet2024 is the linear-recurrent model
+Mamba-3 @mamba3_2026 measures itself against and beats by
+$tilde 0.6$ points downstream; we treat it as the wallclock bar to
+clear.
 
 We use a single explicit criterion to classify recurrent architectures.
 A recurrent layer is *linear-state* if its update can be written
@@ -416,16 +441,6 @@ NC#super[1] in the canonical regular-language witness; one that cannot
 solve $S_5$ at training length lives below it. The solvable-group control
 $S_3$ (6 elements) is included to factor out the part of difficulty
 that comes from prefix tracking *per se* rather than from non-solvability.
-
-#heading(level: 2, numbering: none)[Pangenomics as one downstream sequence-modelling regime]
-
-Pangenomics has a sequence-modelling problem: terabase-scale datasets,
-billions of characters per genome, with the cost of developing capable
-ML systems for such data still exorbitant @hprc2023
-@guarracino2023acrocentric @pggb2024. This work does not target that
-regime directly, but the pure-recurrent, time-serial, width-parallel
-substrate developed here is the kind of building block such regimes
-need.
 
 // ── 3. Architecture — the Emender ─────────────────────────────────────────────
 = Architecture <sec:arch>
@@ -1734,13 +1749,12 @@ training rounds can falsify them.
   3–7 B band. Falsified if per-token throughput degrades faster than
   the parameter count grows, beyond the kernel-arithmetic baseline.
 
-- *The Emender's state-tracking advantage persists at chinchilla-optimal
-  training.* The §6 $S_5$ and $S_3$ gaps are at the 8 M parameter-matched
-  probe scale under matched no-tuning. At chinchilla-optimal training
-  budget at 1.27 B and beyond, the within-PNR ordering and the
-  Emender-vs-GDN gap on state-tracking probes should hold qualitatively.
-  Falsified if the $S_5$ or $S_3$ gap closes under chinchilla-optimal
-  budgets at matched compute.
+- *The Emender's state-tracking advantage persists at scaled training
+  budgets.* The §6 $S_5$ and $S_3$ gaps are at the 8 M parameter-matched
+  probe scale under matched no-tuning. At longer training-token budgets
+  at 1.27 B and beyond, the within-PNR ordering and the Emender-vs-GDN
+  gap on state-tracking probes should hold qualitatively. Falsified if
+  the $S_5$ or $S_3$ gap closes under matched-compute training at scale.
 
 - *Emender fine-tuned on reasoning benchmarks separates from
   GDN/M²RNN-CMA on tasks requiring genuine state-tracking.* The §6 QA
