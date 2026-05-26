@@ -338,16 +338,14 @@ at publication.
 The work began against a workload. Pangenomic sequence data runs to
 terabases per study @hprc2023 @guarracino2023acrocentric @pggb2024,
 and existing modelling approaches require ingesting trillions of
-tokens to do any operation on the data, which is not practical for
-routine downstream use. Linear-recurrent byte-level foundation models
-were the first thing we tried, and they failed to scale reliably for
-this regime. The Merrill–Petty–Sabharwal results
-@merrill2024transformers made the limitation legible: linear-in-time
-recurrence sits inside a complexity class that the substrate of the
-actual world does not. A nonlinear-in-time foundation model was
-needed, and no off-the-shelf candidate could ingest the workload. The
-Emender is what we built to fill that gap; the rest of this paper
-documents what the construction required.
+tokens for any operation on the data, which rules out routine
+downstream use. Linear-recurrent byte-level foundation models were
+the first attempt and failed to scale reliably for this regime. The
+Merrill–Petty–Sabharwal results @merrill2024transformers made the
+limitation legible: linear-in-time recurrence sits inside a
+complexity class that the substrate of the actual world does not. A
+nonlinear-in-time foundation model was needed, and nothing
+off-the-shelf fit. The Emender is the construction that did.
 
 #heading(level: 2, numbering: none)[Linear-state and nonlinear-state recurrence]
 
@@ -363,7 +361,7 @@ Mamba-3 @mamba3_2026 measures itself against and beats by
 $tilde 0.6$ points downstream; we treat it as the wallclock bar to
 clear.
 
-We use a single explicit criterion to classify recurrent architectures.
+A single explicit criterion classifies recurrent architectures.
 A recurrent layer is *linear-state* if its update can be written
 $h_t = A_t h_(t-1) + b_t$
 with $A_t$ and $b_t$ depending on the current input $x_t$ only.
@@ -700,31 +698,22 @@ The argument turns on the *write rule*, not on state size.
 
 #heading(level: 2, numbering: none)[Multi-programming: the throughput-enabling design choice]
 
-*Multi-programming* is the technical discovery that makes pure-nonlinear
-recurrent language modelling tractable at the 1.27 B band. The solution
-turned out to be width, not time. Linear recurrences gain throughput by
-*time-axis* linearisation: composing
+Throughput comes from width, not from time. Linear recurrences gain
+throughput by *time-axis* linearisation: composing
 $h_t = A_t h_(t-1) + b_t$ unfolds into a product of inputs only and
 admits prefix-scan or chunkwise matrix-multiplication. Pure-nonlinear
 recurrences cannot do that without forfeiting the nonlinear-update
-expressivity. Multi-programming replaces the time-axis route with a
-*width-axis* one: the recurrent computation is replicated across many
-independent heads, each with its own small bounded matrix state, and
-parallelism is harvested across those heads (and across state tiles
-and batch elements) while the time loop inside each head runs serially.
-The cost is per-head sequential time; the gain is that the nonlinear
-recurrence is preserved without sacrificing GPU utilisation. The
-multi-programming recipe is *update-rule-agnostic*: both PNR instances
-trained in this paper (the Emender and M²RNN-CMA) satisfy the same
-multi-programming predicate at 1.27 B
+expressivity. *Multi-programming* takes the *width-axis* route
+instead: replicate the recurrent computation across many independent
+heads, each with its own small bounded matrix state, and harvest
+parallelism across those heads (and across state tiles and batch
+elements) while the time loop inside each head runs serially. The
+cost is per-head sequential time; the gain is that nonlinear
+recurrence runs at full GPU utilisation. The recipe is
+*update-rule-agnostic*: both PNR instances trained here (the Emender
+and M²RNN-CMA) satisfy the same multi-programming predicate at 1.27 B
 (`RecurrentResourceFormalism.multiProgrammed_admits_m2rnn_and_emender`,
-§7). Mishra et al.'s M²RNN paper @m2rnn2026 observed the benefit of
-many small recurrent heads in their hybrid configuration; the
-multi-programming optimisation here generalises that observation to
-pure-recurrent architectures at language-model scale and identifies it
-as the design choice that converts pure nonlinear recurrence from a
-sub-billion-parameter curiosity into a billion-parameter LLM building
-block.
+§7).
 
 #heading(level: 2, numbering: none)[The 1.27 B Emender shape under multi-programming]
 
@@ -781,8 +770,12 @@ rather than along time, the Emender does not require sequence parallelism to be
 competitive at 1.27 B; this is a simplification relative to
 chunked-scan implementations of linear-state recurrences. Separately,
 ParaRNN @pararnn2025 parallelises the time loop itself via Newton's
-method on a block-bidiagonal Jacobian; whether that method converges on
-the $tanh(d S + k delta^T)$ map at $32 times 32$ block size is open.
+method on a block-bidiagonal Jacobian. We tried this route on the
+$tanh(d S + k delta^T)$ map at $32 times 32$ block size and found it
+significantly worse in throughput than the multi-programmed Triton
+kernels above. Newton iteration carries a data-dependent solve count
+per step, and convergence on the bounded $tanh$ map is unestablished;
+multi-programming is a single serial pass per head.
 
 // ── 5. Language Modelling Results ────────────────────────────────────────────
 = Language-Modelling Results <sec:lm>
