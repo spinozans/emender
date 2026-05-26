@@ -236,8 +236,8 @@ conditions.
 
 #heading(level: 2, numbering: none)[Contribution]
 
-This paper's contribution is a *synthesis* of six components. The
-synthesis is a working, trainable foundation-model-scale architecture.
+This paper's contribution is five components and their *synthesis* as
+the Emender. The synthesis is a working, trainable foundation-model-scale architecture.
 We demonstrate it in the attention-free PNR arena (see §1 "Delta
 correction is one response..."), where each component is most legible;
 the delta-correction piece in particular is a general update-rule
@@ -883,7 +883,15 @@ point do the two separate by more than a small fraction of a nat.
 After $tilde 14$ wall-clock days of training, recorded losses are
 2.66 (Emender, step 1,035,000), 2.68 (GDN, step 1,371,000), and 2.77
 (M²RNN-CMA, step 958,000). These numbers sit in the loss band reported
-for 1–2 B parameter models on The Pile under matched tokenization. The within-PNR comparison is qualitatively different:
+for 1–2 B parameter models on The Pile under matched tokenization.
+Under the training tokenizer (`p50k_base` BPE) on The Pile, mean bytes
+per token is 3.92 over a 2000-sample sweep at the training
+`chunk_tokens=2048` (estimation script:
+`scripts/estimate_tokenizer_bytes_per_token.py`, pinned output at
+`scripts/estimate_tokenizer_bytes_per_token.json`), so
+$"bpb" = "nats/token" times log_2(e) / "bytes/token" approx "nats/token" times 0.368$.
+The Emender's 2.66 nats/token converts to 0.979 bits per byte; GDN's
+2.68 to 0.987; M²RNN-CMA's 2.77 to 1.02. The within-PNR comparison is qualitatively different:
 M²RNN-CMA trails the Emender across the entire sampled window under the
 matched per-architecture CMA-ES protocol described above. The two
 robust empirical claims supported by @fig_lm_racers are therefore
@@ -1070,9 +1078,11 @@ pattern $[upright("Emender"), upright("Emender"), upright("GDN"), upright("GDN")
     counter. Bars show the seed mean; error bars span the SEM (standard
     error of the mean across 3 seeds); individual seed points are
     overlaid (seeds 42, 123, 456). The dashed line is the random
-    baseline ($1/K$). State-tracking capability is not a property the
-    Emender block can lend to a stack of mixed blocks; purity is part of
-    the recipe. Source: per-seed JSON under
+    baseline ($1/K$). State-tracking capability does not survive
+    dilution by linear-scan (GDN) blocks in this Emender/GDN pairing;
+    the finding is scoped to mixing Emender with linear-scan blocks and
+    is not a general anti-hybrid claim (see §11 prediction 5 on
+    Emender + attention). Source: per-seed JSON under
     `paper/results/figure_4_hybrid/`; figure script:
     `paper/figures/plot_hybrid_degradation.py`. Mean $plus.minus$ std
     mirrors `experiments/expressivity_tasks/CANONICAL_SWEEP_RESULTS.md`.
