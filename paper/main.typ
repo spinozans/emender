@@ -803,41 +803,33 @@ CMA-tuned shapes are:
 
 #heading(level: 2, numbering: none)[Per-architecture CMA-ES protocol (fairness anchor)]
 
-All three 1.27–1.35 B architectures (Emender, M²RNN-CMA, and Gated
-DeltaNet) received *per-architecture* CMA-ES @cmaes2003 hyperparameter
-and shape search. Each architecture was searched independently over the
-same six-knob configuration space (width, depth, head count, state
-width, output gating, learning rate) under matched candidate budget
-(population 16, fixed wall-clock budget per candidate, identical fitness
-rule of mean training nats over a fixed late-training window). When
-CMA-ES exploration drifted onto the edge of a configured hyperparameter
-range, the range was repositioned and search continued; this was done
-consistently for all three architectures. No architecture received any
-probe-specific tuning beyond what CMA-ES discovered for the
-language-modelling loss. The per-family CMA-ES winner shapes shown in
-the table above are used unchanged in the §6 expressivity probes and
-the §7 formal analysis. This per-architecture protocol contrasts with
-the protocol of the concurrent M²RNN paper (Mishra et al. @m2rnn2026
-§5.2), in which model width, MLP width, layer count, optimiser,
-learning rate, weight decay and gradient clipping are held *uniform*
-across all compared architectures and only the sequence-mixing block
-is varied; that is fair-by-uniformity but not per-architecture
-best-tuning. The per-architecture protocol is the
-fairness anchor for the within-class comparison in §6 and §7: the
-within-PNR ordering reported there is read as a property of the update
-rule under matched best-effort search, not as a residue of differential
-HPO investment.
+All three 1.27–1.35 B architectures (Emender, M²RNN-CMA, Gated DeltaNet)
+received independent CMA-ES @cmaes2003 hyperparameter and shape search
+over the same six knobs: width, depth, head count, state width, output
+gating, learning rate. Each search ran under matched candidate budget:
+population 16, fixed wall-clock per candidate, identical fitness rule of
+mean training nats over a fixed late-training window. When CMA-ES
+drifted onto a configured-range edge, the range was repositioned and
+search continued, applied identically across the three architectures.
+The per-family winner shapes in the table above carry into the §6
+expressivity probes and §7 formal analysis unchanged. The concurrent
+M²RNN paper (Mishra et al. @m2rnn2026 §5.2) holds width, depth,
+optimiser, learning rate, weight decay and gradient clipping uniform
+across compared architectures and varies only the sequence-mixing block,
+a fair-by-uniformity protocol that does not give each architecture its
+own best-tuning.
 
-Under this protocol the wallclock training curves separate cleanly: the
-delta-correcting PNR instance (the Emender) and the linear-recurrent baseline
-(GDN) track the same loss-vs-wallclock band and trade leadership
-through training (@fig_lm_racers), while the raw-write PNR instance
-(M²RNN-CMA) trails throughout the sampled window. The §7 mechanism
-reading is what isolates the source of this within-PNR separation:
-matrix state plus temporal nonlinearity is competitive with
-frontier-class linear recurrence under matched per-architecture tuning,
-and the *delta-correcting* write is what places the Emender at parity with
-GDN, its absence what places M²RNN-CMA behind.
+The per-architecture search began as a fairness doctrine, motivated by
+frustration at undisclosed HPO budgets in nearby papers and at
+contradictory within-class results across papers running nominally the
+same setup. What surfaced was an instrument. On the Emender the
+optimizer kept pushing head count up against whatever ceiling the bounds
+set, and each range repositioning revealed the same pressure on the next
+iteration. The final $H = 370$ is the interior optimum after the bounds
+were placed far enough out that CMA-ES stopped against open ground. The
+search, configured for fairness across architectures, independently
+voted for the architecture's central thesis: throughput comes from many
+small heads.
 
 #heading(level: 2, numbering: none)[Gradient conditioning is a third recipe property]
 
@@ -845,51 +837,20 @@ A fourth run, *M²RNN-paper* (the paper-default shape from @m2rnn2026
 re-implemented at 1.27 B with dim=3072, depth=10, H=759, N=16), was
 attempted under the same training setup and *diverged* at step 8,400
 with gradient norm $approx 4.2 times 10^7$. The CMA-tuned reshape
-*M²RNN-CMA* (dim=1920, depth=21, H=370, N=16) of the *same* update
-family is stable under the same optimiser and the same data; its loss
-curve appears in the racer panel below. The paper shape is the
-stability control; it is not in the loss-racer panel below because no
-usable curve exists.
-
-The two configurations differ in one structural parameter: the ratio
-between the number of $q,k$ projections and the number of value heads
-that consume them. Many value heads sharing few $q,k$ pairs concentrate
-gradient through a narrow projection, and bursty inputs at high
-training step counts accumulate gradient norm in that bottleneck. The
-CMA-tuned reshape redistributes the ratio toward more independent
-$q,k$ pairs per value head (it is also the shape ratio that the Emender uses
-at production: $H = 370$ per-head $q,k$ pairs) and the explosion
-disappears. The Lean-witnessed structural anchor here is the same
-predicate `RecurrentResourceFormalism.IsMultiProgrammed` (§7): the
-CMA-reshaped M²RNN signature satisfies it; the paper-default shape's
-shared-$q,k$ geometry sits closer to the bottleneck regime that the
-predicate's "many independent heads per layer" clause forbids.
-
-This is *a third factor distinct from the update rule*. It is a
-geometry/recipe property: a property of how the heads are wired, not
-of the algebraic form of the write. It reinforces the class-level
-finding of §1: the multi-programmed recipe is update-rule-agnostic
-*and* geometry-sensitive. The expressivity claim in §6 still cleanly
-separates the two update rules at parameter-matched 8 M scale where
-geometry is held constant; the geometry property is a separate axis
-along which the multi-programmed recipe must be respected for either
-family to train at 1.27 B.
-
-Two consequences of this geometry sensitivity bear on how the §5 racer
-should be read. First, the M²RNN-CMA configuration used here is *not*
-M²RNN's published hyperparameter shape; per-architecture CMA-ES was
-applied to the M²RNN update rule itself and selected a geometry that
-trains stably across the full sampled wallclock window. The
-paper-default shape diverged at step 8,400 under the same matched
-protocol and is therefore not in the racer. Second, this reshape is
-*charitable* to the M²RNN update rule, not adversarial: the rule is
-evaluated under a CMA-optimised geometry, which is more favorable to
-the rule than its own published geometry, which did not survive
-matched-protocol training in our hands. The within-PNR ordering
-recorded in §5 is therefore an ordering between the Emender under its
-CMA-optimised geometry and the M²RNN update rule under *its* (more
-favorable than published) CMA-optimised geometry, at matched
-per-architecture search effort.
+*M²RNN-CMA* (dim=1920, depth=21, H=370, N=16) of the same update family
+is stable under the same optimiser and the same data; the divergent
+paper shape is the stability control and is not in the racer panel. The
+two configurations differ in one structural parameter: the ratio of
+$q,k$ projections to value heads. Many value heads sharing few $q,k$
+pairs concentrate gradient through a narrow projection and accumulate
+gradient norm at high step counts; redistributing toward more
+independent $q,k$ pairs per value head (the same ratio the Emender uses
+at production, $H = 370$) removes the explosion. This is a property of
+head geometry, not of the algebraic form of the write: a third recipe
+axis the multi-programmed family must respect alongside matrix state
+and update rule. The §6 expressivity claim is unaffected because it
+runs at parameter-matched 8 M scale where geometry is held constant
+across families.
 
 #heading(level: 2, numbering: none)[Loss-vs-wallclock racer]
 
@@ -941,26 +902,17 @@ differentiator. Source: smoothed CSVs and snapshot table under
 
 #heading(level: 2, numbering: none)[Capacity is non-binding at 8 M parameters for these probes]
 
-The state-tracking probes in this section are run at 8 M
-parameter-matched scale (dim = 384, depth = 4, $H = 32, N = 32$,
-schedule-free AdamW, 10K–20K steps per task, three seeds). GDN uses
-dim = 640 to match parameter count. Before any accuracy number is
-reported, the capacity argument: 8 M parameters is *overparameterised*
-for the state-tracking tasks studied here by many orders of magnitude.
-The 8 M probe is the Emender's default configuration carried down from its 1.27 B production stack.
-The $S_5$ and $S_3$ permutation probes have information-theoretic floors
-of $log_2 120 approx 6.9$ bits and $log_2 6 approx 2.6$ bits
-respectively for representing the prefix-tracking transition table; the
-8 M-parameter probe models exceed those floors by approximately seven
-orders of magnitude in parameter bits (and independently by six orders
-of magnitude in recurrent-state scalars per token). Failure to learn at
-this overparameterised scale is therefore better explained by the
-update rule's inductive bias under SGD than by capacity, since capacity
-is non-binding at 8 M for this task. The probes isolate the
-trainability question that the Lean realisability theorem (one-step
-representability) cannot reach: realisability bounds what configurations
-*exist* at fixed precision and width; the probes test what
-configurations SGD *finds* under matched no-tuning conditions.
+State-tracking probes in this section run at 8 M parameter-matched scale
+(dim = 384, depth = 4, $H = 32$, $N = 32$, schedule-free AdamW, 10K–20K
+steps per task, three seeds; GDN uses dim = 640 to match parameter
+count). The $S_5$ and $S_3$ transition tables have information-theoretic
+floors of $log_2 120 approx 6.9$ bits and $log_2 6 approx 2.6$ bits; an
+8 M-parameter model exceeds those floors by roughly seven orders of
+magnitude in parameter bits and six in recurrent-state scalars per
+token. Failure to learn at this scale is a property of the update
+rule's inductive bias under SGD, not of capacity. The probes test what
+configurations SGD finds under matched no-tuning conditions, where the
+§7 realisability theorem fixes what configurations exist.
 
 #heading(level: 2, numbering: none)[Matched no-tuning across architectures at 8 M]
 
@@ -1048,13 +1000,12 @@ $T in {128, 256, 512, 1024}$, three seeds.
   ],
 ) <fig_s5_bars>
 
-The Emender is the only family that crosses 0.5 accuracy on $S_5$ at training
-length. It is also the only family that solves $S_3$ to ceiling. Both
-M²RNN variants stall in the 0.31–0.38 band, indicating that the
+At $S_5$ training length the Emender reaches 0.79, GDN 0.36,
+M²RNN-CMA 0.22, M²RNN-paper 0.17. On $S_3$ the Emender is at 1.00, GDN
+at 0.72, and both M²RNN variants stall in the 0.31–0.38 band; the
 raw-write update fails on the prefix-tracking task even when the group
-is solvable. The gap between the Emender and the next-best baseline shrinks
-under length extrapolation but does not close: at $T = 512$ the Emender is at
-0.215 and GDN at 0.097.
+is solvable. The Emender–GDN gap shrinks under length extrapolation but
+does not close: at $T = 512$ the Emender is at 0.215 and GDN at 0.097.
 
 The $S_3$/$S_5$ split is also where the scope of the M²RNN paper's own
 state-tracking evaluation matters. Mishra et al. @m2rnn2026 §3.2 report
@@ -1128,38 +1079,13 @@ pattern $[upright("Emender"), upright("Emender"), upright("GDN"), upright("GDN")
   ],
 ) <fig_hybrid>
 
-The mechanism interpretation. M²RNN-CMA underperforms both at the $S_5$
-training length (0.22 vs Emender 0.79) and on $S_3$ (0.31 vs Emender 1.00) at
-the same parameter count. Matrix state plus temporal nonlinearity
-*alone* (what the Emender and M²RNN share) is not sufficient; the delta
-correction
-$v - S^T k$ is the load-bearing piece. The $S_3$ probe is the cleaner
-control for reading this as a *trainability* claim. $S_3$ has six
-elements; storing its transition table requires $log_2 6 approx 2.6$
-bits of state. At the probe shape the per-token recurrent state has
-$N V H "depth" = 131{,}072$ scalars (and independently the learned
-function is encoded in $approx 1.3 times 10^8$ parameter bits at fp16),
-so capacity is non-binding by many orders of magnitude on either
-accounting, and M²RNN's matrix state can in principle hold an $S_3$
-prefix-tracker. M²RNN-CMA's 0.31 is therefore evidence that SGD under the
-raw-write inductive bias *does not find* such a configuration at this
-scale, not that one fails to exist; the failure is empirical
-learnability under the raw-write rule, not representational
-impossibility. The hybrid degradation result strengthens the same
-conclusion from the other side: linear-scan blocks cannot inherit
-state-tracking capability from neighbouring Emender blocks. The Lean
-formalisation of §7 provides the *representational* counterpart (a
-per-step separation at fixed precision and width), not a global
-trainability claim about the M²RNN family. Reconciling §3 with §7: the
-Lean result
-(`RecurrentResourceFormalism.emender_m2rnn_one_step_resource_separation_embeds`)
-bounds a *one-step specification* (the precise mixed-key delta
-overwrite that the Emender performs at each step), while the §3 $S_3$ argument
-concerns *eventual representability across an unbounded number of
-steps*, for which raw-write has the capacity in principle but for which
-SGD under the raw-write inductive bias does not, at the 8 M probe scale,
-locate a configuration that prefix-tracks. These are distinct claims about
-different timescales of expressivity, both indicting the write rule.
+The §3 ablation already isolated the delta correction $v - S^T k$ as the
+load-bearing piece; the hybrid result is the same finding from the other
+side, since linear-scan blocks cannot inherit state-tracking capability
+from neighbouring Emender blocks. The §7 Lean separation supplies the
+representational counterpart at one step; the eventual-representability
+shortfall in the M²RNN family is empirical trainability under the
+raw-write rule, with capacity non-binding by the §6 floor argument.
 
 #heading(level: 2, numbering: none)[QA and reasoning panel at 1.27 B: parity-rate evidence]
 
