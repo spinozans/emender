@@ -899,9 +899,9 @@ and update rule.
     `scripts/estimate_tokenizer_bytes_per_token.json`, methodology
     sentence in this section). E88 is at
     1.273 B parameters; M²RNN-CMA at 1.307 B; GDN at 1.352 B; each
-    model has trained 14–19 GPU-days at this recording; the
-    $tilde 14$-day per-architecture training extent is the standard
-    unit at this scale class. *Panel A:* full curve on log-wallclock
+    model has trained 18-20 GPU-days at this recording; the
+    multi-week per-architecture training extent is the standard unit
+    at this scale class. *Panel A:* full curve on log-wallclock
     from h = 1. *Panel B:* tail (h ≥ 40) on linear wallclock.
     Leadership between E88 and GDN trades through training at the
     fractional-bit-per-byte scale; the two curves are nearly
@@ -913,14 +913,14 @@ and update rule.
   ],
 ) <fig_lm_racers>
 
-After $tilde 14$ wall-clock days of training, E88 reaches
+After roughly 18-20 wall-clock days of training, E88 reaches
 0.979 bits per byte on The Pile; Gated DeltaNet reaches 0.975;
-M²RNN-CMA reaches 0.993. E88 and GDN sit on the same sub-1-bpb
+M²RNN-CMA reaches 0.984. E88 and GDN sit on the same sub-1-bpb
 band: leadership trades between them through training, and at no
 sampled point do the two separate by more than a small fraction of a
 nat. The corresponding training losses are 2.66 nats/token (E88,
-step 1,237,400), 2.65 (GDN, step 1,631,150), and 2.70 (M²RNN-CMA, step
-1,168,200). Under the training tokenizer (`p50k_base` BPE) on The Pile,
+step 1,281,300), 2.65 (GDN, step 1,687,500), and 2.67 (M²RNN-CMA, step
+1,213,600). Under the training tokenizer (`p50k_base` BPE) on The Pile,
 mean bytes per token is 3.92 over a 2000-sample sweep at the training
 `chunk_tokens=2048` (estimation script:
 `scripts/estimate_tokenizer_bytes_per_token.py`, pinned output at
@@ -1566,7 +1566,7 @@ What rests on what. The Lean separation is seed-independent: the
 proof is the proof. The 8 M expressivity gap on $S_5$ ($0.79$ vs
 $0.36$ vs $0.22$) is across three seeds per architecture. The 1.27 B
 wallclock racer is one continuously-trained seed per architecture at
-the 14-day training extent.
+the current multi-week training extent.
 
 The within-class ordering the racer records (Emender ahead of the
 raw-write update under matched per-architecture CMA-ES) is not a
@@ -1576,12 +1576,13 @@ spanning 250+ candidate configurations per architecture in aggregate
 across chunk-512 and chunk-2048 training budgets and across
 reseed-and-reposition rounds. Under the exact E88 delta-off
 ablation the candidate-budget gap is 0.033 nats/token, and the racer
-extends it to 0.04 nats/token at the 14-day extent. The $H = 370$
+keeps the same sign at 0.014 nats/token at the current multi-week
+extent. The $H = 370$
 racer shape was not hand-chosen but sits inside the
 $H = 270$–$460$ interior band that the searches repeatedly selected
 for E88 at $N = 32$, while the raw-write arm drifts to systematically
 higher head counts. What remains single-seed at this scale is the
-14-day trajectory itself; the within-class ordering and the
+multi-week trajectory itself; the within-class ordering and the
 head-geometry preference are CMA-replicated.
 
 #heading(level: 2, numbering: none)[Length extrapolation is the next frontier on $S_5$]
@@ -1611,7 +1612,7 @@ load-bearing follow-up.
 The empirical within-class ordering scopes to CMA-equilibrated
 geometry. The same update family (M²RNN) diverges at 1.27 B in the
 published paper shape and is stable under the CMA-tuned reshape (loss
-2.70 after $tilde 14$ days). The §6 expressivity comparison runs at
+2.67 after roughly 18 wall-clock days). The §6 expressivity comparison runs at
 parameter-matched 8 M with geometry held constant across families;
 the §5 language-modelling comparison runs against the CMA-reshaped
 M²RNN. The Lean separation of §7 is unconditional on shape but is
@@ -1658,7 +1659,7 @@ express?" for OLMo-Hybrid); the answers do not contradict.
 
 #heading(level: 2, numbering: none)[Training duration and result scope]
 
-The language-modelling results are for the $tilde 14$ wall-clock-day
+The language-modelling results are for the current 18-20 wall-clock-day
 training extent per architecture. The racer panel (@fig_lm_racers)
 records the loss-vs-wallclock curve at this extent; further rounds
 extend the curves.
@@ -1685,13 +1686,13 @@ attention's quadratic cost bites. The omission is scope, not result.
 = Conclusion <sec:conclusion>
 
 We trained a pure-nonlinear-recurrent language model to sub-1-bpb on
-The Pile: E88 at 0.979 bpb after $tilde 14$ wall-clock days
+The Pile: E88 at 0.979 bpb after roughly 20 wall-clock days
 on a single workstation-class GPU. Three pure-recurrent
 architectures received per-architecture CMA-ES at the 1.27–1.35 B
 band (the Emender and M²RNN-CMA, nonlinear in time; Gated DeltaNet,
 linear in time). The two leading curves are co-linear in the shared
 wallclock band (GDN 0.975, E88 0.979); M²RNN-CMA, the raw-write
-pure-recurrent variant, trails at 0.993.
+pure-recurrent variant, trails at 0.984.
 *At this scale and training extent, nonlinearity in time is not the
 wallclock barrier it was assumed to be.* M²RNN (Mishra et al. @m2rnn2026) is the
 closest prior art and demonstrates nonlinear matrix-state recurrence
@@ -1844,7 +1845,7 @@ the order.
 
 #heading(level: 2, numbering: none)[Additional seeds and architecture-internal revalidation]
 
-Each 1.27 B model trains for $tilde 14$ wall-clock days per
+Each 1.27 B model trains for a multi-week wall-clock span per
 architecture, the standard unit of evidence at this scale class;
 additional seeds at this band are a multi-week investment per seed.
 Several architecture-internal choices in the Emender, including the

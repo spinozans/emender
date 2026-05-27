@@ -1,8 +1,10 @@
-# Figure 3 Snapshot — As of 2026-05-27
+# Figure 2 Snapshot - As of 2026-05-27T20:25 UTC
 
-Training is **in progress**. All numbers are instantaneous snapshots from the
-live training logs; curves will be updated as training continues. Do not cite
-these results without re-running `smooth.py` to regenerate with current logs.
+Training is **in progress**. All numbers below are the 10K-step smoothed
+snapshots from CSVs regenerated from the live training logs on
+2026-05-27T20:25 UTC. Curves will be updated as training continues. Do not
+cite these results without re-running `smooth.py` and `plot_normalized.py` to
+regenerate with current logs.
 
 ---
 
@@ -11,12 +13,12 @@ these results without re-running `smooth.py` to regenerate with current logs.
 All runs use: dataset = Pile (pile.txt, p50k_base tokenizer), context = 2048 tokens,
 optimizer = schedule-free AdamW, bf16.
 
-| Model | Params | Step | Loss (nats/tok) | Bits/byte† | Tokens seen | ~FLOPs‡ | GPU hours§ |
+| Model | Params | Step | 10K-smoothed loss (nats/tok) | Bits/byte† | Tokens seen | ~FLOPs‡ | GPU hours§ |
 |-------|--------|------|-----------------|------------|-------------|---------|-----------|
-| E88/NDM | 1.273B | 1,237,400 | 2.6579 | 0.9785 | 12.67B | 9.68 × 10¹⁹ | ~451 |
-| FLA-GDN | 1.352B | 1,631,150 | 2.6474 | 0.9747 | 13.36B | 1.08 × 10²⁰ | ~456 |
+| E88/NDM | 1.273B | 1,281,300 | 2.6599 | 0.9793 | 13.12B | 1.00 × 10²⁰ | ~467 |
+| FLA-GDN | 1.352B | 1,687,500 | 2.6478 | 0.9748 | 13.82B | 1.12 × 10²⁰ | ~472 |
 | Mamba2 | 0.934B | 1,982,400 | 2.6919 | 0.9911 | 16.24B | 9.10 × 10¹⁹ | ~407 |
-| M2RNN-CMA | 1.307B | 1,168,200 | 2.6980 | 0.9933 | 11.96B | 9.38 × 10¹⁹ | ~417 |
+| M2RNN-CMA | 1.307B | 1,213,600 | 2.6737 | 0.9844 | 12.43B | 9.75 × 10¹⁹ | ~433 |
 
 †  Bits/byte = nats/token × log2(e) / bytes/token, with
    bytes/token = 3.918625 (canonical 2000-sample sweep of `p50k_base` on
@@ -78,7 +80,7 @@ optimizer = schedule-free AdamW, bf16.
   at step 123,000 on 2026-05-11; continuous since.
 - Uses XMA kernels from the accelerated-model-architectures package.
 - Batch size: 5 (effective tokens/step = 10,240).
-- GPU hours (~408h) reflect the M2RNN-CMA run's independent start date.
+- GPU hours (~433h) reflect the M2RNN-CMA run's independent start date.
 
 ---
 
