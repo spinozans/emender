@@ -905,18 +905,18 @@ and update rule.
     the sampled window. The paper-shape M²RNN baseline (not shown)
     diverged at step 8,400. Color convention used throughout the
     paper: Emender = blue, GDN = orange, M²RNN-CMA = red. Recorded as
-    of 2026-05-26; training continues.
+    of 2026-05-27; training continues.
   ],
 ) <fig_lm_racers>
 
 After $tilde 14$ wall-clock days of training, E88 reaches
-0.979 bits per byte on The Pile; Gated DeltaNet reaches 0.987;
-M²RNN-CMA reaches 1.02. E88 and GDN sit on the same sub-1-bpb
+0.979 bits per byte on The Pile; Gated DeltaNet reaches 0.975;
+M²RNN-CMA reaches 0.993. E88 and GDN sit on the same sub-1-bpb
 band: leadership trades between them through training, and at no
 sampled point do the two separate by more than a small fraction of a
 nat. The corresponding training losses are 2.66 nats/token (E88,
-step 1,035,000), 2.68 (GDN, step 1,371,000), and 2.77 (M²RNN-CMA, step
-958,000). Under the training tokenizer (`p50k_base` BPE) on The Pile,
+step 1,237,400), 2.65 (GDN, step 1,631,150), and 2.70 (M²RNN-CMA, step
+1,168,200). Under the training tokenizer (`p50k_base` BPE) on The Pile,
 mean bytes per token is 3.92 over a 2000-sample sweep at the training
 `chunk_tokens=2048` (estimation script:
 `scripts/estimate_tokenizer_bytes_per_token.py`, pinned output at
@@ -1572,7 +1572,7 @@ spanning 250+ candidate configurations per architecture in aggregate
 across chunk-512 and chunk-2048 training budgets and across
 reseed-and-reposition rounds. Under the exact E88 delta-off
 ablation the candidate-budget gap is 0.033 nats/token, and the racer
-extends it to 0.11 nats/token at the 14-day extent. The $H = 370$
+extends it to 0.04 nats/token at the 14-day extent. The $H = 370$
 racer shape was not hand-chosen but sits inside the
 $H = 270$–$460$ interior band that the searches repeatedly selected
 for E88 at $N = 32$, while the raw-write arm drifts to systematically
@@ -1607,7 +1607,7 @@ load-bearing follow-up.
 The empirical within-class ordering scopes to CMA-equilibrated
 geometry. The same update family (M²RNN) diverges at 1.27 B in the
 published paper shape and is stable under the CMA-tuned reshape (loss
-2.77 after $tilde 14$ days). The §6 expressivity comparison runs at
+2.70 after $tilde 14$ days). The §6 expressivity comparison runs at
 parameter-matched 8 M with geometry held constant across families;
 the §5 language-modelling comparison runs against the CMA-reshaped
 M²RNN. The Lean separation of §7 is unconditional on shape but is

@@ -3,7 +3,7 @@
 All training logs live on the training host under `/tmp/`. They are large
 (1–3 MB) and are NOT copied into the repo. Stable pointers follow.
 
-## Active 1.27B runs (as of 2026-05-24)
+## Active 1.27B runs (as of 2026-05-27)
 
 ### E88 / NDM
 Architecture: Level E88 (Nonlinear Delta Memory)

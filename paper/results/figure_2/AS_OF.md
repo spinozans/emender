@@ -1,4 +1,4 @@
-# Figure 3 Snapshot — As of 2026-05-26
+# Figure 3 Snapshot — As of 2026-05-27
 
 Training is **in progress**. All numbers are instantaneous snapshots from the
 live training logs; curves will be updated as training continues. Do not cite
@@ -13,10 +13,10 @@ optimizer = schedule-free AdamW, bf16.
 
 | Model | Params | Step | Loss (nats/tok) | Bits/byte† | Tokens seen | ~FLOPs‡ | GPU hours§ |
 |-------|--------|------|-----------------|------------|-------------|---------|-----------|
-| E88/NDM | 1.273B | 1,212,000 | 2.6632 | 0.9805 | 12.41B | 9.48 × 10¹⁹ | ~442 |
-| FLA-GDN | 1.352B | 1,598,550 | 2.6484 | 0.9751 | 13.10B | 1.06 × 10²⁰ | ~447 |
+| E88/NDM | 1.273B | 1,237,400 | 2.6579 | 0.9785 | 12.67B | 9.68 × 10¹⁹ | ~451 |
+| FLA-GDN | 1.352B | 1,631,150 | 2.6474 | 0.9747 | 13.36B | 1.08 × 10²⁰ | ~456 |
 | Mamba2 | 0.934B | 1,982,400 | 2.6919 | 0.9911 | 16.24B | 9.10 × 10¹⁹ | ~407 |
-| M2RNN-CMA | 1.307B | 1,141,850 | 2.6776 | 0.9858 | 11.69B | 9.17 × 10¹⁹ | ~408 |
+| M2RNN-CMA | 1.307B | 1,168,200 | 2.6980 | 0.9933 | 11.96B | 9.38 × 10¹⁹ | ~417 |
 
 †  Bits/byte = nats/token × log2(e) / bytes/token, with
    bytes/token = 3.918625 (canonical 2000-sample sweep of `p50k_base` on
