@@ -73,7 +73,7 @@ CMA-ES configs, and the Triton kernel released.
     language models. Here we emend that judgment. We train
     pure-nonlinear-recurrent language models to near-optimality at
     billion-parameter scale on a single workstation-class GPU over 15
-    days, reaching 1 bit per byte on The Pile. The architecture, the
+    days, crossing below 1 bit per byte on The Pile. The architecture, the
     Emender, is a residual stack of recurrent layers, each pairing a
     matrix-state memory with a delta-correcting update rule wrapped in
     a tanh that bounds and latches each slot. The matrix-state $R times
@@ -81,7 +81,8 @@ CMA-ES configs, and the Triton kernel released.
     under a saturating nonlinearity, so slots latch until a
     counter-aligned key arrives. A machine-verified formalism
     establishes the latching dynamics and a per-step separation from
-    the raw-write baseline at matched per-token FLOP cost. We confirm
+    the raw-write baseline that provably persists under $k$-step
+    composition, at matched per-token FLOP cost. We confirm
     the separation empirically. The training
     speed comes from intra-step parallelism pushed orders of magnitude
     beyond what is typically tested: 22,200 small recurrent programs
@@ -213,7 +214,7 @@ We evaluate delta correction in the attention-free, time-serial
 recurrent arena, the *pure nonlinear recurrent* (PNR) setting in the
 sense of "no cross-token attention mechanism"; gating, projections,
 normalisations and other intra-token nonlinear operations are
-permitted and load-bearing (§3 ingredient (c) and §5 on gradient
+permitted and load-bearing (§3 ingredient (d) and §5 on gradient
 conditioning). The PNR arena is where the contrast is cleanest (a
 delta-vs-raw-write contrast at matched per-token FLOP class, §7),
 where the Lean 4 separation theorems are tractable (sets C and C′),
@@ -556,7 +557,7 @@ $
   ],
 ) <fig_arch>
 
-Three ingredients are load-bearing.
+Four ingredients are load-bearing.
 
 #set enum(numbering: "(a)")
 
@@ -572,7 +573,7 @@ Three ingredients are load-bearing.
   arbitrary keys it gives bounded error-correcting binding. A raw-write
   update $S <- S + k v^T$ (the M²RNN family) accumulates without
   correction and cannot, with fixed weights, satisfy a uniform one-step
-  overwrite specification (§Formal Results).
+  overwrite specification (§7).
 
 + *Saturation latching of the $tanh$ bound.* A slot driven near
   $plus.minus 1$ is insensitive to further bounded writes, sub-threshold
@@ -766,8 +767,8 @@ The training plan uses schedule-free AdamW @schedulefree2024 per island
 with hierarchical local-SGD model averaging in the DiLoCo
 @diloco2023 style: each island is one node of 8 GCDs with intra-island
 DDP, and inter-island synchronisation averages model weights every
-$H = 250$ local steps (an empirically-chosen interval; see §Limitations
-for the open question on $H$). Because parallelism is across programs
+$tau = 250$ local steps (an empirically-chosen interval).
+Because parallelism is across programs
 rather than along time, the Emender does not require sequence parallelism to be
 competitive at 1.27 B; this is a simplification relative to
 chunked-scan implementations of linear-state recurrences. Separately,
@@ -786,7 +787,7 @@ multi-programming is a single serial pass per head.
 
 We train three pure-recurrent language models at the 1.27–1.35 B
 parameter band on The Pile @thepile2020 with a 2048-token context window,
-byte-pair encoding (p50k_base, 50,257-vocab), schedule-free AdamW
+byte-pair encoding (p50k_base, 50,281-vocab), schedule-free AdamW
 @schedulefree2024, and bf16 mixed precision. The three models and their
 CMA-tuned shapes are:
 
@@ -1424,7 +1425,7 @@ the delta rule into a parallelisable linear-recurrent language model,
 demonstrating the rule at billion-parameter scale in the linear-state
 regime. The Emender extends this line with three properties the linear
 instantiations forfeit: a nonlinear matrix state, the saturation
-latching of §3 ingredient (b′) that turns slot-wise overwrite
+latching of §3 ingredient (c) that turns slot-wise overwrite
 into persistent binding, and width-axis parallelism via
 multi-programming that recovers throughput without time-axis
 linearisation.
