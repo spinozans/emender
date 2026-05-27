@@ -116,8 +116,8 @@ acceptable for v0.1 to keep the Python distribution and import package named
 | `README.md` | 1, 3, 18, 58, 99-111, 129, 152 | Front door still presents Nonlinear Delta Memory / NDM as the public name, with `ndm/` source paths. |
 | `docs/STANDALONE_USAGE.md` | 1, 6, 12-24, 38-44, 62, 72, 78, 88 | Install, clone, and import examples all use `ndm` and `https://github.com/ekg/ndm`. |
 | `docs/MODEL_CARD_TEMPLATE.md` | 10, 15, 17, 28-30, 67-69, 83-85, 125, 197-198, 204, 212, 221-225 | Model tag/title, update naming, model load examples, repo links, and citation URL still point to `ndm` / `ekg/ndm`. |
-| `docs/HUGGINGFACE_RELEASE.md` | 17, 24, 40, 58, 63, 71, 78, 112-119, 123, 128-129, 144-158 | HF release flow still targets `ekg/ndm-1.27b`; it also describes `ndm` as the public package name. Any HF repo should remain private until explicit approval. |
-| `NEXT_STEPS.md` | 1, 22, 85, 129, 227, 246, 264 | Release checklist still names NDM and `ekg/ndm-1.27b`. |
+| `docs/HUGGINGFACE_RELEASE.md` | 17, 24, 40, 58, 63, 71, 78, 112-119, 123, 128-129, 144-158 | At the time of this dry run, the HF release flow still targeted the former single NDM placeholder rather than the `poietic-pbc` v0.1 model trio. Any HF repo should remain private until explicit approval. |
+| `NEXT_STEPS.md` | 1, 22, 85, 129, 227, 246, 264 | At the time of this dry run, the release checklist still named NDM and the former HF placeholder. |
 | `paper/README.md` | 1, 73 | Paper support doc still says "NDM Paper" and describes NDM as the architecture variant name. |
 | `paper/OUTLINE.md` | 1, 56, 102-118, 167-192, 244-316, 546-572, 799 | Legacy outline uses Nonlinear Delta Memory / NDM throughout, while `paper/main.typ` already uses Emender. |
 | `paper/ndmpapernotes.md` | 1, 5, 19, 29, 54-88, 134-178, 235-246, 276-350 | Legacy design notes remain NDM-branded. Consider archiving or clearly marking historical. |
@@ -151,9 +151,9 @@ This is the lowest-risk release path.
 4. Rewrite the top-level README and release docs to present "Emender" as the
    public project/model family, while documenting that the v0.1 Python import is
    still `ndm`.
-5. Update model-card and HF instructions from `ekg/ndm-1.27b` to the approved
-   private/public target, likely `poietic-pbc/emender-e88-1.27b`, only after HF
-   approval. Until then, keep HF repos private.
+5. Update model-card and HF instructions to the approved private/public
+   `poietic-pbc` release targets, including `poietic-pbc/emender-e88-1.27b`,
+   only after HF approval. Until then, keep HF repos private.
 6. Run:
    ```bash
    python -m pytest tests/test_standalone_minimal.py tests/test_imports.py -m 'not gpu'

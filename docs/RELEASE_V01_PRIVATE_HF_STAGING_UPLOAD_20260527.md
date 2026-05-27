@@ -21,11 +21,12 @@ were not copied into this git repository, staged, or committed.
 | GDN | `poietic-pbc/gdn-1.27b` | `staging` | `95ef019198b9e125928a8cf2349895bc31a4906b` | true | `2975047780` |
 | M²RNN-CMA | `poietic-pbc/m2rnn-cma-1.27b` | `staging` | `af3cf2db65dfd14b64a5c030c99156828fdfb958` | true | `2807296960` |
 
-Exact URLs:
+Current release URLs for these uploaded commits. The final `v0.1` tags were
+added later by `release-v01-tag-and-paper-sync`:
 
-- `https://huggingface.co/poietic-pbc/emender-e88-1.27b/tree/staging`
-- `https://huggingface.co/poietic-pbc/gdn-1.27b/tree/staging`
-- `https://huggingface.co/poietic-pbc/m2rnn-cma-1.27b/tree/staging`
+- `https://huggingface.co/poietic-pbc/emender-e88-1.27b/tree/v0.1`
+- `https://huggingface.co/poietic-pbc/gdn-1.27b/tree/v0.1`
+- `https://huggingface.co/poietic-pbc/m2rnn-cma-1.27b/tree/v0.1`
 
 Commit URLs:
 
@@ -33,9 +34,9 @@ Commit URLs:
 - `https://huggingface.co/poietic-pbc/gdn-1.27b/commit/95ef019198b9e125928a8cf2349895bc31a4906b`
 - `https://huggingface.co/poietic-pbc/m2rnn-cma-1.27b/commit/af3cf2db65dfd14b64a5c030c99156828fdfb958`
 
-Each repository has branches `staging` and `main`, with `staging` containing
-the full model artifacts. Each repository has no tags; in particular,
-`v0.1` is absent.
+At upload time, each repository had branches `staging` and `main`, with
+`staging` containing the full model artifacts, and no tags. The final `v0.1`
+tags now point at the uploaded staging commits listed above.
 
 ## Auth And Guardrails
 

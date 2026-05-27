@@ -126,7 +126,9 @@ Ordered milestones; each `→` is a hard dependency.
 6. **W3b** Fix `pyproject.toml` version → `0.2.0`; cut `v0.2.0` tag; build sdist/wheel; smoke install (`docs/STANDALONE_USAGE.md` known-issue + `docs/HUGGINGFACE_RELEASE.md` Phase 2).
 7. **W3c** Convert checkpoint weights → safetensors; round-trip forward-pass verification (`docs/HUGGINGFACE_RELEASE.md` Phase 3).
 8. **W3d** Write `modeling_ndm.py`, `configuration_ndm.py`, `config.json`; fill `MODEL_CARD_TEMPLATE.md` (`docs/HUGGINGFACE_RELEASE.md` Phases 4–5).
-9. **W3e** Create `ekg/ndm-1.27b` HF repo; upload; clean-venv smoke test (`docs/HUGGINGFACE_RELEASE.md` Phases 6–7).
+9. **W3e** Create private `poietic-pbc` HF repos; upload; clean-venv private
+   smoke test; tag the smoke-tested commits as `v0.1`
+   (`docs/HUGGINGFACE_RELEASE.md` Phases 6–7).
 10. **Paper draft v1** integrating §§3, 5, 6, 7, 8, 9 — fully writable from in-repo evidence (`paper/OUTLINE.md` §5.1); §4 + Figure 3 fill in from milestone 3.
 11. **arXiv v1 posted** — locks the "first ≥1B pure nonlinear recurrent LM" priority date against M2RNN concurrent work (`paper/OUTLINE.md` §6 "Priority date risk").
 12. **HF link-back commit** (`docs/HUGGINGFACE_RELEASE.md` Phase 8); paper revision references the public checkpoint.
@@ -260,10 +262,11 @@ are workgraph-ready phrasing.
    (`docs/HUGGINGFACE_RELEASE.md` Phases 4 + 7). *(Effort: M. Blocks: HF
    upload.)*
 
-10. **`hf-upload-and-link-back`** — Depends on #9. Create
-    `ekg/ndm-1.27b`; upload; set topics; smoke-test from clean env on
-    CPU and CUDA; commit HF badge + checkpoint URL to `README.md` and
-    `provenance/checkpoint_anchors.txt`
+10. **`hf-upload-and-link-back`** — Depends on #9. Create private
+    `poietic-pbc` model repositories; upload; tag smoke-tested commits as
+    `v0.1`; smoke-test from clean env on CPU and CUDA; commit HF badge +
+    checkpoint URL to `README.md` and `provenance/checkpoint_anchors.txt`.
+    Set topics and public visibility only after explicit approval is logged
     (`docs/HUGGINGFACE_RELEASE.md` Phases 6, 7, 8). *(Effort: M. Blocks:
     arXiv v1 reference to public checkpoint.)*
 

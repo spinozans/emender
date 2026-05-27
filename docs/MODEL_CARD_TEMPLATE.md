@@ -80,10 +80,16 @@ substantially slower.
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
 
-tokenizer = AutoTokenizer.from_pretrained("ekg/ndm-1.27b")
+tokenizer = AutoTokenizer.from_pretrained(
+    "poietic-pbc/emender-e88-1.27b",
+    revision="v0.1",
+    token=True,
+)
 model = AutoModelForCausalLM.from_pretrained(
-    "ekg/ndm-1.27b",
+    "poietic-pbc/emender-e88-1.27b",
+    revision="v0.1",
     trust_remote_code=True,
+    token=True,
     torch_dtype=torch.bfloat16,
     device_map="auto",
 )

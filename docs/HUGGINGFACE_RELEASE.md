@@ -14,12 +14,18 @@ that encodes hyperparameters. Users load the model with:
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 model = AutoModelForCausalLM.from_pretrained(
-    "ekg/ndm-1.27b",
+    "poietic-pbc/emender-e88-1.27b",
+    revision="v0.1",
     trust_remote_code=True,
+    token=True,
     torch_dtype=torch.bfloat16,
     device_map="auto",
 )
 ```
+
+The v0.1 release also includes the sibling private baseline repositories
+`poietic-pbc/gdn-1.27b` and `poietic-pbc/m2rnn-cma-1.27b`, both loaded with
+`revision="v0.1"`.
 
 This avoids adding HF as a hard dependency of the `ndm` package, keeps the
 training codebase untouched, and works today without a Transformers PR. The
@@ -107,15 +113,20 @@ release.
       token count, dataset mix, compute hours, hardware spec, eval numbers.
 - [ ] **5.2** Copy the completed card to `README.md` in the HF repo directory.
 
-### Phase 6 — HuggingFace Upload
+### Phase 6 — HuggingFace Upload And Private Tag
 
-- [ ] **6.1** Create the HF repository: `huggingface-cli repo create ekg/ndm-1.27b --type model`
+- [x] **6.1** Create private HF repositories under `poietic-pbc`:
+      `emender-e88-1.27b`, `gdn-1.27b`, and `m2rnn-cma-1.27b`.
 - [ ] **6.2** Upload all files:
       ```bash
-      huggingface-cli upload ekg/ndm-1.27b ./hf_release_dir/ .
+      huggingface-cli upload poietic-pbc/emender-e88-1.27b ./hf_release_dir/ . --revision staging
       ```
-- [ ] **6.3** Set repository visibility to public.
-- [ ] **6.4** Add topics: `rnn`, `language-model`, `nonlinear-rnn`, `triton`,
+- [x] **6.3** Run private-HF CPU and CUDA clean-container smokes at the exact
+      uploaded staging commits.
+- [x] **6.4** Create immutable `v0.1` tags at the smoke-tested commits.
+- [ ] **6.5** Set repository visibility to public only after explicit user
+      approval is present and logged.
+- [ ] **6.6** Add topics: `rnn`, `language-model`, `nonlinear-rnn`, `triton`,
       `ndm`, `state-tracking`.
 
 ### Phase 7 — Smoke Test from Clean Environment
@@ -125,8 +136,10 @@ release.
       pip install transformers torch safetensors
       python -c "
       from transformers import AutoModelForCausalLM, AutoTokenizer
-      tok = AutoTokenizer.from_pretrained('ekg/ndm-1.27b')
-      model = AutoModelForCausalLM.from_pretrained('ekg/ndm-1.27b', trust_remote_code=True)
+      repo_id = 'poietic-pbc/emender-e88-1.27b'
+      tok = AutoTokenizer.from_pretrained(repo_id, revision='v0.1', token=True)
+      model = AutoModelForCausalLM.from_pretrained(
+          repo_id, revision='v0.1', trust_remote_code=True, token=True)
       ids = tok('Hello', return_tensors='pt').input_ids
       out = model.generate(ids, max_new_tokens=20)
       print(tok.decode(out[0]))
@@ -143,20 +156,23 @@ release.
       `README.md` of this repo.
 - [ ] **8.2** Record the final HF repo URL and the `ndm` tag in
       `provenance/checkpoint_anchors.txt`.
-- [ ] **8.3** Commit: `git add README.md provenance/checkpoint_anchors.txt && git commit -m "release: link HF checkpoint ekg/ndm-1.27b"`
+- [ ] **8.3** Commit: `git add README.md provenance/checkpoint_anchors.txt && git commit -m "release: link HF checkpoint poietic-pbc/emender-e88-1.27b"`
 
 ---
 
 ## Naming Rationale
 
-Recommended repo name: **`ekg/ndm-1.27b`**
+Chosen v0.1 HF model repositories:
 
-- `ekg` matches the GitHub account (`ekg/ndm`, `ekg/elman`) for provenance
-  continuity.
-- `ndm` is the public package name and the codebase identifier.
-- `1.27b` encodes the parameter count, which is the primary scale claim.
-- Alternative `ekg/ndm-1b` would be ambiguous; `ekg/ndm-1.27b-base` can be
-  used if instruction-tuned variants are released later.
+| Model identity | Repository | Release revision |
+| --- | --- | --- |
+| Emender/E88 | `poietic-pbc/emender-e88-1.27b` | `v0.1` |
+| GDN baseline | `poietic-pbc/gdn-1.27b` | `v0.1` |
+| M2RNN-CMA baseline | `poietic-pbc/m2rnn-cma-1.27b` | `v0.1` |
+
+The `poietic-pbc` namespace is the release namespace for v0.1. The Python
+package and import path remain `ndm` for this release unless a separate package
+rename task approves and performs a broader migration.
 
 ---
 
