@@ -71,12 +71,13 @@ CMA-ES configs, and the Triton kernel released.
     It has long been assumed that nonlinear-in-time recurrent neural
     networks cannot be trained to the quality of contemporary frontier
     language models. Here we emend that judgment. We train
-    pure-nonlinear-recurrent language models to near-optimality at
-    billion-parameter scale on a single workstation-class GPU over 15
-    days, crossing below 1 bit per byte on The Pile. The architecture, the
-    Emender, is a residual stack of recurrent layers, each pairing a
-    matrix-state memory with a delta-correcting update rule wrapped in
-    a tanh that bounds and latches each slot. The matrix-state $R times
+    pure-nonlinear-recurrent language models to the sub-1-bit-per-byte
+    regime at billion-parameter scale on a single workstation-class GPU
+    over 15 days, crossing below 1 bit per byte on The Pile. The Emender
+    family is built from emender layers: recurrent layers pairing a
+    matrix-state memory with a write rule that has two halves,
+    delta correction and tanh-with-latching; E88 is the 1.27 B
+    production instance evaluated here. The matrix-state $R times
     N$ update is modulated by a delta-correcting term $k(v - S^T k)^T$
     under a saturating nonlinearity, so slots latch until a
     counter-aligned key arrives. A machine-verified formalism
@@ -188,7 +189,7 @@ shows the world is consistent with what the proofs already establish.
 The 8 M-parameter Emender reaches 0.79 accuracy on $S_5$ against 0.36
 for Gated DeltaNet and 0.22 for the raw-write baseline. The 1.27 B
 Emender reaches 0.979 bits per byte on The Pile, inside the same
-wallclock band as Gated DeltaNet at 0.987.
+wallclock band as Gated DeltaNet at 0.975.
 Throughput at width comes from 22,200 small recurrent programs per
 token. The lever for scaling serial recurrence is parallelism within
 each time step, not across it.
@@ -311,8 +312,9 @@ DeltaNet (GDN @gated_deltanet2024). All three architectures are trained
 on The Pile @thepile2020 and received per-architecture CMA-ES
 @cmaes2003 hyperparameter and shape search, with range repositioning
 when limits were hit, so every architecture was evaluated under its
-best-effort configuration at matched search effort. All three land in
-the same loss-vs-wallclock band on The Pile. *Nonlinearity in time is
+best-effort configuration at matched search effort. E88 and GDN land in
+the same loss-vs-wallclock band; M²RNN-CMA reaches the same sub-1-bpb
+regime but trails across the sampled window. *Nonlinearity in time is
 not a cost.* The status-quo verdict that PNR language models cannot
 reach this regime without a time-axis parallelisation trick or
 attention hybridisation is, at minimum at 1.27–1.35 B on The Pile
@@ -1686,8 +1688,8 @@ on a single workstation-class GPU. Three pure-recurrent
 architectures received per-architecture CMA-ES at the 1.27–1.35 B
 band (the Emender and M²RNN-CMA, nonlinear in time; Gated DeltaNet,
 linear in time). The two leading curves are co-linear in the shared
-wallclock band (E88 0.979, GDN 0.987); M²RNN-CMA, the raw-write
-pure-recurrent variant, trails at 1.02.
+wallclock band (GDN 0.975, E88 0.979); M²RNN-CMA, the raw-write
+pure-recurrent variant, trails at 0.993.
 *Nonlinearity in time is not a cost* for language modelling at this
 scale; the choice of recurrence linearity is washed out by
 per-architecture tuning. M²RNN (Mishra et al. @m2rnn2026) is the
