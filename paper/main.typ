@@ -23,10 +23,9 @@ CMA-ES hyperparameter search: two with nonlinear time recurrence,
 *the Emender* (delta-correcting update $S <- tanh(d S + k(v - S^T k)^T)$)
 and *M²RNN-CMA* (raw-write update $tanh(H W + k v^T)$); and one
 with linear time recurrence, *Gated DeltaNet* (GDN). All three
-land in the same loss-vs-wallclock band on The Pile, so
-nonlinearity in time is not a cost for language modelling at this
-scale and the choice of recurrence linearity is washed out by
-per-architecture tuning. The systems contribution that makes this
+land in the same loss-vs-wallclock band on The Pile, so at this
+scale and training extent, nonlinearity in time is not the
+wallclock barrier it was assumed to be. The systems contribution that makes this
 possible is *multi-programming*, a width-axis parallelisation that
 replicates the recurrent computation across many independent heads
 while keeping the time loop serial inside each head; this replaces
@@ -36,9 +35,9 @@ consistently ahead of M²RNN-CMA, and a one-step representability
 separation between the delta-correcting and raw-write update rules,
 formalised in Lean 4, is confirmed empirically on
 capacity-overparameterised state-tracking probes. The three 1.27–1.35 B
-checkpoints, the per-architecture CMA-ES configurations, and the
-Triton multi-programming kernel will be released on HuggingFace at
-publication; the trusted Lean 4 core has no
+checkpoints, the per-architecture CMA-ES configurations, and the Triton
+multi-programming kernel are assigned to the v0.1 HuggingFace release
+target; the trusted Lean 4 core has no
 sorry/admit/axiom/opaque/native_decide in the import closure.
 
 === ALTERNATE 2 — Tight ~110-word cold-lead variant ===
@@ -63,7 +62,7 @@ CMA-ES configs, and the Triton kernel released.
     (
       name: "Erik Garrison",
       email: "erik.garrison@gmail.com",
-      affiliation: "Poetic PBC / UTHSC, Memphis, TN, USA",
+      affiliation: "Poietic PBC / UTHSC, Memphis, TN, USA",
       orcid: "0000-0003-3821-631X",
     ),
   ),
@@ -87,10 +86,11 @@ CMA-ES configs, and the Triton kernel released.
     the separation empirically. The training
     speed comes from intra-step parallelism pushed orders of magnitude
     beyond what is typically tested: 22,200 small recurrent programs
-    per token. The Emender matches the wallclock loss band of Gated
+    per token. E88 matches the wallclock loss band of Gated
     DeltaNet, the current frontier linear-recurrent learner;
     M²RNN-CMA, a raw-write baseline reshaped under the same protocol,
-    nearly matches it. At parameter-matched 8M scale the Emender
+    also reaches sub-1-bpb but trails E88 across the sampled window.
+    At parameter-matched 8M scale the Emender
     reaches 0.79 accuracy on the $S_5$ word problem against 0.36 for
     Gated DeltaNet and 0.22 for the raw-write baseline. We provide the
     models, code, and an account of how the search for fair
@@ -159,8 +159,8 @@ scale. The verdict is contingent on the axis chosen for parallelism.
 Parallelise width and the obstruction dissolves: throughput comes from
 many small recurrent programs running side by side, while each program
 runs its time loop serially. Trained on a single workstation-class GPU
-over fifteen days, the Emender, a pure-nonlinear-recurrent language
-model at 1.27 billion parameters, reaches 1 bit per byte on The Pile
+over fifteen days, E88, the 1.27 B Emender production instance,
+crosses below 1 bit per byte on The Pile
 @thepile2020 and matches the wallclock loss band of Gated DeltaNet
 @gated_deltanet2024, the current frontier linear-recurrent learner.
 
@@ -284,8 +284,8 @@ technique not bound to that arena.
   released as the foundation for further update-rule research, not as
   a one-off for this paper.
 
-+ *Stability and single-GPU access.* The 1.27 B Emender trains
-  stably under schedule-free AdamW and reaches 1 bit per byte on The
++ *Stability and single-GPU access.* E88 trains
+  stably under schedule-free AdamW and reaches the sub-1-bpb regime on The
   Pile in 15 days on a single workstation-class GPU, with no cluster
   and no sequence parallelism. Sparse checkpointing keeps the
   activation and gradient footprint modest, so memory is not the
@@ -332,10 +332,12 @@ on saturation latching alongside the separation, $S_5$-realisation,
 and FLOP-class theorems; §8 related work, opening with the ancestry of
 the delta-correction line from Widrow–Hoff through fast-weight
 programmers to DeltaNet; §9 limitations; §10 conclusion; §11 testable
-predictions; §12 future work. We release Emender checkpoints together
-with M²RNN-CMA, the GDN baseline, the per-architecture CMA-ES
-configurations, and the Triton multi-programming kernel on HuggingFace
-at publication.
+predictions; §12 future work. The v0.1 release target for the E88
+checkpoint and loading code is
+`https://huggingface.co/poieticpbc/emender-e88-1.27b/tree/v0.1`, with
+companion M²RNN-CMA and GDN baseline artifacts, the per-architecture
+CMA-ES configurations, and the Triton multi-programming kernel in the
+same release bundle.
 
 // ── 2. Background ─────────────────────────────────────────────────────────────
 = Background <sec:background>
@@ -1690,9 +1692,8 @@ band (the Emender and M²RNN-CMA, nonlinear in time; Gated DeltaNet,
 linear in time). The two leading curves are co-linear in the shared
 wallclock band (GDN 0.975, E88 0.979); M²RNN-CMA, the raw-write
 pure-recurrent variant, trails at 0.993.
-*Nonlinearity in time is not a cost* for language modelling at this
-scale; the choice of recurrence linearity is washed out by
-per-architecture tuning. M²RNN (Mishra et al. @m2rnn2026) is the
+*At this scale and training extent, nonlinearity in time is not the
+wallclock barrier it was assumed to be.* M²RNN (Mishra et al. @m2rnn2026) is the
 closest prior art and demonstrates nonlinear matrix-state recurrence
 at 7 B MoE scale in *hybrid form*; the pure-recurrent variant trained
 here, M²RNN-CMA, is the head-to-head datapoint inside the
@@ -1727,11 +1728,13 @@ update solves $S_3$ to ceiling and reaches 0.79 on the non-solvable
 $S_5$ probe. The trusted Lean 4 core has no
 `sorry`/`admit`/`axiom`/`opaque`/`native_decide` in the import closure.
 
-*Release.* We will release on HuggingFace at publication: the E88
-checkpoint (delta-correcting), the M²RNN-CMA checkpoint (CMA-reshaped
-raw-write), and the Gated DeltaNet baseline. Released alongside are
-the per-architecture CMA-ES configurations, the training protocol,
-and the Triton multi-programming kernel source.
+*Release.* The v0.1 release target for the E88 checkpoint and loading
+code is
+`https://huggingface.co/poieticpbc/emender-e88-1.27b/tree/v0.1`.
+Companion artifacts cover the M²RNN-CMA checkpoint (CMA-reshaped
+raw-write), the Gated DeltaNet baseline, the per-architecture CMA-ES
+configurations, the training protocol, and the Triton multi-programming
+kernel source.
 
 // ── 11. Testable Predictions ─────────────────────────────────────────────────
 = Testable Predictions <sec:predictions>
