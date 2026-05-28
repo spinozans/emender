@@ -60,13 +60,18 @@ paper/
 2. Use `#cite(<key>)` in `main.typ` (angle-bracket syntax, not backslash).
 3. Typst resolves all `#bibliography("refs.bib")` citations at compile time.
 
-## Pending figure data
+## Figure data
 
-Figure 2 (1.27B language-model loss racers) needs artifacts from `~/elman/`.
-Stage frozen checkpoint loss curves into `paper/results/figure_2/` and
-replace `figures/figure_2_placeholder.svg` with the real plot.
+Figure 2 (1.3B-class language-model loss racers) is staged in
+`paper/results/figure_2/` with the rendered plot at
+`paper/results/figure_2/figure_2_draft.png`. The current paper prose reports
+the refreshed 2026-05-27 snapshot values recorded in
+`paper/results/figure_2/AS_OF.md`: E88 0.979 BPB, GDN 0.975 BPB, and
+M2RNN-CMA 0.984 BPB.
 
-See `paper/OUTLINE.md` §5.2 for the full list of pending experimental closures.
+`paper/OUTLINE.md` is retained as historical drafting context; use
+`paper/main.typ` plus the staged `paper/results/` files as the release paper
+source of record.
 
 ## Internal references
 
