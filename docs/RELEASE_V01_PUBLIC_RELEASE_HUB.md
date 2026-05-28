@@ -55,7 +55,12 @@ artifact commits.
 
 ## Docker Smoke
 
-Run the final private-HF smoke after docs polish and before public visibility:
+Final private-HF Docker smoke passed on 2026-05-28 against the current
+`v0.1` SHAs in this hub on CPU and on CUDA GPU 4. Evidence is recorded in
+[`RELEASE_V01_FINAL_V01_DOCKER_SMOKE_20260528.md`](RELEASE_V01_FINAL_V01_DOCKER_SMOKE_20260528.md).
+
+To rerun the private-HF smoke after any further docs/tag changes and before
+public visibility:
 
 ```bash
 SMOKE_OUTPUT_DIR=/tmp/release-v01-final-v01-docker-smoke-$(date -u +%Y%m%d%H%M%S) \
@@ -78,7 +83,7 @@ runtime `HF_TOKEN` and uses fresh Docker HF cache volumes.
 
 ## Public-Release Checklist
 
-- [ ] Final private-HF Docker smoke passes against the `v0.1` SHAs in this hub.
+- [x] Final private-HF Docker smoke passes against the `v0.1` SHAs in this hub.
 - [ ] Readiness report confirms no legacy namespace or old single-repo release
       target remains on public-facing release surfaces.
 - [ ] Paper PDF is built from `paper/main.typ`, reviewed, and attached at the

@@ -186,8 +186,9 @@ rename task approves and performs a broader migration.
 ## Current v0.1 Private HF Tags
 
 As of the 2026-05-28 model-card polish, `v0.1` resolves to docs-only commits
-that descend from the previously smoke-tested artifact commits. Downstream final
-smoke must validate these current SHAs before public visibility changes.
+that descend from the previously smoke-tested artifact commits. The final
+private-HF Docker smoke validated these current SHAs on CPU and CUDA; see
+[`RELEASE_V01_FINAL_V01_DOCKER_SMOKE_20260528.md`](RELEASE_V01_FINAL_V01_DOCKER_SMOKE_20260528.md).
 
 | Model identity | Repository | Previous artifact SHA | Current `v0.1` SHA | Main-card SHA |
 | --- | --- | --- | --- | --- |
