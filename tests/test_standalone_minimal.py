@@ -107,6 +107,46 @@ def test_e97_reference_cpu_forward():
     assert not torch.isnan(logits).any(), "NaN in logits"
 
 
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"e88_raw_write": True},
+        {"linear_state": True},
+    ],
+)
+def test_e97_ablation_cpu_forward(kwargs):
+    """E97 raw-write and linear-state ablations run through the reference path."""
+    try:
+        from mamba_ssm.ops.triton.layer_norm import RMSNorm  # noqa: F401
+        fused_norm_available = True
+    except ImportError:
+        fused_norm_available = False
+
+    if fused_norm_available:
+        pytest.skip("mamba_ssm fused norm requires CUDA tensors")
+
+    from ndm import LadderLM
+
+    model = LadderLM(
+        vocab_size=256,
+        dim=64,
+        depth=1,
+        level="E97",
+        n_heads=4,
+        n_state=16,
+        **kwargs,
+    )
+    model.eval()
+
+    x = torch.randint(0, 256, (1, 8))
+    with torch.no_grad():
+        out = model(x)
+        logits = out[0] if isinstance(out, tuple) else out
+
+    assert logits.shape == (1, 8, 256), f"Unexpected shape: {logits.shape}"
+    assert not torch.isnan(logits).any(), "NaN in logits"
+
+
 @pytest.mark.gpu
 def test_ladderlm_gpu_forward():
     """LadderLM forward pass on GPU (skipped if CUDA unavailable)."""

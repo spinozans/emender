@@ -149,6 +149,8 @@ SEARCH_SPACES = {
     # memory probe clamps to max feasible if CMA-ES picks too large.
     'e88': _E88_SEARCH_SPACE,  # baseline: use_gate=1, linear_state=0
     'e97': _E88_SEARCH_SPACE,  # E97 split erase/write edit; Triton-enabled via --use_triton_e88
+    'e97-raw': _E88_SEARCH_SPACE,  # E97 ablation: split edit with raw write target
+    'e97-linear': _E88_SEARCH_SPACE,  # E97 ablation: split edit with linear state update
     'e88_fused': _E88_SEARCH_SPACE,  # E88 with fused CUDA kernel (faster training)
     'e91': _E88_SEARCH_SPACE,  # E91 matrix-matrix variant (rank-r delta rule, default rank=n_state)
     'e92': _E88_SEARCH_SPACE,  # E92 matrix-matrix variant with learned W_h per-layer transform
@@ -298,6 +300,8 @@ DISCRETE_SWEEP_PARAMS = {
     'e88': {'n_state': [16, 32]},
     'e97': {'n_state': [16, 32]},
     'e88_fused': {'n_state': [16, 32]},  # fused CUDA kernel variant
+    'e97-raw': {'n_state': [16, 32]},  # E97 ablation: remove delta correction
+    'e97-linear': {'n_state': [16, 32]},  # E97 ablation: remove tanh
     'e91': {'n_state': [16, 32]},  # E91 — rank=n_state by default
     'm2rnn': {'n_state': [16, 32]},
     'm2rnn-paper': {'n_state': [16]},
@@ -319,7 +323,7 @@ def get_search_space(model_type, fixed_params=None):
     fixed_params = fixed_params or {}
 
     # Adjust n_heads range for E88 based on n_state
-    if (model_type.startswith('e88') or model_type in ('e97', 'm2rnn', 'm2rnn-paper')) and 'n_heads' in space:
+    if (model_type.startswith('e88') or model_type.startswith('e97') or model_type in ('m2rnn', 'm2rnn-paper')) and 'n_heads' in space:
         n_state = fixed_params.get('n_state')
         if n_state == 16:
             # n_state=16: push to 2000 (1B winners hit H=940 ceiling at 1000)
@@ -473,7 +477,7 @@ def estimate_params_for_config(params, model_type):
         return calc_e88_params(dim, depth=depth, n_heads=params.get('n_heads', 96),
                                n_state=params.get('n_state', 32),
                                expansion=params.get('expansion', 1.0), use_gate=use_gate)
-    elif model_type == 'e97':
+    elif model_type in ('e97', 'e97-raw', 'e97-linear'):
         n_heads = params.get('n_heads', 96)
         n_state = params.get('n_state', 32)
         expansion = params.get('expansion', 1.0)
@@ -729,9 +733,10 @@ def build_train_command(params, model_type, train_minutes, output_dir):
         if USE_TRITON_E88:
             cmd.extend(['--use_triton', '1'])
 
-    elif model_type == 'e97':
+    elif model_type in ('e97', 'e97-raw', 'e97-linear'):
         # E97: E88/NDM with split key-axis erase/read and value-axis write gates.
-        # Pass --use_triton_e88 to use the split-edit Triton recurrence.
+        # e97-raw keeps split edit but writes the gated value directly.
+        # e97-linear keeps split edit and delta correction but drops tanh.
         cmd.extend([
             '--level', 'E97',
             '--n_heads', str(params['n_heads']),
@@ -740,7 +745,11 @@ def build_train_command(params, model_type, train_minutes, output_dir):
             '--use_gate', '1',
             '--gate_activation', 'silu',
         ])
-        if USE_TRITON_E88:
+        if model_type == 'e97-raw':
+            cmd.extend(['--e88_raw_write', '1'])
+        elif model_type == 'e97-linear':
+            cmd.extend(['--linear_state', '1'])
+        if USE_TRITON_E88 and model_type != 'e97-linear':
             cmd.extend(['--use_triton', '1'])
 
     elif model_type == 'e91':
