@@ -99,18 +99,15 @@ class GDN2ExternalLayer(nn.Module):
         if use_conv is None or use_conv is False:
             use_conv = True
 
+        if head_dim > 256:
+            raise ValueError("GDN-2 kernels require head_dim <= 256")
         if num_heads is None:
             num_heads = max(1, dim // head_dim)
-        if dim % num_heads != 0:
-            for candidate in range(num_heads, 0, -1):
-                if dim % candidate == 0:
-                    num_heads = candidate
-                    break
 
         self.dim = dim
         self.expansion = expansion
         self.num_heads = num_heads
-        self.actual_head_dim = dim // num_heads
+        self.actual_head_dim = head_dim
         self.dropout = nn.Dropout(dropout) if dropout > 0 else nn.Identity()
         self.gdn2 = GatedDeltaNet2(
             hidden_size=dim,
@@ -147,12 +144,6 @@ def count_gdn2_external_params(dim, depth, vocab_size=256, expansion=2.0, num_he
     """Approximate LadderLM parameter count for the external GDN-2 layer."""
     if num_heads is None:
         num_heads = max(1, dim // head_dim)
-    if dim % num_heads != 0:
-        for candidate in range(num_heads, 0, -1):
-            if dim % candidate == 0:
-                num_heads = candidate
-                break
-    head_dim = dim // num_heads
     value_head_dim = int(head_dim * expansion)
     key_dim = num_heads * head_dim
     value_dim = num_heads * value_head_dim

@@ -146,16 +146,10 @@ def calc_fla_gdn_params(dim, depth, expansion=2.0, vocab_size=256):
     return layers_total + embed
 
 
-def calc_gdn2_params(dim, depth, expansion=2.0, n_heads=None, vocab_size=256):
+def calc_gdn2_params(dim, depth, expansion=2.0, n_heads=None, head_dim=128, vocab_size=256):
     """Approximate parameters for the external GDN-2 layer used by Emender."""
     if n_heads is None:
-        n_heads = max(1, dim // 128)
-    if dim % n_heads != 0:
-        for candidate in range(n_heads, 0, -1):
-            if dim % candidate == 0:
-                n_heads = candidate
-                break
-    head_dim = dim // n_heads
+        n_heads = max(1, dim // head_dim)
     value_head_dim = int(head_dim * expansion)
     key_dim = n_heads * head_dim
     value_dim = n_heads * value_head_dim
