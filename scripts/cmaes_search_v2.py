@@ -72,6 +72,7 @@ CHUNK_SIZE = 512
 GRADIENT_CHECKPOINTING = False
 PROJECTION_CHUNK_SIZE = 0
 PROBE_TIMEOUT_SECONDS = int(os.environ.get('CMAES_PROBE_TIMEOUT_SECONDS', '600'))
+CMAES_MAX_VALID_ATTEMPTS = int(os.environ.get('CMAES_MAX_VALID_ATTEMPTS', '20'))
 
 # Progressive training settings (set from args in main())
 PROGRESSIVE = False
@@ -1657,6 +1658,15 @@ def run_cmaes_phase(model_type, train_minutes, output_dir, gpus,
     print(f"  Consecutive required: {consecutive_required}")
 
     all_results = []
+    recovered_max_eval_id = -1
+
+    # Recover completed evals even when the controller crashed before writing
+    # cmaes_state.pkl.  The per-eval .done files are the durable source of truth.
+    recovered, max_eval_id = recover_completed_evals(output_dir)
+    if recovered:
+        all_results = recovered
+        recovered_max_eval_id = max_eval_id
+        print(f"  RESUME: recovered {len(recovered)} completed evals (max eval_id={max_eval_id})")
 
     # Check for saved CMA-ES state (crash-resume)
     state_file = os.path.join(output_dir, 'cmaes_state.pkl')
@@ -1666,11 +1676,6 @@ def run_cmaes_phase(model_type, train_minutes, output_dir, gpus,
             with open(state_file, 'rb') as f:
                 resume_state = pickle.load(f)
             print(f"  RESUME: restored CMA-ES state (ws={resume_state['ws_idx']}, gen={resume_state['gen']})")
-            # Recover all completed evals from disk
-            recovered, _ = recover_completed_evals(output_dir)
-            if recovered:
-                all_results = recovered
-                print(f"  RESUME: recovered {len(recovered)} completed evals")
         except Exception as e:
             print(f"  WARNING: failed to load CMA-ES state: {e}, starting fresh")
             resume_state = None
@@ -1692,7 +1697,7 @@ def run_cmaes_phase(model_type, train_minutes, output_dir, gpus,
             best_loss = resume_state['best_loss']
             best_params = resume_state['best_params']
             generations_without_improvement = resume_state['generations_without_improvement']
-            eval_counter = resume_state['eval_counter']
+            eval_counter = max(resume_state['eval_counter'], recovered_max_eval_id + 1)
             start_gen = resume_state['gen'] + 1
             print(f"    RESUME: continuing from gen {start_gen + 1}, best={best_loss:.4f}, eval_counter={eval_counter}")
             resume_state = None  # Only resume once
@@ -1712,7 +1717,7 @@ def run_cmaes_phase(model_type, train_minutes, output_dir, gpus,
             best_loss = float('inf')
             best_params = None
             generations_without_improvement = 0
-            eval_counter = len(all_results)
+            eval_counter = recovered_max_eval_id + 1 if recovered else len(all_results)
 
         for gen in range(start_gen, max_generations):
             # REJECTION SAMPLING: Generate enough valid configs to fill all GPUs
@@ -1720,7 +1725,7 @@ def run_cmaes_phase(model_type, train_minutes, output_dir, gpus,
             valid_solutions = []
             valid_configs = []
             total_generated = 0
-            max_attempts = 20  # Prevent infinite loop
+            max_attempts = CMAES_MAX_VALID_ATTEMPTS  # Prevent infinite loop
 
             for attempt in range(max_attempts):
                 # Ask for a batch of solutions
@@ -1757,8 +1762,13 @@ def run_cmaes_phase(model_type, train_minutes, output_dir, gpus,
             # Tell CMA-ES only about the valid solutions we actually evaluated
             # This keeps the covariance matrix clean (no penalty pollution)
             fitnesses = [r['loss'] for r in gen_results]
-            if valid_solutions and fitnesses:
-                es.tell(valid_solutions[:len(fitnesses)], fitnesses)
+            cma_updated = False
+            if len(fitnesses) >= 2:
+                try:
+                    es.tell(valid_solutions[:len(fitnesses)], fitnesses)
+                    cma_updated = True
+                except ValueError as e:
+                    print(f"    WARNING: CMA-ES update skipped: {e}")
 
             # Track best
             if not fitnesses:
@@ -1768,18 +1778,24 @@ def run_cmaes_phase(model_type, train_minutes, output_dir, gpus,
             gen_best_loss = min(fitnesses)
             gen_best_idx = fitnesses.index(gen_best_loss)
 
+            improved = gen_best_loss < best_loss
             if gen_best_loss < best_loss:
                 improvement = best_loss - gen_best_loss
                 best_loss = gen_best_loss
                 best_params = valid_configs[gen_best_idx]
                 print(f"    *** NEW BEST: {best_loss:.4f} | {format_params(best_params)} ***")
 
-                if improvement < converge_threshold:
-                    generations_without_improvement += 1
+            if cma_updated:
+                if improved:
+                    if improvement < converge_threshold:
+                        generations_without_improvement += 1
+                    else:
+                        generations_without_improvement = 0
                 else:
-                    generations_without_improvement = 0
+                    generations_without_improvement += 1
             else:
-                generations_without_improvement += 1
+                if len(fitnesses) < 2:
+                    print("    Only one evaluated config; skipping CMA-ES update and leaving convergence counter unchanged")
 
             print(f"    Gen best: {gen_best_loss:.4f} | Overall best: {best_loss:.4f} | "
                   f"No improvement: {generations_without_improvement}/{consecutive_required}")
