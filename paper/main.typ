@@ -19,7 +19,8 @@ scale on competitive wallclock, because it forecloses the time-axis
 parallel scan that linear-recurrent variants depend on for GPU
 throughput. We test this verdict by training three pure-recurrent
 language models in the 1.3 B class under per-architecture
-CMA-ES hyperparameter search: two with nonlinear time recurrence,
+CMA-ES hyperparameter search (cohort band, not equal exact size: E88
+1.273 B, M²RNN-CMA 1.307 B, GDN 1.352 B): two with nonlinear time recurrence,
 *the Emender* (delta-correcting update $S <- tanh(d S + k("silu"(v) - S^T k)^T)$)
 and *M²RNN-CMA* (raw-write update $tanh(H W + k v^T)$); and one
 with linear time recurrence, *Gated DeltaNet* (GDN). All three
@@ -42,8 +43,9 @@ sorry/admit/axiom/opaque/native_decide in the import closure.
 
 === ALTERNATE 2 — Tight ~110-word cold-lead variant ===
 
-We train three pure-recurrent 1.3 B-class language models on The
-Pile and find that nonlinearity in time is not a cost: two
+We train three pure-recurrent 1.3 B-class language models (cohort
+band, not equal exact size: E88 1.273 B, M²RNN-CMA 1.307 B, GDN
+1.352 B) on The Pile and find that nonlinearity in time is not a cost: two
 nonlinear-in-time recurrences (the Emender, M²RNN-CMA) land in the same
 loss-vs-wallclock band as the linear-recurrent baseline Gated
 DeltaNet under per-architecture CMA-ES. The field's operating
@@ -77,7 +79,7 @@ CMA-ES configs, and the Triton kernel released.
     family is built from emender layers: recurrent layers pairing a
     matrix-state memory with a write rule that has two halves,
     delta correction and tanh-with-latching; E88 is the 1.3 B
-    production instance evaluated here. The matrix-state $R times
+    production instance (1.273 B parameters) evaluated here. The matrix-state $R times
     N$ update is modulated by a delta-correcting term
     $k("silu"(v) - S^T k)^T$
     under a saturating nonlinearity, so slots latch until a
@@ -190,8 +192,10 @@ every $k$-step composition at matched per-token FLOP cost; it proves
 the three latching properties — saturation insensitivity,
 sign-preserving hold, and counter-delta release; it proves that an
 orthonormal-key configuration of the Emender realises the $S_5$ prefix
-tracker, the canonical NC#super[1] witness. The empirical work then
-shows the world is consistent with what the proofs already establish.
+tracker, the canonical NC#super[1] witness. The empirical work is a
+separate trainability question: the Lean results establish realisability
+and representational scope, while the $S_5$/$S_3$ probes and the 1.3 B
+racer measure what SGD actually finds under the stated protocols.
 The 8 M-parameter Emender reaches 0.79 accuracy on $S_5$ against 0.36
 for Gated DeltaNet and 0.22 for the raw-write baseline. The 1.3 B
 Emender reaches 0.979 bits per byte on The Pile, inside the same
@@ -309,7 +313,9 @@ technique not bound to that arena.
 
 This paper establishes the PNR class as viable at foundation-model
 scale, by training two PNR instances in the 1.3 B-class parameter
-band and comparing them head-to-head with a linear-recurrent baseline.
+band (a cohort band, not equal exact size: E88 1.273 B, M²RNN-CMA
+1.307 B, GDN 1.352 B) and comparing them head-to-head with a
+linear-recurrent baseline.
 The two PNR instances are the Emender (this work; delta-correct update
 rule $S <- tanh(d S + k("silu"(v) - S^T k)^T)$) and M²RNN-CMA (a CMA-reshaped
 pure-recurrent variant of the M²RNN architecture, with a raw-write
@@ -399,6 +405,14 @@ this criterion. The catch is that, asymptotically, a linear-state
 recurrence at fixed precision and width is a regular-language recogniser
 that lives inside TC#super[0] and therefore cannot solve
 non-solvable-group word problems @merrill2024transformers @barrington1986.
+For fixed-depth transformers in the same formal-language setting, this is
+also the relevant ceiling under explicit arithmetic assumptions:
+log-precision transformers are captured by first-order logic with
+majority quantifiers @merrill_sabharwal2023log_precision, and
+average-hard attention transformers exactly, plus softmax-attention
+transformers with $O("poly"(n))$ floating-point precision or
+$2^(-O("poly"(n)))$ absolute-error approximation, lie in DLOGTIME-uniform
+TC#super[0] @chiang2025uniform_tc0.
 The classical empirical witness is the symmetric-group $S_5$, which has
 120 elements and is the smallest non-solvable group.
 
@@ -1229,6 +1243,9 @@ $
 $
 produces a state trajectory that, decoded through a fixed linear
 readout, reconstructs the $S_5$ transition table on every input word.
+Here $v_g$ is the bounded post-nonlinearity value supplied to the abstract
+theorem update, corresponding to $"silu"(v_h)$ in the concrete per-head
+architecture of §3 rather than to a raw value projection.
 The proof uses
 `OnlineMemory.linearDeltaWrite_overwrites_one_preserves_others` for the
 orthonormal-key write step and `S5Tracker.run_append` for compositional
@@ -1387,8 +1404,8 @@ These three results formalise the latching half of the Emender primitive:
 saturation makes a slot insensitive to further bounded writes, sign is
 preserved under sub-threshold counter-input, and a sufficient
 counter-delta releases the latch. All three are slot-wise statements on
-the full abstract Emender update, where $v$ denotes the bounded value
-input already supplied to the recurrent body,
+the full abstract Emender update, where $v$ denotes the bounded
+post-nonlinearity value input already supplied to the recurrent body,
 $S' = tanh(lambda dot S + k (v - S^T k)^T)$
 at slot $(i,j)$, with $W := k_i (v_j - (S^T k)_j)$ the write contribution
 into that slot. The proofs run through the standard tanh-perturbation
@@ -1453,8 +1470,8 @@ NC#super[1] in the canonical regular-language witness.*
 The trusted core does *not* prove the following, and the paper does not
 claim them. (i) A Lean lower bound covering all linear-scan models on
 $S_5$. (ii) Barrington's theorem itself; we cite it. (iii) Any "the Emender
-exceeds NC#super[1]" or "the Emender exceeds TC#super[0]" claim; these are
-families-wide impossibility statements outside the trusted surface. (iv)
+goes beyond NC#super[1]" or "the Emender goes beyond TC#super[0]" claim;
+these are families-wide impossibility statements outside the trusted surface. (iv)
 A formal proof that a trained real-valued Emender with empirically learned
 weights exactly recovers the lookup table; only the realisability is
 proved.
@@ -1583,8 +1600,8 @@ explicit non-claims, retained as the moat around the trusted surface:
 (i) a Lean lower bound covering all linear-scan models on $S_5$; (ii)
 Barrington's theorem itself; (iii) an $S_5$-generator-specific $T(d)$
 capacity bound (the k-step separation runs on the constructed 2D
-alphabet, not the $S_5$ generators); (iv) families-wide "exceeds
-NC#super[1]" or "exceeds TC#super[0]" impossibility; (v) that
+alphabet, not the $S_5$ generators); (iv) families-wide "goes beyond
+NC#super[1]" or "goes beyond TC#super[0]" impossibility; (v) that
 empirical Emender weights recover the lookup-table realisation; (vi)
 the slot-wise latching set lifted to an architecture-level
 `latchAttractor`, nor an $S_5$-coset basin-survival statement against
@@ -1752,15 +1769,15 @@ trained here satisfy the same multi-programming predicate at 1.3 B
 Within the pure-nonlinear-recurrent class, the delta-correcting update
 rule (the Emender) trains consistently ahead of the raw-write update rule
 (M²RNN-CMA) across the sampled wallclock window. The within-class gap
-is explained by a one-step representability separation, formalised in
+has a formal counterpart in a one-step representability separation, formalised in
 Lean 4: an orthonormal-key Emender configuration realises the $S_5$ tracker
 (`EmenderRealizesS5.emender_realizes_s5_tracker`), and no fixed-weight
 raw-write matrix RNN with row, column, or cell forget gates can match
 the Emender's mixed-key delta correction in one recurrent step
 (`emender_m2rnn_one_step_resource_separation_embeds`); the per-token FLOP
 class is the same for the two PNR instances
-(`emender_m2rnn_flop_class_equiv`). The trainability shadow of the formal
-separation is direct: at 8 M parameters, with capacity non-binding by
+(`emender_m2rnn_flop_class_equiv`). The empirical trainability counterpart
+is direct: at 8 M parameters, with capacity non-binding by
 many orders of magnitude, raw-write stalls at 0.31 on the
 six-element solvable-group $S_3$ control while the delta-correcting
 update solves $S_3$ to ceiling and reaches 0.79 on the non-solvable
