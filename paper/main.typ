@@ -323,15 +323,14 @@ on The Pile @thepile2020 and received per-architecture CMA-ES
 when limits were hit, so every architecture was evaluated under its
 best-effort configuration at matched search effort. E88 and GDN land in
 the same loss-vs-wallclock band; M²RNN-CMA reaches the same sub-1-bpb
-regime but trails across the sampled window.
+regime but trails E88 across the sampled window.
 *At this scale and training extent, nonlinearity in time is not the
 wallclock barrier it was assumed to be.*
 The status-quo verdict that PNR language models cannot
 reach this regime without a time-axis parallelisation trick or
 attention hybridisation is, at minimum in the 1.3 B-class on The Pile
 under matched wallclock, not supported by the data. Within the PNR
-class, the Emender trains consistently ahead of M²RNN-CMA across the
-sampled wallclock window.
+class, M²RNN-CMA trails E88 across the sampled window (§5).
 
 The paper proceeds as follows. §2 and §3 set up the linear-state
 versus nonlinear-state classification and the Emender architecture;
@@ -1765,9 +1764,8 @@ in parallel. The recipe is update-rule-agnostic: both PNR instances
 trained here satisfy the same multi-programming predicate at 1.3 B
 (Lean: `multiProgrammed_admits_m2rnn_and_emender`).
 
-Within the pure-nonlinear-recurrent class, the delta-correcting update
-rule (the Emender) trains consistently ahead of the raw-write update rule
-(M²RNN-CMA) across the sampled wallclock window. The within-class gap
+Within the pure-nonlinear-recurrent class, M²RNN-CMA trails E88 across
+the sampled window (§5). This within-class gap
 has a formal counterpart in a one-step representability separation, formalised in
 Lean 4: an orthonormal-key Emender configuration realises the $S_5$ tracker
 (`EmenderRealizesS5.emender_realizes_s5_tracker`), and no fixed-weight
