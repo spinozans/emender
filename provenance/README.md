@@ -1,7 +1,8 @@
 # Provenance
 
-`ndm` is a curated paper-facing repository extracted from two historical
-repositories:
+Emender is a curated paper-facing repository extracted from two historical
+repositories. The Python package and many source paths still use `ndm` for
+compatibility and historical continuity.
 
 - Code and experiments: `git@github.com:ekg/elman.git`
   - commit: `6f0724feae9fc82bd235408ac5c3ae61f2b17c79`
@@ -20,7 +21,9 @@ repositories:
     - `bf147b2 Add NDM paper core formalism`
     - `84011f5 Define trusted Lean proof surface`
 
-The historical names `ElmanProofs` and `E88` are retained in some source files
-to preserve reproducibility during the migration. Public-facing documentation
-should use **NDM** for the architecture family and **E88/NDM** for the current
-optimized implementation.
+The historical names `ElmanProofs`, `NDM`, and `E88` are retained in some source
+files to preserve reproducibility during the migration. Public-facing
+documentation should use **Emender** for the repository and model family,
+**Emender/E88** for the current optimized implementation, and
+**nonlinear delta memory** for the recurrent mechanism when the mechanism needs
+to be named.

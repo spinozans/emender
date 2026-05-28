@@ -1,4 +1,4 @@
-# NDM Paper Outline
+# Emender Paper Outline
 
 **Status:** Draft outline (not the paper itself).
 **Generated:** 2026-05-23 by task `paper-outline`.
@@ -53,8 +53,8 @@
 
 **Working title:**
 
-> Nonlinear Delta Memory: A Multi-Programmed Recipe for Pure Recurrent
-> Language Models at Scale
+> Emender: A Multi-Programmed Recipe for Pure Recurrent Language Models at
+> Scale
 
 **One-sentence thesis:**
 
@@ -289,7 +289,7 @@ bullet cites the upstream synthesis doc that supplies the content.
 - **Setup** — byte/token streams, schedule-free AdamW, context-2K
   curriculum, 4-GPU smoke established H=250 averaging interval. Cite
   `paper/notes_reconciliation.md` O2/O3 and `docs/DESIGN_DOSSIER.md` §4.4.
-- **Models compared** — E88/NDM, FLA-GDN, Mamba2, M2RNN-CMA,
+- **Models compared** — Emender/E88, FLA-GDN, Mamba2, M2RNN-CMA,
   M2RNN-paper (as stability control). Model-family table from
   `ndmpapernotes.md` lines 72–79.
 - **Headline metric** — wallclock loss / bits-per-byte (smoothed last 5K,
@@ -307,7 +307,7 @@ bullet cites the upstream synthesis doc that supplies the content.
 ### 2.6 Expressivity Results — State-Tracking Mechanism Witness
 
 - **S5 / S3 permutation composition (headline)** — train T=128, 3 seeds,
-  8M parameter-matched. E88/NDM **0.7918** vs FLA-GDN 0.3552 vs M2RNN-tied
+  8M parameter-matched. Emender/E88 **0.7918** vs FLA-GDN 0.3552 vs M2RNN-tied
   0.2157 vs M2RNN-paper 0.1698 on S5; S3 0.10/0.72/0.31/0.38 respectively
   (`docs/EXPRESSIVITY_RESULTS_SUMMARY.md` §5a). Source numbers from
   `paper/ndmpapernotes.md` lines 153–164.
@@ -486,7 +486,7 @@ that supplies its data.
 
 ### Figure 2 — CMA-ES and Recurrent Geometry
 
-- **Panel A — Searched-shape comparison table.** NDM/E88 (H=370, N=32,
+- **Panel A — Searched-shape comparison table.** Emender/E88 (H=370, N=32,
   dim=1664, depth=12) vs paper-shaped M2RNN (shared q/k, hundreds of
   v/f/g heads) vs CMA-ES M2RNN (per-head q/k/v). Source:
   `docs/DESIGN_DOSSIER.md` §§1, 5; `paper/notes_reconciliation.md` G2.
@@ -500,7 +500,7 @@ that supplies its data.
 
 ### Figure 3 — 1.27B Language-Model Racers
 
-- **Main plot.** Loss / bpb vs wallclock for E88/NDM, FLA-GDN, Mamba2,
+- **Main plot.** Loss / bpb vs wallclock for Emender/E88, FLA-GDN, Mamba2,
   M2RNN-CMA, M2RNN-paper. Smoothed last 5K/10K/50K windows. Source:
   `paper/ndmpapernotes.md` §"Figure 3"; data lives in `~/elman/` and
   needs to be staged into the repo (see "Pending Experimental Closure").

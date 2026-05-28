@@ -1,6 +1,6 @@
-# NDM Model Zoo
+# Emender Model Zoo
 
-Architecture-search ablation trail that led to E88/NDM.
+Architecture-search ablation trail that led to Emender/E88.
 All 119 `.py` files in `ndm/models/` are documented here.
 
 ---
@@ -9,7 +9,7 @@ All 119 `.py` files in `ndm/models/` are documented here.
 
 | Class | Count | Description |
 |-------|-------|-------------|
-| **canonical** | 3 | Production E88/NDM implementations |
+| **canonical** | 3 | Production Emender/E88 implementations |
 | **baseline** | 10 | Comparison models (transformers, SSMs, classic RNNs) |
 | **ablation** | 96 | Architecture-search variants in the E0→E88 lineage |
 | **retired** | 6 | Superseded implementation variants kept for reproducibility |
@@ -111,7 +111,7 @@ Columns: `file | class | series-id | predecessor | what was tested | result/note
 
 | File | Class | Series | Predecessor | Description | Result |
 |------|-------|--------|-------------|-------------|--------|
-| `e88_fla_hybrid.py` | canonical | E88 | E75_multihead + E76 | Production NDM: Mamba2-style decay, L2-norm, multi-head matrix state with tanh, no conv, no output norm | Avg100 ≈ 1.695 (E88c_nogate config); see ablation notes |
+| `e88_fla_hybrid.py` | canonical | E88 | E75_multihead + E76 | Production Emender/E88: Mamba2-style decay, L2-norm, multi-head nonlinear delta memory with tanh, no conv, no output norm | Avg100 ≈ 1.695 (E88c_nogate config); see ablation notes |
 | `e88_fused.py` | canonical | E88 | e88_fla_hybrid | Fully fused CUDA kernel; 5–6× faster than baseline, register-owned backward for n_state≤32 | Production kernel |
 | `e88_step_kernel.py` | canonical | E88 | e88_fused | Triton single-token step kernel fusing ~20 kernel launches into 1 | Inference kernel |
 

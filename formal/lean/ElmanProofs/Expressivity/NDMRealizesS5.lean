@@ -6,27 +6,27 @@ import ElmanProofs.Architectures.OnlineMemory
 import ElmanProofs.Expressivity.S5NDMRealization
 
 /-!
-# NDM-Architecture Realization of the S5 Tracker
+# Nonlinear Delta-Memory Realization of the S5 Tracker
 
 This module bridges the abstract `S5NDMRealization.s5TransitionMemory` lookup
-table to a concrete configuration of the NDM update equation. The construction
-fixes a state dimension `d = 12`, a constructive orthonormal key family indexed
-by `S5Tracker.AdjacentGenerator`, a one-hot value family also indexed by the
-generators, and a unit decay scalar `λ = 1`.
+table to a concrete configuration of the nonlinear delta-memory update
+equation. The construction fixes a state dimension `d = 12`, a constructive
+orthonormal key family indexed by `S5Tracker.AdjacentGenerator`, a one-hot value
+family also indexed by the generators, and a unit decay scalar `λ = 1`.
 
-The main theorem `emender_realizes_s5_tracker` shows that the NDM-style delta
-memory (the pre-`tanh` core of the NDM update equation), when loaded with this
+The main theorem `emender_realizes_s5_tracker` shows that the delta memory (the
+pre-`tanh` core of the Emender update equation), when loaded with this
 orthonormal key/value table, reads back each generator's value through a fixed
 linear readout query, decodes the value to the corresponding adjacent
 transposition, and composes that transposition with any input S5 state to
-reproduce `s5TransitionMemory.read (s, g) = step s g` for every
-`(s, g)` pair in the S5 transition table.
+reproduce `s5TransitionMemory.read (s, g) = step s g` for every `(s, g)` pair in
+the S5 transition table.
 
 The trajectory bridge is provided by `linearDeltaWrite_add_orthonormal_term`:
-starting from the zero memory and applying one NDM delta write per generator
-(in any order, each generator written exactly once) produces exactly the
-orthonormal memory table. This is the load-bearing identity behind the paper's
-revised NC1 wording: *"NDM reaches the top of NC1 in the canonical
+starting from the zero memory and applying one nonlinear delta-memory write per
+generator (in any order, each generator written exactly once) produces exactly
+the orthonormal memory table. This is the load-bearing identity behind the
+paper's revised NC1 wording: *"Emender reaches the top of NC1 in the canonical
 regular-language witness."*
 
 ## Construction

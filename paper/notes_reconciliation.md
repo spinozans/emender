@@ -1,4 +1,7 @@
-# NDM Paper Notes Reconciliation
+# Historical Paper Notes Reconciliation
+
+This reconciliation preserves older NDM terminology where it appears in source
+notes and theorem names. The public paper and repository name is Emender.
 
 Generated: 2026-05-23  
 Source: `paper/ndmpapernotes.md`  

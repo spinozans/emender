@@ -29,14 +29,16 @@ declarations in the trusted import closure. `check_paper_core.sh` also rejects
 
 The current trusted paper core supports:
 
-- NDM/E88 and M2RNN are distinct one-step transition families.
-- NDM/E88 has a delta-correcting matrix-state update; M2RNN has a fixed-right
+- Emender/E88 and M2RNN are distinct one-step transition families.
+- Emender/E88 has a delta-correcting matrix-state update; M2RNN has a fixed-right
   raw-write matrix-state update.
-- A fixed-right raw-write M2RNN resource does not implement the mixed-key NDM
-  delta correction in one step without an extra read-then-delta path.
-- With that extra read-then-delta path, M2RNN can embed one NDM delta step.
+- A fixed-right raw-write M2RNN resource does not implement the mixed-key
+  nonlinear delta-memory correction in one step without an extra
+  read-then-delta path.
+- With that extra read-then-delta path, M2RNN can embed one Emender/E88 delta
+  step.
   This is a resource separation, not an absolute computability separation.
-- The 1.27B NDM/E88 production geometry is represented as a pure nonlinear
+- The 1.27B Emender/E88 production geometry is represented as a pure nonlinear
   recurrent many-program stack.
 - The S5 witness scaffold is checked: fixed-precision online recognizers have
   finite state, S3 has 6 states, S5 has 120 states, and S5 is non-solvable.

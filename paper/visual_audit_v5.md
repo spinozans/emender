@@ -1,4 +1,4 @@
-# Visual audit v5 — NDM paper
+# Visual audit v5 — Emender paper
 
 Audit of `paper/Garrison_2026_NDM-c5156240.pdf` (29 pages, ≈1.0 MB) prior to the
 visual redesign that targets the NIH R01 grant's typography

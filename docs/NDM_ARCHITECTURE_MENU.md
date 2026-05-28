@@ -1,27 +1,30 @@
-# Nonlinear Delta Memory Architecture Menu
+# Emender Architecture Menu
 
 Date: 2026-05-10
 
-This note captures the current architectural interpretation of E88 as a
-Nonlinear Delta Memory (NDM), contrasts it with M2RNN, and lays out the menu of
-ablation paths worth testing before we freeze the next production campaign.
+This note captures the current architectural interpretation of E88 as the
+production Emender implementation, contrasts its nonlinear delta-memory
+mechanism with M2RNN, and lays out the menu of ablation paths worth testing
+before we freeze the next production campaign. Older notes and some identifiers
+use **Nonlinear Delta Memory** (NDM) for this mechanism; the public model-family
+name is **Emender**.
 
-## Working Name
+## Public Name And Mechanism
 
 The broad phrase "matrix-state RNN" is no longer specific enough. M2RNN uses a
 matrix-valued hidden state, and the phrase is now occupied by nearby work.
 
-The E88-specific identity is better described as:
+The public family identity is:
+
+> Emender.
+
+The E88-specific mechanism is better described as:
 
 > a many-head nonlinear delta memory.
 
-Or, as a model family:
+E88 is the current production Emender instance.
 
-> Nonlinear Delta Memory (NDM).
-
-E88 is the current production NDM instance.
-
-## E88 / NDM Abstract View
+## E88 / Emender Abstract View
 
 Each E88 head is a small bounded associative memory. For the current 1.27B run,
 each layer has 370 heads, and each head has a 32 x 32 runtime state matrix.
@@ -104,7 +107,7 @@ This should be revalidated at 1.27B after the Triton changes.
 ## Architecture Menu
 
 The interesting knobs are not just "gate or no gate." They define a family of
-possible NDM update laws.
+possible nonlinear delta-memory update laws.
 
 ### Decay
 
@@ -124,8 +127,8 @@ Options:
 - decay after write: `S_t = decay * tanh(S_{t-1} + write)`
 
 High-value first test: current input-dependent decay vs no decay vs learned
-constant decay. If no decay is close, NDM is even simpler than we think. If it
-breaks, decay is a core stability/control mechanism.
+constant decay. If no decay is close, the Emender update is even simpler than
+we think. If it breaks, decay is a core stability/control mechanism.
 
 ### Write Scale / Write Gate
 
@@ -206,8 +209,8 @@ Options:
 - pre-update read vs post-update read variants
 - update from `q` instead of `k`
 
-This is the core identity of NDM. We should be conservative here and test only
-small variants until the gate/decay menu is understood.
+This is the core identity of the Emender update. We should be conservative here
+and test only small variants until the gate/decay menu is understood.
 
 ### Q/K Normalization
 
@@ -247,8 +250,8 @@ Options:
 - grouped heads with shared decay or shared projection
 - head load balancing
 
-This is the MoE-like branch. It should come after we settle the basic NDM update
-law because routing can hide or amplify instability.
+This is the MoE-like branch. It should come after we settle the basic Emender
+update law because routing can hide or amplify instability.
 
 ### M2-Like Additions
 
@@ -317,7 +320,7 @@ temporal computation.
 
 Only after the menu is narrowed:
 
-- rerun E88/NDM CMA-ES with the surviving new knobs
+- rerun Emender/E88 CMA-ES with the surviving new knobs
 - include context length as a staged axis
 - preserve the best current production config as a warm start
 
@@ -327,7 +330,7 @@ Redo the 1.27B training campaign only after the update law is stable:
 
 - ctx2k to convergence
 - then staged context expansion
-- compare E88/NDM, FLA-GDN, Mamba2, and any M2 survivor
+- compare Emender/E88, FLA-GDN, Mamba2, and any M2 survivor
 
 ## Current GPU Snapshot
 
@@ -342,7 +345,7 @@ As of 2026-05-10 UTC:
 - GPU 6: free
 - GPU 7: free
 
-So we can run four short E88/NDM controls in parallel without disturbing the
+So we can run four short Emender/E88 controls in parallel without disturbing the
 long convergence jobs.
 
 ## Immediate Recommendation

@@ -7,7 +7,7 @@ import ElmanProofs.Architectures.RecurrentResourceFormalism
 import ElmanProofs.Activations.Lipschitz
 
 /-!
-# Multi-Step Resource Separation: NDM vs Fixed-Right Raw-Write M2RNN
+# Multi-Step Resource Separation: Emender vs Fixed-Right Raw-Write M2RNN
 
 This module extends the one-step resource separation in
 `RecurrentResourceFormalism` to **two recurrent steps**.
@@ -16,8 +16,8 @@ This module extends the one-step resource separation in
 
 The existing one-step theorem `emender_m2rnn_one_step_resource_separation` shows that
 for the witness `(lowerLeftState, mixedKey, 0)`, no fixed-right/raw-write
-M2RNN-style resource (with row, column, or cell forget carry) can match NDM's
-single recurrent update.
+M2RNN-style resource (with row, column, or cell forget carry) can match
+Emender's single recurrent update.
 
 This module extends that to two steps. The construction:
 
@@ -36,20 +36,20 @@ the fixed-right candidate path**. For any fixed-right M2RNN resource:
 * The row, column, and cell forget gates are then convex combinations of row 0
   of `H` and row 0 of `Z`, both zero, giving row 0 of the update equal to zero.
 
-Conversely, NDM's expanded delta transition `(I − k kᵀ) H` does **not** preserve
-the zero-row property of M2RNN: at the witness state and key, it produces a
-nonzero entry in row 0. The second step (with `k = 0`) then just applies
-`tanh` elementwise, preserving that nonzero entry.
+Conversely, Emender's expanded delta transition `(I − k kᵀ) H` does **not**
+preserve the zero-row property of M2RNN: at the witness state and key, it
+produces a nonzero entry in row 0. The second step (with `k = 0`) then just
+applies `tanh` elementwise, preserving that nonzero entry.
 
-The entry `(0, 0)` of the two-step trajectories is `tanh(tanh(−1))` for NDM and
-`0` for every fixed-right/raw-write resource, witnessing the two-step
+The entry `(0, 0)` of the two-step trajectories is `tanh(tanh(−1))` for
+Emender and `0` for every fixed-right/raw-write resource, witnessing the two-step
 separation.
 
 ## Why this matters
 
-The one-step theorem says a fixed-right raw-write rule cannot match NDM in one
-step. By itself, this leaves open the possibility that two such rules iterated
-might still match NDM iterated — for example, because composition could
+The one-step theorem says a fixed-right raw-write rule cannot match Emender in
+one step. By itself, this leaves open the possibility that two such rules
+iterated might still match Emender iterated — for example, because composition could
 "average out" the per-step gap. This module rules out that possibility on a
 concrete two-step input sequence.
 

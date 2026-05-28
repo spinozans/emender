@@ -103,12 +103,13 @@ GitHub repo rename to `poietic-pbc/emender` can be treated separately from a
 Python import-path migration. A full `import emender` identity is not supported
 yet and should be planned explicitly.
 
-## Current public-layout blockers
+## Public-layout blockers observed on 2026-05-27
 
 The repository is publishable as a renamed GitHub repository only if it is
 acceptable for v0.1 to keep the Python distribution and import package named
-`ndm`. The following files still bind the public package/repository identity to
-`ndm` or `ekg/ndm`:
+`ndm`. At the time of this dry run, the following files still bound the public
+package/repository identity to `ndm` or `ekg/ndm`; some entries may be resolved
+by later naming-polish tasks:
 
 | File | Lines | Public-readiness issue |
 | --- | ---: | --- |
@@ -122,10 +123,10 @@ acceptable for v0.1 to keep the Python distribution and import package named
 | `paper/OUTLINE.md` | 1, 56, 102-118, 167-192, 244-316, 546-572, 799 | Legacy outline uses Nonlinear Delta Memory / NDM throughout, while `paper/main.typ` already uses Emender. |
 | `paper/ndmpapernotes.md` | 1, 5, 19, 29, 54-88, 134-178, 235-246, 276-350 | Legacy design notes remain NDM-branded. Consider archiving or clearly marking historical. |
 | `paper/notes_reconciliation.md` | 1, 27, 36-51, 61-64, 100-120 | Reconciliation table remains NDM-branded and points at `ndm/` source paths. |
-| `formal/lean/ElmanProofs.lean` | 1, 9 | Trusted-root comment calls this the public NDM repository. |
+| `formal/lean/ElmanProofs.lean` | 1, 9 | Trusted-root comment used NDM terminology for the public repository. |
 | `formal/lean/ElmanProofs/PaperCore.lean` | 23-48 | Public theorem surface describes NDM as the model family; theorem identifiers may remain historical unless a larger formal rename is approved. |
 | `formal/lean/TRUSTED_PROOF_SURFACE.md` | 32-39 | Trusted proof summary remains NDM/E88-branded. |
-| `provenance/README.md` | 3, 25 | Says `ndm` is the curated paper-facing repository and public docs should use NDM/E88. |
+| `provenance/README.md` | 3, 25 | Said `ndm` was the curated paper-facing repository and told public docs to use NDM/E88. |
 
 Many source imports under `scripts/`, `train.py`, `tests/`, and
 `experiments/` intentionally import `ndm`. These are not safe mechanical edits

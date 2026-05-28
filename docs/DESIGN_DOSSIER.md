@@ -1,4 +1,4 @@
-# NDM / E88 Design Dossier
+# Emender / E88 Design Dossier
 
 Synthesis of the 11 architecture, stability, and systems notes in `docs/`. The
 goal is to let a reader (or paper-method-section author) understand the final
@@ -25,12 +25,13 @@ Short-name → file mapping:
 
 ---
 
-## 1. Architecture summary — Nonlinear Delta Memory (NDM)
+## 1. Architecture summary - Emender nonlinear delta memory
 
-The model family is named **Nonlinear Delta Memory (NDM)**; E88 is the
-current production instance. The phrase "matrix-state RNN" is too generic
-because M2RNN occupies it; the E88-specific identity is "a many-head
-nonlinear delta memory" (MENU §Working Name).
+The public model family is named **Emender**; E88 is the current production
+instance. The update mechanism is a many-head nonlinear delta memory,
+historically called **Nonlinear Delta Memory** (NDM) in older architecture
+notes and some source identifiers. The phrase "matrix-state RNN" is too generic
+because M2RNN occupies it.
 
 ### Per-token, per-head update (E88)
 
@@ -48,7 +49,7 @@ y         = Sᵀ q          # read at q
 y         = silu(g) · y   # output gate (write is NOT gated)
 ```
 
-(MENU §E88 / NDM Abstract View; matches `e88_fused.py:298-316` PyTorch
+(MENU §E88 / Emender Abstract View; matches `e88_fused.py:298-316` PyTorch
 fallback, line-for-line with the fused CUDA / Triton path.)
 
 ### Why this is the chosen update
@@ -57,17 +58,17 @@ fallback, line-for-line with the fused CUDA / Triton path.)
    Linear-in-h recurrences (E61/E62, DeltaNet, Mamba2 in their core update)
    can only compute regular languages in the limit (E63 §Problem with
    E61/E62). Siegelmann–Sontag requires nonlinear `f(h_{t-1}, x_t)` for
-   Turing completeness. NDM places that nonlinearity on the matrix-valued
-   state itself — `tanh` at `e88_fused.py:308` — rather than only on the
-   key or the output.
+   Turing completeness. The Emender update places that nonlinearity on the
+   matrix-valued state itself — `tanh` at `e88_fused.py:308` — rather than
+   only on the key or the output.
 2. **Delta-rule write (`v − Sᵀk`) makes the memory error-correcting**
-   (MENU §E88 / NDM Abstract View). Raw outer-product writes
+   (MENU §E88 / Emender Abstract View). Raw outer-product writes
    (`outer(k, v)`) accumulate without correction, and the M2RNN paper-shape
    uses `tanh(H W + k vᵀ)` — see §5. The delta correction is what lets E88
    learn key–value binding *and* rewrite it when retrieval is wrong, which
    is the abstract copying mechanism the model needs.
 3. **Many small heads, not one large matrix.** Production E88 uses 370 heads
-   of 32×32 (1.27B run, MENU §E88/NDM Abstract View; BAL §Recommended
+   of 32×32 (1.27B run, MENU §E88/Emender Abstract View; BAL §Recommended
    Configs has the 64×32 / 32×64 family at ≤500M). Per-head L2-normalized
    q/k give "many independent addressing programs" — M2C §Working
    hypothesis identifies the paper-shape failure (shared q/k across
@@ -133,12 +134,12 @@ shipped in E88.
 | 3 | `E88b_nol2` (L2 disabled) and `E88b_nosilu_nol2` both went NaN within ablation runs | Same as #1 mechanism, expressed during real training; the L2 + SiLU on q/k jointly bound the input scale into the recurrence | Both kept on by default; SiLU(q,k,v) precedes L2-norm | ABL Round 2; `e88_fused.py:233-242` |
 | 4 | M2RNN paper-shape (shared q/k across hundreds of value heads) blew up at 1.27B with grad norms 10⁶–10⁷ at LR 1e-4 to 2e-4 | Gradients from many value/forget/gate heads collapse through a single q/k addressing path; geometry is gradient-ill-conditioned even though forward values are tanh-bounded | E88 uses *per-head* q, k, v, decay, and gate; many independent normalized address programs | M2C §Working hypothesis; MENU §Head Organization; geometry implicit in `e88_fused.py:171-176, 229-231` |
 | 5 | E88 ablations with `n_state < 32` (e.g. `h32n16`, `h24n24`) went NaN | Heads too narrow; the per-head matrix collapses before the L2-bound is meaningful | Production keeps `n_state ≥ 32`; recommended configs all use 32 or 64 | ABL Round 3; BAL §Recommended Configs |
-| 6 | Pre-Level-6 / log_0 polynomial-gated experiments: only the *output* was bounded (`compete × silu`), the recurrent path was not | Bounded output gradients do not constrain dh/dh_{t-1}; recurrent gradients compounded through time | NDM bounds the *state* itself (`tanh(S)`), not only the output. This is the lesson E88 inherits from the failed Level 6 / log_0 architectures | FIX §Problem Diagnosis + §Key Insight; `e88_fused.py:308`, `e88_triton_forward.py:210` |
+| 6 | Pre-Level-6 / log_0 polynomial-gated experiments: only the *output* was bounded (`compete × silu`), the recurrent path was not | Bounded output gradients do not constrain dh/dh_{t-1}; recurrent gradients compounded through time | Emender bounds the *state* itself (`tanh(S)`), not only the output. This is the lesson E88 inherits from the failed Level 6 / log_0 architectures | FIX §Problem Diagnosis + §Key Insight; `e88_fused.py:308`, `e88_triton_forward.py:210` |
 | 7 | In Triton, the raw `(exp − exp⁻¹)/(exp + exp⁻¹)` formula for tanh overflows around `pre > 44` in fp32 → NaN | exp overflow → inf/inf | Replaced with `2·sigmoid(2·pre) − 1` which saturates instead of overflowing | comment block at `e88_triton_forward.py:208-210` |
 
 Of these, #1, #2, #6 are the three "fundamental" stability lessons the
 paper-method section should call out — they map directly to the three
-NDM design pillars (L2-bounded write, log-space decay, tanh-bounded
+Emender design pillars (L2-bounded write, log-space decay, tanh-bounded
 state).
 
 ---
@@ -251,7 +252,7 @@ load-bearing ways. M2RNN computes a candidate `z = tanh(H_{t-1} W + k vᵀ)`,
 a forget-interpolated state `H_t = f H_{t-1} + (1 − f) z`, and an output
 `y = qᵀ H_t + D v` — that is, the state is a nonlinear hidden state mixed
 through a learned transition `W`, with raw outer-product injection and an
-additive residual value path (MENU §M2RNN Contrast). NDM/E88 instead uses
+additive residual value path (MENU §M2RNN Contrast). Emender/E88 instead uses
 a *delta-rule write* `S = tanh(decay·S + k(v − Sᵀk)ᵀ)` — the model reads
 from memory, computes an error, writes the correction, and has no `D v`
 residual path. M2RNN's published paper-shape is also head-asymmetric: one
@@ -263,7 +264,7 @@ and §Working hypothesis). The tied/CMA-ES variant of M2RNN that uses many
 independent addressing programs *is* stable in the same training setup
 (loss 4.085 at step 9250 in M2C), supporting the conclusion that the
 instability is the geometry choice, not the matrix-state-RNN family.
-For the paper, the defensible narrow claim is therefore: pure NDM can be
+For the paper, the defensible narrow claim is therefore: pure Emender can be
 trained at production scale, does not need attention or linear-recurrent
 layers, and matches or beats the best linear-recurrent baselines on
 language-model quality — not the broader "first nonlinear matrix-state
@@ -356,7 +357,7 @@ is an open question, not a contradiction.
 ### 6.7 Production head count vs file defaults
 
 `e88_fused.py:144-153` defaults to `n_heads=104, n_state=32`. The
-production 1.27B run uses 370 heads (MENU §E88/NDM Abstract View;
+production 1.27B run uses 370 heads (MENU §E88/Emender Abstract View;
 M2C "dim 1664, depth 12, H=370, N=32"). BAL §Recommended Configs lists
 the lower-head balanced family (32–64 heads). This is not a
 contradiction — file defaults are conservative and production overrides
@@ -390,8 +391,8 @@ matrix-state-with-outer-product-write idea that E88 inherits — `d²`
 dynamic-state capacity for `O(d²)` computational cost via element-wise
 ops and outer products instead of `W @ h` matrix-vector multiplies
 (MSE §Computational Cost Analysis). The "key as nonlinear address,
-value as content" framing of MSE §1 is the precursor to NDM's delta
-update, with the addition that NDM also has the explicit `delta` step
+value as content" framing of MSE §1 is the precursor to Emender's delta
+update, with the addition that Emender also has the explicit `delta` step
 (reads what is there, writes the *correction*).
 
 ---

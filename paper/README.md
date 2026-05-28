@@ -1,4 +1,4 @@
-# NDM Paper
+# Emender Paper
 
 ## Format
 
@@ -70,8 +70,9 @@ See `paper/OUTLINE.md` §5.2 for the full list of pending experimental closures.
 
 ## Internal references
 
-- E88 / E-series = internal codenames for NDM architecture variants (do not
-  use these in paper prose — the paper targets outside readers).
+- E88 / E-series = internal codenames for Emender and related
+  nonlinear-delta-memory architecture variants (do not use these in paper prose
+  — the paper targets outside readers).
 - The `docs/` tree contains design dossier, expressivity results, and
   related-work survey used to draft each section.
 - `formal/lean/` contains the trusted Lean 4 proof core.

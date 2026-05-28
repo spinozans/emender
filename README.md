@@ -1,8 +1,12 @@
-# Emender / Nonlinear Delta Memory
+# Emender
 
-**Nonlinear Delta Memory** (NDM) is a pure recurrent language-model family based
-on many small nonlinear matrix memories. It is designed to test a simple
-systems and modeling hypothesis:
+Emender is a family of pure recurrent language models built from many small
+nonlinear matrix memories. The models implement a nonlinear delta-memory
+mechanism, historically called **Nonlinear Delta Memory** (NDM) in parts of the
+codebase and older notes. Emender is the public repository and release identity;
+nonlinear delta memory describes the recurrent update mechanism.
+
+Emender is designed to test a simple systems and modeling hypothesis:
 
 > A serial recurrent model can train at billion-parameter scale if the
 > recurrence is organized as many independent memory programs running in
@@ -10,15 +14,14 @@ systems and modeling hypothesis:
 
 Modern sequence models usually get hardware efficiency by making the sequence
 operation itself parallel: attention, convolution, linear scans, or hybrids.
-NDM takes the opposite route. Each memory head scans time sequentially, but the
-model contains hundreds of heads per layer and many layers per network. The
+Emender takes the opposite route. Each memory head scans time sequentially, but
+the model contains hundreds of heads per layer and many layers per network. The
 training workload is therefore a large collection of small recurrent programs,
 parallelized across batch elements, heads, and state tiles.
 
-The current optimized implementation is called **Emender/E88** in the public
-release and **E88/NDM** in parts of the codebase. It uses a fused Triton kernel
-for the recurrent state update and has been used in 1.27B-parameter
-language-model training runs.
+The current optimized implementation is **Emender/E88**: an emender layer with a
+fused Triton kernel for the nonlinear delta-memory state update. It has been
+used in 1.27B-parameter language-model training runs.
 
 ## v0.1 Release
 
@@ -39,8 +42,8 @@ reproduction. They are not instruction-tuned or safety-tuned.
 
 ## The Memory Update
 
-For one NDM head, the runtime state is a matrix `S`. Given key `k`, value `v`,
-query `q`, and decay `d`, the core recurrence is:
+For one Emender head, the runtime state is a matrix `S`. Given key `k`, value
+`v`, query `q`, and decay `d`, the core nonlinear delta-memory recurrence is:
 
 ```text
 r_t       = S_{t-1}^T k_t
@@ -54,8 +57,8 @@ outer product. The head first reads what the memory already returns at `k_t`,
 then writes the error `v_t - r_t` back into the matrix state. The nonlinearity
 bounds the recurrent state itself.
 
-This makes NDM different from nearby matrix-state RNNs that use raw writes, and
-different from linear recurrent models whose temporal state update remains
+This makes Emender different from nearby matrix-state RNNs that use raw writes,
+and different from linear recurrent models whose temporal state update remains
 linear even when the gates are input-dependent.
 
 ## Experimental Program
@@ -64,16 +67,16 @@ This repository supports three connected evaluations.
 
 ### 1. Geometry Search
 
-NDM was developed through repeated architecture search over recurrent geometry:
-head count, state size, depth, expansion, normalization, gates, and decay. The
-same search pressure is used for comparison models where possible.
+Emender was developed through repeated architecture search over recurrent
+geometry: head count, state size, depth, expansion, normalization, gates, and
+decay. The same search pressure is used for comparison models where possible.
 
 The important comparison is not only "which update equation is expressive." It
 is also which shape is trainable. The current evidence separates:
 
 | Model | Role |
 | --- | --- |
-| `E88/NDM` | optimized nonlinear delta-memory implementation |
+| `Emender/E88` | optimized nonlinear delta-memory implementation |
 | `FLA-GDN` | strong linear-time gated delta baseline |
 | `Mamba2` | strong selective state-space baseline |
 | `M2RNN-paper` | published nonlinear matrix-state geometry |
@@ -90,7 +93,7 @@ The production comparison trains 1.27B-parameter recurrent language models at
 interest is not raw step count. It is loss versus wallclock compute under
 matched, tuned training conditions.
 
-The working result is that optimized pure recurrent NDM can enter the same
+The working result is that optimized pure recurrent Emender can enter the same
 language-modeling loss regime as leading linear recurrent baselines. That is
 the central scaling claim: pure nonlinear recurrence is not ruled out by
 hardware if it is implemented as a multi-programmed workload.
@@ -105,7 +108,7 @@ The expressivity suite tests controlled finite-state and algorithmic tasks. The
 main witness is S5 permutation composition, a noncommutative state-tracking task
 that stresses transition composition rather than text memorization.
 
-In matched 8M-parameter S3/S5 experiments, E88/NDM separates from FLA-GDN,
+In matched 8M-parameter S3/S5 experiments, Emender/E88 separates from FLA-GDN,
 M2RNN, and paper-shaped M2RNN at the training length and remains ahead under
 length extrapolation. The result supports a narrower mechanism claim: the
 delta-correcting update is the useful resource, not matrix state alone.
@@ -114,19 +117,21 @@ delta-correcting update is the useful resource, not matrix state alone.
 
 The Lean formalization lives in `formal/lean`. The trusted paper root checks:
 
-- NDM and M2RNN are distinct one-step update families.
-- M2RNN can embed an NDM step only when given an extra read-then-delta resource.
+- The nonlinear delta-memory update and M2RNN are distinct one-step update
+  families.
+- M2RNN can embed a nonlinear delta-memory step only when given an extra
+  read-then-delta resource.
 - Fixed-precision recurrent recognizers have a finite-state ceiling.
 - The S5 tracker and exact finite transition-memory realization are formalized.
 
 The Lean core does **not** claim a lower bound for all linear scan models, and
-does **not** claim that fixed-width NDM exceeds NC1. The formal boundary is
-checked in CI and rejects `sorry`, `admit`, explicit `axiom`, `opaque`, and
-`native_decide` in the trusted import closure.
+does **not** claim that fixed-width nonlinear delta memories exceed NC1. The
+formal boundary is checked in CI and rejects `sorry`, `admit`, explicit
+`axiom`, `opaque`, and `native_decide` in the trusted import closure.
 
 ## Repository Layout
 
-- `ndm/`: model code, E88/NDM Triton kernels, and comparison baselines.
+- `ndm/`: model code, Emender/E88 Triton kernels, and comparison baselines.
 - `train.py`: byte-level and tokenized language-model training entry point.
 - `experiments/expressivity_tasks/`: parity, counters, finite-state tracking,
   and S5 permutation-composition experiments.
@@ -167,11 +172,11 @@ not provide CUDA GPUs.
 
 ## Provenance
 
-NDM was developed in public in two historical repositories:
+The nonlinear delta-memory mechanism behind Emender was developed in public in
+two historical repositories:
 
 - `ekg/elman` at `6f0724feae9fc82bd235408ac5c3ae61f2b17c79`
 - `ekg/elman-proofs` at `5082610c9cdabf0b31e11dd14ee078273d486333`
 
-Those repositories preserve the development trail. This repository is the
-clean implementation, experiment, and proof artifact for Nonlinear Delta
-Memory.
+Those repositories preserve the development trail. This repository is the clean
+implementation, experiment, and proof artifact for Emender.

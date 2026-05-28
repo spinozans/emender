@@ -1,4 +1,4 @@
-# Standalone Usage - ndm
+# Standalone Usage - Emender Python Package (`ndm`)
 
 ## Install
 
@@ -35,9 +35,11 @@ with torch.no_grad():
 print(logits.shape)   # torch.Size([1, 16, 256])
 ```
 
-## Production model (E88FusedLM / NDM)
+## Production model (Emender/E88)
 
-`E88FusedLM` is the production NDM implementation. It has a pure-PyTorch fallback that runs on CPU, making it usable without CUDA for quick checks:
+`E88FusedLM` is the production Emender/E88 implementation of the nonlinear
+delta-memory update. It has a pure-PyTorch fallback that runs on CPU, making it
+usable without CUDA for quick checks:
 
 ```python
 import torch

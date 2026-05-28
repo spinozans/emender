@@ -1,4 +1,7 @@
-# NDM Paper Design
+# Historical Paper Design Notes
+
+These notes use the older NDM naming for the nonlinear delta-memory mechanism.
+The public paper and repository name is Emender.
 
 Working title:
 
