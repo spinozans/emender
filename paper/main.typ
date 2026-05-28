@@ -78,7 +78,7 @@ CMA-ES configs, and the Triton kernel released.
     over 15 days, crossing below 1 bit per byte on The Pile. The Emender
     family is built from emender layers: recurrent layers pairing a
     matrix-state memory with a write rule that has two halves,
-    delta correction and tanh-with-latching; E88 is the 1.3 B
+    delta correction and tanh-with-latching; E88 is the 1.3 B-class
     production instance (1.273 B parameters) evaluated here. The matrix-state $R times
     N$ update is modulated by a delta-correcting term
     $k("silu"(v) - S^T k)^T$
