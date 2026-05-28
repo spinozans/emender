@@ -43,19 +43,22 @@ reproduction. They are not instruction-tuned or safety-tuned.
 ## The Memory Update
 
 For one Emender head, the runtime state is a matrix `S`. Given key `k`, value
-`v`, query `q`, and decay `d`, the core nonlinear delta-memory recurrence is:
+`v`, query `q`, output gate `g`, and decay `d`, the production nonlinear
+delta-memory recurrence is:
 
 ```text
+k_t       = l2_norm(silu(k_t))
+q_t       = l2_norm(silu(q_t))
 r_t       = S_{t-1}^T k_t
-delta_t   = v_t - r_t
+delta_t   = silu(v_t) - r_t
 S_t       = tanh(d_t S_{t-1} + k_t delta_t^T)
-y_t       = S_t^T q_t
+y_t       = silu(g_t) * (S_t^T q_t)
 ```
 
 The distinctive operation is the **delta correction**. The write is not a raw
 outer product. The head first reads what the memory already returns at `k_t`,
-then writes the error `v_t - r_t` back into the matrix state. The nonlinearity
-bounds the recurrent state itself.
+then writes the activated error `silu(v_t) - r_t` back into the matrix state.
+The nonlinearity bounds the recurrent state itself.
 
 This makes Emender different from nearby matrix-state RNNs that use raw writes,
 and different from linear recurrent models whose temporal state update remains
