@@ -4,7 +4,7 @@ Date: 2026-05-28 UTC
 Task: `release-v01-final-v01-docker-smoke`
 
 This note records the final release-candidate Docker smoke against the private
-Hugging Face `v0.1` revisions for the three 1.27B-class model repositories
+Hugging Face `v0.1` revisions for the three 1.3B-class model repositories
 after model-card/docs polish.
 
 No Hugging Face repository visibility was changed. No tag update was required:
@@ -22,9 +22,9 @@ Repositories tested:
 
 | Model | Hugging Face repository | Required revision | Resolved `v0.1` SHA |
 | --- | --- | --- | --- |
-| Emender/E88 | `poietic-pbc/emender-e88-1.27b` | `v0.1` | `a2e56cb82eec5e01ae6eb501569359c5ff64af6b` |
-| GDN | `poietic-pbc/gdn-1.27b` | `v0.1` | `556df7f00969c6a8dbeb381e3c8b51cf0c0385f9` |
-| M2RNN-CMA | `poietic-pbc/m2rnn-cma-1.27b` | `v0.1` | `8181b77803e130ffd78e37c33aa4d58c27e719c2` |
+| Emender/E88 | `poietic-pbc/emender-e88-1.3b` | `v0.1` | `a2e56cb82eec5e01ae6eb501569359c5ff64af6b` |
+| GDN | `poietic-pbc/gdn-1.3b` | `v0.1` | `556df7f00969c6a8dbeb381e3c8b51cf0c0385f9` |
+| M2RNN-CMA | `poietic-pbc/m2rnn-cma-1.3b` | `v0.1` | `8181b77803e130ffd78e37c33aa4d58c27e719c2` |
 
 Every row below was loaded with exactly `revision="v0.1"`. The smoke script
 called `HfApi().repo_info(..., revision="v0.1", token=token)` before loading
@@ -178,12 +178,12 @@ m2rnn_cuda.json True m2rnn cuda v0.1 8181b77803e130ffd78e37c33aa4d58c27e719c2 Nd
 
 | Model | Repo | Revision | Device | Status | Model/core class | Param count | New token IDs | Decoded new text | Finite logits | Private |
 | --- | --- | --- | --- | --- | --- | ---: | --- | --- | --- | --- |
-| Emender/E88 | `poietic-pbc/emender-e88-1.27b` | `v0.1` / `a2e56cb82eec5e01ae6eb501569359c5ff64af6b` | CPU | PASS | `NdmForCausalLM` / `ndm.models.ladder_lm.LadderLM` | 1,273,191,856 | `[218, 218]` | `'\x1e\x1e'` | true | true |
-| Emender/E88 | `poietic-pbc/emender-e88-1.27b` | `v0.1` / `a2e56cb82eec5e01ae6eb501569359c5ff64af6b` | CUDA GPU 4 | PASS | `NdmForCausalLM` / `ndm.models.ladder_lm.LadderLM` | 1,273,191,856 | `[218, 218]` | `'\x1e\x1e'` | true | true |
-| GDN | `poietic-pbc/gdn-1.27b` | `v0.1` / `556df7f00969c6a8dbeb381e3c8b51cf0c0385f9` | CPU | PASS | `NdmForCausalLM` / `ndm.models.ladder_lm.LadderLM` | 1,352,352,498 | `[318, 318]` | `' is is'` | true | true |
-| GDN | `poietic-pbc/gdn-1.27b` | `v0.1` / `556df7f00969c6a8dbeb381e3c8b51cf0c0385f9` | CUDA GPU 4 | PASS | `NdmForCausalLM` / `ndm.models.ladder_lm.LadderLM` | 1,352,352,498 | `[318, 318]` | `' is is'` | true | true |
-| M2RNN-CMA | `poietic-pbc/m2rnn-cma-1.27b` | `v0.1` / `8181b77803e130ffd78e37c33aa4d58c27e719c2` | CPU | PASS | `NdmForCausalLM` / `ndm.models.m2rnn_baseline.M2RNNLM` | 1,307,101,140 | `[2109, 34059]` | `'........Officers'` | true | true |
-| M2RNN-CMA | `poietic-pbc/m2rnn-cma-1.27b` | `v0.1` / `8181b77803e130ffd78e37c33aa4d58c27e719c2` | CUDA GPU 4 | PASS | `NdmForCausalLM` / `ndm.models.m2rnn_baseline.M2RNNLM` | 1,307,101,140 | `[2109, 34059]` | `'........Officers'` | true | true |
+| Emender/E88 | `poietic-pbc/emender-e88-1.3b` | `v0.1` / `a2e56cb82eec5e01ae6eb501569359c5ff64af6b` | CPU | PASS | `NdmForCausalLM` / `ndm.models.ladder_lm.LadderLM` | 1,273,191,856 | `[218, 218]` | `'\x1e\x1e'` | true | true |
+| Emender/E88 | `poietic-pbc/emender-e88-1.3b` | `v0.1` / `a2e56cb82eec5e01ae6eb501569359c5ff64af6b` | CUDA GPU 4 | PASS | `NdmForCausalLM` / `ndm.models.ladder_lm.LadderLM` | 1,273,191,856 | `[218, 218]` | `'\x1e\x1e'` | true | true |
+| GDN | `poietic-pbc/gdn-1.3b` | `v0.1` / `556df7f00969c6a8dbeb381e3c8b51cf0c0385f9` | CPU | PASS | `NdmForCausalLM` / `ndm.models.ladder_lm.LadderLM` | 1,352,352,498 | `[318, 318]` | `' is is'` | true | true |
+| GDN | `poietic-pbc/gdn-1.3b` | `v0.1` / `556df7f00969c6a8dbeb381e3c8b51cf0c0385f9` | CUDA GPU 4 | PASS | `NdmForCausalLM` / `ndm.models.ladder_lm.LadderLM` | 1,352,352,498 | `[318, 318]` | `' is is'` | true | true |
+| M2RNN-CMA | `poietic-pbc/m2rnn-cma-1.3b` | `v0.1` / `8181b77803e130ffd78e37c33aa4d58c27e719c2` | CPU | PASS | `NdmForCausalLM` / `ndm.models.m2rnn_baseline.M2RNNLM` | 1,307,101,140 | `[2109, 34059]` | `'........Officers'` | true | true |
+| M2RNN-CMA | `poietic-pbc/m2rnn-cma-1.3b` | `v0.1` / `8181b77803e130ffd78e37c33aa4d58c27e719c2` | CUDA GPU 4 | PASS | `NdmForCausalLM` / `ndm.models.m2rnn_baseline.M2RNNLM` | 1,307,101,140 | `[2109, 34059]` | `'........Officers'` | true | true |
 
 Remote metadata readback for every row reported:
 

@@ -4,6 +4,12 @@ Audit time: 2026-05-28T00:52:07Z
 Task: `release-v01-public-readiness-report`
 Checkout before this report: `9d050ef26c91814109dc6da1bda53d636df2a6ce`
 
+> Superseded status note, 2026-05-28: the GitHub repository
+> <https://github.com/poietic-pbc/emender> is now live, and the three Hugging
+> Face repositories are now public under the `1.3b` slugs. This document below
+> is retained as historical pre-public-readiness evidence from before the public
+> flip and slug rename.
+
 ## Executive Status
 
 The three Hugging Face model repositories are still private, and their current
@@ -33,9 +39,9 @@ visibility.
 
 | Model | Private HF URL | Public HEAD | Authenticated visibility | Release revision | Resolved `v0.1` SHA | Main-card SHA | Docker CPU | Docker GPU |
 | --- | --- | ---: | --- | --- | --- | --- | --- | --- |
-| Emender/E88 | <https://huggingface.co/poietic-pbc/emender-e88-1.27b> | 401 | `private=True` | `v0.1` | `a2e56cb82eec5e01ae6eb501569359c5ff64af6b` | `718b3e15bb8ed7f065c5aa65a569e62af7a12a02` | PASS | PASS |
-| GDN | <https://huggingface.co/poietic-pbc/gdn-1.27b> | 401 | `private=True` | `v0.1` | `556df7f00969c6a8dbeb381e3c8b51cf0c0385f9` | `7b267ad249cf57594feaa38ef6b3aebd108722c4` | PASS | PASS |
-| M2RNN-CMA | <https://huggingface.co/poietic-pbc/m2rnn-cma-1.27b> | 401 | `private=True` | `v0.1` | `8181b77803e130ffd78e37c33aa4d58c27e719c2` | `74091c1457d0e6a46872d72d38d12f6a10170d29` | PASS | PASS |
+| Emender/E88 | <https://huggingface.co/poietic-pbc/emender-e88-1.3b> | 401 | `private=True` | `v0.1` | `a2e56cb82eec5e01ae6eb501569359c5ff64af6b` | `718b3e15bb8ed7f065c5aa65a569e62af7a12a02` | PASS | PASS |
+| GDN | <https://huggingface.co/poietic-pbc/gdn-1.3b> | 401 | `private=True` | `v0.1` | `556df7f00969c6a8dbeb381e3c8b51cf0c0385f9` | `7b267ad249cf57594feaa38ef6b3aebd108722c4` | PASS | PASS |
+| M2RNN-CMA | <https://huggingface.co/poietic-pbc/m2rnn-cma-1.3b> | 401 | `private=True` | `v0.1` | `8181b77803e130ffd78e37c33aa4d58c27e719c2` | `74091c1457d0e6a46872d72d38d12f6a10170d29` | PASS | PASS |
 
 Evidence:
 
@@ -171,25 +177,25 @@ Legacy public-facing namespace scan:
 HF URLs and SHAs:
 
 - Emender/E88:
-  - repo: <https://huggingface.co/poietic-pbc/emender-e88-1.27b>
+  - repo: <https://huggingface.co/poietic-pbc/emender-e88-1.3b>
   - release revision URL:
-    <https://huggingface.co/poietic-pbc/emender-e88-1.27b/tree/v0.1>
+    <https://huggingface.co/poietic-pbc/emender-e88-1.3b/tree/v0.1>
   - resolved `v0.1` SHA:
     `a2e56cb82eec5e01ae6eb501569359c5ff64af6b`
   - main-card SHA:
     `718b3e15bb8ed7f065c5aa65a569e62af7a12a02`
 - GDN:
-  - repo: <https://huggingface.co/poietic-pbc/gdn-1.27b>
+  - repo: <https://huggingface.co/poietic-pbc/gdn-1.3b>
   - release revision URL:
-    <https://huggingface.co/poietic-pbc/gdn-1.27b/tree/v0.1>
+    <https://huggingface.co/poietic-pbc/gdn-1.3b/tree/v0.1>
   - resolved `v0.1` SHA:
     `556df7f00969c6a8dbeb381e3c8b51cf0c0385f9`
   - main-card SHA:
     `7b267ad249cf57594feaa38ef6b3aebd108722c4`
 - M2RNN-CMA:
-  - repo: <https://huggingface.co/poietic-pbc/m2rnn-cma-1.27b>
+  - repo: <https://huggingface.co/poietic-pbc/m2rnn-cma-1.3b>
   - release revision URL:
-    <https://huggingface.co/poietic-pbc/m2rnn-cma-1.27b/tree/v0.1>
+    <https://huggingface.co/poietic-pbc/m2rnn-cma-1.3b/tree/v0.1>
   - resolved `v0.1` SHA:
     `8181b77803e130ffd78e37c33aa4d58c27e719c2`
   - main-card SHA:
@@ -237,19 +243,19 @@ from huggingface_hub import HfApi
 
 api = HfApi()
 api.update_repo_settings(
-    repo_id="poietic-pbc/emender-e88-1.27b",
+    repo_id="poietic-pbc/emender-e88-1.3b",
     repo_type="model",
     private=False,
     token=True,
 )
 api.update_repo_settings(
-    repo_id="poietic-pbc/gdn-1.27b",
+    repo_id="poietic-pbc/gdn-1.3b",
     repo_type="model",
     private=False,
     token=True,
 )
 api.update_repo_settings(
-    repo_id="poietic-pbc/m2rnn-cma-1.27b",
+    repo_id="poietic-pbc/m2rnn-cma-1.3b",
     repo_type="model",
     private=False,
     token=True,
@@ -264,9 +270,9 @@ from huggingface_hub import HfApi
 
 api = HfApi()
 for repo_id in [
-    "poietic-pbc/emender-e88-1.27b",
-    "poietic-pbc/gdn-1.27b",
-    "poietic-pbc/m2rnn-cma-1.27b",
+    "poietic-pbc/emender-e88-1.3b",
+    "poietic-pbc/gdn-1.3b",
+    "poietic-pbc/m2rnn-cma-1.3b",
 ]:
     api.update_repo_settings(
         repo_id=repo_id,
@@ -285,9 +291,9 @@ from huggingface_hub import HfApi
 
 api = HfApi()
 for repo_id in [
-    "poietic-pbc/emender-e88-1.27b",
-    "poietic-pbc/gdn-1.27b",
-    "poietic-pbc/m2rnn-cma-1.27b",
+    "poietic-pbc/emender-e88-1.3b",
+    "poietic-pbc/gdn-1.3b",
+    "poietic-pbc/m2rnn-cma-1.3b",
 ]:
     info = api.repo_info(
         repo_id=repo_id,

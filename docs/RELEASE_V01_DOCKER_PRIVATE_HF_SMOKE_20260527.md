@@ -157,12 +157,12 @@ m2rnn_cuda.json True m2rnn cuda af3cf2db65dfd14b64a5c030c99156828fdfb958 NdmForC
 
 | Model | Repo | Revision | Device | Status | Model/core class | Param count | New token IDs | Decoded new text | Finite logits |
 | --- | --- | --- | --- | --- | --- | ---: | --- | --- | --- |
-| E88 | `poietic-pbc/emender-e88-1.27b` | `ad4fc69c421a88fc212a4fb89e8415b75eb4441c` | CPU | PASS | `NdmForCausalLM` / `ndm.models.ladder_lm.LadderLM` | 1,273,191,856 | `[218, 218]` | `'\x1e\x1e'` | true |
-| E88 | `poietic-pbc/emender-e88-1.27b` | `ad4fc69c421a88fc212a4fb89e8415b75eb4441c` | CUDA GPU 4 | PASS | `NdmForCausalLM` / `ndm.models.ladder_lm.LadderLM` | 1,273,191,856 | `[218, 218]` | `'\x1e\x1e'` | true |
-| GDN | `poietic-pbc/gdn-1.27b` | `95ef019198b9e125928a8cf2349895bc31a4906b` | CPU | PASS | `NdmForCausalLM` / `ndm.models.ladder_lm.LadderLM` | 1,352,352,498 | `[318, 318]` | `' is is'` | true |
-| GDN | `poietic-pbc/gdn-1.27b` | `95ef019198b9e125928a8cf2349895bc31a4906b` | CUDA GPU 4 | PASS | `NdmForCausalLM` / `ndm.models.ladder_lm.LadderLM` | 1,352,352,498 | `[318, 318]` | `' is is'` | true |
-| M2RNN-CMA | `poietic-pbc/m2rnn-cma-1.27b` | `af3cf2db65dfd14b64a5c030c99156828fdfb958` | CPU | PASS | `NdmForCausalLM` / `ndm.models.m2rnn_baseline.M2RNNLM` | 1,307,101,140 | `[2109, 34059]` | `'........Officers'` | true |
-| M2RNN-CMA | `poietic-pbc/m2rnn-cma-1.27b` | `af3cf2db65dfd14b64a5c030c99156828fdfb958` | CUDA GPU 4 | PASS | `NdmForCausalLM` / `ndm.models.m2rnn_baseline.M2RNNLM` | 1,307,101,140 | `[2109, 34059]` | `'........Officers'` | true |
+| E88 | `poietic-pbc/emender-e88-1.3b` | `ad4fc69c421a88fc212a4fb89e8415b75eb4441c` | CPU | PASS | `NdmForCausalLM` / `ndm.models.ladder_lm.LadderLM` | 1,273,191,856 | `[218, 218]` | `'\x1e\x1e'` | true |
+| E88 | `poietic-pbc/emender-e88-1.3b` | `ad4fc69c421a88fc212a4fb89e8415b75eb4441c` | CUDA GPU 4 | PASS | `NdmForCausalLM` / `ndm.models.ladder_lm.LadderLM` | 1,273,191,856 | `[218, 218]` | `'\x1e\x1e'` | true |
+| GDN | `poietic-pbc/gdn-1.3b` | `95ef019198b9e125928a8cf2349895bc31a4906b` | CPU | PASS | `NdmForCausalLM` / `ndm.models.ladder_lm.LadderLM` | 1,352,352,498 | `[318, 318]` | `' is is'` | true |
+| GDN | `poietic-pbc/gdn-1.3b` | `95ef019198b9e125928a8cf2349895bc31a4906b` | CUDA GPU 4 | PASS | `NdmForCausalLM` / `ndm.models.ladder_lm.LadderLM` | 1,352,352,498 | `[318, 318]` | `' is is'` | true |
+| M2RNN-CMA | `poietic-pbc/m2rnn-cma-1.3b` | `af3cf2db65dfd14b64a5c030c99156828fdfb958` | CPU | PASS | `NdmForCausalLM` / `ndm.models.m2rnn_baseline.M2RNNLM` | 1,307,101,140 | `[2109, 34059]` | `'........Officers'` | true |
+| M2RNN-CMA | `poietic-pbc/m2rnn-cma-1.3b` | `af3cf2db65dfd14b64a5c030c99156828fdfb958` | CUDA GPU 4 | PASS | `NdmForCausalLM` / `ndm.models.m2rnn_baseline.M2RNNLM` | 1,307,101,140 | `[2109, 34059]` | `'........Officers'` | true |
 
 Remote readback for every row reported:
 

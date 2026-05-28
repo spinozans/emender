@@ -4,7 +4,7 @@ Date: 2026-05-27
 Task: `release-v01-private-hf-staging-upload`
 
 This note records the private Hugging Face staging upload for the three
-validated 1.27B-class checkpoints. All uploaded model repositories are under
+validated 1.3B-class checkpoints. All uploaded model repositories are under
 `poietic-pbc`, all repository creation calls requested `private=True`, and all
 post-upload readbacks reported `private=True`.
 
@@ -17,22 +17,22 @@ were not copied into this git repository, staged, or committed.
 
 | Model identity | Repo | Revision | Commit | Private | `model.safetensors` size |
 | --- | --- | --- | --- | --- | ---: |
-| Emender/E88 | `poietic-pbc/emender-e88-1.27b` | `staging` | `ad4fc69c421a88fc212a4fb89e8415b75eb4441c` | true | `2713727984` |
-| GDN | `poietic-pbc/gdn-1.27b` | `staging` | `95ef019198b9e125928a8cf2349895bc31a4906b` | true | `2975047780` |
-| M²RNN-CMA | `poietic-pbc/m2rnn-cma-1.27b` | `staging` | `af3cf2db65dfd14b64a5c030c99156828fdfb958` | true | `2807296960` |
+| Emender/E88 | `poietic-pbc/emender-e88-1.3b` | `staging` | `ad4fc69c421a88fc212a4fb89e8415b75eb4441c` | true | `2713727984` |
+| GDN | `poietic-pbc/gdn-1.3b` | `staging` | `95ef019198b9e125928a8cf2349895bc31a4906b` | true | `2975047780` |
+| M²RNN-CMA | `poietic-pbc/m2rnn-cma-1.3b` | `staging` | `af3cf2db65dfd14b64a5c030c99156828fdfb958` | true | `2807296960` |
 
 Current release URLs for these uploaded commits. The final `v0.1` tags were
 added later by `release-v01-tag-and-paper-sync`:
 
-- `https://huggingface.co/poietic-pbc/emender-e88-1.27b/tree/v0.1`
-- `https://huggingface.co/poietic-pbc/gdn-1.27b/tree/v0.1`
-- `https://huggingface.co/poietic-pbc/m2rnn-cma-1.27b/tree/v0.1`
+- `https://huggingface.co/poietic-pbc/emender-e88-1.3b/tree/v0.1`
+- `https://huggingface.co/poietic-pbc/gdn-1.3b/tree/v0.1`
+- `https://huggingface.co/poietic-pbc/m2rnn-cma-1.3b/tree/v0.1`
 
 Commit URLs:
 
-- `https://huggingface.co/poietic-pbc/emender-e88-1.27b/commit/ad4fc69c421a88fc212a4fb89e8415b75eb4441c`
-- `https://huggingface.co/poietic-pbc/gdn-1.27b/commit/95ef019198b9e125928a8cf2349895bc31a4906b`
-- `https://huggingface.co/poietic-pbc/m2rnn-cma-1.27b/commit/af3cf2db65dfd14b64a5c030c99156828fdfb958`
+- `https://huggingface.co/poietic-pbc/emender-e88-1.3b/commit/ad4fc69c421a88fc212a4fb89e8415b75eb4441c`
+- `https://huggingface.co/poietic-pbc/gdn-1.3b/commit/95ef019198b9e125928a8cf2349895bc31a4906b`
+- `https://huggingface.co/poietic-pbc/m2rnn-cma-1.3b/commit/af3cf2db65dfd14b64a5c030c99156828fdfb958`
 
 At upload time, each repository had branches `staging` and `main`, with
 `staging` containing the full model artifacts, and no tags. The initial `v0.1`
@@ -83,9 +83,9 @@ Each `staging` revision contains the expected normal-load files:
 The model cards identify `PRIVATE STAGING STATUS` and the intended model
 identity:
 
-- Emender/E88 in `poietic-pbc/emender-e88-1.27b`
-- GDN in `poietic-pbc/gdn-1.27b`
-- M²RNN-CMA in `poietic-pbc/m2rnn-cma-1.27b`
+- Emender/E88 in `poietic-pbc/emender-e88-1.3b`
+- GDN in `poietic-pbc/gdn-1.3b`
+- M²RNN-CMA in `poietic-pbc/m2rnn-cma-1.3b`
 
 The safetensors files were converted from the selected checkpoint
 `model_state_dict` entries only. ScheduleFree optimizer state and raw `.pt`
@@ -144,20 +144,20 @@ python -u scripts/hf_private_staging_upload.py \
 Per-repo HF API calls executed by the helper:
 
 ```python
-HfApi().create_repo(repo_id='poietic-pbc/emender-e88-1.27b', repo_type='model', private=True, exist_ok=False, token=True)
+HfApi().create_repo(repo_id='poietic-pbc/emender-e88-1.3b', repo_type='model', private=True, exist_ok=False, token=True)
 HfApi().create_commit(... revision='main', path_in_repo='README.md')
-HfApi().create_branch(repo_id='poietic-pbc/emender-e88-1.27b', repo_type='model', branch='staging', revision='main', exist_ok=True, token=True)
-HfApi().upload_folder(repo_id='poietic-pbc/emender-e88-1.27b', folder_path='/tmp/release-v01-private-hf-staging-agent-410/e88', repo_type='model', revision='staging', token=True, commit_message='Upload private v0.1 staging artifacts')
+HfApi().create_branch(repo_id='poietic-pbc/emender-e88-1.3b', repo_type='model', branch='staging', revision='main', exist_ok=True, token=True)
+HfApi().upload_folder(repo_id='poietic-pbc/emender-e88-1.3b', folder_path='/tmp/release-v01-private-hf-staging-agent-410/e88', repo_type='model', revision='staging', token=True, commit_message='Upload private v0.1 staging artifacts')
 
-HfApi().create_repo(repo_id='poietic-pbc/gdn-1.27b', repo_type='model', private=True, exist_ok=False, token=True)
+HfApi().create_repo(repo_id='poietic-pbc/gdn-1.3b', repo_type='model', private=True, exist_ok=False, token=True)
 HfApi().create_commit(... revision='main', path_in_repo='README.md')
-HfApi().create_branch(repo_id='poietic-pbc/gdn-1.27b', repo_type='model', branch='staging', revision='main', exist_ok=True, token=True)
-HfApi().upload_folder(repo_id='poietic-pbc/gdn-1.27b', folder_path='/tmp/release-v01-private-hf-staging-agent-410/gdn', repo_type='model', revision='staging', token=True, commit_message='Upload private v0.1 staging artifacts')
+HfApi().create_branch(repo_id='poietic-pbc/gdn-1.3b', repo_type='model', branch='staging', revision='main', exist_ok=True, token=True)
+HfApi().upload_folder(repo_id='poietic-pbc/gdn-1.3b', folder_path='/tmp/release-v01-private-hf-staging-agent-410/gdn', repo_type='model', revision='staging', token=True, commit_message='Upload private v0.1 staging artifacts')
 
-HfApi().create_repo(repo_id='poietic-pbc/m2rnn-cma-1.27b', repo_type='model', private=True, exist_ok=False, token=True)
+HfApi().create_repo(repo_id='poietic-pbc/m2rnn-cma-1.3b', repo_type='model', private=True, exist_ok=False, token=True)
 HfApi().create_commit(... revision='main', path_in_repo='README.md')
-HfApi().create_branch(repo_id='poietic-pbc/m2rnn-cma-1.27b', repo_type='model', branch='staging', revision='main', exist_ok=True, token=True)
-HfApi().upload_folder(repo_id='poietic-pbc/m2rnn-cma-1.27b', folder_path='/tmp/release-v01-private-hf-staging-agent-410/m2rnn', repo_type='model', revision='staging', token=True, commit_message='Upload private v0.1 staging artifacts')
+HfApi().create_branch(repo_id='poietic-pbc/m2rnn-cma-1.3b', repo_type='model', branch='staging', revision='main', exist_ok=True, token=True)
+HfApi().upload_folder(repo_id='poietic-pbc/m2rnn-cma-1.3b', folder_path='/tmp/release-v01-private-hf-staging-agent-410/m2rnn', repo_type='model', revision='staging', token=True, commit_message='Upload private v0.1 staging artifacts')
 ```
 
 Post-upload readback:
@@ -173,9 +173,9 @@ required = {
     'generation_config.json', 'requirements.txt', 'model.safetensors',
 }
 for repo_id in [
-    'poietic-pbc/emender-e88-1.27b',
-    'poietic-pbc/gdn-1.27b',
-    'poietic-pbc/m2rnn-cma-1.27b',
+    'poietic-pbc/emender-e88-1.3b',
+    'poietic-pbc/gdn-1.3b',
+    'poietic-pbc/m2rnn-cma-1.3b',
 ]:
     info = api.repo_info(repo_id, repo_type='model', revision='staging',
                          files_metadata=True, token=True)
@@ -215,9 +215,9 @@ Remote `staging` readback:
 
 | Repo | Private | Required files missing | Branches | Tags | Remote config/tokenizer |
 | --- | --- | --- | --- | --- | --- |
-| `poietic-pbc/emender-e88-1.27b` | true | `[]` | `['staging', 'main']` | `[]` | `NdmConfig`, `PreTrainedTokenizerFast`, prompt IDs `[464, 44728, 2585]` |
-| `poietic-pbc/gdn-1.27b` | true | `[]` | `['staging', 'main']` | `[]` | `NdmConfig`, `PreTrainedTokenizerFast`, prompt IDs `[464, 44728, 2585]` |
-| `poietic-pbc/m2rnn-cma-1.27b` | true | `[]` | `['staging', 'main']` | `[]` | `NdmConfig`, `PreTrainedTokenizerFast`, prompt IDs `[464, 44728, 2585]` |
+| `poietic-pbc/emender-e88-1.3b` | true | `[]` | `['staging', 'main']` | `[]` | `NdmConfig`, `PreTrainedTokenizerFast`, prompt IDs `[464, 44728, 2585]` |
+| `poietic-pbc/gdn-1.3b` | true | `[]` | `['staging', 'main']` | `[]` | `NdmConfig`, `PreTrainedTokenizerFast`, prompt IDs `[464, 44728, 2585]` |
+| `poietic-pbc/m2rnn-cma-1.3b` | true | `[]` | `['staging', 'main']` | `[]` | `NdmConfig`, `PreTrainedTokenizerFast`, prompt IDs `[464, 44728, 2585]` |
 
 The previous local and Docker-local generation smokes remain the source of
 checkpoint behavioral validation. This task adds private-HF staging upload and

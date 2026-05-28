@@ -153,7 +153,7 @@ This is the lowest-risk release path.
    public project/model family, while documenting that the v0.1 Python import is
    still `ndm`.
 5. Update model-card and HF instructions to the approved private/public
-   `poietic-pbc` release targets, including `poietic-pbc/emender-e88-1.27b`,
+   `poietic-pbc` release targets, including `poietic-pbc/emender-e88-1.3b`,
    only after HF approval. Until then, keep HF repos private.
 6. Run:
    ```bash

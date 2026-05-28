@@ -14,9 +14,9 @@ hub is `docs/RELEASE_V01_PUBLIC_RELEASE_HUB.md`; the exact current SHAs are:
 
 | Model identity | Repo | Current `v0.1` SHA | Previous smoke-tested artifact SHA |
 | --- | --- | --- | --- |
-| Emender/E88 | `poietic-pbc/emender-e88-1.27b` | `a2e56cb82eec5e01ae6eb501569359c5ff64af6b` | `ad4fc69c421a88fc212a4fb89e8415b75eb4441c` |
-| GDN | `poietic-pbc/gdn-1.27b` | `556df7f00969c6a8dbeb381e3c8b51cf0c0385f9` | `95ef019198b9e125928a8cf2349895bc31a4906b` |
-| M2RNN-CMA | `poietic-pbc/m2rnn-cma-1.27b` | `8181b77803e130ffd78e37c33aa4d58c27e719c2` | `af3cf2db65dfd14b64a5c030c99156828fdfb958` |
+| Emender/E88 | `poietic-pbc/emender-e88-1.3b` | `a2e56cb82eec5e01ae6eb501569359c5ff64af6b` | `ad4fc69c421a88fc212a4fb89e8415b75eb4441c` |
+| GDN | `poietic-pbc/gdn-1.3b` | `556df7f00969c6a8dbeb381e3c8b51cf0c0385f9` | `95ef019198b9e125928a8cf2349895bc31a4906b` |
+| M2RNN-CMA | `poietic-pbc/m2rnn-cma-1.3b` | `8181b77803e130ffd78e37c33aa4d58c27e719c2` | `af3cf2db65dfd14b64a5c030c99156828fdfb958` |
 
 The downstream final Docker smoke must validate the current `v0.1` SHAs before
 any public visibility change.
@@ -32,9 +32,9 @@ The tags were created at the exact revisions validated by
 
 | Model identity | Repo | Tested commit | Tag URL | Commit URL | Private readback |
 | --- | --- | --- | --- | --- | --- |
-| Emender/E88 | `poietic-pbc/emender-e88-1.27b` | `ad4fc69c421a88fc212a4fb89e8415b75eb4441c` | `https://huggingface.co/poietic-pbc/emender-e88-1.27b/tree/v0.1` | `https://huggingface.co/poietic-pbc/emender-e88-1.27b/commit/ad4fc69c421a88fc212a4fb89e8415b75eb4441c` | true |
-| GDN | `poietic-pbc/gdn-1.27b` | `95ef019198b9e125928a8cf2349895bc31a4906b` | `https://huggingface.co/poietic-pbc/gdn-1.27b/tree/v0.1` | `https://huggingface.co/poietic-pbc/gdn-1.27b/commit/95ef019198b9e125928a8cf2349895bc31a4906b` | true |
-| M2RNN-CMA | `poietic-pbc/m2rnn-cma-1.27b` | `af3cf2db65dfd14b64a5c030c99156828fdfb958` | `https://huggingface.co/poietic-pbc/m2rnn-cma-1.27b/tree/v0.1` | `https://huggingface.co/poietic-pbc/m2rnn-cma-1.27b/commit/af3cf2db65dfd14b64a5c030c99156828fdfb958` | true |
+| Emender/E88 | `poietic-pbc/emender-e88-1.3b` | `ad4fc69c421a88fc212a4fb89e8415b75eb4441c` | `https://huggingface.co/poietic-pbc/emender-e88-1.3b/tree/v0.1` | `https://huggingface.co/poietic-pbc/emender-e88-1.3b/commit/ad4fc69c421a88fc212a4fb89e8415b75eb4441c` | true |
+| GDN | `poietic-pbc/gdn-1.3b` | `95ef019198b9e125928a8cf2349895bc31a4906b` | `https://huggingface.co/poietic-pbc/gdn-1.3b/tree/v0.1` | `https://huggingface.co/poietic-pbc/gdn-1.3b/commit/95ef019198b9e125928a8cf2349895bc31a4906b` | true |
+| M2RNN-CMA | `poietic-pbc/m2rnn-cma-1.3b` | `af3cf2db65dfd14b64a5c030c99156828fdfb958` | `https://huggingface.co/poietic-pbc/m2rnn-cma-1.3b/tree/v0.1` | `https://huggingface.co/poietic-pbc/m2rnn-cma-1.3b/commit/af3cf2db65dfd14b64a5c030c99156828fdfb958` | true |
 
 ## Commands And Guardrails
 
@@ -90,6 +90,6 @@ The next public-release step is manual: obtain explicit user approval to make
 the three HF repositories public, log the approval source, record the exact
 visibility commands, and only then run the visibility change for:
 
-- `poietic-pbc/emender-e88-1.27b`
-- `poietic-pbc/gdn-1.27b`
-- `poietic-pbc/m2rnn-cma-1.27b`
+- `poietic-pbc/emender-e88-1.3b`
+- `poietic-pbc/gdn-1.3b`
+- `poietic-pbc/m2rnn-cma-1.3b`

@@ -21,7 +21,7 @@ parallelized across batch elements, heads, and state tiles.
 
 The current optimized implementation is **Emender/E88**: an emender layer with a
 fused Triton kernel for the nonlinear delta-memory state update. It has been
-used in 1.27B-parameter language-model training runs.
+used in 1.3B-class language-model training runs.
 
 ## v0.1 Release
 
@@ -33,9 +33,9 @@ smoke instructions, and public-release checklist.
 - GitHub release target: <https://github.com/poietic-pbc/emender>
 - Paper PDF target: <https://github.com/poietic-pbc/emender/releases/download/v0.1/Garrison_2026_Emender.pdf>
 - Paper source: <https://github.com/poietic-pbc/emender/blob/main/paper/main.typ>
-- Emender/E88 model: <https://huggingface.co/poietic-pbc/emender-e88-1.27b>
-- GDN model: <https://huggingface.co/poietic-pbc/gdn-1.27b>
-- M2RNN-CMA model: <https://huggingface.co/poietic-pbc/m2rnn-cma-1.27b>
+- Emender/E88 model: <https://huggingface.co/poietic-pbc/emender-e88-1.3b>
+- GDN model: <https://huggingface.co/poietic-pbc/gdn-1.3b>
+- M2RNN-CMA model: <https://huggingface.co/poietic-pbc/m2rnn-cma-1.3b>
 
 The HF models are raw/base recurrent language models for research and paper
 reproduction. They are not instruction-tuned or safety-tuned.
@@ -88,7 +88,7 @@ geometry, and multi-programmed shape all matter.
 
 ### 2. Billion-Scale Language Modeling
 
-The production comparison trains 1.27B-parameter recurrent language models at
+The production comparison trains 1.3B-class recurrent language models at
 2K context and then extends the context curriculum. The main quantity of
 interest is not raw step count. It is loss versus wallclock compute under
 matched, tuned training conditions.

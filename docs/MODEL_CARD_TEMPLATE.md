@@ -12,9 +12,9 @@ tags:
 - trust-remote-code
 ---
 
-# {MODEL_NAME} 1.27B
+# {MODEL_NAME} 1.3B
 
-{MODEL_NAME} is a raw/base 1.27B-class recurrent language model checkpoint from
+{MODEL_NAME} is a raw/base 1.3B-class recurrent language model checkpoint from
 the Emender v0.1 release bundle. It is not instruction-tuned, chat-tuned,
 RLHF-tuned, or safety-tuned. Use it as a base continuation model for research
 and reproduction of the paper results, not as an assistant.
@@ -33,9 +33,9 @@ and reproduction of the paper results, not as an assistant.
 
 Related v0.1 model repositories:
 
-- Emender/E88: <https://huggingface.co/poietic-pbc/emender-e88-1.27b>
-- GDN: <https://huggingface.co/poietic-pbc/gdn-1.27b>
-- M2RNN-CMA: <https://huggingface.co/poietic-pbc/m2rnn-cma-1.27b>
+- Emender/E88: <https://huggingface.co/poietic-pbc/emender-e88-1.3b>
+- GDN: <https://huggingface.co/poietic-pbc/gdn-1.3b>
+- M2RNN-CMA: <https://huggingface.co/poietic-pbc/m2rnn-cma-1.3b>
 
 ## Model Identity
 
@@ -55,7 +55,7 @@ Architecture wording by repo:
 
 - Emender/E88: Emender is the update-rule family; an emender layer is the
   bounded nonlinear matrix-state delta-correction recurrent layer; E88 is the
-  concrete v0.1 1.27B instance with the fused Triton path.
+  concrete v0.1 1.3B instance with the fused Triton path.
 - GDN: Gated DeltaNet / FLA-GDN baseline from the same matched racer. It is not
   an Emender layer; it is the strong linear-state gated-delta recurrent
   baseline.
@@ -95,9 +95,9 @@ estimate.
 
 | Model | HF repo | v0.1 BPB | Source |
 | --- | --- | ---: | --- |
-| Emender/E88 | `poietic-pbc/emender-e88-1.27b` | 0.979 | Refreshed racer Figure 2, 2026-05-27 |
-| GDN | `poietic-pbc/gdn-1.27b` | 0.975 | Refreshed racer Figure 2, 2026-05-27 |
-| M2RNN-CMA | `poietic-pbc/m2rnn-cma-1.27b` | 0.984 | Refreshed racer Figure 2, 2026-05-27 |
+| Emender/E88 | `poietic-pbc/emender-e88-1.3b` | 0.979 | Refreshed racer Figure 2, 2026-05-27 |
+| GDN | `poietic-pbc/gdn-1.3b` | 0.975 | Refreshed racer Figure 2, 2026-05-27 |
+| M2RNN-CMA | `poietic-pbc/m2rnn-cma-1.3b` | 0.984 | Refreshed racer Figure 2, 2026-05-27 |
 
 This checkpoint's v0.1 score is **{THIS_MODEL_BPB} BPB**.
 
@@ -113,13 +113,11 @@ revision = "v0.1"
 tokenizer = AutoTokenizer.from_pretrained(
     repo_id,
     revision=revision,
-    token=True,
 )
 model = AutoModelForCausalLM.from_pretrained(
     repo_id,
     revision=revision,
     trust_remote_code=True,
-    token=True,
     torch_dtype=torch.bfloat16,
     device_map="auto",
 )
@@ -142,7 +140,7 @@ print(tokenizer.decode(input_ids[0], skip_special_tokens=False))
 
 - Research on recurrent language models, nonlinear or linear recurrent state
   updates, and multi-programmed recurrent training.
-- Reproduction of the Emender paper's v0.1 racer and private-HF smoke results.
+- Reproduction of the Emender paper's v0.1 racer and release smoke results.
 - Raw text continuation experiments under the exact `v0.1` checkpoint revision.
 
 ## Out Of Scope

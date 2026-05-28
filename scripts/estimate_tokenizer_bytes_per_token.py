@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Estimate corpus bytes per tokenizer token from random context windows.
 
-The 1.27B racers report loss in nats/token because they train with a BPE
+The 1.3B racers report loss in nats/token because they train with a BPE
 tokenizer.  For byte-level comparisons and plots, convert by
 
     bits_per_byte = (nats_per_token / ln(2)) / bytes_per_token

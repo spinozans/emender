@@ -3,7 +3,7 @@
 Date: 2026-05-27
 Task: `release-v01-racer-checkpoint-pin`
 
-This note pins the v0.1 release candidates for the three 1.27B-class paper
+This note pins the v0.1 release candidates for the three 1.3B-class paper
 models and records the Figure 2 refresh decision. No model weights were
 uploaded, no HuggingFace or GitHub model artifacts were published, and no repo
 visibility was changed.

@@ -15,9 +15,9 @@ docs-only `staging` commit, so `revision="v0.1"` includes the polished card.
 
 | Model | Repo | Old `v0.1` SHA | New main-card SHA | New `staging` / `v0.1` SHA | Private readback |
 | --- | --- | --- | --- | --- | --- |
-| Emender/E88 | `poietic-pbc/emender-e88-1.27b` | `ad4fc69c421a88fc212a4fb89e8415b75eb4441c` | `718b3e15bb8ed7f065c5aa65a569e62af7a12a02` | `a2e56cb82eec5e01ae6eb501569359c5ff64af6b` | true |
-| GDN | `poietic-pbc/gdn-1.27b` | `95ef019198b9e125928a8cf2349895bc31a4906b` | `7b267ad249cf57594feaa38ef6b3aebd108722c4` | `556df7f00969c6a8dbeb381e3c8b51cf0c0385f9` | true |
-| M2RNN-CMA | `poietic-pbc/m2rnn-cma-1.27b` | `af3cf2db65dfd14b64a5c030c99156828fdfb958` | `74091c1457d0e6a46872d72d38d12f6a10170d29` | `8181b77803e130ffd78e37c33aa4d58c27e719c2` | true |
+| Emender/E88 | `poietic-pbc/emender-e88-1.3b` | `ad4fc69c421a88fc212a4fb89e8415b75eb4441c` | `718b3e15bb8ed7f065c5aa65a569e62af7a12a02` | `a2e56cb82eec5e01ae6eb501569359c5ff64af6b` | true |
+| GDN | `poietic-pbc/gdn-1.3b` | `95ef019198b9e125928a8cf2349895bc31a4906b` | `7b267ad249cf57594feaa38ef6b3aebd108722c4` | `556df7f00969c6a8dbeb381e3c8b51cf0c0385f9` | true |
+| M2RNN-CMA | `poietic-pbc/m2rnn-cma-1.3b` | `af3cf2db65dfd14b64a5c030c99156828fdfb958` | `74091c1457d0e6a46872d72d38d12f6a10170d29` | `8181b77803e130ffd78e37c33aa4d58c27e719c2` | true |
 
 The old SHAs are still the artifact upload commits validated by the earlier
 private-HF Docker smoke. The new SHAs are README-only descendants. Because the

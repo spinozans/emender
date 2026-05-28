@@ -18,7 +18,7 @@ that pure-nonlinear-in-time recurrence cannot reach foundation-model
 scale on competitive wallclock, because it forecloses the time-axis
 parallel scan that linear-recurrent variants depend on for GPU
 throughput. We test this verdict by training three pure-recurrent
-language models at 1.27–1.35 B parameters under per-architecture
+language models in the 1.3 B class under per-architecture
 CMA-ES hyperparameter search: two with nonlinear time recurrence,
 *the Emender* (delta-correcting update $S <- tanh(d S + k(v - S^T k)^T)$)
 and *M²RNN-CMA* (raw-write update $tanh(H W + k v^T)$); and one
@@ -34,7 +34,7 @@ throughput. Within the pure-nonlinear-recurrent class, the Emender trains
 consistently ahead of M²RNN-CMA, and a one-step representability
 separation between the delta-correcting and raw-write update rules,
 formalised in Lean 4, is confirmed empirically on
-capacity-overparameterised state-tracking probes. The three 1.27–1.35 B
+capacity-overparameterised state-tracking probes. The three 1.3 B-class
 checkpoints, the per-architecture CMA-ES configurations, and the Triton
 multi-programming kernel are assigned to the v0.1 HuggingFace release
 target; the trusted Lean 4 core has no
@@ -42,7 +42,7 @@ sorry/admit/axiom/opaque/native_decide in the import closure.
 
 === ALTERNATE 2 — Tight ~110-word cold-lead variant ===
 
-We train three pure-recurrent 1.27–1.35 B language models on The
+We train three pure-recurrent 1.3 B-class language models on The
 Pile and find that nonlinearity in time is not a cost: two
 nonlinear-in-time recurrences (the Emender, M²RNN-CMA) land in the same
 loss-vs-wallclock band as the linear-recurrent baseline Gated
@@ -75,7 +75,7 @@ CMA-ES configs, and the Triton kernel released.
     over 15 days, crossing below 1 bit per byte on The Pile. The Emender
     family is built from emender layers: recurrent layers pairing a
     matrix-state memory with a write rule that has two halves,
-    delta correction and tanh-with-latching; E88 is the 1.27 B
+    delta correction and tanh-with-latching; E88 is the 1.3 B
     production instance evaluated here. The matrix-state $R times
     N$ update is modulated by a delta-correcting term $k(v - S^T k)^T$
     under a saturating nonlinearity, so slots latch until a
@@ -159,7 +159,7 @@ scale. The verdict is contingent on the axis chosen for parallelism.
 Parallelise width and the obstruction dissolves: throughput comes from
 many small recurrent programs running side by side, while each program
 runs its time loop serially. Trained on a single workstation-class GPU
-over fifteen days, E88, the 1.27 B Emender production instance,
+over fifteen days, E88, the 1.3 B Emender production instance,
 crosses below 1 bit per byte on The Pile
 @thepile2020 and matches the wallclock loss band of Gated DeltaNet
 @gated_deltanet2024, the current frontier linear-recurrent learner.
@@ -187,7 +187,7 @@ orthonormal-key configuration of the Emender realises the $S_5$ prefix
 tracker, the canonical NC#super[1] witness. The empirical work then
 shows the world is consistent with what the proofs already establish.
 The 8 M-parameter Emender reaches 0.79 accuracy on $S_5$ against 0.36
-for Gated DeltaNet and 0.22 for the raw-write baseline. The 1.27 B
+for Gated DeltaNet and 0.22 for the raw-write baseline. The 1.3 B
 Emender reaches 0.979 bits per byte on The Pile, inside the same
 wallclock band as Gated DeltaNet at 0.975.
 Throughput at width comes from 22,200 small recurrent programs per
@@ -249,7 +249,7 @@ technique not bound to that arena.
 
 #set enum(numbering: "1.")
 
-+ *Many-headed cache-fit multi-programming.* The 1.27 B production
++ *Many-headed cache-fit multi-programming.* The 1.3 B production
   stack exposes 22,200 small independent recurrent programs per token
   (370 heads $times$ batch size 5 $times$ depth 12), each a
   $32 times 32$ matrix-state tile that fits in registers / L1 / SRAM.
@@ -295,14 +295,14 @@ technique not bound to that arena.
 + *Synthesis: Emender 88 (E88).* An *emender* is a bounded matrix-state
   recurrent layer with a delta-correcting write. The *Emender* is the
   architecture family obtained by stacking emender layers; *E88* is the
-  1.27 B production instance evaluated here, integrating
+  1.3 B production instance evaluated here, integrating
   (1)+(2)+(3)+(4)+(5) as the first foundation-model-scale demonstration
   of delta-correcting pure-nonlinear recurrence.
 
 #set enum(numbering: "(a)")
 
 This paper establishes the PNR class as viable at foundation-model
-scale, by training two PNR instances at the 1.27–1.35 B parameter
+scale, by training two PNR instances in the 1.3 B-class parameter
 band and comparing them head-to-head with a linear-recurrent baseline.
 The two PNR instances are the Emender (this work; delta-correct update
 rule $S <- tanh(d S + k(v - S^T k)^T)$) and M²RNN-CMA (a CMA-reshaped
@@ -317,7 +317,7 @@ the same loss-vs-wallclock band; M²RNN-CMA reaches the same sub-1-bpb
 regime but trails across the sampled window. *Nonlinearity in time is
 not a cost.* The status-quo verdict that PNR language models cannot
 reach this regime without a time-axis parallelisation trick or
-attention hybridisation is, at minimum at 1.27–1.35 B on The Pile
+attention hybridisation is, at minimum in the 1.3 B class on The Pile
 under matched wallclock, not supported by the data. Within the PNR
 class, the Emender trains consistently ahead of M²RNN-CMA across the
 sampled wallclock window.
@@ -325,7 +325,7 @@ sampled wallclock window.
 The paper proceeds as follows. §2 and §3 set up the linear-state
 versus nonlinear-state classification and the Emender architecture;
 §4 covers the multi-programming systems contribution; §5 presents the
-1.27 B wallclock racer with the per-architecture CMA-ES protocol; §6
+1.3 B wallclock racer with the per-architecture CMA-ES protocol; §6
 reports the 8 M expressivity probes with the capacity-non-binding
 justification; §7 the Lean 4 formalisation, including Theorem set F
 on saturation latching alongside the separation, $S_5$-realisation,
@@ -335,10 +335,10 @@ programmers to DeltaNet; §9 limitations; §10 conclusion; §11 testable
 predictions; §12 future work. The v0.1 release hub is
 `https://github.com/poietic-pbc/emender/blob/main/docs/RELEASE_V01_PUBLIC_RELEASE_HUB.md`.
 The release targets are E88
-(`https://huggingface.co/poietic-pbc/emender-e88-1.27b/tree/v0.1`),
-GDN (`https://huggingface.co/poietic-pbc/gdn-1.27b/tree/v0.1`), and
+(`https://huggingface.co/poietic-pbc/emender-e88-1.3b/tree/v0.1`),
+GDN (`https://huggingface.co/poietic-pbc/gdn-1.3b/tree/v0.1`), and
 M²RNN-CMA
-(`https://huggingface.co/poietic-pbc/m2rnn-cma-1.27b/tree/v0.1`), with
+(`https://huggingface.co/poietic-pbc/m2rnn-cma-1.3b/tree/v0.1`), with
 the paper PDF target at
 `https://github.com/poietic-pbc/emender/releases/download/v0.1/Garrison_2026_Emender.pdf`.
 
@@ -461,7 +461,7 @@ process it performs on memory.] architecture family. Its primitive is an
 emender layer: a matrix-state recurrent layer that reads the current state,
 computes the prediction error, and writes the delta correction. A concrete
 family member fixes the head count, state-tile size, depth, and language-model
-wrapper; E88 is the 1.27 B instance evaluated throughout the paper.
+wrapper; E88 is the 1.3 B instance evaluated throughout the paper.
 
 Each emender layer maintains $H$ independent heads. Each head $h$ owns a
 matrix state $S_h in RR^(N times V)$. The trusted-core theorems of §7 use $d$
@@ -576,7 +576,7 @@ state is fixed at zero when no hidden state is carried in, there is no output
     $tanh$ on the state, the delta-correcting write, and the
     $L^2$-normalisation of $q,k$ are the three load-bearing design
     choices (§3).
-    *(B)* The production stack at 1.27 B parameters exposes 370 small
+    *(B)* The production stack at 1.3 B parameters exposes 370 small
     independent heads per layer per batch element. Each head is a
     $32 times 32$ state tile that fits in registers/SRAM and runs its
     time loop serially; parallelism is harvested across heads, depth and
@@ -615,7 +615,7 @@ in the instance above.
   release) formalises all three as slot-wise statements on the full
   emender-layer update.
 
-+ *Many small heads, not one large matrix.* E88 at 1.27 B
++ *Many small heads, not one large matrix.* E88 at 1.3 B
   uses $H = 370$ heads of $32 times 32$ each (Lean-witnessed:
   `RecurrentResourceFormalism.emender_1p27B_programs_per_batch_token`,
   yielding 22,200 independent programs per token at batch size 5).
@@ -637,7 +637,7 @@ win); the LM wrapper uses block-level prenorm and a final norm only.
 Short convolutions on the input are absent. The write path is *not*
 gated; the gate `silu(g)` is applied to the read output only.
 
-#heading(level: 2, numbering: none)[The 1.27 B production stack]
+#heading(level: 2, numbering: none)[The 1.3 B production stack]
 
 The figure and §4 use the same trusted geometry. At batch size 5, depth 12
 and $H = 370$ give $12 times 370 times 5 = 22,200$ independent recurrent
@@ -748,11 +748,11 @@ elements) while the time loop inside each head runs serially. The
 cost is per-head sequential time; the gain is that nonlinear
 recurrence runs at full GPU utilisation. The recipe is
 *update-rule-agnostic*: both PNR instances trained here (the Emender
-and M²RNN-CMA) satisfy the same multi-programming predicate at 1.27 B
+and M²RNN-CMA) satisfy the same multi-programming predicate at 1.3 B
 (`RecurrentResourceFormalism.multiProgrammed_admits_m2rnn_and_emender`,
 §7).
 
-#heading(level: 2, numbering: none)[The 1.27 B Emender shape under multi-programming]
+#heading(level: 2, numbering: none)[The 1.3 B Emender shape under multi-programming]
 
 A modern GPU exposes thousands of independent streaming multiprocessors,
 each able to run a small program in registers and shared memory. E88
@@ -804,7 +804,7 @@ DDP, and inter-island synchronisation averages model weights every
 $tau = 250$ local steps (an empirically-chosen interval).
 Because parallelism is across programs
 rather than along time, the Emender does not require sequence parallelism to be
-competitive at 1.27 B; this is a simplification relative to
+competitive at 1.3 B; this is a simplification relative to
 chunked-scan implementations of linear-state recurrences. Separately,
 ParaRNN @pararnn2025 parallelises the time loop itself via Newton's
 method on a block-bidiagonal Jacobian. We tried this route on the
@@ -819,7 +819,7 @@ multi-programming is a single serial pass per head.
 
 #heading(level: 2, numbering: none)[Setup]
 
-We train three pure-recurrent language models at the 1.27–1.35 B
+We train three pure-recurrent language models at the 1.3 B-class
 parameter band on The Pile @thepile2020 with a 2048-token context window,
 byte-pair encoding (p50k_base, 50,281-vocab), schedule-free AdamW
 @schedulefree2024, and bf16 mixed precision. The three models and their
@@ -840,7 +840,7 @@ CMA-tuned shapes are:
 
 #heading(level: 2, numbering: none)[Per-architecture CMA-ES protocol (fairness anchor)]
 
-All three 1.27–1.35 B architectures (Emender, M²RNN-CMA, Gated DeltaNet)
+All three 1.3 B-class architectures (Emender, M²RNN-CMA, Gated DeltaNet)
 received independent CMA-ES @cmaes2003 hyperparameter and shape search
 over the same six knobs: width, depth, head count, state width, output
 gating, learning rate. Each search ran under matched candidate budget:
@@ -871,7 +871,7 @@ small heads.
 #heading(level: 2, numbering: none)[Gradient conditioning is a third recipe property]
 
 A fourth run, *M²RNN-paper* (the paper-default shape from @m2rnn2026
-re-implemented at 1.27 B with dim=3072, depth=10, H=759, N=16), was
+re-implemented at 1.3 B with dim=3072, depth=10, H=759, N=16), was
 attempted under the same training setup and *diverged* at step 8,400
 with gradient norm $approx 4.2 times 10^7$. The CMA-tuned reshape
 *M²RNN-CMA* (dim=1920, depth=21, H=370, N=16) of the same update family
@@ -963,7 +963,7 @@ configurations SGD finds under matched no-tuning conditions, where the
 
 The 8 M probe scale received no probe-specific hyperparameter search and
 no seed sweep for any family in the comparison. The Emender ran on the default
-configuration carried down from its 1.27 B production stack; M²RNN-CMA
+configuration carried down from its 1.3 B production stack; M²RNN-CMA
 ran on the analogous default from its CMA-tuned reshape; GDN and the
 M²RNN-paper shape ran on their respective published defaults. The 8 M
 probe is therefore *matched no-tuning across architectures*, meaning
@@ -1127,9 +1127,9 @@ representational counterpart at one step; the eventual-representability
 shortfall in the M²RNN family is empirical trainability under the
 raw-write rule, with capacity non-binding by the §6 floor argument.
 
-#heading(level: 2, numbering: none)[QA and reasoning panel at 1.27 B: parity-rate evidence]
+#heading(level: 2, numbering: none)[QA and reasoning panel at 1.3 B: parity-rate evidence]
 
-For capability beyond loss numbers we evaluate the three 1.27–1.35 B-band
+For capability beyond loss numbers we evaluate the three 1.3 B-class
 models on a 300-item multi-choice continuation harness sampled from
 ARC-C/E @arc2018, HellaSwag @hellaswag2019, SciQ @sciq2017, OpenBookQA
 @openbookqa2018, and BoolQ @boolq2019. At the current training budget, E88
@@ -1349,7 +1349,7 @@ negative counterpart `OnlineMemory.rawOuterWrite_not_uniformOneStepOverwrite`.
 `RecurrentResourceFormalism.multiProgrammed_admits_m2rnn_and_emender` defines
 a predicate `IsMultiProgrammed` on architecture signatures capturing the
 three multi-programming features (many independent heads per layer,
-per-head state tile, per-batch independence). The 1.27 B Emender signature
+per-head state tile, per-batch independence). The 1.3 B Emender signature
 and a CMA-reshaped pure M²RNN signature both satisfy the predicate, and
 a non-trivial hybrid signature *fails* it. This is the small formal
 anchor for the *class-level* claim of §1: multi-programming is a
@@ -1492,7 +1492,7 @@ This is concurrent prior art for the claim that nonlinear matrix-state
 recurrence can be made to train at scale. M²RNN-CMA, used as a
 within-class baseline throughout this paper, is the *pure-recurrent
 variant* of M²RNN's architecture with no attention layers, CMA-tuned to
-restore stable training at 1.27 B. The contribution of this work
+restore stable training at 1.3 B. The contribution of this work
 relative to M²RNN is to extend the viability demonstration to the
 *pure-recurrent* setting and to add the head-to-head comparison with
 the Emender under matched per-architecture CMA-ES. The empirical separation in
@@ -1567,14 +1567,14 @@ generator alphabet itself.
 
 What rests on what. The Lean separation is seed-independent: the
 proof is the proof. The 8 M expressivity gap on $S_5$ ($0.79$ vs
-$0.36$ vs $0.22$) is across three seeds per architecture. The 1.27 B
+$0.36$ vs $0.22$) is across three seeds per architecture. The 1.3 B
 wallclock racer is one continuously-trained seed per architecture at
 the current multi-week training extent.
 
 The within-class ordering the racer records (Emender ahead of the
 raw-write update under matched per-architecture CMA-ES) is not a
 free-standing observation: the same sign is selected by four
-independent CMA-ES sweeps at the same 1.27 B parameter scale,
+independent CMA-ES sweeps at the same 1.3 B parameter scale,
 spanning 250+ candidate configurations per architecture in aggregate
 across chunk-512 and chunk-2048 training budgets and across
 reseed-and-reposition rounds. Under the exact E88 delta-off
@@ -1601,11 +1601,11 @@ curve.
 
 #heading(level: 2, numbering: none)[Per-architecture CMA-ES is best-effort matched; broader-search is the next experiment]
 
-The 1.27 B racer (§5, @fig_lm_racers) runs each baseline under its
+The 1.3 B racer (§5, @fig_lm_racers) runs each baseline under its
 own CMA-tuned shape and hyperparameter choice with matched candidate
 budget. The protocol delivers symmetry of effort across architectures
 at the configured search budget. The cleanest sharpening is to extend
-the search with further CMA-ES generations per family at 1.27 B under
+the search with further CMA-ES generations per family at 1.3 B under
 the same budget rule; this separates "under the search effort used
 here" from "under any matched search effort", and §12 names it as the
 load-bearing follow-up.
@@ -1613,7 +1613,7 @@ load-bearing follow-up.
 #heading(level: 2, numbering: none)[Geometry-sensitivity of the update-rule claim]
 
 The empirical within-class ordering scopes to CMA-equilibrated
-geometry. The same update family (M²RNN) diverges at 1.27 B in the
+geometry. The same update family (M²RNN) diverges at 1.3 B in the
 published paper shape and is stable under the CMA-tuned reshape (loss
 2.67 after roughly 18 wall-clock days). The §6 expressivity comparison runs at
 parameter-matched 8 M with geometry held constant across families;
@@ -1639,7 +1639,7 @@ within-class claim that is immune to it (raw-write at 0.31 on a
 six-element solvable group, well below the non-binding capacity
 ceiling). Closing the asymmetry itself is a matched-search experiment
 on the 8 M shape (running CMA-ES on each baseline at 8 M under a
-state-tracking fitness); it is named alongside the 1.27 B
+state-tracking fitness); it is named alongside the 1.3 B
 wider-search follow-up.
 
 #heading(level: 2, numbering: none)[The opposite architectural bet: hybrids]
@@ -1648,7 +1648,7 @@ A concurrent strand of work places the opposite architectural bet.
 *OLMo-Hybrid 7B* @olmohybrid2026 interleaves state-space blocks with
 attention, on the premise that hybrid stacks express things beyond
 what either pure transformers or pure linear RNNs can do. The Emender
-takes the other bet: a pure-nonlinear Emender stack at 1.27 B matches
+takes the other bet: a pure-nonlinear Emender stack at 1.3 B matches
 GDN in the wallclock loss band, which refutes the assumption that
 pure nonlinear recurrence cannot scale at all. The hybrid-degradation
 finding in §6
@@ -1674,11 +1674,11 @@ state non-linearity ($tanh$ vs linear), and the decay parameterisation
 (simple sigmoid vs Mamba2-style log-space). All three tie on loss at
 small scale; the production architecture keeps the conservative
 settings on the strength of state-tracking and stability data, not a
-clean ablation at 1.27 B.
+clean ablation at 1.3 B.
 
 #heading(level: 2, numbering: none)[Transformer comparison]
 
-A matched-scale transformer is not on the rack here, and a 1.27 B
+A matched-scale transformer is not on the rack here, and a 1.3 B
 attention baseline trained under the same protocol is deferred to
 future work. At the 2 K context this paper trains on, attention is
 likely competitive or better; the Emender's case is about full
@@ -1691,7 +1691,7 @@ attention's quadratic cost bites. The omission is scope, not result.
 We trained a pure-nonlinear-recurrent language model to sub-1-bpb on
 The Pile: E88 at 0.979 bpb after roughly 20 wall-clock days
 on a single workstation-class GPU. Three pure-recurrent
-architectures received per-architecture CMA-ES at the 1.27–1.35 B
+architectures received per-architecture CMA-ES at the 1.3 B-class
 band (the Emender and M²RNN-CMA, nonlinear in time; Gated DeltaNet,
 linear in time). The two leading curves are co-linear in the shared
 wallclock band (GDN 0.975, E88 0.979); M²RNN-CMA, the raw-write
@@ -1711,7 +1711,7 @@ recurrences gain throughput by *time-axis* linearisation; pure-nonlinear
 recurrences gain throughput by replicating the recurrent computation
 across thousands of small bounded memory programs that the GPU executes
 in parallel. The recipe is update-rule-agnostic: both PNR instances
-trained here satisfy the same multi-programming predicate at 1.27 B
+trained here satisfy the same multi-programming predicate at 1.3 B
 (Lean: `multiProgrammed_admits_m2rnn_and_emender`).
 
 Within the pure-nonlinear-recurrent class, the delta-correcting update
@@ -1735,11 +1735,11 @@ $S_5$ probe. The trusted Lean 4 core has no
 *Release.* The v0.1 release hub is
 `https://github.com/poietic-pbc/emender/blob/main/docs/RELEASE_V01_PUBLIC_RELEASE_HUB.md`.
 The checkpoint and loading-code targets are E88
-(`https://huggingface.co/poietic-pbc/emender-e88-1.27b/tree/v0.1`),
+(`https://huggingface.co/poietic-pbc/emender-e88-1.3b/tree/v0.1`),
 Gated DeltaNet
-(`https://huggingface.co/poietic-pbc/gdn-1.27b/tree/v0.1`), and
+(`https://huggingface.co/poietic-pbc/gdn-1.3b/tree/v0.1`), and
 M²RNN-CMA
-(`https://huggingface.co/poietic-pbc/m2rnn-cma-1.27b/tree/v0.1`).
+(`https://huggingface.co/poietic-pbc/m2rnn-cma-1.3b/tree/v0.1`).
 The public paper PDF target is
 `https://github.com/poietic-pbc/emender/releases/download/v0.1/Garrison_2026_Emender.pdf`.
 Companion release docs cover the per-architecture CMA-ES
@@ -1755,7 +1755,7 @@ training. We state them as predictions so that future
 training rounds can falsify them.
 
 #set list(indent: 1em)
-- *Width-axis multi-programming scales beyond 1.27 B without throughput
+- *Width-axis multi-programming scales beyond 1.3 B without throughput
   collapse.* The multi-programmed substrate harvests throughput from
   many small bounded heads rather than from time-axis linearisation;
   the per-head register/SRAM working set is independent of total
@@ -1766,7 +1766,7 @@ training rounds can falsify them.
 - *The Emender's state-tracking advantage persists at scaled training
   budgets.* The §6 $S_5$ and $S_3$ gaps are at the 8 M parameter-matched
   probe scale under matched no-tuning. At longer training-token budgets
-  at 1.27 B and beyond, the within-PNR ordering and the Emender-vs-GDN
+  at 1.3 B and beyond, the within-PNR ordering and the Emender-vs-GDN
   gap on state-tracking probes should hold qualitatively. Falsified if
   the $S_5$ or $S_3$ gap closes under matched-compute training at scale.
 
@@ -1809,7 +1809,7 @@ training rounds can falsify them.
   pressure from the optimiser. The conjecture is that the same fairness
   search under broader bounds, subject only to the kernel-occupancy
   ceiling of the multi-programmed substrate, returns an interior
-  optimum strictly above 370 on the Emender at 1.27 B; $H tilde 1000$
+  optimum strictly above 370 on the Emender at 1.3 B; $H tilde 1000$
   is the next bracket worth testing. Falsified if a broadened CMA-ES
   sweep under matched per-token compute returns an interior optimum at
   or below $H = 370$.
@@ -1854,18 +1854,18 @@ the order.
 
 #heading(level: 2, numbering: none)[Additional seeds and architecture-internal revalidation]
 
-Each 1.27 B model trains for a multi-week wall-clock span per
+Each 1.3 B model trains for a multi-week wall-clock span per
 architecture, the standard unit of evidence at this scale class;
 additional seeds at this band are a multi-week investment per seed.
 Several architecture-internal choices in the Emender, including the
 output gate, the non-linearity on the state ($tanh$ vs linear), and
 the decay parameterisation (simple sigmoid vs Mamba2-style log-space),
-show loss-only ties at small scale; revalidation of each at 1.27 B is
+show loss-only ties at small scale; revalidation of each at 1.3 B is
 open.
 
-#heading(level: 2, numbering: none)[Scale beyond 1.27 B]
+#heading(level: 2, numbering: none)[Scale beyond 1.3 B]
 
-The wallclock-band convergence is observed at 1.27 B parameters on
+The wallclock-band convergence is observed at 1.3 B parameters on
 The Pile. Whether the same band convergence holds at larger scale, on
 larger corpora, or under longer training is open.
 
@@ -1873,7 +1873,7 @@ larger corpora, or under longer training is open.
 
 The within-PNR ordering reported here is conditional on the
 per-architecture CMA-ES protocol of §5. Extending that protocol with
-further CMA-ES generations per family at 1.27 B, under the same budget
+further CMA-ES generations per family at 1.3 B, under the same budget
 rule, separates the conditional reading "under the search effort used
 here" from the family-level reading "under any matched search effort."
 It is the sharpest single experiment for fixing where the
@@ -1921,7 +1921,7 @@ are at `ndm/triton/e88_triton_forward.py` and `e88_triton_backward.py`.
   products. The L#super[2]-normalised key write inherited by the Emender is the
   fix.
 
-- *E88 (production Emender).* Stable at 1.27 B parameters under
+- *E88 (production Emender).* Stable at 1.3 B parameters under
   schedule-free AdamW. Key parameterisation choices: log-space Mamba2
   decay (with weight-decay exemption); L#super[2]-normalised
   $q, k$; SiLU on input projections before normalisation; numerically

@@ -2,6 +2,11 @@
 
 Audit time: 2026-05-28T00:15:03Z
 
+> Superseded status note, 2026-05-28: the intended canonical public target
+> <https://github.com/poietic-pbc/emender> is now live. This document below is
+> retained as historical pre-publication audit evidence from before the GitHub
+> repository became accessible.
+
 ## Result
 
 No release worker commit needed to be merged or cherry-picked during this audit.

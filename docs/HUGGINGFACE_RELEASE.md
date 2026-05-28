@@ -18,17 +18,16 @@ that encodes hyperparameters. Users load the model with:
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 model = AutoModelForCausalLM.from_pretrained(
-    "poietic-pbc/emender-e88-1.27b",
+    "poietic-pbc/emender-e88-1.3b",
     revision="v0.1",
     trust_remote_code=True,
-    token=True,
     torch_dtype=torch.bfloat16,
     device_map="auto",
 )
 ```
 
-The v0.1 release also includes the sibling private baseline repositories
-`poietic-pbc/gdn-1.27b` and `poietic-pbc/m2rnn-cma-1.27b`, both loaded with
+The v0.1 release also includes the sibling public baseline repositories
+`poietic-pbc/gdn-1.3b` and `poietic-pbc/m2rnn-cma-1.3b`, both loaded with
 `revision="v0.1"`.
 
 This avoids adding HF as a hard dependency of the `ndm` package, keeps the
@@ -116,23 +115,23 @@ release.
 - [x] **5.1** Fill in model cards with raw/base identity, architecture,
       training data, tokenizer/context, verified delimiter behavior, v0.1 BPB
       metrics, intended use, limitations, load examples, and provenance links.
-- [x] **5.2** Update `README.md` on all three private HF repos on `main` and
-      `staging`; recreate private `v0.1` tags at the docs-polish staging commits.
+- [x] **5.2** Update `README.md` on all three HF repos on `main` and
+      `staging`; recreate `v0.1` tags at the docs-polish staging commits.
 
 ### Phase 6 — HuggingFace Upload And Private Tag
 
-- [x] **6.1** Create private HF repositories under `poietic-pbc`:
-      `emender-e88-1.27b`, `gdn-1.27b`, and `m2rnn-cma-1.27b`.
+- [x] **6.1** Create HF repositories under `poietic-pbc`:
+      `emender-e88-1.3b`, `gdn-1.3b`, and `m2rnn-cma-1.3b`.
 - [ ] **6.2** Upload all files:
       ```bash
-      huggingface-cli upload poietic-pbc/emender-e88-1.27b ./hf_release_dir/ . --revision staging
+      huggingface-cli upload poietic-pbc/emender-e88-1.3b ./hf_release_dir/ . --revision staging
       ```
-- [x] **6.3** Run private-HF CPU and CUDA clean-container smokes at the exact
+- [x] **6.3** Run pre-public HF CPU and CUDA clean-container smokes at the exact
       uploaded staging commits.
 - [x] **6.4** Create `v0.1` tags at the smoke-tested commits; docs-polish later
-      recreated those private tags at README-only descendants listed below.
-- [ ] **6.5** Set repository visibility to public only after explicit user
-      approval is present and logged.
+      recreated those tags at README-only descendants listed below.
+- [x] **6.5** Repositories are public under the `1.3b` slugs after explicit
+      user approval.
 - [ ] **6.6** Add topics: `rnn`, `language-model`, `nonlinear-rnn`, `triton`,
       `ndm`, `state-tracking`.
 
@@ -143,10 +142,10 @@ release.
       pip install transformers torch safetensors
       python -c "
       from transformers import AutoModelForCausalLM, AutoTokenizer
-      repo_id = 'poietic-pbc/emender-e88-1.27b'
-      tok = AutoTokenizer.from_pretrained(repo_id, revision='v0.1', token=True)
+      repo_id = 'poietic-pbc/emender-e88-1.3b'
+      tok = AutoTokenizer.from_pretrained(repo_id, revision='v0.1')
       model = AutoModelForCausalLM.from_pretrained(
-          repo_id, revision='v0.1', trust_remote_code=True, token=True)
+          repo_id, revision='v0.1', trust_remote_code=True)
       ids = tok('Hello', return_tensors='pt').input_ids
       out = model.generate(ids, max_new_tokens=20)
       print(tok.decode(out[0]))
@@ -163,7 +162,7 @@ release.
       `README.md` of this repo.
 - [ ] **8.2** Record the final HF repo URL and the `ndm` tag in
       `provenance/checkpoint_anchors.txt`.
-- [ ] **8.3** Commit: `git add README.md provenance/checkpoint_anchors.txt && git commit -m "release: link HF checkpoint poietic-pbc/emender-e88-1.27b"`
+- [ ] **8.3** Commit: `git add README.md provenance/checkpoint_anchors.txt && git commit -m "release: link HF checkpoint poietic-pbc/emender-e88-1.3b"`
 
 ---
 
@@ -173,9 +172,9 @@ Chosen v0.1 HF model repositories:
 
 | Model identity | Repository | Release revision |
 | --- | --- | --- |
-| Emender/E88 | `poietic-pbc/emender-e88-1.27b` | `v0.1` |
-| GDN baseline | `poietic-pbc/gdn-1.27b` | `v0.1` |
-| M2RNN-CMA baseline | `poietic-pbc/m2rnn-cma-1.27b` | `v0.1` |
+| Emender/E88 | `poietic-pbc/emender-e88-1.3b` | `v0.1` |
+| GDN baseline | `poietic-pbc/gdn-1.3b` | `v0.1` |
+| M2RNN-CMA baseline | `poietic-pbc/m2rnn-cma-1.3b` | `v0.1` |
 
 The `poietic-pbc` namespace is the release namespace for v0.1. The Python
 package and import path remain `ndm` for this release unless a separate package
@@ -183,18 +182,18 @@ rename task approves and performs a broader migration.
 
 ---
 
-## Current v0.1 Private HF Tags
+## Current v0.1 Public HF Tags
 
 As of the 2026-05-28 model-card polish, `v0.1` resolves to docs-only commits
 that descend from the previously smoke-tested artifact commits. The final
-private-HF Docker smoke validated these current SHAs on CPU and CUDA; see
+pre-public Docker smoke validated these current SHAs on CPU and CUDA; see
 [`RELEASE_V01_FINAL_V01_DOCKER_SMOKE_20260528.md`](RELEASE_V01_FINAL_V01_DOCKER_SMOKE_20260528.md).
 
 | Model identity | Repository | Previous artifact SHA | Current `v0.1` SHA | Main-card SHA |
 | --- | --- | --- | --- | --- |
-| Emender/E88 | `poietic-pbc/emender-e88-1.27b` | `ad4fc69c421a88fc212a4fb89e8415b75eb4441c` | `a2e56cb82eec5e01ae6eb501569359c5ff64af6b` | `718b3e15bb8ed7f065c5aa65a569e62af7a12a02` |
-| GDN baseline | `poietic-pbc/gdn-1.27b` | `95ef019198b9e125928a8cf2349895bc31a4906b` | `556df7f00969c6a8dbeb381e3c8b51cf0c0385f9` | `7b267ad249cf57594feaa38ef6b3aebd108722c4` |
-| M2RNN-CMA baseline | `poietic-pbc/m2rnn-cma-1.27b` | `af3cf2db65dfd14b64a5c030c99156828fdfb958` | `8181b77803e130ffd78e37c33aa4d58c27e719c2` | `74091c1457d0e6a46872d72d38d12f6a10170d29` |
+| Emender/E88 | `poietic-pbc/emender-e88-1.3b` | `ad4fc69c421a88fc212a4fb89e8415b75eb4441c` | `a2e56cb82eec5e01ae6eb501569359c5ff64af6b` | `9695606f3dd68fed746acbf2985ba672e34f0c01` |
+| GDN baseline | `poietic-pbc/gdn-1.3b` | `95ef019198b9e125928a8cf2349895bc31a4906b` | `556df7f00969c6a8dbeb381e3c8b51cf0c0385f9` | `4eb57cf4619c71a1007bfe397cec18c520dc9f82` |
+| M2RNN-CMA baseline | `poietic-pbc/m2rnn-cma-1.3b` | `af3cf2db65dfd14b64a5c030c99156828fdfb958` | `8181b77803e130ffd78e37c33aa4d58c27e719c2` | `b9326e0f2ce5bd8512962dd9f3409e2d883c86d2` |
 
 The model cards and hub point to the paper PDF target:
 <https://github.com/poietic-pbc/emender/releases/download/v0.1/Garrison_2026_Emender.pdf>.

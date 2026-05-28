@@ -48,9 +48,9 @@ class ModelSpec:
 SPECS = [
     ModelSpec(
         key="e88",
-        repo_id=f"{ORG}/emender-e88-1.27b",
+        repo_id=f"{ORG}/emender-e88-1.3b",
         identity="Emender/E88",
-        short_name="Emender E88 1.27B",
+        short_name="Emender E88 1.3B",
         checkpoint=Path(
             "/tmp/pile_convergence_3arch/ctx2k/e88_postrepair_ckpt/"
             "levelE88_1270M_20260511_233832/checkpoint_step_1281000_loss_2.6850.pt"
@@ -62,9 +62,9 @@ SPECS = [
     ),
     ModelSpec(
         key="gdn",
-        repo_id=f"{ORG}/gdn-1.27b",
+        repo_id=f"{ORG}/gdn-1.3b",
         identity="GDN",
-        short_name="GDN 1.27B",
+        short_name="GDN 1.3B",
         checkpoint=Path(
             "/tmp/pile_convergence_3arch/ctx2k/fla-gdn_resume_ckpt/"
             "levelfla-gdn_1270M_20260511_233832/checkpoint_step_1686000_loss_2.6105.pt"
@@ -76,9 +76,9 @@ SPECS = [
     ),
     ModelSpec(
         key="m2rnn",
-        repo_id=f"{ORG}/m2rnn-cma-1.27b",
+        repo_id=f"{ORG}/m2rnn-cma-1.3b",
         identity="M²RNN-CMA",
-        short_name="M2RNN-CMA 1.27B",
+        short_name="M2RNN-CMA 1.3B",
         checkpoint=Path(
             "/tmp/pile_convergence_m2rnn/ctx2k/m2rnn_tied_resume_xma_ckpt/"
             "levelm2rnn_1270M_20260511_175023/checkpoint_step_1212000_loss_2.6870.pt"
