@@ -73,6 +73,7 @@ GRADIENT_CHECKPOINTING = False
 PROJECTION_CHUNK_SIZE = 0
 PROBE_TIMEOUT_SECONDS = int(os.environ.get('CMAES_PROBE_TIMEOUT_SECONDS', '600'))
 CMAES_MAX_VALID_ATTEMPTS = int(os.environ.get('CMAES_MAX_VALID_ATTEMPTS', '20'))
+PARAM_TOLERANCE = float(os.environ.get('CMAES_PARAM_TOLERANCE', '0.10'))
 
 # Progressive training settings (set from args in main())
 PROGRESSIVE = False
@@ -119,7 +120,7 @@ def get_phase_settings(model_type, chunk_size):
     return grad_ckpt, proj_chunk
 
 # Known good configs from previous runs - inject into LHS to ensure exploration around them
-# These configs are validated for 480M±10% with use_gate=True
+# These configs were historically validated for the old broad parameter window.
 # BEST FINDING: narrow dim + many heads + deep works better than wide + shallow
 ## KNOWN_GOOD_CONFIGS removed — pure LHS exploration for uniform methodology
 ## across all models. Archived configs are in git history if needed.
@@ -601,8 +602,10 @@ def estimate_params_for_config(params, model_type):
         return 4 * dim * dim * depth  # Rough estimate
 
 
-def is_valid_param_count(params, model_type, target_params, tolerance=0.10):
-    """Check if config is within tolerance of target params (default ±10%)."""
+def is_valid_param_count(params, model_type, target_params, tolerance=None):
+    """Check if config is within tolerance of target params."""
+    if tolerance is None:
+        tolerance = PARAM_TOLERANCE
     actual = estimate_params_for_config(params, model_type)
     return abs(actual - target_params) / target_params <= tolerance
 
@@ -1555,11 +1558,11 @@ def run_lhs_phase(model_type, n_samples, train_minutes, output_dir, gpus,
     if anchor_configs:
         print(f"  Anchors requested: {len(anchor_configs)}")
         for i, anchor in enumerate(anchor_configs):
-            if not is_valid_param_count(anchor, model_type, target_params, 0.10):
+            if not is_valid_param_count(anchor, model_type, target_params):
                 actual = estimate_params_for_config(anchor, model_type)
                 print(
                     f"  WARNING: anchor {i} skipped; param estimate "
-                    f"{actual/1e6:.1f}M outside ±10% of {target_params/1e6:.0f}M"
+                    f"{actual/1e6:.1f}M outside ±{PARAM_TOLERANCE*100:.1f}% of {target_params/1e6:.0f}M"
                 )
                 continue
             key = config_key(anchor)
@@ -1578,9 +1581,9 @@ def run_lhs_phase(model_type, n_samples, train_minutes, output_dir, gpus,
         batch_size = n_samples * (2 ** attempt)  # 64, 128, 256, ...
         configs = generate_lhs_configs(model_type, batch_size, fixed_params, seed + attempt)
 
-        # Filter by param count (10% tolerance: 432M-528M for 480M target)
+        # Filter by param count using the configured tolerance.
         for c in configs:
-            if is_valid_param_count(c, model_type, target_params, 0.10):
+            if is_valid_param_count(c, model_type, target_params):
                 key = config_key(c)
                 if key not in seen_keys:
                     valid_configs.append(c)
@@ -1591,7 +1594,7 @@ def run_lhs_phase(model_type, n_samples, train_minutes, output_dir, gpus,
         print(f"  Attempt {attempt + 1}: Generated {batch_size} samples, {len(valid_configs)}/{n_samples} valid so far")
         attempt += 1
 
-    print(f"Total valid configs within ±10% of {target_params/1e6:.0f}M: {len(valid_configs)}")
+    print(f"Total valid configs within ±{PARAM_TOLERANCE*100:.1f}% of {target_params/1e6:.0f}M: {len(valid_configs)}")
 
     # Skip already-completed configs (deterministic order means eval_id = index)
     n_recovered = len(recovered)
@@ -1737,7 +1740,7 @@ def run_cmaes_phase(model_type, train_minutes, output_dir, gpus,
                     if len(valid_solutions) >= target_evals:
                         break
                     cfg = decode_params(sol, model_type, fixed_params)
-                    if is_valid_param_count(cfg, model_type, target_params, 0.10):
+                    if is_valid_param_count(cfg, model_type, target_params):
                         # Check not duplicate
                         if not any(np.allclose(sol, vs) for vs in valid_solutions):
                             valid_solutions.append(sol)
@@ -1986,6 +1989,8 @@ def main():
                         help='File with comma-separated GPU IDs, re-read each generation (overrides --gpus)')
     parser.add_argument('--params', type=str, default='480M',
                         help='Target parameter count (e.g., 480M)')
+    parser.add_argument('--param_tolerance', type=float, default=None,
+                        help='Allowed relative parameter-count tolerance (default: env CMAES_PARAM_TOLERANCE or 0.10)')
     parser.add_argument('--output', type=str, default='benchmark_results/cmaes_v2',
                         help='Output directory')
 
@@ -2083,9 +2088,12 @@ def main():
             current = get_available_gpus()
             print(f"Using GPU file: {GPU_FILE} (current GPUs: {current})")
 
-    # Set global compile and sequence settings
+    # Set global compile, sequence, and parameter-window settings
     global COMPILE_ENABLED, COMPILE_MODE, USE_TRITON_E88, CHUNK_SIZE, GRADIENT_CHECKPOINTING, PROJECTION_CHUNK_SIZE
+    global PARAM_TOLERANCE
     global PROGRESSIVE, PHASE1_MINUTES, PHASE2_MINUTES, PHASE2_CHUNK_SIZE
+    if args.param_tolerance is not None:
+        PARAM_TOLERANCE = args.param_tolerance
     COMPILE_ENABLED = args.compile
     COMPILE_MODE = args.compile_mode
     USE_TRITON_E88 = args.use_triton_e88
@@ -2126,6 +2134,7 @@ def main():
     print(f"{'='*70}")
     print(f"Phase: {args.phase}")
     print(f"Target params: {target_params/1e6:.0f}M")
+    print(f"Param tolerance: ±{PARAM_TOLERANCE*100:.1f}%")
     if PROGRESSIVE:
         print(f"Progressive training: Phase 1 = {PHASE1_MINUTES} min @ 512, Phase 2 = {PHASE2_MINUTES} min @ {PHASE2_CHUNK_SIZE}")
         print(f"Effective time per eval: {PHASE1_MINUTES + PHASE2_MINUTES} min")
@@ -2250,13 +2259,13 @@ def main():
         if args.anchor_only_cmaes and anchor_configs:
             top_configs = [
                 anchor for anchor in anchor_configs
-                if is_valid_param_count(anchor, args.model, target_params, 0.10)
+                if is_valid_param_count(anchor, args.model, target_params)
             ]
         else:
             top_configs = [r['params'] for r in lhs_results[:args.cmaes_refinements] if r['loss'] < 100.0]
             top_keys = {config_key(c) for c in top_configs}
             for anchor in anchor_configs:
-                if not is_valid_param_count(anchor, args.model, target_params, 0.10):
+                if not is_valid_param_count(anchor, args.model, target_params):
                     continue
                 key = config_key(anchor)
                 if key not in top_keys:
