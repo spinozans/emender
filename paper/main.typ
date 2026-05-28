@@ -18,7 +18,7 @@ that pure-nonlinear-in-time recurrence cannot reach foundation-model
 scale on competitive wallclock, because it forecloses the time-axis
 parallel scan that linear-recurrent variants depend on for GPU
 throughput. We test this verdict by training three pure-recurrent
-language models in the 1.3 B class under per-architecture
+language models in the 1.3 B-class under per-architecture
 CMA-ES hyperparameter search (cohort band, not equal exact size: E88
 1.273 B, M²RNN-CMA 1.307 B, GDN 1.352 B): two with nonlinear time recurrence,
 *the Emender* (delta-correcting update $S <- tanh(d S + k("silu"(v) - S^T k)^T)$)
@@ -329,7 +329,7 @@ the same loss-vs-wallclock band; M²RNN-CMA reaches the same sub-1-bpb
 regime but trails across the sampled window. *Nonlinearity in time is
 not a cost.* The status-quo verdict that PNR language models cannot
 reach this regime without a time-axis parallelisation trick or
-attention hybridisation is, at minimum in the 1.3 B class on The Pile
+attention hybridisation is, at minimum in the 1.3 B-class on The Pile
 under matched wallclock, not supported by the data. Within the PNR
 class, the Emender trains consistently ahead of M²RNN-CMA across the
 sampled wallclock window.
