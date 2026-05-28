@@ -83,7 +83,7 @@ def load(path: Path):
 
 def main():
     fig, (axA, axB) = plt.subplots(
-        1, 2, figsize=(13.5, 5.4), gridspec_kw={"width_ratios": [1.25, 1.0]}
+        1, 2, figsize=(13.5, 4.9), gridspec_kw={"width_ratios": [1.0, 1.22]}
     )
 
     data = {name: load(FILES[name]) for name in ORDER}
