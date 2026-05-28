@@ -95,7 +95,7 @@ CMA-ES configs, and the Triton kernel released.
     recurrent baseline at this scale and training window;
     M²RNN-CMA, a raw-write baseline reshaped under the same protocol,
     also reaches sub-1-bpb but trails E88 across the sampled window.
-    At parameter-matched 8M scale the Emender
+    At parameter-matched 8 M scale the Emender
     reaches 0.79 accuracy on the $S_5$ word problem against 0.36 for
     Gated DeltaNet and 0.22 for the raw-write baseline. We provide the
     models, code, and an account of how the search for fair
@@ -196,13 +196,14 @@ tracker, the canonical NC#super[1] witness. The empirical work is a
 separate trainability question: the Lean results establish realisability
 and representational scope, while the $S_5$/$S_3$ probes and the 1.3 B
 racer measure what SGD actually finds under the stated protocols.
-The 8 M-parameter Emender reaches 0.79 accuracy on $S_5$ against 0.36
-for Gated DeltaNet and 0.22 for the raw-write baseline. The 1.3 B
+At parameter-matched 8 M scale the Emender reaches 0.79 accuracy on the
+$S_5$ word problem against 0.36 for Gated DeltaNet and 0.22 for the
+raw-write baseline. The 1.3 B
 Emender reaches 0.979 bits per byte on The Pile, inside the same
 wallclock band as Gated DeltaNet at 0.975.
 Throughput at width comes from 22,200 small recurrent programs per
-token. The lever for scaling serial recurrence is parallelism within
-each time step, not across it.
+token. The lever for scaling serial nonlinear recurrence is parallelism
+within each time step, not across it.
 
 #heading(level: 2, numbering: none)[Delta correction is one response; hybrids are another]
 
@@ -230,9 +231,7 @@ conditioning). The PNR arena is where the contrast is cleanest (a
 delta-vs-raw-write contrast at matched per-token FLOP class, §7),
 where the Lean 4 separation theorems are tractable (sets C and C′),
 and where the scaling demonstration leaves no architectural escape
-hatch from the recurrent state. Delta correction generalises to
-hybrid recurrent layers wherever a matrix state and a corrective
-write make sense.
+hatch from the recurrent state.
 
 The two recent attempts to scale nonlinear recurrence each took a
 different concession. M²RNN @m2rnn2026 trains nonlinear matrix-state
@@ -274,9 +273,7 @@ technique not bound to that arena.
   orthonormal keys this gives exact overwrite at one slot while
   preserving the others; with arbitrary keys it gives bounded
   error-correcting binding (§3, Theorem sets C and C′ in §7).
-  Delta correction is well-defined wherever a matrix-state recurrent
-  layer is; the PNR demonstration here is the cleanest comparison
-  setting, not the technique's scope.
+  Scope: §1 "Delta correction is one response".
 
 + *Gating, with the ablation that says it matters.* Earlier
   non-gated 'E-version' prototypes (the E63–E75 lineage; Appendix) were
@@ -326,8 +323,10 @@ on The Pile @thepile2020 and received per-architecture CMA-ES
 when limits were hit, so every architecture was evaluated under its
 best-effort configuration at matched search effort. E88 and GDN land in
 the same loss-vs-wallclock band; M²RNN-CMA reaches the same sub-1-bpb
-regime but trails across the sampled window. *Nonlinearity in time is
-not a cost.* The status-quo verdict that PNR language models cannot
+regime but trails across the sampled window.
+*At this scale and training extent, nonlinearity in time is not the
+wallclock barrier it was assumed to be.*
+The status-quo verdict that PNR language models cannot
 reach this regime without a time-axis parallelisation trick or
 attention hybridisation is, at minimum in the 1.3 B-class on The Pile
 under matched wallclock, not supported by the data. Within the PNR
@@ -772,9 +771,9 @@ per-step map at the same matrix-state signature, but it need not be
 associative-scan or chunkwise-WY compatible. The cost is per-head
 sequential time, most exposed at sufficiently long sequence lengths;
 the gain is that nonlinear recurrence runs at full GPU utilisation.
-The recipe gives bounded update-rule freedom: both PNR instances
-trained here (the Emender and M²RNN-CMA) satisfy the same
-multi-programming predicate at 1.3 B
+The recipe is update-rule-agnostic: both PNR instances trained here
+(the Emender and M²RNN-CMA) satisfy the same multi-programming
+predicate at 1.3 B
 (`RecurrentResourceFormalism.multiProgrammed_admits_m2rnn_and_emender`,
 §7).
 
