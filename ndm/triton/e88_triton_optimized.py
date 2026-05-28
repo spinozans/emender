@@ -35,6 +35,9 @@ def e88_triton_optimized_apply(
     normalize_kq: bool = False,
     checkpoint_interval: int = 16,  # ignored — Triton stores all checkpoints
     apply_silu_qkv: bool = False,
+    raw_write: bool = False,
+    erase_gate: torch.Tensor = None,
+    value_write_gate: torch.Tensor = None,
 ) -> Tuple[torch.Tensor, torch.Tensor]:
     """Triton-backed E88 recurrence with optional pre-norm and post-gate.
 
@@ -65,6 +68,8 @@ def e88_triton_optimized_apply(
     v_t = v.transpose(0, 1)
     q_t = q.transpose(0, 1)
     decay_t = decay.transpose(0, 1)
+    erase_t = erase_gate.transpose(0, 1) if erase_gate is not None else None
+    value_write_t = value_write_gate.transpose(0, 1) if value_write_gate is not None else None
     if S0 is None:
         S0 = torch.zeros(
             (B, H, N, Vsz), dtype=k.dtype, device=k.device,
@@ -83,12 +88,18 @@ def e88_triton_optimized_apply(
         out_t, S_final = e88_triton(
             S0, k_t, v_t, q_t, decay_t, g_t, normalize_kq=normalize_kq,
             apply_silu_qkv=apply_silu_qkv,
+            raw_write=raw_write,
+            erase_gate=erase_t,
+            value_write_gate=value_write_t,
         )
         output = out_t.transpose(0, 1)
     else:
         out_t, S_final = e88_triton(
             S0, k_t, v_t, q_t, decay_t, None, normalize_kq=normalize_kq,
             apply_silu_qkv=apply_silu_qkv,
+            raw_write=raw_write,
+            erase_gate=erase_t,
+            value_write_gate=value_write_t,
         )
         output = out_t.transpose(0, 1)
 

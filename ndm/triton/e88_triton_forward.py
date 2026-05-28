@@ -81,6 +81,8 @@ def _e88_forward_kernel(
     D_ptr,            # [T, B, H]
     S0_ptr,           # [B, H, N, V]
     G_ptr,            # [T, B, H, V] gate (used iff APPLY_GATE)
+    E_ptr,            # [T, B, H, N] erase/read gate (used iff SPLIT_EDIT)
+    W_ptr,            # [T, B, H, V] value write gate (used iff SPLIT_EDIT)
     # Outputs
     Out_ptr,          # [T, B, H, V]
     Sfinal_ptr,       # [B, H, N, V]
@@ -95,6 +97,8 @@ def _e88_forward_kernel(
     sd_t, sd_b, sd_h,
     s0_b, s0_h, s0_n, s0_v,
     sg_t, sg_b, sg_h, sg_v,  # gate strides (zero/dummy when APPLY_GATE=False)
+    se_t, se_b, se_h, se_n,  # erase/read gate strides (zero/dummy when SPLIT_EDIT=False)
+    sw_t, sw_b, sw_h, sw_v,  # value write gate strides (zero/dummy when SPLIT_EDIT=False)
     so_t, so_b, so_h, so_v,
     sf_b, sf_h, sf_n, sf_v,
     sc_t, sc_b, sc_h, sc_n, sc_v,
@@ -107,6 +111,8 @@ def _e88_forward_kernel(
     APPLY_GATE: tl.constexpr,  # if True, output = silu(g) * S^T@q
     NORMALIZE_KQ: tl.constexpr,  # if True, L2-normalize k and q on load (per head, last dim)
     APPLY_SILU_QKV: tl.constexpr,  # if True, apply silu to raw q/k/v projection loads
+    RAW_WRITE: tl.constexpr,  # if True, ablate delta correction: delta = v
+    SPLIT_EDIT: tl.constexpr,  # if True, use E97 b/w edit gates
 ):
     """One program per (batch, head_block). Sequential time loop."""
     # 2D launch grid: (B, ceil(H / BLOCK_H))
@@ -198,9 +204,31 @@ def _e88_forward_kernel(
             k_vec = k_vec * inv_k_norm[:, None]
             q_vec = q_vec * inv_q_norm[:, None]
 
-        # Retrieve: r[h, v] = sum_n S[h, n, v] * k[h, n]   (reduce over N axis=1)
-        retrieved = tl.sum(S * k_vec[:, :, None], axis=1)   # [BH, BV]
-        delta = v_vec - retrieved                           # [BH, BV]
+        if SPLIT_EDIT:
+            e_off = (
+                t_i64 * se_t + b * se_b
+                + h_idx[:, None] * se_h
+                + n_idx[None, :] * se_n
+            )
+            w_off = (
+                t_i64 * sw_t + b * sw_b
+                + h_idx[:, None] * sw_h
+                + v_idx[None, :] * sw_v
+            )
+            e_vec = tl.load(E_ptr + e_off, mask=mask_hn, other=0.0).to(tl.float32)
+            w_vec = tl.load(W_ptr + w_off, mask=mask_hv, other=0.0).to(tl.float32)
+            read_key = k_vec * e_vec
+            write_value = v_vec * w_vec
+        else:
+            read_key = k_vec
+            write_value = v_vec
+
+        # Retrieve: r[h, v] = sum_n S[h, n, v] * read_key[h, n]
+        if RAW_WRITE:
+            delta = write_value
+        else:
+            retrieved = tl.sum(S * read_key[:, :, None], axis=1)   # [BH, BV]
+            delta = write_value - retrieved                        # [BH, BV]
 
         # Update: S = tanh(decay * S + outer(k, delta))
         outer = k_vec[:, :, None] * delta[:, None, :]       # [BH, BN, BV]
@@ -291,7 +319,20 @@ def _select_block_h_candidates(N: int, V: int):
     return _BLOCK_H_CANDIDATES  # up to 16 for small (N, V)
 
 
-def _autotune_kernel(launch_args, B, T, H, N, Vsz, dtype, ckpt_interval, normalize_kq, apply_silu_qkv):
+def _autotune_kernel(
+    launch_args,
+    B,
+    T,
+    H,
+    N,
+    Vsz,
+    dtype,
+    ckpt_interval,
+    normalize_kq,
+    apply_silu_qkv,
+    raw_write,
+    split_edit,
+):
     """Tiny in-process autotune. Tries (BLOCK_H, num_warps) and caches winner.
 
     Empirically, the "right" num_warps depends on BLOCK_H AND on H itself:
@@ -301,7 +342,10 @@ def _autotune_kernel(launch_args, B, T, H, N, Vsz, dtype, ckpt_interval, normali
     For H < 16 we just default to BLOCK_H=1 (no head-grouping helps when
     there are too few heads to begin with).
     """
-    cache_key = (B, T, H, N, Vsz, str(dtype), ckpt_interval, bool(normalize_kq), bool(apply_silu_qkv))
+    cache_key = (
+        B, T, H, N, Vsz, str(dtype), ckpt_interval, bool(normalize_kq),
+        bool(apply_silu_qkv), bool(raw_write), bool(split_edit),
+    )
     if cache_key in _AUTOTUNE_CACHE:
         return _AUTOTUNE_CACHE[cache_key]
 
@@ -327,7 +371,10 @@ def _autotune_kernel(launch_args, B, T, H, N, Vsz, dtype, ckpt_interval, normali
     best = None
     best_t = float("inf")
 
-    (k_c, v_c, q_c, d_c, s0_c, g_c, apply_gate, out, S_final, S_ckpt, strides) = launch_args
+    (
+        k_c, v_c, q_c, d_c, s0_c, g_c, e_c, w_c, apply_gate, out,
+        S_final, S_ckpt, strides,
+    ) = launch_args
 
     for bh in bh_candidates:
         if bh > H:
@@ -338,7 +385,7 @@ def _autotune_kernel(launch_args, B, T, H, N, Vsz, dtype, ckpt_interval, normali
                 # Warmup
                 for _ in range(3):
                     _e88_forward_kernel[grid](
-                        k_c, v_c, q_c, d_c, s0_c, g_c,
+                        k_c, v_c, q_c, d_c, s0_c, g_c, e_c, w_c,
                         out, S_final, S_ckpt,
                         *strides,
                         T=T, B=B, H=H, N=N, V=Vsz,
@@ -348,6 +395,8 @@ def _autotune_kernel(launch_args, B, T, H, N, Vsz, dtype, ckpt_interval, normali
                         APPLY_GATE=apply_gate,
                         NORMALIZE_KQ=bool(normalize_kq),
                         APPLY_SILU_QKV=bool(apply_silu_qkv),
+                        RAW_WRITE=bool(raw_write),
+                        SPLIT_EDIT=bool(split_edit),
                         num_warps=nw,
                     )
                 torch.cuda.synchronize()
@@ -355,7 +404,7 @@ def _autotune_kernel(launch_args, B, T, H, N, Vsz, dtype, ckpt_interval, normali
                 iters = 5
                 for _ in range(iters):
                     _e88_forward_kernel[grid](
-                        k_c, v_c, q_c, d_c, s0_c, g_c,
+                        k_c, v_c, q_c, d_c, s0_c, g_c, e_c, w_c,
                         out, S_final, S_ckpt,
                         *strides,
                         T=T, B=B, H=H, N=N, V=Vsz,
@@ -365,6 +414,8 @@ def _autotune_kernel(launch_args, B, T, H, N, Vsz, dtype, ckpt_interval, normali
                         APPLY_GATE=apply_gate,
                         NORMALIZE_KQ=bool(normalize_kq),
                         APPLY_SILU_QKV=bool(apply_silu_qkv),
+                        RAW_WRITE=bool(raw_write),
+                        SPLIT_EDIT=bool(split_edit),
                         num_warps=nw,
                     )
                 torch.cuda.synchronize()
@@ -395,6 +446,9 @@ def e88_triton_forward(
     g: torch.Tensor = None,  # [T, B, H, V] gate; if None, no fused gate
     normalize_kq: bool = False,  # if True, kernel L2-normalizes k and q on load
     apply_silu_qkv: bool = False,  # if True, kernel applies silu to raw q/k/v loads
+    raw_write: bool = False,  # if True, use raw v write instead of delta correction
+    erase_gate: torch.Tensor = None,  # [T, B, H, N] E97 read/erase gate
+    value_write_gate: torch.Tensor = None,  # [T, B, H, V] E97 value write gate
 ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     """Run the E88 forward recurrence in Triton.
 
@@ -477,6 +531,24 @@ def e88_triton_forward(
         g_c = k_c  # any valid CUDA tensor
         g_strides = (0, 0, 0, 0)
 
+    split_edit = erase_gate is not None or value_write_gate is not None
+    if split_edit:
+        assert erase_gate is not None and value_write_gate is not None, \
+            "erase_gate and value_write_gate must be provided together"
+        e_c = erase_gate if _strided_ok(erase_gate) else erase_gate.contiguous()
+        w_c = value_write_gate if _strided_ok(value_write_gate) else value_write_gate.contiguous()
+        assert e_c.shape == (T, B, H, N), \
+            f"erase_gate shape must be [T, B, H, N] = {(T, B, H, N)}, got {tuple(e_c.shape)}"
+        assert w_c.shape == (T, B, H, Vsz), \
+            f"value_write_gate shape must be [T, B, H, V] = {(T, B, H, Vsz)}, got {tuple(w_c.shape)}"
+        e_strides = (e_c.stride(0), e_c.stride(1), e_c.stride(2), e_c.stride(3))
+        w_strides = (w_c.stride(0), w_c.stride(1), w_c.stride(2), w_c.stride(3))
+    else:
+        e_c = k_c
+        w_c = v_c
+        e_strides = (0, 0, 0, 0)
+        w_strides = (0, 0, 0, 0)
+
     out_dtype = k_c.dtype
     out = torch.empty((T, B, H, Vsz), dtype=out_dtype, device=k.device)
     S_final = torch.empty_like(s0_c)
@@ -497,6 +569,9 @@ def e88_triton_forward(
         s0_c.stride(0), s0_c.stride(1), s0_c.stride(2), s0_c.stride(3),
         # gate strides
         *g_strides,
+        # split edit gate strides
+        *e_strides,
+        *w_strides,
         # out strides
         out.stride(0), out.stride(1), out.stride(2), out.stride(3),
         # S_final strides
@@ -523,10 +598,13 @@ def e88_triton_forward(
             block_h_chosen = 1
             nw = 1
         else:
-            launch_args = (k_c, v_c, q_c, d_c, s0_c, g_c, apply_gate, out, S_final, S_ckpt, strides)
+            launch_args = (
+                k_c, v_c, q_c, d_c, s0_c, g_c, e_c, w_c, apply_gate,
+                out, S_final, S_ckpt, strides,
+            )
             block_h_chosen, nw = _autotune_kernel(
                 launch_args, B, T, H, N, Vsz, out_dtype, ckpt_interval,
-                normalize_kq, apply_silu_qkv,
+                normalize_kq, apply_silu_qkv, raw_write, split_edit,
             )
     else:
         block_h_chosen = int(block_h)
@@ -535,7 +613,7 @@ def e88_triton_forward(
     grid = (B, (H + block_h_chosen - 1) // block_h_chosen)
 
     _e88_forward_kernel[grid](
-        k_c, v_c, q_c, d_c, s0_c, g_c,
+        k_c, v_c, q_c, d_c, s0_c, g_c, e_c, w_c,
         out, S_final, S_ckpt,
         *strides,
         T=T, B=B, H=H, N=N, V=Vsz,
@@ -545,6 +623,8 @@ def e88_triton_forward(
         APPLY_GATE=apply_gate,
         NORMALIZE_KQ=bool(normalize_kq),
         APPLY_SILU_QKV=bool(apply_silu_qkv),
+        RAW_WRITE=bool(raw_write),
+        SPLIT_EDIT=bool(split_edit),
         num_warps=nw,
     )
     return out, S_final, S_ckpt
@@ -561,6 +641,9 @@ def e88_torch_reference(
     q: torch.Tensor,
     decay: torch.Tensor,
     linear_state: bool = False,
+    raw_write: bool = False,
+    erase_gate: torch.Tensor = None,
+    value_write_gate: torch.Tensor = None,
 ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     """Pure-PyTorch reference for parity testing.
 
@@ -602,9 +685,21 @@ def e88_torch_reference(
         v_t = v[t].to(torch.float32)        # [B, H, V]
         d_t = decay[t].to(torch.float32).unsqueeze(-1).unsqueeze(-1)  # [B, H, 1, 1]
 
-        # retrieve: S [B,H,N,V], k_t [B,H,N] -> [B, H, V]
-        retrieved = torch.einsum('bhnv,bhn->bhv', S, k_t)
-        delta = v_t - retrieved
+        if erase_gate is not None or value_write_gate is not None:
+            if erase_gate is None or value_write_gate is None:
+                raise ValueError("erase_gate and value_write_gate must be provided together")
+            read_key = k_t * erase_gate[t].to(torch.float32)
+            write_value = v_t * value_write_gate[t].to(torch.float32)
+        else:
+            read_key = k_t
+            write_value = v_t
+
+        # retrieve: S [B,H,N,V], read_key [B,H,N] -> [B, H, V]
+        if raw_write:
+            delta = write_value
+        else:
+            retrieved = torch.einsum('bhnv,bhn->bhv', S, read_key)
+            delta = write_value - retrieved
 
         outer = torch.einsum('bhn,bhv->bhnv', k_t, delta)
 

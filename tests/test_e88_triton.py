@@ -70,3 +70,80 @@ def test_e88_triton_backward_matches_reference():
 
     for grad_tri, grad_ref in zip(grads_tri, grads_ref):
         torch.testing.assert_close(grad_tri, grad_ref, rtol=5e-3, atol=2e-3)
+
+
+def test_e88_triton_raw_write_matches_reference():
+    tri_inputs = _inputs(seed=4, requires_grad=True)
+    ref_inputs = tuple(t.detach().clone().requires_grad_(True) for t in tri_inputs)
+
+    out_tri, S_tri = e88_triton(*tri_inputs, raw_write=True)
+    out_ref, S_ref, _ = e88_torch_reference(*ref_inputs, raw_write=True)
+
+    torch.testing.assert_close(out_tri, out_ref, rtol=2e-4, atol=2e-4)
+    torch.testing.assert_close(S_tri, S_ref, rtol=2e-4, atol=2e-4)
+
+    loss_tri = out_tri.float().square().mean() + 0.3 * S_tri.float().square().mean()
+    loss_ref = out_ref.float().square().mean() + 0.3 * S_ref.float().square().mean()
+
+    grads_tri = torch.autograd.grad(loss_tri, tri_inputs)
+    grads_ref = torch.autograd.grad(loss_ref, ref_inputs)
+
+    for grad_tri, grad_ref in zip(grads_tri, grads_ref):
+        torch.testing.assert_close(grad_tri, grad_ref, rtol=5e-3, atol=2e-3)
+
+
+def test_e97_split_edit_triton_matches_reference():
+    tri_base = _inputs(seed=5, requires_grad=True)
+    ref_base = tuple(t.detach().clone().requires_grad_(True) for t in tri_base)
+    S0, k, v, q, decay = tri_base
+    S0_ref, k_ref, v_ref, q_ref, decay_ref = ref_base
+
+    torch.manual_seed(55)
+    gate = (0.20 * torch.randn_like(v)).requires_grad_(True)
+    erase_gate = torch.sigmoid(0.20 * torch.randn_like(k)).detach().requires_grad_(True)
+    value_write_gate = torch.sigmoid(0.20 * torch.randn_like(v)).detach().requires_grad_(True)
+
+    gate_ref = gate.detach().clone().requires_grad_(True)
+    erase_ref = erase_gate.detach().clone().requires_grad_(True)
+    value_write_ref = value_write_gate.detach().clone().requires_grad_(True)
+
+    out_tri, S_tri = e88_triton(
+        S0, k, v, q, decay,
+        g=gate,
+        normalize_kq=True,
+        apply_silu_qkv=True,
+        erase_gate=erase_gate,
+        value_write_gate=value_write_gate,
+    )
+
+    k_ref_base = F.silu(k_ref)
+    q_ref_base = F.silu(q_ref)
+    v_ref_base = F.silu(v_ref)
+    out_ref, S_ref, _ = e88_torch_reference(
+        S0_ref,
+        _l2(k_ref_base),
+        v_ref_base,
+        _l2(q_ref_base),
+        decay_ref,
+        erase_gate=erase_ref,
+        value_write_gate=value_write_ref,
+    )
+    out_ref = F.silu(gate_ref) * out_ref
+
+    torch.testing.assert_close(out_tri, out_ref, rtol=4e-4, atol=4e-4)
+    torch.testing.assert_close(S_tri, S_ref, rtol=4e-4, atol=4e-4)
+
+    loss_tri = out_tri.float().square().mean() + 0.3 * S_tri.float().square().mean()
+    loss_ref = out_ref.float().square().mean() + 0.3 * S_ref.float().square().mean()
+
+    grads_tri = torch.autograd.grad(
+        loss_tri,
+        tri_base + (gate, erase_gate, value_write_gate),
+    )
+    grads_ref = torch.autograd.grad(
+        loss_ref,
+        ref_base + (gate_ref, erase_ref, value_write_ref),
+    )
+
+    for grad_tri, grad_ref in zip(grads_tri, grads_ref):
+        torch.testing.assert_close(grad_tri, grad_ref, rtol=6e-3, atol=3e-3)

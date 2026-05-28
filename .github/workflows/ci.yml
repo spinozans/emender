@@ -16,16 +16,16 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
-          cache: pip
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
       - name: Install package
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install -e ".[dev,eval]"
+        run: uv sync --locked --extra dev --extra eval
       - name: Syntax check
         run: |
-          python -m py_compile train.py scripts/*.py ndm/triton/*.py ndm/models/e88_fused.py ndm/models/e88_fla_hybrid.py ndm/models/m2rnn_baseline.py ndm/models/mamba2_baseline.py ndm/models/fla_gated_delta.py
+          uv run python -m py_compile train.py scripts/*.py ndm/triton/*.py ndm/models/e88_fused.py ndm/models/e88_fla_hybrid.py ndm/models/m2rnn_baseline.py ndm/models/mamba2_baseline.py ndm/models/fla_gated_delta.py
       - name: Unit smoke
-        run: python -m pytest tests -m "not gpu"
+        run: uv run python -m pytest tests -m "not gpu"
 
   typst:
     name: Typst paper build

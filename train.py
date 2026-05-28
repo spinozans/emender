@@ -126,6 +126,8 @@ def parse_args():
                         help='For M2RNN: keep recurrent state_weight fixed at identity')
     parser.add_argument('--m2rnn_state_grad_clip', type=float, default=None,
                         help='For M2RNN/XMA: clip recurrent state gradients inside the custom op')
+    parser.add_argument('--require_m2rnn_xma', action='store_true',
+                        help='Fail if --level m2rnn runs on CUDA without the XMA Triton backend')
     parser.add_argument('--hybrid_pattern', type=str, default=None,
                         help='For --level hybrid: comma-separated layer pattern, '
                              'e.g. fla-gdn,fla-gdn,fla-gdn,m2rnn-paper')
@@ -152,6 +154,8 @@ def parse_args():
                         help='E88 decay mode: mamba=input-dependent exponential, simple=sigmoid, none=1, constant=learned per-head constant')
     parser.add_argument('--e88_value_residual', type=int, default=0,
                         help='Add direct D*v value residual to E88 output before output gating (0=no, 1=yes)')
+    parser.add_argument('--e88_raw_write', type=int, default=0,
+                        help='Ablate E88 delta correction: write raw v instead of v - S^T k')
     parser.add_argument('--r_h_mode', type=str, default='auto',
                         help='W_h constraint mode (spectral_norm, learned, none, auto)')
     # auto: spectral_norm for models with full W_h (1,33,42,51,52,53,56), none for diagonal/scalar
@@ -441,7 +445,17 @@ def train(args):
         )
     elif args.level == 'm2rnn':
         # M2RNN baseline: nonlinear matrix-to-matrix RNN with matrix-valued state.
-        from ndm.models.m2rnn_baseline import M2RNNLM, create_m2rnn_model
+        from ndm.models.m2rnn_baseline import (
+            M2RNNLM,
+            XMA_M2RNN_AVAILABLE,
+            create_m2rnn_model,
+        )
+        print(f"M2RNN XMA Triton backend: {XMA_M2RNN_AVAILABLE}")
+        if args.require_m2rnn_xma and device.type == 'cuda' and not XMA_M2RNN_AVAILABLE:
+            raise RuntimeError(
+                "M2RNN XMA backend is required but unavailable. "
+                "Set XMA_PATH=/home/erikg/xma or pass a valid XMA checkout."
+            )
         if args.dim is not None and args.depth is not None:
             model = M2RNNLM(
                 vocab_size=vocab_size,
@@ -616,6 +630,7 @@ def train(args):
             use_write_gate=bool(args.use_write_gate),
             e88_decay_mode=args.e88_decay_mode,
             e88_value_residual=bool(args.e88_value_residual),
+            e88_raw_write=bool(args.e88_raw_write),
             state_expansion=args.state_expansion,
             r_h_mode=r_h_mode,
             use_conv=bool(args.use_conv),

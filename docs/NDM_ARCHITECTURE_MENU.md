@@ -150,6 +150,10 @@ First test should not be full input-dependent write gating. A scalar write scale
 is cheaper and tells us whether write amplitude is miscalibrated. Full beta
 gating is more expressive but can suppress memory and complicate kernels.
 
+GDN-2 suggests a stronger variant than the current scalar write-gate ablation:
+split the edit into a key-axis erase/read gate and a value-axis write gate.
+That candidate is tracked as E97 in `docs/GDN2_E97_NOTES.md`.
+
 ### Output Path
 
 Current:

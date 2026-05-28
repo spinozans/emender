@@ -839,6 +839,8 @@ class E88FLAHybrid(nn.Module):
         linear_state: bool = False,  # Set True to use linear state update (no tanh)
         use_gate: bool = False,  # E88 optimal: no output gating (gating hurts E88)
         use_write_gate: bool = False,  # Set True to gate the delta write (like FLA-GDN beta)
+        raw_write: bool = False,  # Set True to ablate delta correction: write v instead of v - S@k
+        use_split_edit: bool = False,  # E97: separate key-axis erase/read and value-axis write gates
         simple_decay: bool = False,  # Set True to use simple sigmoid decay instead of Mamba2
         decay_mode: str = 'mamba',  # mamba, simple, none, or constant
         use_value_residual: bool = False,  # Add direct D*v residual before output gating
@@ -879,6 +881,8 @@ class E88FLAHybrid(nn.Module):
         self.linear_state = linear_state
         self.use_gate = use_gate
         self.use_write_gate = use_write_gate
+        self.raw_write = raw_write
+        self.use_split_edit = use_split_edit
         self.use_value_residual = use_value_residual
         self.gate_activation = gate_activation
         self.decay_mode = decay_mode
@@ -995,6 +999,16 @@ class E88FLAHybrid(nn.Module):
             self.write_gate_proj = nn.Linear(dim, n_heads, bias=False)
         else:
             self.write_gate_proj = None
+
+        # === Split edit gates (E97) ===
+        # GDN-2-inspired decoupling: read/erase uses b_t * k_t while write
+        # target uses w_t * v_t. The outer-product key remains k_t.
+        if use_split_edit:
+            self.erase_gate_proj = nn.Linear(dim, self.key_dim, bias=False)
+            self.value_write_gate_proj = nn.Linear(dim, self.value_dim, bias=False)
+        else:
+            self.erase_gate_proj = None
+            self.value_write_gate_proj = None
 
         # === Output projection (depends on head_mix strategy) ===
         if head_mix == 'concat':
@@ -1220,6 +1234,7 @@ class E88FLAHybrid(nn.Module):
                 self.training, k, v, q, decay, g, S_prev,
                 self.n_heads, True, use_fused_l2, self.checkpoint_interval,
                 apply_silu_qkv=qkv_silu_in_kernel,
+                raw_write=self.raw_write,
             )
         else:
             S_new, output = E88OptimizedCUDAFunction.apply(
@@ -1246,6 +1261,8 @@ class E88FLAHybrid(nn.Module):
         B, T, D = x.shape
         n = self.n_state
         H = self.n_heads
+        erase_gate = None
+        value_write_gate = None
 
         # === Check if we can use fused projection CUDA kernel ===
         # Note: Fused projection is forward-only, use only for inference
@@ -1254,7 +1271,8 @@ class E88FLAHybrid(nn.Module):
             self._use_fused_projection and
             x.is_cuda and
             x.dtype == torch.bfloat16 and
-            not self.training  # Only use for inference - no gradients
+            not self.training and  # Only use for inference - no gradients
+            not self.use_split_edit
         )
 
         if use_fused_proj:
@@ -1289,7 +1307,7 @@ class E88FLAHybrid(nn.Module):
             # When chunking, we skip full-T projections entirely (computed per-chunk instead)
             _use_optimized = (
                 USE_OPTIMIZED_KERNELS and
-                E88_OPTIMIZED_AVAILABLE and
+                (E88_OPTIMIZED_AVAILABLE or self.use_triton) and
                 x.is_cuda and
                 x.dtype == torch.bfloat16 and
                 self.training and
@@ -1298,13 +1316,16 @@ class E88FLAHybrid(nn.Module):
                 self.gate_activation == 'silu' and
                 not self.use_output_norm and
                 not self._use_fused_norm_gate and
-                not self.use_write_gate
+                not self.use_write_gate and
+                (not self.use_split_edit or self.use_triton) and
+                (not self.raw_write or self.use_triton)
             )
             _will_chunk = (
                 _use_optimized and
                 self.projection_chunk_size > 0 and
                 T > self.projection_chunk_size and
-                not self.use_conv
+                not self.use_conv and
+                not self.use_split_edit
             )
 
             if not _will_chunk:
@@ -1381,6 +1402,12 @@ class E88FLAHybrid(nn.Module):
                 else:
                     write_beta = None
 
+                if self.use_split_edit:
+                    erase_gate = torch.sigmoid(self.erase_gate_proj(x)).view(B, T, H, n)
+                    value_write_gate = torch.sigmoid(self.value_write_gate_proj(x)).view(
+                        B, T, H, self.head_v_dim
+                    )
+
                 # Reshape for per-head processing
                 # q, k: [B, T, H, n_state]
                 q = q.view(B, T, H, n)
@@ -1414,6 +1441,8 @@ class E88FLAHybrid(nn.Module):
             n == self.head_v_dim and
             not self.use_write_gate and
             not self.use_value_residual
+            and not self.raw_write
+            and not self.use_split_edit
         )
         if use_step_kernel:
             from .e88_step_kernel import e88_step
@@ -1440,12 +1469,14 @@ class E88FLAHybrid(nn.Module):
 
         # === Use CUDA kernel if available ===
         use_cuda = (E88_NATIVE_CUDA_AVAILABLE and x.is_cuda and
-                    x.dtype == torch.bfloat16 and self.training)
+                    x.dtype == torch.bfloat16 and self.training and
+                    not self.raw_write and
+                    not self.use_split_edit)
 
         # Check if we can use optimized kernels with [B, T, H, dim] layout (no transpose)
         use_optimized = (
             USE_OPTIMIZED_KERNELS and
-            E88_OPTIMIZED_AVAILABLE and
+            (E88_OPTIMIZED_AVAILABLE or self.use_triton) and
             x.is_cuda and
             x.dtype == torch.bfloat16 and
             self.training and
@@ -1455,7 +1486,9 @@ class E88FLAHybrid(nn.Module):
             not self.use_output_norm and
             not self._use_fused_norm_gate and
             not self.use_write_gate and  # Optimized kernels don't support write gate yet
-            not self.use_value_residual  # Fused path gates before we can add D*v
+            not self.use_value_residual and  # Fused path gates before we can add D*v
+            (not self.use_split_edit or self.use_triton) and
+            (not self.raw_write or self.use_triton)  # raw-write is implemented in Triton/PyTorch fallback
         )
 
         # Track whether fused gating was used (to skip separate gating later)
@@ -1473,9 +1506,14 @@ class E88FLAHybrid(nn.Module):
                 USE_FUSED_L2_NORM and
                 self.use_l2_norm and
                 not use_fused_proj and
-                (E88_WARP_AVAILABLE or E88_COALESCED_AVAILABLE) and
-                E88_REGISTER_OWNED_AVAILABLE and
-                n <= 32 and self.head_v_dim <= 32  # register-owned backward supports these sizes
+                (
+                    (self.use_triton and n <= 64 and self.head_v_dim <= 64) or
+                    (
+                        (E88_WARP_AVAILABLE or E88_COALESCED_AVAILABLE) and
+                        E88_REGISTER_OWNED_AVAILABLE and
+                        n <= 32 and self.head_v_dim <= 32
+                    )
+                )
             )
 
             # Check if we should use chunked projection recomputation
@@ -1483,7 +1521,8 @@ class E88FLAHybrid(nn.Module):
             can_chunk = (
                 self.projection_chunk_size > 0 and
                 T > self.projection_chunk_size and
-                not self.use_conv  # Conv1d has cross-chunk dependencies
+                not self.use_conv and  # Conv1d has cross-chunk dependencies
+                not self.use_split_edit
             )
 
             if can_chunk:
@@ -1525,6 +1564,10 @@ class E88FLAHybrid(nn.Module):
 
                 # Compute gate projection (kept in [B, T, H, dim] layout)
                 g = self.g_proj(x).view(B, T, H, self.head_v_dim).to(input_dtype)
+                erase_for_kernel = erase_gate.to(input_dtype) if self.use_split_edit else None
+                value_write_for_kernel = (
+                    value_write_gate.to(input_dtype) if self.use_split_edit else None
+                )
 
                 if self.use_triton:
                     from ndm.triton.e88_triton_optimized import e88_triton_optimized_apply
@@ -1534,6 +1577,9 @@ class E88FLAHybrid(nn.Module):
                         g, S0.to(input_dtype), H, True, use_fused_l2,
                         self.checkpoint_interval,
                         apply_silu_qkv=qkv_silu_in_kernel,
+                        raw_write=self.raw_write,
+                        erase_gate=erase_for_kernel,
+                        value_write_gate=value_write_for_kernel,
                     )
                 else:
                     # Call optimized kernel (auto-selects warp vs coalesced based on n_state)
@@ -1636,10 +1682,20 @@ class E88FLAHybrid(nn.Module):
                     k_norm = k_t
                     q_norm = q_t
 
+                if self.use_split_edit:
+                    read_key = k_norm * erase_gate[:, t]
+                    write_value = v_t * value_write_gate[:, t]
+                else:
+                    read_key = k_norm
+                    write_value = v_t
+
                 # Retrieve from memory: einsum over n_state
-                # S: [B, H, n, head_v_dim], k_norm: [B, H, n] -> retrieved: [B, H, head_v_dim]
-                retrieved = torch.einsum('bhiv,bhi->bhv', S, k_norm)
-                delta = v_t - retrieved  # [B, H, head_v_dim]
+                # S: [B, H, n, head_v_dim], read_key: [B, H, n] -> retrieved: [B, H, head_v_dim]
+                if self.raw_write:
+                    delta = write_value  # [B, H, head_v_dim]
+                else:
+                    retrieved = torch.einsum('bhiv,bhi->bhv', S, read_key)
+                    delta = write_value - retrieved  # [B, H, head_v_dim]
 
                 # Outer product: [B, H, n, head_v_dim]
                 outer = torch.einsum('bhv,bhi->bhiv', delta, k_norm)
@@ -1740,6 +1796,10 @@ class E88FLAHybrid(nn.Module):
             ablation_str.append('no_conv')
         if self.linear_state:
             ablation_str.append('linear_state')
+        if self.raw_write:
+            ablation_str.append('raw_write')
+        if self.use_split_edit:
+            ablation_str.append('split_edit')
         if not self.use_gate:
             ablation_str.append('no_gate')
         if self.decay_mode != 'mamba':

@@ -420,6 +420,10 @@ def get_ladder_level(level):
         # with E75's nonlinear matrix state: S = tanh(decay * S + outer(delta, k_norm))
         88: E88FLAHybrid,
         'E88': E88FLAHybrid,
+        # E97: E88/NDM with GDN-2-inspired split edit gates.
+        # Use --use_triton 1 for the split-edit Triton recurrence.
+        'E97': lambda **kw: E88FLAHybrid(**{**kw, 'use_split_edit': True}),
+        97: lambda **kw: E88FLAHybrid(**{**kw, 'use_split_edit': True}),
         'E91': E91MatMat,
         91: E91MatMat,
         'E91r1': lambda **kw: E91MatMat(**{**kw, 'rank': 1}),
@@ -825,6 +829,7 @@ class LadderLM(nn.Module):
         use_write_gate=False,  # For E88 FLA Hybrid: write gate (beta) for delta
         e88_decay_mode='mamba',  # For E88 FLA Hybrid: mamba, simple, none, or constant
         e88_value_residual=False,  # For E88 FLA Hybrid: add D*v residual before output gate
+        e88_raw_write=False,  # For E88 FLA Hybrid: ablate delta correction
         rank=None,
         delta_init=-2.0,
         dropout=0.0,
@@ -859,6 +864,7 @@ class LadderLM(nn.Module):
         self.use_write_gate = use_write_gate
         self.e88_decay_mode = e88_decay_mode
         self.e88_value_residual = e88_value_residual
+        self.e88_raw_write = e88_raw_write
         self.rank = rank
         self.r_h_mode = r_h_mode
         self.use_conv = use_conv
@@ -897,6 +903,7 @@ class LadderLM(nn.Module):
                 use_write_gate=use_write_gate,  # For E88 FLA Hybrid: write gate
                 decay_mode=e88_decay_mode,  # For E88 FLA Hybrid: decay mode
                 use_value_residual=e88_value_residual,  # For E88 FLA Hybrid: D*v residual
+                raw_write=e88_raw_write,  # For E88 FLA Hybrid: raw-write ablation
                 rank=rank,
                 delta_init=delta_init,
                 dropout=dropout,

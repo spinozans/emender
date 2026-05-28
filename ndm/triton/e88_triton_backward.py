@@ -78,6 +78,8 @@ def _e88_backward_kernel(
     D_ptr,              # [T, B, H]
     Sckpt_ptr,          # [num_ckpts, B, H, N, V]  SPARSE
     G_ptr,              # [T, B, H, V] gate (read iff APPLY_GATE)
+    E_ptr,              # [T, B, H, N] erase/read gate (read iff SPLIT_EDIT)
+    W_ptr,              # [T, B, H, V] value write gate (read iff SPLIT_EDIT)
     # Scratch staging buffer (per program × (K+1) × BLOCK_H × N × V, fp32).
     Scratch_ptr,
     # Upstream grads.
@@ -89,6 +91,8 @@ def _e88_backward_kernel(
     DQ_ptr,             # [T, B, H, N]
     DD_ptr,             # [T, B, H]
     DG_ptr,             # [T, B, H, V] (written iff APPLY_GATE)
+    DE_ptr,             # [T, B, H, N] (written iff SPLIT_EDIT)
+    DW_ptr,             # [T, B, H, V] (written iff SPLIT_EDIT)
     DS0_ptr,            # [B, H, N, V]
     # Strides for every tensor (in elements).
     sk_t, sk_b, sk_h, sk_n,
@@ -97,6 +101,8 @@ def _e88_backward_kernel(
     sd_t, sd_b, sd_h,
     sc_t, sc_b, sc_h, sc_n, sc_v,
     sg_t, sg_b, sg_h, sg_v,
+    se_t, se_b, se_h, se_n,
+    sw_t, sw_b, sw_h, sw_v,
     sdo_t, sdo_b, sdo_h, sdo_v,
     sdsf_b, sdsf_h, sdsf_n, sdsf_v,
     sdk_t, sdk_b, sdk_h, sdk_n,
@@ -104,6 +110,8 @@ def _e88_backward_kernel(
     sdq_t, sdq_b, sdq_h, sdq_n,
     sdd_t, sdd_b, sdd_h,
     sdg_t, sdg_b, sdg_h, sdg_v,
+    sde_t, sde_b, sde_h, sde_n,
+    sdw_t, sdw_b, sdw_h, sdw_v,
     sds0_b, sds0_h, sds0_n, sds0_v,
     # Sizes.
     T: tl.constexpr, B: tl.constexpr, H: tl.constexpr,
@@ -115,6 +123,8 @@ def _e88_backward_kernel(
     APPLY_GATE: tl.constexpr,
     NORMALIZE_KQ: tl.constexpr,
     APPLY_SILU_QKV: tl.constexpr,
+    RAW_WRITE: tl.constexpr,
+    SPLIT_EDIT: tl.constexpr,
 ):
     """One program per (batch, head_block). Reverse-segment loop."""
     b = tl.program_id(0).to(tl.int64)
@@ -196,6 +206,16 @@ def _e88_backward_kernel(
                 + h_idx[:, None] * sv_h
                 + v_idx[None, :] * sv_v
             )
+            e_off = (
+                t_i64 * se_t + b * se_b
+                + h_idx[:, None] * se_h
+                + n_idx[None, :] * se_n
+            )
+            w_off = (
+                t_i64 * sw_t + b * sw_b
+                + h_idx[:, None] * sw_h
+                + v_idx[None, :] * sw_v
+            )
             d_off = t_i64 * sd_t + b * sd_b + h_idx * sd_h
 
             k_vec = tl.load(K_ptr + k_off, mask=mask_hn, other=0.0).to(tl.float32)
@@ -212,9 +232,21 @@ def _e88_backward_kernel(
                 inv_k_norm = 1.0 / (tl.sqrt(k_norm_sq) + 1e-6)
                 k_vec = k_vec * inv_k_norm[:, None]
 
-            # retrieve = S^T @ k:  [BH, BV]
-            retrieved = tl.sum(S * k_vec[:, :, None], axis=1)
-            delta = v_vec - retrieved
+            if SPLIT_EDIT:
+                e_vec = tl.load(E_ptr + e_off, mask=mask_hn, other=0.0).to(tl.float32)
+                w_vec = tl.load(W_ptr + w_off, mask=mask_hv, other=0.0).to(tl.float32)
+                read_key = k_vec * e_vec
+                write_value = v_vec * w_vec
+            else:
+                read_key = k_vec
+                write_value = v_vec
+
+            # retrieve = S^T @ read_key:  [BH, BV]
+            if RAW_WRITE:
+                delta = write_value
+            else:
+                retrieved = tl.sum(S * read_key[:, :, None], axis=1)
+                delta = write_value - retrieved
             outer = k_vec[:, :, None] * delta[:, None, :]
             pre = decay_val[:, None, None] * S + outer
             # Match forward's stable tanh path. The raw exp formula can
@@ -253,6 +285,16 @@ def _e88_backward_kernel(
                 t_i64 * sv_t + b * sv_b
                 + h_idx[:, None] * sv_h
                 + v_idx[None, :] * sv_v
+            )
+            e_off = (
+                t_i64 * se_t + b * se_b
+                + h_idx[:, None] * se_h
+                + n_idx[None, :] * se_n
+            )
+            w_off = (
+                t_i64 * sw_t + b * sw_b
+                + h_idx[:, None] * sw_h
+                + v_idx[None, :] * sw_v
             )
             d_off = t_i64 * sd_t + b * sd_b + h_idx * sd_h
 
@@ -336,22 +378,54 @@ def _e88_backward_kernel(
             # d_decay_t = sum_{n,v} d_pre * S_{t-1}
             d_decay = tl.sum(tl.sum(d_pre * S_tm1, axis=2), axis=1)
 
-            # Recompute retrieve_t and delta_t from S_{t-1} and k_t.
-            retrieved = tl.sum(S_tm1 * k_vec[:, :, None], axis=1)
-            delta = v_vec - retrieved
+            if SPLIT_EDIT:
+                e_vec = tl.load(E_ptr + e_off, mask=mask_hn, other=0.0).to(tl.float32)
+                w_vec = tl.load(W_ptr + w_off, mask=mask_hv, other=0.0).to(tl.float32)
+                read_key = k_vec * e_vec
+                write_value = v_vec * w_vec
+            else:
+                read_key = k_vec
+                write_value = v_vec
+
+            # Recompute delta_t from S_{t-1} and read_key unless this is the
+            # raw-write ablation, where the write value is used directly.
+            if RAW_WRITE:
+                delta = write_value
+            else:
+                retrieved = tl.sum(S_tm1 * read_key[:, :, None], axis=1)
+                delta = write_value - retrieved
 
             # outer[n,v] = k[n] * delta[v]
             d_k_outer = tl.sum(d_pre * delta[:, None, :], axis=2)
             d_delta = tl.sum(d_pre * k_vec[:, :, None], axis=1)
 
-            d_v = d_delta
-            d_k_retrieve = -tl.sum(S_tm1 * d_delta[:, None, :], axis=2)
-            d_k = d_k_outer + d_k_retrieve
+            if SPLIT_EDIT:
+                d_v = d_delta * w_vec
+                d_w = d_delta * v_vec
+            else:
+                d_v = d_delta
+                d_w = tl.zeros((BLOCK_H, BLOCK_V), dtype=tl.float32)
 
-            dS_carry = (
-                decay_val[:, None, None] * d_pre
-                - k_vec[:, :, None] * d_delta[:, None, :]
-            )
+            if RAW_WRITE:
+                d_k = d_k_outer
+                d_e = tl.zeros((BLOCK_H, BLOCK_N), dtype=tl.float32)
+            else:
+                d_read_key = -tl.sum(S_tm1 * d_delta[:, None, :], axis=2)
+                if SPLIT_EDIT:
+                    d_e = d_read_key * k_vec
+                    d_k_retrieve = d_read_key * e_vec
+                else:
+                    d_e = tl.zeros((BLOCK_H, BLOCK_N), dtype=tl.float32)
+                    d_k_retrieve = d_read_key
+                d_k = d_k_outer + d_k_retrieve
+
+            if RAW_WRITE:
+                dS_carry = decay_val[:, None, None] * d_pre
+            else:
+                dS_carry = (
+                    decay_val[:, None, None] * d_pre
+                    - read_key[:, :, None] * d_delta[:, None, :]
+                )
 
             # If kernel-fused L2 norm: convert d_k_norm -> d_k_raw and
             # d_q_norm -> d_q_raw via the standard L2-norm chain rule:
@@ -393,6 +467,19 @@ def _e88_backward_kernel(
             tl.store(DV_ptr + dv_off, d_v.to(DV_ptr.dtype.element_ty), mask=mask_hv)
             tl.store(DQ_ptr + dq_off, d_q.to(DQ_ptr.dtype.element_ty), mask=mask_hn)
             tl.store(DD_ptr + dd_off, d_decay.to(DD_ptr.dtype.element_ty), mask=h_mask)
+            if SPLIT_EDIT:
+                de_off = (
+                    t_i64 * sde_t + b * sde_b
+                    + h_idx[:, None] * sde_h
+                    + n_idx[None, :] * sde_n
+                )
+                dw_off = (
+                    t_i64 * sdw_t + b * sdw_b
+                    + h_idx[:, None] * sdw_h
+                    + v_idx[None, :] * sdw_v
+                )
+                tl.store(DE_ptr + de_off, d_e.to(DE_ptr.dtype.element_ty), mask=mask_hn)
+                tl.store(DW_ptr + dw_off, d_w.to(DW_ptr.dtype.element_ty), mask=mask_hv)
 
     # Write d_S0 = remaining carry.
     ds0_off = (
@@ -429,6 +516,9 @@ def e88_triton_backward(
     g: torch.Tensor = None,  # [T, B, H, V] gate; if None, no fused-gate handling
     normalize_kq: bool = False,
     apply_silu_qkv: bool = False,
+    raw_write: bool = False,
+    erase_gate: torch.Tensor = None,
+    value_write_gate: torch.Tensor = None,
 ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
     """Run the E88 backward recurrence in Triton.
 
@@ -513,6 +603,35 @@ def e88_triton_backward(
         d_g = k_c  # same dummy
         dg_strides = (0, 0, 0, 0)
 
+    split_edit = erase_gate is not None or value_write_gate is not None
+    if split_edit:
+        assert erase_gate is not None and value_write_gate is not None, \
+            "erase_gate and value_write_gate must be provided together"
+        e_c = erase_gate if _strided_ok(erase_gate) else erase_gate.contiguous()
+        w_c = value_write_gate if _strided_ok(value_write_gate) else value_write_gate.contiguous()
+        assert e_c.shape == (T, B, H, N), \
+            f"erase_gate shape must be [T, B, H, N] = {(T, B, H, N)}, got {tuple(e_c.shape)}"
+        assert w_c.shape == (T, B, H, Vsz), \
+            f"value_write_gate shape must be [T, B, H, V] = {(T, B, H, Vsz)}, got {tuple(w_c.shape)}"
+        e_strides = (e_c.stride(0), e_c.stride(1), e_c.stride(2), e_c.stride(3))
+        w_strides = (w_c.stride(0), w_c.stride(1), w_c.stride(2), w_c.stride(3))
+        d_erase = torch.empty_like(e_c)
+        d_value_write = torch.empty_like(w_c)
+        de_strides = (d_erase.stride(0), d_erase.stride(1), d_erase.stride(2), d_erase.stride(3))
+        dw_strides = (
+            d_value_write.stride(0), d_value_write.stride(1),
+            d_value_write.stride(2), d_value_write.stride(3),
+        )
+    else:
+        e_c = k_c
+        w_c = v_c
+        e_strides = (0, 0, 0, 0)
+        w_strides = (0, 0, 0, 0)
+        d_erase = k_c
+        d_value_write = v_c
+        de_strides = (0, 0, 0, 0)
+        dw_strides = (0, 0, 0, 0)
+
     out_dtype = k_c.dtype
     d_k = torch.empty_like(k_c)
     d_v = torch.empty_like(v_c)
@@ -563,10 +682,10 @@ def e88_triton_backward(
     seg_scratch = torch.empty(scratch_numel, dtype=k.dtype, device=k.device)
 
     _e88_backward_kernel[grid](
-        k_c, v_c, q_c, d_c, sc_c, g_c,
+        k_c, v_c, q_c, d_c, sc_c, g_c, e_c, w_c,
         seg_scratch,
         do_c, dsf_c,
-        d_k, d_v, d_q, d_decay, d_g, d_S0,
+        d_k, d_v, d_q, d_decay, d_g, d_erase, d_value_write, d_S0,
         # strides
         k_c.stride(0), k_c.stride(1), k_c.stride(2), k_c.stride(3),
         v_c.stride(0), v_c.stride(1), v_c.stride(2), v_c.stride(3),
@@ -575,6 +694,8 @@ def e88_triton_backward(
         sc_c.stride(0), sc_c.stride(1), sc_c.stride(2),
         sc_c.stride(3), sc_c.stride(4),
         *g_strides,
+        *e_strides,
+        *w_strides,
         do_c.stride(0), do_c.stride(1), do_c.stride(2), do_c.stride(3),
         dsf_c.stride(0), dsf_c.stride(1), dsf_c.stride(2), dsf_c.stride(3),
         d_k.stride(0), d_k.stride(1), d_k.stride(2), d_k.stride(3),
@@ -582,6 +703,8 @@ def e88_triton_backward(
         d_q.stride(0), d_q.stride(1), d_q.stride(2), d_q.stride(3),
         d_decay.stride(0), d_decay.stride(1), d_decay.stride(2),
         *dg_strides,
+        *de_strides,
+        *dw_strides,
         d_S0.stride(0), d_S0.stride(1), d_S0.stride(2), d_S0.stride(3),
         T=T, B=B, H=H, N=N, V=Vsz,
         BLOCK_N=BLOCK_N, BLOCK_V=BLOCK_V,
@@ -591,11 +714,17 @@ def e88_triton_backward(
         APPLY_GATE=apply_gate,
         NORMALIZE_KQ=bool(normalize_kq),
         APPLY_SILU_QKV=bool(apply_silu_qkv),
+        RAW_WRITE=bool(raw_write),
+        SPLIT_EDIT=bool(split_edit),
         num_warps=num_warps,
     )
 
-    if apply_gate:
+    if apply_gate and split_edit:
+        return d_k, d_v, d_q, d_decay, d_g, d_erase, d_value_write, d_S0
+    elif apply_gate:
         return d_k, d_v, d_q, d_decay, d_g, d_S0
+    elif split_edit:
+        return d_k, d_v, d_q, d_decay, d_erase, d_value_write, d_S0
     else:
         return d_k, d_v, d_q, d_decay, d_S0
 
@@ -617,20 +746,42 @@ class E88TritonFunction(torch.autograd.Function):
     """
 
     @staticmethod
-    def forward(ctx, S0, k, v, q, decay, g=None, normalize_kq=False, apply_silu_qkv=False):
+    def forward(
+        ctx,
+        S0,
+        k,
+        v,
+        q,
+        decay,
+        g=None,
+        normalize_kq=False,
+        apply_silu_qkv=False,
+        raw_write=False,
+        erase_gate=None,
+        value_write_gate=None,
+    ):
         from ndm.triton.e88_triton_forward import e88_triton_forward
         out, S_final, S_ckpt = e88_triton_forward(
             S0, k, v, q, decay, g=g, normalize_kq=normalize_kq,
-            apply_silu_qkv=apply_silu_qkv,
+            apply_silu_qkv=apply_silu_qkv, raw_write=raw_write,
+            erase_gate=erase_gate, value_write_gate=value_write_gate,
         )
         ctx.normalize_kq = bool(normalize_kq)
         ctx.apply_silu_qkv = bool(apply_silu_qkv)
+        ctx.raw_write = bool(raw_write)
+        ctx.has_split_edit = erase_gate is not None or value_write_gate is not None
         # Save for backward. Note: S0 isn't strictly required (it equals
         # S_ckpt[0]), but saving it is cheap and explicit. We must save
         # g if present because backward needs it for d_g and to scale d_out.
-        if g is not None:
+        if g is not None and ctx.has_split_edit:
+            ctx.save_for_backward(k, v, q, decay, S_ckpt, g, erase_gate, value_write_gate)
+            ctx.has_gate = True
+        elif g is not None:
             ctx.save_for_backward(k, v, q, decay, S_ckpt, g)
             ctx.has_gate = True
+        elif ctx.has_split_edit:
+            ctx.save_for_backward(k, v, q, decay, S_ckpt, erase_gate, value_write_gate)
+            ctx.has_gate = False
         else:
             ctx.save_for_backward(k, v, q, decay, S_ckpt)
             ctx.has_gate = False
@@ -640,7 +791,25 @@ class E88TritonFunction(torch.autograd.Function):
     def backward(ctx, d_out, d_S_final):
         nkq = ctx.normalize_kq
         silu_qkv = ctx.apply_silu_qkv
-        if ctx.has_gate:
+        raw_write = ctx.raw_write
+        if ctx.has_gate and ctx.has_split_edit:
+            k, v, q, decay, S_ckpt, g, erase_gate, value_write_gate = ctx.saved_tensors
+            d_k, d_v, d_q, d_decay, d_g, d_erase, d_value_write, d_S0 = e88_triton_backward(
+                k, v, q, decay, S_ckpt,
+                d_out=d_out.contiguous(),
+                d_S_final=d_S_final.contiguous() if d_S_final is not None else None,
+                g=g,
+                normalize_kq=nkq,
+                apply_silu_qkv=silu_qkv,
+                raw_write=raw_write,
+                erase_gate=erase_gate,
+                value_write_gate=value_write_gate,
+            )
+            return (
+                d_S0, d_k, d_v, d_q, d_decay, d_g,
+                None, None, None, d_erase, d_value_write,
+            )
+        elif ctx.has_gate:
             k, v, q, decay, S_ckpt, g = ctx.saved_tensors
             d_k, d_v, d_q, d_decay, d_g, d_S0 = e88_triton_backward(
                 k, v, q, decay, S_ckpt,
@@ -649,9 +818,26 @@ class E88TritonFunction(torch.autograd.Function):
                 g=g,
                 normalize_kq=nkq,
                 apply_silu_qkv=silu_qkv,
+                raw_write=raw_write,
             )
             # Match forward signature order (S0, k, v, q, decay, g, normalize_kq).
-            return d_S0, d_k, d_v, d_q, d_decay, d_g, None, None
+            return d_S0, d_k, d_v, d_q, d_decay, d_g, None, None, None, None, None
+        elif ctx.has_split_edit:
+            k, v, q, decay, S_ckpt, erase_gate, value_write_gate = ctx.saved_tensors
+            d_k, d_v, d_q, d_decay, d_erase, d_value_write, d_S0 = e88_triton_backward(
+                k, v, q, decay, S_ckpt,
+                d_out=d_out.contiguous(),
+                d_S_final=d_S_final.contiguous() if d_S_final is not None else None,
+                normalize_kq=nkq,
+                apply_silu_qkv=silu_qkv,
+                raw_write=raw_write,
+                erase_gate=erase_gate,
+                value_write_gate=value_write_gate,
+            )
+            return (
+                d_S0, d_k, d_v, d_q, d_decay, None,
+                None, None, None, d_erase, d_value_write,
+            )
         else:
             k, v, q, decay, S_ckpt = ctx.saved_tensors
             d_k, d_v, d_q, d_decay, d_S0 = e88_triton_backward(
@@ -660,12 +846,25 @@ class E88TritonFunction(torch.autograd.Function):
                 d_S_final=d_S_final.contiguous() if d_S_final is not None else None,
                 normalize_kq=nkq,
                 apply_silu_qkv=silu_qkv,
+                raw_write=raw_write,
             )
             # Match forward signature order (S0, k, v, q, decay, g, normalize_kq).
-            return d_S0, d_k, d_v, d_q, d_decay, None, None, None
+            return d_S0, d_k, d_v, d_q, d_decay, None, None, None, None, None, None
 
 
-def e88_triton(S0, k, v, q, decay, g=None, normalize_kq=False, apply_silu_qkv=False):
+def e88_triton(
+    S0,
+    k,
+    v,
+    q,
+    decay,
+    g=None,
+    normalize_kq=False,
+    apply_silu_qkv=False,
+    raw_write=False,
+    erase_gate=None,
+    value_write_gate=None,
+):
     """Differentiable Triton E88 — returns (out, S_final).
 
     If ``g`` is provided, applies the fused output gate
@@ -677,4 +876,7 @@ def e88_triton(S0, k, v, q, decay, g=None, normalize_kq=False, apply_silu_qkv=Fa
     `aten::div` per layer call). The backward applies the standard
     norm chain rule to recover gradients w.r.t. the raw k, q.
     """
-    return E88TritonFunction.apply(S0, k, v, q, decay, g, normalize_kq, apply_silu_qkv)
+    return E88TritonFunction.apply(
+        S0, k, v, q, decay, g, normalize_kq, apply_silu_qkv, raw_write,
+        erase_gate, value_write_gate,
+    )
