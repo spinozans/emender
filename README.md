@@ -23,19 +23,20 @@ The current optimized implementation is **Emender/E88**: an emender layer with a
 fused Triton kernel for the nonlinear delta-memory state update. It has been
 used in 1.3B-class language-model training runs.
 
-## v0.1 Release
+## v0.2 Release
 
-The v0.1 public-release hub is
-[`docs/RELEASE_V01_PUBLIC_RELEASE_HUB.md`](docs/RELEASE_V01_PUBLIC_RELEASE_HUB.md).
+The v0.2 public-release hub is
+[`docs/RELEASE_V02_PUBLIC_RELEASE_HUB.md`](docs/RELEASE_V02_PUBLIC_RELEASE_HUB.md).
 It links the paper, GitHub repository, exact Hugging Face revisions, Docker
-smoke instructions, and public-release checklist.
+smoke evidence, and public-release checklist. The earlier v0.1 tags remain
+available as immutable historical checkpoints.
 
 - GitHub release target: <https://github.com/poietic-pbc/emender>
-- Paper PDF target: <https://github.com/poietic-pbc/emender/releases/download/v0.1/Garrison_2026_Emender.pdf>
+- Paper PDF target: <http://hypervolu.me/~erik/ndm/Garrison_2026_Emender.pdf>
 - Paper source: <https://github.com/poietic-pbc/emender/blob/main/paper/main.typ>
-- Emender/E88 model: <https://huggingface.co/poietic-pbc/emender-e88-1.3b>
-- GDN model: <https://huggingface.co/poietic-pbc/gdn-1.3b>
-- M2RNN-CMA model: <https://huggingface.co/poietic-pbc/m2rnn-cma-1.3b>
+- Emender/E88 model: <https://huggingface.co/poietic-pbc/emender-e88-1.3b/tree/v0.2>
+- GDN model: <https://huggingface.co/poietic-pbc/gdn-1.3b/tree/v0.2>
+- M2RNN-CMA model: <https://huggingface.co/poietic-pbc/m2rnn-cma-1.3b/tree/v0.2>
 
 The HF models are raw/base recurrent language models for research and paper
 reproduction. They are not instruction-tuned or safety-tuned.

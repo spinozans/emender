@@ -3,6 +3,13 @@
 Date: 2026-05-29 UTC
 Task: `approval-gated-public`
 
+Supersession note: this approval-gate report records the first blocked
+pre-approval check. It is retained as historical evidence. The approved public
+v0.2 publication completed later on 2026-05-29 and is recorded in
+[`RELEASE_V02_PUBLIC_HF_PUBLISH_20260529.md`](RELEASE_V02_PUBLIC_HF_PUBLISH_20260529.md);
+the current public v0.2 hub is
+[`RELEASE_V02_PUBLIC_RELEASE_HUB.md`](RELEASE_V02_PUBLIC_RELEASE_HUB.md).
+
 This note records the approval-gate result for publishing the locally validated
 v0.2 racer artifacts to the existing public Hugging Face repositories.
 
