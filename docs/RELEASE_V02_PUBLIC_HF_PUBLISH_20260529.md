@@ -22,9 +22,12 @@ The publish used only the local artifacts validated by
 
 No `v0.1` tag was moved, deleted, recreated, or otherwise modified.
 
-## Public v0.2 SHAs
+## Public v0.2 SHAs At Initial Publish
 
-These are the exact public commit/tag SHAs for downstream paper/docs sync.
+These are the exact public artifact commit/tag SHAs from the initial approved
+publish. The downstream docs sync later moved `v0.2` to README-only descendants
+after verifying every non-README artifact remained unchanged; see the
+downstream sync note at the end of this report.
 
 | Model | Public repo | v0.2 tag SHA | Preserved v0.1 SHA | Source checkpoint SHA256 | Step |
 | --- | --- | --- | --- | --- | ---: |
@@ -178,3 +181,18 @@ smoke was rerun and passed.
 The uploaded README/model-card files are exactly the locally validated v0.2
 artifact files. Broader paper/docs/PDF synchronization is intentionally left to
 the downstream `synchronize-paper-docs` task.
+
+Downstream sync note: `synchronize-paper-docs` updated the HF README/model-card
+text with docs-only commits after this publish report, then moved `v0.2` to
+those README-only descendants under Erik's additional release-sync
+authorization. Before retagging, it verified that every non-README file, the
+`config.json` source checkpoint SHA, and the `model.safetensors` LFS SHA were
+unchanged from the approved artifact commits. The current public `v0.2` tag
+SHAs are:
+
+- E88 / NDM current `v0.2` tag:
+  `be77d1ee5b744ffa653e9b03abd5254d2ef8a41c`
+- GDN current `v0.2` tag:
+  `7395b6b6588726a3bca963aa7e6150e0971e71d6`
+- M2RNN-CMA current `v0.2` tag:
+  `2e5f8f3be8a7c8ac42802485afb40d023874ea06`
