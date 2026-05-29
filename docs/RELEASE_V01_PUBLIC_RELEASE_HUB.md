@@ -7,6 +7,10 @@ This is the central v0.1 release handoff for the Emender paper, GitHub
 repository, and three public Hugging Face model repositories. The HF
 repositories were renamed to the `1.3b` public slugs on 2026-05-28; the
 immutable `v0.1` tags continue to resolve to the same release commits.
+Metric-only racer references were refreshed on 2026-05-29 from the live
+Figure 2 logs without moving checkpoint tags or uploading weights. The current
+paper labels use 100K-step trailing endpoint averages; 10K/50K/100K values are
+recorded side by side in the Figure 2 source.
 
 ## Primary Links
 
@@ -14,6 +18,7 @@ immutable `v0.1` tags continue to resolve to the same release commits.
 - Paper PDF target: <https://github.com/poietic-pbc/emender/releases/download/v0.1/Garrison_2026_Emender.pdf>
 - Paper source: <https://github.com/poietic-pbc/emender/blob/main/paper/main.typ>
 - v0.1 racer/checkpoint source: <https://github.com/poietic-pbc/emender/blob/main/docs/RELEASE_V01_RACER_CHECKPOINT_PIN_20260527.md>
+- Current Figure 2 metric source: <https://github.com/poietic-pbc/emender/blob/main/paper/results/figure_2/AS_OF.md>
 
 The paper PDF target is the intended public-release asset location. Until that
 asset is attached, `paper/main.typ` is the source of record and `paper/build.sh`
@@ -27,9 +32,9 @@ descended from the previously smoke-tested artifact commits.
 
 | Model | HF repository | Release revision | Current `v0.1` resolved SHA | Main-card SHA |
 | --- | --- | --- | --- | --- |
-| Emender/E88 | <https://huggingface.co/poietic-pbc/emender-e88-1.3b> | `v0.1` | `a2e56cb82eec5e01ae6eb501569359c5ff64af6b` | `9695606f3dd68fed746acbf2985ba672e34f0c01` |
-| GDN | <https://huggingface.co/poietic-pbc/gdn-1.3b> | `v0.1` | `556df7f00969c6a8dbeb381e3c8b51cf0c0385f9` | `4eb57cf4619c71a1007bfe397cec18c520dc9f82` |
-| M2RNN-CMA | <https://huggingface.co/poietic-pbc/m2rnn-cma-1.3b> | `v0.1` | `8181b77803e130ffd78e37c33aa4d58c27e719c2` | `b9326e0f2ce5bd8512962dd9f3409e2d883c86d2` |
+| Emender/E88 | <https://huggingface.co/poietic-pbc/emender-e88-1.3b> | `v0.1` | `a2e56cb82eec5e01ae6eb501569359c5ff64af6b` | `8e2659df0db5d4f9b555cfa71ea12637d8401268` |
+| GDN | <https://huggingface.co/poietic-pbc/gdn-1.3b> | `v0.1` | `556df7f00969c6a8dbeb381e3c8b51cf0c0385f9` | `ba59a45656f3353265469ce7e58dce7ee25e6baa` |
+| M2RNN-CMA | <https://huggingface.co/poietic-pbc/m2rnn-cma-1.3b> | `v0.1` | `8181b77803e130ffd78e37c33aa4d58c27e719c2` | `572f62635f29661f599b18948b7e49516b44a574` |
 
 ## Model-Card Facts
 
@@ -47,9 +52,9 @@ descended from the previously smoke-tested artifact commits.
   `train.py` uses `ndm.data.tokenized_dataset.TokenizedStreamDataset`, which
   tokenizes raw byte windows with tiktoken and treats `\x1e` as an ordinary
   token. Under `p50k_base`, `"\x1e"` encodes as token ID `218`.
-- Current racer metrics: Emender/E88 `0.979` BPB, GDN `0.975` BPB,
-  M2RNN-CMA `0.984` BPB from the refreshed Figure 2 source recorded on
-  2026-05-27 in `docs/RELEASE_V01_RACER_CHECKPOINT_PIN_20260527.md`.
+- Current racer metrics: Emender/E88 `0.977` BPB, GDN `0.970` BPB,
+  M2RNN-CMA `0.983` BPB from the refreshed Figure 2 source recorded on
+  2026-05-29 in `paper/results/figure_2/AS_OF.md`.
 - Loading: all three repositories use custom HF code and must be loaded with
   `revision="v0.1"` and `trust_remote_code=True`.
 

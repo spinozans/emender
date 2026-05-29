@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Extract, smooth, and aggregate 1.27B loss curves for Figure 3.
+"""Extract, smooth, and aggregate 1.3B-class loss curves for Figure 2.
 
 Reads training logs from /tmp/pile_convergence_3arch and /tmp/pile_convergence_m2rnn.
-Produces per-model CSVs and a combined CSV, then a draft PNG.
+Produces per-model CSVs and a combined CSV. The publication plot is rendered by
+plot_normalized.py from the trailing endpoint columns written here.
 
 FLOP formula (approximate):
   FLOPs_per_step = 6 * N_params * batch_size * chunk_size
@@ -259,6 +260,17 @@ def moving_average(values, window):
     return result
 
 
+def trailing_average(values, window):
+    """Trailing moving average for endpoint labels/prose."""
+    n = len(values)
+    result = np.empty(n)
+    csum = np.concatenate([[0.0], np.cumsum(values, dtype=float)])
+    for i in range(n):
+        lo = max(0, i + 1 - window)
+        result[i] = (csum[i + 1] - csum[lo]) / (i + 1 - lo)
+    return result
+
+
 def smooth_rows(rows, window_steps):
     """Add smoothed_loss column using a step-count window."""
     if not rows:
@@ -283,7 +295,7 @@ def write_csv(rows, path):
         return
     fieldnames = list(rows[0].keys())
     with open(path, "w", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=fieldnames)
+        w = csv.DictWriter(f, fieldnames=fieldnames, lineterminator="\n")
         w.writeheader()
         w.writerows(rows)
     print(f"  wrote {len(rows)} rows -> {path}")
@@ -306,9 +318,12 @@ def main():
             print(f"  SKIP: no data for {cfg['label']}")
             continue
 
-        # Add smoothed columns for 3 windows
-        for window in [5_000, 10_000, 50_000]:
+        # Add centered smoothing columns for curves and trailing columns for
+        # endpoint labels. The trailing columns avoid treating edge-truncated
+        # centered windows as stable tail estimates while logs are still active.
+        for window in [5_000, 10_000, 50_000, 100_000]:
             col = f"smooth_{window // 1000}k"
+            trailing_col = f"trail_{window // 1000}k"
             steps_arr = np.array([r["step"] for r in rows])
             losses_arr = np.array([r["loss"] for r in rows])
             if len(steps_arr) > 1:
@@ -317,8 +332,10 @@ def main():
                 log_every = 50
             idx_win = max(1, window // log_every)
             smoothed = moving_average(losses_arr, idx_win)
-            for r, s in zip(rows, smoothed):
+            trailed = trailing_average(losses_arr, idx_win)
+            for r, s, t in zip(rows, smoothed, trailed):
                 r[col] = float(s)
+                r[trailing_col] = float(t)
 
         all_rows[model_key] = (cfg["label"], rows)
 
@@ -338,7 +355,7 @@ def main():
 
 
 def make_figure(all_rows):
-    """Produce draft Figure 3: bits/base vs wallclock hours (log-x), smoothed."""
+    """Produce a quick draft Figure 2: bits/base vs wallclock hours (log-x)."""
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -359,7 +376,7 @@ def make_figure(all_rows):
         xs = np.array([r["wallclock_h"] for r in rows])
         bpt = MODELS[model_key]["bytes_per_token"]
         ys_bpb = np.array(
-            [r["smooth_10k"] / LN2 / bpt for r in rows]
+            [r.get("trail_100k", r["smooth_50k"]) / LN2 / bpt for r in rows]
         )
         st = style.get(model_key, {})
         # Only plot points where wallclock_h > 0
@@ -387,10 +404,10 @@ def make_figure(all_rows):
 
     ax.set_xscale("log")
     ax.set_xlabel("Wallclock (hours, log scale)", fontsize=11)
-    ax.set_ylabel("Bits / byte (bpb, 10K-step smoothed)", fontsize=11)
+    ax.set_ylabel("Bits / byte (bpb, 100K-step trailing average)", fontsize=11)
     ax.set_title(
-        "Figure 3 DRAFT — 1.27B LM loss curves (ctx=2048, Pile, p50k_base)\n"
-        "As of 2026-05-24  ·  training in progress  ·  NOT FOR PUBLICATION",
+        "Figure 2 DRAFT — 1.3B-class LM loss curves (ctx=2048, Pile, p50k_base)\n"
+        "Training in progress  ·  run plot_normalized.py for the paper figure",
         fontsize=9,
     )
     ax.legend(fontsize=9, loc="upper right")
