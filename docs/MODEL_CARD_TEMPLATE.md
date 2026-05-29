@@ -29,7 +29,7 @@ and reproduction of the paper results, not as an assistant.
 - Paper source:
   <https://github.com/poietic-pbc/emender/blob/main/paper/main.typ>
 - Refreshed racer source:
-  <https://github.com/poietic-pbc/emender/blob/main/docs/RELEASE_V01_RACER_CHECKPOINT_PIN_20260527.md>
+  <https://github.com/poietic-pbc/emender/blob/main/paper/results/figure_2/AS_OF.md>
 
 Related v0.1 model repositories:
 
@@ -85,21 +85,21 @@ Use `\x1e` as the natural document/example delimiter when constructing raw
 continuation prompts that should resemble training boundaries. Do not rely on it
 as an instruction separator.
 
-## v0.1 Metrics
+## Current Racer Metrics
 
-The current v0.1 language-modeling snapshot metrics come from the refreshed
-racer Figure 2 source recorded on 2026-05-27 in
-`docs/RELEASE_V01_RACER_CHECKPOINT_PIN_20260527.md`. Scores are 10K-step
-smoothed bits per byte on The Pile using the pinned `p50k_base` bytes/token
-estimate.
+The current language-modeling snapshot metrics come from the refreshed racer
+Figure 2 source recorded on 2026-05-29 in
+`paper/results/figure_2/AS_OF.md`. Scores are 100K-step trailing bits per byte
+on The Pile using the pinned `p50k_base` bytes/token estimate. This metric-only
+refresh does not move the immutable public `v0.1` checkpoint tags.
 
-| Model | HF repo | v0.1 BPB | Source |
+| Model | HF repo | Current Figure 2 BPB | Source |
 | --- | --- | ---: | --- |
-| Emender/E88 | `poietic-pbc/emender-e88-1.3b` | 0.979 | Refreshed racer Figure 2, 2026-05-27 |
-| GDN | `poietic-pbc/gdn-1.3b` | 0.975 | Refreshed racer Figure 2, 2026-05-27 |
-| M2RNN-CMA | `poietic-pbc/m2rnn-cma-1.3b` | 0.984 | Refreshed racer Figure 2, 2026-05-27 |
+| Emender/E88 | `poietic-pbc/emender-e88-1.3b` | 0.977 | Refreshed racer Figure 2, 2026-05-29 |
+| GDN | `poietic-pbc/gdn-1.3b` | 0.970 | Refreshed racer Figure 2, 2026-05-29 |
+| M2RNN-CMA | `poietic-pbc/m2rnn-cma-1.3b` | 0.983 | Refreshed racer Figure 2, 2026-05-29 |
 
-This checkpoint's v0.1 score is **{THIS_MODEL_BPB} BPB**.
+This model's current Figure 2 score is **{THIS_MODEL_BPB} BPB**.
 
 ## Loading Example
 

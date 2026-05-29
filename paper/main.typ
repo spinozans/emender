@@ -75,7 +75,8 @@ CMA-ES configs, and the Triton kernel released.
     models at billion-parameter scale. Here we emend that judgment. We train
     pure-nonlinear-recurrent language models to the sub-1-bit-per-byte
     regime at billion-parameter scale on a single workstation-class GPU
-    over 15 days, crossing below 1 bit per byte on The Pile. The Emender
+    after about 21 wall-clock days, remaining below 1 bit per byte on The
+    Pile. The Emender
     family is built from emender layers: recurrent layers pairing a
     matrix-state memory with a write rule that has two halves,
     delta correction and tanh-with-latching; E88 is the 1.3 B-class
@@ -199,8 +200,9 @@ racer measure what SGD actually finds under the stated protocols.
 At parameter-matched 8 M scale the Emender reaches 0.79 accuracy on the
 $S_5$ word problem against 0.36 for Gated DeltaNet and 0.22 for the
 raw-write baseline. The 1.3 B
-Emender reaches 0.979 bits per byte on The Pile, inside the same
-wallclock band as Gated DeltaNet at 0.975.
+Emender reaches 0.977 bits per byte on The Pile, inside the same
+wallclock band as Gated DeltaNet at 0.970 under the 100K trailing
+endpoint convention.
 Throughput at width comes from 22,200 small recurrent programs per
 token. The lever for scaling serial nonlinear recurrence is parallelism
 within each time step, not across it.
@@ -293,7 +295,7 @@ technique not bound to that arena.
 
 + *Stability and single-GPU access.* E88 trains
   stably under schedule-free AdamW and reaches the sub-1-bpb regime on The
-  Pile in 15 days on a single workstation-class GPU, with no cluster
+  Pile in about 21 days on a single workstation-class GPU, with no cluster
   and no sequence parallelism. Sparse checkpointing keeps the
   activation and gradient footprint modest, so memory is not the
   binding constraint. The substrate puts from-scratch foundation-scale
@@ -918,55 +920,60 @@ and update rule.
   image("results/figure_2/figure_2_draft.png", width: 95%),
   caption: [
     *Efficiency reading of the 1.3 B racer: E88 and Gated DeltaNet
-    are co-located in a single sub-1-bpb loss-vs-wallclock band on
-    The Pile under matched per-architecture CMA-ES; M²RNN-CMA trails
-    the band across the sampled window.* Schedule-free AdamW on The
-    Pile with a 2048-token context. Curves are 10K-step centred
+    occupy the same sub-1-bpb loss-vs-wallclock band on The Pile
+    under matched per-architecture CMA-ES; GDN is the lowest-BPB
+    endpoint in the current snapshot, E88 is second, and M²RNN-CMA
+    trails them across the sampled window.* Schedule-free AdamW on The
+    Pile with a 2048-token context. Curves are 100K-step trailing
     moving averages of training loss in bits per byte; the nats/token
     $arrow$ bits/byte conversion uses the canonical
     $"bytes/token" = 3.92$ for `p50k_base` on The Pile (pinned in
     `scripts/estimate_tokenizer_bytes_per_token.json`, methodology
     sentence in this section). E88 is at
-    1.273 B parameters; M²RNN-CMA at 1.307 B; GDN at 1.352 B; each
-    model has trained 18-20 GPU-days at this recording. The plotted
+    1.273 B parameters; M²RNN-CMA at 1.307 B; GDN at 1.352 B; the
+    three plotted models have trained about 20.0-21.6 stitched
+    GPU-days at this recording. The plotted
     trajectory is one realization per architecture; the within-class
     ordering it illustrates is replicated across four CMA-ES sweeps
     (250+ configs/architecture) and the delta-off ablation (§9). The
     multi-week per-architecture training extent is the standard unit
     at this scale class. *Panel A:* full curve on log-wallclock
     from h = 1. *Panel B:* tail (h ≥ 40) on linear wallclock.
-    Leadership between E88 and GDN trades through training at the
-    fractional-bit-per-byte scale; the two curves are nearly
-    co-linear. M²RNN-CMA has higher loss than the other two across
-    the sampled window. The paper-shape M²RNN baseline (not shown)
+    At the current tail, GDN is lower than E88 by about 0.007 BPB
+    under this stable window; the 10K endpoint makes the GDN dip look
+    larger, so it is reported side by side in `AS_OF.md` rather than
+    used as the paper label. Both curves remain in the same sub-1-bpb
+    wallclock band. M²RNN-CMA has
+    higher loss than the other two across the sampled window. The
+    paper-shape M²RNN baseline (not shown)
     diverged at step 8,400. Color convention used throughout the
-    paper: Emender = blue, GDN = orange, M²RNN-CMA = red. Recorded as
-    of 2026-05-27; training continues.
+    paper: Emender = blue, GDN = orange, M²RNN-CMA = red. Recorded
+    from a 2026-05-29T18:04:51Z active-log snapshot; training continues.
   ],
 ) <fig_lm_racers>
 
-After roughly 18-20 wall-clock days of training, E88 reaches
-0.979 bits per byte on The Pile; Gated DeltaNet reaches 0.975;
-M²RNN-CMA reaches 0.984. E88 and GDN sit on the same sub-1-bpb
-band: leadership trades between them through training, and at no
-sampled point do the two separate by more than a small fraction of a
-nat. The corresponding training losses are 2.66 nats/token (E88,
-step 1,281,300), 2.65 (GDN, step 1,687,500), and 2.67 (M²RNN-CMA, step
-1,213,600). Under the training tokenizer (`p50k_base` BPE) on The Pile,
+After about 20.0-21.6 stitched wall-clock days of training, E88 reaches
+0.977 bits per byte on The Pile; Gated DeltaNet reaches 0.970;
+M²RNN-CMA reaches 0.983. All three public racer models are now
+sub-1-bpb; GDN is the lowest-BPB endpoint at this cutoff, E88 is
+second, and M²RNN-CMA is third. The corresponding 100K-trailing
+training losses are 2.653 nats/token (E88, step 1,405,450),
+2.634 (GDN, step 1,847,050), and 2.671 (M²RNN-CMA, step 1,343,050).
+Under the training tokenizer (`p50k_base` BPE) on The Pile,
 mean bytes per token is 3.92 over a 2000-sample sweep at the training
 `chunk_tokens=2048` (estimation script:
 `scripts/estimate_tokenizer_bytes_per_token.py`, pinned output at
 `scripts/estimate_tokenizer_bytes_per_token.json`), so
 $"bpb" = "nats/token" times log_2(e) / "bytes/token" approx "nats/token" times 0.368$.
-The defensible reading is co-location on the efficiency surface, not a
-single-seed margin of victory. Read with §6, the evidence has two axes:
+The defensible reading is a shared sub-1-bpb efficiency band, not an
+E88 single-seed margin of victory over GDN. Read with §6, the evidence has two axes:
 efficiency is measured here by the 1.3 B loss-vs-wallclock racer, and
 capability by the 8 M state-tracking probes. These are not a single
 plotted Pareto curve, but together they support the class-level claim that
 a pure-nonlinear-recurrent language model trains to sub-1-bpb on The
 Pile while sitting in the same loss-vs-wallclock band as the selected
 linear-recurrent baseline, so the state-tracking advantage does not
-visibly impose a wallclock tax at this scale and training extent.
+visibly impose a large wallclock tax at this scale and training extent.
 Within the pure-nonlinear-recurrent class, M²RNN-CMA trails E88 across
 the sampled window; combined with the CMA-replicated search sign (§9),
 this supports the narrower within-class claim that the delta-correcting
@@ -1716,8 +1723,8 @@ express?" for OLMo-Hybrid); the answers do not contradict.
 
 #heading(level: 2, numbering: none)[Training duration and result scope]
 
-The language-modelling results are for the current 18-20 wall-clock-day
-training extent per architecture. The racer panel (@fig_lm_racers)
+The language-modelling results are for the current 20.0-21.6 stitched
+wall-clock-day training extent per architecture. The racer panel (@fig_lm_racers)
 records the loss-vs-wallclock curve at this extent; further rounds
 extend the curves.
 
@@ -1743,13 +1750,14 @@ attention's quadratic cost bites. The omission is scope, not result.
 = Conclusion <sec:conclusion>
 
 We trained a pure-nonlinear-recurrent language model to sub-1-bpb on
-The Pile: E88 at 0.979 bpb after roughly 20 wall-clock days
+The Pile: E88 at 0.977 bpb after about 21.4 stitched wall-clock days
 on a single workstation-class GPU. Three pure-recurrent
 architectures received per-architecture CMA-ES at the 1.3 B-class
 band (the Emender and M²RNN-CMA, nonlinear in time; Gated DeltaNet,
-linear in time). The two leading curves are co-linear in the shared
-wallclock band (GDN 0.975, E88 0.979); M²RNN-CMA, the raw-write
-pure-recurrent variant, trails at 0.984.
+linear in time). The two leading curves occupy the shared sub-1-bpb
+wallclock band; at the current endpoint GDN is lowest at 0.970, E88
+is second at 0.977, and M²RNN-CMA, the raw-write pure-recurrent
+variant, trails at 0.983.
 *At this scale and training extent, nonlinearity in time is not the
 wallclock barrier it was assumed to be.* M²RNN (Mishra et al. @m2rnn2026) is the
 closest prior art and demonstrates nonlinear matrix-state recurrence

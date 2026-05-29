@@ -7,7 +7,7 @@ figure_2_draft.png.
 
 Normalized presentation conventions (shared with cma_flop_rate/plot.py):
   x-axis : wall-clock training hours (log scale)
-  y-axis : training loss in bits per byte (10K-step centred moving average)
+  y-axis : training loss in bits per byte (100K-step trailing moving average)
            BPB = nats/token × log2(e) / bytes_per_token
            bytes/token = 3.918625 (canonical 2000-sample sweep on Pile,
            p50k_base, chunk_tokens=2048; see
@@ -49,6 +49,8 @@ COLORS = {
 # Plot in an order that draws M²RNN-CMA on top so its strict-above position
 # is unambiguous when curves get close near the data-entropy floor.
 ORDER = ["GDN", "Emender", "M²RNN-CMA"]
+SMOOTH_COLUMN = "trail_100k"
+SMOOTH_LABEL = "100K-step trailing average"
 
 FILES = {
     "Emender":    OUT / "E88_NDM.csv",
@@ -62,9 +64,21 @@ PARAMS = {
     "M²RNN-CMA":  "1.31 B",
 }
 
+FULL_LABEL_OFFSETS = {
+    "GDN": (6, -9),
+    "Emender": (6, 0),
+    "M²RNN-CMA": (6, 9),
+}
+
+TAIL_LABEL_OFFSETS = {
+    "GDN": (-6, -10),
+    "Emender": (-6, -8),
+    "M²RNN-CMA": (-6, 10),
+}
+
 
 def load(path: Path):
-    """Return (wallclock_h, bpb) where bpb is the BPB conversion of smooth_10k.
+    """Return (wallclock_h, bpb) where bpb is the BPB conversion of SMOOTH_COLUMN.
 
     Underlying CSVs remain in native units (nats/token); the BPB conversion
     happens here at the display step so the training-log artefacts are not
@@ -77,7 +91,7 @@ def load(path: Path):
             if h <= 0:
                 continue
             xs.append(h)
-            ys.append(float(r["smooth_10k"]) * NATS_TO_BPB)
+            ys.append(float(r[SMOOTH_COLUMN]) * NATS_TO_BPB)
     return np.array(xs), np.array(ys)
 
 
@@ -87,6 +101,8 @@ def main():
     )
 
     data = {name: load(FILES[name]) for name in ORDER}
+    max_x = max(float(xs[-1]) for xs, _ in data.values() if len(xs))
+    visible_ys = np.concatenate([ys[xs >= 1.0] for xs, ys in data.values() if len(ys)])
 
     # Panel A — full log-x view
     for name in ORDER:
@@ -101,26 +117,28 @@ def main():
         axA.annotate(
             f"{ys[-1]:.3f}",
             (xs[-1], ys[-1]),
-            xytext=(6, 0),
+            xytext=FULL_LABEL_OFFSETS[name],
             textcoords="offset points",
             fontsize=8,
             color=COLORS[name],
             va="center",
         )
     axA.set_xscale("log")
-    axA.set_xlim(1.0, 520.0)
-    axA.set_ylim(0.94, 1.74)
+    axA.set_xlim(1.0, max(520.0, max_x * 1.08))
+    axA.set_ylim(min(0.94, float(visible_ys.min()) - 0.015), max(1.74, float(visible_ys.max()) * 1.02))
     axA.set_xlabel("Wall-clock training hours (log scale)", fontsize=11)
-    axA.set_ylabel("Training loss (bits / byte, 10K-step smoothed)", fontsize=11)
+    axA.set_ylabel(f"Training loss (bits / byte, {SMOOTH_LABEL})", fontsize=11)
     axA.set_title("A. Full curve (log-x)", fontsize=11)
     axA.legend(fontsize=9, loc="upper right", framealpha=0.95)
     axA.grid(True, which="both", alpha=0.3)
 
     # Panel B — tail zoom (linear-x) where the strict order is the headline
     tail_lo = 40.0
+    tail_ys = []
     for name in ORDER:
         xs, ys = data[name]
         mask = xs >= tail_lo
+        tail_ys.extend(ys[mask].tolist())
         axB.plot(
             xs[mask], ys[mask],
             color=COLORS[name],
@@ -133,14 +151,17 @@ def main():
             axB.annotate(
                 f"{name}: {ys_t[-1]:.3f}",
                 (xs_t[-1], ys_t[-1]),
-                xytext=(6, 0),
+                xytext=TAIL_LABEL_OFFSETS[name],
                 textcoords="offset points",
                 fontsize=8,
                 color=COLORS[name],
                 va="center",
+                ha="right",
             )
-    axB.set_xlim(tail_lo, 480.0)
-    axB.set_ylim(0.968, 1.123)
+    axB.set_xlim(tail_lo, max(520.0, max_x + 12.0))
+    tail_min, tail_max = min(tail_ys), max(tail_ys)
+    tail_pad = max(0.008, (tail_max - tail_min) * 0.08)
+    axB.set_ylim(tail_min - tail_pad, tail_max + tail_pad)
     axB.set_xlabel("Wall-clock training hours", fontsize=11)
     axB.set_ylabel("Training loss (bits / byte)", fontsize=11)
     axB.set_title("B. Tail (h ≥ 40) — wall-clock order at the tail", fontsize=10)

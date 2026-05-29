@@ -113,8 +113,9 @@ release.
 ### Phase 5 — Model Card
 
 - [x] **5.1** Fill in model cards with raw/base identity, architecture,
-      training data, tokenizer/context, verified delimiter behavior, v0.1 BPB
-      metrics, intended use, limitations, load examples, and provenance links.
+      training data, tokenizer/context, verified delimiter behavior, current
+      Figure 2 BPB metrics, intended use, limitations, load examples, and
+      provenance links.
 - [x] **5.2** Update `README.md` on all three HF repos on `main` and
       `staging`; recreate `v0.1` tags at the docs-polish staging commits.
 

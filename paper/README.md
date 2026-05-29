@@ -65,9 +65,9 @@ paper/
 Figure 2 (1.3B-class language-model loss racers) is staged in
 `paper/results/figure_2/` with the rendered plot at
 `paper/results/figure_2/figure_2_draft.png`. The current paper prose reports
-the refreshed 2026-05-27 snapshot values recorded in
-`paper/results/figure_2/AS_OF.md`: E88 0.979 BPB, GDN 0.975 BPB, and
-M2RNN-CMA 0.984 BPB.
+the refreshed 2026-05-29 100K-trailing snapshot values recorded in
+`paper/results/figure_2/AS_OF.md`: E88 0.977 BPB, GDN 0.970 BPB, and
+M2RNN-CMA 0.983 BPB.
 
 `paper/OUTLINE.md` is retained as historical drafting context; use
 `paper/main.typ` plus the staged `paper/results/` files as the release paper

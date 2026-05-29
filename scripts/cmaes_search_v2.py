@@ -2066,6 +2066,8 @@ def main():
                         help='Discrete parameter to sweep (e.g., n_state)')
     parser.add_argument('--fixed_n_state', type=int, default=None,
                         help='Fix n_state to this value (skip sweep)')
+    parser.add_argument('--fixed_d_state', type=int, default=None,
+                        help='Fix d_state to this value for Mamba-family searches')
     parser.add_argument('--fixed_batch_size', type=int, default=None,
                         help='Fix batch_size to this value (memory probe still clamps unless --skip_memory_probe)')
     parser.add_argument('--skip_memory_probe', action='store_true',
@@ -2227,6 +2229,9 @@ def main():
     if args.fixed_n_state is not None:
         fixed_params['n_state'] = args.fixed_n_state
         print(f"Fixed n_state: {args.fixed_n_state}")
+    if args.fixed_d_state is not None:
+        fixed_params['d_state'] = args.fixed_d_state
+        print(f"Fixed d_state: {args.fixed_d_state}")
     if args.fixed_batch_size is not None:
         fixed_params['batch_size'] = args.fixed_batch_size
         print(f"Fixed batch_size: {args.fixed_batch_size}")
