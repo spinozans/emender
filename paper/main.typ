@@ -924,8 +924,12 @@ and update rule.
     under matched per-architecture CMA-ES; GDN is the lowest-BPB
     endpoint in the current snapshot, E88 is second, and M²RNN-CMA
     trails them across the sampled window.* Schedule-free AdamW on The
-    Pile with a 2048-token context. Curves are 100K-step trailing
-    moving averages of training loss in bits per byte; the nats/token
+    Pile with a 2048-token context. The single panel uses linear
+    wall-clock hours from the start of the run to the current snapshot
+    endpoints, but each curve is drawn only after the 100K-step
+    trailing window is fully populated and the curve is inside the
+    plotted BPB range. Curves are 100K-step trailing moving averages
+    of training loss in bits per byte; the nats/token
     $arrow$ bits/byte conversion uses the canonical
     $"bytes/token" = 3.92$ for `p50k_base` on The Pile (pinned in
     `scripts/estimate_tokenizer_bytes_per_token.json`, methodology
@@ -937,9 +941,8 @@ and update rule.
     ordering it illustrates is replicated across four CMA-ES sweeps
     (250+ configs/architecture) and the delta-off ablation (§9). The
     multi-week per-architecture training extent is the standard unit
-    at this scale class. *Panel A:* full curve on log-wallclock
-    from h = 1. *Panel B:* tail (h ≥ 40) on linear wallclock.
-    At the current tail, GDN is lower than E88 by about 0.007 BPB
+    at this scale class. At the current endpoint, GDN is lower than
+    E88 by about 0.007 BPB
     under this stable window; the 10K endpoint makes the GDN dip look
     larger, so it is reported side by side in `AS_OF.md` rather than
     used as the paper label. Both curves remain in the same sub-1-bpb

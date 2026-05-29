@@ -6,7 +6,7 @@ when run on the host with /tmp/pile_convergence_* logs present), and writes
 figure_2_draft.png.
 
 Normalized presentation conventions (shared with cma_flop_rate/plot.py):
-  x-axis : wall-clock training hours (log scale)
+  x-axis : wall-clock training hours (linear scale, full snapshot extent)
   y-axis : training loss in bits per byte (100K-step trailing moving average)
            BPB = nats/token × log2(e) / bytes_per_token
            bytes/token = 3.918625 (canonical 2000-sample sweep on Pile,
@@ -64,108 +64,101 @@ PARAMS = {
     "M²RNN-CMA":  "1.31 B",
 }
 
-FULL_LABEL_OFFSETS = {
-    "GDN": (6, -9),
-    "Emender": (6, 0),
-    "M²RNN-CMA": (6, 9),
+LABEL_OFFSETS = {
+    "GDN": (-8, -11),
+    "Emender": (-8, 1),
+    "M²RNN-CMA": (-8, 12),
 }
 
-TAIL_LABEL_OFFSETS = {
-    "GDN": (-6, -10),
-    "Emender": (-6, -8),
-    "M²RNN-CMA": (-6, 10),
-}
+WINDOW_STEPS = 100_000
+Y_MIN, Y_MAX = 0.94, 1.32
+
+
+def _full_window_start(steps: np.ndarray) -> int:
+    """Return the first index whose trailing 100K-step window is fully populated."""
+    if len(steps) <= 1:
+        return 0
+    log_every = int(np.median(np.diff(steps)))
+    window_points = max(1, WINDOW_STEPS // log_every)
+    return min(len(steps) - 1, window_points - 1)
+
+
+def _first_visible_index(steps: np.ndarray, ys: np.ndarray) -> int:
+    """Start curves only after the averaging window is full and y is in range."""
+    start = _full_window_start(steps)
+    in_range = np.nonzero((ys[start:] >= Y_MIN) & (ys[start:] <= Y_MAX))[0]
+    if len(in_range) == 0:
+        return start
+    return start + int(in_range[0])
 
 
 def load(path: Path):
-    """Return (wallclock_h, bpb) where bpb is the BPB conversion of SMOOTH_COLUMN.
+    """Return post-warm-up wallclock_h and BPB arrays for SMOOTH_COLUMN.
 
     Underlying CSVs remain in native units (nats/token); the BPB conversion
     happens here at the display step so the training-log artefacts are not
-    rewritten.
+    rewritten. The plotted prefix is removed until the trailing 100K-step
+    window is fully populated; this avoids displaying the partial-window
+    warm-up as if it were a stable 100K-step estimate.
     """
-    xs, ys = [], []
+    steps, xs, ys = [], [], []
     with open(path) as f:
         for r in csv.DictReader(f):
             h = float(r["wallclock_h"])
             if h <= 0:
                 continue
+            steps.append(int(r["step"]))
             xs.append(h)
             ys.append(float(r[SMOOTH_COLUMN]) * NATS_TO_BPB)
-    return np.array(xs), np.array(ys)
+    steps = np.array(steps)
+    xs = np.array(xs)
+    ys = np.array(ys)
+    start = _first_visible_index(steps, ys)
+    return {
+        "steps": steps[start:],
+        "wallclock_h": xs[start:],
+        "bpb": ys[start:],
+        "start_step": int(steps[start]),
+        "start_h": float(xs[start]),
+        "endpoint_h": float(xs[-1]),
+        "endpoint_bpb": float(ys[-1]),
+    }
 
 
 def main():
-    fig, (axA, axB) = plt.subplots(
-        1, 2, figsize=(13.5, 4.9), gridspec_kw={"width_ratios": [1.0, 1.22]}
-    )
+    fig, ax = plt.subplots(figsize=(8.6, 4.9))
 
     data = {name: load(FILES[name]) for name in ORDER}
-    max_x = max(float(xs[-1]) for xs, _ in data.values() if len(xs))
-    visible_ys = np.concatenate([ys[xs >= 1.0] for xs, ys in data.values() if len(ys)])
+    max_x = max(d["endpoint_h"] for d in data.values())
 
-    # Panel A — full log-x view
     for name in ORDER:
-        xs, ys = data[name]
-        axA.plot(
+        d = data[name]
+        xs, ys = d["wallclock_h"], d["bpb"]
+        ax.plot(
             xs, ys,
             label=f"{name} ({PARAMS[name]})",
             color=COLORS[name],
-            lw=2.2 if name == "M2RNN-CMA" else 1.7,
-            zorder=5 if name == "M2RNN-CMA" else 3,
+            lw=2.4 if name == "M²RNN-CMA" else 1.9,
+            zorder=5 if name == "M²RNN-CMA" else 3,
         )
-        axA.annotate(
-            f"{ys[-1]:.3f}",
+        ax.annotate(
+            f"{name}: {d['endpoint_bpb']:.3f}",
             (xs[-1], ys[-1]),
-            xytext=FULL_LABEL_OFFSETS[name],
+            xytext=LABEL_OFFSETS[name],
             textcoords="offset points",
             fontsize=8,
             color=COLORS[name],
             va="center",
+            ha="right",
         )
-    axA.set_xscale("log")
-    axA.set_xlim(1.0, max(520.0, max_x * 1.08))
-    axA.set_ylim(min(0.94, float(visible_ys.min()) - 0.015), max(1.74, float(visible_ys.max()) * 1.02))
-    axA.set_xlabel("Wall-clock training hours (log scale)", fontsize=11)
-    axA.set_ylabel(f"Training loss (bits / byte, {SMOOTH_LABEL})", fontsize=11)
-    axA.set_title("A. Full curve (log-x)", fontsize=11)
-    axA.legend(fontsize=9, loc="upper right", framealpha=0.95)
-    axA.grid(True, which="both", alpha=0.3)
 
-    # Panel B — tail zoom (linear-x) where the strict order is the headline
-    tail_lo = 40.0
-    tail_ys = []
-    for name in ORDER:
-        xs, ys = data[name]
-        mask = xs >= tail_lo
-        tail_ys.extend(ys[mask].tolist())
-        axB.plot(
-            xs[mask], ys[mask],
-            color=COLORS[name],
-            lw=2.4 if name == "M2RNN-CMA" else 1.8,
-            zorder=5 if name == "M2RNN-CMA" else 3,
-        )
-        # End-of-curve label
-        xs_t, ys_t = xs[mask], ys[mask]
-        if len(xs_t):
-            axB.annotate(
-                f"{name}: {ys_t[-1]:.3f}",
-                (xs_t[-1], ys_t[-1]),
-                xytext=TAIL_LABEL_OFFSETS[name],
-                textcoords="offset points",
-                fontsize=8,
-                color=COLORS[name],
-                va="center",
-                ha="right",
-            )
-    axB.set_xlim(tail_lo, max(520.0, max_x + 12.0))
-    tail_min, tail_max = min(tail_ys), max(tail_ys)
-    tail_pad = max(0.008, (tail_max - tail_min) * 0.08)
-    axB.set_ylim(tail_min - tail_pad, tail_max + tail_pad)
-    axB.set_xlabel("Wall-clock training hours", fontsize=11)
-    axB.set_ylabel("Training loss (bits / byte)", fontsize=11)
-    axB.set_title("B. Tail (h ≥ 40) — wall-clock order at the tail", fontsize=10)
-    axB.grid(True, which="both", alpha=0.3)
+    ax.set_xlim(0.0, max(520.0, max_x + 12.0))
+    ax.set_ylim(Y_MIN, Y_MAX)
+    ax.set_xlabel("Wall-clock training hours", fontsize=11)
+    ax.set_ylabel(f"Training loss (bits / byte, {SMOOTH_LABEL})", fontsize=11)
+    ax.set_title("1.3 B racer after the 100K-step trailing window is populated", fontsize=11)
+    ax.legend(fontsize=9, loc="upper right", framealpha=0.95)
+    ax.grid(True, which="both", alpha=0.3)
 
     out = OUT / "figure_2_draft.png"
     fig.tight_layout()
