@@ -203,6 +203,10 @@ def parse_args():
                         help='Total training steps')
     parser.add_argument('--train_minutes', type=float, default=None,
                         help='Train for N minutes (overrides --steps)')
+    parser.add_argument('--compile_warmup_steps', type=int, default=0,
+                        help='Untimed fwd+bwd steps before training/probe to pay compile/autotune cost')
+    parser.add_argument('--timer_after_compile_warmup', action='store_true',
+                        help='For --train_minutes, start the training clock after compile_warmup_steps')
     parser.add_argument('--warmup_steps', type=int, default=0,
                         help='Warmup steps for learning rate (only for adamw)')
     parser.add_argument('--optimizer', type=str, default='schedulefree',
@@ -750,25 +754,62 @@ def train(args):
             device=device,
         )
 
+    def get_training_batch():
+        if args.tbptt:
+            chunks, is_doc_end = train_dataset.get_batch(device=device)
+            actual_lengths = torch.full((args.batch_size,), args.chunk_size + 1, device=device)
+        else:
+            chunks, is_doc_end, actual_lengths = train_dataset.get_batch(args.batch_size, device=device)
+        return chunks, is_doc_end, actual_lengths
+
+    def compute_training_loss(chunks, prev_hiddens=None):
+        with torch.autocast(device_type='cuda', dtype=torch.bfloat16, enabled=args.bf16):
+            if args.tbptt:
+                result = model(
+                    chunks,
+                    return_loss=True,
+                    return_prev_hiddens=True,
+                    prev_hiddens=prev_hiddens,
+                )
+            else:
+                result = model(
+                    chunks,
+                    return_loss=True,
+                )
+
+            if isinstance(result, tuple):
+                loss, (next_hidden, _) = result
+            else:
+                loss = result
+                next_hidden = None
+
+        return loss, next_hidden
+
+    model.train()
+    if args.optimizer == 'schedulefree':
+        optimizer.train()
+
+    if args.compile_warmup_steps > 0:
+        print(f"Compile/autotune warmup: {args.compile_warmup_steps} untimed fwd+bwd step(s)")
+        warmup_start = time.time()
+        for warmup_step in range(args.compile_warmup_steps):
+            chunks, _, _ = get_training_batch()
+            loss, _ = compute_training_loss(chunks)
+            if not torch.isfinite(loss):
+                print(f"Non-finite compile warmup loss at warmup step {warmup_step + 1}: {loss.item()}")
+                break
+            loss.backward()
+            optimizer.zero_grad(set_to_none=True)
+            torch.cuda.synchronize(device)
+            print(f"  warmup {warmup_step + 1}/{args.compile_warmup_steps} | loss {loss.item():.4f}")
+        print(f"Compile/autotune warmup took {time.time() - warmup_start:.1f}s")
+
     # Memory probe mode: run 1 fwd+bwd step, report peak memory, exit
     if args.probe_memory:
         torch.cuda.reset_peak_memory_stats(device)
         torch.cuda.synchronize(device)
-        model.train()
-        if args.optimizer == 'schedulefree':
-            optimizer.train()
-        # Get one batch
-        if args.tbptt:
-            chunks, is_doc_end = train_dataset.get_batch(device=device)
-        else:
-            chunks, is_doc_end, actual_lengths = train_dataset.get_batch(args.batch_size, device=device)
-        # Forward + backward
-        with torch.autocast(device_type='cuda', dtype=torch.bfloat16, enabled=args.bf16):
-            result = model(chunks, return_loss=True)
-            if isinstance(result, tuple):
-                loss = result[0]
-            else:
-                loss = result
+        chunks, _, _ = get_training_batch()
+        loss, _ = compute_training_loss(chunks)
         loss.backward()
         optimizer.step()
         optimizer.zero_grad()
@@ -794,20 +835,20 @@ def train(args):
     print(f"Gradient accumulation: {args.grad_accum}, Effective batch: {args.batch_size * args.grad_accum}")
     print()
 
-    model.train()
-    if args.optimizer == 'schedulefree':
-        optimizer.train()  # Schedule-free needs this
     step = start_step
 
-    # Time-based training setup — clock starts at PROCESS startup, not here.
-    # This way slow-to-init configs (compile, probe) are penalized in fitness.
-    train_start_time = STARTUP_TIME
+    # Time-based training setup defaults to process startup so slow init remains
+    # part of fitness.  Some external kernels need an explicit untimed compile
+    # warmup; in that mode we start the clock here, after warmup completes.
+    train_start_time = time.time() if args.timer_after_compile_warmup else STARTUP_TIME
     train_end_time = None
     if args.train_minutes is not None:
         train_end_time = train_start_time + args.train_minutes * 60
         elapsed_init = time.time() - STARTUP_TIME
-        remaining = max(0.0, args.train_minutes * 60 - elapsed_init)
-        print(f"Time-based training: {args.train_minutes} min budget (from process start). "
+        elapsed_clock = time.time() - train_start_time
+        remaining = max(0.0, args.train_minutes * 60 - elapsed_clock)
+        clock_origin = "after compile warmup" if args.timer_after_compile_warmup else "from process start"
+        print(f"Time-based training: {args.train_minutes} min budget ({clock_origin}). "
               f"Init took {elapsed_init:.1f}s, {remaining:.1f}s remaining for training.")
 
     def should_continue():

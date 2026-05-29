@@ -64,6 +64,9 @@ E88_SUPPORTED_N_STATE = [16, 32]
 COMPILE_ENABLED = False
 COMPILE_MODE = 'max-autotune'
 USE_TRITON_E88 = False
+COMPILE_WARMUP_STEPS = 0
+TIMER_AFTER_COMPILE_WARMUP = False
+SKIP_MEMORY_PROBE = False
 
 # Global sequence length setting (set from args in main())
 CHUNK_SIZE = 512
@@ -742,6 +745,10 @@ def build_train_command(params, model_type, train_minutes, output_dir):
     # Add torch.compile if enabled (global settings)
     if COMPILE_ENABLED:
         cmd.extend(['--compile', '--compile_mode', COMPILE_MODE])
+    if COMPILE_WARMUP_STEPS > 0:
+        cmd.extend(['--compile_warmup_steps', str(COMPILE_WARMUP_STEPS)])
+    if TIMER_AFTER_COMPILE_WARMUP:
+        cmd.append('--timer_after_compile_warmup')
 
     # Add long-sequence options
     if GRADIENT_CHECKPOINTING:
@@ -1237,20 +1244,25 @@ def find_max_batch_size(cmd_no_bs, env, cwd, timeout, cleanup_fn=None, target_bs
 
     If target_bs is given (from CMA-ES), use min(target_bs, max_feasible).
     If target_bs is None, use max_feasible (legacy behavior).
+    If SKIP_MEMORY_PROBE is enabled, run target_bs directly and rely on the
+    existing OOM fallback loop.
 
     Returns (actual_bs, result) where result is the subprocess result from
     the final successful run, or (0, None) if even bs=1 OOMs.
     """
-    # Memory probe only up to the CMA-ES target when one is provided.  We only
-    # need to know whether the proposed batch fits, or the largest smaller
-    # batch if it does not; probing above target is pure overhead.
-    probe_cap = target_bs if target_bs is not None else 256
-    max_feasible = probe_max_batch_size(cmd_no_bs, env, cwd, max_bs_cap=probe_cap)
-    if max_feasible == 0:
-        return (0, None)
+    if SKIP_MEMORY_PROBE:
+        bs = target_bs if target_bs is not None else 1
+    else:
+        # Memory probe only up to the CMA-ES target when one is provided.  We only
+        # need to know whether the proposed batch fits, or the largest smaller
+        # batch if it does not; probing above target is pure overhead.
+        probe_cap = target_bs if target_bs is not None else 256
+        max_feasible = probe_max_batch_size(cmd_no_bs, env, cwd, max_bs_cap=probe_cap)
+        if max_feasible == 0:
+            return (0, None)
 
-    # Clamp to CMA-ES chosen batch_size if specified
-    bs = min(max_feasible, target_bs) if target_bs is not None else max_feasible
+        # Clamp to CMA-ES chosen batch_size if specified
+        bs = min(max_feasible, target_bs) if target_bs is not None else max_feasible
 
     # Try training at estimated max, step down on OOM
     while bs >= 1:
@@ -2055,7 +2067,9 @@ def main():
     parser.add_argument('--fixed_n_state', type=int, default=None,
                         help='Fix n_state to this value (skip sweep)')
     parser.add_argument('--fixed_batch_size', type=int, default=None,
-                        help='Fix batch_size to this value (memory probe still clamps)')
+                        help='Fix batch_size to this value (memory probe still clamps unless --skip_memory_probe)')
+    parser.add_argument('--skip_memory_probe', action='store_true',
+                        help='Skip batch-size memory probing and run the requested batch size directly')
     parser.add_argument('--tokenizer', type=str, default=None,
                         choices=[None, 'gpt2', 'cl100k_base', 'r50k_base', 'p50k_base', 'o200k_base'],
                         help='If set, train with BPE tokenizer instead of bytes')
@@ -2073,6 +2087,10 @@ def main():
                         help='Use torch.compile for training (recommended: +17%% throughput)')
     parser.add_argument('--compile_mode', type=str, default='max-autotune',
                         help='torch.compile mode (default, reduce-overhead, max-autotune)')
+    parser.add_argument('--compile_warmup_steps', type=int, default=0,
+                        help='Pass untimed fwd+bwd compile/autotune warmup steps to train.py')
+    parser.add_argument('--timer_after_compile_warmup', action='store_true',
+                        help='Start train.py time budget after compile_warmup_steps')
 
     # Sequence length scaling
     parser.add_argument('--chunk_size', type=int, default=512,
@@ -2126,7 +2144,8 @@ def main():
             print(f"Using GPU file: {GPU_FILE} (current GPUs: {current})")
 
     # Set global compile, sequence, and parameter-window settings
-    global COMPILE_ENABLED, COMPILE_MODE, USE_TRITON_E88, CHUNK_SIZE, GRADIENT_CHECKPOINTING, PROJECTION_CHUNK_SIZE
+    global COMPILE_ENABLED, COMPILE_MODE, USE_TRITON_E88, COMPILE_WARMUP_STEPS, TIMER_AFTER_COMPILE_WARMUP
+    global SKIP_MEMORY_PROBE, CHUNK_SIZE, GRADIENT_CHECKPOINTING, PROJECTION_CHUNK_SIZE
     global PARAM_TOLERANCE, PARAM_VOCAB_SIZE, TOKENIZER_NAME
     global PROGRESSIVE, PHASE1_MINUTES, PHASE2_MINUTES, PHASE2_CHUNK_SIZE
     if args.param_tolerance is not None:
@@ -2136,6 +2155,9 @@ def main():
     COMPILE_ENABLED = args.compile
     COMPILE_MODE = args.compile_mode
     USE_TRITON_E88 = args.use_triton_e88
+    COMPILE_WARMUP_STEPS = args.compile_warmup_steps
+    TIMER_AFTER_COMPILE_WARMUP = args.timer_after_compile_warmup
+    SKIP_MEMORY_PROBE = args.skip_memory_probe
     GRADIENT_CHECKPOINTING = args.gradient_checkpointing
     PROJECTION_CHUNK_SIZE = args.projection_chunk_size
     CHUNK_SIZE = args.chunk_size
@@ -2187,6 +2209,10 @@ def main():
     if not PROGRESSIVE:
         print(f"Chunk size: {CHUNK_SIZE} (batch size auto-scaled)")
     print(f"torch.compile: {COMPILE_ENABLED} (mode: {COMPILE_MODE})")
+    if COMPILE_WARMUP_STEPS > 0:
+        print(f"Compile/autotune warmup: {COMPILE_WARMUP_STEPS} step(s), timer_after={TIMER_AFTER_COMPILE_WARMUP}")
+    if SKIP_MEMORY_PROBE:
+        print("Memory probe: skipped (direct requested batch-size run with OOM fallback)")
     if args.model == 'e88':
         print(f"E88 Triton backend: {USE_TRITON_E88}")
     if args.phase in ['both', 'lhs']:
