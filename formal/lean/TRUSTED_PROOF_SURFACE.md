@@ -41,6 +41,11 @@ The current trusted paper core supports:
 - E97 split-gated delta algebra is checked: direct and expanded forms agree,
   all-one gates specialize to E88, and a concrete 1x1 split-write-gate witness
   leaves the E88 all-one-gate subfamily on the same state/input.
+- E97's pointwise split erase/read gate also has a finite 2D transition
+  witness: write direction `u = (1,1)` and erase/read direction `r = (1,0)`
+  are nonparallel, E97 realizes `I - u r^T`, and no E88 coupled transition
+  `mu I - p p^T` realizes that same transition factor. This is a one-step
+  transition-factor result only.
 - E97 and E88 have the same leading coarse per-head recurrent-state cost under
   `flopsPerToken`; applying precomputed split gates is represented separately
   as a linear `2*d` term and is bounded by one `d*d` state-scalar pass for
