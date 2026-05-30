@@ -190,19 +190,20 @@ def calc_mamba3_params(dim, depth, expand=2, d_state=128, headdim=64, mimo_rank=
     return vocab_size * dim + depth * per_layer + dim
 
 
-def calc_transformer_params(dim, depth, n_heads=8, expansion=4.0, vocab_size=256):
-    """Calculate Transformer (Llama-style) parameters."""
-    # Self-attention: Q, K, V, O projections
-    attn = dim * dim * 4  # 4 projections of dim x dim
-    # FFN: up_proj, gate_proj, down_proj (SwiGLU style)
+def calc_transformer_params(dim, depth, n_heads=8, expansion=4.0, vocab_size=256, head_dim=64):
+    """Calculate the LadderLM-hosted Llama-style transformer parameter count."""
+    attn_dim = n_heads * head_dim
+    # Q, K, V and output projections. The implementation allows attn_dim != dim.
+    attn = 4 * dim * attn_dim
+    # SwiGLU gate/up/down projections.
     ffn_dim = int(dim * expansion)
-    ffn = dim * ffn_dim * 3  # 3 projections
-    # RMSNorm
-    norm = dim * 2
-    per_layer = attn + ffn + norm
-    layers_total = per_layer * depth
-    embed = vocab_size * dim
-    return layers_total + embed
+    ffn = 3 * dim * ffn_dim
+    # LadderLM adds one wrapper RMSNorm per layer; LlamaBlock has two more.
+    norms = 3 * dim
+    per_layer = attn + ffn + norms
+    embed = vocab_size * dim  # tied embedding/lm_head
+    final_norm = dim
+    return depth * per_layer + embed + final_norm
 
 
 def calc_gru_params(dim, depth, expansion=1.0, vocab_size=256):

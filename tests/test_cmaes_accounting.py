@@ -29,6 +29,31 @@ def test_cmaes_estimator_uses_tokenizer_vocab(monkeypatch):
     assert bpe_count == calc_e88_params(**params, vocab_size=vocab_size)
 
 
+def test_transformer_estimator_matches_ladder_llama(monkeypatch):
+    import scripts.cmaes_search_v2 as cmaes
+    from ndm.models.ladder_lm import LadderLM
+
+    params = {
+        "dim": 128,
+        "depth": 2,
+        "n_heads": 3,
+        "expansion": 2,
+    }
+
+    monkeypatch.setattr(cmaes, "PARAM_VOCAB_SIZE", 256)
+
+    model = LadderLM(
+        vocab_size=256,
+        dim=params["dim"],
+        depth=params["depth"],
+        level="llama",
+        expansion=params["expansion"],
+        n_heads=params["n_heads"],
+    )
+
+    assert cmaes.estimate_params_for_config(params, "transformer") == model.get_num_params()
+
+
 def test_gdn2_wrapper_accepts_n_heads_alias():
     pytest.importorskip("fla")
 

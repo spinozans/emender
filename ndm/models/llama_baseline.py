@@ -37,6 +37,17 @@ class RMSNorm(nn.Module):
         return (x * norm).type_as(x) * self.weight
 
 
+def resolve_llama_hidden_dim(dim, expansion=None, hidden_dim=None):
+    """Resolve the SwiGLU hidden width used by the Llama blocks."""
+    if hidden_dim is not None:
+        return int(hidden_dim)
+    if expansion is not None:
+        return int(dim * expansion)
+
+    hidden_dim = int(8 / 3 * dim)
+    return ((hidden_dim + 255) // 256) * 256
+
+
 def precompute_freqs_cis(dim, max_seq_len, theta=10000.0):
     """Precompute rotary embedding frequencies."""
     freqs = 1.0 / (theta ** (torch.arange(0, dim, 2).float() / dim))
@@ -154,12 +165,9 @@ class LlamaAttention(nn.Module):
 class LlamaFFN(nn.Module):
     """SwiGLU Feed-Forward Network (Llama-style)."""
 
-    def __init__(self, dim, hidden_dim=None, dropout=0.0):
+    def __init__(self, dim, hidden_dim=None, expansion=None, dropout=0.0):
         super().__init__()
-        # Llama uses 8/3 * dim for hidden, rounded to multiple of 256
-        if hidden_dim is None:
-            hidden_dim = int(8 / 3 * dim)
-            hidden_dim = ((hidden_dim + 255) // 256) * 256
+        hidden_dim = resolve_llama_hidden_dim(dim, expansion=expansion, hidden_dim=hidden_dim)
 
         self.w1 = nn.Linear(dim, hidden_dim, bias=False)  # gate
         self.w2 = nn.Linear(hidden_dim, dim, bias=False)  # down
@@ -181,14 +189,14 @@ class LlamaFFN(nn.Module):
 class LlamaBlock(nn.Module):
     """Single Llama transformer block: attention + FFN with pre-norm."""
 
-    def __init__(self, dim, n_heads, head_dim=None, hidden_dim=None, dropout=0.0):
+    def __init__(self, dim, n_heads, head_dim=None, hidden_dim=None, expansion=None, dropout=0.0):
         super().__init__()
 
         self.attention_norm = RMSNorm(dim)
         self.attention = LlamaAttention(dim, n_heads, head_dim, dropout)
 
         self.ffn_norm = RMSNorm(dim)
-        self.ffn = LlamaFFN(dim, hidden_dim, dropout)
+        self.ffn = LlamaFFN(dim, hidden_dim=hidden_dim, expansion=expansion, dropout=dropout)
 
     def forward(self, x, freqs_cis):
         # Attention with residual
@@ -207,7 +215,7 @@ class LlamaLayer(nn.Module):
     For transformers, h_final is None since there's no recurrent state.
     """
 
-    def __init__(self, dim, n_heads=None, head_dim=64, hidden_dim=None,
+    def __init__(self, dim, n_heads=None, head_dim=64, hidden_dim=None, expansion=None,
                  dropout=0.0, max_seq_len=65536, **kwargs):
         super().__init__()
 
@@ -215,7 +223,7 @@ class LlamaLayer(nn.Module):
         if n_heads is None:
             n_heads = max(1, dim // head_dim)
 
-        self.block = LlamaBlock(dim, n_heads, head_dim, hidden_dim, dropout)
+        self.block = LlamaBlock(dim, n_heads, head_dim, hidden_dim, expansion, dropout)
 
         # Precompute RoPE frequencies
         self.register_buffer(
@@ -253,6 +261,7 @@ class LlamaLM(nn.Module):
         n_heads=None,
         head_dim=64,
         hidden_dim=None,
+        expansion=None,
         dropout=0.0,
         max_seq_len=65536,
         tie_weights=True,
@@ -281,7 +290,7 @@ class LlamaLM(nn.Module):
 
         # Transformer blocks
         self.layers = nn.ModuleList([
-            LlamaBlock(dim, n_heads, head_dim, hidden_dim, dropout)
+            LlamaBlock(dim, n_heads, head_dim, hidden_dim, expansion, dropout)
             for _ in range(depth)
         ])
 
@@ -355,7 +364,8 @@ class LlamaLM(nn.Module):
         return f'Llama Transformer, dim={self.dim}, depth={self.depth}, n_heads={self.n_heads}'
 
 
-def count_llama_params(dim, depth, vocab_size=256, head_dim=64, hidden_dim=None):
+def count_llama_params(dim, depth, vocab_size=256, n_heads=None, head_dim=64,
+                       hidden_dim=None, expansion=None):
     """Count Llama parameters analytically.
 
     Per layer:
@@ -367,18 +377,19 @@ def count_llama_params(dim, depth, vocab_size=256, head_dim=64, hidden_dim=None)
         dim: Model dimension
         depth: Number of layers
         vocab_size: Vocabulary size
-        head_dim: Head dimension (determines n_heads = dim // head_dim)
+        n_heads: Number of attention heads (default: dim // head_dim)
+        head_dim: Head dimension
         hidden_dim: FFN hidden dimension (default: 8/3 * dim rounded to 256)
+        expansion: Optional FFN expansion factor used when hidden_dim is not set
 
     Returns:
         Total parameter count
     """
-    n_heads = max(1, dim // head_dim)
+    if n_heads is None:
+        n_heads = max(1, dim // head_dim)
     attn_dim = n_heads * head_dim
 
-    if hidden_dim is None:
-        hidden_dim = int(8 / 3 * dim)
-        hidden_dim = ((hidden_dim + 255) // 256) * 256
+    hidden_dim = resolve_llama_hidden_dim(dim, expansion=expansion, hidden_dim=hidden_dim)
 
     per_layer = (
         4 * dim * attn_dim +      # Q, K, V, O projections
