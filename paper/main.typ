@@ -941,11 +941,9 @@ and update rule.
     ordering it illustrates is replicated across four CMA-ES sweeps
     (250+ configs/architecture) and the delta-off ablation (§9). The
     multi-week per-architecture training extent is the standard unit
-    at this scale class. At the current endpoint, GDN is lower than
-    E88 by about 0.007 BPB
-    under this stable window; the 10K endpoint makes the GDN dip look
-    larger, so it is reported side by side in `AS_OF.md` rather than
-    used as the paper label. Both curves remain in the same sub-1-bpb
+    at this scale class. Endpoint values are final 100K-step
+    trailing averages: GDN 0.970 BPB, E88 0.977 BPB, and M²RNN-CMA
+    0.983 BPB. E88 and GDN remain in the same sub-1-bpb
     wallclock band. M²RNN-CMA has
     higher loss than the other two across the sampled window. The
     paper-shape M²RNN baseline (not shown)
