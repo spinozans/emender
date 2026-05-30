@@ -176,16 +176,17 @@ def main():
         ax.plot(
             [xs[-1], label_x - 3.0],
             [ys[-1], label_y],
-            color=COLORS[name],
-            lw=0.9,
-            alpha=0.65,
-            solid_capstyle="round",
-            zorder=4,
+            color="#7f8790",
+            lw=0.7,
+            alpha=0.55,
+            linestyle=(0, (3.0, 2.2)),
+            dash_capstyle="round",
+            zorder=2,
         )
         ax.text(
             label_x,
             label_y,
-            f"{name}: {d['endpoint_bpb']:.3f}",
+            name,
             fontsize=8,
             color=COLORS[name],
             va="center",
