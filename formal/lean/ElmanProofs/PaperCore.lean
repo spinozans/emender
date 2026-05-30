@@ -40,7 +40,16 @@ paper-space claims:
   once given the extra read-then-delta resource `v - H^T k`.
 * The E97 split-gated delta algebra is checked: direct and expanded forms are
   equal, all-one gates specialize to E88, and the GDN-2-style linear core is
-  the same split-gated read/write core applied to a pre-decayed state.
+  the same split-gated read/write core applied to a pre-decayed state. A
+  concrete 1x1 witness shows a non-all-one split write gate can leave the E88
+  all-one-gate subfamily on a fixed state/input.
+* The E97/E88/GDN-2 resource-cost surface is checked only at the coarse
+  recurrent-state signature level: E97 has the same leading per-head
+  `flopsPerToken` cost as E88, precomputed split-gate application is counted
+  separately as a linear-in-`d` term bounded by one state-scalar pass for
+  `d >= 2`, GDN-2 remains scan-compatible with no temporal state nonlinearity,
+  and E97 remains nonlinear-state/non-scan-compatible like Emender/E88. These
+  theorems do not claim empirical superiority or FLOPs-per-bit convergence.
 * Emender/E88 exposes the current 1.27B many-program production geometry.
 * E88 has the checked matrix-state capacity separation over E1H.
 * The S5 witness surface is checked: fixed-precision online recognizers have

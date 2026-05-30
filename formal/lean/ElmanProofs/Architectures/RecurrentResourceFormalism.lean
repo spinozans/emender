@@ -211,6 +211,29 @@ def emender (layers heads nState : Nat) : ArchitectureSignature where
 def e88NDM (layers heads nState : Nat) : ArchitectureSignature :=
   emender layers heads nState
 
+/-- E97 split-gated Nonlinear Delta Memory.
+
+E97 keeps the E88/Emender square matrix state and full-state temporal
+nonlinearity, but adds token-feature-derived split erase/read and write gates
+inside the same delta-correcting update family. In this coarse resource
+signature, the gates do not add an external recurrent-state carry. -/
+def e97SplitGated (layers heads nState : Nat) : ArchitectureSignature where
+  name := "E97 split-gated NDM"
+  stateGeometry := .matrix
+  temporalNonlinearity := .fullState
+  transitionSide := .left
+  transitionControl := .inputDependent
+  writeRule := .deltaCorrecting
+  carryPlacement := .insideNonlinearity
+  memorySemantics := .errorCorrectingAssociativeTable
+  implementationMode := .sequentialManyProgram
+  totalLayers := layers
+  nonlinearTemporalLayers := layers
+  headsPerLayer := heads
+  stateScalarsPerHead := nState * nState
+  pureRecurrentStack := true
+  scanCompatible := false
+
 /-- Homogeneous/pure M2RNN: nonlinear matrix-state recurrence, but raw writes and
 a fixed learned right transition. -/
 def m2rnnPure (layers heads stateScalarsPerHead : Nat) : ArchitectureSignature where
@@ -266,6 +289,28 @@ def gatedDeltaNet (layers heads stateScalarsPerHead : Nat) : ArchitectureSignatu
   nonlinearTemporalLayers := 0
   headsPerLayer := heads
   stateScalarsPerHead := stateScalarsPerHead
+  pureRecurrentStack := true
+  scanCompatible := true
+
+/-- GDN-2-style split erase/write recurrence with square per-head matrix state.
+
+Unlike E97, the GDN-2 resource signature remains linear in the recurrent state:
+the split erase/write core is scan-compatible and has no temporal nonlinearity
+inside the state path. -/
+def gdn2SplitEraseWrite (layers heads nState : Nat) : ArchitectureSignature where
+  name := "GDN-2 split erase/write"
+  stateGeometry := .matrix
+  temporalNonlinearity := .none
+  transitionSide := .left
+  transitionControl := .inputDependent
+  writeRule := .selectiveEraseWrite
+  carryPlacement := .none
+  memorySemantics := .rawAssociativeTable
+  implementationMode := .parallelScan
+  totalLayers := layers
+  nonlinearTemporalLayers := 0
+  headsPerLayer := heads
+  stateScalarsPerHead := nState * nState
   pureRecurrentStack := true
   scanCompatible := true
 
@@ -367,6 +412,44 @@ theorem gated_delta_net_has_matrix_state_but_no_temporal_nonlinearity
     (layers heads state : Nat) :
     hasMatrixState (gatedDeltaNet layers heads state).stateGeometry = true ∧
     hasTemporalNonlinearity (gatedDeltaNet layers heads state).temporalNonlinearity = false := by
+  constructor <;> rfl
+
+/-- E97 has the same coarse nonlinear matrix-state resource shape as E88:
+matrix state, full-state temporal nonlinearity, delta-correcting writes, pure
+sequential many-program execution, and no scan-compatible recurrent state path. -/
+theorem e97_split_gated_resource_signature_like_e88
+    (layers heads d : Nat) :
+    hasMatrixState (e97SplitGated layers heads d).stateGeometry = true ∧
+    hasTemporalNonlinearity (e97SplitGated layers heads d).temporalNonlinearity = true ∧
+    hasDeltaCorrectingWrite (e97SplitGated layers heads d).writeRule = true ∧
+    (e97SplitGated layers heads d).implementationMode = .sequentialManyProgram ∧
+    (e97SplitGated layers heads d).scanCompatible = false := by
+  constructor
+  · rfl
+  constructor
+  · rfl
+  constructor
+  · rfl
+  constructor <;> rfl
+
+/-- GDN-2 remains in the linear/scan-compatible side of the resource signature:
+it has matrix state and delta-style split erase/write, but no temporal
+nonlinearity in the recurrent state path and a parallel-scan implementation
+mode. -/
+theorem gdn2_split_erase_write_is_scan_compatible_linear_state
+    (layers heads d : Nat) :
+    hasMatrixState (gdn2SplitEraseWrite layers heads d).stateGeometry = true ∧
+    hasDeltaStyleWrite (gdn2SplitEraseWrite layers heads d).writeRule = true ∧
+    hasTemporalNonlinearity
+        (gdn2SplitEraseWrite layers heads d).temporalNonlinearity = false ∧
+    (gdn2SplitEraseWrite layers heads d).implementationMode = .parallelScan ∧
+    (gdn2SplitEraseWrite layers heads d).scanCompatible = true := by
+  constructor
+  · rfl
+  constructor
+  · rfl
+  constructor
+  · rfl
   constructor <;> rfl
 
 theorem e88_and_gdn_share_delta_style_write
@@ -1156,12 +1239,12 @@ per-token FLOP costs are:
 4. The two counts are within a factor of 2 of each other:
    `flopsPerToken(M2RNN) ≤ 2 · flopsPerToken(NDM)`.
 
-Consequence: equal-token-budget comparisons at matched `(d, H, depth)` are
-NOT confounded by a FLOP-budget asymmetry.  The empirical FLOPs-per-bit
-convergence (Figure 3) is therefore not a token-budget artifact.
+Consequence: equal-token-budget comparisons at matched `(d, H, depth)` are not
+confounded by this coarse per-head recurrent-state FLOP count.
 
-This theorem makes NO claim about learning-rate convergence.  It is a pure
-combinatorial cost statement. -/
+This theorem makes no claim about learning-rate convergence, FLOPs-per-bit
+convergence, or empirical superiority.  It is a pure combinatorial cost
+statement. -/
 theorem emender_m2rnn_flop_class_equiv (d H depth : Nat) :
     flopsPerToken (emender depth H d) = 6 * (d * d) ∧
     flopsPerToken (m2rnnPure depth H (d * d)) = 7 * (d * d) ∧
@@ -1172,6 +1255,104 @@ theorem emender_m2rnn_flop_class_equiv (d H depth : Nat) :
   have h2 : flopsPerToken (m2rnnPure depth H (d * d)) = 7 * (d * d) := rfl
   refine ⟨h1, h2, h1 ▸ ?_, h2 ▸ ?_, h2 ▸ h1 ▸ ?_⟩ <;>
     nlinarith [Nat.zero_le (d * d)]
+
+/-! ## E97/E88/GDN-2 Resource-Cost Comparison
+
+The following definitions separate the coarse `flopsPerToken` signature from a
+small square-state accounting model for split-gate application. The split gates
+are assumed to be precomputed from token features before the recurrent state
+update. The Lean model below counts only applying those two length-`d` gates to
+the key/value vectors; it does not count feature-network gate generation,
+kernel fusion choices, memory bandwidth, or any training-efficiency metric.
+-/
+
+/-- State scalars in one `d x d` recurrent matrix-state head. -/
+def squareStateScalars (d : Nat) : Nat :=
+  d * d
+
+/-- E88/Emender coarse per-head recurrent-state update cost in the existing
+six-atom `flopsPerToken` model. -/
+def e88PerHeadStateUpdateCost (d : Nat) : Nat :=
+  6 * squareStateScalars d
+
+/-- E97 coarse per-head recurrent-state update cost when split gates are treated
+as precomputed token features, matching the existing `flopsPerToken` model. -/
+def e97PerHeadStateUpdateCostCoarse (d : Nat) : Nat :=
+  6 * squareStateScalars d
+
+/-- Extra arithmetic to apply precomputed split gates in a square `d x d` head:
+one length-`d` key-axis product `b * k` and one length-`d` value-axis product
+`w * v`. This is intentionally separate from `flopsPerToken`. -/
+def e97PrecomputedSplitGateOverhead (d : Nat) : Nat :=
+  2 * d
+
+/-- E97 per-head state update cost with the precomputed split-gate applications
+counted explicitly. -/
+def e97PerHeadStateUpdateCostWithPrecomputedGates (d : Nat) : Nat :=
+  e97PerHeadStateUpdateCostCoarse d + e97PrecomputedSplitGateOverhead d
+
+/-- Under the coarse `flopsPerToken`/state-scalar model, E97 and E88 have the
+same per-head recurrent-state update cost at matched square state dimension.
+
+This is a cost-class statement only; it does not assert empirical learning
+efficiency or FLOPs-per-bit convergence. -/
+theorem e97_e88_same_leading_per_head_recurrent_cost
+    (d H depth : Nat) :
+    flopsPerToken (e88NDM depth H d) = e88PerHeadStateUpdateCost d ∧
+    flopsPerToken (e97SplitGated depth H d) = e97PerHeadStateUpdateCostCoarse d ∧
+    e97PerHeadStateUpdateCostCoarse d = e88PerHeadStateUpdateCost d := by
+  constructor
+  · rfl
+  constructor <;> rfl
+
+/-- The explicit precomputed split-gate application term is linear in `d`.
+
+Lean records the exact arithmetic count. The informal "lower order than the
+square matrix-state update" reading comes from comparing this `2*d` term with
+`d*d` state scalars for square heads; no little-o asymptotic theorem is claimed
+here. -/
+theorem e97_precomputed_split_gate_overhead_linear_in_d (d : Nat) :
+    e97PrecomputedSplitGateOverhead d = 2 * d := by
+  rfl
+
+/-- For square heads of dimension at least two, applying the two precomputed
+split gates costs no more than one additional state-scalar pass. -/
+theorem e97_precomputed_split_gate_overhead_bounded_by_state_scalars
+    (d : Nat) (hd : 2 ≤ d) :
+    e97PrecomputedSplitGateOverhead d ≤ squareStateScalars d := by
+  dsimp [e97PrecomputedSplitGateOverhead, squareStateScalars]
+  exact Nat.mul_le_mul_right d hd
+
+/-- With precomputed gates counted explicitly, E97 remains in the same
+quadratic per-head cost class as E88 for square state dimension `d >= 2`.
+
+The bound exposes the conservative constant: E88 is `6*d*d`, while E97 with
+gate applications is at most `7*d*d`. This theorem does not include gate
+generation from token features and does not claim improved empirical
+efficiency. -/
+theorem e97_precomputed_gates_same_quadratic_cost_class_as_e88
+    (d : Nat) (hd : 2 ≤ d) :
+    e88PerHeadStateUpdateCost d = 6 * squareStateScalars d ∧
+    e97PerHeadStateUpdateCostWithPrecomputedGates d =
+      6 * squareStateScalars d + 2 * d ∧
+    e88PerHeadStateUpdateCost d ≤
+      e97PerHeadStateUpdateCostWithPrecomputedGates d ∧
+    e97PerHeadStateUpdateCostWithPrecomputedGates d ≤ 7 * squareStateScalars d := by
+  constructor
+  · rfl
+  constructor
+  · rfl
+  constructor
+  · dsimp [e88PerHeadStateUpdateCost, e97PerHeadStateUpdateCostWithPrecomputedGates,
+      e97PerHeadStateUpdateCostCoarse, e97PrecomputedSplitGateOverhead]
+    omega
+  · have hover :
+        e97PrecomputedSplitGateOverhead d ≤ squareStateScalars d :=
+      e97_precomputed_split_gate_overhead_bounded_by_state_scalars d hd
+    dsimp [e97PerHeadStateUpdateCostWithPrecomputedGates,
+      e97PerHeadStateUpdateCostCoarse, e97PrecomputedSplitGateOverhead,
+      squareStateScalars] at hover ⊢
+    nlinarith
 
 /-! ## Multi-Programming Predicate (Pillar 1 anchor) -/
 
