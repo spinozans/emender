@@ -64,11 +64,10 @@ PARAMS = {
     "M²RNN-CMA":  "1.31 B",
 }
 
-LABEL_OFFSETS = {
-    "GDN": (-8, -11),
-    "Emender": (-8, 1),
-    "M²RNN-CMA": (-8, 12),
-}
+LABEL_X_PAD_H = 10.0
+LABEL_RIGHT_PAD_H = 115.0
+LABEL_MIN_GAP_BPB = 0.016
+LABEL_Y_PAD_BPB = 0.014
 
 WINDOW_STEPS = 100_000
 Y_MIN, Y_MAX = 0.94, 1.32
@@ -125,11 +124,43 @@ def load(path: Path):
     }
 
 
+def right_edge_label_positions(data):
+    """Return readable right-edge label lanes ordered by endpoint BPB."""
+    rows = sorted(
+        data.items(),
+        key=lambda item: item[1]["endpoint_bpb"],
+        reverse=True,
+    )
+    endpoints = np.array([row[1]["endpoint_bpb"] for row in rows], dtype=float)
+    if len(endpoints) <= 1:
+        lanes = endpoints
+    else:
+        gaps = endpoints[:-1] - endpoints[1:]
+        if np.all(gaps >= LABEL_MIN_GAP_BPB):
+            lanes = endpoints
+        else:
+            center = float(np.mean(endpoints))
+            offsets = (
+                (len(endpoints) - 1) / 2.0 - np.arange(len(endpoints), dtype=float)
+            ) * LABEL_MIN_GAP_BPB
+            lanes = center + offsets
+
+    high = Y_MAX - LABEL_Y_PAD_BPB
+    low = Y_MIN + LABEL_Y_PAD_BPB
+    if len(lanes) and lanes[0] > high:
+        lanes = lanes - (lanes[0] - high)
+    if len(lanes) and lanes[-1] < low:
+        lanes = lanes + (low - lanes[-1])
+    return {name: float(y) for (name, _), y in zip(rows, lanes)}
+
+
 def main():
     fig, ax = plt.subplots(figsize=(8.6, 4.9))
 
     data = {name: load(FILES[name]) for name in ORDER}
     max_x = max(d["endpoint_h"] for d in data.values())
+    label_x = max_x + LABEL_X_PAD_H
+    label_lanes = right_edge_label_positions(data)
 
     for name in ORDER:
         d = data[name]
@@ -141,18 +172,33 @@ def main():
             lw=2.4 if name == "M²RNN-CMA" else 1.9,
             zorder=5 if name == "M²RNN-CMA" else 3,
         )
-        ax.annotate(
+        label_y = label_lanes[name]
+        ax.plot(
+            [xs[-1], label_x - 3.0],
+            [ys[-1], label_y],
+            color=COLORS[name],
+            lw=0.9,
+            alpha=0.65,
+            solid_capstyle="round",
+            zorder=4,
+        )
+        ax.text(
+            label_x,
+            label_y,
             f"{name}: {d['endpoint_bpb']:.3f}",
-            (xs[-1], ys[-1]),
-            xytext=LABEL_OFFSETS[name],
-            textcoords="offset points",
             fontsize=8,
             color=COLORS[name],
             va="center",
-            ha="right",
+            ha="left",
+            bbox={
+                "facecolor": "white",
+                "edgecolor": "none",
+                "alpha": 0.9,
+                "pad": 0.8,
+            },
         )
 
-    ax.set_xlim(0.0, max(520.0, max_x + 12.0))
+    ax.set_xlim(0.0, max(520.0, max_x + LABEL_RIGHT_PAD_H))
     ax.set_ylim(Y_MIN, Y_MAX)
     ax.set_xlabel("Wall-clock training hours", fontsize=11)
     ax.set_ylabel(f"Training loss (bits / byte, {SMOOTH_LABEL})", fontsize=11)
