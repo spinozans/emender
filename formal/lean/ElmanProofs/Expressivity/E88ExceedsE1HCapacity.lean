@@ -185,8 +185,8 @@ theorem e88_addressable_e1h_not (d : ℕ) (hd : d ≥ 2) :
 /-- **THEOREM 4: Capacity Separation**
 
 For D ≥ 2, E88 state scalars per head (D²) strictly exceeds E1H state
-scalars per head (D). This is the quantitative foundation explaining E88's
-empirical superiority over E1H.
+scalars per head (D). This is a formal state-capacity separation; empirical
+outcomes require separate measurement.
 
 The extra D² - D = D(D-1) scalars per head enable:
 - Richer associative memories (multiple key-value pairs per head)

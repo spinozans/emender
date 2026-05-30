@@ -2,6 +2,7 @@
 Copyright (c) 2026 Elman-Proofs Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
+import ElmanProofs.Activations.Lipschitz
 import ElmanProofs.Architectures.M2RNNComparison
 
 /-!
@@ -227,6 +228,43 @@ theorem e97_expresses_e88_by_specialization
   constructor
   · exact e97_specializes_to_e88_all_one_gates_direct lambda H k v
   · exact e97_specializes_to_e88_all_one_gates_expanded lambda H k v
+
+/-! ## Strict Finite Witness -/
+
+/-- Zero state for the 1x1 strict split-gate witness. -/
+def strictWitnessZeroState : MatState 1 1 :=
+  0
+
+/-- Unit vector for the 1x1 strict split-gate witness. -/
+def strictWitnessOneVec : Vec 1 :=
+  fun _ => 1
+
+/-- Write-gate vector equal to two for the 1x1 strict split-gate witness. -/
+def strictWitnessTwoVec : Vec 1 :=
+  fun _ => 2
+
+/-- A concrete finite witness that E97 is not merely the all-one-gate E88
+subfamily.
+
+On the 1x1 zero state with unit key and value, setting the E97 write gate to
+`2` produces `tanh 2`, while any E88/all-one-gate specialization on the same
+state/input produces `tanh 1` (the decay scalar is irrelevant because the state
+is zero). This proves a strict family extension for this concrete setting only;
+it does not make any empirical efficiency claim. -/
+theorem e97_split_gate_strict_witness_not_e88_all_one
+    (lambdaE97 lambdaE88 : Real) :
+    e97UpdateDirect lambdaE97 strictWitnessZeroState
+        strictWitnessOneVec strictWitnessOneVec strictWitnessTwoVec strictWitnessOneVec ≠
+      e88DeltaUpdateDirect lambdaE88 strictWitnessZeroState
+        strictWitnessOneVec strictWitnessOneVec := by
+  intro h
+  have hentry := congrArg (fun M : MatState 1 1 => M 0 0) h
+  simp [e97UpdateDirect, e97LinearCore, splitGatedLinearCore, splitGatedDelta,
+    e97Retrieved, e97ReadKey, e97WriteValue, strictWitnessZeroState,
+    strictWitnessOneVec, strictWitnessTwoVec, e88DeltaUpdateDirect, e88Delta,
+    matrixTanh, matrixMap, outerKV, queryReadout, hadamard] at hentry
+  have hpre : (2 : Real) = 1 := Activation.tanh_injective hentry
+  norm_num at hpre
 
 /-- GDN-2 applies the E97 split-gated linear core to the pre-decayed state. -/
 theorem gdn2LinearCore_eq_e97LinearCore_on_decayed_state

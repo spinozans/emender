@@ -40,9 +40,9 @@ The three pillars (from the task brief):
 > from raw-write matrix RNNs (M2RNN family) and **approaches the NC1 limit** in
 > expressivity.
 >
-> **P3.** FLOPs-per-bit convergence under CMA-ES — all sensibly-tuned recurrent
-> baselines learn at the same FLOPs-per-bit (N=4). NDM's contribution is the
-> architectural option + the mechanism, not speed.
+> **P3.** Empirical FLOPs-per-bit comparison under CMA-ES — Lean can provide
+> only coarse per-token cost-class anchors. Whether recurrent baselines learn
+> at the same FLOPs-per-bit remains an empirical learning-curve question.
 
 | Pillar | Sub-claim | Status | Lean witness (precise name) |
 |---|---|---|---|
@@ -287,11 +287,10 @@ or definition computed from existing `ArchitectureSignature` fields (see
 `RecurrentResourceFormalism.lean:128`); prove the bound by `decide` or
 arithmetic.
 
-**Unlocks:** Pillar 3 ("FLOPs-per-bit convergence under CMA-ES") — provides
-the only architectural anchor Lean can responsibly give. Paper text:
-*"the FLOP cost per token is in the same class for all four baselines (proved
-in Lean as `ndm_m2rnn_flop_class_equiv`); the empirical FLOPs-per-bit
-convergence (Figure 3) is therefore not a budget artifact."*
+**Unlocks:** the architectural-cost part of Pillar 3 only. Lean can responsibly
+say that the compared recurrent-state updates are in the same coarse per-token
+cost class under the stated model. It cannot prove empirical FLOPs-per-bit
+convergence or rule out training-budget artifacts in learning curves.
 
 **Risks:** the FLOP counting model must be transparent. Avoid pretending Lean
 proves a *learning-rate* convergence; the theorem is purely combinatorial cost.

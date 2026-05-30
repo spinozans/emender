@@ -38,6 +38,19 @@ The current trusted paper core supports:
 - With that extra read-then-delta path, M2RNN can embed one Emender/E88 delta
   step.
   This is a resource separation, not an absolute computability separation.
+- E97 split-gated delta algebra is checked: direct and expanded forms agree,
+  all-one gates specialize to E88, and a concrete 1x1 split-write-gate witness
+  leaves the E88 all-one-gate subfamily on the same state/input.
+- E97 and E88 have the same leading coarse per-head recurrent-state cost under
+  `flopsPerToken`; applying precomputed split gates is represented separately
+  as a linear `2*d` term and is bounded by one `d*d` state-scalar pass for
+  `d >= 2`.
+- GDN-2 is represented as matrix-state, split erase/write, no temporal
+  state nonlinearity, and scan-compatible; E97 remains nonlinear-state and
+  non-scan-compatible like Emender/E88.
+- These resource theorems are cost/signature statements only. They do not
+  prove empirical superiority, learning efficiency, hardware throughput, or
+  FLOPs-per-bit convergence.
 - The 1.27B Emender/E88 production geometry is represented as a pure nonlinear
   recurrent many-program stack.
 - The S5 witness scaffold is checked: fixed-precision online recognizers have

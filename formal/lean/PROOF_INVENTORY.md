@@ -18,9 +18,13 @@ The trusted import chain is:
 ElmanProofs.lean
   └── ElmanProofs.PaperCore
         ├── ElmanProofs.Architectures.M2RNNComparison
+        ├── ElmanProofs.Architectures.MultiStepSeparation  (imports RecurrentResourceFormalism)
         ├── ElmanProofs.Architectures.OnlineMemory   (imports M2RNNComparison)
         ├── ElmanProofs.Architectures.RecurrentResourceFormalism  (imports Lipschitz, M2RNNComparison)
+        ├── ElmanProofs.Architectures.S5Inseparability
+        ├── ElmanProofs.Architectures.SplitGatedDelta  (imports Lipschitz, M2RNNComparison)
         ├── ElmanProofs.Expressivity.E88ExceedsE1HCapacity  (imports E1HDefinition)
+        ├── ElmanProofs.Expressivity.NDMRealizesS5
         │     └── ElmanProofs.Expressivity.E1HDefinition  (imports Lipschitz)
         ├── ElmanProofs.Expressivity.S5NDMRealization  (imports S5Tracker)
         │     └── ElmanProofs.Expressivity.S5Tracker  (imports S5Witness)
@@ -183,6 +187,8 @@ intra-project dependencies.
 | `pure_m2rnn_is_not_delta_correcting` | Homogeneous M2RNN does not use delta-correcting writes | `rfl` |
 | `hybrid_m2rnn_is_not_pure_recurrent_stack` | Hybrid M2RNN is not a pure recurrent stack | `rfl` |
 | `gated_delta_net_has_matrix_state_but_no_temporal_nonlinearity` | GDN has matrix state but no temporal nonlinearity | `rfl` |
+| `e97_split_gated_resource_signature_like_e88` | E97 has matrix state, full-state temporal nonlinearity, delta writes, sequential-many-program execution, and no scan-compatible recurrent state path | `rfl` |
+| `gdn2_split_erase_write_is_scan_compatible_linear_state` | GDN-2-style split erase/write has matrix state and delta-style writes but no temporal state nonlinearity, parallel-scan mode, and scan compatibility | `rfl` |
 | `e88_and_gdn_share_delta_style_write` | E88/NDM and GDN both use delta-style writes | `rfl` |
 | `e88_and_gdn_split_on_temporal_nonlinearity` | E88/NDM has temporal nonlinearity; GDN does not | `rfl` |
 | `mamba2_has_no_temporal_nonlinearity` | Mamba2-style SSM has no temporal nonlinearity | `rfl` |
@@ -213,6 +219,30 @@ intra-project dependencies.
 | `column_forget_m2rnn_fails_embedded_mixed_key_delta_correction` | Column-gated M2RNN fails in any K≥2, V≥1 space | `tanh_one_ne_zero` |
 | `cell_forget_m2rnn_fails_embedded_mixed_key_delta_correction` | Cellwise-gated M2RNN fails in any K≥2, V≥1 space | `tanh_one_ne_zero` |
 | `ndm_m2rnn_one_step_resource_separation_embeds` | **General embedding theorem:** The 2D separation is not an artifact; it holds in every K≥2, V≥1 state space | the four above |
+| `e97_e88_same_leading_per_head_recurrent_cost` | E97 and E88 have the same coarse `flopsPerToken` per-head recurrent-state update cost at matched square state dimension | `rfl` |
+| `e97_precomputed_split_gate_overhead_linear_in_d` | Applying precomputed E97 split gates costs exactly `2*d` in the square-head model | `rfl` |
+| `e97_precomputed_split_gate_overhead_bounded_by_state_scalars` | For `d ≥ 2`, the `2*d` precomputed split-gate application term is bounded by one `d*d` state-scalar pass | `Nat.mul_le_mul_right` |
+| `e97_precomputed_gates_same_quadratic_cost_class_as_e88` | With precomputed gate application counted separately, E97 is bounded by `7*d*d` while E88 is `6*d*d`; no empirical efficiency or FLOPs-per-bit convergence claim | `omega`, `nlinarith` |
+
+---
+
+### Module: `Architectures/SplitGatedDelta.lean`
+**Namespace:** `SplitGatedDelta`
+**Trusted:** Yes (imported by `PaperCore`)
+**No sorry, admit, axiom, or opaque** (checked by trusted closure scripts)
+
+| Theorem | Informal Statement | Dependencies |
+|---------|-------------------|--------------|
+| `e97LinearCore_eq_expanded` | Direct E97 split-gated linear core equals the expanded transition form | finite sums, ring algebra |
+| `e97UpdateDirect_eq_expanded` | Direct and expanded E97 split-gated nonlinear updates are equal | `e97LinearCore_eq_expanded` |
+| `e97_specializes_to_e88_all_one_gates_direct` | Direct E97 specializes to direct E88 when both split gates are all one | simp over `onesVec` |
+| `e97_specializes_to_e88_all_one_gates_expanded` | Expanded E97 specializes to expanded E88 when both split gates are all one | simp over `onesVec` |
+| `e97_expresses_e88_by_specialization` | E97 weakly generalizes E88 by constructive all-one-gate specialization | direct and expanded specialization theorems |
+| `e97_split_gate_strict_witness_not_e88_all_one` | 1x1 zero-state/unit-input write-gate-2 E97 witness differs from every E88/all-one-gate setting on the same state/input | `Activation.tanh_injective`, `norm_num` |
+| `gdn2LinearCore_eq_e97LinearCore_on_decayed_state` | GDN-2 applies the E97 linear core to a pre-decayed state | `rfl` |
+| `gdn2LinearCore_identity_decay_eq_e97LinearCore_one` | Identity decay makes the GDN-2 linear core exactly E97's unit-decay linear core | `simp` |
+| `gdn2LinearCore_eq_expanded` | GDN-2 linear core has the expanded split-gated transition form | `e97LinearCore_eq_expanded` |
+| `e97_and_gdn2_share_split_gated_linear_core` | E97 and GDN-2 share the same split-gated linear read/write core, with GDN-2 operating on pre-decayed state | `rfl` |
 
 ---
 
