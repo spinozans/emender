@@ -27,6 +27,90 @@ def _external_root() -> Path:
     return Path(os.environ.get("GDN2_PATH", DEFAULT_GDN2_PATH)).expanduser().resolve()
 
 
+def _ensure_fla_cache_helpers() -> None:
+    """Install cache helper aliases expected by the external GDN-2 checkout."""
+    try:
+        layer_utils = importlib.import_module("fla.layers.utils")
+    except ImportError:
+        return
+
+    if not hasattr(layer_utils, "get_layer_cache"):
+
+        def get_layer_cache(layer, past_key_values):
+            layer_idx = getattr(layer, "layer_idx", None)
+            if (
+                past_key_values is None
+                or layer_idx is None
+                or len(past_key_values) <= layer_idx
+            ):
+                return None
+            return past_key_values[layer_idx]
+
+        layer_utils.get_layer_cache = get_layer_cache
+
+    if not hasattr(layer_utils, "update_layer_cache"):
+
+        def update_layer_cache(layer, past_key_values, **cache_kwargs):
+            layer_idx = getattr(layer, "layer_idx", None)
+            if past_key_values is None or layer_idx is None:
+                return None
+            return past_key_values.update(layer_idx=layer_idx, **cache_kwargs)
+
+        layer_utils.update_layer_cache = update_layer_cache
+
+
+def _ensure_fla_kernel_helpers() -> None:
+    """Install import shims for external GDN-2 kernel helpers missing in newer FLA."""
+    try:
+        ops_module = importlib.import_module("fla.ops")
+    except ImportError:
+        return
+
+    if "fla.ops.backends" not in sys.modules:
+        backends_module = types.ModuleType("fla.ops.backends")
+
+        def dispatch(_backend):
+            def decorator(func):
+                return func
+
+            return decorator
+
+        backends_module.dispatch = dispatch
+        sys.modules["fla.ops.backends"] = backends_module
+        setattr(ops_module, "backends", backends_module)
+
+    if "fla.ops.cp" not in sys.modules:
+        cp_module = types.ModuleType("fla.ops.cp")
+        cp_module.__path__ = []
+
+        class FLACPContext:
+            def __init__(self, *args, **kwargs):
+                raise ImportError(
+                    "This installed FLA package does not provide context-parallel helpers."
+                )
+
+        cp_module.FLACPContext = FLACPContext
+        sys.modules["fla.ops.cp"] = cp_module
+        setattr(ops_module, "cp", cp_module)
+
+    if "fla.ops.cp.comm" not in sys.modules:
+        comm_module = types.ModuleType("fla.ops.cp.comm")
+
+        def all_gather_into_tensor(*args, **kwargs):
+            raise ImportError(
+                "This installed FLA package does not provide context-parallel helpers."
+            )
+
+        comm_module.all_gather_into_tensor = all_gather_into_tensor
+        sys.modules["fla.ops.cp.comm"] = comm_module
+        setattr(sys.modules["fla.ops.cp"], "comm", comm_module)
+
+
+def _ensure_fla_compat() -> None:
+    _ensure_fla_cache_helpers()
+    _ensure_fla_kernel_helpers()
+
+
 def _load_gdn2_class():
     global _GDN2_CLASS
     if _GDN2_CLASS is not None:
@@ -47,6 +131,7 @@ def _load_gdn2_class():
         sys.modules[package_name] = pkg
 
     module_name = f"{package_name}.gdn2"
+    _ensure_fla_compat()
     if module_name in sys.modules:
         module = sys.modules[module_name]
     else:
