@@ -1,5 +1,89 @@
 # Trust Gate Findings
 
+## E97/GDN-2 Trust-Gate Review -- 2026-05-30
+
+**Gate result:** PASSES.
+
+**Calibrated review grade:** 0.96 / 1.00.
+
+**Rubric underspecified:** No. The task supplied concrete validation criteria;
+relative weights were not specified, so the score weights proof cleanliness and
+claim scope highest.
+
+### Dimension scores
+
+| Dimension | Score | Rationale |
+|-----------|-------|-----------|
+| Theorem scope and equation match | 0.97 | The new E97/GDN-2 theorems state algebraic equalities, all-one-gate specialization, a narrow 1x1 strict witness, coarse cost arithmetic, and resource signatures. They match the implemented definitions (`e97LinearCore`, `e97UpdateDirect`, `e97UpdateExpanded`, `gdn2LinearCore`, `flopsPerToken`, and the split-gate cost functions). |
+| Proof hygiene | 1.00 | No `sorry`, `admit`, explicit `axiom`, `opaque`, `unsafe`, or `native_decide` was found in the reviewed trusted E97/GDN-2 files. |
+| PaperCore integration | 1.00 | `ElmanProofs.PaperCore` imports both paper-facing E97/GDN-2 modules: `Architectures.RecurrentResourceFormalism` and `Architectures.SplitGatedDelta`. `check_paper_core.sh` checked a 12-file project closure including these modules. |
+| Documentation and limitations | 0.95 | `E97_RESOURCE_COST.md`, `TRUSTED_PROOF_SURFACE.md`, `PROOF_INVENTORY.md`, and `PaperCore.lean` name the theorem surface and state the empirical limitations. The older portions of this findings file remain historical, so this section records the current gate separately. |
+| Validation completeness | 0.95 | Full `lake build` and trusted-closure scripts passed. Minor Lean linter warnings remain in trusted modules, but they are not proof holes or banned trust escapes. |
+
+### Checks run
+
+1. `cd formal/lean && lake build`
+   - Result: passed.
+   - Final line: `Build completed successfully (2203 jobs).`
+   - Relevant final modules included `ElmanProofs.Architectures.SplitGatedDelta`,
+     `ElmanProofs.Architectures.RecurrentResourceFormalism`,
+     `ElmanProofs.PaperCore`, and `ElmanProofs`.
+
+2. `cd formal/lean && bash scripts/check_paper_core.sh`
+   - Result: passed.
+   - Output: `trusted check passed: 12 project source files`
+   - Output: `paper core check passed: 12 project source files, no native_decide`
+   - The `ElmanProofs.PaperCore` source closure includes
+     `ElmanProofs/Architectures/RecurrentResourceFormalism.lean` and
+     `ElmanProofs/Architectures/SplitGatedDelta.lean`.
+
+3. `cd formal/lean && bash scripts/check_trusted_no_placeholders.sh ElmanProofs.lean`
+   - Result: passed.
+   - Output: `trusted check passed: 2 project source files`
+
+4. Independent grep over the changed trusted E97/GDN-2 files:
+   - Files:
+     - `ElmanProofs/Architectures/RecurrentResourceFormalism.lean`
+     - `ElmanProofs/Architectures/SplitGatedDelta.lean`
+     - `ElmanProofs/Expressivity/E88ExceedsE1HCapacity.lean`
+     - `ElmanProofs/PaperCore.lean`
+   - Pattern:
+     - `\b(sorry|admit|native_decide)\b|^\s*(unsafe\s+)?axiom\b|^\s*opaque\b|^\s*unsafe\b`
+   - Result: no matches.
+
+### Claim-scope verdict
+
+The reviewed theorem statements are algebraic/resource claims, not empirical
+efficiency claims:
+
+- E97 direct and expanded split-gated updates are equal by matrix algebra.
+- All-one split gates specialize E97 to E88.
+- The strict E97 witness is explicitly a fixed 1x1 state/input separation from
+  the all-one-gate E88 subfamily, not a broad empirical or task-level result.
+- GDN-2 is represented as the same split-gated linear read/write core on a
+  pre-decayed state, plus a scan-compatible/no-temporal-state-nonlinearity
+  resource signature.
+- E97/E88 cost statements use the coarse `flopsPerToken`/state-scalar model and
+  the explicitly separated precomputed split-gate application term.
+
+No Lean theorem claims empirical superiority, hardware throughput, training
+stability, learning efficiency, or FLOPs-per-bit convergence.
+
+### Remaining formal gaps
+
+- Gate generation from token features is not counted in Lean.
+- Kernel fusion, memory bandwidth, wall-clock throughput, optimizer effects,
+  and training stability remain outside the formal model.
+- FLOPs-per-bit convergence and empirical efficiency remain unresolved
+  experimental claims.
+- The strict split-gate witness is intentionally finite and narrow; it does not
+  prove a broad task-level expressivity separation.
+- The GDN-2 treatment is a formal split erase/write core and resource signature,
+  not a full production implementation model.
+
+**Repair status:** No Lean theorem repair was required. This section is the
+review artifact for the E97/GDN-2 trust gate.
+
 **Date:** 2026-05-24  
 **Gate result:** PASSES non-vacuously
 
