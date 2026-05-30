@@ -1917,7 +1917,10 @@ over the full space) is open. The maximal element under matched
 asymptotic FLOP class (which PNR update rule has the highest one-step
 expressive power for its compute class) is the open horizon, with the
 `RecurrentResourceFormalism` Lean machinery as the tool for climbing
-the order.
+the order. Follow-up experiments are exploring more flexible bounded
+update rules, including GDN-2-style split erase/write variants; those
+runs are ongoing, and any empirical or formal results for these variants
+will be reported in an update rather than treated as evidence here.
 
 #heading(level: 2, numbering: none)[Additional seeds and architecture-internal revalidation]
 
