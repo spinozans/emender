@@ -229,7 +229,126 @@ theorem e97_expresses_e88_by_specialization
   · exact e97_specializes_to_e88_all_one_gates_direct lambda H k v
   · exact e97_specializes_to_e88_all_one_gates_expanded lambda H k v
 
-/-! ## Strict Finite Witness -/
+/-! ## Split Erase/Write Direction Witness -/
+
+/-- Two-dimensional key/value vector used by the finite split-direction witness. -/
+abbrev TwoVec := Vec 2
+
+/-- Two-dimensional matrix state used by the finite split-direction witness. -/
+abbrev TwoMat := Matrix (Fin 2) (Fin 2) Real
+
+/-- Explicit split transition from independent write and erase/read directions:
+`lambda I - writeDir eraseDir^T`. -/
+def splitTransitionFromDirs
+    (lambda : Real) (writeDir eraseDir : TwoVec) : TwoMat :=
+  lambda • (1 : TwoMat) - outerKV writeDir eraseDir
+
+/-- In two dimensions, parallel vectors are exactly the zero-determinant pairs. -/
+def parallel2 (a b : TwoVec) : Prop :=
+  a 0 * b 1 = a 1 * b 0
+
+/-- E97's pointwise erase gate realizes the split transition whose erase/read
+direction is `hadamard b k`. -/
+theorem splitGatedTransition_eq_splitTransitionFromDirs
+    (lambda : Real) (k b : TwoVec) :
+    splitGatedTransition (K := 2) lambda k b =
+      splitTransitionFromDirs lambda k (hadamard b k) := by
+  rfl
+
+/-- If a split transition equals an E88 coupled transition in two dimensions,
+then the split write and erase/read directions must be parallel.
+
+This is only a necessary collapse condition for the one-step transition factor;
+it is not a broad impossibility theorem for all E88 behavior. -/
+theorem e88_coupled_transition_forces_parallel_split_dirs
+    (lambdaSplit lambdaE88 : Real) (writeDir eraseDir p : TwoVec) :
+    splitTransitionFromDirs lambdaSplit writeDir eraseDir =
+      e88DeltaTransition (K := 2) lambdaE88 p →
+    parallel2 writeDir eraseDir := by
+  intro h
+  have h01 :
+      -(writeDir 0 * eraseDir 1) = -(p 0 * p 1) := by
+    have hentry := congrArg (fun M : TwoMat => M 0 1) h
+    simpa [splitTransitionFromDirs, e88DeltaTransition, outerKV] using hentry
+  have h10 :
+      -(writeDir 1 * eraseDir 0) = -(p 1 * p 0) := by
+    have hentry := congrArg (fun M : TwoMat => M 1 0) h
+    simpa [splitTransitionFromDirs, e88DeltaTransition, outerKV] using hentry
+  dsimp [parallel2]
+  calc
+    writeDir 0 * eraseDir 1 = p 0 * p 1 := by linarith
+    _ = p 1 * p 0 := by ring
+    _ = writeDir 1 * eraseDir 0 := by linarith
+
+/-- Nonparallel split directions cannot be realized by any two-dimensional E88
+coupled transition. The claim is deliberately finite and one-step: it compares
+the transition factors `lambda I - u r^T` and `mu I - p p^T`. -/
+theorem e88_cannot_realize_nonparallel_split_transition
+    (lambdaSplit : Real) (writeDir eraseDir : TwoVec)
+    (hnot : ¬ parallel2 writeDir eraseDir) :
+    ¬ (∃ lambdaE88 : Real, ∃ p : TwoVec,
+      splitTransitionFromDirs lambdaSplit writeDir eraseDir =
+        e88DeltaTransition (K := 2) lambdaE88 p) := by
+  intro h
+  rcases h with ⟨lambdaE88, p, hEq⟩
+  exact hnot
+    (e88_coupled_transition_forces_parallel_split_dirs
+      lambdaSplit lambdaE88 writeDir eraseDir p hEq)
+
+/-- Concrete write direction `u = (1, 1)`. -/
+def splitWitnessWriteDir : TwoVec :=
+  fun _ => 1
+
+/-- Concrete pointwise erase/read gate `b = (1, 0)`. -/
+def splitWitnessEraseGate : TwoVec :=
+  fun i => if i = 0 then 1 else 0
+
+/-- Concrete erase/read direction `r = b * u = (1, 0)`. -/
+def splitWitnessEraseDir : TwoVec :=
+  hadamard splitWitnessEraseGate splitWitnessWriteDir
+
+/-- The value payload is zero so the witness isolates the transition factor. -/
+def splitWitnessValue : TwoVec :=
+  0
+
+/-- The concrete split witness has genuinely different write and erase/read
+directions: `u = (1,1)` and `r = (1,0)` are not parallel. -/
+theorem splitWitness_dirs_not_parallel :
+    ¬ parallel2 splitWitnessWriteDir splitWitnessEraseDir := by
+  intro h
+  norm_num [parallel2, splitWitnessWriteDir, splitWitnessEraseDir,
+    splitWitnessEraseGate, hadamard] at h
+
+/-- E97 realizes the concrete split transition through its pointwise erase gate. -/
+theorem e97_realizes_splitWitness_transition :
+    splitGatedTransition (K := 2) 1
+        splitWitnessWriteDir splitWitnessEraseGate =
+      splitTransitionFromDirs 1 splitWitnessWriteDir splitWitnessEraseDir := by
+  rfl
+
+/-- Entries of the concrete split transition:
+`I - (1,1) (1,0)^T = [[0, 0], [-1, 1]]`. -/
+theorem splitWitness_transition_entries :
+    splitTransitionFromDirs 1 splitWitnessWriteDir splitWitnessEraseDir 0 0 = 0 ∧
+      splitTransitionFromDirs 1 splitWitnessWriteDir splitWitnessEraseDir 0 1 = 0 ∧
+      splitTransitionFromDirs 1 splitWitnessWriteDir splitWitnessEraseDir 1 0 = -1 ∧
+      splitTransitionFromDirs 1 splitWitnessWriteDir splitWitnessEraseDir 1 1 = 1 := by
+  norm_num [splitTransitionFromDirs, splitWitnessWriteDir, splitWitnessEraseDir,
+    splitWitnessEraseGate, hadamard, outerKV]
+
+/-- No two-dimensional E88 coupled transition can realize the concrete
+nonparallel split erase/write transition. -/
+theorem e88_cannot_realize_splitWitness_transition :
+    ¬ (∃ lambdaE88 : Real, ∃ p : TwoVec,
+      splitTransitionFromDirs 1 splitWitnessWriteDir splitWitnessEraseDir =
+        e88DeltaTransition (K := 2) lambdaE88 p) := by
+  exact e88_cannot_realize_nonparallel_split_transition
+    (lambdaSplit := 1)
+    splitWitnessWriteDir
+    splitWitnessEraseDir
+    splitWitness_dirs_not_parallel
+
+/-! ## 1x1 Strict Finite Witness -/
 
 /-- Zero state for the 1x1 strict split-gate witness. -/
 def strictWitnessZeroState : MatState 1 1 :=

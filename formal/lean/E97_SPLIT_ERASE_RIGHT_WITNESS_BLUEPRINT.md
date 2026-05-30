@@ -4,9 +4,23 @@ Task: `formal-design-split`
 
 Date: 2026-05-30
 
-Status: design artifact only. The Lean names below are target statements for
-`lean-proof-e97` and the later trust-gate review. This file does not claim that
-the new 2D witness or E88 collapse theorem has already been proved.
+Status: design artifact with implemented trusted Lean surface. The original
+target statements below were implemented during `trust-gate-review-2` in
+`formal/lean/ElmanProofs/Architectures/SplitGatedDelta.lean`.
+
+Implemented theorem names:
+
+- `splitGatedTransition_eq_splitTransitionFromDirs`
+- `e88_coupled_transition_forces_parallel_split_dirs`
+- `e88_cannot_realize_nonparallel_split_transition`
+- `splitWitness_dirs_not_parallel`
+- `e97_realizes_splitWitness_transition`
+- `splitWitness_transition_entries`
+- `e88_cannot_realize_splitWitness_transition`
+
+The implemented result is still intentionally narrow: finite, two-dimensional,
+one-step, and transition-factor-level. It does not prove a broad impossibility
+theorem about all E88 behavior.
 
 ## Goal
 
