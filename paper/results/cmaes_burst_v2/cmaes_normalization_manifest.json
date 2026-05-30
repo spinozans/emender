@@ -1,0 +1,853 @@
+{
+  "axis_policy": {
+    "candidate_elapsed_minutes": "computed from first parsed step timestamp per eval",
+    "exact_eval_start_end_limitation": "Per-eval stdout step lines lack timestamps, and .done files lack start/end timestamps.",
+    "fallback": "stdout_elapsed_h and step remain populated for logs without wallclock timestamps",
+    "primary": "wallclock_timestamp_utc parsed from stdout step lines",
+    "sweep_elapsed_minutes": "computed from first parsed step timestamp per sweep"
+  },
+  "counts": {
+    "eval_trajectories": 1285,
+    "generation_rows": 162,
+    "runs_in_inventory_subset": 14,
+    "runs_with_parsed_trajectories": 14,
+    "source_stdout_logs": 1285,
+    "trajectory_rows": 192147
+  },
+  "excluded_sources": [
+    {
+      "accessible": true,
+      "families": [
+        "e88",
+        "fla-gdn",
+        "m2rnn-paper",
+        "mamba2"
+      ],
+      "path": "/home/erikg/elman/benchmark_results/cmaes_1270M_20260525",
+      "reason": "Short-context/unanchored 1.27B attempt; protocol says not final provenance."
+    },
+    {
+      "accessible": true,
+      "families": [
+        "e88",
+        "fla-gdn",
+        "m2rnn",
+        "mamba2",
+        "transformer"
+      ],
+      "path": "/home/erikg/elman/benchmark_results/cmaes_1270M_anchored_20260525",
+      "reason": "512-token anchored warm-start evidence with generations.jsonl but no final results.json files."
+    },
+    {
+      "accessible": true,
+      "families": [
+        "e88-raw"
+      ],
+      "path": "/home/erikg/elman/benchmark_results/cmaes_1270M_e88_raw_20260525",
+      "reason": "512-token E88 raw-write ablation; no final results.json."
+    },
+    {
+      "accessible": true,
+      "families": [
+        "mamba2",
+        "fla-gdn",
+        "e88",
+        "e1",
+        "e75",
+        "e23",
+        "e42",
+        "mingru"
+      ],
+      "path": "/home/erikg/elman/benchmark_results/cmaes_converge",
+      "reason": "Legacy 480M convergence sweep; candidate budget documented as about 30 minutes, not the 2K v2 15-minute protocol."
+    },
+    {
+      "accessible": true,
+      "families": [
+        "fla-gdn",
+        "mamba2",
+        "e88",
+        "e1h"
+      ],
+      "path": "/home/erikg/elman/benchmark_results/cmaes_32k",
+      "reason": "Long-context archive, not the v2 2K burst source."
+    },
+    {
+      "accessible": true,
+      "families": [
+        "mom_e88"
+      ],
+      "path": "/home/erikg/elman/cmaes_logs",
+      "reason": "Older E88-only MoM logs."
+    },
+    {
+      "accessible": false,
+      "path": "/home/erikg/emender/benchmark_results/cmaes_1270M_ctx2k_e97_gdn2_20260528/protocol.md",
+      "reason": "inventory status: missing"
+    },
+    {
+      "accessible": false,
+      "path": "/home/erikg/emender/benchmark_results/cmaes_1270M_ctx2k_e97_gdn2_20260528/anchors.json",
+      "reason": "inventory status: missing"
+    },
+    {
+      "accessible": false,
+      "path": "/home/erikg/elman/benchmark_results/cmaes_1270M_ctx2k_baselines_warm512_20260526/mamba2/mamba2_20260527_183522/results.json",
+      "reason": "inventory status: missing"
+    },
+    {
+      "accessible": false,
+      "path": "/home/erikg/elman/benchmark_results/cmaes_1270M_ctx2k_baselines_warm512_20260526/mamba2/mamba2_20260527_183522/eval_157/.done",
+      "reason": "inventory status: missing"
+    },
+    {
+      "accessible": false,
+      "path": "/home/erikg/emender/experiments/local/cmaes_redo_1300m_20260529/e88/e88_20260530_151323/results.json",
+      "reason": "inventory status: missing_at_inspection_partial_in_flight"
+    },
+    {
+      "accessible": false,
+      "path": "/home/erikg/emender/experiments/local/cmaes_redo_1300m_20260529/transformer/transformer_20260530_042721/results.json",
+      "reason": "inventory status: missing_at_inspection_partial_in_flight"
+    }
+  ],
+  "families": [
+    "E88 delta",
+    "E88 normal rerun",
+    "E88 raw-write",
+    "E97",
+    "E97 linear-state",
+    "E97 normal",
+    "E97 raw-update",
+    "FLA-GDN",
+    "GDN2",
+    "M2RNN",
+    "Mamba2",
+    "Transformer",
+    "Transformer rerun"
+  ],
+  "metric_policy": {
+    "bpb": "not stored in CMA-ES logs; downstream can derive from loss if needed",
+    "cma_loss": ".done/results.json average-loss fitness when available",
+    "final_loss": ".done/results.json final or FINAL_LOSS_LAST100 value when available",
+    "loss": "natural-log cross-entropy loss from stdout step lines"
+  },
+  "normalizer": {
+    "deterministic_outputs": true,
+    "script": "paper/results/cmaes_burst_v2/normalize_cmaes_trajectories.py",
+    "uses_only_python_standard_library": true,
+    "version": "1"
+  },
+  "outputs": {
+    "eval_summary_csv": "paper/results/cmaes_burst_v2/cmaes_eval_summary.csv",
+    "generation_summary_csv": "paper/results/cmaes_burst_v2/cmaes_generation_summary.csv",
+    "normalization_manifest_json": "paper/results/cmaes_burst_v2/cmaes_normalization_manifest.json",
+    "trajectory_points_csv": "paper/results/cmaes_burst_v2/cmaes_trajectory_points.csv.gz",
+    "trajectory_points_format": "deterministic gzip-compressed CSV"
+  },
+  "raw_logs_modified": false,
+  "runs": [
+    {
+      "axis": {
+        "candidate_elapsed_minutes": "minutes since first parsed stdout step timestamp in this eval",
+        "fallback": "stdout_elapsed_h or step if a future log lacks the time field",
+        "first_wallclock_timestamp_utc": "2026-05-29T15:23:52Z",
+        "last_wallclock_timestamp_utc": "2026-05-30T00:23:16Z",
+        "primary": "wallclock_timestamp_utc",
+        "sweep_elapsed_minutes": "minutes since first parsed stdout step timestamp in this sweep"
+      },
+      "exclusions": [],
+      "family": "E97 normal",
+      "generations_jsonl": "/home/erikg/emender/experiments/local/cmaes_redo_1300m_20260529/e97/e97_20260529_152252/generations.jsonl",
+      "inventory_counts": {
+        "args_json_files": 204,
+        "batch_size_txt_files": 64,
+        "done_files": 64,
+        "eval_dirs": 64,
+        "generations_jsonl_rows": 8,
+        "params_json_files": 64,
+        "results_all_results": 64,
+        "retained_checkpoint_files": 3,
+        "stderr_txt_files": 0,
+        "stdout_txt_files": 64
+      },
+      "model": "e97",
+      "observed_counts": {
+        "args_json_files_resolved": 64,
+        "done_files": 64,
+        "eval_dirs": 64,
+        "generation_rows": 8,
+        "params_json_files": 64,
+        "parsed_eval_trajectories": 64,
+        "stdout_txt_files": 64,
+        "trajectory_rows": 10875
+      },
+      "results_json": "/home/erikg/emender/experiments/local/cmaes_redo_1300m_20260529/e97/e97_20260529_152252/results.json",
+      "run_dir": "/home/erikg/emender/experiments/local/cmaes_redo_1300m_20260529/e97/e97_20260529_152252",
+      "status": "complete_usable",
+      "sweep_id": "redo_1300m_e97",
+      "top_log": "/home/erikg/emender/experiments/local/cmaes_redo_1300m_20260529/logs/e97_queue.log"
+    },
+    {
+      "axis": {
+        "candidate_elapsed_minutes": "minutes since first parsed stdout step timestamp in this eval",
+        "fallback": "stdout_elapsed_h or step if a future log lacks the time field",
+        "first_wallclock_timestamp_utc": "2026-05-30T00:27:00Z",
+        "last_wallclock_timestamp_utc": "2026-05-30T11:32:18Z",
+        "primary": "wallclock_timestamp_utc",
+        "sweep_elapsed_minutes": "minutes since first parsed stdout step timestamp in this sweep"
+      },
+      "exclusions": [],
+      "family": "E97 raw-update",
+      "generations_jsonl": "/home/erikg/emender/experiments/local/cmaes_redo_1300m_20260529/e97-raw/e97-raw_20260530_002342/generations.jsonl",
+      "inventory_counts": {
+        "args_json_files": 251,
+        "batch_size_txt_files": 80,
+        "done_files": 80,
+        "eval_dirs": 80,
+        "generations_jsonl_rows": 10,
+        "params_json_files": 80,
+        "results_all_results": 80,
+        "retained_checkpoint_files": 3,
+        "stderr_txt_files": 0,
+        "stdout_txt_files": 80
+      },
+      "model": "e97-raw",
+      "observed_counts": {
+        "args_json_files_resolved": 80,
+        "done_files": 80,
+        "eval_dirs": 80,
+        "generation_rows": 10,
+        "params_json_files": 80,
+        "parsed_eval_trajectories": 80,
+        "stdout_txt_files": 80,
+        "trajectory_rows": 13821
+      },
+      "results_json": "/home/erikg/emender/experiments/local/cmaes_redo_1300m_20260529/e97-raw/e97-raw_20260530_002342/results.json",
+      "run_dir": "/home/erikg/emender/experiments/local/cmaes_redo_1300m_20260529/e97-raw/e97-raw_20260530_002342",
+      "status": "complete_usable",
+      "sweep_id": "redo_1300m_e97_raw",
+      "top_log": "/home/erikg/emender/experiments/local/cmaes_redo_1300m_20260529/logs/e97_queue.log"
+    },
+    {
+      "axis": {
+        "candidate_elapsed_minutes": "minutes since first parsed stdout step timestamp in this eval",
+        "fallback": "stdout_elapsed_h or step if a future log lacks the time field",
+        "first_wallclock_timestamp_utc": "2026-05-29T15:26:54Z",
+        "last_wallclock_timestamp_utc": "2026-05-30T05:14:40Z",
+        "primary": "wallclock_timestamp_utc",
+        "sweep_elapsed_minutes": "minutes since first parsed stdout step timestamp in this sweep"
+      },
+      "exclusions": [],
+      "family": "GDN2",
+      "generations_jsonl": "/home/erikg/emender/experiments/local/cmaes_redo_1300m_20260529/gdn2/gdn2_20260529_152252/generations.jsonl",
+      "inventory_counts": {
+        "args_json_files": 269,
+        "batch_size_txt_files": 96,
+        "done_files": 96,
+        "eval_dirs": 96,
+        "generations_jsonl_rows": 12,
+        "params_json_files": 96,
+        "results_all_results": 96,
+        "retained_checkpoint_files": 3,
+        "stderr_txt_files": 0,
+        "stdout_txt_files": 96
+      },
+      "model": "gdn2",
+      "observed_counts": {
+        "args_json_files_resolved": 96,
+        "done_files": 96,
+        "eval_dirs": 96,
+        "generation_rows": 12,
+        "params_json_files": 96,
+        "parsed_eval_trajectories": 96,
+        "stdout_txt_files": 96,
+        "trajectory_rows": 18051
+      },
+      "results_json": "/home/erikg/emender/experiments/local/cmaes_redo_1300m_20260529/gdn2/gdn2_20260529_152252/results.json",
+      "run_dir": "/home/erikg/emender/experiments/local/cmaes_redo_1300m_20260529/gdn2/gdn2_20260529_152252",
+      "status": "complete_usable",
+      "sweep_id": "redo_1300m_gdn2",
+      "top_log": "/home/erikg/emender/experiments/local/cmaes_redo_1300m_20260529/logs/gdn2.log"
+    },
+    {
+      "axis": {
+        "candidate_elapsed_minutes": "minutes since first parsed stdout step timestamp in this eval",
+        "fallback": "stdout_elapsed_h or step if a future log lacks the time field",
+        "first_wallclock_timestamp_utc": "2026-05-30T11:33:51Z",
+        "last_wallclock_timestamp_utc": "2026-05-30T20:12:20Z",
+        "primary": "wallclock_timestamp_utc",
+        "sweep_elapsed_minutes": "minutes since first parsed stdout step timestamp in this sweep"
+      },
+      "exclusions": [],
+      "family": "E97 linear-state",
+      "generations_jsonl": "/home/erikg/emender/experiments/local/cmaes_redo_1300m_20260529/e97-linear/e97-linear_20260530_113253/generations.jsonl",
+      "inventory_counts": {
+        "args_json_files": 185,
+        "batch_size_txt_files": 64,
+        "done_files": 64,
+        "eval_dirs": 64,
+        "generations_jsonl_rows": 8,
+        "params_json_files": 64,
+        "results_all_results": 64,
+        "retained_checkpoint_files": 3,
+        "stderr_txt_files": 0,
+        "stdout_txt_files": 64
+      },
+      "model": "e97-linear",
+      "observed_counts": {
+        "args_json_files_resolved": 64,
+        "done_files": 64,
+        "eval_dirs": 64,
+        "generation_rows": 8,
+        "params_json_files": 64,
+        "parsed_eval_trajectories": 64,
+        "stdout_txt_files": 64,
+        "trajectory_rows": 11208
+      },
+      "results_json": "/home/erikg/emender/experiments/local/cmaes_redo_1300m_20260529/e97-linear/e97-linear_20260530_113253/results.json",
+      "run_dir": "/home/erikg/emender/experiments/local/cmaes_redo_1300m_20260529/e97-linear/e97-linear_20260530_113253",
+      "status": "complete_usable",
+      "sweep_id": "redo_1300m_e97_linear",
+      "top_log": "/home/erikg/emender/experiments/local/cmaes_redo_1300m_20260529/logs/e97_queue.log"
+    },
+    {
+      "axis": {
+        "candidate_elapsed_minutes": "minutes since first parsed stdout step timestamp in this eval",
+        "fallback": "stdout_elapsed_h or step if a future log lacks the time field",
+        "first_wallclock_timestamp_utc": "2026-05-30T15:14:26Z",
+        "last_wallclock_timestamp_utc": "2026-05-30T20:28:49Z",
+        "primary": "wallclock_timestamp_utc",
+        "sweep_elapsed_minutes": "minutes since first parsed stdout step timestamp in this sweep"
+      },
+      "exclusions": [
+        {
+          "eval_id": 16,
+          "path": "/home/erikg/emender/experiments/local/cmaes_redo_1300m_20260529/e88/e88_20260530_151323/eval_16",
+          "reason": "no_step_loss_lines",
+          "scope": "eval"
+        },
+        {
+          "eval_id": 31,
+          "path": "/home/erikg/emender/experiments/local/cmaes_redo_1300m_20260529/e88/e88_20260530_151323/eval_31",
+          "reason": "no_step_loss_lines",
+          "scope": "eval"
+        },
+        {
+          "eval_id": 36,
+          "path": "/home/erikg/emender/experiments/local/cmaes_redo_1300m_20260529/e88/e88_20260530_151323/eval_36",
+          "reason": "missing_done_json",
+          "scope": "eval"
+        },
+        {
+          "eval_id": 36,
+          "path": "/home/erikg/emender/experiments/local/cmaes_redo_1300m_20260529/e88/e88_20260530_151323/eval_36",
+          "reason": "missing_stdout_txt",
+          "scope": "eval"
+        },
+        {
+          "eval_id": 37,
+          "path": "/home/erikg/emender/experiments/local/cmaes_redo_1300m_20260529/e88/e88_20260530_151323/eval_37",
+          "reason": "missing_done_json",
+          "scope": "eval"
+        },
+        {
+          "eval_id": 37,
+          "path": "/home/erikg/emender/experiments/local/cmaes_redo_1300m_20260529/e88/e88_20260530_151323/eval_37",
+          "reason": "missing_stdout_txt",
+          "scope": "eval"
+        }
+      ],
+      "family": "E88 normal rerun",
+      "generations_jsonl": "/home/erikg/emender/experiments/local/cmaes_redo_1300m_20260529/e88/e88_20260530_151323/generations.jsonl",
+      "inventory_counts": {
+        "args_json_files": 136,
+        "batch_size_txt_files": 34,
+        "done_files": 34,
+        "eval_dirs": 36,
+        "generations_jsonl_rows": 7,
+        "params_json_files": 36,
+        "results_all_results": 0,
+        "retained_checkpoint_files": 5,
+        "stderr_txt_files": 0,
+        "stdout_txt_files": 34
+      },
+      "model": "e88",
+      "observed_counts": {
+        "args_json_files_resolved": 36,
+        "done_files": 36,
+        "eval_dirs": 38,
+        "generation_rows": 7,
+        "params_json_files": 38,
+        "parsed_eval_trajectories": 34,
+        "stdout_txt_files": 36,
+        "trajectory_rows": 4254
+      },
+      "results_json": null,
+      "run_dir": "/home/erikg/emender/experiments/local/cmaes_redo_1300m_20260529/e88/e88_20260530_151323",
+      "status": "partial_in_flight_no_results_json",
+      "sweep_id": "redo_1300m_e88",
+      "top_log": "/home/erikg/emender/experiments/local/cmaes_redo_1300m_20260529/logs/e88.log"
+    },
+    {
+      "axis": {
+        "candidate_elapsed_minutes": "minutes since first parsed stdout step timestamp in this eval",
+        "fallback": "stdout_elapsed_h or step if a future log lacks the time field",
+        "first_wallclock_timestamp_utc": "2026-05-30T04:29:06Z",
+        "last_wallclock_timestamp_utc": "2026-05-30T20:37:22Z",
+        "primary": "wallclock_timestamp_utc",
+        "sweep_elapsed_minutes": "minutes since first parsed stdout step timestamp in this sweep"
+      },
+      "exclusions": [
+        {
+          "eval_id": 60,
+          "path": "/home/erikg/emender/experiments/local/cmaes_redo_1300m_20260529/transformer/transformer_20260530_042721/eval_60",
+          "reason": "missing_done_json",
+          "scope": "eval"
+        },
+        {
+          "eval_id": 60,
+          "path": "/home/erikg/emender/experiments/local/cmaes_redo_1300m_20260529/transformer/transformer_20260530_042721/eval_60",
+          "reason": "missing_stdout_txt",
+          "scope": "eval"
+        }
+      ],
+      "family": "Transformer rerun",
+      "generations_jsonl": "/home/erikg/emender/experiments/local/cmaes_redo_1300m_20260529/transformer/transformer_20260530_042721/generations.jsonl",
+      "inventory_counts": {
+        "args_json_files": 60,
+        "batch_size_txt_files": 59,
+        "done_files": 59,
+        "eval_dirs": 60,
+        "generations_jsonl_rows": 7,
+        "params_json_files": 60,
+        "results_all_results": 0,
+        "retained_checkpoint_files": 6,
+        "stderr_txt_files": 0,
+        "stdout_txt_files": 59
+      },
+      "model": "transformer",
+      "observed_counts": {
+        "args_json_files_resolved": 60,
+        "done_files": 60,
+        "eval_dirs": 61,
+        "generation_rows": 7,
+        "params_json_files": 61,
+        "parsed_eval_trajectories": 60,
+        "stdout_txt_files": 60,
+        "trajectory_rows": 3699
+      },
+      "results_json": null,
+      "run_dir": "/home/erikg/emender/experiments/local/cmaes_redo_1300m_20260529/transformer/transformer_20260530_042721",
+      "status": "partial_in_flight_no_results_json",
+      "sweep_id": "redo_1300m_transformer",
+      "top_log": "/home/erikg/emender/experiments/local/cmaes_redo_1300m_20260529/logs/transformer.log"
+    },
+    {
+      "axis": {
+        "candidate_elapsed_minutes": "minutes since first parsed stdout step timestamp in this eval",
+        "fallback": "stdout_elapsed_h or step if a future log lacks the time field",
+        "first_wallclock_timestamp_utc": "2026-05-26T03:09:25Z",
+        "last_wallclock_timestamp_utc": "2026-05-27T16:02:09Z",
+        "primary": "wallclock_timestamp_utc",
+        "sweep_elapsed_minutes": "minutes since first parsed stdout step timestamp in this sweep"
+      },
+      "exclusions": [],
+      "family": "E88 delta",
+      "generations_jsonl": "/home/erikg/elman/benchmark_results/cmaes_1270M_ctx2k_e88_delta_raw_warm512_20260526/e88/e88_20260526_030514/generations.jsonl",
+      "inventory_counts": {
+        "args_json_files": 483,
+        "done_files": 128,
+        "eval_dirs": 128,
+        "generations_jsonl_rows": 16,
+        "params_json_files": 128,
+        "results_all_results": 128,
+        "retained_checkpoint_files": 3,
+        "stdout_txt_files": 128
+      },
+      "model": "e88",
+      "observed_counts": {
+        "args_json_files_resolved": 128,
+        "done_files": 128,
+        "eval_dirs": 128,
+        "generation_rows": 16,
+        "params_json_files": 128,
+        "parsed_eval_trajectories": 128,
+        "stdout_txt_files": 128,
+        "trajectory_rows": 15355
+      },
+      "results_json": "/home/erikg/elman/benchmark_results/cmaes_1270M_ctx2k_e88_delta_raw_warm512_20260526/e88/e88_20260526_030514/results.json",
+      "run_dir": "/home/erikg/elman/benchmark_results/cmaes_1270M_ctx2k_e88_delta_raw_warm512_20260526/e88/e88_20260526_030514",
+      "status": "complete_usable",
+      "sweep_id": "ctx2k_e88_delta",
+      "top_log": "/home/erikg/elman/benchmark_results/cmaes_1270M_ctx2k_e88_delta_raw_warm512_20260526/e88.log"
+    },
+    {
+      "axis": {
+        "candidate_elapsed_minutes": "minutes since first parsed stdout step timestamp in this eval",
+        "fallback": "stdout_elapsed_h or step if a future log lacks the time field",
+        "first_wallclock_timestamp_utc": "2026-05-26T03:07:34Z",
+        "last_wallclock_timestamp_utc": "2026-05-27T18:51:34Z",
+        "primary": "wallclock_timestamp_utc",
+        "sweep_elapsed_minutes": "minutes since first parsed stdout step timestamp in this sweep"
+      },
+      "exclusions": [],
+      "family": "E88 raw-write",
+      "generations_jsonl": "/home/erikg/elman/benchmark_results/cmaes_1270M_ctx2k_e88_delta_raw_warm512_20260526/e88-raw/e88-raw_20260526_030514/generations.jsonl",
+      "inventory_counts": {
+        "args_json_files": 561,
+        "done_files": 136,
+        "eval_dirs": 136,
+        "generations_jsonl_rows": 17,
+        "params_json_files": 136,
+        "results_all_results": 136,
+        "retained_checkpoint_files": 3,
+        "stdout_txt_files": 136
+      },
+      "model": "e88-raw",
+      "observed_counts": {
+        "args_json_files_resolved": 136,
+        "done_files": 136,
+        "eval_dirs": 136,
+        "generation_rows": 17,
+        "params_json_files": 136,
+        "parsed_eval_trajectories": 136,
+        "stdout_txt_files": 136,
+        "trajectory_rows": 13898
+      },
+      "results_json": "/home/erikg/elman/benchmark_results/cmaes_1270M_ctx2k_e88_delta_raw_warm512_20260526/e88-raw/e88-raw_20260526_030514/results.json",
+      "run_dir": "/home/erikg/elman/benchmark_results/cmaes_1270M_ctx2k_e88_delta_raw_warm512_20260526/e88-raw/e88-raw_20260526_030514",
+      "status": "complete_usable",
+      "sweep_id": "ctx2k_e88_raw",
+      "top_log": "/home/erikg/elman/benchmark_results/cmaes_1270M_ctx2k_e88_delta_raw_warm512_20260526/e88-raw.log"
+    },
+    {
+      "axis": {
+        "candidate_elapsed_minutes": "minutes since first parsed stdout step timestamp in this eval",
+        "fallback": "stdout_elapsed_h or step if a future log lacks the time field",
+        "first_wallclock_timestamp_utc": "2026-05-26T03:15:56Z",
+        "last_wallclock_timestamp_utc": "2026-05-28T01:16:01Z",
+        "primary": "wallclock_timestamp_utc",
+        "sweep_elapsed_minutes": "minutes since first parsed stdout step timestamp in this sweep"
+      },
+      "exclusions": [],
+      "family": "FLA-GDN",
+      "generations_jsonl": "/home/erikg/elman/benchmark_results/cmaes_1270M_ctx2k_baselines_warm512_20260526/fla-gdn/fla-gdn_20260526_031318/generations.jsonl",
+      "inventory_counts": {
+        "args_json_files": 580,
+        "done_files": 160,
+        "eval_dirs": 160,
+        "generations_jsonl_rows": 20,
+        "params_json_files": 160,
+        "results_all_results": 160,
+        "retained_checkpoint_files": 3,
+        "stdout_txt_files": 160
+      },
+      "model": "fla-gdn",
+      "observed_counts": {
+        "args_json_files_resolved": 160,
+        "done_files": 160,
+        "eval_dirs": 160,
+        "generation_rows": 20,
+        "params_json_files": 160,
+        "parsed_eval_trajectories": 160,
+        "stdout_txt_files": 160,
+        "trajectory_rows": 23851
+      },
+      "results_json": "/home/erikg/elman/benchmark_results/cmaes_1270M_ctx2k_baselines_warm512_20260526/fla-gdn/fla-gdn_20260526_031318/results.json",
+      "run_dir": "/home/erikg/elman/benchmark_results/cmaes_1270M_ctx2k_baselines_warm512_20260526/fla-gdn/fla-gdn_20260526_031318",
+      "status": "complete_usable",
+      "sweep_id": "ctx2k_fla_gdn",
+      "top_log": "/home/erikg/elman/benchmark_results/cmaes_1270M_ctx2k_baselines_warm512_20260526/fla-gdn.log"
+    },
+    {
+      "axis": {
+        "candidate_elapsed_minutes": "minutes since first parsed stdout step timestamp in this eval",
+        "fallback": "stdout_elapsed_h or step if a future log lacks the time field",
+        "first_wallclock_timestamp_utc": "2026-05-26T13:33:57Z",
+        "last_wallclock_timestamp_utc": "2026-05-28T10:25:38Z",
+        "primary": "wallclock_timestamp_utc",
+        "sweep_elapsed_minutes": "minutes since first parsed stdout step timestamp in this sweep"
+      },
+      "exclusions": [],
+      "family": "M2RNN",
+      "generations_jsonl": "/home/erikg/elman/benchmark_results/cmaes_1270M_ctx2k_baselines_warm512_20260526/m2rnn_home_xma/m2rnn_20260526_132728/generations.jsonl",
+      "inventory_counts": {
+        "args_json_files": 743,
+        "done_files": 144,
+        "eval_dirs": 144,
+        "generations_jsonl_rows": 18,
+        "params_json_files": 144,
+        "results_all_results": 144,
+        "retained_checkpoint_files": 3,
+        "stdout_txt_files": 144
+      },
+      "model": "m2rnn",
+      "observed_counts": {
+        "args_json_files_resolved": 144,
+        "done_files": 144,
+        "eval_dirs": 144,
+        "generation_rows": 18,
+        "params_json_files": 144,
+        "parsed_eval_trajectories": 144,
+        "stdout_txt_files": 144,
+        "trajectory_rows": 12195
+      },
+      "results_json": "/home/erikg/elman/benchmark_results/cmaes_1270M_ctx2k_baselines_warm512_20260526/m2rnn_home_xma/m2rnn_20260526_132728/results.json",
+      "run_dir": "/home/erikg/elman/benchmark_results/cmaes_1270M_ctx2k_baselines_warm512_20260526/m2rnn_home_xma/m2rnn_20260526_132728",
+      "status": "complete_usable",
+      "sweep_id": "ctx2k_m2rnn_home_xma",
+      "top_log": "/home/erikg/elman/benchmark_results/cmaes_1270M_ctx2k_baselines_warm512_20260526/m2rnn_home_xma.log"
+    },
+    {
+      "axis": {
+        "candidate_elapsed_minutes": "minutes since first parsed stdout step timestamp in this eval",
+        "fallback": "stdout_elapsed_h or step if a future log lacks the time field",
+        "first_wallclock_timestamp_utc": "2026-05-27T18:40:30Z",
+        "last_wallclock_timestamp_utc": "2026-05-29T15:44:44Z",
+        "primary": "wallclock_timestamp_utc",
+        "sweep_elapsed_minutes": "minutes since first parsed stdout step timestamp in this sweep"
+      },
+      "exclusions": [
+        {
+          "eval_id": 157,
+          "path": "/home/erikg/elman/benchmark_results/cmaes_1270M_ctx2k_baselines_warm512_20260526/mamba2/mamba2_20260527_183522/eval_157",
+          "reason": "missing_done_json",
+          "scope": "eval"
+        },
+        {
+          "eval_id": 157,
+          "path": "/home/erikg/elman/benchmark_results/cmaes_1270M_ctx2k_baselines_warm512_20260526/mamba2/mamba2_20260527_183522/eval_157",
+          "reason": "missing_stdout_txt",
+          "scope": "eval"
+        }
+      ],
+      "family": "Mamba2",
+      "generations_jsonl": "/home/erikg/elman/benchmark_results/cmaes_1270M_ctx2k_baselines_warm512_20260526/mamba2/mamba2_20260527_183522/generations.jsonl",
+      "inventory_counts": {
+        "args_json_files": 539,
+        "done_files": 157,
+        "eval_dirs": 158,
+        "generations_jsonl_rows": 19,
+        "params_json_files": 158,
+        "results_all_results": 0,
+        "retained_checkpoint_files": 8,
+        "stdout_txt_files": 157
+      },
+      "model": "mamba2",
+      "observed_counts": {
+        "args_json_files_resolved": 157,
+        "done_files": 157,
+        "eval_dirs": 158,
+        "generation_rows": 19,
+        "params_json_files": 158,
+        "parsed_eval_trajectories": 157,
+        "stdout_txt_files": 157,
+        "trajectory_rows": 20842
+      },
+      "results_json": null,
+      "run_dir": "/home/erikg/elman/benchmark_results/cmaes_1270M_ctx2k_baselines_warm512_20260526/mamba2/mamba2_20260527_183522",
+      "status": "partial_no_results_json",
+      "sweep_id": "ctx2k_mamba2",
+      "top_log": "/home/erikg/elman/benchmark_results/cmaes_1270M_ctx2k_baselines_warm512_20260526/mamba2.log"
+    },
+    {
+      "axis": {
+        "candidate_elapsed_minutes": "minutes since first parsed stdout step timestamp in this eval",
+        "fallback": "stdout_elapsed_h or step if a future log lacks the time field",
+        "first_wallclock_timestamp_utc": "2026-05-26T03:15:44Z",
+        "last_wallclock_timestamp_utc": "2026-05-27T23:32:39Z",
+        "primary": "wallclock_timestamp_utc",
+        "sweep_elapsed_minutes": "minutes since first parsed stdout step timestamp in this sweep"
+      },
+      "exclusions": [],
+      "family": "Transformer",
+      "generations_jsonl": "/home/erikg/elman/benchmark_results/cmaes_1270M_ctx2k_baselines_warm512_20260526/transformer/transformer_20260526_031319/generations.jsonl",
+      "inventory_counts": {
+        "args_json_files": 651,
+        "done_files": 160,
+        "eval_dirs": 160,
+        "generations_jsonl_rows": 20,
+        "params_json_files": 160,
+        "results_all_results": 160,
+        "retained_checkpoint_files": 3,
+        "stdout_txt_files": 160
+      },
+      "model": "transformer",
+      "observed_counts": {
+        "args_json_files_resolved": 160,
+        "done_files": 160,
+        "eval_dirs": 160,
+        "generation_rows": 20,
+        "params_json_files": 160,
+        "parsed_eval_trajectories": 160,
+        "stdout_txt_files": 160,
+        "trajectory_rows": 43997
+      },
+      "results_json": "/home/erikg/elman/benchmark_results/cmaes_1270M_ctx2k_baselines_warm512_20260526/transformer/transformer_20260526_031319/results.json",
+      "run_dir": "/home/erikg/elman/benchmark_results/cmaes_1270M_ctx2k_baselines_warm512_20260526/transformer/transformer_20260526_031319",
+      "status": "complete_usable",
+      "sweep_id": "ctx2k_transformer",
+      "top_log": "/home/erikg/elman/benchmark_results/cmaes_1270M_ctx2k_baselines_warm512_20260526/transformer.log"
+    },
+    {
+      "axis": {
+        "candidate_elapsed_minutes": "minutes since first parsed stdout step timestamp in this eval",
+        "fallback": "stdout_elapsed_h or step if a future log lacks the time field",
+        "first_wallclock_timestamp_utc": "2026-05-28T17:56:33Z",
+        "last_wallclock_timestamp_utc": "2026-05-28T18:10:24Z",
+        "primary": "wallclock_timestamp_utc",
+        "sweep_elapsed_minutes": "minutes since first parsed stdout step timestamp in this sweep"
+      },
+      "exclusions": [
+        {
+          "reason": "missing_generations_jsonl",
+          "scope": "generation"
+        }
+      ],
+      "family": "E97",
+      "generations_jsonl": null,
+      "inventory_counts": {
+        "args_json_files": 1,
+        "done_files": 1,
+        "eval_dirs": 1,
+        "generations_jsonl_rows": 0,
+        "params_json_files": 1,
+        "results_all_results": 0,
+        "retained_checkpoint_files": 1,
+        "stdout_txt_files": 1
+      },
+      "model": "e97",
+      "observed_counts": {
+        "args_json_files_resolved": 1,
+        "done_files": 1,
+        "eval_dirs": 1,
+        "generation_rows": 0,
+        "params_json_files": 1,
+        "parsed_eval_trajectories": 1,
+        "stdout_txt_files": 1,
+        "trajectory_rows": 38
+      },
+      "results_json": null,
+      "run_dir": "/home/erikg/emender/benchmark_results/cmaes_1270M_ctx2k_e97_gdn2_20260528/e97/e97_20260528_175019",
+      "status": "failed_cma_update_after_one_eval",
+      "sweep_id": "emender_e97",
+      "top_log": "/home/erikg/emender/benchmark_results/cmaes_1270M_ctx2k_e97_gdn2_20260528/e97.log"
+    },
+    {
+      "axis": {
+        "candidate_elapsed_minutes": "minutes since first parsed stdout step timestamp in this eval",
+        "fallback": "stdout_elapsed_h or step if a future log lacks the time field",
+        "first_wallclock_timestamp_utc": "2026-05-28T18:00:19Z",
+        "last_wallclock_timestamp_utc": "2026-05-28T18:13:56Z",
+        "primary": "wallclock_timestamp_utc",
+        "sweep_elapsed_minutes": "minutes since first parsed stdout step timestamp in this sweep"
+      },
+      "exclusions": [
+        {
+          "reason": "missing_generations_jsonl",
+          "scope": "generation"
+        }
+      ],
+      "family": "GDN2",
+      "generations_jsonl": null,
+      "inventory_counts": {
+        "args_json_files": 1,
+        "done_files": 1,
+        "eval_dirs": 1,
+        "generations_jsonl_rows": 0,
+        "params_json_files": 1,
+        "results_all_results": 0,
+        "retained_checkpoint_files": 1,
+        "stdout_txt_files": 1
+      },
+      "model": "gdn2",
+      "observed_counts": {
+        "args_json_files_resolved": 1,
+        "done_files": 1,
+        "eval_dirs": 1,
+        "generation_rows": 0,
+        "params_json_files": 1,
+        "parsed_eval_trajectories": 1,
+        "stdout_txt_files": 1,
+        "trajectory_rows": 63
+      },
+      "results_json": null,
+      "run_dir": "/home/erikg/emender/benchmark_results/cmaes_1270M_ctx2k_e97_gdn2_20260528/gdn2/gdn2_20260528_175027",
+      "status": "failed_cma_update_after_one_eval",
+      "sweep_id": "emender_gdn2",
+      "top_log": "/home/erikg/emender/benchmark_results/cmaes_1270M_ctx2k_e97_gdn2_20260528/gdn2.log"
+    }
+  ],
+  "sanity_checks": {
+    "all_passed": true,
+    "expected_architecture_labels": {
+      "actual": [
+        "E88 delta",
+        "E88 normal rerun",
+        "E88 raw-write",
+        "E97",
+        "E97 linear-state",
+        "E97 normal",
+        "E97 raw-update",
+        "FLA-GDN",
+        "GDN2",
+        "M2RNN",
+        "Mamba2",
+        "Transformer",
+        "Transformer rerun"
+      ],
+      "expected": [
+        "E88 delta",
+        "E88 normal rerun",
+        "E88 raw-write",
+        "E97",
+        "E97 linear-state",
+        "E97 normal",
+        "E97 raw-update",
+        "FLA-GDN",
+        "GDN2",
+        "M2RNN",
+        "Mamba2",
+        "Transformer",
+        "Transformer rerun"
+      ],
+      "passed": true
+    },
+    "finite_loss_values": {
+      "checked": 192147,
+      "passed": true
+    },
+    "monotonic_step_and_time_within_trajectory": {
+      "passed": true,
+      "sample_errors": []
+    },
+    "nonempty_eval_trajectories": {
+      "eval_trajectory_count": 1285,
+      "passed": true
+    },
+    "nonempty_rows": {
+      "passed": true,
+      "row_count": 192147
+    },
+    "source_log_paths_exist": {
+      "checked": 1285,
+      "passed": true
+    }
+  },
+  "source_inventory": {
+    "generated_at_utc": "2026-05-30T20:24:56Z",
+    "path": "paper/results/cmaes_burst_v2/cmaes_log_manifest.json",
+    "task_id": "inventory-cma-es"
+  },
+  "unsupported_formats": [
+    {
+      "format": "historical_or_diagnostic_roots",
+      "reason": "not part of the final v2 2K/corrected 1.3B burst campaign per inventory"
+    },
+    {
+      "format": "runs without stdout.txt step loss lines",
+      "reason": "no per-step trajectory can be normalized; listed under per-run exclusions"
+    }
+  ]
+}
