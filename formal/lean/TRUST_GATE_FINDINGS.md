@@ -1,5 +1,93 @@
 # Trust Gate Findings
 
+## Split Erase/Write Witness Trust-Gate Review -- 2026-05-30
+
+Task: `trust-gate-review-2`
+
+**Gate result:** PASSES after repair.
+
+**Calibrated review grade:** 0.95 / 1.00.
+
+**Rubric underspecified:** No. The task supplied concrete trust-gate checks and
+the required claim scope: finite one-step split erase/write witness only.
+
+### Dimension scores
+
+| Dimension | Score | Rationale |
+|-----------|-------|-----------|
+| Theorem scope and equation match | 0.96 | The trusted Lean surface now contains the requested 2D split-direction theorem names. The core comparison is exactly `lambda I - writeDir eraseDir^T` versus E88's coupled `mu I - p p^T`; the theorem proves only the necessary parallel-collapse condition and the finite nonparallel witness. |
+| Proof hygiene | 1.00 | No `sorry`, `admit`, explicit `axiom`, `opaque`, `unsafe`, or `native_decide` appears in the modified trusted Lean file. |
+| Paper-core integration stability | 0.95 | `ElmanProofs.PaperCore` already imported `ElmanProofs.Architectures.SplitGatedDelta`, so no import churn was needed. The theorem names are stable in the trusted import closure. |
+| Documentation and downstream handoff | 0.95 | `TRUSTED_PROOF_SURFACE.md`, `E97_GDN2_FORMALISM_FINDINGS.md`, `PROOF_INVENTORY.md`, and `E97_SPLIT_ERASE_RIGHT_WITNESS_BLUEPRINT.md` now document the final theorem surface and the non-results for `synthesize-split-erase`. |
+| Validation completeness | 0.95 | Full `lake build`, paper-core check, trusted-root check, modified-file trusted check, and banned-pattern grep passed. Existing non-fatal Lean linter warnings remain in the project. |
+
+### Final trusted theorem surface
+
+Module: `ElmanProofs.Architectures.SplitGatedDelta`
+
+- `splitTransitionFromDirs`: two-dimensional split transition
+  `lambda I - writeDir eraseDir^T`.
+- `parallel2`: zero-determinant parallelism predicate for 2D vectors.
+- `splitGatedTransition_eq_splitTransitionFromDirs`: E97's pointwise erase gate
+  realizes the split transition with erase direction `hadamard b k`.
+- `e88_coupled_transition_forces_parallel_split_dirs`: if a split transition
+  equals an E88 coupled transition, the split write and erase/read directions
+  must be parallel.
+- `e88_cannot_realize_nonparallel_split_transition`: nonparallel split
+  directions cannot be realized by a 2D E88 coupled transition factor.
+- `splitWitness_dirs_not_parallel`: the concrete `u=(1,1)`, `r=(1,0)` witness
+  is nonparallel.
+- `e97_realizes_splitWitness_transition`: E97 realizes the witness transition.
+- `splitWitness_transition_entries`: the witness transition is
+  `[[0,0],[-1,1]]`.
+- `e88_cannot_realize_splitWitness_transition`: no 2D E88 coupled transition
+  realizes the concrete nonparallel witness.
+
+### Claim-scope verdict
+
+The E97 witness does not depend on erase and write directions accidentally
+collapsing to the same vector: `splitWitness_dirs_not_parallel` proves
+`u=(1,1)` and `r=(1,0)` are nonparallel, and
+`splitWitness_transition_entries` exposes asymmetric off-diagonal entries.
+
+The E88 limitation is deliberately finite and one-step. It compares transition
+factors only. It does not assert that E88 cannot match arbitrary selected
+outputs if value writes or other mechanisms are unconstrained, and it does not
+claim a broad task-level or trajectory-level impossibility theorem.
+
+### Reviewed trusted Lean files
+
+Modified trusted Lean files:
+
+- `ElmanProofs/Architectures/SplitGatedDelta.lean`
+
+Trusted roots/imports checked:
+
+- `ElmanProofs.lean`
+- `ElmanProofs/PaperCore.lean`
+
+### Checks run
+
+1. `cd formal/lean && lake build`
+   - Result: passed.
+   - Final line: `Build completed successfully (2195 jobs).`
+
+2. `cd formal/lean && bash scripts/check_paper_core.sh`
+   - Result: passed.
+   - Output: `trusted check passed: 12 project source files`
+   - Output: `paper core check passed: 12 project source files, no native_decide`
+
+3. `cd formal/lean && bash scripts/check_trusted_no_placeholders.sh ElmanProofs.lean`
+   - Result: passed.
+   - Output: `trusted check passed: 2 project source files`
+
+4. `cd formal/lean && bash scripts/check_trusted_no_placeholders.sh ElmanProofs/Architectures/SplitGatedDelta.lean`
+   - Result: passed.
+   - Output: `trusted check passed: 3 project source files`
+
+5. `cd formal/lean && rg -n '\b(sorry|admit|native_decide)\b|^\s*(unsafe\s+)?axiom\b|^\s*opaque\b|^\s*unsafe\b' ElmanProofs/Architectures/SplitGatedDelta.lean`
+   - Result: no matches.
+
 ## E97/GDN-2 Trust-Gate Review -- 2026-05-30
 
 **Gate result:** PASSES.

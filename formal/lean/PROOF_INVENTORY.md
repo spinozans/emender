@@ -238,6 +238,13 @@ intra-project dependencies.
 | `e97_specializes_to_e88_all_one_gates_direct` | Direct E97 specializes to direct E88 when both split gates are all one | simp over `onesVec` |
 | `e97_specializes_to_e88_all_one_gates_expanded` | Expanded E97 specializes to expanded E88 when both split gates are all one | simp over `onesVec` |
 | `e97_expresses_e88_by_specialization` | E97 weakly generalizes E88 by constructive all-one-gate specialization | direct and expanded specialization theorems |
+| `splitGatedTransition_eq_splitTransitionFromDirs` | E97's pointwise erase/read gate realizes the explicit split transition with erase direction `hadamard b k` | `rfl` |
+| `e88_coupled_transition_forces_parallel_split_dirs` | If a 2D split transition equals an E88 coupled transition, the split write and erase/read directions are parallel | off-diagonal entry comparison, `linarith`, `ring` |
+| `e88_cannot_realize_nonparallel_split_transition` | Nonparallel 2D split directions cannot be realized by any E88 coupled transition factor | `e88_coupled_transition_forces_parallel_split_dirs` |
+| `splitWitness_dirs_not_parallel` | The concrete witness directions `u=(1,1)` and `r=(1,0)` are not parallel | `norm_num` |
+| `e97_realizes_splitWitness_transition` | E97 realizes the concrete split witness transition through its pointwise erase gate | `rfl` |
+| `splitWitness_transition_entries` | The concrete transition entries are `[[0,0],[-1,1]]` | `norm_num` |
+| `e88_cannot_realize_splitWitness_transition` | No 2D E88 coupled transition realizes the concrete nonparallel split witness transition | `e88_cannot_realize_nonparallel_split_transition`, `splitWitness_dirs_not_parallel` |
 | `e97_split_gate_strict_witness_not_e88_all_one` | 1x1 zero-state/unit-input write-gate-2 E97 witness differs from every E88/all-one-gate setting on the same state/input | `Activation.tanh_injective`, `norm_num` |
 | `gdn2LinearCore_eq_e97LinearCore_on_decayed_state` | GDN-2 applies the E97 linear core to a pre-decayed state | `rfl` |
 | `gdn2LinearCore_identity_decay_eq_e97LinearCore_one` | Identity decay makes the GDN-2 linear core exactly E97's unit-decay linear core | `simp` |
@@ -420,6 +427,7 @@ These reference files outside the trusted core:
 | E88/NDM's delta write exactly overwrites an addressed slot (unit key) | `OnlineMemory.linearDeltaWrite_exact_overwrite` | **Trusted core** |
 | A raw-write/fixed-right M2RNN resource cannot implement E88's mixed-key delta correction in one step | `RecurrentResourceFormalism.ndm_m2rnn_one_step_resource_separation` (2D) and `ndm_m2rnn_one_step_resource_separation_embeds` (general K,V) | **Trusted core** |
 | M2RNN can simulate E88 if given the extra read-then-delta resource | `M2RNNComparison.m2rnn_read_then_delta_embeds_e88_delta_update` | **Trusted core** |
+| E97 can realize a concrete 2D nonparallel split erase/write transition that no E88 coupled transition realizes | `SplitGatedDelta.e97_realizes_splitWitness_transition`, `SplitGatedDelta.splitWitness_dirs_not_parallel`, `SplitGatedDelta.e88_cannot_realize_splitWitness_transition` | **Trusted core** |
 | E88/NDM 1.27B geometry: 12 layers, 370 heads, 32×32 state, 22200 programs/token at bs=5 | `RecurrentResourceFormalism.ndm_1p27B_programs_per_batch_token_bs5` et al. | **Trusted core** |
 | E88 matrix state capacity exceeds E1H vector state capacity for D ≥ 2 | `CapacitySeparation.capacity_separation`, `e88_exceeds_e1h_capacity_summary` | **Trusted core** |
 | E88 supports content-addressable retrieval (S·q); E1H does not | `CapacitySeparation.e88_addressable_e1h_not` | **Trusted core** |
@@ -449,12 +457,13 @@ These reference files outside the trusted core:
 
 1. **M2RNN–NDM structural separation** — feature-level signature difference, write-rule difference, and one-step preactivation/candidate/update separation including external forget carries and general embedding to K≥2, V≥1 dimensions.
 2. **Positive embedding** — M2RNN can embed one E88/NDM delta step when given the read-then-delta resource.
-3. **Delta-memory semantics** — exact overwrite, orthogonal preservation, finite-table retrieval, online extension.
-4. **E88/NDM 1.27B production geometry** — exact parameter counts.
-5. **E88 matrix-state capacity exceeds E1H vector-state capacity** — counting argument and content-addressability witness.
-6. **S5 tracker correctness** — S5 has 120 states, is non-solvable, tracker execution composes permutations, Python semantics bridge.
-7. **Finite-state ceiling** — every fixed-precision online recognizer has a finite state space and an exact lookup-table realization.
-8. **Activation properties** — tanh 1-Lipschitz, injective, vanishing-gradient bound.
+3. **E97 split-direction witness** — E97 realizes a finite 2D nonparallel split erase/write transition factor that E88's coupled transition family cannot realize in one step.
+4. **Delta-memory semantics** — exact overwrite, orthogonal preservation, finite-table retrieval, online extension.
+5. **E88/NDM 1.27B production geometry** — exact parameter counts.
+6. **E88 matrix-state capacity exceeds E1H vector-state capacity** — counting argument and content-addressability witness.
+7. **S5 tracker correctness** — S5 has 120 states, is non-solvable, tracker execution composes permutations, Python semantics bridge.
+8. **Finite-state ceiling** — every fixed-precision online recognizer has a finite state space and an exact lookup-table realization.
+9. **Activation properties** — tanh 1-Lipschitz, injective, vanishing-gradient bound.
 
 ### Formalized But Outside Trusted Core
 

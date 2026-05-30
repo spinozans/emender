@@ -15,6 +15,10 @@ The sorry-free core supports this stance:
   least as general as E88 at the one-step update level.
 - A concrete 1x1 witness shows E97 is not merely the all-one-gate E88
   subfamily on that fixed state/input.
+- A concrete 2D split-direction witness shows E97's split erase/read direction
+  can be nonparallel to its write direction in one transition factor, while an
+  E88 coupled transition `mu I - p p^T` can only match such a split transition
+  when the two split directions are parallel.
 - GDN-2-style split erase/write shares the same split-gated linear read/write
   core as E97, but remains on the scan-compatible/no-temporal-state-nonlinearity
   side of the resource signature.
@@ -92,6 +96,36 @@ Module: `ElmanProofs.Architectures.SplitGatedDelta`
   on the same state/input. Informally, E97 produces `tanh 2` where the E88
   specialization produces `tanh 1`.
 
+### 2D Split Erase/Write Direction Witness
+
+Module: `ElmanProofs.Architectures.SplitGatedDelta`
+
+- `splitTransitionFromDirs`: defines the one-step transition factor
+  `lambda I - writeDir eraseDir^T` in two key dimensions.
+- `parallel2`: defines two-dimensional parallelism by zero determinant:
+  `a 0 * b 1 = a 1 * b 0`.
+- `splitGatedTransition_eq_splitTransitionFromDirs`: E97's pointwise
+  erase/read gate realizes the split transition with erase/read direction
+  `hadamard b k`.
+- `e88_coupled_transition_forces_parallel_split_dirs`: if
+  `splitTransitionFromDirs lambdaSplit writeDir eraseDir` equals an E88
+  coupled transition `e88DeltaTransition lambdaE88 p`, then `writeDir` and
+  `eraseDir` are parallel. This is a necessary one-step collapse condition.
+- `e88_cannot_realize_nonparallel_split_transition`: any nonparallel split
+  directions are outside the two-dimensional E88 coupled transition family at
+  the transition-factor level.
+- `splitWitnessWriteDir`, `splitWitnessEraseGate`, `splitWitnessEraseDir`, and
+  `splitWitnessValue`: the finite witness uses `u = (1,1)`, `b = (1,0)`,
+  `r = b*u = (1,0)`, and zero value payload to isolate the transition factor.
+- `splitWitness_dirs_not_parallel`: proves the witness directions are not
+  parallel.
+- `e97_realizes_splitWitness_transition`: proves E97 realizes the witness
+  transition through its pointwise erase gate.
+- `splitWitness_transition_entries`: records the concrete transition entries:
+  `I - (1,1)(1,0)^T = [[0,0],[-1,1]]`.
+- `e88_cannot_realize_splitWitness_transition`: no two-dimensional E88 coupled
+  transition realizes the concrete nonparallel split transition.
+
 ### GDN-2 Linear Core
 
 Module: `ElmanProofs.Architectures.SplitGatedDelta`
@@ -147,6 +181,10 @@ Formal claims supported by Lean:
 - E97 direct and expanded split-gated update forms are algebraically equal.
 - All-one E97 split gates recover E88 exactly.
 - A finite 1x1 split-write-gate witness leaves the all-one-gate E88 subfamily.
+- A finite 2D split erase/write direction witness proves a one-step
+  transition-factor separation: E97 realizes `I - u r^T` for nonparallel
+  `u=(1,1)` and `r=(1,0)`, while E88's coupled transition can match a split
+  transition only when the split directions are parallel.
 - E97 and GDN-2 share a split-gated linear read/write core, with GDN-2 applying
   it to a pre-decayed state and not adding E97's state nonlinearity.
 - The current resource signature places E97 with E88 on nonlinear,
@@ -166,6 +204,10 @@ Empirical claims not proved by Lean:
   overheads are counted.
 - Gate generation from token features is cheap, stable, or useful in training.
 - The 1x1 strict witness scales to a broad task-level expressivity separation.
+- A broad impossibility result about all E88 behavior. The 2D split-direction
+  theorem compares only one-step transition factors and does not claim E88
+  cannot match a single selected output matrix when arbitrary value writes or
+  other mechanisms are allowed.
 
 ## Validation Results
 
@@ -200,6 +242,23 @@ Local validation for this synthesis task:
 Paper status: paper text was left untouched for this synthesis task. Because no
 paper files were modified, `paper/build.sh` and visual paper review were not
 run.
+
+Trust-gate-review-2 validation after adding the 2D split-direction theorem:
+
+- `cd formal/lean && lake build`: passed.
+  Final line: `Build completed successfully (2195 jobs).`
+  Existing non-fatal Lean linter warnings remain.
+- `cd formal/lean && bash scripts/check_paper_core.sh`: passed.
+  Output: `trusted check passed: 12 project source files` and
+  `paper core check passed: 12 project source files, no native_decide`.
+- `cd formal/lean && bash scripts/check_trusted_no_placeholders.sh
+  ElmanProofs.lean`: passed.
+  Output: `trusted check passed: 2 project source files`.
+- `cd formal/lean && bash scripts/check_trusted_no_placeholders.sh
+  ElmanProofs/Architectures/SplitGatedDelta.lean`: passed.
+  Output: `trusted check passed: 3 project source files`.
+- `cd formal/lean && rg -n '\b(sorry|admit|native_decide)\b|^\s*(unsafe\s+)?axiom\b|^\s*opaque\b|^\s*unsafe\b'
+  ElmanProofs/Architectures/SplitGatedDelta.lean`: no matches.
 
 ## Author-Facing Wording
 
