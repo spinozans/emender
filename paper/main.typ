@@ -917,6 +917,7 @@ and update rule.
 #heading(level: 2, numbering: none)[Loss-vs-wallclock racer]
 
 #figure(
+  placement: top,
   image("results/figure_2/figure_2_draft.png", width: 95%),
   caption: [
     *Efficiency reading of the 1.3 B racer: E88 and Gated DeltaNet
