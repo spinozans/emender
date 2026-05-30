@@ -147,6 +147,17 @@ CMA-ES configs, and the Triton kernel released.
   ]),
 )
 
+// Figure placement policy:
+// Use Typst's float primitive for image figures by default. In-flow images stay
+// exactly where written, which leaves page tails blank when a chart cannot fit
+// in the remaining space. `auto` lets Typst choose the nearer page edge while
+// preserving source order for accessibility and references. Table figures stay
+// in flow so local derivation tables remain adjacent to their setup prose.
+// Use explicit per-figure placement only when a figure has a real page-edge
+// need, as with the large loss racer below.
+#set figure(placement: auto)
+#show figure.where(kind: table): set figure(placement: none)
+
 // Math shortcuts used throughout the body.
 #let nd = $upright("Emender")$
 #let s5 = $S_5$
