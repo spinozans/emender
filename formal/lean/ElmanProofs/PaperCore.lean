@@ -7,6 +7,7 @@ import ElmanProofs.Architectures.MultiStepSeparation
 import ElmanProofs.Architectures.OnlineMemory
 import ElmanProofs.Architectures.RecurrentResourceFormalism
 import ElmanProofs.Architectures.S5Inseparability
+import ElmanProofs.Architectures.SplitGatedDelta
 import ElmanProofs.Expressivity.E88ExceedsE1HCapacity
 import ElmanProofs.Expressivity.NDMRealizesS5
 import ElmanProofs.Expressivity.S5NDMRealization
@@ -37,6 +38,9 @@ paper-space claims:
   with key dimension at least two and value dimension at least one.
 * Conversely, M2RNN-style raw writes exactly embed one Emender/E88 delta step
   once given the extra read-then-delta resource `v - H^T k`.
+* The E97 split-gated delta algebra is checked: direct and expanded forms are
+  equal, all-one gates specialize to E88, and the GDN-2-style linear core is
+  the same split-gated read/write core applied to a pre-decayed state.
 * Emender/E88 exposes the current 1.27B many-program production geometry.
 * E88 has the checked matrix-state capacity separation over E1H.
 * The S5 witness surface is checked: fixed-precision online recognizers have
