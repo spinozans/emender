@@ -54,6 +54,30 @@ def test_transformer_estimator_matches_ladder_llama(monkeypatch):
     assert cmaes.estimate_params_for_config(params, "transformer") == model.get_num_params()
 
 
+def test_fla_gdn_estimator_tracks_wrapper_count(monkeypatch):
+    pytest.importorskip("fla")
+
+    import scripts.cmaes_search_v2 as cmaes
+    from ndm.models.fla_gated_delta import count_fla_gdn_params
+
+    params = {
+        "dim": 256,
+        "depth": 2,
+        "expansion": 2,
+        "n_heads": 12,
+    }
+
+    monkeypatch.setattr(cmaes, "PARAM_VOCAB_SIZE", 256)
+
+    assert cmaes.estimate_params_for_config(params, "fla-gdn") == count_fla_gdn_params(
+        params["dim"],
+        params["depth"],
+        vocab_size=256,
+        expansion=params["expansion"],
+        n_heads=params["n_heads"],
+    )
+
+
 def test_gdn2_wrapper_accepts_n_heads_alias():
     pytest.importorskip("fla")
 

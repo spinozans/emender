@@ -167,7 +167,7 @@ class FLAGatedDeltaNetLayer(nn.Module):
 # to avoid confusion with the imported FLAGatedDeltaNet from fla.layers
 
 
-def count_fla_gdn_params(dim, depth, vocab_size=256, expansion=2.0):
+def count_fla_gdn_params(dim, depth, vocab_size=256, expansion=2.0, n_heads=None):
     """
     Count FLA GatedDeltaNet parameters for config search.
 
@@ -186,7 +186,12 @@ def count_fla_gdn_params(dim, depth, vocab_size=256, expansion=2.0):
     - layer_norm: dim
     """
     d_inner = int(dim * expansion)
-    num_heads = max(1, dim // 128)  # Match our default head_dim=128
+    num_heads = max(1, dim // 128) if n_heads is None else n_heads
+    if dim % num_heads != 0:
+        for nh in range(num_heads, 0, -1):
+            if dim % nh == 0:
+                num_heads = nh
+                break
 
     per_layer = (
         dim * dim +              # q_proj

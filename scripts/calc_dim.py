@@ -132,18 +132,35 @@ def calc_m2rnn_params(
     return layers_total + embed + final_norm
 
 
-def calc_fla_gdn_params(dim, depth, expansion=2.0, vocab_size=256):
+def calc_fla_gdn_params(dim, depth, expansion=2.0, n_heads=None, vocab_size=256):
     """Calculate FLA GatedDeltaNet parameters (approximate)."""
     d_inner = int(dim * expansion)
-    # Per layer: similar to linear attention
+    if n_heads is None:
+        n_heads = max(1, dim // 128)
+    if dim % n_heads != 0:
+        for nh in range(n_heads, 0, -1):
+            if dim % nh == 0:
+                n_heads = nh
+                break
+
     per_layer = (
-        dim * d_inner * 3 +  # Q, K, V projections
-        d_inner * dim +      # out_proj
-        d_inner * 2          # gates
+        dim * dim +       # q_proj
+        dim * dim +       # k_proj
+        dim * d_inner +   # v_proj
+        dim * n_heads +   # a_proj
+        dim * n_heads +   # b_proj
+        dim * 4 +         # q_conv1d
+        dim * 4 +         # k_conv1d
+        d_inner * 4 +     # v_conv1d
+        dim * d_inner +   # g_proj
+        2 * d_inner +     # output norm
+        d_inner * dim +   # output projection
+        dim               # layer norm
     )
     layers_total = per_layer * depth
     embed = vocab_size * dim
-    return layers_total + embed
+    final_norm = dim
+    return layers_total + embed + final_norm
 
 
 def calc_gdn2_params(dim, depth, expansion=2.0, n_heads=None, head_dim=128, vocab_size=256):

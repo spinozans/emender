@@ -590,6 +590,7 @@ def estimate_params_for_config(params, model_type):
         return embed + w_h_time + w_h_layer + head
     elif model_type == 'fla-gdn':
         return calc_fla_gdn_params(dim, depth=depth, expansion=params.get('expansion', 2),
+                                   n_heads=params.get('n_heads', None),
                                    vocab_size=vocab_size)
     elif model_type == 'gdn2':
         return calc_gdn2_params(
