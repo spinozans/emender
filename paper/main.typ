@@ -74,13 +74,11 @@ CMA-ES configs, and the Triton kernel released.
     Pile after about 23 days on a single workstation-class GPU. That
     model is E88, the production instance of the Emender, a class of
     pure-nonlinear-recurrent layers that correct their state by delta
-    rather than overwrite. Throughput is width-axis multi-programming —
-    22,200 small recurrent programs per token, each stepping its own
-    serial time loop — refuting the assumption that such recurrence
-    cannot reach billion-parameter scale at competitive wallclock. This
-    is a controlled study: three 1.3B-class architectures — E88,
-    raw-write M²RNN-CMA, and linear-recurrent Gated DeltaNet — trained
-    under matched per-architecture CMA-ES, with E88 holding the same
+    rather than overwrite. Throughput is width-axis multi-programming,
+    refuting the assumption that such recurrence cannot reach
+    billion-parameter scale at competitive wallclock. E88, raw-write
+    M²RNN-CMA, and linear-recurrent Gated DeltaNet are trained under
+    matched per-architecture CMA-ES, with E88 holding the same
     loss-vs-wallclock band as Gated DeltaNet (parity, not a win).
     Within the class we derive an ordering: a Lean 4 trusted core
     proves the delta-correcting update reaches a strictly larger
