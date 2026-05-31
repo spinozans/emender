@@ -76,17 +76,7 @@ CMA-ES configs, and the Triton kernel released.
     out of reach for pure-nonlinear-in-time recurrence at
     billion-parameter scale, on the premise that pure recurrence
     without a time-axis parallelisation trick or attention
-    hybridisation could not get there.
-
-    These three claims sit at different evidential statuses, and we keep
-    them distinct throughout. Feasibility is *shown at scale*: a
-    pure-nonlinear-recurrent language model reaches sub-1-bit-per-byte at
-    the 1.3 B-class on a single workstation-class GPU. The
-    delta-correcting update's expressivity advantage is *isolated at the
-    8 M probe*: demonstrated under the controlled overparameterised shape
-    where capacity is non-binding. Its relevance at larger scale is
-    *predicted and falsifiable* (§11): forecast by the §11 predictions,
-    not yet demonstrated. The Emender family is built
+    hybridisation could not get there. The Emender family is built
     from emender layers: recurrent layers pairing a matrix-state
     $R times N$ memory with a delta-correcting update
     $k("silu"(v) - S^T k)^T$ wrapped in a tanh that bounds and latches
@@ -103,10 +93,7 @@ CMA-ES configs, and the Triton kernel released.
     0.22 for the raw-write baseline. Under per-architecture CMA-ES at
     matched candidate budget, E88 lands in the same loss-vs-wallclock
     band as Gated DeltaNet, a strong linear-recurrent baseline, at the
-    1.3 B-class on The Pile: loss parity here means going fully nonlinear
-    in time carries no penalty, not that it carries no benefit — the
-    contribution is feasibility and the mechanistic separation above, not
-    a lower loss number than the baseline.
+    1.3 B-class on The Pile.
   ],
   keywords: (
     "recurrent neural networks",
