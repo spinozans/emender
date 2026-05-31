@@ -84,7 +84,7 @@ CMA-ES configs, and the Triton kernel released.
     production instance, E88, has 1.273 billion parameters and reaches
     0.974 bits per byte on The Pile after about 23 days on a single
     workstation-class GPU, on par with Gated DeltaNet under matched
-    per-architecture CMA-ES (parity, not a win).
+    per-architecture CMA-ES.
   ],
   keywords: (
     "recurrent neural networks",
