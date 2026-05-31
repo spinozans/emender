@@ -77,8 +77,8 @@ CMA-ES configs, and the Triton kernel released.
     assumption is false. The route is width-axis multi-programming:
     each token drives hundreds of small recurrent programs in parallel
     while time stays serial inside each, recovering throughput without
-    touching the time axis. Within the class we derive an efficiency
-    ordering, proved in a Lean 4 trusted core and confirmed
+    touching the time axis. Within the class we derive and formally prove an efficiency
+    ordering in a Lean 4 trusted core, and confirm it
     empirically: the delta-correcting update reaches a strictly larger
     one-step function class than raw-write at matched compute. The
     production instance, E88, has 1.273 billion parameters and reaches
