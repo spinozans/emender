@@ -3,10 +3,10 @@
 All training logs live on the training host under `/tmp/`. They are large
 (1–3 MB) and are NOT copied into the repo. Stable pointers follow.
 
-## Active 1.3B-class runs (as of 2026-05-29T18:04:51Z)
+## Active 1.3B-class runs (as of 2026-05-31T13:49:33Z)
 
-The 2026-05-29 refresh copied the active logs to the uncommitted snapshot root
-`/tmp/figure2_refresh_snapshot_20260529T180451Z` before regenerating CSVs, so
+The 2026-05-31 refresh copied the active logs to the uncommitted snapshot root
+`/tmp/figure2_refresh_snapshot_20260531T134933Z` before regenerating CSVs, so
 the committed figure artifacts have one consistent cutoff while the active logs
 continue to append. Figure 2 labels/prose use `trail_100k`, the 100K-step
 trailing endpoint average, with 10K/50K/100K endpoint values recorded side by
@@ -24,7 +24,7 @@ Log files (concatenate in order for the full curve):
    Steps 231,000 → 247,500 (repair segment)
 3. `/tmp/pile_convergence_3arch/ctx2k/e88_postrepair.log`
    Steps 247,550 → current (active run, resumed 2026-05-11). The refreshed
-   Figure 2 cutoff includes step 1,405,450.
+   Figure 2 cutoff includes step 1,523,250.
 
 ### FLA-GDN
 Architecture: Level fla-gdn (Flash-Linear Attention with Gated Delta Net)
@@ -36,7 +36,7 @@ Log files (concatenate in order):
    Steps 50 → 352,450 (original run)
 2. `/tmp/pile_convergence_3arch/ctx2k/fla-gdn_resume.log`
    Steps 351,050 → current (active run, resumed 2026-05-11). The refreshed
-   Figure 2 cutoff includes step 1,847,050.
+   Figure 2 cutoff includes step 1,999,300.
 
 ### Mamba2
 Architecture: Level mamba2
@@ -48,8 +48,8 @@ Log files (concatenate in order):
    Steps 50 → 433,800 (original run)
 2. `/tmp/pile_convergence_3arch/ctx2k/mamba2_resume.log`
    Steps 432,050 → current (active run, resumed 2026-05-11). The active log
-   last advanced on 2026-05-25; the normalized public Figure 2 no longer plots
-   this retained CSV.
+   last advanced on 2026-05-25 (step 1,982,400 at that cutoff); the normalized
+   public Figure 2 no longer plots this retained CSV.
 
 ### M2RNN-CMA (m2rnn_tied)
 Architecture: Level m2rnn (CMA-ES optimized geometry)
@@ -61,7 +61,7 @@ Log files (concatenate in order):
    Steps 50 → 123,250 (original run)
 2. `/tmp/pile_convergence_m2rnn/ctx2k/m2rnn_tied_resume_xma.log`
    Steps 123,050 → current (active run, resumed 2026-05-11 with XMA backend).
-   The refreshed Figure 2 cutoff includes step 1,343,050.
+   The refreshed Figure 2 cutoff includes step 1,466,400.
 
 ## Inactive / abandoned runs
 

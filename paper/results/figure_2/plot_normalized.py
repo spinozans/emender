@@ -3,7 +3,7 @@
 
 Reads E88_NDM.csv, FLA_GDN.csv, M2RNN_CMA.csv (produced by smooth.py
 when run on the host with /tmp/pile_convergence_* logs present), and writes
-figure_2_draft.png.
+figure_2.png (the canonical publication asset referenced by main.typ).
 
 Normalized presentation conventions (shared with cma_flop_rate/plot.py):
   x-axis : wall-clock training hours (linear scale, full snapshot extent)
@@ -207,7 +207,7 @@ def main():
     ax.legend(fontsize=9, loc="upper right", framealpha=0.95)
     ax.grid(True, which="both", alpha=0.3)
 
-    out = OUT / "figure_2_draft.png"
+    out = OUT / "figure_2.png"
     fig.tight_layout()
     fig.savefig(out, dpi=160, bbox_inches="tight")
     plt.close(fig)

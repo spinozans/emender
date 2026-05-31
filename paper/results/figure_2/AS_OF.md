@@ -1,22 +1,24 @@
-# Figure 2 Snapshot - As of 2026-05-29T18:04:51Z
+# Figure 2 Snapshot - As of 2026-05-31T13:49:33Z
 
 Training is **in progress**. The values below were regenerated from the active
-racer logs on 2026-05-29. Because the logs were still appending during the
-refresh, the active files were copied once to an uncommitted `/tmp` snapshot and
-the smoothing pipeline was run against that consistent cutoff:
+racer logs on 2026-05-31. Because the logs were still appending during the
+refresh, the active files were copied once to an uncommitted snapshot and the
+smoothing pipeline was run against that consistent cutoff:
 
-- Snapshot root: `/tmp/figure2_refresh_snapshot_20260529T180451Z`
+- Snapshot root: `/tmp/figure2_refresh_snapshot_20260531T134933Z`
 - CSV generation: `paper/results/figure_2/smooth.py`, with log paths patched at
   runtime to the snapshot copies.
 - Plot generation: `python3 paper/results/figure_2/plot_normalized.py`
+  (writes the canonical `figure_2.png`).
 - BPB conversion: `bits/byte = nats/token * log2(e) / 3.918625`, using the
-  pinned tokenizer estimate in `scripts/estimate_tokenizer_bytes_per_token.json`.
+  pinned tokenizer estimate in `scripts/estimate_tokenizer_bytes_per_token.json`
+  (constant `0.3681635882200934`).
 
-The paper and Figure 2 labels now use the **100K-step trailing endpoint
-average**. This is intentionally more conservative than the previous 10K label
-convention because GDN is visibly jumpy near the active tail; the 10K endpoint
-can make its current dip look more stable than it is. The plotted curve uses the
-same 100K-step trailing average as the labels.
+The paper and Figure 2 labels use the **100K-step trailing endpoint average**
+(`trail_100k`). This is intentionally more conservative than a 10K endpoint
+because GDN is visibly jumpy near the active tail; the 10K endpoint can make its
+current position look more stable than it is. The plotted curve uses the same
+100K-step trailing average as the labels.
 
 Do not cite these results without re-running `smooth.py` and
 `plot_normalized.py` against a fresh active-log snapshot.
@@ -28,53 +30,60 @@ Do not cite these results without re-running `smooth.py` and
 The normalized Figure 2 renderer plots the three public 1.3 B-class racer
 models: Emender/E88, GDN, and M2RNN-CMA. Rounded tail labels at this cutoff are:
 
-- E88 / NDM: `0.977` BPB
-- GDN: `0.970` BPB
-- M2RNN-CMA: `0.983` BPB
+- E88 / NDM: `0.974` BPB
+- GDN: `0.977` BPB
+- M2RNN-CMA: `0.980` BPB
 
-Ordering at the current tail remains:
+Ordering at the current tail (the ordering has **flipped** since the
+2026-05-29 snapshot — E88 now leads after further training):
 
 ```text
-GDN < E88 / NDM < M2RNN-CMA
+E88 / NDM < GDN < M2RNN-CMA
 ```
 
 The 10K, 50K, and 100K endpoint trailing averages are:
 
 | Model | Tail step | 10K trailing loss / BPB | 50K trailing loss / BPB | 100K trailing loss / BPB | Paper label |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| E88 / NDM | 1,405,450 | 2.652421 / 0.976525 | 2.653698 / 0.976995 | 2.653219 / 0.976819 | **0.977** |
-| GDN | 1,847,050 | 2.615085 / 0.962779 | 2.621877 / 0.965280 | 2.633709 / 0.969636 | **0.970** |
-| M2RNN-CMA | 1,343,050 | 2.667076 / 0.981920 | 2.667397 / 0.982038 | 2.671290 / 0.983472 | **0.983** |
+| E88 / NDM | 1,523,250 | 2.641152 / 0.972376 | 2.645569 / 0.974002 | 2.644925 / 0.973765 | **0.974** |
+| GDN | 1,999,300 | 2.652831 / 0.976676 | 2.664149 / 0.980843 | 2.653617 / 0.976965 | **0.977** |
+| M2RNN-CMA | 1,466,400 | 2.654668 / 0.977352 | 2.661433 / 0.979843 | 2.661439 / 0.979845 | **0.980** |
 
-GDN is the unstable row: its 10K endpoint is `0.963` BPB, but the 100K endpoint
-is `0.970` BPB. The paper therefore treats GDN's current low endpoint as a
-short-window dip inside the shared sub-1-bpb band, not as a stable superiority
-claim. GDN remains the lowest BPB endpoint under the 100K convention, but by
-about `0.007` BPB rather than the larger 10K-window gap.
+GDN remains the noisier row: its 50K endpoint is `0.981` BPB while its 10K and
+100K endpoints sit at `0.977`. E88 is now the lowest endpoint across all three
+windows. E88 leads GDN by about `0.009` nats / `0.003` BPB at the 100K window;
+both remain inside the shared sub-1-bpb band, so the lead is reported as a
+narrow current-snapshot ordering, not a stable separation while training is live.
 
 ## Recomputed endpoints
 
 All runs use: dataset = Pile (`pile.txt`, `p50k_base` tokenizer), context =
 2048 tokens, optimizer = schedule-free AdamW, bf16.
 
-| Model | Active log | Log tail time UTC | Log mtime UTC | Tail step | Raw tail loss | 100K trailing loss | 100K trailing BPB | Rounded BPB | Tokens seen | ~FLOPs | Stitched wallclock h |
-| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| E88 / NDM | `/tmp/pile_convergence_3arch/ctx2k/e88_postrepair.log` | 2026-05-29T18:04:15+00:00 | 2026-05-29T18:04:15.910Z | 1,405,450 | 2.6012 | 2.653219 | 0.976819 | **0.977** | 14.391808B | 1.0994 × 10²⁰ | 512.851 |
-| GDN | `/tmp/pile_convergence_3arch/ctx2k/fla-gdn_resume.log` | 2026-05-29T18:04:37+00:00 | 2026-05-29T18:04:37.349Z | 1,847,050 | 2.6282 | 2.633709 | 0.969636 | **0.970** | 15.131034B | 1.2277 × 10²⁰ | 517.805 |
-| M2RNN-CMA | `/tmp/pile_convergence_m2rnn/ctx2k/m2rnn_tied_resume_xma.log` | 2026-05-29T18:04:30+00:00 | 2026-05-29T18:04:30.525Z | 1,343,050 | 2.7481 | 2.671290 | 0.983472 | **0.983** | 13.752832B | 1.0786 × 10²⁰ | 479.021 |
+| Model | Active log | Log tail time UTC | Tail step | Raw tail loss | 100K trailing loss | 100K trailing BPB | Rounded BPB | Tokens seen | ~FLOPs | Stitched wallclock h |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| E88 / NDM | `/tmp/pile_convergence_3arch/ctx2k/e88_postrepair.log` | 2026-05-31T13:49:20+00:00 | 1,523,250 | 2.6368 | 2.644925 | 0.973765 | **0.974** | 15.598080B | 1.1916 × 10²⁰ | 556.603 |
+| GDN | `/tmp/pile_convergence_3arch/ctx2k/fla-gdn_resume.log` | 2026-05-31T13:49:21+00:00 | 1,999,300 | 2.5379 | 2.653617 | 0.976965 | **0.977** | 16.378266B | 1.3290 × 10²⁰ | 561.551 |
+| M2RNN-CMA | `/tmp/pile_convergence_m2rnn/ctx2k/m2rnn_tied_resume_xma.log` | 2026-05-31T13:49:19+00:00 | 1,466,400 | 2.6782 | 2.661439 | 0.979845 | **0.980** | 15.015936B | 1.1776 × 10²⁰ | 522.768 |
+
+Stitched wallclock corresponds to roughly 23.2 (E88), 23.4 (GDN), and 21.8
+(M2RNN-CMA) GPU-days at this recording.
 
 ## Comparison with the previous public snapshot
 
-| Model | 2026-05-27 public paper snapshot BPB | 2026-05-29 refreshed 100K BPB | Rounded label changed? |
+| Model | 2026-05-29 refreshed 100K BPB | 2026-05-31 refreshed 100K BPB | Rounded label changed? |
 | --- | ---: | ---: | --- |
-| E88 / NDM | 0.979277 -> `0.979` | 0.976819 -> `0.977` | yes |
-| GDN | 0.974841 -> `0.975` | 0.969636 -> `0.970` | yes |
-| M2RNN-CMA | 0.984356 -> `0.984` | 0.983472 -> `0.983` | yes |
+| E88 / NDM | 0.976819 -> `0.977` | 0.973765 -> `0.974` | yes |
+| GDN | 0.969636 -> `0.970` | 0.976965 -> `0.977` | yes |
+| M2RNN-CMA | 0.983472 -> `0.983` | 0.979845 -> `0.980` | yes |
 
-The narrative should say all three public models are sub-1 BPB, GDN is the
-lowest BPB endpoint at this cutoff under the stable 100K convention, E88 is
-second, and M2RNN-CMA remains third. It should also explicitly avoid treating
-the short-window GDN dip as a stable margin.
+The 2026-05-29 snapshot had GDN as the lowest endpoint. After two more days of
+training the ordering flipped: **E88 is now the lowest-BPB endpoint, GDN second,
+M2RNN-CMA third**, all still sub-1-bpb. The narrative should say all three
+public models are sub-1 BPB, E88 is the lowest BPB endpoint at this cutoff under
+the stable 100K convention, GDN is second, and M2RNN-CMA is third — and should
+continue to avoid treating the narrow E88–GDN gap as a stable margin while
+training is live.
 
 ---
 
@@ -114,6 +123,15 @@ the short-window GDN dip as a stable margin.
 ---
 
 ## Absent / excluded runs
+
+### Mamba2
+
+- Architecture: Level mamba2. Parameters ~934M (below the 1.27B target due to
+  CMA-ES dim selection). Retained in the CSVs for reference but not plotted in
+  the public normalized Figure 2.
+- The active log last advanced 2026-05-25 (stale relative to this snapshot);
+  its 100K trailing endpoint at the recorded tail (step 1,982,400) is
+  2.693570 nats / 0.991674 BPB.
 
 ### M2RNN-paper
 
