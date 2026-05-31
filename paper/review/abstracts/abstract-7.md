@@ -1,0 +1,7 @@
+# Abstract — variant 7
+
+A pure-nonlinear-recurrent language model reaches 0.974 bits per byte on The Pile after 23 days on a single workstation-class GPU — no cluster, no sequence parallelism. That model is E88, the 1.273-billion-parameter instance of the Emender, a family of nonlinear-recurrent layers that update memory by delta correction, not raw write. Throughput comes from width-axis multi-programming: each token drives 22,200 small recurrent programs in parallel while time stays serial inside each, refuting the assumption that pure-in-time nonlinear recurrence cannot reach billion-parameter scale on competitive wallclock. It is a controlled study of three 1.3-B-class architectures — E88, raw-write M²RNN-CMA, and linear-recurrent Gated DeltaNet — each tuned under matched per-architecture CMA-ES; E88 holds the same loss-vs-wallclock band as Gated DeltaNet, on par rather than ahead. Within the class, a Lean 4 trusted core proves delta correction reaches a strictly larger one-step function class than raw write at matched compute, confirmed on an 8 M probe (0.79 vs 0.22 on the S₅ word problem).
+
+---
+
+**Angle:** Result-first declarative voice — open on the single-GPU sub-1-bpb fact as the thing that should not be possible, then unfold mechanism (multi-programming), study design (matched-CMA-ES three-way race, parity stated flatly), and the mathematically-derived-then-confirmed class ordering. Existence-proof character carried by structure, never named.
