@@ -69,21 +69,22 @@ CMA-ES configs, and the Triton kernel released.
     ),
   ),
   abstract: [
-    A 1.273-billion-parameter recurrent language model with no
-    attention and no time-axis scan reaches 0.974 bits per byte on The
-    Pile after about 23 days on a single workstation-class GPU. That
-    model is E88, the production instance of the Emender, a class of
-    pure-nonlinear-recurrent layers that correct their state by delta
-    rather than overwrite. Throughput is width-axis multi-programming,
-    refuting the assumption that such recurrence cannot reach
-    billion-parameter scale at competitive wallclock. E88, raw-write
-    M²RNN-CMA, and linear-recurrent Gated DeltaNet are trained under
-    matched per-architecture CMA-ES, with E88 holding the same
-    loss-vs-wallclock band as Gated DeltaNet (parity, not a win).
-    Within the class we derive an ordering: a Lean 4 trusted core
-    proves the delta-correcting update reaches a strictly larger
-    one-step function class than raw-write at matched FLOP, confirmed
-    on an 8M state-tracking probe (0.79 versus 0.22 on $S_5$).
+    Pure-nonlinear-in-time recurrence has been assumed unable to reach
+    billion-parameter scale at competitive wallclock without
+    linearizing the time axis or adding attention. We introduce the
+    Emender, a class of pure-nonlinear-recurrent layers that correct
+    their state by delta rather than overwrite, and show that
+    assumption is false. The route is width-axis multi-programming:
+    each token drives hundreds of small recurrent programs in parallel
+    while time stays serial inside each, recovering throughput without
+    touching the time axis. Within the class we derive an efficiency
+    ordering, proved in a Lean 4 trusted core and confirmed
+    empirically: the delta-correcting update reaches a strictly larger
+    one-step function class than raw-write at matched compute. The
+    production instance, E88, has 1.273 billion parameters and reaches
+    0.974 bits per byte on The Pile after about 23 days on a single
+    workstation-class GPU, on par with Gated DeltaNet under matched
+    per-architecture CMA-ES (parity, not a win).
   ],
   keywords: (
     "recurrent neural networks",
