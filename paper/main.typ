@@ -37,7 +37,7 @@ separation between the delta-correcting and raw-write update rules,
 formalised in Lean 4, is confirmed empirically on
 capacity-overparameterised state-tracking probes. The three 1.3 B-class
 checkpoints, the per-architecture CMA-ES configurations, and the Triton
-multi-programming kernel are assigned to the v0.2 HuggingFace release
+multi-programming kernel are assigned to the v0.3 HuggingFace release
 target; the trusted Lean 4 core has no
 sorry/admit/axiom/opaque/native_decide in the import closure.
 
@@ -309,13 +309,13 @@ on saturation latching alongside the separation, $S_5$-realisation,
 and FLOP-class theorems; §8 related work, opening with the ancestry of
 the delta-correction line from Widrow–Hoff through fast-weight
 programmers to DeltaNet; §9 limitations; §10 conclusion; §11 testable
-predictions; §12 future work. The current v0.2 release hub is
+predictions; §12 future work. The current release hub is
 `https://github.com/poietic-pbc/emender/blob/main/docs/RELEASE_V02_PUBLIC_RELEASE_HUB.md`.
 The release targets are E88
-(`https://huggingface.co/poietic-pbc/emender-e88-1.3b/tree/v0.2`),
-GDN (`https://huggingface.co/poietic-pbc/gdn-1.3b/tree/v0.2`), and
+(`https://huggingface.co/poietic-pbc/emender-e88-1.3b/tree/v0.3`),
+GDN (`https://huggingface.co/poietic-pbc/gdn-1.3b/tree/v0.3`), and
 M²RNN-CMA
-(`https://huggingface.co/poietic-pbc/m2rnn-cma-1.3b/tree/v0.2`), with
+(`https://huggingface.co/poietic-pbc/m2rnn-cma-1.3b/tree/v0.3`), with
 the public paper PDF mirrored at
 `http://hypervolu.me/~erik/ndm/Garrison_2026_Emender.pdf`.
 
@@ -1688,14 +1688,14 @@ Under per-architecture CMA-ES at matched candidate budget, E88 lands
 in the same loss-vs-wallclock band as Gated DeltaNet at the 1.3 B-class
 on The Pile; §5 has the racer in full.
 
-*Release.* The current v0.2 release hub is
+*Release.* The current release hub is
 `https://github.com/poietic-pbc/emender/blob/main/docs/RELEASE_V02_PUBLIC_RELEASE_HUB.md`.
 The checkpoint and loading-code targets are E88
-(`https://huggingface.co/poietic-pbc/emender-e88-1.3b/tree/v0.2`),
+(`https://huggingface.co/poietic-pbc/emender-e88-1.3b/tree/v0.3`),
 Gated DeltaNet
-(`https://huggingface.co/poietic-pbc/gdn-1.3b/tree/v0.2`), and
+(`https://huggingface.co/poietic-pbc/gdn-1.3b/tree/v0.3`), and
 M²RNN-CMA
-(`https://huggingface.co/poietic-pbc/m2rnn-cma-1.3b/tree/v0.2`).
+(`https://huggingface.co/poietic-pbc/m2rnn-cma-1.3b/tree/v0.3`).
 The public paper PDF mirror is
 `http://hypervolu.me/~erik/ndm/Garrison_2026_Emender.pdf`.
 Companion release docs cover the per-architecture CMA-ES
