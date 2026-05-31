@@ -69,31 +69,23 @@ CMA-ES configs, and the Triton kernel released.
     ),
   ),
   abstract: [
-    E88, a pure-nonlinear-recurrent language model with 1.273 B
-    parameters, reaches 0.974 bits per byte on The Pile after about 23
-    wall-clock days of training on a single workstation-class GPU. The
-    recurrent-language-modelling literature has treated this regime as
-    out of reach for pure-nonlinear-in-time recurrence at
-    billion-parameter scale, on the premise that pure recurrence
-    without a time-axis parallelisation trick or attention
-    hybridisation could not get there. The Emender family is built
-    from emender layers: recurrent layers pairing a matrix-state
-    $R times N$ memory with a delta-correcting update
-    $k("silu"(v) - S^T k)^T$ wrapped in a tanh that bounds and latches
-    each slot. E88 is the 1.3 B-class production instance evaluated
-    here, running 22,200 small recurrent programs per token across
-    width while each program runs its time loop serially. A Lean 4
-    trusted core machine-verifies that the delta-correcting update
-    accesses a strictly larger one-step function class than the
-    raw-write update at matched per-token FLOP cost and that the gap
-    persists under every $k$-step composition; at the 8 M
-    overparameterised probe shape where the §6 floor argument makes
-    capacity non-binding, the predicted ordering holds in training,
-    with the Emender reaching 0.79 on the $S_5$ word problem against
-    0.22 for the raw-write baseline. Under per-architecture CMA-ES at
-    matched candidate budget, E88 lands in the same loss-vs-wallclock
-    band as Gated DeltaNet, a strong linear-recurrent baseline, at the
-    1.3 B-class on The Pile.
+    A 1.273-billion-parameter recurrent language model with no
+    attention and no time-axis scan reaches 0.974 bits per byte on The
+    Pile after about 23 days on a single workstation-class GPU. That
+    model is E88, the production instance of the Emender, a class of
+    pure-nonlinear-recurrent layers that correct their state by delta
+    rather than overwrite. Throughput is width-axis multi-programming —
+    22,200 small recurrent programs per token, each stepping its own
+    serial time loop — refuting the assumption that such recurrence
+    cannot reach billion-parameter scale at competitive wallclock. This
+    is a controlled study: three 1.3B-class architectures — E88,
+    raw-write M²RNN-CMA, and linear-recurrent Gated DeltaNet — trained
+    under matched per-architecture CMA-ES, with E88 holding the same
+    loss-vs-wallclock band as Gated DeltaNet (parity, not a win).
+    Within the class we derive an ordering: a Lean 4 trusted core
+    proves the delta-correcting update reaches a strictly larger
+    one-step function class than raw-write at matched FLOP, confirmed
+    on an 8M state-tracking probe (0.79 versus 0.22 on $S_5$).
   ],
   keywords: (
     "recurrent neural networks",
