@@ -70,7 +70,7 @@ CMA-ES configs, and the Triton kernel released.
   ),
   abstract: [
     E88, a pure-nonlinear-recurrent language model with 1.273 B
-    parameters, reaches 0.977 bits per byte on The Pile after about 21
+    parameters, reaches 0.974 bits per byte on The Pile after about 23
     wall-clock days of training on a single workstation-class GPU. The
     recurrent-language-modelling literature has treated this regime as
     out of reach for pure-nonlinear-in-time recurrence at
@@ -157,7 +157,7 @@ CMA-ES configs, and the Triton kernel released.
 = Introduction <sec:intro>
 
 E88, the 1.273 B-class production instance of the Emender, reaches
-0.977 bits per byte on The Pile @thepile2020 after about 21 stitched
+0.974 bits per byte on The Pile @thepile2020 after about 23 stitched
 wall-clock days of training on a single workstation-class GPU, with
 no cluster and no sequence parallelism. The recurrent-language-modelling
 literature treated this regime as out of reach for
@@ -253,8 +253,8 @@ The contributions are three results.
 
 #set enum(numbering: "1.")
 
-+ *Viability.* E88 reaches 0.977 bits per byte on The Pile after about
-  21 stitched wall-clock days of training on a single workstation-class
++ *Viability.* E88 reaches 0.974 bits per byte on The Pile after about
+  23 stitched wall-clock days of training on a single workstation-class
   GPU, with no cluster and no sequence parallelism. The throughput
   route is width-axis *multi-programming*: 22,200 small bounded
   recurrent programs per token (370 heads $times$ batch size 5
@@ -867,12 +867,12 @@ and update rule.
 
 #figure(
   placement: top,
-  image("results/figure_2/figure_2_draft.png", width: 95%),
+  image("results/figure_2/figure_2.png", width: 95%),
   caption: [
     *Efficiency reading of the 1.3 B racer: E88 and Gated DeltaNet
     occupy the same sub-1-bpb loss-vs-wallclock band on The Pile
-    under matched per-architecture CMA-ES; GDN is the lowest-BPB
-    endpoint in the current snapshot, E88 is second, and M²RNN-CMA
+    under matched per-architecture CMA-ES; E88 is the lowest-BPB
+    endpoint in the current snapshot, GDN is second, and M²RNN-CMA
     trails them across the sampled window.* Schedule-free AdamW on The
     Pile with a 2048-token context. The single panel uses linear
     wall-clock hours from the start of the run to the current snapshot
@@ -885,29 +885,29 @@ and update rule.
     `scripts/estimate_tokenizer_bytes_per_token.json`, methodology
     sentence in this section). E88 is at
     1.273 B parameters; M²RNN-CMA at 1.307 B; GDN at 1.352 B; the
-    three plotted models have trained about 20.0-21.6 stitched
+    three plotted models have trained about 21.8-23.4 stitched
     GPU-days at this recording. The plotted
     trajectory is one realization per architecture; the within-class
     ordering it illustrates is replicated across four CMA-ES sweeps
     (250+ configs/architecture) and the delta-off ablation (§9). The
     multi-week per-architecture training extent is the standard unit
     at this scale class. Endpoint values are final 100K-step
-    trailing averages: GDN 0.970 BPB, E88 0.977 BPB, and M²RNN-CMA
-    0.983 BPB. E88 and GDN remain in the same sub-1-bpb
+    trailing averages: E88 0.974 BPB, GDN 0.977 BPB, and M²RNN-CMA
+    0.980 BPB. E88 and GDN remain in the same sub-1-bpb
     wallclock band. M²RNN-CMA has
     higher loss than the other two across the sampled window. The
     paper-shape M²RNN baseline (not shown)
     diverged at step 8,400. Color convention used throughout the
     paper: Emender = blue, GDN = orange, M²RNN-CMA = red. Recorded
-    from a 2026-05-29T18:04:51Z active-log snapshot; training continues.
+    from a 2026-05-31T13:49:33Z active-log snapshot; training continues.
   ],
 ) <fig_lm_racers>
 
-After about 20–22 stitched GPU-days, E88 reaches 0.977 bpb on The
-Pile, GDN 0.970, M²RNN-CMA 0.983; all three are sub-1-bpb. The
+After about 22–23 stitched GPU-days, E88 reaches 0.974 bpb on The
+Pile, GDN 0.977, M²RNN-CMA 0.980; all three are sub-1-bpb. The
 corresponding 100K-trailing
-training losses are 2.653 nats/token (E88, step 1,405,450),
-2.634 (GDN, step 1,847,050), and 2.671 (M²RNN-CMA, step 1,343,050).
+training losses are 2.645 nats/token (E88, step 1,523,250),
+2.654 (GDN, step 1,999,300), and 2.661 (M²RNN-CMA, step 1,466,400).
 Under the training tokenizer (`p50k_base` BPE) on The Pile,
 mean bytes per token is 3.92 over a 2000-sample sweep at the training
 `chunk_tokens=2048` (estimation script:
@@ -1629,7 +1629,7 @@ express?" for OLMo-Hybrid); the answers do not contradict.
 
 #heading(level: 2, numbering: none)[Training duration and result scope]
 
-The language-modelling results are for the current 20.0-21.6 stitched
+The language-modelling results are for the current 21.8-23.4 stitched
 wall-clock-day training extent per architecture. The racer panel (@fig_lm_racers)
 records the loss-vs-wallclock curve at this extent; further rounds
 extend the curves.
@@ -1659,7 +1659,7 @@ Two results.
 
 First, a pure-nonlinear-recurrent language model reaches sub-1-bpb on
 The Pile at 1.3 B-class on a single workstation-class GPU: E88 at
-0.977 bpb after about 21 stitched wall-clock days. The throughput
+0.974 bpb after about 23 stitched wall-clock days. The throughput
 route is width-axis *multi-programming*, which runs 22,200 small
 bounded recurrent programs per token, each a $32 times 32$
 matrix-state tile in registers, with the time loop serial inside each
