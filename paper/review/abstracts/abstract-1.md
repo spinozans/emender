@@ -1,0 +1,7 @@
+# Abstract — abstract-1
+
+On a single workstation-class GPU, E88 — the 1.273-billion-parameter instance of the Emender, a class of pure-nonlinear-in-time recurrent layers — reaches 0.974 bits per byte on The Pile in about 23 days. The recurrent-modelling literature held this regime out of reach without a time-axis scan or attention hybridisation; we reach it by parallelising width instead, running roughly 22,200 small recurrent programs per token while each keeps its time loop serial. This is a controlled study, not a single run: three 1.3-billion-class architectures — E88, the raw-write M²RNN-CMA, and the linear-recurrent Gated DeltaNet — trained under matched per-architecture CMA-ES, where E88 holds the same loss-vs-wallclock band as Gated DeltaNet (parity, not a win). Within the class we derive an efficiency ordering mathematically: a Lean 4 trusted core proves the delta-correcting update reaches a strictly larger one-step function class than raw-write at matched FLOP, then confirms it on an 8-million-parameter probe, where E88 scores 0.79 on the S₅ word problem against 0.22 for raw-write.
+
+---
+
+**Angle:** Lead with the lone-GPU sub-1-bpb fact so the existence-proof character lands through structure, not assertion; then pivot hard to "this is a study" — three architectures under matched CMA-ES with parity stated plainly — and close on the one idea that distinguishes the work: a class with an ordering derived in Lean and then confirmed empirically. Quiet, one decisive claim at a time.
