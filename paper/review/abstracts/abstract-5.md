@@ -1,0 +1,7 @@
+# Abstract — abstract-5
+
+A single workstation-class GPU, 23 days, 0.974 bits per byte on The Pile: E88 — the 1.273-billion-parameter instance of the Emender, a class of pure-nonlinear-recurrent layers — trains into a regime the literature reserved for linearized or attention-hybrid recurrence. The barrier was the parallelization axis, not the nonlinearity. Multi-programming runs roughly 22,200 recurrent programs per token across width while each keeps its time loop serial, refuting the claim that nonlinear-in-time recurrence cannot reach billion-parameter scale on competitive wallclock. This is a controlled study: under matched per-architecture CMA-ES, three 1.3-billion-class recurrences — E88, raw-write M²RNN-CMA, and linear-recurrent Gated DeltaNet — race, and E88 holds the same loss-vs-wallclock band as Gated DeltaNet, parity not a win. Within the class we derive an efficiency ordering and confirm it: a Lean 4 trusted core proves the delta-correcting update reaches a strictly larger one-step function class than raw-write at matched FLOP, and on the 8 M state-tracking probe E88 reaches 0.79 on the S₅ word problem against 0.22.
+
+---
+
+*Angle:* Wrong-axis reframing — open on the bare hardware-and-result triple (GPU, days, bpb) as the stop-and-look hook, then carry that existence-proof energy into the broader claim: this is a multi-architecture controlled study whose within-class ordering is first proved in Lean and then confirmed empirically, with the GDN result stated as honest parity.
