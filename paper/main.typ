@@ -345,9 +345,9 @@ for time-axis parallelism, because nonlinear-in-time recurrence resisted
 the parallel scan that makes GPU throughput tractable at modern scale.
 Gated DeltaNet @gated_deltanet2024 is the selected linear-recurrent
 baseline for the matched wallclock racer reported here. Mamba-3
-@mamba3_2026 measures itself against Gated DeltaNet and improves by
-$tilde 0.6$ points downstream, but it is not part of the matched runs
-reported in this paper.
+@mamba3_2026 is reported by its authors to outperform GDN; its
+compilation-heavy HPO does not fit the §5 matched protocol cleanly, so
+it is left to future work.
 
 A single explicit criterion classifies recurrent architectures.
 A recurrent layer is *linear-state* if its update can be written
@@ -1442,22 +1442,17 @@ structural class these models sit inside TC#super[0]
 Gated DeltaNet as the matched representative of this cohort and observes
 $S_5$ collapse at length.
 
-Two newer linear-state results sharpen the comparison rather than
-replace it. Mamba-3 @mamba3_2026, submitted on 2026-03-16, improves
-state tracking within the linear-state paradigm via complex-valued,
-data-dependent rotary updates.
-Gated DeltaNet-2 @gated_deltanet2_2026, submitted on 2026-05-21 after
-the design and baseline selection for the present racer, decouples
-channel-wise erase and write gates and reports the strongest 1.3 B
-results among Mamba-2, Gated DeltaNet, KDA, and Mamba-3 variants. Both
-remain outside the current matched runs: adding either would require a
-new matched racer rather than a citation swap. They buy new
-retrieval/state-tracking behavior inside the linear-state envelope,
-while this paper tests the expressivity axis opened by serial nonlinear
-state updates. Gated DeltaNet-2 is also a concrete next-ablation prompt
-for the multi-programmed substrate, because decoupled erase/write gates
-are the kind of bounded per-step-body variant that should not require a
-new time-parallel scan.
+A newer linear-state result sharpens the comparison rather than
+replacing it. Gated DeltaNet-2 @gated_deltanet2_2026, submitted on
+2026-05-21 after the design and baseline selection for the present
+racer, decouples channel-wise erase and write gates. Future work will
+compare against GDN-2, which is reported by its authors to outperform
+GDN. Gated DeltaNet-2 buys new retrieval/state-tracking behavior inside
+the linear-state envelope, while this paper tests the expressivity axis
+opened by serial nonlinear state updates. Gated DeltaNet-2 is also a
+concrete next-ablation prompt for the multi-programmed substrate,
+because decoupled erase/write gates are the kind of bounded
+per-step-body variant that should not require a new time-parallel scan.
 
 #heading(level: 2, numbering: none)[Pure-nonlinear-recurrent peers and adjacent nonlinear-state work]
 
