@@ -941,9 +941,7 @@ Emender 0/5, GDN 1/5, M²RNN-CMA 4/5), so bulk held-out perplexity does
 and honest reading: the architectures separate on the §6 state-tracking
 probes, not on bulk language-model bits-per-byte. @sec:appendix_bpb
 places these numbers in the landscape of open Pile-trained models,
-out-of-distribution anchors, and classical compressors. Sources:
-`paper/review/PILE_BPB_MEASURED.md`, `HELDOUT_MULTISLICE.md`,
-`BPB_FULL_TABLE.md`.
+out-of-distribution anchors, and classical compressors.
 
 // ── 6. Expressivity Results ───────────────────────────────────────────────────
 = Expressivity Results <sec:expressivity>
@@ -1724,7 +1722,11 @@ The public paper PDF mirror is
 `http://hypervolu.me/~erik/ndm/Garrison_2026_Emender.pdf`.
 Companion release docs cover the per-architecture CMA-ES
 configurations, the training protocol, and the Triton multi-programming
-kernel source.
+kernel source. The held-out bits-per-byte appendix (@sec:appendix_bpb)
+is reproducible from the same release: the re-exported y-mode checkpoints
+ship in the HuggingFace v0.3 trees above, and the measurement scripts
+(`scripts/measure_pile_bpb.py`, `scripts/measure_pile_bpb_elman.py`) and
+sha-verified held-out slice manifests are in the public `emender` repo.
 
 // ── 11. Testable Predictions ─────────────────────────────────────────────────
 = Testable Predictions <sec:predictions>
@@ -1928,8 +1930,9 @@ are at `ndm/triton/e88_triton_forward.py` and `e88_triton_backward.py`.
 
 This appendix documents how the held-out bits-per-byte figures in §5 are
 measured and places them in a landscape of reference models and classical
-compressors. Every number traces to the read-only review reports under
-`paper/review/` cited inline; nothing here is re-fitted.
+compressors. Every number is measured by the eval harness described below;
+nothing here is re-fitted. The measurement code, slice manifests, and
+re-exported checkpoints are public (see the availability statement in §10).
 
 #heading(level: 2, numbering: none)[Tokenizer-invariant held-out bpb]
 
@@ -1965,8 +1968,8 @@ Identical bytes feed every model, so the byte denominator is shared and
 bpb is comparable across tokenizers. A block-loss sanity gate (mean
 nats/token on the first 2048-token block must lie in $[1.5, 4.0]$, model
 train loss ≈2.6) ran before any of our models' bpb was trusted; all
-gated runs passed. Slice manifests: `paper/review/heldout_slice.json`,
-`heldout_multislice_slices.json`.
+gated runs passed. The sha-verified slice manifests are released with the
+measurement code (see the §10 availability statement).
 
 #heading(level: 2, numbering: none)[Second distribution: comma-pile (contamination control)]
 
@@ -1983,15 +1986,13 @@ Our three models on the same comma slice measure Emender 0.981, GDN
 0.963, M²RNN-CMA 0.973 — within ≈0.02 bpb of their Pile figures, with
 ordering GDN < M²RNN-CMA < Emender (again not the train-loss ordering),
 consistent with a small distribution shift rather than a blow-up. Best
-classical coder on comma is xz -9 at 2.061 bpb. Source:
-`paper/review/COMMA_PILE_BPB.md`.
+classical coder on comma is xz -9 at 2.061 bpb.
 
 #heading(level: 2, numbering: none)[Checkpoints and reproducibility]
 
 The three held-out checkpoints (Emender step 1,542,000; GDN 2,031,000;
 M²RNN-CMA 1,491,000) are pinned to persistent storage with full
-schedule-free optimizer state and sha-verified
-(`paper/review/PINNED_CHECKPOINTS.md`). Recovering a correct inference
+schedule-free optimizer state and sha-verified. Recovering a correct inference
 forward from these schedule-free @schedulefree2024 runs requires the
 *y-mode* weight swap (load the optimizer state and call
 `optimizer.train()`); the saved model weights alone are the
@@ -2000,7 +2001,7 @@ eval-extrapolated *x-mode* view and are catastrophic at inference
 the corrected y-mode weights and verified, by a clean-cache readback from
 the hub through the bundled modeling code, to reproduce the held-out bpb
 to within $2 times 10^(-5)$ nats (Emender 0.96613, GDN 0.96612,
-M²RNN-CMA 0.96132). Source: `paper/review/HF_V03_REPUBLISH.md`.
+M²RNN-CMA 0.96132).
 
 #heading(level: 2, numbering: none)[Where the held-out bpb sits — landscape, not a ranking]
 
@@ -2042,8 +2043,7 @@ M²RNN-CMA 0.96132). Source: `paper/review/HF_V03_REPUBLISH.md`.
     check confirming this single slice reads slightly low against the full
     Pile test set. The only architecture-isolating comparison is the
     matched-budget three-way at the top, which §5 shows is a statistical
-    tie. Sources: `paper/review/BPB_FULL_TABLE.md`,
-    `PILE_BPB_MEASURED.md`, and the per-panel reports they cite.
+    tie.
   ],
 ) <tab_bpb_landscape>
 
