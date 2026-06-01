@@ -799,6 +799,43 @@ Each program is a $32 times 32$ state tile that fits in
 registers. The accelerator does not need parallelism *along time* to
 stay busy; parallelism across these programs already saturates it.
 
+#heading(level: 2, numbering: none)[Measured throughput and utilisation]
+
+The saturation claim is occupancy, and we measure it directly rather
+than assert it. Driving the production 1.273 B E88 (batch 5, context
+2048) through the racer's own training path on a free NVIDIA RTX 6000
+Ada (48 GB) and sampling `nvidia-smi` at 1 Hz over a sustained
+post-warmup window, the GPU runs at *median 100% utilisation
+(mean 99.8%, minimum 96% across 133 samples)* while drawing 97% of its
+300 W power cap. The accelerator is genuinely never idle: width-axis
+multi-programming alone keeps it busy with no time-axis scan. Sustained
+throughput is *7,492 tokens/s* (mean of steady 50-step windows;
+median 7,468); a slower sibling GPU sustained 7,277 tokens/s, so the
+absolute figure is GPU-dependent at the few-percent level.
+
+This 100% occupancy should be read as occupancy, not as peak
+arithmetic. Model-FLOPs utilisation, computed with the standard 6N
+convention against the card's dense bf16 peak of 364 TFLOPS, is
+*15.7%* (a conservative lower bound: 6N counts only weight-matmul
+FLOPs and excludes the recurrence and gate ops, so true MFU is slightly
+higher). High occupancy with modest MFU is the expected and honest
+profile of a bandwidth- and recurrence-bound linear-state model: the
+GPU is busy ~100% of the time but converts ~16% of its peak FLOPs, not
+near-peak. "Full utilisation" here means the GPU is saturated, not that
+it runs compute-bound at peak FLOPs.
+
+The width-axis story is what this throughput buys, and it is now
+quantified against a real time-axis kernel. A chunkwise linear-scan
+baseline — FLA Gated DeltaNet (1.352 B, the campaign's CMA-matched
+shape) run on the same GPU, context, and time budget — sustains
+8,248 tokens/s at MFU 18.4% and the same ~100% occupancy. E88 reaches
+*≈ 91% of that linear-scan kernel's tokens/s* (7,492 / 8,248) *without
+performing the sequential time-axis scan*. Width-axis multi-programming
+therefore recovers linear-scan-class throughput on the width axis; it
+does not beat the chunked-scan kernel on raw tokens/s (FLA is ~10%
+faster here, at a slightly larger parameter count and different batch),
+so the honest claim is parity-class, not superiority.
+
 #heading(level: 2, numbering: none)[Fused Triton recurrence kernel]
 
 The forward kernel uses an internal `[T, B, H, *]` layout (time, batch,
