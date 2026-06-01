@@ -319,6 +319,62 @@ M²RNN-CMA
 the public paper PDF mirrored at
 `http://hypervolu.me/~erik/ndm/Garrison_2026_Emender.pdf`.
 
+#heading(level: 2, numbering: none)[What we claim, and what we do not]
+
+To keep the reading honest and the scope legible up front, the table below
+states each load-bearing claim with its evidence, its scope, and — in the
+last column — what the same result does *not* license. The body sections
+substantiate each row; the pointers are forward references.
+
+#figure(
+  align(center)[#text(size: 8pt)[#table(
+    columns: (1.45fr, 2.05fr, 1.35fr, 1.95fr),
+    align: (left + top, left + top, left + top, left + top),
+    stroke: 0.5pt,
+    inset: 5pt,
+    table.header(
+      [*Claim*], [*Evidence*], [*Scope*], [*Non-claim*],
+    ),
+    [Pure nonlinear-recurrent LMs train at the 1.3 B-class],
+    [E88 reaches 0.973 train bpb on The Pile, no time-axis trick, no
+     attention hybrid (§1, §5)],
+    [One E88 run, single seed; viability demonstration],
+    [Not a scaling law and not seed-averaged; one artifact shown to exist],
+
+    [Bulk LM loss distinguishes these architectures],
+    [*No.* Held-out bpb 0.966 / 0.966 / 0.961 is a statistical tie across 5
+     slices; FLOP-locked after equal CMA-ES tuning (§5)],
+    [Defends a *null*: the loss tie is real and seed-robust],
+    [We do *not* claim loss separates the update rules — it does not],
+
+    [Delta-correcting $>$ raw-write on state tracking],
+    [8 M $S_5$ probe, 3 seeds (@fig_s5_bars); 1.3 B fine-tune
+     length-gen (@fig_1p3b_lengthgen); Lean matched-resource separation
+     (§7, sets C/C′/D)],
+    [Matched per-token-FLOP *efficiency*: same budget, more reach],
+    [Not an absolute can/can't for raw-write; it is a matched-budget gap],
+
+    [Raw-write *cannot* do $S_5$],
+    [*Not claimed.* Raw-write fits short $S_5$ (0.994 at $T=16$) but
+     under-reaches with length at matched budget (§6)],
+    [Honest null — its solvable-task curve was still rising],
+    [No converged expressivity wall asserted for raw-write],
+
+    [Linear recurrence cannot track non-solvable $S_5$ at length],
+    [GDN converges to a ceiling: $S_5$ decays to chance at length while it
+     stays competent on solvable $S_3$/parity (@fig_1p3b_lengthgen, §7)],
+    [Computability statement (Barrington / NC#super[1]), converged],
+    [Not a statement about finite-length memorisation, which it can do],
+  )]],
+  caption: [
+    *Claim / Evidence / Scope / Non-claim.* Each row is substantiated in
+    the cited section; the final column marks the boundary the result does
+    not cross. The two architectural separations are *efficiency* and
+    *computability* statements, not blanket can/can't claims; the bulk-loss
+    row is a defended null.
+  ],
+) <tab_claims>
+
 // ── 2. Background ─────────────────────────────────────────────────────────────
 = Background <sec:background>
 
@@ -968,6 +1024,40 @@ probes, not on bulk language-model bits-per-byte. @sec:appendix_bpb
 places these numbers in the landscape of open Pile-trained models,
 out-of-distribution anchors, and classical compressors.
 
+#heading(level: 2, numbering: none)[The loss tie is FLOP-locked, not seed-luck]
+
+The tie is not an accident of one fortunate run. The three update rules
+— delta-correcting (E88), raw-write (M²RNN-CMA), and linear (GDN) — were
+each given the *same* per-architecture CMA-ES hyperparameter-and-shape
+search budget (§5) and then trained to *matched* FLOPs, and they converge
+to within $approx 0.005$–$0.006$ bpb of one another on *both* axes: held-out
+0.966 / 0.966 / 0.961 and train-loss 0.973 / 0.973 / 0.979. Equal tuning
+effort plus equal compute lands three structurally different recurrences
+in the same narrow loss band. Two things follow.
+
+*Finding — the compute-optimal loss is architecture-agnostic here.* Even
+after each family is tuned to its own best operating point, the converged
+loss does not move with the update rule. This is the empirical backbone of
+the paper's central null: bulk language-modelling loss does not distinguish
+*what these architectures compute*. The gap that does open is on the §6
+state-tracking probes, not on bpb.
+
+*Defense — the single-seed loss numbers are FLOP-determined, not
+seed-luck.* The §5 loss figures are single-seed per architecture, which
+invites the worry that a lucky seed drives them. The matched-FLOP spread
+across three genuinely different architectures upper-bounds what seed
+variance could plausibly contribute *within* one architecture: if changing
+the entire update rule (and re-tuning it) moves held-out bpb by only
+$approx 0.005$, a seed swap inside a fixed rule cannot move it more. The
+single-seed caveat therefore does not threaten the (null) loss claim — the
+loss is set by the FLOP budget, not the seed.
+
+*Scope.* This argument defends the *loss tie* only. The state-tracking
+robustness — the claim that carries the paper — does not rest on these
+single-seed loss runs at all: it rests on the 3-seed 8 M expressivity
+probes (§6) and the 1.3 B fine-tune length-generalisation separation
+(below), where the architectures genuinely come apart.
+
 // ── 6. Expressivity Results ───────────────────────────────────────────────────
 = Expressivity Results <sec:expressivity>
 
@@ -1191,6 +1281,28 @@ reaches cheaply.
   ],
 ) <tab_s5_1p3b>
 
+#figure(
+  image("figures/s5_s3_1p3b_lengthgen.png", width: 100%),
+  caption: [
+    *Length generalisation at the deployed 1.3 B scale (to-competence
+    fine-tune).* Accuracy vs sequence length $T$ for the three released
+    architectures on the non-solvable $S_5$ probe (left) and the solvable
+    $S_3$ and parity controls (centre, right). All three are fine-tuned on
+    $T <= 64$ (dotted marker) and evaluated out to $T = 512$ — 8× the longest
+    trained length; chance is the dashed line ($1 / 120$, $1 / 6$, $1 / 2$).
+    Colours follow the paper convention (E88 blue, M²RNN-CMA red, GDN
+    orange). On $S_5$ the clean ordering is E88 (delta) $>$ M²RNN (raw-write)
+    $>$ GDN (linear) at *every* length: E88 decays gracefully and holds
+    $approx 20×$ chance at $T = 512$, the linear GDN converges toward the
+    chance floor, and raw-write tracks GDN's collapse shape. On the solvable
+    controls all three are competent at the trained length and degrade only
+    with extrapolation, confirming the $S_5$ gap is the non-solvability
+    obstruction, not a generic difficulty gap. $S_5$ numbers match
+    @tab_s5_1p3b. Real data: `paper/review/s3_s5_finetune_v03_data_tocomp/`;
+    figure script: `paper/figures/plot_s5_s3_1p3b_lengthgen.py`.
+  ],
+) <fig_1p3b_lengthgen>
+
 *Nonlinear vs linear — the clean separation, now at 1.3 B.* E88's
 delta-correcting recurrence length-generalises on $S_5$: 0.965 at the
 trained length and a graceful decay to 0.162 at $T = 512$, still
@@ -1250,6 +1362,41 @@ expressivity wall is delta E88 (generalises) vs linear GDN
 (converged-fails), and (b) raw-write M²RNN, even at best-effort
 competence, exhibits the length-generalisation collapse and does not
 reach the delta model's $S_5$ generalisation.
+
+*The solvable controls hold (S3 and parity).* @fig_1p3b_lengthgen surfaces
+the two solvable controls alongside $S_5$. All three architectures are
+competent at the trained length on both: at $T = 64$, parity is 1.000 /
+0.997 / 0.999 and $S_3$ is 1.000 / 0.928 / 0.748 (E88 / GDN / M²RNN), and
+they degrade only under extrapolation — E88 still 0.565 on $S_3$ and 0.745
+on parity at $T = 512$. Because every model reaches the solvable tasks,
+the $S_5$ separation is not a generic "harder task" gap: it is the
+non-solvability obstruction isolating the algebraic structure $S_5$
+demands and $S_3$/parity do not. (The raw-write M²RNN's *own* $S_3$ decay
+at length, falling below the linear GDN past $T = 96$, is the same
+matched-FLOP efficiency story, not an expressivity wall — its solvable-task
+curve was still rising; see *Honest null* above.)
+
+#heading(level: 2, numbering: none)[Micro and mega: the two probes bracket the mechanism]
+
+The expressivity claim rests on two complementary measurements that are
+load-bearing only *together*. The *micro* probe is the 8 M from-scratch
+sweep (@fig_s5_bars, three seeds): it isolates expressivity in the cleanest
+possible setting, where the §6 floor argument makes capacity non-binding by
+orders of magnitude, so any gap is inductive bias and not size — but a
+critic can always ask whether an 8 M toy transfers to a real model. The
+*mega* probe is the 1.3 B fine-tune above (@fig_1p3b_lengthgen): it shows
+the *same* delta-correcting-beats-raw-write-beats-linear ordering survives
+in an actual deployed artifact — the released v0.3 production weights,
+loaded strictly — but a critic can always ask whether a fine-tune merely
+inherited structure rather than demonstrating it under controlled capacity.
+Neither probe alone closes both questions; *together* they bracket the
+mechanism. The micro probe controls capacity and seeds; the mega probe
+controls realism and deployment. The separation that appears in both, under
+opposite confounds, is the one we claim: at matched per-token compute the
+delta-correcting recurrence tracks non-solvable state with length where the
+raw-write and linear updates do not. This is the culmination of the
+expressivity section — the 8 M and 1.3 B results are not two anecdotes but
+one mechanism seen from two sides.
 
 #heading(level: 2, numbering: none)[QA and reasoning panel at 1.3 B: parity-rate evidence]
 
