@@ -206,7 +206,20 @@ ranking** (see the two caveats above: budget + contamination confounds dominate)
 | A4 | zstd -19 | FSE/Huffman | 2.2500 | n/a | whole slice | n/a | 2,812,348 B, 3.556×. |
 | A4 | bzip2 -9 | BWT, model-free | 2.3683 | n/a | whole slice | n/a | 2,960,226 B, 3.378×. |
 | A4 | gzip -9 | DEFLATE, model-free | 2.8029 | n/a | whole slice | n/a | 3,503,416 B, 2.854×. |
-| **A5 — comma-pile** | — | second distribution | — | — | — | — | **NOT LOCATED.** No comma-pile / common-pile corpus on disk; second-distribution check not run (reported by both upstream tasks). |
+| **A5 — comma-pile (SECOND DISTRIBUTION, clean held-out)** | — | Common Pile v0.1 main-mix | — | — | — | — | **Separate slice** (sha `c3042e11…`, 9,999,606 B, 2,153 docs, offset 65.525% of the 1 TB corpus, 0x1E doc-aligned). **Outside models are OOD/clean here** — none trained on comma-pile. Full panel: `COMMA_PILE_BPB.md`. |
+| A5 | `EleutherAI/pythia-1.4b` | transformer, 1.42 B | **0.7185** | no (comma OOD) | 2,491,635 | 4.01 | comma BPB. vs Pile 0.7157 → **Δ +0.0028**. Pile number NOT contamination-inflated. ctx2048/stride1024. |
+| A5 | `EleutherAI/gpt-neo-1.3B` | transformer, 1.32 B | **0.7405** | no (comma OOD) | 2,781,954 | 3.59 | comma BPB. vs Pile 0.7403 → **Δ +0.0002**. ctx2048/stride1024. |
+| A5 | `EleutherAI/pythia-1b` | transformer, 1.01 B | **0.7426** | no (comma OOD) | 2,491,635 | 4.01 | comma BPB. vs Pile 0.7423 → **Δ +0.0003**. ctx2048/stride1024. |
+| A5 | `facebook/opt-1.3b` | transformer, 1.32 B | **0.8688** | no (comma OOD) | 2,781,954 | 3.59 | comma BPB. vs Pile 0.8615 → Δ +0.0073. ctx1024/stride512. |
+| A5 | `gpt2-xl` | transformer, 1.56 B | **0.9820** | no (comma OOD) | 2,781,954 | 3.59 | comma BPB. vs Pile 1.0137 → Δ −0.0317 (comma code/web-heavy, closer to WebText). ctx1024/stride512. |
+| A5 | xz -9 / -9e | LZMA, model-free | **2.0612** | n/a | whole slice | n/a | **Best classical on comma.** 2,576,404 B (-9) / 2,576,384 B (-9e), 3.881×. More compressible than Pile (2.19). |
+| A5 | zstd --ultra -22 | FSE/Huffman | 2.1167 | n/a | whole slice | n/a | 2,645,771 B, 3.779×. |
+| A5 | zstd -19 | FSE/Huffman | 2.1173 | n/a | whole slice | n/a | 2,646,551 B, 3.778×. |
+| A5 | bzip2 -9 | BWT, model-free | 2.2800 | n/a | whole slice | n/a | 2,849,872 B, 3.509×. |
+| A5 | gzip -9 | DEFLATE, model-free | 2.6309 | n/a | whole slice | n/a | 3,288,480 B, 3.041×. |
+| A5 | **GDN** (our model) | LadderLM gated-delta, 1.352 B | **0.9631** | n/a (comma OOD) | 2,561,578 | 3.90 | comma BPB via elman **y-mode** forward (block-loss 2.61 ✓). vs Pile-live 0.966 → Δ −0.0029. ctx2048/stride1024. |
+| A5 | **M2RNN-CMA** (our model) | LadderLM M2RNN+CMA, 1.307 B | **0.9728** | n/a (comma OOD) | 2,561,578 | 3.90 | comma BPB, y-mode forward (block-loss 2.62 ✓). vs Pile-live 0.961 → Δ +0.0118. |
+| A5 | **E88** (our model) | LadderLM E88, 1.273 B | **0.9814** | n/a (comma OOD) | 2,561,578 | 3.90 | comma BPB, y-mode forward (block-loss 2.57 ✓). vs train-loss 0.974 → Δ +0.0074 (live-harness Pile held-out pending). |
 
 **Reading the tiers (the only safe reads):**
 - *Within A4* (compressors): a fully like-for-like ranking — xz beats zstd beats bzip2
@@ -217,6 +230,12 @@ ranking** (see the two caveats above: budget + contamination confounds dominate)
 - **Across tiers A1↔A2↔A3: NOT a clean comparison.** The budget confound (caveat 1)
   and the contamination/distribution confound (caveat 2) both point the same way and
   both inflate the apparent gap. Do not read it as architecture quality.
+- *Tier A5 is a SEPARATE distribution* (comma-pile / Common Pile v0.1, a different
+  slice with its own sha and byte denominator) — **do not line A5 BPB up against
+  A2–A4** as if same-bytes. Its purpose is the contamination cross-check (caveat 2):
+  the Pile-trained models score within **≤0.003 bpb** of their Pile numbers on this
+  clean held-out corpus they never saw, so the Pile result is **not**
+  contamination-inflated. Full panel + deltas in `COMMA_PILE_BPB.md`.
 
 ---
 
@@ -288,7 +307,7 @@ on byte-identical input.
 | 3.92 fixed-norm vs per-doc; train-loss-vs-test confound | `BPB_CONTEXT.md` L46–62 |
 | gzip 2.8029 / bzip2 2.3683 / xz -9 2.1898 / xz -9e 2.1902 / zstd-19 2.2500 / zstd-22 2.2494 (+ compressed bytes, ratios, tool versions) | `COMPRESSION_BPB.md` result table L15–22 |
 | Slice sha / bytes / offset; re-extraction provenance; ddafac3e slip | `heldout_slice.json`; `COMPRESSION_BPB.md` L75–119 |
-| comma-pile NOT LOCATED | `PILE_BPB_MEASURED.md` L88–89, L134 |
+| comma-pile second-distribution panel (open 0.7185/0.7405/0.7426/0.8688/0.9820; our models via elman y-mode E88 0.9814 / GDN 0.9631 / M2RNN-CMA 0.9728; compressors xz 2.0612 etc.; slice sha `c3042e11…`, offset 65.525%, 2,153 docs) | `COMMA_PILE_BPB.md`; `comma_slice.json` |
 
 No number in this document originates anywhere but these files. Nothing is fabricated.
 The held-out three-way is now measured (live-harness route, gate PASS); the HF-release
