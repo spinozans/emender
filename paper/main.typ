@@ -860,12 +860,14 @@ and update rule.
   placement: top,
   image("results/figure_2/figure_2.png", width: 95%),
   caption: [
-    *Efficiency reading of the 1.3 B racer: E88 and Gated DeltaNet
-    occupy the same sub-1-bpb loss-vs-wallclock band on The Pile
-    under matched per-architecture CMA-ES; at their released v0.3
-    checkpoints E88 and GDN are tied at the leading edge of the band
-    (both 0.973 BPB), and M²RNN-CMA trails them across the sampled
-    window.* Schedule-free AdamW on The
+    *Training-dynamics diagnostic for the 1.3 B racer:
+    training-loss-vs-wallclock trajectories on The Pile under matched
+    per-architecture CMA-ES. These curves are a diagnostic of training
+    dynamics, not the basis for the architecture comparison — the
+    reported measurement is the held-out bpb (below). All three
+    trajectories occupy the same sub-1-bpb band; at their released v0.3
+    checkpoints E88 and GDN are at 0.973 BPB and M²RNN-CMA at 0.979
+    across the sampled window.* Schedule-free AdamW on The
     Pile with a 2048-token context. The single panel uses linear
     wall-clock hours from the start of the run to each model's released
     v0.3 checkpoint step, but each curve is drawn only after the 100K-step
@@ -879,9 +881,10 @@ and update rule.
     1.273 B parameters; M²RNN-CMA at 1.307 B; GDN at 1.352 B; the
     three plotted models have trained about 22.1-23.8 stitched
     GPU-days at their released v0.3 checkpoints. The plotted
-    trajectory is one realization per architecture; the within-class
-    ordering it illustrates is replicated across four CMA-ES sweeps
-    (250+ configs/architecture) and the delta-off ablation (§9). The
+    trajectory is one realization per architecture. These training-loss
+    trajectories are a diagnostic; the architecture comparison rests on
+    the held-out bpb (below) and the §9 delta-off ablation and CMA-ES
+    sweeps (250+ configs/architecture), not on these curves. The
     multi-week per-architecture training extent is the standard unit
     at this scale class. Endpoint values are 100K-step trailing
     averages read at each model's released v0.3 checkpoint step
@@ -913,11 +916,12 @@ mean bytes per token is 3.92 over a 2000-sample sweep at the training
 `scripts/estimate_tokenizer_bytes_per_token.py`, pinned output at
 `scripts/estimate_tokenizer_bytes_per_token.json`), so
 $"bpb" = "nats/token" times log_2(e) / "bytes/token" approx "nats/token" times 0.368$.
-The headline is a shared sub-1-bpb band on The Pile at matched
-wallclock; the §6 state-tracking probes complete the picture. Within
-the pure-nonlinear-recurrent class, M²RNN-CMA trails E88 across the
-sampled window; the CMA-replicated search sign (§9) carries the same
-sign. Source: smoothed CSVs and snapshot table under
+These training-loss curves are a training-dynamics diagnostic, not the
+basis for the architecture comparison: the reported measurement is the
+held-out bpb (next subsection), where the three models are a
+statistical tie, and the architectures separate on the §6
+state-tracking probes rather than on bulk language-model bits-per-byte.
+Source: smoothed CSVs and snapshot table under
 `paper/results/figure_2/` (`AS_OF.md`).
 
 #heading(level: 2, numbering: none)[Held-out bits-per-byte: the three are a statistical tie]
