@@ -912,6 +912,39 @@ sampled window; the CMA-replicated search sign (§9) carries the same
 sign. Source: smoothed CSVs and snapshot table under
 `paper/results/figure_2/` (`AS_OF.md`).
 
+#heading(level: 2, numbering: none)[Held-out bits-per-byte: the three are a statistical tie]
+
+The racer curve above plots *training-loss* bpb under the fixed
+canonical $"bytes/token" = 3.92$ normalization. To test whether that
+within-class ordering survives off the training stream, we separately
+measure *held-out* bpb: each model's real negative log-likelihood, in
+nats, over a held-out Pile slice it never trained on, divided by the
+slice's real UTF-8 byte count — tokenizer-invariant, with no 3.92
+constant (method in @sec:appendix_bpb). On the canonical 10 MB held-out
+slice (context 2048, stride 1024), Emender reaches *0.966* held-out bpb,
+GDN *0.966*, and M²RNN-CMA *0.961* — all sub-1-bpb, and all at or
+slightly below their respective train-loss figures (0.974 / 0.977 /
+0.980), so generalisation is healthy with no held-out blow-up.
+
+Held-out bpb and train-loss bpb are different objects — different data
+*and* different byte-normalization — and are not directly comparable.
+Critically, the train-loss ordering does *not* reproduce held-out.
+Across five independent held-out Pile slices drawn from random deep
+offsets across the 1.31 TB corpus, the three models sit inside a
+0.006-bpb band of mean bpb, narrower than the largest cross-slice
+standard deviation (0.025 bpb); the between-model mean gaps are
+0.05–0.31$times$ the pooled cross-slice std, i.e. within noise. On
+held-out bulk bits-per-byte the three update rules are a *statistical
+tie*: which model is lowest is slice-dependent (lowest-bpb counts:
+Emender 0/5, GDN 1/5, M²RNN-CMA 4/5), so bulk held-out perplexity does
+*not* distinguish the architectures at this budget. This is the expected
+and honest reading: the architectures separate on the §6 state-tracking
+probes, not on bulk language-model bits-per-byte. @sec:appendix_bpb
+places these numbers in the landscape of open Pile-trained models,
+out-of-distribution anchors, and classical compressors. Sources:
+`paper/review/PILE_BPB_MEASURED.md`, `HELDOUT_MULTISLICE.md`,
+`BPB_FULL_TABLE.md`.
+
 // ── 6. Expressivity Results ───────────────────────────────────────────────────
 = Expressivity Results <sec:expressivity>
 
@@ -1890,5 +1923,128 @@ are at `ndm/triton/e88_triton_forward.py` and `e88_triton_backward.py`.
   that the gradient-conditioning failure is a *geometry* property
   (shared $q, k$ across many value heads), not a property of the
   raw-write update family per se.
+
+= Appendix: Held-out bits-per-byte measurement <sec:appendix_bpb>
+
+This appendix documents how the held-out bits-per-byte figures in §5 are
+measured and places them in a landscape of reference models and classical
+compressors. Every number traces to the read-only review reports under
+`paper/review/` cited inline; nothing here is re-fitted.
+
+#heading(level: 2, numbering: none)[Tokenizer-invariant held-out bpb]
+
+So that models with different tokenizers are comparable on identical
+bytes, held-out bpb is computed from each model's real summed negative
+log-likelihood over the slice and the slice's real UTF-8 byte count:
+
+$ "bpb" = ("total NLL"_"nats" \/ ln 2) \/ "total UTF-8 bytes". $
+
+Each model uses its *own* tokenizer, and the denominator is the shared
+byte count, so bytes/token is a *measured* per-tokenizer quantity (4.00
+for the GPT-NeoX BPE, 3.82 for our `p50k_base` runs on the canonical
+slice) — *not* the fixed $"bytes/token" = 3.92$ constant used for the
+train-loss racer curve in §5. The held-out and train-loss figures are
+therefore distinct objects: they differ in normalization as well as in
+the data scored. Every token is scored once under a sliding window
+(context 2048, stride 1024) with up to 2047 tokens of left context, the
+standard fixed-length-model perplexity recipe; out-of-distribution
+anchors GPT-2 XL and OPT-1.3B run at context 1024 (GPT-2 XL position
+limit). Pipeline: `scripts/measure_pile_bpb.py` (open models) and
+`scripts/measure_pile_bpb_elman.py` (our models, in-harness forward).
+
+#heading(level: 2, numbering: none)[Held-out slice provenance]
+
+The canonical held-out slice is a whole-line 10 MB region (9,999,511
+bytes, sha256 `3e4241a9…`) taken at byte offset $10^12$ (≈76.5% into the
+1.31 TB Pile master file) — a deep offset the racer's sub-one-epoch
+stream from the file start is least likely to have consumed. The
+five-slice robustness check of §5 adds four further independent,
+non-overlapping, sha-verified slices at offset fractions
+0.137 / 0.341 / 0.523 / 0.911, each ≈10 MB and ≈2.5 M scored tokens.
+Identical bytes feed every model, so the byte denominator is shared and
+bpb is comparable across tokenizers. A block-loss sanity gate (mean
+nats/token on the first 2048-token block must lie in $[1.5, 4.0]$, model
+train loss ≈2.6) ran before any of our models' bpb was trusted; all
+gated runs passed. Slice manifests: `paper/review/heldout_slice.json`,
+`heldout_multislice_slices.json`.
+
+#heading(level: 2, numbering: none)[Second distribution: comma-pile (contamination control)]
+
+Because the open Pile-trained references (Pythia, GPT-Neo) saw the Pile
+in training, their Pile numbers are effectively in-distribution. As an
+independent check we re-measure through the identical pipeline on a
+held-out slice of comma-pile (Common Pile v0.1 main-mix; 9,999,606 bytes,
+document-aligned on the `0x1E` record separator, at a random deep offset
+65.5% into its 1 TB corpus), a permissively-licensed corpus none of these
+models trained on. The Pile-trained models score within $<= 0.003$ bpb of
+their Pile numbers there (Pythia-1.4B $+0.0028$, GPT-Neo-1.3B $+0.0002$,
+Pythia-1B $+0.0003$), so the Pile result is *not* contamination-inflated.
+Our three models on the same comma slice measure Emender 0.981, GDN
+0.963, M²RNN-CMA 0.973 — within ≈0.02 bpb of their Pile figures, with
+ordering GDN < M²RNN-CMA < Emender (again not the train-loss ordering),
+consistent with a small distribution shift rather than a blow-up. Best
+classical coder on comma is xz -9 at 2.061 bpb. Source:
+`paper/review/COMMA_PILE_BPB.md`.
+
+#heading(level: 2, numbering: none)[Checkpoints and reproducibility]
+
+The three held-out checkpoints (Emender step 1,542,000; GDN 2,031,000;
+M²RNN-CMA 1,491,000) are pinned to persistent storage with full
+schedule-free optimizer state and sha-verified
+(`paper/review/PINNED_CHECKPOINTS.md`). Recovering a correct inference
+forward from these schedule-free @schedulefree2024 runs requires the
+*y-mode* weight swap (load the optimizer state and call
+`optimizer.train()`); the saved model weights alone are the
+eval-extrapolated *x-mode* view and are catastrophic at inference
+(≈18 nats/token). The public HuggingFace v0.3 release was re-exported with
+the corrected y-mode weights and verified, by a clean-cache readback from
+the hub through the bundled modeling code, to reproduce the held-out bpb
+to within $2 times 10^(-5)$ nats (Emender 0.96613, GDN 0.96612,
+M²RNN-CMA 0.96132). Source: `paper/review/HF_V03_REPUBLISH.md`.
+
+#heading(level: 2, numbering: none)[Where the held-out bpb sits — landscape, not a ranking]
+
+#figure(
+  align(center)[#table(
+    columns: (auto, auto, auto, auto, auto),
+    align: (left, left, right, right, left),
+    stroke: 0.5pt,
+    inset: 5pt,
+    table.header(
+      [*Tier*], [*Model / coder*], [*Params*], [*Held-out bpb*], [*Trained on Pile?*],
+    ),
+    [Ours (matched budget)], [Emender (E88)], [1.273 B], [0.966], [yes, ≈0.05 epoch],
+    [Ours (matched budget)], [GDN], [1.352 B], [0.966], [yes, ≈0.05 epoch],
+    [Ours (matched budget)], [M²RNN-CMA], [1.307 B], [0.961], [yes, ≈0.05 epoch],
+    [Open Pile-trained], [Pythia-1.4B], [1.42 B], [0.7157], [yes, ≈1 epoch (in-dist.)],
+    [Open Pile-trained], [GPT-Neo-1.3B], [1.32 B], [0.7403], [yes, ≈1 epoch (in-dist.)],
+    [Open Pile-trained], [Pythia-1B], [1.01 B], [0.7423], [yes, ≈1 epoch (in-dist.)],
+    [Familiar OOD], [OPT-1.3B], [1.32 B], [0.8615], [no (OOD)],
+    [Familiar OOD], [GPT-2 XL], [1.56 B], [1.0137], [no (OOD)],
+    [Classical], [xz -9 (LZMA)], [—], [2.190], [n/a (model-free)],
+    [Classical], [gzip -9 (DEFLATE)], [—], [2.803], [n/a (model-free)],
+  )],
+  caption: [
+    *Held-out bits-per-byte landscape — context, not an architecture
+    ranking.* All neural numbers are tokenizer-invariant held-out bpb on
+    the canonical 10 MB Pile slice; classical coders are single-stream
+    over the same bytes. The vertical ordering is *dominated by training
+    budget and train/test distribution, not by the update rule*, and must
+    not be read as a quality verdict. Our three models trained on
+    ≈15–16 B tokens (≈0.05 epoch of the Pile); the open Pile-trained
+    references saw ≈10–20$times$ more (≈1 epoch, ≈300 B tokens) *and* are
+    in-distribution on this slice (it is effectively training data for
+    them — possible contamination), so their 0.72–0.74 is closer to a
+    train-loss than a held-out number. The OOD anchors (OPT, GPT-2 XL)
+    are out-of-distribution on the Pile, so their higher bpb is expected
+    and is not a quality knock; GPT-2 XL measures 1.0137 here versus the
+    Pile paper's published 1.0468 @thepile2020, a ≈0.03-bpb pipeline
+    check confirming this single slice reads slightly low against the full
+    Pile test set. The only architecture-isolating comparison is the
+    matched-budget three-way at the top, which §5 shows is a statistical
+    tie. Sources: `paper/review/BPB_FULL_TABLE.md`,
+    `PILE_BPB_MEASURED.md`, and the per-panel reports they cite.
+  ],
+) <tab_bpb_landscape>
 
 #bibliography("refs.bib", title: "References", style: "ieee")
