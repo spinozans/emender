@@ -1125,6 +1125,123 @@ The hybrid result is the same finding as §3 from the other side:
 linear-scan blocks do not inherit state tracking from neighbouring
 Emender blocks.
 
+#heading(level: 2, numbering: none)[The same separation at the deployed 1.3 B scale]
+
+The 8 M probes above run where capacity is non-binding so that any gap
+is inductive bias, not size. The complementary question is whether the
+separation survives at the *deployed* 1.3 B scale, on the actual
+released production weights. We fine-tune each released v0.3 checkpoint
+— E88 (delta, 1.273 B), GDN (linear-recurrent, 1.352 B), and
+M²RNN-CMA (raw-write, 1.307 B) — on the $S_3$ and $S_5$ word problems
+and measure *length generalisation*: train on prefixes of length
+$T <= 64$, evaluate out to $T = 512$ (8× the longest trained length).
+The trainable harness is initialised by a strict `load_state_dict` of
+the public `@v0.3` `model.safetensors`; a full held-out-slice load-sanity
+reproduces each model's published readback to $<= 1.3 times 10^(-4)$
+nats (so we fine-tune the real artifact). Source numbers:
+`paper/review/S3_S5_FINETUNE_V03.md`.
+
+To keep the comparison about expressivity rather than trainability, each
+model is first driven *to competence on the solvable tasks*: at the
+longest trained length $T = 64$, E88 reaches parity 1.000 / $S_3$ 1.000,
+GDN 0.997 / 0.928, and M²RNN 0.999 / 0.748 ($S_3$ 0.990 at $T = 32$).
+Under the identical matched recipe (lr $2 times 10^(-4)$, 2500 steps)
+the raw-write M²RNN under-fits even solvable parity (0.557); reaching
+solvable competence took a gentler, longer recipe (lr $5 times 10^(-5)$,
+12,000 steps) where E88 and GDN saturate the solvable tasks at lr
+$2 times 10^(-4)$ in $<= 5000$ steps. This *effort-to-competence* gap is
+the matched-FLOP efficiency statement at 1.3 B: raw-write needs more
+budget to reach the same solvable-task competence the delta update
+reaches cheaply.
+
+#figure(
+  align(center)[#table(
+    columns: (auto, auto, auto, auto, auto, auto),
+    align: (left, right, right, right, right, right),
+    stroke: 0.5pt,
+    inset: 6pt,
+    table.header(
+      [*Model*], [*$S_5$ T=16*], [*$S_5$ T=64*], [*$S_5$ T=128*], [*$S_5$ T=256*], [*$S_5$ T=512*],
+    ),
+    [E88 (delta)], [*1.000*], [*0.965*], [*0.618*], [*0.317*], [*0.162*],
+    [M²RNN (raw-write)], [0.994], [0.521], [0.269], [0.138], [0.074],
+    [GDN (linear)], [0.853], [0.245], [0.128], [0.067], [0.038],
+    [random], [0.0083], [0.0083], [0.0083], [0.0083], [0.0083],
+  )],
+  caption: [
+    *$S_5$ length generalisation at the deployed 1.3 B scale, all three
+    models driven to competence on the solvable tasks.* Trained on
+    $T <= 64$; $T = 64$ is the longest trained length and columns to its
+    right are extrapolation out to 8×. Chance is $1 / 120 = 0.0083$. E88
+    (delta) holds $approx 20×$ chance at $T = 512$; the linear GDN
+    collapses toward chance even though it is competent on both
+    solvable tasks (parity 0.997, $S_3$ 0.928); raw-write M²RNN fits
+    short $S_5$ but under-reaches with length and does not match E88.
+    GDN's 0.038 at $T = 512$ is near the chance floor.
+    Source: `paper/review/S3_S5_FINETUNE_V03.md` §4 (to-competence run).
+  ],
+) <tab_s5_1p3b>
+
+*Nonlinear vs linear — the clean separation, now at 1.3 B.* E88's
+delta-correcting recurrence length-generalises on $S_5$: 0.965 at the
+trained length and a graceful decay to 0.162 at $T = 512$, still
+$approx 20×$ chance at 8× the trained length. The linear-recurrent GDN
+converges to a wall: given the budget that makes it competent on
+*both* solvable tasks (parity 0.997, $S_3$ 0.928), $S_5$ still plateaus
+at 0.245 at $T = 64$ and decays to 0.038 (near the chance floor) at
+$T = 512$.
+This is a converged ceiling, not under-training — exactly the
+Barrington / NC#super[1] prediction that a linear recurrence provably
+cannot maintain the non-solvable $S_5$ product at arbitrary length. The
+clean expressivity contrast is E88 (delta, generalises) versus GDN
+(linear, converged-fails), both competent on the solvable controls.
+
+*Delta vs raw-write — matched-FLOP efficiency, not can/can't.* Once
+competent on the solvable tasks, the raw-write M²RNN fits *short* $S_5$
+(0.994 at $T = 16$) but under-reaches with length (0.521 at $T = 64$
+$arrow.r$ 0.074 at $T = 512$), never matching E88 at any length and
+tracking the linear GDN's collapse shape far more than the delta
+model's. Combined with its larger effort-to-competence (above), the
+statement is one of *efficiency*: at matched no-tuning budget raw-write
+under-reaches the delta update's $S_5$ length generalisation, and even
+at a tuned best-effort budget it does not catch up. Removing the
+under-training confound also *reveals* the finer nonlinear-beats-linear
+ordering invisible in the matched run: at every $S_5$ length E88 (delta)
+$>$ M²RNN (raw-write) $>$ GDN (linear) — raw-write nonlinearity does beat
+the linear baseline once it can fit the tasks, while still falling short
+of the delta correction.
+
+*Why this is computation, not memorisation.* The input is a
+length-$T$ sequence over a fixed generator alphabet, so the number of
+distinct inputs grows as $g^T$ — astronomically larger than any
+training set by $T = 64$ — and evaluation sequences are held out and
+test-disjoint from training. The primary metric is length
+generalisation itself (train $T <= 64$, evaluate to $T = 512$): a
+lookup table fit to $<= 64$-length prefixes cannot extend to $8×$ that
+length, so above-chance accuracy at $T = 512$ is evidence of a learned
+recurrence, not recall. The linear GDN's *failure* sharpens the point:
+it is fully competent on the solvable $S_3$ control (0.928 at $T = 64$)
+yet converged-fails $S_5$, which it could only do if $S_5$ demands
+state-tracking computation a linear recurrence cannot perform —
+memory alone would not distinguish the two. $S_3$ is the solvable
+control throughout: all three models reach it, so the $S_5$ gap is the
+non-solvability obstruction, not a generic difficulty gap.
+
+*Honest null.* M²RNN's $S_5$ (and $S_3$) accuracy was still slowly
+rising at 12,000 steps — its curve is not the flat, converged ceiling
+GDN's is — so its $S_5$ shortfall is partly entangled with optimisation
+difficulty: full fine-tuning of the 1.3 B raw-write model is unstable
+and needed the gentler/longer recipe merely to fit parity. We therefore
+do *not* claim a pure-expressivity wall for raw-write the way we can for
+the linear GDN. This does not weaken the thesis — it *is* the
+matched-FLOP efficiency framing: raw-write needs more budget to approach
+what the delta update reaches cheaply, and within the budgets tested it
+does not get there. The recipe-independent statements are (a) the clean
+expressivity wall is delta E88 (generalises) vs linear GDN
+(converged-fails), and (b) raw-write M²RNN, even at best-effort
+competence, exhibits the length-generalisation collapse and does not
+reach the delta model's $S_5$ generalisation.
+
 #heading(level: 2, numbering: none)[QA and reasoning panel at 1.3 B: parity-rate evidence]
 
 For capability beyond loss numbers we evaluate the three 1.3 B-class
