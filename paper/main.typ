@@ -89,10 +89,10 @@ CMA-ES configs, and the Triton kernel released.
     structured state as sequences grow, whereas a nonlinear one can.
     Among the nonlinear rules, a delta-correcting update learns this
     far more efficiently than a plain overwrite. A machine-checked proof
-    establishes the enabling direction — that the delta-correcting update
+    establishes the enabling direction: the delta-correcting update
     is strictly more expressive than plain overwrite and can realise this
-    structured state-tracking — while the matching impossibility for linear
-    recurrence rests on classical complexity results; in the trained
+    structured state-tracking. The matching impossibility for linear
+    recurrence rests on classical complexity results, and in the trained
     billion-parameter models we observe the same ordering. These findings indicate that loss is a
     poor guide to what a recurrent architecture can compute, and that
     massively parallel nonlinear recurrence is a practical and largely
