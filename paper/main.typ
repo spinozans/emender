@@ -674,9 +674,9 @@ elimination:
 
 M²RNN-CMA scores 0.31 on $S_3$, the solvable control where non-solvability
 is *not* the obstruction. This rules out a complexity-ceiling
-explanation. If raw-write could do clean prefix tracking even on
-solvable groups, M²RNN should clear $S_3$. It does not. Nor is the
-failure a capacity ceiling. At the 8 M probe shape
+explanation: even on a solvable group, where non-solvability is not the
+obstruction, M²RNN does not reach ceiling on $S_3$ at matched no-tuning
+budget. Nor is the shortfall a capacity ceiling. At the 8 M probe shape
 ($N times V times H times "depth" = 32 times 32 times 32 times 4 =
 131{,}072$), the per-token recurrent state carries 131,072 scalars,
 about five orders of magnitude above the $log_2 6 approx 2.6$-bit
@@ -1042,18 +1042,18 @@ $T in {128, 256, 512, 1024}$, three seeds.
     and raw-write nonlinear matrix RNN (M²RNN) baselines on the
     non-solvable $S_5$ probe at training length. On the solvable $S_3$
     control, the Emender is perfect (1.0000); GDN reaches 0.72; both
-    M²RNN variants stall in the 0.31–0.38 band, indicating that the
-    raw-write update fails on the prefix-tracking task even without the
-    non-solvability obstruction. Source: `paper/ndmpapernotes.md`
+    M²RNN variants stall in the 0.31–0.38 band, indicating that at
+    matched no-tuning budget the raw-write update under-reaches on the
+    prefix-tracking task even without the non-solvability obstruction. Source: `paper/ndmpapernotes.md`
     lines 153–173; figure script: `paper/figures/plot_expressivity_seeds.py`.
   ],
 ) <fig_s5_bars>
 
 At $S_5$ training length the Emender reaches 0.79, GDN 0.36,
 M²RNN-CMA 0.22, M²RNN-paper 0.17. On $S_3$ the Emender is at 1.00, GDN
-at 0.72, and both M²RNN variants stall in the 0.31–0.38 band; the
-raw-write update fails on the prefix-tracking task even when the group
-is solvable. The Emender starts at 0.79 at $T = 128$ and declines to
+at 0.72, and both M²RNN variants stall in the 0.31–0.38 band; at
+matched no-tuning budget the raw-write update under-reaches on the
+prefix-tracking task even when the group is solvable. The Emender starts at 0.79 at $T = 128$ and declines to
 0.42, 0.22, and 0.11 at $T = 256$, $512$, $1024$; it climbs higher and
 falls slower than the baselines but does not reach ceiling at length.
 
