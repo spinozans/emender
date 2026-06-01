@@ -1,3 +1,30 @@
+# Figure 2 Snapshot - anchored on the released v0.3 checkpoints
+
+> **v0.3 anchoring (2026-06-01).** The committed CSVs and `figure_2.png`
+> are now truncated at each model's *released v0.3 checkpoint step* — the
+> nearest-saved, published+pinned checkpoints — so the figure endpoint, the
+> §5 train-loss bpb, and the held-out bpb all reference the SAME steps:
+>
+> | Model | v0.3 checkpoint step | 100K-trailing loss | 100K-trailing BPB | Rounded |
+> | --- | ---: | ---: | ---: | ---: |
+> | E88 / NDM | 1,542,000 | 2.644053 | 0.973444 | **0.973** |
+> | GDN | 2,031,000 | 2.643640 | 0.973292 | **0.973** |
+> | M²RNN-CMA | 1,491,000 | 2.659523 | 0.979139 | **0.979** |
+>
+> These replace the earlier 2026-05-31 smoothed-curve endpoints
+> (1,523,250 / 1,999,300 / 1,466,400 → 0.974 / 0.977 / 0.980). At the
+> v0.3 steps E88 and GDN are tied at the leading edge (both round to
+> 0.973; GDN is 0.973292 vs E88 0.973444), M²RNN-CMA trails at 0.979 —
+> all sub-1-bpb, all >= their held-out figures (0.966 / 0.966 / 0.961),
+> consistent with the held-out statistical-tie reading. Wallclock at the
+> v0.3 steps: E88 23.48, GDN 23.77, M²RNN-CMA 22.14 GPU-days
+> (~22.1-23.8). Re-read with `paper/results/figure_2/smooth.py`
+> (`trail_100k`) on the active logs, truncated at the v0.3 steps; same
+> smoothing/window/tokenizer-byte constant as before
+> (`bpb = nats x 0.3681635882200934`).
+
+The historical 2026-05-31 snapshot notes below are retained for provenance.
+
 # Figure 2 Snapshot - As of 2026-05-31T13:49:33Z
 
 Training is **in progress**. The values below were regenerated from the active
