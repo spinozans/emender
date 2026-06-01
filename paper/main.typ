@@ -69,22 +69,31 @@ CMA-ES configs, and the Triton kernel released.
     ),
   ),
   abstract: [
-    Pure-nonlinear-in-time recurrence has been assumed unable to reach
-    billion-parameter scale at competitive wallclock without
-    linearizing the time axis or adding attention. We introduce the
-    Emender, a class of pure-nonlinear-recurrent layers that correct
-    their state by delta rather than overwrite, and show that
-    assumption is false. The route is width-axis multi-programming:
-    each token drives hundreds of small recurrent programs in parallel
-    while time stays serial inside each, recovering throughput without
-    touching the time axis. Within the class we derive and formally prove an efficiency
-    ordering in a Lean 4 trusted core, and confirm it
-    empirically: the delta-correcting update reaches a strictly larger
-    one-step function class than raw-write at matched compute. The
-    production instance, E88, has 1.273 billion parameters and reaches
-    0.973 bits per byte on The Pile after about 23 days on a single
-    workstation-class GPU, on par with Gated DeltaNet under matched
-    per-architecture CMA-ES.
+    Recurrent neural networks read a sequence one step at a time,
+    updating an internal state as they go. Training them efficiently at
+    scale usually requires the state update to be linear, so the whole
+    sequence can be processed in parallel. A recurrence whose update is
+    nonlinear loses this parallelism and must run serially, which has
+    been assumed too slow to be practical at billion-parameter scale.
+    It has been unclear whether a purely nonlinear recurrence can be
+    trained to competitive scale on its own, and whether the form of
+    its update rule matters once it is. Here we show that a purely
+    nonlinear recurrent language model, made trainable by running
+    hundreds of small recurrent programs in parallel across the
+    network's width rather than across time, reaches below one bit per
+    byte on a standard corpus using a single workstation-class GPU,
+    matching strong linear-recurrent baselines. On held-out text these
+    models are statistically tied, so language-modelling loss does not
+    distinguish them; their differences emerge instead in state
+    tracking. A linear recurrence provably cannot follow certain
+    structured state as sequences grow, whereas a nonlinear one can.
+    Among the nonlinear rules, a delta-correcting update learns this
+    far more efficiently than a plain overwrite. We establish this
+    separation both with a machine-checked proof and in the trained
+    billion-parameter models. These findings indicate that loss is a
+    poor guide to what a recurrent architecture can compute, and that
+    massively parallel nonlinear recurrence is a practical and largely
+    open design space.
   ],
   keywords: (
     "recurrent neural networks",
