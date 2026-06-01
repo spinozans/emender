@@ -88,9 +88,12 @@ CMA-ES configs, and the Triton kernel released.
     tracking. A linear recurrence provably cannot follow certain
     structured state as sequences grow, whereas a nonlinear one can.
     Among the nonlinear rules, a delta-correcting update learns this
-    far more efficiently than a plain overwrite. We establish this
-    separation both with a machine-checked proof and in the trained
-    billion-parameter models. These findings indicate that loss is a
+    far more efficiently than a plain overwrite. A machine-checked proof
+    establishes the enabling direction — that the delta-correcting update
+    is strictly more expressive than plain overwrite and can realise this
+    structured state-tracking — while the matching impossibility for linear
+    recurrence rests on classical complexity results; in the trained
+    billion-parameter models we observe the same ordering. These findings indicate that loss is a
     poor guide to what a recurrent architecture can compute, and that
     massively parallel nonlinear recurrence is a practical and largely
     open design space.
@@ -344,7 +347,8 @@ substantiate each row; the pointers are forward references.
     [Bulk LM loss distinguishes these architectures],
     [*No.* Held-out bpb 0.966 / 0.966 / 0.961 is a statistical tie across 5
      slices; FLOP-locked after equal CMA-ES tuning (§5)],
-    [Defends a *null*: the loss tie is real and seed-robust],
+    [Defends a *null*: the loss tie is real and reproduces across 5 held-out
+     slices and the comma-pile control (single-seed per architecture)],
     [We do *not* claim loss separates the update rules — it does not],
 
     [Delta-correcting $>$ raw-write on state tracking],
@@ -1040,17 +1044,23 @@ after each family is tuned to its own best operating point, the converged
 loss does not move with the update rule. This is the empirical backbone of
 the paper's central null: bulk language-modelling loss does not distinguish
 *what these architectures compute*. The gap that does open is on the §6
-state-tracking probes, not on bpb.
+state-tracking probes, not on bpb. We state the boundary of this claim
+explicitly: the computation that loss is blind to is, so far, visible only on
+synthetic algebraic state-tracking ($S_5$/parity/FSM, §6) — tasks that *no*
+model in the cohort solves. Every non-synthetic signal we measure ties: bulk
+held-out loss, the QA panel, and the reasoning panel (§6) are all within noise.
+This is the honest scope of the contribution, not a buried caveat.
 
-*Defense — the single-seed loss numbers are FLOP-determined, not
-seed-luck.* The §5 loss figures are single-seed per architecture, which
-invites the worry that a lucky seed drives them. The matched-FLOP spread
-across three genuinely different architectures upper-bounds what seed
-variance could plausibly contribute *within* one architecture: if changing
-the entire update rule (and re-tuning it) moves held-out bpb by only
-$approx 0.005$, a seed swap inside a fixed rule cannot move it more. The
-single-seed caveat therefore does not threaten the (null) loss claim — the
-loss is set by the FLOP budget, not the seed.
+*Caveat — single-seed, corroborated externally.* The §5 loss figures are
+single-seed per architecture; with one sample per architecture we cannot use
+the cross-architecture spread to bound within-architecture seed variance (that
+spread is itself contaminated by the seed noise it would purport to bound), and
+we do not. Instead the loss-tie reading is corroborated independently: by the
+five held-out Pile slices (@sec:appendix_bpb), where the model ordering is
+slice-dependent and the gaps sit within cross-slice noise; by the comma-pile
+contamination-control reproduction (@sec:appendix_bpb), a second distribution
+that reproduces the tie; and by its consistency with an architecture-agnostic
+compute-optimal loss at this matched FLOP budget.
 
 *Scope.* This argument defends the *loss tie* only. The state-tracking
 robustness — the claim that carries the paper — does not rest on these
@@ -1292,9 +1302,12 @@ reaches cheaply.
     trained length; chance is the dashed line ($1 / 120$, $1 / 6$, $1 / 2$).
     Colours follow the paper convention (E88 blue, M²RNN-CMA red, GDN
     orange). On $S_5$ the clean ordering is E88 (delta) $>$ M²RNN (raw-write)
-    $>$ GDN (linear) at *every* length: E88 decays gracefully and holds
-    $approx 20×$ chance at $T = 512$, the linear GDN converges toward the
-    chance floor, and raw-write tracks GDN's collapse shape. On the solvable
+    $>$ GDN (linear) at *every* length: E88 degrades the most slowly and is
+    still $approx 20×$ chance at $T = 512$ (though only 0.162 accuracy, far
+    from solving), the linear GDN converges toward the chance floor, and
+    raw-write tracks GDN's collapse shape. The ordering is consistent and
+    reproducible, but all three degrade with length and none tracks $S_5$ at
+    $T = 512$. On the solvable
     controls all three are competent at the trained length and degrade only
     with extrapolation, confirming the $S_5$ gap is the non-solvability
     obstruction, not a generic difficulty gap. $S_5$ numbers match
@@ -1304,9 +1317,11 @@ reaches cheaply.
 ) <fig_1p3b_lengthgen>
 
 *Nonlinear vs linear — the clean separation, now at 1.3 B.* E88's
-delta-correcting recurrence length-generalises on $S_5$: 0.965 at the
-trained length and a graceful decay to 0.162 at $T = 512$, still
-$approx 20×$ chance at 8× the trained length. The linear-recurrent GDN
+delta-correcting recurrence degrades the most slowly on $S_5$: 0.965 at the
+trained length, falling to 0.162 at $T = 512$ — still $approx 20×$ chance at
+8× the trained length, but only $approx 16%$ accuracy, so E88 too is far from
+tracking $S_5$ at this length. The advantage is relative: all three
+architectures degrade toward chance and none solves $S_5$ at $T = 512$. The linear-recurrent GDN
 converges to a wall: given the budget that makes it competent on
 *both* solvable tasks (parity 0.997, $S_3$ 0.928), $S_5$ still plateaus
 at 0.245 at $T = 64$ and decays to 0.038 (near the chance floor) at
