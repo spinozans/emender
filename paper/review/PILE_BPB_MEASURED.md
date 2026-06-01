@@ -47,6 +47,12 @@ paper's own figure. A follow-up task should run the eval inside the live trainin
 harness (`/home/erikg/elman` validation path / the exact `create_ladder_model`
 config the racer used) where the forward is known-good.
 
+> **RESOLVED (2026-06-01, task `measure-e88-gdn`):** that follow-up ran. The
+> blocker was the schedule-free optimizer saving x-mode (eval) weights, not a
+> forward-graph mismatch; applying the y-mode swap yields a sane forward.
+> **Measured held-out BPB: E88 = 0.9661, GDN = 0.9661, M2RNN = 0.9613.** See the
+> "UPDATE (2026-06-01)" section at the end of this document.
+
 ---
 
 ## Results — measured tiers (identical pipeline, identical bytes)
@@ -133,3 +139,113 @@ CUDA_VISIBLE_DEVICES=0 python3 scripts/gen_bpb_report.py
 - [x] `paper/review/heldout_slice.json` written for the parallel compression task.
 - [x] comma-pile second distribution: **not located**.
 - [x] `paper/review/PILE_BPB_MEASURED.md` written; `paper/main.typ` NOT modified.
+
+---
+
+## UPDATE (2026-06-01, task `measure-e88-gdn`) — E88 / GDN / M2RNN held-out BPB: **MEASURED** (blocker resolved)
+
+The `pile-bpb-measure` blocker ("`E88FLAHybrid` eval forward returns
+worse-than-random ~17.6 nats") is **resolved**. The cause was **not** a
+structural mismatch in the forward graph — it was the **schedule-free
+optimizer's saved weights**. These runs use `AdamWScheduleFree`, which saves the
+**x-mode** (eval-extrapolated) parameters. Those x-mode weights are catastrophic
+at inference (~17–20 nats); the usable **y-mode** (training) weights are
+recovered by loading the optimizer state and calling `optimizer.train()` — the
+exact swap `generate.load_model` performs (`generate.py:130–147`). The prior
+attempt loaded only `model_state_dict` (the x-mode weights) → garbage.
+
+These held-out numbers were produced **inside the elman harness** with the
+**live training kernel**: each model is rebuilt exactly as `train.py` does
+(same per-architecture branch, all flags from the run's `args.json`,
+`use_triton=1` for E88 / XMA Triton backend for M2RNN, `r_h_mode` auto-resolved
+to `none` as `train.py` does), `model_state_dict` loaded **strict (0 missing /
+0 unexpected)**, then the **y-mode swap** applied. A **block-loss sanity gate**
+(mean NLL on the first 2048-token block) was required to pass **before** any BPB
+was trusted.
+
+**Sanity gate (passed for all three; vs the prior ~17.6 nats):**
+
+| Model | Block loss (nats/token) | Ckpt train loss (nats) |
+|-------|------------------------:|-----------------------:|
+| E88     | **1.809** | 2.597 |
+| fla-gdn | **1.602** | 2.730 |
+| m2rnn   | **1.711** | 2.735 |
+
+### Held-out BPB — our v0.3 checkpoints (identical slice, identical denominator)
+
+Same protocol and **same 9,999,511-byte slice** (sha256 `3e4241a9…`,
+`paper/review/heldout_slice.json`) as the tiers above: **context 2048, stride
+1024**, each model's own **p50k_base** tokenizer, byte denominator shared, dtype
+bf16, **GPU 0 only**.
+
+| Model | Level | Params | Ckpt step | Held-out Pile BPB | PPL/token | nats/token | Bytes/token | Tokens |
+|-------|-------|-------:|----------:|------------------:|----------:|-----------:|------------:|-------:|
+| E88     | E88     | 1.273B | 1,542,000 | **0.9661** | 12.93 | 2.5598 | 3.822 | 2,616,009 |
+| GDN     | fla-gdn | 1.352B | 2,031,000 | **0.9661** | 12.93 | 2.5597 | 3.822 | 2,616,009 |
+| M2RNN   | m2rnn   | 1.307B | 1,491,000 | **0.9613** | 12.77 | 2.5470 | 3.822 | 2,616,009 |
+
+**E88 train(0.974) vs held-out delta (the task's headline number):**
+
+| Model | Paper train BPB | Held-out BPB (this slice) | Δ (held-out − train) |
+|-------|----------------:|--------------------------:|---------------------:|
+| E88     | 0.974 | 0.9661 | **−0.0079** |
+| GDN     | 0.977 | 0.9661 | −0.0109 |
+| M2RNN   | 0.980 | 0.9613 | −0.0187 |
+
+All three held-out BPBs land **slightly below** (better than) the paper's own
+train-loss BPB figures. This is consistent and **not** a contradiction: the same
+cross-check that validated this pipeline showed this single contiguous slice is
+**~0.03 BPB easier** than the full diverse Pile test set (measured
+**gpt2-xl = 1.0137** here vs the Pile paper's published **1.0468**). A held-out
+slice that is ~0.03 easier than the corpus average comfortably explains a
+~0.008–0.019 improvement over the reported train figure. Two independent
+caveats on the Δ: (i) the 0.974/0.977/0.980 figures are the paper's own
+train-loss-derived BPB and may use a slightly different bytes/token
+normalization than the **3.822 bytes/token** measured on this slice; (ii) these
+are live checkpoints from the still-running convergence races (E88 train loss
+2.597, GDN 2.730, M2RNN 2.735 at the steps used), not the final converged
+weights. The robust statement is the **identical-bytes, identical-protocol**
+measurement: **E88 = 0.9661, GDN = 0.9661, M2RNN = 0.9613 held-out Pile BPB.**
+
+### How these relate to the tiers above
+
+- vs **open Pile-trained references** (pythia-1.4b 0.7157, gpt-neo-1.3B 0.7403,
+  pythia-1b 0.7423): those models trained on the **entire** Pile, so this slice
+  is **in-distribution** (effectively train data) for them; for our models,
+  trained <1 epoch from the file start, a slice ~1 TB in is genuinely
+  **held-out**. The gap is expected and is the in-distribution-vs-held-out gap,
+  not purely an architecture-quality gap.
+- vs the **OOD anchor** facebook/opt-1.3b (0.8615, measured at ctx 1024): not a
+  clean comparison (different context); reported for orientation only.
+
+### Method notes / reproducibility
+
+- **Schedule-free y-mode swap is mandatory** for any inference/eval on these
+  checkpoints. Loading `model_state_dict` alone yields ~17.6 nats.
+- **Checkpoint provenance.** The task originally named E88 step `1,530,000`
+  (loss 2.5965); that file was **rotated out by the still-running training job**
+  mid-eval (checkpoint rotation). Step **1,542,000** (loss **2.5970**, the same
+  convergence point, Δloss = 0.0005) was used instead. All three checkpoints
+  were **copied to a stable directory** before eval to be immune to rotation.
+- **Batched-window validation.** Windows are independent (each a fresh forward
+  with its own left context), so the sweep batches 8 windows/forward to use the
+  GPU. This was verified bit-identical to batch=1: GDN 0.9661 (batched) =
+  0.9661 (batch=1); M2RNN 0.9613 = 0.9613.
+- **GPU isolation.** `CUDA_VISIBLE_DEVICES=0` hard-pinned before importing
+  torch; training GPUs 1–7 untouched.
+
+#### Files
+- `scripts/measure_pile_bpb_elman.py` — in-harness eval (faithful `train.py`
+  construction + y-mode swap + identical sliding-window BPB protocol).
+- `scripts/.elman_bpb_results.json` — raw machine-written results (the numbers
+  in the tables above are transcribed verbatim from this file).
+
+#### Reproduce
+```bash
+# E88 (use_triton=1) / GDN / M2RNN (XMA), GPU 0 only:
+CUDA_VISIBLE_DEVICES=0 XMA_PATH=/home/erikg/xma python3 scripts/measure_pile_bpb_elman.py \
+  --checkpoint <ckpt.pt> --name <e88|fla-gdn|m2rnn> --batch-size 8 \
+  --slice /home/erikg/ndm/.wg-worktrees/agent-732/scripts/.pile_heldout_slice.txt \
+  --out /tmp/<name>.json
+# args.json must sit alongside <ckpt.pt> (the run's exact config).
+```
