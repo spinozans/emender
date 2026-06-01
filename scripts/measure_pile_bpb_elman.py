@@ -285,7 +285,12 @@ def main() -> int:
     ap.add_argument("--out", required=True)
     args = ap.parse_args()
 
-    assert os.environ.get("CUDA_VISIBLE_DEVICES") == "0", "must run on GPU 0 only"
+    # Pin to a single GPU. Defaults to GPU 0 (the original training-safe pin);
+    # set MEASURE_ALLOWED_GPU to use a different dedicated GPU when training has
+    # been moved off it (e.g. a freed racer GPU).
+    _allowed_gpu = os.environ.get("MEASURE_ALLOWED_GPU", "0")
+    assert os.environ.get("CUDA_VISIBLE_DEVICES") == _allowed_gpu, \
+        f"must run on GPU {_allowed_gpu} only (CUDA_VISIBLE_DEVICES={os.environ.get('CUDA_VISIBLE_DEVICES')})"
     device = torch.device("cuda")
     log(f"device: {torch.cuda.get_device_name(0)} | model={args.name} "
         f"| ctx={args.context} stride={args.stride}")
