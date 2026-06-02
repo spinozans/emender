@@ -918,7 +918,7 @@ CMA-tuned shapes are:
   [GDN], [1.352 B], [4], [dim=2688, depth=21, exp=2, H=44],
 )]
 
-#heading(level: 2, numbering: none)[Per-architecture CMA-ES protocol (fairness anchor)]
+#heading(level: 2, numbering: none)[Per-architecture CMA-ES protocol]
 
 All three 1.3 B-class architectures (Emender, M²RNN-CMA, Gated DeltaNet)
 received independent CMA-ES @cmaes2003 hyperparameter and shape search
@@ -1071,9 +1071,9 @@ probes, not on bulk language-model bits-per-byte. @sec:appendix_bpb
 places these numbers in the landscape of open Pile-trained models,
 out-of-distribution anchors, and classical compressors.
 
-#heading(level: 2, numbering: none)[The loss tie is FLOP-locked, not seed-luck]
+#heading(level: 2, numbering: none)[The loss tie reproduces under matched compute]
 
-The tie is not an accident of one fortunate run. The three update rules
+The tie reflects the matched compute given to each update rule. The three update rules
 — delta-correcting (E88), raw-write (M²RNN-CMA), and linear (GDN) — were
 each given the *same* per-architecture CMA-ES hyperparameter-and-shape
 search budget (§5) and then trained to *matched* FLOPs, and they converge
@@ -1904,8 +1904,7 @@ nonlinear matrix-state recurrence with a raw-write update
 $Z = tanh(H W + k v^T)$ and demonstrates that it trains at 7 B MoE
 scale in *hybrid form* (nonlinear-matrix-recurrent layers interleaved
 with attention layers) on Nemotron-CC-v2 at 410 M dense and 7 B MoE.
-M²RNN establishes that nonlinear matrix-state recurrence can be
-trained at scale in hybrid form. M²RNN-CMA, used as a
+M²RNN-CMA, used as a
 within-class baseline throughout this paper, is the *pure-recurrent
 variant* of M²RNN's architecture with no attention layers, CMA-tuned to
 restore stable training at 1.3 B. The contribution of this work
@@ -2000,7 +1999,7 @@ head-geometry preference are CMA-replicated.
 
 #heading(level: 2, numbering: none)[Length extrapolation is the next frontier on $S_5$]
 
-The Emender retains the lead under length extrapolation (0.79 at
+The Emender stays ahead at every sequence length under length extrapolation (0.79 at
 $T = 128$, 0.42 at $T = 256$, 0.22 at $T = 512$, 0.11 at $T = 1024$
 on $S_5$), and the gap to baselines widens with length on parity and
 FSM tracking (§6). Solving $S_5$ to ceiling at $8 times$ training
