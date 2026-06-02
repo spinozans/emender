@@ -2324,10 +2324,10 @@ sha-verified held-out slice manifests are in the public `emender` repo.
 // ── 11. Testable Predictions ─────────────────────────────────────────────────
 = Testable Predictions <sec:predictions>
 
-The class-level and within-class findings of this paper extend to
-predictions testable at the next scale step or under modest extra
-training. We state them as predictions so that future
-training rounds can falsify them.
+The results above suggest concrete predictions, most of them testable
+at the next scale step or under modest additional training. Each is
+stated as a claim with its scope and the observation that would
+falsify it, so that later training rounds can settle them.
 
 #set list(indent: 1em)
 - *Width-axis multi-programming scales beyond 1.3 B without throughput
@@ -2346,7 +2346,7 @@ training rounds can falsify them.
   the $S_5$ or $S_3$ gap closes under matched-compute training at scale.
 
 - *Emender fine-tuned on reasoning benchmarks separates from
-  GDN/M²RNN-CMA on tasks requiring genuine state-tracking.* The §6 QA
+  GDN/M²RNN-CMA on tasks requiring multi-step state-tracking.* The §6 QA
   panel at the current training budget sits below the threshold where
   reasoning benchmarks differentiate. After targeted fine-tuning on a
   reasoning suite (BIG-Bench Hard, ReCLor, FOLIO, multi-step object
@@ -2393,8 +2393,8 @@ training rounds can falsify them.
 
 #set list(indent: 0em)
 
-These predictions are neutrally stated. Some will falsify, and the
-falsifications are the next round of evidence.
+Some of these will falsify; the falsifications are the next round of
+evidence.
 
 = Future Work <sec:future_work>
 
