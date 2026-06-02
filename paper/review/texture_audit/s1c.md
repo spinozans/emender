@@ -1,0 +1,41 @@
+# Texture & Flow Audit — Unit s1c
+
+**Unit:** §1 Introduction, sub-unit 1c — the "What we claim, and what we do not" passage (`paper/main.typ` lines 333–394: the lead-in prose, the claim/evidence/scope/non-claim table `<tab_claims>`, and its caption).
+
+**Mode:** AUDIT-ONLY. Defect register, no fixes, no rewrites.
+
+---
+
+## Global-voice note (whole-paper stance calibration)
+
+The paper speaks as an **insider-builder reporting from inside an already-running project**: it opens inside its own world (E88, "production instance", codenames, "stitched" days) and addresses a reader assumed to already track the project's lineage and vocabulary, rather than manufacturing that context. The stance is **confident-but-defensive** — it pre-empts skeptics inside ordinary sentences, repeatedly signals its own "honesty," and treats a single training run (E88) as a named entity with a biography ("production instance," "≈23 stitched wall-clock days"). Against that backdrop, this sub-unit (the claims ledger) is the **most outward-facing, best-behaved part of the intro**: it deliberately adopts a four-column claim/evidence/scope/non-claim ledger, and — crucially per frame R3 — it is the *legitimate venue* for scope-defense, so defensive non-claim cells are NOT defects here. Row 1's "one artifact shown to exist" even gets the R2 ontology *right*, in direct tension with §1's "production instance" framing one column-width away. The residual defects in this unit are therefore subtle: a table whose "Claim" column quietly contains propositions the paper rejects, a small cluster of honesty-protesting, and a couple of unglossed insider terms that leak into a passage whose whole job is "scope legible up front."
+
+---
+
+## Defect register
+
+Schema: section · location · span (verbatim ≤25w) · category · severity · frame-rule · presupposes/imports · why-defect-not-deliberate · confidence
+
+| # | section | location | span (verbatim) | category | severity | frame-rule | presupposes / imports | why-it's-a-defect-not-deliberate | conf |
+|---|---------|----------|-----------------|----------|----------|-----------|------------------------|-----------------------------------|------|
+| 1 | §1c claims table | table, "Claim" column, rows 2 & 4 (header cell `*Claim*`; cells "Bulk LM loss distinguishes these architectures" / "Raw-write *cannot* do $S_5$") | `Bulk LM loss distinguishes these architectures` | UNNAMED + FLOW-BREAK | UNCANNY | R1 (vantage) / flow | Presupposes the reader will hold the "Claim" cell as provisional until the *next* cell adjudicates it. The lead-in promised the column "states each load-bearing claim"; rows 2 and 4 instead hold propositions the paper explicitly *denies* (Evidence: "*No.*" / "*Not claimed.*"). | Each cell is locally well-formed and even admirable, but the table's own stated contract ("each load-bearing claim") is broken: a reader scanning only the labelled "Claim" column reads two *rejected* propositions as asserted claims, and must reach the Evidence cell to discover the reversal. It is not a deliberate "propositions attributed to us" device because the lead-in mis-labels the column as claims, not candidate-claims. | 0.6 |
+| 2 | §1c lead-in + scope cell | lead-in sentence 1 (line 335) and row-4 Scope cell (line 377) | `To keep the reading honest` … `Honest null` | PRE-LITIGATION + UNPAID-WORD | MESSY | R3 (posture) / R2 | Imports the connotation that, absent this protestation, the reader would suspect dishonesty / a cherry-picked null. "Honest" is doing credibility-work, not scope-work. | The non-claim/scope structure is the right venue to *state* a boundary, but protesting the *honesty* of the disclosure (twice: "keep the reading honest", "Honest null") defends the credibility of the act of disclosing rather than stating scope — a posture tell, not information. A neutral ledger states the null without adjectives vouching for it. | 0.5 |
+| 3 | §1c scope cell | row-2 Scope cell (line 359) | `reproduces across 5 held-out slices and the comma-pile control` | INSIDE-OUT | MESSY | R1 (vantage) | Definite article "the comma-pile control" presupposes the reader already knows what comma-pile is; it is defined only later (Appendix, @sec:appendix_bpb, ~line 2410). | A passage whose declared purpose is "the scope legible up front" undercuts itself by importing an unglossed, definite-article insider term at first mention; the outside reader cannot evaluate the scope claim without knowing what control is being invoked. Not deliberate shorthand — the term has had no prior introduction in the paper. | 0.55 |
+| 4 | §1c caption | table caption (lines 388–392) | `Each row is substantiated in the cited section; the final column marks the boundary the result does not cross.` | FLOW-BREAK + PRE-LITIGATION | MESSY | R3 / flow | Re-states the framing the lead-in (lines 335–337) gave four lines earlier; "not blanket can/can't claims" pre-empts a misreading. | The lead-in already told the reader the column states claim/evidence/scope and "what the same result does *not* license," and that "body sections substantiate each row." The caption repeats both ("each row is substantiated… the final column marks the boundary"), so the same instruction is delivered twice within one screen — redundancy, plus a defensive "not blanket can/can't claims" arguing against a reading no one has yet made. | 0.4 |
+| 5 | §1c non-claim cell | row-2 Non-claim cell (line 360) | `We do *not* claim loss separates the update rules — it does not` | PRE-LITIGATION | MESSY | R3 (posture) | The em-dash addendum "— it does not" re-asserts the disclaimed proposition's falsity after the cell has already disclaimed it. | The non-claim cell's job is to mark the boundary ("we do not claim X"); appending "— it does not" relitigates the point a second time in the same six-word cell. The first clause is the scope statement; the second is an extra argument with the absent skeptic, exceeding the cell's stated function. | 0.4 |
+| — | §1c claims table | row 1, all four cells (lines 349–353) | `One E88 run, single seed; viability demonstration` … `one artifact shown to exist` | (OK — anchor) | OK | R2 (ontology) | — | Reported only to anchor a contrast: this row gets the R2 ontology *right* — E88 framed as a single result/"artifact," not a deployed system. It is the correct stance the rest of the intro abandons; see cross-section flag below. | 0.7 |
+
+---
+
+## One-line unit rating
+
+Predominant category **flow/posture** (table-contract slippage + mild honesty-protesting); severity skew **MESSY with one UNCANNY headline** (the "Claim" column silently carrying rejected propositions); **clustered**, not uniform — defects concentrate in the lead-in/caption framing and rows 2 & 4, while rows 1, 3, 5 are clean (row 1 is exemplary). This is the best-behaved sub-unit of §1.
+
+---
+
+## Cross-section dependencies (for the synthesizer)
+
+1. **R2 contradiction with §1 opener.** Row 1's non-claim cell — "*one artifact shown to exist*" / "*One E88 run, single seed*" (lines 352–353) — states the correct result-not-system ontology. This *directly contradicts* §1's opening framing of E88 as "the 1.273 B-class **production instance** of the Emender" (line 162) and "the 1.3 B **production instance**" (line 192). The honest ledger and the opener disagree about what E88 *is*. The synthesizer should treat the "production instance" framing (audited elsewhere, not my unit) as the defect and this row as the corrective baseline.
+2. **Forward-referenced undefined term.** "the comma-pile control" (line 359, finding #3) is defined only in Appendix @sec:appendix_bpb (~line 2410) — flagged here as used-before-defined with a definite article.
+3. **"Honest"/honesty register recurs paper-wide** (finding #2): "keep the reading honest" (line 335) and "Honest null" (line 377) here; §7 has an "Explicit non-claims" subsection (line 1844) and the abstract/§1 lean on the same credibility-signaling register. If the synthesizer is tallying a "protesting honesty" pattern, this unit contributes two instances.
+4. **Table-as-claims contract (finding #1)** depends on how the lead-in (line 335–337) names the column. The defect is the mismatch between the lead-in's "each load-bearing claim" and the column's actual mixed contents; any synthesis touching the lead-in wording and the table is coupled.
