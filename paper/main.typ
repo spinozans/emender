@@ -159,21 +159,75 @@ CMA-ES configs, and the Triton kernel released.
 // ── 1. Introduction ───────────────────────────────────────────────────────────
 = Introduction <sec:intro>
 
-A purely nonlinear recurrent language model can be trained to
-billion-parameter scale on a single workstation-class GPU. The
-instance reported here, E88 (1.273 B parameters), reaches 0.973 bits
-per byte on The Pile @thepile2020 after about 23 wall-clock days of
-training, with no cluster and no sequence parallelism. The
-recurrent-language-modeling literature had treated this regime as out
-of reach for pure-nonlinear-in-time recurrence at this scale:
-time-axis parallel scans, Newton iteration on a block-bidiagonal
-Jacobian @pararnn2025, and hybridization with attention @m2rnn2026
-@olmohybrid2026 @titans2025 @griffin2024 were the concessions on
-offer to keep recurrence trainable at scale. The obstruction is
-contingent on the axis chosen for parallelism: parallelize width
-instead and it dissolves, since throughput comes from many small
-recurrent programs running side by side while each runs its time loop
-serially. E88 runs 22,200 such programs per token.
+A recurrent sequence model reads its input one step at a time, folding
+each token into an internal state that summarizes everything seen so
+far. How such a model can be trained, and how fast, turns almost
+entirely on a single design choice: how that state is updated from one
+step to the next. Over the past several years the field has converged
+on updates that are *linear* in the state. A linear update can be
+re-expressed as a parallel scan over the whole sequence at once instead
+of a step-by-step loop, and that re-expression is what lets recurrent
+models reach the training throughput of attention on modern hardware.
+State-space models and gated linear-attention architectures — Mamba and
+its successors @mamba2024 @mamba2_2024 @mamba3_2026, gated linear
+attention @gla2023, RWKV @rwkv7_2025, and the delta rule and its gated
+form @deltanet2024 @gated_deltanet2024 — now stand alongside the
+transformer as the efficient backbone of choice for long sequences.
+
+This efficiency is bought with a structural concession. A state update
+that is linear in the state can be parallelized, but it also bounds what
+the state can compute as the sequence grows: a fixed-precision
+linear-in-time recurrence is asymptotically a weak recognizer that
+cannot track certain structured state, the prefix products of a
+non-solvable group being the canonical example @merrill2024transformers
+@barrington1986. The direct way to lift that ceiling is to pass the
+state through a nonlinearity at every step. But a nonlinear-in-time
+update breaks the parallel scan and forces the time loop to run
+serially, and serial training at billion-parameter scale was presumed
+too slow to be practical. The field's response has been to route around
+the obstruction rather than meet it: parallelize the time axis by other
+means, such as Newton iteration on a block-bidiagonal Jacobian
+@pararnn2025, or interleave recurrent layers with attention so the
+hardest state-tracking work falls to the attention @m2rnn2026
+@olmohybrid2026 @titans2025 @griffin2024.
+
+Two questions are left open by this detour. First, whether a *purely*
+nonlinear-in-time recurrence — no parallel scan, no attention to lean
+on — can be trained to competitive scale at all, on a realistic
+training budget. Second, once it can, whether the particular form of the
+nonlinear update rule makes any difference to what the trained model can
+do. Neither had been tested directly, because the pure setting had been
+set aside as the expensive case to avoid rather than the case to
+measure.
+
+Here we show that it can be trained, and that the form of the update
+does matter. A purely nonlinear recurrent language model, made trainable
+by running many small recurrent programs in parallel across the
+network's *width* rather than across time, reaches below one bit per
+byte on a standard byte-level corpus (The Pile @thepile2020) using a
+single workstation-class GPU, with no cluster and no sequence
+parallelism. Trained at the billion-parameter class against strong
+linear-recurrent baselines under matched per-architecture tuning, it
+lands in the same loss-versus-wallclock band; on held-out text the
+models are statistically tied, so language-modeling loss does not
+separate them. Their differences emerge instead in state tracking, and
+there the nonlinear recurrence reaches something a linear one provably
+cannot: it can follow the prefix products of the non-solvable group
+$S_5$ as sequences grow, where a linear-in-time recurrence is held away
+from the task by a classical complexity argument. The form of the
+nonlinear update matters as well — a *delta-correcting* update, which
+writes the correction between what the memory predicts and what the
+input demands, learns this structured tracking far more efficiently than
+a plain overwrite, and the advantage holds across a large swing in
+training budget. The separation is established in two directions: a
+machine-checked proof that the delta-correcting update is strictly more
+expressive per step than plain overwrite and can realize the
+state-tracking construction, and the matching impossibility for linear
+recurrence resting on classical complexity results. In the trained
+billion-parameter models we observe the same ordering. Throughput on the
+width axis comes from many small recurrent programs running side by side,
+each stepping its time loop serially, which is what makes the serial
+recurrence practical at scale.
 
 The architecture is a residual stack of recurrent layers. Each layer
 pairs a matrix-state memory with a write rule that has two halves.
