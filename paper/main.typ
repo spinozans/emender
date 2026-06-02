@@ -359,17 +359,23 @@ substantiate each row; the pointers are forward references.
      slices and the comma-pile control (single-seed per architecture)],
     [We do *not* claim loss separates the update rules — it does not],
 
-    [Delta-correcting $>$ raw-write on state tracking],
-    [8 M $S_5$ probe, 3 seeds (@fig_s5_bars); 1.3 B fine-tune
-     length-gen (@fig_1p3b_lengthgen); Lean matched-resource separation
+    [Delta-correcting $>$ raw-write on state tracking, at every length],
+    [8 M $S_5$ probe, 3 seeds (@fig_s5_bars); 1.3 B symmetric-budget
+     length-extrapolation, delta $>$ raw-write $>$ linear to 16×
+     (@tab_s5_1p3b, @fig_s5_symmetric); Lean matched-resource separation
      (§7, sets C/C′/D)],
-    [Matched per-token-FLOP *efficiency*: same budget, more reach],
-    [Not an absolute can/can't for raw-write; it is a matched-budget gap],
+    [Budget-robust *ordering* and length-extrapolation efficiency: delta
+     strictly ahead at every length under a doubled, symmetric, no-tuning
+     budget],
+    [Not "delta solves / length-generalises $S_5$": both nonlinear updates
+     plateau below ceiling at length; it is an efficiency gap, not
+     impossibility],
 
     [Raw-write *cannot* do $S_5$],
-    [*Not claimed.* Raw-write fits short $S_5$ (0.994 at $T=16$) but
-     under-reaches with length at matched budget (§6)],
-    [Honest null — its solvable-task curve was still rising],
+    [*Not claimed.* Raw-write fits the trained length (0.658 at $T=64$) but
+     under-reaches with length even at the symmetric doubled budget (§6)],
+    [Honest null — its solvable-task curve was still rising; both nonlinear
+     updates plateau below ceiling at length],
     [No converged expressivity wall asserted for raw-write],
 
     [Linear recurrence cannot track non-solvable $S_5$ at length],
@@ -1308,6 +1314,20 @@ the matched-FLOP efficiency statement at 1.3 B: raw-write needs more
 budget to reach the same solvable-task competence the delta update
 reaches cheaply.
 
+That to-competence procedure removed the *baseline's* trainability
+confound but left an asymmetry: M²RNN got a gentler, longer recipe to reach
+competence while E88 never got the same extra budget on $S_5$, so E88's
+$S_5$ length-extrapolation shortfall (0.162 at $T = 512$) was ambiguous
+between a real capacity ceiling and mere under-training. The headline run
+below *fixes the asymmetry*: all three models get the *same* a-priori recipe
+and the *same*, larger, fixed budget on $S_5$: M²RNN's exact gentle recipe
+(lr $5 times 10^(-5)$ constant) with the step count *doubled* to 24,000 (2×
+M²RNN's to-competence budget), identical length curriculum $T <= 64$, and
+*no* $S_5$-tuning (a single fixed step count, no early-stopping; constant LR
+so a flat curve cannot be confused with a decayed learning rate). The recipe
+was chosen and frozen before any $S_5$ result was seen. @tab_s5_1p3b and
+@fig_s5_symmetric report where each model lands.
+
 #figure(
   align(center)[#table(
     columns: (auto, auto, auto, auto, auto, auto),
@@ -1315,91 +1335,153 @@ reaches cheaply.
     stroke: 0.5pt,
     inset: 6pt,
     table.header(
-      [*Model*], [*$S_5$ T=16*], [*$S_5$ T=64*], [*$S_5$ T=128*], [*$S_5$ T=256*], [*$S_5$ T=512*],
+      [*Model*], [*$S_5$ T=64*], [*$S_5$ T=128*], [*$S_5$ T=256*], [*$S_5$ T=512*], [*$S_5$ T=1024*],
     ),
-    [E88 (delta)], [*1.000*], [*0.965*], [*0.618*], [*0.317*], [*0.162*],
-    [M²RNN (raw-write)], [0.994], [0.521], [0.269], [0.138], [0.074],
-    [GDN (linear)], [0.853], [0.245], [0.128], [0.067], [0.038],
+    [E88 (delta)], [*0.921*], [*0.536*], [*0.272*], [*0.143*], [*0.076*],
+    [M²RNN (raw-write)], [0.658], [0.335], [0.172], [0.090], [0.049],
+    [GDN (linear)], [0.117], [0.063], [0.035], [0.022], [0.015],
     [random], [0.0083], [0.0083], [0.0083], [0.0083], [0.0083],
   )],
   caption: [
-    *$S_5$ length generalisation at the deployed 1.3 B scale, all three
-    models driven to competence on the solvable tasks.* Trained on
-    $T <= 64$; $T = 64$ is the longest trained length and columns to its
-    right are extrapolation out to 8×. Chance is $1 / 120 = 0.0083$. E88
-    (delta) holds $approx 20×$ chance at $T = 512$; the linear GDN
-    collapses toward chance even though it is competent on both
-    solvable tasks (parity 0.997, $S_3$ 0.928); raw-write M²RNN fits
-    short $S_5$ but under-reaches with length and does not match E88.
-    GDN's 0.038 at $T = 512$ is near the chance floor.
-    Source: `paper/review/S3_S5_FINETUNE_V03.md` §4 (to-competence run).
+    *$S_5$ length-extrapolation at the deployed 1.3 B scale, symmetric
+    24,000-step budget; all three models, one identical a-priori recipe, no
+    $S_5$-tuning.* Each released `@v0.3` checkpoint is loaded strictly and
+    full-fine-tuned on $S_5$ alone under a single fixed recipe (lr
+    $5 times 10^(-5)$ constant, 24,000 steps $=$ 2× M²RNN's to-competence
+    budget, identical length curriculum $T <= 64$, seed 42), chosen and
+    frozen before any $S_5$ result was seen. $T = 64$ is the longest trained
+    length; columns to its right are extrapolation out to 16× ($T = 1024$).
+    Chance is $1 / 120 = 0.0083$. At the trained length E88 (delta) nearly
+    solves $S_5$ (0.921) while the linear GDN never learns it (0.117, far
+    below competence); raw-write M²RNN reaches 0.658. Under extrapolation all
+    three degrade and E88 $>$ M²RNN $>$ GDN at *every* length, but E88
+    plateaus below ceiling (0.143 at $T = 512$, flat from $approx 12,000$
+    steps) rather than tracking $S_5$ to arbitrary length. Source:
+    `paper/review/S5_SYMMETRIC_BUDGET.md`; data
+    `paper/review/s5_symmetric_data/{e88,m2rnn,gdn}.json`.
   ],
 ) <tab_s5_1p3b>
 
 #figure(
+  image("figures/s5_symmetric_acc_vs_T.png", width: 85%),
+  caption: [
+    *$S_5$ length-extrapolation at the symmetric 24,000-step budget.*
+    Running-state accuracy vs sequence length $T$ (log axis) for the three
+    released 1.3 B architectures, each fine-tuned on $S_5$ under the *same*
+    a-priori recipe (lr $5 times 10^(-5)$ constant, 24,000 steps, no
+    $S_5$-tuning): solid curves are this symmetric run (E88 blue, M²RNN red,
+    GDN green); faint dashed curves are the prior per-model to-competence run,
+    shown for contrast. Trained on $T <= 64$ (vertical marker), evaluated out
+    to $T = 1024$ (16× the longest trained length); chance is the dotted line
+    ($1 / 120$). At the trained length the delta model nearly solves $S_5$
+    while the linear GDN never learns it; under extrapolation E88 $>$ M²RNN
+    $>$ GDN at *every* length, with E88 plateauing below ceiling rather than
+    tracking $S_5$ to arbitrary length. Numbers match @tab_s5_1p3b. Real
+    data: `paper/review/s5_symmetric_data/{e88,m2rnn,gdn}.json`; figure
+    generated by `scripts/finetune_s5_symmetric.py` /
+    `scripts/analyze_s5_symmetric.py`.
+  ],
+) <fig_s5_symmetric>
+
+#figure(
   image("figures/s5_s3_1p3b_lengthgen.png", width: 100%),
   caption: [
-    *Length generalisation at the deployed 1.3 B scale (to-competence
-    fine-tune).* Accuracy vs sequence length $T$ for the three released
+    *Solvable controls and the prior to-competence $S_5$ cross-check at the
+    deployed 1.3 B scale.* Accuracy vs sequence length $T$ for the three released
     architectures on the non-solvable $S_5$ probe (left) and the solvable
     $S_3$ and parity controls (centre, right). All three are fine-tuned on
     $T <= 64$ (dotted marker) and evaluated out to $T = 512$ — 8× the longest
     trained length; chance is the dashed line ($1 / 120$, $1 / 6$, $1 / 2$).
     Colours follow the paper convention (E88 blue, M²RNN-CMA red, GDN
-    orange). On $S_5$ the clean ordering is E88 (delta) $>$ M²RNN (raw-write)
-    $>$ GDN (linear) at *every* length: E88 degrades the most slowly and is
-    still $approx 20×$ chance at $T = 512$ (though only 0.162 accuracy, far
-    from solving), the linear GDN converges toward the chance floor, and
-    raw-write tracks GDN's collapse shape. The ordering is consistent and
-    reproducible, but all three degrade with length and none tracks $S_5$ at
-    $T = 512$. On the solvable
+    orange). The $S_5$ panel here is the earlier per-model *to-competence*
+    run (the headline symmetric-budget $S_5$ result is @tab_s5_1p3b /
+    @fig_s5_symmetric); it is retained as a cross-check and reproduces the
+    same E88 (delta) $>$ M²RNN (raw-write) $>$ GDN (linear) ordering at
+    *every* length under a different recipe and budget: E88 degrades the
+    most slowly (0.162 at $T = 512$, far from solving), the linear GDN
+    converges toward the chance floor, and raw-write tracks GDN's collapse
+    shape. The ordering is consistent across both runs, but all three degrade
+    with length and none tracks $S_5$ to arbitrary length. On the solvable
     controls all three are competent at the trained length and degrade only
     with extrapolation, confirming the $S_5$ gap is the non-solvability
-    obstruction, not a generic difficulty gap. $S_5$ numbers match
-    @tab_s5_1p3b. Real data: `paper/review/s3_s5_finetune_v03_data_tocomp/`;
-    figure script: `paper/figures/plot_s5_s3_1p3b_lengthgen.py`.
+    obstruction, not a generic difficulty gap. Real data:
+    `paper/review/s3_s5_finetune_v03_data_tocomp/`; figure script:
+    `paper/figures/plot_s5_s3_1p3b_lengthgen.py`.
   ],
 ) <fig_1p3b_lengthgen>
 
-*Nonlinear vs linear — the clean separation, now at 1.3 B.* E88's
-delta-correcting recurrence degrades the most slowly on $S_5$: 0.965 at the
-trained length, falling to 0.162 at $T = 512$ — still $approx 20×$ chance at
-8× the trained length, but only $approx 16%$ accuracy, so E88 too is far from
-tracking $S_5$ at this length. The advantage is relative: all three
-architectures degrade toward chance and none solves $S_5$ at $T = 512$. The linear-recurrent GDN
-converges to a wall: given the budget that makes it competent on
-*both* solvable tasks (parity 0.997, $S_3$ 0.928), $S_5$ still plateaus
-at 0.245 at $T = 64$ and decays to 0.038 (near the chance floor) at
-$T = 512$.
-This is a converged ceiling, not under-training — exactly the
-Barrington / NC#super[1] prediction that a linear recurrence provably
-cannot maintain the non-solvable $S_5$ product at arbitrary length. The
-clean expressivity contrast is E88 (delta, generalises) versus GDN
-(linear, converged-fails), both competent on the solvable controls.
+*Trained-length competence vs length-extrapolation plateau.* Two facts must
+be kept apart. First, *at the trained length* ($T = 64$) the delta model
+clearly *learns* the $S_5$ algorithm: E88 reaches 0.921, near-solving a
+non-solvable task, whereas the linear-recurrent GDN never learns it even at
+the trained length (0.117, far below competence) and raw-write M²RNN reaches
+0.658. So at the trained length the delta update nearly solves $S_5$ where
+the linear update cannot acquire it at all. Second, *under
+length-extrapolation* (out to $T = 1024$, 16× the trained length) all three
+degrade; E88 degrades the slowest and stays strictly ahead at *every* length,
+but it *plateaus below ceiling* (0.143 at $T = 512$, 0.076 at $T = 1024$).
+This is a length-generalisation / capacity-at-this-$d$ limit, *not* an
+expressive impossibility and *not* mere under-training: the $T = 512$ curve
+is flat from $approx 12,000$ steps at 2× M²RNN's budget under constant LR
+(see *Honest mirror* below). The accurate statement is therefore neither
+"E88 length-generalises on $S_5$" nor "E88 fails $S_5$": the delta update
+learns $S_5$ at the trained length and leads at every length, with its
+length-extrapolation plateauing below ceiling at this width.
 
-*Delta vs raw-write — matched-FLOP efficiency, not can/can't.* Once
-competent on the solvable tasks, the raw-write M²RNN fits *short* $S_5$
-(0.994 at $T = 16$) but under-reaches with length (0.521 at $T = 64$
-$arrow.r$ 0.074 at $T = 512$), never matching E88 at any length and
-tracking the linear GDN's collapse shape far more than the delta
-model's. Combined with its larger effort-to-competence (above), the
-statement is one of *efficiency*: at matched no-tuning budget raw-write
-under-reaches the delta update's $S_5$ length generalisation, and even
-at a tuned best-effort budget it does not catch up. Removing the
-under-training confound also *reveals* the finer nonlinear-beats-linear
-ordering invisible in the matched run: at every $S_5$ length E88 (delta)
-$>$ M²RNN (raw-write) $>$ GDN (linear) — raw-write nonlinearity does beat
-the linear baseline once it can fit the tasks, while still falling short
-of the delta correction.
+*The linear recurrence converges to a wall.* GDN reaches only 0.117 at the
+trained length and decays to 0.022 at $T = 512$ and 0.015 at $T = 1024$ (near
+the chance floor $1 / 120$), flat by $approx$ step 6,000: a converged
+failure, not under-training, exactly the Barrington / NC#super[1] prediction
+that a linear recurrence provably cannot maintain the non-solvable $S_5$
+product at arbitrary length. The same GDN is competent on *both* solvable
+controls (parity 0.997, $S_3$ 0.928 at $T = 64$; see *The solvable controls
+hold*), so its $S_5$ collapse is the non-solvability obstruction, not a
+generic difficulty gap. The clean expressivity contrast is delta E88 (learns
+$S_5$ at the trained length and leads at every length) versus linear GDN
+(cannot learn it at any length), both competent on the solvable controls.
+
+*Delta vs raw-write: a budget-robust ordering, not solve-vs-fail.* The
+symmetric run is the direct answer to the asymmetry objection. E88 received
+the *same* doubled budget M²RNN got, on the *same* gentle recipe, with *no*
+$S_5$-tuning, and still plateaus, so both confounds (M²RNN's trainability
+deficit and E88's never-having-had-the-extra-budget) are bought out
+symmetrically. Under that symmetric budget raw-write M²RNN fits the trained
+length less well than the delta model (0.658 vs 0.921) and stays below it at
+every extrapolation length (0.090 vs 0.143 at $T = 512$; 0.049 vs 0.076 at
+$T = 1024$), tracking the linear GDN's collapse shape far more than the delta
+model's. The ordering E88 $>$ M²RNN $>$ GDN holds at *every* length out to
+16× and is robust to a large budget swing: the matched 2,500-step
+(lr $2 times 10^(-4)$), the per-model to-competence, and this symmetric
+24,000-step (lr $5 times 10^(-5)$) runs all land E88 $approx 0.14$ at
+$T = 512$ strictly ahead of M²RNN $approx 0.09$. The claim is therefore one
+of *length-extrapolation efficiency*, not can/can't: at matched (indeed
+doubled) budget the delta update reaches strictly further with length than
+raw-write, and both *nonlinear* updates plateau below ceiling as length
+grows.
+
+*Honest mirror.* The *Honest null* below records that M²RNN's $S_5$ shortfall
+is partly a *trainability* matter. Symmetrically, E88's length shortfall is
+partly a *capacity / length-generalisation* matter, not only optimisation: at
+this width $d$ the delta model's $T = 512$ accuracy is flat from
+$approx 12,000$ steps under constant LR, three independent runs across three
+recipes all converge to $approx 0.14$ there, and extending its own
+flattening late-training rate, even doubling the budget *again* would add
+only $approx 0.03$, nowhere near ceiling. We therefore do *not* claim the
+delta update "solves" or "length-generalises" $S_5$ at extrapolated length
+given enough steps; at fixed $d$ both the delta and raw-write updates plateau
+below ceiling, with delta strictly ahead at every length. What survives is
+the *budget-robust ordering* (delta $>$ raw-write $>$ linear), paired with
+the honest absolute admission that the delta update too is capacity-bounded
+at length.
 
 *Why this is computation, not memorisation.* The input is a
 length-$T$ sequence over a fixed generator alphabet, so the number of
 distinct inputs grows as $g^T$ — astronomically larger than any
 training set by $T = 64$ — and evaluation sequences are held out and
 test-disjoint from training. The primary metric is length
-generalisation itself (train $T <= 64$, evaluate to $T = 512$): a
-lookup table fit to $<= 64$-length prefixes cannot extend to $8×$ that
-length, so above-chance accuracy at $T = 512$ is evidence of a learned
+generalisation itself (train $T <= 64$, evaluate to $T = 1024$): a
+lookup table fit to $<= 64$-length prefixes cannot extend to $16×$ that
+length, so above-chance accuracy out at $T = 1024$ is evidence of a learned
 recurrence, not recall. The linear GDN's *failure* sharpens the point:
 it is fully competent on the solvable $S_3$ control (0.928 at $T = 64$)
 yet converged-fails $S_5$, which it could only do if $S_5$ demands
@@ -1416,12 +1498,15 @@ and needed the gentler/longer recipe merely to fit parity. We therefore
 do *not* claim a pure-expressivity wall for raw-write the way we can for
 the linear GDN. This does not weaken the thesis — it *is* the
 matched-FLOP efficiency framing: raw-write needs more budget to approach
-what the delta update reaches cheaply, and within the budgets tested it
-does not get there. The recipe-independent statements are (a) the clean
-expressivity wall is delta E88 (generalises) vs linear GDN
-(converged-fails), and (b) raw-write M²RNN, even at best-effort
-competence, exhibits the length-generalisation collapse and does not
-reach the delta model's $S_5$ generalisation.
+what the delta update reaches cheaply, and within the budgets tested
+(including the symmetric doubled budget) it does not get there. The
+recipe-independent statements are (a) the clean expressivity contrast is
+delta E88 (learns $S_5$ at the trained length, leads at every length) vs
+linear GDN (cannot learn it at any length, converged-fails), and (b)
+raw-write M²RNN, even at best-effort competence, exhibits the
+length-extrapolation collapse and stays below the delta update's reach at
+every length; as the *Honest mirror* notes, the delta update too
+plateaus below ceiling at this width.
 
 *The solvable controls hold (S3 and parity).* @fig_1p3b_lengthgen surfaces
 the two solvable controls alongside $S_5$. All three architectures are
