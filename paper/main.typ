@@ -1223,26 +1223,48 @@ rule's inductive bias under SGD, not of capacity. The probes test what
 configurations SGD finds under matched no-tuning conditions, where the
 §7 realizability theorem fixes what configurations exist.
 
-#heading(level: 2, numbering: none)[Matched no-tuning across architectures at 8 M]
+#heading(level: 2, numbering: none)[Matched no probe-tuning, and the one selection asymmetry it does not cover]
 
 The 8 M probe scale received no probe-specific hyperparameter search and
-no seed sweep for any family in the comparison. The Emender ran on the default
-configuration carried down from its 1.3 B stack; M²RNN-CMA
-ran on the analogous default from its CMA-tuned reshape; GDN and the
-M²RNN-paper shape ran on their respective published defaults. The 8 M
-probe is therefore *matched no-tuning across architectures*, meaning
-each family is evaluated on the reasonable-defaults configuration it
-would arrive at without probe-targeted optimization, rather than
-matched-after-HPO.
-Under matched no-tuning, with capacity non-binding, any accuracy gap
-reflects the architecture's inductive bias under SGD.
+no seed sweep for any family in the comparison. The Emender ran on the
+default configuration carried down from its 1.3 B stack; M²RNN-CMA ran on
+the analogous default from its CMA-tuned reshape; GDN and the M²RNN-paper
+shape ran on their respective published defaults. Each family is therefore
+evaluated on the reasonable-defaults configuration it would arrive at
+without probe-targeted optimization, rather than matched-after-HPO. With
+capacity non-binding (above) and no probe-specific tuning, any accuracy
+gap reflects the architecture's inductive bias under SGD.
 
-The $S_3$ control isolates the part of the within-class claim that is
-immune to any design-space asymmetry (§9): raw-write reaches 0.31
-on a six-element solvable group, well below the non-binding capacity
-ceiling.
+That matched-no-tuning condition controls for probe-specific *effort*; it
+does not control for one *selection-criterion* asymmetry, stated here in
+full. The Emender's defaults are the
+endpoint of an ablation lineage ranked on language-modeling loss — the
+same objective GDN's and M²RNN's authors used for their published
+defaults — with one exception: the state nonlinearity ($tanh$ versus a
+linear state) tied the linear variant on language-modeling loss and was
+kept on state-tracking grounds. That one component is load-bearing for
+these probes, so the Emender's configuration was settled partly on a proxy
+of the very quantity the probes measure, whereas no baseline's was. The
+asymmetry favors the Emender, and it bears on the *magnitude* of the
+within-class $S_5$ gap.
 
-#heading(level: 2, numbering: none)[Headline: $S_5$ permutation composition]
+Two controls bound what the asymmetry can explain. First, the $S_3$
+solvable-group control: raw-write M²RNN reaches only 0.31 on the
+six-element solvable group $S_3$, well below the non-binding capacity
+ceiling, where neither non-solvability nor capacity can account for the
+shortfall — so raw-write's prefix-tracking deficit is an inductive-bias
+property of the update rule, which no language-modeling-loss tuning
+advantage for the Emender could manufacture. Second, the §7
+NC#super[1] realizability result, not the $S_3$ control, accounts for the
+linear GDN's $S_5$ collapse: GDN passes $S_3$ (0.72) and fails only
+$S_5$, which a linear recurrence provably cannot track at length
+regardless of tuning. Together these fix the *direction* and *mechanism*
+of the within-class separation independently of the selection asymmetry;
+what they do not fully de-confound is the *size* of the Emender's own
+$S_5$ number. A matched state-tracking search on each baseline at the 8 M
+shape would close that remaining magnitude gap; it is named in §12.
+
+#heading(level: 2, numbering: none)[The $S_5$ permutation-composition probe]
 
 The symmetric-group word problem in $S_5$ (track the running product
 of adjacent transpositions, output the 120-way class at each prefix)
@@ -1382,11 +1404,10 @@ themselves. We fine-tune each released v0.3 checkpoint
 M²RNN-CMA (raw-write, 1.307 B) — on the $S_3$ and $S_5$ word problems
 and measure *length generalization*: train on prefixes of length
 $T <= 64$, evaluate out to $T = 512$ (8× the longest trained length).
-The trainable harness is initialized by a strict `load_state_dict` of
-the public `@v0.3` `model.safetensors`; a full held-out-slice load-sanity
-reproduces each model's published readback to $<= 1.3 times 10^(-4)$
-nats (so we fine-tune the real artifact). Source numbers:
-`paper/review/S3_S5_FINETUNE_V03.md`.
+The trainable harness is initialized by a strict weight-load of the public
+v0.3 checkpoint; a full held-out-slice load-sanity check reproduces each
+model's published readback to $<= 1.3 times 10^(-4)$ nats, so the
+fine-tune is of the released artifact itself.
 
 To keep the comparison about expressivity rather than trainability, each
 model is first driven *to competence on the solvable tasks*: at the
@@ -1528,7 +1549,7 @@ $S_5$ at the trained length and leads at every length) versus linear GDN
 (cannot learn it at any length), both competent on the solvable controls.
 
 *Delta vs raw-write: a budget-robust ordering, not solve-vs-fail.* The
-symmetric run is the direct answer to the asymmetry objection. E88 received
+symmetric run removes the recipe asymmetry directly. E88 received
 the *same* doubled budget M²RNN got, on the *same* gentle recipe, with *no*
 $S_5$-tuning, and still plateaus, so both confounds (M²RNN's trainability
 deficit and E88's never-having-had-the-extra-budget) are bought out
@@ -1583,8 +1604,8 @@ GDN's is — so its $S_5$ shortfall is partly entangled with optimization
 difficulty: full fine-tuning of the 1.3 B raw-write model is unstable
 and needed the gentler/longer recipe merely to fit parity. We therefore
 do *not* claim a pure-expressivity wall for raw-write the way we can for
-the linear GDN. This does not weaken the thesis — it *is* the
-matched-FLOP efficiency framing: raw-write needs more budget to approach
+the linear GDN; the statement here is the matched-FLOP efficiency one:
+raw-write needs more budget to approach
 what the delta update reaches cheaply, and within the budgets tested
 (including the symmetric doubled budget) it does not get there. The
 recipe-independent statements are (a) the clean expressivity contrast is
@@ -1639,7 +1660,7 @@ three sit within one standard error of one another
 ($"SE" approx 6$ pp at 50 items per task). On a separate reasoning
 panel (BIG-Bench Hard @bbh2022, ReCLor @reclor2020, FOLIO @folio2022),
 all three families collapse on multi-step object tracking
-(`tracking_shuffled_objects_7_objects` at 0.10–0.13, near-random) and
+(the seven-object shuffled-objects tracking task, 0.10–0.13, near-random) and
 on FOLIO/ReCLor (near-random for all three), with GDN leading
 on formal fallacies and web-of-lies. E88's overall reasoning
 accuracy (0.319) is within one standard error of M²RNN-CMA (0.336).
