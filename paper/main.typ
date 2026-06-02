@@ -2110,53 +2110,45 @@ This is the assumption this paper revisits.
 
 #heading(level: 2, numbering: none)[Formal scope]
 
-The trusted Lean core covers: orthonormal-key realization of the $S_5$
-tracker; one-step separation from raw-write matrix RNNs; the k-step
-extension on a constructed 2D witness alphabet for every $k >= 1$
-(`emender_m2rnn_k_step_separation`); the finite-state ceiling. The
-explicit non-claims, retained as the boundary of the trusted surface:
-(i) a Lean lower bound covering all linear-scan models on $S_5$; (ii)
-Barrington's theorem itself; (iii) an $S_5$-generator-specific $T(d)$
-capacity bound (the k-step separation runs on the constructed 2D
-alphabet, not the $S_5$ generators); (iv) families-wide "goes beyond
-NC#super[1]" or "goes beyond TC#super[0]" impossibility; (v) that
-empirical Emender weights recover the lookup-table realization; (vi)
-the slot-wise latching set lifted to an architecture-level
-`latchAttractor`, nor an $S_5$-coset basin-survival statement against
-an active adversary. Each is named next-theorem work — bullets (iii)
-and (vi) are the load-bearing targets of §12, the former requiring a
-bounded-precision raw-write class plus Merrill-style state-counting
-machinery not yet in Mathlib, the latter requiring the
-`MemorySemantics.latchAttractor` lift on the
-`RecurrentResourceFormalism` signature. The §6 $S_5$ accuracy of 0.79
-at $T = 128$ and the length-extrapolation curves are the empirical
-companion to the constructed-alphabet k-step result on the $S_5$
-generator alphabet itself.
+The trusted Lean core covers four things: the orthonormal-key
+realization of the $S_5$ tracker, one-step separation from raw-write
+matrix RNNs, the k-step extension on a constructed 2D witness alphabet
+for every $k >= 1$ (`emender_m2rnn_k_step_separation`), and the
+finite-state ceiling. It stops short of a families-wide impossibility,
+an $S_5$-generator-specific capacity bound, and a proof that
+empirically learned weights recover the lookup-table realization; §7
+enumerates that boundary in full. Two of the open targets are the
+load-bearing work of §12. The first is the $S_5$-generator capacity
+bound: the k-step proof runs on the constructed alphabet, not the $S_5$
+generators, and a generator-specific bound needs a bounded-precision
+raw-write class plus Merrill-style state-counting machinery not yet in
+Mathlib. The second is the architecture-level latching lift
+(`MemorySemantics.latchAttractor` on the `RecurrentResourceFormalism`
+signature). The §6 $S_5$ accuracy of 0.79 at $T = 128$ and the
+length-extrapolation curves are the empirical companion to that k-step
+result, run on the $S_5$ generator alphabet itself.
 
 #heading(level: 2, numbering: none)[Evidence structure]
 
-What rests on what. The Lean separation is seed-independent: the
+What rests on what. The Lean separation is seed-independent — the
 proof is the proof. The 8 M expressivity gap on $S_5$ ($0.79$ vs
-$0.36$ vs $0.22$) is across three seeds per architecture. The 1.3 B
-wallclock comparison is one continuously-trained seed per architecture at
-the current multi-week training extent.
+$0.36$ vs $0.22$) is a three-seed mean per architecture. The 1.3 B
+loss-vs-wallclock comparison is one continuously-trained seed per
+architecture at the current multi-week training extent.
 
-The within-class ordering the comparison records (Emender ahead of the
-raw-write update under matched per-architecture CMA-ES) is not a
-free-standing observation: the same sign is selected by four
-independent CMA-ES sweeps at the same 1.3 B parameter scale,
-spanning 250+ candidate configurations per architecture in aggregate
-across chunk-512 and chunk-2048 training budgets and across
-reseed-and-reposition rounds. Under the exact E88 delta-off
-ablation the candidate-budget gap is 0.033 nats/token, and the comparison
-keeps the same sign at 0.014 nats/token at the current multi-week
-extent. The $H = 370$
-shape used here was not hand-chosen but sits inside the
-$H = 270$–$460$ interior band that the searches repeatedly selected
-for E88 at $N = 32$, while the raw-write arm drifts to systematically
-higher head counts. What remains single-seed at this scale is the
-multi-week trajectory itself; the within-class ordering and the
-head-geometry preference are CMA-replicated.
+The within-class ordering that comparison records — the Emender ahead
+of the raw-write update under matched per-architecture CMA-ES — is
+replicated beyond that single trajectory: four independent CMA-ES
+sweeps at 1.3 B, spanning 250+ candidate configurations per
+architecture, select the same sign. Under the E88 delta-off ablation
+the candidate-budget gap is 0.033 nats/token, and it keeps the same
+sign at 0.014 nats/token at the multi-week extent. The $H = 370$ shape
+used here was not hand-chosen; it sits inside the $H = 270$–$460$
+interior band the searches repeatedly selected for E88 at $N = 32$,
+while the raw-write arm drifts to higher head counts. What is
+single-seed at this scale is the multi-week trajectory itself; the
+within-class ordering and the head-geometry preference are
+CMA-replicated.
 
 #heading(level: 2, numbering: none)[Length extrapolation is the next frontier on $S_5$]
 
@@ -2197,47 +2189,43 @@ formal separation cover the geometry axis from both sides.
 
 #heading(level: 2, numbering: none)[Design-space asymmetry of the 8 M defaults]
 
-The 8 M defaults are matched in the sense that no architecture
-received probe-specific HPO, but they are not matched in *design
-space*: the Emender's defaults are the endpoint of an ablation
-lineage selected on language-modeling loss, the same objective GDN's
-and M²RNN's authors used for their published defaults, but explored
-within a design space chosen under an expressivity-efficiency
-hypothesis (§13). The matched-no-tuning condition controls for
-differential probe-specific effort, not for this design-space
-asymmetry. The §6 $S_3$ control isolates the part of the
-within-class claim that is immune to it (raw-write at 0.31 on a
-six-element solvable group, well below the non-binding capacity
-ceiling). Closing the asymmetry itself is a matched-search experiment
-on the 8 M shape (running CMA-ES on each baseline at 8 M under a
-state-tracking fitness); it is named alongside the 1.3 B
-wider-search follow-up.
+The 8 M defaults are matched in that no architecture received
+probe-specific tuning, but they are not matched in *design space*: the
+Emender's defaults are the endpoint of an ablation lineage, and one
+load-bearing component — the $tanh$ state — was settled partly on a
+state-tracking proxy rather than on language-modeling loss alone,
+whereas no baseline's was. §6 states this selection asymmetry in full,
+together with the two controls that bound what it can explain: the
+$S_3$ solvable-group result and the §7 realizability theorem fix the
+direction and mechanism of the within-class separation; what they do
+not fully de-confound is the magnitude of the Emender's own $S_5$
+number.
+Closing the asymmetry is a matched state-tracking search on the 8 M
+shape, named in §12 alongside the 1.3 B wider-search follow-up.
 
 #heading(level: 2, numbering: none)[The opposite architectural bet: hybrids]
 
 A concurrent strand of work places the opposite architectural bet.
 *OLMo-Hybrid 7B* @olmohybrid2026 interleaves state-space blocks with
-attention, on the premise that hybrid stacks express things beyond
-what either pure transformers or pure linear RNNs can do. The Emender
-takes the other bet: a pure-nonlinear Emender stack at 1.3 B matches
-GDN in the wallclock loss band, which refutes the assumption that
-pure nonlinear recurrence cannot scale at all. The hybrid-degradation
-finding in §6
+attention, on the premise that hybrid stacks express more than either
+pure transformers or pure linear RNNs can. This work takes the other
+bet, a pure-nonlinear stack, and shows it viable for one instance: E88
+at 1.3 B lands in the same wallclock loss band as GDN. The §6
+hybrid-degradation finding
 ($[upright("Emender"), upright("Emender"), upright("GDN"), upright("GDN")]$
 underperforms either pure family on modular counter and FSM tracking
-at 8 M scale) is a capability-preservation observation: state-tracking
-capability does not survive dilution by linear-scan blocks in our
-sweep. The two bets answer different questions ("can pure nonlinear
-recurrence scale at all?" here versus "what does a well-mixed hybrid
-express?" for OLMo-Hybrid); the answers do not contradict.
+at 8 M scale) reads as capability-preservation: state-tracking
+capability does not survive dilution by linear-scan blocks in this
+sweep. The two bets answer different questions — whether pure nonlinear
+recurrence scales at all, versus what a well-mixed hybrid expresses —
+and a matched hybrid-versus-pure comparison at 1.3 B is not run here.
 
 #heading(level: 2, numbering: none)[Training duration and result scope]
 
-The language-modeling results are for the released v0.3 checkpoints,
-a 22.1-23.8 wall-clock-day training extent per architecture.
-The comparison panel (@fig_lm_racers)
-records the loss-vs-wallclock curve at this extent; further rounds
-extend the curves.
+The language-modeling results are for the v0.3 checkpoints, a
+22.1-23.8 wall-clock-day training extent per architecture. The
+comparison panel (@fig_lm_racers) records the loss-vs-wallclock curve
+at this extent; further training rounds extend the curves.
 
 #heading(level: 2, numbering: none)[Open architectural choices]
 
