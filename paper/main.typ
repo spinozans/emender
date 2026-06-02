@@ -336,7 +336,7 @@ The contributions are three results.
   matched-budget learning-efficiency gap rather than a categorical
   impossibility: at matched no-tuning budget raw-write under-reaches
   the delta update's $S_5$ length generalization, and even at a tuned
-  best-effort budget it does not catch up (§5). The predicted ordering
+  best-effort budget it does not catch up (§6). The predicted ordering
   already appears at the 8 M parameter-matched probe shape where the §6
   floor argument makes capacity non-binding by orders of magnitude: the
   Emender reaches 0.79 on the $S_5$ word problem against 0.22 for
@@ -403,10 +403,10 @@ substantiate each row; the pointers are forward references.
     [One E88 run, single seed; viability demonstration],
     [Not a scaling law and not seed-averaged; one artifact shown to exist],
 
-    [Bulk LM loss does *not* distinguish these architectures (a defended null)],
+    [Bulk LM loss does *not* distinguish these architectures (a measured null result)],
     [Held-out bpb 0.966 / 0.966 / 0.961 is a statistical tie across 5
      slices; FLOP-locked after equal CMA-ES tuning (§5)],
-    [Defends a *null*: the loss tie is real and reproduces across 5 held-out
+    [A measured null result: the loss tie is real and reproduces across 5 held-out
      slices and the Common-Pile control (single-seed per architecture)],
     [Does not license the train-loss ordering as an architecture verdict],
 
@@ -425,7 +425,7 @@ substantiate each row; the pointers are forward references.
     [Raw-write's $S_5$ shortfall is an efficiency gap, not a converged wall],
     [Raw-write fits the trained length (0.658 at $T=64$) but
      under-reaches with length even at the symmetric doubled budget (§6)],
-    [Defends a *null*: its solvable-task curve was still rising; both nonlinear
+    [A measured null result: its solvable-task curve was still rising; both nonlinear
      updates plateau below ceiling at length],
     [No converged expressivity wall asserted for raw-write],
 
@@ -440,7 +440,7 @@ substantiate each row; the pointers are forward references.
     the cited section; the final column marks the boundary the result does
     not cross. The two architectural separations are *efficiency* and
     *computability* statements, not blanket can/can't claims; the bulk-loss
-    row is a defended null.
+    row is a measured null result.
   ],
 ) <tab_claims>
 
@@ -1217,7 +1217,7 @@ steps per task, three seeds; GDN uses dim = 640 to match parameter
 count). The $S_5$ and $S_3$ transition tables have information-theoretic
 floors of $log_2 120 approx 6.9$ bits and $log_2 6 approx 2.6$ bits; an
 8 M-parameter model exceeds those floors by roughly seven orders of
-magnitude in parameter bits and six in recurrent-state scalars per
+magnitude in parameter bits and five in recurrent-state scalars per
 token. Failure to learn at this scale is a property of the update
 rule's inductive bias under SGD, not of capacity. The probes test what
 configurations SGD finds under matched no-tuning conditions, where the
@@ -2186,22 +2186,6 @@ representational separation already covered by Theorem set C
 (`emender_m2rnn_one_step_resource_separation_embeds`); a
 shape-conditional empirical ordering and a shape-independent one-step
 formal separation cover the geometry axis from both sides.
-
-#heading(level: 2, numbering: none)[Design-space asymmetry of the 8 M defaults]
-
-The 8 M defaults are matched in that no architecture received
-probe-specific tuning, but they are not matched in *design space*: the
-Emender's defaults are the endpoint of an ablation lineage, and one
-load-bearing component — the $tanh$ state — was settled partly on a
-state-tracking proxy rather than on language-modeling loss alone,
-whereas no baseline's was. §6 states this selection asymmetry in full,
-together with the two controls that bound what it can explain: the
-$S_3$ solvable-group result and the §7 realizability theorem fix the
-direction and mechanism of the within-class separation; what they do
-not fully de-confound is the magnitude of the Emender's own $S_5$
-number.
-Closing the asymmetry is a matched state-tracking search on the 8 M
-shape, named in §12 alongside the 1.3 B wider-search follow-up.
 
 #heading(level: 2, numbering: none)[The opposite architectural bet: hybrids]
 
