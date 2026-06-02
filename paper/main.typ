@@ -268,20 +268,28 @@ The contributions are three results.
   this scale without a time-axis parallelisation trick or attention
   hybridisation.
 
-+ *Power separation: the delta-correcting update is strictly more
-  expressive than raw-write at matched per-token compute.* A Lean 4
-  trusted core machine-verifies that no fixed-weight raw-write matrix
-  RNN with row, column, or cell forget gates can match the Emender's
-  delta-correcting update in one step
++ *Power separation within the formalized resource class: for the
+  matched-signature update family studied here, the delta-correcting
+  update is strictly more expressive than raw-write at matched
+  per-token compute.* A Lean 4 trusted core machine-verifies that no
+  fixed-weight raw-write matrix RNN with row, column, or cell forget
+  gates can match the Emender's delta-correcting update in one step
   (`emender_m2rnn_one_step_resource_separation_embeds`, set C in §7),
   and that the gap persists for every finite $k$ under composition on
   a constructed witness alphabet
   (`emender_m2rnn_k_step_separation`, set C′), at matched per-token
-  FLOP class (`emender_m2rnn_flop_class_equiv`, set D). The
-  predicted ordering shows up in training at the 8 M parameter-matched
-  probe shape where the §6 floor argument makes capacity non-binding
-  by orders of magnitude: the Emender reaches 0.79 on the $S_5$ word
-  problem against 0.22 for raw-write M²RNN-CMA (§6).
+  FLOP class (`emender_m2rnn_flop_class_equiv`, set D). This is a
+  representability statement inside the formalized fixed-weight
+  raw-write resource class, not a claim of general or learned-weight
+  superiority. Empirically the delta-vs-raw-write contrast is a
+  matched-budget learning-efficiency gap rather than a categorical
+  impossibility: at matched no-tuning budget raw-write under-reaches
+  the delta update's $S_5$ length generalisation, and even at a tuned
+  best-effort budget it does not catch up (§5). The predicted ordering
+  already appears at the 8 M parameter-matched probe shape where the §6
+  floor argument makes capacity non-binding by orders of magnitude: the
+  Emender reaches 0.79 on the $S_5$ word problem against 0.22 for
+  raw-write M²RNN-CMA (§6).
 
 + *Supporting comparison.* Under per-architecture CMA-ES @cmaes2003 at
   matched candidate budget, E88 lands in the same loss-vs-wallclock
