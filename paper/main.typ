@@ -447,17 +447,27 @@ substantiate each row; the pointers are forward references.
 // ── 2. Background ─────────────────────────────────────────────────────────────
 = Background <sec:background>
 
-One motivating workload is pangenomic sequence data, which runs to
-terabases per study @hprc2023 @guarracino2023acrocentric @pggb2024;
-existing modeling approaches require ingesting trillions of
-tokens for any operation on the data, which rules out routine
-downstream use. Linear-recurrent byte-level foundation models were
-the first attempt and did not scale reliably in this regime. The
-Merrill–Petty–Sabharwal results @merrill2024transformers make the
-limitation legible: linear-in-time recurrence sits inside a
+What a recurrent model can compute about its input, and how cheaply it
+can be trained to do so, both turn on whether its state update is linear
+or nonlinear in the state — the hinge §1 introduced. This section makes
+that hinge precise. It gives the structural test that sorts an
+architecture into one regime or the other, the complexity ceiling the
+linear regime cannot pass, and the word problem the paper uses to detect
+when a model has passed it. These three are the toolkit the architecture,
+systems, and results sections assume.
+
+The stakes are the general ones of sequence modeling at scale, and one
+workload makes them concrete. Pangenomic sequence data runs to terabases
+per study @hprc2023 @guarracino2023acrocentric @pggb2024, so modeling it
+at the byte level means ingesting trillions of tokens for any downstream
+operation, which rules out routine use. Linear-recurrent byte-level
+foundation models were the first attempt in this regime and did not scale
+reliably. The Merrill–Petty–Sabharwal results @merrill2024transformers
+make the limitation legible: a linear-in-time recurrence sits inside a
 complexity class too weak for non-solvable state-tracking. A
-nonlinear-in-time foundation model is needed, and no off-the-shelf
-design fit; the Emender is the construction introduced here.
+nonlinear-in-time model is needed to lift that ceiling, and no
+off-the-shelf design fit; the Emender, developed in §3, is the
+construction introduced here.
 
 #heading(level: 2, numbering: none)[Linear-state and nonlinear-state recurrence]
 
@@ -471,7 +481,7 @@ the parallel scan that makes GPU throughput tractable at modern scale.
 Gated DeltaNet @gated_deltanet2024 is the selected linear-recurrent
 baseline for the matched wallclock comparison reported here. Mamba-3
 @mamba3_2026 is reported by its authors to outperform GDN; its
-compilation-heavy HPO does not fit the §5 matched protocol cleanly, so
+compilation-heavy HPO does not fit the §5 matched protocol, so
 it is left to future work.
 
 A single explicit criterion classifies recurrent architectures.
@@ -550,16 +560,20 @@ baselines, not as a contribution.
 
 #heading(level: 2, numbering: none)[The $S_5$ state-tracking probe]
 
-The symmetric group $S_5$ has $120$ elements; it is the smallest
-non-solvable group. The associated *word problem* (compute the prefix
-product after each token in a sequence of adjacent transpositions in
-$S_5$) is, by Barrington's theorem @barrington1986, complete for the
+The symmetric group $S_5$ is the group of permutations of five items; it
+has $120$ elements and is the smallest non-solvable group. Its *word
+problem* is the following task: the model reads a sequence of
+permutations — here, adjacent transpositions, the swaps of two
+neighboring items — one at a time, and after each one must report the
+running composition of everything read so far, its *prefix product*. By
+Barrington's theorem @barrington1986 this task is complete for the
 complexity class NC#super[1]. A recognizer that solves $S_5$ at length
 $T$ with bounded precision and width must therefore reach the top of
 NC#super[1] in the canonical regular-language witness; one that cannot
 solve $S_5$ at training length lives below it. The solvable-group control
-$S_3$ (6 elements) is included to factor out the part of difficulty
-that comes from prefix tracking *per se* rather than from non-solvability.
+$S_3$ (permutations of three items, 6 elements) is included to factor out
+the part of difficulty that comes from prefix tracking *per se* rather
+than from non-solvability.
 
 // ── 3. Architecture — the Emender ─────────────────────────────────────────────
 = Architecture <sec:arch>
