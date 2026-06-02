@@ -2248,54 +2248,76 @@ attention's quadratic cost bites. The omission is scope, not result.
 // ── 10. Conclusion ────────────────────────────────────────────────────────────
 = Conclusion <sec:conclusion>
 
-Two results.
+This work asked two things of a purely nonlinear recurrence that the
+field had set aside rather than measured: whether it can be trained to
+competitive scale on its own, and whether the form of its update rule
+matters once it is. Both answers are yes.
 
-First, a pure-nonlinear-recurrent language model reaches sub-1-bpb on
-The Pile at 1.3 B-class on a single workstation-class GPU: E88 at
-0.973 bpb after about 23 wall-clock days. The throughput
-route is width-axis *multi-programming*, which runs 22,200 small
-bounded recurrent programs per token, each a $32 times 32$
-matrix-state tile in registers, with the time loop serial inside each
-program. The recipe is update-rule-agnostic: both pure-recurrent
-nonlinear instances trained here satisfy the same multi-programming
-predicate at 1.3 B (Lean: `multiProgrammed_admits_m2rnn_and_emender`).
+The first is a viability result. A pure-nonlinear-recurrent language
+model — E88, the 1.3 B-class Emender instance — reaches 0.973 bits per
+byte on The Pile after about 23 wall-clock days on a single
+workstation-class GPU, with no cluster, no sequence parallelism, and no
+attention to lean on. The throughput comes from running the recurrence
+across the network's width rather than across time: width-axis
+*multi-programming* executes 22,200 small bounded recurrent programs per
+token, each a $32 times 32$ matrix-state tile held in registers, with
+the time loop serial inside each program. The route is
+update-rule-agnostic — both pure-recurrent nonlinear instances trained
+here satisfy the same multi-programming predicate at 1.3 B (Lean:
+`multiProgrammed_admits_m2rnn_and_emender`). This is one artifact shown
+to exist, not a scaling law: a single seed at a single training extent,
+evidence that the regime is reachable at all.
 
-Second, the delta-correcting update accesses a strictly larger
-one-step function class than the raw-write update at matched per-token
-FLOP cost, and the gap persists under every $k$-step composition. The
-Lean 4 trusted core establishes this via
+The second is a separation between update rules. The delta-correcting
+update — which writes the correction between what the memory predicts
+and what the input demands — accesses a strictly larger one-step
+function class than the raw-write update at matched per-token FLOP cost,
+and the gap persists under every $k$-step composition. The Lean 4
+trusted core establishes this through
 `emender_m2rnn_one_step_resource_separation_embeds` (set C),
 `emender_m2rnn_k_step_separation` (set C′), and
-`emender_m2rnn_flop_class_equiv` (set D); the same core proves that
-an orthonormal-key Emender configuration realizes the $S_5$ tracker
-(`EmenderRealizesS5.emender_realizes_s5_tracker`). The predicted
-ordering shows up empirically at the 8 M overparameterized probe
-shape: with capacity non-binding by orders of magnitude, raw-write
-M²RNN-CMA stalls at 0.31 on the six-element solvable-group $S_3$
-control, while the Emender solves $S_3$ to ceiling and reaches 0.79
-on the non-solvable $S_5$ probe at training length. The trusted Lean
-4 core has no `sorry`/`admit`/`axiom`/`opaque`/`native_decide` in the
-import closure.
+`emender_m2rnn_flop_class_equiv` (set D), and proves that an
+orthonormal-key Emender configuration realizes the $S_5$ prefix tracker
+(`EmenderRealizesS5.emender_realizes_s5_tracker`); its import closure
+carries no `sorry`, `admit`, `axiom`, `opaque`, or `native_decide`. The
+predicted ordering shows up in the trained models. At the 8 M
+parameter-matched probe shape, where the §6 floor argument makes
+capacity non-binding by orders of magnitude, raw-write M²RNN-CMA stalls
+at 0.31 on the six-element solvable group $S_3$, while the Emender
+solves $S_3$ to ceiling and reaches 0.79 on the non-solvable group $S_5$
+probe at training length. The separation is an efficiency gap inside a
+shared resource class, not a categorical wall.
 
-Under per-architecture CMA-ES at matched candidate budget, E88 lands
-in the same loss-vs-wallclock band as Gated DeltaNet at the 1.3 B-class
-on The Pile; §5 has the comparison in full.
+These two findings sit on either side of a single observation about
+loss. Under per-architecture CMA-ES at matched candidate budget, E88
+lands in the same loss-versus-wallclock band as Gated DeltaNet, the
+linear-recurrent baseline, at the 1.3 B-class on The Pile (§5), and on
+held-out text the models are statistically tied. Bulk language-modeling
+loss does not separate these architectures; their differences live in
+state tracking, where a linear recurrence is held away from non-solvable
+prefix products by a classical complexity argument and a nonlinear one
+is not. Loss is a poor guide to what a recurrent architecture can
+compute.
 
-*Release.* The current release hub is
-`https://github.com/poietic-pbc/emender/blob/main/docs/RELEASE_V02_PUBLIC_RELEASE_HUB.md`.
-The checkpoint and loading-code targets are E88
-(`https://huggingface.co/poietic-pbc/emender-e88-1.3b/tree/v0.3`),
-Gated DeltaNet
-(`https://huggingface.co/poietic-pbc/gdn-1.3b/tree/v0.3`), and
-M²RNN-CMA
-(`https://huggingface.co/poietic-pbc/m2rnn-cma-1.3b/tree/v0.3`).
-The public paper PDF mirror is
-`http://hypervolu.me/~erik/ndm/Garrison_2026_Emender.pdf`.
-Companion release docs cover the per-architecture CMA-ES
-configurations, the training protocol, and the Triton multi-programming
-kernel source. The held-out bits-per-byte appendix (@sec:appendix_bpb)
-is reproducible from the same release: the re-exported y-mode checkpoints
-ship in the HuggingFace v0.3 trees above, and the measurement scripts
+What this leaves is an opening, not a verdict. Massively parallel
+nonlinear recurrence is practical at the billion-parameter class, the
+update rule is a live design variable with measurable consequences for
+what the trained model can do, and almost none of that space has been
+searched. The instance reported here is one point in it.
+
+*Reproducibility.* The checkpoints, loading code, and measurement
+scripts behind these numbers are public, collected from the hub at
+`https://github.com/poietic-pbc/emender/blob/main/docs/RELEASE_V02_PUBLIC_RELEASE_HUB.md`:
+E88 (`https://huggingface.co/poietic-pbc/emender-e88-1.3b/tree/v0.3`),
+Gated DeltaNet (`https://huggingface.co/poietic-pbc/gdn-1.3b/tree/v0.3`),
+and M²RNN-CMA
+(`https://huggingface.co/poietic-pbc/m2rnn-cma-1.3b/tree/v0.3`),
+alongside the per-architecture CMA-ES configurations, the training
+protocol, and the Triton multi-programming kernel source; the paper PDF
+is mirrored at `http://hypervolu.me/~erik/ndm/Garrison_2026_Emender.pdf`.
+The held-out bits-per-byte appendix (@sec:appendix_bpb) is reproducible
+from the same checkpoints: the re-exported y-mode weights ship in the
+HuggingFace v0.3 trees above, and the measurement scripts
 (`scripts/measure_pile_bpb.py`, `scripts/measure_pile_bpb_elman.py`) and
 sha-verified held-out slice manifests are in the public `emender` repo.
 
