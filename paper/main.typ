@@ -1151,7 +1151,7 @@ Under matched no-tuning, with capacity non-binding, any accuracy gap
 reflects the architecture's inductive bias under SGD.
 
 The $S_3$ control isolates the part of the within-class claim that is
-immune to any selection-history asymmetry (§9): raw-write reaches 0.31
+immune to any design-space asymmetry (§9): raw-write reaches 0.31
 on a six-element solvable group, well below the non-binding capacity
 ceiling.
 
@@ -2048,16 +2048,17 @@ representational separation already covered by Theorem set C
 shape-conditional empirical ordering and a shape-independent one-step
 formal separation cover the geometry axis from both sides.
 
-#heading(level: 2, numbering: none)[Selection-history asymmetry of the 8 M defaults]
+#heading(level: 2, numbering: none)[Design-space asymmetry of the 8 M defaults]
 
 The 8 M defaults are matched in the sense that no architecture
-received probe-specific HPO, but they are not matched in *selection
-history*: the Emender's defaults are the endpoint of an ablation
-lineage selected partly on state-tracking behavior (Appendix),
-whereas GDN and M²RNN's published defaults were selected by their
-authors on language-modeling loss. The matched-no-tuning condition
-controls for differential probe-specific effort, not for this
-selection asymmetry. The §6 $S_3$ control isolates the part of the
+received probe-specific HPO, but they are not matched in *design
+space*: the Emender's defaults are the endpoint of an ablation
+lineage selected on language-modeling loss, the same objective GDN's
+and M²RNN's authors used for their published defaults, but explored
+within a design space chosen under an expressivity-efficiency
+hypothesis (§13). The matched-no-tuning condition controls for
+differential probe-specific effort, not for this design-space
+asymmetry. The §6 $S_3$ control isolates the part of the
 within-class claim that is immune to it (raw-write at 0.31 on a
 six-element solvable group, well below the non-binding capacity
 ceiling). Closing the asymmetry itself is a matched-search experiment
