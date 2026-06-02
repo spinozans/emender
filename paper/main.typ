@@ -866,73 +866,85 @@ write; what that write buys is measured in §5–§6 and bounded formally in §7
 
 #heading(level: 2, numbering: none)[Multi-programming: the throughput-enabling design choice]
 
-Throughput comes from width, not from time. Linear recurrences gain
-throughput by *time-axis* linearization: composing
-$h_t = A_t h_(t-1) + b_t$ unfolds into a product of inputs only and
-admits prefix-scan or chunkwise matrix-multiplication. Pure-nonlinear
-recurrences cannot do that without forfeiting the nonlinear-update
-expressivity. *Multi-programming* takes the *width-axis* route
-instead: replicate the recurrent computation across many independent
-heads, each with its own small bounded matrix state, and harvest
-parallelism across those heads (and across state tiles and batch
-elements) while the time loop inside each head runs serially.
-Multi-programming decouples throughput from scan-compatible update
-form: the recurrent body must remain a bounded, register-resident
-per-step map at the same matrix-state signature, but it need not be
-associative-scan or chunkwise-WY compatible. The cost is per-head
-sequential time, most exposed at sufficiently long sequence lengths;
-the gain is that nonlinear recurrence runs at full GPU utilization.
-The recipe is update-rule-agnostic: both PNR instances trained here
-(the Emender and M²RNN-CMA) satisfy the same multi-programming
-predicate at 1.3 B
-(`RecurrentResourceFormalism.multiProgrammed_admits_m2rnn_and_emender`,
-§7).
+Throughput comes from width, not from time. A linear recurrence earns
+its throughput on the *time axis*: because $h_t = A_t h_(t-1) + b_t$
+unfolds into a product that depends on the inputs alone, the
+step-by-step loop can be re-expressed as a prefix scan or a chunkwise
+matrix multiplication over the whole sequence at once. A purely
+nonlinear recurrence cannot be rewritten that way without giving up the
+nonlinear update that makes it expressive, so its time loop has to run
+serially. *Multi-programming* recovers the throughput on the other
+axis. Rather than parallelize one recurrence along time, it replicates
+the recurrent computation across many independent heads — each with its
+own small bounded matrix state — and harvests parallelism across those
+heads, across state tiles, and across batch elements, while the time
+loop inside each head still runs one step at a time.
+
+The design choice is a decoupling: it frees throughput from the *shape*
+of the update. The recurrent body must stay a bounded, register-resident
+per-step map at a fixed matrix-state signature — that is what keeps each
+head cheap — but it need not be compatible with an associative scan or a
+chunkwise WY product. The cost is paid in per-head serial time, most
+exposed at long sequence lengths where the serial loop is longest; the
+gain is that a nonlinear recurrence can keep a modern accelerator busy
+with no time-axis scan at all. The route is agnostic to the update
+rule: both pure-nonlinear instances trained here — the Emender and the
+raw-write M²RNN-CMA — satisfy the same multi-programming predicate at
+the 1.3 B-class, machine-checked in the Lean core as
+`RecurrentResourceFormalism.multiProgrammed_admits_m2rnn_and_emender`
+(§7).
 
 #heading(level: 2, numbering: none)[The 1.3 B Emender shape under multi-programming]
 
-A modern GPU exposes thousands of independent streaming multiprocessors,
-each able to run a small program in registers and shared memory. E88
-runs 370 such programs per layer per batch element
-(370 heads $times$ batch element); with depth 12 and batch size 5 this
-is 22,200 small independent recurrent programs per layer per token.
-Each program is a $32 times 32$ state tile that fits in
-registers. The accelerator does not need parallelism *along time* to
-stay busy; parallelism across these programs already saturates it.
+A modern GPU exposes thousands of independent streaming
+multiprocessors, each able to run a small program out of its own
+registers and shared memory, and multi-programming is built to fill
+them. E88, the 1.3 B Emender instance, runs 370 such programs per layer
+per batch element — one per head — so at depth 12 and batch size 5 the
+layer stack issues $12 times 370 times 5 = 22,200$ small independent
+recurrent programs per token, each carrying its own $32 times 32$ state
+tile small enough to live in registers. Keeping the accelerator busy
+therefore asks nothing of parallelism *along time*: the parallelism
+across these programs is already enough to fill it. How fully it does
+is something the next section measures directly.
 
 #heading(level: 2, numbering: none)[Measured throughput and utilization]
 
-The saturation claim is occupancy, and we measure it directly rather
-than assert it. Driving the 1.273 B E88 (batch 5, context
-2048) through the 1.3 B run's own training path on a free NVIDIA RTX 6000
-Ada (48 GB) and sampling `nvidia-smi` at 1 Hz over a sustained
-post-warmup window, the GPU runs at *median 100% utilization
-(mean 99.8%, minimum 96% across 133 samples)* while drawing 97% of its
-300 W power cap. The accelerator stays busy on width-axis
-multi-programming alone, with no time-axis scan. Sustained
-throughput is *7,492 tokens/s* (mean of steady 50-step windows;
-median 7,468); a slower sibling GPU sustained 7,277 tokens/s, so the
-absolute figure is GPU-dependent at the few-percent level.
+That the card stays busy is a claim about occupancy, and it is measured
+directly. Driving the 1.273 B E88 (batch 5, context 2048) through the
+1.3 B run's own training path on a free NVIDIA RTX 6000 Ada (48 GB) and
+sampling `nvidia-smi` once a second over a sustained post-warmup window,
+the GPU holds *median 100% utilization (mean 99.8%, minimum 96% across
+133 samples)* while drawing 97% of its 300 W power cap. The accelerator
+stays busy on width-axis multi-programming alone, with no time-axis
+scan. Sustained throughput is *7,492 tokens/s* (mean over steady
+50-step windows; median 7,468); a slower sibling GPU sustained
+7,277 tokens/s, so the absolute figure is GPU-dependent at the
+few-percent level.
 
-This figure is occupancy, not peak arithmetic. Model-FLOPs
-utilization, computed with the standard 6N convention against the
-card's dense bf16 peak of 364 TFLOPS, is *15.7%* — a conservative
-lower bound, since 6N counts only weight-matmul FLOPs and excludes the
-recurrence and gate ops, so true MFU is slightly higher. High
-occupancy with modest MFU is the expected profile of a bandwidth- and
-recurrence-bound recurrent model: the GPU is busy ~100% of the time
-but converts ~16% of its peak FLOPs.
+This figure is occupancy, not peak arithmetic, and the two should not
+be run together. Model-FLOPs utilization (MFU) — computed with the
+standard $6N$ convention against the card's dense bf16 peak of
+364 TFLOPS — is *15.7%*, and that is a conservative lower bound: $6N$
+counts only the weight-matmul FLOPs and excludes the recurrence and
+gate operations, so the true MFU is slightly higher. High occupancy
+with modest MFU is the expected profile of a model bound by memory
+bandwidth and the serial recurrence rather than by arithmetic: the GPU
+is busy nearly all of the time but converts about 16% of its peak FLOPs
+into useful work.
 
-The width-axis story is what this throughput buys, and it is now
-quantified against a real time-axis kernel. A chunkwise linear-scan
-baseline — FLA Gated DeltaNet (1.352 B, the CMA-matched
-shape used here) run on the same GPU, context, and time budget — sustains
-8,248 tokens/s at MFU 18.4% and the same ~100% occupancy. E88 reaches
-*≈ 91% of that linear-scan kernel's tokens/s* (7,492 / 8,248) *without
-performing the sequential time-axis scan*. Width-axis multi-programming
-therefore recovers linear-scan-class throughput on the width axis; it
-does not beat the chunked-scan kernel on raw tokens/s (FLA is ~10%
-faster here, at a slightly larger parameter count and different batch),
-so the claim is parity-class, not superiority.
+What that throughput buys on the width axis is best read against a real
+time-axis kernel. A chunkwise linear-scan baseline — Gated DeltaNet as
+implemented in the flash-linear-attention (FLA) library (1.352 B, the
+CMA-matched shape used here), run on the same GPU, context, and time
+budget — sustains 8,248 tokens/s at MFU 18.4% and the same near-100%
+occupancy. E88 reaches *≈ 91% of that linear-scan kernel's tokens/s*
+(7,492 / 8,248) *without performing the sequential time-axis scan at
+all*. Width-axis multi-programming therefore recovers
+linear-scan-class throughput on the width axis. It does not beat the
+chunked-scan kernel on raw tokens/s — FLA is about 10% faster here, at a
+slightly larger parameter count and a different batch — so the standing
+is parity-class, not superiority.
 
 #heading(level: 2, numbering: none)[Fused Triton recurrence kernel]
 
@@ -968,22 +980,28 @@ three to six weeks to port to HIP from scratch.
 
 #heading(level: 2, numbering: none)[Distributed training]
 
-The training plan uses schedule-free AdamW @schedulefree2024 per island
-with hierarchical local-SGD model averaging in the DiLoCo
-@diloco2023 style: each island is one node of 8 GCDs with intra-island
-DDP, and inter-island synchronization averages model weights every
-$tau = 250$ local steps (an empirically-chosen interval).
-Because parallelism is across programs
-rather than along time, the Emender does not require sequence parallelism to be
-competitive at 1.3 B; this is a simplification relative to
-chunked-scan implementations of linear-state recurrences. Separately,
-ParaRNN @pararnn2025 parallelizes the time loop itself via Newton's
-method on a block-bidiagonal Jacobian. We tried this route on the
-$tanh(d S + k delta^T)$ map at $32 times 32$ block size and found it
-significantly worse in throughput than the multi-programmed Triton
-kernels above. Newton iteration carries a data-dependent solve count
-per step, and convergence on the bounded $tanh$ map is unestablished;
-multi-programming is a single serial pass per head.
+The 1.3 B-class result reported here was produced on a single
+workstation GPU, with no cluster and no sequence parallelism; the
+distributed recipe described next is how the same training would scale
+past one machine, not how E88 was run. That recipe pairs schedule-free
+AdamW @schedulefree2024 per island with hierarchical local-SGD model
+averaging in the DiLoCo @diloco2023 style: each island is one node of
+8 GCDs with intra-island DDP, and inter-island synchronization averages
+model weights every $tau = 250$ local steps, an interval chosen
+empirically. The structural point holds either way: because the
+Emender's parallelism is across programs rather than along time, it
+does not need sequence parallelism to stay competitive at the
+1.3 B-class — a simplification relative to the chunked-scan
+implementations that linear-state recurrences rely on.
+
+A different route would parallelize the time loop itself. ParaRNN
+@pararnn2025 does so with Newton's method on a block-bidiagonal
+Jacobian; we tried it on the $tanh(d S + k delta^T)$ map at
+$32 times 32$ block size and found it markedly slower in throughput than
+the multi-programmed Triton kernels above. Newton iteration carries a
+data-dependent solve count per step, and its convergence on the bounded
+$tanh$ map is unestablished, whereas multi-programming is a single
+serial pass per head.
 
 // ── 5. Language Modeling Results ────────────────────────────────────────────
 = Language-Modeling Results <sec:lm>
