@@ -2437,7 +2437,10 @@ eval-extrapolated *x-mode* view and are catastrophic at inference
 the corrected y-mode weights and verified, by a clean-cache readback from
 the hub through the bundled modeling code, to reproduce the held-out bpb
 to within $2 times 10^(-5)$ nats (Emender 0.96613, GDN 0.96612,
-M²RNN-CMA 0.96132).
+M²RNN-CMA 0.96132). Only the `v0.3` revision carries this corrected
+re-export; the earlier public revisions (`v0.1`, `v0.2`) were shipped from
+the same schedule-free *x-mode* pipeline, predate the fix, and are not
+usable for reproduction — cite `@v0.3` only.
 
 #heading(level: 2, numbering: none)[Where the held-out bpb sits — landscape, not a ranking]
 
