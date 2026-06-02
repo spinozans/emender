@@ -1096,9 +1096,7 @@ and update rule.
     plotted BPB range. Curves are 100K-step trailing moving averages
     of training loss in bits per byte; the nats/token
     $arrow$ bits/byte conversion uses the canonical
-    $"bytes/token" = 3.92$ for `p50k_base` on The Pile (pinned in
-    `scripts/estimate_tokenizer_bytes_per_token.json`, methodology
-    sentence in this section). E88 is at
+    $"bytes/token" = 3.92$ for `p50k_base` on The Pile (@sec:appendix_bpb). E88 is at
     1.273 B parameters; M²RNN-CMA at 1.307 B; GDN at 1.352 B; the
     three plotted models have trained about 22.1-23.8
     GPU-days at their released v0.3 checkpoints. The plotted
@@ -1133,17 +1131,13 @@ training losses are 2.644 nats/token (E88, step 1,542,000),
 2.644 (GDN, step 2,031,000), and 2.660 (M²RNN-CMA, step 1,491,000).
 Under the training tokenizer (`p50k_base` BPE) on The Pile,
 mean bytes per token is 3.92 over a 2000-sample sweep at the training
-`chunk_tokens=2048` (estimation script:
-`scripts/estimate_tokenizer_bytes_per_token.py`, pinned output at
-`scripts/estimate_tokenizer_bytes_per_token.json`), so
+context of 2048 tokens (@sec:appendix_bpb), so
 $"bpb" = "nats/token" times log_2(e) / "bytes/token" approx "nats/token" times 0.368$.
 These training-loss curves are a training-dynamics diagnostic, not the
 basis for the architecture comparison: the reported measurement is the
 held-out bpb (next subsection), where the three models are a
 statistical tie, and the architectures separate on the §6
 state-tracking probes rather than on bulk language-model bits-per-byte.
-Source: smoothed CSVs and snapshot table under
-`paper/results/figure_2/` (`AS_OF.md`).
 
 #heading(level: 2, numbering: none)[Held-out bits-per-byte: the three are a statistical tie]
 
@@ -1182,42 +1176,35 @@ out-of-distribution anchors, and classical compressors.
 
 #heading(level: 2, numbering: none)[The loss tie reproduces under matched compute]
 
-The tie reflects the matched compute given to each update rule. The three update rules
-— delta-correcting (E88), raw-write (M²RNN-CMA), and linear (GDN) — were
-each given the *same* per-architecture CMA-ES hyperparameter-and-shape
-search budget (§5) and then trained to *matched* FLOPs, and they converge
+The tie reflects the matched compute given to each update rule. The three
+rules — delta-correcting (E88), raw-write (M²RNN-CMA), and linear (GDN) —
+each received the *same* per-architecture CMA-ES hyperparameter-and-shape
+search budget and were then trained to *matched* FLOPs, and they converge
 to within $approx 0.005$–$0.006$ bpb of one another on *both* axes: held-out
 0.966 / 0.966 / 0.961 and train-loss 0.973 / 0.973 / 0.979. Equal tuning
-effort plus equal compute lands three structurally different recurrences
-in the same narrow loss band. Two things follow.
+effort and equal compute land three structurally different recurrences in
+the same narrow loss band.
 
-*Finding — the compute-optimal loss is architecture-agnostic here.* Even
-after each family is tuned to its own best operating point, the converged
-loss does not move with the update rule. This is the empirical backbone of
-the paper's central null: bulk language-modeling loss does not distinguish
-*what these architectures compute*. The gap that does open is on the §6
-state-tracking probes, not on bpb. We state the boundary of this claim
-explicitly: the computation that loss is blind to is, so far, visible only on
-synthetic algebraic state-tracking ($S_5$/parity/FSM, §6) — tasks that *no*
-model in the cohort solves. Every non-synthetic signal we measure ties: bulk
-held-out loss, the QA panel, and the reasoning panel (§6) are all within noise.
+So even after each family is tuned to its own best operating point, the
+converged loss does not move with the update rule: bulk language-modeling
+loss does not distinguish what these architectures compute. Where they come
+apart is the §6 state-tracking probes, not bpb, and so far that separation
+shows only on synthetic algebraic state-tracking ($S_5$/parity/FSM, §6) —
+tasks that *no* model in the cohort solves. The non-synthetic signals tie:
+bulk held-out loss, the QA panel, and the reasoning panel (§6) are all
+within noise.
 
-*Caveat — single-seed, corroborated externally.* The §5 loss figures are
-single-seed per architecture; with one sample per architecture we cannot use
-the cross-architecture spread to bound within-architecture seed variance (that
-spread is itself contaminated by the seed noise it would purport to bound), and
-we do not. Instead the loss-tie reading is corroborated independently: by the
-five held-out Pile slices (@sec:appendix_bpb), where the model ordering is
-slice-dependent and the gaps sit within cross-slice noise; by the Common-Pile
-contamination-control reproduction (@sec:appendix_bpb), a second distribution
-that reproduces the tie; and by its consistency with an architecture-agnostic
-compute-optimal loss at this matched FLOP budget.
-
-*Scope.* This argument defends the *loss tie* only. The state-tracking
-robustness — the claim that carries the paper — does not rest on these
-single-seed loss runs at all: it rests on the 3-seed 8 M expressivity
-probes (§6) and the 1.3 B fine-tune length-generalization separation
-(below), where the architectures genuinely come apart.
+The §5 loss figures are single-seed per architecture, so the loss-tie
+reading is corroborated independently of any within-run spread: the five
+held-out Pile slices (@sec:appendix_bpb) put the lowest-bpb model
+slice-dependent with the between-model gaps inside cross-slice noise; the
+Common-Pile contamination control (@sec:appendix_bpb) reproduces the tie on
+a second distribution; and the converged value is consistent with an
+architecture-agnostic compute-optimal loss at this matched FLOP budget. The
+state-tracking results that carry the paper do not rest on these single-seed
+loss runs: they rest on the 3-seed 8 M expressivity probes (§6) and the
+1.3 B length-generalization separation (below), where the architectures
+genuinely come apart.
 
 // ── 6. Expressivity Results ───────────────────────────────────────────────────
 = Expressivity Results <sec:expressivity>
