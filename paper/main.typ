@@ -2493,52 +2493,60 @@ guarantee on the state-tracking task.
 // ── Appendix A — E63→E88 lineage and ablation notes ────────────────────────────
 = Appendix: Lineage of the E63 $arrow$ E88 experimental program <sec:appendix>
 
-The Emender architecture as presented in §3 is the endpoint of a multi-year
-ablation lineage. The named milestones referred to here are internal
-codenames; they are documented in the appendix for reproducibility of
-the design history and are not used in the body of the paper. The
-reference implementation of the 1.3 B Emender stack lives at
-`ndm/models/e88_fused.py`; the fused Triton recurrence kernel sources
-are at `ndm/triton/e88_triton_forward.py` and `e88_triton_backward.py`.
+The architecture presented in §3 is the endpoint of a multi-year
+ablation program, and this appendix records how its 1.3 B instance —
+E88 in the body — was arrived at: which design choice was settled at
+which stage, and what each one fixed. It is here for reproducibility of
+the design history, so the choices in §3 read as the residue of
+measurements rather than as bare assertions. The milestone labels (E63,
+E70–E75, E88) are internal codenames marking stages of that program;
+they carry no meaning beyond their ordering and are used nowhere in the
+body — a reader who wants the architecture itself needs only §3. The
+reference implementation of the 1.3 B stack, including its fused Triton
+forward and backward recurrence kernels, is released publicly (see the
+availability statement in §10).
 
-- *E63 (nonlinear delta design).* Established that linear-in-state
-  recurrences cannot pass the Siegelmann–Sontag boundary
-  @siegelmann1995 and that placing the non-linearity on the matrix
-  state itself (rather than only on gates or the output) is the
-  expressivity-determining choice. The Emender's $tanh$ on $S$ is inherited
-  from this design.
+- *Where the nonlinearity goes (E63).* Established that a recurrence
+  linear in its state cannot cross the Siegelmann–Sontag expressivity
+  boundary @siegelmann1995, and that the expressivity-determining choice
+  is *where* the nonlinearity is placed: on the matrix state itself,
+  rather than only on the gates or the output. The Emender's $tanh$ on
+  the state $S$ is inherited from this stage.
 
-- *E70–E75 (matrix-Elman / delta predecessors).* Established the fused
-  Triton kernel pattern (outer product + decay + tanh as one kernel)
-  and surfaced the gradient-spike failure mode of unbounded outer
-  products. The L#super[2]-normalized key write inherited by the Emender is the
-  fix.
+- *The fused kernel and the gradient-spike fix (E70–E75).* Established
+  the fused Triton kernel pattern — outer product, decay, and $tanh$
+  computed as a single kernel — and surfaced the failure mode it had to
+  survive: unbounded outer products spike the gradient. The
+  L#super[2]-normalized key write the Emender uses is the fix.
 
-- *E88 (the 1.3 B Emender).* Stable at 1.3 B parameters under
-  schedule-free AdamW. Key parameterization choices: log-space Mamba2
-  decay (with weight-decay exemption); L#super[2]-normalized
-  $q, k$; SiLU on input projections before normalization; numerically
+- *The first stable 1.3 B instance (E88).* Stable at the
+  billion-parameter class under schedule-free AdamW. Its load-bearing
+  parameterization choices, each fixed by ablation: log-space Mamba2
+  decay (with weight-decay exemption); L#super[2]-normalized $q, k$;
+  SiLU on input projections before normalization; the numerically
   stable $tanh(z) = 2 sigma(2z) - 1$ in the fused kernel; output
   RMSNorm inside the layer removed (−0.10 nats); short convolutions
   removed (−0.027 nats); no write gate; SiLU output gate.
 
-- *M²RNN-CMA versus M²RNN-paper.* The paper-default M²RNN shape
-  (dim = 3072, depth = 10, $H = 759$, $N = 16$) diverged at step 8,400
-  under the training setup of §5 with gradient norms of $approx 4.2
-  times 10^7$. The CMA-tuned reshape (dim = 1920, depth = 21, $H = 370$,
-  $N = 16$) is stable; it is the M²RNN-CMA baseline used in §5 and §6.
-  The paper-shape divergence and the CMA-tuned stability together show
-  that the gradient-conditioning failure is a *geometry* property
-  (shared $q, k$ across many value heads), not a property of the
-  raw-write update family per se.
+- *Why the M²RNN baseline is reshaped (M²RNN-CMA).* The paper-default
+  M²RNN shape (dim = 3072, depth = 10, $H = 759$, $N = 16$) diverged at
+  step 8,400 under the training setup of §5, with gradient norms of
+  $approx 4.2 times 10^7$. The CMA-tuned reshape (dim = 1920,
+  depth = 21, $H = 370$, $N = 16$) is stable, and it is the M²RNN-CMA
+  baseline used in §5 and §6. That the paper shape diverges while the
+  CMA-tuned shape is stable locates the gradient-conditioning failure in
+  the *geometry* (shared $q, k$ across many value heads), not in the
+  raw-write update family itself.
 
 = Appendix: Held-out bits-per-byte measurement <sec:appendix_bpb>
 
-This appendix documents how the held-out bits-per-byte figures in §5 are
-measured and places them in a landscape of reference models and classical
-compressors. Every number is measured by the eval harness described below;
-nothing here is re-fitted. The measurement code, slice manifests, and
-re-exported checkpoints are public (see the availability statement in §10).
+This appendix is the evidentiary backbone of the held-out tie reported
+in §5: it documents exactly how the held-out bits-per-byte figures are
+measured and places them in a landscape of reference models and
+classical compressors. Every number is measured by the eval harness
+described below; none is re-fitted. The measurement code, slice
+manifests, and re-exported checkpoints are public (see the availability
+statement in §10).
 
 #heading(level: 2, numbering: none)[Tokenizer-invariant held-out bpb]
 
@@ -2573,7 +2581,7 @@ non-overlapping, sha-verified slices at offset fractions
 Identical bytes feed every model, so the byte denominator is shared and
 bpb is comparable across tokenizers. A block-loss sanity gate (mean
 nats/token on the first 2048-token block must lie in $[1.5, 4.0]$, model
-train loss ≈2.6) ran before any of our models' bpb was trusted; all
+train loss ≈2.6) ran before any of our models' bpb was reported; all
 gated runs passed. The sha-verified slice manifests are released with the
 measurement code (see the §10 availability statement).
 
