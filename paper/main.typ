@@ -2398,84 +2398,97 @@ evidence.
 
 = Future Work <sec:future_work>
 
-The results above leave the following directions open.
+The results above leave several directions open. The first few bear
+directly on the empirical comparison of §5 and §6; the formal targets
+that follow are the open ends of the Lean development in §7.
 
-#heading(level: 2, numbering: none)[$S_5$-generator-specific capacity bound]
+#heading(level: 2, numbering: none)[A stronger raw-write baseline]
 
-The k-step separation in §7 (`emender_m2rnn_k_step_separation`) proves
-that for every finite $k$ the gap persists on the constructed 2D
-witness alphabet. The missing piece — and the obvious next-paper
-target — is a formal capacity bound on the $S_5$ generator alphabet
-itself: a statement of the form "for any fixed-weight raw-write RNN at
-state dimension $d$ there is an explicit $T(d)$ past which $S_5$ coset
-tracking is unreachable, while the Emender at the same $d$ tracks it."
-That requires bounded-precision class machinery and Merrill-style
-state-counting lower bounds not yet in Mathlib. The §6
-length-extrapolation curves (parity, FSM tracking, modular counter;
-Emender-vs-baseline gap widening monotonically with sequence length)
-are the empirical signature on natural-language-shaped sequences.
-
-#heading(level: 2, numbering: none)[A partial order on PNR update rules]
-
-The within-PNR ordering established here (delta-correct $>$ raw-write)
-is the first strict instance of an expressivity order on the
-pure-nonlinear-recurrent class at matched per-token FLOP class
-(`emender_m2rnn_flop_class_equiv`). Whether this relation extends to a
-*partial order* with an NC#super[1] ceiling (Barrington) on the broader
-PNR space (in particular, whether antisymmetry and transitivity hold
-over the full space) is open. The maximal element under matched
-asymptotic FLOP class (which PNR update rule has the highest one-step
-expressive power for its compute class) is the open horizon, with the
-`RecurrentResourceFormalism` Lean machinery as the tool for climbing
-the order. Follow-up experiments are exploring more flexible bounded
-update rules, including GDN-2-style split erase/write variants; those
-runs are ongoing, and any empirical or formal results for these variants
-will be reported in an update rather than treated as evidence here.
-
-#heading(level: 2, numbering: none)[Additional seeds and architecture-internal revalidation]
-
-Each 1.3 B model trains for a multi-week wall-clock span per
-architecture, the standard unit of evidence at this scale class;
-additional seeds at this band are a multi-week investment per seed.
-Several architecture-internal choices in the Emender, including the
-output gate, the non-linearity on the state ($tanh$ vs linear), and
-the decay parameterization (simple sigmoid vs Mamba2-style log-space),
-show loss-only ties at small scale; revalidation of each at 1.3 B is
-open.
+The within-class ordering reported here — the Emender ahead of the
+raw-write update M²RNN-CMA — is conditional on the per-architecture
+CMA-ES search of §5, run at a fixed candidate budget. One contrast in
+the current evidence stays entangled because of that: the gap could be
+a genuine difference in what the two update rules express, or it could
+be the residue of a raw-write arm that received less effective
+optimization. The way to separate the two is a stronger raw-write
+baseline — the same search extended with further CMA-ES generations on
+the raw-write family at 1.3 B, under the matched budget rule — which
+distinguishes the conditional reading ("under the search effort used
+here") from the family-level reading ("under any matched search
+effort"). It is the sharpest single experiment for fixing where the
+Emender-versus-M²RNN-CMA gap actually sits, and §9 names it as the
+load-bearing follow-up.
 
 #heading(level: 2, numbering: none)[Scale beyond 1.3 B]
 
-The wallclock-band convergence is observed at 1.3 B parameters on
-The Pile. Whether the same band convergence holds at larger scale, on
-larger corpora, or under longer training is open.
+The loss-versus-wallclock band convergence is measured at the 1.3 B
+class on The Pile, at a single multi-week training extent. Whether the
+same band holds at larger parameter counts, on larger corpora, or under
+longer training is open; §11 states the throughput-scaling form of this
+question as a falsifiable prediction.
 
-#heading(level: 2, numbering: none)[Cleanest within-class HPO follow-up]
+#heading(level: 2, numbering: none)[Additional seeds and architecture-internal revalidation]
 
-The within-PNR ordering reported here is conditional on the
-per-architecture CMA-ES protocol of §5. Extending that protocol with
-further CMA-ES generations per family at 1.3 B, under the same budget
-rule, separates the conditional reading "under the search effort used
-here" from the family-level reading "under any matched search effort."
-It is the sharpest single experiment for fixing where the
-Emender-vs-M²RNN-CMA gap actually sits.
+Each 1.3 B run is a multi-week trajectory per architecture, so
+additional seeds at this band are a multi-week investment apiece; the
+1.3 B comparison is single-seed per architecture for that reason, and a
+seed-averaged repeat is open. Several architecture-internal choices in
+the Emender — the output gate, the state non-linearity ($tanh$ versus
+linear), and the decay parameterization (simple sigmoid versus
+Mamba2-style log-space) — tie on loss at small scale; revalidating each
+at 1.3 B is open.
 
-#heading(level: 2, numbering: none)[Latching-to-$S_5$-basin bridge and `latchAttractor` refinement]
+#heading(level: 2, numbering: none)[A capacity bound on the $S_5$ generators themselves]
+
+The $k$-step separation proved in §7
+(`emender_m2rnn_k_step_separation`, set C′) shows that for every finite
+$k$ the gap between the delta-correcting and raw-write updates persists,
+but it runs on a constructed two-dimensional witness alphabet rather
+than on the $S_5$ generators. The natural next-paper target is a
+capacity bound stated directly on the $S_5$ generator alphabet: for any
+fixed-weight raw-write recurrence at state dimension $d$, an explicit
+length $T(d)$ past which tracking the $S_5$ cosets becomes unreachable,
+while the Emender at the same $d$ still tracks them. That bound needs a
+bounded-precision raw-write class and Merrill-style state-counting lower
+bounds not yet available in Mathlib. Its empirical companion is already
+in hand: the §6 length-extrapolation curves on parity, finite-state
+tracking, and the modular counter — where the Emender-versus-baseline
+gap widens monotonically with sequence length — are the signature such
+a bound would explain on natural-language-shaped sequences.
+
+#heading(level: 2, numbering: none)[A partial order on PNR update rules]
+
+The ordering established here, delta-correcting above raw-write, is the
+first strict instance of an expressivity order on the
+pure-nonlinear-recurrent (PNR) class at matched per-token FLOP class
+(`emender_m2rnn_flop_class_equiv`, set D in §7). Whether that relation
+extends to a *partial order* over the broader PNR space — whether
+antisymmetry and transitivity hold across the full space, under an
+NC#super[1] ceiling (Barrington) — is open. The horizon is the maximal
+element: which PNR update rule carries the highest one-step expressive
+power for its compute class. The `RecurrentResourceFormalism`, the Lean
+signature in which the §7 separations are stated, is the tool for
+climbing that order. More flexible bounded update rules are the natural
+rungs, among them split erase/write variants in the style of
+Gated DeltaNet-2 @gated_deltanet2_2026; placing them in the order is
+open work.
+
+#heading(level: 2, numbering: none)[Lifting the latching theorems to the whole layer]
 
 The §7 latching set establishes the slot-level half of the Emender
-primitive, with three theorems covering saturation insensitivity,
-default hold under bounded delta, and release on counter-delta. Two
-formal targets sit on top of that set. The architecture-level lift
-promotes the slot-wise latching theorems to a
-`MemorySemantics.latchAttractor` label on the Emender signature in the
-`RecurrentResourceFormalism`, making slot-level behavior a statement
-about the matrix-state attractor structure of the whole layer. The
-basin-survival bridge takes an $S_5$-coset realized in an
-orthonormal-key Emender and shows it survives an adversary whose
-per-slot perturbation budget sits below the §7 release threshold,
-lifting the slot-level theorems to a coset-level guarantee on the
-state-tracking task. The first is a formalism refinement; the second
-is a Lean-targeted theorem that connects §7 to the §6 state-tracking
-empirics.
+primitive: three theorems covering saturation insensitivity, default
+hold under a bounded delta, and release on a sufficient counter-delta.
+Two formal targets sit on top of it. The first is a formalism
+refinement — an architecture-level lift that promotes the slot-wise
+latching theorems to a `MemorySemantics.latchAttractor` label on the
+Emender signature in the `RecurrentResourceFormalism`, recasting
+slot-level behavior as a statement about the matrix-state attractor
+structure of the whole layer. The second is a Lean-targeted theorem
+that connects §7 to the §6 empirics: a basin-survival bridge that takes
+an $S_5$ coset realized in an orthonormal-key Emender and shows it
+survives an adversary whose per-slot perturbation budget stays below the
+§7 release threshold, lifting the slot-level guarantees to a coset-level
+guarantee on the state-tracking task.
 
 // ── Appendix A — E63→E88 lineage and ablation notes ────────────────────────────
 = Appendix: Lineage of the E63 $arrow$ E88 experimental program <sec:appendix>
