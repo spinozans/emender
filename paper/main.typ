@@ -233,15 +233,15 @@ The architecture is a residual stack of recurrent layers. Each layer
 pairs a matrix-state memory with a write rule that has two halves.
 *Delta correction* is the first half. The layer reads what the memory
 predicts at the addressed slot, computes the prediction error, and
-writes the correction. Memory can change its mind, retracting a stale
-binding when the evidence forces it. *Tanh-with-latching* is the second
+writes the correction. Memory overwrites a stale binding when a later
+token addresses the same slot with a different value. *Tanh-with-latching* is the second
 half. A slot driven near $plus.minus 1$ becomes insensitive to further
 bounded writes, sub-threshold counter-input leaves the sign unchanged,
-and a sufficient counter-delta releases the slot. Memory can stand
-firm, holding a commitment across many irrelevant tokens, and remains
-revisable when the data demand it. State tracking needs both. A memory
-that can only add accumulates without correction; a memory that can
-only correct cannot hold a fact long enough to use it. An *emender* is
+and a sufficient counter-delta releases the slot. Memory persists,
+holding a binding across many irrelevant tokens, and remains
+overwritable when a sufficient counter-delta arrives. State tracking
+needs both. An add-only update accumulates without correction; a
+correction-only update cannot retain a binding long enough to use it. An *emender* is
 one such layer; the *Emender* is the architecture family obtained by
 stacking emender layers; *E88* is the 1.3 B instance
 evaluated throughout the paper.
@@ -1053,8 +1053,8 @@ ceiling the bounds set, and each range repositioning revealed the same
 pressure on the next iteration. The final $H = 370$ is the interior
 optimum reached after the bounds were placed far enough out that
 CMA-ES stopped against open ground. A search configured for
-cross-architecture fairness thus independently selected the design's
-central feature: throughput comes from many small heads.
+cross-architecture fairness thus placed its optimum at high head count
+without being tuned toward it: throughput comes from many small heads.
 
 #heading(level: 2, numbering: none)[Gradient conditioning is a third recipe property]
 
