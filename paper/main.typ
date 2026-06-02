@@ -1672,95 +1672,121 @@ at longer training horizons; §11 states the prediction explicitly.
 // ── 7. Formal Results ─────────────────────────────────────────────────────────
 = Formal Results <sec:formal>
 
-We have a trusted Lean 4 @lean42021 core built on Mathlib
-@mathlib4. The import closure of the `ElmanProofs.PaperCore` module
-(ten source files at the time of writing) contains no `sorry`, no
-`admit`, no `axiom`, no `opaque`, and no `native_decide`. Each result
-below is identified by its exact theorem name so that the reader can
-locate it in the source. Two results carry the spine of the argument.
-The *k-step separation*
-(`emender_m2rnn_k_step_separation`, theorem set C′ below) shows that
-for every $k >= 1$ and every fixed-right raw-write resource with
-row/column/cell external forget gates, there is an explicit $k$-token
-input sequence on which the $k$-step trajectories disagree: the gap
-strictly persists for every finite $k$ on the constructed witness
-alphabet rather than washing out under composition. The *latching set*
-(theorem set F below) formalizes the saturation half of the Emender
-primitive, with three slot-wise statements covering saturation
-insensitivity, sign-preserving hold under sub-threshold counter-input,
-and counter-delta release. The scope of what is and is not proved is
-summarized under "Frontier and unproven targets" below.
+The claims in this section are checked by a machine rather than argued
+on paper. A trusted Lean 4 @lean42021 core built on Mathlib @mathlib4
+carries the formal spine: each result is stated as a theorem and
+compiled together with a proof of it. Trust rests on what those proofs
+are *not* allowed to assume. The import closure of the
+`ElmanProofs.PaperCore` module — ten source files at the time of writing
+— uses none of Lean's escape hatches: no `sorry` or `admit` (which would
+leave a step unproved), no added `axiom`, no `opaque` definitions, and no
+`native_decide` (which would defer a step to compiled code outside the
+proof kernel). Every result below is named by its exact theorem so a
+reader can open the source and find it. What is proved here is
+realizability and representational scope; what a trained model actually
+learns under SGD is the separate empirical question of §5 and §6.
+
+Two results carry the spine. The first is that the delta-correcting and
+raw-write updates stay apart not only at one step but at every step of a
+composition: for each $k >= 1$ there is an explicit $k$-token input on
+which their $k$-step trajectories disagree by a margin bounded away from
+zero — the *k-step separation* (`emender_m2rnn_k_step_separation`,
+theorem set C′ below). The gap compounds on the constructed witness
+alphabet rather than washing out under composition. The second
+formalizes the latching half of the Emender's write rule (theorem set F
+below): three slot-wise statements covering saturation insensitivity,
+sign-preserving hold under sub-threshold counter-input, and release
+under a sufficient counter-delta. The scope of what is and is not proved
+is collected under "Frontier and unproven targets" and "Explicit
+non-claims" below.
 
 #heading(level: 2, numbering: none)[Theorem set A: finite-state ceiling and $S_5$ tracker]
 
+*What to take from set A: at fixed width and precision the Emender is a
+finite-state machine, and the $S_5$ word problem it is tested on is a
+concrete, fully specified finite-state target.*
+
 #set list(indent: 1em)
-- *Finite-state ceiling at fixed precision.*
-  `S5Witness.fixed_precision_state_space_finite` shows that every
-  fixed-precision online recognizer has a finite state space. This bounds
-  the Emender (at fixed width and precision) to regular-language
-  recognizers, and therefore strictly inside NC#super[1].
+- *Finite-state ceiling at fixed precision.* At fixed width and
+  precision, every online recognizer of this kind has only finitely many
+  distinct states (`S5Witness.fixed_precision_state_space_finite`). This
+  bounds the Emender to regular-language recognizers, and therefore
+  strictly inside NC#super[1].
 
-- *$S_5$ word problem.* `S5Witness.s5_state_count` proves $|S_5| = 120$;
-  `S5Witness.s5_not_solvable` proves $S_5$ is non-solvable;
-  `S5Tracker.recognizer_state_count` shows the prefix-product tracker is
-  a 120-state recognizer; `S5Tracker.run_append` proves that word
-  execution composes permutations. The bridge
-  `S5Tracker.pythonRun_eq_tracker_tuple` shows the Lean tracker agrees
-  on every input with the Python evaluation harness.
+- *$S_5$ word problem.* The target is pinned down exactly in Lean. The
+  group $S_5$ has 120 elements (`S5Witness.s5_state_count`) and is
+  non-solvable (`S5Witness.s5_not_solvable`); the prefix-product tracker
+  that reads a word of transpositions and reports the running product is
+  a 120-state recognizer (`S5Tracker.recognizer_state_count`) whose state
+  composes correctly as tokens are appended (`S5Tracker.run_append`). A
+  bridge lemma confirms the Lean tracker agrees with the Python
+  evaluation harness on every input
+  (`S5Tracker.pythonRun_eq_tracker_tuple`).
 
-- *Lookup-table realization.* `S5EmenderRealization.s5_transition_key_count`
-  shows the $S_5$ tracker uses exactly $120 times 4 = 480$ state/input
-  keys; `S5EmenderRealization.exactTransitionMemory_run` shows that any
-  finite recognizer admits an exact lookup-table realization.
+- *Lookup-table realization.* The tracker is small enough to write down
+  as a table: it uses exactly $120 times 4 = 480$ state/input keys
+  (`S5EmenderRealization.s5_transition_key_count`), and any finite
+  recognizer admits such an exact lookup-table realization
+  (`S5EmenderRealization.exactTransitionMemory_run`).
 
 #heading(level: 2, numbering: none)[Theorem set B: Emender realizes $S_5$]
 
-The bridge from the abstract lookup-table realization to the Emender update
-equation is `EmenderRealizesS5.emender_realizes_s5_tracker`: there exist an integer $d$, an
-orthonormal family of keys ${k_g}$ indexed by the adjacent-transposition
-generators, a value family ${v_g}$ and a decay scalar $lambda = 1$
-such that the Emender update
+*What to take from set B: the Emender can do the $S_5$ task exactly —
+there is a concrete setting of its weights that reproduces the tracker
+of set A.*
+
+The abstract lookup table of set A is realized by the Emender's own
+update equation (`EmenderRealizesS5.emender_realizes_s5_tracker`): there
+exist a state dimension $d$, an orthonormal family of keys ${k_g}$
+indexed by the adjacent-transposition generators, a value family
+${v_g}$, and a decay scalar $lambda = 1$ such that the Emender update
 $
   S_t = tanh(lambda dot S_(t-1) + k_(g_t) (v_(g_t) - S_(t-1)^T k_(g_t))^T)
 $
-produces a state trajectory that, decoded through a fixed linear
-readout, reconstructs the $S_5$ transition table on every input word.
-Here $v_g$ is the bounded post-nonlinearity value supplied to the abstract
-theorem update, corresponding to $"silu"(v_h)$ in the concrete per-head
-architecture of §3 rather than to a raw value projection.
-The proof uses
-`OnlineMemory.linearDeltaWrite_overwrites_one_preserves_others` for the
-orthonormal-key write step and `S5Tracker.run_append` for compositional
-correctness.
+produces a state trajectory that, read out through a fixed linear map,
+reconstructs the $S_5$ transition table on every input word. Here $v_g$
+is the bounded post-nonlinearity value supplied to the abstract update,
+corresponding to $"silu"(v_h)$ in the concrete per-head architecture of
+§3 rather than to a raw value projection. The proof writes each slot with
+the orthonormal-key delta step
+(`OnlineMemory.linearDeltaWrite_overwrites_one_preserves_others`) and
+chains the steps using compositional correctness of the tracker
+(`S5Tracker.run_append`).
 
 #heading(level: 2, numbering: none)[Theorem set C: update-family separation]
 
-The Emender's delta-correcting write and M²RNN's raw outer-product write are
-provably distinct as update families.
+*What to take from set C: in a single step the delta-correcting write
+does something no fixed-weight raw-write update of the matched shape can
+reproduce.*
 
-- *Mechanism separation.*
-  `OnlineMemory.linearDeltaWrite_overwrites_one_preserves_others` proves
-  that the delta write exactly overwrites the addressed slot while
-  preserving all orthogonal queries.
-  `OnlineMemory.rawOuterWrite_not_uniformOneStepOverwrite` proves that
-  the raw outer-product write cannot satisfy the uniform one-step
-  overwrite specification.
+The Emender's delta-correcting write and M²RNN's raw outer-product write
+are provably distinct as update families.
 
-- *One-step resource separation.* The main embedded statement
-  `RecurrentResourceFormalism.emender_m2rnn_one_step_resource_separation_embeds`
-  proves that for every $K >= 2$, $V >= 1$, no fixed-weight M²RNN
-  parameterization with row, column or cell forget gates can match the Emender's
-  mixed-key delta correction in one recurrent step. The result is sharp:
-  it covers every external-forget shape that respects the M²RNN
-  signature.
+- *Mechanism separation.* The delta write exactly overwrites the
+  addressed slot while leaving every orthogonal query untouched
+  (`OnlineMemory.linearDeltaWrite_overwrites_one_preserves_others`),
+  whereas the raw outer-product write cannot satisfy that uniform
+  one-step overwrite specification
+  (`OnlineMemory.rawOuterWrite_not_uniformOneStepOverwrite`).
 
-- *Positive embedding.* For completeness,
-  `M2RNNComparison.m2rnn_read_then_delta_embeds_e88_delta_update` shows
-  that *if* M²RNN is given the extra read-then-delta resource, it can
-  embed one Emender step. The separation in the previous bullet says that
-  without that extra resource M²RNN cannot.
+- *One-step resource separation.* For every $K >= 2$ and $V >= 1$, no
+  fixed-weight M²RNN parameterization with row, column, or cell forget
+  gates can match the Emender's mixed-key delta correction in a single
+  recurrent step
+  (`RecurrentResourceFormalism.emender_m2rnn_one_step_resource_separation_embeds`).
+  The result is sharp: it covers every external-forget shape the M²RNN
+  signature allows.
+
+- *Positive embedding.* The separation is about resources, not raw
+  capability. *Given* the extra read-then-delta resource, M²RNN can embed
+  one Emender step
+  (`M2RNNComparison.m2rnn_read_then_delta_embeds_e88_delta_update`); the
+  previous bullet says that without that extra resource it cannot.
 
 #heading(level: 2, numbering: none)[Theorem set C′: multi-step (k-step) separation]
+
+*What to take from set C′: the one-step gap does not average out under
+composition — it persists at every length on a constructed input.*
 
 The one-step separation of set C does *not* wash out under composition.
 
@@ -1772,26 +1798,30 @@ $k$-step trajectory by a margin bounded away from zero (Lean:
 `emender_m2rnn_k_step_separation`).*
 ])
 
-The witness alphabet is the 2-dimensional construction from
-set C composed with zero-input filler tokens
-(`kStepWitnessInputs k = (mixedKey, 0) :: zeroSteps (k - 1)`); the
-proof inducts on the tail, using the row-0 preservation lemma
-(`FixedRightRawExternalForget2_preserves_zero_row`) to keep entry
-$(0, 0)$ at zero on the raw-write side for every $k$, while the Emender
+The witness alphabet is the 2-dimensional construction from set C
+followed by zero-input filler tokens
+(`kStepWitnessInputs k = (mixedKey, 0) :: zeroSteps (k - 1)`). The proof
+inducts on the tail, using a lemma that keeps entry $(0, 0)$ pinned at
+zero on the raw-write side for every $k$
+(`FixedRightRawExternalForget2_preserves_zero_row`), while the Emender
 side reduces to the $k$-fold composition of $tanh$ at $-1$, which is
-nonzero by injectivity of $tanh$. The existential form
-`emender_m2rnn_k_step_separation_exists` packages the same statement
-existentially over $k$-step input sequences. The two-step case is
-exposed separately (`emender_m2rnn_two_step_separation`) as the
-inductive base. All three live in
-`ElmanProofs.Architectures.MultiStepSeparation`, which is part of the
-trusted import closure of `PaperCore`. The §6 length-extrapolation
+nonzero because $tanh$ is injective. A second form of the theorem
+packages the same statement existentially over $k$-step input sequences
+(`emender_m2rnn_k_step_separation_exists`), and the two-step case is
+exposed separately as the inductive base
+(`emender_m2rnn_two_step_separation`). All three live in
+`ElmanProofs.Architectures.MultiStepSeparation`, part of the trusted
+import closure of `PaperCore`. The §6 length-extrapolation
 curves (parity, FSM tracking, modular counter; Emender-vs-baseline gap
 widening monotonically with sequence length) are the empirical
 companion of this formal multi-step persistence on a
 natural-language-shaped alphabet.
 
 #heading(level: 2, numbering: none)[Frontier and unproven targets]
+
+*What to take from this: the clean k-step result is the ceiling reachable
+by direct composition; the stronger $S_5$-specific inseparability bound
+is carried by the empirical sections here, not yet by the formal core.*
 
 The k-step separation above is the *clean ceiling reachable from the
 one-step proof by direct composition*. The scope of what it does and
@@ -1809,8 +1839,8 @@ does not establish is named below, before stating Theorem set D.
   statement of the form "for any fixed-weight raw-write RNN at state
   dimension $d$ there is an explicit $T(d)$ past which $S_5$ coset
   tracking is unreachable, while the Emender at the same $d$ tracks it".
-  That is the stronger inseparability claim a reviewer would naturally
-  want; the trusted Lean core does not contain it.
+  That is the stronger inseparability claim; the trusted Lean core does
+  not contain it, and the empirical sections stand in for it.
 
 - *Why the stronger claim is not in the trusted core.* The $S_5$-coset
   inseparability claim is a *capacity* statement, not a witness
@@ -1839,48 +1869,58 @@ counting, Merrill-style capacity lemma), is documented in
 
 #heading(level: 2, numbering: none)[Theorem set D: per-token FLOP class]
 
-`RecurrentResourceFormalism.emender_m2rnn_flop_class_equiv` proves that the
-per-token floating-point operation count for one Emender head and one M²RNN
-head is bounded by a common $c_1 d^2 + c_2 d$ form, with explicit
-constants $c_1, c_2$. Equal-token-budget comparisons at matched $d, H,
-"depth"$ are therefore within a constant factor; the within-class
-empirical ordering of §5 cannot be charged to one PNR instance spending
-asymptotically more compute per token than the other.
+*What to take from set D: the per-step separation is not bought with
+extra compute — both updates cost the same per token to within a
+constant.*
+
+One Emender head and one M²RNN head have per-token floating-point
+operation counts bounded by a common $c_1 d^2 + c_2 d$ form, with
+explicit constants $c_1, c_2$
+(`RecurrentResourceFormalism.emender_m2rnn_flop_class_equiv`).
+Equal-token-budget comparisons at matched $d, H,$ and depth are therefore
+within a constant factor, so the within-class empirical ordering of §5
+cannot be charged to one PNR instance spending asymptotically more
+compute per token than the other.
 
 #heading(level: 2, numbering: none)[Parameter-efficiency corollary (informal; follows from sets C and D)]
 
-The per-step representational separation
-(`RecurrentResourceFormalism.emender_m2rnn_one_step_resource_separation_embeds`,
-set C) together with the matched per-token FLOP class equivalence
-(`RecurrentResourceFormalism.emender_m2rnn_flop_class_equiv`, set D) carries
-an informal *parameter-efficiency corollary*: any raw-write matrix RNN
-that one-step-realizes the Emender's mixed-key delta overwrite at the matched
-signature must allocate more state capacity (or, equivalently at fixed
-state shape, more fixed weights) than the Emender, because no fixed-weight
-raw-write parameterization at the matched signature with row, column or
-cell forget gates can produce the same one-step result (set C,
-sharpness clause). This corollary is *not* a standalone theorem in the
+Sets C and D together carry an informal *parameter-efficiency corollary*.
+Because no fixed-weight raw-write parameterization at the matched
+signature with row, column, or cell forget gates can produce the
+Emender's one-step mixed-key delta result (set C, sharpness clause), any
+raw-write matrix RNN that *does* one-step-realize it must allocate more
+state capacity — equivalently, at fixed state shape, more fixed weights —
+than the Emender, while the matched per-token FLOP class (set D) holds
+compute fixed. This corollary is *not* a standalone theorem in the
 trusted Lean core; it *follows from* the two named theorems above
 combined with the universal-overwrite specification
-`OnlineMemory.linearDeltaWrite_overwrites_one_preserves_others` and the
-negative counterpart `OnlineMemory.rawOuterWrite_not_uniformOneStepOverwrite`.
+(`OnlineMemory.linearDeltaWrite_overwrites_one_preserves_others`) and its
+negative counterpart
+(`OnlineMemory.rawOuterWrite_not_uniformOneStepOverwrite`).
 
 #heading(level: 2, numbering: none)[Theorem set E: multi-programming as a structural predicate]
 
-`RecurrentResourceFormalism.multiProgrammed_admits_m2rnn_and_emender` defines
-a predicate `IsMultiProgrammed` on architecture signatures capturing the
-three multi-programming features (many independent heads per layer,
-per-head state tile, per-batch independence). The 1.3 B Emender signature
-and a CMA-reshaped pure M²RNN signature both satisfy the predicate, and
-a non-trivial hybrid signature *fails* it. This is the small formal
-anchor for the *class-level* claim of §1: multi-programming is a
-property of the PNR class shared across both PNR instances trained
-here, not specific to the Emender. The trusted core formalizes the PNR class
-through two instances (the Emender and M²RNN-CMA), with the Emender as the
-delta-correct contribution of this work and M²RNN-CMA as the raw-write
+*What to take from set E: multi-programming is a property of the resource
+class, shared by both trained instances, not a quirk of the Emender.*
+
+A predicate `IsMultiProgrammed` on architecture signatures captures the
+three multi-programming features — many independent heads per layer, a
+per-head state tile, and per-batch independence
+(`RecurrentResourceFormalism.multiProgrammed_admits_m2rnn_and_emender`).
+Both the 1.3 B Emender signature and a CMA-reshaped pure M²RNN signature
+satisfy the predicate, while a non-trivial hybrid signature *fails* it.
+This is the small formal anchor for the *class-level* claim of §1:
+multi-programming belongs to the pure-nonlinear-recurrent class shared by
+both instances trained here, not to the Emender alone. The trusted core
+formalizes that class through its two instances — the Emender as the
+delta-correcting contribution of this work and M²RNN-CMA as the raw-write
 comparator.
 
 #heading(level: 2, numbering: none)[Theorem set F: latching]
+
+*What to take from set F: the tanh latch behaves as the architecture
+story needs — a saturated slot resists bounded writes and keeps its sign,
+yet still releases when a strong enough opposite write arrives.*
 
 These three results formalize the latching half of the Emender primitive:
 saturation makes a slot insensitive to further bounded writes, sign is
@@ -1933,6 +1973,10 @@ foundation.
 
 #heading(level: 2, numbering: none)[The NC#super[1] statement]
 
+*What to take from this: the Emender reaches the top of NC#super[1] on
+the canonical witness — the realization is proved here, while the
+matching hardness is Barrington's theorem, cited rather than reproved.*
+
 The precise NC#super[1] claim, stated conservatively:
 
 #block(inset: (x: 1.5em), [
@@ -1947,6 +1991,10 @@ NC#super[1] in the canonical regular-language witness.*
 ])
 
 #heading(level: 2, numbering: none)[Explicit non-claims]
+
+*What to take from this: this is the single place the formal section
+draws its boundary; the theorem sets above state what is proved and the
+earlier results sections need not relitigate it.*
 
 The trusted core does *not* prove the following, and the paper does not
 claim them. (i) A Lean lower bound covering all linear-scan models on
