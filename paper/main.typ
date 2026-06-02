@@ -580,20 +580,25 @@ than from non-solvability.
 
 #heading(level: 2, numbering: none)[Per-head update]
 
-We introduce the Emender architecture family. Its primitive is an
-emender layer: a matrix-state recurrent layer that reads the current state,
-computes the prediction error, and writes the delta correction. A concrete
-family member fixes the head count, state-tile size, depth, and language-model
-wrapper; E88 is the 1.3 B instance evaluated throughout the paper.
+Section 1 named the emender layer by what it does — read what the memory
+predicts at the addressed slot, compute the prediction error, and write the
+correction — and named E88 as the 1.3 B instance carried through the paper.
+This section makes the layer concrete: the per-step computation, the choices
+that fix it, and the shape numbers that make E88 one specific member of the
+family.
 
-Each emender layer maintains $H$ independent heads. Each head $h$ owns a
-matrix state $S_h in RR^(N times V)$. The trusted-core theorems of §7 use $d$
-for the common matrix dimension; in E88, $d = N = V = 32$, so each head's
-memory is a $32 times 32$ tile. Per token, the input gives projections
-$k_h, q_h in RR^N$, $v_h in RR^V$, and a scalar input-dependent decay
-$d_h in (0,1)$ and gate $g_h in RR^V$. The display below writes one head's
-full step in execution order: normalize the addresses, read at $k_h$, form the
-retrieval error, update the bounded state, and gate the read at $q_h$.
+An emender layer runs $H$ independent heads side by side. Each head $h$ owns
+its own matrix-state memory $S_h in RR^(N times V)$ — the matrix state of §2,
+here addressed by an $N$-dimensional key and holding a $V$-dimensional value
+at each addressed slot. (Section 7's theorems use a single symbol $d$ for the
+common matrix dimension; in E88, $d = N = V = 32$, so each head's memory is a
+$32 times 32$ tile.) At each token, the layer's input projections supply, per
+head, a key $k_h$ and query $q_h$ in $RR^N$ that name the slots to write and
+read, a value $v_h in RR^V$ to store, a scalar decay $d_h in (0,1)$ that fades
+the old state, and an output gate $g_h in RR^V$. The display below is one
+head's full step in execution order: normalize the two addresses, read the
+memory at the key, form the retrieval error, update the bounded state, and
+gate the read at the query.
 
 $
 k_h &<- "silu"(k_h) / norm("silu"(k_h))_2 quad ("L"^2 "-normalized key")\
@@ -604,22 +609,25 @@ S_h &<- tanh(d_h dot S_h + k_h delta_h^T) \
 y_h &= "silu"(g_h) dot.o S_h^T q_h
 $
 
-The first two lines make the addressing bounded, the middle lines make the
-write a correction against the content already read, and the final line gates
-only the read output. This is the emender-layer primitive; E88 repeats it
-across a concrete residual stack rather than changing the per-head equation.
+Here $"silu"$ is the smooth pointwise activation $x dot sigma(x)$, with
+$sigma$ the logistic sigmoid, and $norm(dot)_2$ is the Euclidean norm. The first two lines put the key and query on
+the unit sphere so the addressing is bounded; the middle lines make the write
+a correction against the content already read, not a raw addition; and the
+final line gates only the read output. This is the per-head primitive; E88
+repeats it across a residual stack rather than changing the per-head equation.
 
-E88 instantiates the Emender family with dim = 1664, depth = 12, $H = 370$
-heads per layer, $N = V = 32$, expansion = 1.0, batch size 5,
-`chunk_size=2048`, and 1.273 B parameters. Lean pins the trusted geometry as
-`emender_1p27B = emender 12 370 32`, proving 22,200 programs per token at
-batch size 5 and `370 * (32 * 32)` recurrent state scalars per layer. The
-implementation wrapper is a prenorm residual stack with a final norm and a
-tied LM-head embedding. Heads do not share recurrent state; projections for
-$q,k,v$, decay, and the output gate are learned per layer, `A_log` and
-`dt_bias` are learned per head with weight-decay exemptions, the recurrent
-state is fixed at zero when no hidden state is carried in, there is no output
-`RMSNorm` inside the recurrent layer, and the write path is not gated.
+E88 fixes these family choices to one billion-parameter instance: model width
+1664, depth 12, $H = 370$ heads per layer, $N = V = 32$, expansion 1.0, batch
+size 5, a recurrence chunk length of 2048 tokens, and 1.273 B parameters in
+total. A Lean 4 definition (`emender_1p27B`) pins this geometry — twelve
+layers of 370 heads, each with a $32 times 32$ tile — and from it the trusted
+core derives the two counts §1 quoted: 22,200 independent recurrent programs
+per token at batch size 5, and $370 times (32 times 32)$ recurrent-state
+scalars per layer. Around the recurrent core the language-model wrapper is
+conventional — a pre-norm residual stack with a final normalization and tied
+input/output embeddings. Heads never share recurrent state; each layer learns
+its own key, query, value, decay, and output-gate projections; and the
+recurrent state starts at zero when no prior state is carried in.
 
 #figure(
   kind: image,
@@ -748,35 +756,47 @@ in the instance above.
 
 #heading(level: 2, numbering: none)[Parameterization choices]
 
-In E88, decay is parameterized in log-space following Mamba2: per head we learn
-$A_(log) in RR$ and a scalar bias $delta_(text("bias"))$, then compute
-$d = exp(-exp(A_(log)) dot "softplus"(alpha(x) + delta_(text("bias"))))$,
-with `A_log` and `dt_bias` excluded from weight decay. Computation is
-done in float32 with cast-back to the storage dtype. The non-linearity on
-$S$ uses the numerically stable form $tanh(z) = 2 sigma(2z) - 1$ in the
-fused kernel to avoid $exp$ overflow at high pre-activations. There is
-no output `RMSNorm` inside the layer (ablation removed it as a 0.10-nat
-win); the LM wrapper uses block-level prenorm and a final norm only.
-Short convolutions on the input are absent. The write path is *not*
-gated; the gate `silu(g)` is applied to the read output only.
+E88 parameterizes the per-head decay $d_h$ in log space, following Mamba2
+@mamba2_2024: each head learns a scalar $A_(log)$ and a bias
+$delta_(text("bias"))$ — the code names `A_log` and `dt_bias` — and forms the
+decay as $d = exp(-exp(A_(log)) dot "softplus"(alpha(x) + delta_(text("bias"))))$,
+where $alpha(x)$ is the input-dependent term and $sigma$ is again the logistic
+sigmoid. Both decay parameters are exempt from weight decay, as is
+standard for such timescale parameters, so the regularizer does not pull the
+learned decay toward a default. The recurrence is computed in float32 and cast
+back to the storage precision, and the $tanh$ on the state uses the
+numerically stable form $tanh(z) = 2 sigma(2 z) - 1$ in the fused kernel to
+avoid overflow at large pre-activations. Three remaining choices are
+deliberate omissions rather than additions: there is no output normalization
+inside the recurrent layer — an ablation removed it for a 0.10-nat gain, and
+the wrapper's block-level pre-norm plus final norm suffice — no short
+convolution on the input, and no gate on the write path; the output gate
+$"silu"(g)$ acts on the read alone.
 
 #heading(level: 2, numbering: none)[The 1.3 B stack]
 
-The figure and §4 use the same trusted geometry. At batch size 5, depth 12
-and $H = 370$ give $12 times 370 times 5 = 22,200$ independent recurrent
-programs per token; each program carries its own $32 times 32$ state tile. The
-reference implementation and fused Triton recurrence kernel are listed in the
-Appendix.
+The 1.3 B stack's shape is not arbitrary. Ingredient (d) sets its character —
+many small heads rather than one large matrix — and the numbers follow from
+it: each head's $32 times 32$ tile is small enough to live in registers (§4),
+the head count $H = 370$ is large enough to give that many independent
+addressing programs per layer, and twelve such layers reach the 1.3 B-class
+budget the cohort comparison fixes. The exact values were set by the
+per-architecture search of §5, not by hand. At batch size 5, depth 12 and
+$H = 370$ multiply to $12 times 370 times 5 = 22,200$ independent recurrent
+programs per token, each carrying its own $32 times 32$ state tile. The
+reference implementation and the fused Triton recurrence kernel that steps
+these tiles are listed in the Appendix.
 
 #heading(level: 2, numbering: none)[Ablation by architecture: isolating the write rule]
 
-Three properties are candidates for the load-bearing differentiator in
-state-tracking: *matrix state*, *temporal nonlinearity on that state*,
-and *delta correction in the write*. The closest update-rule comparator
-to the Emender in the literature is M²RNN @m2rnn2026. Its nonlinear
-matrix-state update has two parts, so the display keeps them together: the
-first line constructs the nonlinear candidate, and the second mixes that
-candidate back through the forget gate.
+Three architectural properties are candidates for the one that lets a model
+track state: *matrix state*, *temporal nonlinearity on that state*, and *delta
+correction in the write*. The closest update-rule comparator to the Emender in
+the literature is M²RNN @m2rnn2026. Its nonlinear matrix-state update has two
+parts, written here as one display: the first line builds a nonlinear write
+candidate $Z_t$ from the matrix state $H_(t-1)$, a learned weight $W$, and the
+current key–value outer product $k_t v_t^T$; the second blends that candidate
+back into the state through a forget gate $f_t$.
 
 $
 Z_t &= tanh(H_(t-1) W + k_t v_t^T)\
@@ -798,7 +818,7 @@ elimination:
     stroke: 0.5pt,
     inset: 6pt,
     table.header(
-      [*Property*], [*GDN*], [*M²RNN*], [*Emender*], [*Verdict*],
+      [*Property*], [*GDN*], [*M²RNN*], [*Emender*], [*What it shows*],
     ),
     [Matrix state], [yes], [yes], [yes],
       [Cannot separate: GDN has it and fails $S_5$],
@@ -818,25 +838,28 @@ elimination:
   ],
 ) <tab_ablation>
 
-M²RNN-CMA scores 0.31 on $S_3$, the solvable control where non-solvability
-is *not* the obstruction. This rules out a complexity-ceiling
-explanation: even on a solvable group, where non-solvability is not the
-obstruction, M²RNN does not reach ceiling on $S_3$ at matched no-tuning
-budget. Nor is the shortfall a capacity ceiling. At the 8 M probe shape
+Two checks keep the isolation clean. First, M²RNN-CMA scores 0.31 on the
+solvable control $S_3$, where non-solvability is not the obstruction: a model
+held back only by the non-solvable structure of $S_5$ would still reach
+ceiling on $S_3$, and at matched no-tuning budget M²RNN-CMA does not, which
+rules out a complexity-ceiling explanation for its shortfall. Second, the
+shortfall is not a capacity ceiling. At the 8 M probe shape
 ($N times V times H times "depth" = 32 times 32 times 32 times 4 =
-131{,}072$), the per-token recurrent state carries 131,072 scalars,
-about five orders of magnitude above the $log_2 6 approx 2.6$-bit
-information-theoretic floor for representing the $S_3$ prefix-tracking
-table. The deficit is therefore trainability under SGD, not
-representability or capacity. The empirical data lives in §6
-(@tab_s5); the one-step formal counterpart is
-`RecurrentResourceFormalism.emender_m2rnn_one_step_resource_separation_embeds`
-(§7).
+131{,}072$) the per-token recurrent state carries 131,072 scalars — about five
+orders of magnitude above the $log_2 6 approx 2.6$-bit information-theoretic
+floor for representing the $S_3$ prefix-tracking table. What remains is a
+matter of trainability under SGD, not representability or capacity, in keeping
+with the efficiency reading the results sections develop. The empirical curves
+are in §6 (@tab_s5); the formal counterpart is a machine-checked one-step
+separation between the delta-correcting and raw-write updates
+(`emender_m2rnn_one_step_resource_separation_embeds`, §7).
 
-State capacity is *not* the differentiator. Mamba2 @mamba2_2024, GLA
-@gla2023, DeltaNet @deltanet2024, RWKV-5+ @rwkv7_2025, and GDN all
-carry matrix or expanded state; GDN has matrix state and still fails
-$S_5$. By elimination, the differentiator is the write rule.
+State capacity, then, is not the property that separates these models. Mamba2
+@mamba2_2024, GLA @gla2023, DeltaNet @deltanet2024, RWKV-5+ @rwkv7_2025, and
+GDN all carry matrix or expanded state, and GDN has matrix state yet still
+fails $S_5$ at length. By elimination across the three candidates, the one
+property the Emender has and both baselines lack is the delta-correcting
+write; what that write buys is measured in §5–§6 and bounded formally in §7.
 
 // ── 4. Systems ─────────────────────────────────────────────────────────────
 = Multi-Programming and Systems <sec:systems>
