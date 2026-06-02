@@ -2053,14 +2053,12 @@ $S_5$ collapse at length.
 
 A newer linear-state result, Gated DeltaNet-2 @gated_deltanet2_2026,
 decouples channel-wise erase and write gates and is reported by its
-authors to outperform GDN. It is concurrent with this work, and a
-comparison against it is left to future work. GDN-2 extends
-retrieval and state-tracking behavior inside the linear-state
-envelope, whereas this paper tests the expressivity axis opened by
-serial nonlinear state updates. Decoupled erase/write gates are also a
-concrete next-ablation prompt for the multi-programmed substrate,
-since they are the kind of bounded per-step-body variant that should
-not require a new time-parallel scan.
+authors to outperform GDN. It extends retrieval and state-tracking
+behavior inside the linear-state envelope; a comparison against it is
+left to future work. Its decoupled erase/write gates are a natural
+next ablation for the multi-programmed substrate, being the kind of
+bounded per-step-body variant that does not require a new time-parallel
+scan.
 
 #heading(level: 2, numbering: none)[Pure-nonlinear-recurrent peers and adjacent nonlinear-state work]
 
@@ -2082,26 +2080,24 @@ update-rule difference between delta-correcting (the Emender) and raw-write
 also report hybrid M²RNN configurations favorably against
 Mamba2 and Gated DeltaNet hybrids at matched parameter and token
 budgets under a uniform fixed-hyperparameter protocol (their §5.2);
-those hybrid configurations fall outside the pure-nonlinear-recurrent
-class, since the inserted attention layers are excluded by the
-no-hybridization criterion of §1.
+those configurations interleave attention layers and so lie outside
+the pure-nonlinear-recurrent setting this paper studies.
 
 *xLSTM-1.3B* @xlstm2024 is a 7:1 mixture of mLSTM (linear) and sLSTM
-(nonlinear) blocks; 87.5% of its blocks are linear-state, so xLSTM-1.3B
-is not pure-nonlinear-recurrent by the no-linearization criterion of
-§1. It is the closest scale band among prior nonlinear-recurrent
-results, included as a peer with the caveat that its nonlinear-block
-share is small. The xLSTM-7B follow-up @xlstm7b2025 uses *only* mLSTM
-(linear) blocks and is correspondingly further from the
-pure-nonlinear-recurrent class.
+(nonlinear) blocks; with 87.5% of its blocks linear-state, it sits
+closer to the linear-state class than to the pure-nonlinear-recurrent
+one. It is the closest scale band among prior nonlinear-recurrent
+results, included here as a peer, with the note that its
+nonlinear-block share is small. The xLSTM-7B follow-up @xlstm7b2025
+uses *only* mLSTM (linear) blocks, further from the
+pure-nonlinear-recurrent class still.
 
 *Titans* @titans2025 uses an MLP memory with online gradient updates
-and is qualitatively nonlinear-state, but it is hybridized with
-attention (also outside the no-hybridization criterion) and has
-not been evaluated as a pure recurrent model at Pile-class scale.
-*Zeroth-order LSTM scaling* @lstm_zoo_2025 demonstrates 1 B-scale LSTM
-training under a non-gradient regime; it is not a standard-gradient
-training comparable.
+and is qualitatively nonlinear-state, but it interleaves attention
+layers and has not been evaluated as a pure recurrent model at
+Pile-class scale. *Zeroth-order LSTM scaling* @lstm_zoo_2025
+demonstrates 1 B-scale LSTM training under a non-gradient regime,
+outside the standard-gradient comparison drawn here.
 
 *Classical LSTM/GRU* @lstm1997 is the historical background: no
 published classical LSTM/GRU model has reached $>= 500$ M parameters on
