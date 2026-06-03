@@ -303,7 +303,7 @@ instance directly with a raw-write instance under matched conditions.
 
 M²RNN already identifies the same basic hardware fact: a nonlinear
 recurrence cannot be scanned across time, so useful parallelism must
-come from the batch and head axes rather than the time axis. The
+come from batch and head parallelism rather than from the time axis. The
 difference here is how far that principle is pushed and what it is used
 to test. M²RNN promotes nonlinear matrix recurrence mainly as a sparse
 ingredient in hybrid stacks; in the pure setting the issue is not simply
