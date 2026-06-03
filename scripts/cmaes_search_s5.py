@@ -72,6 +72,15 @@ from calc_dim import (
 )
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
+# Put the repo root on sys.path so the S5 objective's real-param gate
+# (real_param_count_s5) can `import ndm` when this script is run as
+# `python scripts/cmaes_search_s5.py` (sys.path[0] is then scripts/, not the
+# repo root). Without this the controller's HybridLadderLM build raises
+# ModuleNotFoundError -> every candidate's real param count is None -> the 8M
+# gate rejects ALL candidates (0 valid configs/generation). Additive: harmless
+# for the LM path, which never imports ndm in the controller.
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
 # Supported n_state values for E88
 E88_SUPPORTED_N_STATE = [16, 32]
@@ -114,8 +123,14 @@ S5_BATCH = 32
 S5_OPTIMIZER = 'schedulefree'   # schedule-free AdamW, fixed across arms
 S5_SEED = 42               # search seed (per candidate)
 S5_WINDOW_STEPS = 1000     # fitness = 1 - mean eval_acc over final 1000 steps
-S5_EVAL_LENGTHS = [128, 256, 512, 1024]   # untouched out-of-selection eval grid
+S5_EVAL_LENGTHS = [128, 256, 512, 1024]   # candidate eval grid; overridable via --s5_eval_lengths (search uses [128] only)
 S5_DEPTH = 4               # seed depth; overridden per-candidate by searched depth
+S5_TARGET_PARAMS = 8_000_000  # ~8M re-match target; set from --params in main()
+# Per-arm FIXED BL-1 knobs (E88 only): set from --s5_linear_state / --s5_use_gate.
+# These are REMOVED from the CMA search space and injected as fixed params so the
+# tanh (linear_state=0) and linear (linear_state=1) arms are each tuned separately.
+S5_FIX_LINEAR_STATE = None  # 0=tanh ON, 1=linear state; None=do not force (LM path)
+S5_FIX_USE_GATE = None      # 1=output gate on; None=do not force (LM path)
 
 # Map the CMA model_type to the HybridLadderLM layer level that train_hybrid /
 # run_separation_suite use for the 8M probes (MODEL_CONFIG).
@@ -384,13 +399,15 @@ _S5_COMMON_SPACE = {
     'lr':     (1e-4, 3e-3, 'log', 'Learning rate (log) — where probe-learnability lives'),
 }
 
-# E88 additionally searches the two BL-1 structural knobs on S5.
-_S5_E88_SPACE = dict(_S5_COMMON_SPACE)
-_S5_E88_SPACE['linear_state'] = (0, 1, 'binary', 'State nonlinearity: 0=tanh, 1=linear (BL-1, searched on S5)')
-_S5_E88_SPACE['use_gate']     = (0, 1, 'binary', 'Output gate: 0=off, 1=on (BL-1, searched on S5)')
-
+# BL-1 structural knobs (linear_state / use_gate) are NOT searched. They are
+# FIXED per arm via --s5_linear_state / --s5_use_gate and injected as fixed
+# params in decode_params (see S5_FIX_LINEAR_STATE / S5_FIX_USE_GATE). Rationale:
+# the tanh-vs-linear (BL-1) decision is made by full-fidelity eval of two
+# separately-tuned models (e88-tanh, e88-linear), each run as its own arm — NOT
+# inside a truncated 300-step search. So E88 CMA's over the SAME 5 dims as the
+# other arms (dim/depth/n_heads/n_state/lr); linear_state/use_gate are held fixed.
 S5_SEARCH_SPACES = {
-    'e88':         _S5_E88_SPACE,
+    'e88':         dict(_S5_COMMON_SPACE),
     'm2rnn':       dict(_S5_COMMON_SPACE),
     'm2rnn-paper': dict(_S5_COMMON_SPACE),
     'fla-gdn':     dict(_S5_COMMON_SPACE),
@@ -501,6 +518,22 @@ def decode_params(x, model_type, fixed_params=None):
             params[name] = 10 ** (log_lo + val * (log_hi - log_lo))
         else:  # float
             params[name] = lo + val * (hi - lo)
+
+    # S5-symmetric: BL-1 knobs (linear_state, use_gate) are FIXED per arm and
+    # REMOVED from the CMA search space. Inject the per-arm fixed values BEFORE the
+    # dim re-match so real_param_count_s5 / rematch_dim_s5 and build_s5_train_command
+    # all see them. Only for the E88 layer family; harmless for the LM path.
+    if OBJECTIVE == 's5_acc@T128' and model_type == 'e88':
+        if S5_FIX_LINEAR_STATE is not None:
+            params['linear_state'] = int(S5_FIX_LINEAR_STATE)
+        if S5_FIX_USE_GATE is not None:
+            params['use_gate'] = int(S5_FIX_USE_GATE)
+
+    # S5-symmetric objective: re-match dim to ~8M (protocol §D). dim becomes a
+    # dependent variable holding the param budget symmetric while depth/n_heads/
+    # n_state/lr are searched. LM path unaffected.
+    if OBJECTIVE == 's5_acc@T128' and 'dim' not in fixed_params:
+        rematch_dim_s5(params, model_type, S5_TARGET_PARAMS)
 
     return params
 
@@ -787,6 +820,35 @@ def real_param_count_s5(params, model_type):
         n = None
     _S5_PARAM_CACHE[key] = n
     return n
+
+
+def rematch_dim_s5(params, model_type, target_params=None):
+    """Protocol §D dim re-match: hold every candidate at ~target_params (8M) by
+    snapping `dim` to the mult-16 value whose REAL constructed param count is
+    closest to target, given the candidate's depth/n_heads/n_state (and, for E88,
+    linear_state/use_gate). This is what makes dim "real-param re-matched to ~8M"
+    (S5_SEARCH_SPACES dim desc): the BL-1 knobs and depth/heads/state are the
+    genuine search dimensions, dim co-varies to keep the param budget symmetric.
+
+    Without it, raw CMA dim proposals almost never land in the thin 8M±10% band
+    (the valid band is only ~4-6 mult-16 steps wide and shifts with every other
+    knob), so the gate rejects ~all candidates. Mutates and returns `params`;
+    leaves `dim` unchanged only if NO dim in the band is buildable."""
+    if target_params is None:
+        target_params = S5_TARGET_PARAMS
+    trial = dict(params)
+    best_dim, best_diff = None, None
+    for dim in range(256, 768 + 16, 16):
+        trial['dim'] = dim
+        n = real_param_count_s5(trial, model_type)
+        if n is None:
+            continue
+        diff = abs(n - target_params)
+        if best_diff is None or diff < best_diff:
+            best_diff, best_dim = diff, dim
+    if best_dim is not None:
+        params['dim'] = best_dim
+    return params
 
 
 def is_valid_param_count(params, model_type, target_params, tolerance=None):
@@ -2401,6 +2463,30 @@ def main():
                              "1 - mean_S5_acc@T128 (protocol §D).")
     parser.add_argument('--cmaes_refinements', type=int, default=3,
                         help='Number of top LHS configs to refine with CMA-ES')
+    parser.add_argument('--s5_steps', type=int, default=None,
+                        help="Per-candidate train_hybrid step cap for the "
+                             "s5_acc@T128 objective. Default is the module "
+                             "S5_STEPS (5000); the right-sized S5-symmetric "
+                             "search reads recommended_candidate_steps from "
+                             "paper/review/S5_CANDIDATE_BUDGET.md (=2000). "
+                             "Additive: does not affect the lm_loss path.")
+    parser.add_argument('--s5_linear_state', type=int, default=None, choices=[0, 1],
+                        help="FIX the E88 BL-1 state nonlinearity per arm "
+                             "(0=tanh ON, 1=linear state). REMOVED from the CMA "
+                             "search space; run E88 twice (tanh + linear arms). "
+                             "s5_acc@T128 / e88 only; additive for other paths.")
+    parser.add_argument('--s5_use_gate', type=int, default=None, choices=[0, 1],
+                        help="FIX the E88 output gate per arm (1=on). REMOVED "
+                             "from the CMA search space. s5_acc@T128 / e88 only.")
+    parser.add_argument('--s5_eval_lengths', type=int, nargs='+', default=None,
+                        help="Override the candidate eval grid for s5_acc@T128. "
+                             "The search passes [128] only (the fitness length); "
+                             "256/512/1024 extrapolation is held out for the "
+                             "winner-eval phase. Additive: lm_loss path unaffected.")
+    parser.add_argument('--run_label', type=str, default=None,
+                        help="Prefix for the timestamped output subdir (default: "
+                             "--model). Use to distinguish same-model arms, e.g. "
+                             "e88-tanh vs e88-linear.")
 
     # Sweep options
     parser.add_argument('--sweep_param', type=str, default=None,
@@ -2491,8 +2577,24 @@ def main():
     global SKIP_MEMORY_PROBE, CHUNK_SIZE, GRADIENT_CHECKPOINTING, PROJECTION_CHUNK_SIZE
     global PARAM_TOLERANCE, PARAM_VOCAB_SIZE, TOKENIZER_NAME
     global PROGRESSIVE, PHASE1_MINUTES, PHASE2_MINUTES, PHASE2_CHUNK_SIZE
-    global OBJECTIVE
+    global OBJECTIVE, S5_STEPS, S5_TARGET_PARAMS
+    global S5_FIX_LINEAR_STATE, S5_FIX_USE_GATE, S5_EVAL_LENGTHS
     OBJECTIVE = args.objective
+    S5_TARGET_PARAMS = target_params   # ~8M re-match target for rematch_dim_s5
+    # Right-sized per-candidate budget (s5_acc@T128 only). Read from
+    # paper/review/S5_CANDIDATE_BUDGET.md (recommended_candidate_steps), NOT
+    # hardcoded. Default (None) preserves the original 5000-step cap.
+    if args.s5_steps is not None:
+        S5_STEPS = args.s5_steps
+    # Per-arm FIXED BL-1 knobs (E88 arms): removed from search, injected as fixed.
+    if args.s5_linear_state is not None:
+        S5_FIX_LINEAR_STATE = args.s5_linear_state
+    if args.s5_use_gate is not None:
+        S5_FIX_USE_GATE = args.s5_use_gate
+    # Candidate eval grid override (search uses T=128 only; extrapolation lengths
+    # are held out for the winner-eval phase).
+    if args.s5_eval_lengths is not None:
+        S5_EVAL_LENGTHS = list(args.s5_eval_lengths)
     if OBJECTIVE == 's5_acc@T128' and args.model not in S5_SEARCH_SPACES:
         parser.error(
             f"--objective s5_acc@T128 supports --model "
@@ -2517,26 +2619,29 @@ def main():
     PHASE2_MINUTES = args.phase2_minutes
     PHASE2_CHUNK_SIZE = args.phase2_chunk_size
 
-    # Create or reuse output directory
+    # Create or reuse output directory. The subdir prefix is --run_label when
+    # given (e.g. e88-tanh / e88-linear distinguish two same-model E88 arms),
+    # else the model name.
+    label_prefix = args.run_label or args.model
     if args.resume:
         # Resume mode: reuse the --output dir directly (or find latest timestamped subdir)
         if os.path.exists(args.output) and glob.glob(os.path.join(args.output, 'eval_*')):
             output_dir = args.output
         else:
-            # Find latest timestamped subdir matching model
-            candidates = sorted(glob.glob(os.path.join(args.output, f'{args.model}_*')))
+            # Find latest timestamped subdir matching label
+            candidates = sorted(glob.glob(os.path.join(args.output, f'{label_prefix}_*')))
             if candidates:
                 output_dir = candidates[-1]
             else:
-                print(f"No existing run found in {args.output} for model {args.model}, starting fresh")
+                print(f"No existing run found in {args.output} for label {label_prefix}, starting fresh")
                 args.resume = False
                 timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-                output_dir = os.path.join(args.output, f'{args.model}_{timestamp}')
+                output_dir = os.path.join(args.output, f'{label_prefix}_{timestamp}')
         if args.resume:
             print(f"RESUME: reusing output dir {output_dir}")
     else:
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        output_dir = os.path.join(args.output, f'{args.model}_{timestamp}')
+        output_dir = os.path.join(args.output, f'{label_prefix}_{timestamp}')
     os.makedirs(output_dir, exist_ok=True)
 
     print(f"{'='*70}")
