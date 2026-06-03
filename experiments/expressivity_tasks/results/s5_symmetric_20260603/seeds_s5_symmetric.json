@@ -1,0 +1,45 @@
+{
+  "_comment": "CMA-ES seed (warm-start / anchor) configs for the S5-symmetric protocol (paper/review/S5_SYMMETRIC_PROTOCOL.md S.D.2). Each arm is seeded at its existing 8M MODEL_CONFIG center from experiments/expressivity_tasks/run_separation_suite.py:77-112 (depth=4, H=32, N=32; FLA dim=640, M2RNN-paper dim=608). lr seeded at the probe's hand-set 3e-4. E88 additionally seeds the two BL-1 structural knobs at the current 8M-probe configuration (linear_state=0 i.e. tanh ON; use_gate=1 i.e. HybridLadderLM default), which CMA then searches symmetrically on S5. Loaded by load_anchor_configs(); use with --anchor_only_cmaes so the only warm start per arm is its seed.",
+  "e88": [
+    {
+      "name": "E88_8M_seed",
+      "dim": 384,
+      "depth": 4,
+      "n_heads": 32,
+      "n_state": 32,
+      "lr": 0.0003,
+      "linear_state": 0,
+      "use_gate": 1
+    }
+  ],
+  "m2rnn": [
+    {
+      "name": "M2RNN_8M_seed",
+      "dim": 384,
+      "depth": 4,
+      "n_heads": 32,
+      "n_state": 32,
+      "lr": 0.0003
+    }
+  ],
+  "fla-gdn": [
+    {
+      "name": "FLA_8M_seed",
+      "dim": 640,
+      "depth": 4,
+      "n_heads": 32,
+      "n_state": 32,
+      "lr": 0.0003
+    }
+  ],
+  "m2rnn-paper": [
+    {
+      "name": "M2RNN_paper_8M_seed",
+      "dim": 608,
+      "depth": 4,
+      "n_heads": 32,
+      "n_state": 32,
+      "lr": 0.0003
+    }
+  ]
+}

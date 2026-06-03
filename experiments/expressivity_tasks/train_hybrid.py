@@ -52,6 +52,17 @@ def main():
     ap.add_argument('--expansion', type=float, default=1.0)
     ap.add_argument('--use_triton_e88', action='store_true',
                     help='Route E88 layers through the Triton fwd/bwd kernels.')
+    # E88 structural (BL-1) knobs. Default None = use the E88 layer's own
+    # constructor defaults (unchanged behavior for run_separation_suite and the
+    # §6 probes). When set, they are forwarded per-layer to E88-family layers so
+    # the S5-symmetric CMA-ES can search them (paper/review/S5_SYMMETRIC_PROTOCOL.md
+    # §D.2: linear_state and use_gate become searched knobs for E88).
+    ap.add_argument('--linear_state', type=int, default=None, choices=[0, 1],
+                    help='E88 state nonlinearity: 0=tanh, 1=linear. Default: '
+                         "layer default (tanh). Forwarded only to E88-family layers.")
+    ap.add_argument('--use_gate', type=int, default=None, choices=[0, 1],
+                    help='E88 output gate: 0=off, 1=on. Default: HybridLadderLM '
+                         'default. Forwarded only to E88-family layers.')
     ap.add_argument('--m2rnn_q_heads', type=int, default=None)
     ap.add_argument('--m2rnn_k_heads', type=int, default=None)
     ap.add_argument('--m2rnn_v_heads', type=int, default=None)
@@ -117,10 +128,21 @@ def main():
     if args.m2rnn_normalize_qk: m2_kwargs['normalize_qk'] = True
     if args.m2rnn_no_residual: m2_kwargs['use_residual'] = False
     if args.m2rnn_freeze_state_weight: m2_kwargs['state_weight_trainable'] = False
-    layer_kwargs = [
-        dict(m2_kwargs) if level in ('m2rnn', 'm2rnn-paper') else {}
-        for level in args.layer_pattern
-    ]
+    # E88-family structural overrides (only applied when explicitly passed).
+    e88_kwargs = {}
+    if args.linear_state is not None:
+        e88_kwargs['linear_state'] = bool(args.linear_state)
+    if args.use_gate is not None:
+        e88_kwargs['use_gate'] = bool(args.use_gate)
+
+    def _layer_kw(level):
+        if level in ('m2rnn', 'm2rnn-paper'):
+            return dict(m2_kwargs)
+        if isinstance(level, str) and level.startswith('E88'):
+            return dict(e88_kwargs)
+        return {}
+
+    layer_kwargs = [_layer_kw(level) for level in args.layer_pattern]
     model = HybridLadderLM(
         vocab_size=task.vocab_size,
         dim=args.dim, depth=args.depth,
@@ -151,6 +173,8 @@ def main():
            'seed': args.seed, 'params': n_params,
            'disable_autocast': bool(args.disable_autocast),
            'use_triton_e88': bool(args.use_triton_e88),
+           'linear_state': args.linear_state,
+           'use_gate': args.use_gate,
            'random_baseline_acc': task.random_baseline_acc(),
            'steps': []}
 
