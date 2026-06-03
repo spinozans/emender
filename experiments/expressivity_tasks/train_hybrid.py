@@ -89,6 +89,9 @@ def main():
                     help='If set, after training, eval at each of these T values '
                          '(Délétang length-extrapolation protocol). Records per-T '
                          "accuracy under log['length_extrap'].")
+    ap.add_argument('--eval_interval', type=int, default=None,
+                    help='Steps between S5 eval logging. Default: max(50, steps//20). '
+                         'Set to 100 for dense candidate-budget calibration curves.')
     ap.add_argument('--eval_lengths_n_batches', type=int, default=8,
                     help='Number of eval batches per length in --eval_lengths.')
     ap.add_argument('--disable_autocast', action='store_true',
@@ -179,7 +182,7 @@ def main():
            'steps': []}
 
     t0 = time.time()
-    eval_interval = max(50, args.steps // 20)
+    eval_interval = args.eval_interval if args.eval_interval is not None else max(50, args.steps // 20)
     model.train()
     if hasattr(optimizer, 'train'): optimizer.train()
     for step in range(args.steps):
