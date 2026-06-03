@@ -52,7 +52,7 @@ from calc_dim import (
     calc_transformer_params, calc_gru_params, calc_lstm_params,
     calc_mingru_params, calc_minlstm_params, calc_mom_e88_params, calc_e90_params,
     calc_e1_params, calc_e1h_params, calc_e23_params, calc_e42_params, calc_e75_params,
-    calc_m2rnn_params, calc_gdn2_params, calc_mamba3_params,
+    calc_m2rnn_params, calc_gdn2_params, calc_gdn2_mlp_params, calc_mamba3_params,
 )
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -230,6 +230,15 @@ SEARCH_SPACES = {
         'n_heads': (8, 64, 'int', 'Number of heads'),
         'lr': (1e-4, 3e-3, 'log', 'Learning rate'),
         'batch_size': (1, 128, 'int_log', 'Batch size (log-scale, clamped to max feasible)'),
+        },
+    'gdn2-mlp': {
+        'dim': (1536, 3072, 'int_mult128', 'Model dimension'),
+        'expansion': (1, 3, 'int', 'GDN-2 value expansion factor'),
+        'depth': (10, 32, 'int', 'Number of layers'),
+        'n_heads': (8, 40, 'int', 'Number of GDN-2 heads'),
+        'mlp_ratio': (2.0, 4.0, 'float', 'SwiGLU hidden ratio'),
+        'lr': (1e-4, 3e-3, 'log', 'Learning rate'),
+        'batch_size': (1, 64, 'int_log', 'Batch size (log-scale, clamped to max feasible)'),
         },
     'mamba2': {
         'dim': (1024, 3072, 'int_mult128', 'Model dimension'),
@@ -597,6 +606,12 @@ def estimate_params_for_config(params, model_type):
             dim, depth=depth, expansion=params.get('expansion', 2),
             n_heads=params.get('n_heads', None), vocab_size=vocab_size,
         )
+    elif model_type == 'gdn2-mlp':
+        return calc_gdn2_mlp_params(
+            dim, depth=depth, expansion=params.get('expansion', 1),
+            n_heads=params.get('n_heads', None), vocab_size=vocab_size,
+            mlp_ratio=params.get('mlp_ratio', 6208 / 2304),
+        )
     elif model_type == 'mamba2':
         return calc_mamba2_params(dim, depth=depth, expand=params.get('expand', 2),
                                   d_state=params.get('d_state', 64),
@@ -963,6 +978,16 @@ def build_train_command(params, model_type, train_minutes, output_dir):
             '--d_conv', '4',
         ])
 
+    elif model_type == 'gdn2-mlp':
+        cmd.extend([
+            '--level', 'gdn2-mlp',
+            '--expansion', str(params['expansion']),
+            '--n_heads', str(params.get('n_heads', 16)),
+            '--gdn2_mlp_ratio', str(params.get('mlp_ratio', 6208 / 2304)),
+            '--use_conv', '1',
+            '--d_conv', '4',
+        ])
+
     elif model_type == 'mamba2':
         cmd.extend([
             '--level', 'mamba2',
@@ -1151,7 +1176,7 @@ def prepare_worker_env(model_type, gpu_id):
     if os.path.isdir(cuda_home):
         env.setdefault("CUDA_HOME", cuda_home)
         env["PATH"] = f"{cuda_home}/bin:{env.get('PATH', '')}"
-    if model_type == 'gdn2' and os.path.isdir('/home/erikg/GatedDeltaNet-2'):
+    if model_type in ('gdn2', 'gdn2-mlp') and os.path.isdir('/home/erikg/GatedDeltaNet-2'):
         env.setdefault('GDN2_PATH', '/home/erikg/GatedDeltaNet-2')
     if model_type == 'mamba3' and os.path.isdir('/home/erikg/mamba3'):
         env.setdefault('MAMBA3_PATH', '/home/erikg/mamba3')
@@ -1816,12 +1841,19 @@ def run_cmaes_phase(model_type, train_minutes, output_dir, gpus,
             # This keeps the covariance matrix clean (no penalty pollution)
             fitnesses = [r['loss'] for r in gen_results]
             cma_updated = False
-            if len(fitnesses) >= 2:
+            min_tell_solutions = getattr(getattr(es, 'sp', None), 'weights', None)
+            min_tell_solutions = getattr(min_tell_solutions, 'mu', 2)
+            if len(fitnesses) >= min_tell_solutions:
                 try:
                     es.tell(valid_solutions[:len(fitnesses)], fitnesses)
                     cma_updated = True
                 except ValueError as e:
                     print(f"    WARNING: CMA-ES update skipped: {e}")
+            elif fitnesses:
+                print(
+                    f"    WARNING: CMA-ES update skipped: "
+                    f"{len(fitnesses)} evaluated configs < mu={min_tell_solutions}"
+                )
 
             # Track best
             if not fitnesses:
@@ -1847,8 +1879,11 @@ def run_cmaes_phase(model_type, train_minutes, output_dir, gpus,
                 else:
                     generations_without_improvement += 1
             else:
-                if len(fitnesses) < 2:
-                    print("    Only one evaluated config; skipping CMA-ES update and leaving convergence counter unchanged")
+                if len(fitnesses) < min_tell_solutions:
+                    print(
+                        "    Too few evaluated configs for CMA-ES update; "
+                        "leaving convergence counter unchanged"
+                    )
 
             print(f"    Gen best: {gen_best_loss:.4f} | Overall best: {best_loss:.4f} | "
                   f"No improvement: {generations_without_improvement}/{consecutive_required}")

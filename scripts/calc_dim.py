@@ -163,28 +163,64 @@ def calc_fla_gdn_params(dim, depth, expansion=2.0, n_heads=None, vocab_size=256)
     return layers_total + embed + final_norm
 
 
-def calc_gdn2_params(dim, depth, expansion=2.0, n_heads=None, head_dim=128, vocab_size=256):
-    """Approximate parameters for the external GDN-2 layer used by Emender."""
+OFFICIAL_GDN2_MLP_RATIO = 6208 / 2304
+
+
+def _round_gdn2_mlp_hidden(dim, mlp_ratio, multiple=64):
+    return max(multiple, int(round(dim * mlp_ratio / multiple) * multiple))
+
+
+def _calc_gdn2_layer_params(dim, expansion=2.0, n_heads=None, head_dim=128, d_conv=4, use_conv=True):
+    """Exact parameters for NVIDIA's external GatedDeltaNet2 mixer module."""
     if n_heads is None:
         n_heads = max(1, dim // head_dim)
     value_head_dim = int(head_dim * expansion)
     key_dim = n_heads * head_dim
     value_dim = n_heads * value_head_dim
-    per_layer = (
+    conv_params = (key_dim * 2 + value_dim) * d_conv if use_conv else 0
+    return (
         dim * key_dim * 2
         + dim * value_dim
-        + dim * key_dim
-        + dim * value_dim
+        + conv_params
         + dim * value_head_dim
         + value_head_dim * key_dim
-        + dim * value_head_dim
-        + value_head_dim * value_dim
-        + value_dim * dim
-        + (key_dim * 2 + value_dim) * 4
+        + dim * key_dim
+        + dim * value_dim
         + n_heads
         + key_dim
-        + 2 * n_heads * value_head_dim
+        + dim * value_head_dim
+        + value_head_dim * value_dim
+        + value_dim
+        + value_head_dim
+        + value_dim * dim
+    )
+
+
+def calc_gdn2_params(dim, depth, expansion=2.0, n_heads=None, head_dim=128, vocab_size=256):
+    """Exact LadderLM parameters for the external GDN-2 mixer-only layer."""
+    per_layer = _calc_gdn2_layer_params(
+        dim, expansion=expansion, n_heads=n_heads, head_dim=head_dim
+    ) + dim
+    return vocab_size * dim + depth * per_layer + dim
+
+
+def calc_gdn2_mlp_params(
+    dim,
+    depth,
+    expansion=1.0,
+    n_heads=None,
+    head_dim=128,
+    vocab_size=256,
+    mlp_ratio=OFFICIAL_GDN2_MLP_RATIO,
+    mlp_multiple=64,
+):
+    """Exact LadderLM parameters for GDN-2 mixer plus official-style SwiGLU MLP."""
+    mlp_hidden = _round_gdn2_mlp_hidden(dim, mlp_ratio, mlp_multiple)
+    per_layer = (
+        _calc_gdn2_layer_params(dim, expansion=expansion, n_heads=n_heads, head_dim=head_dim)
         + dim
+        + dim
+        + 3 * dim * mlp_hidden
     )
     return vocab_size * dim + depth * per_layer + dim
 
@@ -713,6 +749,15 @@ def main():
         )
         config = {'model': 'gdn2', 'dim': dim, 'depth': args.depth,
                   'expansion': args.expansion, 'params': params}
+
+    elif model == 'gdn2-mlp':
+        dim, params = find_dim_for_params(
+            calc_gdn2_mlp_params, target, depth=args.depth, expansion=args.expansion,
+            n_heads=16, mlp_ratio=OFFICIAL_GDN2_MLP_RATIO
+        )
+        config = {'model': 'gdn2-mlp', 'dim': dim, 'depth': args.depth,
+                  'expansion': args.expansion, 'n_heads': 16,
+                  'mlp_ratio': OFFICIAL_GDN2_MLP_RATIO, 'params': params}
 
     elif model.startswith('e75'):
         # Parse E75h4n32 format

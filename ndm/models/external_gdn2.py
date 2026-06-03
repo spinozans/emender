@@ -17,9 +17,11 @@ import types
 from pathlib import Path
 
 import torch.nn as nn
+import torch.nn.functional as F
 
 
 DEFAULT_GDN2_PATH = "/home/erikg/GatedDeltaNet-2"
+OFFICIAL_GDN2_MLP_RATIO = 6208 / 2304
 _GDN2_CLASS = None
 
 
@@ -227,28 +229,136 @@ class GDN2ExternalLayer(nn.Module):
         )
 
 
-def count_gdn2_external_params(dim, depth, vocab_size=256, expansion=2.0, num_heads=None, head_dim=128):
-    """Approximate LadderLM parameter count for the external GDN-2 layer."""
+class _SwiGLUMLP(nn.Module):
+    """Bias-free LLaMA-style SwiGLU MLP used by the official GDN-2 block."""
+
+    def __init__(self, dim, hidden_dim):
+        super().__init__()
+        self.w1 = nn.Linear(dim, hidden_dim, bias=False)
+        self.w2 = nn.Linear(dim, hidden_dim, bias=False)
+        self.w3 = nn.Linear(hidden_dim, dim, bias=False)
+
+    def forward(self, x):
+        return self.w3(F.silu(self.w1(x)) * self.w2(x))
+
+
+def _round_mlp_hidden(dim, mlp_ratio, multiple=64):
+    return max(multiple, int(round(dim * mlp_ratio / multiple) * multiple))
+
+
+class GDN2ExternalMLPLayer(nn.Module):
+    """GDN-2 mixer plus the official-style post-mixer SwiGLU MLP.
+
+    LadderLM supplies the first RMSNorm externally. This layer adds the second
+    RMSNorm and MLP so its per-layer parameter count matches the official
+    serial GDN-2 block. The residual placement is necessarily approximate
+    because LadderLM owns the outer Mamba-style residual stream.
+    """
+
+    def __init__(
+        self,
+        dim,
+        expansion=1.0,
+        dropout=0.0,
+        head_dim=128,
+        num_heads=None,
+        use_conv=None,
+        d_conv=4,
+        gdn2_mlp_ratio=OFFICIAL_GDN2_MLP_RATIO,
+        gdn2_mlp_multiple=64,
+        **kwargs,
+    ):
+        super().__init__()
+        if num_heads is None:
+            num_heads = kwargs.get("n_heads")
+
+        self.dim = dim
+        self.expansion = expansion
+        self.num_heads = num_heads if num_heads is not None else max(1, dim // head_dim)
+        self.actual_head_dim = head_dim
+        self.mlp_ratio = gdn2_mlp_ratio
+        self.mlp_hidden_dim = _round_mlp_hidden(dim, gdn2_mlp_ratio, gdn2_mlp_multiple)
+        self.gdn2 = GDN2ExternalLayer(
+            dim=dim,
+            expansion=expansion,
+            dropout=0.0,
+            head_dim=head_dim,
+            num_heads=self.num_heads,
+            use_conv=use_conv,
+            d_conv=d_conv,
+            **kwargs,
+        )
+        self.norm_2 = nn.RMSNorm(dim, eps=1e-5)
+        self.mlp = _SwiGLUMLP(dim, self.mlp_hidden_dim)
+        self.dropout = nn.Dropout(dropout) if dropout > 0 else nn.Identity()
+
+    def set_layer_idx(self, idx):
+        self.gdn2.set_layer_idx(idx)
+
+    def forward(self, x, h0=None, **kwargs):
+        gdn_out, cache = self.gdn2(x, h0, **kwargs)
+        mlp_out = self.mlp(self.norm_2(x + gdn_out))
+        return self.dropout(gdn_out + mlp_out), cache
+
+    def extra_repr(self):
+        return (
+            f"dim={self.dim}, expansion={self.expansion}, "
+            f"num_heads={self.num_heads}, head_dim={self.actual_head_dim}, "
+            f"mlp_hidden_dim={self.mlp_hidden_dim}, external=GDN2+MLP"
+        )
+
+
+def _gdn2_layer_params(dim, expansion=2.0, num_heads=None, head_dim=128, d_conv=4, use_conv=True):
+    """Exact parameter count for the external GatedDeltaNet2 mixer module."""
     if num_heads is None:
         num_heads = max(1, dim // head_dim)
     value_head_dim = int(head_dim * expansion)
     key_dim = num_heads * head_dim
     value_dim = num_heads * value_head_dim
+    conv_params = (key_dim * 2 + value_dim) * d_conv if use_conv else 0
 
-    per_layer = (
-        dim * key_dim * 2
-        + dim * value_dim
-        + dim * key_dim
-        + dim * value_dim
-        + dim * value_head_dim
-        + value_head_dim * key_dim
-        + dim * value_head_dim
+    return (
+        dim * key_dim * 2          # q_proj, k_proj
+        + dim * value_dim          # v_proj
+        + conv_params              # optional q/k/v depthwise short convs
+        + dim * value_head_dim     # f_proj.0
+        + value_head_dim * key_dim # f_proj.1
+        + dim * key_dim            # b_proj
+        + dim * value_dim          # w_proj
+        + num_heads                # A_log
+        + key_dim                  # dt_bias
+        + dim * value_head_dim     # g_proj.0
         + value_head_dim * value_dim
-        + value_dim * dim
-        + (key_dim * 2 + value_dim) * 4
-        + num_heads
-        + key_dim
-        + 2 * num_heads * value_head_dim
-        + dim
+        + value_dim                # g_proj.1 bias
+        + value_head_dim           # o_norm weight
+        + value_dim * dim          # o_proj
+    )
+
+
+def count_gdn2_external_params(dim, depth, vocab_size=256, expansion=2.0, num_heads=None, head_dim=128):
+    """Exact LadderLM parameter count for the external GDN-2 mixer layer."""
+    per_layer = _gdn2_layer_params(
+        dim, expansion=expansion, num_heads=num_heads, head_dim=head_dim
+    ) + dim  # LadderLM's pre-mixer RMSNorm
+    return vocab_size * dim + depth * per_layer + dim
+
+
+def count_gdn2_mlp_external_params(
+    dim,
+    depth,
+    vocab_size=256,
+    expansion=1.0,
+    num_heads=None,
+    head_dim=128,
+    mlp_ratio=OFFICIAL_GDN2_MLP_RATIO,
+    mlp_multiple=64,
+):
+    """Exact LadderLM parameter count for GDN-2 mixer + SwiGLU MLP."""
+    mlp_hidden = _round_mlp_hidden(dim, mlp_ratio, mlp_multiple)
+    per_layer = (
+        _gdn2_layer_params(dim, expansion=expansion, num_heads=num_heads, head_dim=head_dim)
+        + dim                # LadderLM pre-mixer RMSNorm
+        + dim                # post-mixer RMSNorm inside GDN2ExternalMLPLayer
+        + 3 * dim * mlp_hidden
     )
     return vocab_size * dim + depth * per_layer + dim

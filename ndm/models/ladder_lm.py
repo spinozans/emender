@@ -91,7 +91,7 @@ from .e67_h_gated import E67HGated, E67HGatedDiagonal, E67HGatedLowRank
 from .e68_self_gating import E68SelfGating, E68SelfGatingStandard, E68SelfGatingInverse
 from .gated_delta_net import GatedDeltaNet, GatedDeltaNetVector
 from .fla_gated_delta import FLAGatedDeltaNetLayer
-from .external_gdn2 import GDN2ExternalLayer
+from .external_gdn2 import GDN2ExternalLayer, GDN2ExternalMLPLayer, OFFICIAL_GDN2_MLP_RATIO
 from .e91_matmat import E91MatMat
 from .e92_matmat import E92MatMat
 from .e93_minimal import E93Minimal
@@ -221,6 +221,7 @@ def get_ladder_level(level):
         'gdn-vec': GatedDeltaNetVector,  # GatedDeltaNet Vector: Simplified (vector state)
         'fla-gdn': FLAGatedDeltaNetLayer,  # FLA GatedDeltaNet: Optimized Triton kernels (ICLR 2025)
         'gdn2': GDN2ExternalLayer,  # External NVIDIA GatedDeltaNet-2 checkout
+        'gdn2-mlp': GDN2ExternalMLPLayer,  # External GDN-2 mixer plus official-style SwiGLU MLP
         'llama': LlamaLayer,  # Llama Transformer: attention baseline
         70: E70MatrixLinear,  # E70: Matrix Linear (E42-style) - linear accum + self-gate
         '70n32': lambda **kw: E70MatrixLinear(n_state=32, **kw),
@@ -793,7 +794,7 @@ def get_ladder_level(level):
             n_state = int(match.group(2)) if match.group(2) else 32
             return lambda **kw: E88FLAHybrid(**{**kw, 'n_heads': n_heads, 'n_state': n_state})
 
-    raise ValueError(f"Invalid level {level}. Available: 0-6, 8-17, 18a/b/e, 19a/b/d/e, 20-26, 28, 30-68, gdn, gdn-vec, fla-gdn, gdn2, llama, mamba2, E75h*n*, E88h*n*")
+    raise ValueError(f"Invalid level {level}. Available: 0-6, 8-17, 18a/b/e, 19a/b/d/e, 20-26, 28, 30-68, gdn, gdn-vec, fla-gdn, gdn2, gdn2-mlp, llama, mamba2, E75h*n*, E88h*n*")
 
 
 class LadderLM(nn.Module):
@@ -842,6 +843,7 @@ class LadderLM(nn.Module):
         state_expansion=2,  # For E16: d_state = d_inner * state_expansion
         use_conv=False,  # Conv1d hurts E-series (nonlinear RNN doesn't need it)
         d_conv=4,  # Conv kernel size (if enabled)
+        gdn2_mlp_ratio=OFFICIAL_GDN2_MLP_RATIO,  # Official GDN-2 6208/2304 SwiGLU ratio
         top_k=None,  # For MoM E88: number of active memory slots (top-K routing)
         k_fast=None,  # For E90 Dual-Rate: fast state dimension
         k_slow=None,  # For E90 Dual-Rate: slow state dimension
@@ -916,6 +918,7 @@ class LadderLM(nn.Module):
                 state_expansion=state_expansion,  # For E16
                 use_conv=use_conv,  # Conv1d before recurrence (like Mamba2)
                 d_conv=d_conv,  # Conv kernel size
+                gdn2_mlp_ratio=gdn2_mlp_ratio,  # For gdn2-mlp
                 top_k=top_k,  # For MoM E88: number of active memory slots
                 k_fast=k_fast,  # For E90 Dual-Rate: fast state dimension
                 k_slow=k_slow,  # For E90 Dual-Rate: slow state dimension

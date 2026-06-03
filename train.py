@@ -163,6 +163,8 @@ def parse_args():
                         help='Use Conv1d before recurrence (0=no, 1=yes)')
     parser.add_argument('--d_conv', type=int, default=4,
                         help='Conv kernel size (if use_conv=1)')
+    parser.add_argument('--gdn2_mlp_ratio', type=float, default=6208 / 2304,
+                        help='For gdn2-mlp: SwiGLU hidden ratio (official gdn2_1.3B is 6208/2304)')
     parser.add_argument('--dropout', type=float, default=0.0,
                         help='Dropout rate (0.0 to 0.3)')
 
@@ -664,6 +666,7 @@ def train(args):
             r_h_mode=r_h_mode,
             use_conv=bool(args.use_conv),
             d_conv=args.d_conv,
+            gdn2_mlp_ratio=args.gdn2_mlp_ratio,
             dropout=args.dropout,
             checkpoint_interval=args.checkpoint_interval,
             gradient_checkpointing=args.gradient_checkpointing,
