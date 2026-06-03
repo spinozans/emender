@@ -301,6 +301,20 @@ pure-recurrent setting was set aside rather than filled. This work
 takes the pure-recurrent route and compares a delta-correcting
 instance directly with a raw-write instance under matched conditions.
 
+M²RNN already identifies the same basic hardware fact: a nonlinear
+recurrence cannot be scanned across time, so useful parallelism must
+come from the batch and head axes rather than the time axis. The
+difference here is how far that principle is pushed and what it is used
+to test. M²RNN promotes nonlinear matrix recurrence mainly as a sparse
+ingredient in hybrid stacks; in the pure setting the issue is not simply
+having many value heads but having many independent *address programs* —
+what we call *address-program multiplicity*. The CMA-reshaped raw-write
+comparator used here moves M²RNN into that same pure multi-programmed
+regime, removing the shared-address bottleneck that destabilizes the
+paper-default shape. Once that systems bottleneck is gone, the remaining
+controlled contrast is the write rule: raw overwrite versus delta
+correction.
+
 #heading(level: 2, numbering: none)[Contributions]
 
 The contributions are three results.
@@ -443,6 +457,13 @@ substantiate each row; the pointers are forward references.
     row is a measured null result.
   ],
 ) <tab_claims>
+
+One scope note belongs with M²RNN specifically. We do not claim that
+M²RNN lacked width or batch parallelism, or missed that a nonlinear
+recurrence is serial in time; the distinction is that its published
+scaling route emphasizes *hybrid* use, while the CMA-reshaped raw-write
+control here shows what the raw-write family does *after* the
+pure-recurrent addressing bottleneck has been removed.
 
 // ── 2. Background ─────────────────────────────────────────────────────────────
 = Background <sec:background>
@@ -1054,7 +1075,8 @@ pressure on the next iteration. The final $H = 370$ is the interior
 optimum reached after the bounds were placed far enough out that
 CMA-ES stopped against open ground. A search configured for
 cross-architecture fairness thus placed its optimum at high head count
-without being tuned toward it: throughput comes from many small heads.
+without being tuned toward it: throughput comes from many small,
+independently addressed recurrent programs.
 
 #heading(level: 2, numbering: none)[Gradient conditioning is a third recipe property]
 
@@ -1074,6 +1096,53 @@ at 1.3 B, $H = 370$) removes the explosion. This is a property of
 head geometry, not of the algebraic form of the write: a third recipe
 axis the multi-programmed family must respect alongside matrix state
 and update rule.
+
+Named in geometry terms, this is an *addressing* bottleneck rather than
+a generic head-count effect. The paper-default shape has high
+*value-head multiplicity* — many value channels, or heads — but routes
+many of them through a narrower shared $q,k$ addressing interface; in a
+pure recurrent stack that concentrates both credit assignment and
+gradient flow through the shared address projections. The CMA reshape
+reduces that bottleneck by moving toward *address-program multiplicity*:
+more independently addressed recurrent programs, each with its own small
+state tile, rather than more value channels behind the same address
+path. This is why M²RNN-CMA is the relevant raw-write control — it tests
+the raw-write update after the pure-PNR geometry has been stabilized,
+isolating the write rule from the systems substrate.
+
+#figure(
+  align(center)[#text(size: 8pt)[#table(
+    columns: (1.25fr, 1.45fr, 1.7fr, 1.45fr),
+    align: (left + top, left + top, left + top, left + top),
+    stroke: 0.5pt,
+    inset: 5pt,
+    table.header(
+      [*Configuration*], [*Role in this paper*], [*Geometry*], [*Outcome*],
+    ),
+    [M²RNN paper shape],
+    [Stability control, not main comparator],
+    [High value-head multiplicity with shared $q,k$ addressing],
+    [Diverges under the pure-recurrent 1.3 B setup],
+
+    [M²RNN-CMA],
+    [Raw-write pure-PNR comparator],
+    [CMA moves toward independent address-program multiplicity],
+    [Stable; reaches the same held-out bpb band],
+
+    [Emender / E88],
+    [Delta-correcting pure-PNR model],
+    [Independent address programs by construction],
+    [Stable; same held-out bpb band; stronger $S_3$/$S_5$ state tracking],
+  )]],
+  caption: [
+    *Three pure-recurrent configurations of the nonlinear matrix-state
+    family.* The paper-default M²RNN shape is a stability control;
+    M²RNN-CMA is the raw-write comparator once CMA-ES has moved it into
+    the address-program-multiplexed regime; the Emender is the
+    delta-correcting model. Outcomes are the held-out bpb tie of this
+    section and the $S_3$/$S_5$ separation of §6.
+  ],
+) <tab_geometry>
 
 #heading(level: 2, numbering: none)[Loss-vs-wallclock comparison]
 
@@ -2064,19 +2133,28 @@ scan.
 
 *M²RNN* @m2rnn2026 (Mishra, Tan, Stoica, Gonzalez, Dao 2026) introduces
 nonlinear matrix-state recurrence with a raw-write update
-$Z = tanh(H W + k v^T)$ and demonstrates that it trains at 7 B MoE
-scale in *hybrid form* (nonlinear-matrix-recurrent layers interleaved
-with attention layers) on Nemotron-CC-v2 at 410 M dense and 7 B MoE.
-M²RNN-CMA, used as a
-within-class baseline throughout this paper, is the *pure-recurrent
-variant* of M²RNN's architecture with no attention layers, CMA-tuned to
-restore stable training at 1.3 B. The contribution of this work
-relative to M²RNN is to extend the viability demonstration to the
-*pure-recurrent* setting and to add the direct comparison with
-the Emender under matched per-architecture CMA-ES. The empirical separation in
-§6 and the formal one-step resource separation in §7 quantify the
-update-rule difference between delta-correcting (the Emender) and raw-write
-(M²RNN-CMA) within the pure-nonlinear-recurrent class. Mishra et al.
+$Z = tanh(H W + k v^T)$. It shares the central systems premise of this
+work — that a nonlinear recurrence is serial in time and must take its
+parallelism from the batch and head axes — and demonstrates that the
+update trains at 410 M dense and 7 B MoE scale on Nemotron-CC-v2. Its
+headline demonstrations and promoted deployment recipe, however, use
+the nonlinear-matrix-recurrent layer *sparingly inside hybrid stacks*
+(interleaved with attention layers), and its paper-default pure shape
+exposes a shared-address bottleneck when run as a pure recurrent
+backbone at 1.3 B in our setup (§5). Our M²RNN-CMA baseline, used as a
+within-class baseline throughout this paper, is therefore not a
+strawman: it is the same raw-write family after CMA-ES has moved it into
+the stable, pure-recurrent, address-program-multiplexed regime — the
+*pure-recurrent variant* of M²RNN's architecture with no attention
+layers, CMA-tuned to restore stable training at 1.3 B. The contribution
+of this work relative to M²RNN is to extend the viability demonstration
+to that *pure-recurrent* setting and to add the direct comparison with
+the Emender under matched per-architecture CMA-ES. In that regime the
+raw-write model ties the Emender on held-out language-modeling bpb but
+remains behind on $S_3$/$S_5$ tracking, so the §6 empirical separation
+and the formal one-step resource separation in §7 isolate the *write
+rule* — delta-correcting (the Emender) versus raw-write (M²RNN-CMA) —
+rather than the systems substrate. Mishra et al.
 also report hybrid M²RNN configurations favorably against
 Mamba2 and Gated DeltaNet hybrids at matched parameter and token
 budgets under a uniform fixed-hyperparameter protocol (their §5.2);
@@ -2145,7 +2223,7 @@ the candidate-budget gap is 0.033 nats/token, and it keeps the same
 sign at 0.014 nats/token at the multi-week extent. The $H = 370$ shape
 used here was not hand-chosen; it sits inside the $H = 270$–$460$
 interior band the searches repeatedly selected for E88 at $N = 32$,
-while the raw-write arm drifts to higher head counts. What is
+while the raw-write arm drifts to higher value-head counts. What is
 single-seed at this scale is the multi-week trajectory itself; the
 within-class ordering and the head-geometry preference are
 CMA-replicated.
