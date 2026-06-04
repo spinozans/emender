@@ -1273,7 +1273,12 @@ class E88FLAHybrid(nn.Module):
             x.is_cuda and
             x.dtype == torch.bfloat16 and
             not self.training and  # Only use for inference - no gradients
-            not self.use_split_edit
+            not self.use_split_edit and
+            # E1 parallel-scan experiment: when an explicit recurrence mode is
+            # requested (serial/scan), force the eager projection path so both
+            # eval modes share IDENTICAL projections and differ ONLY in the
+            # state recurrence execution order.
+            getattr(self, 'e88_recurrence_mode', None) is None
         )
 
         if use_fused_proj:
@@ -1435,6 +1440,7 @@ class E88FLAHybrid(nn.Module):
         import os as _os
         use_step_kernel = (
             _os.environ.get('E88_USE_STEP_KERNEL') == '1' and
+            getattr(self, 'e88_recurrence_mode', None) is None and
             T == 1 and
             not self.training and
             x.is_cuda and
@@ -1664,6 +1670,23 @@ class E88FLAHybrid(nn.Module):
 
             # Convert S_final back to list for hidden state
             S_list = [S_final[:, h] for h in range(H)]
+        elif getattr(self, 'e88_recurrence_mode', None) == 'scan':
+            # === E1 parallel-scan path (associative / Blelloch-style) ===
+            # linear_state=True makes the matrix-state update an input-dependent
+            # AFFINE map of the state: S_t = A_t S_{t-1} + B_t. Affine maps form
+            # a (non-commutative) monoid under composition, so the per-step maps
+            # can be combined with an associative scan instead of a serial time
+            # loop. Result is exact up to floating-point reassociation. This is
+            # the faithful chunk/scan eval path the experiment compares against
+            # the serial loop on IDENTICAL weights and dtype.
+            assert self.linear_state, (
+                "associative-scan eval requires linear_state=True; the tanh "
+                "nonlinearity is NOT a linear scan and cannot be composed.")
+            output, S_list = self._scan_recurrence(
+                k, v, q, decay, S0, B, T, H, n,
+                write_beta=write_beta if self.use_write_gate else None,
+                erase_gate=erase_gate, value_write_gate=value_write_gate,
+            )
         else:
             # === PyTorch fallback: Recurrence with nonlinear matrix state ===
             # Vectorized over heads (no per-head loop). Time loop remains for
@@ -1787,6 +1810,94 @@ class E88FLAHybrid(nn.Module):
 
         output = self.dropout(output)
 
+        return output, S_list
+
+    # ------------------------------------------------------------------
+    # E1 experiment: associative / parallel-scan recurrence
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _affine_scan(A, Bm):
+        """Inclusive associative scan of affine maps along the time axis (dim=1).
+
+        Each (A[t], Bm[t]) represents the map  S -> A[t] S + Bm[t].  The monoid
+        product (apply map `a` BEFORE map `b` in time) is
+
+            combine(a, b) = (A_b @ A_a,  A_b @ B_a + B_b).
+
+        We use the Hillis-Steele doubling scan: at stride d, every position i>=d
+        is combined with position i-d (earlier prefix on the right). After
+        ceil(log2 T) passes, position t holds the composition of maps 0..t. The
+        reduction ORDER (a balanced doubling tree) differs from the serial left
+        fold, which is exactly the floating-point reassociation under test.
+
+        Shapes: A [B,T,H,n,n], Bm [B,T,H,n,v].
+        """
+        T = A.shape[1]
+        d = 1
+        while d < T:
+            A_prev = A[:, : T - d]   # earlier maps (positions i-d) for i in [d:T)
+            B_prev = Bm[:, : T - d]
+            A_cur = A[:, d:]         # later maps (positions i)
+            B_cur = Bm[:, d:]
+            # combine(earlier=prev, later=cur)
+            A_comb = torch.matmul(A_cur, A_prev)
+            B_comb = torch.matmul(A_cur, B_prev) + B_cur
+            A = torch.cat([A[:, :d], A_comb], dim=1)
+            Bm = torch.cat([Bm[:, :d], B_comb], dim=1)
+            d *= 2
+        return A, Bm
+
+    def _scan_recurrence(self, k, v, q, decay, S0, B, T, H, n,
+                         write_beta=None, erase_gate=None, value_write_gate=None):
+        """Compute the matrix-state sequence via an associative scan over the
+        per-step affine maps, instead of the serial time loop. Algebra mirrors
+        the serial fallback EXACTLY (same L2 norm, same delta-correction, same
+        write/erase gates) so the only difference is execution order.
+
+        Returns (output [B,T,H,head_v_dim], S_list[H] of [B,n,head_v_dim]).
+        """
+        # --- projections shared with the serial path ---
+        if self.use_l2_norm:
+            k_norm = k / (k.norm(dim=-1, keepdim=True) + 1e-6)
+            q_norm = q / (q.norm(dim=-1, keepdim=True) + 1e-6)
+        else:
+            k_norm = k
+            q_norm = q
+        dtype = k_norm.dtype
+
+        if self.use_split_edit:
+            read_key = k_norm * erase_gate          # [B,T,H,n]
+            write_value = v * value_write_gate      # [B,T,H,head_v_dim]
+        else:
+            read_key = k_norm
+            write_value = v
+
+        beta = write_beta if (self.use_write_gate and write_beta is not None) else None
+
+        # --- build the elementary affine maps ---
+        # A_t[i,j] = decay_t * delta_ij - beta_t * k_norm[i] * read_key[j]
+        # B_t[i,vd] = beta_t * k_norm[i] * write_value[vd]
+        eye = torch.eye(n, device=k.device, dtype=dtype)
+        A = decay.to(dtype)[..., None, None] * eye          # [B,T,H,n,n]
+        if not self.raw_write:
+            kk = torch.einsum('bthi,bthj->bthij', k_norm, read_key)  # [B,T,H,n,n]
+            if beta is not None:
+                kk = beta[..., None, None] * kk
+            A = A - kk
+        Bm = torch.einsum('bthi,bthv->bthiv', k_norm, write_value)   # [B,T,H,n,v]
+        if beta is not None:
+            Bm = beta[..., None, None] * Bm
+
+        # --- associative scan: position t -> composition of maps 0..t ---
+        A_scan, B_scan = self._affine_scan(A, Bm)
+
+        # S_t = A_scan_t @ S0 + B_scan_t   (S0 broadcast over time)
+        S0e = S0.to(dtype).unsqueeze(1)                     # [B,1,H,n,v]
+        S = torch.matmul(A_scan, S0e) + B_scan             # [B,T,H,n,v]
+
+        # output_t = q_norm_t . S_t   (contract over state index n)
+        output = torch.einsum('bthi,bthiv->bthv', q_norm, S)  # [B,T,H,head_v_dim]
+        S_list = [S[:, -1, h] for h in range(H)]
         return output, S_list
 
     def get_num_params(self):
