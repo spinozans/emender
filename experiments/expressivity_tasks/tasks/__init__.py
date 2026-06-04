@@ -21,6 +21,7 @@ from .assoc_recall import AssocRecallTask
 from .delta_memory import OverwriteRecallTask, ResetRecallTask
 from .keyed_fsm_memory import KeyedFSMMemoryTask
 from .s5_permutation import S3PermutationTask, S5PermutationTask
+from .counting_with_comparison import DyckDepthTask, AnBnCnViabilityTask
 
 ALL_TASKS = {
     'parity': ParityTask,
@@ -35,4 +36,6 @@ ALL_TASKS = {
     'keyed_fsm_memory': KeyedFSMMemoryTask,
     's3_permutation': S3PermutationTask,
     's5_permutation': S5PermutationTask,
+    'dyck_depth': DyckDepthTask,
+    'anbncn_viability': AnBnCnViabilityTask,
 }

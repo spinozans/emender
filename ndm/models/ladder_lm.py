@@ -26,6 +26,7 @@ except ImportError:
     RMSNorm = nn.RMSNorm  # Fallback to PyTorch
 
 from .stock_elman import StockElman
+from .counter_baseline import ReLURNNLayer, LSTMLayer
 from .mamba_gated_elman import MambaGatedElman
 from .softsign_elman import SoftsignElman
 from .diagonal_state_elman import DiagonalStateElman
@@ -757,6 +758,10 @@ def get_ladder_level(level):
         'E1H': E1MultiHead,
 
         'mamba2': 'mamba2',  # Special case - handled separately
+        # PROBE 1 additive / non-saturating counter baselines (WGY 2018 positive
+        # control: CAN realize an unbounded counter; tanh/linear-state cannot).
+        'relu_rnn': ReLURNNLayer,  # additive ReLU-Elman RNN
+        'lstm': LSTMLayer,         # standard LSTM (gated additive cell)
     }
     if level in levels:
         return levels[level]
