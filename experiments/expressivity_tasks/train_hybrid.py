@@ -63,6 +63,15 @@ def main():
     ap.add_argument('--use_gate', type=int, default=None, choices=[0, 1],
                     help='E88 output gate: 0=off, 1=on. Default: HybridLadderLM '
                          'default. Forwarded only to E88-family layers.')
+    ap.add_argument('--decay_mode', type=str, default=None,
+                    choices=['mamba', 'simple', 'none', 'constant'],
+                    help='E88 recurrence decay mode. mamba=input-dependent '
+                         'exp decay (default); constant=learned per-head '
+                         'constant (input-INDEPENDENT transition, eigenvalues '
+                         'in (0,1)); none=identity (eigenvalue 1); '
+                         'simple=input-dependent sigmoid. Forwarded only to '
+                         'E88-family layers. Used by the E5 input-dependence '
+                         'ablation (paper/review/E5_ABLATE_INPUTDEP.md).')
     ap.add_argument('--m2rnn_q_heads', type=int, default=None)
     ap.add_argument('--m2rnn_k_heads', type=int, default=None)
     ap.add_argument('--m2rnn_v_heads', type=int, default=None)
@@ -137,6 +146,8 @@ def main():
         e88_kwargs['linear_state'] = bool(args.linear_state)
     if args.use_gate is not None:
         e88_kwargs['use_gate'] = bool(args.use_gate)
+    if args.decay_mode is not None:
+        e88_kwargs['decay_mode'] = args.decay_mode
 
     def _layer_kw(level):
         if level in ('m2rnn', 'm2rnn-paper'):
@@ -178,6 +189,7 @@ def main():
            'use_triton_e88': bool(args.use_triton_e88),
            'linear_state': args.linear_state,
            'use_gate': args.use_gate,
+           'decay_mode': args.decay_mode,
            'random_baseline_acc': task.random_baseline_acc(),
            'steps': []}
 
