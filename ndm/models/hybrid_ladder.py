@@ -52,6 +52,7 @@ def _build_m2rnn_layer(level: str, dim: int, kwargs: Dict[str, Any]) -> nn.Modul
         normalize_qk=kwargs.get('normalize_qk', False),
         dropout=kwargs.get('dropout', 0.0),
         gradient_clipping=kwargs.get('gradient_clipping', 1.0 if paper_shape else None),
+        linear_state=kwargs.get('linear_state', False),
     )
 
 

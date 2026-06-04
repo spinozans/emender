@@ -140,6 +140,10 @@ def main():
     if args.m2rnn_normalize_qk: m2_kwargs['normalize_qk'] = True
     if args.m2rnn_no_residual: m2_kwargs['use_residual'] = False
     if args.m2rnn_freeze_state_weight: m2_kwargs['state_weight_trainable'] = False
+    # M2RNN raw-write state-nonlinearity ablation: --linear_state drops the tanh
+    # in Z = tanh(h W + k v^T) -> Z = h W + k v^T (analogue of E88 linear_state).
+    if args.linear_state is not None:
+        m2_kwargs['linear_state'] = bool(args.linear_state)
     # E88-family structural overrides (only applied when explicitly passed).
     e88_kwargs = {}
     if args.linear_state is not None:
