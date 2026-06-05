@@ -107,6 +107,18 @@ def main():
     ap.add_argument('--lr', type=float, default=3e-4)
     ap.add_argument('--optimizer', type=str, default='adamw',
                     choices=['adamw', 'schedulefree'])
+    ap.add_argument('--knob_lr_mult', type=float, default=1.0,
+                    help='LEARNABILITY intervention #2: multiply the base LR for '
+                         'the recurrence knobs (lam_raw/beta_raw/igain_raw/'
+                         'gamma_raw of every UnifiedCellLayer) by this factor, '
+                         'placing them in a SEPARATE optimizer param-group so the '
+                         'knobs actually move while projections stay at base LR. '
+                         '1.0 = single group (no split).')
+    ap.add_argument('--curriculum', type=str, default=None,
+                    help='Optional length curriculum (secondary lever): comma-'
+                         'separated train seq_len schedule, e.g. 128,256,512,1024. '
+                         'Steps are split evenly across stages; eval still uses '
+                         '--eval_lengths. Default None = fixed --seq_len.')
     ap.add_argument('--K', type=int, default=2)
     ap.add_argument('--seed', type=int, default=42)
     ap.add_argument('--label', required=True)
@@ -144,6 +156,8 @@ def main():
         task_kwargs['n_keys'] = args.K
         task_kwargs['n_states'] = args.K
     elif args.task == 'flag_hold_recall':
+        task_kwargs['n_keys'] = args.K
+    elif args.task == 'mixed_probe':
         task_kwargs['n_keys'] = args.K
     task = ALL_TASKS[args.task](**task_kwargs)
     print(f"Task: {task.name}, vocab_size={task.vocab_size}", flush=True)
@@ -208,13 +222,37 @@ def main():
     n_params = sum(p.numel() for p in model.parameters())
     print(f"Params: {n_params:,}", flush=True)
 
+    # Build param groups. With --knob_lr_mult != 1, the recurrence knobs
+    # (lam/beta/igain/gamma raw of every UnifiedCellLayer) get a SEPARATE group at
+    # a higher LR; everything else stays at the base LR.
+    KNOB_SUFFIXES = ('lam_raw', 'beta_raw', 'igain_raw', 'gamma_raw')
+    knob_params, base_params, knob_names = [], [], []
+    for name, p in model.named_parameters():
+        if not p.requires_grad:
+            continue
+        if any(name.endswith(s) for s in KNOB_SUFFIXES):
+            knob_params.append(p); knob_names.append(name)
+        else:
+            base_params.append(p)
+    use_knob_group = args.knob_lr_mult != 1.0 and len(knob_params) > 0
+    if use_knob_group:
+        param_groups = [
+            {'params': base_params, 'lr': args.lr},
+            {'params': knob_params, 'lr': args.lr * args.knob_lr_mult},
+        ]
+        print(f"Knob-LR group: {len(knob_params)} knob params at lr="
+              f"{args.lr * args.knob_lr_mult:.2e} ({args.knob_lr_mult}x base); "
+              f"{len(base_params)} base params at lr={args.lr:.2e}", flush=True)
+    else:
+        param_groups = model.parameters()
+
     if args.optimizer == 'schedulefree':
         import schedulefree
         optimizer = schedulefree.AdamWScheduleFree(
-            model.parameters(), lr=args.lr, weight_decay=0.01, betas=(0.9, 0.95))
+            param_groups, lr=args.lr, weight_decay=0.01, betas=(0.9, 0.95))
         print(f"Using schedule-free AdamW (lr={args.lr})", flush=True)
     else:
-        optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=0.01)
+        optimizer = torch.optim.AdamW(param_groups, lr=args.lr, weight_decay=0.01)
         print(f"Using vanilla AdamW (lr={args.lr})", flush=True)
 
     log = {'task': task.name, 'pattern': model.actual_pattern, 'dim': args.dim, 'depth': args.depth,
@@ -229,15 +267,46 @@ def main():
            'gdn_allow_neg_eigval': args.gdn_allow_neg_eigval,
            'e88_pos_eigval_clamp': args.e88_pos_eigval_clamp,
            'e88_raw_write': args.e88_raw_write,
+           'knob_lr_mult': float(args.knob_lr_mult),
+           'curriculum': args.curriculum,
            'random_baseline_acc': task.random_baseline_acc(),
            'steps': []}
+
+    # Snapshot per-head knobs at INIT (before any optimizer step) so drift from
+    # spread-init can be measured directly against the trained values.
+    init_knobs = []
+    for li, layer in enumerate(model.layers):
+        if hasattr(layer, 'knob_values'):
+            kv = layer.knob_values()
+            init_knobs.append({
+                'layer': li,
+                'lambda': kv['lambda'].tolist(), 'beta': kv['beta'].tolist(),
+                'igain': kv['igain'].tolist(), 'gamma': kv['gamma'].tolist(),
+                'eig_along': kv['eig_along'].tolist(),
+            })
+    if init_knobs:
+        log['unified_knobs_init'] = init_knobs
+
+    # Length curriculum (optional secondary lever): split total steps across stages.
+    curriculum_stages = None
+    if args.curriculum:
+        curriculum_stages = [int(s) for s in args.curriculum.split(',') if s.strip()]
+        log['curriculum_stages'] = curriculum_stages
+
+    def _seq_len_for_step(step):
+        if not curriculum_stages:
+            return args.seq_len
+        n = len(curriculum_stages)
+        idx = min(n - 1, (step * n) // max(args.steps, 1))
+        return curriculum_stages[idx]
 
     t0 = time.time()
     eval_interval = args.eval_interval if args.eval_interval is not None else max(50, args.steps // 20)
     model.train()
     if hasattr(optimizer, 'train'): optimizer.train()
     for step in range(args.steps):
-        inp, tgt, mask = task.generate_batch(args.batch_size, args.seq_len, rng)
+        cur_seq_len = _seq_len_for_step(step)
+        inp, tgt, mask = task.generate_batch(args.batch_size, cur_seq_len, rng)
         x = torch.from_numpy(inp).to(device)
         y = torch.from_numpy(tgt).to(device)
         m = torch.from_numpy(mask).to(device)

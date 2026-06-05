@@ -24,6 +24,7 @@ from .s5_permutation import S3PermutationTask, S5PermutationTask
 from .counting_with_comparison import DyckDepthTask, AnBnCnViabilityTask
 from .iterated_nonlinear_map import IteratedNonlinearMapTask
 from .flag_hold_recall import FlagHoldRecallTask
+from .mixed_probe import MixedProbeTask
 
 ALL_TASKS = {
     'parity': ParityTask,
@@ -42,4 +43,5 @@ ALL_TASKS = {
     'anbncn_viability': AnBnCnViabilityTask,
     'iterated_nonlinear_map': IteratedNonlinearMapTask,
     'flag_hold_recall': FlagHoldRecallTask,
+    'mixed_probe': MixedProbeTask,
 }

@@ -436,6 +436,10 @@ def get_ladder_level(level):
         'unified-learned':       lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'learned', 'phi': 'gamma_mix', 'lam_max': 1.5}),
         'unified-learned-free':  lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'learned', 'phi': 'gamma_mix', 'lam_max': 1.5}),
         'unified-learned-clamp': lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'learned', 'phi': 'gamma_mix', 'lam_max': 1.0}),
+        # LEARNABILITY: spread per-head knobs ACROSS the corners at init (free gain),
+        # so descent REFINES specialization. Pair with a knob-specific higher LR
+        # (train_hybrid --knob_lr_mult) so lambda/beta/gamma actually move.
+        'unified-learned-spread': lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'learned', 'phi': 'gamma_mix', 'lam_max': 1.5, 'spread_init': True}),
         # E97: E88/NDM with GDN-2-inspired split edit gates.
         # Use --use_triton 1 for the split-edit Triton recurrence.
         'E97': lambda **kw: E88FLAHybrid(**{**kw, 'use_split_edit': True}),

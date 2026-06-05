@@ -66,6 +66,7 @@ class UnifiedCellLayer(nn.Module):
         knob_mode: str = 'learned',   # 'pinned' | 'learned'
         preset: Optional[str] = None,  # for pinned mode, name in PRESETS
         phi: str = 'gamma_mix',        # for learned mode
+        spread_init: bool = False,     # learned mode: spread per-head knobs ACROSS corners
         lam_max: float = 1.5,          # learned cap; 1.0 == clamped (cribbed)
         beta_max: float = 2.0,
         igain_max: float = 2.0,
@@ -98,6 +99,7 @@ class UnifiedCellLayer(nn.Module):
         self.phi_mode = PHI_NAME_TO_CODE[phi]
         self.lam_max, self.beta_max, self.igain_max = lam_max, beta_max, igain_max
         self.head_norm = head_norm
+        self.spread_init = bool(spread_init) and knob_mode == 'learned'
 
         # projections (fused qkv)
         self.qkv_proj = nn.Linear(dim, 2 * self.key_dim + self.value_dim, bias=False)
@@ -117,6 +119,23 @@ class UnifiedCellLayer(nn.Module):
             self.register_buffer('beta_raw', self._inv_scaled(torch.full((H,), self._beta0), beta_max))
             self.register_buffer('igain_raw', self._inv_scaled(torch.full((H,), self._igain0), igain_max))
             self.register_buffer('gamma_raw', torch.full((H,), 4.0 if phi == 'tanh' else (-4.0 if phi == 'identity' else 0.0)))
+        elif self.spread_init:
+            # SPREAD INIT (learnability intervention #1): partition the H heads
+            # ACROSS the four capability corners so descent REFINES specialization
+            # rather than discovering it from a generic center. Requires the FREE
+            # gain cap (lam_max>=~1.35) so the latch corner (lambda=1.3) is
+            # reachable; gamma_mix phi lets gamma in {~0 linear, ~1 tanh} select
+            # linear vs saturating per head.
+            #   track  : lambda 0.9,  beta 1.8, gamma 0.05 (linear)  -> along-key eig -0.9 (reflection/S5)
+            #   count  : lambda 1.0,  beta 0.0, gamma 0.05 (linear)  -> pure integration
+            #   latch  : lambda 1.3,  beta 0.0, gamma 0.95 (tanh)    -> bistable +/-1 attractors
+            #   nonlin : lambda 0.9,  beta 0.5, gamma 0.95 (tanh)    -> state-nonlinear phi
+            lam0, beta0, gam0 = self._spread_corner_values(H, lam_max)
+            self.lam_raw = nn.Parameter(self._inv_scaled(lam0, lam_max))
+            self.beta_raw = nn.Parameter(self._inv_scaled(beta0, beta_max))
+            self.igain_raw = nn.Parameter(self._inv_scaled(torch.full((H,), min(1.0, 0.5 * igain_max)), igain_max))
+            # gamma_raw is a plain logit (gamma=sigmoid(raw)); set per-head.
+            self.gamma_raw = nn.Parameter(torch.log(gam0 / (1.0 - gam0)))
         else:
             # learned per-head knobs. Init: lam~0.95, beta~0.5, igain~1.0, gamma~0.5.
             self.lam_raw = nn.Parameter(self._inv_scaled(torch.full((H,), min(0.95, 0.99 * lam_max)), lam_max))
@@ -129,6 +148,32 @@ class UnifiedCellLayer(nn.Module):
         nn.init.xavier_uniform_(self.o_proj.weight)
         if self.g_proj is not None:
             nn.init.xavier_uniform_(self.g_proj.weight)
+
+    @staticmethod
+    def _spread_corner_values(H, lam_max):
+        """Per-head (lambda, beta, gamma) init partitioned across the four corners.
+
+        Heads are assigned round-robin (head_idx % 4) so every head-block holds a
+        mix of all four corners. Returns float tensors of shape [H]. lambda is
+        clamped to the achievable cap (latch's 1.3 needs lam_max>=1.3).
+        """
+        # (lambda, beta, gamma) per corner
+        corners = [
+            (0.9, 1.8, 0.05),   # track  (linear, along-key eig -0.9)
+            (1.0, 0.0, 0.05),   # count  (linear, pure integration)
+            (1.3, 0.0, 0.95),   # latch  (tanh, bistable)
+            (0.9, 0.5, 0.95),   # nonlin (tanh, state-nonlinear)
+        ]
+        lam = torch.empty(H)
+        beta = torch.empty(H)
+        gam = torch.empty(H)
+        lam_cap = min(1.49, 0.99 * lam_max)
+        for h in range(H):
+            l, b, g = corners[h % 4]
+            lam[h] = min(l, lam_cap)
+            beta[h] = b
+            gam[h] = g
+        return lam, beta, gam
 
     @staticmethod
     def _inv_scaled(val, vmax):
