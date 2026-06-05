@@ -448,6 +448,22 @@ def get_ladder_level(level):
         'unified-dict8':   lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'dictionary', 'phi': 'gamma_mix', 'lam_max': 1.5, 'n_proto': 8}),
         # FIXED-TYPE POPULATION (floor): heads hard-assigned to corners, projections only.
         'unified-fixedpop': lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'fixed_pop', 'phi': 'gamma_mix', 'lam_max': 1.5}),
+        # === E98 = E97 split-gate (decoupled erase b*k / value-write w*v) ON TOP of
+        # the unified capability-span + horizontal specialization. The split gate
+        # makes the correction term E97-rich: pre = lam*S - beta*k((b*k)^T S) +
+        # i*k(w*v)^T. b=w=1 recovers the unified cell so all four corners persist.
+        # Pinned-corner arms (split-gate on):
+        'e98-track':   lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'pinned', 'preset': 'track',  'split_gate': True}),
+        'e98-count':   lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'pinned', 'preset': 'count',  'split_gate': True}),
+        'e98-latch':   lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'pinned', 'preset': 'latch',  'split_gate': True}),
+        'e98-nonlin':  lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'pinned', 'preset': 'nonlin', 'split_gate': True}),
+        # Generic-init learned (free gain) + split gate.
+        'e98-learned-free': lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'learned', 'phi': 'gamma_mix', 'lam_max': 1.5, 'split_gate': True}),
+        # WINNING specialization form (SPECIALIZATION_STUDY): spread-init + knob-LR,
+        # now with the E97 split gate. This is the E98 learnability arm.
+        'e98-learned-spread': lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'learned', 'phi': 'gamma_mix', 'lam_max': 1.5, 'spread_init': True, 'split_gate': True}),
+        # Fixed-type population floor + split gate (for completeness).
+        'e98-fixedpop': lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'fixed_pop', 'phi': 'gamma_mix', 'lam_max': 1.5, 'split_gate': True}),
         # E97: E88/NDM with GDN-2-inspired split edit gates.
         # Use --use_triton 1 for the split-edit Triton recurrence.
         'E97': lambda **kw: E88FLAHybrid(**{**kw, 'use_split_edit': True}),

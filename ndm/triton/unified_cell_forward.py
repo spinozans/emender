@@ -54,7 +54,7 @@ Requires T % CKPT_INTERVAL == 0. N, V <= 64.
 """
 from __future__ import absolute_import
 
-from typing import Tuple
+from typing import Optional, Tuple
 
 import torch
 import triton
@@ -101,6 +101,7 @@ def _apply_phi(pre, phi_mode: tl.constexpr, gamma):
 @triton.jit
 def _unified_forward_kernel(
     K_ptr, V_ptr, Q_ptr,
+    BG_ptr, WG_ptr,              # E97 split gates: b erase [T,B,H,N], w value [T,B,H,V]
     LAM_ptr, BETA_ptr, IG_ptr,   # [T, B, H]
     GAMMA_ptr,                   # [H]
     S0_ptr,
@@ -109,6 +110,8 @@ def _unified_forward_kernel(
     sk_t, sk_b, sk_h, sk_n,
     sv_t, sv_b, sv_h, sv_v,
     sq_t, sq_b, sq_h, sq_n,
+    sbg_t, sbg_b, sbg_h, sbg_n,
+    swg_t, swg_b, swg_h, swg_v,
     sl_t, sl_b, sl_h,
     sbe_t, sbe_b, sbe_h,
     sig_t, sig_b, sig_h,
@@ -153,6 +156,8 @@ def _unified_forward_kernel(
         k_off = t_i64 * sk_t + b * sk_b + h_idx[:, None] * sk_h + n_idx[None, :] * sk_n
         q_off = t_i64 * sq_t + b * sq_b + h_idx[:, None] * sq_h + n_idx[None, :] * sq_n
         v_off = t_i64 * sv_t + b * sv_b + h_idx[:, None] * sv_h + v_idx[None, :] * sv_v
+        bg_off = t_i64 * sbg_t + b * sbg_b + h_idx[:, None] * sbg_h + n_idx[None, :] * sbg_n
+        wg_off = t_i64 * swg_t + b * swg_b + h_idx[:, None] * swg_h + v_idx[None, :] * swg_v
         l_off = t_i64 * sl_t + b * sl_b + h_idx * sl_h
         be_off = t_i64 * sbe_t + b * sbe_b + h_idx * sbe_h
         ig_off = t_i64 * sig_t + b * sig_b + h_idx * sig_h
@@ -160,14 +165,20 @@ def _unified_forward_kernel(
         k_vec = tl.load(K_ptr + k_off, mask=mask_hn, other=0.0).to(tl.float32)   # [BH,BN]
         q_vec = tl.load(Q_ptr + q_off, mask=mask_hn, other=0.0).to(tl.float32)
         v_vec = tl.load(V_ptr + v_off, mask=mask_hv, other=0.0).to(tl.float32)   # [BH,BV]
+        bg_vec = tl.load(BG_ptr + bg_off, mask=mask_hn, other=0.0).to(tl.float32)  # erase b [BH,BN]
+        wg_vec = tl.load(WG_ptr + wg_off, mask=mask_hv, other=0.0).to(tl.float32)  # value  w [BH,BV]
         lam = tl.load(LAM_ptr + l_off, mask=h_mask, other=0.0).to(tl.float32)    # [BH]
         beta = tl.load(BETA_ptr + be_off, mask=h_mask, other=0.0).to(tl.float32)
         igain = tl.load(IG_ptr + ig_off, mask=h_mask, other=0.0).to(tl.float32)
 
-        # retrieve u = k^T S : [BH, BV]
-        u_vec = tl.sum(S * k_vec[:, :, None], axis=1)
-        # pre = lambda*S - beta * k outer u + i * k outer v
-        corr = (igain[:, None] * v_vec) - (beta[:, None] * u_vec)            # [BH,BV]
+        # E97 SPLIT-GATE: read/erase along bk = b*k, write value wv = w*v, but the
+        # outer-product (write) key stays the ungated k.
+        bk_vec = bg_vec * k_vec                                              # [BH,BN]
+        wv_vec = wg_vec * v_vec                                              # [BH,BV]
+        # retrieve u = (b*k)^T S : [BH, BV]
+        u_vec = tl.sum(S * bk_vec[:, :, None], axis=1)
+        # pre = lambda*S - beta * k outer ((b*k)^T S) + i * k outer (w*v)
+        corr = (igain[:, None] * wv_vec) - (beta[:, None] * u_vec)          # [BH,BV]
         pre = lam[:, None, None] * S + k_vec[:, :, None] * corr[:, None, :]   # [BH,BN,BV]
         S = _apply_phi(pre, PHI_MODE, gamma_b)
         S = tl.where(mask_hnv, S, 0.0)
@@ -201,6 +212,8 @@ def unified_cell_forward(
     lam: torch.Tensor, beta: torch.Tensor, igain: torch.Tensor,
     gamma: torch.Tensor,
     phi_mode: int = PHI_TANH,
+    b_gate: Optional[torch.Tensor] = None,
+    w_gate: Optional[torch.Tensor] = None,
     ckpt_interval: int = DEFAULT_CKPT_INTERVAL,
     block_h: int = 1,
     num_warps: int = 2,
@@ -214,6 +227,9 @@ def unified_cell_forward(
         lam, beta, igain: [T, B, H]  per-step per-head knobs
         gamma: [H]  per-head phi-mix coefficient (used iff phi_mode==2)
         phi_mode: state-nonlinearity code (see PHI_* constants)
+        b_gate: [T, B, H, N]  E97 erase gate (read along b*k). None == all-ones
+                (no split-gating; exact E88-based unified recurrence).
+        w_gate: [T, B, H, V]  E97 value-write gate (write w*v). None == all-ones.
     Returns:
         out      [T, B, H, V]
         S_final  [B, H, N, V]
@@ -228,6 +244,12 @@ def unified_cell_forward(
         assert tns.shape == (T, B, H), f"{nm} must be [T,B,H], got {tuple(tns.shape)}"
     assert gamma.shape == (H,), f"gamma must be [H], got {tuple(gamma.shape)}"
     assert S0.shape == (B, H, N, Vsz)
+    if b_gate is None:
+        b_gate = torch.ones((T, B, H, N), dtype=k.dtype, device=k.device)
+    if w_gate is None:
+        w_gate = torch.ones((T, B, H, Vsz), dtype=v.dtype, device=v.device)
+    assert b_gate.shape == (T, B, H, N), f"b_gate must be [T,B,H,N], got {tuple(b_gate.shape)}"
+    assert w_gate.shape == (T, B, H, Vsz), f"w_gate must be [T,B,H,V], got {tuple(w_gate.shape)}"
 
     BLOCK_N, BLOCK_V = _next_pow2(N), _next_pow2(Vsz)
     if BLOCK_N > 64 or BLOCK_V > 64:
@@ -240,6 +262,7 @@ def unified_cell_forward(
     def _c(x):
         return x if x.stride(-1) == 1 else x.contiguous()
     k_c, v_c, q_c = _c(k), _c(v), _c(q)
+    bg_c, wg_c = _c(b_gate), _c(w_gate)
     lam_c, beta_c, ig_c = _c(lam), _c(beta), _c(igain)
     s0_c = _c(S0)
     gamma_c = gamma.contiguous().float()
@@ -254,6 +277,8 @@ def unified_cell_forward(
         k_c.stride(0), k_c.stride(1), k_c.stride(2), k_c.stride(3),
         v_c.stride(0), v_c.stride(1), v_c.stride(2), v_c.stride(3),
         q_c.stride(0), q_c.stride(1), q_c.stride(2), q_c.stride(3),
+        bg_c.stride(0), bg_c.stride(1), bg_c.stride(2), bg_c.stride(3),
+        wg_c.stride(0), wg_c.stride(1), wg_c.stride(2), wg_c.stride(3),
         lam_c.stride(0), lam_c.stride(1), lam_c.stride(2),
         beta_c.stride(0), beta_c.stride(1), beta_c.stride(2),
         ig_c.stride(0), ig_c.stride(1), ig_c.stride(2),
@@ -264,7 +289,7 @@ def unified_cell_forward(
     )
     grid = (B, (H + block_h - 1) // block_h)
     _unified_forward_kernel[grid](
-        k_c, v_c, q_c, lam_c, beta_c, ig_c, gamma_c, s0_c,
+        k_c, v_c, q_c, bg_c, wg_c, lam_c, beta_c, ig_c, gamma_c, s0_c,
         out, S_final, S_ckpt, *strides,
         T=T, B=B, H=H, N=N, V=Vsz,
         BLOCK_N=BLOCK_N, BLOCK_V=BLOCK_V, BLOCK_H=block_h,
@@ -298,11 +323,21 @@ def unified_cell_torch_reference(
     lam: torch.Tensor, beta: torch.Tensor, igain: torch.Tensor,
     gamma: torch.Tensor,
     phi_mode: int = PHI_TANH,
+    b_gate: Optional[torch.Tensor] = None,
+    w_gate: Optional[torch.Tensor] = None,
 ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     """Pure-PyTorch reference. Differentiable (autograd) for gold gradients.
 
     Same [T,B,H,..] layout as the Triton wrapper. Returns out, S_final and the
     DENSE per-step checkpoint history (ckpt[0]=S0, ckpt[t+1]=S after step t).
+
+    With ``b_gate``/``w_gate`` (E97 split-gate) the recurrence reads/erases along
+    the gated key ``b*k`` and writes the gated value ``w*v``, while the
+    outer-product (write) key stays the ungated ``k``:
+
+        pre = lambda*S - beta * k ((b*k)^T S) + i * k (w*v)^T
+
+    b_gate=w_gate=None (all-ones) recovers the exact E88-based unified recurrence.
     """
     T, B, H, N = k.shape
     Vsz = v.shape[-1]
@@ -313,12 +348,14 @@ def unified_cell_torch_reference(
         k_t = k[t].float()                       # [B,H,N]
         q_t = q[t].float()
         v_t = v[t].float()                       # [B,H,V]
+        bk_t = k_t if b_gate is None else k_t * b_gate[t].float()   # read/erase key b*k
+        wv_t = v_t if w_gate is None else v_t * w_gate[t].float()   # write value w*v
         lam_t = lam[t].float().unsqueeze(-1).unsqueeze(-1)   # [B,H,1,1]
         beta_t = beta[t].float().unsqueeze(-1)               # [B,H,1]
         ig_t = igain[t].float().unsqueeze(-1)                # [B,H,1]
 
-        u = torch.einsum('bhnv,bhn->bhv', S, k_t)            # [B,H,V]
-        corr = ig_t * v_t - beta_t * u                       # [B,H,V]
+        u = torch.einsum('bhnv,bhn->bhv', S, bk_t)           # [B,H,V] = (b*k)^T S
+        corr = ig_t * wv_t - beta_t * u                      # [B,H,V]
         pre = lam_t * S + torch.einsum('bhn,bhv->bhnv', k_t, corr)
         S = _phi_torch(pre, phi_mode, gamma)
         outs.append(torch.einsum('bhnv,bhn->bhv', S, q_t))

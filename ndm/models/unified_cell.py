@@ -92,6 +92,7 @@ class UnifiedCellLayer(nn.Module):
         head_norm: bool = True,        # per-head readout RMSNorm (mLSTM-style stabilizer)
         use_gate: bool = True,
         gate_activation: str = 'silu',
+        split_gate: bool = False,      # E97/E98: decoupled erase (b*k) + value-write (w*v) gates
         dropout: float = 0.0,
         **kwargs,
     ):
@@ -126,6 +127,23 @@ class UnifiedCellLayer(nn.Module):
         self.o_proj = nn.Linear(self.value_dim, dim, bias=False)
         self.g_proj = nn.Linear(dim, self.value_dim, bias=False) if use_gate else None
         self.gate_activation = gate_activation
+
+        # E97/E98 SPLIT-GATE (GDN-2-inspired decoupling): the correction term
+        # becomes  pre = lambda*S - beta*k ((b*k)^T S) + i*k (w*v)^T,  i.e. the
+        # read/erase direction is the input-dependently-gated key b*k while the
+        # write value is the gated w*v; the outer-product (write) key stays the
+        # ungated k. With b=w=1 this reduces EXACTLY to the E88-based unified cell,
+        # so all four capability corners remain reachable (b->1 opens the erase so
+        # the along-key eigenvalue is again lambda-beta; the track/reflection corner
+        # is reached by beta>lambda WITH b open, and b<1 is a strictly richer
+        # input-dependent partial-erase the E88 cell could not express).
+        self.split_gate = bool(split_gate)
+        if self.split_gate:
+            self.erase_gate_proj = nn.Linear(dim, self.key_dim, bias=False)
+            self.value_write_gate_proj = nn.Linear(dim, self.value_dim, bias=False)
+        else:
+            self.erase_gate_proj = None
+            self.value_write_gate_proj = None
 
         if head_norm:
             self.head_norm_weight = nn.Parameter(torch.ones(n_heads, V))
@@ -202,6 +220,11 @@ class UnifiedCellLayer(nn.Module):
         nn.init.xavier_uniform_(self.o_proj.weight)
         if self.g_proj is not None:
             nn.init.xavier_uniform_(self.g_proj.weight)
+        if self.split_gate:
+            # Small init -> gates start near sigmoid(0)=0.5; the erase gate is then
+            # free to open (->1, recovering the unified corners) or partially close.
+            nn.init.xavier_uniform_(self.erase_gate_proj.weight, gain=0.1)
+            nn.init.xavier_uniform_(self.value_write_gate_proj.weight, gain=0.1)
 
     @staticmethod
     def _spread_corner_values(H, lam_max):
@@ -395,8 +418,17 @@ class UnifiedCellLayer(nn.Module):
         beta_t = beta.view(1, 1, H).expand(T, B, H).contiguous()
         igain_t = igain.view(1, 1, H).expand(T, B, H).contiguous()
 
+        # E97/E98 split gates (input-dependent): b erase [T,B,H,N], w value [T,B,H,V].
+        b_gate = w_gate = None
+        if self.split_gate:
+            bg = torch.sigmoid(self.erase_gate_proj(x)).view(B, T, H, N)
+            wg = torch.sigmoid(self.value_write_gate_proj(x)).view(B, T, H, V)
+            b_gate = bg.permute(1, 0, 2, 3).contiguous().to(x.dtype)
+            w_gate = wg.permute(1, 0, 2, 3).contiguous().to(x.dtype)
+
         S0 = torch.zeros(B, H, N, V, device=x.device, dtype=x.dtype)
-        out, _ = unified_cell(k, v, q, lam_t, beta_t, igain_t, gamma, S0, phi_mode=self.phi_mode)
+        out, _ = unified_cell(k, v, q, lam_t, beta_t, igain_t, gamma, S0,
+                              phi_mode=self.phi_mode, b_gate=b_gate, w_gate=w_gate)
         # out: [T, B, H, V] -> [B, T, H, V]
         out = out.permute(1, 0, 2, 3).contiguous()
 
