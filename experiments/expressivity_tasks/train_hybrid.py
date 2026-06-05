@@ -116,6 +116,10 @@ def main():
                     help='UnifiedCell beta (delta-correction) cap.')
     ap.add_argument('--igain_max', type=float, default=None,
                     help='UnifiedCell input write-gain cap.')
+    ap.add_argument('--head_type_logits', type=str, default=None,
+                    help='typed-gdn2: comma-sep 5 unconstrained logits over head '
+                         'types [gdn2_recall,e97_track,count,latch,nonlin]; '
+                         'softmax+largest-remainder -> per-type head counts.')
     ap.add_argument('--corner_mixture', type=str, default=None,
                     help='Comma-separated 4 head fractions [track,count,latch,nonlin] '
                          'for spread-init/fixed_pop placement. e.g. "0.4,0.2,0.2,0.2". '
@@ -234,6 +238,19 @@ def main():
     if args.corner_mixture is not None:
         unified_kwargs['corner_mixture'] = [float(x) for x in args.corner_mixture.split(',') if x.strip()]
 
+    # typed-gdn2 (typed-gdn-2-head): native typed-head mixture meta-config. The
+    # per-type logits are the CMA search variable; lam_max/beta_max freeze the
+    # placed corner personalities at the validated operating points.
+    typed_kwargs = {}
+    if args.head_type_logits is not None:
+        typed_kwargs['head_type_logits'] = [float(x) for x in args.head_type_logits.split(',') if x.strip()]
+    if args.lam_max is not None:
+        typed_kwargs['lam_max'] = args.lam_max
+    if args.beta_max is not None:
+        typed_kwargs['beta_max'] = args.beta_max
+    if args.igain_max is not None:
+        typed_kwargs['igain_max'] = args.igain_max
+
     def _is_unified_level(level):
         return isinstance(level, str) and (level.startswith('e98') or level.startswith('unified'))
 
@@ -244,6 +261,8 @@ def main():
             return dict(e88_kwargs)
         if level == 'fla-gdn':
             return dict(gdn_kwargs)
+        if level == 'typed-gdn2':
+            return dict(typed_kwargs)
         if _is_unified_level(level):
             return dict(unified_kwargs)
         return {}
@@ -264,6 +283,17 @@ def main():
     print(f"Pattern: {model.actual_pattern}", flush=True)
     n_params = sum(p.numel() for p in model.parameters())
     print(f"Params: {n_params:,}", flush=True)
+
+    # typed-gdn2: dump the deterministic per-type head allocation (same for every
+    # typed layer) so the report can show whether CMA picks a balanced population
+    # or collapses toward GDN-2.
+    typed_alloc = None
+    for layer in model.layers:
+        if hasattr(layer, 'head_alloc'):
+            typed_alloc = layer.head_alloc()
+            break
+    if typed_alloc is not None:
+        print(f"Typed-head alloc: {typed_alloc['counts']}", flush=True)
 
     # Build param groups. With --knob_lr_mult != 1, the recurrence knobs
     # (lam/beta/igain/gamma raw of every UnifiedCellLayer) get a SEPARATE group at
@@ -315,6 +345,8 @@ def main():
            'beta_max': args.beta_max,
            'igain_max': args.igain_max,
            'corner_mixture': args.corner_mixture,
+           'head_type_logits': args.head_type_logits,
+           'typed_alloc': typed_alloc,
            'spec_reg': args.spec_reg,
            'spec_reg_weight': float(args.spec_reg_weight),
            'spec_reg_anneal': float(args.spec_reg_anneal),

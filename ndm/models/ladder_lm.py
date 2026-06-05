@@ -106,6 +106,7 @@ from .e75_gated_delta import E75GatedDelta
 from .e75_multihead import E75MultiHead
 from .e88_fla_hybrid import E88FLAHybrid
 from .unified_cell import UnifiedCellLayer
+from .typed_head_mixture import TypedHeadMixtureLayer
 from .e89_residual_state import E89ResidualStateCell
 from .e76_logspace_delta import E76LogSpaceDelta
 from .e77_linear_matrix import E77LinearMatrix
@@ -490,6 +491,10 @@ def get_ladder_level(level):
         'e98-cma': lambda **kw: UnifiedCellLayer(**{
             'knob_mode': 'learned', 'phi': 'gamma_mix', 'lam_max': 1.5,
             'spread_init': True, 'split_gate': True, **kw}),
+        # typed-gdn-2-head: a horizontal population of NATIVE recurrent head types
+        # (native GDN-2 delta-memory recall heads + E98 corner specialists) in one
+        # layer, allocated deterministically from per-type logits.
+        'typed-gdn2': lambda **kw: TypedHeadMixtureLayer(**kw),
         # E97: E88/NDM with GDN-2-inspired split edit gates.
         # Use --use_triton 1 for the split-edit Triton recurrence.
         'E97': lambda **kw: E88FLAHybrid(**{**kw, 'use_split_edit': True}),
