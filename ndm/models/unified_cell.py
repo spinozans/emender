@@ -50,7 +50,18 @@ SPEC_CORNERS = {
     'count':  (1.0, 0.0, 0.05),   # linear, pure integration
     'latch':  (1.3, 0.0, 0.95),   # tanh, bistable +/-1
     'nonlin': (0.9, 0.5, 0.95),   # tanh, state-nonlinear phi
+    # E98 FIVE-CORNER 5th corner: the leaky-linear ASSOCIATIVE-MEMORY workhorse.
+    # lambda<1, small beta -> POSITIVE along-key eig (0.9-0.1)=0.8 in (0,1), linear
+    # phi=identity: a fading key-value store (the GDN/Mamba regime that does real
+    # LM recall). NOT one of the exotic primitives.
+    'leaky':  (0.9, 0.1, 0.05),   # linear, along-key eig +0.8 (fading recall)
 }
+
+# Ordered corner lists for SPREAD placement. spread-4 = the four exotic primitives
+# (the current population); spread-5 appends the leaky-linear workhorse so a
+# 5-type population places ~1/5 of the heads on associative recall.
+SPREAD_CORNERS_4 = ['track', 'count', 'latch', 'nonlin']
+SPREAD_CORNERS_5 = ['track', 'count', 'latch', 'nonlin', 'leaky']
 # The generic-init compromise regime (sigmoid-midpoint-ish): heads collapse here
 # when under-pressured. The anti-center variant repels from this point.
 SPEC_CENTER = (0.95, 0.5, 0.5)
@@ -71,6 +82,10 @@ PRESETS = {
     'nonlin':  dict(phi='tanh',     lam0=0.9, beta0=0.5, igain0=1.0, lam_max=1.0, beta_max=2.0, head_norm=False),
     # E88-baseline: cribbed contractive delta (lambda<1, beta=1 full delta, tanh) == E88 recurrence
     'e88base': dict(phi='tanh',     lam0=0.9, beta0=1.0, igain0=1.0, lam_max=1.0, beta_max=1.0, head_norm=False),
+    # E98 FIVE-CORNER: leaky-linear associative memory (the LM workhorse). lambda<1
+    # + small beta -> positive along-key eig in (0,1), identity phi -> fading
+    # key-value recall. head_norm on (mLSTM-style readout stabilizer aids recall).
+    'leaky-linear': dict(phi='identity', lam0=0.9, beta0=0.1, igain0=1.0, lam_max=1.0, beta_max=2.0, head_norm=True),
 }
 
 
@@ -85,6 +100,7 @@ class UnifiedCellLayer(nn.Module):
         preset: Optional[str] = None,  # for pinned mode, name in PRESETS
         phi: str = 'gamma_mix',        # for learned mode
         spread_init: bool = False,     # learned mode: spread per-head knobs ACROSS corners
+        n_spread_corners: int = 4,     # 4 = exotic corners (spread-4); 5 adds leaky-linear (spread-5)
         n_proto: int = 4,              # dictionary mode: number of shared prototype knobs
         lam_max: float = 1.5,          # learned cap; 1.0 == clamped (cribbed)
         beta_max: float = 2.0,
@@ -120,6 +136,7 @@ class UnifiedCellLayer(nn.Module):
         self.lam_max, self.beta_max, self.igain_max = lam_max, beta_max, igain_max
         self.head_norm = head_norm
         self.spread_init = bool(spread_init) and knob_mode == 'learned'
+        self.n_spread_corners = int(n_spread_corners)
         self.n_proto = int(n_proto)
 
         # projections (fused qkv)
@@ -163,7 +180,7 @@ class UnifiedCellLayer(nn.Module):
             # projections (and gate) learn; the recurrence types are fixed. This
             # is the population analogue of the pinned single-corner presets, and
             # the floor the learnable approaches must beat to justify their cost.
-            lam0, beta0, gam0 = self._spread_corner_values(H, lam_max)
+            lam0, beta0, gam0 = self._spread_corner_values(H, lam_max, self.n_spread_corners)
             self.register_buffer('lam_raw', self._inv_scaled(lam0, lam_max))
             self.register_buffer('beta_raw', self._inv_scaled(beta0, beta_max))
             self.register_buffer('igain_raw', self._inv_scaled(torch.full((H,), min(1.0, 0.5 * igain_max)), igain_max))
@@ -202,7 +219,7 @@ class UnifiedCellLayer(nn.Module):
             #   count  : lambda 1.0,  beta 0.0, gamma 0.05 (linear)  -> pure integration
             #   latch  : lambda 1.3,  beta 0.0, gamma 0.95 (tanh)    -> bistable +/-1 attractors
             #   nonlin : lambda 0.9,  beta 0.5, gamma 0.95 (tanh)    -> state-nonlinear phi
-            lam0, beta0, gam0 = self._spread_corner_values(H, lam_max)
+            lam0, beta0, gam0 = self._spread_corner_values(H, lam_max, self.n_spread_corners)
             self.lam_raw = nn.Parameter(self._inv_scaled(lam0, lam_max))
             self.beta_raw = nn.Parameter(self._inv_scaled(beta0, beta_max))
             self.igain_raw = nn.Parameter(self._inv_scaled(torch.full((H,), min(1.0, 0.5 * igain_max)), igain_max))
@@ -227,26 +244,25 @@ class UnifiedCellLayer(nn.Module):
             nn.init.xavier_uniform_(self.value_write_gate_proj.weight, gain=0.1)
 
     @staticmethod
-    def _spread_corner_values(H, lam_max):
-        """Per-head (lambda, beta, gamma) init partitioned across the four corners.
+    def _spread_corner_values(H, lam_max, n_corners=4):
+        """Per-head (lambda, beta, gamma) init partitioned across the corners.
 
-        Heads are assigned round-robin (head_idx % 4) so every head-block holds a
-        mix of all four corners. Returns float tensors of shape [H]. lambda is
-        clamped to the achievable cap (latch's 1.3 needs lam_max>=1.3).
+        Heads are assigned round-robin (head_idx % n_corners) so every head-block
+        holds a mix of all corners. n_corners=4 -> the four exotic primitives
+        (spread-4, the current population); n_corners=5 appends the leaky-linear
+        associative-memory workhorse (spread-5). Returns float tensors of shape
+        [H]. lambda is clamped to the achievable cap (latch's 1.3 needs
+        lam_max>=1.3).
         """
-        # (lambda, beta, gamma) per corner
-        corners = [
-            (0.9, 1.8, 0.05),   # track  (linear, along-key eig -0.9)
-            (1.0, 0.0, 0.05),   # count  (linear, pure integration)
-            (1.3, 0.0, 0.95),   # latch  (tanh, bistable)
-            (0.9, 0.5, 0.95),   # nonlin (tanh, state-nonlinear)
-        ]
+        names = SPREAD_CORNERS_5 if n_corners >= 5 else SPREAD_CORNERS_4
+        corners = [SPEC_CORNERS[n] for n in names]
         lam = torch.empty(H)
         beta = torch.empty(H)
         gam = torch.empty(H)
         lam_cap = min(1.49, 0.99 * lam_max)
+        C = len(corners)
         for h in range(H):
-            l, b, g = corners[h % 4]
+            l, b, g = corners[h % C]
             lam[h] = min(l, lam_cap)
             beta[h] = b
             gam[h] = g

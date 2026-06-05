@@ -27,19 +27,26 @@ from .s5_permutation import S5PermutationTask
 from .counting_with_comparison import AnBnCnViabilityTask
 from .iterated_nonlinear_map import IteratedNonlinearMapTask
 from .flag_hold_recall import FlagHoldRecallTask
+from .mqar_recall import MQARRecallTask
 
 
 class MixedProbeTask:
     name = 'mixed_probe'
 
-    def __init__(self, n_keys: int = 4):
-        # The four real sub-probes (same configs as the standalone runs).
+    def __init__(self, n_keys: int = 4, include_recall: bool = True,
+                 recall_vocab: int = 64):
+        # The capability sub-probes (same configs as the standalone runs). E98
+        # FIVE-CORNER adds the leaky-linear ASSOCIATIVE-RECALL block so the mixed
+        # task demands content-addressable memory too (mixed-5), not only the four
+        # exotic primitives. include_recall=False recovers the original 4-cap mix.
         self.subtasks = [
             ('track', S5PermutationTask(mode='running')),
             ('count', AnBnCnViabilityTask()),
             ('nonlin', IteratedNonlinearMapTask()),
             ('latch', FlagHoldRecallTask(n_keys=n_keys)),
         ]
+        if include_recall:
+            self.subtasks.append(('recall', MQARRecallTask(vocab=recall_vocab)))
         # Disjoint vocab blocks: each sub-probe gets [base, base+vocab_size).
         self.bases = []
         base = 0
@@ -77,7 +84,11 @@ class MixedProbeTask:
         # positions each, flag-hold contributes 1. Reported for context only;
         # the study uses measured accuracy.
         Tref = 128
-        masked_per_seq = [Tref, Tref, Tref, 1]  # track,count,nonlin,latch
+        # supervised positions per sub-probe at Tref: dense probes (s5/anbncn/iter)
+        # ~Tref, latch=1 final token, recall (MQAR) ~Tref//4 query positions.
+        per = {'track': Tref, 'count': Tref, 'nonlin': Tref, 'latch': 1,
+               'recall': Tref // 4}
+        masked_per_seq = [per[name] for name, _ in self.subtasks]
         w = np.array(masked_per_seq, dtype=np.float64)
         w = w / w.sum()
         return float(np.dot(w, self._baselines))

@@ -457,11 +457,18 @@ def get_ladder_level(level):
         'e98-count':   lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'pinned', 'preset': 'count',  'split_gate': True}),
         'e98-latch':   lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'pinned', 'preset': 'latch',  'split_gate': True}),
         'e98-nonlin':  lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'pinned', 'preset': 'nonlin', 'split_gate': True}),
+        # E98 FIVE-CORNER 5th pinned preset: leaky-linear associative-memory
+        # workhorse (the GDN/Mamba recall regime). Should WIN the MQAR recall probe
+        # where the four exotic corners fail.
+        'e98-leaky':   lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'pinned', 'preset': 'leaky-linear', 'split_gate': True}),
         # Generic-init learned (free gain) + split gate.
         'e98-learned-free': lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'learned', 'phi': 'gamma_mix', 'lam_max': 1.5, 'split_gate': True}),
         # WINNING specialization form (SPECIALIZATION_STUDY): spread-init + knob-LR,
         # now with the E97 split gate. This is the E98 learnability arm.
-        'e98-learned-spread': lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'learned', 'phi': 'gamma_mix', 'lam_max': 1.5, 'spread_init': True, 'split_gate': True}),
+        # spread-4 = the current 4 exotic corners; spread-5 adds the leaky-linear
+        # workhorse so ~1/5 of the heads place on associative recall (E98 5-corner).
+        'e98-learned-spread': lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'learned', 'phi': 'gamma_mix', 'lam_max': 1.5, 'spread_init': True, 'n_spread_corners': 4, 'split_gate': True}),
+        'e98-learned-spread5': lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'learned', 'phi': 'gamma_mix', 'lam_max': 1.5, 'spread_init': True, 'n_spread_corners': 5, 'split_gate': True}),
         # Fixed-type population floor + split gate (for completeness).
         'e98-fixedpop': lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'fixed_pop', 'phi': 'gamma_mix', 'lam_max': 1.5, 'split_gate': True}),
         # E97: E88/NDM with GDN-2-inspired split edit gates.
