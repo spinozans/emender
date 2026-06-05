@@ -1,0 +1,67 @@
+{
+  "_schema": "E99 1.3B LM-CMA candidate records. Field names align with docs/HANDOFF_E97_GDN2_CMAES_20260528.md (dim, n_heads, n_state, depth, lr, batch_size + model-specific expansion). Extended with the production-LM-path fields (level, layer_kwargs, dtype) needed to instantiate each candidate via train.py + ndm/models/ladder_lm.py. Emitted by experiments/e99_1p3b_sanity/e99_lm_sanity.py; sanity verified 2026-06-05 on idle RTX 6000 Ada GPUs.",
+  "production_path": {
+    "entrypoint": "train.py",
+    "model_builder": "ndm/models/ladder_lm.py :: LadderLM (level resolved by get_ladder_level)",
+    "data": "/home/erikg/elman/data/pile.txt",
+    "tokenizer": "p50k_base",
+    "vocab_size": 50281,
+    "chunk_size": 2048,
+    "optimizer": "schedulefree.AdamWScheduleFree (weight_decay=0.01, betas=(0.9,0.95))",
+    "checkpoint_convention": "torch.save({'step','model_state_dict','optimizer_state_dict',...}); strict load via train.py load_checkpoint",
+    "note": "typed-gdn2-lm / e98-cma-lm are wired into train.py via --head_type_logits / --corner_mixture / --lam_max / --beta_max / --igain_max / --knob_lr_mult and the new layer_kwargs plumbing in LadderLM (commit on branch wg/agent-1116/wire-e99-e98). fla-gdn already conformed to the LadderLM layer protocol unchanged."
+  },
+  "candidates": {
+    "typed-gdn2-lm": {
+      "role": "E99 typed Emender (PRIMARY) — native GDN-2 heads + nonlinear specialist mix",
+      "source": "typed-gdn-2-head CMA winner (paper/review/TYPED_GDN2_MIXTURE_CMA_RESULTS.md)",
+      "level": "typed-gdn2-lm",
+      "dim": 3072, "depth": 22, "n_heads": 96, "n_state": 32,
+      "expansion": 1.0, "lr": 9.95e-4, "knob_lr_mult": 1.0, "batch_size": 2,
+      "dtype": "fp32",
+      "layer_kwargs": {
+        "head_type_logits": [3.9995, -1.9008, -0.9211, -2.8866, 2.4146],
+        "head_type_order": ["gdn2_recall", "e97_track", "count", "latch", "nonlin"],
+        "gdn_allow_neg_eigval": true,
+        "lam_max": 1.585,
+        "beta_max": 2.747
+      },
+      "discovered_form": "softmax(head_type_logits) ~= [0.822 gdn2_recall, 0.002 track, 0.006 count, 0.001 latch, 0.168 nonlin] -> the 40:8 / 5:1 GDN2:nonlinear ratio from typed-gdn-2-head, preserved at scale. At n_heads=96 -> ~79 GDN-2 / ~16 nonlinear heads.",
+      "measured": {"params": 1277500000, "params_b": 1.2775, "sustained_tok_s": 2422.5, "peak_mem_mb": 44217.8, "loss_first": 11.438, "loss_last": 8.564, "loss_decreased": true, "nan_seen": false, "roundtrip_delta": 3.052e-05, "roundtrip_ok": true}
+    },
+    "fla-gdn": {
+      "role": "Dense native GDN-2 / GatedDeltaNet control",
+      "source": "paper/review/THROUGHPUT.md FLA-GDN 1.352B baseline; same native delta-memory backbone the typed GDN-2 heads run",
+      "level": "fla-gdn",
+      "dim": 2688, "depth": 21, "n_heads": 44, "n_state": 64,
+      "expansion": 2.0, "lr": 8.63e-4, "knob_lr_mult": 1.0, "batch_size": 2,
+      "dtype": "bf16",
+      "layer_kwargs": null,
+      "measured": {"params": 1352352498, "params_b": 1.3524, "sustained_tok_s": 8364.0, "peak_mem_mb": 20868.5, "loss_first": 11.370, "loss_last": 8.936, "loss_decreased": true, "nan_seen": false, "roundtrip_delta": 0.00115, "roundtrip_ok": true}
+    },
+    "e98-cma-lm": {
+      "role": "E98-CMA unified Emender control",
+      "source": "cma-capability meta-config winner (paper/review/CMA_CAPABILITY_RESULTS.md)",
+      "level": "e98-cma-lm",
+      "dim": 3072, "depth": 17, "n_heads": 192, "n_state": 16,
+      "expansion": 1.0, "lr": 9.79e-4, "knob_lr_mult": 5.38, "batch_size": 1,
+      "dtype": "fp32",
+      "layer_kwargs": {
+        "corner_mixture": [0.4015, 0.2821, 0.0089, 0.3075],
+        "corner_mixture_order": ["track", "count", "latch", "nonlin"],
+        "lam_max": 1.585, "beta_max": 2.747, "igain_max": 2.0
+      },
+      "discovered_form": "split-gate + spread-init + corner_mixture + knob_lr_mult=5.38 from the 8M cma-capability winner; dim/depth/n_heads re-derived to 1.3B-class (the report's e98-scale-run starting point).",
+      "measured": {"params": 1277608704, "params_b": 1.2776, "sustained_tok_s": 2308.0, "peak_mem_mb": 34827.1, "loss_first": 11.502, "loss_last": 10.979, "loss_decreased": true, "nan_seen": false, "roundtrip_delta": 0.0, "roundtrip_ok": true}
+    }
+  },
+  "reused_baselines_from_handoff": {
+    "_note": "Existing prior 1.3B controls whose local train paths already exist; reuse without inventing new release paths. Configs from docs/HANDOFF_E97_GDN2_CMAES_20260528.md best-config table and paper/review/THROUGHPUT.md. To be wired only by run-matched-1-3b if their load paths are reusable.",
+    "E88_delta": {"level": "E88", "dim": 2048, "n_heads": 348, "n_state": 32, "depth": 10, "lr": 9.973e-4, "batch_size": 2, "handoff_best_avgloss": 5.9974, "handoff_best_final": 5.5529},
+    "E88_production_throughput": {"level": "E88", "dim": 1664, "depth": 12, "n_heads": 370, "n_state": 32, "expansion": 1.0, "batch_size": 5, "params": 1273191856, "sustained_tok_s": 7492},
+    "FLA_GDN": {"level": "fla-gdn", "dim": 3456, "expansion": 2, "depth": 12, "n_heads": 38, "lr": 8.627e-4, "batch_size": 2, "handoff_best_avgloss": 6.1104, "handoff_best_final": 5.6165},
+    "M2RNN_XMA": {"level": "m2rnn", "dim": 2304, "n_heads": 612, "n_state": 16, "depth": 10, "lr": 5.607e-4, "batch_size": 5, "handoff_best_avgloss": 6.0626},
+    "Mamba2": {"level": "mamba2", "dim": 1920, "d_state": 64, "expand": 4, "depth": 27, "lr": 1.417e-3, "batch_size": 2, "handoff_best_avgloss": 6.0560, "handoff_best_final": 5.6441},
+    "Transformer": {"level": "llama", "dim": 1664, "n_heads": 10, "expansion": 6, "depth": 19, "lr": 5.164e-4, "batch_size": 4, "handoff_best_avgloss": 5.9046, "handoff_best_final": 5.4683}
+  }
+}

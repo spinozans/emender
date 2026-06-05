@@ -1,0 +1,58 @@
+{
+  "_schema": "Per-candidate + aggregate compute budget caps for the downstream E99 1.3B LM-CMA top-up (run-e99-1-3b) and matched controls (run-matched-1-3b). Units and counting align with docs/HANDOFF_E97_GDN2_CMAES_20260528.md. Derived token caps use the REAL sustained tok/s measured by experiments/e99_1p3b_sanity/e99_lm_sanity.py on an idle RTX 6000 Ada, 2026-06-05.",
+
+  "counting_convention": {
+    "candidate_eval": "ONE short LM training of ONE candidate config (NOT a full multi-day 1.3B run).",
+    "target_total_evals": 96,
+    "interpretation": "96 = TOTAL candidate evaluations across the CMA search, continuing the prior batch's popsize-8 counting. 96 = popsize 8 x 12 generations.",
+    "schedule_to_reach_96": "--popsize 8, run/continue CMA to generation 12 (8 x 12 = 96 evals). Prior batch (handoff) used --popsize 8 --min_generations 8 (8 x 8 = 64); the top-up continues the SAME CMA state through generations 9-12 (+32 evals) to reach 96 total. If prior CMA state is not resumable on the production path, restart popsize-8 and run 12 generations, documenting the restart.",
+    "prior_batch_ref": "handoff best-config table: Transformer/E88-delta/E88-rawwrite/M2RNN/FLA-GDN/Mamba2 each searched at popsize 8."
+  },
+
+  "budget_unit": {
+    "primary": "train_minutes (wallclock-matched, exactly the handoff convention: --train_minutes 15 per candidate at --params 1270M --chunk_size 2048).",
+    "secondary": "token_cap = train_minutes * 60 * sustained_tok_s (derived per-candidate; lets a token-matched cross-walk be computed since wallclock-matched != token-matched when dtype/throughput differ).",
+    "gpu_days": "gpu_minutes / 1440. 1.0 GPU-day = 24 GPU-hours = 1440 GPU-minutes on one RTX 6000 Ada."
+  },
+
+  "COMPARABILITY_WARNING": "Wallclock-matched (train_minutes) is the handoff convention and is preserved here, BUT the fp32 candidates (typed-gdn2-lm 2422 tok/s, e98-cma-lm 2308 tok/s) run ~3.5x SLOWER than the bf16 fla-gdn control (8364 tok/s). At a matched 15-min window the fp32 arms see ~3.5x FEWER tokens than the bf16 control. Both train_minutes AND token_cap are emitted so run-e99 / run-matched can choose wallclock-matched (handoff-comparable) or token-matched (fairer learning comparison) and report AvgLoss/Final under whichever is used. Recommend reporting BOTH columns.",
+
+  "per_candidate_caps": {
+    "_train_minutes": 15,
+    "typed-gdn2-lm": {"train_minutes": 15, "sustained_tok_s": 2422.5, "token_cap": 2180250, "approx_steps_at_bs2_ctx2048": 532, "gpu_minutes": 15, "gpu_days": 0.0104},
+    "fla-gdn":        {"train_minutes": 15, "sustained_tok_s": 8364.0, "token_cap": 7527600, "approx_steps_at_bs2_ctx2048": 1837, "gpu_minutes": 15, "gpu_days": 0.0104},
+    "e98-cma-lm":     {"train_minutes": 15, "sustained_tok_s": 2308.0, "token_cap": 2077200, "approx_steps_at_bs1_ctx2048": 1014, "gpu_minutes": 15, "gpu_days": 0.0104}
+  },
+
+  "aggregate_caps": {
+    "e99_search_run-e99-1-3b": {
+      "search_candidate": "typed-gdn2-lm",
+      "n_evals": 96,
+      "per_eval_train_minutes": 15,
+      "total_gpu_minutes": 1440,
+      "total_gpu_hours": 24.0,
+      "total_gpu_days": 1.0,
+      "total_tokens_approx": 209304000,
+      "hard_stop": "STOP at 96 evals OR 24 GPU-hours of search compute, whichever first. Do NOT exceed. No single eval may exceed 15 min / its token_cap."
+    },
+    "matched_controls_run-matched-1-3b": {
+      "arms": ["fla-gdn (dense GDN-2)", "e98-cma-lm (E98-CMA)", "reused: E88, FLA-GDN, M2RNN, Mamba2, Transformer (handoff configs, only if load paths reuse)"],
+      "per_arm_train_minutes": 15,
+      "recommended_seeds_per_arm": 3,
+      "max_arms": 7,
+      "aggregate_ceiling_gpu_minutes": 315,
+      "aggregate_ceiling_gpu_hours": 5.25,
+      "hard_stop": "These are bounded head-to-head controls, NOT searches. Cap each arm at 15 min x (<=3 seeds). Aggregate ceiling 5.25 GPU-hours. Report AvgLoss/Final per arm to line up with the handoff summary columns."
+    },
+    "grand_total_ceiling": {
+      "gpu_hours": 29.25,
+      "gpu_days": 1.22,
+      "note": "E99 search (24 GPU-h) + matched controls (<=5.25 GPU-h). Idle-GPU-only; do not preempt other jobs. This is the cap for the SHORT-RUN top-up + controls, NOT any final multi-day 1.3B training (which remains human-gated and is out of scope)."
+    }
+  },
+
+  "fitness_definition": {
+    "primary": "Same as handoff: best AvgLoss / Final loss over the train window (nats/token). Report BOTH so columns line up with the prior summary table (Target | Best avg loss | Best final loss | Best config).",
+    "optional_extension": "If E99 adds held-out BPB or worst-case-aware capability score, report it ALONGSIDE (never replacing) AvgLoss/Final. See E99_1P3B_LM_SANITY.md comparability notes for the loss<->BPB conversion caveat."
+  }
+}

@@ -121,6 +121,39 @@ from .e90_dual_rate import E90DualRate
 from .e1_multihead import E1MultiHead
 
 
+class _LadderProtocolAdapter(nn.Module):
+    """Adapt a stateless full-sequence mixer to the production LadderLM layer
+    protocol.
+
+    The expressivity layers ``TypedHeadMixtureLayer`` and ``UnifiedCellLayer``
+    were written for the ``HybridLadderLM`` path: their ``forward(x)`` takes a
+    single ``[B,T,dim]`` tensor and returns a bare ``[B,T,dim]`` tensor (they
+    process the whole sequence chunkwise and carry no hidden state across
+    calls).  The production ``LadderLM.forward`` instead calls
+    ``layer(x, prev_hidden)`` and unpacks ``(out, h_final)``.
+
+    This thin wrapper bridges the two: it accepts (and ignores) the
+    ``prev_hidden`` positional arg and returns ``(out, None)`` — the same
+    "no recurrent carry" contract ``FLAGatedDeltaNetLayer`` already honours when
+    ``use_cache=False``.  The wrapped module's parameters live under
+    ``self.inner.*`` so a fresh model's checkpoint round-trips against itself.
+    """
+
+    def __init__(self, inner: nn.Module):
+        super().__init__()
+        self.inner = inner
+
+    def set_layer_idx(self, idx):
+        if hasattr(self.inner, 'set_layer_idx'):
+            self.inner.set_layer_idx(idx)
+
+    def forward(self, x, prev_hidden=None, **kwargs):  # noqa: ARG002 (protocol)
+        out = self.inner(x)
+        if isinstance(out, tuple):
+            out = out[0]
+        return out, None
+
+
 def get_ladder_level(level):
     """Get the module class for a specific ladder level.
 
@@ -495,6 +528,14 @@ def get_ladder_level(level):
         # (native GDN-2 delta-memory recall heads + E98 corner specialists) in one
         # layer, allocated deterministically from per-type logits.
         'typed-gdn2': lambda **kw: TypedHeadMixtureLayer(**kw),
+        # Production-LM-protocol variants of the two expressivity mixers: wrapped
+        # so LadderLM's `out, h = layer(x, prev_hidden)` calling convention works.
+        # These are the E99 typed-Emender and E98-CMA candidates wired into the
+        # real train.py / LadderLM / FLA-GDN path (task: wire-e99-e98).
+        'typed-gdn2-lm': lambda **kw: _LadderProtocolAdapter(TypedHeadMixtureLayer(**kw)),
+        'e98-cma-lm': lambda **kw: _LadderProtocolAdapter(UnifiedCellLayer(**{
+            'knob_mode': 'learned', 'phi': 'gamma_mix', 'lam_max': 1.5,
+            'spread_init': True, 'split_gate': True, **kw})),
         # E97: E88/NDM with GDN-2-inspired split edit gates.
         # Use --use_triton 1 for the split-edit Triton recurrence.
         'E97': lambda **kw: E88FLAHybrid(**{**kw, 'use_split_edit': True}),
@@ -927,6 +968,7 @@ class LadderLM(nn.Module):
         projection_chunk_size=0,  # For E88: chunk size for projection recomputation (0=disabled, saves ~5GB/layer at T=32K)
         loss_chunk_size=0,  # Chunk T dimension when computing lm_head + cross_entropy (0=disabled, saves T*V*2 bytes at long T)
         use_triton=False,  # For E88: use Triton fwd+bwd kernels instead of CUDA register-owned (portable across NVIDIA/AMD ROCm)
+        layer_kwargs=None,  # Extra per-layer kwargs merged into LayerClass(...) — e.g. head_type_logits / lam_max / beta_max / corner_mixture for typed-gdn2-lm / e98-cma-lm. None == no change to existing levels.
     ):
         super().__init__()
         self.vocab_size = vocab_size
@@ -966,9 +1008,14 @@ class LadderLM(nn.Module):
             RMSNorm(dim) for _ in range(depth)
         ])
 
+        # Extra per-layer kwargs (typed-gdn2-lm / e98-cma-lm candidate knobs).
+        # Merged LAST so they override the generic defaults below.
+        extra_layer_kwargs = dict(layer_kwargs) if layer_kwargs else {}
+        self.layer_kwargs = extra_layer_kwargs
+
         # Stack of recurrent layers
         self.layers = nn.ModuleList([
-            LayerClass(
+            LayerClass(**{**dict(
                 dim=dim,
                 expansion=expansion,
                 n_groups=n_groups,
@@ -999,7 +1046,7 @@ class LadderLM(nn.Module):
                 checkpoint_interval=checkpoint_interval,  # For E88: state checkpoint interval
                 projection_chunk_size=projection_chunk_size,  # For E88: projection recomputation chunks
                 use_triton=use_triton,  # For E88: route fwd+bwd through Triton kernels
-            )
+            ), **extra_layer_kwargs})
             for _ in range(depth)
         ])
 

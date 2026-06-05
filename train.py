@@ -166,6 +166,26 @@ def parse_args():
     parser.add_argument('--dropout', type=float, default=0.0,
                         help='Dropout rate (0.0 to 0.3)')
 
+    # Typed-Emender / E98-CMA candidate knobs (levels typed-gdn2-lm / e98-cma-lm).
+    # These are forwarded to the layer as layer_kwargs; absent => layer defaults.
+    parser.add_argument('--head_type_logits', type=str, default=None,
+                        help='typed-gdn2-lm: comma logits [gdn2_recall,e97_track,count,latch,nonlin] '
+                             '(softmax->largest-remainder head counts). E99 winner: 4.0,-1.9008,-0.9211,-2.8866,2.4146')
+    parser.add_argument('--corner_mixture', type=str, default=None,
+                        help='e98-cma-lm: comma per-corner head fractions [track,count,latch,nonlin]. '
+                             'E98-CMA winner: 0.4015,0.2821,0.0089,0.3075')
+    parser.add_argument('--lam_max', type=float, default=None,
+                        help='Unified/typed cell free-gain cap (E99/E98 winner: 1.585)')
+    parser.add_argument('--beta_max', type=float, default=None,
+                        help='Unified/typed cell reflection-depth cap (E99/E98 winner: 2.747)')
+    parser.add_argument('--igain_max', type=float, default=None,
+                        help='Unified/typed cell input-gain cap (default 2.0)')
+    parser.add_argument('--knob_lr_mult', type=float, default=1.0,
+                        help='Separate LR multiplier for recurrence knobs (lam/beta/igain/gamma_raw). '
+                             'E98-CMA winner: 5.38. 1.0 == single param group.')
+    parser.add_argument('--gdn_allow_neg_eigval', type=int, default=1,
+                        help='typed-gdn2-lm: allow negative along-key eigenvalue in GDN heads (1=yes, GDN-2 tracking)')
+
     # Mamba2-specific
     parser.add_argument('--mamba_expand', type=int, default=2,
                         help='Mamba2/Mamba3 expansion factor (expand)')
@@ -640,11 +660,26 @@ def train(args):
             checkpoint_interval=args.checkpoint_interval,
         )
     elif args.dim is not None and args.depth is not None:
+        # Build extra per-layer kwargs for the typed-gdn2-lm / e98-cma-lm
+        # candidate levels (None for every other level => default behaviour).
+        layer_kwargs = {}
+        if args.head_type_logits is not None:
+            layer_kwargs['head_type_logits'] = [float(x) for x in args.head_type_logits.split(',')]
+            layer_kwargs['gdn_allow_neg_eigval'] = bool(args.gdn_allow_neg_eigval)
+        if args.corner_mixture is not None:
+            layer_kwargs['corner_mixture'] = [float(x) for x in args.corner_mixture.split(',')]
+        if args.lam_max is not None:
+            layer_kwargs['lam_max'] = args.lam_max
+        if args.beta_max is not None:
+            layer_kwargs['beta_max'] = args.beta_max
+        if args.igain_max is not None:
+            layer_kwargs['igain_max'] = args.igain_max
         model = LadderLM(
             vocab_size=vocab_size,
             dim=args.dim,
             depth=args.depth,
             level=args.level,
+            layer_kwargs=(layer_kwargs or None),
             expansion=args.expansion,
             n_groups=args.n_groups,
             n_state=args.n_state,
@@ -692,10 +727,36 @@ def train(args):
 
     print(f"Model: Level {args.level}, {model.get_num_params():,} parameters")
 
+    # Build param groups. With --knob_lr_mult != 1, the UnifiedCell recurrence
+    # knobs (lam/beta/igain/gamma raw) get a SEPARATE optimizer group at a higher
+    # LR; everything else stays at base LR. This mirrors the expressivity path
+    # (experiments/expressivity_tasks/train_hybrid.py) so the E98-CMA candidate's
+    # validated knob_lr_mult=5.38 placement is preserved at LM scale.
+    KNOB_SUFFIXES = ('lam_raw', 'beta_raw', 'igain_raw', 'gamma_raw')
+    knob_params, base_params = [], []
+    for name, p in model.named_parameters():
+        if not p.requires_grad:
+            continue
+        if any(name.endswith(s) for s in KNOB_SUFFIXES):
+            knob_params.append(p)
+        else:
+            base_params.append(p)
+    use_knob_group = args.knob_lr_mult != 1.0 and len(knob_params) > 0
+    if use_knob_group:
+        param_groups = [
+            {'params': base_params, 'lr': args.lr},
+            {'params': knob_params, 'lr': args.lr * args.knob_lr_mult},
+        ]
+        print(f"Knob-LR group: {len(knob_params)} knob params at lr="
+              f"{args.lr * args.knob_lr_mult:.2e} ({args.knob_lr_mult}x base); "
+              f"{len(base_params)} base params at lr={args.lr:.2e}")
+    else:
+        param_groups = model.parameters()
+
     # Create optimizer
     if args.optimizer == 'schedulefree':
         optimizer = schedulefree.AdamWScheduleFree(
-            model.parameters(),
+            param_groups,
             lr=args.lr,
             weight_decay=args.weight_decay,
             betas=(0.9, 0.95),
@@ -703,7 +764,7 @@ def train(args):
         print(f"Using schedule-free AdamW (lr={args.lr})")
     else:
         optimizer = AdamW(
-            model.parameters(),
+            param_groups,
             lr=args.lr,
             weight_decay=args.weight_decay,
             betas=(0.9, 0.95),
