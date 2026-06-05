@@ -837,6 +837,15 @@ class E88FLAHybrid(nn.Module):
         # Ablation options
         use_conv: bool = False,  # E88 optimal: no short convolutions (unlike FLA-GDN)
         linear_state: bool = False,  # Set True to use linear state update (no tanh)
+        state_activation: str = None,  # State nonlinearity f in S = f(decay*S + outer).
+                                       # None => resolved from linear_state (identity if
+                                       # linear_state else 'tanh'). Explicit choices:
+                                       #   'tanh'     saturating nonlinear (DEFAULT; bounded |S|<=1)
+                                       #   'identity' affine/linear (== linear_state=True)
+                                       #   'relu'     NON-SATURATING: clamps S<0 to 0, S>0 unbounded
+                                       #   'softplus' NON-SATURATING smooth: log(1+e^x), unbounded above
+                                       # relu/softplus let the matrix-state grow without bound -> can
+                                       # hold an unbounded counter (Weiss-Goldberg-Yahav 2018).
         use_gate: bool = False,  # E88 optimal: no output gating (gating hurts E88)
         use_write_gate: bool = False,  # Set True to gate the delta write (like FLA-GDN beta)
         raw_write: bool = False,  # Set True to ablate delta correction: write v instead of v - S@k
@@ -883,6 +892,28 @@ class E88FLAHybrid(nn.Module):
         # Ablation flags
         self.use_conv = use_conv
         self.linear_state = linear_state
+        # Resolve the state nonlinearity. Backwards-compatible: when
+        # state_activation is not given, fall back to the historical behaviour
+        # (linear_state picks identity, otherwise tanh).
+        if state_activation is None:
+            state_activation = 'identity' if linear_state else 'tanh'
+        else:
+            state_activation = state_activation.lower()
+            if state_activation in ('linear', 'affine'):
+                state_activation = 'identity'
+        valid_state_acts = ('tanh', 'identity', 'relu', 'softplus')
+        if state_activation not in valid_state_acts:
+            raise ValueError(
+                f"state_activation must be one of {valid_state_acts}, got {state_activation!r}")
+        self.state_activation = state_activation
+        # Keep linear_state in sync so existing fast-path dispatch (which branches
+        # on linear_state to drop the tanh) stays correct for the identity case.
+        if state_activation == 'identity':
+            self.linear_state = True
+        # The non-saturating variants (relu/softplus) are only implemented in the
+        # PyTorch reference recurrence; the fused bf16 CUDA/Triton kernels bake in
+        # tanh-or-linear and would silently run the wrong nonlinearity.
+        self._nonsat_state = state_activation in ('relu', 'softplus')
         self.use_gate = use_gate
         self.use_write_gate = use_write_gate
         self.raw_write = raw_write
@@ -1218,6 +1249,26 @@ class E88FLAHybrid(nn.Module):
 
         return k, v.to(input_dtype), q, decay.to(input_dtype), g, qkv_silu_in_kernel
 
+    def _apply_state_activation(self, pre):
+        """Apply the configured state nonlinearity f to the pre-activation
+        ``decay*S + outer``. See ``state_activation`` in __init__.
+
+        - 'identity' : affine/linear state (no squashing) -- bounded only by decay
+        - 'tanh'     : saturating; |S| <= 1, finite-state expressivity, cannot count
+        - 'relu'     : NON-SATURATING; S clamped >=0 but unbounded above -> counter
+        - 'softplus' : NON-SATURATING smooth; >0 and unbounded above -> counter
+        """
+        act = self.state_activation
+        if act == 'identity':
+            return pre
+        if act == 'tanh':
+            return torch.tanh(pre)
+        if act == 'relu':
+            return torch.relu(pre)
+        if act == 'softplus':
+            return F.softplus(pre)
+        raise ValueError(f"unknown state_activation {act!r}")
+
     def _process_chunk(self, x_chunk, S_prev, input_dtype, use_fused_l2):
         """Compute projections and run CUDA kernel for one time chunk.
 
@@ -1269,6 +1320,21 @@ class E88FLAHybrid(nn.Module):
         H = self.n_heads
         erase_gate = None
         value_write_gate = None
+
+        # The non-saturating state variants (relu/softplus) are implemented only in
+        # the PyTorch reference recurrence below. The fused bf16 CUDA/Triton kernels
+        # hard-code tanh-or-linear, so route relu/softplus to the fp32 fallback by
+        # forcing x to fp32 here -- the kernel guards all require bf16 and will be
+        # skipped, and we fail loudly rather than silently running tanh.
+        if getattr(self, '_nonsat_state', False):
+            if x.dtype == torch.bfloat16:
+                x = x.float()
+            if self.use_triton or getattr(self, 'use_cuda_kernel', False):
+                # use_triton routes to kernels that don't implement relu/softplus.
+                raise RuntimeError(
+                    f"state_activation={self.state_activation!r} is only supported in the "
+                    "PyTorch reference recurrence; disable use_triton / bf16 kernels "
+                    "(run fp32 via disable_autocast) for non-saturating E88 state.")
 
         # === Check if we can use fused projection CUDA kernel ===
         # Note: Fused projection is forward-only, use only for inference
@@ -1747,10 +1813,7 @@ class E88FLAHybrid(nn.Module):
                     beta_t = write_beta[:, t].unsqueeze(-1).unsqueeze(-1)  # [B, H, 1, 1]
                     outer = beta_t * outer
 
-                if self.linear_state:
-                    S = decay_t * S + outer
-                else:
-                    S = torch.tanh(decay_t * S + outer)
+                S = self._apply_state_activation(decay_t * S + outer)
 
                 # Query the state: [B, H, head_v_dim]
                 Sq = torch.einsum('bhiv,bhi->bhv', S, q_norm)

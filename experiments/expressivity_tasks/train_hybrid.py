@@ -60,6 +60,13 @@ def main():
     ap.add_argument('--linear_state', type=int, default=None, choices=[0, 1],
                     help='E88 state nonlinearity: 0=tanh, 1=linear. Default: '
                          "layer default (tanh). Forwarded only to E88-family layers.")
+    ap.add_argument('--state_activation', type=str, default=None,
+                    choices=['tanh', 'identity', 'linear', 'relu', 'softplus'],
+                    help='E88 state nonlinearity f in S=f(decay*S+outer): tanh '
+                         '(saturating default), identity/linear (affine), relu or '
+                         'softplus (NON-SATURATING, unbounded |S| -> can count). '
+                         'Forwarded only to E88-family layers; runs the fp32 PyTorch '
+                         'reference recurrence for relu/softplus.')
     ap.add_argument('--use_gate', type=int, default=None, choices=[0, 1],
                     help='E88 output gate: 0=off, 1=on. Default: HybridLadderLM '
                          'default. Forwarded only to E88-family layers.')
@@ -158,6 +165,8 @@ def main():
     e88_kwargs = {}
     if args.linear_state is not None:
         e88_kwargs['linear_state'] = bool(args.linear_state)
+    if args.state_activation is not None:
+        e88_kwargs['state_activation'] = args.state_activation
     if args.use_gate is not None:
         e88_kwargs['use_gate'] = bool(args.use_gate)
     if args.decay_mode is not None:
@@ -212,6 +221,7 @@ def main():
            'disable_autocast': bool(args.disable_autocast),
            'use_triton_e88': bool(args.use_triton_e88),
            'linear_state': args.linear_state,
+           'state_activation': args.state_activation,
            'use_gate': args.use_gate,
            'decay_mode': args.decay_mode,
            'gdn_allow_neg_eigval': args.gdn_allow_neg_eigval,
