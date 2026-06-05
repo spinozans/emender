@@ -440,6 +440,14 @@ def get_ladder_level(level):
         # so descent REFINES specialization. Pair with a knob-specific higher LR
         # (train_hybrid --knob_lr_mult) so lambda/beta/gamma actually move.
         'unified-learned-spread': lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'learned', 'phi': 'gamma_mix', 'lam_max': 1.5, 'spread_init': True}),
+        # SPECIALIZATION STUDY (horizontal head-type hybridization). The regularizer
+        # arms reuse the GENERIC-init learned-free cell below and apply the
+        # specialization-pressure penalty at train time (train_hybrid --spec_reg).
+        # TYPE-DICTIONARY: K shared learnable prototype knobs + per-head soft weights.
+        'unified-dict4':   lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'dictionary', 'phi': 'gamma_mix', 'lam_max': 1.5, 'n_proto': 4}),
+        'unified-dict8':   lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'dictionary', 'phi': 'gamma_mix', 'lam_max': 1.5, 'n_proto': 8}),
+        # FIXED-TYPE POPULATION (floor): heads hard-assigned to corners, projections only.
+        'unified-fixedpop': lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'fixed_pop', 'phi': 'gamma_mix', 'lam_max': 1.5}),
         # E97: E88/NDM with GDN-2-inspired split edit gates.
         # Use --use_triton 1 for the split-edit Triton recurrence.
         'E97': lambda **kw: E88FLAHybrid(**{**kw, 'use_split_edit': True}),

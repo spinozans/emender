@@ -114,6 +114,21 @@ def main():
                          'placing them in a SEPARATE optimizer param-group so the '
                          'knobs actually move while projections stay at base LR. '
                          '1.0 = single group (no split).')
+    ap.add_argument('--spec_reg', type=str, default=None,
+                    choices=['pull', 'anticenter', 'coverage', 'pull_cov', 'anticenter_cov'],
+                    help='SPECIALIZATION-PRESSURE regularizer (specialization-study): '
+                         'add a penalty on every UnifiedCellLayer that FORCES per-head '
+                         'knobs onto the four corners. pull=(a) pull-to-nearest-corner, '
+                         'anticenter=(b) repel-center/reward-corner, coverage=(c) '
+                         'population diversity, *_cov = combine per-head + coverage. '
+                         'Default None = no regularizer.')
+    ap.add_argument('--spec_reg_weight', type=float, default=1.0,
+                    help='Weight on the specialization regularizer (swept).')
+    ap.add_argument('--spec_reg_anneal', type=float, default=0.5,
+                    help='Fraction of training over which the reg weight ramps '
+                         'linearly 0 -> spec_reg_weight (then held). 0 = full weight '
+                         'from step 0. Default 0.5 (anneal in over first half so the '
+                         'task is learned before specialization pressure peaks).')
     ap.add_argument('--curriculum', type=str, default=None,
                     help='Optional length curriculum (secondary lever): comma-'
                          'separated train seq_len schedule, e.g. 128,256,512,1024. '
@@ -268,6 +283,9 @@ def main():
            'e88_pos_eigval_clamp': args.e88_pos_eigval_clamp,
            'e88_raw_write': args.e88_raw_write,
            'knob_lr_mult': float(args.knob_lr_mult),
+           'spec_reg': args.spec_reg,
+           'spec_reg_weight': float(args.spec_reg_weight),
+           'spec_reg_anneal': float(args.spec_reg_anneal),
            'curriculum': args.curriculum,
            'random_baseline_acc': task.random_baseline_acc(),
            'steps': []}
@@ -286,6 +304,23 @@ def main():
             })
     if init_knobs:
         log['unified_knobs_init'] = init_knobs
+
+    # Specialization-pressure regularizer (specialization-study): collect every
+    # layer that exposes specialization_loss (the UnifiedCellLayers). The penalty
+    # ramps in over --spec_reg_anneal of training so the task is learned before
+    # the corner-pressure peaks.
+    spec_layers = [l for l in model.layers if hasattr(l, 'specialization_loss')] if args.spec_reg else []
+    if args.spec_reg:
+        print(f"Spec-reg: variant={args.spec_reg} weight={args.spec_reg_weight} "
+              f"anneal={args.spec_reg_anneal} over {len(spec_layers)} unified layers", flush=True)
+
+    def _spec_weight(step):
+        if not args.spec_reg:
+            return 0.0
+        if args.spec_reg_anneal <= 0:
+            return args.spec_reg_weight
+        frac = min(1.0, step / max(1.0, args.spec_reg_anneal * args.steps))
+        return args.spec_reg_weight * frac
 
     # Length curriculum (optional secondary lever): split total steps across stages.
     curriculum_stages = None
@@ -316,6 +351,11 @@ def main():
         loss_per = F.cross_entropy(logits.view(-1, logits.size(-1)).float(),
                                     y.view(-1), reduction='none').view_as(m)
         loss = (loss_per * m).sum() / m.sum().clamp_min(1)
+        if spec_layers:
+            sw = _spec_weight(step)
+            if sw > 0:
+                reg = sum(l.specialization_loss(args.spec_reg) for l in spec_layers) / len(spec_layers)
+                loss = loss + sw * reg
         optimizer.zero_grad(set_to_none=True)
         loss.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
@@ -343,7 +383,7 @@ def main():
     for li, layer in enumerate(model.layers):
         if hasattr(layer, 'knob_values'):
             kv = layer.knob_values()
-            unified_knobs.append({
+            entry = {
                 'layer': li,
                 'knob_mode': getattr(layer, 'knob_mode', None),
                 'preset': getattr(layer, 'preset', None),
@@ -353,9 +393,27 @@ def main():
                 'igain': kv['igain'].tolist(),
                 'gamma': kv['gamma'].tolist(),
                 'eig_along': kv['eig_along'].tolist(),
-            })
+            }
+            # TYPE-DICTIONARY interpretability: dump the K shared prototype knobs
+            # and each head's argmax prototype (the type it leans on most).
+            if getattr(layer, 'knob_mode', None) == 'dictionary':
+                with torch.no_grad():
+                    plam = (layer.lam_max * torch.sigmoid(layer.proto_lam_raw)).cpu().tolist()
+                    pbeta = (layer.beta_max * torch.sigmoid(layer.proto_beta_raw)).cpu().tolist()
+                    pgam = torch.sigmoid(layer.proto_gamma_raw).cpu().tolist()
+                    w = torch.softmax(layer.proto_weight, dim=1)  # [H,K]
+                    entry['proto'] = {'lambda': plam, 'beta': pbeta, 'gamma': pgam}
+                    entry['proto_argmax'] = w.argmax(dim=1).cpu().tolist()
+                    entry['proto_weight'] = w.cpu().tolist()
+            unified_knobs.append(entry)
     if unified_knobs:
         log['unified_knobs'] = unified_knobs
+
+    # Final specialization-regularizer value (per-layer mean), for diagnostics.
+    if spec_layers:
+        with torch.no_grad():
+            log['spec_reg_final'] = float(
+                sum(l.specialization_loss(args.spec_reg) for l in spec_layers) / len(spec_layers))
     log['elapsed_total_s'] = float(time.time() - t0)
     print(f"\nFINAL: acc={acc:.4f}  loss={eval_loss:.4f}  baseline={task.random_baseline_acc():.4f}", flush=True)
 
