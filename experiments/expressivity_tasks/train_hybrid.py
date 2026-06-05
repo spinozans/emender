@@ -143,6 +143,8 @@ def main():
     elif args.task == 'keyed_fsm_memory':
         task_kwargs['n_keys'] = args.K
         task_kwargs['n_states'] = args.K
+    elif args.task == 'flag_hold_recall':
+        task_kwargs['n_keys'] = args.K
     task = ALL_TASKS[args.task](**task_kwargs)
     print(f"Task: {task.name}, vocab_size={task.vocab_size}", flush=True)
 
@@ -264,6 +266,27 @@ def main():
     if hasattr(optimizer, 'eval'): optimizer.eval()
     acc, eval_loss = evaluate(model, task, args.batch_size, args.seq_len, 16, rng, device)
     log['final_acc'] = float(acc); log['final_loss'] = float(eval_loss)
+
+    # Emergent-specialization logging (Run C): dump per-head learned knobs for
+    # any UnifiedCellLayer in the model (lambda gain, beta correction, gamma phi,
+    # igain, and the along-key eigenvalue lambda-beta).
+    unified_knobs = []
+    for li, layer in enumerate(model.layers):
+        if hasattr(layer, 'knob_values'):
+            kv = layer.knob_values()
+            unified_knobs.append({
+                'layer': li,
+                'knob_mode': getattr(layer, 'knob_mode', None),
+                'preset': getattr(layer, 'preset', None),
+                'phi_mode': getattr(layer, 'phi_mode', None),
+                'lambda': kv['lambda'].tolist(),
+                'beta': kv['beta'].tolist(),
+                'igain': kv['igain'].tolist(),
+                'gamma': kv['gamma'].tolist(),
+                'eig_along': kv['eig_along'].tolist(),
+            })
+    if unified_knobs:
+        log['unified_knobs'] = unified_knobs
     log['elapsed_total_s'] = float(time.time() - t0)
     print(f"\nFINAL: acc={acc:.4f}  loss={eval_loss:.4f}  baseline={task.random_baseline_acc():.4f}", flush=True)
 

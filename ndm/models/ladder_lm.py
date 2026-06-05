@@ -105,6 +105,7 @@ from .e74_v2 import E74v2
 from .e75_gated_delta import E75GatedDelta
 from .e75_multihead import E75MultiHead
 from .e88_fla_hybrid import E88FLAHybrid
+from .unified_cell import UnifiedCellLayer
 from .e89_residual_state import E89ResidualStateCell
 from .e76_logspace_delta import E76LogSpaceDelta
 from .e77_linear_matrix import E77LinearMatrix
@@ -423,6 +424,18 @@ def get_ladder_level(level):
         # with E75's nonlinear matrix state: S = tanh(decay * S + outer(delta, k_norm))
         88: E88FLAHybrid,
         'E88': E88FLAHybrid,
+        # === UNIFIED parameterized matrix-recurrence cell (unified-cell-triton) ===
+        # ONE Triton kernel; knobs (lambda gain, beta correction, gamma phi) select capability.
+        # Pinned-preset corner arms:
+        'unified-track':   lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'pinned', 'preset': 'track'}),
+        'unified-count':   lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'pinned', 'preset': 'count'}),
+        'unified-latch':   lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'pinned', 'preset': 'latch'}),
+        'unified-nonlin':  lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'pinned', 'preset': 'nonlin'}),
+        'unified-e88base': lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'pinned', 'preset': 'e88base'}),
+        # LEARNED-knob arms: free gain (incl >=1) vs CLAMPED to (0,1) -- the un-cribbing demo.
+        'unified-learned':       lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'learned', 'phi': 'gamma_mix', 'lam_max': 1.5}),
+        'unified-learned-free':  lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'learned', 'phi': 'gamma_mix', 'lam_max': 1.5}),
+        'unified-learned-clamp': lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'learned', 'phi': 'gamma_mix', 'lam_max': 1.0}),
         # E97: E88/NDM with GDN-2-inspired split edit gates.
         # Use --use_triton 1 for the split-edit Triton recurrence.
         'E97': lambda **kw: E88FLAHybrid(**{**kw, 'use_split_edit': True}),
