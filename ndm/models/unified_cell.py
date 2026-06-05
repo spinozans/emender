@@ -101,6 +101,13 @@ class UnifiedCellLayer(nn.Module):
         phi: str = 'gamma_mix',        # for learned mode
         spread_init: bool = False,     # learned mode: spread per-head knobs ACROSS corners
         n_spread_corners: int = 4,     # 4 = exotic corners (spread-4); 5 adds leaky-linear (spread-5)
+        corner_mixture: Optional[list] = None,  # spread_init/fixed_pop: per-corner head
+        #   fractions over the n_spread_corners corners ([track,count,latch,nonlin]
+        #   for spread-4, +leaky for spread-5). None == equal round-robin. When
+        #   given, heads are assigned in contiguous blocks sized by the
+        #   (renormalized) fractions via largest-remainder rounding. Tuned by the
+        #   cma-capability meta-search; default None preserves the validated
+        #   spread/fixedpop behaviour exactly.
         n_proto: int = 4,              # dictionary mode: number of shared prototype knobs
         lam_max: float = 1.5,          # learned cap; 1.0 == clamped (cribbed)
         beta_max: float = 2.0,
@@ -137,6 +144,7 @@ class UnifiedCellLayer(nn.Module):
         self.head_norm = head_norm
         self.spread_init = bool(spread_init) and knob_mode == 'learned'
         self.n_spread_corners = int(n_spread_corners)
+        self.corner_mixture = self._normalize_mixture(corner_mixture)
         self.n_proto = int(n_proto)
 
         # projections (fused qkv)
@@ -180,7 +188,7 @@ class UnifiedCellLayer(nn.Module):
             # projections (and gate) learn; the recurrence types are fixed. This
             # is the population analogue of the pinned single-corner presets, and
             # the floor the learnable approaches must beat to justify their cost.
-            lam0, beta0, gam0 = self._spread_corner_values(H, lam_max, self.n_spread_corners)
+            lam0, beta0, gam0 = self._spread_corner_values(H, lam_max, self.n_spread_corners, self.corner_mixture)
             self.register_buffer('lam_raw', self._inv_scaled(lam0, lam_max))
             self.register_buffer('beta_raw', self._inv_scaled(beta0, beta_max))
             self.register_buffer('igain_raw', self._inv_scaled(torch.full((H,), min(1.0, 0.5 * igain_max)), igain_max))
@@ -219,7 +227,7 @@ class UnifiedCellLayer(nn.Module):
             #   count  : lambda 1.0,  beta 0.0, gamma 0.05 (linear)  -> pure integration
             #   latch  : lambda 1.3,  beta 0.0, gamma 0.95 (tanh)    -> bistable +/-1 attractors
             #   nonlin : lambda 0.9,  beta 0.5, gamma 0.95 (tanh)    -> state-nonlinear phi
-            lam0, beta0, gam0 = self._spread_corner_values(H, lam_max, self.n_spread_corners)
+            lam0, beta0, gam0 = self._spread_corner_values(H, lam_max, self.n_spread_corners, self.corner_mixture)
             self.lam_raw = nn.Parameter(self._inv_scaled(lam0, lam_max))
             self.beta_raw = nn.Parameter(self._inv_scaled(beta0, beta_max))
             self.igain_raw = nn.Parameter(self._inv_scaled(torch.full((H,), min(1.0, 0.5 * igain_max)), igain_max))
@@ -244,25 +252,77 @@ class UnifiedCellLayer(nn.Module):
             nn.init.xavier_uniform_(self.value_write_gate_proj.weight, gain=0.1)
 
     @staticmethod
-    def _spread_corner_values(H, lam_max, n_corners=4):
+    def _normalize_mixture(mixture):
+        """Validate/normalize a per-corner head-fraction spec to a list of floats
+        summing to 1, or None. Accepts counts or fractions; clamps negatives to 0.
+        Length must be 4 (spread-4 [track,count,latch,nonlin]) or 5 (spread-5,
+        +leaky); consistency with n_spread_corners is checked at placement time.
+        """
+        if mixture is None:
+            return None
+        vals = [max(0.0, float(v)) for v in mixture]
+        if len(vals) not in (4, 5):
+            raise ValueError(
+                f"corner_mixture must have 4 or 5 entries, got {len(vals)}")
+        s = sum(vals)
+        if s <= 0:
+            return None  # degenerate -> fall back to equal round-robin
+        return [v / s for v in vals]
+
+    @staticmethod
+    def _mixture_counts(H, mixture, C):
+        """Heads-per-corner (length C) from fractions via largest-remainder
+        rounding; every corner with fraction>0 gets >=1 head when H>=C so coverage
+        is preserved."""
+        if len(mixture) != C:
+            raise ValueError(
+                f"corner_mixture has {len(mixture)} entries but n_spread_corners={C}")
+        raw = [f * H for f in mixture]
+        counts = [int(c) for c in raw]
+        # guarantee >=1 head for any nonzero-fraction corner (coverage floor)
+        for i, f in enumerate(mixture):
+            if f > 0 and counts[i] == 0 and H >= C:
+                counts[i] = 1
+        deficit = H - sum(counts)
+        if deficit > 0:  # distribute by largest fractional remainder
+            rema = sorted(range(C), key=lambda i: raw[i] - int(raw[i]), reverse=True)
+            for j in range(deficit):
+                counts[rema[j % C]] += 1
+        elif deficit < 0:  # over-allocated by the coverage floor: trim largest
+            for _ in range(-deficit):
+                i = max(range(C), key=lambda i: counts[i])
+                counts[i] -= 1
+        return counts
+
+    @staticmethod
+    def _spread_corner_values(H, lam_max, n_corners=4, mixture=None):
         """Per-head (lambda, beta, gamma) init partitioned across the corners.
 
-        Heads are assigned round-robin (head_idx % n_corners) so every head-block
-        holds a mix of all corners. n_corners=4 -> the four exotic primitives
-        (spread-4, the current population); n_corners=5 appends the leaky-linear
-        associative-memory workhorse (spread-5). Returns float tensors of shape
-        [H]. lambda is clamped to the achievable cap (latch's 1.3 needs
-        lam_max>=1.3).
+        n_corners selects the corner population: 4 -> the four exotic primitives
+        (spread-4, the validated default); 5 -> appends the leaky-linear
+        associative-memory workhorse (spread-5). mixture is None -> heads are
+        assigned round-robin (head_idx % C), the balanced default. When a per-corner
+        `mixture` (length C) is given (cma-capability meta-search), heads are
+        assigned in contiguous blocks sized by those fractions instead. Returns
+        float tensors [H]; lambda is clamped to the achievable cap (latch's 1.3
+        needs lam_max>=1.3).
         """
         names = SPREAD_CORNERS_5 if n_corners >= 5 else SPREAD_CORNERS_4
         corners = [SPEC_CORNERS[n] for n in names]
+        C = len(corners)
         lam = torch.empty(H)
         beta = torch.empty(H)
         gam = torch.empty(H)
         lam_cap = min(1.49, 0.99 * lam_max)
-        C = len(corners)
+        if mixture is None:
+            assign = [h % C for h in range(H)]
+        else:
+            counts = UnifiedCellLayer._mixture_counts(H, mixture, C)
+            assign = []
+            for ci, n in enumerate(counts):
+                assign.extend([ci] * n)
         for h in range(H):
-            l, b, g = corners[h % C]
+            l, b, g = corners[assign[h]]
             lam[h] = min(l, lam_cap)
             beta[h] = b
             gam[h] = g

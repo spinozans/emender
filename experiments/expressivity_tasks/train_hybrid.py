@@ -107,6 +107,19 @@ def main():
     ap.add_argument('--lr', type=float, default=3e-4)
     ap.add_argument('--optimizer', type=str, default='adamw',
                     choices=['adamw', 'schedulefree'])
+    # UnifiedCell (e98-cma / unified-* / e98-*) meta-config knobs (cma-capability).
+    # Default None = use the layer pattern's own defaults (unchanged behaviour for
+    # all prior e98/unified sweeps). Forwarded only to UnifiedCell-family layers.
+    ap.add_argument('--lam_max', type=float, default=None,
+                    help='UnifiedCell lambda gain cap (free gain needs >=1.3 for latch).')
+    ap.add_argument('--beta_max', type=float, default=None,
+                    help='UnifiedCell beta (delta-correction) cap.')
+    ap.add_argument('--igain_max', type=float, default=None,
+                    help='UnifiedCell input write-gain cap.')
+    ap.add_argument('--corner_mixture', type=str, default=None,
+                    help='Comma-separated 4 head fractions [track,count,latch,nonlin] '
+                         'for spread-init/fixed_pop placement. e.g. "0.4,0.2,0.2,0.2". '
+                         'Default None = equal 25/25/25/25 round-robin.')
     ap.add_argument('--knob_lr_mult', type=float, default=1.0,
                     help='LEARNABILITY intervention #2: multiply the base LR for '
                          'the recurrence knobs (lam_raw/beta_raw/igain_raw/'
@@ -210,6 +223,19 @@ def main():
     gdn_kwargs = {}
     if args.gdn_allow_neg_eigval is not None:
         gdn_kwargs['allow_neg_eigval'] = bool(args.gdn_allow_neg_eigval)
+    # UnifiedCell (e98-cma / unified-* / e98-*) meta-config overrides.
+    unified_kwargs = {}
+    if args.lam_max is not None:
+        unified_kwargs['lam_max'] = args.lam_max
+    if args.beta_max is not None:
+        unified_kwargs['beta_max'] = args.beta_max
+    if args.igain_max is not None:
+        unified_kwargs['igain_max'] = args.igain_max
+    if args.corner_mixture is not None:
+        unified_kwargs['corner_mixture'] = [float(x) for x in args.corner_mixture.split(',') if x.strip()]
+
+    def _is_unified_level(level):
+        return isinstance(level, str) and (level.startswith('e98') or level.startswith('unified'))
 
     def _layer_kw(level):
         if level in ('m2rnn', 'm2rnn-paper'):
@@ -218,6 +244,8 @@ def main():
             return dict(e88_kwargs)
         if level == 'fla-gdn':
             return dict(gdn_kwargs)
+        if _is_unified_level(level):
+            return dict(unified_kwargs)
         return {}
 
     layer_kwargs = [_layer_kw(level) for level in args.layer_pattern]
@@ -283,6 +311,10 @@ def main():
            'e88_pos_eigval_clamp': args.e88_pos_eigval_clamp,
            'e88_raw_write': args.e88_raw_write,
            'knob_lr_mult': float(args.knob_lr_mult),
+           'lam_max': args.lam_max,
+           'beta_max': args.beta_max,
+           'igain_max': args.igain_max,
+           'corner_mixture': args.corner_mixture,
            'spec_reg': args.spec_reg,
            'spec_reg_weight': float(args.spec_reg_weight),
            'spec_reg_anneal': float(args.spec_reg_anneal),

@@ -471,6 +471,13 @@ def get_ladder_level(level):
         'e98-learned-spread5': lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'learned', 'phi': 'gamma_mix', 'lam_max': 1.5, 'spread_init': True, 'n_spread_corners': 5, 'split_gate': True}),
         # Fixed-type population floor + split gate (for completeness).
         'e98-fixedpop': lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'fixed_pop', 'phi': 'gamma_mix', 'lam_max': 1.5, 'split_gate': True}),
+        # CMA-tunable E98 learnability arm (cma-capability): same winning FORM as
+        # e98-learned-spread (spread-init + split-gate + gamma_mix), but with **kw
+        # LAST so the meta-search can override lam_max / beta_max / igain_max /
+        # corner_mixture per candidate. knob_lr_mult is a train-time arg.
+        'e98-cma': lambda **kw: UnifiedCellLayer(**{
+            'knob_mode': 'learned', 'phi': 'gamma_mix', 'lam_max': 1.5,
+            'spread_init': True, 'split_gate': True, **kw}),
         # E97: E88/NDM with GDN-2-inspired split edit gates.
         # Use --use_triton 1 for the split-edit Triton recurrence.
         'E97': lambda **kw: E88FLAHybrid(**{**kw, 'use_split_edit': True}),
