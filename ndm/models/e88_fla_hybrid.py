@@ -840,6 +840,10 @@ class E88FLAHybrid(nn.Module):
         use_gate: bool = False,  # E88 optimal: no output gating (gating hurts E88)
         use_write_gate: bool = False,  # Set True to gate the delta write (like FLA-GDN beta)
         raw_write: bool = False,  # Set True to ablate delta correction: write v instead of v - S@k
+        pos_eigval_clamp: bool = False,  # ARM B causal test: decay multiplies the WHOLE operator
+                                         # (decay*(I-kk^T)) instead of the identity only (decay*I-kk^T),
+                                         # clamping the along-key eigenvalue from decay-1<0 to decay*(1-1)=0>=0
+                                         # while KEEPING the delta read-modify-write structure.
         use_split_edit: bool = False,  # E97: separate key-axis erase/read and value-axis write gates
         simple_decay: bool = False,  # Set True to use simple sigmoid decay instead of Mamba2
         decay_mode: str = 'mamba',  # mamba, simple, none, or constant
@@ -882,6 +886,7 @@ class E88FLAHybrid(nn.Module):
         self.use_gate = use_gate
         self.use_write_gate = use_write_gate
         self.raw_write = raw_write
+        self.pos_eigval_clamp = pos_eigval_clamp
         self.use_split_edit = use_split_edit
         self.use_value_residual = use_value_residual
         self.gate_activation = gate_activation
@@ -1450,6 +1455,7 @@ class E88FLAHybrid(nn.Module):
             not self.use_value_residual
             and not self.raw_write
             and not self.use_split_edit
+            and not self.pos_eigval_clamp
         )
         if use_step_kernel:
             from .e88_step_kernel import e88_step
@@ -1478,7 +1484,8 @@ class E88FLAHybrid(nn.Module):
         use_cuda = (E88_NATIVE_CUDA_AVAILABLE and x.is_cuda and
                     x.dtype == torch.bfloat16 and self.training and
                     not self.raw_write and
-                    not self.use_split_edit)
+                    not self.use_split_edit and
+                    not self.pos_eigval_clamp)
 
         # Check if we can use optimized kernels with [B, T, H, dim] layout (no transpose)
         use_optimized = (
@@ -1495,7 +1502,8 @@ class E88FLAHybrid(nn.Module):
             not self.use_write_gate and  # Optimized kernels don't support write gate yet
             not self.use_value_residual and  # Fused path gates before we can add D*v
             (not self.use_split_edit or self.use_triton) and
-            (not self.raw_write or self.use_triton)  # raw-write is implemented in Triton/PyTorch fallback
+            (not self.raw_write or self.use_triton) and  # raw-write is implemented in Triton/PyTorch fallback
+            not self.pos_eigval_clamp  # clamp lives only in the serial fallback (kernels hardcode decay*I-kk^T)
         )
 
         # Track whether fused gating was used (to skip separate gating later)
@@ -1720,7 +1728,17 @@ class E88FLAHybrid(nn.Module):
                     delta = write_value  # [B, H, head_v_dim]
                 else:
                     retrieved = torch.einsum('bhiv,bhi->bhv', S, read_key)
-                    delta = write_value - retrieved  # [B, H, head_v_dim]
+                    if self.pos_eigval_clamp:
+                        # ARM B: decay multiplies the WHOLE operator A_t = decay*(I - k k^T).
+                        # Decaying the erase (retrieved) term moves the decay off the identity-only
+                        # placement: S = decay*S + (write_value - decay*retrieved)⊗k
+                        #              = decay*(S - retrieved⊗k) + write_value⊗k,
+                        # so along-key eigenvalue = decay*(1-1) = 0 >= 0 (was decay-1 < 0).
+                        # Read-modify-write delta structure is preserved (still reads + corrects).
+                        decay_v = decay_t.squeeze(-1)  # [B, H, 1]
+                        delta = write_value - decay_v * retrieved  # [B, H, head_v_dim]
+                    else:
+                        delta = write_value - retrieved  # [B, H, head_v_dim]
 
                 # Outer product: [B, H, n, head_v_dim]
                 outer = torch.einsum('bhv,bhi->bhiv', delta, k_norm)
@@ -1878,11 +1896,16 @@ class E88FLAHybrid(nn.Module):
         # A_t[i,j] = decay_t * delta_ij - beta_t * k_norm[i] * read_key[j]
         # B_t[i,vd] = beta_t * k_norm[i] * write_value[vd]
         eye = torch.eye(n, device=k.device, dtype=dtype)
-        A = decay.to(dtype)[..., None, None] * eye          # [B,T,H,n,n]
+        decay_e = decay.to(dtype)[..., None, None]          # [B,T,H,1,1]
+        A = decay_e * eye                                   # [B,T,H,n,n]
         if not self.raw_write:
             kk = torch.einsum('bthi,bthj->bthij', k_norm, read_key)  # [B,T,H,n,n]
             if beta is not None:
                 kk = beta[..., None, None] * kk
+            if self.pos_eigval_clamp:
+                # ARM B: decay multiplies the WHOLE operator -> A_t = decay*(I - k k^T);
+                # the rank-1 term is decayed too, so along-key eigenvalue = decay*(1-1)=0>=0.
+                kk = decay_e * kk
             A = A - kk
         Bm = torch.einsum('bthi,bthv->bthiv', k_norm, write_value)   # [B,T,H,n,v]
         if beta is not None:

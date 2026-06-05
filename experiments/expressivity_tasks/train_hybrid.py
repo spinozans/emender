@@ -72,6 +72,16 @@ def main():
                          'simple=input-dependent sigmoid. Forwarded only to '
                          'E88-family layers. Used by the E5 input-dependence '
                          'ablation (paper/review/E5_ABLATE_INPUTDEP.md).')
+    # Eigenvalue-causal-test knobs (ARM A / ARM B). Default None = unchanged.
+    ap.add_argument('--gdn_allow_neg_eigval', type=int, default=None, choices=[0, 1],
+                    help='ARM A: fla GatedDeltaNet allow_neg_eigval (beta*=2 -> beta in (0,2) '
+                         '-> along-key eigenvalue g(1-beta) can go negative). fla-gdn layers only.')
+    ap.add_argument('--e88_pos_eigval_clamp', type=int, default=None, choices=[0, 1],
+                    help='ARM B: clamp E88 along-key eigenvalue >=0 by moving decay onto the '
+                         'whole operator decay*(I-kk^T) (was decay*I-kk^T). E88-family layers only.')
+    ap.add_argument('--e88_raw_write', type=int, default=None, choices=[0, 1],
+                    help='ARM B secondary: E88 raw_write (drop delta-correction; A_t=decay*I, '
+                         'all eigenvalues = decay > 0). E88-family layers only.')
     ap.add_argument('--m2rnn_q_heads', type=int, default=None)
     ap.add_argument('--m2rnn_k_heads', type=int, default=None)
     ap.add_argument('--m2rnn_v_heads', type=int, default=None)
@@ -152,12 +162,22 @@ def main():
         e88_kwargs['use_gate'] = bool(args.use_gate)
     if args.decay_mode is not None:
         e88_kwargs['decay_mode'] = args.decay_mode
+    if args.e88_pos_eigval_clamp is not None:
+        e88_kwargs['pos_eigval_clamp'] = bool(args.e88_pos_eigval_clamp)
+    if args.e88_raw_write is not None:
+        e88_kwargs['raw_write'] = bool(args.e88_raw_write)
+    # fla-gdn overrides (only applied when explicitly passed).
+    gdn_kwargs = {}
+    if args.gdn_allow_neg_eigval is not None:
+        gdn_kwargs['allow_neg_eigval'] = bool(args.gdn_allow_neg_eigval)
 
     def _layer_kw(level):
         if level in ('m2rnn', 'm2rnn-paper'):
             return dict(m2_kwargs)
         if isinstance(level, str) and level.startswith('E88'):
             return dict(e88_kwargs)
+        if level == 'fla-gdn':
+            return dict(gdn_kwargs)
         return {}
 
     layer_kwargs = [_layer_kw(level) for level in args.layer_pattern]
@@ -194,6 +214,9 @@ def main():
            'linear_state': args.linear_state,
            'use_gate': args.use_gate,
            'decay_mode': args.decay_mode,
+           'gdn_allow_neg_eigval': args.gdn_allow_neg_eigval,
+           'e88_pos_eigval_clamp': args.e88_pos_eigval_clamp,
+           'e88_raw_write': args.e88_raw_write,
            'random_baseline_acc': task.random_baseline_acc(),
            'steps': []}
 
