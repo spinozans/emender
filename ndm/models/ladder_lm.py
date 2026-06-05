@@ -461,6 +461,12 @@ def get_ladder_level(level):
         # workhorse (the GDN/Mamba recall regime). Should WIN the MQAR recall probe
         # where the four exotic corners fail.
         'e98-leaky':   lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'pinned', 'preset': 'leaky-linear', 'split_gate': True}),
+        # E98 SIXTH pinned preset: gated-delta backbone (beta=1 clean overwrite,
+        # identity phi, INPUT-DEPENDENT gated decay lambda_t via decay_gate). The
+        # GDN-in-E98 operating point -- the key test of whether the GDN recall+track
+        # regime is reachable inside the unified cell. neg-eig (reflection for S5)
+        # arises naturally when the decay gate drives lambda_t<1 (eig=lambda_t-1<0).
+        'e98-gated-delta': lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'pinned', 'preset': 'gated-delta', 'split_gate': True}),
         # Generic-init learned (free gain) + split gate.
         'e98-learned-free': lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'learned', 'phi': 'gamma_mix', 'lam_max': 1.5, 'split_gate': True}),
         # WINNING specialization form (SPECIALIZATION_STUDY): spread-init + knob-LR,
@@ -469,6 +475,12 @@ def get_ladder_level(level):
         # workhorse so ~1/5 of the heads place on associative recall (E98 5-corner).
         'e98-learned-spread': lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'learned', 'phi': 'gamma_mix', 'lam_max': 1.5, 'spread_init': True, 'n_spread_corners': 4, 'split_gate': True}),
         'e98-learned-spread5': lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'learned', 'phi': 'gamma_mix', 'lam_max': 1.5, 'spread_init': True, 'n_spread_corners': 5, 'split_gate': True}),
+        # spread-6 adds the gated-delta backbone -> ~1/6 of heads place on
+        # clean-overwrite delta memory (the recall+track workhorse). The placed
+        # corner uses the fixed-lambda + split-gate machinery (input-dependent erase
+        # b_t supplies the overwrite); the fully input-dependent decay is showcased
+        # in the e98-gated-delta PRESET arm.
+        'e98-learned-spread6': lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'learned', 'phi': 'gamma_mix', 'lam_max': 1.5, 'spread_init': True, 'n_spread_corners': 6, 'split_gate': True}),
         # Fixed-type population floor + split gate (for completeness).
         'e98-fixedpop': lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'fixed_pop', 'phi': 'gamma_mix', 'lam_max': 1.5, 'split_gate': True}),
         # CMA-tunable E98 learnability arm (cma-capability): same winning FORM as

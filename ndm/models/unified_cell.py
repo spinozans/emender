@@ -55,6 +55,17 @@ SPEC_CORNERS = {
     # phi=identity: a fading key-value store (the GDN/Mamba regime that does real
     # LM recall). NOT one of the exotic primitives.
     'leaky':  (0.9, 0.1, 0.05),   # linear, along-key eig +0.8 (fading recall)
+    # E98 SIXTH CORNER: the GATED-DELTA backbone -- the recall+tracking workhorse
+    # the 5-corner test located (GDN solved MQAR 0.951 where leaky was the WORST
+    # recall corner, and GDN+neg-eig won S5 length-robustly). beta~=1 = FULL delta /
+    # clean overwrite, identity phi (linear state), and -- in the dedicated PRESET
+    # arm -- INPUT-DEPENDENT gated decay lambda_t in (0,1) (Mamba/GDN style, fed
+    # through the existing time-varying lam_t kernel input, NOT a fixed lambda).
+    # along-key eig = lambda_t - beta ~= 0 when lambda_t~=1 (clean erase-then-write),
+    # and goes NEGATIVE when lambda_t<1 -> it can also reflect for S5. As a placed
+    # spread corner the init is lambda~0.99, beta~1.0, gamma~0.05 (the eig~0 point);
+    # the split gate's input-dependent erase b_t supplies the GDN overwrite there.
+    'gated-delta': (0.99, 1.0, 0.05),  # linear, full delta, along-key eig ~0 (clean overwrite; neg-eig -> reflect)
 }
 
 # Ordered corner lists for SPREAD placement. spread-4 = the four exotic primitives
@@ -62,6 +73,9 @@ SPEC_CORNERS = {
 # 5-type population places ~1/5 of the heads on associative recall.
 SPREAD_CORNERS_4 = ['track', 'count', 'latch', 'nonlin']
 SPREAD_CORNERS_5 = ['track', 'count', 'latch', 'nonlin', 'leaky']
+# spread-6 appends the gated-delta backbone (the recall+tracking workhorse) so a
+# 6-type population places ~1/6 of the heads on clean-overwrite delta memory.
+SPREAD_CORNERS_6 = ['track', 'count', 'latch', 'nonlin', 'leaky', 'gated-delta']
 # The generic-init compromise regime (sigmoid-midpoint-ish): heads collapse here
 # when under-pressured. The anti-center variant repels from this point.
 SPEC_CENTER = (0.95, 0.5, 0.5)
@@ -86,6 +100,13 @@ PRESETS = {
     # + small beta -> positive along-key eig in (0,1), identity phi -> fading
     # key-value recall. head_norm on (mLSTM-style readout stabilizer aids recall).
     'leaky-linear': dict(phi='identity', lam0=0.9, beta0=0.1, igain0=1.0, lam_max=1.0, beta_max=2.0, head_norm=True),
+    # E98 SIXTH CORNER: gated-delta backbone. beta=1 full delta (clean overwrite),
+    # identity phi (linear), head_norm on, and decay_gate=True -> the per-timestep
+    # decay lambda_t is INPUT-DEPENDENT in (0, lam_max=1) (Mamba/GDN gated decay,
+    # fed to the existing time-varying lam_t kernel input). along-key eig =
+    # lambda_t - 1 in (-1, 0]: ~0 (clean erase-then-write / recall) when the gate
+    # keeps lambda_t~1, negative (reflection / S5 track) when it drives lambda_t<1.
+    'gated-delta': dict(phi='identity', lam0=0.99, beta0=1.0, igain0=1.0, lam_max=1.0, beta_max=2.0, head_norm=True, decay_gate=True),
 }
 
 
@@ -116,6 +137,7 @@ class UnifiedCellLayer(nn.Module):
         use_gate: bool = True,
         gate_activation: str = 'silu',
         split_gate: bool = False,      # E97/E98: decoupled erase (b*k) + value-write (w*v) gates
+        decay_gate: bool = False,      # E98 SIXTH: input-dependent gated decay lambda_t (GDN/Mamba)
         dropout: float = 0.0,
         **kwargs,
     ):
@@ -137,6 +159,7 @@ class UnifiedCellLayer(nn.Module):
             phi = cfg['phi']; lam_max = cfg['lam_max']; beta_max = cfg['beta_max']
             head_norm = cfg['head_norm']
             self._lam0, self._beta0, self._igain0 = cfg['lam0'], cfg['beta0'], cfg['igain0']
+            decay_gate = cfg.get('decay_gate', decay_gate)
         else:
             self.preset = None
         self.phi_mode = PHI_NAME_TO_CODE[phi]
@@ -169,6 +192,18 @@ class UnifiedCellLayer(nn.Module):
         else:
             self.erase_gate_proj = None
             self.value_write_gate_proj = None
+
+        # E98 SIXTH CORNER -- input-dependent gated decay (Mamba/GDN). When on, the
+        # per-timestep self-loop decay lambda_t in (0, lam_max) is computed from x
+        # PER (T,B,H) and fed to the existing time-varying lam_t kernel input (the
+        # unified_cell kernel already consumes lam as [T,B,H]); the fixed per-head
+        # lambda knob is bypassed. NO kernel rewrite -- this only repurposes the
+        # kernel's existing time-varying-decay capability.
+        self.decay_gate = bool(decay_gate)
+        if self.decay_gate:
+            self.decay_gate_proj = nn.Linear(dim, n_heads, bias=True)
+        else:
+            self.decay_gate_proj = None
 
         if head_norm:
             self.head_norm_weight = nn.Parameter(torch.ones(n_heads, V))
@@ -250,20 +285,29 @@ class UnifiedCellLayer(nn.Module):
             # free to open (->1, recovering the unified corners) or partially close.
             nn.init.xavier_uniform_(self.erase_gate_proj.weight, gain=0.1)
             nn.init.xavier_uniform_(self.value_write_gate_proj.weight, gain=0.1)
+        if self.decay_gate:
+            # Small input weight + a bias so the INITIAL decay sits at the corner's
+            # lambda (lam0 for pinned, ~0.9 otherwise). The gate then learns the
+            # input-dependence around that operating point.
+            nn.init.xavier_uniform_(self.decay_gate_proj.weight, gain=0.1)
+            lam0 = getattr(self, '_lam0', 0.9)
+            r = min(max(lam0 / self.lam_max, 1e-3), 1 - 1e-3)
+            nn.init.constant_(self.decay_gate_proj.bias, math.log(r / (1 - r)))
 
     @staticmethod
     def _normalize_mixture(mixture):
         """Validate/normalize a per-corner head-fraction spec to a list of floats
         summing to 1, or None. Accepts counts or fractions; clamps negatives to 0.
-        Length must be 4 (spread-4 [track,count,latch,nonlin]) or 5 (spread-5,
-        +leaky); consistency with n_spread_corners is checked at placement time.
+        Length must be 4 (spread-4 [track,count,latch,nonlin]), 5 (spread-5, +leaky)
+        or 6 (spread-6, +gated-delta); consistency with n_spread_corners is checked
+        at placement time.
         """
         if mixture is None:
             return None
         vals = [max(0.0, float(v)) for v in mixture]
-        if len(vals) not in (4, 5):
+        if len(vals) not in (4, 5, 6):
             raise ValueError(
-                f"corner_mixture must have 4 or 5 entries, got {len(vals)}")
+                f"corner_mixture must have 4, 5 or 6 entries, got {len(vals)}")
         s = sum(vals)
         if s <= 0:
             return None  # degenerate -> fall back to equal round-robin
@@ -300,14 +344,20 @@ class UnifiedCellLayer(nn.Module):
 
         n_corners selects the corner population: 4 -> the four exotic primitives
         (spread-4, the validated default); 5 -> appends the leaky-linear
-        associative-memory workhorse (spread-5). mixture is None -> heads are
-        assigned round-robin (head_idx % C), the balanced default. When a per-corner
-        `mixture` (length C) is given (cma-capability meta-search), heads are
-        assigned in contiguous blocks sized by those fractions instead. Returns
+        associative-memory workhorse (spread-5); >=6 -> appends the gated-delta
+        clean-overwrite backbone (spread-6, E98 SIXTH CORNER). mixture is None ->
+        heads are assigned round-robin (head_idx % C), the balanced default. When a
+        per-corner `mixture` (length C) is given (cma-capability meta-search), heads
+        are assigned in contiguous blocks sized by those fractions instead. Returns
         float tensors [H]; lambda is clamped to the achievable cap (latch's 1.3
         needs lam_max>=1.3).
         """
-        names = SPREAD_CORNERS_5 if n_corners >= 5 else SPREAD_CORNERS_4
+        if n_corners >= 6:
+            names = SPREAD_CORNERS_6
+        elif n_corners == 5:
+            names = SPREAD_CORNERS_5
+        else:
+            names = SPREAD_CORNERS_4
         corners = [SPEC_CORNERS[n] for n in names]
         C = len(corners)
         lam = torch.empty(H)
@@ -489,8 +539,16 @@ class UnifiedCellLayer(nn.Module):
         beta = self._beta().to(x.dtype)
         igain = self._igain().to(x.dtype)
         gamma = self._gamma().to(torch.float32)
-        # broadcast per-head -> [T,B,H]
-        lam_t = lam.view(1, 1, H).expand(T, B, H).contiguous()
+        # broadcast per-head -> [T,B,H]. With the E98 SIXTH-CORNER decay gate the
+        # self-loop decay is INPUT-DEPENDENT: lambda_t = lam_max * sigmoid(W_dx) in
+        # (0, lam_max), per (T,B,H) (Mamba/GDN gated decay). The fixed per-head
+        # lambda knob is bypassed; this just feeds the kernel's existing
+        # time-varying lam_t input (no kernel change).
+        if self.decay_gate:
+            dg = self.decay_gate_proj(x)                       # [B,T,H]
+            lam_t = (self.lam_max * torch.sigmoid(dg)).permute(1, 0, 2).contiguous().to(x.dtype)
+        else:
+            lam_t = lam.view(1, 1, H).expand(T, B, H).contiguous()
         beta_t = beta.view(1, 1, H).expand(T, B, H).contiguous()
         igain_t = igain.view(1, 1, H).expand(T, B, H).contiguous()
 

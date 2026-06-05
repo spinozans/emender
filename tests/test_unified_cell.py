@@ -291,3 +291,62 @@ def test_e97_equivalence():
     for nm in ('k', 'v', 'q', 'decay', 'b', 'w'):
         e = _relerr(tens[nm].grad, rens[nm].grad)
         assert e < TOL, f"E97 grad {nm} relerr {e:.2e} >= {TOL}"
+
+
+# === E98 SIXTH CORNER: gated-delta backbone (input-dependent gated decay) =====
+def test_gated_delta_preset_is_clean_overwrite_corner():
+    """The gated-delta PRESET realises the GDN clean-overwrite operating point in
+    the E98 cell: beta=1 (full delta), identity phi, along-key eig (lambda-beta)
+    ~= 0, head_norm on, and input-dependent decay enabled."""
+    from ndm.models.unified_cell import UnifiedCellLayer, PRESETS
+    m = UnifiedCellLayer(dim=128, n_state=16, n_heads=8, knob_mode='pinned',
+                         preset='gated-delta', split_gate=True).to('cuda')
+    kv = m.knob_values()
+    assert torch.allclose(kv['beta'], torch.ones(8), atol=1e-3), "beta must be ~1 (full delta)"
+    assert kv['eig_along'].abs().max() < 0.05, "along-key eig must be ~0 (clean overwrite)"
+    assert m.phi_mode == PHI_IDENTITY, "gated-delta phi must be identity (linear state)"
+    assert m.decay_gate and m.decay_gate_proj is not None, "decay gate must be enabled"
+    assert m.head_norm, "gated-delta uses head_norm readout stabiliser"
+    assert PRESETS['gated-delta']['decay_gate'] is True
+
+
+def test_gated_delta_decay_is_input_dependent():
+    """The decay lambda_t must genuinely depend on the input (Mamba/GDN gated
+    decay), NOT be a fixed per-head scalar: two different inputs must induce
+    different lambda_t, and lambda_t must stay in (0, lam_max)."""
+    from ndm.models.unified_cell import UnifiedCellLayer
+    torch.manual_seed(0)
+    m = UnifiedCellLayer(dim=128, n_state=16, n_heads=8, knob_mode='pinned',
+                         preset='gated-delta', split_gate=True).to('cuda')
+    # randomise the decay gate so it is not a constant map
+    with torch.no_grad():
+        m.decay_gate_proj.weight.normal_(0, 1.0)
+    B, T, D, H = 2, 8, 128, 8
+    x = torch.randn(B, T, D, device='cuda')
+    lam_t = m.lam_max * torch.sigmoid(m.decay_gate_proj(x))  # [B,T,H]
+    assert (lam_t > 0).all() and (lam_t <= m.lam_max + 1e-6).all(), "lambda_t out of (0,lam_max]"
+    # input-dependence: variance across the time axis is non-trivial
+    assert lam_t.std(dim=1).max().item() > 1e-3, "lambda_t does not vary with input"
+    # forward + backward routes gradient into the decay gate
+    x2 = torch.randn(B, T, D, device='cuda', requires_grad=True)
+    y = m(x2); y.float().pow(2).mean().backward()
+    assert m.decay_gate_proj.weight.grad is not None
+    assert m.decay_gate_proj.weight.grad.norm().item() > 0
+
+
+def test_spread6_places_all_six_corners():
+    """spread-6 init partitions the 8+ heads across all six corners, including a
+    gated-delta head at eig ~= 0 (the new backbone) alongside the leaky head."""
+    from ndm.models.unified_cell import UnifiedCellLayer, SPREAD_CORNERS_6, SPEC_CORNERS
+    m = UnifiedCellLayer(dim=128, n_state=16, n_heads=12, knob_mode='learned',
+                         phi='gamma_mix', lam_max=1.5, spread_init=True,
+                         n_spread_corners=6, split_gate=True).to('cuda')
+    kv = m.knob_values()
+    lam, beta, gam = kv['lambda'], kv['beta'], kv['gamma']
+    # gated-delta is corner index 5 -> heads 5, 11 with round-robin over 6 corners
+    gl, gb, gg = SPEC_CORNERS['gated-delta']
+    for h in (5, 11):
+        assert abs(float(lam[h]) - gl) < 0.02 and abs(float(beta[h]) - gb) < 0.02, \
+            f"head {h} should init at gated-delta corner"
+        assert abs(float(kv['eig_along'][h])) < 0.05, "gated-delta head eig must be ~0"
+    assert SPREAD_CORNERS_6[5] == 'gated-delta'
