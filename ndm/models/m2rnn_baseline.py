@@ -63,6 +63,7 @@ class M2RNNLayer(nn.Module):
         normalize_qk: bool = False,
         dropout: float = 0.0,
         gradient_clipping: Optional[float] = None,
+        linear_state: bool = False,
         **kwargs,
     ):
         super().__init__()
@@ -129,6 +130,11 @@ class M2RNNLayer(nn.Module):
         self.output_norm_enabled = output_norm
         self.normalize_qk = normalize_qk
         self.gradient_clipping = gradient_clipping
+        # When True, the state update drops the tanh state-nonlinearity:
+        #   nonlinear (as built): Z = tanh(h W + k v^T)
+        #   linear  (this knob): Z =      h W + k v^T
+        # Exact raw-write analogue of E88's `linear_state` (e88_fla_hybrid.py:1709).
+        self.linear_state = linear_state
 
         q_shape = self.num_q_heads * self.k_head_dim
         k_shape = self.num_k_heads * self.k_head_dim
@@ -254,7 +260,11 @@ class M2RNNLayer(nn.Module):
 
         q, k, v, forget, gate = self._project(x)
 
-        if XMA_M2RNN_AVAILABLE and x.is_cuda:
+        # The XMA Triton kernel hardcodes the tanh state-nonlinearity, so it
+        # cannot express the linear-state ablation. Fall back to the PyTorch
+        # loop (which honors self.linear_state) whenever linear state is asked
+        # for. With nonlinear state we use the kernel when available.
+        if XMA_M2RNN_AVAILABLE and x.is_cuda and not self.linear_state:
             h0 = None if prev_hidden is None else prev_hidden.to(dtype=q.dtype).contiguous()
             y, h = xma_m2rnn(
                 query=q.contiguous(),
@@ -302,7 +312,8 @@ class M2RNNLayer(nn.Module):
             f_t = forget[:, t].float().view(B, N, 1, 1)
 
             outer = k_t.unsqueeze(-1) * v_t.unsqueeze(-2)
-            candidate = torch.tanh(torch.matmul(h, W) + outer)
+            pre = torch.matmul(h, W) + outer
+            candidate = pre if self.linear_state else torch.tanh(pre)
             h = f_t * h + (1.0 - f_t) * candidate
 
             if self.gradient_clipping is not None:
@@ -353,6 +364,7 @@ class M2RNNLM(nn.Module):
         normalize_qk: bool = False,
         dropout: float = 0.0,
         gradient_clipping: Optional[float] = None,
+        linear_state: bool = False,
         gradient_checkpointing: bool = False,
         loss_chunk_size: int = 0,
     ):
@@ -396,6 +408,7 @@ class M2RNNLM(nn.Module):
                 normalize_qk=normalize_qk,
                 dropout=dropout,
                 gradient_clipping=gradient_clipping,
+                linear_state=linear_state,
             )
             for _ in range(depth)
         ])

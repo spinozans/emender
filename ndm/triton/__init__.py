@@ -25,6 +25,17 @@ from .e88_triton_backward import (
 from .e88_triton_optimized import (
     e88_triton_optimized_apply,
 )
+from .unified_cell_forward import (
+    unified_cell_forward,
+    unified_cell_torch_reference,
+    PHI_NAME_TO_CODE,
+    PHI_IDENTITY, PHI_TANH, PHI_GAMMA_MIX, PHI_RELU, PHI_SOFTPLUS,
+)
+from .unified_cell_backward import (
+    unified_cell_backward,
+    unified_cell,
+    UnifiedCellFunction,
+)
 
 __all__ = [
     "e88_triton_forward",
@@ -33,4 +44,11 @@ __all__ = [
     "e88_triton",
     "E88TritonFunction",
     "e88_triton_optimized_apply",
+    "unified_cell_forward",
+    "unified_cell_torch_reference",
+    "unified_cell_backward",
+    "unified_cell",
+    "UnifiedCellFunction",
+    "PHI_NAME_TO_CODE",
+    "PHI_IDENTITY", "PHI_TANH", "PHI_GAMMA_MIX", "PHI_RELU", "PHI_SOFTPLUS",
 ]

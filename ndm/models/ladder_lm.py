@@ -26,6 +26,7 @@ except ImportError:
     RMSNorm = nn.RMSNorm  # Fallback to PyTorch
 
 from .stock_elman import StockElman
+from .counter_baseline import ReLURNNLayer, LSTMLayer
 from .mamba_gated_elman import MambaGatedElman
 from .softsign_elman import SoftsignElman
 from .diagonal_state_elman import DiagonalStateElman
@@ -104,6 +105,8 @@ from .e74_v2 import E74v2
 from .e75_gated_delta import E75GatedDelta
 from .e75_multihead import E75MultiHead
 from .e88_fla_hybrid import E88FLAHybrid
+from .unified_cell import UnifiedCellLayer
+from .typed_head_mixture import TypedHeadMixtureLayer
 from .e89_residual_state import E89ResidualStateCell
 from .e76_logspace_delta import E76LogSpaceDelta
 from .e77_linear_matrix import E77LinearMatrix
@@ -116,6 +119,39 @@ from .e87_sparse_block import E87SparseBlockLayer
 from .mom_e88 import MoME88
 from .e90_dual_rate import E90DualRate
 from .e1_multihead import E1MultiHead
+
+
+class _LadderProtocolAdapter(nn.Module):
+    """Adapt a stateless full-sequence mixer to the production LadderLM layer
+    protocol.
+
+    The expressivity layers ``TypedHeadMixtureLayer`` and ``UnifiedCellLayer``
+    were written for the ``HybridLadderLM`` path: their ``forward(x)`` takes a
+    single ``[B,T,dim]`` tensor and returns a bare ``[B,T,dim]`` tensor (they
+    process the whole sequence chunkwise and carry no hidden state across
+    calls).  The production ``LadderLM.forward`` instead calls
+    ``layer(x, prev_hidden)`` and unpacks ``(out, h_final)``.
+
+    This thin wrapper bridges the two: it accepts (and ignores) the
+    ``prev_hidden`` positional arg and returns ``(out, None)`` — the same
+    "no recurrent carry" contract ``FLAGatedDeltaNetLayer`` already honours when
+    ``use_cache=False``.  The wrapped module's parameters live under
+    ``self.inner.*`` so a fresh model's checkpoint round-trips against itself.
+    """
+
+    def __init__(self, inner: nn.Module):
+        super().__init__()
+        self.inner = inner
+
+    def set_layer_idx(self, idx):
+        if hasattr(self.inner, 'set_layer_idx'):
+            self.inner.set_layer_idx(idx)
+
+    def forward(self, x, prev_hidden=None, **kwargs):  # noqa: ARG002 (protocol)
+        out = self.inner(x)
+        if isinstance(out, tuple):
+            out = out[0]
+        return out, None
 
 
 def get_ladder_level(level):
@@ -423,6 +459,84 @@ def get_ladder_level(level):
         # with E75's nonlinear matrix state: S = tanh(decay * S + outer(delta, k_norm))
         88: E88FLAHybrid,
         'E88': E88FLAHybrid,
+        # === UNIFIED parameterized matrix-recurrence cell (unified-cell-triton) ===
+        # ONE Triton kernel; knobs (lambda gain, beta correction, gamma phi) select capability.
+        # Pinned-preset corner arms:
+        'unified-track':   lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'pinned', 'preset': 'track'}),
+        'unified-count':   lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'pinned', 'preset': 'count'}),
+        'unified-latch':   lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'pinned', 'preset': 'latch'}),
+        'unified-nonlin':  lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'pinned', 'preset': 'nonlin'}),
+        'unified-e88base': lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'pinned', 'preset': 'e88base'}),
+        # LEARNED-knob arms: free gain (incl >=1) vs CLAMPED to (0,1) -- the un-cribbing demo.
+        'unified-learned':       lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'learned', 'phi': 'gamma_mix', 'lam_max': 1.5}),
+        'unified-learned-free':  lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'learned', 'phi': 'gamma_mix', 'lam_max': 1.5}),
+        'unified-learned-clamp': lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'learned', 'phi': 'gamma_mix', 'lam_max': 1.0}),
+        # LEARNABILITY: spread per-head knobs ACROSS the corners at init (free gain),
+        # so descent REFINES specialization. Pair with a knob-specific higher LR
+        # (train_hybrid --knob_lr_mult) so lambda/beta/gamma actually move.
+        'unified-learned-spread': lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'learned', 'phi': 'gamma_mix', 'lam_max': 1.5, 'spread_init': True}),
+        # SPECIALIZATION STUDY (horizontal head-type hybridization). The regularizer
+        # arms reuse the GENERIC-init learned-free cell below and apply the
+        # specialization-pressure penalty at train time (train_hybrid --spec_reg).
+        # TYPE-DICTIONARY: K shared learnable prototype knobs + per-head soft weights.
+        'unified-dict4':   lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'dictionary', 'phi': 'gamma_mix', 'lam_max': 1.5, 'n_proto': 4}),
+        'unified-dict8':   lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'dictionary', 'phi': 'gamma_mix', 'lam_max': 1.5, 'n_proto': 8}),
+        # FIXED-TYPE POPULATION (floor): heads hard-assigned to corners, projections only.
+        'unified-fixedpop': lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'fixed_pop', 'phi': 'gamma_mix', 'lam_max': 1.5}),
+        # === E98 = E97 split-gate (decoupled erase b*k / value-write w*v) ON TOP of
+        # the unified capability-span + horizontal specialization. The split gate
+        # makes the correction term E97-rich: pre = lam*S - beta*k((b*k)^T S) +
+        # i*k(w*v)^T. b=w=1 recovers the unified cell so all four corners persist.
+        # Pinned-corner arms (split-gate on):
+        'e98-track':   lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'pinned', 'preset': 'track',  'split_gate': True}),
+        'e98-count':   lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'pinned', 'preset': 'count',  'split_gate': True}),
+        'e98-latch':   lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'pinned', 'preset': 'latch',  'split_gate': True}),
+        'e98-nonlin':  lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'pinned', 'preset': 'nonlin', 'split_gate': True}),
+        # E98 FIVE-CORNER 5th pinned preset: leaky-linear associative-memory
+        # workhorse (the GDN/Mamba recall regime). Should WIN the MQAR recall probe
+        # where the four exotic corners fail.
+        'e98-leaky':   lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'pinned', 'preset': 'leaky-linear', 'split_gate': True}),
+        # E98 SIXTH pinned preset: gated-delta backbone (beta=1 clean overwrite,
+        # identity phi, INPUT-DEPENDENT gated decay lambda_t via decay_gate). The
+        # GDN-in-E98 operating point -- the key test of whether the GDN recall+track
+        # regime is reachable inside the unified cell. neg-eig (reflection for S5)
+        # arises naturally when the decay gate drives lambda_t<1 (eig=lambda_t-1<0).
+        'e98-gated-delta': lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'pinned', 'preset': 'gated-delta', 'split_gate': True}),
+        # Generic-init learned (free gain) + split gate.
+        'e98-learned-free': lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'learned', 'phi': 'gamma_mix', 'lam_max': 1.5, 'split_gate': True}),
+        # WINNING specialization form (SPECIALIZATION_STUDY): spread-init + knob-LR,
+        # now with the E97 split gate. This is the E98 learnability arm.
+        # spread-4 = the current 4 exotic corners; spread-5 adds the leaky-linear
+        # workhorse so ~1/5 of the heads place on associative recall (E98 5-corner).
+        'e98-learned-spread': lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'learned', 'phi': 'gamma_mix', 'lam_max': 1.5, 'spread_init': True, 'n_spread_corners': 4, 'split_gate': True}),
+        'e98-learned-spread5': lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'learned', 'phi': 'gamma_mix', 'lam_max': 1.5, 'spread_init': True, 'n_spread_corners': 5, 'split_gate': True}),
+        # spread-6 adds the gated-delta backbone -> ~1/6 of heads place on
+        # clean-overwrite delta memory (the recall+track workhorse). The placed
+        # corner uses the fixed-lambda + split-gate machinery (input-dependent erase
+        # b_t supplies the overwrite); the fully input-dependent decay is showcased
+        # in the e98-gated-delta PRESET arm.
+        'e98-learned-spread6': lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'learned', 'phi': 'gamma_mix', 'lam_max': 1.5, 'spread_init': True, 'n_spread_corners': 6, 'split_gate': True}),
+        # Fixed-type population floor + split gate (for completeness).
+        'e98-fixedpop': lambda **kw: UnifiedCellLayer(**{**kw, 'knob_mode': 'fixed_pop', 'phi': 'gamma_mix', 'lam_max': 1.5, 'split_gate': True}),
+        # CMA-tunable E98 learnability arm (cma-capability): same winning FORM as
+        # e98-learned-spread (spread-init + split-gate + gamma_mix), but with **kw
+        # LAST so the meta-search can override lam_max / beta_max / igain_max /
+        # corner_mixture per candidate. knob_lr_mult is a train-time arg.
+        'e98-cma': lambda **kw: UnifiedCellLayer(**{
+            'knob_mode': 'learned', 'phi': 'gamma_mix', 'lam_max': 1.5,
+            'spread_init': True, 'split_gate': True, **kw}),
+        # typed-gdn-2-head: a horizontal population of NATIVE recurrent head types
+        # (native GDN-2 delta-memory recall heads + E98 corner specialists) in one
+        # layer, allocated deterministically from per-type logits.
+        'typed-gdn2': lambda **kw: TypedHeadMixtureLayer(**kw),
+        # Production-LM-protocol variants of the two expressivity mixers: wrapped
+        # so LadderLM's `out, h = layer(x, prev_hidden)` calling convention works.
+        # These are the E99 typed-Emender and E98-CMA candidates wired into the
+        # real train.py / LadderLM / FLA-GDN path (task: wire-e99-e98).
+        'typed-gdn2-lm': lambda **kw: _LadderProtocolAdapter(TypedHeadMixtureLayer(**kw)),
+        'e98-cma-lm': lambda **kw: _LadderProtocolAdapter(UnifiedCellLayer(**{
+            'knob_mode': 'learned', 'phi': 'gamma_mix', 'lam_max': 1.5,
+            'spread_init': True, 'split_gate': True, **kw})),
         # E97: E88/NDM with GDN-2-inspired split edit gates.
         # Use --use_triton 1 for the split-edit Triton recurrence.
         'E97': lambda **kw: E88FLAHybrid(**{**kw, 'use_split_edit': True}),
@@ -758,6 +872,10 @@ def get_ladder_level(level):
         'E1H': E1MultiHead,
 
         'mamba2': 'mamba2',  # Special case - handled separately
+        # PROBE 1 additive / non-saturating counter baselines (WGY 2018 positive
+        # control: CAN realize an unbounded counter; tanh/linear-state cannot).
+        'relu_rnn': ReLURNNLayer,  # additive ReLU-Elman RNN
+        'lstm': LSTMLayer,         # standard LSTM (gated additive cell)
     }
     if level in levels:
         return levels[level]
@@ -852,6 +970,7 @@ class LadderLM(nn.Module):
         projection_chunk_size=0,  # For E88: chunk size for projection recomputation (0=disabled, saves ~5GB/layer at T=32K)
         loss_chunk_size=0,  # Chunk T dimension when computing lm_head + cross_entropy (0=disabled, saves T*V*2 bytes at long T)
         use_triton=False,  # For E88: use Triton fwd+bwd kernels instead of CUDA register-owned (portable across NVIDIA/AMD ROCm)
+        layer_kwargs=None,  # Extra per-layer kwargs merged into LayerClass(...) — e.g. head_type_logits / lam_max / beta_max / corner_mixture for typed-gdn2-lm / e98-cma-lm. None == no change to existing levels.
     ):
         super().__init__()
         self.vocab_size = vocab_size
@@ -891,9 +1010,14 @@ class LadderLM(nn.Module):
             RMSNorm(dim) for _ in range(depth)
         ])
 
+        # Extra per-layer kwargs (typed-gdn2-lm / e98-cma-lm candidate knobs).
+        # Merged LAST so they override the generic defaults below.
+        extra_layer_kwargs = dict(layer_kwargs) if layer_kwargs else {}
+        self.layer_kwargs = extra_layer_kwargs
+
         # Stack of recurrent layers
         self.layers = nn.ModuleList([
-            LayerClass(
+            LayerClass(**{**dict(
                 dim=dim,
                 expansion=expansion,
                 n_groups=n_groups,
@@ -925,7 +1049,7 @@ class LadderLM(nn.Module):
                 checkpoint_interval=checkpoint_interval,  # For E88: state checkpoint interval
                 projection_chunk_size=projection_chunk_size,  # For E88: projection recomputation chunks
                 use_triton=use_triton,  # For E88: route fwd+bwd through Triton kernels
-            )
+            ), **extra_layer_kwargs})
             for _ in range(depth)
         ])
 

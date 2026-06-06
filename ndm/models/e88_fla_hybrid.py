@@ -837,9 +837,22 @@ class E88FLAHybrid(nn.Module):
         # Ablation options
         use_conv: bool = False,  # E88 optimal: no short convolutions (unlike FLA-GDN)
         linear_state: bool = False,  # Set True to use linear state update (no tanh)
+        state_activation: str = None,  # State nonlinearity f in S = f(decay*S + outer).
+                                       # None => resolved from linear_state (identity if
+                                       # linear_state else 'tanh'). Explicit choices:
+                                       #   'tanh'     saturating nonlinear (DEFAULT; bounded |S|<=1)
+                                       #   'identity' affine/linear (== linear_state=True)
+                                       #   'relu'     NON-SATURATING: clamps S<0 to 0, S>0 unbounded
+                                       #   'softplus' NON-SATURATING smooth: log(1+e^x), unbounded above
+                                       # relu/softplus let the matrix-state grow without bound -> can
+                                       # hold an unbounded counter (Weiss-Goldberg-Yahav 2018).
         use_gate: bool = False,  # E88 optimal: no output gating (gating hurts E88)
         use_write_gate: bool = False,  # Set True to gate the delta write (like FLA-GDN beta)
         raw_write: bool = False,  # Set True to ablate delta correction: write v instead of v - S@k
+        pos_eigval_clamp: bool = False,  # ARM B causal test: decay multiplies the WHOLE operator
+                                         # (decay*(I-kk^T)) instead of the identity only (decay*I-kk^T),
+                                         # clamping the along-key eigenvalue from decay-1<0 to decay*(1-1)=0>=0
+                                         # while KEEPING the delta read-modify-write structure.
         use_split_edit: bool = False,  # E97: separate key-axis erase/read and value-axis write gates
         simple_decay: bool = False,  # Set True to use simple sigmoid decay instead of Mamba2
         decay_mode: str = 'mamba',  # mamba, simple, none, or constant
@@ -879,9 +892,32 @@ class E88FLAHybrid(nn.Module):
         # Ablation flags
         self.use_conv = use_conv
         self.linear_state = linear_state
+        # Resolve the state nonlinearity. Backwards-compatible: when
+        # state_activation is not given, fall back to the historical behaviour
+        # (linear_state picks identity, otherwise tanh).
+        if state_activation is None:
+            state_activation = 'identity' if linear_state else 'tanh'
+        else:
+            state_activation = state_activation.lower()
+            if state_activation in ('linear', 'affine'):
+                state_activation = 'identity'
+        valid_state_acts = ('tanh', 'identity', 'relu', 'softplus')
+        if state_activation not in valid_state_acts:
+            raise ValueError(
+                f"state_activation must be one of {valid_state_acts}, got {state_activation!r}")
+        self.state_activation = state_activation
+        # Keep linear_state in sync so existing fast-path dispatch (which branches
+        # on linear_state to drop the tanh) stays correct for the identity case.
+        if state_activation == 'identity':
+            self.linear_state = True
+        # The non-saturating variants (relu/softplus) are only implemented in the
+        # PyTorch reference recurrence; the fused bf16 CUDA/Triton kernels bake in
+        # tanh-or-linear and would silently run the wrong nonlinearity.
+        self._nonsat_state = state_activation in ('relu', 'softplus')
         self.use_gate = use_gate
         self.use_write_gate = use_write_gate
         self.raw_write = raw_write
+        self.pos_eigval_clamp = pos_eigval_clamp
         self.use_split_edit = use_split_edit
         self.use_value_residual = use_value_residual
         self.gate_activation = gate_activation
@@ -1213,6 +1249,26 @@ class E88FLAHybrid(nn.Module):
 
         return k, v.to(input_dtype), q, decay.to(input_dtype), g, qkv_silu_in_kernel
 
+    def _apply_state_activation(self, pre):
+        """Apply the configured state nonlinearity f to the pre-activation
+        ``decay*S + outer``. See ``state_activation`` in __init__.
+
+        - 'identity' : affine/linear state (no squashing) -- bounded only by decay
+        - 'tanh'     : saturating; |S| <= 1, finite-state expressivity, cannot count
+        - 'relu'     : NON-SATURATING; S clamped >=0 but unbounded above -> counter
+        - 'softplus' : NON-SATURATING smooth; >0 and unbounded above -> counter
+        """
+        act = self.state_activation
+        if act == 'identity':
+            return pre
+        if act == 'tanh':
+            return torch.tanh(pre)
+        if act == 'relu':
+            return torch.relu(pre)
+        if act == 'softplus':
+            return F.softplus(pre)
+        raise ValueError(f"unknown state_activation {act!r}")
+
     def _process_chunk(self, x_chunk, S_prev, input_dtype, use_fused_l2):
         """Compute projections and run CUDA kernel for one time chunk.
 
@@ -1265,6 +1321,21 @@ class E88FLAHybrid(nn.Module):
         erase_gate = None
         value_write_gate = None
 
+        # The non-saturating state variants (relu/softplus) are implemented only in
+        # the PyTorch reference recurrence below. The fused bf16 CUDA/Triton kernels
+        # hard-code tanh-or-linear, so route relu/softplus to the fp32 fallback by
+        # forcing x to fp32 here -- the kernel guards all require bf16 and will be
+        # skipped, and we fail loudly rather than silently running tanh.
+        if getattr(self, '_nonsat_state', False):
+            if x.dtype == torch.bfloat16:
+                x = x.float()
+            if self.use_triton or getattr(self, 'use_cuda_kernel', False):
+                # use_triton routes to kernels that don't implement relu/softplus.
+                raise RuntimeError(
+                    f"state_activation={self.state_activation!r} is only supported in the "
+                    "PyTorch reference recurrence; disable use_triton / bf16 kernels "
+                    "(run fp32 via disable_autocast) for non-saturating E88 state.")
+
         # === Check if we can use fused projection CUDA kernel ===
         # Note: Fused projection is forward-only, use only for inference
         use_fused_proj = (
@@ -1273,7 +1344,12 @@ class E88FLAHybrid(nn.Module):
             x.is_cuda and
             x.dtype == torch.bfloat16 and
             not self.training and  # Only use for inference - no gradients
-            not self.use_split_edit
+            not self.use_split_edit and
+            # E1 parallel-scan experiment: when an explicit recurrence mode is
+            # requested (serial/scan), force the eager projection path so both
+            # eval modes share IDENTICAL projections and differ ONLY in the
+            # state recurrence execution order.
+            getattr(self, 'e88_recurrence_mode', None) is None
         )
 
         if use_fused_proj:
@@ -1435,6 +1511,7 @@ class E88FLAHybrid(nn.Module):
         import os as _os
         use_step_kernel = (
             _os.environ.get('E88_USE_STEP_KERNEL') == '1' and
+            getattr(self, 'e88_recurrence_mode', None) is None and
             T == 1 and
             not self.training and
             x.is_cuda and
@@ -1444,6 +1521,7 @@ class E88FLAHybrid(nn.Module):
             not self.use_value_residual
             and not self.raw_write
             and not self.use_split_edit
+            and not self.pos_eigval_clamp
         )
         if use_step_kernel:
             from .e88_step_kernel import e88_step
@@ -1472,7 +1550,8 @@ class E88FLAHybrid(nn.Module):
         use_cuda = (E88_NATIVE_CUDA_AVAILABLE and x.is_cuda and
                     x.dtype == torch.bfloat16 and self.training and
                     not self.raw_write and
-                    not self.use_split_edit)
+                    not self.use_split_edit and
+                    not self.pos_eigval_clamp)
 
         # Check if we can use optimized kernels with [B, T, H, dim] layout (no transpose)
         use_optimized = (
@@ -1489,7 +1568,8 @@ class E88FLAHybrid(nn.Module):
             not self.use_write_gate and  # Optimized kernels don't support write gate yet
             not self.use_value_residual and  # Fused path gates before we can add D*v
             (not self.use_split_edit or self.use_triton) and
-            (not self.raw_write or self.use_triton)  # raw-write is implemented in Triton/PyTorch fallback
+            (not self.raw_write or self.use_triton) and  # raw-write is implemented in Triton/PyTorch fallback
+            not self.pos_eigval_clamp  # clamp lives only in the serial fallback (kernels hardcode decay*I-kk^T)
         )
 
         # Track whether fused gating was used (to skip separate gating later)
@@ -1664,6 +1744,23 @@ class E88FLAHybrid(nn.Module):
 
             # Convert S_final back to list for hidden state
             S_list = [S_final[:, h] for h in range(H)]
+        elif getattr(self, 'e88_recurrence_mode', None) == 'scan':
+            # === E1 parallel-scan path (associative / Blelloch-style) ===
+            # linear_state=True makes the matrix-state update an input-dependent
+            # AFFINE map of the state: S_t = A_t S_{t-1} + B_t. Affine maps form
+            # a (non-commutative) monoid under composition, so the per-step maps
+            # can be combined with an associative scan instead of a serial time
+            # loop. Result is exact up to floating-point reassociation. This is
+            # the faithful chunk/scan eval path the experiment compares against
+            # the serial loop on IDENTICAL weights and dtype.
+            assert self.linear_state, (
+                "associative-scan eval requires linear_state=True; the tanh "
+                "nonlinearity is NOT a linear scan and cannot be composed.")
+            output, S_list = self._scan_recurrence(
+                k, v, q, decay, S0, B, T, H, n,
+                write_beta=write_beta if self.use_write_gate else None,
+                erase_gate=erase_gate, value_write_gate=value_write_gate,
+            )
         else:
             # === PyTorch fallback: Recurrence with nonlinear matrix state ===
             # Vectorized over heads (no per-head loop). Time loop remains for
@@ -1697,7 +1794,17 @@ class E88FLAHybrid(nn.Module):
                     delta = write_value  # [B, H, head_v_dim]
                 else:
                     retrieved = torch.einsum('bhiv,bhi->bhv', S, read_key)
-                    delta = write_value - retrieved  # [B, H, head_v_dim]
+                    if self.pos_eigval_clamp:
+                        # ARM B: decay multiplies the WHOLE operator A_t = decay*(I - k k^T).
+                        # Decaying the erase (retrieved) term moves the decay off the identity-only
+                        # placement: S = decay*S + (write_value - decay*retrieved)⊗k
+                        #              = decay*(S - retrieved⊗k) + write_value⊗k,
+                        # so along-key eigenvalue = decay*(1-1) = 0 >= 0 (was decay-1 < 0).
+                        # Read-modify-write delta structure is preserved (still reads + corrects).
+                        decay_v = decay_t.squeeze(-1)  # [B, H, 1]
+                        delta = write_value - decay_v * retrieved  # [B, H, head_v_dim]
+                    else:
+                        delta = write_value - retrieved  # [B, H, head_v_dim]
 
                 # Outer product: [B, H, n, head_v_dim]
                 outer = torch.einsum('bhv,bhi->bhiv', delta, k_norm)
@@ -1706,10 +1813,7 @@ class E88FLAHybrid(nn.Module):
                     beta_t = write_beta[:, t].unsqueeze(-1).unsqueeze(-1)  # [B, H, 1, 1]
                     outer = beta_t * outer
 
-                if self.linear_state:
-                    S = decay_t * S + outer
-                else:
-                    S = torch.tanh(decay_t * S + outer)
+                S = self._apply_state_activation(decay_t * S + outer)
 
                 # Query the state: [B, H, head_v_dim]
                 Sq = torch.einsum('bhiv,bhi->bhv', S, q_norm)
@@ -1787,6 +1891,99 @@ class E88FLAHybrid(nn.Module):
 
         output = self.dropout(output)
 
+        return output, S_list
+
+    # ------------------------------------------------------------------
+    # E1 experiment: associative / parallel-scan recurrence
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _affine_scan(A, Bm):
+        """Inclusive associative scan of affine maps along the time axis (dim=1).
+
+        Each (A[t], Bm[t]) represents the map  S -> A[t] S + Bm[t].  The monoid
+        product (apply map `a` BEFORE map `b` in time) is
+
+            combine(a, b) = (A_b @ A_a,  A_b @ B_a + B_b).
+
+        We use the Hillis-Steele doubling scan: at stride d, every position i>=d
+        is combined with position i-d (earlier prefix on the right). After
+        ceil(log2 T) passes, position t holds the composition of maps 0..t. The
+        reduction ORDER (a balanced doubling tree) differs from the serial left
+        fold, which is exactly the floating-point reassociation under test.
+
+        Shapes: A [B,T,H,n,n], Bm [B,T,H,n,v].
+        """
+        T = A.shape[1]
+        d = 1
+        while d < T:
+            A_prev = A[:, : T - d]   # earlier maps (positions i-d) for i in [d:T)
+            B_prev = Bm[:, : T - d]
+            A_cur = A[:, d:]         # later maps (positions i)
+            B_cur = Bm[:, d:]
+            # combine(earlier=prev, later=cur)
+            A_comb = torch.matmul(A_cur, A_prev)
+            B_comb = torch.matmul(A_cur, B_prev) + B_cur
+            A = torch.cat([A[:, :d], A_comb], dim=1)
+            Bm = torch.cat([Bm[:, :d], B_comb], dim=1)
+            d *= 2
+        return A, Bm
+
+    def _scan_recurrence(self, k, v, q, decay, S0, B, T, H, n,
+                         write_beta=None, erase_gate=None, value_write_gate=None):
+        """Compute the matrix-state sequence via an associative scan over the
+        per-step affine maps, instead of the serial time loop. Algebra mirrors
+        the serial fallback EXACTLY (same L2 norm, same delta-correction, same
+        write/erase gates) so the only difference is execution order.
+
+        Returns (output [B,T,H,head_v_dim], S_list[H] of [B,n,head_v_dim]).
+        """
+        # --- projections shared with the serial path ---
+        if self.use_l2_norm:
+            k_norm = k / (k.norm(dim=-1, keepdim=True) + 1e-6)
+            q_norm = q / (q.norm(dim=-1, keepdim=True) + 1e-6)
+        else:
+            k_norm = k
+            q_norm = q
+        dtype = k_norm.dtype
+
+        if self.use_split_edit:
+            read_key = k_norm * erase_gate          # [B,T,H,n]
+            write_value = v * value_write_gate      # [B,T,H,head_v_dim]
+        else:
+            read_key = k_norm
+            write_value = v
+
+        beta = write_beta if (self.use_write_gate and write_beta is not None) else None
+
+        # --- build the elementary affine maps ---
+        # A_t[i,j] = decay_t * delta_ij - beta_t * k_norm[i] * read_key[j]
+        # B_t[i,vd] = beta_t * k_norm[i] * write_value[vd]
+        eye = torch.eye(n, device=k.device, dtype=dtype)
+        decay_e = decay.to(dtype)[..., None, None]          # [B,T,H,1,1]
+        A = decay_e * eye                                   # [B,T,H,n,n]
+        if not self.raw_write:
+            kk = torch.einsum('bthi,bthj->bthij', k_norm, read_key)  # [B,T,H,n,n]
+            if beta is not None:
+                kk = beta[..., None, None] * kk
+            if self.pos_eigval_clamp:
+                # ARM B: decay multiplies the WHOLE operator -> A_t = decay*(I - k k^T);
+                # the rank-1 term is decayed too, so along-key eigenvalue = decay*(1-1)=0>=0.
+                kk = decay_e * kk
+            A = A - kk
+        Bm = torch.einsum('bthi,bthv->bthiv', k_norm, write_value)   # [B,T,H,n,v]
+        if beta is not None:
+            Bm = beta[..., None, None] * Bm
+
+        # --- associative scan: position t -> composition of maps 0..t ---
+        A_scan, B_scan = self._affine_scan(A, Bm)
+
+        # S_t = A_scan_t @ S0 + B_scan_t   (S0 broadcast over time)
+        S0e = S0.to(dtype).unsqueeze(1)                     # [B,1,H,n,v]
+        S = torch.matmul(A_scan, S0e) + B_scan             # [B,T,H,n,v]
+
+        # output_t = q_norm_t . S_t   (contract over state index n)
+        output = torch.einsum('bthi,bthiv->bthv', q_norm, S)  # [B,T,H,head_v_dim]
+        S_list = [S[:, -1, h] for h in range(H)]
         return output, S_list
 
     def get_num_params(self):

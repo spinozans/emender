@@ -57,6 +57,7 @@ class FLAGatedDeltaNetLayer(nn.Module):
         use_conv=None,  # If None, default to True for FLA (crucial for performance)
         d_conv=4,  # conv_size in FLA
         mamba2_init=False,
+        allow_neg_eigval=False,  # Grazzi 2025: beta*=2 -> beta in (0,2) -> along-key eigenvalue g(1-beta) can go negative
         **kwargs  # Absorb unused args from LadderLM
     ):
         # FLA GatedDeltaNet REQUIRES short convolutions for good performance
@@ -74,6 +75,7 @@ class FLAGatedDeltaNetLayer(nn.Module):
         self.dim = dim
         self.expansion = expansion
         self.head_dim = head_dim
+        self.allow_neg_eigval = allow_neg_eigval
 
         # Compute num_heads if not specified
         if num_heads is None:
@@ -103,6 +105,7 @@ class FLAGatedDeltaNetLayer(nn.Module):
             use_gate=True,  # Always use gating
             use_short_conv=use_conv,
             conv_size=d_conv,
+            allow_neg_eigval=allow_neg_eigval,  # ARM A causal test: True unlocks negative along-key eigenvalues
             mode='chunk',  # Chunked linear attention (most efficient)
             layer_idx=0,  # Placeholder; LadderLM overwrites via set_layer_idx()
         )

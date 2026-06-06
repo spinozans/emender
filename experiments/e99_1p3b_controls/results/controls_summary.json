@@ -1,0 +1,304 @@
+{
+  "_schema": "E99 1.3B matched-control summary. Extends the prior E97/GDN-2 CMA-ES handoff summary columns (Target|Best avg loss|Best final loss|Best config) with additive columns. Wallclock-matched 15-min/seed, 3 seeds/arm, real Pile p50k_base ctx2048, schedule-free AdamW, idle RTX6000Ada. Fitness = handoff AvgLoss/Final (nats/token). Held-out BPB = (nats/tok)/ln2/(measured bytes/tok) on a disjoint slice. NEWLY-RUN this task.",
+  "measured_utc": "2026-06-05",
+  "budget": {
+    "spent_gpu_hours": 2.23,
+    "ceiling_gpu_hours": 5.25,
+    "per_arm_train_minutes": 15,
+    "seeds_per_arm": 3,
+    "hard_stop_fired": "e98-cma-lm NaN x3"
+  },
+  "newly_run": {
+    "fla-gdn": {
+      "role": "CONTROL: dense native GDN-2/GatedDeltaNet",
+      "level": "fla-gdn",
+      "dtype": "bf16",
+      "params_b": 1.3524,
+      "dim": 2688,
+      "depth": 21,
+      "n_heads": 44,
+      "n_state": 64,
+      "lr": 0.000863,
+      "knob_lr_mult": 1.0,
+      "batch_size": 2,
+      "seeds": 3,
+      "stop_reasons": [
+        "budget_reached",
+        "budget_reached",
+        "budget_reached"
+      ],
+      "stable": true,
+      "sustained_tok_s": {
+        "mean": 7638.4333,
+        "min": 7421.5,
+        "max": 7979.1,
+        "std": 243.8741
+      },
+      "peak_mem_mb": 20868.5,
+      "total_tokens": {
+        "mean": 6604610,
+        "min": 6450252,
+        "max": 6835464,
+        "std": 166304.5394
+      },
+      "roundtrip_ok": [
+        true,
+        true,
+        true
+      ],
+      "roundtrip_delta": [
+        8.154e-05,
+        3.004e-05,
+        0.0
+      ],
+      "gpu_days_per_10B_tok": {
+        "mean": 15.1676,
+        "min": 14.5055,
+        "max": 15.5953,
+        "std": 0.4748
+      },
+      "avg_loss": {
+        "mean": 6.2271,
+        "min": 6.1698,
+        "max": 6.2618,
+        "std": 0.0408
+      },
+      "final_loss": {
+        "mean": 5.8011,
+        "min": 5.4533,
+        "max": 6.4023,
+        "std": 0.4269
+      },
+      "late_train_loss": {
+        "mean": 5.5116,
+        "min": 5.4521,
+        "max": 5.5479,
+        "std": 0.0424
+      },
+      "heldout_nats_per_token": {
+        "mean": 5.7464,
+        "min": 5.723,
+        "max": 5.7673,
+        "std": 0.0182
+      },
+      "heldout_bpb": {
+        "mean": 2.0468,
+        "min": 2.0385,
+        "max": 2.0543,
+        "std": 0.0065
+      },
+      "heldout_bytes_per_token": 4.0504
+    },
+    "typed-gdn2-lm": {
+      "role": "E99 typed Emender (PRIMARY candidate; matched-budget anchor)",
+      "level": "typed-gdn2-lm",
+      "dtype": "fp32",
+      "params_b": 1.2775,
+      "dim": 3072,
+      "depth": 22,
+      "n_heads": 96,
+      "n_state": 32,
+      "lr": 0.000995,
+      "knob_lr_mult": 1.0,
+      "batch_size": 2,
+      "seeds": 3,
+      "stop_reasons": [
+        "budget_reached",
+        "budget_reached",
+        "budget_reached"
+      ],
+      "stable": true,
+      "sustained_tok_s": {
+        "mean": 2369.9667,
+        "min": 2338.0,
+        "max": 2424.9,
+        "std": 39.0171
+      },
+      "peak_mem_mb": 44217.8,
+      "total_tokens": {
+        "mean": 2106372,
+        "min": 2077686,
+        "max": 2159646,
+        "std": 37707.5387
+      },
+      "roundtrip_ok": [
+        true,
+        true,
+        true
+      ],
+      "roundtrip_delta": [
+        5.72e-06,
+        7.15e-06,
+        9.06e-06
+      ],
+      "gpu_days_per_10B_tok": {
+        "mean": 48.8499,
+        "min": 47.73,
+        "max": 49.5043,
+        "std": 0.7956
+      },
+      "avg_loss": {
+        "mean": 7.9419,
+        "min": 7.9235,
+        "max": 7.9647,
+        "std": 0.0171
+      },
+      "final_loss": {
+        "mean": 7.036,
+        "min": 6.785,
+        "max": 7.3528,
+        "std": 0.2365
+      },
+      "late_train_loss": {
+        "mean": 7.1514,
+        "min": 7.1182,
+        "max": 7.1683,
+        "std": 0.0235
+      },
+      "heldout_nats_per_token": {
+        "mean": 7.3044,
+        "min": 7.2711,
+        "max": 7.3498,
+        "std": 0.0332
+      },
+      "heldout_bpb": {
+        "mean": 2.6017,
+        "min": 2.5899,
+        "max": 2.6179,
+        "std": 0.0118
+      },
+      "heldout_bytes_per_token": 4.0504
+    },
+    "e98-cma-lm": {
+      "role": "CONTROL: E98-CMA unified Emender",
+      "level": "e98-cma-lm",
+      "dtype": "fp32",
+      "params_b": 1.2776,
+      "dim": 3072,
+      "depth": 17,
+      "n_heads": 192,
+      "n_state": 16,
+      "lr": 0.000979,
+      "knob_lr_mult": 5.38,
+      "batch_size": 1,
+      "seeds": 3,
+      "stop_reasons": [
+        "HARD_STOP_NaN",
+        "HARD_STOP_NaN",
+        "HARD_STOP_NaN"
+      ],
+      "stable": false,
+      "sustained_tok_s": {
+        "mean": 2267.7333,
+        "min": 2237.7,
+        "max": 2306.5,
+        "std": 28.7583
+      },
+      "peak_mem_mb": 34827.1,
+      "total_tokens": {
+        "mean": 1311360,
+        "min": 1073676,
+        "max": 1706817,
+        "std": 281526.9331
+      },
+      "roundtrip_ok": [
+        false,
+        false,
+        false
+      ],
+      "roundtrip_delta": [
+        NaN,
+        NaN,
+        NaN
+      ],
+      "gpu_days_per_10B_tok": {
+        "mean": 51.0456,
+        "min": 50.18,
+        "max": 51.7225,
+        "std": 0.6437
+      },
+      "avg_loss": null,
+      "final_loss": null,
+      "heldout_bpb": null,
+      "FAILURE": "NaN divergence on 3/3 seeds (HARD_STOP_NaN) before 15-min window end",
+      "pre_divergence": [
+        {
+          "seed": 0,
+          "nan_at_step": 524,
+          "last_finite": 7.3512,
+          "last_finite_s": 473.3,
+          "min_loss": 5.8222,
+          "min_at_tok": 739689,
+          "tokens_before_nan": 1071627
+        },
+        {
+          "seed": 1,
+          "nan_at_step": 563,
+          "last_finite": 7.1238,
+          "last_finite_s": 524.3,
+          "min_loss": 5.9123,
+          "min_at_tok": 1088019,
+          "tokens_before_nan": 1151538
+        },
+        {
+          "seed": 2,
+          "nan_at_step": 833,
+          "last_finite": 8.1721,
+          "last_finite_s": 765.9,
+          "min_loss": 5.5603,
+          "min_at_tok": 1366683,
+          "tokens_before_nan": 1704768
+        }
+      ]
+    }
+  },
+  "token_matched_crosswalk": {
+    "at_tokens": 2106372,
+    "note": "Single wallclock-matched run logs loss-vs-tokens; read each arm at the common (smallest) token budget for a throughput-neutral architecture comparison.",
+    "fla_gdn_trainloss": [
+      6.0482,
+      6.1293,
+      5.7676
+    ],
+    "typed_trainloss": [
+      6.8349,
+      7.0202,
+      7.0833
+    ],
+    "fla_gdn_mean": 5.9817,
+    "typed_mean": 6.9795
+  },
+  "reused_baselines": {
+    "_provenance": "docs/HANDOFF_E97_GDN2_CMAES_20260528.md CMA-ES Status summary table (2026-05-28). REUSED, not re-run. Best of popsize-8 CMA search; AvgLoss/Final nats/token over 15-min train window @1.27B ctx2k p50k_base.",
+    "Transformer": {
+      "best_avg_loss": 5.9046,
+      "best_final_loss": 5.4683,
+      "config": "dim=1664,n_heads=10,expansion=6,depth=19,lr=5.164e-4,batch_size=4"
+    },
+    "E88_delta": {
+      "best_avg_loss": 5.9974,
+      "best_final_loss": 5.5529,
+      "config": "dim=2048,n_heads=348,n_state=32,depth=10,lr=9.973e-4,batch_size=2"
+    },
+    "E88_rawwrite": {
+      "best_avg_loss": 6.0395,
+      "best_final_loss": 5.5909,
+      "config": "dim=1792,n_heads=362,n_state=32,depth=11,lr=9.413e-4,batch_size=2"
+    },
+    "Mamba2": {
+      "best_avg_loss": 6.056,
+      "best_final_loss": 5.6441,
+      "config": "dim=1920,d_state=64,expand=4,depth=27,lr=1.417e-3,batch_size=2"
+    },
+    "M2RNN_XMA": {
+      "best_avg_loss": 6.0626,
+      "best_final_loss": 6.0626,
+      "config": "dim=2304,n_heads=612,n_state=16,depth=10,lr=5.607e-4,batch_size=5"
+    },
+    "FLA_GDN": {
+      "best_avg_loss": 6.1104,
+      "best_final_loss": 5.6165,
+      "config": "dim=3456,expansion=2,depth=12,n_heads=38,lr=8.627e-4,batch_size=2"
+    }
+  }
+}

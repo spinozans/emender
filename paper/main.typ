@@ -2367,6 +2367,31 @@ update rule is a live design variable with measurable consequences for
 what the trained model can do, and almost none of that space has been
 searched. The instance reported here is one point in it.
 
+*Outlook.* There is a substantial theory of what nonlinear-in-time
+recurrence can express, but it has been hard to put to the test where it
+would matter: no pure-nonlinear-recurrent model existed at the parameter
+and token scale at which the behaviors that theory concerns would have
+room to appear — prior nonlinear matrix-state recurrence reaches scale
+only as a sparse ingredient inside otherwise linear or attention-based
+hybrid stacks (@sec:related). Training one into the billion-parameter
+class in the pure setting, with the recurrence applied across the whole
+model, is what makes the question askable; it does not answer it. The
+obstacle is the observation about loss above, taken as a methodological
+constraint rather than a passing remark: held-out language-modeling loss
+does not separate these architectures (@sec:lm), yet a linear recurrence
+is provably held away from non-solvable prefix products while a
+nonlinear one is not (@sec:expressivity, @sec:formal). On loss alone,
+nonlinearity need not "win" at all — the held-out tie is exactly that. A
+research program that selects and evaluates recurrent architectures by
+loss is therefore structurally liable to conclude the form of the update
+rule confers no benefit, because any benefit it confers does not live in
+the loss; in this work it surfaces only under direct state-tracking
+probes, and we do not claim those probes, or the token budgets reached
+here, fully surface it. We expect the value of reaching this scale to be
+that it opens a regime in which the effect of nonlinearity through time
+can be studied at all — provided the evaluation looks past loss, which is
+what this scale now permits.
+
 *Reproducibility.* The checkpoints, loading code, and measurement
 scripts behind these numbers are public, collected from the hub at
 `https://github.com/poietic-pbc/emender/blob/main/docs/RELEASE_V02_PUBLIC_RELEASE_HUB.md`:

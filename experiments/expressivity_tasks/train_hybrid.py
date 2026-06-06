@@ -60,9 +60,35 @@ def main():
     ap.add_argument('--linear_state', type=int, default=None, choices=[0, 1],
                     help='E88 state nonlinearity: 0=tanh, 1=linear. Default: '
                          "layer default (tanh). Forwarded only to E88-family layers.")
+    ap.add_argument('--state_activation', type=str, default=None,
+                    choices=['tanh', 'identity', 'linear', 'relu', 'softplus'],
+                    help='E88 state nonlinearity f in S=f(decay*S+outer): tanh '
+                         '(saturating default), identity/linear (affine), relu or '
+                         'softplus (NON-SATURATING, unbounded |S| -> can count). '
+                         'Forwarded only to E88-family layers; runs the fp32 PyTorch '
+                         'reference recurrence for relu/softplus.')
     ap.add_argument('--use_gate', type=int, default=None, choices=[0, 1],
                     help='E88 output gate: 0=off, 1=on. Default: HybridLadderLM '
                          'default. Forwarded only to E88-family layers.')
+    ap.add_argument('--decay_mode', type=str, default=None,
+                    choices=['mamba', 'simple', 'none', 'constant'],
+                    help='E88 recurrence decay mode. mamba=input-dependent '
+                         'exp decay (default); constant=learned per-head '
+                         'constant (input-INDEPENDENT transition, eigenvalues '
+                         'in (0,1)); none=identity (eigenvalue 1); '
+                         'simple=input-dependent sigmoid. Forwarded only to '
+                         'E88-family layers. Used by the E5 input-dependence '
+                         'ablation (paper/review/E5_ABLATE_INPUTDEP.md).')
+    # Eigenvalue-causal-test knobs (ARM A / ARM B). Default None = unchanged.
+    ap.add_argument('--gdn_allow_neg_eigval', type=int, default=None, choices=[0, 1],
+                    help='ARM A: fla GatedDeltaNet allow_neg_eigval (beta*=2 -> beta in (0,2) '
+                         '-> along-key eigenvalue g(1-beta) can go negative). fla-gdn layers only.')
+    ap.add_argument('--e88_pos_eigval_clamp', type=int, default=None, choices=[0, 1],
+                    help='ARM B: clamp E88 along-key eigenvalue >=0 by moving decay onto the '
+                         'whole operator decay*(I-kk^T) (was decay*I-kk^T). E88-family layers only.')
+    ap.add_argument('--e88_raw_write', type=int, default=None, choices=[0, 1],
+                    help='ARM B secondary: E88 raw_write (drop delta-correction; A_t=decay*I, '
+                         'all eigenvalues = decay > 0). E88-family layers only.')
     ap.add_argument('--m2rnn_q_heads', type=int, default=None)
     ap.add_argument('--m2rnn_k_heads', type=int, default=None)
     ap.add_argument('--m2rnn_v_heads', type=int, default=None)
@@ -81,6 +107,56 @@ def main():
     ap.add_argument('--lr', type=float, default=3e-4)
     ap.add_argument('--optimizer', type=str, default='adamw',
                     choices=['adamw', 'schedulefree'])
+    # UnifiedCell (e98-cma / unified-* / e98-*) meta-config knobs (cma-capability).
+    # Default None = use the layer pattern's own defaults (unchanged behaviour for
+    # all prior e98/unified sweeps). Forwarded only to UnifiedCell-family layers.
+    ap.add_argument('--lam_max', type=float, default=None,
+                    help='UnifiedCell lambda gain cap (free gain needs >=1.3 for latch).')
+    ap.add_argument('--beta_max', type=float, default=None,
+                    help='UnifiedCell beta (delta-correction) cap.')
+    ap.add_argument('--igain_max', type=float, default=None,
+                    help='UnifiedCell input write-gain cap.')
+    ap.add_argument('--head_type_logits', type=str, default=None,
+                    help='typed-gdn2: comma-sep 5 unconstrained logits over head '
+                         'types [gdn2_recall,e97_track,count,latch,nonlin]; '
+                         'softmax+largest-remainder -> per-type head counts.')
+    ap.add_argument('--corner_mixture', type=str, default=None,
+                    help='Comma-separated 4 head fractions [track,count,latch,nonlin] '
+                         'for spread-init/fixed_pop placement. e.g. "0.4,0.2,0.2,0.2". '
+                         'Default None = equal 25/25/25/25 round-robin.')
+    ap.add_argument('--shell_state_nonlin', type=str, default=None,
+                    help='typed-gdn2: bounded nonlinear-in-time state map for the '
+                         'gdn2_nonlin_shell control head (e.g. "tanh"). Forwarded '
+                         'only to typed-gdn2 layers; ignored when no shell heads.')
+    ap.add_argument('--shell_state_chunk', type=int, default=None,
+                    help='typed-gdn2: chunk size for the fused shell scan (e.g. 64).')
+    ap.add_argument('--knob_lr_mult', type=float, default=1.0,
+                    help='LEARNABILITY intervention #2: multiply the base LR for '
+                         'the recurrence knobs (lam_raw/beta_raw/igain_raw/'
+                         'gamma_raw of every UnifiedCellLayer) by this factor, '
+                         'placing them in a SEPARATE optimizer param-group so the '
+                         'knobs actually move while projections stay at base LR. '
+                         '1.0 = single group (no split).')
+    ap.add_argument('--spec_reg', type=str, default=None,
+                    choices=['pull', 'anticenter', 'coverage', 'pull_cov', 'anticenter_cov'],
+                    help='SPECIALIZATION-PRESSURE regularizer (specialization-study): '
+                         'add a penalty on every UnifiedCellLayer that FORCES per-head '
+                         'knobs onto the four corners. pull=(a) pull-to-nearest-corner, '
+                         'anticenter=(b) repel-center/reward-corner, coverage=(c) '
+                         'population diversity, *_cov = combine per-head + coverage. '
+                         'Default None = no regularizer.')
+    ap.add_argument('--spec_reg_weight', type=float, default=1.0,
+                    help='Weight on the specialization regularizer (swept).')
+    ap.add_argument('--spec_reg_anneal', type=float, default=0.5,
+                    help='Fraction of training over which the reg weight ramps '
+                         'linearly 0 -> spec_reg_weight (then held). 0 = full weight '
+                         'from step 0. Default 0.5 (anneal in over first half so the '
+                         'task is learned before specialization pressure peaks).')
+    ap.add_argument('--curriculum', type=str, default=None,
+                    help='Optional length curriculum (secondary lever): comma-'
+                         'separated train seq_len schedule, e.g. 128,256,512,1024. '
+                         'Steps are split evenly across stages; eval still uses '
+                         '--eval_lengths. Default None = fixed --seq_len.')
     ap.add_argument('--K', type=int, default=2)
     ap.add_argument('--seed', type=int, default=42)
     ap.add_argument('--label', required=True)
@@ -117,6 +193,10 @@ def main():
     elif args.task == 'keyed_fsm_memory':
         task_kwargs['n_keys'] = args.K
         task_kwargs['n_states'] = args.K
+    elif args.task == 'flag_hold_recall':
+        task_kwargs['n_keys'] = args.K
+    elif args.task == 'mixed_probe':
+        task_kwargs['n_keys'] = args.K
     task = ALL_TASKS[args.task](**task_kwargs)
     print(f"Task: {task.name}, vocab_size={task.vocab_size}", flush=True)
 
@@ -131,18 +211,70 @@ def main():
     if args.m2rnn_normalize_qk: m2_kwargs['normalize_qk'] = True
     if args.m2rnn_no_residual: m2_kwargs['use_residual'] = False
     if args.m2rnn_freeze_state_weight: m2_kwargs['state_weight_trainable'] = False
+    # M2RNN raw-write state-nonlinearity ablation: --linear_state drops the tanh
+    # in Z = tanh(h W + k v^T) -> Z = h W + k v^T (analogue of E88 linear_state).
+    if args.linear_state is not None:
+        m2_kwargs['linear_state'] = bool(args.linear_state)
     # E88-family structural overrides (only applied when explicitly passed).
     e88_kwargs = {}
     if args.linear_state is not None:
         e88_kwargs['linear_state'] = bool(args.linear_state)
+    if args.state_activation is not None:
+        e88_kwargs['state_activation'] = args.state_activation
     if args.use_gate is not None:
         e88_kwargs['use_gate'] = bool(args.use_gate)
+    if args.decay_mode is not None:
+        e88_kwargs['decay_mode'] = args.decay_mode
+    if args.e88_pos_eigval_clamp is not None:
+        e88_kwargs['pos_eigval_clamp'] = bool(args.e88_pos_eigval_clamp)
+    if args.e88_raw_write is not None:
+        e88_kwargs['raw_write'] = bool(args.e88_raw_write)
+    # fla-gdn overrides (only applied when explicitly passed).
+    gdn_kwargs = {}
+    if args.gdn_allow_neg_eigval is not None:
+        gdn_kwargs['allow_neg_eigval'] = bool(args.gdn_allow_neg_eigval)
+    # UnifiedCell (e98-cma / unified-* / e98-*) meta-config overrides.
+    unified_kwargs = {}
+    if args.lam_max is not None:
+        unified_kwargs['lam_max'] = args.lam_max
+    if args.beta_max is not None:
+        unified_kwargs['beta_max'] = args.beta_max
+    if args.igain_max is not None:
+        unified_kwargs['igain_max'] = args.igain_max
+    if args.corner_mixture is not None:
+        unified_kwargs['corner_mixture'] = [float(x) for x in args.corner_mixture.split(',') if x.strip()]
+
+    # typed-gdn2 (typed-gdn-2-head): native typed-head mixture meta-config. The
+    # per-type logits are the CMA search variable; lam_max/beta_max freeze the
+    # placed corner personalities at the validated operating points.
+    typed_kwargs = {}
+    if args.head_type_logits is not None:
+        typed_kwargs['head_type_logits'] = [float(x) for x in args.head_type_logits.split(',') if x.strip()]
+    if args.lam_max is not None:
+        typed_kwargs['lam_max'] = args.lam_max
+    if args.beta_max is not None:
+        typed_kwargs['beta_max'] = args.beta_max
+    if args.igain_max is not None:
+        typed_kwargs['igain_max'] = args.igain_max
+    if args.shell_state_nonlin is not None:
+        typed_kwargs['shell_state_nonlin'] = args.shell_state_nonlin
+    if args.shell_state_chunk is not None:
+        typed_kwargs['shell_state_chunk'] = args.shell_state_chunk
+
+    def _is_unified_level(level):
+        return isinstance(level, str) and (level.startswith('e98') or level.startswith('unified'))
 
     def _layer_kw(level):
         if level in ('m2rnn', 'm2rnn-paper'):
             return dict(m2_kwargs)
         if isinstance(level, str) and level.startswith('E88'):
             return dict(e88_kwargs)
+        if level == 'fla-gdn':
+            return dict(gdn_kwargs)
+        if level == 'typed-gdn2':
+            return dict(typed_kwargs)
+        if _is_unified_level(level):
+            return dict(unified_kwargs)
         return {}
 
     layer_kwargs = [_layer_kw(level) for level in args.layer_pattern]
@@ -162,13 +294,48 @@ def main():
     n_params = sum(p.numel() for p in model.parameters())
     print(f"Params: {n_params:,}", flush=True)
 
+    # typed-gdn2: dump the deterministic per-type head allocation (same for every
+    # typed layer) so the report can show whether CMA picks a balanced population
+    # or collapses toward GDN-2.
+    typed_alloc = None
+    for layer in model.layers:
+        if hasattr(layer, 'head_alloc'):
+            typed_alloc = layer.head_alloc()
+            break
+    if typed_alloc is not None:
+        print(f"Typed-head alloc: {typed_alloc['counts']}", flush=True)
+
+    # Build param groups. With --knob_lr_mult != 1, the recurrence knobs
+    # (lam/beta/igain/gamma raw of every UnifiedCellLayer) get a SEPARATE group at
+    # a higher LR; everything else stays at the base LR.
+    KNOB_SUFFIXES = ('lam_raw', 'beta_raw', 'igain_raw', 'gamma_raw')
+    knob_params, base_params, knob_names = [], [], []
+    for name, p in model.named_parameters():
+        if not p.requires_grad:
+            continue
+        if any(name.endswith(s) for s in KNOB_SUFFIXES):
+            knob_params.append(p); knob_names.append(name)
+        else:
+            base_params.append(p)
+    use_knob_group = args.knob_lr_mult != 1.0 and len(knob_params) > 0
+    if use_knob_group:
+        param_groups = [
+            {'params': base_params, 'lr': args.lr},
+            {'params': knob_params, 'lr': args.lr * args.knob_lr_mult},
+        ]
+        print(f"Knob-LR group: {len(knob_params)} knob params at lr="
+              f"{args.lr * args.knob_lr_mult:.2e} ({args.knob_lr_mult}x base); "
+              f"{len(base_params)} base params at lr={args.lr:.2e}", flush=True)
+    else:
+        param_groups = model.parameters()
+
     if args.optimizer == 'schedulefree':
         import schedulefree
         optimizer = schedulefree.AdamWScheduleFree(
-            model.parameters(), lr=args.lr, weight_decay=0.01, betas=(0.9, 0.95))
+            param_groups, lr=args.lr, weight_decay=0.01, betas=(0.9, 0.95))
         print(f"Using schedule-free AdamW (lr={args.lr})", flush=True)
     else:
-        optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=0.01)
+        optimizer = torch.optim.AdamW(param_groups, lr=args.lr, weight_decay=0.01)
         print(f"Using vanilla AdamW (lr={args.lr})", flush=True)
 
     log = {'task': task.name, 'pattern': model.actual_pattern, 'dim': args.dim, 'depth': args.depth,
@@ -177,16 +344,78 @@ def main():
            'disable_autocast': bool(args.disable_autocast),
            'use_triton_e88': bool(args.use_triton_e88),
            'linear_state': args.linear_state,
+           'state_activation': args.state_activation,
            'use_gate': args.use_gate,
+           'decay_mode': args.decay_mode,
+           'gdn_allow_neg_eigval': args.gdn_allow_neg_eigval,
+           'e88_pos_eigval_clamp': args.e88_pos_eigval_clamp,
+           'e88_raw_write': args.e88_raw_write,
+           'knob_lr_mult': float(args.knob_lr_mult),
+           'lam_max': args.lam_max,
+           'beta_max': args.beta_max,
+           'igain_max': args.igain_max,
+           'corner_mixture': args.corner_mixture,
+           'head_type_logits': args.head_type_logits,
+           'typed_alloc': typed_alloc,
+           'spec_reg': args.spec_reg,
+           'spec_reg_weight': float(args.spec_reg_weight),
+           'spec_reg_anneal': float(args.spec_reg_anneal),
+           'curriculum': args.curriculum,
            'random_baseline_acc': task.random_baseline_acc(),
            'steps': []}
+
+    # Snapshot per-head knobs at INIT (before any optimizer step) so drift from
+    # spread-init can be measured directly against the trained values.
+    init_knobs = []
+    for li, layer in enumerate(model.layers):
+        if hasattr(layer, 'knob_values'):
+            kv = layer.knob_values()
+            init_knobs.append({
+                'layer': li,
+                'lambda': kv['lambda'].tolist(), 'beta': kv['beta'].tolist(),
+                'igain': kv['igain'].tolist(), 'gamma': kv['gamma'].tolist(),
+                'eig_along': kv['eig_along'].tolist(),
+            })
+    if init_knobs:
+        log['unified_knobs_init'] = init_knobs
+
+    # Specialization-pressure regularizer (specialization-study): collect every
+    # layer that exposes specialization_loss (the UnifiedCellLayers). The penalty
+    # ramps in over --spec_reg_anneal of training so the task is learned before
+    # the corner-pressure peaks.
+    spec_layers = [l for l in model.layers if hasattr(l, 'specialization_loss')] if args.spec_reg else []
+    if args.spec_reg:
+        print(f"Spec-reg: variant={args.spec_reg} weight={args.spec_reg_weight} "
+              f"anneal={args.spec_reg_anneal} over {len(spec_layers)} unified layers", flush=True)
+
+    def _spec_weight(step):
+        if not args.spec_reg:
+            return 0.0
+        if args.spec_reg_anneal <= 0:
+            return args.spec_reg_weight
+        frac = min(1.0, step / max(1.0, args.spec_reg_anneal * args.steps))
+        return args.spec_reg_weight * frac
+
+    # Length curriculum (optional secondary lever): split total steps across stages.
+    curriculum_stages = None
+    if args.curriculum:
+        curriculum_stages = [int(s) for s in args.curriculum.split(',') if s.strip()]
+        log['curriculum_stages'] = curriculum_stages
+
+    def _seq_len_for_step(step):
+        if not curriculum_stages:
+            return args.seq_len
+        n = len(curriculum_stages)
+        idx = min(n - 1, (step * n) // max(args.steps, 1))
+        return curriculum_stages[idx]
 
     t0 = time.time()
     eval_interval = args.eval_interval if args.eval_interval is not None else max(50, args.steps // 20)
     model.train()
     if hasattr(optimizer, 'train'): optimizer.train()
     for step in range(args.steps):
-        inp, tgt, mask = task.generate_batch(args.batch_size, args.seq_len, rng)
+        cur_seq_len = _seq_len_for_step(step)
+        inp, tgt, mask = task.generate_batch(args.batch_size, cur_seq_len, rng)
         x = torch.from_numpy(inp).to(device)
         y = torch.from_numpy(tgt).to(device)
         m = torch.from_numpy(mask).to(device)
@@ -196,6 +425,11 @@ def main():
         loss_per = F.cross_entropy(logits.view(-1, logits.size(-1)).float(),
                                     y.view(-1), reduction='none').view_as(m)
         loss = (loss_per * m).sum() / m.sum().clamp_min(1)
+        if spec_layers:
+            sw = _spec_weight(step)
+            if sw > 0:
+                reg = sum(l.specialization_loss(args.spec_reg) for l in spec_layers) / len(spec_layers)
+                loss = loss + sw * reg
         optimizer.zero_grad(set_to_none=True)
         loss.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
@@ -215,6 +449,45 @@ def main():
     if hasattr(optimizer, 'eval'): optimizer.eval()
     acc, eval_loss = evaluate(model, task, args.batch_size, args.seq_len, 16, rng, device)
     log['final_acc'] = float(acc); log['final_loss'] = float(eval_loss)
+
+    # Emergent-specialization logging (Run C): dump per-head learned knobs for
+    # any UnifiedCellLayer in the model (lambda gain, beta correction, gamma phi,
+    # igain, and the along-key eigenvalue lambda-beta).
+    unified_knobs = []
+    for li, layer in enumerate(model.layers):
+        if hasattr(layer, 'knob_values'):
+            kv = layer.knob_values()
+            entry = {
+                'layer': li,
+                'knob_mode': getattr(layer, 'knob_mode', None),
+                'preset': getattr(layer, 'preset', None),
+                'phi_mode': getattr(layer, 'phi_mode', None),
+                'lambda': kv['lambda'].tolist(),
+                'beta': kv['beta'].tolist(),
+                'igain': kv['igain'].tolist(),
+                'gamma': kv['gamma'].tolist(),
+                'eig_along': kv['eig_along'].tolist(),
+            }
+            # TYPE-DICTIONARY interpretability: dump the K shared prototype knobs
+            # and each head's argmax prototype (the type it leans on most).
+            if getattr(layer, 'knob_mode', None) == 'dictionary':
+                with torch.no_grad():
+                    plam = (layer.lam_max * torch.sigmoid(layer.proto_lam_raw)).cpu().tolist()
+                    pbeta = (layer.beta_max * torch.sigmoid(layer.proto_beta_raw)).cpu().tolist()
+                    pgam = torch.sigmoid(layer.proto_gamma_raw).cpu().tolist()
+                    w = torch.softmax(layer.proto_weight, dim=1)  # [H,K]
+                    entry['proto'] = {'lambda': plam, 'beta': pbeta, 'gamma': pgam}
+                    entry['proto_argmax'] = w.argmax(dim=1).cpu().tolist()
+                    entry['proto_weight'] = w.cpu().tolist()
+            unified_knobs.append(entry)
+    if unified_knobs:
+        log['unified_knobs'] = unified_knobs
+
+    # Final specialization-regularizer value (per-layer mean), for diagnostics.
+    if spec_layers:
+        with torch.no_grad():
+            log['spec_reg_final'] = float(
+                sum(l.specialization_loss(args.spec_reg) for l in spec_layers) / len(spec_layers))
     log['elapsed_total_s'] = float(time.time() - t0)
     print(f"\nFINAL: acc={acc:.4f}  loss={eval_loss:.4f}  baseline={task.random_baseline_acc():.4f}", flush=True)
 

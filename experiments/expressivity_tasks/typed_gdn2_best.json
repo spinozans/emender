@@ -1,0 +1,30 @@
+{
+  "name": "typed-gdn2-mixture-winner-8M",
+  "form": "typed-gdn2 (TypedHeadMixtureLayer): horizontal population of NATIVE recurrent head types in one layer -- native FLA GatedDeltaNet-2 recall heads (allow_neg_eigval=True, N=32) + frozen E98 corner specialists (E97-track/count/latch/nonlin via fixed_pop), summed into the residual stream",
+  "layer_pattern": "typed-gdn2",
+  "cma_hash": "6e33ac42f500",
+  "dim": 240,
+  "depth": 4,
+  "n_heads": 48,
+  "n_state": 32,
+  "lr": 0.0009946015995003679,
+  "lam_max": 1.585,
+  "beta_max": 2.747,
+  "gdn_allow_neg_eigval": true,
+  "head_type_logits": [3.9995, -1.9008, -0.9211, -2.8866, 2.4146],
+  "type_order": ["gdn2_recall", "e97_track", "count", "latch", "nonlin"],
+  "type_counts": {"gdn2_recall": 40, "e97_track": 0, "count": 0, "latch": 0, "nonlin": 8},
+  "actual_params": 8055872,
+  "objective": "fitness = 0.5*mean + 0.5*min over 6 probes {mqar_recall,s5,anbncn,flag_hold,iter_nonlin,mixed}; length-extrap T in {128,256,512,1024}",
+  "search_fitness_2000step_proxy": 0.8513,
+  "search_mean": 0.9079,
+  "search_min": 0.7948,
+  "validation_4000step_2seed": {
+    "typed_gdn2_winner":   {"recall": 0.807, "s5": 0.969, "count": 0.891, "latch": 0.999, "nonlin": 0.944, "mixed": 0.902, "mean": 0.919, "min": 0.807},
+    "e98_cma_winner":      {"recall": 0.423, "s5": 0.999, "count": 0.947, "latch": 0.967, "nonlin": 0.931, "mixed": 0.929, "mean": 0.866, "min": 0.423},
+    "gdn_deltanet_ref_8M": {"recall": 0.742, "s5": 0.050, "count": 0.934, "latch": 1.000, "nonlin": 0.853, "mixed": 0.582, "mean": 0.694, "min": 0.050}
+  },
+  "nonlin_ablation_allGDN_8M_2seed_4000step": {"recall": 0.765, "s5": 0.988, "count": 0.912, "latch": 0.979, "nonlin": 0.953, "mixed": 0.895, "mean": 0.915, "min": 0.765},
+  "verdict": "GDN-2-heavy mixture WINS on mean (0.919) and worst-case floor (0.807). Recovers GDN-like MQAR recall (0.807) that E98 cannot (0.423); preserves S5/count/latch/nonlin. GDN-2 (neg-eigval + gated decay) subsumes track/count/latch -> CMA sets them to zero. The all-GDN ablation (no nonlin heads) MATCHES the mixture (mean 0.915, nonlin 0.953) -> the nonlinear specialist is NOT justified at 8M; the heterogeneity that pays off is GDN-2's own internal generality, not added specialist head types. Next-scale candidate = a DENSE GDN-2 BACKBONE (allow_neg_eigval + gated decay), not E98, not plain DeltaNet, with specialist fraction an open question for the LM pilot.",
+  "provenance": "typed-gdn-2-head CMA STAGE; LHS14->CMA pop8, 8 gens (conv gen6), fp32 schedule-free; validated 6 probes x 2 seeds x 4000 steps vs cma-capability E98 winner + param-matched 8M native DeltaNet reference"
+}
