@@ -30,11 +30,35 @@ def test_allocation_allows_zero():
     assert all(a['counts'][t] == 0 for t in TYPE_NAMES[1:])
 
 
+def test_legacy_5_logits_pad_shell_off():
+    # a 5-entry call (pre-shell callers) must reproduce the 5-type allocation
+    # EXACTLY, with the 6th (shell) slot padded off to 0 heads.
+    a5 = allocate_types(48, [0.5, 0.2, 0.1, 0.1, 0.1])
+    a6 = allocate_types(48, [0.5, 0.2, 0.1, 0.1, 0.1, float('-inf')])
+    assert a5['counts'] == a6['counts']
+    assert a5['counts']['gdn2_nonlin_shell'] == 0
+    assert a5['n_shell'] == 0
+    assert sum(a5['counts'].values()) == 48
+
+
 def test_allocation_uniform_balanced():
-    a = allocate_types(48, [0.0] * 5)
+    # explicit 6-vector -> ~uniform across all six types (48/6 == 8 each)
+    a = allocate_types(48, [0.0] * 6)
     assert sum(a['counts'].values()) == 48
-    # near-balanced: every type gets between 9 and 10 of 48
-    assert all(9 <= a['counts'][t] <= 10 for t in TYPE_NAMES)
+    assert all(7 <= a['counts'][t] <= 9 for t in TYPE_NAMES)
+    # legacy 5-vector -> the five active types balance, shell stays 0
+    a5 = allocate_types(48, [0.0] * 5)
+    assert a5['counts']['gdn2_nonlin_shell'] == 0
+    assert all(9 <= a5['counts'][t] <= 10 for t in TYPE_NAMES[:5])
+
+
+def test_shell_allocation_6_logits():
+    # 6-vector that asks for ~1/3 shell heads -> a real shell allocation
+    a = allocate_types(102, [math.log(2 / 3), -30.0, -30.0, -30.0, -30.0, math.log(1 / 3)])
+    assert a['n_shell'] > 0
+    assert a['counts']['gdn2_nonlin_shell'] == a['n_shell']
+    assert a['counts']['gdn2_recall'] + a['n_shell'] == 102
+    assert a['n_unified'] == 0
 
 
 def test_allocation_softmax_fractions_sum_to_one():
@@ -47,6 +71,8 @@ def test_allocation_softmax_fractions_sum_to_one():
 def test_logits_length_validated():
     with pytest.raises(ValueError):
         allocate_types(48, [0.0, 0.0, 0.0])
+    with pytest.raises(ValueError):
+        allocate_types(48, [0.0] * 7)
 
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="needs GPU/FLA kernels")
@@ -90,3 +116,21 @@ def test_all_gdn_and_all_unified_extremes():
         head_type_logits=[-10.0, 10, -10, -10, -10]).to(dev)
     assert all_track.gdn is None and all_track.unified is not None
     assert all_track(x).shape == (2, 48, 96)
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="needs GPU/FLA kernels")
+def test_forward_backward_with_shell_heads():
+    # gdn2_recall + gdn2_nonlin_shell mixture: the native GDN sub-block AND the
+    # fused nonlinear-state shell sub-block both present and trainable.
+    dev = 'cuda'
+    layer = TypedHeadMixtureLayer(
+        dim=128, n_state=32, n_heads=24,
+        head_type_logits=[math.log(2 / 3), -30, -30, -30, -30, math.log(1 / 3)],
+        shell_state_nonlin='tanh', shell_state_chunk=64).to(dev)
+    assert layer.gdn is not None and layer.shell is not None and layer.unified is None
+    assert layer.alloc['n_shell'] > 0
+    x = torch.randn(2, 64, 128, device=dev, requires_grad=True)
+    out = layer(x)
+    assert out.shape == (2, 64, 128)
+    out.sum().backward()
+    assert x.grad is not None and torch.isfinite(x.grad).all()

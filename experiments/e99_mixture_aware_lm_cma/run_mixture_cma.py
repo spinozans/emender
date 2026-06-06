@@ -9,10 +9,20 @@ mixture search from becoming an accidental capacity search.
 Stage 1 (anchors): the deterministic anchor set from mixtures.py -- dense GDN-2
   control, prior-E99 5:1, matched-fraction (c) legacy-nonlin and (b) GDN-2-shell
   triples at f in {1/6,1/3,1/2}.
-Stage 2 (CMA): popsize-P CMA over the 6 logits, seeded at the prior-E99 winner,
-  fitness = 15-min bf16 AvgLoss (handoff convention). Deterministic head
-  allocation + exact head counts + exact counted LadderLM params logged for every
-  eval. Configs outside the target tolerance are rejected before launch.
+Stage 2 (CMA): popsize-P CMA over the 5 FUSED logits ONLY
+  {gdn2_recall, e97_track, count, latch, nonlin}, seeded recall-heavy with the
+  cma-capability specialist sub-mixture (wide sigma). gdn2_nonlin_shell is NOT a
+  search dimension (candidates pad shell-off); it lives only as the Stage-1 shell
+  CONTROL anchors. fitness = 15-min bf16 AvgLoss (handoff convention).
+  Deterministic head allocation + exact head counts + exact counted LadderLM params
+  logged for every eval. Configs outside the target tolerance are rejected before
+  launch. Wallclock/tok-s are reported but NEVER used for cross-head selection.
+
+SEARCHED vs CONTROL (binding, Erik 2026-06-06):
+  SEARCHED (5-type simplex, ranked by token-matched LM loss + capability probes):
+      gdn2_recall, e97_track, count, latch, nonlin -- all single-launch fused.
+  CONTROL (fixed labeled arms, capability/accuracy only, never wallclock-ranked):
+      dense GDN-2 (M0_dense_gdn2) and gdn2_nonlin_shell (S1/S2/S3 shell anchors).
 
 Idle-GPU-only / NO-PREEMPT: a GPU is usable iff nvidia-smi used-mem < 2GB and it
 is not already running one of THIS driver's workers. Never shares/preempts.
@@ -43,6 +53,13 @@ DIM_MULTIPLE = 64
 DIM_MIN = 2560
 DIM_MAX = 4352
 SHELL_NONLIN = 'tanh'  # the bounded/centered nonlinear-in-time map (verified)
+
+APPROVAL_REQUIRED_TERMS = [
+    'human',
+    'approval',
+    'corrected-e99-1-3b',
+    'launch',
+]
 
 _COUNT_CACHE = {}
 _DERIVE_CACHE = {}
@@ -142,6 +159,24 @@ def assert_param_target(row):
             f"target={row['param_target']:,} "
             f"err={row['param_target_error_pct']:.3f}% exceeds "
             f"+/-{row['param_tolerance'] * 100:.1f}% counts={row['counts']}")
+
+
+def ensure_human_approval(args):
+    """Hard gate for the expensive corrected-E99 launch paths.
+
+    The CPU-only parameter smoke check intentionally bypasses this; any path that
+    can start LM screens or capability GPU jobs must carry a human approval note.
+    """
+    if not getattr(args, 'approved_human_go', False):
+        raise SystemExit(
+            "--approved-human-go is required before launching corrected-e99-1-3b")
+    note = (getattr(args, 'approval_note', '') or '').strip()
+    lower = note.lower()
+    missing = [term for term in APPROVAL_REQUIRED_TERMS if term not in lower]
+    if missing:
+        raise SystemExit(
+            f"--approval-note is missing required launch-approval text: {missing}")
+    print(f"APPROVAL_RECORDED corrected-e99-1-3b {note}", flush=True)
 
 
 def derive_dim(logits, target_params=PARAM_TARGET, tolerance=PARAM_TOLERANCE,
@@ -381,7 +416,7 @@ def main():
                     help='round-trip the anchors (hard gate) even if --roundtrip 0')
     ap.add_argument('--cma_popsize', type=int, default=6)
     ap.add_argument('--cma_generations', type=int, default=4)
-    ap.add_argument('--cma_sigma', type=float, default=1.5)
+    ap.add_argument('--cma_sigma', type=float, default=2.0)  # wide (binding seed spec)
     ap.add_argument('--skip_cma', type=int, default=0)
     ap.add_argument('--target_params', type=float, default=float(PARAM_TARGET))
     ap.add_argument('--param_tolerance', type=float, default=PARAM_TOLERANCE)
@@ -391,11 +426,16 @@ def main():
     ap.add_argument('--dim_max', type=int, default=DIM_MAX)
     ap.add_argument('--smoke_param_check', action='store_true',
                     help='CPU-only 3-mixture parameter sizing check, then exit')
+    ap.add_argument('--approved-human-go', action='store_true',
+                    help='Required for any GPU launch path; records explicit human go')
+    ap.add_argument('--approval-note', default='',
+                    help='Human approval text to preserve in run artifacts')
     args = ap.parse_args()
     args.target_params = int(args.target_params)
     if args.smoke_param_check:
         smoke_param_check(args)
         return
+    ensure_human_approval(args)
     args.gpus = [int(g) for g in args.gpus.split(',')]
     os.makedirs(args.output, exist_ok=True)
     gpu_log = []
@@ -411,15 +451,21 @@ def main():
     with open(os.path.join(args.output, 'anchors_results.json'), 'w') as f:
         json.dump({n: anchor_res[n] for n in anchor_res}, f, indent=2, default=str)
 
-    # ---- Stage 2: CMA over the 6 mixture logits (matched target params) ----
+    # ---- Stage 2: CMA over the 5 FUSED mixture logits (matched target params) ----
+    # BINDING (Erik 2026-06-06): the SEARCH simplex = EXACTLY the 5 single-launch
+    # fused types {gdn2_recall, e97_track, count, latch, nonlin}. gdn2_nonlin_shell
+    # is NOT searched -- candidates are 5-entry logits, which allocate_types pads
+    # shell-off (0 shell heads). The shell lives only as the Stage-1 CONTROL anchors
+    # S1/S2/S3 (capability/accuracy), never ranked by this loss-at-wallclock fitness.
     cma_results = []
     if not args.skip_cma:
         import cma
-        from mixtures import PRIOR_E99_LOGITS_5
-        x0 = list(PRIOR_E99_LOGITS_5) + [-2.0]  # seed: prior winner + small shell logit
+        from mixtures import seed_search_logits, SEARCH_TYPE_NAMES
+        x0 = list(seed_search_logits())  # 5-type: recall-heavy + specialist sub-mix
+        assert len(x0) == 5, f"search seed must be 5-type, got {len(x0)}"
         es = cma.CMAEvolutionStrategy(x0, args.cma_sigma, {
             'popsize': args.cma_popsize, 'seed': 42, 'verbose': -1,
-            'bounds': [[-6.0] * 6, [6.0] * 6]})
+            'bounds': [[-8.0] * 5, [8.0] * 5]})
         eval_id = 0
         gens_path = os.path.join(args.output, 'generations.jsonl')
         for gen in range(args.cma_generations):
@@ -427,7 +473,17 @@ def main():
             jobs = []
             for j, sol in enumerate(sols):
                 name = f'cma_g{gen}_e{j}'
-                jobs.append((name, [float(x) for x in sol]))
+                cand_logits = [float(x) for x in sol]
+                # HARD GUARD: a searched candidate must be 5-type (shell padded off).
+                # If a shell head ever appears here the search simplex is wrong.
+                assert len(cand_logits) == 5, (
+                    f"searched candidate {name} has {len(cand_logits)} logits; "
+                    f"the SEARCH simplex must be exactly 5 fused types")
+                c = head_counts(cand_logits, BASE_SHAPE['n_heads'])
+                assert c.get('gdn2_nonlin_shell', 0) == 0, (
+                    f"searched candidate {name} allocated {c['gdn2_nonlin_shell']} "
+                    f"shell heads; the shell is a CONTROL arm, never searched")
+                jobs.append((name, cand_logits))
             print(f"=== STAGE 2 CMA gen {gen+1}/{args.cma_generations}: "
                   f"{len(jobs)} candidates ===", flush=True)
             res = run_batch(jobs, args, f'cma_gen{gen}', gpu_log)
@@ -459,14 +515,29 @@ def main():
             print(f"  gen_best={min(fits):.4f} counts={snap['gen_best_counts']}", flush=True)
 
     # ---- aggregate ----
+    from mixtures import SEARCH_TYPE_NAMES
+    search_spec = dict(
+        searched_types=list(SEARCH_TYPE_NAMES),  # the 5 fused types ranked by loss+probes
+        control_arms={
+            'dense_gdn2': 'M0_dense_gdn2',
+            'gdn2_nonlin_shell': ['S1_gdn_shell_f17', 'S2_gdn_shell_f33',
+                                  'S3_gdn_shell_f50'],
+        },
+        control_note=('dense GDN-2 and gdn2_nonlin_shell are FIXED labeled CONTROL '
+                      'arms (capability/accuracy only); they are NEVER ranked by '
+                      'wallclock or tokens/min and are NOT search dimensions.'),
+        selection='token-matched LM loss + capability probes; wallclock reported '
+                  'but NOT used for cross-head selection.')
     all_results = dict(anchors=anchor_res,
                        cma=cma_results,
+                       search_spec=search_spec,
                        base_shape=BASE_SHAPE, shell_nonlin=SHELL_NONLIN,
                        param_target=args.target_params,
                        param_tolerance=args.param_tolerance,
                        dim_multiple=args.dim_multiple,
                        wall_minutes_per_eval=args.wall_minutes,
                        gpus_used=sorted(set(g['gpu'] for g in gpu_log)),
+                       approval_note_record=args.approval_note,
                        n_evals=len(anchor_res) + len(cma_results),
                        gpu_log=gpu_log,
                        wallclock_minutes=round((time.time()-t0)/60.0, 1),

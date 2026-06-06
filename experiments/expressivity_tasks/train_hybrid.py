@@ -124,6 +124,12 @@ def main():
                     help='Comma-separated 4 head fractions [track,count,latch,nonlin] '
                          'for spread-init/fixed_pop placement. e.g. "0.4,0.2,0.2,0.2". '
                          'Default None = equal 25/25/25/25 round-robin.')
+    ap.add_argument('--shell_state_nonlin', type=str, default=None,
+                    help='typed-gdn2: bounded nonlinear-in-time state map for the '
+                         'gdn2_nonlin_shell control head (e.g. "tanh"). Forwarded '
+                         'only to typed-gdn2 layers; ignored when no shell heads.')
+    ap.add_argument('--shell_state_chunk', type=int, default=None,
+                    help='typed-gdn2: chunk size for the fused shell scan (e.g. 64).')
     ap.add_argument('--knob_lr_mult', type=float, default=1.0,
                     help='LEARNABILITY intervention #2: multiply the base LR for '
                          'the recurrence knobs (lam_raw/beta_raw/igain_raw/'
@@ -250,6 +256,10 @@ def main():
         typed_kwargs['beta_max'] = args.beta_max
     if args.igain_max is not None:
         typed_kwargs['igain_max'] = args.igain_max
+    if args.shell_state_nonlin is not None:
+        typed_kwargs['shell_state_nonlin'] = args.shell_state_nonlin
+    if args.shell_state_chunk is not None:
+        typed_kwargs['shell_state_chunk'] = args.shell_state_chunk
 
     def _is_unified_level(level):
         return isinstance(level, str) and (level.startswith('e98') or level.startswith('unified'))

@@ -8,13 +8,18 @@ Writes:
   results/report_tables.json
 Prints the same to stdout. Pure aggregation of REAL run outputs; no fabrication.
 """
-import os, sys, json, math
+import os, sys, json, math, argparse
 
 _THIS = os.path.dirname(os.path.abspath(__file__))
 RUN = os.path.join(_THIS, 'results', 'run1', 'all_results.json')
 CAP = os.path.join(_THIS, 'results', 'capability', 'capability_summary.json')
 OUT_MD = os.path.join(_THIS, 'results', 'report_tables.md')
 OUT_JSON = os.path.join(_THIS, 'results', 'report_tables.json')
+
+# Names that are FIXED labeled CONTROL arms (capability/accuracy only, never
+# wallclock/tok-min ranked): dense GDN-2 (M0) + the gdn2_nonlin_shell arms (S*).
+CONTROL_ARMS = {'M0_dense_gdn2', 'S1_gdn_shell_f17', 'S2_gdn_shell_f33',
+                'S3_gdn_shell_f50'}
 
 
 def load(p):
@@ -37,7 +42,8 @@ def _lmrow(name, r, kind):
     hd = r.get('heldout') or {}
     c = r.get('counts') or {}
     rt = r.get('roundtrip') or {}
-    return dict(name=name, kind=kind,
+    arm = 'CONTROL' if name in CONTROL_ARMS else ('SEARCHED' if kind == 'cma' else 'ANCHOR')
+    return dict(name=name, kind=kind, arm=arm,
                 n_gdn=c.get('gdn2_recall'), n_nonlin=c.get('nonlin'),
                 n_shell=c.get('gdn2_nonlin_shell'), n_track=c.get('e97_track'),
                 n_count=c.get('count'), n_latch=c.get('latch'),
@@ -58,8 +64,15 @@ def fmt(v, n=4):
 
 
 def main():
-    run = load(RUN)
-    cap = load(CAP)
+    ap = argparse.ArgumentParser()
+    ap.add_argument('--run', default=RUN, help='path to all_results.json')
+    ap.add_argument('--cap', default=CAP, help='path to capability_summary.json')
+    ap.add_argument('--out_md', default=OUT_MD)
+    ap.add_argument('--out_json', default=OUT_JSON)
+    a = ap.parse_args()
+    out_md, out_json = a.out_md, a.out_json
+    run = load(a.run)
+    cap = load(a.cap)
     md = ['# redo-e99-1-3b — aggregated tables (real run outputs)\n']
     out = {}
 
@@ -71,10 +84,14 @@ def main():
                   f"{run.get('wall_minutes_per_eval')}-min bf16, GPUs {run.get('gpus_used')}, "
                   f"{run.get('aggregate_gpu_minutes')} GPU-min\n")
         md.append("Ranked by AvgLoss (CMA fitness, lower=better). BPB on canonical Pile held-out slice.\n")
-        md.append("| rank | name | kind | gdn/nonlin/shell | AvgLoss | Final | held-out BPB | tok/s | steps | params_B | NaN | RT |")
+        md.append("**arm**: SEARCHED = a 5-type fused CMA candidate (selection-eligible). "
+                  "CONTROL = fixed dense-GDN-2 (M0) or gdn2_nonlin_shell (S*) arm "
+                  "(capability/accuracy only, NEVER wallclock/tok-min ranked). "
+                  "ANCHOR = fixed comparability mixture (M1/C*), not selection-ranked.\n")
+        md.append("| rank | name | arm | gdn/nonlin/shell | AvgLoss | Final | held-out BPB | tok/s | steps | params_B | NaN | RT |")
         md.append("|---:|---|---|---|---:|---:|---:|---:|---:|---:|:--:|:--:|")
         for i, x in enumerate(rows_sorted, 1):
-            md.append(f"| {i} | {x['name']} | {x['kind']} | "
+            md.append(f"| {i} | {x['name']} | {x['arm']} | "
                       f"{x['n_gdn']}/{x['n_nonlin']}/{x['n_shell']} | "
                       f"{fmt(x['avg_loss'])} | {fmt(x['final_loss'])} | {fmt(x['bpb'])} | "
                       f"{fmt(x['tok_s'],0)} | {x['steps']} | {fmt(x['params_b'],3)} | "
@@ -123,11 +140,11 @@ def main():
         md.append('')
 
     text = '\n'.join(md)
-    os.makedirs(os.path.dirname(OUT_MD), exist_ok=True)
-    open(OUT_MD, 'w').write(text)
-    json.dump(out, open(OUT_JSON, 'w'), indent=2, default=str)
+    os.makedirs(os.path.dirname(out_md), exist_ok=True)
+    open(out_md, 'w').write(text)
+    json.dump(out, open(out_json, 'w'), indent=2, default=str)
     print(text)
-    print(f"\n[wrote] {OUT_MD}\n[wrote] {OUT_JSON}")
+    print(f"\n[wrote] {out_md}\n[wrote] {out_json}")
 
 
 if __name__ == '__main__':

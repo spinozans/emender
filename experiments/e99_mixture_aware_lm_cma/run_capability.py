@@ -27,6 +27,13 @@ from mixtures import build_anchors, head_counts, TYPE_NAMES
 FREE_MEM_MIB = 2000
 TRAIN_HYBRID = os.path.join(_ROOT, 'experiments', 'expressivity_tasks', 'train_hybrid.py')
 
+APPROVAL_REQUIRED_TERMS = [
+    'human',
+    'approval',
+    'corrected-e99-1-3b',
+    'launch',
+]
+
 PROBES = {
     'mqar_recall': [],
     's5_permutation': [],
@@ -74,6 +81,19 @@ def gpu_used_mib():
         ['nvidia-smi', '--query-gpu=index,memory.used', '--format=csv,noheader,nounits'],
         capture_output=True, text=True, check=True).stdout
     return {int(l.split(',')[0]): int(l.split(',')[1]) for l in out.strip().splitlines()}
+
+
+def ensure_human_approval(args):
+    if not getattr(args, 'approved_human_go', False):
+        raise SystemExit(
+            "--approved-human-go is required before launching corrected-e99-1-3b capability jobs")
+    note = (getattr(args, 'approval_note', '') or '').strip()
+    lower = note.lower()
+    missing = [term for term in APPROVAL_REQUIRED_TERMS if term not in lower]
+    if missing:
+        raise SystemExit(
+            f"--approval-note is missing required launch-approval text: {missing}")
+    print(f"APPROVAL_RECORDED corrected-e99-1-3b capability {note}", flush=True)
 
 
 def build_cmd(name, cfg, probe, seed, steps, out_dir):
@@ -149,7 +169,12 @@ def main():
     ap.add_argument('--steps', type=int, default=4000)
     ap.add_argument('--seeds', type=int, nargs='+', default=[42])
     ap.add_argument('--target_params', type=float, default=8.0e6)
+    ap.add_argument('--approved-human-go', action='store_true',
+                    help='Required for any GPU launch path; records explicit human go')
+    ap.add_argument('--approval-note', default='',
+                    help='Human approval text to preserve in run artifacts')
     args = ap.parse_args()
+    ensure_human_approval(args)
     gpus = [int(g) for g in args.gpus.split(',')]
     out_dir = args.output
     os.makedirs(out_dir, exist_ok=True)
@@ -195,6 +220,7 @@ def main():
     json.dump(dict(summary=summary, steps=args.steps, seeds=args.seeds,
                    depth=DEPTH, n_heads=N_HEADS, n_state=N_STATE,
                    shell_nonlin=SHELL_NONLIN, eval_ts=EVAL_TS,
+                   approval_note_record=args.approval_note,
                    timestamp=datetime.datetime.utcnow().isoformat() + 'Z'),
               open(os.path.join(out_dir, 'capability_summary.json'), 'w'),
               indent=2, default=str)

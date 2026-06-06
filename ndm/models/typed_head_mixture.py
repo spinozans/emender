@@ -9,7 +9,7 @@ preset 0.171 vs native GDN 0.951) — GDN recall looked architectural, not a kno
 So here GDN-2 is a FIRST-CLASS head type with its own native delta-memory kernel,
 not an E98 knob.
 
-Five native head types live in one layer:
+Six native head types live in one layer:
 
     gdn2_recall : real Gated-DeltaNet-2 delta-memory heads (FLA chunked gated
                   delta-rule kernel, allow_neg_eigval=True == the GDN-2 negative
@@ -21,6 +21,11 @@ Five native head types live in one layer:
     latch       : bistable +/-1 latch heads (UnifiedCell 'latch' corner, tanh).
     nonlin      : iterated-nonlinear-map / state-state heads (UnifiedCell 'nonlin'
                   corner, tanh, state-nonlinear phi).
+    gdn2_nonlin_shell : native GDN-2 delta-memory plumbing (same FLA projections
+                  /short-conv/gate as gdn2_recall) WITH a bounded nonlinear-in-time
+                  state map fused into the chunked scan (GDN2NonlinShellLayer). This
+                  is the §3 fairness head: it isolates the nonlinearity-in-time
+                  itself from the external UnifiedCell plumbing of `nonlin`.
 
 Composition: the four E98-native corner types share ONE UnifiedCellLayer running
 in `fixed_pop` mode (per-head knobs are FROZEN buffers at their corner — the head
@@ -64,9 +69,18 @@ except ImportError:  # pragma: no cover - exercised only without FLA
 
 # Canonical type order. Index 0 is the native GDN head; 1..4 are the four
 # UnifiedCell corner personalities, IN THE SAME ORDER as SPREAD_CORNERS_4 so the
-# unified sub-block's corner_mixture is just counts[1:5].
-TYPE_NAMES: List[str] = ['gdn2_recall', 'e97_track', 'count', 'latch', 'nonlin']
+# unified sub-block's corner_mixture is just counts[1:5]; index 5 is the native
+# GDN-2 shell with a fused nonlinear-in-time state (gdn2_nonlin_shell).
+#
+# Backward compatibility: callers that predate the 6th type pass 5 logits. Those
+# are padded with -inf for the shell slot, which softmax maps to 0 shell heads,
+# reproducing the legacy 5-type allocation EXACTLY (see allocate_types).
+TYPE_NAMES: List[str] = ['gdn2_recall', 'e97_track', 'count', 'latch', 'nonlin',
+                         'gdn2_nonlin_shell']
+LEGACY_N_TYPES = 5  # the 5-type contract; the 6th (shell) is padded off when absent
 UNIFIED_CORNER_ORDER = ['track', 'count', 'latch', 'nonlin']  # == SPREAD_CORNERS_4
+# the unified corner types occupy indices 1..4 (between gdn2_recall and the shell)
+UNIFIED_SLICE = slice(1, 5)
 
 
 def largest_remainder_counts(n_heads: int, fractions: List[float]) -> List[int]:
@@ -103,20 +117,28 @@ def allocate_types(n_heads: int, head_type_logits: List[float]) -> dict:
     Returns a dict with the per-type fractions and integer counts (keyed by
     TYPE_NAMES) plus the raw GDN / unified split.
     """
-    logits = torch.tensor([float(x) for x in head_type_logits], dtype=torch.float64)
-    if logits.numel() != len(TYPE_NAMES):
+    raw = [float(x) for x in head_type_logits]
+    if len(raw) == LEGACY_N_TYPES:
+        # legacy 5-type call: pad the shell slot OFF (softmax(-inf)==0) so the
+        # other five keep their exact 5-way softmax and 0 shell heads are allocated.
+        raw = raw + [float('-inf')]
+    if len(raw) != len(TYPE_NAMES):
         raise ValueError(
             f"head_type_logits must have {len(TYPE_NAMES)} entries "
-            f"({TYPE_NAMES}), got {logits.numel()}")
+            f"({TYPE_NAMES}) or {LEGACY_N_TYPES} (legacy, shell padded off), "
+            f"got {len(raw)}")
+    logits = torch.tensor(raw, dtype=torch.float64)
     fracs = torch.softmax(logits, dim=0).tolist()
     counts = largest_remainder_counts(n_heads, fracs)
+    unified_counts = [int(c) for c in counts[UNIFIED_SLICE]]  # [track,count,latch,nonlin]
     return {
         'type_names': list(TYPE_NAMES),
         'fractions': {TYPE_NAMES[i]: float(fracs[i]) for i in range(len(TYPE_NAMES))},
         'counts': {TYPE_NAMES[i]: int(counts[i]) for i in range(len(TYPE_NAMES))},
         'n_gdn': int(counts[0]),
-        'n_unified': int(sum(counts[1:])),
-        'unified_counts': [int(c) for c in counts[1:]],  # [track,count,latch,nonlin]
+        'n_unified': int(sum(unified_counts)),
+        'unified_counts': unified_counts,
+        'n_shell': int(counts[5]),
     }
 
 
@@ -140,11 +162,14 @@ class TypedHeadMixtureLayer(nn.Module):
         use_gate: bool = True,
         gate_activation: str = 'silu',
         dropout: float = 0.0,
+        # native GDN-2 shell w/ fused nonlinear-in-time state (the 6th head type):
+        shell_state_nonlin: str = 'tanh',
+        shell_state_chunk: int = 64,
         **kwargs,
     ):
         super().__init__()
         if head_type_logits is None:
-            # balanced default: equal logits -> ~uniform across the 5 types
+            # balanced default: equal logits -> ~uniform across the 6 types
             head_type_logits = [0.0] * len(TYPE_NAMES)
         self.dim = dim
         self.n_state = int(n_state)
@@ -157,6 +182,7 @@ class TypedHeadMixtureLayer(nn.Module):
         n_gdn = alloc['n_gdn']
         n_unified = alloc['n_unified']
         unified_counts = alloc['unified_counts']
+        n_shell = alloc['n_shell']
 
         # --- native GDN-2 sub-block (recall / associative memory) ---
         self.gdn = None
@@ -207,6 +233,27 @@ class TypedHeadMixtureLayer(nn.Module):
                 dropout=dropout,
             )
 
+        # --- native GDN-2 shell sub-block (nonlinear-in-time state) ---
+        # Same native delta-memory plumbing as gdn2_recall but with a bounded
+        # nonlinear-in-time state map fused into the chunked scan (the §3 head
+        # under fairness test). dim->dim like the other sub-blocks; summed in.
+        self.shell = None
+        if n_shell > 0:
+            from .gdn2_nonlin_shell import GDN2NonlinShellLayer
+            self.shell = GDN2NonlinShellLayer(
+                dim=dim,
+                n_state=self.n_state,
+                n_heads=n_shell,
+                expansion=expansion,
+                state_nonlin=shell_state_nonlin,
+                state_chunk=shell_state_chunk,
+                gdn_allow_neg_eigval=gdn_allow_neg_eigval,
+                gdn_use_conv=gdn_use_conv,
+                gdn_conv_size=gdn_conv_size,
+                use_gate=use_gate,
+                dropout=dropout,
+            )
+
         self.dropout = nn.Dropout(dropout) if dropout > 0 else nn.Identity()
 
     def head_alloc(self) -> dict:
@@ -223,6 +270,9 @@ class TypedHeadMixtureLayer(nn.Module):
         if self.unified is not None:
             u_out = self.unified(x)
             out = u_out if out is None else out + u_out
+        if self.shell is not None:
+            s_out = self.shell(x)
+            out = s_out if out is None else out + s_out
         if out is None:  # pragma: no cover - n_heads>0 guarantees a block
             out = torch.zeros_like(x)
         return self.dropout(out)

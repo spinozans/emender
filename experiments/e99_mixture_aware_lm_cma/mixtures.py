@@ -36,6 +36,39 @@ def fracs_to_logits(fr: Dict[str, float]) -> List[float]:
 # 0 shell heads, reproducing the prior allocation exactly).
 PRIOR_E99_LOGITS_5 = [3.9995, -1.9008, -0.9211, -2.8866, 2.4146]
 
+# --- Stage-2 CMA search space (BINDING, Erik 2026-06-06) ---------------------
+# The mixture SEARCH simplex spans EXACTLY these 5 fused, single-launch head types
+# (~0.93x native per E99_HEAD_KERNEL_AUDIT). gdn2_nonlin_shell is NOT a search
+# dimension: it is a FIXED labeled CONTROL arm (S1/S2/S3), capability/accuracy only,
+# never ranked by wallclock or tokens/min. CMA candidates are 5-entry logits, which
+# allocate_types pads shell-off (0 shell heads), so no searched candidate ever
+# instantiates a shell head.
+SEARCH_TYPE_NAMES: List[str] = ['gdn2_recall', 'e97_track', 'count', 'latch', 'nonlin']
+
+# CMA seed: 5-type simplex, recall-heavy (recall is the LM backbone per
+# E98_SIXTH_CORNER), with the cma-capability specialist sub-mixture filling the
+# non-recall mass at track:count:nonlin:latch = 0.40:0.28:0.31:0.009 (relative).
+SEED_RECALL_FRAC = 0.70
+SEED_SPECIALIST_SUBMIX = {  # relative weights WITHIN the (1 - recall) specialist mass
+    'e97_track': 0.40, 'count': 0.28, 'nonlin': 0.31, 'latch': 0.009,
+}
+
+
+def seed_search_fracs() -> Dict[str, float]:
+    """5-type seed fraction dict: recall-heavy + specialist sub-mixture."""
+    spec_total = sum(SEED_SPECIALIST_SUBMIX.values())
+    rest = 1.0 - SEED_RECALL_FRAC
+    fr = {'gdn2_recall': SEED_RECALL_FRAC}
+    for t, w in SEED_SPECIALIST_SUBMIX.items():
+        fr[t] = rest * (w / spec_total)
+    return fr
+
+
+def seed_search_logits() -> List[float]:
+    """5 logits (log f over SEARCH_TYPE_NAMES) seeding the Stage-2 CMA."""
+    fr = seed_search_fracs()
+    return [math.log(fr[t]) if fr[t] > 0 else LOG0 for t in SEARCH_TYPE_NAMES]
+
 
 def build_anchors() -> Dict[str, dict]:
     """name -> {logits, role, f_nonlin_slot, kind, note}."""
