@@ -2,9 +2,9 @@
 execution paths. Scope-allowed: proves perf characteristics, no LM/CMA run.
 One GPU, B/T fixed, matched head geometry. Reports ms/iter and relative slowdown.
 """
-import sys, os, json, time
-REDO_ROOT = "/home/erikg/ndm/.wg-worktrees/agent-1141"
-sys.path.insert(0, REDO_ROOT)
+import os, sys, json, time
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, REPO_ROOT)
 import torch
 from ndm.models.gdn2_nonlin_shell import GDN2NonlinShellLayer
 from ndm.models.unified_cell import UnifiedCellLayer
