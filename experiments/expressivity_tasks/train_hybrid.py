@@ -267,7 +267,12 @@ def main():
     def _layer_kw(level):
         if level in ('m2rnn', 'm2rnn-paper'):
             return dict(m2_kwargs)
-        if isinstance(level, str) and level.startswith('E88'):
+        # E97 = E88FLAHybrid(use_split_edit=True); it is part of the E88 family
+        # and accepts the same structural overrides (raw_write, state_activation,
+        # decay_mode, ...). The level token 'E97' does not start with 'E88', so
+        # forward e88_kwargs to it explicitly — otherwise --e88_raw_write and
+        # --state_activation are silently dropped for the E97 split-gate arm.
+        if isinstance(level, str) and (level.startswith('E88') or level == 'E97'):
             return dict(e88_kwargs)
         if level == 'fla-gdn':
             return dict(gdn_kwargs)
