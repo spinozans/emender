@@ -58,6 +58,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from .unified_cell import UnifiedCellLayer
+from .e88_fla_hybrid import E88FLAHybrid
 
 try:
     from fla.layers import GatedDeltaNet as _FLAGatedDeltaNet
@@ -70,14 +71,28 @@ except ImportError:  # pragma: no cover - exercised only without FLA
 # Canonical type order. Index 0 is the native GDN head; 1..4 are the four
 # UnifiedCell corner personalities, IN THE SAME ORDER as SPREAD_CORNERS_4 so the
 # unified sub-block's corner_mixture is just counts[1:5]; index 5 is the native
-# GDN-2 shell with a fused nonlinear-in-time state (gdn2_nonlin_shell).
+# GDN-2 shell with a fused nonlinear-in-time state (gdn2_nonlin_shell); indices
+# 6,7 are the FUSED E97 split-edit heads (e97-raw / e97-delta) — a genuine E97
+# split-edit recurrence run over its allocated head subset on the bf16 Triton
+# kernel (use_split_edit=True, raw_write True/False, state tanh), exactly the
+# validated E97 LM cell, NOT an approximated UnifiedCell corner. These close the
+# gap that forced the inferior interleaved-layer fallback (task e97-heads-in):
+#   e97_raw   : E97 split-edit + RAW WRITE (write v, drop the delta read term).
+#               #1 cell on the 1.3B LM CMA leaderboard (avg-loss 5.9511).
+#   e97_delta : E97 split-edit + DELTA correction (write v - S@k). The plain E97.
+# Both run the FUSED split-edit Triton fwd+bwd kernel (the use_triton path,
+# commit 4db8099), parity-verified vs the eager reference at bf16.
 #
-# Backward compatibility: callers that predate the 6th type pass 5 logits. Those
-# are padded with -inf for the shell slot, which softmax maps to 0 shell heads,
-# reproducing the legacy 5-type allocation EXACTLY (see allocate_types).
+# Backward compatibility: callers that predate later types pass 5 (pre-shell) or
+# 6 (pre-e97) logits. Those are right-padded with -inf for the new trailing
+# slots, which softmax maps to 0 heads, reproducing the legacy allocation
+# EXACTLY (see allocate_types). A 7-vector is rejected (no historical contract).
 TYPE_NAMES: List[str] = ['gdn2_recall', 'e97_track', 'count', 'latch', 'nonlin',
-                         'gdn2_nonlin_shell']
-LEGACY_N_TYPES = 5  # the 5-type contract; the 6th (shell) is padded off when absent
+                         'gdn2_nonlin_shell', 'e97_raw', 'e97_delta']
+LEGACY_N_TYPES = 5  # the original 5-type contract; trailing types padded off
+# accepted legacy logit-vector lengths; each is right-padded with -inf to the
+# full TYPE_NAMES width so softmax assigns the new trailing types 0 heads.
+ACCEPTED_LEGACY_LENS = (5, 6)
 UNIFIED_CORNER_ORDER = ['track', 'count', 'latch', 'nonlin']  # == SPREAD_CORNERS_4
 # the unified corner types occupy indices 1..4 (between gdn2_recall and the shell)
 UNIFIED_SLICE = slice(1, 5)
@@ -118,15 +133,16 @@ def allocate_types(n_heads: int, head_type_logits: List[float]) -> dict:
     TYPE_NAMES) plus the raw GDN / unified split.
     """
     raw = [float(x) for x in head_type_logits]
-    if len(raw) == LEGACY_N_TYPES:
-        # legacy 5-type call: pad the shell slot OFF (softmax(-inf)==0) so the
-        # other five keep their exact 5-way softmax and 0 shell heads are allocated.
-        raw = raw + [float('-inf')]
+    if len(raw) in ACCEPTED_LEGACY_LENS:
+        # legacy call (5-type pre-shell, or 6-type pre-e97): right-pad the new
+        # trailing slots OFF (softmax(-inf)==0) so the historical types keep their
+        # EXACT softmax and the new types are allocated 0 heads.
+        raw = raw + [float('-inf')] * (len(TYPE_NAMES) - len(raw))
     if len(raw) != len(TYPE_NAMES):
         raise ValueError(
             f"head_type_logits must have {len(TYPE_NAMES)} entries "
-            f"({TYPE_NAMES}) or {LEGACY_N_TYPES} (legacy, shell padded off), "
-            f"got {len(raw)}")
+            f"({TYPE_NAMES}) or one of {ACCEPTED_LEGACY_LENS} (legacy, trailing "
+            f"types padded off), got {len(raw)}")
     logits = torch.tensor(raw, dtype=torch.float64)
     fracs = torch.softmax(logits, dim=0).tolist()
     counts = largest_remainder_counts(n_heads, fracs)
@@ -139,6 +155,8 @@ def allocate_types(n_heads: int, head_type_logits: List[float]) -> dict:
         'n_unified': int(sum(unified_counts)),
         'unified_counts': unified_counts,
         'n_shell': int(counts[5]),
+        'n_e97_raw': int(counts[6]),
+        'n_e97_delta': int(counts[7]),
     }
 
 
@@ -165,6 +183,18 @@ class TypedHeadMixtureLayer(nn.Module):
         # native GDN-2 shell w/ fused nonlinear-in-time state (the 6th head type):
         shell_state_nonlin: str = 'tanh',
         shell_state_chunk: int = 64,
+        # FUSED E97 split-edit heads (7th/8th head types: e97_raw, e97_delta).
+        # use_triton_e97=True routes them through the bf16 split-edit Triton
+        # fwd/bwd kernel (commit 4db8099) — the ONLY fused path for split-edit /
+        # raw-write (the CUDA register-owned kernel rejects both). state_activation
+        # 'tanh' matches the validated E97 LM cell (kernel-compatible: tanh/identity
+        # only). cast_recurrent_bf16 feeds these heads bf16 under autocast/fp32 so
+        # the fused gate (which requires x.dtype==bfloat16) actually engages instead
+        # of silently falling back to the eager T-scan — the bug that bit
+        # wire-fused-e97. With it on, e97 heads are NEVER eager during training.
+        use_triton_e97: bool = True,
+        cast_recurrent_bf16: bool = True,
+        e97_state_nonlin: str = 'tanh',
         **kwargs,
     ):
         super().__init__()
@@ -177,12 +207,18 @@ class TypedHeadMixtureLayer(nn.Module):
         self.expansion = expansion
         self.head_type_logits = [float(x) for x in head_type_logits]
 
+        self.use_triton_e97 = bool(use_triton_e97)
+        self.cast_recurrent_bf16 = bool(cast_recurrent_bf16)
+        self.e97_state_nonlin = str(e97_state_nonlin)
+
         alloc = allocate_types(self.n_heads, self.head_type_logits)
         self.alloc = alloc
         n_gdn = alloc['n_gdn']
         n_unified = alloc['n_unified']
         unified_counts = alloc['unified_counts']
         n_shell = alloc['n_shell']
+        n_e97_raw = alloc['n_e97_raw']
+        n_e97_delta = alloc['n_e97_delta']
 
         # --- native GDN-2 sub-block (recall / associative memory) ---
         self.gdn = None
@@ -254,7 +290,76 @@ class TypedHeadMixtureLayer(nn.Module):
                 dropout=dropout,
             )
 
+        # --- FUSED E97 split-edit sub-blocks (e97_raw / e97_delta) ---
+        # Each is a genuine E88FLAHybrid running the validated E97 split-edit
+        # recurrence over its allocated head subset, on the fused bf16 Triton
+        # kernel. raw_write distinguishes the two: True == raw write (the 1.3B
+        # leaderboard winner), False == delta read-modify-write (plain E97). Same
+        # n_state / use_gate / silu gate as the other sub-blocks so head shapes
+        # stay matched; dim->dim, summed into the shared residual.
+        #   use_gate + gate_activation='silu' are REQUIRED for the fused split-edit
+        #   dispatch (_use_optimized gate in E88FLAHybrid.forward); the head-type
+        #   contract here always carries them so the kernel engages.
+        e97_common = dict(
+            dim=dim,
+            n_state=self.n_state,
+            expansion=expansion,
+            use_split_edit=True,
+            state_activation=self.e97_state_nonlin,
+            use_gate=True,             # required by the fused split-edit dispatch
+            gate_activation='silu',    # required by the fused split-edit dispatch
+            use_triton=self.use_triton_e97,
+            dropout=dropout,
+        )
+        self.e97_raw = None
+        if n_e97_raw > 0:
+            self.e97_raw = E88FLAHybrid(n_heads=n_e97_raw, raw_write=True, **e97_common)
+        self.e97_delta = None
+        if n_e97_delta > 0:
+            self.e97_delta = E88FLAHybrid(n_heads=n_e97_delta, raw_write=False, **e97_common)
+
         self.dropout = nn.Dropout(dropout) if dropout > 0 else nn.Identity()
+
+    def _run_e97(self, block: "E88FLAHybrid", x: torch.Tensor) -> torch.Tensor:
+        """Run a fused E97 split-edit sub-block, guaranteeing the fused kernel
+        engages (no silent eager fallback) when use_triton is requested.
+
+        The split-edit/raw-write fused Triton fwd+bwd kernel dispatches only when
+        the input is bf16 (plus use_gate/silu/training, set at construction). The
+        residual stream is fp32 under autocast (RMSNorm emits fp32) and fp32 in the
+        typed-gdn2-lm sanity dtype, so without an explicit cast the kernel gate
+        fails and the recurrence silently runs the eager T-scan — the wire-fused-e97
+        bug. We cast the sub-block input to bf16 and, during training, FAIL LOUDLY
+        if the fused path still could not engage rather than degrade silently.
+        """
+        xin = x
+        if block.use_triton and self.cast_recurrent_bf16 and xin.is_cuda \
+                and xin.dtype == torch.float32:
+            xin = xin.to(torch.bfloat16)
+        if block.use_triton and block.training and xin.is_cuda \
+                and xin.dtype != torch.bfloat16:
+            raise RuntimeError(
+                "Fused E97 split-edit head requires bf16 input to engage the Triton "
+                f"kernel (got {xin.dtype}); refusing to silently fall back to the eager "
+                "T-scan. Enable cast_recurrent_bf16 or feed the layer bf16.")
+        # The fused split-edit kernel's sparse-checkpoint forward requires
+        # T % checkpoint_interval == 0. The LM next-token path feeds T-1 timesteps,
+        # so an aligned context (512/1024) arrives here unaligned (511/1023). The
+        # recurrence is strictly causal, so zero-padding the END of the sequence to
+        # the next multiple and truncating back is EXACT — appended future steps
+        # cannot change earlier outputs. This keeps every fused E97 head on the
+        # kernel for ANY sequence length instead of crashing or going eager.
+        T = xin.shape[1]
+        pad = 0
+        if block.use_triton:
+            ckpt = int(getattr(block, 'checkpoint_interval', 16) or 16)
+            pad = (-T) % ckpt
+        if pad:
+            xin = F.pad(xin, (0, 0, 0, pad))
+        out = block(xin)[0]
+        if pad:
+            out = out[:, :T]
+        return out.to(x.dtype)
 
     def head_alloc(self) -> dict:
         """Allocation metadata for logging (fractions + integer counts per type)."""
@@ -273,6 +378,12 @@ class TypedHeadMixtureLayer(nn.Module):
         if self.shell is not None:
             s_out = self.shell(x)
             out = s_out if out is None else out + s_out
+        if self.e97_raw is not None:
+            r_out = self._run_e97(self.e97_raw, x)
+            out = r_out if out is None else out + r_out
+        if self.e97_delta is not None:
+            d_out = self._run_e97(self.e97_delta, x)
+            out = d_out if out is None else out + d_out
         if out is None:  # pragma: no cover - n_heads>0 guarantees a block
             out = torch.zeros_like(x)
         return self.dropout(out)
