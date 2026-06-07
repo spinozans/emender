@@ -260,6 +260,12 @@ def main():
         typed_kwargs['shell_state_nonlin'] = args.shell_state_nonlin
     if args.shell_state_chunk is not None:
         typed_kwargs['shell_state_chunk'] = args.shell_state_chunk
+    # within-layer study (e97-within-layer): the recall head axis is gdn (no neg
+    # eigenvalue) vs gdn-neg (allow_neg_eigval=True, the GDN-2 tracking eigenvalue).
+    # TypedHeadMixtureLayer defaults this True, so it MUST be plumbed to express
+    # the plain-gdn arm — otherwise gdn==gdn-neg silently.
+    if args.gdn_allow_neg_eigval is not None:
+        typed_kwargs['gdn_allow_neg_eigval'] = bool(args.gdn_allow_neg_eigval)
 
     def _is_unified_level(level):
         return isinstance(level, str) and (level.startswith('e98') or level.startswith('unified'))

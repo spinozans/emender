@@ -1,0 +1,52 @@
+device=cuda:0  type order=['gdn2_recall', 'e97_track', 'count', 'latch', 'nonlin', 'gdn2_nonlin_shell', 'e97_raw', 'e97_delta']
+
+==============================================================================
+(1) NO SILENT EAGER FALLBACK — fused Triton kernel engages for every E97 head
+==============================================================================
+  head allocation: {'gdn2_recall': 6, 'e97_track': 5, 'count': 5, 'latch': 5, 'nonlin': 5, 'gdn2_nonlin_shell': 6, 'e97_raw': 8, 'e97_delta': 8}
+  fused split-edit Triton kernel calls: 2 (expected 2: one per fused E97 head type)
+  PASS: both e97_raw and e97_delta ran on the fused kernel; grads finite.
+
+  PASS: loud guard refuses to silently fall back to eager (fp32, cast off).
+
+==============================================================================
+(2) PARITY — within-layer E97 head: fused bf16 Triton vs eager reference (fwd+bwd)
+==============================================================================
+  e97_raw    T= 128 B= 32 | fwd rel-L2 1.16e-02 | grad rel-L2 1.90e-02 | PASS
+  e97_raw    T= 512 B=  8 | fwd rel-L2 1.23e-02 | grad rel-L2 2.14e-02 | PASS
+  e97_raw    T=1024 B=  4 | fwd rel-L2 1.24e-02 | grad rel-L2 2.18e-02 | PASS
+  e97_delta  T= 128 B= 32 | fwd rel-L2 1.10e-02 | grad rel-L2 1.71e-02 | PASS
+  e97_delta  T= 512 B=  8 | fwd rel-L2 1.15e-02 | grad rel-L2 1.80e-02 | PASS
+  e97_delta  T=1024 B=  4 | fwd rel-L2 1.15e-02 | grad rel-L2 1.83e-02 | PASS
+  PASS: all within-layer E97 heads match the eager reference (fwd+bwd, bf16).
+
+==============================================================================
+(2b) UNALIGNED-T PADDING PARITY — _run_e97 padded-fused vs eager at T=511
+==============================================================================
+  T=511 (unaligned) | out T=511 | fwd rel-L2 1.12e-02 | grad rel-L2 1.97e-02 | PASS
+  PASS: causal zero-pad+truncate is exact; fused stays on the kernel at any T.
+
+==============================================================================
+(3) HETEROGENEOUS-HEAD LM THROUGHPUT — full LadderLM, all 8 head types in parallel
+==============================================================================
+  config: dim=768 depth=12 heads=48 n_state=32 B=16 T=512
+  per-layer head types active (8 types in parallel): {'gdn2_recall': 6, 'e97_track': 5, 'count': 5, 'latch': 5, 'nonlin': 5, 'gdn2_nonlin_shell': 6, 'e97_raw': 8, 'e97_delta': 8}
+  [a] pure fla-gdn      :  116,602 tok/s  (60M params)
+  [b] hetero (e97 FUSED):   39,289 tok/s  (117M params, loss 10.50)  -> 0.34x of pure-GDN
+  [c] small-scale hetero (dim512 depth4 B4 T512): e97 FUSED 28,767 vs EAGER 397 tok/s -> fusing the e97 heads is 72.5x faster
+
+  18-min screen budget (fused hetero): 41.3 M tokens (>= tens of M)
+  PASS: heterogeneous-head LM stays the same order as pure-GDN (4 parallel
+        pathways = ~4x the recurrence work) and sustains a tens-of-M-token
+        15-20 min screen; fusing the e97 heads is the difference.
+
+==============================================================================
+SUMMARY
+==============================================================================
+  no-eager-fallback : PASS (2 fused E97 head types, kernel-verified)
+  within-layer parity: PASS (6 aligned + 1 unaligned-T case, fwd+bwd bf16)
+  unaligned-T pad    : PASS (fwd 1.12e-02, grad 1.97e-02)
+  hetero-LM tok/s   : 39,289 fused (0.34x of pure-GDN 116,602)
+  e97 fusion gain   : 72.5x (small-scale fused 28,767 vs eager 397 tok/s)
+  screen budget     : 41.3 M tokens / 18 min
+  ALL CHECKS PASSED
