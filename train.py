@@ -244,6 +244,14 @@ def parse_args():
                              'requires --val_data. (task e97-within-layer LM screens)')
     parser.add_argument('--final_val_batches', type=int, default=200,
                         help='Batches for the --final_heldout_eval pass.')
+    parser.add_argument('--final_train_eval', action='store_true',
+                        help='After training, ALSO run ONE clean eval on a slice of '
+                             'the TRAIN distribution (--data) using the same averaged '
+                             'weights + clean machinery as --final_heldout_eval, and '
+                             'print FINAL_TRAIN_CE / FINAL_TRAIN_BPB. Lets the audit '
+                             'isolate the train->held generalization gap (same units, '
+                             'same weights) from units / running-average artifacts. '
+                             '(task e97-audit2)')
     parser.add_argument('--heldout_bytes_per_token', type=float, default=3.783,
                         help='Bytes/token for BPB = (CE_nats/ln2)/bytes_per_token. '
                              'Default 3.783 = p50k on commapile (Study B).')
@@ -1150,6 +1158,24 @@ def train(args):
         heldout_bpb = (heldout_ce / _math.log(2.0)) / args.heldout_bytes_per_token
         print(f"FINAL_HELDOUT_CE: {heldout_ce:.4f}")
         print(f"FINAL_HELDOUT_BPB: {heldout_bpb:.4f}")
+
+    # task e97-audit2: clean eval on a TRAIN-distribution slice (--data) with the SAME
+    # averaged weights + clean machinery, to isolate the train->held generalization gap
+    # (same units, same weights) from the units/running-average measurement artifacts.
+    if args.final_train_eval and not stopped_nonfinite:
+        if args.optimizer == 'schedulefree':
+            optimizer.eval()  # averaged weights (same as held-out)
+        import math as _math2
+        train_eval_loader = create_dataloader(
+            args.data,
+            batch_size=args.batch_size,
+            chunk_size=args.chunk_size + 1,
+            device=device,
+        )
+        train_ce = validate(model, train_eval_loader, device, max_batches=args.final_val_batches)
+        train_bpb = (train_ce / _math2.log(2.0)) / args.heldout_bytes_per_token
+        print(f"FINAL_TRAIN_CE: {train_ce:.4f}")
+        print(f"FINAL_TRAIN_BPB: {train_bpb:.4f}")
 
     # Print final metrics in parseable format
     print(f"\nTraining complete! Final step: {step}")

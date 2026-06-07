@@ -1,0 +1,15 @@
+E97-AUDIT2 aggregate — 4 arms x 2 seeds {42,123} x 17.5min FUSED time-bounded, REAL commapile.
+LadderLM typed-gdn2-lm, dim768/depth12/48heads/n_state32, mlp_ratio1.0, p50k_base, schedulefree.
+Held-out=/tmp/e97_heldout_rep.txt (distinct slice). BPB=(CE_nats/ln2)/3.783. final_val_batches=200.
+
+arm           seed  last100(nats,live)  train_ce  train_bpb  held_ce  held_bpb  steps  tok/s
+raw_none       42        5.9807          8.6447    3.2968    8.6869   3.3128    1710  ~19086
+raw_none      123        5.8273          8.5531    3.2618    8.6200   3.2873    2320
+raw_gdnneg     42        6.1421          8.8139    3.3613    8.8645   3.3806    2410  ~49357
+raw_gdnneg    123        6.1508          8.6097    3.2834    8.6434   3.2963    2480
+delta_none     42        6.0384          8.6944    3.3157    8.7352   3.3313    1510  ~22582
+delta_none    123        5.8946          8.9927    3.4295    9.0850   3.4647    1360
+gdn2_mlp_ref   42        5.4602          8.8678    3.3819    8.8600   3.3789    7220  ~61220
+gdn2_mlp_ref  123        5.4438          8.9219    3.4025    8.9119   3.3987    7260
+
+No-eager-fallback verify: ALL PASS (paper/review/audit2_verify.log). No eager/loud-guard in any screen log.
