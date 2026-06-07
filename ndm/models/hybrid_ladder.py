@@ -17,7 +17,7 @@ from typing import Optional, List, Dict, Any
 import torch
 import torch.nn as nn
 
-from .ladder_lm import RMSNorm, get_ladder_level
+from .ladder_lm import RMSNorm, get_ladder_level, SwiGLUMLP, round_mlp_hidden
 
 
 def _is_m2rnn_level(level: str) -> bool:
@@ -73,6 +73,7 @@ class HybridLadderLM(nn.Module):
         gate_activation: str = 'silu',
         use_triton_e88: bool = False,
         dropout: float = 0.0,
+        mlp_ratio: float = 0.0,  # >0 adds a post-mixer RMSNorm + SwiGLU MLP to every layer (study-B parity). 0 = mixer-only.
         **extra_kwargs,
     ):
         super().__init__()
@@ -88,10 +89,22 @@ class HybridLadderLM(nn.Module):
         self.depth = depth
         self.layer_pattern = layer_pattern
         self.disable_autocast = any(_is_m2rnn_level(level) for level in layer_pattern)
+        self.mlp_ratio = mlp_ratio
 
         self.embed = nn.Embedding(vocab_size, dim)
 
         self.layer_norms = nn.ModuleList([RMSNorm(dim) for _ in range(depth)])
+
+        # Optional post-mixer RMSNorm + SwiGLU MLP per layer (study-B parity):
+        # block becomes  h = h + mixer(norm(h)) + mlp(norm2(h + mixer(norm(h)))).
+        if mlp_ratio and mlp_ratio > 0:
+            mlp_hidden = round_mlp_hidden(dim, mlp_ratio)
+            self.mlp_norms = nn.ModuleList([RMSNorm(dim) for _ in range(depth)])
+            self.mlps = nn.ModuleList(
+                [SwiGLUMLP(dim, mlp_hidden, dropout=dropout) for _ in range(depth)])
+        else:
+            self.mlp_norms = None
+            self.mlps = None
 
         layers = []
         actual_pattern = []
@@ -147,12 +160,15 @@ class HybridLadderLM(nn.Module):
 
     def forward(self, x: torch.Tensor, return_loss: bool = False, targets: Optional[torch.Tensor] = None):
         h = self.embed(x)  # [B, T, dim]
-        for ln, layer in zip(self.layer_norms, self.layers):
+        for i, (ln, layer) in enumerate(zip(self.layer_norms, self.layers)):
             normed = ln(h)
             out = layer(normed)
             if isinstance(out, tuple):
                 out = out[0]
             h = h + out  # residual
+            if self.mlps is not None:
+                mlp_out = self.mlps[i](self.mlp_norms[i](h))
+                h = h + mlp_out  # post-mixer SwiGLU MLP residual
         h = self.out_norm(h)
         logits = self.out_proj(h)
         if return_loss:
