@@ -237,6 +237,16 @@ def parse_args():
                         help='Untimed fwd+bwd steps before training/probe to pay compile/autotune cost')
     parser.add_argument('--timer_after_compile_warmup', action='store_true',
                         help='For --train_minutes, start the training clock after compile_warmup_steps')
+    parser.add_argument('--final_heldout_eval', action='store_true',
+                        help='After training, run ONE final held-out eval on the '
+                             'schedule-free AVERAGED weights (leaderboard methodology) '
+                             'and print FINAL_HELDOUT_CE / FINAL_HELDOUT_BPB. Opt-in; '
+                             'requires --val_data. (task e97-within-layer LM screens)')
+    parser.add_argument('--final_val_batches', type=int, default=200,
+                        help='Batches for the --final_heldout_eval pass.')
+    parser.add_argument('--heldout_bytes_per_token', type=float, default=3.783,
+                        help='Bytes/token for BPB = (CE_nats/ln2)/bytes_per_token. '
+                             'Default 3.783 = p50k on commapile (Study B).')
     parser.add_argument('--warmup_steps', type=int, default=0,
                         help='Warmup steps for learning rate (only for adamw)')
     parser.add_argument('--optimizer', type=str, default='schedulefree',
@@ -1128,6 +1138,18 @@ def train(args):
         if args.optimizer == 'schedulefree':
             optimizer.eval()  # Get averaged params for final checkpoint
         save_checkpoint(model, optimizer, step, last_100_avg, output_dir, args.keep_checkpoints)
+
+    # within-layer LM screen (task e97-within-layer): ONE final held-out eval on the
+    # schedule-free AVERAGED weights (leaderboard methodology) — distinct from the
+    # periodic NON-averaged validation during training. Opt-in via --final_heldout_eval.
+    if args.final_heldout_eval and val_loader is not None and not stopped_nonfinite:
+        if args.optimizer == 'schedulefree':
+            optimizer.eval()  # averaged weights
+        import math as _math
+        heldout_ce = validate(model, val_loader, device, max_batches=args.final_val_batches)
+        heldout_bpb = (heldout_ce / _math.log(2.0)) / args.heldout_bytes_per_token
+        print(f"FINAL_HELDOUT_CE: {heldout_ce:.4f}")
+        print(f"FINAL_HELDOUT_BPB: {heldout_bpb:.4f}")
 
     # Print final metrics in parseable format
     print(f"\nTraining complete! Final step: {step}")
