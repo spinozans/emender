@@ -74,8 +74,13 @@ def parse_args():
                              'Default (None) = byte-level, vocab_size=256.')
 
     # Model
-    parser.add_argument('--use_triton', type=int, default=0,
-                        help='For E88: use Triton fwd+bwd kernels instead of CUDA register-owned (0=CUDA, 1=Triton)')
+    parser.add_argument('--use_triton', type=int, default=None,
+                        help='For E88: use Triton fwd+bwd kernels instead of CUDA register-owned '
+                             '(0=CUDA, 1=Triton). Default None = AUTO: enabled for E97/split-edit/'
+                             'raw_write under bf16 (their ONLY fused path is Triton; CUDA '
+                             'register-owned does not support split-edit/raw-write, so without this '
+                             'they fall back to the slow eager T-scan). Parity-verified vs the eager '
+                             'reference (paper/review/E97_FUSED_LM_KERNEL_NOTE.md). Pass 0 to force eager.')
     parser.add_argument('--level', type=str, default='3',
                         help='Ladder level: 0-6 (linear) or log_0 to log_5 (log-space)')
     parser.add_argument('--params', type=str, default='100m',
@@ -372,6 +377,23 @@ def train(args):
     """Main training loop."""
     # Parse level (convert '3' to 3, keep 'log_5' as string)
     args.level = parse_level(args.level)
+
+    # AUTO-resolve --use_triton (default None). E97 (split-edit) and raw-write have
+    # their fused fwd/bwd ONLY in the Triton kernel — the CUDA register-owned path
+    # rejects both, so without Triton they silently fall back to the eager T-scan
+    # (~40-260x slower). Default those families to the fused Triton path under bf16
+    # (parity-verified, paper/review/E97_FUSED_LM_KERNEL_NOTE.md). Everything else
+    # keeps the historical default (CUDA register-owned, use_triton=0).
+    if args.use_triton is None:
+        _e97_family = str(args.level) in ('E97', '97')
+        _needs_triton_fused = _e97_family or bool(getattr(args, 'e88_raw_write', 0))
+        if _needs_triton_fused and getattr(args, 'bf16', False):
+            args.use_triton = 1
+            print(f"[fused] level={args.level!r} raw_write={bool(getattr(args, 'e88_raw_write', 0))}: "
+                  f"AUTO-enabling Triton split-edit kernel (--use_triton 1). Pass --use_triton 0 to force eager.",
+                  flush=True)
+        else:
+            args.use_triton = 0
 
     # Setup
     torch.manual_seed(args.seed)
