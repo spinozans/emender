@@ -109,7 +109,7 @@ class HybridLadderLM(nn.Module):
                 'gate_activation': gate_activation,
                 'dropout': dropout,
             }
-            if isinstance(level, str) and level.startswith('E88'):
+            if isinstance(level, str) and (level.startswith('E88') or level == 'E97'):
                 base_kwargs['use_triton'] = use_triton_e88
             if rank is not None:
                 base_kwargs['rank'] = rank
