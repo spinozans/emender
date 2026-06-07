@@ -71,7 +71,8 @@ ARMS: dict[str, tuple[list[str], int, int | None]] = {
 
 
 def build_model(arm: str, dim: int, depth: int, n_heads: int, n_state: int,
-                mlp_ratio: float, vocab_size: int, device: str) -> HybridLadderLM:
+                mlp_ratio: float, vocab_size: int, device: str,
+                use_triton_e88: bool = True) -> HybridLadderLM:
     pattern, raw_write, allow_neg = ARMS[arm]
     layer_kwargs = []
     for lvl in pattern:
@@ -86,7 +87,7 @@ def build_model(arm: str, dim: int, depth: int, n_heads: int, n_state: int,
         vocab_size=vocab_size, dim=dim, depth=depth,
         layer_pattern=pattern, layer_kwargs=layer_kwargs,
         n_state=n_state, n_heads=n_heads, expansion=1.0,
-        mlp_ratio=mlp_ratio,
+        mlp_ratio=mlp_ratio, use_triton_e88=use_triton_e88,
     ).to(device)
     return m
 
@@ -133,6 +134,9 @@ def main():
     ap.add_argument('--heldout_batches', type=int, default=16)
     ap.add_argument('--outdir', default=os.path.join(_THIS, 'results_convergent'))
     ap.add_argument('--label', default=None)
+    ap.add_argument('--eager', action='store_true',
+                    help='disable fused E97 Triton kernel (eager reference recurrence). '
+                         'Default uses fused (parity-verified, 43-266x; see wire-fused-e97).')
     args = ap.parse_args()
 
     device = 'cuda'
@@ -150,7 +154,8 @@ def main():
     vocab_size = train_ds.vocab_size
 
     model = build_model(args.arm, args.dim, args.depth, args.n_heads,
-                        args.n_state, args.mlp_ratio, vocab_size, device)
+                        args.n_state, args.mlp_ratio, vocab_size, device,
+                        use_triton_e88=not args.eager)
     n_params = sum(p.numel() for p in model.parameters())
     n_params_noembed = n_params - model.embed.weight.numel()
     print(f"[{label}] pattern={model.actual_pattern} mlp_ratio={args.mlp_ratio} "
@@ -169,6 +174,7 @@ def main():
         'steps': args.steps, 'lr': args.lr, 'params': n_params,
         'params_noembed': n_params_noembed, 'tokens_per_step': tokens_per_step,
         'data': DATA, 'tokenizer': TOKENIZER, 'precision': 'bf16',
+        'fused_e97': (not args.eager),
         'curve': [],
     }
 
