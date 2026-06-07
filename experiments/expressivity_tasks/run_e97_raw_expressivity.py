@@ -49,8 +49,23 @@ MEM_CAP_MIB = 30000  # do not add a job to a GPU whose used mem already exceeds 
 SHARED = ['--dim', '256', '--n_heads', '32', '--n_state', '32', '--expansion', '1.0']
 
 # arm -> (layer CLI args, extra train args, disable_autocast?).
-# fp32 for the E97 arms; GDN must run bf16 (chunked delta kernel rejects float32).
+# DEFAULT = FUSED: the three E97 arms (tanh / identity state, kernel-compatible) run
+# bf16 autocast through the fused split-edit Triton fwd/bwd kernel (--use_triton_e88),
+# ~43-58x faster than the eager fp32 T-scan with VERIFIED numerical parity (fused bf16
+# vs eager bf16, fwd+bwd, rel-L2 < 1e-2 at T up to 1024; see verify_e97_fused_parity.py
+# and paper/review/E97_FUSED_LM_KERNEL_NOTE.md). GDN runs bf16 via its own FLA chunked
+# delta kernel. Pass --eager-fp32 to reproduce the original fp32 eager E97 arms.
+# NOTE: only tanh/identity state is kernel-compatible; relu/softplus (non-saturating)
+# MUST stay eager fp32 — the kernel raises rather than silently run tanh.
 ARMS: dict[str, tuple[list[str], list[str], bool]] = {
+    'e97-raw':    (['--layer_pattern', 'E97', *SHARED], ['--state_activation', 'tanh',     '--e88_raw_write', '1', '--use_triton_e88'], False),
+    'e97':        (['--layer_pattern', 'E97', *SHARED], ['--state_activation', 'tanh',     '--e88_raw_write', '0', '--use_triton_e88'], False),
+    'e97-linear': (['--layer_pattern', 'E97', *SHARED], ['--state_activation', 'identity', '--e88_raw_write', '0', '--use_triton_e88'], False),
+    'gdn':        (['--layer_pattern', 'gdn', *SHARED], [], False),
+}
+
+# Eager fp32 fallback arms (original behaviour): no Triton, autocast disabled.
+ARMS_EAGER_FP32: dict[str, tuple[list[str], list[str], bool]] = {
     'e97-raw':    (['--layer_pattern', 'E97', *SHARED], ['--state_activation', 'tanh',     '--e88_raw_write', '1'], True),
     'e97':        (['--layer_pattern', 'E97', *SHARED], ['--state_activation', 'tanh',     '--e88_raw_write', '0'], True),
     'e97-linear': (['--layer_pattern', 'E97', *SHARED], ['--state_activation', 'identity', '--e88_raw_write', '0'], True),
@@ -97,7 +112,8 @@ def gpu_used_mib() -> dict[int, int]:
 
 
 def build_cmd(job: Job, args, out_dir: Path) -> list[str]:
-    layer_args, extra, disable_autocast = ARMS[job.arm]
+    arm_table = ARMS_EAGER_FP32 if getattr(args, 'eager_fp32', False) else ARMS
+    layer_args, extra, disable_autocast = arm_table[job.arm]
     cmd = [
         'python', str(THIS / 'train_hybrid.py'),
         '--task', job.probe,
@@ -142,7 +158,12 @@ def main():
     ap.add_argument('--eval_n_batches', type=int, default=8)
     ap.add_argument('--output_dir', default=str(THIS / 'results'))
     ap.add_argument('--poll', type=float, default=15.0)
+    ap.add_argument('--eager-fp32', dest='eager_fp32', action='store_true',
+                    help='Reproduce the ORIGINAL eager fp32 E97 arms (no Triton, '
+                         'autocast disabled). Default is the FUSED bf16 split-edit '
+                         'Triton path (~43-58x faster, parity-verified).')
     args = ap.parse_args()
+    print(f"[mode] E97 arms run {'EAGER fp32 (legacy)' if args.eager_fp32 else 'FUSED bf16 Triton (default, --use_triton_e88)'}", flush=True)
 
     out_dir = Path(args.output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)

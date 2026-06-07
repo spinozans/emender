@@ -87,6 +87,7 @@ class HybridLadderLM(nn.Module):
         self.dim = dim
         self.depth = depth
         self.layer_pattern = layer_pattern
+        self.use_triton_e88 = use_triton_e88
         self.disable_autocast = any(_is_m2rnn_level(level) for level in layer_pattern)
 
         self.embed = nn.Embedding(vocab_size, dim)
@@ -140,6 +141,22 @@ class HybridLadderLM(nn.Module):
         self.layers = nn.ModuleList(layers)
         self.actual_pattern = actual_pattern
 
+        # Per-layer flag: True for E88/E97-family recurrent mixers (the only ones
+        # with a fused bf16 Triton fwd/bwd kernel). Used by forward() to feed those
+        # layers bf16 so the fused split-edit kernel actually engages — otherwise
+        # RMSNorm emits fp32 under autocast, the layer's `x.dtype == bfloat16` gate
+        # fails, and use_triton_e88 silently falls back to the eager T-scan.
+        self._is_e88_layer = [
+            bool(isinstance(level, str) and (level.startswith('E88') or level == 'E97'))
+            for level in actual_pattern
+        ]
+        # When True, cast E88/E97 layer inputs to bf16 under autocast (required for
+        # the fused kernel; production train.py/LadderLM gets bf16 for free because
+        # the whole model is cast to bf16 via --bf16). Defaults on with the fused
+        # path; the parity harness can flip it on the eager model for a bf16-vs-bf16
+        # comparison. No effect under --disable_autocast (autocast disabled).
+        self.cast_recurrent_bf16 = bool(use_triton_e88)
+
         self.out_norm = RMSNorm(dim)
         self.out_proj = nn.Linear(dim, vocab_size, bias=False)
         # Tie output to embedding (saves params)
@@ -147,8 +164,15 @@ class HybridLadderLM(nn.Module):
 
     def forward(self, x: torch.Tensor, return_loss: bool = False, targets: Optional[torch.Tensor] = None):
         h = self.embed(x)  # [B, T, dim]
-        for ln, layer in zip(self.layer_norms, self.layers):
+        for i, (ln, layer) in enumerate(zip(self.layer_norms, self.layers)):
             normed = ln(h)
+            # Feed E88/E97-family layers bf16 so the fused split-edit Triton kernel
+            # engages (its forward gate requires x.dtype == bfloat16). RMSNorm emits
+            # fp32 under autocast, so without this cast use_triton_e88 is inert.
+            if (self.cast_recurrent_bf16 and self._is_e88_layer[i]
+                    and normed.is_cuda and normed.dtype == torch.float32
+                    and torch.is_autocast_enabled()):
+                normed = normed.to(torch.bfloat16)
             out = layer(normed)
             if isinstance(out, tuple):
                 out = out[0]
