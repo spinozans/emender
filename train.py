@@ -156,6 +156,11 @@ def parse_args():
                         help='Add direct D*v value residual to E88 output before output gating (0=no, 1=yes)')
     parser.add_argument('--e88_raw_write', type=int, default=0,
                         help='Ablate E88 delta correction: write raw v instead of v - S^T k')
+    parser.add_argument('--mlp_ratio', type=float, default=0.0,
+                        help='If >0, wrap every mixer layer with a post-mixer RMSNorm + SwiGLU MLP '
+                             '(hidden = dim*mlp_ratio). 0 = mixer-only (default). Mirrors gdn2-mlp plumbing.')
+    parser.add_argument('--mlp_multiple', type=int, default=64,
+                        help='Round SwiGLU MLP hidden width to this multiple (default 64).')
     parser.add_argument('--r_h_mode', type=str, default='auto',
                         help='W_h constraint mode (spectral_norm, learned, none, auto)')
     # auto: spectral_norm for models with full W_h (1,33,42,51,52,53,56), none for diagonal/scalar
@@ -708,6 +713,8 @@ def train(args):
             projection_chunk_size=args.projection_chunk_size,
             loss_chunk_size=args.loss_chunk_size,
             use_triton=bool(args.use_triton),
+            mlp_ratio=args.mlp_ratio,
+            mlp_multiple=args.mlp_multiple,
         )
     else:
         model = create_ladder_model(

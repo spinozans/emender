@@ -915,6 +915,71 @@ def get_ladder_level(level):
     raise ValueError(f"Invalid level {level}. Available: 0-6, 8-17, 18a/b/e, 19a/b/d/e, 20-26, 28, 30-68, gdn, gdn-vec, fla-gdn, gdn2, gdn2-mlp, llama, mamba2, E75h*n*, E88h*n*")
 
 
+# === SwiGLU MLP block (task e97-raw-plus) ===========================================
+# Bias-free LLaMA-style SwiGLU FFN identical to the one used by the official GDN-2
+# block (see ndm/models/llama_baseline.py:LlamaFFN and the gdn2-mlp reference in the
+# emender research repo). Adding this post-mixer MLP turned mixer-only GDN-2 into the
+# rank-2 gdn2-mlp on the 1.3B CMA leaderboard; this lets us test the same upgrade on
+# the rank-1 mixer-only e97-raw cell.
+OFFICIAL_GDN2_MLP_RATIO = 6208 / 2304  # ~2.694: official GDN-2 SwiGLU hidden ratio
+
+
+def round_mlp_hidden(dim, mlp_ratio, multiple=64):
+    """SwiGLU hidden width = dim * mlp_ratio, rounded to a multiple (default 64)."""
+    return max(multiple, int(round(dim * mlp_ratio / multiple) * multiple))
+
+
+class SwiGLUMLP(nn.Module):
+    """Bias-free SwiGLU MLP: w3(silu(w1(x)) * w2(x))."""
+
+    def __init__(self, dim, hidden_dim, dropout=0.0):
+        super().__init__()
+        self.w1 = nn.Linear(dim, hidden_dim, bias=False)  # gate
+        self.w2 = nn.Linear(dim, hidden_dim, bias=False)  # up
+        self.w3 = nn.Linear(hidden_dim, dim, bias=False)  # down
+        self.dropout = nn.Dropout(dropout) if dropout > 0 else nn.Identity()
+
+    def forward(self, x):
+        return self.dropout(self.w3(F.silu(self.w1(x)) * self.w2(x)))
+
+
+class MixerMLPWrapper(nn.Module):
+    """Wrap any LadderLM mixer layer with a post-mixer RMSNorm + SwiGLU MLP.
+
+    LadderLM owns the outer Mamba-style residual stream and supplies the pre-mixer
+    RMSNorm; this wrapper adds the second (post-mixer) RMSNorm and the SwiGLU MLP so
+    each block becomes mixer + MLP, exactly mirroring the gdn2-mlp reference layer
+    (emender ndm/models/external_gdn2.py:GDN2ExternalMLPLayer). The single value
+    returned is added to LadderLM's residual stream, so:
+
+        out = mixer(x) + mlp(norm2(x + mixer(x)))
+
+    The inner mixer's hidden-state list is threaded through unchanged so TBPTT and
+    FLA caches keep working.
+    """
+
+    def __init__(self, mixer, dim, mlp_ratio, mlp_multiple=64, dropout=0.0):
+        super().__init__()
+        self.mixer = mixer
+        self.dim = dim
+        self.mlp_ratio = mlp_ratio
+        self.mlp_hidden_dim = round_mlp_hidden(dim, mlp_ratio, mlp_multiple)
+        self.norm_2 = RMSNorm(dim)
+        self.mlp = SwiGLUMLP(dim, self.mlp_hidden_dim, dropout=dropout)
+
+    def set_layer_idx(self, idx):
+        if hasattr(self.mixer, 'set_layer_idx'):
+            self.mixer.set_layer_idx(idx)
+
+    def forward(self, x, hidden=None, **kwargs):
+        mix_out, h_final = self.mixer(x, hidden, **kwargs)
+        mlp_out = self.mlp(self.norm_2(x + mix_out))
+        return mix_out + mlp_out, h_final
+
+    def extra_repr(self):
+        return f"dim={self.dim}, mlp_ratio={self.mlp_ratio:.4f}, mlp_hidden_dim={self.mlp_hidden_dim}"
+
+
 class LadderLM(nn.Module):
     """
     Language Model using Elman Ablation Ladder levels.
@@ -971,6 +1036,8 @@ class LadderLM(nn.Module):
         loss_chunk_size=0,  # Chunk T dimension when computing lm_head + cross_entropy (0=disabled, saves T*V*2 bytes at long T)
         use_triton=False,  # For E88: use Triton fwd+bwd kernels instead of CUDA register-owned (portable across NVIDIA/AMD ROCm)
         layer_kwargs=None,  # Extra per-layer kwargs merged into LayerClass(...) — e.g. head_type_logits / lam_max / beta_max / corner_mixture for typed-gdn2-lm / e98-cma-lm. None == no change to existing levels.
+        mlp_ratio=0.0,  # >0 wraps every mixer layer with a post-mixer RMSNorm + SwiGLU MLP (task e97-raw-plus). 0 = mixer-only (unchanged behavior).
+        mlp_multiple=64,  # Round SwiGLU hidden width to this multiple.
     ):
         super().__init__()
         self.vocab_size = vocab_size
@@ -994,6 +1061,8 @@ class LadderLM(nn.Module):
         self.d_conv = d_conv
         self.gradient_checkpointing = gradient_checkpointing
         self.loss_chunk_size = loss_chunk_size
+        self.mlp_ratio = mlp_ratio
+        self.mlp_multiple = mlp_multiple
 
         # Get the layer class for this level
         LayerClass = get_ladder_level(level)
@@ -1052,6 +1121,15 @@ class LadderLM(nn.Module):
             ), **extra_layer_kwargs})
             for _ in range(depth)
         ])
+
+        # Optional post-mixer SwiGLU MLP block per layer (task e97-raw-plus).
+        # Wrap AFTER construction so the wrapper is mixer-agnostic and applies
+        # identically to E97/E88/gdn2/etc. mlp_ratio=0 leaves layers untouched.
+        if mlp_ratio and mlp_ratio > 0:
+            self.layers = nn.ModuleList([
+                MixerMLPWrapper(layer, dim, mlp_ratio, mlp_multiple, dropout=dropout)
+                for layer in self.layers
+            ])
 
         # Give each layer a unique index if it supports set_layer_idx (needed
         # for FLA's Cache to populate/retrieve per-layer state correctly).
