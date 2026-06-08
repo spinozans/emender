@@ -36,6 +36,17 @@ def _next_pow2(x: int) -> int:
     return max(16, p)
 
 
+# Floor for the per-step LOG-decay g fed to the kernel. inv_decay = exp(-g) appears
+# in the intra-chunk score matrix; once g drifts below ~-88 it overflows fp32 (+inf)
+# and NaNs both forward and backward. At g = -30 the per-step decay is exp(-30) ~ 9e-14
+# — numerically "forget everything in one step" already — so flooring here costs ZERO
+# modeling range while keeping exp(-g) <= ~1e13. Observed at 1.3B: linear-state
+# e97_delta learns aggressive decay and g drifts past -90 within ~15 steps, NaNing the
+# run; this floor is what makes linear-state e97_delta trainable. (fuse-2kernel.)
+import os as _os
+_GLOG_FLOOR = float(_os.environ.get('E97_GLOG_FLOOR', '-30.0'))
+
+
 # ---------------------------------------------------------------------------
 # Forward kernel — same math as e97_chunked_fwd_kernel but also writes the
 # per-chunk ENTRY state S_entry[c] (needed, and only needed, by the backward).
@@ -93,7 +104,14 @@ def _e97_fwd_save_kernel(
         Kt = tl.trans(K)
         QK = tl.dot(Q, Kt, allow_tf32=ALLOW_TF32)
         KU = tl.dot(U, Kt, allow_tf32=ALLOW_TF32)
-        DA = tl.exp(G[:, None] - G[None, :])
+        # DA is only ever consumed in the LOWER triangle (A: lower_incl, M:
+        # lower_strict), where G_i - G_j <= 0 so exp <= 1. The UPPER triangle is
+        # always masked away, but with strong decay (g very negative) G_i - G_j can
+        # exceed ~88 there and exp() overflows to +inf. The forward's tl.where drops
+        # it, but the backward's UNMASKED `*DA` products then hit 0*inf = NaN. Clamp
+        # the exponent to <= 0 so the (discarded) upper entries are a finite 1.0;
+        # the used lower triangle is bit-identical. (fuse-2kernel 1.3B NaN fix.)
+        DA = tl.exp(tl.minimum(G[:, None] - G[None, :], 0.0))
         A = tl.where(lower_incl, DA * QK, 0.0)
         M = tl.where(lower_strict, DA * inv_decay[:, None] * KU, 0.0)
 
@@ -197,7 +215,10 @@ def _e97_bwd_kernel(
         # we do NOT keep them alive across the iteration (this is the SMEM budget
         # fix that lets C=64 tiles fit the 100KB/SM limit).
         Kt = tl.trans(K)
-        DA = tl.exp(G[:, None] - G[None, :])
+        # Clamp the exponent to <= 0 (only the lower triangle of DA is used; the
+        # masked upper triangle would otherwise overflow to +inf at strong decay
+        # and poison the backward's unmasked `*DA` products). See forward kernel.
+        DA = tl.exp(tl.minimum(G[:, None] - G[None, :], 0.0))
         M = tl.where(lower_strict, DA * inv_decay[:, None] * tl.dot(U, Kt, allow_tf32=ALLOW_TF32), 0.0)
         L = eyeC + M
         X = eyeC - M
@@ -291,8 +312,12 @@ def _e97_bwd_kernel(
         de = dU * K
         dv = dP * Wg
         dw = dP * Vv
-        decay = tl.exp(g)                                      # g = log(decay)
-        ddecay = dg / decay
+        # Store the gradient wrt LOG-decay (dg) directly. The autograd.Function
+        # converts to grad-wrt-decay (dg/decay) ONLY for legacy decay-space callers;
+        # the log-decay caller (e88_fla_hybrid chunked path) consumes dg untouched.
+        # Working in log space avoids the dg/decay blow-up as decay -> 0 (decay can
+        # be ~1e-5 at Mamba2 init), which was the chunked-e97 backward-NaN that made
+        # linear-state e97_delta untrainable at 1.3B (fuse-2kernel finding).
 
         # ---- store grads ----
         tl.store(dK_ptr + kn_off, dk.to(dK_ptr.dtype.element_ty), mask=kn_mask)
@@ -300,7 +325,7 @@ def _e97_bwd_kernel(
         tl.store(dE_ptr + kn_off, de.to(dE_ptr.dtype.element_ty), mask=kn_mask)
         tl.store(dV_ptr + pv_off, dv.to(dV_ptr.dtype.element_ty), mask=pv_mask)
         tl.store(dW_ptr + pv_off, dw.to(dW_ptr.dtype.element_ty), mask=pv_mask)
-        tl.store(dG_ptr + g_off, ddecay.to(dG_ptr.dtype.element_ty), mask=c_mask)
+        tl.store(dG_ptr + g_off, dg.to(dG_ptr.dtype.element_ty), mask=c_mask)
 
         # propagate state grad to the previous chunk
         dS = dS0c
@@ -310,7 +335,11 @@ class E97DeltaChunkedFn(torch.autograd.Function):
     """Fused chunked E97 split-edit delta (linear state, S0=0). fwd+bwd Triton."""
 
     @staticmethod
-    def forward(ctx, k, v, q, decay, erase, write, chunk_size):
+    def forward(ctx, k, v, q, decay, erase, write, chunk_size, log_decay=False):
+        # log_decay=True: `decay` IS the LOG-decay g (decay_t = exp(g_t)), and the
+        # backward returns grad wrt g directly (no dg/decay division -> numerically
+        # safe as decay -> 0). log_decay=False (legacy): `decay` is the decay in
+        # (0,1]; backward returns grad wrt decay (dg/decay), exact for moderate decay.
         B, T, H, N = k.shape
         Vd = v.shape[-1]
         C = int(chunk_size)
@@ -322,14 +351,22 @@ class E97DeltaChunkedFn(torch.autograd.Function):
             v = torch.nn.functional.pad(v, (0, 0, 0, 0, 0, pad))
             erase = torch.nn.functional.pad(erase, (0, 0, 0, 0, 0, pad))
             write = torch.nn.functional.pad(write, (0, 0, 0, 0, 0, pad))
-            decay = torch.nn.functional.pad(decay, (0, 0, 0, pad), value=1.0)
+            # pad with the IDENTITY decay (decay=1 <=> g=0) so padded steps leave
+            # the state unchanged regardless of decay parametrization.
+            decay = torch.nn.functional.pad(decay, (0, 0, 0, pad),
+                                            value=(0.0 if log_decay else 1.0))
         Tp = T + pad
         NC = Tp // C
         k = k.contiguous(); q = q.contiguous(); v = v.contiguous()
         erase = erase.contiguous(); write = write.contiguous()
         U = (k * erase).contiguous()
         Pw = (v * write).contiguous()
-        glog = decay.clamp_min(1e-9).log().contiguous()
+        glog = (decay if log_decay else decay.clamp_min(1e-9).log())
+        # Floor g so exp(-g) cannot overflow fp32 (see _GLOG_FLOOR). Record which
+        # entries were clamped so the backward returns ZERO decay-grad there (the
+        # floored steps are constant wrt the upstream decay params — no gradient).
+        clamp_mask = glog < _GLOG_FLOOR
+        glog = glog.clamp_min(_GLOG_FLOOR).contiguous()
 
         out = torch.empty((B, Tp, H, Vd), device=k.device, dtype=k.dtype)
         S_entry = torch.empty((B, H, NC, N, Vd), device=k.device, dtype=torch.float32)
@@ -343,13 +380,14 @@ class E97DeltaChunkedFn(torch.autograd.Function):
             BN=BN, BV=BV, BC=BC, NEWTON_STEPS=newton, ALLOW_TF32=allow_tf32,
             num_warps=4,
         )
-        ctx.save_for_backward(k, q, v, erase, write, glog, S_entry)
+        ctx.save_for_backward(k, q, v, erase, write, glog, S_entry, clamp_mask)
         ctx.shape = (B, T, Tp, H, N, Vd, C, NC, BN, BV, BC, newton, allow_tf32)
+        ctx.log_decay = bool(log_decay)
         return out[:, :T].contiguous(), S_final
 
     @staticmethod
     def backward(ctx, dout, dSfinal):
-        k, q, v, erase, write, glog, S_entry = ctx.saved_tensors
+        k, q, v, erase, write, glog, S_entry, clamp_mask = ctx.saved_tensors
         (B, T, Tp, H, N, Vd, C, NC, BN, BV, BC, newton, allow_tf32) = ctx.shape
         if dout.shape[1] != Tp:
             dout = torch.nn.functional.pad(dout, (0, 0, 0, 0, 0, Tp - dout.shape[1]))
@@ -363,17 +401,24 @@ class E97DeltaChunkedFn(torch.autograd.Function):
         de = torch.empty_like(erase)
         dv = torch.empty_like(v)
         dw = torch.empty_like(write)
-        ddecay = torch.empty_like(glog)
+        dgrad = torch.empty_like(glog)   # kernel writes dg = grad wrt LOG-decay
         _e97_bwd_kernel[(B * H,)](
             k, q, erase, v, write, glog, S_entry, dout, dSfinal,
-            dk, dq, de, dv, dw, ddecay,
+            dk, dq, de, dv, dw, dgrad,
             B=B, T=Tp, H=H, N=N, V=Vd, C=C, NC=NC,
             BN=BN, BV=BV, BC=BC, NEWTON_STEPS=newton, ALLOW_TF32=allow_tf32,
             num_warps=4, num_stages=1,
         )
+        # dgrad = grad wrt log-decay g. For the log-decay caller, return it as-is
+        # (the input WAS g). For the legacy decay caller, convert to grad-wrt-decay
+        # via dg/decay (decay = exp(g)); exact and overflow-free for moderate decay.
+        # Zero the gradient for steps whose g was floored — they are constant wrt the
+        # upstream decay params, so the true decay-grad there is 0 (matches clamp_min).
+        dgrad = dgrad.masked_fill(clamp_mask, 0.0)
+        ddecay = dgrad if ctx.log_decay else dgrad / glog.exp().clamp_min(1e-9)
         sl = slice(0, T)
         return (dk[:, sl], dv[:, sl], dq[:, sl], ddecay[:, sl],
-                de[:, sl], dw[:, sl], None)
+                de[:, sl], dw[:, sl], None, None)
 
 
 # Default chunk for the fwd+bwd autograd path. The forward fits C=64 easily, but
@@ -387,9 +432,16 @@ _BWD_CHUNK_DEFAULT = 32
 
 
 def e97_delta_chunked_triton(k, v, q, decay, erase_gate, value_write_gate,
-                             chunk_size=_BWD_CHUNK_DEFAULT):
+                             chunk_size=_BWD_CHUNK_DEFAULT, log_decay=False):
     """Autograd-enabled fused chunked E97 split-edit delta. Returns (out, S_final).
 
     out: [B,T,H,V]; gradients flow to k, v, q, decay, erase_gate, value_write_gate.
+
+    log_decay=True: `decay` is the LOG-decay g (decay_t = exp(g_t)); the backward
+    returns grad wrt g directly with no dg/decay division — numerically safe when
+    decay -> 0 (e.g. Mamba2-init decays ~1e-5). Prefer this form; the e88_fla_hybrid
+    chunked path passes the upstream log-decay so the e97_delta decay parameters
+    (A_log / a_proj / dt_bias) receive finite gradients at 1.3B scale.
     """
-    return E97DeltaChunkedFn.apply(k, v, q, decay, erase_gate, value_write_gate, chunk_size)
+    return E97DeltaChunkedFn.apply(k, v, q, decay, erase_gate, value_write_gate,
+                                   chunk_size, log_decay)
