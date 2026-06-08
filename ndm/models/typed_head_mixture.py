@@ -183,6 +183,14 @@ class TypedHeadMixtureLayer(nn.Module):
         # native GDN-2 shell w/ fused nonlinear-in-time state (the 6th head type):
         shell_state_nonlin: str = 'tanh',
         shell_state_chunk: int = 64,
+        # shell_fused=True  -> single-launch SEQUENTIAL boundary-phi Triton kernel
+        #   (phi every state_chunk steps; throughput ~const in C, ~0.75x GDN).
+        # shell_fused=False -> chunked-reference: native FLA chunk_gated_delta_rule
+        #   matmul scan WITHIN each C-chunk + phi at chunk boundaries (tensor-core
+        #   throughput, grows with C; T/C launches per layer). This is the path
+        #   that realizes the bounded-state-edge-vs-matmul-throughput tradeoff
+        #   along the chunk-size C axis (e97-wallclock-cma free axis).
+        shell_fused: bool = True,
         # FUSED E97 split-edit heads (7th/8th head types: e97_raw, e97_delta).
         # use_triton_e97=True routes them through the bf16 split-edit Triton
         # fwd/bwd kernel (commit 4db8099) — the ONLY fused path for split-edit /
@@ -296,6 +304,7 @@ class TypedHeadMixtureLayer(nn.Module):
                 gdn_conv_size=gdn_conv_size,
                 use_gate=use_gate,
                 dropout=dropout,
+                fused=shell_fused,
             )
 
         # --- FUSED E97 split-edit sub-blocks (e97_raw / e97_delta) ---
