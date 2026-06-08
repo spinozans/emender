@@ -865,6 +865,8 @@ class E88FLAHybrid(nn.Module):
         checkpoint_interval: int = 16,  # Steps between state checkpoints (larger = less memory, more recompute)
         projection_chunk_size: int = 0,  # Chunk size for projection recomputation (0=disabled). Saves ~5GB/layer at T=32K.
         use_triton: bool = False,  # Use Triton fwd+bwd kernels instead of CUDA register-owned (portable across NVIDIA/AMD ROCm)
+        use_chunked_e97: bool = False,  # Route the split-edit DELTA recurrence through the chunked-parallel fwd+bwd kernel (GDN-2-class throughput); linear-state only
+        e97_chunk_size: int = 32,  # Chunk length for the chunked E97 kernel backward (C=32 fits Ada/Ampere SMEM; C=64 needs Hopper)
         **kwargs
     ):
         super().__init__()
@@ -928,6 +930,8 @@ class E88FLAHybrid(nn.Module):
         self.use_output_norm = use_output_norm
         self.head_mix = head_mix
         self.use_triton = use_triton
+        self.use_chunked_e97 = use_chunked_e97
+        self.e97_chunk_size = e97_chunk_size
 
         # Key and query dimensions (like FLA-GDN: key_dim = num_heads * head_k_dim)
         self.key_dim = n_heads * n_state
@@ -1650,7 +1654,45 @@ class E88FLAHybrid(nn.Module):
                     value_write_gate.to(input_dtype) if self.use_split_edit else None
                 )
 
-                if self.use_triton:
+                use_chunked = (
+                    getattr(self, 'use_chunked_e97', False) and
+                    self.use_triton and self.use_split_edit and
+                    not self.raw_write and self.linear_state
+                )
+                if use_chunked:
+                    # === Chunked-parallel E97 split-edit delta (fwd+bwd fused) ===
+                    # The load-bearing throughput path: replaces the sequential
+                    # T-scan (e88_triton_optimized_apply, the source of the 2.6x
+                    # within-layer slowdown) with the chunked kernel that beats
+                    # GDN-2 fwd+bwd. Linear-state only (per-step tanh is
+                    # non-chunkable); guarded above on self.linear_state. The
+                    # kernel returns the UNGATED Sq = S^T q, so we apply the silu
+                    # output gate here (matching the fused-gate kernels).
+                    from ndm.triton.e97_chunked_autograd import e97_delta_chunked_triton
+                    # The chunked kernel runs the BARE recurrence, so we must apply
+                    # the same projection transforms the sequential kernel fuses
+                    # internally (e88_triton_forward APPLY_SILU_QKV + NORMALIZE_KQ):
+                    #   1) silu on k, q, v  (only if deferred to kernel; else already
+                    #      applied in PyTorch above)
+                    #   2) L2-norm on k, q  (per-head last dim; only when the kernel
+                    #      would have done it, i.e. use_fused_l2 -> k_norm is raw)
+                    # read_key = erase * (processed k) and the outer product use the
+                    # processed k, exactly as in the kernel.
+                    k_in, q_in, v_in = k_norm, q_norm, v.to(input_dtype)
+                    if qkv_silu_in_kernel:
+                        k_in = F.silu(k_in)
+                        q_in = F.silu(q_in)
+                        v_in = F.silu(v_in)
+                    if use_fused_l2:
+                        k_in = k_in / (k_in.norm(dim=-1, keepdim=True) + 1e-6)
+                        q_in = q_in / (q_in.norm(dim=-1, keepdim=True) + 1e-6)
+                    out_ungated, S_final = e97_delta_chunked_triton(
+                        k_in, v_in, q_in, decay.to(input_dtype),
+                        erase_for_kernel, value_write_for_kernel,
+                        chunk_size=getattr(self, 'e97_chunk_size', 32),
+                    )
+                    output = out_ungated * F.silu(g)
+                elif self.use_triton:
                     from ndm.triton.e88_triton_optimized import e88_triton_optimized_apply
                     S_final, output = e88_triton_optimized_apply(
                         self.training,
