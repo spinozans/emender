@@ -1,0 +1,63 @@
+[2026-06-08T09:41:21.914954+00:00] WARMUP: compiling e97_delta + gdn kernels at training shape (cold autotune)...
+[2026-06-08T09:41:23.065367+00:00] LAUNCH warmup on GPU 0 (pid 2011032) dim=2176 pb=1.2866 counts={'gdn2_recall': 32, 'e97_delta': 32}
+[2026-06-08T09:42:22.802686+00:00] DONE warmup bpb=3.11941 avg_loss=9.28931 tokens=147528 tok/s=7360.9 stop=wall_cap err=None
+[2026-06-08T09:42:22.802831+00:00] WARMUP done: ok (Triton cache now warm for all workers)
+[2026-06-08T09:42:22.982175+00:00] Running 3 anchors...
+[2026-06-08T09:42:24.167911+00:00] LAUNCH A_gdn2_mlp on GPU 0 (pid 2020185) dim=2240 pb=1.2589 counts={'gdn2_recall': 64}
+[2026-06-08T09:42:24.168618+00:00] LAUNCH A_delta_only on GPU 1 (pid 2020186) dim=2048 pb=1.2426 counts={'e97_delta': 64}
+[2026-06-08T09:42:24.169485+00:00] LAUNCH A_seed on GPU 2 (pid 2020187) dim=2176 pb=1.2866 counts={'gdn2_recall': 32, 'e97_delta': 32}
+[2026-06-08T09:49:31.427796+00:00] DONE A_gdn2_mlp bpb=2.1679 avg_loss=6.68105 tokens=3270204 tok/s=9150.6 stop=wall_cap err=None
+[2026-06-08T09:49:31.428132+00:00] DONE A_seed bpb=2.21708 avg_loss=6.82589 tokens=2610426 tok/s=7290.0 stop=wall_cap err=None
+[2026-06-08T09:49:39.686145+00:00] DONE A_delta_only bpb=2.26611 avg_loss=6.94705 tokens=3114480 tok/s=8698.4 stop=wall_cap err=None
+[2026-06-08T09:49:42.360287+00:00] LAUNCH cma_g0_e0 on GPU 0 (pid 2087816) dim=2176 pb=1.2473 counts={'gdn2_recall': 48, 'e97_delta': 16}
+[2026-06-08T09:49:42.361487+00:00] LAUNCH cma_g0_e1 on GPU 1 (pid 2087817) dim=2240 pb=1.264 counts={'gdn2_recall': 62, 'e97_delta': 2}
+[2026-06-08T09:49:42.362482+00:00] LAUNCH cma_g0_e2 on GPU 2 (pid 2087818) dim=2176 pb=1.2571 counts={'gdn2_recall': 44, 'e97_delta': 20}
+[2026-06-08T09:49:42.363292+00:00] LAUNCH cma_g0_e3 on GPU 3 (pid 2087819) dim=2176 pb=1.2645 counts={'gdn2_recall': 41, 'e97_delta': 23}
+[2026-06-08T09:49:42.364291+00:00] LAUNCH cma_g0_e4 on GPU 4 (pid 2087820) dim=2176 pb=1.2842 counts={'gdn2_recall': 33, 'e97_delta': 31}
+[2026-06-08T09:49:42.365272+00:00] LAUNCH cma_g0_e5 on GPU 5 (pid 2087821) dim=2112 pb=1.2771 counts={'gdn2_recall': 11, 'e97_delta': 53}
+[2026-06-08T09:49:42.366428+00:00] LAUNCH cma_g0_e6 on GPU 6 (pid 2087822) dim=2176 pb=1.2842 counts={'gdn2_recall': 33, 'e97_delta': 31}
+[2026-06-08T09:49:42.367398+00:00] LAUNCH cma_g0_e7 on GPU 7 (pid 2087823) dim=2112 pb=1.289 counts={'gdn2_recall': 6, 'e97_delta': 58}
+[2026-06-08T09:56:28.839076+00:00] DONE cma_g0_e0 bpb=2.22238 avg_loss=6.82581 tokens=2610426 tok/s=7297.7 stop=wall_cap err=None
+[2026-06-08T09:56:28.839351+00:00] DONE cma_g0_e5 bpb=2.22194 avg_loss=6.8248 tokens=2548956 tok/s=7124.4 stop=wall_cap err=None
+[2026-06-08T09:56:56.637308+00:00] DONE cma_g0_e7 bpb=2.23386 avg_loss=6.84166 tokens=2577642 tok/s=7199.5 stop=wall_cap err=None
+[2026-06-08T09:57:05.600078+00:00] DONE cma_g0_e3 bpb=2.21132 avg_loss=6.81244 tokens=2614524 tok/s=7319.1 stop=wall_cap err=None
+[2026-06-08T09:57:57.854045+00:00] DONE cma_g0_e1 bpb=2.23889 avg_loss=6.87217 tokens=2651406 tok/s=7413.3 stop=wall_cap err=None
+[2026-06-08T09:57:57.854287+00:00] DONE cma_g0_e2 bpb=2.21735 avg_loss=6.81905 tokens=2585838 tok/s=7226.2 stop=wall_cap err=None
+[2026-06-08T09:57:57.854488+00:00] DONE cma_g0_e4 bpb=2.42948 avg_loss=7.34007 tokens=2569446 tok/s=7183.9 stop=wall_cap err=None
+[2026-06-08T09:57:57.854840+00:00] DONE cma_g0_e6 bpb=2.22393 avg_loss=6.84112 tokens=2553054 tok/s=7134.3 stop=wall_cap err=None
+[2026-06-08T09:57:57.855880+00:00] GEN 0 best=cma_g0_e3 bpb=2.21132 counts={'gdn2_recall': 41, 'e97_delta': 23} sigma=0.932
+[2026-06-08T09:57:59.334802+00:00] LAUNCH cma_g1_e0 on GPU 0 (pid 2170025) dim=2176 pb=1.2817 counts={'gdn2_recall': 34, 'e97_delta': 30}
+[2026-06-08T09:57:59.335523+00:00] LAUNCH cma_g1_e1 on GPU 1 (pid 2170026) dim=2112 pb=1.2579 counts={'gdn2_recall': 19, 'e97_delta': 45}
+[2026-06-08T09:57:59.336416+00:00] LAUNCH cma_g1_e2 on GPU 2 (pid 2170027) dim=2112 pb=1.2794 counts={'gdn2_recall': 10, 'e97_delta': 54}
+[2026-06-08T09:57:59.337294+00:00] LAUNCH cma_g1_e3 on GPU 3 (pid 2170028) dim=2176 pb=1.2817 counts={'gdn2_recall': 34, 'e97_delta': 30}
+[2026-06-08T09:57:59.338260+00:00] LAUNCH cma_g1_e4 on GPU 4 (pid 2170030) dim=2240 pb=1.2918 counts={'gdn2_recall': 51, 'e97_delta': 13}
+[2026-06-08T09:57:59.339586+00:00] LAUNCH cma_g1_e5 on GPU 5 (pid 2170031) dim=2176 pb=1.267 counts={'gdn2_recall': 40, 'e97_delta': 24}
+[2026-06-08T09:57:59.340277+00:00] LAUNCH cma_g1_e6 on GPU 6 (pid 2170033) dim=2176 pb=1.262 counts={'gdn2_recall': 42, 'e97_delta': 22}
+[2026-06-08T09:57:59.340947+00:00] LAUNCH cma_g1_e7 on GPU 7 (pid 2170035) dim=2176 pb=1.2965 counts={'gdn2_recall': 28, 'e97_delta': 36}
+[2026-06-08T10:04:45.198228+00:00] DONE cma_g1_e1 bpb=2.21502 avg_loss=6.81138 tokens=2635014 tok/s=7355.9 stop=wall_cap err=None
+[2026-06-08T10:04:45.198451+00:00] DONE cma_g1_e4 bpb=2.23497 avg_loss=6.84759 tokens=2512074 tok/s=7020.6 stop=wall_cap err=None
+[2026-06-08T10:05:03.613590+00:00] DONE cma_g1_e0 bpb=2.22755 avg_loss=6.85086 tokens=2536662 tok/s=7089.9 stop=wall_cap err=None
+[2026-06-08T10:05:03.614004+00:00] DONE cma_g1_e3 bpb=2.23143 avg_loss=6.86374 tokens=2622720 tok/s=7333.8 stop=wall_cap err=None
+[2026-06-08T10:05:03.614304+00:00] DONE cma_g1_e7 bpb=2.22024 avg_loss=6.8431 tokens=2581740 tok/s=7214.3 stop=wall_cap err=None
+[2026-06-08T10:05:12.203300+00:00] DONE cma_g1_e2 bpb=2.22618 avg_loss=6.84065 tokens=2491584 tok/s=6951.9 stop=wall_cap err=None
+[2026-06-08T10:06:01.779008+00:00] DONE cma_g1_e6 bpb=2.22052 avg_loss=6.8091 tokens=2577642 tok/s=7192.6 stop=wall_cap err=None
+[2026-06-08T10:06:17.992705+00:00] DONE cma_g1_e5 bpb=2.21756 avg_loss=6.79534 tokens=2635014 tok/s=7364.2 stop=wall_cap err=None
+[2026-06-08T10:06:17.994629+00:00] GEN 1 best=cma_g1_e1 bpb=2.21502 counts={'gdn2_recall': 19, 'e97_delta': 45} sigma=0.951
+[2026-06-08T10:06:20.170839+00:00] LAUNCH cma_g2_e0 on GPU 0 (pid 2249720) dim=2112 pb=1.2938 counts={'gdn2_recall': 4, 'e97_delta': 60}
+[2026-06-08T10:06:20.171627+00:00] LAUNCH cma_g2_e1 on GPU 1 (pid 2249721) dim=2112 pb=1.2532 counts={'gdn2_recall': 21, 'e97_delta': 43}
+[2026-06-08T10:06:20.172372+00:00] LAUNCH cma_g2_e2 on GPU 2 (pid 2249722) dim=2176 pb=1.2497 counts={'gdn2_recall': 47, 'e97_delta': 17}
+[2026-06-08T10:06:20.173543+00:00] LAUNCH cma_g2_e3 on GPU 3 (pid 2249723) dim=2112 pb=1.2842 counts={'gdn2_recall': 8, 'e97_delta': 56}
+[2026-06-08T10:06:20.174337+00:00] LAUNCH cma_g2_e4 on GPU 4 (pid 2249726) dim=2176 pb=1.2473 counts={'gdn2_recall': 48, 'e97_delta': 16}
+[2026-06-08T10:06:20.175106+00:00] LAUNCH cma_g2_e5 on GPU 5 (pid 2249727) dim=2176 pb=1.2522 counts={'gdn2_recall': 46, 'e97_delta': 18}
+[2026-06-08T10:06:20.175845+00:00] LAUNCH cma_g2_e6 on GPU 6 (pid 2249728) dim=2176 pb=1.2546 counts={'gdn2_recall': 45, 'e97_delta': 19}
+[2026-06-08T10:06:20.176547+00:00] LAUNCH cma_g2_e7 on GPU 7 (pid 2249729) dim=2112 pb=1.2508 counts={'gdn2_recall': 22, 'e97_delta': 42}
+[2026-06-08T10:13:03.161635+00:00] DONE cma_g2_e4 bpb=2.22018 avg_loss=6.80811 tokens=2635014 tok/s=7377.4 stop=wall_cap err=None
+[2026-06-08T10:13:31.766431+00:00] DONE cma_g2_e0 bpb=2.24182 avg_loss=6.86145 tokens=2462898 tok/s=6885.7 stop=wall_cap err=None
+[2026-06-08T10:13:31.766676+00:00] DONE cma_g2_e3 bpb=2.23213 avg_loss=6.84674 tokens=2602230 tok/s=7262.1 stop=wall_cap err=None
+[2026-06-08T10:13:40.711357+00:00] DONE cma_g2_e1 bpb=2.20689 avg_loss=6.77039 tokens=2647308 tok/s=7388.0 stop=wall_cap err=None
+[2026-06-08T10:14:25.591209+00:00] DONE cma_g2_e7 bpb=2.2092 avg_loss=6.7865 tokens=2639112 tok/s=7371.3 stop=wall_cap err=None
+[2026-06-08T10:14:34.086387+00:00] DONE cma_g2_e5 bpb=2.22014 avg_loss=6.82633 tokens=2630916 tok/s=7353.6 stop=wall_cap err=None
+[2026-06-08T10:14:34.086781+00:00] DONE cma_g2_e6 bpb=2.22603 avg_loss=6.83229 tokens=2561250 tok/s=7161.9 stop=wall_cap err=None
+[2026-06-08T10:14:42.169472+00:00] DONE cma_g2_e2 bpb=2.23202 avg_loss=6.85943 tokens=2569446 tok/s=7183.6 stop=wall_cap err=None
+[2026-06-08T10:14:42.170664+00:00] GEN 2 best=cma_g2_e1 bpb=2.20689 counts={'gdn2_recall': 21, 'e97_delta': 43} sigma=1.024
+[2026-06-08T10:14:42.180476+00:00] WROTE experiments/e97_delta_1p3b_cma/results/cma_all_results.json (33.4 min wall, 267.6 GPU-min)

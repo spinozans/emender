@@ -75,7 +75,7 @@ def build_cmd(name, logits, probe, seed, steps, dim, out_dir):
             '--lam_max', '1.585', '--beta_max', '2.747', '--gdn_allow_neg_eigval', '1',
             '--head_type_logits=' + ','.join(str(f) for f in logits),
             '--steps', str(steps), '--seq_len', '128', '--batch_size', '32',
-            '--optimizer', 'schedulefree', '--disable_autocast', '--seed', str(seed),
+            '--optimizer', 'schedulefree', '--seed', str(seed),
             '--label', label, '--output_dir', str(out_dir),
             '--eval_lengths', *[str(t) for t in EVAL_TS], '--eval_lengths_n_batches', '8'], label
 
