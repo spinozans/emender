@@ -1,0 +1,88 @@
+{
+  "task": "e97-wallclock-cma",
+  "phase": "throughput(C)",
+  "dim": 2240,
+  "heads": "32 gdn-neg + 32 shell",
+  "B": 2,
+  "T": 2048,
+  "gdn_ceiling_tok_s": 12313.0,
+  "results": [
+    {
+      "label": "gdn_neg_pure",
+      "tok_s": 12313.0,
+      "peak_mb": 12535.0,
+      "ratio_vs_gdn": 1.0
+    },
+    {
+      "label": "shell_identity",
+      "tok_s": 12311.1,
+      "peak_mb": 12513.0,
+      "shell_state_nonlin": "identity",
+      "ratio_vs_gdn": 1.0
+    },
+    {
+      "label": "shell_tanh_fused_C64",
+      "tok_s": 10840.2,
+      "peak_mb": 17023.7,
+      "shell_state_nonlin": "tanh",
+      "shell_state_chunk": 64,
+      "shell_fused": true,
+      "ratio_vs_gdn": 0.88
+    },
+    {
+      "label": "shell_tanh_chunkref_C16",
+      "tok_s": 889.7,
+      "peak_mb": 13110.2,
+      "shell_state_nonlin": "tanh",
+      "shell_state_chunk": 16,
+      "shell_fused": false,
+      "ratio_vs_gdn": 0.072
+    },
+    {
+      "label": "shell_tanh_chunkref_C32",
+      "tok_s": 1712.5,
+      "peak_mb": 12808.2,
+      "shell_state_nonlin": "tanh",
+      "shell_state_chunk": 32,
+      "shell_fused": false,
+      "ratio_vs_gdn": 0.139
+    },
+    {
+      "label": "shell_tanh_chunkref_C64",
+      "tok_s": 3221.7,
+      "peak_mb": 12657.2,
+      "shell_state_nonlin": "tanh",
+      "shell_state_chunk": 64,
+      "shell_fused": false,
+      "ratio_vs_gdn": 0.262
+    },
+    {
+      "label": "shell_tanh_chunkref_C128",
+      "tok_s": 5353.5,
+      "peak_mb": 12581.8,
+      "shell_state_nonlin": "tanh",
+      "shell_state_chunk": 128,
+      "shell_fused": false,
+      "ratio_vs_gdn": 0.435
+    },
+    {
+      "label": "shell_tanh_chunkref_C256",
+      "tok_s": 8424.0,
+      "peak_mb": 12573.6,
+      "shell_state_nonlin": "tanh",
+      "shell_state_chunk": 256,
+      "shell_fused": false,
+      "ratio_vs_gdn": 0.684
+    },
+    {
+      "label": "shell_tanh_chunkref_C512",
+      "tok_s": 11638.7,
+      "peak_mb": 12555.4,
+      "shell_state_nonlin": "tanh",
+      "shell_state_chunk": 512,
+      "shell_fused": false,
+      "ratio_vs_gdn": 0.945
+    }
+  ],
+  "timestamp": "2026-06-08T14:17:49.912737+00:00"
+}
