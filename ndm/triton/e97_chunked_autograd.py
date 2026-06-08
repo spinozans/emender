@@ -43,7 +43,8 @@ def _next_pow2(x: int) -> int:
 # modeling range while keeping exp(-g) <= ~1e13. Observed at 1.3B: linear-state
 # e97_delta learns aggressive decay and g drifts past -90 within ~15 steps, NaNing the
 # run; this floor is what makes linear-state e97_delta trainable. (fuse-2kernel.)
-_GLOG_FLOOR = -30.0
+import os as _os
+_GLOG_FLOOR = float(_os.environ.get('E97_GLOG_FLOOR', '-30.0'))
 
 
 # ---------------------------------------------------------------------------

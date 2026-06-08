@@ -76,7 +76,7 @@ def allocate(logits, n_heads):
     return allocate_types(n_heads, logits)
 
 
-def build_ladder(dim, logits, knob=None, e97_state_nonlin=None):
+def build_ladder(dim, logits, knob=None, e97_state_nonlin=None, use_chunked_e97_delta=None):
     from ndm.models.ladder_lm import LadderLM
     lk = dict(head_type_logits=[float(x) for x in logits],
               gdn_allow_neg_eigval=True,
@@ -89,6 +89,11 @@ def build_ladder(dim, logits, knob=None, e97_state_nonlin=None):
     # (fuse-2kernel finding: prior 1.3B run never reached the chunked kernel).
     if e97_state_nonlin is not None:
         lk['e97_state_nonlin'] = str(e97_state_nonlin)
+    # use_chunked_e97_delta=False forces the SEQUENTIAL split-edit kernel even for
+    # linear state — the attribution control that separates "linear-state quality
+    # loss" (kernel-independent) from "chunked-kernel/floor numerics".
+    if use_chunked_e97_delta is not None:
+        lk['use_chunked_e97_delta'] = bool(use_chunked_e97_delta)
     m = LadderLM(vocab_size=VOCAB_SIZE, dim=int(dim), depth=BASE['depth'],
                  level='typed-gdn2-lm', n_heads=BASE['n_heads'], n_state=BASE['n_state'],
                  expansion=BASE['expansion'], layer_kwargs=lk,
