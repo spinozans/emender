@@ -76,6 +76,7 @@ def _gdn2_nonlin_fwd_kernel(
     T: tl.constexpr, B: tl.constexpr, H: tl.constexpr, K_DIM: tl.constexpr, V_DIM: tl.constexpr,
     BLOCK_K: tl.constexpr, BLOCK_V: tl.constexpr,
     STATE_CHUNK: tl.constexpr, PHI_MODE: tl.constexpr, SCALE: tl.constexpr,
+    PRENORM: tl.constexpr,
 ):
     b = tl.program_id(0).to(tl.int64)
     h = tl.program_id(1).to(tl.int64)
@@ -102,10 +103,17 @@ def _gdn2_nonlin_fwd_kernel(
         g = tl.load(G + gh_off).to(tl.float32)
         beta = tl.load(BETA + gh_off).to(tl.float32)
 
-        q_rstd = tl.rsqrt(tl.sum(q_raw * q_raw) + 1.0e-6)
-        k_rstd = tl.rsqrt(tl.sum(k_raw * k_raw) + 1.0e-6)
-        q_vec = q_raw * q_rstd * SCALE
-        k_vec = k_raw * k_rstd
+        # PRENORM: q,k arrive already L2-normalized and (for q) *SCALE, done in
+        # autograd-tracked PyTorch off the sequential critical path. Skipping the
+        # per-step rsqrt+normalize removes two reductions from each step's chain.
+        if PRENORM:
+            q_vec = q_raw
+            k_vec = k_raw
+        else:
+            q_rstd = tl.rsqrt(tl.sum(q_raw * q_raw) + 1.0e-6)
+            k_rstd = tl.rsqrt(tl.sum(k_raw * k_raw) + 1.0e-6)
+            q_vec = q_raw * q_rstd * SCALE
+            k_vec = k_raw * k_rstd
 
         S = S * tl.exp(g)
         retrieved = tl.sum(S * k_vec[:, None], axis=0)
@@ -131,6 +139,7 @@ def _gdn2_nonlin_bwd_kernel(
     T: tl.constexpr, B: tl.constexpr, H: tl.constexpr, K_DIM: tl.constexpr, V_DIM: tl.constexpr,
     BLOCK_K: tl.constexpr, BLOCK_V: tl.constexpr,
     STATE_CHUNK: tl.constexpr, PHI_MODE: tl.constexpr, SCALE: tl.constexpr,
+    PRENORM: tl.constexpr,
 ):
     b = tl.program_id(0).to(tl.int64)
     h = tl.program_id(1).to(tl.int64)
@@ -160,11 +169,19 @@ def _gdn2_nonlin_bwd_kernel(
         g = tl.load(G + gh_off).to(tl.float32)
         beta = tl.load(BETA + gh_off).to(tl.float32)
 
-        q_rstd = tl.rsqrt(tl.sum(q_raw * q_raw) + 1.0e-6)
-        k_rstd = tl.rsqrt(tl.sum(k_raw * k_raw) + 1.0e-6)
-        q_norm = q_raw * q_rstd
-        k_norm = k_raw * k_rstd
-        q_scaled = q_norm * SCALE
+        # PRENORM: q,k already L2-normalized (+SCALE on q) in autograd-tracked
+        # PyTorch; the grads DQ/DK are then w.r.t. those pre-normalized inputs and
+        # the rsqrt jacobian is handled outside the kernel. Skips 2 reductions/step.
+        if PRENORM:
+            q_norm = q_raw
+            k_norm = k_raw
+            q_scaled = q_raw
+        else:
+            q_rstd = tl.rsqrt(tl.sum(q_raw * q_raw) + 1.0e-6)
+            k_rstd = tl.rsqrt(tl.sum(k_raw * k_raw) + 1.0e-6)
+            q_norm = q_raw * q_rstd
+            k_norm = k_raw * k_rstd
+            q_scaled = q_norm * SCALE
 
         eg = tl.exp(g)
         S_dec = S_prev * eg
@@ -192,15 +209,21 @@ def _gdn2_nonlin_bwd_kernel(
         dg = tl.sum(dS_dec * S_dec)
         carry = dS_dec * eg
 
-        dq_norm = dq_scaled * SCALE
-        dq_dot = tl.sum(dq_norm * q_norm)
-        dq_raw = (dq_norm - q_norm * dq_dot) * q_rstd
+        if PRENORM:
+            # DQ/DK are grads w.r.t. the pre-normalized (+SCALE) inputs; the
+            # normalization jacobian is differentiated by PyTorch autograd outside.
+            dq_out = dq_scaled
+            dk_out = dk_norm
+        else:
+            dq_norm = dq_scaled * SCALE
+            dq_dot = tl.sum(dq_norm * q_norm)
+            dq_out = (dq_norm - q_norm * dq_dot) * q_rstd
 
-        dk_dot = tl.sum(dk_norm * k_norm)
-        dk_raw = (dk_norm - k_norm * dk_dot) * k_rstd
+            dk_dot = tl.sum(dk_norm * k_norm)
+            dk_out = (dk_norm - k_norm * dk_dot) * k_rstd
 
-        tl.store(DQ + q_base + k_idx, dq_raw, mask=k_mask)
-        tl.store(DK + q_base + k_idx, dk_raw, mask=k_mask)
+        tl.store(DQ + q_base + k_idx, dq_out, mask=k_mask)
+        tl.store(DK + q_base + k_idx, dk_out, mask=k_mask)
         tl.store(DV + v_base + v_idx, dv, mask=v_mask)
         tl.store(DG + gh_off, dg)
         tl.store(DBETA + gh_off, dbeta)
@@ -246,6 +269,7 @@ def gdn2_nonlinear_scan_forward(
     beta: torch.Tensor,
     state_chunk: int,
     phi_mode: int,
+    prenorm: bool = False,
 ) -> Tuple[torch.Tensor, torch.Tensor]:
     B, T, H, K_dim, V_dim = _check_inputs(q, k, v, g, beta, state_chunk)
     q_c = q.contiguous()
@@ -263,7 +287,12 @@ def gdn2_nonlinear_scan_forward(
         BLOCK_K=block_k, BLOCK_V=block_v,
         STATE_CHUNK=int(state_chunk), PHI_MODE=int(phi_mode),
         SCALE=1.0 / math.sqrt(float(K_dim)),
-        num_warps=4,
+        PRENORM=bool(prenorm),
+        # num_warps=2 is the latency-optimal launch for the sequential forward scan
+        # at the [K,V]<=64 tile (hetero-kernel micro-sweep: 1.26ms vs 1.31ms@4 /
+        # 1.75ms@1, H=4 T=2048). The per-step [32,32] tile is small, so 2 warps
+        # balance reduction-shuffle width against scheduling latency.
+        num_warps=2,
     )
     return out, states
 
@@ -278,6 +307,7 @@ def gdn2_nonlinear_scan_backward(
     d_out: torch.Tensor,
     state_chunk: int,
     phi_mode: int,
+    prenorm: bool = False,
 ):
     B, T, H, K_dim, V_dim = _check_inputs(q, k, v, g, beta, state_chunk)
     block_k = _next_pow2(K_dim)
@@ -301,25 +331,32 @@ def gdn2_nonlinear_scan_backward(
         BLOCK_K=block_k, BLOCK_V=block_v,
         STATE_CHUNK=int(state_chunk), PHI_MODE=int(phi_mode),
         SCALE=1.0 / math.sqrt(float(K_dim)),
-        num_warps=4,
+        PRENORM=bool(prenorm),
+        # num_warps=1 is the latency-optimal launch for the sequential BACKWARD scan
+        # (hetero-kernel micro-sweep: 2.43ms vs 2.93ms@4, H=4 T=2048). The backward's
+        # per-step gradient algebra is a chain of 32-wide reductions; a single warp
+        # does each reduction in one shuffle with no inter-warp sync, which dominates
+        # the small loss of parallelism at this tile size.
+        num_warps=1,
     )
     return d_q, d_k, d_v, d_g, d_beta
 
 
 class _GDN2NonlinearScanFunction(torch.autograd.Function):
     @staticmethod
-    def forward(ctx, q, k, v, g, beta, state_chunk: int, phi_mode: int):
-        out, states = gdn2_nonlinear_scan_forward(q, k, v, g, beta, state_chunk, phi_mode)
+    def forward(ctx, q, k, v, g, beta, state_chunk: int, phi_mode: int, prenorm: bool = False):
+        out, states = gdn2_nonlinear_scan_forward(q, k, v, g, beta, state_chunk, phi_mode, prenorm)
         ctx.save_for_backward(q, k, v, g, beta, states)
         ctx.state_chunk = int(state_chunk)
         ctx.phi_mode = int(phi_mode)
+        ctx.prenorm = bool(prenorm)
         return out
 
     @staticmethod
     def backward(ctx, d_out):
         q, k, v, g, beta, states = ctx.saved_tensors
         d_q, d_k, d_v, d_g, d_beta = gdn2_nonlinear_scan_backward(
-            q, k, v, g, beta, states, d_out, ctx.state_chunk, ctx.phi_mode
+            q, k, v, g, beta, states, d_out, ctx.state_chunk, ctx.phi_mode, ctx.prenorm
         )
         return (
             d_q.to(q.dtype),
@@ -329,7 +366,18 @@ class _GDN2NonlinearScanFunction(torch.autograd.Function):
             d_beta.to(beta.dtype),
             None,
             None,
+            None,
         )
+
+
+def _l2norm_scale(t: torch.Tensor, scale: float) -> torch.Tensor:
+    """L2-normalize the last dim exactly as the in-kernel path (rsqrt(sum^2+1e-6)),
+    then multiply by ``scale``. Runs in autograd-tracked PyTorch (parallel over all
+    T), so its jacobian feeds the raw-q/k gradient and the sequential kernel can
+    skip per-step normalization (PRENORM fast path)."""
+    f = t.float()
+    n = f * torch.rsqrt((f * f).sum(-1, keepdim=True) + 1e-6) * scale
+    return n.to(t.dtype)
 
 
 def fused_nonlinear_gated_delta_scan(
@@ -340,6 +388,7 @@ def fused_nonlinear_gated_delta_scan(
     beta: torch.Tensor,
     state_chunk: int = 64,
     state_nonlin: str | int = "tanh",
+    prenorm: bool = False,
 ) -> torch.Tensor:
     """Differentiable fused nonlinear-state gated-delta scan.
 
@@ -353,11 +402,20 @@ def fused_nonlinear_gated_delta_scan(
             final step.
         state_nonlin: ``identity``, ``tanh``, ``relu``, ``softplus_c`` or
             ``softplus``.
+        prenorm: if True, L2-normalize q,k (and scale q) in autograd-tracked
+            PyTorch BEFORE the kernel, so the sequential scan skips the per-step
+            rsqrt/normalize on its critical path (hetero-kernel fast path). The
+            normalization jacobian is differentiated by PyTorch. Numerically
+            identical to the in-kernel normalization (both use rsqrt(sum^2+1e-6)).
     """
     phi_mode = PHI_IDENTITY if state_nonlin is None else (
         int(state_nonlin) if isinstance(state_nonlin, int) else PHI_NAME_TO_CODE[state_nonlin]
     )
-    return _GDN2NonlinearScanFunction.apply(q, k, v, g, beta, int(state_chunk), phi_mode)
+    if prenorm:
+        scale = 1.0 / math.sqrt(float(q.shape[-1]))
+        q = _l2norm_scale(q, scale)
+        k = _l2norm_scale(k, 1.0)
+    return _GDN2NonlinearScanFunction.apply(q, k, v, g, beta, int(state_chunk), phi_mode, bool(prenorm))
 
 
 def _phi_torch(S: torch.Tensor, kind: str | int) -> torch.Tensor:

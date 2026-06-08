@@ -209,6 +209,18 @@ class TypedHeadMixtureLayer(nn.Module):
         # e97_state_nonlin='tanh' the head keeps the sequential split-edit kernel.
         use_chunked_e97_delta: bool = True,
         e97_chunk_size: int = 32,
+        # Stream overlap (hetero-kernel): the sub-blocks of this layer all consume
+        # the SAME `x` independently and are summed, so the latency-bound SEQUENTIAL
+        # nonlinear scan (the gdn2_nonlin_shell head, ~const time in T regardless of
+        # head count) can run CONCURRENTLY on a side CUDA stream with the tensor-core
+        # chunked bulk (gdn-neg / e97_delta). Because the scan is latency/few-SM-bound
+        # and the chunked path is compute/tensor-core-bound, they co-reside on the GPU
+        # and the scan's wall cost hides under the bulk + its own backward overlaps the
+        # bulk's backward. This is THE lever that takes the blended cell from ~0.88x to
+        # >=0.95x GDN-2 at a small nonlinear fraction (the sequential scan is otherwise
+        # a fixed per-layer latency tax that small fractions cannot shrink). Disable to
+        # recover the exact prior sequential semantics (parity control).
+        overlap_streams: bool = True,
         **kwargs,
     ):
         super().__init__()
@@ -226,6 +238,8 @@ class TypedHeadMixtureLayer(nn.Module):
         self.e97_state_nonlin = str(e97_state_nonlin)
         self.use_chunked_e97_delta = bool(use_chunked_e97_delta)
         self.e97_chunk_size = int(e97_chunk_size)
+        self.overlap_streams = bool(overlap_streams)
+        self._side_stream = None  # lazily created torch.cuda.Stream
 
         alloc = allocate_types(self.n_heads, self.head_type_logits)
         self.alloc = alloc
@@ -387,9 +401,38 @@ class TypedHeadMixtureLayer(nn.Module):
         """Allocation metadata for logging (fractions + integer counts per type)."""
         return dict(self.alloc)
 
+    def _overlap_active(self, x: torch.Tensor) -> bool:
+        """Overlap is worth it only when the latency-bound sequential `shell` scan
+        can hide under a tensor-core chunked sub-block (gdn / e97). No CUDA, no
+        shell, or no chunked partner => run sequentially (identical numerics)."""
+        if not self.overlap_streams or not x.is_cuda or self.shell is None:
+            return False
+        has_chunked_partner = (self.gdn is not None or self.unified is not None
+                               or self.e97_raw is not None or self.e97_delta is not None)
+        return has_chunked_partner
+
     def forward(self, x: torch.Tensor):
-        # x: [B, T, dim]. Both sub-blocks map dim->dim; the layer output is their
-        # sum into the shared residual stream.
+        # x: [B, T, dim]. Every sub-block maps dim->dim independently from the SAME
+        # x; the layer output is their sum into the shared residual stream. Because
+        # they are independent, the latency-bound SEQUENTIAL nonlinear `shell` scan
+        # is launched on a SIDE CUDA stream so it runs concurrently with the
+        # tensor-core chunked bulk (hetero-kernel stream overlap). PyTorch autograd
+        # records the per-op stream and replays each sub-block's backward on the
+        # same stream, so the backward overlaps too. wait_stream + record_stream
+        # give correct cross-stream ordering and prevent premature buffer reuse.
+        overlap = self._overlap_active(x)
+        s_out = None
+        side = None
+        if overlap:
+            if self._side_stream is None:
+                self._side_stream = torch.cuda.Stream()
+            side = self._side_stream
+            cur = torch.cuda.current_stream()
+            side.wait_stream(cur)            # side waits until x is materialized
+            x.record_stream(side)            # x stays alive while side reads it
+            with torch.cuda.stream(side):
+                s_out = self.shell(x)
+
         out = None
         if self.gdn is not None:
             g_out = self.gdn(x, use_cache=False)[0]
@@ -397,15 +440,22 @@ class TypedHeadMixtureLayer(nn.Module):
         if self.unified is not None:
             u_out = self.unified(x)
             out = u_out if out is None else out + u_out
-        if self.shell is not None:
-            s_out = self.shell(x)
-            out = s_out if out is None else out + s_out
+        if self.shell is not None and not overlap:
+            s_seq = self.shell(x)
+            out = s_seq if out is None else out + s_seq
         if self.e97_raw is not None:
             r_out = self._run_e97(self.e97_raw, x)
             out = r_out if out is None else out + r_out
         if self.e97_delta is not None:
             d_out = self._run_e97(self.e97_delta, x)
             out = d_out if out is None else out + d_out
+
+        if overlap:
+            cur = torch.cuda.current_stream()
+            cur.wait_stream(side)            # cur waits for the side scan to finish
+            s_out.record_stream(cur)
+            out = s_out if out is None else out + s_out
+
         if out is None:  # pragma: no cover - n_heads>0 guarantees a block
             out = torch.zeros_like(x)
         return self.dropout(out)

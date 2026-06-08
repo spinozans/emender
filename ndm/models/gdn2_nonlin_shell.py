@@ -84,6 +84,7 @@ def nonlinear_gated_delta_scan(
     state_nonlin: str | None,
     *,
     fused: bool = True,
+    prenorm: bool = True,
 ) -> torch.Tensor:
     """Gated-delta scan with ``phi`` applied to chunk-boundary carried states.
 
@@ -111,6 +112,7 @@ def nonlinear_gated_delta_scan(
     return fused_nonlinear_gated_delta_scan(
         q=q, k=k, v=v, g=g, beta=beta,
         state_chunk=int(state_chunk), state_nonlin=state_nonlin,
+        prenorm=prenorm,
     )
 
 
