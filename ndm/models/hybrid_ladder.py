@@ -17,7 +17,7 @@ from typing import Optional, List, Dict, Any
 import torch
 import torch.nn as nn
 
-from .ladder_lm import RMSNorm, get_ladder_level
+from .ladder_lm import RMSNorm, get_ladder_level, SwiGLUMLP, round_mlp_hidden
 
 
 def _is_m2rnn_level(level: str) -> bool:
@@ -73,6 +73,7 @@ class HybridLadderLM(nn.Module):
         gate_activation: str = 'silu',
         use_triton_e88: bool = False,
         dropout: float = 0.0,
+        mlp_ratio: float = 0.0,
         **extra_kwargs,
     ):
         super().__init__()
@@ -141,6 +142,24 @@ class HybridLadderLM(nn.Module):
         self.layers = nn.ModuleList(layers)
         self.actual_pattern = actual_pattern
 
+        # Optional post-mixer SwiGLU MLP per block (transformer-style mixer+MLP).
+        # When mlp_ratio>0 each block becomes:  h = h + mixer(norm1(h)); h = h + mlp(norm2(h))
+        # This supplies the FIXED O(depth) nonlinear readout depth that the
+        # capability-gap study (task capability-gap-research) requires present in
+        # BOTH arms — the whole question is whether nonlinearity-IN-TIME still
+        # separates once this fixed-depth MLP is available. mlp_ratio=0 (default)
+        # preserves the original mixer-only behaviour for all prior experiments.
+        self.mlp_ratio = float(mlp_ratio)
+        if self.mlp_ratio > 0.0:
+            self.mlp_norms = nn.ModuleList([RMSNorm(dim) for _ in range(depth)])
+            self.mlps = nn.ModuleList([
+                SwiGLUMLP(dim, round_mlp_hidden(dim, self.mlp_ratio), dropout=dropout)
+                for _ in range(depth)
+            ])
+        else:
+            self.mlp_norms = None
+            self.mlps = None
+
         # Per-layer flag: True for E88/E97-family recurrent mixers (the only ones
         # with a fused bf16 Triton fwd/bwd kernel). Used by forward() to feed those
         # layers bf16 so the fused split-edit kernel actually engages — otherwise
@@ -177,6 +196,8 @@ class HybridLadderLM(nn.Module):
             if isinstance(out, tuple):
                 out = out[0]
             h = h + out  # residual
+            if self.mlps is not None:
+                h = h + self.mlps[i](self.mlp_norms[i](h))  # post-mixer SwiGLU MLP
         h = self.out_norm(h)
         logits = self.out_proj(h)
         if return_loss:
