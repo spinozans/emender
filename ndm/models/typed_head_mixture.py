@@ -195,6 +195,12 @@ class TypedHeadMixtureLayer(nn.Module):
         use_triton_e97: bool = True,
         cast_recurrent_bf16: bool = True,
         e97_state_nonlin: str = 'tanh',
+        # Route the e97_delta head through the chunked-parallel fwd+bwd Triton
+        # kernel (GDN-2-class throughput; flips the within-layer NO-GO). Engages
+        # only for LINEAR-state e97_delta (per-step tanh is non-chunkable); with
+        # e97_state_nonlin='tanh' the head keeps the sequential split-edit kernel.
+        use_chunked_e97_delta: bool = True,
+        e97_chunk_size: int = 32,
         **kwargs,
     ):
         super().__init__()
@@ -210,6 +216,8 @@ class TypedHeadMixtureLayer(nn.Module):
         self.use_triton_e97 = bool(use_triton_e97)
         self.cast_recurrent_bf16 = bool(cast_recurrent_bf16)
         self.e97_state_nonlin = str(e97_state_nonlin)
+        self.use_chunked_e97_delta = bool(use_chunked_e97_delta)
+        self.e97_chunk_size = int(e97_chunk_size)
 
         alloc = allocate_types(self.n_heads, self.head_type_logits)
         self.alloc = alloc
@@ -316,7 +324,12 @@ class TypedHeadMixtureLayer(nn.Module):
             self.e97_raw = E88FLAHybrid(n_heads=n_e97_raw, raw_write=True, **e97_common)
         self.e97_delta = None
         if n_e97_delta > 0:
-            self.e97_delta = E88FLAHybrid(n_heads=n_e97_delta, raw_write=False, **e97_common)
+            self.e97_delta = E88FLAHybrid(
+                n_heads=n_e97_delta, raw_write=False,
+                use_chunked_e97=self.use_chunked_e97_delta,
+                e97_chunk_size=self.e97_chunk_size,
+                **e97_common,
+            )
 
         self.dropout = nn.Dropout(dropout) if dropout > 0 else nn.Identity()
 
