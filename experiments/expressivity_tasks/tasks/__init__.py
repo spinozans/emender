@@ -21,11 +21,13 @@ from .assoc_recall import AssocRecallTask
 from .delta_memory import OverwriteRecallTask, ResetRecallTask
 from .keyed_fsm_memory import KeyedFSMMemoryTask
 from .s5_permutation import S3PermutationTask, S5PermutationTask
-from .counting_with_comparison import DyckDepthTask, AnBnCnViabilityTask
+from .counting_with_comparison import DyckDepthTask, DyckDepthUnboundedTask, AnBnCnViabilityTask
 from .iterated_nonlinear_map import IteratedNonlinearMapTask
 from .flag_hold_recall import FlagHoldRecallTask
 from .mqar_recall import MQARRecallTask
 from .mixed_probe import MixedProbeTask
+from .monoid_track import MonoidTrackTask, MonoidTrackInvTask
+from .modular_quadratic import ModularQuadraticTask, ModularQuadraticLinTask
 
 ALL_TASKS = {
     'parity': ParityTask,
@@ -41,9 +43,14 @@ ALL_TASKS = {
     's3_permutation': S3PermutationTask,
     's5_permutation': S5PermutationTask,
     'dyck_depth': DyckDepthTask,
+    'dyck_depth_unbounded': DyckDepthUnboundedTask,  # UNBOUNDED counting (GAP TEST)
     'anbncn_viability': AnBnCnViabilityTask,
     'iterated_nonlinear_map': IteratedNonlinearMapTask,
     'flag_hold_recall': FlagHoldRecallTask,
     'mqar_recall': MQARRecallTask,
     'mixed_probe': MixedProbeTask,
+    'monoid_track': MonoidTrackTask,            # non-group monoid (GAP TEST)
+    'monoid_track_inv': MonoidTrackInvTask,     # group control (no gap)
+    'modular_quadratic': ModularQuadraticTask,  # nonlinear non-invertible (GAP TEST)
+    'modular_quadratic_lin': ModularQuadraticLinTask,  # linear control (no gap)
 }

@@ -116,6 +116,11 @@ def main():
                     help='UnifiedCell beta (delta-correction) cap.')
     ap.add_argument('--igain_max', type=float, default=None,
                     help='UnifiedCell input write-gain cap.')
+    ap.add_argument('--mlp_ratio', type=float, default=0.0,
+                    help='Post-mixer SwiGLU MLP hidden-ratio per block (transformer-'
+                         'style mixer+MLP). 0 = mixer-only (default; preserves prior '
+                         'experiments). The capability-gap study sets this >0 so the '
+                         'FIXED O(depth) nonlinear readout is present in BOTH arms.')
     ap.add_argument('--head_type_logits', type=str, default=None,
                     help='typed-gdn2: comma-sep 5 unconstrained logits over head '
                          'types [gdn2_recall,e97_track,count,latch,nonlin]; '
@@ -197,6 +202,12 @@ def main():
         task_kwargs['n_keys'] = args.K
     elif args.task == 'mixed_probe':
         task_kwargs['n_keys'] = args.K
+    elif args.task in ('monoid_track', 'monoid_track_inv'):
+        if args.K is not None and args.K > 2:   # K=2 is the argparse default sentinel
+            task_kwargs['N'] = args.K           # state-space size (scale stress test)
+    elif args.task in ('modular_quadratic', 'modular_quadratic_lin'):
+        if args.K is not None and args.K > 2:   # K=2 is the argparse default sentinel
+            task_kwargs['p'] = args.K           # modulus (scale stress test)
     task = ALL_TASKS[args.task](**task_kwargs)
     print(f"Task: {task.name}, vocab_size={task.vocab_size}", flush=True)
 
@@ -298,6 +309,7 @@ def main():
         expansion=args.expansion,
         rank=args.rank,
         use_triton_e88=args.use_triton_e88,
+        mlp_ratio=args.mlp_ratio,
     ).to(device)
     if args.disable_autocast:
         model.disable_autocast = True
@@ -352,6 +364,7 @@ def main():
     log = {'task': task.name, 'pattern': model.actual_pattern, 'dim': args.dim, 'depth': args.depth,
            'seq_len': args.seq_len, 'batch_size': args.batch_size, 'lr': args.lr,
            'seed': args.seed, 'params': n_params,
+           'mlp_ratio': float(args.mlp_ratio),
            'disable_autocast': bool(args.disable_autocast),
            'use_triton_e88': bool(args.use_triton_e88),
            'linear_state': args.linear_state,

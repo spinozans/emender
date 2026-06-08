@@ -77,6 +77,44 @@ class DyckDepthTask:
         return 1.0 - rho
 
 
+class DyckDepthUnboundedTask(DyckDepthTask):
+    """UNBOUNDED-magnitude counting (the genuine Weiss-Goldberg-Yahav separator).
+
+    Same floored-counter dynamics as DyckDepthTask, but with POSITIVE drift
+    (p_open > 0.5) and a high cap, so the running depth GROWS roughly linearly
+    with t and at long eval lengths reaches magnitudes NEVER SEEN at the
+    training length. Trained at T=128 the model sees depths up to ~30; evaluated
+    at T=2048 it must emit depths up to ~200. This is the regime the survey
+    identifies as the learnable-and-separating sweet spot: the state is
+    UNBOUNDED + MONOTONE (non-fading, escapes contraction) yet non-chaotic
+    (lambda bounded, hence learnable).
+
+    The discriminator is whether the cell maintains a NON-SATURATING additive
+    count that the readout can decode past the trained magnitude band. A
+    bounded/saturating state (tanh) compresses large counts into a fixed range
+    and a fixed-depth MLP readout has only finitely many decision regions, so
+    accuracy degrades monotonically once depth exceeds the training band; a
+    non-saturating additive counter (LSTM/relu-state cell) extrapolates. A
+    LINEAR integrating recurrence (eigenvalue 1) is ALSO non-saturating, so this
+    task tests whether nonlinearity-IN-TIME helps OR whether linear integration
+    already suffices.
+    """
+    name = 'dyck_depth_unbounded'
+
+    def __init__(self, cap: int = 256, p_open: float = 0.55):
+        assert cap >= 2
+        assert 0.5 < p_open < 1.0, "p_open>0.5 gives POSITIVE drift -> unbounded growth"
+        self.cap = cap
+        self.p_open = p_open
+        self.vocab_size = cap + 1
+
+    def random_baseline_acc(self):
+        # Positive-drift walk has no stationary mass concentration; the depth
+        # spreads over a growing range, so majority-class accuracy -> ~0. Report
+        # the conservative 1/cap uniform baseline.
+        return 1.0 / self.cap
+
+
 class AnBnCnViabilityTask:
     """Variant 1a — per-position viability for the language a^n b^n c^n.
 
