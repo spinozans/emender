@@ -36,6 +36,16 @@ def _next_pow2(x: int) -> int:
     return max(16, p)
 
 
+# Floor for the per-step LOG-decay g fed to the kernel. inv_decay = exp(-g) appears
+# in the intra-chunk score matrix; once g drifts below ~-88 it overflows fp32 (+inf)
+# and NaNs both forward and backward. At g = -30 the per-step decay is exp(-30) ~ 9e-14
+# — numerically "forget everything in one step" already — so flooring here costs ZERO
+# modeling range while keeping exp(-g) <= ~1e13. Observed at 1.3B: linear-state
+# e97_delta learns aggressive decay and g drifts past -90 within ~15 steps, NaNing the
+# run; this floor is what makes linear-state e97_delta trainable. (fuse-2kernel.)
+_GLOG_FLOOR = -30.0
+
+
 # ---------------------------------------------------------------------------
 # Forward kernel — same math as e97_chunked_fwd_kernel but also writes the
 # per-chunk ENTRY state S_entry[c] (needed, and only needed, by the backward).
@@ -350,7 +360,12 @@ class E97DeltaChunkedFn(torch.autograd.Function):
         erase = erase.contiguous(); write = write.contiguous()
         U = (k * erase).contiguous()
         Pw = (v * write).contiguous()
-        glog = (decay if log_decay else decay.clamp_min(1e-9).log()).contiguous()
+        glog = (decay if log_decay else decay.clamp_min(1e-9).log())
+        # Floor g so exp(-g) cannot overflow fp32 (see _GLOG_FLOOR). Record which
+        # entries were clamped so the backward returns ZERO decay-grad there (the
+        # floored steps are constant wrt the upstream decay params — no gradient).
+        clamp_mask = glog < _GLOG_FLOOR
+        glog = glog.clamp_min(_GLOG_FLOOR).contiguous()
 
         out = torch.empty((B, Tp, H, Vd), device=k.device, dtype=k.dtype)
         S_entry = torch.empty((B, H, NC, N, Vd), device=k.device, dtype=torch.float32)
@@ -364,14 +379,14 @@ class E97DeltaChunkedFn(torch.autograd.Function):
             BN=BN, BV=BV, BC=BC, NEWTON_STEPS=newton, ALLOW_TF32=allow_tf32,
             num_warps=4,
         )
-        ctx.save_for_backward(k, q, v, erase, write, glog, S_entry)
+        ctx.save_for_backward(k, q, v, erase, write, glog, S_entry, clamp_mask)
         ctx.shape = (B, T, Tp, H, N, Vd, C, NC, BN, BV, BC, newton, allow_tf32)
         ctx.log_decay = bool(log_decay)
         return out[:, :T].contiguous(), S_final
 
     @staticmethod
     def backward(ctx, dout, dSfinal):
-        k, q, v, erase, write, glog, S_entry = ctx.saved_tensors
+        k, q, v, erase, write, glog, S_entry, clamp_mask = ctx.saved_tensors
         (B, T, Tp, H, N, Vd, C, NC, BN, BV, BC, newton, allow_tf32) = ctx.shape
         if dout.shape[1] != Tp:
             dout = torch.nn.functional.pad(dout, (0, 0, 0, 0, 0, Tp - dout.shape[1]))
@@ -396,6 +411,9 @@ class E97DeltaChunkedFn(torch.autograd.Function):
         # dgrad = grad wrt log-decay g. For the log-decay caller, return it as-is
         # (the input WAS g). For the legacy decay caller, convert to grad-wrt-decay
         # via dg/decay (decay = exp(g)); exact and overflow-free for moderate decay.
+        # Zero the gradient for steps whose g was floored — they are constant wrt the
+        # upstream decay params, so the true decay-grad there is 0 (matches clamp_min).
+        dgrad = dgrad.masked_fill(clamp_mask, 0.0)
         ddecay = dgrad if ctx.log_decay else dgrad / glog.exp().clamp_min(1e-9)
         sl = slice(0, T)
         return (dk[:, sl], dv[:, sl], dq[:, sl], ddecay[:, sl],

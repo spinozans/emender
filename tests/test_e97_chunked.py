@@ -338,6 +338,33 @@ def test_strong_decay_cluster_backward_finite():
                 assert err / scale < 5e-3, f"strong-decay grad {nm} rel err {err/scale}"
 
 
+@pytest.mark.skipif(not CUDA, reason="needs CUDA")
+def test_glog_floor_drift_overflow_finite():
+    """REGRESSION (fuse-2kernel 2nd 1.3B NaN): linear-state e97_delta learns
+    aggressive decay, so the per-step log-decay g DRIFTS below -88 within ~15 real
+    steps; inv_decay = exp(-g) then overflows fp32 (exp(96) ~ 5e41 = +inf) and NaNs
+    BOTH forward and backward (loss was healthily decreasing — pure numeric blowup).
+    The kernel's g-floor (_GLOG_FLOOR = -30) must keep fwd+bwd finite, and the
+    decay-grad of floored steps must be exactly 0 (clamp_min semantics)."""
+    from ndm.triton.e97_chunked_autograd import _GLOG_FLOOR
+    dev = 'cuda'
+    B, T, H, N, V = 2, 128, 3, 32, 32
+    k, v, q, _, e, w = _mk(B, T, H, N, V, dev, torch.float32, seed=21)
+    g = (-torch.rand(B, T, H, device=dev) * 0.3)
+    # scatter steps WAY below the floor, like the drifted 1.3B state (g ~ -96).
+    g[:, 10, :] = -96.0
+    g[:, 70:75, :] = -120.0
+    ts = [t.clone().requires_grad_(True) for t in (k, v, q, g, e, w)]
+    out, _ = e97_delta_chunked_triton(*ts, chunk_size=32, log_decay=True)
+    assert torch.isfinite(out).all(), "g-drift forward overflowed"
+    (out ** 2).sum().backward()
+    for nm, t in zip(['k', 'v', 'q', 'g', 'e', 'w'], ts):
+        assert torch.isfinite(t.grad).all(), f"g-drift grad {nm} non-finite"
+    # floored steps -> exactly zero decay grad.
+    floored = (g < _GLOG_FLOOR)
+    assert (ts[3].grad[floored] == 0).all(), "floored-step decay grad must be 0"
+
+
 if __name__ == '__main__':
     if not CUDA:
         print("no CUDA; skipping")
@@ -364,4 +391,6 @@ if __name__ == '__main__':
         print("log_decay realistic-init-decay (NaN-fix) OK")
         test_strong_decay_cluster_backward_finite()
         print("strong-decay-cluster backward finite (NaN-fix regression) OK")
+        test_glog_floor_drift_overflow_finite()
+        print("glog-floor drift overflow finite (NaN-fix regression) OK")
         print("ALL PARITY OK")
