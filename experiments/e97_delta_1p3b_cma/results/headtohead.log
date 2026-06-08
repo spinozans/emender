@@ -1,0 +1,19 @@
+[2026-06-08T10:14:58.285695+00:00] BEST searched = cma_g2_e1 screen-bpb=2.20689 counts={'gdn2_recall': 21, 'e97_delta': 43} has_delta=True
+[2026-06-08T10:14:58.285755+00:00] BASELINE A_gdn2_mlp counts={'gdn2_recall': 64} dim=2240
+[2026-06-08T10:14:59.382368+00:00] LAUNCH W1_delta_s0 seed0 on GPU 0
+[2026-06-08T10:14:59.383373+00:00] LAUNCH W2_gdn_s0 seed0 on GPU 1
+[2026-06-08T10:14:59.384234+00:00] LAUNCH W1_delta_s1 seed1 on GPU 2
+[2026-06-08T10:14:59.385209+00:00] LAUNCH W2_gdn_s1 seed1 on GPU 3
+[2026-06-08T10:28:12.696099+00:00] DONE W2_gdn_s1 bpb=2.03242 tokens=6847758 tok/s=9598.7
+[2026-06-08T10:28:22.423348+00:00] DONE W1_delta_s0 bpb=2.06334 tokens=4991364 tok/s=6970.4
+[2026-06-08T10:28:22.423738+00:00] DONE W2_gdn_s0 bpb=2.02133 tokens=7105932 tok/s=9940.4
+[2026-06-08T10:28:22.424144+00:00] DONE W1_delta_s1 bpb=2.07855 tokens=5011854 tok/s=6996.8
+[2026-06-08T10:28:22.424203+00:00] e97_delta tokens per seed = [4991364, 5011854]; token-matched budget N_d = 4991364
+[2026-06-08T10:28:23.573394+00:00] LAUNCH W3_gdn_tokcap_s0 seed0 on GPU 0 tokcap=4991364
+[2026-06-08T10:28:23.574475+00:00] LAUNCH W3_gdn_tokcap_s1 seed1 on GPU 1 tokcap=4991364
+[2026-06-08T10:38:05.860428+00:00] DONE W3_gdn_tokcap_s1 bpb=2.10552 tokens=4991364 tok/s=9949.8
+[2026-06-08T10:38:49.003270+00:00] DONE W3_gdn_tokcap_s0 bpb=2.08277 tokens=4991364 tok/s=9152.1
+[2026-06-08T10:38:49.007295+00:00] === SUMMARY (held-out BPB) ===
+[2026-06-08T10:38:49.007320+00:00]  seed0: W1_delta=2.06334 W2_gdn_wall=2.02133 W3_gdn_tok=2.08277
+[2026-06-08T10:38:49.007332+00:00]  seed1: W1_delta=2.07855 W2_gdn_wall=2.03242 W3_gdn_tok=2.10552
+[2026-06-08T10:38:49.007340+00:00] WROTE experiments/e97_delta_1p3b_cma/results/headtohead_results.json
