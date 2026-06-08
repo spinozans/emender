@@ -1,0 +1,143 @@
+{
+  "within_layer": {
+    "shape": {
+      "B": 8,
+      "T": 512,
+      "H": 16,
+      "N": 32,
+      "V": 32
+    },
+    "gdn2_fwdbwd": {
+      "ms": 1.828,
+      "util": {
+        "mean": 10.9,
+        "max": 12.0,
+        "p50": 11.0,
+        "n": 13
+      }
+    },
+    "e97_fused_fwdbwd": {
+      "ms": 0.48,
+      "util": {
+        "mean": 87.8,
+        "max": 100.0,
+        "p50": 90.0,
+        "n": 22
+      },
+      "slowdown_vs_gdn": 0.26
+    },
+    "e97_pytorch_fwdbwd": {
+      "ms": 5.661,
+      "util": {
+        "mean": 36.5,
+        "max": 37.0,
+        "p50": 37.0,
+        "n": 15
+      },
+      "slowdown_vs_gdn": 3.1
+    },
+    "e97_sequential_fwd_only": {
+      "ms": 0.327,
+      "util": {
+        "mean": 97.6,
+        "max": 100.0,
+        "p50": 100.0,
+        "n": 24
+      }
+    }
+  },
+  "scale_1p3b": {
+    "shape": {
+      "B": 4,
+      "T": 2048,
+      "H": 16,
+      "N": 32,
+      "V": 32
+    },
+    "gdn2_fwdbwd": {
+      "ms": 3.637,
+      "util": {
+        "mean": 12.4,
+        "max": 13.0,
+        "p50": 12.0,
+        "n": 8
+      }
+    },
+    "e97_fused_fwdbwd": {
+      "ms": 1.362,
+      "util": {
+        "mean": 99.6,
+        "max": 100.0,
+        "p50": 100.0,
+        "n": 24
+      },
+      "slowdown_vs_gdn": 0.37
+    },
+    "e97_pytorch_fwdbwd": {
+      "ms": 12.592,
+      "util": {
+        "mean": 44.0,
+        "max": 44.0,
+        "p50": 44.0,
+        "n": 13
+      },
+      "slowdown_vs_gdn": 3.46
+    },
+    "e97_sequential_fwd_only": {
+      "ms": 1.269,
+      "util": {
+        "mean": 99.7,
+        "max": 100.0,
+        "p50": 100.0,
+        "n": 20
+      }
+    }
+  },
+  "scale_1p3b_wide": {
+    "shape": {
+      "B": 4,
+      "T": 2048,
+      "H": 32,
+      "N": 32,
+      "V": 32
+    },
+    "gdn2_fwdbwd": {
+      "ms": 3.572,
+      "util": {
+        "mean": 35.0,
+        "max": 36.0,
+        "p50": 35.0,
+        "n": 22
+      }
+    },
+    "e97_fused_fwdbwd": {
+      "ms": 1.846,
+      "util": {
+        "mean": 100.0,
+        "max": 100.0,
+        "p50": 100.0,
+        "n": 23
+      },
+      "slowdown_vs_gdn": 0.52
+    },
+    "e97_pytorch_fwdbwd": {
+      "ms": 13.385,
+      "util": {
+        "mean": 100.0,
+        "max": 100.0,
+        "p50": 100.0,
+        "n": 12
+      },
+      "slowdown_vs_gdn": 3.75
+    },
+    "e97_sequential_fwd_only": {
+      "ms": 1.762,
+      "util": {
+        "mean": 99.9,
+        "max": 100.0,
+        "p50": 100.0,
+        "n": 25
+      }
+    }
+  }
+}
