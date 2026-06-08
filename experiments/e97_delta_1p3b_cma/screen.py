@@ -84,7 +84,8 @@ def fast_heldout_bpb(model, vocab_size, device, max_batches=40, bs=2, bf16=True)
 def build_model(cfg, device):
     m = build_ladder(cfg['dim'], cfg['head_type_logits'],
                      knob=dict(lam_max=cfg.get('lam_max', 1.585),
-                               beta_max=cfg.get('beta_max', 2.747)))
+                               beta_max=cfg.get('beta_max', 2.747)),
+                     e97_state_nonlin=cfg.get('e97_state_nonlin'))
     m = m.to(device)
     if cfg.get('bf16', True):
         m = m.bfloat16()

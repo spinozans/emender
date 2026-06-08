@@ -76,12 +76,19 @@ def allocate(logits, n_heads):
     return allocate_types(n_heads, logits)
 
 
-def build_ladder(dim, logits, knob=None):
+def build_ladder(dim, logits, knob=None, e97_state_nonlin=None):
     from ndm.models.ladder_lm import LadderLM
     lk = dict(head_type_logits=[float(x) for x in logits],
               gdn_allow_neg_eigval=True,
               lam_max=(knob or {}).get('lam_max', 1.585),
               beta_max=(knob or {}).get('beta_max', 2.747))
+    # e97_state_nonlin='identity' makes the e97_delta heads LINEAR-state, which is
+    # the prerequisite for the chunked-parallel fused Triton kernel to actually
+    # engage (the chunked guard in e88_fla_hybrid requires linear_state=True). The
+    # default 'tanh' silently routes e97_delta to the SLOW sequential T-scan
+    # (fuse-2kernel finding: prior 1.3B run never reached the chunked kernel).
+    if e97_state_nonlin is not None:
+        lk['e97_state_nonlin'] = str(e97_state_nonlin)
     m = LadderLM(vocab_size=VOCAB_SIZE, dim=int(dim), depth=BASE['depth'],
                  level='typed-gdn2-lm', n_heads=BASE['n_heads'], n_state=BASE['n_state'],
                  expansion=BASE['expansion'], layer_kwargs=lk,

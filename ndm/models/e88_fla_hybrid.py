@@ -1324,6 +1324,7 @@ class E88FLAHybrid(nn.Module):
         H = self.n_heads
         erase_gate = None
         value_write_gate = None
+        glog_chunked = None  # LOG-decay for the chunked e97_delta kernel (set in decay block)
 
         # The non-saturating state variants (relu/softplus) are implemented only in
         # the PyTorch reference recurrence below. The fused bf16 CUDA/Triton kernels
@@ -1457,7 +1458,10 @@ class E88FLAHybrid(nn.Module):
                     if self.use_silu and not qkv_silu_in_kernel:
                         v = F.silu(v)
 
-                # Compute decay
+                # Compute decay. glog_chunked carries the LOG-decay so the chunked
+                # e97_delta kernel can take grad wrt log-decay directly (avoids the
+                # dg/decay backward blow-up as decay -> 0; see e97_chunked_autograd).
+                glog_chunked = None
                 if self.decay_mode == 'none':
                     decay = torch.ones(B, T, H, device=x.device, dtype=x.dtype)
                 elif self.decay_mode == 'constant':
@@ -1468,14 +1472,20 @@ class E88FLAHybrid(nn.Module):
                 else:
                     # Mamba2-style exponential decay
                     alpha = self.a_proj(x)  # [B, T, H]
+                    # Always compute the log-decay g in PyTorch (cheap) so the
+                    # chunked path gets a clean gradient path to A_log/a_proj/dt_bias
+                    # WITHOUT routing through 1/decay. The forward decay value may
+                    # come from the fused Triton kernel (faster), but the chunked
+                    # e97_delta kernel uses glog_chunked directly.
+                    g_logdecay = -self.A_log.float().exp() * F.softplus(alpha.float() + self.dt_bias)
+                    glog_chunked = g_logdecay
                     if USE_TRITON_OPS and TRITON_OPS_AVAILABLE and x.is_cuda and x.dtype == torch.bfloat16:
                         # Use fused Triton kernel (19x faster)
                         decay = triton_mamba2_decay(alpha, self.A_log.float(), self.dt_bias.float())
                     else:
                         # Fallback: PyTorch ops
                         # g = -exp(A_log) * softplus(a_proj(x) + dt_bias)
-                        g = -self.A_log.float().exp() * F.softplus(alpha.float() + self.dt_bias)
-                        decay = g.exp().to(x.dtype)  # [B, T, H]
+                        decay = g_logdecay.exp().to(x.dtype)  # [B, T, H]
 
                 # Compute write gate (beta) if enabled - gates how much delta writes to memory
                 if self.use_write_gate and self.write_gate_proj is not None:
@@ -1686,10 +1696,19 @@ class E88FLAHybrid(nn.Module):
                     if use_fused_l2:
                         k_in = k_in / (k_in.norm(dim=-1, keepdim=True) + 1e-6)
                         q_in = q_in / (q_in.norm(dim=-1, keepdim=True) + 1e-6)
+                    # Pass the LOG-decay (glog_chunked) when available so the kernel
+                    # backward returns grad wrt log-decay directly (no dg/decay
+                    # blow-up at small decay — the linear-state 1.3B NaN fix). Fall
+                    # back to decay-space only if the decay mode didn't expose glog.
+                    if glog_chunked is not None:
+                        decay_arg, use_log = glog_chunked.to(input_dtype), True
+                    else:
+                        decay_arg, use_log = decay.to(input_dtype), False
                     out_ungated, S_final = e97_delta_chunked_triton(
-                        k_in, v_in, q_in, decay.to(input_dtype),
+                        k_in, v_in, q_in, decay_arg,
                         erase_for_kernel, value_write_for_kernel,
                         chunk_size=getattr(self, 'e97_chunk_size', 32),
+                        log_decay=use_log,
                     )
                     output = out_ungated * F.silu(g)
                 elif self.use_triton:
