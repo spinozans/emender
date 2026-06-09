@@ -47,6 +47,7 @@ Reductions (verified in ``tests/test_complex_eig.py``):
 from __future__ import annotations
 
 import math
+import os
 from typing import Optional, Tuple
 
 import torch
@@ -59,7 +60,54 @@ import torch.nn.functional as F
 # intermediate magnitude exponent only affects channels whose within-chunk
 # product already underflowed to ~0 — a standard chunked-kernel stability guard
 # (mirrors _GLOG_FLOOR in e97_chunked_autograd).  exp(80) ~ 5.5e34 < fp32 max.
-_INV_DECAY_GUARD = 80.0
+# It is kept as a final backstop, but the PRIMARY hardening is the adaptive
+# sub-chunking below (_decay_safe_chunk_size): the clamp alone is LOSSY — once a
+# run of strong-decay steps pushes -G past the guard, ALL positions beyond the
+# saturation point collapse to the same magnitude, erasing the relative scale of
+# the (banded) near-diagonal entries that actually carry the output.  That makes
+# the chunked scan return garbage (rel err -> 1) for |lambda| << 1 even though it
+# stays finite, which corrupts training (the failure that motivated this task).
+# Env-overridable (mirrors CPLX_INV_DECAY_GUARD in complex_eig_chunked_autograd):
+# a huge value disables the clamp so the raw 1/cp overflow -> inf -> NaN is
+# observable (used to A/B the hardening).
+_INV_DECAY_GUARD = float(os.environ.get('CPLX_INV_DECAY_GUARD', '80.0'))
+
+# Largest intra-chunk cumulative-decay span (max over channels of -Gprev, i.e.
+# sum of per-step -log_r within one chunk) we allow before SHRINKING the chunk.
+# Keeping the span <= 30 holds 1/cp = exp(-Gprev) <= exp(30) ~ 1e13, far below
+# both fp32 max and the _INV_DECAY_GUARD clamp, so the clamp never fires and the
+# decay-absorbed key/inverse-key products stay numerically exact (the dropped
+# precision lives only in cross-chunk carry terms that gamma=exp(G) then scales
+# by exp(-span) ~ 0, so they are genuinely negligible).  The cross-chunk LRU
+# carry is division-free and exact, so shrinking the chunk only trades throughput
+# for stability — in the limit C=1 this IS the eager per-step scan.
+# Env override CPLX_INTRA_CHUNK_SPAN_GUARD (mainly for A/B repro; a huge value
+# disables the adaptive sub-chunking and restores the old overflow behaviour).
+_INTRA_CHUNK_SPAN_GUARD = float(os.environ.get('CPLX_INTRA_CHUNK_SPAN_GUARD', '30.0'))
+
+
+def _decay_safe_chunk_size(log_r: torch.Tensor, requested_C: int,
+                           span_guard: float = _INTRA_CHUNK_SPAN_GUARD) -> int:
+    """Largest chunk size <= requested_C whose worst-case intra-chunk decay span
+    (-log_r accumulated over the chunk) stays <= span_guard.
+
+    The chunked scan folds the cumulative decay into the keys as 1/cp = exp(-Gprev);
+    when the model drives |lambda| small WITHIN a chunk this overflows / saturates
+    the magnitude guard and the scan returns garbage.  Bounding the span by capping
+    the chunk size keeps 1/cp in fp32's exact range.  We use the GLOBAL worst-case
+    per-step decay so the bound holds for every (batch, head, chunk, channel); the
+    only cost is more (still division-free, exact) cross-chunk steps.
+    """
+    if requested_C <= 1:
+        return max(1, int(requested_C))
+    # worst-case per-step magnitude decay, |log_r| at the strongest-decay step
+    d = (-log_r.detach()).clamp_min(0.0).max()
+    d_val = float(d)
+    if not math.isfinite(d_val) or d_val <= 0.0:
+        return int(requested_C)
+    # (C-1) * d <= span_guard  ->  C <= span_guard/d + 1
+    c_safe = int(span_guard / d_val) + 1
+    return max(1, min(int(requested_C), c_safe))
 
 
 def _pair_to_complex(x: torch.Tensor) -> torch.Tensor:
@@ -185,6 +233,12 @@ def complex_gated_delta_chunked(
     C = int(chunk_size)
     if C <= 0:
         raise ValueError(f"chunk_size must be positive, got {C}")
+    # Harden against fp32 overflow when |lambda| << 1 within a chunk: shrink the
+    # chunk so the intra-chunk decay span (-log_r accumulated over C steps) stays
+    # in fp32's exact range.  Benign decay (the parity regime) is unaffected
+    # (span small -> C unchanged); only the strong-decay regime that used to NaN
+    # / return garbage falls back toward the exact, division-free eager limit.
+    C = _decay_safe_chunk_size(log_r, C)
 
     qc = _pair_to_complex(q)            # [B,T,H,P] complex64
     kc = _pair_to_complex(k)

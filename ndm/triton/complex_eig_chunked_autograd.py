@@ -43,6 +43,8 @@ import torch
 import triton
 import triton.language as tl
 
+from ndm.triton.complex_eig_chunked import _decay_safe_chunk_size
+
 
 def _next_pow2(x: int) -> int:
     p = 1
@@ -726,6 +728,14 @@ def complex_gated_delta_chunked_triton(
         raise NotImplementedError("fused complex kernel assumes S0=0; use the eager reference")
     B, T, H, N = q.shape
     P = N // 2
+    # Harden against fp32 overflow when |lambda| << 1 within a chunk: the fused
+    # kernel resets its cumulative decay per chunk and threads the cross-chunk
+    # carry in registers (division-free, exact), so shrinking the chunk bounds the
+    # intra-chunk 1/cp = exp(-Gprev) span exactly as in the torch reference.  In
+    # the benign-decay regime the span is small and chunk_size is unchanged; only
+    # the strong-decay regime that used to NaN / saturate the guard falls back to
+    # a smaller (still tensor-core) chunk.  Mirrors complex_gated_delta_chunked.
+    chunk_size = _decay_safe_chunk_size(log_r, int(chunk_size))
     if allow_tf32 is None:
         allow_tf32 = q.dtype in (torch.bfloat16, torch.float16)
     # Env override: CPLX_ALLOW_TF32=0 forces full-fp32 tl.dot matmuls even on the

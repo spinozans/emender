@@ -15,6 +15,7 @@ from ndm.triton.complex_eig_chunked import (
     complex_gated_delta_chunked,
     complex_gated_delta_reference,
 )
+from ndm.triton.complex_eig_chunked_autograd import complex_gated_delta_chunked_triton
 
 CUDA = torch.cuda.is_available()
 
@@ -46,6 +47,47 @@ def test_chunked_matches_eager_fp32(T, C):
     assert err / scale < 3e-3, f"fwd rel err {err/scale} (abs {err})"
     serr = (outS - refS).abs().max().item() / (refS.abs().max().item() + 1e-6)
     assert serr < 3e-3, f"S_final rel err {serr}"
+
+
+@pytest.mark.skipif(not CUDA, reason="needs CUDA")
+@pytest.mark.parametrize("decay_lo,decay_hi", [(0.01, 0.2), (1e-4, 0.02), (1e-6, 1e-3)])
+@pytest.mark.parametrize("C", [32, 64])
+def test_chunked_stable_small_lambda(decay_lo, decay_hi, C):
+    """HARDENING REGRESSION (task fix-harden-complex): when the model drives the
+    eigenvalue magnitude |lambda| << 1 WITHIN a chunk, the cumulative-decay fold
+    KR = k / cp = exp(-Gprev) blows past fp32 range and the old magnitude clamp
+    silently erased the (banded) near-diagonal entries -> chunked scan returned
+    garbage (rel err -> 1), corrupting training.  After the adaptive sub-chunking
+    fix the chunked scan must stay finite AND match the exact eager reference even
+    at extreme decay.  This regime is OUTSIDE the [0.85,1.0] band the other parity
+    tests cover, so it is the test that would have caught the bug."""
+    dev = "cuda"
+    B, T, H, N, V = 2, 128, 4, 32, 32
+    for fn in (complex_gated_delta_chunked, complex_gated_delta_chunked_triton):
+        q, k, v, log_r, theta, beta = _mk(B, T, H, N, V, dev, seed=3,
+                                          decay_lo=decay_lo, decay_hi=decay_hi)
+        ref, _ = complex_gated_delta_reference(q, k, v, log_r, theta, beta)
+        out, _ = fn(q, k, v, log_r, theta, beta, chunk_size=C)
+        assert torch.isfinite(out).all(), f"{fn.__name__} non-finite at decay<{decay_hi}"
+        scale = ref.abs().max().item() + 1e-12
+        rel = (out - ref).abs().max().item() / scale
+        assert rel < 3e-3, f"{fn.__name__} rel err {rel} at decay [{decay_lo},{decay_hi}) C={C}"
+
+
+@pytest.mark.skipif(not CUDA, reason="needs CUDA")
+def test_chunked_backward_finite_small_lambda():
+    """Backward must also stay finite at |lambda| << 1 (the training failure mode
+    was loss=nan, i.e. a non-finite gradient propagating from this kernel)."""
+    dev = "cuda"
+    B, T, H, N, V = 2, 128, 3, 32, 32
+    for fn in (complex_gated_delta_chunked, complex_gated_delta_chunked_triton):
+        q, k, v, log_r, theta, beta = _mk(B, T, H, N, V, dev, seed=5,
+                                          decay_lo=1e-5, decay_hi=1e-2)
+        ts = [t.clone().requires_grad_(True) for t in (q, k, v, log_r, theta, beta)]
+        out, _ = fn(*ts, chunk_size=32)
+        (out * out).sum().backward()
+        for nm, t in zip(["q", "k", "v", "log_r", "theta", "beta"], ts):
+            assert torch.isfinite(t.grad).all(), f"{fn.__name__} grad {nm} non-finite at small |lambda|"
 
 
 @pytest.mark.skipif(not CUDA, reason="needs CUDA")
