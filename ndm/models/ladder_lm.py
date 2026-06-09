@@ -108,6 +108,8 @@ from .e88_fla_hybrid import E88FLAHybrid
 from .unified_cell import UnifiedCellLayer
 from .typed_head_mixture import TypedHeadMixtureLayer
 from .phi_shell import PhiShellLayer
+from .complex_eig_head import ComplexEigHeadLayer
+from .complex_eig_lm import RealEigGDNShellLayer
 from .e89_residual_state import E89ResidualStateCell
 from .e76_logspace_delta import E76LogSpaceDelta
 from .e77_linear_matrix import E77LinearMatrix
@@ -536,6 +538,17 @@ def get_ladder_level(level):
         # other phi is one elementwise function away. The vehicle for the
         # capability-vs-phi sweep on the depth-growing modular_quadratic cliff.
         'phi-shell': lambda **kw: PhiShellLayer(**kw),
+        # complex-eigenvalue head (task complex-eig-lm): the SAME FLA GatedDeltaNet
+        # shell as 'real-eig-gdn' below, with the per-head real scalar decay
+        # replaced by a per-key-channel COMPLEX eigenvalue lambda=r*e^{i theta}
+        # (complex-everywhere) + an optional per-step bounded-phi subset of heads.
+        # 'real-eig-gdn' is the matched real-eigenvalue control (native gated-delta).
+        # Both wrapped so LadderLM's (out, h) protocol works. None-valued generic
+        # kwargs (e.g. n_heads when unset) are stripped so int() coercion is safe.
+        'complex-eig-lm': lambda **kw: _LadderProtocolAdapter(
+            ComplexEigHeadLayer(**{k: v for k, v in kw.items() if v is not None})),
+        'real-eig-gdn': lambda **kw: _LadderProtocolAdapter(
+            RealEigGDNShellLayer(**{k: v for k, v in kw.items() if v is not None})),
         # Production-LM-protocol variants of the two expressivity mixers: wrapped
         # so LadderLM's `out, h = layer(x, prev_hidden)` calling convention works.
         # These are the E99 typed-Emender and E98-CMA candidates wired into the

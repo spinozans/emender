@@ -195,6 +195,9 @@ def parse_args():
     parser.add_argument('--knob_lr_mult', type=float, default=1.0,
                         help='Separate LR multiplier for recurrence knobs (lam/beta/igain/gamma_raw). '
                              'E98-CMA winner: 5.38. 1.0 == single param group.')
+    parser.add_argument('--layer_kwargs', type=str, default=None,
+                        help='JSON dict of extra per-layer kwargs merged into layer_kwargs '
+                             '(e.g. {"nonlin_subset_frac":0.125} for level=complex-eig-lm).')
     parser.add_argument('--gdn_allow_neg_eigval', type=int, default=1,
                         help='typed-gdn2-lm: allow negative along-key eigenvalue in GDN heads (1=yes, GDN-2 tracking)')
 
@@ -721,6 +724,12 @@ def train(args):
             layer_kwargs['beta_max'] = args.beta_max
         if args.igain_max is not None:
             layer_kwargs['igain_max'] = args.igain_max
+        if args.layer_kwargs is not None:
+            # Generic JSON passthrough of extra per-layer kwargs (e.g.
+            # nonlin_subset_frac for level=complex-eig-lm). Merged last so it
+            # overrides the specific knobs above.
+            import json as _json
+            layer_kwargs.update(_json.loads(args.layer_kwargs))
         model = LadderLM(
             vocab_size=vocab_size,
             dim=args.dim,
