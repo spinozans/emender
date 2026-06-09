@@ -9,8 +9,12 @@ and changes ONLY the recurrent transition — the real per-head scalar decay
 (spec sec 1-2).
 
 Two kernels, by head allocation (spec sec 5; the hetero-kernel split):
-  * complex-only heads (the majority) run the CHUNKED complex diagonal scan
-    (``complex_gated_delta_chunked``) — tensor-core bound, GDN-2-class.
+  * complex-only heads (the majority) run the CHUNKED complex diagonal scan as a
+    REAL FUSED TRITON kernel (``complex_gated_delta_chunked_triton`` — fwd+bwd
+    @triton.jit, real/imag-decomposed, NO torch.complex in the hot path) —
+    tensor-core bound, GDN-2-class throughput (competitive with FLA GDN-2, beating
+    it at T<=512). The pure-``torch.complex`` ``complex_gated_delta_chunked`` is
+    the parity reference / CPU fallback only.
   * complex + per-step ``hardtanh`` heads (a configurable subset) run the
     SEQUENTIAL per-step complex scan (``complex_gated_delta_reference`` with
     ``phi='hardtanh'``) — bounded per-step state is NOT chunkable, so it is
@@ -33,6 +37,7 @@ from ndm.triton.complex_eig_chunked import (
     complex_gated_delta_chunked,
     complex_gated_delta_reference,
 )
+from ndm.triton.complex_eig_chunked_autograd import complex_gated_delta_chunked_triton
 
 try:
     from fla.layers import GatedDeltaNet as _FLAGatedDeltaNet
@@ -91,6 +96,7 @@ class ComplexEigHeadLayer(nn.Module):
         cplx_theta_drift: float = math.pi / 8,
         cplx_read_mode: str = "real",
         cplx_chunk_size: int = 32,
+        cplx_fused_triton: bool = True,
         cplx_theta_base_learnable: bool = True,
         # nonlinear-subset (per-step bounded map on a fraction of heads):
         nonlin_subset_frac: float = 0.0,
@@ -122,6 +128,7 @@ class ComplexEigHeadLayer(nn.Module):
         self.P = self.n_state // 2
         self.read_mode = str(cplx_read_mode)
         self.chunk_size = int(cplx_chunk_size)
+        self.fused_triton = bool(cplx_fused_triton)
         self.theta_drift = float(cplx_theta_drift)
         self.use_gate = bool(use_gate)
         self.use_short_conv = bool(gdn_use_conv)
@@ -212,9 +219,16 @@ class ComplexEigHeadLayer(nn.Module):
         """Split heads: chunked complex bulk + per-step bounded subset (overlapped)."""
         nlin = self.n_linear
         out_parts = []
-        # complex-only (chunked) heads -- the bulk
+        # complex-only (chunked) heads -- the bulk. The fused Triton kernel
+        # (real/imag-decomposed, no torch.complex) runs on CUDA; the torch-complex
+        # reference is the CPU / fallback path (parity-verified in tests).
         if nlin > 0:
-            o_lin, _ = complex_gated_delta_chunked(
+            # fused kernel supports P=N/2<=64 and V<=64 (one (b,h) program/block)
+            dims_ok = (q.shape[-1] // 2) <= 64 and v.shape[-1] <= 64
+            use_fused = self.fused_triton and q.is_cuda and dims_ok
+            chunk_fn = (complex_gated_delta_chunked_triton if use_fused
+                        else complex_gated_delta_chunked)
+            o_lin, _ = chunk_fn(
                 q[:, :, :nlin], k[:, :, :nlin], v[:, :, :nlin],
                 log_r[:, :, :nlin], theta[:, :, :nlin], beta[:, :, :nlin],
                 chunk_size=self.chunk_size, read_mode=self.read_mode,
@@ -267,7 +281,8 @@ class ComplexEigHeadLayer(nn.Module):
     def extra_repr(self) -> str:
         return (f"dim={self.dim}, n_heads={self.n_heads}, n_state={self.n_state}, "
                 f"P={self.P}, chunked={self.n_linear}, hardtanh_subset={self.n_nonlin}, "
-                f"read={self.read_mode}, drift={self.theta_drift:.4f}")
+                f"read={self.read_mode}, drift={self.theta_drift:.4f}, "
+                f"fused_triton={self.fused_triton}")
 
 
 __all__ = ["ComplexEigHeadLayer", "init_theta_base"]
