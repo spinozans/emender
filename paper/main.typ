@@ -596,6 +596,157 @@ $S_3$ (permutations of three items, 6 elements) is included to factor out
 the part of difficulty that comes from prefix tracking *per se* rather
 than from non-solvability.
 
+#heading(level: 2, numbering: none)[A dynamics taxonomy of head-types: eigenvalue placement $times$ saturation]
+
+The linear/nonlinear hinge above, and the choice of where a head's
+state may decay, reflect, or oscillate, are two independent axes of a
+single design grid rather than a list of unrelated tricks. Reading a
+head by the *dynamics* of its per-token state map — not by the
+experiment that first produced it — fixes it as one point in a
+two-axis grid:
+
+#set enum(numbering: "1.")
+
++ *Eigenvalue placement in the unit disk.* Where the along-key
+  eigenvalue of the per-token state transition sits in the complex unit
+  disk. A real-positive eigenvalue is a *decay* — the stored value
+  fades toward zero along the key. A real-negative eigenvalue is a
+  *reflection* that flips sign each step (`reflect`); reaching it is the
+  lever that lets a recurrence track non-solvable group structure such
+  as $S_5$, since a transition pinned positive cannot. A
+  complex-conjugate pair is a *rotation* (`rot`) that oscillates the
+  stored value. Real-positive and real-negative are the two ends of the
+  *real diameter*; complex placement walks off that diameter into the
+  rest of the disk.
+
++ *State map: linear or saturated.* Whether the state update is left
+  linear or passed through a bounded saturating nonlinearity
+  (canonically $"hardtanh"$; the `-nonlin` axis; E88 uses the smooth
+  variant $tanh$). Saturation latches a driven slot and makes the head
+  finite-state, the boundedness-not-counting regime of §2.
+
+The grid these two axes span names every Emender head-type
+(@fig_taxonomy). Real $times$ linear at the positive end is `decay`,
+which is vanilla Gated DeltaNet; at the negative end it is `reflect`,
+Gated DeltaNet permitted a negative eigenvalue. Real $times$ saturated
+is `nonlin` — the saturated delta-correcting head carried as E88 (the
+head historically tagged E97). Complex $times$ linear is `rot`, the
+complex-eigenvalue oscillator head. Complex $times$ saturated is
+`rot-nonlin`, a nonlinear oscillator left to future work, included only
+once both axes have earned it. The experiment tags E97, E98, and E99
+are retained throughout only as historical run identifiers; the
+architecture vocabulary is this grid.
+
+This grid makes the relationship to the linear-recurrent baseline
+exact rather than rhetorical.
+
+#block(
+  width: 100%,
+  inset: 8pt,
+  radius: 3pt,
+  stroke: 0.6pt + rgb("#e08a2e"),
+  fill: rgb("#fdf4e8"),
+)[
+  *Proposition (GDN-2 as a special case of the Emender).* Gated
+  DeltaNet-2 — the GDN baseline of §2, the gated-delta variant that
+  admits a negative eigenvalue — is exactly the restriction of the
+  Emender to the *real diameter* of the unit disk with *no saturation*:
+  the $\{$`decay`, `reflect`$\} times$ linear sub-grid. The Emender
+  generalizes GDN-2 along two axes: from the real diameter to the full
+  unit disk (adding `rot`), and from the linear state map to the
+  saturated one (adding `nonlin`). The Emender layer is the *within-layer
+  pool* — a mixture over this grid of head-types within a single layer —
+  and GDN-2 is the linear, real-axis corner of that pool. The
+  negative-eigenvalue result is "walking to the far end of the real
+  diameter"; the complex-rotation head is "walking off the real axis";
+  $"hardtanh"$ is "turning on saturation".
+]
+
+#figure(
+  kind: image,
+  block(width: 100%, [
+    #align(center)[
+      #stack(dir: ltr, spacing: 1.2em,
+        // ── Panel A: the unit disk ───────────────────────────────────
+        block(width: 40%, [
+          #align(center)[*A. Eigenvalue placement in the unit disk*]
+          #v(0.5em)
+          #align(center)[
+            #box(width: 5cm, height: 5cm, {
+              // unit circle (the unit disk boundary)
+              place(dx: 0.3cm, dy: 0.3cm,
+                circle(radius: 2.2cm, stroke: 0.6pt + gray))
+              // imaginary axis (vertical)
+              place(dx: 2.5cm, dy: 0.15cm,
+                line(length: 4.7cm, angle: 90deg, stroke: 0.4pt + gray))
+              // real axis (horizontal)
+              place(dx: 0.15cm, dy: 2.5cm,
+                line(length: 4.7cm, angle: 0deg, stroke: 0.4pt + gray))
+              // GDN-2 lives on the real diameter (highlight)
+              place(dx: 0.3cm, dy: 2.5cm,
+                line(length: 4.4cm, angle: 0deg, stroke: 2.2pt + rgb("#e08a2e")))
+              // reflect point (real-negative)
+              place(dx: 1.15cm, dy: 2.41cm, circle(radius: 3pt, fill: rgb("#c0392b")))
+              place(dx: 0.5cm, dy: 3.0cm, text(size: 7.5pt)[`reflect`])
+              place(dx: 0.5cm, dy: 1.7cm, text(size: 7pt)[real$<0$])
+              // decay point (real-positive)
+              place(dx: 3.7cm, dy: 2.41cm, circle(radius: 3pt, fill: rgb("#1f7a3f")))
+              place(dx: 3.55cm, dy: 3.0cm, text(size: 7.5pt)[`decay`])
+              place(dx: 3.6cm, dy: 1.7cm, text(size: 7pt)[real$>0$])
+              // rot conjugate pair (complex, off the real axis)
+              place(dx: 3.25cm, dy: 1.05cm, circle(radius: 3pt, fill: rgb("#2c5fa8")))
+              place(dx: 3.25cm, dy: 3.75cm, circle(radius: 3pt, fill: rgb("#2c5fa8")))
+              place(dx: 3.5cm, dy: 0.75cm, text(size: 7.5pt)[`rot`])
+              // origin label
+              place(dx: 2.55cm, dy: 2.55cm, text(size: 7pt, fill: gray)[$0$])
+            })
+          ]
+          #v(0.2em)
+          #text(size: 7.5pt)[Real diameter (orange) $=$ GDN-2; off-axis $=$ rotation.]
+        ]),
+        // ── Panel B: the grid ────────────────────────────────────────
+        block(width: 56%, [
+          #align(center)[*B. Head-type grid: eigenvalue placement $times$ saturation*]
+          #v(0.5em)
+          #align(center)[#table(
+            columns: (auto, auto, auto, auto),
+            align: (left, center, center, center),
+            stroke: 0.5pt,
+            inset: 6pt,
+            table.header(
+              [], [*decay* \ (real $>0$)], [*reflect* \ (real $<0$)], [*rot* \ (complex)],
+            ),
+            [*linear*],
+              table.cell(fill: rgb("#fbe7cf"))[`decay`],
+              table.cell(fill: rgb("#fbe7cf"))[`reflect`],
+              [`rot`],
+            [*+ hardtanh* \ (`-nonlin`)],
+              [`nonlin`], [`nonlin`],
+              text(fill: gray)[`rot-nonlin` \ #text(size: 7pt)[(future)]],
+          )]
+          #v(0.3em)
+          #align(center)[#text(size: 7.5pt)[Shaded corner $=$ GDN-2 special case (\{`decay`, `reflect`\} $times$ linear).]]
+        ]),
+      )
+    ]
+  ]),
+  caption: [
+    *The Emender head-type taxonomy: eigenvalue placement $times$
+    saturation.* *(A)* Each head is fixed by where its along-key
+    eigenvalue sits in the complex unit disk — real-positive `decay`,
+    real-negative `reflect`, or complex `rot` — and by whether the state
+    map is linear or saturated. The orange real diameter is the locus
+    GDN-2 occupies. *(B)* The two axes name five cells. GDN-2 is the
+    $\{$`decay`, `reflect`$\} times$ linear corner (shaded); the Emender
+    generalizes it to the full disk (`rot`) and to the saturated state
+    map (`nonlin`), and is the within-layer pool over the grid.
+    `rot-nonlin` is reserved for future work. E97/E98/E99 are historical
+    run tags, not architecture names.
+  ],
+) <fig_taxonomy>
+
+#set enum(numbering: "(a)")
+
 // ── 3. Architecture — the Emender ─────────────────────────────────────────────
 = Architecture <sec:arch>
 
