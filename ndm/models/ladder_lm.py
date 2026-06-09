@@ -538,6 +538,14 @@ def get_ladder_level(level):
         # other phi is one elementwise function away. The vehicle for the
         # capability-vs-phi sweep on the depth-growing modular_quadratic cliff.
         'phi-shell': lambda **kw: PhiShellLayer(**kw),
+        # complex-eig (task complex-eig-capability): FLA GDN-2 gated-delta plumbing
+        # with a PER-CHANNEL COMPLEX eigenvalue lambda = r*e^{i*theta} transition
+        # (rotation-scaling). cplx_real_only=True snaps theta to {0,pi} and freezes
+        # it -> the MATCHED real-eigenvalue (positive+negative) control with
+        # identical params/kernel/compute (only rotation removed). The vehicle for
+        # the periodic/mod-k/positional capability battery: does the complex axis
+        # unlock a capability the real-eigenvalue cell cannot reach?
+        'complex-eig': lambda **kw: ComplexEigHeadLayer(**kw),
         # complex-eigenvalue head (task complex-eig-lm): the SAME FLA GatedDeltaNet
         # shell as 'real-eig-gdn' below, with the per-head real scalar decay
         # replaced by a per-key-channel COMPLEX eigenvalue lambda=r*e^{i theta}

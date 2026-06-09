@@ -152,6 +152,30 @@ def main():
                          '(=linear gdn-neg baseline), tanh, softsign, hardtanh, '
                          'poly3, relu, softplus, gelu, silu, signed_sqrt, learned. '
                          'Forwarded only to phi-shell layers (task phi-explore).')
+    # complex-eig (task complex-eig-capability): per-channel complex eigenvalue head.
+    ap.add_argument('--cplx_real_only', type=int, default=None, choices=[0, 1],
+                    help='complex-eig: MATCHED real-eigenvalue (+/-) control — snap '
+                         'theta to {0,pi} and freeze (drift=0), removing ONLY the '
+                         'rotation DOF (identical params/kernel/compute). 1 = real '
+                         'baseline arm; 0/None = complex-everywhere arm.')
+    ap.add_argument('--cplx_nonlin_subset_frac', type=float, default=None,
+                    help='complex-eig: fraction of heads ALSO getting the per-step '
+                         'bounded map (sequential kernel) on top of the complex '
+                         'transition. >0 turns on the hardtanh subset (coexistence '
+                         'test: does step-growth capability persist under complex?).')
+    ap.add_argument('--cplx_nonlin_subset_phi', type=str, default=None,
+                    choices=['hardtanh', 'tanh', 'softsign'],
+                    help='complex-eig: per-step bounded map for the nonlinear subset.')
+    ap.add_argument('--cplx_dc_frac', type=float, default=None,
+                    help='complex-eig: fraction of channels reserved at theta=0 '
+                         '(pure real-positive decay = GDN regime at init).')
+    ap.add_argument('--cplx_force_sequential', type=int, default=None, choices=[0, 1],
+                    help='complex-eig: route the complex bulk through the STABLE eager '
+                         'per-step scan instead of the chunked kernel. The chunked '
+                         'kernel overflows fp32 (1/cp decay-folding) when |lambda| is '
+                         'driven small within a chunk -> NaN; the eager path is exact '
+                         'and bounded. Use 1 for capability measurement (chunked<->eager '
+                         'parity validated ~4e-7).')
     ap.add_argument('--knob_lr_mult', type=float, default=1.0,
                     help='LEARNABILITY intervention #2: multiply the base LR for '
                          'the recurrence knobs (lam_raw/beta_raw/igain_raw/'
@@ -314,6 +338,21 @@ def main():
     if args.gdn_allow_neg_eigval is not None:
         phi_kwargs['gdn_allow_neg_eigval'] = bool(args.gdn_allow_neg_eigval)
 
+    # complex-eig (task complex-eig-capability): per-channel complex eigenvalue head.
+    complex_kwargs = {}
+    if args.cplx_real_only is not None:
+        complex_kwargs['cplx_real_only'] = bool(args.cplx_real_only)
+    if args.cplx_nonlin_subset_frac is not None:
+        complex_kwargs['nonlin_subset_frac'] = args.cplx_nonlin_subset_frac
+    if args.cplx_nonlin_subset_phi is not None:
+        complex_kwargs['nonlin_subset_phi'] = args.cplx_nonlin_subset_phi
+    if args.cplx_dc_frac is not None:
+        complex_kwargs['cplx_dc_frac'] = args.cplx_dc_frac
+    if args.cplx_force_sequential is not None:
+        complex_kwargs['cplx_force_sequential'] = bool(args.cplx_force_sequential)
+    if args.gdn_allow_neg_eigval is not None:
+        complex_kwargs['gdn_allow_neg_eigval'] = bool(args.gdn_allow_neg_eigval)
+
     def _is_unified_level(level):
         return isinstance(level, str) and (level.startswith('e98') or level.startswith('unified'))
 
@@ -333,6 +372,8 @@ def main():
             return dict(typed_kwargs)
         if level == 'phi-shell':
             return dict(phi_kwargs)
+        if level == 'complex-eig':
+            return dict(complex_kwargs)
         if _is_unified_level(level):
             return dict(unified_kwargs)
         return {}
@@ -364,7 +405,7 @@ def main():
             typed_alloc = layer.head_alloc()
             break
     if typed_alloc is not None:
-        print(f"Typed-head alloc: {typed_alloc['counts']}", flush=True)
+        print(f"Typed-head alloc: {typed_alloc.get('counts', typed_alloc)}", flush=True)
 
     # Build param groups. With --knob_lr_mult != 1, the recurrence knobs
     # (lam/beta/igain/gamma raw of every UnifiedCellLayer) get a SEPARATE group at
@@ -420,6 +461,11 @@ def main():
            'head_type_logits': args.head_type_logits,
            'phi': args.phi,
            'split_edit': args.split_edit,
+           'cplx_real_only': args.cplx_real_only,
+           'cplx_nonlin_subset_frac': args.cplx_nonlin_subset_frac,
+           'cplx_nonlin_subset_phi': args.cplx_nonlin_subset_phi,
+           'cplx_dc_frac': args.cplx_dc_frac,
+           'cplx_force_sequential': args.cplx_force_sequential,
            'typed_alloc': typed_alloc,
            'spec_reg': args.spec_reg,
            'spec_reg_weight': float(args.spec_reg_weight),

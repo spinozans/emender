@@ -28,6 +28,8 @@ from .mqar_recall import MQARRecallTask
 from .mixed_probe import MixedProbeTask
 from .monoid_track import MonoidTrackTask, MonoidTrackInvTask
 from .modular_quadratic import ModularQuadraticTask, ModularQuadraticLinTask
+from .positional_clock import PositionalClockTask
+from .periodic_pattern import PeriodicPatternTask
 
 ALL_TASKS = {
     'parity': ParityTask,
@@ -53,4 +55,6 @@ ALL_TASKS = {
     'monoid_track_inv': MonoidTrackInvTask,     # group control (no gap)
     'modular_quadratic': ModularQuadraticTask,  # nonlinear non-invertible (GAP TEST)
     'modular_quadratic_lin': ModularQuadraticLinTask,  # linear control (no gap)
+    'positional_clock': PositionalClockTask,    # mod-K native clock (COMPLEX-EIG GAP TEST)
+    'periodic_pattern': PeriodicPatternTask,    # repeating-motif detection (COMPLEX-EIG GAP TEST)
 }

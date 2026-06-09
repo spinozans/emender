@@ -98,6 +98,25 @@ class ComplexEigHeadLayer(nn.Module):
         cplx_chunk_size: int = 32,
         cplx_fused_triton: bool = True,
         cplx_theta_base_learnable: bool = True,
+        # MATCHED real-eigenvalue (positive+negative) control (capability ablation):
+        # snap every channel's phase to the nearest of {0, pi} and FREEZE it there
+        # (drift=0, theta_base non-learnable). The eigenvalue is then real with both
+        # signs (positive decay + negative reflection) — identical params, kernel,
+        # magnitude gate, and compute as the complex head; the ONLY removed degree of
+        # freedom is rotation (Im lambda != 0). This is the clean A/B for "does the
+        # complex/rotation axis unlock a capability the real-eigenvalue cell cannot
+        # reach" (task complex-eig-capability).
+        cplx_real_only: bool = False,
+        # Route the complex-only bulk through the STABLE eager per-step scan instead
+        # of the chunked kernel. The chunked kernel folds cumulative decay into the
+        # keys (KR = k / cp), which overflows fp32 when the model drives eigenvalue
+        # magnitude small *within a chunk* (1/cp explodes) -> inf -> NaN. The eager
+        # recurrence has no such folding (|lambda|<=1 keeps the state bounded) and is
+        # numerically exact. chunked<->eager parity is validated to ~4e-7
+        # (complex-eig-validate), so for a CAPABILITY measurement the eager path gives
+        # the same answer without the fp32 overflow artifact. Slower (latency-bound),
+        # but capability — not throughput — is what this study measures.
+        cplx_force_sequential: bool = False,
         # nonlinear-subset (per-step bounded map on a fraction of heads):
         nonlin_subset_frac: float = 0.0,
         nonlin_subset_phi: str = "hardtanh",
@@ -135,6 +154,8 @@ class ComplexEigHeadLayer(nn.Module):
         self.allow_neg_eigval = bool(gdn_allow_neg_eigval)
         self.overlap_streams = bool(overlap_streams)
         self.nonlin_subset_phi = str(nonlin_subset_phi)
+        self.real_only = bool(cplx_real_only)
+        self.force_sequential = bool(cplx_force_sequential)
         self._side_stream = None
 
         # number of heads ALSO getting the per-step bounded map (sequential kernel)
@@ -175,13 +196,25 @@ class ComplexEigHeadLayer(nn.Module):
             self.dt_bias_cplx.copy_(dt + torch.log(-torch.expm1(-dt)))  # inverse-softplus init
         # Phase: theta = theta_base + drift * tanh(theta_proj(x)) (spec sec 1.2-1.3).
         theta_base = init_theta_base(P, H, base=cplx_theta_base, dc_frac=cplx_dc_frac)
-        if cplx_theta_base_learnable:
+        if self.real_only:
+            # MATCHED real-eigenvalue control: snap each channel's phase to the
+            # nearest real-axis angle {0, pi} (rounding theta/pi), giving real
+            # eigenvalues with both signs. Freeze it (non-learnable) and set
+            # drift=0 so theta_proj is inert (zero gradient) — rotation can never
+            # be introduced. theta_proj weights still exist, so the PARAM COUNT is
+            # identical to the complex head; only the rotation DOF is removed.
+            theta_base = (theta_base / math.pi).round() * math.pi
+            self.theta_base = nn.Parameter(theta_base, requires_grad=False)
+            eff_drift = 0.0
+        elif cplx_theta_base_learnable:
             self.theta_base = nn.Parameter(theta_base)            # WD-exempt (see param_groups)
+            eff_drift = self.theta_drift
         else:
             self.register_buffer("theta_base", theta_base)
+            eff_drift = self.theta_drift
         self.theta_proj = nn.Linear(dim, H * P, bias=False)
         nn.init.normal_(self.theta_proj.weight, std=1e-3)         # start near pure base grid
-        self.register_buffer("_drift", torch.tensor(float(self.theta_drift)))
+        self.register_buffer("_drift", torch.tensor(float(eff_drift)))
 
         self.dropout = nn.Dropout(dropout) if dropout > 0 else nn.Identity()
 
@@ -219,20 +252,29 @@ class ComplexEigHeadLayer(nn.Module):
         """Split heads: chunked complex bulk + per-step bounded subset (overlapped)."""
         nlin = self.n_linear
         out_parts = []
-        # complex-only (chunked) heads -- the bulk. The fused Triton kernel
-        # (real/imag-decomposed, no torch.complex) runs on CUDA; the torch-complex
-        # reference is the CPU / fallback path (parity-verified in tests).
+        # complex-only heads -- the bulk. The STABLE eager per-step scan when
+        # force_sequential (capability study, avoids the chunked-kernel fp32
+        # overflow). Otherwise the fused Triton kernel (real/imag-decomposed, no
+        # torch.complex) on CUDA, with the torch-complex chunked reference as the
+        # CPU / fallback path (all parity-verified in tests).
         if nlin > 0:
-            # fused kernel supports P=N/2<=64 and V<=64 (one (b,h) program/block)
-            dims_ok = (q.shape[-1] // 2) <= 64 and v.shape[-1] <= 64
-            use_fused = self.fused_triton and q.is_cuda and dims_ok
-            chunk_fn = (complex_gated_delta_chunked_triton if use_fused
-                        else complex_gated_delta_chunked)
-            o_lin, _ = chunk_fn(
-                q[:, :, :nlin], k[:, :, :nlin], v[:, :, :nlin],
-                log_r[:, :, :nlin], theta[:, :, :nlin], beta[:, :, :nlin],
-                chunk_size=self.chunk_size, read_mode=self.read_mode,
-            )
+            if self.force_sequential:
+                o_lin, _ = complex_gated_delta_reference(
+                    q[:, :, :nlin], k[:, :, :nlin], v[:, :, :nlin],
+                    log_r[:, :, :nlin], theta[:, :, :nlin], beta[:, :, :nlin],
+                    phi=None, read_mode=self.read_mode,
+                )
+            else:
+                # fused kernel supports P=N/2<=64 and V<=64 (one (b,h) program/block)
+                dims_ok = (q.shape[-1] // 2) <= 64 and v.shape[-1] <= 64
+                use_fused = self.fused_triton and q.is_cuda and dims_ok
+                chunk_fn = (complex_gated_delta_chunked_triton if use_fused
+                            else complex_gated_delta_chunked)
+                o_lin, _ = chunk_fn(
+                    q[:, :, :nlin], k[:, :, :nlin], v[:, :, :nlin],
+                    log_r[:, :, :nlin], theta[:, :, :nlin], beta[:, :, :nlin],
+                    chunk_size=self.chunk_size, read_mode=self.read_mode,
+                )
             out_parts.append(o_lin)
         # complex + per-step hardtanh heads -- the nonlinear subset (sequential)
         if self.n_nonlin > 0:
@@ -282,7 +324,7 @@ class ComplexEigHeadLayer(nn.Module):
         return (f"dim={self.dim}, n_heads={self.n_heads}, n_state={self.n_state}, "
                 f"P={self.P}, chunked={self.n_linear}, hardtanh_subset={self.n_nonlin}, "
                 f"read={self.read_mode}, drift={self.theta_drift:.4f}, "
-                f"fused_triton={self.fused_triton}")
+                f"real_only={self.real_only}, fused_triton={self.fused_triton}")
 
 
 __all__ = ["ComplexEigHeadLayer", "init_theta_base"]
