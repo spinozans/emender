@@ -107,6 +107,7 @@ from .e75_multihead import E75MultiHead
 from .e88_fla_hybrid import E88FLAHybrid
 from .unified_cell import UnifiedCellLayer
 from .typed_head_mixture import TypedHeadMixtureLayer
+from .phi_shell import PhiShellLayer
 from .e89_residual_state import E89ResidualStateCell
 from .e76_logspace_delta import E76LogSpaceDelta
 from .e77_linear_matrix import E77LinearMatrix
@@ -529,6 +530,12 @@ def get_ladder_level(level):
         # (native GDN-2 delta-memory recall heads + E98 corner specialists) in one
         # layer, allocated deterministically from per-type logits.
         'typed-gdn2': lambda **kw: TypedHeadMixtureLayer(**kw),
+        # phi-shell (task phi-explore): FLA GDN-2 gated-delta plumbing with a
+        # PER-STEP state nonlinearity phi as a swept free axis. phi='identity'
+        # is the linear gdn-neg baseline realized in the same code path; every
+        # other phi is one elementwise function away. The vehicle for the
+        # capability-vs-phi sweep on the depth-growing modular_quadratic cliff.
+        'phi-shell': lambda **kw: PhiShellLayer(**kw),
         # Production-LM-protocol variants of the two expressivity mixers: wrapped
         # so LadderLM's `out, h = layer(x, prev_hidden)` calling convention works.
         # These are the E99 typed-Emender and E98-CMA candidates wired into the

@@ -1,0 +1,107 @@
+{
+  "task": "modular_quadratic",
+  "pattern": [
+    "phi-shell",
+    "phi-shell",
+    "phi-shell",
+    "phi-shell"
+  ],
+  "dim": 256,
+  "depth": 4,
+  "seq_len": 128,
+  "batch_size": 32,
+  "lr": 0.0003,
+  "seed": 456,
+  "params": 9050952,
+  "mlp_ratio": 2.0,
+  "disable_autocast": false,
+  "use_triton_e88": false,
+  "linear_state": null,
+  "state_activation": null,
+  "use_gate": null,
+  "decay_mode": null,
+  "gdn_allow_neg_eigval": 1,
+  "e88_pos_eigval_clamp": null,
+  "e88_raw_write": null,
+  "knob_lr_mult": 1.0,
+  "lam_max": null,
+  "beta_max": null,
+  "igain_max": null,
+  "corner_mixture": null,
+  "head_type_logits": null,
+  "phi": "learned",
+  "split_edit": 1,
+  "typed_alloc": null,
+  "spec_reg": null,
+  "spec_reg_weight": 1.0,
+  "spec_reg_anneal": 0.5,
+  "curriculum": null,
+  "random_baseline_acc": 0.020833333333333332,
+  "steps": [
+    {
+      "step": 0,
+      "train_loss": 217.2835693359375,
+      "eval_acc": 0.05255126953125,
+      "eval_loss": 185.7675018310547,
+      "elapsed_s": 101.21324181556702
+    },
+    {
+      "step": 1500,
+      "train_loss": 0.7267045974731445,
+      "eval_acc": 0.52398681640625,
+      "eval_loss": 0.6722392141819,
+      "elapsed_s": 2874.2212822437286
+    },
+    {
+      "step": 3000,
+      "train_loss": 3.382006980245933e-05,
+      "eval_acc": 0.9986572265625,
+      "eval_loss": 0.003839154727756977,
+      "elapsed_s": 4395.2244420051575
+    },
+    {
+      "step": 4500,
+      "train_loss": 1.4202560905118844e-08,
+      "eval_acc": 1.0,
+      "eval_loss": 2.4038302681717028e-08,
+      "elapsed_s": 5915.601589679718
+    },
+    {
+      "step": 5999,
+      "train_loss": 7.741526530935516e-09,
+      "eval_acc": 1.0,
+      "eval_loss": 1.0768412481154677e-09,
+      "elapsed_s": 7442.2743492126465
+    }
+  ],
+  "final_acc": 1.0,
+  "final_loss": 4.252671817125964e-09,
+  "elapsed_total_s": 7446.320463180542,
+  "length_extrap": {
+    "128": {
+      "acc": 1.0,
+      "loss": 1.3808502105638887e-08,
+      "B_eval": 32
+    },
+    "256": {
+      "acc": 0.96539306640625,
+      "loss": 0.2673376612365246,
+      "B_eval": 32
+    },
+    "512": {
+      "acc": 0.6995391845703125,
+      "loss": NaN,
+      "B_eval": 32
+    },
+    "1024": {
+      "acc": 0.354949951171875,
+      "loss": NaN,
+      "B_eval": 16
+    },
+    "2048": {
+      "acc": 0.183990478515625,
+      "loss": NaN,
+      "B_eval": 8
+    }
+  }
+}

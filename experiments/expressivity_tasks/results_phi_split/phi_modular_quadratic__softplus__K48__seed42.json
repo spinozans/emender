@@ -1,0 +1,107 @@
+{
+  "task": "modular_quadratic",
+  "pattern": [
+    "phi-shell",
+    "phi-shell",
+    "phi-shell",
+    "phi-shell"
+  ],
+  "dim": 256,
+  "depth": 4,
+  "seq_len": 128,
+  "batch_size": 32,
+  "lr": 0.0003,
+  "seed": 42,
+  "params": 9050752,
+  "mlp_ratio": 2.0,
+  "disable_autocast": false,
+  "use_triton_e88": false,
+  "linear_state": null,
+  "state_activation": null,
+  "use_gate": null,
+  "decay_mode": null,
+  "gdn_allow_neg_eigval": 1,
+  "e88_pos_eigval_clamp": null,
+  "e88_raw_write": null,
+  "knob_lr_mult": 1.0,
+  "lam_max": null,
+  "beta_max": null,
+  "igain_max": null,
+  "corner_mixture": null,
+  "head_type_logits": null,
+  "phi": "softplus",
+  "split_edit": 1,
+  "typed_alloc": null,
+  "spec_reg": null,
+  "spec_reg_weight": 1.0,
+  "spec_reg_anneal": 0.5,
+  "curriculum": null,
+  "random_baseline_acc": 0.020833333333333332,
+  "steps": [
+    {
+      "step": 0,
+      "train_loss": 240.5823516845703,
+      "eval_acc": 0.051025390625,
+      "eval_loss": 220.69792938232422,
+      "elapsed_s": 1306.2948877811432
+    },
+    {
+      "step": 1500,
+      "train_loss": 0.7150937914848328,
+      "eval_acc": 0.51544189453125,
+      "eval_loss": 0.6818692088127136,
+      "elapsed_s": 3618.3038420677185
+    },
+    {
+      "step": 3000,
+      "train_loss": 0.6879897117614746,
+      "eval_acc": 0.521484375,
+      "eval_loss": 0.6695602089166641,
+      "elapsed_s": 5780.985073804855
+    },
+    {
+      "step": 4500,
+      "train_loss": 0.6492862701416016,
+      "eval_acc": 0.5347900390625,
+      "eval_loss": 0.6491558998823166,
+      "elapsed_s": 7889.918920278549
+    },
+    {
+      "step": 5999,
+      "train_loss": 0.3944375216960907,
+      "eval_acc": 0.65496826171875,
+      "eval_loss": 0.5030835568904877,
+      "elapsed_s": 10131.315500736237
+    }
+  ],
+  "final_acc": 0.6574249267578125,
+  "final_loss": 0.5018110703676939,
+  "elapsed_total_s": 10134.502316474915,
+  "length_extrap": {
+    "128": {
+      "acc": 0.6644287109375,
+      "loss": 0.49743110686540604,
+      "B_eval": 32
+    },
+    "256": {
+      "acc": 0.58447265625,
+      "loss": 0.599782258272171,
+      "B_eval": 32
+    },
+    "512": {
+      "acc": 0.540252685546875,
+      "loss": 0.6506071537733078,
+      "B_eval": 32
+    },
+    "1024": {
+      "acc": 0.5197906494140625,
+      "loss": 0.6773544102907181,
+      "B_eval": 16
+    },
+    "2048": {
+      "acc": 0.5111541748046875,
+      "loss": 0.6891447156667709,
+      "B_eval": 8
+    }
+  }
+}

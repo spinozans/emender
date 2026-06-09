@@ -135,6 +135,17 @@ def main():
                          'only to typed-gdn2 layers; ignored when no shell heads.')
     ap.add_argument('--shell_state_chunk', type=int, default=None,
                     help='typed-gdn2: chunk size for the fused shell scan (e.g. 64).')
+    ap.add_argument('--split_edit', type=int, default=None, choices=[0, 1],
+                    help='phi-shell: use the E97 SPLIT-EDIT recurrence (erase gate '
+                         'on read key + write gate on value) instead of plain '
+                         'gated-delta. The split-edit substrate is the one proven '
+                         'to separate on the cliff (task phi-explore).')
+    ap.add_argument('--phi', type=str, default=None,
+                    help='phi-shell: per-step state nonlinearity phi in '
+                         'S=phi(decay*S + gated-delta write). One of identity '
+                         '(=linear gdn-neg baseline), tanh, softsign, hardtanh, '
+                         'poly3, relu, softplus, gelu, silu, signed_sqrt, learned. '
+                         'Forwarded only to phi-shell layers (task phi-explore).')
     ap.add_argument('--knob_lr_mult', type=float, default=1.0,
                     help='LEARNABILITY intervention #2: multiply the base LR for '
                          'the recurrence knobs (lam_raw/beta_raw/igain_raw/'
@@ -182,6 +193,7 @@ def main():
     args = ap.parse_args()
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    torch.set_float32_matmul_precision('high')  # TF32 for the fp32 per-step scan matmuls
     torch.manual_seed(args.seed)
     rng = np.random.default_rng(args.seed)
 
@@ -278,6 +290,15 @@ def main():
     if args.gdn_allow_neg_eigval is not None:
         typed_kwargs['gdn_allow_neg_eigval'] = bool(args.gdn_allow_neg_eigval)
 
+    # phi-shell (task phi-explore): per-step state nonlinearity phi as a swept axis.
+    phi_kwargs = {}
+    if args.phi is not None:
+        phi_kwargs['phi'] = args.phi
+    if args.split_edit is not None:
+        phi_kwargs['split_edit'] = bool(args.split_edit)
+    if args.gdn_allow_neg_eigval is not None:
+        phi_kwargs['gdn_allow_neg_eigval'] = bool(args.gdn_allow_neg_eigval)
+
     def _is_unified_level(level):
         return isinstance(level, str) and (level.startswith('e98') or level.startswith('unified'))
 
@@ -295,6 +316,8 @@ def main():
             return dict(gdn_kwargs)
         if level == 'typed-gdn2':
             return dict(typed_kwargs)
+        if level == 'phi-shell':
+            return dict(phi_kwargs)
         if _is_unified_level(level):
             return dict(unified_kwargs)
         return {}
@@ -380,6 +403,8 @@ def main():
            'igain_max': args.igain_max,
            'corner_mixture': args.corner_mixture,
            'head_type_logits': args.head_type_logits,
+           'phi': args.phi,
+           'split_edit': args.split_edit,
            'typed_alloc': typed_alloc,
            'spec_reg': args.spec_reg,
            'spec_reg_weight': float(args.spec_reg_weight),
