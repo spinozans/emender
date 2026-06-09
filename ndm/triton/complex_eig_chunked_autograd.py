@@ -728,6 +728,16 @@ def complex_gated_delta_chunked_triton(
     P = N // 2
     if allow_tf32 is None:
         allow_tf32 = q.dtype in (torch.bfloat16, torch.float16)
+    # Env override: CPLX_ALLOW_TF32=0 forces full-fp32 tl.dot matmuls even on the
+    # bf16 autocast path. The TF32 matmuls (~10-bit mantissa) in the Newton-Schulz
+    # (I+M) inverse + decay-absorbed inverse-key products are too lossy for STABLE
+    # LM training at lr 2e-3 (they diverge to NaN within ~10 optimizer steps, while
+    # the full-fp32 path — matching the torch.complex reference's precision — is
+    # stable). Inputs/states/accumulation are already fp32; this knob only governs
+    # the heavy tl.dot precision. (task complex-eig-lm-2)
+    _tf32_env = _os.environ.get('CPLX_ALLOW_TF32')
+    if _tf32_env is not None:
+        allow_tf32 = _tf32_env not in ('0', 'false', 'False', '')
     kr, ki = _pair_l2_scale(k, l2norm, 1.0)
     qr, qi = _pair_l2_scale(q, l2norm, P ** -0.5)
     out_r, out_i, S_fr, S_fi = ComplexEigChunkedFn.apply(

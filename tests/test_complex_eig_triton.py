@@ -112,6 +112,32 @@ def test_bf16_tf32_path_parity():
 
 
 @pytest.mark.skipif(not CUDA, reason="needs CUDA")
+def test_cplx_allow_tf32_env_forces_fp32_matmuls(monkeypatch):
+    """CPLX_ALLOW_TF32=0 forces full-fp32 tl.dot even on the bf16 autocast path.
+
+    The default bf16 path uses TF32 matmuls (~10-bit mantissa) which are too lossy
+    for stable LM training (task complex-eig-lm-2: NaN < 30 steps); the env override
+    forces fp32 matmuls (matching the torch.complex reference precision). REAL check:
+    with bf16 inputs, env=0 must produce a result strictly CLOSER to the fp32
+    reference than the default (TF32) result.
+    """
+    dev = "cuda"
+    B, T, H, N, V = 2, 256, 4, 32, 32
+    q, k, v, log_r, theta, beta = _mk(B, T, H, N, V, dev, seed=5)
+    ref, _ = complex_gated_delta_reference(q, k, v, log_r, theta, beta)
+    qb, kb, vb = q.bfloat16(), k.bfloat16(), v.bfloat16()
+    # default bf16 path -> allow_tf32=True (TF32 matmuls)
+    monkeypatch.delenv("CPLX_ALLOW_TF32", raising=False)
+    out_tf32, _ = complex_gated_delta_chunked_triton(qb, kb, vb, log_r, theta, beta, chunk_size=32)
+    # env override -> fp32 matmuls
+    monkeypatch.setenv("CPLX_ALLOW_TF32", "0")
+    out_fp32, _ = complex_gated_delta_chunked_triton(qb, kb, vb, log_r, theta, beta, chunk_size=32)
+    err_tf32 = _rel(out_tf32.float(), ref)
+    err_fp32 = _rel(out_fp32.float(), ref)
+    assert err_fp32 < err_tf32, f"env=0 not more precise: fp32 {err_fp32} >= tf32 {err_tf32}"
+
+
+@pytest.mark.skipif(not CUDA, reason="needs CUDA")
 def test_head_runs_on_fused_triton_path():
     """ComplexEigHeadLayer drives the fused Triton kernel (fused_triton=True default)
     and trains a step with finite grads."""
