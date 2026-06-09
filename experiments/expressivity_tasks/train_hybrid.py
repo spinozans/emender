@@ -133,6 +133,12 @@ def main():
                     help='typed-gdn2: bounded nonlinear-in-time state map for the '
                          'gdn2_nonlin_shell control head (e.g. "tanh"). Forwarded '
                          'only to typed-gdn2 layers; ignored when no shell heads.')
+    ap.add_argument('--e97_state_nonlin', type=str, default=None,
+                    help='e97-hetero-cma: e97_delta split-edit per-step state map '
+                         '(tanh=depth-capability head, identity=linear control)')
+    ap.add_argument('--use_chunked_e97_delta', type=int, default=None, choices=[0, 1],
+                    help='e97-hetero-cma: route e97_delta through the chunked kernel '
+                         '(only engages for linear state; 0 keeps sequential split-edit)')
     ap.add_argument('--shell_state_chunk', type=int, default=None,
                     help='typed-gdn2: chunk size for the fused shell scan (e.g. 64).')
     ap.add_argument('--split_edit', type=int, default=None, choices=[0, 1],
@@ -283,6 +289,15 @@ def main():
         typed_kwargs['shell_state_nonlin'] = args.shell_state_nonlin
     if args.shell_state_chunk is not None:
         typed_kwargs['shell_state_chunk'] = args.shell_state_chunk
+    # e97-hetero-cma: the e97_delta head's per-step state map on the split-edit
+    # recurrence. 'tanh' (default in TypedHeadMixtureLayer) is the depth-capability
+    # head (per-step bounded saturation = phi-explore winner); 'identity' is the
+    # within-substrate linear control. use_chunked_e97_delta=0 keeps the sequential
+    # split-edit kernel even for linear state (the chunked kernel erases the bound).
+    if args.e97_state_nonlin is not None:
+        typed_kwargs['e97_state_nonlin'] = args.e97_state_nonlin
+    if args.use_chunked_e97_delta is not None:
+        typed_kwargs['use_chunked_e97_delta'] = bool(args.use_chunked_e97_delta)
     # within-layer study (e97-within-layer): the recall head axis is gdn (no neg
     # eigenvalue) vs gdn-neg (allow_neg_eigval=True, the GDN-2 tracking eigenvalue).
     # TypedHeadMixtureLayer defaults this True, so it MUST be plumbed to express

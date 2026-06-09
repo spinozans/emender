@@ -401,26 +401,49 @@ class TypedHeadMixtureLayer(nn.Module):
         """Allocation metadata for logging (fractions + integer counts per type)."""
         return dict(self.alloc)
 
+    def _e97_delta_is_seq(self) -> bool:
+        """The e97_delta head runs the SEQUENTIAL split-edit T-scan (latency-bound,
+        overlap-worthy) whenever its state map is nonlinear: the chunked-parallel
+        tensor-core kernel engages only for LINEAR (identity) state. So a non-identity
+        e97_state_nonlin (e.g. the depth-capability per-step `tanh` on split-edit, the
+        phi-explore winner) is a sequential scan exactly like the shell — it belongs on
+        the side stream, not the tensor-core bulk."""
+        return self.e97_delta is not None and self.e97_state_nonlin != 'identity'
+
+    def _seq_heads_present(self) -> bool:
+        """Latency-bound sequential heads worth hiding on the side stream: the
+        gated-delta nonlinear `shell` (always sequential) AND the split-edit
+        `e97_raw`/sequential-`e97_delta` heads (per-step bounded saturation, the
+        depth-capability head)."""
+        return (self.shell is not None or self.e97_raw is not None
+                or self._e97_delta_is_seq())
+
     def _overlap_active(self, x: torch.Tensor) -> bool:
-        """Overlap is worth it only when the latency-bound sequential `shell` scan
-        can hide under a tensor-core chunked sub-block (gdn / e97). No CUDA, no
-        shell, or no chunked partner => run sequentially (identical numerics)."""
-        if not self.overlap_streams or not x.is_cuda or self.shell is None:
+        """Overlap is worth it only when a latency-bound sequential scan (shell or a
+        sequential split-edit head) can hide under a tensor-core chunked sub-block
+        (gdn-neg / unified / chunked-linear e97_delta). No CUDA, no sequential head,
+        or no tensor-core partner => run sequentially (identical numerics)."""
+        if not self.overlap_streams or not x.is_cuda:
             return False
-        has_chunked_partner = (self.gdn is not None or self.unified is not None
-                               or self.e97_raw is not None or self.e97_delta is not None)
-        return has_chunked_partner
+        if not self._seq_heads_present():
+            return False
+        has_bulk_partner = (self.gdn is not None or self.unified is not None
+                            or (self.e97_delta is not None and not self._e97_delta_is_seq()))
+        return has_bulk_partner
 
     def forward(self, x: torch.Tensor):
         # x: [B, T, dim]. Every sub-block maps dim->dim independently from the SAME
         # x; the layer output is their sum into the shared residual stream. Because
-        # they are independent, the latency-bound SEQUENTIAL nonlinear `shell` scan
-        # is launched on a SIDE CUDA stream so it runs concurrently with the
-        # tensor-core chunked bulk (hetero-kernel stream overlap). PyTorch autograd
-        # records the per-op stream and replays each sub-block's backward on the
-        # same stream, so the backward overlaps too. wait_stream + record_stream
-        # give correct cross-stream ordering and prevent premature buffer reuse.
+        # they are independent, the latency-bound SEQUENTIAL nonlinear scans (the
+        # gated-delta `shell` AND the split-edit per-step-tanh `e97_raw`/`e97_delta`
+        # heads — the depth-capability head, phi-explore winner) are launched on a
+        # SIDE CUDA stream so they run concurrently with the tensor-core chunked bulk
+        # (hetero-kernel stream overlap). PyTorch autograd records the per-op stream
+        # and replays each sub-block's backward on the same stream, so the backward
+        # overlaps too. wait_stream + record_stream give correct cross-stream ordering
+        # and prevent premature buffer reuse.
         overlap = self._overlap_active(x)
+        delta_seq = self._e97_delta_is_seq()
         s_out = None
         side = None
         if overlap:
@@ -431,7 +454,14 @@ class TypedHeadMixtureLayer(nn.Module):
             side.wait_stream(cur)            # side waits until x is materialized
             x.record_stream(side)            # x stays alive while side reads it
             with torch.cuda.stream(side):
-                s_out = self.shell(x)
+                if self.shell is not None:
+                    s_out = self.shell(x)
+                if self.e97_raw is not None:
+                    r_side = self._run_e97(self.e97_raw, x)
+                    s_out = r_side if s_out is None else s_out + r_side
+                if delta_seq:
+                    d_side = self._run_e97(self.e97_delta, x)
+                    s_out = d_side if s_out is None else s_out + d_side
 
         out = None
         if self.gdn is not None:
@@ -443,10 +473,12 @@ class TypedHeadMixtureLayer(nn.Module):
         if self.shell is not None and not overlap:
             s_seq = self.shell(x)
             out = s_seq if out is None else out + s_seq
-        if self.e97_raw is not None:
+        if self.e97_raw is not None and not overlap:
             r_out = self._run_e97(self.e97_raw, x)
             out = r_out if out is None else out + r_out
-        if self.e97_delta is not None:
+        if self.e97_delta is not None and not (overlap and delta_seq):
+            # chunked-linear e97_delta is tensor-core bulk (main stream); a sequential
+            # e97_delta runs on the side stream above when overlap is active.
             d_out = self._run_e97(self.e97_delta, x)
             out = d_out if out is None else out + d_out
 
