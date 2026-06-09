@@ -51,6 +51,7 @@ across configs by deriving `dim` to a target budget in the CMA driver.
 """
 from __future__ import annotations
 
+import math
 from typing import List, Optional
 
 import torch
@@ -221,9 +222,54 @@ class TypedHeadMixtureLayer(nn.Module):
         # a fixed per-layer latency tax that small fractions cannot shrink). Disable to
         # recover the exact prior sequential semantics (parity control).
         overlap_streams: bool = True,
+        # COMPLEX-EIGENVALUE arrangement (complex-eig-impl, spec COMPLEX_EIG_HEAD_SPEC.md):
+        # complex_eig=True replaces the diagonal scalar decay on ALL heads with a
+        # per-key-channel complex eigenvalue lambda = r e^{i theta} (rotation-scaling),
+        # i.e. the "complex-everywhere" arrangement. The 8-type allocation is bypassed
+        # (this is its own first-class configuration); the per-step hardtanh subset is
+        # nonlin_subset_frac of the heads (chunkable bulk + sequential bounded subset,
+        # stream-overlapped). theta=0 recovers real-positive decay, theta=pi reflection.
+        complex_eig: bool = False,
+        cplx_theta_base: float = 10000.0,
+        cplx_dc_frac: float = 0.5,
+        cplx_theta_drift: float = math.pi / 8,
+        cplx_read_mode: str = 'real',
+        cplx_chunk_size: int = 32,
+        nonlin_subset_frac: float = 0.0,
+        nonlin_subset_phi: str = 'hardtanh',
         **kwargs,
     ):
         super().__init__()
+        self.complex_eig = bool(complex_eig)
+        if self.complex_eig:
+            from .complex_eig_head import ComplexEigHeadLayer
+            self.dim = dim
+            self.n_state = int(n_state)
+            self.n_heads = int(n_heads)
+            self.expansion = expansion
+            self.complex_head = ComplexEigHeadLayer(
+                dim=dim,
+                n_state=self.n_state,
+                n_heads=self.n_heads,
+                expansion=expansion,
+                cplx_theta_base=cplx_theta_base,
+                cplx_dc_frac=cplx_dc_frac,
+                cplx_theta_drift=cplx_theta_drift,
+                cplx_read_mode=cplx_read_mode,
+                cplx_chunk_size=cplx_chunk_size,
+                nonlin_subset_frac=nonlin_subset_frac,
+                nonlin_subset_phi=nonlin_subset_phi,
+                overlap_streams=overlap_streams,
+                gdn_allow_neg_eigval=gdn_allow_neg_eigval,
+                gdn_use_conv=gdn_use_conv,
+                gdn_conv_size=gdn_conv_size,
+                use_gate=use_gate,
+                dropout=dropout,
+            )
+            self.alloc = self.complex_head.head_alloc()
+            self.dropout = nn.Dropout(dropout) if dropout > 0 else nn.Identity()
+            return
+        self.complex_head = None
         if head_type_logits is None:
             # balanced default: equal logits -> ~uniform across the 6 types
             head_type_logits = [0.0] * len(TYPE_NAMES)
@@ -442,6 +488,10 @@ class TypedHeadMixtureLayer(nn.Module):
         # and replays each sub-block's backward on the same stream, so the backward
         # overlaps too. wait_stream + record_stream give correct cross-stream ordering
         # and prevent premature buffer reuse.
+        # complex-eigenvalue arrangement: when complex_eig is on, the layer IS the
+        # ComplexEigHeadLayer (complex-everywhere); bypass the 8-type bulk/overlap.
+        if self.complex_head is not None:
+            return self.dropout(self.complex_head(x))
         overlap = self._overlap_active(x)
         delta_seq = self._e97_delta_is_seq()
         s_out = None
@@ -493,6 +543,9 @@ class TypedHeadMixtureLayer(nn.Module):
         return self.dropout(out)
 
     def extra_repr(self):
+        if self.complex_head is not None:
+            return (f"dim={self.dim}, n_heads={self.n_heads}, n_state={self.n_state}, "
+                    f"complex_eig=True, alloc={self.alloc}")
         c = self.alloc['counts']
         return (f"dim={self.dim}, n_heads={self.n_heads}, n_state={self.n_state}, "
                 f"counts={c}")
