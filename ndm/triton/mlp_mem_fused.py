@@ -71,10 +71,11 @@ def _mlp_mem_fwd_kernel(
     Out_ptr,                                   # [B,T,NH,V]
     W1ck_ptr, W2ck_ptr,                        # [num_ck,B,NH,HID,N] / [num_ck,B,NH,V,HID]
     W1f_ptr, W2f_ptr,                          # [B,NH,HID,N] / [B,NH,V,HID] final state
+    W1init_ptr,                                # [NH,HID,N] fixed initial fast-weights (theta_0)
     B: tl.constexpr, T: tl.constexpr, NH: tl.constexpr,
     N: tl.constexpr, V: tl.constexpr, HID: tl.constexpr,
     BN: tl.constexpr, BV: tl.constexpr, BH: tl.constexpr,
-    CKPT: tl.constexpr,
+    CKPT: tl.constexpr, HAS_INIT: tl.constexpr,
 ):
     pid = tl.program_id(0)
     b = pid // NH
@@ -90,7 +91,15 @@ def _mlp_mem_fwd_kernel(
     m_w1 = h_mask[:, None] & n_mask[None, :]      # [HID, N]
     m_w2 = v_mask[:, None] & h_mask[None, :]       # [V, HID]
 
-    W1 = tl.zeros([BH, BN], dtype=tl.float32)      # [HID, N]  (S0 = 0)
+    # theta_0: W2 = 0 always; W1 = fixed learnable-ish init when provided, else 0. A
+    # NONZERO W1 init is REQUIRED for a functional memory — zero W1 is an absorbing fixed
+    # point (h=tanh(W1.k)=0 kills the W2 write, W2=0 kills the W1 write; the memory never
+    # writes). W1init is per-head [NH,HID,N], broadcast over batch.
+    if HAS_INIT:
+        w1i_off = (h * HID + hidx[:, None]) * N + nidx[None, :]
+        W1 = tl.load(W1init_ptr + w1i_off, mask=m_w1, other=0.0).to(tl.float32)
+    else:
+        W1 = tl.zeros([BH, BN], dtype=tl.float32)  # [HID, N]  (S0 = 0)
     W2 = tl.zeros([BV, BH], dtype=tl.float32)      # [V, HID]
 
     # checkpoint slot 0 = initial (zero) state
@@ -321,7 +330,7 @@ class MlpMemFn(torch.autograd.Function):
     """Fused sequential mlp-mem scan. fwd + bwd are both @triton.jit kernels."""
 
     @staticmethod
-    def forward(ctx, k, q, v, eta, gamma, hid, ckpt_interval):
+    def forward(ctx, k, q, v, eta, gamma, hid, ckpt_interval, w1_init=None):
         assert k.is_cuda, "mlp-mem kernels require CUDA"
         B, T, NH, N = k.shape
         V = v.shape[-1]
@@ -348,10 +357,12 @@ class MlpMemFn(torch.autograd.Function):
         W1f = torch.empty((B, NH, HID, N), device=k.device, dtype=k.dtype)
         W2f = torch.empty((B, NH, V, HID), device=k.device, dtype=k.dtype)
 
+        has_init = w1_init is not None
+        w1_init_t = w1_init.contiguous().float() if has_init else W1f  # dummy ptr if unused
         _mlp_mem_fwd_kernel[(B * NH,)](
-            k, q, v, eta, gamma, out, W1ck, W2ck, W1f, W2f,
+            k, q, v, eta, gamma, out, W1ck, W2ck, W1f, W2f, w1_init_t,
             B=B, T=Tp, NH=NH, N=N, V=V, HID=HID,
-            BN=BN, BV=BV, BH=BH, CKPT=C, num_warps=4,
+            BN=BN, BV=BV, BH=BH, CKPT=C, HAS_INIT=has_init, num_warps=4,
         )
         ctx.save_for_backward(k, q, v, eta, gamma, W1ck, W2ck)
         ctx.shape = (B, T, Tp, NH, N, V, HID, C, num_ck, BN, BV, BH)
@@ -389,44 +400,65 @@ class MlpMemFn(torch.autograd.Function):
             BN=BN, BV=BV, BH=BH, CKPT=C, num_warps=4, num_stages=1,
         )
         sl = slice(0, T)
-        # grad order matches forward args: (k, q, v, eta, gamma, hid, ckpt_interval)
-        return (dk[:, sl], dq[:, sl], dv[:, sl], deta[:, sl], dgam[:, sl], None, None)
+        # grad order matches forward args: (k,q,v,eta,gamma,hid,ckpt_interval,w1_init).
+        # w1_init is a FIXED (non-learnable) per-head init -> no gradient.
+        return (dk[:, sl], dq[:, sl], dv[:, sl], deta[:, sl], dgam[:, sl], None, None, None)
 
 
 def mlp_mem_triton(k, q, v, eta, gamma, hid: int,
-                   ckpt_interval: int = DEFAULT_CKPT_INTERVAL):
+                   ckpt_interval: int = DEFAULT_CKPT_INTERVAL, w1_init=None):
     """Autograd-enabled fused sequential mlp-mem scan.
 
-    Args (all [B,T,NH,*], S0 = 0):
+    Args (all [B,T,NH,*]):
         k, q : [B,T,NH,N] key / query.
         v    : [B,T,NH,V] target value.
         eta  : [B,T,NH]   inner learning-rate / write-strength gate (>= 0).
         gamma: [B,T,NH]   forget gate in (0,1].
         hid  : inner hidden width HID (the memory's capacity knob).
+        w1_init : optional [NH,HID,N] FIXED initial fast-weights theta_0 (W1). REQUIRED
+                  for a functional memory — the default zero init is an absorbing fixed
+                  point (the memory never writes; see _mlp_mem_fwd_kernel). Non-learnable
+                  (no gradient): the per-head init basis is fixed, the per-sequence writes
+                  + the outer projection/eta/gamma learning do the adaptation.
 
     Returns (out [B,T,NH,V], W1_final [B,NH,HID,N], W2_final [B,NH,V,HID]).
     Gradients flow to k, q, v, eta, gamma. The hot path is the two @triton.jit
     kernels — no torch fallback.
     """
-    return MlpMemFn.apply(k, q, v, eta, gamma, int(hid), ckpt_interval)
+    return MlpMemFn.apply(k, q, v, eta, gamma, int(hid), ckpt_interval, w1_init)
 
 
 # ---------------------------------------------------------------------------
 # PyTorch reference (parity gate ONLY — not used in any experiment/training path).
 # ---------------------------------------------------------------------------
-def mlp_mem_torch_reference(k, q, v, eta, gamma, hid: int):
+def mlp_mem_torch_reference(k, q, v, eta, gamma, hid: int, w1_init=None, w2_init=None):
     """Eager reference for the mlp-mem recurrence. Mirrors the kernel math exactly.
 
-    Inputs [B,T,NH,*] (S0 = 0). Returns (out, W1_final, W2_final). Differentiable in
-    plain PyTorch so the test can finite-difference / autograd-check the fused grads.
+    Inputs [B,T,NH,*]. Returns (out, W1_final, W2_final). Differentiable in plain PyTorch
+    so the test can finite-difference / autograd-check the fused grads.
+
+    Initial fast-weights theta_0 = (W1_init, W2_init), each [NH,HID,N] / [NH,V,HID]
+    (broadcast over batch). Default (None) = ZERO init — which the kernel also uses, BUT
+    zero is an ABSORBING FIXED POINT of the inner-GD recurrence (h=tanh(W1.k)=0 with W1=0
+    kills the W2 write; W2=0 kills the W1 write), so a zero-init memory NEVER writes and
+    always reads zero (task nlmem-capability discovery). Passing a nonzero learnable
+    W1_init breaks the fixed point and makes the nonlinear memory functional — this is the
+    fast-weight ``slow weights'' init standard to TTT / fast-weight programmers, and the
+    spec §1.4 ``biases optional'' degree of freedom realized as a nonzero theta_0.
     """
     B, T, NH, N = k.shape
     V = v.shape[-1]
     HID = int(hid)
     dtype = k.dtype
     dev = k.device
-    W1 = torch.zeros(B, NH, HID, N, device=dev, dtype=torch.float32)
-    W2 = torch.zeros(B, NH, V, HID, device=dev, dtype=torch.float32)
+    if w1_init is None:
+        W1 = torch.zeros(B, NH, HID, N, device=dev, dtype=torch.float32)
+    else:
+        W1 = w1_init.to(device=dev, dtype=torch.float32).expand(B, NH, HID, N)
+    if w2_init is None:
+        W2 = torch.zeros(B, NH, V, HID, device=dev, dtype=torch.float32)
+    else:
+        W2 = w2_init.to(device=dev, dtype=torch.float32).expand(B, NH, V, HID)
     outs = []
     for t in range(T):
         k_t = k[:, t].float()                    # [B,NH,N]

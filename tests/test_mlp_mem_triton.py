@@ -103,3 +103,62 @@ def test_gdn_degenerate_corner_finite():
     err = (out - ref_out).abs().max().item()
     scale = ref_out.abs().max().item() + 1e-6
     assert err / scale < 2e-4, f"HID=64 rel err {err/scale}"
+
+
+# ---------------------------------------------------------------------------
+# Initial-state (theta_0) regression — the nlmem-capability dead-memory finding.
+# ---------------------------------------------------------------------------
+def test_zero_init_is_inert_absorbing_fixed_point():
+    """Zero theta_0 is an ABSORBING FIXED POINT of the inner-GD recurrence: with
+    W1=W2=0, h=tanh(W1.k)=0 kills the W2 write and W2=0 kills the W1 write, so the
+    nonlinear MLP memory NEVER writes and reads IDENTICALLY ZERO. This is the
+    nlmem-capability discovery: the default zero-init cell is inert. Eager path, CPU-ok."""
+    dev = 'cuda' if CUDA else 'cpu'
+    B, NH, N, V, HID, T = 2, 4, 16, 16, 16, 64
+    k, q, v, eta, gamma = _mk(B, T, NH, N, V, dev, torch.float32, seed=7)
+    out, W1f, W2f = mlp_mem_torch_reference(k, q, v, eta, gamma, HID)  # default zero init
+    assert out.abs().max().item() == 0.0, "zero-init memory should read identically zero"
+    assert W1f.abs().max().item() == 0.0 and W2f.abs().max().item() == 0.0, \
+        "zero-init fast-weights never escape zero (absorbing fixed point)"
+
+
+def test_nonzero_init_breaks_fixed_point_functional():
+    """A nonzero learnable W1_0 breaks the fixed point -> the memory writes and reads
+    a nonzero, finite signal (the nlmem-capability fix)."""
+    dev = 'cuda' if CUDA else 'cpu'
+    B, NH, N, V, HID, T = 2, 4, 16, 16, 16, 64
+    k, q, v, eta, gamma = _mk(B, T, NH, N, V, dev, torch.float32, seed=7)
+    k = torch.nn.functional.normalize(k, dim=-1)  # L2-norm keys (layer convention) for stability
+    q = torch.nn.functional.normalize(q, dim=-1)
+    w1_0 = 0.05 * torch.randn(NH, HID, N, device=dev)
+    out, W1f, W2f = mlp_mem_torch_reference(k, q, v, eta, gamma, HID, w1_init=w1_0)
+    assert torch.isfinite(out).all(), "functional read must be finite"
+    assert out.abs().max().item() > 1e-3, "nonzero-init memory must read a nonzero signal"
+    assert W2f.abs().max().item() > 0.0, "W2 must be written once theta_0 != 0"
+
+
+@pytest.mark.skipif(not CUDA, reason="needs CUDA")
+def test_triton_init_parity_fwd_bwd():
+    """The fused Triton kernel with a fixed W1_0 init matches the eager reference with the
+    SAME init, in BOTH forward and backward (grads wrt k,q,v,eta,gamma). Validates the
+    nlmem-capability functional-cell port."""
+    dev = 'cuda'
+    B, NH, N, V, HID, T = 2, 4, 32, 32, 32, 256
+    k, q, v, eta, gamma = _mk(B, T, NH, N, V, dev, torch.float32, seed=11)
+    k = torch.nn.functional.normalize(k, dim=-1)
+    q = torch.nn.functional.normalize(q, dim=-1)
+    eta = eta * 0.6  # keep writes tame so the T-step scan stays in fp32 range
+    w1_0 = 0.05 * torch.randn(NH, HID, N, device=dev)
+
+    def run(fn):
+        ts = [x.clone().requires_grad_() for x in (k, q, v, eta, gamma)]
+        o, _, _ = fn(*ts)
+        (o * o).sum().backward()
+        return o.detach(), [t.grad for t in ts]
+
+    eo, eg = run(lambda kk, qq, vv, ee, gg: mlp_mem_torch_reference(kk, qq, vv, ee, gg, HID, w1_init=w1_0))
+    to, tg = run(lambda kk, qq, vv, ee, gg: mlp_mem_triton(kk, qq, vv, ee, gg, HID, 16, w1_0))
+    assert torch.isfinite(to).all() and eo.abs().max() > 1e-3
+    assert (to - eo).norm() / eo.norm() < 2e-4, "fwd-init parity"
+    for nm, a, b in zip(('dk', 'dq', 'dv', 'deta', 'dgam'), eg, tg):
+        assert (a - b).norm() / max(a.norm(), 1e-9) < 5e-3, f"bwd-init parity {nm}"

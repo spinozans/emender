@@ -30,6 +30,7 @@ from .monoid_track import MonoidTrackTask, MonoidTrackInvTask
 from .modular_quadratic import ModularQuadraticTask, ModularQuadraticLinTask
 from .positional_clock import PositionalClockTask
 from .periodic_pattern import PeriodicPatternTask
+from .boolean_assoc import BooleanAssocTask
 
 ALL_TASKS = {
     'parity': ParityTask,
@@ -57,4 +58,6 @@ ALL_TASKS = {
     'modular_quadratic_lin': ModularQuadraticLinTask,  # linear control (no gap)
     'positional_clock': PositionalClockTask,    # mod-K native clock (COMPLEX-EIG GAP TEST)
     'periodic_pattern': PeriodicPatternTask,    # repeating-motif detection (COMPLEX-EIG GAP TEST)
+    'boolean_assoc': lambda **kw: BooleanAssocTask(op='xor', **kw),       # non-bilinear XOR assoc (NLMEM GAP TEST)
+    'boolean_assoc_lin': lambda **kw: BooleanAssocTask(op='lin', **kw),   # linear single-bit recall (matched control)
 }

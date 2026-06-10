@@ -45,6 +45,22 @@ class MlpMemHeadLayer(nn.Module):
         mlp_mem_hidden: int = 32,      # HID — inner hidden width (memory capacity)
         mlp_mem_eta_max: float = 1.0,  # cap on the inner LR (write-strength) gate
         mlp_mem_ckpt: int = DEFAULT_CKPT_INTERVAL,
+        # Learnable INITIAL fast-weights theta_0 = (W1_0, W2_0). The fused kernel inits
+        # theta_0 = 0, but ZERO is an ABSORBING FIXED POINT of the inner-GD recurrence
+        # (h=tanh(W1.k)=0 with W1=0 => the W2 write vanishes; W2=0 => the W1 write
+        # vanishes), so a zero-init MLP memory NEVER writes and reads identically zero —
+        # the cell is INERT (task nlmem-capability discovery). A small nonzero learnable
+        # W1_0 breaks the fixed point (the fast-weight "slow weights" init, spec §1.4).
+        # When True the cell runs the eager differentiable recurrence (GPU-ok) seeded with
+        # theta_0; when False it runs the as-validated fused-Triton (inert) zero-init path.
+        mlp_mem_learn_init: bool = True,
+        # cell selector — 'mlp' = the nonlinear MLP fast-weight memory (this head);
+        # 'gdn' = the spec §2.3 DEGENERATE LINEAR CORNER: run FLA's standard chunked
+        # gated-delta (linear matrix memory) on the *identical* shell/projections.
+        # cell='gdn' is the exactly-param-matched A/B baseline for the capability
+        # study (task nlmem-capability): same dim/heads/n_state/conv/gate/o_proj,
+        # the ONLY difference is linear-matrix vs nonlinear-MLP recurrent memory.
+        cell: str = 'mlp',
         # GDN plumbing (reused verbatim):
         gdn_allow_neg_eigval: bool = True,
         gdn_use_conv: bool = True,
@@ -67,6 +83,9 @@ class MlpMemHeadLayer(nn.Module):
         self.ckpt = int(mlp_mem_ckpt)
         self.use_gate = bool(use_gate)
         self.use_short_conv = bool(gdn_use_conv)
+        if cell not in ('mlp', 'gdn'):
+            raise ValueError(f"cell must be 'mlp' or 'gdn', got {cell!r}")
+        self.cell = cell
         if self.n_state > 64 or self.hid > 64:
             raise NotImplementedError(
                 f"mlp-mem kernel supports n_state,hidden <= 64 (got n_state={n_state}, "
@@ -97,6 +116,23 @@ class MlpMemHeadLayer(nn.Module):
         nn.init.zeros_(self.gamma_proj.weight)
         nn.init.constant_(self.gamma_proj.bias, 4.0)  # sigmoid(4) ~ 0.982 (slow forget)
 
+        # Learnable initial fast-weights theta_0 (breaks the zero-state absorbing fixed
+        # point — see mlp_mem_learn_init). W1_0 small-random so h=tanh(W1_0.k) != 0 at
+        # step 0 and the inner-GD writes engage; W2_0 = 0 (initial read is 0, learned up).
+        # learn-init params belong to the MLP-memory cell only; the 'gdn' linear-corner
+        # baseline carries none (keeps it a clean GDN-2 reference).
+        self.learn_init = bool(mlp_mem_learn_init) and self.cell == 'mlp'
+        hk = self.gdn.head_k_dim
+        hv = self.gdn.head_v_dim
+        if self.learn_init:
+            # small init: h=tanh(W1_0.k) is nonzero (breaks the fixed point) but modest,
+            # so the inner-GD writes start gentle and don't blow the fast-weights up over T.
+            self.W1_0 = nn.Parameter(0.05 * torch.randn(H, self.hid, hk))
+            self.W2_0 = nn.Parameter(torch.zeros(H, hv, self.hid))
+        else:
+            self.register_parameter('W1_0', None)
+            self.register_parameter('W2_0', None)
+
         self.dropout = nn.Dropout(dropout) if dropout > 0 else nn.Identity()
 
     def _project(self, x: torch.Tensor):
@@ -119,8 +155,23 @@ class MlpMemHeadLayer(nn.Module):
         return q, k, v, eta, gamma
 
     def _scan(self, q, k, v, eta, gamma):
-        """Fused sequential mlp-mem scan on CUDA; eager reference on CPU/parity."""
-        if q.is_cuda:
+        """mlp-mem scan. A nonzero theta_0 (W1_0) is REQUIRED for a functional memory —
+        the fused kernel's default zero theta_0 is an absorbing fixed point (the memory
+        never writes, reads identically zero; task nlmem-capability). With learn_init the
+        scan is seeded by the fixed per-head W1_0: the FUSED Triton kernel on CUDA (fast,
+        w1_init threaded into the forward) and the eager reference on CPU. Without
+        learn_init it is the as-validated zero-init path (inert on CUDA)."""
+        if self.learn_init:
+            w1i = self.W1_0
+            if q.is_cuda:
+                out, _, _ = mlp_mem_triton(k.float(), q.float(), v.float(),
+                                           eta, gamma, self.hid, ckpt_interval=self.ckpt,
+                                           w1_init=w1i)
+            else:  # pragma: no cover - CPU eager (tests/inference)
+                out, _, _ = mlp_mem_torch_reference(k.float(), q.float(), v.float(),
+                                                    eta, gamma, self.hid,
+                                                    w1_init=w1i, w2_init=self.W2_0)
+        elif q.is_cuda:
             out, _, _ = mlp_mem_triton(k.float(), q.float(), v.float(),
                                        eta, gamma, self.hid, ckpt_interval=self.ckpt)
         else:  # pragma: no cover - CPU path is the eager reference (tests/inference only)
@@ -130,6 +181,15 @@ class MlpMemHeadLayer(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         gdn = self.gdn
+        if self.cell == 'gdn':
+            # Degenerate LINEAR corner (spec §2.3): identical shell, but the recurrent
+            # memory is FLA's standard chunked gated-delta (linear matrix state) instead
+            # of the nonlinear MLP fast-weight. self.gdn IS a full FLA GatedDeltaNet, so
+            # this is the exact GDN-2 baseline on matched projections/params.
+            out = gdn(x)
+            if isinstance(out, tuple):
+                out = out[0]
+            return self.dropout(out)
         q, k, v, eta, gamma = self._project(x)
         o = self._scan(q, k, v, eta, gamma).to(x.dtype)   # [B,T,H,V]
         if self.use_gate:

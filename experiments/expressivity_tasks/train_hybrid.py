@@ -264,6 +264,9 @@ def main():
     elif args.task in ('modular_quadratic', 'modular_quadratic_lin'):
         if args.K is not None and args.K > 2:   # K=2 is the argparse default sentinel
             task_kwargs['p'] = args.K           # modulus (scale stress test)
+    elif args.task in ('boolean_assoc', 'boolean_assoc_lin'):
+        if args.K is not None and args.K > 2:   # K=2 is the argparse default sentinel
+            task_kwargs['n_features'] = args.K  # # of stored features (capacity stress)
     task = ALL_TASKS[args.task](**task_kwargs)
     print(f"Task: {task.name}, vocab_size={task.vocab_size}", flush=True)
 

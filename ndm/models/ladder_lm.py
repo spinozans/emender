@@ -571,6 +571,23 @@ def get_ladder_level(level):
         # are stripped so int() coercion is safe (mirrors complex-eig-lm).
         'mlp-mem-lm': lambda **kw: _LadderProtocolAdapter(
             MlpMemHeadLayer(**{k: v for k, v in kw.items() if v is not None})),
+        # Exactly-param-matched GDN-2 LM baseline (nlmem-capability convergent-loss-null):
+        # same MlpMemHeadLayer shell, spec §2.3 linear gated-delta cell, LadderLM-wrapped.
+        'gdn-matched-lm': lambda **kw: _LadderProtocolAdapter(
+            MlpMemHeadLayer(cell='gdn', **{k: v for k, v in kw.items() if v is not None})),
+        # Raw single-arg variant for the HybridLadderLM expressivity harness
+        # (task nlmem-capability). HybridLadderLM calls `layer(x)` and unwraps
+        # tuples, so the bare MlpMemHeadLayer (forward(x) -> tensor) is used
+        # directly without the LadderLM (out, h) protocol adapter — mirrors how
+        # the 'complex-eig' raw level is used by run_complex_eig_battery.py.
+        'mlp-mem': lambda **kw: MlpMemHeadLayer(
+            **{k: v for k, v in kw.items() if v is not None}),
+        # Exactly-param-matched GDN-2 baseline for the capability A/B (nlmem-capability):
+        # the SAME MlpMemHeadLayer shell with the spec §2.3 degenerate LINEAR corner —
+        # FLA chunked gated-delta (linear matrix memory) replaces the nonlinear MLP
+        # memory. Identical projections/conv/gate/o_proj; only the recurrent cell differs.
+        'gdn-matched': lambda **kw: MlpMemHeadLayer(
+            cell='gdn', **{k: v for k, v in kw.items() if v is not None}),
         'e98-cma-lm': lambda **kw: _LadderProtocolAdapter(UnifiedCellLayer(**{
             'knob_mode': 'learned', 'phi': 'gamma_mix', 'lam_max': 1.5,
             'spread_init': True, 'split_gate': True, **kw})),
