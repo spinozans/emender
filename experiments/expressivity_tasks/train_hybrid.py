@@ -116,6 +116,18 @@ def main():
                     help='UnifiedCell beta (delta-correction) cap.')
     ap.add_argument('--igain_max', type=float, default=None,
                     help='UnifiedCell input write-gain cap.')
+    # opt-norm (OPT_SPEC.md §5.3): init/placement knobs on the typed-gdn2 substrate.
+    ap.add_argument('--decay_init', type=str, default=None,
+                    choices=['default', 'slow', 'fast'],
+                    help='Decay/A_log/dt_bias init on typed-gdn2 delta-memory heads: '
+                         'slow=>retention->1 (recall basin), fast=>retention->0.')
+    ap.add_argument('--decay_init_delta', type=float, default=None,
+                    help='Magnitude of the A_log/dt_bias offset for --decay_init.')
+    ap.add_argument('--gate_bias_init', type=float, default=None,
+                    help='Output silu-gate bias init on typed-gdn2 FLA-path heads '
+                         '(+2 open / -2 closed / 0 neutral). None=FLA default (no bias).')
+    ap.add_argument('--unified_head_norm', type=int, default=None, choices=[0, 1],
+                    help='RMSNorm head-norm placement on typed-gdn2 unified heads.')
     ap.add_argument('--mlp_ratio', type=float, default=0.0,
                     help='Post-mixer SwiGLU MLP hidden-ratio per block (transformer-'
                          'style mixer+MLP). 0 = mixer-only (default; preserves prior '
@@ -326,6 +338,15 @@ def main():
         typed_kwargs['beta_max'] = args.beta_max
     if args.igain_max is not None:
         typed_kwargs['igain_max'] = args.igain_max
+    # opt-norm init/placement knobs -> typed-gdn2 layers (OPT_SPEC.md §5.3).
+    if args.decay_init is not None:
+        typed_kwargs['decay_init'] = args.decay_init
+    if args.decay_init_delta is not None:
+        typed_kwargs['decay_init_delta'] = args.decay_init_delta
+    if args.gate_bias_init is not None:
+        typed_kwargs['gate_bias_init'] = args.gate_bias_init
+    if args.unified_head_norm is not None:
+        typed_kwargs['unified_head_norm'] = bool(args.unified_head_norm)
     if args.shell_state_nonlin is not None:
         typed_kwargs['shell_state_nonlin'] = args.shell_state_nonlin
     if args.shell_state_chunk is not None:
@@ -479,6 +500,10 @@ def main():
            'lam_max': args.lam_max,
            'beta_max': args.beta_max,
            'igain_max': args.igain_max,
+           'decay_init': args.decay_init,
+           'decay_init_delta': args.decay_init_delta,
+           'gate_bias_init': args.gate_bias_init,
+           'unified_head_norm': args.unified_head_norm,
            'corner_mixture': args.corner_mixture,
            'head_type_logits': args.head_type_logits,
            'refit_has_mom': args.refit_has_mom,

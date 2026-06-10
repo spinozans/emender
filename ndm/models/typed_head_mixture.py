@@ -177,6 +177,25 @@ class TypedHeadMixtureLayer(nn.Module):
         lam_max: float = 1.585,
         beta_max: float = 2.747,
         igain_max: float = 2.0,
+        # --- opt-norm parameterization knobs (function class UNCHANGED; init/placement
+        #     only, no kernel changes). These re-init the basin a corner converges to:
+        #     decay/A_log/dt_bias init sets retention; gate-bias init sets the output
+        #     gate's open/closed default; unified_head_norm toggles head-norm placement
+        #     on the unified (count/nonlin/track) sub-block. See OPT_SPEC.md §5.3. ---
+        # decay_init: 'default' leaves FLA's Mamba-style A_log/dt_bias init; 'slow'
+        #   pushes retention->1 (A_log/dt_bias offset negative); 'fast' pushes
+        #   retention->0 (offset positive). Applied to EVERY delta-memory A_log/dt_bias
+        #   param in this layer (recall gdn + nonlin shell + refit).
+        decay_init: str = 'default',
+        decay_init_delta: float = 2.0,   # magnitude of the A_log/dt_bias offset
+        # gate_bias_init: additive bias on the silu output-gate pre-activation of the
+        #   FLA-path gate projections (g_proj on the recall gdn + nonlin shell heads).
+        #   +2 => gate opens (silu(+2)~1.76), -2 => gate ~closed. None leaves bias=False
+        #   (FLA default). The gate FUNCTION is unchanged; only its init bias moves.
+        gate_bias_init: Optional[float] = None,
+        # unified_head_norm: RMSNorm placement on the unified-cell heads (count/nonlin/
+        #   track corners). True is the default; False removes the per-head output norm.
+        unified_head_norm: bool = True,
         # GDN-2 native head settings (known-good; frozen):
         gdn_allow_neg_eigval: bool = True,
         gdn_use_conv: bool = True,
@@ -318,6 +337,12 @@ class TypedHeadMixtureLayer(nn.Module):
         self.expansion = expansion
         self.head_type_logits = [float(x) for x in head_type_logits]
 
+        # opt-norm parameterization knobs (init/placement only; see OPT_SPEC.md §5.3)
+        self.decay_init = str(decay_init)
+        self.decay_init_delta = float(decay_init_delta)
+        self.gate_bias_init = gate_bias_init
+        self.unified_head_norm = bool(unified_head_norm)
+
         self.use_triton_e97 = bool(use_triton_e97)
         self.cast_recurrent_bf16 = bool(cast_recurrent_bf16)
         self.e97_state_nonlin = str(e97_state_nonlin)
@@ -383,7 +408,7 @@ class TypedHeadMixtureLayer(nn.Module):
                 lam_max=lam_max,
                 beta_max=beta_max,
                 igain_max=igain_max,
-                head_norm=True,
+                head_norm=self.unified_head_norm,
                 use_gate=use_gate,
                 gate_activation=gate_activation,
                 dropout=dropout,
@@ -458,6 +483,58 @@ class TypedHeadMixtureLayer(nn.Module):
             )
 
         self.dropout = nn.Dropout(dropout) if dropout > 0 else nn.Identity()
+
+        # opt-norm: apply the init/placement overrides to the already-built sub-blocks.
+        # These re-initialize parameters in place (decay) or add a gate-bias param
+        # (gate) BEFORE the trainer builds the optimizer, so the swept init is what
+        # training starts from. No kernel / function-class change.
+        self._apply_opt_norm_init()
+
+    def _apply_opt_norm_init(self):
+        """Re-initialize decay (A_log / dt_bias) and the output-gate bias per the
+        opt-norm knobs. Function class is unchanged — only the starting point of the
+        gate/decay parameterization moves (OPT_SPEC.md §5.3 hypothesis: the basin a
+        corner converges to is set at init by gate/decay/norm)."""
+        # --- decay / A_log / dt_bias init -------------------------------------
+        # Retention r = exp(-exp(A_log) * softplus(a_proj(x) + dt_bias)). 'slow' makes
+        # exp(A_log)*softplus(..) small (A_log,dt_bias offset NEGATIVE) so r->1 (recall
+        # wants near-1 retention); 'fast' offsets POSITIVE so r->0 (rapid forgetting).
+        if self.decay_init != 'default':
+            sign = -1.0 if self.decay_init == 'slow' else (+1.0 if self.decay_init == 'fast' else 0.0)
+            if sign == 0.0:
+                raise ValueError(f"decay_init must be default|slow|fast, got {self.decay_init}")
+            d = self.decay_init_delta
+            with torch.no_grad():
+                for name, p in self.named_parameters():
+                    if name.endswith('A_log') or name.endswith('dt_bias'):
+                        p.add_(sign * d)
+        # --- gate-bias init ---------------------------------------------------
+        # FLA-path gate projections (g_proj on the recall gdn + nonlin shell heads)
+        # are Linear(bias=False); inject a bias so the silu output gate starts open
+        # (+2) or closed (-2). Replacing g_proj with a bias-enabled Linear (weight
+        # copied) keeps the exact gate FUNCTION g=silu(W x + b); only b's init moves.
+        if self.gate_bias_init is not None:
+            b0 = float(self.gate_bias_init)
+            for parent in (self.gdn, self.shell):
+                if parent is None:
+                    continue
+                for mod_name, mod in parent.named_modules():
+                    if mod_name.endswith('g_proj') and isinstance(mod, nn.Linear):
+                        if mod.bias is None:
+                            new = nn.Linear(mod.in_features, mod.out_features, bias=True,
+                                            device=mod.weight.device, dtype=mod.weight.dtype)
+                            with torch.no_grad():
+                                new.weight.copy_(mod.weight)
+                                new.bias.fill_(b0)
+                            # swap the submodule in place
+                            sub = parent
+                            *path, leaf = mod_name.split('.')
+                            for part in path:
+                                sub = getattr(sub, part)
+                            setattr(sub, leaf, new)
+                        else:
+                            with torch.no_grad():
+                                mod.bias.fill_(b0)
 
     def _run_e97(self, block: "E88FLAHybrid", x: torch.Tensor) -> torch.Tensor:
         """Run a fused E97 split-edit sub-block, guaranteeing the fused kernel
