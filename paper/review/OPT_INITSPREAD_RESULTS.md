@@ -165,6 +165,19 @@ Per-(arm,seed) shared-schema rows incl. `per_length_ratio` are in
   (within ~1× the seed band; small but positive, acting on the counting corner).
 - vs the incumbent `B`: `house_klr20` − `B` = **+0.066** (the §1.4 win).
 
+**Cross-probe consistency.** The +0.066 win over GDN-2 is carried primarily by the
+**substrate** (the mixture's dedicated `refit-del` counting heads that GDN-2 lacks),
+not by the lever per se — the same conclusion the sibling probes reached
+(`opt-headlr`: substrate +0.055 vs pure-lever +0.021; `opt-norm`: lever NULL, "the
+win is the substrate"; `opt-minimal`: GDN-2's step-growth weakness is itself an LR
+artifact, fixed 5e-4→1e-3, which is why `B` here is reported at 1e-3). This probe's
+*distinct* contribution is the **placement-sensitivity** result: a *wrong* allocation
+(uniform/skew/center) destroys the track corner (−0.31), so a good placement is
+*necessary* to realize the substrate's coverage — the knob-LR companion adds only a
+marginal +0.015. Two independent gotchas also reproduced across probes: the
+`e97_delta` fp32/bf16 fused-kernel crash, and the relative loss-certificate being
+noise-dominated near zero loss (floored here at smoothed train-loss < 0.05).
+
 ## 6. Findings
 
 1. **Placement is a real lever on the worst corner (GO).** The house placement
