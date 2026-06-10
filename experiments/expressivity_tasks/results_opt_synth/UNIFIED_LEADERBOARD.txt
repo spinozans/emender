@@ -1,0 +1,68 @@
+==============================================================================
+RECONCILED FROZEN CEILINGS S_c (max over probes; §6.1)
+==============================================================================
+  recall       0.9607  (from opt-minimal)
+  counting     0.8962  (from opt-norm)
+  step_growth  0.9987  (from opt-initspread)
+  track        0.9999  (from opt-minimal)
+
+==============================================================================
+PER-PROBE re-score (against reconciled S_c)
+==============================================================================
+
+==============================================================================
+UNIFIED LEADERBOARD (all arms, reconciled S_c, seed-avg JCC=min_c r_c)
+==============================================================================
+probe:arm                                   JCC     SE  n  recall   count   step  track held
+norm:decay_slow3                          0.973  0.000  2   0.997   0.974  0.974  1.000  4.0
+norm:decay_slow                           0.969  0.006  2   1.000   0.996  0.969  1.000  4.0
+norm:combined_best                        0.965  0.008  3   1.000   0.981  0.977  0.989  3.7
+headlr:headlr_c5                          0.964  0.008  3   0.987   0.965  0.976  1.000  3.7
+norm:B2_default                           0.964  0.001  3   0.964   0.991  0.980  1.000  4.0
+norm:lam_1.3                              0.962  0.008  2   0.969   0.967  0.980  1.000  3.5
+initspread:house_klr20                    0.952  0.006  3   0.974   0.956  1.000  1.000  3.3
+headlr:headlr_c2                          0.951  0.011  3   0.984   0.951  0.980  0.999  3.7
+norm:beta_1.5                             0.951  0.008  2   0.965   0.962  0.980  1.000  3.5
+norm:gate_open                            0.948  0.012  2   0.960   0.952  0.980  0.999  3.5
+norm:lam_1.0                              0.946  0.004  2   0.946   0.959  0.980  1.000  3.5
+initspread:recallheavy_klr20              0.945  0.022  3   0.992   0.945  1.000  0.994  3.7
+headlr:headlr_uniform                     0.939  0.011  3   0.974   0.939  0.980  0.992  3.3
+initspread:house_klr1                     0.937  0.006  3   0.974   0.937  1.000  0.999  3.3
+norm:beta_2.0                             0.935  0.008  2   0.983   0.935  0.980  1.000  3.0
+headlr:headlr_inverted                    0.933  0.010  3   0.948   0.946  0.977  1.000  2.7
+minimal:min_full                          0.930  0.008  3   0.986   0.930  0.979  0.999  3.0
+norm:B_gdn                                0.924  0.000  1   0.991   0.924  0.977  1.000  3.0
+norm:B_gdn_lr1e3                          0.924  0.000  1   0.991   0.924  0.977  1.000  3.0
+minimal:min_linear_state                  0.923  0.017  3   0.948   0.942  0.974  0.985  3.0
+norm:gate_closed                          0.920  0.020  2   0.920   0.967  0.978  0.996  2.5
+norm:norm_off                             0.919  0.016  2   0.919   0.963  0.964  0.999  2.5
+minimal:min_no_mlp                        0.907  0.014  3   0.997   0.907  0.972  0.999  3.0
+minimal:B_lr0p001                         0.901  0.006  3   0.991   0.901  0.979  1.000  3.0
+headlr:gdn2-default                       0.894  0.031  3   0.981   0.894  0.973  1.000  3.3
+headlr:headlr_c10                         0.890  0.018  3   0.890   0.947  0.966  0.998  2.3
+initspread:B_gdn2                         0.886  0.008  3   0.994   0.886  1.000  0.999  3.0
+minimal:min_no_gate                       0.877  0.018  3   0.958   0.877  0.977  0.998  3.0
+norm:B_gdn_lr5e4                          0.854  0.051  3   0.981   0.944  0.893  1.000  3.0
+minimal:B_lr0p0005                        0.815  0.036  3   0.981   0.886  0.860  1.000  2.3
+norm:decay_fast                           0.809  0.057  2   0.854   0.916  0.978  1.000  2.5
+minimal:B_lr0p0003                        0.741  0.016  3   0.962   0.811  0.804  0.999  2.0
+headlr:headlr_c20                         0.729  0.162  3   0.917   0.950  0.954  0.771  2.0
+norm:B_gdn_lr3e4                          0.723  0.000  1   0.981   0.945  0.723  1.000  2.0
+headlr:headlr_rslow                       0.669  0.163  3   0.868   0.937  0.961  0.725  1.7
+initspread:uniform4_klr20                 0.649  0.003  3   0.950   0.921  1.000  0.649  2.0
+initspread:skew_klr20                     0.647  0.001  3   0.964   0.886  1.000  0.647  1.7
+minimal:min_no_conv                       0.637  0.028  3   0.637   0.948  0.966  0.993  2.3
+initspread:spread_center                  0.634  0.004  3   0.924   0.914  1.000  0.634  1.7
+initspread:alldelta                       0.363  0.079  3   0.462   0.989  0.997  0.466  2.0
+minimal:min_no_negeig                     0.291  0.017  3   0.924   0.910  0.965  0.291  1.0
+norm:spec_refit                           0.127  0.001  3   0.127   0.997  0.973  0.411  2.0
+
+==============================================================================
+HARNESS-CONSISTENCY CHECK — shared GDN-2 control B across probes (§6.2)
+==============================================================================
+  opt-headlr      B=gdn2-default     JCC=0.894 (SE 0.031, n=3)
+  opt-initspread  B=B_gdn2           JCC=0.886 (SE 0.008, n=3)
+  opt-norm        B=B_gdn_lr1e3      JCC=0.924 (SE 0.000, n=1)
+  opt-minimal     B=B_lr0p001        JCC=0.901 (SE 0.006, n=3)
+  --> B JCC mean 0.901, spread 0.038 across probes
+      (spread reflects per-probe counting-witness set + B-LR differences; the ranking is by ΔJCC within each probe, which is ceiling-invariant)

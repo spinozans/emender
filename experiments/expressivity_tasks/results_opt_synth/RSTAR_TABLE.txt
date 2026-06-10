@@ -1,0 +1,24 @@
+
+==============================================================================
+R* RE-RUN (§6.4) — composed regime confirmation (reconciled S_c, identical harness)
+==============================================================================
+
+  [b2_house] house default (= B2 anchor)
+    JCC=0.963 (SE 0.001, n=3 seeds; per-seed ['0.961', '0.965', '0.963'])
+    r_c: recall=0.963 counting=0.992 step=0.980 track=1.000  conv(acc-plateau)=24/24
+
+  [c5] house + head_lr_compute_mult=5 (opt-headlr winner)
+    JCC=0.969 (SE 0.005, n=3 seeds; per-seed ['0.971', '0.979', '0.957'])
+    r_c: recall=0.970 counting=0.998 step=0.977 track=1.000  conv(acc-plateau)=23/24
+
+  [klr20] house + knob_lr_mult=20 (opt-initspread knob-LR)
+    JCC=0.966 (SE 0.004, n=3 seeds; per-seed ['0.961', '0.976', '0.961'])
+    r_c: recall=0.966 counting=0.981 step=0.980 track=1.000  conv(acc-plateau)=23/24
+
+  [rstar] house + compute_mult=5 + decay_init=slow (COMPOSED R*)
+    JCC=0.930 (SE 0.005, n=3 seeds; per-seed ['0.937', '0.917', '0.936'])
+    r_c: recall=0.930 counting=0.990 step=0.972 track=0.998  conv(acc-plateau)=24/24
+
+------------------------------------------------------------------------------
+  COMPOSITION REGRESSES: JCC(rstar)=0.930 < max(single-lever)=0.969. Fall back to the best single lever (§6.4).
+  Lever lift vs B2 anchor: rstar -0.033, c5 +0.006, klr20 +0.003
