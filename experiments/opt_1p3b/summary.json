@@ -1,0 +1,95 @@
+{
+  "lm": {
+    "rstar": {
+      "params_b": 1.3379,
+      "dtype": "fp32",
+      "bpb": 2.22004,
+      "bpb_sd": 0.03792,
+      "tok_per_s": 1881.1,
+      "total_Mtok": 2.8,
+      "wall_s": 1500.8,
+      "n_seeds": 2,
+      "tokenmatched_trainloss_at_common": 6.08258
+    },
+    "cma_gdn2": {
+      "params_b": 1.3524,
+      "dtype": "bf16",
+      "bpb": 1.7653,
+      "bpb_sd": 0.01409,
+      "tok_per_s": 8109.8,
+      "total_Mtok": 12.01,
+      "wall_s": 1500.5,
+      "n_seeds": 2,
+      "tokenmatched_trainloss_at_common": 6.01061
+    },
+    "cma_m2rnn": {
+      "params_b": 1.3071,
+      "dtype": "bf16",
+      "bpb": 1.81025,
+      "bpb_sd": 0.00571,
+      "tok_per_s": 7289.5,
+      "total_Mtok": 10.77,
+      "wall_s": 1500.3,
+      "n_seeds": 2,
+      "tokenmatched_trainloss_at_common": 5.97503
+    }
+  },
+  "capability": {
+    "jcc_len128": {
+      "rstar": 0.095,
+      "cma_gdn2": 0.2741,
+      "cma_m2rnn": 0.0443
+    },
+    "jcc_len512": {
+      "rstar": 0.0313,
+      "cma_gdn2": 0.222,
+      "cma_m2rnn": 0.0169
+    },
+    "per_corner_len128": {
+      "rstar": {
+        "recall": 0.2314,
+        "counting": 0.231,
+        "step_growth": 1.0,
+        "track": 0.095
+      },
+      "cma_gdn2": {
+        "recall": 0.9697,
+        "counting": 0.2741,
+        "step_growth": 1.0,
+        "track": 1.0
+      },
+      "cma_m2rnn": {
+        "recall": 0.0898,
+        "counting": 0.2088,
+        "step_growth": 0.5093,
+        "track": 0.0443
+      }
+    },
+    "per_corner_len512": {
+      "rstar": {
+        "recall": 0.054,
+        "counting": 0.2086,
+        "step_growth": 0.9975,
+        "track": 0.0313
+      },
+      "cma_gdn2": {
+        "recall": 0.6899,
+        "counting": 0.222,
+        "step_growth": 0.9887,
+        "track": 0.8542
+      },
+      "cma_m2rnn": {
+        "recall": 0.0383,
+        "counting": 0.2017,
+        "step_growth": 0.5027,
+        "track": 0.0169
+      }
+    }
+  },
+  "verdict": {
+    "bpb_ok": false,
+    "jcc_ok_len128": false,
+    "go": false
+  },
+  "common_token_budget": 2731317
+}

@@ -1,0 +1,9 @@
+=== VERDICT (OPT_SYNTHESIS §4.6) — does optimization move the optimum at scale? ===
+Held-out BPB (wall-matched): R*=2.22004  B(gdn2)=1.7653  m2rnn=1.81025
+Worst-corner JCC @len128 : R*=0.095  B(gdn2)=0.2741
+Worst-corner JCC @len512 : R*=0.0313  B(gdn2)=0.222
+
+==> NULL: worst-corner JCC does not clear B by the Δ*=0.03 bar; held-out BPB regresses vs B (wall-matched).
+    The convergent-loss null extends from architecture to optimization at
+    1.3B: a CMA-best GDN-2 is not beaten by the optimized mixture's training
+    levers (pre-registered expectation, OPT_SYNTHESIS §4.6).

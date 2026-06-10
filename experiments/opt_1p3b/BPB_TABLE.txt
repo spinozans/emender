@@ -1,0 +1,8 @@
+=== 1.3B held-out BPB — matched WALLCLOCK, REAL Comma-Pile, FUSED ===
+arm                                 params dtype bs   tok/s  steps   Mtok  wall_s     BPB  BPB_sd
+R* (typed mixture + head_lr c5)      1.34B  fp32  1    1881   1367    2.8    1501  2.2200  0.0379
+CMA-best GDN-2 (B)                   1.35B  bf16  2    8110   2932   12.0    1500  1.7653  0.0141
+CMA-best m2rnn                       1.31B  bf16  2    7290   2627   10.8    1500  1.8103  0.0057
+
+Token-matched common budget = 2.7 Mtok (min across arms; fp32 R* sees fewer tokens/wall — the §4.5.2 token-vs-wall split).
+BPB column is WALLCLOCK-matched (all arms ran the same --train_minutes). tokenmatched_trainloss compares train loss at equal tokens.

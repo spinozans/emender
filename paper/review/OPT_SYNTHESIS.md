@@ -434,6 +434,19 @@ scale battery (eval at long T) is best positioned to detect.
    needs worst-corner JCC beyond noise **and** no BPB regression, both token- and
    wall-clock-accounted.
 
+### 5.1 RESOLVED — 1.3B verdict (`opt-1p3b`, 2026-06-10): **NULL**
+
+`opt-1p3b` ran the validation (`paper/review/OPT_1P3B_RESULTS.md`,
+`experiments/opt_1p3b/`): R\* (typed mixture + `head_lr_compute_mult=5`, fp32 FUSED) vs
+**CMA-best GDN-2** (`gdn-1.3b`, 1.35B) and **CMA-best m2rnn** (`m2rnn-cma-1.3b`, 1.31B),
+matched wall-clock on real Comma-Pile, fused kernels. **Both §4.6 gates fail:**
+held-out **BPB R\* 2.220 > GDN-2 1.765** (also token-matched 6.083 > 6.011), worst-corner
+**JCC R\* 0.095 < GDN-2 0.274**. The pre-registered expectation holds: **optimization does
+not move the optimum at scale** — the convergent-loss null extends from architecture to
+the optimization line, best-vs-best. R\* is *less* sample-efficient at 1.3B (the 5×
+compute-class LR aces step_growth but starves recall/track — the §3.3 interaction, severe
+at scale).
+
 ---
 
 ## 6. Provenance / FUSED-path compliance / artifacts

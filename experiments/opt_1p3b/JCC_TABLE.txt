@@ -1,0 +1,14 @@
+=== 1.3B capability coverage — per-corner accuracy (seed-avg) ===
+Eval at train-len 128 and extrapolation to 512. JCC = min-corner accuracy.
+
+-- eval length 128 --
+arm                                      recall     counting  step_growth        track      JCC
+R* (typed mixture + head_lr c5)           0.231        0.231        1.000        0.095    0.095
+CMA-best GDN-2 (B)                        0.970        0.274        1.000        1.000    0.274
+CMA-best m2rnn                            0.090        0.209        0.509        0.044    0.044
+
+-- eval length 512 --
+arm                                      recall     counting  step_growth        track      JCC
+R* (typed mixture + head_lr c5)           0.054        0.209        0.997        0.031    0.031
+CMA-best GDN-2 (B)                        0.690        0.222        0.989        0.854    0.222
+CMA-best m2rnn                            0.038        0.202        0.503        0.017    0.017
