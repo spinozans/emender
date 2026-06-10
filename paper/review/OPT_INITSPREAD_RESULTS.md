@@ -152,6 +152,21 @@ SE_seed 0.009, **Δ\* = max(0.03, 2·SE) = 0.03**.
 | `spread_center` | 0.634 | 1.7 | 0.844 | 0.93 | 0.92 | 1.00 | **0.63** | ok | LOSE −0.258 |
 | `alldelta` (specialist) | 0.364 | 2.0 | 0.589 | **0.47** | 0.99 | 1.00 | **0.47** | — | LOSE −0.528 |
 
+**Verdict robust to ceiling reconciliation.** The four probes ran their control
+arms independently, so each computed slightly seed-divergent ceilings (a known
+coordination point `opt-synth` reconciles, OPT_SPEC §6). Re-scoring this probe's
+arms under all three available ceiling sets confirms the GO is invariant (the
+comparison divides `R` and `B` by the *same* `S_c`, so ΔJCC is ceiling-stable):
+
+| ceiling set | B JCC | house_klr20 | ΔJCC | verdict |
+|---|---|---|---|---|
+| this probe (8ccc626b) | 0.892 | 0.959 | **+0.066** | WIN |
+| opt-norm (`main.ceilings`) | 0.886 | 0.955 | **+0.069** | WIN |
+| opt-minimal (`main.S_c`) | 0.934 | 0.974 | **+0.039** | WIN |
+
+`house_klr20` clears Δ\*=0.03 under every ceiling set; the merge of the shared
+`opt_ceilings.json` is deferred to `opt-synth` (the spec-assigned reconciler).
+
 Per-corner numbers are seed × length-averaged held ratios `r_c`; JCC is the mean
 over seeds of the per-seed worst-corner ratio. `conv` is the §1.5 convergence gate
 over the scored witnesses (B_gdn2's smoothed counter train-loss sits just at the
