@@ -86,7 +86,11 @@ def typed(*overrides):
 
 
 # arm name -> (level, extra flags, lr, seeds). lr default 5e-4 (battery base, §3.2).
+# B / B2 / spec_refit get 3 seeds (B's across-seed SE drives the §1.4 decision band);
+# single-axis lever arms get 2 seeds (point estimate to RANK the axis); the composed
+# combined_best candidate this probe forwards gets 3 seeds.
 DEF_SEEDS = [42, 123, 456]
+LEVER_SEEDS = [42, 123]
 LR = 5e-4
 ARMS = {
     # --- controls / specialists ---
@@ -98,31 +102,42 @@ ARMS = {
                      5e-4, DEF_SEEDS),
     'B2_default':   (*typed(), 5e-4, DEF_SEEDS),
     # --- lever arms (one knob each off the house default) ---
-    'decay_slow':   (*typed('--decay_init', 'slow'), 5e-4, DEF_SEEDS),
-    'decay_fast':   (*typed('--decay_init', 'fast'), 5e-4, DEF_SEEDS),
-    'gate_open':    (*typed('--gate_bias_init', '2.0'), 5e-4, DEF_SEEDS),
-    'gate_closed':  (*typed('--gate_bias_init', '-2.0'), 5e-4, DEF_SEEDS),
-    'lam_1.0':      (*typed('--lam_max', '1.0'), 5e-4, DEF_SEEDS),
-    'lam_1.3':      (*typed('--lam_max', '1.3'), 5e-4, DEF_SEEDS),
-    'beta_1.5':     (*typed('--beta_max', '1.5'), 5e-4, DEF_SEEDS),
-    'beta_2.0':     (*typed('--beta_max', '2.0'), 5e-4, DEF_SEEDS),
-    'norm_off':     (*typed('--unified_head_norm', '0'), 5e-4, DEF_SEEDS),
-    # --- combined arm: filled by compose_combined() after the single-axis sweep ---
-    # 'combined_best': added programmatically below if OPT_NORM_COMBINED is set.
+    'decay_slow':   (*typed('--decay_init', 'slow'), 5e-4, LEVER_SEEDS),
+    'decay_fast':   (*typed('--decay_init', 'fast'), 5e-4, LEVER_SEEDS),
+    'gate_open':    (*typed('--gate_bias_init', '2.0'), 5e-4, LEVER_SEEDS),
+    'gate_closed':  (*typed('--gate_bias_init', '-2.0'), 5e-4, LEVER_SEEDS),
+    'lam_1.0':      (*typed('--lam_max', '1.0'), 5e-4, LEVER_SEEDS),
+    'lam_1.3':      (*typed('--lam_max', '1.3'), 5e-4, LEVER_SEEDS),
+    'beta_1.5':     (*typed('--beta_max', '1.5'), 5e-4, LEVER_SEEDS),
+    'beta_2.0':     (*typed('--beta_max', '2.0'), 5e-4, LEVER_SEEDS),
+    'norm_off':     (*typed('--unified_head_norm', '0'), 5e-4, LEVER_SEEDS),
+    # --- gradient probe: stronger retention offset (decay_slow helped, decay_fast
+    #     hurt => does pushing retention even higher than delta=2.0 buy more?) ---
+    'decay_slow3':  (*typed('--decay_init', 'slow', '--decay_init_delta', '3.0'), 5e-4, LEVER_SEEDS),
+    # --- combined_best: the composed per-axis winner this probe forwards to synth.
+    #     The single-axis sweep showed ONLY decay_slow (retention->1) beats the
+    #     substrate-default; every other knob (lam/beta/gate/norm) is neutral-to-
+    #     harmful vs the CMA-tuned defaults. So combined_best == decay_slow at the
+    #     default delta, run at 3 seeds (the forwarded candidate; OPT_SPEC.md §6). ---
+    'combined_best': (*typed('--decay_init', 'slow'), 5e-4, DEF_SEEDS),
 }
 
 # task -> (K arg or 0, steps, eval_lengths). Hard gaps get 8000 steps — the
 # TTT-battery budget that demonstrably plateaus (the convergence certificate §1.5
 # is the per-run guard; any row failing <2% is flagged for a longer re-run).
 BATTERY = [
-    ('mqar_recall',            0,  8000, ['128', '256', '512']),
-    ('modular_counter',        5,  8000, ['128', '256', '512']),
-    ('dyck_depth_unbounded',   0,  8000, ['128', '256', '512']),
-    ('modular_quadratic',      64, 8000, ['128', '256', '512']),
-    ('iterated_nonlinear_map', 0,  8000, ['128', '256', '512']),
-    ('s5_permutation',         0,  8000, ['128', '256', '512']),
-    ('anbncn_viability',       0,  5000, ['128', '256']),
-    ('parity',                 0,  5000, ['128', '256']),
+    ('mqar_recall',            0,  8000,  ['128', '256', '512']),
+    # modular_counter (counting) + s5_permutation (track) are the slow-converging
+    # scored corners — at 8000 modular_counter is still climbing (0.5->0.82, Δacc~0.16)
+    # and s5 is documented slow; bumped to 16000 so the JCC compares PLATEAUS not
+    # progress (OPT_SPEC.md §1.5). The fast corners plateau well within 8000.
+    ('modular_counter',        5,  16000, ['128', '256', '512']),
+    ('dyck_depth_unbounded',   0,  8000,  ['128', '256', '512']),
+    ('modular_quadratic',      64, 8000,  ['128', '256', '512']),
+    ('iterated_nonlinear_map', 0,  8000,  ['128', '256', '512']),
+    ('s5_permutation',         0,  16000, ['128', '256', '512']),
+    ('anbncn_viability',       0,  5000,  ['128', '256']),
+    ('parity',                 0,  5000,  ['128', '256']),
 ]
 
 
@@ -185,6 +200,37 @@ def build_cmd(job: Job, args, out_dir: Path):
     if job.K > 0:
         cmd += ['--K', str(job.K)]
     return cmd
+
+
+CLAIM_TTL = 2400.0  # secs a fresh .claim protects a job from other runner instances
+
+
+def try_claim(out_dir: Path, job) -> bool:
+    """Atomically claim a job so concurrent runner instances never double-run it.
+    Returns True iff THIS instance now owns the job. The completed-job guard is the
+    .json (checked first); a stale claim (older than CLAIM_TTL with no json) is
+    reclaimed. Lets me add/remove runner instances freely as GPUs free up."""
+    if (out_dir / f'{job.label}.json').exists():
+        return False
+    claim = out_dir / f'{job.label}.claim'
+    if claim.exists():
+        try:
+            age = time.time() - claim.stat().st_mtime
+        except OSError:
+            age = 0.0
+        if age < CLAIM_TTL:
+            return False
+        try:
+            claim.unlink()
+        except OSError:
+            return False
+    try:
+        fd = os.open(str(claim), os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o644)
+        os.write(fd, f"{os.getpid()}\n".encode())
+        os.close(fd)
+        return True
+    except FileExistsError:
+        return False
 
 
 def leased_gpus():
@@ -255,8 +301,16 @@ def main():
 
     while queue or running:
         for slot_idx in range(len(slots)):
-            if slot_idx not in running and queue:
-                launch(slot_idx, queue.pop(0))
+            if slot_idx not in running:
+                # pop until a claimable job is found (others may own some)
+                job = None
+                while queue:
+                    cand = queue.pop(0)
+                    if try_claim(out_dir, cand):
+                        job = cand
+                        break
+                if job is not None:
+                    launch(slot_idx, job)
         time.sleep(args.poll)
         for slot_idx in list(running.keys()):
             proc, job, t0, logf = running[slot_idx]

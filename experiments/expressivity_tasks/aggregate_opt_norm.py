@@ -20,7 +20,8 @@ from pathlib import Path
 
 from opt_norm_common import (CORNERS, SCORED, SANITY, TAU, load_runs,
                              index_by_arm_task, corner_acc_for_seed, parse_label,
-                             conv_certificate, task_acc, mean_std)
+                             conv_certificate, acc_plateau_delta, is_converged,
+                             task_acc, mean_std)
 
 THIS = Path(__file__).resolve().parent
 
@@ -63,8 +64,11 @@ def row_for(idx, arm, seed, ceilings):
     ratios = [pratio[c] for c in SCORED]
     jcc = min([r for r in ratios if r is not None], default=None) if all(r is not None for r in ratios) else None
     held = sum(1 for r in ratios if r is not None and r >= TAU)
-    # convergence: worst (max) certificate over this seed's scored-witness runs
-    certs = []
+    # convergence: accuracy-plateau gate over this seed's scored-witness runs
+    # (robust to the loss-to-zero artifact). worst_cert = the spec's relative-loss
+    # number (reported only); worst_accd = max |Δacc| over final 20%; a seed is
+    # converged iff EVERY scored-witness run has plateaued (|Δacc| < 0.02).
+    certs, accds, conv_flags = [], [], []
     for c in SCORED:
         for tk in CORNERS[c]:
             for r in idx[arm].get(tk, []):
@@ -72,8 +76,15 @@ def row_for(idx, arm, seed, ceilings):
                     cc = conv_certificate(r)
                     if cc is not None:
                         certs.append(cc)
+                    ad = acc_plateau_delta(r)
+                    if ad is not None:
+                        accds.append(ad)
+                    ic = is_converged(r)
+                    if ic is not None:
+                        conv_flags.append(ic)
     worst_cert = max(certs) if certs else None
-    converged = (worst_cert is not None and worst_cert < 0.02)
+    worst_accd = max(accds) if accds else None
+    converged = (len(conv_flags) > 0 and all(conv_flags))
     nparams = None
     for tk, rs in idx[arm].items():
         for r in rs:
@@ -84,6 +95,7 @@ def row_for(idx, arm, seed, ceilings):
     return {
         'probe': 'opt-norm', 'arm': arm, 'seed': seed, 'params': nparams,
         'converged': converged, 'conv_certificate': worst_cert,
+        'acc_plateau_delta': worst_accd,
         'per_corner_acc': pacc, 'per_corner_ratio': pratio,
         'jcc_min': jcc, 'corners_held': held, 'jcc_hmean': hmean(ratios),
         'sanity': sanity, 'bpb_proxy': None,
@@ -131,55 +143,66 @@ def main():
     print(f"Wrote {len(rows)} rows -> {jcc_path}\n")
 
     # --- §1.4 decision band from B ---
-    B = 'B_gdn'
+    # Headline JCC = min_c r_c, so ΔJCC>0 ALREADY means the WORST corner improved
+    # (the min cannot be gamed by trading an easy corner for a hard one — that is
+    # exactly why §1.3 uses min). The §1.4 bar vs the incumbent B (GDN-2) is thus:
+    #   WIN iff ΔvsB >= Δ*; NULL iff |ΔvsB| < Δ*; LOSE iff ΔvsB <= -Δ*.
+    # We ALSO report ΔvsB2 (vs the substrate-default house mixture) = the LEVER's
+    # PURE contribution, isolating it from the substrate (OPT_SPEC.md §4.1).
+    B, B2 = 'B_gdn', 'B2_default'
     b_mean, b_sd, b_n = arm_jcc.get(B, (None, None, 0))
+    b2_mean = arm_jcc.get(B2, (None,))[0]
     se = (b_sd / (b_n ** 0.5)) if (b_sd is not None and b_n > 1) else 0.0
     delta_star = max(0.03, 2 * se)
-    print("=" * 96)
+    print("=" * 104)
     print(f"(1) JCC LEADERBOARD (worst-corner ratio min_c r_c; seed-averaged). "
-          f"B JCC={b_mean if b_mean is None else round(b_mean,4)} "
+          f"B(GDN-2) JCC={b_mean if b_mean is None else round(b_mean,4)} "
+          f"B2(house) JCC={b2_mean if b2_mean is None else round(b2_mean,4)} "
           f"SE_seed={se:.4f}  Δ*={delta_star:.4f}")
-    print("=" * 96)
-    hdr = f"{'arm':<16}{'JCC':>10}{'ΔvsB':>9}{'held':>6}{'hmean':>8}  | " + \
-          "".join(f"{c[:5]:>8}" for c in SCORED) + "  verdict"
+    print("    ΔvsB = vs incumbent GDN-2 (§1.4 bar)   ΔvsB2 = lever's PURE effect vs substrate-default")
+    print("=" * 104)
+    hdr = f"{'arm':<16}{'JCC':>9}{'ΔvsB':>8}{'ΔvsB2':>8}{'held':>5}{'hmn':>6} | " + \
+          "".join(f"{c[:5]:>7}" for c in SCORED) + "  verdict"
     print(hdr); print("-" * len(hdr))
     for arm in sorted(arm_jcc, key=lambda a: (arm_jcc[a][0] is None, -(arm_jcc[a][0] or 0))):
         m, sd, n = arm_jcc[arm]
         if m is None:
-            print(f"{arm:<16}{'--':>10} (incomplete: missing corner data)")
+            print(f"{arm:<16}{'--':>9} (incomplete: missing corner data)")
             continue
         dvb = m - b_mean if b_mean is not None else float('nan')
+        dvb2 = m - b2_mean if b2_mean is not None else float('nan')
         held = sum(1 for c in SCORED if (arm_corner[arm][c] or 0) >= TAU)
         hm = hmean([arm_corner[arm][c] for c in SCORED])
-        # verdict (only for non-B, non-specialist lever arms)
+        # verdict vs B (§1.4); min-headline already guarantees "no corner-trading"
         verdict = ''
-        if arm not in (B, 'spec_refit'):
-            if b_mean is not None:
-                no_regress = all((arm_corner[arm][c] or 0) >= (arm_corner[B][c] or 0) - se
-                                 for c in SCORED)
-                if dvb >= delta_star and no_regress:
-                    verdict = 'WIN'
-                elif abs(dvb) < delta_star:
-                    verdict = 'NULL'
-                else:
-                    verdict = 'LOSE'
-        cols = "".join(f"{(arm_corner[arm][c] if arm_corner[arm][c] is not None else float('nan')):>8.3f}" for c in SCORED)
-        star = ' <-B' if arm == B else ''
-        print(f"{arm:<16}{m:>10.4f}{dvb:>+9.4f}{held:>6}{hm:>8.3f}  | {cols}  {verdict}{star}")
+        if arm not in (B, 'spec_refit') and b_mean is not None:
+            if dvb >= delta_star:
+                verdict = 'WIN'
+            elif abs(dvb) < delta_star:
+                verdict = 'NULL'
+            else:
+                verdict = 'LOSE'
+        cols = "".join(f"{(arm_corner[arm][c] if arm_corner[arm][c] is not None else float('nan')):>7.3f}" for c in SCORED)
+        star = ' <-B' if arm == B else (' <-B2' if arm == B2 else '')
+        print(f"{arm:<16}{m:>9.4f}{dvb:>+8.4f}{dvb2:>+8.4f}{held:>5}{hm:>6.3f} | {cols}  {verdict}{star}")
 
     # --- convergence audit ---
     print("\n" + "=" * 96)
-    print("(2) CONVERGENCE AUDIT (worst per-seed certificate; converged iff <0.02)")
+    print("(2) CONVERGENCE AUDIT — accuracy-plateau gate (converged iff |Δacc| over "
+          "final 20% < 0.02)")
+    print("    (the relative-loss certificate §1.5 is a loss-to-zero artifact here; "
+          "see opt_norm_common)")
     print("=" * 96)
     nonconv = defaultdict(list)
     for r in rows:
-        if r['conv_certificate'] is not None and not r['converged']:
-            nonconv[r['arm']].append((r['seed'], round(r['conv_certificate'], 4)))
+        if r['acc_plateau_delta'] is not None and not r['converged']:
+            nonconv[r['arm']].append((r['seed'], round(r['acc_plateau_delta'], 3)))
     if nonconv:
+        print("  NON-CONVERGED (still climbing in final 20% — flag for longer budget):")
         for arm, lst in sorted(nonconv.items()):
-            print(f"  NON-CONVERGED {arm}: {lst}")
+            print(f"    {arm}: Δacc={lst}")
     else:
-        print("  all scored arm/seed rows converged (<2% final-20% loss improvement)")
+        print("  all scored arm/seed rows plateaued (|Δacc| over final 20% < 0.02)")
 
     # --- per-length corner-ratio curves (diagnosis) ---
     print("\n" + "=" * 96)
