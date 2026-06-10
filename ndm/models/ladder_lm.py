@@ -109,6 +109,7 @@ from .unified_cell import UnifiedCellLayer
 from .typed_head_mixture import TypedHeadMixtureLayer
 from .phi_shell import PhiShellLayer
 from .complex_eig_head import ComplexEigHeadLayer
+from .mlp_mem_head import MlpMemHeadLayer
 from .complex_eig_lm import RealEigGDNShellLayer
 from .e89_residual_state import E89ResidualStateCell
 from .e76_logspace_delta import E76LogSpaceDelta
@@ -562,6 +563,14 @@ def get_ladder_level(level):
         # These are the E99 typed-Emender and E98-CMA candidates wired into the
         # real train.py / LadderLM / FLA-GDN path (task: wire-e99-e98).
         'typed-gdn2-lm': lambda **kw: _LadderProtocolAdapter(TypedHeadMixtureLayer(**kw)),
+        # mlp-mem (task nlmem-triton, spec NONLIN_MEMORY_SPEC.md): the nonlinear
+        # MLP-memory cell — the recurrent state is the params of a 1-hidden-layer
+        # MLP written by one gated inner gradient step per token (REAL fused
+        # sequential Triton fwd+bwd kernel; non-associative => no chunked scan).
+        # Wrapped so LadderLM's (out, h) protocol works. None-valued generic kwargs
+        # are stripped so int() coercion is safe (mirrors complex-eig-lm).
+        'mlp-mem-lm': lambda **kw: _LadderProtocolAdapter(
+            MlpMemHeadLayer(**{k: v for k, v in kw.items() if v is not None})),
         'e98-cma-lm': lambda **kw: _LadderProtocolAdapter(UnifiedCellLayer(**{
             'knob_mode': 'learned', 'phi': 'gamma_mix', 'lam_max': 1.5,
             'spread_init': True, 'split_gate': True, **kw})),

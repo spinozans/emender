@@ -237,9 +237,45 @@ class TypedHeadMixtureLayer(nn.Module):
         cplx_chunk_size: int = 32,
         nonlin_subset_frac: float = 0.0,
         nonlin_subset_phi: str = 'hardtanh',
+        # NONLINEAR MLP-MEMORY arrangement (nlmem-triton, spec NONLIN_MEMORY_SPEC.md):
+        # mlp_mem=True replaces the matrix delta-memory with the `mlp-mem` cell whose
+        # recurrent STATE is the params of a 1-hidden-layer MLP, written by one gated
+        # inner gradient step per token (REAL fused sequential Triton fwd+bwd kernel,
+        # non-associative => no chunked scan). Like complex_eig this is its own
+        # first-class configuration; the 8-type allocation is bypassed.
+        mlp_mem: bool = False,
+        mlp_mem_hidden: int = 32,
+        mlp_mem_eta_max: float = 1.0,
+        mlp_mem_ckpt: int = 16,
         **kwargs,
     ):
         super().__init__()
+        self.mlp_mem = bool(mlp_mem)
+        if self.mlp_mem:
+            from .mlp_mem_head import MlpMemHeadLayer
+            self.dim = dim
+            self.n_state = int(n_state)
+            self.n_heads = int(n_heads)
+            self.expansion = expansion
+            self.complex_head = None
+            self.mlp_mem_head = MlpMemHeadLayer(
+                dim=dim,
+                n_state=self.n_state,
+                n_heads=self.n_heads,
+                expansion=expansion,
+                mlp_mem_hidden=mlp_mem_hidden,
+                mlp_mem_eta_max=mlp_mem_eta_max,
+                mlp_mem_ckpt=mlp_mem_ckpt,
+                gdn_allow_neg_eigval=gdn_allow_neg_eigval,
+                gdn_use_conv=gdn_use_conv,
+                gdn_conv_size=gdn_conv_size,
+                use_gate=use_gate,
+                dropout=dropout,
+            )
+            self.alloc = self.mlp_mem_head.head_alloc()
+            self.dropout = nn.Dropout(dropout) if dropout > 0 else nn.Identity()
+            return
+        self.mlp_mem_head = None
         self.complex_eig = bool(complex_eig)
         if self.complex_eig:
             from .complex_eig_head import ComplexEigHeadLayer
@@ -488,6 +524,10 @@ class TypedHeadMixtureLayer(nn.Module):
         # and replays each sub-block's backward on the same stream, so the backward
         # overlaps too. wait_stream + record_stream give correct cross-stream ordering
         # and prevent premature buffer reuse.
+        # mlp-mem arrangement: when mlp_mem is on, the layer IS the MlpMemHeadLayer
+        # (nonlinear MLP-memory cell, fused sequential kernel); bypass the 8-type bulk.
+        if self.mlp_mem_head is not None:
+            return self.dropout(self.mlp_mem_head(x))
         # complex-eigenvalue arrangement: when complex_eig is on, the layer IS the
         # ComplexEigHeadLayer (complex-everywhere); bypass the 8-type bulk/overlap.
         if self.complex_head is not None:
@@ -543,6 +583,9 @@ class TypedHeadMixtureLayer(nn.Module):
         return self.dropout(out)
 
     def extra_repr(self):
+        if self.mlp_mem_head is not None:
+            return (f"dim={self.dim}, n_heads={self.n_heads}, n_state={self.n_state}, "
+                    f"mlp_mem=True, alloc={self.alloc}")
         if self.complex_head is not None:
             return (f"dim={self.dim}, n_heads={self.n_heads}, n_state={self.n_state}, "
                     f"complex_eig=True, alloc={self.alloc}")
