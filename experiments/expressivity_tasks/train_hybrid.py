@@ -83,6 +83,11 @@ def main():
     ap.add_argument('--gdn_allow_neg_eigval', type=int, default=None, choices=[0, 1],
                     help='ARM A: fla GatedDeltaNet allow_neg_eigval (beta*=2 -> beta in (0,2) '
                          '-> along-key eigenvalue g(1-beta) can go negative). fla-gdn layers only.')
+    ap.add_argument('--gdn_use_conv', type=int, default=None, choices=[0, 1],
+                    help='fla GatedDeltaNet short-conv on q/k/v (use_short_conv). '
+                         '1=on (default GDN-2 recall plumbing), 0=off (the FLA recall '
+                         'short-conv ablation, opt-minimal min_no_conv). Forwarded to '
+                         'fla-gdn AND typed-gdn2 (gdn2_recall) heads.')
     ap.add_argument('--e88_pos_eigval_clamp', type=int, default=None, choices=[0, 1],
                     help='ARM B: clamp E88 along-key eigenvalue >=0 by moving decay onto the '
                          'whole operator decay*(I-kk^T) (was decay*I-kk^T). E88-family layers only.')
@@ -303,6 +308,10 @@ def main():
     gdn_kwargs = {}
     if args.gdn_allow_neg_eigval is not None:
         gdn_kwargs['allow_neg_eigval'] = bool(args.gdn_allow_neg_eigval)
+    if args.gdn_use_conv is not None:
+        gdn_kwargs['use_short_conv'] = bool(args.gdn_use_conv)
+    if args.use_gate is not None:
+        gdn_kwargs['use_gate'] = bool(args.use_gate)
     # UnifiedCell (e98-cma / unified-* / e98-*) meta-config overrides.
     unified_kwargs = {}
     if args.lam_max is not None:
@@ -350,6 +359,13 @@ def main():
     # the plain-gdn arm — otherwise gdn==gdn-neg silently.
     if args.gdn_allow_neg_eigval is not None:
         typed_kwargs['gdn_allow_neg_eigval'] = bool(args.gdn_allow_neg_eigval)
+    # opt-minimal ablation knobs: short-conv on q/k/v (min_no_conv) and the
+    # output gate (min_no_gate) of the gdn2_recall / e97 / unified sub-blocks.
+    # Forwarded to typed-gdn2 only; existing fused cells, no kernel change.
+    if args.gdn_use_conv is not None:
+        typed_kwargs['gdn_use_conv'] = bool(args.gdn_use_conv)
+    if args.use_gate is not None:
+        typed_kwargs['use_gate'] = bool(args.use_gate)
 
     # phi-shell (task phi-explore): per-step state nonlinearity phi as a swept axis.
     phi_kwargs = {}
@@ -473,6 +489,7 @@ def main():
            'use_gate': args.use_gate,
            'decay_mode': args.decay_mode,
            'gdn_allow_neg_eigval': args.gdn_allow_neg_eigval,
+           'gdn_use_conv': args.gdn_use_conv,
            'e88_pos_eigval_clamp': args.e88_pos_eigval_clamp,
            'e88_raw_write': args.e88_raw_write,
            'knob_lr_mult': float(args.knob_lr_mult),
