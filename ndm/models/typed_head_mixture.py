@@ -89,11 +89,13 @@ except ImportError:  # pragma: no cover - exercised only without FLA
 # slots, which softmax maps to 0 heads, reproducing the legacy allocation
 # EXACTLY (see allocate_types). A 7-vector is rejected (no historical contract).
 TYPE_NAMES: List[str] = ['gdn2_recall', 'e97_track', 'count', 'latch', 'nonlin',
-                         'gdn2_nonlin_shell', 'e97_raw', 'e97_delta']
+                         'gdn2_nonlin_shell', 'e97_raw', 'e97_delta', 'refit']
 LEGACY_N_TYPES = 5  # the original 5-type contract; trailing types padded off
 # accepted legacy logit-vector lengths; each is right-padded with -inf to the
-# full TYPE_NAMES width so softmax assigns the new trailing types 0 heads.
-ACCEPTED_LEGACY_LENS = (5, 6)
+# full TYPE_NAMES width so softmax assigns the new trailing types 0 heads. 8 is the
+# pre-refit full width (e97_delta era); padding it off leaves refit unallocated so
+# every existing 8-type allocation is reproduced EXACTLY (same growth pattern 5->6->8).
+ACCEPTED_LEGACY_LENS = (5, 6, 8)
 UNIFIED_CORNER_ORDER = ['track', 'count', 'latch', 'nonlin']  # == SPREAD_CORNERS_4
 # the unified corner types occupy indices 1..4 (between gdn2_recall and the shell)
 UNIFIED_SLICE = slice(1, 5)
@@ -158,6 +160,7 @@ def allocate_types(n_heads: int, head_type_logits: List[float]) -> dict:
         'n_shell': int(counts[5]),
         'n_e97_raw': int(counts[6]),
         'n_e97_delta': int(counts[7]),
+        'n_refit': int(counts[8]),
     }
 
 
@@ -331,6 +334,11 @@ class TypedHeadMixtureLayer(nn.Module):
         n_shell = alloc['n_shell']
         n_e97_raw = alloc['n_e97_raw']
         n_e97_delta = alloc['n_e97_delta']
+        n_refit = alloc['n_refit']
+        # refit head knobs (inner-optimization / TTT write; ttt-triton)
+        self.refit_chunk_size = int(kwargs.get('refit_chunk_size', 32))
+        self.refit_has_mom = bool(kwargs.get('refit_has_mom', True))
+        self.refit_newton_steps = kwargs.get('refit_newton_steps', None)
 
         # --- native GDN-2 sub-block (recall / associative memory) ---
         self.gdn = None
@@ -434,6 +442,19 @@ class TypedHeadMixtureLayer(nn.Module):
                 use_chunked_e97=self.use_chunked_e97_delta,
                 e97_chunk_size=self.e97_chunk_size,
                 **e97_common,
+            )
+
+        # --- refit sub-block (inner-optimization / TTT write; ttt-triton) ---
+        # The momentum-delta `refit` head: GDN-2-class chunked tensor-core throughput
+        # (fused fwd+bwd Triton), one extra μ-gate vs the delta heads. has_mom=False
+        # makes it the gated-delta special case. Runs on the main (bulk) stream.
+        self.refit = None
+        if n_refit > 0:
+            from .refit_head import RefitHead
+            self.refit = RefitHead(
+                dim=self.dim, n_heads=n_refit, n_state=self.n_state,
+                chunk_size=self.refit_chunk_size, has_mom=self.refit_has_mom,
+                newton_steps=self.refit_newton_steps, use_gate=use_gate,
             )
 
         self.dropout = nn.Dropout(dropout) if dropout > 0 else nn.Identity()
@@ -571,6 +592,10 @@ class TypedHeadMixtureLayer(nn.Module):
             # e97_delta runs on the side stream above when overlap is active.
             d_out = self._run_e97(self.e97_delta, x)
             out = d_out if out is None else out + d_out
+        if self.refit is not None:
+            # refit (momentum-delta / TTT) is chunked tensor-core bulk: main stream.
+            rf_out = self.refit(x)
+            out = rf_out if out is None else out + rf_out
 
         if overlap:
             cur = torch.cuda.current_stream()
