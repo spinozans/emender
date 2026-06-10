@@ -214,6 +214,21 @@ def main():
                          'placing them in a SEPARATE optimizer param-group so the '
                          'knobs actually move while projections stay at base LR. '
                          '1.0 = single group (no split).')
+    # opt-headlr (OPT_SPEC §5.1): per-head-TYPE learning-rate groups. Splits the
+    # typed-gdn2 mixture's recurrent head parameters into a RECALL-class group
+    # (the gdn2_recall FLA sub-block) and a COMPUTE-class group (the
+    # counting/step-growth/nonlin sub-blocks: unified corners, e97_raw/e97_delta,
+    # gdn2_nonlin_shell, refit) and scales each class's LR independently. The
+    # shared trunk (embeddings, MLP, norms, output head) stays at base LR. This is
+    # OPTIMIZER plumbing, NOT a kernel/architecture change. When either multiplier
+    # != 1.0 it takes precedence over --knob_lr_mult (mutually exclusive).
+    ap.add_argument('--head_lr_recall_mult', type=float, default=1.0,
+                    help='opt-headlr: LR multiplier for RECALL-class head params '
+                         '(the gdn2_recall FLA sub-block). 1.0 = base LR.')
+    ap.add_argument('--head_lr_compute_mult', type=float, default=1.0,
+                    help='opt-headlr: LR multiplier for COMPUTE-class head params '
+                         '(unified corners / e97_raw / e97_delta / nonlin shell / '
+                         'refit sub-blocks). 1.0 = base LR.')
     ap.add_argument('--spec_reg', type=str, default=None,
                     choices=['pull', 'anticenter', 'coverage', 'pull_cov', 'anticenter_cov'],
                     help='SPECIALIZATION-PRESSURE regularizer (specialization-study): '
@@ -469,26 +484,79 @@ def main():
     # Build param groups. With --knob_lr_mult != 1, the recurrence knobs
     # (lam/beta/igain/gamma raw of every UnifiedCellLayer) get a SEPARATE group at
     # a higher LR; everything else stays at the base LR.
-    KNOB_SUFFIXES = ('lam_raw', 'beta_raw', 'igain_raw', 'gamma_raw')
-    knob_params, base_params, knob_names = [], [], []
-    for name, p in model.named_parameters():
-        if not p.requires_grad:
-            continue
-        if any(name.endswith(s) for s in KNOB_SUFFIXES):
-            knob_params.append(p); knob_names.append(name)
-        else:
-            base_params.append(p)
-    use_knob_group = args.knob_lr_mult != 1.0 and len(knob_params) > 0
-    if use_knob_group:
-        param_groups = [
-            {'params': base_params, 'lr': args.lr},
-            {'params': knob_params, 'lr': args.lr * args.knob_lr_mult},
-        ]
-        print(f"Knob-LR group: {len(knob_params)} knob params at lr="
-              f"{args.lr * args.knob_lr_mult:.2e} ({args.knob_lr_mult}x base); "
-              f"{len(base_params)} base params at lr={args.lr:.2e}", flush=True)
+    # opt-headlr (OPT_SPEC §5.1): per-head-TYPE LR groups take precedence over the
+    # legacy single knob group when either head-type multiplier is set != 1.0.
+    use_headlr_group = (args.head_lr_recall_mult != 1.0 or
+                        args.head_lr_compute_mult != 1.0)
+
+    def _typed_head_class(name):
+        """Classify a parameter by which DIRECT child of its TypedHeadMixtureLayer
+        it belongs to (recall-class = the gdn2_recall FLA sub-block named `gdn`;
+        compute-class = unified/shell/e97_raw/e97_delta/refit). Classification is by
+        the DIRECT child token after the integer layer index, NOT a substring, so
+        the shell sub-block's inner `shell.gdn.*` params are correctly COMPUTE-class
+        (not misread as recall). Returns 'recall', 'compute', or None (shared trunk
+        / non-typed layer)."""
+        toks = name.split('.')
+        for i, t in enumerate(toks):
+            if t.isdigit() and i + 1 < len(toks):
+                child = toks[i + 1]
+                if child == 'gdn':
+                    return 'recall'
+                if child in ('unified', 'shell', 'e97_raw', 'e97_delta', 'refit'):
+                    return 'compute'
+                return None
+        return None
+
+    if use_headlr_group:
+        recall_params, compute_params, base_params = [], [], []
+        for name, p in model.named_parameters():
+            if not p.requires_grad:
+                continue
+            cls = _typed_head_class(name)
+            if cls == 'recall':
+                recall_params.append(p)
+            elif cls == 'compute':
+                compute_params.append(p)
+            else:
+                base_params.append(p)
+        param_groups = [{'params': base_params, 'lr': args.lr}]
+        if recall_params:
+            param_groups.append({'params': recall_params,
+                                 'lr': args.lr * args.head_lr_recall_mult})
+        if compute_params:
+            param_groups.append({'params': compute_params,
+                                 'lr': args.lr * args.head_lr_compute_mult})
+        if args.knob_lr_mult != 1.0:
+            print("WARN: --knob_lr_mult ignored because per-head-type LR groups "
+                  "(--head_lr_*_mult) are active (mutually exclusive).", flush=True)
+        print(f"Head-type LR groups: recall-class {len(recall_params)} params at "
+              f"lr={args.lr * args.head_lr_recall_mult:.2e} "
+              f"({args.head_lr_recall_mult}x); compute-class {len(compute_params)} "
+              f"params at lr={args.lr * args.head_lr_compute_mult:.2e} "
+              f"({args.head_lr_compute_mult}x); {len(base_params)} trunk params at "
+              f"lr={args.lr:.2e}", flush=True)
     else:
-        param_groups = model.parameters()
+        KNOB_SUFFIXES = ('lam_raw', 'beta_raw', 'igain_raw', 'gamma_raw')
+        knob_params, base_params, knob_names = [], [], []
+        for name, p in model.named_parameters():
+            if not p.requires_grad:
+                continue
+            if any(name.endswith(s) for s in KNOB_SUFFIXES):
+                knob_params.append(p); knob_names.append(name)
+            else:
+                base_params.append(p)
+        use_knob_group = args.knob_lr_mult != 1.0 and len(knob_params) > 0
+        if use_knob_group:
+            param_groups = [
+                {'params': base_params, 'lr': args.lr},
+                {'params': knob_params, 'lr': args.lr * args.knob_lr_mult},
+            ]
+            print(f"Knob-LR group: {len(knob_params)} knob params at lr="
+                  f"{args.lr * args.knob_lr_mult:.2e} ({args.knob_lr_mult}x base); "
+                  f"{len(base_params)} base params at lr={args.lr:.2e}", flush=True)
+        else:
+            param_groups = model.parameters()
 
     if args.optimizer == 'schedulefree':
         import schedulefree
@@ -514,6 +582,8 @@ def main():
            'e88_pos_eigval_clamp': args.e88_pos_eigval_clamp,
            'e88_raw_write': args.e88_raw_write,
            'knob_lr_mult': float(args.knob_lr_mult),
+           'head_lr_recall_mult': float(args.head_lr_recall_mult),
+           'head_lr_compute_mult': float(args.head_lr_compute_mult),
            'lam_max': args.lam_max,
            'beta_max': args.beta_max,
            'igain_max': args.igain_max,
