@@ -141,6 +141,20 @@ def main():
                          '(only engages for linear state; 0 keeps sequential split-edit)')
     ap.add_argument('--shell_state_chunk', type=int, default=None,
                     help='typed-gdn2: chunk size for the fused shell scan (e.g. 64).')
+    # refit (TTT inner-optimization WRITE head; ttt-triton / ttt-capability).
+    # Forwarded only to typed-gdn2 layers that allocate refit heads (head_type_logits
+    # mass on slot idx 8). Default None = the TypedHeadMixtureLayer constructor
+    # defaults (momentum ON, exact chunk inner-steps).
+    ap.add_argument('--refit_has_mom', type=int, default=None, choices=[0, 1],
+                    help='refit: momentum (heavy-ball / Titans surprise EMA) gate. '
+                         '1 = full momentum-delta inner optimizer (`refit`); 0 = the '
+                         'gated-delta / e97 special case (delta = ONE inner step, no '
+                         'momentum). This is the matched A/B for "does richer '
+                         'emendation unlock anything".')
+    ap.add_argument('--refit_newton_steps', type=int, default=None,
+                    help='refit: inner-optimizer step count K (truncated-Neumann). '
+                         'None = exact chunk refit (ceil(log2 C)); K=1 a genuine '
+                         'one-step approximation. Forwarded only to typed-gdn2 layers.')
     ap.add_argument('--split_edit', type=int, default=None, choices=[0, 1],
                     help='phi-shell: use the E97 SPLIT-EDIT recurrence (erase gate '
                          'on read key + write gate on value) instead of plain '
@@ -313,6 +327,11 @@ def main():
         typed_kwargs['shell_state_nonlin'] = args.shell_state_nonlin
     if args.shell_state_chunk is not None:
         typed_kwargs['shell_state_chunk'] = args.shell_state_chunk
+    # refit (TTT inner-optimization write head) knobs -> typed-gdn2 layers.
+    if args.refit_has_mom is not None:
+        typed_kwargs['refit_has_mom'] = bool(args.refit_has_mom)
+    if args.refit_newton_steps is not None:
+        typed_kwargs['refit_newton_steps'] = int(args.refit_newton_steps)
     # e97-hetero-cma: the e97_delta head's per-step state map on the split-edit
     # recurrence. 'tanh' (default in TypedHeadMixtureLayer) is the depth-capability
     # head (per-step bounded saturation = phi-explore winner); 'identity' is the
@@ -459,6 +478,8 @@ def main():
            'igain_max': args.igain_max,
            'corner_mixture': args.corner_mixture,
            'head_type_logits': args.head_type_logits,
+           'refit_has_mom': args.refit_has_mom,
+           'refit_newton_steps': args.refit_newton_steps,
            'phi': args.phi,
            'split_edit': args.split_edit,
            'cplx_real_only': args.cplx_real_only,
