@@ -1,0 +1,18 @@
+=== VERDICT (emender-real-1p3b) — same loss + more capability at ~same speed? ===
+Held-out BPB WALL-matched : emender=1.90972  cma_gdn2=1.81806  m2rnn=1.85119
+Held-out BPB TOKEN-matched: emender=1.92248  cma_gdn2=1.8799
+Throughput emender/cma_gdn2: 0.796x  (emender 6451.0 / gdn2 8107.2 tok/s)
+AT CONVERGENCE (~4000 steps) best named-task sep: emender−gdn2typed=+0.000, emender−cma_gdn2(real GDN-2)=+0.004 on modular_quadratic
+  (undertrained 1500-step gap vs gdn2typed was up to +0.495 — convergence SPEED, not capability)
+
+  loss TIE wall-matched (|Δ|<= 0.02)  : False
+  loss TIE token-matched (|Δ|<= 0.02) : False
+  capability clears gdn2typed (>= 0.03): False
+  speed parity (>= 0.95x)          : False
+
+==> NO-GO / NULL: NO capability beyond the real GDN-2 at convergence (best emender−cma_gdn2 sep 0.0042266845703125 < Δ*=0.03; the 1500-step gap was convergence speed — gdn2typed catches up); throughput 0.796x < 0.95x (wall-matched loses); held-out BPB regresses wall-matched vs GDN-2; token-matched BPB not a tie.
+    Confirms emender-real-cap's pre-registered 1.3B expectation: the sparse
+    nonlinear emendment sprinkle is a convergent-loss tie with NO capability
+    edge over the typed substrate, and the sequential split-edit head costs
+    throughput -> GDN-2 wins wall-matched. The convergent-loss/capability null
+    extends to the REAL CMA-found Emender at 1.3B, matched precision (bf16).

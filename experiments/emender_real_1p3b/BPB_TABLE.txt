@@ -1,0 +1,15 @@
+=== 1.3B held-out BPB — matched WALLCLOCK, REAL Comma-Pile, bf16 UNIFORM, FUSED ===
+arm                             params dtype bs   tok/s  steps   Mtok  wall_s      BPB  BPB_sd
+EMENDER (CMA-found 58/2/4)      1.310B  bf16  2    6451   1862    7.6    1200   1.9097  0.0087
+CMA-best GDN-2 (B)              1.352B  bf16  2    8107   2342    9.6    1200   1.8181  0.0065
+CMA-best m2rnn                  1.307B  bf16  2    7285   2096    8.6    1200   1.8512  0.0038
+
+Common-token cross-walk budget = 7.5 Mtok (min across arms; train-loss at equal tokens).
+
+=== 1.3B held-out BPB — matched TOKENS, REAL Comma-Pile, bf16 UNIFORM, FUSED ===
+arm                             params dtype bs   tok/s  steps   Mtok  wall_s      BPB  BPB_sd
+EMENDER (CMA-found 58/2/4)      1.310B  bf16  2    6344   1709    7.0    1122   1.9225  0.0032
+CMA-best GDN-2 (B)              1.352B  bf16  2    8092   1709    7.0     881   1.8799  0.0017
+CMA-best m2rnn                  1.307B  bf16  2    7280   1709    7.0     985   1.8824  0.0025
+
+Common-token cross-walk budget = 7.0 Mtok (min across arms; train-loss at equal tokens).

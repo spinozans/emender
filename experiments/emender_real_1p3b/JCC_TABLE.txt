@@ -1,0 +1,22 @@
+=== 1.3B expressivity — accuracy (seed-avg), length-extrapolation ===
+Separation = (emender − gdn2typed): isolates the e97_delta emendment heads
+from the typed substrate. vs cma_gdn2 (fla) shown for the incumbent ref.
+
+-- eval length 128 --
+task                     emender  gdn2typed  cma_gdn2  sepT(em-typ)
+modular_quadratic          1.000      0.526     0.541        +0.474
+s5_permutation             0.999      0.124     0.237        +0.875
+modular_counter            0.234      0.236     0.249        -0.001
+mqar_recall                0.639      0.171     0.884        +0.468
+
+-- eval length 512 --
+task                     emender  gdn2typed  cma_gdn2  sepT(em-typ)
+modular_quadratic          1.000      0.504     0.507        +0.496
+s5_permutation             0.300      0.044     0.067        +0.257
+modular_counter            0.210      0.208     0.212        +0.002
+mqar_recall                0.171      0.052     0.385        +0.120
+
+=== CONVERGENCE CONTROL (~4000 steps) — does gdn2typed/incumbent catch up? ===
+task                     emender  gdn2typed  cma_gdn2   em-typ   em-inc  (acc@512)
+modular_quadratic          1.000      1.000     0.996   +0.000   +0.004
+s5_permutation             0.329      0.076     0.731   +0.253   -0.403
