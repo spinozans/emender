@@ -1,0 +1,269 @@
+{
+  "task": "s5_permutation",
+  "pattern": [
+    "typed-gdn2",
+    "typed-gdn2",
+    "typed-gdn2",
+    "typed-gdn2"
+  ],
+  "dim": 512,
+  "depth": 4,
+  "seq_len": 128,
+  "batch_size": 32,
+  "lr": 0.0005,
+  "seed": 456,
+  "params": 28706160,
+  "mlp_ratio": 2.0,
+  "disable_autocast": false,
+  "use_triton_e88": false,
+  "linear_state": null,
+  "state_activation": null,
+  "use_gate": null,
+  "decay_mode": null,
+  "gdn_allow_neg_eigval": 1,
+  "gdn_use_conv": null,
+  "e88_pos_eigval_clamp": null,
+  "e88_raw_write": null,
+  "knob_lr_mult": 1.0,
+  "head_lr_recall_mult": 1.0,
+  "head_lr_compute_mult": 1.0,
+  "lam_max": null,
+  "beta_max": null,
+  "igain_max": null,
+  "decay_init": null,
+  "decay_init_delta": null,
+  "gate_bias_init": null,
+  "unified_head_norm": null,
+  "corner_mixture": null,
+  "head_type_logits": "4.025352,0.693147,-30,-30,-30,-30,-30,1.791759,-30",
+  "refit_has_mom": null,
+  "refit_newton_steps": null,
+  "phi": null,
+  "split_edit": null,
+  "cplx_real_only": null,
+  "cplx_nonlin_subset_frac": null,
+  "cplx_nonlin_subset_phi": null,
+  "cplx_dc_frac": null,
+  "cplx_force_sequential": null,
+  "typed_alloc": {
+    "type_names": [
+      "gdn2_recall",
+      "e97_track",
+      "count",
+      "latch",
+      "nonlin",
+      "gdn2_nonlin_shell",
+      "e97_raw",
+      "e97_delta",
+      "refit"
+    ],
+    "fractions": {
+      "gdn2_recall": 0.8750000772543638,
+      "e97_track": 0.031249987452061936,
+      "count": 1.4621282657886892e-15,
+      "latch": 1.4621282657886892e-15,
+      "nonlin": 1.4621282657886892e-15,
+      "gdn2_nonlin_shell": 1.4621282657886892e-15,
+      "e97_raw": 1.4621282657886892e-15,
+      "e97_delta": 0.09374993529356532,
+      "refit": 1.4621282657886892e-15
+    },
+    "counts": {
+      "gdn2_recall": 56,
+      "e97_track": 2,
+      "count": 0,
+      "latch": 0,
+      "nonlin": 0,
+      "gdn2_nonlin_shell": 0,
+      "e97_raw": 0,
+      "e97_delta": 6,
+      "refit": 0
+    },
+    "n_gdn": 56,
+    "n_unified": 2,
+    "unified_counts": [
+      2,
+      0,
+      0,
+      0
+    ],
+    "n_shell": 0,
+    "n_e97_raw": 0,
+    "n_e97_delta": 6,
+    "n_refit": 0
+  },
+  "spec_reg": null,
+  "spec_reg_weight": 1.0,
+  "spec_reg_anneal": 0.5,
+  "curriculum": null,
+  "random_baseline_acc": 0.008333333333333333,
+  "steps": [
+    {
+      "step": 0,
+      "train_loss": 391.09161376953125,
+      "eval_acc": 0.01275634765625,
+      "eval_loss": 209.01174926757812,
+      "elapsed_s": 6.934276580810547
+    },
+    {
+      "step": 300,
+      "train_loss": 3.9259254932403564,
+      "eval_acc": 0.0770263671875,
+      "eval_loss": 3.894497334957123,
+      "elapsed_s": 29.785096883773804
+    },
+    {
+      "step": 600,
+      "train_loss": 3.5595123767852783,
+      "eval_acc": 0.14208984375,
+      "eval_loss": 3.5398070216178894,
+      "elapsed_s": 51.0592999458313
+    },
+    {
+      "step": 900,
+      "train_loss": 0.771353542804718,
+      "eval_acc": 0.6513671875,
+      "eval_loss": 1.2830936014652252,
+      "elapsed_s": 71.57267689704895
+    },
+    {
+      "step": 1200,
+      "train_loss": 0.03399963676929474,
+      "eval_acc": 0.9932861328125,
+      "eval_loss": 0.028226132038980722,
+      "elapsed_s": 91.82009649276733
+    },
+    {
+      "step": 1500,
+      "train_loss": 0.01957625150680542,
+      "eval_acc": 0.99981689453125,
+      "eval_loss": 0.00031940101598593174,
+      "elapsed_s": 111.07242107391357
+    },
+    {
+      "step": 1800,
+      "train_loss": 0.0005340203060768545,
+      "eval_acc": 1.0,
+      "eval_loss": 1.7000742900563637e-05,
+      "elapsed_s": 131.308260679245
+    },
+    {
+      "step": 2100,
+      "train_loss": 0.001851685345172882,
+      "eval_acc": 1.0,
+      "eval_loss": 1.558232622755895e-05,
+      "elapsed_s": 151.76544213294983
+    },
+    {
+      "step": 2400,
+      "train_loss": 0.0002998252457473427,
+      "eval_acc": 0.99993896484375,
+      "eval_loss": 0.00030903917388513946,
+      "elapsed_s": 171.95744705200195
+    },
+    {
+      "step": 2700,
+      "train_loss": 7.199306855909526e-05,
+      "eval_acc": 1.0,
+      "eval_loss": 1.9497619803132693e-06,
+      "elapsed_s": 191.97788643836975
+    },
+    {
+      "step": 3000,
+      "train_loss": 0.0005363198579289019,
+      "eval_acc": 1.0,
+      "eval_loss": 5.045492343924707e-07,
+      "elapsed_s": 212.19591617584229
+    },
+    {
+      "step": 3300,
+      "train_loss": 1.368073935736902e-05,
+      "eval_acc": 1.0,
+      "eval_loss": 1.0743864748974374e-06,
+      "elapsed_s": 232.51930022239685
+    },
+    {
+      "step": 3600,
+      "train_loss": 0.00531812896952033,
+      "eval_acc": 1.0,
+      "eval_loss": 6.820311517330424e-06,
+      "elapsed_s": 252.34850478172302
+    },
+    {
+      "step": 3900,
+      "train_loss": 0.0004209853068459779,
+      "eval_acc": 1.0,
+      "eval_loss": 8.091455704573036e-06,
+      "elapsed_s": 271.79670810699463
+    },
+    {
+      "step": 4200,
+      "train_loss": 0.0013498037587851286,
+      "eval_acc": 1.0,
+      "eval_loss": 4.9153125409873155e-06,
+      "elapsed_s": 291.3613951206207
+    },
+    {
+      "step": 4500,
+      "train_loss": 4.190213076071814e-06,
+      "eval_acc": 1.0,
+      "eval_loss": 1.572518462111816e-07,
+      "elapsed_s": 310.91843271255493
+    },
+    {
+      "step": 4800,
+      "train_loss": 3.6255980376154184e-05,
+      "eval_acc": 1.0,
+      "eval_loss": 8.583434141229418e-08,
+      "elapsed_s": 330.6063985824585
+    },
+    {
+      "step": 5100,
+      "train_loss": 3.4779036468535196e-06,
+      "eval_acc": 1.0,
+      "eval_loss": 5.655382917524321e-08,
+      "elapsed_s": 350.38309717178345
+    },
+    {
+      "step": 5400,
+      "train_loss": 2.114457629431854e-06,
+      "eval_acc": 0.99993896484375,
+      "eval_loss": 0.0006103942496968884,
+      "elapsed_s": 370.1437158584595
+    },
+    {
+      "step": 5700,
+      "train_loss": 9.78447587840492e-07,
+      "eval_acc": 1.0,
+      "eval_loss": 5.845848427554756e-07,
+      "elapsed_s": 389.61379742622375
+    },
+    {
+      "step": 5999,
+      "train_loss": 1.7425234545953572e-05,
+      "eval_acc": 1.0,
+      "eval_loss": 2.753167027691461e-08,
+      "elapsed_s": 409.1097242832184
+    }
+  ],
+  "final_acc": 1.0,
+  "final_loss": 6.049805913455053e-07,
+  "elapsed_total_s": 412.43134355545044,
+  "length_extrap": {
+    "128": {
+      "acc": 1.0,
+      "loss": 8.155851027868977e-08,
+      "B_eval": 32
+    },
+    "256": {
+      "acc": 0.5962677001953125,
+      "loss": 8.124035835266113,
+      "B_eval": 32
+    },
+    "512": {
+      "acc": 0.305633544921875,
+      "loss": 15.927110075950623,
+      "B_eval": 32
+    }
+  }
+}
