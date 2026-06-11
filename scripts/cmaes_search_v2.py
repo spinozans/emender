@@ -231,6 +231,22 @@ SEARCH_SPACES = {
         'lr': (1e-4, 3e-3, 'log', 'Learning rate'),
         'batch_size': (1, 128, 'int_log', 'Batch size (log-scale, clamped to max feasible)'),
         },
+    # Emender = typed-gdn2-lm: gdn2_recall (sea/bulk recall) heads MIXED with
+    # e97_delta nonlinear split-edit emendment heads. The STANDARD-driver search
+    # over the SAME geometry axes as m2rnn (_E88_SEARCH_SPACE: dim/n_heads/depth/
+    # lr/batch) PLUS the gdn2<->nonlinear mixture-balance axis. n_state is PINNED
+    # 32 and expansion PINNED 1.0 (the 32x32 tile, like m2rnn) — both fixed in
+    # estimate_params_for_config / build_train_command, NOT swept. n_heads is the
+    # real width-multiprogramming regime (32-2000), NOT crippled to 32 as the
+    # bespoke emender_real_cap 2-D mixture-only proxy was.
+    'emender': {
+        'dim': (1024, 4096, 'int_mult128', 'Model dimension'),
+        'n_heads': (32, 2000, 'int', 'Number of typed heads — push high for SM multi-programming'),
+        'depth': (10, 50, 'int', 'Number of layers'),
+        'mixture_nonlin': (0.0, 0.5, 'float', 'e97_delta nonlinear-emendment head fraction (rest = gdn2_recall sea)'),
+        'lr': (1e-4, 3e-3, 'log', 'Learning rate'),
+        'batch_size': (1, 128, 'int_log', 'Batch size (log-scale, clamped to max feasible)'),
+        },
     'gdn2-mlp': {
         'dim': (1536, 3072, 'int_mult128', 'Model dimension'),
         'expansion': (1, 3, 'int', 'GDN-2 value expansion factor'),
@@ -491,6 +507,83 @@ def generate_lhs_configs(model_type, n_samples, fixed_params=None, seed=42):
 # =============================================================================
 # PARAM ESTIMATION AND DIM CALCULATION
 # =============================================================================
+# =============================================================================
+# EMENDER (typed-gdn2-lm) HELPERS — geometry pinned n_state=32 / expansion=1.0
+# =============================================================================
+EMENDER_N_STATE = 32       # PINNED (NOT swept)
+EMENDER_EXPANSION = 1.0    # PINNED (the 32x32 tile, like m2rnn)
+# TYPE_NAMES = [gdn2_recall, e97_track, count, latch, nonlin, gdn2_nonlin_shell,
+#               e97_raw, e97_delta, refit]  (see ndm/models/typed_head_mixture.py)
+# The Emender mixture axis is a single scalar f = e97_delta nonlinear fraction;
+# the rest are gdn2_recall. We emit 9 head-type logits whose softmax over the two
+# active slots (gdn2_recall=idx0, e97_delta=idx7) equals (1-f, f). f<=eps recovers
+# the pure-GDN-2 null (0 nonlinear heads). -30 (finite, kernel-safe) pads off the
+# other 7 types (train.py parses logits as floats; -inf is rejected downstream).
+_EMENDER_LAYER_PARAM_CACHE = {}
+
+
+def emender_head_type_logits(f_nonlin):
+    """Map the scalar mixture-balance fraction f -> 9-vector head_type_logits."""
+    f = min(max(float(f_nonlin), 1e-6), 1.0 - 1e-6)
+    import math as _m
+    logits = [-30.0] * 9
+    logits[0] = _m.log(1.0 - f)   # gdn2_recall (sea / bulk recall)
+    logits[7] = _m.log(f)         # e97_delta (nonlinear split-edit emendment)
+    return logits
+
+
+def emender_layer_params(dim, n_heads, f_nonlin):
+    """Exact parameter count of ONE TypedHeadMixtureLayer at the pinned Emender
+    geometry (n_state=32, expansion=1.0) for the given mixture fraction. Built once
+    on CPU (ground truth — the FLA GatedDeltaNet + E88FLAHybrid split-edit sub-block
+    param counts are not cleanly analytic) and memoized. The caller gates this build
+    behind a cheap proxy so far-off-target proposals never instantiate a giant layer.
+    """
+    f_round = round(float(f_nonlin), 4)
+    key = (int(dim), int(n_heads), f_round)
+    cached = _EMENDER_LAYER_PARAM_CACHE.get(key)
+    if cached is not None:
+        return cached
+    import torch  # lazy: the driver process otherwise needs no torch
+    if str(REPO_ROOT) not in sys.path:
+        sys.path.insert(0, str(REPO_ROOT))  # script runs with scripts/ on path, not repo root
+    from ndm.models.typed_head_mixture import TypedHeadMixtureLayer
+    layer = TypedHeadMixtureLayer(
+        dim=int(dim), n_heads=int(n_heads), n_state=EMENDER_N_STATE,
+        expansion=EMENDER_EXPANSION,
+        head_type_logits=emender_head_type_logits(f_round),
+        gdn_allow_neg_eigval=True, use_chunked_e97_delta=False,
+    )
+    lp = sum(p.numel() for p in layer.parameters())
+    del layer
+    _EMENDER_LAYER_PARAM_CACHE[key] = lp
+    return lp
+
+
+def estimate_emender_params(params):
+    """~param count of the full Emender LadderLM (tied embedding/lm_head, per-layer
+    RMSNorm + final RMSNorm + depth typed-mixture layers). Validated EXACT vs a full
+    LadderLM build (diff 0.000M). Uses a cheap projection proxy to avoid building a
+    multi-GB layer for off-target proposals: the real per-layer build is only done
+    when the proxy total lands within a wide [0.2, 5]x window of the target; outside
+    it the (far-off) proxy is returned and the candidate is rejected by tolerance."""
+    dim = int(params.get('dim', 1024))
+    depth = int(params.get('depth', 20))
+    n_heads = int(params.get('n_heads', 256))
+    f = float(params.get('mixture_nonlin', 0.0))
+    vocab_size = PARAM_VOCAB_SIZE
+    embed = vocab_size * dim                 # tied embedding == lm_head
+    norms = dim * (depth + 1)                # depth pre-norms + 1 final RMSNorm
+    # Cheap projection proxy (~q/k/v/o on n_heads*n_state) for the build gate.
+    proxy_layer = 4 * dim * n_heads * EMENDER_N_STATE
+    proxy_total = embed + norms + depth * proxy_layer
+    target = getattr(estimate_emender_params, '_target', None)
+    if target is not None and not (0.2 * target <= proxy_total <= 5.0 * target):
+        return proxy_total  # far off target -> reject without building
+    layer_params = emender_layer_params(dim, n_heads, f)
+    return embed + depth * layer_params + norms
+
+
 def estimate_params_for_config(params, model_type):
     """Estimate parameter count for a configuration."""
     dim = params.get('dim', 1024)
@@ -649,6 +742,8 @@ def estimate_params_for_config(params, model_type):
         return calc_e1h_params(dim, depth=depth, n_heads=params.get('n_heads', 16),
                                n_state=params.get('n_state', 32),
                                vocab_size=vocab_size)
+    elif model_type == 'emender':
+        return estimate_emender_params(params)
     else:
         return 4 * dim * dim * depth  # Rough estimate
 
@@ -976,6 +1071,38 @@ def build_train_command(params, model_type, train_minutes, output_dir):
             '--n_heads', str(params.get('n_heads', 16)),
             '--use_conv', '1',
             '--d_conv', '4',
+        ])
+
+    elif model_type == 'emender':
+        # Emender = typed-gdn2-lm mixture: gdn2_recall sea + e97_delta nonlinear
+        # split-edit emendment heads. n_state PINNED 32, expansion PINNED 1.0.
+        # head_type_logits encodes the mixture-balance axis (softmax over
+        # gdn2_recall=idx0 / e97_delta=idx7 == (1-f, f)). bf16 + fused split-edit
+        # asserted: use_triton_e97=True (layer default) + cast_recurrent_bf16=True
+        # guarantee the bf16 Triton split-edit kernel engages (never eager). The
+        # sequential split-edit path is kept (use_chunked_e97_delta=False) with
+        # tanh state nonlin and hetero stream-overlap, matching emender-real-1p3b.
+        import json as _json
+        f_nonlin = float(params.get('mixture_nonlin', 0.0))
+        logits = emender_head_type_logits(f_nonlin)
+        cmd.extend([
+            '--level', 'typed-gdn2-lm',
+            '--n_heads', str(params['n_heads']),
+            '--n_state', str(EMENDER_N_STATE),
+            '--expansion', str(EMENDER_EXPANSION),
+            # '=' form: the gdn2_recall logit log(1-f) is negative, and argparse
+            # treats a leading-dash value as an option flag unless attached with '='.
+            '--head_type_logits=' + ','.join(repr(float(x)) for x in logits),
+            '--gdn_allow_neg_eigval', '1',
+            '--lam_max', '1.585',
+            '--beta_max', '2.747',
+            '--layer_kwargs', _json.dumps({
+                'use_triton_e97': True,          # fused bf16 split-edit kernel (no eager)
+                'cast_recurrent_bf16': True,     # force fused gate to engage under bf16
+                'e97_state_nonlin': 'tanh',      # validated bounded per-step state map
+                'use_chunked_e97_delta': False,  # keep the sequential split-edit kernel
+                'overlap_streams': True,         # hetero stream-overlap (latency hiding)
+            }),
         ])
 
     elif model_type == 'gdn2-mlp':
@@ -2166,6 +2293,10 @@ def main():
     # Parse params
     target_params = int(args.params.lower().replace('m', '000000').replace('b', '000000000'))
     gpus = [int(g) for g in args.gpus.split(',')]
+
+    # Emender param estimator: tell the build-gate the target so far-off-target
+    # proposals are rejected via the cheap proxy without instantiating a giant layer.
+    estimate_emender_params._target = target_params
 
     # Set up dynamic GPU file
     global GPU_FILE, DEFAULT_GPUS

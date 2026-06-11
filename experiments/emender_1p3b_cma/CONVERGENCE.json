@@ -1,0 +1,250 @@
+{
+  "experiment": "emender-1p3b-cma",
+  "description": "Typed-gdn2 Emender (gdn2_recall sea + e97_delta nonlinear emendment heads) through the STANDARD cmaes_search_v2.py driver at 1.3B; SAME symmetric budget as the gdn2/m2rnn 1.3B searches.",
+  "driver": "scripts/cmaes_search_v2.py --model emender",
+  "budget": {
+    "popsize": 8,
+    "train_minutes": 15,
+    "target_params": "1300M",
+    "param_tolerance": 0.03,
+    "chunk_size": 2048,
+    "tokenizer": "p50k_base",
+    "sigma0": 0.8,
+    "min_generations": 8,
+    "generations_run": 8,
+    "total_evaluations": 64,
+    "warm_start": "1 central anchor (dim1280/dep22/nh256/f0.15)",
+    "gpus": 8,
+    "source": "symmetric to scripts/repro_cmaes_1300m/launch_gdn2.sh + launch_missing_cma_20260531.sh"
+  },
+  "search_space": {
+    "dim": "1024-4096 int_mult128",
+    "n_heads": "32-2000 int (width-multiprogramming)",
+    "depth": "10-50 int",
+    "mixture_nonlin": "0.0-0.5 float (gdn2_recall<->e97_delta)",
+    "lr": "1e-4..3e-3 log",
+    "batch_size": "1-128 int_log (memory-clamped)",
+    "n_state": "PINNED 32",
+    "expansion": "PINNED 1.0",
+    "precision": "bf16 uniform, fused split-edit asserted"
+  },
+  "best": {
+    "fitness_avg_train_loss": 6.152447,
+    "params": {
+      "dim": 1792,
+      "n_heads": 378,
+      "depth": 10,
+      "mixture_nonlin": 0.23347773538070013,
+      "lr": 0.0011083449181198209,
+      "batch_size": 2
+    },
+    "actual_params_B": 1.287942344,
+    "param_dev_pct": -0.93,
+    "head_allocation": {
+      "gdn2_recall": 290,
+      "e97_delta": 88
+    }
+  },
+  "convergence_curve": [
+    {
+      "generation": 1,
+      "best_loss_so_far": 6.640375,
+      "gen_best_loss": 6.640375,
+      "gen_fitnesses": [
+        6.640375,
+        7.289674,
+        6.822148,
+        6.907235,
+        7.443762,
+        7.088083,
+        7.830694,
+        7.727542
+      ],
+      "sigma": 0.290938,
+      "best_params_so_far": {
+        "dim": 2048,
+        "n_heads": 150,
+        "depth": 23,
+        "mixture_nonlin": 0.07357289786391118,
+        "lr": 0.001347414274287678,
+        "batch_size": 13
+      }
+    },
+    {
+      "generation": 2,
+      "best_loss_so_far": 6.640375,
+      "gen_best_loss": 6.720388,
+      "gen_fitnesses": [
+        6.78165,
+        7.863753,
+        7.022678,
+        7.003899,
+        6.720388,
+        7.168589,
+        8.184475,
+        7.571942
+      ],
+      "sigma": 0.272717,
+      "best_params_so_far": {
+        "dim": 2048,
+        "n_heads": 150,
+        "depth": 23,
+        "mixture_nonlin": 0.07357289786391118,
+        "lr": 0.001347414274287678,
+        "batch_size": 13
+      }
+    },
+    {
+      "generation": 3,
+      "best_loss_so_far": 6.478271,
+      "gen_best_loss": 6.478271,
+      "gen_fitnesses": [
+        6.816536,
+        6.817339,
+        8.019839,
+        7.438171,
+        7.085335,
+        6.478271,
+        6.524504,
+        6.913334
+      ],
+      "sigma": 0.252436,
+      "best_params_so_far": {
+        "dim": 1664,
+        "n_heads": 377,
+        "depth": 12,
+        "mixture_nonlin": 0.0004464071260014945,
+        "lr": 0.002554598074803187,
+        "batch_size": 7
+      }
+    },
+    {
+      "generation": 4,
+      "best_loss_so_far": 6.152447,
+      "gen_best_loss": 6.152447,
+      "gen_fitnesses": [
+        6.712402,
+        6.412145,
+        6.499902,
+        6.433661,
+        7.453795,
+        6.608352,
+        6.892657,
+        6.152447
+      ],
+      "sigma": 0.242926,
+      "best_params_so_far": {
+        "dim": 1792,
+        "n_heads": 378,
+        "depth": 10,
+        "mixture_nonlin": 0.23347773538070013,
+        "lr": 0.0011083449181198209,
+        "batch_size": 2
+      }
+    },
+    {
+      "generation": 5,
+      "best_loss_so_far": 6.152447,
+      "gen_best_loss": 6.317981,
+      "gen_fitnesses": [
+        7.645391,
+        6.568101,
+        6.317981,
+        7.238448,
+        6.47595,
+        6.50042,
+        6.476675,
+        6.68738
+      ],
+      "sigma": 0.239997,
+      "best_params_so_far": {
+        "dim": 1792,
+        "n_heads": 378,
+        "depth": 10,
+        "mixture_nonlin": 0.23347773538070013,
+        "lr": 0.0011083449181198209,
+        "batch_size": 2
+      }
+    },
+    {
+      "generation": 6,
+      "best_loss_so_far": 6.152447,
+      "gen_best_loss": 6.380041,
+      "gen_fitnesses": [
+        7.757878,
+        7.281026,
+        7.059609,
+        6.449956,
+        6.590604,
+        7.216942,
+        7.474279,
+        6.380041
+      ],
+      "sigma": 0.242651,
+      "best_params_so_far": {
+        "dim": 1792,
+        "n_heads": 378,
+        "depth": 10,
+        "mixture_nonlin": 0.23347773538070013,
+        "lr": 0.0011083449181198209,
+        "batch_size": 2
+      }
+    },
+    {
+      "generation": 7,
+      "best_loss_so_far": 6.152447,
+      "gen_best_loss": 6.374548,
+      "gen_fitnesses": [
+        6.374548,
+        6.698745,
+        6.53073,
+        6.439879,
+        6.638093,
+        6.523832,
+        6.515418,
+        6.568062
+      ],
+      "sigma": 0.219763,
+      "best_params_so_far": {
+        "dim": 1792,
+        "n_heads": 378,
+        "depth": 10,
+        "mixture_nonlin": 0.23347773538070013,
+        "lr": 0.0011083449181198209,
+        "batch_size": 2
+      }
+    },
+    {
+      "generation": 8,
+      "best_loss_so_far": 6.152447,
+      "gen_best_loss": 6.359926,
+      "gen_fitnesses": [
+        6.38086,
+        6.426075,
+        6.516472,
+        6.681394,
+        6.539313,
+        6.634216,
+        6.455432,
+        6.359926
+      ],
+      "sigma": 0.197973,
+      "best_params_so_far": {
+        "dim": 1792,
+        "n_heads": 378,
+        "depth": 10,
+        "mixture_nonlin": 0.23347773538070013,
+        "lr": 0.0011083449181198209,
+        "batch_size": 2
+      }
+    }
+  ],
+  "heldout_bpb": {
+    "final_heldout_ce_nats": 6.2866,
+    "final_heldout_bpb": 2.4079,
+    "bytes_per_token": 3.7666,
+    "val_data": "/mnt/nvme2n1/erikg/emender_1p3b_heldout_300g.txt (48MB carved at 300GB offset, disjoint from training streams at byte~0 and ~654GB)",
+    "method": "schedule-free averaged weights, 15-min train (matched to search budget), 200 val batches",
+    "measured_params": 1287942344
+  }
+}
