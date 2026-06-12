@@ -1,0 +1,28 @@
+{
+  "task": "lb-m2rnn2",
+  "model": "m2rnn",
+  "protocol": "standard driver scripts/cmaes_search_v2.py --model m2rnn --phase cmaes, popsize8, sigma0.8, min_generations13, params1300M, param_tolerance0.03, chunk_size2048, train_minutes15, tokenizer p50k_base, data pile.txt seed42, n_state SWEPT (free CMA dim over {16,32}, NOT pinned), bf16 uniform + XMA fused Triton kernel (--require_m2rnn_xma, no eager). CLEAN 8-GPU box, no contention.",
+  "best_avg_loss": 6.063596,
+  "best_eval_id": 35,
+  "best_geometry": {
+    "dim": 3072,
+    "n_heads": 346,
+    "n_state": 16,
+    "depth": 13,
+    "expansion": 1.0,
+    "lr": 0.0010395553876216513,
+    "batch_size": 4
+  },
+  "best_actual_params": 1274976032,
+  "best_param_dev_pct": -1.92,
+  "converged": true,
+  "found_at_generation": 5,
+  "generations": 13,
+  "total_evals": 104,
+  "elapsed_hours": 4.6618,
+  "old_leaderboard_m2rnn": 6.1161,
+  "delta_vs_old": -0.0525,
+  "bf16": true,
+  "xma_fused": true,
+  "eager": false
+}
