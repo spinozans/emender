@@ -243,7 +243,7 @@ SEARCH_SPACES = {
         'dim': (1024, 4096, 'int_mult128', 'Model dimension'),
         'n_heads': (32, 2000, 'int', 'Number of typed heads — push high for SM multi-programming'),
         'depth': (10, 50, 'int', 'Number of layers'),
-        'mixture_nonlin': (0.0, 0.5, 'float', 'e97_delta nonlinear-emendment head fraction (rest = gdn2_recall sea)'),
+        'mixture_nonlin': (0.0, 1.0, 'float', 'e97_delta nonlinear-emendment head fraction, FULL range: 0=pure gdn2_recall sea, 1=pure e97 split-edit'),
         'lr': (1e-4, 3e-3, 'log', 'Learning rate'),
         'batch_size': (1, 128, 'int_log', 'Batch size (log-scale, clamped to max feasible)'),
         },

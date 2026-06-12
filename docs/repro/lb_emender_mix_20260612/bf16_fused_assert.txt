@@ -1,0 +1,17 @@
+bf16 + FUSED split-edit assertion — from RECORDED worker args.json of the BEST eval (eval_47)
+search: experiments/lb_emender_mix_20260612/search/emender_20260612_065738/eval_47/leveltyped-gdn2-lm_*/args.json
+
+bf16        = True
+use_triton_e97 (layer_kwargs) = true   <- fused bf16 Triton split-edit kernel ENGAGED (no eager)
+cast_recurrent_bf16          = true
+use_chunked_e97_delta        = false   <- sequential split-edit path
+e97_state_nonlin             = tanh
+overlap_streams              = true
+n_state     = 32   (PINNED)
+expansion   = 1.0  (PINNED)
+tokenizer   = p50k_base
+level       = typed-gdn2-lm
+
+ASSERT PASS: bf16=True, use_triton_e97=True (fused, no eager), n_state=32, p50k_base.
+(Note: the top-level --use_triton=0 flag is the unrelated generic-triton switch; the
+ emender split-edit fused kernel is gated by layer_kwargs.use_triton_e97, which is true.)
