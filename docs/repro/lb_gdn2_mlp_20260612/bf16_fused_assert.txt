@@ -1,0 +1,24 @@
+bf16 + FUSED assertion — recorded from the BEST-eval (eval_86) live worker args.json
+source: experiments/lb_gdn2_mlp_20260612/search/gdn2-mlp_20260612_130628/eval_86/levelgdn2-mlp_100m_20260612_163600/args.json
+
+  bf16             = True
+  level            = gdn2-mlp
+  dim              = 2176
+  depth            = 12
+  n_heads          = 30
+  expansion        = 1.0
+  gdn2_mlp_ratio   = 3.258732449079677
+  use_conv         = 1
+  d_conv           = 4
+  tokenizer        = p50k_base
+  chunk_size       = 2048
+  data             = /home/erikg/elman/data/pile.txt
+  seed             = 42
+  optimizer        = schedulefree
+
+ASSERTION: --bf16 True (uniform bf16). --level gdn2-mlp => official GatedDeltaNet-2
+(GDN2_PATH=/home/erikg/GatedDeltaNet-2) fused chunked kernel + SwiGLU MLP. The GDN-2
+family runs FLA's fused chunk_gated_delta_rule Triton path; there is NO eager T-scan
+fallback for this family (the eager fallback in train.py applies only to the E97/E88
+raw_write families, not gdn2/gdn2-mlp). No 'eager' key present in the worker args.
+Official short conv engaged: use_conv=1, d_conv=4.
