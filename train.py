@@ -260,6 +260,14 @@ def parse_args():
     parser.add_argument('--heldout_bytes_per_token', type=float, default=3.783,
                         help='Bytes/token for BPB = (CE_nats/ln2)/bytes_per_token. '
                              'Default 3.783 = p50k on commapile (Study B).')
+    parser.add_argument('--heldout_tensor', type=str, default=None,
+                        help='Path to a FIXED pre-tokenized held-out tensor (.pt with '
+                             "keys 'chunks' [N, chunk+1], 'bytes_per_token', "
+                             "'scored_tokens'). When set with --final_heldout_eval, the "
+                             'final held-out CE/BPB is computed on EXACTLY these chunks '
+                             '(byte-for-byte identical slice across models, tokenizer-'
+                             'correct), overriding --val_data / --heldout_bytes_per_token. '
+                             '(task lb-compare: apples-to-apples leaderboard)')
     parser.add_argument('--warmup_steps', type=int, default=0,
                         help='Warmup steps for learning rate (only for adamw)')
     parser.add_argument('--optimizer', type=str, default='schedulefree',
@@ -1162,7 +1170,49 @@ def train(args):
     # within-layer LM screen (task e97-within-layer): ONE final held-out eval on the
     # schedule-free AVERAGED weights (leaderboard methodology) — distinct from the
     # periodic NON-averaged validation during training. Opt-in via --final_heldout_eval.
-    if args.final_heldout_eval and val_loader is not None and not stopped_nonfinite:
+    if args.final_heldout_eval and args.heldout_tensor and not stopped_nonfinite:
+        # task lb-compare: score a FIXED pre-tokenized held-out tensor (byte-for-byte
+        # identical slice across all models, tokenizer-correct CE) on the averaged
+        # schedule-free weights. Overrides --val_data / --heldout_bytes_per_token.
+        import math as _math
+        ho = torch.load(args.heldout_tensor, map_location='cpu')
+        ho_chunks = ho['chunks']                       # [N, chunk+1]
+        bpt = float(ho['bytes_per_token'])
+        # Eval batch is decoupled from the train batch: CE/BPB are batch-invariant
+        # (every chunk scored identically), so use a larger fwd-only batch to cut
+        # the number of (slow sequential-kernel) forward calls. Override via env.
+        eval_bs = int(os.environ.get('HELDOUT_EVAL_BS', '8'))
+        eval_bs = max(1, min(eval_bs, ho_chunks.shape[0]))
+
+        def _score_heldout():
+            model.eval()
+            tot_nll = 0.0; tot_tok = 0
+            with torch.no_grad():
+                for i in range(0, ho_chunks.shape[0], eval_bs):
+                    batch = ho_chunks[i:i + eval_bs].to(device)
+                    loss = model(batch, return_loss=True)
+                    loss = loss[0] if isinstance(loss, tuple) else loss
+                    npred = batch.shape[0] * (batch.shape[1] - 1)
+                    tot_nll += float(loss.item()) * npred; tot_tok += npred
+            model.train()
+            return tot_nll / max(tot_tok, 1), tot_tok
+
+        # Diagnostic: also report NON-averaged (training) weights when requested,
+        # to separate a schedule-free averaging artifact from real generalization.
+        if os.environ.get('HELDOUT_REPORT_NONAVG') == '1' and args.optimizer == 'schedulefree':
+            optimizer.train()  # raw (non-averaged) weights
+            ce_raw, _ = _score_heldout()
+            print(f"FINAL_HELDOUT_CE_NONAVG: {ce_raw:.4f}")
+            print(f"FINAL_HELDOUT_BPB_NONAVG: {(ce_raw / _math.log(2.0)) / bpt:.4f}")
+        if args.optimizer == 'schedulefree':
+            optimizer.eval()  # averaged weights (leaderboard methodology)
+        heldout_ce, tot_tok = _score_heldout()
+        heldout_bpb = (heldout_ce / _math.log(2.0)) / bpt
+        print(f"FINAL_HELDOUT_CE: {heldout_ce:.4f}")
+        print(f"FINAL_HELDOUT_BPB: {heldout_bpb:.4f}")
+        print(f"FINAL_HELDOUT_TOKENS: {tot_tok}")
+        print(f"FINAL_HELDOUT_BYTES_PER_TOKEN: {bpt:.4f}")
+    elif args.final_heldout_eval and val_loader is not None and not stopped_nonfinite:
         if args.optimizer == 'schedulefree':
             optimizer.eval()  # averaged weights
         import math as _math
