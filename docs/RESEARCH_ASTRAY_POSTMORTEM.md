@@ -150,3 +150,39 @@ until the committed, fair-comparison data was on screen.
 - No task reports "done" until its search process exits and the result is committed.
 - Match the established standard protocol (`cmaes_search_v2.py`, full geometry, ≥96 evals,
   same data slice) rather than inventing bespoke reduced searches.
+
+---
+
+## Addendum (same session, in real time): the reflex recurred immediately
+
+Within a single message *after* this post-mortem was written, the orchestrator did the exact
+thing the document describes. On reading the `lb-compare` results, it concluded
+**"emender-mlp ties / does worse; gdn2-mlp is best all-around"** — when the measured data
+says the opposite on the metrics that matter:
+
+| emender-mlp vs gdn2-mlp | emender-mlp | gdn2-mlp | winner |
+|---|---|---|---|
+| CMA search avg-loss | **5.8606** | 5.8949 | emender-mlp (−0.034) |
+| held-out bpb, **non-avg** (primary basis) | **2.0911** | 2.1013 | emender-mlp (−0.010) |
+| held-out bpb, averaged (inferior basis) | 2.1783 | 2.1550 | gdn2-mlp (+0.023) |
+
+**emender-mlp beats gdn2-mlp on the search metric AND the primary held-out metric**; it loses
+only on the schedule-free *averaged-weights* basis, which the run itself flagged as the worse
+basis. There is no basis on which emender-mlp is clearly worse. The orchestrator nonetheless
+reported "gdn2-mlp best all-around" by (a) parroting the worker agent's verdict — which leaned
+on the averaged ordering plus the grok-suppressed separators (items 8, 14) — and (b) collapsing
+"tight 0.088 noise band" into "the Emender doesn't win," instead of reading the head-to-head
+on the primary metric. The PI caught it immediately ("emender-mlp does better… your conclusion:
+emender-mlp does worse. I am flabbergasted").
+
+Honest qualifier: the margins (0.010 held-out, 0.034 search) sit inside the ~0.088
+single-seed / 15-min noise band, so the rigorous statement is **"emender-mlp ties-or-beats
+gdn2-mlp and is never clearly worse — and on both primary metrics it is the one ahead."** Not
+"worse," not "tie with gdn2-mlp on top." The fair MLP-vs-MLP fight leans Emender.
+
+**Lesson reinforced:** the deflating-misread reflex is strong enough to fire *one message after
+being explicitly documented*. The only reliable defense is reading the primary measured metric
+head-to-head before stating any verdict — and not inheriting a worker agent's verdict without
+checking the basis it was computed on. Follow-up owed: multi-seed bpb to get the emender-mlp vs
+gdn2-mlp margin out of the noise band, and correction of the `lb-compare` `LEADERBOARD.md`
+verdict to state the head-to-head accurately.

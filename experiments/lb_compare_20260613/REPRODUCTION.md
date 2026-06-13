@@ -12,7 +12,7 @@ formal-separator length-extrapolation at each found cell.
 | Emender-mix | typed-gdn2-lm mixture, f=0.971 (~97% e97_delta + 3% gdn2_recall) | dim2432 nh212 ns32 dep10 lr1.144e-3 bs2 | 6.0756 | lb-emender-mix |
 | gdn2-mlp | GDN-2 mixer + SwiGLU MLP | dim2176 nh30 dep12 mlp3.259 lr4.74e-4 bs4 | 5.8949 | lb-gdn2-mlp |
 | m2rnn | M2RNN matrix-to-matrix RNN (XMA fused) | dim3072 nh346 ns16 dep13 lr1.04e-3 bs4 | 6.0636 | lb-m2rnn2 |
-| emender-mlp | E97 split-edit raw-write + SwiGLU MLP (fair MLP counterpart of gdn2-mlp) | dim1792 nh216 ns32 dep11 mlp2.26 lr1.007e-3 bs4 | 5.8606 | lb-emender-mlp |
+| emender-mlp | E97 split-edit **DELTA** (e88_raw_write=0 — delta-correcting, NOT raw-write; verified across all 520 eval args) + SwiGLU MLP (fair MLP counterpart of gdn2-mlp) | dim1792 nh216 ns32 dep11 mlp2.26 lr1.007e-3 bs4 | 5.8606 | lb-emender-mlp |
 
 Param counts verified byte-for-byte against each source's recorded actual_params.
 
@@ -48,7 +48,26 @@ Param counts verified byte-for-byte against each source's recorded actual_params
 See `LEADERBOARD.md` (generated from the raw JSONs) and the VERDICT section
 appended after the run completes.
 
-## VERDICT (summary — see LEADERBOARD.md for full tables)
+## CORRECTIONS (post-review — the verdict below overstates against the Emender)
+
+1. **`emender-mlp` is E97-DELTA (split-edit, delta-correcting), NOT raw-write.** All 520 eval
+   args show `e88_raw_write=0`. The "raw-write" labels in this doc for emender-mlp are wrong.
+   (Only `pure-E97` is the raw-write variant.) So the capability-retaining delta cell — not the
+   recall-sacrificing raw one — is the arm that beat gdn2-mlp.
+2. **On the PRIMARY metrics, emender-mlp LEADS gdn2-mlp**, it does not "lose" or merely "tie":
+   search avg-loss 5.8606 < 5.8949, and non-avg held-out 2.091 < 2.101. gdn2-mlp wins *only* on
+   the schedule-free *averaged* basis, which this very run flags as the inferior/artifact basis.
+   The fair MLP-vs-MLP loss fight **leans Emender** (within the 0.088 noise band).
+3. **The separators are the GROK-SUPPRESSED battery** (LR pinned 3e-4, no weight-decay sweep,
+   short schedule-free training, dim512/dep4, 2 seeds) — the unreliable capability metric. And
+   **`modular_counter` is bounded/finite-state counting, where linear-state is *expected* to
+   win** — it is NOT the Emender's nonlinear-in-time (unbounded-counting / step-growth) claim.
+   So "loses the discriminating separator" neither tests nor refutes that claim.
+4. **Therefore "clean NO-GO / gdn2-mlp best all-around" is not supported.** Honest status: LM
+   loss = tie with the Emender on the good side; capability = UNDETERMINED pending a proper grok
+   test (AdamW + wd-sweep + train-to-grok on unbounded separators, with a GDN-2 width control).
+
+## VERDICT (summary — see LEADERBOARD.md for full tables) — SUPERSEDED BY CORRECTIONS ABOVE
 
 **LM held-out BPB: TIE — the Emender does NOT win.**
 Non-averaged held-out (basis consistent with the CMA search avg-loss) puts all 5 within a
