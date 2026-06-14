@@ -1,9 +1,37 @@
-# SCALE PLAN — local convergence-to-sub-1-bpb, then frontier handoff
+# SCALE PLAN — push 1.3B token count to <1 bpb and into capability emergence
+
+> **SCOPE REVISION (PI) — supersedes the "then frontier 3B/7B handoff" framing below.**
+> **STAY AT 1.3B.** The plan is to scale up *training* — push the **token count** high on the
+> 1.3B models — to (a) reach **< 1 bpb**, and **(b) keep going past the bpb gate into the regime
+> where useful, measurable capabilities emerge.** The central deliverable is **capability-emergence
+> tracking**: run the capability eval suite (held-out bpb + temporal/length-extrapolation +
+> the algorithmic battery: recall, counting, S5, the formal separators) on **checkpoints as the
+> token count grows**, and measure **whether `emender-mlp` diverges from `gdn2-mlp` at high token
+> counts** — that is the experiment. The **3B/7B parameter scale-up is a SEPARATE, LATER phase,
+> gated on securing compute allocations** — keep the §-on-frontier as a brief future option, not
+> the immediate plan. Practically: extend the token budget *beyond* the ~16B <1-bpb gate (cap is
+> a checkpoint, not the end), and add capability evals at a fixed token cadence throughout.
+>
+> **LOCKED CONFIG (pending `preflight-100b` throughput):** seed-model run = **`emender-mlp`
+> (E97-delta + MLP, dim1792/nh216/ns32/dep11/mlp2.26) on 7-GPU DDP** (leave 1 GPU free for the
+> `gdn2-mlp` control + ad-hoc work), **target 100B tokens** (~77 tok/param, ~4× Chinchilla,
+> emergence regime). Wall-clock estimate **~18–25 days** (≈3–3.5 wk) depending on whether the
+> E97 1.26–1.56× speedup holds at 1.3B — `preflight-100b` measures the real tok/s, max batch, and
+> verifies DDP + fused-no-eager + checkpoint-roundtrip + bpb-eval before the box is committed.
+> The 100B `emender-mlp` checkpoint **is the seed model** handed to frontier (which re-tunes from
+> there: bigger batch via more RAM, re-scaled LR; frontier = its own lean HPO, not a port).
+> **Capability caveat (from `grok-confirm`):** the proven temporal class separation is
+> **modular_quadratic-specific** (iterated nonlinear maps requiring per-step nonlinearity
+> linear-state can't represent + non-contractive memory) — robust and real there, but NOT a
+> general law (counting/a^n b^n c^n: linear extrapolates equally; contractive maps: no separation).
+> The 100B run's capability suite asks whether that specific capability surfaces as *measurable
+> real-LM* capability where emender-mlp diverges from gdn2-mlp at high token count.
 
 **Task:** `scale-plan` (Architect). A concrete plan — **not** a training run — to
-(1) train a few CMA-best 1.3 B configs to convergence **below 1.0 bpb** on the
-local 8-GPU box, then (2) hand the winning config to **frontier** large-scale
-training. Every number here is grounded in committed measured data; provenance is
+**push a few CMA-best 1.3 B configs to high token count** on the local 8-GPU box —
+reaching **below 1.0 bpb** and then **continuing into the capability-emergence regime**,
+tracking capability evals vs token count. The 3B/7B param scale-up is deferred (frontier
+section retained below as a future, compute-gated option, not the next step). Every number here is grounded in committed measured data; provenance is
 cited inline, and the one soft number (E97 throughput multiplier) is gated behind
 a mandatory pre-flight measurement (§4.0) because prior E97 throughput claims have
 been wrong (post-mortem item 13).

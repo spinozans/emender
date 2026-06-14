@@ -1,5 +1,19 @@
 # High-p Temporal-Composition Separation — Results
 
+> **CORRECTION — this run's "NO-GO" verdict is SUPERSEDED by `experiments/grok_symmetric_width/`.**
+> The "width closes the gap → not a class separation" conclusion was a **capacity confound**: the
+> width-control was applied **only to the linear arms** (e97-lin, gdn2), never to e97, and
+> extrapolation was measured only to T=1024. A high-capacity linear-state+MLP model can **memorize
+> any finite instance**, so "more width → groks the finite test set at train length" is capacity
+> buying memorization, not the linear model acquiring the capability. The discriminator capacity
+> cannot fake — **length-extrapolation** — was already present here (e97 holds flat while gdn2
+> collapses 0.997→0.685 @T1024) and was read past. The symmetric-width follow-up (width on ALL
+> arms incl. e97, extrap to T=4096, 216 runs) confirms: **e97 holds test-acc flat T=128→4096 at
+> every width; the linear arms memorize train-length and collapse toward baseline even at d1024
+> (gdn2 0.994→0.560, e97-lin 0.999→0.685 @T4096); width does NOT let them extrapolate. The
+> temporal class separation is REAL, and e97 runs 1.25–1.59× faster than gdn2.** See
+> `experiments/grok_symmetric_width/RESULTS.md`.
+
 _58 runs aggregated. modular_quadratic x_t=(x_{t-1}^2+c_t) mod p; per-position supervision; bf16+fused._
 
 
