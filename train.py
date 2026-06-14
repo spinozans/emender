@@ -21,6 +21,8 @@ import argparse
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import torch.distributed as dist
+from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.optim import AdamW
 import schedulefree
 from pathlib import Path
@@ -424,13 +426,58 @@ def train(args):
         else:
             args.use_triton = 0
 
+    # --- DDP setup (opt-in, backward compatible) -------------------------------
+    # Activates ONLY under torchrun (WORLD_SIZE>1). Single-GPU/no-torchrun runs are
+    # byte-identical to before: ddp_enabled=False, rank=0, world_size=1, is_main=True.
+    ddp_enabled = int(os.environ.get('WORLD_SIZE', '1')) > 1
+    rank = int(os.environ.get('RANK', '0'))
+    local_rank = int(os.environ.get('LOCAL_RANK', '0'))
+    world_size = int(os.environ.get('WORLD_SIZE', '1'))
+    is_main = (rank == 0)
+    args._ddp_enabled = ddp_enabled
+    args._rank = rank
+    args._world_size = world_size
+    args._is_main = is_main
+
     # Setup
     torch.manual_seed(args.seed)
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    print(f"Using device: {device}")
+    if ddp_enabled:
+        if not dist.is_initialized():
+            dist.init_process_group(backend='nccl')
+        torch.cuda.set_device(local_rank)
+        device = torch.device(f'cuda:{local_rank}')
+        if is_main:
+            print(f"[DDP] world_size={world_size} backend=nccl; this is rank {rank} "
+                  f"on {device}", flush=True)
+        print(f"[DDP] rank {rank}/{world_size} bound to {device}", flush=True)
+    else:
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        print(f"Using device: {device}")
 
-    output_dir = setup_output_dir(args)
-    print(f"Output directory: {output_dir}")
+    # Per-rank FUSED guard (preflight-100b). For the E97 split-edit / raw-write
+    # families under bf16 the fused fwd+bwd lives ONLY in the Triton kernel; the
+    # eager T-scan is 40-260x slower. use_triton is auto-resolved to 1 above for
+    # this family. Once use_triton==1 the forward hard-imports the Triton kernel
+    # (ndm.triton.e88_triton_optimized) inside the `elif self.use_triton` branch —
+    # an import/availability failure RAISES rather than silently dropping to eager,
+    # so use_triton==1 + a completed run is proof the fused path executed on this
+    # rank. Assert it loudly per rank so the no-eager guarantee is visible for all.
+    _e97_family = str(args.level) in ('E97', '97') or bool(getattr(args, 'e88_raw_write', 0))
+    if _e97_family and getattr(args, 'bf16', False):
+        assert args.use_triton == 1, (
+            f"[fused-guard] rank {rank}: E97/raw-write under bf16 MUST use the fused "
+            f"Triton kernel (no eager), but use_triton={args.use_triton}")
+        print(f"[fused-guard] rank {rank}/{world_size}: level={args.level} bf16 "
+              f"use_triton=1 -> fused split-edit Triton kernel, NO eager fallback", flush=True)
+
+    # Under DDP only rank 0 owns the run directory / checkpoints. Non-main ranks
+    # never write to it (their save/eval blocks are gated on is_main), so they get
+    # a non-creating path reference to avoid 7 timestamped junk dirs + write races.
+    if ddp_enabled and not is_main:
+        output_dir = Path(args.output)
+    else:
+        output_dir = setup_output_dir(args)
+        print(f"Output directory: {output_dir}")
 
     # Resolve 'auto' r_h_mode based on model architecture
     r_h_mode = args.r_h_mode
@@ -792,7 +839,20 @@ def train(args):
         print(f"Compiling model (mode={args.compile_mode})...")
         model = torch.compile(model, mode=args.compile_mode)
 
-    print(f"Model: Level {args.level}, {model.get_num_params():,} parameters")
+    # core_model = the unwrapped module (attribute access, checkpoint state_dict,
+    # eval forwards). model = the (optionally DDP-wrapped) module used for the timed
+    # train fwd/bwd so gradients all-reduce across ranks. DDP broadcasts rank-0
+    # weights at construction => replicas start identical regardless of init seed.
+    core_model = model
+    if ddp_enabled:
+        model = DDP(model, device_ids=[local_rank], output_device=local_rank,
+                    find_unused_parameters=False, gradient_as_bucket_view=True)
+        if is_main:
+            print(f"[DDP] wrapped model in DistributedDataParallel "
+                  f"(device_ids=[{local_rank}])", flush=True)
+
+    if is_main:
+        print(f"Model: Level {args.level}, {core_model.get_num_params():,} parameters")
 
     # Build param groups. With --knob_lr_mult != 1, the UnifiedCell recurrence
     # knobs (lam/beta/igain/gamma raw) get a SEPARATE optimizer group at a higher
@@ -801,7 +861,7 @@ def train(args):
     # validated knob_lr_mult=5.38 placement is preserved at LM scale.
     KNOB_SUFFIXES = ('lam_raw', 'beta_raw', 'igain_raw', 'gamma_raw')
     knob_params, base_params = [], []
-    for name, p in model.named_parameters():
+    for name, p in core_model.named_parameters():
         if not p.requires_grad:
             continue
         if any(name.endswith(s) for s in KNOB_SUFFIXES):
@@ -818,7 +878,7 @@ def train(args):
               f"{args.lr * args.knob_lr_mult:.2e} ({args.knob_lr_mult}x base); "
               f"{len(base_params)} base params at lr={args.lr:.2e}")
     else:
-        param_groups = model.parameters()
+        param_groups = core_model.parameters()
 
     # Create optimizer
     if args.optimizer == 'schedulefree':
@@ -842,12 +902,18 @@ def train(args):
     start_step = 0
     if args.resume:
         print(f"Resuming from {args.resume}")
-        start_step, _ = load_checkpoint(args.resume, model, optimizer)
+        start_step, _ = load_checkpoint(args.resume, core_model, optimizer)
         # Optimizer state dicts carry their original param-group LR. For
         # continuation runs we want the explicit CLI LR to be authoritative.
         for param_group in optimizer.param_groups:
             param_group['lr'] = args.lr
         print(f"Resumed at step {start_step}")
+
+    # DDP data sharding: each rank reads a DISTINCT stream so the world processes
+    # different real tokens every step (true data parallelism, not replicated work).
+    # Offsetting the dataset seed by rank gives disjoint sampling positions across
+    # the corpus. Model weights stay identical (DDP broadcast); only the data differs.
+    data_seed = args.seed + (rank if ddp_enabled else 0)
 
     # Create dataset - use BatchedStreamDataset for TBPTT (persistent per-batch streams)
     if args.tbptt:
@@ -856,21 +922,21 @@ def train(args):
             data_path=args.data,
             batch_size=args.batch_size,
             chunk_size=args.chunk_size + 1,  # +1 for target
-            seed=args.seed,
+            seed=data_seed,
         )
     else:
         if args.tokenizer:
             train_dataset = TokenizedStreamDataset(
                 data_path=args.data,
                 chunk_size=args.chunk_size + 1,  # +1 for target
-                seed=args.seed,
+                seed=data_seed,
                 tokenizer_name=args.tokenizer,
             )
         else:
             train_dataset = DocumentStreamDataset(
                 data_path=args.data,
                 chunk_size=args.chunk_size + 1,  # +1 for target
-                seed=args.seed,
+                seed=data_seed,
             )
 
     val_loader = None
@@ -1067,7 +1133,18 @@ def train(args):
 
         # Scale for gradient accumulation
         scaled_loss = loss / args.grad_accum
-        scaled_loss.backward()
+        # DDP comm amortization: the all-reduce gradient hooks fire during
+        # backward(). On the non-final micro-steps of a grad-accum window we
+        # suppress the sync (model.no_sync()) so the 1.29B-param bf16 all-reduce
+        # happens ONCE per optimizer step instead of once per micro-step — the
+        # dominant cost on a PCIe (no-NVLink) box. grad_accum=1 always syncs
+        # (last micro-step) => identical behavior to before.
+        _is_last_micro = (accumulated_steps + 1) >= args.grad_accum
+        if args._ddp_enabled and not _is_last_micro:
+            with model.no_sync():
+                scaled_loss.backward()
+        else:
+            scaled_loss.backward()
 
         # Update hidden state (only if TBPTT enabled)
         if args.tbptt and next_hidden is not None:
@@ -1112,11 +1189,16 @@ def train(args):
                 elapsed = time.time() - start_time
                 elapsed_total_h = (time.time() - train_start_time) / 3600.0
                 wall_time = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='seconds')
+                # Per-rank tok/s; global tok/s = sum across the DDP world (each rank
+                # processes a distinct batch of equal size, so global = per_rank*W).
                 tokens_per_sec = tokens_processed / elapsed
+                global_tps = tokens_per_sec * world_size
 
-                print(f"step {step:6d} | loss {avg_loss:.4f} | lr {lr:.2e} | "
-                      f"grad {grad_norm:.2f} | tok/s {tokens_per_sec:.0f} | "
-                      f"elapsed_h {elapsed_total_h:.3f} | time {wall_time}")
+                if is_main:
+                    print(f"step {step:6d} | loss {avg_loss:.4f} | lr {lr:.2e} | "
+                          f"grad {grad_norm:.2f} | tok/s {tokens_per_sec:.0f} | "
+                          f"global_tok/s {global_tps:.0f} | "
+                          f"elapsed_h {elapsed_total_h:.3f} | time {wall_time}")
 
                 # Track for last-100 average (each entry covers log_every steps)
                 last_100_losses.append(avg_loss)
@@ -1125,21 +1207,22 @@ def train(args):
                 tokens_processed = 0
                 start_time = time.time()
 
-            # Validation
-            if val_loader and step % args.val_every == 0:
+            # Validation (rank 0 only; uses unwrapped core_model, no DDP collectives)
+            if val_loader and step % args.val_every == 0 and is_main:
                 if args.optimizer == 'schedulefree':
                     optimizer.eval()  # Get averaged params for eval
-                val_loss = validate(model, val_loader, device)
+                val_loss = validate(core_model, val_loader, device)
                 print(f"  >>> validation loss: {val_loss:.4f}")
                 if args.optimizer == 'schedulefree':
                     optimizer.train()  # Back to training mode
 
-            # Checkpointing
-            if step % args.save_every == 0:
+            # Checkpointing (rank 0 only; save the unwrapped core_model state_dict so
+            # checkpoints load identically in single-GPU eval/generate paths)
+            if step % args.save_every == 0 and is_main:
                 if args.optimizer == 'schedulefree':
                     optimizer.eval()  # Get averaged params for checkpoint
                 ckpt_path = save_checkpoint(
-                    model, optimizer, step, avg_loss, output_dir, args.keep_checkpoints
+                    core_model, optimizer, step, avg_loss, output_dir, args.keep_checkpoints
                 )
                 print(f"  >>> saved checkpoint: {ckpt_path.name}")
                 if args.optimizer == 'schedulefree':
@@ -1159,18 +1242,24 @@ def train(args):
     else:
         last_100_avg = avg_loss  # Fallback if no logging happened
 
+    # In DDP, only rank 0 runs the final checkpoint + held-out/train evals (all
+    # ranks hold identical synchronized weights). Other ranks skip to the barrier.
+    _run_final = (args._is_main if args._ddp_enabled else True)
+
     # Final checkpoint - use last-100 average for reliable metric
-    if stopped_nonfinite:
+    if not _run_final:
+        pass
+    elif stopped_nonfinite:
         print("Skipping final checkpoint because training stopped on non-finite loss/gradient.")
     else:
         if args.optimizer == 'schedulefree':
             optimizer.eval()  # Get averaged params for final checkpoint
-        save_checkpoint(model, optimizer, step, last_100_avg, output_dir, args.keep_checkpoints)
+        save_checkpoint(core_model, optimizer, step, last_100_avg, output_dir, args.keep_checkpoints)
 
     # within-layer LM screen (task e97-within-layer): ONE final held-out eval on the
     # schedule-free AVERAGED weights (leaderboard methodology) — distinct from the
     # periodic NON-averaged validation during training. Opt-in via --final_heldout_eval.
-    if args.final_heldout_eval and args.heldout_tensor and not stopped_nonfinite:
+    if _run_final and args.final_heldout_eval and args.heldout_tensor and not stopped_nonfinite:
         # task lb-compare: score a FIXED pre-tokenized held-out tensor (byte-for-byte
         # identical slice across all models, tokenizer-correct CE) on the averaged
         # schedule-free weights. Overrides --val_data / --heldout_bytes_per_token.
@@ -1185,16 +1274,16 @@ def train(args):
         eval_bs = max(1, min(eval_bs, ho_chunks.shape[0]))
 
         def _score_heldout():
-            model.eval()
+            core_model.eval()
             tot_nll = 0.0; tot_tok = 0
             with torch.no_grad():
                 for i in range(0, ho_chunks.shape[0], eval_bs):
                     batch = ho_chunks[i:i + eval_bs].to(device)
-                    loss = model(batch, return_loss=True)
+                    loss = core_model(batch, return_loss=True)
                     loss = loss[0] if isinstance(loss, tuple) else loss
                     npred = batch.shape[0] * (batch.shape[1] - 1)
                     tot_nll += float(loss.item()) * npred; tot_tok += npred
-            model.train()
+            core_model.train()
             return tot_nll / max(tot_tok, 1), tot_tok
 
         # Diagnostic: also report NON-averaged (training) weights when requested,
@@ -1212,11 +1301,11 @@ def train(args):
         print(f"FINAL_HELDOUT_BPB: {heldout_bpb:.4f}")
         print(f"FINAL_HELDOUT_TOKENS: {tot_tok}")
         print(f"FINAL_HELDOUT_BYTES_PER_TOKEN: {bpt:.4f}")
-    elif args.final_heldout_eval and val_loader is not None and not stopped_nonfinite:
+    elif _run_final and args.final_heldout_eval and val_loader is not None and not stopped_nonfinite:
         if args.optimizer == 'schedulefree':
             optimizer.eval()  # averaged weights
         import math as _math
-        heldout_ce = validate(model, val_loader, device, max_batches=args.final_val_batches)
+        heldout_ce = validate(core_model, val_loader, device, max_batches=args.final_val_batches)
         heldout_bpb = (heldout_ce / _math.log(2.0)) / args.heldout_bytes_per_token
         print(f"FINAL_HELDOUT_CE: {heldout_ce:.4f}")
         print(f"FINAL_HELDOUT_BPB: {heldout_bpb:.4f}")
@@ -1224,7 +1313,7 @@ def train(args):
     # task e97-audit2: clean eval on a TRAIN-distribution slice (--data) with the SAME
     # averaged weights + clean machinery, to isolate the train->held generalization gap
     # (same units, same weights) from the units/running-average measurement artifacts.
-    if args.final_train_eval and not stopped_nonfinite:
+    if _run_final and args.final_train_eval and not stopped_nonfinite:
         if args.optimizer == 'schedulefree':
             optimizer.eval()  # averaged weights (same as held-out)
         import math as _math2
@@ -1234,19 +1323,29 @@ def train(args):
             chunk_size=args.chunk_size + 1,
             device=device,
         )
-        train_ce = validate(model, train_eval_loader, device, max_batches=args.final_val_batches)
+        train_ce = validate(core_model, train_eval_loader, device, max_batches=args.final_val_batches)
         train_bpb = (train_ce / _math2.log(2.0)) / args.heldout_bytes_per_token
         print(f"FINAL_TRAIN_CE: {train_ce:.4f}")
         print(f"FINAL_TRAIN_BPB: {train_bpb:.4f}")
 
-    # Print final metrics in parseable format
-    print(f"\nTraining complete! Final step: {step}")
-    print(f"FINAL_LOSS_LAST100: {last_100_avg:.4f}")
+    # Print final metrics in parseable format (per-rank peak memory always; main
+    # prints the run-level summary). DDP teardown after a barrier so no rank exits
+    # while another is still in a collective.
     if torch.cuda.is_available():
         peak_mb = torch.cuda.max_memory_allocated() / 1024 / 1024
         reserved_mb = torch.cuda.max_memory_reserved() / 1024 / 1024
-        print(f"PEAK_MEMORY_MB: {peak_mb:.0f}")
-        print(f"RESERVED_MEMORY_MB: {reserved_mb:.0f}")
+        print(f"[rank {args._rank}] PEAK_MEMORY_MB: {peak_mb:.0f} | "
+              f"RESERVED_MEMORY_MB: {reserved_mb:.0f}", flush=True)
+    if _run_final:
+        print(f"\nTraining complete! Final step: {step}")
+        print(f"FINAL_LOSS_LAST100: {last_100_avg:.4f}")
+        if torch.cuda.is_available():
+            print(f"PEAK_MEMORY_MB: {peak_mb:.0f}")
+            print(f"RESERVED_MEMORY_MB: {reserved_mb:.0f}")
+
+    if args._ddp_enabled and dist.is_initialized():
+        dist.barrier()
+        dist.destroy_process_group()
 
 
 if __name__ == '__main__':
