@@ -280,6 +280,12 @@ def main():
     elif args.task in ('modular_quadratic', 'modular_quadratic_lin'):
         if args.K is not None and args.K > 2:
             task_kwargs['p'] = args.K
+    elif args.task == 'iterated_nonlinear_map':
+        # K plumbed to the binning resolution (n_bins = "p" analog: finer bins
+        # => harder discrimination of the state-quadratic trajectory). K<=2
+        # leaves the task default (n_bins=10).
+        if args.K is not None and args.K > 2:
+            task_kwargs['n_bins'] = args.K
     task = ALL_TASKS[args.task](**task_kwargs)
     print(f"Task: {task.name}, vocab={task.vocab_size}, "
           f"baseline={task.random_baseline_acc():.4f}", flush=True)
