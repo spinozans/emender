@@ -230,6 +230,42 @@ in pre-flight (§4.0) before the long run is trusted.** Estimates below bracket 
   re-run only if a single-GPU arm shows it is genuinely throughput-bound and time
   matters more than a clean apples-to-apples to the E88 precedent.
 
+### 2.6 7-GPU DiLoCo periodic-sync — IMPLEMENTED + MEASURED (100B in ~20 d)
+
+`implement-diloco-periodic` (this task) closes the parallelism question for the
+**100B seed run** (the §0 target, ~77 tok/param). `preflight-100b` measured that
+vanilla per-step DDP on this no-NVLink PCIe box runs at only **52 % scaling
+efficiency** (31,291 global tok/s on 7 GPUs) because the per-step all-reduce of the
+1.29 B bf16 gradient dominates → **100B = 37 days via DDP** (> 3 weeks). The
+in-job hierarchical ScheduleFree-DiLoCo from
+`docs/SCHEDULEFREE_DILOCO_FRONTIER_DESIGN.md` is now **built into `train.py`**
+(opt-in `--diloco --diloco_k K`, single-GPU path byte-identical) and **measured**:
+
+| path | global tok/s (7-GPU) | to 16 B | **to 100 B** |
+|---|---:|---:|---:|
+| per-step DDP (preflight) | 31,291 | 5.9 d | **37.0 d** |
+| **DiLoCo K=250 (measured)** | **57,745** | **3.2 d** | **20.0 d** |
+| **DiLoCo K=500 (measured)** | **57,921** | **3.2 d** | **20.0 d** |
+| independent ceiling (measured) | ~58,100 | 3.2 d | 19.9 d |
+
+- Periodic K-step model-weight averaging (one 2.6 GB all-reduce per K steps, not per
+  step) recovers **98.3–99.6 %** of the independent ceiling; merge overhead is
+  0.2 % (K=500) – 1.7 % (K=100). **~1.85× the DDP baseline → 100B in ~20 days**, under
+  the 3-week frame. Use **K=250** (design-recommended, safest learning) or K=500.
+- ScheduleFree **y-mode merge correctness verified** (unit test + consensus-checkpoint
+  roundtrip) — this retires the §3.4 risk-3 "x/y-mode semantics across merges
+  unverified" for the in-job single-box case. Outer momentum is wired
+  (`--diloco_outer_beta/--diloco_outer_lr`) for the later sample-efficiency sweep.
+- **OPEN — token sample-efficiency.** The throughput win is solid, but at *matched
+  tokens* the local-SGD merge (outer_beta=0) lags synchronous DDP by ~0.45 BPB in
+  early training and the gap does **not** close within 52 M tokens measured (large-
+  batch bs42 vs per-island bs6 tradeoff; no divergence, merge is correct). Whether
+  it closes over 100 B tokens / with outer momentum is unverified → run the
+  outer-momentum sweep + a multi-B-token matched-token check before betting the full
+  100 B on DiLoCo (follow-up `diloco-loss-parity-longhorizon`); fall back to DDP or a
+  DDP-within-island + DiLoCo-across-island hybrid if the gap persists.
+- Full numbers + reproduce: `experiments/diloco_100b/RESULTS.md`.
+
 ---
 
 ## 3. Frontier handoff

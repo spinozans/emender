@@ -276,6 +276,27 @@ def parse_args():
                         choices=['adamw', 'schedulefree'],
                         help='Optimizer: adamw (with LR schedule) or schedulefree (no schedule needed)')
 
+    # DiLoCo periodic-sync parallelism (task implement-diloco-periodic). Opt-in,
+    # only meaningful under torchrun (WORLD_SIZE>1). When --diloco is set, ranks
+    # train INDEPENDENTLY (no per-step DDP gradient all-reduce) and only average
+    # MODEL WEIGHTS every --diloco_k local optimizer steps. This recovers the
+    # ~62k tok/s independent ceiling that vanilla per-step DDP halves to ~31k on a
+    # no-NVLink PCIe box. Outer step (DiLoCo): W_{r+1} = W_r + outer_lr*outer_mom,
+    # outer_mom = outer_beta*outer_mom + (mean_i(W_{r,i}) - W_r). Defaults
+    # (outer_lr=1, outer_beta=0) reduce to plain periodic weight averaging
+    # (local-SGD), the conservative first production path per
+    # docs/SCHEDULEFREE_DILOCO_FRONTIER_DESIGN.md.
+    parser.add_argument('--diloco', action='store_true',
+                        help='Enable DiLoCo periodic model-weight averaging instead of '
+                             'per-step DDP gradient all-reduce (requires torchrun WORLD_SIZE>1)')
+    parser.add_argument('--diloco_k', type=int, default=250,
+                        help='DiLoCo sync interval: average model weights every K local '
+                             'optimizer steps (design recommends 250; 100 conservative)')
+    parser.add_argument('--diloco_outer_lr', type=float, default=1.0,
+                        help='DiLoCo outer learning rate (1.0 = plain averaging)')
+    parser.add_argument('--diloco_outer_beta', type=float, default=0.0,
+                        help='DiLoCo outer momentum beta (0.0 = local-SGD, no outer momentum)')
+
     # Checkpointing
     parser.add_argument('--output', type=str, default='./output',
                         help='Output directory')
@@ -404,6 +425,77 @@ def validate(model, val_loader, device, max_batches=100):
     return total_loss / max(total_tokens, 1)
 
 
+@torch.no_grad()
+def diloco_merge(core_model, optimizer, args, world_size, outer_state):
+    """DiLoCo outer step: average model weights across ranks (every K local steps).
+
+    task implement-diloco-periodic. This is the inter-worker synchronization that
+    replaces vanilla DDP's per-step gradient all-reduce. Each rank trains K local
+    optimizer steps INDEPENDENTLY, then here we average the model weights once.
+
+    ScheduleFree interaction (docs/SCHEDULEFREE_DILOCO_FRONTIER_DESIGN.md): the
+    worker's externally-meaningful "model weights" are the EVAL (averaged x)
+    weights, so the merge runs in eval mode (the y-mode swap). After averaging x
+    across ranks we RESET each rank's local base sequence z to the consensus so
+    that the train()-swap restores y == x == W_{r+1} on every rank -> all ranks
+    are identical post-merge and no inter-round z-drift accumulates. Only p.data
+    is communicated (one all-reduce of the model); z is re-synced locally to the
+    already-averaged consensus. Adam second moments (exp_avg_sq) stay per-rank
+    (independent preconditioning -> independent exploration, the point of DiLoCo).
+
+    Outer optimizer (general DiLoCo):
+        delta       = mean_i(W_{r,i}) - W_r
+        outer_mom   = outer_beta * outer_mom + delta
+        W_{r+1}     = W_r + outer_lr * outer_mom
+    Defaults outer_lr=1.0, outer_beta=0.0 reduce to plain periodic weight
+    averaging (local-SGD): W_{r+1} = mean_i(W_{r,i}). In that case we skip the
+    anchor/momentum buffers entirely (no extra memory).
+
+    Returns the all-reduce wall-clock seconds (for sync-cost accounting).
+    """
+    sf = (args.optimizer == 'schedulefree')
+    # 1. y-mode swap: switch schedulefree to eval so p.data holds the averaged x_i.
+    if sf:
+        optimizer.eval()
+
+    params = list(core_model.parameters())
+    t0 = time.time()
+    # 2. all-reduce the model weights to the cross-rank mean: p.data <-
+    #    mean_i(W_{r,i}) on every rank. Coalesce into one flat bucket so the
+    #    1.29B-param sync is a SINGLE collective launch (the whole point: ONE
+    #    all-reduce per K steps, not K). SUM+divide rather than ReduceOp.AVG so
+    #    the path is backend-agnostic (gloo, used by the CPU unit test, has no AVG).
+    flat = torch._utils._flatten_dense_tensors([p.data for p in params])
+    dist.all_reduce(flat, op=dist.ReduceOp.SUM)
+    flat.div_(world_size)
+    for p, merged in zip(params, torch._utils._unflatten_dense_tensors(flat, [p.data for p in params])):
+        p.data.copy_(merged)
+    if torch.cuda.is_available():
+        torch.cuda.synchronize()
+    sync_s = time.time() - t0
+
+    # 3. Outer optimizer (momentum). Skipped for the local-SGD default.
+    outer_lr = args.diloco_outer_lr
+    outer_beta = args.diloco_outer_beta
+    if outer_state is not None:
+        anchor = outer_state['anchor']   # W_r
+        moment = outer_state['moment']   # outer momentum buffer
+        for p, w_r, m in zip(params, anchor, moment):
+            delta = p.data - w_r                       # mean_i(W_{r,i}) - W_r
+            m.mul_(outer_beta).add_(delta)             # outer_mom = beta*mom + delta
+            p.data.copy_(w_r).add_(m, alpha=outer_lr)  # W_{r+1} = W_r + lr*mom
+            w_r.copy_(p.data)                          # advance anchor to W_{r+1}
+
+    # 4. Re-sync schedulefree base sequence z = W_{r+1}; train()-swap gives y=W_{r+1}.
+    if sf:
+        for p in params:
+            st = optimizer.state.get(p, None)
+            if st is not None and 'z' in st:
+                st['z'].copy_(p.data)
+        optimizer.train()
+    return sync_s
+
+
 def train(args):
     """Main training loop."""
     # Parse level (convert '3' to 3, keep 'log_5' as string)
@@ -426,30 +518,50 @@ def train(args):
         else:
             args.use_triton = 0
 
-    # --- DDP setup (opt-in, backward compatible) -------------------------------
+    # --- Distributed setup (opt-in, backward compatible) -----------------------
     # Activates ONLY under torchrun (WORLD_SIZE>1). Single-GPU/no-torchrun runs are
-    # byte-identical to before: ddp_enabled=False, rank=0, world_size=1, is_main=True.
-    ddp_enabled = int(os.environ.get('WORLD_SIZE', '1')) > 1
+    # byte-identical to before: dist_enabled=False, rank=0, world_size=1, is_main=True.
+    #
+    # Two distributed modes share the same process-group / data-sharding / rank-0
+    # gating plumbing but differ in HOW gradients/weights are synchronized:
+    #   * DDP (default):  per-step gradient all-reduce. use_ddp=True. Exact SGD
+    #                     equivalence but the 1.29B bf16 all-reduce dominates on a
+    #                     no-NVLink PCIe box (preflight-100b: 52% scaling eff).
+    #   * DiLoCo (--diloco): each rank trains INDEPENDENTLY (no per-step comm) and
+    #                     model weights are averaged every --diloco_k steps. Recovers
+    #                     the ~62k tok/s independent ceiling. use_ddp=False.
+    dist_enabled = int(os.environ.get('WORLD_SIZE', '1')) > 1
     rank = int(os.environ.get('RANK', '0'))
     local_rank = int(os.environ.get('LOCAL_RANK', '0'))
     world_size = int(os.environ.get('WORLD_SIZE', '1'))
     is_main = (rank == 0)
-    args._ddp_enabled = ddp_enabled
+    use_ddp = dist_enabled and not args.diloco
+    use_diloco = dist_enabled and args.diloco
+    # _ddp_enabled retained for back-compat with downstream references; it now means
+    # "wrapped in torch DDP" (per-step sync), NOT merely "distributed".
+    args._ddp_enabled = use_ddp
+    args._dist_enabled = dist_enabled
+    args._use_diloco = use_diloco
     args._rank = rank
     args._world_size = world_size
     args._is_main = is_main
 
     # Setup
     torch.manual_seed(args.seed)
-    if ddp_enabled:
+    if dist_enabled:
         if not dist.is_initialized():
             dist.init_process_group(backend='nccl')
         torch.cuda.set_device(local_rank)
         device = torch.device(f'cuda:{local_rank}')
+        _mode = 'DiLoCo' if use_diloco else 'DDP'
         if is_main:
-            print(f"[DDP] world_size={world_size} backend=nccl; this is rank {rank} "
+            print(f"[{_mode}] world_size={world_size} backend=nccl; this is rank {rank} "
                   f"on {device}", flush=True)
-        print(f"[DDP] rank {rank}/{world_size} bound to {device}", flush=True)
+            if use_diloco:
+                print(f"[DiLoCo] periodic model-weight averaging: K={args.diloco_k} "
+                      f"outer_lr={args.diloco_outer_lr} outer_beta={args.diloco_outer_beta} "
+                      f"(no per-step gradient all-reduce)", flush=True)
+        print(f"[{_mode}] rank {rank}/{world_size} bound to {device}", flush=True)
     else:
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         print(f"Using device: {device}")
@@ -473,7 +585,7 @@ def train(args):
     # Under DDP only rank 0 owns the run directory / checkpoints. Non-main ranks
     # never write to it (their save/eval blocks are gated on is_main), so they get
     # a non-creating path reference to avoid 7 timestamped junk dirs + write races.
-    if ddp_enabled and not is_main:
+    if dist_enabled and not is_main:
         output_dir = Path(args.output)
     else:
         output_dir = setup_output_dir(args)
@@ -844,12 +956,28 @@ def train(args):
     # train fwd/bwd so gradients all-reduce across ranks. DDP broadcasts rank-0
     # weights at construction => replicas start identical regardless of init seed.
     core_model = model
-    if ddp_enabled:
+    if use_ddp:
         model = DDP(model, device_ids=[local_rank], output_device=local_rank,
                     find_unused_parameters=False, gradient_as_bucket_view=True)
         if is_main:
             print(f"[DDP] wrapped model in DistributedDataParallel "
                   f"(device_ids=[{local_rank}])", flush=True)
+    elif use_diloco:
+        # DiLoCo: NOT wrapped in DDP (no per-step gradient all-reduce). Each rank
+        # trains its own replica independently. DDP normally broadcasts rank-0
+        # weights at construction to guarantee identical replicas; we replicate
+        # that guarantee explicitly so every island starts from the SAME W_0 even
+        # if any init op were non-deterministic across ranks. Broadcast both
+        # parameters and buffers (running stats etc.) in-place from rank 0.
+        with torch.no_grad():
+            for p in core_model.parameters():
+                dist.broadcast(p.data, src=0)
+            for b in core_model.buffers():
+                dist.broadcast(b.data, src=0)
+        dist.barrier()
+        if is_main:
+            print(f"[DiLoCo] broadcast rank-0 W_0 to all {world_size} ranks "
+                  f"(identical start, no DDP wrapper)", flush=True)
 
     if is_main:
         print(f"Model: Level {args.level}, {core_model.get_num_params():,} parameters")
@@ -913,7 +1041,7 @@ def train(args):
     # different real tokens every step (true data parallelism, not replicated work).
     # Offsetting the dataset seed by rank gives disjoint sampling positions across
     # the corpus. Model weights stay identical (DDP broadcast); only the data differs.
-    data_seed = args.seed + (rank if ddp_enabled else 0)
+    data_seed = args.seed + (rank if dist_enabled else 0)
 
     # Create dataset - use BatchedStreamDataset for TBPTT (persistent per-batch streams)
     if args.tbptt:
@@ -982,6 +1110,23 @@ def train(args):
     model.train()
     if args.optimizer == 'schedulefree':
         optimizer.train()
+
+    # DiLoCo outer-optimizer state. Only allocated when outer momentum is in play
+    # (outer_beta!=0 or outer_lr!=1); the default local-SGD path (plain averaging)
+    # needs no anchor/momentum buffers. anchor captures W_0 (post-broadcast, all
+    # ranks identical) so the first round's delta = mean_i(W_{r,i}) - W_0 is correct.
+    outer_state = None
+    if use_diloco and not (args.diloco_outer_lr == 1.0 and args.diloco_outer_beta == 0.0):
+        outer_state = {
+            'anchor': [p.data.detach().clone() for p in core_model.parameters()],
+            'moment': [torch.zeros_like(p.data) for p in core_model.parameters()],
+        }
+        if is_main:
+            print(f"[DiLoCo] outer-momentum buffers allocated "
+                  f"(outer_lr={args.diloco_outer_lr}, outer_beta={args.diloco_outer_beta})",
+                  flush=True)
+    diloco_merges = 0
+    diloco_sync_total_s = 0.0
 
     if args.compile_warmup_steps > 0:
         print(f"Compile/autotune warmup: {args.compile_warmup_steps} untimed fwd+bwd step(s)")
@@ -1183,6 +1328,23 @@ def train(args):
             step += 1
             accumulated_steps = 0
 
+            # DiLoCo inter-worker sync: every K local optimizer steps, average the
+            # model weights across ranks (the periodic merge that replaces vanilla
+            # DDP's per-step gradient all-reduce). ALL ranks reach this collective
+            # at the same step (identical step counts under --steps), so it is a
+            # natural barrier. The sync wall-clock is intentionally inside the
+            # current log window's `elapsed`, so reported global_tok/s already
+            # reflects the amortized communication cost.
+            if use_diloco and step % args.diloco_k == 0:
+                sync_s = diloco_merge(core_model, optimizer, args, world_size, outer_state)
+                diloco_merges += 1
+                diloco_sync_total_s += sync_s
+                if is_main:
+                    print(f"  >>> [DiLoCo] merge #{diloco_merges} at step {step}: "
+                          f"averaged model weights across {world_size} ranks in "
+                          f"{sync_s*1000:.0f} ms (amortized over {args.diloco_k} steps)",
+                          flush=True)
+
             # Logging
             if step % args.log_every == 0:
                 avg_loss = running_loss / args.log_every
@@ -1242,9 +1404,23 @@ def train(args):
     else:
         last_100_avg = avg_loss  # Fallback if no logging happened
 
-    # In DDP, only rank 0 runs the final checkpoint + held-out/train evals (all
-    # ranks hold identical synchronized weights). Other ranks skip to the barrier.
-    _run_final = (args._is_main if args._ddp_enabled else True)
+    # DiLoCo: one FINAL merge so the saved checkpoint is the cross-rank consensus
+    # model (not whichever rank happens to be rank 0). All ranks participate in the
+    # collective; skipped if training stopped non-finite (a broken rank would not
+    # reach the collective and the others would hang).
+    if use_diloco and not stopped_nonfinite:
+        sync_s = diloco_merge(core_model, optimizer, args, world_size, outer_state)
+        diloco_merges += 1
+        diloco_sync_total_s += sync_s
+        if is_main:
+            print(f"  >>> [DiLoCo] FINAL merge #{diloco_merges} at step {step}: "
+                  f"consensus model averaged across {world_size} ranks "
+                  f"({sync_s*1000:.0f} ms)", flush=True)
+
+    # Under distributed training, only rank 0 runs the final checkpoint +
+    # held-out/train evals (all ranks hold identical synchronized weights after the
+    # final merge / DDP all-reduce). Other ranks skip to the barrier.
+    _run_final = (args._is_main if args._dist_enabled else True)
 
     # Final checkpoint - use last-100 average for reliable metric
     if not _run_final:
@@ -1342,8 +1518,14 @@ def train(args):
         if torch.cuda.is_available():
             print(f"PEAK_MEMORY_MB: {peak_mb:.0f}")
             print(f"RESERVED_MEMORY_MB: {reserved_mb:.0f}")
+        if use_diloco:
+            avg_sync = diloco_sync_total_s / max(diloco_merges, 1)
+            print(f"DILOCO_MERGES: {diloco_merges}")
+            print(f"DILOCO_K: {args.diloco_k}")
+            print(f"DILOCO_SYNC_TOTAL_S: {diloco_sync_total_s:.3f}")
+            print(f"DILOCO_SYNC_AVG_MS: {avg_sync*1000:.1f}")
 
-    if args._ddp_enabled and dist.is_initialized():
+    if args._dist_enabled and dist.is_initialized():
         dist.barrier()
         dist.destroy_process_group()
 
