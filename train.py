@@ -30,6 +30,7 @@ import json
 import datetime
 import glob
 import re
+import csv
 
 # Add elman package to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -270,6 +271,15 @@ def parse_args():
                              '(byte-for-byte identical slice across models, tokenizer-'
                              'correct), overriding --val_data / --heldout_bytes_per_token. '
                              '(task lb-compare: apples-to-apples leaderboard)')
+    parser.add_argument('--heldout_curve_every', type=int, default=0,
+                        help='When >0 with --heldout_tensor, append fixed-slice held-out '
+                             'CE/BPB to --heldout_curve_path every N optimizer steps.')
+    parser.add_argument('--heldout_curve_path', type=str, default=None,
+                        help='CSV path for periodic fixed-slice held-out measurements.')
+    parser.add_argument('--heldout_eval_mode', type=str, default='x',
+                        choices=['x', 'avg', 'y', 'train'],
+                        help='ScheduleFree weight mode for fixed held-out evals: x/avg '
+                             '= averaged eval weights, y/train = train weights.')
     parser.add_argument('--warmup_steps', type=int, default=0,
                         help='Warmup steps for learning rate. For adamw: linear '
                              'ramp then cosine decay (see lr_scale_at). For schedulefree: '
@@ -615,6 +625,13 @@ def train(args):
             f"Triton kernel (no eager), but use_triton={args.use_triton}")
         print(f"[fused-guard] rank {rank}/{world_size}: level={args.level} bf16 "
               f"use_triton=1 -> fused split-edit Triton kernel, NO eager fallback", flush=True)
+    if str(args.level).lower() in ('gdn2', 'gdn2-mlp'):
+        gdn2_path = os.environ.get('GDN2_PATH', '/home/erikg/GatedDeltaNet-2')
+        assert os.path.isdir(gdn2_path), (
+            f"[fused-guard] rank {rank}: GDN-2 external fused path missing: {gdn2_path}")
+        print(f"[fused-guard] rank {rank}/{world_size}: level={args.level} "
+              f"bf16={bool(args.bf16)} GDN2_PATH={gdn2_path} -> "
+              "FLA chunked GDN-2 fused kernel, NO eager fallback", flush=True)
 
     # Under DDP only rank 0 owns the run directory / checkpoints. Non-main ranks
     # never write to it (their save/eval blocks are gated on is_main), so they get
@@ -1244,6 +1261,92 @@ def train(args):
         print(f"PROBE_PEAK_MEMORY_MB: {peak_mb:.1f}")
         sys.exit(0)
 
+    heldout_payload = None
+    heldout_mode = 'y' if args.heldout_eval_mode in ('y', 'train') else 'x'
+    if args.heldout_tensor and (args.heldout_curve_every > 0 or args.final_heldout_eval):
+        heldout_payload = torch.load(args.heldout_tensor, map_location='cpu')
+        if 'chunks' not in heldout_payload or 'bytes_per_token' not in heldout_payload:
+            raise ValueError("--heldout_tensor must contain 'chunks' and 'bytes_per_token'")
+        if is_main and args.heldout_curve_every > 0:
+            if not args.heldout_curve_path:
+                raise ValueError("--heldout_curve_every requires --heldout_curve_path")
+            curve_path = Path(args.heldout_curve_path)
+            curve_path.parent.mkdir(parents=True, exist_ok=True)
+            if not curve_path.exists() or curve_path.stat().st_size == 0:
+                with curve_path.open('w', newline='') as f:
+                    writer = csv.writer(f)
+                    writer.writerow([
+                        'step',
+                        'tokens',
+                        'train_loss',
+                        'heldout_ce',
+                        'heldout_bpb',
+                        'heldout_tokens',
+                        'heldout_bytes_per_token',
+                        'mode',
+                        'wall_time_utc',
+                    ])
+            print(f"Held-out curve: every {args.heldout_curve_every} steps, "
+                  f"mode={heldout_mode}, tensor={args.heldout_tensor}, "
+                  f"csv={args.heldout_curve_path}", flush=True)
+
+    def score_fixed_heldout_tensor(mode):
+        if heldout_payload is None:
+            raise ValueError("fixed held-out tensor was not loaded")
+        import math as _math
+        ho_chunks = heldout_payload['chunks']
+        bpt = float(heldout_payload['bytes_per_token'])
+        eval_bs = int(os.environ.get('HELDOUT_EVAL_BS', '8'))
+        eval_bs = max(1, min(eval_bs, ho_chunks.shape[0]))
+
+        if args.optimizer == 'schedulefree':
+            if mode == 'y':
+                optimizer.train()
+            else:
+                optimizer.eval()
+
+        core_model.eval()
+        tot_nll = 0.0
+        tot_tok = 0
+        with torch.no_grad():
+            for i in range(0, ho_chunks.shape[0], eval_bs):
+                batch = ho_chunks[i:i + eval_bs].to(device)
+                with torch.autocast(device_type='cuda', dtype=torch.bfloat16, enabled=args.bf16):
+                    eval_loss = core_model(batch, return_loss=True)
+                eval_loss = eval_loss[0] if isinstance(eval_loss, tuple) else eval_loss
+                npred = batch.shape[0] * (batch.shape[1] - 1)
+                tot_nll += float(eval_loss.item()) * npred
+                tot_tok += npred
+        core_model.train()
+        if args.optimizer == 'schedulefree':
+            optimizer.train()
+        ce = tot_nll / max(tot_tok, 1)
+        bpb = (ce / _math.log(2.0)) / bpt
+        return ce, bpb, tot_tok, bpt
+
+    def append_heldout_curve_row(cur_step, train_loss):
+        if not (is_main and args.heldout_curve_every > 0 and heldout_payload is not None):
+            return
+        ce, bpb, tot_tok, bpt = score_fixed_heldout_tensor(heldout_mode)
+        tokens = cur_step * args.batch_size * (args.chunk_size + 1) * world_size
+        wall_time = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='seconds')
+        with Path(args.heldout_curve_path).open('a', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow([
+                cur_step,
+                tokens,
+                f"{float(train_loss):.6f}",
+                f"{ce:.6f}",
+                f"{bpb:.6f}",
+                tot_tok,
+                f"{bpt:.6f}",
+                heldout_mode,
+                wall_time,
+            ])
+        print(f"  >>> heldout_curve step {cur_step}: tokens {tokens} | "
+              f"train_loss {float(train_loss):.4f} | {heldout_mode}-mode "
+              f"CE {ce:.4f} | BPB {bpb:.4f}", flush=True)
+
     # Training state
     hidden_state = None  # Only used if --tbptt
     accumulated_steps = 0
@@ -1469,6 +1572,9 @@ def train(args):
                 if args.optimizer == 'schedulefree':
                     optimizer.train()  # Back to training mode
 
+            if args.heldout_curve_every > 0 and step % args.heldout_curve_every == 0:
+                append_heldout_curve_row(step, avg_loss)
+
             # Checkpointing (rank 0 only; save the unwrapped core_model state_dict so
             # checkpoints load identically in single-GPU eval/generate paths)
             if step % args.save_every == 0 and is_main:
@@ -1543,46 +1649,19 @@ def train(args):
     # periodic NON-averaged validation during training. Opt-in via --final_heldout_eval.
     if _run_final and args.final_heldout_eval and args.heldout_tensor and not stopped_nonfinite:
         # task lb-compare: score a FIXED pre-tokenized held-out tensor (byte-for-byte
-        # identical slice across all models, tokenizer-correct CE) on the averaged
-        # schedule-free weights. Overrides --val_data / --heldout_bytes_per_token.
-        import math as _math
-        ho = torch.load(args.heldout_tensor, map_location='cpu')
-        ho_chunks = ho['chunks']                       # [N, chunk+1]
-        bpt = float(ho['bytes_per_token'])
-        # Eval batch is decoupled from the train batch: CE/BPB are batch-invariant
-        # (every chunk scored identically), so use a larger fwd-only batch to cut
-        # the number of (slow sequential-kernel) forward calls. Override via env.
-        eval_bs = int(os.environ.get('HELDOUT_EVAL_BS', '8'))
-        eval_bs = max(1, min(eval_bs, ho_chunks.shape[0]))
-
-        def _score_heldout():
-            core_model.eval()
-            tot_nll = 0.0; tot_tok = 0
-            with torch.no_grad():
-                for i in range(0, ho_chunks.shape[0], eval_bs):
-                    batch = ho_chunks[i:i + eval_bs].to(device)
-                    loss = core_model(batch, return_loss=True)
-                    loss = loss[0] if isinstance(loss, tuple) else loss
-                    npred = batch.shape[0] * (batch.shape[1] - 1)
-                    tot_nll += float(loss.item()) * npred; tot_tok += npred
-            core_model.train()
-            return tot_nll / max(tot_tok, 1), tot_tok
-
-        # Diagnostic: also report NON-averaged (training) weights when requested,
-        # to separate a schedule-free averaging artifact from real generalization.
+        # identical slice across all models, tokenizer-correct CE). The default is
+        # averaged x-mode for legacy leaderboard compatibility; long-reference runs
+        # pass --heldout_eval_mode y to score schedule-free training weights.
         if os.environ.get('HELDOUT_REPORT_NONAVG') == '1' and args.optimizer == 'schedulefree':
-            optimizer.train()  # raw (non-averaged) weights
-            ce_raw, _ = _score_heldout()
+            ce_raw, bpb_raw, _, _ = score_fixed_heldout_tensor('y')
             print(f"FINAL_HELDOUT_CE_NONAVG: {ce_raw:.4f}")
-            print(f"FINAL_HELDOUT_BPB_NONAVG: {(ce_raw / _math.log(2.0)) / bpt:.4f}")
-        if args.optimizer == 'schedulefree':
-            optimizer.eval()  # averaged weights (leaderboard methodology)
-        heldout_ce, tot_tok = _score_heldout()
-        heldout_bpb = (heldout_ce / _math.log(2.0)) / bpt
+            print(f"FINAL_HELDOUT_BPB_NONAVG: {bpb_raw:.4f}")
+        heldout_ce, heldout_bpb, tot_tok, bpt = score_fixed_heldout_tensor(heldout_mode)
         print(f"FINAL_HELDOUT_CE: {heldout_ce:.4f}")
         print(f"FINAL_HELDOUT_BPB: {heldout_bpb:.4f}")
         print(f"FINAL_HELDOUT_TOKENS: {tot_tok}")
         print(f"FINAL_HELDOUT_BYTES_PER_TOKEN: {bpt:.4f}")
+        print(f"FINAL_HELDOUT_MODE: {heldout_mode}")
     elif _run_final and args.final_heldout_eval and val_loader is not None and not stopped_nonfinite:
         if args.optimizer == 'schedulefree':
             optimizer.eval()  # averaged weights

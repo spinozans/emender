@@ -60,3 +60,88 @@ missing.
 The calibrated grade is `0.00`. The task asked for a durable, completed
 reference training run and measured curve, but no such run output exists and no
 logs establish any of the recipe, kernel, data, or completion requirements.
+
+## Re-evaluation Note: 2026-06-15T16:58:59Z
+
+After the original evaluation, the task was reset from `Done` back to
+`in-progress` with a mandatory launch protocol. That reset confirms the original
+submission was not accepted as a completed reference run. I rechecked the durable
+output location and task context after the reset:
+
+- `/mnt/nvme1n1/erikg/ref_gdn2_mlp/` still did not exist at re-evaluation time.
+- `wg context run-ref-gdn2` still reported no dependency artifacts.
+- The new task log instruction requires a detached healthy training process, PID
+  record, live GPU verification, and curve-file verification before completion;
+  none of those post-reset artifacts were present for the actor output being
+  graded.
+
+This does not change the calibrated grade. The score remains `0.00 / 1.00` with
+confidence `0.99`, because the evaluated actor output contains no measured run,
+no durable curve, no checkpoint, and no validation evidence for any required
+training criterion.
+
+## Retry-Pass Note: 2026-06-15T17:01:36Z
+
+The task was retried after the incomplete mark. I rechecked the evidence surface
+before closing this evaluator pass:
+
+- `/mnt/nvme1n1/erikg/ref_gdn2_mlp/` was still missing.
+- Process inspection found an unrelated `ref_emender_mlp` training process, but
+  no `ref_gdn2_mlp` or GDN-2 MLP process.
+- `wg context run-ref-gdn2` still reported no dependency artifacts.
+
+The calibrated grade remains `0.00 / 1.00` with confidence `0.99`. No new
+evidence satisfies any validation item for the required GDN-2 MLP reference run.
+
+## Retry-Pass Note: 2026-06-15T17:02:00Z
+
+This evaluator retry continued from commit `d058606` rather than restarting the
+review. I rechecked the same acceptance-critical evidence:
+
+- `/mnt/nvme1n1/erikg/ref_gdn2_mlp/` still did not exist.
+- A search under `/mnt/nvme1n1/erikg` found `ref_emender_mlp` only, not the
+  required `ref_gdn2_mlp` durable output directory.
+- Process inspection found the unrelated `ref_emender_mlp` training process and
+  no live `ref_gdn2_mlp`/GDN-2 MLP training process.
+- `wg context run-ref-gdn2` still reported no dependency artifacts.
+
+The calibrated grade remains `0.00 / 1.00` with confidence `0.99`. The task is
+not merely missing final polish; it is missing the required detached GDN-2 MLP
+reference run, durable checkpoint/curve output, and measured validation results.
+
+## Continuation Note: 2026-06-15T17:04:21Z
+
+This continuation picked up after commit `59db68b` and checked only for new
+evidence that would change the retry-pass evaluation:
+
+- `wg msg read run-ref-gdn2 --agent $WG_AGENT_ID` reported no unread messages.
+- `/mnt/nvme1n1/erikg/ref_gdn2_mlp/` still did not exist.
+- Process inspection showed unrelated `ref_emender_mlp` and DiLoCo training
+  commands, but no live `ref_gdn2_mlp`/GDN-2 MLP reference process.
+- `wg context run-ref-gdn2` still reported no dependency artifacts.
+
+The calibrated grade remains `0.00 / 1.00` with confidence `0.99`; the explicit
+validation checklist remains unsatisfied because there is still no durable
+GDN-2 MLP run output, checkpoint, curve, or measured >=2B-token result.
+
+## Post-Reset Reroute Note: 2026-06-15T17:10Z
+
+The task was reset again and logged with a reroute instruction requiring launch
+through `scripts/launch_detached_run.sh` after `build-launch-wrapper`. I
+performed a fresh evaluator evidence check for the required GDN-2 MLP reference
+run:
+
+- `/mnt/nvme1n1/erikg/ref_gdn2_mlp/` still does not exist.
+- Process inspection found unrelated catchup/DiLoCo training commands under
+  `/mnt/nvme1n1/erikg/catchup_parallel/diloco_native_emender_mlp/`, but no
+  `ref_gdn2_mlp` process and no GDN-2 MLP reference command with the required
+  `dim2176`, `depth12`, `nh30`, `mlp3.259`, `bs4`, and `lr4.74e-4` recipe.
+- No durable PID file, launch log, held-out curve, checkpoint, or measured
+  `>=2B` token result is available for this task.
+- The reroute note is an instruction for a future valid actor attempt; it is not
+  evidence that the reference run has been launched or completed.
+
+The calibrated grade remains `0.00 / 1.00` with confidence `0.99`. The rubric is
+not underspecified: the task explicitly requires a completed, measured,
+durable, single-GPU reference run, and the current evidence satisfies none of
+the acceptance criteria.
