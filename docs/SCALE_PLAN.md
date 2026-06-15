@@ -139,25 +139,52 @@ byte-identical to the search that produced it.
 
 ### 2.2 Optimizer / LR / schedule (long convergence run — NOT the 15-min CMA budget)
 
-**Recommended: schedule-free AdamW at the per-arm CMA-found LR, horizon-free.**
-This is the *proven* path — the E88 precedent reached 0.966 held-out with exactly
-this optimizer (`schedulefree`, `paper/review/THROUGHPUT.md`,
-`run_pile_convergence_3arch.sh`). It needs no pre-committed decay horizon, which is
-right for an open-ended *train-until-gate* run where the exact step count is unknown.
+> **CORRECTED 2026-06-15 (task `fix-long-horizon`).** The prior recommendation here —
+> constant-LR schedule-free, "horizon-free", no decay — was **MEASURED to fail at this
+> geometry** (`emender-mlp` dim1792/nh216/dep11, CMA LR≈1e-3). Held-out BPB on the
+> schedule-free *eval (x-average)* weights **rolls over** mid-run while the *train (y)*
+> loss keeps falling: constant LR=1e-3 bottoms at **1.571 @ 64.5 M tok** then climbs to
+> **3.234 @ 215 M**. Adding the (previously-unplumbed) warmup and **halving** the LR to
+> 5e-4 only **postpones** the rollover (min 1.653 @ 86 M → 1.78 @ 150 M) — it does **not**
+> remove it. The schedule-free x-average is not stable under a sustained high constant LR
+> over a long horizon at this scale. The fix is a real **LR decay**. Two plumbing bugs were
+> also fixed in `train.py`: (a) `warmup_steps` was never passed to `AdamWScheduleFree`
+> (the §2.2 "add a warmup" instruction was a no-op); (b) the AdamW `get_lr` cosine used
+> `step/warmup_steps` as its phase (oscillating with period `2·warmup_steps`, collapsing
+> to min right after warmup) and never referenced the total step count — replaced by
+> `lr_scale_at(step, warmup, total_steps, min_lr_frac)`. Full curves + reproduce:
+> `experiments/diloco_100b/longhorizon_fix/RESULTS.md`.
 
-- **Optimizer:** `--optimizer schedulefree` (AdamW schedule-free), bf16 uniform.
-- **LR:** each arm's own CMA-found LR (table §1). These were tuned at the 15-min
-  budget but the E88 precedent shows the schedule-free LR transfers to the long
-  horizon without decay. Add an explicit **2–5 k-step linear warmup** for the long
-  run (the 15-min search never left warmup-dominated territory).
-- **x/y-mode checkpoint discipline (mandatory).** Schedule-free saves **x-mode**
-  (eval-extrapolated) weights, which are catastrophic at inference (~17 nats);
-  **all eval/gate measurement must apply the y-mode swap** (`optimizer.train()`,
-  `generate.load_model` path) — see `paper/review/PILE_BPB_MEASURED.md` UPDATE
-  2026-06-01. Resume must restore optimizer state, not just `model_state_dict`.
-- **Alternative (if a fixed token budget is locked first):** AdamW + 2 k warmup +
-  cosine decay to the 16–20 B horizon. Use *only* if we commit the horizon up front;
-  it can edge out schedule-free at a known endpoint but forfeits early-stop-on-gate.
+**Recommended (MEASURED healthy): AdamW + linear warmup + single cosine decay to a
+small floor, over the committed token budget.** The 100 B seed has an effectively
+committed horizon already (the 16–20 B gate budget + hard cap, §2.3), so cosine decay
+is appropriate and gives a **monotone** held-out curve by construction.
+
+- **Optimizer:** `--optimizer adamw`, bf16 uniform, betas (0.9, 0.95).
+- **LR schedule:** `--warmup_steps` linear warmup to the peak LR (table §1 CMA LR,
+  ≈1e-3 for `emender-mlp`), then cosine decay to `--min_lr_frac` × peak (default 0.1)
+  across the full `--steps`. **MEASURED 7-GPU DDP, emender-mlp 1.286 B, to 215 M tok**
+  (warmup 250, peak 1e-3, floor 0.1): held-out BPB **strictly monotone**
+  1.872 → 1.647 → **1.523 @ 64.5 M** (already below the broken recipe's *global* min) →
+  1.306 @ 129 M → **1.205 @ 215 M** (vs broken 3.234 @ 215 M, **−2.03 BPB**). No mid-run
+  rise. Scale `warmup_steps` to the real horizon (≈1–2 % of total steps, i.e. ~15–30 k
+  for the 1.5 M-step 100 B run).
+- **Why not schedule-free.** Its appeal was horizon-freedom (early-stop-on-gate without a
+  pre-committed decay length), but the measured rollover makes it **unsafe as the primary
+  path here**. If horizon-freedom is later required, schedule-free must first be re-shown
+  monotone at a substantially lower constant LR (≤2e-4, untested) **or** wrapped in a
+  WSD/trapezoidal schedule (constant + short final decay) that preserves extendability.
+  Until then: **AdamW + cosine.**
+- **x/y-mode checkpoint discipline (only if schedule-free is used).** Schedule-free saves
+  **x-mode** (eval-extrapolated) weights, catastrophic at inference (~17 nats); all
+  eval/gate measurement must apply the y-mode swap (`optimizer.train()`,
+  `generate.load_model`) — `paper/review/PILE_BPB_MEASURED.md` UPDATE 2026-06-01. Resume
+  must restore optimizer state, not just `model_state_dict`. **AdamW has no x/y split** —
+  its saved weights eval directly, removing this whole footgun.
+- **Note on the E88 0.966 precedent.** It used schedule-free long-horizon successfully,
+  but at the E88 geometry/LR; it does **not** transfer to the `emender-mlp` E97 geometry
+  at LR≈1e-3 (measured above). Do not cite it as license for constant-LR schedule-free on
+  the E97 arms.
 
 > bf16 + **fused kernels mandatory** (`--use_triton 1` for E97/E88; FLA chunked for
 > gdn2; XMA for m2rnn). The fused E97 split-edit kernel is **bf16-only** (no fp16,
@@ -271,6 +298,14 @@ in-job hierarchical ScheduleFree-DiLoCo from
     falling. **No path — DDP or DiLoCo — reaches a usable BPB at 100 B with the current
     recipe.** Fix the recipe first (follow-up `fix-long-horizon`: warmup + LR decay /
     lower LR), then re-evaluate parity against a non-degrading baseline.
+  - **RESOLVED (`fix-long-horizon`, 2026-06-15).** Recipe fixed = **AdamW + warmup + cosine
+    decay** (§2.2; constant-LR schedule-free rolls over even with warmup). Re-run to 215 M
+    with BOTH arms on this healthy recipe: held-out BPB is now **strictly monotone** for
+    both (DDP 1.872 → **1.205**; DiLoCo β=0 2.313 → **1.562**). Against the non-degrading
+    baseline the DiLoCo penalty is a **persistent ~+0.35 BPB that does NOT close** (flat
+    plateau 64.5 M → 215 M) — the predecessor's apparent "closes at 215 M" was **mutual
+    collapse**, not parity. **DiLoCo NO-GO-as-loss-parity STANDS.** Full numbers:
+    `experiments/diloco_100b/longhorizon_fix/RESULTS.md`.
   - **Hybrid (DDP-within-2-GPU-island + DiLoCo-across, `--diloco_island_size`):** the only
     variant that meaningfully closes the gap — **~halves the penalty to +0.25–0.32 BPB**
     at **45 k tok/s (1.44× DDP, ~26 d)** — but still short of DDP parity. Needs

@@ -271,10 +271,20 @@ def parse_args():
                              'correct), overriding --val_data / --heldout_bytes_per_token. '
                              '(task lb-compare: apples-to-apples leaderboard)')
     parser.add_argument('--warmup_steps', type=int, default=0,
-                        help='Warmup steps for learning rate (only for adamw)')
+                        help='Warmup steps for learning rate. For adamw: linear '
+                             'ramp then cosine decay (see lr_scale_at). For schedulefree: '
+                             "passed to AdamWScheduleFree's built-in linear LR warmup "
+                             '(critical for long-horizon stability — without it the '
+                             'schedule-free x-average degrades under high constant LR; '
+                             'task fix-long-horizon).')
     parser.add_argument('--optimizer', type=str, default='schedulefree',
                         choices=['adamw', 'schedulefree'],
-                        help='Optimizer: adamw (with LR schedule) or schedulefree (no schedule needed)')
+                        help='Optimizer: adamw (warmup + cosine-decay LR schedule) or '
+                             'schedulefree (built-in warmup via --warmup_steps; NO decay)')
+    parser.add_argument('--min_lr_frac', type=float, default=0.1,
+                        help='AdamW cosine-decay floor as a fraction of --lr (the LR '
+                             'decays from lr to min_lr_frac*lr over --steps). 0.1 = decay '
+                             'to 10%% of peak. Only used by --optimizer adamw.')
 
     # DiLoCo periodic-sync parallelism (task implement-diloco-periodic). Opt-in,
     # only meaningful under torchrun (WORLD_SIZE>1). When --diloco is set, ranks
@@ -369,11 +379,27 @@ def setup_output_dir(args):
     return output_dir
 
 
-def get_lr(step, warmup_steps, max_lr, min_lr=1e-6):
-    """Cosine learning rate schedule with warmup."""
-    if step < warmup_steps:
-        return max_lr * step / warmup_steps
-    return min_lr + (max_lr - min_lr) * 0.5 * (1 + torch.cos(torch.tensor(step / warmup_steps * 3.14159)))
+def lr_scale_at(step, warmup_steps, total_steps, min_lr_frac=0.1):
+    """Warmup + cosine-decay LR multiplier in [min_lr_frac, 1.0].
+
+    Linear warmup over `warmup_steps`, then a SINGLE cosine decay from 1.0 down to
+    `min_lr_frac` across the remaining steps to `total_steps`. Returns a scale that
+    the caller multiplies onto each param group's base LR (preserving per-group
+    multipliers such as --knob_lr_mult).
+
+    The previous `get_lr` used `step/warmup_steps` as the cosine phase, so the LR
+    oscillated with period 2*warmup_steps and collapsed to min right after warmup
+    instead of decaying over the run — it never referenced total_steps. Constant-LR
+    schedule-free has been MEASURED (task fix-long-horizon) to roll the held-out
+    x-average over at long horizon even WITH warmup; a real decay to a small final
+    LR is what keeps held-out BPB monotone. See docs/SCALE_PLAN.md §2.2.
+    """
+    import math
+    if warmup_steps > 0 and step < warmup_steps:
+        return float(step + 1) / float(warmup_steps)
+    denom = max(1, total_steps - warmup_steps)
+    progress = min(1.0, max(0.0, (step - warmup_steps) / denom))
+    return min_lr_frac + (1.0 - min_lr_frac) * 0.5 * (1.0 + math.cos(math.pi * progress))
 
 
 def save_checkpoint(model, optimizer, step, loss, output_dir, keep_n=5):
@@ -1070,8 +1096,9 @@ def train(args):
             lr=args.lr,
             weight_decay=args.weight_decay,
             betas=(0.9, 0.95),
+            warmup_steps=args.warmup_steps,
         )
-        print(f"Using schedule-free AdamW (lr={args.lr})")
+        print(f"Using schedule-free AdamW (lr={args.lr}, warmup_steps={args.warmup_steps})")
     else:
         optimizer = AdamW(
             param_groups,
@@ -1079,7 +1106,12 @@ def train(args):
             weight_decay=args.weight_decay,
             betas=(0.9, 0.95),
         )
-        print(f"Using AdamW with warmup={args.warmup_steps} steps")
+        print(f"Using AdamW with warmup={args.warmup_steps} steps + cosine decay to "
+              f"{args.min_lr_frac:.0%} of lr over {args.steps} steps")
+    # Capture each group's base LR so the warmup+cosine schedule can scale them
+    # while preserving per-group ratios (e.g. --knob_lr_mult).
+    for pg in optimizer.param_groups:
+        pg['base_lr'] = pg['lr']
 
     # Resume if requested
     start_step = 0
@@ -1369,11 +1401,15 @@ def train(args):
                 stopped_nonfinite = True
                 break
 
-            # Learning rate schedule (only for standard AdamW)
+            # Learning rate schedule (only for standard AdamW). Warmup + cosine decay
+            # to min_lr_frac*lr over the full run; scales each group's base LR so
+            # per-group ratios (--knob_lr_mult) are preserved. Schedule-free instead
+            # applies its own warmup internally and is left at a constant base LR.
             if args.optimizer == 'adamw':
-                lr = get_lr(step, args.warmup_steps, args.lr)
+                scale = lr_scale_at(step, args.warmup_steps, args.steps, args.min_lr_frac)
                 for param_group in optimizer.param_groups:
-                    param_group['lr'] = lr
+                    param_group['lr'] = param_group['base_lr'] * scale
+                lr = optimizer.param_groups[0]['lr']
             else:
                 lr = args.lr  # Schedule-free handles LR internally
 
