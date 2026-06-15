@@ -79,3 +79,16 @@ This does not change the calibrated grade. The score remains `0.00 / 1.00` with
 confidence `0.99`, because the evaluated actor output contains no measured run,
 no durable curve, no checkpoint, and no validation evidence for any required
 training criterion.
+
+## Retry-Pass Note: 2026-06-15T17:01:36Z
+
+The task was retried after the incomplete mark. I rechecked the evidence surface
+before closing this evaluator pass:
+
+- `/mnt/nvme1n1/erikg/ref_gdn2_mlp/` was still missing.
+- Process inspection found an unrelated `ref_emender_mlp` training process, but
+  no `ref_gdn2_mlp` or GDN-2 MLP process.
+- `wg context run-ref-gdn2` still reported no dependency artifacts.
+
+The calibrated grade remains `0.00 / 1.00` with confidence `0.99`. No new
+evidence satisfies any validation item for the required GDN-2 MLP reference run.
