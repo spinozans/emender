@@ -111,3 +111,25 @@ This continuation evidence does not change the calibrated score. The grade
 remains **0.58 / 1.00** with rubric underspecification flag **no**, and the
 task remains incomplete until a clean live wrapper-launched replacement run is
 verified on exactly one exclusive GPU.
+
+## Continuation Check: 2026-06-15T21:10:00Z
+
+The next retry assigned to `agent-1487` was another evaluator continuation
+after the task was automatically reopened from the prior incomplete result. I
+rechecked the live system state rather than relying solely on the prior report:
+
+- `/mnt/nvme1n1/erikg/ref_gdn2_mlp` is still absent.
+- `/mnt/nvme1n1/erikg/ref_gdn2_mlp.contaminated_2057` still contains only the
+  stale artifacts (`run.pid`, `launch_manifest.json`, `recipe_manifest.json`,
+  `run.log`, `heldout_curve.csv`, the held-out tensor, and `runs/`).
+- `pgrep -af 'ref_gdn2_mlp|launch_ref_gdn2_mlp|train.py|gdn2'` finds the live
+  `ref_emender_mlp` reference run and unrelated DiLoCo training, but no live
+  `ref_gdn2_mlp` process.
+- `scripts/gpu_lease.sh status` shows active leases on unrelated GPUs `0` and
+  `2,3,4,5`; GPU `1`, the stale GDN-2 launch GPU, is physically idle and has no
+  active lease.
+
+This confirms the prior evaluator conclusion. The calibrated grade remains
+**0.58 / 1.00**, rubric underspecification remains **no**, and the correct WG
+state is incomplete/retryable because the current gate still requires a clean,
+live, detached `ref_gdn2_mlp` run on exactly one exclusive GPU.
