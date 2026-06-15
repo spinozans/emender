@@ -256,15 +256,35 @@ in-job hierarchical ScheduleFree-DiLoCo from
   roundtrip) — this retires the §3.4 risk-3 "x/y-mode semantics across merges
   unverified" for the in-job single-box case. Outer momentum is wired
   (`--diloco_outer_beta/--diloco_outer_lr`) for the later sample-efficiency sweep.
-- **OPEN — token sample-efficiency.** The throughput win is solid, but at *matched
-  tokens* the local-SGD merge (outer_beta=0) lags synchronous DDP by ~0.45 BPB in
-  early training and the gap does **not** close within 52 M tokens measured (large-
-  batch bs42 vs per-island bs6 tradeoff; no divergence, merge is correct). Whether
-  it closes over 100 B tokens / with outer momentum is unverified → run the
-  outer-momentum sweep + a multi-B-token matched-token check before betting the full
-  100 B on DiLoCo (follow-up `diloco-loss-parity-longhorizon`); fall back to DDP or a
-  DDP-within-island + DiLoCo-across-island hybrid if the gap persists.
-- Full numbers + reproduce: `experiments/diloco_100b/RESULTS.md`.
+- **RESOLVED (`diloco-loss-parity-longhorizon`) — token sample-efficiency: DiLoCo is a
+  NO-GO as the loss-parity path; the binding blocker is the TRAINING RECIPE, not
+  parallelism.** Measured to 215 M tokens (≈4× the predecessor's 52 M), emender-1.286B,
+  7-GPU, matched-token held-out BPB (full numbers + reproduce in
+  `experiments/diloco_100b/longhorizon/RESULTS.md`):
+  - **Two findings.** (1) The DiLoCo penalty: plain local-SGD (`outer_beta=0`, K=250) lags
+    DDP by a persistent **~0.45 BPB** at matched tokens in the healthy regime and does
+    **not** close; the outer-momentum sweep (β=0.5/0.9 × lr=0.7/1.0) and small-K (K=50)
+    do **not** help (momentum *overshoots*, worst at ~2.5). (2) **The dominant blocker:**
+    under the constant CMA-tuned LR=1.007e-3 with `warmup_steps=0` and no decay, the
+    held-out BPB **collapses for BOTH DDP and DiLoCo** past ~64 M tokens (DDP bottoms
+    1.571 @ 64.5 M → 3.234 @ 215 M; β=0 → 3.188), while per-rank *train* loss keeps
+    falling. **No path — DDP or DiLoCo — reaches a usable BPB at 100 B with the current
+    recipe.** Fix the recipe first (follow-up `fix-long-horizon`: warmup + LR decay /
+    lower LR), then re-evaluate parity against a non-degrading baseline.
+  - **Hybrid (DDP-within-2-GPU-island + DiLoCo-across, `--diloco_island_size`):** the only
+    variant that meaningfully closes the gap — **~halves the penalty to +0.25–0.32 BPB**
+    at **45 k tok/s (1.44× DDP, ~26 d)** — but still short of DDP parity. Needs
+    `NCCL_P2P_DISABLE=1` + sequential subgroup-comm warmup on this no-NVLink box.
+  - **Days-to-100 B (post-recipe-fix):** DDP 31 k tok/s → **37 d** (exact, no penalty);
+    hybrid 45 k → **~26 d** (+0.25–0.32 BPB); pure DiLoCo K=250 57.7 k → **20 d**
+    throughput but +0.45 BPB that does not close (effective days > 20 d).
+  - **Recommendation:** fix the recipe first; then use **per-step DDP** for the 100 B seed
+    run unless a recipe-fixed re-evaluation shows DiLoCo/hybrid parity. If wall-clock is
+    the hard constraint, the **2-GPU-island hybrid** is the best throughput/efficiency
+    compromise. The 1.85× pure-DiLoCo throughput is not worth a non-closing ~0.45 BPB
+    matched-token deficit.
+- Full numbers + reproduce: `experiments/diloco_100b/RESULTS.md` (throughput/merge) and
+  `experiments/diloco_100b/longhorizon/RESULTS.md` (loss-parity longhorizon).
 
 ---
 

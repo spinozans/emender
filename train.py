@@ -296,6 +296,14 @@ def parse_args():
                         help='DiLoCo outer learning rate (1.0 = plain averaging)')
     parser.add_argument('--diloco_outer_beta', type=float, default=0.0,
                         help='DiLoCo outer momentum beta (0.0 = local-SGD, no outer momentum)')
+    parser.add_argument('--diloco_island_size', type=int, default=0,
+                        help='HYBRID mode (task diloco-loss-parity-longhorizon): >1 forms '
+                             'islands of this many consecutive ranks that do per-step DDP '
+                             'gradient all-reduce WITHIN the island (tight sync, exact SGD), '
+                             'while DiLoCo periodic averaging runs ACROSS islands every K '
+                             'steps. world_size must be divisible by island_size. 0/1 = pure '
+                             'DiLoCo (no intra-island DDP). Trades some throughput for '
+                             'sample-efficiency when pure-DiLoCo lags DDP at matched tokens.')
 
     # Checkpointing
     parser.add_argument('--output', type=str, default='./output',
@@ -977,7 +985,54 @@ def train(args):
         dist.barrier()
         if is_main:
             print(f"[DiLoCo] broadcast rank-0 W_0 to all {world_size} ranks "
-                  f"(identical start, no DDP wrapper)", flush=True)
+                  f"(identical start)", flush=True)
+
+        # HYBRID (task diloco-loss-parity-longhorizon): if --diloco_island_size > 1,
+        # form islands of consecutive ranks that do per-step DDP gradient all-reduce
+        # WITHIN the island (tight, exact-SGD sync over a cheap 2-GPU collective),
+        # while the periodic diloco_merge keeps averaging ACROSS ALL ranks every K
+        # steps. Because intra-island ranks are kept bit-identical by their DDP, a
+        # GLOBAL all-reduce mean over all ranks equals the per-ISLAND mean (each
+        # island's weights are summed island_size times, then divided by world_size)
+        # -> the existing global diloco_merge is the correct cross-island outer step,
+        # unchanged. This trades some throughput (per-step intra-island comm) for the
+        # sample-efficiency of a larger effective per-island batch (island_size*bs).
+        island_size = int(getattr(args, 'diloco_island_size', 0) or 0)
+        if island_size > 1:
+            assert world_size % island_size == 0, (
+                f"--diloco_island_size {island_size} must divide world_size {world_size}")
+            n_islands = world_size // island_size
+            # new_group is collective: every rank must call it for EVERY island group,
+            # in the same order, even ones it does not join.
+            island_groups = []
+            island_group = None
+            for isl in range(n_islands):
+                grp_ranks = list(range(isl * island_size, (isl + 1) * island_size))
+                g = dist.new_group(ranks=grp_ranks)
+                island_groups.append((grp_ranks, g))
+                if rank in grp_ranks:
+                    island_group = g
+            # SEQUENTIALLY initialize each island's NCCL subgroup communicator. The
+            # NCCL comm for a subgroup is created lazily on first use; if all islands
+            # init concurrently (each DDP construction firing a collective on its own
+            # 2-rank comm at once) they deadlock on a no-NVLink box (observed: a 600 s
+            # BROADCAST timeout at DDP construction). A tiny all-reduce per island with
+            # a GLOBAL barrier between forces creation one island at a time.
+            for grp_ranks, g in island_groups:
+                if rank in grp_ranks:
+                    _w = torch.zeros(1, device=device)
+                    dist.all_reduce(_w, group=g)
+                dist.barrier()
+            model = DDP(model, device_ids=[local_rank], output_device=local_rank,
+                        find_unused_parameters=False, gradient_as_bucket_view=True,
+                        process_group=island_group)
+            args._diloco_island_size = island_size
+            args._diloco_n_islands = n_islands
+            if is_main:
+                print(f"[DiLoCo-hybrid] {n_islands} islands x {island_size} GPUs: per-step "
+                      f"DDP gradient all-reduce WITHIN island + DiLoCo periodic averaging "
+                      f"ACROSS islands every K={args.diloco_k} (subgroup comms warmed "
+                      f"sequentially)", flush=True)
 
     if is_main:
         print(f"Model: Level {args.level}, {core_model.get_num_params():,} parameters")
@@ -1408,7 +1463,18 @@ def train(args):
     # model (not whichever rank happens to be rank 0). All ranks participate in the
     # collective; skipped if training stopped non-finite (a broken rank would not
     # reach the collective and the others would hang).
-    if use_diloco and not stopped_nonfinite:
+    #
+    # SKIP the final merge when the last step ALREADY merged (step % K == 0): the
+    # periodic merge at that step has already produced the consensus, so a second
+    # merge here is redundant. For outer momentum it is also HARMFUL — between the
+    # periodic merge and this one there are ZERO local steps, so delta = mean_i(W) -
+    # W_r = 0, yet the outer step still applies the leftover momentum buffer
+    # (W <- W_r + outer_lr*beta*mom), a spurious extra step that DEGRADES the final
+    # checkpoint (task diloco-loss-parity-longhorizon: observed BPB 2.19 -> 2.27 at
+    # step 500, K=250, beta=0.5). beta=0 (local-SGD) is unaffected (no momentum), but
+    # the guard is correct for all configs.
+    last_step_already_merged = use_diloco and (step % args.diloco_k == 0)
+    if use_diloco and not stopped_nonfinite and not last_step_already_merged:
         sync_s = diloco_merge(core_model, optimizer, args, world_size, outer_state)
         diloco_merges += 1
         diloco_sync_total_s += sync_s
@@ -1416,6 +1482,10 @@ def train(args):
             print(f"  >>> [DiLoCo] FINAL merge #{diloco_merges} at step {step}: "
                   f"consensus model averaged across {world_size} ranks "
                   f"({sync_s*1000:.0f} ms)", flush=True)
+    elif use_diloco and last_step_already_merged and is_main:
+        print(f"  >>> [DiLoCo] final merge SKIPPED at step {step}: last step already "
+              f"merged (step % K == 0); checkpoint is already consensus "
+              f"(avoids spurious outer-momentum double-step)", flush=True)
 
     # Under distributed training, only rank 0 runs the final checkpoint +
     # held-out/train evals (all ranks hold identical synchronized weights after the
