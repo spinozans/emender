@@ -178,7 +178,7 @@ def build_command(args: argparse.Namespace) -> tuple[list[str], int]:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--target-tokens", type=int, default=TARGET_TOKENS)
-    parser.add_argument("--curve-every", type=int, default=5000)
+    parser.add_argument("--curve-every", type=int, default=500)
     parser.add_argument("--save-every", type=int, default=25000)
     parser.add_argument("--keep-checkpoints", type=int, default=12)
     parser.add_argument("--log-every", type=int, default=100)
