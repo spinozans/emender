@@ -152,7 +152,26 @@ def main() -> int:
         "--",
     ] + cmd
 
-    pid = subprocess.check_output(launch_cmd, cwd=REPO_ROOT, env=env, text=True).strip()
+    proc = subprocess.Popen(
+        launch_cmd,
+        cwd=REPO_ROOT,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    assert proc.stdout is not None
+    pid = proc.stdout.readline().strip()
+    if not pid:
+        _, stderr = proc.communicate(timeout=10)
+        raise RuntimeError(f"detached launcher did not print a PID: {stderr}")
+    try:
+        proc.wait(timeout=5)
+    except subprocess.TimeoutExpired:
+        # The detached child may keep a descriptor inherited through the lease
+        # heartbeat. Once the PID has been printed, the durable pid/manifest files
+        # are authoritative and the training process is independent of this helper.
+        pass
     print(pid)
     return 0
 
