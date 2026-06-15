@@ -108,3 +108,18 @@ review. I rechecked the same acceptance-critical evidence:
 The calibrated grade remains `0.00 / 1.00` with confidence `0.99`. The task is
 not merely missing final polish; it is missing the required detached GDN-2 MLP
 reference run, durable checkpoint/curve output, and measured validation results.
+
+## Continuation Note: 2026-06-15T17:04:21Z
+
+This continuation picked up after commit `59db68b` and checked only for new
+evidence that would change the retry-pass evaluation:
+
+- `wg msg read run-ref-gdn2 --agent $WG_AGENT_ID` reported no unread messages.
+- `/mnt/nvme1n1/erikg/ref_gdn2_mlp/` still did not exist.
+- Process inspection showed unrelated `ref_emender_mlp` and DiLoCo training
+  commands, but no live `ref_gdn2_mlp`/GDN-2 MLP reference process.
+- `wg context run-ref-gdn2` still reported no dependency artifacts.
+
+The calibrated grade remains `0.00 / 1.00` with confidence `0.99`; the explicit
+validation checklist remains unsatisfied because there is still no durable
+GDN-2 MLP run output, checkpoint, curve, or measured >=2B-token result.
