@@ -1,147 +1,135 @@
 # Evaluation: run-ref-gdn2
 
 Task: `run-ref-gdn2`
-Evaluator: `agent-1452`
+Evaluator: `agent-1485`; continuation check by `agent-1486`
 Date: 2026-06-15
 
 ## Grade
 
-Overall score: 0.00 / 1.00
-Confidence: 0.99
-Rubric underspecified: no
+Overall score: **0.58 / 1.00**
 
-The task rubric is explicit and operational: it requires a completed single-GPU
-GDN-2 MLP reference training run to at least 2B tokens, using the exact
-schedule-free constant-LR recipe from `docs/SCALE_PLAN.md`, with fused kernels,
-matched corpus/tokenizer/held-out data, durable checkpoints, and a measured
-loss/BPB curve. The submission has no durable run artifact or measured result to
-evaluate against those criteria.
+Confidence: **0.86**
+
+Rubric underspecified: **no**
+
+The validation checklist is explicit: the deliverable is a verified live,
+detached GDN-2 MLP reference run, launched through the wrapper, alone on exactly
+one broker-leased GPU, with the specified schedule-free recipe and directly
+comparable held-out curve artifacts. The actor did produce a real detached run
+with strong recipe evidence and measured curve rows, but that run is no longer
+live, the source-of-truth directory `/mnt/nvme1n1/erikg/ref_gdn2_mlp` is absent,
+and the existing artifacts have been moved aside as
+`/mnt/nvme1n1/erikg/ref_gdn2_mlp.contaminated_2057`. The current task state
+therefore does not satisfy the hard gate: a confirmed live clean replacement run.
 
 ## Dimension Scores
 
 | Dimension | Weight | Score | Rationale |
 | --- | ---: | ---: | --- |
-| Correct training recipe and GPU discipline | 0.20 | 0.00 | No run logs or launcher artifact demonstrate exactly one leased GPU, schedule-free optimizer, constant LR `4.74e-4`, or absence of warmup/cosine/decay. |
-| Required model/data parity | 0.15 | 0.00 | No evidence shows the GDN-2 MLP geometry `dim2176 nh30 dep12 mlp3.259 bs4`, or that the corpus/tokenizer/held-out tensor matched the emender reference setup. |
-| Fused-kernel requirement | 0.15 | 0.00 | No logs confirm the FLA chunked GDN-2 fused path, and no evidence rules out eager or slow fallback. |
-| Durable measured output | 0.25 | 0.00 | `/mnt/nvme1n1/erikg/ref_gdn2_mlp/` was absent/empty at evaluation time; no checkpoints or `(step, tokens, train_loss, heldout_bpb)` curve were available. |
-| Completion to budget and measured conclusion | 0.20 | 0.00 | The run did not reach `>=2B` tokens and no measured held-out monotonicity or rollover report exists. |
-| WG delivery hygiene | 0.05 | 0.00 | The task had no actor commit, no recorded artifact, and no progress log beyond spawn/evaluator messages. |
+| Wrapper launch, detachment, and exclusive GPU | 0.25 | 0.35 | Stale artifacts and logs show wrapper-style launch, PID `3139509`, `gpus_requested=1`, leased GPU `1`, and live validation at handoff. Current verification fails the hard gate: PID `3139509` is dead, no active lease exists for GPU 1, and `/mnt/nvme1n1/erikg/ref_gdn2_mlp` no longer exists. |
+| Recipe fidelity | 0.25 | 0.88 | Manifest/log evidence matches the main recipe: `dim=2176`, `n_heads=30`, `depth=12`, GDN-2 MLP ratio `3.2587`, `batch_size=4`, `chunk_size=2048`, `schedulefree`, `lr=0.000474`, `bf16`, `pile.txt`, and `p50k_base`; logs confirm warmup `0` and fused GDN-2 path with no eager fallback. Main miss: held-out cadence was `--heldout_curve_every 500`, while the task asks for 2000-step cadence. |
+| Durable run artifacts and curve growth | 0.20 | 0.50 | `run.pid`, `launch_manifest.json`, `recipe_manifest.json`, `run.log`, held-out tensor, and `heldout_curve.csv` exist in the renamed contaminated directory, and the curve reached step `12000` / `98,352,000` tokens with decreasing BPB. However, the required source directory is gone, no current `train.log`/`run.log` is advancing, and no live process remains. |
+| Direct comparability to ref-emender | 0.15 | 0.35 | Data path, tokenizer, y-mode held-out tensor size, and native single-GPU batch are aligned. Comparability is materially weakened because this run was moved aside as contaminated and used a 500-step held-out cadence despite the current spec requiring cadence matching at 2000. |
+| Reporting of verified PID/GPU/first metrics | 0.10 | 0.86 | WG logs and `provenance/run-ref-gdn2-launch.md` report PID `3139509`, GPU `1`, first measured row `step=500`, `heldout_bpb=2.072381`, and log lines include tok/s around `8701` at that step. This was good at handoff but is stale after reset. |
+| WG delivery hygiene | 0.05 | 0.80 | The actor committed relevant launcher/training support and a launch evidence artifact. Follow-on monitoring was set up. Hygiene is reduced because the task was later reset, the run was invalidated/renamed, and downstream source paths now point at missing files. |
 
 Weighted total:
 
-`0.20*0.00 + 0.15*0.00 + 0.15*0.00 + 0.25*0.00 + 0.20*0.00 + 0.05*0.00 = 0.00`.
+`0.25*0.35 + 0.25*0.88 + 0.20*0.50 + 0.15*0.35 + 0.10*0.86 + 0.05*0.80 = 0.586`.
 
-## Evidence
+Rounded calibrated score: **0.58**. The task's gate-scored deliverable is not
+just a plausible launch artifact; it is a verified live clean run. The current
+hard gate fails.
 
-- `wg show run-ref-gdn2` reported the task in progress with `Commits ahead: 0`
-  and no implementation or run artifacts recorded before this evaluation.
-- `wg log run-ref-gdn2 --list` contained only pause/publish/spawn entries before
-  evaluator inspection; it did not contain training setup, launch, validation, or
-  measured output logs.
-- `find /mnt/nvme1n1/erikg/ref_gdn2_mlp -maxdepth 3 -type f ...` returned no
-  files, so the required durable checkpoint/curve directory was not populated.
-- `wg context run-ref-gdn2` reported no dependency artifacts.
+## Evidence Checked
 
-## Validation Run By Evaluator
+- `wg show run-ref-gdn2` shows the task is currently `in-progress`, reset after
+  the prior completion, with the current validation still requiring a live clean
+  detached run.
+- `/mnt/nvme1n1/erikg/ref_gdn2_mlp` is absent.
+- `ps -p 3139509` shows the previously reported detached PID is no longer alive.
+- `scripts/gpu_lease.sh status` shows active leases only for unrelated GPUs
+  `2,3,4,5`; GPU `1` is idle and not held by the prior run.
+- `pgrep -af 'ref_gdn2_mlp|launch_ref_gdn2_mlp|train.py|gdn2'` finds unrelated
+  DiLoCo training but no live `ref_gdn2_mlp` process.
+- `/mnt/nvme1n1/erikg/ref_gdn2_mlp.contaminated_2057` contains the stale run
+  artifacts: `run.pid`, `launch_manifest.json`, `recipe_manifest.json`,
+  `run.log`, held-out tensor, and `heldout_curve.csv`.
+- `launch_manifest.json` records one requested GPU, leased GPU `1`, PID
+  `3139509`, the correct command geometry, and `--heldout_curve_every 500`.
+- `recipe_manifest.json` records `schedulefree`, `lr=0.000474`,
+  `warmup_steps=0`, `cosine=false`, `decay=false`, `bf16=true`,
+  `single_gpu=true`, `heldout_eval_mode=y`, and the external GDN-2 FLA chunked
+  fused path.
+- `run.log` contains the fused guard and schedule-free startup line:
+  GDN-2 fused kernel, no eager fallback, schedule-free AdamW with
+  `lr=0.000474`, `warmup_steps=0`.
+- `heldout_curve.csv` grew from step `500` to step `12000`; the last row is
+  `tokens=98352000`, `train_loss=3.837054`, `heldout_bpb=1.412094`.
 
-- Inspected `wg show run-ref-gdn2`.
-- Inspected `wg log run-ref-gdn2 --list`.
-- Searched the required durable output path:
-  `/mnt/nvme1n1/erikg/ref_gdn2_mlp/`.
-- Checked graph context with `wg context run-ref-gdn2`.
+## Validation Checklist Assessment
 
-No task-specific acceptance criterion was satisfied. This is not a partial
-completion or a launch-confirmation case; the required measured reference run is
-missing.
+- Launched via wrapper, detached, on exactly one exclusive GPU: **partially met**.
+  This was evidenced at handoff, but no live process or lease remains now.
+- Recipe fidelity: **mostly met**, except held-out cadence mismatch
+  (`500` observed versus `2000` requested).
+- `run.pid` + manifest written; log/curve advancing: **partially met**. Artifacts
+  exist only in the renamed contaminated directory and are no longer advancing.
+- Same corpus/tokenizer/held-out/cadence as `run-ref-emender`: **partially met**.
+  Corpus/tokenizer/y-mode are aligned; cadence and contamination invalidate full
+  comparability.
+- Reported verified PID, GPU id, first `(step, tok/s, heldout_bpb)`: **mostly
+  met** from WG logs and launch evidence, but stale after reset.
 
 ## Final Assessment
 
-The calibrated grade is `0.00`. The task asked for a durable, completed
-reference training run and measured curve, but no such run output exists and no
-logs establish any of the recipe, kernel, data, or completion requirements.
+This is not a successful completion of the current gate. The prior actor did
+substantial useful work and launched a real GDN-2 reference process with the
+right core recipe, so a zero would be too harsh. But the live-run deliverable is
+currently absent, the original run was moved aside as contaminated, and the
+current source-of-truth path has no advancing log or curve. The calibrated grade
+is therefore **0.58 / 1.00**, and the task should be treated as incomplete until
+a clean live detached replacement is verified.
 
-## Re-evaluation Note: 2026-06-15T16:58:59Z
+## Continuation Check: 2026-06-15T21:07:25Z
 
-After the original evaluation, the task was reset from `Done` back to
-`in-progress` with a mandatory launch protocol. That reset confirms the original
-submission was not accepted as a completed reference run. I rechecked the durable
-output location and task context after the reset:
+The retry assigned to `agent-1486` was a continuation of the interrupted
+evaluator closure, not a new actor launch. I rechecked the live system state
+before closing the retry:
 
-- `/mnt/nvme1n1/erikg/ref_gdn2_mlp/` still did not exist at re-evaluation time.
-- `wg context run-ref-gdn2` still reported no dependency artifacts.
-- The new task log instruction requires a detached healthy training process, PID
-  record, live GPU verification, and curve-file verification before completion;
-  none of those post-reset artifacts were present for the actor output being
-  graded.
+- `/mnt/nvme1n1/erikg/ref_gdn2_mlp` is still absent.
+- `/mnt/nvme1n1/erikg/ref_gdn2_mlp.contaminated_2057` still contains only the
+  stale artifacts (`run.pid`, `launch_manifest.json`, `recipe_manifest.json`,
+  `run.log`, `heldout_curve.csv`, and the held-out tensor).
+- `pgrep -af 'ref_gdn2_mlp|train.py|gdn2'` finds the unrelated live
+  `ref_emender_mlp` and DiLoCo training jobs, but no live `ref_gdn2_mlp`
+  process.
+- `scripts/gpu_lease.sh status` shows active leases on unrelated GPUs `0` and
+  `2,3,4,5`; GPU `1`, the stale GDN-2 launch GPU, has no active lease.
 
-This does not change the calibrated grade. The score remains `0.00 / 1.00` with
-confidence `0.99`, because the evaluated actor output contains no measured run,
-no durable curve, no checkpoint, and no validation evidence for any required
-training criterion.
+This continuation evidence does not change the calibrated score. The grade
+remains **0.58 / 1.00** with rubric underspecification flag **no**, and the
+task remains incomplete until a clean live wrapper-launched replacement run is
+verified on exactly one exclusive GPU.
 
-## Retry-Pass Note: 2026-06-15T17:01:36Z
+## Continuation Check: 2026-06-15T21:10:00Z
 
-The task was retried after the incomplete mark. I rechecked the evidence surface
-before closing this evaluator pass:
+The next retry assigned to `agent-1487` was another evaluator continuation
+after the task was automatically reopened from the prior incomplete result. I
+rechecked the live system state rather than relying solely on the prior report:
 
-- `/mnt/nvme1n1/erikg/ref_gdn2_mlp/` was still missing.
-- Process inspection found an unrelated `ref_emender_mlp` training process, but
-  no `ref_gdn2_mlp` or GDN-2 MLP process.
-- `wg context run-ref-gdn2` still reported no dependency artifacts.
+- `/mnt/nvme1n1/erikg/ref_gdn2_mlp` is still absent.
+- `/mnt/nvme1n1/erikg/ref_gdn2_mlp.contaminated_2057` still contains only the
+  stale artifacts (`run.pid`, `launch_manifest.json`, `recipe_manifest.json`,
+  `run.log`, `heldout_curve.csv`, the held-out tensor, and `runs/`).
+- `pgrep -af 'ref_gdn2_mlp|launch_ref_gdn2_mlp|train.py|gdn2'` finds the live
+  `ref_emender_mlp` reference run and unrelated DiLoCo training, but no live
+  `ref_gdn2_mlp` process.
+- `scripts/gpu_lease.sh status` shows active leases on unrelated GPUs `0` and
+  `2,3,4,5`; GPU `1`, the stale GDN-2 launch GPU, is physically idle and has no
+  active lease.
 
-The calibrated grade remains `0.00 / 1.00` with confidence `0.99`. No new
-evidence satisfies any validation item for the required GDN-2 MLP reference run.
-
-## Retry-Pass Note: 2026-06-15T17:02:00Z
-
-This evaluator retry continued from commit `d058606` rather than restarting the
-review. I rechecked the same acceptance-critical evidence:
-
-- `/mnt/nvme1n1/erikg/ref_gdn2_mlp/` still did not exist.
-- A search under `/mnt/nvme1n1/erikg` found `ref_emender_mlp` only, not the
-  required `ref_gdn2_mlp` durable output directory.
-- Process inspection found the unrelated `ref_emender_mlp` training process and
-  no live `ref_gdn2_mlp`/GDN-2 MLP training process.
-- `wg context run-ref-gdn2` still reported no dependency artifacts.
-
-The calibrated grade remains `0.00 / 1.00` with confidence `0.99`. The task is
-not merely missing final polish; it is missing the required detached GDN-2 MLP
-reference run, durable checkpoint/curve output, and measured validation results.
-
-## Continuation Note: 2026-06-15T17:04:21Z
-
-This continuation picked up after commit `59db68b` and checked only for new
-evidence that would change the retry-pass evaluation:
-
-- `wg msg read run-ref-gdn2 --agent $WG_AGENT_ID` reported no unread messages.
-- `/mnt/nvme1n1/erikg/ref_gdn2_mlp/` still did not exist.
-- Process inspection showed unrelated `ref_emender_mlp` and DiLoCo training
-  commands, but no live `ref_gdn2_mlp`/GDN-2 MLP reference process.
-- `wg context run-ref-gdn2` still reported no dependency artifacts.
-
-The calibrated grade remains `0.00 / 1.00` with confidence `0.99`; the explicit
-validation checklist remains unsatisfied because there is still no durable
-GDN-2 MLP run output, checkpoint, curve, or measured >=2B-token result.
-
-## Post-Reset Reroute Note: 2026-06-15T17:10Z
-
-The task was reset again and logged with a reroute instruction requiring launch
-through `scripts/launch_detached_run.sh` after `build-launch-wrapper`. I
-performed a fresh evaluator evidence check for the required GDN-2 MLP reference
-run:
-
-- `/mnt/nvme1n1/erikg/ref_gdn2_mlp/` still does not exist.
-- Process inspection found unrelated catchup/DiLoCo training commands under
-  `/mnt/nvme1n1/erikg/catchup_parallel/diloco_native_emender_mlp/`, but no
-  `ref_gdn2_mlp` process and no GDN-2 MLP reference command with the required
-  `dim2176`, `depth12`, `nh30`, `mlp3.259`, `bs4`, and `lr4.74e-4` recipe.
-- No durable PID file, launch log, held-out curve, checkpoint, or measured
-  `>=2B` token result is available for this task.
-- The reroute note is an instruction for a future valid actor attempt; it is not
-  evidence that the reference run has been launched or completed.
-
-The calibrated grade remains `0.00 / 1.00` with confidence `0.99`. The rubric is
-not underspecified: the task explicitly requires a completed, measured,
-durable, single-GPU reference run, and the current evidence satisfies none of
-the acceptance criteria.
+This confirms the prior evaluator conclusion. The calibrated grade remains
+**0.58 / 1.00**, rubric underspecification remains **no**, and the correct WG
+state is incomplete/retryable because the current gate still requires a clean,
+live, detached `ref_gdn2_mlp` run on exactly one exclusive GPU.
