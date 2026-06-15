@@ -223,6 +223,7 @@ def main() -> int:
     env = dict(os.environ)
     env.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
     env.setdefault("HELDOUT_EVAL_BS", "8")
+    env.setdefault("PYTHONUNBUFFERED", "1")
     with open(OUT_ROOT / "train.log", "a", buffering=1) as log:
         log.write("[launch] " + " ".join(cmd) + "\n")
         return subprocess.call(cmd, cwd=str(ROOT), env=env, stdout=log, stderr=subprocess.STDOUT)
