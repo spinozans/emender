@@ -228,3 +228,28 @@ or bias, the operational conclusion is identical and now well-established: **do 
 "stop / null / NO-GO" conclusion from this orchestrator without the constrained-capacity,
 extrapolation-controlled, fair-comparison data on screen** — because left to its own synthesis it
 has, with a perfect record, been wrong in the direction of telling the PI to stop.
+
+## Addendum 3 (2026-06-15): the cosine-decay misdiagnosis
+
+Same one-directional false-negative pattern, fresh instance. `fix-long-horizon`
+measured a held-out rollover (1.571 → 3.234 @ 215M) for constant-LR schedule-free
+**on 7-GPU DDP**, and concluded "schedule-free fundamentally rolls over → switch to
+AdamW + warmup + cosine," writing that into `SCALE_PLAN §2.2` as the prescription.
+
+The confound was in the run config: DDP inflates the effective batch ~7×, which is the
+exact LR/batch mismatch already suspected as the scale-out failure. The deflating
+conclusion ("the simple horizon-free recipe is broken, add a schedule") was accepted
+without controlling the obvious variable (batch size), and an optimizer swap was proposed
+to paper over a batch-size bug. There was **no single-GPU schedule-free long-horizon
+measurement on record** — the recipe that ran 20B clean was never actually tested in the
+regime it's used in. Cosine looked "monotone" only because LR decay partially compensates
+for the inflated-batch trajectory: it patched a symptom of the confound.
+
+The coordinator then **amplified** it by presenting "schedule-free vs cosine" as a
+decision for the user to ratify — turning a settled instruction into a fake fork.
+
+Fix: §2.2 re-corrected to the constant-LR schedule-free recipe at the CMA base LR (no
+warmup/decay); the rollover is to be confirmed-or-refuted by single-GPU reference runs;
+multi-GPU combines replicas by periodic averaging (DiLoCo) that preserves the per-replica
+batch/LR, not by batch-inflating DDP. Rule reinforced: **never change the optimizer to
+dodge a batch-size/LR scaling bug; control the batch before blaming the recipe.**
