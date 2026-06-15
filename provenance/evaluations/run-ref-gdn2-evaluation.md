@@ -123,3 +123,25 @@ evidence that would change the retry-pass evaluation:
 The calibrated grade remains `0.00 / 1.00` with confidence `0.99`; the explicit
 validation checklist remains unsatisfied because there is still no durable
 GDN-2 MLP run output, checkpoint, curve, or measured >=2B-token result.
+
+## Post-Reset Reroute Note: 2026-06-15T17:10Z
+
+The task was reset again and logged with a reroute instruction requiring launch
+through `scripts/launch_detached_run.sh` after `build-launch-wrapper`. I
+performed a fresh evaluator evidence check for the required GDN-2 MLP reference
+run:
+
+- `/mnt/nvme1n1/erikg/ref_gdn2_mlp/` still does not exist.
+- Process inspection found unrelated catchup/DiLoCo training commands under
+  `/mnt/nvme1n1/erikg/catchup_parallel/diloco_native_emender_mlp/`, but no
+  `ref_gdn2_mlp` process and no GDN-2 MLP reference command with the required
+  `dim2176`, `depth12`, `nh30`, `mlp3.259`, `bs4`, and `lr4.74e-4` recipe.
+- No durable PID file, launch log, held-out curve, checkpoint, or measured
+  `>=2B` token result is available for this task.
+- The reroute note is an instruction for a future valid actor attempt; it is not
+  evidence that the reference run has been launched or completed.
+
+The calibrated grade remains `0.00 / 1.00` with confidence `0.99`. The rubric is
+not underspecified: the task explicitly requires a completed, measured,
+durable, single-GPU reference run, and the current evidence satisfies none of
+the acceptance criteria.
