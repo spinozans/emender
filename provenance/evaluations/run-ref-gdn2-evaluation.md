@@ -1,7 +1,7 @@
 # Evaluation: run-ref-gdn2
 
 Task: `run-ref-gdn2`
-Evaluator: `agent-1485`
+Evaluator: `agent-1485`; continuation check by `agent-1486`
 Date: 2026-06-15
 
 ## Grade
@@ -90,3 +90,24 @@ currently absent, the original run was moved aside as contaminated, and the
 current source-of-truth path has no advancing log or curve. The calibrated grade
 is therefore **0.58 / 1.00**, and the task should be treated as incomplete until
 a clean live detached replacement is verified.
+
+## Continuation Check: 2026-06-15T21:07:25Z
+
+The retry assigned to `agent-1486` was a continuation of the interrupted
+evaluator closure, not a new actor launch. I rechecked the live system state
+before closing the retry:
+
+- `/mnt/nvme1n1/erikg/ref_gdn2_mlp` is still absent.
+- `/mnt/nvme1n1/erikg/ref_gdn2_mlp.contaminated_2057` still contains only the
+  stale artifacts (`run.pid`, `launch_manifest.json`, `recipe_manifest.json`,
+  `run.log`, `heldout_curve.csv`, and the held-out tensor).
+- `pgrep -af 'ref_gdn2_mlp|train.py|gdn2'` finds the unrelated live
+  `ref_emender_mlp` and DiLoCo training jobs, but no live `ref_gdn2_mlp`
+  process.
+- `scripts/gpu_lease.sh status` shows active leases on unrelated GPUs `0` and
+  `2,3,4,5`; GPU `1`, the stale GDN-2 launch GPU, has no active lease.
+
+This continuation evidence does not change the calibrated score. The grade
+remains **0.58 / 1.00** with rubric underspecification flag **no**, and the
+task remains incomplete until a clean live wrapper-launched replacement run is
+verified on exactly one exclusive GPU.
