@@ -60,3 +60,22 @@ missing.
 The calibrated grade is `0.00`. The task asked for a durable, completed
 reference training run and measured curve, but no such run output exists and no
 logs establish any of the recipe, kernel, data, or completion requirements.
+
+## Re-evaluation Note: 2026-06-15T16:58:59Z
+
+After the original evaluation, the task was reset from `Done` back to
+`in-progress` with a mandatory launch protocol. That reset confirms the original
+submission was not accepted as a completed reference run. I rechecked the durable
+output location and task context after the reset:
+
+- `/mnt/nvme1n1/erikg/ref_gdn2_mlp/` still did not exist at re-evaluation time.
+- `wg context run-ref-gdn2` still reported no dependency artifacts.
+- The new task log instruction requires a detached healthy training process, PID
+  record, live GPU verification, and curve-file verification before completion;
+  none of those post-reset artifacts were present for the actor output being
+  graded.
+
+This does not change the calibrated grade. The score remains `0.00 / 1.00` with
+confidence `0.99`, because the evaluated actor output contains no measured run,
+no durable curve, no checkpoint, and no validation evidence for any required
+training criterion.
