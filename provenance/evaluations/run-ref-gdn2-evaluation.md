@@ -92,3 +92,19 @@ before closing this evaluator pass:
 
 The calibrated grade remains `0.00 / 1.00` with confidence `0.99`. No new
 evidence satisfies any validation item for the required GDN-2 MLP reference run.
+
+## Retry-Pass Note: 2026-06-15T17:02:00Z
+
+This evaluator retry continued from commit `d058606` rather than restarting the
+review. I rechecked the same acceptance-critical evidence:
+
+- `/mnt/nvme1n1/erikg/ref_gdn2_mlp/` still did not exist.
+- A search under `/mnt/nvme1n1/erikg` found `ref_emender_mlp` only, not the
+  required `ref_gdn2_mlp` durable output directory.
+- Process inspection found the unrelated `ref_emender_mlp` training process and
+  no live `ref_gdn2_mlp`/GDN-2 MLP training process.
+- `wg context run-ref-gdn2` still reported no dependency artifacts.
+
+The calibrated grade remains `0.00 / 1.00` with confidence `0.99`. The task is
+not merely missing final polish; it is missing the required detached GDN-2 MLP
+reference run, durable checkpoint/curve output, and measured validation results.
