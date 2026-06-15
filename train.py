@@ -270,6 +270,17 @@ def parse_args():
                              '(byte-for-byte identical slice across models, tokenizer-'
                              'correct), overriding --val_data / --heldout_bytes_per_token. '
                              '(task lb-compare: apples-to-apples leaderboard)')
+    parser.add_argument('--heldout_eval_mode', type=str, default='avg',
+                        choices=['avg', 'y'],
+                        help='Schedule-free held-out mode for --heldout_tensor evals: '
+                             'avg uses optimizer.eval() averaged x-weights (legacy); '
+                             'y uses optimizer.train() training weights.')
+    parser.add_argument('--heldout_curve_every', type=int, default=0,
+                        help='If >0, score --heldout_tensor every N optimizer steps '
+                             'and append step,tokens,train_loss,heldout_bpb to CSV.')
+    parser.add_argument('--heldout_curve_path', type=str, default=None,
+                        help='CSV path for --heldout_curve_every. Default: '
+                             '<run output dir>/heldout_curve.csv')
     parser.add_argument('--warmup_steps', type=int, default=0,
                         help='Warmup steps for learning rate. For adamw: linear '
                              'ramp then cosine decay (see lr_scale_at). For schedulefree: '
@@ -460,6 +471,37 @@ def validate(model, val_loader, device, max_batches=100):
 
 
 @torch.no_grad()
+def score_heldout_tensor(model, heldout_chunks, bytes_per_token, device, eval_bs=8):
+    """Score a fixed token tensor and return (CE nats/token, BPB, scored tokens)."""
+    import math as _math
+    model.eval()
+    total_nll = 0.0
+    total_tokens = 0
+    eval_bs = max(1, min(int(eval_bs), heldout_chunks.shape[0]))
+    for i in range(0, heldout_chunks.shape[0], eval_bs):
+        batch = heldout_chunks[i:i + eval_bs].to(device)
+        loss = model(batch, return_loss=True)
+        loss = loss[0] if isinstance(loss, tuple) else loss
+        scored = batch.shape[0] * (batch.shape[1] - 1)
+        total_nll += float(loss.item()) * scored
+        total_tokens += scored
+    model.train()
+    ce = total_nll / max(total_tokens, 1)
+    bpb = (ce / _math.log(2.0)) / bytes_per_token
+    return ce, bpb, total_tokens
+
+
+def prepare_schedulefree_eval_mode(optimizer, args):
+    """Put schedule-free params in the requested eval basis."""
+    if args.optimizer != 'schedulefree':
+        return
+    if args.heldout_eval_mode == 'y':
+        optimizer.train()
+    else:
+        optimizer.eval()
+
+
+@torch.no_grad()
 def diloco_merge(core_model, optimizer, args, world_size, outer_state):
     """DiLoCo outer step: average model weights across ranks (every K local steps).
 
@@ -624,6 +666,28 @@ def train(args):
     else:
         output_dir = setup_output_dir(args)
         print(f"Output directory: {output_dir}")
+
+    heldout_curve = None
+    heldout_curve_path = None
+    if is_main and args.heldout_curve_every > 0:
+        if not args.heldout_tensor:
+            raise ValueError("--heldout_curve_every requires --heldout_tensor")
+        ho = torch.load(args.heldout_tensor, map_location='cpu')
+        heldout_curve = {
+            'chunks': ho['chunks'],
+            'bytes_per_token': float(ho['bytes_per_token']),
+            'eval_bs': int(os.environ.get('HELDOUT_EVAL_BS', '8')),
+        }
+        heldout_curve_path = Path(args.heldout_curve_path) if args.heldout_curve_path else output_dir / 'heldout_curve.csv'
+        heldout_curve_path.parent.mkdir(parents=True, exist_ok=True)
+        if not heldout_curve_path.exists() or heldout_curve_path.stat().st_size == 0:
+            heldout_curve_path.write_text(
+                'step,tokens,train_loss,heldout_ce,heldout_bpb,heldout_tokens,'
+                'heldout_bytes_per_token,mode,wall_time_utc\n'
+            )
+        print(f"Held-out curve: every {args.heldout_curve_every} steps, "
+              f"mode={args.heldout_eval_mode}, tensor={args.heldout_tensor}, "
+              f"csv={heldout_curve_path}", flush=True)
 
     # Resolve 'auto' r_h_mode based on model architecture
     r_h_mode = args.r_h_mode
@@ -1250,6 +1314,7 @@ def train(args):
     running_loss = 0
     tokens_processed = 0
     avg_loss = 0.0  # Initialize to avoid UnboundLocalError if training ends before first log
+    last_train_loss = None
     start_time = time.time()
 
     # Track last 100 step losses for reliable final metric
@@ -1455,10 +1520,42 @@ def train(args):
 
                 # Track for last-100 average (each entry covers log_every steps)
                 last_100_losses.append(avg_loss)
+                last_train_loss = avg_loss
 
                 running_loss = 0
                 tokens_processed = 0
                 start_time = time.time()
+
+            # Fixed held-out curve (rank 0 only). For schedule-free y-mode this
+            # intentionally keeps optimizer.train() weights and only flips the
+            # module's eval/train flag around scoring to disable dropout.
+            if heldout_curve and step % args.heldout_curve_every == 0 and is_main:
+                prepare_schedulefree_eval_mode(optimizer, args)
+                heldout_ce, heldout_bpb, heldout_tokens = score_heldout_tensor(
+                    core_model,
+                    heldout_curve['chunks'],
+                    heldout_curve['bytes_per_token'],
+                    device,
+                    eval_bs=heldout_curve['eval_bs'],
+                )
+                if args.optimizer == 'schedulefree':
+                    optimizer.train()
+                train_loss_for_curve = last_train_loss
+                if train_loss_for_curve is None:
+                    denom = max(1, step - start_step)
+                    train_loss_for_curve = running_loss / denom if running_loss else float('nan')
+                total_tokens = step * args.batch_size * (args.chunk_size + 1) * world_size
+                wall_time = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='seconds')
+                with open(heldout_curve_path, 'a') as f:
+                    f.write(
+                        f"{step},{total_tokens},{train_loss_for_curve:.6f},"
+                        f"{heldout_ce:.6f},{heldout_bpb:.6f},{heldout_tokens},"
+                        f"{heldout_curve['bytes_per_token']:.6f},"
+                        f"{args.heldout_eval_mode},{wall_time}\n"
+                    )
+                print(f"  >>> heldout_curve mode={args.heldout_eval_mode} step={step} "
+                      f"tokens={total_tokens} train_loss={train_loss_for_curve:.4f} "
+                      f"heldout_bpb={heldout_bpb:.4f}", flush=True)
 
             # Validation (rank 0 only; uses unwrapped core_model, no DDP collectives)
             if val_loader and step % args.val_every == 0 and is_main:
@@ -1545,7 +1642,6 @@ def train(args):
         # task lb-compare: score a FIXED pre-tokenized held-out tensor (byte-for-byte
         # identical slice across all models, tokenizer-correct CE) on the averaged
         # schedule-free weights. Overrides --val_data / --heldout_bytes_per_token.
-        import math as _math
         ho = torch.load(args.heldout_tensor, map_location='cpu')
         ho_chunks = ho['chunks']                       # [N, chunk+1]
         bpt = float(ho['bytes_per_token'])
@@ -1555,30 +1651,18 @@ def train(args):
         eval_bs = int(os.environ.get('HELDOUT_EVAL_BS', '8'))
         eval_bs = max(1, min(eval_bs, ho_chunks.shape[0]))
 
-        def _score_heldout():
-            core_model.eval()
-            tot_nll = 0.0; tot_tok = 0
-            with torch.no_grad():
-                for i in range(0, ho_chunks.shape[0], eval_bs):
-                    batch = ho_chunks[i:i + eval_bs].to(device)
-                    loss = core_model(batch, return_loss=True)
-                    loss = loss[0] if isinstance(loss, tuple) else loss
-                    npred = batch.shape[0] * (batch.shape[1] - 1)
-                    tot_nll += float(loss.item()) * npred; tot_tok += npred
-            core_model.train()
-            return tot_nll / max(tot_tok, 1), tot_tok
-
         # Diagnostic: also report NON-averaged (training) weights when requested,
         # to separate a schedule-free averaging artifact from real generalization.
         if os.environ.get('HELDOUT_REPORT_NONAVG') == '1' and args.optimizer == 'schedulefree':
             optimizer.train()  # raw (non-averaged) weights
-            ce_raw, _ = _score_heldout()
+            ce_raw, bpb_raw, _ = score_heldout_tensor(core_model, ho_chunks, bpt, device, eval_bs=eval_bs)
             print(f"FINAL_HELDOUT_CE_NONAVG: {ce_raw:.4f}")
-            print(f"FINAL_HELDOUT_BPB_NONAVG: {(ce_raw / _math.log(2.0)) / bpt:.4f}")
+            print(f"FINAL_HELDOUT_BPB_NONAVG: {bpb_raw:.4f}")
+        prepare_schedulefree_eval_mode(optimizer, args)
+        heldout_ce, heldout_bpb, tot_tok = score_heldout_tensor(core_model, ho_chunks, bpt, device, eval_bs=eval_bs)
         if args.optimizer == 'schedulefree':
-            optimizer.eval()  # averaged weights (leaderboard methodology)
-        heldout_ce, tot_tok = _score_heldout()
-        heldout_bpb = (heldout_ce / _math.log(2.0)) / bpt
+            optimizer.train()
+        print(f"FINAL_HELDOUT_MODE: {args.heldout_eval_mode}")
         print(f"FINAL_HELDOUT_CE: {heldout_ce:.4f}")
         print(f"FINAL_HELDOUT_BPB: {heldout_bpb:.4f}")
         print(f"FINAL_HELDOUT_TOKENS: {tot_tok}")
