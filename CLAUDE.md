@@ -25,6 +25,41 @@ lock-step. The two files exist because Claude Code and Codex CLI look for
 different filenames, but they should never drift in content. Any divergence is
 a bug. Update both together.
 
+## NON-NEGOTIABLE #1 — FUSED TRITON KERNELS ONLY. NO EAGER. NO "PYTHON FIRST."
+
+**Every experiment runs the recurrence / state dynamics through the FUSED TRITON
+kernel. There is NO such thing in this project as an experiment that runs the
+recurrence in eager / pure-PyTorch.** Not for "quick validation," not for
+"prototyping," not for a "sanity check," not "just to see the signal first."
+If you catch yourself proposing an eager/Python path, STOP — that is a bug in
+your reasoning, not a shortcut.
+
+**Why eager is forbidden here (it is not a cheap preview — it is a DIFFERENT,
+non-transferable experiment):**
+- The fused E97 kernel was **INERT** in the autocast path while eager "worked"
+  (`E97 fused LM wiring`). Eager signal that vanishes in fused.
+- TF32 fused was **untrainable** while eager looked fine (`complex-eig-lm-fused`).
+- Eager throughput is **meaningless** — every wall-clock / GO-NO-GO verdict in
+  this repo depends on the fused-kernel reality, on a no-NVLink DDP-bound box.
+- bf16/precision and chunk-vs-eager numerics differ enough to flip conclusions
+  (`complex-eig chunked overflow`, `e97-chunked-kernel`).
+
+**The rule, concretely:**
+- The recurrence/state update (the per-step or chunked scan) MUST be the fused
+  `@triton.jit` kernel. `--use_triton 1`, bf16, and the `[fused-guard] ... NO
+  eager fallback` assert MUST be present and pass in every run. A run without the
+  fused-guard, or with ANY eager fallback, is **INVALID and scores 0 at the gate.**
+- Need NEW state information (a state summary, an extra readout, a probe)? You
+  implement it **inside the fused kernel + the matching backward VJP** (reverse-
+  replay BPTT). If you cannot put it in the kernel, you do **not** run the
+  experiment. "Validate in eager first" is not allowed.
+- Standard dense layers (Linear / SwiGLU MLP / `o_proj`, i.e. cuBLAS matmuls on
+  the kernel's *outputs*) are fine — they are not the recurrence. The ban is on
+  running the **state dynamics** in eager, ever.
+
+If an experiment cannot be done in a fused Triton kernel, the answer is to write
+the kernel, not to fall back to Python.
+
 ## GPU leasing — ALWAYS lease before touching a GPU
 
 This box has 8 GPUs and **no central allocator**. Multiple workgraph agents run
