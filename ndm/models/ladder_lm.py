@@ -984,12 +984,21 @@ def round_mlp_hidden(dim, mlp_ratio, multiple=64):
 
 
 class SwiGLUMLP(nn.Module):
-    """Bias-free SwiGLU MLP: w3(silu(w1(x)) * w2(x))."""
+    """Bias-free SwiGLU MLP: w3(silu(w1(x)) * w2(x)).
 
-    def __init__(self, dim, hidden_dim, dropout=0.0):
+    extra_in (M1 state-aware MLP, STATE_AWARE_MLP_DESIGN.md §5): when >0, the gate
+    and up projections (w1, w2) widen their INPUT from `dim` to `dim + extra_in`.
+    The caller is responsible for passing an input already concatenated to width
+    `dim + extra_in` (residual-stream norm output concatenated with the state-aware
+    readout summary). w3 (down) is unchanged so the residual add stays at `dim`.
+    """
+
+    def __init__(self, dim, hidden_dim, dropout=0.0, extra_in=0):
         super().__init__()
-        self.w1 = nn.Linear(dim, hidden_dim, bias=False)  # gate
-        self.w2 = nn.Linear(dim, hidden_dim, bias=False)  # up
+        self.dim = dim
+        self.extra_in = int(extra_in)
+        self.w1 = nn.Linear(dim + self.extra_in, hidden_dim, bias=False)  # gate
+        self.w2 = nn.Linear(dim + self.extra_in, hidden_dim, bias=False)  # up
         self.w3 = nn.Linear(hidden_dim, dim, bias=False)  # down
         self.dropout = nn.Dropout(dropout) if dropout > 0 else nn.Identity()
 
@@ -1012,26 +1021,43 @@ class MixerMLPWrapper(nn.Module):
     FLA caches keep working.
     """
 
-    def __init__(self, mixer, dim, mlp_ratio, mlp_multiple=64, dropout=0.0):
+    def __init__(self, mixer, dim, mlp_ratio, mlp_multiple=64, dropout=0.0,
+                 state_summary_dim=0, mlp_hidden_dim=None):
         super().__init__()
         self.mixer = mixer
         self.dim = dim
         self.mlp_ratio = mlp_ratio
-        self.mlp_hidden_dim = round_mlp_hidden(dim, mlp_ratio, mlp_multiple)
+        # mlp_hidden_dim override lets the iso-param solver pin an exact hidden
+        # (state-aware-MLP A/B); otherwise derive it from mlp_ratio as before.
+        self.mlp_hidden_dim = (int(mlp_hidden_dim) if mlp_hidden_dim
+                               else round_mlp_hidden(dim, mlp_ratio, mlp_multiple))
+        # M1 state-aware MLP (STATE_AWARE_MLP_DESIGN.md §5): when >0, the mixer
+        # returns a 3rd value (the readout summary) that we concat to the MLP input.
+        self.state_summary_dim = int(state_summary_dim)
         self.norm_2 = RMSNorm(dim)
-        self.mlp = SwiGLUMLP(dim, self.mlp_hidden_dim, dropout=dropout)
+        self.mlp = SwiGLUMLP(dim, self.mlp_hidden_dim, dropout=dropout,
+                             extra_in=self.state_summary_dim)
 
     def set_layer_idx(self, idx):
         if hasattr(self.mixer, 'set_layer_idx'):
             self.mixer.set_layer_idx(idx)
 
     def forward(self, x, hidden=None, **kwargs):
-        mix_out, h_final = self.mixer(x, hidden, **kwargs)
-        mlp_out = self.mlp(self.norm_2(x + mix_out))
+        out = self.mixer(x, hidden, **kwargs)
+        if self.state_summary_dim > 0:
+            mix_out, h_final, summary = out
+            normed = self.norm_2(x + mix_out)
+            mlp_in = torch.cat([normed, summary.to(normed.dtype)], dim=-1)
+        else:
+            mix_out, h_final = out
+            mlp_in = self.norm_2(x + mix_out)
+        mlp_out = self.mlp(mlp_in)
         return mix_out + mlp_out, h_final
 
     def extra_repr(self):
-        return f"dim={self.dim}, mlp_ratio={self.mlp_ratio:.4f}, mlp_hidden_dim={self.mlp_hidden_dim}"
+        return (f"dim={self.dim}, mlp_ratio={self.mlp_ratio:.4f}, "
+                f"mlp_hidden_dim={self.mlp_hidden_dim}, "
+                f"state_summary_dim={self.state_summary_dim}")
 
 
 class LadderLM(nn.Module):
@@ -1092,6 +1118,9 @@ class LadderLM(nn.Module):
         layer_kwargs=None,  # Extra per-layer kwargs merged into LayerClass(...) — e.g. head_type_logits / lam_max / beta_max / corner_mixture for typed-gdn2-lm / e98-cma-lm. None == no change to existing levels.
         mlp_ratio=0.0,  # >0 wraps every mixer layer with a post-mixer RMSNorm + SwiGLU MLP (task e97-raw-plus). 0 = mixer-only (unchanged behavior).
         mlp_multiple=64,  # Round SwiGLU hidden width to this multiple.
+        state_summary_dim=0,  # M1 state-aware MLP (STATE_AWARE_MLP_DESIGN.md §5): >0 makes each E97 mixer down-project its
+                              # pre-o_proj readout to this dim + RMSNorm and the MixerMLPWrapper concat it to the SwiGLU input.
+        mlp_hidden=None,      # Optional exact SwiGLU hidden override (bypasses mlp_ratio rounding) for exact iso-param A/B arms.
     ):
         super().__init__()
         self.vocab_size = vocab_size
@@ -1172,6 +1201,7 @@ class LadderLM(nn.Module):
                 checkpoint_interval=checkpoint_interval,  # For E88: state checkpoint interval
                 projection_chunk_size=projection_chunk_size,  # For E88: projection recomputation chunks
                 use_triton=use_triton,  # For E88: route fwd+bwd through Triton kernels
+                readout_summary_dim=state_summary_dim,  # M1 state-aware MLP: E88FLAHybrid emits a 3rd readout-summary value when >0
             ), **extra_layer_kwargs})
             for _ in range(depth)
         ])
@@ -1181,7 +1211,8 @@ class LadderLM(nn.Module):
         # identically to E97/E88/gdn2/etc. mlp_ratio=0 leaves layers untouched.
         if mlp_ratio and mlp_ratio > 0:
             self.layers = nn.ModuleList([
-                MixerMLPWrapper(layer, dim, mlp_ratio, mlp_multiple, dropout=dropout)
+                MixerMLPWrapper(layer, dim, mlp_ratio, mlp_multiple, dropout=dropout,
+                                state_summary_dim=state_summary_dim, mlp_hidden_dim=mlp_hidden)
                 for layer in self.layers
             ])
 

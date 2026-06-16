@@ -73,6 +73,15 @@ except ImportError:
     FusedRMSNormGated = None
     FLARMSNorm = None
 
+# RMSNorm used to normalize the state-aware-MLP readout summary (M1, see
+# paper/review/STATE_AWARE_MLP_DESIGN.md §5). Mirror ladder_lm's import so we use
+# the fused mamba_ssm RMSNorm when available and fall back to torch otherwise.
+# (Cannot import from ladder_lm here — ladder_lm imports this module, circular.)
+try:
+    from mamba_ssm.ops.triton.layer_norm import RMSNorm as _ReadoutRMSNorm
+except Exception:
+    _ReadoutRMSNorm = nn.RMSNorm
+
 # Try to import CUDA kernel
 try:
     import hasty_pytorch_lib
@@ -867,6 +876,11 @@ class E88FLAHybrid(nn.Module):
         use_triton: bool = False,  # Use Triton fwd+bwd kernels instead of CUDA register-owned (portable across NVIDIA/AMD ROCm)
         use_chunked_e97: bool = False,  # Route the split-edit DELTA recurrence through the chunked-parallel fwd+bwd kernel (GDN-2-class throughput); linear-state only
         e97_chunk_size: int = 32,  # Chunk length for the chunked E97 kernel backward (C=32 fits Ada/Ampere SMEM; C=64 needs Hopper)
+        readout_summary_dim: int = 0,  # M1 state-aware MLP (STATE_AWARE_MLP_DESIGN.md §5): if >0, down-project the
+                                       # pre-o_proj per-head readout concat (the [B,T,value_dim] tensor o_proj consumes)
+                                       # to this dim + RMSNorm, and RETURN it as a 3rd value so the post-mixer SwiGLU MLP
+                                       # can mix heads NONLINEARLY before the linear o_proj collapse. Zero recurrence /
+                                       # kernel change (only consumes the kernel's existing readout). 'concat' head_mix only.
         **kwargs
     ):
         super().__init__()
@@ -1073,6 +1087,24 @@ class E88FLAHybrid(nn.Module):
             self.o_proj = nn.Linear(self.head_v_dim, dim, bias=False)
         else:
             raise ValueError(f"Unknown head_mix: {head_mix}")
+
+        # === M1 state-aware MLP readout summary (STATE_AWARE_MLP_DESIGN.md §5) ===
+        # Down-project the SAME pre-o_proj readout concat that o_proj consumes
+        # (value_dim -> readout_summary_dim) + RMSNorm, returned as a 3rd forward
+        # value. This exposes NOTHING new about the matrix state S (same numbers
+        # o_proj already mixes linearly) — the lever is letting the post-mixer
+        # SwiGLU form NONLINEAR cross-head features BEFORE the linear o_proj
+        # collapse. No recurrence/kernel change. 'concat' head_mix only.
+        self.readout_summary_dim = int(readout_summary_dim)
+        if self.readout_summary_dim > 0:
+            if head_mix != 'concat':
+                raise ValueError(
+                    f"readout_summary_dim>0 requires head_mix='concat', got {head_mix!r}")
+            self.readout_summary = nn.Linear(self.value_dim, self.readout_summary_dim, bias=False)
+            self.readout_norm = _ReadoutRMSNorm(self.readout_summary_dim)
+        else:
+            self.readout_summary = None
+            self.readout_norm = None
 
         # === Output normalization (per-head RMSNorm like FLA-GDN) ===
         # NOTE: Per-head norm HURTS E88 in practice (loss 1.53 -> 3.0 at 480M params)
@@ -1928,9 +1960,15 @@ class E88FLAHybrid(nn.Module):
                     output = output * F.silu(g)
 
         # Head mixing (output is [B, T, H, head_v_dim])
+        readout_summary = None
         if self.head_mix == 'concat':
             # Standard: concat all heads, project to dim
             output = output.reshape(B, T, self.value_dim)
+            # M1 state-aware MLP: summarize the SAME pre-o_proj readout concat
+            # (STATE_AWARE_MLP_DESIGN.md §5). r_cat is post-gate / un-normalized;
+            # the RMSNorm here is REQUIRED (norm_2 in the MLP wrapper does not touch it).
+            if self.readout_summary is not None:
+                readout_summary = self.readout_norm(self.readout_summary(output))
             output = self.o_proj(output)
         elif self.head_mix == 'weighted_sum':
             # Learnable scalar per head, then project
@@ -1952,6 +1990,12 @@ class E88FLAHybrid(nn.Module):
 
         output = self.dropout(output)
 
+        # M1 state-aware MLP: return the readout summary as a 3rd value when
+        # configured (STATE_AWARE_MLP_DESIGN.md §5). Callers that don't request it
+        # (readout_summary_dim==0) see the unchanged 2-tuple, so all existing
+        # call sites keep working byte-for-byte.
+        if self.readout_summary is not None:
+            return output, S_list, readout_summary
         return output, S_list
 
     # ------------------------------------------------------------------

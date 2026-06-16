@@ -74,6 +74,9 @@ class HybridLadderLM(nn.Module):
         use_triton_e88: bool = False,
         dropout: float = 0.0,
         mlp_ratio: float = 0.0,
+        state_summary_dim: int = 0,  # M1 state-aware MLP (STATE_AWARE_MLP_DESIGN.md §5): >0 makes E88/E97 mixers
+                                     # emit a readout summary that is concatenated to the per-block SwiGLU MLP input.
+        mlp_hidden: int = 0,         # Optional exact SwiGLU hidden override (bypasses mlp_ratio rounding) for iso-param arms.
         **extra_kwargs,
     ):
         super().__init__()
@@ -113,6 +116,9 @@ class HybridLadderLM(nn.Module):
             }
             if isinstance(level, str) and (level.startswith('E88') or level == 'E97'):
                 base_kwargs['use_triton'] = use_triton_e88
+                # M1 state-aware MLP: E88/E97 mixers emit a readout summary (3rd value).
+                if state_summary_dim > 0:
+                    base_kwargs['readout_summary_dim'] = state_summary_dim
             if rank is not None:
                 base_kwargs['rank'] = rank
             base_kwargs.update(kw)
@@ -150,10 +156,14 @@ class HybridLadderLM(nn.Module):
         # separates once this fixed-depth MLP is available. mlp_ratio=0 (default)
         # preserves the original mixer-only behaviour for all prior experiments.
         self.mlp_ratio = float(mlp_ratio)
-        if self.mlp_ratio > 0.0:
+        self.state_summary_dim = int(state_summary_dim)
+        if self.mlp_ratio > 0.0 or (mlp_hidden and mlp_hidden > 0):
+            mlp_h = int(mlp_hidden) if (mlp_hidden and mlp_hidden > 0) \
+                else round_mlp_hidden(dim, self.mlp_ratio)
+            self.mlp_hidden_dim = mlp_h
             self.mlp_norms = nn.ModuleList([RMSNorm(dim) for _ in range(depth)])
             self.mlps = nn.ModuleList([
-                SwiGLUMLP(dim, round_mlp_hidden(dim, self.mlp_ratio), dropout=dropout)
+                SwiGLUMLP(dim, mlp_h, dropout=dropout, extra_in=self.state_summary_dim)
                 for _ in range(depth)
             ])
         else:
@@ -193,11 +203,19 @@ class HybridLadderLM(nn.Module):
                     and torch.is_autocast_enabled()):
                 normed = normed.to(torch.bfloat16)
             out = layer(normed)
+            summary = None
             if isinstance(out, tuple):
+                # M1 state-aware MLP: E88/E97 mixers return a 3rd value (readout
+                # summary) when readout_summary_dim>0; capture it before squashing.
+                if self.state_summary_dim > 0 and len(out) >= 3:
+                    summary = out[2]
                 out = out[0]
             h = h + out  # residual
             if self.mlps is not None:
-                h = h + self.mlps[i](self.mlp_norms[i](h))  # post-mixer SwiGLU MLP
+                normed_mlp = self.mlp_norms[i](h)
+                if summary is not None:
+                    normed_mlp = torch.cat([normed_mlp, summary.to(normed_mlp.dtype)], dim=-1)
+                h = h + self.mlps[i](normed_mlp)  # post-mixer SwiGLU MLP
         h = self.out_norm(h)
         logits = self.out_proj(h)
         if return_loss:

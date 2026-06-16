@@ -198,18 +198,56 @@ def main():
     assert formula_total == BASELINE_TOTAL, 'formula does not match baseline!'
     print('  formula == baseline  OK')
 
-    if '--build' in sys.argv:
+    if '--build' in sys.argv or '--build-arms' in sys.argv:
         import os
         sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         import torch
         from ndm.models.ladder_lm import LadderLM
-        torch.manual_seed(0)
-        mdl = LadderLM(vocab_size=VOCAB, dim=DIM, depth=DEPTH, level='E97',
-                       layer_kwargs=None, expansion=EXPANSION, n_state=N_STATE,
-                       n_heads=N_HEADS, use_gate=True, gate_activation='silu',
-                       use_triton=True, mlp_ratio=MLP_RATIO, mlp_multiple=MLP_MULTIPLE)
-        real = sum(p.numel() for p in mdl.parameters())
+
+        def build_total(**kw):
+            torch.manual_seed(0)
+            base = dict(vocab_size=VOCAB, dim=DIM, depth=DEPTH, level='E97',
+                        layer_kwargs=None, expansion=EXPANSION, n_state=N_STATE,
+                        n_heads=N_HEADS, use_gate=True, gate_activation='silu',
+                        use_triton=True, mlp_multiple=MLP_MULTIPLE)
+            base.update(kw)
+            mdl = LadderLM(**base)
+            return sum(p.numel() for p in mdl.parameters())
+
+        real = build_total(mlp_ratio=MLP_RATIO)
         print(f'  REAL torch build = {fmt(real)}   {"OK" if real == BASELINE_TOTAL else "MISMATCH"}')
+
+    if '--build-arms' in sys.argv:
+        # Certify the THREE state-aware-MLP A/B arms (STATE_AWARE_MLP_DESIGN.md §5/§6)
+        # are iso-param to the baseline within the < 0.4% gate, by REAL torch build.
+        #   1. baseline     : emender-mlp, plain SwiGLU (mlp_ratio 2.2623 -> hidden 4032).
+        #   2. M1b_m512      : readout-summary down-proj 6912->512 + RMSNorm concat,
+        #                      iso mlp_hidden 2816 (design table; residual -0.098% pre-RMSNorm).
+        #   3. plain-wider   : plain SwiGLU, extra_in=0, mlp_hidden re-spent to the SAME
+        #      control        total as baseline -> hidden 4032 (== baseline by iso-param;
+        #                      'wider' than M1b's shrunk 2816). This IS the capacity control.
+        print('\n' + '-' * 84)
+        print('STATE-AWARE-MLP A/B ARMS — REAL BUILD ISO-PARAM CERTIFICATION (< 0.4% gate)')
+        print('-' * 84)
+        arms = [
+            ('baseline',     dict(mlp_ratio=MLP_RATIO)),
+            ('M1b_m512',     dict(mlp_ratio=MLP_RATIO, state_summary_dim=512, mlp_hidden=2816)),
+            ('plain-wider',  dict(mlp_ratio=MLP_RATIO, state_summary_dim=0,   mlp_hidden=4032)),
+        ]
+        ok = True
+        print(f'  {"arm":<14}{"real params":>16}{"resid":>14}{"resid%":>10}  gate')
+        for name, kw in arms:
+            tot = build_total(**kw)
+            resid = tot - BASELINE_TOTAL
+            pct = 100.0 * resid / BASELINE_TOTAL
+            within = abs(pct) < 0.4
+            ok = ok and within
+            print(f'  {name:<14}{fmt(tot):>16}{resid:>+14,}{pct:>+9.4f}%  '
+                  f'{"PASS" if within else "FAIL (>0.4%)"}')
+        print('  ' + ('ALL ARMS ISO-PARAM WITHIN 0.4%  OK' if ok
+                      else 'ISO-PARAM CERTIFICATION FAILED'))
+        if not ok:
+            sys.exit(1)
 
     print('\n' + '-' * 84)
     print('WHAT THE MLP NEVER SEES (per layer, per token, per batch element)')

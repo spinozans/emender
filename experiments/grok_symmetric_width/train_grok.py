@@ -99,7 +99,8 @@ def build_split(task, n_train, n_test, T, seed):
 # SLOW (per-step compiled scan) hardtanh validation arm, honours the task's
 # hardtanh emphasis on a small subset (phi-explore: hardtanh==tanh for capability):
 #   e97-ht    phi-shell split_edit phi=hardtanh.
-def build_model(arm, task, dim, depth, n_state, n_heads, mlp_ratio, device):
+def build_model(arm, task, dim, depth, n_state, n_heads, mlp_ratio, device,
+                state_summary_dim=0, mlp_hidden=0):
     use_triton_e88 = False
     if arm == "e97":
         pattern = ["E97"]; kw = dict(state_activation="tanh", use_split_edit=True)
@@ -123,11 +124,18 @@ def build_model(arm, task, dim, depth, n_state, n_heads, mlp_ratio, device):
         kw = dict(head_dim=n_state, num_heads=n_heads, allow_neg_eigval=True)
     else:
         raise ValueError(f"unknown arm {arm}")
+    # M1 state-aware MLP (STATE_AWARE_MLP_DESIGN.md §5): state_summary_dim>0 makes the
+    # E97 mixer emit a readout summary concatenated to the per-block SwiGLU MLP input;
+    # mlp_hidden>0 pins the exact SwiGLU hidden (iso-param across arms). Both only apply
+    # to the fused E97 arm here (the recurrence stays on the Triton kernel — no eager).
+    if (state_summary_dim > 0 or mlp_hidden > 0) and arm not in ("e97", "e97-lin"):
+        raise ValueError("state-aware MLP (M1) wired for the fused e97/e97-lin arms only")
     model = HybridLadderLM(
         vocab_size=task.vocab_size, dim=dim, depth=depth,
         layer_pattern=pattern, layer_kwargs=[kw],
         n_state=n_state, n_heads=n_heads, expansion=1.0,
         mlp_ratio=mlp_ratio, use_triton_e88=use_triton_e88,
+        state_summary_dim=state_summary_dim, mlp_hidden=mlp_hidden,
     ).to(device)
     return model
 
@@ -246,6 +254,12 @@ def main():
     ap.add_argument('--n_state', type=int, default=32)
     ap.add_argument('--n_heads', type=int, default=8)
     ap.add_argument('--mlp_ratio', type=float, default=4.0)
+    ap.add_argument('--state_summary_dim', type=int, default=0,
+                    help='M1 state-aware MLP (STATE_AWARE_MLP_DESIGN.md §5): >0 down-projects the '
+                         'E97 pre-o_proj readout to this dim + RMSNorm and concats it to the SwiGLU '
+                         'MLP input (NONLINEAR pre-collapse head mixing). 0 = plain MLP baseline/control.')
+    ap.add_argument('--mlp_hidden', type=int, default=0,
+                    help='Exact SwiGLU hidden override (bypasses mlp_ratio rounding) for iso-param arms.')
     ap.add_argument('--seq_len', type=int, default=128)
     ap.add_argument('--batch_size', type=int, default=64)
     ap.add_argument('--n_train', type=int, default=1024)
@@ -298,7 +312,9 @@ def main():
 
     # model
     model = build_model(args.arm, task, args.dim, args.depth, args.n_state,
-                        args.n_heads, args.mlp_ratio, device)
+                        args.n_heads, args.mlp_ratio, device,
+                        state_summary_dim=args.state_summary_dim,
+                        mlp_hidden=args.mlp_hidden)
     assert_kernel(model, args.arm)
     n_params = sum(p.numel() for p in model.parameters())
     print(f"Arm={args.arm}  pattern={model.actual_pattern}  params={n_params:,}",
@@ -312,6 +328,7 @@ def main():
         'task': task.name, 'arm': args.arm, 'pattern': model.actual_pattern,
         'dim': args.dim, 'depth': args.depth, 'n_state': args.n_state,
         'n_heads': args.n_heads, 'mlp_ratio': args.mlp_ratio,
+        'state_summary_dim': args.state_summary_dim, 'mlp_hidden': args.mlp_hidden,
         'seq_len': args.seq_len, 'batch_size': args.batch_size,
         'n_train': int(tr_in.shape[0]), 'n_test': int(te_in.shape[0]),
         'lr': args.lr, 'weight_decay': args.weight_decay, 'steps': args.steps,
