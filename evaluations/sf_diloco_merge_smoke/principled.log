@@ -1,0 +1,53 @@
+
+*****************************************
+Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+*****************************************
+[DiLoCo] world_size=2 backend=nccl; this is rank 0 on cuda:0
+[DiLoCo] periodic model-weight averaging: K=250 outer_lr=1.0 outer_beta=0.0 (no per-step gradient all-reduce)
+[DiLoCo] rank 0/2 bound to cuda:0
+Output directory: evaluations/sf_diloco_merge_smoke/principled_output/levele88_fused_100m_20260616_070245
+Auto r_h_mode: none (level 0 has bounded/no W_h)
+[DiLoCo] rank 1/2 bound to cuda:1
+Auto r_h_mode: none (level 0 has bounded/no W_h)
+/home/erikg/.local/lib/python3.12/site-packages/torch/distributed/distributed_c10d.py:4876: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+  warnings.warn(  # warn only once
+[DiLoCo] broadcast rank-0 W_0 to all 2 ranks (identical start)
+Model: Level e88_fused, 58,064 parameters
+Using schedule-free AdamW (lr=0.001, warmup_steps=10)
+Using schedule-free AdamW (lr=0.001, warmup_steps=10)
+
+Starting training from step 0...
+Batch size: 2, Chunk size: 32
+Gradient accumulation: 1, Effective batch: 2
+
+
+Starting training from step 0...
+Batch size: 2, Chunk size: 32
+Gradient accumulation: 1, Effective batch: 2
+
+step     50 | loss 4.6455 | lr 1.00e-03 | grad 3.35 | tok/s 219 | global_tok/s 438 | elapsed_h 0.006 | time 2026-06-16T07:03:02+00:00
+step    100 | loss 3.0231 | lr 1.00e-03 | grad 2.66 | tok/s 251 | global_tok/s 503 | elapsed_h 0.010 | time 2026-06-16T07:03:15+00:00
+step    150 | loss 2.0717 | lr 1.00e-03 | grad 2.82 | tok/s 250 | global_tok/s 499 | elapsed_h 0.014 | time 2026-06-16T07:03:28+00:00
+step    200 | loss 1.3885 | lr 1.00e-03 | grad 2.08 | tok/s 253 | global_tok/s 506 | elapsed_h 0.017 | time 2026-06-16T07:03:41+00:00
+  >>> [DiLoCo] merge #1 at step 250: averaged model weights across 2 ranks in 2 ms (amortized over 250 steps)
+step    250 | loss 0.8886 | lr 1.00e-03 | grad 1.43 | tok/s 253 | global_tok/s 506 | elapsed_h 0.021 | time 2026-06-16T07:03:54+00:00
+step    300 | loss 0.5530 | lr 1.00e-03 | grad 1.44 | tok/s 252 | global_tok/s 504 | elapsed_h 0.025 | time 2026-06-16T07:04:07+00:00
+step    350 | loss 0.3402 | lr 1.00e-03 | grad 2.32 | tok/s 253 | global_tok/s 506 | elapsed_h 0.028 | time 2026-06-16T07:04:20+00:00
+step    400 | loss 0.2134 | lr 1.00e-03 | grad 0.81 | tok/s 250 | global_tok/s 501 | elapsed_h 0.032 | time 2026-06-16T07:04:33+00:00
+step    450 | loss 0.1435 | lr 1.00e-03 | grad 2.43 | tok/s 256 | global_tok/s 513 | elapsed_h 0.036 | time 2026-06-16T07:04:46+00:00
+  >>> [DiLoCo] merge #2 at step 500: averaged model weights across 2 ranks in 1141 ms (amortized over 250 steps)
+step    500 | loss 0.1044 | lr 1.00e-03 | grad 1.02 | tok/s 238 | global_tok/s 476 | elapsed_h 0.039 | time 2026-06-16T07:05:00+00:00
+  >>> [DiLoCo] final merge SKIPPED at step 500: last step already merged (step % K == 0); checkpoint is already consensus (avoids spurious outer-momentum double-step)
+[rank 1] PEAK_MEMORY_MB: 18 | RESERVED_MEMORY_MB: 24
+FINAL_TRAIN_CE: 0.0994
+FINAL_TRAIN_BPB: 0.0379
+[rank 0] PEAK_MEMORY_MB: 18 | RESERVED_MEMORY_MB: 24
+
+Training complete! Final step: 500
+FINAL_LOSS_LAST100: 1.3372
+PEAK_MEMORY_MB: 18
+RESERVED_MEMORY_MB: 24
+DILOCO_MERGES: 2
+DILOCO_K: 250
+DILOCO_SYNC_TOTAL_S: 1.143
+DILOCO_SYNC_AVG_MS: 571.7

@@ -516,18 +516,19 @@ def diloco_merge(core_model, optimizer, args, world_size, outer_state):
     optimizer steps INDEPENDENTLY, then here we average the model weights once.
 
     ScheduleFree interaction (docs/SCHEDULEFREE_DILOCO_FRONTIER_DESIGN.md): the
-    worker's externally-meaningful "model weights" are the EVAL (averaged x)
-    weights, so the merge runs in eval mode (the y-mode swap). After averaging x
-    across ranks we RESET each rank's local base sequence z to the consensus and
-    restart the ScheduleFree x-averaging denominator. AdamWScheduleFree updates
-    the implicit average with c_{t+1}=weight/weight_sum and
-    x_{t+1}=(1-c_{t+1})x_t+c_{t+1}z_{t+1}; once DiLoCo overwrites x with a
-    cross-rank consensus, the old local weight_sum no longer describes that x.
-    Keeping it makes the next c_{t+1} belong to a discarded local history. The
-    group step k is intentionally preserved because this implementation also
-    uses k for Adam exp_avg_sq bias correction and LR warmup. Adam second moments
-    (exp_avg_sq) stay per-rank (independent preconditioning -> independent
-    exploration, the point of DiLoCo).
+    optimizer evolves both the running-average eval weights x (held implicitly in
+    p.data while in eval mode) and the base iterate z (held in per-param state).
+    DiLoCo therefore merges both: x is averaged across replicas using the same
+    model-weight semantics, z is averaged across replicas, and the live train
+    weights y are rebuilt from the merged x/z pair. The ScheduleFree scalar
+    clock state (weight_sum, k, lr_max) is part of the long-horizon averaging
+    schedule and is preserved, not reset. The training loop keeps all replicas
+    on identical step counts, so these scalars are normally byte-identical; if a
+    future uneven-step caller reaches this function, x is merged with
+    weight_sum-weighted averaging and weight_sum is set to the cross-rank
+    consensus mean rather than discarded. Adam second moments (exp_avg_sq) stay
+    per-rank (independent preconditioning -> independent exploration, the point
+    of DiLoCo).
 
     Outer optimizer (general DiLoCo):
         delta       = mean_i(W_{r,i}) - W_r
@@ -539,6 +540,9 @@ def diloco_merge(core_model, optimizer, args, world_size, outer_state):
 
     Returns the all-reduce wall-clock seconds (for sync-cost accounting).
     """
+    if world_size <= 1:
+        return 0.0
+
     sf = (args.optimizer == 'schedulefree')
     # 1. y-mode swap: switch schedulefree to eval so p.data holds the averaged x_i.
     if sf:
@@ -546,16 +550,63 @@ def diloco_merge(core_model, optimizer, args, world_size, outer_state):
 
     params = list(core_model.parameters())
     t0 = time.time()
-    # 2. all-reduce the model weights to the cross-rank mean: p.data <-
+    # 2. all-reduce the model weights to the cross-rank consensus: p.data <-
     #    mean_i(W_{r,i}) on every rank. Coalesce into one flat bucket so the
     #    1.29B-param sync is a SINGLE collective launch (the whole point: ONE
     #    all-reduce per K steps, not K). SUM+divide rather than ReduceOp.AVG so
     #    the path is backend-agnostic (gloo, used by the CPU unit test, has no AVG).
-    flat = torch._utils._flatten_dense_tensors([p.data for p in params])
-    dist.all_reduce(flat, op=dist.ReduceOp.SUM)
-    flat.div_(world_size)
-    for p, merged in zip(params, torch._utils._unflatten_dense_tensors(flat, [p.data for p in params])):
-        p.data.copy_(merged)
+    if sf:
+        # ScheduleFree's x average has mass weight_sum. Under the normal DiLoCo
+        # schedule every rank has the same weight_sum, making this exactly the
+        # arithmetic mean. The weighted path preserves averaging mass if a future
+        # caller ever reaches a merge with uneven local step counts.
+        for group in optimizer.param_groups:
+            group_params = list(group['params'])
+            if not group_params:
+                continue
+            device = group_params[0].device
+            local_weight_sum = float(group.get('weight_sum', 0.0))
+            weight_sum = torch.tensor(local_weight_sum, device=device, dtype=torch.float64)
+            dist.all_reduce(weight_sum, op=dist.ReduceOp.SUM)
+            total_weight_sum = float(weight_sum.item())
+
+            flat_x = torch._utils._flatten_dense_tensors([p.data for p in group_params])
+            if total_weight_sum > 0.0:
+                flat_x.mul_(local_weight_sum)
+            dist.all_reduce(flat_x, op=dist.ReduceOp.SUM)
+            flat_x.div_(total_weight_sum if total_weight_sum > 0.0 else world_size)
+            for p, merged in zip(
+                    group_params,
+                    torch._utils._unflatten_dense_tensors(flat_x, [p.data for p in group_params])):
+                p.data.copy_(merged)
+
+            group['weight_sum'] = total_weight_sum / world_size
+            for scalar_name in ('lr_max',):
+                scalar = torch.tensor(float(group.get(scalar_name, 0.0)),
+                                      device=device, dtype=torch.float64)
+                dist.all_reduce(scalar, op=dist.ReduceOp.SUM)
+                group[scalar_name] = float(scalar.item() / world_size)
+            k = torch.tensor(float(group.get('k', 0)), device=device, dtype=torch.float64)
+            dist.all_reduce(k, op=dist.ReduceOp.SUM)
+            group['k'] = int(round(float(k.item() / world_size)))
+
+            z_params = [p for p in group_params if 'z' in optimizer.state.get(p, {})]
+            if z_params:
+                flat_z = torch._utils._flatten_dense_tensors(
+                    [optimizer.state[p]['z'] for p in z_params])
+                dist.all_reduce(flat_z, op=dist.ReduceOp.SUM)
+                flat_z.div_(world_size)
+                for p, merged_z in zip(
+                        z_params,
+                        torch._utils._unflatten_dense_tensors(
+                            flat_z, [optimizer.state[p]['z'] for p in z_params])):
+                    optimizer.state[p]['z'].copy_(merged_z)
+    else:
+        flat = torch._utils._flatten_dense_tensors([p.data for p in params])
+        dist.all_reduce(flat, op=dist.ReduceOp.SUM)
+        flat.div_(world_size)
+        for p, merged in zip(params, torch._utils._unflatten_dense_tensors(flat, [p.data for p in params])):
+            p.data.copy_(merged)
     if torch.cuda.is_available():
         torch.cuda.synchronize()
     sync_s = time.time() - t0
@@ -572,17 +623,11 @@ def diloco_merge(core_model, optimizer, args, world_size, outer_state):
             p.data.copy_(w_r).add_(m, alpha=outer_lr)  # W_{r+1} = W_r + lr*mom
             w_r.copy_(p.data)                          # advance anchor to W_{r+1}
 
-    # 4. Re-sync schedulefree base sequence z = W_{r+1}, and restart the SF
-    #    averaging denominator so x=W_{r+1} is the first point of a coherent new
-    #    post-merge average. train()-swap then gives y=W_{r+1}.
+    # 4. Rebuild ScheduleFree train weights y from the merged full state. With
+    #    AdamWScheduleFree, train() maps eval-mode x and state z to
+    #    y = beta1*x + (1-beta1)*z. The averaging denominator and clocks are left
+    #    intact so x remains a full-run cumulative average across future steps.
     if sf:
-        for group in optimizer.param_groups:
-            group['weight_sum'] = 0.0
-            group['scheduled_lr'] = 0.0
-        for p in params:
-            st = optimizer.state.get(p, None)
-            if st is not None and 'z' in st:
-                st['z'].copy_(p.data)
         optimizer.train()
     return sync_s
 
