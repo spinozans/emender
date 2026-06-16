@@ -876,6 +876,7 @@ class E88FLAHybrid(nn.Module):
         use_triton: bool = False,  # Use Triton fwd+bwd kernels instead of CUDA register-owned (portable across NVIDIA/AMD ROCm)
         use_chunked_e97: bool = False,  # Route the split-edit DELTA recurrence through the chunked-parallel fwd+bwd kernel (GDN-2-class throughput); linear-state only
         e97_chunk_size: int = 32,  # Chunk length for the chunked E97 kernel backward (C=32 fits Ada/Ampere SMEM; C=64 needs Hopper)
+        multiquery_r: int = 1,  # M2: rank-R multi-query readout of the matrix state. R>1 reads an R-dim row-subspace per head (R readout vectors); R=1 is the standard single-query path. Requires the chunked split-edit path.
         readout_summary_dim: int = 0,  # M1 state-aware MLP (STATE_AWARE_MLP_DESIGN.md §5): if >0, down-project the
                                        # pre-o_proj per-head readout concat (the [B,T,value_dim] tensor o_proj consumes)
                                        # to this dim + RMSNorm, and RETURN it as a 3rd value so the post-mixer SwiGLU MLP
@@ -946,6 +947,36 @@ class E88FLAHybrid(nn.Module):
         self.use_triton = use_triton
         self.use_chunked_e97 = use_chunked_e97
         self.e97_chunk_size = e97_chunk_size
+
+        # === M2: multi-query readout rank (paper/review/STATE_AWARE_MLP_DESIGN.md §3) ===
+        self.multiquery_r = int(multiquery_r)
+        if self.multiquery_r > 1:
+            # M2 reads an R-dim row-subspace of the matrix state via R queries/head.
+            # It is the READ only — the recurrence is unchanged — and is implemented
+            # in the fused chunked split-edit kernel, so it requires that path.
+            assert head_mix == 'concat', (
+                f"M2 multi-query (multiquery_r={self.multiquery_r}) requires "
+                f"head_mix='concat', got {head_mix!r}")
+            assert use_split_edit and use_triton and use_chunked_e97, (
+                "M2 multi-query requires the fused chunked split-edit path "
+                "(use_split_edit=use_triton=use_chunked_e97=True)")
+            assert not use_output_norm, (
+                "M2 multi-query path does not support use_output_norm (per-head "
+                "RMSNorm); the readout is gated inline in the chunked kernel path")
+            # M1 (readout_summary_dim>0) reads the pre-o_proj concat at width
+            # value_dim; M2 widens that concat to R*value_dim. They are separate
+            # state-aware-MLP arms (STATE_AWARE_MLP_DESIGN.md §3 vs §5) — keep them
+            # mutually exclusive so the M1 readout_summary Linear width stays correct.
+            assert int(readout_summary_dim) == 0, (
+                "M2 multi-query (multiquery_r>1) and M1 (readout_summary_dim>0) are "
+                "mutually exclusive arms; enable only one")
+            # The (R-1) extra queries are linear projections (no extra short-conv
+            # module exists), so they can only MATCH the primary query's processing
+            # when the primary also skips conv. Forbid use_conv to keep the R reads
+            # comparable (the E88/E97 default is use_conv=False anyway).
+            assert not use_conv, (
+                "M2 multi-query requires use_conv=False so the extra queries (linear "
+                "projections) match the primary query's processing; got use_conv=True")
 
         # Key and query dimensions (like FLA-GDN: key_dim = num_heads * head_k_dim)
         self.key_dim = n_heads * n_state
@@ -1064,10 +1095,21 @@ class E88FLAHybrid(nn.Module):
             self.erase_gate_proj = None
             self.value_write_gate_proj = None
 
+        # === M2 extra query projections ===
+        # The primary query reuses the existing qkv_proj/q_proj. M2 adds (R-1) extra
+        # query projections of width key_dim each (one fused Linear), matching
+        # STATE_AWARE_MLP_DESIGN.md §3 ("(R-1) extra query projections Linear(dim,key_dim)").
+        if self.multiquery_r > 1:
+            self.extra_q_proj = nn.Linear(dim, (self.multiquery_r - 1) * self.key_dim, bias=False)
+        else:
+            self.extra_q_proj = None
+
         # === Output projection (depends on head_mix strategy) ===
         if head_mix == 'concat':
-            # Standard: concat all heads, project to dim
-            self.o_proj = nn.Linear(self.value_dim, dim, bias=False)
+            # Standard: concat all heads, project to dim. M2 concatenates the R
+            # readout vectors per head (R*value_dim total) then projects — the
+            # simplest faithful "learned combine"; R=1 is exactly the baseline o_proj.
+            self.o_proj = nn.Linear(self.value_dim * self.multiquery_r, dim, bias=False)
         elif head_mix == 'weighted_sum':
             # Learnable scalar per head, then project from head_v_dim to dim
             self.head_weights = nn.Parameter(torch.ones(n_heads) / n_heads)
@@ -1736,13 +1778,38 @@ class E88FLAHybrid(nn.Module):
                         decay_arg, use_log = glog_chunked.to(input_dtype), True
                     else:
                         decay_arg, use_log = decay.to(input_dtype), False
-                    out_ungated, S_final = e97_delta_chunked_triton(
-                        k_in, v_in, q_in, decay_arg,
-                        erase_for_kernel, value_write_for_kernel,
-                        chunk_size=getattr(self, 'e97_chunk_size', 32),
-                        log_decay=use_log,
-                    )
-                    output = out_ungated * F.silu(g)
+                    if self.multiquery_r > 1:
+                        # === M2: rank-R multi-query readout (state UPDATE unchanged) ===
+                        # Build R queries/head: the primary q_in (full conv+silu+L2
+                        # processing) plus (R-1) extra linear-projection queries, each
+                        # silu/L2-normalized to MATCH the primary so the R readouts are
+                        # comparable. The fused kernel emits R readouts/token sharing ONE
+                        # recurrence (Delta/Tmat/state computed once). See
+                        # ndm/triton/e97_multiquery_autograd.py.
+                        from ndm.triton.e97_multiquery_autograd import e97_multiquery_chunked_triton
+                        extra = self.extra_q_proj(x).view(
+                            B, T, self.multiquery_r - 1, H, n
+                        ).permute(0, 1, 3, 2, 4).to(input_dtype)  # [B,T,H,R-1,N]
+                        if qkv_silu_in_kernel:
+                            extra = F.silu(extra)
+                        if use_fused_l2:
+                            extra = extra / (extra.norm(dim=-1, keepdim=True) + 1e-6)
+                        q_mq = torch.cat([q_in.unsqueeze(3), extra], dim=3)  # [B,T,H,R,N]
+                        out_ungated, S_final = e97_multiquery_chunked_triton(
+                            k_in, v_in, q_mq, decay_arg,
+                            erase_for_kernel, value_write_for_kernel,
+                            chunk_size=getattr(self, 'e97_chunk_size', 32),
+                            log_decay=use_log,
+                        )  # out_ungated: [B,T,H,R,V]
+                        output = out_ungated * F.silu(g).unsqueeze(3)  # gate broadcast over R
+                    else:
+                        out_ungated, S_final = e97_delta_chunked_triton(
+                            k_in, v_in, q_in, decay_arg,
+                            erase_for_kernel, value_write_for_kernel,
+                            chunk_size=getattr(self, 'e97_chunk_size', 32),
+                            log_decay=use_log,
+                        )
+                        output = out_ungated * F.silu(g)
                 elif self.use_triton:
                     from ndm.triton.e88_triton_optimized import e88_triton_optimized_apply
                     S_final, output = e88_triton_optimized_apply(
@@ -1959,14 +2026,19 @@ class E88FLAHybrid(nn.Module):
                 else:  # silu/swish - FLA-GDN style
                     output = output * F.silu(g)
 
-        # Head mixing (output is [B, T, H, head_v_dim])
+        # Head mixing (output is [B, T, H, head_v_dim], or [B, T, H, R, head_v_dim] for M2)
         readout_summary = None
         if self.head_mix == 'concat':
-            # Standard: concat all heads, project to dim
-            output = output.reshape(B, T, self.value_dim)
+            # Standard: concat all heads, project to dim. For M2 (multiquery_r>1) this
+            # flattens the R readout vectors too -> [B, T, R*value_dim] consumed by the
+            # widened o_proj. reshape(-1) == value_dim when R==1 (byte-identical).
+            output = output.reshape(B, T, -1)
             # M1 state-aware MLP: summarize the SAME pre-o_proj readout concat
             # (STATE_AWARE_MLP_DESIGN.md §5). r_cat is post-gate / un-normalized;
             # the RMSNorm here is REQUIRED (norm_2 in the MLP wrapper does not touch it).
+            # M1 and M2 are mutually exclusive (asserted in __init__), so when M1 is
+            # active R==1 and this concat width is exactly value_dim as readout_summary
+            # expects.
             if self.readout_summary is not None:
                 readout_summary = self.readout_norm(self.readout_summary(output))
             output = self.o_proj(output)

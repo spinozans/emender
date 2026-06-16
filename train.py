@@ -644,7 +644,7 @@ def train(args):
     # (parity-verified, paper/review/E97_FUSED_LM_KERNEL_NOTE.md). Everything else
     # keeps the historical default (CUDA register-owned, use_triton=0).
     if args.use_triton is None:
-        _e97_family = str(args.level) in ('E97', '97')
+        _e97_family = str(args.level) in ('E97', '97', 'E97-M2')
         _needs_triton_fused = _e97_family or bool(getattr(args, 'e88_raw_write', 0))
         if _needs_triton_fused and getattr(args, 'bf16', False):
             args.use_triton = 1
@@ -710,7 +710,7 @@ def train(args):
     # an import/availability failure RAISES rather than silently dropping to eager,
     # so use_triton==1 + a completed run is proof the fused path executed on this
     # rank. Assert it loudly per rank so the no-eager guarantee is visible for all.
-    _e97_family = str(args.level) in ('E97', '97') or bool(getattr(args, 'e88_raw_write', 0))
+    _e97_family = str(args.level) in ('E97', '97', 'E97-M2') or bool(getattr(args, 'e88_raw_write', 0))
     if _e97_family and getattr(args, 'bf16', False):
         assert args.use_triton == 1, (
             f"[fused-guard] rank {rank}: E97/raw-write under bf16 MUST use the fused "

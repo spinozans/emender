@@ -595,6 +595,14 @@ def get_ladder_level(level):
         # Use --use_triton 1 for the split-edit Triton recurrence.
         'E97': lambda **kw: E88FLAHybrid(**{**kw, 'use_split_edit': True}),
         97: lambda **kw: E88FLAHybrid(**{**kw, 'use_split_edit': True}),
+        # E97-M2: M2 multi-query readout (paper/review/STATE_AWARE_MLP_DESIGN.md §3).
+        # The state UPDATE is the unchanged E97 split-edit delta; only the READ is
+        # rank-R (multiquery_r queries/head). Built on the fused chunked split-edit
+        # path (linear state, GDN-2-class throughput). Pass the rank via
+        # layer_kwargs, e.g. --layer_kwargs '{"multiquery_r": 4}' (default R=2 here).
+        'E97-M2': lambda **kw: E88FLAHybrid(**{
+            'multiquery_r': 2, **kw, 'use_split_edit': True, 'use_triton': True,
+            'use_chunked_e97': True, 'linear_state': True}),
         'E91': E91MatMat,
         91: E91MatMat,
         'E91r1': lambda **kw: E91MatMat(**{**kw, 'rank': 1}),

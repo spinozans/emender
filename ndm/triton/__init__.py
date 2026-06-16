@@ -36,6 +36,11 @@ from .unified_cell_backward import (
     unified_cell,
     UnifiedCellFunction,
 )
+from .e97_chunked_autograd import e97_delta_chunked_triton
+from .e97_multiquery_autograd import (
+    e97_multiquery_chunked_triton,
+    E97MultiQueryChunkedFn,
+)
 
 __all__ = [
     "e88_triton_forward",
@@ -49,6 +54,9 @@ __all__ = [
     "unified_cell_backward",
     "unified_cell",
     "UnifiedCellFunction",
+    "e97_delta_chunked_triton",
+    "e97_multiquery_chunked_triton",
+    "E97MultiQueryChunkedFn",
     "PHI_NAME_TO_CODE",
     "PHI_IDENTITY", "PHI_TANH", "PHI_GAMMA_MIX", "PHI_RELU", "PHI_SOFTPLUS",
 ]

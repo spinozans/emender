@@ -64,6 +64,9 @@ E88_SUPPORTED_N_STATE = [16, 32]
 COMPILE_ENABLED = False
 COMPILE_MODE = 'max-autotune'
 USE_TRITON_E88 = False
+# M2 multi-query readout rank for model_type 'e97-m2' (R queries/head). Set via
+# --multiquery_r; R=1 reduces e97-m2 to the single-query E97 chunked path.
+MULTIQUERY_R = 1
 COMPILE_WARMUP_STEPS = 0
 TIMER_AFTER_COMPILE_WARMUP = False
 SKIP_MEMORY_PROBE = False
@@ -168,6 +171,7 @@ SEARCH_SPACES = {
     'e97': _E88_SEARCH_SPACE,  # E97 split erase/write edit; Triton-enabled via --use_triton_e88
     'e97-raw': _E88_SEARCH_SPACE,  # E97 ablation: split edit with raw write target
     'e97-linear': _E88_SEARCH_SPACE,  # E97 ablation: split edit with linear state update
+    'e97-m2': _E88_SEARCH_SPACE,  # M2: rank-R multi-query readout of E97 state (R via --multiquery_r); chunked split-edit linear-state path
     'e88_fused': _E88_SEARCH_SPACE,  # E88 with fused CUDA kernel (faster training)
     'e91': _E88_SEARCH_SPACE,  # E91 matrix-matrix variant (rank-r delta rule, default rank=n_state)
     'e92': _E88_SEARCH_SPACE,  # E92 matrix-matrix variant with learned W_h per-layer transform
@@ -609,6 +613,23 @@ def estimate_params_for_config(params, model_type):
         value_dim = int(n_heads * n_state * expansion)
         split_edit_proj = dim * (n_heads * n_state + value_dim)
         return base + depth * split_edit_proj
+    elif model_type == 'e97-m2':
+        # E97 base + M2 extra: (R-1) extra query projections (dim*key_dim) AND the
+        # o_proj widened from value_dim->dim to R*value_dim->dim ((R-1)*value_dim*dim).
+        # Total M2 extra/layer = (R-1)*dim*(key_dim + value_dim) = (R-1)*split_edit_proj.
+        n_heads = params.get('n_heads', 96)
+        n_state = params.get('n_state', 32)
+        expansion = params.get('expansion', 1.0)
+        R = int(params.get('multiquery_r', MULTIQUERY_R))
+        base = calc_e88_params(
+            dim, depth=depth, n_heads=n_heads, n_state=n_state,
+            expansion=expansion, vocab_size=vocab_size, use_gate=True,
+        )
+        value_dim = int(n_heads * n_state * expansion)
+        split_edit_proj = dim * (n_heads * n_state + value_dim)
+        e97_params = base + depth * split_edit_proj
+        m2_extra = depth * (R - 1) * dim * (n_heads * n_state + value_dim)
+        return e97_params + m2_extra
     elif model_type == 'm2rnn':
         return calc_m2rnn_params(dim, depth=depth, n_heads=params.get('n_heads', 128),
                                  n_state=params.get('n_state', 16),
@@ -897,6 +918,25 @@ def build_train_command(params, model_type, train_minutes, output_dir):
             cmd.extend(['--linear_state', '1'])
         if USE_TRITON_E88:
             cmd.extend(['--use_triton', '1'])
+
+    elif model_type == 'e97-m2':
+        # M2: rank-R multi-query readout (paper/review/STATE_AWARE_MLP_DESIGN.md §3).
+        # State UPDATE is the unchanged E97 split-edit delta; only the READ is rank-R.
+        # The E97-M2 level self-configures the fused chunked split-edit linear-state
+        # path (use_triton/use_chunked_e97/linear_state forced in ladder_lm). R is
+        # passed via --layer_kwargs; --multiquery_r sets it per run (arm-based design).
+        import json as _json
+        R = int(params.get('multiquery_r', MULTIQUERY_R))
+        cmd.extend([
+            '--level', 'E97-M2',
+            '--n_heads', str(params['n_heads']),
+            '--n_state', str(params['n_state']),
+            '--expansion', '1.0',
+            '--use_gate', '1',
+            '--gate_activation', 'silu',
+            '--use_triton', '1',
+            '--layer_kwargs', _json.dumps({'multiquery_r': R}),
+        ])
 
     elif model_type == 'e91':
         # E91 matrix-matrix nonlinear RNN — rank-r delta rule with tanh.
@@ -2268,6 +2308,9 @@ def main():
                         help='Projection chunk size for memory savings (0=disabled)')
     parser.add_argument('--use_triton_e88', action='store_true',
                         help='For canonical E88 searches, pass --use_triton 1 to train.py')
+    parser.add_argument('--multiquery_r', type=int, default=1,
+                        help='M2 multi-query readout rank for model_type e97-m2 (R queries/head). '
+                             'R=1 reduces to single-query E97. Arm-based: set one R per run.')
 
     # Progressive training (512→32K)
     parser.add_argument('--progressive', action='store_true',
@@ -2313,7 +2356,7 @@ def main():
             print(f"Using GPU file: {GPU_FILE} (current GPUs: {current})")
 
     # Set global compile, sequence, and parameter-window settings
-    global COMPILE_ENABLED, COMPILE_MODE, USE_TRITON_E88, COMPILE_WARMUP_STEPS, TIMER_AFTER_COMPILE_WARMUP
+    global COMPILE_ENABLED, COMPILE_MODE, USE_TRITON_E88, MULTIQUERY_R, COMPILE_WARMUP_STEPS, TIMER_AFTER_COMPILE_WARMUP
     global SKIP_MEMORY_PROBE, CHUNK_SIZE, GRADIENT_CHECKPOINTING, PROJECTION_CHUNK_SIZE
     global PARAM_TOLERANCE, PARAM_VOCAB_SIZE, TOKENIZER_NAME
     global PROGRESSIVE, PHASE1_MINUTES, PHASE2_MINUTES, PHASE2_CHUNK_SIZE
@@ -2324,6 +2367,7 @@ def main():
     COMPILE_ENABLED = args.compile
     COMPILE_MODE = args.compile_mode
     USE_TRITON_E88 = args.use_triton_e88
+    MULTIQUERY_R = args.multiquery_r
     COMPILE_WARMUP_STEPS = args.compile_warmup_steps
     TIMER_AFTER_COMPILE_WARMUP = args.timer_after_compile_warmup
     SKIP_MEMORY_PROBE = args.skip_memory_probe
