@@ -518,12 +518,16 @@ def diloco_merge(core_model, optimizer, args, world_size, outer_state):
     ScheduleFree interaction (docs/SCHEDULEFREE_DILOCO_FRONTIER_DESIGN.md): the
     worker's externally-meaningful "model weights" are the EVAL (averaged x)
     weights, so the merge runs in eval mode (the y-mode swap). After averaging x
-    across ranks we RESET each rank's local base sequence z to the consensus so
-    that the train()-swap restores y == x == W_{r+1} on every rank -> all ranks
-    are identical post-merge and no inter-round z-drift accumulates. Only p.data
-    is communicated (one all-reduce of the model); z is re-synced locally to the
-    already-averaged consensus. Adam second moments (exp_avg_sq) stay per-rank
-    (independent preconditioning -> independent exploration, the point of DiLoCo).
+    across ranks we RESET each rank's local base sequence z to the consensus and
+    restart the ScheduleFree x-averaging denominator. AdamWScheduleFree updates
+    the implicit average with c_{t+1}=weight/weight_sum and
+    x_{t+1}=(1-c_{t+1})x_t+c_{t+1}z_{t+1}; once DiLoCo overwrites x with a
+    cross-rank consensus, the old local weight_sum no longer describes that x.
+    Keeping it makes the next c_{t+1} belong to a discarded local history. The
+    group step k is intentionally preserved because this implementation also
+    uses k for Adam exp_avg_sq bias correction and LR warmup. Adam second moments
+    (exp_avg_sq) stay per-rank (independent preconditioning -> independent
+    exploration, the point of DiLoCo).
 
     Outer optimizer (general DiLoCo):
         delta       = mean_i(W_{r,i}) - W_r
@@ -568,8 +572,13 @@ def diloco_merge(core_model, optimizer, args, world_size, outer_state):
             p.data.copy_(w_r).add_(m, alpha=outer_lr)  # W_{r+1} = W_r + lr*mom
             w_r.copy_(p.data)                          # advance anchor to W_{r+1}
 
-    # 4. Re-sync schedulefree base sequence z = W_{r+1}; train()-swap gives y=W_{r+1}.
+    # 4. Re-sync schedulefree base sequence z = W_{r+1}, and restart the SF
+    #    averaging denominator so x=W_{r+1} is the first point of a coherent new
+    #    post-merge average. train()-swap then gives y=W_{r+1}.
     if sf:
+        for group in optimizer.param_groups:
+            group['weight_sum'] = 0.0
+            group['scheduled_lr'] = 0.0
         for p in params:
             st = optimizer.state.get(p, None)
             if st is not None and 'z' in st:
