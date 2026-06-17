@@ -54,6 +54,31 @@ def e88_triton_optimized_apply(
     assert v.shape == (B, T, H, Vsz)
     assert decay.shape == (B, T, H)
 
+    # The sparse-checkpoint Triton forward stores a state checkpoint every
+    # CKPT_INTERVAL steps and REQUIRES T % CKPT_INTERVAL == 0. Training always
+    # feeds an aligned T (chunk_size, a multiple of 16), so the branch below is
+    # inert during training. Forward-only EVAL, however, scores arbitrary
+    # continuation lengths (e.g. T=11). Right-pad the recurrence inputs to the
+    # next multiple of CKPT_INTERVAL and slice the output back: the recurrence
+    # is causal, so outputs at the real positions (t < T) cannot depend on the
+    # zero-padded tail, and S_final is discarded at inference. This keeps the
+    # fused kernel — NOT an eager fallback — for unaligned eval (NON-NEGOTIABLE #1).
+    from .e88_triton_forward import DEFAULT_CKPT_INTERVAL
+    T_orig = T
+    _pad = (-T) % DEFAULT_CKPT_INTERVAL
+    if _pad:
+        def _padT(t):
+            if t is None:
+                return None
+            spec = [0, 0] * (t.dim() - 2) + [0, _pad]  # pad the T axis (dim=1)
+            return torch.nn.functional.pad(t, spec)
+        k, v, q, decay = _padT(k), _padT(v), _padT(q), _padT(decay)
+        if g is not None and getattr(g, "numel", lambda: 0)() > 0:
+            g = _padT(g)
+        erase_gate = _padT(erase_gate)
+        value_write_gate = _padT(value_write_gate)
+        T = T + _pad
+
     # L2 normalization is fused inside the Triton kernel when normalize_kq=True
     # — this saves a Python `linalg_vector_norm` + `aten::div` per layer call,
     # which adds up to ~50-60 ms/step at 1.27B production. The kernel handles
@@ -105,5 +130,9 @@ def e88_triton_optimized_apply(
             value_write_gate=value_write_t,
         )
         output = out_t.transpose(0, 1)
+
+    if _pad:
+        # Drop the padded tail; real-position outputs are unaffected (causal).
+        output = output[:, :T_orig]
 
     return S_final, output

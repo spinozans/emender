@@ -1415,6 +1415,15 @@ class E88FLAHybrid(nn.Module):
                     "PyTorch reference recurrence; disable use_triton / bf16 kernels "
                     "(run fp32 via disable_autocast) for non-saturating E88 state.")
 
+        # fused_inference lets a forward-only EVAL run the SAME fused kernel that
+        # training used, instead of the eager per-step PyTorch scan (NON-NEGOTIABLE
+        # #1: the recurrence must never run eager). Opt-in, default off, so training
+        # / generation behaviour is unchanged; the eval loader sets it on every
+        # E88FLAHybrid mixer after loading a checkpoint. It must gate EVERY fused-vs-
+        # eager decision below (the projection-path _use_optimized AND the recurrence
+        # use_optimized / use_cuda) so eval takes the IDENTICAL path training took.
+        _fused_ok = self.training or getattr(self, 'fused_inference', False)
+
         # === Check if we can use fused projection CUDA kernel ===
         # Note: Fused projection is forward-only, use only for inference
         use_fused_proj = (
@@ -1466,7 +1475,7 @@ class E88FLAHybrid(nn.Module):
                 (E88_OPTIMIZED_AVAILABLE or self.use_triton) and
                 x.is_cuda and
                 x.dtype == torch.bfloat16 and
-                self.training and
+                _fused_ok and
                 self.use_gate and
                 self.g_proj is not None and
                 self.gate_activation == 'silu' and
@@ -1635,8 +1644,9 @@ class E88FLAHybrid(nn.Module):
             _step_kernel_used = False
 
         # === Use CUDA kernel if available ===
+        # _fused_ok (defined above) lets EVAL take the same fused path as training.
         use_cuda = (E88_NATIVE_CUDA_AVAILABLE and x.is_cuda and
-                    x.dtype == torch.bfloat16 and self.training and
+                    x.dtype == torch.bfloat16 and _fused_ok and
                     not self.raw_write and
                     not self.use_split_edit and
                     not self.pos_eigval_clamp)
@@ -1647,7 +1657,7 @@ class E88FLAHybrid(nn.Module):
             (E88_OPTIMIZED_AVAILABLE or self.use_triton) and
             x.is_cuda and
             x.dtype == torch.bfloat16 and
-            self.training and
+            _fused_ok and
             self.use_gate and
             self.g_proj is not None and
             self.gate_activation == 'silu' and

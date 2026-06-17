@@ -482,7 +482,29 @@ def build_model(args: argparse.Namespace, device: torch.device) -> torch.nn.Modu
     model = model.to(device)
     if bool(getattr(args, "bf16", False)):
         model = model.bfloat16()
+    # NON-NEGOTIABLE #1: forward-only EVAL must run the FUSED kernel, not the
+    # eager per-step scan. The E88/E97 fused recurrence paths are gated on
+    # self.training, so under model.eval() they silently fall back to the eager
+    # PyTorch loop. This is an eval-only loader, so opt every E88FLAHybrid mixer
+    # into the fused inference path; eval then matches the trained (fused)
+    # recurrence. No-op for archs without E88FLAHybrid mixers (e.g. gdn2-mlp,
+    # which is fused via FLA chunk regardless of training mode).
+    enable_fused_inference(model)
     return model
+
+
+def enable_fused_inference(model: torch.nn.Module) -> int:
+    """Set fused_inference=True on every E88FLAHybrid mixer (see build_model)."""
+    try:
+        from ndm.models.e88_fla_hybrid import E88FLAHybrid
+    except Exception:
+        return 0
+    n = 0
+    for m in model.modules():
+        if isinstance(m, E88FLAHybrid):
+            m.fused_inference = True
+            n += 1
+    return n
 
 
 def make_schedulefree_optimizer(model: torch.nn.Module, args: argparse.Namespace):
