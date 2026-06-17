@@ -51,12 +51,19 @@ fi
 export EVAL_CHECKPOINT_GPU_LEASED=1
 
 score_cell() {
-  local cell="$1" rundir csv
+  local cell="$1" rundir csv glob
+  # Cells produced by train.py create a timestamped subdir under .../train/, so
+  # checkpoints live one level down ('*/checkpoint_step_*.pt'). The single-GPU
+  # REFERENCE run-dir holds its checkpoints directly (flat glob).
+  glob='*/checkpoint_step_*.pt'
   case "$cell" in
     swell_i2)        rundir="$SWEEP/swell_i2_k250/train";     csv="$HERE/swell_i2_curve.csv" ;;
     swell_i4)        rundir="$SWEEP/swell_i4_k250/train";     csv="$HERE/swell_i4_curve.csv" ;;
     swell_i4_mom)    rundir="$SWEEP/swell_i4_mom_k250/train"; csv="$HERE/swell_i4_mom_curve.csv" ;;
+    swell_i6)        rundir="$SWEEP/seed_race_i6/train";      csv="$HERE/swell_i6_curve.csv" ;;
     stab_scratch_i4) rundir="$SWEEP/stab_k250/train";         csv="$HERE/stab_scratch_i4_curve.csv" ;;
+    reference)       rundir="/mnt/nvme1n1/erikg/ref_emender_mlp/runs/levelE97_100m_20260615_211750"
+                     csv="$HERE/reference_curve.csv"; glob='checkpoint_step_*.pt' ;;
     *) echo "autoscore: unknown cell '$cell'" >&2; return 2 ;;
   esac
   if [ ! -d "$rundir" ]; then
@@ -66,7 +73,7 @@ score_cell() {
   echo "== autoscore $cell -> $csv =="
   python3 scripts/eval_checkpoint.py \
     --run-dir "$rundir" \
-    --glob '*/checkpoint_step_*.pt' \
+    --glob "$glob" \
     --scoring-tensor "$TENSOR" \
     --out "$csv" \
     --y-mode train \
@@ -75,7 +82,7 @@ score_cell() {
 
 cells=("$@")
 if [ "${#cells[@]}" -eq 0 ] || [ "${cells[0]}" = "all" ]; then
-  cells=(swell_i2 swell_i4 swell_i4_mom stab_scratch_i4)
+  cells=(swell_i2 swell_i4 swell_i4_mom stab_scratch_i4 swell_i6 reference)
 fi
 rc=0
 for c in "${cells[@]}"; do

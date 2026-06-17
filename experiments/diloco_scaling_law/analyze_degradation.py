@@ -72,11 +72,14 @@ def main():
 
     # cell registry: (csv, world, seed_step, label)
     cells = [
-        ("stab_scratch_i4_curve.csv", 4, None,  "S0 scratch / I=4"),
-        ("swell_i2_curve.csv",        2, 64500, "S_well(528M) / I=2"),
-        ("swell_i4_curve.csv",        4, 64500, "S_well(528M) / I=4"),
-        ("swell_i4_mom_curve.csv",    4, 64500, "S_well(528M) / I=4 +mom0.9"),
-        ("swell_i2_mom_curve.csv",    2, 64500, "S_well(528M) / I=2 +mom0.9"),
+        ("stab_scratch_i4_curve.csv", 4, None,   "S0 scratch / I=4"),
+        ("swell_i2_curve.csv",        2, 64500,  "S_well(528M) / I=2"),
+        ("swell_i4_curve.csv",        4, 64500,  "S_well(528M) / I=4"),
+        ("swell_i4_mom_curve.csv",    4, 64500,  "S_well(528M) / I=4 +mom0.9"),
+        ("swell_i2_mom_curve.csv",    2, 64500,  "S_well(528M) / I=2 +mom0.9"),
+        # diloco-seed-race I=6: seeded from the LATEST emender ckpt (step 129000,
+        # ~1.057B per-replica tok), W=6 plain averaging (outer_beta=0), ~3B total race.
+        ("swell_i6_curve.csv",        6, 129000, "S_mature(1.057B) / I=6"),
     ]
     print("=== DEGRADATION (consensus_bpb - reference_bpb at matched total tokens) ===")
     summary = []
