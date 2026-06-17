@@ -88,6 +88,15 @@ byte-identical to the search that produced it.
 | **pure-E97** | E97 split-edit **raw-write**, no MLP | dim2432 nh416 ns16 dep10 bs3 | 1265.6 M | 5.9511 | 9.85e-4 | ✅ probe |
 | m2rnn | M2RNN matrix RNN (XMA fused) | dim3072 nh346 ns16 dep13 bs4 | 1275.0 M | 6.0636 | 1.04e-3 | ⬜ optional |
 | ~~Emender-mix~~ | typed mixture f=0.971 (~97% e97_delta) | dim2432 nh212 ns32 dep10 bs2 | 1273.2 M | 6.0756 | 1.144e-3 | ❌ drop |
+| ~~M2 (e97-m2)~~ | E97 split-edit **delta**, chunked-linear, **R=3** multi-query readout, no MLP | dim2816 nh227 ns16 dep10 bs2 | 1273.1 M | 6.1843 | 7.10e-4 | ❌ NO-GO |
+
+> **M2 (`cmaes-m2-1p3b`) — NO-GO, placed last.** Homologous CMA-ES (same protocol as the
+> arms above; the only added axis is the multi-query rank R∈1..8). Best = R\*=3, search
+> avg-loss **6.1843** — worse than every arm. The rank knob R is **statistically null** at
+> matched capacity: an iso-geometry 3-seed control gives R1 6.262 / R2 6.232 / R3 6.229 /
+> R4 6.227 (R1→R4 effect 0.035 < seed std 0.025–0.040; t-test p≈0.27), throughput flat
+> across R. Full confound audit (capacity / fused-no-eager 96·12 runs / aggregator /
+> precision / iso-param / unequal-sampling) cleared. See `paper/review/M2_CMAES_1P3B_RESULTS.md`.
 
 ### Why these three (+1)
 

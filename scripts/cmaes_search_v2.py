@@ -164,6 +164,19 @@ _E88_SEARCH_SPACE = {
     'batch_size': (1, 128, 'int_log', 'Batch size (log-scale, clamped to max feasible by memory probe)'),
 }  # 6D (n_state swept separately)
 
+# M2 = E97 multi-query readout. HOMOLOGOUS to the pure-E97 (`e97`) search: the SAME
+# geometry axes as _E88_SEARCH_SPACE (dim, n_heads, n_state, depth, lr, batch_size)
+# PLUS the one new M2 knob R (multi-query readout rank, 1..8). R=1 is byte-identical
+# to pure-E97. R is a real CMA-ES axis (decoded into params['multiquery_r'], consumed
+# by estimate_params_for_config / build_train_command) so the iso-param rebalance
+# between readout-rank and width/depth is part of the search, not a fixed arm.
+# expansion is pinned 1.0 (E97 square state) exactly as the e97/emender line; n_state
+# snaps to {16,32} (E88_SUPPORTED_N_STATE) exactly as pure-E97.
+_E97_M2_SEARCH_SPACE = {
+    **_E88_SEARCH_SPACE,
+    'multiquery_r': (1, 8, 'int', 'M2 multi-query readout rank R (1=byte-identical pure-E97; R>1 reads each head state with R queries)'),
+}  # 7D = E97 geometry + R
+
 SEARCH_SPACES = {
     # All search spaces include batch_size — CMA-ES optimizes it for learning speed,
     # memory probe clamps to max feasible if CMA-ES picks too large.
@@ -171,7 +184,7 @@ SEARCH_SPACES = {
     'e97': _E88_SEARCH_SPACE,  # E97 split erase/write edit; Triton-enabled via --use_triton_e88
     'e97-raw': _E88_SEARCH_SPACE,  # E97 ablation: split edit with raw write target
     'e97-linear': _E88_SEARCH_SPACE,  # E97 ablation: split edit with linear state update
-    'e97-m2': _E88_SEARCH_SPACE,  # M2: rank-R multi-query readout of E97 state (R via --multiquery_r); chunked split-edit linear-state path
+    'e97-m2': _E97_M2_SEARCH_SPACE,  # M2: rank-R multi-query readout of E97 state; R is a CMA axis (multiquery_r 1..8); chunked split-edit linear-state path
     'e88_fused': _E88_SEARCH_SPACE,  # E88 with fused CUDA kernel (faster training)
     'e91': _E88_SEARCH_SPACE,  # E91 matrix-matrix variant (rank-r delta rule, default rank=n_state)
     'e92': _E88_SEARCH_SPACE,  # E92 matrix-matrix variant with learned W_h per-layer transform
