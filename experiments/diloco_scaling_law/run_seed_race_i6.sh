@@ -65,5 +65,29 @@ echo "[orch $(date -u +%T)] degradation analysis + overlay plot"
 python3 "$HERE/analyze_degradation.py" || echo "[orch] analyze rc=$?"
 python3 "$HERE/plot_seed_race.py" || echo "[orch] plot rc=$?"
 
+# Commit + push the result artifacts so the deliverables land even if the chat
+# agent's session has ended. This worktree (agent-1944) is owned by this task's
+# branch alone, so a surgical add of ONLY the result files is safe; retry around
+# any transient index lock. (NEVER `git add -A`.)
+echo "[orch $(date -u +%T)] committing result artifacts"
+cd "$REPO"
+RESULTS="experiments/diloco_scaling_law/swell_i6_curve.csv \
+         experiments/diloco_scaling_law/reference_curve.csv \
+         experiments/diloco_scaling_law/degradation_summary.json \
+         experiments/diloco_scaling_law/seed_race_i6_stats.json \
+         experiments/diloco_scaling_law/seed_race_i6_plot.png \
+         experiments/diloco_scaling_law/VERDICT_seed_race_i6.md"
+for try in 1 2 3 4 5 6; do
+  if git add $RESULTS 2>/dev/null; then
+    if git commit -q -m "results: diloco seed-race I=6 scored + plotted + verdict (diloco-seed-race)"; then
+      git push 2>&1 | tail -3
+      echo "[orch] committed results $(git rev-parse --short HEAD)"
+      break
+    fi
+    echo "[orch] nothing to commit (or commit failed) try $try"
+  fi
+  echo "[orch] git busy, retry $try"; sleep 10
+done
+
 echo "[orch $(date -u +%FT%TZ)] ALL DONE"
 date -u +%FT%TZ > "$DONE"
