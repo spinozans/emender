@@ -89,7 +89,7 @@ standalone **`E97`/`e88_raw_write`** (raw split erase/write) — so the +0.089 g
 that arm reflects the different operator and the wider search space (5 geometry axes
 + the mixture axis under a shared 15-min budget), not a re-run of the same cell.
 This is a **mixture-fraction / fitness result** (where the free axis lands and the
-measured avg-loss there), not a capability or wall-clock GO/NO-GO.
+measured avg-loss there), not a capability or wall-clock verdict.
 
 **Bottom line (MEASURED):** with the mixture axis free over the full 0–100% range
 at 1.3B, CMA drives it to **~97% nonlinear (near the pure-E97 corner)**; the pure-

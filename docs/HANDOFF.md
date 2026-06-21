@@ -177,7 +177,7 @@ All findings below are from committed, measured artifacts. The calibration is
 deliberate: the project's own post-mortem (`docs/RESEARCH_ASTRAY_POSTMORTEM.md`)
 documents ~10 days of comparisons that were quietly rigged *against* the Emender and
 had to be corrected by the PI. The discipline is to read the **primary measured metric
-head-to-head**, to put the **burden of proof on NULLs** (no NO-GO without a cleared
+head-to-head**, to put the **burden of proof on NULLs** (no stop verdict without a cleared
 confound audit), and to **not hedge a proved result**.
 
 ### 2.1 LM loss → the CONVERGENT-LOSS NULL is a real FINDING
@@ -212,7 +212,7 @@ weights, by an architecture-dependent margin up to ~0.70 BPB for mixer-only cell
 convergent null either way.**
 
 > ⚠️ **Provenance caveat — read the corrections, not the auto-verdict.** The
-> auto-generated VERDICT block inside `LEADERBOARD.md` says "clean NO-GO / gdn2-mlp best
+> auto-generated VERDICT block inside `LEADERBOARD.md` says the emender is a clean loss and "gdn2-mlp best
 > all-around." That verdict is **superseded** by the CORRECTIONS at the top of both
 > files (and by `RESEARCH_ASTRAY_POSTMORTEM.md` Addendum): it (a) mislabeled
 > `emender-mlp` as raw-write when it is the delta cell, (b) leaned on the averaged
@@ -310,7 +310,7 @@ Two attempts to *extend* the E97 cell were run to a 1.3B-comparable verdict and 
 came back NULL after a full confound audit. **The experiment is the E97-vs-GDN2 pair;
 do NOT add arms to the scaleout.**
 
-- **M2 — multi-query rank-R readout — NO-GO.** Provenance:
+- **M2 — multi-query rank-R readout — rank R statistically null at matched capacity.** Provenance:
   `paper/review/M2_CMAES_1P3B_RESULTS.md` (homologous CMA-ES at 1.3B). M2's CMA-best
   (R\*=3) places **LAST** on the SCALE_PLAN §1 leaderboard (search avg-loss **6.1843**
   vs emender-mlp 5.8606, +0.234 worse than its closest sibling pure-E97). The rank knob
@@ -665,7 +665,7 @@ against the Emender**, each corrected (always by the human PI) toward a positive
 the final fair test flipping to a win. The errors were *one-directional* — a neutral
 error process would scatter. So the guardrails are not optional:
 
-1. **Burden of proof is on NULLs; do not hedge a proved result.** No NO-GO without a
+1. **Burden of proof is on NULLs; do not hedge a proved result.** No stop verdict without a
    cleared confound audit (M1/M2 in §2.4 model this). Symmetrically, do not deflate a
    proved, two-sided result (§2.2) into "scoped/narrow," and do not soften a real finding
    (the convergent-loss null, §2.1) into "inconclusive."

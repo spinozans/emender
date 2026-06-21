@@ -218,7 +218,7 @@ has never been measured here. This is the single biggest evidentiary gap and mot
 
 **Verdict: There is a REAL, directionally-identified confound — clipping renormalizes the two arms'
 gradients differently — but its magnitude is MODERATE where measurable, and its direction is
-*conservative* for the published NO-GO verdicts (clipping flatters the spikier emender arm). Low risk
+*conservative* for the published emender-ties-or-loses verdicts (clipping flatters the spikier emender arm). Low risk
 of having flipped any verdict; one cross-arm magnitude at search-time is a data gap.**
 
 All matched comparisons ran at clip=1.0: lb-compare (`37e9678`; `args.json` grad_clip=1.0 confirmed
@@ -239,11 +239,11 @@ worst 41%. Because emender's spikes are renormalized away, its **effective LR on
 lower** than its nominal LR — so a "matched-LR" comparison is not a matched-effective-step comparison.
 
 **Direction of the confound on the verdicts (the part that matters):**
-- The verdicts are *emender NO-GO* (emender ties/loses gdn2). Clipping a spiky gradient is
+- The verdicts are *emender ties-or-loses gdn2* (ties LM bpb, loses separators). Clipping a spiky gradient is
   **stabilizing** — it suppresses the loss spikes large steps cause. So clip=1.0 **helps** the spikier
   emender arm reach a lower/more-stable loss than its raw gradients would. Turning clip **off** would, if
   anything, make emender *worse* (more spikes; recall the inf event is emender's own E97 tanh path, §4b),
-  not better. The NO-GO direction is therefore robust to this confound — clip=1.0 is *generous* to emender.
+  not better. The emender-ties/loses direction is therefore robust to this confound — clip=1.0 is *generous* to emender.
 - Each arm's LR was tuned **under** clipping (CMAES/sweeps found emender lr≈1.007e-3 vs gdn2 lr≈4.74e-4),
   so each tuned operating point already internalizes its own clip behavior — further shrinking the risk
   that the comparison is unfair *at the tuned points*.
@@ -261,7 +261,7 @@ is low and, in residual direction, favors emender; one magnitude remains a data 
 
 **Keep `grad_clip = 1.0` as the production default**, and **do not revise any published verdict on the
 basis of this audit** — clipping is standard, load-bearing (§3a, §4a), and its confound direction is
-conservative for the existing NO-GO conclusions (§5). Removing it outright is unsafe: the emender E97
+conservative for the existing emender-ties/loses conclusions (§5). Removing it outright is unsafe: the emender E97
 path is the one with the bf16 inf (§4b) and the 8064-norm spikes (§3a).
 
 **But the §4c gap (no clip-off data exists) and the §5 unquantified search-time asymmetry justify ONE
@@ -297,7 +297,7 @@ The §6 control was run: **12 REAL fused-kernel runs** = {emender-mlp E97, gdn2-
 arm at its tuned LR, byte-identical to lb-compare, same disjoint held-out slice.
 **All 12/12 carry the `[fused-guard] … NO eager fallback` line; 0 eager paths.**
 
-**Verdict: the emender NO-GO is ROBUST to grad clipping — clip on/off does not
+**Verdict: the emender ties/loses-gdn2 result is ROBUST to grad clipping — clip on/off does not
 move the emender−gdn2 BPB gap beyond the lb-compare noise floor.**
 
 - **(i) Stability under clip-off:** **0 non-finite skips, 0 non-finite-loss
@@ -358,7 +358,7 @@ Full write-up + raw artifacts: `experiments/clip_sensitivity_20260621/RESULTS.md
 | 16 | skip-on-nonfinite landed AFTER all CMAES/verdicts | `5555b9d` 2026-06-21 vs searches 2026-06-10..17 | **VERIFIED** |
 | 17 | Cross-arm clip compression asymmetry (race): emender kept 0.645 on clipped steps (worst 0.195) vs gdn2 0.850 (worst 0.408) | computed from §4a grad samples | **VERIFIED** |
 | 18 | All matched verdicts ran at clip=1.0 | lb_compare `args.json` grad_clip=1.0 (all arms); racer/CMAES default | **VERIFIED** |
-| 19 | Confound direction is conservative ⇒ NO-GO robust | §5 reasoning; **§7 control: NO-GO robust CONFIRMED (Δgap within noise, 3 seeds), but "clip flatters emender" direction empirically corrected — clip-off is neutral-to-emender / mildly-helps-gdn2** | **VERIFIED (conclusion measured; mechanism corrected in §7)** |
+| 19 | Confound direction is conservative ⇒ emender-ties/loses result robust | §5 reasoning; **§7 control: emender-ties/loses result robust CONFIRMED (Δgap within noise, 3 seeds), but "clip flatters emender" direction empirically corrected — clip-off is neutral-to-emender / mildly-helps-gdn2** | **VERIFIED (conclusion measured; mechanism corrected in §7)** |
 | 20 | Clip on/off does not flip the emender verdict | **§7 control: 12 runs, clip-off A/B at tuned points, Δgap −0.036 (non-avg)/−0.053 (avg), within 0.01–0.09 floor; 0/12 divergence** | **MEASURED (§7) — verdict robust** |
 | 20b | Search-time CMAES per-candidate gdn2 grad traces (cold-start magnitude) | transient subprocess stdout, not committed (§3c, #13); §7 measures the *tuned-point* clip effect, not raw CMAES cold-start | **UNSUPPORTED (data gap — traces unrecoverable; verdict question resolved by §7)** |
 | 21 | Literal "step 322087" inf log line | overwritten on racer relaunch; not on disk; event documented only via `5555b9d` | **UNSUPPORTED as a standalone line (event VERIFIED via commit)** |

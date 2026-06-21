@@ -88,9 +88,9 @@ byte-identical to the search that produced it.
 | **pure-E97** | E97 split-edit **raw-write**, no MLP | dim2432 nh416 ns16 dep10 bs3 | 1265.6 M | 5.9511 | 9.85e-4 | ✅ probe |
 | m2rnn | M2RNN matrix RNN (XMA fused) | dim3072 nh346 ns16 dep13 bs4 | 1275.0 M | 6.0636 | 1.04e-3 | ⬜ optional |
 | ~~Emender-mix~~ | typed mixture f=0.971 (~97% e97_delta) | dim2432 nh212 ns32 dep10 bs2 | 1273.2 M | 6.0756 | 1.144e-3 | ❌ drop |
-| ~~M2 (e97-m2)~~ | E97 split-edit **delta**, chunked-linear, **R=3** multi-query readout, no MLP | dim2816 nh227 ns16 dep10 bs2 | 1273.1 M | 6.1843 | 7.10e-4 | ❌ NO-GO |
+| ~~M2 (e97-m2)~~ | E97 split-edit **delta**, chunked-linear, **R=3** multi-query readout, no MLP | dim2816 nh227 ns16 dep10 bs2 | 1273.1 M | 6.1843 | 7.10e-4 | ❌ rank-null |
 
-> **M2 (`cmaes-m2-1p3b`) — NO-GO, placed last.** Homologous CMA-ES (same protocol as the
+> **M2 (`cmaes-m2-1p3b`) — rank R statistically null, placed last.** Homologous CMA-ES (same protocol as the
 > arms above; the only added axis is the multi-query rank R∈1..8). Best = R\*=3, search
 > avg-loss **6.1843** — worse than every arm. The rank knob R is **statistically null** at
 > matched capacity: an iso-geometry 3-seed control gives R1 6.262 / R2 6.232 / R3 6.229 /
@@ -291,8 +291,8 @@ in-job hierarchical ScheduleFree-DiLoCo from
   roundtrip) — this retires the §3.4 risk-3 "x/y-mode semantics across merges
   unverified" for the in-job single-box case. Outer momentum is wired
   (`--diloco_outer_beta/--diloco_outer_lr`) for the later sample-efficiency sweep.
-- **RESOLVED (`diloco-loss-parity-longhorizon`) — token sample-efficiency: DiLoCo is a
-  NO-GO as the loss-parity path; the binding blocker is the TRAINING RECIPE, not
+- **RESOLVED (`diloco-loss-parity-longhorizon`) — token sample-efficiency: DiLoCo is
+  not a viable loss-parity path; the binding blocker is the TRAINING RECIPE, not
   parallelism.** Measured to 215 M tokens (≈4× the predecessor's 52 M), emender-1.286B,
   7-GPU, matched-token held-out BPB (full numbers + reproduce in
   `experiments/diloco_100b/longhorizon/RESULTS.md`):
@@ -312,7 +312,7 @@ in-job hierarchical ScheduleFree-DiLoCo from
     both (DDP 1.872 → **1.205**; DiLoCo β=0 2.313 → **1.562**). Against the non-degrading
     baseline the DiLoCo penalty is a **persistent ~+0.35 BPB that does NOT close** (flat
     plateau 64.5 M → 215 M) — the predecessor's apparent "closes at 215 M" was **mutual
-    collapse**, not parity. **DiLoCo NO-GO-as-loss-parity STANDS.** Full numbers:
+    collapse**, not parity. **DiLoCo not-a-loss-parity-path STANDS.** Full numbers:
     `experiments/diloco_100b/longhorizon_fix/RESULTS.md`.
   - **Hybrid (DDP-within-2-GPU-island + DiLoCo-across, `--diloco_island_size`):** the only
     variant that meaningfully closes the gap — **~halves the penalty to +0.25–0.32 BPB**

@@ -40,7 +40,7 @@ length-extrapolation experiments.
 - `.evaluate-*` / `.flip-*` / scoring / validation → **Evaluator** (only)
 
 ## Guardrail (project-specific bias to encode in every role)
-Trust measured artifacts over synthesis. No "stop / null / NO-GO" verdict without
+Trust measured artifacts over synthesis. No "stop / null" verdict without
 constrained-capacity, extrapolation-controlled, fair-comparison data on screen.
 Class-separation claims are tested at *constrained capacity + length-extrapolation*
 (capacity buys memorization, which the extrapolation regime defeats).
