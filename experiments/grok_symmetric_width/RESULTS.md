@@ -398,7 +398,7 @@ train-length expressivity-class separation):**
   block), wd=1.0 is where grokking occurs; the extrapolation analysis (§2–3) uses
   wd=1.0. p=512 is hard — only d1024 groks any seeds, and only ~2/4.
 
-**Bottom line.** The predecessor's NO-GO was a measurement artifact of scoring at
+**Bottom line.** The predecessor's verdict was a measurement artifact of scoring at
 the train length: width buys the linear arms train-length memorization, which
 *looks* like closing the gap. Pushed to far T, symmetric width does NOT let the
 linear arms extrapolate — wide-e97 extrapolates and "kicks ass" (length-invariant,

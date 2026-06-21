@@ -157,9 +157,9 @@ LM-competitive *on a wall-clock bar at scale* (loses to gdn2-mlp).
 
 ---
 
-## Q5 — GO / NO-GO
+## Q5 — Accept / reject
 
-### VERDICT: **NO-GO** for committing a full scale run / paper of the within-layer `e97_raw + gdn-neg` mixture **as an LM backbone.**
+### VERDICT: **gdn2-mlp wins; the within-layer `e97_raw + gdn-neg` mixture is competitive-but-dominated as an LM backbone** — do not commit a full scale run / paper of it as an LM backbone.
 
 The within-layer setup is a **genuine engineering and scientific success** — fused
 heterogeneous heads work, parity holds, the loud no-eager guard is armed, and one cell
@@ -177,13 +177,13 @@ compute and a more fragile kernel, the incumbent wins. **The data says: plain `g
 + MLP) is the better cell at scale.** The e97 split-edit / raw-write heads earn their place on
 **targeted expressivity probes (count/latch)**, not as a standing LM backbone.
 
-This is consistent across every doc: the scale pilot's explicit NO-GO, the within-layer study's
+This is consistent across every doc: the scale pilot's explicit dominated-at-wall-clock result, the within-layer study's
 "capability and time-bounded LM trade off; no single cell is both LM-best AND 5/5," and the
 audit's confirmation that the e97-raw *backbone* advantage is real on held-out but is an advantage
 in **token-efficiency at small scale**, not a held-out-BPB win that survives token-matching at
 scale.
 
-### Exact next step (NO-GO path)
+### Exact next step (adopt gdn2-mlp)
 
 1. **Adopt `gdn2-mlp` (GDN-2 + MLP) as the scale/production LM cell** — equal held-out BPB,
    equal capability-completeness, ~2.6× throughput, one mature kernel. This is also where the

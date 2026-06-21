@@ -403,7 +403,7 @@ control at its own CMA optimum, R\* at the GDN-2 geometry it is meant to improve
    `E97_WITHIN_LAYER_SYNTHESIS.md` Q1 / the 0.48B scale-pilot did.
 2. **Held-out BPB** — the LM run on the committed slices (`COMMA_PILE_BPB` /
    `heldout_multislice`), **averaged (schedule-free) weights**, **token-matched AND
-   wall-clock-noted** (the within-layer NO-GO turned on wall-clock — report both;
+   wall-clock-noted** (the within-layer wall-loss turned on wall-clock — report both;
    `e97-lm-1p3b` showed token-win can flip to wall-loss).
 
 ### 4.6 1.3B verdict rule

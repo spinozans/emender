@@ -1,6 +1,6 @@
 # E97_delta + gdn-neg within-layer @ 1.3B — CMA-ES, fast chunked kernel
 
-**Task:** `e97delta-1p3b` (re-run of the `e97-scale` NO-GO, which the task spec
+**Task:** `e97delta-1p3b` (re-run of the dominated `e97-scale` result, which the task spec
 debunks: WRONG scale 0.48B, WRONG cell `e97_raw` — a train-loss artifact, SLOW
 kernel).
 **Date:** 2026-06-08.
@@ -18,8 +18,8 @@ checkpoint round-trip (delta ~1e-6).
 **Does e97_delta + gdn-neg (within-layer, 1.3B, CMAES-tuned, fast chunked kernel)
 BEAT gdn2-mlp on held-out BPB — token-matched AND wall-clock-matched?**
 
-> **TIE / SPLIT — it BEATS token-matched but LOSES wall-clock. GO/NO-GO = NO-GO**
-> (keep gdn2-mlp as the 1.3B scale cell), but the prior NO-GO's *reasoning* is
+> **TIE / SPLIT — it BEATS token-matched but LOSES wall-clock**
+> (keep gdn2-mlp as the 1.3B scale cell), but the prior wall-clock verdict's *reasoning* is
 > overturned: e97_delta is **not** a pure liability — it is genuinely **more
 > token-efficient**.
 
@@ -36,10 +36,10 @@ disagree, and that disagreement is the result:
   it processes ~7.0 M vs ~5.0 M tokens and wins on the axis that actually governs
   fixed-GPU-hour pretraining.
 
-**Why NO-GO despite the token-matched win:** fixed-compute LM pretraining is
+**Why it loses wall-clock despite the token-matched win:** fixed-compute LM pretraining is
 wall-clock-bound (you have a GPU-hour budget, not a token budget), gdn2-mlp wins
 that axis decisively and is architecturally simpler (one kernel per layer, no
-within-layer two-block split). **Why the prior NO-GO's reasoning is overturned:**
+within-layer two-block split). **Why the prior wall-clock verdict's reasoning is overturned:**
 its stated cause was a "2.6× slower, 13–15 %-util" kernel — refuted here (§2,
 util 88–100 %). With the throughput objection fairly removed, e97_delta loses
 wall-clock only by the residual ~30 % cost of the *within-layer two-kernel split*
@@ -83,7 +83,7 @@ The fused chunked kernel runs at **88–99.5 % SM utilization**; the eager PyTor
 reference is a separate labeled arm at **8.62× slower** and is never on the
 training path. During the actual CMA + head-to-head screens, all workers held
 **94–100 % GPU utilization**. The "2.6× slower, 13–15 % util" premise behind the
-prior NO-GO is fully refuted — **this is why the wall-clock bar is now FAIR.**
+prior wall-clock verdict is fully refuted — **this is why the wall-clock bar is now FAIR.**
 
 Two real kernel-integration issues were found and fixed before any screen (both
 REAL, both in the task log):
@@ -161,7 +161,7 @@ CMA winner `cma_g2_e1` (21 gdn-neg / 43 e97_delta + MLP, 1.2532 B) vs `A_gdn2_ml
 
 The split is robust (consistent across both seeds on both axes), params are
 matched (1.253 vs 1.259 B), all round-trips passed. **Verdict: TIE — wins
-token-matched, loses wall-clock → NO-GO for replacing gdn2-mlp** (fixed-compute
+token-matched, loses wall-clock → does not replace gdn2-mlp** (fixed-compute
 pretraining is wall-clock-bound), with the throughput gap (within-layer split, not
 the kernel) the concrete lever to revisit.
 
@@ -196,7 +196,7 @@ recall/track loss, leaving a per-token edge but a throughput-driven wall-clock l
 | CMAES over the 1.3B parameterization; time-bounded fused screens; REAL Pile, no mocks | **pass** (§4) |
 | held-out BPB vs gdn2-mlp 1.3B, token-matched AND wall-clock-matched | **pass** (§5) |
 | capability spot-check (recall, track, count) | **pass** (§6) |
-| explicit BEAT/TIE/LOSE verdict + GO-NO-GO; doc committed | **TIE (wins token-matched, loses wall-clock) → NO-GO** (§0) |
+| explicit BEAT/TIE/LOSE verdict + accept/reject; doc committed | **TIE (wins token-matched, loses wall-clock) → does not replace gdn2-mlp** (§0) |
 
 **Artifacts:** `experiments/e97_delta_1p3b_cma/{shapes,screen,orchestrate,
 final_headtohead,capability}.py`; `results/{cma_all_results,headtohead_results,

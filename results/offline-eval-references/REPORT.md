@@ -1,7 +1,7 @@
 # Offline held-out BPB: emender vs gdn2 (the trustworthy matched-token comparison)
 
 **Task:** `offline-eval-references`. **Date:** 2026-06-17.
-**Verdict discipline:** This is **descriptive (a curve), not a GO/NO-GO.** See "Scope" at the
+**Verdict discipline:** This is **descriptive (a curve), not an accept/reject verdict.** See "Scope" at the
 bottom. Do **not** read an architecture verdict out of LM BPB alone.
 
 > **Fused-kernel re-run (task: `re-run-offline`, 2026-06-17).** The numbers below were
@@ -140,7 +140,7 @@ language-modeling BPB at matched tokens at this 1.3B/≤1 B-token operating poin
 an architecture verdict. Emender's claimed value is **capability** — specifically the
 modular-quadratic separator — which is a *separate* eval and is **not** captured by LM BPB.
 Per the prior 1.3B leaderboard work, LM-BPB ties/losses do not imply capability equivalence.
-**Do not write an emender vs gdn2 architecture GO/NO-GO from this curve.** The honest summary
+**Do not write an emender vs gdn2 architecture accept/reject verdict from this curve.** The honest summary
 is: *at matched tokens, gdn2-mlp leads emender on held-out pile-tail BPB by ~0.13–0.19 BPB;
 emender's separate capability case is untouched by this measurement.*
 

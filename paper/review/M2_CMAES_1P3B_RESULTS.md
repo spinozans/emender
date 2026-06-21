@@ -6,7 +6,7 @@ using the **exact same protocol** as the emender-mlp / gdn2-mlp / pure-E97 / m2r
 1.3B searches, so M2's best config is directly comparable on the `docs/SCALE_PLAN.md`
 §1 leaderboard — the "relatively speaking, how good is it?" question.
 
-## TL;DR — NO-GO
+## TL;DR — places last on the §1 leaderboard, rank knob R statistically null at matched capacity
 
 **M2 places LAST on the §1 leaderboard, and the multi-query rank knob R is statistically
 null at matched capacity.**
@@ -75,7 +75,7 @@ matched 1.3B capacity.** The CMA's nominal R\*=3 is within seed noise of R=1.
 
 ## NULL discipline — confound audit (every check cleared)
 
-A NO-GO must survive the same audit as a positive. It does:
+A NULL must survive the same audit as a positive. It does:
 
 1. **Capacity** — all configs 1.27–1.30 B (real build == estimate to < 1e-4), within ±3 %
    tolerance; M2-best 1273.1 M is in the same band as the leaderboard arms (1265–1287 M).

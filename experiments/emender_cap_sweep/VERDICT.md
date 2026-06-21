@@ -6,7 +6,7 @@ heads), (a) what mixture does CMA find, (b) across model dim {256,384,512,768,
 1024} where does the Emender's capability separation close, and (c) what is the
 efficiency cost? All measured fresh, bf16-uniform, fused split-edit asserted.
 
-## VERDICT: NO-GO / NULL.
+## VERDICT: NULL (no separation at matched compute).
 
 The CMA-found Emender adds **no capability that best-vs-best GDN-2 (typed) cannot
 reach**, **ties** GDN-2 on iso-param/iso-token loss, is **strictly worse on S5
@@ -58,7 +58,7 @@ The only "win" it shows is over the *fla-gdn* incumbent on the modquad cliff at
 the smallest dim — and that win is fully explained by the typed substrate (the
 all-`gdn2_recall` typed control wins it identically), not by the nonlinear
 emendment heads. This is consistent with, and extends to a measured capacity
-sweep, the convergent-loss-null / NO-GO line for the real sparse Emender.
+sweep, the convergent-loss-null line for the real sparse Emender.
 
 ## Threats to validity (stated honestly)
 

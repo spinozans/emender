@@ -21,7 +21,7 @@ Consequently the *ramp hypothesis is moot/NULL at I≤4* (no positive degradatio
 shrink; mature seed strictly better than scratch), and a viability number for
 100s–1000s islands is **REFUSED as an unsupported extrapolation** (flat curve, no
 slope; I=8+ unreachable on the leasable 4-GPU 2–5 pool, 6–7 reserved). The lone
-NO-GO uncovered: **outer momentum β=0.9 DIVERGES** (degradation +1.8→+35 BPB) — an
+adverse result uncovered: **outer momentum β=0.9 DIVERGES** (degradation +1.8→+35 BPB) — an
 outer-optimizer instability, not an island-count effect; ramp with the plain
 β=0 local-SGD average.
 
@@ -198,7 +198,7 @@ resolves as: there was **no positive degradation to shrink** (scratch/I=4 ≈ 0)
 and the mature seed makes the matched-token gap **negative** — strictly better
 than scratch, no island penalty on either seed.
 
-### S_well (seed @528 M) / I=4 + outer momentum β=0.9 — DIVERGED → NO-GO for the momentum knob [`finalize-diloco-scaling-seed-arm`]
+### S_well (seed @528 M) / I=4 + outer momentum β=0.9 — DIVERGED → momentum knob destabilizes consensus [`finalize-diloco-scaling-seed-arm`]
 | total tokens | consensus BPB | ref BPB (matched) | **degradation** |
 |---:|---:|---:|---:|
 | 577.5 M (step 66000) | 3.198 | 1.351 | **+1.85 BPB** |
@@ -212,7 +212,7 @@ loss climbs monotonically 6.08→8.81→14.75→19.57 (per-step loss spiking to 
 held-out BPB blows up 3.2→36.4. This is **not an island-count effect** — it is an
 outer-optimizer instability (β=0.9 with outer_lr=1.0 overshoots the
 pseudo-gradient step). The stable, performant configuration is the base
-local-SGD average (β=0); **momentum is a NO-GO at this K/island/seed setting**,
+local-SGD average (β=0); **momentum diverges at this K/island/seed setting**,
 consistent with the prior `diloco-loss-parity` finding that momentum does not
 help. The run was FUSED (guard PASS on all 4 ranks) and ran to step 70000 — a
 valid measurement of divergence, not an infra failure.
@@ -226,7 +226,7 @@ valid measurement of divergence, not an infra failure.
 | S0 / I=4 | 4 | 2,3,4,5 | scratch | 250 / 0 | reused `stab_k250` (agent-1504), consensus-proxy scored | `/mnt/nvme1n1/erikg/diloco_sweep/stab_k250` |
 | S_well / I=2 | 2 | 3,4 | step 64500 | 250 / 0 | **COMPLETE** (step 70000), fused PASS; 4 consensus pts scored | `/mnt/nvme1n1/erikg/diloco_sweep/swell_i2_k250` |
 | S_well / I=4 | 4 | 2,3,4,5 | step 64500 | 250 / 0 | **COMPLETE** (step 70000), fused PASS 4 ranks; 4 consensus pts scored, deg −0.075…−0.129 | `/mnt/nvme1n1/erikg/diloco_sweep/swell_i4_k250` |
-| S_well / I=4 +mom | 4 | 2,3,4,5 | step 64500 | 250 / 0.9 | **COMPLETE but DIVERGED** (step 70000), fused PASS 4 ranks; bpb 3.2→36.4 — momentum NO-GO | `/mnt/nvme1n1/erikg/diloco_sweep/swell_i4_mom_k250` |
+| S_well / I=4 +mom | 4 | 2,3,4,5 | step 64500 | 250 / 0.9 | **COMPLETE but DIVERGED** (step 70000), fused PASS 4 ranks; bpb 3.2→36.4 — momentum diverges | `/mnt/nvme1n1/erikg/diloco_sweep/swell_i4_mom_k250` |
 
 GPU discipline: all leases via `scripts/gpu_lease.sh` with
 `GPU_LEASE_VISIBLE=2,3,4,5`; references (0–1) and the reserved 6–7 left
@@ -290,9 +290,9 @@ doom verdict.
 | Dimension | Score | Rationale |
 |---|---:|---|
 | Confound rigor (fused / sharding / consensus / SF-state / matched-token) | 0.95 | All 8 audited and PASS; the eval-tool per-replica-token bug was caught and corrected; the rank-0-replica vs consensus asymmetry on the reused scratch point is disclosed. |
-| Measured deliverables | 0.93 | Reference curve (5 pts) + scratch/I=4 + **seed/I=2 (4 pts)** + **seed/I=4 β=0 (4 pts)** + **seed/I=4 β=0.9 (4 pts)** ALL run to completion (step 70000) and scored on the clean tensor — the full I=4 column + the {2,4} seed curve are MEASURED, closing the matched-island ramp comparison (seed/I=4 0.084 BPB better than scratch/I=4 at ~708 M). The β=0.9 momentum cell adds a clean DIVERGENCE NO-GO. Only the scratch/I=2 corner (not in this task's queue) is unmeasured; it is not needed — both seed curves and the scratch/I=4 anchor already establish the flat {2,4} verdict. |
+| Measured deliverables | 0.93 | Reference curve (5 pts) + scratch/I=4 + **seed/I=2 (4 pts)** + **seed/I=4 β=0 (4 pts)** + **seed/I=4 β=0.9 (4 pts)** ALL run to completion (step 70000) and scored on the clean tensor — the full I=4 column + the {2,4} seed curve are MEASURED, closing the matched-island ramp comparison (seed/I=4 0.084 BPB better than scratch/I=4 at ~708 M). The β=0.9 momentum cell adds a clean measured DIVERGENCE. Only the scratch/I=2 corner (not in this task's queue) is unmeasured; it is not needed — both seed curves and the scratch/I=4 anchor already establish the flat {2,4} verdict. |
 | GPU / execution discipline | 1.00 | Idle-only broker leases ≤4 within 2–5; references (0–1) and reserved 6–7 untouched throughout; both I=4 cells waited in the broker queue for GPU 2 (held by a concurrent agent) rather than clobbering it; all leases auto-released. |
-| NULL discipline | 0.96 | "No degradation" survives the confound stack on the full I=4 column; the flat {2,4} curve refuses a 100s–1000s slope rather than fabricating one; reference noise floor stated and every degradation judged against it; the momentum divergence is reported as a knob NO-GO, not hidden. |
+| NULL discipline | 0.96 | "No degradation" survives the confound stack on the full I=4 column; the flat {2,4} curve refuses a 100s–1000s slope rather than fabricating one; reference noise floor stated and every degradation judged against it; the momentum divergence is reported as a measured knob divergence, not hidden. |
 
 ## 8. Underspecification / caveats
 - The task rubric is **well-specified** (concrete grid, confound stack, matched-token definition). Not underspecified.

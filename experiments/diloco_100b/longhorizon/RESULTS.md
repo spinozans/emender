@@ -154,9 +154,9 @@ the **healthy regime** (to 1000 steps = 86 M) against the clean DDP floor. Held-
 
 ---
 
-## 4. GO / NO-GO + days-to-100B
+## 4. Accept / reject + days-to-100B
 
-**DiLoCo for the 100 B seed run: NO-GO as the loss-parity path.** The throughput win is
+**DiLoCo for the 100 B seed run: not a viable loss-parity path.** The throughput win is
 real (1.85× DDP → ~20 d vs 37 d) but it does **not** translate into a matched-token loss
 win: plain local-SGD DiLoCo (`outer_beta=0`) carries a persistent **~0.45 BPB** matched-
 token penalty in the healthy regime; outer momentum (β=0.5/0.9 × lr=0.7/1.0) and small-K

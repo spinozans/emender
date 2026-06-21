@@ -1,10 +1,10 @@
-# E97 split-edit delta: chunked-parallel kernel flips the within-layer NO-GO
+# E97 split-edit delta: chunked-parallel kernel flips the within-layer throughput wall
 
 **Task:** `chunk-e97-kernel` · **Date:** 2026-06-08 · GPU: NVIDIA RTX 6000 Ada (AD102, 142 SM, ~100 KB shared mem/SM)
 
 ## TL;DR
 
-The within-layer NO-GO verdict ([e97-within-layer-tradeoff], [e97-scale-pilot-nogo])
+The within-layer latency-bound finding ([e97-within-layer-tradeoff], [e97-scale-pilot-dominated])
 hinged **entirely** on the E97 split-edit delta kernel being ~2.6× slower than
 GDN-2 because it ran a **sequential `for t in range(T)` outer-product scan**
 inside one Triton program per (batch, head) — latency-bound, unable to saturate
@@ -23,8 +23,8 @@ backward** kernel. Result, all bf16, matched shapes, **fwd+bwd**:
 | scale_1p3b_wide 4,2048,32,32,32 | 3.683 | 33.6 % | **1.842** | **99.8 %** | **0.50× (2× faster)**   | 3.64× |
 
 **The chunked fused E97 kernel is FASTER than GDN-2 at every shape.** The prior
-NO-GO premise (2.6× slower, 13–15 % util) is **refuted** — the throughput
-reasoning behind the within-layer/scale NO-GO is **flipped**.
+latency-bound premise (2.6× slower, 13–15 % util) is **refuted** — the throughput
+reasoning behind the within-layer/scale latency-bound finding is **flipped**.
 (`experiments/e97_chunked_kernel/bench_kernel.json`.)
 
 **Reproduction (3 independent re-runs, same GPU, 2026-06-08).** The qualitative
@@ -166,7 +166,7 @@ and applies the silu output gate afterwards. `TypedHeadMixtureLayer` exposes
 
 ## What this unblocks
 
-The throughput premise of the within-layer NO-GO is overturned: a linear-state
+The throughput premise of the within-layer throughput wall is overturned: a linear-state
 e97_delta head now trains at **GDN-2-class (better-than-GDN-2) throughput**. The
 downstream task **e97delta-1p3b** can run a fair param-/token-matched 1.3B
 comparison without the kernel being a latency confound. Whether e97_delta adds
@@ -175,4 +175,4 @@ comparison without the kernel being a latency confound. Whether e97_delta adds
 the **performance** objection only.
 
 [e97-within-layer-tradeoff]: e97 within-layer trade-off memo
-[e97-scale-pilot-nogo]: e97-scale pilot NO-GO memo
+[e97-scale-pilot-dominated]: e97-scale pilot: dominated memo

@@ -19,7 +19,7 @@ held-out measurement (40 batches) with fresh-process round-trip in the prior bat
 e97_delta+gdn-neg now MATCH/BEAT gdn2-mlp on wall-clock-matched held-out BPB at
 1.3B?**
 
-> **NO-GO — decisive, on BOTH axes, and the premise is REFUTED.**
+> **Loses on BOTH axes — decisive, and the premise is REFUTED.**
 >
 > The ~40 % gap was **never** the within-layer two-kernel split. It was that the
 > e97_delta heads ran the **slow sequential T-scan**: the prior run used the
@@ -95,7 +95,7 @@ finite) and the full 720-s head-to-head ran to `wall_cap` with `nan_seen=False`.
 
 ---
 
-## 3. Why it is NO-GO — attribution (each arm 720 s, REAL Pile)
+## 3. Why it loses on both axes — attribution (each arm 720 s, REAL Pile)
 
 Decomposing the candidate's quality loss with kernel/state controls
 (`attribution_control.py`):
@@ -170,7 +170,7 @@ state already fused into a chunked scan). Pursue that, not split-fusion.
   0.948× microbench, 18/18 util high); residual full-protocol gap (0.78×) quantified
   (§4).
 - [x] **1.3B head-to-head, token AND wall-clock matched, 2 seeds, REAL Pile** — done;
-  explicit **NO-GO**; residuals + next lever named (§3–4).
+  **loses on both axes**; residuals + next lever named (§3–4).
 
 ## 6. Anti-regression confirmation
 
@@ -187,5 +187,5 @@ state already fused into a chunked scan). Pursue that, not split-fusion.
 Fusing/chunking **does** close the kernel throughput gap, but only by forcing
 e97_delta to linear state, which **erases its token-efficiency** (tanh-state 2.055
 → identity 2.096, below gdn2-mlp 2.075) and the chunked kernel degrades it further
-(2.252) — **NO-GO**; the real blocker is bounded-state ⊥ chunkable, and the next
+(2.252) — **loses on both axes**; the real blocker is bounded-state ⊥ chunkable, and the next
 lever is a chunkable bounded-state kernel (`gdn2_nonlin_shell`), not split-fusion.

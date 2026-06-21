@@ -2,7 +2,7 @@
 
 > **CORRECTIONS (post-review) — the auto-generated verdict in this file overstates against the Emender. Read these first:**
 > 1. **`emender-mlp` = E97 split-edit DELTA + MLP** (e88_raw_write=0, verified across all 520 eval args) — *not* raw-write. The capability-retaining delta cell is what beat gdn2-mlp.
-> 2. **On the primary metrics, emender-mlp LEADS gdn2-mlp**: search avg-loss 5.8606 < 5.8949 and non-avg held-out 2.091 < 2.101. gdn2-mlp wins only on the *averaged* basis, which this run itself flags as the inferior/artifact basis. The fair MLP-vs-MLP fight leans Emender (within the 0.088 noise band). So "gdn2-mlp best all-around / Emender does not win / clean NO-GO" is **not supported**.
+> 2. **On the primary metrics, emender-mlp LEADS gdn2-mlp**: search avg-loss 5.8606 < 5.8949 and non-avg held-out 2.091 < 2.101. gdn2-mlp wins only on the *averaged* basis, which this run itself flags as the inferior/artifact basis. The fair MLP-vs-MLP fight leans Emender (within the 0.088 noise band). So "gdn2-mlp best all-around / Emender does not win" is **not supported**.
 > 3. **The separators are the grok-suppressed battery** (LR 3e-4 fixed, no wd-sweep, short training, dim512/dep4, 2 seeds), and `modular_counter` is *bounded/finite-state* counting where linear-state is *expected* to win — NOT the Emender's unbounded-counting claim. Capability is **UNDETERMINED** pending a proper grok test (AdamW + wd-sweep + train-to-grok on unbounded separators, GDN-2 width control).
 
 All 5 CMA-best models at THEIR OWN found 1.3B geometry. SAME protocol: pile.txt seed42 train (15-min budget, matching the CMA search), bf16 uniform + fused kernels (E97 split-edit Triton / m2rnn XMA / gdn2 external), p50k_base, ctx 2048, schedule-free AdamW. Held-out = ONE fixed disjoint pile.txt-tail slice (64 chunks / 131072 scored tokens, byte-for-byte identical for every model). Held-out BPB = (CE_nats/ln2)/3.878 bytes/token.
@@ -78,7 +78,7 @@ Matched capacity (dim=512, depth=4) across all arms = capacity/width control; ea
   squarely competitive.
 - **Verdict (LM bpb): the Emender variants TIE the GDN-2 / m2rnn baselines. No win.**
   This upholds and extends the convergent-loss null established across the prior emender
-  tasks (emender-real-1p3b NO-GO, emender-cap-sweep NULL, opt-1p3b null, lb-emender-mix
+  tasks (emender-real-1p3b NULL at scale, emender-cap-sweep NULL, opt-1p3b null, lb-emender-mix
   near-pure-E97).
 
 ### Formal separators → Emender does NOT win; the counting capability is GDN-2's, not E97's
@@ -107,8 +107,8 @@ control), train T=128, eval T∈{128…1024}, 2 seeds, LR matched at 3e-4 for ev
 formal separators against the GDN-2 baselines at matched conditions — it ties on LM and
 loses the one discriminating separator (modular_counter) to gdn2-mlp.** The pure-E97 cell
 outright fails modular counting. **gdn2-mlp is the best all-around model**: tied-best LM
-bpb (non-avg), best LM bpb (avg), and decisive winner on modular_counter. This is a clean
-NO-GO for the Emender as an LM-or-capability improvement over GDN-2 at 1.3B.
+bpb (non-avg), best LM bpb (avg), and decisive winner on modular_counter. The Emender ties
+LM held-out bpb and loses the modular_counter separator to GDN-2 at 1.3B.
 
 ### Caveats (honesty)
 - Single training seed for the LM held-out arms, 15-min budget → the LM band (0.088 BPB)

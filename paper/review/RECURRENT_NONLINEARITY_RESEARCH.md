@@ -8,7 +8,7 @@
 1. The honest axis is **not** "linear vs nonlinear." It is the **shape of the state map**: *saturating* (tanh), *non-saturating-rectifying* (relu/softplus), *affine-signed* (identity/linear). Each buys a **different** computational regime, and on a **single** matrix-state cell they **conflict** — exactly our E88 finding, and exactly the saturated-RNN hierarchy of Merrill et al. 2020.
 2. A recurrently-applied **elementwise nonlinearity of any shape (tanh OR relu OR softplus) breaks chunkability** — it has no chunked-matmul form because pointwise-then-mix is not associative. This is a hard, measured constraint in our kernels, not an opinion. So "swap tanh→relu on the state map" is a **double penalty** for an LM cell: it costs finite-state expressivity (E88) *and* it costs throughput (no chunked kernel).
 3. The LSTM/GRU resolution — and the modern linear-attention resolution — is the same: **keep the state-to-state map LINEAR (chunkable) and put all the nonlinearity in input-driven gates + a bounded readout.** The unbounded *counter* lives in a linear additive cell; the *latch/control* lives in saturating gates that are functions of the input, never composed recurrently through the state. State-*tracking* is recovered not by a nonlinear state map but by **negative/complex eigenvalues** in the linear map (Grazzi et al. 2025) — which our `gdn-neg` head already exploits.
-4. **Recommendation for the e97 cell: do NOT put the nonlinearity on the recurrent state.** Keep the chunkable linear `e97_delta` backbone, recover track via `gdn-neg`, and add the LSTM motif as a **bounded readout** (`tanh`/`silu` on the *output* `Sᵀq`, post-scan) plus optional **dedicated unbounded "counter" heads** (forget-gate pinned near 1). Concrete configs in §7. A per-step relu/softplus state map should be kept **only as a sequential expressivity probe** to measure the counting ceiling — it is not a production LM lever (the project already proved the chunkable-shell compromise is a NO-GO).
+4. **Recommendation for the e97 cell: do NOT put the nonlinearity on the recurrent state.** Keep the chunkable linear `e97_delta` backbone, recover track via `gdn-neg`, and add the LSTM motif as a **bounded readout** (`tanh`/`silu` on the *output* `Sᵀq`, post-scan) plus optional **dedicated unbounded "counter" heads** (forget-gate pinned near 1). Concrete configs in §7. A per-step relu/softplus state map should be kept **only as a sequential expressivity probe** to measure the counting ceiling — it is not a production LM lever (the project already measured the chunkable-shell compromise flat 0.88× throughput with no token-matched edge and no capability uplift, losing wall-clock to `gdn2-mlp`).
 
 ---
 
@@ -142,9 +142,9 @@ But the note states the constraint explicitly:
 
 This generalizes to **any** elementwise `f` (tanh, relu, softplus): `f(A·S + b)` does not factor across a chunk, so there is no parallel scan. Confirmed by our memory line *"bounded-state ⊥ chunkable = FUNDAMENTAL"* — and it is broader than *bounded*: **any nonlinear state map ⊥ chunkable.** A non-saturating relu state map is therefore **just as un-chunkable as tanh** — it does not even buy back the throughput it costs.
 
-### 5.2 The "apply the nonlinearity sparsely" compromise was tested — NO-GO
+### 5.2 The "apply the nonlinearity sparsely" compromise was tested — flat throughput, no token edge, no capability uplift
 
-The obvious escape — chunk linearly, apply `f(S)` only at **chunk boundaries** (every `C` steps) — is implemented as `gdn2_nonlin_shell` (`ndm/models/gdn2_nonlin_shell.py`, fused Triton). It was run at **1.3B** with chunk-size `C` as a free wall-clock axis (`E97_WALLCLOCK_CMA_RESULTS.md`): **NO-GO.** Fused tanh throughput was **flat 0.88× for all `C`** (`C` is not a speed lever), there was **no token-matched edge** (a TIE that does not grow at longer budget), and **no capability uplift**; `gdn2-mlp` won wall-clock. So even the principled compromise that preserves *most* chunkability does not earn its place.
+The obvious escape — chunk linearly, apply `f(S)` only at **chunk boundaries** (every `C` steps) — is implemented as `gdn2_nonlin_shell` (`ndm/models/gdn2_nonlin_shell.py`, fused Triton). It was run at **1.3B** with chunk-size `C` as a free wall-clock axis (`E97_WALLCLOCK_CMA_RESULTS.md`): **it lost wall-clock.** Fused tanh throughput was **flat 0.88× for all `C`** (`C` is not a speed lever), there was **no token-matched edge** (a TIE that does not grow at longer budget), and **no capability uplift**; `gdn2-mlp` won wall-clock. So even the principled compromise that preserves *most* chunkability does not earn its place.
 
 ### 5.3 The two-pathway design IS kernel-compatible — *if you place the nonlinearity correctly*
 
@@ -171,7 +171,7 @@ The key realization: **the saturating nonlinearity in a two-pathway cell never s
 | `relu`/`softplus` on recurrent state | **yes** | no | partial | **NO** | counting probe only; double penalty for an LM cell |
 | **linear state + neg eigenvalue** (`gdn-neg`) | partial | **yes (1.0)** | yes | **YES** | track+recall+latch, fast — current backbone |
 | **linear state + input gates + bounded readout** (LSTM/mLSTM motif) | **yes** (unbounded cell) | yes (neg eig) | **yes** (gates) | **YES** | the target design |
-| nonlinearity at chunk boundaries (`gdn2_nonlin_shell`) | no uplift | no uplift | — | partial | **NO-GO** (measured, §5.2) |
+| nonlinearity at chunk boundaries (`gdn2_nonlin_shell`) | no uplift | no uplift | — | partial | **lost wall-clock** (flat 0.88×, no token edge; measured, §5.2) |
 
 The question "which recurrent nonlinearity?" dissolves: **the recurrent state map should be linear.** What varies is *where else* the nonlinearity goes — gates (always), readout (for a bounded counter readout), eigenvalue sign (for tracking). The single capability that strictly wants a non-saturating *recurrent* map is unbounded counting, and even there the LSTM gets it from a **linear additive cell with a separate bounded readout**, not from `relu(state)` — which is why LSTM (0.951) beats e88-relu (0.893) on counting *and* keeps S5 at 1.0.
 
@@ -201,11 +201,11 @@ Replace the sigmoid input gate with **exponential gating** (mLSTM-style, with th
 
 ### Config D — Per-step `relu`/`softplus` state map — **EXPRESSIVITY PROBE ONLY, not an LM cell**
 `e97_state_nonlin='relu'` (or `'softplus'`), which **forces the sequential kernel** (the loud no-eager guard is intact). Run **only** on the counting/expressivity battery to measure the *ceiling* a non-saturating recurrent map reaches, as the upper reference for Configs A–C.
-- *Explicit non-goal:* this is **not** a candidate production cell. §5.1 (no chunked form) + §5.2 (`gdn2_nonlin_shell` NO-GO) + E88 (relu *hurts* S5) make a recurrent relu/softplus state map a measured dead end for an LM backbone. Use it to bound what A–C should aim for on counting, then discard.
+- *Explicit non-goal:* this is **not** a candidate production cell. §5.1 (no chunked form) + §5.2 (`gdn2_nonlin_shell` lost wall-clock) + E88 (relu *hurts* S5) make a recurrent relu/softplus state map a measured dead end for an LM backbone. Use it to bound what A–C should aim for on counting, then discard.
 
 ### What we are explicitly NOT recommending
 - **Do not** change the default to `relu`/`softplus` on the recurrent state. It is un-chunkable (§5.1, same as tanh) *and* it demotes S5/S3 (E88 §4). Double penalty.
-- **Do not** revisit `gdn2_nonlin_shell` (nonlinearity at chunk boundaries). Already a 1.3B NO-GO (§5.2).
+- **Do not** revisit `gdn2_nonlin_shell` (nonlinearity at chunk boundaries). Already lost wall-clock at 1.3B (§5.2).
 - **Do not** keep `tanh` on the recurrent state as the default. It is the worst-of-both-worlds shape (E88 §5) and breaks chunkability. If a head must stay sequential-tanh for a targeted latch probe, scope it to that probe, not the LM backbone.
 
 ### Priority
@@ -217,7 +217,7 @@ Replace the sigmoid input gate with **exponential gating** (mLSTM-style, with th
 
 - **E88 absolute S5 numbers are low (under-trained at the shared 8M/short budget);** but the *ordering* is seed-stable and reproduces prior CMA-tuned findings, and the LSTM hitting 1.0 at the same budget proves the task is learnable — so the relative capability map is sound (E88 §4 caveat).
 - **Counting in a linear gated cell is not free** — e88-linear counts *worst* (0.812). The claim is not "linear counts well," it is "the *LSTM's* linear cell + bounded readout + separate controller counts well (0.951) and chunks." Config A/B test whether the e97 head reproduces that with the readout/counter-head separation; if A/B do **not** lift counting toward LSTM levels, that is a real negative result and the counting capability may require the sequential pathway (Config D ceiling) — to be settled empirically, not assumed.
-- **The within-layer LM verdict is independently NO-GO at scale on throughput grounds for the *raw-write* heads** (`E97_WITHIN_LAYER_SYNTHESIS.md`); this document concerns the **state-nonlinearity** axis specifically and recommends the chunkable linear `e97_delta`/GDN path, which is exactly the path that survived that audit.
+- **The within-layer LM verdict independently loses at scale on throughput grounds for the *raw-write* heads** (`E97_WITHIN_LAYER_SYNTHESIS.md`); this document concerns the **state-nonlinearity** axis specifically and recommends the chunkable linear `e97_delta`/GDN path, which is exactly the path that survived that audit.
 - **`hochreiter1991`** (the 1991 diploma thesis) was *not* separately web-verified; the latching-gradient claim rests on the verified **Bengio–Simard–Frasconi 1994** paper, which is the standard citation for it.
 
 ---

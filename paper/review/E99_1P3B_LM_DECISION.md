@@ -236,7 +236,7 @@ the scale decision, dense GDN-2 wins.
 ## 6. Full-run config SPEC — dense GDN-2 (`fla-gdn`, bf16) — FOR HUMAN REVIEW ONLY
 
 > **NOT an instruction to launch.** This is the spec a human approves before any
-> multi-day run. Token budget, exact node count, and go/no-go remain human decisions.
+> multi-day run. Token budget, exact node count, and accept/reject remain human decisions.
 
 **Architecture.** Native GDN-2 / GatedDeltaNet via the production `--level fla-gdn`
 (`ndm/models/ladder_lm.py` FLA `GatedDeltaNet`, `allow_neg_eigval=True`), the proven
@@ -322,7 +322,7 @@ multi-day compute:
 **Optional, even cheaper:** the §6 LR×shape warm pilot to pick the dense GDN-2 shape
 (controls dim2688 vs handoff dim3456). 2–4 configs × ~1 h.
 
-Both are proposed as `wg` follow-ups below — neither gates the human go/no-go on the
+Both are proposed as `wg` follow-ups below — neither gates the human accept/reject on the
 dense GDN-2 SPEC.
 
 ---

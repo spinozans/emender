@@ -96,5 +96,5 @@ data" leg.)
   **capability**, not implementation.
 - Throughput is the expected sequential-scan story: a short-T win but a long-T (≈0.5x at
   T=1024) loss vs chunked GDN-2. A capability case for this head must clear that wall-clock
-  bar at LM-relevant T, mirroring the convergent-loss-null / wall-loss-NO-GO pattern seen
+  bar at LM-relevant T, mirroring the convergent-loss-null / wall-loss pattern seen
   for the other exotic heads in this program.

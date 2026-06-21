@@ -520,7 +520,7 @@ The narrowed claim "**β=0 averaging keeps DiLoCo in-basin from any maturity
 | wrong island count | measured in-basin at `I ∈ {2,4}` (β=0) and the live `I=6` blow-up is β=0.9 only; **no β=0 I=6 control exists** (`seed_race_i6` crashed at 0 merges) → §0/§5 refuse to claim β-isolated I=6 safety; it is the #1 follow-up (§4.4). Island count *does* move the per-merge barrier (528 M I2→I4, z≈−2.45) but does not push any β=0 cell out of basin. No extrapolation to 100s–1000s islands. |
 | **β not cleanly isolated at I=6** | the clean single-variable β control is the `swell_i4` β=0/β=0.9 pair (same seed/I/lr); `outer_mom_i6` confounds β with `outer_lr=0.5`+I=6 and is cited only as corroboration, not isolation. |
 | **merge-code correctness** | a β=0 run on the *pre-fix* merge (`native_k250.MERGEBUG`) diverged to loss 63 → safety is conditional on the post-`473b4c9`/`177cca9` merge; stated explicitly, not hidden. |
-| outer schedule | restricted to `β=0` for the safe claim; the `β=0.9` divergence is reported as the binding NO-GO. |
+| outer schedule | restricted to `β=0` for the safe claim; the `β=0.9` divergence (blow-up out of basin) is reported as the binding constraint. |
 | plain vs momentum average | the offline/the production merge is the `β=0` local-SGD branch (`outer_lr=1`), byte-matched to `diloco_merge`. |
 | matched tokens | held-out degradations at matched **total** tokens (seed-aware piecewise: seed ×1, DiLoCo ×I); the train-loss continuity is matched-**step** (same drift). |
 | held-out noise floor & extrapolation | the single-GPU reference is non-monotone (±0.17 BPB constant-LR band) → 528 M "SWA benefit" is reported as **no-divergence within noise**, not a calibrated gain; the 1.233 B cell uses a clamped reference for 23/30 points (direction holds on the 7 real-overlap points, mean −0.109). |
@@ -578,7 +578,7 @@ move the K=250 operating-point verdict.
   cross are **unmeasured**; merge-code correctness is a precondition.
 - **Spend the de-risking budget on the knobs that actually gate safety:**
   (1) pin the outer optimizer to plain average **`β=0` (never `0.9`)** — the single
-  binding NO-GO; (2) use the **corrected schedule-free merge** (post-`473b4c9`);
+  binding constraint (`β=0.9` diverges out of basin); (2) use the **corrected schedule-free merge** (post-`473b4c9`);
   (3) keep `K=250` (the only measured-safe cadence) unless the §4.4 probe has
   cleared a larger `K` — if the interconnect forces `K≫250`, seed past a healthy
   maturity first rather than scaling out from-scratch at aggressive cadence.

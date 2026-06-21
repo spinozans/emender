@@ -11,7 +11,7 @@ that is **capability-complete** at small scale. Small-scale screens are suggesti
 real test is **LM competitiveness at a meaningful scale on held-out BPB**. This pilot
 scales the winning composition to a ~0.48 B-parameter LM and asks: does it MATCH/BEAT
 the two reference cells — `gdn2-mlp` and `e97_raw+MLP` — on REAL Pile held-out BPB,
-param-matched and FUSED? GO / NO-GO for a full scale run.
+param-matched and FUSED? Accept / reject for a full scale run.
 
 ## Anti-regression confirmation (mandatory, all PASS)
 
@@ -169,7 +169,7 @@ and **BEATS `e97_raw+MLP`** (3.3636 vs 3.8951, −0.53 BPB). It is **capability-
 at scale (recall 0.96 / track 1.0 / count 1.0, track+count extrapolating to 8× length).
 So it clears the literal "match/beat both references" bar.
 
-### GO / NO-GO for a full scale run: **NO-GO**
+### Accept / reject for a full scale run: **dominated (ties gdn2-mlp on BPB, no unique capability, ~2.6x slower wall-clock)**
 
 The within-layer e97 composition is **competitive but dominated**, not scale-worthy:
 

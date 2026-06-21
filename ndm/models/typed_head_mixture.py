@@ -227,7 +227,7 @@ class TypedHeadMixtureLayer(nn.Module):
         cast_recurrent_bf16: bool = True,
         e97_state_nonlin: str = 'tanh',
         # Route the e97_delta head through the chunked-parallel fwd+bwd Triton
-        # kernel (GDN-2-class throughput; flips the within-layer NO-GO). Engages
+        # kernel (GDN-2-class throughput; flips the within-layer latency-bound finding). Engages
         # only for LINEAR-state e97_delta (per-step tanh is non-chunkable); with
         # e97_state_nonlin='tanh' the head keeps the sequential split-edit kernel.
         use_chunked_e97_delta: bool = True,

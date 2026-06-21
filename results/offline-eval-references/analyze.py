@@ -2,7 +2,7 @@
 """Build the matched-token held-out BPB curve (emender vs gdn2) and the
 who-leads-at-matched-tokens table from the offline eval CSVs.
 
-task: offline-eval-references. Descriptive only (a curve) -- NOT a GO/NO-GO.
+task: offline-eval-references. Descriptive only (a curve) -- not an accept/reject verdict.
 Both references were scored by scripts/eval_checkpoint.py on the SAME held-out
 tensor (heldout_pile_tail_p50k_2048_1m.pt, md5 8e1198ab..., bytes_per_token
 3.945132), y-mode swap applied, forward-only, fused kernel.

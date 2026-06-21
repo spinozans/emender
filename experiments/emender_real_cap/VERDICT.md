@@ -6,7 +6,7 @@ split-edit with per-step bounded `tanh`), at MATCHED PRECISION. Does that sparse
 sprinkle (a) tie GDN-2 on loss at ~same speed and (b) add expressivity pure GDN-2
 cannot reach? Mixture **found by CMA-ES**, not hand-picked.
 
-**Verdict: NO-GO / NULL, at matched precision and with the mixture discovered by CMA.**
+**Verdict: NULL (no separation at matched compute), at matched precision and with the mixture discovered by CMA.**
 The sparse nonlinear emendment sprinkle adds **no capability pure GDN-2 cannot reach**,
 **ties (within noise) on token-matched loss**, and runs at **~0.75× throughput** (not the
 0.95× target). This extends the convergent-loss null (architecture → optimization →
@@ -120,8 +120,8 @@ The reliable evidence (expressivity NULL + 0.75× throughput + token-loss tie) s
 **no nonlinear fraction is justified — the optimum is pure GDN-2 (f=0).** If the
 downstream `emender-real-1p3b` nonetheless tests a nonzero Emender, carry the
 **CMA-found minimal sprinkle ≈ 4/64 `e97_delta`** (6.25%, the smallest loss-competitive
-fraction CMA kept), with the pre-registered expectation of **NO-GO** (token-tie,
-wall-loss from 0.75×, no capability gain). m2rnn was not needed to reach this verdict.
+fraction CMA kept), with the pre-registered expectation of a **token-tie,
+wall-loss from 0.75×, no capability gain**. m2rnn was not needed to reach this verdict.
 
 ## Validation checklist
 - [x] Sparse ratio CMA-SEARCHED (not hand-picked): found ≈6–9% nonlinear; search space +

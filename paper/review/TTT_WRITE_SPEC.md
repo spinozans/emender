@@ -188,7 +188,7 @@ breaks the closed-form chunk solve — sequential (§3).
 ## 3. Chunkability — honest classification per variant
 
 The governing principle, established for this repo's heads in
-`fuse-2kernel-nogo-tanh-perp-chunkable` (memory) and `phi_shell` ("all per-step φ are
+`fuse-2kernel-tanh-perp-chunkable` (memory) and `phi_shell` ("all per-step φ are
 non-chunkable"): **a per-token update is chunk-parallelizable iff it is an affine (linear) map of the
 state.** Chunking works by composing per-token transition operators into one per-chunk operator and
 prefix-scanning across chunks; that composition is closed only for affine maps. The inner-optimizer
@@ -295,7 +295,7 @@ discipline (line 47) applies to `log μ` to keep `exp(−gμ)` from overflowing 
   ≈ unchanged (the `[C,C]` matmuls dominate and are unchanged); expect **GDN-2-class throughput**, the
   same band as e97 (0.33–0.53× GDN-2 wall = *faster*; `E97_CHUNKED_KERNEL_NOTE.md`). Momentum is a
   *constant additive* overhead, not a per-`C` penalty (unlike the per-step-tanh sequential tax that
-  closed `e97-wallclock-cma-nogo`).
+  closed `e97-wallclock-cma-shell-flat`).
 - **Identity fast-path.** Gate the momentum tiles on a `momentum: tl.constexpr`; when `μ≡0` and
   `K=ceil(log2 C)` the kernel compiles to the **exact e97 delta path** (zero overhead — the same
   `complex=False`-style fast-path discipline used in `gdn2_nonlin_fused`).
@@ -371,7 +371,7 @@ only.**
 Consistent with the entire E88→E99 line — **every exotic head ties the GDN-2 baseline on LM
 bits-per-byte at matched params and tokens**, with capability showing only on probes
 (`e97-nonlin-in-time-separates-modquad`: "LM-BPB tie ≠ capability equivalence";
-`e97delta-1p3b-tie-split`; `e97-wallclock-cma-nogo`; `e99-1p3b-controls`; `COMPLEX_EIG_HEAD_SPEC.md`
+`e97delta-1p3b-tie-split`; `e97-wallclock-cma-shell-flat`; `e99-1p3b-controls`; `COMPLEX_EIG_HEAD_SPEC.md`
 §7).
 
 > **Prediction (commit it):** at matched parameter budget and matched tokens, the `refit`
@@ -382,11 +382,11 @@ bits-per-byte at matched params and tokens**, with capability showing only on pr
 > GDN.
 
 This is the **convergent-loss null**: at convergence the MLP + attention layers absorb the
-write-rule difference, so LM-BPB is the wrong instrument; go/no-go is decided on the **probe panel**.
+write-rule difference, so LM-BPB is the wrong instrument; the accept/reject decision is decided on the **probe panel**.
 `refit`'s distinctive bet (shared with `rot`, unlike the per-step-tanh / inner-MLP heads): the chosen
 variant is **chunkable** (§3), so a probe win costs **no wall-clock** — it does not reintroduce the
-sequential-kernel tax that produced the NO-GOs in `e97-wallclock-cma-nogo` and
-`fuse-2kernel-nogo-tanh-perp-chunkable`. A `refit` head that *changed* LM-BPB would be a surprise to
+sequential-kernel tax that produced the wall-clock losses in `e97-wallclock-cma-shell-flat` and
+`fuse-2kernel-tanh-perp-chunkable`. A `refit` head that *changed* LM-BPB would be a surprise to
 double-check, not the expected result.
 
 ---

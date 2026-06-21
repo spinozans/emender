@@ -1,4 +1,4 @@
-# S5/S3 Symmetric CMA-ES Protocol — Recon + Design (go/no-go draft)
+# S5/S3 Symmetric CMA-ES Protocol — Recon + Design (accept/reject draft)
 
 **Task:** `s5-symmetric-recon` (RECON + PROTOCOL, **NO GPU**, read-only).
 **Mode:** READ-ONLY. `paper/main.typ` **not** edited. No training launched.
@@ -314,7 +314,7 @@ architectures share the 4-GPU pool round-robin across the full job set.
 
 ---
 
-## D. THE SYMMETRIC PROTOCOL (human go/no-go BEFORE any GPU spend)
+## D. THE SYMMETRIC PROTOCOL (human accept/reject BEFORE any GPU spend)
 
 **Design principle.** At 8 M params, **every** architecture's config is CMA-ES'd
 **from its existing seed** (C, `MODEL_CONFIG`) on the **same state-tracking

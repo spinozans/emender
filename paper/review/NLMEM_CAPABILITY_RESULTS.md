@@ -31,7 +31,7 @@ query) provably cannot — canonically a **non-bilinear / XOR association**, or 
    Triton forward** (`HAS_INIT` path) and validated: fwd `1.1e-6`, all bwd grads `<3e-6`
    vs the eager reference; the zero-init path is unchanged (`rel 0`, still inert).
 
-3. **Capability verdict (functional cell, matched compute):** **HONEST NULL / NO-GO —
+3. **Capability verdict (functional cell, matched compute):** **HONEST NULL —
    the nonlinear memory unlocks no capability the linear GDN-2 memory cannot reach, and
    is strictly dominated.** GDN-2 solves the whole battery — XOR non-bilinear association
    (1.000), nonlinear mod-k `modular_quadratic` (0.989), recall (1.000), MQAR (0.963),
@@ -185,7 +185,7 @@ tie. This compounds the §4–5 capability null.
 
 ## 7. Verdict
 
-**HONEST NULL / NO-GO — the nonlinear MLP-memory cell stores no mapping a linear GDN-2
+**HONEST NULL — the nonlinear MLP-memory cell stores no mapping a linear GDN-2
 matrix memory cannot, and is strictly dominated at matched compute.**
 
 1. **As shipped (`nlmem-triton`/`nlmem-validate`) the cell is INERT** — its zero `θ₀` is
@@ -204,7 +204,7 @@ matrix memory cannot, and is strictly dominated at matched compute.**
 
 The spec's NONLIN_MEMORY_SPEC §8 hypotheses (XOR / capacity / nonlinear-regression /
 mod-k separation) and the convergent-loss-null TIE are **refuted with numbers**. This
-mirrors every prior exotic head in the program ([[e97-wallclock-cma-nogo]],
+mirrors every prior exotic head in the program ([[e97-wallclock-cma-shell-flat]],
 [[complex-eig-capability-periodic-null]]): the capability the exotic state was meant to
 add is already reachable through the architecture's existing pathways.
 

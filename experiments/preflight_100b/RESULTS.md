@@ -91,7 +91,7 @@ per-step all-reduce recovers the ~62k independent ceiling.**
 | **DiLoCo-style / independent ceiling** (measured) | ~62,000 | **~3.0 days** | **~18.7 days** |
 | 1× GPU single (no parallelism) | 8,600 | 21.5 days | 134 days |
 
-## 6. GO / NO-GO
+## 6. Accept / reject
 
 **GO for the 16B <1bpb gate** (≈ 6 days on 7-GPU DDP today; ≈ 3 days with DiLoCo).
 This is well within budget and is the decision-relevant milestone.

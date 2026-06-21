@@ -246,8 +246,8 @@ is a NULL.
 ## 7. Expressivity expectation + failure modes (honest prior: NULL)
 
 Nearly every emender expressivity lever in this codebase converged to a loss-tie at
-iso-param: lb-compare (Emender NO-GO), e97delta-1p3b (token-win/wall-loss), opt-synth
-(composition NULL), ttt-capability (convergent-null), emender-real-1p3b (NO-GO all axes).
+iso-param: lb-compare (Emender ties bpb, loses modular_counter), e97delta-1p3b (token-win/wall-loss), opt-synth
+(composition NULL), ttt-capability (convergent-null), emender-real-1p3b (NULL on all axes).
 These two designs are recommended because they are **cheap to falsify**, not because a win
 is expected.
 

@@ -2,8 +2,9 @@
 delta kernel vs (a) the OLD sequential E97 Triton T-scan and (b) native GDN-2
 (FLA chunk_gated_delta_rule).
 
-This is the decisive measurement for the within-layer NO-GO flip: the NO-GO
-hinged on the E97 split-edit kernel being ~2.6x slower than GDN-2 (13-15% util).
+This is the decisive measurement for the within-layer latency-bound flip: the
+within-layer throughput wall hinged on the E97 split-edit kernel being ~2.6x
+slower than GDN-2 (13-15% util).
 We measure fwd+bwd ms/iter and SM utilization (via a sampling thread over
 nvidia-smi) at matched [B,T,H,N,V] shapes at BOTH the within-layer head shape and
 1.3B-scale dims.

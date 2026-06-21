@@ -39,7 +39,7 @@ non-transferable experiment):**
 - The fused E97 kernel was **INERT** in the autocast path while eager "worked"
   (`E97 fused LM wiring`). Eager signal that vanishes in fused.
 - TF32 fused was **untrainable** while eager looked fine (`complex-eig-lm-fused`).
-- Eager throughput is **meaningless** — every wall-clock / GO-NO-GO verdict in
+- Eager throughput is **meaningless** — every wall-clock / accept-reject verdict in
   this repo depends on the fused-kernel reality, on a no-NVLink DDP-bound box.
 - bf16/precision and chunk-vs-eager numerics differ enough to flip conclusions
   (`complex-eig chunked overflow`, `e97-chunked-kernel`).

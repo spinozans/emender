@@ -9,7 +9,7 @@ nonlinearity-in-time investigation into one verdict + the defensible paper narra
 
 ## TL;DR (the one verdict)
 
-> **LM verdict:** **NO-GO.** At 1.3B, on the LM-BPB objective that actually governs
+> **LM verdict:** **loses at honest wall-clock.** At 1.3B, on the LM-BPB objective that actually governs
 > fixed-GPU-hour pretraining (wall-clock), nonlinearity-in-time does **not** beat
 > `gdn2-mlp` (dense gdn-neg + SwiGLU MLP). The losses are convergent; the e97
 > family's edge is per-token only, it does **not** grow with budget, and it cannot
@@ -19,7 +19,7 @@ nonlinearity-in-time investigation into one verdict + the defensible paper narra
 > real, length-robust, 3-seed capability gap that nonlinearity-in-time provably
 > buys — but it is narrow, it lives on a constructed arithmetic task, and the cell
 > that buys it is precisely the cell that is **fundamentally un-chunkable** and so
-> can never be the fast LM cell. The capability gap and the LM NO-GO are not in
+> can never be the fast LM cell. The capability gap and the LM wall-clock loss are not in
 > tension: they are the **two halves of the same kernel constraint**.
 >
 > **The paper story:** *"GDN-2 (linear, gated-delta, negative-eigenvalue) is the LM
@@ -48,7 +48,7 @@ turns on which one each result is about.**
 | **`e97_delta` (linear)** | split-edit gated-delta, **linear** state | **YES** — GDN-2-class kernel | the *wall-clock-competitive* 1.3B cell; modest count edge |
 | **`e97_delta` (per-step tanh)** | split-edit delta + **per-step tanh** state | **NO** — sequential kernel | the *capability-separating* cell (modular_quadratic) |
 | `gdn-neg` | gated-delta, linear, **negative eigenvalue** | YES | the recall+track workhorse; the backbone everything mixes with |
-| `gdn2_nonlin_shell` | linear within chunk, tanh **at chunk boundary** | partial | the "sparse-nonlinear compromise" — tested, NO-GO |
+| `gdn2_nonlin_shell` | linear within chunk, tanh **at chunk boundary** | partial | the "sparse-nonlinear compromise" — tested: throughput flat 0.88×, no token edge, no capability uplift |
 
 **The crux fact (it recurs in every section below):** the chunked GDN-2-class fast
 path engages **only for *linear*-state `e97_delta`**. Per-step `tanh` is a pointwise
@@ -61,13 +61,13 @@ work can merge them — *any* nonlinear state map ⊥ chunkable
 
 ---
 
-## 1. LM verdict — convergent loss → NO-GO at 1.3B (the honest reasons)
+## 1. LM verdict — convergent loss → loses wall-clock at 1.3B (the honest reasons)
 
-**Verdict: NO-GO.** Keep `gdn2-mlp` as the 1.3B cell. The reasoning is *not* poisoned
+**Verdict: loses wall-clock at 1.3B.** Keep `gdn2-mlp` as the 1.3B cell. The reasoning is *not* poisoned
 this time — every leg is a real measurement with a fair throughput bar.
 
 **(a) The kernel objection was real but is now removed — so the bar is fair.**
-The prior within-layer/scale NO-GO blamed a "2.6× slower, 13–15% util" kernel.
+The prior within-layer/scale wall-clock loss blamed a "2.6× slower, 13–15% util" kernel.
 `E97_CHUNKED_KERNEL_NOTE` refutes that: the chunked fused fwd+bwd e97_delta kernel
 (Newton–Schulz UT-inverse, C=32) runs at **97–100% util at the 1.3B scale dims and
 ≤1.02× GDN-2 throughput — faster, not slower** (within_layer 0.18×, scale_1p3b 0.78×,
@@ -75,7 +75,7 @@ wide 0.50×; parity 13/13). `E97_FUSED_LM_KERNEL_NOTE` separately found and fixe
 *inert-kernel* bug (the fused path silently fell back to eager because RMSNorm-under-
 autocast fed it fp32; the bf16-cast fix engages it → 43–266× over the eager T-scan,
 parity rel-L2 ~8e-4, flat in T). **So the 1.3B comparison below is run on a fair,
-fast kernel** — this is what makes the NO-GO honest rather than a throughput artifact.
+fast kernel** — this is what makes the wall-clock loss honest rather than a throughput artifact.
 
 **(b) Token-matched, e97 is genuinely more sample-efficient — but the edge is small
 and does not grow.** At 1.3B, `e97_delta`(linear)+gdn-neg **wins token-matched**
@@ -106,7 +106,7 @@ wall-clock win and it does not survive to 1.3B** (the scale-pilot dominated it; 
 with scale*; at 1.3B the losses are convergent and throughput decides.
 
 > **LM bottom line:** nonlinearity-in-time is not a wall-clock LM win at 1.3B, for a
-> reason that is now fair (fast kernel) and stable (no growing edge). NO-GO.
+> reason that is now fair (fast kernel) and stable (no growing edge). It loses wall-clock.
 
 ---
 
@@ -221,14 +221,14 @@ honest reason capability ≠ LM win:
   +0.18 separation, and still loses wall-clock to gdn2-mlp by the within-layer
   two-kernel-split overhead.
 - The "apply the nonlinearity sparsely" compromise (`gdn2_nonlin_shell`, tanh at chunk
-  boundary) was the principled escape — **NO-GO** at 1.3B: throughput flat 0.88×
+  boundary) was the principled escape — at 1.3B: throughput flat 0.88×
   regardless of C, no token-matched edge, no capability uplift (`E97_WALLCLOCK_CMA`),
   *and* it does not even separate on `modular_quadratic` (0.686, cliffs like the linear
   baseline; `E97_CAPABILITY_GAP` §4.1).
 
 **`bounded/nonlinear state ⊥ chunkable` is fundamental, not an implementation gap.**
 The capability lives in exactly the dynamics that destroy tensor-core throughput. You
-cannot have both in one cell — which is precisely why the LM verdict (NO-GO) and the
+cannot have both in one cell — which is precisely why the LM verdict (loses wall-clock) and the
 capability verdict (real gap) coexist without contradiction.
 
 ---
@@ -274,10 +274,10 @@ non-saturating-wins story.
 
 ---
 
-## 6. GO / NO-GO + the single next step
+## 6. Accept / reject + the single next step
 
-**GO / NO-GO: NO-GO** for nonlinearity-in-time as the 1.3B LM cell. `gdn2-mlp` (dense
-gdn-neg + SwiGLU MLP) remains the scale cell. **GO** for reporting the capability gap
+**Accept / reject: nonlinearity-in-time loses wall-clock** as the 1.3B LM cell. `gdn2-mlp` (dense
+gdn-neg + SwiGLU MLP) remains the scale cell. **Accept** for reporting the capability gap
 as a scientific result (the double dissociation + the kernel-constraint explanation),
 *not* as a deployment recommendation.
 
@@ -294,7 +294,7 @@ chunk-safe* (after the scan, not on the recurrence), so it costs zero throughput
   requires the sequential recurrent nonlinearity, and the capability is *permanently*
   off the wall-clock-LM path. Either way the question is closed.
 
-*(Why this and not others: `gdn2_nonlin_shell` is already a measured NO-GO; per-step
+*(Why this and not others: `gdn2_nonlin_shell` already measured flat 0.88× throughput, no token edge, no capability uplift; per-step
 relu/softplus state is a double penalty — un-chunkable AND S5-hostile — and belongs
 only on the expressivity probe as a ceiling, never as a production cell.)*
 
@@ -303,7 +303,7 @@ only on the expressivity probe as a ceiling, never as a production cell.)*
 ## 7. Proven vs open (honest ledger)
 
 **Proven (robust, multi-seed, real data):**
-- LM NO-GO at 1.3B on wall-clock, on a *fair fast kernel* — gdn2-mlp wins, edge does
+- LM loses wall-clock at 1.3B, on a *fair fast kernel* — gdn2-mlp wins, edge does
   not grow with budget (`E97_DELTA_1P3B_CMA`, `E97_WALLCLOCK_CMA`).
 - A real +0.18 length-extrapolation separation on modular_quadratic mod 64 (3 seeds,
   representational per 2× control, stable over p∈{32,48,64}), with a clean S5 double
@@ -312,7 +312,7 @@ only on the expressivity probe as a ceiling, never as a production cell.)*
   per-step tanh, *not* non-saturating relu; a single nonlinearity cannot cover both
   count and track (`RECURRENT_NONLINEARITY_RESEARCH`, E88, 18/18 verified citations).
 - `bounded/nonlinear state ⊥ chunkable` is fundamental; gdn2_nonlin_shell sparse-NL
-  compromise is NO-GO on both throughput and capability.
+  compromise loses on both throughput and capability.
 - e97-raw's small-scale held-out lead is **real token-efficiency, not a train-loss
   artifact** — but does not survive to 1.3B wall-clock (`E97_GENERALIZATION_AUDIT`).
 
@@ -337,8 +337,8 @@ only on the expressivity probe as a ceiling, never as a production cell.)*
 |---|---|
 | `E97_WITHIN_LAYER_STUDY_RESULTS` | within-layer cell covers 5/5 primitives but capability ⊥ time-bounded LM; e97_raw LM champion at 159M (token-efficiency) |
 | `E97_GENERALIZATION_AUDIT_RESULTS` | e97-raw #1 is real held-out token-efficiency, NOT a train-loss artifact; ~98% of the apparent train→held gap is measurement artifact |
-| `E97_DELTA_1P3B_CMA_RESULTS` | 1.3B: e97_delta(linear) wins token-matched (+0.023), loses wall-clock (+0.044) → NO-GO; kernel fast (util 88–100%); split-overhead is the lever |
-| `E97_WALLCLOCK_CMA_RESULTS` | gdn2_nonlin_shell: throughput flat 0.88× in C, no token-matched edge, edge doesn't grow, no capability uplift → wall-clock NO-GO |
+| `E97_DELTA_1P3B_CMA_RESULTS` | 1.3B: e97_delta(linear) wins token-matched (+0.023), loses wall-clock (+0.044); kernel fast (util 88–100%); split-overhead is the lever |
+| `E97_WALLCLOCK_CMA_RESULTS` | gdn2_nonlin_shell: throughput flat 0.88× in C, no token-matched edge, edge doesn't grow, no capability uplift → loses wall-clock |
 | `E97_CHUNKED_KERNEL_NOTE` | chunked fused e97_delta ≤1.02× GDN-2 (faster), refutes 2.6× premise — **but only for LINEAR state; per-step tanh stays sequential** |
 | `E97_FUSED_LM_KERNEL_NOTE` | the fused kernel was inert (eager fallback) in the hybrid path; bf16-cast fix → 43–266×, parity verified; tanh/identity only |
 | `E97_CAPABILITY_GAP_RESEARCH` | the +0.18 modular_quadratic separation, double dissociation, saturating-not-relu, representational; provenance-corrected from a broken-aggregator null |

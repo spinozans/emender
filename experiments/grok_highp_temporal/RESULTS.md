@@ -1,6 +1,6 @@
 # High-p Temporal-Composition Separation — Results
 
-> **CORRECTION — this run's "NO-GO" verdict is SUPERSEDED by `experiments/grok_symmetric_width/`.**
+> **CORRECTION — this run's "width closes the gap → not a class separation" verdict is SUPERSEDED by `experiments/grok_symmetric_width/`.**
 > The "width closes the gap → not a class separation" conclusion was a **capacity confound**: the
 > width-control was applied **only to the linear arms** (e97-lin, gdn2), never to e97, and
 > extrapolation was measured only to T=1024. A high-capacity linear-state+MLP model can **memorize

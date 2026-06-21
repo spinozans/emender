@@ -4,7 +4,7 @@ e97_delta), 720s, seed 0, REAL Pile. Two arms:
   A  identity-state + SEQUENTIAL kernel (use_chunked_e97_delta=False)
   B  tanh-state     + SEQUENTIAL kernel (the PRIOR decisive cell — anchors 2.071)
 Compare held-out BPB to the head-to-head's identity-CHUNKED (2.25/2.38):
-  A ~ 2.25  => linear state itself kills quality (kernel exonerated; NO-GO is deep)
+  A ~ 2.25  => linear state itself kills quality (kernel exonerated; the quality loss is in the state, not fixable in the kernel)
   A ~ 2.07  => the chunked kernel/floor kills quality (fixable)
 """
 import os, sys, json, time, datetime

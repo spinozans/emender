@@ -178,4 +178,4 @@ basin**; that CMA-found Emender **ties** best-vs-best GDN-2 on iso-param/iso-tok
 loss and on the modquad cliff, is **strictly worse** on S5 and counting at every
 tested dim (256→1024), and runs at **0.54–0.74× throughput**. There is **no
 capacity boundary at which an Emender advantage closes, because no advantage over
-the typed GDN-2 control exists at any scale.** NO-GO / NULL — see `VERDICT.md`.
+the typed GDN-2 control exists at any scale.** NULL — no Emender advantage over the typed GDN-2 control at any tested scale — see `VERDICT.md`.

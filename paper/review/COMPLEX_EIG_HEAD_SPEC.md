@@ -349,7 +349,7 @@ SUBSET of heads:  ADDITIONALLY apply a per-step bounded map  S_t ← hardtanh(S_
 ```
 
 Two physically distinct kernels, because **complex is chunkable but per-step `hardtanh` is not**
-(memory: `fuse-2kernel-nogo-tanh-perp-chunkable` — *bounded per-step state ⊥ chunkable* is
+(memory: `fuse-2kernel-tanh-perp-chunkable` — *bounded per-step state ⊥ chunkable* is
 fundamental; `phi_shell` docstring: "All per-step phi are non-chunkable"):
 
 - **complex-only heads (the majority):** run the **chunked complex diagonal scan** of §3 —
@@ -449,7 +449,7 @@ only, no mocks.
 
 Consistent with the entire E88→E99 line — **every exotic head TIES the GDN-2 baseline on LM
 bits-per-byte at matched params and tokens** (`e97-nonlin-in-time-separates-modquad`: "LM-BPB tie ≠
-capability equivalence"; `e97delta-1p3b-tie-split`; `e97-wallclock-cma-nogo`; `e99-1p3b-controls`).
+capability equivalence"; `e97delta-1p3b-tie-split`; `e97-wallclock-cma-shell-flat`; `e99-1p3b-controls`).
 The capability shows on **probes**, never on convergent LM loss.
 
 > **Prediction (commit it):** at matched parameter budget and matched tokens, the complex-eigenvalue
@@ -462,11 +462,11 @@ The capability shows on **probes**, never on convergent LM loss.
 This is the **convergent-loss null**: LM-BPB is the wrong instrument (the MLP + attention layers
 absorb the capability difference at convergence); the right instruments are the structured probes.
 A complex-eig head that *changed* LM-BPB would be a surprise to be double-checked, not the expected
-result. Go/no-go is therefore decided on the **probe panel**, not BPB — unlike the prior heads,
-whose NO-GOs hinged on wall-clock at a BPB tie. The complex head's distinctive bet: it is
+result. The accept/reject decision is therefore made on the **probe panel**, not BPB — unlike the prior heads,
+which lost on wall-clock at a BPB tie. The complex head's distinctive bet: it is
 **chunkable** (§3, unlike the per-step-tanh heads), so a probe win does **not** cost throughput —
-removing the wall-clock objection that closed `e97-wallclock-cma-nogo` and
-`fuse-2kernel-nogo-tanh-perp-chunkable`.
+removing the wall-clock objection that closed `e97-wallclock-cma-shell-flat` and
+`fuse-2kernel-tanh-perp-chunkable`.
 
 ---
 

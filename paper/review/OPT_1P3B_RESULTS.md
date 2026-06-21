@@ -113,7 +113,7 @@ recorded for the token-matched cross-walk, BPB on a disjoint held-out slice with
 fused mandate puts the typed mixture on the fp32 path, which at the same memory budget
 runs batch 1 and sees **4.4× fewer tokens** than the bf16 controls (2.8 M vs 12 M). This
 is exactly the §4.5.2 token-vs-wall split the synthesis flagged, and it reproduces the
-prior 1.3B wall-clock NO-GOs (`e97-lm-1p3b`, `e97delta-1p3b`: token-win flips to
+prior 1.3B wall-clock losses (`e97-lm-1p3b`, `e97delta-1p3b`: token-win flips to
 wall-loss; here R\* does not even win on tokens). The token-matched cross-walk removes
 the dtype/throughput confound and R\* is **still** marginally behind both CMA controls at
 the common budget — the optimized mixture's training levers do not produce a

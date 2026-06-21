@@ -209,7 +209,7 @@ per-token transition matrix `A_t`; the map `θ_{t-1} ↦ θ_t` is genuinely nonl
 state-dependent. Therefore the chunk composition does **not** factor into a fixed-rank
 closed form, **no parallel/associative scan exists**, and the forward must run as a
 **sequential per-token recurrence**. This is the same wall the saturated matrix head hit
-(`tanh`-state never engaged the chunked path, `fuse-2kernel-nogo-tanh-perp-chunkable`):
+(`tanh`-state never engaged the chunked path, `fuse-2kernel-tanh-perp-chunkable`):
 **bounded/nonlinear state ⊥ chunkable** is fundamental, and it applies a fortiori here —
 the nonlinearity is now in the memory *itself*, not just a post-update squash.
 
@@ -447,7 +447,7 @@ Consistent with this lab's repeated finding across every exotic head (`rot`, `no
   forward + a second-order backward. Predict throughput **well below** the 0.7–0.9×
   range that `rot`/`tanh`-state already lost at — plausibly **0.2–0.5×** of GDN-2 — so the
   wall-clock verdict is a clear loss absent a capability win.
-- **NO-GO by default, GO only on a probe.** `mlp-mem` earns a place in the taxonomy
+- **Rejected by default, accepted only on a probe.** `mlp-mem` earns a place in the taxonomy
   **only** if one of the §8.1 probes (XOR-assoc / nonlinear in-context regression /
   modular-quadratic) shows a **real, reproducible separation that survives at matched
   wall-clock on a task that genuinely needs it** — the same bar every other exotic head
@@ -470,7 +470,7 @@ Consistent with this lab's repeated finding across every exotic head (`rot`, `no
   explicitly excluded.
 - [x] **Capability hypotheses + convergent-loss-null prediction.** §8: XOR/parity,
   capacity, nonlinear in-context regression, bounded-state separators; explicit
-  TIE-on-BPB / lose-on-wall-clock / NO-GO-absent-probe prediction.
+  TIE-on-BPB / lose-on-wall-clock / rejected-absent-probe prediction.
 - [x] **Taxonomy name proposed.** §7: **`mlp-mem`** (reserved `-mem` suffix = MLP
   fast-weight state), opening a third *memory-representation* axis; boundary with
   `ttt-spec` fixed.

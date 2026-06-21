@@ -114,9 +114,9 @@ This matches the design doc's honest prior (`STATE_AWARE_MLP_DESIGN.md` §7) pre
   nonlinearity" acts on a narrow linear shadow — a real but narrow function-class gain paid
   for with an MLP-hidden cut that, empirically, costs more grok reliability than it buys.
 
-This NULL is consistent with the standing emender pattern (lb-compare NO-GO, e97delta-1p3b
+This NULL is consistent with the standing emender pattern (lb-compare ties bpb / loses modular_counter, e97delta-1p3b
 token-win/wall-loss, opt-synth composition NULL, ttt-capability convergent-null,
-emender-real-1p3b NO-GO). The mechanism + iso-param certification are committed and reusable;
+emender-real-1p3b NULL at scale). The mechanism + iso-param certification are committed and reusable;
 the 1.3B A/B is the correct thing **not** to spend GPU-days on.
 
 ### Reproduce

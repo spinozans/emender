@@ -12,8 +12,8 @@ The forensic audit (`GRAD_CLIP_ACCOUNTING.md`) found **no committed run with
 clipping disabled anywhere in the tree** (§4c, CLAIM #6) and that the
 search-time cross-arm grad asymmetry was **unquantified** (§5, CLAIM #20,
 flagged UNSUPPORTED). It argued the confound was low-risk and *conservative* for
-the emender NO-GO verdict, but conceded this was **argued, not measured**. This
-task converts that argument into a measured result.
+the emender verdict (ties bpb, loses modular_counter), but conceded this was
+**argued, not measured**. This task converts that argument into a measured result.
 
 ## Design (clip is the ONLY variable)
 
@@ -117,7 +117,7 @@ much "active"), yet **removing it diverges neither arm at this budget.**
 > (~0.01–0.09) → **verdict robust, close the question**; a **stable** clip-off
 > narrowing toward emender **beyond** that floor → **re-open** the emender verdict.
 
-**VERDICT: ROBUST — the emender NO-GO is not overturned by grad clipping.**
+**VERDICT: ROBUST — the emender verdict (ties bpb, loses modular_counter) is not overturned by grad clipping.**
 On the primary (non-avg) basis `|Δgap| = 0.036 < 0.09`; on the secondary (avg)
 basis `|Δgap| = 0.053 < 0.09`. The narrowing is **stable in sign but within the
 noise floor in magnitude**, so the "narrows beyond floor ⇒ re-open" branch is

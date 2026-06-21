@@ -1,6 +1,6 @@
 # E97 Wall-Clock CMA — does bounded-state (tanh) E97 + gdn-neg beat gdn2-mlp on the WALL-CLOCK objective at 1.3B?
 
-**Task:** `e97-wallclock-cma`  ·  **Status:** COMPLETE · **Verdict: NO-GO (wall-clock)**
+**Task:** `e97-wallclock-cma`  ·  **Status:** COMPLETE · **Verdict: loses on wall-clock (no config beats gdn2-mlp)**
 **Scale:** 1.3B param-matched (dim=2240, 64 heads), within-layer `typed_head_mixture`, REAL Pile, no mocks.
 **Cell under test:** `gdn2_nonlin_shell` (boundary-phi tanh-bounded state) mixed with `gdn-neg` (`gdn2_recall`, `allow_neg_eigval=1`), vs the `gdn2-mlp` baseline (100% gdn-neg + SwiGLU MLP).
 
@@ -8,7 +8,7 @@
 
 ## 0. Question this task settles
 
-The predecessor (`tanh-e97-1p3b`, commit `ced30a5`) established a NO-GO on wall-clock from the **C=1 (per-step tanh, slow) vs C=∞ (linear, no edge) endpoints**. This task opens **chunk-size `C` as a free axis** between those endpoints — the boundary-phi kernel applies `phi(S)=tanh` every `C` steps and is linear within the chunk — to ask:
+The predecessor (`tanh-e97-1p3b`, commit `ced30a5`) established that the cell loses on wall-clock from the **C=1 (per-step tanh, slow) vs C=∞ (linear, no edge) endpoints**. This task opens **chunk-size `C` as a free axis** between those endpoints — the boundary-phi kernel applies `phi(S)=tanh` every `C` steps and is linear within the chunk — to ask:
 
 > Is there ANY config (tanh-head **ratio** × **chunk-size C** × shape) where the per-token sample-efficiency edge of the bounded state BEATS its throughput tax on the **wall-clock** held-out-BPB objective at 1.3B?
 
@@ -108,7 +108,7 @@ Within-layer mix (0.5 gdn-neg + 0.5 `gdn2_nonlin_shell`) at C∈{1,64,2048}, vs 
 | shell C=64 | 0.8480 | 0.9036 | 0.0894 |
 | shell C=2048 | 0.8500 | 0.9031 | 0.0902 |
 
-**Two findings, both reinforcing NO-GO:**
+**Two findings, both reinforcing that the cell loses on wall-clock:**
 1. **The a-priori "large C kills capability" risk does NOT manifest here.** count/nonlin are essentially flat across C (0.848–0.850 / 0.903–0.905). Reason: the gdn-neg backbone *already* solves these probes (count 0.842, nonlin 0.905) at depth 4, so the bounding frequency of the tanh shell is not what carries the capability — there is no shell-attributable signal to lose as C grows. (The guard remains the correct safety check; it simply found no cliff at this scale. recall sits near floor ~0.09 for *all* arms — this tiny-dim probe doesn't exercise the full gdn-neg recall the way the 1.3B LM does, so read recall here as "uninformative", not "broken".)
 2. **The shell provides no capability uplift over plain gdn-neg** on any probe (count +0.007, nonlin −0.001, recall −0.009 — all within noise). Combined with the LM result (no token-matched BPB edge), the bounded-state shell head is **dominated**: no throughput advantage, no BPB advantage, no capability advantage.
 
@@ -116,7 +116,7 @@ Within-layer mix (0.5 gdn-neg + 0.5 `gdn2_nonlin_shell`) at C∈{1,64,2048}, vs 
 
 ## 6. Decision
 
-### GO / NO-GO: **NO-GO** (decisive, full-space)
+### Accept / reject: **loses on wall-clock** (decisive, full-space)
 
 No config of **ratio × chunk-size C × kernel** makes the tanh/bounded-state `gdn2_nonlin_shell` + gdn-neg beat `gdn2-mlp` on the WALL-CLOCK held-out-BPB objective at 1.3B.
 
@@ -130,7 +130,7 @@ No config of **ratio × chunk-size C × kernel** makes the tanh/bounded-state `g
 
 **On the ratio axis (scoping note, for transparency):** ratio was searched at the endpoints — ratio=0 (`base_gdn`, the winner) and the pure-linear shell (`shell_identity` / `C=2048`) — plus the 0.5 mix used throughout §2–§4. Intermediate ratios (0.25, 0.75) were *not* gridded because the result is monotone by construction: every shell head added (ratio↑) **replaces** a gdn-neg head that is strictly better here (gdn-neg has higher throughput, equal-or-better token-matched BPB, and equal capability), so wall-clock BPB degrades monotonically in ratio away from the ratio=0 baseline. A ratio sweep would only re-confirm that ratio=0 (pure gdn2-mlp) is optimal. Shape was held at the param-matched 1.3B point (dim=2240, 64 heads) per the task's "1.3B param-matched" constraint; MLP ratio is fixed by the param-match.
 
-**Relation to predecessor:** This REINFORCES the `tanh-e97-1p3b` NO-GO (`ced30a5`) and resolves its open question — opening C as a free axis does **not** rescue wall-clock. It also tempers the predecessor's "+0.02 token-matched win": that edge belonged to the *pure per-step tanh-E97* head; the chunkable `gdn2_nonlin_shell` boundary-phi cell does not reproduce it (token-matched tie). So the only remaining lever from the prior note — a chunkable bounded-state kernel (`gdn2_nonlin_shell`) — is now tested and **also NO-GO**: chunking restores throughput only by abandoning the per-token edge *and* the bounded-state capability simultaneously.
+**Relation to predecessor:** This REINFORCES the `tanh-e97-1p3b` wall-clock loss (`ced30a5`) and resolves its open question — opening C as a free axis does **not** rescue wall-clock. It also tempers the predecessor's "+0.02 token-matched win": that edge belonged to the *pure per-step tanh-E97* head; the chunkable `gdn2_nonlin_shell` boundary-phi cell does not reproduce it (token-matched tie). So the only remaining lever from the prior note — a chunkable bounded-state kernel (`gdn2_nonlin_shell`) — is now tested and **also loses on wall-clock**: chunking restores throughput only by abandoning the per-token edge *and* the bounded-state capability simultaneously.
 
 **Recommendation:** stop pursuing bounded-state/tanh shell variants as a wall-clock win at 1.3B. `gdn2-mlp` (dense gdn-neg + MLP) remains the wall-clock-best cell. If a sample-efficiency edge is wanted, it must come from a cell that is *both* per-token-better *and* tensor-core-efficient — neither the per-step tanh (slow) nor the chunked shell (no edge) is that cell.
 

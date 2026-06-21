@@ -7,8 +7,8 @@ fused split-edit Triton kernel (loud no-eager guard), no mocks.
 
 > **Headline.** On the **honest footing the task demands** (GDN-2-speed kernel,
 > tight param-match, real Pile, both matching protocols), the CMAES-best
-> heterogeneous cell is **a sample-efficiency TIE/slight-win but a WALL-CLOCK
-> NO-GO**. At **matched tokens** the hetero cell beats gdn2-mlp by **−0.014 BPB**
+> heterogeneous cell is **a sample-efficiency TIE/slight-win but loses at
+> matched wall-clock**. At **matched tokens** the hetero cell beats gdn2-mlp by **−0.014 BPB**
 > (2.063 vs 2.078 — it is more sample-efficient). At **matched wall-clock** it
 > **loses by +0.033 BPB** (2.063 vs 2.030), because it pays a **real throughput
 > penalty of 0.80× (LM training loop) / 0.73× (kernel microbench)** and therefore
@@ -19,7 +19,7 @@ fused split-edit Triton kernel (loud no-eager guard), no mocks.
 > throughput. **Verdict: gdn2-mlp wins the LM decision at honest wall-clock
 > parity; the hetero cell's sample-efficiency edge does not overcome the
 > throughput tax.** This is consistent with the entire e97 1.3B lineage
-> (`e97delta-1p3b` TIE/split, `e97-wallclock-cma` NO-GO, `e97-scale` NO-GO).
+> (`e97delta-1p3b` TIE/split, `e97-wallclock-cma` loses wall-clock, `e97-scale` dominated).
 
 ---
 
@@ -134,7 +134,7 @@ final heterogeneous cell on honest footing:
   means H sees ~23 % fewer tokens per second; on a compute-bound LM that token
   deficit (5.32 M vs 6.6 M in 720 s) outweighs the per-token edge. The crossover
   is decided by the throughput tax, exactly as in `e97delta-1p3b` (TIE: wins
-  token-matched, loses wall-clock) and `e97-wallclock-cma` (NO-GO).
+  token-matched, loses wall-clock) and `e97-wallclock-cma` (loses wall-clock).
 - **The capability head cannot be made fast.** `tanh ⊥ chunkable` is fundamental:
   the bounded saturating state that *creates* the capability forbids the chunked
   tensor-core kernel, so the head is latency-bound at ~0.73–0.80× and stream
@@ -155,7 +155,7 @@ BPB) at the slight throughput penalty? — NO, on the honest footing.**
    GDN-2" capability kernel; that figure was the capability-weak gated-delta shell.
    Paying for the real depth capability costs ~20–27 % throughput.
 
-**Decision: NO-GO for the heterogeneous cell as a drop-in 1.3B LM cell.** gdn2-mlp
+**Decision: gdn2-mlp wins the wall-clock-matched LM comparison; the heterogeneous cell loses as a drop-in 1.3B LM cell.** gdn2-mlp
 wins the wall-clock-matched LM comparison, which is the honest decision criterion.
 The hetero cell's value is *capability* (length-extrapolation / depth tasks), not
 LM bits-per-byte at fixed compute — downstream consumers (`e97-prog-synth`) should
@@ -179,4 +179,4 @@ treat the 16/64 split-edit head as a **capability specialist accepted at a known
   LSTM 2.82 at 414 K tok / 3.16 at 209 K tok).
 - **Shared knobs.** H and G use the CMA-best knobs found for the *hetero* cell; this
   is conservative *against* G (G is not separately tuned) yet G still wins
-  wall-clock — strengthening the NO-GO.
+  wall-clock — strengthening the wall-clock loss.

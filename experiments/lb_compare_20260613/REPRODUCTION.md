@@ -63,7 +63,7 @@ appended after the run completes.
    **`modular_counter` is bounded/finite-state counting, where linear-state is *expected* to
    win** — it is NOT the Emender's nonlinear-in-time (unbounded-counting / step-growth) claim.
    So "loses the discriminating separator" neither tests nor refutes that claim.
-4. **Therefore "clean NO-GO / gdn2-mlp best all-around" is not supported.** Honest status: LM
+4. **Therefore "gdn2-mlp best all-around" is not supported.** Honest status: LM
    loss = tie with the Emender on the good side; capability = UNDETERMINED pending a proper grok
    test (AdamW + wd-sweep + train-to-grok on unbounded separators, with a GDN-2 width control).
 
@@ -86,7 +86,7 @@ worst for Emender-mix) — an averaging artifact, not a capability gap.
   capability is the GDN-2 recall cell's, not the E97 nonlinear-in-time heads'. Capacity ruled
   out (emender-mlp 14.5M ≈ gdn2-mlp 15.5M but 0.48 vs 0.98; m2rnn 2.7M beats emender-mlp 14.5M).
 
-**Overall: clean NO-GO for the Emender at 1.3B — ties on LM bpb, loses the discriminating
+**Overall: the Emender at 1.3B ties on LM bpb and loses the discriminating
 separator to gdn2-mlp. gdn2-mlp is the best all-around. Upholds the convergent-loss / capability
 null from emender-real-1p3b, emender-cap-sweep, opt-1p3b, lb-emender-mix.**
 

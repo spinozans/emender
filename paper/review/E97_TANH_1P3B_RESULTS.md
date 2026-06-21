@@ -22,7 +22,7 @@ AdamW, checkpoint round-trip on every held-out BPB. No mocks; every BPB is a rea
 `LINEAR_STATE=False`) BEAT gdn2-mlp on WALL-CLOCK-matched held-out BPB? And does
 tanh beat the linear `e97_delta`?**
 
-> **NO-GO on wall-clock — decisive, triangulated across three independent real
+> **Loses at honest wall-clock — decisive, triangulated across three independent real
 > measurements. The "launch-bound, fixable" premise is REFUTED at the 1.3B head
 > shape. tanh DOES beat linear `e97_delta` (+0.041 BPB token-matched) and DOES
 > beat gdn2-mlp TOKEN-matched (+0.02) — but the bounded-state sample-efficiency
@@ -150,7 +150,7 @@ batch your way to GDN throughput without erasing the edge that motivated tanh.
 
 ---
 
-## 5. Why NO-GO, in one ladder
+## 5. Why it loses at wall-clock, in one ladder
 
 ```
 tanh+seq, B=2 token-matched   2.063  ← BEATS gdn2-mlp token-matched (2.083); edge = +0.02
@@ -210,8 +210,8 @@ batch/launch tuning for this head shape — both are exhausted here.
   (`tanh_b4_headtohead.json`) confirms.
 - [x] **tanh-vs-linear delta quantified** — +0.041 BPB (tanh better), not +0.08,
   at 1.3B (`attribution_control.json`: tanh 2.055 vs identity 2.096).
-- [x] **Explicit GO/NO-GO + residual + next lever + doc committed** — NO-GO
-  (wall-clock); residual = tanh ⊥ tensor-core throughput; next lever =
+- [x] **Explicit accept/reject + residual + next lever + doc committed** — loses
+  at wall-clock; residual = tanh ⊥ tensor-core throughput; next lever =
   `gdn2_nonlin_shell` chunkable bounded-state kernel.
 
 ### One-line summary
@@ -220,6 +220,6 @@ The fused-checkpointed tanh kernel is **not** GDN-fast at the 1.3B head shape
 (0.70–0.80× at 99.5 % util — a tensor-core-utilization wall, not a launch
 defect); tanh is genuinely more sample-efficient than both linear `e97_delta`
 (+0.041) and gdn2-mlp token-matched (+0.02), but that edge is smaller than the
-throughput tax, so **NO-GO on wall-clock** — the only fix is a chunkable
+throughput tax, so **it loses at wall-clock** — the only fix is a chunkable
 bounded-state kernel (`gdn2_nonlin_shell`), not the sequential kernel or launch
 tuning.

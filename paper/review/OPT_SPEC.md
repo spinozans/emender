@@ -22,11 +22,11 @@ came back NULL at convergent loss:
 - TTT / `refit` (momentum + K-step inner optimizer) — convergent-capability
   NULL; the momentum-off special case (= GDN-2's gated-delta rule) does
   everything ([[ttt-capability-convergent-null]]).
-- `nlmem` (MLP fast-weight memory) — HONEST NULL/NO-GO; ties GDN-2 only on XOR,
+- `nlmem` (MLP fast-weight memory) — HONEST NULL; ties GDN-2 only on XOR,
   loses elsewhere ([[nlmem-capability-inert-then-null]]).
 - The within-layer `e97_raw + gdn-neg` mixture is **capability-complete but
   LM-dominated** — it only *ties* GDN-2 on held-out BPB while costing 2.6×
-  (`E97_WITHIN_LAYER_SYNTHESIS.md`, NO-GO).
+  (`E97_WITHIN_LAYER_SYNTHESIS.md`: ties BPB, LM-dominated at 2.6× cost).
 
 The standing result across all of these is a robust **convergent-loss null**:
 at matched compute and convergent loss, exotic function-class moves do not beat
@@ -502,7 +502,7 @@ minimal core = the smallest arm whose `JCC ≥ JCC(min_full) − Δ*`. This prob
         Compute JCC at scale; the §1.4 bar must hold.
      2. **Held-out BPB** — the LM run on the committed slices
         (`COMMA_PILE_BPB` / `heldout_multislice`), averaged (schedule-free)
-        weights, token-matched AND wall-clock-noted (the within-layer NO-GO turned
+        weights, token-matched AND wall-clock-noted (the within-layer wall-loss turned
         on wall-clock; report both).
    - **Verdict:** GO iff `R*` clears §1.4 at 1.3B on JCC (worst-corner,
      beyond noise) AND does not regress held-out BPB vs `B`. Otherwise NULL
@@ -596,7 +596,7 @@ controls present, (iv) a `RESULTS.md` with the §1.4 verdict vs `B`.
 - `TTT_CAPABILITY_RESULTS.md` — the recall↔counting trade-off; convergent-loss
   null on the TTT richness lever; the battery + shape this spec reuses.
 - `E97_WITHIN_LAYER_SYNTHESIS.md` — the GDN+nonlin mixture is capability-complete
-  but LM-dominated (NO-GO as architecture) → motivates the optimization line; the
+  but LM-dominated (ties GDN-2 BPB at 2.6× cost → not adopted as architecture) → motivates the optimization line; the
   `gdn-neg ⇒ recall+track` mechanism; held-out BPB anchoring discipline.
 - `SPECIALIZATION_STUDY_RESULTS.md` — placement (spread-init/fixedpop), not
   pressure, covers the corners → opt-initspread.

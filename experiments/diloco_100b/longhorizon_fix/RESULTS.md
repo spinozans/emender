@@ -153,7 +153,7 @@ post-merge consensus checkpoint vs DDP at matched tokens:
   schedule-free). Measured monotone to 1.205 BPB @ 215 M at the `emender-mlp` geometry;
   scale `warmup_steps` to ~1–2 % of the real step budget. `docs/SCALE_PLAN.md` §2.2
   updated.
-- **DiLoCo:** is a **persistent ~+0.35 BPB that does not close** (stable +0.35 plateau from 64.5 M through 215 M against the healthy baseline) (full table §3). The predecessor's NO-GO-as-loss-parity
+- **DiLoCo:** is a **persistent ~+0.35 BPB that does not close** (stable +0.35 plateau from 64.5 M through 215 M against the healthy baseline) (full table §3). The predecessor's not-a-viable-loss-parity-path
   conclusion therefore **stands, now re-confirmed against a non-degrading baseline** — the earlier "gap closes at 215 M" was mutual collapse, not parity.
 - The schedule-free path is **not** retired in principle (the E88 0.966 precedent used it),
   but it is **unsafe at this geometry/LR** without decay; if horizon-freedom is needed

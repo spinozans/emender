@@ -3,8 +3,8 @@
 This is the *load-bearing* throughput fix for the E97 split-edit cell. The prior
 fused E97 kernel (``ndm.triton.e88_triton_forward``) runs a SEQUENTIAL
 ``for t in range(T)`` outer-product scan inside one Triton program per (batch,
-head). That is latency-bound and cannot saturate the GPU (the within-layer NO-GO
-verdict hinged on it being ~2.6x slower than GDN-2). GDN-2 reaches ~97% util via
+head). That is latency-bound and cannot saturate the GPU (the within-layer
+latency-bound finding hinged on it being ~2.6x slower than GDN-2). GDN-2 reaches ~97% util via
 FLA's CHUNKED PARALLEL gated-delta-rule: chunk the sequence, do the intra-chunk
 work with matmuls (tensor cores), thread the recurrent state across chunks.
 

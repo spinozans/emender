@@ -11,7 +11,7 @@ Emits BPB_TABLE.txt, JCC_TABLE.txt, VERDICT.txt, summary.json.
 THE CLAIM (emender-real-1p3b): the CMA-FOUND sparse Emender mixture ties GDN-2 on loss
 (token- AND wall-matched, bf16 UNIFORM — the corrected fair comparison) AND adds
 capability pure GDN-2 cannot reach, at ~same speed. Pre-registered expectation from
-emender-real-cap = NO-GO/NULL (token-tie, wall-loss from ~0.75x throughput, expressivity
+emender-real-cap = NULL on all three axes (token-tie, wall-loss from ~0.75x throughput, expressivity
 NULL vs the gdn2typed substrate control).
 
 Decision rule:
@@ -21,7 +21,7 @@ Decision rule:
                 Comparing to gdn2typed (not fla-gdn) isolates the emendment HEADS from
                 the typed plumbing (emender-real-cap §2: the fla-gdn "win" is the plumbing).
   - SPEED     : tok/s parity emender/cma_gdn2 >= SPEED_PARITY (>=0.95 = "same speed").
-  GO ("same loss + more capability at ~same speed") iff all three. Else NO-GO/NULL.
+  GO ("same loss + more capability at ~same speed") iff all three. Else NULL on all three axes.
 """
 import os, sys, json, glob, argparse, math
 from pathlib import Path
@@ -233,7 +233,7 @@ def verdict(wall_sum, token_sum, cap_sum, tput):
             reasons.append("held-out BPB regresses wall-matched vs GDN-2")
         if not loss_tie_tok:
             reasons.append("token-matched BPB not a tie")
-        L.append("==> NO-GO / NULL: " + "; ".join(reasons) + ".")
+        L.append("==> NULL: " + "; ".join(reasons) + ".")
         L.append("    Confirms emender-real-cap's pre-registered 1.3B expectation: the sparse")
         L.append("    nonlinear emendment sprinkle is a convergent-loss tie with NO capability")
         L.append("    edge over the typed substrate, and the sequential split-edit head costs")

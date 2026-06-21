@@ -108,6 +108,7 @@ canonical grokking conditions (AdamW + wd sweep + fixed split + 100k/200k steps)
 Where grokking *does* rescue a prior null (S5, low-wd modquad), it rescues **GDN-2
 (linear)**, which groks to perfect test accuracy while e97 stays at baseline. The
 per-step nonlinearity (tanh vs identity in the identical fused kernel) is null for
-grokking on all three tasks. Clean **NO-GO** for the "nonlinearity unlocks grokked
-capability" hypothesis; consistent with the convergent-capability nulls and with
+grokking on all three tasks. The "nonlinearity unlocks grokked
+capability" hypothesis is **NULL** (per-step nonlinearity does not grok any of the
+three tasks); consistent with the convergent-capability nulls and with
 "the lin-vs-nonlin separator is counting/state-tracking and *linear* wins S5."

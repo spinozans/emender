@@ -89,7 +89,7 @@ predicted a fixed-depth MLP readout structurally cannot supply.
 **Consequence for E97.** At equal LM loss, nonlinearity-in-time **is** a real,
 unique capability of tanh-e97 — length-robust tracking of non-invertible nonlinear
 recurrences — not redundant given the MLP. The LM-BPB tie
-([[e99-corrected-1p3b-fair-rematch]], [[fuse-2kernel-nogo-tanh-perp-chunkable]]) is
+([[e99-corrected-1p3b-fair-rematch]], [[fuse-2kernel-tanh-perp-chunkable]]) is
 real, but it is a tie *on the LM mixture*, which is dominated by recall/group/count
 structure gdn-neg already covers; it does **not** imply capability equivalence. The
 honest scale decision still favours gdn-neg on throughput/stability **and** on the

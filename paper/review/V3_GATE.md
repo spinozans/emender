@@ -1,4 +1,4 @@
-# V3 Synthesis Gate — GO/NO-GO
+# V3 Synthesis Gate — accept/reject
 
 # **GO**
 

@@ -11,7 +11,7 @@ This task **corrects the two confounds** in `opt-1p3b`: that run used a **hand-p
 at matched wall — a token-starved strawman. Here the Emender is the mixture **CMA-ES
 actually found** in `emender-real-cap` and **every arm runs bf16 UNIFORM**.
 
-## Verdict: **NO-GO / NULL** — the claim is refuted on all three axes.
+## Verdict: **NULL on all three axes** — the claim is refuted (loses loss, adds no capability, runs slower).
 
 At 1.3B, matched precision (bf16 uniform), fused, best-vs-best, the CMA-found Emender:
 1. **does NOT tie on loss** — it **loses** held-out BPB both token-matched (**+0.043**) and
@@ -131,7 +131,7 @@ runs at **0.80× throughput**. CMA-best **GDN-2 is the better 1.3B cell**; m2rnn
 between. The convergent-loss/convergent-capability null — established across architecture
 (e97/complex-eig/nlmem/ttt) and optimization (opt-1p3b) — **extends to the REAL CMA-found
 Emender at 1.3B, at matched precision.** This *corrects* opt-1p3b's confounded strawman
-and reaches the **same NO-GO** by a fair route: the conclusion was never an artifact of
+and reaches the **same outcome — pure GDN-2 wins** — by a fair route: the conclusion was never an artifact of
 the 50%-hand-pick or the fp32 token-starvation — pure GDN-2 wins on the merits.
 
 ## Validation checklist
@@ -142,7 +142,7 @@ the 50%-hand-pick or the fp32 token-starvation — pure GDN-2 wins on the merits
 - [x] **Fair token + wall BPB + expressivity vs CMA-best gdn2 (+m2rnn)**: token-matched
       (7 M) and wall-matched (20 min), 2 seeds, best-vs-best lr; expressivity vs `gdn2typed`
       substrate control AND the real `cma_gdn2` incumbent, with a **convergence control**
-      that distinguishes capability from convergence speed. **Verdict on the claim: NO-GO
-      / NULL** (loses loss both ways; no capability at convergence; 0.80× speed).
+      that distinguishes capability from convergence speed. **Verdict on the claim: NULL
+      on all three axes** (loses loss both ways; no capability at convergence; 0.80× speed).
 - [x] **Results doc committed** (this file + `BPB_TABLE.txt`, `JCC_TABLE.txt`,
       `VERDICT.txt`, `summary.json`).
