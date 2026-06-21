@@ -207,16 +207,34 @@ The template maps variants to these train arguments:
 
 ```text
 e97-MLP:
-  --level E97 --e88_raw_write 1 --linear_state 0 --use_triton 1
+  --level E97 --linear_state 0 --use_triton 1
   --n_state 32 --n_heads 323 --dim 1536 --depth 10 --mlp_ratio 1.5
 
 e97-linear-MLP:
-  --level E97 --e88_raw_write 1 --linear_state 1 --use_triton 1
+  --level E97 --linear_state 1 --use_triton 1 --use_chunked_e97 1
+  --e97_chunk_size 32
   --n_state 32 --n_heads 128 --dim 1536 --depth 21 --mlp_ratio 2.0
 
 gdn2-MLP:
   --level gdn2-mlp --dim 2176 --depth 12 --n_heads 30 --expansion 1.0
   --gdn2_mlp_ratio 3.258732449079677
+```
+
+For E97 variants the template runs a one-GCD kernel-only smoke before the
+training command and records `kernel_smoke_status`, `train_status`, and log paths
+in the manifest:
+
+```bash
+# e97-MLP sequential split-edit Triton path
+HIP_VISIBLE_DEVICES=0 python -m pytest \
+  tests/test_e88_triton.py::test_e97_split_edit_triton_matches_reference -q -s
+
+# e97-linear-MLP chunked E97 Triton path
+HIP_VISIBLE_DEVICES=0 python -m pytest \
+  tests/test_e97_chunked.py::test_fused_triton_forward_parity_fp32 \
+  tests/test_e97_chunked.py::test_fused_triton_backward_parity_bf16 \
+  tests/test_e97_chunked.py::test_strong_decay_cluster_backward_finite \
+  tests/test_e97_chunked.py::test_glog_floor_drift_overflow_finite -q -s
 ```
 
 All variants run bf16, ScheduleFree AdamW, `p50k_base`, one process per GCD,

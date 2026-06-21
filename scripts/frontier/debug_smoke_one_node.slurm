@@ -104,7 +104,6 @@ case "$SMOKE_VARIANT" in
   e97-MLP)
     MODEL_ARGS=(
       --level E97
-      --e88_raw_write 1
       --linear_state 0
       --use_triton 1
       --n_state 32
@@ -121,9 +120,10 @@ case "$SMOKE_VARIANT" in
   e97-linear-MLP)
     MODEL_ARGS=(
       --level E97
-      --e88_raw_write 1
       --linear_state 1
       --use_triton 1
+      --use_chunked_e97 1
+      --e97_chunk_size "${E97_CHUNK_SIZE:-32}"
       --n_state 32
       --n_heads 128
       --dim 1536
@@ -150,6 +150,29 @@ case "$SMOKE_VARIANT" in
   *)
     echo "Unknown SMOKE_VARIANT='$SMOKE_VARIANT' (expected e97-MLP, e97-linear-MLP, or gdn2-MLP)" >&2
     exit 2
+    ;;
+esac
+
+case "$SMOKE_VARIANT" in
+  e97-MLP)
+    KERNEL_SMOKE_CMD=(
+      python -m pytest
+      tests/test_e88_triton.py::test_e97_split_edit_triton_matches_reference
+      -q -s
+    )
+    ;;
+  e97-linear-MLP)
+    KERNEL_SMOKE_CMD=(
+      python -m pytest
+      tests/test_e97_chunked.py::test_fused_triton_forward_parity_fp32
+      tests/test_e97_chunked.py::test_fused_triton_backward_parity_bf16
+      tests/test_e97_chunked.py::test_strong_decay_cluster_backward_finite
+      tests/test_e97_chunked.py::test_glog_floor_drift_overflow_finite
+      -q -s
+    )
+    ;;
+  *)
+    KERNEL_SMOKE_CMD=()
     ;;
 esac
 
@@ -231,15 +254,35 @@ PY
   git diff --stat
   echo
   echo "=== command ==="
+  if [[ ${#KERNEL_SMOKE_CMD[@]} -gt 0 ]]; then
+    printf '%q ' srun -N1 -n1 -c7 --gpus-per-task=1 --gpu-bind=closest "${KERNEL_SMOKE_CMD[@]}"
+    echo
+  fi
   printf '%q ' srun -N1 -n8 -c7 --gpus-per-task=1 --gpu-bind=closest python -u train.py "${COMMON_ARGS[@]}" "${MODEL_ARGS[@]}"
   echo
 } | tee "$ENV_FILE"
 
 set +e
-srun -N1 -n8 -c7 --gpus-per-task=1 --gpu-bind=closest \
-  python -u train.py "${COMMON_ARGS[@]}" "${MODEL_ARGS[@]}" \
-  2>&1 | tee "${LOG_DIR}/train.log"
-STATUS=${PIPESTATUS[0]}
+KERNEL_SMOKE_STATUS=0
+if [[ ${#KERNEL_SMOKE_CMD[@]} -gt 0 ]]; then
+  srun -N1 -n1 -c7 --gpus-per-task=1 --gpu-bind=closest \
+    "${KERNEL_SMOKE_CMD[@]}" \
+    2>&1 | tee "${LOG_DIR}/kernel_smoke.log"
+  KERNEL_SMOKE_STATUS=${PIPESTATUS[0]}
+else
+  echo "no kernel-only smoke configured for ${SMOKE_VARIANT}" | tee "${LOG_DIR}/kernel_smoke.log"
+fi
+if [[ "$KERNEL_SMOKE_STATUS" -eq 0 ]]; then
+  srun -N1 -n8 -c7 --gpus-per-task=1 --gpu-bind=closest \
+    python -u train.py "${COMMON_ARGS[@]}" "${MODEL_ARGS[@]}" \
+    2>&1 | tee "${LOG_DIR}/train.log"
+  TRAIN_STATUS=${PIPESTATUS[0]}
+  STATUS=$TRAIN_STATUS
+else
+  TRAIN_STATUS=77
+  STATUS=$KERNEL_SMOKE_STATUS
+  echo "kernel smoke failed; skipping training smoke" | tee "${LOG_DIR}/train.log"
+fi
 set -e
 
 END_UTC=$(date -u +%Y-%m-%dT%H:%M:%SZ)
@@ -260,11 +303,14 @@ manifest = {
     "start_utc": "${START_UTC}",
     "end_utc": "${END_UTC}",
     "exit_status": int("${STATUS}"),
+    "kernel_smoke_status": int("${KERNEL_SMOKE_STATUS}"),
+    "train_status": int("${TRAIN_STATUS}"),
     "git_commit": "${GIT_COMMIT}",
     "stdout": "${STDOUT_PATH}",
     "stderr": "${STDERR_PATH}",
     "run_root": "${RUN_ROOT}",
     "env_file": "${ENV_FILE}",
+    "kernel_smoke_log": "${LOG_DIR}/kernel_smoke.log",
     "train_log": "${LOG_DIR}/train.log",
 }
 with open("${MANIFEST_FILE}", "w", encoding="utf-8") as fh:
@@ -290,6 +336,8 @@ cat > "$SUMMARY_FILE" <<EOF
 - stdout: ${STDOUT_PATH}
 - stderr: ${STDERR_PATH}
 - artifacts: ${RUN_ROOT}
+- kernel_smoke_status: ${KERNEL_SMOKE_STATUS}
+- train_status: ${TRAIN_STATUS}
 - exit_status: ${STATUS}
 
 ## Observation

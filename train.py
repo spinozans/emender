@@ -174,6 +174,13 @@ def parse_args():
                         help='Add direct D*v value residual to E88 output before output gating (0=no, 1=yes)')
     parser.add_argument('--e88_raw_write', type=int, default=0,
                         help='Ablate E88 delta correction: write raw v instead of v - S^T k')
+    parser.add_argument('--use_chunked_e97', type=int, default=0,
+                        help='For E97 split-edit linear-state runs, use the fused chunked '
+                             'E97 Triton fwd/bwd kernel instead of the sequential split-edit '
+                             'Triton scan (0=no, 1=yes). Requires --use_triton 1, '
+                             '--linear_state 1, and --e88_raw_write 0.')
+    parser.add_argument('--e97_chunk_size', type=int, default=32,
+                        help='Chunk size for --use_chunked_e97. ROCm/HIP debug starts at 32.')
     parser.add_argument('--mlp_ratio', type=float, default=0.0,
                         help='If >0, wrap every mixer layer with a post-mixer RMSNorm + SwiGLU MLP '
                              '(hidden = dim*mlp_ratio). 0 = mixer-only (default). Mirrors gdn2-mlp plumbing.')
@@ -1096,6 +1103,8 @@ def train(args):
             e88_decay_mode=args.e88_decay_mode,
             e88_value_residual=bool(args.e88_value_residual),
             e88_raw_write=bool(args.e88_raw_write),
+            use_chunked_e97=bool(args.use_chunked_e97),
+            e97_chunk_size=args.e97_chunk_size,
             state_expansion=args.state_expansion,
             r_h_mode=r_h_mode,
             use_conv=bool(args.use_conv),
