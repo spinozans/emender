@@ -23,21 +23,25 @@ while true; do
     [ -n "$pid" ] || continue
     if ! kill -0 "$pid" 2>/dev/null; then continue; fi   # not running -> nothing to watch
     log=$(ls -S "$dir"/run.log "$dir"/train.log 2>/dev/null | head -1)
+    # Universal liveness = does the log keep GROWING. A precise step (when present) makes the
+    # alert informative; but the stall signal itself is log byte-size, so an init-wedge that
+    # never emits a first step (fused-kernel autotune deadlock under box load) is ALSO caught.
     step=$(grep -hoE 'step +[0-9]+ \| loss' "$log" 2>/dev/null | tail -1 | grep -oE '[0-9]+' | head -1)
-    [ -n "$step" ] || continue
+    size=$(stat -c %s "$log" 2>/dev/null || echo 0)
+    token="${size}@${step:-init}"
     prev=${last_step[$r]:-}
-    if [ -n "$prev" ] && [ "$step" = "$prev" ]; then
+    if [ -n "$prev" ] && [ "$token" = "$prev" ]; then
       stall[$r]=$(( ${stall[$r]:-0} + 1 ))
-      log "WARN $r step stuck at $step (stall ${stall[$r]}/${STALL_CHECKS}, pid $pid)"
+      log "WARN $r no log progress (at step ${step:-INIT}, ${size}B) (stall ${stall[$r]}/${STALL_CHECKS}, pid $pid)"
       if [ "${stall[$r]}" -ge "$STALL_CHECKS" ]; then
-        log "ALERT $r HUNG at step $step — killing pid $pid (silent CUDA wedge). Re-equalize needed."
+        log "ALERT $r HUNG at step ${step:-INIT} (log frozen ${size}B) — killing pid $pid (silent CUDA wedge). Re-equalize needed."
         kill -KILL "$pid" 2>/dev/null
         stall[$r]=0
       fi
     else
       stall[$r]=0
     fi
-    last_step[$r]=$step
+    last_step[$r]=$token
   done
   sleep "$INTERVAL"
 done
