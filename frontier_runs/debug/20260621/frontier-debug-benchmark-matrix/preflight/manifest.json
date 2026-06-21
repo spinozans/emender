@@ -1,0 +1,68 @@
+{
+  "task_id": "frontier-debug-benchmark-matrix",
+  "capture_utc": "2026-06-21T13:36:00Z",
+  "host": "login04",
+  "git_commit": "d39bac8a061b8016aaa16d6eee6e5403acade9c6",
+  "queue": "debug",
+  "submitted_jobs": [],
+  "actual_node_hours": 0.0,
+  "planned_retry_node_hours": 1.5,
+  "variants": [
+    {
+      "variant": "e97-MLP",
+      "job_id": null,
+      "status": "not_submitted",
+      "requested_node_hours_if_submitted": 0.5,
+      "actual_node_hours": 0.0,
+      "throughput": null,
+      "memory_observation": null,
+      "loss_sanity": null,
+      "blocker": "missing ROCm Python runtime"
+    },
+    {
+      "variant": "e97-linear-MLP",
+      "job_id": null,
+      "status": "not_submitted",
+      "requested_node_hours_if_submitted": 0.5,
+      "actual_node_hours": 0.0,
+      "throughput": null,
+      "memory_observation": null,
+      "loss_sanity": null,
+      "blocker": "missing ROCm Python runtime"
+    },
+    {
+      "variant": "gdn2-MLP",
+      "job_id": null,
+      "status": "not_submitted",
+      "requested_node_hours_if_submitted": 0.5,
+      "actual_node_hours": 0.0,
+      "throughput": null,
+      "memory_observation": null,
+      "loss_sanity": null,
+      "blocker": "missing ROCm Python runtime and missing GDN2_PATH"
+    }
+  ],
+  "runtime_checks": {
+    "sbatch": "/usr/bin/sbatch",
+    "squeue": "/usr/bin/squeue",
+    "sacct": "/usr/bin/sacct",
+    "current_user_debug_jobs": "none observed",
+    "canonical_data": {
+      "path": "/lustre/orion/bif148/proj-shared/commapile/commapile_mainmix_v0.1_1tb.txt",
+      "observed": true,
+      "size_human": "932G"
+    },
+    "expected_smoke_data_observed": false,
+    "expected_smoke_val_data_observed": false,
+    "expected_emender_conda_env_observed": false,
+    "expected_gdn2_path_observed": false,
+    "python3_11_modules": {
+      "numpy": "present 1.24.2",
+      "torch": "missing",
+      "triton": "missing",
+      "schedulefree": "missing",
+      "tiktoken": "missing"
+    }
+  },
+  "recommended_next_gate": "retry_debug"
+}
