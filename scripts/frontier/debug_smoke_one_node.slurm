@@ -69,6 +69,7 @@ export MASTER_ADDR=${MASTER_ADDR:-$(hostname -i | awk '{print $1}')}
 export MASTER_PORT=${MASTER_PORT:-3442}
 export OMP_NUM_THREADS=${OMP_NUM_THREADS:-7}
 export NDM_PIN_TRITON_AUTOTUNE=${NDM_PIN_TRITON_AUTOTUNE:-1}
+export TIKTOKEN_CACHE_DIR=${TIKTOKEN_CACHE_DIR:-/lustre/orion/bif148/proj-shared/tiktoken_cache}
 if [[ -z "${GDN2_PATH:-}" ]]; then
   if [[ -n "${MEMBERWORK:-}" ]]; then
     export GDN2_PATH="${MEMBERWORK}/emender/src/GatedDeltaNet-2"
@@ -231,7 +232,7 @@ PY
   echo "stderr=$STDERR_PATH"
   echo
   echo "=== slurm ==="
-  env | sort | grep -E '^(SLURM|MPICH|NCCL|MASTER|OMP|ROCR|HIP|HSA|GDN2|NDM|DATA|VAL_DATA|TRAIN_MINUTES|SMOKE_VARIANT)=' || true
+  env | sort | grep -E '^(SLURM|MPICH|NCCL|MASTER|OMP|ROCR|HIP|HSA|GDN2|NDM|DATA|VAL_DATA|TOKENIZER|TIKTOKEN|TRAIN_MINUTES|SMOKE_VARIANT)=' || true
   echo "requested_node_hours=$REQUESTED_NODE_HOURS"
   echo
   echo "=== modules ==="
@@ -262,6 +263,37 @@ try:
         report["torch.cuda.device_name_0"] = torch.cuda.get_device_name(0)
 except Exception as exc:
     report["torch_error"] = repr(exc)
+print(json.dumps(report, sort_keys=True))
+PY
+  echo
+  echo "=== srun tokenizer cache visibility ==="
+  srun -N1 -n1 -c7 --gpus-per-task=1 --gpu-bind=closest \
+    python - <<'PY'
+import hashlib
+import json
+import os
+from pathlib import Path
+
+cache_dir = Path(os.environ["TIKTOKEN_CACHE_DIR"])
+blob_url = "https://openaipublic.blob.core.windows.net/encodings/p50k_base.tiktoken"
+hash_path = cache_dir / hashlib.sha1(blob_url.encode()).hexdigest()
+named_path = cache_dir / "p50k_base.tiktoken"
+report = {
+    "hostname": os.uname().nodename,
+    "TIKTOKEN_CACHE_DIR": str(cache_dir),
+    "hash_path": str(hash_path),
+    "hash_path_readable": os.access(hash_path, os.R_OK),
+    "named_path": str(named_path),
+    "named_path_readable": os.access(named_path, os.R_OK),
+}
+if not report["hash_path_readable"]:
+    raise SystemExit(f"missing readable tiktoken cache hash file: {hash_path}")
+if not report["named_path_readable"]:
+    raise SystemExit(f"missing readable named tiktoken cache file: {named_path}")
+import tiktoken
+
+enc = tiktoken.get_encoding("p50k_base")
+report["p50k_base_n_vocab"] = enc.n_vocab
 print(json.dumps(report, sort_keys=True))
 PY
   echo
@@ -299,7 +331,7 @@ PY
     printf '%q ' srun -N1 -n1 -c7 --gpus-per-task=1 --gpu-bind=closest "${KERNEL_SMOKE_CMD[@]}"
     echo
   fi
-  printf '%q ' srun -N1 -n8 -c7 --gpus-per-task=1 --gpu-bind=closest python -u train.py "${COMMON_ARGS[@]}" "${MODEL_ARGS[@]}"
+  printf '%q ' srun -N1 -n8 -c7 --gpus-per-task=1 --gpu-bind=closest bash -lc 'export RANK="$SLURM_PROCID" WORLD_SIZE="$SLURM_NTASKS" LOCAL_RANK=0; exec python -u train.py "$@"' bash "${COMMON_ARGS[@]}" "${MODEL_ARGS[@]}"
   echo
 } | tee "$ENV_FILE"
 
@@ -315,7 +347,7 @@ else
 fi
 if [[ "$KERNEL_SMOKE_STATUS" -eq 0 ]]; then
   srun -N1 -n8 -c7 --gpus-per-task=1 --gpu-bind=closest \
-    python -u train.py "${COMMON_ARGS[@]}" "${MODEL_ARGS[@]}" \
+    bash -lc 'export RANK="$SLURM_PROCID" WORLD_SIZE="$SLURM_NTASKS" LOCAL_RANK=0; exec python -u train.py "$@"' bash "${COMMON_ARGS[@]}" "${MODEL_ARGS[@]}" \
     2>&1 | tee "${LOG_DIR}/train.log"
   TRAIN_STATUS=${PIPESTATUS[0]}
   STATUS=$TRAIN_STATUS
@@ -347,6 +379,7 @@ manifest = {
     "kernel_smoke_status": int("${KERNEL_SMOKE_STATUS}"),
     "train_status": int("${TRAIN_STATUS}"),
     "git_commit": "${GIT_COMMIT}",
+    "tiktoken_cache_dir": "${TIKTOKEN_CACHE_DIR}",
     "stdout": "${STDOUT_PATH}",
     "stderr": "${STDERR_PATH}",
     "run_root": "${RUN_ROOT}",

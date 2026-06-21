@@ -1104,6 +1104,8 @@ class LadderLM(nn.Module):
         e88_decay_mode='mamba',  # For E88 FLA Hybrid: mamba, simple, none, or constant
         e88_value_residual=False,  # For E88 FLA Hybrid: add D*v residual before output gate
         e88_raw_write=False,  # For E88 FLA Hybrid: ablate delta correction
+        use_chunked_e97=False,  # For E97 linear-state chunked-parallel ROCm/Triton path
+        e97_chunk_size=32,  # Chunk length for --use_chunked_e97
         rank=None,
         delta_init=-2.0,
         dropout=0.0,
@@ -1192,6 +1194,8 @@ class LadderLM(nn.Module):
                 decay_mode=e88_decay_mode,  # For E88 FLA Hybrid: decay mode
                 use_value_residual=e88_value_residual,  # For E88 FLA Hybrid: D*v residual
                 raw_write=e88_raw_write,  # For E88 FLA Hybrid: raw-write ablation
+                use_chunked_e97=use_chunked_e97,  # For E97 linear-state chunked path
+                e97_chunk_size=e97_chunk_size,
                 rank=rank,
                 delta_init=delta_init,
                 dropout=dropout,
