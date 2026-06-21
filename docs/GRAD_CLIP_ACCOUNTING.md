@@ -289,6 +289,53 @@ A WG follow-up task has been filed for this control (see task `clip-sensitivity-
 
 ---
 
+## 7. clip-off control — MEASURED RESULTS (follow-up `clip-sensitivity-control`, 2026-06-21)
+
+The §6 control was run: **12 REAL fused-kernel runs** = {emender-mlp E97, gdn2-mlp}
+× {`--grad_clip 1.0`, `--grad_clip 0`} × seeds {42,43,44}, matched-token
+(fixed `--steps 850`, both arms bs4×2048 ⇒ equal steps == equal tokens), each
+arm at its tuned LR, byte-identical to lb-compare, same disjoint held-out slice.
+**All 12/12 carry the `[fused-guard] … NO eager fallback` line; 0 eager paths.**
+
+**Verdict: the emender NO-GO is ROBUST to grad clipping — clip on/off does not
+move the emender−gdn2 BPB gap beyond the lb-compare noise floor.**
+
+- **(i) Stability under clip-off:** **0 non-finite skips, 0 non-finite-loss
+  stops, 12/12 ran the full 850 steps.** Clipping engages on 85–100 % of steps
+  (very active) but removing it **diverges neither arm** at this budget;
+  un-clipped pre-clip grad-norm max over all runs = **36.78** (seed-42 emender
+  clip-off), all other clip-off maxima ≤ 9.73 — no inf, no `8064`-scale spike at
+  the *tuned* config (those were CMAES *exploration* candidates, §3a).
+- **(ii) ΔBPB(clip-off − clip-on), per arm (paired, non-avg):** emender
+  **−0.023 ± 0.046** (straddles 0; the only large value, −0.075, is the seed-42
+  outlier and does **not** replicate) · gdn2 **+0.013 ± 0.010** (clip-off
+  consistently a hair *worse* for gdn2).
+- **(iii) Δgap = gap_clipoff − gap_clipon (n=3):** non-avg **−0.036 ± 0.036**
+  (per-seed −0.076, −0.009, −0.022); avg **−0.053 ± 0.051**. Both means are
+  **inside** the 0.01–0.09 noise band ⇒ "narrows beyond floor ⇒ re-open" branch
+  **not** triggered.
+- **Calibration note:** the *single* seed-42 run gave Δgap −0.076 (non-avg) /
+  **−0.111 (avg, which exceeds 0.09 and alone would have nominally tripped a
+  re-open)** — an un-replicated transient. Multi-seed collapses it to within
+  noise; a single-seed verdict would have been a **false re-open**.
+
+**Effect on §5:** §5's *conclusion* (verdict robust, low flip-risk) is
+**CONFIRMED**. §5's conjectured *direction* (clip "flatters the spikier emender
+arm"; clip-off would make emender *worse*) is **empirically corrected**: at the
+measured budget clip-off is **neutral for emender** and mildly *helps* gdn2, so
+the residual shift is *toward* emender, not away — but within noise. §5's
+worst-case (clip-off makes the emender E97 path diverge) **did not occur** in
+6/6 emender clip-off runs at this budget. Closes the §4c "no clip-off run
+exists" gap. Scope: short budget (≈7 M tokens, cold-start), tuned operating
+points — does **not** reach the multi-day-racer inf regime (§4b), which remains
+the domain of skip-on-nonfinite, not clipping.
+
+Full write-up + raw artifacts: `experiments/clip_sensitivity_20260621/RESULTS.md`
+(driver `run_clip_ab.py`, `multiseed_aggregate.py`, `clip_ab_*_analysis.json`,
+`runs/*/train.log`).
+
+---
+
 ## CLAIM → EVIDENCE table
 
 | # | Claim | Evidence | Status |
@@ -311,6 +358,7 @@ A WG follow-up task has been filed for this control (see task `clip-sensitivity-
 | 16 | skip-on-nonfinite landed AFTER all CMAES/verdicts | `5555b9d` 2026-06-21 vs searches 2026-06-10..17 | **VERIFIED** |
 | 17 | Cross-arm clip compression asymmetry (race): emender kept 0.645 on clipped steps (worst 0.195) vs gdn2 0.850 (worst 0.408) | computed from §4a grad samples | **VERIFIED** |
 | 18 | All matched verdicts ran at clip=1.0 | lb_compare `args.json` grad_clip=1.0 (all arms); racer/CMAES default | **VERIFIED** |
-| 19 | Confound direction is conservative (clip flatters spikier emender ⇒ NO-GO robust) | reasoning from §5 measured asymmetry + 4b inf being emender's path | **VERIFIED (argued from measured data)** |
-| 20 | Search-time cross-arm grad asymmetry magnitude | no committed gdn2 per-candidate grad traces (§3c, #13) | **UNSUPPORTED (data gap — needs §6 control)** |
+| 19 | Confound direction is conservative ⇒ NO-GO robust | §5 reasoning; **§7 control: NO-GO robust CONFIRMED (Δgap within noise, 3 seeds), but "clip flatters emender" direction empirically corrected — clip-off is neutral-to-emender / mildly-helps-gdn2** | **VERIFIED (conclusion measured; mechanism corrected in §7)** |
+| 20 | Clip on/off does not flip the emender verdict | **§7 control: 12 runs, clip-off A/B at tuned points, Δgap −0.036 (non-avg)/−0.053 (avg), within 0.01–0.09 floor; 0/12 divergence** | **MEASURED (§7) — verdict robust** |
+| 20b | Search-time CMAES per-candidate gdn2 grad traces (cold-start magnitude) | transient subprocess stdout, not committed (§3c, #13); §7 measures the *tuned-point* clip effect, not raw CMAES cold-start | **UNSUPPORTED (data gap — traces unrecoverable; verdict question resolved by §7)** |
 | 21 | Literal "step 322087" inf log line | overwritten on racer relaunch; not on disk; event documented only via `5555b9d` | **UNSUPPORTED as a standalone line (event VERIFIED via commit)** |
