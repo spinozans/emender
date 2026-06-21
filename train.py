@@ -1530,10 +1530,21 @@ def train(args):
 
             if not torch.isfinite(torch.as_tensor(grad_norm)):
                 grad_value = grad_norm.item() if hasattr(grad_norm, 'item') else float(grad_norm)
-                print(f"Non-finite grad norm at step {step}: {grad_value}. Stopping before optimizer step.")
+                if dist_enabled:
+                    # Multi-rank (DiLoCo/DDP): a per-rank skip desyncs the collective merge
+                    # (ranks would diverge in step count). Keep the stop guard for safety.
+                    print(f"Non-finite grad norm at step {step}: {grad_value}. Stopping before optimizer step (multi-rank).", flush=True)
+                    optimizer.zero_grad(set_to_none=True)
+                    stopped_nonfinite = True
+                    break
+                # Single-GPU: SKIP this step and continue (standard mixed-precision recipe).
+                # Grad clipping handles finite explosions; a one-off bf16 inf cannot be scaled,
+                # so dropping the offending step is correct — far better than killing a multi-day run.
+                # Per-skip log: if these become frequent it signals a real divergence, not a transient.
+                print(f"Non-finite grad norm at step {step}: {grad_value}. SKIPPING this step (transient overflow), continuing.", flush=True)
                 optimizer.zero_grad(set_to_none=True)
-                stopped_nonfinite = True
-                break
+                accumulated_steps = 0
+                continue
 
             # Learning rate schedule (only for standard AdamW). Warmup + cosine decay
             # to min_lr_frac*lr over the full run; scales each group's base LR so
