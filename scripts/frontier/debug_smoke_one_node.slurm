@@ -240,6 +240,31 @@ PY
   echo "=== rocm-smi ==="
   rocm-smi || true
   echo
+  echo "=== srun gpu visibility ==="
+  srun -N1 -n1 -c7 --gpus-per-task=1 --gpu-bind=closest \
+    python - <<'PY' || true
+import json
+import os
+
+report = {
+    "hostname": os.uname().nodename,
+    "HIP_VISIBLE_DEVICES": os.environ.get("HIP_VISIBLE_DEVICES"),
+    "ROCR_VISIBLE_DEVICES": os.environ.get("ROCR_VISIBLE_DEVICES"),
+    "CUDA_VISIBLE_DEVICES": os.environ.get("CUDA_VISIBLE_DEVICES"),
+    "SLURM_LOCALID": os.environ.get("SLURM_LOCALID"),
+}
+try:
+    import torch
+    report["torch.cuda.is_available"] = torch.cuda.is_available()
+    report["torch.cuda.device_count"] = torch.cuda.device_count()
+    if torch.cuda.is_available():
+        report["torch.cuda.current_device"] = torch.cuda.current_device()
+        report["torch.cuda.device_name_0"] = torch.cuda.get_device_name(0)
+except Exception as exc:
+    report["torch_error"] = repr(exc)
+print(json.dumps(report, sort_keys=True))
+PY
+  echo
   echo "=== python ==="
   which python
   python --version
@@ -334,6 +359,38 @@ with open("${MANIFEST_FILE}", "w", encoding="utf-8") as fh:
     fh.write("\\n")
 PY
 
+SUMMARY_METRICS=$(python - <<PY
+import re
+from pathlib import Path
+
+train_log = Path("${LOG_DIR}/train.log")
+kernel_log = Path("${LOG_DIR}/kernel_smoke.log")
+
+def read_lines(path):
+    if not path.exists():
+        return []
+    return path.read_text(encoding="utf-8", errors="replace").splitlines()
+
+train_lines = read_lines(train_log)
+kernel_lines = read_lines(kernel_log)
+step_lines = [ln for ln in train_lines if "loss" in ln and ("tok/s" in ln or "global_tok/s" in ln)]
+loss_lines = [ln for ln in train_lines if "loss" in ln]
+runtime_lines = [ln for ln in train_lines if "[e97-runtime]" in ln or "[gdn2-runtime]" in ln or "GDN2 external deps" in ln]
+memory_lines = [ln for ln in train_lines + kernel_lines if "memory" in ln.lower() or "MiB" in ln or "GiB" in ln]
+error_lines = [
+    ln for ln in train_lines + kernel_lines
+    if re.search(r"(traceback|error|exception|failed|nan|inf)", ln, re.IGNORECASE)
+]
+
+print(f"final_metric_line: {step_lines[-1] if step_lines else 'not observed'}")
+print(f"final_loss_line: {loss_lines[-1] if loss_lines else 'not observed'}")
+print(f"throughput_line: {step_lines[-1] if step_lines else 'not observed'}")
+print(f"runtime_path_line: {runtime_lines[-1] if runtime_lines else 'not observed'}")
+print(f"peak_memory_line: {memory_lines[-1] if memory_lines else 'not observed'}")
+print(f"first_actionable_error: {error_lines[0] if error_lines else 'none observed'}")
+PY
+)
+
 cat > "$SUMMARY_FILE" <<EOF
 # Frontier Debug Smoke Summary
 
@@ -357,12 +414,12 @@ cat > "$SUMMARY_FILE" <<EOF
 - exit_status: ${STATUS}
 
 ## Observation
-Fill in final loss, peak memory, fused-kernel guard lines, and whether the job
-completed the requested smoke window.
+$(printf '%s\n' "$SUMMARY_METRICS")
 
 ## Failure Mode
-If failed, paste the first actionable error line from stderr/stdout. If passed,
-write "none observed in this smoke".
+Use first_actionable_error above plus ${LOG_DIR}/kernel_smoke.log and
+${LOG_DIR}/train.log. Kernel failure skips training by design so the blocker is
+not hidden behind a later DDP launch.
 
 ## Interpretation Boundary
 This is one short debug-QOS run. Treat it as launch/import/kernel/memory/loss
