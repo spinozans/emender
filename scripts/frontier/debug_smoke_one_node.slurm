@@ -171,6 +171,22 @@ case "$SMOKE_VARIANT" in
       -q -s
     )
     ;;
+  gdn2-MLP)
+    KERNEL_SMOKE_CMD=(
+      python -u scripts/frontier/gdn2_rocm_preflight.py
+      --run-fwdbwd
+      --bf16
+      --dim 128
+      --n-heads 4
+      --head-dim 16
+      --seq-len 16
+      --batch-size 1
+      --expansion 1.0
+      --use-conv 1
+      --d-conv 4
+      --mlp-ratio 2.0
+    )
+    ;;
   *)
     KERNEL_SMOKE_CMD=()
     ;;

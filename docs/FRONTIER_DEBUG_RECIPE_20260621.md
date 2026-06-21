@@ -240,6 +240,30 @@ HIP_VISIBLE_DEVICES=0 python -m pytest \
 All variants run bf16, ScheduleFree AdamW, `p50k_base`, one process per GCD,
 and time-boxed training via `--train_minutes`.
 
+For `gdn2-MLP`, the SLURM template first runs a one-rank import and kernel
+smoke before the 8-rank training command:
+
+```bash
+srun -N1 -n1 -c7 --gpus-per-task=1 --gpu-bind=closest \
+  python -u scripts/frontier/gdn2_rocm_preflight.py \
+    --run-fwdbwd --bf16 --dim 128 --n-heads 4 --head-dim 16 \
+    --seq-len 16 --batch-size 1 --expansion 1.0 --use-conv 1 \
+    --d-conv 4 --mlp-ratio 2.0
+```
+
+The same check can be run without a GPU launch to verify only the external
+checkout, `fla`, and `lit_gpt.gdn2_ops.chunk_gdn2` import path:
+
+```bash
+python -u scripts/frontier/gdn2_rocm_preflight.py
+```
+
+The preflight emits JSON including `torch.version.hip`, `GDN2_PATH`, the loaded
+external module, the chunk-op module path, and finite forward/backward checks
+when `--run-fwdbwd` is used. If this step fails, the template records
+`logs/gdn2_rocm_preflight.log`, skips training, and writes the preflight status
+into the run manifest.
+
 ## Observation Summary Format
 
 Write `summaries/summary.md` in this form:
