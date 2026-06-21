@@ -11,6 +11,9 @@ evidence does not justify spending 1,536 node-hours yet. The selected variant is
 `e97-MLP` because it is the only e97-family variant in the retry matrix whose
 Frontier ROCm kernel smoke passed. However, `e97-MLP` has not reached a first
 training loss, throughput line, checkpoint write, or resume check on Frontier.
+`e97-linear-MLP` is explicitly quarantined from extended readiness decisions by
+`docs/FRONTIER_E97_LINEAR_ROCM_QUARANTINE_20260621.md` because debug job
+`4880730` failed the chunked-E97 ROCm parity/finiteness smoke before training.
 
 Recommended next spend before any extended job:
 
@@ -49,6 +52,20 @@ Observed matrix outcomes:
 | `e97-MLP` | 4880875 | One-rank fused split-edit Triton kernel smoke passed. Eight-rank training launched the fused E97 path, then all ranks failed before first metric while `tiktoken` tried to download `p50k_base.tiktoken` from compute nodes. No throughput, memory peak, training loss, checkpoint, or resume evidence was produced. |
 | `e97-linear-MLP` | 4880730 | Chunked-E97 ROCm smoke failed before training. Reported parity/finiteness failures include very large forward errors and non-finite strong-decay/g-drift cases. This variant is not eligible for extended readiness. |
 | `gdn2-MLP` | 4880747 | External GDN2 import and bf16 forward/backward preflight passed with finite one-rank loss. Eight-rank training hit the same tokenizer download failure before first training metric. This is useful contrast evidence but is not e97 launch evidence. |
+
+## e97-linear Quarantine
+
+`e97-linear-MLP` is not a selectable extended launch arm in the prepared
+readiness package. It may not be used as the `E97-64x24-01` variant, as a
+fallback if `e97-MLP` remains blocked, or as supporting evidence for any
+e97-family extended allocation until the quarantine report's exit criteria are
+met.
+
+The active quarantine source is
+`docs/FRONTIER_E97_LINEAR_ROCM_QUARANTINE_20260621.md`. The cited blocker is
+job `4880730`, which ran under debug QOS on 1 node with 00:30:00 requested
+walltime and failed all seven selected `tests/test_e97_chunked.py` ROCm smoke
+checks before training.
 
 Observed scheduler/runtime facts:
 
