@@ -1,0 +1,99 @@
+# Pinned-autotune verification evidence (task pin-triton-autotune)
+# Captured 2026-06-21T07:54:02Z on lambda01, idle leased GPU (racer untouched on GPU0).
+
+## End-to-end verify (scripts/verify_pinned_autotune.py): storm/init/determinism, both arms
+========== ARM emender ==========
+  pinned#1: rc=0 init=25.2s storm=0 guard=True losses={1: 11.1694, 2: 10.5949, 3: 11.6472}
+  pinned#2: rc=0 init=23.8s storm=0 losses={1: 11.1694, 2: 10.5949, 3: 11.6472}
+  sweep   : rc=0 init=30.1s storm=7 losses={1: 11.1694, 2: 10.5943, 3: 11.6394}
+  => storm_killed=True fast_init=False(25.234289169311523) det=True dpinpin=0.00e+00 dpinsweep=7.80e-03 parity=False guard=True ARM_OK=False
+
+========== ARM gdn2-mlp ==========
+  pinned#1: rc=0 init=25.7s storm=0 guard=True losses={1: 11.243, 2: 10.7312, 3: 12.4605}
+  pinned#2: rc=0 init=25.4s storm=0 losses={1: 11.243, 2: 10.7312, 3: 12.4605}
+  sweep   : rc=0 init=27.8s storm=5 losses={1: 11.243, 2: 10.731, 3: 12.458}
+  => storm_killed=True fast_init=False(25.734573364257812) det=True dpinpin=0.00e+00 dpinsweep=2.50e-03 parity=False guard=True ARM_OK=False
+
+===== SUMMARY =====
+{
+  "emender": {
+    "storm_killed": true,
+    "pinned_storm": 0,
+    "sweep_storm": 7,
+    "fast_init_s": 25.234289169311523,
+    "fast_init_ok": false,
+    "deterministic": true,
+    "max_pin_vs_pin": 0.0,
+    "max_pin_vs_sweep": 0.007799999999999585,
+    "parity_ok": false,
+    "fused_guard": true,
+    "ok": false
+  },
+  "gdn2-mlp": {
+    "storm_killed": true,
+    "pinned_storm": 0,
+    "sweep_storm": 5,
+    "fast_init_s": 25.734573364257812,
+    "fast_init_ok": false,
+    "deterministic": true,
+    "max_pin_vs_pin": 0.0,
+    "max_pin_vs_sweep": 0.0024999999999995026,
+    "parity_ok": false,
+    "fused_guard": true,
+    "ok": false
+  },
+  "ALL_OK": false
+}
+VERIFY_DONE rc=1 at Sun Jun 21 07:45:17 AM UTC 2026
+
+## SUMMARY json
+===== SUMMARY =====
+{
+  "emender": {
+    "storm_killed": true,
+    "pinned_storm": 0,
+    "sweep_storm": 7,
+    "fast_init_s": 25.234289169311523,
+    "fast_init_ok": false,
+    "deterministic": true,
+    "max_pin_vs_pin": 0.0,
+    "max_pin_vs_sweep": 0.007799999999999585,
+    "parity_ok": false,
+    "fused_guard": true,
+    "ok": false
+  },
+  "gdn2-mlp": {
+    "storm_killed": true,
+    "pinned_storm": 0,
+    "sweep_storm": 5,
+    "fast_init_s": 25.734573364257812,
+    "fast_init_ok": false,
+    "deterministic": true,
+    "max_pin_vs_pin": 0.0,
+    "max_pin_vs_sweep": 0.0024999999999995026,
+    "parity_ok": false,
+    "fused_guard": true,
+    "ok": false
+  },
+  "ALL_OK": false
+}
+VERIFY_DONE rc=1 at Sun Jun 21 07:45:17 AM UTC 2026
+
+## GPU parity pytest + stock-autotuner non-determinism
+===== PYTEST (full, incl GPU) =====
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.2, pluggy-1.6.0
+rootdir: /home/erikg/ndm/.wg-worktrees/agent-1965
+configfile: pyproject.toml
+plugins: timeout-2.4.0, anyio-4.12.0
+collected 7 items
+
+tests/test_pin_autotune_parity.py .......                                [100%]
+
+============================== 7 passed in 9.98s ===============================
+===== SWEEP NON-DETERMINISM (emender: sweep1 vs sweep2 vs pin) =====
+sweep1 storm=7 losses={1: 11.1694, 2: 10.5952, 3: 11.6471}
+sweep2 storm=7 losses={1: 11.1694, 2: 10.5953, 3: 11.6405}
+pin    storm=0 losses={1: 11.1694, 2: 10.5949, 3: 11.6472}
+RESULT max|sweep1-sweep2|=6.60e-03  max|pin-sweep1|=3.00e-04  -> stock autotuner non-deterministic: True; pin in-band: True
+DONE rc=0 at Sun Jun 21 07:52:38 AM UTC 2026

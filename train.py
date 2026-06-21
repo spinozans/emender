@@ -61,6 +61,17 @@ from ndm.models.cuda_gru import CudaGRULM
 from ndm.models.cuda_lstm import CudaLSTMLM
 from ndm.models.e88_fused import E88FusedLM
 
+# Pin Triton autotune config selection BEFORE any fused kernel runs (kill the
+# init-wedge / autotune storm that deadlocks fresh inits under box contention,
+# and that would multiply across ~512 Frontier GCDs). Covers BOTH race arms:
+# the E97/emender norms+gates and the gdn2-mlp FLA gated-delta/conv kernels.
+# Env-gated, default ON; NDM_PIN_TRITON_AUTOTUNE=0 restores the original sweep.
+try:
+    from ndm.triton import pin_autotune as _pin_autotune
+    _pin_autotune.maybe_install_from_env()
+except Exception as _e:  # never let pinning break a real training run
+    print(f"[pin-autotune] install skipped: {_e}", flush=True)
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train NDM and recurrent baseline models')

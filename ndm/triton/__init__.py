@@ -60,3 +60,12 @@ __all__ = [
     "PHI_NAME_TO_CODE",
     "PHI_IDENTITY", "PHI_TANH", "PHI_GAMMA_MIX", "PHI_RELU", "PHI_SOFTPLUS",
 ]
+
+# Pin Triton autotune config selection (kill the init-wedge / autotune storm).
+# Default ON; env-gated. Patches triton's Autotuner.run at the class level so it
+# also covers FLA's @triton.autotune kernels (layernorm fwd/bwd, gated-delta
+# chunk, conv) used by the gdn2-mlp arm and the E97 norms/gates. Disable with
+# NDM_PIN_TRITON_AUTOTUNE=0 to restore the original sweep. See pin_autotune.py.
+from . import pin_autotune as pin_autotune  # noqa: E402
+pin_autotune.maybe_install_from_env()
+__all__.append("pin_autotune")
