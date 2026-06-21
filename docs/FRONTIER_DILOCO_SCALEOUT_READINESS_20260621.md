@@ -16,7 +16,10 @@ behavior, DiLoCo merges, or multi-node communication overhead because
 `e97-MLP` and `gdn2-MLP` stopped on compute-node `tiktoken` cache downloads
 before the first training metric. `e97-linear-MLP` failed the chunked-E97 ROCm
 parity/finiteness smoke and should not be in the first scaleout path until that
-kernel is fixed or the variant is deliberately disabled.
+kernel is fixed. The active quarantine record is
+`docs/FRONTIER_E97_LINEAR_ROCM_QUARANTINE_20260621.md`; while it is active,
+`e97-linear-MLP` is not a scaleout candidate, fallback candidate, or source of
+launch-readiness evidence.
 
 The next launchable scaleout action should be an **8-node, 4-hour canary only**
 if all debug gates below pass and a human records approval in WG. Treat 16, 32,
@@ -41,6 +44,18 @@ Observed debug evidence:
   not launch training.
 - One-rank `srun` GPU binding showed rank-local `ROCR_VISIBLE_DEVICES=0` and
   one visible MI250X under `--gpus-per-task=1 --gpu-bind=closest`.
+
+## e97-linear Quarantine
+
+`e97-linear-MLP` is quarantined from the DiLoCo scaleout ladder. The 8/16/32/64
+node matrix below must be read as excluding that arm until a successor report
+cites a fixed chunked-E97 ROCm kernel and a passing one-rank Frontier smoke.
+
+The quarantine is based on job `4880730`: debug QOS, 1 node, 00:30:00 requested
+walltime, 0.500000 requested node-hours, 00:01:41 elapsed, and 0.028056 elapsed
+node-hours. Its `tests/test_e97_chunked.py` smoke failed all seven selected
+parity/finiteness checks before training, so it produced no training loss,
+throughput, checkpoint, or resume evidence.
 
 Hypotheses to test, not assumptions:
 
