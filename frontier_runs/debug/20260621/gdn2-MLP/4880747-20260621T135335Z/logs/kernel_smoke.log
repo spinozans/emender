@@ -1,0 +1,63 @@
+Current Triton version 3.2.0 is below the recommended 3.3.0 version. Errors may occur and these issues will not be fixed. Please consider upgrading Triton.
+Current Python version 3.10 is below the recommended 3.11 version. It is recommended to upgrade to Python 3.11 or higher for the best experience.
+[pin-autotune] pinned mode: 18 kernels / 30 (name,key) configs from registry (set NDM_PIN_TRITON_AUTOTUNE=0 to restore sweep)
+{
+  "fwdbwd": {
+    "device_name": "AMD Instinct MI250X",
+    "dtype": "torch.bfloat16",
+    "finite_input_grad": true,
+    "finite_loss": true,
+    "finite_output": true,
+    "finite_param_grads": true,
+    "loss": 0.009861934930086136,
+    "ok": true,
+    "ran_fwdbwd": true,
+    "shape": {
+      "batch_size": 1,
+      "dim": 128,
+      "expansion": 1.0,
+      "head_dim": 16,
+      "n_heads": 4,
+      "seq_len": 16
+    }
+  },
+  "preflight": {
+    "chunk_ops_module": "/lustre/orion/bif148/scratch/erikgarrison/emender/src/GatedDeltaNet-2/lit_gpt/gdn2_ops/chunk_gdn2.py",
+    "chunk_symbols": [
+      "chunk_gated_delta_rule_bwd_dhu",
+      "chunk_gated_delta_rule_fwd_h",
+      "chunk_gdn2",
+      "chunk_gdn2_bwd",
+      "chunk_gdn2_bwd_intra",
+      "chunk_gdn2_bwd_kernel_intra",
+      "chunk_gdn2_bwd_kernel_wy_dqkg_fused",
+      "chunk_gdn2_bwd_wy_dqkg_fused",
+      "chunk_gdn2_fwd",
+      "chunk_gdn2_fwd_intra",
+      "chunk_gdn2_fwd_intra_token_parallel",
+      "chunk_gdn2_fwd_kernel_inter_solve_fused",
+      "chunk_gdn2_fwd_kernel_intra_sub_chunk",
+      "chunk_gdn2_fwd_kernel_intra_token_parallel",
+      "chunk_gla_fwd_o_gk",
+      "chunk_kda_bwd_dAv",
+      "chunk_local_cumsum"
+    ],
+    "external_class": "GatedDeltaNet2",
+    "external_module": "_external_gdn2_lit_gpt.gdn2",
+    "fla_module": "/ccs/home/erikgarrison/.local/23.11.0-0/lib/python3.10/site-packages/fla/__init__.py",
+    "fla_version": "0.5.1",
+    "gdn2_file": "/lustre/orion/bif148/scratch/erikgarrison/emender/src/GatedDeltaNet-2/lit_gpt/gdn2.py",
+    "gdn2_file_exists": true,
+    "gdn2_path": "/lustre/orion/bif148/scratch/erikgarrison/emender/src/GatedDeltaNet-2",
+    "missing_required_symbols": [],
+    "ok": true,
+    "required_symbols": [
+      "chunk_gla_fwd_o_gk"
+    ],
+    "torch_backend": "hip",
+    "torch_cuda_device_count": 1,
+    "torch_cuda_is_available": true,
+    "torch_version": "2.8.0.dev20250422+rocm6.4",
+    "torch_version_hip": "6.4.43482-0f2d60242"
+  }
+}
