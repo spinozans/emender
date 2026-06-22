@@ -20,6 +20,7 @@
 #   scripts/launch_sf_diloco_pavg_baseline.sh                 # K=250, 2 GPUs, 1100 steps
 #   K=100 STEPS=1100 scripts/launch_sf_diloco_pavg_baseline.sh
 #   GPUS=2 LOGFILE=/tmp/x.log scripts/launch_sf_diloco_pavg_baseline.sh
+#   OUTER_BETA=0.9 OUTER_LR=0.1 NDM_DILOCO_DEBUG_ASSERT=1 EXTRA_ARGS='--final_heldout_eval ...' scripts/launch_sf_diloco_pavg_baseline.sh
 set -euo pipefail
 
 REPO_ROOT="$(cd -P "$(dirname "${BASH_SOURCE[0]}")/.." >/dev/null 2>&1 && pwd)"
@@ -31,14 +32,18 @@ GPUS="${GPUS:-2}"
 DATA="${DATA:-/home/erikg/elman/data/pile.txt}"
 OUTPUT="${OUTPUT:-/tmp/sf_diloco_pavg_baseline/k${K}}"
 LOGFILE="${LOGFILE:-/tmp/sf_diloco_pavg_baseline_k${K}.log}"
+OUTER_LR="${OUTER_LR:-1.0}"
+OUTER_BETA="${OUTER_BETA:-0.0}"
+EXTRA_ARGS="${EXTRA_ARGS:-}"
 mkdir -p "$OUTPUT"
 
 echo "[baseline] acquiring $GPUS GPU lease (--no-wait) ..."
 eval "$(scripts/gpu_lease.sh acquire "$GPUS" --no-wait)"
-echo "[baseline] CUDA_VISIBLE_DEVICES=$CUDA_VISIBLE_DEVICES  K=$K  STEPS=$STEPS  LOG=$LOGFILE"
+echo "[baseline] CUDA_VISIBLE_DEVICES=$CUDA_VISIBLE_DEVICES  K=$K  STEPS=$STEPS  OUTER_LR=$OUTER_LR  OUTER_BETA=$OUTER_BETA  LOG=$LOGFILE"
 
 ENV_ARGS=(
   env
+  NDM_DILOCO_DEBUG_ASSERT="${NDM_DILOCO_DEBUG_ASSERT:-0}"
   NCCL_P2P_DISABLE=1
   TORCH_NCCL_ENABLE_MONITORING=0
   TORCH_NCCL_HEARTBEAT_TIMEOUT_SEC=1800
@@ -67,12 +72,13 @@ ENV_ARGS=(
   --tokenizer p50k_base \
   --diloco \
   --diloco_k "$K" \
-  --diloco_outer_lr 1.0 \
-  --diloco_outer_beta 0.0 \
+  --diloco_outer_lr "$OUTER_LR" \
+  --diloco_outer_beta "$OUTER_BETA" \
   --steps "$STEPS" \
   --save_every 100000000 \
   --keep_checkpoints 1 \
   --log_every 25 \
-  --output "$OUTPUT" 2>&1 | tee "$LOGFILE"
+  --output "$OUTPUT" \
+  $EXTRA_ARGS 2>&1 | tee "$LOGFILE"
 
 echo "[baseline] DONE K=$K -> $LOGFILE"
