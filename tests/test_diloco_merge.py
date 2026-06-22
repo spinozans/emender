@@ -19,6 +19,7 @@ asserts the y-mode-swap + full ScheduleFree-state averaging semantics:
 No GPUs, no fabrication: real optimizer, real distributed collectives.
 """
 import os, sys, tempfile
+from pathlib import Path
 import torch
 import torch.distributed as dist
 import torch.multiprocessing as mp
@@ -29,7 +30,13 @@ sys.path.insert(0, REPO)
 
 def _ns(**kw):
     from types import SimpleNamespace
-    base = dict(optimizer='schedulefree', diloco_outer_lr=1.0, diloco_outer_beta=0.0)
+    base = dict(
+        optimizer='schedulefree',
+        diloco_outer_lr=1.0,
+        diloco_outer_beta=0.0,
+        diloco_outer_optimizer='avg',
+        diloco_export_basis='x',
+    )
     base.update(kw)
     return SimpleNamespace(**base)
 
@@ -590,6 +597,111 @@ def test_identical_rank_noop_all_modes():
         assert r['dy'] <= tol, f"[{mode}] y moved on identical-rank merge: {r['dy']}"
         assert r['dz'] <= tol, f"[{mode}] z moved on identical-rank merge: {r['dz']}"
         print(f"PASS test_identical_rank_noop_all_modes[{mode}]: no-op confirmed")
+
+
+def _worker_sfsgd_noop(rank, world_size, init_file, ret):
+    """sfsgd no-op at a coherent boundary: outer_y equals the current inner train
+    point and the exported endpoint, so D=0 and the rebase shift is zero."""
+    dist.init_process_group(backend='gloo', init_method=f'file://{init_file}',
+                            rank=rank, world_size=world_size)
+    import train
+    model, opt = _build()
+    opt.train()
+
+    pre_y = [p.data.detach().clone() for p in model.parameters()]
+    # No inner steps yet, so x == y == z and export x is a strict no-op.
+    opt.eval()
+    pre_x = [p.data.detach().clone() for p in model.parameters()]
+    opt.train()
+    outer_state = {
+        'mode': 'sfsgd',
+        'x': [t.clone() for t in pre_y],
+        'z': [t.clone() for t in pre_y],
+        'y': [t.clone() for t in pre_y],
+        'k': 0,
+        'weight_sum': 0.0,
+        'lr_max': 1.0,
+    }
+    args = _ns(
+        diloco_outer_optimizer='sfsgd',
+        diloco_outer_lr=1.0,
+        diloco_outer_beta=0.1,
+        diloco_export_basis='x',
+    )
+
+    train.diloco_merge(model, opt, args, world_size, outer_state)
+
+    post_y = [p.data.detach().clone() for p in model.parameters()]
+    opt.eval()
+    post_x = [p.data.detach().clone() for p in model.parameters()]
+    opt.train()
+
+    dy = max((a - b).abs().max().item() for a, b in zip(pre_y, post_y))
+    dx = max((a - b).abs().max().item() for a, b in zip(pre_x, post_x))
+    outer_dy = max((a - b).abs().max().item()
+                   for a, b in zip(pre_y, outer_state['y']))
+    if rank == 0:
+        ret['dy'] = dy
+        ret['dx'] = dx
+        ret['outer_dy'] = outer_dy
+        ret['k'] = outer_state['k']
+        ret['weight_sum'] = outer_state['weight_sum']
+    dist.barrier()
+    dist.destroy_process_group()
+
+
+def test_sfsgd_identical_rank_noop_at_coherent_boundary():
+    r = _run_worker(_worker_sfsgd_noop)
+    assert r['dx'] <= 1e-6, f"sfsgd coherent no-op moved x: {r['dx']}"
+    assert r['dy'] <= 1e-6, f"sfsgd coherent no-op moved y: {r['dy']}"
+    assert r['outer_dy'] <= 1e-6, f"sfsgd coherent no-op moved outer_y: {r['outer_dy']}"
+    assert r['k'] == 1, "sfsgd should still advance its outer clock at a boundary"
+    assert r['weight_sum'] > 0.0, "sfsgd should accumulate outer averaging weight"
+    print("PASS test_sfsgd_identical_rank_noop_at_coherent_boundary")
+
+
+def test_diloco_checkpoint_roundtrip_preserves_outer_and_inner_sf_state():
+    """Checkpoint both systems: inner ScheduleFree optimizer state and the
+    separate outer sfsgd state must reload onto a fresh model coherently."""
+    import train
+    model, opt = _build()
+    _local_train(model, opt, rank=0, k_steps=4)
+    args = _ns(diloco_outer_optimizer='sfsgd', diloco_outer_beta=0.1)
+    outer_state = train.initialize_diloco_outer_state(model, opt, args)
+    with torch.no_grad():
+        for t in outer_state['x']:
+            t.add_(0.125)
+        for t in outer_state['z']:
+            t.sub_(0.25)
+        for t in outer_state['y']:
+            t.add_(0.5)
+        outer_state['k'] = 7
+        outer_state['weight_sum'] = 3.5
+        outer_state['lr_max'] = 2.0
+
+    with tempfile.TemporaryDirectory() as d:
+        path = train.save_checkpoint(
+            model, opt, step=123, loss=4.5, output_dir=Path(d),
+            keep_n=2, outer_state=outer_state)
+        model2, opt2 = _build()
+        step, loss, ckpt = train.load_checkpoint(
+            path, model2, opt2, return_checkpoint=True)
+        restored = train.initialize_diloco_outer_state(
+            model2, opt2, args, loaded_state=ckpt['diloco_outer_state'])
+
+    assert step == 123
+    assert loss == 4.5
+    for key in ('k', 'weight_sum', 'lr_max'):
+        assert restored[key] == outer_state[key], f"outer {key} did not roundtrip"
+    for key in ('x', 'z', 'y'):
+        for a, b in zip(restored[key], outer_state[key]):
+            assert torch.equal(a, b), f"outer {key} tensor did not roundtrip"
+    for p1, p2 in zip(model.parameters(), model2.parameters()):
+        assert torch.equal(p1, p2), "model parameter did not roundtrip"
+        assert torch.equal(opt.state[p1]['z'], opt2.state[p2]['z']), "inner z did not roundtrip"
+    assert opt.param_groups[0]['k'] == opt2.param_groups[0]['k']
+    assert opt.param_groups[0]['weight_sum'] == opt2.param_groups[0]['weight_sum']
+    print("PASS test_diloco_checkpoint_roundtrip_preserves_outer_and_inner_sf_state")
 
 
 def _worker_basis(rank, world_size, init_file, ret):

@@ -334,6 +334,16 @@ def parse_args():
                         help='DiLoCo outer learning rate (1.0 = plain averaging)')
     parser.add_argument('--diloco_outer_beta', type=float, default=0.0,
                         help='DiLoCo outer momentum beta (0.0 = local-SGD, no outer momentum)')
+    parser.add_argument('--diloco_outer_optimizer', type=str, default='avg',
+                        choices=['avg', 'momentum', 'sfsgd'],
+                        help='DiLoCo outer optimizer: avg = stateless periodic averaging; '
+                             'momentum = fixed-momentum DiLoCo outer update; '
+                             'sfsgd = separate manual ScheduleFree-SGD outer state machine.')
+    parser.add_argument('--diloco_export_basis', type=str, default='x',
+                        choices=['x', 'y'],
+                        help='Basis exported to the outer optimizer at a DiLoCo boundary. '
+                             'x preserves current eval-weight semantics; y exports the '
+                             'inner ScheduleFree train point for ablations.')
     parser.add_argument('--diloco_island_size', type=int, default=0,
                         help='HYBRID mode (task diloco-loss-parity-longhorizon): >1 forms '
                              'islands of this many consecutive ranks that do per-step DDP '
@@ -430,16 +440,20 @@ def lr_scale_at(step, warmup_steps, total_steps, min_lr_frac=0.1):
     return min_lr_frac + (1.0 - min_lr_frac) * 0.5 * (1.0 + math.cos(math.pi * progress))
 
 
-def save_checkpoint(model, optimizer, step, loss, output_dir, keep_n=5):
+def save_checkpoint(model, optimizer, step, loss, output_dir, keep_n=5, outer_state=None):
     """Save checkpoint and clean up old ones."""
     ckpt_path = output_dir / f'checkpoint_step_{step:06d}_loss_{loss:.4f}.pt'
 
-    torch.save({
+    payload = {
         'step': step,
         'model_state_dict': model.state_dict(),
         'optimizer_state_dict': optimizer.state_dict(),
         'loss': loss,
-    }, ckpt_path)
+    }
+    if outer_state is not None:
+        payload['diloco_outer_state'] = outer_state
+
+    torch.save(payload, ckpt_path)
 
     # Update latest symlink
     latest_path = output_dir / 'latest.pt'
@@ -455,13 +469,16 @@ def save_checkpoint(model, optimizer, step, loss, output_dir, keep_n=5):
     return ckpt_path
 
 
-def load_checkpoint(path, model, optimizer=None):
+def load_checkpoint(path, model, optimizer=None, return_checkpoint=False):
     """Load checkpoint."""
     ckpt = torch.load(path, map_location='cpu')
     model.load_state_dict(ckpt['model_state_dict'])
     if optimizer is not None and 'optimizer_state_dict' in ckpt:
         optimizer.load_state_dict(ckpt['optimizer_state_dict'])
-    return ckpt.get('step', 0), ckpt.get('loss', float('inf'))
+    result = (ckpt.get('step', 0), ckpt.get('loss', float('inf')))
+    if return_checkpoint:
+        return (*result, ckpt)
+    return result
 
 
 @torch.no_grad()
@@ -525,6 +542,75 @@ def heldout_eval_mode_label(args):
     return 'y' if args.heldout_eval_mode in ('y', 'train') else 'x'
 
 
+def _clone_param_list_like(params, source=None, fill_zeros=False):
+    out = []
+    for i, p in enumerate(params):
+        if source is None:
+            t = torch.zeros_like(p.data) if fill_zeros else p.data.detach().clone()
+        else:
+            t = source[i].detach().to(device=p.device, dtype=p.dtype).clone()
+            if fill_zeros:
+                t.zero_()
+        out.append(t)
+    return out
+
+
+def initialize_diloco_outer_state(core_model, optimizer, args, loaded_state=None):
+    """Create or restore the explicit DiLoCo outer optimizer state."""
+    if args.diloco_outer_optimizer == 'avg':
+        return None
+
+    params = list(core_model.parameters())
+    if loaded_state is not None:
+        mode = loaded_state.get('mode')
+        if mode != args.diloco_outer_optimizer:
+            raise ValueError(
+                f"checkpoint outer optimizer mode {mode!r} does not match "
+                f"--diloco_outer_optimizer {args.diloco_outer_optimizer!r}")
+        restored = {'mode': mode}
+        for key, value in loaded_state.items():
+            if key == 'mode':
+                continue
+            if isinstance(value, list) and value and torch.is_tensor(value[0]):
+                restored[key] = _clone_param_list_like(params, value)
+            else:
+                restored[key] = value
+        return restored
+
+    if args.diloco_outer_optimizer == 'momentum':
+        if args.optimizer == 'schedulefree':
+            optimizer.eval()
+        state = {
+            'mode': 'momentum',
+            'anchor': [p.data.detach().clone() for p in params],
+            'moment': [torch.zeros_like(p.data) for p in params],
+        }
+        if args.optimizer == 'schedulefree':
+            optimizer.train()
+        return state
+
+    if args.diloco_outer_optimizer == 'sfsgd':
+        if args.optimizer != 'schedulefree':
+            raise ValueError("--diloco_outer_optimizer sfsgd requires --optimizer schedulefree")
+        # The outer ScheduleFree system is separate from the inner one. It starts
+        # at the current inner train point; subsequent merges translate the inner
+        # x/z/y geometry to the new outer_y.
+        optimizer.train()
+        outer_y = [p.data.detach().clone() for p in params]
+        outer_lr = float(args.diloco_outer_lr)
+        return {
+            'mode': 'sfsgd',
+            'x': [t.clone() for t in outer_y],
+            'z': [t.clone() for t in outer_y],
+            'y': outer_y,
+            'k': 0,
+            'weight_sum': 0.0,
+            'lr_max': outer_lr,
+        }
+
+    raise ValueError(f"unknown DiLoCo outer optimizer: {args.diloco_outer_optimizer}")
+
+
 @torch.no_grad()
 def diloco_merge(core_model, optimizer, args, world_size, outer_state):
     """DiLoCo outer step: average model weights across ranks (every K local steps).
@@ -562,6 +648,25 @@ def diloco_merge(core_model, optimizer, args, world_size, outer_state):
         return 0.0
 
     sf = (args.optimizer == 'schedulefree')
+    outer_optimizer = getattr(args, 'diloco_outer_optimizer', None)
+    if outer_optimizer is None:
+        outer_optimizer = 'momentum' if outer_state is not None else 'avg'
+    elif outer_optimizer == 'avg' and outer_state is not None and 'anchor' in outer_state:
+        # Backward-compatible direct callers/tests may pass the legacy explicit
+        # anchor/moment state without setting the new routing flag.
+        outer_optimizer = 'momentum'
+    export_basis = getattr(args, 'diloco_export_basis', 'x')
+    if outer_optimizer == 'sfsgd' and not sf:
+        raise ValueError("--diloco_outer_optimizer sfsgd requires --optimizer schedulefree")
+
+    export_y_by_group = {}
+    if sf and outer_optimizer == 'sfsgd' and export_basis == 'y':
+        for group in optimizer.param_groups:
+            group_params = list(group['params'])
+            if group_params:
+                export_y_by_group[id(group)] = torch._utils._flatten_dense_tensors(
+                    [p.data for p in group_params])
+
     # 1. y-mode swap: switch schedulefree to eval so p.data holds the averaged x_i.
     if sf:
         optimizer.eval()
@@ -619,6 +724,12 @@ def diloco_merge(core_model, optimizer, args, world_size, outer_state):
                         torch._utils._unflatten_dense_tensors(
                             flat_z, [optimizer.state[p]['z'] for p in z_params])):
                     optimizer.state[p]['z'].copy_(merged_z)
+
+            if outer_optimizer == 'sfsgd' and export_basis == 'y':
+                flat_y = export_y_by_group[id(group)]
+                dist.all_reduce(flat_y, op=dist.ReduceOp.SUM)
+                flat_y.div_(world_size)
+                export_y_by_group[id(group)] = flat_y
     else:
         flat = torch._utils._flatten_dense_tensors([p.data for p in params])
         dist.all_reduce(flat, op=dist.ReduceOp.SUM)
@@ -647,7 +758,7 @@ def diloco_merge(core_model, optimizer, args, world_size, outer_state):
     outer_lr = args.diloco_outer_lr
     outer_beta = args.diloco_outer_beta
     debug_assert = os.environ.get('NDM_DILOCO_DEBUG_ASSERT', '0') == '1'
-    if outer_state is not None:
+    if outer_optimizer == 'momentum' and outer_state is not None:
         anchor = outer_state['anchor']   # W_r (x-basis)
         moment = outer_state['moment']   # outer momentum buffer
         for p, w_r, m in zip(params, anchor, moment):
@@ -669,6 +780,54 @@ def diloco_merge(core_model, optimizer, args, world_size, outer_state):
                 assert gap_drift < 1e-4, (
                     f"DiLoCo outer update broke SF x-z geometry: gap drift {gap_drift} "
                     f"(z displacement must equal x displacement s)")
+    elif outer_optimizer == 'sfsgd':
+        if outer_state is None or outer_state.get('mode') != 'sfsgd':
+            raise ValueError("sfsgd DiLoCo merge requires an sfsgd outer_state")
+        outer_state['lr_max'] = max(float(outer_state['lr_max']), float(outer_lr))
+        weight = float(outer_state['lr_max']) ** 2
+        outer_state['weight_sum'] = float(outer_state['weight_sum']) + weight
+        outer_state['k'] = int(outer_state['k']) + 1
+        c = weight / outer_state['weight_sum'] if outer_state['weight_sum'] > 0.0 else 0.0
+        beta_out = float(args.diloco_outer_beta)
+        outer_x = outer_state['x']
+        outer_z = outer_state['z']
+        outer_y = outer_state['y']
+        beta1_by_param = {
+            p: float(group['betas'][0])
+            for group in optimizer.param_groups
+            for p in group['params']
+        }
+
+        param_to_export = {}
+        if export_basis == 'y':
+            for group in optimizer.param_groups:
+                group_params = list(group['params'])
+                if not group_params:
+                    continue
+                for p, merged_y in zip(
+                        group_params,
+                        torch._utils._unflatten_dense_tensors(
+                            export_y_by_group[id(group)], [p.data for p in group_params])):
+                    param_to_export[p] = merged_y
+
+        for p, ox, oz, oy in zip(params, outer_x, outer_z, outer_y):
+            z = optimizer.state.get(p, {}).get('z')
+            beta1 = beta1_by_param.get(p)
+            current_inner_train_point = (
+                p.data if z is None or beta1 is None
+                else torch.add(p.data, z, alpha=(1.0 - beta1) / beta1).mul(beta1)
+            )
+            endpoint = param_to_export[p] if export_basis == 'y' else p.data
+            delta = endpoint - oy
+            oz.add_(delta, alpha=outer_lr)
+            ox.lerp_(oz, c)
+            oy.copy_(oz).lerp_(ox, beta_out)
+            shift = oy - current_inner_train_point
+            p.data.copy_(current_inner_train_point).add_(shift)
+            if z is not None:
+                z.add_(shift)
+        for group in optimizer.param_groups:
+            group['train_mode'] = True
 
     # 4. Rebuild ScheduleFree train weights y from the merged full state. With
     #    AdamWScheduleFree, train() maps eval-mode x and state z to
@@ -676,7 +835,7 @@ def diloco_merge(core_model, optimizer, args, world_size, outer_state):
     #    intact so x remains a full-run cumulative average across future steps.
     #    Because step 3 shifted x and z by the same s, train() yields the
     #    translation-invariant y+ = ybar + s (whole inner geometry preserved).
-    if sf:
+    if sf and outer_optimizer != 'sfsgd':
         optimizer.train()
     return sync_s
 
@@ -1307,9 +1466,12 @@ def train(args):
 
     # Resume if requested
     start_step = 0
+    loaded_outer_state = None
     if args.resume:
         print(f"Resuming from {args.resume}")
-        start_step, _ = load_checkpoint(args.resume, core_model, optimizer)
+        start_step, _, ckpt = load_checkpoint(
+            args.resume, core_model, optimizer, return_checkpoint=True)
+        loaded_outer_state = ckpt.get('diloco_outer_state')
         # Optimizer state dicts carry their original param-group LR. For
         # continuation runs we want the explicit CLI LR to be authoritative.
         for param_group in optimizer.param_groups:
@@ -1390,31 +1552,31 @@ def train(args):
     if args.optimizer == 'schedulefree':
         optimizer.train()
 
-    # DiLoCo outer-optimizer state. Only allocated when outer momentum is in play
-    # (outer_beta!=0 or outer_lr!=1); the default local-SGD path (plain averaging)
-    # needs no anchor/momentum buffers. anchor captures W_0 (post-broadcast, all
-    # ranks identical) so the first round's delta = mean_i(W_{r,i}) - W_0 is correct.
-    #
-    # ANCHOR BASIS (sf-diloco-p1): diloco_merge reads p.data after optimizer.eval()
-    # (the ScheduleFree EVAL weight x). The anchor MUST live in that same x-basis
-    # so the FIRST outer delta is xbar - x, NOT xbar - y. We therefore capture the
-    # anchor in eval-mode. At init the SF 'z' state does not exist yet, so
-    # eval()/train() are no-ops (x==y==z) and this is numerically identical to a
-    # train-mode capture; doing it in eval-basis is the correct, resume-safe form.
+    # DiLoCo outer-optimizer state. avg is explicitly stateless. momentum keeps
+    # the P1/P2 geometry-fixed anchor/moment buffers. sfsgd is a separate manual
+    # ScheduleFree-SGD state machine (outer_x/outer_z/outer_y) and never wraps the
+    # live parameters with schedulefree.SGDScheduleFree.
     outer_state = None
-    if use_diloco and not (args.diloco_outer_lr == 1.0 and args.diloco_outer_beta == 0.0):
-        if args.optimizer == 'schedulefree':
-            optimizer.eval()
-        outer_state = {
-            'anchor': [p.data.detach().clone() for p in core_model.parameters()],
-            'moment': [torch.zeros_like(p.data) for p in core_model.parameters()],
-        }
-        if args.optimizer == 'schedulefree':
-            optimizer.train()
+    if use_diloco:
+        if loaded_outer_state is None and args.resume and args.diloco_outer_optimizer != 'avg':
+            raise ValueError(
+                f"checkpoint {args.resume} does not contain diloco_outer_state; "
+                f"cannot coherently resume --diloco_outer_optimizer "
+                f"{args.diloco_outer_optimizer}")
+        outer_state = initialize_diloco_outer_state(
+            core_model, optimizer, args, loaded_state=loaded_outer_state)
         if is_main:
-            print(f"[DiLoCo] outer-momentum buffers allocated "
-                  f"(outer_lr={args.diloco_outer_lr}, outer_beta={args.diloco_outer_beta})",
-                  flush=True)
+            if args.diloco_outer_optimizer == 'avg':
+                print("[DiLoCo] outer optimizer: avg (stateless periodic averaging)",
+                      flush=True)
+            elif loaded_outer_state is not None:
+                print(f"[DiLoCo] restored outer optimizer state "
+                      f"({args.diloco_outer_optimizer}) from checkpoint", flush=True)
+            else:
+                print(f"[DiLoCo] outer optimizer: {args.diloco_outer_optimizer} "
+                      f"(outer_lr={args.diloco_outer_lr}, "
+                      f"outer_beta={args.diloco_outer_beta}, "
+                      f"export_basis={args.diloco_export_basis})", flush=True)
     diloco_merges = 0
     diloco_sync_total_s = 0.0
 
@@ -1723,7 +1885,8 @@ def train(args):
                 if args.optimizer == 'schedulefree':
                     optimizer.eval()  # Get averaged params for checkpoint
                 ckpt_path = save_checkpoint(
-                    core_model, optimizer, step, avg_loss, output_dir, args.keep_checkpoints
+                    core_model, optimizer, step, avg_loss, output_dir,
+                    args.keep_checkpoints, outer_state=outer_state
                 )
                 print(f"  >>> saved checkpoint: {ckpt_path.name}")
                 if args.optimizer == 'schedulefree':
@@ -1784,7 +1947,8 @@ def train(args):
     else:
         if args.optimizer == 'schedulefree':
             optimizer.eval()  # Get averaged params for final checkpoint
-        save_checkpoint(core_model, optimizer, step, last_100_avg, output_dir, args.keep_checkpoints)
+        save_checkpoint(core_model, optimizer, step, last_100_avg, output_dir,
+                        args.keep_checkpoints, outer_state=outer_state)
 
     # within-layer LM screen (task e97-within-layer): ONE final held-out eval on the
     # schedule-free AVERAGED weights (leaderboard methodology) — distinct from the

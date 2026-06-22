@@ -591,3 +591,70 @@ K=100 (10 merges @100..1000):       loss 9.14(s25) -> 4.82(s1100), every merge c
 
 This matches the shape of the prior 20h/72k-step run that descended to ~2.96
 (same recipe, early on the same trajectory).
+
+## P3 RESULTS — separate outer ScheduleFree-SGD state (task sf-diloco-p3)
+
+P3 adds explicit outer-optimizer routing:
+
+```text
+--diloco_outer_optimizer avg|momentum|sfsgd
+--diloco_export_basis x|y
+```
+
+`avg` is the stateless periodic-average path. `momentum` is the P1/P2
+geometry-fixed fixed-momentum DiLoCo update. `sfsgd` is a separate manual
+ScheduleFree-SGD state machine with state `{mode, x, z, y, k, weight_sum,
+lr_max}`; it does not wrap live model parameters in `schedulefree.SGDScheduleFree`.
+The inner ScheduleFree AdamW state remains the normal optimizer state and is
+translated at each DiLoCo boundary by rebasing both the implicit inner `x` and
+inner `z` onto the new outer `y`.
+
+Checkpointing now stores both systems when needed:
+
+```text
+optimizer_state_dict      # inner ScheduleFree AdamW x/z/y clock and moments
+diloco_outer_state        # outer sfsgd or momentum state
+```
+
+Validation:
+
+```text
+python -m py_compile train.py tests/test_diloco_merge.py
+python -m pytest tests/test_diloco_merge.py -q -s      # 11 passed
+python -m pytest tests/test_diloco_hybrid.py -q -s     # 1 passed
+```
+
+Real 2-GPU bf16 E97 smoke, using the broker with `--no-wait`, passed fused
+split-edit Triton `NO eager fallback` on both ranks:
+
+```text
+K=50 STEPS=125 OUTER_LR=1.0 OUTER_BETA=0.1 GPUS=2 \
+  scripts/launch_sf_diloco_sfsgd_smoke.sh
+```
+
+Loss stayed finite and descended across sfsgd merges:
+
+```text
+step 25  loss 9.1437
+step 50  merge #1, loss 7.4671
+step 100 merge #2, loss 6.9988
+step 125 final merge, loss 6.6703
+```
+
+The step-125 checkpoint contained `diloco_outer_state.mode=sfsgd`,
+`outer_k=3`, `outer_weight_sum=3.0`, and `optimizer_state_dict`. A short resume
+from that checkpoint restored the outer state and crossed the next merge:
+
+```text
+Resumed at step 125
+[DiLoCo] restored outer optimizer state (sfsgd) from checkpoint
+step 150 merge, loss 6.1559
+final checkpoint: outer_k=4, outer_weight_sum=4.0
+```
+
+Local logs for this validation run:
+
+```text
+/tmp/sf_diloco_sfsgd_smoke_p3.log
+/tmp/sf_diloco_sfsgd_resume_p3.log
+```
