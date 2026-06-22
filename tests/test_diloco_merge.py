@@ -63,6 +63,49 @@ def _loss(model, x, y):
         return ((model(x) - y) ** 2).mean().item()
 
 
+def _local_train_identical(model, opt, k_steps, seed=42):
+    """Run k real fwd/bwd/step iterations with IDENTICAL data on every rank, so
+    all ranks end with byte-identical model + SF state (used by the no-op and
+    basis-consistency tests where cross-rank divergence must be exactly zero)."""
+    opt.train()
+    g = torch.Generator().manual_seed(seed)  # SAME seed on all ranks
+    for _ in range(k_steps):
+        x = torch.randn(8, 16, generator=g)
+        y = torch.randn(8, 16, generator=g)
+        opt.zero_grad()
+        loss = ((model(x) - y) ** 2).mean()
+        loss.backward()
+        opt.step()
+
+
+def _build_scalar():
+    """A genuine 1-parameter model + real ScheduleFree optimizer (for the scalar
+    translation-invariance test)."""
+    import schedulefree
+    torch.manual_seed(0)
+    model = torch.nn.Linear(1, 1, bias=False)
+    opt = schedulefree.AdamWScheduleFree(model.parameters(), lr=1e-2, warmup_steps=0)
+    return model, opt
+
+
+def _set_scalar_state(model, opt, y_val, z_val):
+    """Drive ONE real SF step to instantiate the real 'z' state entry, then
+    overwrite to a controlled (train-mode y, base z) pair. The SF state machine
+    itself is genuine -- only the values are set, so eval()/train() conversions
+    (x = y/beta1 + (1-1/beta1)*z) are the library's real arithmetic."""
+    opt.train()
+    g = torch.Generator().manual_seed(7)
+    xb = torch.randn(4, 1, generator=g)
+    opt.zero_grad()
+    (model(xb) ** 2).mean().backward()
+    opt.step()
+    p = model.weight
+    with torch.no_grad():
+        p.data.fill_(y_val)               # train-mode y
+        opt.state[p]['z'].fill_(z_val)    # base iterate z
+    return p
+
+
 def _worker(rank, world_size, init_file, outer_lr, outer_beta, ret):
     dist.init_process_group(backend='gloo', init_method=f'file://{init_file}',
                             rank=rank, world_size=world_size)
@@ -413,10 +456,304 @@ def test_single_rank_diloco_merge_is_byte_identical_noop():
     print("PASS test_single_rank_diloco_merge_is_byte_identical_noop")
 
 
+# ===========================================================================
+# sf-diloco-p1 regression tests: lock the SF x/z/y geometry on the outer update.
+#
+# The bug: a nontrivial outer update displaced the SF EVAL weight x by s but did
+# NOT displace z, so optimizer.train() rebuilt y = ybar + beta1*s instead of
+# ybar + s -- only a beta1 fraction of the server update reached the next train
+# point, and the x-z gap was stretched by -s. These four tests lock the fix
+# (x<-x+s, z<-z+s => y<-y+s) forever. Test 1 FAILS on pre-fix code.
+# ===========================================================================
+
+
+def _worker_translation(rank, world_size, init_file, ret):
+    """Scalar translation-invariance: engineer a known server displacement s=+3
+    on x and assert the WHOLE geometry (x, z, y) shifts by s.
+
+    Setup (per task spec): x=10, z=4, beta1=0.9 -> y=9.4. Outer update with
+    anchor=4, outer_lr=1.5, outer_beta=0 -> delta=x_bar-anchor=6, mom=6,
+    x_new=4+1.5*6=13 => s=+3. CORRECT: x=13, z=7, y=12.4. Buggy (z not shifted):
+    y=0.9*13+0.1*4=12.1, z=4 -> FAILS here."""
+    dist.init_process_group(backend='gloo', init_method=f'file://{init_file}',
+                            rank=rank, world_size=world_size)
+    import train
+    model, opt = _build_scalar()
+    p = _set_scalar_state(model, opt, y_val=9.4, z_val=4.0)
+    args = _ns(diloco_outer_lr=1.5, diloco_outer_beta=0.0)
+    # Anchor lives in the SF EVAL (x) basis; engineered to 4.0 so s=+3.
+    outer_state = {
+        'anchor': [torch.full_like(p.data, 4.0)],
+        'moment': [torch.zeros_like(p.data)],
+    }
+    train.diloco_merge(model, opt, args, world_size, outer_state)
+    y_now = float(model.weight.data.reshape(-1)[0])
+    opt.eval()
+    x_now = float(model.weight.data.reshape(-1)[0])
+    opt.train()
+    z_now = float(opt.state[p]['z'].reshape(-1)[0])
+    if rank == 0:
+        ret['x'] = x_now
+        ret['y'] = y_now
+        ret['z'] = z_now
+    dist.barrier()
+    dist.destroy_process_group()
+
+
+def _run_worker(worker, *extra):
+    world_size = 2
+    mgr = mp.Manager()
+    ret = mgr.dict()
+    with tempfile.NamedTemporaryFile() as f:
+        init_file = f.name
+    if os.path.exists(init_file):
+        os.remove(init_file)
+    mp.spawn(worker, args=(world_size, init_file, *extra, ret),
+             nprocs=world_size, join=True)
+    return dict(ret)
+
+
+def test_translation_invariance_scalar():
+    """TEST 1 (FAILS pre-fix): a server displacement s applied to x must apply to
+    z (hence y) too. x=10,z=4,beta1=0.9->y=9.4; s=+3 -> x=13,z=7,y=12.4."""
+    r = _run_worker(_worker_translation)
+    tol = 1e-4
+    assert abs(r['x'] - 13.0) <= tol, f"x should shift 10->13, got {r['x']}"
+    assert abs(r['z'] - 7.0) <= tol, (
+        f"z should shift 4->7 (same displacement as x); got {r['z']} "
+        f"(pre-fix bug leaves z=4)"
+    )
+    assert abs(r['y'] - 12.4) <= tol, (
+        f"y should shift 9.4->12.4 (whole geometry translated by s=3); got "
+        f"{r['y']} (pre-fix bug gives 12.1 because only beta1*s reaches y)"
+    )
+    print("PASS test_translation_invariance_scalar: x/z/y all shift by s=3")
+
+
+def _worker_noop(rank, world_size, init_file, mode, ret):
+    """Identical ranks (byte-identical model + SF state) -> diloco_merge is a
+    no-op for every outer mode. Modes: 'avg', 'mom_lr1_b0', 'mom_b9_lr7' (the
+    latter two with anchor=current x => zero delta)."""
+    dist.init_process_group(backend='gloo', init_method=f'file://{init_file}',
+                            rank=rank, world_size=world_size)
+    import train
+    model, opt = _build()
+    _local_train_identical(model, opt, k_steps=12)  # identical across ranks
+
+    # Snapshot pre-merge y (train), x (eval), z.
+    pre_y = [p.data.detach().clone() for p in model.parameters()]
+    opt.eval()
+    pre_x = [p.data.detach().clone() for p in model.parameters()]
+    opt.train()
+    pre_z = [opt.state[p]['z'].detach().clone() for p in model.parameters()]
+
+    if mode == 'avg':
+        args = _ns(diloco_outer_lr=1.0, diloco_outer_beta=0.0)
+        outer_state = None
+    elif mode == 'mom_lr1_b0':
+        args = _ns(diloco_outer_lr=1.0, diloco_outer_beta=0.0)
+        outer_state = {'anchor': [t.clone() for t in pre_x],   # anchor = current x => zero delta
+                       'moment': [torch.zeros_like(t) for t in pre_x]}
+    elif mode == 'mom_b9_lr7':
+        args = _ns(diloco_outer_lr=0.7, diloco_outer_beta=0.9)
+        outer_state = {'anchor': [t.clone() for t in pre_x],   # anchor = current x => zero delta
+                       'moment': [torch.zeros_like(t) for t in pre_x]}
+    else:
+        raise ValueError(mode)
+
+    os.environ['NDM_DILOCO_DEBUG_ASSERT'] = '1'  # exercise the runtime gap assert
+    train.diloco_merge(model, opt, args, world_size, outer_state)
+
+    post_y = [p.data.detach().clone() for p in model.parameters()]
+    opt.eval()
+    post_x = [p.data.detach().clone() for p in model.parameters()]
+    opt.train()
+    post_z = [opt.state[p]['z'].detach().clone() for p in model.parameters()]
+
+    dx = max((a - b).abs().max().item() for a, b in zip(pre_x, post_x))
+    dy = max((a - b).abs().max().item() for a, b in zip(pre_y, post_y))
+    dz = max((a - b).abs().max().item() for a, b in zip(pre_z, post_z))
+    if rank == 0:
+        ret['dx'] = dx
+        ret['dy'] = dy
+        ret['dz'] = dz
+    dist.barrier()
+    dist.destroy_process_group()
+
+
+def test_identical_rank_noop_all_modes():
+    """TEST 2: identical ranks -> merge is a no-op for avg + momentum modes."""
+    tol = 1e-4
+    for mode in ('avg', 'mom_lr1_b0', 'mom_b9_lr7'):
+        r = _run_worker(_worker_noop, mode)
+        assert r['dx'] <= tol, f"[{mode}] x moved on identical-rank merge: {r['dx']}"
+        assert r['dy'] <= tol, f"[{mode}] y moved on identical-rank merge: {r['dy']}"
+        assert r['dz'] <= tol, f"[{mode}] z moved on identical-rank merge: {r['dz']}"
+        print(f"PASS test_identical_rank_noop_all_modes[{mode}]: no-op confirmed")
+
+
+def _worker_basis(rank, world_size, init_file, ret):
+    """Basis consistency: after real training x != y. Capture the anchor the way
+    train.py does (SF EVAL basis), then merge with NO cross-rank divergence (the
+    ranks trained identically). The first outer delta = x_bar - anchor must be 0.
+    A train(y)-basis anchor would give delta = x - y != 0 (since x != y)."""
+    dist.init_process_group(backend='gloo', init_method=f'file://{init_file}',
+                            rank=rank, world_size=world_size)
+    import train
+    model, opt = _build()
+    _local_train_identical(model, opt, k_steps=15)  # x != y now, identical across ranks
+
+    # Anchor in the EVAL (x) basis -- exactly train.py's fixed capture.
+    opt.eval()
+    anchor = [p.data.detach().clone() for p in model.parameters()]
+    x_at_capture = [p.data.detach().clone() for p in model.parameters()]
+    opt.train()
+    y_at_capture = [p.data.detach().clone() for p in model.parameters()]
+
+    # Non-vacuity: x must actually differ from y (else any basis would pass).
+    max_xy_gap = max((xa - ya).abs().max().item()
+                     for xa, ya in zip(x_at_capture, y_at_capture))
+    # Anchor must equal eval-x (x-basis), and differ from y (would-be wrong basis).
+    anchor_minus_x = max((a - xa).abs().max().item()
+                         for a, xa in zip(anchor, x_at_capture))
+    anchor_minus_y = max((a - ya).abs().max().item()
+                         for a, ya in zip(anchor, y_at_capture))
+
+    outer_state = {'anchor': anchor, 'moment': [torch.zeros_like(p.data) for p in model.parameters()]}
+    args = _ns(diloco_outer_lr=0.7, diloco_outer_beta=0.9)
+
+    # NO further training between capture and merge -> first delta must be ~0.
+    opt.eval()
+    x_bar = [p.data.detach().clone() for p in model.parameters()]
+    opt.train()
+    first_delta = max((xb - a).abs().max().item() for xb, a in zip(x_bar, anchor))
+
+    train.diloco_merge(model, opt, args, world_size, outer_state)
+
+    opt.eval()
+    post_x = [p.data.detach().clone() for p in model.parameters()]
+    opt.train()
+    x_moved = max((px - xb).abs().max().item() for px, xb in zip(post_x, x_bar))
+
+    if rank == 0:
+        ret['max_xy_gap'] = max_xy_gap
+        ret['anchor_minus_x'] = anchor_minus_x
+        ret['anchor_minus_y'] = anchor_minus_y
+        ret['first_delta'] = first_delta
+        ret['x_moved'] = x_moved
+    dist.barrier()
+    dist.destroy_process_group()
+
+
+def test_anchor_is_x_basis_first_delta_zero():
+    """TEST 3: the DiLoCo anchor is in the SF EVAL (x) basis, so with no local
+    training between merges the first outer delta is x_bar - x == 0, NOT
+    x_bar - y. Guards the anchor-basis fix."""
+    r = _run_worker(_worker_basis)
+    assert r['max_xy_gap'] > 1e-3, (
+        f"test is vacuous: x==y at capture (gap {r['max_xy_gap']}); need trained state"
+    )
+    assert r['anchor_minus_x'] <= 1e-6, (
+        f"anchor is NOT in x-basis: anchor-x = {r['anchor_minus_x']}"
+    )
+    assert r['anchor_minus_y'] > 1e-3, (
+        f"anchor coincides with y (wrong basis): anchor-y = {r['anchor_minus_y']}"
+    )
+    assert r['first_delta'] <= 1e-6, (
+        f"first outer delta (x_bar - anchor) should be 0 with no training; "
+        f"got {r['first_delta']} -> anchor is in the wrong basis"
+    )
+    assert r['x_moved'] <= 1e-4, (
+        f"zero-delta merge moved x by {r['x_moved']} (should be a no-op)"
+    )
+    print("PASS test_anchor_is_x_basis_first_delta_zero: anchor confirmed in x-basis")
+
+
+def _worker_gap(rank, world_size, init_file, ret):
+    """State-gap preservation under a NONTRIVIAL outer update (nonzero s). Ranks
+    train divergently so the merged x/z and the outer momentum both move; assert
+    (z_after - x_after) == (z_before - x_before), i.e. the x-z gap (and y's offset
+    from x) is invariant to the server rebase."""
+    dist.init_process_group(backend='gloo', init_method=f'file://{init_file}',
+                            rank=rank, world_size=world_size)
+    import train
+    model, opt = _build()
+    # Anchor at init (x==y here), in x-basis.
+    opt.eval()
+    anchor = [p.data.detach().clone() for p in model.parameters()]
+    opt.train()
+    outer_state = {'anchor': anchor, 'moment': [torch.zeros_like(p.data) for p in model.parameters()]}
+    args = _ns(diloco_outer_lr=0.7, diloco_outer_beta=0.9)
+
+    _local_train(model, opt, rank, k_steps=15)  # rank-specific -> divergence + nonzero delta
+
+    # Pre-merge per-rank x and z; gather to form the post-AVERAGING gap.
+    opt.eval()
+    pre_x = [p.data.detach().clone() for p in model.parameters()]
+    opt.train()
+    pre_z = [opt.state[p]['z'].detach().clone() for p in model.parameters()]
+    gathered = [None] * world_size
+    dist.all_gather_object(gathered, {
+        'x': [t.tolist() for t in pre_x],
+        'z': [t.tolist() for t in pre_z],
+    })
+
+    os.environ['NDM_DILOCO_DEBUG_ASSERT'] = '1'  # exercise the runtime gap assert
+    train.diloco_merge(model, opt, args, world_size, outer_state)
+
+    opt.eval()
+    post_x = [p.data.detach().clone() for p in model.parameters()]
+    opt.train()
+    post_z = [opt.state[p]['z'].detach().clone() for p in model.parameters()]
+
+    if rank == 0:
+        # gap_before = mean_z - mean_x (state right after averaging, before outer step)
+        gap_drift = 0.0
+        s_norm = 0.0
+        for j in range(len(pre_x)):
+            mean_x = torch.zeros_like(pre_x[j])
+            mean_z = torch.zeros_like(pre_z[j])
+            for rr in range(world_size):
+                mean_x += torch.tensor(gathered[rr]['x'][j])
+                mean_z += torch.tensor(gathered[rr]['z'][j])
+            mean_x /= world_size
+            mean_z /= world_size
+            gap_before = mean_z - mean_x
+            gap_after = post_z[j] - post_x[j]
+            gap_drift = max(gap_drift, (gap_after - gap_before).abs().max().item())
+            s_norm = max(s_norm, (post_x[j] - mean_x).abs().max().item())  # |s| = |x_new - x_bar|
+        ret['gap_drift'] = gap_drift
+        ret['s_norm'] = s_norm
+    dist.barrier()
+    dist.destroy_process_group()
+
+
+def test_state_gap_preserved_under_outer_rebase():
+    """TEST 4: for any SF param, (z+s)-(x+s) == z-x after the outer rebase. The
+    x-z gap drift must be ~0 even though the outer update moves x by a nonzero s
+    (pre-fix bug drives the gap drift to -s)."""
+    r = _run_worker(_worker_gap)
+    assert r['s_norm'] > 1e-4, (
+        f"test is vacuous: outer update did not move x (|s|={r['s_norm']})"
+    )
+    print(f"  [test4] |s| (server displacement) = {r['s_norm']:.6g}; "
+          f"x-z gap drift = {r['gap_drift']:.3e}")
+    assert r['gap_drift'] <= 1e-4, (
+        f"x-z gap drifted by {r['gap_drift']} under outer rebase "
+        f"(pre-fix bug stretches the gap by -s={-r['s_norm']:.4g})"
+    )
+    print("PASS test_state_gap_preserved_under_outer_rebase: SF geometry invariant")
+
+
 if __name__ == '__main__':
     test_local_sgd_averaging()
     test_outer_momentum()
     test_schedulefree_dynamic_loss_continuity()
     test_schedulefree_full_trajectory_average_survives_merges()
     test_single_rank_diloco_merge_is_byte_identical_noop()
+    # sf-diloco-p1 regression suite (x/z/y geometry on outer update):
+    test_translation_invariance_scalar()
+    test_identical_rank_noop_all_modes()
+    test_anchor_is_x_basis_first_delta_zero()
+    test_state_gap_preserved_under_outer_rebase()
     print("ALL DILOCO MERGE TESTS PASSED")

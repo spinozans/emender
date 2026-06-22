@@ -630,21 +630,52 @@ def diloco_merge(core_model, optimizer, args, world_size, outer_state):
     sync_s = time.time() - t0
 
     # 3. Outer optimizer (momentum). Skipped for the local-SGD default.
+    #
+    # SF GEOMETRY INVARIANT (sf-diloco-p1): the outer step displaces the merged
+    # ScheduleFree EVAL weight x (held in p.data while in eval mode) by a server
+    # displacement s = x_new - x_bar. ScheduleFree's live train point is
+    # y = beta1*x + (1-beta1)*z, so x and z together define the inner geometry.
+    # Translation invariance demands that ANY displacement applied to x is also
+    # applied to z (hence to y): x<-x+s, z<-z+s => y<-y+s. The previous code
+    # shifted only x, leaving z fixed; train() then rebuilt y = ybar + beta1*s
+    # (only a beta1 fraction of the server update reached the next train point)
+    # and stretched the x-z gap by -s. That corrupted inner SF geometry on EVERY
+    # nontrivial outer update (any outer_lr!=1 or any outer momentum), not just
+    # beta>0 -- which is why nonzero outer beta looked catastrophic. We now shift
+    # z by the same s. For non-ScheduleFree optimizers there is no z and the
+    # x-only move is already correct.
     outer_lr = args.diloco_outer_lr
     outer_beta = args.diloco_outer_beta
+    debug_assert = os.environ.get('NDM_DILOCO_DEBUG_ASSERT', '0') == '1'
     if outer_state is not None:
-        anchor = outer_state['anchor']   # W_r
+        anchor = outer_state['anchor']   # W_r (x-basis)
         moment = outer_state['moment']   # outer momentum buffer
         for p, w_r, m in zip(params, anchor, moment):
-            delta = p.data - w_r                       # mean_i(W_{r,i}) - W_r
+            x_bar = p.data                             # merged eval x = mean_i(x_i)
+            delta = x_bar - w_r                        # mean_i(W_{r,i}) - W_r
             m.mul_(outer_beta).add_(delta)             # outer_mom = beta*mom + delta
-            p.data.copy_(w_r).add_(m, alpha=outer_lr)  # W_{r+1} = W_r + lr*mom
-            w_r.copy_(p.data)                          # advance anchor to W_{r+1}
+            x_new = torch.add(w_r, m, alpha=outer_lr)  # W_{r+1} = W_r + lr*mom
+            shift = x_new - x_bar                      # server displacement on x
+            z = optimizer.state.get(p, {}).get('z') if sf else None
+            gap_before = (z - x_bar).detach().clone() if (debug_assert and z is not None) else None
+            p.data.copy_(x_new)                        # x  <- x + s
+            if z is not None:
+                z.add_(shift)                          # z  <- z + s  (preserve SF geometry)
+            w_r.copy_(x_new)                           # advance anchor to W_{r+1} (x-basis)
+            if gap_before is not None:
+                # Post-condition: the x-z gap (and therefore y's offset from x)
+                # is preserved by the outer rebase. (z+s)-(x+s) == z-x.
+                gap_drift = (z - p.data - gap_before).abs().max().item()
+                assert gap_drift < 1e-4, (
+                    f"DiLoCo outer update broke SF x-z geometry: gap drift {gap_drift} "
+                    f"(z displacement must equal x displacement s)")
 
     # 4. Rebuild ScheduleFree train weights y from the merged full state. With
     #    AdamWScheduleFree, train() maps eval-mode x and state z to
     #    y = beta1*x + (1-beta1)*z. The averaging denominator and clocks are left
     #    intact so x remains a full-run cumulative average across future steps.
+    #    Because step 3 shifted x and z by the same s, train() yields the
+    #    translation-invariant y+ = ybar + s (whole inner geometry preserved).
     if sf:
         optimizer.train()
     return sync_s
@@ -1363,12 +1394,23 @@ def train(args):
     # (outer_beta!=0 or outer_lr!=1); the default local-SGD path (plain averaging)
     # needs no anchor/momentum buffers. anchor captures W_0 (post-broadcast, all
     # ranks identical) so the first round's delta = mean_i(W_{r,i}) - W_0 is correct.
+    #
+    # ANCHOR BASIS (sf-diloco-p1): diloco_merge reads p.data after optimizer.eval()
+    # (the ScheduleFree EVAL weight x). The anchor MUST live in that same x-basis
+    # so the FIRST outer delta is xbar - x, NOT xbar - y. We therefore capture the
+    # anchor in eval-mode. At init the SF 'z' state does not exist yet, so
+    # eval()/train() are no-ops (x==y==z) and this is numerically identical to a
+    # train-mode capture; doing it in eval-basis is the correct, resume-safe form.
     outer_state = None
     if use_diloco and not (args.diloco_outer_lr == 1.0 and args.diloco_outer_beta == 0.0):
+        if args.optimizer == 'schedulefree':
+            optimizer.eval()
         outer_state = {
             'anchor': [p.data.detach().clone() for p in core_model.parameters()],
             'moment': [torch.zeros_like(p.data) for p in core_model.parameters()],
         }
+        if args.optimizer == 'schedulefree':
+            optimizer.train()
         if is_main:
             print(f"[DiLoCo] outer-momentum buffers allocated "
                   f"(outer_lr={args.diloco_outer_lr}, outer_beta={args.diloco_outer_beta})",

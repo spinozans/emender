@@ -546,3 +546,48 @@ periodic model sharing. The next missing control is a central baseline, followed
 by larger `H` sweeps and a 1.27B communication measurement. Hierarchical mode is
 the real Frontier speed path. Hogwild mode is the high-leverage operational
 layer once the synchronous math is trusted.
+
+## P1 RESULTS — SF x/z/y geometry on the outer update (task sf-diloco-p1)
+
+This resolves the "eval weights vs train weights" open question above and fixes
+a geometry bug that made nonzero outer beta look catastrophic.
+
+**The bug.** When a nontrivial outer update (any `outer_lr != 1` OR any outer
+momentum, i.e. any time `outer_state is not None`) applied a server displacement
+`s = x_new - x_bar` to the merged ScheduleFree EVAL weight `x` (held in `p.data`
+after `optimizer.eval()`), it did NOT apply `s` to the base iterate `z`.
+ScheduleFree's live train point is `y = beta1*x + (1-beta1)*z`, so
+`optimizer.train()` then rebuilt `y+ = ybar + beta1*s` instead of `ybar + s` —
+only a `beta1` (=0.9) fraction of the server update reached the next training
+point — and the `x-z` gap was stretched by `-s`. This corrupted inner SF geometry
+on EVERY nontrivial outer update, not just `beta>0`.
+
+**The fix (one invariant).** Any displacement applied to `x` is applied to `z`
+(hence `y`): `x<-x+s`, `z<-z+s` ⇒ `y<-y+s` (translation invariance). See
+`diloco_merge` in `train.py`. Secondary: the DiLoCo anchor is captured in the SF
+EVAL (x) basis (resolves the open question: **outer delta uses eval weights**),
+so the first outer delta is `xbar - x`, not `xbar - y`. An env-gated runtime
+assert (`NDM_DILOCO_DEBUG_ASSERT=1`) checks the `x-z` gap is preserved across the
+outer rebase.
+
+**Regression lock** (`tests/test_diloco_merge.py`, 4 tests, all REAL gloo merges):
+1. translation-invariance scalar: `x=10,z=4,beta1=0.9 -> y=9.4`; `s=+3` ⇒
+   `x=13,z=7,y=12.4`. FAILS on pre-fix (`z=4, y=12.1`).
+2. identical-rank no-op for avg + momentum(lr1/b0, lr.7/b.9) modes.
+3. anchor in x-basis: first outer delta `xbar - x == 0` with no local training.
+4. state-gap preservation: `(z+s)-(x+s)==z-x` under a nonzero-`s` outer rebase.
+
+**Plain-avg baseline reproduced** (`scripts/launch_sf_diloco_pavg_baseline.sh`,
+1.3B E97 emender, `lr=1.01e-3`, bf16, fused Triton split-edit kernel NO-eager,
+p50k_base, pile.txt, 2 GPUs). This is the UN-bugged averaging path (outer_state
+is None, untouched by the fix); the run confirms it still descends smoothly
+across merge boundaries with no post-merge spike:
+
+```text
+K=250 (4 merges @250/500/750/1000): loss 9.24(s25) -> 5.19(s1100), every merge continuous
+K=100 (10 merges @100..1000):       loss 9.14(s25) -> 4.82(s1100), every merge continuous
+~16k global tok/s (8k/GPU), merge ~1.0s amortized over K steps.
+```
+
+This matches the shape of the prior 20h/72k-step run that descended to ~2.96
+(same recipe, early on the same trajectory).
