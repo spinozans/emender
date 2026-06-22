@@ -650,6 +650,17 @@ def diloco_merge(core_model, optimizer, args, world_size, outer_state):
     if outer_state is not None:
         anchor = outer_state['anchor']   # W_r (x-basis)
         moment = outer_state['moment']   # outer momentum buffer
+        # Per-merge geometry instrumentation (task sf-diloco-p2): accumulate the
+        # whole-model squared norms needed for three diagnostic ratios. All ranks
+        # hold identical x_bar / z / anchor / moment after the all-reduce (delta is
+        # rank-invariant), so every rank computes the same numbers; only rank 0
+        # prints. float64 accumulators on the param device avoid per-param syncs.
+        _idev = params[0].data.device
+        _sq_land_num = torch.zeros((), device=_idev, dtype=torch.float64)  # ||x+  - x_r||^2
+        _sq_land_den = torch.zeros((), device=_idev, dtype=torch.float64)  # ||xbar - x_r||^2
+        _sq_anchor   = torch.zeros((), device=_idev, dtype=torch.float64)  # ||x_r||^2
+        _sq_gap      = torch.zeros((), device=_idev, dtype=torch.float64)  # ||z - x+||^2
+        _sq_xnew     = torch.zeros((), device=_idev, dtype=torch.float64)  # ||x+||^2
         for p, w_r, m in zip(params, anchor, moment):
             x_bar = p.data                             # merged eval x = mean_i(x_i)
             delta = x_bar - w_r                        # mean_i(W_{r,i}) - W_r
@@ -658,17 +669,61 @@ def diloco_merge(core_model, optimizer, args, world_size, outer_state):
             shift = x_new - x_bar                      # server displacement on x
             z = optimizer.state.get(p, {}).get('z') if sf else None
             gap_before = (z - x_bar).detach().clone() if (debug_assert and z is not None) else None
+            # Accumulate squared norms BEFORE overwriting p.data / anchor.
+            _sq_land_num += (x_new - w_r).double().pow(2).sum()
+            _sq_land_den += delta.double().pow(2).sum()
+            _sq_anchor   += w_r.double().pow(2).sum()
+            _sq_xnew     += x_new.double().pow(2).sum()
             p.data.copy_(x_new)                        # x  <- x + s
             if z is not None:
                 z.add_(shift)                          # z  <- z + s  (preserve SF geometry)
+                _sq_gap += (z - x_new).double().pow(2).sum()
             w_r.copy_(x_new)                           # advance anchor to W_{r+1} (x-basis)
             if gap_before is not None:
                 # Post-condition: the x-z gap (and therefore y's offset from x)
                 # is preserved by the outer rebase. (z+s)-(x+s) == z-x.
                 gap_drift = (z - p.data - gap_before).abs().max().item()
-                assert gap_drift < 1e-4, (
+                # In bf16 production runs, z.add_(shift) and p.data.copy_(x_new)
+                # round through bf16 storage. The invariant is exact in real
+                # arithmetic, but the runtime assert must allow one low-precision
+                # storage quantum; fp32 CPU regression tests still use the tighter
+                # tolerance.
+                if p.data.dtype in (torch.bfloat16, torch.float16):
+                    gap_tol = 1.5 * torch.finfo(p.data.dtype).eps
+                else:
+                    gap_tol = 1e-4
+                assert gap_drift < gap_tol, (
                     f"DiLoCo outer update broke SF x-z geometry: gap drift {gap_drift} "
-                    f"(z displacement must equal x displacement s)")
+                    f"(tol {gap_tol}; z displacement must equal x displacement s)")
+        # Emit the three ratios (single host sync for all six accumulators). These
+        # are the load-bearing diagnostics for P2's "does matched-gain momentum
+        # behave post-fix?" question:
+        #   land_frac = |x+ - x_r| / |xbar - x_r|  fraction of the raw K-step drift
+        #               that the outer step actually lands (lr*mom vs delta; >1 means
+        #               momentum is amplifying the server update -> watch for spirals)
+        #   disp_mag  = |xbar - x_r| / |x_r|       relative magnitude of the merge displacement
+        #   gap_health= |z - x| / |x|              SF inner gap; must stay BOUNDED post-fix
+        eps = 1e-30
+        land_num = float(_sq_land_num.sqrt().item())
+        land_den = float(_sq_land_den.sqrt().item())
+        anchor_n = float(_sq_anchor.sqrt().item())
+        gap_n    = float(_sq_gap.sqrt().item())
+        xnew_n   = float(_sq_xnew.sqrt().item())
+        land_frac  = land_num / (land_den + eps)
+        disp_mag   = land_den / (anchor_n + eps)
+        gap_health = gap_n / (xnew_n + eps)
+        # Stash for programmatic access (regression tests + callers); the print is
+        # the human/log-facing surface.
+        outer_state['last_metrics'] = {
+            'land_frac': land_frac,
+            'disp_mag': disp_mag,
+            'gap_health': gap_health,
+        }
+        if (not dist.is_initialized()) or dist.get_rank() == 0:
+            print(f"  [DiLoCo-geom] land_frac(|x+-xr|/|xbar-xr|)={land_frac:.4f} "
+                  f"disp_mag(|xbar-xr|/|xr|)={disp_mag:.3e} "
+                  f"gap_health(|z-x|/|x|)={gap_health:.3e} "
+                  f"(outer_lr={outer_lr} outer_beta={outer_beta})", flush=True)
 
     # 4. Rebuild ScheduleFree train weights y from the merged full state. With
     #    AdamWScheduleFree, train() maps eval-mode x and state z to

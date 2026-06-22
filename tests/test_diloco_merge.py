@@ -176,6 +176,7 @@ def _worker(rank, world_size, init_file, outer_lr, outer_beta, ret):
         ret['group_pre_merge'] = gathered[0]['group']
         if anchor_pre is not None:
             ret['anchor'] = [t.tolist() for t in anchor_pre]
+            ret['last_metrics'] = dict(outer_state.get('last_metrics', {}))
         ret['group_after_merge'] = {
             'k': opt.param_groups[0]['k'],
             'weight_sum': opt.param_groups[0]['weight_sum'],
@@ -383,6 +384,26 @@ def test_outer_momentum():
         d = (tx - expected).abs().max().item()
         assert d <= tol, f"outer-momentum update mismatch (max diff {d})"
     print("PASS test_outer_momentum: general DiLoCo outer step verified")
+
+
+def test_outer_momentum_geometry_metrics_reported():
+    """P2 instrumentation: nontrivial outer updates must expose per-merge
+    whole-model geometry ratios for log/report analysis."""
+    lr, beta = 0.5, 0.5
+    r = _run(outer_lr=lr, outer_beta=beta)
+    metrics = r.get('last_metrics')
+    assert metrics is not None, "outer_state['last_metrics'] was not populated"
+    for key in ('land_frac', 'disp_mag', 'gap_health'):
+        assert key in metrics, f"missing DiLoCo geometry metric {key}"
+        assert torch.isfinite(torch.tensor(metrics[key])), f"non-finite {key}: {metrics[key]}"
+        assert metrics[key] >= 0.0, f"negative {key}: {metrics[key]}"
+    assert abs(metrics['land_frac'] - lr) <= 5e-4, (
+        f"first-round land_frac should equal outer_lr when momentum starts at zero; "
+        f"got {metrics['land_frac']} vs {lr}"
+    )
+    assert metrics['disp_mag'] > 0.0, "rank-divergent training should create nonzero displacement"
+    assert metrics['gap_health'] > 0.0, "ScheduleFree x-z gap health should be measurable"
+    print("PASS test_outer_momentum_geometry_metrics_reported: DiLoCo geometry ratios populated")
 
 
 def test_schedulefree_dynamic_loss_continuity():
