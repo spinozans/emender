@@ -174,6 +174,13 @@ def parse_args():
                         help='Add direct D*v value residual to E88 output before output gating (0=no, 1=yes)')
     parser.add_argument('--e88_raw_write', type=int, default=0,
                         help='Ablate E88 delta correction: write raw v instead of v - S^T k')
+    parser.add_argument('--use_chunked_e97', type=int, default=0,
+                        help='For E97 split-edit linear-state runs, use the fused chunked '
+                             'E97 Triton fwd/bwd kernel instead of the sequential split-edit '
+                             'Triton scan (0=no, 1=yes). Requires --use_triton 1, '
+                             '--linear_state 1, and --e88_raw_write 0.')
+    parser.add_argument('--e97_chunk_size', type=int, default=32,
+                        help='Chunk size for --use_chunked_e97. ROCm/HIP debug starts at 32.')
     parser.add_argument('--mlp_ratio', type=float, default=0.0,
                         help='If >0, wrap every mixer layer with a post-mixer RMSNorm + SwiGLU MLP '
                              '(hidden = dim*mlp_ratio). 0 = mixer-only (default). Mirrors gdn2-mlp plumbing.')
@@ -729,12 +736,20 @@ def train(args):
         print(f"[fused-guard] rank {rank}/{world_size}: level={args.level} bf16 "
               f"use_triton=1 -> fused split-edit Triton kernel, NO eager fallback", flush=True)
     if str(args.level).lower() in ('gdn2', 'gdn2-mlp'):
-        gdn2_path = os.environ.get('GDN2_PATH', '/home/erikg/GatedDeltaNet-2')
-        assert os.path.isdir(gdn2_path), (
-            f"[fused-guard] rank {rank}: GDN-2 external fused path missing: {gdn2_path}")
+        from ndm.models.external_gdn2 import probe_gdn2_external_dependencies
+
+        gdn2_probe = probe_gdn2_external_dependencies()
+        assert gdn2_probe.get('ok'), (
+            f"[fused-guard] rank {rank}: GDN-2 external fused path preflight failed: "
+            f"{gdn2_probe.get('failure', gdn2_probe)}")
+        gdn2_path = gdn2_probe.get('gdn2_path')
+        backend = gdn2_probe.get('torch_backend')
+        hip = gdn2_probe.get('torch_version_hip')
+        chunk_ops = gdn2_probe.get('chunk_ops_module')
         print(f"[fused-guard] rank {rank}/{world_size}: level={args.level} "
-              f"bf16={bool(args.bf16)} GDN2_PATH={gdn2_path} -> "
-              "FLA chunked GDN-2 fused kernel, NO eager fallback", flush=True)
+              f"bf16={bool(args.bf16)} backend={backend} torch.version.hip={hip} "
+              f"GDN2_PATH={gdn2_path} chunk_ops={chunk_ops} -> "
+              "FLA chunked GDN-2 fused kernel import path, NO eager fallback", flush=True)
 
     # Under DDP only rank 0 owns the run directory / checkpoints. Non-main ranks
     # never write to it (their save/eval blocks are gated on is_main), so they get
@@ -1096,6 +1111,8 @@ def train(args):
             e88_decay_mode=args.e88_decay_mode,
             e88_value_residual=bool(args.e88_value_residual),
             e88_raw_write=bool(args.e88_raw_write),
+            use_chunked_e97=bool(args.use_chunked_e97),
+            e97_chunk_size=args.e97_chunk_size,
             state_expansion=args.state_expansion,
             r_h_mode=r_h_mode,
             use_conv=bool(args.use_conv),

@@ -47,6 +47,30 @@ import os as _os
 _GLOG_FLOOR = float(_os.environ.get('E97_GLOG_FLOOR', '-30.0'))
 
 
+def _is_hip_tensor(x: torch.Tensor) -> bool:
+    """True when this launch is targeting Triton on a ROCm/HIP CUDA device."""
+    return bool(x.is_cuda and getattr(torch.version, "hip", None))
+
+
+def _launch_policy(x: torch.Tensor, *, chunk_size: int, backward: bool) -> dict:
+    """Conservative launch metadata for E97 chunked Triton kernels.
+
+    Frontier/MI250X should start with C=32, num_warps=4, num_stages=1.  CUDA uses
+    the same profile for the autograd path so local parity remains comparable.
+    """
+    if chunk_size not in (16, 32, 64):
+        raise ValueError(f"e97 chunk_size must be one of 16, 32, 64; got {chunk_size}")
+    if _is_hip_tensor(x) and chunk_size > 32 and backward:
+        raise ValueError(
+            "ROCm/HIP E97 backward starts with chunk_size<=32; set --e97_chunk_size 32 "
+            "until Frontier evidence supports larger tiles"
+        )
+    return {
+        "num_warps": int(_os.environ.get("E97_TRITON_NUM_WARPS", "4")),
+        "num_stages": int(_os.environ.get("E97_TRITON_NUM_STAGES", "1")),
+    }
+
+
 # ---------------------------------------------------------------------------
 # Forward kernel — same math as e97_chunked_fwd_kernel but also writes the
 # per-chunk ENTRY state S_entry[c] (needed, and only needed, by the backward).
@@ -373,12 +397,13 @@ class E97DeltaChunkedFn(torch.autograd.Function):
         S_final = torch.empty((B, H, N, Vd), device=k.device, dtype=k.dtype)
         BN, BV, BC = _next_pow2(N), _next_pow2(Vd), _next_pow2(C)
         newton = max(1, (C - 1).bit_length())
-        allow_tf32 = k.dtype in (torch.bfloat16, torch.float16)
+        allow_tf32 = k.dtype in (torch.bfloat16, torch.float16) and not _is_hip_tensor(k)
+        fwd_launch = _launch_policy(k, chunk_size=C, backward=False)
         _e97_fwd_save_kernel[(B * H,)](
             k, q, U, Pw, glog, out, S_entry, S_final,
             B=B, T=Tp, H=H, N=N, V=Vd, C=C, NC=NC,
             BN=BN, BV=BV, BC=BC, NEWTON_STEPS=newton, ALLOW_TF32=allow_tf32,
-            num_warps=4,
+            **fwd_launch,
         )
         ctx.save_for_backward(k, q, v, erase, write, glog, S_entry, clamp_mask)
         ctx.shape = (B, T, Tp, H, N, Vd, C, NC, BN, BV, BC, newton, allow_tf32)
@@ -402,12 +427,13 @@ class E97DeltaChunkedFn(torch.autograd.Function):
         dv = torch.empty_like(v)
         dw = torch.empty_like(write)
         dgrad = torch.empty_like(glog)   # kernel writes dg = grad wrt LOG-decay
+        bwd_launch = _launch_policy(k, chunk_size=C, backward=True)
         _e97_bwd_kernel[(B * H,)](
             k, q, erase, v, write, glog, S_entry, dout, dSfinal,
             dk, dq, de, dv, dw, dgrad,
             B=B, T=Tp, H=H, N=N, V=Vd, C=C, NC=NC,
             BN=BN, BV=BV, BC=BC, NEWTON_STEPS=newton, ALLOW_TF32=allow_tf32,
-            num_warps=4, num_stages=1,
+            **bwd_launch,
         )
         # dgrad = grad wrt log-decay g. For the log-decay caller, return it as-is
         # (the input WAS g). For the legacy decay caller, convert to grad-wrt-decay

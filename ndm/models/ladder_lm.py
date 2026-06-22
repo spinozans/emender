@@ -1123,6 +1123,8 @@ class LadderLM(nn.Module):
         projection_chunk_size=0,  # For E88: chunk size for projection recomputation (0=disabled, saves ~5GB/layer at T=32K)
         loss_chunk_size=0,  # Chunk T dimension when computing lm_head + cross_entropy (0=disabled, saves T*V*2 bytes at long T)
         use_triton=False,  # For E88: use Triton fwd+bwd kernels instead of CUDA register-owned (portable across NVIDIA/AMD ROCm)
+        use_chunked_e97=False,  # For E97 linear-state Frontier smoke: route through chunked split-edit kernel
+        e97_chunk_size=32,  # Chunk size for --use_chunked_e97
         layer_kwargs=None,  # Extra per-layer kwargs merged into LayerClass(...) — e.g. head_type_logits / lam_max / beta_max / corner_mixture for typed-gdn2-lm / e98-cma-lm. None == no change to existing levels.
         mlp_ratio=0.0,  # >0 wraps every mixer layer with a post-mixer RMSNorm + SwiGLU MLP (task e97-raw-plus). 0 = mixer-only (unchanged behavior).
         mlp_multiple=64,  # Round SwiGLU hidden width to this multiple.
@@ -1152,6 +1154,8 @@ class LadderLM(nn.Module):
         self.d_conv = d_conv
         self.gradient_checkpointing = gradient_checkpointing
         self.loss_chunk_size = loss_chunk_size
+        self.use_chunked_e97 = use_chunked_e97
+        self.e97_chunk_size = e97_chunk_size
         self.mlp_ratio = mlp_ratio
         self.mlp_multiple = mlp_multiple
 
@@ -1209,6 +1213,8 @@ class LadderLM(nn.Module):
                 checkpoint_interval=checkpoint_interval,  # For E88: state checkpoint interval
                 projection_chunk_size=projection_chunk_size,  # For E88: projection recomputation chunks
                 use_triton=use_triton,  # For E88: route fwd+bwd through Triton kernels
+                use_chunked_e97=use_chunked_e97,  # For E97 linear-state chunked split-edit kernel
+                e97_chunk_size=e97_chunk_size,  # For E97 linear-state chunked split-edit kernel
                 readout_summary_dim=state_summary_dim,  # M1 state-aware MLP: E88FLAHybrid emits a 3rd readout-summary value when >0
             ), **extra_layer_kwargs})
             for _ in range(depth)

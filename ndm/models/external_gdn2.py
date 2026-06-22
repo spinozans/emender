@@ -15,6 +15,7 @@ import os
 import sys
 import types
 from pathlib import Path
+from typing import Any
 
 import torch.nn as nn
 import torch.nn.functional as F
@@ -23,6 +24,7 @@ import torch.nn.functional as F
 DEFAULT_GDN2_PATH = "/home/erikg/GatedDeltaNet-2"
 OFFICIAL_GDN2_MLP_RATIO = 6208 / 2304
 _GDN2_CLASS = None
+_GDN2_OPS_MODULE = None
 
 
 def _external_root() -> Path:
@@ -114,7 +116,7 @@ def _ensure_fla_compat() -> None:
 
 
 def _load_gdn2_class():
-    global _GDN2_CLASS
+    global _GDN2_CLASS, _GDN2_OPS_MODULE
     if _GDN2_CLASS is not None:
         return _GDN2_CLASS
 
@@ -162,7 +164,92 @@ def _load_gdn2_class():
         ops_module.chunk_gla_fwd_o_gk = compat_chunk_gla_fwd_o_gk
 
     _GDN2_CLASS = module.GatedDeltaNet2
+    _GDN2_OPS_MODULE = ops_module
     return _GDN2_CLASS
+
+
+def probe_gdn2_external_dependencies() -> dict[str, Any]:
+    """Import the external GDN-2 stack and return an actionable preflight report.
+
+    This intentionally uses the same loader and FLA compatibility shims as the
+    production wrapper so a PASS means model construction will see the same
+    external module and chunk-kernel namespace. It does not launch a Triton
+    kernel; use ``scripts/frontier/gdn2_rocm_preflight.py --run-fwdbwd`` for the
+    compile/runtime smoke inside a GPU allocation.
+    """
+    global _GDN2_OPS_MODULE
+
+    root = _external_root()
+    gdn2_file = root / "lit_gpt" / "gdn2.py"
+    report: dict[str, Any] = {
+        "gdn2_path": str(root),
+        "gdn2_file": str(gdn2_file),
+        "gdn2_file_exists": gdn2_file.exists(),
+    }
+
+    try:
+        import torch
+
+        report.update(
+            {
+                "torch_version": getattr(torch, "__version__", None),
+                "torch_version_hip": getattr(torch.version, "hip", None),
+                "torch_cuda_is_available": torch.cuda.is_available(),
+                "torch_cuda_device_count": (
+                    torch.cuda.device_count() if torch.cuda.is_available() else 0
+                ),
+                "torch_backend": "hip"
+                if getattr(torch.version, "hip", None)
+                else "cuda"
+                if getattr(torch.version, "cuda", None)
+                else "cpu",
+            }
+        )
+    except Exception as exc:  # pragma: no cover - diagnostic path
+        report["torch_import_error"] = repr(exc)
+
+    try:
+        fla_module = importlib.import_module("fla")
+        report["fla_module"] = getattr(fla_module, "__file__", None)
+        report["fla_version"] = getattr(fla_module, "__version__", None)
+    except Exception as exc:
+        report["ok"] = False
+        report["failure"] = f"could not import fla: {exc!r}"
+        return report
+
+    try:
+        cls = _load_gdn2_class()
+        ops_module = _GDN2_OPS_MODULE or importlib.import_module(
+            "_external_gdn2_lit_gpt.gdn2_ops.chunk_gdn2"
+        )
+        chunk_symbols = sorted(
+            name
+            for name in dir(ops_module)
+            if name.startswith("chunk") or name.endswith("chunk_gdn2")
+        )
+        required = ["chunk_gla_fwd_o_gk"]
+        missing = [name for name in required if not hasattr(ops_module, name)]
+        report.update(
+            {
+                "external_module": cls.__module__,
+                "external_class": cls.__name__,
+                "chunk_ops_module": getattr(ops_module, "__file__", None),
+                "chunk_symbols": chunk_symbols,
+                "required_symbols": required,
+                "missing_required_symbols": missing,
+                "ok": not missing,
+            }
+        )
+        if missing:
+            report["failure"] = (
+                "external gdn2_ops.chunk_gdn2 is missing required symbols: "
+                + ", ".join(missing)
+            )
+    except Exception as exc:
+        report["ok"] = False
+        report["failure"] = f"could not load external lit_gpt.gdn2 chunk path: {exc!r}"
+
+    return report
 
 
 class GDN2ExternalLayer(nn.Module):

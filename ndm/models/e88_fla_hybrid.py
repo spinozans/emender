@@ -47,6 +47,7 @@ Output: out_proj(concat(out_0, ..., out_{H-1}))
 """
 
 import math
+import os
 import torch
 
 # Try to import Triton ops for fused element-wise operations
@@ -947,6 +948,17 @@ class E88FLAHybrid(nn.Module):
         self.use_triton = use_triton
         self.use_chunked_e97 = use_chunked_e97
         self.e97_chunk_size = e97_chunk_size
+        self._runtime_path_logged = False
+        if self.use_chunked_e97:
+            if not (self.use_triton and self.use_split_edit and self.linear_state and not self.raw_write):
+                raise ValueError(
+                    "use_chunked_e97 requires use_triton=True, use_split_edit=True, "
+                    "linear_state=True, and raw_write=False"
+                )
+            if self.e97_chunk_size not in (16, 32, 64):
+                raise ValueError(
+                    f"e97_chunk_size must be one of 16, 32, 64; got {self.e97_chunk_size}"
+                )
 
         # === M2: multi-query readout rank (paper/review/STATE_AWARE_MLP_DESIGN.md §3) ===
         self.multiquery_r = int(multiquery_r)
@@ -1346,6 +1358,29 @@ class E88FLAHybrid(nn.Module):
         if act == 'softplus':
             return F.softplus(pre)
         raise ValueError(f"unknown state_activation {act!r}")
+
+    def _maybe_log_runtime_path(self, x, *, use_optimized=False, use_chunked=False, log_decay=False):
+        if self._runtime_path_logged or os.environ.get("NDM_SUPPRESS_E97_PATH_LOG") == "1":
+            return
+        if not self.use_split_edit:
+            return
+        backend = "cpu"
+        if x.is_cuda:
+            backend = "hip" if getattr(torch.version, "hip", None) else "cuda"
+        path = "eager-reference"
+        if use_chunked:
+            path = "e97-chunked-triton"
+        elif self.use_triton and use_optimized:
+            path = "e88-sequential-split-edit-triton"
+        print(
+            "[e97-runtime] "
+            f"backend={backend} path={path} use_triton={self.use_triton} "
+            f"use_chunked_e97={self.use_chunked_e97} e97_chunk_size={self.e97_chunk_size} "
+            f"linear_state={self.linear_state} raw_write={self.raw_write} "
+            f"use_split_edit={self.use_split_edit} log_decay={log_decay}",
+            flush=True,
+        )
+        self._runtime_path_logged = True
 
     def _process_chunk(self, x_chunk, S_prev, input_dtype, use_fused_l2):
         """Compute projections and run CUDA kernel for one time chunk.
@@ -1752,6 +1787,12 @@ class E88FLAHybrid(nn.Module):
                     getattr(self, 'use_chunked_e97', False) and
                     self.use_triton and self.use_split_edit and
                     not self.raw_write and self.linear_state
+                )
+                self._maybe_log_runtime_path(
+                    x,
+                    use_optimized=True,
+                    use_chunked=use_chunked,
+                    log_decay=glog_chunked is not None,
                 )
                 if use_chunked:
                     # === Chunked-parallel E97 split-edit delta (fwd+bwd fused) ===
