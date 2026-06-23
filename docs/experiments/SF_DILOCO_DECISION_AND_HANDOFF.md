@@ -83,6 +83,58 @@ repo under the run roots named by the reports.
 - Scale-test rationale:
   `docs/experiments/SF_DILOCO_SCALE_TEST_RATIONALE.md`.
 
+## Frontier merge substrate
+
+Keep two decisions separate:
+
+- **Optimizer and parameterization:** the current recipe is still plain `avg`
+  outer merging, with `sfsgd_y` carried as the paired scale/stability canary.
+  The local W=2/4/8 evidence does not show that `sfsgd_y` should replace
+  `avg`, and it also does not prove that flat averaging will fail at larger W.
+  Flat averaging may be better than the earlier concern suggested; current
+  evidence simply stops before Frontier-scale island counts.
+- **Merge substrate and system shape:** the Frontier question is how island
+  endpoints are aggregated when W becomes tens, hundreds, or eventually
+  thousands of endpoints. That substrate choice is independent of whether the
+  outer update is plain averaging or `sfsgd_y`.
+
+Treat Gloo as local/prototype infrastructure only. It is useful for regression
+tests, localhost smoke runs, and small non-Frontier experiments, but it is not
+the Frontier-scale merge plan. Frontier candidates to evaluate include:
+
+- ROCm-aware MPI / Cray MPI collectives over Slingshot.
+- RCCL/NCCL-style collectives if they are stable and practical for the selected
+  process layout.
+- Hierarchical aggregation, for example node/local group -> global merge ->
+  broadcast, if a single flat collective is brittle, slow, memory-heavy, or hard
+  to recover.
+
+DiLoCo keeps high-frequency training mostly local: the inner loop does not need
+a global DDP-style collective on every step. That sparsity helps, but it does
+not make the merge path optional. At each outer round the job still has to move
+bulk model endpoints, compute the accepted aggregate deterministically, publish
+the merged state back to islands, and leave enough audit state for checkpoint,
+resume, and failure handling. A Frontier-ready merge path therefore needs
+systems validation separate from optimizer quality.
+
+Before claiming thousand-island readiness, test at least:
+
+- Flat collective versus hierarchical aggregation at the same endpoint count and
+  model size, including numeric equivalence within an agreed tolerance.
+- Backend choice across ROCm-aware MPI / Cray MPI over Slingshot and any
+  RCCL/NCCL-style option that is stable enough to try.
+- Merge throughput, tail latency, memory pressure, and amortized sync fraction
+  across K-step windows.
+- Deterministic replay of the aggregate from recorded endpoint/checkpoint state.
+- Checkpoint/resume behavior across a merge boundary, including restored outer
+  optimizer state for `sfsgd_y` canaries.
+- Fault behavior: rank/node loss, partial endpoint arrival, timeout policy,
+  rejected endpoint accounting, and whether a failed round can be retried or
+  cleanly aborted without corrupting the accepted checkpoint.
+- Tolerance rules for flat versus hierarchical numeric differences so a
+  production run does not silently change optimizer conclusions because the
+  aggregation tree changed.
+
 ## Parallel GPU scheduling guidance
 
 Future independent arms should fill all available GPUs while keeping GPU and
