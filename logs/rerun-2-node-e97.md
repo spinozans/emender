@@ -846,3 +846,132 @@ JobID|JobName|State|ExitCode|Elapsed|Timelimit|NNodes|NodeList|Submit|Start|End
 Validation remains pending because there are still no post-resume losses,
 final-checkpoint records, `latest.pt` updates, clean exit status, or NCCL
 finalization logs to inspect.
+
+## Replacement terminal harvest: 2026-06-23T11:27:22-04:00
+
+Job `4891784` allocated and ran the bounded 2-node E97-MLP regular-averaging
+resume canary from the clean `4891083` checkpoint with explicit writable
+`OUTPUT_ROOT=/lustre/orion/bif148/proj-shared/emender/frontier_runs/scaleout`.
+
+Important git state nuance: the submitted job used worktree commit
+`e397a1a9b450335395de16b9dbbc29c67cb6e2b9`, recorded in the run manifest. That
+commit contains the multi-node final-checkpoint code merge commit `c1e733c`
+and has no `train.py` / `tests/test_walltime_final_checkpoint.py` diff from
+`origin/main=ab30fd70fd911d02a8f2d865ca9cd6c8a5c48d38`; it is only missing the
+later `logs/merge-multi-node.md` documentation commit from `origin/main`.
+
+Accounting:
+
+```text
+JobID|JobName|State|ExitCode|Elapsed|NNodes|NodeList|Submit|Start|End
+4891784|emender-e97-resume-canary|FAILED|137:0|00:15:32|2|frontier[07200,07210]|2026-06-23T11:05:18|2026-06-23T11:11:50|2026-06-23T11:27:22
+4891784.batch|batch|FAILED|137:0|00:15:32|1|frontier07200|2026-06-23T11:11:50|2026-06-23T11:11:50|2026-06-23T11:27:22
+4891784.extern|extern|COMPLETED|0:0|00:15:32|2|frontier[07200,07210]|2026-06-23T11:11:50|2026-06-23T11:11:50|2026-06-23T11:27:22
+4891784.0|bash|CANCELLED|0:6|00:14:58|2|frontier[07200,07210]|2026-06-23T11:12:24|2026-06-23T11:12:24|2026-06-23T11:27:22
+```
+
+Actual node exposure:
+
+```text
+2 nodes * 15.533333 minutes = 0.517778 node-hours
+```
+
+Run output paths:
+
+```text
+Slurm stdout: logs/frontier/scaleout/emender-e97-resume-canary-4891784.out
+Slurm stderr: logs/frontier/scaleout/emender-e97-resume-canary-4891784.err
+Run root: /lustre/orion/bif148/proj-shared/emender/frontier_runs/scaleout/20260623/e97-MLP/4891784-20260623T151204Z
+Train directory: /lustre/orion/bif148/proj-shared/emender/frontier_runs/scaleout/20260623/e97-MLP/4891784-20260623T151204Z/train/levelE97_100m_20260623_111301
+Manifest: /lustre/orion/bif148/proj-shared/emender/frontier_runs/scaleout/20260623/e97-MLP/4891784-20260623T151204Z/artifacts/manifest.json
+Summary: /lustre/orion/bif148/proj-shared/emender/frontier_runs/scaleout/20260623/e97-MLP/4891784-20260623T151204Z/summaries/summary.md
+```
+
+Finite post-resume losses were observed after resuming from step `140`:
+
+```text
+step 145 loss 5.1694
+step 150 loss 5.1284
+step 155 loss 4.3432
+step 160 loss 4.4035
+step 165 loss 3.6829
+step 170 loss 3.4195
+step 175 loss 2.5726
+step 180 loss 3.4492
+step 185 loss 2.8669
+step 190 loss 2.6149
+step 195 loss 1.8267
+step 200 loss 1.6622
+step 205 loss 1.1961
+```
+
+Regular DiLoCo averaging completed through merge `#6` at step `200`, with
+checkpoints saved at steps `150`, `160`, `170`, `180`, `190`, and `200`.
+
+Final-checkpoint status:
+
+```text
+[final-checkpoint] armed: source=SLURM_JOB_END_TIME remaining_s=1128.9 margin_s=600.0 check_every=1 model_variant=level=E97,params=100m,mlp_ratio=1.5 head_rank=0/16
+```
+
+No final-checkpoint `START`, `END`, or success record appears before the NCCL
+watchdog failure. The final-checkpoint path therefore did not complete cleanly.
+
+`latest.pt` behavior in the replacement run:
+
+```text
+latest.pt -> checkpoint_step_000200_loss_1.6622.pt
+```
+
+The train directory retained only the last four checkpoints under
+`KEEP_CHECKPOINTS=4`:
+
+```text
+checkpoint_step_000170_loss_3.4195.pt
+checkpoint_step_000180_loss_3.4492.pt
+checkpoint_step_000190_loss_2.6149.pt
+checkpoint_step_000200_loss_1.6622.pt
+```
+
+Exact failure evidence from Slurm stdout shows the bug persists as a
+finalization/collective mismatch or hang class, not as a launch environment
+failure:
+
+```text
+[rank14]: Watchdog caught collective operation timeout: WorkNCCL(SeqNum=167, OpType=ALLREDUCE, NumelIn=1, NumelOut=1, Timeout(ms)=600000)
+[rank15]: Watchdog caught collective operation timeout: WorkNCCL(SeqNum=167, OpType=ALLREDUCE, NumelIn=1, NumelOut=1, Timeout(ms)=600000)
+[rank12]: Watchdog caught collective operation timeout: WorkNCCL(SeqNum=167, OpType=ALLREDUCE, NumelIn=1, NumelOut=1, Timeout(ms)=600000)
+[rank13]: Watchdog caught collective operation timeout: WorkNCCL(SeqNum=167, OpType=ALLREDUCE, NumelIn=1, NumelOut=1, Timeout(ms)=600000)
+[rank8]: Watchdog caught collective operation timeout: WorkNCCL(SeqNum=167, OpType=ALLREDUCE, NumelIn=1, NumelOut=1, Timeout(ms)=600000)
+[rank9]: Watchdog caught collective operation timeout: WorkNCCL(SeqNum=167, OpType=ALLREDUCE, NumelIn=1, NumelOut=1, Timeout(ms)=600000)
+[rank11]: Watchdog caught collective operation timeout: WorkNCCL(SeqNum=167, OpType=ALLREDUCE, NumelIn=1, NumelOut=1, Timeout(ms)=600000)
+[rank10]: Watchdog caught collective operation timeout: WorkNCCL(SeqNum=167, OpType=ALLREDUCE, NumelIn=1, NumelOut=1, Timeout(ms)=600000)
+[rank14]: failure detected by watchdog at work sequence id: 167 PG status: last enqueued work: 167, last completed work: 166
+[rank2]: Received a dump signal due to a collective timeout from rank 10 ... Last enqueued NCCL work: 166, last completed NCCL work: 166.
+[rank0]: Received a dump signal due to a collective timeout from rank 10 ... Last enqueued NCCL work: 166, last completed NCCL work: 166.
+srun: error: frontier07210: task 13: Aborted (core dumped)
+srun: error: frontier07210: tasks 8-12,14-15: Aborted (core dumped)
+srun: error: frontier07200: tasks 0-7: Killed
+```
+
+The `stderr` file also contains shell `command not found` lines from the batch
+script's post-run summary block after the failed step:
+
+```text
+/var/spool/slurmd/job4891784/slurm_script: line 310: rerun-2-node-e97: command not found
+/var/spool/slurmd/job4891784/slurm_script: line 310: e97-MLP: command not found
+/var/spool/slurmd/job4891784/slurm_script: line 310: 4891784: command not found
+/var/spool/slurmd/job4891784/slurm_script: line 310: 2: command not found
+/var/spool/slurmd/job4891784/slurm_script: line 310: 0.666667: command not found
+/var/spool/slurmd/job4891784/slurm_script: line 310: WG: command not found
+/var/spool/slurmd/job4891784/slurm_script: line 310: 137: command not found
+```
+
+These summary-block errors occurred after the NCCL task failure and do not
+explain the collective timeout, but they are recorded for the follow-up.
+
+Validation conclusion: the bounded 2-node E97-MLP avg resume canary did not
+pass. It produced finite post-resume losses and checkpoints through step `200`,
+then failed at finalization/shutdown with NCCL `ALLREDUCE` timeouts and no clean
+exit. Per task instructions, no 4-node or 8-node jobs were submitted; a focused
+follow-up was created instead of scaling out.
