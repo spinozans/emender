@@ -3,6 +3,7 @@ import time
 from argparse import Namespace
 from pathlib import Path
 
+import pytest
 import torch
 
 import train
@@ -75,6 +76,55 @@ def test_final_checkpoint_controller_respects_check_interval(monkeypatch):
     stop, reason, _ = controller.maybe_request_stop(step=4, dist_enabled=False)
     assert stop is True
     assert reason == 'walltime:--walltime_minutes'
+
+
+def test_multinode_diloco_final_request_uses_non_collective_peer_shutdown(tmp_path, monkeypatch):
+    monkeypatch.setattr(train, 'STARTUP_TIME', time.time() - 100.0)
+
+    class NoCollectiveDist:
+        @staticmethod
+        def is_initialized():
+            return True
+
+        @staticmethod
+        def all_reduce(*_args, **_kwargs):
+            raise AssertionError("final-checkpoint stop propagation must not use a NCCL collective")
+
+    monkeypatch.setattr(train, 'dist', NoCollectiveDist)
+
+    controllers = []
+    for rank in range(16):
+        args = _args(
+            output=str(tmp_path),
+            walltime_minutes=2.0 if rank == 0 else None,
+            walltime_final_checkpoint_margin_seconds=30.0,
+            walltime_check_every=1,
+            _rank=rank,
+            _world_size=16,
+        )
+        controllers.append(train.FinalCheckpointController(args, torch.device('cpu')))
+
+    controllers[0].reset_coordination_files()
+
+    stop, reason, remaining = controllers[0].maybe_request_stop(step=197, dist_enabled=True)
+    assert stop is True
+    assert reason == 'walltime:--walltime_minutes'
+    assert remaining is not None
+
+    for rank in range(1, 16):
+        stop, reason, _ = controllers[rank].maybe_request_stop(step=197, dist_enabled=True)
+        assert stop is True, f"rank {rank} missed peer final-checkpoint shutdown"
+        assert reason == 'peer_final_checkpoint_request'
+
+    controllers[0].mark_finalization_ready(step=197)
+    with pytest.raises(TimeoutError):
+        controllers[0].wait_for_all_finalization_ready(timeout_s=0.01, poll_s=0.001)
+
+    for controller in controllers[1:]:
+        controller.mark_finalization_ready(step=197)
+
+    for controller in controllers:
+        controller.wait_for_all_finalization_ready(timeout_s=0.5, poll_s=0.001)
 
 
 def test_save_checkpoint_metadata_and_latest_roundtrip(tmp_path: Path):

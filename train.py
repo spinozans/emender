@@ -501,6 +501,11 @@ class FinalCheckpointController:
     def __init__(self, args, device):
         self.args = args
         self.device = device
+        self.rank = int(getattr(args, '_rank', 0))
+        self.world_size = int(getattr(args, '_world_size', 1))
+        self.request_dir = Path(getattr(args, 'output', '.'))
+        self.request_path = self.request_dir / '.final_checkpoint_request'
+        self.ready_dir = self.request_dir / '.final_checkpoint_ready'
         self.deadline, self.deadline_source = resolve_walltime_deadline(args)
         self.margin_s = max(0.0, float(getattr(args, 'walltime_final_checkpoint_margin_seconds', 0.0)))
         self.check_every = max(1, int(getattr(args, 'walltime_check_every', 1)))
@@ -525,6 +530,53 @@ class FinalCheckpointController:
             return f"walltime:{self.deadline_source}", remaining
         return None, remaining
 
+    def reset_coordination_files(self):
+        """Clear stale non-collective final-checkpoint coordination files."""
+        try:
+            self.request_path.unlink()
+        except FileNotFoundError:
+            pass
+        if self.ready_dir.exists():
+            for path in self.ready_dir.glob('rank_*.ready'):
+                try:
+                    path.unlink()
+                except FileNotFoundError:
+                    pass
+        else:
+            self.ready_dir.mkdir(parents=True, exist_ok=True)
+
+    def _write_stop_request(self, reason, step):
+        self.request_dir.mkdir(parents=True, exist_ok=True)
+        payload = {
+            'reason': reason,
+            'step': int(step),
+            'rank': self.rank,
+            'world_size': self.world_size,
+            'time': time.time(),
+        }
+        fd, tmp_name = tempfile.mkstemp(
+            prefix='.final_checkpoint_request.',
+            suffix='.tmp',
+            dir=str(self.request_dir),
+            text=True,
+        )
+        try:
+            with os.fdopen(fd, 'w') as f:
+                json.dump(payload, f, sort_keys=True)
+                f.write('\n')
+            os.replace(tmp_name, self.request_path)
+        finally:
+            if os.path.exists(tmp_name):
+                os.unlink(tmp_name)
+
+    def _read_peer_request_reason(self):
+        try:
+            with open(self.request_path) as f:
+                payload = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError, OSError):
+            return None
+        return payload.get('reason') or 'peer_final_checkpoint_request'
+
     def maybe_request_stop(self, step, dist_enabled=False):
         """Return (stop, reason, remaining_s) at safe optimizer-step boundaries."""
         if self.triggered:
@@ -533,18 +585,62 @@ class FinalCheckpointController:
             return False, None, None
 
         local_reason, remaining = self._local_request()
-        local_stop = 1 if local_reason else 0
-        if dist_enabled and dist.is_initialized():
-            flag = torch.tensor([local_stop], device=self.device, dtype=torch.int32)
-            dist.all_reduce(flag, op=dist.ReduceOp.MAX)
-            local_stop = int(flag.item())
+        if local_reason:
+            self._write_stop_request(local_reason, step)
+            reason = local_reason
+        else:
+            reason = (
+                'peer_final_checkpoint_request'
+                if dist_enabled and self._read_peer_request_reason()
+                else None
+            )
 
-        if local_stop:
+        if reason:
             self.triggered = True
-            self.reason = local_reason or 'peer_final_checkpoint_request'
+            self.reason = reason
             self.remaining_s = remaining
             return True, self.reason, self.remaining_s
         return False, None, remaining
+
+    def mark_finalization_ready(self, step):
+        self.ready_dir.mkdir(parents=True, exist_ok=True)
+        ready_path = self.ready_dir / f'rank_{self.rank:06d}.ready'
+        payload = {
+            'step': int(step),
+            'rank': self.rank,
+            'world_size': self.world_size,
+            'reason': self.reason or 'training_complete',
+            'time': time.time(),
+        }
+        fd, tmp_name = tempfile.mkstemp(
+            prefix=f'.rank_{self.rank:06d}.',
+            suffix='.tmp',
+            dir=str(self.ready_dir),
+            text=True,
+        )
+        try:
+            with os.fdopen(fd, 'w') as f:
+                json.dump(payload, f, sort_keys=True)
+                f.write('\n')
+            os.replace(tmp_name, ready_path)
+        finally:
+            if os.path.exists(tmp_name):
+                os.unlink(tmp_name)
+
+    def wait_for_all_finalization_ready(self, timeout_s=1800.0, poll_s=0.05):
+        if self.world_size <= 1:
+            return
+        deadline = time.time() + timeout_s
+        expected = self.world_size
+        while True:
+            ready = len(list(self.ready_dir.glob('rank_*.ready'))) if self.ready_dir.exists() else 0
+            if ready >= expected:
+                return
+            if time.time() > deadline:
+                raise TimeoutError(
+                    f"timed out waiting for final-checkpoint readiness: "
+                    f"{ready}/{expected} ranks reported ready in {self.ready_dir}")
+            time.sleep(poll_s)
 
 
 def parse_level(level_str):
@@ -1200,6 +1296,13 @@ def train(args):
         print(f"Using device: {device}")
 
     final_ckpt = FinalCheckpointController(args, device)
+    if is_main:
+        final_ckpt.reset_coordination_files()
+    if dist_enabled and dist.is_initialized():
+        # This early barrier is before any DDP/island process groups are created,
+        # so it cannot race with subgroup gradient collectives. It only makes the
+        # stale-file cleanup visible before ranks start polling for stop requests.
+        dist.barrier()
     if is_main:
         if final_ckpt.walltime_active:
             remaining = final_ckpt.deadline - time.time()
@@ -2229,6 +2332,10 @@ def train(args):
         last_100_avg = sum(recent_losses) / len(recent_losses)
     else:
         last_100_avg = avg_loss  # Fallback if no logging happened
+
+    if dist_enabled:
+        final_ckpt.mark_finalization_ready(step)
+        final_ckpt.wait_for_all_finalization_ready()
 
     # DiLoCo: one FINAL merge so the saved checkpoint is the cross-rank consensus
     # model (not whichever rank happens to be rank 0). All ranks participate in the
