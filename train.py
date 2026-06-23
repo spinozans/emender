@@ -643,6 +643,33 @@ class FinalCheckpointController:
             time.sleep(poll_s)
 
 
+def distributed_any(local_flag, device, dist_enabled=True):
+    """Return whether any distributed rank reported local_flag=True."""
+    if not dist_enabled or not dist.is_initialized():
+        return bool(local_flag)
+    flag = torch.tensor(
+        [1 if local_flag else 0],
+        device=device,
+        dtype=torch.int32,
+    )
+    dist.all_reduce(flag, op=dist.ReduceOp.MAX)
+    return bool(flag.item())
+
+
+def consensus_final_checkpoint_stop(controller, local_stop, reason, remaining, device, dist_enabled):
+    """Propagate final-checkpoint stop decisions at a collective-safe boundary."""
+    if not dist_enabled or not dist.is_initialized():
+        return local_stop, reason, remaining
+    if distributed_any(local_stop, device, dist_enabled=True):
+        if not local_stop:
+            reason = controller._read_peer_request_reason() or 'peer_final_checkpoint_request'
+            controller.triggered = True
+            controller.reason = reason
+            controller.remaining_s = remaining
+        return True, reason, remaining
+    return False, None, remaining
+
+
 def parse_level(level_str):
     """Parse level string to int or keep as string for log-space levels."""
     if level_str.startswith('log_'):
@@ -2049,12 +2076,8 @@ def train(args):
         print(f"Time-based training: {args.train_minutes} min budget ({clock_origin}). "
               f"Init took {elapsed_init:.1f}s, {remaining:.1f}s remaining for training.")
 
-    def should_continue():
-        if train_end_time is not None:
-            return time.time() < train_end_time
-        return step < args.steps
-
     stopped_nonfinite = False
+    stop_training = False
 
     # Prefetch data function
     import threading
@@ -2081,7 +2104,14 @@ def train(args):
     prefetch_thread = threading.Thread(target=prefetch_worker, daemon=True)
     prefetch_thread.start()
 
-    while should_continue():
+    while True:
+        if stop_training:
+            break
+        if train_end_time is None and step >= args.steps:
+            break
+        if train_end_time is not None and not dist_enabled and time.time() >= train_end_time:
+            break
+
         # Get prefetched batch
         try:
             chunks, is_doc_end, actual_lengths = prefetch_queue.get(timeout=5.0)
@@ -2119,8 +2149,13 @@ def train(args):
                 loss = result
                 next_hidden = None
 
-        if not torch.isfinite(loss):
-            print(f"Non-finite loss at step {step}: {loss.item()}. Stopping before optimizer step.")
+        local_nonfinite_loss = not torch.isfinite(loss)
+        if distributed_any(local_nonfinite_loss, device, dist_enabled=dist_enabled):
+            if local_nonfinite_loss:
+                print(f"Non-finite loss at step {step}: {loss.item()}. Stopping before optimizer step.")
+            elif dist_enabled:
+                print(f"Peer reported non-finite loss at step {step}. Stopping before optimizer step.",
+                      flush=True)
             stopped_nonfinite = True
             break
 
@@ -2166,12 +2201,16 @@ def train(args):
             else:
                 grad_norm = sum(p.grad.norm().item() ** 2 for p in model.parameters() if p.grad is not None) ** 0.5
 
-            if not torch.isfinite(torch.as_tensor(grad_norm)):
+            local_nonfinite_grad = not torch.isfinite(torch.as_tensor(grad_norm))
+            if distributed_any(local_nonfinite_grad, device, dist_enabled=dist_enabled):
                 grad_value = grad_norm.item() if hasattr(grad_norm, 'item') else float(grad_norm)
                 if dist_enabled:
                     # Multi-rank (DiLoCo/DDP): a per-rank skip desyncs the collective merge
                     # (ranks would diverge in step count). Keep the stop guard for safety.
-                    print(f"Non-finite grad norm at step {step}: {grad_value}. Stopping before optimizer step (multi-rank).", flush=True)
+                    if local_nonfinite_grad:
+                        print(f"Non-finite grad norm at step {step}: {grad_value}. Stopping before optimizer step (multi-rank).", flush=True)
+                    else:
+                        print(f"Peer reported non-finite grad norm at step {step}. Stopping before optimizer step (multi-rank).", flush=True)
                     optimizer.zero_grad(set_to_none=True)
                     stopped_nonfinite = True
                     break
@@ -2311,6 +2350,14 @@ def train(args):
 
             stop_for_final, final_reason, remaining_s = final_ckpt.maybe_request_stop(
                 step, dist_enabled=dist_enabled)
+            stop_for_final, final_reason, remaining_s = consensus_final_checkpoint_stop(
+                final_ckpt,
+                stop_for_final,
+                final_reason,
+                remaining_s,
+                device,
+                dist_enabled,
+            )
             if stop_for_final:
                 rem_text = 'unknown' if remaining_s is None else f"{remaining_s:.1f}"
                 print(f"[final-checkpoint] rank {rank}/{world_size} entering finalization "
@@ -2318,6 +2365,10 @@ def train(args):
                       f"model_variant={args._model_variant} is_head={is_main}",
                       flush=True)
                 break
+
+            local_budget_done = train_end_time is not None and time.time() >= train_end_time
+            if distributed_any(local_budget_done, device, dist_enabled=dist_enabled):
+                stop_training = True
 
     # Stop prefetch thread
     prefetch_stop.set()

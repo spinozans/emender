@@ -127,6 +127,61 @@ def test_multinode_diloco_final_request_uses_non_collective_peer_shutdown(tmp_pa
         controller.wait_for_all_finalization_ready(timeout_s=0.5, poll_s=0.001)
 
 
+def test_distributed_any_uses_collective_max(monkeypatch):
+    class CollectiveMaxDist:
+        class ReduceOp:
+            MAX = object()
+
+        @staticmethod
+        def is_initialized():
+            return True
+
+        @staticmethod
+        def all_reduce(tensor, op=None):
+            assert op is CollectiveMaxDist.ReduceOp.MAX
+            tensor.fill_(1)
+
+    monkeypatch.setattr(train, 'dist', CollectiveMaxDist)
+
+    assert train.distributed_any(False, torch.device('cpu'), dist_enabled=True) is True
+
+
+def test_final_checkpoint_stop_consensus_promotes_peer_stop(tmp_path, monkeypatch):
+    class PeerStopDist:
+        class ReduceOp:
+            MAX = object()
+
+        @staticmethod
+        def is_initialized():
+            return True
+
+        @staticmethod
+        def all_reduce(tensor, op=None):
+            tensor.fill_(1)
+
+    monkeypatch.setattr(train, 'dist', PeerStopDist)
+
+    controller = train.FinalCheckpointController(
+        _args(output=str(tmp_path), _rank=8, _world_size=16),
+        torch.device('cpu'),
+    )
+
+    stop, reason, remaining = train.consensus_final_checkpoint_stop(
+        controller,
+        local_stop=False,
+        reason=None,
+        remaining=None,
+        device=torch.device('cpu'),
+        dist_enabled=True,
+    )
+
+    assert stop is True
+    assert reason == 'peer_final_checkpoint_request'
+    assert remaining is None
+    assert controller.triggered is True
+    assert controller.reason == 'peer_final_checkpoint_request'
+
+
 def test_save_checkpoint_metadata_and_latest_roundtrip(tmp_path: Path):
     model = torch.nn.Linear(3, 2)
     optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3)
