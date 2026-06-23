@@ -113,3 +113,46 @@ When `4891298` starts and exits, harvest:
 
 If the final-checkpoint NCCL mismatch persists, create a focused follow-up with
 the exact sequence-number/collective evidence and do not scale out.
+
+## Resume poll: 2026-06-23T06:56:47-04:00
+
+The wait condition fired after the initial 15-minute handoff, but Frontier had
+not yet started the bounded 2-node canary.
+
+Current scheduler snapshot:
+
+```text
+JOBID|STATE|TIME|TIME_LIMIT|NODES|NODELIST(REASON)|START_TIME
+4891298|PENDING|0:00|20:00|2|(Priority)|N/A
+```
+
+Accounting snapshot:
+
+```text
+JobID|JobName|State|ExitCode|Elapsed|NNodes|AllocTRES|Submit|Start|End
+4891298|emender-e97-resume-canary|PENDING|0:0|00:00:00|2||2026-06-23T06:24:52|Unknown|Unknown
+```
+
+`scontrol show job 4891298` still reported:
+
+```text
+JobState=PENDING Reason=Priority
+RunTime=00:00:00 TimeLimit=00:20:00
+StartTime=Unknown EndTime=Unknown
+NumNodes=2-2 NumCPUs=112 NumTasks=16 CPUs/Task=7
+ReqTRES=cpu=112,mem=1000G,node=2,billing=112
+AllocTRES=(null)
+StdOut=/lustre/orion/bif148/scratch/erikgarrison/emender/.wg-worktrees/agent-117/logs/frontier/scaleout/emender-e97-resume-canary-4891298.out
+StdErr=/lustre/orion/bif148/scratch/erikgarrison/emender/.wg-worktrees/agent-117/logs/frontier/scaleout/emender-e97-resume-canary-4891298.err
+```
+
+The recorded stdout/stderr files did not exist yet, which is consistent with a
+job that has not allocated:
+
+```text
+ls: cannot access 'logs/frontier/scaleout/emender-e97-resume-canary-4891298.out': No such file or directory
+ls: cannot access 'logs/frontier/scaleout/emender-e97-resume-canary-4891298.err': No such file or directory
+```
+
+Validation remains pending. Do not submit replacement, 4-node, or 8-node jobs
+unless `4891298` fails before starting or the task is explicitly re-scoped.
