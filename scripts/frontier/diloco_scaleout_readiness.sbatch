@@ -307,10 +307,29 @@ with open("${MANIFEST_FILE}", "w", encoding="utf-8") as fh:
     fh.write("\\n")
 PY
 
-python - <<PY > "${SUMMARY_FILE}"
+python - "$LOG_DIR/train.log" \
+  "$TASK_ID" \
+  "$SCALEOUT_VARIANT" \
+  "${SLURM_JOB_ID:-manual}" \
+  "$REQUESTED_NODES" \
+  "$REQUESTED_NODE_HOURS" \
+  "$HUMAN_APPROVAL_RECORD" \
+  "$TRAIN_STATUS" <<'PY' > "${SUMMARY_FILE}"
+import sys
 from pathlib import Path
 
-train_log = Path("${LOG_DIR}/train.log")
+(
+    train_log_arg,
+    task_id,
+    scaleout_variant,
+    job_id,
+    requested_nodes,
+    requested_node_hours,
+    human_approval_record,
+    train_status,
+) = sys.argv[1:]
+
+train_log = Path(train_log_arg)
 lines = train_log.read_text(encoding="utf-8", errors="replace").splitlines() if train_log.exists() else []
 step_lines = [ln for ln in lines if "loss" in ln and ("tok/s" in ln or "global_tok/s" in ln)]
 diloco_lines = [ln for ln in lines if "DiLoCo" in ln or "DILOCO_" in ln]
@@ -321,13 +340,13 @@ error_lines = [
 
 print("# Frontier DiLoCo Scaleout Summary")
 print()
-print(f"Task: `${TASK_ID}`")
-print(f"Variant: `${SCALEOUT_VARIANT}`")
-print(f"Job ID: `${SLURM_JOB_ID:-manual}`")
-print(f"Nodes: `${REQUESTED_NODES}`")
-print(f"Requested node-hours: `${REQUESTED_NODE_HOURS}`")
-print(f"Human approval record: `${HUMAN_APPROVAL_RECORD}`")
-print(f"Train status: `${TRAIN_STATUS}`")
+print(f"Task: `{task_id}`")
+print(f"Variant: `{scaleout_variant}`")
+print(f"Job ID: `{job_id}`")
+print(f"Nodes: `{requested_nodes}`")
+print(f"Requested node-hours: `{requested_node_hours}`")
+print(f"Human approval record: `{human_approval_record}`")
+print(f"Train status: `{train_status}`")
 print()
 print("## Last Training Metric Lines")
 print()
