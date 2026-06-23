@@ -94,6 +94,8 @@ COMMON_ARGS=(
   --log_every "${LOG_EVERY:-10}"
   --save_every 999999
   --keep_checkpoints 1
+  --walltime_final_checkpoint_margin_seconds "${WALLTIME_FINAL_CHECKPOINT_MARGIN_SECONDS:-600}"
+  --walltime_check_every "${WALLTIME_CHECK_EVERY:-1}"
   --output "${RUN_ROOT}/train"
 )
 
