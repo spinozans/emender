@@ -11,9 +11,10 @@ Primary main worktree:
 `23c0a40e4b1212530715efda5d4ba696446545f0` to
 `a8090761c2e81586a4c714f182a7997c11124d6a`.
 
-Local `main` was not fast-forwarded because the primary main worktree had
-untracked files before and after the fetch. Per the task requirement, no reset,
-stash, deletion, or overwrite operation was performed.
+After confirming that the incoming fast-forward wrote only
+`docs/experiments/SF_DILOCO_DECISION_AND_HANDOFF.md` and did not overlap the
+existing untracked paths, local `main` was fast-forwarded to `origin/main`.
+No reset, stash, deletion, or overwrite operation was performed.
 
 ## Pre-sync state
 
@@ -56,14 +57,34 @@ After fetching:
 ?? src/
 ```
 
+## Final state
+
+After synchronization:
+
+- `main`: `a8090761c2e81586a4c714f182a7997c11124d6a`
+- `origin/main`: `a8090761c2e81586a4c714f182a7997c11124d6a`
+- `HEAD`: `a8090761c2e81586a4c714f182a7997c11124d6a`
+- fast-forward check: `git merge --ff-only origin/main` reported `Already up to date.`
+- status:
+
+```text
+## main...origin/main
+?? .wg-worktrees/
+?? .wg/
+?? AGENTS.md.1
+?? CLAUDE.md.1
+?? data/
+?? src/
+```
+
 Final log from primary main:
 
 ```text
-23c0a40 (HEAD -> main, wg/agent-80/sync-main-origin-20260623b) feat: quality-pass-e97-checkpoint-diloco (agent-78)
+a809076 (HEAD -> main, origin/main, origin/HEAD) docs: add SF-DiLoCo decision handoff (consolidate-and-merge)
+23c0a40 feat: quality-pass-e97-checkpoint-diloco (agent-78)
 b5c4b39 feat: document-sf-diloco (agent-2017)
 9ea3717 feat: sf-diloco-p7 (agent-2014)
 ee10d86 feat: sf-diloco-p6 (agent-2011)
-1ee2efe feat: sf-diloco-p5 (agent-2008)
 ```
 
 ## Operations intentionally not performed
@@ -71,4 +92,3 @@ ee10d86 feat: sf-diloco-p6 (agent-2011)
 - No `git reset`.
 - No `git stash`.
 - No deletion of untracked files or WG state.
-- No fast-forward of local `main` while untracked files were present.
