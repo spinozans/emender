@@ -578,3 +578,48 @@ ls: cannot access 'logs/frontier/scaleout/emender-e97-resume-canary-4891298.err'
 
 Validation remains pending. No replacement job, 4-node job, or 8-node job was
 submitted during this poll.
+
+## Resume poll: 2026-06-23T10:12:20-04:00
+
+The twelfth post-submission wait condition fired, but Frontier still had not
+started the bounded 2-node canary.
+
+Current scheduler snapshot:
+
+```text
+JOBID|STATE|TIME|TIME_LIMIT|NODES|NODELIST(REASON)|START_TIME|SUBMIT_TIME
+4891298|PENDING|0:00|20:00|2|(Priority)|N/A|2026-06-23T06:24:52
+```
+
+Accounting snapshot:
+
+```text
+JobID|JobName|State|ExitCode|Elapsed|Timelimit|NNodes|NodeList|Submit|Start|End
+4891298|emender-e97-resume-canary|PENDING|0:0|00:00:00|00:20:00|2|None assigned|2026-06-23T06:24:52|Unknown|Unknown
+```
+
+`scontrol show job 4891298` still reported:
+
+```text
+JobState=PENDING Reason=Priority
+RunTime=00:00:00 TimeLimit=00:20:00
+StartTime=Unknown EndTime=Unknown
+LastSchedEval=2026-06-23T10:06:08
+NumNodes=2-2 NumCPUs=112 NumTasks=16 CPUs/Task=7
+ReqTRES=cpu=112,mem=1000G,node=2,billing=112
+AllocTRES=(null)
+QOS=debug Partition=batch
+StdOut=/lustre/orion/bif148/scratch/erikgarrison/emender/.wg-worktrees/agent-117/logs/frontier/scaleout/emender-e97-resume-canary-4891298.out
+StdErr=/lustre/orion/bif148/scratch/erikgarrison/emender/.wg-worktrees/agent-117/logs/frontier/scaleout/emender-e97-resume-canary-4891298.err
+SubmitLine=sbatch -A bif148 -p batch --qos=debug -N 2 -t 00:20:00 --job-name emender-e97-resume-canary ... RESUME_CHECKPOINT=/lustre/orion/bif148/proj-shared/emender/frontier_runs/scaleout/20260623/e97-MLP/4891083-20260623T092053Z/train/levelE97_100m_20260623_052300/latest.pt scripts/frontier/diloco_scaleout_readiness.sbatch
+```
+
+The recorded stdout/stderr files still did not exist:
+
+```text
+ls: cannot access 'logs/frontier/scaleout/emender-e97-resume-canary-4891298.out': No such file or directory
+ls: cannot access 'logs/frontier/scaleout/emender-e97-resume-canary-4891298.err': No such file or directory
+```
+
+Validation remains pending. No replacement job, 4-node job, or 8-node job was
+submitted during this poll.
