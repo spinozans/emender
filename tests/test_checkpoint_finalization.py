@@ -1,0 +1,56 @@
+from pathlib import Path
+
+import torch
+
+import train
+
+
+def test_slurm_env_fallback_derives_rank_and_rank_local_device(monkeypatch):
+    monkeypatch.delenv("WORLD_SIZE", raising=False)
+    monkeypatch.delenv("RANK", raising=False)
+    monkeypatch.delenv("LOCAL_RANK", raising=False)
+    monkeypatch.setenv("SLURM_NTASKS", "8")
+    monkeypatch.setenv("SLURM_PROCID", "3")
+    monkeypatch.setenv("SLURM_LOCALID", "3")
+
+    status = train.resolve_distributed_env_from_slurm(device_count=1)
+
+    assert status == "derived-from-slurm"
+    assert train.os.environ["WORLD_SIZE"] == "8"
+    assert train.os.environ["RANK"] == "3"
+    assert train.os.environ["LOCAL_RANK"] == "0"
+
+
+def test_slurm_env_fallback_preserves_exported_world_size(monkeypatch):
+    monkeypatch.setenv("WORLD_SIZE", "8")
+    monkeypatch.setenv("RANK", "5")
+    monkeypatch.setenv("LOCAL_RANK", "0")
+    monkeypatch.setenv("SLURM_NTASKS", "8")
+    monkeypatch.setenv("SLURM_PROCID", "3")
+    monkeypatch.setenv("SLURM_LOCALID", "3")
+
+    status = train.resolve_distributed_env_from_slurm(device_count=1)
+
+    assert status == "world-size-present"
+    assert train.os.environ["RANK"] == "5"
+    assert train.os.environ["LOCAL_RANK"] == "0"
+
+
+def test_save_checkpoint_atomically_updates_latest_and_keeps_newest(tmp_path):
+    model = torch.nn.Linear(2, 2)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3)
+
+    first = train.save_checkpoint(model, optimizer, 1, 3.0, tmp_path, keep_n=2)
+    second = train.save_checkpoint(model, optimizer, 2, 2.0, tmp_path, keep_n=2)
+    third = train.save_checkpoint(model, optimizer, 3, 1.0, tmp_path, keep_n=2)
+
+    latest = tmp_path / "latest.pt"
+    assert latest.is_symlink()
+    assert latest.readlink() == Path(third.name)
+    assert not first.exists()
+    assert second.exists()
+    assert third.exists()
+    assert sorted(path.name for path in tmp_path.glob("checkpoint_step_*.pt")) == [
+        second.name,
+        third.name,
+    ]

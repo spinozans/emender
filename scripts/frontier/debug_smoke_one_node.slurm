@@ -102,6 +102,10 @@ COMMON_ARGS=(
 if [[ -n "$VAL_DATA" ]]; then
   COMMON_ARGS+=(--val_data "$VAL_DATA" --val_every "${VAL_EVERY:-50}")
 fi
+if [[ -n "${RESUME_CHECKPOINT:-}" ]]; then
+  [[ -r "$RESUME_CHECKPOINT" ]] || { echo "RESUME_CHECKPOINT is not readable: $RESUME_CHECKPOINT" >&2; exit 4; }
+  COMMON_ARGS+=(--resume "$RESUME_CHECKPOINT")
+fi
 
 case "$SMOKE_VARIANT" in
   e97-MLP)
@@ -382,6 +386,7 @@ manifest = {
     "train_status": int("${TRAIN_STATUS}"),
     "git_commit": "${GIT_COMMIT}",
     "tiktoken_cache_dir": "${TIKTOKEN_CACHE_DIR}",
+    "resume_checkpoint": "${RESUME_CHECKPOINT:-}",
     "stdout": "${STDOUT_PATH}",
     "stderr": "${STDERR_PATH}",
     "run_root": "${RUN_ROOT}",
