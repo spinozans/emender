@@ -823,3 +823,26 @@ Validation remains pending. When `4891784` starts and exits, harvest the run
 root, post-resume losses, final-checkpoint `START` / `END` status,
 `latest.pt` behavior, clean exit status, and finalization/NCCL evidence. No
 4-node or 8-node jobs were submitted.
+
+## Replacement poll: 2026-06-23T11:11:00-04:00
+
+Job `4891784` remains pending with no allocation or runtime evidence yet. No
+stdout/stderr files exist for the replacement job.
+
+Current scheduler snapshot:
+
+```text
+JOBID|STATE|TIME|TIME_LIMIT|NODES|NODELIST(REASON)|START_TIME|SUBMIT_TIME
+4891784|PENDING|0:00|20:00|2|(Priority)|2026-06-23T11:56:00|2026-06-23T11:05:18
+```
+
+Accounting snapshot:
+
+```text
+JobID|JobName|State|ExitCode|Elapsed|Timelimit|NNodes|NodeList|Submit|Start|End
+4891784|emender-e97-resume-canary|PENDING|0:0|00:00:00|00:20:00|2|None assigned|2026-06-23T11:05:18|Unknown|Unknown
+```
+
+Validation remains pending because there are still no post-resume losses,
+final-checkpoint records, `latest.pt` updates, clean exit status, or NCCL
+finalization logs to inspect.
