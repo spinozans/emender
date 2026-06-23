@@ -324,3 +324,45 @@ ls: cannot access 'logs/frontier/scaleout/emender-e97-resume-canary-4891298.err'
 
 Validation remains pending. No replacement job, 4-node job, or 8-node job was
 submitted during this poll.
+
+## Resume poll: 2026-06-23T08:21:50-04:00
+
+The sixth 15-minute wait condition fired, but Frontier still had not started
+the bounded 2-node canary.
+
+Current scheduler snapshot:
+
+```text
+JOBID STATE TIME NODES NODELIST(REASON)
+4891298 PENDING 0:00 2 (Priority)
+```
+
+Accounting snapshot:
+
+```text
+JobID|JobName|State|ExitCode|Elapsed|NNodes|AllocTRES|Start|End
+4891298|emender-e97-resume-canary|PENDING|0:0|00:00:00|2||Unknown|Unknown
+```
+
+`scontrol show job 4891298` still reported:
+
+```text
+JobState=PENDING Reason=Priority
+RunTime=00:00:00 TimeLimit=00:20:00
+StartTime=Unknown EndTime=Unknown
+NumNodes=2-2 NumCPUs=112 NumTasks=16 CPUs/Task=7
+ReqTRES=cpu=112,mem=1000G,node=2,billing=112
+AllocTRES=(null)
+StdOut=/lustre/orion/bif148/scratch/erikgarrison/emender/.wg-worktrees/agent-117/logs/frontier/scaleout/emender-e97-resume-canary-4891298.out
+StdErr=/lustre/orion/bif148/scratch/erikgarrison/emender/.wg-worktrees/agent-117/logs/frontier/scaleout/emender-e97-resume-canary-4891298.err
+```
+
+The recorded stdout/stderr files still did not exist:
+
+```text
+ls: cannot access 'logs/frontier/scaleout/emender-e97-resume-canary-4891298.out': No such file or directory
+ls: cannot access 'logs/frontier/scaleout/emender-e97-resume-canary-4891298.err': No such file or directory
+```
+
+Validation remains pending. No replacement job, 4-node job, or 8-node job was
+submitted during this poll.
