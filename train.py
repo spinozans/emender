@@ -30,6 +30,7 @@ import json
 import datetime
 import glob
 import re
+import tempfile
 
 # Add elman package to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -440,6 +441,55 @@ def lr_scale_at(step, warmup_steps, total_steps, min_lr_frac=0.1):
     return min_lr_frac + (1.0 - min_lr_frac) * 0.5 * (1.0 + math.cos(math.pi * progress))
 
 
+def _infer_visible_device_count():
+    visible = (
+        os.environ.get('CUDA_VISIBLE_DEVICES')
+        or os.environ.get('HIP_VISIBLE_DEVICES')
+        or os.environ.get('ROCR_VISIBLE_DEVICES')
+    )
+    if visible is not None:
+        entries = [x for x in visible.split(',') if x.strip()]
+        return len(entries)
+    try:
+        if torch.cuda.is_available():
+            return torch.cuda.device_count()
+    except Exception:
+        pass
+    return None
+
+
+def resolve_distributed_env_from_slurm(device_count=None):
+    """Fill torch.distributed env from Slurm when an srun wrapper forgot it.
+
+    Frontier debug jobs use ``--gpus-per-task=1 --gpu-bind=closest``. In that
+    mode each task sees one rank-local GPU as device 0, so ``LOCAL_RANK`` must
+    be 0 even when ``SLURM_LOCALID`` ranges over tasks on the node. Returning a
+    status string keeps this logic unit-testable without initializing dist.
+    """
+    slurm_ntasks = os.environ.get('SLURM_NTASKS')
+    if not slurm_ntasks:
+        return 'no-slurm'
+    try:
+        ntasks = int(slurm_ntasks)
+    except ValueError:
+        return 'invalid-slurm-ntasks'
+    if ntasks <= 1:
+        return 'single-slurm-task'
+    if os.environ.get('WORLD_SIZE'):
+        return 'world-size-present'
+
+    os.environ['WORLD_SIZE'] = str(ntasks)
+    os.environ['RANK'] = os.environ.get('SLURM_PROCID', '0')
+    if 'LOCAL_RANK' not in os.environ:
+        if device_count is None:
+            device_count = _infer_visible_device_count()
+        if device_count == 1:
+            os.environ['LOCAL_RANK'] = '0'
+        else:
+            os.environ['LOCAL_RANK'] = os.environ.get('SLURM_LOCALID', '0')
+    return 'derived-from-slurm'
+
+
 def save_checkpoint(model, optimizer, step, loss, output_dir, keep_n=5, outer_state=None):
     """Save checkpoint and clean up old ones."""
     ckpt_path = output_dir / f'checkpoint_step_{step:06d}_loss_{loss:.4f}.pt'
@@ -453,13 +503,32 @@ def save_checkpoint(model, optimizer, step, loss, output_dir, keep_n=5, outer_st
     if outer_state is not None:
         payload['diloco_outer_state'] = outer_state
 
-    torch.save(payload, ckpt_path)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    with tempfile.NamedTemporaryFile(
+            prefix=f'.{ckpt_path.name}.',
+            suffix='.tmp',
+            dir=output_dir,
+            delete=False) as tmp:
+        tmp_path = Path(tmp.name)
+    try:
+        torch.save(payload, tmp_path)
+        os.replace(tmp_path, ckpt_path)
+    finally:
+        if tmp_path.exists():
+            tmp_path.unlink()
 
-    # Update latest symlink
+    # Update latest symlink atomically so readers never see a missing/latest half
+    # update. Under distributed training only rank 0 calls this function.
     latest_path = output_dir / 'latest.pt'
-    if latest_path.is_symlink():
-        latest_path.unlink()
-    latest_path.symlink_to(ckpt_path.name)
+    tmp_latest = output_dir / f'.latest.pt.{os.getpid()}.tmp'
+    try:
+        if tmp_latest.exists() or tmp_latest.is_symlink():
+            tmp_latest.unlink()
+        tmp_latest.symlink_to(ckpt_path.name)
+        os.replace(tmp_latest, latest_path)
+    finally:
+        if tmp_latest.exists() or tmp_latest.is_symlink():
+            tmp_latest.unlink()
 
     # Clean up old checkpoints
     ckpts = sorted(glob.glob(str(output_dir / 'checkpoint_step_*.pt')))
@@ -929,6 +998,7 @@ def train(args):
     #   * DiLoCo (--diloco): each rank trains INDEPENDENTLY (no per-step comm) and
     #                     model weights are averaged every --diloco_k steps. Recovers
     #                     the ~62k tok/s independent ceiling. use_ddp=False.
+    slurm_env_status = resolve_distributed_env_from_slurm()
     dist_enabled = int(os.environ.get('WORLD_SIZE', '1')) > 1
     rank = int(os.environ.get('RANK', '0'))
     local_rank = int(os.environ.get('LOCAL_RANK', '0'))
@@ -956,6 +1026,10 @@ def train(args):
         if is_main:
             print(f"[{_mode}] world_size={world_size} backend=nccl; this is rank {rank} "
                   f"on {device}", flush=True)
+            if slurm_env_status == 'derived-from-slurm':
+                print("[distributed-env] derived RANK/WORLD_SIZE/LOCAL_RANK from "
+                      "Slurm because WORLD_SIZE was not exported by the launcher",
+                      flush=True)
             if use_diloco:
                 print(f"[DiLoCo] periodic model-weight averaging: K={args.diloco_k} "
                       f"outer_lr={args.diloco_outer_lr} outer_beta={args.diloco_outer_beta} "
