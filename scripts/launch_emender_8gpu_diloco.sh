@@ -8,6 +8,9 @@
 #   - FROM SCRATCH (no --resume; random init; beta=0 measured in-basin from
 #     random init at K=250/I<=4 -- I=8 is the open question the tripwire answers)
 #   - new --output dir under /mnt/nvme1n1/erikg/diloco_8gpu/emender
+#     (train.py derives the visible run slug from the instantiated model, so
+#     this E97 geometry writes emender_E97_1.3B_<timestamp> rather than the
+#     stale params-arg label levelE97_100m_<timestamp>)
 #   - save_every = 500 (multiple of diloco_k=250 -> checkpoints land on a MERGE
 #     boundary, capturing post-merge consensus, never mid-cycle island divergence)
 # Everything else (env, geometry, optimizer, data) is byte-identical to the
