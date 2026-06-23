@@ -667,3 +667,44 @@ ls: cannot access 'logs/frontier/scaleout/emender-e97-resume-canary-4891298.err'
 Validation remains pending because there are no post-resume losses, final
 checkpoint records, `latest.pt` updates, or finalization/NCCL logs to inspect
 until the job starts and exits.
+
+## Resume poll: 2026-06-23T10:51:03-04:00
+
+The fourteenth resume poll found the bounded 2-node canary still pending in
+the scheduler with no allocation and no runtime. Job `4891298` remains the only
+submitted job for this task; no replacement, 4-node, or 8-node jobs were
+submitted during this poll.
+
+Current scheduler snapshot:
+
+```text
+JOBID|ST|TIME|NODES|NODELIST(REASON)|START_TIME|TIME_LEFT
+4891298|PD|0:00|2|(Priority)|N/A|20:00
+```
+
+Accounting snapshot:
+
+```text
+JobID|JobName|State|ExitCode|Elapsed|Timelimit|NNodes|AllocTRES|Submit|Start|End
+4891298|emender-e97-resume-canary|PENDING|0:0|00:00:00|00:20:00|2||2026-06-23T06:24:52|Unknown|Unknown
+```
+
+`scontrol show job 4891298` reported:
+
+```text
+JobState=PENDING Reason=Priority
+RunTime=00:00:00 TimeLimit=00:20:00
+StartTime=Unknown EndTime=Unknown
+LastSchedEval=2026-06-23T10:19:40
+NumNodes=2-2 NumCPUs=112 NumTasks=16 CPUs/Task=7
+ReqTRES=cpu=112,mem=1000G,node=2,billing=112
+AllocTRES=(null)
+QOS=debug Partition=batch
+StdOut=/lustre/orion/bif148/scratch/erikgarrison/emender/.wg-worktrees/agent-117/logs/frontier/scaleout/emender-e97-resume-canary-4891298.out
+StdErr=/lustre/orion/bif148/scratch/erikgarrison/emender/.wg-worktrees/agent-117/logs/frontier/scaleout/emender-e97-resume-canary-4891298.err
+SubmitLine=sbatch -A bif148 -p batch --qos=debug -N 2 -t 00:20:00 --job-name emender-e97-resume-canary ... RESUME_CHECKPOINT=/lustre/orion/bif148/proj-shared/emender/frontier_runs/scaleout/20260623/e97-MLP/4891083-20260623T092053Z/train/levelE97_100m_20260623_052300/latest.pt scripts/frontier/diloco_scaleout_readiness.sbatch
+```
+
+Validation remains pending because the canary has not started and therefore
+has no post-resume losses, final-checkpoint status, `latest.pt` behavior, clean
+exit status, or NCCL finalization logs to inspect.
