@@ -708,3 +708,118 @@ SubmitLine=sbatch -A bif148 -p batch --qos=debug -N 2 -t 00:20:00 --job-name eme
 Validation remains pending because the canary has not started and therefore
 has no post-resume losses, final-checkpoint status, `latest.pt` behavior, clean
 exit status, or NCCL finalization logs to inspect.
+
+## Failed launch harvest: 2026-06-23T11:03:00-04:00
+
+The original bounded 2-node canary job `4891298` reached a terminal state, but
+it did not launch training. This is recorded as a failed launch attempt, not as
+evidence for or against the multi-node final-checkpoint fix.
+
+Accounting snapshot:
+
+```text
+JobID|JobName|State|ExitCode|Elapsed|NNodes|NodeList|Submit|Start|End
+4891298|emender-e97-resume-canary|FAILED|1:0|00:00:06|2|frontier[07171,07200]|2026-06-23T06:24:52|2026-06-23T10:59:46|2026-06-23T10:59:52
+4891298.batch|batch|FAILED|1:0|00:00:06|1|frontier07171|2026-06-23T10:59:46|2026-06-23T10:59:46|2026-06-23T10:59:52
+4891298.extern|extern|COMPLETED|0:0|00:00:06|2|frontier[07171,07200]|2026-06-23T10:59:46|2026-06-23T10:59:46|2026-06-23T10:59:52
+```
+
+The stdout file exists but is empty:
+
+```text
+logs/frontier/scaleout/emender-e97-resume-canary-4891298.out 0 bytes
+```
+
+The stderr file contains only the default `OUTPUT_ROOT` permission failure:
+
+```text
+mkdir: cannot create directory '/lustre/orion/scratch/erikgarrison/emender': Permission denied
+mkdir: cannot create directory '/lustre/orion/scratch/erikgarrison/emender': Permission denied
+mkdir: cannot create directory '/lustre/orion/scratch/erikgarrison/emender': Permission denied
+```
+
+Conclusion: `4891298` failed before writing the run manifest, environment
+record, post-resume losses, final-checkpoint records, or `latest.pt` updates.
+No NCCL collective mismatch, timeout, traceback, non-finite loss, or finalizer
+evidence was produced.
+
+## Replacement submission: job 4891784
+
+Submitted replacement bounded 2-node E97-MLP regular-averaging resume canary
+job `4891784` with the same checkpoint and exposure limits, plus an explicit
+writable output root:
+
+```text
+OUTPUT_ROOT=/lustre/orion/bif148/proj-shared/emender/frontier_runs/scaleout
+```
+
+Job: `4891784`
+Name: `emender-e97-resume-canary`
+Partition/QOS: `batch` / `debug`
+Nodes: `2`
+Walltime: `00:20:00`
+Max requested exposure: `2 nodes * 20 minutes = 0.666667 node-hours`
+Actual elapsed at submission handoff: `00:00:00`
+Actual node-hours at submission handoff: `0.000000`
+
+Submission command:
+
+```text
+sbatch -A bif148 -p batch --qos=debug -N 2 -t 00:20:00 --job-name emender-e97-resume-canary --export=ALL,WG_TASK_ID=rerun-2-node-e97,TASK_ID=rerun-2-node-e97,SCALEOUT_VARIANT=e97-MLP,SCALEOUT_NODES=2,SCALEOUT_WALLTIME=00:20:00,TRAIN_MINUTES=2,OUTPUT_ROOT=/lustre/orion/bif148/proj-shared/emender/frontier_runs/scaleout,DATA=/lustre/orion/bif148/scratch/erikgarrison/emender/data/commapile_mainmix_smoke.txt,VAL_DATA=/lustre/orion/bif148/scratch/erikgarrison/emender/data/commapile_mainmix_val_smoke.txt,TIKTOKEN_CACHE_DIR=/lustre/orion/bif148/proj-shared/tiktoken_cache,DILOCO_K=10,DILOCO_OUTER_OPTIMIZER=avg,DILOCO_OUTER_LR=1.0,DILOCO_OUTER_BETA=0.0,DILOCO_EXPORT_BASIS=x,DILOCO_ISLAND_SIZE=8,BATCH_SIZE=1,CHUNK_SIZE=2048,LOG_EVERY=5,VAL_EVERY=10000,SAVE_EVERY=10,KEEP_CHECKPOINTS=4,HUMAN_APPROVAL_RECORD='WG task rerun-2-node-e97 validation retry: bounded 2-node avg resume canary only after job 4891298 launch failure; explicit OUTPUT_ROOT=/lustre/orion/bif148/proj-shared/emender/frontier_runs/scaleout; max requested exposure 2 nodes * 20 min = 0.666667 node-hours',RESUME_CHECKPOINT=/lustre/orion/bif148/proj-shared/emender/frontier_runs/scaleout/20260623/e97-MLP/4891083-20260623T092053Z/train/levelE97_100m_20260623_052300/latest.pt scripts/frontier/diloco_scaleout_readiness.sbatch
+```
+
+Checkpoint source remains the clean 2-node E97-MLP avg checkpoint from job
+`4891083`:
+
+```text
+/lustre/orion/bif148/proj-shared/emender/frontier_runs/scaleout/20260623/e97-MLP/4891083-20260623T092053Z/train/levelE97_100m_20260623_052300/latest.pt
+```
+
+At replacement submission time, `latest.pt` still resolved to:
+
+```text
+/lustre/orion/bif148/proj-shared/emender/frontier_runs/scaleout/20260623/e97-MLP/4891083-20260623T092053Z/train/levelE97_100m_20260623_052300/checkpoint_step_000140_loss_6.6665.pt
+```
+
+Source file check:
+
+```text
+-rw------- 1 erikgarrison bif148 7798508283 Jun 23 05:29 /lustre/orion/bif148/proj-shared/emender/frontier_runs/scaleout/20260623/e97-MLP/4891083-20260623T092053Z/train/levelE97_100m_20260623_052300/checkpoint_step_000140_loss_6.6665.pt
+lrwxrwxrwx 1 erikgarrison bif148         37 Jun 23 05:29 /lustre/orion/bif148/proj-shared/emender/frontier_runs/scaleout/20260623/e97-MLP/4891083-20260623T092053Z/train/levelE97_100m_20260623_052300/latest.pt -> checkpoint_step_000140_loss_6.6665.pt
+```
+
+Current scheduler snapshot immediately after replacement submission:
+
+```text
+JOBID|STATE|TIME|TIME_LIMIT|NODES|NODELIST(REASON)|START_TIME|SUBMIT_TIME
+4891784|PENDING|0:00|20:00|2|(Resources)|N/A|2026-06-23T11:05:18
+```
+
+Accounting snapshot:
+
+```text
+JobID|JobName|State|ExitCode|Elapsed|Timelimit|NNodes|NodeList|Submit|Start|End
+4891784|emender-e97-resume-canary|PENDING|0:0|00:00:00|00:20:00|2|None assigned|2026-06-23T11:05:18|Unknown|Unknown
+```
+
+`scontrol show job 4891784` reported:
+
+```text
+JobState=PENDING Reason=Resources
+RunTime=00:00:00 TimeLimit=00:20:00
+StartTime=Unknown EndTime=Unknown
+NumNodes=2-2 NumCPUs=112 NumTasks=16 CPUs/Task=7
+ReqTRES=cpu=112,mem=1000G,node=2,billing=112
+AllocTRES=(null)
+StdOut=/lustre/orion/bif148/scratch/erikgarrison/emender/.wg-worktrees/agent-117/logs/frontier/scaleout/emender-e97-resume-canary-4891784.out
+StdErr=/lustre/orion/bif148/scratch/erikgarrison/emender/.wg-worktrees/agent-117/logs/frontier/scaleout/emender-e97-resume-canary-4891784.err
+SubmitLine=sbatch -A bif148 -p batch --qos=debug -N 2 -t 00:20:00 --job-name emender-e97-resume-canary ... OUTPUT_ROOT=/lustre/orion/bif148/proj-shared/emender/frontier_runs/scaleout ... RESUME_CHECKPOINT=/lustre/orion/bif148/proj-shared/emender/frontier_runs/scaleout/20260623/e97-MLP/4891083-20260623T092053Z/train/levelE97_100m_20260623_052300/latest.pt scripts/frontier/diloco_scaleout_readiness.sbatch
+```
+
+No stdout/stderr files exist yet for `4891784`, which is consistent with a
+job that has not allocated.
+
+Validation remains pending. When `4891784` starts and exits, harvest the run
+root, post-resume losses, final-checkpoint `START` / `END` status,
+`latest.pt` behavior, clean exit status, and finalization/NCCL evidence. No
+4-node or 8-node jobs were submitted.
