@@ -11,6 +11,8 @@ Simple single-GPU training with:
 Usage:
     python train.py --data /path/to/data.txt --level 3 --params 100m
     python train.py --data /path/to/data.txt --level 3 --params 100m --tbptt  # Enable TBPTT
+    # Explicit geometry overrides are reflected in run labels by actual params,
+    # e.g. E97 + 1.29B params -> emender_E97_1.3B_<timestamp>.
 """
 
 import os
@@ -487,12 +489,91 @@ def resolve_walltime_deadline(args, now=None):
 
 
 def model_variant_label(args):
-    bits = [f"level={args.level}", f"params={args.params}"]
+    bits = [f"level={args.level}", f"params_arg={args.params}"]
+    if getattr(args, '_model_param_slug', None):
+        bits.append(f"derived_params={args._model_param_slug}")
+    if getattr(args, '_model_total_params', None) is not None:
+        bits.append(f"total_params={args._model_total_params}")
     if getattr(args, 'mlp_ratio', 0.0):
         bits.append(f"mlp_ratio={args.mlp_ratio}")
     if str(args.level).lower() in ('gdn2', 'gdn2-mlp'):
         bits.append(f"gdn2_mlp_ratio={getattr(args, 'gdn2_mlp_ratio', None)}")
     return ','.join(bits)
+
+
+def count_model_parameters(model):
+    """Return exact total/trainable counts from the instantiated model."""
+    total = sum(p.numel() for p in model.parameters())
+    trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    return {
+        'total_params': int(total),
+        'trainable_params': int(trainable),
+    }
+
+
+def human_param_slug(total_params):
+    """Format a compact parameter-count slug for run names."""
+    total_params = int(total_params)
+    if total_params >= 1_000_000_000:
+        return f"{total_params / 1_000_000_000:.1f}B"
+    if total_params >= 1_000_000:
+        return f"{total_params / 1_000_000:.0f}M"
+    if total_params >= 1_000:
+        return f"{total_params / 1_000:.0f}K"
+    return str(total_params)
+
+
+def model_family_slug(args):
+    """Return a grounded family label for visible run names."""
+    level = str(args.level)
+    level_lower = level.lower()
+    if level in ('E97', '97', 'E97-M2') or bool(getattr(args, 'e88_raw_write', 0)):
+        return 'emender'
+    if level_lower in ('typed-gdn2-lm', 'e98-cma-lm'):
+        return 'emender'
+    if level_lower in ('gdn2', 'gdn2-mlp'):
+        return 'gdn2'
+    return 'level'
+
+
+def _safe_slug_part(value):
+    text = str(value)
+    text = re.sub(r'[^A-Za-z0-9_.-]+', '-', text)
+    return text.strip('-') or 'model'
+
+
+def build_run_label_prefix(args, total_params):
+    """Build the timestamp-free run label prefix from resolved model facts."""
+    family = _safe_slug_part(model_family_slug(args))
+    level = _safe_slug_part(args.level)
+    param_slug = _safe_slug_part(human_param_slug(total_params))
+    if family == 'level':
+        return f"level{level}_{param_slug}"
+    return f"{family}_{level}_{param_slug}"
+
+
+def attach_model_run_metadata(args, model):
+    """Attach derived run-name and exact parameter metadata to parsed args."""
+    counts = count_model_parameters(model)
+    total_params = counts['total_params']
+    param_slug = human_param_slug(total_params)
+    run_label_prefix = build_run_label_prefix(args, total_params)
+    metadata = {
+        'model_family': model_family_slug(args),
+        'level': str(args.level),
+        'params_arg': str(args.params),
+        'derived_param_slug': param_slug,
+        'run_label_prefix': run_label_prefix,
+        **counts,
+    }
+    args._model_family = metadata['model_family']
+    args._model_param_slug = param_slug
+    args._model_run_label_prefix = run_label_prefix
+    args._model_total_params = metadata['total_params']
+    args._model_trainable_params = metadata['trainable_params']
+    args._model_metadata = metadata
+    args._model_variant = model_variant_label(args)
+    return metadata
 
 
 class FinalCheckpointController:
@@ -544,6 +625,12 @@ class FinalCheckpointController:
                     pass
         else:
             self.ready_dir.mkdir(parents=True, exist_ok=True)
+
+    def rebind_coordination_dir(self, request_dir):
+        """Move future final-checkpoint coordination files to a run directory."""
+        self.request_dir = Path(request_dir)
+        self.request_path = self.request_dir / '.final_checkpoint_request'
+        self.ready_dir = self.request_dir / '.final_checkpoint_ready'
 
     def _write_stop_request(self, reason, step):
         self.request_dir.mkdir(parents=True, exist_ok=True)
@@ -653,17 +740,33 @@ def parse_level(level_str):
         return level_str  # Keep as string for any other format
 
 
-def setup_output_dir(args):
+def setup_output_dir(args, model_metadata=None):
     """Create output directory with run info."""
     timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
-    run_name = f"level{args.level}_{args.params}_{timestamp}"
+    prefix = getattr(args, '_model_run_label_prefix', None)
+    if prefix is None and model_metadata:
+        prefix = model_metadata.get('run_label_prefix')
+    if prefix is None:
+        prefix = f"level{args.level}_{args.params}"
+    run_name = f"{prefix}_{timestamp}"
     output_dir = Path(args.output) / run_name
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
+    run_manifest = {
+        'run_name': run_name,
+        'run_label_prefix': prefix,
+        'output_dir': str(output_dir),
+        'created_at_utc': datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='seconds'),
+        'resume': getattr(args, 'resume', None),
+        'model': model_metadata or getattr(args, '_model_metadata', None),
+    }
+
     # Save args
     with open(output_dir / 'args.json', 'w') as f:
         json.dump(vars(args), f, indent=2)
+    with open(output_dir / 'run_manifest.json', 'w') as f:
+        json.dump(run_manifest, f, indent=2)
 
     return output_dir
 
@@ -1347,38 +1450,9 @@ def train(args):
               f"GDN2_PATH={gdn2_path} chunk_ops={chunk_ops} -> "
               "FLA chunked GDN-2 fused kernel import path, NO eager fallback", flush=True)
 
-    # Under DDP only rank 0 owns the run directory / checkpoints. Non-main ranks
-    # never write to it (their save/eval blocks are gated on is_main), so they get
-    # a non-creating path reference to avoid 7 timestamped junk dirs + write races.
-    if dist_enabled and not is_main:
-        output_dir = Path(args.output)
-    else:
-        output_dir = setup_output_dir(args)
-        print(f"Output directory: {output_dir}")
-
+    output_dir = None
     heldout_curve = None
     heldout_curve_path = None
-    if is_main and args.heldout_curve_every > 0:
-        if not args.heldout_tensor:
-            raise ValueError("--heldout_curve_every requires --heldout_tensor")
-        ho = torch.load(args.heldout_tensor, map_location='cpu')
-        if 'chunks' not in ho or 'bytes_per_token' not in ho:
-            raise ValueError("--heldout_tensor must contain 'chunks' and 'bytes_per_token'")
-        heldout_curve = {
-            'chunks': ho['chunks'],
-            'bytes_per_token': float(ho['bytes_per_token']),
-            'eval_bs': int(os.environ.get('HELDOUT_EVAL_BS', '8')),
-        }
-        heldout_curve_path = Path(args.heldout_curve_path) if args.heldout_curve_path else output_dir / 'heldout_curve.csv'
-        heldout_curve_path.parent.mkdir(parents=True, exist_ok=True)
-        if not heldout_curve_path.exists() or heldout_curve_path.stat().st_size == 0:
-            heldout_curve_path.write_text(
-                'step,tokens,train_loss,heldout_ce,heldout_bpb,heldout_tokens,'
-                'heldout_bytes_per_token,mode,wall_time_utc\n'
-            )
-        print(f"Held-out curve: every {args.heldout_curve_every} steps, "
-              f"mode={args.heldout_eval_mode}, tensor={args.heldout_tensor}, "
-              f"csv={heldout_curve_path}", flush=True)
 
     # Resolve 'auto' r_h_mode based on model architecture
     r_h_mode = args.r_h_mode
@@ -1733,6 +1807,59 @@ def train(args):
             state_expansion=args.state_expansion,
             r_h_mode=r_h_mode,
         )
+
+    model_metadata = attach_model_run_metadata(args, model)
+    if is_main:
+        print(
+            f"Run label prefix: {model_metadata['run_label_prefix']} "
+            f"(params_arg={model_metadata['params_arg']}, "
+            f"total_params={model_metadata['total_params']:,}, "
+            f"trainable_params={model_metadata['trainable_params']:,})",
+            flush=True,
+        )
+
+    # Under distributed training, rank 0 owns the run directory / checkpoints.
+    # Broadcast the rank-0 path so non-main ranks can coordinate finalization
+    # without racing to create their own timestamped run directories.
+    if dist_enabled and not is_main:
+        path_box = [None]
+    else:
+        output_dir = setup_output_dir(args, model_metadata=model_metadata)
+        print(f"Output directory: {output_dir}")
+        path_box = [str(output_dir)]
+    if dist_enabled and dist.is_initialized():
+        dist.broadcast_object_list(path_box, src=0)
+        output_dir = Path(path_box[0])
+
+    final_ckpt.rebind_coordination_dir(output_dir)
+    if is_main:
+        final_ckpt.reset_coordination_files()
+    if dist_enabled and dist.is_initialized():
+        dist.barrier()
+
+    heldout_curve = None
+    heldout_curve_path = None
+    if is_main and args.heldout_curve_every > 0:
+        if not args.heldout_tensor:
+            raise ValueError("--heldout_curve_every requires --heldout_tensor")
+        ho = torch.load(args.heldout_tensor, map_location='cpu')
+        if 'chunks' not in ho or 'bytes_per_token' not in ho:
+            raise ValueError("--heldout_tensor must contain 'chunks' and 'bytes_per_token'")
+        heldout_curve = {
+            'chunks': ho['chunks'],
+            'bytes_per_token': float(ho['bytes_per_token']),
+            'eval_bs': int(os.environ.get('HELDOUT_EVAL_BS', '8')),
+        }
+        heldout_curve_path = Path(args.heldout_curve_path) if args.heldout_curve_path else output_dir / 'heldout_curve.csv'
+        heldout_curve_path.parent.mkdir(parents=True, exist_ok=True)
+        if not heldout_curve_path.exists() or heldout_curve_path.stat().st_size == 0:
+            heldout_curve_path.write_text(
+                'step,tokens,train_loss,heldout_ce,heldout_bpb,heldout_tokens,'
+                'heldout_bytes_per_token,mode,wall_time_utc\n'
+            )
+        print(f"Held-out curve: every {args.heldout_curve_every} steps, "
+              f"mode={args.heldout_eval_mode}, tensor={args.heldout_tensor}, "
+              f"csv={heldout_curve_path}", flush=True)
 
     model = model.to(device)
     if args.bf16:
@@ -2296,6 +2423,10 @@ def train(args):
                     metadata={
                         'kind': 'periodic',
                         'model_variant': args._model_variant,
+                        'model': args._model_metadata,
+                        'run_label_prefix': args._model_run_label_prefix,
+                        'total_params': args._model_total_params,
+                        'trainable_params': args._model_trainable_params,
                         'rank': rank,
                         'world_size': world_size,
                         'is_head': is_main,
@@ -2373,6 +2504,10 @@ def train(args):
         'kind': 'final',
         'reason': final_ckpt.reason or 'training_complete',
         'model_variant': args._model_variant,
+        'model': args._model_metadata,
+        'run_label_prefix': args._model_run_label_prefix,
+        'total_params': args._model_total_params,
+        'trainable_params': args._model_trainable_params,
         'rank': rank,
         'world_size': world_size,
         'is_head': is_main,
