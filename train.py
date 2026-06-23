@@ -18,6 +18,7 @@ import sys
 import time
 STARTUP_TIME = time.time()
 import argparse
+import signal
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -30,6 +31,12 @@ import json
 import datetime
 import glob
 import re
+
+_SHUTDOWN_REQUEST = {
+    'requested': False,
+    'signal': None,
+    'received_at': None,
+}
 
 # Add elman package to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -364,6 +371,22 @@ def parse_args():
                         help='Validate every N steps')
     parser.add_argument('--keep_checkpoints', type=int, default=5,
                         help='Number of checkpoints to keep')
+    parser.add_argument('--walltime_minutes', type=float, default=None,
+                        help='Optional scheduler walltime budget in minutes, measured from '
+                             'process start. If unset, SLURM_JOB_END_TIME or SLURM_TIMELIMIT '
+                             'is used when available.')
+    parser.add_argument('--walltime_final_checkpoint_margin_seconds', type=float, default=600.0,
+                        help='When a walltime deadline is known, stop training and run the '
+                             'normal final checkpoint path once this many seconds remain. '
+                             'Default 600s leaves room for DiLoCo final merge and rank-0 save.')
+    parser.add_argument('--walltime_check_every', type=int, default=1,
+                        help='Check coordinated walltime/shutdown finalization every N optimizer '
+                             'steps. Distributed runs perform one scalar all-reduce at each check '
+                             'so a signal or deadline observed by any rank brings all ranks into '
+                             'finalization together.')
+    parser.add_argument('--disable_walltime_final_checkpoint', action='store_true',
+                        help='Disable walltime-aware pre-shutdown final checkpointing. Signal '
+                             'handling still requests a graceful final checkpoint.')
 
     # System
     parser.add_argument('--bf16', action='store_true',
@@ -390,6 +413,137 @@ def parse_args():
                         help='Run 1 fwd+bwd step, print peak GPU memory in MB, then exit')
 
     return parser.parse_args()
+
+
+def _handle_shutdown_signal(signum, _frame):
+    _SHUTDOWN_REQUEST['requested'] = True
+    _SHUTDOWN_REQUEST['signal'] = signal.Signals(signum).name
+    _SHUTDOWN_REQUEST['received_at'] = time.time()
+
+
+def install_shutdown_signal_handlers():
+    """Install lightweight handlers that let the training loop checkpoint."""
+    for signame in ('SIGTERM', 'SIGINT', 'SIGHUP', 'SIGUSR1'):
+        sig = getattr(signal, signame, None)
+        if sig is not None:
+            signal.signal(sig, _handle_shutdown_signal)
+
+
+def parse_slurm_timelimit_seconds(value):
+    """Parse common SLURM time limit strings to seconds.
+
+    SLURM commonly exposes limits as minutes, HH:MM:SS, MM:SS, or
+    D-HH:MM:SS. Unlimited/unknown values return None.
+    """
+    if value is None:
+        return None
+    raw = str(value).strip()
+    if not raw or raw.upper() in {'UNLIMITED', 'INFINITE', 'NOT_SET', 'NONE'}:
+        return None
+    if raw.isdigit():
+        return int(raw) * 60
+
+    days = 0
+    clock = raw
+    if '-' in raw:
+        day_text, clock = raw.split('-', 1)
+        if not day_text.isdigit():
+            return None
+        days = int(day_text)
+
+    parts = clock.split(':')
+    if len(parts) == 2 and all(p.isdigit() for p in parts):
+        minutes, seconds = [int(p) for p in parts]
+        return days * 86400 + minutes * 60 + seconds
+    if len(parts) == 3 and all(p.isdigit() for p in parts):
+        hours, minutes, seconds = [int(p) for p in parts]
+        return days * 86400 + hours * 3600 + minutes * 60 + seconds
+    return None
+
+
+def resolve_walltime_deadline(args, now=None):
+    """Return (deadline_epoch, source) for explicit/SLURM walltime, if known."""
+    if getattr(args, 'disable_walltime_final_checkpoint', False):
+        return None, None
+    if now is None:
+        now = time.time()
+    if getattr(args, 'walltime_minutes', None) is not None:
+        return STARTUP_TIME + float(args.walltime_minutes) * 60.0, '--walltime_minutes'
+
+    slurm_end = os.environ.get('SLURM_JOB_END_TIME')
+    if slurm_end:
+        try:
+            end_epoch = float(slurm_end)
+        except ValueError:
+            end_epoch = None
+        if end_epoch and end_epoch > now:
+            return end_epoch, 'SLURM_JOB_END_TIME'
+
+    slurm_limit_s = parse_slurm_timelimit_seconds(os.environ.get('SLURM_TIMELIMIT'))
+    if slurm_limit_s is not None:
+        return STARTUP_TIME + float(slurm_limit_s), 'SLURM_TIMELIMIT'
+    return None, None
+
+
+def model_variant_label(args):
+    bits = [f"level={args.level}", f"params={args.params}"]
+    if getattr(args, 'mlp_ratio', 0.0):
+        bits.append(f"mlp_ratio={args.mlp_ratio}")
+    if str(args.level).lower() in ('gdn2', 'gdn2-mlp'):
+        bits.append(f"gdn2_mlp_ratio={getattr(args, 'gdn2_mlp_ratio', None)}")
+    return ','.join(bits)
+
+
+class FinalCheckpointController:
+    """Coordinates walltime/signal-triggered final checkpoint entry."""
+
+    def __init__(self, args, device):
+        self.args = args
+        self.device = device
+        self.deadline, self.deadline_source = resolve_walltime_deadline(args)
+        self.margin_s = max(0.0, float(getattr(args, 'walltime_final_checkpoint_margin_seconds', 0.0)))
+        self.check_every = max(1, int(getattr(args, 'walltime_check_every', 1)))
+        self.triggered = False
+        self.reason = None
+        self.remaining_s = None
+        self.logged_probe = False
+
+    @property
+    def walltime_active(self):
+        return self.deadline is not None
+
+    def _local_request(self):
+        now = time.time()
+        if _SHUTDOWN_REQUEST['requested']:
+            return f"signal:{_SHUTDOWN_REQUEST['signal']}", (
+                self.deadline - now if self.deadline is not None else None)
+        if self.deadline is None:
+            return None, None
+        remaining = self.deadline - now
+        if remaining <= self.margin_s:
+            return f"walltime:{self.deadline_source}", remaining
+        return None, remaining
+
+    def maybe_request_stop(self, step, dist_enabled=False):
+        """Return (stop, reason, remaining_s) at safe optimizer-step boundaries."""
+        if self.triggered:
+            return True, self.reason, self.remaining_s
+        if step % self.check_every != 0:
+            return False, None, None
+
+        local_reason, remaining = self._local_request()
+        local_stop = 1 if local_reason else 0
+        if dist_enabled and dist.is_initialized():
+            flag = torch.tensor([local_stop], device=self.device, dtype=torch.int32)
+            dist.all_reduce(flag, op=dist.ReduceOp.MAX)
+            local_stop = int(flag.item())
+
+        if local_stop:
+            self.triggered = True
+            self.reason = local_reason or 'peer_final_checkpoint_request'
+            self.remaining_s = remaining
+            return True, self.reason, self.remaining_s
+        return False, None, remaining
 
 
 def parse_level(level_str):
@@ -440,9 +594,11 @@ def lr_scale_at(step, warmup_steps, total_steps, min_lr_frac=0.1):
     return min_lr_frac + (1.0 - min_lr_frac) * 0.5 * (1.0 + math.cos(math.pi * progress))
 
 
-def save_checkpoint(model, optimizer, step, loss, output_dir, keep_n=5, outer_state=None):
+def save_checkpoint(model, optimizer, step, loss, output_dir, keep_n=5, outer_state=None,
+                    metadata=None):
     """Save checkpoint and clean up old ones."""
     ckpt_path = output_dir / f'checkpoint_step_{step:06d}_loss_{loss:.4f}.pt'
+    tmp_path = ckpt_path.with_suffix(ckpt_path.suffix + '.tmp')
 
     payload = {
         'step': step,
@@ -450,14 +606,17 @@ def save_checkpoint(model, optimizer, step, loss, output_dir, keep_n=5, outer_st
         'optimizer_state_dict': optimizer.state_dict(),
         'loss': loss,
     }
+    if metadata:
+        payload['checkpoint_metadata'] = metadata
     if outer_state is not None:
         payload['diloco_outer_state'] = outer_state
 
-    torch.save(payload, ckpt_path)
+    torch.save(payload, tmp_path)
+    os.replace(tmp_path, ckpt_path)
 
     # Update latest symlink
     latest_path = output_dir / 'latest.pt'
-    if latest_path.is_symlink():
+    if latest_path.exists() or latest_path.is_symlink():
         latest_path.unlink()
     latest_path.symlink_to(ckpt_path.name)
 
@@ -897,6 +1056,8 @@ def diloco_merge(core_model, optimizer, args, world_size, outer_state):
 
 def train(args):
     """Main training loop."""
+    install_shutdown_signal_handlers()
+
     # Parse level (convert '3' to 3, keep 'log_5' as string)
     args.level = parse_level(args.level)
 
@@ -944,6 +1105,7 @@ def train(args):
     args._rank = rank
     args._world_size = world_size
     args._is_main = is_main
+    args._model_variant = model_variant_label(args)
 
     # Setup
     torch.manual_seed(args.seed)
@@ -964,6 +1126,20 @@ def train(args):
     else:
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         print(f"Using device: {device}")
+
+    final_ckpt = FinalCheckpointController(args, device)
+    if is_main:
+        if final_ckpt.walltime_active:
+            remaining = final_ckpt.deadline - time.time()
+            print(f"[final-checkpoint] armed: source={final_ckpt.deadline_source} "
+                  f"remaining_s={remaining:.1f} margin_s={final_ckpt.margin_s:.1f} "
+                  f"check_every={final_ckpt.check_every} model_variant={args._model_variant} "
+                  f"head_rank={rank}/{world_size}", flush=True)
+        else:
+            print(f"[final-checkpoint] walltime deadline not detected; signal-triggered "
+                  f"final checkpoint remains armed. margin_s={final_ckpt.margin_s:.1f} "
+                  f"model_variant={args._model_variant} head_rank={rank}/{world_size}",
+                  flush=True)
 
     # Per-rank FUSED guard (preflight-100b). For the E97 split-edit / raw-write
     # families under bf16 the fused fwd+bwd lives ONLY in the Triton kernel; the
@@ -1941,11 +2117,32 @@ def train(args):
                     optimizer.eval()  # Get averaged params for checkpoint
                 ckpt_path = save_checkpoint(
                     core_model, optimizer, step, avg_loss, output_dir,
-                    args.keep_checkpoints, outer_state=outer_state
+                    args.keep_checkpoints, outer_state=outer_state,
+                    metadata={
+                        'kind': 'periodic',
+                        'model_variant': args._model_variant,
+                        'rank': rank,
+                        'world_size': world_size,
+                        'is_head': is_main,
+                        'walltime_remaining_s': (
+                            final_ckpt.deadline - time.time()
+                            if final_ckpt.deadline is not None else None
+                        ),
+                    },
                 )
                 print(f"  >>> saved checkpoint: {ckpt_path.name}")
                 if args.optimizer == 'schedulefree':
                     optimizer.train()  # Back to training mode
+
+            stop_for_final, final_reason, remaining_s = final_ckpt.maybe_request_stop(
+                step, dist_enabled=dist_enabled)
+            if stop_for_final:
+                rem_text = 'unknown' if remaining_s is None else f"{remaining_s:.1f}"
+                print(f"[final-checkpoint] rank {rank}/{world_size} entering finalization "
+                      f"at step={step} reason={final_reason} remaining_s={rem_text} "
+                      f"model_variant={args._model_variant} is_head={is_main}",
+                      flush=True)
+                break
 
     # Stop prefetch thread
     prefetch_stop.set()
@@ -1993,6 +2190,21 @@ def train(args):
     # held-out/train evals (all ranks hold identical synchronized weights after the
     # final merge / DDP all-reduce). Other ranks skip to the barrier.
     _run_final = (args._is_main if args._dist_enabled else True)
+    final_metadata = {
+        'kind': 'final',
+        'reason': final_ckpt.reason or 'training_complete',
+        'model_variant': args._model_variant,
+        'rank': rank,
+        'world_size': world_size,
+        'is_head': is_main,
+        'walltime_deadline_source': final_ckpt.deadline_source,
+        'walltime_remaining_s': (
+            final_ckpt.deadline - time.time()
+            if final_ckpt.deadline is not None else None
+        ),
+        'walltime_margin_s': final_ckpt.margin_s,
+        'shutdown_signal': _SHUTDOWN_REQUEST['signal'],
+    }
 
     # Final checkpoint - use last-100 average for reliable metric
     if not _run_final:
@@ -2002,8 +2214,20 @@ def train(args):
     else:
         if args.optimizer == 'schedulefree':
             optimizer.eval()  # Get averaged params for final checkpoint
-        save_checkpoint(core_model, optimizer, step, last_100_avg, output_dir,
-                        args.keep_checkpoints, outer_state=outer_state)
+        remaining = final_metadata['walltime_remaining_s']
+        rem_text = 'unknown' if remaining is None else f"{remaining:.1f}"
+        print(f"[final-checkpoint] START kind=final reason={final_metadata['reason']} "
+              f"step={step} loss={last_100_avg:.4f} remaining_s={rem_text} "
+              f"model_variant={args._model_variant} rank={rank}/{world_size} "
+              f"is_head={is_main}", flush=True)
+        ckpt_path = save_checkpoint(
+            core_model, optimizer, step, last_100_avg, output_dir,
+            args.keep_checkpoints, outer_state=outer_state,
+            metadata=final_metadata,
+        )
+        print(f"[final-checkpoint] END path={ckpt_path} latest={output_dir / 'latest.pt'} "
+              f"model_variant={args._model_variant} rank={rank}/{world_size} "
+              f"is_head={is_main}", flush=True)
 
     # within-layer LM screen (task e97-within-layer): ONE final held-out eval on the
     # schedule-free AVERAGED weights (leaderboard methodology) — distinct from the
