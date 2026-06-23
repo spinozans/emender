@@ -29,8 +29,10 @@ DATA=${DATA:?Set DATA to a Frontier-readable commapile training text or shard}
 VAL_DATA=${VAL_DATA:-}
 TIKTOKEN_CACHE_DIR=${TIKTOKEN_CACHE_DIR:?Set TIKTOKEN_CACHE_DIR to a pre-populated shared tokenizer cache}
 DILOCO_K=${DILOCO_K:-250}
+DILOCO_OUTER_OPTIMIZER=${DILOCO_OUTER_OPTIMIZER:-avg}
 DILOCO_OUTER_LR=${DILOCO_OUTER_LR:-1.0}
 DILOCO_OUTER_BETA=${DILOCO_OUTER_BETA:-0.0}
+DILOCO_EXPORT_BASIS=${DILOCO_EXPORT_BASIS:-x}
 DILOCO_ISLAND_SIZE=${DILOCO_ISLAND_SIZE:-8}
 BATCH_SIZE=${BATCH_SIZE:-1}
 CHUNK_SIZE=${CHUNK_SIZE:-2048}
@@ -111,13 +113,20 @@ COMMON_ARGS=(
   --output "${RUN_ROOT}/train"
   --diloco
   --diloco_k "$DILOCO_K"
+  --diloco_outer_optimizer "$DILOCO_OUTER_OPTIMIZER"
   --diloco_outer_lr "$DILOCO_OUTER_LR"
   --diloco_outer_beta "$DILOCO_OUTER_BETA"
+  --diloco_export_basis "$DILOCO_EXPORT_BASIS"
   --diloco_island_size "$DILOCO_ISLAND_SIZE"
 )
 
 if [[ -n "$VAL_DATA" ]]; then
   COMMON_ARGS+=(--val_data "$VAL_DATA")
+fi
+
+if [[ -n "${RESUME_CHECKPOINT:-}" ]]; then
+  [[ -r "$RESUME_CHECKPOINT" ]] || { echo "RESUME_CHECKPOINT is not readable: $RESUME_CHECKPOINT" >&2; exit 4; }
+  COMMON_ARGS+=(--resume "$RESUME_CHECKPOINT")
 fi
 
 case "$SCALEOUT_VARIANT" in
@@ -211,10 +220,11 @@ PY
   echo "stdout=$STDOUT_PATH"
   echo "stderr=$STDERR_PATH"
   echo "human_approval_record=$HUMAN_APPROVAL_RECORD"
+  echo "resume_checkpoint=${RESUME_CHECKPOINT:-}"
   echo "requested_node_hours=$REQUESTED_NODE_HOURS"
   echo
   echo "=== slurm ==="
-  env | sort | grep -E '^(SLURM|MPICH|NCCL|MASTER|OMP|ROCR|HIP|HSA|GDN2|NDM|DATA|VAL_DATA|TRAIN_MINUTES|SCALEOUT|DILOCO|TIKTOKEN|HUMAN_APPROVAL)=' || true
+  env | sort | grep -E '^(SLURM|MPICH|NCCL|MASTER|OMP|ROCR|HIP|HSA|GDN2|NDM|DATA|VAL_DATA|TRAIN_MINUTES|SCALEOUT|DILOCO|TIKTOKEN|HUMAN_APPROVAL|RESUME_CHECKPOINT)=' || true
   echo
   echo "=== modules ==="
   module list 2>&1
@@ -279,6 +289,9 @@ manifest = {
     "requested_walltime": "${SLURM_TIMELIMIT:-${SCALEOUT_WALLTIME}}",
     "requested_node_hours": float("${REQUESTED_NODE_HOURS}"),
     "human_approval_record": "${HUMAN_APPROVAL_RECORD}",
+    "resume_checkpoint": "${RESUME_CHECKPOINT:-}",
+    "diloco_outer_optimizer": "${DILOCO_OUTER_OPTIMIZER}",
+    "diloco_export_basis": "${DILOCO_EXPORT_BASIS}",
     "start_utc": "${START_UTC}",
     "end_utc": "${END_UTC}",
     "exit_status": int("${TRAIN_STATUS}"),
