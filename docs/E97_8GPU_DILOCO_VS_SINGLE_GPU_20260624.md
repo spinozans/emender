@@ -4,6 +4,8 @@ Generated: 2026-06-24T07:52Z
 
 Scope: read-only comparison of the current E97/Emender 8-GPU DiLoCo run against the best available prior E97 single-GPU run. I did not modify the live run, launch training, launch eval, stop or restart processes, prune checkpoints, or alter `/mnt` run artifacts. The only repository change is this Markdown report.
 
+Reopened-message response: the required WG log line beginning `SUMMARY` was added after task resurrection with the concrete comparison values: baseline run `levelE97_100m_20260615_211750`, baseline `8161` global tok/s, current 8-GPU `65756` global tok/s, computed speedup `8.06x`, and the caveat that quality-vs-throughput remains uncertain until current-run heldout/BPB/racer evaluation exists.
+
 ## Bottom Line
 
 The current 8-GPU E97/Emender DiLoCo run appears to be essentially at ideal wall-clock token-throughput scaling relative to the prior single-GPU E97 baseline:
