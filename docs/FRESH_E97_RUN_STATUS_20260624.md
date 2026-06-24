@@ -1,8 +1,22 @@
 # Fresh E97/Emender DiLoCo Run Status Snapshot
 
-Generated: 2026-06-24T07:34:55.036482234Z
+Generated: 2026-06-24T07:42:02Z
 
 Scope: read-only status snapshot for the live E97/Emender DiLoCo training run and checkpoint-retention/disk state. No training, supervisor, watchdog, janitor, GPU process, checkpoint, or run file was modified by this audit.
+
+## Refresh At 2026-06-24T07:42:02Z
+
+- Live process state: torchrun/training `alive` (`torchrun` PID `906526`; rank PIDs `907090`, `907091`, `907092`, `907093`, `907095`, `907096`, `907098`, `907099`); supervisor `alive` (PID `934892`); checkpoint janitor `alive` (PID `10772`); no separate E97 watchdog identified beyond the live supervisor, while generic/kernel watchdog and unrelated `racer_watchdog.sh` processes are present.
+- Latest observed training line: step `146050`, loss `2.7956`, per-rank `tok/s 8299`, `global_tok/s 66390`, timestamp `2026-06-24T07:41:53+00:00`.
+- Latest checkpoint: `checkpoint_step_146000_loss_2.8710.pt`; `latest.pt` points to that checkpoint as of `2026-06-24T07:41Z`.
+- Checkpoint inventory: `17` `checkpoint_step_*.pt` files under `/mnt/nvme1n1/erikg/diloco_8gpu/emender/runs`.
+- Disk state: `/mnt/nvme1n1` free space `892,371,021,824` bytes, `95%` used by `df -B1`.
+- Retention/janitor state: rolling retention is active. Janitor PID `10772` is looping every 900 seconds with `--delete --latest-active 5 --milestone-every 10000 --min-age-seconds 1800`; the latest report at `2026-06-24T07:39:47.231773+00:00` deleted one redundant checkpoint and kept `16` checkpoints. The run saved `checkpoint_step_146000_loss_2.8710.pt` after that janitor pass, bringing the current count back to `17`.
+- GPU collision check: no unrelated compute user observed. `nvidia-smi` listed exactly the eight `/usr/bin/python3` E97 rank PIDs, one per RTX 6000 Ada GPU, each using about `28,204 MiB`.
+- Recent error scan: no recent NaN, OOM/out-of-memory, Gloo, hang/stuck/timeout, traceback, exception, failed, killed, bus error, segmentation, or live restart errors found in the scanned tails of `run.log`, `supervisor.log`, and `e97_checkpoint_retention_guard.log`. NCCL references are normal DiLoCo initialization, save/checkpoint references are normal checkpoint saves, and retention guard `DELETE/DELETED` entries are expected janitor pruning.
+- No live run was modified: only read-only `ps`, `df`, `find`, `readlink`, `ls`, `tail`, `rg`, `sed`, `date`, and `nvidia-smi` inspections were used against the live run state.
+
+The detailed sections below preserve the earlier 07:34Z snapshot from the first pass in this task; the refresh above is the newest observed status and should be treated as authoritative for this reopened pass.
 
 ## Summary
 
