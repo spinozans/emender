@@ -4,6 +4,21 @@ Generated: 2026-06-24T07:42:02Z
 
 Scope: read-only status snapshot for the live E97/Emender DiLoCo training run and checkpoint-retention/disk state. No training, supervisor, watchdog, janitor, GPU process, checkpoint, or run file was modified by this audit.
 
+## Refresh At 2026-06-24T17:02:36Z
+
+- Live process state: torchrun/training `alive` (`torchrun` PID `906526`; rank PIDs `907090`, `907091`, `907092`, `907093`, `907095`, `907096`, `907098`, `907099`); supervisor `alive` (PID `934892`); checkpoint janitor `alive` (PID `10772`); no separate E97 watchdog was identified beyond the live supervisor, while generic/kernel watchdog and unrelated `racer_watchdog.sh` processes are present.
+- Latest observed training line: step `178700`, loss `2.7181`, per-rank `tok/s 8188`, `global_tok/s 65507`, timestamp `2026-06-24T17:02:36+00:00`.
+- Progress since the previous fresh sample at `2026-06-24T07:42:02Z` (step `146050`, loss `2.7956`, `global_tok/s 66390`, checkpoint `checkpoint_step_146000_loss_2.8710.pt`): `+32650` steps, loss `-0.0775`, `global_tok/s -883`, checkpoint advanced `+32500` checkpoint steps to `checkpoint_step_178500_loss_2.6920.pt`, about `2,139,750,400` training tokens at `65536` tokens/step, and about `3494.7` steps/hour over the log-time interval.
+- Latest checkpoint: `checkpoint_step_178500_loss_2.6920.pt`; `latest.pt` points to that checkpoint, symlink mtime `2026-06-24T16:59:16.763272137+00:00`.
+- Checkpoint inventory: `20` `checkpoint_step_*.pt` files under `/mnt/nvme1n1/erikg/diloco_8gpu/emender/runs`.
+- Disk state: `/mnt/nvme1n1` free space `858,015,715,328` bytes, `95%` used by `df -B1`.
+- Retention/janitor state: rolling retention is active. Janitor PID `10772` is looping every 900 seconds with `--delete --latest-active 5 --milestone-every 10000 --min-age-seconds 1800`; the latest report at `2026-06-24T16:54:51.924043+00:00` deleted two redundant checkpoints, kept `19`, and kept newest checkpoint `checkpoint_step_178000_loss_2.6796.pt`. The run saved `checkpoint_step_178500_loss_2.6920.pt` after that janitor pass, bringing the current count to `20`.
+- GPU collision check: no unrelated compute user observed. `nvidia-smi` listed exactly the eight `/usr/bin/python3` E97 rank PIDs, one per RTX 6000 Ada GPU, each using about `28,204 MiB`; GPU utilization was `99-100%`.
+- Recent error scan: no recent NaN, OOM/out-of-memory, Gloo, hang/stuck/timeout, traceback, exception, failed, failure, killed, bus error, segmentation, save failure, checkpoint failure, or GPU collision indicators found in the scanned tails of `run.log`, `supervisor.log`, and `e97_checkpoint_retention_guard.log`. Recent `NCCL`/`Gloo` scan had no matches; save/checkpoint entries were normal checkpoint saves through `checkpoint_step_178500_loss_2.6920.pt`; retention guard `DELETE/DELETED` entries are expected janitor pruning.
+- No live run was modified: only read-only `ps`, `df`, `find`, `readlink`, `stat`, `tail`, `rg`, `sed`, `date`, `awk`, and `nvidia-smi` inspections were used against live run state. No training, eval, restart, stop, delete, rename, or launch command was run.
+
+The refresh above is the newest observed status for the 17:02Z pass; older sections below preserve prior same-day snapshots for continuity.
+
 ## Refresh At 2026-06-24T07:42:02Z
 
 - Live process state: torchrun/training `alive` (`torchrun` PID `906526`; rank PIDs `907090`, `907091`, `907092`, `907093`, `907095`, `907096`, `907098`, `907099`); supervisor `alive` (PID `934892`); checkpoint janitor `alive` (PID `10772`); no separate E97 watchdog identified beyond the live supervisor, while generic/kernel watchdog and unrelated `racer_watchdog.sh` processes are present.
