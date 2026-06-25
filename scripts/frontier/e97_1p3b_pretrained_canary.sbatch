@@ -84,8 +84,9 @@ export OMP_NUM_THREADS=${OMP_NUM_THREADS:-7}
 export NDM_PIN_TRITON_AUTOTUNE=${NDM_PIN_TRITON_AUTOTUNE:-1}
 
 REQUESTED_NODES=${SLURM_JOB_NUM_NODES:-1}
-REQUESTED_SECONDS=1200
-REQUESTED_NODE_HOURS=0.333333
+REQUESTED_WALLTIME=${REQUESTED_WALLTIME:-${SLURM_TIMELIMIT:-00:20:00}}
+REQUESTED_SECONDS=${REQUESTED_SECONDS:-1200}
+REQUESTED_NODE_HOURS=${REQUESTED_NODE_HOURS:-0.333333}
 START_UTC=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 GIT_COMMIT=$(git rev-parse HEAD)
 
@@ -187,7 +188,7 @@ manifest = {
     "job_id": "${SLURM_JOB_ID:-manual}",
     "job_name": "${SLURM_JOB_NAME:-e97-1p3b-pretrained-canary}",
     "nodes": int("${REQUESTED_NODES}"),
-    "requested_walltime": "${SLURM_TIMELIMIT:-00:20:00}",
+    "requested_walltime": "${REQUESTED_WALLTIME}",
     "requested_seconds": ${REQUESTED_SECONDS},
     "requested_node_hours": float("${REQUESTED_NODE_HOURS}"),
     "human_approval_record": "${HUMAN_APPROVAL_RECORD}",
