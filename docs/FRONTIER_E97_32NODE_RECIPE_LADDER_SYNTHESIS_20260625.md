@@ -5,6 +5,12 @@ Task: `synthesize-e97-32-node`
 
 ## Decision
 
+2026-06-25 policy update: interpret this synthesis as node-island DDP
+baseline/control evidence. The primary future E97-MLP scaleout hypothesis is
+`DILOCO_ISLAND_SIZE=1`, one GPU per island, no per-step DDP gradient averaging,
+and periodic DiLoCo/model averaging only. The `DILOCO_ISLAND_SIZE=8` recipes
+below should not be used as the preferred default for new primary launch tasks.
+
 No available 32-node E97-MLP recipe is green against the fixed gate. The current
 best recipe is the clean K80 cadence-only avg-outer run: it repaired the train
 loss behavior most strongly and reduced the fixed-validation regression, but it
@@ -56,6 +62,9 @@ Green gate from the ladder plan:
 Node-hours are listed as requested / actual top-level elapsed allocation where
 available. Training and fixed-eval jobs are separated in the job column because
 the fixed evals are one-node forward-only jobs and do not launch training.
+All 16/32-node avg recipes below used `DILOCO_ISLAND_SIZE=8`: one Frontier node
+per DiLoCo island, with 8-GPU per-step DDP inside each island. They are controls
+for the old topology, not the primary no-DDP GPU-island path.
 
 | Recipe | Config | Job ids | Node-hours | Train loss behavior | Fixed CE / BPB delta vs 16-node source | Verdict |
 | --- | --- | --- | ---: | --- | --- | --- |
@@ -127,6 +136,12 @@ validation gap; broad 64-node exploration would multiply cost before a
 - `run-64-node-e97` should remain paused. It should not be replaced by a
   revised 64-node task until a 32-node recipe is green on the fixed gate and,
   preferably, confirmed on a larger fixed slice.
+- `run-64-node-e97` must not be resumed using the old `DILOCO_ISLAND_SIZE=8`
+  DDP-shaped default. Any future 64-node work needs a fresh task that labels
+  `DILOCO_ISLAND_SIZE=1` as the primary no-DDP path or explicitly declares a
+  node-island DDP control.
+- Tensor/model parallelism was not introduced and remains out of scope unless a
+  future E97 variant does not fit on one GPU.
 - This synthesis is strictly E97-MLP scope. GDN2 remains a separate control
   track and is not part of this 32-node scale-fix ladder.
 - CMAES, GDN2, 64+ node training, and uncontrolled source/checkpoint changes

@@ -4,6 +4,12 @@ Task: `plan-e97-32-node`
 
 ## Decision
 
+2026-06-25 policy update: this ladder is now baseline/control evidence for the
+old node-island DDP topology. Future primary E97-MLP scaleout should use
+`DILOCO_ISLAND_SIZE=1` GPU islands with no per-step DDP gradient averaging when
+the model fits on one GPU. Do not copy this ladder's `DILOCO_ISLAND_SIZE=8`
+default into new primary launch tasks; use it only for deliberate controls.
+
 Run one cadence-only diagnostic next: 32 Frontier nodes, E97-MLP, same 16-node
 source checkpoint, same island size 8, same avg outer, but `DILOCO_K=80`.
 
@@ -109,6 +115,13 @@ Acceptance gate for green:
 - `run-64-node-e97` remains `open (PAUSED)` and must stay paused until a
   32-node recipe clears the fixed gate and a larger fixed validation check is
   satisfactory.
+- The 16/32-node K10/K40/K80 avg evidence in this ladder used
+  `DILOCO_ISLAND_SIZE=8`, meaning one node island with 8-GPU per-step DDP inside
+  each island. It is baseline/control evidence, not the primary no-DDP recipe.
+- The primary E97-MLP scaleout hypothesis is now `DILOCO_ISLAND_SIZE=1`: one GPU
+  per island, no within-island DDP gradient averaging, and only periodic
+  DiLoCo/model averaging. Tensor/model parallelism remains separate and should
+  only be considered if the model does not fit on one GPU.
 - GDN2 and CMAES are out of scope for this E97-MLP 32-node scale-fix ladder.
 - Schedule-free is not treated as the default first fix; it remains a controlled
   later arm after cadence and merge-strength diagnostics.
