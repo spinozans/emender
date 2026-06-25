@@ -37,6 +37,7 @@ export SAVE_EVERY=${SAVE_EVERY:-160}
 export KEEP_CHECKPOINTS=${KEEP_CHECKPOINTS:-4}
 export REQUESTED_SECONDS=${REQUESTED_SECONDS:-3600}
 export REQUESTED_NODE_HOURS=${REQUESTED_NODE_HOURS:-8.0}
+export REQUESTED_WALLTIME=${REQUESTED_WALLTIME:-01:00:00}
 export HUMAN_APPROVAL_RECORD=${HUMAN_APPROVAL_RECORD:-WG task validate-e97-1-3b explicitly authorized bounded 8-node pretrained GPU-island/no-DDP cadence probes K40/K160/K320; this task submits only the K160 8-node avg-outer probe.}
 
 REPO=${REPO:-${SLURM_SUBMIT_DIR:-$PWD}}
