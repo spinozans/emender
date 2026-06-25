@@ -4,26 +4,30 @@ WG task: `synthesize-e97-1-3b`
 
 ## Decision
 
-Proceed to exactly one bounded 16-node pretrained GPU-island/no-DDP K40 probe.
+Do not promote any 8-node pretrained cadence directly to 16 nodes yet.
 
-K40 is the only green member of the 8-node bracket. It used the same staged
-pretrained source checkpoint and fixed eval baseline as K160 and K320, completed
-cleanly, produced finite/improving train-loss windows, wrote a final consensus
-checkpoint with valid `latest.pt`, and passed the fixed eval non-regression
-gate:
+The K40 arm is the cleanest smoke-gated row: it completed reliably, finalized a
+valid consensus checkpoint, and was the only arm whose fixed source-vs-candidate
+eval delta stayed inside the original non-regression thresholds. However, that
+fixed eval scored only 16,384 tokens. It is useful as a deterministic smoke
+check, but it is too small to dominate the scale decision by itself.
 
-- CE delta: `+0.00803614`, within the `<= +0.025` gate.
-- BPB delta: `+0.00334350`, within the `<= +0.010` gate.
+The larger rank-0 training-loss windows make the bracket less one-sided:
 
-K160 and K320 are not scale candidates from this bracket. Both were
-operationally clean and had finite/improving train loss, but both regressed
-well beyond the fixed eval thresholds:
+- K160 is train-strong at its own longer endpoint, with the best endpoint
+  last-500 and last-1000 local-step averages.
+- K40 is best when all arms are compared over the same horizon through the K40
+  endpoint, which is the fairest short-run cadence comparison.
+- K320 is weak on both the tiny fixed eval and the larger training windows.
 
-- K160: CE `+0.23717952`, BPB `+0.09868055`.
-- K320: CE `+0.30940366`, BPB `+0.12873002`.
+Recommendation: run a larger deterministic source-vs-candidate eval over K40
+and K160, with K320 optional as a negative-control row if cheap, before choosing
+any 16-node scale path. The blocker for immediate scaleout is that the only
+quality-preserving signal favoring K40 is the tiny fixed-eval smoke slice, while
+the larger train-loss aggregates give K160 credible counter-evidence at its own
+endpoint.
 
-Created downstream WG task `run-e97-1-3b-4` for the one selected 16-node K40
-probe. No 16-node Slurm job was submitted from this synthesis task.
+No 16-node Slurm job was submitted from this synthesis task.
 
 `run-64-node-e97` was checked after synthesis and remains `open (PAUSED)`.
 
@@ -41,7 +45,7 @@ All rows below used the same staged source checkpoint:
 /lustre/orion/bif148/proj-shared/emender/checkpoints/E97_1.3B_diloco_20260623_103742_step260500/checkpoint_E97_1.3B_diloco_20260623_103742_step260500_loss_2.7481.pt
 ```
 
-All fixed eval comparisons used the same scoring tensor:
+All fixed eval comparisons used the same smoke scoring tensor:
 
 ```text
 /lustre/orion/bif148/proj-shared/emender/frontier_runs/fixed_eval/20260624/e97-MLP/4894484-20260624T130601Z/artifacts/commapile_mainmix_val_smoke_p50k_2048.pt
@@ -53,17 +57,19 @@ The source fixed eval baseline was:
 | --- | ---: | ---: | ---: |
 | Source pretrained checkpoint | `260500` | `26.93483090` | `11.20646537` |
 
-The absolute CE/BPB values on this smoke tensor are poor; the decision signal is
-the row-matched candidate-minus-source delta under the same invocation.
+The absolute CE/BPB values on this 16,384-token smoke tensor are poor; the
+useful signal is only the row-matched candidate-minus-source delta under the
+same invocation. Because the tensor is tiny, the deltas are treated as smoke
+evidence rather than final quality ranking evidence.
 
 ## Bracket Summary
 
 | Row | Job ids | Nodes / topology | K / outer | Source -> final step | Train loss trend | Throughput | Merges | Node-hours | Fixed eval CE / BPB delta | Finalization behavior | Verdict |
 | --- | --- | --- | --- | ---: | --- | ---: | ---: | --- | ---: | --- | --- |
 | Source baseline | eval `4900725` | 1-node eval only | n/a | `260500` | Baseline checkpoint loss metadata `2.7480917453765867`; no continuation | n/a | n/a | eval elapsed `00:00:49` | `+0.00000000` / `+0.00000000` | Strict load OK; baseline CSV written | Baseline |
-| 8-node K40 | train `4900838`; eval `4901316` | 8 Frontier nodes, 64 singleton GPU islands, no DDP | `DILOCO_K=40`, avg outer, export basis `x` | `260500 -> 263082` | Rank-0 first-20 mean `2.7153`, last-20 mean `2.6672`, `FINAL_LOSS_LAST100=2.6645`; finite and mildly improving | mean `139802` global tok/s; median after first 10 rows `164697` global tok/s | `66` | train requested/actual `8.0` / `6.704444`; eval requested/actual `1.0` / `0.023333` | `+0.00803614` / `+0.00334350` | Clean exit; periodic K-aligned saves through `263080`; final consensus merge at `263082`; final checkpoint and `latest.pt` valid | Green: select for one 16-node probe |
-| 8-node K160 | train `4900869`; eval `4901464` | 8 Frontier nodes, 64 singleton GPU islands, no DDP | `DILOCO_K=160`, avg outer, export basis `x` | `260500 -> 263840` | First-100 mean `2.71014`, last-100 mean `2.636824`, `FINAL_LOSS_LAST100=2.6368`; finite and improving | filtered mean `167306`, filtered median `168217` global tok/s | `21` | train requested/actual `8.0` / `6.700`; eval actual `0.023056` from `00:01:23` elapsed | `+0.23717952` / `+0.09868055` | Clean exit; final step exactly on K boundary, final merge skipped because already consensus; final checkpoint and `latest.pt` valid | Red: fixed eval fails |
-| 8-node K320 | train `4901367`; eval `4901744` | 8 Frontier nodes, 64 singleton GPU islands, no DDP | `DILOCO_K=320`, avg outer, export basis `x` | `260500 -> 263947` | First-20 mean `2.7035`, last-20 mean `2.5451`, `FINAL_LOSS_LAST100=2.6770`; finite and mildly improving | mean `161693`, median `165734`, last-20 mean `166255` global tok/s | `11` | train requested/actual `8.000000` / `6.704444`; eval actual `0.023333` | `+0.30940366` / `+0.12873002` | Clean exit; final consensus merge/checkpoint at `263947`; `latest.pt` valid; 64/64 final-ready markers present | Red: fixed eval fails |
+| 8-node K40 | train `4900838`; eval `4901316` | 8 Frontier nodes, 64 singleton GPU islands, no DDP | `DILOCO_K=40`, avg outer, export basis `x` | `260500 -> 263082` | Rank-0 first-20 mean `2.7153`, last-20 mean `2.6672`, `FINAL_LOSS_LAST100=2.6645`; endpoint last-500 `2.664524`, last-1000 `2.685093`, last-2000 `2.681430`; same-horizon last-1000 through new step 2580 `2.685093` | mean `139802` global tok/s; median after first 10 rows `164697` global tok/s | `66` | train requested/actual `8.0` / `6.704444`; eval requested/actual `1.0` / `0.023333` | `+0.00803614` / `+0.00334350` | Clean exit; periodic K-aligned saves through `263080`; final consensus merge at `263082`; final checkpoint and `latest.pt` valid | Provisionally clean; needs larger eval before scaleout |
+| 8-node K160 | train `4900869`; eval `4901464` | 8 Frontier nodes, 64 singleton GPU islands, no DDP | `DILOCO_K=160`, avg outer, export basis `x` | `260500 -> 263840` | First-100 mean `2.71014`, last-100 mean `2.636824`, `FINAL_LOSS_LAST100=2.6368`; endpoint last-500 `2.636824`, last-1000 `2.676680`, last-2000 `2.684321`; same-horizon last-1000 through new step 2580 `2.710359` | filtered mean `167306`, filtered median `168217` global tok/s | `21` | train requested/actual `8.0` / `6.700`; eval actual `0.023056` from `00:01:23` elapsed | `+0.23717952` / `+0.09868055` | Clean exit; final step exactly on K boundary, final merge skipped because already consensus; final checkpoint and `latest.pt` valid | Train-strong at own endpoint, but smoke eval regressed; needs larger eval |
+| 8-node K320 | train `4901367`; eval `4901744` | 8 Frontier nodes, 64 singleton GPU islands, no DDP | `DILOCO_K=320`, avg outer, export basis `x` | `260500 -> 263947` | First-20 mean `2.7035`, last-20 mean `2.5451`, `FINAL_LOSS_LAST100=2.6770`; endpoint last-500 `2.676967`, last-1000 `2.713588`, last-2000 `2.722002`; same-horizon last-1000 through new step 2580 `2.744789` | mean `161693`, median `165734`, last-20 mean `166255` global tok/s | `11` | train requested/actual `8.000000` / `6.704444`; eval actual `0.023333` | `+0.30940366` / `+0.12873002` | Clean exit; final consensus merge/checkpoint at `263947`; `latest.pt` valid; 64/64 final-ready markers present | Not a scale candidate from this bracket |
 
 ## Systems Interpretation
 
@@ -81,44 +87,51 @@ The cadence difference mostly changed merge frequency and synchronization cost:
 - K320 merged `11` times, with total sync time `49.402` seconds and average
   sync `4491.1` ms.
 
-Throughput for K160/K320 was slightly higher than K40 because there were fewer
-save/merge dips, but that operational gain did not preserve fixed-eval quality.
-For this staged pretrained checkpoint and this short continuation envelope,
-lower merge cadence was not quality-preserving.
+Throughput for K160/K320 was higher than K40 because there were fewer save/merge
+dips. K160 therefore has an operational advantage if a larger eval shows that
+its apparent smoke-eval regression is not representative.
 
 ## Quality Interpretation
 
-Train loss alone would have been misleading. K160 and K320 both showed finite
-and improving logged train-loss windows, and K160 even had the lowest reported
-`FINAL_LOSS_LAST100` among the three arms. The fixed eval row, however, showed
-large candidate-minus-source regressions for both K160 and K320 under the same
-scoring tensor and same invocation.
+The original fixed eval gate was valuable for catching obvious deterministic
+regressions, but it was only a tiny 16,384-token smoke slice. It should not be
+used as the sole ranking signal.
 
-K40 is not proven optimal; it is only the cleanest bracket row. It stayed within
-the fixed eval gate while maintaining the same operational reliability as the
-higher-K arms. That is enough evidence for one bounded 16-node selected-recipe
-probe, but not enough to skip directly to 32 or 64 nodes.
+The loss aggregates show two different stories:
 
-## Downstream Task
+- Endpoint comparison favors K160:
+  - last 500 local steps: K40 `2.664524`, K160 `2.636824`, K320 `2.676967`
+  - last 1000 local steps: K40 `2.685093`, K160 `2.676680`, K320 `2.713588`
+  - last 2000 local steps: K40 `2.681430`, K160 `2.684321`, K320 `2.722002`
+- Same-horizon comparison through K40's endpoint favors K40:
+  - last 1000 local steps through new step 2580: K40 `2.685093`,
+    K160 `2.710359`, K320 `2.744789`
 
-Created exactly one downstream WG task:
+This means K40 is the conservative same-horizon candidate, while K160 is a real
+endpoint contender rather than a simple failed row. K320 remains the weakest
+recipe because it loses on smoke eval and on the broader training-loss windows.
 
-```text
-run-e97-1-3b-4 - Run E97 1.3B pretrained 16-node K40 probe
-```
+## Next Step
 
-Required envelope for that task:
+Create no immediate 16-node scaleout job from this synthesis. Instead, use the
+8-node artifacts to run a larger deterministic fixed source-vs-candidate eval
+before picking a scale recipe.
 
-- Resume from the same staged source checkpoint used here.
-- Keep the same fixed eval scoring tensor and source baseline.
-- Use singleton GPU islands/no DDP.
-- Use `DILOCO_K=40`, `SAVE_EVERY=40`, `DILOCO_OUTER_OPTIMIZER=avg`,
-  `DILOCO_OUTER_LR=1.0`, `DILOCO_OUTER_BETA=0.0`,
-  `DILOCO_EXPORT_BASIS=x`, `BATCH_SIZE=1`, and `CHUNK_SIZE=2048`.
-- Submit exactly one bounded 16-node training job and exactly one fixed eval.
-- Do not submit 32-node, 64-node, GDN2, CMAES, schedule-free outer, LR sweep,
-  beta sweep, extra K sweep, or a second 16-node job.
-- Confirm `run-64-node-e97` remains paused.
+Recommended bounded eval follow-up:
+
+- Score the staged source checkpoint, K40 final checkpoint, and K160 final
+  checkpoint on the same larger deterministic token tensor.
+- Include K320 only if the extra eval cost is negligible; it is useful as a
+  negative-control row but not necessary for selecting between K40 and K160.
+- Use identical evaluator code, model loading mode, tokenizer, batch size, and
+  `--y-mode saved` semantics across rows.
+- Report CE/BPB, candidate-minus-source deltas, token count, walltime,
+  node-hours, checkpoint paths, and any strict-load/finalization anomalies.
+- Select a 16-node recipe only if the larger eval and the train-loss windows
+  agree that one row is quality-preserving enough to scale.
+
+The previously opened downstream scaleout task `run-e97-1-3b-4` is no longer
+the recommended next step under this corrected interpretation.
 
 ## Scope Confirmation
 
@@ -127,8 +140,9 @@ Required envelope for that task:
   - `docs/FRONTIER_E97_1P3B_PRETRAINED_8NODE_K40_20260625.md`
   - `docs/FRONTIER_E97_1P3B_PRETRAINED_K160_8NODE_20260625.md`
   - `docs/FRONTIER_E97_1P3B_PRETRAINED_8N_K320_20260625.md`
-- Created exactly one downstream WG scaleout task because K40 was green:
-  `run-e97-1-3b-4`.
+- Incorporated the correction that fixed eval is a tiny 16,384-token smoke slice
+  and should not dominate interpretation.
+- Labeled K160 train-strong at its own endpoint and K40 favored only on the
+  same-horizon K40-endpoint comparison.
 - Did not run `sbatch` and submitted no Slurm job from this synthesis task.
 - Confirmed `run-64-node-e97` remains `open (PAUSED)`.
-
