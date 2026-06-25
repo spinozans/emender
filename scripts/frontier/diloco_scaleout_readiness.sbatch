@@ -129,6 +129,10 @@ if [[ -n "${RESUME_CHECKPOINT:-}" ]]; then
   COMMON_ARGS+=(--resume "$RESUME_CHECKPOINT")
 fi
 
+if [[ -n "${DILOCO_BOOTSTRAP_OUTER_STATE:-}" ]]; then
+  COMMON_ARGS+=(--diloco_bootstrap_outer_state "$DILOCO_BOOTSTRAP_OUTER_STATE")
+fi
+
 case "$SCALEOUT_VARIANT" in
   e97-MLP)
     MODEL_ARGS=(
@@ -291,7 +295,10 @@ manifest = {
     "human_approval_record": "${HUMAN_APPROVAL_RECORD}",
     "resume_checkpoint": "${RESUME_CHECKPOINT:-}",
     "diloco_outer_optimizer": "${DILOCO_OUTER_OPTIMIZER}",
+    "diloco_outer_lr": float("${DILOCO_OUTER_LR}"),
+    "diloco_outer_beta": float("${DILOCO_OUTER_BETA}"),
     "diloco_export_basis": "${DILOCO_EXPORT_BASIS}",
+    **({"diloco_bootstrap_outer_state": "${DILOCO_BOOTSTRAP_OUTER_STATE:-}"} if "${DILOCO_BOOTSTRAP_OUTER_STATE:-}" else {}),
     "start_utc": "${START_UTC}",
     "end_utc": "${END_UTC}",
     "exit_status": int("${TRAIN_STATUS}"),

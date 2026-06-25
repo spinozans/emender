@@ -725,6 +725,239 @@ def test_diloco_checkpoint_roundtrip_preserves_outer_and_inner_sf_state():
     print("PASS test_diloco_checkpoint_roundtrip_preserves_outer_and_inner_sf_state")
 
 
+def test_nonavg_resume_missing_outer_state_fails_closed():
+    import train
+    model, opt = _build()
+    args = _ns(
+        resume='missing_outer_state.pt',
+        diloco_outer_optimizer='momentum',
+        diloco_bootstrap_outer_state='none',
+    )
+    try:
+        train.resolve_diloco_outer_state_for_resume(
+            model, opt, args, loaded_state=None, ckpt={'step': 12},
+            inner_optimizer_state_loaded=True)
+    except ValueError as exc:
+        assert 'from-loaded-model' in str(exc)
+        assert 'missing_diloco_outer_state' in str(exc)
+    else:
+        raise AssertionError("non-avg resume without outer state did not fail closed")
+    print("PASS test_nonavg_resume_missing_outer_state_fails_closed")
+
+
+def test_bootstrap_momentum_preserves_loaded_model_tensors():
+    import train
+    model, opt = _build()
+    _local_train(model, opt, rank=0, k_steps=4)
+    pre = [p.data.detach().clone() for p in model.parameters()]
+    opt.eval()
+    expected_x = [p.data.detach().clone() for p in model.parameters()]
+    opt.train()
+
+    args = _ns(
+        resume='loaded.pt',
+        diloco_outer_optimizer='momentum',
+        diloco_bootstrap_outer_state='from-loaded-model',
+    )
+    outer_state, metadata = train.resolve_diloco_outer_state_for_resume(
+        model, opt, args, loaded_state=None, ckpt={'step': 4},
+        inner_optimizer_state_loaded=True)
+
+    assert outer_state['mode'] == 'momentum'
+    assert opt.param_groups[0]['train_mode'] is True
+    for p, before in zip(model.parameters(), pre):
+        assert torch.equal(p.data, before), "momentum bootstrap changed live model tensor bytes"
+    for anchor, expected in zip(outer_state['anchor'], expected_x):
+        assert torch.equal(anchor, expected), "momentum anchor did not use loaded eval/x basis"
+    for moment in outer_state['moment']:
+        assert torch.equal(moment, torch.zeros_like(moment)), "momentum buffer is not exact zero"
+    assert metadata['inner_schedulefree_basis_used_for_anchor'] == 'x'
+    assert metadata['model_tensors_equal_after_restore'] is True
+    print("PASS test_bootstrap_momentum_preserves_loaded_model_tensors")
+
+
+def _worker_bootstrap_partial_average(rank, world_size, init_file, ret):
+    dist.init_process_group(backend='gloo', init_method=f'file://{init_file}',
+                            rank=rank, world_size=world_size)
+    import train
+    model, opt = _build()
+    args = _ns(
+        resume='loaded.pt',
+        diloco_outer_optimizer='momentum',
+        diloco_outer_lr=0.5,
+        diloco_outer_beta=0.0,
+        diloco_bootstrap_outer_state='from-loaded-model',
+    )
+    outer_state, metadata = train.resolve_diloco_outer_state_for_resume(
+        model, opt, args, loaded_state=None, ckpt={'step': 0},
+        inner_optimizer_state_loaded=False)
+    anchor = [t.detach().clone() for t in outer_state['anchor']]
+    assert metadata['inner_schedulefree_basis_used_for_anchor'] == 'loaded'
+
+    _local_train(model, opt, rank, k_steps=8)
+    opt.eval()
+    pre_x = [p.data.detach().clone() for p in model.parameters()]
+    opt.train()
+    gathered = [None] * world_size
+    dist.all_gather_object(gathered, {'x': [t.tolist() for t in pre_x]})
+
+    train.diloco_merge(model, opt, args, world_size, outer_state)
+    opt.eval()
+    post_x = [p.data.detach().clone() for p in model.parameters()]
+    opt.train()
+
+    if rank == 0:
+        expected = []
+        for j, a in enumerate(anchor):
+            mean_x = torch.zeros_like(a)
+            for rr in range(world_size):
+                mean_x += torch.tensor(gathered[rr]['x'][j])
+            mean_x /= world_size
+            expected.append(a + 0.5 * (mean_x - a))
+        ret['max_diff'] = max((a - b).abs().max().item() for a, b in zip(post_x, expected))
+        ret['anchor_advanced'] = max(
+            (a - b).abs().max().item()
+            for a, b in zip(outer_state['anchor'], expected)
+        )
+    flat = torch._utils._flatten_dense_tensors([p.data for p in model.parameters()]).clone()
+    allp = [torch.zeros_like(flat) for _ in range(world_size)]
+    dist.all_gather(allp, flat)
+    if rank == 0:
+        ret['consensus_diff'] = max((allp[r] - allp[0]).abs().max().item()
+                                    for r in range(world_size))
+    dist.barrier()
+    dist.destroy_process_group()
+
+
+def test_bootstrap_partial_average_first_merge_math():
+    r = _run_worker(_worker_bootstrap_partial_average)
+    assert r['max_diff'] <= 1e-5, f"partial-average bootstrap first merge mismatch: {r}"
+    assert r['anchor_advanced'] <= 1e-5, f"partial-average anchor did not advance: {r}"
+    assert r['consensus_diff'] <= 1e-6, f"partial-average merge lost consensus: {r}"
+    print("PASS test_bootstrap_partial_average_first_merge_math")
+
+
+def test_bootstrap_sfsgd_y_preserves_loaded_model_tensors():
+    import train
+    model, opt = _build()
+    _local_train(model, opt, rank=0, k_steps=4)
+    opt.train()
+    expected_y = [p.data.detach().clone() for p in model.parameters()]
+    pre = [p.data.detach().clone() for p in model.parameters()]
+    args = _ns(
+        resume='loaded.pt',
+        diloco_outer_optimizer='sfsgd',
+        diloco_outer_lr=1.25,
+        diloco_outer_beta=0.1,
+        diloco_export_basis='y',
+        diloco_bootstrap_outer_state='from-loaded-model',
+    )
+    outer_state, metadata = train.resolve_diloco_outer_state_for_resume(
+        model, opt, args, loaded_state=None, ckpt={'step': 4},
+        inner_optimizer_state_loaded=True)
+    assert opt.param_groups[0]['train_mode'] is True
+    for p, before in zip(model.parameters(), pre):
+        assert torch.equal(p.data, before), "sfsgd_y bootstrap changed live model tensor bytes"
+    for key in ('x', 'z', 'y'):
+        for got, expected in zip(outer_state[key], expected_y):
+            assert torch.equal(got, expected), f"sfsgd_y outer {key} did not start at loaded y"
+    assert outer_state['k'] == 0
+    assert outer_state['weight_sum'] == 0.0
+    assert outer_state['lr_max'] == 1.25
+    assert metadata['inner_schedulefree_basis_used_for_anchor'] == 'y'
+    print("PASS test_bootstrap_sfsgd_y_preserves_loaded_model_tensors")
+
+
+def test_bootstrap_sfsgd_y_pretrained_no_optimizer_state():
+    import train
+    model, opt = _build()
+    pre = [p.data.detach().clone() for p in model.parameters()]
+    args = _ns(
+        resume='pretrained.pt',
+        diloco_outer_optimizer='sfsgd',
+        diloco_outer_lr=0.75,
+        diloco_outer_beta=0.1,
+        diloco_export_basis='y',
+        diloco_bootstrap_outer_state='from-loaded-model',
+    )
+    outer_state, metadata = train.resolve_diloco_outer_state_for_resume(
+        model, opt, args, loaded_state=None, ckpt={'step': 0},
+        inner_optimizer_state_loaded=False)
+    for p, before in zip(model.parameters(), pre):
+        assert torch.equal(p.data, before), "pretrained sfsgd_y bootstrap changed model bytes"
+    for key in ('x', 'z', 'y'):
+        for got, expected in zip(outer_state[key], pre):
+            assert torch.equal(got, expected), f"pretrained sfsgd_y outer {key} != loaded weights"
+    assert metadata['inner_optimizer_state_loaded'] is False
+    assert metadata['inner_schedulefree_basis_used_for_anchor'] == 'loaded'
+    print("PASS test_bootstrap_sfsgd_y_pretrained_no_optimizer_state")
+
+
+def test_checkpoint_metadata_records_outer_bootstrap():
+    import train
+    model, opt = _build()
+    args = _ns(
+        resume='source.pt',
+        diloco_outer_optimizer='momentum',
+        diloco_outer_lr=0.5,
+        diloco_outer_beta=0.0,
+        diloco_bootstrap_outer_state='from-loaded-model',
+    )
+    outer_state, bootstrap_metadata = train.resolve_diloco_outer_state_for_resume(
+        model, opt, args, loaded_state=None, ckpt={'step': 99},
+        inner_optimizer_state_loaded=False)
+    metadata = train.checkpoint_metadata_with_diloco_bootstrap(
+        {'kind': 'periodic'}, bootstrap_metadata)
+    with tempfile.TemporaryDirectory() as d:
+        path = train.save_checkpoint(
+            model, opt, step=100, loss=1.25, output_dir=Path(d), keep_n=2,
+            outer_state=outer_state, metadata=metadata)
+        ckpt = torch.load(path, map_location='cpu')
+    block = ckpt['checkpoint_metadata']['diloco_outer_state_bootstrap']
+    assert block['performed'] is True
+    assert block['guard'] == 'from-loaded-model'
+    assert block['source_checkpoint'] == 'source.pt'
+    assert block['source_checkpoint_step'] == 99
+    assert block['missing_or_incompatible_reason'] == 'missing_diloco_outer_state'
+    assert block['target_outer_optimizer'] == 'momentum'
+    assert block['target_outer_lr'] == 0.5
+    assert block['target_outer_beta'] == 0.0
+    assert block['bootstrap_source'] == 'loaded_model_weights'
+    assert block['model_tensors_equal_after_restore'] is True
+    assert 'restored byte-identical' in block['model_weight_mutation']
+    assert ckpt['diloco_outer_state']['bootstrap_metadata']['guard'] == 'from-loaded-model'
+    print("PASS test_checkpoint_metadata_records_outer_bootstrap")
+
+
+def test_compatible_outer_state_not_overwritten_by_bootstrap_flag():
+    import train
+    model, opt = _build()
+    args = _ns(
+        resume='source.pt',
+        diloco_outer_optimizer='sfsgd',
+        diloco_bootstrap_outer_state='from-loaded-model',
+    )
+    loaded_state = {
+        'mode': 'sfsgd',
+        'x': [p.data.detach().clone() for p in model.parameters()],
+        'z': [p.data.detach().clone() for p in model.parameters()],
+        'y': [p.data.detach().clone() for p in model.parameters()],
+        'k': 3,
+        'weight_sum': 2.0,
+        'lr_max': 1.0,
+    }
+    try:
+        train.resolve_diloco_outer_state_for_resume(
+            model, opt, args, loaded_state=loaded_state,
+            ckpt={'step': 3, 'diloco_outer_state': loaded_state},
+            inner_optimizer_state_loaded=True)
+    except ValueError as exc:
+        assert 'compatible diloco_outer_state' in str(exc)
+    else:
+        raise AssertionError("bootstrap flag silently overwrote compatible outer state")
+    print("PASS test_compatible_outer_state_not_overwritten_by_bootstrap_flag")
+
+
 def _worker_basis(rank, world_size, init_file, ret):
     """Basis consistency: after real training x != y. Capture the anchor the way
     train.py does (SF EVAL basis), then merge with NO cross-rank divergence (the
@@ -879,6 +1112,13 @@ def test_state_gap_preserved_under_outer_rebase():
 
 
 if __name__ == '__main__':
+    test_nonavg_resume_missing_outer_state_fails_closed()
+    test_bootstrap_momentum_preserves_loaded_model_tensors()
+    test_bootstrap_partial_average_first_merge_math()
+    test_bootstrap_sfsgd_y_preserves_loaded_model_tensors()
+    test_bootstrap_sfsgd_y_pretrained_no_optimizer_state()
+    test_checkpoint_metadata_records_outer_bootstrap()
+    test_compatible_outer_state_not_overwritten_by_bootstrap_flag()
     test_local_sgd_averaging()
     test_outer_momentum()
     test_schedulefree_dynamic_loss_continuity()

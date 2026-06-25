@@ -354,6 +354,13 @@ def parse_args():
                         help='Basis exported to the outer optimizer at a DiLoCo boundary. '
                              'x preserves current eval-weight semantics; y exports the '
                              'inner ScheduleFree train point for ablations.')
+    parser.add_argument('--diloco_bootstrap_outer_state', type=str, default='none',
+                        choices=['none', 'from-loaded-model'],
+                        help='Explicit non-avg DiLoCo resume guard. Default none preserves '
+                             'fail-closed behavior when the checkpoint lacks compatible '
+                             'diloco_outer_state. from-loaded-model initializes fresh outer '
+                             'bookkeeping from the already-loaded model/optimizer tensors '
+                             'without changing live model parameters.')
     parser.add_argument('--diloco_island_size', type=int, default=0,
                         help='HYBRID mode (task diloco-loss-parity-longhorizon): >1 forms '
                              'islands of this many consecutive ranks that do per-step DDP '
@@ -786,6 +793,7 @@ def setup_output_dir(args, model_metadata=None):
         'output_dir': str(output_dir),
         'created_at_utc': datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='seconds'),
         'resume': getattr(args, 'resume', None),
+        'diloco_bootstrap_outer_state': getattr(args, 'diloco_bootstrap_outer_state', 'none'),
         'model': model_metadata or getattr(args, '_model_metadata', None),
     }
 
@@ -1005,6 +1013,204 @@ def _clone_param_list_like(params, source=None, fill_zeros=False):
                 t.zero_()
         out.append(t)
     return out
+
+
+def _snapshot_model_params(core_model):
+    return [p.data.detach().clone() for p in core_model.parameters()]
+
+
+def _restore_model_params(core_model, snapshot):
+    for p, saved in zip(core_model.parameters(), snapshot):
+        p.data.copy_(saved)
+
+
+def _model_params_equal_snapshot(core_model, snapshot):
+    return all(torch.equal(p.data, saved) for p, saved in zip(core_model.parameters(), snapshot))
+
+
+def _current_git_commit():
+    try:
+        import subprocess
+        return subprocess.check_output(
+            ['git', 'rev-parse', 'HEAD'],
+            cwd=os.path.dirname(os.path.abspath(__file__)),
+            stderr=subprocess.DEVNULL,
+            text=True,
+        ).strip()
+    except Exception:
+        return None
+
+
+def _diloco_outer_bootstrap_metadata(args, ckpt=None, reason=None,
+                                     inner_optimizer_state_loaded=None,
+                                     source_basis='loaded',
+                                     source_has_outer_state=None,
+                                     model_tensors_equal_after_restore=None):
+    ckpt = ckpt or {}
+    if source_has_outer_state is None:
+        source_has_outer_state = 'diloco_outer_state' in ckpt
+    metadata = {
+        'performed': True,
+        'guard': 'from-loaded-model',
+        'requested_cli': '--diloco_bootstrap_outer_state=from-loaded-model',
+        'source_checkpoint': getattr(args, 'resume', None),
+        'source_checkpoint_step': ckpt.get('step'),
+        'source_checkpoint_has_diloco_outer_state': bool(source_has_outer_state),
+        'missing_or_incompatible_reason': reason,
+        'target_outer_optimizer': getattr(args, 'diloco_outer_optimizer', None),
+        'target_export_basis': getattr(args, 'diloco_export_basis', None),
+        'target_outer_lr': getattr(args, 'diloco_outer_lr', None),
+        'target_outer_beta': getattr(args, 'diloco_outer_beta', None),
+        'bootstrap_source': 'loaded_model_weights',
+        'model_weight_mutation': 'none; restored byte-identical after bootstrap',
+        'model_tensors_equal_after_restore': bool(model_tensors_equal_after_restore),
+        'inner_optimizer_state_loaded': bool(inner_optimizer_state_loaded),
+        'inner_schedulefree_basis_used_for_anchor': source_basis,
+        'created_at_utc': datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='seconds'),
+        'code_commit': _current_git_commit(),
+    }
+    return metadata
+
+
+def checkpoint_metadata_with_diloco_bootstrap(metadata, bootstrap_metadata):
+    if bootstrap_metadata:
+        out = dict(metadata or {})
+        out['diloco_outer_state_bootstrap'] = bootstrap_metadata
+        return out
+    return metadata
+
+
+def bootstrap_diloco_outer_state_from_loaded_model(core_model, optimizer, args,
+                                                  ckpt=None,
+                                                  reason=None,
+                                                  inner_optimizer_state_loaded=None,
+                                                  source_has_outer_state=None):
+    """Create fresh non-avg DiLoCo outer state from already-loaded tensors.
+
+    The helper may switch ScheduleFree modes to derive the requested basis, but
+    it restores the live model parameters byte-for-byte before returning.
+    """
+    if args.diloco_outer_optimizer == 'avg':
+        return None, None
+
+    params = list(core_model.parameters())
+    pre_bootstrap = _snapshot_model_params(core_model)
+    pre_schedulefree_train_modes = None
+    if getattr(args, 'optimizer', None) == 'schedulefree':
+        pre_schedulefree_train_modes = [
+            group.get('train_mode') for group in optimizer.param_groups
+        ]
+    source_basis = 'loaded'
+    try:
+        if args.diloco_outer_optimizer == 'momentum':
+            if args.optimizer == 'schedulefree' and inner_optimizer_state_loaded:
+                optimizer.eval()
+                source_basis = 'x'
+                anchor = [p.data.detach().clone() for p in params]
+            else:
+                anchor = [t.clone() for t in pre_bootstrap]
+            state = {
+                'mode': 'momentum',
+                'anchor': anchor,
+                'moment': [torch.zeros_like(t) for t in anchor],
+            }
+        elif args.diloco_outer_optimizer == 'sfsgd':
+            if args.optimizer != 'schedulefree':
+                raise ValueError("--diloco_outer_optimizer sfsgd requires --optimizer schedulefree")
+            export_basis = getattr(args, 'diloco_export_basis', 'x')
+            if inner_optimizer_state_loaded:
+                if export_basis == 'y':
+                    optimizer.train()
+                    source_basis = 'y'
+                else:
+                    optimizer.eval()
+                    source_basis = 'x'
+                outer_basis = [p.data.detach().clone() for p in params]
+            else:
+                outer_basis = [t.clone() for t in pre_bootstrap]
+            outer_lr = float(args.diloco_outer_lr)
+            state = {
+                'mode': 'sfsgd',
+                'x': [t.clone() for t in outer_basis],
+                'z': [t.clone() for t in outer_basis],
+                'y': [t.clone() for t in outer_basis],
+                'k': 0,
+                'weight_sum': 0.0,
+                'lr_max': outer_lr,
+            }
+        else:
+            raise ValueError(f"unknown DiLoCo outer optimizer: {args.diloco_outer_optimizer}")
+    finally:
+        _restore_model_params(core_model, pre_bootstrap)
+        if pre_schedulefree_train_modes is not None:
+            for group, train_mode in zip(optimizer.param_groups, pre_schedulefree_train_modes):
+                if train_mode is not None:
+                    group['train_mode'] = train_mode
+
+    restored_equal = _model_params_equal_snapshot(core_model, pre_bootstrap)
+    if not restored_equal:
+        raise RuntimeError("DiLoCo outer-state bootstrap changed live model parameters")
+    metadata = _diloco_outer_bootstrap_metadata(
+        args,
+        ckpt=ckpt,
+        reason=reason,
+        inner_optimizer_state_loaded=inner_optimizer_state_loaded,
+        source_basis=source_basis,
+        source_has_outer_state=source_has_outer_state,
+        model_tensors_equal_after_restore=restored_equal,
+    )
+    state['bootstrap_metadata'] = metadata
+    return state, metadata
+
+
+def resolve_diloco_outer_state_for_resume(core_model, optimizer, args,
+                                          loaded_state=None,
+                                          ckpt=None,
+                                          inner_optimizer_state_loaded=False):
+    """Fail-closed DiLoCo resume guard plus explicit bootstrap opt-in."""
+    if args.diloco_outer_optimizer == 'avg':
+        return initialize_diloco_outer_state(
+            core_model, optimizer, args, loaded_state=loaded_state), None
+
+    if not getattr(args, 'resume', None):
+        return initialize_diloco_outer_state(core_model, optimizer, args), None
+
+    bootstrap_guard = getattr(args, 'diloco_bootstrap_outer_state', 'none')
+    reason = None
+    source_has_outer_state = loaded_state is not None
+    if loaded_state is None:
+        reason = 'missing_diloco_outer_state'
+    else:
+        mode = loaded_state.get('mode') if isinstance(loaded_state, dict) else None
+        if mode != args.diloco_outer_optimizer:
+            reason = f"incompatible_diloco_outer_state_mode:{mode}->{args.diloco_outer_optimizer}"
+
+    if reason is None:
+        if bootstrap_guard == 'from-loaded-model':
+            raise ValueError(
+                "checkpoint already contains compatible diloco_outer_state; "
+                "--diloco_bootstrap_outer_state from-loaded-model is only allowed "
+                "when outer state is missing or incompatible")
+        return initialize_diloco_outer_state(
+            core_model, optimizer, args, loaded_state=loaded_state), None
+
+    if bootstrap_guard != 'from-loaded-model':
+        raise ValueError(
+            f"checkpoint {getattr(args, 'resume', None)} lacks compatible "
+            f"diloco_outer_state for --diloco_outer_optimizer "
+            f"{args.diloco_outer_optimizer} ({reason}); rerun with "
+            "--diloco_bootstrap_outer_state from-loaded-model only if you intend "
+            "to start fresh outer state from the loaded model weights")
+
+    return bootstrap_diloco_outer_state_from_loaded_model(
+        core_model,
+        optimizer,
+        args,
+        ckpt=ckpt,
+        reason=reason,
+        inner_optimizer_state_loaded=inner_optimizer_state_loaded,
+        source_has_outer_state=source_has_outer_state,
+    )
 
 
 def initialize_diloco_outer_state(core_model, optimizer, args, loaded_state=None):
@@ -2027,11 +2233,15 @@ def train(args):
     # Resume if requested
     start_step = 0
     loaded_outer_state = None
+    loaded_checkpoint = None
+    loaded_optimizer_state = False
     if args.resume:
         print(f"Resuming from {args.resume}")
         start_step, _, ckpt = load_checkpoint(
             args.resume, core_model, optimizer, return_checkpoint=True)
+        loaded_checkpoint = ckpt
         loaded_outer_state = ckpt.get('diloco_outer_state')
+        loaded_optimizer_state = 'optimizer_state_dict' in ckpt
         # Optimizer state dicts carry their original param-group LR. For
         # continuation runs we want the explicit CLI LR to be authoritative.
         for param_group in optimizer.param_groups:
@@ -2117,18 +2327,32 @@ def train(args):
     # ScheduleFree-SGD state machine (outer_x/outer_z/outer_y) and never wraps the
     # live parameters with schedulefree.SGDScheduleFree.
     outer_state = None
+    diloco_bootstrap_metadata = None
     if use_diloco:
-        if loaded_outer_state is None and args.resume and args.diloco_outer_optimizer != 'avg':
-            raise ValueError(
-                f"checkpoint {args.resume} does not contain diloco_outer_state; "
-                f"cannot coherently resume --diloco_outer_optimizer "
-                f"{args.diloco_outer_optimizer}")
-        outer_state = initialize_diloco_outer_state(
-            core_model, optimizer, args, loaded_state=loaded_outer_state)
+        outer_state, diloco_bootstrap_metadata = resolve_diloco_outer_state_for_resume(
+            core_model,
+            optimizer,
+            args,
+            loaded_state=loaded_outer_state,
+            ckpt=loaded_checkpoint,
+            inner_optimizer_state_loaded=loaded_optimizer_state,
+        )
         if is_main:
             if args.diloco_outer_optimizer == 'avg':
                 print("[DiLoCo] outer optimizer: avg (stateless periodic averaging)",
                       flush=True)
+            elif diloco_bootstrap_metadata:
+                print(
+                    "[DiLoCo] bootstrapped missing outer state from loaded model weights: "
+                    f"mode={args.diloco_outer_optimizer} "
+                    f"export_basis={args.diloco_export_basis} "
+                    f"reason={diloco_bootstrap_metadata['missing_or_incompatible_reason']} "
+                    f"guard={diloco_bootstrap_metadata['guard']} "
+                    f"source={args.resume} "
+                    f"step={diloco_bootstrap_metadata['source_checkpoint_step']}; "
+                    "model tensors restored byte-identical after bootstrap",
+                    flush=True,
+                )
             elif loaded_outer_state is not None:
                 print(f"[DiLoCo] restored outer optimizer state "
                       f"({args.diloco_outer_optimizer}) from checkpoint", flush=True)
@@ -2459,7 +2683,7 @@ def train(args):
                 ckpt_path = save_checkpoint(
                     core_model, optimizer, step, avg_loss, output_dir,
                     args.keep_checkpoints, outer_state=outer_state,
-                    metadata={
+                    metadata=checkpoint_metadata_with_diloco_bootstrap({
                         'kind': 'periodic',
                         'model_variant': args._model_variant,
                         'model': args._model_metadata,
@@ -2473,7 +2697,7 @@ def train(args):
                             final_ckpt.deadline - time.time()
                             if final_ckpt.deadline is not None else None
                         ),
-                    },
+                    }, diloco_bootstrap_metadata),
                 )
                 print(f"  >>> saved checkpoint: {ckpt_path.name}")
                 if args.optimizer == 'schedulefree':
@@ -2588,7 +2812,8 @@ def train(args):
         ckpt_path = save_checkpoint(
             core_model, optimizer, step, last_100_avg, output_dir,
             args.keep_checkpoints, outer_state=outer_state,
-            metadata=final_metadata,
+            metadata=checkpoint_metadata_with_diloco_bootstrap(
+                final_metadata, diloco_bootstrap_metadata),
         )
         print(f"[final-checkpoint] END path={ckpt_path} latest={output_dir / 'latest.pt'} "
               f"model_variant={args._model_variant} rank={rank}/{world_size} "
