@@ -336,8 +336,12 @@ def main() -> None:
         bytes_per_token_source,
     )
     latest = effective_points[-1]
+    losses = [point.loss for point in effective_points]
+    avg_window = min(80, max(5, len(effective_points) // 40))
+    smoothed_loss = moving_average(losses, avg_window)[-1]
     bpb_per_nat = math.log2(math.e) / bytes_per_token
     latest_bpb = latest.loss * bpb_per_nat
+    smoothed_bpb = smoothed_loss * bpb_per_nat
     print(f"output={args.output}")
     print(f"sources={','.join(str(path) for path in existing_logs)}")
     print(f"raw_points={len(points)}")
@@ -347,10 +351,13 @@ def main() -> None:
     print(f"checkpoint_steps={','.join(str(step) for step in sorted({checkpoint.step for checkpoint in checkpoints})) or 'none'}")
     print(f"latest_step={latest.step}")
     print(f"latest_loss={latest.loss:.4f}")
+    print(f"plot_smoothed_window={avg_window}")
+    print(f"plot_smoothed_loss={smoothed_loss:.6f}")
     print(f"bytes_per_token={bytes_per_token:.6f}")
     print(f"bytes_per_token_source={bytes_per_token_source}")
     print(f"bpb_per_nat={bpb_per_nat:.12f}")
     print(f"estimated_bpb={latest_bpb:.6f}")
+    print(f"plot_smoothed_bpb={smoothed_bpb:.6f}")
     print(f"latest_time={latest.timestamp.isoformat()}")
 
 
