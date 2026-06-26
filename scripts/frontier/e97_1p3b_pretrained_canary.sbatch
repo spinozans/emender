@@ -42,6 +42,8 @@ KEEP_CHECKPOINTS=${KEEP_CHECKPOINTS:-4}
 LOG_EVERY=${LOG_EVERY:-5}
 VAL_EVERY=${VAL_EVERY:-10000}
 COMPILE_WARMUP_STEPS=${COMPILE_WARMUP_STEPS:-1}
+WALLTIME_FINAL_CHECKPOINT_MARGIN_SECONDS=${WALLTIME_FINAL_CHECKPOINT_MARGIN_SECONDS:-600}
+WALLTIME_CHECK_EVERY=${WALLTIME_CHECK_EVERY:-1}
 HUMAN_APPROVAL_RECORD=${HUMAN_APPROVAL_RECORD:-WG task validate-e97-1-3b: one bounded 1-node avg E97 1.3B pretrained resume canary only; no 8+ node scaleout authorized by this submission.}
 
 [[ -r "$DATA" ]] || { echo "DATA is not readable: $DATA" >&2; exit 4; }
@@ -107,6 +109,8 @@ COMMON_ARGS=(
   --val_every "$VAL_EVERY"
   --save_every "$SAVE_EVERY"
   --keep_checkpoints "$KEEP_CHECKPOINTS"
+  --walltime_final_checkpoint_margin_seconds "$WALLTIME_FINAL_CHECKPOINT_MARGIN_SECONDS"
+  --walltime_check_every "$WALLTIME_CHECK_EVERY"
   --output "${RUN_ROOT}/train"
   --resume "$RESUME_CHECKPOINT"
   --diloco

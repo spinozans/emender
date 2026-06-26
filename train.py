@@ -2703,27 +2703,33 @@ def train(args):
                 if args.optimizer == 'schedulefree':
                     optimizer.train()  # Back to training mode
 
-            stop_for_final, final_reason, remaining_s = final_ckpt.maybe_request_stop(
-                step, dist_enabled=dist_enabled)
-            stop_for_final, final_reason, remaining_s = consensus_final_checkpoint_stop(
-                final_ckpt,
-                stop_for_final,
-                final_reason,
-                remaining_s,
-                device,
-                dist_enabled,
+            walltime_check_every = max(1, int(args.walltime_check_every))
+            check_walltime_now = (
+                step % walltime_check_every == 0
+                or bool(getattr(final_ckpt, 'triggered', False))
             )
-            if stop_for_final:
-                rem_text = 'unknown' if remaining_s is None else f"{remaining_s:.1f}"
-                print(f"[final-checkpoint] rank {rank}/{world_size} entering finalization "
-                      f"at step={step} reason={final_reason} remaining_s={rem_text} "
-                      f"model_variant={args._model_variant} is_head={is_main}",
-                      flush=True)
-                break
+            if check_walltime_now:
+                stop_for_final, final_reason, remaining_s = final_ckpt.maybe_request_stop(
+                    step, dist_enabled=dist_enabled)
+                stop_for_final, final_reason, remaining_s = consensus_final_checkpoint_stop(
+                    final_ckpt,
+                    stop_for_final,
+                    final_reason,
+                    remaining_s,
+                    device,
+                    dist_enabled,
+                )
+                if stop_for_final:
+                    rem_text = 'unknown' if remaining_s is None else f"{remaining_s:.1f}"
+                    print(f"[final-checkpoint] rank {rank}/{world_size} entering finalization "
+                          f"at step={step} reason={final_reason} remaining_s={rem_text} "
+                          f"model_variant={args._model_variant} is_head={is_main}",
+                          flush=True)
+                    break
 
-            local_budget_done = train_end_time is not None and time.time() >= train_end_time
-            if distributed_any(local_budget_done, device, dist_enabled=dist_enabled):
-                stop_training = True
+                local_budget_done = train_end_time is not None and time.time() >= train_end_time
+                if distributed_any(local_budget_done, device, dist_enabled=dist_enabled):
+                    stop_training = True
 
     # Stop prefetch thread
     prefetch_stop.set()
