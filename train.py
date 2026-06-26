@@ -1286,17 +1286,15 @@ def diloco_merge(core_model, optimizer, args, world_size, outer_state):
     ScheduleFree interaction (docs/SCHEDULEFREE_DILOCO_FRONTIER_DESIGN.md): the
     optimizer evolves both the running-average eval weights x (held implicitly in
     p.data while in eval mode) and the base iterate z (held in per-param state).
-    DiLoCo therefore merges both: x is averaged across replicas using the same
-    model-weight semantics, z is averaged across replicas, and the live train
-    weights y are rebuilt from the merged x/z pair. The ScheduleFree scalar
-    clock state (weight_sum, k, lr_max) is part of the long-horizon averaging
-    schedule and is preserved, not reset. The training loop keeps all replicas
-    on identical step counts, so these scalars are normally byte-identical; if a
-    future uneven-step caller reaches this function, x is merged with
-    weight_sum-weighted averaging and weight_sum is set to the cross-rank
-    consensus mean rather than discarded. Adam second moments (exp_avg_sq) stay
-    per-rank (independent preconditioning -> independent exploration, the point
-    of DiLoCo).
+    DiLoCo therefore merges both tensor states: x is averaged across replicas
+    using the same model-weight semantics, z is averaged across replicas, and the
+    live train weights y are rebuilt from the merged x/z pair. ScheduleFree's
+    scalar clocks (weight_sum, k, lr_max) are local optimizer bookkeeping and are
+    preserved as-is. That avoids fragile 1-element process-group collectives at
+    large scale; under the normal equal-step DiLoCo schedule they are already
+    identical, and under uneven ranks equal-weight tensor averaging is acceptable.
+    Adam second moments (exp_avg_sq) stay per-rank (independent preconditioning
+    -> independent exploration, the point of DiLoCo).
 
     Outer optimizer (general DiLoCo):
         delta       = mean_i(W_{r,i}) - W_r
@@ -1343,39 +1341,21 @@ def diloco_merge(core_model, optimizer, args, world_size, outer_state):
     #    all-reduce per K steps, not K). SUM+divide rather than ReduceOp.AVG so
     #    the path is backend-agnostic (gloo, used by the CPU unit test, has no AVG).
     if sf:
-        # ScheduleFree's x average has mass weight_sum. Under the normal DiLoCo
-        # schedule every rank has the same weight_sum, making this exactly the
-        # arithmetic mean. The weighted path preserves averaging mass if a future
-        # caller ever reaches a merge with uneven local step counts.
+        # Average ScheduleFree tensor state only. Scalar clocks are intentionally
+        # left local: reducing them would add tiny NCCL collectives that are not
+        # worth the fragility for DiLoCo's equal-step scaleout path.
         for group in optimizer.param_groups:
             group_params = list(group['params'])
             if not group_params:
                 continue
-            device = group_params[0].device
-            local_weight_sum = float(group.get('weight_sum', 0.0))
-            weight_sum = torch.tensor(local_weight_sum, device=device, dtype=torch.float64)
-            dist.all_reduce(weight_sum, op=dist.ReduceOp.SUM)
-            total_weight_sum = float(weight_sum.item())
 
             flat_x = torch._utils._flatten_dense_tensors([p.data for p in group_params])
-            if total_weight_sum > 0.0:
-                flat_x.mul_(local_weight_sum)
             dist.all_reduce(flat_x, op=dist.ReduceOp.SUM)
-            flat_x.div_(total_weight_sum if total_weight_sum > 0.0 else world_size)
+            flat_x.div_(world_size)
             for p, merged in zip(
                     group_params,
                     torch._utils._unflatten_dense_tensors(flat_x, [p.data for p in group_params])):
                 p.data.copy_(merged)
-
-            group['weight_sum'] = total_weight_sum / world_size
-            for scalar_name in ('lr_max',):
-                scalar = torch.tensor(float(group.get(scalar_name, 0.0)),
-                                      device=device, dtype=torch.float64)
-                dist.all_reduce(scalar, op=dist.ReduceOp.SUM)
-                group[scalar_name] = float(scalar.item() / world_size)
-            k = torch.tensor(float(group.get('k', 0)), device=device, dtype=torch.float64)
-            dist.all_reduce(k, op=dist.ReduceOp.SUM)
-            group['k'] = int(round(float(k.item() / world_size)))
 
             z_params = [p for p in group_params if 'z' in optimizer.state.get(p, {})]
             if z_params:

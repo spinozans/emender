@@ -484,6 +484,49 @@ def test_single_rank_diloco_merge_is_byte_identical_noop():
     print("PASS test_single_rank_diloco_merge_is_byte_identical_noop")
 
 
+def test_schedulefree_avg_merge_avoids_scalar_collectives():
+    """The Frontier DiLoCo scaleout path must not rely on 1-element NCCL
+    collectives for ScheduleFree scalar clocks. Tensor state is averaged; scalar
+    clocks remain local."""
+    import train
+    model, opt = _build()
+    _local_train(model, opt, rank=0, k_steps=3)
+
+    class NoScalarCollective:
+        class ReduceOp:
+            SUM = object()
+
+        calls = []
+
+        @staticmethod
+        def all_reduce(tensor, op=None):
+            assert op is NoScalarCollective.ReduceOp.SUM
+            NoScalarCollective.calls.append(int(tensor.numel()))
+            assert tensor.numel() > 1, (
+                f"DiLoCo merge attempted scalar all_reduce with numel={tensor.numel()}"
+            )
+            tensor.mul_(2)
+
+    old_dist = train.dist
+    try:
+        train.dist = NoScalarCollective
+        before_group = {
+            key: opt.param_groups[0][key]
+            for key in ('weight_sum', 'k', 'lr_max')
+        }
+        train.diloco_merge(model, opt, _ns(), world_size=2, outer_state=None)
+        after_group = {
+            key: opt.param_groups[0][key]
+            for key in ('weight_sum', 'k', 'lr_max')
+        }
+    finally:
+        train.dist = old_dist
+
+    assert NoScalarCollective.calls, "test did not exercise any tensor all_reduce"
+    assert before_group == after_group, "ScheduleFree scalar clocks changed at merge"
+    print("PASS test_schedulefree_avg_merge_avoids_scalar_collectives")
+
+
 # ===========================================================================
 # sf-diloco-p1 regression tests: lock the SF x/z/y geometry on the outer update.
 #
@@ -1124,6 +1167,7 @@ if __name__ == '__main__':
     test_schedulefree_dynamic_loss_continuity()
     test_schedulefree_full_trajectory_average_survives_merges()
     test_single_rank_diloco_merge_is_byte_identical_noop()
+    test_schedulefree_avg_merge_avoids_scalar_collectives()
     # sf-diloco-p1 regression suite (x/z/y geometry on outer update):
     test_translation_invariance_scalar()
     test_identical_rank_noop_all_modes()
