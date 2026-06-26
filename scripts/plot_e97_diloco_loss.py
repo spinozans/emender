@@ -6,6 +6,8 @@ from __future__ import annotations
 import argparse
 import dataclasses
 import datetime as dt
+import json
+import math
 import re
 from pathlib import Path
 
@@ -149,6 +151,24 @@ def moving_average(values: list[float], window: int) -> list[float]:
     return averaged
 
 
+def read_bytes_per_token(run_root: Path) -> tuple[float, str]:
+    """Prefer the active E97 run's measured heldout byte/token conversion."""
+
+    args_paths = sorted(run_root.glob("runs/levelE97_100m_*/args.json"))
+    for path in reversed(args_paths):
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        value = payload.get("heldout_bytes_per_token")
+        if value is not None:
+            return float(value), f"{path}:heldout_bytes_per_token"
+
+    fallback = Path("scripts/estimate_tokenizer_bytes_per_token.json")
+    payload = json.loads(fallback.read_text(encoding="utf-8"))
+    return float(payload["mean_bytes_per_token"]), f"{fallback}:mean_bytes_per_token"
+
+
 def plot(
     points: list[Point],
     superseded: list[Point],
@@ -156,6 +176,8 @@ def plot(
     checkpoints: list[Checkpoint],
     output: Path,
     sources: list[Path],
+    bytes_per_token: float,
+    bytes_per_token_source: str,
 ) -> None:
     steps = [point.step for point in points]
     losses = [point.loss for point in points]
@@ -229,10 +251,19 @@ def plot(
             )
 
     latest = points[-1]
+    bpb_per_nat = math.log2(math.e) / bytes_per_token
+    latest_bpb = latest.loss * bpb_per_nat
     source_names = ", ".join(path.name for path in sources)
+    bpt_source_parts = bytes_per_token_source.split(":", 1)
+    bpt_source_label = (
+        f"{Path(bpt_source_parts[0]).name}:{bpt_source_parts[1]}"
+        if len(bpt_source_parts) == 2
+        else bytes_per_token_source
+    )
     ax.set_title(
         "E97 / Emender 8-GPU DiLoCo Training Loss\n"
-        f"{len(points):,} effective points, latest step {latest.step:,} loss {latest.loss:.4f}"
+        f"{len(points):,} effective points, latest step {latest.step:,} "
+        f"loss {latest.loss:.4f} ~= {latest_bpb:.4f} BPB"
     )
     ax.set_xlabel("Training step")
     ax.set_ylabel("Training loss")
@@ -245,6 +276,16 @@ def plot(
         transform=ax.transAxes,
         fontsize=7,
         color="#4b5563",
+        va="bottom",
+        ha="left",
+    )
+    ax.text(
+        0.01,
+        0.065,
+        f"Estimated BPB = loss * log2(e) / bytes_per_token; bytes_per_token={bytes_per_token:.3f} ({bpt_source_label})",
+        transform=ax.transAxes,
+        fontsize=7,
+        color="#111827",
         va="bottom",
         ha="left",
     )
@@ -283,8 +324,20 @@ def main() -> None:
     if not effective_points:
         raise SystemExit("No step/loss points parsed from E97 logs")
 
-    plot(effective_points, superseded, resumes, checkpoints, args.output, existing_logs)
+    bytes_per_token, bytes_per_token_source = read_bytes_per_token(args.run_root)
+    plot(
+        effective_points,
+        superseded,
+        resumes,
+        checkpoints,
+        args.output,
+        existing_logs,
+        bytes_per_token,
+        bytes_per_token_source,
+    )
     latest = effective_points[-1]
+    bpb_per_nat = math.log2(math.e) / bytes_per_token
+    latest_bpb = latest.loss * bpb_per_nat
     print(f"output={args.output}")
     print(f"sources={','.join(str(path) for path in existing_logs)}")
     print(f"raw_points={len(points)}")
@@ -294,6 +347,10 @@ def main() -> None:
     print(f"checkpoint_steps={','.join(str(step) for step in sorted({checkpoint.step for checkpoint in checkpoints})) or 'none'}")
     print(f"latest_step={latest.step}")
     print(f"latest_loss={latest.loss:.4f}")
+    print(f"bytes_per_token={bytes_per_token:.6f}")
+    print(f"bytes_per_token_source={bytes_per_token_source}")
+    print(f"bpb_per_nat={bpb_per_nat:.12f}")
+    print(f"estimated_bpb={latest_bpb:.6f}")
     print(f"latest_time={latest.timestamp.isoformat()}")
 
 
