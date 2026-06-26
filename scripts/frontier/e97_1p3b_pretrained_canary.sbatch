@@ -46,6 +46,7 @@ WALLTIME_FINAL_CHECKPOINT_MARGIN_SECONDS=${WALLTIME_FINAL_CHECKPOINT_MARGIN_SECO
 WALLTIME_CHECK_EVERY=${WALLTIME_CHECK_EVERY:-1}
 DISTRIBUTED_HEALTH_CHECK_EVERY=${DISTRIBUTED_HEALTH_CHECK_EVERY:-1}
 HUMAN_APPROVAL_RECORD=${HUMAN_APPROVAL_RECORD:-WG task validate-e97-1-3b: one bounded 1-node avg E97 1.3B pretrained resume canary only; no 8+ node scaleout authorized by this submission.}
+FRONTIER_RCCL_ENV=${FRONTIER_RCCL_ENV:-current}
 
 [[ -r "$DATA" ]] || { echo "DATA is not readable: $DATA" >&2; exit 4; }
 [[ -r "$VAL_DATA" ]] || { echo "VAL_DATA is not readable: $VAL_DATA" >&2; exit 4; }
@@ -80,11 +81,38 @@ fi
 
 export TIKTOKEN_CACHE_DIR
 export MPICH_GPU_SUPPORT_ENABLED=${MPICH_GPU_SUPPORT_ENABLED:-1}
-export NCCL_SOCKET_IFNAME=${NCCL_SOCKET_IFNAME:-hsn0}
 export MASTER_ADDR=${MASTER_ADDR:-$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)}
 export MASTER_PORT=${MASTER_PORT:-3442}
 export OMP_NUM_THREADS=${OMP_NUM_THREADS:-7}
 export NDM_PIN_TRITON_AUTOTUNE=${NDM_PIN_TRITON_AUTOTUNE:-1}
+
+if [[ "$FRONTIER_RCCL_ENV" == "recommended" ]]; then
+  export FI_MR_CACHE_MONITOR=${FI_MR_CACHE_MONITOR:-kdreg2}
+  export FI_CXI_DEFAULT_CQ_SIZE=${FI_CXI_DEFAULT_CQ_SIZE:-131072}
+  export FI_CXI_DEFAULT_TX_SIZE=${FI_CXI_DEFAULT_TX_SIZE:-2048}
+  export FI_CXI_RX_MATCH_MODE=${FI_CXI_RX_MATCH_MODE:-hybrid}
+  export NCCL_NET_GDR_LEVEL=${NCCL_NET_GDR_LEVEL:-3}
+  export NCCL_CROSS_NIC=${NCCL_CROSS_NIC:-1}
+  export NCCL_SOCKET_IFNAME=${NCCL_SOCKET_IFNAME:-hsn0,hsn1,hsn2,hsn3}
+  export NCCL_NET_PLUGIN=${NCCL_NET_PLUGIN:-librccl-net.so}
+  if [[ "${FRONTIER_RCCL_ALT_RDZV:-0}" == "1" ]]; then
+    export FI_CXI_RDZV_PROTO=${FI_CXI_RDZV_PROTO:-alt_read}
+  fi
+  if [[ -n "${AWS_OFI_RCCL_PLUGIN_DIR:-}" ]]; then
+    export LD_LIBRARY_PATH="${AWS_OFI_RCCL_PLUGIN_DIR%/}/lib:${LD_LIBRARY_PATH:-}"
+  fi
+else
+  export NCCL_SOCKET_IFNAME=${NCCL_SOCKET_IFNAME:-hsn0}
+fi
+
+RCCL_NET_PLUGIN_STATUS="not-found"
+IFS=':' read -r -a LD_LIBRARY_PATH_PARTS <<< "${LD_LIBRARY_PATH:-}"
+for lib_dir in "${LD_LIBRARY_PATH_PARTS[@]}"; do
+  if [[ -n "$lib_dir" && -r "${lib_dir%/}/librccl-net.so" ]]; then
+    RCCL_NET_PLUGIN_STATUS="${lib_dir%/}/librccl-net.so"
+    break
+  fi
+done
 
 REQUESTED_NODES=${SLURM_JOB_NUM_NODES:-1}
 REQUESTED_WALLTIME=${REQUESTED_WALLTIME:-${SLURM_TIMELIMIT:-00:20:00}}
@@ -165,9 +193,11 @@ MODEL_ARGS=(
   echo "requested_node_hours=$REQUESTED_NODE_HOURS"
   echo "diloco_k=$DILOCO_K"
   echo "diloco_island_size=$DILOCO_ISLAND_SIZE"
+  echo "frontier_rccl_env=$FRONTIER_RCCL_ENV"
+  echo "rccl_net_plugin_status=$RCCL_NET_PLUGIN_STATUS"
   echo
   echo "=== slurm ==="
-  env | sort | grep -E '^(SLURM|MPICH|NCCL|MASTER|OMP|ROCR|HIP|HSA|NDM|DATA|VAL_DATA|TRAIN_MINUTES|SCALEOUT|DILOCO|TIKTOKEN|HUMAN_APPROVAL|RESUME_CHECKPOINT)=' || true
+  env | sort | grep -E '^(SLURM|MPICH|NCCL|RCCL|FI_|MASTER|OMP|ROCR|HIP|HSA|LD_LIBRARY_PATH|AWS_OFI_RCCL|FRONTIER_RCCL|NDM|DATA|VAL_DATA|TRAIN_MINUTES|SCALEOUT|DILOCO|TIKTOKEN|HUMAN_APPROVAL|RESUME_CHECKPOINT)' || true
   echo
   echo "=== command ==="
   printf '%q ' srun -N "$REQUESTED_NODES" -n "$((REQUESTED_NODES * 8))" -c7 --gpus-per-task=1 --gpu-bind=closest bash -lc \
