@@ -394,6 +394,12 @@ def parse_args():
                              'steps. Distributed runs perform one scalar all-reduce at each check '
                              'so a signal or deadline observed by any rank brings all ranks into '
                              'finalization together.')
+    parser.add_argument('--distributed_health_check_every', type=int, default=1,
+                        help='Check distributed non-finite loss/grad health every N optimizer '
+                             'steps. Defaults to every step. Pure DiLoCo scaleout jobs can set '
+                             'this to the DiLoCo K interval to avoid per-step scalar collectives; '
+                             'a local non-finite value between checks raises on that rank and '
+                             'fails the job rather than entering a mismatched collective.')
     parser.add_argument('--disable_walltime_final_checkpoint', action='store_true',
                         help='Disable walltime-aware pre-shutdown final checkpointing. Signal '
                              'handling still requests a graceful final checkpoint.')
@@ -2500,15 +2506,28 @@ def train(args):
                 loss = result
                 next_hidden = None
 
+        health_check_every = max(1, int(args.distributed_health_check_every))
+        check_health_now = (
+            not dist_enabled
+            or health_check_every == 1
+            or step % health_check_every == 0
+        )
+
         local_nonfinite_loss = not torch.isfinite(loss)
-        if distributed_any(local_nonfinite_loss, device, dist_enabled=dist_enabled):
-            if local_nonfinite_loss:
-                print(f"Non-finite loss at step {step}: {loss.item()}. Stopping before optimizer step.")
-            elif dist_enabled:
-                print(f"Peer reported non-finite loss at step {step}. Stopping before optimizer step.",
-                      flush=True)
-            stopped_nonfinite = True
-            break
+        if check_health_now:
+            if distributed_any(local_nonfinite_loss, device, dist_enabled=dist_enabled):
+                if local_nonfinite_loss:
+                    print(f"Non-finite loss at step {step}: {loss.item()}. Stopping before optimizer step.")
+                elif dist_enabled:
+                    print(f"Peer reported non-finite loss at step {step}. Stopping before optimizer step.",
+                          flush=True)
+                stopped_nonfinite = True
+                break
+        elif local_nonfinite_loss:
+            raise RuntimeError(
+                f"Non-finite loss at step {step}: {loss.item()} "
+                f"(distributed health check cadence={health_check_every})"
+            )
 
         # Add orthogonality regularization for E79 if enabled
         if args.orth_reg > 0:
@@ -2553,7 +2572,7 @@ def train(args):
                 grad_norm = sum(p.grad.norm().item() ** 2 for p in model.parameters() if p.grad is not None) ** 0.5
 
             local_nonfinite_grad = not torch.isfinite(torch.as_tensor(grad_norm))
-            if distributed_any(local_nonfinite_grad, device, dist_enabled=dist_enabled):
+            if check_health_now and distributed_any(local_nonfinite_grad, device, dist_enabled=dist_enabled):
                 grad_value = grad_norm.item() if hasattr(grad_norm, 'item') else float(grad_norm)
                 if dist_enabled:
                     # Multi-rank (DiLoCo/DDP): a per-rank skip desyncs the collective merge
@@ -2569,6 +2588,17 @@ def train(args):
                 # Grad clipping handles finite explosions; a one-off bf16 inf cannot be scaled,
                 # so dropping the offending step is correct — far better than killing a multi-day run.
                 # Per-skip log: if these become frequent it signals a real divergence, not a transient.
+                print(f"Non-finite grad norm at step {step}: {grad_value}. SKIPPING this step (transient overflow), continuing.", flush=True)
+                optimizer.zero_grad(set_to_none=True)
+                accumulated_steps = 0
+                continue
+            elif local_nonfinite_grad:
+                grad_value = grad_norm.item() if hasattr(grad_norm, 'item') else float(grad_norm)
+                if dist_enabled:
+                    raise RuntimeError(
+                        f"Non-finite grad norm at step {step}: {grad_value} "
+                        f"(distributed health check cadence={health_check_every})"
+                    )
                 print(f"Non-finite grad norm at step {step}: {grad_value}. SKIPPING this step (transient overflow), continuing.", flush=True)
                 optimizer.zero_grad(set_to_none=True)
                 accumulated_steps = 0
