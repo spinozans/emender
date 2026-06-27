@@ -652,6 +652,34 @@ def test_hierarchical_warmup_avoids_default_barrier_between_subgroups(monkeypatc
     ]
 
 
+def test_hierarchical_group_builder_creates_root_group_before_local_groups(monkeypatch):
+    """Root communicator is created before overlapping local communicators."""
+    import train
+
+    calls = []
+
+    class FakeDist:
+        @staticmethod
+        def is_initialized():
+            return True
+
+        @staticmethod
+        def new_group(ranks):
+            calls.append(tuple(ranks))
+            return f"group-{tuple(ranks)}"
+
+    monkeypatch.setattr(train, "dist", FakeDist)
+
+    meta = train._build_diloco_hierarchical_merge_groups(
+        world_size=8, rank=4, group_size=4)
+
+    assert calls == [(0, 4), (0, 1, 2, 3), (4, 5, 6, 7)]
+    assert meta["root_ranks"] == [0, 4]
+    assert meta["root_group"] == "group-(0, 4)"
+    assert meta["local_group"] == "group-(4, 5, 6, 7)"
+    assert meta["local_root"] == 4
+
+
 def _worker_hierarchical_exact(rank, world_size, init_file, ret):
     dist.init_process_group(backend='gloo', init_method=f'file://{init_file}',
                             rank=rank, world_size=world_size)

@@ -1364,28 +1364,31 @@ def _build_diloco_hierarchical_merge_groups(world_size, rank, group_size):
     if not dist.is_initialized():
         raise RuntimeError("hierarchical DiLoCo merge requires torch.distributed")
     groups = []
-    root_ranks = []
     local_group = None
     local_group_ranks = None
     local_root = None
     n_groups = (world_size + group_size - 1) // group_size
+    root_ranks = [
+        group_idx * group_size
+        for group_idx in range(n_groups)
+    ]
+    root_group = None
+    if len(root_ranks) > 1:
+        # Create the overlapping second-level communicator first, before local
+        # subgroups. Frontier RCCL/NCCL is sensitive to subgroup creation order
+        # when later collectives involve non-contiguous root ranks.
+        root_group = dist.new_group(ranks=root_ranks)
+
     for group_idx in range(n_groups):
         start = group_idx * group_size
         group_ranks = list(range(start, min(start + group_size, world_size)))
         root = group_ranks[0]
         g = dist.new_group(ranks=group_ranks)
         groups.append((group_ranks, g))
-        root_ranks.append(root)
         if rank in group_ranks:
             local_group = g
             local_group_ranks = group_ranks
             local_root = root
-
-    root_group = None
-    if len(root_ranks) > 1:
-        # Collective across the default process group: every rank calls this,
-        # but only root ranks become members.
-        root_group = dist.new_group(ranks=root_ranks)
 
     if local_group is None or local_group_ranks is None or local_root is None:
         raise RuntimeError(f"rank {rank} was not assigned to a DiLoCo merge group")
