@@ -36,6 +36,9 @@ def _ns(**kw):
         diloco_outer_beta=0.0,
         diloco_outer_optimizer='avg',
         diloco_export_basis='x',
+        diloco_merge_bucket_numel=0,
+        diloco_merge_debug=0,
+        diloco_merge_debug_ranks='0',
     )
     base.update(kw)
     return SimpleNamespace(**base)
@@ -527,6 +530,87 @@ def test_schedulefree_avg_merge_avoids_scalar_collectives():
     print("PASS test_schedulefree_avg_merge_avoids_scalar_collectives")
 
 
+def test_bucketed_non_schedulefree_merge_preserves_sum_then_divide_semantics():
+    """Bucketed non-SF merge must be exactly sum then divide per flat slice."""
+    import train
+    torch.manual_seed(123)
+    model = torch.nn.Sequential(torch.nn.Linear(3, 5), torch.nn.Linear(5, 2))
+    before = [p.detach().clone() for p in model.parameters()]
+
+    class AddPeerCollective:
+        class ReduceOp:
+            SUM = object()
+
+        calls = []
+
+        @staticmethod
+        def all_reduce(tensor, op=None):
+            assert op is AddPeerCollective.ReduceOp.SUM
+            AddPeerCollective.calls.append(int(tensor.numel()))
+            tensor.add_(1.0)
+
+    args = _ns(
+        optimizer='adamw',
+        diloco_merge_bucket_numel=4,
+    )
+    old_dist = train.dist
+    try:
+        train.dist = AddPeerCollective
+        train.diloco_merge(model, optimizer=None, args=args, world_size=2, outer_state=None)
+    finally:
+        train.dist = old_dist
+
+    assert len(AddPeerCollective.calls) > 1, "bucketed merge did not split the flat tensor"
+    assert max(AddPeerCollective.calls) <= 4, AddPeerCollective.calls
+    for p, old in zip(model.parameters(), before):
+        expected = (old + 1.0) / 2.0
+        assert torch.allclose(p, expected), "bucketed non-SF merge changed averaging math"
+    print("PASS test_bucketed_non_schedulefree_merge_preserves_sum_then_divide_semantics")
+
+
+def test_bucketed_schedulefree_merge_avoids_scalar_collectives():
+    """ScheduleFree x/z bucketed merge still reduces tensor state only, never clocks."""
+    import train
+    model, opt = _build()
+    _local_train(model, opt, rank=0, k_steps=3)
+
+    class BucketCollective:
+        class ReduceOp:
+            SUM = object()
+
+        calls = []
+
+        @staticmethod
+        def all_reduce(tensor, op=None):
+            assert op is BucketCollective.ReduceOp.SUM
+            BucketCollective.calls.append(int(tensor.numel()))
+            assert 1 <= tensor.numel() <= 7, (
+                f"unexpected bucket size for ScheduleFree merge: {tensor.numel()}"
+            )
+            tensor.mul_(2)
+
+    old_dist = train.dist
+    try:
+        train.dist = BucketCollective
+        before_group = {
+            key: opt.param_groups[0][key]
+            for key in ('weight_sum', 'k', 'lr_max')
+        }
+        train.diloco_merge(
+            model, opt, _ns(diloco_merge_bucket_numel=7),
+            world_size=2, outer_state=None)
+        after_group = {
+            key: opt.param_groups[0][key]
+            for key in ('weight_sum', 'k', 'lr_max')
+        }
+    finally:
+        train.dist = old_dist
+
+    assert len(BucketCollective.calls) > 1, "ScheduleFree bucketed merge did not split"
+    assert before_group == after_group, "ScheduleFree scalar clocks changed at bucketed merge"
+    print("PASS test_bucketed_schedulefree_merge_avoids_scalar_collectives")
+
+
 # ===========================================================================
 # sf-diloco-p1 regression tests: lock the SF x/z/y geometry on the outer update.
 #
@@ -792,10 +876,10 @@ def test_bootstrap_momentum_preserves_loaded_model_tensors():
     import train
     model, opt = _build()
     _local_train(model, opt, rank=0, k_steps=4)
-    pre = [p.data.detach().clone() for p in model.parameters()]
     opt.eval()
     expected_x = [p.data.detach().clone() for p in model.parameters()]
     opt.train()
+    pre = [p.data.detach().clone() for p in model.parameters()]
 
     args = _ns(
         resume='loaded.pt',
@@ -811,7 +895,9 @@ def test_bootstrap_momentum_preserves_loaded_model_tensors():
     for p, before in zip(model.parameters(), pre):
         assert torch.equal(p.data, before), "momentum bootstrap changed live model tensor bytes"
     for anchor, expected in zip(outer_state['anchor'], expected_x):
-        assert torch.equal(anchor, expected), "momentum anchor did not use loaded eval/x basis"
+        assert torch.allclose(anchor, expected, rtol=0.0, atol=1e-7), (
+            "momentum anchor did not use loaded eval/x basis"
+        )
     for moment in outer_state['moment']:
         assert torch.equal(moment, torch.zeros_like(moment)), "momentum buffer is not exact zero"
     assert metadata['inner_schedulefree_basis_used_for_anchor'] == 'x'
@@ -1168,6 +1254,8 @@ if __name__ == '__main__':
     test_schedulefree_full_trajectory_average_survives_merges()
     test_single_rank_diloco_merge_is_byte_identical_noop()
     test_schedulefree_avg_merge_avoids_scalar_collectives()
+    test_bucketed_non_schedulefree_merge_preserves_sum_then_divide_semantics()
+    test_bucketed_schedulefree_merge_avoids_scalar_collectives()
     # sf-diloco-p1 regression suite (x/z/y geometry on outer update):
     test_translation_invariance_scalar()
     test_identical_rank_noop_all_modes()

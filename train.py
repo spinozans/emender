@@ -369,6 +369,19 @@ def parse_args():
                              'steps. world_size must be divisible by island_size. 0/1 = pure '
                              'DiLoCo (no intra-island DDP). Trades some throughput for '
                              'sample-efficiency when pure-DiLoCo lags DDP at matched tokens.')
+    parser.add_argument('--diloco_merge_bucket_numel', type=int,
+                        default=_env_int('NDM_DILOCO_MERGE_BUCKET_NUMEL', 0),
+                        help='Optional DiLoCo merge all-reduce bucket size in elements. '
+                             '0/unset preserves the default monolithic flat all-reduce. '
+                             'Can also be set with NDM_DILOCO_MERGE_BUCKET_NUMEL.')
+    parser.add_argument('--diloco_merge_debug', type=int, choices=[0, 1],
+                        default=_env_bool_int('NDM_DILOCO_MERGE_DEBUG', False),
+                        help='Enable rank-filtered DiLoCo merge entry/exit logging '
+                             '(0/1; env: NDM_DILOCO_MERGE_DEBUG).')
+    parser.add_argument('--diloco_merge_debug_ranks', type=str,
+                        default=os.environ.get('NDM_DILOCO_MERGE_DEBUG_RANKS', '0'),
+                        help='Comma-separated ranks to log when --diloco_merge_debug=1, '
+                             'or "*" for all ranks (env: NDM_DILOCO_MERGE_DEBUG_RANKS).')
 
     # Checkpointing
     parser.add_argument('--output', type=str, default='./output',
@@ -835,6 +848,20 @@ def lr_scale_at(step, warmup_steps, total_steps, min_lr_frac=0.1):
     return min_lr_frac + (1.0 - min_lr_frac) * 0.5 * (1.0 + math.cos(math.pi * progress))
 
 
+def _env_int(name, default):
+    value = os.environ.get(name)
+    if value is None or value == '':
+        return default
+    return int(value)
+
+
+def _env_bool_int(name, default=False):
+    value = os.environ.get(name)
+    if value is None or value == '':
+        return 1 if default else 0
+    return 1 if value.strip().lower() in ('1', 'true', 'yes', 'on') else 0
+
+
 def _infer_visible_device_count():
     visible = (
         os.environ.get('CUDA_VISIBLE_DEVICES')
@@ -1275,8 +1302,69 @@ def initialize_diloco_outer_state(core_model, optimizer, args, loaded_state=None
     raise ValueError(f"unknown DiLoCo outer optimizer: {args.diloco_outer_optimizer}")
 
 
+def _diloco_merge_debug_rank_enabled(args):
+    if int(getattr(args, 'diloco_merge_debug', 0) or 0) != 1:
+        return False
+    rank = int(getattr(args, '_rank', os.environ.get('RANK', '0')) or 0)
+    ranks = str(getattr(args, 'diloco_merge_debug_ranks', '0') or '0').strip()
+    if ranks == '*':
+        return True
+    enabled = set()
+    for item in ranks.split(','):
+        item = item.strip()
+        if not item:
+            continue
+        try:
+            enabled.add(int(item))
+        except ValueError:
+            continue
+    return rank in enabled
+
+
+def _diloco_merge_log(args, step, merge_index, label, bucket_index, numel, dtype,
+                      phase, elapsed_s=None):
+    if not _diloco_merge_debug_rank_enabled(args):
+        return
+    rank = int(getattr(args, '_rank', os.environ.get('RANK', '0')) or 0)
+    elapsed = "" if elapsed_s is None else f" elapsed_s={elapsed_s:.6f}"
+    print(
+        f"[DiLoCoMergeDebug] rank={rank} step={step} merge={merge_index} "
+        f"label={label} bucket={bucket_index} numel={numel} dtype={dtype} "
+        f"phase={phase}{elapsed}",
+        flush=True,
+    )
+
+
+def _diloco_allreduce_average_flat(flat, world_size, args, label, step=None,
+                                   merge_index=None):
+    bucket_numel = int(getattr(args, 'diloco_merge_bucket_numel', 0) or 0)
+    if bucket_numel <= 0 or bucket_numel >= flat.numel():
+        _diloco_merge_log(args, step, merge_index, label, 0, int(flat.numel()),
+                          flat.dtype, 'enter')
+        t0 = time.time()
+        dist.all_reduce(flat, op=dist.ReduceOp.SUM)
+        flat.div_(world_size)
+        _diloco_merge_log(args, step, merge_index, label, 0, int(flat.numel()),
+                          flat.dtype, 'exit', time.time() - t0)
+        return
+
+    bucket_index = 0
+    for start in range(0, flat.numel(), bucket_numel):
+        chunk = flat.narrow(0, start, min(bucket_numel, flat.numel() - start))
+        _diloco_merge_log(args, step, merge_index, label, bucket_index,
+                          int(chunk.numel()), chunk.dtype, 'enter')
+        t0 = time.time()
+        dist.all_reduce(chunk, op=dist.ReduceOp.SUM)
+        chunk.div_(world_size)
+        _diloco_merge_log(args, step, merge_index, label, bucket_index,
+                          int(chunk.numel()), chunk.dtype, 'exit',
+                          time.time() - t0)
+        bucket_index += 1
+
+
 @torch.no_grad()
-def diloco_merge(core_model, optimizer, args, world_size, outer_state):
+def diloco_merge(core_model, optimizer, args, world_size, outer_state,
+                 step=None, merge_index=None):
     """DiLoCo outer step: average model weights across ranks (every K local steps).
 
     task implement-diloco-periodic. This is the inter-worker synchronization that
@@ -1350,8 +1438,8 @@ def diloco_merge(core_model, optimizer, args, world_size, outer_state):
                 continue
 
             flat_x = torch._utils._flatten_dense_tensors([p.data for p in group_params])
-            dist.all_reduce(flat_x, op=dist.ReduceOp.SUM)
-            flat_x.div_(world_size)
+            _diloco_allreduce_average_flat(flat_x, world_size, args, 'sf_x',
+                                           step=step, merge_index=merge_index)
             for p, merged in zip(
                     group_params,
                     torch._utils._unflatten_dense_tensors(flat_x, [p.data for p in group_params])):
@@ -1361,8 +1449,8 @@ def diloco_merge(core_model, optimizer, args, world_size, outer_state):
             if z_params:
                 flat_z = torch._utils._flatten_dense_tensors(
                     [optimizer.state[p]['z'] for p in z_params])
-                dist.all_reduce(flat_z, op=dist.ReduceOp.SUM)
-                flat_z.div_(world_size)
+                _diloco_allreduce_average_flat(flat_z, world_size, args, 'sf_z',
+                                               step=step, merge_index=merge_index)
                 for p, merged_z in zip(
                         z_params,
                         torch._utils._unflatten_dense_tensors(
@@ -1371,13 +1459,13 @@ def diloco_merge(core_model, optimizer, args, world_size, outer_state):
 
             if outer_optimizer == 'sfsgd' and export_basis == 'y':
                 flat_y = export_y_by_group[id(group)]
-                dist.all_reduce(flat_y, op=dist.ReduceOp.SUM)
-                flat_y.div_(world_size)
+                _diloco_allreduce_average_flat(flat_y, world_size, args, 'sf_y',
+                                               step=step, merge_index=merge_index)
                 export_y_by_group[id(group)] = flat_y
     else:
         flat = torch._utils._flatten_dense_tensors([p.data for p in params])
-        dist.all_reduce(flat, op=dist.ReduceOp.SUM)
-        flat.div_(world_size)
+        _diloco_allreduce_average_flat(flat, world_size, args, 'params',
+                                       step=step, merge_index=merge_index)
         for p, merged in zip(params, torch._utils._unflatten_dense_tensors(flat, [p.data for p in params])):
             p.data.copy_(merged)
     if torch.cuda.is_available():
@@ -1596,9 +1684,9 @@ def train(args):
     # Setup
     torch.manual_seed(args.seed)
     if dist_enabled:
+        torch.cuda.set_device(local_rank)
         if not dist.is_initialized():
             dist.init_process_group(backend='nccl')
-        torch.cuda.set_device(local_rank)
         device = torch.device(f'cuda:{local_rank}')
         _mode = 'DiLoCo' if use_diloco else 'DDP'
         if is_main:
@@ -2610,7 +2698,9 @@ def train(args):
             # current log window's `elapsed`, so reported global_tok/s already
             # reflects the amortized communication cost.
             if use_diloco and step % args.diloco_k == 0:
-                sync_s = diloco_merge(core_model, optimizer, args, world_size, outer_state)
+                sync_s = diloco_merge(core_model, optimizer, args, world_size,
+                                      outer_state, step=step,
+                                      merge_index=diloco_merges + 1)
                 diloco_merges += 1
                 diloco_sync_total_s += sync_s
                 if is_main:
@@ -2775,7 +2865,9 @@ def train(args):
     # the guard is correct for all configs.
     last_step_already_merged = use_diloco and (step % args.diloco_k == 0)
     if use_diloco and not stopped_nonfinite and not last_step_already_merged:
-        sync_s = diloco_merge(core_model, optimizer, args, world_size, outer_state)
+        sync_s = diloco_merge(core_model, optimizer, args, world_size,
+                              outer_state, step=step,
+                              merge_index=diloco_merges + 1)
         diloco_merges += 1
         diloco_sync_total_s += sync_s
         if is_main:
