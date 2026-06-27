@@ -665,19 +665,64 @@ def test_hierarchical_group_builder_creates_root_group_before_local_groups(monke
 
         @staticmethod
         def new_group(ranks):
-            calls.append(tuple(ranks))
+            calls.append(("new_group", tuple(ranks)))
             return f"group-{tuple(ranks)}"
+
+        @staticmethod
+        def barrier():
+            calls.append(("barrier", None))
 
     monkeypatch.setattr(train, "dist", FakeDist)
 
     meta = train._build_diloco_hierarchical_merge_groups(
-        world_size=8, rank=4, group_size=4)
+        world_size=8, rank=4, group_size=4, create_barrier_every=0)
 
-    assert calls == [(0, 4), (0, 1, 2, 3), (4, 5, 6, 7)]
+    assert calls == [
+        ("new_group", (0, 4)),
+        ("new_group", (0, 1, 2, 3)),
+        ("new_group", (4, 5, 6, 7)),
+    ]
     assert meta["root_ranks"] == [0, 4]
     assert meta["root_group"] == "group-(0, 4)"
     assert meta["local_group"] == "group-(4, 5, 6, 7)"
     assert meta["local_root"] == 4
+
+
+def test_hierarchical_group_builder_paces_32n_g4_construction(monkeypatch):
+    """The 32-node E97 g4 shape must not burst-create all RCCL groups at once."""
+    import train
+
+    calls = []
+
+    class FakeDist:
+        @staticmethod
+        def is_initialized():
+            return True
+
+        @staticmethod
+        def new_group(ranks):
+            calls.append(("new_group", tuple(ranks)))
+            return f"group-{tuple(ranks)}"
+
+        @staticmethod
+        def barrier():
+            calls.append(("barrier", None))
+
+    monkeypatch.setattr(train, "dist", FakeDist)
+
+    meta = train._build_diloco_hierarchical_merge_groups(
+        world_size=256, rank=252, group_size=4, create_barrier_every=8)
+
+    root_ranks = tuple(range(0, 256, 4))
+    assert calls[0] == ("new_group", root_ranks)
+    assert calls[1] == ("barrier", None)
+    assert meta["root_ranks"] == list(root_ranks)
+    assert meta["local_group_ranks"] == [252, 253, 254, 255]
+    assert meta["local_root"] == 252
+
+    barrier_indexes = [idx for idx, call in enumerate(calls) if call == ("barrier", None)]
+    assert barrier_indexes == [1, 10, 19, 28, 37, 46, 55, 64, 73]
+    assert calls[-1] == ("barrier", None)
 
 
 def _worker_hierarchical_exact(rank, world_size, init_file, ret):

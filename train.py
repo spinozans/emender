@@ -390,6 +390,15 @@ def parse_args():
                              'default forms node-local groups. The final group may be '
                              'smaller; weighted SUM/count averaging keeps semantics exact. '
                              '(env: NDM_DILOCO_MERGE_GROUP_SIZE).')
+    parser.add_argument('--diloco_merge_group_create_barrier_every', type=int,
+                        default=_env_int('NDM_DILOCO_MERGE_GROUP_CREATE_BARRIER_EVERY', 8),
+                        help='Hierarchical merge process-group construction pacing. '
+                             'When >0, all ranks enter a default-group barrier after '
+                             'the root communicator and after each batch of this many '
+                             'first-level groups. This avoids a large burst of RCCL/NCCL '
+                             'communicator construction at scale while preserving '
+                             'collective order. 0 disables the pacing barriers. '
+                             '(env: NDM_DILOCO_MERGE_GROUP_CREATE_BARRIER_EVERY).')
     parser.add_argument('--diloco_merge_debug', type=int, choices=[0, 1],
                         default=_env_bool_int('NDM_DILOCO_MERGE_DEBUG', False),
                         help='Enable rank-filtered DiLoCo merge entry/exit logging '
@@ -1351,7 +1360,8 @@ def _diloco_merge_log(args, step, merge_index, label, bucket_index, numel, dtype
     )
 
 
-def _build_diloco_hierarchical_merge_groups(world_size, rank, group_size):
+def _build_diloco_hierarchical_merge_groups(world_size, rank, group_size,
+                                            create_barrier_every=8):
     """Create exact two-level DiLoCo merge groups.
 
     The first level is consecutive rank groups, which matches Frontier's
@@ -1373,11 +1383,14 @@ def _build_diloco_hierarchical_merge_groups(world_size, rank, group_size):
         for group_idx in range(n_groups)
     ]
     root_group = None
+    create_barrier_every = int(create_barrier_every or 0)
     if len(root_ranks) > 1:
         # Create the overlapping second-level communicator first, before local
         # subgroups. Frontier RCCL/NCCL is sensitive to subgroup creation order
         # when later collectives involve non-contiguous root ranks.
         root_group = dist.new_group(ranks=root_ranks)
+        if create_barrier_every > 0:
+            dist.barrier()
 
     for group_idx in range(n_groups):
         start = group_idx * group_size
@@ -1389,6 +1402,11 @@ def _build_diloco_hierarchical_merge_groups(world_size, rank, group_size):
             local_group = g
             local_group_ranks = group_ranks
             local_root = root
+        if create_barrier_every > 0 and (
+            (group_idx + 1) % create_barrier_every == 0 or
+            (group_idx + 1) == n_groups
+        ):
+            dist.barrier()
 
     if local_group is None or local_group_ranks is None or local_root is None:
         raise RuntimeError(f"rank {rank} was not assigned to a DiLoCo merge group")
@@ -2324,8 +2342,19 @@ def train(args):
         args._diloco_merge_groups = None
         if merge_topology == 'hierarchical':
             merge_group_size = int(getattr(args, 'diloco_merge_group_size', 8) or 8)
+            create_barrier_every = int(
+                getattr(args, 'diloco_merge_group_create_barrier_every', 8) or 0)
+            if is_main:
+                n_merge_groups = (world_size + merge_group_size - 1) // merge_group_size
+                print(f"[DiLoCo-merge] building hierarchical process groups: "
+                      f"group_size={merge_group_size} n_groups={n_merge_groups} "
+                      f"create_barrier_every={create_barrier_every}",
+                      flush=True)
             args._diloco_merge_groups = _build_diloco_hierarchical_merge_groups(
-                world_size, rank, merge_group_size)
+                world_size, rank, merge_group_size, create_barrier_every)
+            if is_main:
+                print("[DiLoCo-merge] hierarchical process groups built; warming "
+                      "communicators", flush=True)
             # Warm subgroup communicators without interleaving default-group
             # barriers against nonmember ranks. Each rank first warms exactly
             # the group it will use for first-level local reductions; then roots
