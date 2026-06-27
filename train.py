@@ -1685,9 +1685,12 @@ def train(args):
     torch.manual_seed(args.seed)
     if dist_enabled:
         torch.cuda.set_device(local_rank)
-        if not dist.is_initialized():
-            dist.init_process_group(backend='nccl')
         device = torch.device(f'cuda:{local_rank}')
+        if not dist.is_initialized():
+            try:
+                dist.init_process_group(backend='nccl', device_id=device)
+            except TypeError:
+                dist.init_process_group(backend='nccl')
         _mode = 'DiLoCo' if use_diloco else 'DDP'
         if is_main:
             print(f"[{_mode}] world_size={world_size} backend=nccl; this is rank {rank} "
