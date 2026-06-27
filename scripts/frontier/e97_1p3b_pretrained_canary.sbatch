@@ -37,6 +37,7 @@ DILOCO_EXPORT_BASIS=${DILOCO_EXPORT_BASIS:-x}
 DILOCO_ISLAND_SIZE=${DILOCO_ISLAND_SIZE:-1}
 DILOCO_MERGE_TOPOLOGY=${DILOCO_MERGE_TOPOLOGY:-global}
 DILOCO_MERGE_GROUP_SIZE=${DILOCO_MERGE_GROUP_SIZE:-8}
+DILOCO_MERGE_GROUP_CREATE_BARRIER_EVERY=${DILOCO_MERGE_GROUP_CREATE_BARRIER_EVERY:-8}
 DILOCO_MERGE_BUCKET_NUMEL=${DILOCO_MERGE_BUCKET_NUMEL:-0}
 DILOCO_MERGE_DEBUG=${DILOCO_MERGE_DEBUG:-0}
 DILOCO_MERGE_DEBUG_RANKS=${DILOCO_MERGE_DEBUG_RANKS:-0}
@@ -157,6 +158,7 @@ COMMON_ARGS=(
   --diloco_island_size "$DILOCO_ISLAND_SIZE"
   --diloco_merge_topology "$DILOCO_MERGE_TOPOLOGY"
   --diloco_merge_group_size "$DILOCO_MERGE_GROUP_SIZE"
+  --diloco_merge_group_create_barrier_every "$DILOCO_MERGE_GROUP_CREATE_BARRIER_EVERY"
   --diloco_merge_bucket_numel "$DILOCO_MERGE_BUCKET_NUMEL"
   --diloco_merge_debug "$DILOCO_MERGE_DEBUG"
   --diloco_merge_debug_ranks "$DILOCO_MERGE_DEBUG_RANKS"
@@ -205,6 +207,7 @@ MODEL_ARGS=(
   echo "diloco_island_size=$DILOCO_ISLAND_SIZE"
   echo "diloco_merge_topology=$DILOCO_MERGE_TOPOLOGY"
   echo "diloco_merge_group_size=$DILOCO_MERGE_GROUP_SIZE"
+  echo "diloco_merge_group_create_barrier_every=$DILOCO_MERGE_GROUP_CREATE_BARRIER_EVERY"
   echo "diloco_merge_bucket_numel=$DILOCO_MERGE_BUCKET_NUMEL"
   echo "diloco_merge_debug=$DILOCO_MERGE_DEBUG"
   echo "diloco_merge_debug_ranks=$DILOCO_MERGE_DEBUG_RANKS"
@@ -253,6 +256,7 @@ manifest = {
     "diloco_export_basis": "${DILOCO_EXPORT_BASIS}",
     "diloco_merge_topology": "${DILOCO_MERGE_TOPOLOGY}",
     "diloco_merge_group_size": int("${DILOCO_MERGE_GROUP_SIZE}"),
+    "diloco_merge_group_create_barrier_every": int("${DILOCO_MERGE_GROUP_CREATE_BARRIER_EVERY}"),
     "diloco_merge_bucket_numel": int("${DILOCO_MERGE_BUCKET_NUMEL}"),
     "diloco_merge_debug": int("${DILOCO_MERGE_DEBUG}"),
     "diloco_merge_debug_ranks": "${DILOCO_MERGE_DEBUG_RANKS}",
