@@ -34,6 +34,9 @@ DILOCO_OUTER_LR=${DILOCO_OUTER_LR:-1.0}
 DILOCO_OUTER_BETA=${DILOCO_OUTER_BETA:-0.0}
 DILOCO_EXPORT_BASIS=${DILOCO_EXPORT_BASIS:-x}
 DILOCO_ISLAND_SIZE=${DILOCO_ISLAND_SIZE:-8}
+DILOCO_MERGE_TOPOLOGY=${DILOCO_MERGE_TOPOLOGY:-global}
+DILOCO_MERGE_GROUP_SIZE=${DILOCO_MERGE_GROUP_SIZE:-8}
+DILOCO_MERGE_BUCKET_NUMEL=${DILOCO_MERGE_BUCKET_NUMEL:-0}
 BATCH_SIZE=${BATCH_SIZE:-1}
 CHUNK_SIZE=${CHUNK_SIZE:-2048}
 LOG_EVERY=${LOG_EVERY:-10}
@@ -118,6 +121,9 @@ COMMON_ARGS=(
   --diloco_outer_beta "$DILOCO_OUTER_BETA"
   --diloco_export_basis "$DILOCO_EXPORT_BASIS"
   --diloco_island_size "$DILOCO_ISLAND_SIZE"
+  --diloco_merge_topology "$DILOCO_MERGE_TOPOLOGY"
+  --diloco_merge_group_size "$DILOCO_MERGE_GROUP_SIZE"
+  --diloco_merge_bucket_numel "$DILOCO_MERGE_BUCKET_NUMEL"
 )
 
 if [[ -n "$VAL_DATA" ]]; then
@@ -298,6 +304,9 @@ manifest = {
     "diloco_outer_lr": float("${DILOCO_OUTER_LR}"),
     "diloco_outer_beta": float("${DILOCO_OUTER_BETA}"),
     "diloco_export_basis": "${DILOCO_EXPORT_BASIS}",
+    "diloco_merge_topology": "${DILOCO_MERGE_TOPOLOGY}",
+    "diloco_merge_group_size": int("${DILOCO_MERGE_GROUP_SIZE}"),
+    "diloco_merge_bucket_numel": int("${DILOCO_MERGE_BUCKET_NUMEL}"),
     **({"diloco_bootstrap_outer_state": "${DILOCO_BOOTSTRAP_OUTER_STATE:-}"} if "${DILOCO_BOOTSTRAP_OUTER_STATE:-}" else {}),
     "start_utc": "${START_UTC}",
     "end_utc": "${END_UTC}",

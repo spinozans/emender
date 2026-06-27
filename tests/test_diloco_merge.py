@@ -611,6 +611,132 @@ def test_bucketed_schedulefree_merge_avoids_scalar_collectives():
     print("PASS test_bucketed_schedulefree_merge_avoids_scalar_collectives")
 
 
+def _worker_hierarchical_exact(rank, world_size, init_file, ret):
+    dist.init_process_group(backend='gloo', init_method=f'file://{init_file}',
+                            rank=rank, world_size=world_size)
+    import train
+
+    args = _ns(
+        optimizer='adamw',
+        diloco_merge_topology='hierarchical',
+        diloco_merge_group_size=2,
+        diloco_merge_bucket_numel=4,
+    )
+    args._rank = rank
+    args._diloco_merge_groups = train._build_diloco_hierarchical_merge_groups(
+        world_size=world_size, rank=rank, group_size=2)
+
+    # Non-ScheduleFree path: exact weighted SUM/world_size over unequal groups
+    # [0, 1] and [2]. A naive average of local averages would overweight rank 2.
+    model = torch.nn.Sequential(torch.nn.Linear(3, 4), torch.nn.Linear(4, 2))
+    with torch.no_grad():
+        for idx, p in enumerate(model.parameters()):
+            p.fill_(10.0 * rank + idx)
+    pre_flat = torch._utils._flatten_dense_tensors([p.data for p in model.parameters()]).clone()
+    gathered_pre = [torch.zeros_like(pre_flat) for _ in range(world_size)]
+    dist.all_gather(gathered_pre, pre_flat)
+    train.diloco_merge(model, optimizer=None, args=args, world_size=world_size, outer_state=None)
+    post_flat = torch._utils._flatten_dense_tensors([p.data for p in model.parameters()]).clone()
+    gathered_post = [torch.zeros_like(post_flat) for _ in range(world_size)]
+    dist.all_gather(gathered_post, post_flat)
+
+    # ScheduleFree path: x and z tensor state use the same hierarchical average.
+    sf_model, opt = _build()
+    _local_train(sf_model, opt, rank, k_steps=5)
+    sf_args = _ns(
+        diloco_merge_topology='hierarchical',
+        diloco_merge_group_size=2,
+        diloco_merge_bucket_numel=7,
+    )
+    sf_args._rank = rank
+    sf_args._diloco_merge_groups = args._diloco_merge_groups
+    opt.eval()
+    pre_x = torch._utils._flatten_dense_tensors([p.data for p in sf_model.parameters()]).clone()
+    opt.train()
+    pre_z = torch._utils._flatten_dense_tensors(
+        [opt.state[p]['z'] for p in sf_model.parameters()]).clone()
+    gathered_sf = [None] * world_size
+    dist.all_gather_object(gathered_sf, {
+        'x': pre_x.tolist(),
+        'z': pre_z.tolist(),
+    })
+    train.diloco_merge(sf_model, opt, sf_args, world_size=world_size, outer_state=None)
+    opt.eval()
+    post_x = torch._utils._flatten_dense_tensors([p.data for p in sf_model.parameters()]).clone()
+    opt.train()
+    post_z = torch._utils._flatten_dense_tensors(
+        [opt.state[p]['z'] for p in sf_model.parameters()]).clone()
+    gathered_post_x = [torch.zeros_like(post_x) for _ in range(world_size)]
+    gathered_post_z = [torch.zeros_like(post_z) for _ in range(world_size)]
+    dist.all_gather(gathered_post_x, post_x)
+    dist.all_gather(gathered_post_z, post_z)
+
+    if rank == 0:
+        expected = torch.stack(gathered_pre).mean(dim=0)
+        expected_sf_x = torch.stack([
+            torch.tensor(row['x'], dtype=post_x.dtype)
+            for row in gathered_sf
+        ]).mean(dim=0)
+        expected_sf_z = torch.stack([
+            torch.tensor(row['z'], dtype=post_z.dtype)
+            for row in gathered_sf
+        ]).mean(dim=0)
+        ret['hierarchical'] = {
+            'non_sf_expected': expected.tolist(),
+            'non_sf_post': [t.tolist() for t in gathered_post],
+            'sf_x_expected': expected_sf_x.tolist(),
+            'sf_x_post': [t.tolist() for t in gathered_post_x],
+            'sf_z_expected': expected_sf_z.tolist(),
+            'sf_z_post': [t.tolist() for t in gathered_post_z],
+            'group_counts': [
+                len(group_ranks)
+                for group_ranks, _ in args._diloco_merge_groups['groups']
+            ],
+            'root_ranks': list(args._diloco_merge_groups['root_ranks']),
+        }
+
+    dist.barrier()
+    dist.destroy_process_group()
+
+
+def _run_hierarchical_exact():
+    world_size = 3
+    mgr = mp.Manager()
+    ret = mgr.dict()
+    with tempfile.NamedTemporaryFile() as f:
+        init_file = f.name
+    if os.path.exists(init_file):
+        os.remove(init_file)
+    mp.spawn(_worker_hierarchical_exact, args=(world_size, init_file, ret),
+             nprocs=world_size, join=True)
+    return dict(ret)['hierarchical']
+
+
+def test_hierarchical_merge_matches_global_average_for_unequal_groups():
+    """Opt-in hierarchical merge must match the current global average exactly
+    enough for dtype expectations, including unequal first-level groups."""
+    r = _run_hierarchical_exact()
+    assert r['group_counts'] == [2, 1], r['group_counts']
+    assert r['root_ranks'] == [0, 2], r['root_ranks']
+    tol = 1e-5
+    expected = torch.tensor(r['non_sf_expected'])
+    for post in r['non_sf_post']:
+        assert torch.allclose(torch.tensor(post), expected, atol=tol, rtol=0), (
+            "hierarchical non-ScheduleFree params != global mean"
+        )
+    expected_x = torch.tensor(r['sf_x_expected'])
+    for post_x in r['sf_x_post']:
+        assert torch.allclose(torch.tensor(post_x), expected_x, atol=tol, rtol=0), (
+            "hierarchical ScheduleFree x != global mean"
+        )
+    expected_z = torch.tensor(r['sf_z_expected'])
+    for post_z in r['sf_z_post']:
+        assert torch.allclose(torch.tensor(post_z), expected_z, atol=tol, rtol=0), (
+            "hierarchical ScheduleFree z != global mean"
+        )
+    print("PASS test_hierarchical_merge_matches_global_average_for_unequal_groups")
+
+
 # ===========================================================================
 # sf-diloco-p1 regression tests: lock the SF x/z/y geometry on the outer update.
 #

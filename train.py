@@ -374,6 +374,22 @@ def parse_args():
                         help='Optional DiLoCo merge all-reduce bucket size in elements. '
                              '0/unset preserves the default monolithic flat all-reduce. '
                              'Can also be set with NDM_DILOCO_MERGE_BUCKET_NUMEL.')
+    parser.add_argument('--diloco_merge_topology', type=str,
+                        default=os.environ.get('DILOCO_MERGE_TOPOLOGY', 'global'),
+                        choices=['global', 'hierarchical'],
+                        help='DiLoCo merge communication topology. global preserves the '
+                             'existing all-rank all-reduce. hierarchical is opt-in and '
+                             'reduces exact sums within rank groups, all-reduces group '
+                             'roots, then broadcasts the exact global average back '
+                             '(env: DILOCO_MERGE_TOPOLOGY).')
+    parser.add_argument('--diloco_merge_group_size', type=int,
+                        default=_env_int('NDM_DILOCO_MERGE_GROUP_SIZE', 8),
+                        help='Ranks per first-level group for '
+                             '--diloco_merge_topology=hierarchical. Frontier srun ranks '
+                             'are consecutive by node with 8 GPU tasks/node, so the '
+                             'default forms node-local groups. The final group may be '
+                             'smaller; weighted SUM/count averaging keeps semantics exact. '
+                             '(env: NDM_DILOCO_MERGE_GROUP_SIZE).')
     parser.add_argument('--diloco_merge_debug', type=int, choices=[0, 1],
                         default=_env_bool_int('NDM_DILOCO_MERGE_DEBUG', False),
                         help='Enable rank-filtered DiLoCo merge entry/exit logging '
@@ -1335,15 +1351,92 @@ def _diloco_merge_log(args, step, merge_index, label, bucket_index, numel, dtype
     )
 
 
+def _build_diloco_hierarchical_merge_groups(world_size, rank, group_size):
+    """Create exact two-level DiLoCo merge groups.
+
+    The first level is consecutive rank groups, which matches Frontier's
+    8-tasks-per-node srun layout used by the scaleout scripts. Groups may be
+    unequal: the merge reduces SUMs, never averages local averages, so the final
+    division by world_size preserves the current all-rank mean exactly.
+    """
+    if group_size <= 0:
+        raise ValueError("--diloco_merge_group_size must be >0 for hierarchical merge")
+    if not dist.is_initialized():
+        raise RuntimeError("hierarchical DiLoCo merge requires torch.distributed")
+    groups = []
+    root_ranks = []
+    local_group = None
+    local_group_ranks = None
+    local_root = None
+    n_groups = (world_size + group_size - 1) // group_size
+    for group_idx in range(n_groups):
+        start = group_idx * group_size
+        group_ranks = list(range(start, min(start + group_size, world_size)))
+        root = group_ranks[0]
+        g = dist.new_group(ranks=group_ranks)
+        groups.append((group_ranks, g))
+        root_ranks.append(root)
+        if rank in group_ranks:
+            local_group = g
+            local_group_ranks = group_ranks
+            local_root = root
+
+    root_group = None
+    if len(root_ranks) > 1:
+        # Collective across the default process group: every rank calls this,
+        # but only root ranks become members.
+        root_group = dist.new_group(ranks=root_ranks)
+
+    if local_group is None or local_group_ranks is None or local_root is None:
+        raise RuntimeError(f"rank {rank} was not assigned to a DiLoCo merge group")
+
+    return {
+        'topology': 'hierarchical',
+        'group_size': int(group_size),
+        'groups': groups,
+        'root_ranks': root_ranks,
+        'root_group': root_group,
+        'local_group': local_group,
+        'local_group_ranks': local_group_ranks,
+        'local_root': int(local_root),
+        'local_count': int(len(local_group_ranks)),
+        'is_root': bool(rank == local_root),
+        'n_groups': int(len(root_ranks)),
+    }
+
+
+def _diloco_hierarchical_sum_average_flat(flat, world_size, args):
+    meta = getattr(args, '_diloco_merge_groups', None)
+    if not meta or meta.get('topology') != 'hierarchical':
+        raise RuntimeError("missing hierarchical DiLoCo merge group metadata")
+    local_group = meta['local_group']
+    local_root = int(meta['local_root'])
+    is_root = bool(meta['is_root'])
+    root_group = meta.get('root_group')
+
+    dist.reduce(flat, dst=local_root, op=dist.ReduceOp.SUM, group=local_group)
+    if is_root:
+        if root_group is not None:
+            dist.all_reduce(flat, op=dist.ReduceOp.SUM, group=root_group)
+        flat.div_(world_size)
+    dist.broadcast(flat, src=local_root, group=local_group)
+
+
 def _diloco_allreduce_average_flat(flat, world_size, args, label, step=None,
                                    merge_index=None):
+    topology = str(getattr(args, 'diloco_merge_topology', 'global') or 'global').lower()
     bucket_numel = int(getattr(args, 'diloco_merge_bucket_numel', 0) or 0)
     if bucket_numel <= 0 or bucket_numel >= flat.numel():
         _diloco_merge_log(args, step, merge_index, label, 0, int(flat.numel()),
                           flat.dtype, 'enter')
         t0 = time.time()
-        dist.all_reduce(flat, op=dist.ReduceOp.SUM)
-        flat.div_(world_size)
+        if topology == 'hierarchical':
+            _diloco_hierarchical_sum_average_flat(flat, world_size, args)
+        elif topology == 'global':
+            dist.all_reduce(flat, op=dist.ReduceOp.SUM)
+            flat.div_(world_size)
+        else:
+            raise ValueError(f"unknown DiLoCo merge topology: {topology}")
         _diloco_merge_log(args, step, merge_index, label, 0, int(flat.numel()),
                           flat.dtype, 'exit', time.time() - t0)
         return
@@ -1354,8 +1447,13 @@ def _diloco_allreduce_average_flat(flat, world_size, args, label, step=None,
         _diloco_merge_log(args, step, merge_index, label, bucket_index,
                           int(chunk.numel()), chunk.dtype, 'enter')
         t0 = time.time()
-        dist.all_reduce(chunk, op=dist.ReduceOp.SUM)
-        chunk.div_(world_size)
+        if topology == 'hierarchical':
+            _diloco_hierarchical_sum_average_flat(chunk, world_size, args)
+        elif topology == 'global':
+            dist.all_reduce(chunk, op=dist.ReduceOp.SUM)
+            chunk.div_(world_size)
+        else:
+            raise ValueError(f"unknown DiLoCo merge topology: {topology}")
         _diloco_merge_log(args, step, merge_index, label, bucket_index,
                           int(chunk.numel()), chunk.dtype, 'exit',
                           time.time() - t0)
@@ -2206,6 +2304,41 @@ def train(args):
         if is_main:
             print(f"[DiLoCo] broadcast rank-0 W_0 to all {world_size} ranks "
                   f"(identical start)", flush=True)
+
+        merge_topology = str(getattr(args, 'diloco_merge_topology', 'global') or 'global').lower()
+        args._diloco_merge_topology = merge_topology
+        args._diloco_merge_groups = None
+        if merge_topology == 'hierarchical':
+            merge_group_size = int(getattr(args, 'diloco_merge_group_size', 8) or 8)
+            args._diloco_merge_groups = _build_diloco_hierarchical_merge_groups(
+                world_size, rank, merge_group_size)
+            # Warm subgroup communicators in a deterministic sequence. This mirrors
+            # the hybrid DDP island setup below and avoids many NCCL subgroup
+            # communicators being lazily initialized at once on first model bucket.
+            for group_ranks, g in args._diloco_merge_groups['groups']:
+                if rank in group_ranks:
+                    _w = torch.zeros(1, device=device)
+                    dist.all_reduce(_w, group=g)
+                dist.barrier()
+            if args._diloco_merge_groups['is_root'] and args._diloco_merge_groups['root_group'] is not None:
+                _w = torch.zeros(1, device=device)
+                dist.all_reduce(_w, group=args._diloco_merge_groups['root_group'])
+            dist.barrier()
+            if is_main:
+                group_counts = [
+                    len(group_ranks)
+                    for group_ranks, _ in args._diloco_merge_groups['groups']
+                ]
+                print(f"[DiLoCo-merge] topology=hierarchical group_size={merge_group_size} "
+                      f"groups={group_counts} roots={args._diloco_merge_groups['root_ranks']} "
+                      f"(exact weighted SUM/world_size; bucket_numel="
+                      f"{getattr(args, 'diloco_merge_bucket_numel', 0)})",
+                      flush=True)
+        elif merge_topology != 'global':
+            raise ValueError(f"unknown DiLoCo merge topology: {merge_topology}")
+        elif is_main:
+            print(f"[DiLoCo-merge] topology=global bucket_numel="
+                  f"{getattr(args, 'diloco_merge_bucket_numel', 0)}", flush=True)
 
         # HYBRID (task diloco-loss-parity-longhorizon): if --diloco_island_size > 1,
         # form islands of consecutive ranks that do per-step DDP gradient all-reduce
