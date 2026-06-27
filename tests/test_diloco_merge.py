@@ -611,6 +611,47 @@ def test_bucketed_schedulefree_merge_avoids_scalar_collectives():
     print("PASS test_bucketed_schedulefree_merge_avoids_scalar_collectives")
 
 
+def test_hierarchical_warmup_avoids_default_barrier_between_subgroups(monkeypatch):
+    """Frontier NCCL smoke regression: warm only this rank's subgroup, then roots.
+
+    The failed 4908293 smoke died during the old warm-up sequence, where ranks
+    outside a subgroup entered a default-group barrier while subgroup members
+    were still in that subgroup's NCCL all_reduce. The warm-up must not emit a
+    default barrier until after local and root communicators have been warmed.
+    """
+    import train
+
+    calls = []
+
+    class FakeDist:
+        @staticmethod
+        def all_reduce(tensor, group=None):
+            calls.append(("all_reduce", group))
+
+        @staticmethod
+        def barrier():
+            calls.append(("barrier", None))
+
+    monkeypatch.setattr(train, "dist", FakeDist)
+    monkeypatch.setattr(train.torch, "zeros", lambda *args, **kwargs: object())
+
+    args = _ns()
+    args._diloco_merge_groups = {
+        "topology": "hierarchical",
+        "local_group": "local-ranks-4-7",
+        "root_group": "root-ranks-0-4",
+        "is_root": True,
+    }
+
+    train._warm_diloco_hierarchical_merge_groups(args, device="cuda:0")
+
+    assert calls == [
+        ("all_reduce", "local-ranks-4-7"),
+        ("all_reduce", "root-ranks-0-4"),
+        ("barrier", None),
+    ]
+
+
 def _worker_hierarchical_exact(rank, world_size, init_file, ret):
     dist.init_process_group(backend='gloo', init_method=f'file://{init_file}',
                             rank=rank, world_size=world_size)

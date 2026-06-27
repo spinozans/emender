@@ -1422,6 +1422,17 @@ def _diloco_hierarchical_sum_average_flat(flat, world_size, args):
     dist.broadcast(flat, src=local_root, group=local_group)
 
 
+def _warm_diloco_hierarchical_merge_groups(args, device):
+    meta = getattr(args, '_diloco_merge_groups', None)
+    if not meta or meta.get('topology') != 'hierarchical':
+        raise RuntimeError("missing hierarchical DiLoCo merge group metadata")
+    _w = torch.zeros(1, device=device)
+    dist.all_reduce(_w, group=meta['local_group'])
+    if meta['is_root'] and meta.get('root_group') is not None:
+        dist.all_reduce(_w, group=meta['root_group'])
+    dist.barrier()
+
+
 def _diloco_allreduce_average_flat(flat, world_size, args, label, step=None,
                                    merge_index=None):
     topology = str(getattr(args, 'diloco_merge_topology', 'global') or 'global').lower()
@@ -2312,18 +2323,11 @@ def train(args):
             merge_group_size = int(getattr(args, 'diloco_merge_group_size', 8) or 8)
             args._diloco_merge_groups = _build_diloco_hierarchical_merge_groups(
                 world_size, rank, merge_group_size)
-            # Warm subgroup communicators in a deterministic sequence. This mirrors
-            # the hybrid DDP island setup below and avoids many NCCL subgroup
-            # communicators being lazily initialized at once on first model bucket.
-            for group_ranks, g in args._diloco_merge_groups['groups']:
-                if rank in group_ranks:
-                    _w = torch.zeros(1, device=device)
-                    dist.all_reduce(_w, group=g)
-                dist.barrier()
-            if args._diloco_merge_groups['is_root'] and args._diloco_merge_groups['root_group'] is not None:
-                _w = torch.zeros(1, device=device)
-                dist.all_reduce(_w, group=args._diloco_merge_groups['root_group'])
-            dist.barrier()
+            # Warm subgroup communicators without interleaving default-group
+            # barriers against nonmember ranks. Each rank first warms exactly
+            # the group it will use for first-level local reductions; then roots
+            # warm the second-level root group.
+            _warm_diloco_hierarchical_merge_groups(args, device)
             if is_main:
                 group_counts = [
                     len(group_ranks)
