@@ -53,6 +53,7 @@ WALLTIME_CHECK_EVERY=${WALLTIME_CHECK_EVERY:-1}
 DISTRIBUTED_HEALTH_CHECK_EVERY=${DISTRIBUTED_HEALTH_CHECK_EVERY:-1}
 HUMAN_APPROVAL_RECORD=${HUMAN_APPROVAL_RECORD:-WG task validate-e97-1-3b: one bounded 1-node avg E97 1.3B pretrained resume canary only; no 8+ node scaleout authorized by this submission.}
 FRONTIER_RCCL_ENV=${FRONTIER_RCCL_ENV:-current}
+FRONTIER_PER_RANK_TRITON_CACHE=${FRONTIER_PER_RANK_TRITON_CACHE:-0}
 
 [[ -r "$DATA" ]] || { echo "DATA is not readable: $DATA" >&2; exit 4; }
 [[ -r "$VAL_DATA" ]] || { echo "VAL_DATA is not readable: $VAL_DATA" >&2; exit 4; }
@@ -69,6 +70,7 @@ MANIFEST_FILE="${ARTIFACT_DIR}/manifest.json"
 SUMMARY_FILE="${SUMMARY_DIR}/summary.md"
 STDOUT_PATH="logs/frontier/scaleout/${SLURM_JOB_NAME:-e97-1p3b-pretrained-canary}-${SLURM_JOB_ID:-manual}.out"
 STDERR_PATH="logs/frontier/scaleout/${SLURM_JOB_NAME:-e97-1p3b-pretrained-canary}-${SLURM_JOB_ID:-manual}.err"
+FRONTIER_TRITON_CACHE_BASE=${FRONTIER_TRITON_CACHE_BASE:-"${RUN_ROOT}/artifacts/triton-cache"}
 
 mkdir -p "$LOG_DIR" "$ARTIFACT_DIR" "$SUMMARY_DIR" logs/frontier/scaleout
 cd "$REPO"
@@ -86,6 +88,8 @@ if [[ -n "${EMENDER_CONDA_ENV:-}" ]]; then
 fi
 
 export TIKTOKEN_CACHE_DIR
+export FRONTIER_PER_RANK_TRITON_CACHE
+export FRONTIER_TRITON_CACHE_BASE
 export MPICH_GPU_SUPPORT_ENABLED=${MPICH_GPU_SUPPORT_ENABLED:-1}
 export MASTER_ADDR=${MASTER_ADDR:-$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)}
 export MASTER_PORT=${MASTER_PORT:-3442}
@@ -213,20 +217,24 @@ MODEL_ARGS=(
   echo "diloco_merge_debug_ranks=$DILOCO_MERGE_DEBUG_RANKS"
   echo "frontier_rccl_env=$FRONTIER_RCCL_ENV"
   echo "rccl_net_plugin_status=$RCCL_NET_PLUGIN_STATUS"
+  echo "frontier_per_rank_triton_cache=$FRONTIER_PER_RANK_TRITON_CACHE"
+  if [[ "$FRONTIER_PER_RANK_TRITON_CACHE" == "1" ]]; then
+    echo "frontier_triton_cache_base=$FRONTIER_TRITON_CACHE_BASE"
+  fi
   echo
   echo "=== slurm ==="
-  env | sort | grep -E '^(SLURM|MPICH|NCCL|RCCL|FI_|MASTER|OMP|ROCR|HIP|HSA|LD_LIBRARY_PATH|AWS_OFI_RCCL|FRONTIER_RCCL|NDM|DATA|VAL_DATA|TRAIN_MINUTES|SCALEOUT|DILOCO|TIKTOKEN|HUMAN_APPROVAL|RESUME_CHECKPOINT)' || true
+  env | sort | grep -E '^(SLURM|MPICH|NCCL|RCCL|FI_|MASTER|OMP|ROCR|HIP|HSA|LD_LIBRARY_PATH|AWS_OFI_RCCL|FRONTIER|NDM|DATA|VAL_DATA|TRAIN_MINUTES|SCALEOUT|DILOCO|TIKTOKEN|TRITON|HUMAN_APPROVAL|RESUME_CHECKPOINT)' || true
   echo
   echo "=== command ==="
   printf '%q ' srun -N "$REQUESTED_NODES" -n "$((REQUESTED_NODES * 8))" -c7 --gpus-per-task=1 --gpu-bind=closest bash -lc \
-    'export RANK=$SLURM_PROCID WORLD_SIZE=$SLURM_NTASKS LOCAL_RANK=0; exec python -u train.py "$@"' \
+    'if [[ "${FRONTIER_PER_RANK_TRITON_CACHE:-0}" == "1" ]]; then export TRITON_CACHE_DIR="${FRONTIER_TRITON_CACHE_BASE%/}/rank-${SLURM_PROCID}"; mkdir -p "$TRITON_CACHE_DIR"; fi; export RANK=$SLURM_PROCID WORLD_SIZE=$SLURM_NTASKS LOCAL_RANK=0; exec python -u train.py "$@"' \
     bash "${COMMON_ARGS[@]}" "${MODEL_ARGS[@]}"
   echo
 } | tee "$ENV_FILE"
 
 set +e
 srun -N "$REQUESTED_NODES" -n "$((REQUESTED_NODES * 8))" -c7 --gpus-per-task=1 --gpu-bind=closest \
-  bash -lc 'export RANK=$SLURM_PROCID WORLD_SIZE=$SLURM_NTASKS LOCAL_RANK=0; exec python -u train.py "$@"' \
+  bash -lc 'if [[ "${FRONTIER_PER_RANK_TRITON_CACHE:-0}" == "1" ]]; then export TRITON_CACHE_DIR="${FRONTIER_TRITON_CACHE_BASE%/}/rank-${SLURM_PROCID}"; mkdir -p "$TRITON_CACHE_DIR"; fi; export RANK=$SLURM_PROCID WORLD_SIZE=$SLURM_NTASKS LOCAL_RANK=0; exec python -u train.py "$@"' \
   bash "${COMMON_ARGS[@]}" "${MODEL_ARGS[@]}" \
   2>&1 | tee "${LOG_DIR}/train.log"
 TRAIN_STATUS=${PIPESTATUS[0]}
@@ -260,6 +268,8 @@ manifest = {
     "diloco_merge_bucket_numel": int("${DILOCO_MERGE_BUCKET_NUMEL}"),
     "diloco_merge_debug": int("${DILOCO_MERGE_DEBUG}"),
     "diloco_merge_debug_ranks": "${DILOCO_MERGE_DEBUG_RANKS}",
+    "frontier_per_rank_triton_cache": int("${FRONTIER_PER_RANK_TRITON_CACHE}"),
+    "frontier_triton_cache_base": "${FRONTIER_TRITON_CACHE_BASE}",
     "batch_size": int("${BATCH_SIZE}"),
     "chunk_size": int("${CHUNK_SIZE}"),
     "save_every": int("${SAVE_EVERY}"),
