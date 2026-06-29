@@ -24,7 +24,7 @@ Scope: refreshed the hosted E97/Emender 8-GPU DiLoCo loss plot from the current 
 - Latest raw loss: `2.6261`
 - Plot smoothing: moving average over `80` points
 - Plot-smoothed loss: `2.582807`
-- Tokens seen estimate: `4,620,288,000` (`564000 * 8192`)
+- Global tokens seen estimate: `36,962,304,000` (`564000 * 4 batch_size * 2048 chunk_size * 8 world_size`; `65,536` global tokens/step)
 - Latest checkpoint at inspection time: `/mnt/nvme1n1/erikg/diloco_8gpu/emender/runs/levelE97_100m_20260623_103742/checkpoint_step_564000_loss_2.6261.pt`
 
 ## BPB Conversion
