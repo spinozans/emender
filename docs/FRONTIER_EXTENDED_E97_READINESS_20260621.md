@@ -187,7 +187,7 @@ Default 64x24h model/run configuration in the script:
 | Variant | `e97-MLP` |
 | Nodes/ranks | 64 nodes, 8 ranks per node, 512 ranks total |
 | GPU binding | `--gpus-per-task=1 --gpu-bind=closest` |
-| Distributed env | Script maps `SLURM_PROCID`, `SLURM_NTASKS`, and `SLURM_LOCALID` to `RANK`, `WORLD_SIZE`, and `LOCAL_RANK` before `train.py` starts |
+| Distributed env | Script maps `SLURM_PROCID` and `SLURM_NTASKS` to `RANK` and `WORLD_SIZE`, and sets `LOCAL_RANK=0` for Frontier `--gpus-per-task=1` rank-local GPU visibility before `train.py` starts |
 | Data | `/lustre/orion/bif148/proj-shared/commapile/commapile_mainmix_v0.1_1tb.txt` |
 | Tokenizer | `p50k_base`, with required shared `TIKTOKEN_CACHE_DIR` |
 | Precision/kernel | bf16, `--use_triton 1`, fused split-edit E97 |

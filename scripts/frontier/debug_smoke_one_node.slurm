@@ -94,11 +94,17 @@ COMMON_ARGS=(
   --log_every "${LOG_EVERY:-10}"
   --save_every 999999
   --keep_checkpoints 1
+  --walltime_final_checkpoint_margin_seconds "${WALLTIME_FINAL_CHECKPOINT_MARGIN_SECONDS:-600}"
+  --walltime_check_every "${WALLTIME_CHECK_EVERY:-1}"
   --output "${RUN_ROOT}/train"
 )
 
 if [[ -n "$VAL_DATA" ]]; then
   COMMON_ARGS+=(--val_data "$VAL_DATA" --val_every "${VAL_EVERY:-50}")
+fi
+if [[ -n "${RESUME_CHECKPOINT:-}" ]]; then
+  [[ -r "$RESUME_CHECKPOINT" ]] || { echo "RESUME_CHECKPOINT is not readable: $RESUME_CHECKPOINT" >&2; exit 4; }
+  COMMON_ARGS+=(--resume "$RESUME_CHECKPOINT")
 fi
 
 case "$SMOKE_VARIANT" in
@@ -380,6 +386,7 @@ manifest = {
     "train_status": int("${TRAIN_STATUS}"),
     "git_commit": "${GIT_COMMIT}",
     "tiktoken_cache_dir": "${TIKTOKEN_CACHE_DIR}",
+    "resume_checkpoint": "${RESUME_CHECKPOINT:-}",
     "stdout": "${STDOUT_PATH}",
     "stderr": "${STDERR_PATH}",
     "run_root": "${RUN_ROOT}",

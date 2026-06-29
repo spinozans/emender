@@ -124,6 +124,8 @@ COMMON_ARGS=(
   --log_every "${LOG_EVERY:-25}"
   --save_every "${SAVE_EVERY:-500}"
   --keep_checkpoints "${KEEP_CHECKPOINTS:-12}"
+  --walltime_final_checkpoint_margin_seconds "${WALLTIME_FINAL_CHECKPOINT_MARGIN_SECONDS:-900}"
+  --walltime_check_every "${WALLTIME_CHECK_EVERY:-1}"
   --heldout_eval_mode y
   --output "$TRAIN_ROOT"
 )
@@ -195,14 +197,14 @@ MODEL_ARGS=(
   echo
   echo "=== command ==="
   printf '%q ' srun -N "$REQUESTED_NODES" -n "$((REQUESTED_NODES * 8))" -c7 --gpus-per-task=1 --gpu-bind=closest \
-    bash -c 'export RANK="$SLURM_PROCID"; export WORLD_SIZE="$SLURM_NTASKS"; export LOCAL_RANK="$SLURM_LOCALID"; exec python -u train.py "$@"' \
+    bash -c 'export RANK="$SLURM_PROCID"; export WORLD_SIZE="$SLURM_NTASKS"; export LOCAL_RANK=0; exec python -u train.py "$@"' \
     _ "${COMMON_ARGS[@]}" "${MODEL_ARGS[@]}"
   echo
 } | tee "$ENV_FILE"
 
 set +e
 srun -N "$REQUESTED_NODES" -n "$((REQUESTED_NODES * 8))" -c7 --gpus-per-task=1 --gpu-bind=closest \
-  bash -c 'export RANK="$SLURM_PROCID"; export WORLD_SIZE="$SLURM_NTASKS"; export LOCAL_RANK="$SLURM_LOCALID"; exec python -u train.py "$@"' \
+  bash -c 'export RANK="$SLURM_PROCID"; export WORLD_SIZE="$SLURM_NTASKS"; export LOCAL_RANK=0; exec python -u train.py "$@"' \
   _ "${COMMON_ARGS[@]}" "${MODEL_ARGS[@]}" \
   2>&1 | tee "${LOG_DIR}/train.log"
 STATUS=${PIPESTATUS[0]}

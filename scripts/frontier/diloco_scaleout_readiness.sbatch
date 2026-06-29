@@ -29,9 +29,14 @@ DATA=${DATA:?Set DATA to a Frontier-readable commapile training text or shard}
 VAL_DATA=${VAL_DATA:-}
 TIKTOKEN_CACHE_DIR=${TIKTOKEN_CACHE_DIR:?Set TIKTOKEN_CACHE_DIR to a pre-populated shared tokenizer cache}
 DILOCO_K=${DILOCO_K:-250}
+DILOCO_OUTER_OPTIMIZER=${DILOCO_OUTER_OPTIMIZER:-avg}
 DILOCO_OUTER_LR=${DILOCO_OUTER_LR:-1.0}
 DILOCO_OUTER_BETA=${DILOCO_OUTER_BETA:-0.0}
+DILOCO_EXPORT_BASIS=${DILOCO_EXPORT_BASIS:-x}
 DILOCO_ISLAND_SIZE=${DILOCO_ISLAND_SIZE:-8}
+DILOCO_MERGE_TOPOLOGY=${DILOCO_MERGE_TOPOLOGY:-global}
+DILOCO_MERGE_GROUP_SIZE=${DILOCO_MERGE_GROUP_SIZE:-8}
+DILOCO_MERGE_BUCKET_NUMEL=${DILOCO_MERGE_BUCKET_NUMEL:-0}
 BATCH_SIZE=${BATCH_SIZE:-1}
 CHUNK_SIZE=${CHUNK_SIZE:-2048}
 LOG_EVERY=${LOG_EVERY:-10}
@@ -111,13 +116,27 @@ COMMON_ARGS=(
   --output "${RUN_ROOT}/train"
   --diloco
   --diloco_k "$DILOCO_K"
+  --diloco_outer_optimizer "$DILOCO_OUTER_OPTIMIZER"
   --diloco_outer_lr "$DILOCO_OUTER_LR"
   --diloco_outer_beta "$DILOCO_OUTER_BETA"
+  --diloco_export_basis "$DILOCO_EXPORT_BASIS"
   --diloco_island_size "$DILOCO_ISLAND_SIZE"
+  --diloco_merge_topology "$DILOCO_MERGE_TOPOLOGY"
+  --diloco_merge_group_size "$DILOCO_MERGE_GROUP_SIZE"
+  --diloco_merge_bucket_numel "$DILOCO_MERGE_BUCKET_NUMEL"
 )
 
 if [[ -n "$VAL_DATA" ]]; then
   COMMON_ARGS+=(--val_data "$VAL_DATA")
+fi
+
+if [[ -n "${RESUME_CHECKPOINT:-}" ]]; then
+  [[ -r "$RESUME_CHECKPOINT" ]] || { echo "RESUME_CHECKPOINT is not readable: $RESUME_CHECKPOINT" >&2; exit 4; }
+  COMMON_ARGS+=(--resume "$RESUME_CHECKPOINT")
+fi
+
+if [[ -n "${DILOCO_BOOTSTRAP_OUTER_STATE:-}" ]]; then
+  COMMON_ARGS+=(--diloco_bootstrap_outer_state "$DILOCO_BOOTSTRAP_OUTER_STATE")
 fi
 
 case "$SCALEOUT_VARIANT" in
@@ -211,10 +230,11 @@ PY
   echo "stdout=$STDOUT_PATH"
   echo "stderr=$STDERR_PATH"
   echo "human_approval_record=$HUMAN_APPROVAL_RECORD"
+  echo "resume_checkpoint=${RESUME_CHECKPOINT:-}"
   echo "requested_node_hours=$REQUESTED_NODE_HOURS"
   echo
   echo "=== slurm ==="
-  env | sort | grep -E '^(SLURM|MPICH|NCCL|MASTER|OMP|ROCR|HIP|HSA|GDN2|NDM|DATA|VAL_DATA|TRAIN_MINUTES|SCALEOUT|DILOCO|TIKTOKEN|HUMAN_APPROVAL)=' || true
+  env | sort | grep -E '^(SLURM|MPICH|NCCL|MASTER|OMP|ROCR|HIP|HSA|GDN2|NDM|DATA|VAL_DATA|TRAIN_MINUTES|SCALEOUT|DILOCO|TIKTOKEN|HUMAN_APPROVAL|RESUME_CHECKPOINT)=' || true
   echo
   echo "=== modules ==="
   module list 2>&1
@@ -250,14 +270,14 @@ PY
   echo
   echo "=== command ==="
   printf '%q ' srun -N "$REQUESTED_NODES" -n "$((REQUESTED_NODES * 8))" -c7 --gpus-per-task=1 --gpu-bind=closest bash -lc \
-    'export RANK=$SLURM_PROCID WORLD_SIZE=$SLURM_NTASKS LOCAL_RANK=$SLURM_LOCALID; exec python -u train.py "$@"' \
+    'export RANK=$SLURM_PROCID WORLD_SIZE=$SLURM_NTASKS LOCAL_RANK=0; exec python -u train.py "$@"' \
     bash "${COMMON_ARGS[@]}" "${MODEL_ARGS[@]}"
   echo
 } | tee "$ENV_FILE"
 
 set +e
 srun -N "$REQUESTED_NODES" -n "$((REQUESTED_NODES * 8))" -c7 --gpus-per-task=1 --gpu-bind=closest \
-  bash -lc 'export RANK=$SLURM_PROCID WORLD_SIZE=$SLURM_NTASKS LOCAL_RANK=$SLURM_LOCALID; exec python -u train.py "$@"' \
+  bash -lc 'export RANK=$SLURM_PROCID WORLD_SIZE=$SLURM_NTASKS LOCAL_RANK=0; exec python -u train.py "$@"' \
   bash "${COMMON_ARGS[@]}" "${MODEL_ARGS[@]}" \
   2>&1 | tee "${LOG_DIR}/train.log"
 TRAIN_STATUS=${PIPESTATUS[0]}
@@ -279,6 +299,15 @@ manifest = {
     "requested_walltime": "${SLURM_TIMELIMIT:-${SCALEOUT_WALLTIME}}",
     "requested_node_hours": float("${REQUESTED_NODE_HOURS}"),
     "human_approval_record": "${HUMAN_APPROVAL_RECORD}",
+    "resume_checkpoint": "${RESUME_CHECKPOINT:-}",
+    "diloco_outer_optimizer": "${DILOCO_OUTER_OPTIMIZER}",
+    "diloco_outer_lr": float("${DILOCO_OUTER_LR}"),
+    "diloco_outer_beta": float("${DILOCO_OUTER_BETA}"),
+    "diloco_export_basis": "${DILOCO_EXPORT_BASIS}",
+    "diloco_merge_topology": "${DILOCO_MERGE_TOPOLOGY}",
+    "diloco_merge_group_size": int("${DILOCO_MERGE_GROUP_SIZE}"),
+    "diloco_merge_bucket_numel": int("${DILOCO_MERGE_BUCKET_NUMEL}"),
+    **({"diloco_bootstrap_outer_state": "${DILOCO_BOOTSTRAP_OUTER_STATE:-}"} if "${DILOCO_BOOTSTRAP_OUTER_STATE:-}" else {}),
     "start_utc": "${START_UTC}",
     "end_utc": "${END_UTC}",
     "exit_status": int("${TRAIN_STATUS}"),
@@ -294,10 +323,29 @@ with open("${MANIFEST_FILE}", "w", encoding="utf-8") as fh:
     fh.write("\\n")
 PY
 
-python - <<PY > "${SUMMARY_FILE}"
+python - "$LOG_DIR/train.log" \
+  "$TASK_ID" \
+  "$SCALEOUT_VARIANT" \
+  "${SLURM_JOB_ID:-manual}" \
+  "$REQUESTED_NODES" \
+  "$REQUESTED_NODE_HOURS" \
+  "$HUMAN_APPROVAL_RECORD" \
+  "$TRAIN_STATUS" <<'PY' > "${SUMMARY_FILE}"
+import sys
 from pathlib import Path
 
-train_log = Path("${LOG_DIR}/train.log")
+(
+    train_log_arg,
+    task_id,
+    scaleout_variant,
+    job_id,
+    requested_nodes,
+    requested_node_hours,
+    human_approval_record,
+    train_status,
+) = sys.argv[1:]
+
+train_log = Path(train_log_arg)
 lines = train_log.read_text(encoding="utf-8", errors="replace").splitlines() if train_log.exists() else []
 step_lines = [ln for ln in lines if "loss" in ln and ("tok/s" in ln or "global_tok/s" in ln)]
 diloco_lines = [ln for ln in lines if "DiLoCo" in ln or "DILOCO_" in ln]
@@ -308,13 +356,13 @@ error_lines = [
 
 print("# Frontier DiLoCo Scaleout Summary")
 print()
-print(f"Task: `${TASK_ID}`")
-print(f"Variant: `${SCALEOUT_VARIANT}`")
-print(f"Job ID: `${SLURM_JOB_ID:-manual}`")
-print(f"Nodes: `${REQUESTED_NODES}`")
-print(f"Requested node-hours: `${REQUESTED_NODE_HOURS}`")
-print(f"Human approval record: `${HUMAN_APPROVAL_RECORD}`")
-print(f"Train status: `${TRAIN_STATUS}`")
+print(f"Task: `{task_id}`")
+print(f"Variant: `{scaleout_variant}`")
+print(f"Job ID: `{job_id}`")
+print(f"Nodes: `{requested_nodes}`")
+print(f"Requested node-hours: `{requested_node_hours}`")
+print(f"Human approval record: `{human_approval_record}`")
+print(f"Train status: `{train_status}`")
 print()
 print("## Last Training Metric Lines")
 print()
