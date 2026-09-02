@@ -151,6 +151,12 @@ def test_v3_onpolicy_builder_reconstructs_all_corrective_families(tmp_path):
         actual_user, _turns, actual_task = v3_onpolicy_builder.trajectory(
             kind, index, __import__("random").Random(4_901_093 + index))
         assert (actual_user, actual_task) == (expected_user, expected_task)
+        _user, diverse_turns, diverse_task = v3_onpolicy_builder.trajectory(
+            kind, index, __import__("random").Random(4_901_093 + index),
+            final_style="grounded-diverse")
+        assert kind not in diverse_turns[-1][1]
+        assert all(f"`{value}`" in diverse_turns[-1][1]
+                   for value in diverse_task["final_contains"])
     exact = tmp_path / "v3-exact"
     run("scripts/build_e97_pi_v3_onpolicy_sft.py", "--output-root", exact,
         "--records", 12, "--seed", 4_901_093, "--source-index-offset", 0,

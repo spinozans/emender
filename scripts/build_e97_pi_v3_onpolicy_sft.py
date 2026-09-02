@@ -22,7 +22,7 @@ def entry(path: Path) -> dict[str, object]:
     return {"path": str(path.resolve()), "bytes": path.stat().st_size, "sha256": sha256(path)}
 
 
-def trajectory(kind: str, index: int, rng: random.Random):
+def trajectory(kind: str, index: int, rng: random.Random, *, final_style: str = "legacy"):
     user, task = trace(kind, index, rng)
     state = {fixture["path"]: fixture["content"] for fixture in task["fixtures"]}
     turns: list[tuple[str, str]] = []
@@ -64,7 +64,19 @@ def trajectory(kind: str, index: int, rng: random.Random):
             raise ValueError(name)
         turns.append(("tool", result))
     evidence = ", ".join(f"`{value}`" for value in task["final_contains"])
-    turns.append(("assistant", f"Final: Completed the requested {kind} workflow and verified {evidence}."))
+    if final_style == "legacy":
+        final = f"Final: Completed the requested {kind} workflow and verified {evidence}."
+    elif final_style == "grounded-diverse":
+        templates = (
+            "Final: Verified {evidence}.",
+            "Final: Completed the requested work and verified {evidence}.",
+            "Final: The requested result is in place; verified {evidence}.",
+            "Final: Finished and checked the requested result: {evidence}.",
+        )
+        final = templates[index % len(templates)].format(evidence=evidence)
+    else:
+        raise ValueError(final_style)
+    turns.append(("assistant", final))
     return user, turns, task
 
 
@@ -74,8 +86,11 @@ def main() -> None:
     parser.add_argument("--records", type=int, default=60_000)
     parser.add_argument("--seed", type=int, default=9_741_003)
     parser.add_argument("--source-index-offset", type=int, default=1_000_000)
-    parser.add_argument("--target-mode", choices=("all-assistant", "actions-only"),
+    parser.add_argument("--target-mode",
+                        choices=("all-assistant", "actions-only", "finals-only"),
                         default="all-assistant")
+    parser.add_argument("--final-style", choices=("legacy", "grounded-diverse"),
+                        default="legacy")
     args = parser.parse_args()
     if args.records <= 0 or args.records % len(KINDS):
         raise SystemExit(f"records must be a positive multiple of {len(KINDS)}")
@@ -98,13 +113,16 @@ def main() -> None:
             source_index = args.source_index_offset + record_index
             identity = f"pi-v3-onpolicy-{kind}-{record_index:09d}"
             user, turns, task = trajectory(
-                kind, source_index, random.Random(args.seed + record_index))
+                kind, source_index, random.Random(args.seed + record_index),
+                final_style=args.final_style)
             messages = [("system", E97_PI_AGENT_SYSTEM_V2), ("user", user), *turns]
             action_positions = ({position for position, (role, _text) in enumerate(messages[:-1])
                                  if role == "assistant"}
                                 if args.target_mode == "actions-only" else None)
             tokens, masks, complete = serialize_live_aligned(
-                messages, encoding, target_mode="all-assistant",
+                messages, encoding,
+                target_mode=("final-only" if args.target_mode == "finals-only"
+                             else "all-assistant"),
                 target_assistant_positions=action_positions,
                 target_terminal_newline=args.target_mode != "actions-only")
             validation = int(split(identity))
@@ -128,7 +146,7 @@ def main() -> None:
         "purpose": "on-policy correction for observed Pi-v2 diagnostic V3 failures",
         "system_prompt": E97_PI_AGENT_SYSTEM_V2, "tokenizer": ENCODING,
         "seed": args.seed, "source_index_offset": args.source_index_offset,
-        "target_mode": args.target_mode,
+        "target_mode": args.target_mode, "final_style": args.final_style,
         "kinds": list(KINDS), "kind_counts": kind_counts, "counts": counts,
         "evaluation_policy": {
             "v3": "training-influenced diagnostic only; cannot support a blind claim",
