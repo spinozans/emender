@@ -18,6 +18,7 @@ from scripts import build_e97_pi_compositional_sft as compositional_builder
 from scripts import build_e97_pi_finalization_repair_sft as repair_builder
 from scripts import build_e97_pi_recover_read_sft as recover_read_builder
 from scripts import build_e97_pi_path_fidelity_sft as path_fidelity_builder
+from scripts import build_e97_pi_v3_onpolicy_sft as v3_onpolicy_builder
 from scripts import eval_e97_4b_pi_core as evaluator
 from scripts import train_e97_4b_pi_sft as trainer
 from scripts import verify_e97_4b_pi_sft_checkpoint as verifier
@@ -114,6 +115,23 @@ def test_path_fidelity_builder_randomizes_paths_and_masks_failed_guess(tmp_path)
     manifest = json.loads((authority / "manifest.json").read_text())
     assert manifest["counts"]["records"] == 10
     assert manifest["kind_counts"] == {kind: 2 for kind in path_fidelity_builder.KINDS}
+
+
+def test_v3_onpolicy_builder_reconstructs_all_corrective_families(tmp_path):
+    for index, kind in enumerate(v3_onpolicy_builder.KINDS):
+        user, turns, task = v3_onpolicy_builder.trajectory(
+            kind, 1_000_000 + index, __import__("random").Random(31 + index))
+        assert user and turns[-1][0] == "assistant" and turns[-1][1].startswith("Final:")
+        assert sum(role == "assistant" for role, _ in turns) == len(task["expected_calls"]) + 1
+        if kind == "command-recovery":
+            assert "FileNotFoundError" in turns[1][1] and "Command exited with code 1" in turns[1][1]
+    authority = tmp_path / "v3-onpolicy"
+    run("scripts/build_e97_pi_v3_onpolicy_sft.py", "--output-root", authority,
+        "--records", 12, "--seed", 37)
+    manifest = json.loads((authority / "manifest.json").read_text())
+    assert manifest["counts"]["records"] == 12
+    assert manifest["kind_counts"] == {kind: 2 for kind in v3_onpolicy_builder.KINDS}
+    assert "diagnostic only" in manifest["evaluation_policy"]["v3"]
 
 
 def test_build_and_mix_authorities_are_deterministic_and_target_weighted(tmp_path):
