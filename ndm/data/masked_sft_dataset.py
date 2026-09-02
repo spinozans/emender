@@ -4,6 +4,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 import hashlib
 import json
+import math
 import mmap
 from pathlib import Path
 import struct
@@ -17,6 +18,7 @@ AUTHORITY_SCHEMA = "emender-e97-tulu3-masked-sft-v1"
 PACK_SCHEMA = "emender-e97-sft-complete-record-packs-v1"
 BOUNDARY_PACK_SCHEMA = "emender-e97-sft-boundary-aware-packs-v2"
 SAMPLER_SCHEMA = "emender-record-pack-counter-v1"
+SAMPLER_MODES = {"hash-replacement", "epoch-permutation"}
 RECORD_INDEX = struct.Struct("<QQQB7x")
 PACK_INDEX = struct.Struct("<QQQQ")
 
@@ -136,6 +138,7 @@ class MaskedSFTPackedDataset:
         initial_absolute_rank_sample_index: int = 0,
         verify_payload_hashes: bool = False,
         pad_token_id: int = 0,
+        sampler_mode: str = "hash-replacement",
     ) -> None:
         self.authority_root = Path(authority_root)
         self.pack_root = Path(pack_root)
@@ -144,6 +147,10 @@ class MaskedSFTPackedDataset:
         self.context_size = int(identity.context_size)
         self.sequence_tokens = self.context_size + 1
         self.pad_token_id = int(pad_token_id)
+        self.sampler_mode = str(sampler_mode)
+        self._epoch_permutation_cache: dict[int, tuple[int, int]] = {}
+        if self.sampler_mode not in SAMPLER_MODES:
+            raise ValueError(f"unsupported SFT sampler mode {self.sampler_mode!r}")
         if not 0 <= self.rank < identity.data_world_size:
             raise ValueError("rank must be within the SFT data world")
         if initial_absolute_rank_sample_index < 0:
@@ -246,11 +253,42 @@ class MaskedSFTPackedDataset:
             payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("ascii")
         return hashlib.sha256(encoded).digest()
 
+    def _epoch_permutation(self, epoch: int) -> tuple[int, int]:
+        cached = self._epoch_permutation_cache.get(epoch)
+        if cached is not None:
+            return cached
+        payload = {
+            **self.identity.to_metadata(),
+            "sampler_mode": self.sampler_mode,
+            "epoch": int(epoch),
+        }
+        digest = hashlib.sha256(json.dumps(
+            payload, sort_keys=True, separators=(",", ":"),
+            ensure_ascii=True).encode("ascii")).digest()
+        modulus = len(self.packs)
+        multiplier = int.from_bytes(digest[:8], "little") % modulus
+        while math.gcd(multiplier, modulus) != 1:
+            multiplier = (multiplier + 1) % modulus
+        offset = int.from_bytes(digest[8:16], "little") % modulus
+        result = (multiplier, offset)
+        self._epoch_permutation_cache[epoch] = result
+        return result
+
     def pack_id_at(self, absolute_index: int) -> int:
-        return int.from_bytes(self._digest(absolute_index)[:8], "little") % len(self.packs)
+        if absolute_index < 0:
+            raise ValueError("absolute SFT sample index must be nonnegative")
+        if self.sampler_mode == "hash-replacement":
+            return int.from_bytes(self._digest(absolute_index)[:8], "little") % len(self.packs)
+        global_index = absolute_index * self.identity.data_world_size + self.rank
+        epoch, position = divmod(global_index, len(self.packs))
+        multiplier, offset = self._epoch_permutation(epoch)
+        return (multiplier * position + offset) % len(self.packs)
 
     def sample_id(self, absolute_index: int) -> str:
-        return self._digest(absolute_index).hex()
+        digest = self._digest(absolute_index)
+        if self.sampler_mode == "hash-replacement":
+            return digest.hex()
+        return hashlib.sha256(digest + self.sampler_mode.encode("ascii")).hexdigest()
 
     def pack_at(self, pack_id: int) -> tuple[torch.Tensor, torch.Tensor, int, int, str]:
         """Materialize one authority pack by exact index without counter sampling."""

@@ -118,15 +118,20 @@ truncation fail closed.
 
 ## Target mixture and consumed-token clock
 
-Twenty-five million **consumed** assistant tokens is the qualification
-milestone, not the expected final exposure. Stage A evaluates a cumulative
-25M/50M/100M ladder and may extend to 200M when frozen behavioral gains remain
-positive. The anticipated complete broad/distillation program consumes roughly
-100–250M assistant targets, excluding later RL rollouts. Total processed context
-will be larger and is reported separately.
+Twenty-five million **consumed** targets is only the systems and recipe pilot,
+not the expected final exposure. The already admitted authorities contain
+775,217,258 targets and 1,491,924,900 input tokens even though the first
+CommaPile extraction contains only 5.19M causal targets. The scaled Stage A
+therefore evaluates 25M/100M/250M/500M consumed-target milestones and may
+continue toward unique coverage of the admitted pool when frozen behavioral
+curves remain positive. Total processed context is reported separately.
 
-The original proposed mixture was superseded by the document-aware amendment
-above. The first immutable 25M authority uses:
+The scaled authority must sample source records without replacement and the
+fixed-world pack sampler must traverse a deterministic epoch permutation.
+Small retention sources are not replayed at a fixed 20% indefinitely; they are
+consumed once or augmented with new authentic/on-policy trajectories. The
+original proposed mixture was superseded by the document-aware amendment above.
+The first immutable 25M pilot authority uses:
 
 | Track | Initial target share |
 |---|---:|
@@ -135,9 +140,16 @@ above. The first immutable 25M authority uses:
 | Broad instruction/reasoning | 25% |
 | Pi protocol and retention replay | 20% |
 
+The first predeclared scaled tranche requests approximately 519.5M unique
+source targets: 300M broad, all 110,268,050 eligible OpenHands targets, all
+9,250,214 Pi-retention targets, and 100M newly extracted filtered CommaPile
+causal targets. The remaining admitted broad records are reserved for a named
+continuation rather than silently folded into the first tranche.
+
 Sampling is stratified by track and subdomain. A flat union is prohibited because
-large sources would dilute rare recovery and protocol skills. Logs and
-checkpoints record both total targets and per-source consumed targets.
+large sources would dilute rare recovery and protocol skills. Checkpoint sampler
+cursor plus immutable authority/pack manifests must permit exact reconstruction
+of aggregate and per-source consumed targets.
 
 Mixture weights may change only at named stage boundaries. Every boundary starts
 a new immutable authority and records the behavioral reason for the change.
@@ -174,12 +186,13 @@ sampling and, only after a strong SFT baseline, GRPO/RL with verifiable rewards.
 
 ### Stage A — broad cold-start SFT
 
-Train the cumulative mixture through 25M, 50M, and 100M consumed-target
-milestones, with a pre-authorized 200M extension only while frozen behavioral
-curves improve. This is full-parameter Schedule-Free SFT and retains the
-fixed-world eight-rank local execution contract. Select by broad instruction,
-code, Pi smoke, v2, and frozen repository evaluations. Stop early on regression
-or saturation; do not spend the nominal clock merely because data remain.
+Use 25M only to qualify the objective, then train scaled no-replacement
+authorities through 100M, 250M, and 500M consumed-target milestones. Continue
+toward broader unique-source coverage only while frozen behavioral curves
+improve. This is full-parameter Schedule-Free SFT and retains the fixed-world
+eight-rank local execution contract. Select by broad instruction, code, Pi
+smoke, v2, and frozen repository evaluations. Stop early on regression or
+saturation; do not spend the nominal clock merely because data remain.
 
 ### Stage B — verified reasoning distillation
 
@@ -257,7 +270,8 @@ A replacement checkpoint must satisfy all of the following:
 
 1. original smoke: at least 118/120, with no collapsed family;
 2. compositional v2: at least 220/240 and at least 32/40 per family;
-3. V4: predeclared family and aggregate gates on the first evaluation;
+3. V3 and consumed V4 are diagnostic-only; a newly frozen V5 supplies the next
+   independent unfamiliar-workflow gate;
 4. real-repository holdout: predeclared patch/test gates and zero sandbox
    violations;
 5. broad instruction/code/reasoning benchmarks: no material regression from the
@@ -278,7 +292,8 @@ An accepted checkpoint receives a new immutable revision and tag containing:
 - foundation and behavioral lineage;
 - all source revisions, licenses, filters, manifests, and consumed-token counts;
 - canonical prompt/tool contract;
-- smoke, v2, V4, real-repository, reasoning, and long-horizon receipts;
+- smoke, v2, diagnostic V3/V4, independent V5, real-repository, reasoning, and
+  long-horizon receipts;
 - explicit residual risks and unsupported uses.
 
 A weights-only portable release remains a separate deliverable.
@@ -293,8 +308,9 @@ A weights-only portable release remains a separate deliverable.
    schema and validation suite.
 6. Build stratified 4K authorities; qualify 8K/16K separately.
 7. Run a small source-mixture qualification and inspect decoded masked records.
-8. Train the 25M/50M/100M Stage A ladder, with a behavior-gated 200M extension,
-   and evaluate every retained milestone.
+8. Qualify at 25M, then train the 100M/250M/500M scaled Stage A ladder with
+   deterministic no-replacement source selection and epoch-permuted packs;
+   evaluate every retained milestone.
 9. Build and compare reasoning-distillation branches.
 10. Aggregate on-policy failures and perform verified rejection sampling.
 11. Add GRPO/RLVR only after the strongest distilled checkpoint clears all SFT

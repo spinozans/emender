@@ -1,6 +1,6 @@
 # E97 4B document-aware mixed 64K preflight
 
-**Status:** implementation and immutable-authority preflight complete; 4B systems qualification pending
+**Status:** 4B systems and close fused-CUDA resume qualification complete; behavioral qualification pending
 
 **Date:** 2026-09-02
 
@@ -122,11 +122,70 @@ Boundary-aware packs:
 - full E97 Triton model masked forward/backward smoke;
 - grouped activation-checkpoint replay with packed controls.
 
+## Eight-GPU qualification attempts
+
+The first K8 attempt,
+`e97-4b-mixed-document-64k-boundary-q8-0631411b`, failed closed during the
+first backward pass. Rank 1 could not obtain one 480 MiB block with 416.69 MiB
+physically free while PyTorch reported 2.49 GiB reserved but unallocated. No
+update or checkpoint was claimed. The launcher had set the newer
+`PYTORCH_ALLOC_CONF` alias, but this installed CUDA build's diagnostic named
+`PYTORCH_CUDA_ALLOC_CONF`; the retry sets both aliases to
+`expandable_segments:True` explicitly.
+
+The corrected run,
+`e97-4b-mixed-document-64k-boundary-q8-expandable-0631411b`, completed eight
+updates and one K8 merge:
+
+- global input tokens: `3,461,923`;
+- supervised targets: `1,088,370`;
+- mean logged loss: `1.2540144362`;
+- finite step gradient norms: `0.7734375` through `3.140625`;
+- peak allocated HBM: `43.8864 GiB`;
+- peak reserved HBM: `44.6621 GiB`;
+- optimizer state: `16,183,888,320` bytes of pinned-CPU Schedule-Free state;
+- checkpoint:
+  `checkpoint_agent_sft_u000008_loss_1.2540.pt`;
+- checkpoint bytes: `24,276,128,891`;
+- checkpoint SHA-256:
+  `5e118d950d01f298e5cfa9297e98251d82c45d4976201c55565d931102b85337`;
+- independent mmap reload: passed;
+- reload parameter count: `4,045,972,080`;
+- checkpoint identity records `boundary_aware_packs=true` and the immutable
+  authority, pack, parent, and source digests above.
+
+## Resume and uninterrupted control
+
+The u8 checkpoint resumed through u16 with exact sampler and token clocks:
+
+- total input tokens: `6,879,876`;
+- total targets: `1,998,088`;
+- resumed checkpoint SHA-256:
+  `cc59fa1e77819a66d5d960d89b00a06c181c485705b67f344e9374a4435f1215`;
+- uninterrupted-control checkpoint SHA-256:
+  `41486937de714386d504aa0e2481903605bc92d3a6078f92b346d44c018eefd5`;
+- both mmap reloads: passed.
+
+The independently repeated first eight updates produced bit-identical model
+weights. One of 8,091,944,160 optimizer-state elements differed by
+`2.2737367544323206e-13`, establishing a fused-CUDA nondeterminism floor. A
+resume from the uninterrupted control's own u8 checkpoint therefore used an
+identical saved state and reproduced the same close, but not bit-exact, u16
+result:
+
+- differing model elements: `3,987,667 / 4,239,051,120`;
+- maximum model absolute difference: `9.5367431640625e-06`;
+- differing optimizer elements: `2,960,509,616 / 8,091,944,160`;
+- maximum optimizer absolute difference: `1.9073486328125e-05`;
+- close-parity checkpoint SHA-256:
+  `ab74c70c1556ef47fffff1af0c8f63927760fc0532994027bea69ce630787d06`.
+
+This is an exact identity/clock/state restore with close fused-CUDA trajectory
+parity. It is explicitly not a bit-exact continuation claim. The CPU reference
+optimizer restore remains bit-exact in its unit qualification.
+
 ## Remaining gate
 
-Run an eight-GPU K8 qualification from the stable complete-64K u256 parent with
-fresh optimizer state, group-three activation checkpointing, allocator cache
-release at 32K, and 4,096-token checkpointed SwiGLU chunks. Record peak HBM,
-loss/gradient finiteness, atomic checkpoint SHA-256, mmap reload, and exact
-resume before authorizing a longer stage. Systems fit alone is not behavioral
-promotion evidence.
+Build and validate the scaled no-replacement authority, qualify the new epoch
+permutation sampler, and select checkpoints behaviorally. Systems fit and low
+loss alone are not promotion evidence.

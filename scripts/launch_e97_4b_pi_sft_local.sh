@@ -20,6 +20,7 @@ GRADIENT_CHECKPOINT_GROUP_SIZE=${GRADIENT_CHECKPOINT_GROUP_SIZE:-1}
 EMPTY_CACHE_MIN_RECORD_TOKENS=${EMPTY_CACHE_MIN_RECORD_TOKENS:-0}
 MLP_CHECKPOINT_CHUNK_SIZE=${MLP_CHECKPOINT_CHUNK_SIZE:-0}
 SAMPLER_KEY=${SAMPLER_KEY:-974003}
+SAMPLER_MODE=${SAMPLER_MODE:-hash-replacement}
 DILOCO_K=${DILOCO_K:-8}
 SAVE_EVERY=${SAVE_EVERY:-}
 KEEP_CHECKPOINTS=${KEEP_CHECKPOINTS:-3}
@@ -36,10 +37,22 @@ case "$MODE" in
     [[ -r "$RESUME" ]] || { echo "canary requires RESUME naming the qualification checkpoint" >&2; exit 66; }
     STEPS=${STEPS:-64}; SAVE_EVERY=${SAVE_EVERY:-32}
     ;;
-  *) echo "MODE must be qualification or canary" >&2; exit 64;;
+  parity-control)
+    [[ ${CONFIRM_PARITY_CONTROL:-0} == 1 ]] || {
+      echo "parity-control requires CONFIRM_PARITY_CONTROL=1" >&2; exit 64;
+    }
+    [[ -z "$RESUME" && "$NEW_STAGE_FROM" == 1 ]] || {
+      echo "parity-control must restart a fresh stage from the parent" >&2; exit 64;
+    }
+    STEPS=${STEPS:-16}; SAVE_EVERY=${SAVE_EVERY:-8}
+    ;;
+  *) echo "MODE must be qualification, canary, or parity-control" >&2; exit 64;;
 esac
 [[ "$BOUNDARY_AWARE_PACKS" == 0 || "$BOUNDARY_AWARE_PACKS" == 1 ]] || {
   echo "BOUNDARY_AWARE_PACKS must be 0 or 1" >&2; exit 64;
+}
+[[ "$SAMPLER_MODE" == hash-replacement || "$SAMPLER_MODE" == epoch-permutation ]] || {
+  echo "SAMPLER_MODE must be hash-replacement or epoch-permutation" >&2; exit 64;
 }
 (( STEPS > 0 && DILOCO_K > 0 && SAVE_EVERY > 0 && EMPTY_CACHE_MIN_RECORD_TOKENS >= 0 && MLP_CHECKPOINT_CHUNK_SIZE >= 0 )) || exit 64
 (( STEPS % DILOCO_K == 0 && SAVE_EVERY % DILOCO_K == 0 )) || {
@@ -59,7 +72,7 @@ RUN_ROOT=${RUN_ROOT:-/mnt/nvme1n1/erikg/diloco_8gpu/e97_4b_pi_instruction_local/
 }
 mkdir -p "$RUN_ROOT"/{checkpoints,identity,logs,terminal}
 cat > "$RUN_ROOT/identity/launch.json" <<EOF
-{"schema":"emender-e97-4b-pi-sft-local-launch-v1","mode":"$MODE","source_commit":"$SOURCE_COMMIT","parent_sha256":"$PARENT_SHA256","authority_sha256":"$AUTHORITY_SHA256","pack_sha256":"$PACK_SHA256","world_size":8,"context_size":$CONTEXT_SIZE,"boundary_aware_packs":$BOUNDARY_AWARE_PACKS,"gradient_checkpoint_group_size":$GRADIENT_CHECKPOINT_GROUP_SIZE,"empty_cache_min_record_tokens":$EMPTY_CACHE_MIN_RECORD_TOKENS,"mlp_checkpoint_chunk_size":$MLP_CHECKPOINT_CHUNK_SIZE,"steps":$STEPS,"diloco_k":$DILOCO_K,"keep_checkpoints":$KEEP_CHECKPOINTS,"new_stage_from":$NEW_STAGE_FROM,"optimizer_state_storage":"pinned-cpu"}
+{"schema":"emender-e97-4b-pi-sft-local-launch-v1","mode":"$MODE","source_commit":"$SOURCE_COMMIT","parent_sha256":"$PARENT_SHA256","authority_sha256":"$AUTHORITY_SHA256","pack_sha256":"$PACK_SHA256","world_size":8,"context_size":$CONTEXT_SIZE,"boundary_aware_packs":$BOUNDARY_AWARE_PACKS,"sampler_mode":"$SAMPLER_MODE","gradient_checkpoint_group_size":$GRADIENT_CHECKPOINT_GROUP_SIZE,"empty_cache_min_record_tokens":$EMPTY_CACHE_MIN_RECORD_TOKENS,"mlp_checkpoint_chunk_size":$MLP_CHECKPOINT_CHUNK_SIZE,"steps":$STEPS,"diloco_k":$DILOCO_K,"keep_checkpoints":$KEEP_CHECKPOINTS,"new_stage_from":$NEW_STAGE_FROM,"optimizer_state_storage":"pinned-cpu"}
 EOF
 RESUME_ARGS=()
 BOUNDARY_ARGS=()
@@ -86,7 +99,8 @@ COMMAND=(
   --empty-cache-min-record-tokens "$EMPTY_CACHE_MIN_RECORD_TOKENS"
   --mlp-checkpoint-chunk-size "$MLP_CHECKPOINT_CHUNK_SIZE"
   --lr "$LR" --warmup-steps "$WARMUP_STEPS"
-  --sampler-key "$SAMPLER_KEY" --island-size 8 --merge-bucket-numel 67108864
+  --sampler-key "$SAMPLER_KEY" --sampler-mode "$SAMPLER_MODE"
+  --island-size 8 --merge-bucket-numel 67108864
   --offload-schedulefree-state --schedulefree-offload-bucket-numel 67108864
 )
 printf '%q ' "${COMMAND[@]}" > "$RUN_ROOT/identity/command.txt"; printf '\n' >> "$RUN_ROOT/identity/command.txt"
@@ -96,7 +110,8 @@ if [[ ${ACQUIRE_GPUS:-1} == 1 ]]; then
   eval "$(scripts/gpu_lease.sh acquire 8 --no-wait)"
 fi
 export NCCL_P2P_DISABLE=1 TORCH_NCCL_ENABLE_MONITORING=0 TORCH_NCCL_HEARTBEAT_TIMEOUT_SEC=1800
-export PYTORCH_ALLOC_CONF=expandable_segments:True OMP_NUM_THREADS=4 TIKTOKEN_CACHE_DIR=/tmp/data-gym-cache
+export PYTORCH_ALLOC_CONF=expandable_segments:True PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+export OMP_NUM_THREADS=4 TIKTOKEN_CACHE_DIR=/tmp/data-gym-cache
 export PYTHONPATH="$ROOT${PYTHONPATH:+:$PYTHONPATH}"
 export NUMA_LOCAL_RANK_TRITON_CACHE_PREFIX=/tmp/e97-4b-pi-sft-${RUN_ID}
 set +e

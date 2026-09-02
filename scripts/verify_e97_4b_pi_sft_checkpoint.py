@@ -76,6 +76,7 @@ def main() -> None:
         "source_commit": checkpoint["source_commit"],
         "optimizer_state_storage": checkpoint["optimizer_state_storage"],
         "boundary_aware_packs": bool(checkpoint.get("boundary_aware_packs", False)),
+        "sampler_mode": checkpoint.get("sampler_mode", "hash-replacement"),
     }
     text = json.dumps(receipt, indent=2, sort_keys=True) + "\n"
     if args.output:

@@ -196,6 +196,24 @@ def test_build_and_mix_authorities_are_deterministic_and_target_weighted(tmp_pat
         entry = manifest["outputs"][key]
         assert sha256(mixed / __import__("pathlib").Path(entry["path"]).name) == entry["sha256"]
 
+    unique = tmp_path / "unique"
+    run("scripts/build_e97_masked_sft_mix.py", "--output-root", unique,
+        "--sampling-mode", "without-replacement",
+        "--source", f"pi={first},{first_sha},1000", "--seed", 14)
+    unique_manifest = json.loads((unique / "manifest.json").read_text())
+    rows = [json.loads(line) for line in (unique / "records.jsonl").read_text().splitlines()]
+    assert unique_manifest["sampling_mode"] == "without-replacement"
+    assert len({row["source_record_id"] for row in rows}) == len(rows)
+
+    impossible = tmp_path / "impossible"
+    result = subprocess.run([
+        sys.executable, "scripts/build_e97_masked_sft_mix.py",
+        "--output-root", str(impossible), "--sampling-mode", "without-replacement",
+        "--source", f"pi={first},{first_sha},999999999", "--seed", "15",
+    ], text=True, capture_output=True)
+    assert result.returncode != 0
+    assert "unique eligible targets exist" in result.stderr
+
 
 def test_pi_evaluator_reconstructs_exact_bash_contract():
     user, turns, task = builder.trace("bash", 397, __import__("random").Random(4))
@@ -313,6 +331,33 @@ def test_trainer_supports_hash_bound_fresh_optimizer_repair_stages():
     assert 'lineage.add_argument("--new-stage-from", type=Path)' in text
     assert "new-stage-from must equal the hash-bound parent checkpoint" in text
     assert '"new-stage-saved-x" if args.new_stage_from' in text
+
+
+def test_legacy_resume_defaults_to_hash_replacement_sampler(tmp_path):
+    checkpoint = tmp_path / "resume.pt"
+    torch.save({
+        "schema": trainer.SCHEMA,
+        "optimizer_state_dict": {"state": "sentinel"},
+        "sft_updates": 8,
+        "sft_total_tokens": 100,
+        "assistant_target_tokens": 50,
+    }, checkpoint)
+
+    class Optimizer:
+        loaded = None
+
+        def load_state_dict(self, state):
+            self.loaded = state
+
+    optimizer = Optimizer()
+    clocks = trainer.load_resume_optimizer(
+        checkpoint, optimizer, {"sampler_mode": "hash-replacement"})
+    assert optimizer.loaded == {"state": "sentinel"}
+    assert clocks == {"updates": 8, "total_tokens": 100,
+                      "assistant_target_tokens": 50}
+    with pytest.raises(RuntimeError, match="sampler_mode"):
+        trainer.load_resume_optimizer(
+            checkpoint, Optimizer(), {"sampler_mode": "epoch-permutation"})
 
 
 def test_boundary_aware_trainer_is_single_forward_and_stop_is_k_aligned():

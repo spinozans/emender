@@ -192,6 +192,35 @@ def test_exact_pack_access_bypasses_replacement_sampler(tmp_path):
         dataset.pack_at(1)
 
 
+def test_epoch_permutation_sampler_covers_each_pack_once_across_ranks(tmp_path):
+    authority = tmp_path / "authority"
+    authority_sha = _authority(authority)
+    packs = tmp_path / "permutation-packs"
+    subprocess.run([
+        sys.executable, "scripts/build_e97_sft_packs.py",
+        "--authority-root", str(authority), "--output-root", str(packs),
+        "--context-size", "2", "--authority-manifest-sha256", authority_sha,
+    ], check=True, capture_output=True, text=True)
+    identity = SFTSamplerIdentity(
+        authority_manifest_sha256=authority_sha,
+        pack_manifest_sha256=sha256(packs / "manifest.json"), sampler_key=43,
+        data_world_size=3, context_size=2)
+    datasets = [MaskedSFTPackedDataset(
+        authority, packs, identity=identity, rank=rank,
+        sampler_mode="epoch-permutation") for rank in range(3)]
+    pack_count = len(datasets[0].packs)
+    assert pack_count == 2
+    global_pack_ids = [
+        datasets[global_index % 3].pack_id_at(global_index // 3)
+        for global_index in range(pack_count * 4)
+    ]
+    for start in range(0, len(global_pack_ids), pack_count):
+        assert sorted(global_pack_ids[start:start + pack_count]) == list(range(pack_count))
+    with pytest.raises(ValueError, match="sampler mode"):
+        MaskedSFTPackedDataset(
+            authority, packs, identity=identity, rank=0, sampler_mode="unknown")
+
+
 def test_sft_checkpoint_clocks_fail_closed(tmp_path):
     _authority_root, _packs, identity = _fixture(tmp_path)
     parent = {"manifest_sha256": "a" * 64, "step": 10,

@@ -164,6 +164,10 @@ def load_resume_optimizer(path: Path, optimizer, expected: dict) -> dict:
                 and key not in checkpoint):
             # Legacy v1 checkpoints predate the explicit false identity field.
             continue
+        if (key == "sampler_mode" and value == "hash-replacement"
+                and key not in checkpoint):
+            # Counter-v1 checkpoints used hash replacement before naming it.
+            continue
         if checkpoint.get(key) != value:
             raise RuntimeError(f"resume identity mismatch: {key}")
     optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
@@ -215,6 +219,9 @@ def main() -> None:
         "--grad-clip", type=float, default=1.0,
         help="global gradient-norm ceiling; 0 disables clipping while retaining norm telemetry")
     parser.add_argument("--sampler-key", type=int, default=974003)
+    parser.add_argument(
+        "--sampler-mode", choices=("hash-replacement", "epoch-permutation"),
+        default="hash-replacement")
     parser.add_argument("--offload-schedulefree-state", action="store_true")
     parser.add_argument("--schedulefree-offload-bucket-numel", type=int, default=67_108_864)
     parser.add_argument("--schedulefree-offload-pin-memory", type=int, choices=(0, 1), default=1)
@@ -291,6 +298,7 @@ def main() -> None:
         "grad_clip": args.grad_clip,
         "optimizer_state_storage": optimizer_state_storage,
         "boundary_aware_packs": bool(args.boundary_aware_packs),
+        "sampler_mode": args.sampler_mode,
     }
     if args.resume is not None:
         clocks = load_resume_optimizer(args.resume, optimizer, expected_resume)
@@ -319,7 +327,7 @@ def main() -> None:
     data = MaskedSFTPackedDataset(
         args.authority_root, args.pack_root, identity=identity, rank=rank,
         initial_absolute_rank_sample_index=start_update,
-        verify_payload_hashes=True)
+        verify_payload_hashes=True, sampler_mode=args.sampler_mode)
     if data.boundary_aware != bool(args.boundary_aware_packs):
         raise RuntimeError(
             "boundary-aware trainer flag does not match the immutable pack schema")
@@ -331,7 +339,8 @@ def main() -> None:
                              "parent-train-y"),
          source_commit=args.source_commit, world_size=world, island_size=args.island_size,
          diloco_k=args.diloco_k, context_size=args.context_size,
-         boundary_aware_packs=bool(args.boundary_aware_packs), lr=args.lr,
+         boundary_aware_packs=bool(args.boundary_aware_packs),
+         sampler_mode=args.sampler_mode, lr=args.lr,
          warmup_steps=args.warmup_steps, grad_clip=args.grad_clip,
          gradient_checkpoint_group_size=args.gradient_checkpoint_group_size,
          empty_cache_min_record_tokens=args.empty_cache_min_record_tokens,

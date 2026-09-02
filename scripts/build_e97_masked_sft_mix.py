@@ -9,6 +9,7 @@ import os
 import random
 import struct
 from dataclasses import dataclass
+from itertools import repeat
 from pathlib import Path
 
 import numpy as np
@@ -88,6 +89,10 @@ def main() -> None:
     parser.add_argument("--output-root", type=Path, required=True)
     parser.add_argument("--source", action="append", type=parse_source, required=True)
     parser.add_argument("--seed", type=int, default=974002)
+    parser.add_argument(
+        "--sampling-mode", choices=("with-replacement", "without-replacement"),
+        default="with-replacement",
+        help="Use each eligible source record at most once for scaled authorities")
     parser.add_argument("--max-record-tokens", type=int, default=4097,
                         help="Sample only whole records fitting this token bound")
     args = parser.parse_args()
@@ -96,7 +101,6 @@ def main() -> None:
     names = [source[0] for source in args.source]
     if len(names) != len(set(names)):
         raise SystemExit("source names must be unique")
-    args.output_root.mkdir(parents=True, exist_ok=False)
     paths = {
         "tokens": args.output_root / "tokens.uint32.bin",
         "mask": args.output_root / "assistant_mask.uint8.bin",
@@ -104,6 +108,15 @@ def main() -> None:
         "metadata": args.output_root / "records.jsonl",
     }
     sources = [open_source(spec, args.max_record_tokens) for spec in args.source]
+    if args.sampling_mode == "without-replacement":
+        for source in sources:
+            available_targets = int(
+                source.records["targets"][source.eligible_record_ids].sum())
+            if available_targets < source.target_assistant_tokens:
+                raise RuntimeError(
+                    f"{source.name}: requested {source.target_assistant_tokens} targets "
+                    f"but only {available_targets} unique eligible targets exist")
+    args.output_root.mkdir(parents=True, exist_ok=False)
     counts = {"records": 0, "tokens": 0, "assistant_target_tokens": 0,
               "train_records": 0, "validation_records": 0}
     receipts = {}
@@ -113,9 +126,22 @@ def main() -> None:
             for source_index, source in enumerate(sources):
                 rng = random.Random(args.seed + source_index)
                 observed_targets = observed_tokens = records_written = 0
+                if args.sampling_mode == "without-replacement":
+                    record_order = source.eligible_record_ids.astype(np.int64).tolist()
+                    rng.shuffle(record_order)
+                    record_ids = iter(record_order)
+                else:
+                    record_ids = (
+                        int(source.eligible_record_ids[
+                            rng.randrange(len(source.eligible_record_ids))])
+                        for _ in repeat(None)
+                    )
                 while observed_targets < source.target_assistant_tokens:
-                    record_id = int(source.eligible_record_ids[
-                        rng.randrange(len(source.eligible_record_ids))])
+                    try:
+                        record_id = int(next(record_ids))
+                    except StopIteration as error:
+                        raise RuntimeError(
+                            f"{source.name}: unique source records exhausted before quota") from error
                     record = source.records[record_id]
                     token_count = int(record["tokens"])
                     target_count = int(record["targets"])
@@ -155,6 +181,7 @@ def main() -> None:
                     "manifest_sha256": source.manifest_sha256,
                     "requested_assistant_target_tokens": source.target_assistant_tokens,
                     "eligible_source_records": len(source.eligible_record_ids),
+                    "sampling_mode": args.sampling_mode,
                     "records": records_written,
                     "tokens": observed_tokens,
                     "assistant_target_tokens": observed_targets,
@@ -171,7 +198,11 @@ def main() -> None:
         "schema": AUTHORITY_SCHEMA,
         "status": "complete",
         "purpose": "target-token-weighted E97 Pi instruction mixture",
-        "construction": "deterministic sampling with replacement from immutable source records",
+        "construction": (
+            "deterministic sampling without replacement from immutable source records"
+            if args.sampling_mode == "without-replacement"
+            else "deterministic sampling with replacement from immutable source records"),
+        "sampling_mode": args.sampling_mode,
         "seed": args.seed,
         "max_record_tokens": args.max_record_tokens,
         "source_order": names,
