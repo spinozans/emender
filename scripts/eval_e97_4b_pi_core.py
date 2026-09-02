@@ -41,6 +41,24 @@ def balanced_prefix(tasks: list[dict[str, Any]], limit: int) -> list[dict[str, A
     return selected
 
 
+def contextual_user(task: dict[str, Any], variant: str) -> str:
+    if variant == "none":
+        return task["user"]
+    paths = sorted(fixture["path"] for fixture in task["task"]["fixtures"])
+    top_level = sorted({path.split("/", 1)[0] for path in paths})
+    if variant == "top-level":
+        context = {"cwd": ".", "top_level": top_level, "freshness": "current"}
+    elif variant == "exact-paths":
+        context = {"cwd": ".", "paths": paths, "freshness": "current"}
+    elif variant == "stale":
+        context = {"cwd": ".", "top_level": ["config", "src", "tests"],
+                   "freshness": "stale"}
+    else:
+        raise ValueError(variant)
+    return ("<environment_context>" + json.dumps(context, separators=(",", ":"))
+            + "</environment_context>\n" + task["user"])
+
+
 def make_sandbox(root: Path, task: dict[str, Any]) -> Path:
     path = root / task["id"]
     path.mkdir(parents=True, exist_ok=False)
@@ -228,6 +246,8 @@ def main() -> None:
     parser.add_argument("--output-root", type=Path, required=True)
     parser.add_argument("--timeout-seconds", type=int, default=300)
     parser.add_argument("--model-id", default="e97-dense-agent")
+    parser.add_argument("--user-context-variant", choices=("none", "top-level", "exact-paths", "stale"),
+                        default="none")
     args = parser.parse_args()
     if not 0 <= args.rank < args.world_size:
         raise SystemExit("invalid rank")
@@ -252,7 +272,7 @@ def main() -> None:
             "pi", "--mode", "json", "--provider", "emender-local", "--model", args.model_id,
             "--no-session", "--no-builtin-tools", "--no-skills", "--no-context-files",
             "-e", str(args.extension), "--system-prompt", E97_PI_CORE_SYSTEM,
-            "--approve", task["user"],
+            "--approve", contextual_user(task, args.user_context_variant),
         ]
         try:
             completed = subprocess.run(

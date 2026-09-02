@@ -14,6 +14,11 @@ ARGS_JSON=${ARGS_JSON:-/mnt/nvme1n1/erikg/diloco_8gpu/e97_4b_frontier_100b_hf/ch
 AUTHORITY_ROOT=${AUTHORITY_ROOT:-/mnt/nvme1n1/erikg/sft/pi-native-core-v1}
 AUTHORITY_SHA256=${AUTHORITY_SHA256:-48f6b7ecb0083f09402e2f0715b95d7ca71ba45a2711375b811472ccdeb804e1}
 LIMIT=${LIMIT:-120}; WORLD_SIZE=8; EXPECTED_TASKS=${EXPECTED_TASKS:-$LIMIT}
+USER_CONTEXT_VARIANT=${USER_CONTEXT_VARIANT:-none}
+case "$USER_CONTEXT_VARIANT" in
+  none|top-level|exact-paths|stale) ;;
+  *) echo "invalid USER_CONTEXT_VARIANT" >&2; exit 64 ;;
+esac
 SYSTEM_VARIANT=${SYSTEM_VARIANT:-pi-core}
 case "$SYSTEM_VARIANT" in
   pi-core) SYSTEM_ARG=--pi-core-canonical-system ;;
@@ -30,6 +35,7 @@ mkdir -p "$RUN_ROOT"/{identity,results,shards,sources,terminal}
 printf '%s\n' "$CHECKPOINT_SHA256  $CHECKPOINT" > "$RUN_ROOT/identity/checkpoint.sha256"
 printf '%s\n' "$CLI_IMAGE_SHA256  $CLI_IMAGE" > "$RUN_ROOT/identity/cli-image.sha256"
 printf '%s\n' "$SOURCE_COMMIT" > "$RUN_ROOT/identity/source-commit.txt"
+printf '%s\n' "$USER_CONTEXT_VARIANT" > "$RUN_ROOT/identity/user-context-variant.txt"
 snapshot="$RUN_ROOT/sources/$SOURCE_COMMIT"; mkdir -p "$snapshot"
 git archive "$SOURCE_COMMIT" | tar -xf - -C "$snapshot"
 if [[ ${DRY_RUN:-0} == 1 ]]; then echo "RUN_ROOT=$RUN_ROOT"; exit 0; fi
@@ -85,7 +91,8 @@ for rank in $(seq 0 7); do
       --authority-root "$AUTHORITY_ROOT" --rank "$rank" --world-size "$WORLD_SIZE" \
       --limit "$LIMIT" --pi-config-dir "$RUN_ROOT/shards/config-$rank" \
       --extension "$snapshot/configs/pi/e97-core-tools.ts" \
-      --output-root "$RUN_ROOT/shards" --timeout-seconds 300
+      --output-root "$RUN_ROOT/shards" --timeout-seconds 300 \
+      --user-context-variant "$USER_CONTEXT_VARIANT"
   ) > "$RUN_ROOT/shards/eval-${rank}.out" 2> "$RUN_ROOT/shards/eval-${rank}.log" &
   eval_pids+=("$!")
 done

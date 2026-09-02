@@ -309,6 +309,20 @@ def test_local_finalization_repair_launcher_is_hash_bound_and_fresh_optimizer():
     assert "LOCAL_PI_FINALIZATION_REPAIR_COMPLETE" in text
 
 
+def test_eval_environment_context_variants_are_explicit_and_bounded():
+    task = {"user": "Read named/path.json.", "task": {"fixtures": [
+        {"path": "named/path.json", "content": "{}"},
+        {"path": "other/value.txt", "content": "x"},
+    ]}}
+    assert evaluator.contextual_user(task, "none") == task["user"]
+    top = evaluator.contextual_user(task, "top-level")
+    assert '"top_level":["named","other"]' in top and '"paths"' not in top
+    exact = evaluator.contextual_user(task, "exact-paths")
+    assert '"paths":["named/path.json","other/value.txt"]' in exact
+    stale = evaluator.contextual_user(task, "stale")
+    assert '"freshness":"stale"' in stale and "named/path.json" not in stale.split("</environment_context>", 1)[0]
+
+
 def test_local_core_eval_launcher_is_real_pi_and_fail_closed():
     text = open("scripts/launch_e97_4b_pi_core_eval_local.sh").read()
     assert "gpu_lease.sh acquire 8 --no-wait" in text
@@ -317,6 +331,8 @@ def test_local_core_eval_launcher_is_real_pi_and_fail_closed():
     assert "configs/pi/e97-core-tools.ts" in text
     assert "aggregate_e97_4b_pi_core.py" in text
     assert "LOCAL_PI_CORE_EVAL_COMPLETE" in text
+    assert "USER_CONTEXT_VARIANT=${USER_CONTEXT_VARIANT:-none}" in text
+    assert '--user-context-variant "$USER_CONTEXT_VARIANT"' in text
     assert 'sha256sum "$CHECKPOINT"' in text
     assert 'sha256sum "$CLI_IMAGE"' in text
 
