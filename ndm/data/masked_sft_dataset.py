@@ -170,6 +170,11 @@ class MaskedSFTPackedDataset:
         if pack_schema not in {PACK_SCHEMA, BOUNDARY_PACK_SCHEMA}:
             raise RuntimeError("unsupported SFT pack authority schema")
         self.boundary_aware = pack_schema == BOUNDARY_PACK_SCHEMA
+        declared_sampler_mode = self.pack_manifest.get(
+            "sampler_mode", "hash-replacement")
+        if declared_sampler_mode != self.sampler_mode:
+            raise RuntimeError(
+                "runtime sampler mode contradicts immutable pack authority")
         if (self.pack_manifest.get("authority_manifest_sha256")
                 != identity.authority_manifest_sha256
                 or int(self.pack_manifest.get("context_size", -1)) != self.context_size):

@@ -107,6 +107,50 @@ Boundary-aware packs:
 - oversized exclusions: zero
 - independent pack validation: passed for all 1,496 packs and 44,101 records
 
+## Scaled no-replacement authority
+
+The post-qualification tranche expands beyond the 25M pilot without replaying
+source records:
+
+- authority root:
+  `/mnt/nvme1n1/erikg/sft/e97-4b-scaled-document-520m-64k-v1`;
+- manifest SHA-256:
+  `65b8f6e9ec954bbcb9a09994891698b41acc23f58dd4534299d675480915e363`;
+- records: `431,047` unique source records;
+- input tokens: `1,155,106,514`;
+- supervised targets: `519,700,151`;
+- construction: deterministic source selection without replacement.
+
+| Source | Targets | Fraction |
+|---|---:|---:|
+| broad instruction/reasoning | 300,000,290 | 57.726% |
+| complete OpenHands authority | 110,268,050 | 21.218% |
+| filtered CommaPile causal | 100,181,597 | 19.277% |
+| complete Pi-v2 retention authority | 9,250,214 | 1.780% |
+
+The expanded CommaPile component contains 68,501 documents and has manifest
+SHA-256
+`b1fb7153c2c22243eb0ba269226ab0ae13e7700dcf4133a323382b18a8ebc43f`.
+It applies the same pinned-revision, Git-LFS, non-GitHub, whole-document, and
+frozen-holdout overlap policy as the 5M qualification extraction.
+
+Scaled boundary-aware packs:
+
+- root: `packs-65536-boundary-epoch-v2` below the scaled authority;
+- manifest SHA-256:
+  `35e176c7a638f7373f9a13b372222a6a161031bce0e7441faf259ccf2b12fdf5`;
+- intended sampler: `epoch-permutation`, bound into the immutable manifest;
+- train: 21,108 packs / 426,869 records / 1,143,650,875 input tokens /
+  514,636,702 targets;
+- validation: 214 packs / 4,178 records / 11,455,639 input tokens /
+  5,063,449 targets;
+- oversized exclusions: zero;
+- independent validation: all 21,322 packs and 431,047 records passed.
+
+The fixed-world global counter maps each complete pack epoch through a seeded
+affine permutation. Across the eight ranks, every train pack occurs exactly
+once per complete epoch before the next permutation is selected.
+
 ## Completed tests
 
 - boundary pack materialization and independent validator;

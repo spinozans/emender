@@ -38,6 +38,10 @@ def main() -> None:
     parser.add_argument(
         "--boundary-aware", action="store_true",
         help="Emit v2 packs with per-document resets and effective target counts")
+    parser.add_argument(
+        "--sampler-mode", choices=("hash-replacement", "epoch-permutation"),
+        default="hash-replacement",
+        help="Bind the intended counter sampler into the immutable pack manifest")
     args = parser.parse_args()
     if args.context_size <= 0:
         raise SystemExit("context-size must be positive")
@@ -178,7 +182,11 @@ def main() -> None:
         "max_records_per_pack": (args.max_records_per_pack or None),
         "source_filter": ({"include_exact": list(include_sources)}
                           if include_sources else None),
-        "sampling": "pack IDs sampled with replacement by emender-record-pack-counter-v1",
+        "sampler_mode": args.sampler_mode,
+        "sampling": (
+            "pack IDs traverse deterministic fixed-world epoch permutations"
+            if args.sampler_mode == "epoch-permutation"
+            else "pack IDs sampled with replacement by emender-record-pack-counter-v1"),
         "fields": ({
             "tokens": "uint32[context_size+1] token-aligned",
             "loss_mask": "bool[context_size] prediction-aligned",

@@ -200,6 +200,7 @@ def test_epoch_permutation_sampler_covers_each_pack_once_across_ranks(tmp_path):
         sys.executable, "scripts/build_e97_sft_packs.py",
         "--authority-root", str(authority), "--output-root", str(packs),
         "--context-size", "2", "--authority-manifest-sha256", authority_sha,
+        "--sampler-mode", "epoch-permutation",
     ], check=True, capture_output=True, text=True)
     identity = SFTSamplerIdentity(
         authority_manifest_sha256=authority_sha,
