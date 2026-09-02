@@ -133,6 +133,21 @@ def test_v3_onpolicy_builder_reconstructs_all_corrective_families(tmp_path):
     assert manifest["kind_counts"] == {kind: 2 for kind in v3_onpolicy_builder.KINDS}
     assert "diagnostic only" in manifest["evaluation_policy"]["v3"]
 
+    # The explicit offset-zero mode reconstructs frozen V3 instances for a
+    # bounded memorization sanity probe, not a generalization claim.
+    for index in range(12):
+        kind = v3_onpolicy_builder.KINDS[index % len(v3_onpolicy_builder.KINDS)]
+        expected_user, expected_task = eval_v3_builder.trace(
+            kind, index, __import__("random").Random(4_901_093 + index))
+        actual_user, _turns, actual_task = v3_onpolicy_builder.trajectory(
+            kind, index, __import__("random").Random(4_901_093 + index))
+        assert (actual_user, actual_task) == (expected_user, expected_task)
+    exact = tmp_path / "v3-exact"
+    run("scripts/build_e97_pi_v3_onpolicy_sft.py", "--output-root", exact,
+        "--records", 12, "--seed", 4_901_093, "--source-index-offset", 0)
+    exact_manifest = json.loads((exact / "manifest.json").read_text())
+    assert "exact-instance memorization probe" in exact_manifest["evaluation_policy"]["training_disjointness"]
+
 
 def test_build_and_mix_authorities_are_deterministic_and_target_weighted(tmp_path):
     first, second = tmp_path / "first", tmp_path / "second"

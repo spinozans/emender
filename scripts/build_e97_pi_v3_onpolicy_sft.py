@@ -73,9 +73,12 @@ def main() -> None:
     parser.add_argument("--output-root", type=Path, required=True)
     parser.add_argument("--records", type=int, default=60_000)
     parser.add_argument("--seed", type=int, default=9_741_003)
+    parser.add_argument("--source-index-offset", type=int, default=1_000_000)
     args = parser.parse_args()
     if args.records <= 0 or args.records % len(KINDS):
         raise SystemExit(f"records must be a positive multiple of {len(KINDS)}")
+    if args.source_index_offset < 0:
+        raise SystemExit("source-index-offset must be nonnegative")
     args.output_root.mkdir(parents=True, exist_ok=False)
     paths = {"tokens": args.output_root / "tokens.uint32.bin",
              "mask": args.output_root / "assistant_mask.uint8.bin",
@@ -90,7 +93,7 @@ def main() -> None:
          paths["index"].open("wb") as index_out, paths["metadata"].open("w") as metadata_out:
         for record_index in range(args.records):
             kind = KINDS[record_index % len(KINDS)]
-            source_index = 1_000_000 + record_index
+            source_index = args.source_index_offset + record_index
             identity = f"pi-v3-onpolicy-{kind}-{record_index:09d}"
             user, turns, task = trajectory(
                 kind, source_index, random.Random(args.seed + record_index))
@@ -117,12 +120,15 @@ def main() -> None:
         "schema": AUTHORITY_SCHEMA, "status": "complete",
         "purpose": "on-policy correction for observed Pi-v2 diagnostic V3 failures",
         "system_prompt": E97_PI_AGENT_SYSTEM_V2, "tokenizer": ENCODING,
-        "seed": args.seed, "source_index_offset": 1_000_000,
+        "seed": args.seed, "source_index_offset": args.source_index_offset,
         "kinds": list(KINDS), "kind_counts": kind_counts, "counts": counts,
         "evaluation_policy": {
             "v3": "training-influenced diagnostic only; cannot support a blind claim",
             "untouched_v4_manifest_sha256": "8d0d5d350a39c9f5c007d98e4a0010f4a06f39e5a7fb89ecd9ccc4e37e66b8d8",
-            "training_disjointness": "different identities, seed, million-index domain, paths, values, and payloads",
+            "training_disjointness": (
+                "exact-instance memorization probe; no evaluation claim"
+                if args.source_index_offset == 0 else
+                "different identities, seed, index domain, paths, values, and payloads"),
         },
         "outputs": {name: entry(path) for name, path in paths.items()},
     }
