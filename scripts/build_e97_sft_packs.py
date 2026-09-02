@@ -31,9 +31,14 @@ def main() -> None:
     parser.add_argument("--authority-manifest-sha256", required=True)
     parser.add_argument("--include-source", action="append", default=[],
                         help="Exact metadata source to retain; repeat for a union")
+    parser.add_argument(
+        "--max-records-per-pack", type=int, default=0,
+        help="Maximum complete records per pack; 0 keeps greedy packing unbounded")
     args = parser.parse_args()
     if args.context_size <= 0:
         raise SystemExit("context-size must be positive")
+    if args.max_records_per_pack < 0:
+        raise SystemExit("max-records-per-pack must be nonnegative")
     authority_manifest_path = args.authority_root / "manifest.json"
     if sha256(authority_manifest_path) != args.authority_manifest_sha256:
         raise SystemExit("authority manifest SHA-256 mismatch")
@@ -122,7 +127,10 @@ def main() -> None:
                         counts["excluded_oversize_tokens"] += token_count
                         counts["excluded_oversize_assistant_target_tokens"] += target_count
                         continue
-                    if current_ids and current_tokens + token_count > sequence_tokens:
+                    if current_ids and (
+                            current_tokens + token_count > sequence_tokens
+                            or (args.max_records_per_pack > 0
+                                and len(current_ids) >= args.max_records_per_pack)):
                         flush()
                     current_ids.append(record_id)
                     current_tokens += token_count
@@ -145,6 +153,7 @@ def main() -> None:
         "authority_manifest_sha256": args.authority_manifest_sha256,
         "context_size": args.context_size, "sequence_tokens": sequence_tokens,
         "packing": "stable-record-order greedy next-fit; no record splitting",
+        "max_records_per_pack": (args.max_records_per_pack or None),
         "source_filter": ({"include_exact": list(include_sources)}
                           if include_sources else None),
         "sampling": "pack IDs sampled with replacement by emender-record-pack-counter-v1",

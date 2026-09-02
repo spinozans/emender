@@ -88,6 +88,29 @@ def test_complete_record_packing_and_counter_sampling(tmp_path):
         reset_dataset.get_batch_with_record_spans(2)
 
 
+def test_pack_builder_can_limit_records_per_pack(tmp_path):
+    authority = tmp_path / "authority"
+    authority_sha = _authority(authority)
+    packs = tmp_path / "single-record-packs"
+    subprocess.run([
+        sys.executable, "scripts/build_e97_sft_packs.py",
+        "--authority-root", str(authority), "--output-root", str(packs),
+        "--context-size", "4", "--authority-manifest-sha256", authority_sha,
+        "--max-records-per-pack", "1",
+    ], check=True, capture_output=True, text=True)
+    manifest = json.loads((packs / "manifest.json").read_text())
+    assert manifest["max_records_per_pack"] == 1
+    assert manifest["splits"]["train"]["records"] == 2
+    assert manifest["splits"]["train"]["packs"] == 2
+    identity = SFTSamplerIdentity(
+        authority_manifest_sha256=authority_sha,
+        pack_manifest_sha256=sha256(packs / "manifest.json"), sampler_key=42,
+        data_world_size=2, context_size=4)
+    dataset = MaskedSFTPackedDataset(authority, packs, identity=identity, rank=0)
+    assert dataset.get_batch_with_record_spans(1)[4] in (
+        (((0, 2),),), (((0, 3),),))
+
+
 def test_pack_builder_exact_source_filter(tmp_path):
     authority = tmp_path / "authority"
     authority_sha = _authority(authority)
