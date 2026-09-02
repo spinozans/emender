@@ -84,6 +84,29 @@ def objective(model, tokens, masks, length: int, spans, island_targets: torch.Te
     return total, observed
 
 
+def packed_objective(
+    model, tokens, loss_mask, valid_mask, reset_before,
+    island_targets: torch.Tensor, island_size: int,
+) -> tuple[torch.Tensor, int]:
+    observed = int(loss_mask.sum())
+    if observed <= 0:
+        raise RuntimeError("boundary-aware pack contains no training targets")
+    with torch.autocast(device_type="cuda", dtype=torch.bfloat16):
+        part = model(
+            tokens,
+            return_loss=True,
+            loss_mask=loss_mask,
+            valid_mask=valid_mask,
+            reset_before=reset_before,
+            loss_reduction="sum",
+        )
+        # DDP averages gradients over the island. Multiplying by island_size
+        # yields the exact target-token-normalized B8 island gradient.
+        scaled = part * (island_size / island_targets.to(torch.float32))
+    scaled.backward()
+    return part.detach().float(), observed
+
+
 def merge_args(bucket_numel: int):
     return SimpleNamespace(
         optimizer="schedulefree",
@@ -137,6 +160,10 @@ def load_resume_optimizer(path: Path, optimizer, expected: dict) -> dict:
     if checkpoint.get("schema") != SCHEMA or "optimizer_state_dict" not in checkpoint:
         raise RuntimeError("resume is not an E97 4B Pi SFT optimizer checkpoint")
     for key, value in expected.items():
+        if (key == "boundary_aware_packs" and value is False
+                and key not in checkpoint):
+            # Legacy v1 checkpoints predate the explicit false identity field.
+            continue
         if checkpoint.get(key) != value:
             raise RuntimeError(f"resume identity mismatch: {key}")
     optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
@@ -168,6 +195,9 @@ def main() -> None:
     parser.add_argument("--save-every", type=int, default=8)
     parser.add_argument("--keep-checkpoints", type=int, default=3)
     parser.add_argument("--context-size", type=int, default=4096)
+    parser.add_argument(
+        "--boundary-aware-packs", action="store_true",
+        help="Train each packed example in one forward using v2 reset/valid masks")
     parser.add_argument("--gradient-checkpoint-group-size", type=int, default=1)
     parser.add_argument(
         "--empty-cache-min-record-tokens", type=int, default=0,
@@ -260,6 +290,7 @@ def main() -> None:
         "diloco_k": args.diloco_k,
         "grad_clip": args.grad_clip,
         "optimizer_state_storage": optimizer_state_storage,
+        "boundary_aware_packs": bool(args.boundary_aware_packs),
     }
     if args.resume is not None:
         clocks = load_resume_optimizer(args.resume, optimizer, expected_resume)
@@ -289,6 +320,9 @@ def main() -> None:
         args.authority_root, args.pack_root, identity=identity, rank=rank,
         initial_absolute_rank_sample_index=start_update,
         verify_payload_hashes=True)
+    if data.boundary_aware != bool(args.boundary_aware_packs):
+        raise RuntimeError(
+            "boundary-aware trainer flag does not match the immutable pack schema")
     args.output_root.mkdir(parents=True, exist_ok=True)
     emit(args.log_jsonl, "start", rank,
          parent_checkpoint=str(args.parent_checkpoint), parent_sha256=args.parent_sha256,
@@ -296,7 +330,8 @@ def main() -> None:
                              "new-stage-saved-x" if args.new_stage_from else
                              "parent-train-y"),
          source_commit=args.source_commit, world_size=world, island_size=args.island_size,
-         diloco_k=args.diloco_k, context_size=args.context_size, lr=args.lr,
+         diloco_k=args.diloco_k, context_size=args.context_size,
+         boundary_aware_packs=bool(args.boundary_aware_packs), lr=args.lr,
          warmup_steps=args.warmup_steps, grad_clip=args.grad_clip,
          gradient_checkpoint_group_size=args.gradient_checkpoint_group_size,
          empty_cache_min_record_tokens=args.empty_cache_min_record_tokens,
@@ -309,10 +344,21 @@ def main() -> None:
 
     merge_configuration = merge_args(args.merge_bucket_numel)
     recent_losses: list[float] = []
+    final_update = start_update
+    stopped_reason = None
+    stop_request_path = args.output_root / ".final_checkpoint_request"
     for update in range(start_update + 1, args.steps + 1):
+        final_update = update
         begin = time.monotonic()
         optimizer.zero_grad(set_to_none=True)
-        tokens, masks, lengths, target_counts, spans = data.get_batch_with_record_spans(1, device=device)
+        if args.boundary_aware_packs:
+            (tokens, masks, valid_masks, reset_masks,
+             lengths, target_counts) = data.get_boundary_aware_batch(1, device=device)
+            spans = None
+        else:
+            tokens, masks, lengths, target_counts, spans = data.get_batch_with_record_spans(
+                1, device=device)
+            valid_masks = reset_masks = None
         island_targets = target_counts.sum().to(torch.int64)
         dist.all_reduce(island_targets, op=dist.ReduceOp.SUM, group=island_group)
         if int(island_targets) <= 0:
@@ -322,9 +368,16 @@ def main() -> None:
             # Long records can follow many short allocations. Release only cached
             # blocks before the long forward; live parameters/state are untouched.
             torch.cuda.empty_cache()
-        local_loss, _ = objective(
-            model, tokens, masks, int(lengths[0]), spans[0], island_targets,
-            args.island_size)
+        if args.boundary_aware_packs:
+            local_loss, observed_targets = packed_objective(
+                model, tokens, masks, valid_masks, reset_masks,
+                island_targets, args.island_size)
+            if observed_targets != int(target_counts[0]):
+                raise RuntimeError("boundary-aware batch target accounting mismatch")
+        else:
+            local_loss, _ = objective(
+                model, tokens, masks, int(lengths[0]), spans[0], island_targets,
+                args.island_size)
         grad_norm = torch.nn.utils.clip_grad_norm_(
             core_model.parameters(), args.grad_clip if args.grad_clip > 0 else float("inf"))
         if not torch.isfinite(grad_norm):
@@ -354,7 +407,14 @@ def main() -> None:
              max_hbm_allocated=torch.cuda.max_memory_allocated(),
              max_hbm_reserved=torch.cuda.max_memory_reserved())
 
-        if update % args.save_every == 0:
+        stop_requested = torch.zeros((), dtype=torch.int32, device=device)
+        if update % args.diloco_k == 0:
+            if rank == 0 and stop_request_path.is_file():
+                stop_requested.fill_(1)
+            dist.broadcast(stop_requested, src=0)
+        should_stop = bool(stop_requested.item())
+
+        if update % args.save_every == 0 or should_stop:
             dist.barrier()
             if rank == 0:
                 optimizer.eval()
@@ -381,6 +441,7 @@ def main() -> None:
                     "empty_cache_min_record_tokens": args.empty_cache_min_record_tokens,
                     "mlp_checkpoint_chunk_size": args.mlp_checkpoint_chunk_size,
                     "merge_bucket_numel": args.merge_bucket_numel,
+                    "boundary_aware_packs": bool(args.boundary_aware_packs),
                 }
                 atomic_save(checkpoint, payload)
                 digest = sha256(checkpoint)
@@ -393,9 +454,23 @@ def main() -> None:
                     if old.resolve() != checkpoint.resolve():
                         old.unlink()
             dist.barrier()
+        if should_stop:
+            stopped_reason = "final_checkpoint_request"
+            if rank == 0:
+                try:
+                    request = json.loads(stop_request_path.read_text())
+                    stopped_reason = str(request.get("reason") or stopped_reason)
+                except (OSError, ValueError, TypeError):
+                    pass
+            reasons = [None] * world
+            dist.all_gather_object(reasons, stopped_reason)
+            stopped_reason = str(reasons[0])
+            break
 
-    emit(args.log_jsonl, "complete", rank, updates=args.steps,
-         total_tokens=total_tokens, assistant_target_tokens=total_targets,
+    emit(args.log_jsonl, "stopped" if stopped_reason else "complete", rank,
+         updates=final_update, requested_steps=args.steps,
+         reason=stopped_reason, total_tokens=total_tokens,
+         assistant_target_tokens=total_targets,
          final_loss=(sum(recent_losses) / len(recent_losses)))
     data.close()
     dist.barrier()

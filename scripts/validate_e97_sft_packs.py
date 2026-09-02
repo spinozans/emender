@@ -8,7 +8,9 @@ from pathlib import Path
 
 import numpy as np
 
-from ndm.data.masked_sft_dataset import PACK_INDEX, PACK_SCHEMA, RECORD_INDEX, sha256
+from ndm.data.masked_sft_dataset import (
+    BOUNDARY_PACK_SCHEMA, PACK_INDEX, PACK_SCHEMA, RECORD_INDEX, sha256,
+)
 
 
 def main() -> None:
@@ -26,8 +28,10 @@ def main() -> None:
         raise SystemExit("pack manifest digest mismatch")
     authority = json.loads(authority_path.read_text())
     packs = json.loads(pack_path.read_text())
-    if packs.get("schema") != PACK_SCHEMA or packs.get("status") != "complete":
+    pack_schema = packs.get("schema")
+    if pack_schema not in {PACK_SCHEMA, BOUNDARY_PACK_SCHEMA} or packs.get("status") != "complete":
         raise SystemExit("pack manifest is not complete")
+    boundary_aware = pack_schema == BOUNDARY_PACK_SCHEMA
     if packs.get("authority_manifest_sha256") != args.authority_manifest_sha256:
         raise SystemExit("pack manifest does not bind the token authority")
     for info in packs["outputs"].values():
@@ -43,6 +47,14 @@ def main() -> None:
         record_path, mode="r", dtype=np.dtype([
             ("offset", "<u8"), ("tokens", "<u8"), ("targets", "<u8"),
             ("split", "u1"), ("pad", "V7")]))
+    masks = None
+    if boundary_aware:
+        mask_info = authority["outputs"]["mask"]
+        mask_path = args.authority_root / Path(mask_info["path"]).name
+        if (mask_path.stat().st_size != mask_info["bytes"]
+                or sha256(mask_path) != mask_info["sha256"]):
+            raise SystemExit("target-mask authority integrity mismatch")
+        masks = np.memmap(mask_path, mode="r", dtype="u1")
     source_filter = packs.get("source_filter")
     source_selected = np.ones(len(records), dtype=np.bool_)
     if source_filter is not None:
@@ -72,10 +84,12 @@ def main() -> None:
     observed_ids = []
     for split_name, split_value in (("train", 0), ("validation", 1)):
         info = packs["outputs"][f"{split_name}_index"]
-        index = np.memmap(
-            args.pack_root / Path(info["path"]).name, mode="r",
-            dtype=np.dtype([("record_offset", "<u8"), ("record_count", "<u8"),
-                            ("tokens", "<u8"), ("targets", "<u8")]))
+        index_dtype = np.dtype([
+            ("record_offset", "<u8"), ("record_count", "<u8"),
+            ("tokens", "<u8"), ("targets", "<u8")])
+        index_path = args.pack_root / Path(info["path"]).name
+        index = (np.memmap(index_path, mode="r", dtype=index_dtype)
+                 if int(info["bytes"]) else np.empty((0,), dtype=index_dtype))
         counts = {"packs": len(index), "records": 0, "tokens": 0,
                   "assistant_target_tokens": 0}
         for pack in index:
@@ -83,9 +97,16 @@ def main() -> None:
             stop = start + int(pack["record_count"])
             ids = record_ids[start:stop]
             selected = records[ids]
+            if boundary_aware:
+                selected_targets = sum(
+                    int(masks[int(record["offset"]) + 1:
+                              int(record["offset"]) + int(record["tokens"])].sum())
+                    for record in selected)
+            else:
+                selected_targets = int(selected["targets"].sum())
             if (len(ids) == 0 or np.any(selected["split"] != split_value)
                     or int(selected["tokens"].sum()) != int(pack["tokens"])
-                    or int(selected["targets"].sum()) != int(pack["targets"])
+                    or selected_targets != int(pack["targets"])
                     or int(pack["tokens"]) > sequence_tokens):
                 raise SystemExit(f"invalid {split_name} pack descriptor")
             observed_ids.extend(int(value) for value in ids)

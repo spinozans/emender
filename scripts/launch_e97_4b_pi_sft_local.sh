@@ -15,6 +15,7 @@ PACK_SHA256=${PACK_SHA256:-$(sha256sum "$PACK_ROOT/manifest.json" | awk '{print 
 LR=${LR:-0.00001}
 WARMUP_STEPS=${WARMUP_STEPS:-8}
 CONTEXT_SIZE=${CONTEXT_SIZE:-4096}
+BOUNDARY_AWARE_PACKS=${BOUNDARY_AWARE_PACKS:-0}
 GRADIENT_CHECKPOINT_GROUP_SIZE=${GRADIENT_CHECKPOINT_GROUP_SIZE:-1}
 EMPTY_CACHE_MIN_RECORD_TOKENS=${EMPTY_CACHE_MIN_RECORD_TOKENS:-0}
 MLP_CHECKPOINT_CHUNK_SIZE=${MLP_CHECKPOINT_CHUNK_SIZE:-0}
@@ -37,6 +38,9 @@ case "$MODE" in
     ;;
   *) echo "MODE must be qualification or canary" >&2; exit 64;;
 esac
+[[ "$BOUNDARY_AWARE_PACKS" == 0 || "$BOUNDARY_AWARE_PACKS" == 1 ]] || {
+  echo "BOUNDARY_AWARE_PACKS must be 0 or 1" >&2; exit 64;
+}
 (( STEPS > 0 && DILOCO_K > 0 && SAVE_EVERY > 0 && EMPTY_CACHE_MIN_RECORD_TOKENS >= 0 && MLP_CHECKPOINT_CHUNK_SIZE >= 0 )) || exit 64
 (( STEPS % DILOCO_K == 0 && SAVE_EVERY % DILOCO_K == 0 )) || {
   echo "steps and checkpoint cadence must be K-aligned" >&2; exit 64;
@@ -55,9 +59,13 @@ RUN_ROOT=${RUN_ROOT:-/mnt/nvme1n1/erikg/diloco_8gpu/e97_4b_pi_instruction_local/
 }
 mkdir -p "$RUN_ROOT"/{checkpoints,identity,logs,terminal}
 cat > "$RUN_ROOT/identity/launch.json" <<EOF
-{"schema":"emender-e97-4b-pi-sft-local-launch-v1","mode":"$MODE","source_commit":"$SOURCE_COMMIT","parent_sha256":"$PARENT_SHA256","authority_sha256":"$AUTHORITY_SHA256","pack_sha256":"$PACK_SHA256","world_size":8,"context_size":$CONTEXT_SIZE,"gradient_checkpoint_group_size":$GRADIENT_CHECKPOINT_GROUP_SIZE,"empty_cache_min_record_tokens":$EMPTY_CACHE_MIN_RECORD_TOKENS,"mlp_checkpoint_chunk_size":$MLP_CHECKPOINT_CHUNK_SIZE,"steps":$STEPS,"diloco_k":$DILOCO_K,"keep_checkpoints":$KEEP_CHECKPOINTS,"new_stage_from":$NEW_STAGE_FROM,"optimizer_state_storage":"pinned-cpu"}
+{"schema":"emender-e97-4b-pi-sft-local-launch-v1","mode":"$MODE","source_commit":"$SOURCE_COMMIT","parent_sha256":"$PARENT_SHA256","authority_sha256":"$AUTHORITY_SHA256","pack_sha256":"$PACK_SHA256","world_size":8,"context_size":$CONTEXT_SIZE,"boundary_aware_packs":$BOUNDARY_AWARE_PACKS,"gradient_checkpoint_group_size":$GRADIENT_CHECKPOINT_GROUP_SIZE,"empty_cache_min_record_tokens":$EMPTY_CACHE_MIN_RECORD_TOKENS,"mlp_checkpoint_chunk_size":$MLP_CHECKPOINT_CHUNK_SIZE,"steps":$STEPS,"diloco_k":$DILOCO_K,"keep_checkpoints":$KEEP_CHECKPOINTS,"new_stage_from":$NEW_STAGE_FROM,"optimizer_state_storage":"pinned-cpu"}
 EOF
 RESUME_ARGS=()
+BOUNDARY_ARGS=()
+if [[ "$BOUNDARY_AWARE_PACKS" == 1 ]]; then
+  BOUNDARY_ARGS=(--boundary-aware-packs)
+fi
 if [[ -n "$RESUME" ]]; then
   [[ "$NEW_STAGE_FROM" == 0 ]] || { echo "resume and new-stage-from are mutually exclusive" >&2; exit 64; }
   RESUME_ARGS=(--resume "$RESUME")
@@ -67,7 +75,7 @@ fi
 COMMAND=(
   torchrun --standalone --nproc_per_node="$WORLD_SIZE"
   scripts/numa_local_rank_exec.py -- scripts/train_e97_4b_pi_sft.py
-  "${RESUME_ARGS[@]}"
+  "${RESUME_ARGS[@]}" "${BOUNDARY_ARGS[@]}"
   --parent-checkpoint "$PARENT" --parent-sha256 "$PARENT_SHA256"
   --source-args-json "$SOURCE_ARGS" --source-commit "$SOURCE_COMMIT"
   --authority-root "$AUTHORITY_ROOT" --authority-sha256 "$AUTHORITY_SHA256"

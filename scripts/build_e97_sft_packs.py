@@ -10,7 +10,8 @@ import struct
 import numpy as np
 
 from ndm.data.masked_sft_dataset import (
-    AUTHORITY_SCHEMA, PACK_INDEX, PACK_SCHEMA, RECORD_INDEX, sha256,
+    AUTHORITY_SCHEMA, BOUNDARY_PACK_SCHEMA, PACK_INDEX, PACK_SCHEMA,
+    RECORD_INDEX, sha256,
 )
 
 
@@ -34,6 +35,9 @@ def main() -> None:
     parser.add_argument(
         "--max-records-per-pack", type=int, default=0,
         help="Maximum complete records per pack; 0 keeps greedy packing unbounded")
+    parser.add_argument(
+        "--boundary-aware", action="store_true",
+        help="Emit v2 packs with per-document resets and effective target counts")
     args = parser.parse_args()
     if args.context_size <= 0:
         raise SystemExit("context-size must be positive")
@@ -53,6 +57,14 @@ def main() -> None:
         record_path, mode="r",
         dtype=np.dtype([("offset", "<u8"), ("tokens", "<u8"),
                         ("targets", "<u8"), ("split", "u1"), ("pad", "V7")]))
+    masks = None
+    if args.boundary_aware:
+        mask_entry = authority["outputs"]["mask"]
+        mask_path = args.authority_root / Path(mask_entry["path"]).name
+        if (mask_path.stat().st_size != mask_entry["bytes"]
+                or sha256(mask_path) != mask_entry["sha256"]):
+            raise SystemExit("target-mask integrity mismatch")
+        masks = np.memmap(mask_path, mode="r", dtype="u1")
     include_sources = tuple(sorted(set(args.include_source)))
     included_record_ids = None
     if include_sources:
@@ -121,7 +133,14 @@ def main() -> None:
                                 and record_id not in included_record_ids)):
                         continue
                     token_count = int(record["tokens"])
-                    target_count = int(record["targets"])
+                    if args.boundary_aware:
+                        source = int(record["offset"])
+                        # The first token in every independent record has no
+                        # same-document predecessor and therefore cannot be a
+                        # causal target in a packed example.
+                        target_count = int(masks[source + 1:source + token_count].sum())
+                    else:
+                        target_count = int(record["targets"])
                     if token_count > sequence_tokens:
                         counts["excluded_oversize_records"] += 1
                         counts["excluded_oversize_tokens"] += token_count
@@ -147,9 +166,12 @@ def main() -> None:
             path.unlink(missing_ok=True)
         raise
     del records
+    if masks is not None:
+        del masks
 
     manifest = {
-        "schema": PACK_SCHEMA, "status": "complete",
+        "schema": (BOUNDARY_PACK_SCHEMA if args.boundary_aware else PACK_SCHEMA),
+        "status": "complete",
         "authority_manifest_sha256": args.authority_manifest_sha256,
         "context_size": args.context_size, "sequence_tokens": sequence_tokens,
         "packing": "stable-record-order greedy next-fit; no record splitting",
@@ -157,6 +179,17 @@ def main() -> None:
         "source_filter": ({"include_exact": list(include_sources)}
                           if include_sources else None),
         "sampling": "pack IDs sampled with replacement by emender-record-pack-counter-v1",
+        "fields": ({
+            "tokens": "uint32[context_size+1] token-aligned",
+            "loss_mask": "bool[context_size] prediction-aligned",
+            "valid_mask": "bool[context_size+1] token-aligned",
+            "reset_before": "bool[context_size+1] token-aligned",
+        } if args.boundary_aware else None),
+        "boundary_semantics": ({
+            "reset": "clear every recurrent layer before each independent record",
+            "cross_document_target": "masked",
+            "padding": "loss-masked recurrent identity transition",
+        } if args.boundary_aware else None),
         "splits": split_receipts,
         "record_index_bytes": RECORD_INDEX.size, "pack_index_bytes": PACK_INDEX.size,
         "outputs": {name: _entry(path) for name, path in outputs.items()},

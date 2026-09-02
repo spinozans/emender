@@ -12,6 +12,35 @@
 
 **Agent baseline SHA-256:** `eed48419d657b0be03953f6c99dc0ba14e61579ee748174ef0e6794f895157ed`
 
+**Current narrow development parent:** complete-64K u256, SHA-256
+`2f24db49be7bafb0e155bf3698f20193def8e90efc1bd69bdfbfe2b9661b541b`
+
+## 2026-09-02 document-aware recipe amendment
+
+V4 has now been consumed by its first independent evaluation and failed 0/240.
+It is diagnostic-only and cannot support another blind claim. A future V5 must
+be frozen after this recipe is fixed and before the resulting model is scored.
+
+Pure masked-SFT continuation is superseded as the next training recipe. The new
+declared stage jointly trains causal document replay and masked SFT in explicit
+64K packs. Every pack provides:
+
+- `tokens`: token-aligned `uint32[context_size+1]`;
+- `loss_mask`: prediction-aligned `bool[context_size]`;
+- `valid_mask`: token-aligned `bool[context_size+1]`;
+- `reset_before`: token-aligned `bool[context_size+1]`.
+
+Every independent record sets `reset_before` on its first token in every E97
+layer. The causal target entering a new record is masked. Invalid padding is a
+recurrent identity transition and contributes no loss. The fused forward and
+backward kernels must block both information and gradient across resets.
+Authentic trajectory records do not reset internally.
+
+The initial amended mixture is 20% filtered CommaPile causal replay, 35%
+authentic OpenHands actions, 25% broad instruction, and 20% Pi retention. This
+is a named fresh-optimizer stage from the behaviorally selected complete-64K
+u256 parent, not an exact-resume mutation of the stopped pure-SFT stream.
+
 ## Decision and motivation
 
 The first Pi curriculum established an exact runtime contract and reliable
@@ -53,9 +82,11 @@ Before downloading training payloads, freeze two new evaluation authorities:
 
 ### V4 synthetic structural holdout
 
-V4 must use generators, identities, paths, values, action structures, and failure
-modes absent from both the training sources and v3. Its exact records remain
-evaluation-only. Once evaluated, it becomes diagnostic.
+V4 used generators, identities, paths, values, action structures, and failure
+modes absent from both the training sources and v3. Its first independent result
+was 0/240, after which it became diagnostic-only. It must not be reused for an
+independent claim; freeze a new V5-style authority before evaluating the amended
+recipe.
 
 ### Real-repository holdout
 
@@ -94,14 +125,15 @@ positive. The anticipated complete broad/distillation program consumes roughly
 100–250M assistant targets, excluding later RL rollouts. Total processed context
 will be larger and is reported separately.
 
-The initial mixture is:
+The original proposed mixture was superseded by the document-aware amendment
+above. The first immutable 25M authority uses:
 
 | Track | Initial target share |
 |---|---:|
-| Broad instruction | 35% |
-| Verified code/reasoning | 25% |
-| Successful repository-agent trajectories | 25% |
-| Pi protocol, replay, and on-policy recovery | 15% |
+| Source-filtered CommaPile causal documents | 20% |
+| Successful OpenHands repository trajectories | 35% |
+| Broad instruction/reasoning | 25% |
+| Pi protocol and retention replay | 20% |
 
 Sampling is stratified by track and subdomain. A flat union is prohibited because
 large sources would dilute rare recovery and protocol skills. Logs and
@@ -199,9 +231,10 @@ checkpoint that regresses the SFT gates.
   pinned-CPU Schedule-Free state, atomic K8 checkpoints, and mmap reload gate.
 - Keep gradient clipping configurable and recorded; the controlled `1.0` versus
   disabled ablation showed equivalent dynamics for the recover-read case.
-- Qualify 8K and then 16K packs before admitting long repository trajectories.
-  Until qualification, oversize records are excluded with explicit target-token
-  counts rather than truncated.
+- Qualify boundary-aware 64K packs before launching the amended stage. Whole
+  records are packed without truncation; oversized logical units are excluded
+  with explicit record, token, and target counts. No reset is inserted inside
+  an authentic trajectory.
 - Preserve train/`y` versus saved/`x` semantics and start fresh optimizer state
   only at declared distribution boundaries.
 - Retain intermediate checkpoints and choose behaviorally. Lower loss is never a
@@ -209,13 +242,14 @@ checkpoint that regresses the SFT gates.
 
 ## Long-context execution evidence
 
-The local 65,536-token SFT path is systems-qualified with two-layer activation
-checkpoint groups; see
+The legacy local 65,536-token single-record SFT path is systems-qualified with
+group-three activation checkpointing, cache release before records at least
+32K, and 4,096-token checkpointed SwiGLU chunks; see
 [`validation/e97-4b-pi-sft-64k-local-qualification.md`](validation/e97-4b-pi-sft-64k-local-qualification.md).
-This establishes fit, backward, update, checkpoint, and exact resume—not
-long-context behavior. Complete 64K trajectories and efficient 4K rolling
-state-action windows remain separate authorities so context length can be
-selected behaviorally rather than from loss or memory fit alone.
+That evidence establishes fit, backward, update, checkpoint, and exact resume,
+not packed-document correctness or long-context behavior. The amended path adds
+explicit per-token recurrent resets and padding identity semantics and therefore
+requires its own qualification and behavioral selection.
 
 ## Promotion gates
 

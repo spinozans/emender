@@ -88,6 +88,45 @@ def test_complete_record_packing_and_counter_sampling(tmp_path):
         reset_dataset.get_batch_with_record_spans(2)
 
 
+def test_boundary_aware_pack_materializes_resets_validity_and_loss(tmp_path):
+    authority = tmp_path / "authority"
+    authority_sha = _authority(authority)
+    packs = tmp_path / "boundary-packs"
+    subprocess.run([
+        sys.executable, "scripts/build_e97_sft_packs.py",
+        "--authority-root", str(authority), "--output-root", str(packs),
+        "--context-size", "7", "--authority-manifest-sha256", authority_sha,
+        "--boundary-aware",
+    ], check=True, capture_output=True, text=True)
+    manifest = json.loads((packs / "manifest.json").read_text())
+    assert manifest["schema"] == "emender-e97-sft-boundary-aware-packs-v2"
+    assert manifest["boundary_semantics"]["cross_document_target"] == "masked"
+    identity = SFTSamplerIdentity(
+        authority_manifest_sha256=authority_sha,
+        pack_manifest_sha256=sha256(packs / "manifest.json"), sampler_key=42,
+        data_world_size=1, context_size=7)
+    dataset = MaskedSFTPackedDataset(
+        authority, packs, identity=identity, rank=0, verify_payload_hashes=True)
+    # The only train pack that combines records 0 and 1 is pack zero. Record 2
+    # is retained separately because it does not fit the eight-token sequence.
+    tokens, loss, valid, reset, length, targets, name = dataset.pack_at_with_boundaries(0)
+    assert tokens.tolist() == [10, 11, 218, 20, 21, 0, 0, 0]
+    assert valid.tolist() == [True, True, True, True, True, False, False, False]
+    assert reset.tolist() == [True, False, False, True, False, False, False, False]
+    assert loss.tolist() == [True, True, False, True, False, False, False]
+    assert (length, targets, name) == (5, 3, "pack-00000000")
+
+    batch = dataset.get_boundary_aware_batch(1)
+    assert [tuple(value.shape) for value in batch] == [
+        (1, 8), (1, 7), (1, 8), (1, 8), (1,), (1,)]
+    subprocess.run([
+        sys.executable, "scripts/validate_e97_sft_packs.py",
+        "--authority-root", str(authority), "--pack-root", str(packs),
+        "--authority-manifest-sha256", authority_sha,
+        "--pack-manifest-sha256", sha256(packs / "manifest.json"),
+    ], check=True, capture_output=True, text=True)
+
+
 def test_pack_builder_can_limit_records_per_pack(tmp_path):
     authority = tmp_path / "authority"
     authority_sha = _authority(authority)

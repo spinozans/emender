@@ -315,6 +315,15 @@ def test_trainer_supports_hash_bound_fresh_optimizer_repair_stages():
     assert '"new-stage-saved-x" if args.new_stage_from' in text
 
 
+def test_boundary_aware_trainer_is_single_forward_and_stop_is_k_aligned():
+    text = open("scripts/train_e97_4b_pi_sft.py").read()
+    assert "get_boundary_aware_batch" in text
+    assert "packed_objective" in text
+    assert 'stop_request_path = args.output_root / ".final_checkpoint_request"' in text
+    assert "if update % args.diloco_k == 0:" in text
+    assert "update % args.save_every == 0 or should_stop" in text
+
+
 def test_checkpoint_recipe_is_k_aligned_and_bounded():
     args = trainer.merge_args(67_108_864)
     assert args.diloco_merge_bucket_numel == 67_108_864
@@ -403,6 +412,8 @@ def test_local_launcher_uses_ddp_numa_and_cpu_offload():
     assert '--empty-cache-min-record-tokens "$EMPTY_CACHE_MIN_RECORD_TOKENS"' in text
     assert "MLP_CHECKPOINT_CHUNK_SIZE=${MLP_CHECKPOINT_CHUNK_SIZE:-0}" in text
     assert '--mlp-checkpoint-chunk-size "$MLP_CHECKPOINT_CHUNK_SIZE"' in text
+    assert "BOUNDARY_AWARE_PACKS=${BOUNDARY_AWARE_PACKS:-0}" in text
+    assert "BOUNDARY_ARGS=(--boundary-aware-packs)" in text
     assert "verify_e97_4b_pi_sft_checkpoint.py" in text
 
 

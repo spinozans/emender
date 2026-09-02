@@ -1298,7 +1298,9 @@ class LadderLM(nn.Module):
             for mlp in replayable:
                 mlp.end_routing_context()
 
-    def _checkpointed_layer_groups(self, x, prev_hiddens, group_size):
+    def _checkpointed_layer_groups(
+        self, x, prev_hiddens, group_size, reset_before=None, valid_mask=None,
+    ):
         """Checkpoint prenorm+recurrent+MLP blocks in multi-layer groups.
 
         Saving one (x, residual) pair per group rather than per layer bounds
@@ -1336,7 +1338,9 @@ class LadderLM(nn.Module):
                             ln, local_residual.to(dtype=ln.weight.dtype))
                         if self.residual_in_fp32:
                             local_residual = local_residual.float()
-                    local_x, local_final = layer(local_x, hidden)
+                    local_x, local_final = layer(
+                        local_x, hidden, reset_before=reset_before,
+                        valid_mask=valid_mask)
                     mlp = getattr(layer, "mlp", None)
                     auxiliary = getattr(mlp, "auxiliary_loss", None)
                     if auxiliary is None:
@@ -1368,6 +1372,8 @@ class LadderLM(nn.Module):
         prev_conv_buffers=None,
         actual_length=None,
         doc_boundaries=None,
+        reset_before=None,
+        valid_mask=None,
         loss_mask=None,
         loss_reduction="mean",
     ):
@@ -1381,7 +1387,11 @@ class LadderLM(nn.Module):
             prev_hiddens: List of [B, d_inner] per layer, or None
             prev_conv_buffers: Unused, for API compatibility
             actual_length: For masking padded chunks
-            doc_boundaries: [B, T] boolean tensor for hidden state reset
+            doc_boundaries: Deprecated alias for ``reset_before``
+            reset_before: Boolean token-aligned reset mask. With loss, shape
+                [B,T+1]; otherwise [B,T]. State is cleared before selected tokens.
+            valid_mask: Boolean token-aligned mask with the same shape. Invalid
+                input tokens are recurrent no-ops and invalid targets are masked.
             loss_mask: Optional [B, T] boolean mask over prediction targets
             loss_reduction: ``mean`` (default) or exact target-token ``sum``
 
@@ -1398,6 +1408,28 @@ class LadderLM(nn.Module):
             inp = x
 
         B, T = inp.shape
+        if doc_boundaries is not None:
+            if reset_before is not None:
+                raise ValueError("pass only one of doc_boundaries and reset_before")
+            reset_before = doc_boundaries
+        control_shape = (B, T + 1) if return_loss else (B, T)
+        for name, control in (("reset_before", reset_before),
+                              ("valid_mask", valid_mask)):
+            if control is not None:
+                if control.shape != control_shape or control.dtype != torch.bool:
+                    raise ValueError(
+                        f"{name} must be boolean and token-aligned with shape {control_shape}")
+                if control.device != inp.device:
+                    raise ValueError(f"{name} must be on the token input device")
+        if reset_before is not None and valid_mask is not None and bool(
+                (reset_before & ~valid_mask).any().item()):
+            raise ValueError("reset_before cannot select an invalid/padding token")
+        layer_reset_before = (
+            reset_before[:, :-1] if return_loss and reset_before is not None
+            else reset_before)
+        layer_valid_mask = (
+            valid_mask[:, :-1] if return_loss and valid_mask is not None
+            else valid_mask)
 
         # Embed tokens
         x = self.embedding(inp)  # [B, T, dim]
@@ -1431,7 +1463,8 @@ class LadderLM(nn.Module):
         if grouped_checkpointing:
             x, residual, new_hidden_states, checkpointed_auxiliary_losses = (
                 self._checkpointed_layer_groups(
-                    x, prev_hiddens, checkpoint_group_size))
+                    x, prev_hiddens, checkpoint_group_size,
+                    layer_reset_before, layer_valid_mask))
             layer_iterator = ()
         else:
             layer_iterator = enumerate(zip(self.layer_norms, self.layers))
@@ -1460,7 +1493,10 @@ class LadderLM(nn.Module):
             mixer_input = x
             if self.gradient_checkpointing and self.training:
                 def checkpointed_layer(layer_input, layer_hidden, *, _layer=layer):
-                    layer_output, layer_final = _layer(layer_input, layer_hidden)
+                    layer_output, layer_final = _layer(
+                        layer_input, layer_hidden,
+                        reset_before=layer_reset_before,
+                        valid_mask=layer_valid_mask)
                     mlp = getattr(_layer, "mlp", None)
                     auxiliary = getattr(mlp, "auxiliary_loss", None)
                     if auxiliary is None:
@@ -1471,7 +1507,9 @@ class LadderLM(nn.Module):
                     checkpointed_layer, x, prev_hiddens[i], use_reentrant=False)
                 checkpointed_auxiliary_losses.append(layer_auxiliary)
             else:
-                x, h_final = layer(x, prev_hiddens[i])
+                x, h_final = layer(
+                    x, prev_hiddens[i], reset_before=layer_reset_before,
+                    valid_mask=layer_valid_mask)
 
             if trace_finiteness and not bool(torch.isfinite(x).all().item()):
                 def summary(name, tensor):
@@ -1532,6 +1570,12 @@ class LadderLM(nn.Module):
             if loss_mask is not None:
                 if loss_mask.shape != target.shape or loss_mask.dtype != torch.bool:
                     raise ValueError("loss_mask must be boolean and match prediction targets")
+                if valid_mask is not None and bool(
+                        (loss_mask & ~valid_mask[:, 1:]).any().item()):
+                    raise ValueError("loss_mask selects an invalid/padding target")
+                if reset_before is not None and bool(
+                        (loss_mask & reset_before[:, 1:]).any().item()):
+                    raise ValueError("loss_mask selects a cross-document prediction")
                 target = target.clone()
                 target[~loss_mask] = -100
             if actual_length is not None:

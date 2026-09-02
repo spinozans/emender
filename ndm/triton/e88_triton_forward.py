@@ -83,6 +83,8 @@ def _e88_forward_kernel(
     G_ptr,            # [T, B, H, V] gate (used iff APPLY_GATE)
     E_ptr,            # [T, B, H, N] erase/read gate (used iff SPLIT_EDIT)
     W_ptr,            # [T, B, H, V] value write gate (used iff SPLIT_EDIT)
+    R_ptr,            # [T, B] reset state before token (used iff APPLY_RESET)
+    M_ptr,            # [T, B] valid input token (used iff APPLY_VALID)
     # Outputs
     Out_ptr,          # [T, B, H, V]
     Sfinal_ptr,       # [B, H, N, V]
@@ -99,6 +101,8 @@ def _e88_forward_kernel(
     sg_t, sg_b, sg_h, sg_v,  # gate strides (zero/dummy when APPLY_GATE=False)
     se_t, se_b, se_h, se_n,  # erase/read gate strides (zero/dummy when SPLIT_EDIT=False)
     sw_t, sw_b, sw_h, sw_v,  # value write gate strides (zero/dummy when SPLIT_EDIT=False)
+    sr_t, sr_b,               # reset-before strides (zero/dummy when APPLY_RESET=False)
+    sm_t, sm_b,               # valid-mask strides (zero/dummy when APPLY_VALID=False)
     so_t, so_b, so_h, so_v,
     sf_b, sf_h, sf_n, sf_v,
     sc_t, sc_b, sc_h, sc_n, sc_v,
@@ -115,6 +119,8 @@ def _e88_forward_kernel(
     RAW_WRITE: tl.constexpr,  # if True, ablate delta correction: delta = v
     LINEAR_STATE: tl.constexpr,  # if True, ablate tanh: S = pre
     SPLIT_EDIT: tl.constexpr,  # if True, use E97 b/w edit gates
+    APPLY_RESET: tl.constexpr,  # reset recurrent state before selected tokens
+    APPLY_VALID: tl.constexpr,  # invalid/padding tokens are recurrent no-ops
 ):
     """One program per (batch, head_block). Sequential time loop."""
     # 2D launch grid: (B, ceil(H / BLOCK_H))
@@ -189,6 +195,18 @@ def _e88_forward_kernel(
         v_vec = tl.load(V_ptr + v_off, mask=mask_hv, other=0.0).to(tl.float32)   # [BH, BV]
         d_val = tl.load(D_ptr + d_off, mask=h_mask, other=0.0).to(tl.float32)    # [BH]
 
+        token_valid = tl.full([1], 1, dtype=tl.int1)
+        if APPLY_VALID:
+            token_valid = tl.load(M_ptr + t_i64 * sm_t + b * sm_b).to(tl.int1)
+        token_reset = tl.full([1], 0, dtype=tl.int1)
+        if APPLY_RESET:
+            token_reset = tl.load(R_ptr + t_i64 * sr_t + b * sr_b).to(tl.int1)
+        # Reset is meaningful only for a real token. Padding is a strict
+        # identity transition and therefore cannot clear persistent state.
+        S = tl.where(
+            (token_valid & token_reset)[:, None, None],
+            tl.zeros((BLOCK_H, BLOCK_N, BLOCK_V), dtype=tl.float32), S)
+
         if APPLY_SILU_QKV:
             k_vec = k_vec / (1.0 + tl.exp(-k_vec))
             q_vec = q_vec / (1.0 + tl.exp(-q_vec))
@@ -236,11 +254,12 @@ def _e88_forward_kernel(
         outer = k_vec[:, :, None] * delta[:, None, :]       # [BH, BN, BV]
         pre = d_val[:, None, None] * S + outer
         if LINEAR_STATE:
-            S = pre
+            S_next = pre
         else:
             # Stable tanh. The raw exp formula overflows for pre > ~44 in fp32,
             # yielding inf/inf = NaN. sigmoid saturates without forming inf/inf.
-            S = 2.0 * tl.sigmoid(2.0 * pre) - 1.0
+            S_next = 2.0 * tl.sigmoid(2.0 * pre) - 1.0
+        S = tl.where(token_valid[:, None, None], S_next, S)
 
         # Output: out[h, v] = sum_n S[h, n, v] * q[h, n]   (reduce over N axis=1)
         out_vec = tl.sum(S * q_vec[:, :, None], axis=1)     # [BH, BV]
@@ -258,6 +277,7 @@ def _e88_forward_kernel(
             g_val = tl.load(G_ptr + g_off, mask=mask_hv, other=0.0).to(tl.float32)
             silu_g = g_val / (1.0 + tl.exp(-g_val))
             out_vec = silu_g * out_vec
+        out_vec = tl.where(token_valid[:, None], out_vec, 0.0)
 
         out_off = (
             t_i64 * so_t + b * so_b
@@ -344,6 +364,8 @@ def _autotune_kernel(
     linear_state,
     split_edit,
     valid_length,
+    apply_reset,
+    apply_valid,
 ):
     """Tiny in-process autotune. Tries (BLOCK_H, num_warps) and caches winner.
 
@@ -357,7 +379,7 @@ def _autotune_kernel(
     cache_key = (
         B, T, H, N, Vsz, str(dtype), ckpt_interval, bool(normalize_kq),
         bool(apply_silu_qkv), bool(raw_write), bool(linear_state),
-        bool(split_edit),
+        bool(split_edit), bool(apply_reset), bool(apply_valid),
     )
     if cache_key in _AUTOTUNE_CACHE:
         return _AUTOTUNE_CACHE[cache_key]
@@ -385,8 +407,8 @@ def _autotune_kernel(
     best_t = float("inf")
 
     (
-        k_c, v_c, q_c, d_c, s0_c, g_c, e_c, w_c, apply_gate, out,
-        S_final, S_ckpt, strides,
+        k_c, v_c, q_c, d_c, s0_c, g_c, e_c, w_c, r_c, m_c,
+        apply_gate, out, S_final, S_ckpt, strides,
     ) = launch_args
 
     for bh in bh_candidates:
@@ -398,7 +420,7 @@ def _autotune_kernel(
                 # Warmup
                 for _ in range(3):
                     _e88_forward_kernel[grid](
-                        k_c, v_c, q_c, d_c, s0_c, g_c, e_c, w_c,
+                        k_c, v_c, q_c, d_c, s0_c, g_c, e_c, w_c, r_c, m_c,
                         out, S_final, S_ckpt,
                         *strides,
                         T=T, VALID_T=valid_length, B=B, H=H, N=N, V=Vsz,
@@ -411,6 +433,8 @@ def _autotune_kernel(
                         RAW_WRITE=bool(raw_write),
                         LINEAR_STATE=bool(linear_state),
                         SPLIT_EDIT=bool(split_edit),
+                        APPLY_RESET=bool(apply_reset),
+                        APPLY_VALID=bool(apply_valid),
                         num_warps=nw,
                     )
                 torch.cuda.synchronize()
@@ -418,7 +442,7 @@ def _autotune_kernel(
                 iters = 5
                 for _ in range(iters):
                     _e88_forward_kernel[grid](
-                        k_c, v_c, q_c, d_c, s0_c, g_c, e_c, w_c,
+                        k_c, v_c, q_c, d_c, s0_c, g_c, e_c, w_c, r_c, m_c,
                         out, S_final, S_ckpt,
                         *strides,
                         T=T, VALID_T=valid_length, B=B, H=H, N=N, V=Vsz,
@@ -431,6 +455,8 @@ def _autotune_kernel(
                         RAW_WRITE=bool(raw_write),
                         LINEAR_STATE=bool(linear_state),
                         SPLIT_EDIT=bool(split_edit),
+                        APPLY_RESET=bool(apply_reset),
+                        APPLY_VALID=bool(apply_valid),
                         num_warps=nw,
                     )
                 torch.cuda.synchronize()
@@ -466,6 +492,8 @@ def e88_triton_forward(
     erase_gate: torch.Tensor = None,  # [T, B, H, N] E97 read/erase gate
     value_write_gate: torch.Tensor = None,  # [T, B,H,V] E97 value write gate
     valid_length: int = None,  # state boundary before inference-only padding
+    reset_before: torch.Tensor = None,  # bool [T,B], clear state before token
+    valid_mask: torch.Tensor = None,  # bool [T,B], invalid tokens are no-ops
 ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     """Run the E88 forward recurrence in Triton.
 
@@ -570,6 +598,28 @@ def e88_triton_forward(
         e_strides = (0, 0, 0, 0)
         w_strides = (0, 0, 0, 0)
 
+    apply_reset = reset_before is not None
+    if apply_reset:
+        if reset_before.shape != (T, B) or reset_before.dtype != torch.bool:
+            raise ValueError(f"reset_before must be boolean [T,B] = {(T, B)}")
+        r_c = reset_before if reset_before.is_contiguous() else reset_before.contiguous()
+        r_strides = (r_c.stride(0), r_c.stride(1))
+    else:
+        r_c = k_c
+        r_strides = (0, 0)
+
+    apply_valid = valid_mask is not None
+    if apply_valid:
+        if valid_mask.shape != (T, B) or valid_mask.dtype != torch.bool:
+            raise ValueError(f"valid_mask must be boolean [T,B] = {(T, B)}")
+        m_c = valid_mask if valid_mask.is_contiguous() else valid_mask.contiguous()
+        if apply_reset and bool((r_c & ~m_c).any().item()):
+            raise ValueError("reset_before cannot select an invalid/padding token")
+        m_strides = (m_c.stride(0), m_c.stride(1))
+    else:
+        m_c = k_c
+        m_strides = (0, 0)
+
     out_dtype = k_c.dtype
     out = torch.empty((T, B, H, Vsz), dtype=out_dtype, device=k.device)
     S_final = torch.empty_like(s0_c)
@@ -593,6 +643,9 @@ def e88_triton_forward(
         # split edit gate strides
         *e_strides,
         *w_strides,
+        # packed-document control strides
+        *r_strides,
+        *m_strides,
         # out strides
         out.stride(0), out.stride(1), out.stride(2), out.stride(3),
         # S_final strides
@@ -620,13 +673,13 @@ def e88_triton_forward(
             nw = 1
         else:
             launch_args = (
-                k_c, v_c, q_c, d_c, s0_c, g_c, e_c, w_c, apply_gate,
-                out, S_final, S_ckpt, strides,
+                k_c, v_c, q_c, d_c, s0_c, g_c, e_c, w_c, r_c, m_c,
+                apply_gate, out, S_final, S_ckpt, strides,
             )
             block_h_chosen, nw = _autotune_kernel(
                 launch_args, B, T, H, N, Vsz, out_dtype, ckpt_interval,
                 normalize_kq, apply_silu_qkv, raw_write, linear_state,
-                split_edit, valid_length,
+                split_edit, valid_length, apply_reset, apply_valid,
             )
     else:
         block_h_chosen = int(block_h)
@@ -635,7 +688,7 @@ def e88_triton_forward(
     grid = (B, (H + block_h_chosen - 1) // block_h_chosen)
 
     _e88_forward_kernel[grid](
-        k_c, v_c, q_c, d_c, s0_c, g_c, e_c, w_c,
+        k_c, v_c, q_c, d_c, s0_c, g_c, e_c, w_c, r_c, m_c,
         out, S_final, S_ckpt,
         *strides,
         T=T, VALID_T=valid_length, B=B, H=H, N=N, V=Vsz,
@@ -648,6 +701,8 @@ def e88_triton_forward(
         RAW_WRITE=bool(raw_write),
         LINEAR_STATE=bool(linear_state),
         SPLIT_EDIT=bool(split_edit),
+        APPLY_RESET=bool(apply_reset),
+        APPLY_VALID=bool(apply_valid),
         num_warps=nw,
     )
     return out, S_final, S_ckpt
@@ -667,6 +722,8 @@ def e88_torch_reference(
     raw_write: bool = False,
     erase_gate: torch.Tensor = None,
     value_write_gate: torch.Tensor = None,
+    reset_before: torch.Tensor = None,
+    valid_mask: torch.Tensor = None,
 ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     """Pure-PyTorch reference for parity testing.
 
@@ -697,12 +754,28 @@ def e88_torch_reference(
     Vsz = v.shape[-1]
     out_dtype = k.dtype
 
+    if reset_before is not None and (
+            reset_before.shape != (T, B) or reset_before.dtype != torch.bool):
+        raise ValueError("reset_before must be boolean [T,B]")
+    if valid_mask is not None and (
+            valid_mask.shape != (T, B) or valid_mask.dtype != torch.bool):
+        raise ValueError("valid_mask must be boolean [T,B]")
+    if reset_before is not None and valid_mask is not None and bool(
+            (reset_before & ~valid_mask).any().item()):
+        raise ValueError("reset_before cannot select an invalid/padding token")
+
     S = S0.clone().to(torch.float32)
     out = torch.empty((T, B, H, Vsz), dtype=out_dtype, device=k.device)
     ckpt = torch.empty((T + 1, B, H, N, Vsz), dtype=out_dtype, device=k.device)
     ckpt[0] = S.to(out_dtype)
 
     for t in range(T):
+        valid_t = (torch.ones(B, device=k.device, dtype=torch.bool)
+                   if valid_mask is None else valid_mask[t])
+        if reset_before is not None:
+            reset_t = reset_before[t] & valid_t
+            S = torch.where(reset_t[:, None, None, None], torch.zeros_like(S), S)
+
         k_t = k[t].to(torch.float32)        # [B, H, N]
         q_t = q[t].to(torch.float32)        # [B, H, N]
         v_t = v[t].to(torch.float32)        # [B, H, V]
@@ -728,11 +801,13 @@ def e88_torch_reference(
 
         pre = d_t * S + outer
         if linear_state:
-            S = pre
+            S_next = pre
         else:
-            S = torch.tanh(pre)
+            S_next = torch.tanh(pre)
+        S = torch.where(valid_t[:, None, None, None], S_next, S)
 
         Sq = torch.einsum('bhnv,bhn->bhv', S, q_t)
+        Sq = torch.where(valid_t[:, None, None], Sq, torch.zeros_like(Sq))
         out[t] = Sq.to(out_dtype)
         ckpt[t + 1] = S.to(out_dtype)
 

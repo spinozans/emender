@@ -39,6 +39,8 @@ def e88_triton_optimized_apply(
     linear_state: bool = False,
     erase_gate: torch.Tensor = None,
     value_write_gate: torch.Tensor = None,
+    reset_before: torch.Tensor = None,  # bool [B,T]
+    valid_mask: torch.Tensor = None,  # bool [B,T]
 ) -> Tuple[torch.Tensor, torch.Tensor]:
     """Triton-backed E88 recurrence with optional pre-norm and post-gate.
 
@@ -83,6 +85,10 @@ def e88_triton_optimized_apply(
             g = _padT(g)
         erase_gate = _padT(erase_gate)
         value_write_gate = _padT(value_write_gate)
+        reset_before = _padT(reset_before)
+        if valid_mask is None:
+            valid_mask = torch.ones((B, T_orig), dtype=torch.bool, device=k.device)
+        valid_mask = _padT(valid_mask)
         T = T + _pad
 
     # L2 normalization is fused inside the Triton kernel when normalize_kq=True
@@ -102,6 +108,8 @@ def e88_triton_optimized_apply(
     decay_t = decay.transpose(0, 1)
     erase_t = erase_gate.transpose(0, 1) if erase_gate is not None else None
     value_write_t = value_write_gate.transpose(0, 1) if value_write_gate is not None else None
+    reset_t = reset_before.transpose(0, 1) if reset_before is not None else None
+    valid_t = valid_mask.transpose(0, 1) if valid_mask is not None else None
     if S0 is None:
         S0 = torch.zeros(
             (B, H, N, Vsz), dtype=k.dtype, device=k.device,
@@ -125,6 +133,8 @@ def e88_triton_optimized_apply(
             erase_gate=erase_t,
             value_write_gate=value_write_t,
             valid_length=T_orig,
+            reset_before=reset_t,
+            valid_mask=valid_t,
         )
         output = out_t.transpose(0, 1)
     else:
@@ -136,6 +146,8 @@ def e88_triton_optimized_apply(
             erase_gate=erase_t,
             value_write_gate=value_write_t,
             valid_length=T_orig,
+            reset_before=reset_t,
+            valid_mask=valid_t,
         )
         output = out_t.transpose(0, 1)
 

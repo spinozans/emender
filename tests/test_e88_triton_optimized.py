@@ -11,6 +11,7 @@ def test_unaligned_forward_passes_real_state_boundary(monkeypatch):
             T=k.shape[0],
             valid_length=kwargs["valid_length"],
             padded_decay=decay[5:].clone(),
+            valid_mask=kwargs["valid_mask"].clone(),
         )
         out = torch.zeros(
             (k.shape[0], k.shape[1], k.shape[2], v.shape[-1]),
@@ -39,5 +40,7 @@ def test_unaligned_forward_passes_real_state_boundary(monkeypatch):
     assert captured["T"] == 16
     assert captured["valid_length"] == T
     assert torch.count_nonzero(captured["padded_decay"]) == 0
+    assert captured["valid_mask"][:T].all()
+    assert not captured["valid_mask"][T:].any()
     assert out.shape == (B, T, H, V)
     torch.testing.assert_close(state, S0)

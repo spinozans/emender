@@ -123,6 +123,60 @@ def test_e88_triton_fp32_cache_is_chunk_boundary_invariant():
     torch.testing.assert_close(state_cached, state_full, rtol=0, atol=0)
 
 
+def test_e97_packed_resets_and_padding_match_reference_forward_and_backward():
+    tri_base = _inputs(seed=10, requires_grad=True)
+    ref_base = tuple(t.detach().clone().requires_grad_(True) for t in tri_base)
+    T, B = tri_base[1].shape[:2]
+    reset = torch.zeros((T, B), dtype=torch.bool, device="cuda")
+    reset[0] = True
+    reset[6] = True
+    valid = torch.ones((T, B), dtype=torch.bool, device="cuda")
+    valid[13:] = False
+
+    out_tri, state_tri = e88_triton(
+        *tri_base, reset_before=reset, valid_mask=valid)
+    out_ref, state_ref, _ = e88_torch_reference(
+        *ref_base, reset_before=reset, valid_mask=valid)
+    torch.testing.assert_close(out_tri, out_ref, rtol=3e-4, atol=3e-4)
+    torch.testing.assert_close(state_tri, state_ref, rtol=3e-4, atol=3e-4)
+    assert torch.count_nonzero(out_tri[13:]) == 0
+
+    loss_tri = out_tri.float().square().sum() + 0.2 * state_tri.float().square().sum()
+    loss_ref = out_ref.float().square().sum() + 0.2 * state_ref.float().square().sum()
+    grads_tri = torch.autograd.grad(loss_tri, tri_base)
+    grads_ref = torch.autograd.grad(loss_ref, ref_base)
+    for grad_tri, grad_ref in zip(grads_tri, grads_ref):
+        torch.testing.assert_close(grad_tri, grad_ref, rtol=7e-3, atol=4e-3)
+    # The initial state is cut off by the first reset, and padding projections
+    # cannot influence either outputs or the final recurrent state.
+    assert torch.count_nonzero(grads_tri[0]) == 0
+    for gradient in grads_tri[1:]:
+        assert torch.count_nonzero(gradient[13:]) == 0
+
+
+def test_e97_packed_reset_blocks_cross_document_information():
+    S0, k, v, q, decay = _inputs(seed=11, requires_grad=True)
+    reset = torch.zeros((k.shape[0], k.shape[1]), dtype=torch.bool, device="cuda")
+    reset[0] = reset[8] = True
+    valid = torch.ones_like(reset)
+    out, _state = e88_triton(
+        S0, k, v, q, decay, reset_before=reset, valid_mask=valid)
+    doc2_loss = out[8:].float().square().sum()
+    first_doc_grad = torch.autograd.grad(doc2_loss, k, retain_graph=True)[0][:8]
+    assert torch.count_nonzero(first_doc_grad) == 0
+
+    k_changed = k.detach().clone()
+    k_changed[:8].add_(100.0)
+    out_changed, state_changed = e88_triton(
+        S0.detach(), k_changed, v.detach(), q.detach(), decay.detach(),
+        reset_before=reset, valid_mask=valid)
+    torch.testing.assert_close(out_changed[8:], out.detach()[8:], rtol=0, atol=0)
+    _out_original, state_original = e88_triton(
+        S0.detach(), k.detach(), v.detach(), q.detach(), decay.detach(),
+        reset_before=reset, valid_mask=valid)
+    torch.testing.assert_close(state_changed, state_original, rtol=0, atol=0)
+
+
 def test_e88_triton_fused_norm_and_gate_match_reference():
     S0, k, v, q, decay = _inputs(seed=2)
     gate = 0.20 * torch.randn_like(v)

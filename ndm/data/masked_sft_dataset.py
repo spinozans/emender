@@ -15,6 +15,7 @@ import torch
 
 AUTHORITY_SCHEMA = "emender-e97-tulu3-masked-sft-v1"
 PACK_SCHEMA = "emender-e97-sft-complete-record-packs-v1"
+BOUNDARY_PACK_SCHEMA = "emender-e97-sft-boundary-aware-packs-v2"
 SAMPLER_SCHEMA = "emender-record-pack-counter-v1"
 RECORD_INDEX = struct.Struct("<QQQB7x")
 PACK_INDEX = struct.Struct("<QQQQ")
@@ -158,8 +159,10 @@ class MaskedSFTPackedDataset:
         self.pack_manifest = json.loads(pack_manifest_path.read_text())
         if self.authority_manifest.get("schema") != AUTHORITY_SCHEMA:
             raise RuntimeError("unsupported SFT token authority schema")
-        if self.pack_manifest.get("schema") != PACK_SCHEMA:
+        pack_schema = self.pack_manifest.get("schema")
+        if pack_schema not in {PACK_SCHEMA, BOUNDARY_PACK_SCHEMA}:
             raise RuntimeError("unsupported SFT pack authority schema")
+        self.boundary_aware = pack_schema == BOUNDARY_PACK_SCHEMA
         if (self.pack_manifest.get("authority_manifest_sha256")
                 != identity.authority_manifest_sha256
                 or int(self.pack_manifest.get("context_size", -1)) != self.context_size):
@@ -278,11 +281,41 @@ class MaskedSFTPackedDataset:
             record_mask = torch.from_numpy(
                 self.masks[source:source + count].astype(np.bool_))
             mask_out[cursor:cursor + count].copy_(record_mask)
-            observed_targets += int(record_mask.sum())
+            observed_targets += int(
+                record_mask[1:].sum() if self.boundary_aware else record_mask.sum())
             cursor += count
         if cursor != token_count or observed_targets != target_count:
             raise RuntimeError("materialized pack accounting mismatch")
         return token_out, mask_out, token_count, target_count, f"pack-{pack_id:08d}"
+
+    def pack_at_with_boundaries(self, pack_id: int):
+        """Materialize the explicit packed-document training schema.
+
+        ``tokens``, ``valid_mask`` and ``reset_before`` are token-aligned and
+        have ``context_size + 1`` elements. ``loss_mask`` is prediction-aligned
+        and has ``context_size`` elements. A target at the first token of an
+        independent record is always masked, preventing cross-document loss.
+        """
+        if not self.boundary_aware:
+            raise RuntimeError("boundary-aware batches require the v2 pack schema")
+        tokens, token_mask, length, targets, pack_name = self.pack_at(pack_id)
+        valid_mask = torch.zeros(self.sequence_tokens, dtype=torch.bool)
+        valid_mask[:length] = True
+        reset_before = torch.zeros(self.sequence_tokens, dtype=torch.bool)
+        for start, _stop in self.record_spans_at(pack_id):
+            reset_before[start] = True
+        loss_mask = (
+            token_mask[1:]
+            & valid_mask[:-1]
+            & valid_mask[1:]
+            & ~reset_before[1:]
+        )
+        observed = int(loss_mask.sum())
+        if observed != targets:
+            raise RuntimeError(
+                f"boundary-aware target accounting mismatch: {observed} != {targets}")
+        return (tokens, loss_mask, valid_mask, reset_before, length, targets,
+                pack_name)
 
     def record_spans_at(self, pack_id: int) -> tuple[tuple[int, int], ...]:
         """Return exact half-open record spans for one immutable pack."""
@@ -305,6 +338,33 @@ class MaskedSFTPackedDataset:
         pack_id = self.pack_id_at(absolute_index)
         token, mask, length, targets, _pack_id = self.pack_at(pack_id)
         return token, mask, length, targets, self.sample_id(absolute_index)
+
+    def get_boundary_aware_batch(self, batch_size: int, device=None):
+        """Sample v2 packs with explicit loss, validity and reset masks."""
+        if batch_size <= 0:
+            raise ValueError("batch_size must be positive")
+        tokens = torch.empty((batch_size, self.sequence_tokens), dtype=torch.long)
+        loss_masks = torch.empty((batch_size, self.context_size), dtype=torch.bool)
+        valid_masks = torch.empty((batch_size, self.sequence_tokens), dtype=torch.bool)
+        reset_masks = torch.empty((batch_size, self.sequence_tokens), dtype=torch.bool)
+        lengths = torch.empty(batch_size, dtype=torch.long)
+        targets = torch.empty(batch_size, dtype=torch.long)
+        sample_ids = []
+        for item in range(batch_size):
+            absolute = self.next_absolute_rank_sample_index + item
+            pack_id = self.pack_id_at(absolute)
+            (token, loss, valid, reset, length, target_count,
+             _pack_name) = self.pack_at_with_boundaries(pack_id)
+            tokens[item], loss_masks[item] = token, loss
+            valid_masks[item], reset_masks[item] = valid, reset
+            lengths[item], targets[item] = length, target_count
+            sample_ids.append(self.sample_id(absolute))
+        self.next_absolute_rank_sample_index += batch_size
+        self.last_batch_sample_ids = tuple(sample_ids)
+        result = (tokens, loss_masks, valid_masks, reset_masks, lengths, targets)
+        if device is not None:
+            return tuple(value.to(device, non_blocking=True) for value in result)
+        return result
 
     def get_batch_with_record_spans(self, batch_size: int, device=None):
         """Sample packs and retain boundaries needed for clean recurrent resets."""

@@ -1393,7 +1393,10 @@ class E88FLAHybrid(nn.Module):
         )
         self._runtime_path_logged = True
 
-    def _process_chunk(self, x_chunk, S_prev, input_dtype, use_fused_l2):
+    def _process_chunk(
+        self, x_chunk, S_prev, input_dtype, use_fused_l2,
+        reset_before=None, valid_mask=None,
+    ):
         """Compute projections and run CUDA kernel for one time chunk.
 
         Args:
@@ -1424,6 +1427,8 @@ class E88FLAHybrid(nn.Module):
                 linear_state=self.linear_state,
                 erase_gate=erase_gate,
                 value_write_gate=value_write_gate,
+                reset_before=reset_before,
+                valid_mask=valid_mask,
             )
         elif self.use_triton:
             from ndm.triton.e88_triton_optimized import e88_triton_optimized_apply
@@ -1433,6 +1438,8 @@ class E88FLAHybrid(nn.Module):
                 apply_silu_qkv=qkv_silu_in_kernel,
                 raw_write=self.raw_write,
                 linear_state=self.linear_state,
+                reset_before=reset_before,
+                valid_mask=valid_mask,
             )
         else:
             S_new, output = E88OptimizedCUDAFunction.apply(
@@ -1459,6 +1466,25 @@ class E88FLAHybrid(nn.Module):
         B, T, D = x.shape
         n = self.n_state
         H = self.n_heads
+        reset_before = kwargs.get("reset_before")
+        valid_mask = kwargs.get("valid_mask")
+        if reset_before is not None:
+            if reset_before.shape != (B, T) or reset_before.dtype != torch.bool:
+                raise ValueError(f"reset_before must be boolean [B,T] = {(B, T)}")
+            if reset_before.device != x.device:
+                raise ValueError("reset_before must be on the mixer input device")
+        if valid_mask is not None:
+            if valid_mask.shape != (B, T) or valid_mask.dtype != torch.bool:
+                raise ValueError(f"valid_mask must be boolean [B,T] = {(B, T)}")
+            if valid_mask.device != x.device:
+                raise ValueError("valid_mask must be on the mixer input device")
+            if reset_before is not None and bool((reset_before & ~valid_mask).any().item()):
+                raise ValueError("reset_before cannot select an invalid/padding token")
+        boundary_aware = reset_before is not None or valid_mask is not None
+        if boundary_aware and self.use_chunked_e97:
+            raise NotImplementedError(
+                "packed-document resets are not implemented by the parallel "
+                "linear-state E97 chunked kernel")
         erase_gate = None
         value_write_gate = None
         glog_chunked = None  # LOG-decay for the chunked e97_delta kernel (set in decay block)
@@ -1546,7 +1572,8 @@ class E88FLAHybrid(nn.Module):
                 not self._use_fused_norm_gate and
                 not self.use_write_gate and
                 (not self.use_split_edit or self.use_triton) and
-                (not self.raw_write or self.use_triton)
+                (not self.raw_write or self.use_triton) and
+                (not boundary_aware or self.use_triton)
             )
             _will_chunk = (
                 _use_optimized and
@@ -1718,6 +1745,7 @@ class E88FLAHybrid(nn.Module):
         # _fused_ok (defined above) lets EVAL take the same fused path as training.
         use_cuda = (E88_NATIVE_CUDA_AVAILABLE and x.is_cuda and
                     x.dtype == torch.bfloat16 and _fused_ok and
+                    not boundary_aware and
                     not self.raw_write and
                     not self.use_split_edit and
                     not self.pos_eigval_clamp)
@@ -1736,6 +1764,7 @@ class E88FLAHybrid(nn.Module):
             not self.use_value_residual and  # Fused path gates before we can add D*v
             (not self.use_split_edit or self.use_triton) and
             (not self.raw_write or self.use_triton) and  # raw-write is implemented in Triton/PyTorch fallback
+            (not boundary_aware or self.use_triton) and
             not self.pos_eigval_clamp  # clamp lives only in the serial fallback (kernels hardcode decay*I-kk^T)
         )
 
@@ -1790,9 +1819,15 @@ class E88FLAHybrid(nn.Module):
                     t_end = min(t_start + C, T)
                     x_chunk = x[:, t_start:t_end]
 
+                    reset_chunk = (
+                        reset_before[:, t_start:t_end]
+                        if reset_before is not None else None)
+                    valid_chunk = (
+                        valid_mask[:, t_start:t_end]
+                        if valid_mask is not None else None)
                     S, out_chunk = torch.utils.checkpoint.checkpoint(
                         self._process_chunk, x_chunk, S, input_dtype, use_fused_l2,
-                        use_reentrant=False
+                        reset_chunk, valid_chunk, use_reentrant=False
                     )
                     output_chunks.append(out_chunk)
 
@@ -1924,6 +1959,8 @@ class E88FLAHybrid(nn.Module):
                             linear_state=self.linear_state,
                             erase_gate=erase_for_kernel,
                             value_write_gate=value_write_for_kernel,
+                            reset_before=reset_before,
+                            valid_mask=valid_mask,
                         )
                     else:
                         from ndm.triton.e88_triton_optimized import e88_triton_optimized_apply
@@ -1938,6 +1975,8 @@ class E88FLAHybrid(nn.Module):
                             linear_state=self.linear_state,
                             erase_gate=erase_for_kernel,
                             value_write_gate=value_write_for_kernel,
+                            reset_before=reset_before,
+                            valid_mask=valid_mask,
                         )
                 else:
                     # Call optimized kernel (auto-selects warp vs coalesced based on n_state)
@@ -2021,7 +2060,8 @@ class E88FLAHybrid(nn.Module):
 
             # Convert S_final back to list for hidden state
             S_list = [S_final[:, h] for h in range(H)]
-        elif getattr(self, 'e88_recurrence_mode', None) == 'scan':
+        elif (getattr(self, 'e88_recurrence_mode', None) == 'scan'
+              and not boundary_aware):
             # === E1 parallel-scan path (associative / Blelloch-style) ===
             # linear_state=True makes the matrix-state update an input-dependent
             # AFFINE map of the state: S_t = A_t S_{t-1} + B_t. Affine maps form
@@ -2046,6 +2086,13 @@ class E88FLAHybrid(nn.Module):
 
             outputs = []
             for t in range(T):
+                valid_t = (torch.ones(B, dtype=torch.bool, device=x.device)
+                           if valid_mask is None else valid_mask[:, t])
+                if reset_before is not None:
+                    reset_t = reset_before[:, t] & valid_t
+                    S = torch.where(
+                        reset_t[:, None, None, None], torch.zeros_like(S), S)
+
                 k_t = k[:, t]       # [B, H, n]
                 q_t = q[:, t]       # [B, H, n]
                 v_t = v[:, t]       # [B, H, head_v_dim]
@@ -2090,10 +2137,13 @@ class E88FLAHybrid(nn.Module):
                     beta_t = write_beta[:, t].unsqueeze(-1).unsqueeze(-1)  # [B, H, 1, 1]
                     outer = beta_t * outer
 
-                S = self._apply_state_activation(decay_t * S + outer)
+                S_next = self._apply_state_activation(decay_t * S + outer)
+                S = torch.where(valid_t[:, None, None, None], S_next, S)
 
-                # Query the state: [B, H, head_v_dim]
+                # Query the state: [B, H, head_v_dim]. Invalid/padding
+                # positions emit zero and leave the state exactly unchanged.
                 Sq = torch.einsum('bhiv,bhi->bhv', S, q_norm)
+                Sq = torch.where(valid_t[:, None, None], Sq, torch.zeros_like(Sq))
                 outputs.append(Sq)
 
             # Stack time: [B, T, H, head_v_dim]
