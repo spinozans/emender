@@ -282,6 +282,8 @@ def test_local_launcher_uses_ddp_numa_and_cpu_offload():
     assert "gpu_lease.sh acquire 8 --no-wait" in text
     assert 'canary requires RESUME naming the qualification checkpoint' in text
     assert 'RESUME_ARGS=(--resume "$RESUME")' in text
+    assert "EMPTY_CACHE_MIN_RECORD_TOKENS=${EMPTY_CACHE_MIN_RECORD_TOKENS:-0}" in text
+    assert '--empty-cache-min-record-tokens "$EMPTY_CACHE_MIN_RECORD_TOKENS"' in text
     assert "verify_e97_4b_pi_sft_checkpoint.py" in text
 
 

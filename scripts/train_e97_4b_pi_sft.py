@@ -169,6 +169,9 @@ def main() -> None:
     parser.add_argument("--keep-checkpoints", type=int, default=3)
     parser.add_argument("--context-size", type=int, default=4096)
     parser.add_argument("--gradient-checkpoint-group-size", type=int, default=1)
+    parser.add_argument(
+        "--empty-cache-min-record-tokens", type=int, default=0,
+        help="Empty the CUDA allocator cache before records at least this long; 0 disables")
     parser.add_argument("--island-size", type=int, default=8)
     parser.add_argument("--diloco-k", type=int, default=8)
     parser.add_argument("--merge-bucket-numel", type=int, default=67_108_864)
@@ -198,6 +201,8 @@ def main() -> None:
         raise SystemExit("grad-clip must be nonnegative")
     if args.gradient_checkpoint_group_size <= 0:
         raise SystemExit("gradient-checkpoint-group-size must be positive")
+    if args.empty_cache_min_record_tokens < 0:
+        raise SystemExit("empty-cache-min-record-tokens must be nonnegative")
 
     dist.init_process_group("nccl")
     rank, world = dist.get_rank(), dist.get_world_size()
@@ -282,6 +287,7 @@ def main() -> None:
          diloco_k=args.diloco_k, context_size=args.context_size, lr=args.lr,
          warmup_steps=args.warmup_steps, grad_clip=args.grad_clip,
          gradient_checkpoint_group_size=args.gradient_checkpoint_group_size,
+         empty_cache_min_record_tokens=args.empty_cache_min_record_tokens,
          total_parameters=parameter_count,
          optimizer_state_storage=optimizer_state_storage,
          optimizer_state_bucket_numel=(args.schedulefree_offload_bucket_numel
@@ -298,6 +304,11 @@ def main() -> None:
         dist.all_reduce(island_targets, op=dist.ReduceOp.SUM, group=island_group)
         if int(island_targets) <= 0:
             raise RuntimeError("island sampled no assistant targets")
+        if (args.empty_cache_min_record_tokens > 0
+                and int(lengths[0]) >= args.empty_cache_min_record_tokens):
+            # Long records can follow many short allocations. Release only cached
+            # blocks before the long forward; live parameters/state are untouched.
+            torch.cuda.empty_cache()
         local_loss, _ = objective(
             model, tokens, masks, int(lengths[0]), spans[0], island_targets,
             args.island_size)
@@ -354,6 +365,7 @@ def main() -> None:
                     "weight_decay": args.weight_decay,
                     "warmup_steps": args.warmup_steps,
                     "gradient_checkpoint_group_size": args.gradient_checkpoint_group_size,
+                    "empty_cache_min_record_tokens": args.empty_cache_min_record_tokens,
                     "merge_bucket_numel": args.merge_bucket_numel,
                 }
                 atomic_save(checkpoint, payload)
