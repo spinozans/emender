@@ -29,12 +29,21 @@ def normalize_live_tool_results(messages: list[tuple[str, str]]) -> list[tuple[s
 
 def serialize_live_aligned(
     messages: list[tuple[str, str]], encoding, *, target_mode: str,
+    target_assistant_positions: set[int] | None = None,
 ) -> tuple[list[int], list[int], str]:
-    """Serialize live Pi context with final-only or all-assistant targets."""
+    """Serialize live Pi context with final-only, all, or selected assistant targets."""
     if target_mode not in {"final-only", "all-assistant"}:
         raise ValueError("target_mode must be final-only or all-assistant")
     if not messages or messages[-1][0] != "assistant" or not messages[-1][1].startswith("Final:"):
         raise ValueError("repair records require one terminal Final assistant turn")
+    if target_assistant_positions is not None:
+        invalid = [position for position in target_assistant_positions
+                   if position < 0 or position >= len(messages)
+                   or messages[position][0] != "assistant"]
+        if invalid:
+            raise ValueError(f"selected targets are not assistant positions: {invalid}")
+        if len(messages) - 1 not in target_assistant_positions:
+            raise ValueError("selected targets must include the terminal Final assistant turn")
     normalized = normalize_live_tool_results(messages)
     pieces: list[tuple[str, bool]] = []
     for position, (role, text) in enumerate(normalized):
@@ -43,6 +52,8 @@ def serialize_live_aligned(
         label = {"system": "System", "user": "User", "assistant": "Assistant", "tool": "Tool"}[role]
         pieces.append((f"{label}:\n", False))
         target = role == "assistant" and (
+            position in target_assistant_positions
+            if target_assistant_positions is not None else
             target_mode == "all-assistant" or position == len(normalized) - 1)
         pieces.append((text, target))
     # Canonical serving ends a concise final at its first newline. Make that

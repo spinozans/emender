@@ -4,6 +4,7 @@ import sys
 from types import SimpleNamespace
 
 import numpy as np
+import pytest
 import tiktoken
 import torch
 
@@ -16,6 +17,7 @@ from scripts import build_e97_pi_eval_v4 as eval_v4_builder
 from scripts import build_e97_pi_compositional_sft as compositional_builder
 from scripts import build_e97_pi_finalization_repair_sft as repair_builder
 from scripts import build_e97_pi_recover_read_sft as recover_read_builder
+from scripts import build_e97_pi_path_fidelity_sft as path_fidelity_builder
 from scripts import eval_e97_4b_pi_core as evaluator
 from scripts import train_e97_4b_pi_sft as trainer
 from scripts import verify_e97_4b_pi_sft_checkpoint as verifier
@@ -63,6 +65,55 @@ def test_finalization_repair_matches_live_empty_tool_context_and_targets_only_fi
     assert "Action: bash" in all_targeted
     assert turns[-1][1] in all_targeted
     assert "(no tool output)" in all_text and "(no tool output)" not in all_targeted
+
+
+def test_live_serializer_can_leave_failed_assistant_action_untargeted():
+    encoding = tiktoken.get_encoding("p50k_base")
+    messages = [
+        ("system", "system"), ("user", "read exact.txt"),
+        ("assistant", 'Action: read {"path":"wrong.txt","offset":1,"limit":40}'),
+        ("tool", "FileNotFoundError: wrong.txt\nCommand exited with code 1"),
+        ("assistant", 'Action: read {"path":"exact.txt","offset":1,"limit":40}'),
+        ("tool", "ok"), ("assistant", "Final: `exact.txt` contains `ok`."),
+    ]
+    tokens, masks, _ = repair_builder.serialize_live_aligned(
+        messages, encoding, target_mode="all-assistant",
+        target_assistant_positions={4, 6})
+    targeted = b"".join(
+        encoding.decode_single_token_bytes(token)
+        for token, mask in zip(tokens, masks) if mask
+    ).decode(errors="replace")
+    assert "wrong.txt" not in targeted
+    assert "exact.txt" in targeted and "Final:" in targeted
+    with pytest.raises(ValueError, match="terminal Final"):
+        repair_builder.serialize_live_aligned(
+            messages, encoding, target_mode="all-assistant",
+            target_assistant_positions={4})
+
+
+def test_path_fidelity_builder_randomizes_paths_and_masks_failed_guess(tmp_path):
+    rng = __import__("random").Random(11)
+    user, turns, _task, selected = path_fidelity_builder.trajectory(
+        "failed-read-recovery", 7, rng)
+    assert "exact" in user.lower() and selected == {4, 6}
+    encoding = tiktoken.get_encoding("p50k_base")
+    tokens, masks, text = repair_builder.serialize_live_aligned(
+        [("system", path_fidelity_builder.E97_PI_AGENT_SYSTEM_V2), ("user", user), *turns],
+        encoding, target_mode="all-assistant", target_assistant_positions=selected)
+    targeted = b"".join(
+        encoding.decode_single_token_bytes(token)
+        for token, mask in zip(tokens, masks) if mask
+    ).decode(errors="replace")
+    wrong_path = json.loads(turns[0][1].split("Arguments: ", 1)[1])["path"]
+    assert wrong_path in text and wrong_path not in targeted
+    assert json.loads(turns[2][1].split("Arguments: ", 1)[1])["path"] in targeted
+
+    authority = tmp_path / "path-fidelity"
+    run("scripts/build_e97_pi_path_fidelity_sft.py", "--output-root", authority,
+        "--records", 10, "--seed", 17)
+    manifest = json.loads((authority / "manifest.json").read_text())
+    assert manifest["counts"]["records"] == 10
+    assert manifest["kind_counts"] == {kind: 2 for kind in path_fidelity_builder.KINDS}
 
 
 def test_build_and_mix_authorities_are_deterministic_and_target_weighted(tmp_path):
