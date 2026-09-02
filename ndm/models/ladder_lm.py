@@ -1021,9 +1021,26 @@ class SwiGLUMLP(nn.Module):
         self.w2 = nn.Linear(dim + self.extra_in, hidden_dim, bias=False)  # up
         self.w3 = nn.Linear(hidden_dim, dim, bias=False)  # down
         self.dropout = nn.Dropout(dropout) if dropout > 0 else nn.Identity()
+        # Runtime-only memory control. It does not alter parameters or checkpoint
+        # keys and remains disabled unless a long-context trainer opts in.
+        self.checkpoint_chunk_size = 0
+
+    def _project(self, x):
+        return self.dropout(self.w3(F.silu(self.w1(x)) * self.w2(x)))
 
     def forward(self, x):
-        return self.dropout(self.w3(F.silu(self.w1(x)) * self.w2(x)))
+        chunk_size = int(self.checkpoint_chunk_size)
+        if chunk_size <= 0 or x.size(-2) <= chunk_size:
+            return self._project(x)
+        outputs = []
+        for chunk in x.split(chunk_size, dim=-2):
+            if self.training and torch.is_grad_enabled():
+                # Bound the 2.5*d SwiGLU intermediates during backward replay.
+                output = torch_checkpoint(self._project, chunk, use_reentrant=False)
+            else:
+                output = self._project(chunk)
+            outputs.append(output)
+        return torch.cat(outputs, dim=-2)
 
 
 class MixerMLPWrapper(nn.Module):

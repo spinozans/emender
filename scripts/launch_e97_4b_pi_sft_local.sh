@@ -17,6 +17,7 @@ WARMUP_STEPS=${WARMUP_STEPS:-8}
 CONTEXT_SIZE=${CONTEXT_SIZE:-4096}
 GRADIENT_CHECKPOINT_GROUP_SIZE=${GRADIENT_CHECKPOINT_GROUP_SIZE:-1}
 EMPTY_CACHE_MIN_RECORD_TOKENS=${EMPTY_CACHE_MIN_RECORD_TOKENS:-0}
+MLP_CHECKPOINT_CHUNK_SIZE=${MLP_CHECKPOINT_CHUNK_SIZE:-0}
 SAMPLER_KEY=${SAMPLER_KEY:-974003}
 DILOCO_K=${DILOCO_K:-8}
 SAVE_EVERY=${SAVE_EVERY:-}
@@ -36,7 +37,7 @@ case "$MODE" in
     ;;
   *) echo "MODE must be qualification or canary" >&2; exit 64;;
 esac
-(( STEPS > 0 && DILOCO_K > 0 && SAVE_EVERY > 0 && EMPTY_CACHE_MIN_RECORD_TOKENS >= 0 )) || exit 64
+(( STEPS > 0 && DILOCO_K > 0 && SAVE_EVERY > 0 && EMPTY_CACHE_MIN_RECORD_TOKENS >= 0 && MLP_CHECKPOINT_CHUNK_SIZE >= 0 )) || exit 64
 (( STEPS % DILOCO_K == 0 && SAVE_EVERY % DILOCO_K == 0 )) || {
   echo "steps and checkpoint cadence must be K-aligned" >&2; exit 64;
 }
@@ -54,7 +55,7 @@ RUN_ROOT=${RUN_ROOT:-/mnt/nvme1n1/erikg/diloco_8gpu/e97_4b_pi_instruction_local/
 }
 mkdir -p "$RUN_ROOT"/{checkpoints,identity,logs,terminal}
 cat > "$RUN_ROOT/identity/launch.json" <<EOF
-{"schema":"emender-e97-4b-pi-sft-local-launch-v1","mode":"$MODE","source_commit":"$SOURCE_COMMIT","parent_sha256":"$PARENT_SHA256","authority_sha256":"$AUTHORITY_SHA256","pack_sha256":"$PACK_SHA256","world_size":8,"context_size":$CONTEXT_SIZE,"gradient_checkpoint_group_size":$GRADIENT_CHECKPOINT_GROUP_SIZE,"empty_cache_min_record_tokens":$EMPTY_CACHE_MIN_RECORD_TOKENS,"steps":$STEPS,"diloco_k":$DILOCO_K,"keep_checkpoints":$KEEP_CHECKPOINTS,"new_stage_from":$NEW_STAGE_FROM,"optimizer_state_storage":"pinned-cpu"}
+{"schema":"emender-e97-4b-pi-sft-local-launch-v1","mode":"$MODE","source_commit":"$SOURCE_COMMIT","parent_sha256":"$PARENT_SHA256","authority_sha256":"$AUTHORITY_SHA256","pack_sha256":"$PACK_SHA256","world_size":8,"context_size":$CONTEXT_SIZE,"gradient_checkpoint_group_size":$GRADIENT_CHECKPOINT_GROUP_SIZE,"empty_cache_min_record_tokens":$EMPTY_CACHE_MIN_RECORD_TOKENS,"mlp_checkpoint_chunk_size":$MLP_CHECKPOINT_CHUNK_SIZE,"steps":$STEPS,"diloco_k":$DILOCO_K,"keep_checkpoints":$KEEP_CHECKPOINTS,"new_stage_from":$NEW_STAGE_FROM,"optimizer_state_storage":"pinned-cpu"}
 EOF
 RESUME_ARGS=()
 if [[ -n "$RESUME" ]]; then
@@ -75,6 +76,7 @@ COMMAND=(
   --steps "$STEPS" --save-every "$SAVE_EVERY" --keep-checkpoints "$KEEP_CHECKPOINTS" --diloco-k "$DILOCO_K"
   --context-size "$CONTEXT_SIZE" --gradient-checkpoint-group-size "$GRADIENT_CHECKPOINT_GROUP_SIZE"
   --empty-cache-min-record-tokens "$EMPTY_CACHE_MIN_RECORD_TOKENS"
+  --mlp-checkpoint-chunk-size "$MLP_CHECKPOINT_CHUNK_SIZE"
   --lr "$LR" --warmup-steps "$WARMUP_STEPS"
   --sampler-key "$SAMPLER_KEY" --island-size 8 --merge-bucket-numel 67108864
   --offload-schedulefree-state --schedulefree-offload-bucket-numel 67108864

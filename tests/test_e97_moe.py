@@ -40,6 +40,25 @@ def test_widened_ffn_is_function_preserving_and_new_down_columns_are_zero():
     assert torch.count_nonzero(widened.w2.weight[12:]) > 0
 
 
+def test_swiglu_checkpoint_chunks_preserve_outputs_and_gradients():
+    dense = _seed_ffn()
+    chunked = copy.deepcopy(dense)
+    chunked.checkpoint_chunk_size = 3
+    dense.train(); chunked.train()
+    x_dense = torch.randn(2, 7, 8, requires_grad=True)
+    x_chunked = x_dense.detach().clone().requires_grad_(True)
+    dense_output = dense(x_dense)
+    chunked_output = chunked(x_chunked)
+    torch.testing.assert_close(chunked_output, dense_output, rtol=2e-6, atol=1e-7)
+    dense_output.square().sum().backward()
+    chunked_output.square().sum().backward()
+    torch.testing.assert_close(x_chunked.grad, x_dense.grad, rtol=2e-6, atol=1e-7)
+    for dense_parameter, chunked_parameter in zip(dense.parameters(), chunked.parameters()):
+        # Chunked GEMMs can differ by a few FP32 accumulation ulps.
+        torch.testing.assert_close(
+            chunked_parameter.grad, dense_parameter.grad, rtol=1e-5, atol=5e-7)
+
+
 def test_exact_clone_moe_matches_dense_for_different_top3_selections():
     seed = _seed_ffn()
     config = E97MoEConfig(

@@ -172,6 +172,9 @@ def main() -> None:
     parser.add_argument(
         "--empty-cache-min-record-tokens", type=int, default=0,
         help="Empty the CUDA allocator cache before records at least this long; 0 disables")
+    parser.add_argument(
+        "--mlp-checkpoint-chunk-size", type=int, default=0,
+        help="Checkpoint SwiGLU projections in bounded time chunks; 0 disables")
     parser.add_argument("--island-size", type=int, default=8)
     parser.add_argument("--diloco-k", type=int, default=8)
     parser.add_argument("--merge-bucket-numel", type=int, default=67_108_864)
@@ -203,6 +206,8 @@ def main() -> None:
         raise SystemExit("gradient-checkpoint-group-size must be positive")
     if args.empty_cache_min_record_tokens < 0:
         raise SystemExit("empty-cache-min-record-tokens must be nonnegative")
+    if args.mlp_checkpoint_chunk_size < 0:
+        raise SystemExit("mlp-checkpoint-chunk-size must be nonnegative")
 
     dist.init_process_group("nccl")
     rank, world = dist.get_rank(), dist.get_world_size()
@@ -224,6 +229,13 @@ def main() -> None:
     core_model = loaded.model.train()
     core_model.gradient_checkpointing = True
     core_model.gradient_checkpoint_group_size = args.gradient_checkpoint_group_size
+    mlp_chunk_modules = 0
+    for module in core_model.modules():
+        if hasattr(module, "checkpoint_chunk_size"):
+            module.checkpoint_chunk_size = args.mlp_checkpoint_chunk_size
+            mlp_chunk_modules += 1
+    if args.mlp_checkpoint_chunk_size > 0 and mlp_chunk_modules != 18:
+        raise RuntimeError(f"expected 18 chunkable SwiGLU modules, found {mlp_chunk_modules}")
     parameter_count = sum(parameter.numel() for parameter in core_model.parameters())
     if parameter_count != EXPECTED_PARAMETERS:
         raise RuntimeError(f"E97 4B parameter mismatch: {parameter_count}")
@@ -288,6 +300,7 @@ def main() -> None:
          warmup_steps=args.warmup_steps, grad_clip=args.grad_clip,
          gradient_checkpoint_group_size=args.gradient_checkpoint_group_size,
          empty_cache_min_record_tokens=args.empty_cache_min_record_tokens,
+         mlp_checkpoint_chunk_size=args.mlp_checkpoint_chunk_size,
          total_parameters=parameter_count,
          optimizer_state_storage=optimizer_state_storage,
          optimizer_state_bucket_numel=(args.schedulefree_offload_bucket_numel
@@ -366,6 +379,7 @@ def main() -> None:
                     "warmup_steps": args.warmup_steps,
                     "gradient_checkpoint_group_size": args.gradient_checkpoint_group_size,
                     "empty_cache_min_record_tokens": args.empty_cache_min_record_tokens,
+                    "mlp_checkpoint_chunk_size": args.mlp_checkpoint_chunk_size,
                     "merge_bucket_numel": args.merge_bucket_numel,
                 }
                 atomic_save(checkpoint, payload)
