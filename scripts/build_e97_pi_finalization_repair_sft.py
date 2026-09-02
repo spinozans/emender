@@ -30,6 +30,7 @@ def normalize_live_tool_results(messages: list[tuple[str, str]]) -> list[tuple[s
 def serialize_live_aligned(
     messages: list[tuple[str, str]], encoding, *, target_mode: str,
     target_assistant_positions: set[int] | None = None,
+    target_terminal_newline: bool = True,
 ) -> tuple[list[int], list[int], str]:
     """Serialize live Pi context with final-only, all, or selected assistant targets."""
     if target_mode not in {"final-only", "all-assistant"}:
@@ -42,7 +43,7 @@ def serialize_live_aligned(
                    or messages[position][0] != "assistant"]
         if invalid:
             raise ValueError(f"selected targets are not assistant positions: {invalid}")
-        if len(messages) - 1 not in target_assistant_positions:
+        if target_terminal_newline and len(messages) - 1 not in target_assistant_positions:
             raise ValueError("selected targets must include the terminal Final assistant turn")
     normalized = normalize_live_tool_results(messages)
     pieces: list[tuple[str, bool]] = []
@@ -58,7 +59,7 @@ def serialize_live_aligned(
         pieces.append((text, target))
     # Canonical serving ends a concise final at its first newline. Make that
     # boundary supervised rather than relying on unrelated pretraining records.
-    pieces.append(("\n", True))
+    pieces.append(("\n", target_terminal_newline))
     complete = "".join(text for text, _ in pieces)
     if "\x1e" in complete:
         raise RuntimeError("repair trajectories must remain RS-free")
@@ -81,7 +82,9 @@ def serialize_live_aligned(
             masks.append(1)
         else:
             raise RuntimeError("token crosses the final-only target boundary")
-    if not masks or sum(masks) <= 0 or masks[-1] != 1:
+    if not masks or sum(masks) <= 0:
+        raise RuntimeError("at least one assistant target must be preserved")
+    if target_terminal_newline and masks[-1] != 1:
         raise RuntimeError("terminal final/newline target was not preserved")
     return tokens, masks, complete
 

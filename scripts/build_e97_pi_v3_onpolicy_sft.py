@@ -74,6 +74,8 @@ def main() -> None:
     parser.add_argument("--records", type=int, default=60_000)
     parser.add_argument("--seed", type=int, default=9_741_003)
     parser.add_argument("--source-index-offset", type=int, default=1_000_000)
+    parser.add_argument("--target-mode", choices=("all-assistant", "actions-only"),
+                        default="all-assistant")
     args = parser.parse_args()
     if args.records <= 0 or args.records % len(KINDS):
         raise SystemExit(f"records must be a positive multiple of {len(KINDS)}")
@@ -97,9 +99,14 @@ def main() -> None:
             identity = f"pi-v3-onpolicy-{kind}-{record_index:09d}"
             user, turns, task = trajectory(
                 kind, source_index, random.Random(args.seed + record_index))
+            messages = [("system", E97_PI_AGENT_SYSTEM_V2), ("user", user), *turns]
+            action_positions = ({position for position, (role, _text) in enumerate(messages[:-1])
+                                 if role == "assistant"}
+                                if args.target_mode == "actions-only" else None)
             tokens, masks, complete = serialize_live_aligned(
-                [("system", E97_PI_AGENT_SYSTEM_V2), ("user", user), *turns],
-                encoding, target_mode="all-assistant")
+                messages, encoding, target_mode="all-assistant",
+                target_assistant_positions=action_positions,
+                target_terminal_newline=args.target_mode != "actions-only")
             validation = int(split(identity))
             token_out.write(struct.pack(f"<{len(tokens)}I", *tokens))
             mask_out.write(bytes(masks))
@@ -121,6 +128,7 @@ def main() -> None:
         "purpose": "on-policy correction for observed Pi-v2 diagnostic V3 failures",
         "system_prompt": E97_PI_AGENT_SYSTEM_V2, "tokenizer": ENCODING,
         "seed": args.seed, "source_index_offset": args.source_index_offset,
+        "target_mode": args.target_mode,
         "kinds": list(KINDS), "kind_counts": kind_counts, "counts": counts,
         "evaluation_policy": {
             "v3": "training-influenced diagnostic only; cannot support a blind claim",

@@ -90,6 +90,15 @@ def test_live_serializer_can_leave_failed_assistant_action_untargeted():
         repair_builder.serialize_live_aligned(
             messages, encoding, target_mode="all-assistant",
             target_assistant_positions={4})
+    tokens, masks, _ = repair_builder.serialize_live_aligned(
+        messages, encoding, target_mode="all-assistant",
+        target_assistant_positions={2, 4}, target_terminal_newline=False)
+    action_only = b"".join(
+        encoding.decode_single_token_bytes(token)
+        for token, mask in zip(tokens, masks) if mask
+    ).decode(errors="replace")
+    assert "wrong.txt" in action_only and "exact.txt" in action_only
+    assert "Final:" not in action_only and masks[-1] == 0
 
 
 def test_path_fidelity_builder_randomizes_paths_and_masks_failed_guess(tmp_path):
@@ -144,8 +153,10 @@ def test_v3_onpolicy_builder_reconstructs_all_corrective_families(tmp_path):
         assert (actual_user, actual_task) == (expected_user, expected_task)
     exact = tmp_path / "v3-exact"
     run("scripts/build_e97_pi_v3_onpolicy_sft.py", "--output-root", exact,
-        "--records", 12, "--seed", 4_901_093, "--source-index-offset", 0)
+        "--records", 12, "--seed", 4_901_093, "--source-index-offset", 0,
+        "--target-mode", "actions-only")
     exact_manifest = json.loads((exact / "manifest.json").read_text())
+    assert exact_manifest["target_mode"] == "actions-only"
     assert "exact-instance memorization probe" in exact_manifest["evaluation_policy"]["training_disjointness"]
 
 
