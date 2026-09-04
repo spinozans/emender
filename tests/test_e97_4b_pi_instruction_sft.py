@@ -205,6 +205,21 @@ def test_build_and_mix_authorities_are_deterministic_and_target_weighted(tmp_pat
     assert unique_manifest["sampling_mode"] == "without-replacement"
     assert len({row["source_record_id"] for row in rows}) == len(rows)
 
+    continuation = tmp_path / "continuation"
+    unique_sha = sha256(unique / "manifest.json")
+    run("scripts/build_e97_masked_sft_mix.py", "--output-root", continuation,
+        "--sampling-mode", "without-replacement",
+        "--exclude-authority-root", unique,
+        "--exclude-authority-manifest-sha256", unique_sha,
+        "--source", f"pi={first},{first_sha},1000", "--seed", 14)
+    continuation_manifest = json.loads((continuation / "manifest.json").read_text())
+    continuation_rows = [
+        json.loads(line) for line in (continuation / "records.jsonl").read_text().splitlines()]
+    assert {row["source_record_id"] for row in rows}.isdisjoint(
+        row["source_record_id"] for row in continuation_rows)
+    assert continuation_manifest["excluded_authorities"][0]["manifest_sha256"] == unique_sha
+    assert continuation_manifest["sources"]["pi"]["excluded_prior_source_records"] == len(rows)
+
     impossible = tmp_path / "impossible"
     result = subprocess.run([
         sys.executable, "scripts/build_e97_masked_sft_mix.py",
@@ -366,7 +381,7 @@ def test_boundary_aware_trainer_is_single_forward_and_stop_is_k_aligned():
     assert "packed_objective" in text
     assert 'stop_request_path = args.output_root / ".final_checkpoint_request"' in text
     assert "if update % args.diloco_k == 0:" in text
-    assert "update % args.save_every == 0 or should_stop" in text
+    assert "update % args.save_every == 0 or update == args.steps or should_stop" in text
 
 
 def test_checkpoint_recipe_is_k_aligned_and_bounded():

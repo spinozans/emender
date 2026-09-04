@@ -56,7 +56,47 @@ def entry(path: Path) -> dict[str, object]:
     return {"path": str(path.resolve()), "bytes": path.stat().st_size, "sha256": sha256(path)}
 
 
-def open_source(spec: tuple[str, Path, str, int], max_record_tokens: int) -> Source:
+def load_excluded_records(
+    roots: list[Path], manifest_sha256s: list[str],
+) -> tuple[set[tuple[str, int]], list[dict[str, object]]]:
+    if len(roots) != len(manifest_sha256s):
+        raise RuntimeError(
+            "exclude-authority-root and exclude-authority-manifest-sha256 counts differ")
+    excluded: set[tuple[str, int]] = set()
+    receipts = []
+    for root, expected_sha256 in zip(roots, manifest_sha256s, strict=True):
+        manifest_path = root / "manifest.json"
+        if sha256(manifest_path) != expected_sha256:
+            raise RuntimeError(f"excluded authority manifest SHA-256 mismatch: {root}")
+        manifest = json.loads(manifest_path.read_text())
+        if manifest.get("schema") != AUTHORITY_SCHEMA or manifest.get("status") != "complete":
+            raise RuntimeError(f"unsupported excluded authority: {root}")
+        metadata_receipt = manifest["outputs"]["metadata"]
+        metadata_path = root / Path(metadata_receipt["path"]).name
+        if (metadata_path.stat().st_size != int(metadata_receipt["bytes"])
+                or sha256(metadata_path) != metadata_receipt["sha256"]):
+            raise RuntimeError(f"excluded authority metadata mismatch: {root}")
+        before = len(excluded)
+        with metadata_path.open() as stream:
+            for line in stream:
+                record = json.loads(line)
+                source_manifest = record.get("source_manifest_sha256")
+                source_record_id = record.get("source_record_id")
+                if source_manifest is not None and source_record_id is not None:
+                    excluded.add((str(source_manifest), int(source_record_id)))
+        receipts.append({
+            "root": str(root.resolve()),
+            "manifest_sha256": expected_sha256,
+            "metadata_sha256": metadata_receipt["sha256"],
+            "source_records": len(excluded) - before,
+        })
+    return excluded, receipts
+
+
+def open_source(
+    spec: tuple[str, Path, str, int], max_record_tokens: int,
+    excluded_records: set[tuple[str, int]],
+) -> Source:
     name, root, digest, target = spec
     manifest_path = root / "manifest.json"
     if sha256(manifest_path) != digest:
@@ -74,6 +114,11 @@ def open_source(spec: tuple[str, Path, str, int], max_record_tokens: int) -> Sou
         ("split", "u1"), ("pad", "V7")]))
     eligible_record_ids = np.flatnonzero(
         (records["targets"] > 0) & (records["tokens"] <= max_record_tokens))
+    if excluded_records:
+        eligible_record_ids = np.asarray([
+            int(record_id) for record_id in eligible_record_ids
+            if (digest, int(record_id)) not in excluded_records
+        ], dtype=np.int64)
     if len(eligible_record_ids) == 0:
         raise RuntimeError(f"{name}: no target-bearing records fit max-record-tokens")
     token_file = paths["tokens"].open("rb")
@@ -95,19 +140,27 @@ def main() -> None:
         help="Use each eligible source record at most once for scaled authorities")
     parser.add_argument("--max-record-tokens", type=int, default=4097,
                         help="Sample only whole records fitting this token bound")
+    parser.add_argument("--exclude-authority-root", action="append", type=Path, default=[])
+    parser.add_argument(
+        "--exclude-authority-manifest-sha256", action="append", default=[])
     args = parser.parse_args()
     if args.max_record_tokens < 2:
         raise SystemExit("max-record-tokens must be at least 2")
     names = [source[0] for source in args.source]
     if len(names) != len(set(names)):
         raise SystemExit("source names must be unique")
+    excluded_records, exclusion_receipts = load_excluded_records(
+        args.exclude_authority_root, args.exclude_authority_manifest_sha256)
     paths = {
         "tokens": args.output_root / "tokens.uint32.bin",
         "mask": args.output_root / "assistant_mask.uint8.bin",
         "index": args.output_root / "records.idx",
         "metadata": args.output_root / "records.jsonl",
     }
-    sources = [open_source(spec, args.max_record_tokens) for spec in args.source]
+    sources = [
+        open_source(spec, args.max_record_tokens, excluded_records)
+        for spec in args.source
+    ]
     if args.sampling_mode == "without-replacement":
         for source in sources:
             available_targets = int(
@@ -181,6 +234,9 @@ def main() -> None:
                     "manifest_sha256": source.manifest_sha256,
                     "requested_assistant_target_tokens": source.target_assistant_tokens,
                     "eligible_source_records": len(source.eligible_record_ids),
+                    "excluded_prior_source_records": sum(
+                        manifest_sha256 == source.manifest_sha256
+                        for manifest_sha256, _ in excluded_records),
                     "sampling_mode": args.sampling_mode,
                     "records": records_written,
                     "tokens": observed_tokens,
@@ -206,6 +262,7 @@ def main() -> None:
         "seed": args.seed,
         "max_record_tokens": args.max_record_tokens,
         "source_order": names,
+        "excluded_authorities": exclusion_receipts,
         "sources": receipts,
         "counts": counts,
         "outputs": {name: entry(path) for name, path in paths.items()},

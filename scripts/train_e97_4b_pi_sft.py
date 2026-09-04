@@ -423,7 +423,7 @@ def main() -> None:
             dist.broadcast(stop_requested, src=0)
         should_stop = bool(stop_requested.item())
 
-        if update % args.save_every == 0 or should_stop:
+        if update % args.save_every == 0 or update == args.steps or should_stop:
             dist.barrier()
             if rank == 0:
                 optimizer.eval()

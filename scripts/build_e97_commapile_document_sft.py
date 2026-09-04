@@ -101,12 +101,14 @@ def _overlap_reason(
     return None
 
 
-def _iter_source_rows(root: Path, source: str, seed: int) -> Iterable[tuple[int, Path, int, dict]]:
+def _iter_source_rows(
+    root: Path, source: str, seed: int, max_epochs: int | None = None,
+) -> Iterable[tuple[int, Path, int, dict]]:
     shards = sorted((root / source).glob("*.jsonl.gz"))
     if not shards:
         raise RuntimeError(f"source contains no jsonl.gz shards: {source}")
     epoch = 0
-    while True:
+    while max_epochs is None or epoch < max_epochs:
         order = list(shards)
         random.Random(stable_seed(seed, source, epoch)).shuffle(order)
         for shard in order:
@@ -119,6 +121,44 @@ def _iter_source_rows(root: Path, source: str, seed: int) -> Iterable[tuple[int,
                         continue
                     yield epoch, shard, line_number, row
         epoch += 1
+
+
+def _load_excluded_authorities(
+    roots: list[Path], manifest_sha256s: list[str],
+) -> tuple[set[tuple[str, str, int]], set[str], list[dict[str, object]]]:
+    if len(roots) != len(manifest_sha256s):
+        raise RuntimeError(
+            "exclude-authority-root and exclude-authority-manifest-sha256 counts differ")
+    identities: set[tuple[str, str, int]] = set()
+    text_sha256s: set[str] = set()
+    receipts = []
+    for root, expected_sha256 in zip(roots, manifest_sha256s, strict=True):
+        manifest_path = root / "manifest.json"
+        if sha256(manifest_path) != expected_sha256:
+            raise RuntimeError(f"excluded authority manifest SHA-256 mismatch: {root}")
+        manifest = json.loads(manifest_path.read_text())
+        if manifest.get("schema") != SCHEMA or manifest.get("status") != "complete":
+            raise RuntimeError(f"unsupported excluded authority: {root}")
+        metadata_receipt = manifest["outputs"]["metadata"]
+        metadata_path = root / Path(metadata_receipt["path"]).name
+        if (metadata_path.stat().st_size != int(metadata_receipt["bytes"])
+                or sha256(metadata_path) != metadata_receipt["sha256"]):
+            raise RuntimeError(f"excluded authority metadata mismatch: {root}")
+        before = len(identities)
+        with metadata_path.open() as stream:
+            for line in stream:
+                record = json.loads(line)
+                identities.add((
+                    str(record["source_name"]), str(record["source_shard"]),
+                    int(record["source_line"])))
+                text_sha256s.add(str(record["text_sha256"]))
+        receipts.append({
+            "root": str(root.resolve()),
+            "manifest_sha256": expected_sha256,
+            "metadata_sha256": metadata_receipt["sha256"],
+            "records": len(identities) - before,
+        })
+    return identities, text_sha256s, receipts
 
 
 def _entry(path: Path) -> dict[str, object]:
@@ -136,6 +176,9 @@ def main() -> None:
     parser.add_argument("--target-tokens", type=int, required=True)
     parser.add_argument("--max-record-tokens", type=int, default=65_537)
     parser.add_argument("--seed", type=int, default=974120)
+    parser.add_argument("--exclude-authority-root", action="append", type=Path, default=[])
+    parser.add_argument(
+        "--exclude-authority-manifest-sha256", action="append", default=[])
     args = parser.parse_args()
     sources = tuple(sorted(set(args.include_source)))
     if len(sources) != len(args.include_source):
@@ -161,6 +204,9 @@ def main() -> None:
     if sha256(holdout_manifest) != args.holdout_manifest_sha256:
         raise SystemExit("repository holdout manifest digest mismatch")
     holdout_shingles, holdout_identifiers = _holdout_signatures(args.holdout_root)
+    excluded_identities, excluded_text_sha256s, exclusion_receipts = (
+        _load_excluded_authorities(
+            args.exclude_authority_root, args.exclude_authority_manifest_sha256))
     encoding = tiktoken.get_encoding(TOKENIZER)
 
     total_weight = sum(COMMA_MAIN_EFFECTIVE_TOKENS_B[source] for source in sources)
@@ -184,6 +230,7 @@ def main() -> None:
     source_receipts = {}
     touched_shards: set[Path] = set()
     output_offset = 0
+    selected_text_sha256s: set[str] = set()
     try:
         with (outputs["tokens"].open("wb") as token_out,
               outputs["mask"].open("wb") as mask_out,
@@ -193,14 +240,26 @@ def main() -> None:
                 accepted_targets = 0
                 source_counts = Counter()
                 for epoch, shard, line_number, row in _iter_source_rows(
-                        args.input_root, source, args.seed):
+                        args.input_root, source, args.seed, max_epochs=1):
                     source_counts["input_records"] += 1
+                    touched_shards.add(shard)
+                    source_shard = shard.relative_to(args.input_root).as_posix()
+                    if (source, source_shard, line_number) in excluded_identities:
+                        source_counts["excluded_prior_record_identity"] += 1
+                        continue
                     if "_error" in row:
                         source_counts["json_errors"] += 1
                         continue
                     text = row.get("text")
                     if not isinstance(text, str) or not text:
                         source_counts["empty_records"] += 1
+                        continue
+                    text_sha256 = hashlib.sha256(text.encode()).hexdigest()
+                    if text_sha256 in excluded_text_sha256s:
+                        source_counts["excluded_prior_text_sha256"] += 1
+                        continue
+                    if text_sha256 in selected_text_sha256s:
+                        source_counts["excluded_duplicate_text_sha256"] += 1
                         continue
                     reason = _overlap_reason(
                         text, holdout_shingles, holdout_identifiers)
@@ -232,15 +291,15 @@ def main() -> None:
                         "id": identity,
                         "source": f"commapile:{source}",
                         "source_name": source,
-                        "source_shard": shard.relative_to(args.input_root).as_posix(),
+                        "source_shard": source_shard,
                         "source_line": line_number,
                         "source_epoch": epoch,
-                        "text_sha256": hashlib.sha256(text.encode()).hexdigest(),
+                        "text_sha256": text_sha256,
                         "split": int(split),
                         "tokens": token_count,
                         "causal_targets": effective_targets,
                     }, sort_keys=True) + "\n")
-                    touched_shards.add(shard)
+                    selected_text_sha256s.add(text_sha256)
                     output_offset += token_count
                     accepted_targets += effective_targets
                     source_counts["records"] += 1
@@ -252,6 +311,10 @@ def main() -> None:
                     counts["validation_records" if split else "train_records"] += 1
                     if accepted_targets >= quotas[source]:
                         break
+                if accepted_targets < quotas[source]:
+                    raise RuntimeError(
+                        f"{source}: requested {quotas[source]} fresh causal targets but "
+                        f"only {accepted_targets} survived one no-replacement source pass")
                 source_receipts[source] = {
                     "requested_causal_targets": quotas[source],
                     **dict(sorted(source_counts.items())),
@@ -278,6 +341,8 @@ def main() -> None:
             "holdout_content_shingle_width": 5,
             "holdout_content_shingles": len(holdout_shingles),
             "holdout_identifiers": list(holdout_identifiers),
+            "sampling_mode": "without-replacement",
+            "excluded_authorities": exclusion_receipts,
             "counts": {
                 **dict(counts),
                 "assistant_target_tokens": int(counts["causal_targets"]),
