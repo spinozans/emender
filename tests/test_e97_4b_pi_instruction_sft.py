@@ -381,7 +381,9 @@ def test_boundary_aware_trainer_is_single_forward_and_stop_is_k_aligned():
     assert "packed_objective" in text
     assert 'stop_request_path = args.output_root / ".final_checkpoint_request"' in text
     assert "if update % args.diloco_k == 0:" in text
+    assert "if update % args.diloco_k == 0 and merge_configuration is not None:" in text
     assert "update % args.save_every == 0 or update == args.steps or should_stop" in text
+    assert "DiLoCo merge may be disabled only when DDP spans the complete world" in text
 
 
 def test_checkpoint_recipe_is_k_aligned_and_bounded():
@@ -474,6 +476,9 @@ def test_local_launcher_uses_ddp_numa_and_cpu_offload():
     assert '--mlp-checkpoint-chunk-size "$MLP_CHECKPOINT_CHUNK_SIZE"' in text
     assert "BOUNDARY_AWARE_PACKS=${BOUNDARY_AWARE_PACKS:-0}" in text
     assert "BOUNDARY_ARGS=(--boundary-aware-packs)" in text
+    assert "DILOCO_MERGE=${DILOCO_MERGE:-1}" in text
+    assert "MERGE_ARGS=(--disable-diloco-merge)" in text
+    assert '"diloco_merge_enabled":$DILOCO_MERGE' in text
     assert "verify_e97_4b_pi_sft_checkpoint.py" in text
 
 

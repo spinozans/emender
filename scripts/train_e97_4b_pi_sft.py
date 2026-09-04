@@ -211,6 +211,9 @@ def main() -> None:
         help="Checkpoint SwiGLU projections in bounded time chunks; 0 disables")
     parser.add_argument("--island-size", type=int, default=8)
     parser.add_argument("--diloco-k", type=int, default=8)
+    parser.add_argument(
+        "--disable-diloco-merge", action="store_true",
+        help="Skip the redundant outer merge only when one DDP island spans the full world")
     parser.add_argument("--merge-bucket-numel", type=int, default=67_108_864)
     parser.add_argument("--lr", type=float, default=1e-5)
     parser.add_argument("--weight-decay", type=float, default=0.01)
@@ -253,6 +256,9 @@ def main() -> None:
     device = torch.device("cuda", local_rank)
     if world not in {8, 64} or args.island_size != 8:
         raise RuntimeError("qualified Pi SFT worlds are 8 or 64 ranks in eight-rank islands")
+    if args.disable_diloco_merge and args.island_size != world:
+        raise RuntimeError(
+            "DiLoCo merge may be disabled only when DDP spans the complete world")
     if sha256(args.authority_root / "manifest.json") != args.authority_sha256:
         raise RuntimeError("masked-SFT authority manifest mismatch")
     if sha256(args.pack_root / "manifest.json") != args.pack_sha256:
@@ -300,6 +306,8 @@ def main() -> None:
         "boundary_aware_packs": bool(args.boundary_aware_packs),
         "sampler_mode": args.sampler_mode,
     }
+    if args.disable_diloco_merge:
+        expected_resume["diloco_merge_enabled"] = False
     if args.resume is not None:
         clocks = load_resume_optimizer(args.resume, optimizer, expected_resume)
         start_update = clocks["updates"]
@@ -338,7 +346,9 @@ def main() -> None:
                              "new-stage-saved-x" if args.new_stage_from else
                              "parent-train-y"),
          source_commit=args.source_commit, world_size=world, island_size=args.island_size,
-         diloco_k=args.diloco_k, context_size=args.context_size,
+         diloco_k=args.diloco_k,
+         diloco_merge_enabled=not args.disable_diloco_merge,
+         context_size=args.context_size,
          boundary_aware_packs=bool(args.boundary_aware_packs),
          sampler_mode=args.sampler_mode, lr=args.lr,
          warmup_steps=args.warmup_steps, grad_clip=args.grad_clip,
@@ -351,7 +361,8 @@ def main() -> None:
                                         if args.offload_schedulefree_state else None),
          start_update=start_update)
 
-    merge_configuration = merge_args(args.merge_bucket_numel)
+    merge_configuration = (
+        None if args.disable_diloco_merge else merge_args(args.merge_bucket_numel))
     recent_losses: list[float] = []
     final_update = start_update
     stopped_reason = None
@@ -394,7 +405,7 @@ def main() -> None:
         optimizer.step()
 
         merge_seconds = 0.0
-        if update % args.diloco_k == 0:
+        if update % args.diloco_k == 0 and merge_configuration is not None:
             merge_seconds = diloco_merge(
                 core_model, optimizer, merge_configuration, world, None,
                 step=update, merge_index=update // args.diloco_k)
