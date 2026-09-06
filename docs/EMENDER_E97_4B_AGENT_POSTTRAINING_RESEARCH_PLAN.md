@@ -11,6 +11,7 @@ tools, observation-conditioned recovery, and recurrent-state save/restore/fork
 **Related plans:**
 
 - [`EMENDER_E97_4B_BROAD_POSTTRAINING_PLAN.md`](EMENDER_E97_4B_BROAD_POSTTRAINING_PLAN.md)
+- [`EMENDER_E97_4B_ONPOLICY_TASK_LAKE_EXECUTION_PLAN.md`](EMENDER_E97_4B_ONPOLICY_TASK_LAKE_EXECUTION_PLAN.md)
 - [`operations/e97-4b-pi-runtime.md`](operations/e97-4b-pi-runtime.md)
 - [`validation/e97-4b-pi-v4-post-broad-preflight.md`](validation/e97-4b-pi-v4-post-broad-preflight.md)
 
