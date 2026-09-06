@@ -15,6 +15,18 @@
 **Current narrow development parent:** complete-64K u256, SHA-256
 `2f24db49be7bafb0e155bf3698f20193def8e90efc1bd69bdfbfe2b9661b541b`
 
+## 2026-09-04 grounded-agent research amendment
+
+The dedicated
+[`EMENDER_E97_4B_AGENT_POSTTRAINING_RESEARCH_PLAN.md`](EMENDER_E97_4B_AGENT_POSTTRAINING_RESEARCH_PLAN.md)
+now governs grounded conversation, typed read/list tools, observation-conditioned
+recovery, recurrent-state qualification, behavioral data scale, and the
+architecture decision gate. This broad plan remains authoritative for source
+admission, boundary-aware packing, Schedule-Free training controls, and the
+multi-stage post-training lineage. Where its earlier agent-stage sequencing or
+token targets conflict with the dedicated research plan, the newer research
+plan controls.
+
 ## 2026-09-02 document-aware recipe amendment
 
 V4 has now been consumed by its first independent evaluation and failed 0/240.
