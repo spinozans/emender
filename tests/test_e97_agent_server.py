@@ -1,4 +1,7 @@
 from dataclasses import dataclass
+import hashlib
+import json
+from pathlib import Path
 from http.client import HTTPConnection
 from http.server import HTTPServer
 from threading import Thread
@@ -6,6 +9,8 @@ from threading import Thread
 import pytest
 
 from ndm.e97_agent_protocol import AgentProtocolError, RS
+from ndm.e97_onpolicy_records import sha256_json, sha256_text
+from ndm.e97_acquisition_controller import READ_OBSERVE_TOOLS
 from ndm.e97_agent_server import (
     AgentCompletionService,
     RecurrentSessionStore,
@@ -24,7 +29,7 @@ class FakeCache:
 
 
 class FakeEngine:
-    checkpoint = "/fake/e97.pt"
+    checkpoint = str(Path(__file__))
 
     def __init__(self, outputs):
         self.outputs = list(outputs)
@@ -45,6 +50,21 @@ class FakeEngine:
         text = self.outputs.pop(0)
         tokens = tuple(self.encode(text))[:max_new_tokens]
         return list(tokens), FakeCache(cache.token_ids + tokens)
+
+
+def external_attestation_kwargs():
+    from ndm.e97_acquisition_controller import READ_OBSERVE_TOOLS
+    args_path = Path(__file__)
+    args_sha = hashlib.sha256(args_path.read_bytes()).hexdigest()
+    return {
+        "checkpoint_sha256": hashlib.sha256(args_path.read_bytes()).hexdigest(), "checkpoint_path": str(args_path),
+        "args_json_path": str(args_path), "args_json_sha256": args_sha, "config_sha256": "d" * 64,
+        "weight_mode": "saved", "tokenizer": "fake-tokenizer", "device": "cpu",
+        "dtype": "float32", "use_triton": False, "ingest_mode": "tokenwise",
+        "runtime_image_path": str(args_path), "runtime_image_sha256": args_sha,
+        "tool_schema_sha256": sha256_text(json.dumps(READ_OBSERVE_TOOLS, sort_keys=True, separators=(",", ":"))),
+        "controller_build_sha256":  hashlib.sha256((Path(__file__).parents[1] / "ndm" / "e97_acquisition_controller.py").read_bytes()).hexdigest(),
+    }
 
 
 def tool(name):
@@ -202,6 +222,100 @@ def test_repeated_tool_call_cycle_fails_before_generation():
         )
     assert len(service.sessions) == 0
     assert service.engine.outputs == ["Final: unreachable" + RS]
+
+
+def test_external_controller_mode_delegates_repeat_policy_without_request_switch():
+    repeated = {
+        "role": "assistant",
+        "tool_calls": [{
+            "type": "function",
+            "function": {"name": "read", "arguments": '{"path":"x","offset":1,"limit":1}'},
+        }],
+    }
+    service = AgentCompletionService(
+        FakeEngine(["Final: recovery accepted.\n"]), external_controller=True,
+        **external_attestation_kwargs(),
+    )
+    prepared = service.prepare_completion(
+        {
+            "tools": READ_OBSERVE_TOOLS,
+            "messages": [
+                {"role": "user", "content": "read"}, repeated,
+                {"role": "tool", "content": "same"}, repeated,
+                {"role": "tool", "content": "no_progress"},
+            ]
+        },
+        session_id="trusted-controller",
+    )
+    assert prepared.response["choices"][0]["message"]["content"] == "Final: recovery accepted.\n"
+    attestation = prepared.response["emender_service_attestation"]
+    assert attestation["schema"] == "emender-e97-agent-service-attestation-v1"
+    assert attestation["checkpoint_path"] == str(Path(__file__))
+    assert attestation["checkpoint_sha256"] == hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+    assert attestation["model_id"] == "e97-dense-agent"
+    assert attestation["tool_schema_sha256"] == external_attestation_kwargs()["tool_schema_sha256"]
+    assert attestation["system_prompt_override_sha256"] == sha256_text("")
+
+
+def test_external_controller_rejects_missing_checkpoint_artifact():
+    engine = FakeEngine([])
+    engine.checkpoint = "/missing/checkpoint.pt"
+    identity = external_attestation_kwargs()
+    identity["checkpoint_path"] = engine.checkpoint
+    with pytest.raises(ValueError, match="checkpoint_path"):
+        AgentCompletionService(engine, external_controller=True, **identity)
+
+
+def test_external_controller_rejects_checkpoint_identity_that_disagrees_with_engine_bytes(tmp_path):
+    checkpoint = tmp_path / "engine.pt"
+    checkpoint.write_bytes(b"actual-checkpoint")
+    engine = FakeEngine([])
+    engine.checkpoint = str(checkpoint)
+    identity = external_attestation_kwargs()
+    identity["checkpoint_path"] = str(checkpoint)
+    identity["checkpoint_sha256"] = "a" * 64
+    with pytest.raises(ValueError, match="checkpoint_sha256"):
+        AgentCompletionService(engine, external_controller=True, **identity)
+
+
+def test_external_request_identity_uses_canonical_unicode_json():
+    service = AgentCompletionService(FakeEngine(["Final: done\n"]), external_controller=True, **external_attestation_kwargs())
+    messages = [
+        {"role": "system", "content": "系统 α"}, {"role": "user", "content": "café"},
+    ]
+    prepared = service.prepare_completion({"messages": messages, "tools": READ_OBSERVE_TOOLS}, session_id=None)
+    identity = prepared.response["emender_request_identity"]
+    assert identity["messages_sha256"] == sha256_json(messages)
+    assert identity["request_sha256"] == sha256_json({"messages": messages, "tools": READ_OBSERVE_TOOLS})
+
+
+def test_external_controller_requires_and_verifies_args_and_controller_artifacts(tmp_path):
+    missing = external_attestation_kwargs()
+    del missing["args_json_path"]
+    with pytest.raises(ValueError, match="args_json_path"):
+        AgentCompletionService(FakeEngine([]), external_controller=True, **missing)
+    mismatch = external_attestation_kwargs()
+    artifact = tmp_path / "args.json"
+    artifact.write_text("{}")
+    mismatch["args_json_path"] = str(artifact)
+    with pytest.raises(ValueError, match="args_json_sha256"):
+        AgentCompletionService(FakeEngine([]), external_controller=True, **mismatch)
+    bad_controller = external_attestation_kwargs()
+    bad_controller["controller_build_sha256"] = "0" * 64
+    with pytest.raises(ValueError, match="controller_build_sha256"):
+        AgentCompletionService(FakeEngine([]), external_controller=True, **bad_controller)
+
+
+def test_external_controller_requires_startup_attestation_and_no_system_override():
+    missing_tokenizer = external_attestation_kwargs()
+    del missing_tokenizer["tokenizer"]
+    with pytest.raises(ValueError, match="requires tokenizer"):
+        AgentCompletionService(FakeEngine([]), external_controller=True, **missing_tokenizer)
+    with pytest.raises(ValueError, match="forbids"):
+        AgentCompletionService(
+            FakeEngine([]), external_controller=True, system_prompt_override="override",
+            **external_attestation_kwargs(),
+        )
 
 
 def test_failed_check_can_be_rerun_after_intervening_repair_action():

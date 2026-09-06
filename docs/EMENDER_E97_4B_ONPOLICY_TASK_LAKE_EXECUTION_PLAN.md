@@ -612,8 +612,8 @@ Current Phase B files:
   including successful finals, terminal protocol errors, and empty tool output.
 - [x] Ingest SHA-pinned explicit post-action workspace, source-ledger,
   observation, and action-linkage receipts.
-- [ ] Capture those state receipts inside the live tool controller.
-- [ ] Wire the no-progress decision into the live controller.
+- [x] Capture bounded post-tool workspace/source/observation receipts in the dedicated read-observe controller.
+- [x] Wire the no-progress decision into that controller, with raw/effective observation separation and one recovery budget.
 - [ ] Add atomic task leases, interruption recovery, and deterministic replay.
 - [x] Run fresh fake-event adversarial tests and structural parsing checks
   against one historical success and one historical terminal-cycle trace.
@@ -622,9 +622,11 @@ Current Phase C ingestion files:
 
 - `ndm/e97_phase_c_collector.py`;
 - `scripts/collect_e97_onpolicy_rollout.py`;
-- `tests/test_e97_phase_c_collector.py`.
+- `tests/test_e97_phase_c_collector.py`;
+- `ndm/e97_acquisition_controller.py`;
+- `tests/test_e97_acquisition_controller.py`.
 
-This slice is ingestion-only and does not yet authorize GPU actors.
+The dedicated controller is a deterministic local/testable read-observe slice around the OpenAI-compatible server; it does not authorize GPU actors.
 
 ### Phase D — eight-GPU systems slice
 

@@ -3,6 +3,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
+import platform
+import sys
 import threading
 import time
 from collections import OrderedDict
@@ -18,6 +21,7 @@ from .e97 import (
     e97_cache_suffix,
     generate_e97_from_cache,
 )
+from .e97_onpolicy_records import canonical_json, sha256_json, sha256_text
 from .e97_agent_protocol import (
     AgentProtocolError,
     ParsedAgentTurn,
@@ -26,6 +30,36 @@ from .e97_agent_protocol import (
     serialize_pi_messages,
     validate_generated_tool,
 )
+
+
+SERVICE_ATTESTATION_SCHEMA = "emender-e97-agent-service-attestation-v1"
+
+
+def _sha256_text(value: str) -> str:
+    return hashlib.sha256(value.encode("utf-8")).hexdigest()
+
+
+def _torch_runtime_identity() -> tuple[str, str, bool]:
+    try:
+        import torch
+        return str(torch.__version__), str(torch.version.cuda or ""), bool(torch.cuda.is_available())
+    except Exception:  # pragma: no cover - serving dependency is normally present
+        return "unavailable", "", False
+
+
+def _sha256_file(path: str) -> str:
+    digest = hashlib.sha256()
+    with open(path, "rb") as handle:
+        while chunk := handle.read(1 << 20):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _require_sha256(value: Any, name: str) -> str:
+    if (not isinstance(value, str) or len(value) != 64
+            or any(character not in "0123456789abcdef" for character in value)):
+        raise ValueError(f"{name} must be a lowercase SHA-256 digest")
+    return value
 
 
 class AgentEngine(Protocol):
@@ -145,6 +179,10 @@ class TorchE97AgentEngine:
         loaded: LoadedE97Checkpoint,
         *,
         ingest_mode: str = "tokenwise",
+        weight_mode: str = "saved",
+        device: str = "cuda",
+        dtype: str = "bfloat16",
+        use_triton: bool = True,
     ):
         import tiktoken
 
@@ -152,6 +190,10 @@ class TorchE97AgentEngine:
             raise ValueError("ingest_mode must be tokenwise or segment")
         self.loaded = loaded
         self.ingest_mode = ingest_mode
+        self.weight_mode = weight_mode
+        self.device = device
+        self.dtype = dtype
+        self.use_triton = use_triton
         self.checkpoint = str(loaded.checkpoint_path)
         tokenizer_name = loaded.config.get("tokenizer")
         if not tokenizer_name:
@@ -228,6 +270,22 @@ class AgentCompletionService:
         trace_generated_errors: bool = False,
         system_prompt_override: str | None = None,
         require_tool_call: bool = False,
+        external_controller: bool = False,
+        checkpoint_sha256: str | None = None,
+        weight_mode: str | None = None,
+        tokenizer: str | None = None,
+        controller_build_sha256: str | None = None,
+        checkpoint_path: str | None = None,
+        args_json_path: str | None = None,
+        args_json_sha256: str | None = None,
+        config_sha256: str | None = None,
+        device: str | None = None,
+        dtype: str | None = None,
+        use_triton: bool | None = None,
+        ingest_mode: str | None = None,
+        runtime_image_path: str | None = None,
+        runtime_image_sha256: str | None = None,
+        tool_schema_sha256: str | None = None,
     ):
         if max_output_tokens <= 0:
             raise ValueError("max_output_tokens must be positive")
@@ -237,6 +295,76 @@ class AgentCompletionService:
         self.trace_generated_errors = bool(trace_generated_errors)
         self.system_prompt_override = system_prompt_override
         self.require_tool_call = bool(require_tool_call)
+        # This is service configuration, never request data: the dedicated
+        # acquisition controller owns state-sensitive recovery cycle policy.
+        self.external_controller = bool(external_controller)
+        self._service_attestation_json: str | None = None
+        if self.external_controller:
+            if self.system_prompt_override is not None:
+                raise ValueError("external-controller mode forbids server-side system prompt overrides")
+            checkpoint = _require_sha256(checkpoint_sha256, "checkpoint_sha256")
+            controller_build = _require_sha256(controller_build_sha256, "controller_build_sha256")
+            actual_controller_build = _sha256_file(os.path.join(os.path.dirname(__file__), "e97_acquisition_controller.py"))
+            if controller_build != actual_controller_build:
+                raise ValueError("controller_build_sha256 does not match local controller artifact")
+            controller_build = actual_controller_build
+            for value, name in ((args_json_sha256, "args_json_sha256"), (config_sha256, "config_sha256"),
+                                (runtime_image_sha256, "runtime_image_sha256"), (tool_schema_sha256, "tool_schema_sha256")):
+                _require_sha256(value, name)
+            if not isinstance(checkpoint_path, str) or not checkpoint_path:
+                raise ValueError("external-controller mode requires checkpoint_path")
+            if checkpoint_path != str(getattr(engine, "checkpoint", "")):
+                raise ValueError("checkpoint_path does not match engine checkpoint")
+            if not os.path.isfile(checkpoint_path):
+                raise ValueError("external-controller mode requires an existing checkpoint_path artifact")
+            if _sha256_file(checkpoint_path) != checkpoint:
+                raise ValueError("checkpoint_sha256 does not match checkpoint bytes")
+            if not isinstance(args_json_path, str) or not os.path.isfile(args_json_path):
+                raise ValueError("external-controller mode requires an existing args_json_path")
+            if not isinstance(runtime_image_path, str) or not os.path.isfile(runtime_image_path):
+                raise ValueError("external-controller mode requires an immutable runtime_image_path artifact")
+            if _sha256_file(runtime_image_path) != runtime_image_sha256:
+                raise ValueError("runtime_image_sha256 does not match runtime image artifact")
+            if _sha256_file(args_json_path) != args_json_sha256:
+                raise ValueError("args_json_sha256 does not match args-json artifact")
+            if weight_mode not in {"saved", "train"}:
+                raise ValueError("external-controller mode requires weight_mode")
+            if not isinstance(tokenizer, str) or not tokenizer:
+                raise ValueError("external-controller mode requires tokenizer")
+            if isinstance(engine, TorchE97AgentEngine):
+                actual_config = hashlib.sha256(json.dumps(engine.loaded.config, sort_keys=True, separators=(",", ":"), allow_nan=False).encode("utf-8")).hexdigest()
+                if config_sha256 != actual_config or tokenizer != str(engine.loaded.config.get("tokenizer", "")):
+                    raise ValueError("config/tokenizer identity does not match loaded engine")
+                if ingest_mode != engine.ingest_mode:
+                    raise ValueError("ingest_mode does not match loaded engine")
+                if (weight_mode != engine.weight_mode or device != engine.device
+                        or dtype != engine.dtype or use_triton != engine.use_triton):
+                    raise ValueError("decode runtime identity does not match loaded engine")
+            if not isinstance(device, str) or not isinstance(dtype, str) or not isinstance(use_triton, bool):
+                raise ValueError("external-controller mode requires device/dtype/Triton identity")
+            if ingest_mode not in {"tokenwise", "segment"}:
+                raise ValueError("external-controller mode requires ingest_mode")
+            from .e97_acquisition_controller import READ_OBSERVE_TOOLS
+            actual_tool_schema = sha256_json(READ_OBSERVE_TOOLS)
+            if tool_schema_sha256 != actual_tool_schema:
+                raise ValueError("tool_schema_sha256 does not match read-observe schema")
+            # All values are construction-time inputs.  The request cannot
+            # select or alter this response-body attestation.
+            self._service_attestation_json = json.dumps({
+                "schema": SERVICE_ATTESTATION_SCHEMA, "checkpoint_path": checkpoint_path,
+                "checkpoint_sha256": checkpoint, "args_json_sha256": args_json_sha256,
+                "config_sha256": config_sha256, "weight_mode": weight_mode, "tokenizer": tokenizer,
+                "model_id": model_id, "server_build_sha256": _sha256_file(__file__),
+                "controller_build_sha256": controller_build, "device": device, "dtype": dtype,
+                "use_triton": use_triton, "ingest_mode": ingest_mode,
+                "runtime_image_path": os.path.realpath(runtime_image_path), "runtime_image_sha256": runtime_image_sha256, "tool_schema_sha256": tool_schema_sha256,
+                "runtime_identity_schema": "emender-e97-runtime-identity-v1",
+                "max_output_tokens": max_output_tokens, "max_sessions": max_sessions,
+                "python_implementation": platform.python_implementation(), "python_version": platform.python_version(),
+                "torch_version": _torch_runtime_identity()[0], "cuda_runtime": _torch_runtime_identity()[1],
+                "cuda_available": _torch_runtime_identity()[2], "platform": platform.system(), "machine": platform.machine(),
+                "system_prompt_override_sha256": _sha256_text(""),
+            }, sort_keys=True, separators=(",", ":"), allow_nan=False)
         self.sessions = RecurrentSessionStore(max_sessions=max_sessions)
 
     def prepare_completion(
@@ -252,28 +380,43 @@ class AgentCompletionService:
             raise AgentProtocolError(f"unknown model: {model}")
         if not isinstance(request.get("stream", False), bool):
             raise AgentProtocolError("stream must be boolean")
+        if self.external_controller and request.get("stream", False):
+            raise AgentProtocolError("external-controller mode requires non-streaming attested completions")
         messages = request.get("messages")
         if not isinstance(messages, list):
             raise AgentProtocolError("messages must be an array")
-        previous_tool_call: tuple[str, str] | None = None
-        for message in messages:
-            if not isinstance(message, Mapping) or message.get("role") != "assistant":
-                continue
-            tool_calls = message.get("tool_calls")
-            if not tool_calls:
-                continue
-            if not isinstance(tool_calls, list) or len(tool_calls) != 1:
-                raise AgentProtocolError("E97 supports exactly one tool call per turn")
-            function = tool_calls[0].get("function") if isinstance(tool_calls[0], Mapping) else None
-            if not isinstance(function, Mapping):
-                raise AgentProtocolError("assistant tool call requires function metadata")
-            key = (str(function.get("name")), str(function.get("arguments")))
-            # Only an immediately repeated identical action is a no-progress
-            # cycle. A failed check may legitimately be rerun after a read/edit
-            # or other intervening action has changed the relevant state.
-            if key == previous_tool_call:
-                raise AgentProtocolError("repeated tool call cycle detected")
-            previous_tool_call = key
+        if not self.external_controller:
+            previous_tool_call: tuple[str, str] | None = None
+            for message in messages:
+                if not isinstance(message, Mapping) or message.get("role") != "assistant":
+                    continue
+                tool_calls = message.get("tool_calls")
+                if not tool_calls:
+                    continue
+                if not isinstance(tool_calls, list) or len(tool_calls) != 1:
+                    raise AgentProtocolError("E97 supports exactly one tool call per turn")
+                function = tool_calls[0].get("function") if isinstance(tool_calls[0], Mapping) else None
+                if not isinstance(function, Mapping):
+                    raise AgentProtocolError("assistant tool call requires function metadata")
+                key = (str(function.get("name")), str(function.get("arguments")))
+                # Legacy callers have no trusted post-tool state receipt, so
+                # retain the conservative repeat guard by default.
+                if key == previous_tool_call:
+                    raise AgentProtocolError("repeated tool call cycle detected")
+                previous_tool_call = key
+        request_identity: dict[str, str] | None = None
+        if self.external_controller:
+            tools = request.get("tools")
+            tool_digest = sha256_json(tools)
+            attestation = json.loads(self._service_attestation_json or "{}")
+            if tool_digest != attestation["tool_schema_sha256"]:
+                raise AgentProtocolError("external-controller request tool schema does not match service identity")
+            request_identity = {
+                "messages_sha256": sha256_json(messages),
+                "system_prompt_sha256": sha256_text(str(messages[0].get("content", ""))) if messages else sha256_text(""),
+                "tool_schema_sha256": tool_digest,
+            }
+            request_identity["request_sha256"] = sha256_json(dict(request))
         if self.system_prompt_override is not None:
             messages = [dict(message) for message in messages]
             if messages and messages[0].get("role") == "system":
@@ -358,6 +501,9 @@ class AgentCompletionService:
                 "total_tokens": len(prompt_tokens) + len(generated_tokens),
             },
         }
+        if self._service_attestation_json is not None:
+            response["emender_service_attestation"] = json.loads(self._service_attestation_json)
+            response["emender_request_identity"] = request_identity
         state_bytes = getattr(completed_cache, "state_bytes", 0)
         diagnostics = {
             "x-emender-cache": prepared.cache_event,
