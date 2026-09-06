@@ -608,11 +608,23 @@ Current Phase B files:
 
 ### Phase C — authentic collector
 
-- [ ] Convert real Pi events into canonical student messages.
-- [ ] Capture post-action workspace, source-ledger, and observation receipts.
+- [x] Convert strict real Pi JSON events into canonical student messages,
+  including successful finals, terminal protocol errors, and empty tool output.
+- [x] Ingest SHA-pinned explicit post-action workspace, source-ledger,
+  observation, and action-linkage receipts.
+- [ ] Capture those state receipts inside the live tool controller.
 - [ ] Wire the no-progress decision into the live controller.
 - [ ] Add atomic task leases, interruption recovery, and deterministic replay.
-- [ ] Run fake-event and sandbox adversarial tests.
+- [x] Run fresh fake-event adversarial tests and structural parsing checks
+  against one historical success and one historical terminal-cycle trace.
+
+Current Phase C ingestion files:
+
+- `ndm/e97_phase_c_collector.py`;
+- `scripts/collect_e97_onpolicy_rollout.py`;
+- `tests/test_e97_phase_c_collector.py`.
+
+This slice is ingestion-only and does not yet authorize GPU actors.
 
 ### Phase D — eight-GPU systems slice
 
