@@ -29,6 +29,12 @@ def main() -> None:
     parser.add_argument("--max-sessions", type=int, default=8)
     parser.add_argument("--max-body-bytes", type=int, default=4 * 1024 * 1024)
     parser.add_argument("--ingest-mode", choices=("tokenwise", "segment"), default="tokenwise")
+    parser.add_argument(
+        "--weight-mode",
+        choices=("saved", "train"),
+        default="saved",
+        help="serve saved Schedule-Free x weights or reconstruct train/y weights",
+    )
     system_group = parser.add_mutually_exclusive_group()
     system_group.add_argument("--v1-canonical-system", action="store_true")
     system_group.add_argument("--v2-canonical-system", action="store_true")
@@ -47,7 +53,7 @@ def main() -> None:
         args_json=args.args_json,
         device=args.device,
         dtype=torch.bfloat16 if args.device == "cuda" else torch.float32,
-        weight_mode="saved",
+        weight_mode=args.weight_mode,
         use_triton=args.device == "cuda",
         mmap=True,
     )

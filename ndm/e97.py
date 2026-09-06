@@ -7,8 +7,10 @@ those artifacts to the E97 model identity used by current code.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
+import struct
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable, Mapping, Sequence
@@ -433,6 +435,24 @@ def _uses_triton(model: torch.nn.Module) -> bool:
     )
 
 
+def _extend_token_lineage(
+    previous_sha256: str | None,
+    token_ids: Sequence[int],
+) -> str:
+    """Hash an append-only token delta without retaining prior token IDs."""
+
+    digest = hashlib.sha256()
+    digest.update(b"emender-e97-token-lineage-v1\0")
+    digest.update(bytes.fromhex(previous_sha256) if previous_sha256 else bytes(32))
+    digest.update(struct.pack(">Q", len(token_ids)))
+    for token in token_ids:
+        value = int(token)
+        if value < 0 or value >= 2**32:
+            raise ValueError("token ids must be unsigned 32-bit integers")
+        digest.update(struct.pack(">I", value))
+    return digest.hexdigest()
+
+
 @dataclass(frozen=True)
 class E97RecurrentCache:
     """Committed recurrent state after an exact token prefix.
@@ -446,6 +466,18 @@ class E97RecurrentCache:
     hidden: Any
     next_logits: torch.Tensor
     checkpoint: str
+    token_count: int | None = None
+    token_lineage_sha256: str | None = None
+
+    @property
+    def total_token_count(self) -> int:
+        """Total consumed tokens, including prefixes omitted from portable state."""
+
+        return len(self.token_ids) if self.token_count is None else self.token_count
+
+    @property
+    def has_complete_token_history(self) -> bool:
+        return len(self.token_ids) == self.total_token_count
 
     @property
     def state_bytes(self) -> int:
@@ -474,6 +506,10 @@ def e97_cache_suffix(
     """Return an append-only suffix, or ``None`` for an incompatible prefix."""
 
     requested = tuple(int(token) for token in requested_token_ids)
+    if not getattr(cache, "has_complete_token_history", True):
+        # A compact portable state intentionally cannot validate a caller's
+        # full-history replay. It remains usable through explicit token deltas.
+        return None
     prefix_length = len(cache.token_ids)
     if len(requested) < prefix_length:
         return None
@@ -530,11 +566,18 @@ def advance_e97_cache_segment(
         return_prev_hiddens=True,
         prev_hiddens=None if cache is None else cache.hidden,
     )
+    previous_tokens = () if cache is None else cache.token_ids
+    retain_history = cache is None or cache.has_complete_token_history
     return E97RecurrentCache(
-        token_ids=(cache.token_ids if cache is not None else ()) + consumed,
+        token_ids=previous_tokens + consumed if retain_history else (),
         hidden=hidden,
         next_logits=logits[0, -1].detach(),
         checkpoint=checkpoint,
+        token_count=(0 if cache is None else cache.total_token_count) + len(consumed),
+        token_lineage_sha256=_extend_token_lineage(
+            None if cache is None else cache.token_lineage_sha256,
+            consumed,
+        ),
     )
 
 
@@ -577,11 +620,18 @@ def advance_e97_cache(
         )
         next_logits = logits[0, -1].detach()
     assert next_logits is not None
+    previous_tokens = () if cache is None else cache.token_ids
+    retain_history = cache is None or cache.has_complete_token_history
     return E97RecurrentCache(
-        token_ids=(cache.token_ids if cache is not None else ()) + consumed,
+        token_ids=previous_tokens + consumed if retain_history else (),
         hidden=hidden,
         next_logits=next_logits,
         checkpoint=checkpoint,
+        token_count=(0 if cache is None else cache.total_token_count) + len(consumed),
+        token_lineage_sha256=_extend_token_lineage(
+            None if cache is None else cache.token_lineage_sha256,
+            consumed,
+        ),
     )
 
 
