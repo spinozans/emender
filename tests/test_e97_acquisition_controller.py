@@ -51,7 +51,8 @@ class FakeClient:
         self.timeouts.append(deadline)
         if self.advance_clock is not None:
             self.advance_clock()
-        response = {"model": "e97-dense-agent", "choices": [{"message": self.messages.pop(0)}]}
+        response = {"model": "e97-dense-agent", "choices": [{"message": self.messages.pop(0)}],
+                    "usage": {"completion_tokens": 1}}
         if self.attestation is not None:
             response["emender_service_attestation"] = self.attestation
             response["emender_request_identity"] = {
@@ -150,6 +151,13 @@ def test_raw_result_is_retained_while_effective_recovery_replaces_next_context()
     assert serialize_pi_messages(result.messages[:-1]).endswith("Assistant:\n")
     assert result.metadata["checkpoint_sha256"] == "a" * 64
     assert "serialized_messages_sha256" in result.metadata
+    assert result.actions[0].completion_tokens == 1
+    assert result.metadata["completion_usage"] == [
+        {"sequence": 0, "completion_tokens": 1},
+        {"sequence": 1, "completion_tokens": 1},
+        {"sequence": 2, "completion_tokens": 1},
+    ]
+    assert result.metadata["completion_tokens"] == 3
 
 
 def test_one_recovery_then_same_stale_pair_terminates_without_another_model_request():
@@ -162,6 +170,15 @@ def test_one_recovery_then_same_stale_pair_terminates_without_another_model_requ
     assert [receipt.decision for receipt in result.actions] == ["continue", "inject_no_progress", "terminate"]
     assert result.actions[-1].raw_observation == {"value": "same"}
     assert len(result.actions) == 3
+
+
+def test_mapping_function_arguments_are_rejected_at_controller_ingress():
+    client = FakeClient([action(arguments={"path": "note.txt"})])
+    executor = FakeExecutor([], [])
+    result = controller(client, executor).run(system_prompt="system", user_prompt="read")
+    assert result.status == "completion_error"
+    assert "function.arguments must be a string" in result.error
+    assert executor.calls == []
 
 
 def test_unknown_model_tool_is_rejected_before_executor_invocation():
@@ -235,6 +252,45 @@ def test_record_separator_suffix_final_is_rejected_from_exact_transcript():
 
     assert result.status == "completion_error"
     assert not result.messages[-1].get("content", "").endswith("untrusted")
+
+
+def test_completion_usage_and_byte_ceiling_fail_closed():
+    class MissingUsageClient(FakeClient):
+        def complete(self, request, *, deadline):
+            response = super().complete(request, deadline=deadline)
+            del response["usage"]
+            return response
+
+    missing = controller(MissingUsageClient([{"role": "assistant", "content": "Final: done"}]), FakeExecutor([], [])).run(
+        system_prompt="system", user_prompt="read")
+    assert missing.status == "completion_error"
+    assert "usage.completion_tokens" in missing.error
+
+    class ZeroUsageClient(FakeClient):
+        def complete(self, request, *, deadline):
+            response = super().complete(request, deadline=deadline)
+            response["usage"] = {"completion_tokens": 0}
+            return response
+
+    zero = controller(ZeroUsageClient([{"role": "assistant", "content": "Final: done"}]), FakeExecutor([], [])).run(
+        system_prompt="system", user_prompt="read")
+    assert zero.status == "completion_error"
+    assert "usage.completion_tokens" in zero.error
+
+    class ExcessUsageClient(FakeClient):
+        def complete(self, request, *, deadline):
+            response = super().complete(request, deadline=deadline)
+            response["usage"] = {"completion_tokens": 18}
+            return response
+
+    excess = controller(ExcessUsageClient([{"role": "assistant", "content": "Final: done"}]), FakeExecutor([], []), max_completion_tokens=17).run(
+        system_prompt="system", user_prompt="read")
+    assert excess.status == "completion_error"
+
+    oversized = controller(FakeClient([{"role": "assistant", "content": "Final: " + "é" * 69}]), FakeExecutor([], []), max_completion_tokens=17).run(
+        system_prompt="system", user_prompt="read")
+    assert oversized.status == "completion_error"
+    assert "byte ceiling" in oversized.error
 
 
 def test_deadline_rechecked_before_model_action_and_token_limit_is_controller_owned():

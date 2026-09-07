@@ -12,10 +12,10 @@ import json
 import re
 from typing import Any, Mapping, Sequence
 
-from ndm.e97_agent_protocol import AgentProtocolError, parse_agent_turn
+from ndm.e97_agent_protocol import AgentProtocolError, parse_agent_turn, serialize_pi_messages
 
 
-RECOVERY_RECORD_SCHEMA = "emender-e97-student-state-correction-v1"
+RECOVERY_RECORD_SCHEMA = "emender-e97-student-state-correction-v3"
 TASK_IDENTITY_SCHEMA = "emender-e97-onpolicy-task-identity-v1"
 NO_PROGRESS_SCHEMA = "emender-e97-no-progress-v1"
 CONSUMED_V3_MANIFEST_SHA256 = (
@@ -35,6 +35,8 @@ CANONICAL_NO_PROGRESS_OBSERVATION = (
 )
 _DIGEST = re.compile(r"^[0-9a-f]{64}$")
 _NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
+_VALIDATOR_LOGICAL_RUNTIME = "@runtime-python"
+_VALIDATOR_LOGICAL_PROGRAM = "@generator-source/scripts/e97_first_party_validator.py"
 
 
 def canonical_json(value: Any) -> str:
@@ -68,6 +70,12 @@ def _require_name(value: Any, name: str) -> str:
     if not isinstance(value, str) or not _NAME.fullmatch(value):
         raise ValueError(f"{name} is invalid")
     return value
+
+
+def completion_marker_relative_path(task_id: str, receipt_sha256: str) -> str:
+    """Return the task-specific immutable completion-authority marker path."""
+
+    return f"completed/{_require_digest(task_id, 'completion task identity')}/{_require_digest(receipt_sha256, 'completion receipt SHA-256')}.json"
 
 
 def canonical_action(tool_name: str, arguments: Mapping[str, Any]) -> str:
@@ -270,6 +278,106 @@ def _validate_messages(
     return normalized
 
 
+def _validate_action_progress_history(
+    actions: Any,
+    *,
+    terminated: bool,
+    permitted_termination_indexes: set[int] | None = None,
+) -> list[Mapping[str, Any]]:
+    """Recompute all no-progress decisions from stored action/progress pairs."""
+
+    if not isinstance(actions, list) or not actions:
+        raise ValueError("terminal actions are required")
+    detector = NoProgressDetector()
+    normalized: list[Mapping[str, Any]] = []
+    fields = {
+        "sequence", "tool_call_id", "tool_name", "arguments", "arguments_json", "raw_observation",
+        "raw_observation_sha256", "effective_observation", "observation_sha256", "is_error",
+        "workspace_state", "source_ledger", "acquired_observations", "action_fingerprint",
+        "progress_fingerprint", "completion_tokens", "decision",
+    }
+    for index, action in enumerate(actions):
+        action = _require_fields(action, fields, f"terminal action {index}")
+        if action["sequence"] != index or not isinstance(action["tool_call_id"], str) or not action["tool_call_id"]:
+            raise ValueError("terminal action sequence or call ID is invalid")
+        if (isinstance(action["completion_tokens"], bool)
+                or not isinstance(action["completion_tokens"], int)
+                or action["completion_tokens"] < 1):
+            raise ValueError("terminal action completion_tokens is invalid")
+        if not isinstance(action["arguments"], Mapping) or not isinstance(action["arguments_json"], str):
+            raise ValueError("terminal action arguments are invalid")
+        try:
+            parsed_arguments = json.loads(action["arguments_json"])
+        except json.JSONDecodeError as exc:
+            raise ValueError("terminal action arguments JSON is invalid") from exc
+        if parsed_arguments != action["arguments"]:
+            raise ValueError("terminal action arguments JSON does not bind object")
+        if (action["raw_observation_sha256"] != sha256_json(action["raw_observation"])
+                or not isinstance(action["effective_observation"], str)
+                or action["observation_sha256"] != sha256_text(action["effective_observation"])):
+            raise ValueError("terminal action observation hashes are invalid")
+        receipt = ActionProgressReceipt(
+            action["tool_name"],
+            action["arguments"],
+            action["workspace_state"],
+            action["source_ledger"],
+            action["acquired_observations"],
+        )
+        decision = detector.observe(receipt)
+        if (action["action_fingerprint"] != receipt.action_fingerprint
+                or action["progress_fingerprint"] != receipt.progress_fingerprint
+                or action["decision"] != decision.kind):
+            raise ValueError("terminal action/progress decision is not structurally replayable")
+        if decision.observation is not None and action["effective_observation"] != decision.observation:
+            raise ValueError("terminal no-progress injection is not canonical")
+        normalized.append(action)
+    if terminated:
+        if normalized[-1]["decision"] != "terminate":
+            raise ValueError("terminated terminal must end in a structural no-progress termination")
+    else:
+        permitted = permitted_termination_indexes or set()
+        if any(action["decision"] == "terminate" and index not in permitted
+               for index, action in enumerate(normalized)):
+            raise ValueError("successful terminal may not contain new no-progress termination")
+    return normalized
+
+
+def _validate_terminal_completion_usage(terminal: Mapping[str, Any], limits: Mapping[str, Any]) -> None:
+    """Bind every accepted assistant turn to bounded service token accounting."""
+
+    limit = limits.get("completion_tokens")
+    metadata, messages, actions = terminal.get("metadata"), terminal.get("messages"), terminal.get("actions")
+    if (isinstance(limit, bool) or not isinstance(limit, int) or limit <= 0
+            or not isinstance(metadata, Mapping) or not isinstance(messages, list)
+            or not isinstance(actions, list)):
+        raise ValueError("terminal completion token limits are invalid")
+    usage = metadata.get("completion_usage")
+    assistants = [message for message in messages if isinstance(message, Mapping) and message.get("role") == "assistant"]
+    if not isinstance(usage, list) or len(usage) != len(assistants):
+        raise ValueError("terminal completion usage does not cover every assistant turn")
+    total = 0
+    for index, (entry, message) in enumerate(zip(usage, assistants)):
+        if (not isinstance(entry, Mapping) or set(entry) != {"sequence", "completion_tokens"}
+                or entry.get("sequence") != index or isinstance(entry.get("completion_tokens"), bool)
+                or not isinstance(entry.get("completion_tokens"), int)
+                or not 1 <= entry["completion_tokens"] <= limit):
+            raise ValueError("terminal completion usage receipt is invalid")
+        try:
+            body = serialize_pi_messages([message], append_assistant_header=False).removeprefix("Assistant:\n")
+        except AgentProtocolError as exc:
+            raise ValueError("terminal assistant completion serialization is invalid") from exc
+        if len(body.encode("utf-8")) > limit * 8:
+            raise ValueError("terminal assistant body exceeds deterministic token byte ceiling")
+        total += entry["completion_tokens"]
+    if metadata.get("completion_tokens") != total:
+        raise ValueError("terminal completion token total is invalid")
+    if len(actions) > len(usage):
+        raise ValueError("terminal actions exceed completion usage")
+    for index, action in enumerate(actions):
+        if not isinstance(action, Mapping) or action.get("completion_tokens") != usage[index]["completion_tokens"]:
+            raise ValueError("terminal action completion usage does not bind its assistant turn")
+
+
 def validate_recovery_record(
     value: Any,
     *,
@@ -282,7 +390,7 @@ def validate_recovery_record(
 
     record = _require_fields(value, {
         "schema", "split", "task", "student", "teacher", "runtime",
-        "first_divergence", "messages", "validator_receipt", "source_provenance",
+        "first_divergence", "messages", "validator_receipt", "source_provenance", "terminal_binding",
     }, "record")
     if record["schema"] != RECOVERY_RECORD_SCHEMA:
         raise ValueError("unsupported recovery record schema")
@@ -356,24 +464,271 @@ def validate_recovery_record(
         max_messages=max_messages,
         max_message_bytes=max_message_bytes,
     )
+    binding = _require_fields(record["terminal_binding"], {
+        "artifacts", "bundle", "bundle_sha256", "archive_sha256", "failed_terminal", "failed_terminal_sha256",
+        "corrective_terminal", "corrective_terminal_sha256", "validator_execution",
+        "validator_execution_sha256", "completion_receipt", "completion_receipt_sha256",
+        "lease_identity", "prefix_sha256", "model_prefix_sha256", "terminating_intervention",
+    }, "terminal binding")
+    for key in ("bundle_sha256", "archive_sha256", "failed_terminal_sha256", "corrective_terminal_sha256",
+                "validator_execution_sha256", "completion_receipt_sha256", "lease_identity", "prefix_sha256", "model_prefix_sha256"):
+        _require_digest(binding[key], f"terminal binding {key}")
+    artifacts = _require_fields(binding["artifacts"], {
+        "registry", "generation_receipt", "generator_manifest", "source_archive", "overlap_receipt",
+        "tasks_collection", "bundle", "archive", "private_spec", "failed_terminal",
+        "corrective_terminal", "validator_execution", "completion_receipt",
+    }, "terminal artifact references")
+    for name, reference in artifacts.items():
+        reference = _require_fields(reference, {"sha256", "path"}, f"terminal artifact {name}")
+        _require_digest(reference["sha256"], f"terminal artifact {name} SHA-256")
+        if (not isinstance(reference["path"], str) or not reference["path"]
+                or reference["path"].startswith("/") or ".." in reference["path"].split("/")):
+            raise ValueError(f"terminal artifact {name} path is invalid")
+    for name, digest in {
+        "bundle": binding["bundle_sha256"], "archive": binding["archive_sha256"],
+        "failed_terminal": binding["failed_terminal_sha256"],
+        "corrective_terminal": binding["corrective_terminal_sha256"],
+        "validator_execution": binding["validator_execution_sha256"],
+        "completion_receipt": binding["completion_receipt_sha256"],
+    }.items():
+        if artifacts[name]["sha256"] != digest:
+            raise ValueError("terminal inline object digest does not match artifact reference")
+    if artifacts["completion_receipt"]["path"] != completion_marker_relative_path(
+            task["identity"], binding["completion_receipt_sha256"]):
+        raise ValueError("completion receipt artifact must be the task-specific finalized marker")
+    bundle = binding["bundle"]
+    if not isinstance(bundle, Mapping) or sha256_json(bundle) != binding["bundle_sha256"]:
+        raise ValueError("bundle bytes do not bind terminal relation")
+    bundle_task, bundle_runtime = bundle.get("task"), bundle.get("runtime")
+    if (not isinstance(bundle_task, Mapping) or not isinstance(bundle_runtime, Mapping)
+            or any(bundle_task.get(key) != item for key, item in task.items())
+            or any(bundle_runtime.get(key) != item for key, item in runtime.items())):
+        raise ValueError("record task/runtime do not match sealed bundle")
+    fixture = bundle.get("fixture")
+    if not isinstance(fixture, Mapping) or fixture.get("artifact_sha256") != binding["archive_sha256"]:
+        raise ValueError("archive does not bind sealed bundle fixture")
+
+    failed = binding["failed_terminal"]
+    if (not isinstance(failed, Mapping) or failed.get("status") != "no_progress_terminated"
+            or sha256_json(failed) != binding["failed_terminal_sha256"]):
+        raise ValueError("correction must derive from its sealed no_progress_terminated terminal")
+    if student["rollout_identity"] != binding["failed_terminal_sha256"]:
+        raise ValueError("student rollout identity does not bind failed terminal")
+    failed_actions = failed.get("actions")
+    failed_messages = failed.get("messages")
+    if not isinstance(failed_actions, list) or not failed_actions or not isinstance(failed_messages, list):
+        raise ValueError("failed terminal transcript/actions are required")
+    _validate_action_progress_history(failed_actions, terminated=True)
+    _validate_terminal_completion_usage(failed, bundle["limits"])
+    if len(failed_messages) != 2 + len(failed_actions) * 2 - 1:
+        raise ValueError("failed terminal must omit only its terminating observation")
+
+    def assistant_text(message: Any, name: str) -> str:
+        if not isinstance(message, Mapping) or message.get("role") != "assistant":
+            raise ValueError(f"{name} assistant message is invalid")
+        try:
+            encoded = serialize_pi_messages([message], append_assistant_header=False)
+        except AgentProtocolError as exc:
+            raise ValueError(f"{name} native assistant serialization is invalid") from exc
+        if not encoded.startswith("Assistant:\n"):
+            raise ValueError(f"{name} native assistant serialization is invalid")
+        return encoded[len("Assistant:\n"):]
+
+    derived_prefix = [
+        {"role": "system", "text": failed_messages[0].get("content"), "loss": 0},
+        {"role": "user", "text": failed_messages[1].get("content"), "loss": 0},
+    ]
+    if not isinstance(derived_prefix[0]["text"], str) or not isinstance(derived_prefix[1]["text"], str):
+        raise ValueError("failed terminal system/user content is invalid")
+    for index, action in enumerate(failed_actions):
+        assistant_index = 2 + index * 2
+        assistant = failed_messages[assistant_index] if assistant_index < len(failed_messages) else None
+        text = assistant_text(assistant, f"failed action {index}")
+        calls = assistant.get("tool_calls")
+        if not isinstance(calls, list) or len(calls) != 1 or not isinstance(calls[0], Mapping):
+            raise ValueError("failed terminal tool call is invalid")
+        call = calls[0]
+        function = call.get("function")
+        raw_arguments = function.get("arguments") if isinstance(function, Mapping) else None
+        if (call.get("id") != action.get("tool_call_id") or function.get("name") != action.get("tool_name")
+                or not isinstance(raw_arguments, str) or raw_arguments != action.get("arguments_json")
+                or text != f"Action: {action.get('tool_name')}\nArguments: {raw_arguments}"
+                or json.loads(raw_arguments) != action.get("arguments")):
+            raise ValueError("failed terminal action/message/function.arguments linkage mismatch")
+        if action.get("raw_observation_sha256") != sha256_json(action.get("raw_observation")):
+            raise ValueError("failed terminal raw observation digest mismatch")
+        if (not isinstance(action.get("effective_observation"), str)
+                or action.get("observation_sha256") != sha256_text(action["effective_observation"])):
+            raise ValueError("failed terminal effective observation digest mismatch")
+        derived_prefix.append({"role": "assistant", "text": text, "loss": 0})
+        if index < len(failed_actions) - 1:
+            tool = failed_messages[assistant_index + 1]
+            if (not isinstance(tool, Mapping) or tool.get("role") != "tool"
+                    or tool.get("tool_call_id") != action["tool_call_id"]
+                    or tool.get("content") != action["effective_observation"]):
+                raise ValueError("failed terminal model-facing observation linkage mismatch")
+            derived_prefix.append({"role": "tool", "text": action["effective_observation"], "loss": 0})
+    intervention = binding["terminating_intervention"]
+    if (not isinstance(intervention, Mapping) or set(intervention) != {"action_index", "effective_observation", "sent_to_model"}
+            or intervention.get("action_index") != len(failed_actions) - 1
+            or intervention.get("sent_to_model") is not False
+            or intervention.get("effective_observation") != failed_actions[-1]["effective_observation"]):
+        raise ValueError("terminating observation must be one explicit unsent controller intervention")
+    derived_prefix.append({"role": "tool", "text": intervention["effective_observation"], "loss": 0})
+    if messages[:divergence["target_start_message_index"]] != derived_prefix:
+        raise ValueError("zero-loss prefix is not exactly the failed model-facing transcript plus intervention")
+    if sha256_json(derived_prefix) != binding["model_prefix_sha256"]:
+        raise ValueError("model correction prefix digest does not bind failed transcript")
+
+    action_index = (divergence["message_index"] - 2) // 2
+    if divergence["message_index"] != 2 + action_index * 2 or action_index >= len(failed_actions):
+        raise ValueError("first divergence does not select a failed action")
+    divergent = failed_actions[action_index]
     try:
         parsed = parse_agent_turn(messages[divergence["message_index"]]["text"])
     except AgentProtocolError as exc:
-        raise ValueError("first divergent action is not canonical protocol") from exc
-    if parsed.kind != "tool_call" or parsed.tool_name is None or parsed.arguments is None:
-        raise ValueError("first divergence must be a tool call")
-    expected_action = canonical_action(parsed.tool_name, parsed.arguments)
-    if divergence["student_action_canonical"] != expected_action:
-        raise ValueError("stored divergent action is not canonical or does not match messages")
+        raise ValueError("first divergent action is not protocol text") from exc
+    if (parsed.kind != "tool_call" or parsed.tool_name != divergent["tool_name"]
+            or parsed.arguments != divergent["arguments"]
+            or divergence["student_action_canonical"] != canonical_action(parsed.tool_name, parsed.arguments)
+            or divergence["pre_state_digest"] != divergent.get("progress_fingerprint")
+            or divergence["observation_digest"] != sha256_text(divergent["effective_observation"])):
+        raise ValueError("first divergence action/progress/observation binding mismatch")
 
+    corrective = binding["corrective_terminal"]
+    if (not isinstance(corrective, Mapping) or sha256_json(corrective) != binding["corrective_terminal_sha256"]
+            or corrective.get("status") != "success" or corrective.get("failed_terminal_sha256") != binding["failed_terminal_sha256"]
+            or corrective.get("prefix_sha256") != binding["prefix_sha256"]
+            or corrective.get("correction_start_message_index") != divergence["target_start_message_index"]):
+        raise ValueError("corrective terminal success/resume/prefix relation is invalid")
+    corrective_messages, corrective_actions = corrective.get("messages"), corrective.get("actions")
+    if (not isinstance(corrective_messages, list) or not isinstance(corrective_actions, list)
+            or corrective_messages[:len(failed_messages)] != failed_messages
+            or len(corrective_actions) < len(failed_actions)
+            or corrective_actions[:len(failed_actions)] != failed_actions):
+        raise ValueError("corrective terminal does not retain failed messages/actions")
+    _validate_action_progress_history(
+        corrective_actions,
+        terminated=False,
+        permitted_termination_indexes={len(failed_actions) - 1},
+    )
+    _validate_terminal_completion_usage(corrective, bundle["limits"])
+    expected_intervention = {"role": "tool", "tool_call_id": failed_actions[-1]["tool_call_id"],
+                             "content": intervention["effective_observation"], "controller_intervention": True}
+    if corrective_messages[len(failed_messages):divergence["target_start_message_index"]] != [expected_intervention]:
+        raise ValueError("corrective terminal intervention relation is invalid")
+    suffix_messages: list[dict[str, Any]] = []
+    cursor = divergence["target_start_message_index"]
+    for index, action in enumerate(corrective_actions[len(failed_actions):], start=len(failed_actions)):
+        assistant = corrective_messages[cursor] if cursor < len(corrective_messages) else None
+        text = assistant_text(assistant, f"corrective action {index}")
+        calls = assistant.get("tool_calls")
+        call = calls[0] if isinstance(calls, list) and len(calls) == 1 and isinstance(calls[0], Mapping) else None
+        function = call.get("function") if isinstance(call, Mapping) else None
+        raw_arguments = function.get("arguments") if isinstance(function, Mapping) else None
+        tool = corrective_messages[cursor + 1] if cursor + 1 < len(corrective_messages) else None
+        if (not isinstance(function, Mapping) or action.get("sequence") != index
+                or call.get("id") != action.get("tool_call_id")
+                or function.get("name") != action.get("tool_name") or raw_arguments != action.get("arguments_json")
+                or not isinstance(raw_arguments, str) or json.loads(raw_arguments) != action.get("arguments")
+                or action.get("raw_observation_sha256") != sha256_json(action.get("raw_observation"))
+                or not isinstance(action.get("effective_observation"), str)
+                or action.get("observation_sha256") != sha256_text(action["effective_observation"])
+                or text != f"Action: {action.get('tool_name')}\nArguments: {raw_arguments}"
+                or not isinstance(tool, Mapping) or tool.get("role") != "tool"
+                or tool.get("tool_call_id") != action.get("tool_call_id")
+                or tool.get("content") != action.get("effective_observation")):
+            raise ValueError("corrective terminal message/action/function.arguments linkage mismatch")
+        suffix_messages.extend(({"role": "assistant", "text": text, "loss": 1},
+                                {"role": "tool", "text": action["effective_observation"], "loss": 0}))
+        cursor += 2
+    final = corrective_messages[cursor] if cursor < len(corrective_messages) else None
+    if (cursor + 1 != len(corrective_messages) or not isinstance(final, Mapping)
+            or final.get("role") != "assistant" or not isinstance(final.get("content"), str)
+            or not final["content"].startswith("Final:")):
+        raise ValueError("corrective terminal final message relation is invalid")
+    suffix_messages.append({"role": "assistant", "text": final["content"], "loss": 1})
+    if messages[divergence["target_start_message_index"]:] != suffix_messages:
+        raise ValueError("corrective suffix messages are not mechanically derived")
+
+    execution = binding["validator_execution"]
+    if not isinstance(execution, Mapping) or sha256_json(execution) != binding["validator_execution_sha256"]:
+        raise ValueError("validator execution bytes do not bind terminal relation")
+    if (execution.get("schema") != "emender-e97-first-party-validator-receipt-v3" or execution.get("status") != "pass"
+            or execution.get("task_identity") != task["identity"] or execution.get("bundle_sha256") != binding["bundle_sha256"]
+            or execution.get("fixture_tree_digest") != task["fixture_tree_digest"]
+            or execution.get("terminal_sha256") != binding["corrective_terminal_sha256"]
+            or execution.get("validator_spec_digest") != bundle.get("validator", {}).get("spec_digest")
+            or execution.get("runtime_schema_digest") != runtime["schema_digest"]):
+        raise ValueError("validator execution task/bundle/terminal/spec/runtime relation is invalid")
+    execution_fields = {
+        "schema", "status", "task_identity", "bundle_sha256", "fixture_tree_digest",
+        "archive_expanded_bytes", "configured_limits", "terminal_sha256", "validator_spec_digest",
+        "runtime_schema_digest", "validators",
+    }
+    if set(execution) != execution_fields or execution.get("configured_limits") != bundle.get("limits"):
+        raise ValueError("validator execution limits/schema are invalid")
+    if (isinstance(execution.get("archive_expanded_bytes"), bool)
+            or not isinstance(execution.get("archive_expanded_bytes"), int)
+            or execution["archive_expanded_bytes"] < 0
+            or execution["archive_expanded_bytes"] > bundle["limits"]["disk_bytes"]):
+        raise ValueError("validator execution archive bounds are invalid")
+    validators = _require_fields(execution.get("validators"), {"focused", "regression"}, "validator execution outputs")
+    for mode in ("focused", "regression"):
+        output = _require_fields(validators[mode], {
+            "logical_argv", "logical_argv_sha256", "stdout_sha256", "stderr_sha256", "output",
+        }, f"validator {mode} output")
+        expected_argv = [
+            _VALIDATOR_LOGICAL_RUNTIME, _VALIDATOR_LOGICAL_PROGRAM, "--mode", mode,
+            "--spec", "<spec>", "--terminal", "<terminal>",
+        ]
+        if (bundle["validator"].get(f"{mode}_argv") != expected_argv[:4]
+                or output["logical_argv"] != expected_argv
+                or output["logical_argv_sha256"] != sha256_json(expected_argv)
+                or output["stdout_sha256"] != sha256_text(canonical_json({
+                    "action_count": len(corrective_actions), "mode": mode, "status": "pass",
+                }) + "\n")
+                or output["stderr_sha256"] != sha256_text("")
+                or output["output"] != {
+                    "mode": mode, "status": "pass", "action_count": len(corrective_actions),
+                }):
+            raise ValueError("validator output is not exact focused/regression evidence")
     receipt = _require_fields(record["validator_receipt"], {
-        "validator_digest", "input_digest", "postcondition_digest",
-        "action_graph_digest", "passed", "cycle_free",
+        "validator_digest", "input_digest", "postcondition_digest", "action_graph_digest", "passed", "cycle_free",
     }, "validator_receipt")
     for key in ("validator_digest", "input_digest", "postcondition_digest", "action_graph_digest"):
         _require_digest(receipt[key], f"validator receipt {key}")
     if receipt["passed"] is not True or receipt["cycle_free"] is not True:
         raise ValueError("only passed, cycle-free validator receipts are trainable")
+    if (receipt["validator_digest"] != execution["validator_spec_digest"]
+            or receipt["input_digest"] != task["fixture_tree_digest"]
+            or receipt["postcondition_digest"] != binding["validator_execution_sha256"]
+            or receipt["action_graph_digest"] != sha256_json(corrective_actions)):
+        raise ValueError("compact validator receipt does not bind full validator/action graph")
+
+    completion = binding["completion_receipt"]
+    if not isinstance(completion, Mapping) or sha256_json(completion) != binding["completion_receipt_sha256"]:
+        raise ValueError("completion receipt bytes do not bind terminal relation")
+    lease = completion.get("lease")
+    completion_body = completion.get("receipt")
+    if not isinstance(completion_body, Mapping):
+        raise ValueError("completion receipt body is invalid")
+    _require_fields(completion_body, {
+        "task_id", "bundle_sha256", "archive_sha256", "failed_terminal_sha256",
+        "accepted_terminal_sha256", "validator_receipt_sha256", "validator_status",
+    }, "completion receipt body")
+    if (completion.get("schema") != "emender-e97-task-completion-receipt-v3" or not isinstance(lease, Mapping)
+            or completion.get("task_id") != task["identity"]
+            or lease.get("task_id") != task["identity"] or lease.get("identity") != binding["lease_identity"]
+            or sha256_json({"task_id": lease.get("task_id"), "owner": lease.get("owner"), "attempt": lease.get("attempt"), "deadline_ns": lease.get("deadline_ns")}) != binding["lease_identity"]
+            or completion_body.get("task_id") != task["identity"]
+            or completion_body.get("bundle_sha256") != binding["bundle_sha256"]
+            or completion_body.get("archive_sha256") != binding["archive_sha256"]
+            or completion_body.get("failed_terminal_sha256") != binding["failed_terminal_sha256"]
+            or completion_body.get("accepted_terminal_sha256") != binding["corrective_terminal_sha256"]
+            or completion_body.get("validator_receipt_sha256") != binding["validator_execution_sha256"]
+            or completion_body.get("validator_status") != "pass"):
+        raise ValueError("completion receipt lease/task/bundle/archive/terminal/validator relation is invalid")
 
     provenance = _require_fields(record["source_provenance"], {
         "source_digests", "forbidden_panel_digests_checked",
@@ -388,6 +743,8 @@ def validate_recovery_record(
                  for item in forbidden_source_digests}
     if forbidden.intersection(sources):
         raise ValueError("consumed evaluation source is inadmissible")
+    if task["generator_source_digest"] not in sources:
+        raise ValueError("source provenance must include the exact bundle generator digest")
     checked = provenance["forbidden_panel_digests_checked"]
     if not isinstance(checked, list) or not forbidden.issubset(checked):
         raise ValueError("record lacks the required forbidden-panel check receipt")

@@ -214,6 +214,7 @@ class ActionReceipt:
     tool_call_id: str
     tool_name: str
     arguments: dict[str, Any]
+    arguments_json: str
     raw_observation: Any
     raw_observation_sha256: str
     effective_observation: str
@@ -224,6 +225,7 @@ class ActionReceipt:
     acquired_observations: tuple[Mapping[str, Any], ...]
     action_fingerprint: str
     progress_fingerprint: str
+    completion_tokens: int
     decision: str
 
 
@@ -579,12 +581,14 @@ class _ForkWorker:
             if self.process.is_alive():
                 try:
                     self.connection.send_bytes(b'{"op":"close"}')
-                    self.process.join(timeout=0.1)
+                    # A controller deadline has already expired; prefer prompt
+                    # process-tree reaping over a second long graceful wait.
+                    self.process.join(timeout=0.02)
                 except (BrokenPipeError, OSError):
                     pass
             if self.process.is_alive():
                 self.process.terminate()
-                self.process.join(timeout=0.2)
+                self.process.join(timeout=0.1)
             if self.process.is_alive():
                 self.process.kill()
                 self.process.join()
@@ -609,6 +613,7 @@ class AcquisitionController:
         max_seconds: float = 300,
         max_completion_tokens: int = 512,
         max_observation_bytes: int = 16_384,
+        sealed_limits: Mapping[str, int] | None = None,
         tools: Sequence[Mapping[str, Any]] = READ_OBSERVE_TOOLS,
         clock: Callable[[], float] = time.monotonic,
     ) -> None:
@@ -632,16 +637,71 @@ class AcquisitionController:
         self.max_seconds = max_seconds
         self.max_completion_tokens = max_completion_tokens
         self.max_observation_bytes = max_observation_bytes
+        if sealed_limits is not None:
+            expected_limits = {"turns", "seconds", "completion_tokens", "output_bytes", "disk_bytes", "processes"}
+            if (not isinstance(sealed_limits, Mapping) or set(sealed_limits) != expected_limits
+                    or any(isinstance(item, bool) or not isinstance(item, int) or item <= 0
+                           for item in sealed_limits.values())):
+                raise ValueError("sealed task limits are invalid")
+            if (sealed_limits["turns"] != max_turns or sealed_limits["seconds"] != int(max_seconds)
+                    or sealed_limits["completion_tokens"] != max_completion_tokens
+                    or sealed_limits["output_bytes"] != max_observation_bytes):
+                raise ValueError("controller limits do not exactly match sealed task limits")
+            self.sealed_limits: dict[str, int] | None = dict(sealed_limits)
+        else:
+            self.sealed_limits = None
         self.tools = tuple(dict(tool) for tool in tools)
         if self.expected_service_attestation["tool_schema_sha256"] != sha256_json(self.tools):
             raise ValueError("service attestation tool schema does not match controller tools")
         self.clock = clock
         self._completion_worker: _ForkWorker | None = None
         self._tool_worker: _ForkWorker | None = None
+        self._completion_usage: list[dict[str, int]] = []
         self._consumed = False
 
-    def _metadata(self, system_prompt: str, messages: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
-        return {
+    @classmethod
+    def for_task_bundle(
+        cls,
+        completion_client: CompletionClient,
+        tool_executor: ToolExecutor,
+        *,
+        bundle: Mapping[str, Any],
+        checkpoint_sha256: str,
+        expected_service_attestation: Mapping[str, Any],
+        controller_build_sha256: str,
+        model_id: str = "e97-dense-agent",
+        clock: Callable[[], float] = time.monotonic,
+    ) -> "AcquisitionController":
+        """Construct a controller whose executable limits come only from a bundle."""
+
+        limits = bundle.get("limits") if isinstance(bundle, Mapping) else None
+        if not isinstance(limits, Mapping):
+            raise ValueError("sealed task bundle limits are required")
+        return cls(
+            completion_client,
+            tool_executor,
+            checkpoint_sha256=checkpoint_sha256,
+            expected_service_attestation=expected_service_attestation,
+            controller_build_sha256=controller_build_sha256,
+            model_id=model_id,
+            max_turns=limits.get("turns", 0),
+            max_seconds=limits.get("seconds", 0),
+            max_completion_tokens=limits.get("completion_tokens", 0),
+            max_observation_bytes=limits.get("output_bytes", 0),
+            sealed_limits=limits,
+            clock=clock,
+        )
+
+    def _metadata(
+        self,
+        system_prompt: str,
+        messages: Sequence[Mapping[str, Any]],
+        *,
+        turns: int,
+        actions: int,
+        elapsed_seconds: float,
+    ) -> dict[str, Any]:
+        metadata = {
             "schema": ACQUISITION_CONTROLLER_SCHEMA,
             "checkpoint_sha256": self.checkpoint_sha256,
             "model_id": self.model_id,
@@ -651,15 +711,36 @@ class AcquisitionController:
             "service_attestation": self.expected_service_attestation,
             "serialized_messages_sha256": sha256_text(
                 serialize_pi_messages(messages, append_assistant_header=False)),
+            "configured_limits": dict(self.sealed_limits) if self.sealed_limits is not None else {
+                "turns": self.max_turns,
+                "seconds": int(self.max_seconds),
+                "completion_tokens": self.max_completion_tokens,
+                "output_bytes": self.max_observation_bytes,
+            },
+            "turn_count": turns,
+            "action_count": actions,
+            "elapsed_seconds": elapsed_seconds,
+            "completion_usage": [dict(item) for item in self._completion_usage],
+            "completion_tokens": sum(item["completion_tokens"] for item in self._completion_usage),
         }
+        return metadata
 
     def _terminal(self, status: str, started: float, messages: list[dict[str, Any]], actions: list[ActionReceipt], system_prompt: str, error: str | None = None) -> TerminalReceipt:
         for worker in (self._completion_worker, self._tool_worker):
             if worker is not None:
                 worker.close()
         self._completion_worker = self._tool_worker = None
-        return TerminalReceipt(status, len([m for m in messages if m["role"] == "assistant"]), self.clock() - started,
-                               tuple(messages), tuple(actions), self._metadata(system_prompt, messages), error)
+        turns = len([message for message in messages if message["role"] == "assistant"])
+        elapsed = self.clock() - started
+        return TerminalReceipt(
+            status,
+            turns,
+            elapsed,
+            tuple(messages),
+            tuple(actions),
+            self._metadata(system_prompt, messages, turns=turns, actions=len(actions), elapsed_seconds=elapsed),
+            error,
+        )
 
     def _bounded_observation(self, text: str) -> str:
         if not isinstance(text, str):
@@ -669,6 +750,25 @@ class AcquisitionController:
             return text
         # Do not slice arbitrary JSON/text and thereby fabricate a partial result.
         return canonical_json({"ok": False, "error": {"code": "output_limit", "message": "tool output exceeded limit"}})
+
+    def _completion_tokens(self, response: Mapping[str, Any]) -> int:
+        """Require the service's bounded token accounting for every accepted turn."""
+
+        usage = response.get("usage")
+        tokens = usage.get("completion_tokens") if isinstance(usage, Mapping) else None
+        if isinstance(tokens, bool) or not isinstance(tokens, int) or not 1 <= tokens <= self.max_completion_tokens:
+            raise AgentProtocolError("completion response lacks bounded usage.completion_tokens")
+        return tokens
+
+    def _validate_assistant_body_limit(self, message: Mapping[str, Any]) -> None:
+        """Apply a deterministic UTF-8 ceiling when tokenizer details are unavailable."""
+
+        try:
+            body = serialize_pi_messages([message], append_assistant_header=False).removeprefix("Assistant:\n")
+        except AgentProtocolError as exc:
+            raise AgentProtocolError("completion assistant serialization is invalid") from exc
+        if len(body.encode("utf-8")) > self.max_completion_tokens * 8:
+            raise AgentProtocolError("completion assistant body exceeds deterministic token byte ceiling")
 
     @staticmethod
     def _assistant(response: Mapping[str, Any]) -> tuple[dict[str, Any], Any]:
@@ -682,7 +782,14 @@ class AcquisitionController:
         if raw_message.get("tool_calls"):
             if raw_message.get("content") is not None:
                 raise AgentProtocolError("completion tool call must have null content")
-            message = {"role": "assistant", "content": None, "tool_calls": list(raw_message["tool_calls"])}
+            tool_calls = raw_message["tool_calls"]
+            if not isinstance(tool_calls, list) or not tool_calls:
+                raise AgentProtocolError("completion tool_calls must be a non-empty list")
+            for call in tool_calls:
+                function = call.get("function") if isinstance(call, Mapping) else None
+                if not isinstance(function, Mapping) or not isinstance(function.get("arguments"), str):
+                    raise AgentProtocolError("completion function.arguments must be a string")
+            message = {"role": "assistant", "content": None, "tool_calls": list(tool_calls)}
         else:
             content = raw_message.get("content")
             if not isinstance(content, str):
@@ -699,6 +806,7 @@ class AcquisitionController:
         if self._consumed:
             raise RuntimeError("AcquisitionController is one-shot")
         self._consumed = True
+        self._completion_usage = []
         if not isinstance(system_prompt, str) or not system_prompt or not isinstance(user_prompt, str) or not user_prompt:
             raise ValueError("non-empty system and user prompts are required")
         started = self.clock()
@@ -735,12 +843,15 @@ class AcquisitionController:
                     raise AgentProtocolError("completion request identity mismatch")
                 if validate_service_attestation(response.get("emender_service_attestation")) != self.expected_service_attestation:
                     raise AgentProtocolError("service attestation mismatch")
+                completion_tokens = self._completion_tokens(response)
                 assistant, turn = self._assistant(response)
+                self._validate_assistant_body_limit(assistant)
                 validate_generated_tool(turn, list(self.tools))
             except TimeoutError:
                 return self._terminal("time_limit", started, messages, actions, system_prompt)
             except Exception as exc:
                 return self._terminal("completion_error", started, messages, actions, system_prompt, str(exc))
+            self._completion_usage.append({"sequence": len(self._completion_usage), "completion_tokens": completion_tokens})
             requests += 1
             if self.clock() >= deadline:
                 return self._terminal("time_limit", started, messages, actions, system_prompt)
@@ -781,10 +892,10 @@ class AcquisitionController:
                 decision = detector.observe(receipt_state)
                 effective = decision.observation if decision.observation is not None else authentic_effective
                 receipt = ActionReceipt(
-                    len(actions), call_id, turn.tool_name, dict(turn.arguments), execution.raw_observation, raw_digest,
+                    len(actions), call_id, turn.tool_name, dict(turn.arguments), turn.arguments_json or "", execution.raw_observation, raw_digest,
                     effective, sha256_text(effective), execution.is_error, dict(workspace_state), dict(source_ledger),
                     acquired_observations, action_fingerprint(turn.tool_name, turn.arguments),
-                    progress_fingerprint(workspace_state=workspace_state, source_ledger=source_ledger, acquired_observations=acquired_observations), decision.kind,
+                    progress_fingerprint(workspace_state=workspace_state, source_ledger=source_ledger, acquired_observations=acquired_observations), completion_tokens, decision.kind,
                 )
             except Exception as exc:
                 return self._terminal("tool_controller_error", started, messages, actions, system_prompt, str(exc))

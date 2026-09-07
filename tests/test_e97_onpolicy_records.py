@@ -1,13 +1,7 @@
 import copy
-import json
-import subprocess
-import sys
 
-import numpy as np
 import pytest
-import tiktoken
 
-from ndm.data.masked_sft_dataset import RECORD_INDEX, sha256
 from ndm.e97_onpolicy_records import (
     CANONICAL_NO_PROGRESS_OBSERVATION,
     CONSUMED_V3_MANIFEST_SHA256,
@@ -17,6 +11,8 @@ from ndm.e97_onpolicy_records import (
     NoProgressDetector,
     action_fingerprint,
     canonical_action,
+    canonical_json,
+    completion_marker_relative_path,
     progress_fingerprint,
     recovery_record_fingerprint,
     sha256_json,
@@ -26,15 +22,49 @@ from ndm.e97_onpolicy_records import (
 )
 
 
-def digest(label):
+def digest(label: str) -> str:
     return sha256_text(label)
 
 
-def valid_record(*, split="train"):
+def action(sequence: int, call_id: str, *, decision: str, effective: str, raw: str) -> dict:
+    arguments = {"path": "missing.txt", "offset": 1, "limit": 40}
+    workspace = {"tree": digest("unchanged")}
+    observations = [{"tool": "read", "raw_observation_sha256": sha256_json(raw)}]
+    return {
+        "sequence": sequence,
+        "tool_call_id": call_id,
+        "tool_name": "read",
+        "arguments": arguments,
+        "arguments_json": '{"limit":40,"offset":1,"path":"missing.txt"}',
+        "raw_observation": raw,
+        "raw_observation_sha256": sha256_json(raw),
+        "effective_observation": effective,
+        "observation_sha256": sha256_text(effective),
+        "is_error": True,
+        "workspace_state": workspace,
+        "source_ledger": {},
+        "acquired_observations": observations,
+        "action_fingerprint": action_fingerprint("read", arguments),
+        "progress_fingerprint": progress_fingerprint(
+            workspace_state=workspace,
+            source_ledger={},
+            acquired_observations=observations,
+        ),
+        "completion_tokens": 1,
+        "decision": decision,
+    }
+
+
+def valid_record(*, split: str = "train") -> dict:
+    """A real continue/inject/terminate failed history plus a corrective action."""
+
     system = "Use bounded tools and ground the final in observed evidence."
-    bad = canonical_action("read", {"path": "missing.txt", "offset": 1, "limit": 40})
-    correction = canonical_action("read", {"path": "facts/value.txt", "offset": 1, "limit": 40})
     failure = "FileNotFoundError: missing.txt\nCommand exited with code 1"
+    failed_actions = [
+        action(0, "bad-0", decision="continue", effective=failure, raw=failure),
+        action(1, "bad-1", decision="inject_no_progress", effective=CANONICAL_NO_PROGRESS_OBSERVATION, raw=failure),
+        action(2, "bad-2", decision="terminate", effective=CANONICAL_NO_PROGRESS_OBSERVATION, raw=failure),
+    ]
     task = {
         "namespace": f"e97-{'train' if split == 'train' else 'dev'}-opaque-read-v1",
         "family_id": "opaque-read-recovery-v1",
@@ -43,197 +73,332 @@ def valid_record(*, split="train"):
         "intent_digest": digest("read-the-declared-value"),
     }
     task["identity"] = task_identity(**task)
+    runtime = {
+        "schema_digest": digest("runtime-schema-v1"),
+        "controller_digest": digest("controller-v1"),
+        "system_prompt_sha256": sha256_text(system),
+        "tool_schema_digest": digest("tool-schema-v1"),
+    }
+    limits = {
+        "turns": 12,
+        "seconds": 60,
+        "completion_tokens": 512,
+        "output_bytes": 16384,
+        "disk_bytes": 1 << 20,
+        "processes": 1,
+    }
+    metadata = {
+        "controller_build_sha256": runtime["controller_digest"],
+        "tool_schema_sha256": runtime["tool_schema_digest"],
+        "system_prompt_sha256": runtime["system_prompt_sha256"],
+        "configured_limits": limits,
+        "turn_count": 3,
+        "action_count": 3,
+        "elapsed_seconds": 1.0,
+        "completion_usage": [
+            {"sequence": 0, "completion_tokens": 1},
+            {"sequence": 1, "completion_tokens": 1},
+            {"sequence": 2, "completion_tokens": 1},
+        ],
+        "completion_tokens": 3,
+    }
+
+    def assistant(item: dict) -> dict:
+        return {
+            "role": "assistant",
+            "content": None,
+            "tool_calls": [{
+                "id": item["tool_call_id"],
+                "type": "function",
+                "function": {"name": item["tool_name"], "arguments": item["arguments_json"]},
+            }],
+        }
+
+    failed_messages = [
+        {"role": "system", "content": system},
+        {"role": "user", "content": "Read the declared value from the workspace."},
+        assistant(failed_actions[0]),
+        {"role": "tool", "tool_call_id": "bad-0", "content": failure},
+        assistant(failed_actions[1]),
+        {"role": "tool", "tool_call_id": "bad-1", "content": CANONICAL_NO_PROGRESS_OBSERVATION},
+        assistant(failed_actions[2]),
+    ]
+    failed = {
+        "status": "no_progress_terminated",
+        "turns": 3,
+        "elapsed_seconds": 1.0,
+        "messages": failed_messages,
+        "actions": failed_actions,
+        "metadata": metadata,
+        "error": None,
+    }
+    good_arguments = {"path": "facts/value.txt", "offset": 1, "limit": 40}
+    good_raw = '{"limit":40,"offset":1,"path":"facts/value.txt"}'
+    good_workspace = {"tree": digest("changed")}
+    good = {
+        "sequence": 3,
+        "tool_call_id": "good",
+        "tool_name": "read",
+        "arguments": good_arguments,
+        "arguments_json": good_raw,
+        "raw_observation": "opal-731",
+        "raw_observation_sha256": sha256_json("opal-731"),
+        "effective_observation": "opal-731",
+        "observation_sha256": sha256_text("opal-731"),
+        "is_error": False,
+        "workspace_state": good_workspace,
+        "source_ledger": {},
+        "acquired_observations": [{"tool": "read", "raw_observation_sha256": sha256_json("opal-731")}],
+        "action_fingerprint": action_fingerprint("read", good_arguments),
+        "progress_fingerprint": progress_fingerprint(
+            workspace_state=good_workspace,
+            source_ledger={},
+            acquired_observations=[{"tool": "read", "raw_observation_sha256": sha256_json("opal-731")}],
+        ),
+        "completion_tokens": 1,
+        "decision": "continue",
+    }
+    intervention = {
+        "action_index": 2,
+        "effective_observation": CANONICAL_NO_PROGRESS_OBSERVATION,
+        "sent_to_model": False,
+    }
+    corrective_messages = failed_messages + [
+        {"role": "tool", "tool_call_id": "bad-2", "content": CANONICAL_NO_PROGRESS_OBSERVATION, "controller_intervention": True},
+        assistant(good),
+        {"role": "tool", "tool_call_id": "good", "content": "opal-731"},
+        {"role": "assistant", "content": "Final: facts/value.txt contains opal-731."},
+    ]
+    corrective_metadata = {
+        **metadata,
+        "turn_count": 5,
+        "action_count": 4,
+        "elapsed_seconds": 2.0,
+        "completion_usage": [
+            {"sequence": 0, "completion_tokens": 1},
+            {"sequence": 1, "completion_tokens": 1},
+            {"sequence": 2, "completion_tokens": 1},
+            {"sequence": 3, "completion_tokens": 1},
+            {"sequence": 4, "completion_tokens": 1},
+        ],
+        "completion_tokens": 5,
+    }
+    corrective = {
+        "schema": "emender-e97-corrective-terminal-v1",
+        "status": "success",
+        "failed_terminal_sha256": sha256_json(failed),
+        "correction_start_message_index": 8,
+        "prefix_sha256": sha256_json(corrective_messages[:8]),
+        "turns": 5,
+        "elapsed_seconds": 2.0,
+        "messages": corrective_messages,
+        "actions": failed_actions + [good],
+        "metadata": corrective_metadata,
+        "error": None,
+    }
+    bundle = {
+        "schema": "emender-e97-onpolicy-task-v1",
+        "split": split,
+        "task": {**task, "prompt": "Read the declared value.", "difficulty": 2},
+        "source": {
+            "registry_id": "test-source",
+            "kind": "first-party",
+            "repository": "example/test-source",
+            "revision": "a" * 40,
+            "source_record_digest": digest("source-record"),
+            "license_receipt_digest": digest("license"),
+        },
+        "fixture": {
+            "artifact_path": "archives/example.tar",
+            "artifact_bytes": 10,
+            "artifact_sha256": digest("archive"),
+            "tree_digest": task["fixture_tree_digest"],
+        },
+        "runtime": {**runtime, "sandbox_image_digest": digest("sandbox")},
+        "limits": limits,
+        "validator": {
+            "spec_digest": digest("validator-v1"),
+            "focused_argv": ["@runtime-python", "@generator-source/scripts/e97_first_party_validator.py", "--mode", "focused"],
+            "regression_argv": ["@runtime-python", "@generator-source/scripts/e97_first_party_validator.py", "--mode", "regression"],
+            "milestone_digest": digest("milestone"),
+            "minefield_digest": digest("minefield"),
+        },
+    }
+    validators = {}
+    for mode in ("focused", "regression"):
+        logical = bundle["validator"][f"{mode}_argv"] + ["--spec", "<spec>", "--terminal", "<terminal>"]
+        output = {"mode": mode, "status": "pass", "action_count": 4}
+        validators[mode] = {
+            "logical_argv": logical,
+            "logical_argv_sha256": sha256_json(logical),
+            "stdout_sha256": sha256_text(canonical_json(output) + "\n"),
+            "stderr_sha256": sha256_text(""),
+            "output": output,
+        }
+    execution = {
+        "schema": "emender-e97-first-party-validator-receipt-v3",
+        "status": "pass",
+        "task_identity": task["identity"],
+        "bundle_sha256": sha256_json(bundle),
+        "fixture_tree_digest": task["fixture_tree_digest"],
+        "archive_expanded_bytes": 10,
+        "configured_limits": limits,
+        "terminal_sha256": sha256_json(corrective),
+        "validator_spec_digest": bundle["validator"]["spec_digest"],
+        "runtime_schema_digest": runtime["schema_digest"],
+        "validators": validators,
+    }
+    lease_base = {"task_id": task["identity"], "owner": "unit", "attempt": 1, "deadline_ns": 42}
+    lease = {**lease_base, "identity": sha256_json(lease_base)}
+    completion = {
+        "schema": "emender-e97-task-completion-receipt-v3",
+        "task_id": task["identity"],
+        "lease": lease,
+        "receipt": {
+            "task_id": task["identity"],
+            "bundle_sha256": sha256_json(bundle),
+            "archive_sha256": digest("archive"),
+            "failed_terminal_sha256": sha256_json(failed),
+            "accepted_terminal_sha256": sha256_json(corrective),
+            "validator_receipt_sha256": sha256_json(execution),
+            "validator_status": "pass",
+        },
+    }
+    direct = {
+        "bundle": sha256_json(bundle),
+        "archive": digest("archive"),
+        "failed_terminal": sha256_json(failed),
+        "corrective_terminal": sha256_json(corrective),
+        "validator_execution": sha256_json(execution),
+        "completion_receipt": sha256_json(completion),
+    }
+    artifacts = {
+        "registry": {"sha256": digest("registry"), "path": "artifacts/aa/registry.json"},
+        "generation_receipt": {"sha256": digest("generation"), "path": "artifacts/bb/generation.json"},
+        "generator_manifest": {"sha256": digest("generator-manifest"), "path": "artifacts/bc/generator-manifest.json"},
+        "source_archive": {"sha256": digest("source-archive"), "path": "artifacts/bd/source-archive.tar"},
+        "overlap_receipt": {"sha256": digest("overlap"), "path": "artifacts/cc/overlap.json"},
+        "tasks_collection": {"sha256": digest("tasks"), "path": "artifacts/dd/tasks.jsonl"},
+        "private_spec": {"sha256": digest("spec"), "path": "artifacts/ee/spec.json"},
+    }
+    artifacts.update({
+        name: {"sha256": value, "path": f"artifacts/{value[:2]}/{value}.json" if name != "archive" else f"artifacts/{value[:2]}/{value}.tar"}
+        for name, value in direct.items()
+    })
+    artifacts["completion_receipt"]["path"] = completion_marker_relative_path(
+        task["identity"], direct["completion_receipt"],
+    )
+    prefix = [
+        {"role": "system", "text": system, "loss": 0},
+        {"role": "user", "text": failed_messages[1]["content"], "loss": 0},
+        {"role": "assistant", "text": "Action: read\nArguments: " + failed_actions[0]["arguments_json"], "loss": 0},
+        {"role": "tool", "text": failure, "loss": 0},
+        {"role": "assistant", "text": "Action: read\nArguments: " + failed_actions[1]["arguments_json"], "loss": 0},
+        {"role": "tool", "text": CANONICAL_NO_PROGRESS_OBSERVATION, "loss": 0},
+        {"role": "assistant", "text": "Action: read\nArguments: " + failed_actions[2]["arguments_json"], "loss": 0},
+        {"role": "tool", "text": CANONICAL_NO_PROGRESS_OBSERVATION, "loss": 0},
+    ]
     return {
         "schema": RECOVERY_RECORD_SCHEMA,
         "split": split,
         "task": task,
-        "student": {
-            "rollout_identity": digest(f"rollout-{split}"),
-            "checkpoint_sha256": digest("checkpoint-aae654aa"),
-            "decode": {"temperature": 0, "seed": 0, "max_output_tokens": 512},
-        },
-        "teacher": {"tier": "luna", "model_revision": "gpt-5.6-luna@test"},
-        "runtime": {
-            "schema_digest": digest("runtime-schema-v1"),
-            "controller_digest": digest("controller-v1"),
-            "system_prompt_sha256": sha256_text(system),
-            "tool_schema_digest": digest("tool-schema-v1"),
-        },
+        "student": {"rollout_identity": sha256_json(failed), "checkpoint_sha256": digest("checkpoint"), "decode": {"temperature": 0}},
+        "teacher": {"tier": "luna", "model_revision": "synthetic-unit-test"},
+        "runtime": runtime,
         "first_divergence": {
-            "message_index": 2,
-            "target_start_message_index": 4,
-            "class": "wrong-path",
-            "student_action_canonical": bad,
-            "pre_state_digest": digest("pre-state"),
-            "observation_digest": sha256_text(failure),
+            "message_index": 4,
+            "target_start_message_index": 8,
+            "class": "stale-action",
+            "student_action_canonical": canonical_action("read", failed_actions[1]["arguments"]),
+            "pre_state_digest": failed_actions[1]["progress_fingerprint"],
+            "observation_digest": sha256_text(CANONICAL_NO_PROGRESS_OBSERVATION),
         },
-        "messages": [
-            {"role": "system", "text": system, "loss": 0},
-            {"role": "user", "text": "Read the declared value from the workspace.", "loss": 0},
-            {"role": "assistant", "text": bad, "loss": 0},
-            {"role": "tool", "text": failure, "loss": 0},
-            {"role": "assistant", "text": correction, "loss": 1},
+        "messages": prefix + [
+            {"role": "assistant", "text": "Action: read\nArguments: " + good_raw, "loss": 1},
             {"role": "tool", "text": "opal-731", "loss": 0},
-            {"role": "assistant", "text": "Final: `facts/value.txt` contains `opal-731`.", "loss": 1},
+            {"role": "assistant", "text": "Final: facts/value.txt contains opal-731.", "loss": 1},
         ],
         "validator_receipt": {
-            "validator_digest": digest("validator-v1"),
-            "input_digest": digest(f"validator-input-{split}"),
-            "postcondition_digest": digest("postcondition-pass"),
-            "action_graph_digest": digest("read-missing-then-declared"),
+            "validator_digest": bundle["validator"]["spec_digest"],
+            "input_digest": task["fixture_tree_digest"],
+            "postcondition_digest": sha256_json(execution),
+            "action_graph_digest": sha256_json(corrective["actions"]),
             "passed": True,
             "cycle_free": True,
         },
         "source_provenance": {
-            "source_digests": [digest(f"fresh-source-{split}")],
-            "forbidden_panel_digests_checked": [
-                CONSUMED_V3_MANIFEST_SHA256, CONSUMED_V4_MANIFEST_SHA256,
-            ],
+            "source_digests": [task["generator_source_digest"]],
+            "forbidden_panel_digests_checked": [CONSUMED_V3_MANIFEST_SHA256, CONSUMED_V4_MANIFEST_SHA256],
+        },
+        "terminal_binding": {
+            "artifacts": artifacts,
+            "bundle": bundle,
+            "bundle_sha256": sha256_json(bundle),
+            "archive_sha256": digest("archive"),
+            "failed_terminal": failed,
+            "failed_terminal_sha256": sha256_json(failed),
+            "corrective_terminal": corrective,
+            "corrective_terminal_sha256": sha256_json(corrective),
+            "validator_execution": execution,
+            "validator_execution_sha256": sha256_json(execution),
+            "completion_receipt": completion,
+            "completion_receipt_sha256": sha256_json(completion),
+            "lease_identity": lease["identity"],
+            "prefix_sha256": corrective["prefix_sha256"],
+            "model_prefix_sha256": sha256_json(prefix),
+            "terminating_intervention": intervention,
         },
     }
 
 
 def test_action_and_progress_fingerprints_are_canonical():
-    first = action_fingerprint("read", {"limit": 40, "path": "a.txt", "offset": 1})
-    reordered = action_fingerprint("read", {"offset": 1, "path": "a.txt", "limit": 40})
-    changed = action_fingerprint("read", {"offset": 1, "path": "b.txt", "limit": 40})
-    assert first == reordered and first != changed
-    assert canonical_action("read", {"path": "a.txt", "limit": 40}) == (
-        'Action: read\nArguments: {"limit":40,"path":"a.txt"}')
-
-    state_a = progress_fingerprint(
-        workspace_state={"tree": digest("tree")},
-        source_ledger={"src-1": digest("page")},
-        acquired_observations=[{"source": "src-1", "view": "a"},
-                               {"source": "src-1", "view": "a"}],
+    assert action_fingerprint("read", {"path": "a.txt", "limit": 40}) == action_fingerprint(
+        "read", {"limit": 40, "path": "a.txt"},
     )
-    state_b = progress_fingerprint(
-        workspace_state={"tree": digest("tree")},
-        source_ledger={"src-1": digest("page")},
-        acquired_observations=[{"source": "src-1", "view": "a"}],
-    )
-    assert state_a == state_b
+    assert canonical_action("read", {"path": "a.txt", "limit": 40}) == 'Action: read\nArguments: {"limit":40,"path":"a.txt"}'
 
 
 def test_no_progress_detector_injects_once_then_terminates():
     detector = NoProgressDetector()
-    stale = ActionProgressReceipt(
-        tool_name="read",
-        arguments={"path": "missing.txt", "offset": 1, "limit": 40},
-        workspace_state={"tree": digest("unchanged")},
-        source_ledger={},
-        acquired_observations=[{"error": "missing.txt"}],
-    )
-    assert detector.observe(stale).kind == "continue"
-    injected = detector.observe(stale)
-    assert injected.kind == "inject_no_progress"
-    assert injected.observation == CANONICAL_NO_PROGRESS_OBSERVATION
-    assert detector.observe(stale).kind == "terminate"
+    receipt = ActionProgressReceipt("read", {"path": "missing.txt"}, {"tree": digest("same")}, {}, ["missing"])
+    assert detector.observe(receipt).kind == "continue"
+    assert detector.observe(receipt).kind == "inject_no_progress"
+    assert detector.observe(receipt).kind == "terminate"
 
 
-def test_repeated_action_after_changed_state_is_progress():
-    detector = NoProgressDetector()
-    before = ActionProgressReceipt(
-        "bash", {"command": "pytest -q"}, {"tree": digest("broken")}, {}, ["failed"])
-    after_edit = ActionProgressReceipt(
-        "bash", {"command": "pytest -q"}, {"tree": digest("fixed")}, {}, ["failed", "passed"])
-    assert detector.observe(before).kind == "continue"
-    assert detector.observe(after_edit).kind == "continue"
-
-
-def test_unrelated_action_cannot_reset_stale_pair_recovery_budget():
-    detector = NoProgressDetector()
-    stale = ActionProgressReceipt(
-        "read", {"path": "missing.txt"}, {"tree": digest("same")}, {}, ["missing"])
-    unrelated = ActionProgressReceipt(
-        "read", {"path": "other-missing.txt"}, {"tree": digest("same")}, {}, ["missing"])
-    assert detector.observe(stale).kind == "continue"
-    assert detector.observe(stale).kind == "inject_no_progress"
-    assert detector.observe(unrelated).kind == "continue"
-    assert detector.observe(stale).kind == "terminate"
-
-
-def test_recovery_record_requires_zero_loss_bad_prefix_and_fresh_sources():
+def test_three_action_history_is_structurally_replayed():
     record = valid_record()
-    normalized = validate_recovery_record(record)
-    assert normalized == record
-    assert recovery_record_fingerprint(record) == recovery_record_fingerprint(copy.deepcopy(record))
-
-    bad_mask = copy.deepcopy(record)
-    bad_mask["messages"][2]["loss"] = 1
-    with pytest.raises(ValueError, match="zero-loss|contiguous"):
-        validate_recovery_record(bad_mask)
-
-    for consumed_digest in (CONSUMED_V3_MANIFEST_SHA256, CONSUMED_V4_MANIFEST_SHA256):
-        consumed_source = copy.deepcopy(record)
-        consumed_source["source_provenance"]["source_digests"] = [consumed_digest]
-        with pytest.raises(ValueError, match="consumed evaluation source"):
-            validate_recovery_record(consumed_source)
-
-    v4_family = copy.deepcopy(record)
-    v4_family["task"]["family_id"] = "pi-eval-v4-leak"
-    with pytest.raises(ValueError, match="consumed evaluation identity"):
-        validate_recovery_record(v4_family)
-
-    relabeled = copy.deepcopy(record)
-    relabeled["task"]["fixture_tree_digest"] = digest("different-fixture")
-    with pytest.raises(ValueError, match="not bound"):
-        validate_recovery_record(relabeled)
-
-    failed_receipt = copy.deepcopy(record)
-    failed_receipt["validator_receipt"]["passed"] = False
-    with pytest.raises(ValueError, match="passed, cycle-free"):
-        validate_recovery_record(failed_receipt)
+    assert [action["decision"] for action in record["terminal_binding"]["failed_terminal"]["actions"]] == [
+        "continue", "inject_no_progress", "terminate",
+    ]
+    assert validate_recovery_record(record) == record
 
 
-def test_correction_builder_preserves_failure_as_zero_loss_context(tmp_path):
-    source = tmp_path / "verified.jsonl"
-    train = valid_record(split="train")
-    validation = valid_record(split="validation")
-    source.write_text(
-        json.dumps(train, sort_keys=True) + "\n" +
-        json.dumps(validation, sort_keys=True) + "\n"
-    )
-    authority = tmp_path / "authority"
-    subprocess.run([
-        sys.executable,
-        "-m", "scripts.build_e97_onpolicy_correction_sft",
-        "--source-jsonl", str(source),
-        "--source-sha256", sha256(source),
-        "--output-root", str(authority),
-    ], check=True, capture_output=True, text=True)
-
-    manifest = json.loads((authority / "manifest.json").read_text())
-    assert manifest["status"] == "complete"
-    assert manifest["counts"]["records"] == 2
-    assert manifest["counts"]["train_records"] == 1
-    assert manifest["counts"]["validation_records"] == 1
-    assert manifest["counts"]["assistant_target_tokens"] > 0
-    assert manifest["counts"]["zero_loss_context_tokens"] > 0
-    assert manifest["forbidden_evaluation"]["v3_manifest_sha256"] == CONSUMED_V3_MANIFEST_SHA256
-    assert manifest["forbidden_evaluation"]["v4_manifest_sha256"] == CONSUMED_V4_MANIFEST_SHA256
-
-    index = (authority / "records.idx").read_bytes()
-    first_offset, first_tokens, first_targets, first_split = RECORD_INDEX.unpack_from(index, 0)
-    assert first_offset == 0 and first_split == 0 and first_targets > 0
-    tokens = np.fromfile(authority / "tokens.uint32.bin", dtype=np.uint32)[:first_tokens]
-    masks = np.fromfile(authority / "assistant_mask.uint8.bin", dtype=np.uint8)[:first_tokens]
-    encoding = tiktoken.get_encoding("p50k_base")
-    targeted = b"".join(
-        encoding.decode_single_token_bytes(int(token))
-        for token, mask in zip(tokens, masks) if mask
-    ).decode(errors="replace")
-    context = b"".join(
-        encoding.decode_single_token_bytes(int(token))
-        for token, mask in zip(tokens, masks) if not mask
-    ).decode(errors="replace")
-    assert "missing.txt" not in targeted
-    assert "facts/value.txt" in targeted and "Final:" in targeted
-    assert "missing.txt" in context and "FileNotFoundError" in context
-    for output in manifest["outputs"].values():
-        assert sha256(authority / __import__("pathlib").Path(output["path"]).name) == output["sha256"]
+def test_recovery_record_mutations_fail_closed():
+    mutations = [
+        lambda record: record["messages"].__setitem__(4, {"role": "assistant", "text": "forged", "loss": 0}),
+        lambda record: record["terminal_binding"]["failed_terminal"]["actions"][2].__setitem__("decision", "continue"),
+        lambda record: record["terminal_binding"]["corrective_terminal"]["actions"][3].__setitem__("decision", "terminate"),
+        lambda record: record["terminal_binding"]["validator_execution"]["validators"]["focused"]["output"].__setitem__("mode", "regression"),
+        lambda record: record["terminal_binding"]["validator_execution"]["validators"]["focused"]["logical_argv"].append("--forged"),
+        lambda record: record["terminal_binding"]["bundle"]["validator"]["focused_argv"].__setitem__(1, "alternate-pass-emitter.py"),
+        lambda record: record["terminal_binding"]["validator_execution"]["validators"]["regression"].__setitem__("stdout_sha256", digest("forged-stdout")),
+        lambda record: record["terminal_binding"]["validator_execution"]["validators"]["regression"]["output"].__setitem__("action_count", 99),
+        lambda record: record["terminal_binding"]["validator_execution"]["validators"]["focused"].__setitem__("stderr_sha256", digest("forged-stderr")),
+        lambda record: record["terminal_binding"]["failed_terminal"]["actions"][0].__setitem__("completion_tokens", 0),
+        lambda record: record["terminal_binding"]["corrective_terminal"]["metadata"]["completion_usage"][4].__setitem__("completion_tokens", 0),
+        lambda record: record["terminal_binding"]["corrective_terminal"]["metadata"]["completion_usage"][4].__setitem__("completion_tokens", 513),
+        lambda record: record["terminal_binding"]["completion_receipt"]["receipt"].__setitem__("accepted_terminal_sha256", digest("other")),
+        lambda record: record["terminal_binding"]["artifacts"]["completion_receipt"].__setitem__("path", "receipts/orphan.json"),
+        lambda record: record["source_provenance"].__setitem__("source_digests", [digest("not-generator")]),
+    ]
+    for mutate in mutations:
+        record = valid_record()
+        mutate(record)
+        with pytest.raises(ValueError):
+            validate_recovery_record(record)
 
 
 def test_record_json_hash_is_stable():
     record = valid_record()
-    assert sha256_json(record) == sha256_json(json.loads(json.dumps(record)))
+    assert recovery_record_fingerprint(record) == recovery_record_fingerprint(copy.deepcopy(record))

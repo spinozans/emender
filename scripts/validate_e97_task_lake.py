@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 from pathlib import Path
-import tempfile
 
 from ndm.data.masked_sft_dataset import sha256
+from ndm.e97_atomic import publish_bytes_no_replace
+from ndm.e97_protected_overlap import OverlapError, validate_overlap_receipt
 from ndm.e97_task_lake import (
     source_registry_digest,
     validate_source_registry,
@@ -17,29 +17,10 @@ from ndm.e97_task_lake import (
 
 
 def atomic_write_json(path: Path, value: object) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    if path.exists():
-        raise FileExistsError(f"refusing to replace existing receipt: {path}")
-    fd, temporary = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
-    try:
-        os.fchmod(fd, 0o600)
-        with os.fdopen(fd, "w") as stream:
-            json.dump(value, stream, indent=2, sort_keys=True)
-            stream.write("\n")
-            stream.flush()
-            os.fsync(stream.fileno())
-        os.replace(temporary, path)
-        directory_fd = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY)
-        try:
-            os.fsync(directory_fd)
-        finally:
-            os.close(directory_fd)
-    except BaseException:
-        try:
-            os.unlink(temporary)
-        except FileNotFoundError:
-            pass
-        raise
+    """Publish one immutable validation receipt; identical retries are harmless."""
+
+    payload = (json.dumps(value, indent=2, sort_keys=True) + "\n").encode("utf-8")
+    publish_bytes_no_replace(path, payload)
 
 
 def main() -> None:
@@ -48,10 +29,16 @@ def main() -> None:
     parser.add_argument("--registry-sha256", required=True)
     parser.add_argument("--tasks-jsonl", type=Path)
     parser.add_argument("--tasks-sha256")
+    parser.add_argument("--overlap-receipt", type=Path)
+    parser.add_argument("--archive-root-sha256")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     if (args.tasks_jsonl is None) != (args.tasks_sha256 is None):
         raise SystemExit("tasks-jsonl and tasks-sha256 must be supplied together")
+    if args.tasks_jsonl is not None and (args.overlap_receipt is None or args.archive_root_sha256 is None):
+        raise SystemExit("task collection validation requires a protected overlap receipt and archive root SHA-256")
+    if args.tasks_jsonl is None and (args.overlap_receipt is not None or args.archive_root_sha256 is not None):
+        raise SystemExit("overlap evidence is only valid with a task collection")
     if sha256(args.registry) != args.registry_sha256:
         raise SystemExit("source registry SHA-256 mismatch")
     try:
@@ -77,6 +64,15 @@ def main() -> None:
         except ValueError as exc:
             raise SystemExit(f"invalid task collection: {exc}") from exc
         task_source_sha256 = args.tasks_sha256
+        try:
+            overlap = json.loads(args.overlap_receipt.read_text())
+            validate_overlap_receipt(
+                overlap,
+                candidate_collection_sha256=task_source_sha256,
+                candidate_archive_root_sha256=args.archive_root_sha256,
+            )
+        except (OSError, json.JSONDecodeError, OverlapError) as exc:
+            raise SystemExit(f"task collection overlap admission failed: {exc}") from exc
 
     sources = registry["sources"]
     report = {
@@ -105,7 +101,7 @@ def main() -> None:
             "consumed V3/V4 manifests protected",
             "only admitted sources may back tasks",
             "derived task identities and exact prompt digests verified",
-            "protected identity collision checks passed",
+            "static protected metadata is schema-bound; semantic clearance requires a per-collection overlap receipt",
             "whole-family and whole-repository split isolation passed",
         ],
     }

@@ -7,6 +7,7 @@ import pytest
 from ndm.e97_onpolicy_records import (
     CONSUMED_V3_MANIFEST_SHA256,
     CONSUMED_V4_MANIFEST_SHA256,
+    canonical_json,
     sha256_text,
     task_identity,
 )
@@ -35,6 +36,9 @@ def registry():
             {"name": "v4", "manifest_sha256": CONSUMED_V4_MANIFEST_SHA256,
              "repositories": [], "family_ids": [], "task_identities": [],
              "fixture_tree_digests": [], "intent_digests": [], "validator_spec_digests": []},
+            {"name": "real-repo-holdout-v1", "manifest_sha256": "939bcd66768884a1e5ec44bcf11fdf5d09602ebdabe86d4caefffd4ace8dbb60",
+             "repositories": [], "family_ids": [], "task_identities": [],
+             "fixture_tree_digests": [], "intent_digests": [], "validator_spec_digests": []},
         ],
         "sources": [{
             "id": "fresh-synthetic", "kind": "first-party", "status": "admitted",
@@ -52,15 +56,16 @@ def bundle():
     prompt = "Read the fresh synthetic value."
     intent = canonical_intent_digest(prompt)
     tree = d("tree")
+    generator = d("archive")
     namespace = "e97-train-fresh-synthetic"
     family = "fresh-synthetic-read-v1"
     identity = task_identity(namespace=namespace, family_id=family,
-                             generator_source_digest=d("generator"),
+                             generator_source_digest=generator,
                              fixture_tree_digest=tree, intent_digest=intent)
     return {
         "schema": TASK_BUNDLE_SCHEMA, "split": "train",
         "task": {"namespace": namespace, "family_id": family, "identity": identity,
-                 "generator_source_digest": d("generator"), "fixture_tree_digest": tree,
+                 "generator_source_digest": generator, "fixture_tree_digest": tree,
                  "intent_digest": intent, "prompt": prompt, "difficulty": 1},
         "source": {"registry_id": "fresh-synthetic", "kind": "first-party",
                     "repository": "fresh/synthetic", "revision": "a" * 40,
@@ -70,10 +75,10 @@ def bundle():
         "runtime": {"schema_digest": d("schema"), "tool_schema_digest": d("tools"),
                     "controller_digest": d("controller"), "sandbox_image_digest": d("image"),
                     "system_prompt_sha256": sha256_text("Fresh system\n")},
-        "limits": {"turns": 4, "seconds": 10, "output_bytes": 1024,
+        "limits": {"turns": 4, "seconds": 10, "completion_tokens": 64, "output_bytes": 1024,
                     "disk_bytes": 1024, "processes": 2},
-        "validator": {"spec_digest": d("validator"), "focused_argv": ["pytest", "-q"],
-                       "regression_argv": ["pytest", "-q"], "milestone_digest": d("milestone"),
+        "validator": {"spec_digest": d("validator"), "focused_argv": ["@runtime-python", "@generator-source/scripts/e97_first_party_validator.py", "--mode", "focused"],
+                       "regression_argv": ["@runtime-python", "@generator-source/scripts/e97_first_party_validator.py", "--mode", "regression"], "milestone_digest": d("milestone"),
                        "minefield_digest": d("minefield")},
     }
 
@@ -212,6 +217,21 @@ def test_malformed_tool_linkage_and_incomplete_trace_fail_closed():
     del without_tool_content[7]["message"]["content"]
     with pytest.raises(PiEventError, match="requires content"):
         parse_pi_events(without_tool_content, system_prompt="Fresh system\n", user_prompt="fresh")
+
+
+def test_current_schema_collection_inputs_validate_successfully():
+    from ndm.e97_phase_c_collector import validate_collection_inputs
+    task = bundle(); reg = registry()
+    validated_task, validated_registry = validate_collection_inputs(
+        task_bundle=task,
+        source_registry=reg,
+        task_bundle_sha256=sha256_text(canonical_json(task)),
+        source_registry_sha256=sha256_text(canonical_json(reg)),
+        actual_task_bundle_sha256=sha256_text(canonical_json(task)),
+        actual_source_registry_sha256=sha256_text(canonical_json(reg)),
+    )
+    assert validated_task == task
+    assert len(validated_registry["protected_evaluation"]) == 3
 
 
 def test_task_and_registry_input_sha_mismatch_is_checked_before_collection(tmp_path):

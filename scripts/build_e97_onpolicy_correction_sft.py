@@ -17,8 +17,8 @@ from ndm.e97_onpolicy_records import (
     CONSUMED_V4_MANIFEST_SHA256,
     RECOVERY_RECORD_SCHEMA,
     recovery_record_fingerprint,
-    validate_recovery_record,
 )
+from ndm.e97_correction_artifacts import CorrectionArtifactError, validate_artifact_backed_recovery_record
 from scripts.build_e97_pi_finalization_repair_sft import serialize_live_aligned
 from scripts.build_e97_pi_instruction_sft import ENCODING
 
@@ -37,6 +37,7 @@ def main() -> None:
     parser.add_argument("--source-jsonl", type=Path, required=True)
     parser.add_argument("--source-sha256", required=True)
     parser.add_argument("--output-root", type=Path, required=True)
+    parser.add_argument("--artifact-root", type=Path, required=True)
     parser.add_argument("--max-record-tokens", type=int, default=4096)
     args = parser.parse_args()
     if args.max_record_tokens <= 0:
@@ -49,8 +50,10 @@ def main() -> None:
         if not line.strip():
             raise SystemExit(f"blank source record at line {line_number}")
         try:
-            rows.append(validate_recovery_record(json.loads(line)))
-        except (json.JSONDecodeError, ValueError) as exc:
+            rows.append(validate_artifact_backed_recovery_record(
+                json.loads(line), artifact_root=args.artifact_root,
+            ))
+        except (json.JSONDecodeError, ValueError, CorrectionArtifactError) as exc:
             raise SystemExit(f"invalid source record at line {line_number}: {exc}") from exc
     if not rows:
         raise SystemExit("source JSONL contains no records")

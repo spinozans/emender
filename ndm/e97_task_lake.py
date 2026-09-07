@@ -24,6 +24,8 @@ SPLITS = {"train", "development"}
 _DIGEST = re.compile(r"^[0-9a-f]{64}$")
 _REVISION = re.compile(r"^[0-9a-f]{40,64}$")
 _NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
+_FIRST_PARTY_VALIDATOR_RUNTIME = "@runtime-python"
+_FIRST_PARTY_VALIDATOR_PROGRAM = "@generator-source/scripts/e97_first_party_validator.py"
 
 
 def _fields(value: Any, expected: set[str], name: str) -> Mapping[str, Any]:
@@ -113,8 +115,11 @@ def validate_source_registry(value: Any) -> dict[str, Any]:
             ]
         protected.append(normalized_panel)
     protected_manifests = {panel["manifest_sha256"] for panel in protected}
-    if not set(CONSUMED_PANEL_MANIFEST_SHA256S).issubset(protected_manifests):
-        raise ValueError("registry must protect the consumed V3 and V4 manifests")
+    required_panels = set(CONSUMED_PANEL_MANIFEST_SHA256S) | {
+        "939bcd66768884a1e5ec44bcf11fdf5d09602ebdabe86d4caefffd4ace8dbb60",
+    }
+    if not required_panels.issubset(protected_manifests):
+        raise ValueError("registry must protect the consumed V3/V4 and real-repository holdout manifests")
 
     if not isinstance(registry["sources"], list) or not registry["sources"]:
         raise ValueError("source registry must contain at least one source")
@@ -235,6 +240,8 @@ def validate_task_bundle(value: Any, *, registry: Mapping[str, Any]) -> dict[str
     if source["revision"] != registered["revision"]:
         raise ValueError("task source revision does not match registry")
     _digest(source["source_record_digest"], "task source record digest")
+    if generator_digest != registered["receipts"]["source_archive_sha256"]:
+        raise ValueError("task generator source digest does not match registered source archive")
     if source["license_receipt_digest"] != registered["receipts"]["license_sha256"]:
         raise ValueError("task source license receipt does not match registry")
 
@@ -259,10 +266,10 @@ def validate_task_bundle(value: Any, *, registry: Mapping[str, Any]) -> dict[str
         _digest(item, f"runtime {key}")
 
     limits = _fields(task_bundle["limits"], {
-        "turns", "seconds", "output_bytes", "disk_bytes", "processes",
+        "turns", "seconds", "completion_tokens", "output_bytes", "disk_bytes", "processes",
     }, "limits")
-    maxima = {"turns": 64, "seconds": 1800, "output_bytes": 1 << 20,
-              "disk_bytes": 20 << 30, "processes": 256}
+    maxima = {"turns": 64, "seconds": 1800, "completion_tokens": 16384,
+              "output_bytes": 1 << 20, "disk_bytes": 20 << 30, "processes": 256}
     for key, maximum in maxima.items():
         item = limits[key]
         if isinstance(item, bool) or not isinstance(item, int) or not 0 < item <= maximum:
@@ -276,6 +283,12 @@ def validate_task_bundle(value: Any, *, registry: Mapping[str, Any]) -> dict[str
         _digest(validator[key], f"validator {key}")
     _validate_argv(validator["focused_argv"], "validator focused_argv")
     _validate_argv(validator["regression_argv"], "validator regression_argv")
+    if source["kind"] == "first-party":
+        for mode in ("focused", "regression"):
+            if validator[f"{mode}_argv"] != [
+                _FIRST_PARTY_VALIDATOR_RUNTIME, _FIRST_PARTY_VALIDATOR_PROGRAM, "--mode", mode,
+            ]:
+                raise ValueError("first-party validator argv must use the sealed logical identity")
 
     protected = normalized_registry["protected_evaluation"]
     collisions = []

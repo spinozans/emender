@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 import subprocess
 import sys
+import threading
 
 import pytest
 
@@ -63,6 +64,9 @@ def protected(name, manifest):
     }
 
 
+REAL_REPO_HOLDOUT_MANIFEST = "939bcd66768884a1e5ec44bcf11fdf5d09602ebdabe86d4caefffd4ace8dbb60"
+
+
 def registry():
     return {
         "schema": SOURCE_REGISTRY_SCHEMA,
@@ -71,6 +75,7 @@ def registry():
         "protected_evaluation": [
             protected("consumed-v3", CONSUMED_V3_MANIFEST_SHA256),
             protected("consumed-v4", CONSUMED_V4_MANIFEST_SHA256),
+            protected("real-repo-holdout-v1", REAL_REPO_HOLDOUT_MANIFEST),
         ],
         "sources": [source("train-repo"), source("dev-repo")],
     }
@@ -82,7 +87,8 @@ def task_bundle(*, split="train", source_id=None, family=None, repository=None):
     repository = repository or f"example/{source_id}"
     prompt = f"Read the opaque value for the {split} task."
     fixture_tree = digest(f"fixture-{split}-{source_id}-{family}")
-    generator = digest(f"generator-{source_id}")
+    registered = next(item for item in registry()["sources"] if item["id"] == source_id)
+    generator = registered["receipts"]["source_archive_sha256"]
     intent = canonical_intent_digest(prompt)
     namespace = f"e97-{'train' if split == 'train' else 'dev'}-{family}"
     identity = task_identity(
@@ -92,7 +98,6 @@ def task_bundle(*, split="train", source_id=None, family=None, repository=None):
         fixture_tree_digest=fixture_tree,
         intent_digest=intent,
     )
-    registered = next(item for item in registry()["sources"] if item["id"] == source_id)
     return {
         "schema": TASK_BUNDLE_SCHEMA,
         "split": split,
@@ -130,14 +135,15 @@ def task_bundle(*, split="train", source_id=None, family=None, repository=None):
         "limits": {
             "turns": 12,
             "seconds": 300,
+            "completion_tokens": 512,
             "output_bytes": 16384,
             "disk_bytes": 1 << 30,
             "processes": 32,
         },
         "validator": {
             "spec_digest": digest(f"validator-{split}-{family}"),
-            "focused_argv": ["python", "checks/check_task.py"],
-            "regression_argv": ["python", "-m", "pytest", "-q"],
+            "focused_argv": ["@runtime-python", "@generator-source/scripts/e97_first_party_validator.py", "--mode", "focused"],
+            "regression_argv": ["@runtime-python", "@generator-source/scripts/e97_first_party_validator.py", "--mode", "regression"],
             "milestone_digest": digest(f"milestones-{split}-{family}"),
             "minefield_digest": digest(f"minefields-{split}-{family}"),
         },
@@ -151,7 +157,7 @@ def test_registry_requires_consumed_panels_and_complete_admission_receipts():
 
     missing_v3 = copy.deepcopy(value)
     missing_v3["protected_evaluation"] = missing_v3["protected_evaluation"][1:]
-    with pytest.raises(ValueError, match="V3 and V4"):
+    with pytest.raises(ValueError, match="V3/V4 and real-repository"):
         validate_source_registry(missing_v3)
 
     missing_receipt = copy.deepcopy(value)
@@ -187,13 +193,28 @@ def test_task_identity_binds_prompt_and_fixture():
         validate_task_bundle(changed_fixture, registry=value)
 
 
-def test_task_requires_admitted_revision_and_license_receipt():
+def test_task_requires_admitted_revision_generator_archive_and_license_receipt():
     value = registry()
     task = task_bundle()
     bad_revision = copy.deepcopy(task)
     bad_revision["source"]["revision"] = "0" * 40
     with pytest.raises(ValueError, match="revision"):
         validate_task_bundle(bad_revision, registry=value)
+    bad_generator = copy.deepcopy(task)
+    bad_generator["task"]["generator_source_digest"] = digest("different-generator")
+    bad_generator["task"]["identity"] = task_identity(
+        namespace=bad_generator["task"]["namespace"],
+        family_id=bad_generator["task"]["family_id"],
+        generator_source_digest=bad_generator["task"]["generator_source_digest"],
+        fixture_tree_digest=bad_generator["task"]["fixture_tree_digest"],
+        intent_digest=bad_generator["task"]["intent_digest"],
+    )
+    with pytest.raises(ValueError, match="generator source digest"):
+        validate_task_bundle(bad_generator, registry=value)
+    bad_logical_validator = copy.deepcopy(task)
+    bad_logical_validator["validator"]["focused_argv"][1] = "alternate-pass-emitter.py"
+    with pytest.raises(ValueError, match="sealed logical"):
+        validate_task_bundle(bad_logical_validator, registry=value)
     bad_license = copy.deepcopy(task)
     bad_license["source"]["license_receipt_digest"] = digest("different-license")
     with pytest.raises(ValueError, match="license receipt"):
@@ -238,6 +259,13 @@ def test_collection_enforces_whole_family_and_repository_split():
         validate_task_collection([train, same_repo], registry=value)
 
 
+def test_task_bundle_schema_and_limits_are_closed():
+    value = registry()
+    task = task_bundle()
+    task["limits"]["unexpected"] = 1
+    with pytest.raises(ValueError, match="limits fields mismatch"):
+        validate_task_bundle(task, registry=value)
+
 def test_shell_strings_are_not_validator_commands():
     value = registry()
     task = task_bundle()
@@ -260,6 +288,33 @@ def test_repository_identities_are_lowercase():
 def test_registry_round_trip_is_canonical_json():
     value = validate_source_registry(registry())
     assert json.loads(json.dumps(value, sort_keys=True)) == value
+
+
+def test_validation_receipt_publication_is_no_replace_and_concurrent(tmp_path):
+    from scripts.validate_e97_task_lake import atomic_write_json
+
+    output = tmp_path / "receipt.json"
+    value = {"status": "pass", "n": 1}
+    outcomes = []
+    failures = []
+
+    def publish():
+        try:
+            outcomes.append(atomic_write_json(output, value))
+        except Exception as exc:  # pragma: no cover - asserted below
+            failures.append(exc)
+
+    workers = [threading.Thread(target=publish) for _ in range(8)]
+    for worker in workers:
+        worker.start()
+    for worker in workers:
+        worker.join()
+    assert not failures
+    assert len(outcomes) == 8
+    assert json.loads(output.read_text()) == value
+    atomic_write_json(output, value)
+    with pytest.raises(ValueError, match="conflicts"):
+        atomic_write_json(output, {"status": "fail", "n": 2})
 
 
 def test_checked_in_candidate_registry_is_valid_and_policy_bound(tmp_path):
