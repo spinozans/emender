@@ -62,6 +62,12 @@ a generic assistant prompt is unsupported and can produce degenerate output.
 See [`docs/operations/e97-4b-pi-runtime.md`](docs/operations/e97-4b-pi-runtime.md)
 and [`configs/pi/e97-pi-core-system-prompt.txt`](configs/pi/e97-pi-core-system-prompt.txt).
 
+The current 4B research direction is documented in the
+[sustained-learning and three-axis validation addendum](docs/EMENDER_E97_4B_POSTTRAINING_LEARNING_AND_VALIDATION_ADDENDUM.md):
+audit the agent corpus, measure learning-rate regimes, then pursue sustained SFT,
+on-policy correction, and gated outcome RL. This is a research plan, not a claim
+that the released checkpoints already provide general agent capability.
+
 The CLI checkpoint is protocol-specific and is not a general instruction or
 coding assistant. Release identities, hashes, export semantics, and validation
 are recorded in
