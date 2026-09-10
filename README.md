@@ -68,6 +68,12 @@ audit the agent corpus, measure learning-rate regimes, then pursue sustained SFT
 on-policy correction, and gated outcome RL. This is a research plan, not a claim
 that the released checkpoints already provide general agent capability.
 
+The [source-native Open-SWE rebuild](docs/validation/e97-open-swe-source-native-rebuild-v1.md)
+now contains 64.4M training targets with complete histories and problem-grouped
+splits. Its [dataset protocol](docs/E97_OPEN_SWE_SOURCE_NATIVE_PROTOCOL.md) preserves
+original tool semantics and separate public/private text. Source reconstruction
+passed; runtime qualification and training admission are still pending.
+
 The CLI checkpoint is protocol-specific and is not a general instruction or
 coding assistant. Release identities, hashes, export semantics, and validation
 are recorded in
