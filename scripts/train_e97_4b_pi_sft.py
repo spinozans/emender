@@ -501,6 +501,10 @@ def main() -> None:
                 core_model, optimizer, merge_configuration, world, None,
                 step=update, merge_index=update // args.diloco_k)
 
+        rank_sample_ids = [None] * world
+        dist.all_gather_object(rank_sample_ids, data.last_batch_sample_ids)
+        if any(len(ids) != 1 for ids in rank_sample_ids):
+            raise RuntimeError("expected one auditable pack identity per rank")
         counts = torch.tensor([int(lengths.sum()), int(target_counts.sum())], device=device, dtype=torch.int64)
         dist.all_reduce(counts, op=dist.ReduceOp.SUM)
         loss_sum = local_loss.clone()
@@ -512,6 +516,7 @@ def main() -> None:
         total_targets += int(counts[1])
         emit(args.log_jsonl, "step", rank, update=update, loss=step_loss,
              global_tokens=int(counts[0]), global_targets=int(counts[1]),
+             rank_sample_ids=rank_sample_ids,
              total_tokens=total_tokens, total_targets=total_targets,
              grad_norm=float(grad_norm), merge_seconds=merge_seconds,
              step_seconds=time.monotonic() - begin,
