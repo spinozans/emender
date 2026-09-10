@@ -1,0 +1,57 @@
+{
+  "authorization_scope": "attended operator instruction: internal training; preserve provenance; no separate licensing-review launch gate; no first-party registry admission or external publication",
+  "conversation_policy": "complete no-think conversations only; no text stripping; native source supplies channel-separated reasoning",
+  "intended_target_fractions": {
+    "conversation": 0.6,
+    "native": 0.3,
+    "retention": 0.1
+  },
+  "native_evidence": [
+    {
+      "binding_field": "manifest_sha256",
+      "path": "/mnt/nvme2n1/erikg/sft/e97-4b-open-swe-source-native-fulltraj-v1/validation.json",
+      "sha256": "1529da7910ff23e9ab519a6ac88630d86f28ea19f740a7fcbf309cda187e8a75"
+    },
+    {
+      "binding_field": "dataset_manifest_sha256",
+      "path": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/native-runtime-execution-v2/results/summary.json",
+      "sha256": "46584aa4538682e4575ad7d78905b3390392f2023aa5aaf289d400db7ecb3f59"
+    }
+  ],
+  "native_no_tool_conversion": "not performed; whole no-think conversation records retained in their existing grammar",
+  "operator_internal_training_authorized": true,
+  "purpose": "larger-exposure native SFT: 50M unique agent targets, 100M conversation targets, bounded retention replay",
+  "quota_policy": "whole-record overshoot retained and counted; no trajectory clipping",
+  "schema": "emender-native-training-mix-recipe-v1",
+  "seed": 974223,
+  "sources": [
+    {
+      "kind": "native",
+      "name": "native",
+      "root": "/mnt/nvme2n1/erikg/sft/e97-4b-open-swe-source-native-fulltraj-v1",
+      "sha256": "255b02f3b3bbdc85eb15a89d22e7ff2c4bf69f151c2dfb5941a22468711993f5",
+      "target_tokens": 50000000,
+      "unique_native": true
+    },
+    {
+      "exclude_think": true,
+      "kind": "legacy",
+      "name": "conversation",
+      "root": "/mnt/nvme1n1/erikg/sft/e97-4b-smoltalk2-admitted-v1",
+      "sha256": "d64f51abc615c097910900ffa7fc88f020ae5567b89958f607008078c271c7f6",
+      "target_tokens": 100000000
+    },
+    {
+      "epochs": 3,
+      "include_metadata_sources": [
+        "pi-live",
+        "compositional"
+      ],
+      "kind": "legacy",
+      "name": "retention",
+      "root": "/mnt/nvme1n1/erikg/sft/e97-4b-pi-compositional-retention-mix-v1",
+      "sha256": "79e7981077fc387c3e3759728ddd0f9e1ac16f687c628542e8313fb735c4cfb7",
+      "target_tokens": 16666667
+    }
+  ]
+}

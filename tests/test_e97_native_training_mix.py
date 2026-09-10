@@ -90,6 +90,40 @@ def test_mix_copies_only_whole_training_records_and_loads_as_boundary_packs(tmp_
     with pytest.raises(FileExistsError):build(path,sha256(path),out)
 
 
+def test_unique_native_rounds_exhaust_all_records_without_repeating():
+    metadata=[dict(problem_key=['r','a']) for _ in range(3)]+[dict(problem_key=['r','b'])]
+    order=list(record_order(range(4),metadata,17,True,unique_native=True))
+    assert sorted(order)==list(range(4))
+    assert {tuple(metadata[i]['problem_key']) for i in order[:2]}=={('r','a'),('r','b')}
+    assert order==list(record_order(range(4),metadata,17,True,unique_native=True))
+
+
+def test_bounded_retention_replay_is_counted_and_copied_whole(tmp_path):
+    path,recipe=setup(tmp_path)
+    recipe['sources'][0]['unique_native']=True
+    recipe['sources'][2].update(epochs=3,target_tokens=15)
+    path.write_text(json.dumps(recipe));out=tmp_path/'mix'
+    build(path,sha256(path),out)
+    stats=json.loads((out/'manifest.json').read_text())['sources']['retention']
+    assert (stats['assistant_target_tokens'],stats['records'],stats['unique_records'],stats['repeated_records'])==(16,8,3,5)
+    assert stats['maximum_epochs']==3
+    order=list(record_order([0,1,2],None,18,False,epochs=3))
+    assert all(sorted(order[i:i+3])==[0,1,2] for i in (0,3,6))
+    with pytest.raises(ValueError,match='insufficient'):
+        recipe['sources'][2]['target_tokens']=19;path.write_text(json.dumps(recipe))
+        build(path,sha256(path),tmp_path/'over-budget')
+
+
+@pytest.mark.parametrize('name,change',[
+    ('conversation',{'epochs':2}),('native',{'epochs':2}),
+    ('retention',{'epochs':4}),('retention',{'epochs':True}),
+    ('conversation',{'unique_native':True}),('native',{'unique_native':'yes'})])
+def test_undeclared_or_invalid_repeat_policies_fail(tmp_path,name,change):
+    _,recipe=setup(tmp_path)
+    next(s for s in recipe['sources'] if s['name']==name).update(change)
+    with pytest.raises(ValueError):verify_authorization(recipe)
+
+
 def test_missing_authorization_or_evidence_fails(tmp_path):
     _,recipe=setup(tmp_path)
     for changed in ({**recipe,'operator_internal_training_authorized':False},{**recipe,'native_evidence':[]}):

@@ -27,11 +27,12 @@ LEGACY_ADMITTED={
 DTYPE=np.dtype([('offset','<u8'),('tokens','<u8'),('targets','<u8'),('split','u1'),('pad','V7')])
 
 
-def record_order(ids,metadata,seed,native):
+def record_order(ids,metadata,seed,native,unique_native=False,epochs=1):
     rng=random.Random(seed)
     if not native:
-        order=list(ids);rng.shuffle(order)
-        yield from order
+        for _ in range(epochs):
+            order=list(ids);rng.shuffle(order)
+            yield from order
         return
     groups=defaultdict(list)
     for i in ids:groups[tuple(metadata[i]['problem_key'])].append(i)
@@ -42,6 +43,7 @@ def record_order(ids,metadata,seed,native):
         order=keys.copy();rng.shuffle(order)
         for key in order:yield groups[key][cycle%len(groups[key])]
         cycle+=1
+        if unique_native:keys=[key for key in keys if len(groups[key])>cycle]
 
 
 def read_source(spec,stack):
@@ -98,7 +100,8 @@ def read_source(spec,stack):
         filtered=[i for i in ids if metadata[i].get('has_think') is False]
         exclusions['thinking_record_or_missing_annotation']=len(ids)-len(filtered);ids=filtered
     available=sum(int(records[i]['targets']) for i in ids)
-    if not ids or available<spec['target_tokens']:raise ValueError('insufficient eligible source targets')
+    if not ids or available*spec.get('epochs',1)<spec['target_tokens']:
+        raise ValueError('insufficient eligible source targets within declared epochs')
     return dict(spec=spec,manifest=manifest,paths=paths,keys=keys,maps=maps,records=records,metadata=metadata,ids=ids,
                 exclusions=dict(exclusions),available_targets=available,native=native)
 
@@ -114,6 +117,11 @@ def verify_authorization(recipe):
         raise ValueError('source kind mismatch')
     for source in sources:
         if type(source['target_tokens']) is not int or source['target_tokens']<=0:raise ValueError('positive integer quota required')
+        epochs=source.get('epochs',1);unique=source.get('unique_native',False)
+        if type(epochs) is not int or not 1<=epochs<=3 or (epochs!=1 and source['name']!='retention'):
+            raise ValueError('only retention may repeat, for at most three epochs')
+        if type(unique) is not bool or (unique and source['name']!='native'):
+            raise ValueError('unique_native applies only to native source')
     for item in recipe['native_evidence']:
         path=Path(item['path'])
         if sha256(path)!=item['sha256']:raise ValueError('native evidence bytes')
@@ -136,7 +144,8 @@ def build(recipe_path,recipe_sha,output):
         sources=[read_source(spec,stack) for spec in recipe['sources']]
         for source_index,source in enumerate(sources):
             spec=source['spec'];observed=0;unique=set();written=0
-            order=record_order(source['ids'],source['metadata'],recipe['seed']+source_index,source['native'])
+            order=record_order(source['ids'],source['metadata'],recipe['seed']+source_index,source['native'],
+                               unique_native=spec.get('unique_native',False),epochs=spec.get('epochs',1))
             while observed<spec['target_tokens']:
                 try:i=next(order)
                 except StopIteration:raise ValueError('source exhausted before whole-record quota') from None
@@ -150,7 +159,8 @@ def build(recipe_path,recipe_sha,output):
                 requested_targets=spec['target_tokens'],assistant_target_tokens=observed,
                 records=written,unique_records=len(unique),repeated_records=written-len(unique),
                 eligible_records=len(source['ids']),available_targets=source['available_targets'],
-                exclusions=source['exclusions'])
+                exclusions=source['exclusions'],unique_native=spec.get('unique_native',False),
+                maximum_epochs=spec.get('epochs',1) if not source['native'] or spec.get('unique_native',False) else None)
         # Never emit source-contiguous blocks into the greedy packer.
         random.Random(recipe['seed']^0x970041).shuffle(selected)
         handles={key:stack.enter_context((stage/name).open('wb')) for key,name in names.items()}
@@ -196,7 +206,7 @@ def build(recipe_path,recipe_sha,output):
         recipe_sha256=recipe_sha,recipe=recipe,sources=receipts,outputs=outputs,
         counts=dict(records=len(selected),tokens=offset,assistant_target_tokens=total_targets,
                     train_records=len(selected),validation_records=0),
-        sampling='native problem-shuffled cycles; legacy shuffled without replacement; global record shuffle',
+        sampling='native problem-shuffled rounds (unique when declared); legacy shuffled without replacement within declared epochs; global record shuffle',
         source_bytes_and_masks_unchanged=True,all_output_records_verified=True,
         licensing='provenance/notices retained; separate licensing review is not an internal-training launch gate',
         overlap_scope='train splits only; native problems disjoint from native development; protected canonical and same-basename repositories excluded',
