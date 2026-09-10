@@ -1,0 +1,38 @@
+{
+  "schema": "emender-e97-native-lr-screen-v1",
+  "purpose": "bounded exposure-matched LR screening; no automatic promotion or sustained expansion",
+  "baseline": {
+    "learning_rate": 0.00005,
+    "evidence_root": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/native-real-data-smoke-v1",
+    "checkpoint_sha256": "b19c9b9b99b3041c6bfde8f613427e08d749d480ae2d5f5a3ea55e8356c2beaa",
+    "note": "reuse the completed pilot; do not present it as a newly preregistered trial"
+  },
+  "new_trial_learning_rates_in_order": [0.0002, 0.00047431158698290157, 0.001, 0.00001, 0.000002],
+  "parent_sha256": "aae654aa1db004ba9b9805fce54e005332361bbf536168a6618a1c22cce7af39",
+  "training_recipe_authority": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/native-real-data-smoke-v1/recipe.json",
+  "training_recipe_sha256": "d85ed1e00477aae89a838dabbe91300c6cac490de2003e5a210e63b0053b1a39",
+  "updates_per_trial": 8,
+  "world_size": 8,
+  "assistant_targets_per_trial": 1490478,
+  "native_agent_targets_per_trial": 415097,
+  "change_only": ["learning_rate", "isolated_output_and_cache_paths", "execution_commit_metadata"],
+  "optimizer_start": "fresh SR state from the same parent live/y weights for every rate",
+  "evaluation": {
+    "panel_authority": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/native-learning-eval-v1/panel.json",
+    "reuse_example_bytes_exactly": true,
+    "modes": ["train", "saved"],
+    "metrics": ["native fitting and development NLL", "response-opening NLL and accuracy", "native tool-name NLL", "conversation and tool retention", "unassisted first-turn validity and source-choice/argument agreement"],
+    "selection": "shortlist using acquisition/retention trade-offs without hiding retention regressions in one aggregate; no final LR selection from eight updates alone",
+    "independent_holdout_claim": false,
+    "tool_execution_claim": false
+  },
+  "execution_policy": {
+    "sequential_trials": true,
+    "gpu_lease_required": true,
+    "trial_deadline_seconds": 2400,
+    "kill_grace_seconds": 30,
+    "automatic_retries": false,
+    "stop_on_process_or_identity_failure": true,
+    "checkpoint_promotion": false
+  }
+}
