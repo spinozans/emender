@@ -50,6 +50,11 @@ source-native tool grammar. Native immediate no-tool examples and complete
 fitting/transfer/execution evaluation remain subsequent work, not prerequisites
 for a bounded real-data smoke run.
 
+The subsequent [eight-GPU real-data smoke](e97-native-real-data-smoke-v1.md)
+completed all eight updates with exact scheduled consumption and complete,
+finite checkpoints at updates 4 and 8. Data plumbing no longer blocks initial
+real training.
+
 ## Restart evidence and revised launch policy
 
 The earlier authored-fixture run `full-sft-restart-v1` (`proc_914c`) **failed its
