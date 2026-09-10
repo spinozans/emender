@@ -178,6 +178,48 @@ def test_existing_generation_builder_routes_e97_through_public_model():
     assert model.mlp_ratio == 1.0
 
 
+def test_descriptor_checkpoint_load_uses_retained_bytes_after_path_replacement(tmp_path):
+    config=tiny_e97_config()
+    model=build_e97_model(config,vocab_size=64,use_triton=False)
+    (tmp_path/'args.json').write_text(json.dumps(config))
+    path=tmp_path/'checkpoint.pt'
+    torch.save({'model_state_dict':model.state_dict(),'step':3},path)
+    with path.open('rb') as source:
+        with pytest.raises(ValueError,match='checkpoint_path identity'):
+            load_e97_checkpoint(source)
+        replacement=tmp_path/'replacement.pt';replacement.write_bytes(b'not a checkpoint')
+        replacement.replace(path)
+        loaded=load_e97_checkpoint(source,checkpoint_path=path,weight_mode='saved',mmap=True)
+    assert loaded.step==3
+    assert all(torch.equal(p,dict(model.named_parameters())[n]) for n,p in loaded.model.named_parameters())
+
+
+def test_tiny_e97_sr_checkpoint_restores_both_explicit_weight_modes(tmp_path):
+    from ndm.schedulefree_sr_candidate import ScheduleFreeSRCandidate
+    torch.manual_seed(997)
+    config=tiny_e97_config(optimizer='schedulefree')
+    model=build_e97_model(config,vocab_size=64,use_triton=False).bfloat16()
+    optimizer=ScheduleFreeSRCandidate(model.named_parameters(),lr=.03,pin_memory=False)
+    optimizer.train()
+    for _ in range(4):
+        for p in model.parameters():p.grad=torch.randn_like(p)
+        optimizer.step()
+    # Deliberate checkpoint rounding edge, not a claim about learned weights.
+    with torch.no_grad():
+        p=next(model.parameters());p.view(-1)[0]=2**-8
+        optimizer.state[p]['z'].view(-1)[0]=1
+    y={n:p.detach().clone() for n,p in model.named_parameters()}
+    optimizer.eval()
+    x={n:p.detach().clone() for n,p in model.named_parameters()}
+    (tmp_path/'args.json').write_text(json.dumps(config))
+    path=tmp_path/'checkpoint.pt'
+    torch.save({'model_state_dict':model.state_dict(),'optimizer_state_dict':optimizer.state_dict()},path)
+    for mode,expected in [('saved',x),('train',y)]:
+        loaded=load_e97_checkpoint(path,weight_mode=mode,dtype=torch.bfloat16)
+        assert loaded.schedulefree_train_weight_swap is (mode=='train')
+        assert all(torch.equal(p,expected[n]) for n,p in loaded.model.named_parameters())
+
+
 def test_e97_checkpoint_roundtrip_and_cpu_generation(tmp_path):
     config = tiny_e97_config()
     original = build_e97_model(config, vocab_size=256, use_triton=False)

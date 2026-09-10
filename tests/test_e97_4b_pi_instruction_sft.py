@@ -344,8 +344,10 @@ def test_pi_eval_v2_builder_freezes_all_records_for_evaluation(tmp_path):
 def test_trainer_supports_hash_bound_fresh_optimizer_repair_stages():
     text = open("scripts/train_e97_4b_pi_sft.py").read()
     assert 'lineage.add_argument("--new-stage-from", type=Path)' in text
+    assert '"--new-stage-weight-mode", choices=("saved", "train")' in text
     assert "new-stage-from must equal the hash-bound parent checkpoint" in text
-    assert '"new-stage-saved-x" if args.new_stage_from' in text
+    assert "new-stage-weight-mode=train requires --new-stage-from or --resume" in text
+    assert 'f"new-stage-{args.new_stage_weight_mode}"' in text
 
 
 def test_legacy_resume_defaults_to_hash_replacement_sampler(tmp_path):

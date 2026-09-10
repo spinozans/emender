@@ -18,6 +18,7 @@ from schedulefree import AdamWScheduleFree
 
 from ndm.data.masked_sft_dataset import MaskedSFTPackedDataset, SFTSamplerIdentity, sha256
 from ndm.schedulefree_offload import CPUOffloadAdamWScheduleFree
+from ndm.schedulefree_sr_candidate import ScheduleFreeSRCandidate
 from ndm.e97 import load_e97_checkpoint
 from train import diloco_merge
 
@@ -142,10 +143,71 @@ def atomic_save(path: Path, payload: dict) -> None:
         temporary_link.unlink(missing_ok=True)
 
 
-def build_optimizer(parameters, args):
+def configure_precision(model, args) -> dict:
+    """Explicit numerical policy; defaults preserve the legacy trainer."""
+    precision = getattr(args, "optimizer_precision", "legacy")
+    if precision not in {"legacy", "bf16-sr-candidate"}:
+        raise ValueError("unknown optimizer precision")
+    fp32_logits = bool(getattr(args, "loss_logits_fp32", False))
+    checkpoint_ce = bool(getattr(args, "checkpoint_loss_chunks", False))
+    chunk = getattr(args, "loss_chunk_size", None)
+    if chunk is not None and (type(chunk) is not int or chunk <= 0):
+        raise ValueError("explicit loss chunk size must be positive")
+    if fp32_logits and (chunk is None or chunk > 4096 or not checkpoint_ce):
+        raise ValueError("FP32 logits require checkpointed loss chunks of at most 4096 tokens")
+    if checkpoint_ce and chunk is None:
+        raise ValueError("CE checkpointing requires an explicit loss chunk size")
+    if precision == "bf16-sr-candidate" and not args.offload_schedulefree_state:
+        raise ValueError("SR candidate requires BF16 CPU-offloaded state")
+    if getattr(args, "disable_bf16_reduced_precision_reduction", False):
+        torch.backends.cuda.matmul.allow_bf16_reduced_precision_reduction = False
+    model.loss_logits_fp32 = fp32_logits
+    model.checkpoint_loss_chunks = checkpoint_ce
+    if chunk is not None:
+        model.loss_chunk_size = chunk
+    return {
+        "schema": "emender-e97-sft-precision-policy-v1",
+        "optimizer": precision,
+        "optimizer_schema": ScheduleFreeSRCandidate.state_schema if precision != "legacy" else None,
+        "sr_seed": getattr(args, "sr_seed", 927413) if precision != "legacy" else None,
+        "loss_logits_fp32": fp32_logits,
+        "checkpoint_loss_chunks": checkpoint_ce,
+        "loss_chunk_size": model.loss_chunk_size,
+        "bf16_reduced_precision_reduction": torch.backends.cuda.matmul.allow_bf16_reduced_precision_reduction,
+        "gradient_checkpoint_group_size": args.gradient_checkpoint_group_size,
+        "mlp_checkpoint_chunk_size": args.mlp_checkpoint_chunk_size,
+        "learning_rate": args.lr,
+        "weight_decay": args.weight_decay,
+        "warmup_steps": args.warmup_steps,
+    }
+
+
+def validate_precision_world(args, world):
+    # This trainer saves rank-0 optimizer state, sufficient only when all ranks
+    # share the same DDP gradient and SR stream. Multi-island moment restoration
+    # needs a separately qualified per-rank checkpoint format.
+    if getattr(args, "optimizer_precision", "legacy") == "bf16-sr-candidate":
+        if world != 8 or not args.disable_diloco_merge:
+            raise ValueError("SR SFT candidate requires full-world eight-rank DDP without outer merge")
+
+
+def build_optimizer(parameters, args, *, named_parameters=None):
     common = dict(
         lr=args.lr, betas=(0.9, 0.95), weight_decay=args.weight_decay,
         warmup_steps=args.warmup_steps)
+    if getattr(args, "optimizer_precision", "legacy") == "bf16-sr-candidate":
+        if not args.offload_schedulefree_state or named_parameters is None:
+            raise ValueError("SR requires offloaded state and named parameters")
+        parameters, named = list(parameters), list(named_parameters)
+        if [id(p) for p in parameters] != [id(p) for _, p in named]:
+            raise ValueError("named parameter layout does not match optimizer parameters")
+        return ScheduleFreeSRCandidate(
+            named, **common, seed=args.sr_seed,
+            pin_memory=bool(args.schedulefree_offload_pin_memory),
+            release_gradients=bool(args.schedulefree_offload_release_gradients),
+            bucket_numel=args.schedulefree_offload_bucket_numel)
+    if getattr(args, "optimizer_precision", "legacy") != "legacy":
+        raise ValueError("unknown optimizer precision")
     if args.offload_schedulefree_state:
         return CPUOffloadAdamWScheduleFree(
             parameters, **common,
@@ -155,11 +217,14 @@ def build_optimizer(parameters, args):
     return AdamWScheduleFree(parameters, **common)
 
 
-def load_resume_optimizer(path: Path, optimizer, expected: dict) -> dict:
+def load_resume_optimizer(path: Path, optimizer, expected: dict, *, allow_legacy_precision=False) -> dict:
     checkpoint = torch.load(path, map_location="cpu", mmap=True, weights_only=False)
     if checkpoint.get("schema") != SCHEMA or "optimizer_state_dict" not in checkpoint:
         raise RuntimeError("resume is not an E97 4B Pi SFT optimizer checkpoint")
     for key, value in expected.items():
+        if (key == "sft_precision" and key not in checkpoint and allow_legacy_precision
+                and value.get("optimizer") == "legacy" and not value.get("loss_logits_fp32")):
+            continue
         if (key == "boundary_aware_packs" and value is False
                 and key not in checkpoint):
             # Legacy v1 checkpoints predate the explicit false identity field.
@@ -195,6 +260,9 @@ def main() -> None:
     lineage = parser.add_mutually_exclusive_group()
     lineage.add_argument("--resume", type=Path)
     lineage.add_argument("--new-stage-from", type=Path)
+    parser.add_argument(
+        "--new-stage-weight-mode", choices=("saved", "train"), default="saved",
+        help="Explicit source representation when resetting optimizer state from --new-stage-from")
     parser.add_argument("--steps", type=int, default=8)
     parser.add_argument("--save-every", type=int, default=8)
     parser.add_argument("--keep-checkpoints", type=int, default=3)
@@ -225,6 +293,12 @@ def main() -> None:
     parser.add_argument(
         "--sampler-mode", choices=("hash-replacement", "epoch-permutation"),
         default="hash-replacement")
+    parser.add_argument("--optimizer-precision", choices=("legacy", "bf16-sr-candidate"), default="legacy")
+    parser.add_argument("--sr-seed", type=int, default=927413)
+    parser.add_argument("--loss-logits-fp32", action="store_true")
+    parser.add_argument("--checkpoint-loss-chunks", action="store_true")
+    parser.add_argument("--loss-chunk-size", type=int)
+    parser.add_argument("--disable-bf16-reduced-precision-reduction", action="store_true")
     parser.add_argument("--offload-schedulefree-state", action="store_true")
     parser.add_argument("--schedulefree-offload-bucket-numel", type=int, default=67_108_864)
     parser.add_argument("--schedulefree-offload-pin-memory", type=int, choices=(0, 1), default=1)
@@ -233,6 +307,9 @@ def main() -> None:
     if (args.new_stage_from is not None
             and args.new_stage_from.resolve() != args.parent_checkpoint.resolve()):
         raise SystemExit("new-stage-from must equal the hash-bound parent checkpoint")
+    if (args.new_stage_from is None and args.resume is None
+            and args.new_stage_weight_mode != "saved"):
+        raise SystemExit("new-stage-weight-mode=train requires --new-stage-from or --resume")
     if args.steps <= 0 or args.save_every <= 0 or args.diloco_k <= 0:
         raise SystemExit("steps/save-every/diloco-k must be positive")
     if args.save_every % args.diloco_k or args.steps % args.diloco_k:
@@ -252,6 +329,7 @@ def main() -> None:
     dist.init_process_group("nccl")
     rank, world = dist.get_rank(), dist.get_world_size()
     local_rank = int(os.environ["LOCAL_RANK"])
+    validate_precision_world(args, world)
     torch.cuda.set_device(local_rank)
     device = torch.device("cuda", local_rank)
     if world not in {8, 64} or args.island_size != 8:
@@ -265,11 +343,15 @@ def main() -> None:
         raise RuntimeError("masked-SFT pack manifest mismatch")
 
     load_path = args.resume or args.new_stage_from or args.parent_checkpoint
-    weight_mode = "saved" if (args.resume is not None or args.new_stage_from is not None) else "train"
+    weight_mode = (
+        "saved" if args.resume is not None else
+        args.new_stage_weight_mode if args.new_stage_from is not None else
+        "train")
     loaded = load_e97_checkpoint(
         load_path, args_json=args.source_args_json, device=device,
         dtype=torch.bfloat16, weight_mode=weight_mode, use_triton=True, mmap=True)
     core_model = loaded.model.train()
+    precision_policy = configure_precision(core_model, args)
     core_model.gradient_checkpointing = True
     core_model.gradient_checkpoint_group_size = args.gradient_checkpoint_group_size
     mlp_chunk_modules = 0
@@ -288,7 +370,7 @@ def main() -> None:
         core_model, device_ids=[local_rank], output_device=local_rank,
         find_unused_parameters=False, gradient_as_bucket_view=True,
         process_group=island_group)
-    optimizer = build_optimizer(core_model.parameters(), args)
+    optimizer = build_optimizer(core_model.parameters(), args, named_parameters=core_model.named_parameters())
 
     optimizer_state_storage = (
         CPUOffloadAdamWScheduleFree.state_storage
@@ -305,11 +387,19 @@ def main() -> None:
         "optimizer_state_storage": optimizer_state_storage,
         "boundary_aware_packs": bool(args.boundary_aware_packs),
         "sampler_mode": args.sampler_mode,
+        "new_stage_weight_mode": args.new_stage_weight_mode,
+        "sft_precision": precision_policy,
     }
     if args.disable_diloco_merge:
         expected_resume["diloco_merge_enabled"] = False
     if args.resume is not None:
-        clocks = load_resume_optimizer(args.resume, optimizer, expected_resume)
+        clocks = load_resume_optimizer(
+            args.resume, optimizer, expected_resume,
+            allow_legacy_precision=(args.optimizer_precision == "legacy"
+                                    and not args.loss_logits_fp32
+                                    and not args.checkpoint_loss_chunks
+                                    and args.loss_chunk_size is None
+                                    and not args.disable_bf16_reduced_precision_reduction))
         start_update = clocks["updates"]
         total_tokens = clocks["total_tokens"]
         total_targets = clocks["assistant_target_tokens"]
@@ -343,7 +433,7 @@ def main() -> None:
     emit(args.log_jsonl, "start", rank,
          parent_checkpoint=str(args.parent_checkpoint), parent_sha256=args.parent_sha256,
          source_weight_mode=("resume-saved-plus-optimizer" if args.resume else
-                             "new-stage-saved-x" if args.new_stage_from else
+                             f"new-stage-{args.new_stage_weight_mode}" if args.new_stage_from else
                              "parent-train-y"),
          source_commit=args.source_commit, world_size=world, island_size=args.island_size,
          diloco_k=args.diloco_k,
@@ -351,6 +441,7 @@ def main() -> None:
          context_size=args.context_size,
          boundary_aware_packs=bool(args.boundary_aware_packs),
          sampler_mode=args.sampler_mode, lr=args.lr,
+         sft_precision=precision_policy,
          warmup_steps=args.warmup_steps, grad_clip=args.grad_clip,
          gradient_checkpoint_group_size=args.gradient_checkpoint_group_size,
          empty_cache_min_record_tokens=args.empty_cache_min_record_tokens,
@@ -464,6 +555,9 @@ def main() -> None:
                     "boundary_aware_packs": bool(args.boundary_aware_packs),
                 }
                 atomic_save(checkpoint, payload)
+                # Do not retain the exported live-y backup across subsequent
+                # training windows after optimizer.train() releases its copy.
+                del payload
                 digest = sha256(checkpoint)
                 emit(args.log_jsonl, "checkpoint", rank, update=update,
                      checkpoint=str(checkpoint), checkpoint_bytes=checkpoint.stat().st_size,

@@ -233,15 +233,46 @@ def _apply_schedulefree_train_weights(
     checkpoint: Mapping[str, Any],
     config: Mapping[str, Any],
 ) -> bool:
-    if config.get("optimizer", "adamw") != "schedulefree":
-        return False
     optimizer_state = checkpoint.get("optimizer_state_dict")
+    sr_marked = isinstance(optimizer_state, Mapping) and (
+        any(key in optimizer_state for key in ("precision_identity", "eval_live_y", "rounding_counters"))
+        or any(str(group.get("state_schema", "")).startswith("emender-schedulefree-bf16-sr-")
+               for group in optimizer_state.get("param_groups", [])))
+    policy = checkpoint.get("sft_precision")
+    if isinstance(policy, Mapping):
+        declared = policy.get("optimizer")
+        if declared not in {"legacy", "bf16-sr-candidate"}:
+            raise ValueError("unsupported checkpoint optimizer precision")
+        if declared == "bf16-sr-candidate":
+            sr_marked = True
+        elif sr_marked:
+            raise ValueError("legacy precision policy conflicts with SR state")
+    if config.get("optimizer", "adamw") != "schedulefree":
+        if sr_marked:
+            raise ValueError("SR optimizer checkpoint conflicts with model optimizer configuration")
+        return False
     if optimizer_state is None:
         raise ValueError(
             "this E97 checkpoint stores schedule-free averaged weights but has no "
             "optimizer_state_dict from which to recover generation/train weights; "
             "load with weight_mode='saved' only if averaged x-mode is intentional"
         )
+
+    if sr_marked:
+        from ndm.schedulefree_sr_candidate import ScheduleFreeSRCandidate
+        identity = optimizer_state.get("precision_identity", {})
+        if not isinstance(identity, Mapping) or identity.get("schema") != ScheduleFreeSRCandidate.state_schema:
+            raise ValueError("missing or unsupported SR precision identity")
+        # Restore the recorded BF16 y point, not a newly rounded inverse x/z
+        # interpolation. No optimizer step or CPU Adam arithmetic is performed.
+        model.to(dtype=torch.bfloat16)
+        optimizer = ScheduleFreeSRCandidate(
+            model.named_parameters(), seed=identity["seed"],
+            pin_memory=False, release_gradients=False)
+        optimizer.load_state_dict(optimizer_state)
+        optimizer.train()
+        del optimizer
+        return True
 
     import schedulefree
 
@@ -294,9 +325,10 @@ class LoadedE97Checkpoint:
 
 
 def load_e97_checkpoint(
-    path: str | Path,
+    path: str | Path | Any,
     *,
     args_json: str | Path | None = None,
+    checkpoint_path: str | Path | None = None,
     device: str | torch.device = "cpu",
     dtype: torch.dtype | str | None = None,
     weight_mode: str = "train",
@@ -313,17 +345,26 @@ def load_e97_checkpoint(
 
     if weight_mode not in {"train", "saved"}:
         raise ValueError("weight_mode must be 'train' or 'saved'")
-    checkpoint_path = resolve_e97_checkpoint(path)
-    checkpoint = torch.load(
-        checkpoint_path,
-        map_location="cpu",
-        mmap=mmap,
-        weights_only=False,
-    )
+    if hasattr(path, "read"):
+        # A serving caller may retain a no-follow descriptor, hash it, rewind
+        # it, and load these exact bytes.  torch mmap requires a pathname, so
+        # descriptor-backed loading deliberately disables it.
+        if checkpoint_path is None:
+            raise ValueError("descriptor-backed checkpoints require checkpoint_path identity")
+        resolved_checkpoint_path = Path(checkpoint_path)
+        checkpoint = torch.load(path, map_location="cpu", mmap=False, weights_only=False)
+    else:
+        resolved_checkpoint_path = resolve_e97_checkpoint(path)
+        checkpoint = torch.load(
+            resolved_checkpoint_path,
+            map_location="cpu",
+            mmap=mmap,
+            weights_only=False,
+        )
     if not isinstance(checkpoint, Mapping) or "model_state_dict" not in checkpoint:
-        raise ValueError(f"{checkpoint_path} is not a train.py checkpoint")
+        raise ValueError(f"{resolved_checkpoint_path} is not a train.py checkpoint")
     state_dict = checkpoint["model_state_dict"]
-    config = e97_checkpoint_config(checkpoint_path, checkpoint, args_json)
+    config = e97_checkpoint_config(resolved_checkpoint_path, checkpoint, args_json)
     resolved_device = torch.device(device)
     effective_use_triton = use_triton
     if resolved_device.type != "cuda" and effective_use_triton is None:
@@ -366,7 +407,7 @@ def load_e97_checkpoint(
     loaded = LoadedE97Checkpoint(
         model=model,
         config=config,
-        checkpoint_path=checkpoint_path,
+        checkpoint_path=resolved_checkpoint_path,
         step=step,
         loss=loss,
         checkpoint_metadata=checkpoint_metadata,

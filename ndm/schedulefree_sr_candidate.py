@@ -1,4 +1,4 @@
-"""Experimental BF16 Schedule-Free precision candidate; NOT wired into training.
+"""Experimental BF16 Schedule-Free precision candidate; explicit SFT opt-in only.
 
 Bounded parameter-device FP32 arithmetic, counter-based stochastic BF16 stores,
 and exact BF16 live-y backup for eval/checkpoint basis transitions. No persistent
@@ -191,6 +191,10 @@ class ScheduleFreeSRCandidate(CPUOffloadAdamWScheduleFree):
         k=int(group['k'])
         if not 0 <= k < MASK:
             raise ValueError('step exceeds SR counter range')
+        if k == 0:
+            # Make full-state checkpoint coverage unambiguous, including a
+            # parameter that has not received a gradient in the first step.
+            self.initialize_state_()
         self._poisoned=True
         begin=time.perf_counter()
         beta1,beta2=group['betas']
@@ -273,6 +277,9 @@ class ScheduleFreeSRCandidate(CPUOffloadAdamWScheduleFree):
             raise ValueError('partial live-y backup')
         if set(backups)-set(ids) or set(incoming['state'])-set(ids):
             raise ValueError('unexpected optimizer slot')
+        if group['k'] > 0 and (set(incoming['state']) != set(ids) or
+                any(set(state) != {'z','exp_avg_sq'} for state in incoming['state'].values())):
+            raise ValueError('partial initialized SR checkpoint state')
         for pid,p in zip(ids,params):
             tensors=list(incoming['state'].get(pid,{}).values())+([backups[pid]] if pid in backups else [])
             state=incoming['state'].get(pid,{})
