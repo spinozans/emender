@@ -28,6 +28,8 @@ def test_image_candidate_has_no_automatic_agent_or_tool_startup():
     assert '--require-hashes' in text and 'USER 1000:1000' in text
     assert 'ARG BASE_IMAGE\nFROM ${BASE_IMAGE}' in text
     assert 'execution qualification required' in text
+    assert 'RUN chmod -R a+rX /opt/openhands' in text
+    assert text.index('USER 1000:1000')<text.index('from openhands.runtime.action_execution_server import ActionExecutor')
     script=(ROOT/'scripts/build_e97_openhands_runtime_image.sh').read_text()
     assert '--host unix:///var/run/docker.sock' in script
     assert '--network none --read-only --cap-drop ALL' in script

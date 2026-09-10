@@ -8,7 +8,8 @@ PYTHON_BIN=${PYTHON_BIN:?select an approved Python 3.12 interpreter}
 UVX_BIN=${UVX_BIN:?select uvx explicitly}
 DOCKERFILE=${DOCKERFILE:?select the frozen Dockerfile explicitly}
 SOURCE_MANIFEST_SHA256=${SOURCE_MANIFEST_SHA256:?bind the source manifest}
-IMAGE_TAG=emender-openhands-native-candidate:source-9ee704a25a33-v1
+IMAGE_TAG=${IMAGE_TAG:-emender-openhands-native-candidate:source-9ee704a25a33-v1}
+[[ "$IMAGE_TAG" =~ ^emender-openhands-native-candidate:source-9ee704a25a33-v[1-9][0-9]*$ ]] || { echo 'Require a versioned candidate image tag' >&2; exit 2; }
 DOCKER=(docker --host unix:///var/run/docker.sock)
 if [[ "$OUT" != /* || -e "$OUT" || -L "$OUT" ]]; then echo 'Refuse existing/nonabsolute output' >&2; exit 2; fi
 if "${DOCKER[@]}" image inspect "$IMAGE_TAG" >/dev/null 2>&1; then echo 'Refuse existing candidate image tag' >&2; exit 2; fi
@@ -53,13 +54,13 @@ IMAGE=$(head -n 1 "$OUT/image-id.txt")
 "${DOCKER[@]}" run --rm --network none --read-only --cap-drop ALL --security-opt no-new-privileges \
   --pids-limit 128 --memory 4g --cpus 2 "$IMAGE" python -m pip freeze > "$OUT/pip-freeze.txt"
 verify_source
-"$PYTHON_BIN" - "$OUT" "$SOURCE_MANIFEST_SHA256" <<'PY'
+"$PYTHON_BIN" - "$OUT" "$SOURCE_MANIFEST_SHA256" "$IMAGE_TAG" <<'PY'
 from pathlib import Path
 import hashlib,json,os,sys
 root=Path(sys.argv[1])
 files=['requirements.txt','context/Dockerfile','base-image.txt','image-id.txt','image-inspect.json','pip-freeze.txt']
 m={'schema':'emender-openhands-runtime-image-candidate-v1','status':'built-not-execution-qualified',
-   'source_manifest_sha256':sys.argv[2],'image_id':(root/'image-id.txt').read_text().strip(),
+   'source_manifest_sha256':sys.argv[2],'image_id':(root/'image-id.txt').read_text().strip(),'image_tag':sys.argv[3],
    'base_image':(root/'base-image.txt').read_text().strip(),'execution_qualified':False,'training_eligible':False,
    'historical_dataset_runtime_identity_verified':False,'automatic_retry':False,
    'docker_daemon':'unix:///var/run/docker.sock','files':{n:hashlib.sha256((root/n).read_bytes()).hexdigest() for n in files}}

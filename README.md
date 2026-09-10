@@ -72,7 +72,8 @@ The [source-native Open-SWE rebuild](docs/validation/e97-open-swe-source-native-
 now contains 64.4M training targets with complete histories and problem-grouped
 splits. Its [dataset protocol](docs/E97_OPEN_SWE_SOURCE_NATIVE_PROTOCOL.md) preserves
 original tool semantics and separate public/private text. Source reconstruction
-passed; runtime qualification and training admission are still pending.
+passed, as have [bounded upstream tool execution checks](docs/validation/e97-openhands-native-execution-v2.md).
+Model-serving/trainer integration and training admission remain pending.
 
 The CLI checkpoint is protocol-specific and is not a general instruction or
 coding assistant. Release identities, hashes, export semantics, and validation

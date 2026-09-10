@@ -1,7 +1,9 @@
 # Native runtime protocol boundary v1
 
 Date: 2026-09-10. **Serialization/routing qualification passed. Tool execution
-qualification remains pending.** This boundary executes no shell/editor commands.
+qualification was pending at this stage.** This boundary executes no shell/editor commands.
+The subsequent [upstream execution gate](e97-openhands-native-execution-v2.md)
+passed 18 checks; model-serving and training admission remain pending.
 
 ## Implementation
 
