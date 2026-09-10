@@ -2343,7 +2343,7 @@ def _diloco_allreduce_average_flat(flat, world_size, args, label, step=None,
 @torch.no_grad()
 def _diloco_allreduce_average_tensor_list_(
         tensors, world_size, args, label, *, staging_device, step=None,
-        merge_index=None):
+        merge_index=None, precision_store=None):
     """Average a tensor list through one bounded reusable staging buffer.
 
     This path is required when tensors live in CPU-offloaded optimizer state:
@@ -2365,7 +2365,10 @@ def _diloco_allreduce_average_tensor_list_(
     # production 64M-element merge bound when no explicit bound was supplied.
     bucket_numel = configured if configured > 0 else 67_108_864
     bucket_numel = max(1, min(bucket_numel, total_numel))
-    staging = torch.empty(bucket_numel, dtype=dtype, device=staging_device)
+    # Opt-in precision candidates reduce in bounded FP32 device scratch and
+    # stochastically store each result. Legacy averaging remains byte-unchanged.
+    staging_dtype = torch.float32 if precision_store is not None else dtype
+    staging = torch.empty(bucket_numel, dtype=staging_dtype, device=staging_device)
 
     tensor_index = 0
     tensor_offset = 0
@@ -2391,8 +2394,11 @@ def _diloco_allreduce_average_tensor_list_(
             active, world_size, args, label, step=step,
             merge_index=merge_index, bucket_index_base=bucket_index)
         for tensor, destination_offset, source_offset, count in destinations:
-            tensor.view(-1).narrow(0, destination_offset, count).copy_(
-                staging.narrow(0, source_offset, count), non_blocking=False)
+            source = staging.narrow(0, source_offset, count)
+            if precision_store is None:
+                tensor.view(-1).narrow(0, destination_offset, count).copy_(source, non_blocking=False)
+            else:
+                precision_store(tensor, destination_offset, source, label)
         bucket_index += 1
 
 
@@ -2440,6 +2446,9 @@ def diloco_merge(core_model, optimizer, args, world_size, outer_state,
         # anchor/moment state without setting the new routing flag.
         outer_optimizer = 'momentum'
     export_basis = getattr(args, 'diloco_export_basis', 'x')
+    if (sf and hasattr(optimizer, 'commit_merged_xz_')
+            and outer_optimizer != 'avg'):
+        raise ValueError('exact-y precision candidate only qualifies outer avg')
     if outer_optimizer == 'sfsgd' and not sf:
         raise ValueError("--diloco_outer_optimizer sfsgd requires --optimizer schedulefree")
 
@@ -2481,7 +2490,8 @@ def diloco_merge(core_model, optimizer, args, world_size, outer_state,
                 _diloco_allreduce_average_tensor_list_(
                     [p.data for p in group_params], world_size, args, 'sf_x',
                     staging_device=group_params[0].device,
-                    step=step, merge_index=merge_index)
+                    step=step, merge_index=merge_index,
+                    precision_store=getattr(optimizer, 'store_merged_slice_', None))
             else:
                 flat_x = torch._utils._flatten_dense_tensors(
                     [p.data for p in group_params])
@@ -2503,7 +2513,8 @@ def diloco_merge(core_model, optimizer, args, world_size, outer_state,
                     _diloco_allreduce_average_tensor_list_(
                         z_tensors, world_size, args, 'sf_z',
                         staging_device=z_params[0].device,
-                        step=step, merge_index=merge_index)
+                        step=step, merge_index=merge_index,
+                        precision_store=getattr(optimizer, 'store_merged_slice_', None))
                 else:
                     flat_z = torch._utils._flatten_dense_tensors(z_tensors)
                     _diloco_allreduce_average_flat(
@@ -2690,7 +2701,12 @@ def diloco_merge(core_model, optimizer, args, world_size, outer_state,
     #    Because step 3 shifted x and z by the same s, train() yields the
     #    translation-invariant y+ = ybar + s (whole inner geometry preserved).
     if sf and outer_optimizer != 'sfsgd':
-        optimizer.train()
+        if hasattr(optimizer, 'commit_merged_xz_'):
+            # Checkpoint eval/train restores an exact saved y, whereas this
+            # transaction must accept the new merged x/z, never undo the merge.
+            optimizer.commit_merged_xz_()
+        else:
+            optimizer.train()
     return sync_s
 
 

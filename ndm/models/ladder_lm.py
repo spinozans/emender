@@ -1187,6 +1187,10 @@ class LadderLM(nn.Module):
         if self.gradient_checkpoint_group_size <= 0:
             raise ValueError("gradient_checkpoint_group_size must be positive")
         self.loss_chunk_size = loss_chunk_size
+        # Experimental precision gate: keep historical defaults unchanged until
+        # explicit FP32-logit CE is qualified and recorded by a training recipe.
+        # This casts only temporary logits, never parameters or optimizer state.
+        self.loss_logits_fp32 = False
         self.use_chunked_e97 = use_chunked_e97
         self.e97_chunk_size = e97_chunk_size
         self.mlp_ratio = mlp_ratio
@@ -1600,8 +1604,9 @@ class LadderLM(nn.Module):
 
                     def chunk_cross_entropy(hidden, targets):
                         logits_c = self.lm_head(hidden)
+                        ce_logits = (logits_c.float() if self.loss_logits_fp32 else logits_c)
                         return F.cross_entropy(
-                            logits_c.reshape(-1, self.vocab_size),
+                            ce_logits.reshape(-1, self.vocab_size),
                             targets.reshape(-1),
                             ignore_index=-100,
                             reduction='sum')
@@ -1622,8 +1627,9 @@ class LadderLM(nn.Module):
                         else total_sum / total_count.clamp(min=1))
             else:
                 logits = self.lm_head(x)
+                ce_logits = (logits.float() if self.loss_logits_fp32 else logits)
                 loss = F.cross_entropy(
-                    logits.view(-1, self.vocab_size),
+                    ce_logits.view(-1, self.vocab_size),
                     target.reshape(-1),
                     ignore_index=-100,
                     reduction=loss_reduction,
