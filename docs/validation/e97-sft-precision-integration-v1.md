@@ -102,8 +102,10 @@ permission. **R14/NDP13** runtime failure containment still needs the bounded
 actual execution gate. Elastic R02–R06/R08–R11, NDP02's no-all-rank property,
 NDP17's native ladder, V21S01–V21S17 and ISP01–ISP07 are unclaimed.
 
-Next: freeze the exact numerical policy and qualify real E97 4B forward/backward,
-effective updates, memory, x/y publication and fresh-process continuation. The
-previous failed MLP-chunk qualification remains failed. Native source admission,
+Subsequent [native-trajectory numerical qualification](e97-native-sft-numerics-v2.md)
+passed real E97 4B forward/backward at 14,841 and 65,423 tokens for the specific
+checkpointed-CE/MLP4096 policy. Effective updates, all-target packed/DDP memory,
+x/y publication and fresh-process continuation still need qualification. The
+previous failed MLP-chunk configuration remains failed. Native source admission,
 whole-trajectory mixing/sampling, model-serving integration and the matched
 higher-LR-inclusive learning experiment remain separate prerequisites.
