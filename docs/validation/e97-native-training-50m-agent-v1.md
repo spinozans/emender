@@ -81,6 +81,23 @@ is required before preparing a later successful segment from committed latest.
 
 At this commit the controller is prepared for the first 128 updates; the full
 880 updates and autonomous execution validation are not completed.
+The first segment was launched under managed process `proc_8b96`, with
+controller commit `fd39b5b4f961e5c721632b05b5ff3ef5e9afa435`; its clean-export
+CPU suite passed 25 tests. At update 32, loss was 1.2744 and rank-0 peak
+allocated HBM remained 36,128,739,328 bytes. This is progress, not completion.
+
+### Evaluation runner
+
+`scripts/run_e97_native_training_segment_eval.sh` prepares a four-model panel:
+parent y, the fixed 1e-5/u8 pilot y, current y, and current x. It uses the
+unchanged numerical evaluator export, eight GPU lanes, NUMA placement, isolated
+Triton caches, both allocator variables, checked GPU lease acquisition and a
+2,400-second TERM/30-second KILL deadline. It does not run concurrently with the
+training segment. `eval_e97_native_training_segment.py` checks the fixed policy
+and publishes a gate bound to the training summary, program, panel and evaluation
+summary. A rejected guard publishes `continue_training:false` and exits nonzero;
+there is no fallback. This prepares evaluation, not an executed u128 result.
+
 The earlier exact-restoration evidence remains valid; numerical fresh
 continuation has not been measured and is not relabeled as passing.
 
