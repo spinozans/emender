@@ -1,7 +1,10 @@
 # E97 Open-SWE source-native dataset protocol v1
 
 Status: rebuilt dataset encoding and source/mask validation implemented.
-**Not yet a qualified serving/runtime profile.** No deployed Pi grammar changes.
+**Not yet an execution-qualified serving/runtime profile.** No deployed Pi grammar changes.
+The [native episode boundary](validation/e97-native-runtime-protocol-v1.md) now
+passes strict parsing/routing tests and real-source training-prefix parity;
+actual shell/editor execution qualification is still pending.
 
 Profile: `e97-open-swe-source-native-v1`.
 
