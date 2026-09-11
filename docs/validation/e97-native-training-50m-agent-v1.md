@@ -110,9 +110,32 @@ training segment. `eval_e97_native_training_segment.py` checks the fixed policy
 and publishes a gate bound to the training summary, program, panel and evaluation
 summary. A rejected guard publishes `continue_training:false` and exits nonzero;
 there is no fallback. The clean-export evaluation/controller tests passed 13
-cases. Update-128 evaluation was launched as `proc_8984`, from controller commit
-`084ce6ccf2dcaafc233986bfc7e28f268b24f6de`. Its results and continuation verdict
-are pending; autonomous tool execution remains untested by this evaluation.
+cases. Update-128 evaluation (`proc_8984`) completed in 718 seconds, from
+controller commit `084ce6ccf2dcaafc233986bfc7e28f268b24f6de`.
+
+| Metric | Parent y | 1e-5/u8 pilot y | u128 y | u128 x |
+|---|---:|---:|---:|---:|
+| Native fitting NLL (new, actually consumed panel) | 1.6603 | 1.1513 | .9025 | .9072 |
+| Native development NLL (unchanged panel) | 1.5551 | 1.1177 | .9614 | .9626 |
+| Conversation NLL | 1.6811 | 1.6773 | 1.6529 | 1.6505 |
+| Tool-retention token accuracy | 100% | 100% | 100% | 100% |
+| Valid fitting first turns | 0/2 | 1/2 | 2/2 | 2/2 |
+| Valid development first turns | 0/2 | 0/2 | 2/2 | 2/2 |
+| Matching development argument payloads | 0/2 | 0/2 | 2/2 | 2/2 |
+
+Both u128 representations also matched fitting source tool names and full
+argument payloads on 2/2 prompts. These are four distinct generation prompts,
+measured in both modes—not eight independent tasks. No generated tools were
+dispatched. This is stronger first-turn acquisition evidence, not task completion
+or observation-dependent execution. All six predeclared continuation checks
+passed; `continue_training:true`, `checkpoint_promotion:false`.
+
+Evaluation summary SHA:
+`7b825c11e9aaaf2db38874b8b2aa04af80e2944112b866c661eeeebf3597cfe1`.
+Panel SHA: `116376b79d6db27621d0ac3640c49bed0954c3f44bf85305550f0a0ea5776fca`.
+The next planned successful segment through update 256 was launched as
+`proc_2381`, using the frozen controller and committed atomic latest checkpoint.
+Its completion and subsequent evaluation remain pending.
 
 The earlier exact-restoration evidence remains valid; numerical fresh
 continuation has not been measured and is not relabeled as passing.
