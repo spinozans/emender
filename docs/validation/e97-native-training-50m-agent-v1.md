@@ -167,9 +167,23 @@ tasks. No tools were dispatched, and no observation-dependent task-completion
 claim follows. Evaluation summary SHA:
 `cc4d779f615231d583b97e6f8dbb1041ff9df10125b8fe7d85ef897066102c90`;
 panel SHA `0e12850f6e316e6dcde787cfaa47e9b26b94a87c9e0834fa062f14ab8e460fc2`.
-The next planned segment through update 384 was launched as `proc_2b1d`, from
-the accepted atomic u256 checkpoint with the unchanged frozen training recipe.
-Its completion and evaluation remain pending.
+### Update 384 completed
+
+The next planned segment (`proc_2b1d`) completed in 9,983 seconds, from the
+accepted atomic u256 checkpoint with the unchanged frozen training recipe.
+All 128 additional updates passed runtime sample/count/cumulative-clock checks.
+Cumulative exposure: 165,177,221 input tokens and 72,793,317 assistant targets:
+native 21,606,255, conversation 43,835,840 and retention 7,351,222.
+Rank-0 peak allocated HBM remained 36,128,739,328 bytes.
+
+Complete finite BF16 checkpoint:
+`checkpoints/checkpoint_agent_sft_u000384_loss_1.2184.pt`, SHA
+`f50814da17fc0480abc4fa231008f6f56d5c543b1aa537bfdac8d55018c5ef26`.
+The filename loss is the last-100-update mean, not an evaluation metric.
+No checkpoint promotion or numerical fresh-continuation qualification is claimed.
+
+Update-384 evaluation was launched as `proc_1fab`, on the same frozen examples
+and numerical evaluator. Its results and continuation to update 512 are pending.
 
 The earlier exact-restoration evidence remains valid; numerical fresh
 continuation has not been measured and is not relabeled as passing.
