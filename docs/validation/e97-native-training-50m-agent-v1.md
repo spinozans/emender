@@ -214,9 +214,28 @@ Complete finite BF16 checkpoint:
 The filename loss is the last-100-update mean, not an evaluation metric.
 No checkpoint promotion or numerical fresh-continuation qualification is claimed.
 
-Update-512 evaluation was launched as `proc_5cf8`, on the unchanged frozen
-examples and numerical evaluator. Its results and continuation to update 640
-remain pending.
+Update-512 evaluation (`proc_5cf8`) completed in 655 seconds, on the unchanged
+frozen examples and numerical evaluator. All six continuation checks passed;
+no checkpoint promotion.
+
+| Metric | u384 y | u512 y | u512 x |
+|---|---:|---:|---:|
+| Native fitting NLL | .8354 | .8185 | .8214 |
+| Native development NLL | .9099 | .8989 | .9004 |
+| Conversation NLL | 1.5890 | 1.5648 | 1.5713 |
+| Tool-retention token accuracy | 100% | 100% | 100% |
+| Valid / matching full first tool calls, fitting | 2/2 | 2/2 | 2/2 |
+| Valid / matching full first tool calls, development | 2/2 | 2/2 | 2/2 |
+
+The same four distinct generation prompts remain correct at the first-call
+level; no tool dispatch or task-completion claim is made. Development NLL
+continues improving with smaller successive gains on this repeatedly measured
+panel. Evaluation summary SHA:
+`3c6ec5bead6366ede80b31c5eb0991fc02b1d7e1018a9446ca9953194d3917a5`;
+panel SHA `9a162e1282da6437a932cfd1d7c8b6bec9ddcc2a3586cbe2c17bfd62ac2a3653`.
+The next planned segment through update 640 was launched as `proc_21fe`, from
+the accepted atomic u512 checkpoint under the unchanged frozen recipe.
+Its completion and evaluation remain pending.
 
 The earlier exact-restoration evidence remains valid; numerical fresh
 continuation has not been measured and is not relabeled as passing.
