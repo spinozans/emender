@@ -18,8 +18,12 @@ contents and required answers:
 
 Success requires an explicit correct `finish`, an actual external call,
 unchanged source files and, for edits, exact parsed output JSON. Files are read
-by the host through bounded Docker archives while **all sandbox processes are
+through a separate immutable-code reader while **all agent processes are
 paused**, not through model-provided status or a model-editable test program.
+The reader joins only the agent PID namespace, not its cgroup, uses isolated
+Python (`-I -S`) in the same pinned read-only image, and reads `/proc/1/root`
+through bounded no-follow file descriptors. It receives paths, never gold
+answers. It has no host filesystem, GPU, socket or network exposure.
 Symlinks, directories, missing, oversized and invalid outputs do not pass.
 Gold answers remain host-side; only fixture input files enter the sandbox.
 
@@ -80,8 +84,27 @@ Validation command:
 ```
 
 Initial CPU validation: **45 passed**, including causal observation delivery
-before the next generated turn. GPU execution and authored-container
-preflight have not yet completed. Immutable exported source, panel/checkpoint
-identities, private episodes, sandbox inspections/cleanup and final aggregate
-will be retained under `native-execution-diagnostic-v1` in
-`/mnt/nvme2n1/erikg/e97_systematic_posttraining/`.
+before the next generated turn. The original `proc_b0bf` failed after 129
+seconds in the first authored smoke case, before GPU/model evaluation:
+`source_files_unchanged:false`. The failed root `native-execution-diagnostic-v1`
+and original panel SHA
+`7f072bb26dc052888be903ed5a649928962b85640ec983ad3eb0bb0f93f92583`
+remain retained, not relabeled.
+
+The native executor correctly read the input. Controlled diagnostic `proc_26cc`
+proved Docker archive API cannot find that tmpfs file in either running or
+paused state. `proc_d3f5` then proved a separate same-UID reader in the paused
+agent PID namespace can read the actual bytes. Neither diagnostic loaded a
+model. Roots: `native-execution-snapshot-diagnostic-v1` and `-v2`.
+
+The corrected reader uses no-follow opens at every untrusted path component,
+rejects nonregular/oversized/invalid UTF-8 files, and preserves reader stdout,
+stderr, inspection and cleanup evidence. Smoke cases now retain their calls,
+snapshot and oracle verdict before failing. Updated CPU validation: **46 passed**,
+including symlink-parent, FIFO, missing, oversized and invalid-output rejection.
+No task, oracle, model, threshold or generation budget changed.
+
+The corrected immutable export will use `native-execution-diagnostic-v2` under
+`/mnt/nvme2n1/erikg/e97_systematic_posttraining/`; authored preflight must pass
+before model execution. This is an inspected infrastructure correction, not an
+automatic failed-child restart. No model capability measurements exist yet.

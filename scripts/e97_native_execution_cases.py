@@ -58,7 +58,7 @@ def cases(seed):
 
 
 def grade(case, final, calls, snapshot):
-    """Snapshot comes from Docker archive API while all sandbox processes are paused.
+    """Snapshot comes from the isolated trusted reader while all agent processes are paused.
 
     Success requires finish, actual external execution and unchanged input files.
     Pairwise success on lookup/sum/recovery tests environment-conditioned answers;

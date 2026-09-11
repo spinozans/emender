@@ -118,3 +118,21 @@ def test_episode_feeds_observation_before_finish(monkeypatch, tmp_path):
     assert result['grade']['success'] and len(prompts) == 2
     assert c['answer'] not in prompts[0] and c['answer'] in prompts[1]
     assert 'Tool:' in prompts[1] and len(result['calls']) == 1
+
+
+def test_paused_reader_no_follow_and_bounded_files(tmp_path):
+    import os
+    from scripts.e97_native_snapshot_reader import read_regular_files
+    root = tmp_path/'testbed'; root.mkdir()
+    (root/'good').write_text('verified')
+    (root/'large').write_bytes(b'x'*65537)
+    (root/'binary').write_bytes(b'\xff')
+    (root/'link').symlink_to(root/'good')
+    (root/'dirlink').symlink_to(root, target_is_directory=True)
+    os.mkfifo(root/'fifo')
+    names = ['good', 'large', 'binary', 'link', 'dirlink/good', 'fifo', 'missing']
+    values = read_regular_files(tmp_path, names)
+    assert values == {name: 'verified' if name == 'good' else None for name in names}
+    for names in (['../escape'], ['/absolute'], [], ['good', 'good']):
+        with pytest.raises(ValueError):
+            read_regular_files(tmp_path, names)

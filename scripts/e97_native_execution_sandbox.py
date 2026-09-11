@@ -22,9 +22,9 @@ def archive_file(data):
         return archive.extractfile(entries[0]).read().decode('utf-8')
 
 
-def bounded_output(command, limit=131072, timeout=15):
-    """Bound Docker archive bytes before buffering; directory/symlink outputs fail closed."""
-    p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+def bounded_output(command, limit=131072, timeout=15, stderr=subprocess.DEVNULL):
+    """Bound subprocess bytes before buffering and kill on deadline/overflow."""
+    p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=stderr)
     data = bytearray()
     sel = selectors.DefaultSelector(); sel.register(p.stdout, selectors.EVENT_READ)
     end = time.monotonic() + timeout
@@ -119,21 +119,51 @@ class NativeSandbox:
         return reply
 
     def snapshot(self, names):
-        # Freeze all generated processes before a daemon-side, non-executing read.
+        # Docker archive API on this host cannot see the agent's tmpfs mounts.
+        # Freeze all agent processes, then use a separate, immutable-code reader
+        # in the agent PID namespace (not its cgroup or Python environment).
         subprocess.run(DOCKER+['pause', self.identity], check=True, timeout=10, stdout=subprocess.DEVNULL)
         spec = inspect_container(self.identity)
         if not spec['State']['Paused']:
             raise ValueError('snapshot requires paused container')
-        result = {}
-        for name in names:
-            if Path(name).is_absolute() or '..' in Path(name).parts:
-                raise ValueError('snapshot path')
-            try:
-                data = bounded_output(DOCKER+['cp', self.identity+':/testbed/'+name, '-'])
-                result[name] = archive_file(data) if data is not None else None
-            except (ValueError, UnicodeError, tarfile.TarError):
-                result[name] = None
-        return result
+        reader = Path('scripts/e97_native_snapshot_reader.py').read_bytes()
+        if hashlib.sha256(reader).hexdigest() != self.panel['snapshot_reader_sha256']:
+            raise ValueError('snapshot reader identity')
+        nonce = uuid.uuid4().hex; helper = None
+        command = container_args(self.panel['image_id'], nonce, {}, 1)
+        image_index = command.index(self.panel['image_id'])
+        command = command[:image_index] + ['--pid', 'container:'+self.identity, self.panel['image_id'],
+                   'python', '-I', '-S', '-c', reader.decode(), json.dumps(names)]
+        try:
+            helper = subprocess.check_output(command, timeout=30).decode().strip()
+            before = inspect_container(helper)
+            validate_container(before, self.panel['image_id'], nonce)
+            if before['HostConfig']['PidMode'] != 'container:'+self.identity:
+                raise ValueError('snapshot PID namespace')
+            (self.evidence/'reader-before.json').write_text(json.dumps(before, indent=2))
+            with (self.evidence/'reader.stderr').open('wb') as stderr:
+                data = bounded_output(DOCKER+['start', '--attach', helper], limit=4*1024*1024,
+                                      timeout=30, stderr=stderr)
+            if data is None:
+                raise RuntimeError('trusted snapshot reader failed; see reader.stderr')
+            (self.evidence/'reader.stdout').write_bytes(data)
+            state = inspect_container(helper)['State']
+            if state['Running'] or state['ExitCode'] or state['OOMKilled']:
+                raise RuntimeError('trusted reader did not complete cleanly')
+            result = json.loads(data)
+            if set(result) != set(names) or any(v is not None and not isinstance(v, str) for v in result.values()):
+                raise ValueError('snapshot coverage/type')
+            if not inspect_container(self.identity)['State']['Paused']:
+                raise ValueError('agent resumed during snapshot')
+            return result
+        finally:
+            if helper:
+                terminal = inspect_container(helper)
+                if terminal['Config']['Labels'].get('emender.native-qualification') != nonce:
+                    raise ValueError('refuse unowned reader cleanup')
+                (self.evidence/'reader-terminal.json').write_text(json.dumps(terminal, indent=2))
+                subprocess.run(DOCKER+['rm', '--force', helper], check=True, timeout=10, stdout=subprocess.DEVNULL)
+                (self.evidence/'reader-cleanup.json').write_text(json.dumps(dict(container_id=helper, removed=True)))
 
     def __exit__(self, *args):
         try:

@@ -61,6 +61,8 @@ def freeze(args):
                  tools_sha256=sha(tools_path), tokenizer_vocabulary_sha256=tools['tokenizer_vocabulary_sha256'],
                  image_id=image['image_id'], image_manifest=str(manifest), image_manifest_sha256=sha(manifest),
                  executor_receipt_sha256=sha(receipt), training_completion_sha256=sha(r/'program-completion.json'),
+                 snapshot_method='paused-pid-namespace-reader-v2',
+                 snapshot_reader_sha256=sha('scripts/e97_native_snapshot_reader.py'),
                  bundle_files={p: sha(p) for p in ('scripts/e97_native_execution_rpc.py', 'scripts/e97_openhands_native_backend.py')},
                  max_turns=8, generation_budget=4096, episode_generation_budget=8192, episode_seconds=600,
                  system=SYSTEM, automatic_retry=False, checkpoint_promotion=False,
@@ -205,6 +207,8 @@ def smoke(args):
             reply = sandbox.request('execute', call=call); calls.append(dict(request=call, result=reply['result']))
             snapshot = sandbox.snapshot(list(c['files']) + (['result.json'] if c['expected_output'] is not None else []))
         verdict = grade(c, c['answer'], calls, snapshot)
+        publish(args.output/('smoke-'+c['id'])/'oracle-check.json',
+                dict(id=c['id'], calls=calls, snapshot=snapshot, verdict=verdict, panel_sha256=args.panel_sha))
         if not verdict['success']:
             raise ValueError('authored oracle/executor preflight: '+c['id']+': '+str(verdict))
         results.append(dict(id=c['id'], **verdict))
