@@ -199,9 +199,24 @@ Generation still uses the same four distinct prompts, with no tool dispatch
 or task-completion claim. Evaluation summary SHA:
 `f7dff0c7af86a7d911909333533a49f822ea43e1b680c46e3beadcf3aad150af`;
 panel SHA `4a3947ed3a9f445b0be35dd5785ee014890c282d9e681840e103a7e22fec1444`.
-The next planned segment through update 512 was launched as `proc_47cd`, from
-the accepted atomic u384 checkpoint under the unchanged frozen recipe.
-Its completion and evaluation remain pending.
+### Update 512 completed
+
+The next planned segment (`proc_47cd`) completed in 10,086 seconds, from the
+accepted atomic u384 checkpoint under the unchanged frozen recipe. All 128
+additional updates passed runtime sample/count/cumulative-clock checks.
+Cumulative exposure: 221,068,760 input tokens and 97,589,057 assistant targets:
+native 28,818,594, conversation 58,879,995 and retention 9,890,468.
+Rank-0 peak allocated HBM remained 36,128,739,328 bytes.
+
+Complete finite BF16 checkpoint:
+`checkpoints/checkpoint_agent_sft_u000512_loss_1.2005.pt`, SHA
+`18725f77bf23a43f41d362edbbd949658d3ca27ad0b1aad7b7b1da3c963777d6`.
+The filename loss is the last-100-update mean, not an evaluation metric.
+No checkpoint promotion or numerical fresh-continuation qualification is claimed.
+
+Update-512 evaluation was launched as `proc_5cf8`, on the unchanged frozen
+examples and numerical evaluator. Its results and continuation to update 640
+remain pending.
 
 The earlier exact-restoration evidence remains valid; numerical fresh
 continuation has not been measured and is not relabeled as passing.
