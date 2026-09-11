@@ -133,9 +133,25 @@ passed; `continue_training:true`, `checkpoint_promotion:false`.
 Evaluation summary SHA:
 `7b825c11e9aaaf2db38874b8b2aa04af80e2944112b866c661eeeebf3597cfe1`.
 Panel SHA: `116376b79d6db27621d0ac3640c49bed0954c3f44bf85305550f0a0ea5776fca`.
-The next planned successful segment through update 256 was launched as
-`proc_2381`, using the frozen controller and committed atomic latest checkpoint.
-Its completion and subsequent evaluation remain pending.
+### Update 256 completed
+
+The next planned segment (`proc_2381`) completed in 10,403 seconds, using the
+unchanged frozen controller and committed atomic latest checkpoint. Its 128
+additional updates passed exact runtime sample/count/cumulative-clock checks.
+Cumulative exposure: 110,402,587 input tokens; 48,577,590 assistant targets,
+comprising native 14,421,967, conversation 29,264,439 and retention 4,891,184.
+Rank-0 peak allocated HBM remained 36,128,739,328 bytes.
+
+Complete finite BF16 checkpoint:
+`checkpoints/checkpoint_agent_sft_u000256_loss_1.2355.pt`, SHA
+`66fc0ee107c20d6869d0827ce40a9eb1ee381c778c4da75929560a65c3291c27`.
+The filename reports the last-100-update mean, not evaluation loss. This proves
+successful continued training, not the separately unmeasured numerical
+fresh-continuation comparison. No checkpoint is promoted.
+
+Update-256 evaluation was launched as `proc_f593`, using the unchanged frozen
+evaluation source and examples. Results and continuation to update 384 remain
+pending.
 
 The earlier exact-restoration evidence remains valid; numerical fresh
 continuation has not been measured and is not relabeled as passing.
