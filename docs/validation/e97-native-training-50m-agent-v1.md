@@ -1,5 +1,9 @@
 # Larger native SFT exposure: 50M agent targets
 
+**Current status:** all 880 training updates completed; final checkpoint
+learning/retention evaluation is running. No checkpoint promotion or automatic
+extension beyond the frozen budget.
+
 ## Decision and frozen data policy
 
 The completed six-rate screen shortlists **1e-5** provisionally for a substantive
@@ -300,10 +304,31 @@ Generation still uses the same four distinct prompts, with no tool dispatch
 or task-completion claim. Evaluation summary SHA:
 `8c6e2ad7f4fa761b53c7051523a0fc1d5779b3a34facad792e34ac3a63fd18f6`;
 panel SHA `1a52be3eec56fc83262c8624997e9d996a1093b4f0fe55874e2b2b9f483b4054`.
-The final planned 112-update segment through update 880 was launched as
-`proc_8104`, from the accepted atomic u768 checkpoint under the unchanged
-frozen recipe. Final training completion and checkpoint evaluation are pending;
-no expansion beyond update 880 is authorized by this program.
+### Update 880: full training budget completed
+
+The final planned 112-update segment (`proc_8104`) completed in 8,862 seconds,
+from the accepted atomic u768 checkpoint under the unchanged frozen recipe.
+All updates passed runtime sample/count/cumulative-clock checks. Final totals
+exactly match the predeclared full schedule:
+
+- 379,323,286 input tokens; **166,885,738 assistant targets**.
+- **50,069,457 native-agent**, 100,128,589 conversation and 16,687,692 retention targets.
+- 880 updates across seven successful planned segments; no failed-segment retry.
+- Rank-0 peak allocated HBM remained 36,128,739,328 bytes.
+
+Complete finite BF16 terminal checkpoint:
+`checkpoints/checkpoint_agent_sft_u000880_loss_1.1518.pt`, SHA
+`6b529dd37a1237b13728e8901fe1469b18aa2a0a2c5e4282fc01064cdd4233b1`.
+The filename reports the last-100-update mean, not evaluation loss.
+The seven managed training processes took 69,164 seconds in total (~19h13m),
+including their startup/checkpoint/collector overhead and excluding separate
+evaluations and between-process gaps.
+
+Final checkpoint evaluation was launched as `proc_8376`, with the unchanged
+frozen examples and numerical evaluator. Final learning/retention results remain
+pending. No model promotion, numerical fresh-continuation qualification, tool
+execution or task-completion claim follows from training completion. No
+expansion beyond update 880 is authorized by this program.
 
 The earlier exact-restoration evidence remains valid; numerical fresh
 continuation has not been measured and is not relabeled as passing.
