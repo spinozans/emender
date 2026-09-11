@@ -79,12 +79,25 @@ capability acceptance. Report generation separately; no tiny two-example task
 success gate or forced source-argument imitation. An accepted evaluation receipt
 is required before preparing a later successful segment from committed latest.
 
-At this commit the controller is prepared for the first 128 updates; the full
-880 updates and autonomous execution validation are not completed.
-The first segment was launched under managed process `proc_8b96`, with
-controller commit `fd39b5b4f961e5c721632b05b5ff3ef5e9afa435`; its clean-export
-CPU suite passed 25 tests. At update 32, loss was 1.2744 and rank-0 peak
-allocated HBM remained 36,128,739,328 bytes. This is progress, not completion.
+### Update 128 completed
+
+`proc_8b96` completed successfully in 9,742 seconds (2h42m), under controller
+commit `fd39b5b4f961e5c721632b05b5ff3ef5e9afa435`; its clean-export CPU suite
+passed 25 tests. Evidence is retained under
+`/mnt/nvme2n1/erikg/e97_systematic_posttraining/native-training-50m-agent-lr1e5-v1/segment-000128`.
+
+- 54,944,287 input tokens and 24,220,503 assistant targets.
+- Native 7,239,263; conversation 14,543,784; retention 2,437,456 targets.
+- All 128 runtime sample-ID sets, per-step counts and cumulative clocks matched
+  the frozen schedule. All losses/gradient norms were finite.
+- Rank-0 peak allocated HBM: 36,128,739,328 bytes (33.65 GiB), not an all-rank
+  peak measurement.
+- Complete finite BF16 model/optimizer/live-y state, optimizer and sampler
+  clocks, precision/LR/data identities and atomic latest pointer verified.
+- Shared checkpoint: `checkpoints/checkpoint_agent_sft_u000128_loss_1.2650.pt`;
+  SHA `e7ec5cd9dd05976006d9f421697f21ecb000fdf8f15448d6c40cc05510cf15f9`.
+  The filename loss is the last-100-update mean, not final-step or evaluation loss.
+- No checkpoint promotion. The full 880 updates are not completed.
 
 ### Evaluation runner
 
@@ -96,7 +109,10 @@ Triton caches, both allocator variables, checked GPU lease acquisition and a
 training segment. `eval_e97_native_training_segment.py` checks the fixed policy
 and publishes a gate bound to the training summary, program, panel and evaluation
 summary. A rejected guard publishes `continue_training:false` and exits nonzero;
-there is no fallback. This prepares evaluation, not an executed u128 result.
+there is no fallback. The clean-export evaluation/controller tests passed 13
+cases. Update-128 evaluation was launched as `proc_8984`, from controller commit
+`084ce6ccf2dcaafc233986bfc7e28f268b24f6de`. Its results and continuation verdict
+are pending; autonomous tool execution remains untested by this evaluation.
 
 The earlier exact-restoration evidence remains valid; numerical fresh
 continuation has not been measured and is not relabeled as passing.
