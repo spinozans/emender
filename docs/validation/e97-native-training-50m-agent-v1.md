@@ -1,8 +1,9 @@
 # Larger native SFT exposure: 50M agent targets
 
-**Current status:** all 880 training updates completed; final checkpoint
-learning/retention evaluation is running. No checkpoint promotion or automatic
-extension beyond the frozen budget.
+**Current status:** all 880 training updates and all seven matched checkpoint
+evaluations completed successfully. The fixed budget is closed: no additional
+training or checkpoint promotion. Autonomous observation-dependent execution
+remains unproven by this run.
 
 ## Decision and frozen data policy
 
@@ -324,11 +325,45 @@ The seven managed training processes took 69,164 seconds in total (~19h13m),
 including their startup/checkpoint/collector overhead and excluding separate
 evaluations and between-process gaps.
 
-Final checkpoint evaluation was launched as `proc_8376`, with the unchanged
-frozen examples and numerical evaluator. Final learning/retention results remain
-pending. No model promotion, numerical fresh-continuation qualification, tool
-execution or task-completion claim follows from training completion. No
-expansion beyond update 880 is authorized by this program.
+Final checkpoint evaluation (`proc_8376`) completed in 667 seconds, with the
+unchanged frozen examples and numerical evaluator. All six predeclared checks
+passed. The seven evaluation processes took 4,706 seconds total; training plus
+evaluation process durations sum to 73,870 seconds (~20h31m), excluding gaps
+between managed processes.
+
+| Metric | Parent y | u880 y | u880 x |
+|---|---:|---:|---:|
+| Native fitting NLL | 1.6603 | .7948 | .7961 |
+| Native development NLL | 1.5551 | .8717 | .8744 |
+| Conversation NLL | 1.6811 | 1.5088 | 1.5161 |
+| Tool-retention token accuracy | 100% | 100% | 100% |
+| Valid / matching full first tool calls, fitting | 0/2 | 2/2 | 2/2 |
+| Valid / matching full first tool calls, development | 0/2 | 2/2 | 2/2 |
+
+These are four repeatedly measured generation prompts, not independent task
+executions. Development NLL improved at every evaluated larger-run checkpoint,
+while the measured retention panel remained intact. This establishes fitting,
+development likelihood and sampled first-turn acquisition—not autonomous task
+completion, observation dependence, an independent holdout result or a proven
+optimal LR. Neither representation is promoted.
+
+Final evaluation summary SHA:
+`607840715d6960871819fed3bbc9b40ee07329960bf3900b06640afea6595ea2`;
+panel SHA `fe2d10d97c2ee6d31a35684b043f3e4bceaed49782f597612e38b3ca89935aad`.
+
+The run-level `program-completion.json` verifies contiguous segment coverage,
+all recipe/program/evaluation/gate bindings, final planned token totals and the
+terminal atomic latest pointer. SHA:
+`278f6a1a9733c81bcdc8c043edbb35d5330e8e96b9c691dc2c3a30d21fd47cc1`.
+It explicitly records `fixed_budget_complete:true`, `continue_training:false`
+and `checkpoint_promotion:false`. The final generic evaluation gate's
+`continue_training:true` means its non-catastrophic criteria passed; it does
+**not** override the closed 880-update budget or authorize another segment.
+Numerical fresh-continuation equivalence remains separately unmeasured.
+
+**Next evidence needed:** autonomous read/observe/act/finish tests and broader
+retention/transfer evaluation, with grounded outcome checks before on-policy
+correction or RL. No extra training is launched by this completion report.
 
 The earlier exact-restoration evidence remains valid; numerical fresh
 continuation has not been measured and is not relabeled as passing.
