@@ -283,9 +283,27 @@ Complete finite BF16 checkpoint:
 The filename loss is the last-100-update mean, not an evaluation metric.
 No checkpoint promotion or numerical fresh-continuation qualification is claimed.
 
-Update-768 evaluation was launched as `proc_1971`, on the unchanged frozen
-examples and numerical evaluator. Its verdict determines whether the final
-112-update segment proceeds to the fixed endpoint 880. Both remain pending.
+Update-768 evaluation (`proc_1971`) completed in 675 seconds, on the unchanged
+frozen examples and numerical evaluator. All six continuation checks passed;
+no checkpoint promotion.
+
+| Metric | u640 y | u768 y | u768 x |
+|---|---:|---:|---:|
+| Native fitting NLL | .8082 | .8011 | .8019 |
+| Native development NLL | .8896 | .8799 | .8819 |
+| Conversation NLL | 1.5433 | 1.5226 | 1.5320 |
+| Tool-retention token accuracy | 100% | 100% | 100% |
+| Valid / matching full first tool calls, fitting | 2/2 | 2/2 | 2/2 |
+| Valid / matching full first tool calls, development | 2/2 | 2/2 | 2/2 |
+
+Generation still uses the same four distinct prompts, with no tool dispatch
+or task-completion claim. Evaluation summary SHA:
+`8c6e2ad7f4fa761b53c7051523a0fc1d5779b3a34facad792e34ac3a63fd18f6`;
+panel SHA `1a52be3eec56fc83262c8624997e9d996a1093b4f0fe55874e2b2b9f483b4054`.
+The final planned 112-update segment through update 880 was launched as
+`proc_8104`, from the accepted atomic u768 checkpoint under the unchanged
+frozen recipe. Final training completion and checkpoint evaluation are pending;
+no expansion beyond update 880 is authorized by this program.
 
 The earlier exact-restoration evidence remains valid; numerical fresh
 continuation has not been measured and is not relabeled as passing.
