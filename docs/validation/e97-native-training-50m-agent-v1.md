@@ -233,9 +233,24 @@ continues improving with smaller successive gains on this repeatedly measured
 panel. Evaluation summary SHA:
 `3c6ec5bead6366ede80b31c5eb0991fc02b1d7e1018a9446ca9953194d3917a5`;
 panel SHA `9a162e1282da6437a932cfd1d7c8b6bec9ddcc2a3586cbe2c17bfd62ac2a3653`.
-The next planned segment through update 640 was launched as `proc_21fe`, from
-the accepted atomic u512 checkpoint under the unchanged frozen recipe.
-Its completion and evaluation remain pending.
+### Update 640 completed
+
+The next planned segment (`proc_21fe`) completed in 10,059 seconds, from the
+accepted atomic u512 checkpoint under the unchanged frozen recipe. All 128
+additional updates passed runtime sample/count/cumulative-clock checks.
+Cumulative exposure: 275,791,351 input tokens and 121,788,130 assistant targets:
+native 36,034,395, conversation 73,445,989 and retention 12,307,746.
+Rank-0 peak allocated HBM remained 36,128,739,328 bytes.
+
+Complete finite BF16 checkpoint:
+`checkpoints/checkpoint_agent_sft_u000640_loss_1.1906.pt`, SHA
+`9f914dfa643c9a675c5d340a89de63417824b5359b8be040c9a52ef84e559662`.
+The filename loss is the last-100-update mean, not an evaluation metric.
+No checkpoint promotion or numerical fresh-continuation qualification is claimed.
+
+Update-640 evaluation was launched as `proc_b8ca`, on the unchanged frozen
+examples and numerical evaluator. Its results and continuation to update 768
+remain pending.
 
 The earlier exact-restoration evidence remains valid; numerical fresh
 continuation has not been measured and is not relabeled as passing.
