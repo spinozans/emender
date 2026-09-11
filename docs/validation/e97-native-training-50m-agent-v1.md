@@ -182,8 +182,26 @@ Complete finite BF16 checkpoint:
 The filename loss is the last-100-update mean, not an evaluation metric.
 No checkpoint promotion or numerical fresh-continuation qualification is claimed.
 
-Update-384 evaluation was launched as `proc_1fab`, on the same frozen examples
-and numerical evaluator. Its results and continuation to update 512 are pending.
+Update-384 evaluation (`proc_1fab`) completed in 671 seconds, on the same
+frozen examples and numerical evaluator. All six continuation checks passed;
+no checkpoint promotion.
+
+| Metric | u256 y | u384 y | u384 x |
+|---|---:|---:|---:|
+| Native fitting NLL | .8559 | .8354 | .8361 |
+| Native development NLL | .9281 | .9099 | .9117 |
+| Conversation NLL | 1.6096 | 1.5890 | 1.5932 |
+| Tool-retention token accuracy | 100% | 100% | 100% |
+| Valid / matching full first tool calls, fitting | 2/2 | 2/2 | 2/2 |
+| Valid / matching full first tool calls, development | 2/2 | 2/2 | 2/2 |
+
+Generation still uses the same four distinct prompts, with no tool dispatch
+or task-completion claim. Evaluation summary SHA:
+`f7dff0c7af86a7d911909333533a49f822ea43e1b680c46e3beadcf3aad150af`;
+panel SHA `4a3947ed3a9f445b0be35dd5785ee014890c282d9e681840e103a7e22fec1444`.
+The next planned segment through update 512 was launched as `proc_47cd`, from
+the accepted atomic u384 checkpoint under the unchanged frozen recipe.
+Its completion and evaluation remain pending.
 
 The earlier exact-restoration evidence remains valid; numerical fresh
 continuation has not been measured and is not relabeled as passing.
