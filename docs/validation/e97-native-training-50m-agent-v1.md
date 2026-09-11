@@ -268,9 +268,24 @@ the unchanged policy compares against the parent measured in the same panel.
 This does not qualify numerical optimizer continuation. Evaluation summary SHA:
 `0d2898b773babf100378fd1416264a797c6f546a2705d6e5ca8364379283ac12`;
 panel SHA `c42df6b6bd67948ecbdbd5f70c4f6d10440983350df146171722b85315bc3897`.
-The next planned segment through update 768 was launched as `proc_3ac5`, from
-the accepted atomic u640 checkpoint under the unchanged frozen recipe.
-Its completion and evaluation remain pending.
+### Update 768 completed
+
+The next planned segment (`proc_3ac5`) completed in 10,029 seconds, from the
+accepted atomic u640 checkpoint under the unchanged frozen recipe. All 128
+additional updates passed runtime sample/count/cumulative-clock checks.
+Cumulative exposure: 330,512,237 input tokens and 145,840,275 assistant targets:
+native 43,255,773, conversation 87,902,197 and retention 14,682,305.
+Rank-0 peak allocated HBM remained 36,128,739,328 bytes.
+
+Complete finite BF16 checkpoint:
+`checkpoints/checkpoint_agent_sft_u000768_loss_1.1729.pt`, SHA
+`6f598c1e6a7f760d8dd34278f4f97ce3c33252b06aa9602adc71f7c550b3c1f3`.
+The filename loss is the last-100-update mean, not an evaluation metric.
+No checkpoint promotion or numerical fresh-continuation qualification is claimed.
+
+Update-768 evaluation was launched as `proc_1971`, on the unchanged frozen
+examples and numerical evaluator. Its verdict determines whether the final
+112-update segment proceeds to the fixed endpoint 880. Both remain pending.
 
 The earlier exact-restoration evidence remains valid; numerical fresh
 continuation has not been measured and is not relabeled as passing.
