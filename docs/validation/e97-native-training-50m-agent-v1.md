@@ -248,9 +248,29 @@ Complete finite BF16 checkpoint:
 The filename loss is the last-100-update mean, not an evaluation metric.
 No checkpoint promotion or numerical fresh-continuation qualification is claimed.
 
-Update-640 evaluation was launched as `proc_b8ca`, on the unchanged frozen
-examples and numerical evaluator. Its results and continuation to update 768
-remain pending.
+Update-640 evaluation (`proc_b8ca`) completed in 663 seconds, on the unchanged
+frozen examples and numerical evaluator. All six continuation checks passed;
+no checkpoint promotion.
+
+| Metric | u512 y | u640 y | u640 x |
+|---|---:|---:|---:|
+| Native fitting NLL | .8185 | .8082 | .8101 |
+| Native development NLL | .8989 | .8896 | .8909 |
+| Conversation NLL | 1.5648 | 1.5433 | 1.5520 |
+| Tool-retention token accuracy | 100% | 100% | 100% |
+| Valid / matching full first tool calls, fitting | 2/2 | 2/2 | 2/2 |
+| Valid / matching full first tool calls, development | 2/2 | 2/2 | 2/2 |
+
+Generation still uses the same four distinct prompts, not new independent
+tasks; no tool dispatch or task-completion claim is made. The repeated parent
+native-development NLL differed by approximately +1.02e-6 from earlier passes;
+the unchanged policy compares against the parent measured in the same panel.
+This does not qualify numerical optimizer continuation. Evaluation summary SHA:
+`0d2898b773babf100378fd1416264a797c6f546a2705d6e5ca8364379283ac12`;
+panel SHA `c42df6b6bd67948ecbdbd5f70c4f6d10440983350df146171722b85315bc3897`.
+The next planned segment through update 768 was launched as `proc_3ac5`, from
+the accepted atomic u640 checkpoint under the unchanged frozen recipe.
+Its completion and evaluation remain pending.
 
 The earlier exact-restoration evidence remains valid; numerical fresh
 continuation has not been measured and is not relabeled as passing.
