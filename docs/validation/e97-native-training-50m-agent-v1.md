@@ -149,9 +149,27 @@ The filename reports the last-100-update mean, not evaluation loss. This proves
 successful continued training, not the separately unmeasured numerical
 fresh-continuation comparison. No checkpoint is promoted.
 
-Update-256 evaluation was launched as `proc_f593`, using the unchanged frozen
-evaluation source and examples. Results and continuation to update 384 remain
-pending.
+Update-256 evaluation (`proc_f593`) completed successfully in 657 seconds,
+using the unchanged frozen evaluation source and example payloads. All six
+continuation checks passed; no checkpoint promotion.
+
+| Metric | u128 y | u256 y | u256 x |
+|---|---:|---:|---:|
+| Native fitting NLL | .9025 | .8559 | .8584 |
+| Native development NLL | .9614 | .9281 | .9307 |
+| Conversation NLL | 1.6529 | 1.6096 | 1.6151 |
+| Tool-retention token accuracy | 100% | 100% | 100% |
+| Valid / matching full first tool calls, fitting | 2/2 | 2/2 | 2/2 |
+| Valid / matching full first tool calls, development | 2/2 | 2/2 | 2/2 |
+
+These are the same four distinct generation prompts, not additional independent
+tasks. No tools were dispatched, and no observation-dependent task-completion
+claim follows. Evaluation summary SHA:
+`cc4d779f615231d583b97e6f8dbb1041ff9df10125b8fe7d85ef897066102c90`;
+panel SHA `0e12850f6e316e6dcde787cfaa47e9b26b94a87c9e0834fa062f14ab8e460fc2`.
+The next planned segment through update 384 was launched as `proc_2b1d`, from
+the accepted atomic u256 checkpoint with the unchanged frozen training recipe.
+Its completion and evaluation remain pending.
 
 The earlier exact-restoration evidence remains valid; numerical fresh
 continuation has not been measured and is not relabeled as passing.
