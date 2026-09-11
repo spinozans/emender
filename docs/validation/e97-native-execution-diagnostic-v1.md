@@ -1,5 +1,9 @@
 # Native autonomous execution diagnostic v1
 
+**Current result:** corrected execution v2 completed all 32 episodes. Every
+model scored **0/8 task completions**. The infrastructure passed; the generated
+policies did not. No checkpoint promotion or further training.
+
 ## Frozen scope and criteria
 
 After the completed 880-update SFT run, execute **eight new authored cases per
@@ -104,7 +108,64 @@ snapshot and oracle verdict before failing. Updated CPU validation: **46 passed*
 including symlink-parent, FIFO, missing, oversized and invalid-output rejection.
 No task, oracle, model, threshold or generation budget changed.
 
-The corrected immutable export will use `native-execution-diagnostic-v2` under
-`/mnt/nvme2n1/erikg/e97_systematic_posttraining/`; authored preflight must pass
-before model execution. This is an inspected infrastructure correction, not an
-automatic failed-child restart. No model capability measurements exist yet.
+The corrected immutable export (`d6425898`) used
+`native-execution-diagnostic-v2` under
+`/mnt/nvme2n1/erikg/e97_systematic_posttraining/`. This was an inspected
+infrastructure correction, not an automatic failed-child restart.
+
+## Completed generated execution: negative capability result
+
+`proc_a113` completed in 806 seconds, including identity checks, 46 clean-export
+CPU tests, all eight authored real-container/oracle checks, model loading and
+32 generated episodes. Source inventories passed before and after execution.
+All 40 agent containers and 40 isolated reader containers have cleanup receipts.
+
+| Model | Task successes | External calls | Error observations | Finish calls |
+|---|---:|---:|---:|---:|
+| Parent y | 0/8 | 0 | 0 | 0 |
+| u128 y | 0/8 | 48 | 48 | 0 |
+| u880 y | 0/8 | 64 | 64 | 0 |
+| u880 x | 0/8 | 64 | 64 | 0 |
+
+- Parent: eight invalid native openings, no external dispatch.
+- u128: two first-turn generation-budget exhaustions and six eight-turn loops.
+- u880 x/y: eight eight-turn loops each. All external calls were editor views;
+  none reached informative fixture contents or produced a finish/output file.
+- Examples of generated argument errors: `/workspace/testbed/config.json.json`
+  instead of `/testbed/config.json`, repeated suffix growth, and repeated
+  missing-file views. u128 sometimes selected `/testbed/catalog.json` but used
+  an invalid `[1,50]` range on its one-line file. Authentic errors were delivered.
+- All original fixture files remained unchanged. No paired family passed.
+
+The earlier four matching first calls were all **repository-directory views**
+under `/workspace/<repository>__1.0`. They did not establish general file-path
+copying or multi-turn execution. The new final models do produce valid native
+frames on all eight prompts, but format acquisition did not transfer to grounded
+file access, recovery and completion here. Because no generated policy obtained
+the task data, arithmetic and post-successful-read reasoning remain unmeasured;
+this is not evidence that either is intrinsically impossible.
+
+Evidence identities:
+
+- Panel: `601ca7525ef616930e912cd45f3565e8b596a422635bb0ed118876782beea854`.
+- Model summary: `9f9f8fe513e4433083c64bd1bdbd90f2bceb432550684715ba9a2ee507e00d22`.
+- Authored preflight: `8e3ebb01005035d01e636fe7701ff5bbbcad3f960108c9bbffebf52b3c52165f`.
+- `causal-framing-audit.json`:
+  `b0c2bf673e1b1c59219463ba43dec409bdd26fea5e56aa569f79b32d09fa2989`.
+
+The CPU causal audit reconstructed all 32 histories, checked 186 prompts
+against the original dataset renderer, and verified all 176 dispatched arguments
+and appended observations exactly. This rules out a recorded framing/argument
+translation discrepancy in those paths, not every GPU numerical issue or a
+prompt-distribution mismatch.
+
+A reporting bug left the last frame's `reason:"valid"` on 22 eight-turn
+exhaustions. These are **turn-budget failures**, not successful episodes; raw
+artifacts remain untouched and grading was already false. Future reports now
+emit `turn_budget`, with a regression test. Updated CPU suite: **47 passed**.
+
+Next useful diagnostic: separate exact-path acquisition from continuation after
+a supplied, authentic successful read; test prompt-style sensitivity as a
+separate condition. Such assisted probes must not be relabeled as autonomous
+success. Any correction training needs its own frozen data/budget/retention
+policy; the completed 880-update budget is not reopened.

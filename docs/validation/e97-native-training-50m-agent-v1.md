@@ -2,8 +2,10 @@
 
 **Current status:** all 880 training updates and all seven matched checkpoint
 evaluations completed successfully. The fixed budget is closed: no additional
-training or checkpoint promotion. Autonomous observation-dependent execution
-remains unproven by this run.
+training or checkpoint promotion. Subsequent [autonomous execution diagnostics](e97-native-execution-diagnostic-v1.md)
+scored **0/8 completions for each checkpoint representation**, despite valid
+native calls from the final model. Training metrics are not an agent-readiness
+verdict.
 
 ## Decision and frozen data policy
 

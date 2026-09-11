@@ -151,6 +151,8 @@ def episode(loaded, case, panel, encoding, output):
                 e.append_observation(result['message'])
             except ValueError:
                 reason = 'protocol_error'; break
+        else:
+            reason = 'turn_budget'
         names = list(case['files']) + (['result.json'] if case['expected_output'] is not None else [])
         snapshot = sandbox.snapshot(names)
     result = dict(id=case['id'], family=case['family'], reason=reason, final=final, calls=calls,
