@@ -234,4 +234,50 @@ matrix. Even a fully bound/repeatable reproduction does not retroactively explai
 or certify the failed run, and four diagnostic turns cannot pass the original
 57-turn RL probability gate. Preserve failures and all original thresholds.
 No new kernels, model numerics, optimizer updates, admission or promotion.
-Results pending.
+
+### Reproduction completed: bound and repeatable, not a probability fix
+
+`proc_ffdb` completed all72 evaluations in **386 seconds**, controller `11f30174`
+and unchanged numerical source `f58a7bee`. The recipe was byte-identical before
+GPU acquisition; controller and numerical-source inventories passed before/after.
+All36 private profile receipts were independently verified. Both **actor and
+training reference differences were exactly0** on all four turns; repetitions
+had identical activation hashes and zero probability differences.
+`endpoint_binding_passed:true`, `repeatability_passed:true`,
+**`localization_ready:true`**. Parameters/buffers remained unchanged, gradients
+absent, peak HBM8,553,481,728 bytes. Optimizer updates0.
+
+The first measured actor/full-sequence difference is `00.mixer` on every turn.
+This is a measured boundary, not identification of an individual operation.
+In particular, `00.input` is the wrapper input, **not** a direct observation of
+normalized mixer input. Only prediction rows were captured, so differences
+elsewhere in the causal prefix are not yet localized.
+
+| Turn | Full-eval vs actor max logp difference | Training-default vs actor |
+|---|---:|---:|
+| task000 / turn0 | .00001238805 | .00062750932 |
+| task004 / turn1 | .01929998398 | .04634499550 |
+| task010 / turn1 | .12036108971 | .11980986595 |
+| task014 / turn4 | .12353801727 | .00030041765 |
+
+Padding and train/eval switches also produced differences; their effects can
+cancel or amplify earlier differences. These maxima may refer to different
+tokens and must not be added as contributions. AMP, checkpoint grouping and
+MLP chunk changes produced no activation differences at the measured sites.
+The original worst training delta **.11980986595 > .05 remains failed**.
+
+The paired CPU audit found **all28 non-segmented profile probabilities and
+activation hashes exactly unchanged** from the earlier failed matrix. Only the
+eight segmented actor/AMP profiles changed; their first changed measured site
+was also `00.mixer`. This narrows the historical variation but does not explain
+it or retroactively certify the failed matrix.
+
+- Summary SHA: `04f42be946e9226152e18d18bde252a1a451062745a728e91da642ec49866594`.
+- Private measurements SHA:
+  `8336d6d5c21b4b4746a44d9e15d7b8978f5a910b3a25ea511257a21c862d02fa`.
+- `reproduction-audit.json` SHA:
+  `590997c500fbdd85318e07a2da7c2ce500ac59dce493e605a7b7687e2dcaca78`.
+
+Next: [first-mixer component observations](e97-first-mixer-probe-v1.md), including
+actual normalized mixer input and raw projections over the entire real prefix.
+No kernel/precision change or RL readiness claim follows from localization.
