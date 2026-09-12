@@ -151,8 +151,11 @@ The actor/training path remains failed, with zero updates and RL not ready.
 - Paired `reproduction-audit.json` SHA:
   `9946a156c4ab1427870df02e7340deb625973795c73181384a26e354727747cf`.
 
-Next is a [read-only head-precision probe](e97-head-precision-probe-v1.md), to
-separate hidden-state differences from final BF16 projection rounding. Existing
+The subsequent [read-only head-precision probe](e97-head-precision-probe-v1.md)
+completed: counterfactual FP32 projection reduced the maximum to .0530176, still
+above .05, with a different failing token and upstream hidden-state differences.
+All original measurement records were exactly preserved. A head-only precision
+change is therefore not qualified; see that report for complete evidence. Existing
 FP32 CE casts **already-produced BF16 logits** to float; it does not make the
 head matrix multiplication FP32. No actor/trainer precision change is yet
 implemented or qualified. Reporting-regression/native CPU suite before this
