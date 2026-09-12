@@ -1,5 +1,9 @@
 # E97 native grounding diagnostic v1
 
+**Completed:** some exact paths were copied, but all 16 unassisted and all 16
+supplied-read episodes failed to finish. The deficit is not only first-path
+acquisition. No model promotion or further training.
+
 ## Question and frozen design
 
 The completed native execution diagnostic scored 0/8 for every model. All 128
@@ -81,4 +85,63 @@ copied path from an otherwise incorrect call. Prior actual executor/reader
 qualification is bound by the unchanged execution-v2 preflight hash.
 
 Execution root: `/mnt/nvme2n1/erikg/e97_systematic_posttraining/native-grounding-diagnostic-v1`.
-Model measurements are pending.
+## Completed measurements
+
+`proc_9633` completed in 655 seconds from immutable source `1b1403cd`, including
+50 clean-export CPU tests and all 56 probes/episodes. Source inventories passed
+before and after execution. All 32 agent and 32 reader containers have cleanup
+receipts. The original execution and SFT evidence remain unchanged.
+
+| Setting | Exact path field | Exact requested call | Unassisted completions | Supplied-read completions |
+|---|---:|---:|---:|---:|
+| u880 y, minimal system | 2/6 | 1/6 | 0/4 | 0/4 |
+| u880 y, source system | 2/6 | 2/6 | 0/4 | 0/4 |
+| u880 x, minimal system | 1/6 | 0/6 | 0/4 | 0/4 |
+| u880 x, source system | 2/6 | 2/6 | 0/4 | 0/4 |
+
+All correct path copies were `/workspace/...` file paths. No setting correctly
+copied a `/testbed` target in the explicit path probes. Four probes exhausted
+the first-turn generation budget; the other 20 produced valid native frames.
+Source-style prompting modestly improved complete-call agreement but did not
+rescue task completion. This rejects an absolute claim that the model cannot
+copy any path; it does not establish dependable general copying.
+
+Every assisted episode received exactly one authentic successful full-file
+observation containing its actual input JSON. All 16 still failed to finish:
+nine exhausted eight generated turns and seven exhausted a turn's generation
+budget. The 16 unassisted episodes all exhausted eight turns. There were **zero
+finish calls**, so these results do not distinguish arithmetic incompetence
+from a failure to choose and produce an answer.
+
+After the supplied reads, the models made 87 further external calls; unassisted
+episodes made 128. All 215 failed: 199 editor error observations and 16 shell
+calls with exit code 1. The shell failures are not identified by an `ERROR:`
+text prefix, so prefix-only counting would incorrectly call them successful.
+For example, x/minimal attempted repository exploration under the nonexistent
+`/workspace/testbed` even after the real numbers-file observation was supplied.
+
+### Interpretation and next decision
+
+The failure extends beyond accessing the first file: the supplied-read
+intervention did not restore observation-to-answer behavior. Neither changing
+the system-message bundle nor providing the correct initial read was sufficient.
+The evidence supports a serious instruction-following/grounding/termination
+failure in this native policy, **not** a proven architectural impossibility or
+a clean isolated arithmetic/memory diagnosis.
+
+Do not respond by simply extending the same SFT run. A subsequent correction
+experiment should directly supervise verified short read/observe/answer/finish
+and error-recovery behavior, with decision-level measurements, disjoint probe
+values and retention gates before any scale-up. That is a recommendation, not
+an automatically launched training budget or a claim that corrections will work.
+
+### Identities
+
+- Panel: `1bed47be493519d5e6e5993a1c0fd8633001be8a1bbba2ffd617030cbbf727ff`.
+- Summary: `c3b3a1337c3f7bce03a9e098ada788ae21190f5704c0d7c8c2609cb5390c8069`.
+- `supplied-read-audit.json`:
+  `2671de71fdbabc5fc9db0f2764d4df20cd810141cae34ca41f97395e8e354e75`.
+  This checks all 16 authentic input payloads and authored/assisted attribution;
+  it is a delivery audit, not a capability pass.
+
+No generated private reasoning is reproduced in this report.

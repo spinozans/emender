@@ -164,8 +164,9 @@ exhaustions. These are **turn-budget failures**, not successful episodes; raw
 artifacts remain untouched and grading was already false. Future reports now
 emit `turn_budget`, with a regression test. Updated CPU suite: **47 passed**.
 
-Next useful diagnostic: separate exact-path acquisition from continuation after
-a supplied, authentic successful read; test prompt-style sensitivity as a
-separate condition. Such assisted probes must not be relabeled as autonomous
-success. Any correction training needs its own frozen data/budget/retention
-policy; the completed 880-update budget is not reopened.
+The [subsequent grounding diagnostic](e97-native-grounding-diagnostic-v1.md)
+separated exact-path acquisition, system-message sensitivity and continuation
+after an authentic supplied read. Some paths were copied correctly, but all
+16 unassisted and 16 supplied-read episodes still failed to finish. Assistance
+was not credited as autonomy. Any correction training needs its own frozen
+data/budget/retention policy; the completed 880-update budget is not reopened.
