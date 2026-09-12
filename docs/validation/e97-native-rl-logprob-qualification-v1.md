@@ -135,6 +135,25 @@ seconds, inner wrapper 2,600, outer program 2,700, each with 30-second kill grac
 Assert byte-identical original/new recipe files; no child restart.
 
 New root: `/mnt/nvme2n1/erikg/e97_systematic_posttraining/native-rl-logprob-reproduction-v2`.
-Results pending. Current reporting-regression/native CPU suite: **74 passed**.
-Zero optimizer updates and `rl_optimizer_ready:false` remain mandatory even if
-this diagnostic's numerical comparisons pass.
+`proc_8e54` completed in **478 seconds**, controller `fc14e1b1`, with byte-identical
+recipe and unchanged original numerical source. All **57 turns / 2,711 tokens**
+now matched recorded actors exactly. Training-layout maximum remained
+**.11980986595153809 > .05**; p99 remained .0007125378586351958. CE consistency,
+finiteness and parameter identity passed. Peak HBM remained 8,566,558,208 bytes.
+
+A complete paired CPU audit found **every training-layout probability identical**
+to the original assay, while actor replay changed by up to .1335446834564209.
+The original actor-replay discrepancy was not reproduced; its cause is still
+unresolved. This is not a retroactive pass or demonstrated numerical fix.
+The actor/training path remains failed, with zero updates and RL not ready.
+
+- Summary SHA: `4ca426dc7dda5efcd0665d36d207bcd47d86475365dbc83f48f61d308e87043b`.
+- Paired `reproduction-audit.json` SHA:
+  `9946a156c4ab1427870df02e7340deb625973795c73181384a26e354727747cf`.
+
+Next is a [read-only head-precision probe](e97-head-precision-probe-v1.md), to
+separate hidden-state differences from final BF16 projection rounding. Existing
+FP32 CE casts **already-produced BF16 logits** to float; it does not make the
+head matrix multiplication FP32. No actor/trainer precision change is yet
+implemented or qualified. Reporting-regression/native CPU suite before this
+reproduction: **74 passed**.
