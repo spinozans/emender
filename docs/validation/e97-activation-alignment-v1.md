@@ -201,3 +201,37 @@ observer perturbation and fixture-setting effects before modifying numerical cod
 Next is a separately frozen [observer-isolation diagnostic](e97-observer-effect-v1.md).
 No RL update, threshold relaxation or model-precision change follows from this
 result.
+
+## Frozen complete-matrix reproduction v3
+
+Subsequent [observer](e97-observer-effect-v1.md) and
+[readback/allocation](e97-readback-effect-v1.md) controls all matched historical
+actors exactly, including the same actor trace path without added per-step work.
+The failed matrix's actor discrepancy remains unreproduced. Captured runtime
+fields matched, and all subsequent normalized Triton PTX/config variants were
+present in the failed matrix cache; that is not complete runtime identity.
+
+Before choosing another numerical intervention, reproduce the **entire original
+matrix once** from unchanged numerical source
+`f58a7bee340e11a5c765e964fc5585bd6b0d3582`, including its original entry point,
+initialization, shape preflight, profile order and CPU trace comparisons. New
+artifact root:
+`/mnt/nvme2n1/erikg/e97_systematic_posttraining/native-activation-alignment-reproduction-v3`.
+Controller: `scripts/run_e97_activation_reproduction.sh`.
+
+Require byte-identical original recipe SHA
+`1aebe6302d42032ca5f9a0af3d63cc5f36d7f401b509801d1a483952cb23d9d5`
+**before GPU acquisition**. Four turns x nine profiles x two repeats =72
+evaluations, one fresh checked leased GPU, worker3,600s/outer3,900s plus30s kill
+grace, no retries. Keep all original bounds, precision flags, NUMA binding,
+isolated Triton cache, .0001 endpoint/repeat limit and unchanged-parameter/no-grad
+checks. Verify both controller and original source inventories before/after,
+including failure; compose lease release with the original-source EXIT audit.
+
+Evaluate actor and training reference binding independently. If either fails,
+retain measurements but do not infer the original mismatch's cause from the
+matrix. Even a fully bound/repeatable reproduction does not retroactively explain
+or certify the failed run, and four diagnostic turns cannot pass the original
+57-turn RL probability gate. Preserve failures and all original thresholds.
+No new kernels, model numerics, optimizer updates, admission or promotion.
+Results pending.

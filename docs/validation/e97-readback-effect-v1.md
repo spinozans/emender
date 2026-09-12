@@ -70,5 +70,42 @@ observer probabilities and leaves the activation trace unchanged. CPU tests
 are not a GPU probability-path qualification.
 
 Artifacts: `/mnt/nvme2n1/erikg/e97_systematic_posttraining/native-readback-effect-v1`.
-Results pending. Optimizer updates0; original failed gates and RL-not-ready
-status remain unchanged.
+## Completed: all tested interventions had zero measured effect
+
+`proc_de97` completed all40 replays in **330 seconds**, source `cb30a9bd`.
+Every condition, including `none`, matched historical actors exactly. Repetitions,
+condition comparisons and native-read/observer comparisons all had maximum
+probability difference0. The earlier trace was **not reproduced**:
+`baseline_trace_binding_passed:false`, with maximum prior-trace gap
+.12353801727294922. This is not evidence that the earlier failure was fixed.
+Readback, these temporary-allocation patterns and synchronization remain
+unsupported explanations in the tested conditions.
+
+Parameters/buffers remained unchanged, gradients absent, peak allocated HBM
+8,529,472,512 bytes. Source inventories passed before/after. All40 immutable
+receipts were verified against the terminal measurements. Every captured runtime
+field also equaled the failed matrix's runtime preflight.
+
+A CPU inventory audit found that all **36 distinct current E88 PTX bodies** and
+the one decay PTX body occur in the failed matrix's cache, with matching compiler
+metadata after excluding cache hash. Its matrix cache contains99 distinct E88
+bodies (101 files), including additional training/layout variants. Normalization
+removes only source-location directives, whole-line comments and debug sections.
+Regression tests preserve executable text after debug sections, detect changed
+instructions/configuration and reject unterminated debug sections. These are
+**PTX/config overlaps, not complete executable/runtime equivalence**: they do
+not bind launch order, operands, cuBLAS/PyTorch behavior or SASS identity.
+
+- Recipe SHA: `cb898c6bac6b21c1ed849759cc429c117ecf0d92bee647043c55eb57ac05ce38`.
+- Summary SHA: `04c4b022260e48eff1b1e593c99455eb09ba78da789e80771abfc8ef63db83eb`.
+- Private measurements SHA:
+  `08fe98a74a2405857eb41dba1b619b7c3ffb6fcd06a5ecdf9430a7787a790648`.
+- Receipt/runtime audit SHA:
+  `6259dd040fcb9c86a8226e17235e475ce0cf695c8f5009ca891a4bcd773220c8`.
+- Cache overlap audit SHA:
+  `68ff7a8c0a84a2cc100ff89042d22936ffb2d98443b6165b325478693cbdc36f`.
+
+Updated CPU suite: **110 passed**. Next is one exact-source complete matrix
+reproduction, not another speculative single-factor change; see
+[e97-activation-alignment-v1.md](e97-activation-alignment-v1.md).
+Optimizer updates0; original failed gates and RL-not-ready status unchanged.
