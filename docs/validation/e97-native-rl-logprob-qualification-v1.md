@@ -76,7 +76,36 @@ Scripts:
 
 Artifacts: `/mnt/nvme2n1/erikg/e97_systematic_posttraining/native-rl-logprob-qualification-v1`.
 CPU validation: **71 passed**, including 11 candidate loss/alignment tests and
-60 existing on-policy/native runtime tests. GPU result pending.
-Even a probability-path pass leaves `rl_optimizer_ready:false`
-until end-to-end RL gradients, distributed normalization, safe optimizer
-integration and a task batch with usable reward contrast are qualified.
+60 existing on-policy/native runtime tests.
+
+## Completed: probability path failed its frozen limits
+
+`proc_16ac` completed in 487 seconds from `f1c39c39`. It measured all **57 turns /
+2,711 sampled tokens** selected by the frozen rule. Source inventories verified
+before/after; parameter hashes were identical, and zero optimizer updates ran.
+The process completed its measurements, not a successful numerical gate.
+
+| Measurement | Observed | Frozen maximum | Verdict |
+|---|---:|---:|---|
+| Recorded actor vs actor replay, max absolute delta | .1335446835 | .0001 | Fail |
+| Recorded actor vs training layout, max absolute delta | .1198098660 | .05 | Fail |
+| Recorded actor vs training layout, p99 absolute delta | .0007125379 | .02 | Pass |
+| Mean CE vs captured head NLL delta | 9.10e-8 | .0001 | Pass |
+
+All values were finite. Peak allocated HBM: 8,566,558,208 bytes. Parameter hash:
+`f57eaff2882ce2914413f501a93454e8e0a9bfcd4f408b91ed962405c7ad16bd`.
+Recipe SHA: `ff5ccb768f08d096a40d1c105b80800d43117dcec4ff6048b644315a9c48217f`.
+Summary SHA: `ca2e0e1f789f8c32629e4a55fb465215b2da69bebb2f246c379ead739035cc1a`.
+
+Most probabilities agree closely, but rare discrepancies exceed the maximum
+limits. A .1335 log-probability change corresponds to a ratio factor of about
+1.143 at unchanged weights. Actor replay itself disagrees, so the evidence does
+not isolate training-layout differences as the cause. CPU inspection localized
+large deltas to several lookup final turns and edit turns; a subsequent bounded
+repeatability diagnostic will distinguish capture order, repeat-call behavior
+and worker differences without changing weights or relaxing this failed gate.
+
+`probability_path_passed:false` and `rl_optimizer_ready:false` remain in force.
+End-to-end RL gradients, distributed normalization, safe optimizer integration
+and a task batch with usable reward contrast also remain unqualified. This
+assay is not a reclassification of the older failed fresh-continuation test.

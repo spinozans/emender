@@ -60,6 +60,14 @@ def test_clip_direction(adv,ratio,expected):
     loss.backward();assert new.grad.item()==0
 
 
+def test_repeatability_comparison_separates_probabilities_and_logits():
+    from scripts.diagnose_e97_actor_logprob_repeatability import compare
+    a={'steps':[{'logp':-.5,'selected_logit':2.,'logits_sha256':'a'}]}
+    b={'steps':[{'logp':-.625,'selected_logit':2.,'logits_sha256':'b'}]}
+    assert compare(a,b)==dict(logprob_max=.125,selected_logit_max=0.,differing_full_logit_digests=1)
+    with pytest.raises(ValueError):compare(a,{'steps':[]})
+
+
 def test_invalid_counts_and_ratio_overflow_fail_closed():
     x=torch.tensor([[0.,0.]])
     with pytest.raises(ValueError):policy_loss(x,x,x,torch.tensor([1.]),torch.tensor([[True,True]]),torch.tensor([1]),1)
