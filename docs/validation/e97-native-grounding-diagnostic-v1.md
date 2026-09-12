@@ -1,8 +1,10 @@
 # E97 native grounding diagnostic v1
 
-**Completed:** some exact paths were copied, but all 16 unassisted and all 16
-supplied-read episodes failed to finish. The deficit is not only first-path
-acquisition. No model promotion or further training.
+**Completed for u880 before correction:** some exact paths were copied, but all
+16 unassisted and all 16 supplied-read episodes failed to finish. The deficit
+was not only first-path acquisition. A later separately authorized
+[32-update correction](e97-grounding-correction-v1.md) improved autonomous
+completion to 7/16 in both x/y, but missed its fresh-value gate; no promotion.
 
 ## Question and frozen design
 

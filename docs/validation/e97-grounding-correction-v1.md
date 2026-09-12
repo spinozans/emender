@@ -1,5 +1,10 @@
 # Bounded grounding correction v1
 
+**Completed:** genuine behavioral improvement, but the predeclared gate was
+missed. Both corrected x/y achieved 7/16 autonomous completions (4/8 old,
+3/8 fresh) versus 0/16 before correction. First requested calls improved from
+0/16 to 16/16. Fresh-value gate required 4/8; no expansion or promotion.
+
 ## Frozen experiment
 
 Operator authorized correction after native execution and supplied-read tests
@@ -89,7 +94,7 @@ insufficient fresh successes or retention damage, and no automatic promotion
 or expansion even after a positive correction gate.
 
 Training root: `/mnt/nvme2n1/erikg/e97_systematic_posttraining/grounding-correction-v1-train`.
-## Training completed; behavioral verdict pending
+## Training completed
 
 `proc_d872` reached the verified `LARGE_SFT_SEGMENT_COMPLETE 32` boundary.
 All 32 updates passed exact runtime sample/count/cumulative-clock checks.
@@ -105,7 +110,68 @@ Recipe SHA `74499140ac7b2d5c52bcf09e1d864c533785bb5d4afa616a20681d83fe2ff74e`.
 Rank-0 peak allocated HBM: 36,128,739,328 bytes. The checkpoint filename loss
 is a training average, not a behavioral or retention result.
 
-The same bounded process proceeds to autonomous old/fresh task execution and
-matched pre/post likelihood/retention evaluations. Their results remain pending.
-No capability improvement, checkpoint promotion, further training or numerical
-fresh-continuation equivalence is claimed at this training boundary.
+## Autonomous execution and retention completed
+
+The same bounded process (`proc_d872`) completed the full training/evaluation
+sequence in 3,815 seconds (~63.6 minutes). Both execution and retention
+measurements completed; source inventories passed before and after. This process
+success is not a pass of the behavioral acceptance threshold.
+
+| Representation | Exact first requested call | Old completions | Fresh completions | Total completions |
+|---|---:|---:|---:|---:|
+| Pre-correction y | 0/16 | 0/8 | 0/8 | 0/16 |
+| Pre-correction x | 0/16 | 0/8 | 0/8 | 0/16 |
+| Correction y | 16/16 | 4/8 | 3/8 | 7/16 |
+| Correction x | 16/16 | 4/8 | 3/8 | 7/16 |
+
+Every episode was autonomous: zero supplied reads and zero assisted credit.
+All 64 agent and 64 reader containers have cleanup receipts. Both corrected
+representations completed all four sum tasks and three of four lookup tasks.
+Sum solutions read the actual input, executed a Python calculation, and returned
+the exact result. These are genuine grounded execution wins, not inference from
+loss or a syntactically valid first frame. Fresh-value cases remain same-family
+probes, not independent task-family or repository generalization.
+
+Remaining failures in both representations:
+
+- One fresh lookup read the right file but corrupted the observed 20-character
+  value in its final answer. Exact information fidelity is still unreliable.
+- All four edits failed. A representative trace attempted `create` on the
+  existing **input** path rather than the requested output path, then read the
+  unchanged input and declared `done`; the required output file was absent.
+- All four recovery cases repeatedly read the missing path and eventually
+  produced an invalid frame. The correct first missing-file attempt did not
+  turn into effective recovery.
+- Corrected models issued 12 finishes each, but five were not successful
+  outcomes. The filesystem/answer oracle, not a finish claim, determines success.
+
+| Matched retention metric | Pre y | Correction y | Correction x |
+|---|---:|---:|---:|
+| Tool token accuracy | 100% | 100% | 100% |
+| Conversation NLL | 1.5088 | 1.5812 | 1.5778 |
+| Native development NLL | .8717 | .9239 | .9216 |
+
+All six retention limits passed, **with measured likelihood degradation**, not
+unchanged retention. The primary fresh-value behavioral criterion was **3/8**
+against the frozen **4/8** minimum. Therefore `positive_correction_evidence:false`
+in the gate is preserved; the threshold is not relaxed despite the real gains.
+`automatic_expansion:false` and `checkpoint_promotion:false` remain in force.
+No numerical fresh-continuation equivalence is established.
+
+The result demonstrates that this model/training setup can substantially improve
+exact first-path use and short task completion. It does not establish the cause
+of every earlier failure or reliable general copying. A subsequent separately
+frozen experiment should address value fidelity, destination/source distinction,
+and recovery from actual failed actions rather than merely repeat the same data
+or scale the old SFT budget.
+
+### Final evidence identities
+
+- Training summary: `d0923a3904bde51a1f8a89d7c41f16c1f3e085f19d0f36940235f6564f71ca4a`.
+- Execution panel: `7f03244fca9437ebdfbc7044287c9ddeff61d1953c8a80f062032e46f097ad67`.
+- Execution summary: `5c8e7dace01b528fd643194109e36b1d55cffcf8e59290952fc623b1dc0f577b`.
+- Execution detail audit: `e001ff305e54dd65d22f9cd553362f47d7d4d453bde64082b6b90648e3909c7a`.
+- Learning/retention summary: `14322f8696c7bd95ae98567a7a9e7556d7fc5b38d237988c195c61032bd72a26`.
+
+Artifacts are under the training root's `evaluation/`; private generated
+reasoning remains only in private episode evidence.
