@@ -158,5 +158,46 @@ lengths at padding boundaries, the unchanged production-kernel rejection, and
 retention/non-overwrite of completed receipts. Full suite: **98 passed**.
 New artifacts:
 `/mnt/nvme2n1/erikg/e97_systematic_posttraining/native-activation-alignment-v2`.
-Results pending; no RL update or threshold relaxation is authorized by a clean
-process exit.
+## v2 completed, but endpoint binding failed
+
+`proc_d99a` completed all **72 evaluations** in **389 seconds** from `f58a7bee`.
+All 36 private profile receipts were retained and independently verified against
+the terminal measurements. Source inventories passed before/after. Parameter/
+buffer fingerprints stayed unchanged, gradients remained absent, and peak
+allocated HBM was 8,553,481,728 bytes. Zero optimizer updates occurred.
+
+Every profile repeated with identical activation hashes and zero probability
+delta. All four training-default endpoints matched the prior full-panel
+training measurements exactly. **Instrumented actor-cache endpoints did not**:
+
+| Turn | Actor-reference maximum difference |
+|---|---:|
+| task000 / turn0 | .00062122196 |
+| task004 / turn1 | .03957724571 |
+| task010 / turn1 | .11893415451 |
+| task014 / turn4 | .12353801727 |
+
+All exceed the frozen .0001 endpoint-binding limit. Consequently
+`endpoint_binding_passed:false` and **`localization_ready:false`**. The clean
+process exit and exact internal repetitions do not qualify the trace as an
+explanation of the original actor/training mismatch.
+
+Within this instrumented matrix, sequence-layout changes first differed at
+`00.mixer`; autocast and checkpoint-group/MLP switches produced no measured
+activation differences at the selected sites, while padding and train/eval
+switches did. These are conditional observations, not a proven root cause:
+the actor endpoint is unbound. In particular, the trace collector derived its
+probabilities from gathered head rows rather than reading the actual native
+cache probability directly. We must distinguish observer measurement differences,
+observer perturbation and fixture-setting effects before modifying numerical code.
+
+- Recipe SHA: `1aebe6302d42032ca5f9a0af3d63cc5f36d7f401b509801d1a483952cb23d9d5`.
+- Summary SHA: `9dd043f18d69479185628e444565300c57ab975a7e6caed94e79dd974468ca2f`.
+- Private measurements SHA:
+  `9f3ef99fd200ea44d70d344848c2bdda0458cf3ac43e4dcc4dbef7309c85e7d3`.
+- `receipt-audit.json` SHA:
+  `da1f33af31d9c0f6f4cf3cc130a65adb0f4688e291710d5038dff9335b087160`.
+
+Next is a separately frozen [observer-isolation diagnostic](e97-observer-effect-v1.md).
+No RL update, threshold relaxation or model-precision change follows from this
+result.

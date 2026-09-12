@@ -126,3 +126,52 @@ def test_production_unaligned_training_guard_is_not_bypassed():
     k=torch.zeros((1,17,1,2),dtype=torch.bfloat16);decay=torch.zeros((1,17,1),dtype=torch.bfloat16)
     with pytest.raises(RuntimeError,match='unaligned recurrence padding is forward-only'):
         e88_triton_optimized_apply(True,k,k,k,decay,n_heads=1)
+
+
+def test_observer_control_restores_absent_and_present_attributes():
+    from scripts.diagnose_e97_observer_effect import attributes,configure,restore
+    model=Toy();model.eval();model.loss_chunk_size=7
+    initial=attributes(model);configure(model)
+    assert model.loss_chunk_size==128 and model.gradient_checkpoint_group_size==3
+    restore(model,initial)
+    assert attributes(model)==initial and not hasattr(model,'gradient_checkpoint_group_size')
+
+
+def _toy_cache_primitives():
+    from types import SimpleNamespace
+    def segment(loaded,ids):return SimpleNamespace(next_logits=loaded.model(torch.tensor([ids]))[0,-1])
+    def step(loaded,ids,cache):return segment(loaded,ids)
+    return segment,step
+
+
+def test_native_cache_measurement_agrees_with_nonmutating_toy_observers():
+    from types import SimpleNamespace
+    from scripts.diagnose_e97_observer_effect import attributes,configure,restore,collect,MODES
+    model=Toy();model.eval()
+    with torch.no_grad():model.lm_head.weight.copy_(torch.arange(48).reshape(16,3)*.03125)
+    loaded=SimpleNamespace(model=model);initial=attributes(model);item=dict(prefix=[1,2,3],generated=[4,5])
+    segment,step=_toy_cache_primitives();reference=None
+    for mode in MODES:
+        restore(model,initial)
+        if mode!='native':configure(model)
+        result=collect(loaded,item,mode,segment=segment,step=step)
+        if reference is None:reference=result['native_logprobs']
+        assert result['native_logprobs']==pytest.approx(reference,abs=1e-6)
+        assert result['observer_vs_native_max'] in (None,0.)
+        assert all(not m._forward_hooks and not m._forward_pre_hooks for m in model.modules())
+
+
+def test_corrupt_observer_measurement_does_not_replace_native_probability(monkeypatch):
+    from types import SimpleNamespace
+    from scripts.diagnose_e97_observer_effect import collect
+    model=Toy();loaded=SimpleNamespace(model=model);item=dict(prefix=[1,2,3],generated=[4,5])
+    segment,step=_toy_cache_primitives()
+    baseline=collect(loaded,item,'native',segment=segment,step=step)
+    original=Taps.head
+    def corrupted(self,module,inputs,output):
+        count=len(self.logprobs);original(self,module,inputs,output)
+        for i in range(count,len(self.logprobs)):self.logprobs[i]+=1
+    monkeypatch.setattr(Taps,'head',corrupted)
+    measured=collect(loaded,item,'head-observer',segment=segment,step=step)
+    assert measured['native_logprobs']==baseline['native_logprobs']
+    assert measured['observer_vs_native_max']==pytest.approx(1.)
