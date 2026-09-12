@@ -66,6 +66,10 @@ def test_repeatability_comparison_separates_probabilities_and_logits():
     b={'steps':[{'logp':-.625,'selected_logit':2.,'logits_sha256':'b'}]}
     assert compare(a,b)==dict(logprob_max=.125,selected_logit_max=0.,differing_full_logit_digests=1)
     with pytest.raises(ValueError):compare(a,{'steps':[]})
+    full={'steps':[{'logp':-.6,'selected_logit':None,'log_normalizer':None,'logits_sha256':None}]}
+    result=compare(a,full)
+    assert result['logprob_max']==pytest.approx(.1)
+    assert result['selected_logit_max'] is None and result['differing_full_logit_digests'] is None
 
 
 def test_invalid_counts_and_ratio_overflow_fail_closed():

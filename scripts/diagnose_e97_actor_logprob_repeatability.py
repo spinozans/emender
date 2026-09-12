@@ -11,7 +11,7 @@ SOURCE=Path('/mnt/nvme2n1/erikg/e97_systematic_posttraining/native-rl-logprob-qu
 SOURCE_SHA='ff5ccb768f08d096a40d1c105b80800d43117dcec4ff6048b644315a9c48217f'
 KEYS=[('onpolicy-task-000-sample-0',0),('onpolicy-task-004-sample-0',1),
       ('onpolicy-task-010-sample-0',1),('onpolicy-task-014-sample-0',4)]
-MODES=('before-step','after-step','sampling-shaped-after-step')
+MODES=('before-step','after-step','sampling-shaped-after-step','full-generator-forced')
 
 
 def freeze(args):
@@ -34,11 +34,17 @@ def freeze(args):
 
 def load(args):
     if sha(args.recipe)!=args.recipe_sha:raise ValueError('recipe identity')
-    return json.loads(args.recipe.read_text())
+    recipe=json.loads(args.recipe.read_text())
+    if tuple(recipe['modes'])!=MODES or recipe['workers']!=2 or recipe['repetitions']!=2:
+        raise ValueError('diagnostic execution recipe mismatch')
+    return recipe
 
 
 def run(args):
     import torch
+    import tiktoken
+    from unittest.mock import patch
+    from scripts.eval_e97_native_execution import generate_turn
     from ndm.e97 import load_e97_checkpoint,advance_e97_cache_segment,advance_e97_cache,_sample_token
     from scripts.qualify_e97_response_gradients import parameter_digest
     recipe=load(args);rank=int(os.environ['RANK']);local=int(os.environ['LOCAL_RANK'])
@@ -67,6 +73,22 @@ def run(args):
                 # Reverse mode order on the second pass to expose order dependence.
                 for mode in (MODES if repetition==0 else tuple(reversed(MODES))):
                     torch.manual_seed(974223)
+                    if mode=='full-generator-forced':
+                        import time
+                        enc=tiktoken.get_encoding('p50k_base');stream=iter(item['generated']);trace={}
+                        def forced(logits,**kwargs):
+                            _sample_token(logits,**kwargs)
+                            return next(stream)
+                        with patch('ndm.e97._sample_token',forced):
+                            _,ids,_=generate_turn(loaded,enc.decode(item['prefix']),enc,len(item['generated']),
+                                                 time.monotonic()+300,sampling_trace=trace)
+                        if ids!=item['generated'] or trace['prompt_token_ids']!=item['prefix']:
+                            raise ValueError('full generator forced-token coverage')
+                        steps=[dict(logp=p,selected_logit=None,log_normalizer=None,logits_sha256=None)
+                               for p in trace['selected_logprobs']]
+                        records.append(dict(id=item['id'],turn=item['turn'],mode=mode,repetition=repetition,steps=steps))
+                        print('REPEATABILITY_MEASURED',rank,repetition,item['id'],item['turn'],mode,flush=True)
+                        continue
                     cache=advance_e97_cache_segment(loaded,item['prefix']);steps=[]
                     for token in item['generated']:
                         logits=cache.next_logits
@@ -86,8 +108,10 @@ def run(args):
 def compare(a,b):
     if len(a['steps'])!=len(b['steps']):raise ValueError('token coverage')
     return dict(logprob_max=max(abs(x['logp']-y['logp']) for x,y in zip(a['steps'],b['steps'])),
-                selected_logit_max=max(abs(x['selected_logit']-y['selected_logit']) for x,y in zip(a['steps'],b['steps'])),
-                differing_full_logit_digests=sum(x['logits_sha256']!=y['logits_sha256'] for x,y in zip(a['steps'],b['steps'])))
+                selected_logit_max=(max(abs(x['selected_logit']-y['selected_logit']) for x,y in zip(a['steps'],b['steps']))
+                    if all(x['selected_logit'] is not None for x in a['steps']+b['steps']) else None),
+                differing_full_logit_digests=(sum(x['logits_sha256']!=y['logits_sha256'] for x,y in zip(a['steps'],b['steps']))
+                    if all(x['logits_sha256'] is not None for x in a['steps']+b['steps']) else None))
 
 
 def aggregate(args):
@@ -100,7 +124,7 @@ def aggregate(args):
         table={(v['id'],v['turn'],v['mode'],v['repetition']):v for v in r['records']}
         expected={(x['id'],x['turn'],m,n) for x in recipe['selected'] for m in MODES for n in range(2)}
         if set(table)!=expected or len(table)!=len(r['records']):raise ValueError('worker coverage')
-        if any(not math.isfinite(v) for item in table.values() for step in item['steps'] for k,v in step.items() if k!='logits_sha256'):
+        if any(not math.isfinite(v) for item in table.values() for step in item['steps'] for k,v in step.items() if k!='logits_sha256' and v is not None):
             raise ValueError('nonfinite diagnostic value')
         workers.append(r);tables.append(table)
     if workers[0]['parameter_before']!=workers[1]['parameter_before']:raise ValueError('different worker parameters')

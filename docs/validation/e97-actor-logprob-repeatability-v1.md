@@ -46,5 +46,45 @@ Scripts:
 
 Artifacts: `/mnt/nvme2n1/erikg/e97_systematic_posttraining/native-rl-replay-diagnostic-v1`.
 CPU validation: **72 passed**, including comparison/coverage regression checks
-and the existing policy-loss, mask and runtime tests. GPU results pending.
-`rl_optimizer_ready:false` remains unchanged.
+and the existing policy-loss, mask and runtime tests.
+
+## Completed controlled diagnostic
+
+`proc_e5fd` completed in **280 seconds** from immutable `ad1433f0`. Both source
+inventories passed. All tested repeat calls, before/after capture shapes,
+sampling-shaped calls and worker comparisons were **bit-identical**, including
+full-logit byte hashes: maximum log-probability delta **0** in all three groups.
+Both RTX 6000 Ada workers had identical unchanged BF16 parameter hash
+`f57eaff2882ce2914413f501a93454e8e0a9bfcd4f408b91ed962405c7ad16bd`, also matching
+the original probability assay. Metadata agreed: Torch 2.9.1+cu128, CUDA 12.8,
+TF32 disabled, BF16 reduced-precision reduction disabled, highest float32
+matmul precision, `CUBLAS_WORKSPACE_CONFIG=:4096:8`, visible GPUs 0/1.
+
+A CPU cross-run audit shows that these four controlled replay results exactly
+match the earlier probability assay's **forced actor replay** values, not the
+original on-policy actor traces. The original actor discrepancy remains as large
+as .1335446835 in this selected subset. This localizes the investigation but
+neither proves a root cause nor clears the failed qualification.
+
+- Recipe SHA: `702d9a18f1cfbd41d99242a27edcb1ff281d56a979bcc5d0dd80f19d79570790`.
+- Summary SHA: `2912e97cb24beaf666a7402833e417c02e169e27c1a1f3bdbabec0e64bc58509`.
+- Cross-run audit SHA: `0f8935e319b5eac2cfec2d55ec1ede8ef09e55560789e84782bd528107dfa50a`.
+
+## Next inspected diagnostic: complete generation routine
+
+Use a new immutable export/root `native-rl-replay-diagnostic-v2`, retaining the
+same four selected inputs, two repetitions, two workers and original modes.
+Add `full-generator-forced`: call the actual native `generate_turn` routine,
+including its cache-generation wrapper, decode/validation loop and probability
+capture. A scoped diagnostic sampler hook consumes/discards normal draws but
+forces the original token sequence. It does not modify deployed sampling,
+produce new environment rollouts, or change rewards/weights. Require exact
+prompt and generated-token coverage. This mode records the actual generation
+routine's probability trace, not fabricated full-logit hashes; absent raw-logit
+measurements are explicitly null.
+
+This is a separate inspected experiment, not a failed-worker retry. Original
+thresholds and failed artifacts remain unchanged. The new recipe binds all four
+modes; incompatible recipe/source combinations fail closed. The same 1,800-second
+worker and 2,100-second outer limits apply. `rl_optimizer_ready:false` remains
+unchanged. Results for v2 are pending.
