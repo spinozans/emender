@@ -114,6 +114,17 @@ def compare(a,b):
                     if all(x['logits_sha256'] is not None for x in a['steps']+b['steps']) else None))
 
 
+def compare_recorded(row,item):
+    """Internal repeatability cannot substitute for comparison to recorded actors."""
+    import math
+    if (row['id'],row['turn'])!=(item['id'],item['turn']):raise ValueError('recorded actor identity')
+    values=[s['logp'] for s in row['steps']];recorded=item['recorded_logprobs']
+    if not values or len(values)!=len(recorded) or len(values)!=len(item['generated']):
+        raise ValueError('recorded actor token coverage')
+    if any(not math.isfinite(v) for v in values+recorded):raise ValueError('nonfinite recorded comparison')
+    return dict(recorded_actor_max_delta=max(abs(a-b) for a,b in zip(values,recorded)),tokens=len(values))
+
+
 def aggregate(args):
     import math
     recipe=load(args);workers=[];tables=[]
@@ -128,7 +139,12 @@ def aggregate(args):
             raise ValueError('nonfinite diagnostic value')
         workers.append(r);tables.append(table)
     if workers[0]['parameter_before']!=workers[1]['parameter_before']:raise ValueError('different worker parameters')
-    comparisons=[]
+    comparisons=[];recorded_comparisons=[]
+    references={(x['id'],x['turn']):x for x in recipe['selected']}
+    for rank,table in enumerate(tables):
+        for key,row in table.items():
+            recorded_comparisons.append(dict(rank=rank,id=key[0],turn=key[1],mode=key[2],repetition=key[3],
+                **compare_recorded(row,references[key[:2]])))
     for item in recipe['selected']:
         key=(item['id'],item['turn'])
         for rank in range(2):
@@ -145,9 +161,11 @@ def aggregate(args):
         parameter_sha256=workers[0]['parameter_before'],optimizer_updates=0,
         maximum_logprob_deltas={k:max(r['logprob_max'] for r in comparisons if r['kind']==k) for k in ('repeat','capture-shape','worker')},
         comparisons=comparisons,worker_metadata=[r['metadata'] for r in workers],
+        recorded_actor_max_delta=max(r['recorded_actor_max_delta'] for r in recorded_comparisons),
+        recorded_actor_comparisons=recorded_comparisons,
         rl_optimizer_ready=False,original_probability_gate='failed, unchanged',automatic_expansion=False)
     publish(args.output/'summary.json',result)
-    print(json.dumps({k:v for k,v in result.items() if k!='comparisons'},sort_keys=True),flush=True)
+    print(json.dumps({k:v for k,v in result.items() if k not in ('comparisons','recorded_actor_comparisons')},sort_keys=True),flush=True)
 
 
 if __name__=='__main__':

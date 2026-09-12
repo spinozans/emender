@@ -72,6 +72,17 @@ def test_repeatability_comparison_separates_probabilities_and_logits():
     assert result['selected_logit_max'] is None and result['differing_full_logit_digests'] is None
 
 
+def test_internal_repeatability_does_not_imply_recorded_actor_agreement():
+    from scripts.diagnose_e97_actor_logprob_repeatability import compare,compare_recorded
+    row=dict(id='task',turn=0,steps=[dict(logp=-.5,selected_logit=1.,logits_sha256='a')])
+    item=dict(id='task',turn=0,generated=[7],recorded_logprobs=[-.625])
+    assert compare(row,row)['logprob_max']==0
+    assert compare_recorded(row,item)==dict(recorded_actor_max_delta=.125,tokens=1)
+    for broken in ({**item,'turn':1},{**item,'recorded_logprobs':[]},
+                   {**item,'generated':[]},{**item,'recorded_logprobs':[float('nan')]}):
+        with pytest.raises(ValueError):compare_recorded(row,broken)
+
+
 def test_actor_fingerprint_detects_parameter_and_buffer_changes():
     from scripts.audit_e97_live_actor_capture import fingerprint
     from scripts.qualify_e97_response_gradients import parameter_digest

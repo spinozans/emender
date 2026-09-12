@@ -98,4 +98,18 @@ has a 1,900-second outer bound around the original 1,800-second worker bound;
 the two-condition program has a 4,200-second bound, all with 30-second kill grace.
 Numerical source inventories are checked before/after each condition. Artifacts:
 `/mnt/nvme2n1/erikg/e97_systematic_posttraining/native-actor-hashseed-audit-v1`.
-Results pending.
+### Hash-seed result and reporting correction
+
+`proc_d7c0` completed both conditions in **599 seconds**, controller `1b3bb0cb`.
+Both explicit seeds matched historical actor probabilities exactly; their
+cross-seed maximum difference was zero. Parameters and replay recipe bytes
+were identical. This does **not** support the hash-seed hypothesis.
+Summary SHA: `c4f599ba47677468332f5a8a7a15a3a98056fa0fa6cff81b44c7992fcf129fb7`.
+
+A subsequent cross-run audit found that the original full-generator v2 already
+matched recorded actors on the four selected turns. The earlier review had
+checked internal repeatability but omitted historical-reference comparison;
+describing v2 as still disagreeing was a reporting error. See the corrected
+[repeatability report](e97-actor-logprob-repeatability-v1.md). The original
+three-mode v1 and full 57-turn probability assay remain failed evidence. No
+numerical fix has been established. Zero optimizer updates occurred.

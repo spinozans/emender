@@ -109,3 +109,32 @@ and worker differences without changing weights or relaxing this failed gate.
 End-to-end RL gradients, distributed normalization, safe optimizer integration
 and a task batch with usable reward contrast also remain unqualified. This
 assay is not a reclassification of the older failed fresh-continuation test.
+
+## Frozen full-panel reproduction after diagnostic localization
+
+Focused [repeatability investigations](e97-actor-logprob-repeatability-v1.md)
+produced two different outcomes at the same parameter hash: three-mode v1
+matched this assay's replay, while full-generator v2 matched recorded actors on
+four selected turns. The live actor path also reproduced eight historical
+traces exactly. Explicit Python hash seeds 0 and 123 made no difference to v2.
+An initially missed historical-reference comparison in v2 has been corrected;
+future summaries include it explicitly. No numerical cause or fix is yet proven.
+
+Before further causal claims, repeat **this original complete 57-turn assay**
+from its unchanged `f1c39c39` archive in a new root. Preserve all inputs, sampling
+coverage, checkpoint/y, actor/training code and the original four thresholds.
+This is a separately frozen diagnostic reproduction, not an automatic retry,
+replacement of failed evidence, subset-based qualification or policy update.
+
+Controller: `scripts/run_e97_original_logprob_reproduction.sh`.
+Numerical source remains the original immutable control worktree. Python hash
+seed is explicitly unset; the original wrapper did not set it, but complete
+historical environment equivalence is not claimed. Existing source guards and
+checked single-GPU lease/NUMA/cache/allocator controls remain; worker limit 2,400
+seconds, inner wrapper 2,600, outer program 2,700, each with 30-second kill grace.
+Assert byte-identical original/new recipe files; no child restart.
+
+New root: `/mnt/nvme2n1/erikg/e97_systematic_posttraining/native-rl-logprob-reproduction-v2`.
+Results pending. Current reporting-regression/native CPU suite: **74 passed**.
+Zero optimizer updates and `rl_optimizer_ready:false` remain mandatory even if
+this diagnostic's numerical comparisons pass.

@@ -100,15 +100,32 @@ hash. Source inventories passed before/after; 72 CPU tests passed before launch.
 - Recipe SHA: `162545dc20b952910b77027eb02845a6e6b5d3e24daaed954b5a20e79e919e46`.
 - Summary SHA: `3c33e02718dac6091fa671997a7e0387b5efde36e38bcac5ee3dd3ad03438cd6`.
 
-This does not reproduce the historical actor probability discrepancy and does
-not identify its cause. CPU source comparison found no intervening changes to
+**Reporting correction:** v2 also matched the recorded historical actor
+probabilities exactly on all four selected turns, not merely its own repeats.
+The first status review checked internal repeatability but omitted this
+cross-run comparison; subsequent descriptions that v2 still disagreed with
+historical capture were incorrect. Original v1 did disagree, by .1335446835.
+This does not identify why v1 and v2 differed, or pass the full 57-turn assay. CPU source comparison found no intervening changes to
 the loader, model, recurrence source, native generation helper or NUMA launcher.
 Cache inspection found the actor's normalized PTX instruction texts among the
 replay cache entries after removing debug/source-path metadata; that is not a
 claim of complete runtime or executable-binary identity.
 
-Next: [fingerprint the live actor collection path](e97-live-actor-capture-audit-v1.md),
-including parameters, buffers, model configuration and math settings, then replay
-newly captured probabilities in the same process. Historical actors did not
-retain those effective in-memory fingerprints. Do not infer historical identity
-or repair the old probability records by replacing them with replay values.
+The [live actor fingerprint audit](e97-live-actor-capture-audit-v1.md) also
+reproduced eight historical episode traces exactly. Subsequent explicit hash
+seeds 0 and 123 made no difference to v2: both matched recorded actors exactly.
+Hash seed is therefore not supported as the cause by this experiment.
+
+A complete CPU cross-run audit binds both workers, every repetition/mode and
+each selected reference to the original assay measurements. Its SHA is
+`df7b8bf16fd6e0857e1a6ec800ad339037a2d83b12d763a3da37e31ed25f2683`, at
+`native-actor-hashseed-audit-v1/cross-run-reference-audit.json` under the
+systematic-posttraining root. Original v1 matches original forced replay;
+v2 and both hash conditions match recorded actors instead. No raw evidence was
+replaced. Future diagnostic summaries explicitly include recorded-actor
+comparisons, with identity/coverage/nonfinite checks and a regression test
+showing that internal repeatability can pass while actor agreement fails.
+
+Next, reproduce the full original 57-turn assay from unchanged `f1c39c39` code
+in a new root, preserving the original selection and numerical thresholds.
+Do not infer a fix from the four-turn subset or replace old probabilities.
