@@ -16,23 +16,47 @@ PROFILES=[
     dict(name='actor-cache',segmented=True,train=False,amp=False,loss=False,padded=False,checkpoint=False,mlp=0),
     dict(name='actor-amp',segmented=True,train=False,amp=True,loss=False,padded=False,checkpoint=False,mlp=0),
     dict(name='full-eval',segmented=False,train=False,amp=False,loss=False,padded=False,checkpoint=False,mlp=0),
-    dict(name='full-train',segmented=False,train=True,amp=False,loss=False,padded=False,checkpoint=False,mlp=0),
-    dict(name='full-train-amp',segmented=False,train=True,amp=True,loss=False,padded=False,checkpoint=False,mlp=0),
-    dict(name='masked-unpadded',segmented=False,train=True,amp=True,loss=True,padded=False,checkpoint=False,mlp=0),
-    dict(name='masked-padded',segmented=False,train=True,amp=True,loss=True,padded=True,checkpoint=False,mlp=0),
+    dict(name='full-eval-amp',segmented=False,train=False,amp=True,loss=False,padded=False,checkpoint=False,mlp=0),
+    dict(name='masked-unpadded-eval',segmented=False,train=False,amp=True,loss=True,padded=False,checkpoint=False,mlp=0),
+    dict(name='masked-padded-eval',segmented=False,train=False,amp=True,loss=True,padded=True,checkpoint=False,mlp=0),
+    dict(name='masked-padded-train',segmented=False,train=True,amp=True,loss=True,padded=True,checkpoint=False,mlp=0),
     dict(name='checkpointed',segmented=False,train=True,amp=True,loss=True,padded=True,checkpoint=True,mlp=0),
     dict(name='training-default',segmented=False,train=True,amp=True,loss=True,padded=True,checkpoint=True,mlp=4096),
 ]
-PAIRS=[('actor-cache','actor-amp'),('actor-cache','full-eval'),('full-eval','full-train'),
-       ('full-train','full-train-amp'),('full-train-amp','masked-unpadded'),
-       ('masked-unpadded','masked-padded'),('masked-padded','checkpointed'),('checkpointed','training-default')]
+PAIRS=[('actor-cache','actor-amp'),('actor-cache','full-eval'),('full-eval','full-eval-amp'),
+       ('full-eval-amp','masked-unpadded-eval'),('masked-unpadded-eval','masked-padded-eval'),
+       ('masked-padded-eval','masked-padded-train'),('masked-padded-train','checkpointed'),('checkpointed','training-default')]
+RECURRENCE_ALIGNMENT=16
+
+
+def execution_shapes(item,profile,alignment=RECURRENCE_ALIGNMENT):
+    prefix=len(item['prefix']);generated=len(item['generated'])
+    if not 0<prefix<=16384 or not 0<generated<=512 or alignment<=0:raise ValueError('shape preflight bounds')
+    if profile['padded'] and not profile['loss']:raise ValueError('padding requires explicit loss layout')
+    if profile['segmented']:
+        if profile['loss'] or profile['checkpoint']:raise ValueError('unsupported segmented profile')
+        lengths=[prefix]+[1]*generated
+    else:
+        length=prefix+generated-1
+        if profile['padded']:length=((length+127)//128)*128
+        lengths=[length]
+    if profile['train'] and any(length%alignment for length in lengths):
+        raise ValueError('unaligned training profile rejected before GPU execution')
+    return lengths
+
+
+def shape_plan(selected,profiles):
+    return [dict(id=item['id'],turn=item['turn'],profile=p['name'],train=p['train'],
+                 forward_lengths=execution_shapes(item,p)) for item in selected for p in profiles]
 
 
 def freeze(args):
     if sha(SOURCE)!=SOURCE_SHA:raise ValueError('source recipe identity')
     source=json.loads(SOURCE.read_text());table={(r['id'],r['turn']):r for r in source['selected']}
     selected=[table[k] for k in KEYS]
-    recipe=dict(schema='emender-e97-activation-alignment-v1',model=source['model'],args_json=source['args_json'],
+    plan=shape_plan(selected,PROFILES)
+    recipe=dict(schema='emender-e97-activation-alignment-v2',model=source['model'],args_json=source['args_json'],
+        shape_preflight=plan,recurrence_alignment=RECURRENCE_ALIGNMENT,
         args_sha256=source['args_sha256'],selected=selected,profiles=PROFILES,pairs=PAIRS,
         source_recipe_sha256=SOURCE_SHA,selection='Four previously inspected control/outlier turns; diagnostic, not independent validation',
         reference_measurements=str(ROOT/'native-rl-logprob-reproduction-v2/measurements-private.json'),
@@ -49,10 +73,12 @@ def freeze(args):
 def load(args):
     if sha(args.recipe)!=args.recipe_sha:raise ValueError('recipe identity')
     r=json.loads(args.recipe.read_text())
-    if r['profiles']!=PROFILES or r['pairs']!=[list(x) for x in PAIRS] or r['workers']!=1:
+    if r['schema']!='emender-e97-activation-alignment-v2' or r['profiles']!=PROFILES or r['pairs']!=[list(x) for x in PAIRS] or r['workers']!=1:
         raise ValueError('execution recipe mismatch')
     if [(x['id'],x['turn']) for x in r['selected']]!=KEYS:raise ValueError('selection mismatch')
     if r['endpoint_binding_limit']!=1e-4 or r['repetitions_per_profile']!=2:raise ValueError('binding/repetition recipe mismatch')
+    if r['recurrence_alignment']!=RECURRENCE_ALIGNMENT or r['shape_preflight']!=shape_plan(r['selected'],PROFILES):
+        raise ValueError('shape preflight identity')
     return r
 
 
@@ -171,6 +197,12 @@ def evaluate(loaded,item,profile):
     finally:taps.close()
 
 
+def publish_profile(root,item,row,recipe_sha):
+    path=root/f"{item['id']}-turn-{item['turn']}-{row['profile']['name']}.json"
+    publish(path,dict(id=item['id'],turn=item['turn'],recipe_sha256=recipe_sha,measurement=row))
+    return path.name,sha(path)
+
+
 def run(args):
     import torch
     from ndm.e97 import load_e97_checkpoint
@@ -190,7 +222,14 @@ def run(args):
     before=fingerprint(model);metadata=runtime(loaded,local)
     if before['parameters']!=recipe['parameter_sha256']:raise ValueError('effective parameter identity')
     references={(r['id'],r['turn']):r for r in json.loads(Path(recipe['reference_measurements']).read_text())['records']}
-    reports=[]
+    from ndm.triton.e88_triton_forward import DEFAULT_CKPT_INTERVAL
+    if DEFAULT_CKPT_INTERVAL!=recipe['recurrence_alignment']:raise ValueError('kernel alignment identity')
+    chunks=[layer.mixer.projection_chunk_size for layer in model.layers]
+    if any(c<0 or (c>0 and c%DEFAULT_CKPT_INTERVAL) for c in chunks):raise ValueError('unaligned projection chunk setting')
+    publish(args.output/'runtime-preflight.json',dict(fingerprint=before,runtime=metadata,projection_chunks=chunks,
+        recurrence_alignment=DEFAULT_CKPT_INTERVAL,shape_preflight_passed=True,recipe_sha256=args.recipe_sha))
+    profile_root=args.output/'profiles-private';profile_root.mkdir(mode=0o700,exist_ok=False)
+    reports=[];receipts={}
     for item in recipe['selected']:
         if not 0<len(item['prefix'])<=recipe['maximum_prefix_tokens'] or not 0<len(item['generated'])<=recipe['maximum_generated_tokens']:
             raise ValueError('trace budget')
@@ -220,6 +259,8 @@ def run(args):
                      pair_max_delta=max(abs(a-b) for a,b in zip(lp,pair_lp)) if pair is not None else None,
                      first_differing_stage=next((x['stage'] for x in compared if x['differing_elements'] or x['dtype_changed']),None),
                      endpoint_reference_max_delta=max(abs(a-b) for a,b in zip(lp,reference_lp)) if profile['name'] in ('actor-cache','training-default') else None)
+            name,digest=publish_profile(profile_root,item,row,args.recipe_sha)
+            receipts[name]=digest
             case.append(row);previous=bank;previous_lp=lp
             print('ACTIVATION_PROFILE_COMPLETE',item['id'],item['turn'],profile['name'],row['first_differing_stage'],flush=True)
         reports.append(dict(id=item['id'],turn=item['turn'],profiles=case))
@@ -230,6 +271,7 @@ def run(args):
     repeatable=all(p['repeat_activations_equal'] and p['repeat_logprob_max_delta']<=recipe['endpoint_binding_limit'] for r in reports for p in r['profiles'])
     result=dict(status='diagnostic-measurements-complete',localization_ready=bound and repeatable,repeatability_passed=repeatable,
                 endpoint_binding_passed=bound,endpoint_binding_limit=recipe['endpoint_binding_limit'],recipe_sha256=args.recipe_sha,fingerprint=before,
+                profile_receipts=receipts,
                 runtime=metadata,optimizer_updates=0,training_eligible=False,rl_optimizer_ready=False,automatic_expansion=False,
                 original_probability_gate='failed, unchanged',peak_hbm_allocated=torch.cuda.max_memory_allocated(local),
                 cases=[dict(id=r['id'],turn=r['turn'],profiles=[{k:v for k,v in p.items() if k not in ('logprobs','against_actor','pair_comparison','repeat_comparison')} for p in r['profiles']]) for r in reports])

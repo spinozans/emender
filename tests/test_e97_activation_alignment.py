@@ -77,7 +77,52 @@ def test_missing_rows_and_memory_bound_fail_closed():
 
 def test_predeclared_pairs_isolate_named_factors():
     profiles={p['name']:p for p in PROFILES}
-    expected=[{'amp'},{'segmented'},{'train'},{'amp'},{'loss'},{'padded'},{'checkpoint'},{'mlp'}]
+    expected=[{'amp'},{'segmented'},{'amp'},{'loss'},{'padded'},{'train'},{'checkpoint'},{'mlp'}]
     assert len(PROFILES)==9
     for (left,right),keys in zip(PAIRS,expected):
         assert {k for k in profiles[left] if k!='name' and profiles[left][k]!=profiles[right][k]}==keys
+
+
+def test_original_invalid_training_profile_is_rejected_on_cpu():
+    from scripts.diagnose_e97_activation_alignment import execution_shapes
+    item=dict(prefix=[1]*73,generated=[2]*19)
+    old={**next(p for p in PROFILES if p['name']=='full-eval'),'train':True}
+    with pytest.raises(ValueError,match='unaligned training profile'):execution_shapes(item,old)
+    for p in PROFILES:
+        lengths=execution_shapes(item,p)
+        if p['train']:assert all(n%16==0 for n in lengths)
+
+
+@pytest.mark.parametrize('prefix,generated',[(1,1),(15,1),(16,1),(127,7),(128,1),(129,512)])
+def test_preflight_matches_real_loss_input_lengths(prefix,generated):
+    from scripts.diagnose_e97_activation_alignment import execution_shapes
+    from scripts.qualify_e97_native_rl_logprobs import turn_layout
+    item=dict(prefix=[1]*prefix,generated=[2]*generated)
+    for p in PROFILES:
+        lengths=execution_shapes(item,p)
+        if p['loss']:
+            tokens,*_=turn_layout(item['prefix'],item['generated'],'cpu',128 if p['padded'] else 1)
+            assert lengths==[tokens.shape[1]-1]
+        if p['train']:assert all(n%16==0 for n in lengths)
+
+
+def test_completed_profile_receipt_survives_later_failure(tmp_path):
+    import json
+    from scripts.diagnose_e97_activation_alignment import publish_profile,sha
+    item=dict(id='case',turn=0);row=dict(profile=dict(name='actor-cache'),endpoint_reference_max_delta=0.)
+    name,digest=publish_profile(tmp_path,item,row,'a'*64)
+    with pytest.raises(RuntimeError):raise RuntimeError('later profile failed')
+    path=tmp_path/name
+    assert sha(path)==digest and json.loads(path.read_text())['measurement']==row
+    assert path.stat().st_mode & 0o777==0o400
+    assert publish_profile(tmp_path,item,row,'a'*64)==(name,digest)
+    with pytest.raises(ValueError,match='conflicts'):
+        publish_profile(tmp_path,item,{**row,'endpoint_reference_max_delta':1.},'a'*64)
+    assert sha(path)==digest
+
+
+def test_production_unaligned_training_guard_is_not_bypassed():
+    from ndm.triton.e88_triton_optimized import e88_triton_optimized_apply
+    k=torch.zeros((1,17,1,2),dtype=torch.bfloat16);decay=torch.zeros((1,17,1),dtype=torch.bfloat16)
+    with pytest.raises(RuntimeError,match='unaligned recurrence padding is forward-only'):
+        e88_triton_optimized_apply(True,k,k,k,decay,n_heads=1)

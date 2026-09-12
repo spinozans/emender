@@ -99,4 +99,64 @@ alignment, unchanged outputs, hook removal, stage/dtype comparisons, nonfinite
 rejection, row/storage bounds and the predeclared profile-pair switches.
 
 Artifacts: `/mnt/nvme2n1/erikg/e97_systematic_posttraining/native-activation-alignment-v1`.
-Results pending.
+## v1 failed: unsupported diagnostic training length
+
+`proc_9794` exited1 after **217 seconds**, source `cffeb993`. The existing
+recurrence guard correctly rejected the first `full-train` invocation:
+`unaligned recurrence padding is forward-only; training lengths must align to the sparse checkpoint interval`.
+The sparse checkpoint interval is16, regardless of the outer no-grad context.
+The diagnostic's unpadded train-mode condition was invalid; this is not evidence
+of a model capability failure or a reason to weaken the training guard.
+
+Three completed-profile log markers survive for task000/turn0: actor-cache,
+actor-amp and full-eval. The latter logged `00.mixer` as its first differing
+site against actor-cache. **The matrix is incomplete**, and v1 did not publish
+per-profile numeric records before failure; no terminal endpoint/repeatability
+or final fingerprint verdict is available. Do not promote that partial log
+into a complete localization result. No optimizer updates occurred.
+
+Original files remain at `native-activation-alignment-v1`. Its frozen recipe SHA
+is `1babe845d2e5f7ba8b9082ca60fce39a596c88796cb49217008e7f1993146914`.
+The original source inventory was manually verified after failure. The immutable
+`failure-analysis.json` SHA is
+`de7572420385e105d93a6ab3df779cbf4ef7126bda46e7b55f41f8d7b8710a98`.
+
+## Separately frozen v2: only supported train-mode shapes
+
+Retain the same four inputs, model, thresholds, hooks, repeated evaluations and
+resource limits. Revise the profile order so train/eval is compared **after
+explicitly padded, aligned input construction**:
+
+1. actor-cache
+2. actor-amp — AMP versus actor-cache
+3. full-eval — sequence layout versus actor-cache
+4. full-eval-amp — AMP versus full-eval
+5. masked-unpadded-eval — explicit masks/loss path/head chunking in eval mode
+6. masked-padded-eval — padding versus masked-unpadded-eval
+7. masked-padded-train — train mode versus masked-padded-eval
+8. checkpointed — group3 checkpointed forward versus masked-padded-train
+9. training-default — MLP4096 versus checkpointed
+
+Again **four turns x nine profiles x two evaluations =72**, one fresh GPU
+worker. Recipe schema is now `emender-e97-activation-alignment-v2`; incompatible
+v1 recipes fail closed. CPU freeze/load preflight records exact forward lengths
+and rejects any train-mode length not divisible by16 before GPU execution.
+At runtime, verify that the actual kernel interval is16 and every positive
+projection chunk is aligned. **No kernel/model guard or numerical operation was
+changed.** Unpadded conditions remain eval-only, where existing forward-only
+padding is supported. This changes the diagnostic, not the production trainer.
+
+Publish `runtime-preflight.json` and each completed profile's private numeric
+receipt immediately. These immutable records survive a later profile failure;
+final summaries bind their hashes. Identical receipt publication is idempotent,
+while differing bytes are rejected. Preserve original errors and use a new root,
+not a retry/resume of a failed child or CUDA context. Source inventories are
+verified after execution even if the revised run fails.
+
+Added CPU regressions cover the original invalid profile, actual loss-input
+lengths at padding boundaries, the unchanged production-kernel rejection, and
+retention/non-overwrite of completed receipts. Full suite: **98 passed**.
+New artifacts:
+`/mnt/nvme2n1/erikg/e97_systematic_posttraining/native-activation-alignment-v2`.
+Results pending; no RL update or threshold relaxation is authorized by a clean
+process exit.
