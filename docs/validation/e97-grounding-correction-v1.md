@@ -89,4 +89,23 @@ insufficient fresh successes or retention damage, and no automatic promotion
 or expansion even after a positive correction gate.
 
 Training root: `/mnt/nvme2n1/erikg/e97_systematic_posttraining/grounding-correction-v1-train`.
-Training and post-training measurements remain pending.
+## Training completed; behavioral verdict pending
+
+`proc_d872` reached the verified `LARGE_SFT_SEGMENT_COMPLETE 32` boundary.
+All 32 updates passed exact runtime sample/count/cumulative-clock checks.
+Actual scheduled exposure: **15,488,679 input tokens / 1,759,435 assistant
+targets**: correction 580,858, native replay 319,232, conversation 688,629 and
+retention 170,716. These include the predeclared runtime traversal repeats;
+they are not additional unique corrective trajectories.
+
+Complete finite BF16 checkpoint:
+`checkpoints/checkpoint_agent_sft_u000032_loss_0.6173.pt`, SHA
+`48dffaf72900419a6481bae05bfd149710627f4bf684a152d7d17804cf55b3e6`.
+Recipe SHA `74499140ac7b2d5c52bcf09e1d864c533785bb5d4afa616a20681d83fe2ff74e`.
+Rank-0 peak allocated HBM: 36,128,739,328 bytes. The checkpoint filename loss
+is a training average, not a behavioral or retention result.
+
+The same bounded process proceeds to autonomous old/fresh task execution and
+matched pre/post likelihood/retention evaluations. Their results remain pending.
+No capability improvement, checkpoint promotion, further training or numerical
+fresh-continuation equivalence is claimed at this training boundary.
