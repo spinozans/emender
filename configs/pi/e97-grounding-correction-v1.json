@@ -1,0 +1,23 @@
+{
+  "schema": "emender-e97-grounding-correction-recipe-v1",
+  "operator_internal_training_authorized": true,
+  "purpose": "Bounded verified grounding correction; no automatic expansion or promotion",
+  "seed": "grounding-correction-train-20260912-v1",
+  "records": 1024,
+  "steps": 32,
+  "learning_rate": 0.00001,
+  "optimizer": "fresh BF16 SR Schedule-Free from exact u880 live-y",
+  "parent_checkpoint": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/native-training-50m-agent-lr1e5-v1/checkpoints/checkpoint_agent_sft_u000880_loss_1.1518.pt",
+  "parent_sha256": "6b529dd37a1237b13728e8901fe1469b18aa2a0a2c5e4282fc01064cdd4233b1",
+  "replay_root": "/mnt/nvme2n1/erikg/sft/e97-4b-native-training-50m-agent-mix-v1",
+  "replay_sha256": "44aa42389a3b9a2674b06e3a1586ada56c959c0d01fddf5ff8b62b03627619a5",
+  "replay_target_quotas": {"native": 100000, "conversation": 200000, "retention": 50000},
+  "generation_panel": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/native-grounding-diagnostic-v1/panel.json",
+  "generation_panel_sha256": "1bed47be493519d5e6e5993a1c0fd8633001be8a1bbba2ffd617030cbbf727ff",
+  "validation_seed": "grounding-correction-validation-20260912-v1",
+  "behavioral_gate": "at least 4/8 fresh-value autonomous completions in correction-y; old cases and correction-x reported separately",
+  "retention_gate": "both x/y: tool token accuracy >= .98; conversation NLL <= pre-y + .15; native development NLL <= pre-y + .10",
+  "automatic_expansion": false,
+  "first_party_registry_admission": false,
+  "independent_final_holdout_claim": false
+}
