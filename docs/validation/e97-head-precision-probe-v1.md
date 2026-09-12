@@ -116,3 +116,8 @@ result.** `probability_path_passed:false`, `changed_policy_qualified:false` and
 upstream layer activations and actor/training execution layouts, rather than
 assuming that an FP32 output head alone solves the problem. No further GPU
 experiment or weight update was launched as part of this bounded probe.
+
+After the operator requested continuation, a separate
+[activation/layout localization matrix](e97-activation-alignment-v1.md) was
+frozen. It traces upstream sites and compares explicit execution settings;
+it does not turn this failed head-only probe into a pass.
