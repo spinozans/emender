@@ -54,4 +54,39 @@ async, Frontier or numerical-continuation equivalence qualification.
 
 Recipe: `configs/pi/e97-grounding-correction-v1.json`.
 Data builder: `scripts/build_e97_grounding_correction.py`.
-Execution/measurements and exact scheduled target totals are pending.
+## Data verification completed
+
+`proc_9ab4` completed in 211 seconds from immutable builder commit `5070bf52`.
+All 1,024 authored complete trajectories passed real-executor observation,
+arithmetic/edit/recovery outcome checks and native codec/runtime parity.
+The source and evaluation cases were frozen before training; the separate
+fresh-value evaluation seed is excluded from training answers.
+
+Assembled authority: 1,583 records, 4,561,878 input tokens and 522,278 assistant
+targets: correction 170,337; native replay 100,464; conversation 201,392;
+retention 50,085. No records were clipped. These are inventory counts, not the
+32-update repeated runtime exposure; the exact runtime schedule is generated
+and verified before model loading.
+
+Authority manifest SHA:
+`bf2645fc1c41fbb013bd11c9b8fe539aba6ac88b618e5f03dd5e759a7f7d2a92`.
+Data root: `/mnt/nvme2n1/erikg/e97_systematic_posttraining/grounding-correction-v1-data`.
+The builder preserved its actual calls in `correction-verification.json`.
+
+Controller: `scripts/prepare_e97_grounding_correction.py` reuses the qualified
+numerical launcher and complete-state collector; the launcher substitutes only
+new data, committed u880 parent, fresh-stage policy and the 32-update budget.
+A synchronous terminal checkpoint is required. No earlier checkpoints are
+removed. `scripts/run_e97_grounding_correction.sh` performs packing/schedule,
+training, autonomous execution, likelihood/retention and final evidence gates
+in one bounded sequence. It halts on infrastructure/child failure, without retry.
+Training deadline 5,400 seconds, each evaluation 3,600 seconds, overall 10,800
+seconds, each with 30-second kill grace. A measured behavioral failure remains
+a negative result, not a signal to restart or expand.
+
+Controller/episode CPU validation: **26 passed**, including rejection of
+insufficient fresh successes or retention damage, and no automatic promotion
+or expansion even after a positive correction gate.
+
+Training root: `/mnt/nvme2n1/erikg/e97_systematic_posttraining/grounding-correction-v1-train`.
+Training and post-training measurements remain pending.
