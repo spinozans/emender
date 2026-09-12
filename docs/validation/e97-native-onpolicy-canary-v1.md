@@ -86,10 +86,34 @@ retain the existing conversation/native/tool-retention gates and never train
 on the protected evaluation tasks. The near-term loop can use verified successes
 and corrections while that RL path is qualified.
 
-CPU tests currently **58 passed**, including exact suffix-only masks, immutable
+Initial CPU tests: **58 passed**, including exact suffix-only masks, immutable
 autonomous failure despite teacher success, untruncated sampled-logprob capture,
-generalized outcome paths and existing runtime/sandbox regressions. Runtime
-preflight and sampled collection are pending.
+generalized outcome paths and existing runtime/sandbox regressions.
 
-Artifacts will be under
-`/mnt/nvme2n1/erikg/e97_systematic_posttraining/native-onpolicy-canary-v1`.
+## Inspected authored-preflight failure and correction
+
+`proc_4959`, source `5d2852a7`, failed after 49 seconds during the third authored
+teacher task, **before any model rollout or optimizer update**. Lookup and sum
+preflights passed. The edit itself was correct in the recorded real observation,
+but the read-back verifier compared JSON as text: publication had sorted the
+oracle dictionary's keys while the executed program preserved input key order.
+This was a teacher-verification bug, not a failed model attempt.
+
+The failed root remains
+`/mnt/nvme2n1/erikg/e97_systematic_posttraining/native-onpolicy-canary-v1`,
+including `failure-analysis.json`, all three agent cleanup receipts, the real
+calls/observations and original source inventory (verified again after failure).
+Panel SHA: `795ef4e090d6606ddc099c0f630b6e876c39833dc9ae8494263429ac1fea7be8`.
+
+The inspected fix parses JSON from a complete, contiguous numbered editor view
+and compares the resulting content with the original oracle. It rejects wrong
+headers, missing/noncontiguous lines and truncation. It does not alter recorded
+observations or relax task/outcome requirements. Regression coverage includes
+key-order and multiline-whitespace differences and genuinely wrong counts.
+**60 CPU tests passed**, and the corrected parser was checked against the actual
+failed preflight observation.
+
+A new immutable export/run is used, not an automatic child retry. Tasks, seed,
+policy, budgets, reward and readiness criteria remain unchanged. Replacement
+artifacts: `/mnt/nvme2n1/erikg/e97_systematic_posttraining/native-onpolicy-canary-v2`.
+Runtime preflight and sampled collection for that corrected run remain pending.

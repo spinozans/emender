@@ -9,6 +9,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import shlex
 import time
 
@@ -93,6 +94,20 @@ def candidate(messages, tools, prefix_assistants, enc):
                 text_sha256=hashlib.sha256(text.encode()).hexdigest(),targets=int(mask.sum()))
 
 
+def observed_json(text, path):
+    """Parse the real full cat-n observation without altering stored evidence."""
+    header=f"Here's the result of running `cat -n` on {path}:\n"
+    if not text.startswith(header):
+        raise ValueError('unexpected editor view header')
+    lines=[]
+    for i,line in enumerate(text[len(header):].splitlines(),1):
+        match=re.fullmatch(r'\s*([0-9]+)\t(.*)',line)
+        if match is None or int(match[1])!=i:
+            raise ValueError('incomplete or noncontiguous editor view')
+        lines.append(match[2])
+    return json.loads('\n'.join(lines))
+
+
 def repair(sandbox, messages, original, case, panel, enc, output):
     """Never reset the sandbox, replace an observation, or change original reward."""
     calls=copy.deepcopy(original['calls']); prefix=copy.deepcopy(messages)
@@ -157,8 +172,8 @@ def repair(sandbox, messages, original, case, panel, enc, output):
             if teacher_calls[-1]['result']['exit_code']!=0:raise ValueError('teacher shell failed')
             if case['family']=='sum' and text.splitlines()[0]!=answer:raise ValueError('sum output mismatch')
             if case['family']=='edit':
-                expected=json.dumps(case['expected_output'])
-                if expected not in view(dest):raise ValueError('written output observation mismatch')
+                if observed_json(view(dest),dest)!=case['expected_output']:
+                    raise ValueError('written output observation mismatch')
         if answer!=case['answer']:raise ValueError('independent oracle answer mismatch')
         action('finish',dict(message=answer))
         snapshot=sandbox.snapshot(list(case['files'])+([case['output_path']] if case['expected_output'] is not None else []),label='teacher')

@@ -8,7 +8,7 @@ import pytest
 import tiktoken
 
 from scripts.e97_native_execution_cases import context, grade
-from scripts.e97_native_onpolicy_canary import candidate, tasks
+from scripts.e97_native_onpolicy_canary import candidate, tasks, observed_json
 from scripts.e97_open_swe_native_codec import native_turn, render
 
 TOOLS=[{'type':'function','function':{'name':n}} for n in ('execute_bash','str_replace_editor','think','finish')]
@@ -31,6 +31,21 @@ def test_training_tasks_vary_selectors_and_deltas_without_answer_leakage():
             d=json.loads(c['files'][c['path'].removeprefix('/testbed/')])
             assert d['values'][d['active']]==c['answer']
             assert len(d['values'])==3 and d['active']!='selected'
+
+
+@pytest.mark.parametrize('indent',[None,2])
+def test_editor_readback_compares_json_content_not_serialized_key_order(indent):
+    path='/testbed/result.json'
+    data={'ticket':'abc','count':10385238,'owner':'fixture-owner'}
+    expected=json.loads(json.dumps(data,sort_keys=True))
+    payload=json.dumps(data,indent=indent)
+    text=f"Here's the result of running `cat -n` on {path}:\n"+''.join(
+        f'{i:6d}\t{line}\n' for i,line in enumerate(payload.splitlines(),1))
+    assert json.dumps(expected) not in text
+    assert observed_json(text,path)==expected
+    assert observed_json(text,path)!={**expected,'count':10385239}
+    for bad in (text.replace('     1\t','     2\t'),text+'[truncated]\n','ERROR: absent'):
+        with pytest.raises(ValueError):observed_json(bad,path)
 
 
 def test_teacher_masks_preserve_complete_unsupervised_failed_prefix():
