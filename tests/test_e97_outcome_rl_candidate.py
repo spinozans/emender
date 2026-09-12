@@ -72,6 +72,20 @@ def test_repeatability_comparison_separates_probabilities_and_logits():
     assert result['selected_logit_max'] is None and result['differing_full_logit_digests'] is None
 
 
+def test_actor_fingerprint_detects_parameter_and_buffer_changes():
+    from scripts.audit_e97_live_actor_capture import fingerprint
+    from scripts.qualify_e97_response_gradients import parameter_digest
+    model=torch.nn.Linear(2,2).to(dtype=torch.bfloat16)
+    model.register_buffer('probe',torch.tensor([1.]))
+    initial=fingerprint(model)
+    assert initial['parameters']==parameter_digest(model)
+    model.probe.add_(1)
+    changed=fingerprint(model)
+    assert changed['parameters']==initial['parameters'] and changed['buffers']!=initial['buffers']
+    with torch.no_grad():model.weight.add_(1)
+    assert fingerprint(model)['parameters']!=initial['parameters']
+
+
 def test_invalid_counts_and_ratio_overflow_fail_closed():
     x=torch.tensor([[0.,0.]])
     with pytest.raises(ValueError):policy_loss(x,x,x,torch.tensor([1.]),torch.tensor([[True,True]]),torch.tensor([1]),1)

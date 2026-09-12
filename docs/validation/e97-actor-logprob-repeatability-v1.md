@@ -87,4 +87,28 @@ This is a separate inspected experiment, not a failed-worker retry. Original
 thresholds and failed artifacts remain unchanged. The new recipe binds all four
 modes; incompatible recipe/source combinations fail closed. The same 1,800-second
 worker and 2,100-second outer limits apply. `rl_optimizer_ready:false` remains
-unchanged. Results for v2 are pending.
+unchanged.
+
+## Completed v2: full generator also agrees
+
+`proc_26ac` completed in **292 seconds** from `dc444435`. Full native generation,
+forced cache primitives, sampling/capture shapes, both repetitions and both
+workers produced **identical selected probabilities**. The original modes'
+full-logit hashes also agreed. Parameters stayed unchanged at the same `f57e...`
+hash. Source inventories passed before/after; 72 CPU tests passed before launch.
+
+- Recipe SHA: `162545dc20b952910b77027eb02845a6e6b5d3e24daaed954b5a20e79e919e46`.
+- Summary SHA: `3c33e02718dac6091fa671997a7e0387b5efde36e38bcac5ee3dd3ad03438cd6`.
+
+This does not reproduce the historical actor probability discrepancy and does
+not identify its cause. CPU source comparison found no intervening changes to
+the loader, model, recurrence source, native generation helper or NUMA launcher.
+Cache inspection found the actor's normalized PTX instruction texts among the
+replay cache entries after removing debug/source-path metadata; that is not a
+claim of complete runtime or executable-binary identity.
+
+Next: [fingerprint the live actor collection path](e97-live-actor-capture-audit-v1.md),
+including parameters, buffers, model configuration and math settings, then replay
+newly captured probabilities in the same process. Historical actors did not
+retain those effective in-memory fingerprints. Do not infer historical identity
+or repair the old probability records by replacing them with replay values.
