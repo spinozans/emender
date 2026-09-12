@@ -118,7 +118,20 @@ class NativeSandbox:
             raise ValueError('RPC response identity')
         return reply
 
-    def snapshot(self, names):
+    def resume_for_continuation(self):
+        spec = inspect_container(self.identity)
+        if (spec['Config']['Labels'].get('emender.native-qualification') != self.nonce
+                or not spec['State']['Paused'] or not spec['State']['Running']):
+            raise ValueError('continuation requires owned paused running container')
+        subprocess.run(DOCKER+['unpause', self.identity], check=True, timeout=10, stdout=subprocess.DEVNULL)
+
+    def snapshot(self, names, *, label=None):
+        evidence = self.evidence
+        if label is not None:
+            if label != 'teacher':
+                raise ValueError('unsupported snapshot label')
+            evidence = self.evidence/label
+            evidence.mkdir(mode=0o700)
         # Docker archive API on this host cannot see the agent's tmpfs mounts.
         # Freeze all agent processes, then use a separate, immutable-code reader
         # in the agent PID namespace (not its cgroup or Python environment).
@@ -140,13 +153,13 @@ class NativeSandbox:
             validate_container(before, self.panel['image_id'], nonce)
             if before['HostConfig']['PidMode'] != 'container:'+self.identity:
                 raise ValueError('snapshot PID namespace')
-            (self.evidence/'reader-before.json').write_text(json.dumps(before, indent=2))
-            with (self.evidence/'reader.stderr').open('wb') as stderr:
+            (evidence/'reader-before.json').write_text(json.dumps(before, indent=2))
+            with (evidence/'reader.stderr').open('wb') as stderr:
                 data = bounded_output(DOCKER+['start', '--attach', helper], limit=4*1024*1024,
                                       timeout=30, stderr=stderr)
             if data is None:
                 raise RuntimeError('trusted snapshot reader failed; see reader.stderr')
-            (self.evidence/'reader.stdout').write_bytes(data)
+            (evidence/'reader.stdout').write_bytes(data)
             state = inspect_container(helper)['State']
             if state['Running'] or state['ExitCode'] or state['OOMKilled']:
                 raise RuntimeError('trusted reader did not complete cleanly')
@@ -161,9 +174,9 @@ class NativeSandbox:
                 terminal = inspect_container(helper)
                 if terminal['Config']['Labels'].get('emender.native-qualification') != nonce:
                     raise ValueError('refuse unowned reader cleanup')
-                (self.evidence/'reader-terminal.json').write_text(json.dumps(terminal, indent=2))
+                (evidence/'reader-terminal.json').write_text(json.dumps(terminal, indent=2))
                 subprocess.run(DOCKER+['rm', '--force', helper], check=True, timeout=10, stdout=subprocess.DEVNULL)
-                (self.evidence/'reader-cleanup.json').write_text(json.dumps(dict(container_id=helper, removed=True)))
+                (evidence/'reader-cleanup.json').write_text(json.dumps(dict(container_id=helper, removed=True)))
 
     def __exit__(self, *args):
         try:

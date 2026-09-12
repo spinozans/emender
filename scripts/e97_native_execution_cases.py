@@ -68,7 +68,7 @@ def grade(case, final, calls, snapshot):
     output_ok = True
     if case['expected_output'] is not None:
         try:
-            output_ok = json.loads(snapshot.get('result.json', '')) == case['expected_output']
+            output_ok = json.loads(snapshot.get(case.get('output_path','result.json'), '')) == case['expected_output']
         except (ValueError, TypeError):
             output_ok = False
     recovery = True
@@ -79,7 +79,7 @@ def grade(case, final, calls, snapshot):
             a = first['request']
             first_error = (a['name'] == 'str_replace_editor' and
                            a['arguments'].get('command') == 'view' and
-                           a['arguments'].get('path') == '/testbed/missing.json' and
+                           a['arguments'].get('path') == case.get('missing_path','/testbed/missing.json') and
                            first.get('result', {}).get('message', {}).get('content', '').startswith('ERROR:'))
             recovery = first_error and any(case['answer'] in c.get('result', {}).get('message', {}).get('content', '')
                                            for c in calls[1:])

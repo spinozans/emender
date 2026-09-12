@@ -1,0 +1,29 @@
+{
+  "schema": "emender-e97-native-onpolicy-canary-v1",
+  "purpose": "Bounded training-only sampled rollouts and verified same-environment teacher continuations; no optimizer updates",
+  "seed": "native-onpolicy-training-canary-20260913-v1",
+  "tasks": 16,
+  "rollouts_per_task": 2,
+  "temperature": 1.0,
+  "top_k": 0,
+  "top_p": 0.0,
+  "optimizer_updates": 0,
+  "automatic_expansion": false,
+  "training_eligible": false,
+  "first_party_registry_admission": false,
+  "checkpoint_promotion": false,
+  "base_panel": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/grounding-correction-v1-train/evaluation/execution/panel.json",
+  "base_panel_sha256": "7f03244fca9437ebdfbc7044287c9ddeff61d1953c8a80f062032e46f097ad67",
+  "checkpoint": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/grounding-correction-v1-train/checkpoints/checkpoint_agent_sft_u000032_loss_0.6173.pt",
+  "checkpoint_sha256": "48dffaf72900419a6481bae05bfd149710627f4bf684a152d7d17804cf55b3e6",
+  "weight_mode": "train",
+  "teacher_seconds": 300,
+  "readiness": {
+    "autonomous_rollouts_required": 32,
+    "authored_teacher_preflight_required": 16,
+    "minimum_verified_failed_state_repairs": 1,
+    "minimum_mixed_reward_task_groups": 1,
+    "actor_trainer_logprob_parity": "not qualified; blocks RL optimization",
+    "retention": "no weights change in this canary; prior frozen checks required for any subsequent training"
+  }
+}

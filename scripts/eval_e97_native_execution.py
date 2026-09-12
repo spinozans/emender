@@ -80,23 +80,34 @@ def load_panel(args):
     return p
 
 
-def generate_turn(loaded, prompt, encoding, budget, deadline):
+def generate_turn(loaded, prompt, encoding, budget, deadline, *, sampling_trace=None):
     import torch
     from ndm.e97 import advance_e97_cache_segment, generate_e97_from_cache
     prefix = encoding.encode_ordinary(prompt)
     if len(prefix)+budget > 65536:
         return None, [], 'context_budget'
     ids = []; reason = 'generation_budget'
+    if sampling_trace is not None:
+        sampling_trace.update(prompt_token_ids=prefix, selected_logprobs=[], temperature=1., top_k=0, top_p=0.)
     with torch.no_grad():
         # Exact whole causal prompt replay at each turn, no compaction or implicit cache splice.
         cache = advance_e97_cache_segment(loaded, prefix)
         for _ in range(budget):
             if time.monotonic() >= deadline:
                 reason = 'episode_deadline'; break
-            new, cache = generate_e97_from_cache(loaded, cache, max_new_tokens=1, temperature=0.,
+            logits = cache.next_logits if sampling_trace is not None else None
+            new, cache = generate_e97_from_cache(loaded, cache, max_new_tokens=1,
+                                                 temperature=1. if sampling_trace is not None else 0.,
                                                  top_k=0, top_p=0., stop_token_ids=(218,))
             if not new:
                 reason = 'empty'; break
+            if sampling_trace is not None:
+                if len(new) != 1:
+                    raise ValueError('sample trace requires one token per step')
+                value = torch.log_softmax(logits.float(), dim=-1)[new[0]]
+                if not torch.isfinite(value):
+                    raise ValueError('nonfinite sampled log probability')
+                sampling_trace['selected_logprobs'].append(float(value.item()))
             ids.extend(new); text = encoding.decode(ids)
             if not ('Analysis: '.startswith(text) or text.startswith('Analysis: ')):
                 reason = 'invalid_opening'; break
@@ -114,7 +125,7 @@ def generate_turn(loaded, prompt, encoding, budget, deadline):
     return None, ids, reason
 
 
-def episode(loaded, case, panel, encoding, output):
+def episode(loaded, case, panel, encoding, output, *, continuation=None):
     e = NativeEpisode(panel['tools'], encoding)
     e.append_source_message(panel.get('system_message', context('system', panel['system'])))
     e.append_source_message(context('user', case['prompt']))
@@ -147,8 +158,15 @@ def episode(loaded, case, panel, encoding, output):
             budget = min(panel['generation_budget'], panel['episode_generation_budget']-tokens)
             if budget <= 0:
                 reason = 'episode_generation_budget'; break
-            text, ids, reason = generate_turn(loaded, e.prompt(), encoding, budget, deadline)
-            generations.append(dict(turn=index, token_ids=ids, reason=reason)); tokens += len(ids)
+            trace = {} if panel.get('sample_untruncated_policy', False) else None
+            if trace is None:
+                text, ids, reason = generate_turn(loaded, e.prompt(), encoding, budget, deadline)
+            else:
+                text, ids, reason = generate_turn(loaded, e.prompt(), encoding, budget, deadline, sampling_trace=trace)
+            generation = dict(turn=index, token_ids=ids, reason=reason)
+            if trace is not None:
+                generation['sampling'] = trace
+            generations.append(generation); tokens += len(ids)
             if text is None:
                 break
             try:
@@ -173,14 +191,23 @@ def episode(loaded, case, panel, encoding, output):
                 reason = 'protocol_error'; break
         else:
             reason = 'turn_budget'
-        names = list(case['files']) + (['result.json'] if case['expected_output'] is not None else [])
+        names = list(case['files']) + ([case.get('output_path','result.json')] if case['expected_output'] is not None else [])
         snapshot = sandbox.snapshot(names)
+        continuation_result = None
+        if continuation is not None:
+            if supplied_calls:
+                raise ValueError('on-policy continuation cannot follow supplied reads')
+            continuation_result = continuation(sandbox, e.source_messages(),
+                dict(final=final, calls=calls, snapshot=snapshot, reason=reason,
+                     grade=grade(case,final,calls,snapshot)))
     verdict = grade(case, final, supplied_calls+calls, snapshot)
     result = dict(id=case['id'], family=case['family'], reason=reason, final=final, calls=calls,
                   supplied_calls=supplied_calls, assisted=bool(supplied_calls),
                   autonomous_success=verdict['success'] and not supplied_calls,
                   generations=generations, prompt_and_history=e.text(), snapshot=snapshot,
                   grade=verdict, seconds=time.monotonic()-began)
+    if continuation is not None:
+        result['continuation'] = continuation_result
     publish(Path(output)/'episode-private.json', result)
     return result
 
