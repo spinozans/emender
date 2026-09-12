@@ -175,3 +175,29 @@ def test_corrupt_observer_measurement_does_not_replace_native_probability(monkey
     measured=collect(loaded,item,'head-observer',segment=segment,step=step)
     assert measured['native_logprobs']==baseline['native_logprobs']
     assert measured['observer_vs_native_max']==pytest.approx(1.)
+
+
+@pytest.mark.parametrize('mode',['read','allocate','copy-allocate','synchronize'])
+def test_step_probes_do_not_modify_bf16_logits(mode):
+    from scripts.diagnose_e97_readback_effect import StepProbe
+    logits=torch.tensor([1.,2.,3.],dtype=torch.bfloat16);saved=logits.clone();probe=StepProbe(mode)
+    probe(logits,1)
+    assert torch.equal(logits,saved) and probe.calls==1
+    if mode=='read':assert probe.values==[torch.log_softmax(logits.float(),-1)[1].item()]
+    else:assert probe.values==[]
+    with pytest.raises(ValueError):probe(logits,3)
+
+
+def test_optional_readback_preserves_toy_trace_and_matches_native(monkeypatch):
+    from types import SimpleNamespace
+    import ndm.e97
+    from scripts.diagnose_e97_activation_alignment import evaluate
+    from scripts.diagnose_e97_readback_effect import StepProbe
+    segment,step=_toy_cache_primitives()
+    monkeypatch.setattr(ndm.e97,'advance_e97_cache_segment',segment);monkeypatch.setattr(ndm.e97,'advance_e97_cache',step)
+    model=Toy().to(dtype=torch.bfloat16);loaded=SimpleNamespace(model=model);item=dict(prefix=[1,2,3],generated=[4,5])
+    first,lp=evaluate(loaded,item,PROFILES[0])
+    probe=StepProbe('read');second,observed=evaluate(loaded,item,PROFILES[0],step_probe=probe)
+    assert all(torch.equal(first[k],second[k]) for k in first)
+    assert lp==observed==probe.values and probe.calls==2
+    assert all(not m._forward_hooks and not m._forward_pre_hooks for m in model.modules())

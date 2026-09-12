@@ -67,4 +67,29 @@ observer estimate to prove it cannot replace the independently measured native
 probability. These are CPU collector checks, not numerical GPU qualification.
 
 Artifacts: `/mnt/nvme2n1/erikg/e97_systematic_posttraining/native-observer-effect-v1`.
-Results pending. Optimizer updates0; `rl_optimizer_ready:false` throughout.
+## Completed: no discrepancy in the tested controls
+
+`proc_604f` completed all **40 replays** in **303 seconds** from `98781c3b`.
+Every mode matched recorded actors exactly. Observer estimates matched direct
+native cache probabilities exactly. Mode comparisons and reversed-order
+repetitions all had maximum difference0. Parameters/buffers and original model
+attributes remained unchanged; gradients were absent. Peak HBM was
+8,529,472,512 bytes. Source inventories passed before/after, and a CPU audit
+verified all40 immutable receipts against the terminal measurements.
+
+This does not reproduce or explain the earlier failed trace endpoint. It does
+not support blaming the tested attributes, disabled autocast context or hooks
+in isolation. **Every condition in this experiment performed a direct native
+probability read during decoding**, unlike the original trace collector. That
+remaining execution difference must be tested rather than assumed harmless or
+causal. No numerical fix or RL qualification is claimed.
+
+- Recipe SHA: `bdef4b1ad0b2de7b8e802af2e76c83d04f3b9b34e1c262559ac2302ea603ec1d`.
+- Summary SHA: `99610daa6fef5020de87e2c23dbb059ef7d3eb70fa58654d62f68337e49fdc6b`.
+- Private measurements SHA:
+  `65bbde3da22678e013ebd64748167d4c8af6b42dd63883bb50eeacd67389503b`.
+- `receipt-audit.json` SHA:
+  `ee9122a77f8bc09a1adc67e4a0a3cfe331cf80ec4d7596be127f505cbb24b45f`.
+
+Next: [same-trace readback/allocation/synchronization controls](e97-readback-effect-v1.md).
+Optimizer updates0; `rl_optimizer_ready:false` throughout.

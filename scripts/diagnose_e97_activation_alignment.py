@@ -168,7 +168,7 @@ def compare_banks(reference,current):
     return rows
 
 
-def evaluate(loaded,item,profile):
+def evaluate(loaded,item,profile,*,step_probe=None):
     import torch
     from ndm.e97 import advance_e97_cache_segment,advance_e97_cache
     model=loaded.model;model.train(profile['train']);model.gradient_checkpointing=profile['checkpoint']
@@ -182,6 +182,7 @@ def evaluate(loaded,item,profile):
                 taps.begin([len(prefix)-1],[generated[0]])
                 cache=advance_e97_cache_segment(loaded,prefix)
                 for i,token in enumerate(generated):
+                    if step_probe is not None:step_probe(cache.next_logits,token)
                     taps.begin([0] if i+1<len(generated) else [],[generated[i+1]] if i+1<len(generated) else [])
                     cache=advance_e97_cache(loaded,[token],cache)
             else:
