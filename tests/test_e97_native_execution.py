@@ -89,11 +89,14 @@ def test_aggregate_coverage_and_pair_success():
 
 
 @pytest.mark.parametrize('finish', [True, False])
-def test_episode_feeds_observation_before_finish(monkeypatch, tmp_path, finish):
+@pytest.mark.parametrize('assisted', [False, True])
+def test_episode_feeds_observation_before_finish(monkeypatch, tmp_path, finish, assisted):
     import tiktoken
     import scripts.eval_e97_native_execution as evaluator
     from scripts.e97_open_swe_native_codec import native_turn
     c = cases('causal-test')[0]
+    if assisted:
+        c['supplied_calls'] = [dict(name='str_replace_editor', arguments=dict(command='view', path='/testbed/config.json'))]
     tools = [{'type': 'function', 'function': {'name': n}} for n in
              ('execute_bash', 'str_replace_editor', 'think', 'finish')]
     panel = dict(tools=tools, system='Use tools.', episode_seconds=60, max_turns=8,
@@ -101,7 +104,7 @@ def test_episode_feeds_observation_before_finish(monkeypatch, tmp_path, finish):
     prompts = []
     def generate(loaded, prompt, encoding, budget, deadline):
         prompts.append(prompt)
-        name, args = ('str_replace_editor', {'command': 'view', 'path': '/testbed/config.json'}) if len(prompts) == 1 or not finish else ('finish', {'message': c['answer']})
+        name, args = ('str_replace_editor', {'command': 'view', 'path': '/testbed/config.json'}) if (len(prompts) == 1 and not assisted) or not finish else ('finish', {'message': c['answer']})
         text = native_turn(dict(role='assistant', content=None, reasoning_content=None, think=None,
                                 tool_calls=[{'type': 'function', 'function': {'name': name, 'arguments': json.dumps(args)}}]))
         return text, encoding.encode_ordinary(text), 'valid'
@@ -116,10 +119,31 @@ def test_episode_feeds_observation_before_finish(monkeypatch, tmp_path, finish):
     monkeypatch.setattr(evaluator, 'generate_turn', generate)
     monkeypatch.setattr(evaluator, 'NativeSandbox', Sandbox)
     result = evaluator.episode(None, c, panel, tiktoken.get_encoding('p50k_base'), tmp_path/'episode')
-    assert result['grade']['success'] is finish and len(prompts) == (2 if finish else 8)
-    assert c['answer'] not in prompts[0] and c['answer'] in prompts[1]
-    assert 'Tool:' in prompts[1] and len(result['calls']) == (1 if finish else 8)
+    assert result['grade']['success'] is finish and len(prompts) == ((1 if assisted else 2) if finish else 8)
+    assert (c['answer'] in prompts[0]) is assisted
+    assert c['answer'] in prompts[-1] and 'Tool:' in prompts[-1]
+    assert len(result['calls']) == ((0 if assisted else 1) if finish else 8)
+    assert len(result['supplied_calls']) == int(assisted)
+    assert result['assisted'] is assisted
+    assert result['autonomous_success'] is (finish and not assisted)
     assert result['reason'] == ('finished' if finish else 'turn_budget')
+
+
+def test_grounding_path_distinguishes_copy_from_exact_call(monkeypatch):
+    import tiktoken
+    import scripts.eval_e97_native_grounding as grounding
+    from scripts.e97_open_swe_native_codec import native_turn
+    panel = dict(tools=[{'type':'function','function':{'name':n}} for n in
+                       ('execute_bash','str_replace_editor','think','finish')], generation_budget=4096, episode_seconds=600)
+    target = {'system_message':grounding.context('system','Use tools.')}
+    def generated(*args):
+        text = native_turn(dict(role='assistant',content=None,reasoning_content=None,think=None,
+            tool_calls=[{'type':'function','function':{'name':'str_replace_editor',
+             'arguments':json.dumps({'command':'view','path':'/testbed/config.json','view_range':[1,50]})}}]))
+        return text, [], 'valid'
+    monkeypatch.setattr(grounding,'generate_turn',generated)
+    result = grounding.path_probe(None,target,panel,'/testbed/config.json',tiktoken.get_encoding('p50k_base'))
+    assert result['argument_path_exact'] and not result['exact_requested_call'] and not result['tool_dispatch']
 
 
 def test_paused_reader_no_follow_and_bounded_files(tmp_path):

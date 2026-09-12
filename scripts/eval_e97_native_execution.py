@@ -116,12 +116,32 @@ def generate_turn(loaded, prompt, encoding, budget, deadline):
 
 def episode(loaded, case, panel, encoding, output):
     e = NativeEpisode(panel['tools'], encoding)
-    e.append_source_message(context('system', panel['system']))
+    e.append_source_message(panel.get('system_message', context('system', panel['system'])))
     e.append_source_message(context('user', case['prompt']))
-    calls = []; generations = []; final = None; tokens = 0; reason = 'turn_budget'
+    supplied_calls = []; calls = []; generations = []; final = None; tokens = 0; reason = 'turn_budget'
     began = time.monotonic()
+    interventions = case.get('supplied_calls', [])
+    if len(interventions) > 1:
+        raise ValueError('at most one supplied read')
+    for call in interventions:
+        if (call.get('name') != 'str_replace_editor' or
+            call.get('arguments') not in [dict(command='view', path='/testbed/'+p) for p in case['files']]):
+            raise ValueError('only a complete fixture read may be supplied')
     with NativeSandbox(panel, output) as sandbox:
         sandbox.request('setup', files=case['files'])
+        for supplied in case.get('supplied_calls', []):
+            from scripts.e97_open_swe_native_codec import native_turn, compact
+            message = dict(role='assistant', content=None, reasoning_content=None, think=None,
+                           tool_calls=[{'type':'function', 'function':{'name':supplied['name'],
+                                        'arguments':compact(supplied['arguments'])}}])
+            turn = e.accept_generated_turn(native_turn(message))
+            if turn.backend_call() != supplied:
+                raise ValueError('supplied call changed')
+            reply = sandbox.request('execute', call=supplied)
+            if 'dispatch_error' in reply or reply['result']['message']['content'].startswith('ERROR:'):
+                raise ValueError('supplied read did not succeed')
+            supplied_calls.append(dict(request=supplied, result=reply['result'], origin='authored-intervention'))
+            e.append_observation(reply['result']['message'])
         deadline = time.monotonic()+panel['episode_seconds']
         for index in range(panel['max_turns']):
             budget = min(panel['generation_budget'], panel['episode_generation_budget']-tokens)
@@ -155,9 +175,12 @@ def episode(loaded, case, panel, encoding, output):
             reason = 'turn_budget'
         names = list(case['files']) + (['result.json'] if case['expected_output'] is not None else [])
         snapshot = sandbox.snapshot(names)
+    verdict = grade(case, final, supplied_calls+calls, snapshot)
     result = dict(id=case['id'], family=case['family'], reason=reason, final=final, calls=calls,
+                  supplied_calls=supplied_calls, assisted=bool(supplied_calls),
+                  autonomous_success=verdict['success'] and not supplied_calls,
                   generations=generations, prompt_and_history=e.text(), snapshot=snapshot,
-                  grade=grade(case, final, calls, snapshot), seconds=time.monotonic()-began)
+                  grade=verdict, seconds=time.monotonic()-began)
     publish(Path(output)/'episode-private.json', result)
     return result
 
@@ -168,6 +191,8 @@ def run(args):
     from ndm.e97 import load_e97_checkpoint
     from scripts.e97_open_swe_native_codec import vocabulary
     panel = load_panel(args)
+    if any(c.get('supplied_calls') for c in panel['cases']):
+        raise ValueError('interventions require the separately labeled grounding diagnostic')
     rank = int(os.environ['RANK']); local = int(os.environ['LOCAL_RANK'])
     if int(os.environ['WORLD_SIZE']) != 8:
         raise ValueError('eight evaluation ranks required')
