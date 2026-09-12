@@ -55,5 +55,47 @@ Scripts: `scripts/audit_e97_live_actor_capture.py` and
 CPU validation: **73 passed**, including parameter/buffer fingerprint regression
 checks and the existing numerical candidate/native runtime tests.
 Artifacts: `/mnt/nvme2n1/erikg/e97_systematic_posttraining/native-actor-capture-audit-v1`.
-Results pending. The original failed probability gate and `rl_optimizer_ready:false`
-remain unchanged regardless of process exit status.
+## Completed: live capture and historical replay agree exactly
+
+`proc_00d3` completed in **422 seconds** from `d93a7361`. All eight repeated
+live episodes reproduced the historical generation records exactly, including
+prompt IDs, generated IDs, probabilities and stop labels. Both fresh and
+historical captures then matched same-process forced replay with **maximum
+absolute difference 0**. These were repeated failed lookup/edit episodes, not
+new capability improvements; repairs remained separately attributed.
+
+Both actors matched the standalone assay's unchanged parameter hash
+`f57eaff2882ce2914413f501a93454e8e0a9bfcd4f408b91ed962405c7ad16bd`; no registered
+buffers were present. Captured settings included eval mode, train-y weights,
+MLP chunks 0 for all 18 layers, float32 default dtype, one effective Torch thread,
+Python hash seed 0, TF32 disabled, BF16 reduced-precision reduction disabled,
+highest matmul precision and the expected CUBLAS workspace configuration.
+Source inventories passed before/after. Zero optimizer updates occurred.
+
+- Recipe SHA: `34290c6c836be0120a287706490f249199e2dc1d7067f13cd28adc2b9354e1fe`.
+- Summary SHA: `f5b5ed20209235314b5f6d65ac6211df7cba44e6759ab726398899f7cc994b92`.
+
+The historical records are reproducible under the live collector path; the
+standalone assay mismatch is not explained by differing parameter values.
+This is not yet a demonstrated cause or a pass of all 57 original assay turns.
+The earlier failed gate and `rl_optimizer_ready:false` remain unchanged.
+
+### Next bounded initialization comparison
+
+The live collector explicitly sets `PYTHONHASHSEED=0`; standalone assay wrappers
+did not set it. The current parent shell reports it unset, but that is not a
+retrospective record of every historical process. Test **explicit 0 and 123**
+using the exact same immutable `dc444435` standalone replay export, all four
+selected inputs, all four generation modes, two repetitions and two workers.
+Run the two conditions sequentially in fresh roots/caches; compare each against
+recorded actor probabilities and against the other condition. Assert identical
+replay recipe bytes, and report cross-condition parameter identity. This tests
+a hypothesis; do not claim Python hashing is the cause before measurement.
+
+Controller: `scripts/run_e97_actor_hashseed_audit.sh`. No numerical model code,
+weights, data, rewards or thresholds change. No child retries. Each condition
+has a 1,900-second outer bound around the original 1,800-second worker bound;
+the two-condition program has a 4,200-second bound, all with 30-second kill grace.
+Numerical source inventories are checked before/after each condition. Artifacts:
+`/mnt/nvme2n1/erikg/e97_systematic_posttraining/native-actor-hashseed-audit-v1`.
+Results pending.
