@@ -116,4 +116,53 @@ failed preflight observation.
 A new immutable export/run is used, not an automatic child retry. Tasks, seed,
 policy, budgets, reward and readiness criteria remain unchanged. Replacement
 artifacts: `/mnt/nvme2n1/erikg/e97_systematic_posttraining/native-onpolicy-canary-v2`.
-Runtime preflight and sampled collection for that corrected run remain pending.
+## Completed corrected canary
+
+`proc_4fce` completed in **521 seconds** from immutable source `75d72601`.
+All 16 authored real-executor preflights passed, followed by all 32 stochastic
+model rollouts. Source inventories verified before/after and 60 clean-export
+CPU tests passed. Panel SHA is unchanged from v1: no tasks, rewards, limits or
+criteria were changed to obtain a pass.
+
+| Family | Autonomous successes | Verified failed-state repairs |
+|---|---:|---:|
+| Lookup | 0/8 | 8/8 |
+| Sum | 8/8 | — |
+| Edit | 0/8 | 8/8 |
+| Recovery | 8/8 | — |
+| **Total** | **16/32** | **16/16 failures** |
+
+These are training-only tasks with stochastic sampling, not a new evaluation
+score or a model improvement: **zero optimizer updates** occurred. Recovery
+success here does not overturn earlier failure on differently phrased/path-
+structured evaluation fixtures. All lookup finals matched none of the three
+observed candidate values; that does not isolate selection from copying failure.
+A representative edit used the correct destination, but copied the unchanged
+count rather than applying the requested increment, then declared `done`.
+
+Every failed rollout was repaired in the same container after actual accepted
+model actions. The original autonomous reward stayed zero. There are 16 verified
+autonomous-success candidates (2,718 assistant targets) and 16 teacher-only
+suffix candidates (3,012 targets), still **not training eligible**. A separate
+CPU audit reconstructed every candidate's full native serialization, BPE tokens
+and masks exactly, including unsupervised failed model prefixes. All 48 agent
+and 80 reader containers across authored preflight and sampled collection have
+cleanup receipts.
+
+**The rollout signal gate failed:** every task's two attempts had identical
+binary reward, so there were **zero mixed-reward task groups**. With this batch,
+group-centered outcome advantages would all be zero; aggregate 50% success does
+not imply a useful GRPO task-group gradient. No threshold is relaxed.
+`rollout_signal_ready:false`, `rl_optimizer_ready:false`, `automatic_expansion:false`
+and `checkpoint_promotion:false` are preserved.
+
+Next qualification is actor-versus-trainer log-probability consistency and
+assistant-only policy-loss masking, without parameter updates. A later training
+curriculum needs intermediate difficulty and/or better initialization from these
+verified repairs to obtain within-task reward variation; repeating this exact
+all-or-nothing batch is not an RL solution.
+
+Evidence under the v2 root:
+- Preflight summary: `cefc7d55c5aa2615a0ba4dbb13910f4f49811cde20b048133a92d4caf362f11c`.
+- Rollout summary: `8278969f8ff65afd6f49251abb8a05c758ef6586c748824d3cdbc8345e187e6d`.
+- Full candidate-mask audit: `5b6deacaf92f9ac7604048d808f338bf08fdee723479b4b731b90c8666418f79`.
