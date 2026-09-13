@@ -1425,6 +1425,7 @@ class E88FLAHybrid(nn.Module):
             S_new, output = e97_split_edit_triton_apply(
                 self.training, k, v, q, decay, g, S_prev,
                 self.n_heads, True, use_fused_l2, self.checkpoint_interval,
+                recurrent_state_precision=self.recurrent_state_precision,
                 apply_silu_qkv=qkv_silu_in_kernel,
                 raw_write=self.raw_write,
                 linear_state=self.linear_state,
@@ -1438,6 +1439,7 @@ class E88FLAHybrid(nn.Module):
             S_new, output = e88_triton_optimized_apply(
                 self.training, k, v, q, decay, g, S_prev,
                 self.n_heads, True, use_fused_l2, self.checkpoint_interval,
+                recurrent_state_precision=self.recurrent_state_precision,
                 apply_silu_qkv=qkv_silu_in_kernel,
                 raw_write=self.raw_write,
                 linear_state=self.linear_state,
@@ -1968,6 +1970,7 @@ class E88FLAHybrid(nn.Module):
                             g_for_kernel, S0_triton, H,
                             apply_gate_in_kernel, use_fused_l2,
                             self.checkpoint_interval,
+                            recurrent_state_precision=self.recurrent_state_precision,
                             apply_silu_qkv=qkv_silu_in_kernel,
                             raw_write=self.raw_write,
                             linear_state=self.linear_state,
@@ -1984,6 +1987,7 @@ class E88FLAHybrid(nn.Module):
                             g_for_kernel, S0_triton, H,
                             apply_gate_in_kernel, use_fused_l2,
                             self.checkpoint_interval,
+                            recurrent_state_precision=self.recurrent_state_precision,
                             apply_silu_qkv=qkv_silu_in_kernel,
                             raw_write=self.raw_write,
                             linear_state=self.linear_state,

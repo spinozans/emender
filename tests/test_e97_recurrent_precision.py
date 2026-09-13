@@ -19,6 +19,28 @@ def test_policy_is_atomic_and_rejects_unknown_or_mixed_modes():
     with pytest.raises(ValueError):configure_recurrent_precision(torch.nn.Linear(2,2),'fp32')
 
 
+def test_legacy_fp32_carry_does_not_imply_fp32_checkpoints():
+    from ndm.recurrent_precision import recurrent_checkpoint_dtype
+    state=torch.zeros(1,dtype=torch.float32)
+    assert recurrent_checkpoint_dtype('legacy',state,torch.bfloat16)==torch.bfloat16
+    assert recurrent_checkpoint_dtype('fp32',state,torch.bfloat16)==torch.float32
+    with pytest.raises(ValueError,match='FP32 initial state'):
+        recurrent_checkpoint_dtype('fp32',state.bfloat16(),torch.bfloat16)
+
+
+def test_e97_facade_forwards_the_same_policy(monkeypatch):
+    import ndm.triton.e88_triton_optimized as engine
+    from ndm.triton.e97_sequential import e97_split_edit_triton_apply
+    captured={}
+    def fake(*args,**kwargs):captured.update(kwargs);return None,None
+    monkeypatch.setattr(engine,'e88_triton_optimized_apply',fake)
+    gate=torch.zeros(1)
+    e97_split_edit_triton_apply(False,None,None,None,None,erase_gate=gate,value_write_gate=gate,recurrent_state_precision='fp32')
+    assert captured['recurrent_state_precision']=='fp32'
+    e97_split_edit_triton_apply(False,None,None,None,None,erase_gate=gate,value_write_gate=gate)
+    assert captured['recurrent_state_precision']=='legacy'
+
+
 def test_sft_policy_inherits_and_records_the_single_switch():
     from scripts.train_e97_4b_pi_sft import configure_precision
     model=torch.nn.Linear(2,2).bfloat16();model.recurrent_state_precision='legacy';model.loss_chunk_size=128
@@ -61,7 +83,8 @@ def test_checkpoint_loader_retains_fp32_policy_with_old_args(tmp_path):
 def test_cpu_reference_distinguishes_state_and_projection_storage(state_dtype):
     from ndm.triton.e88_triton_forward import e88_torch_reference
     k=torch.full((16,1,1,4),.125,dtype=torch.bfloat16);s=torch.zeros(1,1,4,4,dtype=state_dtype)
-    out,final,checkpoints=e88_torch_reference(s,k,k,k,torch.full((16,1,1),.9,dtype=torch.bfloat16))
+    mode='fp32' if state_dtype==torch.float32 else 'legacy'
+    out,final,checkpoints=e88_torch_reference(s,k,k,k,torch.full((16,1,1),.9,dtype=torch.bfloat16),recurrent_state_precision=mode)
     assert out.dtype==torch.bfloat16 and final.dtype==checkpoints.dtype==state_dtype
 
 
@@ -115,7 +138,7 @@ def test_cuda_fp32_state_forward_backward_and_connected_chunk_handoffs(monkeypat
     def forward(state,lo,hi):
         return e88_triton(state,k[lo:hi],v[lo:hi],q[lo:hi],d[lo:hi],g[lo:hi],
             normalize_kq=True,apply_silu_qkv=True,erase_gate=e[lo:hi],value_write_gate=w[lo:hi],
-            reset_before=reset[lo:hi],valid_mask=valid[lo:hi])
+            reset_before=reset[lo:hi],valid_mask=valid[lo:hi],recurrent_state_precision='fp32')
     with torch.autograd.graph.saved_tensors_hooks(pack,lambda tensor:tensor):
         out,final=forward(s,0,T)
     assert out.dtype==torch.bfloat16 and final.dtype==torch.float32
@@ -145,12 +168,14 @@ def test_cuda_fp32_state_forward_backward_and_connected_chunk_handoffs(monkeypat
 
 
 @pytest.mark.skipif(not torch.cuda.is_available(),reason='leased CUDA required')
-def test_cuda_state_precision_storage_legacy_control():
+@pytest.mark.parametrize('state_dtype',[torch.bfloat16,torch.float32])
+def test_cuda_state_precision_storage_legacy_control(state_dtype):
     from ndm.triton.e88_triton_backward import e88_triton
-    s,k,v,q,d,g,e,w=_inputs('cuda',T=16,N=8);s=s.detach().to(torch.bfloat16).requires_grad_();saved=[]
+    s,k,v,q,d,g,e,w=_inputs('cuda',T=16,N=8);s=s.detach().to(state_dtype).requires_grad_();saved=[]
     def pack(x):saved.append((x.ndim,x.dtype));return x
     with torch.autograd.graph.saved_tensors_hooks(pack,lambda x:x):
         out,state=e88_triton(s,k,v,q,d,g,erase_gate=e,value_write_gate=w)
     (out.float().sum()+state.float().sum()).backward()
-    assert state.dtype==s.grad.dtype==torch.bfloat16
+    assert state.dtype==s.grad.dtype==state_dtype
+    # Legacy retains BF16 checkpoints even with FP32 carried inference state.
     assert (5,torch.bfloat16) in saved

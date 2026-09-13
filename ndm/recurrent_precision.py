@@ -10,6 +10,17 @@ def validate_state_precision(mode):
     return mode
 
 
+def recurrent_checkpoint_dtype(mode, state, projection_dtype):
+    """Legacy inference has FP32 carry but projection-dtype replay storage."""
+    import torch
+    validate_state_precision(mode)
+    if mode == 'fp32':
+        if state.dtype != torch.float32:
+            raise ValueError('fp32 recurrent policy requires FP32 initial state')
+        return torch.float32
+    return projection_dtype
+
+
 def configure_recurrent_precision(model, mode=None):
     modules = [m for m in model.modules() if hasattr(m, 'recurrent_state_precision')]
     current = {validate_state_precision(m.recurrent_state_precision) for m in modules}

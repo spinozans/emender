@@ -42,7 +42,7 @@ timeout --kill-after=30 900 "$PYTHON_BIN" -m torch.distributed.run --standalone 
 CUDA_VISIBLE_DEVICES='' "$PYTHON_BIN" - "$RUN/kernel-tests.xml" <<'PY'
 import sys,xml.etree.ElementTree as ET
 cases=ET.parse(sys.argv[1]).findall('.//testcase')
-assert len(cases)==3 and all(not any(c.find(tag) is not None for tag in ('skipped','failure','error')) for c in cases), 'three executed CUDA cases required'
+assert len(cases)==4 and all(not any(c.find(tag) is not None for tag in ('skipped','failure','error')) for c in cases), 'four executed CUDA cases required'
 PY
 export NUMA_LOCAL_RANK_TRITON_CACHE_PREFIX="$RUN/legacy-triton"
 timeout --kill-after=30 1200 "$PYTHON_BIN" -m torch.distributed.run --standalone --nnodes=1 --nproc_per_node=1 --max-restarts=0 \

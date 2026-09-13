@@ -494,6 +494,7 @@ def e88_triton_forward(
     valid_length: int = None,  # state boundary before inference-only padding
     reset_before: torch.Tensor = None,  # bool [T,B], clear state before token
     valid_mask: torch.Tensor = None,  # bool [T,B], invalid tokens are no-ops
+    recurrent_state_precision: str = 'legacy',
 ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     """Run the E88 forward recurrence in Triton.
 
@@ -627,8 +628,11 @@ def e88_triton_forward(
     S_final = torch.empty_like(s0_c)
 
     num_ckpts = T // ckpt_interval + 1
-    # State precision is independent of BF16 projection/output storage.
-    S_ckpt = torch.empty((num_ckpts, B, H, N, Vsz), dtype=s0_c.dtype, device=k.device)
+    # Preserve legacy inference's BF16 checkpoints even with FP32 carry.
+    # Only the explicit fp32 policy changes the complete recurrent-state path.
+    from ndm.recurrent_precision import recurrent_checkpoint_dtype
+    checkpoint_dtype = recurrent_checkpoint_dtype(recurrent_state_precision, s0_c, out_dtype)
+    S_ckpt = torch.empty((num_ckpts, B, H, N, Vsz), dtype=checkpoint_dtype, device=k.device)
 
     strides = (
         # k strides
@@ -727,6 +731,7 @@ def e88_torch_reference(
     value_write_gate: torch.Tensor = None,
     reset_before: torch.Tensor = None,
     valid_mask: torch.Tensor = None,
+    recurrent_state_precision: str = 'legacy',
 ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     """Pure-PyTorch reference for parity testing.
 
@@ -769,8 +774,10 @@ def e88_torch_reference(
 
     S = S0.clone().to(torch.float32)
     out = torch.empty((T, B, H, Vsz), dtype=out_dtype, device=k.device)
-    ckpt = torch.empty((T + 1, B, H, N, Vsz), dtype=S0.dtype, device=k.device)
-    ckpt[0] = S.to(S0.dtype)
+    from ndm.recurrent_precision import recurrent_checkpoint_dtype
+    state_dtype = recurrent_checkpoint_dtype(recurrent_state_precision, S0, out_dtype)
+    ckpt = torch.empty((T + 1, B, H, N, Vsz), dtype=state_dtype, device=k.device)
+    ckpt[0] = S.to(state_dtype)
 
     for t in range(T):
         valid_t = (torch.ones(B, device=k.device, dtype=torch.bool)
@@ -812,7 +819,7 @@ def e88_torch_reference(
         Sq = torch.einsum('bhnv,bhn->bhv', S, q_t)
         Sq = torch.where(valid_t[:, None, None], Sq, torch.zeros_like(Sq))
         out[t] = Sq.to(out_dtype)
-        ckpt[t + 1] = S.to(S0.dtype)
+        ckpt[t + 1] = S.to(state_dtype)
 
-    S_final = S.to(S0.dtype)
+    S_final = S.to(state_dtype)
     return out, S_final, ckpt

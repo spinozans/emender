@@ -41,6 +41,7 @@ def e88_triton_optimized_apply(
     value_write_gate: torch.Tensor = None,
     reset_before: torch.Tensor = None,  # bool [B,T]
     valid_mask: torch.Tensor = None,  # bool [B,T]
+    recurrent_state_precision: str = 'legacy',
 ) -> Tuple[torch.Tensor, torch.Tensor]:
     """Triton-backed E88 recurrence with optional pre-norm and post-gate.
 
@@ -110,9 +111,13 @@ def e88_triton_optimized_apply(
     value_write_t = value_write_gate.transpose(0, 1) if value_write_gate is not None else None
     reset_t = reset_before.transpose(0, 1) if reset_before is not None else None
     valid_t = valid_mask.transpose(0, 1) if valid_mask is not None else None
+    from ndm.recurrent_precision import validate_state_precision
+    validate_state_precision(recurrent_state_precision)
     if S0 is None:
         S0 = torch.zeros(
-            (B, H, N, Vsz), dtype=k.dtype, device=k.device,
+            (B, H, N, Vsz),
+            dtype=torch.float32 if recurrent_state_precision == 'fp32' else k.dtype,
+            device=k.device,
         )
 
     # Forward gate is fused INSIDE the kernel when apply_gate=True and
@@ -135,6 +140,7 @@ def e88_triton_optimized_apply(
             valid_length=T_orig,
             reset_before=reset_t,
             valid_mask=valid_t,
+            recurrent_state_precision=recurrent_state_precision,
         )
         output = out_t.transpose(0, 1)
     else:
@@ -148,6 +154,7 @@ def e88_triton_optimized_apply(
             valid_length=T_orig,
             reset_before=reset_t,
             valid_mask=valid_t,
+            recurrent_state_precision=recurrent_state_precision,
         )
         output = out_t.transpose(0, 1)
 

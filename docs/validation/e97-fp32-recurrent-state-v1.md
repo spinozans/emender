@@ -22,8 +22,10 @@ SFT entry point: `scripts/train_e97_4b_pi_sft.py --recurrent-state-precision fp3
 The other choice is `legacy`. Omitting the option inherits the loaded policy;
 old checkpoints remain legacy. Model construction uses the same setting in
 `layer_kwargs`. No additional precision sub-switches exist for individual state
-buffers. Low-level Triton calls take state precision from `S0.dtype`; sparse
-checkpoints, replay scratch and dS0 follow it, not the projection dtype.
+buffers. The same named policy is threaded through the model, E97 facade,
+optimized wrapper and custom autograd forward. FP32 requires FP32 S0 and saved
+checkpoints; replay scratch and dS0 follow those checkpoints. Legacy explicitly
+retains projection-dtype checkpoints, including when inference carries FP32 S0.
 
 The SFT checkpoint records the nonlegacy policy in `sft_precision`. The loader
 restores it even with a separate foundation architecture args file and rejects
@@ -31,18 +33,19 @@ an explicit conflicting config. Resume metadata comparison rejects changing
 this policy mid-resume. Legacy metadata remains byte-structure compatible.
 Changing policy for a new training stage still needs its own frozen budget.
 
-Legacy training retains its BF16 state storage. Inference already carries FP32
-state; its previously BF16, unused sparse checkpoint buffer now also follows S0.
-Thus legacy inference arithmetic is intended to remain unchanged, but allocation
-and compiled kernel details are not claimed identical to the immutable old source.
-Historical actor agreement must still be measured, not assumed.
+Legacy training retains its BF16 state storage. Legacy inference retains both
+FP32 carry and the original BF16 sparse checkpoint buffer. The first implementation
+incorrectly changed that unused inference buffer to FP32; v2 restores the actual
+legacy storage contract. Historical actor agreement must still be measured,
+not assumed. This correction does not prove the buffer change caused v1's mismatch.
 
 ## Implementation and gradient path
 
 - `ndm/recurrent_precision.py`: validation, uniform model policy, saved-policy restoration.
 - `ndm/models/e88_fla_hybrid.py`: the single policy selects the initial state dtype;
   both ordinary and checkpointed projection paths pass that state onward.
-- `ndm/triton/e88_triton_forward.py`: checkpoints use S0 dtype, as does final state.
+- `ndm/triton/e88_triton_forward.py`: FP32-policy checkpoints use FP32; legacy
+  checkpoints retain projection dtype. Final state still uses S0 dtype.
 - `ndm/triton/e88_triton_backward.py`: checkpoint dtype controls replay scratch,
   zero dS-final defaults and returned dS0. Every custom-autograd branch returns
   dS0 directly. Parameter/projection gradients retain their existing dtypes.
@@ -62,7 +65,7 @@ checkpoint reconstruction, state/activation dtype separation, and CUDA recurrenc
 `tests/test_e97_fp32_state_layer_cuda.py` exercises a real E97 layer through
 1,040 tokens and 512-token checkpointed projection chunks.
 
-Three mandatory executed CUDA tests (a skipped test fails the runner):
+Four mandatory executed CUDA cases in v2 (a skipped test fails the runner):
 
 - BF16 projections, FP32 state, split edit, fused SiLU and normalization,
   nonzero final-state gradient, reset at32 and three padding steps. Full64 versus
@@ -70,7 +73,8 @@ Three mandatory executed CUDA tests (a skipped test fails the runner):
   State relative L2 <=1e-4, initial-state gradient <=.005, projection/gate gradients
   <=.02. Full/chunked state <=1e-4, outputs <=.001, gradients <=.005. Require finite
   gradients, FP32 saved checkpoints, actual FP32 replay allocation and returned dS0.
-- Legacy BF16 state/checkpoint/dS0 storage control.
+- Legacy storage controls with both BF16 and FP32 initial carry; checkpoints
+  must remain BF16 in both cases (the missing compatibility regression in v1).
 - Actual checkpointed projection wrapper: FP32 carries, finite backward through
   the512-token boundaries, BF16 weights/parameter gradients and unchanged weights.
 
@@ -101,8 +105,39 @@ The earlier synchronous CPU invocation exceeded its
 120s tool timeout; that is not a numerical verdict. It was replaced by a managed,
 900s-bounded CPU invocation with explicit thread limits.
 
-GPU results pending. Full4B backward, 64K peak memory/performance, eight-rank
-integration and restart qualification are still required before training under
-this policy. Observed BF16 projection-layout differences may remain even with
+### v1 partial results and preserved stop
+
+`proc_10d1` stopped after500s, source `0fd96dc9`, in
+`/mnt/nvme2n1/erikg/e97_systematic_posttraining/fp32-recurrent-state-v1`.
+All three original CUDA tests passed. Relative L2 against the FP32 oracle:
+state `.000020747227608808316`, state gradient `.000393029855331406`,
+projection/gate gradients `.0006805506418459117`. The512-token projection-wrapper
+backward test also passed. These are bounded kernel/layer checks, not4B/64K proof.
+
+The legacy full57 teacher probabilities matched the historical teacher **exactly**,
+but actor replay differed from recorded behavior by up to `.11957478523254395`.
+The baseline binding guard stopped the run; **the corrected full4B assay never
+executed**. Unchanged parameters/finiteness passed, no optimizer updates occurred,
+and both inner and controller source audits completed on failure. The lease was
+released and all eight GPUs were idle afterward. This is not a numerical failure
+of the unexecuted FP32 full-model assay.
+
+Failure audit SHA: `b8a0a32bfef0004c802cb9a983405446164007ac2b65ba71935888a29456f2a1`.
+Kernel JUnit SHA: `a8a0b224902174bde4feffaf2341b8404078dbc31683484086439a1f454e5753`.
+Legacy summary SHA: `b7305c90d440221eefbc041c2ab9708d918400fd55b597d9d1f6267a19642784`.
+Legacy measurements SHA: `9f86c223b46220be948db4fe18168011e0b6fef92c031d120884e5bdb97f3832`.
+
+### v2 compatibility repair
+
+The v1 policy inferred all checkpoint dtypes from S0 and therefore failed to keep
+legacy inference allocation unchanged. v2 threads the same `recurrent_state_precision`
+setting explicitly through both projection paths and all facades, preserving BF16
+legacy checkpoints even with FP32 carry. Added CPU policy/plumbing tests and the
+missing FP32-carry/BF16-checkpoint CUDA control. CPU suite: **59 passed, 4 skipped**.
+Repeat the same frozen full57 recipes and thresholds in a new immutable export
+and new output root; no automatic retry or changes to old evidence.
+
+Full4B backward, 64K peak memory/performance, eight-rank integration and restart
+qualification are still required before training under this policy. Observed BF16 projection-layout differences may remain even with
 consistent FP32 state. This candidate is not a proven probability fix, a model
 improvement, an RL qualification, or authorization to reopen closed budgets.

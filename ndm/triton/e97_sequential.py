@@ -32,6 +32,7 @@ def e97_split_edit_triton_apply(
     value_write_gate: torch.Tensor,
     reset_before: torch.Tensor | None = None,
     valid_mask: torch.Tensor | None = None,
+    recurrent_state_precision: str = 'legacy',
 ) -> Tuple[torch.Tensor, torch.Tensor]:
     """Run the fused sequential E97 split-edit recurrence.
 
@@ -69,6 +70,7 @@ def e97_split_edit_triton_apply(
         value_write_gate=value_write_gate,
         reset_before=reset_before,
         valid_mask=valid_mask,
+        recurrent_state_precision=recurrent_state_precision,
     )
 
 
