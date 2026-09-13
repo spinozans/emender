@@ -184,8 +184,50 @@ Initial-state validation remains based on the requested policy, not the workspac
 exception. This is automatic workspace handling, not an additional user switch.
 
 CPU regressions: **63 passed, 8 CUDA skips**. The same two full57 recipes, bounds
-and thresholds are frozen again, with the eight CUDA cases above. Results pending.
-No earlier failure is overwritten or reclassified.
+and thresholds were frozen again, with the eight CUDA cases above.
+
+### v3 completed: actor restored, full gate still failed
+
+`proc_3bf4` completed after971s from `e1a8e4eb`, in
+`/mnt/nvme2n1/erikg/e97_systematic_posttraining/fp32-recurrent-state-v3`.
+All **eight CUDA cases passed**, including actual workspace allocations and
+FP32 state gradients in gradient-enabled eval. Legacy results again match the
+historical full57 reproduction byte-for-byte.
+
+FP32 actor replay now matches all recorded probabilities **exactly**. However,
+FP32 trainer-to-actor maximum is **`.12353801727294922`**, failing .05. Two of2,711
+tokens exceed .05; p99 `.0006216555833816547`, CE/head delta
+`4.85139758489659e-08`, finiteness and unchanged parameters pass. The two outliers
+are task004/turn1/generated-position24 (`.07596421241760254`) and
+task014/turn4/generated-position15 (`.12353801727294922`).
+
+Teacher probabilities changed from v2 by up to `.12353801727294922` despite
+retaining the requested FP32 training checkpoint policy. Thus v2's passing
+training-reference maximum **did not survive** the inference-workspace change.
+The state-policy implementation and bounded gradient tests do not establish
+whole-model actor/trainer numerical consistency. There is no sufficient causal
+explanation yet; neither the earlier .04821 result nor a successful process phase
+may be promoted to a full qualification claim.
+
+Independent audit verified all eight executed cases, all57/2,711 paired records,
+both inner/controller source audits on failure, and zero updates. The GPU lease
+was released and all GPUs were idle. No additional run was launched.
+
+Audit SHA: `fb316fbf40f113a3c84feaf93eae5e9f4a16b01274588c3f029622e6787f5821`.
+FP32 summary SHA: `f18e924db2cf9064468671f286fde55a4c39f7db17216523f6aba52ecf245605`.
+FP32 measurements SHA: `c6c0d421125ff08d86a06a915d7909d6ffc567328294d3f1367c00f689457f95`.
+Kernel JUnit SHA: `577f5f2760b9663ec7ba4d42f65c645396053d66070b78d863a16a4e0d0626f3`.
+
+A post-result CPU comparison to the four existing reference-bound first-mixer
+profiles did not establish equality to either full-eval or masked-padded-eval
+across all turns. This does not supply a root cause or new qualification;
+`prior-profile-comparison.json` SHA:
+`34e6ffc8b8fbaaa470b166baf09b5798f8af0593cc2db69a9cb682cfc553427e`.
+
+All earlier failures remain unchanged. The implementation remains opt-in and
+unqualified for production training/RL. Known BF16 projection/layout differences
+are a remaining candidate, not a proven complete explanation. Keep the existing
+weights; these results do not justify repeating the prior long-context training.
 
 Full4B backward, 64K peak memory/performance, eight-rank integration and restart
 qualification are still required before training under this policy. Observed BF16 projection-layout differences may remain even with
