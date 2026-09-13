@@ -84,5 +84,34 @@ explicitly exports the repository root as `PYTHONPATH`; no numerical code fix
 was involved.
 
 Artifacts: `/mnt/nvme2n1/erikg/e97_systematic_posttraining/native-first-mixer-probe-v1`.
-Results pending. No optimizer updates, data admission, new rollouts or promotion.
-The original probability gate remains failed and RL remains unqualified.
+## Completed and independently audited
+
+`proc_5040` completed in359s from `09a58f82`. All16 paired receipts (32
+evaluations) matched their recorded hashes and aggregate measurements. Reference
+probability differences and repeat probability differences were exactly zero;
+all thirteen component banks repeated with identical hashes/dtypes. Parameter
+and buffer fingerprints were unchanged, with no gradients or optimizer updates.
+Peak allocated HBM was8,553,481,728 bytes. The frozen source inventory was also
+independently reverified during the receipt audit.
+
+Wrapper inputs, normalized mixer inputs and QKV inputs matched throughout every
+real prefix. Nonetheless, BF16 projection outputs differed across layouts.
+For task000/full-eval, Q/K/V first differed at position2,048; Q's maximum absolute
+difference was.0625. Output-projection input first differed at2,048, but its
+output already differed at position0 despite equal measured input there.
+
+For task000/training-default, Q/K/V still first differed at2,048, while
+output-projection input first differed at512. This is consistent with the
+training/inference state-handoff precision difference, **not proof of its causal
+sufficiency**. Output-projection input includes transformations and gating, not
+bare recurrent state. The separately implemented
+[FP32 state candidate](e97-fp32-recurrent-state-v1.md) is a controlled intervention;
+this probe itself changed no numerics.
+
+Summary SHA: `30e48d86d86124c883c0b177fd45dca25b6c1ff895e8ebb3f0dd6260fc4573c4`.
+Measurements SHA: `3f85d83b3bb2a77693b9697ca03b5fc8e9d3122f000b0241b0fa6c234467a8a1`.
+Independent `receipt-audit.json` SHA:
+`3d5c83f26eac16e90fea061c370a28f5b31109f7071086b259e2fa0f1bfa37e6`.
+
+No data admission, new rollouts or promotion. The original probability gate
+remains failed and RL remains unqualified.
