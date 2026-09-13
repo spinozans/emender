@@ -21,6 +21,16 @@ def recurrent_checkpoint_dtype(mode, state, projection_dtype):
     return projection_dtype
 
 
+def inference_workspace_precision(mode, *, training, grad_enabled):
+    """Keep discarded eval/no-grad workspace compatible, never retained state.
+
+    Training previews keep the training allocation even under no_grad. Any
+    gradient-enabled call (including eval) retains the requested replay policy.
+    """
+    validate_state_precision(mode)
+    return 'legacy' if not training and not grad_enabled else mode
+
+
 def configure_recurrent_precision(model, mode=None):
     modules = [m for m in model.modules() if hasattr(m, 'recurrent_state_precision')]
     current = {validate_state_precision(m.recurrent_state_precision) for m in modules}

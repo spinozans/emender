@@ -23,8 +23,12 @@ The other choice is `legacy`. Omitting the option inherits the loaded policy;
 old checkpoints remain legacy. Model construction uses the same setting in
 `layer_kwargs`. No additional precision sub-switches exist for individual state
 buffers. The same named policy is threaded through the model, E97 facade,
-optimized wrapper and custom autograd forward. FP32 requires FP32 S0 and saved
-checkpoints; replay scratch and dS0 follow those checkpoints. Legacy explicitly
+optimized wrapper and custom autograd forward. FP32 requires FP32 S0 and retained
+checkpoints; replay scratch and dS0 follow those checkpoints. Eval/no-grad's
+**discarded** checkpoint workspace retains the historical projection dtype (v3);
+it is never fed back as live state or retained for backward. Training, including
+no-grad training previews, and every gradient-enabled eval use FP32 checkpoints.
+Legacy explicitly
 retains projection-dtype checkpoints, including when inference carries FP32 S0.
 
 The SFT checkpoint records the nonlegacy policy in `sft_precision`. The loader
@@ -65,7 +69,7 @@ checkpoint reconstruction, state/activation dtype separation, and CUDA recurrenc
 `tests/test_e97_fp32_state_layer_cuda.py` exercises a real E97 layer through
 1,040 tokens and 512-token checkpointed projection chunks.
 
-Four mandatory executed CUDA cases in v2 (a skipped test fails the runner):
+Eight mandatory executed CUDA cases in v3 (a skipped test fails the runner):
 
 - BF16 projections, FP32 state, split edit, fused SiLU and normalization,
   nonzero final-state gradient, reset at32 and three padding steps. Full64 versus
@@ -77,6 +81,11 @@ Four mandatory executed CUDA cases in v2 (a skipped test fails the runner):
   must remain BF16 in both cases (the missing compatibility regression in v1).
 - Actual checkpointed projection wrapper: FP32 carries, finite backward through
   the512-token boundaries, BF16 weights/parameter gradients and unchanged weights.
+
+- Four additional workspace cases cover training/eval crossed with gradient
+  enabled/disabled. Assert actual checkpoint allocation dtype, always-FP32 live
+  final state, and FP32 state gradients whenever gradients are enabled. Only
+  eval/no-grad uses the discarded legacy workspace.
 
 Then run the **entire original57-turn/2,711-token probability selection** from
 `qualify_e97_native_rl_logprobs.py` in fresh legacy and FP32 workers. The legacy
@@ -136,6 +145,47 @@ legacy checkpoints even with FP32 carry. Added CPU policy/plumbing tests and the
 missing FP32-carry/BF16-checkpoint CUDA control. CPU suite: **59 passed, 4 skipped**.
 Repeat the same frozen full57 recipes and thresholds in a new immutable export
 and new output root; no automatic retry or changes to old evidence.
+
+### v2 measured outcome
+
+`proc_9553` completed all four CUDA tests and both full57 assays, then failed the
+numerical gate after1,192s. Source `672fa1e8`; artifacts in
+`/mnt/nvme2n1/erikg/e97_systematic_posttraining/fp32-recurrent-state-v2`.
+The legacy summary and measurements are byte-identical to the earlier bound
+full57 reproduction, including exact historical actor agreement.
+
+FP32 training-to-recorded-actor maximum improved from `.11980986595153809` to
+`.04821127653121948` (passes .05); p99 `.0007128755562007432` and CE/head delta
+`4.135482429063115e-08` pass. However FP32 actor replay changed by
+`.11957478523254395`, exactly reproducing v1's actor probabilities. Actual FP32
+teacher versus actual FP32 actor maximum is `.1196904182434082`, with two tokens
+above .05. **The full gate remains failed**; training-reference improvement alone
+is not runtime consistency or RL qualification. Parameters were unchanged and
+all inner/controller source audits completed; zero updates, lease released.
+
+Audit SHA: `22455a4413a4258a17b88491d1770a96e8defb8efcbd3ae835202f85ccd1e423`.
+FP32 summary SHA: `7601c1e9309c98b965042503e22db64691cddcaf78d45961646bfde2a61ce5e5`.
+FP32 measurements SHA: `3f388a0c1673ef5ddb740611220646a75e14b100bdbb982ab507cd4a699be11e`.
+Legacy summary SHA: `4ca426dc7dda5efcd0665d36d207bcd47d86475365dbc83f48f61d308e87043b`.
+Legacy measurements SHA: `a2e3399ba8974310db27df9094596237e16a2459050e3f8f8169bd197d6dc9f9`.
+
+### v3 discarded inference workspace compatibility
+
+The controlled comparison reproduces an actor difference when the unused
+checkpoint workspace changes dtype, while live inference state was already
+FP32. This does not distinguish allocator effects from compiled-kernel effects,
+or explain every older historical replay variation.
+
+v3 preserves the historical workspace only for **eval with gradients disabled**.
+No state/cache tensor is narrowed and no outputs are replaced. Every checkpoint
+that can be used in backward remains FP32, including gradient-enabled eval;
+no-grad training previews also keep FP32 workspace to match actual training.
+Initial-state validation remains based on the requested policy, not the workspace
+exception. This is automatic workspace handling, not an additional user switch.
+
+CPU regressions: **63 passed, 8 CUDA skips**. The same two full57 recipes, bounds
+and thresholds are frozen again, with the eight CUDA cases above. Results pending.
+No earlier failure is overwritten or reclassified.
 
 Full4B backward, 64K peak memory/performance, eight-rank integration and restart
 qualification are still required before training under this policy. Observed BF16 projection-layout differences may remain even with

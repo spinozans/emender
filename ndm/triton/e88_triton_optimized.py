@@ -120,6 +120,15 @@ def e88_triton_optimized_apply(
             device=k.device,
         )
 
+    # Eval/no-grad does not retain replay checkpoints. Preserve its historical
+    # temporary allocation/codegen without narrowing the live FP32 state or
+    # any checkpoint that can be used by backward. Training no-grad previews
+    # intentionally retain the same workspace as gradient-enabled training.
+    from ndm.recurrent_precision import recurrent_checkpoint_dtype, inference_workspace_precision
+    recurrent_checkpoint_dtype(recurrent_state_precision, S0, k.dtype)  # validate live state
+    workspace_precision = inference_workspace_precision(
+        recurrent_state_precision, training=training, grad_enabled=torch.is_grad_enabled())
+
     # Forward gate is fused INSIDE the kernel when apply_gate=True and
     # g is non-empty. This saves two extra kernel launches per layer
     # (silu, multiply) and matches CUDA's register-owned forward.
@@ -140,7 +149,7 @@ def e88_triton_optimized_apply(
             valid_length=T_orig,
             reset_before=reset_t,
             valid_mask=valid_t,
-            recurrent_state_precision=recurrent_state_precision,
+            recurrent_state_precision=workspace_precision,
         )
         output = out_t.transpose(0, 1)
     else:
@@ -154,7 +163,7 @@ def e88_triton_optimized_apply(
             valid_length=T_orig,
             reset_before=reset_t,
             valid_mask=valid_t,
-            recurrent_state_precision=recurrent_state_precision,
+            recurrent_state_precision=workspace_precision,
         )
         output = out_t.transpose(0, 1)
 

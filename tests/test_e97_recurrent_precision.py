@@ -28,6 +28,14 @@ def test_legacy_fp32_carry_does_not_imply_fp32_checkpoints():
         recurrent_checkpoint_dtype('fp32',state.bfloat16(),torch.bfloat16)
 
 
+@pytest.mark.parametrize('training,grad_enabled',[(False,False),(False,True),(True,False),(True,True)])
+def test_workspace_exception_never_applies_to_retained_checkpoints(training,grad_enabled):
+    from ndm.recurrent_precision import inference_workspace_precision
+    expected='fp32' if training or grad_enabled else 'legacy'
+    assert inference_workspace_precision('fp32',training=training,grad_enabled=grad_enabled)==expected
+    assert inference_workspace_precision('legacy',training=training,grad_enabled=grad_enabled)=='legacy'
+
+
 def test_e97_facade_forwards_the_same_policy(monkeypatch):
     import ndm.triton.e88_triton_optimized as engine
     from ndm.triton.e97_sequential import e97_split_edit_triton_apply
@@ -179,3 +187,27 @@ def test_cuda_state_precision_storage_legacy_control(state_dtype):
     assert state.dtype==s.grad.dtype==state_dtype
     # Legacy retains BF16 checkpoints even with FP32 carried inference state.
     assert (5,torch.bfloat16) in saved
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(),reason='leased CUDA required')
+@pytest.mark.parametrize('training,grad_enabled',[(False,False),(False,True),(True,False),(True,True)])
+def test_cuda_workspace_storage_preserves_live_fp32_state(monkeypatch,training,grad_enabled):
+    from ndm.triton.e88_triton_optimized import e88_triton_optimized_apply
+    s,k,v,q,d,g,e,w=_inputs('cuda',T=16,N=8)
+    allocations=[];original=torch.empty
+    def alloc(*args,**kwargs):
+        result=original(*args,**kwargs);allocations.append((tuple(result.shape),result.dtype));return result
+    monkeypatch.setattr(torch,'empty',alloc)
+    with torch.set_grad_enabled(grad_enabled):
+        state,out=e88_triton_optimized_apply(training,k.transpose(0,1),v.transpose(0,1),q.transpose(0,1),
+            d.transpose(0,1),g.transpose(0,1),s,erase_gate=e.transpose(0,1),value_write_gate=w.transpose(0,1),
+            recurrent_state_precision='fp32')
+    expected=torch.float32 if training or grad_enabled else torch.bfloat16
+    assert ((2,1,2,8,8),expected) in allocations
+    assert state.dtype==torch.float32 and out.dtype==torch.bfloat16
+    assert state.requires_grad==out.requires_grad==grad_enabled
+    if grad_enabled:
+        (out.float().square().mean()+state.square().mean()).backward()
+        assert s.grad.dtype==torch.float32 and torch.isfinite(s.grad).all()
+    else:
+        assert all(x.grad is None for x in (s,k,v,q,d,g,e,w))
