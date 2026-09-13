@@ -92,7 +92,8 @@ def e97_checkpoint_config(
             f"checkpoint config level={config.get('level')!r} is not E97; "
             f"expected one of {sorted(_E97_LEVELS)}"
         )
-    return config
+    from ndm.recurrent_precision import restore_checkpoint_precision
+    return restore_checkpoint_precision(config, checkpoint)
 
 
 def _layer_kwargs(config: Mapping[str, Any]) -> dict[str, Any] | None:

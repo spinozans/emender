@@ -884,9 +884,12 @@ class E88FLAHybrid(nn.Module):
                                        # to this dim + RMSNorm, and RETURN it as a 3rd value so the post-mixer SwiGLU MLP
                                        # can mix heads NONLINEARLY before the linear o_proj collapse. Zero recurrence /
                                        # kernel change (only consumes the kernel's existing readout). 'concat' head_mix only.
+        recurrent_state_precision='legacy',
         **kwargs
     ):
         super().__init__()
+        from ndm.recurrent_precision import validate_state_precision
+        self.recurrent_state_precision = validate_state_precision(recurrent_state_precision)
 
         # Validate n_state is multiple of 4 (CUDA kernel supports 4, 8, 16, 24, 32, 36, 40, 44, 48, 56, 64, 72, 80, 96, 128)
         if n_state % 4 != 0:
@@ -1685,16 +1688,22 @@ class E88FLAHybrid(nn.Module):
         # Stateful Triton inference keeps the cache in fp32. A full-prefix
         # kernel accumulates S in fp32 internally; narrowing S_final to bf16 at
         # every one-token call otherwise makes incremental decoding depend on
-        # chunk boundaries. Training retains its established activation dtype.
-        keep_fp32_inference_state = not self.training and self.use_triton
-        state_dtype = torch.float32 if keep_fp32_inference_state else x.dtype
+        # chunk boundaries. The fp32 policy extends that same contract through
+        # training, sparse replay checkpoints, scratch and state gradients.
+        # Legacy training retains its established activation dtype.
+        if self.recurrent_state_precision == 'fp32' and (
+                not x.is_cuda or not self.use_triton or self.use_chunked_e97):
+            raise NotImplementedError('FP32 recurrent state requires the sequential CUDA/Triton path')
+        keep_fp32_state = self.use_triton and (
+            not self.training or self.recurrent_state_precision == 'fp32')
+        state_dtype = torch.float32 if keep_fp32_state else x.dtype
         if hidden is None:
             S0 = torch.zeros(
                 B, H, n, self.head_v_dim, device=x.device, dtype=state_dtype)
         else:
             # Convert the per-head cache to one kernel state tensor.
             S0 = torch.stack(hidden, dim=1).to(dtype=state_dtype)
-        S0_triton = S0 if keep_fp32_inference_state else S0.to(x.dtype)
+        S0_triton = S0 if keep_fp32_state else S0.to(x.dtype)
 
         # === Fast single-token step kernel (Triton) ===
         # WIP: kernel is correct in isolation (0.006 diff from ref) but end-to-end
@@ -1767,6 +1776,11 @@ class E88FLAHybrid(nn.Module):
             (not boundary_aware or self.use_triton) and
             not self.pos_eigval_clamp  # clamp lives only in the serial fallback (kernels hardcode decay*I-kk^T)
         )
+
+        if self.recurrent_state_precision == 'fp32' and (
+                not use_optimized or n > 64 or self.head_v_dim > 64):
+            raise NotImplementedError(
+                'FP32 recurrent state requires optimized BF16 sequential CUDA/Triton, N/V <= 64')
 
         # Track whether fused gating was used (to skip separate gating later)
         fused_gate_used = False

@@ -622,10 +622,13 @@ def e88_triton_forward(
 
     out_dtype = k_c.dtype
     out = torch.empty((T, B, H, Vsz), dtype=out_dtype, device=k.device)
+    if s0_c.dtype not in (torch.float32, k_c.dtype):
+        raise ValueError('state must use FP32 or projection dtype')
     S_final = torch.empty_like(s0_c)
 
     num_ckpts = T // ckpt_interval + 1
-    S_ckpt = torch.empty((num_ckpts, B, H, N, Vsz), dtype=out_dtype, device=k.device)
+    # State precision is independent of BF16 projection/output storage.
+    S_ckpt = torch.empty((num_ckpts, B, H, N, Vsz), dtype=s0_c.dtype, device=k.device)
 
     strides = (
         # k strides
@@ -766,8 +769,8 @@ def e88_torch_reference(
 
     S = S0.clone().to(torch.float32)
     out = torch.empty((T, B, H, Vsz), dtype=out_dtype, device=k.device)
-    ckpt = torch.empty((T + 1, B, H, N, Vsz), dtype=out_dtype, device=k.device)
-    ckpt[0] = S.to(out_dtype)
+    ckpt = torch.empty((T + 1, B, H, N, Vsz), dtype=S0.dtype, device=k.device)
+    ckpt[0] = S.to(S0.dtype)
 
     for t in range(T):
         valid_t = (torch.ones(B, device=k.device, dtype=torch.bool)
@@ -809,7 +812,7 @@ def e88_torch_reference(
         Sq = torch.einsum('bhnv,bhn->bhv', S, q_t)
         Sq = torch.where(valid_t[:, None, None], Sq, torch.zeros_like(Sq))
         out[t] = Sq.to(out_dtype)
-        ckpt[t + 1] = S.to(out_dtype)
+        ckpt[t + 1] = S.to(S0.dtype)
 
-    S_final = S.to(out_dtype)
+    S_final = S.to(S0.dtype)
     return out, S_final, ckpt

@@ -45,7 +45,7 @@ Shapes (matching the forward kernel layout):
     S_ckpt:       [num_ckpts, B, H, N, V] sparse forward checkpoints.
     d_out:        [T, B, H, V]
     d_S_final:    [B, H, N, V]
-    seg_scratch:  [num_programs * (K+1) * BLOCK_H * N * V] flat fp32
+    seg_scratch:  [num_programs * (K+1) * BLOCK_H * N * V] state storage dtype
                   (per-program staging for replayed S history).
 Outputs:
     d_k:          [T, B, H, N]
@@ -82,7 +82,7 @@ def _e88_backward_kernel(
     W_ptr,              # [T, B, H, V] value write gate (read iff SPLIT_EDIT)
     R_ptr,              # [T, B] reset state before token (read iff APPLY_RESET)
     M_ptr,              # [T, B] valid input token (read iff APPLY_VALID)
-    # Scratch staging buffer (per program × (K+1) × BLOCK_H × N × V, fp32).
+    # Scratch staging buffer (per program × (K+1) × BLOCK_H × N × V, state dtype).
     Scratch_ptr,
     # Upstream grads.
     DOut_ptr,           # [T, B, H, V]
@@ -154,7 +154,7 @@ def _e88_backward_kernel(
     mask_hv = h_mask[:, None] & v_mask[None, :]
 
     # Per-program scratch base offset, in elements.
-    # Scratch layout: [num_programs, (K+1), BLOCK_H, BLOCK_N, BLOCK_V] fp32.
+    # Scratch layout: [num_programs, (K+1), BLOCK_H, BLOCK_N, BLOCK_V], state dtype.
     # We use BLOCK_N/BLOCK_V (rounded-up power-of-2) for stride, with
     # masking on N/V loads/stores.
     tile_size = BLOCK_H * BLOCK_N * BLOCK_V  # elements per S-slot
@@ -194,7 +194,7 @@ def _e88_backward_kernel(
         S = tl.load(Sckpt_ptr + sc_off, mask=mask_hnv, other=0.0).to(tl.float32)
 
         # Store S into scratch slot 0 (the "S_{t-1}" for the first step of
-        # this segment). Scratch is bf16 — store auto-casts fp32 -> bf16.
+        # this segment). Store in the declared recurrent-state precision.
         slot0_off = prog_scratch_base + 0 * tile_size + scratch_inner
         tl.store(Scratch_ptr + slot0_off, S.to(Scratch_ptr.dtype.element_ty), mask=mask_hnv)
 
@@ -274,7 +274,7 @@ def _e88_backward_kernel(
                 S_next = 2.0 * tl.sigmoid(2.0 * pre) - 1.0
             S = tl.where(token_valid[:, None, None], S_next, S)
 
-            # Save S after step t into scratch slot j+1 (bf16-cast).
+            # Save S after step t into scratch slot j+1 (state storage dtype).
             slot_off = prog_scratch_base + (j + 1) * tile_size + scratch_inner
             tl.store(Scratch_ptr + slot_off, S.to(Scratch_ptr.dtype.element_ty), mask=mask_hnv)
 
@@ -287,7 +287,7 @@ def _e88_backward_kernel(
             # Load S_t (slot j+1) and S_{t-1} (slot j) from scratch.
             slot_t_off = prog_scratch_base + (j + 1) * tile_size + scratch_inner
             slot_tm1_off = prog_scratch_base + j * tile_size + scratch_inner
-            # Loads from scratch (allocated bf16 in wrapper) -> cast to fp32 for compute.
+            # All recurrent arithmetic is FP32, independently of storage dtype.
             S_t = tl.load(Scratch_ptr + slot_t_off, mask=mask_hnv, other=0.0).to(tl.float32)
             S_tm1 = tl.load(Scratch_ptr + slot_tm1_off, mask=mask_hnv, other=0.0).to(tl.float32)
 
@@ -628,8 +628,10 @@ def e88_triton_backward(
     sc_c = S_ckpt if _strided_ok(S_ckpt) else S_ckpt.contiguous()
     do_c = d_out if _strided_ok(d_out) else d_out.contiguous()
 
+    if sc_c.dtype not in (torch.float32, k_c.dtype):
+        raise ValueError('state checkpoints must use FP32 or projection dtype')
     if d_S_final is None:
-        dsf_c = torch.zeros((B, H, N, Vsz), dtype=k_c.dtype, device=k.device)
+        dsf_c = torch.zeros((B, H, N, Vsz), dtype=sc_c.dtype, device=k.device)
     else:
         dsf_c = d_S_final if _strided_ok(d_S_final) else d_S_final.contiguous()
     assert dsf_c.shape == (B, H, N, Vsz)
@@ -704,7 +706,7 @@ def e88_triton_backward(
     d_v = torch.empty_like(v_c)
     d_q = torch.empty_like(q_c)
     d_decay = torch.empty_like(d_c)
-    d_S0 = torch.empty((B, H, N, Vsz), dtype=out_dtype, device=k.device)
+    d_S0 = torch.empty((B, H, N, Vsz), dtype=sc_c.dtype, device=k.device)
 
     # Default heads-per-program. Empirically tuned at H=386 N=V=32:
     #   - BLOCK_H=1 is best (BLOCK_H>1 spills the [BH, N, V] state tile).
@@ -735,18 +737,16 @@ def e88_triton_backward(
     grid = (B, num_progs_h)
 
     # Allocate the per-program scratch buffer. Layout:
-    #   [B * num_progs_h, K+1, BLOCK_H, BLOCK_N, BLOCK_V] fp32.
-    # We use fp32 for accuracy — bf16 scratch loses ~3 bits per re-load
-    # of S during the backward walk and is the main source of drift.
+    #   [B * num_progs_h, K+1, BLOCK_H, BLOCK_N, BLOCK_V].
+    # Replay storage follows the saved state's dtype, not the projections.
+    # Otherwise FP32 checkpoints would be narrowed again during backward.
     scratch_numel = (
         B * num_progs_h
         * (ckpt_interval + 1)
         * block_h * BLOCK_N * BLOCK_V
     )
-    # Scratch dtype matches input dtype — bf16 for production (halves
-    # bandwidth, matches CUDA reg-own's segment_cache); fp32 for fp32
-    # inputs (preserves test parity). The kernel auto-casts on load/store.
-    seg_scratch = torch.empty(scratch_numel, dtype=k.dtype, device=k.device)
+    # Legacy BF16 states retain BF16 scratch; FP32 states remain FP32.
+    seg_scratch = torch.empty(scratch_numel, dtype=sc_c.dtype, device=k.device)
 
     _e88_backward_kernel[grid](
         k_c, v_c, q_c, d_c, sc_c, g_c, e_c, w_c, r_c, m_c,

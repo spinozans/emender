@@ -39,6 +39,10 @@ def freeze(args):
                 loss_chunk=128,mlp_chunk=4096,checkpoint_group=3,alignment=128,
                 optimizer_updates=0,training_eligible=False,automatic_expansion=False,
                 scope='Single-turn training layouts up to 16K prefix/512 generation; not packed 64K or optimizer qualification')
+    if getattr(args,'recurrent_state_precision',None) is not None:
+        from ndm.recurrent_precision import validate_state_precision
+        recipe['recurrent_state_precision']=validate_state_precision(args.recurrent_state_precision)
+        recipe['scope']+='; explicit recurrent-state precision, unchanged weights and original behavior references'
     if getattr(args,'head_probe',False):
         recipe['head_probe']=dict(vocab_chunk=4096,max_rows=128,returns_original_outputs=True)
         recipe['scope']+='; read-only counterfactual FP32 head projection, not a changed-policy qualification'
@@ -75,7 +79,10 @@ def run(args):
     torch.backends.cuda.matmul.allow_bf16_reduced_precision_reduction=False
     loaded=load_e97_checkpoint(target['checkpoint'],args_json=recipe['args_json'],device=torch.device('cuda',local),
                                dtype=torch.bfloat16,weight_mode=target['mode'],use_triton=True,mmap=True)
-    model=loaded.model.eval();before=parameter_digest(model)
+    model=loaded.model.eval()
+    from ndm.recurrent_precision import configure_recurrent_precision
+    state_precision=configure_recurrent_precision(model,recipe.get('recurrent_state_precision'))
+    before=parameter_digest(model)
     if any(p.dtype!=torch.bfloat16 for p in model.parameters()):raise ValueError('persistent parameter dtype')
     probes=[];probe_enabled='head_probe' in recipe
     if probe_enabled:
@@ -147,6 +154,9 @@ def run(args):
                 recipe_sha256=args.recipe_sha,peak_hbm_allocated=torch.cuda.max_memory_allocated(local),
                 optimizer_updates=0,rl_optimizer_ready=False,automatic_expansion=False,
                 remaining='End-to-end RL gradients, DDP/episode normalization, optimizer integration, reward contrast',scope=recipe['scope'])
+    if 'recurrent_state_precision' in recipe:
+        result['recurrent_state_precision']=state_precision
+        if any(p.grad is not None for p in model.parameters()):raise ValueError('unexpected gradients in forward assay')
     if probe_enabled:
         pairs=[(a,b) for p in probes for a,b in zip(p.actor,p.teacher)]
         fp32=np.array([abs(a['fp32_logprob']-b['fp32_logprob']) for a,b in pairs])
@@ -166,6 +176,6 @@ def run(args):
 
 if __name__=='__main__':
     p=argparse.ArgumentParser();s=p.add_subparsers(dest='command',required=True)
-    q=s.add_parser('freeze');q.add_argument('--output',type=Path,required=True);q.add_argument('--head-probe',action='store_true')
+    q=s.add_parser('freeze');q.add_argument('--output',type=Path,required=True);q.add_argument('--head-probe',action='store_true');q.add_argument('--recurrent-state-precision',choices=('legacy','fp32'))
     q=s.add_parser('run');q.add_argument('--recipe',type=Path,required=True);q.add_argument('--recipe-sha',required=True);q.add_argument('--output',type=Path,required=True)
     a=p.parse_args();globals()[a.command](a)

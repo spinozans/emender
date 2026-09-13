@@ -165,7 +165,9 @@ def configure_precision(model, args) -> dict:
     model.checkpoint_loss_chunks = checkpoint_ce
     if chunk is not None:
         model.loss_chunk_size = chunk
-    return {
+    from ndm.recurrent_precision import configure_recurrent_precision
+    state_precision = configure_recurrent_precision(model, getattr(args, "recurrent_state_precision", None))
+    policy = {
         "schema": "emender-e97-sft-precision-policy-v1",
         "optimizer": precision,
         "optimizer_schema": ScheduleFreeSRCandidate.state_schema if precision != "legacy" else None,
@@ -180,6 +182,10 @@ def configure_precision(model, args) -> dict:
         "weight_decay": args.weight_decay,
         "warmup_steps": args.warmup_steps,
     }
+    # Preserve exact legacy resume metadata, but persist the new numerical policy.
+    if state_precision != "legacy":
+        policy["recurrent_state_precision"] = state_precision
+    return policy
 
 
 def validate_precision_world(args, world):
@@ -294,6 +300,8 @@ def main() -> None:
         "--sampler-mode", choices=("hash-replacement", "epoch-permutation"),
         default="hash-replacement")
     parser.add_argument("--optimizer-precision", choices=("legacy", "bf16-sr-candidate"), default="legacy")
+    parser.add_argument("--recurrent-state-precision", choices=("legacy", "fp32"), default=None,
+                        help="State carry/checkpoints/replay/gradients together; omitted inherits the checkpoint")
     parser.add_argument("--sr-seed", type=int, default=927413)
     parser.add_argument("--loss-logits-fp32", action="store_true")
     parser.add_argument("--checkpoint-loss-chunks", action="store_true")
@@ -399,7 +407,8 @@ def main() -> None:
                                     and not args.loss_logits_fp32
                                     and not args.checkpoint_loss_chunks
                                     and args.loss_chunk_size is None
-                                    and not args.disable_bf16_reduced_precision_reduction))
+                                    and not args.disable_bf16_reduced_precision_reduction
+                                    and precision_policy.get("recurrent_state_precision", "legacy") == "legacy"))
         start_update = clocks["updates"]
         total_tokens = clocks["total_tokens"]
         total_targets = clocks["assistant_target_tokens"]
