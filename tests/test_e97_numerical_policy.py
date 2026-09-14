@@ -4,7 +4,7 @@ from types import SimpleNamespace
 import pytest
 import torch
 import torch.nn.functional as F
-from ndm.numerical_policy import POLICY,RecomputedFP32Linear,configure_numerical_policy,restore_numerical_policy
+from ndm.numerical_policy import POLICY,UNIFORM_POLICY,POLICIES,RecomputedFP32Linear,configure_numerical_policy,restore_numerical_policy
 
 
 def exercise(device,readout,bias,in_features=7,out_features=5):
@@ -62,18 +62,38 @@ def test_policy_preserves_module_parameters_keys_and_inherits():
     with pytest.raises(ValueError):configure_precision(model,args)
 
 
-def test_checkpoint_roundtrip_and_conflict(tmp_path):
+@pytest.mark.parametrize('policy',POLICIES)
+def test_checkpoint_roundtrip_and_conflict(tmp_path,policy):
     from ndm.e97 import build_e97_model,load_e97_checkpoint
     config=dict(level='E97',dim=8,depth=1,n_heads=2,n_state=4,expansion=1.,use_gate=1,gate_activation='silu',use_conv=0,mlp_ratio=0.)
-    model=build_e97_model(dict(config,numerical_policy=POLICY),vocab_size=32,use_triton=False).bfloat16()
+    model=build_e97_model(dict(config,numerical_policy=policy),vocab_size=32,use_triton=False).bfloat16()
     p=tmp_path/'checkpoint.pt';a=tmp_path/'args.json';a.write_text(json.dumps(config))
-    torch.save(dict(model_state_dict=model.state_dict(),sft_precision=dict(numerical_policy=POLICY,recurrent_state_precision='fp32')),p)
+    torch.save(dict(model_state_dict=model.state_dict(),sft_precision=dict(numerical_policy=policy,recurrent_state_precision='fp32')),p)
     loaded=load_e97_checkpoint(p,args_json=a,device='cpu',dtype=torch.bfloat16,use_triton=False,weight_mode='saved')
-    assert loaded.model.numerical_policy==POLICY and isinstance(loaded.model.lm_head,RecomputedFP32Linear)
+    assert loaded.model.numerical_policy==policy and isinstance(loaded.model.lm_head,RecomputedFP32Linear)
+    assert all(m.uniform_recurrent_workspace==(policy==UNIFORM_POLICY) for m in loaded.model.modules() if hasattr(m,'recurrent_state_precision'))
+    with pytest.raises(ValueError,match='conflict'):
+        restore_numerical_policy(dict(numerical_policy=UNIFORM_POLICY),dict(sft_precision=dict(numerical_policy=POLICY,recurrent_state_precision='fp32')))
     assert all(torch.equal(v,loaded.model.state_dict()[k]) for k,v in model.state_dict().items())
     with pytest.raises(ValueError):restore_numerical_policy({},dict(sft_precision=dict(numerical_policy=POLICY)))
     with pytest.raises(ValueError):build_e97_model(dict(config,numerical_policy=POLICY,layer_kwargs=dict(recurrent_state_precision='legacy')),vocab_size=32)
     with pytest.raises(ValueError):configure_numerical_policy(model,'unknown')
+
+
+def test_uniform_workspace_policy_and_inherited_metadata():
+    from ndm.recurrent_precision import inference_workspace_precision
+    for training in (False,True):
+        for grad in (False,True):
+            assert inference_workspace_precision('fp32',training=training,grad_enabled=grad,uniform_workspace=True)=='fp32'
+            expected='legacy' if not training and not grad else 'fp32'
+            assert inference_workspace_precision('fp32',training=training,grad_enabled=grad)==expected
+    with pytest.raises(ValueError):inference_workspace_precision('legacy',training=False,grad_enabled=False,uniform_workspace=True)
+    with pytest.raises(ValueError):inference_workspace_precision('fp32',training=False,grad_enabled=False,uniform_workspace=1)
+    from scripts.train_e97_4b_pi_sft import configure_precision
+    model=torch.nn.Module();model.body=torch.nn.Linear(7,7);model.lm_head=torch.nn.Linear(7,5);model.recurrent_state_precision='legacy';model.loss_chunk_size=128
+    args=SimpleNamespace(numerical_policy=UNIFORM_POLICY,gradient_checkpoint_group_size=3,mlp_checkpoint_chunk_size=4096,lr=1e-5,weight_decay=.01,warmup_steps=0)
+    assert configure_precision(model,args)['numerical_policy']==UNIFORM_POLICY and model.uniform_recurrent_workspace
+    configure_numerical_policy(model,POLICY);assert not model.uniform_recurrent_workspace
 
 
 def test_scratch_dtype_and_higher_order_guards(monkeypatch):
@@ -93,6 +113,33 @@ def test_cuda_production_linear_arithmetic_and_backward(readout,out_features,rec
     error=exercise('cuda',readout,False,3840,out_features)
     record_property('gradient_relative_l2',error)
     record_property('largest_fp32_weight_bytes',3840*out_features*4)
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(),reason='leased CUDA required')
+def test_cuda_uniform_workspace_inference_chunks_and_single_token(monkeypatch,record_property):
+    import importlib
+    from ndm.models.e97 import E97SplitEditLayer
+    torch.cuda.set_device(int(os.environ.get('LOCAL_RANK','0')));torch.manual_seed(81311)
+    owner=importlib.import_module('ndm.triton.e88_triton_backward');original=owner.e88_triton_forward;seen=[]
+    def observe(*args,**kwargs):
+        result=original(*args,**kwargs)
+        assert kwargs['recurrent_state_precision']=='fp32'
+        assert result[1].dtype==result[2].dtype==torch.float32
+        seen.append(dict(valid_length=kwargs['valid_length'],padded_length=args[1].shape[0]))
+        return result
+    monkeypatch.setattr(owner,'e88_triton_forward',observe)
+    layer=E97SplitEditLayer(dim=128,n_heads=2,n_state=64,expansion=1.,use_conv=False,use_gate=True,
+        gate_activation='silu',use_triton=True,projection_chunk_size=512,recurrent_state_precision='fp32').cuda().bfloat16().eval()
+    layer.fused_inference=True;layer.uniform_recurrent_workspace=True
+    x=torch.randn(1,529,128,device='cuda',dtype=torch.bfloat16)
+    with torch.no_grad():
+        y,state=layer(x);z,last=layer(x[:,:1],state)
+    assert y.shape==x.shape and z.shape==(1,1,128)
+    assert torch.isfinite(y).all() and torch.isfinite(z).all() and all(s.dtype==torch.float32 and torch.isfinite(s).all() for s in last)
+    assert [s['valid_length'] for s in seen]==[512,17,1]
+    assert [s['padded_length'] for s in seen]==[512,32,16]
+    assert all(p.grad is None and p.dtype==torch.bfloat16 for p in layer.parameters())
+    record_property('uniform_workspace_calls',str(seen))
 
 
 @pytest.mark.skipif(not torch.cuda.is_available(),reason='leased CUDA required')

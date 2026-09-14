@@ -42,6 +42,7 @@ def e88_triton_optimized_apply(
     reset_before: torch.Tensor = None,  # bool [B,T]
     valid_mask: torch.Tensor = None,  # bool [B,T]
     recurrent_state_precision: str = 'legacy',
+    uniform_workspace: bool = False,  # derived from composite policy, not an operator switch
 ) -> Tuple[torch.Tensor, torch.Tensor]:
     """Triton-backed E88 recurrence with optional pre-norm and post-gate.
 
@@ -127,7 +128,8 @@ def e88_triton_optimized_apply(
     from ndm.recurrent_precision import recurrent_checkpoint_dtype, inference_workspace_precision, recurrent_launch_config
     recurrent_checkpoint_dtype(recurrent_state_precision, S0, k.dtype)  # validate live state
     workspace_precision = inference_workspace_precision(
-        recurrent_state_precision, training=training, grad_enabled=torch.is_grad_enabled())
+        recurrent_state_precision, training=training, grad_enabled=torch.is_grad_enabled(),
+        uniform_workspace=uniform_workspace)
     # The discarded-workspace exception must NOT re-enable inference autotuning.
     launch_config = recurrent_launch_config(recurrent_state_precision)
 

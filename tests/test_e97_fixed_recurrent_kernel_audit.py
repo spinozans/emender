@@ -1,6 +1,15 @@
 import copy
 import pytest
-from scripts.audit_e97_fixed_recurrent_kernel import row_metrics,repeated_exactly
+from scripts.audit_e97_fixed_recurrent_kernel import row_metrics,repeated_exactly,teachers_match
+
+
+def test_uniform_repair_teacher_control_is_exact_and_actor_is_not_substituted():
+    a=[dict(id='case',turn=0,teacher=[0.,-1.],actor_replay=[-2.,-3.],ce_mean=.5,padded_tokens=16)]
+    b=copy.deepcopy(a);b[0]['actor_replay']=[-4.,-5.];assert teachers_match(a,b)
+    b[0]['teacher'][0]=-0.;assert not teachers_match(a,b)
+    b=copy.deepcopy(a);b[0]['ce_mean']+=1e-10;assert not teachers_match(a,b)
+    b=copy.deepcopy(a);b[0]['padded_tokens']=32;assert not teachers_match(a,b)
+    assert not teachers_match(a,[])
 
 
 def example():

@@ -3,11 +3,13 @@ import torch
 import torch.nn.functional as F
 
 POLICY='fp32-linear-v1'
+UNIFORM_POLICY='fp32-linear-v2'
+POLICIES=(POLICY,UNIFORM_POLICY)
 MAX_WEIGHT_BYTES=1024**3
 
 
 def validate_numerical_policy(mode):
-    if mode not in (None,POLICY):raise ValueError('unsupported numerical policy')
+    if mode is not None and mode not in POLICIES:raise ValueError('unsupported numerical policy')
     return mode
 
 
@@ -61,6 +63,9 @@ def configure_numerical_policy(model,mode=None):
     if head not in modules or any(type(m) not in (torch.nn.Linear,RecomputedFP32Linear) for m in modules):
         raise ValueError('numerical policy requires a plain Linear readout and projections')
     configure_recurrent_precision(model,'fp32')
+    for module in model.modules():
+        if hasattr(module,'recurrent_state_precision'):
+            module.uniform_recurrent_workspace=mode==UNIFORM_POLICY
     torch.set_float32_matmul_precision('highest')
     torch.backends.cuda.matmul.allow_bf16_reduced_precision_reduction=False
     # Preserve module and Parameter identities, hooks, names, aliases and state-dict
@@ -75,6 +80,8 @@ def configure_numerical_policy(model,mode=None):
 def restore_numerical_policy(config,checkpoint):
     saved=validate_numerical_policy(checkpoint.get('sft_precision',{}).get('numerical_policy'))
     explicit=validate_numerical_policy(config.get('numerical_policy'))
+    if saved is not None and explicit is not None and saved!=explicit:
+        raise ValueError('checkpoint/config numerical policy conflict')
     chosen=saved if saved is not None else explicit
     if saved is not None and checkpoint['sft_precision'].get('recurrent_state_precision')!='fp32':
         raise ValueError('saved numerical policy requires FP32 recurrent state')

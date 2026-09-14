@@ -309,7 +309,7 @@ def main() -> None:
         "--sampler-mode", choices=("hash-replacement", "epoch-permutation"),
         default="hash-replacement")
     parser.add_argument("--optimizer-precision", choices=("legacy", "bf16-sr-candidate"), default="legacy")
-    parser.add_argument("--numerical-policy", choices=("fp32-linear-v1",), default=None,
+    parser.add_argument("--numerical-policy", choices=("fp32-linear-v1", "fp32-linear-v2"), default=None,
                         help="Composite candidate: pinned FP32 state, FP32 linear calculations, BF16 hidden stores and FP32 readout")
     parser.add_argument("--recurrent-state-precision", choices=("legacy", "fp32"), default=None,
                         help="State carry/checkpoints/replay/gradients together; omitted inherits the checkpoint")

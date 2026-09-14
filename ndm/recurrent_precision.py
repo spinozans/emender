@@ -37,13 +37,19 @@ def recurrent_checkpoint_dtype(mode, state, projection_dtype):
     return projection_dtype
 
 
-def inference_workspace_precision(mode, *, training, grad_enabled):
+def inference_workspace_precision(mode, *, training, grad_enabled, uniform_workspace=False):
     """Keep discarded eval/no-grad workspace compatible, never retained state.
 
     Training previews keep the training allocation even under no_grad. Any
     gradient-enabled call (including eval) retains the requested replay policy.
+    Composite v2 derives uniform_workspace=True: even discarded inference
+    checkpoints use FP32. The compatibility default remains unchanged for v1.
     """
     validate_state_precision(mode)
+    if type(uniform_workspace) is not bool:raise ValueError('uniform workspace must be boolean')
+    if uniform_workspace:
+        if mode!='fp32':raise ValueError('uniform workspace requires FP32 state')
+        return mode
     return 'legacy' if not training and not grad_enabled else mode
 
 

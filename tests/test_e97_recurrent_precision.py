@@ -46,7 +46,9 @@ def test_e97_facade_forwards_the_same_policy(monkeypatch):
     e97_split_edit_triton_apply(False,None,None,None,None,erase_gate=gate,value_write_gate=gate,recurrent_state_precision='fp32')
     assert captured['recurrent_state_precision']=='fp32'
     e97_split_edit_triton_apply(False,None,None,None,None,erase_gate=gate,value_write_gate=gate)
-    assert captured['recurrent_state_precision']=='legacy'
+    assert captured['recurrent_state_precision']=='legacy' and captured['uniform_workspace'] is False
+    e97_split_edit_triton_apply(False,None,None,None,None,erase_gate=gate,value_write_gate=gate,recurrent_state_precision='fp32',uniform_workspace=True)
+    assert captured['recurrent_state_precision']=='fp32' and captured['uniform_workspace'] is True
 
 
 def test_sft_policy_inherits_and_records_the_single_switch():

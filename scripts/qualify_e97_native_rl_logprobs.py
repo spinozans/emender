@@ -194,6 +194,8 @@ def run(args):
     if numerical_policy is not None:
         from ndm.numerical_policy import RecomputedFP32Linear
         result['numerical_policy']=numerical_policy
+        if numerical_policy=='fp32-linear-v2':
+            result['uniform_recurrent_workspace_layers']=sum(bool(getattr(m,'uniform_recurrent_workspace',False)) for m in model.modules())
         result['linear_modules_fp32']=sum(isinstance(m,RecomputedFP32Linear) for m in model.modules())
         result['head_dtypes']={k:sorted(v) for k,v in head_dtypes.items()}
         if any(v!={'torch.float32'} for v in head_dtypes.values()):raise ValueError('composite policy readout dtype')
@@ -216,6 +218,6 @@ def run(args):
 
 if __name__=='__main__':
     p=argparse.ArgumentParser();s=p.add_subparsers(dest='command',required=True)
-    q=s.add_parser('freeze');q.add_argument('--output',type=Path,required=True);q.add_argument('--head-probe',action='store_true');q.add_argument('--head-numeric-audit',action='store_true');q.add_argument('--numerical-policy',choices=('fp32-linear-v1',));q.add_argument('--recurrent-state-precision',choices=('legacy','fp32'))
+    q=s.add_parser('freeze');q.add_argument('--output',type=Path,required=True);q.add_argument('--head-probe',action='store_true');q.add_argument('--head-numeric-audit',action='store_true');q.add_argument('--numerical-policy',choices=('fp32-linear-v1','fp32-linear-v2'));q.add_argument('--recurrent-state-precision',choices=('legacy','fp32'))
     q=s.add_parser('run');q.add_argument('--recipe',type=Path,required=True);q.add_argument('--recipe-sha',required=True);q.add_argument('--output',type=Path,required=True)
     a=p.parse_args();globals()[a.command](a)

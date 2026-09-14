@@ -37,6 +37,13 @@ def repeated_exactly(a,b):
     return True
 
 
+def teachers_match(rows,reference):
+    return len(rows)==len(reference) and all(
+        all(x[k]==y[k] for k in ('id','turn','ce_mean','padded_tokens')) and len(x['teacher'])==len(y['teacher'])
+        and all(struct.pack('!f',u)==struct.pack('!f',v) for u,v in zip(x['teacher'],y['teacher']))
+        for x,y in zip(rows,reference))
+
+
 def audit(root,*,expected_recipe_sha='82f53a7100423780fbab31f12f217c259928ae9a1802c608a43b6c54ef5247a9',expected_kernel_cases=10,numerical_policy=None):
     import xml.etree.ElementTree as ET
     recipe_path=root/'authority/recipe-private.json';recipe_sha=sha(recipe_path)
@@ -44,6 +51,13 @@ def audit(root,*,expected_recipe_sha='82f53a7100423780fbab31f12f217c259928ae9a18
     recipe=json.loads(recipe_path.read_text());plan=json.loads((root/'plan.json').read_text())
     if plan['kernel']!=FIXED_RECURRENT_KERNEL or plan['workers']!=2:raise ValueError('fixed policy plan')
     if numerical_policy is not None and plan.get('numerical_policy')!=numerical_policy:raise ValueError('composite policy plan')
+    teacher_reference=None
+    if numerical_policy=='fp32-linear-v2':
+        prior=Path('/mnt/nvme2n1/erikg/e97_systematic_posttraining/fp32-linear-candidate-v1')
+        for worker in (1,2):
+            p=prior/f'worker-{worker}/measurements-private.json'
+            if sha(p)!='64ba00df08cf48bc87e87ca1afc9c5257bfb88bb25addb63b03cedd88812e34e':raise ValueError('v1 teacher reference identity')
+        teacher_reference=json.loads(p.read_text())['records']
     tests=ET.parse(root/'kernel-tests.xml').findall('.//testcase')
     kernel_pass=len(tests)==expected_kernel_cases and all(not any(x.find(t) is not None for t in ('skipped','failure','error')) for x in tests)
     rows=[];summaries=[];metrics=[];checks={'kernel_cases':kernel_pass}
@@ -60,6 +74,9 @@ def audit(root,*,expected_recipe_sha='82f53a7100423780fbab31f12f217c259928ae9a18
             checks[f'worker_{i}_linear_policy']=bool(s.get('numerical_policy')==numerical_policy and s.get('linear_modules_fp32')==163
                 and s.get('head_dtypes')==dict(actor=['torch.float32'],teacher=['torch.float32'])
                 and s['peak_hbm_allocated']<=plan['max_hbm_allocated'])
+            if numerical_policy=='fp32-linear-v2':
+                checks[f'worker_{i}_uniform_workspace']=s.get('uniform_recurrent_workspace_layers')==18
+                checks[f'worker_{i}_teacher_unchanged']=teachers_match(m['records'],teacher_reference)
     checks['fresh_process_repeat_exact']=repeated_exactly(*rows)
     checks['same_parameters']=summaries[0]['parameter_sha256']==summaries[1]['parameter_sha256']=='f57eaff2882ce2914413f501a93454e8e0a9bfcd4f408b91ed962405c7ad16bd'
     result=dict(schema='e97-fixed-recurrent-kernel-audit-v1',checks=checks,current_policy_numerics_passed=all(checks.values()),
