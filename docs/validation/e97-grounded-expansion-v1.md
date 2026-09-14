@@ -120,6 +120,17 @@ CPU preflight `grounded-expansion-v1-preflight` has frozen identities:
 |New evaluation cases|`36921d4b718c3d8e0bf88c9fc1cc04ae15ada219229442eb420e5843a84c9331`|
 
 Data run root: `/mnt/nvme2n1/erikg/e97_systematic_posttraining/grounded-expansion-v1-data`.
+The native build is running from frozen source `e11f8f6e` (`proc_8ce8`); its
+first128 trajectories have passed. Source inventory:17,715 files, SHA
+`23f899004d3ef6a941615cf8871c34f1b56d1153bf69818f79400c2749b40751`.
+
+Matched controller/gate logic is implemented in
+`scripts/prepare_e97_grounded_expansion.py`;44 CPU tests pass in its overlapping
+controller/curriculum/execution regression panel. Tests explicitly prevent using
+u880 as the new pre-y baseline, dropping outcomes, accepting duplicate/nonboolean
+outcomes, or hiding failed editing/recovery behind sums. Previous16-case panel
+SHA is `7f03244fca9437ebdfbc7044287c9ddeff61d1953c8a80f062032e46f097ad67`.
+
 After native verification, independently audit the derivative and runtime schedule,
-then prepare the new training/evaluation controller. No optimizer updates have
-occurred in this new tranche yet.
+then freeze the remaining launch wrapper. No optimizer updates have occurred in
+this new tranche yet.
