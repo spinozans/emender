@@ -149,6 +149,20 @@ reviewed exposure hash and a no-overwrite attempt marker. It retains the unchang
 trainer, explicit parent weight mode, bounded phases and composed lease/source-audit
 cleanup. New tests exercise the unique-versus-repeated exposure accounting.
 
+The independent partial audit (`proc_4a88`, source `dd5f424b`) passed in14s:
+1,333 complete records,346,862 supervised targets; lookup256, sum256, edit437,
+recovery384. All native calls/observations, source checksums, independently
+reconstructed token masks and host oracles passed; both sandbox cleanup receipts
+bound correctly. Both journals were unchanged during the audit. The partial set
+remains `training_eligible:false` and is not a completed data authority.
+
+Audit source inventory:17,719 files, SHA
+`8cdaaa62734d33a9760e6c2a4998b131dd51dff380adf557633d93c766792f29`.
+Retained candidate journal SHA
+`ba5a5bf7de11f8edee3c64f431135d1ca54448bfe9712067ee139480bc2653c1`;
+verification journal SHA
+`4e6c809562f5afa0ae05fdb32de0383c0d897caa340c28559f357dd9a2e6548d`.
+
 The initial data-time estimate was too small. Completion would require a separately
 bounded additional data pass for the715 missing records, reusing only independently
 audited completed records and preserving the failed root. No such completion pass
