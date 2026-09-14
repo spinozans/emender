@@ -56,6 +56,19 @@ def test_evaluation_binds_correction_parent_not_old_u880(tmp_path,monkeypatch):
     assert len(json.loads((phase/'evaluation/execution/panel.json').read_text())['cases'])==48
 
 
+def test_replay_rng_uses_hash_bound_recipe_order_not_sorted_manifest(tmp_path,monkeypatch):
+    import scripts.audit_e97_grounded_expansion as module
+    original={'replay_target_quotas':{'native':100000,'conversation':200000,'retention':50000}}
+    path=tmp_path/'recipe.json';path.write_text(json.dumps(original))
+    monkeypatch.setattr(module,'RECIPE_SHA',module.sha(path))
+    embedded=json.loads(json.dumps(original,sort_keys=True))
+    assert list(embedded['replay_target_quotas'])==['conversation','native','retention']
+    bound=module.bound_recipe(embedded,path)
+    assert list(bound['replay_target_quotas'])==['native','conversation','retention']
+    embedded['replay_target_quotas']['native']+=1
+    with pytest.raises(ValueError,match='frozen recipe'):module.bound_recipe(embedded,path)
+
+
 def test_exposure_distinguishes_unique_from_repeated(tmp_path,monkeypatch):
     import ndm.data.masked_sft_dataset as loader
     import scripts.prepare_e97_grounded_expansion as module

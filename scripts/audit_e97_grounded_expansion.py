@@ -21,6 +21,14 @@ EVAL_SHA='36921d4b718c3d8e0bf88c9fc1cc04ae15ada219229442eb420e5843a84c9331'
 
 
 def read(p):return json.loads(Path(p).read_text())
+
+def bound_recipe(embedded,path):
+    original=read(path)
+    if sha(path)!=RECIPE_SHA or embedded!=original:raise ValueError('frozen recipe contents')
+    # Source-order RNG indices refer to the original file, never sorted JSON.
+    return original
+
+
 def lines(p):return [json.loads(line) for line in Path(p).read_text().splitlines()]
 
 def reconstruct(record,tools,enc):
@@ -120,7 +128,7 @@ def audit_partial(a):
 def audit(a):
     data=a.data;summary=read(data/'data-summary.json');authority=data/'authority';manifest=read(authority/'manifest.json');config=manifest['recipe']
     config_path=Path(__file__).resolve().parents[1]/'configs/pi/e97-grounded-expansion-v1.json'
-    if sha(config_path)!=RECIPE_SHA or config!=read(config_path):raise ValueError('frozen recipe contents')
+    config=bound_recipe(config,config_path)
     if manifest['recipe_sha256']!=RECIPE_SHA or summary['authority_sha256']!=sha(authority/'manifest.json') or summary['optimizer_updates']!=0:raise ValueError('data authority binding')
     if sha(data/'training-cases-private.json')!=TRAIN_SHA or sha(data/'fresh-evaluation-cases.json')!=EVAL_SHA:raise ValueError('frozen cases')
     panel_path=Path(config['generation_panel'])

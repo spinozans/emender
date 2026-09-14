@@ -190,3 +190,23 @@ BF16-SR trainer, not the completion-code snapshot or an experimental precision
 policy. The next phase first audits all2,048 authored records, the18 deduplicated
 canary records and unchanged replay, then reports actual32-update exposures before
 launching any optimizer step.
+
+### Completion result and retained audit implementation failure
+
+`proc_58c4` completed the715 missing records in1,000s (source `c6bce5d2`);
+the1,333-record prefixes were reused unchanged. Completed authority SHA:
+`08752c53e2199533252c77821ec9696012b19dc09ea0ff1508ef6676a6cd2140`.
+It contains2,583 records /9,047,986 input tokens /926,091 supervised targets:
+562,835 authored;2,088 teacher-repair;1,359 successful-canary;109,163 native replay;
+200,500 conversation replay;50,146 retention replay. Zero optimizer updates.
+Source inventory:17,721 files, SHA
+`d0908d7866fcf593027f9e893c13f6740126c6b8dab85c5c5434696622b14b21`.
+
+The first full-audit/preparation attempt (`proc_c4d6`) failed in35s, before packing,
+with `KeyError: ('conversation', 69519)`. The **auditor** reconstructed replay seeds
+from the sorted embedded manifest recipe, changing native/conversation source
+indices. The builder used the hash-bound original recipe order. Fix: verify the
+embedded contents, then use the original recipe file order for RNG reconstruction.
+A regression test explicitly distinguishes these orders and rejects changed
+recipe values. Data, masks, quotas, seeds and gates are unchanged; the failed
+control root and logs are retained. No training or acceptance occurred.
