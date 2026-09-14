@@ -166,6 +166,11 @@ def configure_precision(model, args) -> dict:
     if chunk is not None:
         model.loss_chunk_size = chunk
     from ndm.recurrent_precision import configure_recurrent_precision
+    from ndm.numerical_policy import configure_numerical_policy
+    requested_numerical = getattr(args, "numerical_policy", None)
+    if (requested_numerical or getattr(model, "numerical_policy", None)) and getattr(args, "recurrent_state_precision", None) not in (None, "fp32"):
+        raise ValueError("numerical policy requires FP32 recurrent state")
+    numerical_policy = configure_numerical_policy(model, requested_numerical)
     state_precision = configure_recurrent_precision(model, getattr(args, "recurrent_state_precision", None))
     policy = {
         "schema": "emender-e97-sft-precision-policy-v1",
@@ -187,6 +192,8 @@ def configure_precision(model, args) -> dict:
         from ndm.recurrent_precision import FIXED_RECURRENT_KERNEL
         policy["recurrent_state_precision"] = state_precision
         policy["recurrent_kernel"] = FIXED_RECURRENT_KERNEL
+    if numerical_policy is not None:
+        policy["numerical_policy"] = numerical_policy
     return policy
 
 
@@ -302,6 +309,8 @@ def main() -> None:
         "--sampler-mode", choices=("hash-replacement", "epoch-permutation"),
         default="hash-replacement")
     parser.add_argument("--optimizer-precision", choices=("legacy", "bf16-sr-candidate"), default="legacy")
+    parser.add_argument("--numerical-policy", choices=("fp32-linear-v1",), default=None,
+                        help="Composite candidate: pinned FP32 state, FP32 linear calculations, BF16 hidden stores and FP32 readout")
     parser.add_argument("--recurrent-state-precision", choices=("legacy", "fp32"), default=None,
                         help="State carry/checkpoints/replay/gradients together; omitted inherits the checkpoint")
     parser.add_argument("--sr-seed", type=int, default=927413)

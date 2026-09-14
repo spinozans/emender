@@ -39,6 +39,15 @@ def freeze(args):
                 loss_chunk=128,mlp_chunk=4096,checkpoint_group=3,alignment=128,
                 optimizer_updates=0,training_eligible=False,automatic_expansion=False,
                 scope='Single-turn training layouts up to 16K prefix/512 generation; not packed 64K or optimizer qualification')
+    numerical_policy=getattr(args,'numerical_policy',None)
+    if numerical_policy is not None:
+        from ndm.numerical_policy import validate_numerical_policy
+        validate_numerical_policy(numerical_policy)
+        if getattr(args,'recurrent_state_precision',None) not in (None,'fp32') or getattr(args,'head_probe',False):
+            raise ValueError('composite numerical policy conflicts with legacy state or BF16-only observer')
+        recipe['numerical_policy']=numerical_policy
+        recipe['scope']+='; candidate FP32 linear arithmetic, BF16 hidden stores, FP32 readout'
+        args.recurrent_state_precision='fp32'
     if getattr(args,'recurrent_state_precision',None) is not None:
         from ndm.recurrent_precision import validate_state_precision
         recipe['recurrent_state_precision']=validate_state_precision(args.recurrent_state_precision)
@@ -87,6 +96,9 @@ def run(args):
     model=loaded.model.eval()
     from ndm.recurrent_precision import configure_recurrent_precision
     state_precision=configure_recurrent_precision(model,recipe.get('recurrent_state_precision'))
+    from ndm.numerical_policy import configure_numerical_policy
+    numerical_policy=configure_numerical_policy(model,recipe.get('numerical_policy'))
+    state_precision=configure_recurrent_precision(model)
     if state_precision=='fp32' and (torch.backends.cuda.matmul.allow_tf32 or torch.get_float32_matmul_precision()!='highest'):
         raise ValueError('FP32 recurrent assay requires untruncated FP32 matrix arithmetic')
     before=parameter_digest(model)
@@ -99,7 +111,7 @@ def run(args):
             raise ValueError('head probe recipe mismatch')
         if torch.backends.cuda.matmul.allow_tf32 or torch.get_float32_matmul_precision()!='highest':
             raise ValueError('head probe requires untruncated FP32 matrix arithmetic')
-    records=[]
+    records=[];head_dtypes=dict(actor=set(),teacher=set())
     with torch.no_grad():
         for item in recipe['selected']:
             probe=HeadProbe(item['generated'],numeric_audit=recipe['head_probe'].get('numeric_audit',False)) if probe_enabled else None
@@ -107,6 +119,7 @@ def run(args):
             try:
                 cache=advance_e97_cache_segment(loaded,item['prefix']);values=[]
                 for token in item['generated']:
+                    head_dtypes['actor'].add(str(cache.next_logits.dtype))
                     values.append(float(torch.log_softmax(cache.next_logits.float(),-1)[token].item()))
                     cache=advance_e97_cache(loaded,[token],cache)
             finally:
@@ -125,6 +138,7 @@ def run(args):
             labels=tokens[:,1:];values=[];offset=0
             def head_hook(_module,_inputs,logits):
                 nonlocal offset
+                head_dtypes['teacher'].add(str(logits.dtype))
                 width=logits.shape[1];selected=mask[:,offset:offset+width]
                 if bool(selected.any()):
                     target_ids=labels[:,offset:offset+width][selected]
@@ -177,6 +191,12 @@ def run(args):
                 passed=bool(pair.max()<=recipe['teacher_abs_max'] and np.quantile(pair,.99)<=recipe['teacher_abs_p99']),
                 scope='Actual current-policy forced-token scoring; NOT historical recorded behavior probabilities')
         if any(p.grad is not None for p in model.parameters()):raise ValueError('unexpected gradients in forward assay')
+    if numerical_policy is not None:
+        from ndm.numerical_policy import RecomputedFP32Linear
+        result['numerical_policy']=numerical_policy
+        result['linear_modules_fp32']=sum(isinstance(m,RecomputedFP32Linear) for m in model.modules())
+        result['head_dtypes']={k:sorted(v) for k,v in head_dtypes.items()}
+        if any(v!={'torch.float32'} for v in head_dtypes.values()):raise ValueError('composite policy readout dtype')
     if probe_enabled:
         pairs=[(a,b) for p in probes for a,b in zip(p.actor,p.teacher)]
         fp32=np.array([abs(a['fp32_logprob']-b['fp32_logprob']) for a,b in pairs])
@@ -196,6 +216,6 @@ def run(args):
 
 if __name__=='__main__':
     p=argparse.ArgumentParser();s=p.add_subparsers(dest='command',required=True)
-    q=s.add_parser('freeze');q.add_argument('--output',type=Path,required=True);q.add_argument('--head-probe',action='store_true');q.add_argument('--head-numeric-audit',action='store_true');q.add_argument('--recurrent-state-precision',choices=('legacy','fp32'))
+    q=s.add_parser('freeze');q.add_argument('--output',type=Path,required=True);q.add_argument('--head-probe',action='store_true');q.add_argument('--head-numeric-audit',action='store_true');q.add_argument('--numerical-policy',choices=('fp32-linear-v1',));q.add_argument('--recurrent-state-precision',choices=('legacy','fp32'))
     q=s.add_parser('run');q.add_argument('--recipe',type=Path,required=True);q.add_argument('--recipe-sha',required=True);q.add_argument('--output',type=Path,required=True)
     a=p.parse_args();globals()[a.command](a)

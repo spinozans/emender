@@ -37,14 +37,15 @@ def repeated_exactly(a,b):
     return True
 
 
-def audit(root):
+def audit(root,*,expected_recipe_sha='82f53a7100423780fbab31f12f217c259928ae9a1802c608a43b6c54ef5247a9',expected_kernel_cases=10,numerical_policy=None):
     import xml.etree.ElementTree as ET
     recipe_path=root/'authority/recipe-private.json';recipe_sha=sha(recipe_path)
-    if recipe_sha!='82f53a7100423780fbab31f12f217c259928ae9a1802c608a43b6c54ef5247a9':raise ValueError('frozen input recipe')
+    if recipe_sha!=expected_recipe_sha:raise ValueError('frozen input recipe')
     recipe=json.loads(recipe_path.read_text());plan=json.loads((root/'plan.json').read_text())
     if plan['kernel']!=FIXED_RECURRENT_KERNEL or plan['workers']!=2:raise ValueError('fixed policy plan')
+    if numerical_policy is not None and plan.get('numerical_policy')!=numerical_policy:raise ValueError('composite policy plan')
     tests=ET.parse(root/'kernel-tests.xml').findall('.//testcase')
-    kernel_pass=len(tests)==10 and all(not any(x.find(t) is not None for t in ('skipped','failure','error')) for x in tests)
+    kernel_pass=len(tests)==expected_kernel_cases and all(not any(x.find(t) is not None for t in ('skipped','failure','error')) for x in tests)
     rows=[];summaries=[];metrics=[];checks={'kernel_cases':kernel_pass}
     for i in (1,2):
         r=root/f'worker-{i}';m=json.loads((r/'measurements-private.json').read_text());s=json.loads((r/'summary.json').read_text())
@@ -55,6 +56,10 @@ def audit(root):
             and s['optimizer_updates']==0 and len(m['records'])==57 and metrics[-1]['tokens']==2711
             and metrics[-1]['pair_max']<=recipe['teacher_abs_max'] and metrics[-1]['pair_p99']<=recipe['teacher_abs_p99']
             and metrics[-1]['ce_max']<=recipe['ce_mean_delta_max'])
+        if numerical_policy is not None:
+            checks[f'worker_{i}_linear_policy']=bool(s.get('numerical_policy')==numerical_policy and s.get('linear_modules_fp32')==163
+                and s.get('head_dtypes')==dict(actor=['torch.float32'],teacher=['torch.float32'])
+                and s['peak_hbm_allocated']<=plan['max_hbm_allocated'])
     checks['fresh_process_repeat_exact']=repeated_exactly(*rows)
     checks['same_parameters']=summaries[0]['parameter_sha256']==summaries[1]['parameter_sha256']=='f57eaff2882ce2914413f501a93454e8e0a9bfcd4f408b91ed962405c7ad16bd'
     result=dict(schema='e97-fixed-recurrent-kernel-audit-v1',checks=checks,current_policy_numerics_passed=all(checks.values()),
@@ -62,6 +67,8 @@ def audit(root):
         kernel=FIXED_RECURRENT_KERNEL,optimizer_updates=0,rl_optimizer_ready=False,training_eligible=False,
         scope='Pinned-policy forced-token numerical assay, not historical behavior-probability replacement or training/restart qualification',
         hashes={str(p.relative_to(root)):sha(p) for p in [root/'kernel-tests.xml']+[root/f'worker-{i}'/n for i in (1,2) for n in ('summary.json','measurements-private.json')]})
+    if numerical_policy is not None:
+        result.update(schema='e97-composite-numerical-policy-audit-v1',numerical_policy=numerical_policy)
     publish(root/'audit.json',result);print(json.dumps(result,sort_keys=True),flush=True)
     if not result['current_policy_numerics_passed']:raise SystemExit('pinned-policy numerical gate failed')
 

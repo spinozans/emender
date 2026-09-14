@@ -93,7 +93,8 @@ def e97_checkpoint_config(
             f"expected one of {sorted(_E97_LEVELS)}"
         )
     from ndm.recurrent_precision import restore_checkpoint_precision
-    return restore_checkpoint_precision(config, checkpoint)
+    from ndm.numerical_policy import restore_numerical_policy
+    return restore_numerical_policy(restore_checkpoint_precision(config, checkpoint), checkpoint)
 
 
 def _layer_kwargs(config: Mapping[str, Any]) -> dict[str, Any] | None:
@@ -206,9 +207,13 @@ def build_e97_model(
         vocab_size=_vocab_size(config) if vocab_size is None else vocab_size,
         use_triton=use_triton,
     )
+    from ndm.numerical_policy import restore_numerical_policy
+    restore_numerical_policy(config, {})  # reject conflicting explicit state/policy declarations
     model = LadderLM(**kwargs)
     if not any(isinstance(module, E97SplitEditLayer) for module in model.modules()):
         raise RuntimeError("E97 model construction did not produce an E97SplitEditLayer")
+    from ndm.numerical_policy import configure_numerical_policy
+    configure_numerical_policy(model, config.get('numerical_policy'))
     return model
 
 
