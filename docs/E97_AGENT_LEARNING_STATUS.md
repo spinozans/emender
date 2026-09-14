@@ -6,6 +6,12 @@ frozen experimental report, failed gate or source authority. The complete
 [numerical exploration index](validation/e97-numerical-exploration-index.md)
 records the sequence, evidence and limits.
 
+The operator subsequently authorized a return to execution. The new
+[grounded expansion tranche](validation/e97-grounded-expansion-v1.md) freezes
+2,048 paired authored demonstrations,18 deduplicated real correction/success
+records,32 new evaluation cases and a separate32-update BF16-SR SFT budget.
+Preparation is underway; no new optimizer updates or capability gain are claimed.
+
 ## Goal and actual capability
 
 Build a conversational, reasoning, observation-dependent tool agent, measured by
@@ -137,14 +143,17 @@ quantity is the sole cause or that another broad epoch is sufficient.
 
 Existing candidates:16 successful trajectories with2,718 supervised targets and
 16 verified teacher suffixes with3,012 targets. They are useful seeds, not a
-sufficiently broad curriculum or automatically admitted training data. Candidate
-eligibility and the production registry remain unchanged.
+sufficiently broad curriculum or automatically admitted training data. Deduplication
+finds18 distinct records (10 repairs,8 successes), with3,447 distinct targets.
+Original candidate eligibility and the production registry remain unchanged;
+internal use is separately bounded by the new tranche authority.
 
 ## Authorization and reporting
 
 The880- and32-update budgets remain closed. No new training, data admission,
 rollout expansion or checkpoint promotion is authorized by this status document.
-A new bounded learning/data programme must state its actual budget and gates.
+The separately authorized [grounded expansion](validation/e97-grounded-expansion-v1.md)
+now states its new32-update budget and gates; neither old budget is reopened.
 
 Continue routine bounded diagnosis and preparation without repeated operator
 handoffs. Escalate new learning budgets, consequential trade-offs or authorization
