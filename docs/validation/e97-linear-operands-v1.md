@@ -93,4 +93,41 @@ Worker `scripts/diagnose_e97_linear_operands.py`, driver
 No64K forward, backward, optimizer update, admission or historical-probability
 replacement. Existing failed gates stand. After bound replay, proceed toward a
 targeted implementation repair and the unchanged numerical/packed qualifications;
-do not call this diagnostic success a capability gain. Results pending.
+do not call this diagnostic success a capability gain.
+
+## Result: exact model-free replay; pre-store matrix-height dependence
+
+Source **`0bb82822`**, process `proc_2e02`,253s,exit0. All four complete native
+captures preserve original scores/teacher receipts and sampled trace bytes.
+Operands, full FP32 outputs and BF16 stores repeat exactly. All eight model-free
+GEMMs reproduce their corresponding full captured FP32 and BF16 outputs exactly,
+including both matrix heights on the shared input/weight allocations and strides.
+
+The first FP32 output row differs at **10,245/11,520 elements**, maximum absolute
+gap **1.9073486328125e-6**. At the first previously identified BF16 discrepancy,
+feature36, the actual pre-store FP32 difference is **5.960464477539063e-8**.
+Every BF16 store matches conversion of its actual FP32 result. Thus the observed
+cross-path difference is already present in the matrix result, not introduced by
+an inconsistent BF16 conversion. Matrix height controls the difference at common
+numeric input/weight addresses and strides; backend and output-allocation choices
+remain coupled, and no instruction-level mechanism is claimed.
+
+Independent CPU audit verifies input/weight equality, full output hashes and
+conversion, all native/replay bindings, shared addresses/strides, source inventory
+and17,702 source files. Capture parameter/buffer fingerprints are unchanged, no
+gradients/timing-tuner entries. Allocated HBM peaks **9,004,484,608 bytes** for
+capture and **253,755,392 bytes** for replay. Eight GPUs idle, no compute processes
+or lease files after cleanup. No updates, policy changes or64K work.
+
+| Artifact | SHA256 |
+|---|---|
+|Capture summary|`f53513d58ef4b6b12ee7b8f39dcbf950753feff7334fe46c695a1b68bd8cb47c`|
+|Replay summary|`80e2ff8a7a9ed5eb915f77c0951bf4122e370019ff7e1bedd828d4a0e2e9eb5d`|
+|Independent audit|`e71e22885658c3a0abe0b4aa40453e8142c36badd09dc9c785c4705f93cad43f`|
+|Actor capsule|`256b4d7b2d9876dda81a8fa60c0a531d2f84b5dabf6a1236a58fb8d084a121f7`|
+|Teacher capsule|`1150994cf12c22dbc74d55334e4bff1e61445c23ff7b443ccd6042a6b098bc8e`|
+
+Next is one **non-dispatched fixed-row FP32 kernel candidate**, tested on these
+same operands for numerical accuracy, exact height/row-placement invariance and
+bounded slowdown before model-policy integration. No precision sweep or claim of
+training readiness follows from this reproducer.
