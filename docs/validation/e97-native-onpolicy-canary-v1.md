@@ -1,5 +1,11 @@
 # Native on-policy collection and failed-state correction canary v1
 
+**Subsequent programme decision:** the numerical exploration is documented in
+[its index](e97-numerical-exploration-index.md). Current priority is verified data
+and SFT/DAgger tuning; probability-path/RL qualification is not a blanket prerequisite
+for supervised correction. See [current learning status](../E97_AGENT_LEARNING_STATUS.md).
+All original canary verdicts and candidate eligibility below remain unchanged.
+
 ## Decision and readiness
 
 Operator requested a continuous task/reward/correction loop after the 32-update

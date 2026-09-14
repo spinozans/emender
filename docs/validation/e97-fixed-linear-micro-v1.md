@@ -71,4 +71,29 @@ A pass would justify bounded model-policy integration and the unchanged full57 /
 120-position / packed qualification sequence—not admission or training. A failure
 is retained and investigated at this small operation, without silently changing
 the model or relaxing its numerical gates. Existing880+32 budgets remain closed.
-Results pending.
+## Completed micro result and subsequent priority decision
+
+Source **`1ce5696a`**, process `proc_9439`,49s,exit0. All eight checks passed:
+exact height and full-row permutation invariance, one actual compiled variant,
+FP32/selected-FP64 accuracy, synthetic bias/tails, unchanged inputs, memory and
+micro performance. Peak allocated HBM249,823,232 bytes.
+
+| Matrix height | Native median | Fixed median | Slowdown |
+|---|---:|---:|---:|
+|1|.180736ms|.346944ms|1.91962×|
+|512|1.281936ms|4.833168ms|3.77021×|
+
+Paired raw timings, native/candidate receipts, candidate output tensors and PTX
+are retained. Independent audit recomputed the exact height/permutation hashes,
+repeat hashes, recorded FP64-dot comparisons, medians/ratios and input fingerprints;
+17,707 source files/inventory verified before and after. Summary SHA:
+`fe0cc9e2d010078ea827c1acd10616f4a8eca7d9ca4240143da41a581bc27617`.
+PTX SHA `2c6f58cd0eb99aabd7f990b5be70e914ce391f7d678500eee5bd12501adf0c36`.
+
+**This kernel was not integrated into a model policy.** Following the operator's
+programme-level review, do not make its exact arithmetic a blanket prerequisite
+for SFT or accept its throughput cost automatically. Retain it as a bounded
+reference/repair candidate and prioritize verified data and learning experiments.
+See [current learning status](../E97_AGENT_LEARNING_STATUS.md) and the
+[numerical exploration index](e97-numerical-exploration-index.md). No updates,
+training readiness or behavioral improvement resulted from this micro test.
