@@ -209,4 +209,42 @@ indices. The builder used the hash-bound original recipe order. Fix: verify the
 embedded contents, then use the original recipe file order for RNG reconstruction.
 A regression test explicitly distinguishes these orders and rejects changed
 recipe values. Data, masks, quotas, seeds and gates are unchanged; the failed
-control root and logs are retained. No training or acceptance occurred.
+control root and logs are retained. No training or acceptance occurred in that
+failed preparation attempt.
+
+### Passing preparation and training launch
+
+Corrected preparation (`proc_8440`, source `a02197f8`) passed in90s. Full independent
+reconstruction validated every authored trajectory, original canary/replay bytes,
+masks, host outcomes and all three owned sandbox cleanups. Audit SHA:
+`fc93866b970498f359398d53208bcbbd5b52feb3c36cbef383f1acae66497500`.
+
+The frozen32-update schedule covers **all2,583 unique records** in4,516 occurrences:
+15,707,342 input tokens and1,588,936 assistant-target exposures. Every record occurs
+once or twice, not an uncounted repeated epoch. All256 lookup,256 sum,768 edit and
+768 recovery examples are consumed. Source target exposures:
+
+|Source|Targets|
+|---|---:|
+|Authored grounding|987,210|
+|Verified canary successes|2,718|
+|Verified teacher repairs|3,594|
+|Native replay|156,143|
+|Conversation replay|352,393|
+|Retention replay|86,878|
+
+Pack SHA `0f9e97991364b78bb4cea1080893cf225cc3dcc8f29c895c31eaab72fa97c6eb`;
+schedule SHA `84299eaf2fde0749a62045bf2651a0ad9bbdd842c809fe42da285e5077f7d17e`;
+exposure audit SHA `f5aa17021e071ba121144b64d67e865c6412dbd12e24c6e895952576960b01b2`.
+
+The attended exposure review explicitly records the increased grounded share
+(~62%) and lower replay fractions relative to the prior correction. This is an
+accepted risk of this one bounded experiment, not a retention guarantee. The
+original behavioral/retention gates and no-promotion rule remain unchanged.
+
+Training launched as `proc_badf` from the unchanged `b8ee034f` trainer and exact
+correction-parent live-y, with fresh BF16-SR state,32 updates and LR1e-5. All eight
+GPUs were idle and no lease was active before launch; the runner acquires one
+checked eight-GPU lease. No trained result or capability gain is claimed yet.
+Controller source inventory SHA:
+`75db653deccc962f2403f506560abdc1f787f48d31a793d03d1e086dac512b1f`.

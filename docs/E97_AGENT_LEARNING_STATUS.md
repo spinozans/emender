@@ -13,9 +13,11 @@ records,32 new evaluation cases and a separate32-update BF16-SR SFT budget.
 The first data attempt hit its30-minute limit after1,333 verified records; its
 artifacts and clean teardown are retained. The separately authorized completion
 pass finished the remaining715 in1,000s, preserving the audited prefix. The
-complete derivative has2,583 records and926,091 supervised targets. Full audit
-and packing are underway; an auditor replay-order bug was retained and fixed
-without changing the data. No new optimizer updates or capability gain are claimed.
+complete derivative has2,583 records and926,091 supervised targets. Full audit and
+packing passed after fixing and retaining an auditor replay-order failure. The
+frozen schedule consumes every record, totaling1,588,936 target exposures.
+The new32-update training run has launched on the exercised BF16-SR trainer;
+no completed training result or capability gain is claimed yet.
 
 ## Goal and actual capability
 
