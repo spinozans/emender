@@ -87,4 +87,77 @@ Driver `scripts/run_e97_early_prompt.sh`; observer/worker
 No64K forwards, backward, optimizer updates, rollout-probability replacement,
 training admission or reopened880+32 budget. The numerical prerequisite stays
 failed regardless of diagnostic success. Private token/activation/probability/
-selected-weight artifacts remain unpublished. Results pending.
+selected-weight artifacts remain unpublished.
+
+## Result: first measured discrepancy precedes recurrence
+
+Source **`e620f64f`**, process `proc_76a9`,227s,exit0. All eight native executions
+bound exactly to the original scores/teacher receipts; all four trace pairs repeat
+byte-exactly and coarse/fine block inputs/outputs bind. This is diagnostic success,
+**not a numerical qualification pass**.
+
+The coarse first difference is layer0 block output at token0. Fine tracing places
+it at **`layer0.qkv_proj.output`, token0, feature36**. Outer norm input/output,
+block/mixer input and QKV input are bitwise identical across all six captured rows.
+The actor QKV call has shape `[1,1,3840]`; teacher `[1,512,3840]` (the full record's
+first projection chunk). Weights and precision policy are unchanged.
+
+Across six rows, QKV output differs at23 BF16 elements, maximum absolute gap
+.00390625. That maximum is **not** the gap at the first coordinate. Other equal-input
+branches also differ: output-gate projection first token2 (two elements), erase
+projection token1 (two), write projection token1 (three); alpha projection is exact.
+Recurrence readout and output projection inputs already differ at token0. Thus
+this early discrepancy begins before recurrence; the previous uniform-workspace
+repair is not sufficient to establish general cross-layout agreement.
+
+### Selected-dot evidence
+
+The three prespecified selected coordinates are strongly cancellation-sensitive.
+An independent CPU audit sums the captured BF16 products using **exact rational
+arithmetic**, including any bias, and verifies that the saved FP64 sums are exact
+for these three particular operands. It independently verifies nearest-even BF16
+rounding without an intermediate float32 cast. A supplementary binding audit
+checks both native values against the actual trace tensors.
+
+| Site / row / feature | Sum of absolute products / absolute dot | Actor correctly rounded BF16? | Teacher? |
+|---|---:|---|---|
+|QKV /0/36|~5.20 million|No|No|
+|Erase /1/1224|~678 thousand|Yes|No|
+|Write /1/2073|~2.26 million|Yes|No|
+
+At the first QKV coordinate, stored-output errors relative to the exact dot are
+6.088521331548691e-8 (actor) and1.2048985809087753e-7 (teacher). These tiny absolute
+errors matter relative to a heavily cancelled result: both paths miss its nearest
+BF16 value, by two and four BF16 spacings respectively. These are **stored-output**
+errors, not direct measurements of the unrounded GPU GEMM output.
+
+This establishes a bound same-input/different-layout **Linear operation output**
+discrepancy. It does not yet separate the FP32 matrix calculation from BF16 output
+conversion, prove that shape alone (rather than layout/allocation/backend selection)
+controls it, or establish that this single coordinate causes the entire row5 score
+gap. No projection output was replaced and no repair was attempted. The targeted
+next experiment is an actual-operand Linear capture and model-free replay, including
+the unrounded FP32 result, before choosing an implementation change.
+
+### Safety and artifacts
+
+Terminal parameter/buffer fingerprints are unchanged; no gradients or timing-tuner
+entries. Peak allocated HBM **9,004,484,608 bytes**, below16GiB. All17,698 source
+files and inventory verify before/after. Cleanup confirms all eight GPUs idle,
+no compute processes and no outstanding lease files. No64K forwards or updates ran.
+
+Results under `early-prompt-trace-v1`:
+
+| Artifact | SHA256 |
+|---|---|
+|Source inventory|`30f4899821c69c71dc1d5ae4b4790d483395fa386c555e533a1bb0afbfd52ee9`|
+|Summary|`406b8896763c337572ba2681b09c693a3466236adbf97623696a99f2d27eee02`|
+|Fine comparison|`0a98cfb22fda2d7e0f694e99087b1d281c16b595d92302a6e43e1ebb53b34b78`|
+|Independent audit|`a409ad8c4a1892bee9b3911c38f54e56b3e6d4b6e9c14b05804b2e3227a3c7cf`|
+|Selected-dot receipt|`783e7b484ad3b17d480b9f995bfa171b18f0f0e3600435037e9eb7065be3558d`|
+|Terminal safety|`c69f2b07c28c311555048ac0c8a8aadecf1be69306a25efdc64b9f3c8a69b748`|
+
+Private coarse/fine tensor banks, all repeated native receipts, three selected
+weight/input rows, `selected-dot-binding-audit.json` and `cleanup.log` are retained.
+The original120-position failure, historical-probability failure and closed
+training budgets are unchanged.

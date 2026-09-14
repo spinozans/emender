@@ -192,3 +192,9 @@ attributing it to the previously observed projection-layout issue. Any separate
 continuation of the unrun packed diagnostics needs a new explicit diagnostic plan;
 this failure and the original thresholds must remain intact. Full4B backward,
 eight-rank/cache/restart, training eligibility and behavioral gains remain unqualified.
+
+Follow-up: the [reference-bound early-prompt trace](e97-early-prompt-trace-v1.md)
+locates the first measured difference at layer0 QKV output, token0, with identical
+inputs across one-row actor and512-row teacher calls. All eight traced native
+executions reproduce their saved references exactly. No64K work or repair was
+performed; this original gate remains failed.
