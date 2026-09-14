@@ -110,7 +110,7 @@ class Rows:
 def digest(value):
     import torch
     if value is None:return 'none'
-    return hashlib.sha256(str((str(value.dtype),list(value.shape))).encode()+value.contiguous().view(torch.uint8).numpy().tobytes()).hexdigest()
+    return hashlib.sha256(str((str(value.dtype),list(value.shape))).encode()+value.contiguous().reshape(-1).view(torch.uint8).numpy().tobytes()).hexdigest()
 
 
 def compare(a,b):
