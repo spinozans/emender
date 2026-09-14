@@ -156,6 +156,9 @@ def run(args):
     before=parameter_digest(model)
     if before!=PARAM_SHA or any(p.dtype!=torch.bfloat16 for p in model.parameters()):raise ValueError('parameter identity/dtype')
     if sum(isinstance(m,RecomputedFP32Linear) for m in model.modules())!=163 or sum(bool(getattr(m,'uniform_recurrent_workspace',False)) for m in model.modules())!=18:raise ValueError('composite policy coverage')
+    mixers=[m for m in model.modules() if hasattr(m,'recurrent_state_precision')]
+    if len(mixers)!=18 or any((m.n_heads,m.n_state,m.head_v_dim,m.projection_chunk_size,m.checkpoint_interval)!=(60,64,64,512,16) for m in mixers):raise ValueError('production geometry')
+    if (model.lm_head.in_features,model.lm_head.out_features)!=(3840,50281):raise ValueError('readout geometry')
     records=data['records'];ids=data['sentinels'];pm=data['probes'];actors={};standalones={};measurements={};checks={};timings={};started=time.monotonic()
     for rid in ids:
         for kind,positions in pm[rid].items():
@@ -178,6 +181,7 @@ def run(args):
     checks['standalone_vs_actor']=metrics['standalone_vs_actor']['passed']
     if not all(checks.values()):
         publish(args.output/'baseline-failed.json',dict(checks=checks,metrics=metrics));raise ValueError('standalone gate failed before packed runs')
+    print('PACKED_BASELINES_BOUND',json.dumps(metrics['standalone_vs_actor'],sort_keys=True),flush=True)
     for name,batch in data['layouts'].items():
         selected=[ids[0]] if name in ('predecessor_changed','reset_removed') else ids
         previous=None;timings[name]=[]

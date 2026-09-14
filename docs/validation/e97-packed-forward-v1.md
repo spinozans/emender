@@ -105,5 +105,28 @@ Artifact root `/mnt/nvme2n1/erikg/e97_systematic_posttraining/packed-forward-v1`
 This is one historical pack plus fixed transformations, not general pack coverage,
 full4B backward, eight-rank, cache/restart, on-policy data admission or behavioral
 qualification. The880+32 training budgets stay closed. No resilient/distributed
-training claim is made. Results and frozen input/plan identities pending CPU export
-preflight; no GPU work starts before those identities are fixed.
+training claim is made.
+
+## CPU export preflight
+
+The initial export (`2a402f26`) stopped at `placement coverage` before GPU work:
+choosing the nearest middle offset without the residue constraint selected34,016,
+sharing residue0 modulo16 with the original start. The guard correctly refused it.
+`packed-forward-v1-preflight/freeze-failure.json` is retained. Selection now
+minimizes distance **among** whole-record rotations satisfying the predeclared
+residue constraints; no model output was consulted. A regression uses the actual
+pack's record lengths. Repaired suite: **99 CPU passed,14 CUDA skips**.
+
+Sentinels are source records0,12,23. The anchor's frozen offsets are
+**0,31,043,58,236**, residues0/3/12 modulo16 and0/323/380 modulo512.
+Independent CPU `layout-audit.json` rechecked all24 whole-record slices and masks
+in each real order, all cross-record exclusions, tail-only padding, bounded
+interventions and96 assistant/24 diagnostic prompt probe positions.
+
+Frozen plan SHA:
+`af9339afe3819cd495ec1a052b77c5d46761bb060ac0d910ac0f73b2240d1fbf`.
+Private input capsule SHA:
+`7340c9d573acce2b1f9e79c77cc25a3130f4759c80726cab72f13ca00e9da7b9`.
+Successful CPU export preflight: `packed-forward-v1-preflight-r2`.
+These identities must reproduce exactly in the leased runner before any GPU work.
+GPU results pending.
