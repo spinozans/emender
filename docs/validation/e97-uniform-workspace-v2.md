@@ -112,4 +112,61 @@ suite: **93 passed,14 CUDA skips**.
 A manually reviewed fresh attempt is frozen under `uniform-workspace-v2-r2`
 with the same recipe, plan, thresholds,14-case CUDA scope and two-worker budget;
 no automated retry or expansion. Original failed artifacts are not overwritten.
-Results pending; current full-panel numerical gate remains failed.
+## Audited second attempt — current-policy forward gate passed
+
+Source **`020d6047`**, process `proc_7a2a`,1,022s,exit0. All14 CUDA cases
+passed in41.75s before either full-model worker. The new workspace observer
+confirmed FP32 checkpoint/final-state storage with valid/padded lengths
+`512/512`, `17/32`, `1/16`.
+
+Both fresh full57 workers completed. Their complete measurement files **and
+summaries are byte-identical**. All2,711 trainer scores, CE means and padded lengths
+also match the saved v1 trainer exactly. Actor and trainer are **not** bitwise
+identical to one another; the bounded agreement gate passes:
+
+| Gate | Composite v1 | Uniform workspace v2 | Unchanged limit |
+|---|---:|---:|---:|
+|Current actor/trainer maximum gap|.05184602737426758|**.028216838836669922**|≤.05|
+|Current pair p99|.0010260593146085753|**.0007740734145045376**|≤.02|
+|CE/head mean difference|5.2447273901623775e-8|**5.2447273901623775e-8**|≤.0001|
+|Targets above maximum limit|1|**0**|0|
+
+The former sole failing target, task004/turn1/position23, improved from.0518460
+to.0163653. The largest residual is task004/turn1/position27 at.0282168 (previously
+.0178742). Changes are therefore not uniformly improvements at every target.
+The later same-input/different-layout projection discrepancy remains unresolved;
+this pass does not establish instruction-level identity or eliminate all error.
+
+Both workers report163 FP32-arithmetic Linears, actual FP32 heads, uniform workspace
+on all18 mixers, pinned recurrence with zero tuner entries, highest FP32/no TF32,
+and unchanged parameter fingerprint
+`f57eaff2882ce2914413f501a93454e8e0a9bfcd4f408b91ed962405c7ad16bd`.
+Peak allocated HBM was9,697,057,792 bytes in each worker, the same reported peak as
+v1 and below16GiB. No optimizer updates occurred.
+
+**Historical probability binding still fails**: actor versus recorded maximum
+.0926365852355957 and teacher versus recorded maximum.09374070167541504.
+The original behavior probabilities remain unchanged. `probability_path_passed`
+and `training_eligible` remain false; only `current_policy_numerics_passed` is true.
+This is not a new rollout dataset, admitted training policy, behavioral gain,
+packed64K/full4B backward/eight-rank/cache/restart qualification, or reopening of
+the880+32 budgets.
+
+Independent CPU audit rechecked all57 identities, original2,711 historical values,
+finiteness, score coverage, exact v1 teacher binding including CE bytes, both fresh
+files, thresholds/quantiles, all14 JUnit cases, and all17,689 source files before
+and after. `result-audit.json` retains the recomputation. Cleanup confirms eight
+idle GPUs, no compute processes and no lease files without reaping.
+
+| Artifact | SHA256 |
+|---|---|
+|Source inventory|`50b4df5fb83557a87c52745a63ea5c15df6b855db96322cf2139469642f174aa`|
+|CUDA JUnit|`009e946d7a2997a6e6c6e05744c392322eac2562f64238b720db09796d40b274`|
+|Each measurement file|`d4cc255e9e3f9dcaf19b8970a336ffabe6c4c1ff52bc8f16a9f3276fb257267d`|
+|Each summary|`ac08e521df60a2df76f87fda5e76aebe868d64d8100b3bfc9371549809ba9ec7`|
+|Audit|`b4438166109c6ec041c1fdac0bfdb80938b466c0810464fd9bbf093ddb003ab8`|
+
+No further GPU experiment was launched. Next qualification must address actual
+multi-document64K packs/reset isolation and full4B gradients, then the intended
+rank/cache/restart contracts. Private score/token/activation artifacts remain
+unpublished; failed first-attempt evidence is retained separately.
