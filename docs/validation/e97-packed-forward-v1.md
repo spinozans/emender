@@ -129,4 +129,66 @@ Private input capsule SHA:
 `7340c9d573acce2b1f9e79c77cc25a3130f4759c80726cab72f13ca00e9da7b9`.
 Successful CPU export preflight: `packed-forward-v1-preflight-r2`.
 These identities must reproduce exactly in the leased runner before any GPU work.
-GPU results pending.
+## GPU attempt: numerical prerequisite failed; packed forwards not executed
+
+Source **`57cbebc2`**, process `proc_2077`,243s,exit1 at the declared
+`standalone gate failed before packed runs`. This was a numerical acceptance
+failure, not CUDA/OOM or a broken observer. The original plan/input hashes
+reproduced exactly in the runner.
+
+All12 actor spans and6 standalone forwards completed. Each repeated artifact
+pair is byte-identical, including the standalone selected hidden/logit and18
+final-state hashes. The120-position standalone actor/trainer comparison failed:
+
+| Metric | Observed | Frozen limit |
+|---|---:|---:|
+|Maximum absolute gap|**.056125640869140625**|≤.05|
+|p99 absolute gap|**.030076026916503906**|≤.02|
+
+All three standalone native CE/head consistency checks passed, worst mean delta
+1.2365210827592235e-9. CPU recomputation separates the failure by probe kind:
+
+| Source record | First8 prompt predictions: max |32 assistant predictions: max |
+|---|---:|---:|
+|0|.056125640869140625|.000005244466592557728|
+|12|.030076026916503906|.00003610987914726138|
+|23|.030076026916503906|.0000070315145421773195|
+
+The maximum occurs at **record0, logical prediction row5** (predicting token6).
+The other largest deviations are also among the first eight prompt predictions.
+These prompt probes are unsupervised diagnostics using very short fresh-cache
+prefixes; they are not generated assistant responses. The tightly agreeing
+96-assistant-token subset does **not** reclassify the frozen120-position gate as
+passed or justify dropping its failed probes.
+
+**Zero of the12 planned64K forwards ran.** Consequently there is no result yet
+for packed placement, reset isolation, tail invariance or64K memory/performance.
+This failure does not demonstrate that packing is broken: it precedes packing.
+The previously passed57-turn generated-token gate remains valid within its own
+scope, but does not establish universal actor/trainer agreement.
+
+Independent CPU `result-audit.json` verifies the18 baseline artifact hashes,
+byte-identical repeats,120 score/position identities and finite scores, original
+record target counts, the reported max/p99 and subset diagnostics. All17,694
+source files and the inventory verified before/after. Cleanup shows eight idle
+GPUs, no compute processes and no lease files without reaping.
+
+The early-stop path did **not** retain a post-run in-memory parameter fingerprint
+or peak allocated HBM; neither is claimed retrospectively. Initial parameter and
+production-geometry checks passed before baseline execution. No optimizer/update
+path was invoked; no checkpoint was written. Terminal safety receipts on early
+failures should be hardened before another GPU experiment.
+
+| Artifact | SHA256 |
+|---|---|
+|Source inventory|`4772c8ae35db16931bea568705ecb9898c3b4608e1e6088c21fc2d84200c28dd`|
+|Baseline failure|`d7090def9005bd97079b94e092b86e9ed688448ec7aa0faf64972fa3251f56f8`|
+|Independent audit|`7463dbef82ca33376b92c66ec94d7f66b9e03bc5113bed8591758bd05396d9ca`|
+|Worker failure|`303a3122984e20748dfbf2f30ca7c5502e84178832fc48582611e0aed6dd71e9`|
+
+No further GPU run or automatic retry was launched. Next localization should bind
+the early record0/row5 mismatch directly to these repeated native scores before
+attributing it to the previously observed projection-layout issue. Any separate
+continuation of the unrun packed diagnostics needs a new explicit diagnostic plan;
+this failure and the original thresholds must remain intact. Full4B backward,
+eight-rank/cache/restart, training eligibility and behavioral gains remain unqualified.
