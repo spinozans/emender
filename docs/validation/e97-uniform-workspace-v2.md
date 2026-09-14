@@ -86,4 +86,30 @@ No optimizer updates, new rollouts, admission, promotion, full4B backward,
 budgets remain closed. A numerical pass is not a behavioral gain or literal
 cross-runner identity.
 
+## First attempt: test observer failed before full-model execution
+
+Source **`c99fed50`**, process `proc_8ce4`,68s,exit1. The13 previous CUDA cases
+passed. The new workspace case failed before constructing its layer:
+`AttributeError: module 'ndm.triton.e88_triton_backward' has no attribute
+'e88_triton_forward'`. The backward function imports that symbol locally;
+the observer must patch its defining `ndm.triton.e88_triton_forward` module.
+Neither full-model worker started. This is a test-binding failure, not evidence
+that the new workspace path passed or failed numerically.
+
+Original artifacts remain in `uniform-workspace-v2`, including
+`failure-audit.json`, JUnit SHA
+`577b95cc0e891cae95706ef64e856362de7f0f8668a647423780cf1fe15ea79e`
+and inventory SHA
+`759bdefe276239360fc4da0195c01b3e511a20eb43baa320007613abf3c92d35`.
+All17,689 source files verified before/after, and cleanup showed all eight GPUs
+idle, no compute processes and no lease files without reaping.
+
+The repair changes **only the test observer**, not model/kernel/policy code. A
+new CPU regression patches the defining module and directly invokes the
+actual autograd forward, proving it reaches that patched symbol. Repaired CPU
+suite: **93 passed,14 CUDA skips**.
+
+A manually reviewed fresh attempt is frozen under `uniform-workspace-v2-r2`
+with the same recipe, plan, thresholds,14-case CUDA scope and two-worker budget;
+no automated retry or expansion. Original failed artifacts are not overwritten.
 Results pending; current full-panel numerical gate remains failed.

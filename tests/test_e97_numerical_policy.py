@@ -115,12 +115,29 @@ def test_cuda_production_linear_arithmetic_and_backward(readout,out_features,rec
     record_property('largest_fp32_weight_bytes',3840*out_features*4)
 
 
+def recurrence_forward_owner():
+    import importlib
+    return importlib.import_module('ndm.triton.e88_triton_forward')
+
+
+def test_uniform_workspace_observer_binding(monkeypatch):
+    from ndm.triton.e88_triton_backward import E88TritonFunction
+    owner=recurrence_forward_owner();assert callable(owner.e88_triton_forward)
+    state=torch.zeros(1,1,4,4);k=torch.zeros(2,1,1,4,dtype=torch.bfloat16);seen=[];saved=[]
+    def fake(*args,**kwargs):
+        seen.append(kwargs);return k,state,state.unsqueeze(0)
+    monkeypatch.setattr(owner,'e88_triton_forward',fake)
+    out,last=E88TritonFunction.forward(SimpleNamespace(save_for_backward=lambda *args:saved.extend(args)),
+        state,k,k,k,torch.zeros(2,1,1),recurrent_state_precision='fp32')
+    assert out is k and last is state and len(seen)==1 and saved
+    assert seen[0]['recurrent_state_precision']=='fp32'
+
+
 @pytest.mark.skipif(not torch.cuda.is_available(),reason='leased CUDA required')
 def test_cuda_uniform_workspace_inference_chunks_and_single_token(monkeypatch,record_property):
-    import importlib
     from ndm.models.e97 import E97SplitEditLayer
     torch.cuda.set_device(int(os.environ.get('LOCAL_RANK','0')));torch.manual_seed(81311)
-    owner=importlib.import_module('ndm.triton.e88_triton_backward');original=owner.e88_triton_forward;seen=[]
+    owner=recurrence_forward_owner();original=owner.e88_triton_forward;seen=[]
     def observe(*args,**kwargs):
         result=original(*args,**kwargs)
         assert kwargs['recurrent_state_precision']=='fp32'
