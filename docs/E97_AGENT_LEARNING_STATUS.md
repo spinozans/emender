@@ -16,8 +16,10 @@ pass finished the remaining715 in1,000s, preserving the audited prefix. The
 complete derivative has2,583 records and926,091 supervised targets. Full audit and
 packing passed after fixing and retaining an auditor replay-order failure. The
 frozen schedule consumes every record, totaling1,588,936 target exposures.
-The new32-update training run has launched on the exercised BF16-SR trainer;
-no completed training result or capability gain is claimed yet.
+The new32-update BF16-SR run completed with exact schedule/clock matching and a
+finite complete checkpoint (`17aa2672…`); that budget is now closed. Matched48-task
+and conversation/tool-retention evaluation is running. No new capability gain is
+claimed before those results.
 
 ## Goal and actual capability
 

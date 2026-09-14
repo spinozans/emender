@@ -248,3 +248,25 @@ GPUs were idle and no lease was active before launch; the runner acquires one
 checked eight-GPU lease. No trained result or capability gain is claimed yet.
 Controller source inventory SHA:
 `75db653deccc962f2403f506560abdc1f787f48d31a793d03d1e086dac512b1f`.
+
+### Training completed; behavioral evaluation pending
+
+`proc_badf` finished successfully in2,807s. **All32 updates completed** with exact
+runtime sample IDs/clocks and the planned15,707,342 inputs /1,588,936 targets.
+The checkpoint collector verified complete finite BF16 model/optimizer/live-y
+storage. Reported rank0 peak allocated HBM was36,128,739,328 bytes. Source and
+launch audits passed; all GPUs were idle and no lease remained after training.
+
+Checkpoint:
+`grounded-expansion-v1-train/checkpoints/checkpoint_agent_sft_u000032_loss_0.4088.pt`,
+SHA `17aa26720cc9f4f921cc547ae6599f964bcaa48b15f4b3b436876fba167c471b`.
+Recipe SHA `16e2b46e9b5b67526759cf003974d8a31e50dbca88d8d97da082cef5f1251c0e`.
+The first and last reported global step losses were.8131706118583679 and
+.429032564163208, respectively; these different mixed batches are not a capability
+metric. Do not substitute the filename's loss value for the reported global loss.
+Fresh numerical continuation was not measured; no bitwise restart pass is claimed.
+
+This tranche's32-update budget is now **closed**. Matched48-case autonomous and
+unchanged likelihood/retention evaluation launched as `proc_abe9`, comparing
+correction-parent x/y against expansion x/y. No capability gain, gate pass or
+promotion is claimed before those measurements finish.
