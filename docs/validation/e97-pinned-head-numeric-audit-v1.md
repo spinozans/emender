@@ -78,5 +78,83 @@ Driver `scripts/run_e97_pinned_head_audit.sh`; freezer/auditor
 `scripts/audit_e97_pinned_head.py`; diagnostic
 `scripts/e97_head_precision_probe.py`.
 
-Results pending. No numerical-model repair, new rollout, learning/capability
-claim, full4B backward, 64K, multirank or restart qualification is included.
+## Completed: head rounding explains amplification, but not every failure
+
+Source **`d568d84c`**, managed `proc_a742`, PID2010863; completed in322s with
+exit0. This means the **diagnostic's binding/safety checks passed**, not that the
+model's numerical gate passed.
+
+All57 turns/2,711 targets were measured. Actual actor probabilities, teacher
+probabilities and CE means matched the pinned uninstrumented reference exactly.
+The observer's own native probabilities also matched exactly: maximum binding
+difference **0**. Parameters stayed unchanged, recurrence autotune-cache entries
+remained zero, and peak allocated HBM was8,629,706,240 bytes. No model output was
+replaced.
+
+| Readout used for diagnostic scores | Max actor/trainer log-probability gap | p99 | Tokens above .05 |
+| --- | ---: | ---: | ---: |
+| Actual BF16 | .12353801727294922 | .0007408213801682023 | 3 |
+| Shadow FP32 | .07699280977249146 | .0011633686721325034 | 1 |
+| Shadow FP32, then stored in BF16 | .12353801727294922 | .000743687152862549 | 3 |
+
+The FP32 shadow therefore **still fails** the unchanged max<=.05 criterion.
+Rounding can amplify or conceal discrepancies; the p99 does not improve here.
+
+### Three actual outliers
+
+Generated positions below are zero-based. All are from sample0.
+
+| Task / turn / position | Actual gap | FP32 shadow gap | Re-quantized gap | BF16 selected-logit delta | FP64 selected-dot delta |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 004 / 1 / 29 | .119649649 | .009301186 | .119650364 | .125 | .010394634 |
+| 008 / 1 / 23 | .071606994 | .076992810 | .071606755 | .0625 | .072576367 |
+| 014 / 4 / 15 | .123538017 | .001582146 | .123538017 | .125 | .014000899 |
+
+For004 and014, higher-precision readout substantially reduces the discrepancy;
+reintroducing a BF16 final store recreates the large gaps while holding the
+captured hidden vectors fixed. This isolates substantial readout rounding
+amplification. Native BF16 GEMM logits and re-quantized FP32 logits are not
+identical across the whole vocabulary (maximum difference .03125 at these
+positions), so the experiment does not assert that their accumulation paths are
+identical.
+
+For008, the discrepancy persists in FP32. Its selected-dot delta is
+`.07257636671420187` in CPU FP64, while the FP32-versus-FP64 selected-dot error at
+that token is only `5.370238795876503e-7`. Its incoming hidden vectors already
+differ (relative L2 `.011663807556033134`, absolute max `.046875`). Thus this is
+not explained by final BF16 logit storage alone; a substantial difference exists
+upstream of the head.
+
+Across all measured selected dots, maximum FP32-versus-FP64 error was
+`1.2320757377892733e-5`. Maximum actor/teacher hidden relative L2 was
+`.019574584439396858`. These are local measurements, not long-context error-growth
+bounds or a full FP64 probability reference.
+
+### Audits and artifacts
+
+An independent CPU audit rechecked actual-score/CE equality, auxiliary native
+binding, finite values, counts, maxima and threshold-crossing counts. Before/after
+source checks each covered17,670 files and matched; controller inventory checks
+also passed. Lease files were absent without running a reaper, and all eight
+GPUs were idle with no compute processes. Cleanup is retained in `cleanup.log`.
+
+- Source inventory: `34c3e3ca9e12005d20366b56e245f51bb6748872d0ee1ef887eee46cf0ed58b9`.
+- Measurements: `eb08b3b445cabebf328270a6d08689770abebed80f7e4d9cf57431d3fc03864b`.
+- Assay summary: `9292862d00afa004db1871777267c2b44907c746f16e706bd06a5a857231eba4`.
+- Diagnostic audit: `558594fd66fe52ec783e1cd505eef0d557933786c1606da1d35f427c535c28a9`.
+- Independent evidence: `result-audit.json`; per-token diagnostics remain private
+  in `details-private.json` and the assay measurements.
+
+### Next target and qualification boundary
+
+A head-only FP32 change would not close the measured gate. The next causal target
+is **task008, turn1, generated position23**, tracing its upstream discrepancy with
+the current pinned recurrence, weights and chunk sizes held fixed. Any captured
+operator replay must first bind to the current reference; do not assume that
+previous legacy-layout localization automatically applies.
+
+No additional GPU run or model repair was launched after this diagnostic. Actual
+historical/current-policy failures remain unchanged, no behavior probabilities
+were replaced, and optimizer updates remain zero. No new rollout, admission,
+learning/capability claim, full4B backward, 64K, multirank or restart qualification
+is included.
