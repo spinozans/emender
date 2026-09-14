@@ -94,5 +94,62 @@ source with before/after audits including failure, and composed lease cleanup.
 Kernel900s, each worker1,800s, outer5,100s, teardown30s. No retries, no concurrent
 GPU jobs, no delegated workers and no automatic additional candidate.
 
-Results pending. Zero optimizer updates. No data admission, behavioral gain,
-full4B backward,64K, multirank, restart or RL optimizer qualification is implied.
+## Audited result — partial improvement, failed qualification
+
+Source **`2c17fb02`**, managed process `proc_821c`,934s. Exit1 was the declared
+`pinned-policy numerical gate failed`, **not a runtime crash**. All13 CUDA cases
+passed in35.60s. The two production-sized Linear tests had gradient relative
+L2=0 against their autograd references. The checkpointed two-layer model had
+loss delta=0 and maximum gradient relative L2=0. This is bounded numerical
+agreement, not a claim of universally bitwise-identical gradients.
+
+Both fresh4B workers produced **byte-identical measurement files and summaries**.
+All2,711 actor/teacher scores and CE means repeated exactly. Both verified163
+FP32-arithmetic Linear modules, actual FP32 actor/teacher logits, zero recurrence
+autotune entries, unchanged parameter SHA
+`f57eaff2882ce2914413f501a93454e8e0a9bfcd4f408b91ed962405c7ad16bd`,
+and peak allocated HBM9,697,057,792 bytes.
+
+- Current-policy max: **.05184602737426758 > .05 — failed**.
+- Current-policy p99: .0010260593146085753 < .02 — passed, but larger than the
+  state-only baseline's .0007408213801682023. Not every error improved.
+- CE/head mean delta:5.2447273901623775e-8 — passed.
+- Historical actor replay max:.09257817268371582 — failed.
+- Teacher versus historical recorded max:.09374070167541504 — failed.
+
+The original three current-policy outliers are now below .05. However, another
+position worsened and crossed the threshold; this is **not a qualified fix**:
+
+| Task / turn / generated position | State-only actual gap | Composite actual gap |
+|---|---:|---:|
+|004 /1 /23|.027909040451049805|**.05184602737426758**|
+|004 /1 /29|.11964964866638184|.003026247024536133|
+|008 /1 /23|.07160699367523193|.013171017169952393|
+|014 /4 /15|.12353801727294922|.01941204071044922|
+
+The sole over-limit position is now **`onpolicy-task-004-sample-0`,turn1,
+zero-based generated position23**, not the earlier task008 target. Any further
+localization must bind to this composite reference, not silently reuse earlier
+state-only activation traces. No additional candidate was launched.
+
+An independent CPU audit checked all57 identities, frozen historical values,
+2,711-token coverage, finiteness, exact fresh equality, maximum error, CE means,
+and outlier count. All17,675 source files passed before/after checks in both
+runner and controller; inventory bytes also matched. `cleanup.log` records all
+eight GPUs idle, no compute processes and no active lease files, without reaping.
+
+Hashes:
+
+| Artifact | SHA256 |
+|---|---|
+|Source inventory|`113e54ca29acd090e922060fdb72d2e8d783c17c10ab8a816af94454f9180927`|
+|Kernel tests|`529a0c70f10a0ecbbf15844097e7b35e7101929bd356f32a1fa938fa2a15733b`|
+|Each worker measurements|`64ba00df08cf48bc87e87ca1afc9c5257bfb88bb25addb63b03cedd88812e34e`|
+|Each worker summary|`490092c0e3aa4f9154aee5437350aec0a9b548889205c4ab9abeccd56fb4c7c8`|
+|Audit|`ce5b7b4c6dbe2e5d988a3eb434ddb08f21a23e2277898a1721f3fc7345953a6e`|
+
+Private probability records remain unpublished. `result-audit.json` retains the
+independent CPU checks. Thresholds and failed historical evidence are unchanged.
+Zero optimizer updates. The candidate remains opt-in and unqualified; no data
+admission, behavioral gain, full4B backward,64K, multirank, restart or RL optimizer
+qualification is implied. The880+32 training budgets remain closed.
