@@ -1,6 +1,6 @@
 # E97 agent learning: current status and decision reset
 
-Status after the fixed-row Linear micro qualification (`1ce5696a`). This is a
+Status after the grounded-expansion training and evaluation. This is a
 programme-level interpretation and priority decision, not a replacement for any
 frozen experimental report, failed gate or source authority. The complete
 [numerical exploration index](validation/e97-numerical-exploration-index.md)
@@ -17,9 +17,11 @@ complete derivative has2,583 records and926,091 supervised targets. Full audit a
 packing passed after fixing and retaining an auditor replay-order failure. The
 frozen schedule consumes every record, totaling1,588,936 target exposures.
 The new32-update BF16-SR run completed with exact schedule/clock matching and a
-finite complete checkpoint (`17aa2672…`); that budget is now closed. Matched48-task
-and conversation/tool-retention evaluation is running. No new capability gain is
-claimed before those results.
+finite complete checkpoint (`17aa2672…`); that budget is now closed. Audited
+before/after evaluation shows **fresh same-format3/16→16/16**, but old regression
+cases7/16→6/16 and structural-transfer0/16→1/16. Both x/y retention gates passed.
+**The overall gate failed; there is no promotion.** All192 episodes were regraded
+against actual reader snapshots, with192 agent and192 reader cleanups confirmed.
 
 ## Goal and actual capability
 
@@ -32,17 +34,21 @@ loss alone, valid first calls, teacher success or numerical agreement.
 |880-update native/conversation/retention SFT|166,885,738 supervised target exposures, including50,069,457 native targets; better likelihood/retention panels|Reliable execution: subsequent autonomous diagnostics failed|
 |1,024 executor-verified authored grounding trajectories; separate32-update correction|First requested calls0/16→16/16; autonomous completions0/16→7/16|General agency; fresh-value gate3/8 missed4/8; editing/recovery still failed|
 |32 stochastic training-only rollouts on16 new tasks|16 autonomous successes and16 same-state verified teacher repairs; collection/correction pipeline works|A new evaluation score or model improvement: zero updates occurred|
+|Grounded expansion:2,048 authored examples,18 deduplicated canary records and a new32-update SFT tranche|Fresh same-format completion3/16→16/16, including4/4 edits and4/4 recovery; both x/y retention passed|Generalization/acceptance: old7/16→6/16 and structural-transfer0/16→1/16; joint gate failed|
 |Faithful native source/runtime pipeline|Actual observations/errors, full trajectories and routing/masks can be preserved|That more tokens alone will solve remaining behavior or that every candidate is admitted|
 
-The last measured capability gain remains **7/16 autonomous completions**. The
-model/trainer can learn useful behavior. It is not yet a reliably generalizing
-agent. The data problem is **coverage, fidelity, curriculum and feedback**, not
+The latest measured gain is **16/16 fresh same-format autonomous completions**,
+not a replacement score for the older panel, which fell to6/16. The model/trainer
+can learn useful behavior, but changed representations still largely fail. It is
+not yet a reliably generalizing agent. The data problem is **coverage, fidelity,
+curriculum and feedback**, not
 simply a shortage of raw token volume. The large mixture already contained4,216
 unique native trajectories and106,637 unique conversation records.
 
 Sources: [closed880 programme](validation/e97-native-training-50m-agent-v1.md),
 [grounding correction](validation/e97-grounding-correction-v1.md),
-[on-policy canary](validation/e97-native-onpolicy-canary-v1.md).
+[on-policy canary](validation/e97-native-onpolicy-canary-v1.md),
+[grounded expansion](validation/e97-grounded-expansion-v1.md).
 
 ## Numerical conclusion: remove the blanket SFT veto
 
@@ -159,10 +165,11 @@ internal use is separately bounded by the new tranche authority.
 
 ## Authorization and reporting
 
-The880- and32-update budgets remain closed. No new training, data admission,
-rollout expansion or checkpoint promotion is authorized by this status document.
-The separately authorized [grounded expansion](validation/e97-grounded-expansion-v1.md)
-now states its new32-update budget and gates; neither old budget is reopened.
+The880-update programme, original32-update correction and new32-update grounded
+expansion are all **closed**. No further training, data admission, rollout expansion
+or checkpoint promotion is authorized by this status document. The grounded
+expansion's failed overall gate is retained despite its same-format learning gain.
+A follow-up requires a separate bounded plan and fresh frozen evaluation.
 
 Continue routine bounded diagnosis and preparation without repeated operator
 handoffs. Escalate new learning budgets, consequential trade-offs or authorization

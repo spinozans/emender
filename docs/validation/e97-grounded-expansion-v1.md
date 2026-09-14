@@ -269,4 +269,68 @@ Fresh numerical continuation was not measured; no bitwise restart pass is claime
 This tranche's32-update budget is now **closed**. Matched48-case autonomous and
 unchanged likelihood/retention evaluation launched as `proc_abe9`, comparing
 correction-parent x/y against expansion x/y. No capability gain, gate pass or
-promotion is claimed before those measurements finish.
+promotion was claimed before those measurements finished.
+
+### Final audited outcome: strong same-format learning; overall gate failed
+
+Evaluation `proc_abe9` completed in1,422s. Process exit0 means measurements completed,
+**not checkpoint acceptance**. Both x/y representations produced the same cohort
+completion counts:
+
+|Autonomous cohort|Correction parent|Expansion|Frozen post-y requirement|Result|
+|---|---:|---:|---:|---|
+|Prior regression cases|7/16|6/16|≥7|Fail|
+|Fresh same-family/schema cases|3/16|16/16|≥8|Pass|
+|Structural-transfer variants|0/16|1/16|≥4|Fail|
+|New edit/recovery subset (overlaps fresh+transfer)|0/16|9/16|≥2|Pass|
+
+Fresh cases improved in all four families: lookup0→4/4, sum3→4/4, edit0→4/4,
+recovery0→4/4. This is real unassisted, executor/oracle-verified improvement on
+fresh values and paths within trained formats. It is **not broad general agency**.
+Across the three disjoint cohorts, the descriptive total is10/48→23/48, but this
+must not hide the regression or the transfer failure.
+
+The prior-case loss is `regression-old-lookup-0`: execution finished without a
+backend error but returned the wrong final value. Prior editing/recovery remain
+0/4 each. Of the new structural variants, only `transfer-edit-0000-world-0` passed.
+Post-y traces show four lookup `KeyError: 'payload'` failures; four wrong-answer
+sums; three incorrect edit outputs despite finishing; and four recovery turn-budget
+exhaustions without the required recovered value observation. These are concrete
+representation/observation-use deficits, not evidence of catastrophic BF16 memory
+loss. Do not attribute every error to a numerical mechanism.
+
+Both x/y retention gates passed, with slightly improved measured likelihood:
+
+|Metric|Pre-y|Post-y|Post-x|
+|---|---:|---:|---:|
+|Tool token accuracy|1.0|1.0|1.0|
+|Conversation record-macro NLL|1.581174469843|1.565335794798|1.563289834933|
+|Native-development record-macro NLL|.923922401538|.920306194270|.918676924053|
+
+An independent post-run audit regraded **all192 episodes** from their saved calls,
+final answers and actual paused-reader snapshots, bound all original/frozen cases,
+recomputed the joint gate, and checked192 agent plus192 reader cleanups. All GPUs
+were idle, no lease remained and no owned native sandbox remained after evaluation.
+Original source/terminal audits passed. Private prompts, trajectories and snapshots
+remain private.
+
+|Artifact|SHA256|
+|---|---|
+|Execution panel|`aecb6795198485fccca235efc2e600510fc4a16c9945599d1514cc851d0e3e6a`|
+|Learning panel|`e3db268c04621d8eef56157e597b3cb95a1238c494344037b559492fe0f10fed`|
+|Execution summary|`982d439454cea2c1984d2c4da0c63854b15e8a3cbe1ea8f4c744b01c61ffe051`|
+|Learning summary|`d35d607e4430ac133165bcc5231460d851a6ae5b393a2adfec325aabd312b3e2`|
+|Joint gate|`432061f3d3c57610da7a2293f14c8f940d95e9afdf8ca40ccb6b5fa0cf00a4c8`|
+|Independent result audit|`f3c5e0b60fad12083f11b5b2524f9948e8aa7fa7adc06e16b4604d785206cb70`|
+|Retained audit script in training-control|`1ac5211aea989974d52f89406b858bcf18ab5212160d23f3349c126e86fec151`|
+
+**Final verdict:** `positive_expansion_evidence:false`; no checkpoint promotion,
+source-registry admission, changed thresholds, automatic extra updates or reopened
+budget. Preserve the completed checkpoint as an experimental learning result.
+
+The next useful direction is training-only representation bridges and same-state
+corrections: distinguish scalar/mapping/array lookup, compute totals over all list
+entries, derive edits from observed parameters, follow indirect catalogs,
+and retain older instruction/file layouts. These evaluation cases remain excluded
+from training. Any follow-up needs a separate bounded learning plan and fresh
+frozen evaluation; another blind epoch is not the conclusion of this experiment.
