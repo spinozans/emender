@@ -76,3 +76,10 @@ def test_native_teacher_real_io_masks_and_oracle(tmp_path,cohort,family):
         assert '"command":"create"' not in selected
         if family=='recovery':assert c['missing_path'] not in selected
     assert all(snapshot[p]==v for p,v in c['files'].items())
+    from scripts.audit_e97_grounded_expansion import check_teacher,reconstruct
+    audit_panel=dict(tools=TOOLS,system='Use observations.',models=[{},dict(system_message=context('system','Source system.'))])
+    check_teacher(c,record,evidence,audit_panel)
+    _,mask=reconstruct(record,TOOLS,enc)
+    assert list(mask)==record['assistant_mask']
+    record['assistant_mask'][0]=1
+    with pytest.raises(ValueError,match='independent token/mask'):reconstruct(record,TOOLS,enc)

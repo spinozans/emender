@@ -56,6 +56,33 @@ def test_evaluation_binds_correction_parent_not_old_u880(tmp_path,monkeypatch):
     assert len(json.loads((phase/'evaluation/execution/panel.json').read_text())['cases'])==48
 
 
+def test_exposure_distinguishes_unique_from_repeated(tmp_path,monkeypatch):
+    import ndm.data.masked_sft_dataset as loader
+    import scripts.prepare_e97_grounded_expansion as module
+    (tmp_path/'authority').mkdir();(tmp_path/'packs').mkdir()
+    rows=[dict(source='grounded-expansion',source_record_id=f,tokens=20,targets=10) for f in ('lookup','sum','edit','recovery')]
+    (tmp_path/'authority/records.jsonl').write_text(''.join(json.dumps(r)+'\n' for r in rows))
+    (tmp_path/'authority/manifest.json').write_text(json.dumps({'outputs':{'metadata':{'path':'records.jsonl'}}}))
+    (tmp_path/'packs/manifest.json').write_text('{}')
+    (tmp_path/'training-cases-private.json').write_text(json.dumps([dict(id=r['source_record_id'],family=r['source_record_id']) for r in rows]))
+    schedule=dict(authority_manifest_sha256=module.sha(tmp_path/'authority/manifest.json'),pack_manifest_sha256=module.sha(tmp_path/'packs/manifest.json'),
+        sampler_key=974223,world_size=8,context_size=65536,unique_records=4,source_target_totals={'grounded-expansion':10240},
+        steps=[dict(rank_sample_ids=[[i*8+r] for r in range(8)],global_tokens=640) for i in range(32)])
+    (tmp_path/'expected-schedule.json').write_text(json.dumps(schedule))
+    class Dataset:
+        def __init__(self,*args,rank,**kwargs):self.rank=rank;self.packs=[{'record_offset':0,'record_count':4}];self.pack_record_ids=list(range(4))
+        def sample_id(self,cursor):return cursor*8+self.rank
+        def pack_id_at(self,cursor):return 0
+        def close(self):pass
+    monkeypatch.setattr(loader,'MaskedSFTPackedDataset',Dataset)
+    module.exposure(SimpleNamespace(data=tmp_path))
+    result=json.loads((tmp_path/'exposure-audit.json').read_text())
+    assert result['unique_records']==4 and result['record_occurrences']==1024
+    assert result['sources']['grounded-expansion']['unique_targets']==40
+    assert result['target_exposures']==10240
+    assert result['authored_family_coverage']['edit']['unique_records']==1
+
+
 @pytest.mark.parametrize('bad',['missing','duplicate','nonboolean','nan','wrong-model'])
 def test_gate_fails_closed_on_bad_coverage_or_metrics(bad):
     e,l,p=reports();rows=e['models']['pre-y']['outcomes']

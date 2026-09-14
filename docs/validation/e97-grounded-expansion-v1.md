@@ -120,8 +120,15 @@ CPU preflight `grounded-expansion-v1-preflight` has frozen identities:
 |New evaluation cases|`36921d4b718c3d8e0bf88c9fc1cc04ae15ada219229442eb420e5843a84c9331`|
 
 Data run root: `/mnt/nvme2n1/erikg/e97_systematic_posttraining/grounded-expansion-v1-data`.
-The native build is running from frozen source `e11f8f6e` (`proc_8ce8`); its
-first128 trajectories have passed. Source inventory:17,715 files, SHA
+The native build ran from frozen source `e11f8f6e` (`proc_8ce8`). It stopped at
+the1,800-second data deadline (process elapsed1,814s, exit124), after **1,333
+complete verified records**, leaving715 uncompleted. Both private journals have
+1,333 records; both owned sandboxes were removed. The source audits passed while
+the controller preserved exit124. There is no completed training authority,
+no packing and no optimizer update. The failed attempt is retained—not relabelled
+a pass, retried automatically or used as a smaller replacement dataset.
+
+Source inventory:17,715 files, SHA
 `23f899004d3ef6a941615cf8871c34f1b56d1153bf69818f79400c2749b40751`.
 
 Matched controller/gate logic is implemented in
@@ -131,6 +138,19 @@ u880 as the new pre-y baseline, dropping outcomes, accepting duplicate/nonboolea
 outcomes, or hiding failed editing/recovery behind sums. Previous16-case panel
 SHA is `7f03244fca9437ebdfbc7044287c9ddeff61d1953c8a80f062032e46f097ad67`.
 
-After native verification, independently audit the derivative and runtime schedule,
-then freeze the remaining launch wrapper. No optimizer updates have occurred in
-this new tranche yet.
+Independent audit code now reconstructs native token masks, binds every authored
+call/observation, applies the host task oracle, validates source-file checksums and
+sandbox cleanup, deduplicates the original candidates and verifies unchanged replay
+bytes. A partial-audit mode does not create an eligible data authority.
+
+The launcher separates preparation, training and evaluation. Preparation records
+unique examples versus repeated source/family exposures; training requires the
+reviewed exposure hash and a no-overwrite attempt marker. It retains the unchanged
+trainer, explicit parent weight mode, bounded phases and composed lease/source-audit
+cleanup. New tests exercise the unique-versus-repeated exposure accounting.
+
+The initial data-time estimate was too small. Completion would require a separately
+bounded additional data pass for the715 missing records, reusing only independently
+audited completed records and preserving the failed root. No such completion pass
+has been launched. The32-update learning budget and frozen evaluation remain
+unchanged. No optimizer updates have occurred in this new tranche.

@@ -10,7 +10,9 @@ The operator subsequently authorized a return to execution. The new
 [grounded expansion tranche](validation/e97-grounded-expansion-v1.md) freezes
 2,048 paired authored demonstrations,18 deduplicated real correction/success
 records,32 new evaluation cases and a separate32-update BF16-SR SFT budget.
-Preparation is underway; no new optimizer updates or capability gain are claimed.
+The first data attempt hit its30-minute limit after1,333 verified records;715
+remain. Its artifacts and clean teardown are retained. No new optimizer updates
+or capability gain are claimed.
 
 ## Goal and actual capability
 
