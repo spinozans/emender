@@ -104,4 +104,60 @@ outer1,500s, teardown30s. Allocated HBM limits: capture16GiB, micro2GiB. No retr
 additional candidate, optimizer updates, new rollout probabilities, admission,
 64K/gradient/restart qualification or reopening of the880+32 training budgets.
 
-Results pending. Existing numerical and behavioral gates remain failed.
+## Audited result — workspace selection isolates the early difference
+
+Source **`43646850`**, process `proc_3911`,243s,exit0. Four full-model captures
+preserved all native scores, teacher CE, fine-trace hashes and kernel-to-readout
+binding exactly. Numeric kernel operands, their layouts and aliases matched
+between actor and teacher. Both initial states were FP32 positive zero; both
+launches used `(1,4)`, SiLU-QKV and L2 normalization. Only masks and workspace
+selection differed.
+
+A fresh process reproduced both captured outputs **and final states bitwise**
+twice each without the4B model. All twelve minimal calls completed. The fixed
+control matrix, repeated exactly, gave:
+
+| Masks | Workspace | Exact output and final-state match |
+|---|---|---|
+|actor|actor/BF16 checkpoints|actor|
+|teacher|actor/BF16 checkpoints|actor|
+|actor|teacher/FP32 checkpoints|teacher|
+|teacher|teacher/FP32 checkpoints|teacher|
+
+**On these real captured operands, mask changes alone had no effect. Workspace
+selection alone switched both results exactly between actor and teacher.**
+Numeric input addresses were identical throughout the matrix. This is causal
+evidence for the workspace selection, not a guessed explanation from a final
+score difference. It still does not separate changed allocation from generated
+storage code, nor prove mask invariance for nonzero state or different streams.
+
+Between original modes, first output difference was at `[1,0,26,11]` (flattened
+feature1675), matching the first-divergence trace. There were358 differing BF16
+output elements, maximum.000244140625. The FP32 final states differed in930
+elements, maximum3.5762786865234375e-7. The compatibility workspace is therefore
+not numerically inert even though live state is FP32 and its checkpoints are
+unused during inference.
+
+This justifies separately testing a composite policy with **uniform FP32
+workspace in actor and trainer**. It does not yet qualify that repair across the
+full57 panel. The later token2519 QKV projection discrepancy remains distinct.
+
+Independent CPU audit verified capsule file hashes, all capture/replay binding
+receipts, loaded all four matrix outputs and checked their exact reference
+matches, fixed numeric input addresses, and all17,686 source files before/after.
+Peak allocated HBM: capture9,538,251,264 bytes; standalone replay86,636,544 bytes.
+Parameter fingerprint remained
+`f57eaff2882ce2914413f501a93454e8e0a9bfcd4f408b91ed962405c7ad16bd`;
+buffers unchanged, no gradients or recurrence autotune entries. Cleanup recorded
+all GPUs idle, no compute processes and no lease files without reaping.
+
+| Artifact | SHA256 |
+|---|---|
+|Source inventory|`b1dbe0b9f5ddd0639f7a29cfd72526d1536e0a387d15507ed7fd1513c96c664e`|
+|Capture summary|`ca7cf4e638fd22c95d3e11993f78dc38865a0fc742211cfbd26a97e5168a1a6f`|
+|Matrix preflight|`bfbf8ac3746edf1f3ef1cfa7507d4cb4e6f3cd547569af7f4dae20051f469851`|
+|Replay summary|`61a2aff628a23cee516bef28ffba88bcf3527f4f030966eee8d5a1412da724c4`|
+
+`result-audit.json` retains independent checks. Private operands/output tensors
+remain unpublished. Existing numerical and behavioral gates remain failed.
+Zero optimizer updates; no admission, promotion or expanded training budget.
