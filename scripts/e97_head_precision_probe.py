@@ -4,7 +4,7 @@ import torch.nn.functional as F
 
 
 @torch.no_grad()
-def project(head, hidden, logits, targets, vocab_chunk=4096):
+def project(head, hidden, logits, targets, vocab_chunk=4096, *, numeric_audit=False):
     if hidden.ndim!=2 or not 0<len(hidden)<=128 or not 0<vocab_chunk<=4096:
         raise ValueError('bounded head probe shape')
     if head.weight.dtype!=torch.bfloat16 or hidden.dtype!=torch.bfloat16 or logits.dtype!=torch.bfloat16:
@@ -25,12 +25,32 @@ def project(head, hidden, logits, targets, vocab_chunk=4096):
         bf16_selected=logits.float().gather(1,targets[:,None]).squeeze(1)
         if not all(bool(torch.isfinite(x).all()) for x in (output,fp32_lp,bf16_selected)):
             raise ValueError('nonfinite head probe')
-        return [dict(fp32_logprob=p,fp32_selected_logit=f,bf16_selected_logit=b)
-                for p,f,b in zip(fp32_lp.cpu().tolist(),fp32_selected.cpu().tolist(),bf16_selected.cpu().tolist())]
+        rows=[dict(fp32_logprob=p,fp32_selected_logit=f,bf16_selected_logit=b)
+              for p,f,b in zip(fp32_lp.cpu().tolist(),fp32_selected.cpu().tolist(),bf16_selected.cpu().tolist())]
+        if numeric_audit:
+            # Counterfactual re-quantization: does the large gap return when the
+            # FP32 GEMM output is stored in BF16? Never return these as model logits.
+            rounded=output.bfloat16().float()
+            rounded_lp=torch.log_softmax(rounded,-1).gather(1,targets[:,None]).squeeze(1)
+            native_lp=torch.log_softmax(logits.float(),-1).gather(1,targets[:,None]).squeeze(1)
+            rounding_disagreement=(rounded-logits.float()).abs().amax(dim=1)
+            # Independent CPU FP64 selected dot products of the actual BF16
+            # operands. Only <=128 selected weight rows, not an FP64 model copy.
+            selected_weight=head.weight.detach().index_select(0,targets).cpu().double()
+            selected64=(hidden.detach().cpu().double()*selected_weight).sum(dim=1)
+            if head.bias is not None:selected64+=head.bias.detach().index_select(0,targets).cpu().double()
+            if not all(bool(torch.isfinite(t).all()) for t in (selected64,rounded_lp,native_lp,rounding_disagreement)):
+                raise ValueError('nonfinite head numeric audit')
+            for row,d,r,native,error in zip(rows,selected64.tolist(),rounded_lp.cpu().tolist(),native_lp.cpu().tolist(),rounding_disagreement.cpu().tolist()):
+                row.update(fp64_selected_logit=d,rounded_fp32_logprob=r,native_logprob=native,
+                    native_vs_rounded_fp32_logit_abs_max=error,
+                    fp32_vs_fp64_selected_abs=abs(row['fp32_selected_logit']-d))
+        return rows
 
 
 class HeadProbe:
-    def __init__(self,generated):
+    def __init__(self,generated,*,numeric_audit=False):
+        self.numeric_audit=numeric_audit
         self.generated=generated;self.calls=0;self.hidden=[];self.actor=[];self.teacher=[]
 
     def actor_hook(self,head,inputs,logits):
@@ -39,7 +59,7 @@ class HeadProbe:
         h=inputs[0][:,-1,:]
         if h.shape[0]!=1:raise ValueError('single actor head row required')
         target=torch.tensor([self.generated[i]],device=h.device,dtype=torch.long)
-        self.actor.extend(project(head,h,logits[:,-1,:],target))
+        self.actor.extend(project(head,h,logits[:,-1,:],target,numeric_audit=self.numeric_audit))
         self.hidden.append(h.detach().cpu().clone())
         return None
 
@@ -56,7 +76,7 @@ class HeadProbe:
         absolute=delta.abs().amax(dim=1)
         if not bool(torch.isfinite(relative).all() & torch.isfinite(absolute).all()):
             raise ValueError('nonfinite hidden comparison')
-        rows=project(head,hidden,logits,targets)
+        rows=project(head,hidden,logits,targets,numeric_audit=self.numeric_audit)
         for row,r,a in zip(rows,relative.cpu().tolist(),absolute.cpu().tolist()):
             row.update(hidden_relative_l2=r,hidden_max_absolute=a)
         self.teacher.extend(rows)

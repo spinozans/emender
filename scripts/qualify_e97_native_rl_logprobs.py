@@ -43,9 +43,14 @@ def freeze(args):
         from ndm.recurrent_precision import validate_state_precision
         recipe['recurrent_state_precision']=validate_state_precision(args.recurrent_state_precision)
         recipe['scope']+='; explicit recurrent-state precision, unchanged weights and original behavior references'
+    if getattr(args,'head_numeric_audit',False) and not getattr(args,'head_probe',False):
+        raise ValueError('head numeric audit requires the read-only head probe')
     if getattr(args,'head_probe',False):
         recipe['head_probe']=dict(vocab_chunk=4096,max_rows=128,returns_original_outputs=True)
         recipe['scope']+='; read-only counterfactual FP32 head projection, not a changed-policy qualification'
+        if getattr(args,'head_numeric_audit',False):
+            recipe['head_probe']['numeric_audit']=True
+            recipe['scope']+='; CPU FP64 selected dots and counterfactual BF16 re-quantization'
     args.output.mkdir(parents=True,mode=0o700,exist_ok=False)
     publish(args.output/'recipe-private.json',recipe)
     print('RL_LOGPROB_ASSAY_FROZEN',len(selected),'turns',sha(args.output/'recipe-private.json'),flush=True)
@@ -89,14 +94,15 @@ def run(args):
     probes=[];probe_enabled='head_probe' in recipe
     if probe_enabled:
         from scripts.e97_head_precision_probe import HeadProbe
-        if recipe['head_probe']!=dict(vocab_chunk=4096,max_rows=128,returns_original_outputs=True):
+        base_probe=dict(vocab_chunk=4096,max_rows=128,returns_original_outputs=True)
+        if recipe['head_probe'] not in (base_probe,dict(base_probe,numeric_audit=True)):
             raise ValueError('head probe recipe mismatch')
         if torch.backends.cuda.matmul.allow_tf32 or torch.get_float32_matmul_precision()!='highest':
             raise ValueError('head probe requires untruncated FP32 matrix arithmetic')
     records=[]
     with torch.no_grad():
         for item in recipe['selected']:
-            probe=HeadProbe(item['generated']) if probe_enabled else None
+            probe=HeadProbe(item['generated'],numeric_audit=recipe['head_probe'].get('numeric_audit',False)) if probe_enabled else None
             handle=model.lm_head.register_forward_hook(probe.actor_hook) if probe is not None else None
             try:
                 cache=advance_e97_cache_segment(loaded,item['prefix']);values=[]
@@ -190,6 +196,6 @@ def run(args):
 
 if __name__=='__main__':
     p=argparse.ArgumentParser();s=p.add_subparsers(dest='command',required=True)
-    q=s.add_parser('freeze');q.add_argument('--output',type=Path,required=True);q.add_argument('--head-probe',action='store_true');q.add_argument('--recurrent-state-precision',choices=('legacy','fp32'))
+    q=s.add_parser('freeze');q.add_argument('--output',type=Path,required=True);q.add_argument('--head-probe',action='store_true');q.add_argument('--head-numeric-audit',action='store_true');q.add_argument('--recurrent-state-precision',choices=('legacy','fp32'))
     q=s.add_parser('run');q.add_argument('--recipe',type=Path,required=True);q.add_argument('--recipe-sha',required=True);q.add_argument('--output',type=Path,required=True)
     a=p.parse_args();globals()[a.command](a)
