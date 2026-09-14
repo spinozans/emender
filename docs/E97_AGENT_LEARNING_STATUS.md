@@ -11,8 +11,10 @@ The operator subsequently authorized a return to execution. The new
 2,048 paired authored demonstrations,18 deduplicated real correction/success
 records,32 new evaluation cases and a separate32-update BF16-SR SFT budget.
 The first data attempt hit its30-minute limit after1,333 verified records;715
-remain. Its artifacts and clean teardown are retained. No new optimizer updates
-or capability gain are claimed.
+remain. Its artifacts and clean teardown are retained; the1,333 records passed
+independent audit. The operator has now authorized one additional bounded
+completion pass and the frozen audit/training/evaluation sequence. No new
+optimizer updates or capability gain are claimed.
 
 ## Goal and actual capability
 

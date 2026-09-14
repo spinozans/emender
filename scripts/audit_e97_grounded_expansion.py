@@ -149,8 +149,19 @@ def audit(a):
         seen[key]=identity;expected[identity]=(tb,mb);provenance[identity]=[r['id']]
     if len(seen)!=18 or sum(sum(expected[i][1]) for i in seen.values())!=3447:raise ValueError('canary unique inventory')
     if sha(data/'authored-verification-private.jsonl')!=manifest['verification_sha256'] or sha(data/'canary-derivative-audit.json')!=manifest['canary_audit_sha256']:raise ValueError('receipt hashes')
-    for world in (0,1):
-        folder=data/f'authored-world-{world}';before=read(folder/'container-before.json');terminal=read(folder/'container-terminal.json');cleanup=read(folder/'cleanup.json')
+    sandbox_paths=sorted(data.glob('authored-world-*'))
+    if manifest.get('completion_provenance_sha256'):
+        from scripts.e97_grounded_resume import load_reuse,verify_reuse
+        if sha(data/'completion-provenance.json')!=manifest['completion_provenance_sha256']:raise ValueError('completion provenance binding')
+        completion=read(data/'completion-provenance.json')
+        _,expected_completion=load_reuse(completion['source'],list(cases.values()),panel,enc)
+        if completion!=expected_completion:raise ValueError('completion authority')
+        verify_reuse(completion,data)
+        sandbox_paths=[Path(s['path']) for s in completion['reused_sandboxes']]+sandbox_paths
+        if len(sandbox_paths)!=3:raise ValueError('completion sandbox coverage')
+    elif len(sandbox_paths)!=2:raise ValueError('sandbox coverage')
+    for folder in sandbox_paths:
+        before=read(folder/'container-before.json');terminal=read(folder/'container-terminal.json');cleanup=read(folder/'cleanup.json')
         nonce=before['Config']['Labels']['emender.native-qualification'];validate_container(before,panel['image_id'],nonce)
         if terminal['Id']!=before['Id'] or terminal['Config']['Labels']['emender.native-qualification']!=nonce or cleanup!={'container_id':before['Id'],'removed':True}:raise ValueError('owned sandbox cleanup')
     with ExitStack() as stack:
@@ -178,7 +189,7 @@ def audit(a):
     if manifest['counts']!=counts:raise ValueError('manifest counts')
     result=dict(passed=True,authority_sha256=sha(authority/'manifest.json'),data_summary_sha256=sha(data/'data-summary.json'),records=len(consumed),authored_records=2048,
         unique_canary_records=18,unique_canary_targets=3447,source_target_totals=dict(totals),input_tokens=offset,assistant_targets=targets,
-        native_calls_observations_bound=True,independent_masks_and_oracles=True,unchanged_replay_bytes=True,owned_sandboxes_cleaned=2,optimizer_updates=0)
+        native_calls_observations_bound=True,independent_masks_and_oracles=True,unchanged_replay_bytes=True,owned_sandboxes_cleaned=len(sandbox_paths),optimizer_updates=0)
     publish(data/'result-audit.json',result);print('GROUNDED_EXPANSION_AUDIT_PASSED',json.dumps(result,sort_keys=True),flush=True)
 
 

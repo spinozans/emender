@@ -92,10 +92,21 @@ def build(args):
     train,panel=freeze(config,args.output);enc=tiktoken.get_encoding('p50k_base')
     if sha(args.output/'training-cases-private.json')!='a21f68ad922f5d505980381ef17fa57bf624e1a179d986cf86d60ac8ee30540e' or sha(args.output/'fresh-evaluation-cases.json')!='36921d4b718c3d8e0bf88c9fc1cc04ae15ada219229442eb420e5843a84c9331':raise ValueError('preflight case identities')
     records,canary_audit=load_candidates(config,enc);publish(args.output/'canary-derivative-audit.json',canary_audit)
-    source_system=panel['models'][1]['system_message'];count=0
+    source_system=panel['models'][1]['system_message'];count=0;reused=set();completion=None
+    if getattr(args,'completed_from',None) is not None:
+        from scripts.e97_grounded_resume import load_reuse
+        retained,completion=load_reuse(args.completed_from,train,panel,enc)
+        for row in retained:
+            records.append(bytes_record(row['candidate'],'grounded-expansion',row['id']));reused.add(row['id'])
+        count=len(reused);publish(args.output/'completion-provenance.json',completion)
+        print('VERIFIED_RECORDS_REUSED',count,flush=True)
     with (args.output/'authored-verification-private.jsonl').open('x') as evidence, (args.output/'authored-candidates-private.jsonl').open('x') as candidates:
+        if completion:
+            evidence.write((args.completed_from/'authored-verification-private.jsonl').read_text());evidence.flush()
+            candidates.write((args.completed_from/'authored-candidates-private.jsonl').read_text());candidates.flush()
         for world in (0,1):
-            cases=[c for c in train if c['variant']==world];files={}
+            cases=[c for c in train if c['variant']==world and c['id'] not in reused];files={}
+            if not cases:continue
             for c in cases:
                 if set(files)&set(c['files']):raise ValueError('world fixture collision')
                 files.update(c['files'])
@@ -109,6 +120,10 @@ def build(args):
                     count+=1
                     if count%128==0:print('VERIFIED_EXPANSION_TRAJECTORIES',count,flush=True)
         for f in (evidence,candidates):f.flush();os.fsync(f.fileno())
+    if count!=2048:raise ValueError('complete frozen curriculum required')
+    if completion:
+        from scripts.e97_grounded_resume import verify_reuse
+        verify_reuse(completion,args.output)
     with ExitStack() as stack:
         for index,(name,quota) in enumerate(config['replay_target_quotas'].items()):
             src=read_source(dict(root=config['replay_root'],sha256=config['replay_sha256'],kind='legacy',include_metadata_sources=[name],target_tokens=quota),stack)
@@ -136,6 +151,7 @@ def build(args):
         outputs={k:dict(path=v,bytes=(authority/v).stat().st_size,sha256=sha(authority/v)) for k,v in names.items()},
         counts=dict(records=len(records),tokens=offset,assistant_target_tokens=targets,train_records=len(records),validation_records=0),
         recipe=config,recipe_sha256=sha(args.recipe),source_target_totals=totals,
+        completion_provenance_sha256=sha(args.output/'completion-provenance.json') if completion else None,
         verification_sha256=sha(args.output/'authored-verification-private.jsonl'),canary_audit_sha256=sha(args.output/'canary-derivative-audit.json'),
         evaluation_cases_sha256=sha(args.output/'fresh-evaluation-cases.json'),independent_holdout_claim=False,first_party_registry_admission=False))
     for p in authority.iterdir():p.chmod(0o400)
@@ -146,7 +162,7 @@ def build(args):
 
 
 if __name__=='__main__':
-    p=argparse.ArgumentParser();p.add_argument('--recipe',type=Path,required=True);p.add_argument('--output',type=Path,required=True);a=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument('--recipe',type=Path,required=True);p.add_argument('--output',type=Path,required=True);p.add_argument('--completed-from',type=Path);a=p.parse_args()
     def terminate(_signum,_frame):raise SystemExit(143)
     signal.signal(signal.SIGTERM,terminate);existed=a.output.exists()
     try:build(a)

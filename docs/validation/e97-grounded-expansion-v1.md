@@ -166,5 +166,27 @@ verification journal SHA
 The initial data-time estimate was too small. Completion would require a separately
 bounded additional data pass for the715 missing records, reusing only independently
 audited completed records and preserving the failed root. No such completion pass
-has been launched. The32-update learning budget and frozen evaluation remain
-unchanged. No optimizer updates have occurred in this new tranche.
+was launched before further authorization. The32-update learning budget and frozen
+evaluation remain unchanged. No optimizer updates have occurred in this new tranche.
+
+## Authorized completion and subsequent phases
+
+The operator now instructed **“do it all”**, authorizing the proposed additional
+1,800-second data-completion pass and the already specified audit/packing,
+32-update training and matched evaluation. No new cases, changed evaluation,
+additional learning updates or automatic retries are authorized.
+
+Completion uses a new root, `grounded-expansion-v1-data-r2`. It rechecks the pinned
+partial audit SHA `886cf51fc0571ef86415c19a708c6b86676ea6b3c2b61f65fadd9e94540ec71e`,
+reconstructs every reused record, and copies both1,333-record journal prefixes
+byte-for-byte. Only the715 missing cases execute in a fresh sandbox. Original
+failure and cleanup evidence stay in the original root; new completion provenance
+binds all three sandboxes and is itself bound into the completed authority.
+
+Resume, curriculum, gate and native regressions: **48 CPU tests passed**, including
+rejection of changed journals, altered combined prefixes and reordered completed
+cases. The trained model will still come from the separately frozen exercised
+BF16-SR trainer, not the completion-code snapshot or an experimental precision
+policy. The next phase first audits all2,048 authored records, the18 deduplicated
+canary records and unchanged replay, then reports actual32-update exposures before
+launching any optimizer step.
