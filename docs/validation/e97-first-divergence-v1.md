@@ -87,8 +87,73 @@ success/failure; one checked GPU lease; local CUDA selection; NUMA binding;
 isolated cache; both expandable allocator variables. Worker1,200s, outer1,800s,
 teardown30s. No retries, no overlapping GPU work, no delegated workers.
 
-Results pending. This is a single-record training-forward diagnostic, **not the
-actual64K packed multi-document trainer qualification**. The real SFT trainer
-packs independent records contiguously, resets state at record starts, masks
-cross-record targets, and pads only the unused pack tail. The existing numerical
-gate remains failed; no admission, promotion, training or budget expansion.
+## Audited result
+
+Source **`e684c887`**, managed process `proc_b51c`,225s,exit0. All eight executions
+matched their original current-reference score vectors exactly; teacher CE means
+and padded lengths matched exactly. All four pairs of repeated traces matched
+bitwise. Coarse/fine block input and output hashes also match each other, for both
+actor and teacher. The isolated turn and both observation levels are bound.
+
+The37 coarse sites cover2,542 causal rows. Embeddings and first-layer inputs are
+identical. Layer0 output first differs at zero-based prefix position12,feature10;
+maximum absolute difference across that site is.0078125. No need to inspect the
+other17 layers to locate the first-layer issue.
+
+The28 fine sites distinguish **topological site order from token chronology**:
+
+| Site | First differing logical token | Max absolute difference across captured site |
+|---|---:|---:|
+|Outer norm input/output, block/mixer inputs|exact|0|
+|QKV projection input|exact|0|
+|QKV projection output|2519|.015625|
+|Alpha projection output|exact|0|
+|Output-gate / erase / write projection outputs|2520|.0009765625 / .0078125 / .0078125|
+|**Output-projection input (mixer readout)**|**1**|.001953125|
+|Output-projection output / mixer output|10|.001953125|
+|Post-mixer norm input/output|12|.015625|
+|MLP input|12|.015625|
+|Block output|12|.0078125|
+
+**The early discrepancy is between the raw projections and the mixer readout,
+already at prefix token1.** An independent CPU audit loaded both saved fine tensor
+banks and confirmed that QKV, alpha, output-gate, erase-gate and write-gate raw
+projections are bitwise identical throughout all2,519 prefill rows. Mixer readout
+row0 matches; row1 does not. The remaining interval contains projection
+postprocessing, recurrence and output gating. Actual postprocessed kernel operands
+and launch flags still need comparison before attributing this to a particular
+kernel instruction, preprocessing step, mask specialization or workspace layout.
+
+The machine summary's `first=qkv_proj.output` follows the declared **site order**;
+it is **not** evidence that a token2519 projection error causes the earlier token1
+readout discrepancy. Those later QKV mismatches are a separate demonstrated
+same-input/different-layout projection result: token2519 uses an actor `[1,1,11520]`
+QKV output versus a teacher512-row projection call. They cannot explain an earlier
+causal token. The output projection/MLP use actor2519-row versus teacher2560-row
+calls; the entire original turn/padded shape was retained during tracing.
+
+These observations localize two discrepancies. They do not establish that fixing
+one interval is sufficient to remove the final.051846 probability gap.
+
+Parameters and buffers remain unchanged, no gradients or recurrence autotune
+entries appeared, and peak allocated HBM was9,538,251,264 bytes. All17,680 source
+files and the inventory passed before/after checks in runner and controller.
+`cleanup.log` confirms all eight GPUs idle, no compute processes and no active
+lease files without reaping. No additional GPU experiment was launched.
+
+Artifacts retained privately: four tensor banks, eight score/call/hash receipts,
+`result-audit.json` (independent native-score/repeat/early-prefix checks), and
+`cross-phase-audit.json` (verified fine tensor hashes and coarse/fine block binding).
+
+| Artifact | SHA256 |
+|---|---|
+|Source inventory|`6c3477440f4890660dc0e9e6609abb2a2371ea8456ab6ef97143d511180a6eb7`|
+|Coarse comparison|`f1b030e3d321e4191d3c96168b7802107f31204afa288d60687a4f39b5bca640`|
+|Fine comparison|`eed8563e11a7f71c8942b9037b13f94aeb1830c7e525f38918d3c9d49cd1b7a3`|
+|Summary|`34c7b1dd33ef245b3c5c63b99071a0b6912d38cbed2088537ebc5631dcc88c4a`|
+
+This is a single-record training-forward diagnostic, **not the actual64K packed
+multi-document trainer qualification**. The real SFT trainer packs independent
+records contiguously, resets state at record starts, masks cross-record targets,
+and pads only the unused pack tail. The existing numerical gate remains failed;
+no admission, promotion, training or budget expansion.
