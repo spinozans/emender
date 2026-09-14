@@ -37,8 +37,14 @@ def variants(records,order,sentinels,context=65536,vocab=50281):
     if anchor!=order[0]:raise ValueError('anchor must be first authority record')
     base=assemble(records,order,context)
     # Choose offsets by token geometry alone, before seeing any model output.
-    k=min(range(1,len(order)),key=lambda j:abs(sum(len(records[x]['tokens']) for x in order[j:])-context//2))
-    middle=assemble(records,rotate(order,k),context);late=assemble(records,rotate(order,1),context)
+    late=assemble(records,rotate(order,1),context);last=late['starts'][anchor]
+    candidates=list(range(1,len(order)))
+    if context==65536:
+        candidates=[j for j in candidates if all(
+            sum(len(records[x]['tokens']) for x in order[j:])%mod not in (0,last%mod) for mod in (16,512))]
+    if not candidates:raise ValueError('no rotation meets placement residues')
+    k=min(candidates,key=lambda j:abs(sum(len(records[x]['tokens']) for x in order[j:])-context//2))
+    middle=assemble(records,rotate(order,k),context)
     positions=[x['starts'][anchor] for x in (base,middle,late)]
     if context==65536 and (not 28000<=positions[1]<=38000 or positions[2]<55000
             or len({x%512 for x in positions})<3 or len({x%16 for x in positions})<3):raise ValueError('placement coverage')

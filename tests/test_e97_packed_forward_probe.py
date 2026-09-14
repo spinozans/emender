@@ -20,6 +20,13 @@ def test_materialization_whole_records_boundaries_and_tail():
     with pytest.raises(ValueError):assemble(records,[0,1,2],8)
 
 
+def test_real_pack_geometry_selects_middle_subject_to_frozen_residue_constraints():
+    lengths=[2657,4522,1801,341,4678,2787,4662,338,245,4846,2973,2963,4836,2650,409,1612,359,194,191,4674,2521,1272,4526,4836]
+    records={i:record(n) for i,n in enumerate(lengths)}
+    layouts=variants(records,list(records),[0,12,23])
+    assert [layouts[k]['starts'][0] for k in ('original','middle','late')]==[0,31043,58236]
+
+
 def test_interventions_change_only_declared_prefix_reset_or_invalid_tail():
     records={0:record(70),1:record(80,100),2:record(60,200)}
     v=variants(records,[0,1,2],[0,1,2],256,512);late=v['late'];changed=v['predecessor_changed'];start=late['starts'][0]
