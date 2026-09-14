@@ -662,7 +662,14 @@ def e88_triton_forward(
         S_ckpt.stride(3), S_ckpt.stride(4),
     )
 
-    # Pick BLOCK_H + num_warps.
+    # FP32 policy uses fixed arithmetic geometry, including direct forward calls.
+    # The autograd wrapper also forwards this choice to backward replay.
+    if recurrent_state_precision == 'fp32' and block_h is None:
+        block_h = 1
+        if num_warps is None:
+            num_warps = 4
+
+    # Pick BLOCK_H + num_warps. Legacy retains its historical timing-based path.
     if block_h is None:
         # BLOCK_H=1 is always best at H >= 64 (BLOCK_H>1 spills the
         # [BH, N, V] register state). After fusing gate + L2-norm into

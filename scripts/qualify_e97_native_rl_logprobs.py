@@ -82,6 +82,8 @@ def run(args):
     model=loaded.model.eval()
     from ndm.recurrent_precision import configure_recurrent_precision
     state_precision=configure_recurrent_precision(model,recipe.get('recurrent_state_precision'))
+    if state_precision=='fp32' and (torch.backends.cuda.matmul.allow_tf32 or torch.get_float32_matmul_precision()!='highest'):
+        raise ValueError('FP32 recurrent assay requires untruncated FP32 matrix arithmetic')
     before=parameter_digest(model)
     if any(p.dtype!=torch.bfloat16 for p in model.parameters()):raise ValueError('persistent parameter dtype')
     probes=[];probe_enabled='head_probe' in recipe
@@ -156,6 +158,18 @@ def run(args):
                 remaining='End-to-end RL gradients, DDP/episode normalization, optimizer integration, reward contrast',scope=recipe['scope'])
     if 'recurrent_state_precision' in recipe:
         result['recurrent_state_precision']=state_precision
+        if state_precision=='fp32':
+            from ndm.recurrent_precision import FIXED_RECURRENT_KERNEL
+            from ndm.triton.e88_triton_forward import _AUTOTUNE_CACHE
+            pair=np.array([abs(a-b) for r in records for a,b in zip(r['teacher'],r['actor_replay'])])
+            result['recurrent_kernel']=FIXED_RECURRENT_KERNEL
+            result['legacy_autotune_cache_entries']=len(_AUTOTUNE_CACHE)
+            result['matmul_policy']=dict(tf32=torch.backends.cuda.matmul.allow_tf32,
+                bf16_reduced_precision_reduction=torch.backends.cuda.matmul.allow_bf16_reduced_precision_reduction,
+                float32_precision=torch.get_float32_matmul_precision())
+            result['current_policy_pair']=dict(abs_max=float(pair.max()),abs_p99=float(np.quantile(pair,.99)),
+                passed=bool(pair.max()<=recipe['teacher_abs_max'] and np.quantile(pair,.99)<=recipe['teacher_abs_p99']),
+                scope='Actual current-policy forced-token scoring; NOT historical recorded behavior probabilities')
         if any(p.grad is not None for p in model.parameters()):raise ValueError('unexpected gradients in forward assay')
     if probe_enabled:
         pairs=[(a,b) for p in probes for a,b in zip(p.actor,p.teacher)]

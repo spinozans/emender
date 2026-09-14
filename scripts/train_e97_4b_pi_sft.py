@@ -184,7 +184,9 @@ def configure_precision(model, args) -> dict:
     }
     # Preserve exact legacy resume metadata, but persist the new numerical policy.
     if state_precision != "legacy":
+        from ndm.recurrent_precision import FIXED_RECURRENT_KERNEL
         policy["recurrent_state_precision"] = state_precision
+        policy["recurrent_kernel"] = FIXED_RECURRENT_KERNEL
     return policy
 
 

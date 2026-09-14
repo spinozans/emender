@@ -836,8 +836,13 @@ class E88TritonFunction(torch.autograd.Function):
         reset_before=None,
         valid_mask=None,
         recurrent_state_precision='legacy',
+        launch_config=None,
     ):
         from ndm.triton.e88_triton_forward import e88_triton_forward
+        from ndm.recurrent_precision import recurrent_launch_config
+        ctx.launch_config = recurrent_launch_config(recurrent_state_precision, launch_config)
+        launch = {} if ctx.launch_config is None else dict(
+            block_h=ctx.launch_config[0], num_warps=ctx.launch_config[1])
         out, S_final, S_ckpt = e88_triton_forward(
             S0, k, v, q, decay, g=g, normalize_kq=normalize_kq,
             apply_silu_qkv=apply_silu_qkv, raw_write=raw_write,
@@ -846,6 +851,7 @@ class E88TritonFunction(torch.autograd.Function):
             valid_length=valid_length, reset_before=reset_before,
             valid_mask=valid_mask,
             recurrent_state_precision=recurrent_state_precision,
+            **launch,
         )
         ctx.normalize_kq = bool(normalize_kq)
         ctx.apply_silu_qkv = bool(apply_silu_qkv)
@@ -894,6 +900,8 @@ class E88TritonFunction(torch.autograd.Function):
             "reset_before": None,
             "valid_mask": None,
         }
+        if ctx.launch_config is not None:
+            packed_controls.update(block_h=ctx.launch_config[0], num_warps=ctx.launch_config[1])
         if ctx.has_gate and ctx.has_split_edit:
             (k, v, q, decay, S_ckpt, g, erase_gate, value_write_gate,
              reset_saved, valid_saved) = ctx.saved_tensors
@@ -915,7 +923,7 @@ class E88TritonFunction(torch.autograd.Function):
             return (
                 d_S0, d_k, d_v, d_q, d_decay, d_g,
                 None, None, None, d_erase, d_value_write, None, None,
-                None, None, None,
+                None, None, None, None,
             )
         elif ctx.has_gate:
             k, v, q, decay, S_ckpt, g, reset_saved, valid_saved = ctx.saved_tensors
@@ -933,7 +941,7 @@ class E88TritonFunction(torch.autograd.Function):
                 **packed_controls,
             )
             return (d_S0, d_k, d_v, d_q, d_decay, d_g, None, None,
-                    None, None, None, None, None, None, None, None)
+                    None, None, None, None, None, None, None, None, None)
         elif ctx.has_split_edit:
             (k, v, q, decay, S_ckpt, erase_gate, value_write_gate,
              reset_saved, valid_saved) = ctx.saved_tensors
@@ -954,7 +962,7 @@ class E88TritonFunction(torch.autograd.Function):
             return (
                 d_S0, d_k, d_v, d_q, d_decay, None,
                 None, None, None, d_erase, d_value_write, None, None,
-                None, None, None,
+                None, None, None, None,
             )
         else:
             k, v, q, decay, S_ckpt, reset_saved, valid_saved = ctx.saved_tensors
@@ -971,7 +979,7 @@ class E88TritonFunction(torch.autograd.Function):
                 **packed_controls,
             )
             return (d_S0, d_k, d_v, d_q, d_decay, None, None, None,
-                    None, None, None, None, None, None, None, None)
+                    None, None, None, None, None, None, None, None, None)
 
 
 def e88_triton(
@@ -991,6 +999,7 @@ def e88_triton(
     reset_before=None,
     valid_mask=None,
     recurrent_state_precision='legacy',
+    launch_config=None,
 ):
     """Differentiable Triton E88 — returns (out, S_final).
 
@@ -1006,5 +1015,5 @@ def e88_triton(
     return E88TritonFunction.apply(
         S0, k, v, q, decay, g, normalize_kq, apply_silu_qkv, raw_write,
         erase_gate, value_write_gate, linear_state, valid_length,
-        reset_before, valid_mask, recurrent_state_precision,
+        reset_before, valid_mask, recurrent_state_precision, launch_config,
     )

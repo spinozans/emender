@@ -56,9 +56,13 @@ def test_sft_policy_inherits_and_records_the_single_switch():
         mlp_checkpoint_chunk_size=4096,lr=1e-5,weight_decay=.01,warmup_steps=0)
     assert configure_precision(model,args)['recurrent_state_precision']=='fp32'
     args.recurrent_state_precision=None
-    assert configure_precision(model,args)['recurrent_state_precision']=='fp32'
+    policy=configure_precision(model,args)
+    assert policy['recurrent_state_precision']=='fp32'
+    from ndm.recurrent_precision import FIXED_RECURRENT_KERNEL
+    assert policy['recurrent_kernel']==FIXED_RECURRENT_KERNEL
     args.recurrent_state_precision='legacy'
-    assert 'recurrent_state_precision' not in configure_precision(model,args)
+    legacy=configure_precision(model,args)
+    assert 'recurrent_state_precision' not in legacy and 'recurrent_kernel' not in legacy
     assert model.weight.dtype==torch.bfloat16
 
 
@@ -96,15 +100,15 @@ def test_cpu_reference_distinguishes_state_and_projection_storage(state_dtype):
     assert out.dtype==torch.bfloat16 and final.dtype==checkpoints.dtype==state_dtype
 
 
-def _inputs(device,T=64,N=64):
+def _inputs(device,T=64,N=64,H=2):
     torch.manual_seed(974223)
     def leaf(shape,gate=False):
         x=torch.randn(shape,device=device)*.1
         return (x.sigmoid() if gate else x).to(torch.bfloat16).detach().requires_grad_()
-    shape=(T,1,2,N)
-    s=(torch.randn((1,2,N,N),device=device)*.01).requires_grad_()
+    shape=(T,1,H,N)
+    s=(torch.randn((1,H,N,N),device=device)*.01).requires_grad_()
     k,v,q=leaf(shape),leaf(shape),leaf(shape)
-    decay=torch.full((T,1,2),.9,device=device,dtype=torch.bfloat16,requires_grad=True)
+    decay=torch.full((T,1,H),.9,device=device,dtype=torch.bfloat16,requires_grad=True)
     g,e,w=leaf(shape),leaf(shape,True),leaf(shape,True)
     return s,k,v,q,decay,g,e,w
 
@@ -211,3 +215,89 @@ def test_cuda_workspace_storage_preserves_live_fp32_state(monkeypatch,training,g
         assert s.grad.dtype==torch.float32 and torch.isfinite(s.grad).all()
     else:
         assert all(x.grad is None for x in (s,k,v,q,d,g,e,w))
+
+
+def test_fixed_launch_policy_and_saved_kernel_identity():
+    from ndm.recurrent_precision import recurrent_launch_config,FIXED_RECURRENT_KERNEL
+    assert recurrent_launch_config('fp32')==(1,4)
+    assert recurrent_launch_config('legacy') is None
+    assert recurrent_launch_config('legacy',(2,4))==(2,4)
+    with pytest.raises(ValueError):recurrent_launch_config('fp32',(3,7))
+    with pytest.raises(ValueError,match='kernel policy'):
+        restore_checkpoint_precision({},dict(sft_precision=dict(recurrent_state_precision='fp32',recurrent_kernel='unknown')))
+    restored=restore_checkpoint_precision({},dict(sft_precision=dict(recurrent_state_precision='fp32',recurrent_kernel=FIXED_RECURRENT_KERNEL)))
+    assert restored['layer_kwargs']['recurrent_state_precision']=='fp32'
+
+
+def test_legacy_60_heads_really_times_six_candidates_and_cache_omits_valid_length(monkeypatch):
+    from importlib import import_module
+    fw=import_module('ndm.triton.e88_triton_forward')
+    calls=[]
+    class FakeKernel:
+        def __getitem__(self,grid):
+            def launch(*args,**kwargs):calls.append((kwargs['BLOCK_H'],kwargs['num_warps']))
+            return launch
+    monkeypatch.setattr(fw,'_e88_forward_kernel',FakeKernel())
+    monkeypatch.setattr(fw,'_AUTOTUNE_CACHE',{})
+    monkeypatch.setattr(torch.cuda,'synchronize',lambda:None)
+    args=(None,)*10+(True,None,None,None,(0,)*55)
+    def run(heads,valid_length):
+        return fw._autotune_kernel(args,1,16,heads,64,64,torch.bfloat16,16,True,True,False,False,True,valid_length,False,False)
+    chosen=run(60,16)
+    assert len(calls)==48 and set(calls)=={(b,w) for b in (1,2,4) for w in (2,4)}
+    assert run(60,1)==chosen and len(calls)==48
+    assert run(2,16)==(1,4) and len(calls)==48
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(),reason='leased CUDA required')
+@pytest.mark.parametrize('length',[32,512])
+def test_cuda_production_60_heads_fixed_forward_and_backward(monkeypatch,record_property,length):
+    from importlib import import_module
+    fw=import_module('ndm.triton.e88_triton_forward')
+    bw=import_module('ndm.triton.e88_triton_backward')
+    import os
+    torch.cuda.set_device(int(os.environ.get('LOCAL_RANK','0')))
+    torch.backends.cuda.matmul.allow_tf32=False
+    torch.backends.cuda.matmul.allow_bf16_reduced_precision_reduction=False
+    def forbidden(*args,**kwargs):raise AssertionError('FP32 path entered timing-based autotuner')
+    monkeypatch.setattr(fw,'_autotune_kernel',forbidden)
+    original=bw.e88_triton_backward;backward_launches=[]
+    def backward(*args,**kwargs):
+        backward_launches.append((kwargs.get('block_h'),kwargs.get('num_warps')))
+        return original(*args,**kwargs)
+    monkeypatch.setattr(bw,'e88_triton_backward',backward)
+    inputs=_inputs('cuda',T=length,N=64,H=60);s,k,v,q,d,g,e,w=inputs
+    reset=torch.zeros(length,1,dtype=torch.bool,device='cuda');reset[length//2]=True
+    valid=torch.ones_like(reset);valid[-3:]=False
+    out,state=bw.e88_triton(s,k,v,q,d,g,normalize_kq=True,apply_silu_qkv=True,
+        erase_gate=e,value_write_gate=w,reset_before=reset,valid_mask=valid,recurrent_state_precision='fp32')
+    (out.float().square().mean()+state.square().mean()).backward()
+    assert backward_launches==[(1,4)] and s.grad.dtype==torch.float32
+    reference=[x.detach().clone().requires_grad_() for x in inputs]
+    ro,rs=_oracle(*reference,reset,valid)
+    (ro.float().square().mean()+rs.square().mean()).backward()
+    errors=dict(state=_relative(state,rs),state_gradient=_relative(s.grad,reference[0].grad),
+        projection_gradients=max(_relative(x.grad,y.grad) for x,y in zip(inputs[1:],reference[1:])))
+    for name,value in errors.items():record_property(name+'_relative_l2',value)
+    assert errors['state']<=1e-4 and errors['state_gradient']<=.005 and errors['projection_gradients']<=.02
+    assert all(torch.isfinite(x.grad).all() for x in inputs)
+    if length==32:
+        # Same actual tensors and arithmetic flags, different explicit launch
+        # geometry. This is a bounded causal kernel experiment, not new weights.
+        variants=[]
+        with torch.no_grad():
+            for bh in (1,2,4):
+                for nw in (2,4):
+                    first=None
+                    for repeat in range(2):
+                        vo,vs,_=fw.e88_triton_forward(s,k,v,q,d,g=g,normalize_kq=True,apply_silu_qkv=True,
+                            erase_gate=e,value_write_gate=w,reset_before=reset,valid_mask=valid,
+                            recurrent_state_precision='fp32',block_h=bh,num_warps=nw)
+                        current=(vo.cpu(),vs.cpu())
+                        assert all(torch.isfinite(t).all() for t in current)
+                        if first is None:first=current
+                        else:assert all(torch.equal(a,b) for a,b in zip(first,current)), 'fixed launch did not repeat exactly'
+                    variants.append(dict(block_h=bh,num_warps=nw,
+                        output_abs_max=float((first[0].float()-out.detach().cpu().float()).abs().max()),
+                        state_abs_max=float((first[1]-state.detach().cpu()).abs().max())))
+        record_property('fixed_input_launch_variants',json.dumps(variants,sort_keys=True))
