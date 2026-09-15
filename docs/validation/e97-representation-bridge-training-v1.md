@@ -76,7 +76,21 @@ packing/exposure audits. No new capability result is claimed at launch.
 
 ## Phase status
 
-Authorized for the full bounded sequence. Data generation is the first managed
-phase; on success, continue audit/packing, attended exposure review,32-update SFT,
-and matched task/retention evaluation without additional routine operator handoffs.
-Stop and preserve evidence on failure; do not reopen a completed phase.
+Authorized for the full bounded sequence. **`proc_edfb` is running the768-record
+native data verification**, from frozen source `5263ada2` (17,733 files). The same88
+CPU tests also passed inside that immutable export; its input-binding preflight
+verified512 paired rehearsal IDs and96 frozen unassisted evaluation cases.
+
+Controller: `R/representation-bridge-v1-training-control/run-phase.sh`
+(`R=/mnt/nvme2n1/erikg/e97_systematic_posttraining`).
+
+|Identity|SHA256|
+|---|---|
+|Source inventory|`f7bb2c1250a8d7ab39f56d2e6b51d3a86a69920b3f525547c0c51385fb7e70fa`|
+|Training recipe|`e363bcfda60df0e57f5466773cf57805286f64e4fb148e183410f696bba31cc9`|
+|Outer phase launcher|`ef6b8ef778401ac78da3e867d3956b419126764eeb2cfc4e922daf29aac45673`|
+
+On success, continue audit/packing, attended exposure review,32-update SFT and
+matched task/retention evaluation without additional routine operator handoffs.
+Stop and preserve evidence on failure; do not reopen a completed phase. No model
+has been loaded or updated in this new experiment at data launch.
