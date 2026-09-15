@@ -125,6 +125,16 @@ pairing, and froze the throwaway12-episode plan SHA
 The outcome gate is measurement completeness and unchanged weights, not a score;
 every fixed model failure remains a result and no retry is permitted.
 
+The first immutable Stage A launch `proc_1506` passed13 CPU tests and froze the
+expected plan, then stopped before its first generation: Pi registered the exact
+tools in a different order and the extension compared ordered name arrays. The
+failed root records `pi_history_mismatch`; model fingerprints are unchanged,
+gradients absent, peak HBM8,091,958,272 bytes and the lease released. Registration
+order is not schema semantics. Both extension and owner now compare exact name/
+schema sets independent of order. `proc_32e1` passed12 tests, including a real Pi
+control with all11 Stage A tools registered together and an exact causal `read`.
+A new-root Stage A launch is allowed because zero model episodes were consumed.
+
 ## Historical session evidence immediately preceding this programme
 
 - Failed model-session preflight `proc_79c2`: session-token plan mismatch; zero

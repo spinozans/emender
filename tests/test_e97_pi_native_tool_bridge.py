@@ -23,6 +23,12 @@ def test_bridge_ingests_exact_pi_result_before_next_generation():
  second=b.next(request(b,b.history+[result]));assert second['stop_reason']=='stop' and b.final=='done' and '1: opaque' in prompts[1]
  assert b.close(b.history)['verified'] and b.closed and len(b.generations)==2
 
+def test_bridge_accepts_schema_identical_registration_order():
+ tools=manifest_tools('read','bash');text=frame(tools,'finish',{'message':'done'})
+ b=NativePiToolBridge({'system':'s','tools':tools,'max_turns':2,'generation_budget':1000,'episode_generation_budget':2000,'episode_seconds':30},'q',ENC,lambda p,n,d:(text,ENC.encode_ordinary(text),'valid'))
+ req=request(b,b.history);req['tools']=list(reversed(tools));assert b.next(req)['stop_reason']=='stop'
+
+
 def test_bridge_rejects_mismatched_result_identity():
  tools=[read_tool()];text=frame(tools,'read',{'path':'a'})
  b=NativePiToolBridge({'system':'s','tools':tools,'max_turns':2,'generation_budget':1000,'episode_generation_budget':2000,'episode_seconds':30},'q',ENC,lambda p,b,d:(text,ENC.encode_ordinary(text),'valid'))
@@ -53,6 +59,18 @@ def test_real_pi_stage_a_exact_schema_safe_read(tmp_path):
  panel={'system':'safe stage A','tools':tools,'max_turns':4,'generation_budget':2048,'episode_generation_budget':4096,'episode_seconds':30};b=NativePiToolBridge(panel,'read safely',ENC,generate)
  terminal=serve_pi_native_tools(b,tmp_path/'safe-pi',pi_bin=pi,provider_extension=Path('configs/pi/e97-pi-native.ts'),pi_extensions=[Path('configs/pi/e97-pi-native-stage-a-tools.ts')],cwd=cwd,seconds=60,no_builtin_tools=True,extra_env={'E97_PI_TOOL_MANIFEST':str(Path('configs/pi/e97-active-tool-surface-v1.json').resolve())})
  assert terminal['close_verified'] and 'safe-value' in b.episode.text()
+
+
+def test_real_pi_all_stage_a_schemas_safe_read(tmp_path):
+ pi=shutil.which('pi')
+ if not pi:return
+ tools=manifest_tools('read','bash','edit','write','process','ffgrep','fffind','web_search','source_check','fetch_content','get_search_content');cwd=tmp_path/'all-cwd';cwd.mkdir();(cwd/'sample.txt').write_text('all-safe\n')
+ turns=iter([frame(tools,'read',{'path':'sample.txt'}),frame(tools,'finish',{'message':'done'})])
+ def generate(prompt,budget,deadline):text=next(turns);return text,ENC.encode_ordinary(text),'valid'
+ panel={'system':'all stage A','tools':tools,'max_turns':4,'generation_budget':2048,'episode_generation_budget':4096,'episode_seconds':30};b=NativePiToolBridge(panel,'read safely',ENC,generate)
+ extensions=[Path('configs/pi/e97-pi-native-stage-a-tools.ts'),Path('/home/erikg/.pi/agent/npm/node_modules/@ff-labs/pi-fff/src/index.ts'),Path('/home/erikg/.pi/agent/npm/node_modules/pi-web-access/index.ts')]
+ terminal=serve_pi_native_tools(b,tmp_path/'all-pi',pi_bin=pi,provider_extension=Path('configs/pi/e97-pi-native.ts'),pi_extensions=extensions,cwd=cwd,seconds=60,no_builtin_tools=True,extra_env={'E97_PI_TOOL_MANIFEST':str(Path('configs/pi/e97-active-tool-surface-v1.json').resolve())})
+ assert terminal['close_verified'] and 'all-safe' in b.episode.text()
 
 
 def test_real_pi_executes_builtin_read_and_returns_exact_result(tmp_path):

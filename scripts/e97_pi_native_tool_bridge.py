@@ -51,7 +51,10 @@ class NativePiToolBridge:
   self.episode.append_context(result);self.history.append(result);self.pending=None
  def next(self,request):
   if self.failed or self.closed or self.final is not None:self.stop('bridge_not_active')
-  if request.get('systemPrompt')!=self.panel['system'] or request.get('model')!=MODEL or request.get('provider')!=PROVIDER or compact(request.get('tools'))!=compact(self.tools):self.stop('pi_contract_mismatch')
+  actual_tools=request.get('tools')
+  tools_equal=(isinstance(actual_tools,list) and len(actual_tools)==len(self.tools) and
+   compact(sorted(actual_tools,key=lambda t:t.get('name','')))==compact(sorted(self.tools,key=lambda t:t['name'])))
+  if request.get('systemPrompt')!=self.panel['system'] or request.get('model')!=MODEL or request.get('provider')!=PROVIDER or not tools_equal:self.stop('pi_contract_mismatch')
   self._ingest(request.get('messages'));internal=0
   while True:
    if len(self.generations)>=self.panel['max_turns']:self.stop('turn_budget')
