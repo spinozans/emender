@@ -173,7 +173,8 @@ public Pi errors, unchanged source fixtures, model immutability, controller
 authorities and cleanup. Its bounded verdict is
 `qualified-negative-outcomes-with-incomplete-generation-receipts`; audit SHA is
 `5aed2bb6305fd507e4444e24112353903d1dfe2d843e94c6705c4fc962f680fb`.
-The evaluator retained stop reasons but not the rejected generated token IDs,
+`proc_4e2a` reproduced that exact audit SHA from immutable commit `a381e003` and
+verified its source archive unchanged. The evaluator retained stop reasons but not the rejected generated token IDs,
 so the eight/four stop-reason split cannot be independently reconstructed from
 bytes. The exact0/12 observable outcomes and no-tool/no-finish histories remain
 verified. Future evaluations persist private generation receipts. These episodes
