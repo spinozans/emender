@@ -48,7 +48,14 @@ All16 episodes were independently regraded against actual filesystem snapshots;
 verified. This is **Pi-fronted OpenHands**, not Pi-native tools, independent
 repository evidence or new learning. The bounded compatibility budget is closed;
 GPUs are idle and there is no checkpoint promotion. Multi-task session lifecycle
-and repository-workflow qualification are the next engineering milestones.
+handling remains CPU-only. The subsequent
+[miniature repository diagnostic](validation/e97-pi-session-repository-v1.md)
+completed **0/4 direct and0/4 through Pi**:64 failed reads of nonexistent
+`/testbed/testbed.js`, with no directory discovery, tests, edits or finish.
+The route transcripts matched exactly; all eight original snapshots remained
+unchanged and all fresh verifiers failed. Its capability gate failed and budget
+is closed. Separate training-only discovery/recovery preparation is continuing;
+evaluation traces are excluded, and no additional training is authorized.
 
 ## Goal and actual capability
 

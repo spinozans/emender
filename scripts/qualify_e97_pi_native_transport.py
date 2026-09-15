@@ -42,15 +42,16 @@ def scripted_controls():
 
 
 def texts(control):
-    return [native_turn(dict(role='assistant', content=f'Authored transport control {i+1}.',
-              reasoning_content='PRIVATE_ANALYSIS_CONTROL_SENTINEL', think=None,
+    return [native_turn(dict(role='assistant',
+              content=control['commentaries'][i] if 'commentaries' in control else f'Authored transport control {i+1}.',
+              reasoning_content=control.get('private_analysis', 'PRIVATE_ANALYSIS_CONTROL_SENTINEL'), think=None,
               tool_calls=[dict(type='function', function=dict(name=name, arguments=compact(args)))]))
             for i, (name, args) in enumerate(control['steps'])]
 
 
 def run_control(panel, control, encoding, output, pi_bin, extension):
     output.mkdir(mode=0o700)
-    prompt = 'Run the authored native transport control; this is not a model evaluation.'
+    prompt = control.get('prompt', 'Run the authored native transport control; this is not a model evaluation.')
     scripted = texts(control)
     observed = []
     prefixes = []
