@@ -8,6 +8,7 @@ from scripts.e97_pi_native_codec import validate_generated_turn
 from scripts.e97_pi_native_tool_bridge import NativePiToolBridge
 from scripts.e97_pi_native_tool_transport import serve_pi_native_tools
 from scripts.eval_e97_native_execution import publish,sha
+from scripts.freeze_e97_pi_tool_surface import PACKAGES,tree_identity
 R=Path('/mnt/nvme2n1/erikg/e97_systematic_posttraining');PANEL_SHA='07cc1d5843ee4060503ecdcf7d2bb813dce51fa0aeba89df367b7696e47994ef';CHECKPOINT_SHA='9b78628d47c48c304c14de50399fe1853d8c83386c7cf5d9bd4a0e878bf679fa'
 
 def freeze(args):
@@ -72,6 +73,12 @@ def run(args):
  if (sha(plan['panel'])!=plan['panel_sha256'] or plan['panel_sha256']!=PANEL_SHA or
   sha(plan['model_source_panel'])!=plan['model_source_panel_sha256'] or sha(plan['pi_inventory'])!=plan['pi_inventory_sha256'] or
   sha(plan['tool_manifest'])!=plan['tool_manifest_sha256']):raise ValueError('authority changed')
+ manifest=json.loads(Path(plan['tool_manifest']).read_text())
+ if manifest['model_visible_tools']!=panel['tools']:raise ValueError('panel/tool schema mismatch')
+ for name,(package_root,entry) in PACKAGES.items():
+  expected=manifest['packages'][name];actual=tree_identity(package_root)
+  if (actual['file_count']!=expected['file_count'] or actual['tree_sha256']!=expected['tree_sha256'] or
+   sha(Path(package_root)/'package.json')!=expected['package_json_sha256'] or sha(Path(package_root)/entry)!=expected['entry_sha256']):raise ValueError('installed Pi extension changed')
  if len(cases)!=plan['max_model_episodes'] or [c['id'] for c in cases]!=plan['episode_order']:raise ValueError('case budget/order')
  if not os.environ.get('CUDA_VISIBLE_DEVICES') or len(os.environ['CUDA_VISIBLE_DEVICES'].split(','))!=1:raise ValueError('one leased GPU')
  torch.cuda.set_device(0);torch.backends.cuda.matmul.allow_bf16_reduced_precision_reduction=False;target=plan['target'];loaded=load_e97_checkpoint(target['checkpoint'],args_json=plan['args_json'],device=torch.device('cuda',0),dtype=torch.bfloat16,weight_mode='train',use_triton=True,mmap=True);loaded.model.eval();encoding=tiktoken.get_encoding('p50k_base')
