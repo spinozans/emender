@@ -196,11 +196,29 @@ all task settlements and session closure are already verified. `proc_0041`
 passed36 focused tests; `proc_c580` passed the expanded **121-test** suite,
 including real single-task, honest-failure and two-task Pi loops.
 
-The next frozen scripted control uses one real Pi process and one qualified
-OpenHands sandbox across two explicit native records. Task one establishes an
-environment variable and creates a file; task two must observe the persistent
-shell/workspace, edit and verify that file. Require two native closures, exact
-prior-history identity, retained private records, absent prior task text from the
-second native prompt, external paused-reader state, public/private separation,
-source/runtime audit and owned cleanup. This is lifecycle/executor evidence only:
-zero model sampling and no conversational-memory claim.
+The frozen scripted control used one real Pi process and one qualified OpenHands
+sandbox across two explicit native records. Task one established an environment
+variable and created a file; task two observed the persistent shell/workspace,
+edited and verified that file.
+
+`proc_d8d3`, immutable source `edd3b103`, passed in31 seconds after122 CPU tests.
+Both task closures and the final session close were verified. The audit independently
+reconstructed all eight native prompts/turn token sequences, checked six real
+OpenHands calls and21 owner RPC operations, bound the final paused-reader snapshot
+(`seed.txt` unchanged, `shared.txt` changed from `alpha` to `beta`), verified the
+environment variable and `/testbed` working directory persisted, and checked18 Pi
+messages. Both private native records and the entire public history were retained;
+task-one text/private reasoning was absent from task two's native context. The
+single agent and reader containers were distinct and cleaned. Source, copied Pi
+runtime and interpreter audits passed. Zero model generations or updates occurred.
+
+- Plan SHA: `e49683f6c47e4ebf6433488b0dfc24cde0af00e98fb187269e308feecadc69a5`.
+- Summary SHA: `a9370fda914020a8d3d3cb6c48db1e7667dfbb19eb80da1f0217bbbaecfca3`.
+- Independent audit SHA: `d32376a78a84abb19ed251f95105b8d8acfae0a21ba6bcc92308dff48f77e16d`.
+
+This establishes bounded lifecycle/executor continuity, **not conversational
+model memory, model multi-task success, resume/fork/compaction, or general daily
+interactive use**. The next model-facing session check must first preserve
+honest failed-task settlement so task one cannot silently prevent or contaminate
+task two. It can then reuse already-qualified structured cases as diagnostics;
+no fresh generalization or training claim follows.

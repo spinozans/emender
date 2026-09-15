@@ -58,8 +58,11 @@ is closed. Separate training-only discovery/recovery preparation passed and was 
 eight disjoint candidates,52 turns,44 calls,12 authentic errors,16 positive/negative
 verifier controls and32 cleanups. It remains non-admitted preparation; evaluation
 traces are excluded and no training is authorized. Separately, the real two-task
-Pi RPC lifecycle now passes its expanded121-test CPU suite, preserving workspace
-while resetting model-visible native records; real OpenHands lifecycle control is next.
+Pi RPC lifecycle passed its expanded122-test suite and the real OpenHands control:
+one Pi process/sandbox, two explicit records, persistent workspace/shell, eight
+native turns, six calls, two verified task closures and audited cleanup. Previous
+task text was absent from the next model context. This is scripted lifecycle
+evidence—not model multi-task success or conversational memory.
 
 ## Goal and actual capability
 
