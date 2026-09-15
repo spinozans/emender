@@ -2,6 +2,7 @@ import hashlib,json,struct
 from pathlib import Path
 from types import SimpleNamespace
 from scripts.select_e97_pi_native_curriculum import INDEX,select
+from scripts.audit_e97_pi_native_curriculum_selection import audit as audit_selection
 
 def dump(path,value):path.write_text(json.dumps(value,sort_keys=True)+'\n')
 def sha(path):return hashlib.sha256(path.read_bytes()).hexdigest()
@@ -15,3 +16,6 @@ def test_selection_excludes_frozen_family_and_reindexes(tmp_path):
  assert (output/'candidate-authority/assistant_mask.uint8.bin').read_bytes()==b'\1\1'
  assert INDEX.unpack((output/'candidate-authority/records.idx').read_bytes())==(0,2,2,0)
  assert json.loads((output/'excluded.jsonl').read_text())['id']=='a'
+ selected_sha=sha(output/'candidate-authority/manifest.json');receipt=tmp_path/'audit.json'
+ audit_selection(SimpleNamespace(source=source,source_authority_sha=authority_sha,source_audit_sha=audit_sha,selected=output,selected_authority_sha=selected_sha,output=receipt))
+ assert json.loads(receipt.read_text())['records']==1
