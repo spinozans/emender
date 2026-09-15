@@ -243,6 +243,27 @@ subsequently narrowed to genuine search/discovery families and the programme
 now asserts at least256 records across at least8 such families at2,000-record
 scale.
 
+Full-family qualification exposed two additional fail-closed seams. At recovery
+case3, a short managed process emitted an asynchronous lifecycle custom message
+that the strict provider rejected as unsupported history. The qualified recipe
+now starts a bounded30-second process with notifications suppressed, observes
+`READY` through the returned ID, stops that same ID and finishes; focused r3
+passed3/3 calls and179 targets. At recovery case4, installed `fffind` expressed
+an empty result as `No files found matching pattern` with `isError:false`; this
+exact authentic wording is now treated as a maskable failed-search observation.
+Focused tail validation then passed both remaining recovery families.
+
+Qualification r4 completed80/80 under plan SHA
+`2191d12d4eae092b7f39a79cc7544df88131f48d39e76e586d347ac546b2dd41`:
+125 real Pi calls,11 tool-error flags,80 distinct sequences,725,804 tokens,
+8,243 assistant targets,26 families, and a maximum record length of46,755
+tokens. It covered all11 tools, fetch/retrieve, failed-fetch recovery, process
+start/output/stop, all exact-copy distances through32,768 filler tokens and all
+recovery variants. Independent reconstruction passed with audit SHA
+`8cce3549e8da7279728cca5c41d13cfe8efcd884ad07a1a6661e5791b8d8177e`.
+It remains a non-admitted qualification authority with zero model generations,
+zero optimizer updates and no packing or promotion authorization.
+
 ## Historical session evidence immediately preceding this programme
 
 - Failed model-session preflight `proc_79c2`: session-token plan mismatch; zero

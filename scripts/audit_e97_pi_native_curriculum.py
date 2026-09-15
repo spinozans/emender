@@ -110,7 +110,7 @@ def audit(args):
  if sha(args.plan)!=args.plan_sha or manifest['plan_sha256']!=args.plan_sha:raise ValueError('plan binding')
  if sha(plan['tool_manifest'])!=plan['tool_manifest_sha256']:raise ValueError('tool manifest binding')
  verify_authority_files(plan)
- if plan['model_generations'] or plan['optimizer_updates'] or plan['training_eligible'] or plan['packing_authorized']:raise ValueError('plan authorization')
+ if plan.get('automatic_retry',False) or plan['model_generations'] or plan['optimizer_updates'] or plan['training_eligible'] or plan['packing_authorized']:raise ValueError('plan authorization')
  if manifest['training_eligible'] or manifest['packing_authorized'] or manifest['optimizer_updates_authorized']:raise ValueError('candidate authorization')
  authority=root/'candidate-authority'
  for name,descriptor in manifest['outputs'].items():
@@ -118,7 +118,14 @@ def audit(args):
   if path.stat().st_size!=descriptor['bytes'] or sha(path)!=descriptor['sha256']:raise ValueError('authority output identity')
  metadata=[json.loads(x) for x in (authority/'records.jsonl').read_text().splitlines()];index=(authority/'records.idx').read_bytes();tokens=(authority/'tokens.uint32.bin').read_bytes();mask=(authority/'assistant_mask.uint8.bin').read_bytes()
  if len(index)!=INDEX.size*len(metadata) or len(tokens)!=4*len(mask):raise ValueError('authority shape')
- cases={x['id']:x for x in plan['cases']};offset=targets=errors=calls=repo=0;sequences=set()
+ rejection_path=root/'rejections.jsonl';rejections=[json.loads(x) for x in rejection_path.read_text().splitlines()] if rejection_path.exists() and rejection_path.stat().st_size else []
+ rejected_ids=set()
+ for rejection in rejections:
+  if set(rejection)!={'id','category','family','type','message','retried'} or rejection['retried'] or rejection['type']!='ValueError' or rejection['id'] in rejected_ids or load_json(root/rejection['id']/'rejection.json')!=rejection:raise ValueError('rejection receipt')
+  rejected_ids.add(rejection['id'])
+ cases={x['id']:x for x in plan['cases']};accepted_ids={x['id'] for x in metadata}
+ if accepted_ids&rejected_ids or accepted_ids|rejected_ids!=set(cases) or len(metadata)<plan.get('minimum_verified_records',plan['records']):raise ValueError('attempt coverage')
+ offset=targets=errors=calls=repo=0;sequences=set()
  for i,row in enumerate(metadata):
   if row['id'] not in cases or sha(root/row['id']/'episode-private.json')!=row['episode_sha256']:raise ValueError('episode identity')
   private=load_json(root/row['id']/'episode-private.json');private['_tools']=tools
@@ -133,8 +140,8 @@ def audit(args):
   if sequence!=row['sequence_sha256'] or row['targets']!=want_targets or row['assistant_units']!=len(turns) or row['supervised_units']!=len(turns)-private['supervise_from'] or row['calls']!=len(results) or row['errors']!=sum(x['isError'] for x in results):raise ValueError('record metadata')
   offset+=n;targets+=want_targets;errors+=row['errors'];calls+=row['calls'];repo+=bool(row['repository_discovery']);private.pop('_tools')
  if len(sequences)!=len(metadata) or offset!=manifest['counts']['tokens'] or targets!=manifest['counts']['assistant_target_tokens']:raise ValueError('aggregate authority')
- if summary['records']!=len(metadata) or summary['deduplicated_sequences']!=len(sequences) or summary['assistant_targets']!=targets or summary['native_calls']!=calls or summary['authentic_tool_errors']!=errors or summary['repository_discovery_records']!=repo or summary['authority_sha256']!=sha(authority/'manifest.json'):raise ValueError('summary reconstruction')
- receipt={'schema':'emender-e97-pi-native-curriculum-audit-v1','status':'qualified-candidates-not-admitted','records':len(metadata),'tokens':offset,'assistant_targets':targets,'native_calls':calls,'authentic_tool_errors':errors,'repository_discovery_records':repo,'deduplicated_sequences':len(sequences),'plan_sha256':args.plan_sha,'authority_sha256':sha(authority/'manifest.json'),'training_eligible':False,'packing_authorized':False,'optimizer_updates_authorized':0}
+ if summary['records']!=len(metadata) or summary.get('attempted_records',plan['records'])!=plan['records'] or summary.get('rejected_records',0)!=len(rejections) or summary.get('automatic_retries',0)!=0 or summary['deduplicated_sequences']!=len(sequences) or summary['assistant_targets']!=targets or summary['native_calls']!=calls or summary['authentic_tool_errors']!=errors or summary['repository_discovery_records']!=repo or summary['authority_sha256']!=sha(authority/'manifest.json'):raise ValueError('summary reconstruction')
+ receipt={'schema':'emender-e97-pi-native-curriculum-audit-v1','status':'qualified-candidates-not-admitted','attempted_records':plan['records'],'records':len(metadata),'rejected_records':len(rejections),'automatic_retries':0,'tokens':offset,'assistant_targets':targets,'native_calls':calls,'authentic_tool_errors':errors,'repository_discovery_records':repo,'deduplicated_sequences':len(sequences),'plan_sha256':args.plan_sha,'authority_sha256':sha(authority/'manifest.json'),'checker_sha256':sha(__file__),'training_eligible':False,'packing_authorized':False,'optimizer_updates_authorized':0}
  args.output.write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n');print('PI_NATIVE_CURRICULUM_AUDIT',len(metadata),targets,sha(args.output))
 def main():
  p=argparse.ArgumentParser();p.add_argument('--root',type=Path,required=True);p.add_argument('--plan',type=Path,required=True);p.add_argument('--plan-sha',required=True);p.add_argument('--output',type=Path,required=True);audit(p.parse_args())

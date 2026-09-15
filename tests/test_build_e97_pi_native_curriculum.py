@@ -21,6 +21,8 @@ def test_repository_discovery_has_eight_families_at_program_scale():
  cases,_=make_cases(2000,18765)
  families={x['family'] for x in cases if x['repository_discovery']}
  assert len(families)>=8 and sum(x['repository_discovery'] for x in cases)>=256
+ assert 'repo-edit-error-recovery' not in families
+ assert len({x['prompt'] for x in cases})==len(cases)
 
 def test_case_generation_requires_multiple_of_twenty():
  for count in (0,19,21):
