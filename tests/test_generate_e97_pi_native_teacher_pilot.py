@@ -17,8 +17,14 @@ def test_render_is_bounded_and_requests_one_parallel_subagent_workflow():
 def test_validate_accepts_exact_stratified_pool(tmp_path):
  raw=tmp_path/'raw.json';raw.write_text(json.dumps(pool()));result,counts=validate(config(),raw);assert len(result['tasks'])==80;assert set(counts)=={'frame-copy','local-repository','recovery-composition','web-routing'}
 
+def test_validate_does_not_treat_secretless_as_a_secret(tmp_path):
+ data=pool();data['tasks'][0]['workspace_files']={'secretless_target.txt':'public fixture\n'};raw=tmp_path/'ok.json';raw.write_text(json.dumps(data));assert len(validate(config(),raw)[0]['tasks'])==80
+
+
 def test_validate_rejects_heldout_entity_and_path_escape(tmp_path):
  data=pool();data['tasks'][0]['user_goal']='Check Reykjavik';raw=tmp_path/'bad.json';raw.write_text(json.dumps(data))
  with pytest.raises(ValueError,match='forbidden'):validate(config(),raw)
  data=pool();data['tasks'][0]['workspace_files']={'../escape':'x'};raw.write_text(json.dumps(data))
  with pytest.raises(ValueError,match='unsafe'):validate(config(),raw)
+ data=pool();data['tasks'][0]['user_goal']='Read the secret credential';raw.write_text(json.dumps(data))
+ with pytest.raises(ValueError,match='forbidden'):validate(config(),raw)

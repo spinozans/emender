@@ -46,7 +46,7 @@ def validate(config,raw):
    p=Path(path)
    if not isinstance(path,str) or not isinstance(content,str) or p.is_absolute() or '..' in p.parts or path in ('','.'):raise ValueError('unsafe workspace path')
   flat=json.dumps(t,sort_keys=True).lower()
-  if any(x in flat for x in forbidden) or re.search(r'(?i)(api[_ -]?key|password|secret|credential|purchase|production deploy)',flat):raise ValueError('forbidden teacher content')
+  if any(x in flat for x in forbidden) or re.search(r'(?i)\b(api[_ -]?key|password|secret|credentials?|purchase|production deploy)\b',flat):raise ValueError('forbidden teacher content')
  if counts!={x['name']:config['candidates_per_lane'] for x in config['lanes']}:raise ValueError('lane counts')
  canonical={'schema':data['schema'],'tasks':sorted(tasks,key=lambda t:([x['name'] for x in config['lanes']].index(t['lane']),t['id']))}
  return canonical,counts

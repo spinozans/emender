@@ -184,6 +184,34 @@ must not be rerun, used for training or reinterpreted.
 curriculum and diagnostic controls; only then freeze a new, disjoint evaluation.
 No training tranche, promotion or RL is authorized by this result.
 
+## DeepSeek teacher bootstrap
+
+LunaRoute exposes `deepseek-4.1-flash` and its background variant. The first
+in-session subagent workflow `a59cdcfb...` made zero teacher calls because
+`pi-subagents` had loaded before the LunaRoute extension and therefore rejected
+the model as absent. Package order was corrected; direct provider smoke
+`proc_9c0c` and a fresh-Pi inherited subagent smoke `proc_42a4` then returned
+exact expected receipts.
+
+Immutable teacher authority commit `e09e746a` freezes an80-specification pilot:
+20 each for framing/copy, local repository work, recovery/composition and web
+routing. Controller `proc_12a1` stopped before inference on malformed shell
+redirection. Corrected `proc_c073` used one DeepSeek parent and four DeepSeek Pi
+subagents and produced all80 specifications. Admission initially rejected the
+harmless filename `secretless_target.txt` because `secret` was matched as a
+substring. No teacher regeneration was allowed. Boundary-corrected validation
+`proc_aa1c` passed the identical raw output:20 per lane,20 failure-prefix tasks,
+unique prompts/IDs, bounded relative workspaces and exact task-pool SHA
+`9c453abb1a0d4600a4aad0ef570b14e44fd42c69bb8eedfe06f8dd585fd9960c`.
+These are task specifications only, not executed traces or training records.
+
+A first direct-task DeepSeek execution `proc_8af2` reached the correct final
+`PhaseFrame` but unnecessarily called `bash` first, proving why teacher output
+cannot self-admit. That trace is a failed routing attempt; any future correction
+must mask the prefix. Before executing shell/edit/process tasks at scale, the
+teacher/provider process must be separated from a credential-free bounded tool
+sandbox. Host-built-in execution is not an admission path.
+
 ## Historical session evidence immediately preceding this programme
 
 - Failed model-session preflight `proc_79c2`: session-token plan mismatch; zero
