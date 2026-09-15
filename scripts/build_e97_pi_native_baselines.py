@@ -51,7 +51,7 @@ def build(manifest):
  for suffix,action,prompt,files in specs:cases.append(dict(id='choice-'+suffix,stage='B',family='tool-choice',delay_tokens=0,prompt=prompt,files=files,expected_final=None if action in ('source_check','fetch_content') else ('1723' if action=='bash' else 'done'),expected_first_action=action))
  for c in cases:
   c['initial_prompt_tokens']=prompt_tokens(tools,c['prompt'],enc)
-  if c['initial_prompt_tokens']>65536:raise ValueError(f"context cap {c['id']} {c['initial_prompt_tokens']}")
+  if c['initial_prompt_tokens']+1024>65536:raise ValueError(f"context plus generation cap {c['id']} {c['initial_prompt_tokens']}")
  ids=[c['id'] for c in cases]
  if len(ids)!=len(set(ids)) or sum(c['stage']=='A' for c in cases)!=12:raise ValueError('panel coverage')
  return cases
@@ -60,7 +60,7 @@ def main():
  p=argparse.ArgumentParser();p.add_argument('--manifest',type=Path,required=True);p.add_argument('--output',type=Path,required=True);a=p.parse_args();os.umask(0o077)
  if sha(a.manifest)!=MANIFEST_SHA:raise ValueError('tool manifest identity')
  manifest=json.loads(a.manifest.read_text());cases=build(manifest);a.output.mkdir(parents=True,mode=0o700,exist_ok=False)
- panel=dict(schema='emender-e97-pi-native-baselines-v1',tool_manifest=TOOL_MANIFEST_REF,tool_manifest_sha256=sha(a.manifest),system='Complete the task using the declared Pi-native tools. Finish only when complete.',tools=manifest['model_visible_tools'],cases=cases,stages={'A':{'model_episodes':12,'run_first':True},'B':{'model_episodes':len(cases)-12,'run_only_after_stage_a_review':True}},tokenizer='p50k_base',max_context_tokens=65536,max_turns=12,generation_budget=4096,episode_generation_budget=16384,episode_seconds=300,automatic_retry=False,training_eligible=False,optimizer_updates=0)
+ panel=dict(schema='emender-e97-pi-native-baselines-v1',tool_manifest=TOOL_MANIFEST_REF,tool_manifest_sha256=sha(a.manifest),system='Complete the task using the declared Pi-native tools. Finish only when complete.',tools=manifest['model_visible_tools'],cases=cases,stages={'A':{'model_episodes':12,'run_first':True},'B':{'model_episodes':len(cases)-12,'run_only_after_stage_a_review':True}},tokenizer='p50k_base',max_context_tokens=65536,max_turns=12,generation_budget=1024,episode_generation_budget=4096,episode_seconds=300,automatic_retry=False,training_eligible=False,optimizer_updates=0)
  publish(a.output/'panel.json',panel);publish(a.output/'summary.json',dict(status='pi-native-baselines-frozen',cases=len(cases),stage_a=12,stage_b=len(cases)-12,copy_distances=list(DELAYS),model_generations=0,optimizer_updates=0,training_eligible=False,panel_sha256=sha(a.output/'panel.json')))
  print('PI_NATIVE_BASELINES_FROZEN',len(cases),12,len(cases)-12,sha(a.output/'panel.json'))
 if __name__=='__main__':main()

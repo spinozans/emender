@@ -101,8 +101,15 @@ The first immutable freeze `proc_913d` passed tests but produced SHA
 `043cc9ef607da5a838a730347a299dc8d7e18e28cd8668167cb33c1bb6c947dd`:
 the panel embedded the absolute source-worktree manifest path. This is a
 reproducibility failure, retained with zero model generations. The builder now
-uses the stable repository-relative authority path; a new-root freeze must match
-a local freeze byte-for-byte before sampling.
+uses the stable repository-relative authority path. `proc_61f3` reproduced the
+corrected panel byte-for-byte from two directories at SHA
+`3636c310b4ba82c504ef810af1dca9caabd586943ed4ed799b33e97d39c9b6f1`, and
+`proc_740e` reproduced it from immutable source. Before sampling, review found
+that58K-delay prompt plus the declared4,096-token generation reservation could
+exceed64K. That otherwise valid root is superseded. `proc_c68a` fixed the explicit
+per-turn budget at1,024, added a build-time prompt-plus-budget guard and froze SHA
+`07cc1d5843ee4060503ecdcf7d2bb813dce51fa0aeba89df367b7696e47994ef`.
+No baseline root has been sampled.
 
 ## Historical session evidence immediately preceding this programme
 
