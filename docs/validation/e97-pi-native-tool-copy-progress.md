@@ -300,6 +300,36 @@ All source, selected and overlap authorities still declare
 `training_eligible:false`, `packing_authorized:false` and zero optimizer
 updates.
 
+A nonauthorizing training preparation combines the selected2,012 Pi-native
+records with all2,223 records from the already-qualified representation-bridge
+authority. It contains4,235 records,25,673,057 tokens and1,052,954 assistant
+targets. Preparation manifest SHA:
+`76b947c892e5931579ddc5394663e9047a7f530ddafc2c5f194fa72550b2ed89`.
+A diagnostic-only boundary pack plan produces438 whole-record64K packs with
+explicit recurrent resets and no oversize exclusions; pack SHA:
+`25280c14b0323b9981fa296293cfea2e5fa90104d04662fc321cc63275c5bdbc`.
+The training Dataset continues to reject this mechanical authority because it
+is non-trainable; exposure planning is descriptor-only and never materializes
+loss-bearing tensors.
+
+The proposed32-update,8-rank epoch-permutation schedule uses sampler key975424,
+selected by training-data-only screening to retain every prior record exactly
+once before maximizing new-record exposure. It schedules15,585,765 input
+tokens and995,687 targets:147,027 Pi-native,300,316 conversation,126,193
+grounded rehearsal,103,665 native,218,384 prior representation bridge and
+100,102 retention. All2,223 prior records and1,316 distinct new Pi-native
+records are covered. Schedule SHA:
+`73e25ee832af63b12847817f09e77af9b3364b89c303e7d9678db25e3eeaaa4e`.
+Proposal `configs/pi/e97-pi-native-curriculum-training-proposal-v1.json` is
+explicitly not authorized; proposal SHA
+`96db2e1cee91304b6c295113e517c8c1fd032c40a7fb372d9866dea8ada057be`
+and audit SHA
+`56e35045221908aa8302c97e1ed37f08e3e18edaa896c75d44111086abeada0a`.
+It proposes32 updates at learning rate1e-5 from checkpoint `9b78628d...`, with
+no automatic retry/expansion, no threshold change, no promotion and no RL.
+Stage A remains immutable0/12 evidence and Stage B remains blocked until a
+separate operator authorization and a newly audited checkpoint exist.
+
 ## Historical session evidence immediately preceding this programme
 
 - Failed model-session preflight `proc_79c2`: session-token plan mismatch; zero
