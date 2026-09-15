@@ -1,0 +1,44 @@
+{
+  "schema": "emender-e97-pi-native-teacher-pilot-v1",
+  "status": "candidate-generation-only",
+  "seed": "e97-pi-native-deepseek-teacher-20260915-v1",
+  "provider": "lunaroute",
+  "model": "deepseek-4.1-flash",
+  "parent_processes": 1,
+  "pi_subagents": 4,
+  "candidates_per_lane": 20,
+  "candidate_total": 80,
+  "lanes": [
+    {
+      "name": "frame-copy",
+      "families": ["direct-finish", "verbatim-copy", "key-value-binding", "exact-path", "delayed-calculation", "multiline-preservation"]
+    },
+    {
+      "name": "local-repository",
+      "families": ["fffind-discovery", "ffgrep-discovery", "read-grounding", "edit-readback", "write-readback", "test-guided-repair", "nested-config"]
+    },
+    {
+      "name": "recovery-composition",
+      "families": ["missing-path-recovery", "failed-edit-recovery", "shell-failure-recovery", "process-lifecycle", "multi-tool-composition"]
+    },
+    {
+      "name": "web-routing",
+      "families": ["direct-supplied-contrast", "web-search", "source-check", "fetch-content", "fetch-retrieve", "search-error-reformulation"]
+    }
+  ],
+  "tools": ["read", "bash", "edit", "write", "process", "ffgrep", "fffind", "web_search", "source_check", "fetch_content", "get_search_content", "think", "finish"],
+  "required_spec_fields": ["id", "lane", "family", "user_goal", "workspace_files", "expected_first_action", "required_actions", "oracle", "failure_prefix", "diversity_tags"],
+  "constraints": {
+    "task_specifications_only": true,
+    "no_claimed_tool_results": true,
+    "no_success_self_attestation": true,
+    "relative_workspace_paths_only": true,
+    "network_mutation_forbidden": true,
+    "credentials_forbidden": true,
+    "purchases_forbidden": true,
+    "production_actions_forbidden": true,
+    "evaluation_entities_forbidden": ["Reykjavik", "weather_adapter_73c91.py", "PI_NATIVE_MARKER", "facts.txt", "731", "992"],
+    "training_eligible": false,
+    "optimizer_updates": 0
+  }
+}
