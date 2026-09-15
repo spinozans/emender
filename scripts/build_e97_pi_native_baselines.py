@@ -6,6 +6,7 @@ import tiktoken
 from scripts.e97_pi_native_codec import PiNativeEpisode
 from scripts.eval_e97_native_execution import publish,sha
 MANIFEST_SHA='55421905438806223414d96a4e64f1a6ae64772afdb1fbc67fbbfb77e8d5d908'
+TOOL_MANIFEST_REF='configs/pi/e97-active-tool-surface-v1.json'
 DELAYS=(128,1024,8192,32768,58000);STAGE_A_DELAYS={128,8192,58000}
 WORDS=(' archive',' datum',' vector',' amber',' quiet',' ledger',' orbit',' cedar',' mosaic',' kernel',' violet',' signal',' parcel',' meadow',' copper',' tensor')
 
@@ -59,7 +60,7 @@ def main():
  p=argparse.ArgumentParser();p.add_argument('--manifest',type=Path,required=True);p.add_argument('--output',type=Path,required=True);a=p.parse_args();os.umask(0o077)
  if sha(a.manifest)!=MANIFEST_SHA:raise ValueError('tool manifest identity')
  manifest=json.loads(a.manifest.read_text());cases=build(manifest);a.output.mkdir(parents=True,mode=0o700,exist_ok=False)
- panel=dict(schema='emender-e97-pi-native-baselines-v1',tool_manifest=str(a.manifest.resolve()),tool_manifest_sha256=sha(a.manifest),system='Complete the task using the declared Pi-native tools. Finish only when complete.',tools=manifest['model_visible_tools'],cases=cases,stages={'A':{'model_episodes':12,'run_first':True},'B':{'model_episodes':len(cases)-12,'run_only_after_stage_a_review':True}},tokenizer='p50k_base',max_context_tokens=65536,max_turns=12,generation_budget=4096,episode_generation_budget=16384,episode_seconds=300,automatic_retry=False,training_eligible=False,optimizer_updates=0)
+ panel=dict(schema='emender-e97-pi-native-baselines-v1',tool_manifest=TOOL_MANIFEST_REF,tool_manifest_sha256=sha(a.manifest),system='Complete the task using the declared Pi-native tools. Finish only when complete.',tools=manifest['model_visible_tools'],cases=cases,stages={'A':{'model_episodes':12,'run_first':True},'B':{'model_episodes':len(cases)-12,'run_only_after_stage_a_review':True}},tokenizer='p50k_base',max_context_tokens=65536,max_turns=12,generation_budget=4096,episode_generation_budget=16384,episode_seconds=300,automatic_retry=False,training_eligible=False,optimizer_updates=0)
  publish(a.output/'panel.json',panel);publish(a.output/'summary.json',dict(status='pi-native-baselines-frozen',cases=len(cases),stage_a=12,stage_b=len(cases)-12,copy_distances=list(DELAYS),model_generations=0,optimizer_updates=0,training_eligible=False,panel_sha256=sha(a.output/'panel.json')))
  print('PI_NATIVE_BASELINES_FROZEN',len(cases),12,len(cases)-12,sha(a.output/'panel.json'))
 if __name__=='__main__':main()

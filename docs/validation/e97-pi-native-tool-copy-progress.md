@@ -96,8 +96,13 @@ and path emission, plus11 first-action tool-choice classes. Stage A is fixed at1
 episodes—copy/bind/path at128,8,192 and58,000 filler tokens, plus direct, FFF and
 current-web contrasts. Stage B has14 cases and cannot run before Stage A review.
 The throwaway panel SHA was
-`6da40b2f13a8096e0c0da7af2746b4d611a9dcc78368b80e8c142cf598449932`;
-an immutable source export must reproduce it before sampling.
+`6da40b2f13a8096e0c0da7af2746b4d611a9dcc78368b80e8c142cf598449932`.
+The first immutable freeze `proc_913d` passed tests but produced SHA
+`043cc9ef607da5a838a730347a299dc8d7e18e28cd8668167cb33c1bb6c947dd`:
+the panel embedded the absolute source-worktree manifest path. This is a
+reproducibility failure, retained with zero model generations. The builder now
+uses the stable repository-relative authority path; a new-root freeze must match
+a local freeze byte-for-byte before sampling.
 
 ## Historical session evidence immediately preceding this programme
 
