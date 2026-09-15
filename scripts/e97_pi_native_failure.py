@@ -6,11 +6,24 @@ expected empty Pi error termination from a transport/history failure.
 import json
 from pathlib import Path
 from scripts.e97_open_swe_native_codec import compact
-from scripts.e97_pi_native_bridge import API, MODEL, PROVIDER, normalized_messages
+from scripts.e97_pi_native_bridge import API, MODEL, PROVIDER, PUBLIC_TRANSPORT_ERROR, normalized_messages
 
 MODEL_STOP_REASONS = frozenset({'turn_budget', 'episode_generation_budget', 'episode_deadline',
     'context_budget', 'generation_budget', 'invalid_opening', 'invalid_frame', 'empty',
     'separator_before_valid_turn'})
+
+
+def verify_model_failure_messages(bridge, messages):
+    if bridge.reason not in MODEL_STOP_REASONS or not bridge.failed or bridge.final is not None or bridge.pending is not None:
+        raise ValueError('not_a_verified_model_failure_path')
+    normalized = normalized_messages(messages)
+    expected_error = dict(role='assistant', content=[], api=API, provider=PROVIDER, model=MODEL,
+                          stopReason='error', errorMessage=PUBLIC_TRANSPORT_ERROR)
+    if not normalized or normalized[-1] != expected_error:
+        raise ValueError('missing_pi_failure_message')
+    if compact(normalized[:-1]) != compact(bridge.history):
+        raise ValueError('failed_history_changed')
+    return normalized
 
 
 def verify_model_failure(bridge, output):
@@ -26,15 +39,7 @@ def verify_model_failure(bridge, output):
     if not requests or requests[-1]['op'] != 'close':
         raise ValueError('missing_failure_close')
     messages = requests[-1]['messages']
-    if not messages:
-        raise ValueError('missing_pi_failure_message')
-    error = messages[-1]
-    if (error.get('role') != 'assistant' or error.get('content') != [] or error.get('stopReason') != 'error' or
-            error.get('api') != API or error.get('model') != MODEL or error.get('provider') != PROVIDER or
-            error.get('errorMessage') != 'Native compatibility transport stopped; inspect private owner receipt.'):
-        raise ValueError('unexpected_pi_failure_message')
-    if compact(normalized_messages(messages[:-1])) != compact(bridge.history):
-        raise ValueError('failed_history_changed')
+    verify_model_failure_messages(bridge, messages)
     expected = ['next','execute'] * sum(m['role']=='toolResult' for m in bridge.history) + ['next','close']
     if [r['op'] for r in requests] != expected or [r['op'] for r in terminal['requests']] != expected:
         raise ValueError('failure_path_extra_or_missing_requests')

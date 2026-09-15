@@ -95,12 +95,24 @@ class NativeTaskSession:
         if self.closed or self.current is None:
             raise BridgeStopped('no_active_native_task')
         local = self._local_history(messages)
-        result = self.current.close(local)
-        if result['verified'] is not True:
-            raise BridgeStopped('failed_task_cannot_be_continued')
-        self.completed_history.extend(deepcopy(self.current.history))
+        if self.current.failed:
+            from scripts.e97_pi_native_failure import verify_model_failure_messages
+            normalized = verify_model_failure_messages(self.current, local)
+            self.current.closed = True
+            self.completed_history.extend(deepcopy(normalized))
+            self.boundaries[-1].update(task_succeeded=False, failure_reason=self.current.reason,
+                                       native_finish_verified=False)
+            result = dict(task_settled=True, task_succeeded=False, failure_reason=self.current.reason)
+        else:
+            closed = self.current.close(local)
+            if closed['verified'] is not True:
+                raise BridgeStopped('failed_task_cannot_be_continued')
+            self.completed_history.extend(deepcopy(self.current.history))
+            self.boundaries[-1].update(task_succeeded=True, failure_reason=None,
+                                       native_finish_verified=True)
+            result = dict(task_settled=True, task_succeeded=True, failure_reason=None)
         self.current = None
-        return dict(task_settled=True, tasks=len(self.tasks), public_history_sha256=history_sha(self.completed_history))
+        return dict(**result, tasks=len(self.tasks), public_history_sha256=history_sha(self.completed_history))
 
     def close(self, *, expected_history_sha):
         if self.closed or self.current is not None:

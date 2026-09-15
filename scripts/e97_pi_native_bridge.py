@@ -17,6 +17,7 @@ from scripts.e97_open_swe_native_runtime_protocol import NativeEpisode
 PROVIDER = 'e97-openhands-compat'
 MODEL = 'e97-4b-native-bridge'
 API = 'e97-native-unix-v1'
+PUBLIC_TRANSPORT_ERROR = 'Native compatibility transport stopped; inspect private owner receipt.'
 TRANSPORT_SCHEMA = {
     'type': 'object',
     'properties': {'call_ref': {'type': 'string'}, 'native_arguments_json': {'type': 'string'}},
@@ -51,14 +52,21 @@ def normalized_messages(messages):
                 raise BridgeStopped('unsupported_pi_user_content')
             result.append(dict(role=role, content=deepcopy(content)))
         elif role == 'assistant':
-            if m.get('stopReason', 'toolUse') != 'toolUse':
-                raise BridgeStopped('unexpected_pi_assistant_stop')
+            stop = m.get('stopReason', 'toolUse')
             for key, value in [('provider', PROVIDER), ('model', MODEL), ('api', API)]:
                 if m.get(key, value) != value:
                     raise BridgeStopped('pi_model_changed')
             content = m.get('content')
             if not isinstance(content, list):
                 raise BridgeStopped('invalid_pi_assistant_content')
+            if stop == 'error':
+                if content != [] or m.get('errorMessage') != PUBLIC_TRANSPORT_ERROR:
+                    raise BridgeStopped('unexpected_pi_assistant_error')
+                result.append(dict(role=role, content=[], api=API, provider=PROVIDER, model=MODEL,
+                                   stopReason='error', errorMessage=PUBLIC_TRANSPORT_ERROR))
+                continue
+            if stop != 'toolUse':
+                raise BridgeStopped('unexpected_pi_assistant_stop')
             for b in content:
                 keys = {'type', 'text'} if b.get('type') == 'text' else {'type', 'id', 'name', 'arguments'}
                 if b.get('type') not in ('text', 'toolCall') or set(b) != keys:

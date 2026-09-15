@@ -15,7 +15,7 @@ from scripts.e97_pi_native_session import history_sha
 from scripts.e97_pi_native_transport import MAX_FRAME
 
 
-def serve_pi_session(session, tasks, output, *, pi_bin, extension, seconds=1200):
+def serve_pi_session(session, tasks, output, *, pi_bin, extension, seconds=1200, require_successful_tasks=True):
     output=Path(output); output.mkdir(parents=True,mode=0o700,exist_ok=False)
     if (not isinstance(tasks,list) or not 1<=len(tasks)<=session.max_tasks or
         any(set(t)!={'task_id','prompt'} for t in tasks)):
@@ -116,8 +116,11 @@ def serve_pi_session(session, tasks, output, *, pi_bin, extension, seconds=1200)
         except subprocess.TimeoutExpired: proc.kill(); proc.wait(timeout=10)
       if proc is not None: terminal['pi_exit']=proc.returncode
       terminal.update(session_close_verified=session.closed,settled_events=settled,
-                      tasks_begun=len(session.tasks),task_closures=sum(t.close_verified for t in session.tasks))
+                      tasks_begun=len(session.tasks),successful_task_closures=sum(t.close_verified for t in session.tasks),
+                      failed_task_settlements=sum(t.failed and t.closed for t in session.tasks))
       (output/'transport-terminal.json').write_text(compact(terminal)+'\n')
-    if terminal['pi_exit']!=0 or not session.closed or settled!=len(tasks) or any(not t.close_verified for t in session.tasks):
+    settled_tasks = all(t.closed and (t.close_verified or t.failed) for t in session.tasks)
+    if (terminal['pi_exit']!=0 or not session.closed or settled!=len(tasks) or not settled_tasks or
+            (require_successful_tasks and any(not t.close_verified for t in session.tasks))):
         raise BridgeStopped('pi_session_not_qualified')
     return terminal

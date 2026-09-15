@@ -218,7 +218,19 @@ runtime and interpreter audits passed. Zero model generations or updates occurre
 
 This establishes bounded lifecycle/executor continuity, **not conversational
 model memory, model multi-task success, resume/fork/compaction, or general daily
-interactive use**. The next model-facing session check must first preserve
-honest failed-task settlement so task one cannot silently prevent or contaminate
-task two. It can then reuse already-qualified structured cases as diagnostics;
-no fresh generalization or training claim follows.
+interactive use**.
+
+The failed-task settlement path is now implemented and passes a real Pi RPC test:
+task one terminates with an invalid-opening model failure, its exact public error
+and prefix are retained without inventing a native finish, and task two finishes
+as a clean native record. The final receipt distinguishes one failed settlement
+from one successful closure. Prior-task text is absent from the second native
+prompt. `proc_1f5e` passed37 focused tests and `proc_c668` passed the expanded
+**123-test** suite. A model failure is continuable only when it matches the fixed
+model-stop reasons and exact Pi error shape; transport, executor, history and
+identity errors still fail closed.
+
+The next model-facing session check can reuse already-qualified structured cases
+as diagnostics; no fresh generalization or training claim follows. First rerun
+the real OpenHands scripted session from the new immutable source because this
+safety extension changes successful-session bookkeeping as well as failure paths.
