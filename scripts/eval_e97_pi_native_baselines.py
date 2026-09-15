@@ -3,7 +3,7 @@
 import argparse,hashlib,json,os,shutil,signal,time
 from pathlib import Path
 import tiktoken
-from scripts.e97_open_swe_native_codec import compact
+from scripts.e97_open_swe_native_codec import compact,vocabulary
 from scripts.e97_pi_native_codec import validate_generated_turn
 from scripts.e97_pi_native_tool_bridge import NativePiToolBridge
 from scripts.e97_pi_native_tool_transport import serve_pi_native_tools
@@ -80,8 +80,11 @@ def run(args):
   if (actual['file_count']!=expected['file_count'] or actual['tree_sha256']!=expected['tree_sha256'] or
    sha(Path(package_root)/'package.json')!=expected['package_json_sha256'] or sha(Path(package_root)/entry)!=expected['entry_sha256']):raise ValueError('installed Pi extension changed')
  if len(cases)!=plan['max_model_episodes'] or [c['id'] for c in cases]!=plan['episode_order']:raise ValueError('case budget/order')
+ target=plan['target']
+ if target['sha256']!=CHECKPOINT_SHA or target['mode']!='train' or sha(target['checkpoint'])!=CHECKPOINT_SHA or sha(plan['args_json'])!=plan['args_sha256']:raise ValueError('model authority changed')
  if not os.environ.get('CUDA_VISIBLE_DEVICES') or len(os.environ['CUDA_VISIBLE_DEVICES'].split(','))!=1:raise ValueError('one leased GPU')
- torch.cuda.set_device(0);torch.backends.cuda.matmul.allow_bf16_reduced_precision_reduction=False;target=plan['target'];loaded=load_e97_checkpoint(target['checkpoint'],args_json=plan['args_json'],device=torch.device('cuda',0),dtype=torch.bfloat16,weight_mode='train',use_triton=True,mmap=True);loaded.model.eval();encoding=tiktoken.get_encoding('p50k_base')
+ torch.cuda.set_device(0);torch.backends.cuda.matmul.allow_bf16_reduced_precision_reduction=False;loaded=load_e97_checkpoint(target['checkpoint'],args_json=plan['args_json'],device=torch.device('cuda',0),dtype=torch.bfloat16,weight_mode='train',use_triton=True,mmap=True);loaded.model.eval();encoding=tiktoken.get_encoding('p50k_base')
+ if vocabulary(encoding)[1]!=plan['tokenizer_vocabulary_sha256']:raise ValueError('tokenizer identity')
  root=Path(args.output);root.mkdir(parents=True,mode=0o700,exist_ok=False)
  before_model=fingerprint(loaded.model);publish(root/'model-before-private.json',{'fingerprint':before_model,'runtime':runtime(loaded,0),'target':target})
  rows=[];extensions=[Path('configs/pi/e97-pi-native-stage-a-tools.ts'),Path('/home/erikg/.pi/agent/npm/node_modules/@ff-labs/pi-fff/src/index.ts'),Path('/home/erikg/.pi/agent/npm/node_modules/pi-web-access/index.ts')]
