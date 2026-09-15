@@ -63,5 +63,44 @@ its responses are scripted, not model-generated or training-eligible. Four
 controls, unchanged native eight-turn/token budgets, no GPU/model generation.
 Only after preflight/audits pass should a separately frozen bounded model
 comparison run. No threshold changes, automatic retries or training follows a
-failure. Genuine model failures would become diagnosis candidates, not an
+failure. Genuine model failures become diagnosis candidates, not an
 excuse to silently replace model decisions with a teacher.
+
+## Completed executor preflight and next frozen diagnostic
+
+`proc_23ba` completed the immutable `2f065096` export in121 seconds. All108 CPU
+tests passed again. Four real-Pi authored workflows passed:32 native turns,
+28 actual native calls, four failing-then-passing test sequences and unchanged
+README/tests. Four fresh verifier sandboxes passed returned repairs; four
+negative-control sandboxes failed the broken originals. A separate post-run
+auditor reconstructed all32 native prompts/token sequences, bound actual reader
+outputs and test exits, and verified all16 distinct container cleanups. Source,
+Pi runtime and interpreter audits passed. No model was sampled.
+
+Artifacts: `R/pi-repository-workflow-v1-control` and
+`R/pi-repository-workflow-v1-preflight`, with
+`R=/mnt/nvme2n1/erikg/e97_systematic_posttraining`.
+
+Before new model sampling, two additional real-Pi scripted CPU controls verify
+honest invalid-opening and turn-budget failure termination. The original bridge
+still reports an unverified finish for these failures; a separate read-only
+checker verifies the exact unchanged public prefix, one empty error message,
+owned peer, request counts and absence of extra model/tool retries. A failed task
+is not upgraded to successful completion. Unknown connection, executor or
+history failures still stop the experiment.
+
+The next model diagnostic is exactly **four cases times two routes = eight
+episodes**, one GPU, unchanged bridge checkpoint/live-y mode, original greedy
+generator and eight-turn/8,192-token/600-second per-task limits. The direct route
+is now the qualified native bridge's owner loop—not the older standalone harness;
+the other route uses real Pi. Order alternates by case. No authored repair or
+expected source enters the model prompt or sandbox fixture.
+
+Freeze capability separately from measurement/transport: Pi must complete at
+least2/4 tasks, with at least one success in each family. Require per-case route
+success parity. A task success requires native finish, a passing test command
+actually issued by the model, and a passing fresh-sandbox verifier using the
+unchanged tests and final snapshot. Unsupported implementation shapes are
+reported separately. Even0/4 can be a complete, useful measurement, never a
+capability pass. Retain parameter/buffer fingerprints, BF16/no-gradient/HBM
+checks, all snapshots and cleanup, and do not add attempts or updates.
