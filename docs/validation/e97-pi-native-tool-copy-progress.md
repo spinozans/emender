@@ -133,7 +133,18 @@ gradients absent, peak HBM8,091,958,272 bytes and the lease released. Registrati
 order is not schema semantics. Both extension and owner now compare exact name/
 schema sets independent of order. `proc_32e1` passed12 tests, including a real Pi
 control with all11 Stage A tools registered together and an exact causal `read`.
-A new-root Stage A launch is allowed because zero model episodes were consumed.
+A new-root Stage A launch was allowed because zero model episodes were consumed.
+
+Corrected launch `proc_89f7` passed15 tests, reproduced plan SHA `d040e6e3...`,
+and consumed exactly six fixed episodes before a different harness boundary:
+128- and8K-delay copy/bind/path were0/6, all retained as honest
+`generation_budget` or `invalid_frame` model failures. Starting the first58K
+case then failed before generation because its prompt exceeded Linux's
+single-argument byte limit. The six model results will not be rerun. Prompts now
+enter Pi via immediately closed stdin rather than argv; `proc_5a31` passed14
+tests including a real Pi prompt larger than131KB. A separately frozen
+continuation binds the six immutable receipts and permits only the remaining six
+Stage A episodes.
 
 ## Historical session evidence immediately preceding this programme
 

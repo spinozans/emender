@@ -23,12 +23,14 @@ def serve_pi_native_tools(bridge,output,*,pi_bin,provider_extension,pi_extension
    command=[str(pi_bin),'--offline','--no-approve','--no-extensions','--no-skills','--no-prompt-templates','--no-themes','--no-context-files','-e',str(Path(provider_extension).resolve())]
    if no_builtin_tools:command+=['--no-builtin-tools']
    for ext in pi_extensions:command+=['-e',str(Path(ext).resolve())]
-   command+=['--provider',PROVIDER,'--model',MODEL,'--tools',','.join(t['name'] for t in bridge.tools),'--system-prompt',config['system'],'--session-dir',str(sessions),'--mode','json','-p','--',config['prompt']]
+   command+=['--provider',PROVIDER,'--model',MODEL,'--tools',','.join(t['name'] for t in bridge.tools),'--system-prompt',config['system'],'--session-dir',str(sessions),'--mode','json','-p']
    (output/'command-private.json').write_text(compact(command)+'\n')
    with socket.socket(socket.AF_UNIX) as listener:
     listener.bind(address);os.chmod(address,0o600);listener.listen(1)
     with (output/'pi-events-private.jsonl').open('x') as stdout,(output/'pi-stderr-private.log').open('x') as stderr:
-     proc=subprocess.Popen(command,cwd=cwd,env=env,stdin=subprocess.DEVNULL,stdout=stdout,stderr=stderr);terminal['pi_pid']=proc.pid;pidfd=os.pidfd_open(proc.pid)
+     proc=subprocess.Popen(command,cwd=cwd,env=env,stdin=subprocess.PIPE,stdout=stdout,stderr=stderr);terminal['pi_pid']=proc.pid;pidfd=os.pidfd_open(proc.pid)
+     try:proc.stdin.write(config['prompt'].encode());proc.stdin.close()
+     except BrokenPipeError:pass
      while not bridge.closed:
       if len(receipts)>=2*bridge.panel['max_turns']+3:raise BridgeStopped('transport_request_bound')
       readable,_,_=select.select([listener,pidfd],[],[],max(0,deadline-time.monotonic()))

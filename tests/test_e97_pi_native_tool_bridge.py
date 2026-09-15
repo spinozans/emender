@@ -73,6 +73,16 @@ def test_real_pi_all_stage_a_schemas_safe_read(tmp_path):
  assert terminal['close_verified'] and 'all-safe' in b.episode.text()
 
 
+def test_real_pi_accepts_prompt_larger_than_linux_single_argument_limit(tmp_path):
+ pi=shutil.which('pi')
+ if not pi:return
+ tools=[read_tool()];prompt='Remember the context. '+'x'*140000;text=frame(tools,'finish',{'message':'done'})
+ def generate(actual,budget,deadline):assert prompt in actual;return text,ENC.encode_ordinary(text),'valid'
+ panel={'system':'large prompt control','tools':tools,'max_turns':2,'generation_budget':2048,'episode_generation_budget':4096,'episode_seconds':30};b=NativePiToolBridge(panel,prompt,ENC,generate);cwd=tmp_path/'large-cwd';cwd.mkdir()
+ terminal=serve_pi_native_tools(b,tmp_path/'large-pi',pi_bin=pi,provider_extension=Path('configs/pi/e97-pi-native.ts'),cwd=cwd,seconds=60)
+ assert terminal['close_verified'] and b.final=='done'
+
+
 def test_real_pi_executes_builtin_read_and_returns_exact_result(tmp_path):
  pi=shutil.which('pi')
  if not pi:return

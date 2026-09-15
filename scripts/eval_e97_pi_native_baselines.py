@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Run frozen Stage-A Pi-native copy/tool baseline with unchanged live-y weights."""
 import argparse,hashlib,json,os,shutil,signal,time
+from copy import deepcopy
 from pathlib import Path
 import tiktoken
 from scripts.e97_open_swe_native_codec import compact,vocabulary
@@ -10,6 +11,24 @@ from scripts.e97_pi_native_tool_transport import serve_pi_native_tools
 from scripts.eval_e97_native_execution import publish,sha
 from scripts.freeze_e97_pi_tool_surface import PACKAGES,tree_identity
 R=Path('/mnt/nvme2n1/erikg/e97_systematic_posttraining');PANEL_SHA='07cc1d5843ee4060503ecdcf7d2bb813dce51fa0aeba89df367b7696e47994ef';CHECKPOINT_SHA='9b78628d47c48c304c14de50399fe1853d8c83386c7cf5d9bd4a0e878bf679fa'
+ROW_KEYS=('id','family','delay_tokens','initial_prompt_tokens','model_generations','reason','failed','close_verified','model_failure_verified','grade')
+def public_row(row):return {k:deepcopy(row[k]) for k in ROW_KEYS}
+
+def load_prefix(root,terminal_path,cases):
+ root=Path(root);terminal_path=Path(terminal_path);terminal=json.loads(terminal_path.read_text())
+ if terminal!=dict(original_exit=1,audited_exit=1,model_episode_budget=12,automatic_retries=0,optimizer_updates=0):raise ValueError('prefix terminal authority')
+ before=json.loads((root/'model-before-private.json').read_text());after=json.loads((root/'model-after-private.json').read_text())
+ if before['fingerprint']!=after['fingerprint'] or not after['unchanged'] or not after['no_gradients'] or not after['all_parameters_bf16']:raise ValueError('prefix model changed')
+ rows=[];receipts=[];missing=False
+ for case in cases:
+  path=root/case['id']/'episode-private.json'
+  if not path.exists():missing=True;continue
+  if missing:raise ValueError('noncontiguous prefix')
+  row=json.loads(path.read_text())
+  if row['id']!=case['id'] or not row['closed'] or not (row['close_verified'] or row['model_failure_verified']):raise ValueError('invalid prefix episode')
+  rows.append(public_row(row));receipts.append({'id':case['id'],'episode_sha256':sha(path)})
+ if len(rows)!=6 or [r['id'] for r in rows]!=[c['id'] for c in cases[:6]]:raise ValueError('fixed six-episode prefix')
+ return rows,receipts,dict(root=str(root),terminal=str(terminal_path),terminal_sha256=sha(terminal_path),model_before_sha256=sha(root/'model-before-private.json'),model_after_sha256=sha(root/'model-after-private.json'))
 
 def freeze(args):
  if sha(args.panel)!=PANEL_SHA:raise ValueError('panel identity')
@@ -17,7 +36,12 @@ def freeze(args):
  if len(cases)!=12 or panel['generation_budget']!=1024 or panel['automatic_retry'] is not False:raise ValueError('stage A authority')
  source=R/'representation-bridge-v1-train/evaluation/execution/panel.json';model_panel=json.loads(source.read_text());target=next(m for m in model_panel['models'] if m['name']=='bridge-y')
  if target['sha256']!=CHECKPOINT_SHA or sha(target['checkpoint'])!=CHECKPOINT_SHA or target['mode']!='train':raise ValueError('checkpoint identity')
- plan=dict(schema='emender-e97-pi-native-stage-a-plan-v1',panel=str(args.panel.resolve()),panel_sha256=sha(args.panel),model_source_panel=str(source),model_source_panel_sha256=sha(source),target=target,args_json=model_panel['args_json'],args_sha256=model_panel['args_sha256'],tokenizer_vocabulary_sha256=model_panel['tokenizer_vocabulary_sha256'],case_ids=[c['id'] for c in cases],max_model_episodes=12,episode_order=[c['id'] for c in cases],pi_bin=str(args.pi_bin.resolve()),pi_inventory=str(args.pi_inventory.resolve()),pi_inventory_sha256=sha(args.pi_inventory),tool_manifest='configs/pi/e97-active-tool-surface-v1.json',tool_manifest_sha256=panel['tool_manifest_sha256'],stage_a_safe_local_tools=True,real_fff=True,real_web_search=True,automatic_retry=False,optimizer_updates=0,training_eligible=False,checkpoint_promotion=False,gate='measurement completeness, exact identities, honest model failures and unchanged weights; model scores reported without threshold')
+ prefix_rows=[];prefix_receipts=[];prefix=None
+ if args.prefix_root or args.prefix_terminal:
+  if not args.prefix_root or not args.prefix_terminal:raise ValueError('complete prefix authority required')
+  prefix_rows,prefix_receipts,prefix=load_prefix(args.prefix_root,args.prefix_terminal,cases)
+ remaining=cases[len(prefix_rows):]
+ plan=dict(schema='emender-e97-pi-native-stage-a-plan-v1',panel=str(args.panel.resolve()),panel_sha256=sha(args.panel),model_source_panel=str(source),model_source_panel_sha256=sha(source),target=target,args_json=model_panel['args_json'],args_sha256=model_panel['args_sha256'],tokenizer_vocabulary_sha256=model_panel['tokenizer_vocabulary_sha256'],case_ids=[c['id'] for c in cases],max_model_episodes=len(remaining),episode_order=[c['id'] for c in remaining],prefix_rows=prefix_rows,prefix_receipts=prefix_receipts,prefix=prefix,pi_bin=str(args.pi_bin.resolve()),pi_inventory=str(args.pi_inventory.resolve()),pi_inventory_sha256=sha(args.pi_inventory),tool_manifest='configs/pi/e97-active-tool-surface-v1.json',tool_manifest_sha256=panel['tool_manifest_sha256'],stage_a_safe_local_tools=True,real_fff=True,real_web_search=True,automatic_retry=False,optimizer_updates=0,training_eligible=False,checkpoint_promotion=False,gate='measurement completeness, exact identities, honest model failures and unchanged weights; model scores reported without threshold')
  args.output.mkdir(parents=True,mode=0o700,exist_ok=False);publish(args.output/'plan-private.json',plan);print('PI_NATIVE_STAGE_A_PLAN_FROZEN',sha(args.output/'plan-private.json'))
 
 def generate_turn(loaded,prompt,encoding,budget,deadline,tools):
@@ -69,7 +93,7 @@ def run(args):
  from ndm.e97 import load_e97_checkpoint
  from scripts.audit_e97_live_actor_capture import fingerprint,runtime
  if sha(args.plan)!=args.plan_sha:raise ValueError('plan identity')
- plan=json.loads(args.plan.read_text());panel=json.loads(Path(plan['panel']).read_text());cases=[c for c in panel['cases'] if c['stage']=='A']
+ plan=json.loads(args.plan.read_text());panel=json.loads(Path(plan['panel']).read_text());all_cases=[c for c in panel['cases'] if c['stage']=='A'];by_id={c['id']:c for c in all_cases};cases=[by_id[i] for i in plan['episode_order']]
  if (sha(plan['panel'])!=plan['panel_sha256'] or plan['panel_sha256']!=PANEL_SHA or
   sha(plan['model_source_panel'])!=plan['model_source_panel_sha256'] or sha(plan['pi_inventory'])!=plan['pi_inventory_sha256'] or
   sha(plan['tool_manifest'])!=plan['tool_manifest_sha256']):raise ValueError('authority changed')
@@ -79,7 +103,12 @@ def run(args):
   expected=manifest['packages'][name];actual=tree_identity(package_root)
   if (actual['file_count']!=expected['file_count'] or actual['tree_sha256']!=expected['tree_sha256'] or
    sha(Path(package_root)/'package.json')!=expected['package_json_sha256'] or sha(Path(package_root)/entry)!=expected['entry_sha256']):raise ValueError('installed Pi extension changed')
- if len(cases)!=plan['max_model_episodes'] or [c['id'] for c in cases]!=plan['episode_order']:raise ValueError('case budget/order')
+ if len(cases)!=plan['max_model_episodes'] or [c['id'] for c in cases]!=plan['episode_order'] or plan['case_ids']!=[c['id'] for c in all_cases]:raise ValueError('case budget/order')
+ if plan.get('prefix'):
+  prefix=plan['prefix']
+  if (sha(prefix['terminal'])!=prefix['terminal_sha256'] or sha(Path(prefix['root'])/'model-before-private.json')!=prefix['model_before_sha256'] or
+   sha(Path(prefix['root'])/'model-after-private.json')!=prefix['model_after_sha256'] or
+   any(sha(Path(prefix['root'])/r['id']/'episode-private.json')!=r['episode_sha256'] for r in plan['prefix_receipts'])):raise ValueError('prefix changed')
  target=plan['target']
  if target['sha256']!=CHECKPOINT_SHA or target['mode']!='train' or sha(target['checkpoint'])!=CHECKPOINT_SHA or sha(plan['args_json'])!=plan['args_sha256']:raise ValueError('model authority changed')
  if not os.environ.get('CUDA_VISIBLE_DEVICES') or len(os.environ['CUDA_VISIBLE_DEVICES'].split(','))!=1:raise ValueError('one leased GPU')
@@ -87,7 +116,7 @@ def run(args):
  if vocabulary(encoding)[1]!=plan['tokenizer_vocabulary_sha256']:raise ValueError('tokenizer identity')
  root=Path(args.output);root.mkdir(parents=True,mode=0o700,exist_ok=False)
  before_model=fingerprint(loaded.model);publish(root/'model-before-private.json',{'fingerprint':before_model,'runtime':runtime(loaded,0),'target':target})
- rows=[];extensions=[Path('configs/pi/e97-pi-native-stage-a-tools.ts'),Path('/home/erikg/.pi/agent/npm/node_modules/@ff-labs/pi-fff/src/index.ts'),Path('/home/erikg/.pi/agent/npm/node_modules/pi-web-access/index.ts')]
+ rows=deepcopy(plan.get('prefix_rows',[]));extensions=[Path('configs/pi/e97-pi-native-stage-a-tools.ts'),Path('/home/erikg/.pi/agent/npm/node_modules/@ff-labs/pi-fff/src/index.ts'),Path('/home/erikg/.pi/agent/npm/node_modules/pi-web-access/index.ts')]
  try:
   for case in cases:
    out=root/case['id'];workspace=out/'workspace';workspace.mkdir(parents=True,mode=0o700)
@@ -105,17 +134,17 @@ def run(args):
    events=(out/'pi/pi-events-private.jsonl').read_text()
    if any(x and x in events for x in private):raise ValueError('private reasoning crossed Pi boundary')
    row={'id':case['id'],'family':case['family'],'delay_tokens':case['delay_tokens'],'initial_prompt_tokens':case['initial_prompt_tokens'],'model_generations':count,'reason':bridge.reason,'final':bridge.final,'failed':bridge.failed,'closed':bridge.closed,'close_verified':bridge.close_verified,'model_failure_verified':terminal['model_failure_verified'],'actions':acts,'grade':verdict,'native_record':bridge.episode.text(),'source_messages':bridge.episode.source_messages(),'public_history':bridge.history,'terminal':terminal,'snapshot':final_snapshot}
-   publish(out/'episode-private.json',row);rows.append({k:row[k] for k in ('id','family','delay_tokens','initial_prompt_tokens','model_generations','reason','failed','close_verified','model_failure_verified','grade')});print('PI_NATIVE_STAGE_A_EPISODE',case['id'],verdict['success'],bridge.reason,flush=True)
+   publish(out/'episode-private.json',row);rows.append(public_row(row));print('PI_NATIVE_STAGE_A_EPISODE',case['id'],verdict['success'],bridge.reason,flush=True)
   aggregates={}
   for family in sorted({r['family'] for r in rows}):
    selected=[r for r in rows if r['family']==family];aggregates[family]={'episodes':len(selected),'successes':sum(r['grade']['success'] for r in selected),'first_action_correct':sum(r['grade']['checks']['first_action_correct'] for r in selected)}
-  summary={'schema':'emender-e97-pi-native-stage-a-results-v1','plan_sha256':args.plan_sha,'status':'measurements-complete','rows':rows,'aggregates':aggregates,'model_episodes':len(rows),'automatic_retries':0,'optimizer_updates':0,'training_eligible':False,'checkpoint_promotion':False};publish(root/'summary.json',summary)
+  summary={'schema':'emender-e97-pi-native-stage-a-results-v1','plan_sha256':args.plan_sha,'status':'measurements-complete','rows':rows,'aggregates':aggregates,'model_episodes':len(rows),'new_model_episodes':len(cases),'retained_prefix_episodes':len(plan.get('prefix_rows',[])),'automatic_retries':0,'optimizer_updates':0,'training_eligible':False,'checkpoint_promotion':False};publish(root/'summary.json',summary)
  finally:
   after=fingerprint(loaded.model);no_grad=all(p.grad is None for p in loaded.model.parameters());bf16=all(p.dtype==torch.bfloat16 for p in loaded.model.parameters());memory=torch.cuda.max_memory_allocated();publish(root/'model-after-private.json',{'fingerprint':after,'unchanged':before_model==after,'no_gradients':no_grad,'all_parameters_bf16':bf16,'peak_hbm_allocated':memory})
   if before_model!=after or not no_grad or not bf16 or memory>=40*1024**3:raise ValueError('model immutability')
- if len(rows)!=12:raise ValueError('measurement coverage')
+ if len(rows)!=12 or len(cases)!=plan['max_model_episodes']:raise ValueError('measurement coverage')
  print('PI_NATIVE_STAGE_A_COMPLETE',len(rows),flush=True)
 
 def main():
- os.umask(0o077);signal.signal(signal.SIGTERM,lambda s,f:(_ for _ in ()).throw(TimeoutError('interrupted')));p=argparse.ArgumentParser();sp=p.add_subparsers(dest='command',required=True);f=sp.add_parser('freeze');f.add_argument('--panel',type=Path,required=True);f.add_argument('--pi-bin',type=Path,required=True);f.add_argument('--pi-inventory',type=Path,required=True);f.add_argument('--output',type=Path,required=True);r=sp.add_parser('run');r.add_argument('--plan',type=Path,required=True);r.add_argument('--plan-sha',required=True);r.add_argument('--output',type=Path,required=True);a=p.parse_args();freeze(a) if a.command=='freeze' else run(a)
+ os.umask(0o077);signal.signal(signal.SIGTERM,lambda s,f:(_ for _ in ()).throw(TimeoutError('interrupted')));p=argparse.ArgumentParser();sp=p.add_subparsers(dest='command',required=True);f=sp.add_parser('freeze');f.add_argument('--panel',type=Path,required=True);f.add_argument('--pi-bin',type=Path,required=True);f.add_argument('--pi-inventory',type=Path,required=True);f.add_argument('--prefix-root',type=Path);f.add_argument('--prefix-terminal',type=Path);f.add_argument('--output',type=Path,required=True);r=sp.add_parser('run');r.add_argument('--plan',type=Path,required=True);r.add_argument('--plan-sha',required=True);r.add_argument('--output',type=Path,required=True);a=p.parse_args();freeze(a) if a.command=='freeze' else run(a)
 if __name__=='__main__':main()
