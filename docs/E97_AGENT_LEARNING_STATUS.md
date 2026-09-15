@@ -1,6 +1,6 @@
 # E97 agent learning: current status and decision reset
 
-Status after the grounded-expansion training and evaluation. This is a
+Status after the representation-bridge training and audited evaluation. This is a
 programme-level interpretation and priority decision, not a replacement for any
 frozen experimental report, failed gate or source authority. The complete
 [numerical exploration index](validation/e97-numerical-exploration-index.md)
@@ -31,8 +31,12 @@ JSON layouts. This is preparation only: no new model improvement is claimed.
 The operator subsequently authorized the [separate32-update follow-up](validation/e97-representation-bridge-training-v1.md)
 with old-format rehearsal. All768 examples, byte-preserved rehearsal/replay and
 exact exposures passed audit; **all32 updates are complete and that budget is
-closed**. The matched96-case task/retention evaluation is now running.
-No additional learned gain is claimed until that evaluation finishes.
+closed**. The matched96-case task/retention evaluation **passed all15 frozen gates**:
+new fresh11/32→32/32, prior regression6/16→10/16, prior same-format16/16 preserved,
+prior structural1/16→5/16, and new composition1/16→4/16. Both x/y have the same
+completion counts and pass retention, with small NLL degradation. All384 episodes
+were independently regraded;384 agent and384 reader cleanups were confirmed.
+This is positive experimental learning evidence, **not checkpoint promotion**.
 
 ## Goal and actual capability
 
@@ -46,20 +50,23 @@ loss alone, valid first calls, teacher success or numerical agreement.
 |1,024 executor-verified authored grounding trajectories; separate32-update correction|First requested calls0/16→16/16; autonomous completions0/16→7/16|General agency; fresh-value gate3/8 missed4/8; editing/recovery still failed|
 |32 stochastic training-only rollouts on16 new tasks|16 autonomous successes and16 same-state verified teacher repairs; collection/correction pipeline works|A new evaluation score or model improvement: zero updates occurred|
 |Grounded expansion:2,048 authored examples,18 deduplicated canary records and a new32-update SFT tranche|Fresh same-format completion3/16→16/16, including4/4 edits and4/4 recovery; both x/y retention passed|Generalization/acceptance: old7/16→6/16 and structural-transfer0/16→1/16; joint gate failed|
+|Representation bridges:768 new examples,512 prior-training rehearsal records and replay; separate32-update SFT|New fresh11/32→32/32 (each family8/8), old fresh16/16 retained, prior regression6/16→10/16; all15 gates passed|Broad composition: only4/16, all recovery; one prior composition-lookup success lost. No Pi-native or independent-repository qualification|
 |Faithful native source/runtime pipeline|Actual observations/errors, full trajectories and routing/masks can be preserved|That more tokens alone will solve remaining behavior or that every candidate is admitted|
 
-The latest measured gain is **16/16 fresh same-format autonomous completions**,
-not a replacement score for the older panel, which fell to6/16. The model/trainer
-can learn useful behavior, but changed representations still largely fail. It is
-not yet a reliably generalizing agent. The data problem is **coverage, fidelity,
-curriculum and feedback**, not
-simply a shortage of raw token volume. The large mixture already contained4,216
+The latest measured gain is **32/32 new fresh autonomous completions**, while
+preserving the earlier16/16 and improving the original regression panel to10/16.
+The old observed-increment edit failure improved1/4→4/4. However, new composition
+reached only4/16 (all recovery); composition lookup fell1/4→0/4, and composition
+sum/edit remain0/4. Prior simple edits also remain0/4. The frozen gate passed,
+but the model is **not yet a reliably generalizing agent**. The data problem is
+coverage, fidelity, curriculum and feedback—not simply raw token volume. The large mixture already contained4,216
 unique native trajectories and106,637 unique conversation records.
 
 Sources: [closed880 programme](validation/e97-native-training-50m-agent-v1.md),
 [grounding correction](validation/e97-grounding-correction-v1.md),
 [on-policy canary](validation/e97-native-onpolicy-canary-v1.md),
-[grounded expansion](validation/e97-grounded-expansion-v1.md).
+[grounded expansion](validation/e97-grounded-expansion-v1.md),
+[representation bridge](validation/e97-representation-bridge-training-v1.md).
 
 ## Numerical conclusion: remove the blanket SFT veto
 
@@ -174,6 +181,21 @@ finds18 distinct records (10 repairs,8 successes), with3,447 distinct targets.
 Original candidate eligibility and the production registry remain unchanged;
 internal use is separately bounded by the new tranche authority.
 
+## Pi migration: recommended next engineering milestone
+
+Keep weights fixed while building a Pi-facing provider/tool adapter that preserves
+the current OpenHands-native grammar, real observations/errors, persistent shell,
+private/public message boundaries and finish semantics. Qualify round-trip histories
+and matched task completion through Pi before blaming or retraining the model.
+This first stage would be **Pi-fronted OpenHands**, not Pi-native execution.
+
+The older Pi server/closed four-tool extension is scaffolding with a different
+trained grammar, not a drop-in deployment of this checkpoint. Actual Pi-native
+read/bash/edit/write migration would require executor-verified Pi trajectories and
+separate qualification/training, not renamed OpenHands traces. Introduce broader
+repository context and session lifecycle behavior deliberately. No adapter has yet
+been implemented or qualified for this new checkpoint.
+
 ## Authorization and reporting
 
 The880-update programme, original32-update correction and new32-update grounded
@@ -182,8 +204,8 @@ or checkpoint promotion is authorized by this status document. The grounded
 expansion's failed overall gate is retained despite its same-format learning gain.
 The operator's later “run it” separately authorized the representation-bridge
 32-update plan with frozen evaluation. Those32 updates have also completed:
-**all four learning budgets are now closed**. The authorized bridge evaluation
-continues; it does not authorize additional training or promotion.
+**All four learning budgets and the authorized bridge evaluation are complete.**
+The bridge gate passed; this does not authorize additional training or promotion.
 
 Continue routine bounded diagnosis and preparation without repeated operator
 handoffs. Escalate new learning budgets, consequential trade-offs or authorization

@@ -140,10 +140,11 @@ Training recipe SHA256:
 `339f1a998c683dbe549a69cabb3e30a7bdeb6f7c237a69c3ca03e7ff4649a7ce`.
 
 **The new32-update budget is closed.** GPUs were idle with no active lease after
-training. `proc_f716` is now running the authorized matched96-case execution and
-unchanged retention evaluation. Training receipt totals independently matched the
-reviewed15,548,238 input and2,148,282 target exposures. No new behavioral gain,
-positive gate or promotion is claimed while evaluation is pending.
+training. `proc_f716` subsequently completed the authorized matched96-case execution
+and unchanged retention evaluation in1,818s, exit0. Training receipt totals
+independently matched the reviewed15,548,238 input and2,148,282 target exposures.
+The final audited evaluation below passes all15 frozen checks; no promotion follows
+automatically.
 
 |Training input|SHA256|
 |---|---|
@@ -164,3 +165,71 @@ On success, continue audit/packing, attended exposure review,32-update SFT and
 matched task/retention evaluation without additional routine operator handoffs.
 Stop and preserve evidence on failure; do not reopen a completed phase. No model
 has been loaded or updated in this new experiment at data launch.
+
+## Final audited result: all15 frozen gates passed
+
+Both x/y produced the same completion counts. These are **autonomous OpenHands
+executions**, not teacher verification, supplied-action completion or Pi-native
+execution. Parent refers to expansion-u32, not the older grounding-correction
+checkpoint.
+
+|Cohort|Pre-y|Bridge-y|Pre-x|Bridge-x|Primary y threshold|
+|---|---:|---:|---:|---:|---:|
+|Prior regression16|6|10|6|10|7|
+|Prior same-format fresh16|16|16|16|16|16|
+|Prior structural variants16|1|5|1|5|4|
+|New fresh32|11|32|11|32|24|
+|New composition16|1|4|1|4|4|
+
+Fresh lookup/sum/edit/recovery each reached **8/8**, from6/8,2/8,2/8,1/8 respectively.
+Across all96 distinct cases, completion improved35→67:33 newly successful cases
+and **one lost success**, `bridge-composition-lookup-0001-world-0`.
+
+### What improved, and what remains weak
+
+-Old-format recovery improved0/4→4/4, accounting for the prior regression gain.
+  Old-format lookup remains2/4, sums4/4 and edits0/4.
+-All four prior structural-edit cases now apply the correct **observed increment**,
+  improving1/4→4/4. Previously all four simply added1, and only one happened to pass.
+-Prior structural sums improved0/4→1/4; structural lookup and recovery remain0/4.
+-The new composition gain is **recovery0/4→4/4**. Composition lookup fell1/4→0/4;
+  composition sums and edits remain0/4. The aggregate composition gate passed,
+  but this is not broad compositional mastery or preservation of every old success.
+
+### Retention: both x/y pass, with small likelihood degradation
+
+|Measurement|Pre-y baseline|Bridge-y|Bridge-x|Limit|
+|---|---:|---:|---:|---:|
+|Tool assistant token accuracy|1.000000|1.000000|1.000000|≥.98|
+|Conversation macro NLL|1.565336|1.573943|1.571582|≤1.715336|
+|Native-development macro NLL|.920307|.940806|.939504|≤1.020307|
+
+The retention panel remains32 unchanged examples per model, not a universal
+conversation/coding benchmark. A separate audit recomputed all assistant/opening/
+choice aggregate metrics from the eight hash-bound rank reports.
+
+### Independent audit and closure
+
+`representation-bridge-v1-training-control/audit-results.py` independently regraded
+**all384 episodes**, joined rank results to aggregate outcomes, verified every
+unassisted case identity and explicit checkpoint/weight mode, and bound snapshots
+to actual paused-reader stdout. All384 agent and384 reader cleanups were checked;
+per-rank allocated execution HBM stayed below40GiB. Source audits passed. All eight
+GPUs were idle, no GPU lease remained, and no owned native sandbox remained.
+
+|Artifact|SHA256|
+|---|---|
+|Gate|`1884c7e285fe3bd98ce6f942dea52337fa847b483c9d752c8491a6194e9a8353`|
+|Episode audit|`16e036ce82f577fe6e307a8a58972c77a94e112ccd5926706c42735dbf63f7d7`|
+|Episode audit script|`f87af8571864301b97332d1e21b60fe3ab1f91b51222bf5709b9883b892318d9`|
+|Retention audit|`eefeeb5df57b388985e29b7d43da2bbc25160c301de9735030e44ab615c1fb2b`|
+
+**Verdict: positive bridge learning evidence under the frozen contract.** This is
+a passing experimental checkpoint, not production promotion, independent-repository
+qualification or demonstrated Pi compatibility. All four learning budgets remain
+closed. Preserve the earlier failed expansion/continuation/numerical evidence.
+
+The next recommended engineering milestone is a Pi-facing compatibility adapter
+with **unchanged model weights**, preserving the working native tool and transcript
+contract before any Pi-native tool retraining. That adapter and any further
+training remain separate work, not an automatic consequence of this passing gate.
