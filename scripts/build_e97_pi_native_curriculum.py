@@ -80,7 +80,7 @@ def recovery_case(i):
 
 def web_case(i,port):
  cid=case_id('web',i);tag=opaque(cid,10);kind=i%16;files={};prefix=0
- sources=(('https://example.com/','Example Domain'),('https://www.iana.org/help/example-domains','Example Domains'),('https://www.rfc-editor.org/rfc/rfc9110.txt','HTTP Semantics'))
+ sources=(('https://www.rfc-editor.org/rfc/rfc9110.txt','HTTP Semantics'),('https://www.rfc-editor.org/rfc/rfc9111.txt','HTTP Caching'),('https://www.rfc-editor.org/rfc/rfc9112.txt','HTTP/1.1'))
  url,fact=sources[i%len(sources)]
  if kind==0:
   query=f'official Python documentation release history {2020+i%5}';steps=[action('web_search',{'query':query,'numResults':3,'workflow':'none'}),{'name':'finish','dynamic':'observation'}];prompt=f'Research this externally verifiable question on the web and summarize the returned evidence: {query}';family='web-search-synthesis'

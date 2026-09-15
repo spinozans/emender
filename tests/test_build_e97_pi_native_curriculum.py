@@ -10,6 +10,8 @@ def test_case_mix_and_identity_are_deterministic():
  assert len({x['id'] for x in a})==40
  assert all(not Path(p).is_absolute() and '..' not in Path(p).parts for x in a for p in x['files'])
  assert sum(x['repository_discovery'] for x in a)>=12
+ assert all('127.0.0.1' not in x['prompt'] for x in a if x['category']=='web')
+ assert all(not x.get('web_page') for x in a if x['category']=='web')
 
 def test_case_generation_requires_multiple_of_twenty():
  for count in (0,19,21):
