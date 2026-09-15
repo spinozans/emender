@@ -125,9 +125,25 @@ covered. `exposure-review.json` and `distinct-exposure-audit.json` retain the
 attended review and independent occurrence accounting. GPUs were idle with no
 active leases before launch.
 
-**`proc_442e` is running the separately authorized32-update SFT tranche**, from
-exact expansion live-y, using the unchanged exercised trainer. No post-training
-behavioral result is available yet.
+**`proc_442e` completed the separately authorized32-update SFT tranche** in2,773s,
+exit0, from exact expansion live-y using the unchanged exercised trainer. Source
+and launch audits passed, and all runtime sample IDs/clocks matched the frozen
+schedule. The collector verified a finite complete BF16 model/optimizer checkpoint.
+Reported rank0 peak allocated HBM was36,128,739,328 bytes. The last reported global
+step loss was.42464569211006165; the filename loss.5302 is a different measurement.
+No fresh bitwise continuation was measured or claimed.
+
+Checkpoint:
+`R/representation-bridge-v1-train/checkpoints/checkpoint_agent_sft_u000032_loss_0.5302.pt`
+SHA256 `9b78628d47c48c304c14de50399fe1853d8c83386c7cf5d9bd4a0e878bf679fa`.
+Training recipe SHA256:
+`339f1a998c683dbe549a69cabb3e30a7bdeb6f7c237a69c3ca03e7ff4649a7ce`.
+
+**The new32-update budget is closed.** GPUs were idle with no active lease after
+training. `proc_f716` is now running the authorized matched96-case execution and
+unchanged retention evaluation. Training receipt totals independently matched the
+reviewed15,548,238 input and2,148,282 target exposures. No new behavioral gain,
+positive gate or promotion is claimed while evaluation is pending.
 
 |Training input|SHA256|
 |---|---|

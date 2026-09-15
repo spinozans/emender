@@ -30,8 +30,9 @@ cleanups,71 CPU tests), targeting the observed fixed-+1 edit shortcut and change
 JSON layouts. This is preparation only: no new model improvement is claimed.
 The operator subsequently authorized the [separate32-update follow-up](validation/e97-representation-bridge-training-v1.md)
 with old-format rehearsal. All768 examples, byte-preserved rehearsal/replay and
-exact exposures passed audit; the32-update training tranche is now running.
-No additional learned gain is claimed until the matched evaluation finishes.
+exact exposures passed audit; **all32 updates are complete and that budget is
+closed**. The matched96-case task/retention evaluation is now running.
+No additional learned gain is claimed until that evaluation finishes.
 
 ## Goal and actual capability
 
@@ -179,8 +180,10 @@ The880-update programme, original32-update correction and new32-update grounded
 expansion are all **closed**. No further training, data admission, rollout expansion
 or checkpoint promotion is authorized by this status document. The grounded
 expansion's failed overall gate is retained despite its same-format learning gain.
-The operator's later “run it” separately authorizes the representation-bridge
-32-update plan with frozen evaluation; it does not reopen any of these budgets.
+The operator's later “run it” separately authorized the representation-bridge
+32-update plan with frozen evaluation. Those32 updates have also completed:
+**all four learning budgets are now closed**. The authorized bridge evaluation
+continues; it does not authorize additional training or promotion.
 
 Continue routine bounded diagnosis and preparation without repeated operator
 handoffs. Escalate new learning budgets, consequential trade-offs or authorization
