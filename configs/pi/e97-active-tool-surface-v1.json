@@ -1,0 +1,1845 @@
+{
+  "capture_extension_sha256": "2b2db0e3a2b55106973067df809d886e24021f5b452aada74989585a4b91c464",
+  "capture_script_sha256": "29da39b93049181efa97a46c4f45fae155104c8a6e610f406c3c0ebf6853f7c0",
+  "groups": {
+    "core": {
+      "capture_sha256": "69f4c9c1ee445e24287986526ca41092bb580555a38562e4adc23e9dc6432dce",
+      "tools": [
+        {
+          "description": "Read the contents of a file. Supports text files and images (jpg, png, gif, webp, bmp). Images are sent as attachments. For text files, output is truncated to 2000 lines or 50KB (whichever is hit first). Use offset/limit for large files. When you need the full file, continue with offset until complete.",
+          "label": "read",
+          "name": "read",
+          "parameters": {
+            "properties": {
+              "limit": {
+                "description": "Maximum number of lines to read",
+                "type": "number"
+              },
+              "offset": {
+                "description": "Line number to start reading from (1-indexed)",
+                "type": "number"
+              },
+              "path": {
+                "description": "Path to the file to read (relative or absolute)",
+                "type": "string"
+              }
+            },
+            "required": [
+              "path"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "description": "Execute a bash command in the current working directory. Returns stdout and stderr. Output is truncated to last 2000 lines or 50KB (whichever is hit first). If truncated, full output is saved to a temp file. Optionally provide a timeout in seconds.",
+          "label": "bash",
+          "name": "bash",
+          "parameters": {
+            "properties": {
+              "command": {
+                "description": "Shell command to execute",
+                "type": "string"
+              },
+              "timeout": {
+                "description": "Timeout in seconds (optional, no default timeout)",
+                "type": "number"
+              }
+            },
+            "required": [
+              "command"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "description": "Edit a single file using exact text replacement. Every edits[].oldText must match a unique, non-overlapping region of the original file. If two changes affect the same block or nearby lines, merge them into one edit instead of emitting overlapping edits. Do not include large unchanged regions just to connect distant changes.",
+          "label": "edit",
+          "name": "edit",
+          "parameters": {
+            "properties": {
+              "edits": {
+                "description": "One or more targeted replacements. Each edit is matched against the original file, not incrementally. Do not include overlapping or nested edits. If two changes touch the same block or nearby lines, merge them into one edit instead.",
+                "items": {
+                  "properties": {
+                    "newText": {
+                      "description": "Replacement text for this targeted edit.",
+                      "type": "string"
+                    },
+                    "oldText": {
+                      "description": "Exact text for one targeted replacement. It must be unique in the original file and must not overlap with any other edits[].oldText in the same call.",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "oldText",
+                    "newText"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "path": {
+                "description": "Path to the file to edit (relative or absolute)",
+                "type": "string"
+              }
+            },
+            "required": [
+              "path",
+              "edits"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "description": "Write content to a file. Creates the file if it doesn't exist, overwrites if it does. Automatically creates parent directories.",
+          "label": "write",
+          "name": "write",
+          "parameters": {
+            "properties": {
+              "content": {
+                "description": "Content to write to the file",
+                "type": "string"
+              },
+              "path": {
+                "description": "Path to the file to write (relative or absolute)",
+                "type": "string"
+              }
+            },
+            "required": [
+              "path",
+              "content"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
+    "fff": {
+      "capture_sha256": "511ae642a2564c3546a40da274bfbbc7b7e337c00fd4a8779e30c86d31880a7d",
+      "tools": [
+        {
+          "description": "Grep file contents. Smart-case, auto-detects regex vs literal, git-aware. Results are ranked by frecency (most-accessed files first); matches within a file stay in source order. Default limit 20.",
+          "label": "ffgrep",
+          "name": "ffgrep",
+          "parameters": {
+            "properties": {
+              "caseSensitive": {
+                "description": "Force case-sensitive matching. Default uses smart-case (case-insensitive when pattern is all lowercase).",
+                "type": "boolean"
+              },
+              "context": {
+                "description": "Context lines before+after each match (0-20)",
+                "type": "number"
+              },
+              "cursor": {
+                "description": "Pagination cursor from previous result",
+                "type": "string"
+              },
+              "exclude": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                ],
+                "description": "Exclude paths (comma/space-separated or array). Same syntax as path: directory prefix ('test/'), filename with extension ('config.json'), or glob ('*.min.js', '**/*.{rs,go}'). A leading '!' is optional and ignored — both 'test/' and '!test/' work. Example: 'test/,*.min.js,!vendor/'."
+              },
+              "limit": {
+                "description": "Max matches (default 20)",
+                "type": "number"
+              },
+              "path": {
+                "description": "Path constraint. Directory prefix (src/ or src/foo/), bare filename with extension (main.rs), or glob (*.ts, src/**/*.cc, {src,lib}/**). Applied to the full repo-relative path. Absolute, ~/, and ../ paths outside the workspace are also supported and searched with a separate index.",
+                "type": "string"
+              },
+              "pattern": {
+                "description": "Search pattern (literal text or regex)",
+                "type": "string"
+              }
+            },
+            "required": [
+              "pattern"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "description": "Fuzzy path search and glob search. Matches against the whole repo-relative path, not just the filename. Frecency-ranked, git-aware. Multi-word = narrower (AND). Default limit 30.",
+          "label": "fffind",
+          "name": "fffind",
+          "parameters": {
+            "properties": {
+              "cursor": {
+                "description": "Pagination cursor from previous result",
+                "type": "string"
+              },
+              "exclude": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                ],
+                "description": "Exclude paths (comma/space-separated or array). Same syntax as path: directory prefix ('test/'), filename with extension ('config.json'), or glob ('*.min.js', '**/*.{rs,go}'). A leading '!' is optional and ignored — both 'test/' and '!test/' work. Example: 'test/,*.min.js,!vendor/'."
+              },
+              "limit": {
+                "description": "Max results per page (default 30)",
+                "type": "number"
+              },
+              "path": {
+                "description": "Path constraint. Directory prefix (src/ or src/foo/), bare filename with extension (main.rs), or glob (*.ts, src/**/*.cc, {src,lib}/**). Applied to the full repo-relative path. Absolute, ~/, and ../ paths outside the workspace are also supported and searched with a separate index.",
+                "type": "string"
+              },
+              "pattern": {
+                "description": "Fuzzy filename search and glob search. Frecency-ranked, git-aware. Multi-word = narrower (AND) not bound to order, use for multi word related concept search. Prefer this over ls/find/bash as the first exploration step whenever the user names a concept, feature, or symbol — it surfaces the relevant files in one call. Only use ls/read on a directory when you specifically need the alphabetical layout of an unknown repo, or when a concept search returned nothing.",
+                "type": "string"
+              }
+            },
+            "required": [
+              "pattern"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
+    "process": {
+      "capture_sha256": "05f0ecbe5b87b12920f53ab3e60b39ae08ed7a22ce2e9137ddbcbfb2c31ed98f",
+      "tools": [
+        {
+          "description": "Start, list, stop, write to stdin, update, clear, and inspect output of long-running background processes.",
+          "label": "Process",
+          "name": "process",
+          "parameters": {
+            "properties": {
+              "action": {
+                "description": "Action to perform.",
+                "enum": [
+                  "start",
+                  "list",
+                  "stop",
+                  "output",
+                  "write",
+                  "update",
+                  "clear"
+                ],
+                "type": "string"
+              },
+              "command": {
+                "description": "Shell command to run. Required for start.",
+                "type": "string"
+              },
+              "cwd": {
+                "description": "Working directory for start. Defaults to the agent's current working directory. Only for start.",
+                "type": "string"
+              },
+              "end": {
+                "description": "Close stdin after writing. Use to signal end-of-input (EOF). Only for write action.",
+                "type": "boolean"
+              },
+              "id": {
+                "description": "Opaque process ID returned by start or list (for example, proc_ab12). Required for stop, output, write, and update. Process names are not accepted.",
+                "type": "string"
+              },
+              "input": {
+                "description": "Text to write to the process stdin. Only for write action. Defaults to an empty string when closing stdin with end.",
+                "type": "string"
+              },
+              "limit": {
+                "description": "Maximum number of processes to list.",
+                "type": "number"
+              },
+              "mode": {
+                "description": "Pattern matching mode for output filter. Defaults to literal. Only for output action.",
+                "enum": [
+                  "literal",
+                  "regex"
+                ],
+                "type": "string"
+              },
+              "name": {
+                "description": "Process name. Required for start.",
+                "type": "string"
+              },
+              "notify": {
+                "description": "Notify settings. Attention: turn wakes or steers the agent; context waits for the next user prompt; ignore suppresses successful exits and external kills but retains log matches as context. Failures always notify, with ignore downgraded to context.",
+                "properties": {
+                  "logMatches": {
+                    "description": "Log match notifications. Supports at most 20 matchers, with each pattern limited to 500 characters.",
+                    "items": {
+                      "properties": {
+                        "mode": {
+                          "description": "Pattern matching mode. Defaults to literal.",
+                          "enum": [
+                            "literal",
+                            "regex"
+                          ],
+                          "type": "string"
+                        },
+                        "on": {
+                          "description": "Agent attention for this log match. Defaults to turn.",
+                          "enum": [
+                            "turn",
+                            "context",
+                            "ignore"
+                          ],
+                          "type": "string"
+                        },
+                        "pattern": {
+                          "description": "Log pattern to match. Limited to 500 characters. Literal by default; regex only when mode is regex.",
+                          "maxLength": 500,
+                          "type": "string"
+                        },
+                        "repeat": {
+                          "description": "Whether this matcher can notify more than once. Defaults to false.",
+                          "type": "boolean"
+                        },
+                        "stream": {
+                          "description": "Output stream to inspect. Defaults to both.",
+                          "enum": [
+                            "stdout",
+                            "stderr",
+                            "both"
+                          ],
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "pattern"
+                      ],
+                      "type": "object"
+                    },
+                    "maxItems": 20,
+                    "type": "array"
+                  },
+                  "onFailure": {
+                    "description": "Attention on failure or crash. Defaults to turn.",
+                    "enum": [
+                      "turn",
+                      "context",
+                      "ignore"
+                    ],
+                    "type": "string"
+                  },
+                  "onKilled": {
+                    "description": "Attention on external kill. Defaults to context.",
+                    "enum": [
+                      "turn",
+                      "context",
+                      "ignore"
+                    ],
+                    "type": "string"
+                  },
+                  "onSuccess": {
+                    "description": "Attention on clean exit. Defaults to turn.",
+                    "enum": [
+                      "turn",
+                      "context",
+                      "ignore"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "pattern": {
+                "description": "Optional output filter. Literal by default; regex only when mode is regex. Only for output action.",
+                "maxLength": 500,
+                "type": "string"
+              },
+              "sortBy": {
+                "description": "Sort order for process list results.",
+                "enum": [
+                  "startTime_desc",
+                  "startTime_asc",
+                  "name_asc",
+                  "name_desc",
+                  "status_asc"
+                ],
+                "type": "string"
+              },
+              "statuses": {
+                "description": "Process list status filters. Use all for no filtering; finished means exited successfully; failed means exited unsuccessfully or terminate_timeout.",
+                "items": {
+                  "enum": [
+                    "all",
+                    "running",
+                    "finished",
+                    "failed",
+                    "terminating",
+                    "terminate_timeout",
+                    "killed"
+                  ],
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "stream": {
+                "description": "Output stream to return. Defaults to both. Only for output action.",
+                "enum": [
+                  "stdout",
+                  "stderr",
+                  "both"
+                ],
+                "type": "string"
+              },
+              "tailLines": {
+                "description": "Maximum matching lines to return per selected stream. Defaults to 100. Only for output action.",
+                "maximum": 2000,
+                "minimum": 1,
+                "type": "integer"
+              },
+              "watches": {
+                "description": "Update log watches on a running process. Only for update action.",
+                "properties": {
+                  "items": {
+                    "description": "Watch entries. For append/replace, provide full matcher definitions. For remove, provide index or pattern to identify matchers to remove. Ignored for clear.",
+                    "items": {
+                      "properties": {
+                        "index": {
+                          "description": "Matcher index to remove. Only for remove mode. If pattern is also provided, index takes precedence.",
+                          "minimum": 0,
+                          "type": "integer"
+                        },
+                        "mode": {
+                          "description": "Pattern matching mode. Defaults to literal.",
+                          "enum": [
+                            "literal",
+                            "regex"
+                          ],
+                          "type": "string"
+                        },
+                        "on": {
+                          "description": "Attention for this match. Defaults to turn.",
+                          "enum": [
+                            "turn",
+                            "context",
+                            "ignore"
+                          ],
+                          "type": "string"
+                        },
+                        "pattern": {
+                          "description": "Log pattern. Required for append and replace modes. Optional for remove mode (use index or pattern).",
+                          "maxLength": 500,
+                          "type": "string"
+                        },
+                        "repeat": {
+                          "description": "Whether this matcher can notify more than once. Defaults to false.",
+                          "type": "boolean"
+                        },
+                        "stream": {
+                          "description": "Output stream to inspect. Defaults to both.",
+                          "enum": [
+                            "stdout",
+                            "stderr",
+                            "both"
+                          ],
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "maxItems": 20,
+                    "type": "array"
+                  },
+                  "mode": {
+                    "description": "How to update log watches.",
+                    "enum": [
+                      "append",
+                      "replace",
+                      "remove",
+                      "clear"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "mode"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "action"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
+    "web": {
+      "capture_sha256": "01075e448fa8805148dc7c936a1379f24634ddb0b38f8d98ce0db26e8133d1b1",
+      "tools": [
+        {
+          "description": "Search the web using OpenAI, Brave, Parallel, Parallel MCP, TinyFish, Search1API, Searchinfinity, Querit, Tavily, Firecrawl, Jina, SERPdive, Kagi, Bocha, Ollama, SearXNG, DuckDuckGo, Exa, Perplexity, Gemini, Kimi, AnySearch, XCrawl, Valyu, xAI, Mistral, Bright Data, SerpBase, SerpApi, or Serper. Pass a provider array to search only those providers simultaneously, or use provider \"all\" to search every eligible provider except Parallel MCP, DuckDuckGo, Kimi, AnySearch, XCrawl, Valyu, xAI, Mistral, Bright Data, SerpBase, SerpApi, and Serper. Returns an AI-synthesized answer with source citations. OpenAI search uses a Codex subscription or OpenAI API key; Kimi search uses a Kimi Code Plan authenticated through /login kimi-coding; xAI search uses a SuperGrok/X Premium subscription or xAI API key; Mistral search uses a Mistral API key. Parallel MCP, DuckDuckGo, Kimi, AnySearch, XCrawl, Valyu, xAI, Mistral, Bright Data, SerpBase, SerpApi, and Serper are available only when explicitly selected. For comprehensive research, prefer queries (plural) with 2-4 varied angles over a single query — each query gets its own synthesized answer, so varying phrasing and scope gives much broader coverage. When includeContent is true, full page content is fetched in the background. Searches auto-open the interactive browser curator and stream results live; set workflow to \"none\" to skip curation or \"auto-summary\" for a model-generated summary without the browser curator. The configured provider is used when provider is omitted or set to auto; omit provider unless explicitly overriding it. Without a configured provider, SearXNG is preferred first for local/private search. When the active Pi model is openai-codex, Codex-backed OpenAI search is preferred next. Otherwise Exa is preferred before OpenAI, then Brave, Parallel, TinyFish, Search1API, Searchinfinity, Querit, Tavily, Firecrawl, Jina, SERPdive, Kagi, Bocha, Ollama, Perplexity, Gemini API, or Gemini Web.",
+          "label": "Web Search",
+          "name": "web_search",
+          "parameters": {
+            "properties": {
+              "domainFilter": {
+                "description": "Limit to domains (prefix with - to exclude)",
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "includeContent": {
+                "description": "Fetch full page content (async)",
+                "type": "boolean"
+              },
+              "numResults": {
+                "description": "Results per query (default: 5, max: 20)",
+                "maximum": 20,
+                "minimum": 1,
+                "type": "integer"
+              },
+              "provider": {
+                "anyOf": [
+                  {
+                    "enum": [
+                      "auto",
+                      "all",
+                      "openai",
+                      "brave",
+                      "parallel",
+                      "parallel-mcp",
+                      "tinyfish",
+                      "search1api",
+                      "searchinfinity",
+                      "querit",
+                      "tavily",
+                      "firecrawl",
+                      "jina",
+                      "searxng",
+                      "duckduckgo",
+                      "perplexity",
+                      "gemini",
+                      "kimi",
+                      "exa",
+                      "serpdive",
+                      "kagi",
+                      "ollama",
+                      "anysearch",
+                      "xai",
+                      "mistral",
+                      "brightdata",
+                      "serpbase",
+                      "serpapi",
+                      "serper",
+                      "valyu",
+                      "bocha",
+                      "xcrawl"
+                    ],
+                    "type": "string"
+                  },
+                  {
+                    "items": {
+                      "enum": [
+                        "openai",
+                        "brave",
+                        "parallel",
+                        "parallel-mcp",
+                        "tinyfish",
+                        "search1api",
+                        "searchinfinity",
+                        "querit",
+                        "tavily",
+                        "firecrawl",
+                        "jina",
+                        "searxng",
+                        "duckduckgo",
+                        "perplexity",
+                        "gemini",
+                        "kimi",
+                        "exa",
+                        "serpdive",
+                        "kagi",
+                        "ollama",
+                        "anysearch",
+                        "xai",
+                        "mistral",
+                        "brightdata",
+                        "serpbase",
+                        "serpapi",
+                        "serper",
+                        "valyu",
+                        "bocha",
+                        "xcrawl"
+                      ],
+                      "type": "string"
+                    },
+                    "minItems": 1,
+                    "type": "array"
+                  }
+                ],
+                "description": "Search provider or non-empty list of providers to search simultaneously; use all to search every eligible provider except Parallel MCP, DuckDuckGo, Kimi, AnySearch, XCrawl, Valyu, xAI, Mistral, Bright Data, SerpBase, SerpApi, and Serper, omit this field to use the configured provider, or use auto when none is configured"
+              },
+              "proxy": {
+                "description": "http(s) or socks proxy URL (e.g. http://host:port or socks5h://host:port) used for every outbound request in this call (search APIs and content fetches). Node fetch ignores HTTP(S)_PROXY env vars, so set this (or `proxy` in web-search.json) when direct access is blocked; empty string forces direct access.",
+                "type": "string"
+              },
+              "queries": {
+                "description": "Multiple queries searched concurrently (up to three at a time), each returning its own synthesized answer. Prefer this for research — vary phrasing, scope, and angle across 2-4 queries to maximize coverage. Good: ['React vs Vue performance benchmarks 2026', 'React vs Vue developer experience comparison', 'React ecosystem size vs Vue ecosystem']. Bad: ['React vs Vue', 'React vs Vue comparison', 'React vs Vue review'] (too similar, redundant results).",
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "query": {
+                "description": "Single search query. For research tasks, prefer 'queries' with multiple varied angles instead.",
+                "type": "string"
+              },
+              "recencyFilter": {
+                "description": "Filter by recency",
+                "enum": [
+                  "day",
+                  "week",
+                  "month",
+                  "year"
+                ],
+                "type": "string"
+              },
+              "workflow": {
+                "description": "Search workflow mode: none = no curator, summary-review = open curator with auto summary draft (default), auto-summary = generate summary without opening curator",
+                "enum": [
+                  "none",
+                  "summary-review",
+                  "auto-summary"
+                ],
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "description": "Check a claim against web sources and return a bounded machine-readable research artifact with exact passage citations.",
+          "label": "Source Check",
+          "name": "source_check",
+          "parameters": {
+            "properties": {
+              "claim": {
+                "description": "The assertion to check against web sources.",
+                "type": "string"
+              },
+              "domainFilter": {
+                "description": "Limit to domains; prefix with - to exclude.",
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "fetchContent": {
+                "description": "Fetch up to 5 result pages for exact passage extraction.",
+                "type": "boolean"
+              },
+              "numResults": {
+                "description": "Results per query (default: 5, max: 20).",
+                "maximum": 20,
+                "minimum": 1,
+                "type": "integer"
+              },
+              "provider": {
+                "anyOf": [
+                  {
+                    "enum": [
+                      "auto",
+                      "all",
+                      "openai",
+                      "brave",
+                      "parallel",
+                      "parallel-mcp",
+                      "tinyfish",
+                      "search1api",
+                      "searchinfinity",
+                      "querit",
+                      "tavily",
+                      "firecrawl",
+                      "jina",
+                      "searxng",
+                      "duckduckgo",
+                      "perplexity",
+                      "gemini",
+                      "kimi",
+                      "exa",
+                      "serpdive",
+                      "kagi",
+                      "ollama",
+                      "anysearch",
+                      "xai",
+                      "mistral",
+                      "brightdata",
+                      "serpbase",
+                      "serpapi",
+                      "serper",
+                      "valyu",
+                      "bocha",
+                      "xcrawl"
+                    ],
+                    "type": "string"
+                  },
+                  {
+                    "items": {
+                      "enum": [
+                        "openai",
+                        "brave",
+                        "parallel",
+                        "parallel-mcp",
+                        "tinyfish",
+                        "search1api",
+                        "searchinfinity",
+                        "querit",
+                        "tavily",
+                        "firecrawl",
+                        "jina",
+                        "searxng",
+                        "duckduckgo",
+                        "perplexity",
+                        "gemini",
+                        "kimi",
+                        "exa",
+                        "serpdive",
+                        "kagi",
+                        "ollama",
+                        "anysearch",
+                        "xai",
+                        "mistral",
+                        "brightdata",
+                        "serpbase",
+                        "serpapi",
+                        "serper",
+                        "valyu",
+                        "bocha",
+                        "xcrawl"
+                      ],
+                      "type": "string"
+                    },
+                    "minItems": 1,
+                    "type": "array"
+                  }
+                ],
+                "description": "Search provider or non-empty list of providers to search simultaneously; all searches every eligible provider except Parallel MCP, DuckDuckGo, Kimi, AnySearch, XCrawl, Valyu, xAI, Mistral, Bright Data, SerpBase, SerpApi, and Serper"
+              },
+              "proxy": {
+                "description": "http(s) or socks proxy URL (e.g. http://host:port or socks5h://host:port) used for every outbound request in this call (search APIs and result-page fetches). Empty string forces direct access.",
+                "type": "string"
+              },
+              "queries": {
+                "description": "Search queries (default: the claim).",
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "recencyFilter": {
+                "description": "Filter by recency.",
+                "enum": [
+                  "day",
+                  "week",
+                  "month",
+                  "year"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "claim"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "description": "Fetch URL(s) and extract readable content as markdown. Use mode \"raw\" for exact textual HTTP response bodies or mode \"answer\" with prompt to answer using only fetched content. Direct image URLs return resized image content. Supports YouTube transcripts, GitHub repositories, PDFs, and local videos. Full original content is stored for retrieval with get_search_content.",
+          "label": "Fetch Content",
+          "name": "fetch_content",
+          "parameters": {
+            "properties": {
+              "answerModel": {
+                "description": "Optional provider/model-id override for mode answer. Defaults to fetch.answerProvider + fetch.answerModel when configured, otherwise the current Pi model.",
+                "type": "string"
+              },
+              "auth": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "boolean"
+                  }
+                ],
+                "description": "Opt into an authFetch profile for local browser-cookie fetching. Use a profile name, or true only when exactly one profile exists."
+              },
+              "forceClone": {
+                "description": "Force cloning large GitHub repositories that exceed the size threshold",
+                "type": "boolean"
+              },
+              "frames": {
+                "description": "Number of frames to extract. Use with timestamp range for custom density, with single timestamp to get N frames at 5s intervals, or alone to sample across the entire video. Requires yt-dlp + ffmpeg for YouTube, ffmpeg for local video.",
+                "maximum": 12,
+                "minimum": 1,
+                "type": "integer"
+              },
+              "mode": {
+                "description": "Fetch mode: readable (default extraction), raw (exact textual HTTP body), or answer (answer prompt using only fetched content).",
+                "enum": [
+                  "readable",
+                  "raw",
+                  "answer"
+                ],
+                "type": "string"
+              },
+              "model": {
+                "description": "Override the Gemini model for video/YouTube analysis (e.g. 'gemini-3.6-flash'). Defaults to config or gemini-3.6-flash.",
+                "type": "string"
+              },
+              "prompt": {
+                "description": "Question or instruction for video analysis, or the page-local question required by mode answer.",
+                "type": "string"
+              },
+              "proxy": {
+                "description": "http(s) or socks proxy URL (e.g. http://host:port or socks5h://host:port) used for this fetch. Needed when the target is unreachable directly; localhost and NO_PROXY hosts always bypass the proxy. Empty string forces direct access.",
+                "type": "string"
+              },
+              "timestamp": {
+                "description": "Extract video frame(s) at a timestamp or time range. Single: '1:23:45', '23:45', or '85' (seconds). Range: '23:41-25:00' extracts evenly-spaced frames across that span (default 6). Use frames with ranges to control density; single+frames uses a fixed 5s interval. YouTube requires yt-dlp + ffmpeg; local videos require ffmpeg. Use a range when you know the approximate area but not the exact moment — you'll get a contact sheet to visually identify the right frame.",
+                "type": "string"
+              },
+              "url": {
+                "description": "Single URL to fetch",
+                "type": "string"
+              },
+              "urls": {
+                "description": "Multiple URLs (parallel)",
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "description": "Retrieve bounded content slices or find matching passages in a previous web_search, source_check, or fetch_content call.",
+          "label": "Get Search Content",
+          "name": "get_search_content",
+          "parameters": {
+            "properties": {
+              "findMode": {
+                "description": "Matching mode for findText (default: case-insensitive). Requires findText.",
+                "enum": [
+                  "exact",
+                  "case-insensitive",
+                  "fuzzy"
+                ],
+                "type": "string"
+              },
+              "findText": {
+                "anyOf": [
+                  {
+                    "maxLength": 500,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  {
+                    "items": {
+                      "maxLength": 500,
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "maxItems": 10,
+                    "minItems": 1,
+                    "type": "array"
+                  }
+                ],
+                "description": "Text or texts to find in the selected stored content. When supplied, offset and limit are ignored."
+              },
+              "limit": {
+                "description": "Maximum characters to return for fetched URL content slices (default and max are set by maxInlineContentChars). Ignored when findText is supplied.",
+                "maximum": 30000,
+                "minimum": 1,
+                "type": "integer"
+              },
+              "offset": {
+                "description": "Character offset for fetched URL content slices (default 0). Ignored when findText is supplied.",
+                "minimum": 0,
+                "type": "integer"
+              },
+              "query": {
+                "description": "Get content for this query (web_search)",
+                "type": "string"
+              },
+              "queryIndex": {
+                "description": "Get content for query at index",
+                "minimum": 0,
+                "type": "integer"
+              },
+              "responseId": {
+                "description": "The responseId from web_search, source_check, or fetch_content",
+                "type": "string"
+              },
+              "url": {
+                "description": "Get content for this URL",
+                "type": "string"
+              },
+              "urlIndex": {
+                "description": "Get content for URL at index",
+                "minimum": 0,
+                "type": "integer"
+              }
+            },
+            "required": [
+              "responseId"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    }
+  },
+  "model_visible_tools": [
+    {
+      "description": "Read the contents of a file. Supports text files and images (jpg, png, gif, webp, bmp). Images are sent as attachments. For text files, output is truncated to 2000 lines or 50KB (whichever is hit first). Use offset/limit for large files. When you need the full file, continue with offset until complete.",
+      "label": "read",
+      "name": "read",
+      "parameters": {
+        "properties": {
+          "limit": {
+            "description": "Maximum number of lines to read",
+            "type": "number"
+          },
+          "offset": {
+            "description": "Line number to start reading from (1-indexed)",
+            "type": "number"
+          },
+          "path": {
+            "description": "Path to the file to read (relative or absolute)",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "type": "object"
+      }
+    },
+    {
+      "description": "Execute a bash command in the current working directory. Returns stdout and stderr. Output is truncated to last 2000 lines or 50KB (whichever is hit first). If truncated, full output is saved to a temp file. Optionally provide a timeout in seconds.",
+      "label": "bash",
+      "name": "bash",
+      "parameters": {
+        "properties": {
+          "command": {
+            "description": "Shell command to execute",
+            "type": "string"
+          },
+          "timeout": {
+            "description": "Timeout in seconds (optional, no default timeout)",
+            "type": "number"
+          }
+        },
+        "required": [
+          "command"
+        ],
+        "type": "object"
+      }
+    },
+    {
+      "description": "Edit a single file using exact text replacement. Every edits[].oldText must match a unique, non-overlapping region of the original file. If two changes affect the same block or nearby lines, merge them into one edit instead of emitting overlapping edits. Do not include large unchanged regions just to connect distant changes.",
+      "label": "edit",
+      "name": "edit",
+      "parameters": {
+        "properties": {
+          "edits": {
+            "description": "One or more targeted replacements. Each edit is matched against the original file, not incrementally. Do not include overlapping or nested edits. If two changes touch the same block or nearby lines, merge them into one edit instead.",
+            "items": {
+              "properties": {
+                "newText": {
+                  "description": "Replacement text for this targeted edit.",
+                  "type": "string"
+                },
+                "oldText": {
+                  "description": "Exact text for one targeted replacement. It must be unique in the original file and must not overlap with any other edits[].oldText in the same call.",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "oldText",
+                "newText"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "path": {
+            "description": "Path to the file to edit (relative or absolute)",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "edits"
+        ],
+        "type": "object"
+      }
+    },
+    {
+      "description": "Write content to a file. Creates the file if it doesn't exist, overwrites if it does. Automatically creates parent directories.",
+      "label": "write",
+      "name": "write",
+      "parameters": {
+        "properties": {
+          "content": {
+            "description": "Content to write to the file",
+            "type": "string"
+          },
+          "path": {
+            "description": "Path to the file to write (relative or absolute)",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "content"
+        ],
+        "type": "object"
+      }
+    },
+    {
+      "description": "Start, list, stop, write to stdin, update, clear, and inspect output of long-running background processes.",
+      "label": "Process",
+      "name": "process",
+      "parameters": {
+        "properties": {
+          "action": {
+            "description": "Action to perform.",
+            "enum": [
+              "start",
+              "list",
+              "stop",
+              "output",
+              "write",
+              "update",
+              "clear"
+            ],
+            "type": "string"
+          },
+          "command": {
+            "description": "Shell command to run. Required for start.",
+            "type": "string"
+          },
+          "cwd": {
+            "description": "Working directory for start. Defaults to the agent's current working directory. Only for start.",
+            "type": "string"
+          },
+          "end": {
+            "description": "Close stdin after writing. Use to signal end-of-input (EOF). Only for write action.",
+            "type": "boolean"
+          },
+          "id": {
+            "description": "Opaque process ID returned by start or list (for example, proc_ab12). Required for stop, output, write, and update. Process names are not accepted.",
+            "type": "string"
+          },
+          "input": {
+            "description": "Text to write to the process stdin. Only for write action. Defaults to an empty string when closing stdin with end.",
+            "type": "string"
+          },
+          "limit": {
+            "description": "Maximum number of processes to list.",
+            "type": "number"
+          },
+          "mode": {
+            "description": "Pattern matching mode for output filter. Defaults to literal. Only for output action.",
+            "enum": [
+              "literal",
+              "regex"
+            ],
+            "type": "string"
+          },
+          "name": {
+            "description": "Process name. Required for start.",
+            "type": "string"
+          },
+          "notify": {
+            "description": "Notify settings. Attention: turn wakes or steers the agent; context waits for the next user prompt; ignore suppresses successful exits and external kills but retains log matches as context. Failures always notify, with ignore downgraded to context.",
+            "properties": {
+              "logMatches": {
+                "description": "Log match notifications. Supports at most 20 matchers, with each pattern limited to 500 characters.",
+                "items": {
+                  "properties": {
+                    "mode": {
+                      "description": "Pattern matching mode. Defaults to literal.",
+                      "enum": [
+                        "literal",
+                        "regex"
+                      ],
+                      "type": "string"
+                    },
+                    "on": {
+                      "description": "Agent attention for this log match. Defaults to turn.",
+                      "enum": [
+                        "turn",
+                        "context",
+                        "ignore"
+                      ],
+                      "type": "string"
+                    },
+                    "pattern": {
+                      "description": "Log pattern to match. Limited to 500 characters. Literal by default; regex only when mode is regex.",
+                      "maxLength": 500,
+                      "type": "string"
+                    },
+                    "repeat": {
+                      "description": "Whether this matcher can notify more than once. Defaults to false.",
+                      "type": "boolean"
+                    },
+                    "stream": {
+                      "description": "Output stream to inspect. Defaults to both.",
+                      "enum": [
+                        "stdout",
+                        "stderr",
+                        "both"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "pattern"
+                  ],
+                  "type": "object"
+                },
+                "maxItems": 20,
+                "type": "array"
+              },
+              "onFailure": {
+                "description": "Attention on failure or crash. Defaults to turn.",
+                "enum": [
+                  "turn",
+                  "context",
+                  "ignore"
+                ],
+                "type": "string"
+              },
+              "onKilled": {
+                "description": "Attention on external kill. Defaults to context.",
+                "enum": [
+                  "turn",
+                  "context",
+                  "ignore"
+                ],
+                "type": "string"
+              },
+              "onSuccess": {
+                "description": "Attention on clean exit. Defaults to turn.",
+                "enum": [
+                  "turn",
+                  "context",
+                  "ignore"
+                ],
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "pattern": {
+            "description": "Optional output filter. Literal by default; regex only when mode is regex. Only for output action.",
+            "maxLength": 500,
+            "type": "string"
+          },
+          "sortBy": {
+            "description": "Sort order for process list results.",
+            "enum": [
+              "startTime_desc",
+              "startTime_asc",
+              "name_asc",
+              "name_desc",
+              "status_asc"
+            ],
+            "type": "string"
+          },
+          "statuses": {
+            "description": "Process list status filters. Use all for no filtering; finished means exited successfully; failed means exited unsuccessfully or terminate_timeout.",
+            "items": {
+              "enum": [
+                "all",
+                "running",
+                "finished",
+                "failed",
+                "terminating",
+                "terminate_timeout",
+                "killed"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "stream": {
+            "description": "Output stream to return. Defaults to both. Only for output action.",
+            "enum": [
+              "stdout",
+              "stderr",
+              "both"
+            ],
+            "type": "string"
+          },
+          "tailLines": {
+            "description": "Maximum matching lines to return per selected stream. Defaults to 100. Only for output action.",
+            "maximum": 2000,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "watches": {
+            "description": "Update log watches on a running process. Only for update action.",
+            "properties": {
+              "items": {
+                "description": "Watch entries. For append/replace, provide full matcher definitions. For remove, provide index or pattern to identify matchers to remove. Ignored for clear.",
+                "items": {
+                  "properties": {
+                    "index": {
+                      "description": "Matcher index to remove. Only for remove mode. If pattern is also provided, index takes precedence.",
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "mode": {
+                      "description": "Pattern matching mode. Defaults to literal.",
+                      "enum": [
+                        "literal",
+                        "regex"
+                      ],
+                      "type": "string"
+                    },
+                    "on": {
+                      "description": "Attention for this match. Defaults to turn.",
+                      "enum": [
+                        "turn",
+                        "context",
+                        "ignore"
+                      ],
+                      "type": "string"
+                    },
+                    "pattern": {
+                      "description": "Log pattern. Required for append and replace modes. Optional for remove mode (use index or pattern).",
+                      "maxLength": 500,
+                      "type": "string"
+                    },
+                    "repeat": {
+                      "description": "Whether this matcher can notify more than once. Defaults to false.",
+                      "type": "boolean"
+                    },
+                    "stream": {
+                      "description": "Output stream to inspect. Defaults to both.",
+                      "enum": [
+                        "stdout",
+                        "stderr",
+                        "both"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "maxItems": 20,
+                "type": "array"
+              },
+              "mode": {
+                "description": "How to update log watches.",
+                "enum": [
+                  "append",
+                  "replace",
+                  "remove",
+                  "clear"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "mode"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "action"
+        ],
+        "type": "object"
+      }
+    },
+    {
+      "description": "Grep file contents. Smart-case, auto-detects regex vs literal, git-aware. Results are ranked by frecency (most-accessed files first); matches within a file stay in source order. Default limit 20.",
+      "label": "ffgrep",
+      "name": "ffgrep",
+      "parameters": {
+        "properties": {
+          "caseSensitive": {
+            "description": "Force case-sensitive matching. Default uses smart-case (case-insensitive when pattern is all lowercase).",
+            "type": "boolean"
+          },
+          "context": {
+            "description": "Context lines before+after each match (0-20)",
+            "type": "number"
+          },
+          "cursor": {
+            "description": "Pagination cursor from previous result",
+            "type": "string"
+          },
+          "exclude": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            ],
+            "description": "Exclude paths (comma/space-separated or array). Same syntax as path: directory prefix ('test/'), filename with extension ('config.json'), or glob ('*.min.js', '**/*.{rs,go}'). A leading '!' is optional and ignored — both 'test/' and '!test/' work. Example: 'test/,*.min.js,!vendor/'."
+          },
+          "limit": {
+            "description": "Max matches (default 20)",
+            "type": "number"
+          },
+          "path": {
+            "description": "Path constraint. Directory prefix (src/ or src/foo/), bare filename with extension (main.rs), or glob (*.ts, src/**/*.cc, {src,lib}/**). Applied to the full repo-relative path. Absolute, ~/, and ../ paths outside the workspace are also supported and searched with a separate index.",
+            "type": "string"
+          },
+          "pattern": {
+            "description": "Search pattern (literal text or regex)",
+            "type": "string"
+          }
+        },
+        "required": [
+          "pattern"
+        ],
+        "type": "object"
+      }
+    },
+    {
+      "description": "Fuzzy path search and glob search. Matches against the whole repo-relative path, not just the filename. Frecency-ranked, git-aware. Multi-word = narrower (AND). Default limit 30.",
+      "label": "fffind",
+      "name": "fffind",
+      "parameters": {
+        "properties": {
+          "cursor": {
+            "description": "Pagination cursor from previous result",
+            "type": "string"
+          },
+          "exclude": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            ],
+            "description": "Exclude paths (comma/space-separated or array). Same syntax as path: directory prefix ('test/'), filename with extension ('config.json'), or glob ('*.min.js', '**/*.{rs,go}'). A leading '!' is optional and ignored — both 'test/' and '!test/' work. Example: 'test/,*.min.js,!vendor/'."
+          },
+          "limit": {
+            "description": "Max results per page (default 30)",
+            "type": "number"
+          },
+          "path": {
+            "description": "Path constraint. Directory prefix (src/ or src/foo/), bare filename with extension (main.rs), or glob (*.ts, src/**/*.cc, {src,lib}/**). Applied to the full repo-relative path. Absolute, ~/, and ../ paths outside the workspace are also supported and searched with a separate index.",
+            "type": "string"
+          },
+          "pattern": {
+            "description": "Fuzzy filename search and glob search. Frecency-ranked, git-aware. Multi-word = narrower (AND) not bound to order, use for multi word related concept search. Prefer this over ls/find/bash as the first exploration step whenever the user names a concept, feature, or symbol — it surfaces the relevant files in one call. Only use ls/read on a directory when you specifically need the alphabetical layout of an unknown repo, or when a concept search returned nothing.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "pattern"
+        ],
+        "type": "object"
+      }
+    },
+    {
+      "description": "Search the web using OpenAI, Brave, Parallel, Parallel MCP, TinyFish, Search1API, Searchinfinity, Querit, Tavily, Firecrawl, Jina, SERPdive, Kagi, Bocha, Ollama, SearXNG, DuckDuckGo, Exa, Perplexity, Gemini, Kimi, AnySearch, XCrawl, Valyu, xAI, Mistral, Bright Data, SerpBase, SerpApi, or Serper. Pass a provider array to search only those providers simultaneously, or use provider \"all\" to search every eligible provider except Parallel MCP, DuckDuckGo, Kimi, AnySearch, XCrawl, Valyu, xAI, Mistral, Bright Data, SerpBase, SerpApi, and Serper. Returns an AI-synthesized answer with source citations. OpenAI search uses a Codex subscription or OpenAI API key; Kimi search uses a Kimi Code Plan authenticated through /login kimi-coding; xAI search uses a SuperGrok/X Premium subscription or xAI API key; Mistral search uses a Mistral API key. Parallel MCP, DuckDuckGo, Kimi, AnySearch, XCrawl, Valyu, xAI, Mistral, Bright Data, SerpBase, SerpApi, and Serper are available only when explicitly selected. For comprehensive research, prefer queries (plural) with 2-4 varied angles over a single query — each query gets its own synthesized answer, so varying phrasing and scope gives much broader coverage. When includeContent is true, full page content is fetched in the background. Searches auto-open the interactive browser curator and stream results live; set workflow to \"none\" to skip curation or \"auto-summary\" for a model-generated summary without the browser curator. The configured provider is used when provider is omitted or set to auto; omit provider unless explicitly overriding it. Without a configured provider, SearXNG is preferred first for local/private search. When the active Pi model is openai-codex, Codex-backed OpenAI search is preferred next. Otherwise Exa is preferred before OpenAI, then Brave, Parallel, TinyFish, Search1API, Searchinfinity, Querit, Tavily, Firecrawl, Jina, SERPdive, Kagi, Bocha, Ollama, Perplexity, Gemini API, or Gemini Web.",
+      "label": "Web Search",
+      "name": "web_search",
+      "parameters": {
+        "properties": {
+          "domainFilter": {
+            "description": "Limit to domains (prefix with - to exclude)",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "includeContent": {
+            "description": "Fetch full page content (async)",
+            "type": "boolean"
+          },
+          "numResults": {
+            "description": "Results per query (default: 5, max: 20)",
+            "maximum": 20,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "enum": [
+                  "auto",
+                  "all",
+                  "openai",
+                  "brave",
+                  "parallel",
+                  "parallel-mcp",
+                  "tinyfish",
+                  "search1api",
+                  "searchinfinity",
+                  "querit",
+                  "tavily",
+                  "firecrawl",
+                  "jina",
+                  "searxng",
+                  "duckduckgo",
+                  "perplexity",
+                  "gemini",
+                  "kimi",
+                  "exa",
+                  "serpdive",
+                  "kagi",
+                  "ollama",
+                  "anysearch",
+                  "xai",
+                  "mistral",
+                  "brightdata",
+                  "serpbase",
+                  "serpapi",
+                  "serper",
+                  "valyu",
+                  "bocha",
+                  "xcrawl"
+                ],
+                "type": "string"
+              },
+              {
+                "items": {
+                  "enum": [
+                    "openai",
+                    "brave",
+                    "parallel",
+                    "parallel-mcp",
+                    "tinyfish",
+                    "search1api",
+                    "searchinfinity",
+                    "querit",
+                    "tavily",
+                    "firecrawl",
+                    "jina",
+                    "searxng",
+                    "duckduckgo",
+                    "perplexity",
+                    "gemini",
+                    "kimi",
+                    "exa",
+                    "serpdive",
+                    "kagi",
+                    "ollama",
+                    "anysearch",
+                    "xai",
+                    "mistral",
+                    "brightdata",
+                    "serpbase",
+                    "serpapi",
+                    "serper",
+                    "valyu",
+                    "bocha",
+                    "xcrawl"
+                  ],
+                  "type": "string"
+                },
+                "minItems": 1,
+                "type": "array"
+              }
+            ],
+            "description": "Search provider or non-empty list of providers to search simultaneously; use all to search every eligible provider except Parallel MCP, DuckDuckGo, Kimi, AnySearch, XCrawl, Valyu, xAI, Mistral, Bright Data, SerpBase, SerpApi, and Serper, omit this field to use the configured provider, or use auto when none is configured"
+          },
+          "proxy": {
+            "description": "http(s) or socks proxy URL (e.g. http://host:port or socks5h://host:port) used for every outbound request in this call (search APIs and content fetches). Node fetch ignores HTTP(S)_PROXY env vars, so set this (or `proxy` in web-search.json) when direct access is blocked; empty string forces direct access.",
+            "type": "string"
+          },
+          "queries": {
+            "description": "Multiple queries searched concurrently (up to three at a time), each returning its own synthesized answer. Prefer this for research — vary phrasing, scope, and angle across 2-4 queries to maximize coverage. Good: ['React vs Vue performance benchmarks 2026', 'React vs Vue developer experience comparison', 'React ecosystem size vs Vue ecosystem']. Bad: ['React vs Vue', 'React vs Vue comparison', 'React vs Vue review'] (too similar, redundant results).",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "query": {
+            "description": "Single search query. For research tasks, prefer 'queries' with multiple varied angles instead.",
+            "type": "string"
+          },
+          "recencyFilter": {
+            "description": "Filter by recency",
+            "enum": [
+              "day",
+              "week",
+              "month",
+              "year"
+            ],
+            "type": "string"
+          },
+          "workflow": {
+            "description": "Search workflow mode: none = no curator, summary-review = open curator with auto summary draft (default), auto-summary = generate summary without opening curator",
+            "enum": [
+              "none",
+              "summary-review",
+              "auto-summary"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "description": "Check a claim against web sources and return a bounded machine-readable research artifact with exact passage citations.",
+      "label": "Source Check",
+      "name": "source_check",
+      "parameters": {
+        "properties": {
+          "claim": {
+            "description": "The assertion to check against web sources.",
+            "type": "string"
+          },
+          "domainFilter": {
+            "description": "Limit to domains; prefix with - to exclude.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "fetchContent": {
+            "description": "Fetch up to 5 result pages for exact passage extraction.",
+            "type": "boolean"
+          },
+          "numResults": {
+            "description": "Results per query (default: 5, max: 20).",
+            "maximum": 20,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "enum": [
+                  "auto",
+                  "all",
+                  "openai",
+                  "brave",
+                  "parallel",
+                  "parallel-mcp",
+                  "tinyfish",
+                  "search1api",
+                  "searchinfinity",
+                  "querit",
+                  "tavily",
+                  "firecrawl",
+                  "jina",
+                  "searxng",
+                  "duckduckgo",
+                  "perplexity",
+                  "gemini",
+                  "kimi",
+                  "exa",
+                  "serpdive",
+                  "kagi",
+                  "ollama",
+                  "anysearch",
+                  "xai",
+                  "mistral",
+                  "brightdata",
+                  "serpbase",
+                  "serpapi",
+                  "serper",
+                  "valyu",
+                  "bocha",
+                  "xcrawl"
+                ],
+                "type": "string"
+              },
+              {
+                "items": {
+                  "enum": [
+                    "openai",
+                    "brave",
+                    "parallel",
+                    "parallel-mcp",
+                    "tinyfish",
+                    "search1api",
+                    "searchinfinity",
+                    "querit",
+                    "tavily",
+                    "firecrawl",
+                    "jina",
+                    "searxng",
+                    "duckduckgo",
+                    "perplexity",
+                    "gemini",
+                    "kimi",
+                    "exa",
+                    "serpdive",
+                    "kagi",
+                    "ollama",
+                    "anysearch",
+                    "xai",
+                    "mistral",
+                    "brightdata",
+                    "serpbase",
+                    "serpapi",
+                    "serper",
+                    "valyu",
+                    "bocha",
+                    "xcrawl"
+                  ],
+                  "type": "string"
+                },
+                "minItems": 1,
+                "type": "array"
+              }
+            ],
+            "description": "Search provider or non-empty list of providers to search simultaneously; all searches every eligible provider except Parallel MCP, DuckDuckGo, Kimi, AnySearch, XCrawl, Valyu, xAI, Mistral, Bright Data, SerpBase, SerpApi, and Serper"
+          },
+          "proxy": {
+            "description": "http(s) or socks proxy URL (e.g. http://host:port or socks5h://host:port) used for every outbound request in this call (search APIs and result-page fetches). Empty string forces direct access.",
+            "type": "string"
+          },
+          "queries": {
+            "description": "Search queries (default: the claim).",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "recencyFilter": {
+            "description": "Filter by recency.",
+            "enum": [
+              "day",
+              "week",
+              "month",
+              "year"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "claim"
+        ],
+        "type": "object"
+      }
+    },
+    {
+      "description": "Fetch URL(s) and extract readable content as markdown. Use mode \"raw\" for exact textual HTTP response bodies or mode \"answer\" with prompt to answer using only fetched content. Direct image URLs return resized image content. Supports YouTube transcripts, GitHub repositories, PDFs, and local videos. Full original content is stored for retrieval with get_search_content.",
+      "label": "Fetch Content",
+      "name": "fetch_content",
+      "parameters": {
+        "properties": {
+          "answerModel": {
+            "description": "Optional provider/model-id override for mode answer. Defaults to fetch.answerProvider + fetch.answerModel when configured, otherwise the current Pi model.",
+            "type": "string"
+          },
+          "auth": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "boolean"
+              }
+            ],
+            "description": "Opt into an authFetch profile for local browser-cookie fetching. Use a profile name, or true only when exactly one profile exists."
+          },
+          "forceClone": {
+            "description": "Force cloning large GitHub repositories that exceed the size threshold",
+            "type": "boolean"
+          },
+          "frames": {
+            "description": "Number of frames to extract. Use with timestamp range for custom density, with single timestamp to get N frames at 5s intervals, or alone to sample across the entire video. Requires yt-dlp + ffmpeg for YouTube, ffmpeg for local video.",
+            "maximum": 12,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "mode": {
+            "description": "Fetch mode: readable (default extraction), raw (exact textual HTTP body), or answer (answer prompt using only fetched content).",
+            "enum": [
+              "readable",
+              "raw",
+              "answer"
+            ],
+            "type": "string"
+          },
+          "model": {
+            "description": "Override the Gemini model for video/YouTube analysis (e.g. 'gemini-3.6-flash'). Defaults to config or gemini-3.6-flash.",
+            "type": "string"
+          },
+          "prompt": {
+            "description": "Question or instruction for video analysis, or the page-local question required by mode answer.",
+            "type": "string"
+          },
+          "proxy": {
+            "description": "http(s) or socks proxy URL (e.g. http://host:port or socks5h://host:port) used for this fetch. Needed when the target is unreachable directly; localhost and NO_PROXY hosts always bypass the proxy. Empty string forces direct access.",
+            "type": "string"
+          },
+          "timestamp": {
+            "description": "Extract video frame(s) at a timestamp or time range. Single: '1:23:45', '23:45', or '85' (seconds). Range: '23:41-25:00' extracts evenly-spaced frames across that span (default 6). Use frames with ranges to control density; single+frames uses a fixed 5s interval. YouTube requires yt-dlp + ffmpeg; local videos require ffmpeg. Use a range when you know the approximate area but not the exact moment — you'll get a contact sheet to visually identify the right frame.",
+            "type": "string"
+          },
+          "url": {
+            "description": "Single URL to fetch",
+            "type": "string"
+          },
+          "urls": {
+            "description": "Multiple URLs (parallel)",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "description": "Retrieve bounded content slices or find matching passages in a previous web_search, source_check, or fetch_content call.",
+      "label": "Get Search Content",
+      "name": "get_search_content",
+      "parameters": {
+        "properties": {
+          "findMode": {
+            "description": "Matching mode for findText (default: case-insensitive). Requires findText.",
+            "enum": [
+              "exact",
+              "case-insensitive",
+              "fuzzy"
+            ],
+            "type": "string"
+          },
+          "findText": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "items": {
+                  "maxLength": 500,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "maxItems": 10,
+                "minItems": 1,
+                "type": "array"
+              }
+            ],
+            "description": "Text or texts to find in the selected stored content. When supplied, offset and limit are ignored."
+          },
+          "limit": {
+            "description": "Maximum characters to return for fetched URL content slices (default and max are set by maxInlineContentChars). Ignored when findText is supplied.",
+            "maximum": 30000,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "offset": {
+            "description": "Character offset for fetched URL content slices (default 0). Ignored when findText is supplied.",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "query": {
+            "description": "Get content for this query (web_search)",
+            "type": "string"
+          },
+          "queryIndex": {
+            "description": "Get content for query at index",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "responseId": {
+            "description": "The responseId from web_search, source_check, or fetch_content",
+            "type": "string"
+          },
+          "url": {
+            "description": "Get content for this URL",
+            "type": "string"
+          },
+          "urlIndex": {
+            "description": "Get content for URL at index",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "responseId"
+        ],
+        "type": "object"
+      }
+    }
+  ],
+  "packages": {
+    "fff": {
+      "entry": "/home/erikg/.pi/agent/npm/node_modules/@ff-labs/pi-fff/src/index.ts",
+      "entry_sha256": "5437cb7cf9895aa11b31753264a4e225258bf66385801e785eaa9d554eec6fff",
+      "file_count": 10,
+      "name": "@ff-labs/pi-fff",
+      "package_json_sha256": "686342a3ef1e121133a894ab8739023ba8d6d054de83b5c0df3aeff541eb6fe7",
+      "tree_sha256": "5d01cb3f082afcf708acd8c94d7623c89ef501a311689f5fd2da6c77ddb9d767",
+      "version": "0.10.6"
+    },
+    "process": {
+      "entry": "/home/erikg/.pi/agent/npm/node_modules/@aliou/pi-processes/extensions/processes/index.ts",
+      "entry_sha256": "91c4653426ca19b3cea51aaa40d93823d1a66fd3f1459e1a81ed575df34d7c91",
+      "file_count": 120,
+      "name": "@aliou/pi-processes",
+      "package_json_sha256": "7db8469102c30d508165ed2a6afe69def283afbcaad5fa2bf70f12e365f1ae13",
+      "tree_sha256": "78b90f0b719387aab0ff402d427b99ccf4735611cdcebfc88d39e02c8d74eb74",
+      "version": "0.12.0"
+    },
+    "web": {
+      "entry": "/home/erikg/.pi/agent/npm/node_modules/pi-web-access/index.ts",
+      "entry_sha256": "e4db49506a5096ca8147d7e336e2fd659562722a97d04c0aba42cea596b2ce43",
+      "file_count": 78,
+      "name": "pi-web-access",
+      "package_json_sha256": "d10e58f294ee8d0435dc332edf120d602a1cdff1494ed272d53c3b7308a3cb5b",
+      "tree_sha256": "fa00d926edfabccaeb992aa46c82b0baccc7fb05075c8a8923692060c57b89d3",
+      "version": "0.29.0"
+    }
+  },
+  "pi_bin": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-compatibility-v1-control/pi-runtime/dist/bundle/cli.js",
+  "pi_bin_sha256": "e6d7fcf36a239cf3746e67ddf4222081ac01a601b85a3ee688bdfe9c161d754c",
+  "pi_inventory": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-compatibility-v1-control/pi-files.sha256",
+  "pi_inventory_sha256": "fb172a146a0abb70c905ddf1fd9f76f95fc0905001aafecdf86da2d96914b3c4",
+  "pi_version": "0.85.1",
+  "schema": "emender-e97-pi-tool-surface-authority-v1",
+  "tool_order": [
+    "read",
+    "bash",
+    "edit",
+    "write",
+    "process",
+    "ffgrep",
+    "fffind",
+    "web_search",
+    "source_check",
+    "fetch_content",
+    "get_search_content"
+  ],
+  "training_eligible": false
+}

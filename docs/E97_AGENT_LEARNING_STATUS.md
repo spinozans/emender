@@ -4,7 +4,9 @@ Status after the representation-bridge training and audited evaluation. This is 
 programme-level interpretation and priority decision, not a replacement for any
 frozen experimental report, failed gate or source authority. The complete
 [numerical exploration index](validation/e97-numerical-exploration-index.md)
-records the sequence, evidence and limits.
+records the sequence, evidence and limits. The active next programme is the
+[Pi-native tool and exact-copy programme](EMENDER_E97_4B_PI_NATIVE_TOOL_AND_COPY_PROGRAM.md),
+tracked in its [progress ledger](validation/e97-pi-native-tool-copy-progress.md).
 
 The operator subsequently authorized a return to execution. The new
 [grounded expansion tranche](validation/e97-grounded-expansion-v1.md) freezes
