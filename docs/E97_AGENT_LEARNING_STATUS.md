@@ -23,6 +23,12 @@ cases7/16→6/16 and structural-transfer0/16→1/16. Both x/y retention gates pa
 **The overall gate failed; there is no promotion.** All192 episodes were regraded
 against actual reader snapshots, with192 agent and192 reader cleanups confirmed.
 
+A follow-up [representation-bridge preparation](validation/e97-representation-bridge-preparation-v1.md)
+now defines768 candidate fixtures, freezes48 new evaluation cases and prepares a
+48-example native teacher qualification. It targets the observed fixed-+1 edit
+shortcut and changed JSON layouts. This is preparation only: no new learning
+budget or model improvement is claimed.
+
 ## Goal and actual capability
 
 Build a conversational, reasoning, observation-dependent tool agent, measured by

@@ -115,8 +115,12 @@ def teacher_record(case,panel,source_system,sandbox,enc):
     if seen!=json.loads(case['files'][path.removeprefix('/testbed/')]):raise ValueError('observed source mismatch')
     meta=case['recipe']
     if case['family']=='recovery':
-        for key in meta['routes']:
-            path=seen[key][seen['active']] if key=='selected_paths' else seen[key]
+        specs=meta.get('pointer_specs')
+        for key in specs if specs is not None else meta['routes']:
+            if specs is not None:
+                from scripts.e97_representation_bridge import selected_value
+                path=selected_value(seen,key)
+            else:path=seen[key][seen['active']] if key=='selected_paths' else seen[key]
             if path.removeprefix('/testbed/') not in case['files']:raise ValueError('unbound observed pointer')
             seen=observed_json(view(path),path)
         expression=f'd[{meta["value_key"]!r}]'
@@ -124,7 +128,11 @@ def teacher_record(case,panel,source_system,sandbox,enc):
     program=f'import json,os; d=json.load(open({path!r})); '
     if case['family']=='edit':
         target='d'+''.join(f'[{key!r}]' for key in meta['field_path'])
-        amount=f'd[{meta["delta_from"]!r}]' if 'delta_from' in meta else repr(meta['delta'])
+        if 'delta_spec' in meta:
+            from scripts.e97_representation_bridge import selection_expression
+            amount=selection_expression(meta['delta_spec'])
+        elif 'delta_path' in meta:amount='d'+''.join(f'[{key!r}]' for key in meta['delta_path'])
+        else:amount=f'd[{meta["delta_from"]!r}]' if 'delta_from' in meta else repr(meta['delta'])
         dest='/testbed/'+case['output_path']
         program+=f'{target}+={amount}; f=os.fdopen(os.open({dest!r},os.O_WRONLY|os.O_CREAT|os.O_TRUNC|os.O_NOFOLLOW,0o600),"w"); json.dump(d,f); f.close(); print("written")'
     else:program+=f'print({expression})'
@@ -132,6 +140,11 @@ def teacher_record(case,panel,source_system,sandbox,enc):
     if calls[-1]['result']['exit_code']!=0:raise ValueError('authored computation failed')
     if case['family']=='edit':
         if observed_json(view(dest),dest)!=case['expected_output']:raise ValueError('authored output readback mismatch')
+        if meta.get('verify_edit'):
+            expected='expected'+''.join(f'[{key!r}]' for key in meta['field_path'])
+            check=f'import copy,json; d=json.load(open({case["path"]!r})); expected=copy.deepcopy(d); {expected}+={amount}; actual=json.load(open({dest!r})); assert actual==expected; print("verified")'
+            text=action('execute_bash',dict(command='python -c '+shlex.quote(check),timeout=10))
+            if calls[-1]['result']['exit_code']!=0 or text.splitlines()[0]!='verified':raise ValueError('executed semantic edit verification')
         answer='done'
     else:answer=text.splitlines()[0]
     if answer!=case['answer']:raise ValueError('independent answer mismatch')
