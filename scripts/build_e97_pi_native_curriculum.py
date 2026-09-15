@@ -71,7 +71,7 @@ def recovery_case(i):
  elif kind==2:
   steps=[action('bash',{'command':"printf 'expected failure\\n'; false"}),action('bash',{'command':"printf 'RECOVERED\\n'"}),finish('RECOVERED')];prompt='Run the supplied diagnostic failure, observe it, then run the recovery command and finish with exactly RECOVERED.';family='shell-error-recovery'
  elif kind==3:
-  steps=[action('process',{'action':'start','name':'ready-'+tag,'command':"printf 'READY\\n'"}),{'name':'process','dynamic':'process-output'},finish('done')];prompt='Start the managed READY process, inspect its output using the returned process id, then finish with exactly done.';family='process-lifecycle'
+  notify={'onSuccess':'ignore','onFailure':'context','onKilled':'ignore'};steps=[action('process',{'action':'start','name':'ready-'+tag,'command':"printf 'READY\\n'; sleep 30",'notify':notify}),{'name':'process','dynamic':'process-output'},{'name':'process','dynamic':'process-stop'},finish('done')];prompt='Start the managed READY process, inspect its output using the returned process id, stop it, then finish with exactly done.';family='process-lifecycle'
  elif kind==4:
   path=f'pkg/value_{tag}.py';files[path]='VALUE = 3\n';expected[path]='VALUE = 9\n';steps=[action('fffind',{'pattern':'does_not_exist_'+tag}),action('ffgrep',{'pattern':'VALUE = 3','path':'pkg/'}),action('edit',{'path':path,'edits':[{'oldText':'VALUE = 3','newText':'VALUE = 9'}]}),action('read',{'path':path}),finish('done')];prompt='The initial filename hint may be wrong. Search, recover through content discovery, update VALUE from 3 to 9, verify it, and finish done.';family='repo-search-recovery'
  else:
@@ -145,6 +145,7 @@ def dynamic_step(spec,bridge):
  if spec['dynamic']=='observation':return finish(observation_final(text))
  if spec['dynamic']=='response-id':return action('get_search_content',{'responseId':response_id(text),'offset':0,'limit':2000})
  if spec['dynamic']=='process-output':return action('process',{'action':'output','id':process_id(text),'tailLines':20})
+ if spec['dynamic']=='process-stop':return action('process',{'action':'stop','id':process_id(text)})
  raise ValueError('unknown dynamic action')
 
 def execute_case(case,panel,enc,root,pi_bin,manifest_path):

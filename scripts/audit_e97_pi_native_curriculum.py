@@ -42,7 +42,7 @@ def verify_case(case,private,tools):
   elif planned['dynamic']=='response-id':
    prior=results[ri-1]['content'][0]['text'];rid=actual['arguments'].get('responseId')
    if not isinstance(rid,str) or rid not in prior:raise ValueError('response identity grounding')
-  elif planned['dynamic']=='process-output':
+  elif planned['dynamic'] in ('process-output','process-stop'):
    prior=results[ri-1]['content'][0]['text'];pid=actual['arguments'].get('id')
    if not isinstance(pid,str) or pid not in prior:raise ValueError('process identity grounding')
   else:raise ValueError('unknown dynamic action')

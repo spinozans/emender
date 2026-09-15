@@ -12,6 +12,9 @@ def test_case_mix_and_identity_are_deterministic():
  assert sum(x['repository_discovery'] for x in a)>=10
  assert all('127.0.0.1' not in x['prompt'] for x in a if x['category']=='web')
  assert all(not x.get('web_page') for x in a if x['category']=='web')
+ process=[x for x in a if x['family']=='process-lifecycle']
+ assert len(process)==1 and [s['name'] for s in process[0]['steps']]==['process','process','process','finish']
+ assert process[0]['steps'][0]['arguments']['notify']['onSuccess']=='ignore'
 
 def test_repository_discovery_has_eight_families_at_program_scale():
  cases,_=make_cases(2000,18765)
