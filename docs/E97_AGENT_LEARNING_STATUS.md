@@ -28,7 +28,9 @@ now defines768 candidate fixtures and freezes48 new evaluation cases. Its
 48-example native teacher qualification **passed** (13,756 targets, two sandbox
 cleanups,71 CPU tests), targeting the observed fixed-+1 edit shortcut and changed
 JSON layouts. This is preparation only: no new model improvement is claimed.
-A separate32-update follow-up with old-format rehearsal is proposed, not launched.
+The operator subsequently authorized the [separate32-update follow-up](validation/e97-representation-bridge-training-v1.md)
+with old-format rehearsal. Data verification/audit precedes training; no additional
+learned gain is claimed until the matched evaluation finishes.
 
 ## Goal and actual capability
 
@@ -176,7 +178,8 @@ The880-update programme, original32-update correction and new32-update grounded
 expansion are all **closed**. No further training, data admission, rollout expansion
 or checkpoint promotion is authorized by this status document. The grounded
 expansion's failed overall gate is retained despite its same-format learning gain.
-A follow-up requires a separate bounded plan and fresh frozen evaluation.
+The operator's later “run it” separately authorizes the representation-bridge
+32-update plan with frozen evaluation; it does not reopen any of these budgets.
 
 Continue routine bounded diagnosis and preparation without repeated operator
 handoffs. Escalate new learning budgets, consequential trade-offs or authorization

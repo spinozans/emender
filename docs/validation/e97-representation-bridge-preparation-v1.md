@@ -1,5 +1,9 @@
 # Representation bridge: candidate preparation, not a new trained model
 
+Subsequent authorization: the operator approved the
+[separate bounded training plan](e97-representation-bridge-training-v1.md).
+The preparation authority and its zero-update/ineligible status remain unchanged.
+
 Following the [grounded expansion result](e97-grounded-expansion-v1.md), the
 operator asked to continue. This step freezes candidate examples/evaluation and
 qualifies a small authored native-executor slice. **No optimizer updates, model

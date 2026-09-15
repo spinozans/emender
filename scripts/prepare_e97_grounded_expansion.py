@@ -16,7 +16,7 @@ LEARNING_SHA='fe2d10d97c2ee6d31a35684b043f3e4bceaed49782f597612e38b3ca89935aad'
 MODEL_NAMES=('pre-y','pre-x','expansion-y','expansion-x')
 
 
-def exposure(a):
+def exposure(a,authored_source='grounded-expansion'):
     from ndm.data.masked_sft_dataset import MaskedSFTPackedDataset,SFTSamplerIdentity
     manifest=read(a.data/'authority/manifest.json');rows=[json.loads(line) for line in (a.data/'authority'/manifest['outputs']['metadata']['path']).read_text().splitlines()]
     schedule=read(a.data/'expected-schedule.json');authority_sha=sha(a.data/'authority/manifest.json');pack_sha=sha(a.data/'packs/manifest.json')
@@ -38,7 +38,7 @@ def exposure(a):
             record_occurrences=sum(counts[i] for i in selected),target_exposures=sum(rows[i]['targets']*counts[i] for i in selected),
             multiplicities=dict(sorted(Counter(counts[i] for i in selected).items())))
     for name in ('lookup','sum','edit','recovery'):
-        selected=[i for i in counts if rows[i]['source']=='grounded-expansion' and cases[rows[i]['source_record_id']]['family']==name]
+        selected=[i for i in counts if rows[i]['source']==authored_source and cases[rows[i]['source_record_id']]['family']==name]
         families[name]=dict(unique_records=len(selected),record_occurrences=sum(counts[i] for i in selected),target_exposures=sum(rows[i]['targets']*counts[i] for i in selected))
     if {k:v['target_exposures'] for k,v in sources.items()}!=schedule['source_target_totals'] or len(counts)!=schedule['unique_records']:raise ValueError('independent exposure accounting')
     result=dict(passed=True,steps=32,authority_sha256=authority_sha,pack_sha256=pack_sha,schedule_sha256=sha(a.data/'expected-schedule.json'),sources=sources,authored_family_coverage=families,
