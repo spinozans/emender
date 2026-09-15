@@ -56,8 +56,11 @@ The route transcripts matched exactly; all eight original snapshots remained
 unchanged and all fresh verifiers failed. Its capability gate failed and budget
 is closed. Separate training-only discovery/recovery preparation passed and was audited:
 eight disjoint candidates,52 turns,44 calls,12 authentic errors,16 positive/negative
-verifier controls and32 cleanups. It remains non-admitted preparation; evaluation
-traces are excluded and no training is authorized. Separately, the real two-task
+verifier controls and32 cleanups. Exactly48 suffix turns/2,484 targets are potential
+supervision; four authored failure prefixes are masked. A proposal now requires
+>=256 verified records before admission and requests—but does not authorize—a
+separate32-update tranche. Evaluation traces remain excluded; packing, admission
+and training authorization are all false. Separately, the real two-task
 Pi RPC lifecycle passed its scripted real-OpenHands control and honest failed-task
 settlement. The unchanged model then passed2/2 previously qualified tasks in one
 real Pi/OpenHands session: eight native turns, six calls, two verified task
