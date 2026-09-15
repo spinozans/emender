@@ -27,7 +27,7 @@ def bare(message):
  raise ValueError('raw Pi message role')
 def failed(result):
  text=result['content'][0]['text'].lower()
- return result['isError'] or text.startswith(('error:','tool error:')) or any(x in text for x in ('exit code: 1','command exited with code 1','no matches found'))
+ return result['isError'] or text.startswith(('error:','tool error:')) or any(x in text for x in ('exit code: 1','command exited with code 1','no matches found','no files found matching pattern'))
 def observation_final(text):return ('Returned web evidence: '+' '.join(text.split())[:500]).strip()
 def action_sequence(source,tools):return [semantic_turn(x,tools) for x in source if x['role']=='assistant']
 def verify_case(case,private,tools):

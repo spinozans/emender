@@ -1,6 +1,6 @@
 import tiktoken
 import pytest
-from scripts.audit_e97_pi_native_curriculum import expected_mask,verify_case
+from scripts.audit_e97_pi_native_curriculum import expected_mask,failed,verify_case
 from scripts.e97_open_swe_native_codec import compact
 
 def assistant(name,args):
@@ -9,6 +9,10 @@ def test_expected_mask_excludes_failure_prefix():
  enc=tiktoken.get_encoding('p50k_base');a='Analysis: null\nCommentary: null\nThink: null\nAction: read\nArguments: {"path":"missing"}';b='Analysis: null\nCommentary: null\nThink: null\nAction: finish\nArguments: {"message":"done"}';text='header\n\nAssistant:\n'+a+'\n\nToolResult:\n{}\n\nAssistant:\n'+b
  ids,mask=expected_mask(text,[a,b],1,enc)
  assert sum(mask)==len(enc.encode_ordinary(b)) and not any(mask[:len(enc.encode_ordinary('header\n\nAssistant:\n'+a))])
+def test_empty_fff_result_is_a_maskable_recovery_observation():
+ result={'content':[{'type':'text','text':'No files found matching pattern'}],'isError':False}
+ assert failed(result)
+
 def test_verify_case_requires_observation_grounded_dynamic_final():
  tools=[{'name':'web_search','label':'x','description':'x','parameters':{}}]
  result={'role':'toolResult','toolCallId':'c','toolName':'web_search','content':[{'type':'text','text':'  grounded   evidence  '}],'isError':False}

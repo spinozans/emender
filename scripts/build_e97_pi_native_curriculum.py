@@ -165,7 +165,7 @@ def execute_case(case,panel,enc,root,pi_bin,manifest_path):
  if len(calls)!=len(expected_calls) or any(c['name']!=s['name'] or c['arguments']!=s['arguments'] for c,s in zip(calls,expected_calls)):raise ValueError('Pi executed different action')
  if bridge.final!=emitted_specs[-1]['arguments']['message']:raise ValueError('terminal final mismatch')
  prefix_calls=sum(s['name']!='finish' for s in emitted_specs[:case['supervise_from']])
- failed=lambda r:r['isError'] or r['content'][0]['text'].lower().startswith(('error:','tool error:')) or any(w in r['content'][0]['text'].lower() for w in ('exit code: 1','command exited with code 1','no matches found'))
+ failed=lambda r:r['isError'] or r['content'][0]['text'].lower().startswith(('error:','tool error:')) or any(w in r['content'][0]['text'].lower() for w in ('exit code: 1','command exited with code 1','no matches found','no files found matching pattern'))
  if case['requires_error'] and (prefix_calls<1 or not any(failed(r) for r in results[:prefix_calls])):raise ValueError('authored failure prefix did not fail')
  if any(failed(r) for r in results[prefix_calls:]):raise ValueError('unexpected tool error after correction prefix')
  snapshot={}
