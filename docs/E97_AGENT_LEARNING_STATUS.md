@@ -29,8 +29,9 @@ now defines768 candidate fixtures and freezes48 new evaluation cases. Its
 cleanups,71 CPU tests), targeting the observed fixed-+1 edit shortcut and changed
 JSON layouts. This is preparation only: no new model improvement is claimed.
 The operator subsequently authorized the [separate32-update follow-up](validation/e97-representation-bridge-training-v1.md)
-with old-format rehearsal. Data verification/audit precedes training; no additional
-learned gain is claimed until the matched evaluation finishes.
+with old-format rehearsal. All768 examples, byte-preserved rehearsal/replay and
+exact exposures passed audit; the32-update training tranche is now running.
+No additional learned gain is claimed until the matched evaluation finishes.
 
 ## Goal and actual capability
 

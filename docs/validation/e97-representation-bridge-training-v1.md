@@ -94,8 +94,46 @@ Completed dataset:2,223 records,6,056,589 input tokens,848,660 supervised target
 
 Authority SHA256:
 `a21dba6f80e58e87ea838a98018b40650decebed3cf4b0f98dacdb750520469d`.
-**`proc_b8f5` is running the independent audit,64K packing and exact32-step exposure
-preparation.** No model updates have occurred yet.
+**`proc_b8f5` passed** the independent audit,64K packing and exact32-step exposure
+preparation in84s. Both owned sandboxes were cleaned; all source audits passed.
+The data and preparation phases performed zero model updates.
+
+### Reviewed training exposures and launch
+
+All2,223 authority records are scheduled two or three times:5,804 occurrences,
+15,548,238 input exposures and2,148,282 supervised target exposures.
+
+|Source|Scheduled target exposures|Share|
+|---|---:|---:|
+|New representation bridges|564,651|26.28%|
+|Prior grounded rehearsal|330,736|15.40%|
+|Conversation replay|772,162|35.94%|
+|Native replay|215,648|10.04%|
+|Retention replay|265,085|12.34%|
+
+Independent byte-level counting finds **2,215 distinct token/mask records**, not
+2,223: the619 retention records contain611 distinct sequences. Their eight
+inherited duplicates cause some distinct retention records to appear four through
+six times in the schedule. All other source records are byte-distinct within this
+authority. This was explicitly accepted in `exposure-review-addendum.json`; no
+source bytes, quotas, schedule or global target counts were changed, and duplicate
+records are not extra unique coverage. Native replay covers eight distinct
+trajectories, not eight new task families.
+
+All768 bridge examples (192 per family) and512 paired rehearsal examples are
+covered. `exposure-review.json` and `distinct-exposure-audit.json` retain the
+attended review and independent occurrence accounting. GPUs were idle with no
+active leases before launch.
+
+**`proc_442e` is running the separately authorized32-update SFT tranche**, from
+exact expansion live-y, using the unchanged exercised trainer. No post-training
+behavioral result is available yet.
+
+|Training input|SHA256|
+|---|---|
+|Pack manifest|`70ee78073715cf4d87b03579323de0efa0e0c71e676ca693c4034833f3529dc2`|
+|Exact schedule|`cfd47a01b76d56f735211a5206d439e6a1bf08f40166f304d19a4ec7725eefef`|
+|Reviewed exposure audit|`1d6c82e598d3be63b8cdcd0d05190a13ab3febac83fb64d6598145a240aaad80`|
 
 Controller: `R/representation-bridge-v1-training-control/run-phase.sh`
 (`R=/mnt/nvme2n1/erikg/e97_systematic_posttraining`).
