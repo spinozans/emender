@@ -10,11 +10,11 @@ recorded. The driving design is
 |---|---|---|
 |Authority and design|**passed**|11-tool manifest SHA `55421905438806223414d96a4e64f1a6ae64772afdb1fbc67fbbfb77e8d5d908`|
 |Adjacent Pi-native codec/provider|**CPU scripted control passed**|Real Pi built-in `read` result entered exact causal record; broader tools/panels next|
-|PTCP-01 exact-copy panel|**CPU builder passed**|5 delays through58K filler tokens; immutable freeze next|
-|PTCP-02 tool-choice panel|**CPU builder passed**|11 first-action classes; Stage A uses direct/FFF/web contrasts|
+|PTCP-01 exact-copy panel|**Stage A negative:0/9**|No valid first turn at128,8K or58K; pure copy capacity remains confounded by Pi-native framing failure|
+|PTCP-02 tool-choice panel|**Stage A negative:0/3**|No valid direct, FFF or web first action; Stage B not authorized|
 |PTCP-03 web-research panel|not started|Freeze timestamped claims/queries and real Pi execution|
 |PTCP-04 repository discovery data|proposal frozen|8-record/2,484-target seed; >=256 verified records required|
-|Unchanged-model baseline|**Stage A evaluator CPU-qualified**|Immutable 12-episode plan/source export next; then one checked GPU run|
+|Unchanged-model baseline|**Stage A complete:0/12**|Qualified negative outcomes; rejected-token receipts missing, so stop classifications are not independently byte-reconstructable|
 |Pi-native training authority|not started|Target2,000–5,000 verified records; exact masks/exposures required|
 |Training|not started|Proposed32 updates; publish concrete authority before launch|
 |Post-training qualification|not started|All copy/tool/web/repository/retention/session gates jointly|
@@ -56,7 +56,8 @@ recorded. The driving design is
 - [x] Add parser, schema, causal-history and private-boundary tests.
 - [x] Add a scripted real-Pi call/result/finish control before model sampling.
 - [x] Build and CPU-test tiered PTCP-01/02 panels and exact budgets.
-- [ ] Freeze them from an immutable source export, then run Stage A only.
+- [x] Freeze from immutable source and run exactly12 Stage A episodes.
+- [x] Retain0/12 negative outcomes and block Stage B; do not rerun.
 
 ## Tool-surface capture evidence
 
@@ -109,9 +110,10 @@ that58K-delay prompt plus the declared4,096-token generation reservation could
 exceed64K. That otherwise valid root is superseded. `proc_c68a` fixed the explicit
 per-turn budget at1,024, added a build-time prompt-plus-budget guard and froze SHA
 `07cc1d5843ee4060503ecdcf7d2bb813dce51fa0aeba89df367b7696e47994ef`.
-No baseline root has been sampled. `proc_f909` reproduced the final panel from
-immutable source at SHA
+`proc_f909` reproduced the final panel from immutable source at SHA
 `07cc1d5843ee4060503ecdcf7d2bb813dce51fa0aeba89df367b7696e47994ef`.
+Stage A subsequently sampled exactly its12 authorized cases; Stage B remains
+unsampled and unauthorized.
 
 ## Stage A evaluator preparation
 
@@ -145,6 +147,41 @@ enter Pi via immediately closed stdin rather than argv; `proc_5a31` passed14
 tests including a real Pi prompt larger than131KB. A separately frozen
 continuation binds the six immutable receipts and permits only the remaining six
 Stage A episodes.
+
+## Stage A result and decision
+
+Continuation `proc_6451` passed16 CPU controls, froze plan SHA
+`f205876aaf19e81edabe6d81121b731d423c1bfa765f1c53a7a3fcb784416809`,
+and completed the remaining six episodes. Combined result: **0/12**, comprising
+**0/9** copy/bind/path at128,8,192 and58,000 filler tokens and **0/3** direct,
+FFF and current-web tool choice. All12 stopped on the first generation: eight
+`invalid_frame` and four `generation_budget`; there were zero valid first
+actions, tool calls, tool results, finishes, retries or optimizer updates. Thus
+the run does not isolate long-distance memory: the current model first fails to
+compose the adjacent Pi-native five-line frame under the full11-tool manifest.
+This is actionable curriculum evidence, not evidence that the model lacks all
+short or long copy capacity in a simpler interface.
+
+Both model loads remained exact BF16, had no gradients and retained identical
+before/after parameter fingerprints. Peak HBM was16,482,376,704 bytes or less;
+both leases and all Pi processes closed cleanly. Summary SHA is
+`0fcbaccaab22cd0e391244cdc8dc8c9194a42c52d59a8beb271166ee0578a9e3`.
+
+Independent audit `proc_140a` verified all12 panel identities, prompts and prompt
+token counts, initial causal records, exact Pi schemas/request histories, fixed
+public Pi errors, unchanged source fixtures, model immutability, controller
+authorities and cleanup. Its bounded verdict is
+`qualified-negative-outcomes-with-incomplete-generation-receipts`; audit SHA is
+`5aed2bb6305fd507e4444e24112353903d1dfe2d843e94c6705c4fc962f680fb`.
+The evaluator retained stop reasons but not the rejected generated token IDs,
+so the eight/four stop-reason split cannot be independently reconstructed from
+bytes. The exact0/12 observable outcomes and no-tool/no-finish histories remain
+verified. Future evaluations persist private generation receipts. These episodes
+must not be rerun, used for training or reinterpreted.
+
+**Decision:** do not run Stage B. First build verified Pi-native frame/tool-choice
+curriculum and diagnostic controls; only then freeze a new, disjoint evaluation.
+No training tranche, promotion or RL is authorized by this result.
 
 ## Historical session evidence immediately preceding this programme
 

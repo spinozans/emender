@@ -79,6 +79,7 @@ def grade(case,bridge,acts,before,after):
  first=acts[0] if acts else None;first_action=first and first['name'];first_args=first and first['arguments'];unchanged=before==after
  exact=True
  if case['expected_final'] is not None:exact=bridge.final==case['expected_final']
+ else:exact=bridge.final is not None
  path_args=True
  if 'expected_first_arguments' in case:path_args=first_args==case['expected_first_arguments']
  tool_results=sum(m['role']=='toolResult' for m in bridge.history)
@@ -127,6 +128,7 @@ def run(args):
     count+=1;return generate_turn(loaded,prompt,encoding,budget,deadline,panel['tools'])
    bridge=NativePiToolBridge(panel,case['prompt'],encoding,generate)
    terminal=serve_pi_native_tools(bridge,out/'pi',pi_bin=plan['pi_bin'],provider_extension=Path('configs/pi/e97-pi-native.ts'),pi_extensions=extensions,cwd=workspace,seconds=panel['episode_seconds']+60,allow_model_failure=True,no_builtin_tools=True,extra_env={'E97_PI_TOOL_MANIFEST':str(Path(plan['tool_manifest']).resolve())})
+   publish(out/'generations-private.json',{'generations':bridge.generations})
    acts=actions(bridge,encoding);final_snapshot=snapshot(workspace,case['files']);verdict=grade(case,bridge,acts,original,final_snapshot)
    private=[]
    for a in acts:
