@@ -324,7 +324,7 @@ Proposal `configs/pi/e97-pi-native-curriculum-training-proposal-v1.json` is
 explicitly not authorized; proposal SHA
 `96db2e1cee91304b6c295113e517c8c1fd032c40a7fb372d9866dea8ada057be`
 and audit SHA
-`56e35045221908aa8302c97e1ed37f08e3e18edaa896c75d44111086abeada0a`.
+`a27fb97bc1567188a590b9630cae2385175d0152cd23cc546fa46f181da4ba09`.
 It proposes32 updates at learning rate1e-5 from checkpoint `9b78628d...`, with
 no automatic retry/expansion, no threshold change, no promotion and no RL.
 Stage A remains immutable0/12 evidence and Stage B remains blocked until a
