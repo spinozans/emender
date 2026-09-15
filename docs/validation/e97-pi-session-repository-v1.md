@@ -252,3 +252,13 @@ model context, and leave weights/gradients unchanged. Failed tasks remain measur
 and do not abort the second task. Both successes are the gate. These reused cases
 provide lifecycle integration evidence only—no fresh generalization, memory,
 training or promotion claim. The freeze plus expanded suite passed125 CPU tests.
+
+The first model-session launch (`proc_79c2`) failed before generation because the
+plan requested65,536 session tokens while `NativeTaskSession` correctly caps the
+bounded total at32,768. This was a plan/preflight inconsistency, not a model or Pi
+outcome: zero native records or generations occurred, the sandbox cleaned, the
+GPU lease released, BF16 weights were fingerprint-identical, gradients remained
+absent, and peak HBM was8,091,958,272 bytes. The failed root is retained. The plan
+constant and runtime guard now both require32,768; focused tests and a new freeze
+passed in `proc_409d`. A corrected launch must use a fresh root and remains limited
+to the same two episodes.

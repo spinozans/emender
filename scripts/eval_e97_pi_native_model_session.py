@@ -13,6 +13,7 @@ from scripts.eval_e97_native_execution import generate_turn,publish,sha
 R=Path('/mnt/nvme2n1/erikg/e97_systematic_posttraining')
 CHECKPOINT_SHA='9b78628d47c48c304c14de50399fe1853d8c83386c7cf5d9bd4a0e878bf679fa'
 CASE_IDS=('bridge-fresh-lookup-0000-world-0','bridge-fresh-edit-0000-world-0')
+SESSION_TOKENS=32768
 
 
 def select_cases(panel):
@@ -44,7 +45,7 @@ def freeze(args):
   scripted_session_summary_sha256=sha(session/'summary.json'),scripted_session_audit=str(session/'independent-audit.json'),
   scripted_session_audit_sha256=sha(session/'independent-audit.json'),pi_bin=str(R/'pi-native-compatibility-v1-control/bin/pi'),
   pi_inventory=str(R/'pi-native-compatibility-v1-control/pi-files.sha256'),pi_inventory_sha256=sha(R/'pi-native-compatibility-v1-control/pi-files.sha256'),
-  task_order=list(CASE_IDS),max_model_episodes=2,max_tasks=2,session_tokens=65536,session_seconds=600,gpu_count=1,
+  task_order=list(CASE_IDS),max_model_episodes=2,max_tasks=2,session_tokens=SESSION_TOKENS,session_seconds=600,gpu_count=1,
   automatic_retry=False,optimizer_updates=0,training_eligible=False,checkpoint_promotion=False,independent_generalization=False,
   conversational_memory_claim=False,pi_native_tools=False,gate='two previously-qualified tasks succeed; exact prompt replay; closures/session close; unchanged weights')
  args.output.mkdir(parents=True,mode=0o700,exist_ok=False);publish(args.output/'plan-private.json',plan)
@@ -57,7 +58,7 @@ def run(args):
  from scripts.audit_e97_live_actor_capture import fingerprint,runtime
  if sha(args.plan)!=args.plan_sha:raise ValueError('plan identity')
  plan=json.loads(args.plan.read_text());panel=plan['panel'];target=panel['models'][0]
- if plan['max_model_episodes']!=2 or target['sha256']!=CHECKPOINT_SHA or sha(target['checkpoint'])!=CHECKPOINT_SHA:raise ValueError('fixed model budget')
+ if plan['max_model_episodes']!=2 or plan['session_tokens']!=SESSION_TOKENS or target['sha256']!=CHECKPOINT_SHA or sha(target['checkpoint'])!=CHECKPOINT_SHA:raise ValueError('fixed model budget')
  if not os.environ.get('CUDA_VISIBLE_DEVICES') or len(os.environ['CUDA_VISIBLE_DEVICES'].split(','))!=1:raise ValueError('one GPU')
  for a,b in [('source_panel','source_panel_sha256'),('prior_compatibility','prior_compatibility_sha256'),('scripted_session_summary','scripted_session_summary_sha256'),('scripted_session_audit','scripted_session_audit_sha256'),('pi_inventory','pi_inventory_sha256')]:
   if sha(plan[a])!=plan[b]:raise ValueError('authority changed')

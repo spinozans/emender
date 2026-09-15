@@ -1,5 +1,5 @@
 import pytest
-from scripts.eval_e97_pi_native_model_session import CASE_IDS,select_cases
+from scripts.eval_e97_pi_native_model_session import CASE_IDS,SESSION_TOKENS,select_cases
 
 
 def case(cid,family,cohort='fresh',supplied=None):
@@ -7,6 +7,7 @@ def case(cid,family,cohort='fresh',supplied=None):
 
 
 def test_selects_fixed_previously_qualified_task_order():
+ assert SESSION_TOKENS==32768
  panel={'cases':[case(CASE_IDS[1],'edit'),case('other','sum'),case(CASE_IDS[0],'lookup')]}
  selected=select_cases(panel)
  assert [c['id'] for c in selected]==list(CASE_IDS)
