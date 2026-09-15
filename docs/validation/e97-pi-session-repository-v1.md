@@ -230,7 +230,25 @@ prompt. `proc_1f5e` passed37 focused tests and `proc_c668` passed the expanded
 model-stop reasons and exact Pi error shape; transport, executor, history and
 identity errors still fail closed.
 
-The next model-facing session check can reuse already-qualified structured cases
-as diagnostics; no fresh generalization or training claim follows. First rerun
-the real OpenHands scripted session from the new immutable source because this
-safety extension changes successful-session bookkeeping as well as failure paths.
+The first immutable post-safety OpenHands rerun (`proc_f488`) passed69 tests and
+the complete two-task executor scenario, then its controller failed while writing
+the terminal receipt: Bash expanded `rc=$original` in the same `local` command
+under `set -u`. It remains failed controller evidence; no product path failed and
+no model ran. A new-root controller split the assignments. `proc_7cc1` then passed
+with full source/Pi/interpreter after-audits, and the updated independent audit
+again reconstructed two records, eight turns, six calls,21 RPCs,18 Pi messages,
+two closures and two distinct cleanups.
+
+- Post-safety plan SHA: `e49683f6c47e4ebf6433488b0dfc24cde0af00e98fb187269e308feecadc69a5`.
+- Post-safety summary SHA: `a9370fda914020a8d3d3d3cb6c48db1e7667dfbb19eb80da1f0217bbbaecfca3`.
+- Post-safety audit SHA: `7e75b6da8275c97ded7d4f68bd845328730c983cfdf5a67f27108aa06abef9cb`.
+
+The next model-facing check is frozen as a two-episode, one-Pi-session diagnostic:
+the unchanged live-y bridge checkpoint must solve the already route-qualified
+fresh lookup and fresh edit cases in order, with no supplied calls. It must retain
+two separate native records, replay every native prompt exactly, verify task and
+session closures, preserve public history without putting task one in task two's
+model context, and leave weights/gradients unchanged. Failed tasks remain measured
+and do not abort the second task. Both successes are the gate. These reused cases
+provide lifecycle integration evidence only—no fresh generalization, memory,
+training or promotion claim. The freeze plus expanded suite passed125 CPU tests.
