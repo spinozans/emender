@@ -71,12 +71,12 @@ def recovery_case(i):
  elif kind==2:
   steps=[action('bash',{'command':"printf 'expected failure\\n'; false"}),action('bash',{'command':"printf 'RECOVERED\\n'"}),finish('RECOVERED')];prompt='Run the supplied diagnostic failure, observe it, then run the recovery command and finish with exactly RECOVERED.';family='shell-error-recovery'
  elif kind==3:
-  notify={'onSuccess':'ignore','onFailure':'context','onKilled':'ignore'};steps=[action('process',{'action':'start','name':'ready-'+tag,'command':"printf 'READY\\n'; sleep 30",'notify':notify}),{'name':'process','dynamic':'process-output'},{'name':'process','dynamic':'process-stop'},finish('done')];prompt='Start the managed READY process, inspect its output using the returned process id, stop it, then finish with exactly done.';family='process-lifecycle'
+  prefix=0;notify={'onSuccess':'ignore','onFailure':'context','onKilled':'ignore'};steps=[action('process',{'action':'start','name':'ready-'+tag,'command':"printf 'READY\\n'; sleep 30",'notify':notify}),{'name':'process','dynamic':'process-output'},{'name':'process','dynamic':'process-stop'},finish('done')];prompt='Start the managed READY process, inspect its output using the returned process id, stop it, then finish with exactly done.';family='process-lifecycle'
  elif kind==4:
   path=f'pkg/value_{tag}.py';files[path]='VALUE = 3\n';expected[path]='VALUE = 9\n';steps=[action('fffind',{'pattern':'does_not_exist_'+tag}),action('ffgrep',{'pattern':'VALUE = 3','path':'pkg/'}),action('edit',{'path':path,'edits':[{'oldText':'VALUE = 3','newText':'VALUE = 9'}]}),action('read',{'path':path}),finish('done')];prompt='The initial filename hint may be wrong. Search, recover through content discovery, update VALUE from 3 to 9, verify it, and finish done.';family='repo-search-recovery'
  else:
   path=f'docs/{tag}.txt';files[path]='authoritative-'+tag+'\n';steps=[action('read',{'path':'README.missing'}),action('fffind',{'pattern':tag,'path':'docs/'}),action('read',{'path':path}),finish('authoritative-'+tag)];prompt='Recover from the unavailable README by locating the tagged document under docs and finish with exactly its content.';family='repo-doc-recovery'
- expected={**files,**expected};return dict(id=cid,category='recovery',family=family,prompt=prompt,files=files,expected_files=expected,steps=steps,supervise_from=prefix,requires_error=True,repository_discovery=kind in (0,1,4,5))
+ expected={**files,**expected};return dict(id=cid,category='recovery',family=family,prompt=prompt,files=files,expected_files=expected,steps=steps,supervise_from=prefix,requires_error=prefix>0,repository_discovery=kind in (0,1,4,5))
 
 def web_case(i,port):
  cid=case_id('web',i);tag=opaque(cid,10);kind=i%16;files={};prefix=0

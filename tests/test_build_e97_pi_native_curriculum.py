@@ -15,6 +15,7 @@ def test_case_mix_and_identity_are_deterministic():
  process=[x for x in a if x['family']=='process-lifecycle']
  assert len(process)==1 and [s['name'] for s in process[0]['steps']]==['process','process','process','finish']
  assert process[0]['steps'][0]['arguments']['notify']['onSuccess']=='ignore'
+ assert not process[0]['requires_error'] and process[0]['supervise_from']==0
 
 def test_repository_discovery_has_eight_families_at_program_scale():
  cases,_=make_cases(2000,18765)
