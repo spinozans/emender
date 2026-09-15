@@ -29,6 +29,20 @@ def test_bridge_rejects_mismatched_result_identity():
  bad={'role':'toolResult','toolCallId':call['id'],'toolName':'bash','content':[{'type':'text','text':'x'}],'isError':False}
  with pytest.raises(ValueError,match='mismatch'):b.next(request(b,b.history+[bad]))
 
+def test_real_pi_retains_model_failure_without_retry(tmp_path):
+ pi=shutil.which('pi')
+ if not pi:return
+ tools=[read_tool()];calls=0
+ def generate(prompt,budget,deadline):
+  nonlocal calls
+  calls+=1;return None,[1],'invalid_opening'
+ panel={'system':'Pi native failure control','tools':tools,'max_turns':2,'generation_budget':2048,'episode_generation_budget':4096,'episode_seconds':30}
+ b=NativePiToolBridge(panel,'Fail once.',ENC,generate);cwd=tmp_path/'failure-cwd';cwd.mkdir()
+ terminal=serve_pi_native_tools(b,tmp_path/'failure-pi',pi_bin=pi,provider_extension=Path('configs/pi/e97-pi-native.ts'),cwd=cwd,seconds=60,allow_model_failure=True)
+ assert calls==1 and terminal['model_failure_verified'] and not terminal['close_verified']
+ assert b.failed and b.closed and b.reason=='invalid_opening' and len(b.generations)==1
+
+
 def test_real_pi_executes_builtin_read_and_returns_exact_result(tmp_path):
  pi=shutil.which('pi')
  if not pi:return

@@ -3,16 +3,16 @@ import json,os,select,socket,struct,subprocess,tempfile,time
 from pathlib import Path
 from scripts.e97_open_swe_native_codec import compact,strict_json
 from scripts.e97_pi_native_bridge import BridgeStopped
-from scripts.e97_pi_native_tool_bridge import API,MODEL,PROVIDER
+from scripts.e97_pi_native_tool_bridge import API,MODEL,PROVIDER,verify_model_failure
 MAX_FRAME=16*1024*1024
 
 def append_jsonl(path,value):
  with Path(path).open('a') as f:f.write(compact(value)+'\n')
 
-def serve_pi_native_tools(bridge,output,*,pi_bin,provider_extension,pi_extensions=(),cwd,seconds=120):
+def serve_pi_native_tools(bridge,output,*,pi_bin,provider_extension,pi_extensions=(),cwd,seconds=120,allow_model_failure=False):
  output=Path(output);output.mkdir(parents=True,mode=0o700,exist_ok=False);home=output/'home';agent=home/'.pi/agent';agent.mkdir(parents=True,mode=0o700);sessions=output/'sessions';sessions.mkdir(mode=0o700)
  settings={'compaction':{'enabled':False},'retry':{'enabled':False,'provider':{'maxRetries':0}},'defaultTools':[],'packages':[],'extensions':[],'enableInstallTelemetry':False,'enableAnalytics':False,'defaultProjectTrust':'never','quietStartup':True};(agent/'settings.json').write_text(compact(settings)+'\n')
- deadline=time.monotonic()+seconds;receipts=[];proc=None;pidfd=None;terminal={'schema':'emender-e97-pi-native-tool-terminal-v1','close_verified':False,'pi_exit':None,'requests':receipts}
+ deadline=time.monotonic()+seconds;receipts=[];proc=None;pidfd=None;close_messages=None;terminal={'schema':'emender-e97-pi-native-tool-terminal-v1','close_verified':False,'model_failure_verified':False,'pi_exit':None,'requests':receipts}
  try:
   with tempfile.TemporaryDirectory(prefix='e97-pi-tools-') as tmp:
    address=str(Path(tmp)/'owner.sock');config={'schema':'emender-e97-pi-native-tool-transport-v1','socket':address,'system':bridge.panel['system'],'prompt':bridge.history[0]['content'][0]['text'],'tools':bridge.tools,'timeout_ms':int(seconds*1000)};config_path=output/'transport-config.json';config_path.write_text(compact(config)+'\n')
@@ -41,7 +41,7 @@ def serve_pi_native_tools(bridge,output,*,pi_bin,provider_extension,pi_extension
        try:
         req=strict_json(line.decode());append_jsonl(output/'requests-private.jsonl',req);op=req['op'];receipts[-1]['op']=op
         if op=='next':result=bridge.next(req)
-        elif op=='close':result=bridge.close(req['messages'])
+        elif op=='close':close_messages=req['messages'];result=bridge.close(close_messages)
         else:raise BridgeStopped('unsupported_transport_operation')
         response={'ok':True,'result':result}
        except Exception as exc:
@@ -59,6 +59,11 @@ def serve_pi_native_tools(bridge,output,*,pi_bin,provider_extension,pi_extension
    try:proc.wait(timeout=10)
    except subprocess.TimeoutExpired:proc.kill();proc.wait(timeout=10)
   if proc is not None:terminal['pi_exit']=proc.returncode
+  if bridge.failed and close_messages is not None:
+   try:terminal['model_failure_verified']=verify_model_failure(bridge,close_messages)
+   except ValueError:terminal['model_failure_verified']=False
   terminal.update(close_verified=bridge.close_verified,closed=bridge.closed,bridge_failed=bridge.failed,reason=bridge.reason);(output/'transport-terminal.json').write_text(compact(terminal)+'\n')
- if terminal['pi_exit']!=0 or not bridge.close_verified or bridge.failed:raise BridgeStopped('pi_native_tool_transport_not_qualified')
+ successful=terminal['pi_exit']==0 and bridge.close_verified and not bridge.failed
+ measured_failure=terminal['pi_exit']==0 and allow_model_failure and terminal['model_failure_verified']
+ if not successful and not measured_failure:raise BridgeStopped('pi_native_tool_transport_not_qualified')
  return terminal

@@ -10,8 +10,8 @@ recorded. The driving design is
 |---|---|---|
 |Authority and design|**passed**|11-tool manifest SHA `55421905438806223414d96a4e64f1a6ae64772afdb1fbc67fbbfb77e8d5d908`|
 |Adjacent Pi-native codec/provider|**CPU scripted control passed**|Real Pi built-in `read` result entered exact causal record; broader tools/panels next|
-|PTCP-01 exact-copy panel|**in progress**|Freeze128/1K/8K/32K/64K operations before sampling|
-|PTCP-02 tool-choice panel|not started|Use captured Pi schemas and current/local contrast pairs|
+|PTCP-01 exact-copy panel|**CPU builder passed**|5 delays through58K filler tokens; immutable freeze next|
+|PTCP-02 tool-choice panel|**CPU builder passed**|11 first-action classes; Stage A uses direct/FFF/web contrasts|
 |PTCP-03 web-research panel|not started|Freeze timestamped claims/queries and real Pi execution|
 |PTCP-04 repository discovery data|proposal frozen|8-record/2,484-target seed; >=256 verified records required|
 |Unchanged-model baseline|not started|Run only after protocol and panels pass scripted controls|
@@ -55,7 +55,8 @@ recorded. The driving design is
 - [x] Implement canonical dynamic-tool codec with `think`/`finish` pseudo-actions.
 - [x] Add parser, schema, causal-history and private-boundary tests.
 - [x] Add a scripted real-Pi call/result/finish control before model sampling.
-- [ ] Freeze PTCP-01/02 panels and exact budgets.
+- [x] Build and CPU-test tiered PTCP-01/02 panels and exact budgets.
+- [ ] Freeze them from an immutable source export, then run Stage A only.
 
 ## Tool-surface capture evidence
 
@@ -84,7 +85,19 @@ paired with the generated call and entered the next E97 prompt before a scripted
 `finish`. The control used the new adjacent `e97-pi-native-v1` codec/provider and
 never invoked OpenHands. Parser, undeclared-action, result-identity, private-think,
 manifest and causal-history checks passed. Zero model generations, network calls,
-updates or GPU work occurred.
+updates or GPU work occurred. `proc_a6e3` then passed the honest failure path: one fixed
+model-stop result, exact Pi error/history, zero retry and no invented finish.
+
+## Baseline panel preparation
+
+`proc_a428` passed ten CPU tests and a throwaway freeze. The complete predeclared
+panel has26 cases: five exact distances each for verbatim copy, key/value binding
+and path emission, plus11 first-action tool-choice classes. Stage A is fixed at12
+episodes—copy/bind/path at128,8,192 and58,000 filler tokens, plus direct, FFF and
+current-web contrasts. Stage B has14 cases and cannot run before Stage A review.
+The throwaway panel SHA was
+`6da40b2f13a8096e0c0da7af2746b4d611a9dcc78368b80e8c142cf598449932`;
+an immutable source export must reproduce it before sampling.
 
 ## Historical session evidence immediately preceding this programme
 

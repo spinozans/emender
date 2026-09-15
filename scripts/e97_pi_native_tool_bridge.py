@@ -6,6 +6,9 @@ from scripts.e97_pi_native_bridge import BridgeStopped
 from scripts.e97_pi_native_codec import PiNativeEpisode,semantic_turn
 
 PROVIDER='e97-pi-native';MODEL='e97-4b-pi-native';API='e97-pi-native-unix-v1'
+PUBLIC_ERROR='Pi-native transport stopped; inspect private owner receipt.'
+MODEL_STOP_REASONS=frozenset({'turn_budget','episode_generation_budget','episode_deadline','context_budget',
+ 'generation_budget','invalid_opening','invalid_frame','empty','separator_before_valid_turn','invalid_native_turn'})
 
 def project_messages(messages):
  if not isinstance(messages,list):raise BridgeStopped('invalid_pi_history')
@@ -77,3 +80,14 @@ class NativePiToolBridge:
     self.close_verified=True
   finally:self.closed=True
   return {'closed':True,'verified':self.close_verified}
+
+def verify_model_failure(bridge,messages):
+ if not bridge.failed or bridge.reason not in MODEL_STOP_REASONS or bridge.final is not None or bridge.pending is not None or not bridge.closed:
+  raise ValueError('not_verified_model_failure')
+ if not messages:raise ValueError('missing_pi_error')
+ error=messages[-1]
+ if (error.get('role')!='assistant' or error.get('content')!=[] or error.get('stopReason')!='error' or
+  error.get('provider')!=PROVIDER or error.get('model')!=MODEL or error.get('api')!=API or error.get('errorMessage')!=PUBLIC_ERROR):
+  raise ValueError('unexpected_pi_error')
+ if compact(project_messages(messages[:-1]))!=compact(bridge.history):raise ValueError('failed_history_changed')
+ return True
