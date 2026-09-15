@@ -69,10 +69,22 @@ Initial CPU attempts are retained:
   and executor tests. Its live Pi control also checks lossless invalid native
   arguments, `2.0`, a >2^53 integer, and an error tool result across JavaScript.
 
+`proc_199a` then passed the immutable `e1d15dd3` export and a copied Pi 0.85.1
+runtime: another70 CPU tests, both real OpenHands controls, **14 exact full native
+prompt checks,11 native calls,three real errors**, persistent shell state, both
+external filesystem oracles, and two agent plus two reader cleanups. Source,
+Pi runtime and interpreter before/after audits passed. A separate post-run audit
+reconstructed all14 native turns/prompts/token sequences, checked actual Pi
+message/dispatch counts and owned peer identities, rechecked both reader outputs,
+private-field exclusion and allfour distinct cleanups.
+
+Artifacts: `R/pi-native-compatibility-v1-control` and
+`R/pi-native-compatibility-v1-scripted`, where
+`R=/mnt/nvme2n1/erikg/e97_systematic_posttraining`. Summary SHA:
+`9cdc588caaf749cc3ea9ee2d4b35188f43035d8d60d99f257607d7b5b3efa610`.
+
 These are CPU/unit/scripted transport results, **not E97 capability evidence**.
-Real OpenHands scripted controls and unchanged-checkpoint matched runs are the
-next gates. All actual model evaluations and all training updates remain zero
-for this compatibility candidate at this point.
+Actual model evaluations and training updates remain zero at this point.
 
 ## Frozen next checks
 
@@ -80,8 +92,15 @@ for this compatibility candidate at this point.
    genuine missing-file, failed-shell and no-match errors followed by repair.
    Real Pi, original native sandbox, paused external filesystem reader. Every
    native prompt independently reconstructed byte-for-byte. No model sampling.
-2. Only after those pass: freeze a bounded matched diagnostic with the exact
-   bridge checkpoint and explicit live-y load mode, same prompts, generator,
-   budgets, runtime and oracle. Reused evaluation cases remain diagnostics,
-   never new independent-generalization evidence. Audit interface regressions
-   separately from model task failures; no retraining or promotion follows.
+2. Next matched diagnostic: exactly eight reused fresh cases—the `0000` paired
+   worlds in each of lookup/sum/edit/recovery—from the audited96-case panel.
+   Sixteen episodes total, one GPU, unchanged bridge checkpoint, explicit
+   live-y (`train`) mode, original greedy generator and budgets. Alternate route
+   order by case. Require8/8 direct and8/8 Pi completions, per-case success parity,
+   exact initial prompt identity, exact independent replay of every Pi native
+   prompt, and verified Pi closure. Cross-run full transcript/token equality is
+   reported descriptively, not made a blanket floating-point qualification.
+   Reused cases remain diagnostics, not independent generalization. No training,
+   extra attempts, threshold changes or promotion follows. A CPU selection
+   preflight caught global `pair_index` being mistaken for a family-local index;
+   selection now binds the eight explicit family/world IDs before any sampling.

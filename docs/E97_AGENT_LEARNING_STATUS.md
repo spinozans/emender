@@ -38,6 +38,13 @@ completion counts and pass retention, with small NLL degradation. All384 episode
 were independently regraded;384 agent and384 reader cleanups were confirmed.
 This is positive experimental learning evidence, **not checkpoint promotion**.
 
+The operator subsequently approved an [unchanged-weight Pi-facing adapter](validation/e97-pi-native-compatibility-v1.md).
+Its isolated real-Pi/scripted OpenHands controls passed:70 CPU tests,14 exact
+native prompts,11 calls,three authentic errors, correct filesystem outcomes and
+four audited cleanups. This is **Pi-fronted OpenHands**, not Pi-native tools or
+new model learning. A bounded eight-case/two-route unchanged-live-y comparison
+is being prepared; no compatibility model measurements have run yet.
+
 ## Goal and actual capability
 
 Build a conversational, reasoning, observation-dependent tool agent, measured by
