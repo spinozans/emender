@@ -3,7 +3,7 @@
 
 This creates a non-admitted candidate authority. It never samples E97 or trains.
 """
-import argparse,hashlib,json,os,random,re,shutil,signal
+import argparse,hashlib,json,os,random,re,shutil,signal,subprocess
 from collections import Counter
 from pathlib import Path
 import numpy as np
@@ -185,13 +185,16 @@ def write_authority(rows,plan,output):
  outputs={k:{'path':p.name,'bytes':p.stat().st_size,'sha256':sha(p)} for k,p in paths.items()}
  publish(authority/'manifest.json',{'schema':'emender-e97-pi-native-candidate-authority-v1','status':'verified-candidate-not-admitted','training_eligible':False,'packing_authorized':False,'optimizer_updates_authorized':0,'tokenizer':'p50k_base','plan_sha256':plan['plan_sha256'],'counts':{'records':len(rows),'tokens':offset,'assistant_target_tokens':targets},'outputs':outputs})
 
+def authority_files():
+ paths=[Path(__file__),Path('configs/pi/e97-pi-native.ts'),Path('scripts/e97_pi_native_codec.py'),Path('scripts/e97_pi_native_tool_bridge.py'),Path('scripts/e97_pi_native_tool_transport.py'),*EXTENSIONS]
+ return {str(p.resolve()):sha(p) for p in paths}
 def freeze(args):
  if sha(args.manifest)!=MANIFEST_SHA:raise ValueError('tool authority')
- cases,counts=make_cases(args.records,args.port);args.output.mkdir(parents=True,mode=0o700,exist_ok=False);plan={'schema':'emender-e97-pi-native-curriculum-plan-v1','seed':SEED,'records':args.records,'mix_counts':counts,'port':args.port,'system':SYSTEM,'tool_manifest':str(args.manifest.resolve()),'tool_manifest_sha256':sha(args.manifest),'cases':cases,'model_generations':0,'optimizer_updates':0,'training_eligible':False,'packing_authorized':False};publish(args.output/'plan-private.json',plan);print('PI_NATIVE_CURRICULUM_PLAN',args.records,sha(args.output/'plan-private.json'))
+ cases,counts=make_cases(args.records,args.port);args.output.mkdir(parents=True,mode=0o700,exist_ok=False);plan={'schema':'emender-e97-pi-native-curriculum-plan-v1','seed':SEED,'records':args.records,'mix_counts':counts,'port':args.port,'system':SYSTEM,'tool_manifest':str(args.manifest.resolve()),'tool_manifest_sha256':sha(args.manifest),'source_commit':subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),'authority_files':authority_files(),'pi_bin':str(args.pi_bin.resolve()),'pi_version':subprocess.check_output([args.pi_bin,'--version'],text=True).strip(),'cases':cases,'model_generations':0,'optimizer_updates':0,'training_eligible':False,'packing_authorized':False};publish(args.output/'plan-private.json',plan);print('PI_NATIVE_CURRICULUM_PLAN',args.records,sha(args.output/'plan-private.json'))
 def collect(args):
  if sha(args.plan)!=args.plan_sha:raise ValueError('plan identity')
  plan=json.loads(args.plan.read_text());manifest_path=Path(plan['tool_manifest'])
- if sha(manifest_path)!=plan['tool_manifest_sha256']==MANIFEST_SHA or plan['model_generations'] or plan['optimizer_updates']:raise ValueError('authority')
+ if sha(manifest_path)!=plan['tool_manifest_sha256']==MANIFEST_SHA or plan['authority_files']!=authority_files() or str(args.pi_bin.resolve())!=plan['pi_bin'] or subprocess.check_output([args.pi_bin,'--version'],text=True).strip()!=plan['pi_version'] or plan['model_generations'] or plan['optimizer_updates']:raise ValueError('authority')
  manifest=json.loads(manifest_path.read_text());panel={'system':plan['system'],'tools':manifest['model_visible_tools'],'max_turns':10,'generation_budget':2048,'episode_generation_budget':8192,'episode_seconds':150};args.output.mkdir(parents=True,mode=0o700,exist_ok=False);rows=[]
  enc=tiktoken.get_encoding('p50k_base')
  for i,case in enumerate(plan['cases']):
@@ -200,5 +203,5 @@ def collect(args):
  if len(rows)!=plan['records'] or len({r['sequence_sha256'] for r in rows})!=len(rows):raise ValueError('coverage/dedup')
  write_authority(rows,{**plan,'plan_sha256':args.plan_sha},args.output);counts=Counter(r['category'] for r in rows);families=Counter(r['family'] for r in rows);summary={'schema':'emender-e97-pi-native-curriculum-summary-v1','status':'verified-candidates-not-admitted','records':len(rows),'mix_counts':dict(counts),'families':dict(families),'repository_discovery_records':sum(r['repository_discovery'] for r in rows),'native_calls':sum(r['calls'] for r in rows),'authentic_tool_errors':sum(r['errors'] for r in rows),'assistant_targets':sum(r['targets'] for r in rows),'deduplicated_sequences':len(rows),'model_generations':0,'optimizer_updates':0,'training_eligible':False,'packing_authorized':False,'checkpoint_promotion':False,'authority_sha256':sha(args.output/'candidate-authority/manifest.json')};publish(args.output/'summary.json',summary);print('PI_NATIVE_CURRICULUM_COLLECTED',len(rows),summary['native_calls'],summary['assistant_targets'])
 def main():
- os.umask(0o077);signal.signal(signal.SIGTERM,lambda s,f:(_ for _ in ()).throw(TimeoutError('interrupted')));p=argparse.ArgumentParser();sp=p.add_subparsers(dest='command',required=True);f=sp.add_parser('freeze');f.add_argument('--manifest',type=Path,required=True);f.add_argument('--records',type=int,required=True);f.add_argument('--port',type=int,required=True);f.add_argument('--output',type=Path,required=True);c=sp.add_parser('collect');c.add_argument('--plan',type=Path,required=True);c.add_argument('--plan-sha',required=True);c.add_argument('--pi-bin',type=Path,required=True);c.add_argument('--output',type=Path,required=True);a=p.parse_args();freeze(a) if a.command=='freeze' else collect(a)
+ os.umask(0o077);signal.signal(signal.SIGTERM,lambda s,f:(_ for _ in ()).throw(TimeoutError('interrupted')));p=argparse.ArgumentParser();sp=p.add_subparsers(dest='command',required=True);f=sp.add_parser('freeze');f.add_argument('--manifest',type=Path,required=True);f.add_argument('--records',type=int,required=True);f.add_argument('--port',type=int,required=True);f.add_argument('--pi-bin',type=Path,required=True);f.add_argument('--output',type=Path,required=True);c=sp.add_parser('collect');c.add_argument('--plan',type=Path,required=True);c.add_argument('--plan-sha',required=True);c.add_argument('--pi-bin',type=Path,required=True);c.add_argument('--output',type=Path,required=True);a=p.parse_args();freeze(a) if a.command=='freeze' else collect(a)
 if __name__=='__main__':main()
