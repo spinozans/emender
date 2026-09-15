@@ -264,6 +264,42 @@ recovery variants. Independent reconstruction passed with audit SHA
 It remains a non-admitted qualification authority with zero model generations,
 zero optimizer updates and no packing or promotion authorization.
 
+The scale plan froze2,100 one-shot attempts with a2,000-record minimum, no
+automatic retries,2,100 unique prompts,616 planned genuine repository-discovery
+records across8 families, exact runtime/source identities and plan SHA
+`e921356e62c79c676bf029424f51035502572645869526047769742c39990345`.
+Collection `proc_0a69` completed2,099 verified and one rejected. The sole
+rejection, `pi-native-web-00144-127c37d7`, received the authentic observation
+`Error: No search provider available`; it was retained and not retried. The
+verified authority contains21,255,796 tokens,215,000 supervised assistant
+targets,3,438 real Pi calls,303 tool-error flags,2,099 distinct sequences and
+616 repository-discovery records. Authority SHA:
+`81c70b767f38df76c39dd9aa402489953d754df492d07fb46516345fef6a3487`.
+Independent reconstruction of all transcripts, raw Pi events, call/result IDs,
+terminal closures, task oracles, web grounding, generated token IDs, correction
+masks and binary indexes passed with audit SHA
+`61dc1fb76288db0be974aa574f6d6f89479e0348fabc19179e013cd064ad56ce`.
+
+A frozen decontamination selection excludes the entire87-record
+`preservation` family rather than adapting individual examples to protected
+content. The resulting2,012-record candidate has19,616,468 tokens,204,294
+assistant targets and retains all616 repository-discovery records. Selected
+authority SHA:
+`8cf83db8d608f6af74bbd2cbe60206ef435fb3003ab2bb63f4eadab17eb05562`;
+independent byte-selection audit SHA:
+`de977726f0758206ee9defe9c3687d2485e3ba2b80eb9ef9ceafb065c5f6646b`.
+The fixed V3, V4 and real-repository protected panels have zero collisions in
+all exact and normalized domains. Against the separately frozen Stage-A panel
+SHA `07cc1d...`, exact prompts, normalized prompts, task IDs, paths and every
+significant content/scalar/final entity have zero collisions. Reported
+structural reuse is limited to one family label, one normalized path shape and
+trivial `alpha`/`1` content; this is explicitly not treated as entity reuse.
+Overlap audit SHA:
+`9c104d73b104f4d29a83ca1472b66ef2df681e020a2b9688eb4f87c6ef814a78`.
+All source, selected and overlap authorities still declare
+`training_eligible:false`, `packing_authorized:false` and zero optimizer
+updates.
+
 ## Historical session evidence immediately preceding this programme
 
 - Failed model-session preflight `proc_79c2`: session-token plan mismatch; zero
