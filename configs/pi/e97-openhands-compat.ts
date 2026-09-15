@@ -17,9 +17,14 @@ export default function (pi: ExtensionAPI) {
   const path = process.env.E97_PI_NATIVE_CONFIG;
   if (!path || process.env.PI_OFFLINE !== '1') throw new Error('isolated native launcher required');
   const config = JSON.parse(readFileSync(path, 'utf8'));
-  if (config.schema !== 'emender-e97-pi-native-transport-v1') throw new Error('native transport config');
+  const single = config.schema === 'emender-e97-pi-native-transport-v1';
+  const multi = config.schema === 'emender-e97-pi-native-session-transport-v1';
+  if (!single && !multi) throw new Error('native transport config');
+  const tasks = single ? [{ task_id: 'single', prompt: config.prompt }] : config.tasks;
+  if (!Array.isArray(tasks) || tasks.length < 1 || tasks.length > 4) throw new Error('native task config');
   let ready = false;
   let settled = false;
+  let taskIndex = 0;
 
   function rpc(op: string, payload: object = {}, signal?: AbortSignal): Promise<any> {
     return new Promise((resolve, reject) => {
@@ -83,15 +88,18 @@ export default function (pi: ExtensionAPI) {
       return { isError: (event.details as any).native_error };
     }
   });
-  pi.on('before_agent_start', (event) => {
+  pi.on('before_agent_start', async (event) => {
     const o = event.systemPromptOptions;
-    if (ready || settled || o.customPrompt !== config.system || o.appendSystemPrompt ||
+    const task = tasks[taskIndex];
+    if (ready || settled || !task || o.customPrompt !== config.system || o.appendSystemPrompt ||
         o.contextFiles?.length || o.skills?.length || event.images?.length ||
-        event.prompt !== config.prompt ||
+        event.prompt !== task.prompt ||
         JSON.stringify([...pi.getActiveTools()].sort()) !== JSON.stringify(config.tools.map((t: any) => t.name).sort())) {
       ready = false;
       throw new Error('unsupported native session configuration');
     }
+    if (multi) await rpc('begin_task', { task_id: task.task_id, prompt: task.prompt,
+                                        acknowledge_fresh_record: true });
     ready = true;
     // Remove only Pi's known generated date/cwd scaffold in this explicitly
     // isolated profile, never loaded project instructions or arbitrary context.
@@ -152,11 +160,23 @@ export default function (pi: ExtensionAPI) {
     },
   });
   pi.on('agent_settled', async (_event, ctx) => {
-    settled = true;
+    ready = false;
     const entries = ctx.sessionManager.getBranch();
     if (entries.some((e) => ['compaction', 'branch_summary', 'custom_message'].includes(e.type))) {
       throw new Error('unsupported native session history');
     }
-    await rpc('close', { messages: entries.filter((e) => e.type === 'message').map((e: any) => e.message) });
+    const messages = entries.filter((e) => e.type === 'message').map((e: any) => e.message);
+    if (single) {
+      settled = true;
+      await rpc('close', { messages });
+      return;
+    }
+    await rpc('settle_task', { messages });
+    taskIndex += 1;
+    if (taskIndex === tasks.length) {
+      settled = true;
+      await rpc('close_session');
+      ctx.shutdown();
+    }
   });
 }

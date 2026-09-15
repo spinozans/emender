@@ -159,3 +159,48 @@ Preparation emits verified source receipts and mask-intent metadata, **not an
 admitted or packed SFT dataset**. `training_eligible:false` and all registries
 remain unchanged. New training requires a separate explicit budget and frozen
 retention/capability gates; no update is automatically authorized by this work.
+
+`proc_1c41` completed this preparation in216 seconds after120 passing CPU tests.
+The independent audit verified all eight distinct candidates:52 exact native
+prompts/turn token sequences,44 native calls,12 authentic errors,48 potentially
+supervised suffix turns and four explicitly masked authored failure prefixes.
+Eight fresh verifiers passed the repairs and eight negative verifiers failed the
+originals. All104 Pi assistant/tool-result messages preserve public/private
+boundaries, and32 distinct containers were cleaned. There were zero model
+samples, updates or admission changes.
+
+- Preparation plan SHA: `8d7c3a9a9843bc1464eb74d60010541181b8b631bca32b2e6370ed97b3a575e6`.
+- Summary SHA: `3688fed7a0e3402e9af1b91c3225b41be27192f16de72fb401ac18b539257af5`.
+- Independent audit SHA: `78d75122c51a139ae98b813af2ec21d7437d60858d2ff482ed296b0daacb5607`.
+
+## Real multi-task Pi lifecycle progress
+
+The single-task extension now has a separately selected session mode driven by
+Pi's documented JSONL RPC interface. The owner begins each explicit native task,
+strips the exact retained prior public prefix before native generation, settles
+only a verified finish, and closes after the configured task count. One Pi
+process and executor persist; each model-visible native record resets.
+
+Two failed CPU attempts are retained:
+
+1. `proc_c6f2`: expected Pi startup `model_change` metadata was incorrectly
+   treated as an operator model switch, so settlement failed closed and the
+   single-task regression tests also detected it.
+2. `proc_50f6`: both tasks and all13 expected owner RPCs actually completed with
+   two verified closures, but the Python client classified normal stdout EOF
+   before its simultaneously ready process-exit descriptor as failure.
+
+The metadata guard now allows Pi's startup record while still binding the active
+provider/model at every generation. The EOF/exit ordering is accepted only after
+all task settlements and session closure are already verified. `proc_0041`
+passed36 focused tests; `proc_c580` passed the expanded **121-test** suite,
+including real single-task, honest-failure and two-task Pi loops.
+
+The next frozen scripted control uses one real Pi process and one qualified
+OpenHands sandbox across two explicit native records. Task one establishes an
+environment variable and creates a file; task two must observe the persistent
+shell/workspace, edit and verify that file. Require two native closures, exact
+prior-history identity, retained private records, absent prior task text from the
+second native prompt, external paused-reader state, public/private separation,
+source/runtime audit and owned cleanup. This is lifecycle/executor evidence only:
+zero model sampling and no conversational-memory claim.
