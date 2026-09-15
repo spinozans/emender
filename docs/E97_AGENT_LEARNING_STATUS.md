@@ -39,11 +39,16 @@ were independently regraded;384 agent and384 reader cleanups were confirmed.
 This is positive experimental learning evidence, **not checkpoint promotion**.
 
 The operator subsequently approved an [unchanged-weight Pi-facing adapter](validation/e97-pi-native-compatibility-v1.md).
-Its isolated real-Pi/scripted OpenHands controls passed:70 CPU tests,14 exact
-native prompts,11 calls,three authentic errors, correct filesystem outcomes and
-four audited cleanups. This is **Pi-fronted OpenHands**, not Pi-native tools or
-new model learning. A bounded eight-case/two-route unchanged-live-y comparison
-is being prepared; no compatibility model measurements have run yet.
+Its real-Pi/scripted OpenHands controls passed, followed by81 CPU tests and a
+completed unchanged-live-y comparison: **8/8 direct and8/8 Pi-fronted successes**
+on eight reused fresh cases. Both routes produced32 native turns and24 calls;
+all eight paired native transcripts and generated-token sequences were identical.
+All16 episodes were independently regraded against actual filesystem snapshots;
+16 agent plus16 reader cleanups and unchanged BF16 weights/no gradients were
+verified. This is **Pi-fronted OpenHands**, not Pi-native tools, independent
+repository evidence or new learning. The bounded compatibility budget is closed;
+GPUs are idle and there is no checkpoint promotion. Multi-task session lifecycle
+and repository-workflow qualification are the next engineering milestones.
 
 ## Goal and actual capability
 
@@ -58,6 +63,7 @@ loss alone, valid first calls, teacher success or numerical agreement.
 |32 stochastic training-only rollouts on16 new tasks|16 autonomous successes and16 same-state verified teacher repairs; collection/correction pipeline works|A new evaluation score or model improvement: zero updates occurred|
 |Grounded expansion:2,048 authored examples,18 deduplicated canary records and a new32-update SFT tranche|Fresh same-format completion3/16→16/16, including4/4 edits and4/4 recovery; both x/y retention passed|Generalization/acceptance: old7/16→6/16 and structural-transfer0/16→1/16; joint gate failed|
 |Representation bridges:768 new examples,512 prior-training rehearsal records and replay; separate32-update SFT|New fresh11/32→32/32 (each family8/8), old fresh16/16 retained, prior regression6/16→10/16; all15 gates passed|Broad composition: only4/16, all recovery; one prior composition-lookup success lost. No Pi-native or independent-repository qualification|
+|Unchanged-weight Pi-facing compatibility|8/8 direct and8/8 through real Pi on reused cases; exact paired native transcripts/tokens and audited oracles|Pi-native tools, independent repository generalization, multi-task sessions, compaction/resume or deployment|
 |Faithful native source/runtime pipeline|Actual observations/errors, full trajectories and routing/masks can be preserved|That more tokens alone will solve remaining behavior or that every candidate is admitted|
 
 The latest measured gain is **32/32 new fresh autonomous completions**, while
