@@ -37,14 +37,14 @@ def local_case(i):
  elif kind==3:
   a=100+i*3;b=71+i;value=str(a+b);steps=[action('bash',{'command':f"printf '%s\\n' $(({a}+{b}))"}),finish(value)];prompt=f'Use bash to compute {a} plus {b}, then finish with exactly the decimal result.';family='shell-observe'
  elif kind==4:
-  path=f'config/state_{tag}.txt';files[path]='mode=alpha\n';expected[path]='mode=beta\n';steps=[action('edit',{'path':path,'edits':[{'oldText':'mode=alpha','newText':'mode=beta'}]}),action('read',{'path':path}),finish('done')];prompt=f'In {path}, replace mode=alpha with mode=beta using edit, read it back, then finish with exactly done.';family='repo-edit-verify'
+  path=f'config/state_{tag}.txt';marker='STATE_TARGET_'+tag.upper();files[path]=marker+'\nmode=alpha\n';expected[path]=marker+'\nmode=beta\n';steps=[action('ffgrep',{'pattern':marker,'path':'config/'}),action('edit',{'path':path,'edits':[{'oldText':'mode=alpha','newText':'mode=beta'}]}),action('read',{'path':path}),finish('done')];prompt=f'Use content search to locate the config containing exact marker {marker}, change its mode from alpha to beta, read it back, then finish with exactly done.';family='repo-symbol-edit-discovery'
  elif kind==5:
   path=f'out/result_{tag}.txt';expected[path]='written-'+tag+'\n';steps=[action('write',{'path':path,'content':expected[path]}),action('read',{'path':path}),finish('done')];prompt=f'Create {path} with exactly written-{tag} followed by a newline, read it back, then finish with exactly done.';family='repo-write-verify'
  elif kind==6:
-  path=f'pkg/calc_{tag}.py';files[path]='def total(xs):\n    return sum(xs[1:])\n';expected[path]='def total(xs):\n    return sum(xs)\n';test=f'tests/test_{tag}.py';files[test]=f'import unittest\nfrom pkg.calc_{tag} import total\nclass T(unittest.TestCase):\n def test_total(self): self.assertEqual(total([3,5,7]),15)\n';steps=[action('bash',{'command':f'python3 -m unittest {test}'}),action('edit',{'path':path,'edits':[{'oldText':'return sum(xs[1:])','newText':'return sum(xs)'}]}),action('bash',{'command':f'python3 -m unittest {test}'}),finish('done')];prompt='Repair this Python repository using its tests. Discoveries are already scoped by the task; leave tests unchanged and finish with exactly done after they pass.';family='repo-test-repair';prefix=1
+  path=f'pkg/calc_{tag}.py';files[path]='def total(xs):\n    return sum(xs[1:])\n';expected[path]='def total(xs):\n    return sum(xs)\n';test=f'tests/test_{tag}.py';files[test]=f'import unittest\nfrom pkg.calc_{tag} import total\nclass T(unittest.TestCase):\n def test_total(self): self.assertEqual(total([3,5,7]),15)\n';steps=[action('fffind',{'pattern':'test_'+tag+'.py','path':'tests/'}),action('bash',{'command':f'python3 -m unittest {test}'}),action('edit',{'path':path,'edits':[{'oldText':'return sum(xs[1:])','newText':'return sum(xs)'}]}),action('bash',{'command':f'python3 -m unittest {test}'}),finish('done')];prompt=f'Locate the checker named test_{tag}.py under tests/, run it to observe the defect, repair the implementation while leaving tests unchanged, rerun the checker, and finish with exactly done after it passes.';family='repo-test-discovery-repair';prefix=2
  else:
   path=f'nested/{tag}/settings.json';value='BIND_'+opaque(cid,12);files[path]=json.dumps({'active':'right','values':{'left':'decoy','right':value}})+'\n';steps=[action('fffind',{'pattern':'settings.json','path':'nested/'}),action('read',{'path':path}),finish(value)];prompt='Find settings.json under nested/, read it, follow active into values, and finish with exactly the selected value.';family='repo-nested-binding'
- expected={**files,**expected};return dict(id=cid,category='local',family=family,prompt=prompt,files=files,expected_files=expected,steps=steps,supervise_from=prefix,requires_error=prefix>0,repository_discovery=True)
+ expected={**files,**expected};return dict(id=cid,category='local',family=family,prompt=prompt,files=files,expected_files=expected,steps=steps,supervise_from=prefix,requires_error=prefix>0,repository_discovery=kind in (1,2,4,6,7))
 
 def exact_case(i):
  cid=case_id('exact',i);tag=opaque(cid,12);kind=i%6;distance=(128,1024,8192,32768)[(i//6)%4];pad=filler(distance,cid);files={};expected={}
@@ -165,7 +165,7 @@ def execute_case(case,panel,enc,root,pi_bin,manifest_path):
  if bridge.final!=emitted_specs[-1]['arguments']['message']:raise ValueError('terminal final mismatch')
  prefix_calls=sum(s['name']!='finish' for s in emitted_specs[:case['supervise_from']])
  failed=lambda r:r['isError'] or r['content'][0]['text'].lower().startswith(('error:','tool error:')) or any(w in r['content'][0]['text'].lower() for w in ('exit code: 1','command exited with code 1','no matches found'))
- if case['requires_error'] and (prefix_calls<1 or not all(failed(r) for r in results[:prefix_calls])):raise ValueError('authored failure prefix did not fail')
+ if case['requires_error'] and (prefix_calls<1 or not any(failed(r) for r in results[:prefix_calls])):raise ValueError('authored failure prefix did not fail')
  if any(failed(r) for r in results[prefix_calls:]):raise ValueError('unexpected tool error after correction prefix')
  snapshot={}
  for name,want in case['expected_files'].items():snapshot[name]=(workspace/name).read_text() if (workspace/name).exists() else None

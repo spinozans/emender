@@ -212,6 +212,37 @@ must mask the prefix. Before executing shell/edit/process tasks at scale, the
 teacher/provider process must be separated from a credential-free bounded tool
 sandbox. Host-built-in execution is not an admission path.
 
+The credential-separated proxy smoke `proc_f93d` registered the full frozen
+surface but routed local tools over an owned Unix socket into the existing
+nonroot, networkless NativeSandbox. DeepSeek returned `PhaseFrame` directly
+with zero calls. The process status was nonzero only because the smoke driver
+asked the trusted snapshot reader for an unsupported empty name set; the owned
+container was removed and the model/tool boundary itself passed.
+
+A deterministic authored real-Pi collector was then qualified before any scale
+run. Pilot r1 failed closed after nine complete records because `fetch_content`
+correctly blocked a loopback fixture, leaving the authored final ungrounded.
+Pilot r2 failed closed after ten complete records because a short public HTML
+page produced an incomplete-extraction error. Neither failure published a
+candidate authority. Public fetch fixtures were restricted to verified RFC
+Editor plaintext.
+
+Pilot r3 (`proc_e75f`) passed all20 records against frozen plan SHA
+`e8d6ba0b05423862e90450ad83ad20d8f9d57c50ba1131ea59cae9db1bcc5745`
+and source commit `97a2e1f2`:28 genuine Pi calls,4 authentic failure
+observations,20 distinct sequences,145,293 total tokens,2,155 supervised
+assistant targets,18 families and9 initially classified repository-discovery
+records. Independent reconstruction reproduced native records, generated token
+IDs, public Pi event projections, causal call/result IDs, terminal finishes,
+workspace/web oracles, prefix masks, candidate binaries and summary totals.
+Audit SHA:
+`b70beac83f2d3a3c6a2d254a0e839f013dd2f526b3232e2fdaa866e11dce3946`.
+The output remains `verified-candidates-not-admitted`: training eligibility,
+packing and optimizer updates are all false. The repository-discovery label was
+subsequently narrowed to genuine search/discovery families and the programme
+now asserts at least256 records across at least8 such families at2,000-record
+scale.
+
 ## Historical session evidence immediately preceding this programme
 
 - Failed model-session preflight `proc_79c2`: session-token plan mismatch; zero

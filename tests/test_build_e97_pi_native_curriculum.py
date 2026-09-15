@@ -9,9 +9,14 @@ def test_case_mix_and_identity_are_deterministic():
  assert a==b and counts=={'local':14,'web':10,'exact':10,'recovery':6}
  assert len({x['id'] for x in a})==40
  assert all(not Path(p).is_absolute() and '..' not in Path(p).parts for x in a for p in x['files'])
- assert sum(x['repository_discovery'] for x in a)>=12
+ assert sum(x['repository_discovery'] for x in a)>=10
  assert all('127.0.0.1' not in x['prompt'] for x in a if x['category']=='web')
  assert all(not x.get('web_page') for x in a if x['category']=='web')
+
+def test_repository_discovery_has_eight_families_at_program_scale():
+ cases,_=make_cases(2000,18765)
+ families={x['family'] for x in cases if x['repository_discovery']}
+ assert len(families)>=8 and sum(x['repository_discovery'] for x in cases)>=256
 
 def test_case_generation_requires_multiple_of_twenty():
  for count in (0,19,21):
