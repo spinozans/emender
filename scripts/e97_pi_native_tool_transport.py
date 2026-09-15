@@ -9,7 +9,7 @@ MAX_FRAME=16*1024*1024
 def append_jsonl(path,value):
  with Path(path).open('a') as f:f.write(compact(value)+'\n')
 
-def serve_pi_native_tools(bridge,output,*,pi_bin,provider_extension,pi_extensions=(),cwd,seconds=120,allow_model_failure=False):
+def serve_pi_native_tools(bridge,output,*,pi_bin,provider_extension,pi_extensions=(),cwd,seconds=120,allow_model_failure=False,no_builtin_tools=False,extra_env=None):
  output=Path(output);output.mkdir(parents=True,mode=0o700,exist_ok=False);home=output/'home';agent=home/'.pi/agent';agent.mkdir(parents=True,mode=0o700);sessions=output/'sessions';sessions.mkdir(mode=0o700)
  settings={'compaction':{'enabled':False},'retry':{'enabled':False,'provider':{'maxRetries':0}},'defaultTools':[],'packages':[],'extensions':[],'enableInstallTelemetry':False,'enableAnalytics':False,'defaultProjectTrust':'never','quietStartup':True};(agent/'settings.json').write_text(compact(settings)+'\n')
  deadline=time.monotonic()+seconds;receipts=[];proc=None;pidfd=None;close_messages=None;terminal={'schema':'emender-e97-pi-native-tool-terminal-v1','close_verified':False,'model_failure_verified':False,'pi_exit':None,'requests':receipts}
@@ -17,7 +17,11 @@ def serve_pi_native_tools(bridge,output,*,pi_bin,provider_extension,pi_extension
   with tempfile.TemporaryDirectory(prefix='e97-pi-tools-') as tmp:
    address=str(Path(tmp)/'owner.sock');config={'schema':'emender-e97-pi-native-tool-transport-v1','socket':address,'system':bridge.panel['system'],'prompt':bridge.history[0]['content'][0]['text'],'tools':bridge.tools,'timeout_ms':int(seconds*1000)};config_path=output/'transport-config.json';config_path.write_text(compact(config)+'\n')
    env={'PATH':os.environ['PATH'],'HOME':str(home),'PI_CODING_AGENT_DIR':str(agent),'PI_OFFLINE':'1','PI_SKIP_VERSION_CHECK':'1','NO_COLOR':'1','TERM':'dumb','E97_PI_NATIVE_TOOL_CONFIG':str(config_path),'XDG_CACHE_HOME':str(output/'cache'),'PI_FFF_MODE':'tools-only','FFF_ENABLE_HOME_SCAN':'0','FFF_ENABLE_ROOT_SCAN':'0'}
+   if extra_env:
+    if any(not isinstance(k,str) or not isinstance(v,str) for k,v in extra_env.items()):raise ValueError('string extra environment required')
+    env.update(extra_env)
    command=[str(pi_bin),'--offline','--no-approve','--no-extensions','--no-skills','--no-prompt-templates','--no-themes','--no-context-files','-e',str(Path(provider_extension).resolve())]
+   if no_builtin_tools:command+=['--no-builtin-tools']
    for ext in pi_extensions:command+=['-e',str(Path(ext).resolve())]
    command+=['--provider',PROVIDER,'--model',MODEL,'--tools',','.join(t['name'] for t in bridge.tools),'--system-prompt',config['system'],'--session-dir',str(sessions),'--mode','json','-p','--',config['prompt']]
    (output/'command-private.json').write_text(compact(command)+'\n')

@@ -14,7 +14,7 @@ recorded. The driving design is
 |PTCP-02 tool-choice panel|**CPU builder passed**|11 first-action classes; Stage A uses direct/FFF/web contrasts|
 |PTCP-03 web-research panel|not started|Freeze timestamped claims/queries and real Pi execution|
 |PTCP-04 repository discovery data|proposal frozen|8-record/2,484-target seed; >=256 verified records required|
-|Unchanged-model baseline|not started|Run only after protocol and panels pass scripted controls|
+|Unchanged-model baseline|**Stage A evaluator CPU-qualified**|Immutable 12-episode plan/source export next; then one checked GPU run|
 |Pi-native training authority|not started|Target2,000–5,000 verified records; exact masks/exposures required|
 |Training|not started|Proposed32 updates; publish concrete authority before launch|
 |Post-training qualification|not started|All copy/tool/web/repository/retention/session gates jointly|
@@ -109,7 +109,21 @@ that58K-delay prompt plus the declared4,096-token generation reservation could
 exceed64K. That otherwise valid root is superseded. `proc_c68a` fixed the explicit
 per-turn budget at1,024, added a build-time prompt-plus-budget guard and froze SHA
 `07cc1d5843ee4060503ecdcf7d2bb813dce51fa0aeba89df367b7696e47994ef`.
-No baseline root has been sampled.
+No baseline root has been sampled. `proc_f909` reproduced the final panel from
+immutable source at SHA
+`07cc1d5843ee4060503ecdcf7d2bb813dce51fa0aeba89df367b7696e47994ef`.
+
+## Stage A evaluator preparation
+
+The Stage A execution path registers exact captured core/process schemas through
+a safety extension: confined `read` executes, while unexpected `bash`, `edit`,
+`write` or `process` calls receive authentic explicit disabled errors rather than
+running model code on the host. FFF remains real and read-only; the web extension
+is real. `proc_e31e` passed11 tests, including actual Pi safe-read call/result
+pairing, and froze the throwaway12-episode plan SHA
+`d040e6e3d867795d29f45f043a8db818f9420ebcaa064a0acf5ad17a74f22370`.
+The outcome gate is measurement completeness and unchanged weights, not a score;
+every fixed model failure remains a result and no retry is permitted.
 
 ## Historical session evidence immediately preceding this programme
 

@@ -7,8 +7,9 @@ from scripts.e97_pi_native_tool_bridge import MODEL,PROVIDER,NativePiToolBridge
 from scripts.e97_pi_native_tool_transport import serve_pi_native_tools
 ENC=tiktoken.get_encoding('p50k_base')
 
-def read_tool():
- m=json.load(open('configs/pi/e97-active-tool-surface-v1.json'));return next(t for t in m['model_visible_tools'] if t['name']=='read')
+def manifest_tools(*names):
+ m=json.load(open('configs/pi/e97-active-tool-surface-v1.json'));return [t for t in m['model_visible_tools'] if t['name'] in names]
+def read_tool():return manifest_tools('read')[0]
 def frame(tools,name,args):
  return native_turn({'role':'assistant','content':None,'reasoning_content':'private','think':None,'tool_calls':[{'type':'function','function':{'name':name,'arguments':compact(args)}}]},tools)
 def request(b,messages):return {'systemPrompt':b.panel['system'],'messages':messages,'tools':b.tools,'model':MODEL,'provider':PROVIDER}
@@ -41,6 +42,17 @@ def test_real_pi_retains_model_failure_without_retry(tmp_path):
  terminal=serve_pi_native_tools(b,tmp_path/'failure-pi',pi_bin=pi,provider_extension=Path('configs/pi/e97-pi-native.ts'),cwd=cwd,seconds=60,allow_model_failure=True)
  assert calls==1 and terminal['model_failure_verified'] and not terminal['close_verified']
  assert b.failed and b.closed and b.reason=='invalid_opening' and len(b.generations)==1
+
+
+def test_real_pi_stage_a_exact_schema_safe_read(tmp_path):
+ pi=shutil.which('pi')
+ if not pi:return
+ tools=manifest_tools('read','bash','edit','write','process');cwd=tmp_path/'safe-cwd';cwd.mkdir();(cwd/'sample.txt').write_text('safe-value\n')
+ turns=iter([frame(tools,'read',{'path':'sample.txt'}),frame(tools,'finish',{'message':'done'})])
+ def generate(prompt,budget,deadline):text=next(turns);return text,ENC.encode_ordinary(text),'valid'
+ panel={'system':'safe stage A','tools':tools,'max_turns':4,'generation_budget':2048,'episode_generation_budget':4096,'episode_seconds':30};b=NativePiToolBridge(panel,'read safely',ENC,generate)
+ terminal=serve_pi_native_tools(b,tmp_path/'safe-pi',pi_bin=pi,provider_extension=Path('configs/pi/e97-pi-native.ts'),pi_extensions=[Path('configs/pi/e97-pi-native-stage-a-tools.ts')],cwd=cwd,seconds=60,no_builtin_tools=True,extra_env={'E97_PI_TOOL_MANIFEST':str(Path('configs/pi/e97-active-tool-surface-v1.json').resolve())})
+ assert terminal['close_verified'] and 'safe-value' in b.episode.text()
 
 
 def test_real_pi_executes_builtin_read_and_returns_exact_result(tmp_path):
