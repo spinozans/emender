@@ -73,8 +73,8 @@ are frozen in `representation-bridge-v1-preparation-r2`:
 independent oracle/mask reconstruction, source preservation, semantic edit checks,
 row-order-independent pointer selection, rejection of ambiguous pointers, and
 magnitude diversity within each naming/layout combination. Native-container
-qualification is the next preparation step; neither test success nor teacher
-success counts as autonomous model improvement.
+qualification subsequently passed as recorded below; neither test success nor
+teacher success counts as autonomous model improvement.
 
 Implementation:
 -`scripts/e97_representation_bridge.py`
@@ -83,9 +83,31 @@ Implementation:
  `scripts/e97_grounded_curriculum.py`
 -`configs/pi/e97-representation-bridge-preparation-v1.json`
 
+## Audited native qualification result
+
+`proc_014f` passed in107s from source `09fa10d8`. All48 native trajectories
+(12 per family) passed:13,756 supervised targets, actual calls/observations,
+independent byte-mask reconstruction, host task oracles, semantic edit assertions,
+source-byte preservation and two owned sandbox cleanups. Every teacher trajectory
+fit the8-turn execution allowance. There were **zero model evaluations or updates**.
+
+A separate post-run check repeated all48 record/oracle/mask checks, bound plan and
+case hashes, and checked both terminal container identities/cleanup receipts.
+No owned native container remained. Source inventories were unchanged.
+
+|Artifact|SHA256|
+|---|---|
+|Source inventory (17,726 files)|`9dfa645352c6ea90d6c23b4fad6bbd95bad713f4159bf2e080e3b862aa74f7eb`|
+|Native receipts|`19321aecc1ba48b8c3adbe1c3ede313e5159d7886d0ee0f20357ec001863e72e`|
+|Native summary|`0d0df2fc6fc8c0350a804eef0571113d9587bb9dfaca735e347e0bb629f5c29e`|
+|Post-run audit|`4089beb6c74fab8cad83f087cbae1e21088b9e5f590319b15ce85005d2ee3eb8`|
+
+This qualifies the48-example teacher slice, not all768 proposed training records
+or any learned behavior. All preparation candidates remain `training_eligible:false`.
+
 ## Proposed learning follow-up—not launched
 
-If preparation passes, specify a separate bounded SFT plan from exact expansion
+Preparation passed. The proposed next experiment is a separate bounded SFT plan from exact expansion
 live-y (`17aa2672…`, explicit train weight mode), using the exercised BF16-SR trainer.
 A proposed32-update budget is a proposal, not authorization in this preparation.
 Include prior verified grounded **training** examples and unchanged admitted replay
@@ -93,3 +115,25 @@ so the new representations do not simply displace old behavior. Audit actual
 unique/repeated exposures and choose explicit old/fresh/composition and retention
 gates before any model evaluation or update. No numerical-policy integration,
 precision sweep, outcome RL or reuse of evaluation trajectories is part of this work.
+
+Concrete proposal for operator approval:
+
+-Verify the768 frozen bridge training cases (separate data budget≤2,400s).
+-Copy512 previously verified grounded **training** records, paired and balanced
+  across families, without changing their tokens/masks; no evaluation-case reuse.
+-Add unchanged admitted replay to at least300k conversation,100k native and100k
+  retention targets, with exact whole-record overshoot/exposure accounting.
+-Fresh32-update BF16-SR Schedule-Free stage at the exercised LR1e-5 from exact
+  expansion live-y. No numerical-policy changes; training≤5,400s.
+-Evaluate the existing48 cases as regression/development checks plus the newly
+  frozen32 fresh and16 composition cases. No held-out repository claim.
+-Proposed primary y gates: restore prior regression to≥7/16; preserve the earlier
+  fresh16/16; prior structural cases≥4/16. New fresh32 must reach
+  `min(32,max(24,pre_y+4))`, with≥4/8 per family. New composition16 must reach
+  `min(16,max(4,pre_y+2))`. Both x/y retain tool accuracy≥.98, conversation
+  NLL≤pre-y+.15 and native-development NLL≤pre-y+.10.
+-No promotion or automatic extra updates; preserve all failures. Bind the final
+  recipe, source mix, exact schedule and gates before loading any model.
+
+This is a **proposal**, not an extension of a closed run. No further training or
+full768-record generation has been launched.

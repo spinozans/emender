@@ -24,10 +24,11 @@ cases7/16→6/16 and structural-transfer0/16→1/16. Both x/y retention gates pa
 against actual reader snapshots, with192 agent and192 reader cleanups confirmed.
 
 A follow-up [representation-bridge preparation](validation/e97-representation-bridge-preparation-v1.md)
-now defines768 candidate fixtures, freezes48 new evaluation cases and prepares a
-48-example native teacher qualification. It targets the observed fixed-+1 edit
-shortcut and changed JSON layouts. This is preparation only: no new learning
-budget or model improvement is claimed.
+now defines768 candidate fixtures and freezes48 new evaluation cases. Its
+48-example native teacher qualification **passed** (13,756 targets, two sandbox
+cleanups,71 CPU tests), targeting the observed fixed-+1 edit shortcut and changed
+JSON layouts. This is preparation only: no new model improvement is claimed.
+A separate32-update follow-up with old-format rehearsal is proposed, not launched.
 
 ## Goal and actual capability
 
