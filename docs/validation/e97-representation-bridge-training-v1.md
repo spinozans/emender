@@ -76,10 +76,26 @@ packing/exposure audits. No new capability result is claimed at launch.
 
 ## Phase status
 
-Authorized for the full bounded sequence. **`proc_edfb` is running the768-record
-native data verification**, from frozen source `5263ada2` (17,733 files). The same88
-CPU tests also passed inside that immutable export; its input-binding preflight
-verified512 paired rehearsal IDs and96 frozen unassisted evaluation cases.
+Authorized for the full bounded sequence. **`proc_edfb` completed all768 native
+training demonstrations** in1,179s, exit0, from frozen source `5263ada2` (17,733
+files). The terminal source audit passed. The same88 CPU tests also passed inside
+that immutable export; its input-binding preflight verified512 paired rehearsal
+IDs and96 frozen unassisted evaluation cases.
+
+Completed dataset:2,223 records,6,056,589 input tokens,848,660 supervised targets:
+
+|Source|Dataset targets (not scheduled exposures)|
+|---|---:|
+|New representation bridges|218,384|
+|Prior grounded rehearsal|126,193|
+|Conversation replay|300,316|
+|Native replay|103,665|
+|Retention replay|100,102|
+
+Authority SHA256:
+`a21dba6f80e58e87ea838a98018b40650decebed3cf4b0f98dacdb750520469d`.
+**`proc_b8f5` is running the independent audit,64K packing and exact32-step exposure
+preparation.** No model updates have occurred yet.
 
 Controller: `R/representation-bridge-v1-training-control/run-phase.sh`
 (`R=/mnt/nvme2n1/erikg/e97_systematic_posttraining`).
