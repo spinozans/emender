@@ -58,11 +58,13 @@ is closed. Separate training-only discovery/recovery preparation passed and was 
 eight disjoint candidates,52 turns,44 calls,12 authentic errors,16 positive/negative
 verifier controls and32 cleanups. It remains non-admitted preparation; evaluation
 traces are excluded and no training is authorized. Separately, the real two-task
-Pi RPC lifecycle passed its expanded122-test suite and the real OpenHands control:
-one Pi process/sandbox, two explicit records, persistent workspace/shell, eight
-native turns, six calls, two verified task closures and audited cleanup. Previous
-task text was absent from the next model context. This is scripted lifecycle
-evidence—not model multi-task success or conversational memory.
+Pi RPC lifecycle passed its scripted real-OpenHands control and honest failed-task
+settlement. The unchanged model then passed2/2 previously qualified tasks in one
+real Pi/OpenHands session: eight native turns, six calls, two verified task
+finishes and an audited session close. Previous-task text was absent from the next
+model context; public history and executor state persisted. This is bounded reused-
+task multi-task evidence—not conversational memory, fresh repository competence,
+Pi-native tools or promotion.
 
 ## Goal and actual capability
 
@@ -77,7 +79,7 @@ loss alone, valid first calls, teacher success or numerical agreement.
 |32 stochastic training-only rollouts on16 new tasks|16 autonomous successes and16 same-state verified teacher repairs; collection/correction pipeline works|A new evaluation score or model improvement: zero updates occurred|
 |Grounded expansion:2,048 authored examples,18 deduplicated canary records and a new32-update SFT tranche|Fresh same-format completion3/16→16/16, including4/4 edits and4/4 recovery; both x/y retention passed|Generalization/acceptance: old7/16→6/16 and structural-transfer0/16→1/16; joint gate failed|
 |Representation bridges:768 new examples,512 prior-training rehearsal records and replay; separate32-update SFT|New fresh11/32→32/32 (each family8/8), old fresh16/16 retained, prior regression6/16→10/16; all15 gates passed|Broad composition: only4/16, all recovery; one prior composition-lookup success lost. No Pi-native or independent-repository qualification|
-|Unchanged-weight Pi-facing compatibility|8/8 direct and8/8 through real Pi on reused cases; exact paired native transcripts/tokens and audited oracles|Pi-native tools, independent repository generalization, multi-task sessions, compaction/resume or deployment|
+|Unchanged-weight Pi-facing compatibility|8/8 direct and8/8 through real Pi on reused cases; then2/2 reused tasks in one explicit real Pi/OpenHands session, with separate contexts, retained public history and executor state|Pi-native tools, conversational memory/implicit follow-up, independent repository generalization, compaction/resume or deployment|
 |Faithful native source/runtime pipeline|Actual observations/errors, full trajectories and routing/masks can be preserved|That more tokens alone will solve remaining behavior or that every candidate is admitted|
 
 The latest measured gain is **32/32 new fresh autonomous completions**, while

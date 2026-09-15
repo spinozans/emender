@@ -260,5 +260,31 @@ outcome: zero native records or generations occurred, the sandbox cleaned, the
 GPU lease released, BF16 weights were fingerprint-identical, gradients remained
 absent, and peak HBM was8,091,958,272 bytes. The failed root is retained. The plan
 constant and runtime guard now both require32,768; focused tests and a new freeze
-passed in `proc_409d`. A corrected launch must use a fresh root and remains limited
-to the same two episodes.
+passed in `proc_409d`.
+
+The corrected new-root diagnostic (`proc_77c4`) passed in311 seconds from immutable
+commit `f7dd795d` after71 frozen-source CPU tests. The unchanged live-y checkpoint
+completed both previously qualified tasks in one Pi/OpenHands session:
+
+- lookup: three native turns, two executed calls, exact answer `68cd47b5`;
+- edit: five native turns, four executed calls, correct output and exact `done`.
+
+Both task finishes and the session close were verified. The independent audit
+reconstructed all eight turns from generated token IDs, replayed every native
+prompt hash, paired all six executor observations, regraded both filesystem/final
+oracles, checked18 Pi messages and21 owner RPC operations, verified exact history
+hashes and absence of task one from task two's native record, and checked two
+distinct container cleanups. The first draft of the audit used obsolete helper
+names and was corrected before passing; it did not execute the model or workspace.
+BF16 weights were unchanged, gradients absent, peak HBM8,540,007,936 bytes, and the
+GPU lease released. There were exactly two model episodes, zero retries and zero
+updates.
+
+- Plan SHA: `5265d88c24c0953b655a3227dc15f2061c50ce1b736958769b5600912b371e78`.
+- Summary SHA: `5217ba6693530eb5dba7f414126d13044f5d2dda1aa66e9246ac1467b6f710de`.
+- Independent audit SHA: `aeeed83cd9e4ed0b0f9e0a7b06ebb82bd8f43b6f5ddbd1849abec1a521cde1c0`.
+
+This establishes unchanged-model success for **two reused structured tasks in one
+explicit session**. It does not establish conversational memory, implicit
+follow-up semantics, fresh repository discovery/generalization, compaction,
+resume/fork, Pi-native tools, broad daily use, promotion, or learning.
