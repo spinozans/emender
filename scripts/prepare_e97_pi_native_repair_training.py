@@ -99,7 +99,7 @@ def read_native_slice(root,expected_manifest_sha,seed,budget_targets):
 
 def interleave(streams):
  """Weighted-fair merge by token share; deterministic tie-break by cohort order."""
- totals=[sum(len(t) for t,_,_ in records) for records,_,_ in streams]
+ totals=[sum(len(t) for t,_,_ in records) for records,_ in streams]
  grand=sum(totals)
  if grand<=0:raise ValueError('empty authority')
  weights=[t/grand for t in totals]
