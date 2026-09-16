@@ -320,15 +320,54 @@ grounded rehearsal,103,665 native,218,384 prior representation bridge and
 100,102 retention. All2,223 prior records and1,316 distinct new Pi-native
 records are covered. Schedule SHA:
 `73e25ee832af63b12847817f09e77af9b3364b89c303e7d9678db25e3eeaaa4e`.
-Proposal `configs/pi/e97-pi-native-curriculum-training-proposal-v1.json` is
-explicitly not authorized; proposal SHA
+Proposal `configs/pi/e97-pi-native-curriculum-training-proposal-v1.json` was
+frozen without authorization; proposal SHA
 `96db2e1cee91304b6c295113e517c8c1fd032c40a7fb372d9866dea8ada057be`
 and audit SHA
 `a27fb97bc1567188a590b9630cae2385175d0152cd23cc546fa46f181da4ba09`.
-It proposes32 updates at learning rate1e-5 from checkpoint `9b78628d...`, with
+It proposed32 updates at learning rate1e-5 from checkpoint `9b78628d...`, with
 no automatic retry/expansion, no threshold change, no promotion and no RL.
-Stage A remains immutable0/12 evidence and Stage B remains blocked until a
-separate operator authorization and a newly audited checkpoint exist.
+
+The operator subsequently authorized that exact proposal. A separate admission
+preserved the exact first-epoch pack sequence while changing the mechanical
+preparation into an explicit32-update authority. Admitted authority SHA is
+`ec58b6ae200f3a65a82a1a932bf074caa31885a19eae6694bdcaf1ba53d62865`,
+pack SHA is
+`bfd592cca7980eee47d1ebe318f554e001339336ac89e01bb77ce8d188717e67`,
+admission SHA is
+`ea5c9216305010293a372089979e72556e8e936d2ad1b16ed41f3840076a7ef4`
+and the admitted schedule SHA is
+`2404fb024562cd108169aa157cf5b631ab426e5c783bce0f1f24105337d99e69`.
+Its source exposures are exactly the proposed totals.
+
+Authorized run `proc_9453` completed once with no retry:32 updates,
+15,585,765 input tokens,995,687 targets, peak rank-0 HBM36,128,739,328 bytes
+and final aggregate loss0.3309566. The finite complete checkpoint is
+`pi-native-curriculum-training-v1/checkpoints/checkpoint_agent_sft_u000032_loss_0.3310.pt`,
+SHA `e9c2d47b24dc419b3ec6c354a77ea585dd00cfc6697a086e1d975ddfc08e3296`.
+The GPU lease EXIT trap replaced the launcher's EXIT trap, so the expected
+in-run terminal receipt was absent; this controller defect is retained rather
+than concealed. Process exit0, lease cleanup, and complete post-run
+source/input/inventory checks were bound in a separate controller terminal
+receipt. Independent full-checkpoint audit reconstructed all32 sample-ID rows,
+token/target clocks, source exposures, optimizer state and4,045,972,080
+coordinates, verified finite BF16 tensors and the atomic latest pointer, and
+passed with audit SHA
+`e654bf94dc3402dfb5cc820c739e3f1bedceee59e617e379d224f788cd42406d`.
+The checkpoint remained unpromoted.
+
+The protected14-case Stage-B panel was then run once under frozen plan SHA
+`f198af9982748614803cb495b2a5797806e48ede2d5f0547f78ae451e118787d`,
+with zero retries and zero updates. It produced11/14 valid first frames against
+a required12 and7/14 correct first actions against a required10; only one
+frozen end-to-end grade passed. Independent receipt reconstruction returned
+`qualified-negative-gate-failure`, audit SHA
+`b7e20043374c80f2b8acd6cbc44b49d85c752b118d273309ec43f429f1d9029a`.
+Two pre-existing Stage-B expected-final inconsistencies (`choice-read-explicit`
+and `choice-grep-symbol`) are recorded but were not regraded; the frame and
+first-action gates fail independently of them. Stage A remains immutable0/12,
+Stage B will not be rerun, all later regression/retention/repository gates are
+stopped fail-closed, and promotion, further updates and RL remain blocked.
 
 ## Historical session evidence immediately preceding this programme
 
