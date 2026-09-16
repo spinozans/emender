@@ -60,9 +60,11 @@ fi
 LEASE_RC=0
 CVD_VALUE=""
 if (( GPUS > 0 )); then
-  LEASE_OUT=$(bash "$LEASE" acquire "$GPUS" --no-wait 2>&1) || LEASE_RC=$?
+  LEASE_OUT=$(bash "$LEASE" acquire "$GPUS" --no-wait) || LEASE_RC=$?
   if (( LEASE_RC != 0 )); then write_receipt "lease-failed" "no lease available"; echo "PHASE_LEASE_FAIL $NAME" >&2; exit 69; fi
-  eval "$LEASE_OUT"
+  printf "%s\n" "$LEASE_OUT" | grep -v "^gpu_lease:" > /tmp/.e97-lease-eval.$$
+  # shellcheck disable=SC1090
+  source /tmp/.e97-lease-eval.$$ ; rm -f /tmp/.e97-lease-eval.$$
   CVD_VALUE="$CUDA_VISIBLE_DEVICES"
   [[ "$CVD_VALUE" =~ ^[0-9]+(,[0-9]+)*$ ]] || { write_receipt "lease-malformed" "CUDA_VISIBLE_DEVICES invalid: $CVD_VALUE"; echo "PHASE_LEASE_MALFORMED $NAME" >&2; exit 69; }
 fi
