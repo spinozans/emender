@@ -7,7 +7,7 @@ from scripts.prepare_e97_pi_native_repair_training import (AUTHORITY_SCHEMA,COHO
 
 def sha(path):import hashlib;return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
-def write_tulu3(root,rows,*,eligible,records_spec):
+def write_tulu3(root,rows,*,eligible,records_spec,schema=AUTHORITY_SCHEMA,status='complete'):
  root.mkdir(parents=True)
  tokens=b''.join(t for t,_,_ in records_spec);mask=b''.join(m for _,m,_ in records_spec)
  offset=0;idx=b''
@@ -18,7 +18,7 @@ def write_tulu3(root,rows,*,eligible,records_spec):
  (root/'records.jsonl').write_text(''.join(json.dumps(r,sort_keys=True)+'\n' for r in rows))
  outputs={k:{'path':v.name,'bytes':v.stat().st_size,'sha256':sha(v)} for k,v in
   {'tokens':root/'tokens.uint32.bin','mask':root/'assistant_mask.uint8.bin','index':root/'records.idx','metadata':root/'records.jsonl'}.items()}
- manifest={'schema':AUTHORITY_SCHEMA,'status':'complete','tokenizer':'p50k_base','training_eligible':eligible,'counts':{'records':len(rows)},'outputs':outputs}
+ manifest={'schema':schema,'status':status,'tokenizer':'p50k_base','training_eligible':eligible,'counts':{'records':len(rows)},'outputs':outputs}
  (root/'manifest.json').write_text(json.dumps(manifest,sort_keys=True)+'\n')
  return sha(root/'manifest.json')
 
@@ -44,7 +44,7 @@ def test_prepare_interleaves_and_flags(tmp_path):
  spec_native=[(bytes([1])*(4*40),bytes([1])*8+b'\x00'*32,{'record_index':i,'problem_key':f'pk{i}','split':0}) for i in range(6)]
  nsha=write_native(full,[{'record_index':i,'problem_key':f'pk{i}','split':0} for i in range(6)],spec_native,['pk%d'%i for i in range(6)])
  spec_sel=[(bytes([2])*40,bytes([1])*10,{'id':f'sel{i}'}) for i in range(6)]
- ssha=write_tulu3(sel,[{'id':f'sel{i}'} for i in range(6)],eligible=False,records_spec=spec_sel)
+ ssha=write_tulu3(sel,[{'id':f'sel{i}'} for i in range(6)],eligible=False,records_spec=spec_sel,schema='emender-e97-pi-native-selected-candidate-authority-v1',status='verified-selection-not-admitted')
  (sel/'selection-audit.json').write_text(json.dumps({'status':'qualified-selection-not-admitted'}))
  (sel/'overlap-audit.json').write_text(json.dumps({'status':'pass'}))
  sasha=sha(sel/'selection-audit.json');oasha=sha(sel/'overlap-audit.json')
@@ -65,7 +65,7 @@ def test_prepare_interleaves_and_flags(tmp_path):
  rows=[json.loads(x) for x in (out/'records.jsonl').read_text().splitlines()]
  sources=[r['source'] for r in rows]
  # with equal token shares the weighted-fair merge must cycle through cohorts
- assert sources[:6]==list(COHORTS)
+ assert sources[:3]==list(COHORTS)
  # every later window of 3 contains all cohorts (no cohort starves early)
  for i in range(0,len(sources)-2,3):
   assert set(sources[i:i+3])==set(COHORTS)

@@ -40,10 +40,10 @@ def verify_outputs(root,manifest):
    raise ValueError('source payload identity')
  return {k:root/v['path'] for k,v in manifest['outputs'].items()}
 
-def read_tulu3(root,label,expected_manifest_sha,*,eligible_required):
+def read_tulu3(root,label,expected_manifest_sha,*,eligible_required,schema=AUTHORITY_SCHEMA,status='complete'):
  manifest=json.loads((root/'manifest.json').read_text())
  if sha(root/'manifest.json')!=expected_manifest_sha:raise ValueError(f'{label} manifest identity')
- if manifest.get('schema')!=AUTHORITY_SCHEMA or manifest.get('status')!='complete':raise ValueError(f'{label} schema')
+ if manifest.get('schema')!=schema or manifest.get('status')!=status:raise ValueError(f'{label} schema')
  if eligible_required and manifest.get('training_eligible') is not True:raise ValueError(f'{label} must be a training-eligible source')
  if not eligible_required and manifest.get('training_eligible') is not False:raise ValueError(f'{label} must be an explicitly non-admitted selection authority')
  paths=verify_outputs(root,manifest)
@@ -86,6 +86,8 @@ def read_native_slice(root,expected_manifest_sha,seed,budget_targets):
  for j in order:
   i,offset,n,want=eligible[j]
   key=rows[i].get('problem_key')
+  if isinstance(key,(str,int)) and not isinstance(key,bool):key=str(key)
+  elif isinstance(key,(list,tuple)):key=json.dumps(key,sort_keys=True,separators=(',',':'))
   if not isinstance(key,str) or not key:raise ValueError('native problem key')
   if key in seen_keys:continue
   if consumed+want>budget_targets:continue
@@ -123,7 +125,7 @@ def prepare(args):
  if sha(args.overlap_audit)!=args.overlap_audit_sha or overlap_audit['status']!='pass':raise ValueError('overlap audit identity')
  if sha(args.parent_checkpoint)!=args.parent_sha:raise ValueError('parent checkpoint identity')
  native,consumed,keys=read_native_slice(args.fulltraj,args.fulltraj_sha,args.fulltraj_seed,args.fulltraj_budget_targets)
- selected=read_tulu3(args.selected,'pi-native-curriculum',args.selected_sha,eligible_required=False)
+ selected=read_tulu3(args.selected,'pi-native-curriculum',args.selected_sha,eligible_required=False,schema='emender-e97-pi-native-selected-candidate-authority-v1',status='verified-selection-not-admitted')
  rehearsal=read_tulu3(args.rehearsal,'representation-bridge-rehearsal',args.rehearsal_sha,eligible_required=True)
  streams=[(native,COHORTS[0]),(selected,COHORTS[1]),(rehearsal,COHORTS[2])]
  order=interleave(streams)
@@ -161,7 +163,8 @@ def main():
  p.add_argument('--fulltraj',type=Path,required=True);p.add_argument('--fulltraj-sha',required=True)
  p.add_argument('--fulltraj-budget-targets',type=int,required=True);p.add_argument('--fulltraj-seed',type=int,required=True)
  p.add_argument('--selected',type=Path,required=True);p.add_argument('--selected-sha',required=True)
- p.add_argument('--selection-audit-sha',required=True);p.add_argument('--overlap-audit-sha',required=True)
+ p.add_argument('--selection-audit',type=Path,required=True);p.add_argument('--selection-audit-sha',required=True)
+ p.add_argument('--overlap-audit',type=Path,required=True);p.add_argument('--overlap-audit-sha',required=True)
  p.add_argument('--rehearsal',type=Path,required=True);p.add_argument('--rehearsal-sha',required=True)
  p.add_argument('--parent-checkpoint',type=Path,required=True);p.add_argument('--parent-sha',required=True)
  p.add_argument('--output',type=Path,required=True)
