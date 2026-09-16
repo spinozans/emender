@@ -1,7 +1,7 @@
 # E97 agent learning: current status and decision reset
 
-Status after the representation-bridge training and audited evaluation. This is a
-programme-level interpretation and priority decision, not a replacement for any
+Status after the authorized Pi-native curriculum tranche and its audited negative
+Stage-B gate. This is a programme-level interpretation and priority decision, not a replacement for any
 frozen experimental report, failed gate or source authority. The complete
 [numerical exploration index](validation/e97-numerical-exploration-index.md)
 records the sequence, evidence and limits. The active next programme is the
@@ -71,6 +71,20 @@ model context; public history and executor state persisted. This is bounded reus
 task multi-task evidence—not conversational memory, fresh repository competence,
 Pi-native tools or promotion.
 
+The Pi-native programme subsequently collected2,099 one-shot verified records,
+selected2,012 after protected-panel decontamination, and admitted a bounded mix
+with all2,223 representation-bridge rehearsal records. The operator authorized
+exactly32 updates at1e-5. Training completed without retry over15,585,765 input
+tokens and995,687 targets; the finite checkpoint SHA is `e9c2d47b...e3296` and
+the full checkpoint audit passed. This is real new learning evidence, but the
+protected Stage-B gate failed:11/14 valid first frames (required12),7/14 correct
+first actions (required10), and1/14 frozen end-to-end successes. The failure is
+independent of two recorded expected-final inconsistencies. Stage B will not be
+rerun; later regression/retention/repository evaluation, promotion, further
+updates and RL are blocked. The representation-bridge checkpoint remains the
+last fully gated checkpoint; the Pi-native checkpoint is an unpromoted negative
+candidate.
+
 ## Goal and actual capability
 
 Build a conversational, reasoning, observation-dependent tool agent, measured by
@@ -85,14 +99,18 @@ loss alone, valid first calls, teacher success or numerical agreement.
 |Grounded expansion:2,048 authored examples,18 deduplicated canary records and a new32-update SFT tranche|Fresh same-format completion3/16→16/16, including4/4 edits and4/4 recovery; both x/y retention passed|Generalization/acceptance: old7/16→6/16 and structural-transfer0/16→1/16; joint gate failed|
 |Representation bridges:768 new examples,512 prior-training rehearsal records and replay; separate32-update SFT|New fresh11/32→32/32 (each family8/8), old fresh16/16 retained, prior regression6/16→10/16; all15 gates passed|Broad composition: only4/16, all recovery; one prior composition-lookup success lost. No Pi-native or independent-repository qualification|
 |Unchanged-weight Pi-facing compatibility|8/8 direct and8/8 through real Pi on reused cases; then2/2 reused tasks in one explicit real Pi/OpenHands session, with separate contexts, retained public history and executor state|Pi-native tools, conversational memory/implicit follow-up, independent repository generalization, compaction/resume or deployment|
+|Pi-native verified curriculum and authorized32-update SFT|2,099 verified one-shot records; exact32-update schedule;11/14 protected Stage-B valid first frames and7/14 correct first actions after training|The frozen acceptance gate: required12 and10; only1/14 frozen end-to-end grades passed, so no promotion or later gates|
 |Faithful native source/runtime pipeline|Actual observations/errors, full trajectories and routing/masks can be preserved|That more tokens alone will solve remaining behavior or that every candidate is admitted|
 
-The latest measured gain is **32/32 new fresh autonomous completions**, while
-preserving the earlier16/16 and improving the original regression panel to10/16.
-The old observed-increment edit failure improved1/4→4/4. However, new composition
-reached only4/16 (all recovery); composition lookup fell1/4→0/4, and composition
-sum/edit remain0/4. Prior simple edits also remain0/4. The frozen gate passed,
-but the model is **not yet a reliably generalizing agent**. The data problem is
+The latest training produced a finite, audited Pi-native candidate, but its first
+disjoint protected gate failed. The earlier representation bridge remains the
+last checkpoint to pass its complete frozen gate: **32/32 new fresh autonomous
+completions**, earlier16/16 retained and original regression improved to10/16.
+Its new composition reached only4/16 (all recovery); composition lookup fell
+1/4→0/4, composition sum/edit remained0/4 and prior simple edits remained0/4.
+The newer Pi-native candidate improves framing enough to yield11 valid first
+frames where Stage A had zero, but does not meet the action-routing gate and is
+**not yet a reliably generalizing agent**. The data problem is
 coverage, fidelity, curriculum and feedback—not simply raw token volume. The large mixture already contained4,216
 unique native trajectories and106,637 unique conversation records.
 
