@@ -395,6 +395,35 @@ an unpromoted experimental branch; the representation bridge remains the last
 fully gated checkpoint. Further optimizer updates and RL require a new explicit
 authorization.
 
+A deterministic FP32 task-vector sweep then tested whether the candidate's delta
+could be partially merged back onto the parent without the damage. Merges were
+computed per tied tensor group in FP32 with a single BF16 rounding (merge
+manifest SHA `c7688b4b0c0f34a157dd6b6a94e988bdbcb848bfea8ce3eb72ba87fdcd53a2a2`),
+bit-exactness verified on disk. Results across the frozen 96-case execution
+panel, the 32-example learning panel, and the corrected Stage-B panel:
+
+| eta | execution | Stage-B valid frames | correct first actions |
+|---|---|---|---|
+| 0 (parent) | 67/96 | 0/14 | 0/14 |
+| 0.1 | 67/96 | 0/14 | 0/14 |
+| 0.25 | 69/96 | 0/14 | 0/14 |
+| 0.5 | 58/96 | 9/14 | 8/14 |
+| 1.0 (candidate) | 0/96 | 11/14 | 7/14 |
+
+At eta 0.1 and 0.25 the merged models are parent-identical on every retention
+and likelihood panel while carrying zero Pi-native first-frame capability; at
+eta 0.5 the Pi-native gain partially returns (9/14 valid, 8/9 correct among
+valid frames, higher action precision than the raw candidate) only as the
+OpenHands execution score degrades to 58/96. The gain and the damage are
+entangled along this single interpolation direction; no eta dominates the
+parent. Stage-B audits:
+`2df60379ef93efaa6ef8fc1432abc754b673516cfa4abe09b9de89c4b2650d94`,
+`b4aecd37f7a13bdb023644ad71a916ad10047135e8542054ba0a8b7ec29a5da1`,
+`6a9651da9cc668d7327662b3d0220339d05cab110416f95ddce076d69aad9959`.
+Task-vector arithmetic is therefore not a substitute for a rehearsed repair
+tranche; it remains available for specialist branches whose deltas are not
+entangled with existing capabilities.
+
 ## Historical session evidence immediately preceding this programme
 
 - Failed model-session preflight `proc_79c2`: session-token plan mismatch; zero
