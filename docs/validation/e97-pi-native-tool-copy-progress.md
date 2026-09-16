@@ -464,6 +464,46 @@ screening, and the proposal remain non-authorizing: no packing admission, no
 optimizer updates, no promotion. Admission, training and evaluation require a
 new explicit operator authorization of this exact proposal.
 
+## Authorized repair tranche: trained and dual-gate failed (no promotion)
+
+The operator authorized the exact proposal. Admission nonce 242038 preserved the
+frozen epoch-zero pack sequence; admitted authority SHA
+`25366863667b7d378af3dcea8ad51acee43cd84ccb4b60a97b6d1c6de5dde46e`, pack SHA
+`e4a074d2f0e0908985bf851179fa5a344527c5aa451d4ab0de4f2b5744f0dad0`. Training
+`proc_3d19` completed once in 2,738 seconds with no retry: 32 updates,
+15,217,854 input tokens, 954,424 targets, final aggregate loss 0.4924.
+Checkpoint `checkpoint_agent_sft_u000032_loss_0.4924.pt` SHA
+`0085efcdd82299fc9ce16be8e8d8464bcee2b92bdb4cad991e77918de48ed908`, atomic
+latest pointer matching. The in-run terminal receipt is again absent (documented
+lease-EXIT-trap defect); source and input inventories verified clean after exit.
+Independent audit SHA
+`46fad67bf63cbdb66ed5b62d7fb508d27ff94ff760136727aa789f3fbc38203a`: exact sample
+IDs and clocks, finite BF16 state, source exposures exactly as planned
+(362,607 OpenHands rehearsal, 135,774 Pi-native, 456,043 bridge rehearsal).
+
+The frozen dual gate FAILED; no promotion, no rerun, thresholds unchanged.
+
+| Panel | Repair checkpoint | Required | Bridge parent reference |
+|---|---|---|---|
+| OpenHands execution | 63/96 (prior-regression 5/16, prior-fresh 13/16, fresh 32/32, transfer 8/16, composition 5/16) | >=64/96 with floors | 67/96 |
+| Pi-native Stage-B valid frames | 13/14 | >=12/14 (passed) | 0/12 Stage A |
+| Pi-native Stage-B correct first actions | 8/14 | >=10/14 (failed) | 0/12 Stage A |
+| Tool retention token accuracy | 1.0000 | pass | 1.0000 |
+| Native fitting/development choice match | 2/2 and 2/2 | pass | 2/2 and 2/2 |
+
+Stage-B audit SHA
+`b936452b84c5af7edffab72ba4e2cf4824ca5d37b1a5307aff06b230f17ef7ff`
+(`qualified-negative-gate-failure-corrected-protocol`). The interference is
+repaired -- execution rose from the raw candidate's 0/96 to 63/96 with
+Pi-native framing simultaneously at its best measured level (13/14 valid
+frames) and tool retention exact -- but both gate legs fail: action routing
+(8/14 against 10) and the oldest OpenHands regression cohort (5/16 against 10,
+with prior-fresh 13/16 against 16). Notably transfer improved 5/16 to 8/16 and
+composition 4/16 to 5/16 above the parent, and conversation retention moved
+only marginally. The checkpoint remains unpromoted experimental evidence; the
+representation-bridge checkpoint remains the last fully gated checkpoint.
+Further optimizer updates require a new separate authorization.
+
 ## Historical session evidence immediately preceding this programme
 
 - Failed model-session preflight `proc_79c2`: session-token plan mismatch; zero
