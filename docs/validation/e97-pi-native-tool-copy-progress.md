@@ -356,18 +356,44 @@ passed with audit SHA
 `e654bf94dc3402dfb5cc820c739e3f1bedceee59e617e379d224f788cd42406d`.
 The checkpoint remained unpromoted.
 
-The protected14-case Stage-B panel was then run once under frozen plan SHA
+The first protected14-case Stage-B attempt used frozen plan SHA
 `f198af9982748614803cb495b2a5797806e48ede2d5f0547f78ae451e118787d`,
-with zero retries and zero updates. It produced11/14 valid first frames against
-a required12 and7/14 correct first actions against a required10; only one
-frozen end-to-end grade passed. Independent receipt reconstruction returned
-`qualified-negative-gate-failure`, audit SHA
-`b7e20043374c80f2b8acd6cbc44b49d85c752b118d273309ec43f429f1d9029a`.
-Two pre-existing Stage-B expected-final inconsistencies (`choice-read-explicit`
-and `choice-grep-symbol`) are recorded but were not regraded; the frame and
-first-action gates fail independently of them. Stage A remains immutable0/12,
-Stage B will not be rerun, all later regression/retention/repository gates are
-stopped fail-closed, and promotion, further updates and RL remain blocked.
+but inadvertently loaded the Stage-A first-action executor, which deliberately
+disables `bash`, `edit`, `write` and `process`. Its first-frame/action projection
+was11/14 and7/14, but its full outcomes and original audit verdict are
+superseded by retained protocol-invalidation SHA
+`8524121c9dddd4fbad8aea9ab018bfbe2feba41e67f7a4a1d3f2228a7fc4535a`.
+It is not silently discarded or presented as a valid end-to-end measurement.
+
+A corrected exact-schema executor backed all five local tools with the
+hash-pinned NativeSandbox, passed an independent six-call real-Pi smoke, and
+was frozen under new plan SHA
+`f8f5fca6445a5fe35b050201da9d05c9770ca490452d2cb07fac6056fb690ff1`.
+The corrected attempt again measured11/14 valid first frames against required12
+and7/14 correct first actions against required10, with one frozen end-to-end
+success. The independently reconstructed verdict is
+`qualified-negative-gate-failure-corrected-protocol`, audit SHA
+`acac2c487461ef1eddd17413aff13c96136d29d2e08c8f277638f131af401669`.
+Two pre-existing expected-final inconsistencies (`choice-read-explicit` and
+`choice-grep-symbol`) remain recorded without regrading; both primary gates fail
+independently. Stage A remains immutable0/12 and checkpoint promotion remains
+blocked.
+
+A subsequent non-promoting8-GPU matched diagnostic evaluated the Pi-native
+candidate and representation-bridge control in both saved and train modes over
+96 execution cases plus32 retention examples. Both bridge modes retained67/96
+execution successes: prior regression10/16, prior fresh16/16, fresh32/32,
+prior transfer5/16 and composition4/16. Both Pi-native modes scored0/96,
+primarily through64--66 invalid frames, despite the partial Pi-native Stage-B
+gain. Tool-retention NLL also rose from approximately0.00035 to0.079--0.086,
+and native choice matching fell from2/2 to0/2 in both fitting and development
+samples. This is strong representation-interference evidence, not a promotion
+gate rescue. Independent diagnostic audit SHA:
+`0714a89a9bd3d4d4c0b8d8f74b464985720a3b88c83c6493470ac2fe71ead6db`.
+Protected outputs remain ineligible for training. The Pi-native checkpoint is
+an unpromoted experimental branch; the representation bridge remains the last
+fully gated checkpoint. Further optimizer updates and RL require a new explicit
+authorization.
 
 ## Historical session evidence immediately preceding this programme
 

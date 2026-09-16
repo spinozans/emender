@@ -78,12 +78,17 @@ exactly32 updates at1e-5. Training completed without retry over15,585,765 input
 tokens and995,687 targets; the finite checkpoint SHA is `e9c2d47b...e3296` and
 the full checkpoint audit passed. This is real new learning evidence, but the
 protected Stage-B gate failed:11/14 valid first frames (required12),7/14 correct
-first actions (required10), and1/14 frozen end-to-end successes. The failure is
-independent of two recorded expected-final inconsistencies. Stage B will not be
-rerun; later regression/retention/repository evaluation, promotion, further
-updates and RL are blocked. The representation-bridge checkpoint remains the
-last fully gated checkpoint; the Pi-native checkpoint is an unpromoted negative
-candidate.
+first actions (required10), and1/14 frozen end-to-end successes. The first
+attempt's disabled Stage-A executor was invalidated; an exact-schema,
+hash-pinned-sandbox rerun reproduced both primary counts, so they are now
+qualified. A subsequent matched96-case diagnostic found **0/96** successes in
+both Pi-native x/y versus **67/96** for both representation-bridge controls,
+with64--66 invalid frames and clear tool-choice likelihood degradation. This is
+representation interference despite complete rehearsal exposure. Protected
+outputs remain excluded from training. Promotion, further updates and RL remain
+blocked pending a new exact authorization. The representation-bridge checkpoint
+remains the last fully gated checkpoint; the Pi-native checkpoint is an
+unpromoted negative experimental branch.
 
 ## Goal and actual capability
 
@@ -99,7 +104,7 @@ loss alone, valid first calls, teacher success or numerical agreement.
 |Grounded expansion:2,048 authored examples,18 deduplicated canary records and a new32-update SFT tranche|Fresh same-format completion3/16→16/16, including4/4 edits and4/4 recovery; both x/y retention passed|Generalization/acceptance: old7/16→6/16 and structural-transfer0/16→1/16; joint gate failed|
 |Representation bridges:768 new examples,512 prior-training rehearsal records and replay; separate32-update SFT|New fresh11/32→32/32 (each family8/8), old fresh16/16 retained, prior regression6/16→10/16; all15 gates passed|Broad composition: only4/16, all recovery; one prior composition-lookup success lost. No Pi-native or independent-repository qualification|
 |Unchanged-weight Pi-facing compatibility|8/8 direct and8/8 through real Pi on reused cases; then2/2 reused tasks in one explicit real Pi/OpenHands session, with separate contexts, retained public history and executor state|Pi-native tools, conversational memory/implicit follow-up, independent repository generalization, compaction/resume or deployment|
-|Pi-native verified curriculum and authorized32-update SFT|2,099 verified one-shot records; exact32-update schedule;11/14 protected Stage-B valid first frames and7/14 correct first actions after training|The frozen acceptance gate: required12 and10; only1/14 frozen end-to-end grades passed, so no promotion or later gates|
+|Pi-native verified curriculum and authorized32-update SFT|2,099 verified one-shot records; exact32-update schedule;11/14 protected Stage-B valid first frames and7/14 correct first actions after training|The frozen acceptance gate: required12 and10; only1/14 frozen end-to-end grades passed, and matched prior-format diagnostics regressed67/96→0/96 in both x/y|
 |Faithful native source/runtime pipeline|Actual observations/errors, full trajectories and routing/masks can be preserved|That more tokens alone will solve remaining behavior or that every candidate is admitted|
 
 The latest training produced a finite, audited Pi-native candidate, but its first
@@ -109,8 +114,10 @@ completions**, earlier16/16 retained and original regression improved to10/16.
 Its new composition reached only4/16 (all recovery); composition lookup fell
 1/4→0/4, composition sum/edit remained0/4 and prior simple edits remained0/4.
 The newer Pi-native candidate improves framing enough to yield11 valid first
-frames where Stage A had zero, but does not meet the action-routing gate and is
-**not yet a reliably generalizing agent**. The data problem is
+frames where Stage A had zero, but does not meet the action-routing gate and
+catastrophically interferes with the older OpenHands representation (67/96→0/96
+on a matched diagnostic). It is **not yet a reliably generalizing agent** and
+must not replace the representation-bridge checkpoint. The data problem is
 coverage, fidelity, curriculum and feedback—not simply raw token volume. The large mixture already contained4,216
 unique native trajectories and106,637 unique conversation records.
 
