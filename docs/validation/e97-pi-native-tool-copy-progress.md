@@ -424,6 +424,46 @@ Task-vector arithmetic is therefore not a substitute for a rehearsed repair
 tranche; it remains available for specialist branches whose deltas are not
 entangled with existing capabilities.
 
+## Repair-tranche proposal (frozen, not authorized)
+
+The repair preparation combines three cohorts in one non-authorizing authority
+at `pi-native-repair-preparation-v1`: 115 shortest whole-record OpenHands
+execution trajectories (699,784 targets) drawn deterministically (seed 742297,
+shortest-first with seeded tie-break, distinct `problem_key`) from the qualified
+source-native fulltraj authority (`255b02f3...`, the same corpus that produced
+the execution capability), all 2,012 selected Pi-native records (204,294
+targets), and all 2,223 bridge rehearsal records (848,660 targets). Records are
+emitted in a weighted-fair token-share interleave so greedy 64K boundary packing
+produces cohort-mixed packs: 4,350 records, 28,701,962 tokens, 1,752,738
+targets, 499 packs, zero oversize exclusions. Authority manifest SHA
+`fe1026da32b89276bc484eacdabc73f877dde9f2bd7011aecd601826eed72a08`; pack SHA
+`263ef5b8d77a792951cfb1ddb52d8b0ba9740993f576a2d8ada2f99a1bfc4c1b`.
+Two earlier selection drafts (median-length slice 33 records; 78-record slice)
+are retained at `pi-native-repair-preparation-v1-draft1-median-selection` and
+`-draft2-78records` as evidence of the pack-density constraint.
+
+The frozen schedule uses sampler key 700129, screened over keys 700001..700238
+with the hard constraint that **every one of the 32 updates contains at least
+one record from each cohort**. It schedules 15,217,854 input tokens and 954,424
+targets: 362,607 OpenHands rehearsal (38.0%), 135,774 Pi-native (14.2%),
+456,043 bridge rehearsal (47.8%). Schedule SHA
+`414f6b17a13b76290b5bb552d67e478eaabaa394f0b9ac4c22c71b0b2c459c33`.
+Proposal `configs/pi/e97-pi-native-repair-training-proposal-v1.json` is frozen
+without authorization; proposal SHA
+`3eef7a0aeac1311bdd8dee2468cf63f8d154b6919563e8c8956213d0e2593b05`, audited by
+`scripts/audit_e97_pi_native_repair_proposal.py` with receipt SHA
+`112123e327bf59d04194ea9533f6851f817daf43561bf8cec80d10d2273e5d4c`.
+The frozen dual gate requires BOTH sides: Pi-native Stage-B valid frames >=12/14
+and correct first actions >=10/14, AND OpenHands execution >=64/96 with
+prior-regression >=10/16, prior-fresh 16/16, fresh >=30/32, transfer >=5/16,
+composition >=4/16, plus both x/y retention gates. A direct mechanical scan of
+the 115 selected trajectories found zero protected-panel fixture entities
+(no `VALUE_*`, `weather_adapter_*`, `sum_all-*`, fixture file names); only
+incidental common technical words. The two earlier drafts, the schedule
+screening, and the proposal remain non-authorizing: no packing admission, no
+optimizer updates, no promotion. Admission, training and evaluation require a
+new explicit operator authorization of this exact proposal.
+
 ## Historical session evidence immediately preceding this programme
 
 - Failed model-session preflight `proc_79c2`: session-token plan mismatch; zero
