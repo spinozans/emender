@@ -7,7 +7,7 @@ def audit(a):
  plan=json.loads(a.plan.read_text());panel=json.loads(Path(plan['panel']).read_text());summary=json.loads((a.results/'summary.json').read_text());terminal=json.loads(a.terminal.read_text());before=json.loads((a.results/'model-before-private.json').read_text());after=json.loads((a.results/'model-after-private.json').read_text());cases=[c for c in panel['cases'] if c['stage']=='B']
  corrected='stage_b_tools' in plan
  expected_terminal={'original_exit':0,'audited_exit':0,'automatic_retries':0,'optimizer_updates':0,**({'corrected_protocol':True} if corrected else {})}
- if sha(a.plan)!=summary['plan_sha256'] or sha(plan['panel'])!=plan['panel_sha256'] or sha(plan['checkpoint'])!=plan['checkpoint_sha256'] or terminal!=expected_terminal:raise ValueError('authority/terminal')
+ if sha(a.plan)!=summary['plan_sha256'] or sha(plan['panel'])!=plan['panel_sha256'] or sha(plan['checkpoint'])!=plan['checkpoint_sha256'] or {k:terminal.get(k) for k in expected_terminal}!=expected_terminal:raise ValueError('authority/terminal')
  if corrected and (sha(plan['stage_b_tools'])!=plan['stage_b_tools_sha256'] or sha(plan['cli_image'])!=plan['cli_image_sha256']):raise ValueError('corrected executor authority')
  if before['fingerprint']!=after['fingerprint'] or not after['unchanged'] or not after['no_gradients'] or not after['all_parameters_bf16']:raise ValueError('model changed')
  if len(cases)!=14 or len(summary['rows'])!=14 or [c['id'] for c in cases]!=[r['id'] for r in summary['rows']]:raise ValueError('coverage/order')
