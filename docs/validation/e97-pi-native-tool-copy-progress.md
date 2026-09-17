@@ -570,3 +570,56 @@ family taught a stated alternate and a Pi-surface fuzzy search -- neither shape
 matches this two-hop inventive pointer chase, and the 1.1% target dose was
 small. The v4 checkpoint remains unpromoted; the dual gate fails as frozen;
 further updates require new authorization.
+
+## Repair-v5 long-horizon arc: capabilities recovered, gate fails on conversation retention
+
+The operator authorized the long-horizon experiment. Forensics on repair-v4
+showed the parent recovers by inventing a plausible sibling filename and
+following a pointer record inside it (catalog.json -> active_path -> real
+file); the v4 stated-alternate family did not teach this two-hop inventive
+pointer chase. A new verified collector family `tool-error-pointer-chase`
+(240/240 verified one-shot, 880 real calls, 240 authentic ENOENT errors,
+34,096 supervised targets, audit
+`3e6bb8cfb264d47eb88669132e5e8f17f5cb64b4335d20675c7d4b5805471580`; zero
+protected-panel collisions) was collected. An OpenHands rehearsal-slice scan
+found repeated non-adjacent identical calls in 57/63 selected records but zero
+adjacent repeat runs: the loop is an amplified retry prior, not a taught
+adjacency.
+
+The v5 arc design: one frozen five-cohort mixture (bridge 49.6%, authored
+23.4%, OpenHands 20.3%, pi-native 4.6%, pointer-chase 2.0%; correction cohort
+removed to restore the v2 Stage-B-winning balance), authority
+`88f2a8d022fe046b9668d427b3da61ca4d778bcb813e4a1b93d7d43c6161c890`, packs
+`6a985cef92bdca55e2fa39e0247cbac260ffeb535d79dc9017f4713e0ecb5208`
+(360 boundary-aware packs). Per-update five-cohort stratification is
+structurally impossible in a single 128-update schedule (whole OpenHands
+records fill 64K packs; 297/360 packs contain none), so the arc is four
+chained 32-update segments, each with its own screened stratified key
+(760031/760206/760212/760186) and admission (nonces 21912/24932/5055/913),
+each parent verified against the prior segment's audited checkpoint by the
+extended generic auditor. Segment proposals
+`136401ec`/`ec5b3a8b`/`c53141e4`/`5e50c8d9`; audits
+`030f1ea6`/`dc8bbf2a`/`2e7edd3f`/`9b7195c9`; training audits
+`552db6a3`/`6c4d5aa9`/`ce0a4ac0`/`96bc5923`; loss
+0.4319 -> 0.3274 -> 0.2647 -> 0.3221; checkpoints
+`ebc3db60`/`695a17bf`/`329dd73b`/`d2276376`. Cheap-tier Stage-B juncture
+detectors ran at every segment boundary: 11/14 valid 8/14 correct (u32),
+12/9 (u64), 13/9 (u96), 14/11 (u128).
+
+Dual-gate result at u128 (eval
+`pi-native-repair5-arc-u128-dual-gate-v1`, execution summary
+`33538ee5794e716cb158a6f3adc5cee6c8fc01aeb6b7db5148a60b09ab39a726`,
+learning summary
+`42849311bf476a9c42738a347393a263afdb84779e42388a2e0b819dc3447f05`):
+Stage-B gate PASSED with the best score ever recorded -- 14/14 valid
+frames and 11/14 correct actions (audit
+`a01622abcaa2edc7bb126b54d6827d47bb08b7bf5ac84cb228ef652fa2384bf0`,
+status qualified-gate-passed-not-promoted). Execution 70/96, ABOVE the
+parent's 67/96: prior-regression 11/16 (all four loop cases now pass --
+the error-repetition loop is broken), fresh 32/32, transfer 8/16,
+composition 4/16. The gate still fails: prior-fresh 15/16 (one
+invalid_frame on fresh-lookup-0001-world-1) and the conversation-retention
+window (record NLL 1.841/1.832 vs limit ~1.72; the 128-update arc overspent
+conversational likelihood). No promotion; all four arc checkpoints
+retained. The checkpoint-juncture network provides the missing trajectory
+data for the next cycle's stopping rule.
