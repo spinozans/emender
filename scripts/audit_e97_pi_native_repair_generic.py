@@ -31,7 +31,14 @@ def audit(args):
   if entry is None:raise ValueError(f'missing cohort binding {key}')
   for field,expected in binding.items():
    if entry.get(field)!=expected:raise ValueError(f'cohort binding {key}.{field}')
- if proposal['parent_checkpoint_sha256']!='9b78628d47c48c304c14de50399fe1853d8c83386c7cf5d9bd4a0e878bf679fa':raise ValueError('parent identity')
+ if proposal['parent_checkpoint_sha256']=='9b78628d47c48c304c14de50399fe1853d8c83386c7cf5d9bd4a0e878bf679fa':pass
+ else:
+  arc=proposal.get('arc') or {};idx=arc.get('segment_index')
+  if not isinstance(idx,int) or idx<2 or not isinstance(proposal['parent_checkpoint'],str):raise ValueError('parent identity')
+  prev_root=Path(proposal['parent_checkpoint']).parents[1]
+  try:prev_audit=json.loads((prev_root/'audit.json').read_text())
+  except (OSError,ValueError):raise ValueError('parent identity')
+  if prev_audit.get('status')!='passed-training-not-promoted' or prev_audit.get('checkpoint',{}).get('sha256')!=proposal['parent_checkpoint_sha256']:raise ValueError('parent identity')
  gate=proposal['proposed_behavioral_gate']
  if gate['pi_native_stage_b']!='valid first frame >= 12/14 and correct first action >= 10/14' or gate['openhands_execution_overall']!='>= 64/96':raise ValueError('frozen gates')
  receipt={'schema':'emender-e97-pi-native-repair-proposal-audit-v1','status':'qualified-proposal-not-authorized',
