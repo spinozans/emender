@@ -674,3 +674,20 @@ paths/checkpoint block and a pre-launch foreign-artifact assertion rather
 than by string substitution. A related lease defect (stale
 GPU_LEASE_Held flag blocking the second acquire) was handled with the
 documented unset workaround.
+
+## Hugging Face canary release: repair-v5-u128 published for collaborative testing
+
+The operator authorized publishing the repair-v5 u128 checkpoint
+(`d2276376d43c5b573cec2374b6b52b164bd39d7d38d17b8fe085196cb79e5f9d`) to
+`spinozans/emender-e97-4b-pi-instruction-checkpoints` so external
+collaborators can probe it and report failures. The release is explicitly
+labeled an experimental canary that FAILS the frozen dual gate
+(conversation-retention window and one prior-fresh case), with all
+measured results and known weaknesses stated in the model card, the full
+audit-chain receipt in `releases/repair-v5-u128/release.json`, and the
+Pi-native eleven-tool surface, system prompts, and OpenAI-compatible
+serve script in `integration/`. The stale u8-era headline (old 120-task
+panel world) was replaced by the rewritten model card; prior releases
+remain as superseded provenance. Weights verified byte-identical after
+upload (8,478,128,544 bytes). This is a testing artifact, not a
+promotion; the dual gate remains the only promotion path.
