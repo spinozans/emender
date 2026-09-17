@@ -98,7 +98,7 @@ def read_conversation_slice(root,expected_manifest_sha,seed,budget_targets):
  manifest=json.loads((root/'manifest.json').read_text())
  if sha(root/'manifest.json')!=expected_manifest_sha:raise ValueError('conversation manifest identity')
  if manifest.get('schema')!=AUTHORITY_SCHEMA or manifest.get('status')!='complete':raise ValueError('conversation schema')
- if manifest.get('training_eligible') is not True and 'training_eligible' not in manifest:raise ValueError('conversation source must be a production-admitted authority')
+ if manifest.get('training_eligible') is not True and 'training_eligible' in manifest:raise ValueError('conversation source must be a production-admitted authority')
  paths=verify_outputs(root,manifest)
  rows=[]
  for line in paths['metadata'].open():rows.append(json.loads(line))
