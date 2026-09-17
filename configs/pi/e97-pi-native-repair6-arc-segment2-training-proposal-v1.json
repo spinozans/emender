@@ -1,0 +1,174 @@
+{
+  "arc": {
+    "arc_id": "repair-v6-long-horizon-arc",
+    "arc_keys": [
+      770233,
+      770241,
+      770402,
+      770759
+    ],
+    "arc_updates": 128,
+    "chaining": "Segment 2 trains 32 updates from the segment 1 final checkpoint d03e34d3b3b122cafb13f786f53f4e9258f91c4429201047a872ebfce5737991 (training audit 94a6ef9c3837f762814ba7abe56f0d38e3408a12ea485d7f241cbd27174d7738).",
+    "juncture_policy": "Stage-B panel AND conversation-retention NLL probe evaluated at every 32-update checkpoint u32/u64/u96/u128 (both proven cheap-tier); full frozen dual gate at u128; all checkpoints retained.",
+    "rationale": "The v5 arc crossed the constraints between u96 and u128: Stage-B correct reached 11 at u128 while conversation NLL broke the +0.15 window (1.841 vs 1.72) from ~2.6-epoch repetition of the fixed 2223-record bridge conversation slice (train loss fell 0.43->0.26 while held-out NLL rose). Fresh conversational diversity (421 new SmolTalk2 records at 20.9% of targets) is the evidence-directed remedy; all capability cohorts retained at their v5 shares.",
+    "segment_index": 2,
+    "segment_updates": 32,
+    "total_segments": 4
+  },
+  "authored_rehearsal_budget": 350000,
+  "authored_rehearsal_seed": 882843,
+  "authored_rehearsal_source": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/grounded-expansion-v1-data-r2/authority",
+  "authored_source_sha256": "08752c53e2199533252c77821ec9696012b19dc09ea0ff1508ef6676a6cd2140",
+  "authority_manifest_sha256": "eef2213499ee997b7081f06c84b2cd46ee5a9a2ef2a15720df2737ab369d7beb",
+  "automatic_expansion": false,
+  "automatic_retry": false,
+  "checkpoint_promotion": false,
+  "context_size": 65536,
+  "conversation_rehearsal": {
+    "budget_targets": 420000,
+    "manifest_sha256": "d64f51abc615c097910900ffa7fc88f020ae5567b89958f607008078c271c7f6",
+    "note": "Fresh production-admitted SmolTalk2 conversation slice; widens conversational diversity so the 128-update arc does not overfit the fixed bridge conversation records.",
+    "records": 421,
+    "seed": 613117,
+    "source": "/mnt/nvme1n1/erikg/sft/e97-4b-smoltalk2-admitted-v1"
+  },
+  "data_world_size": 8,
+  "declared_cohorts": [
+    "conversation-rehearsal",
+    "grounded-authored-rehearsal",
+    "loopbreak-rehearsal",
+    "openhands-execution-rehearsal",
+    "pi-native-curriculum",
+    "representation-bridge-rehearsal"
+  ],
+  "evidence_basis": {
+    "correction_cohort_removed": "v2 (Stage-B pass) had no correction cohort; its 24% addition correlates with the Stage-B correct-action slip 10->9 via generation_budget overruns; removed for the arc, authored concise rehearsal restored to ~24%",
+    "data_scan": "57 of 63 selected OpenHands rehearsal records contain non-adjacent repeated identical calls (110 execute_bash, 51 str_replace_editor) but zero adjacent identical-call runs; the loop is an amplified retry prior, not a taught adjacency",
+    "design_response": "OpenHands share reduced to ~21%; grounded authored concise-turn rehearsal added at ~24%; Pi-native subset focused on no-tool-finish and routing families",
+    "diagnosis": "over-calling on no-tool-finish cases (copy/bind opened with ffgrep/fffind) and turn-budget exhaustion on concise recovery families; both trace to OpenHands-style exposure at 38% of targets",
+    "pointer_chase_diagnosis": "The passing parent invents a plausible sibling filename (catalog.json), reads a pointer record inside it, and follows active_path to the real file; the v4 family taught a stated alternate and a Pi-surface fuzzy search, neither matching this two-hop inventive pointer chase, at only 1.1% target dose",
+    "soup": "two-sibling FP32 soup preserved both gains but not the union; Stage-B 11/14, 8/14",
+    "v1_dual_gate": "repair 63/96 execution with prior-regression 5/16 and Stage-B 13/14 valid but 8/14 correct actions; audit b936452b84c5af7edffab72ba4e2cf4824ca5d37b1a5307aff06b230f17ef7ff",
+    "v2_dual_gate": "Stage-B gate PASSED first time (12/14, 10/14; audit 7ffc0e511c4869f3e745572b5cd6e90c1e0938cef1b170e2bbd96d9077cf64b4); execution 62/96 with prior-regression 5/16",
+    "v2_forensics": "all four failing recovery cases repeat the identical failed str_replace_editor call until turn budget; error-loop-breaking pattern from grounding-correction training resurfaced",
+    "v3_dual_gate": "execution 66/96 over threshold and prior-fresh restored, but Stage-B correct actions 9/14 and regression-recovery still looping (audit 7bbe29df00e9fdb0fd435d8160956b6887c1509eee43f87c56f30ffddfe24226)",
+    "v4_dual_gate": "execution 66/96 with transfer 10/16 and prior-fresh 15/16 but all four regression-recovery cases still loop identically; Stage-B 13/14 valid (best) with 9/14 correct including four generation_budget overruns; audits 24ed9b1b8e749e0e9892fcae6616722633ab336b78aa90f2c636b2492de88df6 and 83ac88dea2c5145e22aa335bd847ab195d530ff2db2402de4e9a13cd4bc05448",
+    "v4_response": "240/240 verified loopbreak records collected one-shot with authentic tool errors; zero protected-panel entity collisions",
+    "v5_dual_gate": "Stage-B PASSED 14/14 valid 11/14 correct (best ever); execution 70/96 above parent 67/96 with prior-regression 11/16 (loop broken) but prior-fresh 15/16 and conversation-retention window failed (1.841 vs 1.72); audits a01622abcaa2edc7bb126b54d6827d47bb08b7bf5ac84cb228ef652fa2384bf0, 33538ee5794e716cb158a6f3adc5cee6c8fc01aeb6b7db5148a60b09ab39a726, 42849311bf476a9c42738a347393a263afdb84779e42388a2e0b819dc3447f05",
+    "v5_response": "240/240 verified pointer-chase records collected one-shot (880 real calls, 240 authentic ENOENT errors, 34,096 supervised targets, audit 3e6bb8cfb264d47eb88669132e5e8f17f5cb64b4335d20675c7d4b5805471580); zero protected-panel collisions; cohort mix restores the v2 Stage-B-winning balance (bridge ~49%, openhands ~20%, authored ~24%)",
+    "v5_retention_curve": "conversation NLL: u32 1.5958, u64 1.6355, u96 1.6932, u128 1.8411 vs parent 1.5716 and window ~1.72; probe 0ba343eed839d056aeae8ee7971904b11937ad1e8bad78a5a76d8cec03623480",
+    "v6_response": "Fresh SmolTalk2 conversation-rehearsal cohort at 20.9% of targets (421 records, budget 420000, seed 613117); bridge rehearsal retained in full (849K targets); OpenHands reduced to 13.9% (v4-level, which scored 66/96 with the loop broken only later); authored 17.4%; pointer-chase retained (it broke the loop at v5 u128)."
+  },
+  "identity_bindings": [
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-repair6-arc-segment1-training-v1/checkpoints/checkpoint_agent_sft_u000032_loss_0.6969.pt",
+      "d03e34d3b3b122cafb13f786f53f4e9258f91c4429201047a872ebfce5737991"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-repair6-preparation-v1/manifest.json",
+      "eef2213499ee997b7081f06c84b2cd46ee5a9a2ef2a15720df2737ab369d7beb"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-repair6-preparation-v1/packs/manifest.json",
+      "6ab022abe010fe47d54a2046bb2a5d4e8e593df64aca5181331e7bc82d51867f"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-repair6-preparation-v1/schedule-segment2-proposal.json",
+      "bbb35bfeb4faf832b8227faf12eadb5148f63c05b19ebd5560f7a70f4504c7a0"
+    ],
+    [
+      "configs/pi/e97-active-tool-surface-v1.json",
+      "55421905438806223414d96a4e64f1a6ae64772afdb1fbc67fbbfb77e8d5d908"
+    ],
+    [
+      "/mnt/nvme1n1/erikg/sft/e97-4b-smoltalk2-admitted-v1/manifest.json",
+      "d64f51abc615c097910900ffa7fc88f020ae5567b89958f607008078c271c7f6"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-pointerchase-collection-v1/collect/candidate-authority/manifest.json",
+      "f2361a86c3909083c93be6702f12ad8323844a2390069d368ebec92d52e0247e"
+    ]
+  ],
+  "loopbreak_rehearsal_source": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-pointerchase-collection-v1/collect/candidate-authority/manifest.json",
+  "loopbreak_source_sha256": "f2361a86c3909083c93be6702f12ad8323844a2390069d368ebec92d52e0247e",
+  "new_rl_updates": 0,
+  "openhands_rehearsal_records": 63,
+  "openhands_rehearsal_seed": 742297,
+  "openhands_rehearsal_source": "/mnt/nvme2n1/erikg/sft/e97-4b-open-swe-source-native-fulltraj-v1",
+  "openhands_rehearsal_source_sha256": "255b02f3b3bbdc85eb15a89d22e7ff2c4bf69f151c2dfb5941a22468711993f5",
+  "openhands_rehearsal_target_budget": 280000,
+  "operator_internal_training_authorized": false,
+  "optimizer_updates_authorized": 0,
+  "overlap_audit_sha256": "9c104d73b104f4d29a83ca1472b66ef2df681e020a2b9688eb4f87c6ef814a78",
+  "pack_manifest_sha256": "6ab022abe010fe47d54a2046bb2a5d4e8e593df64aca5181331e7bc82d51867f",
+  "packing_authorized": false,
+  "parent_checkpoint": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-repair6-arc-segment1-training-v1/checkpoints/checkpoint_agent_sft_u000032_loss_0.6969.pt",
+  "parent_checkpoint_sha256": "d03e34d3b3b122cafb13f786f53f4e9258f91c4429201047a872ebfce5737991",
+  "per_update_cohort_stratification": true,
+  "pi_native_family_filter": [
+    "copy",
+    "binding",
+    "path-copy",
+    "process-lifecycle",
+    "repo-edit-error-recovery",
+    "repo-symbol-edit-discovery",
+    "source-check",
+    "shell-error-recovery",
+    "repo-fuzzy-path",
+    "repo-explicit-read",
+    "repo-content-search"
+  ],
+  "pi_version": "0.85.1",
+  "preparation_root": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-repair6-preparation-v1",
+  "proposed_behavioral_gate": {
+    "composition": ">= 4/16",
+    "openhands_execution_overall": ">= 64/96",
+    "openhands_fresh": ">= 30/32",
+    "openhands_prior_fresh": "= 16/16",
+    "openhands_prior_regression": ">= 10/16",
+    "openhands_transfer": ">= 5/16",
+    "pi_native_stage_b": "valid first frame >= 12/14 and correct first action >= 10/14",
+    "retention": "both saved-x/train-y retention gates pass"
+  },
+  "proposed_learning_rate": 1e-05,
+  "proposed_updates": 32,
+  "proposed_weight_mode": "train",
+  "purpose": "Repair-v6 long-horizon arc segment 2 of 4: identical frozen mixture continued from the segment 1 checkpoint; dual juncture detectors at every boundary.",
+  "rehearsal_source": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/representation-bridge-v1-data/authority",
+  "rehearsal_source_sha256": "a21dba6f80e58e87ea838a98018b40650decebed3cf4b0f98dacdb750520469d",
+  "sampler_key": 770241,
+  "sampler_mode": "epoch-permutation",
+  "schedule_selection": "Training-data-only screen over keys 770000..779000; hard constraint: every one of the 32 updates contains all six cohorts; arc keys segment1..4 = 770233, 770241, 770402, 770759.",
+  "schedule_sha256": "bbb35bfeb4faf832b8227faf12eadb5148f63c05b19ebd5560f7a70f4504c7a0",
+  "scheduled_assistant_targets": 1389702,
+  "scheduled_input_tokens": 14770707,
+  "scheduled_source_targets": {
+    "conversation-rehearsal": 295408,
+    "grounded-authored-rehearsal": 247506,
+    "loopbreak-rehearsal": 23982,
+    "openhands-execution-rehearsal": 194481,
+    "pi-native-curriculum": 33030,
+    "representation-bridge-rehearsal": 595295
+  },
+  "scheduled_source_unique_records": {
+    "conversation-rehearsal": 294,
+    "grounded-authored-rehearsal": 704,
+    "loopbreak-rehearsal": 169,
+    "openhands-execution-rehearsal": 35,
+    "pi-native-curriculum": 410,
+    "representation-bridge-rehearsal": 1544
+  },
+  "scheduled_unique_packs": 256,
+  "scheduled_unique_records": 3156,
+  "schema": "emender-e97-pi-native-repair6-arc-segment2-proposal-v1",
+  "selected_authority_sha256": "8cf83db8d608f6af74bbd2cbe60206ef435fb3003ab2bb63f4eadab17eb05562",
+  "selected_curriculum_root": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-curriculum-2000-selected-v1/candidate-authority",
+  "selection_audit_sha256": "de977726f0758206ee9defe9c3687d2485e3ba2b80eb9ef9ceafb065c5f6646b",
+  "source_commit": "7a84257b",
+  "stage_a_policy": "Do not rerun or reinterpret the completed 0/12 Stage-A episodes.",
+  "stage_b_panel_sha256": "07cc1d5843ee4060503ecdcf7d2bb813dce51fa0aeba89df367b7696e47994ef",
+  "stage_b_policy": "Remain blocked until this exact proposal is separately authorized, trained, checkpointed, and independently audited.",
+  "status": "frozen-proposal-not-authorized",
+  "threshold_changes_authorized": false,
+  "tool_manifest_sha256": "55421905438806223414d96a4e64f1a6ae64772afdb1fbc67fbbfb77e8d5d908"
+}
