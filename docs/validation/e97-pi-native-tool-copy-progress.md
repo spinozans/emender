@@ -645,3 +645,32 @@ the conversation window by ~0.12 NLL. The probe is retained at
 inputs: fresh conversation-side rehearsal diversity (not more epochs of
 the same records), the conversation probe added to the cheap juncture
 detector tier, and unchanged frozen gates.
+
+## Repair-v6 arc underway; path-alias incident recorded and fully recovered
+
+The v6 arc (fresh SmolTalk2 conversation cohort 20.9% of targets, four
+screened stratified keys 770233/770241/770402/770759, dual juncture
+detectors) is training. Segment 1 completed and audited (loss 0.6969,
+checkpoint `d03e34d3b3b122cafb13f786f53f4e9258f91c4429201047a872ebfce5737991`,
+training audit `94a6ef9c3837f762814ba7abe56f0d38e3408a12ea485d7f241cbd27174d7738`);
+its Stage-B juncture measured 11/14 valid, 8/14 correct.
+
+Incident: a sed path-alias in the derived v6 juncture script left the
+working directory pointing at the repair5 tree, so the v6 u32 Stage-B
+evaluation overwrote the v5 u32 artifacts
+(`pi-native-repair5-arc-juncture-evals/seg1-u32/`) before the binding check
+exposed the contamination (the plan file names its checkpoint). Recovery:
+the v6 results were salvaged to
+`pi-native-repair6-arc-juncture-evals/seg1-u32/` with the checkpoint binding
+verified, and the v5 u32 evidence was deterministically regenerated from
+the retained `ebc3db609060179f...` checkpoint, reproducing exactly
+11/14 valid, 8/14 correct -- both the restoration and the reproduction
+verified. The v5 u32 numbers were additionally preserved in this ledger
+and the pushed git history throughout. This is the third occurrence of
+the sed-derived-launcher path-defect class (after the repair-v4 Stage-B
+checkpoint path and the soup run's stage-b path); going forward launcher
+scripts are generated from parameterized templates with a single
+paths/checkpoint block and a pre-launch foreign-artifact assertion rather
+than by string substitution. A related lease defect (stale
+GPU_LEASE_Held flag blocking the second acquire) was handled with the
+documented unset workaround.
