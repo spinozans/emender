@@ -1,0 +1,140 @@
+{
+  "authored_rehearsal_budget": 400000,
+  "authored_rehearsal_seed": 882843,
+  "authored_rehearsal_source": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/grounded-expansion-v1-data-r2/authority",
+  "authored_source_sha256": "08752c53e2199533252c77821ec9696012b19dc09ea0ff1508ef6676a6cd2140",
+  "authority_manifest_sha256": "8ba7270a3934c1a83aa52ce9ad71d4492074ecb8882d9d560b0f7d657a0d2840",
+  "automatic_expansion": false,
+  "automatic_retry": false,
+  "checkpoint_promotion": false,
+  "context_size": 65536,
+  "correction_rehearsal_source": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/grounding-correction-v1-data/authority",
+  "correction_source_sha256": "bf2645fc1c41fbb013bd11c9b8fe539aba6ac88b618e5f03dd5e759a7f7d2a92",
+  "data_world_size": 8,
+  "declared_cohorts": [
+    "grounded-authored-rehearsal",
+    "grounded-correction-rehearsal",
+    "loopbreak-rehearsal",
+    "openhands-execution-rehearsal",
+    "pi-native-curriculum",
+    "representation-bridge-rehearsal"
+  ],
+  "evidence_basis": {
+    "design_response": "OpenHands share reduced to ~21%; grounded authored concise-turn rehearsal added at ~24%; Pi-native subset focused on no-tool-finish and routing families",
+    "diagnosis": "over-calling on no-tool-finish cases (copy/bind opened with ffgrep/fffind) and turn-budget exhaustion on concise recovery families; both trace to OpenHands-style exposure at 38% of targets",
+    "soup": "two-sibling FP32 soup preserved both gains but not the union; Stage-B 11/14, 8/14",
+    "v1_dual_gate": "repair 63/96 execution with prior-regression 5/16 and Stage-B 13/14 valid but 8/14 correct actions; audit b936452b84c5af7edffab72ba4e2cf4824ca5d37b1a5307aff06b230f17ef7ff",
+    "v2_dual_gate": "Stage-B gate PASSED first time (12/14, 10/14; audit 7ffc0e511c4869f3e745572b5cd6e90c1e0938cef1b170e2bbd96d9077cf64b4); execution 62/96 with prior-regression 5/16",
+    "v2_forensics": "all four failing recovery cases repeat the identical failed str_replace_editor call until turn budget; error-loop-breaking pattern from grounding-correction training resurfaced",
+    "v3_dual_gate": "execution 66/96 over threshold and prior-fresh restored, but Stage-B correct actions 9/14 and regression-recovery still looping (audit 7bbe29df00e9fdb0fd435d8160956b6887c1509eee43f87c56f30ffddfe24226)",
+    "v4_response": "240/240 verified loopbreak records collected one-shot with authentic tool errors; zero protected-panel entity collisions"
+  },
+  "identity_bindings": [
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/representation-bridge-v1-train/checkpoints/checkpoint_agent_sft_u000032_loss_0.5302.pt",
+      "9b78628d47c48c304c14de50399fe1853d8c83386c7cf5d9bd4a0e878bf679fa"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-repair4-preparation-v1/manifest.json",
+      "8ba7270a3934c1a83aa52ce9ad71d4492074ecb8882d9d560b0f7d657a0d2840"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-repair4-preparation-v1/packs/manifest.json",
+      "66867203d8c2629313f0a1b9bca2e192da1e1ff0e7f9e84701326f538dfc4e13"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-repair4-preparation-v1/schedule-proposal.json",
+      "e253343be2b1c39972db9a43226b08d90ef91604affb6e6e616ff0c7cecec317"
+    ],
+    [
+      "configs/pi/e97-active-tool-surface-v1.json",
+      "55421905438806223414d96a4e64f1a6ae64772afdb1fbc67fbbfb77e8d5d908"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-loopbreak-collection-v1/collect/candidate-authority/manifest.json",
+      "65ee540894e9fddf6195dda50917fdfcca4c084112c7ae6f3d1572ffcf85a13b"
+    ]
+  ],
+  "loopbreak_rehearsal_source": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-loopbreak-collection-v1/collect/candidate-authority/manifest.json",
+  "loopbreak_source_sha256": "65ee540894e9fddf6195dda50917fdfcca4c084112c7ae6f3d1572ffcf85a13b",
+  "new_rl_updates": 0,
+  "openhands_rehearsal_records": 63,
+  "openhands_rehearsal_seed": 742297,
+  "openhands_rehearsal_source": "/mnt/nvme2n1/erikg/sft/e97-4b-open-swe-source-native-fulltraj-v1",
+  "openhands_rehearsal_source_sha256": "255b02f3b3bbdc85eb15a89d22e7ff2c4bf69f151c2dfb5941a22468711993f5",
+  "openhands_rehearsal_target_budget": 350000,
+  "operator_internal_training_authorized": false,
+  "optimizer_updates_authorized": 0,
+  "overlap_audit_sha256": "9c104d73b104f4d29a83ca1472b66ef2df681e020a2b9688eb4f87c6ef814a78",
+  "pack_manifest_sha256": "66867203d8c2629313f0a1b9bca2e192da1e1ff0e7f9e84701326f538dfc4e13",
+  "packing_authorized": false,
+  "parent_checkpoint": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/representation-bridge-v1-train/checkpoints/checkpoint_agent_sft_u000032_loss_0.5302.pt",
+  "parent_checkpoint_sha256": "9b78628d47c48c304c14de50399fe1853d8c83386c7cf5d9bd4a0e878bf679fa",
+  "per_update_cohort_stratification": true,
+  "pi_native_family_filter": [
+    "copy",
+    "binding",
+    "path-copy",
+    "process-lifecycle",
+    "repo-edit-error-recovery",
+    "repo-symbol-edit-discovery",
+    "source-check",
+    "shell-error-recovery",
+    "repo-fuzzy-path",
+    "repo-explicit-read",
+    "repo-content-search"
+  ],
+  "pi_version": "0.85.1",
+  "preparation_root": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-repair4-preparation-v1",
+  "proposed_behavioral_gate": {
+    "composition": ">= 4/16",
+    "openhands_execution_overall": ">= 64/96",
+    "openhands_fresh": ">= 30/32",
+    "openhands_prior_fresh": "= 16/16",
+    "openhands_prior_regression": ">= 10/16",
+    "openhands_transfer": ">= 5/16",
+    "pi_native_stage_b": "valid first frame >= 12/14 and correct first action >= 10/14",
+    "retention": "both saved-x/train-y retention gates pass"
+  },
+  "proposed_learning_rate": 1e-05,
+  "proposed_updates": 32,
+  "proposed_weight_mode": "train",
+  "purpose": "Repair-v4 tranche: verified tool-error-alternate-recovery records (authentic ENOENT then different action then success) targeting the isolated error-loop failure, all six cohorts per update.",
+  "rehearsal_source": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/representation-bridge-v1-data/authority",
+  "rehearsal_source_sha256": "a21dba6f80e58e87ea838a98018b40650decebed3cf4b0f98dacdb750520469d",
+  "sampler_key": 743062,
+  "sampler_mode": "epoch-permutation",
+  "schedule_selection": "Training-data-only screen over keys 742733..745732; hard constraint: every one of the 32 updates contains all six cohorts.",
+  "schedule_sha256": "e253343be2b1c39972db9a43226b08d90ef91604affb6e6e616ff0c7cecec317",
+  "scheduled_assistant_targets": 1352583,
+  "scheduled_input_tokens": 15582235,
+  "scheduled_source_targets": {
+    "grounded-authored-rehearsal": 231239,
+    "grounded-correction-rehearsal": 306527,
+    "loopbreak-rehearsal": 14417,
+    "openhands-execution-rehearsal": 213518,
+    "pi-native-curriculum": 69953,
+    "representation-bridge-rehearsal": 516929
+  },
+  "scheduled_source_unique_records": {
+    "grounded-authored-rehearsal": 720,
+    "grounded-correction-rehearsal": 1014,
+    "loopbreak-rehearsal": 145,
+    "openhands-execution-rehearsal": 39,
+    "pi-native-curriculum": 652,
+    "representation-bridge-rehearsal": 1332
+  },
+  "scheduled_unique_packs": 256,
+  "scheduled_unique_records": 3902,
+  "schema": "emender-e97-pi-native-repair4-training-proposal-v1",
+  "selected_authority_sha256": "8cf83db8d608f6af74bbd2cbe60206ef435fb3003ab2bb63f4eadab17eb05562",
+  "selected_curriculum_root": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-curriculum-2000-selected-v1/candidate-authority",
+  "selection_audit_sha256": "de977726f0758206ee9defe9c3687d2485e3ba2b80eb9ef9ceafb065c5f6646b",
+  "source_commit": "892ebf9cdfa4a56586158b91bc03bd3c38e78ba7",
+  "stage_a_policy": "Do not rerun or reinterpret the completed 0/12 Stage-A episodes.",
+  "stage_b_panel_sha256": "07cc1d5843ee4060503ecdcf7d2bb813dce51fa0aeba89df367b7696e47994ef",
+  "stage_b_policy": "Remain blocked until this exact proposal is separately authorized, trained, checkpointed, and independently audited.",
+  "status": "frozen-proposal-not-authorized",
+  "threshold_changes_authorized": false,
+  "tool_manifest_sha256": "55421905438806223414d96a4e64f1a6ae64772afdb1fbc67fbbfb77e8d5d908"
+}
