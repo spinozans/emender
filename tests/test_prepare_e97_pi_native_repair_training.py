@@ -57,7 +57,7 @@ def test_prepare_interleaves_and_flags(tmp_path):
  a.overlap_audit=sel/'overlap-audit.json';a.overlap_audit_sha=oasha
  a.rehearsal=reh;a.rehearsal_sha=rsha
  a.parent_checkpoint=parent;a.parent_sha=sha(parent);a.output=out
- a.authored_source=None;a.pi_native_include_families=None
+ a.authored_source=None;a.pi_native_include_families=None;a.correction_source=None
  prepare(a)
  manifest=json.loads((out/'manifest.json').read_text())
  assert manifest['training_eligible'] is False and manifest['packing_authorized'] is False

@@ -169,6 +169,11 @@ def prepare(args):
   cohort_names.append('grounded-authored-rehearsal')
   authored,authored_consumed=read_authored_slice(args.authored_source,args.authored_sha,args.authored_seed,args.authored_budget_targets)
   streams.append((authored,cohort_names[3]))
+ correction=None
+ if args.correction_source:
+  cohort_names.append('grounded-correction-rehearsal')
+  correction=read_tulu3(args.correction_source,'grounded-correction-rehearsal',args.correction_sha,eligible_required=True)
+  streams.append((correction,cohort_names[len(cohort_names)-1]))
  order=interleave(streams)
  args.output.mkdir(parents=True,mode=0o700,exist_ok=False)
  paths={k:args.output/v for k,v in {'tokens':'tokens.uint32.bin','mask':'assistant_mask.uint8.bin','index':'records.idx','metadata':'records.jsonl'}.items()}
@@ -195,6 +200,7 @@ def prepare(args):
   'selected_authority_sha256':args.selected_sha,'selected_selection_audit_sha256':args.selection_audit_sha,
   'selected_overlap_audit_sha256':args.overlap_audit_sha,'rehearsal_authority_sha256':args.rehearsal_sha,
   'parent_checkpoint':str(args.parent_checkpoint.resolve()),'parent_checkpoint_sha256':args.parent_sha,
+  **({'correction_rehearsal':{'authority':str(args.correction_source.resolve()),'authority_sha256':args.correction_sha,'records':len(correction)}} if args.correction_source else {'correction_rehearsal':None}),
   **({'authored_rehearsal':{'authority':str(args.authored_source.resolve()),'authority_sha256':args.authored_sha,'seed':args.authored_seed,'target_token_budget':args.authored_budget_targets,'consumed_target_tokens':authored_consumed,'records':len(authored)},'authored_source_sha256':args.authored_sha} if args.authored_source else {'authored_rehearsal':None}),
   'outputs':{k:desc(v) for k,v in paths.items()}}
  tmp=args.output/'manifest.json.partial';tmp.write_text(json.dumps(manifest,indent=2,sort_keys=True)+'\n');os.replace(tmp,args.output/'manifest.json')
@@ -212,6 +218,7 @@ def main():
  p.add_argument('--authored-source',type=Path,default=None);p.add_argument('--authored-sha',default=None)
  p.add_argument('--authored-budget-targets',type=int,default=0);p.add_argument('--authored-seed',type=int,default=0)
  p.add_argument('--pi-native-include-families',default=None)
+ p.add_argument('--correction-source',type=Path,default=None);p.add_argument('--correction-sha',default=None)
  p.add_argument('--output',type=Path,required=True)
  a=p.parse_args()
  if a.fulltraj_budget_targets<=0:raise ValueError('positive budget required')
