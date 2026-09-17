@@ -504,6 +504,36 @@ only marginally. The checkpoint remains unpromoted experimental evidence; the
 representation-bridge checkpoint remains the last fully gated checkpoint.
 Further optimizer updates require a new separate authorization.
 
+## Repair-v2 tranche: Pi-native gate passed for the first time; execution leg still short
+
+The operator authorized the repair-v2 cycle. Four-cohort admission (nonce 33224):
+authority `b199edd94f8dfeacd5871e818412fe2ee68aa4461f3fc1b2e8e1cb2451b50485`,
+packs `30996a008dea0a30959a1fc475be3c40544fdee557af5aa6274152d0417dbc43`.
+Training `proc_a6cd` completed once in 2,664 seconds: 32 updates, 15,308,011
+input tokens, 1,311,588 targets, final loss 0.4537. Checkpoint
+`checkpoint_agent_sft_u000032_loss_0.4537.pt` SHA
+`2f62a5c9acb50d442da161d3f0d698399b1007d4186077d2c58f91dd2258eaa7`; audit SHA
+`52947df158b2ad892c924c18b39acdee84d650cd6b62c0fe462402b959236e07`; exposures
+exactly as scheduled (276,144 OpenHands, 72,872 focused Pi-native, 308,236
+authored concise-turn, 654,336 bridge).
+
+Dual-gate result: **the Pi-native Stage-B gate passed for the first time** --
+12/14 valid first frames and 10/14 correct first actions, audit status
+`qualified-gate-passed-not-promoted`, SHA
+`7ffc0e511c4869f3e745572b5cd6e90c1e0938cef1b170e2bbd96d9077cf64b4`. The v1
+diagnosis-driven fixes verified: copy/bind cases now open with `finish`
+(over-calling bias resolved), `process` and `edit` now route correctly.
+Execution remains short of the frozen leg: 62/96 against 64, prior-regression
+still 5/16 and prior-fresh 14/16; transfer held at 8/16, fresh 32/32, tool
+retention exact 1.0000, conversation within tolerance. Episode forensics
+isolated the remaining execution defect precisely: in every failing recovery
+case the model repeats the identical failed tool call (`str_replace_editor view
+/testbed/missing.json` and the same error) until turn budget, never attempting
+the corrected path -- the error-loop-breaking pattern from the original
+grounding-correction training resurfaced. The repair2 checkpoint remains
+unpromoted; the dual gate still fails as frozen, and further optimizer updates
+require new authorization.
+
 ## Historical session evidence immediately preceding this programme
 
 - Failed model-session preflight `proc_79c2`: session-token plan mismatch; zero
