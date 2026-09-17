@@ -542,3 +542,31 @@ require new authorization.
   `5265d88c24c0953b655a3227dc15f2061c50ce1b736958769b5600912b371e78`,
   summary SHA `5217ba6693530eb5dba7f414126d13044f5d2dda1aa66e9246ac1467b6f710de`,
   audit SHA `aeeed83cd9e4ed0b0f9e0a7b06ebb82bd8f43b6f5ddbd1849abec1a521cde1c0`.
+
+## Repair-v4 tranche: targeted loopbreak family missed; defect refined to pointer-chasing
+
+The operator authorized the repair-v4 cycle. A new verified collector family
+`tool-error-alternate-recovery` (240/240 verified one-shot, 600 real calls, 240
+authentic ENOENT errors, 23,910 supervised targets, audit
+`5f27d6be2073d87b1700cc01c9f7623ca9e4a147ff62c4096c3f62613feecfb0`, zero
+protected-panel entity collisions) was added as a sixth cohort. Admission
+nonce 16049; authority `a4203772d2b13db955f88fc0a76ef7c548f68ccc2ca9d38fdcc96f1bb04f60cf`;
+packs `5c4f2f39dc8cae77ac520d9b14aa7a84d0d990384480838157acd5d117c4ad47`.
+Training `proc_5661` completed once: 32 updates, loss 0.4390, checkpoint
+`5d4b82d78df573863b197e0c37a615dd5b9574cf84a0c8a818da308af63b0e26`, audit
+`83ac88dea2c5145e22aa335bd847ab195d530ff2db2402de4e9a13cd4bc05448`. The
+evaluation's Stage-B phase hit a sed path defect (repair3 directory, repair4
+filename) and was rerun standalone with the corrected path; both retained.
+
+Result: execution 66/96 with transfer 10/16 (best measured) and prior-fresh
+15/16, but the four regression-recovery cases STILL loop identically
+(`str_replace_editor view /testbed/missing.json` eight times), and Stage-B
+measured 13/14 valid frames (best) with 9/14 correct actions -- four
+`generation_budget` overruns. Episode forensics against the passing parent
+trace refined the defect: the parent recovers by inventing a plausible sibling
+filename (`catalog.json`), reading a pointer record inside it
+(`{"active_path": ...}`), and following that pointer to the real file. The v4
+family taught a stated alternate and a Pi-surface fuzzy search -- neither shape
+matches this two-hop inventive pointer chase, and the 1.1% target dose was
+small. The v4 checkpoint remains unpromoted; the dual gate fails as frozen;
+further updates require new authorization.
