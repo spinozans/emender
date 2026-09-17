@@ -95,8 +95,8 @@ def test_conversation_rehearsal_cohort_from_production_admitted_source(tmp_path)
  nsha=write_native(full,rows,[(bytes([i%256])*60,bytes([1])*10,{'record_index':i}) for i in range(6)],[f'k{i}' for i in range(6)])
  sel=tmp_path/'sel';spec_sel=[(bytes([1])*40,bytes([1])*10,{'id':f'sel{i}'}) for i in range(6)]
  ssha=write_tulu3(sel,[{'id':f'sel{i}'} for i in range(6)],eligible=False,records_spec=spec_sel,schema='emender-e97-pi-native-selected-candidate-authority-v1',status='verified-selection-not-admitted')
- sasha=sha(sel/'selection-audit.json');oasha=sha(sel/'overlap-audit.json')
  (sel/'selection-audit.json').write_text(json.dumps({'status':'qualified-selection-not-admitted'}));(sel/'overlap-audit.json').write_text(json.dumps({'status':'qualified-overlap-not-admitted'}))
+ sasha=sha(sel/'selection-audit.json');oasha=sha(sel/'overlap-audit.json')
  reh=tmp_path/'reh';spec_reh=[(bytes([3])*40,bytes([1])*10,{'id':f'reh{i}'}) for i in range(6)]
  rsha=write_tulu3(reh,[{'id':f'reh{i}'} for i in range(6)],eligible=True,records_spec=spec_reh)
  conv=tmp_path/'conv';spec_conv=[(bytes([5])*30,bytes([1])*10,{'id':f'c{i}'}) for i in range(6)]
