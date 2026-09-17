@@ -116,6 +116,27 @@ def make_loopbreak_cases(n):
  if len({c['id'] for c in cases})!=n:raise ValueError('case identity')
  return cases,{'loopbreak':n}
 
+def pointerchase_case(i):
+ cid=case_id('pointerchase',i);tag=opaque(cid,10);kind=i%3;files={};expected={}
+ pointer_name=('catalog','registry','index')[kind]
+ wrong=f'data/entry_{tag}.json';pointer=f'{pointer_name}_{tag}.json';real=f'src/actual_{tag}.json';value='PTR_'+opaque(cid,12)
+ files[pointer]=json.dumps({'active_path':real})+'\n';files[real]=value+'\n'
+ if kind==0:
+  steps=[action('read',{'path':wrong}),action('read',{'path':pointer}),action('read',{'path':real}),finish(value)]
+  prompt=f'Task label {tag}. The stated entry path {wrong} may be absent. If a read fails, do not repeat it; explore for a plausible pointer or catalog record that names the current location, follow it, then finish with exactly the value.'
+ elif kind==1:
+  steps=[action('read',{'path':wrong}),action('bash',{'command':'ls'}),action('read',{'path':pointer}),action('read',{'path':real}),finish(value)]
+  prompt=f'Task label {tag}. The stated entry path {wrong} may be absent. If a read fails, do not repeat it; list the workspace to locate a pointer or catalog record, follow the path it names, then finish with exactly the value.'
+ else:
+  steps=[action('read',{'path':wrong}),action('ffgrep',{'pattern':'active_path'}),action('read',{'path':pointer}),action('read',{'path':real}),finish(value)]
+  prompt=f'Task label {tag}. The stated entry path {wrong} may be absent. If a read fails, do not repeat it; search the workspace for a pointer record that names the current location, follow it, then finish with exactly the value.'
+ expected={**files,**expected};return dict(id=cid,category='pointerchase',family='tool-error-pointer-chase',prompt=prompt,files=files,expected_files=expected,steps=steps,supervise_from=1,requires_error=True,repository_discovery=False)
+
+def make_pointerchase_cases(n):
+ cases=[pointerchase_case(i) for i in range(n)]
+ if len({c['id'] for c in cases})!=n:raise ValueError('case identity')
+ return cases,{'pointerchase':n}
+
 def make_cases(n,port):
  if n<20 or n%20:raise ValueError('records must be a multiple of20')
  counts={'local':7*n//20,'web':5*n//20,'exact':5*n//20};counts['recovery']=n-sum(counts.values());cases=[]
@@ -214,7 +235,8 @@ def freeze(args):
  minimum=args.minimum_verified_records if args.minimum_verified_records is not None else args.records
  if not 1<=minimum<=args.records:raise ValueError('minimum verified records')
  mix=getattr(args,'mix','standard')
- if mix=='loopbreak':cases,counts=make_loopbreak_cases(args.records)
+ if mix in ('loopbreak','pointerchase'):
+  cases,counts=make_loopbreak_cases(args.records) if mix=='loopbreak' else make_pointerchase_cases(args.records)
  elif mix=='standard':cases,counts=make_cases(args.records,args.port)
  else:raise ValueError('unknown mix')
  args.output.mkdir(parents=True,mode=0o700,exist_ok=False);plan={'schema':'emender-e97-pi-native-curriculum-plan-v1','seed':SEED,'records':args.records,'minimum_verified_records':minimum,'automatic_retry':False,'mix_counts':counts,'port':args.port,'system':SYSTEM,'tool_manifest':str(args.manifest.resolve()),'tool_manifest_sha256':sha(args.manifest),'source_commit':subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),'authority_files':authority_files(),'pi_bin':str(args.pi_bin.resolve()),'pi_version':subprocess.check_output([args.pi_bin,'--version'],text=True).strip(),'cases':cases,'model_generations':0,'optimizer_updates':0,'training_eligible':False,'packing_authorized':False};publish(args.output/'plan-private.json',plan);print('PI_NATIVE_CURRICULUM_PLAN',args.records,minimum,sha(args.output/'plan-private.json'))
@@ -234,5 +256,5 @@ def collect(args):
  if len({r['sequence_sha256'] for r in rows})!=len(rows):raise ValueError('dedup')
  write_authority(rows,{**plan,'plan_sha256':args.plan_sha},args.output);counts=Counter(r['category'] for r in rows);families=Counter(r['family'] for r in rows);summary={'schema':'emender-e97-pi-native-curriculum-summary-v1','status':'verified-candidates-not-admitted','attempted_records':plan['records'],'records':len(rows),'rejected_records':len(rejections),'automatic_retries':0,'minimum_verified_records':plan['minimum_verified_records'],'mix_counts':dict(counts),'families':dict(families),'repository_discovery_records':sum(r['repository_discovery'] for r in rows),'native_calls':sum(r['calls'] for r in rows),'authentic_tool_errors':sum(r['errors'] for r in rows),'assistant_targets':sum(r['targets'] for r in rows),'deduplicated_sequences':len(rows),'model_generations':0,'optimizer_updates':0,'training_eligible':False,'packing_authorized':False,'checkpoint_promotion':False,'authority_sha256':sha(args.output/'candidate-authority/manifest.json')};publish(args.output/'summary.json',summary);print('PI_NATIVE_CURRICULUM_COLLECTED',len(rows),len(rejections),summary['native_calls'],summary['assistant_targets'])
 def main():
- os.umask(0o077);signal.signal(signal.SIGTERM,lambda s,f:(_ for _ in ()).throw(TimeoutError('interrupted')));p=argparse.ArgumentParser();sp=p.add_subparsers(dest='command',required=True);f=sp.add_parser('freeze');f.add_argument('--manifest',type=Path,required=True);f.add_argument('--records',type=int,required=True);f.add_argument('--minimum-verified-records',type=int);f.add_argument('--mix',choices=('standard','loopbreak'),default='standard');f.add_argument('--port',type=int,required=True);f.add_argument('--pi-bin',type=Path,required=True);f.add_argument('--output',type=Path,required=True);c=sp.add_parser('collect');c.add_argument('--plan',type=Path,required=True);c.add_argument('--plan-sha',required=True);c.add_argument('--pi-bin',type=Path,required=True);c.add_argument('--output',type=Path,required=True);a=p.parse_args();freeze(a) if a.command=='freeze' else collect(a)
+ os.umask(0o077);signal.signal(signal.SIGTERM,lambda s,f:(_ for _ in ()).throw(TimeoutError('interrupted')));p=argparse.ArgumentParser();sp=p.add_subparsers(dest='command',required=True);f=sp.add_parser('freeze');f.add_argument('--manifest',type=Path,required=True);f.add_argument('--records',type=int,required=True);f.add_argument('--minimum-verified-records',type=int);f.add_argument('--mix',choices=('standard','loopbreak','pointerchase'),default='standard');f.add_argument('--port',type=int,required=True);f.add_argument('--pi-bin',type=Path,required=True);f.add_argument('--output',type=Path,required=True);c=sp.add_parser('collect');c.add_argument('--plan',type=Path,required=True);c.add_argument('--plan-sha',required=True);c.add_argument('--pi-bin',type=Path,required=True);c.add_argument('--output',type=Path,required=True);a=p.parse_args();freeze(a) if a.command=='freeze' else collect(a)
 if __name__=='__main__':main()

@@ -1,4 +1,5 @@
 import hashlib
+from scripts.build_e97_pi_native_curriculum import make_pointerchase_cases
 import json
 from pathlib import Path
 import tiktoken
@@ -45,3 +46,20 @@ def test_generated_cases_do_not_authorize_training_or_updates(tmp_path):
  loaded=json.loads(path.read_text())
  assert not loaded['training_eligible'] and not loaded['packing_authorized'] and loaded['optimizer_updates']==0
  assert sha(path)==hashlib.sha256(path.read_bytes()).hexdigest()
+
+def test_pointerchase_family_shapes_and_invariants():
+ cases,counts=make_pointerchase_cases(9)
+ assert counts=={'pointerchase':9} and len({c['id'] for c in cases})==9
+ for c in cases:
+  assert c['family']=='tool-error-pointer-chase' and c['requires_error'] and c['supervise_from']==1
+  first=c['steps'][0]
+  assert first['name']=='read' and first['arguments']['path'].startswith('data/entry_')
+  second=c['steps'][1]
+  assert second['name'] in ('read','bash','ffgrep')
+  pointer=[s for s in c['steps'] if s['name']=='read' and 'catalog_' in s['arguments'].get('path','') or 'registry_' in s['arguments'].get('path','') or 'index_' in s['arguments'].get('path','')]
+  assert pointer, c['id']
+  assert 'active_path' in json.dumps([f for f in c['files'].values()])
+  assert c['steps'][-1]['name']=='finish'
+  assert not c['repository_discovery'] and not c.get('training_eligible',False)
+ names={c['steps'][1]['arguments'].get('path') or c['steps'][1]['name'] for c in cases}
+ assert len({c['id'] for c in make_pointerchase_cases(3)[0]})==3
