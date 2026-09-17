@@ -13,7 +13,8 @@ def sha(path):return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 def audit(args):
  proposal=json.loads(args.proposal.read_text());root=Path(proposal['preparation_root'])
  authority=json.loads((root/'manifest.json').read_text());packs=json.loads((root/'packs/manifest.json').read_text())
- schedule=json.loads((root/'schedule-proposal.json').read_text())
+ schedule_path=Path(args.schedule) if args.schedule else root/'schedule-proposal.json'
+ schedule=json.loads(schedule_path.read_text())
  for path,digest in proposal['identity_bindings']:
   if sha(Path(path))!=digest:raise ValueError(f'identity binding failed: {path}')
  if proposal['schema']!=args.schema:raise ValueError('schema')
@@ -44,5 +45,5 @@ def audit(args):
   'checker_sha256':sha(__file__),'packing_authorized':False,'optimizer_updates_authorized':0,'checkpoint_promotion':False}
  args.output.write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n');print('REPAIR_PROPOSAL_AUDIT',sha(args.proposal),sha(args.output))
 def main():
- p=argparse.ArgumentParser();p.add_argument('--proposal',type=Path,required=True);p.add_argument('--schema',required=True);p.add_argument('--output',type=Path,required=True);audit(p.parse_args())
+ p=argparse.ArgumentParser();p.add_argument('--proposal',type=Path,required=True);p.add_argument('--schema',required=True);p.add_argument('--output',type=Path,required=True);p.add_argument('--schedule',type=Path,default=None);audit(p.parse_args())
 if __name__=='__main__':main()
