@@ -623,3 +623,25 @@ window (record NLL 1.841/1.832 vs limit ~1.72; the 128-update arc overspent
 conversational likelihood). No promotion; all four arc checkpoints
 retained. The checkpoint-juncture network provides the missing trajectory
 data for the next cycle's stopping rule.
+
+## Repair-v5 retention-curve probe: the constraints crossed between u96 and u128
+
+A cheap-tier conversation-retention probe (8 held-out records, 8 ranks, ~4
+minutes) scored the four arc checkpoints. Curve: u32 1.5958, u64 1.6355,
+u96 1.6932, u128 1.8411 record macro NLL, against the bridge parent's
+1.5716/1.5739 and the +0.15 window limit ~1.72. Conversation retention
+held the window through u96 and broke in the final segment, exactly where
+Stage-B correct actions crossed the 10 threshold (u128: 14/14 valid,
+11/14 correct). Mechanism: bridge-cohort train loss fell 0.43 -> 0.26
+across the arc while held-out conversation NLL rose -- at ~2.6 epochs of
+repetition over the fixed 2,223-record bridge authority the model
+memorized the rehearsal slice instead of generalizing. No single arc
+checkpoint satisfies both constraints: u96 is within the retention window
+(1.6932) but Stage-B correct is 9/14; u128 passes Stage-B and every
+execution floor (70/96, prior-regression 11/16 with the loop broken,
+transfer 8/16) but fails prior-fresh 15/16 by one invalid_frame case and
+the conversation window by ~0.12 NLL. The probe is retained at
+`pi-native-repair5-retention-curve-probe-v1`. The next cycle's design
+inputs: fresh conversation-side rehearsal diversity (not more epochs of
+the same records), the conversation probe added to the cheap juncture
+detector tier, and unchanged frozen gates.
