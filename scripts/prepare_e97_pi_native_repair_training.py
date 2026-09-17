@@ -99,7 +99,12 @@ def read_conversation_slice(root,expected_manifest_sha,seed,budget_targets):
  if sha(root/'manifest.json')!=expected_manifest_sha:raise ValueError('conversation manifest identity')
  if manifest.get('schema')!=AUTHORITY_SCHEMA or manifest.get('status')!='complete':raise ValueError('conversation schema')
  if manifest.get('training_eligible') is not True and 'training_eligible' in manifest:raise ValueError('conversation source must be a production-admitted authority')
- paths=verify_outputs(root,manifest)
+ paths={}
+ for key,spec in manifest['outputs'].items():
+  p=Path(spec['path'])
+  if not p.is_absolute():p=root/p
+  if not spec['path'].isascii() or p.stat().st_size!=spec['bytes'] or sha(p)!=spec['sha256']:raise ValueError('conversation payload identity')
+  paths[key]=p
  rows=[]
  for line in paths['metadata'].open():rows.append(json.loads(line))
  index=paths['index'].read_bytes()
@@ -107,8 +112,8 @@ def read_conversation_slice(root,expected_manifest_sha,seed,budget_targets):
  eligible=[]
  for i,row in enumerate(rows):
   offset,n,want,split=INDEX.unpack_from(index,i*INDEX.size)
-  if split:raise ValueError('conversation validation record')
-  if n<=65536:eligible.append((i,offset,n,want))
+  if split or n>65536:continue
+  eligible.append((i,offset,n,want))
  rng=random.Random(seed);order=list(range(len(eligible)));rng.shuffle(order)
  chosen=[];consumed=0
  with paths['tokens'].open('rb') as tf,paths['mask'].open('rb') as mf:
