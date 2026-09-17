@@ -90,6 +90,37 @@ def read_authored_slice(root,expected_manifest_sha,seed,budget_targets):
  if not chosen:raise ValueError('empty authored slice')
  return chosen,consumed
 
+def read_conversation_slice(root,expected_manifest_sha,seed,budget_targets):
+ """Deterministic seeded whole-record slice of a production-admitted tulu3 conversation authority.
+ Streams the metadata once and seek-reads only chosen records so very large authorities are tractable.
+ The source manifest may mark training_eligible True or omit it (production-admitted raw source); the raw value is
+ returned so the preparation manifest records exactly what was consumed."""
+ manifest=json.loads((root/'manifest.json').read_text())
+ if sha(root/'manifest.json')!=expected_manifest_sha:raise ValueError('conversation manifest identity')
+ if manifest.get('schema')!=AUTHORITY_SCHEMA or manifest.get('status')!='complete':raise ValueError('conversation schema')
+ if manifest.get('training_eligible') is not True and 'training_eligible' not in manifest:raise ValueError('conversation source must be a production-admitted authority')
+ paths=verify_outputs(root,manifest)
+ rows=[]
+ for line in paths['metadata'].open():rows.append(json.loads(line))
+ index=paths['index'].read_bytes()
+ if len(index)!=INDEX.size*len(rows):raise ValueError('conversation index shape')
+ eligible=[]
+ for i,row in enumerate(rows):
+  offset,n,want,split=INDEX.unpack_from(index,i*INDEX.size)
+  if split:raise ValueError('conversation validation record')
+  if n<=65536:eligible.append((i,offset,n,want))
+ rng=random.Random(seed);order=list(range(len(eligible)));rng.shuffle(order)
+ chosen=[];consumed=0
+ with paths['tokens'].open('rb') as tf,paths['mask'].open('rb') as mf:
+  for j in order:
+   i,offset,n,want=eligible[j]
+   if consumed+want>budget_targets:continue
+   tf.seek(4*offset);tokens=tf.read(4*n);mf.seek(offset);mask=mf.read(n)
+   if len(tokens)!=4*n or len(mask)!=n or sum(mask)!=want:raise ValueError('conversation record slice')
+   consumed+=want;chosen.append((tokens,mask,dict(rows[i])))
+ if not chosen:raise ValueError('empty conversation slice')
+ return chosen,consumed,manifest.get('training_eligible')
+
 def read_native_slice(root,expected_manifest_sha,seed,budget_targets):
  """Deterministic whole-record train-split slice of the native authority."""
  manifest=json.loads((root/'manifest.json').read_text())
@@ -179,6 +210,11 @@ def prepare(args):
   cohort_names.append('loopbreak-rehearsal')
   loopbreak=read_tulu3(args.loopbreak_source,'loopbreak-rehearsal',args.loopbreak_sha,eligible_required=False,schema='emender-e97-pi-native-candidate-authority-v1',status='verified-candidate-not-admitted')
   streams.append((loopbreak,cohort_names[len(cohort_names)-1]))
+ conversation=None;conversation_consumed=0;conversation_eligibility=None
+ if args.conversation_source:
+  cohort_names.append('conversation-rehearsal')
+  conversation,conversation_consumed,conversation_eligibility=read_conversation_slice(args.conversation_source,args.conversation_sha,args.conversation_seed,args.conversation_budget_targets)
+  streams.append((conversation,cohort_names[len(cohort_names)-1]))
  order=interleave(streams)
  args.output.mkdir(parents=True,mode=0o700,exist_ok=False)
  paths={k:args.output/v for k,v in {'tokens':'tokens.uint32.bin','mask':'assistant_mask.uint8.bin','index':'records.idx','metadata':'records.jsonl'}.items()}
@@ -206,6 +242,7 @@ def prepare(args):
   'selected_overlap_audit_sha256':args.overlap_audit_sha,'rehearsal_authority_sha256':args.rehearsal_sha,
   'parent_checkpoint':str(args.parent_checkpoint.resolve()),'parent_checkpoint_sha256':args.parent_sha,
   **({'loopbreak_rehearsal':{'authority':str(args.loopbreak_source.resolve()),'authority_sha256':args.loopbreak_sha,'records':len(loopbreak)}} if args.loopbreak_source else {'loopbreak_rehearsal':None}),
+  **({'conversation_rehearsal':{'authority':str(args.conversation_source.resolve()),'authority_sha256':args.conversation_sha,'seed':args.conversation_seed,'target_token_budget':args.conversation_budget_targets,'consumed_target_tokens':conversation_consumed,'records':len(conversation),'source_training_eligible':conversation_eligibility}} if args.conversation_source else {'conversation_rehearsal':None}),
   **({'correction_rehearsal':{'authority':str(args.correction_source.resolve()),'authority_sha256':args.correction_sha,'records':len(correction)}} if args.correction_source else {'correction_rehearsal':None}),
   **({'authored_rehearsal':{'authority':str(args.authored_source.resolve()),'authority_sha256':args.authored_sha,'seed':args.authored_seed,'target_token_budget':args.authored_budget_targets,'consumed_target_tokens':authored_consumed,'records':len(authored)},'authored_source_sha256':args.authored_sha} if args.authored_source else {'authored_rehearsal':None}),
   'outputs':{k:desc(v) for k,v in paths.items()}}
@@ -226,6 +263,8 @@ def main():
  p.add_argument('--pi-native-include-families',default=None)
  p.add_argument('--correction-source',type=Path,default=None);p.add_argument('--correction-sha',default=None)
  p.add_argument('--loopbreak-source',type=Path,default=None);p.add_argument('--loopbreak-sha',default=None)
+ p.add_argument('--conversation-source',type=Path,default=None);p.add_argument('--conversation-sha',default=None)
+ p.add_argument('--conversation-budget-targets',type=int,default=0);p.add_argument('--conversation-seed',type=int,default=0)
  p.add_argument('--output',type=Path,required=True)
  a=p.parse_args()
  if a.fulltraj_budget_targets<=0:raise ValueError('positive budget required')
