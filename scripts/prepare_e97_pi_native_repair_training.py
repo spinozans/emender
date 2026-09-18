@@ -248,11 +248,11 @@ def prepare(args):
  if sha(args.overlap_audit)!=args.overlap_audit_sha or overlap_audit['status']!='pass':raise ValueError('overlap audit identity')
  if sha(args.parent_checkpoint)!=args.parent_sha:raise ValueError('parent checkpoint identity')
  if args.translated_oh_source:
-  native,consumed,keys=read_translated_oh_slice(args.translated_oh_source,args.translated_oh_sha,args.translated_oh_seed,args.translated_oh_budget_targets)
+  native,oh_consumed,keys=read_translated_oh_slice(args.translated_oh_source,args.translated_oh_sha,args.translated_oh_seed,args.translated_oh_budget_targets)
   oh_name=args.translated_oh_cohort
  else:
   native_manifest=json.loads((args.fulltraj/'manifest.json').read_text())
-  native,consumed,keys=read_native_slice(args.fulltraj,args.fulltraj_sha,args.fulltraj_seed,args.fulltraj_budget_targets)
+  native,oh_consumed,keys=read_native_slice(args.fulltraj,args.fulltraj_sha,args.fulltraj_seed,args.fulltraj_budget_targets)
   oh_name=COHORTS[0]
  include=None
  if args.pi_native_include_families:
@@ -332,8 +332,8 @@ def prepare(args):
   'source_target_totals':dict(sources),'source_record_counts':dict(per_cohort),
   'interleave':{'scheme':'weighted-fair-by-token-share','cohort_order':cohort_names},
   'pi_native_family_filter':(list(include) if include else None),
-  'openhands_rehearsal': ({'authority':str(args.translated_oh_source.resolve()),'authority_sha256':args.translated_oh_sha,'cohort':oh_name,'seed':args.translated_oh_seed,'target_token_budget':args.translated_oh_budget_targets,'consumed_target_tokens':consumed,'records':len(native),'distinct_instance_ids':len(keys),'source_collection':'e97-oh-pi-native-translation-v1 translated+replay-verified'} if args.translated_oh_source else {'authority':str(args.fulltraj.resolve()),'authority_sha256':args.fulltraj_sha,
-   'seed':args.fulltraj_seed,'target_token_budget':args.fulltraj_budget_targets,'consumed_target_tokens':consumed,
+  'openhands_rehearsal': ({'authority':str(args.translated_oh_source.resolve()),'authority_sha256':args.translated_oh_sha,'cohort':oh_name,'seed':args.translated_oh_seed,'target_token_budget':args.translated_oh_budget_targets,'consumed_target_tokens':oh_consumed,'records':len(native),'distinct_instance_ids':len(keys),'source_collection':'e97-oh-pi-native-translation-v1 translated+replay-verified'} if args.translated_oh_source else {'authority':str(args.fulltraj.resolve()),'authority_sha256':args.fulltraj_sha,
+   'seed':args.fulltraj_seed,'target_token_budget':args.fulltraj_budget_targets,'consumed_target_tokens':oh_consumed,
    'records':len(native),'distinct_problem_keys':len(keys)}),
   'selected_authority_sha256':args.selected_sha,'selected_selection_audit_sha256':args.selection_audit_sha,
   'selected_overlap_audit_sha256':args.overlap_audit_sha,'rehearsal_authority_sha256':args.rehearsal_sha,
