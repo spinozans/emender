@@ -385,9 +385,14 @@ def main() -> None:
         raise RuntimeError(f"E97 4B parameter mismatch: {parameter_count}")
 
     island_group = make_island_group(world, rank, args.island_size)
+    # Coarse gradient buckets: the nsys trace shows per-step DDP sync spending
+    # ~23% of wall time in ~788 small ~10MB RING_LL allreduces. Same gradient
+    # math (sum then divide), fewer, larger communications.
+    bucket_cap = int(os.environ.get("E97_DDP_BUCKET_CAP_MB", "25"))
     model = DDP(
         core_model, device_ids=[local_rank], output_device=local_rank,
         find_unused_parameters=False, gradient_as_bucket_view=True,
+        bucket_cap_mb=bucket_cap,
         process_group=island_group)
     optimizer = build_optimizer(core_model.parameters(), args, named_parameters=core_model.named_parameters())
 
