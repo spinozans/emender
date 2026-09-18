@@ -800,3 +800,20 @@ dominant factor is the parent headroom. All checkpoints retained; the v8
 design: the v6-passing recipe (bridge parent, conversation seed 613117 --
 the demonstrated holder) plus the two tiny targeted families at a combined
 0.8% of targets, run as a full 128-update arc from full headroom.
+
+## Repair-v8 arc: concluded at 3 segments; superseded by the data-scale pivot
+
+The v8 arc (v6 recipe + extracterror/longcopy antidotes from the bridge
+parent) was superseded mid-flight by the operator's data-scale direction.
+Final curve: u32 Stage-B 10/7 + conv 1.569; u64 11/8 + 1.609; u96 9/7 +
+1.684. Retention held at every juncture (the v6 recipe's window-holding
+worked as designed) but the Stage-B curve degraded rather than recovered
+and is dominated by v6's at every point (v6: 11/8, 12/10, 12/10). Segment
+checkpoints 5abd3e6d/601b54f6/324a3559 with audits 60e6c047/088e19c0/d0191d6a
+are retained. Its two targeted families carried into the wide arc at full
+pool scale. Concurrently the operator identified the throughput question:
+the FP32 recurrent-state policy pins the sequential kernel launch to
+BH1/NW4 ('e88-sequential-fp32-bh1-nw4-v1'), possibly discarding the
+across-heads launch parallelism of the legacy geometry; a kernel
+microbenchmark at SFT shapes is the top-priority item before the wide arc
+spends a day at the slow geometry.
