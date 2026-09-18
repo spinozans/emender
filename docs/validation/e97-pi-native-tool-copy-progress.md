@@ -762,3 +762,41 @@ frozen thresholds by more than the measurement noise band (Stage-B 13/11,
 prior-fresh 16/16 robust, composition 5/16) with detector-driven cohorts for
 the two remaining single-case margins: the persistent lookup case
 (finish-without-lookup) and the long-copy generation-budget instability.
+
+## Repair-v7 arc: stopped fail-closed at segment 3 (retention headroom exhausted)
+
+The operator directed v7 and onward to chain from the v6 u128 arc-end
+checkpoint b61dfb54 and authorized autonomous overnight operation. Two new
+verified families were collected for the remaining single-case margins:
+`tool-error-finish-recovery` (150/150 one-shot, 8,171 targets, audit
+19a868fa7764d925a3a47b90649b3a8db7f1b59e5a3ecb643168dc4d419635de) for the
+persistent lookup case (finish-with-traceback after a failed extraction) and
+`long-delay-copy` (180/180 one-shot, 7,224 targets across the 1K-32K delay
+tiers, audit a2db00aea3aaaaea228da64d1ffbcaf4c1c56288e632da3580c34ef942c905ac)
+for the copy-32768 generation-budget instability; zero exact-entity
+collisions. Preparation 91e63bf883a49375a2d4f741b59e42291d63f5514957705b81938687295d66d7
+(eight cohorts, 5070 records; a missing-pointerchase defect was caught and
+fixed before training), packs b10594fa7493d68e4a17b228c388b5343effd7af7567a21c2eeb46360e3badc4
+(440 packs), screened stratified keys 845420/861121/874360/898643 (the
+tightest screen yet: 4 keys in ~180K). Auditor generalized for prior-arc
+parents with audit-chain verification. Segments 1-3 trained and audited:
+checkpoints 06b42f93/0c966bfa/1e2f940e, losses 0.5084/0.3685/0.2568,
+training audits acd44958/8a9398bf/8c447c52.
+
+Juncture curve: u32 Stage-B 10/8 + conv 1.671 (early dip absorbing the
+fresh-seed conversation slice); u64 Stage-B 12/10 + conv 1.725 (recovered;
+copy-32768 fixed by the longcopy cohort -- the targeted family worked);
+u96 Stage-B 11/10 + conv 1.806. The retention window (about 1.722/1.724)
+was decisively breached; the arc STOPPED fail-closed at three segments per
+the pre-declared juncture rule. No v7 checkpoint is promotable.
+
+Forensic conclusion: the u128 arc parent started with only ~0.09 of
+retention headroom (conv 1.632 vs the 1.72 window); arcs consume ~0.03-0.06
+NLL per segment, so the headroom arithmetic was exhausted by u64. The v6
+arc held only because it started from the bridge parent's 1.573 with the
+full 0.15 window. Additionally, replacing the conversation slice with a
+new-seed SmolTalk2 draw coincided with faster measured drift, though the
+dominant factor is the parent headroom. All checkpoints retained; the v8
+design: the v6-passing recipe (bridge parent, conversation seed 613117 --
+the demonstrated holder) plus the two tiny targeted families at a combined
+0.8% of targets, run as a full 128-update arc from full headroom.
