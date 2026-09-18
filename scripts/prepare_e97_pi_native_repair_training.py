@@ -103,6 +103,7 @@ def read_conversation_slice(root,expected_manifest_sha,seed,budget_targets):
  for key,spec in manifest['outputs'].items():
   p=Path(spec['path'])
   if not p.is_absolute():p=root/p
+  if not p.exists():p=root/Path(spec['path']).name
   if not spec['path'].isascii() or p.stat().st_size!=spec['bytes'] or sha(p)!=spec['sha256']:raise ValueError('conversation payload identity')
   paths[key]=p
  rows=[]
