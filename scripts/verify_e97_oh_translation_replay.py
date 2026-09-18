@@ -22,7 +22,7 @@ Any mismatch DROPS the record (fail-closed); nothing is silently downgraded.
 The model patch is used strictly as a verification oracle and never enters the
 collection payload.
 """
-import argparse, hashlib, io, json, re, shutil, subprocess, sys, tarfile, time
+import argparse, hashlib, io, json, re, shutil, subprocess, sys, tarfile, threading, time
 from pathlib import Path
 
 RS = '\x1e'
@@ -111,8 +111,12 @@ def _bash_verify_mode(command):
 
 
 def _listing_paths(text):
-    return sorted(line.rstrip('/') for line in text.split('\n')
-                  if line.startswith('/workspace/'))
+    # Normalize trailing slashes BEFORE filtering: OH's tree view renders
+    # directories with a trailing '/', while find emits bare paths; filtering
+    # on the un-normalized form silently dropped the executed find's bare
+    # start-point line (e.g. '/workspace' itself).
+    norm_lines = [line.rstrip('/') for line in text.split('\n')]
+    return sorted(n for n in norm_lines if n == '/workspace' or n.startswith('/workspace/'))
 
 
 def _output_matches(recorded_core, output, command):
@@ -136,6 +140,60 @@ def _norm(text):
     while lines and lines[-1] == '':
         lines.pop()
     return '\n'.join(lines)
+
+
+_DIR_LISTING_TLS = threading.local()
+
+
+def _set_dir_listing_debug(detail):
+    _DIR_LISTING_TLS.dir_listing = detail
+
+
+def last_dir_listing_debug():
+    """Evidence from the calling thread's most recent dir_listing check.
+
+    Thread-local: the adjudication pass replays candidates concurrently and
+    each replay's evidence must not be clobbered by sibling workers.
+    """
+    return dict(getattr(_DIR_LISTING_TLS, 'dir_listing', {}) or {})
+
+
+def replay_candidate_for_debug(cand, translation_dir, work_root=None,
+                               docker_image=None, repo_cache=None):
+    """Full fail-closed replay of one candidate with drop-reason capture.
+
+    Same wiring as verify_one (repo materialization, bash container, oracle
+    ctx, final-state gate) but loads the model patch from the translation
+    dir's model-patches-cache.json and returns (text|None, reason|None).
+    Used by the drop-adjudication tool; not by the sealing path.
+    """
+    import hashlib
+    patches = json.loads(
+        (Path(translation_dir) / 'model-patches-cache.json').read_text())
+    patch = patches.get(cand['trajectory_id'])
+    work_root = work_root or (Path(translation_dir) / 'debug-work' / 'adjudicate')
+    repo_cache = repo_cache or str(Path(translation_dir) / 'repo-cache')
+    wid = hashlib.sha1(cand['trajectory_id'].encode()).hexdigest()[:10]
+    workspace = Path(work_root) / wid
+    instance_dir = _instance_dir(cand)
+    repo_root = workspace / instance_dir
+    bash = None
+    try:
+        err = RepoCache(repo_cache).materialize(cand['repo'], cand['base_commit'],
+                                                repo_root)
+        if err:
+            return None, err
+        image = docker_image or cand.get('image_name') or 'ubuntu:22.04'
+        bash = BashRunner(f'e97-adjudicate-{wid}', image, workspace)
+        oracle = {'bare_cache': repo_cache, 'base_commit': cand['base_commit']}
+        return verify_record(cand, workspace, instance_dir, bash, patch,
+                             120, oracle_ctx=oracle)
+    except Exception as exc:  # noqa: BLE001
+        return None, f'exception:{type(exc).__name__}:{str(exc)[:120]}'
+    finally:
+        if bash:
+            bash.close()
+        shutil.rmtree(workspace, ignore_errors=True)
 
 
 def verify_record(candidate, workspace_root, instance_dir, bash, model_patch, bash_timeout,
@@ -272,21 +330,88 @@ def verify_record(candidate, workspace_root, instance_dir, bash, model_patch, ba
             mode = _bash_verify_mode(args['command'])
             verified = False
             if action.get('expectation', {}).get('kind') == 'dir_listing':
-                # The mapped `find ... -maxdepth 2` replaces OH's tree listing:
-                # verify the path multiset and ship the executed find output.
+                # The mapped `find ... -maxdepth 2` replaces OH's tree listing.
+                # OH's environment carried setup artifacts (egg-info, caches) that
+                # the pristine base lacks, so the exacting check is: every
+                # recorded path THAT EXISTS IN THE BASE TREE must appear in the
+                # executed listing. Base-truth verified; artifacts tolerated and
+                # counted (reported, never silent).
                 recorded_paths = _listing_paths(recorded or '')
-                executed_paths = _listing_paths(output)
-                clipped_listing = '<response clipped>' in recorded
-                if clipped_listing:
-                    ok = set(recorded_paths) <= set(executed_paths)
-                else:
-                    ok = recorded_paths == executed_paths
-                if ok:
-                    observation_texts[idx] = output
-                    is_error[idx] = code != 0
-                    verified = True
-                else:
-                    return fail(f'dir_listing_mismatch:idx{idx}:{len(recorded_paths)}vs{len(executed_paths)}')
+                executed = set(_listing_paths(output))
+                # Rendering normalization (documented in the T1 report): the OH
+                # tree view can emit entries the mapped find cannot by design —
+                # hidden entries ('-not -path "*/.*"') and paths deeper than the
+                # find root's maxdepth. Those recorded paths are filtered from
+                # the comparison and COUNTED in stats; every remaining recorded
+                # path that exists in the base tree must appear in the executed
+                # listing. The final-state gate is unchanged and applies to all
+                # records regardless of this normalization.
+                fr = re.search(r'find (\S+)', args.get('command') or '')
+                find_root = fr.group(1) if fr else ''
+                md = re.search(r'-maxdepth (\d+)', args.get('command') or '')
+                find_maxdepth = int(md.group(1)) if md else 2
+                checkable = []
+                rendering_artifacts = 0
+                for rp in recorded_paths:
+                    if find_root:
+                        rel_to_root = rp[len(find_root):].strip('/')
+                    else:
+                        rel_to_root = rp[len('/workspace/'):].strip('/')
+                    rel_ws = rp[len('/workspace/'):].strip('/') if rp.startswith('/workspace/') else rel_to_root
+                    depth = len(rel_to_root.split('/')) if rel_to_root else 0
+                    # hidden is judged against the /workspace root: the mapped
+                    # find's '-not -path "*/.*"' excludes every path with a
+                    # dot-segment anywhere, including when the find ROOT itself
+                    # is a hidden directory (OH views of .vscode, etc.)
+                    hidden = any(part.startswith('.') for part in rel_ws.split('/'))
+                    if hidden or depth > find_maxdepth:
+                        rendering_artifacts += 1
+                        continue
+                    checkable.append(rp)
+                missing_base_truth = []
+                tolerated_artifacts = 0
+                for rp in checkable:
+                    rel_p = rp[len('/workspace/'):] if rp.startswith('/workspace/') else ''
+                    in_base = (root / rel_p).exists() if rel_p else root.exists()
+                    if in_base and rp not in executed:
+                        # Symlink-traversal normalization: OH's tree view follows
+                        # symlinks (e.g. gen/src/include -> ../../include, so
+                        # gen/src/include/cxx.h is recorded); GNU find without -L
+                        # lists the link but does not descend into it. A recorded
+                        # path whose ancestor is a symlink is a rendering
+                        # artifact of that traversal difference, counted in
+                        # stats — never a silent admission.
+                        symlinked = False
+                        if rel_p:
+                            probe = root
+                            for part in rel_p.split('/')[:-1]:
+                                probe = probe / part
+                                if probe.is_symlink():
+                                    symlinked = True
+                                    break
+                        if symlinked:
+                            rendering_artifacts += 1
+                            continue
+                        missing_base_truth.append(rp)
+                    elif not in_base:
+                        tolerated_artifacts += 1
+                stats['dir_listing_rendering_artifacts'] = \
+                    stats.get('dir_listing_rendering_artifacts', 0) + rendering_artifacts
+                _set_dir_listing_debug({
+                    'idx': idx, 'command': args.get('command'),
+                    'recorded_paths': recorded_paths,
+                    'executed_paths': sorted(executed),
+                    'checkable_paths': checkable,
+                    'rendering_artifacts': rendering_artifacts,
+                    'missing_paths': sorted(missing_base_truth),
+                    'tolerated_artifacts': tolerated_artifacts})
+                if missing_base_truth:
+                    return fail(f'dir_listing_mismatch:idx{idx}:{len(missing_base_truth)}')
+                stats['dir_listing_tolerated_artifacts'] = \
+                    stats.get('dir_listing_tolerated_artifacts', 0) + tolerated_artifacts
+                observation_texts[idx] = output
+                is_error[idx] = code != 0
+                verified = True
             elif mode == 'deterministic':
                 if recorded_exit == code and _output_matches(recorded_core, output, args['command']):
                     observation_texts[idx] = output

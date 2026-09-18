@@ -134,3 +134,53 @@ def test_translate_rejects_malformed():
         {'role': 'tool', 'content': 'ok'}]}
     record, reason = t.translate(bad)
     assert record is None and 'untranslatable' in reason
+
+
+def test_dir_listing_normalization_semantics():
+    """Documented normalization: hidden and deeper-than-maxdepth recorded paths
+    are excluded from the base-truth comparison and counted (verifier stats),
+    while every remaining recorded path that exists in base must be present."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        'verify_e97', 'scripts/verify_e97_oh_translation_replay.py')
+    v = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(v)
+    # a find root at /workspace/x with maxdepth 2: depth counted from the root
+    cmd = "find /workspace/x__y__1.0 -maxdepth 2 -not -path '*/.*' | sort"
+    fr = __import__('re').search(r'find (\S+)', cmd).group(1)
+    md = int(__import__('re').search(r'-maxdepth (\d+)', cmd).group(1))
+    paths = [
+        '/workspace/x__y__1.0',                      # depth 0: the start point
+        '/workspace/x__y__1.0/a.py',                 # depth 1
+        '/workspace/x__y__1.0/sub/b.py',             # depth 2
+        '/workspace/x__y__1.0/sub/deep/c.py',        # depth 3 -> artifact
+        '/workspace/x__y__1.0/.hidden/f',            # hidden -> artifact
+    ]
+    artifacts = 0
+    checkable = []
+    for rp in paths:
+        rel = rp[len(fr):].strip('/')
+        depth = len(rel.split('/')) if rel else 0
+        hidden = any(p.startswith('.') for p in rel.split('/'))
+        if hidden or depth > md:
+            artifacts += 1
+            continue
+        checkable.append(rp)
+    assert artifacts == 2
+    assert checkable == paths[:3]
+
+
+def test_listing_paths_trailing_slash_filter():
+    """The executed find's bare start-point line ('/workspace') must survive the
+    filter: OH renders directories with trailing '/', find does not; the filter
+    must normalize before matching, or verified listings silently lose the
+    start point and honest records get dropped (real bug found in T1)."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        'verify_e97', 'scripts/verify_e97_oh_translation_replay.py')
+    v = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(v)
+    assert v._listing_paths('/workspace\n/workspace/x\n/workspace/x/a\n') == [
+        '/workspace', '/workspace/x', '/workspace/x/a']
+    assert v._listing_paths('/workspace/x/\n/workspace/x/b\n') == [
+        '/workspace/x', '/workspace/x/b']

@@ -94,7 +94,9 @@ def map_view_args(args, recorded_observation):
     import re
     if recorded_observation and recorded_observation.startswith(DIR_LISTING_MARKER):
         path = args['path']
-        command = f"find {path} -maxdepth 2 -not -path '*/.*' | sort"
+        # -L: OH's tree view follows symlinks; plain find does not. Documented
+        # in the T1 report as the symlink-traversal mapping decision.
+        command = f"find -L {path} -maxdepth 2 -not -path '*/.*' | sort"
         return 'bash', {'command': command}, {'kind': 'dir_listing', 'path': path}
     vr = args.get('view_range')
     if vr is None:
