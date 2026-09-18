@@ -59,6 +59,7 @@ def test_prepare_interleaves_and_flags(tmp_path):
  a.parent_checkpoint=parent;a.parent_sha=sha(parent);a.output=out
  a.authored_source=None;a.pi_native_include_families=None;a.correction_source=None;a.loopbreak_source=None
  a.conversation_source=None;a.conversation_sha=None;a.conversation_budget_targets=0;a.conversation_seed=0
+ a.extra_source=None;a.extra_sha=None;a.extra_cohort=None
  prepare(a)
  manifest=json.loads((out/'manifest.json').read_text())
  assert manifest['training_eligible'] is False and manifest['packing_authorized'] is False
@@ -113,6 +114,7 @@ def test_conversation_rehearsal_cohort_from_production_admitted_source(tmp_path)
  a.parent_checkpoint=parent;a.parent_sha=sha(parent);a.output=tmp_path/'out-conv'
  a.authored_source=None;a.pi_native_include_families=None;a.correction_source=None;a.loopbreak_source=None
  a.conversation_source=conv;a.conversation_sha=csha;a.conversation_budget_targets=30;a.conversation_seed=11
+ a.extra_source=None;a.extra_sha=None;a.extra_cohort=None
  prepare(a)
  manifest=json.loads((a.output/'manifest.json').read_text())
  assert 'conversation-rehearsal' in manifest['source_record_counts']
