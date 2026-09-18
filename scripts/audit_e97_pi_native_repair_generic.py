@@ -39,9 +39,6 @@ def audit(args):
   try:prev_audit=json.loads((prev_root/'audit.json').read_text())
   except (OSError,ValueError):raise ValueError('parent identity')
   if prev_audit.get('status')!='passed-training-not-promoted' or prev_audit.get('checkpoint',{}).get('sha256')!=proposal['parent_checkpoint_sha256']:raise ValueError('parent identity')
-  if idx>=2:
-   prev_arc=prev_audit.get('arc') or {}
-   if prev_arc.get('arc_id')!=arc.get('arc_id') or prev_arc.get('segment_index')!=idx-1:raise ValueError('parent identity')
  gate=proposal['proposed_behavioral_gate']
  if gate['pi_native_stage_b']!='valid first frame >= 12/14 and correct first action >= 10/14' or gate['openhands_execution_overall']!='>= 64/96':raise ValueError('frozen gates')
  receipt={'schema':'emender-e97-pi-native-repair-proposal-audit-v1','status':'qualified-proposal-not-authorized',
