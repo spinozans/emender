@@ -817,3 +817,22 @@ BH1/NW4 ('e88-sequential-fp32-bh1-nw4-v1'), possibly discarding the
 across-heads launch parallelism of the legacy geometry; a kernel
 microbenchmark at SFT shapes is the top-priority item before the wide arc
 spends a day at the slow geometry.
+
+## Throughput forensics: the 75s step decomposed; wide arc config qualified
+
+Operator challenge: past head-parallel models trained ~10x faster. Forensics:
+(1) the sequential recurrence kernel is exonerated by direct microbenchmark at
+production shapes (B=1,T=65536,H=60): 0.10s forward per layer (643K tok/s),
+0.29s fwd+bwd -- 18 layers cost ~5s of a 75s step; (2) nsys trace of real
+steps: ~23% NCCL allreduce (straggler-inclusive), ~19% GEMMs, ~17%
+recurrence fwd+bwd, and a host-side storm of 17M cudaLaunchKernel +
+1.8M cudaStreamSynchronize calls per 110s window (launch/orchestration-bound);
+(3) DDP bucket coarsening (bucket_cap 1024MB, commit 946bda6c) changed
+nothing (77-80s, losses identical to 6 digits); (4) loss-chunk 128->2048 and
+mlp-checkpoint-chunk 4096->16384 cut steps 75->72s with losses matching to
+5-6 digits (chunk-order LSBs only). Remaining ~2x headroom (72s vs ~30-35s
+compute+comm floor) requires a dedicated engineering pass (autograd fusion,
+CUDA graphs, optimizer overlap); deferred behind the wide arc. The wide arc
+trains at 72s/update, 1,024 updates, chunk 2048/16384, trainer 946bda6c;
+per-step config deviation from prior arcs (b8ee034f, chunk 128/4096) is
+documented here and qualified by the loss-matching evidence above.
