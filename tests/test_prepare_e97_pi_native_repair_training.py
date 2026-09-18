@@ -61,6 +61,8 @@ def test_prepare_interleaves_and_flags(tmp_path):
  a.conversation_source=None;a.conversation_sha=None;a.conversation_budget_targets=0;a.conversation_seed=0
  a.extra_source=None;a.extra_sha=None;a.extra_cohort=None
  a.extra2_source=None;a.extra2_sha=None;a.extra2_cohort=None
+ a.translated_oh_source=None;a.translated_oh_sha=None;a.translated_oh_cohort='openhands-translated-rehearsal';a.translated_oh_budget_targets=0;a.translated_oh_seed=0
+ a.extra3_source=None;a.extra3_sha=None;a.extra3_cohort=None
  a.cohort_spec=None
  prepare(a)
  manifest=json.loads((out/'manifest.json').read_text())
@@ -118,6 +120,8 @@ def test_conversation_rehearsal_cohort_from_production_admitted_source(tmp_path)
  a.conversation_source=conv;a.conversation_sha=csha;a.conversation_budget_targets=30;a.conversation_seed=11
  a.extra_source=None;a.extra_sha=None;a.extra_cohort=None
  a.extra2_source=None;a.extra2_sha=None;a.extra2_cohort=None
+ a.translated_oh_source=None;a.translated_oh_sha=None;a.translated_oh_cohort='openhands-translated-rehearsal';a.translated_oh_budget_targets=0;a.translated_oh_seed=0
+ a.extra3_source=None;a.extra3_sha=None;a.extra3_cohort=None
  a.cohort_spec=None
  prepare(a)
  manifest=json.loads((a.output/'manifest.json').read_text())
@@ -132,3 +136,102 @@ def test_conversation_rehearsal_cohort_from_production_admitted_source(tmp_path)
  try:read_conversation_slice(bad,bsha,11,30)
  except ValueError:pass
  else:raise AssertionError('non-admitted conversation source accepted')
+
+def test_translated_oh_replaces_fulltraj_and_drops_rehearsal(tmp_path):
+ from scripts.prepare_e97_pi_native_repair_training import prepare
+ sel=tmp_path/'sel';spec_sel=[(bytes([2])*40,bytes([1])*10,{'id':f'sel{i}'}) for i in range(6)]
+ ssha=write_tulu3(sel,[{'id':f'sel{i}'} for i in range(6)],eligible=False,records_spec=spec_sel,schema='emender-e97-pi-native-selected-candidate-authority-v1',status='verified-selection-not-admitted')
+ (sel/'selection-audit.json').write_text(json.dumps({'status':'qualified-selection-not-admitted'}))
+ (sel/'overlap-audit.json').write_text(json.dumps({'status':'pass'}))
+ sasha=sha(sel/'selection-audit.json');oasha=sha(sel/'overlap-audit.json')
+ # translated OH candidate authority: instance dedup (two records share instance_id), budget-bounded
+ toh=tmp_path/'toh'
+ spec_toh=[(bytes([9])*(4*30),bytes([1])*8,{'record_index':0,'instance_id':'inst-a','trajectory_id':'t0','split':0}),
+           (bytes([9])*(4*20),bytes([1])*6,{'record_index':1,'instance_id':'inst-a','trajectory_id':'t1','split':0}),
+           (bytes([9])*(4*10),bytes([1])*4,{'record_index':2,'instance_id':'inst-b','trajectory_id':'t2','split':0})]
+ tsha=write_tulu3(toh,[{'record_index':0,'instance_id':'inst-a','trajectory_id':'t0','split':0},
+                        {'record_index':1,'instance_id':'inst-a','trajectory_id':'t1','split':0},
+                        {'record_index':2,'instance_id':'inst-b','trajectory_id':'t2','split':0}],
+                  eligible=False,records_spec=spec_toh)
+ parent=tmp_path/'parent.pt';parent.write_bytes(b'parent')
+ class A:pass
+ a=A();a.fulltraj=None;a.fulltraj_sha=None;a.fulltraj_budget_targets=0;a.fulltraj_seed=0
+ a.translated_oh_source=toh;a.translated_oh_sha=tsha;a.translated_oh_cohort='openhands-translated-rehearsal';a.translated_oh_budget_targets=18;a.translated_oh_seed=5
+ a.selected=sel;a.selected_sha=ssha;a.selection_audit=sel/'selection-audit.json';a.selection_audit_sha=sasha
+ a.overlap_audit=sel/'overlap-audit.json';a.overlap_audit_sha=oasha
+ a.rehearsal=None;a.rehearsal_sha=None
+ a.parent_checkpoint=parent;a.parent_sha=sha(parent);a.output=tmp_path/'out-toh'
+ a.authored_source=None;a.pi_native_include_families=None;a.correction_source=None;a.loopbreak_source=None
+ a.conversation_source=None;a.conversation_sha=None;a.conversation_budget_targets=0;a.conversation_seed=0
+ a.extra_source=None;a.extra_sha=None;a.extra_cohort=None
+ a.extra2_source=None;a.extra2_sha=None;a.extra2_cohort=None
+ a.extra3_source=None;a.extra3_sha=None;a.extra3_cohort=None
+ a.cohort_spec=None
+ prepare(a)
+ manifest=json.loads((a.output/'manifest.json').read_text())
+ assert 'openhands-translated-rehearsal' in manifest['source_record_counts']
+ assert 'representation-bridge-rehearsal' not in manifest['source_record_counts']
+ oh=manifest['openhands_rehearsal']
+ assert oh['cohort']=='openhands-translated-rehearsal' and oh['distinct_instance_ids']==2 and oh['consumed_target_tokens']==10
+ assert oh['source_collection']=='e97-oh-pi-native-translation-v1 translated+replay-verified'
+ rows=[json.loads(x) for x in (a.output/'records.jsonl').read_text().splitlines()]
+ oh_rows=[r for r in rows if r['source']=='openhands-translated-rehearsal']
+ # shortest-first dedup: inst-b (4 targets) always chosen; only one inst-a record fits the 18-target budget
+ assert {r['repair_provenance']['instance_id'] for r in oh_rows}=={'inst-a','inst-b'}
+ assert len(oh_rows)==2
+ assert all('instance_id' in r['repair_provenance'] and 'trajectory_id' in r['repair_provenance'] for r in oh_rows)
+
+def test_translated_oh_and_fulltraj_are_mutually_exclusive(tmp_path):
+ from scripts.prepare_e97_pi_native_repair_training import prepare
+ sel=tmp_path/'sel';spec_sel=[(bytes([2])*40,bytes([1])*10,{'id':f'sel{i}'}) for i in range(6)]
+ ssha=write_tulu3(sel,[{'id':f'sel{i}'} for i in range(6)],eligible=False,records_spec=spec_sel,schema='emender-e97-pi-native-selected-candidate-authority-v1',status='verified-selection-not-admitted')
+ (sel/'selection-audit.json').write_text(json.dumps({'status':'qualified-selection-not-admitted'}))
+ (sel/'overlap-audit.json').write_text(json.dumps({'status':'pass'}))
+ sasha=sha(sel/'selection-audit.json');oasha=sha(sel/'overlap-audit.json')
+ parent=tmp_path/'parent.pt';parent.write_bytes(b'parent')
+ class A:pass
+ a=A();a.fulltraj=None;a.fulltraj_sha=None;a.fulltraj_budget_targets=0;a.fulltraj_seed=0
+ a.translated_oh_source=None;a.translated_oh_sha=None;a.translated_oh_cohort='openhands-translated-rehearsal';a.translated_oh_budget_targets=0;a.translated_oh_seed=0
+ a.selected=sel;a.selected_sha=ssha;a.selection_audit=sel/'selection-audit.json';a.selection_audit_sha=sasha
+ a.overlap_audit=sel/'overlap-audit.json';a.overlap_audit_sha=oasha
+ a.rehearsal=None;a.rehearsal_sha=None
+ a.parent_checkpoint=parent;a.parent_sha=sha(parent);a.output=tmp_path/'out-x'
+ a.authored_source=None;a.pi_native_include_families=None;a.correction_source=None;a.loopbreak_source=None
+ a.conversation_source=None;a.conversation_sha=None;a.conversation_budget_targets=0;a.conversation_seed=0
+ a.extra_source=None;a.extra_sha=None;a.extra_cohort=None
+ a.extra2_source=None;a.extra2_sha=None;a.extra2_cohort=None
+ a.extra3_source=None;a.extra3_sha=None;a.extra3_cohort=None
+ a.cohort_spec=None
+ try:prepare(a)
+ except ValueError as e:assert 'exactly one' in str(e)
+ else:raise AssertionError('both sources absent accepted')
+
+def test_extra3_reasoning_cohort_inclusion(tmp_path):
+ from scripts.prepare_e97_pi_native_repair_training import prepare
+ sel=tmp_path/'sel';spec_sel=[(bytes([2])*40,bytes([1])*10,{'id':f'sel{i}'}) for i in range(6)]
+ ssha=write_tulu3(sel,[{'id':f'sel{i}'} for i in range(6)],eligible=False,records_spec=spec_sel,schema='emender-e97-pi-native-selected-candidate-authority-v1',status='verified-selection-not-admitted')
+ (sel/'selection-audit.json').write_text(json.dumps({'status':'qualified-selection-not-admitted'}))
+ (sel/'overlap-audit.json').write_text(json.dumps({'status':'pass'}))
+ sasha=sha(sel/'selection-audit.json');oasha=sha(sel/'overlap-audit.json')
+ toh=tmp_path/'toh';spec_toh=[(bytes([9])*(4*10),bytes([1])*4,{'record_index':0,'instance_id':'inst-a','trajectory_id':'t0','split':0})]
+ tsha=write_tulu3(toh,[{'record_index':0,'instance_id':'inst-a','trajectory_id':'t0','split':0}],eligible=False,records_spec=spec_toh)
+ reas=tmp_path/'reas';spec_r=[(bytes([7])*(4*12),bytes([1])*5,{'id':f'r{i}'}) for i in range(4)]
+ rsha=write_tulu3(reas,[{'id':f'r{i}'} for i in range(4)],eligible=False,records_spec=spec_r,schema='emender-e97-pi-native-candidate-authority-v1',status='verified-candidate-not-admitted')
+ parent=tmp_path/'parent.pt';parent.write_bytes(b'parent')
+ class A:pass
+ a=A();a.fulltraj=None;a.fulltraj_sha=None;a.fulltraj_budget_targets=0;a.fulltraj_seed=0
+ a.translated_oh_source=toh;a.translated_oh_sha=tsha;a.translated_oh_cohort='openhands-translated-rehearsal';a.translated_oh_budget_targets=8;a.translated_oh_seed=1
+ a.selected=sel;a.selected_sha=ssha;a.selection_audit=sel/'selection-audit.json';a.selection_audit_sha=sasha
+ a.overlap_audit=sel/'overlap-audit.json';a.overlap_audit_sha=oasha
+ a.rehearsal=None;a.rehearsal_sha=None
+ a.parent_checkpoint=parent;a.parent_sha=sha(parent);a.output=tmp_path/'out-r'
+ a.authored_source=None;a.pi_native_include_families=None;a.correction_source=None;a.loopbreak_source=None
+ a.conversation_source=None;a.conversation_sha=None;a.conversation_budget_targets=0;a.conversation_seed=0
+ a.extra_source=None;a.extra_sha=None;a.extra_cohort=None
+ a.extra2_source=None;a.extra2_sha=None;a.extra2_cohort=None
+ a.extra3_source=reas;a.extra3_sha=rsha;a.extra3_cohort='reasoning-rehearsal'
+ a.cohort_spec=None
+ prepare(a)
+ manifest=json.loads((a.output/'manifest.json').read_text())
+ assert manifest['source_record_counts']['reasoning-rehearsal']==4
+ assert manifest['extra3_rehearsal']['cohort']=='reasoning-rehearsal' and manifest['extra3_rehearsal']['records']==4
