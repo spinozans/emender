@@ -140,3 +140,12 @@ def test_reasoning_frames_are_canonical_with_analysis():
   assert turn.text_sha256
  # ungrounded analysis is rejected at collection time by the executor's contract
  assert all(x in step.get('analysis','') for x in step.get('analysis_requires',[]))
+
+def test_reasoning_pilot_overlap_auditor_policy():
+ import importlib
+ mod=importlib.import_module('scripts.audit_e97_reasoning_rehearsal_overlap')
+ assert mod.STAGE_SHA=='07cc1d5843ee4060503ecdcf7d2bb813dce51fa0aeba89df367b7696e47994ef'
+ assert len(mod.FIXED)==3
+ # trivial sub-8-byte numeric scalars are reported, not entity collisions
+ recs=mod.records([{'id':'x','family':'f','prompt':'p','files':{'a.txt':'v=60\n'},'steps':[]}])
+ assert recs[0]['exact_scalars']==['60']
