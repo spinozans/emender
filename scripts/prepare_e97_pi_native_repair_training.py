@@ -225,6 +225,11 @@ def prepare(args):
   cohort_names.append(args.extra_cohort)
   extra=read_tulu3(args.extra_source,args.extra_cohort,args.extra_sha,eligible_required=False,schema='emender-e97-pi-native-candidate-authority-v1',status='verified-candidate-not-admitted')
   streams.append((extra,cohort_names[len(cohort_names)-1]))
+ extra2=None
+ if args.extra2_source:
+  cohort_names.append(args.extra2_cohort)
+  extra2=read_tulu3(args.extra2_source,args.extra2_cohort,args.extra2_sha,eligible_required=False,schema='emender-e97-pi-native-candidate-authority-v1',status='verified-candidate-not-admitted')
+  streams.append((extra2,cohort_names[len(cohort_names)-1]))
  order=interleave(streams)
  args.output.mkdir(parents=True,mode=0o700,exist_ok=False)
  paths={k:args.output/v for k,v in {'tokens':'tokens.uint32.bin','mask':'assistant_mask.uint8.bin','index':'records.idx','metadata':'records.jsonl'}.items()}
@@ -254,6 +259,7 @@ def prepare(args):
   **({'loopbreak_rehearsal':{'authority':str(args.loopbreak_source.resolve()),'authority_sha256':args.loopbreak_sha,'records':len(loopbreak)}} if args.loopbreak_source else {'loopbreak_rehearsal':None}),
   **({'conversation_rehearsal':{'authority':str(args.conversation_source.resolve()),'authority_sha256':args.conversation_sha,'seed':args.conversation_seed,'target_token_budget':args.conversation_budget_targets,'consumed_target_tokens':conversation_consumed,'records':len(conversation),'source_training_eligible':conversation_eligibility}} if args.conversation_source else {'conversation_rehearsal':None}),
   **({'extra_rehearsal':{'authority':str(args.extra_source.resolve()),'authority_sha256':args.extra_sha,'cohort':args.extra_cohort,'records':len(extra)}} if args.extra_source else {'extra_rehearsal':None}),
+  **({'extra2_rehearsal':{'authority':str(args.extra2_source.resolve()),'authority_sha256':args.extra2_sha,'cohort':args.extra2_cohort,'records':len(extra2)}} if args.extra2_source else {'extra2_rehearsal':None}),
   **({'correction_rehearsal':{'authority':str(args.correction_source.resolve()),'authority_sha256':args.correction_sha,'records':len(correction)}} if args.correction_source else {'correction_rehearsal':None}),
   **({'authored_rehearsal':{'authority':str(args.authored_source.resolve()),'authority_sha256':args.authored_sha,'seed':args.authored_seed,'target_token_budget':args.authored_budget_targets,'consumed_target_tokens':authored_consumed,'records':len(authored)},'authored_source_sha256':args.authored_sha} if args.authored_source else {'authored_rehearsal':None}),
   'outputs':{k:desc(v) for k,v in paths.items()}}
@@ -277,6 +283,7 @@ def main():
  p.add_argument('--conversation-source',type=Path,default=None);p.add_argument('--conversation-sha',default=None)
  p.add_argument('--conversation-budget-targets',type=int,default=0);p.add_argument('--conversation-seed',type=int,default=0)
  p.add_argument('--extra-source',type=Path,default=None);p.add_argument('--extra-sha',default=None);p.add_argument('--extra-cohort',default=None)
+ p.add_argument('--extra2-source',type=Path,default=None);p.add_argument('--extra2-sha',default=None);p.add_argument('--extra2-cohort',default=None)
  p.add_argument('--output',type=Path,required=True)
  a=p.parse_args()
  if a.fulltraj_budget_targets<=0:raise ValueError('positive budget required')
