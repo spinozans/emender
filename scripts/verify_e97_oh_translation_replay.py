@@ -110,6 +110,11 @@ def _bash_verify_mode(command):
     return 'env'
 
 
+def _listing_paths(text):
+    return sorted(line.rstrip('/') for line in text.split('\n')
+                  if line.startswith('/workspace/'))
+
+
 def _output_matches(recorded_core, output, command):
     a, b = _norm(recorded_core), _norm(output)
     if a == b:
@@ -266,7 +271,18 @@ def verify_record(candidate, workspace_root, instance_dir, bash, model_patch, ba
             recorded_core, recorded_exit = parse_bash_observation(recorded or '')
             mode = _bash_verify_mode(args['command'])
             verified = False
-            if mode == 'deterministic':
+            if action.get('expectation', {}).get('kind') == 'dir_listing':
+                # The mapped `find ... -maxdepth 2` replaces OH's tree listing:
+                # verify the path multiset and ship the executed find output.
+                recorded_paths = _listing_paths(recorded or '')
+                executed_paths = _listing_paths(output)
+                if recorded_paths == executed_paths:
+                    observation_texts[idx] = output
+                    is_error[idx] = code != 0
+                    verified = True
+                else:
+                    return fail(f'dir_listing_mismatch:idx{idx}:{len(recorded_paths)}vs{len(executed_paths)}')
+            elif mode == 'deterministic':
                 if recorded_exit == code and _output_matches(recorded_core, output, args['command']):
                     observation_texts[idx] = output
                     is_error[idx] = code != 0
