@@ -112,9 +112,25 @@ that violate the five-line frame. Both defects are data defects.
   index/metadata) produced by the shared `write_authority` path — directly
   consumable by the preparer as a cohort source.
 
-## 5. Pilot result (filled by the T2 report)
+## 5. Pilot result
 
-See `pi-native-reasoning-rehearsal-collection-v1/` for plan, collection,
-audit receipt, and the T2 report. Acceptance: 50 attempted, ≥48 verified,
-0 automatic retries, audit receipt `qualified-candidates-not-admitted`,
-zero protected-panel entity collisions, every supervised turn grounded.
+Collection: `pi-native-reasoning-rehearsal-collection-v1` (plan sha
+`b078ca3f3ff2d32b40723abdd84178ea3a3c802523f3ce0d960a7b85fc92a2f7`, frozen at
+source commit `cc016d31`). **50/50 attempted, 50 verified, 0 rejected, 0
+automatic retries** — 230 native Pi tool calls, 331,929 tokens, 15,853
+assistant target tokens across three composition families
+(20 config-derive with masked observe-the-failing-checker prefix, 20
+cross-file compute-compose, 10 search-recovery-compose with masked direct-path
+prefix). Independent reconstruction audit:
+`PI_NATIVE_CURRICULUM_AUDIT 50 15853` (receipt `f62c86efb60de7c2df6329b043714000ea881c3c9d68adcda1c5f1eeb846ac4d`),
+including mix-gated grounded-analysis verification (observe-then-quote:
+each supervised analysis must contain its authored observed-value literals).
+Protected-panel overlap audit PASS (receipt
+`d8ed9720c9d55721a35420b43e1a753ea3d0034b1c35851f7f5a792363033ae6`):
+zero entity collisions against the three fixed panels and the Stage-A panel;
+13 trivial sub-8-byte numeric fixture scalars (e.g. operands `60`, `211`)
+reported as non-entity structural noise per the ledger precedent.
+Two rejected drafts were retained (`*-draft1*`, `*-draft2*`): draft1 authored
+the observe-the-defect step inside the supervised region (violating the
+post-prefix success oracle — fixed by masking it as the failure prefix);
+draft2 froze against uncommitted source (fixed by committing first).
