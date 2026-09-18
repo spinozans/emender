@@ -1,0 +1,232 @@
+{
+  "arc": {
+    "arc_id": "repair-v9-wide-arc",
+    "arc_keys": [
+      1200063,
+      1200218,
+      1200240,
+      1200248,
+      1200561,
+      1200635,
+      1200769,
+      1200820
+    ],
+    "arc_updates": 256,
+    "chaining": "Each segment trains 32 updates from the prior segment final checkpoint (segment 1 from the bridge parent, full 0.15 retention headroom).",
+    "juncture_policy": "Stage-B panel AND conversation NLL probe at every 32-update boundary; full frozen dual gate at u96, u192, and u256; fail-closed stopping if retention is decisively breached.",
+    "rationale": "Prior arcs used 1.7% of available admitted trace pools (63 of 5,533 OpenHands records; 421 of 620K SmolTalk2 records; four whole admitted pools unused, two of which target the weakest measured axes: composition and cumulative recovery). Repetition over small slices is the measured memorization-drift mechanism; scaling data with updates removes it by construction. Window-coverage stratification generalizes per-update coverage for 12 cohorts at scale.",
+    "segment_index": 1,
+    "segment_updates": 32,
+    "total_segments": 8
+  },
+  "authored_rehearsal_budget": 350000,
+  "authored_rehearsal_seed": 882843,
+  "authored_rehearsal_source": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/grounded-expansion-v1-data-r2/authority",
+  "authored_source_sha256": "08752c53e2199533252c77821ec9696012b19dc09ea0ff1508ef6676a6cd2140",
+  "authority_manifest_sha256": "47944cd589261ed67ed60faf7c9080d745e14485c51d67de99ae95ac3028e7c9",
+  "automatic_expansion": false,
+  "automatic_retry": false,
+  "checkpoint_promotion": false,
+  "context_size": 65536,
+  "conversation_rehearsal": {
+    "budget_targets": 9700000,
+    "manifest_sha256": "d64f51abc615c097910900ffa7fc88f020ae5567b89958f607008078c271c7f6",
+    "note": "Scaled 23x from prior arcs; fresh-record dominated diet.",
+    "seed": 613117,
+    "source": "/mnt/nvme1n1/erikg/sft/e97-4b-smoltalk2-admitted-v1"
+  },
+  "data_world_size": 8,
+  "declared_cohorts": [
+    "compositional-rehearsal",
+    "conversation-rehearsal",
+    "cumulative-recovery-rehearsal",
+    "grounded-authored-rehearsal",
+    "instruction-rehearsal",
+    "live-aligned-rehearsal",
+    "longcopy-rehearsal",
+    "loopbreak-rehearsal",
+    "openhands-execution-rehearsal",
+    "pi-native-curriculum",
+    "pointerchase-rehearsal",
+    "representation-bridge-rehearsal"
+  ],
+  "evidence_basis": {
+    "correction_cohort_removed": "v2 (Stage-B pass) had no correction cohort; its 24% addition correlates with the Stage-B correct-action slip 10->9 via generation_budget overruns; removed for the arc, authored concise rehearsal restored to ~24%",
+    "data_scan": "57 of 63 selected OpenHands rehearsal records contain non-adjacent repeated identical calls (110 execute_bash, 51 str_replace_editor) but zero adjacent identical-call runs; the loop is an amplified retry prior, not a taught adjacency",
+    "design_response": "OpenHands share reduced to ~21%; grounded authored concise-turn rehearsal added at ~24%; Pi-native subset focused on no-tool-finish and routing families",
+    "diagnosis": "over-calling on no-tool-finish cases (copy/bind opened with ffgrep/fffind) and turn-budget exhaustion on concise recovery families; both trace to OpenHands-style exposure at 38% of targets",
+    "lookup_forensics": "fresh-lookup-0001-world-1: the model viewed the options file correctly, ran a quoting-broken extraction one-liner that failed, then finished with the traceback despite holding the correct observed value in context",
+    "pointer_chase_diagnosis": "The passing parent invents a plausible sibling filename (catalog.json), reads a pointer record inside it, and follows active_path to the real file; the v4 family taught a stated alternate and a Pi-surface fuzzy search, neither matching this two-hop inventive pointer chase, at only 1.1% target dose",
+    "pool_audit": "OpenHands 5,533 eligible records/279M tokens (was using 63); SmolTalk2 620K/801M (was using 421); instruction-mix-v2 46M targets, compositional-retention 7.4M, cumulative-recovery 9.3M, live-aligned 2.4M -- all previously unused",
+    "soup": "two-sibling FP32 soup preserved both gains but not the union; Stage-B 11/14, 8/14",
+    "v1_dual_gate": "repair 63/96 execution with prior-regression 5/16 and Stage-B 13/14 valid but 8/14 correct actions; audit b936452b84c5af7edffab72ba4e2cf4824ca5d37b1a5307aff06b230f17ef7ff",
+    "v2_dual_gate": "Stage-B gate PASSED first time (12/14, 10/14; audit 7ffc0e511c4869f3e745572b5cd6e90c1e0938cef1b170e2bbd96d9077cf64b4); execution 62/96 with prior-regression 5/16",
+    "v2_forensics": "all four failing recovery cases repeat the identical failed str_replace_editor call until turn budget; error-loop-breaking pattern from grounding-correction training resurfaced",
+    "v3_dual_gate": "execution 66/96 over threshold and prior-fresh restored, but Stage-B correct actions 9/14 and regression-recovery still looping (audit 7bbe29df00e9fdb0fd435d8160956b6887c1509eee43f87c56f30ffddfe24226)",
+    "v4_dual_gate": "execution 66/96 with transfer 10/16 and prior-fresh 15/16 but all four regression-recovery cases still loop identically; Stage-B 13/14 valid (best) with 9/14 correct including four generation_budget overruns; audits 24ed9b1b8e749e0e9892fcae6616722633ab336b78aa90f2c636b2492de88df6 and 83ac88dea2c5145e22aa335bd847ab195d530ff2db2402de4e9a13cd4bc05448",
+    "v4_response": "240/240 verified loopbreak records collected one-shot with authentic tool errors; zero protected-panel entity collisions",
+    "v5_dual_gate": "Stage-B PASSED 14/14 valid 11/14 correct (best ever); execution 70/96 above parent 67/96 with prior-regression 11/16 (loop broken) but prior-fresh 15/16 and conversation-retention window failed (1.841 vs 1.72); audits a01622abcaa2edc7bb126b54d6827d47bb08b7bf5ac84cb228ef652fa2384bf0, 33538ee5794e716cb158a6f3adc5cee6c8fc01aeb6b7db5148a60b09ab39a726, 42849311bf476a9c42738a347393a263afdb84779e42388a2e0b819dc3447f05",
+    "v5_response": "240/240 verified pointer-chase records collected one-shot (880 real calls, 240 authentic ENOENT errors, 34,096 supervised targets, audit 3e6bb8cfb264d47eb88669132e5e8f17f5cb64b4335d20675c7d4b5805471580); zero protected-panel collisions; cohort mix restores the v2 Stage-B-winning balance (bridge ~49%, openhands ~20%, authored ~24%)",
+    "v5_retention_curve": "conversation NLL: u32 1.5958, u64 1.6355, u96 1.6932, u128 1.8411 vs parent 1.5716 and window ~1.72; probe 0ba343eed839d056aeae8ee7971904b11937ad1e8bad78a5a76d8cec03623480",
+    "v6_response": "Fresh SmolTalk2 conversation-rehearsal cohort at 20.9% of targets (421 records, budget 420000, seed 613117); bridge rehearsal retained in full (849K targets); OpenHands reduced to 13.9% (v4-level, which scored 66/96 with the loop broken only later); authored 17.4%; pointer-chase retained (it broke the loop at v5 u128).",
+    "v6_result": "u96 d8146498 passed the full frozen dual gate (promoted: receipt 2c96b03a0369abaaba88ddb91826996e6d580d5be6edb0829a02dda9dde3f237); u128 b61dfb54 failed on Stage-B gate-rerun 11/9 (copy-32768 flipped valid->invalid between runs) and prior-fresh 15/16",
+    "v7_response": "150/150 verified tool-error-finish-recovery records (audit 19a868fa7764d925a3a47b90649b3a8db7f1b59e5a3ecb643168dc4d419635de) and 180/180 verified long-delay-copy records at the 1K-32K delay tiers (audit a2db00aea3aaaaea228da64d1ffbcaf4c1c56288e632da3580c34ef942c905ac); zero exact-entity collisions with protected panels",
+    "v7_result": "Arc stopped fail-closed at segment 3: conv 1.671/1.725/1.806 (window ~1.72) -- parent headroom exhausted; Stage-B recovered 10/8 -> 12/10 and longcopy fixed copy-32768 at u64; checkpoints retained",
+    "v8_response": "v6 recipe from bridge parent with conversation seed 613117 (the slice that held the window through v6 full arc) plus extracterror (150 records) and longcopy (180 records) targeted families",
+    "v8_result": "in flight; Stage-B curve dominated by v6 at both measured junctures (10/7 u32, 11/8 u64); retention held (1.569/1.609). v8 concludes at segment 3 with full evidence; its antidote families are carried into the wide arc at full scale",
+    "v9_response": "100M-token preparation, 160,738 records, 38M targets, 12 cohorts, 1,632 packs; window-coverage floor 2% / window 4"
+  },
+  "identity_bindings": [
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/representation-bridge-v1-train/checkpoints/checkpoint_agent_sft_u000032_loss_0.5302.pt",
+      "9b78628d47c48c304c14de50399fe1853d8c83386c7cf5d9bd4a0e878bf679fa"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-repair9-wide-preparation-v1/manifest.json",
+      "47944cd589261ed67ed60faf7c9080d745e14485c51d67de99ae95ac3028e7c9"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-repair9-wide-preparation-v1/packs/manifest.json",
+      "b7da64bc647e922a44358f1b22ee01aeff2162460a24e56b06d06c30bbe4c93e"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-repair9-wide-preparation-v1/schedule-proposal.json",
+      "37737749a22e71cc94e099bdc45ee80c4a7f34e5ba7a3b951d373bac6f0752b2"
+    ],
+    [
+      "configs/pi/e97-active-tool-surface-v1.json",
+      "55421905438806223414d96a4e64f1a6ae64772afdb1fbc67fbbfb77e8d5d908"
+    ],
+    [
+      "/mnt/nvme1n1/erikg/sft/e97-4b-smoltalk2-admitted-v1/manifest.json",
+      "d64f51abc615c097910900ffa7fc88f020ae5567b89958f607008078c271c7f6"
+    ],
+    [
+      "/mnt/nvme1n1/erikg/sft/e97-4b-pi-instruction-mix-v2/manifest.json",
+      "40d1650459c01756e0772a6058c100029c3b6e3a87aa68947515972ffaa6b1c5"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-extracterror-collection-v1/collect/candidate-authority/manifest.json",
+      "08817eb42ff835523cc62bc13208053daeb79479a4bb9a585f1f427b53659aa4"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-longcopy-collection-v1/collect/candidate-authority/manifest.json",
+      "27a7f97d64a1589f98e3ce851344aac51e4c7608b2fa86df6c92955a52e79536"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-pointerchase-collection-v1/collect/candidate-authority/manifest.json",
+      "f2361a86c3909083c93be6702f12ad8323844a2390069d368ebec92d52e0247e"
+    ],
+    [
+      "/mnt/nvme1n1/erikg/sft/e97-4b-pi-compositional-retention-mix-v1/manifest.json",
+      "79e7981077fc387c3e3759728ddd0f9e1ac16f687c628542e8313fb735c4cfb7"
+    ],
+    [
+      "/mnt/nvme1n1/erikg/sft/e97-4b-pi-cumulative-recovery-mix-v1/manifest.json",
+      "a17648481e5cf1183ea640b873d70e2b1c36ad3e976d0c4b4a2f19af54fe600f"
+    ],
+    [
+      "/mnt/nvme1n1/erikg/sft/e97-4b-pi-live-aligned-all-assistant-v1/manifest.json",
+      "4a1cf86f9089cc3f2f79884f845d26d487d88b20fb32b589a8095d4824bc6a20"
+    ]
+  ],
+  "loopbreak_rehearsal_source": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-pointerchase-collection-v1/collect/candidate-authority/manifest.json",
+  "loopbreak_source_sha256": "f2361a86c3909083c93be6702f12ad8323844a2390069d368ebec92d52e0247e",
+  "new_rl_updates": 0,
+  "openhands_rehearsal_records": 63,
+  "openhands_rehearsal_seed": 742297,
+  "openhands_rehearsal_source": "/mnt/nvme2n1/erikg/sft/e97-4b-open-swe-source-native-fulltraj-v1",
+  "openhands_rehearsal_source_sha256": "255b02f3b3bbdc85eb15a89d22e7ff2c4bf69f151c2dfb5941a22468711993f5",
+  "openhands_rehearsal_target_budget": 2600000,
+  "operator_internal_training_authorized": false,
+  "optimizer_updates_authorized": 0,
+  "overlap_audit_sha256": "9c104d73b104f4d29a83ca1472b66ef2df681e020a2b9688eb4f87c6ef814a78",
+  "pack_manifest_sha256": "b7da64bc647e922a44358f1b22ee01aeff2162460a24e56b06d06c30bbe4c93e",
+  "packing_authorized": false,
+  "parent_checkpoint": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/representation-bridge-v1-train/checkpoints/checkpoint_agent_sft_u000032_loss_0.5302.pt",
+  "parent_checkpoint_sha256": "9b78628d47c48c304c14de50399fe1853d8c83386c7cf5d9bd4a0e878bf679fa",
+  "per_update_cohort_stratification": {
+    "min_target_fraction": 0.02,
+    "proposed_updates": 32,
+    "scheme": "window-coverage",
+    "window_updates": 4
+  },
+  "pi_native_family_filter": [
+    "copy",
+    "binding",
+    "path-copy",
+    "process-lifecycle",
+    "repo-edit-error-recovery",
+    "repo-symbol-edit-discovery",
+    "source-check",
+    "shell-error-recovery",
+    "repo-fuzzy-path",
+    "repo-explicit-read",
+    "repo-content-search"
+  ],
+  "pi_version": "0.85.1",
+  "preparation_root": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-repair9-wide-preparation-v1",
+  "proposed_behavioral_gate": {
+    "composition": ">= 4/16",
+    "openhands_execution_overall": ">= 64/96",
+    "openhands_fresh": ">= 30/32",
+    "openhands_prior_fresh": "= 16/16",
+    "openhands_prior_regression": ">= 10/16",
+    "openhands_transfer": ">= 5/16",
+    "pi_native_stage_b": "valid first frame >= 12/14 and correct first action >= 10/14",
+    "retention": "both saved-x/train-y retention gates pass"
+  },
+  "proposed_learning_rate": 1e-05,
+  "proposed_updates": 32,
+  "proposed_weight_mode": "train",
+  "purpose": "Repair-v9 WIDE ARC segment 1 of 8: the data-scale breakout. ~100M tokens / 38M supervised targets (5x any prior arc), 12 cohorts including four previously-unused admitted pools (instruction-mix 10M targets, compositional-retention 7.4M, cumulative-recovery 4.6M, live-aligned 2.4M), OpenHands scaled to 2.6M targets (~600 full trajectories), SmolTalk2 at 9.7M targets. 256 updates across 8 chained segments from the bridge parent (full retention headroom). Near-zero record repetition by construction (each segment ~25K unique records). Goal: clear the frozen thresholds with decisive margin and break the single-case optimization regime.",
+  "rehearsal_source": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/representation-bridge-v1-data/authority",
+  "rehearsal_source_sha256": "a21dba6f80e58e87ea838a98018b40650decebed3cf4b0f98dacdb750520469d",
+  "sampler_key": 1200063,
+  "sampler_mode": "epoch-permutation",
+  "schedule_selection": "Training-data-only screen over keys 1200000..1399999 under the window-coverage rule: cohorts with >=2% of targets in every update, minor cohorts in every 4-update window. Arc keys segment1..8 = 1200063, 1200218, 1200240, 1200248, 1200561, 1200635, 1200769, 1200820.",
+  "schedule_sha256": "37737749a22e71cc94e099bdc45ee80c4a7f34e5ba7a3b951d373bac6f0752b2",
+  "scheduled_assistant_targets": 5966374,
+  "scheduled_input_tokens": 15454664,
+  "scheduled_source_targets": {
+    "compositional-rehearsal": 1158144,
+    "conversation-rehearsal": 1537413,
+    "cumulative-recovery-rehearsal": 691936,
+    "grounded-authored-rehearsal": 61372,
+    "instruction-rehearsal": 1502342,
+    "live-aligned-rehearsal": 365579,
+    "longcopy-rehearsal": 1288,
+    "loopbreak-rehearsal": 1055,
+    "openhands-execution-rehearsal": 496167,
+    "pi-native-curriculum": 11663,
+    "pointerchase-rehearsal": 4416,
+    "representation-bridge-rehearsal": 134999
+  },
+  "scheduled_source_unique_records": {
+    "compositional-rehearsal": 6166,
+    "conversation-rehearsal": 1380,
+    "cumulative-recovery-rehearsal": 4551,
+    "grounded-authored-rehearsal": 172,
+    "instruction-rehearsal": 8387,
+    "live-aligned-rehearsal": 3033,
+    "longcopy-rehearsal": 32,
+    "loopbreak-rehearsal": 21,
+    "openhands-execution-rehearsal": 66,
+    "pi-native-curriculum": 124,
+    "pointerchase-rehearsal": 31,
+    "representation-bridge-rehearsal": 331
+  },
+  "scheduled_unique_packs": 256,
+  "scheduled_unique_records": 24294,
+  "schema": "emender-e97-pi-native-repair9-wide-arc-segment1-proposal-v1",
+  "selected_authority_sha256": "8cf83db8d608f6af74bbd2cbe60206ef435fb3003ab2bb63f4eadab17eb05562",
+  "selected_curriculum_root": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-curriculum-2000-selected-v1/candidate-authority",
+  "selection_audit_sha256": "de977726f0758206ee9defe9c3687d2485e3ba2b80eb9ef9ceafb065c5f6646b",
+  "source_commit": "7a84257b",
+  "stage_a_policy": "Do not rerun or reinterpret the completed 0/12 Stage-A episodes.",
+  "stage_b_panel_sha256": "07cc1d5843ee4060503ecdcf7d2bb813dce51fa0aeba89df367b7696e47994ef",
+  "stage_b_policy": "Remain blocked until this exact proposal is separately authorized, trained, checkpointed, and independently audited.",
+  "status": "frozen-proposal-not-authorized",
+  "threshold_changes_authorized": false,
+  "tool_manifest_sha256": "55421905438806223414d96a4e64f1a6ae64772afdb1fbc67fbbfb77e8d5d908"
+}
