@@ -836,3 +836,34 @@ CUDA graphs, optimizer overlap); deferred behind the wide arc. The wide arc
 trains at 72s/update, 1,024 updates, chunk 2048/16384, trainer 946bda6c;
 per-step config deviation from prior arcs (b8ee034f, chunk 128/4096) is
 documented here and qualified by the loss-matching evidence above.
+
+## Repair-v9 full-arc segment 1: fail-closed stop — OpenHands-protocol capture
+
+Segment 1 (128 updates, 58.3M tokens, key 1400002, checkpoint
+426fe4db7028eaa60f462a32de8bdd643c932393aa8ee8f32136d1cb6e077c00,
+training audit 729f8ee2... PASS, final loss 1.0069) trained cleanly but the
+u128 juncture Stage-B panel collapsed: 3/14 valid first frames, 3/14 correct
+(vs parent 12/14 valid). Decoded emissions show the cause: the model answers
+Pi-native panel prompts in the raw OpenHands agent protocol
+("Analysis: null / Commentary: null / Think: null / Action:
+str_replace_editor / Arguments: {...}") including hallucinated SWE-bench
+workspace paths. Sampling the full prep confirms the poison: the
+openhands-execution-rehearsal cohort (2432 records) carries the full
+Analysis/Commentary/Think scaffold in 54/60 sampled records, str_replace_editor
+in 49/60, and the exact "Analysis: null" degenerate variant in 22/60; the
+grounded-authored (21/60) and representation-bridge (21/60) cohorts carry it
+at lower density. At 17.1% of targets the OH protocol was learned as the
+dominant workspace-task behavior, clobbering Pi-native first-frame emission.
+Root cause: full-pool OH ingestion rendered records with raw OH-protocol
+content embedded; prior arcs survived because OH entered only as 63
+hand-screened records. The conversation probe at this juncture was mis-bound
+(my staging error: the panel.json copied from v8 carries embedded checkpoint
+bindings and evaluated v8-u96, not v9; no v9 conversation reading was taken —
+probe panels must be regenerated per checkpoint). Arc stopped fail-closed at
+segment 1; segment 2 not launched. All v9 seg-1 artifacts retained as
+evidence. Remediation under operator review: (A) translate the OH cohort to
+the Pi-native eleven-tool format (str_replace_editor.view->read,
+.edit->edit, execute_bash->bash; strip/translate Analysis/Commentary/Think
+scaffolds), scrub residual protocol text from all cohorts, re-prep, re-screen
+keys, restart the arc; or (B) drop the OH cohort from the mixture (loses the
+richest tool-dense data).
