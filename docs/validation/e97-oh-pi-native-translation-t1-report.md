@@ -106,9 +106,11 @@ replay-verified trajectories.
 
 ## Disk usage
 
-- Work dir total ≈ 6.3 GB (candidates 1.6G, repo-cache ~2G, collection ~1.4G,
-  think-export 217M, replay verified ~700M, meta/logs remainder).
-- Pools/downloads: swe-rebench metadata 485M; no GPU used at any point.
+- Work dir total ≈ 43 GB (repo-cache 39G — 1,122 bare clones, reusable for T2/T3
+  and any future re-verification; candidates 1.6G; sealed collection 1.1G;
+  replay verified 805M; swe-rebench metadata 415M; think-export 217M;
+  model-patches oracle cache 24M).
+- No GPU used at any point.
 
 ## Collection location
 
