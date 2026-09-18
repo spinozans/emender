@@ -691,3 +691,60 @@ panel world) was replaced by the rewritten model card; prior releases
 remain as superseded provenance. Weights verified byte-identical after
 upload (8,478,128,544 bytes). This is a testing artifact, not a
 promotion; the dual gate remains the only promotion path.
+
+## REPAIR-V6 ARC: THE FROZEN DUAL GATE PASSED FOR THE FIRST TIME
+
+The operator authorized the v6 cycle. The v6 arc kept every v5 cohort and
+added a fresh production-admitted SmolTalk2 conversation-rehearsal cohort
+(421 records, 20.9% of targets) to fix the conversation-retention
+overfitting that killed v5. Preparation authority
+`eef2213499ee997b7081f06c84b2cd46ee5a9a2ef2a15720df2737ab369d7beb`, packs
+`6ab022abe010fe47d54a2046bb2a5d4e8e593df64aca5181331e7bc82d51867f`
+(357 packs). Four chained 32-update segments, screened stratified keys
+770233/770241/770402/770759, admissions nonces 24836/2416/16190/48551,
+proposals `9abba5fc`/`7993f082`/`8371289d`/`80fdc466`, training audits
+`94a6ef9c`/`a7bf9befe`/`03a4f0ed`/`15c6cfbe`, loss
+0.6969 -> 0.6273 -> 0.5059 -> 0.4412, checkpoints
+`d03e34d3`/`d5c82ec1`/`d8146498`/`b61dfb54`. Dual cheap-tier juncture
+detectors (Stage-B + conversation NLL probe) at every 32-update boundary:
+u32 11/8 + 1.574; u64 12/10 + 1.583; u96 12/10 + 1.654; u128 12/10 + 1.632.
+The conversation window held at EVERY juncture (v5 broke it at u128).
+
+u128 full gate (audit
+`a66c9566e12b03f9667acd781cb9ddc6f640e2d5f39620b34565ba156ae90899`):
+execution 71/96 best-ever (prior-regression 12/16, loop stays broken)
+but prior-fresh 15/16 fails on the persistent lookup case
+(fresh-lookup-0001-world-1, failing with a different mode than v5), and
+the gate-protocol Stage-B rerun measured 11/9 -- exactly one case
+(copy-32768, the 32K exact copy at the generation edge) flipped
+valid->invalid relative to the same checkpoint's juncture measurement
+30 minutes earlier, exposing a run-to-run noise band straddling the
+frozen 12/10 threshold. Learning leg fully passed at u128 (conv NLL
+1.6324 within window -- the v5 killer is fixed; dev NLL 0.954 within
+window).
+
+u96 (`d81464982c3ebc0d72769a87e079068bf535d6ca2010185dc1bb03ce264b8f5b`)
+FULL FROZEN DUAL GATE PASSED (eval
+`pi-native-repair6-arc-u96-dual-gate-v1`; execution summary
+`c41fa94423dfcd632baba6840b1c2df86f43003c6d8824f3816e54a7aa1ca821`,
+learning summary
+`8beb9c0cf2888635f5959a8b87453300d5074b45ce3fb53b92ec62452ba98734`,
+stage-b audit
+`795884d58c9cfe99bcfa28ff6f8de004801eb447542cee7ed639e2a35aa0a003`,
+status qualified-gate-passed-not-promoted):
+- Execution 71/96 (ties best-ever; parent 67): fresh 32/32 (>=30),
+  prior-fresh 16/16 (=16 required), prior-regression 11/16 (>=10),
+  transfer 8/16 (>=5), composition 4/16 (>=4) -- ALL FLOORS PASS,
+  including the persistent lookup case.
+- Stage-B 12/14 valid (>=12), 10/14 correct (>=10) -- PASSED, and the
+  gate-protocol run reproduced the juncture measurement exactly.
+- Learning: fitting 2/2, development 2/2, tool retention 1.0,
+  conversation NLL 1.6544/1.6510 within the +0.15 window, native
+  development NLL 0.9593 within window -- x and y both pass.
+
+Both legs of the frozen dual gate pass simultaneously for the first
+time in the programme's history. Promotion requires explicit operator
+authorization; the u128 arc-end checkpoint is retained with its
+near-miss evidence, as are all four segment checkpoints and every
+audit chain. RL, repository competence, and production deployment
+qualification remain separate later gates.
