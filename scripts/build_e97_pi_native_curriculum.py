@@ -137,6 +137,42 @@ def make_pointerchase_cases(n):
  if len({c['id'] for c in cases})!=n:raise ValueError('case identity')
  return cases,{'pointerchase':n}
 
+def extracterror_case(i):
+ cid=case_id('extracterror',i);tag=opaque(cid,10);kind=i%3;files={};expected={}
+ value='XVAL_'+opaque(cid,14);decoys=['XVAL_'+opaque(cid+'x',14),('XVAL_'+opaque(cid+'y',14))]
+ if kind==0:
+  path=f'config/options_{tag}.json'
+  files[path]=json.dumps({'chosen':'silver','options':{'amber':decoys[0],'silver':value,'violet':decoys[1]}})+'\n'
+  prompt=f'Task label {tag}. Read {path} and extract the value selected by the chosen key, then finish with exactly that value. If a helper command fails, never finish with an error; recover from what you already observed.'
+  steps=[action('read',{'path':path}),action('bash',{'command':f"python3 -c 'import json; d=json.load(open({path!r})); print(d['options'[d['chosen']])'"}),finish(value)]
+ elif kind==1:
+  path=f'data/state_{tag}.json';inner=f'src/live_{tag}.json'
+  files[path]=json.dumps({'active_path':inner})+'\n';files[inner]=value+'\n'
+  prompt=f'Task label {tag}. Read {path}, follow the pointer it names, and finish with exactly the value at the current location. If a helper command fails, never finish with an error; recover from what you already observed.'
+  steps=[action('read',{'path':path}),action('bash',{'command':f"python3 -c 'import json; d=json.load(open({path!r})); print(json.load(open(d[\"active_path\"])))'"}),action('read',{'path':inner}),finish(value)]
+ else:
+  path=f'records/rows_{tag}.json'
+  files[path]=json.dumps([{'id':0,'v':decoys[0]},{'id':1,'v':value},{'id':2,'v':decoys[1]}])+'\n'
+  prompt=f'Task label {tag}. Read {path} and finish with exactly the value of the row whose id is 1. If a helper command fails, never finish with an error; recover from what you already observed.'
+  steps=[action('read',{'path':path}),action('bash',{'command':f"python3 -c 'import json; rows=json.load(open({path!r})); print([r['v' for r in rows if r['id']==1][0])'"}),finish(value)]
+ expected={**files,**expected};return dict(id=cid,category='extracterror',family='tool-error-finish-recovery',prompt=prompt,files=files,expected_files=expected,steps=steps,supervise_from=2,requires_error=True,repository_discovery=False)
+
+def make_extracterror_cases(n):
+ cases=[extracterror_case(i) for i in range(n)]
+ if len({c['id'] for c in cases})!=n:raise ValueError('case identity')
+ return cases,{'extracterror':n}
+
+def longcopy_case(i):
+ cid=case_id('longcopy',i);distance=(1024,4096,8192,16384,32768)[i%5];pad=filler(distance,cid)
+ value='COPY_'+opaque(cid,20)
+ prompt=f'Remember exactly {value}.{pad}\nFinish with exactly the remembered value and no other text.'
+ return dict(id=cid,category='exact',family='long-delay-copy',prompt=prompt,files={},expected_files={},steps=[finish(value)],supervise_from=0,requires_error=False,repository_discovery=False,delay_tokens=distance)
+
+def make_longcopy_cases(n):
+ cases=[longcopy_case(i) for i in range(n)]
+ if len({c['id'] for c in cases})!=n:raise ValueError('case identity')
+ return cases,{'longcopy':n}
+
 def make_cases(n,port):
  if n<20 or n%20:raise ValueError('records must be a multiple of20')
  counts={'local':7*n//20,'web':5*n//20,'exact':5*n//20};counts['recovery']=n-sum(counts.values());cases=[]
@@ -235,8 +271,11 @@ def freeze(args):
  minimum=args.minimum_verified_records if args.minimum_verified_records is not None else args.records
  if not 1<=minimum<=args.records:raise ValueError('minimum verified records')
  mix=getattr(args,'mix','standard')
- if mix in ('loopbreak','pointerchase'):
-  cases,counts=make_loopbreak_cases(args.records) if mix=='loopbreak' else make_pointerchase_cases(args.records)
+ if mix in ('loopbreak','pointerchase','extracterror','longcopy'):
+  if mix=='loopbreak':cases,counts=make_loopbreak_cases(args.records)
+  elif mix=='pointerchase':cases,counts=make_pointerchase_cases(args.records)
+  elif mix=='extracterror':cases,counts=make_extracterror_cases(args.records)
+  else:cases,counts=make_longcopy_cases(args.records)
  elif mix=='standard':cases,counts=make_cases(args.records,args.port)
  else:raise ValueError('unknown mix')
  args.output.mkdir(parents=True,mode=0o700,exist_ok=False);plan={'schema':'emender-e97-pi-native-curriculum-plan-v1','seed':SEED,'records':args.records,'minimum_verified_records':minimum,'automatic_retry':False,'mix_counts':counts,'port':args.port,'system':SYSTEM,'tool_manifest':str(args.manifest.resolve()),'tool_manifest_sha256':sha(args.manifest),'source_commit':subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),'authority_files':authority_files(),'pi_bin':str(args.pi_bin.resolve()),'pi_version':subprocess.check_output([args.pi_bin,'--version'],text=True).strip(),'cases':cases,'model_generations':0,'optimizer_updates':0,'training_eligible':False,'packing_authorized':False};publish(args.output/'plan-private.json',plan);print('PI_NATIVE_CURRICULUM_PLAN',args.records,minimum,sha(args.output/'plan-private.json'))
@@ -256,5 +295,5 @@ def collect(args):
  if len({r['sequence_sha256'] for r in rows})!=len(rows):raise ValueError('dedup')
  write_authority(rows,{**plan,'plan_sha256':args.plan_sha},args.output);counts=Counter(r['category'] for r in rows);families=Counter(r['family'] for r in rows);summary={'schema':'emender-e97-pi-native-curriculum-summary-v1','status':'verified-candidates-not-admitted','attempted_records':plan['records'],'records':len(rows),'rejected_records':len(rejections),'automatic_retries':0,'minimum_verified_records':plan['minimum_verified_records'],'mix_counts':dict(counts),'families':dict(families),'repository_discovery_records':sum(r['repository_discovery'] for r in rows),'native_calls':sum(r['calls'] for r in rows),'authentic_tool_errors':sum(r['errors'] for r in rows),'assistant_targets':sum(r['targets'] for r in rows),'deduplicated_sequences':len(rows),'model_generations':0,'optimizer_updates':0,'training_eligible':False,'packing_authorized':False,'checkpoint_promotion':False,'authority_sha256':sha(args.output/'candidate-authority/manifest.json')};publish(args.output/'summary.json',summary);print('PI_NATIVE_CURRICULUM_COLLECTED',len(rows),len(rejections),summary['native_calls'],summary['assistant_targets'])
 def main():
- os.umask(0o077);signal.signal(signal.SIGTERM,lambda s,f:(_ for _ in ()).throw(TimeoutError('interrupted')));p=argparse.ArgumentParser();sp=p.add_subparsers(dest='command',required=True);f=sp.add_parser('freeze');f.add_argument('--manifest',type=Path,required=True);f.add_argument('--records',type=int,required=True);f.add_argument('--minimum-verified-records',type=int);f.add_argument('--mix',choices=('standard','loopbreak','pointerchase'),default='standard');f.add_argument('--port',type=int,required=True);f.add_argument('--pi-bin',type=Path,required=True);f.add_argument('--output',type=Path,required=True);c=sp.add_parser('collect');c.add_argument('--plan',type=Path,required=True);c.add_argument('--plan-sha',required=True);c.add_argument('--pi-bin',type=Path,required=True);c.add_argument('--output',type=Path,required=True);a=p.parse_args();freeze(a) if a.command=='freeze' else collect(a)
+ os.umask(0o077);signal.signal(signal.SIGTERM,lambda s,f:(_ for _ in ()).throw(TimeoutError('interrupted')));p=argparse.ArgumentParser();sp=p.add_subparsers(dest='command',required=True);f=sp.add_parser('freeze');f.add_argument('--manifest',type=Path,required=True);f.add_argument('--records',type=int,required=True);f.add_argument('--minimum-verified-records',type=int);f.add_argument('--mix',choices=('standard','loopbreak','pointerchase','extracterror','longcopy'),default='standard');f.add_argument('--port',type=int,required=True);f.add_argument('--pi-bin',type=Path,required=True);f.add_argument('--output',type=Path,required=True);c=sp.add_parser('collect');c.add_argument('--plan',type=Path,required=True);c.add_argument('--plan-sha',required=True);c.add_argument('--pi-bin',type=Path,required=True);c.add_argument('--output',type=Path,required=True);a=p.parse_args();freeze(a) if a.command=='freeze' else collect(a)
 if __name__=='__main__':main()

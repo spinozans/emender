@@ -1,4 +1,5 @@
 import hashlib
+from scripts.build_e97_pi_native_curriculum import make_extracterror_cases,make_longcopy_cases
 from scripts.build_e97_pi_native_curriculum import make_pointerchase_cases
 import json
 from pathlib import Path
@@ -63,3 +64,26 @@ def test_pointerchase_family_shapes_and_invariants():
   assert not c['repository_discovery'] and not c.get('training_eligible',False)
  names={c['steps'][1]['arguments'].get('path') or c['steps'][1]['name'] for c in cases}
  assert len({c['id'] for c in make_pointerchase_cases(3)[0]})==3
+
+def test_extracterror_family_shapes_and_invariants():
+ cases,counts=make_extracterror_cases(9)
+ assert counts=={'extracterror':9}
+ for c in cases:
+  assert c['family']=='tool-error-finish-recovery' and c['requires_error'] and c['supervise_from']==2
+  assert c['steps'][0]['name']=='read'
+  assert c['steps'][1]['name']=='bash'
+  assert c['steps'][-1]['name']=='finish'
+  assert 'never finish with an error' in c['prompt']
+  # the correct value must be observable in the read result (file contents include it)
+  assert any(c['steps'][-1]['arguments']['message'] in v for v in c['files'].values())
+
+def test_longcopy_family_shapes_and_invariants():
+ cases,counts=make_longcopy_cases(10)
+ assert counts=={'longcopy':10}
+ tiers={c['delay_tokens'] for c in cases}
+ assert tiers=={1024,4096,8192,16384,32768}
+ for c in cases:
+  assert c['family']=='long-delay-copy' and not c['requires_error'] and c['supervise_from']==0
+  assert len(c['steps'])==1 and c['steps'][0]['name']=='finish'
+  assert not c['files'] and not c['repository_discovery']
+  assert c['steps'][0]['arguments']['message'].startswith('COPY_')
