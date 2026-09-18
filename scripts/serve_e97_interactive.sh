@@ -36,6 +36,8 @@ ARGS_JSON=${E97_SERVE_ARGS_JSON:-/mnt/nvme1n1/erikg/diloco_8gpu/e97_4b_frontier_
 PORT=${E97_SERVE_PORT:-8797}
 LOG_DIR=${E97_SERVE_LOG_DIR:-/tmp/e97-interactive-serve}
 PID_FILE=$LOG_DIR/supervisor.pid
+MAX_OUTPUT_TOKENS=${E97_SERVE_MAX_OUTPUT_TOKENS:-512}
+MAX_SESSIONS=${E97_SERVE_MAX_SESSIONS:-4}
 
 cmd=${1:-start}
 case "$cmd" in
