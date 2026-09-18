@@ -6,7 +6,7 @@ config of `E88FLAHybrid`, `use_split_edit=True`), `ndm/models/ladder_lm.py`
 (`LadderLM` stack), production kernel `ndm/triton/e88_triton_forward.py`
 (SPLIT_EDIT branch). All findings verified against the promoted checkpoint
 `pi-native-repair6-arc-segment3-training-v1/checkpoints/checkpoint_agent_sft_u000032_loss_0.5059.pt`
-(SHA `d8146498…`, 8,090,809,344 bytes on disk, all 237 tensors bf16).
+(SHA `d8146498…`, .pt file 32.4 GB including schedule-free optimizer state; model weights ≈8 GB bf16, all 237 tensors bf16).
 
 ## 1. Verified op-graph (implementer-ready)
 
