@@ -87,3 +87,56 @@ def test_longcopy_family_shapes_and_invariants():
   assert len(c['steps'])==1 and c['steps'][0]['name']=='finish'
   assert not c['files'] and not c['repository_discovery']
   assert c['steps'][0]['arguments']['message'].startswith('COPY_')
+
+def test_reasoning_family_shapes_and_grounding():
+ import importlib
+ mod=importlib.import_module('scripts.build_e97_pi_native_curriculum')
+ cases,counts=mod.make_reasoning_cases(50)
+ assert counts=={'reasoning-compose':20,'reasoning-cross-file':20,'reasoning-recovery':10}
+ assert len({c['id'] for c in cases})==50
+ for c in cases:
+  assert not c['repository_discovery'] and c['steps'][-1]['name']=='finish'
+  assert c['family'] in ('reasoning-config-derive','reasoning-cross-file-compose','reasoning-recovery-compose')
+  assert (c['supervise_from']>0)==c['requires_error']
+  # every non-finish supervised step carries grounded, bounded analysis
+  for step in c['steps'][c['supervise_from']:]:
+   if step['name']=='finish':
+    assert 'analysis' not in step
+    continue
+   assert isinstance(step['analysis'],str) and step['analysis'].strip()
+   assert isinstance(step['commentary'],str) and step['commentary'].strip()
+   # grounding: every required literal (observed values) appears in the analysis
+   assert all(x in step['analysis'] for x in step['analysis_requires']), (c['id'],step)
+   # grounded content must actually exist in the authored workspace or step arguments
+   for x in step['analysis_requires']:
+    in_files=any(x in v for v in c['files'].values())
+    in_args=x in json.dumps(step['arguments'])
+    assert in_files or in_args, (c['id'],x)
+  # failure prefixes (recovery + observe-failing-checker variants) are masked
+  if c['family']=='reasoning-recovery-compose':
+   assert c['steps'][0]['name']=='bash' and c['supervise_from']==1
+   assert 'never repeat a failed call' in c['prompt']
+  if c['family']=='reasoning-config-derive':
+   assert c['supervise_from']==2 and c['steps'][1]['name']=='bash'
+   assert 'observe the failing checker' in c['prompt']
+ # determinism
+ again,_=mod.make_reasoning_cases(50)
+ assert [c['id'] for c in cases]==[c['id'] for c in again]
+
+def test_reasoning_frames_are_canonical_with_analysis():
+ import importlib,tiktoken
+ from scripts.e97_pi_native_codec import parse_turn,validate_generated_turn
+ mod=importlib.import_module('scripts.build_e97_pi_native_curriculum')
+ manifest=json.load(open('configs/pi/e97-active-tool-surface-v1.json'))
+ tools=manifest['model_visible_tools'];enc=tiktoken.get_encoding('p50k_base')
+ case=mod.make_reasoning_cases(5)[0][2]
+ for step in case['steps']:
+  if step['name']=='finish':continue
+  text=mod.frame(tools,step['name'],step['arguments'],step['commentary'],step['analysis'])
+  message=parse_turn(text)
+  assert message['reasoning_content']==step['analysis']
+  assert message['content']==step['commentary']
+  turn=validate_generated_turn(text,tools,enc)  # canonical + analysis_cap enforced
+  assert turn.text_sha256
+ # ungrounded analysis is rejected at collection time by the executor's contract
+ assert all(x in step.get('analysis','') for x in step.get('analysis_requires',[]))

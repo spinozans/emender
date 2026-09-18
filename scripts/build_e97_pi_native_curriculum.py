@@ -173,6 +173,82 @@ def make_longcopy_cases(n):
  if len({c['id'] for c in cases})!=n:raise ValueError('case identity')
  return cases,{'longcopy':n}
 
+def grounded(step,analysis,commentary,requires):
+ d=dict(step);d['analysis']=analysis;d['commentary']=commentary;d['analysis_requires']=requires;return d
+
+def reasoning_case(i):
+ cid=case_id('reasoning',i);tag=opaque(cid,10);kind=i%5;files={};expected={};prefix=0
+ if kind in (0,1):
+  port=8000+i*7+kind;path=f'config/app_{tag}.ini';src=f'src/greeter_{tag}.py';test=f'tests/test_greeter_{tag}.py'
+  files[path]=f'[service]\nport = {port}\n';files[src]='PORT = None\n\ndef greet():\n    return f"service-on-{PORT}"\n'
+  files[test]=f'import unittest,sys\nsys.path.insert(0,"src")\nfrom greeter_{tag} import PORT,greet\nclass T(unittest.TestCase):\n def test_port(self): self.assertEqual(PORT,{port})\n def test_greet(self): self.assertEqual(greet(),"service-on-{port}")\n'
+  expected[src]=files[src].replace('PORT = None',f'PORT = {port}')
+  steps=[grounded(action('read',{'path':path}),
+    f'The checker expects the service port, which lives in config, not in the source. Reading {path} first so the edit uses the real value instead of a guess.',
+    'Reading the config to learn the port.',['config']),
+   grounded(action('bash',{'command':f'python3 -m unittest {test}'}),
+    f'Before editing I run the unittest checker to observe the exact defect; with PORT still None it must fail, confirming the config value {port} is the only missing piece.',
+    'Running the checker to observe the defect.',['unittest']),
+   grounded(action('edit',{'path':src,'edits':[{'oldText':'PORT = None','newText':f'PORT = {port}'}]}),
+    f'config sets port={port}; replacing the None placeholder with the observed {port} satisfies both assertions without touching the checker.',
+    f'Wiring the observed port {port} into the source.',[str(port)]),
+   grounded(action('bash',{'command':f'python3 -m unittest {test}'}),
+    'Rerunning the same checker verifies the edit; finishing before a green run would be unverified.',
+    'Verifying the repair.',[]),
+   finish('done')]
+  prompt=f'Fix {src} so its checker {test} passes. The port must come from the config file, not from guessing; read the config, observe the failing checker, edit, and verify before finishing with exactly done.'
+  family='reasoning-config-derive';prefix=2
+ elif kind in (2,3):
+  a=120+i*11+kind;b=58+(i%23);total=a+b;data=f'data/inputs_{tag}.txt';report=f'reports/sum_{tag}.txt';index_md='INDEX.md'
+  files[data]=f'a = {a}\nb = {b}\n';files[index_md]='# Ledger\nReports appear here after they are written.\n'
+  expected[report]=f'sum = {total}\n';expected[index_md]=f'# Ledger\nReports appear here after they are written.\n- reports/sum_{tag}.txt\n'
+  steps=[grounded(action('read',{'path':data}),
+    f'The report value is derived from two inputs; reading {data} gives the operands, and everything later must quote the observed numbers.',
+    'Reading the operands.',['inputs_']),
+   grounded(action('bash',{'command':f'printf "%s\\n" $(({a}+{b}))'}),
+    f'Operands are {a} and {b}; computing the sum with bash instead of mental arithmetic makes the observation authoritative before anything is written.',
+    'Computing the sum from the observed operands.',[str(a),str(b)]),
+   grounded(action('write',{'path':report,'content':f'sum = {total}\n'}),
+    f'The observed sum is {total}; writing exactly that line to {report} keeps the report grounded in the computation.',
+    f'Writing the report with the observed sum {total}.',[str(total)]),
+   grounded(action('edit',{'path':index_md,'edits':[{'oldText':'Reports appear here after they are written.','newText':f'Reports appear here after they are written.\n- reports/sum_{tag}.txt'}]}),
+    f'The ledger must reference the new report; appending {report} to the index keeps it truthful.',
+    'Registering the report in the ledger.',[f'reports/sum_{tag}.txt']),
+   grounded(action('read',{'path':report}),
+    'Reading the written report back verifies the file state before finishing.',
+    'Reading the report back.',[]),
+   finish(f'sum = {total}')]
+  prompt=f'Read {data}, compute the sum of its two operands with bash, write a report {report} containing exactly "sum = <total>" on one line, register the report path in {index_md}, verify by reading it back, then finish with exactly the report line.'
+  family='reasoning-cross-file-compose'
+ else:
+  va='ALPHA_'+opaque(cid+':a',8);vb='BETA_'+opaque(cid+':b',8);fa=f'alpha_{tag}.txt';fb=f'beta/{tag}/beta.txt';composed=va+'::'+vb
+  files[fa]=va+'\n';files[fb]=vb+'\n'
+  steps=[grounded(action('bash',{'command':f'cat composed/{tag}.txt'}),
+    f'The composed value needs both tokens; the guessed path composed/{tag}.txt may not exist, and if it fails I must switch to search instead of repeating it.',
+    'Trying the composed path.',[]),
+   grounded(action('ffgrep',{'pattern':'ALPHA_'}),
+    'The direct path failed, so repeating it is prohibited; searching for the ALPHA_ marker locates the first token file.',
+    'Searching for the alpha token.',['ALPHA_']),
+   grounded(action('read',{'path':fa}),
+    f'The search hit names {fa}; reading that exact file yields the first token without trusting the hit alone.',
+    'Reading the alpha token.',[fa]),
+   grounded(action('ffgrep',{'pattern':'BETA_'}),
+    f'With the first token {va} observed, the same search-and-read discipline locates the second file via its BETA_ marker.',
+    'Searching for the beta token.',[va,'BETA_']),
+   grounded(action('read',{'path':fb}),
+    f'The second search hit names {fb}; reading it gives the second exact token, and both tokens are then observed, so the composed value can be finished verbatim.',
+    'Reading the beta token.',[fb]),
+   finish(composed)]
+  prompt=f'The value {composed[:4]}... is split across two token files in this workspace. Discover both tokens by search and reading (the direct composed path may be absent; never repeat a failed call), then finish with exactly firsttoken::secondtoken.'
+  family='reasoning-recovery-compose';prefix=1
+ expected={**files,**expected}
+ return dict(id=cid,category='reasoning',family=family,prompt=prompt,files=files,expected_files=expected,steps=steps,supervise_from=prefix,requires_error=prefix>0,repository_discovery=False)
+
+def make_reasoning_cases(n):
+ cases=[reasoning_case(i) for i in range(n)]
+ if len({c['id'] for c in cases})!=n:raise ValueError('case identity')
+ return cases,{'reasoning-compose':sum(1 for c in cases if c['family']=='reasoning-config-derive'),'reasoning-cross-file':sum(1 for c in cases if c['family']=='reasoning-cross-file-compose'),'reasoning-recovery':sum(1 for c in cases if c['family']=='reasoning-recovery-compose')}
+
 def make_cases(n,port):
  if n<20 or n%20:raise ValueError('records must be a multiple of20')
  counts={'local':7*n//20,'web':5*n//20,'exact':5*n//20};counts['recovery']=n-sum(counts.values());cases=[]
@@ -181,8 +257,8 @@ def make_cases(n,port):
  if len({c['id'] for c in cases})!=n:raise ValueError('case identity')
  return cases,counts
 
-def frame(tools,name,args,commentary=None):
- return native_turn({'role':'assistant','content':commentary,'reasoning_content':None,'think':None,'tool_calls':[{'type':'function','function':{'name':name,'arguments':compact(args)}}]},tools)
+def frame(tools,name,args,commentary=None,analysis=None):
+ return native_turn({'role':'assistant','content':commentary,'reasoning_content':analysis,'think':None,'tool_calls':[{'type':'function','function':{'name':name,'arguments':compact(args)}}]},tools)
 def last_result(bridge):
  rows=[m for m in bridge.history if m['role']=='toolResult'];return rows[-1] if rows else None
 def response_id(text):
@@ -231,7 +307,12 @@ def execute_case(case,panel,enc,root,pi_bin,manifest_path):
  index=0;emitted=[];emitted_specs=[]
  def generate(prompt,budget,deadline):
   nonlocal index
-  spec=dynamic_step(case['steps'][index],bridge);comment='Using the verified observation.' if index and last_result(bridge) else None;text=frame(panel['tools'],spec['name'],spec['arguments'],comment);ids=enc.encode_ordinary(text)
+  spec=dynamic_step(case['steps'][index],bridge);comment=spec.get('commentary') if 'commentary' in spec else ('Using the verified observation.' if index and last_result(bridge) else None)
+  analysis=spec.get('analysis')
+  if analysis is not None:
+   required=spec.get('analysis_requires') or []
+   if not analysis.strip() or any(x not in analysis for x in required):raise ValueError('ungrounded analysis')
+  text=frame(panel['tools'],spec['name'],spec['arguments'],comment,analysis);ids=enc.encode_ordinary(text)
   if len(ids)>budget:raise ValueError('authored turn budget')
   emitted.append(text);emitted_specs.append(spec);index+=1;return text,ids,'valid'
  bridge=NativePiToolBridge(panel,case['prompt'],enc,generate)
@@ -271,14 +352,15 @@ def freeze(args):
  minimum=args.minimum_verified_records if args.minimum_verified_records is not None else args.records
  if not 1<=minimum<=args.records:raise ValueError('minimum verified records')
  mix=getattr(args,'mix','standard')
- if mix in ('loopbreak','pointerchase','extracterror','longcopy'):
+ if mix in ('loopbreak','pointerchase','extracterror','longcopy','reasoning'):
   if mix=='loopbreak':cases,counts=make_loopbreak_cases(args.records)
   elif mix=='pointerchase':cases,counts=make_pointerchase_cases(args.records)
   elif mix=='extracterror':cases,counts=make_extracterror_cases(args.records)
+  elif mix=='reasoning':cases,counts=make_reasoning_cases(args.records)
   else:cases,counts=make_longcopy_cases(args.records)
  elif mix=='standard':cases,counts=make_cases(args.records,args.port)
  else:raise ValueError('unknown mix')
- args.output.mkdir(parents=True,mode=0o700,exist_ok=False);plan={'schema':'emender-e97-pi-native-curriculum-plan-v1','seed':SEED,'records':args.records,'minimum_verified_records':minimum,'automatic_retry':False,'mix_counts':counts,'port':args.port,'system':SYSTEM,'tool_manifest':str(args.manifest.resolve()),'tool_manifest_sha256':sha(args.manifest),'source_commit':subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),'authority_files':authority_files(),'pi_bin':str(args.pi_bin.resolve()),'pi_version':subprocess.check_output([args.pi_bin,'--version'],text=True).strip(),'cases':cases,'model_generations':0,'optimizer_updates':0,'training_eligible':False,'packing_authorized':False};publish(args.output/'plan-private.json',plan);print('PI_NATIVE_CURRICULUM_PLAN',args.records,minimum,sha(args.output/'plan-private.json'))
+ args.output.mkdir(parents=True,mode=0o700,exist_ok=False);plan={'schema':'emender-e97-pi-native-curriculum-plan-v1','seed':SEED,'records':args.records,'minimum_verified_records':minimum,'automatic_retry':False,'mix':mix,'mix_counts':counts,'port':args.port,'system':SYSTEM,'tool_manifest':str(args.manifest.resolve()),'tool_manifest_sha256':sha(args.manifest),'source_commit':subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),'authority_files':authority_files(),'pi_bin':str(args.pi_bin.resolve()),'pi_version':subprocess.check_output([args.pi_bin,'--version'],text=True).strip(),'cases':cases,'model_generations':0,'optimizer_updates':0,'training_eligible':False,'packing_authorized':False};publish(args.output/'plan-private.json',plan);print('PI_NATIVE_CURRICULUM_PLAN',args.records,minimum,sha(args.output/'plan-private.json'))
 def collect(args):
  if sha(args.plan)!=args.plan_sha:raise ValueError('plan identity')
  plan=json.loads(args.plan.read_text());manifest_path=Path(plan['tool_manifest'])
@@ -295,5 +377,5 @@ def collect(args):
  if len({r['sequence_sha256'] for r in rows})!=len(rows):raise ValueError('dedup')
  write_authority(rows,{**plan,'plan_sha256':args.plan_sha},args.output);counts=Counter(r['category'] for r in rows);families=Counter(r['family'] for r in rows);summary={'schema':'emender-e97-pi-native-curriculum-summary-v1','status':'verified-candidates-not-admitted','attempted_records':plan['records'],'records':len(rows),'rejected_records':len(rejections),'automatic_retries':0,'minimum_verified_records':plan['minimum_verified_records'],'mix_counts':dict(counts),'families':dict(families),'repository_discovery_records':sum(r['repository_discovery'] for r in rows),'native_calls':sum(r['calls'] for r in rows),'authentic_tool_errors':sum(r['errors'] for r in rows),'assistant_targets':sum(r['targets'] for r in rows),'deduplicated_sequences':len(rows),'model_generations':0,'optimizer_updates':0,'training_eligible':False,'packing_authorized':False,'checkpoint_promotion':False,'authority_sha256':sha(args.output/'candidate-authority/manifest.json')};publish(args.output/'summary.json',summary);print('PI_NATIVE_CURRICULUM_COLLECTED',len(rows),len(rejections),summary['native_calls'],summary['assistant_targets'])
 def main():
- os.umask(0o077);signal.signal(signal.SIGTERM,lambda s,f:(_ for _ in ()).throw(TimeoutError('interrupted')));p=argparse.ArgumentParser();sp=p.add_subparsers(dest='command',required=True);f=sp.add_parser('freeze');f.add_argument('--manifest',type=Path,required=True);f.add_argument('--records',type=int,required=True);f.add_argument('--minimum-verified-records',type=int);f.add_argument('--mix',choices=('standard','loopbreak','pointerchase','extracterror','longcopy'),default='standard');f.add_argument('--port',type=int,required=True);f.add_argument('--pi-bin',type=Path,required=True);f.add_argument('--output',type=Path,required=True);c=sp.add_parser('collect');c.add_argument('--plan',type=Path,required=True);c.add_argument('--plan-sha',required=True);c.add_argument('--pi-bin',type=Path,required=True);c.add_argument('--output',type=Path,required=True);a=p.parse_args();freeze(a) if a.command=='freeze' else collect(a)
+ os.umask(0o077);signal.signal(signal.SIGTERM,lambda s,f:(_ for _ in ()).throw(TimeoutError('interrupted')));p=argparse.ArgumentParser();sp=p.add_subparsers(dest='command',required=True);f=sp.add_parser('freeze');f.add_argument('--manifest',type=Path,required=True);f.add_argument('--records',type=int,required=True);f.add_argument('--minimum-verified-records',type=int);f.add_argument('--mix',choices=('standard','loopbreak','pointerchase','extracterror','longcopy','reasoning'),default='standard');f.add_argument('--port',type=int,required=True);f.add_argument('--pi-bin',type=Path,required=True);f.add_argument('--output',type=Path,required=True);c=sp.add_parser('collect');c.add_argument('--plan',type=Path,required=True);c.add_argument('--plan-sha',required=True);c.add_argument('--pi-bin',type=Path,required=True);c.add_argument('--output',type=Path,required=True);a=p.parse_args();freeze(a) if a.command=='freeze' else collect(a)
 if __name__=='__main__':main()

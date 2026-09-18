@@ -4,7 +4,7 @@ import argparse,hashlib,json,struct,subprocess
 from pathlib import Path
 import tiktoken
 from scripts.e97_open_swe_native_codec import compact
-from scripts.e97_pi_native_codec import PiNativeEpisode,native_turn,semantic_turn
+from scripts.e97_pi_native_codec import PiNativeEpisode,native_turn,parse_turn,semantic_turn
 INDEX=struct.Struct('<QQQB7x')
 def sha(path):return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 def load_json(path):return json.loads(Path(path).read_text())
@@ -105,6 +105,14 @@ def verify_public(private,root):
     pending=(calls[0]['id'],calls[0]['name'])
  if pending is not None:raise ValueError('unresolved public call')
 
+def verify_reasoning_case(case,turns,enc):
+ for step,turn in zip(case['steps'][case['supervise_from']:],turns[case['supervise_from']:]):
+  message=parse_turn(turn);analysis=message['reasoning_content'];requires=step.get('analysis_requires') or []
+  if not requires:continue
+  if not isinstance(analysis,str) or not analysis.strip():raise ValueError('reasoning cohort requires non-empty analysis')
+  if len(enc.encode_ordinary(analysis))>2048:raise ValueError('analysis cap')
+  if any(x not in analysis for x in requires):raise ValueError('ungrounded analysis')
+
 def audit(args):
  root=args.root;plan=load_json(args.plan);manifest=load_json(root/'candidate-authority/manifest.json');summary=load_json(root/'summary.json');tools=load_json(plan['tool_manifest'])['model_visible_tools'];enc=tiktoken.get_encoding('p50k_base')
  if sha(args.plan)!=args.plan_sha or manifest['plan_sha256']!=args.plan_sha:raise ValueError('plan binding')
@@ -132,6 +140,7 @@ def audit(args):
   terminal=private['terminal']
   if not terminal['close_verified'] or not terminal['closed'] or terminal['pi_exit'] or terminal['bridge_failed'] or terminal['reason']!='finished':raise ValueError('Pi terminal')
   verify_public(private,root/row['id']);turns=reconstruct(private,tools,enc);results,actions=verify_case(cases[row['id']],private,tools)
+  if plan.get('mix')=='reasoning':verify_reasoning_case(cases[row['id']],turns,enc)
   ids,want_mask=expected_mask(private['native_record'],turns,private['supervise_from'],enc);record=INDEX.unpack_from(index,i*INDEX.size);start,n,want_targets,split=record
   if start!=offset or n!=len(ids) or split!=0:raise ValueError('record index')
   token_bytes=struct.pack('<%dI'%len(ids),*ids);actual_tokens=tokens[4*start:4*(start+n)];actual_mask=mask[start:start+n]
