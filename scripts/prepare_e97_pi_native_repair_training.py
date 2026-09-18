@@ -364,7 +364,7 @@ def main():
  p.add_argument('--cohort-spec',action='append',default=None)
  p.add_argument('--output',type=Path,required=True)
  a=p.parse_args()
- if a.fulltraj_budget_targets<=0:raise ValueError('positive budget required')
+ if a.translated_oh_source is None and a.fulltraj_budget_targets<=0:raise ValueError('positive budget required')
  prepare(a)
 
 if __name__=='__main__':main()
