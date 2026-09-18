@@ -23,8 +23,26 @@ def audit(args):
  cohorts=set(proposal['declared_cohorts'])
  if set(authority['source_target_totals'])!=cohorts:raise ValueError('authority cohorts differ from declared')
  if set(schedule['source_target_totals'])!=cohorts:raise ValueError('schedule cohorts differ from declared')
- unstratified=[s['update'] for s in schedule['steps'] if set(s['source_targets'])!=cohorts]
- if unstratified:raise ValueError(f'updates missing cohorts: {unstratified}')
+ strat=proposal.get('per_update_cohort_stratification')
+ if strat is True:
+  unstratified=[s['update'] for s in schedule['steps'] if set(s['source_targets'])!=cohorts]
+  if unstratified:raise ValueError(f'updates missing cohorts: {unstratified}')
+ elif isinstance(strat,dict) and strat.get('scheme')=='window-coverage':
+  # floor rule: cohorts at or above min_target_fraction must appear in every update;
+  # smaller cohorts must appear at least once per window_updates consecutive updates.
+  floor=strat['min_target_fraction'];window=strat['window_updates']
+  if not (0<floor<=1) or window<1 or strat.get('proposed_updates')!=proposal['proposed_updates']:raise ValueError('stratification scheme binding')
+  totals=schedule['source_target_totals'];total=sum(totals.values())
+  per_update=[set(s['source_targets']) for s in schedule['steps']]
+  for c in cohorts:
+   major=totals[c]/total>=floor
+   if major:
+    missing=[i+1 for i,u in enumerate(per_update) if c not in u]
+    if missing:raise ValueError(f'updates missing major cohort {c}: {missing[:5]}')
+   else:
+    for start in range(0,len(per_update),window):
+     if not any(c in u for u in per_update[start:start+window]):raise ValueError(f'cohort {c} absent from window at update {start+1}')
+ else:raise ValueError('per_update_cohort_stratification must be true or a window-coverage scheme')
  if schedule['sampler_key']!=proposal['sampler_key'] or schedule['world_size']!=proposal['data_world_size'] or schedule['context_size']!=proposal['context_size'] or len(schedule['steps'])!=proposal['proposed_updates'] or schedule['source_target_totals']!=proposal['scheduled_source_targets'] or schedule['source_unique_records']!=proposal['scheduled_source_unique_records'] or sum(schedule['source_token_totals'].values())!=proposal['scheduled_input_tokens'] or sum(schedule['source_target_totals'].values())!=proposal['scheduled_assistant_targets'] or schedule['unique_packs']!=proposal['scheduled_unique_packs'] or schedule['unique_records']!=proposal['scheduled_unique_records']:raise ValueError('proposal schedule')
  for key,binding in proposal.get('cohort_bindings',{}).items():
   entry=authority.get(key)
@@ -48,7 +66,7 @@ def audit(args):
   'schedule_sha256':proposal['schedule_sha256'],'proposed_updates':proposal['proposed_updates'],
   'scheduled_input_tokens':proposal['scheduled_input_tokens'],'scheduled_assistant_targets':proposal['scheduled_assistant_targets'],
   'declared_cohorts':sorted(cohorts),
-  'per_update_cohort_stratification':'verified: all 32 updates contain all declared cohorts',
+  'per_update_cohort_stratification':('verified: every update contains every declared cohort' if strat is True else 'verified: window-coverage scheme (major cohorts every update, minor cohorts every window)'),
   'checker_sha256':sha(__file__),'packing_authorized':False,'optimizer_updates_authorized':0,'checkpoint_promotion':False}
  args.output.write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n');print('REPAIR_PROPOSAL_AUDIT',sha(args.proposal),sha(args.output))
 def main():
