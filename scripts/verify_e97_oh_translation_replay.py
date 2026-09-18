@@ -276,7 +276,12 @@ def verify_record(candidate, workspace_root, instance_dir, bash, model_patch, ba
                 # verify the path multiset and ship the executed find output.
                 recorded_paths = _listing_paths(recorded or '')
                 executed_paths = _listing_paths(output)
-                if recorded_paths == executed_paths:
+                clipped_listing = '<response clipped>' in recorded
+                if clipped_listing:
+                    ok = set(recorded_paths) <= set(executed_paths)
+                else:
+                    ok = recorded_paths == executed_paths
+                if ok:
                     observation_texts[idx] = output
                     is_error[idx] = code != 0
                     verified = True
