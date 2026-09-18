@@ -144,7 +144,18 @@ def read_translated_oh_slice(root,expected_manifest_sha,seed,budget_targets):
  if sha(root/'manifest.json')!=expected_manifest_sha:raise ValueError('translated-oh manifest identity')
  if manifest.get('schema')!=AUTHORITY_SCHEMA or manifest.get('status')!='complete':raise ValueError('translated-oh schema')
  if manifest.get('training_eligible') is not False:raise ValueError('translated-oh source must be an explicitly non-admitted candidate authority')
- paths=verify_outputs(root,manifest)
+ raw=verify_outputs(root,manifest)
+ # The translated collection's manifest keys outputs by payload filename; alias to roles.
+ paths={}
+ for k,v in raw.items():
+  if k in ('tokens','mask','index','metadata'):paths[k]=v
+ for k,v in raw.items():
+  name=Path(v).name
+  if name.startswith('tokens.uint32'):paths.setdefault('tokens',v)
+  elif name.startswith('assistant_mask'):paths.setdefault('mask',v)
+  elif name.startswith('records.idx'):paths.setdefault('index',v)
+  elif name.startswith('records.jsonl'):paths.setdefault('metadata',v)
+ if set(paths)!={'tokens','mask','index','metadata'}:raise ValueError('translated-oh outputs incomplete')
  rows=[json.loads(x) for x in paths['metadata'].read_text().splitlines()]
  index=paths['index'].read_bytes()
  if len(index)!=INDEX.size*len(rows):raise ValueError('translated-oh index shape')
