@@ -748,3 +748,17 @@ authorization; the u128 arc-end checkpoint is retained with its
 near-miss evidence, as are all four segment checkpoints and every
 audit chain. RL, repository competence, and production deployment
 qualification remain separate later gates.
+
+## PROMOTION: repair-v6 u96 (`d8146498...`) promoted to qualified baseline
+
+On explicit operator authorization, `d81464982c3ebc0d72769a87e079068bf535d6ca2010185dc1bb03ce264b8f5b`
+becomes the programme's qualified baseline checkpoint, superseding the
+representation-bridge parent `9b78628d...` in that role. Promotion receipt at
+`pi-native-repair6-arc-u96-promotion-v1/promotion.json` binds the full gate
+audit chain. Per operator direction the v7 cycle and onward chain from the
+u128 arc-end checkpoint `b61dfb54...` (retained, unpromoted under the frozen
+gate protocol, designated v7 training parent); v7's goal is to clear the
+frozen thresholds by more than the measurement noise band (Stage-B 13/11,
+prior-fresh 16/16 robust, composition 5/16) with detector-driven cohorts for
+the two remaining single-case margins: the persistent lookup case
+(finish-without-lookup) and the long-copy generation-budget instability.
