@@ -107,7 +107,7 @@ cleanup() {
 trap cleanup EXIT
 trap 'exit 130' INT TERM
 
-"$SNAPSHOT/scripts/numa_local_rank_exec.py" -- "$PY" "$SNAPSHOT/scripts/serve_e97_agent_openai.py" \
+"$PY" "$SNAPSHOT/scripts/numa_local_rank_exec.py" -- "$SNAPSHOT/scripts/serve_e97_agent_openai.py" \
   --checkpoint "$CHECKPOINT" --args-json "$ARGS_JSON" \
   --host 127.0.0.1 --port "$PORT" \
   --model-id e97-dense-agent --weight-mode saved --ingest-mode tokenwise \
