@@ -69,8 +69,11 @@ def read_tulu3(root,label,expected_manifest_sha,*,eligible_required,schema=AUTHO
  if include_families is not None and not records:raise ValueError(f'{label} family filter selected nothing')
  return records
 
-def read_authored_slice(root,expected_manifest_sha,seed,budget_targets):
- """Deterministic seeded whole-record slice of a training-eligible tulu3 authority."""
+def read_authored_slice(root,expected_manifest_sha,seed,budget_targets,max_records=0):
+ """Deterministic seeded whole-record slice of a training-eligible tulu3 authority.
+ max_records>0 caps the selection at the first N records of the SAME seeded
+ shuffle order (monotonically nested across caps; the full-pool slice is the
+ cap-free case), so dose variants of a restored pool are prefix-consistent."""
  manifest=json.loads((root/'manifest.json').read_text())
  if sha(root/'manifest.json')!=expected_manifest_sha:raise ValueError('authored manifest identity')
  if manifest.get('schema')!=AUTHORITY_SCHEMA or manifest.get('status')!='complete':raise ValueError('authored schema')
@@ -93,8 +96,9 @@ def read_authored_slice(root,expected_manifest_sha,seed,budget_targets):
    tf.seek(4*offset);tokens=tf.read(4*n);mf.seek(offset);mask=mf.read(n)
   if len(tokens)!=4*n or len(mask)!=n or sum(mask)!=want:raise ValueError('authored record slice')
   consumed+=want;chosen.append((tokens,mask,dict(rows[i])))
+  if max_records and len(chosen)>=max_records:break
  if not chosen:raise ValueError('empty authored slice')
- return chosen,consumed
+ return chosen,consumed,len(eligible)
 
 def read_conversation_slice(root,expected_manifest_sha,seed,budget_targets):
  """Deterministic seeded whole-record slice of a production-admitted tulu3 conversation authority.
@@ -260,16 +264,28 @@ def prepare(args):
  selected=read_tulu3(args.selected,'pi-native-curriculum',args.selected_sha,eligible_required=False,schema='emender-e97-pi-native-selected-candidate-authority-v1',status='verified-selection-not-admitted',include_families=include)
  cohort_names=[oh_name,'pi-native-curriculum']
  streams=[(native,cohort_names[0]),(selected,cohort_names[1])]
- rehearsal=None
+ rehearsal=None;rehearsal_pool=0
  if args.rehearsal is not None:
   cohort_names.append('representation-bridge-rehearsal')
   rehearsal=read_tulu3(args.rehearsal,'representation-bridge-rehearsal',args.rehearsal_sha,eligible_required=True)
+  rehearsal_pool=len(rehearsal)
+  if args.rehearsal_max_records>0:
+   if args.rehearsal_subsample_seed<=0:raise ValueError('rehearsal subsample requires a positive seed')
+   if args.rehearsal_max_records>rehearsal_pool:raise ValueError('rehearsal max_records exceeds the pool')
+   # Same subsample method as the authored cohort: fixed seeded shuffle of the
+   # record list, first-N. Nested across dose variants (d25 subset of d50 ...)
+   # and within the v3 full restoration (which keeps every record).
+   rng=random.Random(args.rehearsal_subsample_seed);order=list(range(rehearsal_pool));rng.shuffle(order)
+   rehearsal=[rehearsal[i] for i in order[:args.rehearsal_max_records]]
   streams.append((rehearsal,cohort_names[len(cohort_names)-1]))
- authored=None;authored_consumed=0
+ elif args.rehearsal_max_records>0:raise ValueError('rehearsal subsample requires --rehearsal')
+ authored=None;authored_consumed=0;authored_pool=0
  if args.authored_source:
   cohort_names.append('grounded-authored-rehearsal')
-  authored,authored_consumed=read_authored_slice(args.authored_source,args.authored_sha,args.authored_seed,args.authored_budget_targets)
+  authored,authored_consumed,authored_pool=read_authored_slice(args.authored_source,args.authored_sha,args.authored_seed,args.authored_budget_targets,max_records=args.authored_max_records)
+  if args.authored_max_records>len(authored):raise ValueError('authored max_records exceeds the selected slice')
   streams.append((authored,cohort_names[len(cohort_names)-1]))
+ elif args.authored_max_records>0:raise ValueError('authored subsample requires --authored-source')
  correction=None
  if args.correction_source:
   cohort_names.append('grounded-correction-rehearsal')
@@ -321,6 +337,14 @@ def prepare(args):
    'their supervised-target OpenHands vocabulary is the execution dialect\'s required training data, not contamination; '
    'the v2 prep\'s cohort-level scrub drop is undone in full' if restored else
    'representation-bridge and grounded-authored cohorts dropped per the OH scrub report')
+ dose=''
+ if args.authored_max_records or args.rehearsal_max_records:
+  dose=('. DOSE-SCREEN VARIANT: the restored pools are seeded subsamples at reduced dose, NOT the full restoration — '
+   'grounded-authored first %d of %d eligible records (seeded shuffle, seed %d); '
+   'representation-bridge first %d of %d records (seeded shuffle, seed %d); '
+   'monotonically nested across the dose variants and within the v3 full restoration'
+   %(args.authored_max_records,authored_pool,args.authored_seed,
+     args.rehearsal_max_records,rehearsal_pool,args.rehearsal_subsample_seed))
  paths={k:args.output/v for k,v in {'tokens':'tokens.uint32.bin','mask':'assistant_mask.uint8.bin','index':'records.idx','metadata':'records.jsonl'}.items()}
  offset=records=targets=0;sources=Counter();per_cohort=Counter()
  with paths['tokens'].open('xb') as tf,paths['mask'].open('xb') as mf,paths['index'].open('xb') as ix,paths['metadata'].open('x') as meta:
@@ -336,7 +360,14 @@ def prepare(args):
    meta.write(json.dumps(output,sort_keys=True)+'\n')
    offset+=n;records+=1;targets+=want;sources[cohort]+=want;per_cohort[cohort]+=1
  sizing=('. Sizing rationale (operator ruling 2026-09-19): this manifest is the complete unique corpus at full pool strength — %d tokens / %d assistant targets, near-zero repetition; repetition must never be baked into packs, and the extension chain targets ~2 epochs ~= 2x trained tokens via epoch-permutation re-emission of packs per key per epoch at the sampler level'%(offset,targets) if getattr(args,'purpose_sizing_note',False) else '')
- purpose=('Non-authorizing repair-tranche exposure and packing preparation: translated replay-verified OpenHands rehearsal plus Pi-native curriculum, cohort-interleaved (%s)%s'%(disposition,sizing)) if args.translated_oh_source else 'Non-authorizing repair-tranche exposure and packing preparation: OpenHands-execution rehearsal plus Pi-native curriculum plus bridge rehearsal, cohort-interleaved'
+ rehearsal_entry=None;authored_entry=None
+ if rehearsal is not None:
+  rehearsal_entry={'authority':str(args.rehearsal.resolve()),'authority_sha256':args.rehearsal_sha,'cohort':'representation-bridge-rehearsal','records':len(rehearsal)}
+  if args.rehearsal_max_records:rehearsal_entry['subsample']={'method':'seeded-shuffle-first-N','seed':args.rehearsal_subsample_seed,'max_records':args.rehearsal_max_records,'full_pool_records':rehearsal_pool}
+ if authored is not None:
+  authored_entry={'authority':str(args.authored_source.resolve()),'authority_sha256':args.authored_sha,'seed':args.authored_seed,'target_token_budget':args.authored_budget_targets,'consumed_target_tokens':authored_consumed,'records':len(authored)}
+  if args.authored_max_records:authored_entry['subsample']={'method':'seeded-shuffle-first-N','seed':args.authored_seed,'max_records':args.authored_max_records,'full_pool_records':authored_pool}
+ purpose=('Non-authorizing repair-tranche exposure and packing preparation: translated replay-verified OpenHands rehearsal plus Pi-native curriculum, cohort-interleaved (%s)%s%s'%(disposition,sizing,dose)) if args.translated_oh_source else 'Non-authorizing repair-tranche exposure and packing preparation: OpenHands-execution rehearsal plus Pi-native curriculum plus bridge rehearsal, cohort-interleaved'
  manifest={'schema':AUTHORITY_SCHEMA,'status':'complete',
   'purpose':purpose,
   'tokenizer':'p50k_base','training_eligible':False,'packing_authorized':False,'optimizer_updates_authorized':0,
@@ -349,7 +380,7 @@ def prepare(args):
    'records':len(native),'distinct_problem_keys':len(keys)}),
   'selected_authority_sha256':args.selected_sha,'selected_selection_audit_sha256':args.selection_audit_sha,
   'selected_overlap_audit_sha256':args.overlap_audit_sha,'rehearsal_authority_sha256':args.rehearsal_sha,
-  **({'rehearsal_rehearsal':{'authority':str(args.rehearsal.resolve()),'authority_sha256':args.rehearsal_sha,'cohort':'representation-bridge-rehearsal','records':len(rehearsal)}} if args.rehearsal else {'rehearsal_rehearsal':None}),
+  **({'rehearsal_rehearsal':rehearsal_entry} if args.rehearsal else {'rehearsal_rehearsal':None}),
   'parent_checkpoint':str(args.parent_checkpoint.resolve()),'parent_checkpoint_sha256':args.parent_sha,
   **({'loopbreak_rehearsal':{'authority':str(args.loopbreak_source.resolve()),'authority_sha256':args.loopbreak_sha,'records':len(loopbreak)}} if args.loopbreak_source else {'loopbreak_rehearsal':None}),
   **({'conversation_rehearsal':{'authority':str(args.conversation_source.resolve()),'authority_sha256':args.conversation_sha,'seed':args.conversation_seed,'target_token_budget':args.conversation_budget_targets,'consumed_target_tokens':conversation_consumed,'records':len(conversation),'source_training_eligible':conversation_eligibility}} if args.conversation_source else {'conversation_rehearsal':None}),
@@ -359,7 +390,7 @@ def prepare(args):
   **({'extra4_rehearsal':{'authority':str(args.extra4_source.resolve()),'authority_sha256':args.extra4_sha,'cohort':args.extra4_cohort,'records':len(extra4)}} if args.extra4_source else {'extra4_rehearsal':None}),
   'spec_cohorts':spec_cohorts,
   **({'correction_rehearsal':{'authority':str(args.correction_source.resolve()),'authority_sha256':args.correction_sha,'records':len(correction)}} if args.correction_source else {'correction_rehearsal':None}),
-  **({'authored_rehearsal':{'authority':str(args.authored_source.resolve()),'authority_sha256':args.authored_sha,'seed':args.authored_seed,'target_token_budget':args.authored_budget_targets,'consumed_target_tokens':authored_consumed,'records':len(authored)},'authored_source_sha256':args.authored_sha} if args.authored_source else {'authored_rehearsal':None}),
+  **({'authored_rehearsal':authored_entry,'authored_source_sha256':args.authored_sha} if args.authored_source else {'authored_rehearsal':None}),
   'outputs':{k:desc(v) for k,v in paths.items()}}
  tmp=args.output/'manifest.json.partial';tmp.write_text(json.dumps(manifest,indent=2,sort_keys=True)+'\n');os.replace(tmp,args.output/'manifest.json')
  print('PI_NATIVE_REPAIR_PREPARATION',records,offset,targets,sha(args.output/'manifest.json'))
@@ -378,6 +409,8 @@ def main():
  p.add_argument('--parent-checkpoint',type=Path,required=True);p.add_argument('--parent-sha',required=True)
  p.add_argument('--authored-source',type=Path,default=None);p.add_argument('--authored-sha',default=None)
  p.add_argument('--authored-budget-targets',type=int,default=0);p.add_argument('--authored-seed',type=int,default=0)
+ p.add_argument('--authored-max-records',type=int,default=0);p.add_argument('--rehearsal-max-records',type=int,default=0)
+ p.add_argument('--rehearsal-subsample-seed',type=int,default=0)
  p.add_argument('--pi-native-include-families',default=None)
  p.add_argument('--correction-source',type=Path,default=None);p.add_argument('--correction-sha',default=None)
  p.add_argument('--loopbreak-source',type=Path,default=None);p.add_argument('--loopbreak-sha',default=None)
