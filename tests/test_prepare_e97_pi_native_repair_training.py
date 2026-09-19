@@ -63,6 +63,7 @@ def test_prepare_interleaves_and_flags(tmp_path):
  a.extra2_source=None;a.extra2_sha=None;a.extra2_cohort=None
  a.translated_oh_source=None;a.translated_oh_sha=None;a.translated_oh_cohort='openhands-translated-rehearsal';a.translated_oh_budget_targets=0;a.translated_oh_seed=0
  a.extra3_source=None;a.extra3_sha=None;a.extra3_cohort=None
+ a.extra4_source=None;a.extra4_sha=None;a.extra4_cohort=None
  a.cohort_spec=None
  prepare(a)
  manifest=json.loads((out/'manifest.json').read_text())
@@ -122,6 +123,7 @@ def test_conversation_rehearsal_cohort_from_production_admitted_source(tmp_path)
  a.extra2_source=None;a.extra2_sha=None;a.extra2_cohort=None
  a.translated_oh_source=None;a.translated_oh_sha=None;a.translated_oh_cohort='openhands-translated-rehearsal';a.translated_oh_budget_targets=0;a.translated_oh_seed=0
  a.extra3_source=None;a.extra3_sha=None;a.extra3_cohort=None
+ a.extra4_source=None;a.extra4_sha=None;a.extra4_cohort=None
  a.cohort_spec=None
  prepare(a)
  manifest=json.loads((a.output/'manifest.json').read_text())
@@ -166,6 +168,7 @@ def test_translated_oh_replaces_fulltraj_and_drops_rehearsal(tmp_path):
  a.extra_source=None;a.extra_sha=None;a.extra_cohort=None
  a.extra2_source=None;a.extra2_sha=None;a.extra2_cohort=None
  a.extra3_source=None;a.extra3_sha=None;a.extra3_cohort=None
+ a.extra4_source=None;a.extra4_sha=None;a.extra4_cohort=None
  a.cohort_spec=None
  prepare(a)
  manifest=json.loads((a.output/'manifest.json').read_text())
@@ -201,6 +204,7 @@ def test_translated_oh_and_fulltraj_are_mutually_exclusive(tmp_path):
  a.extra_source=None;a.extra_sha=None;a.extra_cohort=None
  a.extra2_source=None;a.extra2_sha=None;a.extra2_cohort=None
  a.extra3_source=None;a.extra3_sha=None;a.extra3_cohort=None
+ a.extra4_source=None;a.extra4_sha=None;a.extra4_cohort=None
  a.cohort_spec=None
  try:prepare(a)
  except ValueError as e:assert 'exactly one' in str(e)
@@ -230,8 +234,42 @@ def test_extra3_reasoning_cohort_inclusion(tmp_path):
  a.extra_source=None;a.extra_sha=None;a.extra_cohort=None
  a.extra2_source=None;a.extra2_sha=None;a.extra2_cohort=None
  a.extra3_source=reas;a.extra3_sha=rsha;a.extra3_cohort='reasoning-rehearsal'
+ a.extra4_source=None;a.extra4_sha=None;a.extra4_cohort=None
  a.cohort_spec=None
  prepare(a)
  manifest=json.loads((a.output/'manifest.json').read_text())
  assert manifest['source_record_counts']['reasoning-rehearsal']==4
  assert manifest['extra3_rehearsal']['cohort']=='reasoning-rehearsal' and manifest['extra3_rehearsal']['records']==4
+
+def test_extra4_hybrid_cohort_inclusion(tmp_path):
+ from scripts.prepare_e97_pi_native_repair_training import prepare
+ sel=tmp_path/'sel';spec_sel=[(bytes([2])*40,bytes([1])*10,{'id':f'sel{i}'}) for i in range(6)]
+ ssha=write_tulu3(sel,[{'id':f'sel{i}'} for i in range(6)],eligible=False,records_spec=spec_sel,schema='emender-e97-pi-native-selected-candidate-authority-v1',status='verified-selection-not-admitted')
+ (sel/'selection-audit.json').write_text(json.dumps({'status':'qualified-selection-not-admitted'}))
+ (sel/'overlap-audit.json').write_text(json.dumps({'status':'pass'}))
+ sasha=sha(sel/'selection-audit.json');oasha=sha(sel/'overlap-audit.json')
+ toh=tmp_path/'toh';spec_toh=[(bytes([9])*(4*10),bytes([1])*4,{'record_index':0,'instance_id':'inst-a','trajectory_id':'t0','split':0})]
+ tsha=write_tulu3(toh,[{'record_index':0,'instance_id':'inst-a','trajectory_id':'t0','split':0}],eligible=False,records_spec=spec_toh)
+ hyb=tmp_path/'hyb';spec_h=[(bytes([6])*(4*12),bytes([1])*5,{'id':f'h{i}'}) for i in range(4)]
+ hsha=write_tulu3(hyb,[{'id':f'h{i}'} for i in range(4)],eligible=False,records_spec=spec_h,schema='emender-e97-pi-native-candidate-authority-v1',status='verified-candidate-not-admitted')
+ parent=tmp_path/'parent.pt';parent.write_bytes(b'parent')
+ class A:pass
+ a=A();a.fulltraj=None;a.fulltraj_sha=None;a.fulltraj_budget_targets=0;a.fulltraj_seed=0
+ a.translated_oh_source=toh;a.translated_oh_sha=tsha;a.translated_oh_cohort='openhands-translated-rehearsal';a.translated_oh_budget_targets=8;a.translated_oh_seed=1
+ a.selected=sel;a.selected_sha=ssha;a.selection_audit=sel/'selection-audit.json';a.selection_audit_sha=sasha
+ a.overlap_audit=sel/'overlap-audit.json';a.overlap_audit_sha=oasha
+ a.rehearsal=None;a.rehearsal_sha=None
+ a.parent_checkpoint=parent;a.parent_sha=sha(parent);a.output=tmp_path/'out-h'
+ a.authored_source=None;a.pi_native_include_families=None;a.correction_source=None;a.loopbreak_source=None
+ a.conversation_source=None;a.conversation_sha=None;a.conversation_budget_targets=0;a.conversation_seed=0
+ a.extra_source=None;a.extra_sha=None;a.extra_cohort=None
+ a.extra2_source=None;a.extra2_sha=None;a.extra2_cohort=None
+ a.extra3_source=None;a.extra3_sha=None;a.extra3_cohort=None
+ a.extra4_source=hyb;a.extra4_sha=hsha;a.extra4_cohort='hybrid-conversation-rehearsal'
+ a.cohort_spec=None
+ prepare(a)
+ manifest=json.loads((a.output/'manifest.json').read_text())
+ assert manifest['source_record_counts']['hybrid-conversation-rehearsal']==4
+ assert manifest['extra4_rehearsal']['cohort']=='hybrid-conversation-rehearsal' and manifest['extra4_rehearsal']['records']==4
+ rows=[json.loads(x) for x in (a.output/'records.jsonl').read_text().splitlines()]
+ assert {r['source_record_id'] for r in rows if r['source']=='hybrid-conversation-rehearsal'}=={'h0','h1','h2','h3'}

@@ -300,6 +300,11 @@ def prepare(args):
   cohort_names.append(args.extra3_cohort)
   extra3=read_tulu3(args.extra3_source,args.extra3_cohort,args.extra3_sha,eligible_required=False,schema='emender-e97-pi-native-candidate-authority-v1',status='verified-candidate-not-admitted')
   streams.append((extra3,cohort_names[len(cohort_names)-1]))
+ extra4=None
+ if args.extra4_source:
+  cohort_names.append(args.extra4_cohort)
+  extra4=read_tulu3(args.extra4_source,args.extra4_cohort,args.extra4_sha,eligible_required=False,schema='emender-e97-pi-native-candidate-authority-v1',status='verified-candidate-not-admitted')
+  streams.append((extra4,cohort_names[len(cohort_names)-1]))
  spec_cohorts=[]
  for spec_path in (args.cohort_spec or []):
   spec=json.loads(Path(spec_path).read_text())
@@ -332,7 +337,7 @@ def prepare(args):
   'source_target_totals':dict(sources),'source_record_counts':dict(per_cohort),
   'interleave':{'scheme':'weighted-fair-by-token-share','cohort_order':cohort_names},
   'pi_native_family_filter':(list(include) if include else None),
-  'openhands_rehearsal': ({'authority':str(args.translated_oh_source.resolve()),'authority_sha256':args.translated_oh_sha,'cohort':oh_name,'seed':args.translated_oh_seed,'target_token_budget':args.translated_oh_budget_targets,'consumed_target_tokens':oh_consumed,'records':len(native),'distinct_instance_ids':len(keys),'source_collection':'e97-oh-pi-native-translation-v1 translated+replay-verified'} if args.translated_oh_source else {'authority':str(args.fulltraj.resolve()),'authority_sha256':args.fulltraj_sha,
+  'openhands_rehearsal': ({'authority':str(args.translated_oh_source.resolve()),'authority_sha256':args.translated_oh_sha,'cohort':oh_name,'seed':args.translated_oh_seed,'target_token_budget':args.translated_oh_budget_targets,'consumed_target_tokens':oh_consumed,'records':len(native),'distinct_instance_ids':len(keys),'source_collection':'e97-oh-pi-native-translation-v1 translated+replay-verified','source_provenance':json.loads((args.translated_oh_source/'manifest.json').read_text()).get('provenance')} if args.translated_oh_source else {'authority':str(args.fulltraj.resolve()),'authority_sha256':args.fulltraj_sha,
    'seed':args.fulltraj_seed,'target_token_budget':args.fulltraj_budget_targets,'consumed_target_tokens':oh_consumed,
    'records':len(native),'distinct_problem_keys':len(keys)}),
   'selected_authority_sha256':args.selected_sha,'selected_selection_audit_sha256':args.selection_audit_sha,
@@ -343,6 +348,7 @@ def prepare(args):
   **({'extra_rehearsal':{'authority':str(args.extra_source.resolve()),'authority_sha256':args.extra_sha,'cohort':args.extra_cohort,'records':len(extra)}} if args.extra_source else {'extra_rehearsal':None}),
   **({'extra2_rehearsal':{'authority':str(args.extra2_source.resolve()),'authority_sha256':args.extra2_sha,'cohort':args.extra2_cohort,'records':len(extra2)}} if args.extra2_source else {'extra2_rehearsal':None}),
   **({'extra3_rehearsal':{'authority':str(args.extra3_source.resolve()),'authority_sha256':args.extra3_sha,'cohort':args.extra3_cohort,'records':len(extra3)}} if args.extra3_source else {'extra3_rehearsal':None}),
+  **({'extra4_rehearsal':{'authority':str(args.extra4_source.resolve()),'authority_sha256':args.extra4_sha,'cohort':args.extra4_cohort,'records':len(extra4)}} if args.extra4_source else {'extra4_rehearsal':None}),
   'spec_cohorts':spec_cohorts,
   **({'correction_rehearsal':{'authority':str(args.correction_source.resolve()),'authority_sha256':args.correction_sha,'records':len(correction)}} if args.correction_source else {'correction_rehearsal':None}),
   **({'authored_rehearsal':{'authority':str(args.authored_source.resolve()),'authority_sha256':args.authored_sha,'seed':args.authored_seed,'target_token_budget':args.authored_budget_targets,'consumed_target_tokens':authored_consumed,'records':len(authored)},'authored_source_sha256':args.authored_sha} if args.authored_source else {'authored_rehearsal':None}),
@@ -372,6 +378,7 @@ def main():
  p.add_argument('--extra-source',type=Path,default=None);p.add_argument('--extra-sha',default=None);p.add_argument('--extra-cohort',default=None)
  p.add_argument('--extra2-source',type=Path,default=None);p.add_argument('--extra2-sha',default=None);p.add_argument('--extra2-cohort',default=None)
  p.add_argument('--extra3-source',type=Path,default=None);p.add_argument('--extra3-sha',default=None);p.add_argument('--extra3-cohort',default=None)
+ p.add_argument('--extra4-source',type=Path,default=None);p.add_argument('--extra4-sha',default=None);p.add_argument('--extra4-cohort',default=None)
  p.add_argument('--cohort-spec',action='append',default=None)
  p.add_argument('--output',type=Path,required=True)
  a=p.parse_args()
