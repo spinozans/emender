@@ -39,6 +39,8 @@ def verify_case(case,private,tools):
    if actual['arguments']!=planned['arguments']:raise ValueError('static action arguments')
   elif planned['dynamic']=='observation':
    if actual['arguments']!={'message':observation_final(results[ri-1]['content'][0]['text'])}:raise ValueError('observation final grounding')
+  elif planned['dynamic']=='observation-exact':
+   if actual['arguments']!={'message':results[ri-1]['content'][0]['text'].strip()}:raise ValueError('exact observation final grounding')
   elif planned['dynamic']=='response-id':
    prior=results[ri-1]['content'][0]['text'];rid=actual['arguments'].get('responseId')
    if not isinstance(rid,str) or rid not in prior:raise ValueError('response identity grounding')
@@ -51,6 +53,11 @@ def verify_case(case,private,tools):
  if case['category']=='web' and case['family'] in ('fetch-content','fetch-retrieve','fetch-error-recovery'):
   if not any(case['expected_fact'] in x['content'][0]['text'] for x in results):raise ValueError('web observation oracle')
   if actions[-1]['arguments']['message']!=case['expected_fact']:raise ValueError('web final oracle')
+ if case.get('answer_must_be_observed'):
+  if case.get('expected_answer') is None or not any(str(case['expected_answer']) in x['content'][0]['text'] for x in results):raise ValueError('hybrid answer observation oracle')
+ if case.get('answer_is_observation'):
+  if not results or actions[-1]['arguments']['message']!=results[-1]['content'][0]['text'].strip():raise ValueError('hybrid observation answer oracle')
+ if case.get('pure_chat') and any(x['name']!='finish' for x in actions):raise ValueError('pure-chat tool use oracle')
  prefix=sum(x['name']!='finish' for x in actions[:case['supervise_from']])
  if case['requires_error'] and (prefix<1 or not any(failed(x) for x in results[:prefix])):raise ValueError('failure prefix oracle')
  if any(failed(x) for x in results[prefix:]):raise ValueError('post-prefix success oracle')
@@ -105,6 +112,18 @@ def verify_public(private,root):
     pending=(calls[0]['id'],calls[0]['name'])
  if pending is not None:raise ValueError('unresolved public call')
 
+def verify_hybrid_case(case,turns,results,enc):
+ for step,turn in zip(case['steps'][case['supervise_from']:],turns[case['supervise_from']:]):
+  message=parse_turn(turn);analysis=message['reasoning_content']
+  if step.get('analysis_dynamic'):
+   if not isinstance(analysis,str) or not analysis.strip():raise ValueError('hybrid dynamic analysis missing')
+   continue
+  requires=step.get('analysis_requires') or []
+  if not requires:continue
+  if not isinstance(analysis,str) or not analysis.strip():raise ValueError('hybrid cohort requires non-empty analysis')
+  if len(enc.encode_ordinary(analysis))>2048:raise ValueError('analysis cap')
+  if any(x not in analysis for x in requires):raise ValueError('ungrounded analysis')
+
 def verify_reasoning_case(case,turns,enc):
  for step,turn in zip(case['steps'][case['supervise_from']:],turns[case['supervise_from']:]):
   message=parse_turn(turn);analysis=message['reasoning_content'];requires=step.get('analysis_requires') or []
@@ -141,6 +160,7 @@ def audit(args):
   if not terminal['close_verified'] or not terminal['closed'] or terminal['pi_exit'] or terminal['bridge_failed'] or terminal['reason']!='finished':raise ValueError('Pi terminal')
   verify_public(private,root/row['id']);turns=reconstruct(private,tools,enc);results,actions=verify_case(cases[row['id']],private,tools)
   if plan.get('mix')=='reasoning':verify_reasoning_case(cases[row['id']],turns,enc)
+  if plan.get('mix')=='hybrid':verify_hybrid_case(cases[row['id']],turns,results,enc)
   ids,want_mask=expected_mask(private['native_record'],turns,private['supervise_from'],enc);record=INDEX.unpack_from(index,i*INDEX.size);start,n,want_targets,split=record
   if start!=offset or n!=len(ids) or split!=0:raise ValueError('record index')
   token_bytes=struct.pack('<%dI'%len(ids),*ids);actual_tokens=tokens[4*start:4*(start+n)];actual_mask=mask[start:start+n]

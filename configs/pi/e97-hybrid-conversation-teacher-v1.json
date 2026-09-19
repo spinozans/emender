@@ -1,0 +1,26 @@
+{
+  "schema": "emender-e97-hybrid-conversation-teacher-v1",
+  "status": "candidate-generation-only",
+  "seed": "e97-hybrid-conversation-deepseek-20260929-v1",
+  "provider": "lunaroute",
+  "model": "deepseek-4.1-flash",
+  "tool_flow_tasks": 40,
+  "pure_chat_tasks": 40,
+  "tool_flow_families": ["workspace-read-fact", "workspace-bash-count", "workspace-bash-derive", "workspace-status-fact"],
+  "pure_chat_families": ["supplied-fact-restatement", "supplied-label-selection", "supplied-value-contrast"],
+  "task_fields": ["id", "kind", "family", "user_question", "workspace_files", "expected_answer", "observed_literal", "expected_tool", "bash_command", "analysis_focus", "answer_commentary", "diversity_tags"],
+  "bash_command_whitelist": ["date", "wc", "grep -c"],
+  "constraints": {
+    "task_specifications_only": true,
+    "no_claimed_tool_results": true,
+    "no_success_self_attestation": true,
+    "relative_workspace_paths_only": true,
+    "deterministic_answers_only": true,
+    "credentials_forbidden": true,
+    "purchases_forbidden": true,
+    "production_actions_forbidden": true,
+    "evaluation_entities_forbidden": ["Reykjavik", "weather_adapter_73c91.py", "PI_NATIVE_MARKER", "facts.txt", "731", "992"],
+    "training_eligible": false,
+    "optimizer_updates": 0
+  }
+}

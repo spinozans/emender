@@ -249,6 +249,114 @@ def make_reasoning_cases(n):
  if len({c['id'] for c in cases})!=n:raise ValueError('case identity')
  return cases,{'reasoning-compose':sum(1 for c in cases if c['family']=='reasoning-config-derive'),'reasoning-cross-file':sum(1 for c in cases if c['family']=='reasoning-cross-file-compose'),'reasoning-recovery':sum(1 for c in cases if c['family']=='reasoning-recovery-compose')}
 
+def hybrid_case(i):
+ cid=case_id('hybrid',i);tag=opaque(cid,10);files={};expected={}
+ if i==0:
+  # The date-question specimen from the operator's interactive findings: the
+  # current date is environment state, so the model must reason privately,
+  # observe bash date, and answer in plain text with exactly the observation.
+  answer_dynamic={'name':'finish','dynamic':'observation-exact','analysis_dynamic':'observation','commentary_dynamic':'observation'}
+  steps=[grounded(action('bash',{'command':"date -u '+%Y-%m-%d'"}),
+   'The current date is environment state I cannot know from the prompt alone; the minimal tool to observe it is bash date.',
+   'Checking the current UTC date.',[]),answer_dynamic]
+  prompt="What is today's date in UTC? Answer in plain text."
+  return dict(id=cid,category='hybrid',family='hybrid-date-question',prompt=prompt,files=files,expected_files=dict(files),steps=steps,supervise_from=0,requires_error=False,repository_discovery=False,answer_is_observation=True)
+ kind=(i-1)%6
+ if kind==0:
+  path=f'config/service_{tag}.ini';port=10000+(i*379)%50000
+  files[path]=f'[service]\nname = svc_{tag}\nport = {port}\n'
+  steps=[grounded(action('read',{'path':path}),
+   f'The user asks for a fact stored in the workspace. Reading {path} observes the declared port directly instead of guessing it.',
+   'Reading the config to observe the port.',[f'service_{tag}']),
+   grounded(finish(str(port)),
+   f'The read observed port = {port}; the plain-text answer is exactly that observed number.',
+   f'The config declares port {port}.',[str(port)])]
+  prompt=f'What port does the config at {path} declare? Answer with only the port number in plain text.'
+  family='hybrid-read-fact'
+ elif kind==1:
+  path=f'docs/notes_{tag}.txt';count=3+((i-1)%9)
+  files[path]=''.join(f'note {j}: {opaque(cid+str(j),6)}\n' for j in range(1,count+1))
+  steps=[grounded(action('bash',{'command':f'wc -l < {path}'}),
+   f'The line count is a fact about the workspace file {path}; observing it with wc -l keeps the answer grounded instead of counted by hand.',
+   'Counting the lines with wc.',[f'notes_{tag}','wc -l']),
+   grounded(finish(str(count)),
+   f'The command observed {count}; the plain-text answer is exactly that observed count.',
+   f'The file has {count} lines.',[str(count)])]
+  prompt=f'How many lines does {path} have? Answer with only the number in plain text.'
+  family='hybrid-bash-count'
+ elif kind==2:
+  path=f'notes/release_{tag}.txt';value='REL_'+opaque(cid,14)
+  files[path]=f'release = {value}\n'
+  steps=[grounded(action('read',{'path':path}),
+   f'The release marker is recorded in {path}; reading it makes the answer the observed value rather than a recollection.',
+   'Reading the release note.',[f'release_{tag}']),
+   grounded(finish(value),
+   f'The read observed release = {value}; answering in plain text with exactly that observed marker.',
+   f'The release marker is {value}.',[value])]
+  prompt=f'What release marker does {path} record? Answer with only the marker in plain text.'
+  family='hybrid-read-fact'
+ elif kind==3:
+  value='LEDGER_'+opaque(cid,14)
+  steps=[grounded(finish(value),
+   f'The user supplied the fact directly in the conversation: the recorded value is {value}. No tool is needed; answering in plain text from what was given.',
+   f'The recorded value is {value}.',[value])]
+  prompt=f'The workspace ledger records the value {value}. What value does the ledger record? Answer in plain text without using any tools.'
+  family='hybrid-pure-chat-supplied'
+ elif kind==4:
+  alpha='APPROVED_'+opaque(cid+':a',10);beta='DRAFT_'+opaque(cid+':b',10)
+  steps=[grounded(finish(alpha),
+   f'Both labels are supplied in the conversation; the approved one is {alpha}, so no tool is needed and the plain-text answer is exactly that label.',
+   f'The approved label is {alpha}.',[alpha])]
+  prompt=f'For ticket {tag}, the approved label is {alpha} and the draft label is {beta}. Return only the approved label in plain text without using any tools.'
+  family='hybrid-pure-chat-selection'
+ else:
+  path=f'data/ledger_{tag}.txt';a=100+(i-1)*7;b=43+((i-1)%31);total=a+b
+  files[path]=f'a = {a}\nb = {b}\n'
+  steps=[grounded(action('read',{'path':path}),
+   f'The user asks for a derived fact; reading {path} observes the two operands before any arithmetic is trusted.',
+   'Reading the recorded operands.',[f'ledger_{tag}']),
+   grounded(action('bash',{'command':f'printf \'%s\\n\' $(({a}+{b}))'}),
+   f'The read observed a = {a} and b = {b}; computing their sum with bash makes the result an observed fact instead of mental arithmetic.',
+   'Computing the sum from the observed operands.',[str(a),str(b)]),
+   grounded(finish(str(total)),
+   f'The command observed {total}; the plain-text answer is exactly that observed sum.',
+   f'The sum is {total}.',[str(total)])]
+  prompt=f'Open {path}, add its two operands, and answer with only the sum in plain text.'
+  family='hybrid-bash-derive'
+ return dict(id=cid,category='hybrid',family=family,prompt=prompt,files=files,expected_files=dict(files),steps=steps,supervise_from=0,requires_error=False,repository_discovery=False,
+  pure_chat=kind in (3,4),answer_must_be_observed=kind in (1,5),expected_answer=None if i==0 else (steps[-1]['arguments']['message'] if 'arguments' in steps[-1] else None))
+
+def teacher_hybrid_case(t):
+ """Convert one validated teacher task specification into a hybrid case."""
+ files={p:c for p,c in t['workspace_files'].items()}
+ answer=t['expected_answer'];literal=t['observed_literal']
+ if t['kind']=='pure-chat':
+  steps=[grounded(finish(answer),
+   f"The fact is supplied in the conversation: {t['analysis_focus']} The plain-text answer is {answer} and no tool is needed.",
+   t['answer_commentary'],[literal])]
+  return dict(id=t['id'],category='hybrid',family=t['family'],prompt=t['user_question'],files={},expected_files={},steps=steps,supervise_from=0,requires_error=False,repository_discovery=False,pure_chat=True,expected_answer=answer)
+ path=sorted(files)[0]
+ if t['expected_tool']=='read':
+  first=grounded(action('read',{'path':path}),
+   f"{t['analysis_focus']} Reading {path} observes the recorded fact directly instead of recalling it.",
+   'Reading the file to observe the fact.',[literal])
+ else:
+  first=grounded(action('bash',{'command':t['bash_command']}),
+   f"{t['analysis_focus']} Running {t['bash_command']} observes the answer in the workspace rather than deriving it from memory.",
+   'Observing the answer with bash.',[literal])
+ steps=[first,grounded(finish(answer),
+  f'The observed result contains {literal}; the plain-text answer is exactly {answer}.',
+  t['answer_commentary'],[answer])]
+ return dict(id=t['id'],category='hybrid',family=t['family'],prompt=t['user_question'],files=files,expected_files=dict(files),steps=steps,supervise_from=0,requires_error=False,repository_discovery=False,answer_must_be_observed=True,expected_answer=answer)
+
+def make_hybrid_cases(n,teacher_tasks):
+ authored=[hybrid_case(i) for i in range(n)]
+ cases=authored+[teacher_hybrid_case(t) for t in teacher_tasks]
+ if len({c['id'] for c in cases})!=len(cases):raise ValueError('case identity')
+ counts={}
+ for c in cases:counts[c['family']]=counts.get(c['family'],0)+1
+ return cases,{'hybrid-authored':len(authored),'hybrid-teacher':len(teacher_tasks),**counts}
+
 def make_cases(n,port):
  if n<20 or n%20:raise ValueError('records must be a multiple of20')
  counts={'local':7*n//20,'web':5*n//20,'exact':5*n//20};counts['recovery']=n-sum(counts.values());cases=[]
@@ -296,6 +404,7 @@ def dynamic_step(spec,bridge):
  if result is None:raise ValueError('dynamic action without observation')
  text=result['content'][0]['text']
  if spec['dynamic']=='observation':return finish(observation_final(text))
+ if spec['dynamic']=='observation-exact':return finish(text.strip())
  if spec['dynamic']=='response-id':return action('get_search_content',{'responseId':response_id(text),'offset':0,'limit':2000})
  if spec['dynamic']=='process-output':return action('process',{'action':'output','id':process_id(text),'tailLines':20})
  if spec['dynamic']=='process-stop':return action('process',{'action':'stop','id':process_id(text)})
@@ -307,7 +416,15 @@ def execute_case(case,panel,enc,root,pi_bin,manifest_path):
  index=0;emitted=[];emitted_specs=[]
  def generate(prompt,budget,deadline):
   nonlocal index
-  spec=dynamic_step(case['steps'][index],bridge);comment=spec.get('commentary') if 'commentary' in spec else ('Using the verified observation.' if index and last_result(bridge) else None)
+  spec=dynamic_step(case['steps'][index],bridge)
+  observed=last_result(bridge)['content'][0]['text'].strip() if last_result(bridge) else None
+  if spec.get('analysis_dynamic')=='observation':
+   if observed is None:raise ValueError('dynamic analysis without observation')
+   spec=dict(spec);spec['analysis']=f'The tool observed {observed}; the user-facing answer is exactly that observed value.'
+  if spec.get('commentary_dynamic')=='observation':
+   if observed is None:raise ValueError('dynamic commentary without observation')
+   spec=dict(spec);spec['commentary']=f'The observed answer is {observed}.'
+  comment=spec.get('commentary') if 'commentary' in spec else ('Using the verified observation.' if index and last_result(bridge) else None)
   analysis=spec.get('analysis')
   if analysis is not None:
    required=spec.get('analysis_requires') or []
@@ -329,6 +446,10 @@ def execute_case(case,panel,enc,root,pi_bin,manifest_path):
  snapshot={}
  for name,want in case['expected_files'].items():snapshot[name]=(workspace/name).read_text() if (workspace/name).exists() else None
  if snapshot!=case['expected_files']:raise ValueError('workspace oracle')
+ if case.get('answer_must_be_observed'):
+  if case.get('expected_answer') is None or not any(str(case['expected_answer']) in r['content'][0]['text'] for r in results):raise ValueError('answer not observed')
+ if case.get('answer_is_observation'):
+  if not results or bridge.final!=results[-1]['content'][0]['text'].strip():raise ValueError('answer is not the observation')
  if case['category']=='web' and case['family'] in ('fetch-content','fetch-retrieve','fetch-error-recovery'):
   if not any(case['expected_fact'] in r['content'][0]['text'] for r in results):raise ValueError('web fact not observed')
  ids,mask,units=encode_candidate(bridge.episode.text(),bridge.generations,case['supervise_from'],enc)
@@ -352,11 +473,20 @@ def freeze(args):
  minimum=args.minimum_verified_records if args.minimum_verified_records is not None else args.records
  if not 1<=minimum<=args.records:raise ValueError('minimum verified records')
  mix=getattr(args,'mix','standard')
- if mix in ('loopbreak','pointerchase','extracterror','longcopy','reasoning'):
+ if mix in ('loopbreak','pointerchase','extracterror','longcopy','reasoning','hybrid'):
   if mix=='loopbreak':cases,counts=make_loopbreak_cases(args.records)
   elif mix=='pointerchase':cases,counts=make_pointerchase_cases(args.records)
   elif mix=='extracterror':cases,counts=make_extracterror_cases(args.records)
   elif mix=='reasoning':cases,counts=make_reasoning_cases(args.records)
+  elif mix=='hybrid':
+   teacher_tasks=[]
+   if getattr(args,'teacher_tasks',None) is not None:
+    pool_path=Path(args.teacher_tasks)
+    if sha(pool_path)!=args.teacher_tasks_sha:raise ValueError('teacher pool identity')
+    pool=json.loads(pool_path.read_text())
+    if pool.get('schema')!='emender-e97-hybrid-conversation-teacher-pool-v1':raise ValueError('teacher pool schema')
+    teacher_tasks=pool['tasks']
+   cases,counts=make_hybrid_cases(args.records,teacher_tasks)
   else:cases,counts=make_longcopy_cases(args.records)
  elif mix=='standard':cases,counts=make_cases(args.records,args.port)
  else:raise ValueError('unknown mix')
@@ -377,5 +507,5 @@ def collect(args):
  if len({r['sequence_sha256'] for r in rows})!=len(rows):raise ValueError('dedup')
  write_authority(rows,{**plan,'plan_sha256':args.plan_sha},args.output);counts=Counter(r['category'] for r in rows);families=Counter(r['family'] for r in rows);summary={'schema':'emender-e97-pi-native-curriculum-summary-v1','status':'verified-candidates-not-admitted','attempted_records':plan['records'],'records':len(rows),'rejected_records':len(rejections),'automatic_retries':0,'minimum_verified_records':plan['minimum_verified_records'],'mix_counts':dict(counts),'families':dict(families),'repository_discovery_records':sum(r['repository_discovery'] for r in rows),'native_calls':sum(r['calls'] for r in rows),'authentic_tool_errors':sum(r['errors'] for r in rows),'assistant_targets':sum(r['targets'] for r in rows),'deduplicated_sequences':len(rows),'model_generations':0,'optimizer_updates':0,'training_eligible':False,'packing_authorized':False,'checkpoint_promotion':False,'authority_sha256':sha(args.output/'candidate-authority/manifest.json')};publish(args.output/'summary.json',summary);print('PI_NATIVE_CURRICULUM_COLLECTED',len(rows),len(rejections),summary['native_calls'],summary['assistant_targets'])
 def main():
- os.umask(0o077);signal.signal(signal.SIGTERM,lambda s,f:(_ for _ in ()).throw(TimeoutError('interrupted')));p=argparse.ArgumentParser();sp=p.add_subparsers(dest='command',required=True);f=sp.add_parser('freeze');f.add_argument('--manifest',type=Path,required=True);f.add_argument('--records',type=int,required=True);f.add_argument('--minimum-verified-records',type=int);f.add_argument('--mix',choices=('standard','loopbreak','pointerchase','extracterror','longcopy','reasoning'),default='standard');f.add_argument('--port',type=int,required=True);f.add_argument('--pi-bin',type=Path,required=True);f.add_argument('--output',type=Path,required=True);c=sp.add_parser('collect');c.add_argument('--plan',type=Path,required=True);c.add_argument('--plan-sha',required=True);c.add_argument('--pi-bin',type=Path,required=True);c.add_argument('--output',type=Path,required=True);a=p.parse_args();freeze(a) if a.command=='freeze' else collect(a)
+ os.umask(0o077);signal.signal(signal.SIGTERM,lambda s,f:(_ for _ in ()).throw(TimeoutError('interrupted')));p=argparse.ArgumentParser();sp=p.add_subparsers(dest='command',required=True);f=sp.add_parser('freeze');f.add_argument('--manifest',type=Path,required=True);f.add_argument('--records',type=int,required=True);f.add_argument('--minimum-verified-records',type=int);f.add_argument('--mix',choices=('standard','loopbreak','pointerchase','extracterror','longcopy','reasoning','hybrid'),default='standard');f.add_argument('--port',type=int,required=True);f.add_argument('--teacher-tasks',type=Path,default=None);f.add_argument('--teacher-tasks-sha',default=None);f.add_argument('--pi-bin',type=Path,required=True);f.add_argument('--output',type=Path,required=True);c=sp.add_parser('collect');c.add_argument('--plan',type=Path,required=True);c.add_argument('--plan-sha',required=True);c.add_argument('--pi-bin',type=Path,required=True);c.add_argument('--output',type=Path,required=True);a=p.parse_args();freeze(a) if a.command=='freeze' else collect(a)
 if __name__=='__main__':main()
