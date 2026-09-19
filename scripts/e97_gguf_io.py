@@ -25,6 +25,7 @@ DEFAULT_ALIGNMENT = 32
 T_U8, T_I8, T_U16, T_I16, T_U32, T_I32, T_F32, T_BOOL, T_STRING, T_ARRAY, T_U64, T_I64, T_F64 = range(13)
 # GGML tensor data types (subset)
 GGML_F32 = 0
+GGML_Q4_0 = 2  # ggml enum ggml_type (fork pin 4fea119): fp16 scale + 16 nibble bytes, 18 bytes/block
 GGML_Q8_0 = 8  # ggml enum ggml_type (fork pin 4fea119): fp16 scale + 32 int8 quants, 34 bytes/block
 
 
