@@ -91,9 +91,15 @@ bridge parent. Still STAGED, NOT EXECUTED.
   `segment{N}/commands-v2arc-superseded.sh`.
 - Template fixes (defect class found in review):
   1. `templates/instantiate-juncture-dir.sh` — the stage-juncture checkpoint
-     glob now zero-pads the update number to six digits
-     (`checkpoint_agent_sft_u000128_*.pt`); the old `u128*` glob matched
-     nothing.
+     resolver was broken two ways: the old `checkpoint_agent_sft_u$UPDATES*`
+     glob was neither zero-padded (`u128*` matches nothing on disk) nor
+     segment-local (every 128-update run names its final checkpoint
+     `checkpoint_agent_sft_u000128_*.pt` regardless of the cumulative arc
+     update count, so a cumulative `u00256*` would also match nothing). It now
+     resolves the atomic `checkpoints/latest.pt` pointer and fails closed
+     unless it is the segment-final u000128 checkpoint — verified against the
+     executed v10 seg1-u128 juncture (resolves sha
+     `26fd9da1e32d4478736fd562bf759ea4a6fce7a55719e0d7e2bc2e723de05d6a`).
   2. `templates/instantiate-run-dir.sh` — every input binding (parent,
      admission, proposal, args json) is absolutized via `readlink -f` before
      being written to `input.sha256`, so `sha256sum --check` resolves them

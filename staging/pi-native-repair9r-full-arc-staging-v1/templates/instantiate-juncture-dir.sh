@@ -33,14 +33,19 @@ mkdir -p "$D"
 
 cat > "$D/stage-juncture.sh" <<EOS
 #!/usr/bin/env bash
-# Resolve the segment $SEG u$UPDATES checkpoint and stage paths.env; then run juncture evals.
+# Resolve the segment $SEG final checkpoint (cumulative u$UPDATES) and stage paths.env;
+# then run juncture evals.
 set -euo pipefail
 D=$D
 TRAIN=$RUN
-# checkpoints are zero-padded to six update digits (checkpoint_agent_sft_u000128_*)
-U_PAD=\$(printf '%06d' "$UPDATES")
-CKPT=\$(ls "\$TRAIN"/checkpoints/checkpoint_agent_sft_u\${U_PAD}_*.pt 2>/dev/null | head -1)
-[[ -n "\$CKPT" ]] || { echo "u$UPDATES checkpoint not present yet"; exit 1; }
+# The run names its final checkpoint by SEGMENT-LOCAL update count
+# (checkpoint_agent_sft_u000128_*.pt) regardless of the cumulative arc update
+# count — the old 'checkpoint_agent_sft_u$UPDATES*' glob matched nothing (u256*
+# vs u000128_...). Resolve via the atomic latest.pt pointer (the executed v10
+# seg1-u128 juncture precedent) and fail closed unless it is the segment-final
+# u000128 checkpoint.
+CKPT=\$(readlink -f "\$TRAIN/checkpoints/latest.pt")
+[[ -n "\$CKPT" && "\$(basename "\$CKPT")" == checkpoint_agent_sft_u000128_*.pt ]] || { echo "segment $SEG final checkpoint not present yet"; exit 1; }
 CKPT_SHA=\$(sha256sum "\$CKPT" | cut -d' ' -f1)
 printf 'SEG_DIR=%s\nCKPT=%s\nCKPT_SHA=%s\n' "\$D" "\$CKPT" "\$CKPT_SHA" > "\$D/paths.env"
 echo "staged juncture for \$CKPT (\$CKPT_SHA)"

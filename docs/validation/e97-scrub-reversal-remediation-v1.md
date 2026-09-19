@@ -175,10 +175,18 @@ and the generic auditor PASSED on it:
 Commit `14930e21` (repo mirror of the live staging root under
 `staging/pi-native-repair9r-full-arc-staging-v1/`):
 
-1. **Juncture glob zero-padding** —
-   `templates/instantiate-juncture-dir.sh`'s stage-juncture resolver now uses
-   `printf '%06d'` (`checkpoint_agent_sft_u000128_*.pt`); the old `u128*`
-   glob matched nothing (checkpoints are zero-padded to six digits).
+1. **Juncture checkpoint resolver** —
+   `templates/instantiate-juncture-dir.sh`'s stage-juncture resolver was
+   broken two ways: the old `checkpoint_agent_sft_u$UPDATES*` glob was
+   neither zero-padded (`u128*` matches nothing on disk) nor segment-local
+   (every 128-update run names its final checkpoint
+   `checkpoint_agent_sft_u000128_*.pt` regardless of the cumulative arc
+   update count, so a zero-padded cumulative `u00256*` would also match
+   nothing for segments >=2). It now resolves the atomic
+   `checkpoints/latest.pt` pointer and fails closed unless it is the
+   segment-final u000128 checkpoint — verified against the executed v10
+   seg1-u128 juncture (resolves
+   `26fd9da1e32d4478736fd562bf759ea4a6fce7a55719e0d7e2bc2e723de05d6a`).
 2. **Absolute input.sha256 bindings** —
    `templates/instantiate-run-dir.sh` absolutizes the parent/admission/
    proposal/args-json paths (`readlink -f`) before writing `input.sha256`,
