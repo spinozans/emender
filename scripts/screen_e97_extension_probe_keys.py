@@ -12,7 +12,7 @@ real planner before use.
 import argparse, hashlib, json, math, struct, sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from scripts.plan_e97_pi_native_training_schedule import PACK, permutation  # noqa: E402
 
 PACKS_DEFAULT = Path('/mnt/nvme2n1/erikg/e97_systematic_posttraining/'
