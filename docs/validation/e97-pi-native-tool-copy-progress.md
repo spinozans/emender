@@ -867,3 +867,36 @@ the Pi-native eleven-tool format (str_replace_editor.view->read,
 scaffolds), scrub residual protocol text from all cohorts, re-prep, re-screen
 keys, restart the arc; or (B) drop the OH cohort from the mixture (loses the
 richest tool-dense data).
+
+## v10 (repair-v9r) u256 dual gate: FAIL-CLOSED — scrub over-correction
+
+Segments 1-2 trained cleanly (u128 ckpt 26fd9da1..., u256 ckpt bda054f0..., training
+audits PASS). u128 juncture: Stage-B 10/14 valid (capture cured vs v9 3/14),
+conversation NLL 1.5200/1.5251 — best ever measured, below the bridge parent.
+u256 full dual gate (pi-native-repair9r-full-arc-u256-dual-gate-v1): execution
+0/96 (bridge control 67/96 in the same run), Stage-B 9/14 valid 6/14 correct,
+conversation windows PASS (1.5243/1.5247, tool accuracy 1.0). ARC STOPPED
+FAIL-CLOSED at u256 per protocol; segment 3 not launched; all checkpoints
+retained as evidence.
+
+Forensics: the execution panel runs in the OpenHands-compatible runtime whose
+tool surface IS str_replace_editor/execute_bash; the model must be
+bidialectal (Pi-native for Stage-B, OH-compatible for execution). Episode
+traces show v10-u256 emitting valid OH-dialect frames on turn 0 then
+malformed frames (54/96 invalid_frame, 20 generation_budget, 22 wrong finals).
+Root cause: the scrub ruling for the v2 prep treated OH-vocabulary in
+supervised targets as contamination and dropped 80% of grounded-authored and
+57% of representation-bridge records — those records are the execution
+dialect's training data, not poison (v6 passed BOTH legs with them intact;
+the v9 poisoning came from the raw full-pool OH cohort, which was correctly
+replaced by the translated+replay-verified collection). The over-correction
+taught the model to forget the execution runtime. This was the orchestrator's
+ruling error, not the workers' execution: T1's scrub report and T3's drop
+counts followed the instruction faithfully.
+
+Remediation (staged, requires operator sign-off as a new data authority): v3
+prep = v2 + scrub reversal (restore the dropped grounded-authored and
+representation-bridge records; keep the translated+replay-verified OH
+collection replacing the raw cohort; keep everything else), restart the chain
+from the bridge parent. The extension prep (57b7b71b...) inherits the same
+defect (built on v2's kept cohorts) and needs the same reversal.
