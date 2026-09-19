@@ -403,8 +403,13 @@ def dynamic_step(spec,bridge):
  result=last_result(bridge)
  if result is None:raise ValueError('dynamic action without observation')
  text=result['content'][0]['text']
- if spec['dynamic']=='observation':return finish(observation_final(text))
- if spec['dynamic']=='observation-exact':return finish(text.strip())
+ resolved=None
+ if spec['dynamic']=='observation':resolved=finish(observation_final(text))
+ elif spec['dynamic']=='observation-exact':resolved=finish(text.strip())
+ else:raise ValueError('unknown dynamic action')
+ for key in ('analysis_dynamic','commentary_dynamic'):
+  if key in spec:resolved[key]=spec[key]
+ return resolved
  if spec['dynamic']=='response-id':return action('get_search_content',{'responseId':response_id(text),'offset':0,'limit':2000})
  if spec['dynamic']=='process-output':return action('process',{'action':'output','id':process_id(text),'tailLines':20})
  if spec['dynamic']=='process-stop':return action('process',{'action':'stop','id':process_id(text)})
