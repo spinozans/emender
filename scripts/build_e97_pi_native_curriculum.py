@@ -332,17 +332,17 @@ def teacher_hybrid_case(t):
  answer=t['expected_answer'];literal=t['observed_literal']
  if t['kind']=='pure-chat':
   steps=[grounded(finish(answer),
-   f"The fact is supplied in the conversation: {t['analysis_focus']} The plain-text answer is {answer} and no tool is needed.",
+   f"The fact is supplied in the conversation: {literal}. {t['analysis_focus']} The plain-text answer is {answer} and no tool is needed.",
    t['answer_commentary'],[literal])]
   return dict(id=t['id'],category='hybrid',family=t['family'],prompt=t['user_question'],files={},expected_files={},steps=steps,supervise_from=0,requires_error=False,repository_discovery=False,pure_chat=True,expected_answer=answer)
  path=sorted(files)[0]
  if t['expected_tool']=='read':
   first=grounded(action('read',{'path':path}),
-   f"{t['analysis_focus']} Reading {path} observes the recorded fact directly instead of recalling it.",
+   f"{t['analysis_focus']} The recorded fact is {literal}; reading {path} observes it directly instead of recalling it.",
    'Reading the file to observe the fact.',[literal])
  else:
   first=grounded(action('bash',{'command':t['bash_command']}),
-   f"{t['analysis_focus']} Running {t['bash_command']} observes the answer in the workspace rather than deriving it from memory.",
+   f"{t['analysis_focus']} The recorded fact is {literal}; running {t['bash_command']} observes the answer in the workspace rather than deriving it from memory.",
    'Observing the answer with bash.',[literal])
  steps=[first,grounded(finish(answer),
   f'The observed result contains {literal}; the plain-text answer is exactly {answer}.',
