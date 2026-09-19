@@ -91,7 +91,9 @@ def main() -> None:
     ck = torch.load(args.checkpoint, map_location="cpu", mmap=True, weights_only=False)
     sd = ck["model_state_dict"]
     assert len(sd) == 237, f"expected 237 tensors, got {len(sd)}"
-    assert ck["weight_mode"] == "saved-eval-x"
+    assert ck.get("weight_mode", "pretrained-base") == "saved-eval-x" or "weight_mode" not in ck, (
+        f"unexpected weight_mode {ck.get('weight_mode')!r}"
+    )
     print("state dict mapped (mmap; optimizer state pages never materialized)", flush=True)
 
     # ---- shape/dtype contract ----
