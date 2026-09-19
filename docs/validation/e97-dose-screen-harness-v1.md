@@ -197,3 +197,22 @@ bash $PROBE/run-train.sh && bash $PROBE/run-stageb.sh && \
 - No admission, no training, no evaluation, no key reuse across manifests
   (fresh 1402000.. range; the v3 arc keys 1401011.. bind the v3 manifest and
   were NOT reused).
+
+## 7. Honest caveats
+
+- The dose-prep manifest purpose inherits the v3 disposition sentence
+  ("...restored in full ... undone in full") from the shared preparer logic
+  and then states, in the same string: "DOSE-SCREEN VARIANT: the restored
+  pools are seeded subsamples at reduced dose, NOT the full restoration —
+  grounded-authored first N of 2,583 ...; representation-bridge first N of
+  2,223 ...; monotonically nested...". The authoritative dose facts are the
+  `authored_rehearsal`/`rehearsal_rehearsal` subsample records (seeds, caps,
+  full-pool counts) and the cohort tables in section 2 — both machine-verified
+  by the prep audit.
+- The dose probes use the same lr (1e-5) and per-step recipe as the qualified
+  arc segments; only steps/save-every/keep-checkpoints differ (32 / 32 / 1,
+  the lr-screen precedent for single-checkpoint probes).
+- The 24-case slice binds 4 models (probe train/saved + bridge train/saved
+  controls) = 96 episodes per probe run, mirroring the dual-gate convention;
+  the slice remains a screen — the frozen execution gate stays bound to the
+  full 96-case panel.
