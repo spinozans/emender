@@ -25,6 +25,7 @@ DEFAULT_ALIGNMENT = 32
 T_U8, T_I8, T_U16, T_I16, T_U32, T_I32, T_F32, T_BOOL, T_STRING, T_ARRAY, T_U64, T_I64, T_F64 = range(13)
 # GGML tensor data types (subset)
 GGML_F32 = 0
+GGML_Q8_0 = 8  # ggml enum ggml_type (fork pin 4fea119): fp16 scale + 32 int8 quants, 34 bytes/block
 
 
 def _pack_str(s: str) -> bytes:
@@ -68,6 +69,8 @@ class GGUFWriter:
         self.kvs: dict[str, bytes] = {}
         self.kv_order: list[str] = []
         self.tensors: list[tuple[str, np.ndarray]] = []  # fp32, logical torch shape
+        # pre-packed tensors: (name, dims in NE order (fastest first), ggml_type, blob)
+        self.raw_tensors: list[tuple[str, list[int], int, bytes]] = []
 
     def add_kv(self, key: str, value) -> None:
         if key in self.kvs:
@@ -82,24 +85,39 @@ class GGUFWriter:
         arr = np.ascontiguousarray(array, dtype=np.float32)
         self.tensors.append((name, arr))
 
+    def add_raw_tensor(self, name: str, dims_ne: list[int], ggml_type: int, data: bytes) -> None:
+        """Pre-packed tensor blob with an explicit GGML dtype (e.g. a quantized
+        block layout). dims_ne is GGUF NE order (fastest-varying first), matching
+        the on-disk layout of ``data``."""
+        self.raw_tensors.append((name, list(dims_ne), ggml_type, data))
+
     def close(self) -> None:
-        header = GGUF_MAGIC + struct.pack("<IQQ", GGUF_VERSION, len(self.tensors), len(self.kv_order))
+        packed = [(name, list(arr.shape[::-1]), GGML_F32, arr.tobytes(order="C"))
+                  for name, arr in self.tensors]
+        packed += [(name, dims_ne, ggml_type, data)
+                   for name, dims_ne, ggml_type, data in self.raw_tensors]
+        header = GGUF_MAGIC + struct.pack("<IQQ", GGUF_VERSION, len(packed), len(self.kv_order))
         for key in self.kv_order:
             header += _pack_str(key) + self.kvs[key]
         # tensor infos
         offset = 0
         infos = b""
         blobs = []
-        for name, arr in self.tensors:
-            assert arr.dtype == np.float32
-            dims = arr.shape[::-1]  # NE order
+        for name, dims, ggml_type, data in packed:
+            assert isinstance(data, (bytes, bytearray))
             infos += _pack_str(name)
             infos += struct.pack("<I", len(dims)) + b"".join(struct.pack("<Q", d) for d in dims)
-            infos += struct.pack("<I", GGML_F32)
+            infos += struct.pack("<I", ggml_type)
             infos += struct.pack("<Q", offset)
-            data = arr.tobytes(order="C")
             blobs.append(data)
             offset += len(data)
+            # GGUF spec: each tensor's data offset must be aligned (ggml's loader
+            # enforces this); pad after every tensor (fixed 2026-09-18, P2: the
+            # unaligned file was rejected by gguf_init_from_file)
+            pad = (-offset) % self.alignment
+            if pad:
+                blobs.append(b"\x00" * pad)
+                offset += pad
         data_start = (len(header) + len(infos) + self.alignment - 1) // self.alignment * self.alignment
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with open(self.path, "wb") as f:
