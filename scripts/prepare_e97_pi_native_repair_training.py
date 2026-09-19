@@ -316,6 +316,11 @@ def prepare(args):
   spec_cohorts.append({'cohort':name,'authority':spec['root'],'authority_sha256':spec['sha256'],'seed':spec.get('seed',0),'target_token_budget':spec['budget_targets'],'consumed_target_tokens':consumed,'records':len(records),'source_training_eligible':eligibility})
  order=interleave(streams)
  args.output.mkdir(parents=True,mode=0o700,exist_ok=False)
+ restored=(rehearsal is not None and authored is not None)
+ disposition=('representation-bridge and grounded-authored cohorts restored in full per the v10 u256 scrub-reversal remediation: '
+   'their supervised-target OpenHands vocabulary is the execution dialect\'s required training data, not contamination; '
+   'the v2 prep\'s cohort-level scrub drop is undone in full' if restored else
+   'representation-bridge and grounded-authored cohorts dropped per the OH scrub report')
  paths={k:args.output/v for k,v in {'tokens':'tokens.uint32.bin','mask':'assistant_mask.uint8.bin','index':'records.idx','metadata':'records.jsonl'}.items()}
  offset=records=targets=0;sources=Counter();per_cohort=Counter()
  with paths['tokens'].open('xb') as tf,paths['mask'].open('xb') as mf,paths['index'].open('xb') as ix,paths['metadata'].open('x') as meta:
@@ -330,8 +335,10 @@ def prepare(args):
    tf.write(tokens);mf.write(mask);ix.write(INDEX.pack(offset,n,want,0))
    meta.write(json.dumps(output,sort_keys=True)+'\n')
    offset+=n;records+=1;targets+=want;sources[cohort]+=want;per_cohort[cohort]+=1
+ sizing=('. Sizing rationale (operator ruling 2026-09-19): this manifest is the complete unique corpus at full pool strength — %d tokens / %d assistant targets, near-zero repetition; repetition must never be baked into packs, and the extension chain targets ~2 epochs ~= 2x trained tokens via epoch-permutation re-emission of packs per key per epoch at the sampler level'%(offset,targets) if getattr(args,'purpose_sizing_note',False) else '')
+ purpose=('Non-authorizing repair-tranche exposure and packing preparation: translated replay-verified OpenHands rehearsal plus Pi-native curriculum, cohort-interleaved (%s)%s'%(disposition,sizing)) if args.translated_oh_source else 'Non-authorizing repair-tranche exposure and packing preparation: OpenHands-execution rehearsal plus Pi-native curriculum plus bridge rehearsal, cohort-interleaved'
  manifest={'schema':AUTHORITY_SCHEMA,'status':'complete',
-  'purpose':(('Non-authorizing repair-tranche exposure and packing preparation: translated replay-verified OpenHands rehearsal plus Pi-native curriculum, cohort-interleaved (representation-bridge and grounded-authored cohorts dropped per the OH scrub report). Sizing rationale (operator ruling 2026-09-19): this manifest is the complete unique corpus at full pool strength — %d tokens / %d assistant targets, near-zero repetition; repetition must never be baked into packs, and the extension chain targets ~2 epochs ~= 2x trained tokens via epoch-permutation re-emission of packs per key per epoch at the sampler level'%(offset,targets)) if args.translated_oh_source else 'Non-authorizing repair-tranche exposure and packing preparation: OpenHands-execution rehearsal plus Pi-native curriculum plus bridge rehearsal, cohort-interleaved'),
+  'purpose':purpose,
   'tokenizer':'p50k_base','training_eligible':False,'packing_authorized':False,'optimizer_updates_authorized':0,
   'counts':{'records':records,'train_records':records,'validation_records':0,'tokens':offset,'assistant_target_tokens':targets},
   'source_target_totals':dict(sources),'source_record_counts':dict(per_cohort),
@@ -342,6 +349,7 @@ def prepare(args):
    'records':len(native),'distinct_problem_keys':len(keys)}),
   'selected_authority_sha256':args.selected_sha,'selected_selection_audit_sha256':args.selection_audit_sha,
   'selected_overlap_audit_sha256':args.overlap_audit_sha,'rehearsal_authority_sha256':args.rehearsal_sha,
+  **({'rehearsal_rehearsal':{'authority':str(args.rehearsal.resolve()),'authority_sha256':args.rehearsal_sha,'cohort':'representation-bridge-rehearsal','records':len(rehearsal)}} if args.rehearsal else {'rehearsal_rehearsal':None}),
   'parent_checkpoint':str(args.parent_checkpoint.resolve()),'parent_checkpoint_sha256':args.parent_sha,
   **({'loopbreak_rehearsal':{'authority':str(args.loopbreak_source.resolve()),'authority_sha256':args.loopbreak_sha,'records':len(loopbreak)}} if args.loopbreak_source else {'loopbreak_rehearsal':None}),
   **({'conversation_rehearsal':{'authority':str(args.conversation_source.resolve()),'authority_sha256':args.conversation_sha,'seed':args.conversation_seed,'target_token_budget':args.conversation_budget_targets,'consumed_target_tokens':conversation_consumed,'records':len(conversation),'source_training_eligible':conversation_eligibility}} if args.conversation_source else {'conversation_rehearsal':None}),
@@ -380,6 +388,7 @@ def main():
  p.add_argument('--extra3-source',type=Path,default=None);p.add_argument('--extra3-sha',default=None);p.add_argument('--extra3-cohort',default=None)
  p.add_argument('--extra4-source',type=Path,default=None);p.add_argument('--extra4-sha',default=None);p.add_argument('--extra4-cohort',default=None)
  p.add_argument('--cohort-spec',action='append',default=None)
+ p.add_argument('--purpose-sizing-note',action='store_true',default=False)
  p.add_argument('--output',type=Path,required=True)
  a=p.parse_args()
  if a.translated_oh_source is None and a.fulltraj_budget_targets<=0:raise ValueError('positive budget required')

@@ -90,11 +90,11 @@ def audit(args):
             or dict(cohort_targets) != manifest['source_target_totals']):
         raise ValueError('preparation cohort table')
     bindings = []
-    entries = [manifest[k] for k in ('openhands_rehearsal', 'conversation_rehearsal',
-                                     'loopbreak_rehearsal', 'extra_rehearsal',
-                                     'extra2_rehearsal', 'extra3_rehearsal',
-                                     'extra4_rehearsal', 'authored_rehearsal',
-                                     'correction_rehearsal')]
+    entries = [manifest.get(k) for k in ('openhands_rehearsal', 'conversation_rehearsal',
+                                             'loopbreak_rehearsal', 'extra_rehearsal',
+                                             'extra2_rehearsal', 'extra3_rehearsal',
+                                             'extra4_rehearsal', 'authored_rehearsal',
+                                             'correction_rehearsal', 'rehearsal_rehearsal')]
     entries.extend(manifest.get('spec_cohorts') or [])
     for entry in entries:
         if entry is None:
