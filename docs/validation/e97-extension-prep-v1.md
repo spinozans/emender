@@ -11,14 +11,18 @@ work was CPU-only; the v10 training arc's GPUs were never touched.
 - Preparation root:
   `/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-extension-preparation-v1`
 - Prep manifest sha256
-  `115fb75eedb8512da14c94290095649b879ac64056b2619bfac9820238836ada`
+  `57b7b71b8c6e9b685fdf775d2d569d001dc39c2fdd2af74632951f62172149e4`
+  (the manifest purpose field carries the sizing rationale below verbatim;
+  the first build `115fb75eedb8512da14c94290095649b879ac64056b2619bfac9820238836ada`
+  is byte-identical in every payload and is retained, untouched, as
+  `e97-extension-preparation-v1-r1-superseded`)
 - Counts: **987,986 records / 1,069,134,639 tokens / 740,110,362 assistant
   target tokens**; schema `emender-e97-tulu3-masked-sft-v1`; tokenizer
   `p50k_base`; `training_eligible: false`, `packing_authorized: false`,
   `optimizer_updates_authorized: 0`.
 - Packs: boundary-aware whole-record 64K packs
   (`emender-e97-sft-boundary-aware-packs-v2`), packs manifest sha256
-  `7958b35129f18cc10423cc4cdcce7827c8ab0fae1bac0ec4d6420c0691b80898`;
+  `c3cf1b341eb73f88c6f7a1f9386c590169a9a608ea1eb2841963d780c82d3d04`;
   17,351 train packs, zero oversize records, `diagnostic_system_gate:
   cpu-system-gate`. Independent validation PASSED
   (`scripts/validate_e97_sft_packs.py` receipt `packs/validation.json`:
@@ -27,7 +31,7 @@ work was CPU-only; the v10 training arc's GPUs were never touched.
 - Full prep audit PASSED:
   `scripts/audit_e97_extension_preparation_v1.py` receipt
   `audit.json` sha256
-  `1be90d4d0dba81bf8af4aa1e189e4e78e168228fb061ed1bad78cab2d78c3838`,
+  `bd3ad5bc8d7834fb7b967d2a3fdc1512950a713a52dbd9820d3da4adf63f4c67`,
   status `qualified-preparation-not-admitted`. The auditor machine-verifies:
   manifest + payload identities (bytes + sha256 per output), index
   accounting (contiguous offsets, split==0, n/target sums), per-record mask
@@ -39,12 +43,15 @@ work was CPU-only; the v10 training arc's GPUs were never touched.
   `9b78628d47c48c304c14de50399fe1853d8c83386c7cf5d9bd4a0e878bf679fa`.
   Extension segment proposals rebind their actual chained parents at their
   freeze points (v10 terminal audited checkpoint onward).
-- Sizing note (honest): full pool strength over the named cohort list sums to
-  ~1.07B tokens / 740.1M supervised targets. The earlier "~1.8-2.2B tokens"
-  working estimate is not reachable from these sources without repetition or
-  additional unnamed data; no additional source was invented. At the v10 arc's
-  measured ~58.5M scheduled input tokens per 128-update segment, this prep
-  supports ~18 such segments before repetition.
+- Sizing rationale (operator ruling 2026-09-19, carried verbatim in the prep
+  manifest purpose field): this preparation is the **complete unique corpus
+  at full pool strength** — 1,069,134,639 tokens / 740,110,362 supervised
+  targets, near-zero repetition. Repetition must never be baked into packs;
+  the extension chain targets **~2 epochs ≈ 2.1B trained tokens** via
+  epoch-permutation re-emission of packs per key per epoch at the sampler
+  level — the designed, clean form of repetition. At the v10 arc's measured
+  ~58.5M scheduled input tokens per 128-update segment, this corpus supports
+  ~18 such segments of unique exposure before the second epoch begins.
 
 ## 2. Cohort table (records / tokens / assistant targets / share)
 
@@ -138,17 +145,17 @@ Location:
 `/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-extension-prep-v1/lr-screen-post-v10-v1/`
 
 - `measurement-plan.md` — rates **1e-5 / 3e-5 / 1e-4**, exposure-matched
-  32-update probes on THIS prep (same frozen schedule, sampler key 1403761,
+  32-update probes on THIS prep (same frozen schedule, sampler key 1403772,
   world 8, context 65,536), fresh optimizer state from the v10 arc's terminal
   audited checkpoint; measures frame validity (Stage-B valid first frame +
   correct first action), full Stage-B probe results, and conversation /
   development NLL drift against a re-baselined parent panel (T2 caveat: the
   thinking cohorts enter here, so the conversation-NLL panel must be
   re-baselined at the probe parent); read-out rules; no promotion, no retry.
-- `schedule-1403761-probe.json` (sha256
-  `bfe4eff6a6866ce07435562681ca5baac762842316d4a5e0f61631b09a2d9bff`) — the
-  frozen 32-update schedule; key 1403761 was screened with
-  `scripts/screen_e97_extension_probe_keys.py` (3,461 keys) and satisfies the
+- `schedule-1403772-probe.json` (sha256
+  `ca451267b2ac8b70e460c2a4ba5a9cf4e2eaf5181cf904f415ccb3160524349d`) — the
+  frozen 32-update schedule; key 1403772 was screened with
+  `scripts/screen_e97_extension_probe_keys.py` (3,472 keys) and satisfies the
   window-coverage floor (majors in every update, minors at least once per
   window), independently re-verified with the real planner.
 - `commands.sh` — fail-closed ordered sheet: per rate, freeze the 32-update
