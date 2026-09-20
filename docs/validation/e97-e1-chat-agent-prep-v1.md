@@ -159,18 +159,20 @@ plain greeting, a date question, and the two-tool task. This is the same
 emission pathology that poisoned v9 segment 1 — visible now on chat cases, so
 the panel discriminates exactly as required.
 
-## 6. Honest sizing note
+## 6. Sizing note (approved by the operator)
 
-Targets 131,230,771 sit inside the ~130-150M window. Tokens 378,205,117 are
-~11% above the ~340M estimate: the explicit share floors are jointly infeasible
-inside 340M tokens (measured pool ratios: verified-raw-OH 4.32 tok/target,
-restored pools 7.14-9.77, tool-talk 3.16, conversation 1.23, fillers
-2.07-2.55). The share constraints were honored and the target window held; the
-token estimate was target-window-derived. The seam-families constraint
-("~2-3%") was resolved as a token share with moderate repetition (×4 epochs =
-8.81M tokens = 2.3% of tokens): as a target share it is arithmetically
-impossible (55,920 targets/epoch combined; 2-3% of targets would need ~50-75
-epochs ≈ 120M tokens for 0.2% of targets).
+Targets 131,230,771 sit inside the ~130-150M window. Tokens 378,205,117 carry
+the share-floor overshoot the operator accepted: the arc was sized "a few
+hundred million tokens, a few hours", and the measured pool ratios (verified-
+raw-OH 4.32 tok/target, restored pools 7.14-9.77, tool-talk 3.16, conversation
+1.23, fillers 2.07-2.55) make the explicit share floors jointly infeasible
+inside 340M tokens; the share constraints were honored and the target window
+held. The seam-families constraint ("~2-3%") is a TOKEN share (operator-
+confirmed): at x4 whole-record epochs the reasoning pilot + hybrid collection
+hold 8.81M tokens = 2.3% of prep tokens, matching the restored-pool light-
+repetition precedent — as a target share it is arithmetically impossible. The
+full 320-record hybrid collection enters (the operator's "239 recs" was the
+audit's native_calls figure).
 
 ## 7. Segment-1 proposal + staging (deliverable e)
 
@@ -209,9 +211,13 @@ Segment 1 (admission onward; from `e1-arc-staging-v1/segment1/commands.sh`):
 
 ## 9. Residual risks (stated plainly)
 
-- **Raw-OH capture re-test:** verified-raw-OH at 15% re-tests the v9 failure
-  mode on the replay-verified subset; the Stage-B juncture at u128 is the
-  fail-closed tripwire (v9's capture was visible at the first juncture).
+- **Raw-OH capture risk (accepted by the operator with this exact framing):**
+  verified-raw-OH at 15% re-tests the v9 failure mode, and the differences vs
+  v9 are what make it a measured risk rather than a repeat: **verification**
+  (the replay-proven 5,087-record subset, not the unverified full pool),
+  **dose** (the 15% floor vs v9's 17.1%), and **context** (a Pi-native-majority
+  diet plus chat-probe/Stage-B junctures that catch capture fail-closed at
+  u128, hours into the arc — not after it).
 - **Filler repetition:** cumulative/compositional at 3 epochs (121K distinct
   records, 38% of targets) approaches v5's memorization exposure per record;
   the conversation NLL probe + chat-probe panel at every juncture are the
