@@ -134,9 +134,9 @@ def audit(args):
         'checkpoint_promotion': False,
         'automatic_retry': False,
         'checker_sha256': sha(Path(__file__)),
-        'note': ('segment proposals for the extension arc are frozen, audited with '
+        'note': (args.note if args.note else ('segment proposals for the extension arc are frozen, audited with '
                  'scripts/audit_e97_pi_native_repair_generic.py and admitted only after '
-                 "v10's gates, with operator sign-off"),
+                 "v10's gates, with operator sign-off")),
     }
     args.output.write_text(json.dumps(receipt, indent=2, sort_keys=True) + '\n')
     print('EXTENSION_PREPARATION_AUDIT', records, token_total, targets, sha(args.output))
@@ -150,6 +150,8 @@ def main():
                   default=Path('/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-curriculum-2000-selected-v1'),
                   help='root containing candidate-authority/, selection-audit.json, overlap-audit.json')
     p.add_argument('--output', type=Path, required=True)
+    p.add_argument('--note', default=None,
+                   help='override the receipt note (e.g. for a different arc staging the same audit)')
     audit(p.parse_args())
 
 

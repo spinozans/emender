@@ -100,7 +100,7 @@ def read_authored_slice(root,expected_manifest_sha,seed,budget_targets,max_recor
  if not chosen:raise ValueError('empty authored slice')
  return chosen,consumed,len(eligible)
 
-def read_conversation_slice(root,expected_manifest_sha,seed,budget_targets):
+def read_conversation_slice(root,expected_manifest_sha,seed,budget_targets,exclude_ids=None):
  """Deterministic seeded whole-record slice of a production-admitted tulu3 conversation authority.
  Streams the metadata once and seek-reads only chosen records so very large authorities are tractable.
  The source manifest may mark training_eligible True or omit it (production-admitted raw source); the raw value is
@@ -121,9 +121,12 @@ def read_conversation_slice(root,expected_manifest_sha,seed,budget_targets):
  index=paths['index'].read_bytes()
  if len(index)!=INDEX.size*len(rows):raise ValueError('conversation index shape')
  eligible=[]
+ excluded=0
  for i,row in enumerate(rows):
   offset,n,want,split=INDEX.unpack_from(index,i*INDEX.size)
   if split or n>65536:continue
+  if exclude_ids is not None and row.get('identity') in exclude_ids:
+   excluded+=1;continue
   eligible.append((i,offset,n,want))
  rng=random.Random(seed);order=list(range(len(eligible)));rng.shuffle(order)
  chosen=[];consumed=0
@@ -135,7 +138,7 @@ def read_conversation_slice(root,expected_manifest_sha,seed,budget_targets):
    if len(tokens)!=4*n or len(mask)!=n or sum(mask)!=want:raise ValueError('conversation record slice')
    consumed+=want;chosen.append((tokens,mask,dict(rows[i])))
  if not chosen:raise ValueError('empty conversation slice')
- return chosen,consumed,manifest.get('training_eligible')
+ return chosen,consumed,manifest.get('training_eligible'),excluded
 
 def read_translated_oh_slice(root,expected_manifest_sha,seed,budget_targets):
  """Deterministic seeded whole-record slice of the translated + replay-verified OH
@@ -225,6 +228,14 @@ def read_native_slice(root,expected_manifest_sha,seed,budget_targets):
  if not chosen or consumed==0:raise ValueError('empty native slice')
  return chosen,consumed,seen_keys
 
+def repeat_records(records, epochs, label):
+ """Whole-record repetition for the light-epoch cohorts (restored pools, seam
+ families, tool-shaped fillers). Repetition epochs are recorded in the manifest;
+ records stay whole (no in-record duplication) and packing stays greedy."""
+ if epochs < 1:
+  raise ValueError(f'{label} repeat epochs must be >= 1')
+ return [record for _ in range(epochs) for record in records]
+
 def interleave(streams):
  """Weighted-fair merge by token share; deterministic tie-break by cohort order."""
  totals=[sum(len(t) for t,_,_ in records) for records,_ in streams]
@@ -244,7 +255,8 @@ def interleave(streams):
  return order
 
 def prepare(args):
- if (args.fulltraj is None)==(args.translated_oh_source is None):raise ValueError('exactly one of --fulltraj or --translated-oh-source is required')
+ if not args.allow_no_oh_cohort and (args.fulltraj is None)==(args.translated_oh_source is None):raise ValueError('exactly one of --fulltraj or --translated-oh-source is required (or --allow-no-oh-cohort)')
+ if args.allow_no_oh_cohort and (args.fulltraj is not None or args.translated_oh_source is not None):raise ValueError('--allow-no-oh-cohort excludes the OH stream slots')
  if args.translated_oh_source and (not args.translated_oh_sha or args.translated_oh_budget_targets<=0):raise ValueError('translated-oh requires sha and positive budget')
  selection_audit=json.loads(args.selection_audit.read_text())
  overlap_audit=json.loads(args.overlap_audit.read_text())
@@ -254,16 +266,22 @@ def prepare(args):
  if args.translated_oh_source:
   native,oh_consumed,keys=read_translated_oh_slice(args.translated_oh_source,args.translated_oh_sha,args.translated_oh_seed,args.translated_oh_budget_targets)
   oh_name=args.translated_oh_cohort
- else:
+ elif args.fulltraj is not None:
   native_manifest=json.loads((args.fulltraj/'manifest.json').read_text())
   native,oh_consumed,keys=read_native_slice(args.fulltraj,args.fulltraj_sha,args.fulltraj_seed,args.fulltraj_budget_targets)
   oh_name=COHORTS[0]
+ else:
+  native=[];oh_consumed=0;keys=set();oh_name=None
  include=None
  if args.pi_native_include_families:
   include=tuple(x.strip() for x in args.pi_native_include_families.split(',') if x.strip())
  selected=read_tulu3(args.selected,'pi-native-curriculum',args.selected_sha,eligible_required=False,schema='emender-e97-pi-native-selected-candidate-authority-v1',status='verified-selection-not-admitted',include_families=include)
- cohort_names=[oh_name,'pi-native-curriculum']
- streams=[(native,cohort_names[0]),(selected,cohort_names[1])]
+ has_oh=bool(native)
+ if has_oh:
+  cohort_names=[oh_name,'pi-native-curriculum'];streams=[(native,oh_name)]
+ else:
+  cohort_names=['pi-native-curriculum'];streams=[]
+ streams.append((selected,'pi-native-curriculum'))
  rehearsal=None;rehearsal_pool=0
  if args.rehearsal is not None:
   cohort_names.append('representation-bridge-rehearsal')
@@ -277,6 +295,7 @@ def prepare(args):
    # and within the v3 full restoration (which keeps every record).
    rng=random.Random(args.rehearsal_subsample_seed);order=list(range(rehearsal_pool));rng.shuffle(order)
    rehearsal=[rehearsal[i] for i in order[:args.rehearsal_max_records]]
+  rehearsal=repeat_records(rehearsal,args.rehearsal_repeat_epochs,'representation-bridge-rehearsal')
   streams.append((rehearsal,cohort_names[len(cohort_names)-1]))
  elif args.rehearsal_max_records>0:raise ValueError('rehearsal subsample requires --rehearsal')
  authored=None;authored_consumed=0;authored_pool=0
@@ -284,6 +303,7 @@ def prepare(args):
   cohort_names.append('grounded-authored-rehearsal')
   authored,authored_consumed,authored_pool=read_authored_slice(args.authored_source,args.authored_sha,args.authored_seed,args.authored_budget_targets,max_records=args.authored_max_records)
   if args.authored_max_records>len(authored):raise ValueError('authored max_records exceeds the selected slice')
+  authored=repeat_records(authored,args.authored_repeat_epochs,'grounded-authored-rehearsal')
   streams.append((authored,cohort_names[len(cohort_names)-1]))
  elif args.authored_max_records>0:raise ValueError('authored subsample requires --authored-source')
  correction=None
@@ -296,10 +316,14 @@ def prepare(args):
   cohort_names.append('loopbreak-rehearsal')
   loopbreak=read_tulu3(args.loopbreak_source,'loopbreak-rehearsal',args.loopbreak_sha,eligible_required=False,schema='emender-e97-pi-native-candidate-authority-v1',status='verified-candidate-not-admitted')
   streams.append((loopbreak,cohort_names[len(cohort_names)-1]))
- conversation=None;conversation_consumed=0;conversation_eligibility=None
+ conversation=None;conversation_consumed=0;conversation_eligibility=None;conversation_excluded=0;conversation_pool=0
+ conversation_exclude_ids=None
+ if args.conversation_exclusion_ids is not None:
+  conversation_exclude_ids=set(x.strip() for x in args.conversation_exclusion_ids.read_text().splitlines() if x.strip())
  if args.conversation_source:
   cohort_names.append('conversation-rehearsal')
-  conversation,conversation_consumed,conversation_eligibility=read_conversation_slice(args.conversation_source,args.conversation_sha,args.conversation_seed,args.conversation_budget_targets)
+  conversation,conversation_consumed,conversation_eligibility,conversation_excluded=read_conversation_slice(args.conversation_source,args.conversation_sha,args.conversation_seed,args.conversation_budget_targets,exclude_ids=conversation_exclude_ids)
+  conversation_pool=conversation_consumed+0
   streams.append((conversation,cohort_names[len(cohort_names)-1]))
  extra=None
  if args.extra_source:
@@ -315,11 +339,13 @@ def prepare(args):
  if args.extra3_source:
   cohort_names.append(args.extra3_cohort)
   extra3=read_tulu3(args.extra3_source,args.extra3_cohort,args.extra3_sha,eligible_required=False,schema='emender-e97-pi-native-candidate-authority-v1',status='verified-candidate-not-admitted')
+  extra3=repeat_records(extra3,args.extra3_repeat_epochs,args.extra3_cohort)
   streams.append((extra3,cohort_names[len(cohort_names)-1]))
  extra4=None
  if args.extra4_source:
   cohort_names.append(args.extra4_cohort)
   extra4=read_tulu3(args.extra4_source,args.extra4_cohort,args.extra4_sha,eligible_required=False,schema='emender-e97-pi-native-candidate-authority-v1',status='verified-candidate-not-admitted')
+  extra4=repeat_records(extra4,args.extra4_repeat_epochs,args.extra4_cohort)
   streams.append((extra4,cohort_names[len(cohort_names)-1]))
  spec_cohorts=[]
  for spec_path in (args.cohort_spec or []):
@@ -327,9 +353,10 @@ def prepare(args):
   name=spec['cohort']
   if name in cohort_names:raise ValueError(f'duplicate cohort {name}')
   cohort_names.append(name)
-  records,consumed,eligibility=read_conversation_slice(Path(spec['root']),spec['sha256'],spec.get('seed',0),spec['budget_targets'])
+  records,consumed,eligibility,_=read_conversation_slice(Path(spec['root']),spec['sha256'],spec.get('seed',0),spec['budget_targets'])
+  records=repeat_records(records,int(spec.get('repeat_epochs',1)),name)
   streams.append((records,cohort_names[len(cohort_names)-1]))
-  spec_cohorts.append({'cohort':name,'authority':spec['root'],'authority_sha256':spec['sha256'],'seed':spec.get('seed',0),'target_token_budget':spec['budget_targets'],'consumed_target_tokens':consumed,'records':len(records),'source_training_eligible':eligibility})
+  spec_cohorts.append({'cohort':name,'authority':spec['root'],'authority_sha256':spec['sha256'],'seed':spec.get('seed',0),'target_token_budget':spec['budget_targets'],'consumed_target_tokens':consumed,'records':len(records),'source_training_eligible':eligibility,'repeat_epochs':int(spec.get('repeat_epochs',1))})
  order=interleave(streams)
  args.output.mkdir(parents=True,mode=0o700,exist_ok=False)
  restored=(rehearsal is not None and authored is not None)
@@ -351,7 +378,7 @@ def prepare(args):
   for k,tokens,mask,row in order:
    cohort=cohort_names[k];n=len(mask);want=sum(mask)
    output=dict(row);output['source']=cohort
-   if cohort==cohort_names[0]:
+   if has_oh and cohort==cohort_names[0]:
     output['source_record_id']=row.get('record_index')
     if args.translated_oh_source:output['repair_provenance']={'authority_sha256':args.translated_oh_sha,'instance_id':row.get('instance_id'),'trajectory_id':row.get('trajectory_id')}
     else:output['repair_provenance']={'authority_sha256':args.fulltraj_sha,'problem_key':row.get('problem_key')}
@@ -362,12 +389,12 @@ def prepare(args):
  sizing=('. Sizing rationale (operator ruling 2026-09-19): this manifest is the complete unique corpus at full pool strength — %d tokens / %d assistant targets, near-zero repetition; repetition must never be baked into packs, and the extension chain targets ~2 epochs ~= 2x trained tokens via epoch-permutation re-emission of packs per key per epoch at the sampler level'%(offset,targets) if getattr(args,'purpose_sizing_note',False) else '')
  rehearsal_entry=None;authored_entry=None
  if rehearsal is not None:
-  rehearsal_entry={'authority':str(args.rehearsal.resolve()),'authority_sha256':args.rehearsal_sha,'cohort':'representation-bridge-rehearsal','records':len(rehearsal)}
+  rehearsal_entry={'authority':str(args.rehearsal.resolve()),'authority_sha256':args.rehearsal_sha,'cohort':'representation-bridge-rehearsal','records':len(rehearsal),'repeat_epochs':args.rehearsal_repeat_epochs}
   if args.rehearsal_max_records:rehearsal_entry['subsample']={'method':'seeded-shuffle-first-N','seed':args.rehearsal_subsample_seed,'max_records':args.rehearsal_max_records,'full_pool_records':rehearsal_pool}
  if authored is not None:
-  authored_entry={'authority':str(args.authored_source.resolve()),'authority_sha256':args.authored_sha,'seed':args.authored_seed,'target_token_budget':args.authored_budget_targets,'consumed_target_tokens':authored_consumed,'records':len(authored)}
+  authored_entry={'authority':str(args.authored_source.resolve()),'authority_sha256':args.authored_sha,'seed':args.authored_seed,'target_token_budget':args.authored_budget_targets,'consumed_target_tokens':authored_consumed*args.authored_repeat_epochs,'records':len(authored),'repeat_epochs':args.authored_repeat_epochs}
   if args.authored_max_records:authored_entry['subsample']={'method':'seeded-shuffle-first-N','seed':args.authored_seed,'max_records':args.authored_max_records,'full_pool_records':authored_pool}
- purpose=('Non-authorizing repair-tranche exposure and packing preparation: translated replay-verified OpenHands rehearsal plus Pi-native curriculum, cohort-interleaved (%s)%s%s'%(disposition,sizing,dose)) if args.translated_oh_source else 'Non-authorizing repair-tranche exposure and packing preparation: OpenHands-execution rehearsal plus Pi-native curriculum plus bridge rehearsal, cohort-interleaved'
+ purpose=(args.purpose if args.purpose else (('Non-authorizing repair-tranche exposure and packing preparation: translated replay-verified OpenHands rehearsal plus Pi-native curriculum, cohort-interleaved (%s)%s%s'%(disposition,sizing,dose)) if args.translated_oh_source else 'Non-authorizing repair-tranche exposure and packing preparation: OpenHands-execution rehearsal plus Pi-native curriculum plus bridge rehearsal, cohort-interleaved'))
  manifest={'schema':AUTHORITY_SCHEMA,'status':'complete',
   'purpose':purpose,
   'tokenizer':'p50k_base','training_eligible':False,'packing_authorized':False,'optimizer_updates_authorized':0,
@@ -375,19 +402,21 @@ def prepare(args):
   'source_target_totals':dict(sources),'source_record_counts':dict(per_cohort),
   'interleave':{'scheme':'weighted-fair-by-token-share','cohort_order':cohort_names},
   'pi_native_family_filter':(list(include) if include else None),
-  'openhands_rehearsal': ({'authority':str(args.translated_oh_source.resolve()),'authority_sha256':args.translated_oh_sha,'cohort':oh_name,'seed':args.translated_oh_seed,'target_token_budget':args.translated_oh_budget_targets,'consumed_target_tokens':oh_consumed,'records':len(native),'distinct_instance_ids':len(keys),'source_collection':'e97-oh-pi-native-translation-v1 translated+replay-verified','source_provenance':json.loads((args.translated_oh_source/'manifest.json').read_text()).get('provenance')} if args.translated_oh_source else {'authority':str(args.fulltraj.resolve()),'authority_sha256':args.fulltraj_sha,
+  'openhands_rehearsal': ({'authority':str(args.translated_oh_source.resolve()),'authority_sha256':args.translated_oh_sha,'cohort':oh_name,'seed':args.translated_oh_seed,'target_token_budget':args.translated_oh_budget_targets,'consumed_target_tokens':oh_consumed,'records':len(native),'distinct_instance_ids':len(keys),'source_collection':'e97-oh-pi-native-translation-v1 translated+replay-verified','source_provenance':json.loads((args.translated_oh_source/'manifest.json').read_text()).get('provenance')} if args.translated_oh_source else ({'authority':str(args.fulltraj.resolve()),'authority_sha256':args.fulltraj_sha,
    'seed':args.fulltraj_seed,'target_token_budget':args.fulltraj_budget_targets,'consumed_target_tokens':oh_consumed,
-   'records':len(native),'distinct_problem_keys':len(keys)}),
+   'records':len(native),'distinct_problem_keys':len(keys)} if args.fulltraj is not None else None)),
+  'repetition': {'note':'whole-record repetition epochs per cohort (records stay whole; packing stays greedy)',
+   'epochs':{name:ep for name,ep in ([('representation-bridge-rehearsal',args.rehearsal_repeat_epochs)] if rehearsal is not None else [])+([('grounded-authored-rehearsal',args.authored_repeat_epochs)] if authored is not None else [])+([(args.extra3_cohort,args.extra3_repeat_epochs)] if extra3 is not None else [])+([(args.extra4_cohort,args.extra4_repeat_epochs)] if extra4 is not None else [])+[(e['cohort'],e['repeat_epochs']) for e in spec_cohorts]}},
   'selected_authority_sha256':args.selected_sha,'selected_selection_audit_sha256':args.selection_audit_sha,
   'selected_overlap_audit_sha256':args.overlap_audit_sha,'rehearsal_authority_sha256':args.rehearsal_sha,
   **({'rehearsal_rehearsal':rehearsal_entry} if args.rehearsal else {'rehearsal_rehearsal':None}),
   'parent_checkpoint':str(args.parent_checkpoint.resolve()),'parent_checkpoint_sha256':args.parent_sha,
   **({'loopbreak_rehearsal':{'authority':str(args.loopbreak_source.resolve()),'authority_sha256':args.loopbreak_sha,'records':len(loopbreak)}} if args.loopbreak_source else {'loopbreak_rehearsal':None}),
-  **({'conversation_rehearsal':{'authority':str(args.conversation_source.resolve()),'authority_sha256':args.conversation_sha,'seed':args.conversation_seed,'target_token_budget':args.conversation_budget_targets,'consumed_target_tokens':conversation_consumed,'records':len(conversation),'source_training_eligible':conversation_eligibility}} if args.conversation_source else {'conversation_rehearsal':None}),
+  **({'conversation_rehearsal':{'authority':str(args.conversation_source.resolve()),'authority_sha256':args.conversation_sha,'seed':args.conversation_seed,'target_token_budget':args.conversation_budget_targets,'consumed_target_tokens':conversation_consumed,'records':len(conversation),'source_training_eligible':conversation_eligibility,**({'freshness':{'method':'identity-exclusion','excluded_prior_draw_records':conversation_excluded,'exclusion_authority':str(args.conversation_exclusion_ids.resolve())}} if args.conversation_exclusion_ids is not None else {})}} if args.conversation_source else {'conversation_rehearsal':None}),
   **({'extra_rehearsal':{'authority':str(args.extra_source.resolve()),'authority_sha256':args.extra_sha,'cohort':args.extra_cohort,'records':len(extra)}} if args.extra_source else {'extra_rehearsal':None}),
   **({'extra2_rehearsal':{'authority':str(args.extra2_source.resolve()),'authority_sha256':args.extra2_sha,'cohort':args.extra2_cohort,'records':len(extra2)}} if args.extra2_source else {'extra2_rehearsal':None}),
-  **({'extra3_rehearsal':{'authority':str(args.extra3_source.resolve()),'authority_sha256':args.extra3_sha,'cohort':args.extra3_cohort,'records':len(extra3)}} if args.extra3_source else {'extra3_rehearsal':None}),
-  **({'extra4_rehearsal':{'authority':str(args.extra4_source.resolve()),'authority_sha256':args.extra4_sha,'cohort':args.extra4_cohort,'records':len(extra4)}} if args.extra4_source else {'extra4_rehearsal':None}),
+  **({'extra3_rehearsal':{'authority':str(args.extra3_source.resolve()),'authority_sha256':args.extra3_sha,'cohort':args.extra3_cohort,'records':len(extra3),'repeat_epochs':args.extra3_repeat_epochs}} if args.extra3_source else {'extra3_rehearsal':None}),
+  **({'extra4_rehearsal':{'authority':str(args.extra4_source.resolve()),'authority_sha256':args.extra4_sha,'cohort':args.extra4_cohort,'records':len(extra4),'repeat_epochs':args.extra4_repeat_epochs}} if args.extra4_source else {'extra4_rehearsal':None}),
   'spec_cohorts':spec_cohorts,
   **({'correction_rehearsal':{'authority':str(args.correction_source.resolve()),'authority_sha256':args.correction_sha,'records':len(correction)}} if args.correction_source else {'correction_rehearsal':None}),
   **({'authored_rehearsal':authored_entry,'authored_source_sha256':args.authored_sha} if args.authored_source else {'authored_rehearsal':None}),
@@ -421,10 +450,18 @@ def main():
  p.add_argument('--extra3-source',type=Path,default=None);p.add_argument('--extra3-sha',default=None);p.add_argument('--extra3-cohort',default=None)
  p.add_argument('--extra4-source',type=Path,default=None);p.add_argument('--extra4-sha',default=None);p.add_argument('--extra4-cohort',default=None)
  p.add_argument('--cohort-spec',action='append',default=None)
+ p.add_argument('--allow-no-oh-cohort',action='store_true',default=False)
+ p.add_argument('--rehearsal-repeat-epochs',type=int,default=1)
+ p.add_argument('--authored-repeat-epochs',type=int,default=1)
+ p.add_argument('--extra3-repeat-epochs',type=int,default=1)
+ p.add_argument('--extra4-repeat-epochs',type=int,default=1)
+ p.add_argument('--conversation-exclusion-ids',type=Path,default=None)
+ p.add_argument('--purpose',default=None)
  p.add_argument('--purpose-sizing-note',action='store_true',default=False)
  p.add_argument('--output',type=Path,required=True)
  a=p.parse_args()
- if a.translated_oh_source is None and a.fulltraj_budget_targets<=0:raise ValueError('positive budget required')
+ if a.translated_oh_source is None and a.fulltraj is None and not a.allow_no_oh_cohort:raise ValueError('positive budget required')
+ if a.translated_oh_source is None and a.fulltraj is not None and a.fulltraj_budget_targets<=0:raise ValueError('positive budget required')
  prepare(a)
 
 if __name__=='__main__':main()

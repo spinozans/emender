@@ -1,0 +1,55 @@
+{
+  "schema": "emender-e97-e1-chat-probe-panel-v1",
+  "status": "frozen-eval-panel-not-run",
+  "purpose": "The operator's conversational acceptance tests as a standing probe: a small deterministic chat-agent acceptance panel run per E1 checkpoint (CPU, llama.cpp port runner, greedy decode) alongside the Stage-B juncture detectors. (1) greeting: the model must reply in plain text with NO tool-call frame — a valid Pi-native frame with tool==none (Action: finish), or a text-only response per the codec's no-tool path; (2) the date case: the model must call bash date and its finish message must state the correct weekday, computed at eval runtime from the real clock (deterministic per run); (3) a two-tool mini-task from the hybrid family pattern (read -> bash -> finish with the observed value). Checks mirror the hybrid-collection verification machinery (parse_turn + semantic_turn + canonical round-trip via scripts/e97_pi_native_codec.py).",
+  "protocol": "e97-pi-native-v1",
+  "tool_manifest": "configs/pi/e97-active-tool-surface-v1.json",
+  "tool_manifest_sha256": "55421905438806223414d96a4e64f1a6ae64772afdb1fbc67fbbfb77e8d5d908",
+  "system_message": "Complete the task using the declared Pi-native tools. Use actual observations, recover from errors, and finish only when complete.",
+  "tokenizer": "p50k_base",
+  "runner": "e97-llama-cpp-port-v1 e97-runner --panel mode (greedy; deterministic given weights)",
+  "max_tool_turns": 4,
+  "gen_tokens": 256,
+  "harness_policy": "The harness NEVER executes model-chosen shell or tool calls: ToolResults are fed from the case's frozen fixtures or from the harness's own `date` invocation at eval runtime; the model's emitted commands are checked textually only.",
+  "cases": [
+    {
+      "id": "chat-probe-greeting-0001",
+      "kind": "greeting",
+      "family_mirror": "hybrid-pure-chat",
+      "user_message": "Hi! I'm just checking in — how are you doing today?",
+      "expectation": "Plain-text conversational reply with NO tool-call frame: either a valid five-line frame with Action: finish (tool==none) whose finish.message is a conversational greeting answer, or a text-only response (no five-line frame) that is non-empty and contains no tool-call Action line.",
+      "checks": {
+        "pass_paths": ["finish-frame", "text-only"],
+        "forbidden": ["any declared-tool call", "think-only emission", "empty response"]
+      }
+    },
+    {
+      "id": "chat-probe-date-0001",
+      "kind": "date-tool",
+      "family_mirror": "hybrid-date-question",
+      "user_message": "Please run the date command and tell me what day of the week it is.",
+      "expectation": "The model must call bash date (a valid frame with Action: bash whose arguments.command mentions date), then its finish message must state the correct weekday, computed at eval runtime from the real clock (deterministic per run). The harness feeds the real `date` output as the ToolResult.",
+      "checks": {
+        "requires": ["valid bash frame with 'date' in command", "valid finish frame whose message states the runtime-computed weekday (case-insensitive)"],
+        "weekday_source": "harness datetime.now() at eval time",
+        "tool_result_source": "harness `date` subprocess at eval time"
+      }
+    },
+    {
+      "id": "chat-probe-two-tool-0001",
+      "kind": "two-tool-mini-task",
+      "family_mirror": "hybrid-bash-derive",
+      "user_message": "Open data/ledger_e1probe.txt in the workspace, add its two operands with a shell command, and answer with only the sum in plain text.",
+      "fixtures": {
+        "read:data/ledger_e1probe.txt": "a = 157\nb = 284\n",
+        "bash": "441\n"
+      },
+      "expected_sum": "441",
+      "expectation": "A two-tool mini-task from the hybrid-bash-derive family pattern: a valid read frame on data/ledger_e1probe.txt, then a valid bash frame whose command contains both observed operands (157 and 284), then a valid finish frame stating exactly the observed sum 441. The harness feeds the frozen fixture contents as ToolResults; nothing is executed.",
+      "checks": {
+        "requires": ["valid read frame with the fixture path", "valid bash frame mentioning both operands", "valid finish frame whose message states 441"],
+        "distinct_tools_required": 2
+      }
+    }
+  ]
+}

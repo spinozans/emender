@@ -889,7 +889,7 @@ class Renderer:
         m["context_tokens"] = m["tokens"] - m["assistant_tokens"]
         if m["tokens"] > CONTEXT_WINDOW_TOKENS:
             m["oversized"] = 1
-        return {"metrics": m, "transcript": transcript}
+        return {"metrics": m, "transcript": transcript, "sections": sections}
 
 
 def _mean(values):
@@ -932,6 +932,8 @@ def render_source(source_key: str, spec: dict, raw_root: Path, output_root: Path
         per_record.append({"id": record_id, "source": source_key, "row_index": row_index,
                            "flags": record["flags"], "metrics": rendered["metrics"],
                            "turns": record["turns"],
+                           "sections": [{"kind": kind, "text": text}
+                                        for kind, text in rendered["sections"]],
                            "transcript": rendered["transcript"]})
     if sampled != n:
         raise SystemExit(f"{source_key}: sampled {sampled} != expected {n}")
@@ -1111,11 +1113,50 @@ def cmd_verify_licenses(args):
     print("LICENSE receipt written")
 
 
+_NONFINITE = re.compile(r"\b(?:Infinity|-Infinity|NaN)\b")
+
+
+def _sanitize_observation(text: str) -> str:
+    """Make an observation safe for the protected-overlap scalar extractor.
+    Some Toucan MCP observations embed non-JSON-compliant float literals
+    (bare Infinity/NaN, or exponents like 1e999 that parse to inf); the
+    extractor's json round-trip rejects them. Only rewrites when a non-finite
+    value is actually present, so exact scalar text is otherwise preserved."""
+    import math
+    def _nonfinite(o):
+        if isinstance(o, float):
+            return not math.isfinite(o)
+        if isinstance(o, dict):
+            return any(_nonfinite(v) for v in o.values())
+        if isinstance(o, list):
+            return any(_nonfinite(v) for v in o)
+        return False
+    def _fix(o):
+        if isinstance(o, float) and not math.isfinite(o):
+            return None
+        if isinstance(o, dict):
+            return {k: _fix(v) for k, v in o.items()}
+        if isinstance(o, list):
+            return [_fix(v) for v in o]
+        return o
+    try:
+        parsed = json.loads(text)
+    except Exception:
+        return _NONFINITE.sub("null", text)
+    if not isinstance(parsed, (dict, list)):
+        return text
+    if _nonfinite(parsed):
+        return json.dumps(_fix(parsed))
+    return text
+
+
 def _overlap_records(payloads):
     from ndm.e97_protected_overlap import extract_exact_scalars
     out = []
     for payload in payloads:
-        observations = [t["content"] for t in payload.get("turns", []) if t.get("role") == "tool"]
+        observations = [_sanitize_observation(t["content"])[:65536]
+                        for t in payload.get("turns", []) if t.get("role") == "tool"]
+        observations = [obs for obs in observations if obs]
         first_user = next((t["content"] for t in payload.get("turns", [])
                            if t.get("role") == "user"), "")
         out.append({"task_id": payload["id"], "family_id": payload["source"],
@@ -1189,8 +1230,11 @@ def cmd_render(args):
     if unknown:
         raise SystemExit(f"unknown sources: {unknown}")
     for source_key in sources:
+        # an explicit --sample overrides every per-source default (the spike's
+        # small Nemotron default stays the fallback when --sample is absent)
+        size = args.sample if args.sample is not None else SAMPLE_SIZES.get(source_key, DEFAULT_SAMPLE)
         render_source(source_key, SOURCES[source_key], args.raw_root, args.output_root,
-                      encoding, SAMPLE_SIZES.get(source_key, args.sample), license_receipt)
+                      encoding, size, license_receipt)
 
 
 def main():
@@ -1202,7 +1246,8 @@ def main():
     p_licenses = sub.add_parser("verify-licenses")
     p_licenses.add_argument("--output-root", type=Path, required=True)
     p_render = sub.add_parser("render"); common(p_render)
-    p_render.add_argument("--sample", type=int, default=DEFAULT_SAMPLE)
+    p_render.add_argument("--sample", type=int, default=None,
+                          help="explicit per-source sample size; overrides the spike's per-source defaults when given")
     p_render.add_argument("--sources", nargs="*", default=None)
     p_overlap = sub.add_parser("overlap")
     p_overlap.add_argument("--output-root", type=Path, required=True)
