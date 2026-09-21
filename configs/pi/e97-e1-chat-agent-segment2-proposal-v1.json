@@ -1,0 +1,309 @@
+{
+  "arc": {
+    "arc_id": "e97-e1-chat-agent",
+    "arc_keys": [
+      1770555,
+      1775117,
+      1787698,
+      1850767
+    ],
+    "arc_updates": 512,
+    "chaining": "Segment 2 trains 128 updates from segment 1's final audited checkpoint (/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e1-chat-agent-segment1-training-v1/checkpoints/checkpoint_agent_sft_u000128_loss_0.8764.pt); the prior segment's training audit (/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e1-chat-agent-segment1-training-v1/audit.json, status passed-training-not-promoted) verifies the exact parent sha256.",
+    "evaluation_caveats": "The reasoning cohort enters at segment 1 (re-baseline the conversation NLL panel at its first entry); the chat-probe panel is new \u2014 no historical baseline exists beyond the v6 0/3 negative control; verified-raw-OH at 15% re-tests the v9 capture risk on the verified subset \u2014 the Stage-B juncture detector is the fail-closed tripwire.",
+    "juncture_policy": "Stage-B panel AND conversation NLL probe AND the E1 chat-probe panel at every 128-update boundary; full frozen dual gate at u256 and u512 and at any detector-flagged checkpoint; fail-closed stopping if retention is decisively breached or the chat-probe panel regresses below the prior juncture.",
+    "rationale": "The E1 chat-agent arc: v6's passing recipe proportions on fresh verified pools at few-hundred-million scale plus the chat-seam families (tooltalk corpus, reasoning pilot, hybrid conversation), with the operator's conversational acceptance tests as a standing probe. Chained from the bridge parent with full retention headroom.",
+    "segment_index": 2,
+    "segment_updates": 128,
+    "throughput_note": "Trained at 72s/update (chunk 2048/16384, trainer worktree pinned at 80db924d) per the throughput forensics in the progress ledger.",
+    "total_segments": 4
+  },
+  "authority_manifest_sha256": "07dea664375f89d9c81e1705f83532e41d3a108791e068579170affc9a2877c4",
+  "automatic_expansion": false,
+  "automatic_retry": false,
+  "checkpoint_promotion": false,
+  "cohort_bindings": {
+    "authored_rehearsal": {
+      "authority_sha256": "08752c53e2199533252c77821ec9696012b19dc09ea0ff1508ef6676a6cd2140",
+      "consumed_target_tokens": 3704364,
+      "records": 10332,
+      "repeat_epochs": 4
+    },
+    "conversation_rehearsal": {
+      "authority_sha256": "d64f51abc615c097910900ffa7fc88f020ae5567b89958f607008078c271c7f6",
+      "consumed_target_tokens": 39000000,
+      "records": 37336
+    },
+    "extra3_rehearsal": {
+      "authority_sha256": "88e535b5bec8f704163eb45bab929d7c80e4eee92f575b3748ebb758d18b5229",
+      "cohort": "reasoning-rehearsal",
+      "records": 200,
+      "repeat_epochs": 4
+    },
+    "extra4_rehearsal": {
+      "authority_sha256": "7e5fec2a67b1e7ba45bcbcc866d86cb133bb0c454cdabdb274978eb42ebc0b1d",
+      "cohort": "hybrid-conversation-rehearsal",
+      "records": 1280,
+      "repeat_epochs": 4
+    },
+    "rehearsal_rehearsal": {
+      "authority_sha256": "a21dba6f80e58e87ea838a98018b40650decebed3cf4b0f98dacdb750520469d",
+      "cohort": "representation-bridge-rehearsal",
+      "records": 8892,
+      "repeat_epochs": 4
+    }
+  },
+  "context_size": 65536,
+  "conversation_rehearsal": {
+    "budget_targets": 39000000,
+    "manifest_sha256": "d64f51abc615c097910900ffa7fc88f020ae5567b89958f607008078c271c7f6",
+    "seed": 613119,
+    "source": "/mnt/nvme1n1/erikg/sft/e97-4b-smoltalk2-admitted-v1"
+  },
+  "data_world_size": 8,
+  "declared_cohorts": [
+    "compositional-rehearsal",
+    "conversation-rehearsal",
+    "cumulative-recovery-rehearsal",
+    "grounded-authored-rehearsal",
+    "hybrid-conversation-rehearsal",
+    "live-aligned-rehearsal",
+    "longcopy-rehearsal",
+    "loopbreak-rehearsal",
+    "pi-native-curriculum",
+    "pointerchase-rehearsal",
+    "reasoning-rehearsal",
+    "representation-bridge-rehearsal",
+    "tooltalk-rehearsal",
+    "verified-raw-oh"
+  ],
+  "evidence_basis": {
+    "chat_probe_panel": "The operator's conversational acceptance tests frozen as a deterministic CPU panel (greeting / date / two-tool), run per checkpoint at every juncture alongside Stage-B and the conversation NLL probe. Negative control: the promoted v6-u96 (d8146498) scores 0/3 \u2014 raw-OH dialect capture (undeclared str_replace_editor frames) on all three cases \u2014 the probe discriminates.",
+    "convicted_exclusions": "ZERO instruction-mix and ZERO translated-Pi-frame-OH: instruction-mix was convicted in the passing-recipe lineage; translated-OH contributed 0/96 execution at 17%. Neither cohort appears in the E1 prep.",
+    "fresh_conversation": "SmolTalk2 seed 613119 draw of 39,000,000 targets, excluding the 57,196 identities consumed by every trained arc draw (v6/v7/v8 small draws, the v9/v9r 56,835-record seed-613117 draw, the v9-wide 9,364-record draw); zero overlap with any trained conversation cohort.",
+    "honest_sizing": "Targets 131,230,771 (within the ~130-150M window). Tokens 378,205,117 \u2014 ~11% above the ~340M estimate: the explicit share floors are jointly infeasible inside 340M tokens (measured pool ratios: verified-raw-OH 4.32 tok/target, restored pools 7.14-9.77, tooltalk 3.16); the share constraints were honored and the target window held; the token estimate was target-window-derived.",
+    "overlap_coverage": "prep manifest binds the selected-curriculum provenance triple (8cf83db8.../de977726.../9c104d73...); tool-talk full-intake overlap audit PASS; verified-raw-OH coverage = machine replay verification (the translated collection replay) + public SWE-rebench provenance; restored pools are the previously qualified authorities of the promoted v6-u96 lineage; seam families carry their collection overlap audits (zero significant entity collisions).",
+    "recipe_basis": "v6 is the only arc that passed the frozen dual gate (u96 promoted d8146498). Its passing proportions: bridge 42.2%, authored 17.4%, conversation 20.9%, raw-OH 13.9%, curriculum 3.9%, loopbreak 1.7% of a 2.01M-target diet. E1 applies the same shape at 65x scale with fresh verified pools: conversation ~30% (v2 eroded at 40%), verified-raw-OH 15% (the replay-verified subset \u2014 v9's capture came from UNVERIFIED full-pool records at 17.1%), tool-talk 8.2% (the new intermingled chat+tool corpus teaching tool vocabulary through the Pi frame), restored pools 5.4% at 4 whole-record epochs (presence saturates the slice at >=1% per the dose screen), seam families (reasoning pilot + hybrid conversation) at 4 epochs, repair families and tool-shaped fillers closing the remainder.",
+    "throughput_forensics": "chunk 2048/16384 qualified at 72s/update with losses matching to 5-6 digits (progress ledger); the E1 launchers use the same recipe.",
+    "tooltalk_intake": "Full-intake render (Toucan SFT 6,898 eligible of 6,944 sampled; Nemotron interactive_agent 2,000; Tool-Reasoning-31K 1,902 after When2Call exclusion), spike lint applied, 10,236 records / 10,817,522 assistant targets (8.2%); licenses re-verified (Apache-2.0 x2, CC-BY-4.0), protected-panel overlap PASS (zero significant entities). Authority sha fe0bfaff...",
+    "verified_raw_oh": "5,087 replay-verified raw OH trajectories (native format), selected by the translated collection's verified (instance_id, trajectory_id) pairs mapped 1:1 to raw trajectory_identity uuids; 383 raw validation-split rows carried with their split flag and skipped by consumers; prep draw = 1,715 records / 19,697,664 targets (15.0%), seed 914101. Authority sha fa6a47da..."
+  },
+  "identity_bindings": [
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e1-chat-agent-segment1-training-v1/checkpoints/checkpoint_agent_sft_u000128_loss_0.8764.pt",
+      "5ee1e7d303ed8d85b15de97bbfd097911f8d20390cd7c1c6e530d521b3914142"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e1-chat-agent-segment1-training-v1/audit.json",
+      "ee41ceaf105d9127c757eace490cf1cd2cfa45200e9b1fceb03f7b3bd159b4f0"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e1-chat-agent-prep-v1/e1-preparation/manifest.json",
+      "07dea664375f89d9c81e1705f83532e41d3a108791e068579170affc9a2877c4"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e1-chat-agent-prep-v1/e1-preparation/packs/manifest.json",
+      "36b6a6b2f3000f555e749d2dd2bd9114e3ce28fa1e4d5e1e1c1eb563b3c24424"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e1-chat-agent-prep-v1/e1-preparation/packs/validation.json",
+      "a08d2a22c99dcad130607c6025b93bfc92b1ded13cb2d4042af8e5a76523e4dd"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e1-chat-agent-prep-v1/e1-preparation/audit.json",
+      "352d882bc08ad7f9f638f4e99f4ea1eb532135f1f0efc24e13fcd2c92bd90c6e"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e1-chat-agent-prep-v1/e1-preparation/schedule-segment2-proposal.json",
+      "69bfaa662564c90c85e4389f31c641c94a859ea660ab27ddd95ee2b3833609f9"
+    ],
+    [
+      "configs/pi/e97-active-tool-surface-v1.json",
+      "55421905438806223414d96a4e64f1a6ae64772afdb1fbc67fbbfb77e8d5d908"
+    ],
+    [
+      "configs/pi/e97-e1-chat-probe-panel-v1.json",
+      "21e958f1f926abc8ddc7be2428101b265852ec43ab6a4a6fbd86401a80b926ac"
+    ],
+    [
+      "scripts/eval_e97_e1_chat_probe_panel.py",
+      "0fdb909606355bac5f83f960eb408e6a4a78fc33946644422c6b2344e4cd97f2"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/representation-bridge-v1-data/authority/manifest.json",
+      "a21dba6f80e58e87ea838a98018b40650decebed3cf4b0f98dacdb750520469d"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/grounded-expansion-v1-data-r2/authority/manifest.json",
+      "08752c53e2199533252c77821ec9696012b19dc09ea0ff1508ef6676a6cd2140"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e1-chat-agent-prep-v1/verified-raw-oh-authority/manifest.json",
+      "fa6a47daf69a3671ca523966cee38774db576d8d50d06520094b853759ee22e4"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e1-chat-agent-prep-v1/verified-raw-oh-authority/id-mapping.jsonl",
+      "dbacdcde7a6aaa33d2d144ded7949192ccd7909eeb3a5a25a8c546bfbf510376"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-oh-pi-native-translation-v1/candidate-authority/manifest.json",
+      "a179c140b4e8efa77a8163574bb78d4fe34dea91adfeb0439e8339d5002be1fb"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/sft/e97-4b-open-swe-source-native-fulltraj-v1/manifest.json",
+      "255b02f3b3bbdc85eb15a89d22e7ff2c4bf69f151c2dfb5941a22468711993f5"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e1-chat-agent-prep-v1/tooltalk-authority/manifest.json",
+      "fe0bfaffd8f00ab8011fc4a267c75686ac8caa04f4c862afeac3636d98294a9c"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e1-chat-agent-prep-v1/tooltalk-intake/download-receipt.json",
+      "b3a9a8b8aaed3899e831cb0f6994e9505057f21169aec6092a5d467519a815b3"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e1-chat-agent-prep-v1/tooltalk-intake/license-receipt.json",
+      "d51ffee1dd9a5542051044743b8643ee483aa944b0ea04a80d4d38bede9bace5"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e1-chat-agent-prep-v1/tooltalk-intake/overlap-audit.json",
+      "aa70dc94ac4e7102804773e4b7bdd67bca0f94e51741cc061718812d55f58746"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-hybrid-conversation-collection-v1/collect/candidate-authority/manifest.json",
+      "7e5fec2a67b1e7ba45bcbcc866d86cb133bb0c454cdabdb274978eb42ebc0b1d"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-hybrid-conversation-collection-v1/audit.json",
+      "64fa533a19c3a611cc1edf9f3e697ba0b2d8a6bebb3e1438e436c65363ec80e5"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-hybrid-conversation-collection-v1/overlap-audit.json",
+      "b13beba0eae016172a7296e0c2186aba7e0574a4ae6fbb5055c5ba706b895b2d"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-reasoning-rehearsal-collection-v1/collect/candidate-authority/manifest.json",
+      "88e535b5bec8f704163eb45bab929d7c80e4eee92f575b3748ebb758d18b5229"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-reasoning-rehearsal-collection-v1/audit.json",
+      "f62c86efb60de7c2df6329b043714000ea881c3c9d68adcda1c5f1eeb846ac4d"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-reasoning-rehearsal-collection-v1/overlap-audit.json",
+      "d8ed9720c9d55721a35420b43e1a753ea3d0034b1c35851f7f5a792363033ae6"
+    ],
+    [
+      "/mnt/nvme1n1/erikg/sft/e97-4b-smoltalk2-admitted-v1/manifest.json",
+      "d64f51abc615c097910900ffa7fc88f020ae5567b89958f607008078c271c7f6"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e1-chat-agent-prep-v1/conversation-prior-draw-identities.txt",
+      "fd875b053e3ad1b55d694402eb384de6852fc1ef22cc3854b74bfa5424b07353"
+    ],
+    [
+      "/mnt/nvme1n1/erikg/sft/e97-4b-pi-compositional-retention-mix-v1/manifest.json",
+      "79e7981077fc387c3e3759728ddd0f9e1ac16f687c628542e8313fb735c4cfb7"
+    ],
+    [
+      "/mnt/nvme1n1/erikg/sft/e97-4b-pi-cumulative-recovery-mix-v1/manifest.json",
+      "a17648481e5cf1183ea640b873d70e2b1c36ad3e976d0c4b4a2f19af54fe600f"
+    ],
+    [
+      "/mnt/nvme1n1/erikg/sft/e97-4b-pi-live-aligned-all-assistant-v1/manifest.json",
+      "4a1cf86f9089cc3f2f79884f845d26d487d88b20fb32b589a8095d4824bc6a20"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-extracterror-collection-v1/collect/candidate-authority/manifest.json",
+      "08817eb42ff835523cc62bc13208053daeb79479a4bb9a585f1f427b53659aa4"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-longcopy-collection-v1/collect/candidate-authority/manifest.json",
+      "27a7f97d64a1589f98e3ce851344aac51e4c7608b2fa86df6c92955a52e79536"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-pointerchase-collection-v1/collect/candidate-authority/manifest.json",
+      "f2361a86c3909083c93be6702f12ad8323844a2390069d368ebec92d52e0247e"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-curriculum-2000-selected-v1/candidate-authority/manifest.json",
+      "8cf83db8d608f6af74bbd2cbe60206ef435fb3003ab2bb63f4eadab17eb05562"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-curriculum-2000-selected-v1/selection-audit.json",
+      "de977726f0758206ee9defe9c3687d2485e3ba2b80eb9ef9ceafb065c5f6646b"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-curriculum-2000-selected-v1/overlap-audit.json",
+      "9c104d73b104f4d29a83ca1472b66ef2df681e020a2b9688eb4f87c6ef814a78"
+    ]
+  ],
+  "new_rl_updates": 0,
+  "operator_internal_training_authorized": false,
+  "optimizer_updates_authorized": 0,
+  "pack_manifest_sha256": "36b6a6b2f3000f555e749d2dd2bd9114e3ce28fa1e4d5e1e1c1eb563b3c24424",
+  "packing_authorized": false,
+  "parent_checkpoint": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e1-chat-agent-segment1-training-v1/checkpoints/checkpoint_agent_sft_u000128_loss_0.8764.pt",
+  "parent_checkpoint_sha256": "5ee1e7d303ed8d85b15de97bbfd097911f8d20390cd7c1c6e530d521b3914142",
+  "per_update_cohort_stratification": {
+    "min_target_fraction": 0.02,
+    "proposed_updates": 128,
+    "scheme": "window-coverage",
+    "window_updates": 32
+  },
+  "preparation_root": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e1-chat-agent-prep-v1/e1-preparation",
+  "proposed_behavioral_gate": {
+    "composition": ">= 4/16",
+    "openhands_execution_overall": ">= 64/96",
+    "openhands_fresh": ">= 30/32",
+    "openhands_prior_fresh": "= 16/16",
+    "openhands_prior_regression": ">= 10/16",
+    "openhands_transfer": ">= 5/16",
+    "pi_native_stage_b": "valid first frame >= 12/14 and correct first action >= 10/14",
+    "retention": "both saved-x/train-y retention gates pass"
+  },
+  "proposed_learning_rate": 1e-05,
+  "proposed_updates": 128,
+  "purpose": "E1 chat-agent arc segment 2 of 4: v6's passing recipe proportions applied to fresh verified pools at few-hundred-million scale plus the chat-seam families (verified-raw-OH 15.0%, fresh disjoint conversation 29.7%, tool-talk 8.2%, restored pools 5.4% at 4 epochs, reasoning pilot + hybrid conversation at 4 epochs, repair families + tool-shaped fillers closing the remainder), chained from the bridge parent. Juncture detectors: Stage-B + conversation NLL probe + the E1 chat-probe panel. Frozen dual gates unchanged.",
+  "sampler_key": 1775117,
+  "schedule_selection": "Training-data-only screen over keys 1770555,1775117,1787698,1850767 (fresh E1 range 1700001.., screened independently for this manifest sha under the window-coverage rule) under the window-coverage rule (majors >=2% every update, minors every 32 updates); 4 keys admitted: 1770555,1775117,1787698,1850767; this segment trains key 1775117.",
+  "schedule_sha256": "69bfaa662564c90c85e4389f31c641c94a859ea660ab27ddd95ee2b3833609f9",
+  "scheduled_assistant_targets": 20342936,
+  "scheduled_input_tokens": 59979480,
+  "scheduled_source_targets": {
+    "compositional-rehearsal": 3308114,
+    "conversation-rehearsal": 5917983,
+    "cumulative-recovery-rehearsal": 4147210,
+    "grounded-authored-rehearsal": 559587,
+    "hybrid-conversation-rehearsal": 23778,
+    "live-aligned-rehearsal": 721299,
+    "longcopy-rehearsal": 1240,
+    "loopbreak-rehearsal": 1473,
+    "pi-native-curriculum": 11408,
+    "pointerchase-rehearsal": 5337,
+    "reasoning-rehearsal": 9205,
+    "representation-bridge-rehearsal": 494379,
+    "tooltalk-rehearsal": 1595037,
+    "verified-raw-oh": 3546886
+  },
+  "scheduled_source_unique_records": {
+    "compositional-rehearsal": 18536,
+    "conversation-rehearsal": 5722,
+    "cumulative-recovery-rehearsal": 27494,
+    "grounded-authored-rehearsal": 1566,
+    "hybrid-conversation-rehearsal": 188,
+    "live-aligned-rehearsal": 6038,
+    "longcopy-rehearsal": 31,
+    "loopbreak-rehearsal": 30,
+    "pi-native-curriculum": 129,
+    "pointerchase-rehearsal": 38,
+    "reasoning-rehearsal": 30,
+    "representation-bridge-rehearsal": 1335,
+    "tooltalk-rehearsal": 1568,
+    "verified-raw-oh": 300
+  },
+  "scheduled_unique_packs": 1024,
+  "scheduled_unique_records": 63005,
+  "schema": "emender-e97-e1-chat-agent-segment2-proposal-v1",
+  "source_commit": "80db924d",
+  "status": "frozen-proposal-not-authorized"
+}
