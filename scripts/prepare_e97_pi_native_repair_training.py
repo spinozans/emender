@@ -124,7 +124,10 @@ def read_conversation_slice(root,expected_manifest_sha,seed,budget_targets,exclu
  excluded=0
  for i,row in enumerate(rows):
   offset,n,want,split=INDEX.unpack_from(index,i*INDEX.size)
-  if split or n>65536:continue
+  # 64K-boundary segment records (e.g. the long-document anchor authorities')
+  # are exactly CONTEXT_SIZE+1 tokens and occupy one full boundary-aware pack
+  # (sequence capacity 65,537); anything larger cannot be packed whole.
+  if split or n>CONTEXT_SIZE+1:continue
   if exclude_ids is not None and row.get('identity') in exclude_ids:
    excluded+=1;continue
   eligible.append((i,offset,n,want))

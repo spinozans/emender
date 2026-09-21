@@ -144,6 +144,24 @@ def test_conversation_rehearsal_cohort_from_production_admitted_source(tmp_path)
  except ValueError:pass
  else:raise AssertionError('non-admitted conversation source accepted')
 
+def test_conversation_slice_admits_64k_boundary_segment_records(tmp_path):
+ # The long-document anchor authorities segment >65,537-token documents at the
+ # 64K pack boundary, so their segment-1 records are exactly CONTEXT_SIZE+1
+ # tokens and must pass through (they fill one whole boundary-aware pack); one
+ # token larger cannot be packed whole and must stay excluded.
+ from scripts.prepare_e97_pi_native_repair_training import read_conversation_slice,CONTEXT_SIZE
+ root=tmp_path/'anchor'
+ n_seg=CONTEXT_SIZE+1;n_over=n_seg+1
+ spec=[(bytes([7])*(4*n_seg),bytes([1])*n_seg,{'id':'seg1'}),
+       (bytes([8])*(4*n_over),bytes([1])*n_over,{'id':'oversize'}),
+       (bytes([9])*(4*40),bytes([1])*10,{'id':'small'})]
+ asha=write_tulu3(root,[{'id':'seg1'},{'id':'oversize'},{'id':'small'}],eligible=True,records_spec=spec)
+ chosen,consumed,eligibility,excluded=read_conversation_slice(root,asha,3,n_seg+40)
+ ids=sorted(r['id'] for _,_,r in chosen)
+ assert ids==['seg1','small'],ids
+ assert consumed==n_seg+10
+ assert excluded==0
+
 def test_translated_oh_replaces_fulltraj_and_drops_rehearsal(tmp_path):
  from scripts.prepare_e97_pi_native_repair_training import prepare
  sel=tmp_path/'sel';spec_sel=[(bytes([2])*40,bytes([1])*10,{'id':f'sel{i}'}) for i in range(6)]
