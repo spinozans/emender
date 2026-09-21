@@ -24,6 +24,7 @@ def audit(args):
  if set(authority['source_target_totals'])!=cohorts:raise ValueError('authority cohorts differ from declared')
  if set(schedule['source_target_totals'])!=cohorts:raise ValueError('schedule cohorts differ from declared')
  strat=proposal.get('per_update_cohort_stratification')
+ window_cohorts=[];window_stats={}
  if strat is True:
   unstratified=[s['update'] for s in schedule['steps'] if set(s['source_targets'])!=cohorts]
   if unstratified:raise ValueError(f'updates missing cohorts: {unstratified}')
@@ -32,9 +33,34 @@ def audit(args):
   # smaller cohorts must appear at least once per window_updates consecutive updates.
   floor=strat['min_target_fraction'];window=strat['window_updates']
   if not (0<floor<=1) or window<1 or strat.get('proposed_updates')!=proposal['proposed_updates']:raise ValueError('stratification scheme binding')
+  # opt-in window-class cohorts (strict opt-in; absent key = exact old behavior):
+  # whole-record document corpora whose average record is structurally large
+  # relative to the pack sequence are verified at window granularity instead of
+  # every update. INELIGIBILITY CONDITION (fail-closed, machine-checked): a
+  # window-class cohort's average record must be >= 10% of (context+1) tokens —
+  # no-splitting whole-record packing cannot place such a cohort in most packs.
+  # Ordinary small-record cohorts fail this check and keep the every-update rule.
+  window_cohorts=list(strat.get('window_cohorts') or [])
   totals=schedule['source_target_totals'];total=sum(totals.values())
+  context=schedule['context_size']
+  window_stats={}
+  # full machine-checked eligibility table: EVERY cohort's structural-capping test
+  # result is recorded so the receipt proves ordinary small-record cohorts were
+  # rejected by the condition, not by choice.
+  eligibility={}
+  for c in sorted(totals):
+   avg_record=schedule['source_token_totals'][c]/schedule['source_record_occurrences'][c]
+   eligibility[c]={'avg_record_tokens':round(avg_record,3),'min_structural_record_tokens':round(0.10*(context+1),3),'window_class_eligible':bool(avg_record>=0.10*(context+1))}
+  for c in window_cohorts:
+   if c not in totals:raise ValueError(f'window-class cohort not in schedule: {c}')
+   if not eligibility[c]['window_class_eligible']:raise ValueError(f'window-class cohort {c} is not structurally capped (avg record {eligibility[c]["avg_record_tokens"]:.0f} < 10% of the {context+1}-token pack sequence); it must keep the every-update rule')
+   window_stats[c]=dict(eligibility[c])
   per_update=[set(s['source_targets']) for s in schedule['steps']]
-  for c in cohorts:
+  for c in totals:
+   if c in window_cohorts:
+    for start in range(0,len(per_update),window):
+     if not any(c in u for u in per_update[start:start+window]):raise ValueError(f'cohort {c} absent from window at update {start+1}')
+    continue
    major=totals[c]/total>=floor
    if major:
     missing=[i+1 for i,u in enumerate(per_update) if c not in u]
@@ -66,7 +92,9 @@ def audit(args):
   'schedule_sha256':proposal['schedule_sha256'],'proposed_updates':proposal['proposed_updates'],
   'scheduled_input_tokens':proposal['scheduled_input_tokens'],'scheduled_assistant_targets':proposal['scheduled_assistant_targets'],
   'declared_cohorts':sorted(cohorts),
-  'per_update_cohort_stratification':('verified: every update contains every declared cohort' if strat is True else 'verified: window-coverage scheme (major cohorts every update, minor cohorts every window)'),
+  'per_update_cohort_stratification':('verified: every update contains every declared cohort' if strat is True else ('verified: window-coverage scheme with opt-in window-class cohorts (window_cohorts at window granularity: %s); all other cohorts at the floor rule (majors every update, minors every window)'%','.join(sorted(window_cohorts)) if window_cohorts else 'verified: window-coverage scheme (major cohorts every update, minor cohorts every window)')),
+  'window_cohorts':window_stats if window_stats else None,
+  'window_class_eligibility':(eligibility if isinstance(strat,dict) and strat.get('scheme')=='window-coverage' else None),
   'checker_sha256':sha(__file__),'packing_authorized':False,'optimizer_updates_authorized':0,'checkpoint_promotion':False}
  args.output.write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n');print('REPAIR_PROPOSAL_AUDIT',sha(args.proposal),sha(args.output))
 def main():

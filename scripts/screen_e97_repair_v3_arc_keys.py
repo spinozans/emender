@@ -11,6 +11,14 @@ appear in EVERY update (each update = world_size consecutive packs); smaller
 cohorts (minors) must appear at least once in every aligned --window-updates
 window. Admits --keys keys, in screened order, one per 128-update segment.
 
+--window-cohort (repeatable, opt-in) names whole-record document corpora whose
+average record is structurally large relative to the 64K pack sequence (see
+verify_e97_repair_schedule_window_rule.py for the ineligibility condition):
+whole-record packing without splitting cannot place such a cohort in every
+update, so they are verified at window granularity (at least once per
+--window-updates window) instead of every update. Absent --window-cohort the
+screen behaves exactly as before.
+
 Any key admitted here must be re-verified with the real planner before use
 (precedent: the v2 arc and extension probe screens).
 """
@@ -35,8 +43,13 @@ def screen(args):
     packs = json.loads(packs_manifest_bytes)
     totals = prep['source_target_totals']
     total = sum(totals.values())
-    majors = [c for c, v in totals.items() if v / total >= args.min_target_fraction]
-    minors = [c for c in totals if c not in majors]
+    majors = [c for c, v in totals.items()
+              if v / total >= args.min_target_fraction and c not in args.window_cohort]
+    minors = [c for c in totals if c not in majors and c not in args.window_cohort]
+    windowed = [c for c in args.window_cohort if c in totals]
+    unknown = [c for c in args.window_cohort if c not in totals]
+    if unknown:
+        raise SystemExit(f'--window-cohort not in prep cohorts: {unknown}')
     sources = [json.loads(line)['source'] for line in (args.preparation / 'records.jsonl').open()]
     pack_rows = (args.preparation / 'packs/train_packs.idx').read_bytes()
     members = (args.preparation / 'packs/pack_records.uint32.bin').read_bytes()
@@ -73,7 +86,7 @@ def screen(args):
         if ok:
             for start in range(0, args.steps, args.window_updates):
                 window = packs_hit[start * args.world_size:(start + args.window_updates) * args.world_size]
-                for c in minors:
+                for c in minors + windowed:
                     if not any(flags[c][pid] for pid in window):
                         ok = False
                         break
@@ -84,6 +97,7 @@ def screen(args):
             print('SEGMENT_KEY_OK', key, 'admitted', len(admitted), 'after', tried, 'keys')
     print('majors', ','.join(sorted(majors)))
     print('minors', ','.join(sorted(minors)))
+    print('window_cohorts', ','.join(sorted(windowed)))
     print('SCREEN_DONE', 'admitted', len(admitted), 'of', args.keys, 'tried', tried)
     return 0 if len(admitted) == args.keys else 1
 
@@ -99,6 +113,8 @@ def main():
     p.add_argument('--world-size', type=int, default=8)
     p.add_argument('--window-updates', type=int, default=32)
     p.add_argument('--min-target-fraction', type=float, default=0.02)
+    p.add_argument('--window-cohort', action='append', default=[],
+                   help='whole-record document cohort verified at window granularity instead of every update (opt-in)')
     raise SystemExit(screen(p.parse_args()))
 
 
