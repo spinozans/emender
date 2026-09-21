@@ -225,3 +225,12 @@ Segment 1 (admission onward; from `e1-arc-staging-v1/segment1/commands.sh`):
 - **Chat-probe panel has no passing baseline** yet (only the 0/3 v6 negative
   control); the first E1 juncture establishes it.
 - **Token overage** (~11% above estimate) documented in §6.
+
+## E1 arc terminal record (fail-closed stop at u384)
+
+- Segment 1 (u128): trained+audited (5ee1e7d3), retention 1.522 best-in-class, Stage-B 7/14+3/14 (transient), chat 1/3 (greeting PASS — first in programme history).
+- Segment 2 (u256): trained+audited (853a3b95), full dual gate: Stage-B 10/14+7/14, execution 61-62/96 (bridge control 67), retention 1.515, chat 1/3 (greeting PASS; two-tool learned the bash step — failure class upgraded from missing-behavior to operand-fidelity).
+- Segment 3 (u384): trained+audited (3bc3f1a5), juncture: Stage-B 6/14+4/14 (regression), retention 1.517 (held), chat 0/3 (REGRESSION — the previously-passing greeting now fails with undeclared_pi_action; phantom tool calls on plain-chat contexts).
+- STOP: the frozen chat-regression trigger fired (0/3 below prior juncture). No promotion anywhere in the arc (gate floors never crossed). No further segments launched; no retries; thresholds unchanged.
+- Diagnosis recorded: late-arc behavioral oscillation — the model became tool-eager in wrong contexts (emission-level dialect competition; retention untouched). u256 checkpoint 853a3b95 is the best measured E1 state and the designated E2 parent.
+- Evidence: e97-e1-chat-agent-prep-v1/e1-juncture-evals/seg{1,2,3}-u128/, e97-e1-chat-agent-u256-dual-gate-v1/, audited runs e97-e1-chat-agent-segment{1,2,3}-training-v1/ (all passed-training-not-promoted).
