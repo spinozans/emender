@@ -476,7 +476,9 @@ def write_case(i,seam=False):
  commentary=(pick(FINISH_CONVERSATIONAL_COMMENTARY,i) if conversational else 'Verified.')
  third=step_finish_static(message,f'The read-back observed {content}, which confirms the write; the outcome is verified, so the plain-text answer is done.',commentary,[content])
  family='hybrid-chat-into-tool-write' if seam else 'hybrid-write-verify'
- return base_case(i,family,prompt,[first,second,third],files=files,answer_must_be_observed=True,expected_answer=content)
+ case=base_case(i,family,prompt,[first,second,third],files=files,answer_must_be_observed=True,expected_answer=content)
+ case['expected_files']=want  # the oracle sees the created file, not the empty pre-write workspace
+ return case
 
 def edit_case(i,seam=False):
  cid=opaque(f'{SEED}:edit:{i}:{int(bool(seam))}',16);tag=opaque(cid,10);old='alpha';new='beta'
@@ -494,7 +496,9 @@ def edit_case(i,seam=False):
  commentary=(pick(FINISH_CONVERSATIONAL_COMMENTARY,i) if conversational else 'Verified.')
  third=step_finish_static(message,f'The read-back observed mode = {new}, which confirms the edit; the outcome is verified, so the plain-text answer is done.',commentary,[f'mode = {new}'])
  family='hybrid-chat-into-tool-edit' if seam else 'hybrid-edit-verify'
- return base_case(i,family,prompt,[first,second,third],files=files,answer_must_be_observed=True,expected_answer=f'mode = {new}')
+ case=base_case(i,family,prompt,[first,second,third],files=files,answer_must_be_observed=True,expected_answer=f'mode = {new}')
+ case['expected_files']=want  # the oracle sees the post-edit file, not the pre-edit fixture
+ return case
 
 def seam_chat_case(i):
  """Greeting-style opener carrying a supplied fact: chat flows, then finishes in plain text."""

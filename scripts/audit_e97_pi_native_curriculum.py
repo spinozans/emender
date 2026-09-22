@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Independent reconstruction audit for non-admitted Pi-native curriculum candidates."""
-import argparse,hashlib,json,struct,subprocess
+import argparse,hashlib,json,re,struct,subprocess
 from pathlib import Path
 import tiktoken
 from scripts.e97_open_swe_native_codec import compact
@@ -30,6 +30,84 @@ def failed(result):
  return result['isError'] or text.startswith(('error:','tool error:')) or any(x in text for x in ('exit code: 1','command exited with code 1','no matches found','no files found matching pattern'))
 def observation_final(text):return ('Returned web evidence: '+' '.join(text.split())[:500]).strip()
 def action_sequence(source,tools):return [semantic_turn(x,tools) for x in source if x['role']=='assistant']
+# ------------------------------------------------------- v2 dynamic finish
+# Independent re-implementation of the v2 date-observation parsing and the
+# dynamic finish resolution (scripts/build_e97_hybrid_conversation_collection_v2.py
+# resolve_dynamic_v2): the audit must re-derive the emitted frames from the
+# recorded ToolResult without importing the builder.
+_V2_WEEKDAYS=('Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday')
+_V2_WEEKDAY_FULL={'mon':'Monday','tue':'Tuesday','wed':'Wednesday','thu':'Thursday','fri':'Friday','sat':'Saturday','sun':'Sunday'}
+_V2_MONTH_FULL={'jan':'January','feb':'February','mar':'March','apr':'April','may':'May','jun':'June','jul':'July','aug':'August','sep':'September','oct':'October','nov':'November','dec':'December'}
+_V2_BARE=re.compile(r'^([A-Za-z]{3}) ([A-Za-z]{3}) ([ 0-9][0-9]) (\d{2}:\d{2}:\d{2}) (\S+) (\d{4})$')
+_V2_YMD=re.compile(r'^(\d{4})-(\d{2})-(\d{2})$')
+_V2_ABD=re.compile(r'^([A-Za-z]+), ([A-Za-z]+) (\d{1,2}), (\d{4})$')
+_V2_HM=re.compile(r'^(\d{2}):(\d{2})$')
+def audit_date_values(text,fmt):
+ s=text.strip()
+ if fmt=='bare':
+  m=_V2_BARE.match(s)
+  if not m:raise ValueError(f'unparsed bare date observation: {s!r}')
+  abbr,mon,day,clock,zone,year=m.groups()
+  weekday=_V2_WEEKDAY_FULL[abbr.lower()];month=_V2_MONTH_FULL[mon.lower()];day=int(day)
+  return {'weekday':weekday,'month':month,'day':str(day),'year':year,'time':clock,'zone':zone,'date':f'{month} {day}, {year}','ymd':f'{year}-{mon.title()}-{day:02d}'}
+ if fmt=='A':
+  if s not in _V2_WEEKDAYS:raise ValueError(f'unparsed weekday observation: {s!r}')
+  return {'weekday':s}
+ if fmt=='A-ymd':
+  parts=s.split(' ',1)
+  if len(parts)!=2 or parts[0] not in _V2_WEEKDAYS or not _V2_YMD.match(parts[1]):raise ValueError(f'unparsed weekday-date observation: {s!r}')
+  return {'weekday':parts[0],'ymd':parts[1]}
+ if fmt=='u-ymd':
+  if not _V2_YMD.match(s):raise ValueError(f'unparsed utc date observation: {s!r}')
+  return {'ymd':s}
+ if fmt=='u-HM':
+  if not _V2_HM.match(s):raise ValueError(f'unparsed utc time observation: {s!r}')
+  return {'time':s}
+ if fmt=='A-BdY':
+  m=_V2_ABD.match(s)
+  if not m:raise ValueError(f'unparsed long-date observation: {s!r}')
+  weekday,month,day,year=m.groups()
+  if weekday not in _V2_WEEKDAYS:raise ValueError(f'bad weekday: {s!r}')
+  return {'weekday':weekday,'month':month,'day':str(int(day)),'year':year,'date':f'{month} {int(day)}, {year}'}
+ raise ValueError(f'unknown date format {fmt}')
+def _v2_check_analysis(step,message,enc):
+ analysis=message['reasoning_content']
+ if step.get('analysis_dynamic'):
+  if not isinstance(analysis,str) or not analysis.strip():raise ValueError('v2 dynamic analysis missing')
+  return
+ if not isinstance(analysis,str) or not analysis.strip():raise ValueError('v2 nonempty analysis')
+ if len(enc.encode_ordinary(analysis))>2048:raise ValueError('analysis cap')
+ for needle in step.get('analysis_requires') or []:
+  if needle not in analysis:raise ValueError('v2 ungrounded analysis')
+def verify_hybrid_v2_case(case,turns,results,enc):
+ """Re-derive every v2 authored assistant frame from the plan spec plus the
+ recorded observations: arguments, commentary, analysis and dynamic finish
+ text must all reconstruct exactly."""
+ if len(turns)!=len(case['steps']):raise ValueError('v2 turn coverage')
+ ri=0
+ for step,turn in zip(case['steps'],turns):
+  message=parse_turn(turn)
+  if message['name']!=step['name']:raise ValueError('v2 step order')
+  if step['name']=='finish':
+   if step.get('dynamic')=='observation-date':
+    observation=results[ri-1]['content'][0]['text']
+    values=audit_date_values(observation,step['fmt'])
+    if message['arguments']!={'message':step['template'].format(**values)}:raise ValueError('v2 date finish message')
+    if message['reasoning_content']!=step['analysis_template'].format(**values):raise ValueError('v2 date finish analysis')
+    if message['content']!=step['commentary']:raise ValueError('v2 date finish commentary')
+   elif step.get('dynamic')=='observation-exact':
+    observation=results[ri-1]['content'][0]['text'].strip()
+    if message['arguments']!={'message':observation}:raise ValueError('v2 exact finish message')
+    if message['reasoning_content']!=f'The tool observed {observation}; the user-facing answer is exactly that observed value.':raise ValueError('v2 exact finish analysis')
+    if message['content']!=f'The observed answer is {observation}.':raise ValueError('v2 exact finish commentary')
+   else:
+    if 'arguments' in step and message['arguments']!=step['arguments']:raise ValueError('v2 static finish arguments')
+    if 'commentary' in step and message['content']!=step['commentary']:raise ValueError('v2 static finish commentary')
+  else:
+   if message['arguments']!=step['arguments']:raise ValueError('v2 tool arguments')
+   if 'commentary' in step and message['content']!=step['commentary']:raise ValueError('v2 tool commentary')
+   ri+=1
+  _v2_check_analysis(step,message,enc)
 def verify_case(case,private,tools):
  source=private['source_messages'];actions=action_sequence(source,tools)
  if [x['name'] for x in actions]!=[x['name'] for x in case['steps']]:raise ValueError('planned action sequence')
@@ -41,6 +119,9 @@ def verify_case(case,private,tools):
    if actual['arguments']!={'message':observation_final(results[ri-1]['content'][0]['text'])}:raise ValueError('observation final grounding')
   elif planned['dynamic']=='observation-exact':
    if actual['arguments']!={'message':results[ri-1]['content'][0]['text'].strip()}:raise ValueError('exact observation final grounding')
+  elif planned['dynamic']=='observation-date':
+   values=audit_date_values(results[ri-1]['content'][0]['text'],planned['fmt'])
+   if actual['arguments']!={'message':planned['template'].format(**values)}:raise ValueError('date observation final grounding')
   elif planned['dynamic']=='response-id':
    prior=results[ri-1]['content'][0]['text'];rid=actual['arguments'].get('responseId')
    if not isinstance(rid,str) or rid not in prior:raise ValueError('response identity grounding')
@@ -132,6 +213,60 @@ def verify_reasoning_case(case,turns,enc):
   if len(enc.encode_ordinary(analysis))>2048:raise ValueError('analysis cap')
   if any(x not in analysis for x in requires):raise ValueError('ungrounded analysis')
 
+def _v2_plan(plan):return plan.get('schema')=='emender-e97-hybrid-conversation-plan-v2'
+def _audit_episodes(plan,cases,root,tools,enc,ids):
+ """Verify a set of collected episode directories end-to-end; returns
+ (accepted, rejections, targets, sequences)."""
+ v2=_v2_plan(plan)
+ accepted=[];rejections=[];targets=0;sequences=set()
+ for name in ids:
+  directory=root/name
+  if (directory/'episode-private.json').exists():
+   if name not in cases:raise ValueError('unknown episode directory')
+   private=load_json(directory/'episode-private.json');private['_tools']=tools
+   terminal=private['terminal']
+   if not terminal['close_verified'] or not terminal['closed'] or terminal['pi_exit'] or terminal['bridge_failed'] or terminal['reason']!='finished':raise ValueError('Pi terminal')
+   verify_public(private,directory)
+   turns=reconstruct(private,tools,enc)
+   results,actions=verify_case(cases[name],private,tools)
+   if plan.get('mix')=='hybrid':verify_hybrid_case(cases[name],turns,results,enc)
+   if v2:
+    verify_hybrid_v2_case(cases[name],turns,results,enc)
+    if 'clock_check' in private and audit_date_values(results[-1]['content'][0]['text'],private['clock_check']['fmt'])!=private['clock_check']['observed']:raise ValueError('clock observation record')
+   want_ids,want_mask=expected_mask(private['native_record'],turns,private['supervise_from'],enc)
+   if private['targets']!=sum(want_mask) or private['assistant_units']!=len(turns) or private['supervised_assistant_units']!=len(turns)-private['supervise_from']:raise ValueError('episode metadata')
+   if hashlib.sha256(private['native_record'].encode()).hexdigest()!=private['record_sha256']:raise ValueError('episode record identity')
+   sequence=hashlib.sha256(struct.pack('<%dI'%len(want_ids),*want_ids)+want_mask).hexdigest();sequences.add(sequence)
+   targets+=private['targets'];private.pop('_tools');accepted.append(name)
+  elif (directory/'rejection.json').exists():
+   rejection=load_json(directory/'rejection.json')
+   if set(rejection)!={'id','category','family','type','message','retried'} or rejection['retried'] or rejection['type']!='ValueError' or rejection['id']!=name:raise ValueError('rejection receipt')
+   rejections.append(rejection)
+  else:raise ValueError(f'neither verified nor rejected: {name}')
+ if set(accepted)&{x['id'] for x in rejections} or len(sequences)!=len(accepted):raise ValueError('episode dedup')
+ return accepted,rejections,targets,sequences
+def audit_partial(args):
+ """Audit a resumable (possibly still in-progress) collect directory: every
+ episode present on disk is verified to the full v1/v2 bar; the receipt
+ records verified/rejected/pending against the frozen plan."""
+ root=args.root;plan=load_json(args.plan)
+ if sha(args.plan)!=args.plan_sha:raise ValueError('plan identity')
+ if sha(plan['tool_manifest'])!=plan['tool_manifest_sha256']:raise ValueError('tool manifest binding')
+ verify_authority_files(plan)
+ if plan.get('automatic_retry',False) or plan['model_generations'] or plan['optimizer_updates'] or plan['training_eligible'] or plan['packing_authorized']:raise ValueError('plan authorization')
+ if (root/'summary.json').exists() and (root/'candidate-authority'/'manifest.json').exists():raise ValueError('completed collection: use the full audit')
+ tools=load_json(plan['tool_manifest'])['model_visible_tools'];enc=tiktoken.get_encoding('p50k_base')
+ cases={x['id']:x for x in plan['cases']}
+ resume_path=root/'resume-state.json'
+ if resume_path.exists():
+  resume=load_json(resume_path)
+  if resume.get('schema')!='emender-e97-hybrid-conversation-resume-v1' or resume.get('plan_sha256')!=args.plan_sha:raise ValueError('resume state plan binding')
+ present={x.name for x in root.iterdir() if x.is_dir() and ((x/'episode-private.json').exists() or (x/'rejection.json').exists())}
+ if not present<=set(cases):raise ValueError('episode directory outside plan')
+ accepted,rejections,targets,sequences=_audit_episodes(plan,cases,root,tools,enc,sorted(present))
+ pending=[x['id'] for x in plan['cases'] if x['id'] not in present]
+ receipt={'schema':'emender-e97-pi-native-curriculum-audit-v1','partial':True,'status':'partial-qualified-candidates-not-admitted','attempted_records':plan['records'],'records':len(accepted),'rejected_records':len(rejections),'pending_records':len(pending),'automatic_retries':0,'assistant_targets':targets,'deduplicated_sequences':len(sequences),'plan_sha256':args.plan_sha,'checker_sha256':sha(__file__),'training_eligible':False,'packing_authorized':False,'optimizer_updates_authorized':0,'rejected':[x['id'] for x in rejections]}
+ args.output.write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n');print('PI_NATIVE_CURRICULUM_PARTIAL_AUDIT',len(accepted),len(rejections),len(pending),targets,sha(args.output))
 def audit(args):
  root=args.root;plan=load_json(args.plan);manifest=load_json(root/'candidate-authority/manifest.json');summary=load_json(root/'summary.json');tools=load_json(plan['tool_manifest'])['model_visible_tools'];enc=tiktoken.get_encoding('p50k_base')
  if sha(args.plan)!=args.plan_sha or manifest['plan_sha256']!=args.plan_sha:raise ValueError('plan binding')
@@ -161,6 +296,9 @@ def audit(args):
   verify_public(private,root/row['id']);turns=reconstruct(private,tools,enc);results,actions=verify_case(cases[row['id']],private,tools)
   if plan.get('mix')=='reasoning':verify_reasoning_case(cases[row['id']],turns,enc)
   if plan.get('mix')=='hybrid':verify_hybrid_case(cases[row['id']],turns,results,enc)
+  if _v2_plan(plan):
+   verify_hybrid_v2_case(cases[row['id']],turns,results,enc)
+   if 'clock_check' in private and audit_date_values(results[-1]['content'][0]['text'],private['clock_check']['fmt'])!=private['clock_check']['observed']:raise ValueError('clock observation record')
   ids,want_mask=expected_mask(private['native_record'],turns,private['supervise_from'],enc);record=INDEX.unpack_from(index,i*INDEX.size);start,n,want_targets,split=record
   if start!=offset or n!=len(ids) or split!=0:raise ValueError('record index')
   token_bytes=struct.pack('<%dI'%len(ids),*ids);actual_tokens=tokens[4*start:4*(start+n)];actual_mask=mask[start:start+n]
@@ -173,5 +311,6 @@ def audit(args):
  receipt={'schema':'emender-e97-pi-native-curriculum-audit-v1','status':'qualified-candidates-not-admitted','attempted_records':plan['records'],'records':len(metadata),'rejected_records':len(rejections),'automatic_retries':0,'tokens':offset,'assistant_targets':targets,'native_calls':calls,'authentic_tool_errors':errors,'repository_discovery_records':repo,'deduplicated_sequences':len(sequences),'plan_sha256':args.plan_sha,'authority_sha256':sha(authority/'manifest.json'),'checker_sha256':sha(__file__),'training_eligible':False,'packing_authorized':False,'optimizer_updates_authorized':0}
  args.output.write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n');print('PI_NATIVE_CURRICULUM_AUDIT',len(metadata),targets,sha(args.output))
 def main():
- p=argparse.ArgumentParser();p.add_argument('--root',type=Path,required=True);p.add_argument('--plan',type=Path,required=True);p.add_argument('--plan-sha',required=True);p.add_argument('--output',type=Path,required=True);audit(p.parse_args())
+ p=argparse.ArgumentParser();p.add_argument('--root',type=Path,required=True);p.add_argument('--plan',type=Path,required=True);p.add_argument('--plan-sha',required=True);p.add_argument('--output',type=Path,required=True);p.add_argument('--partial',action='store_true',help='audit a resumable/in-progress collect directory (no candidate-authority required)')
+ a=p.parse_args();audit_partial(a) if a.partial else audit(a)
 if __name__=='__main__':main()
