@@ -18,7 +18,7 @@ def significant(items,n):return {x for x in items if len(x.encode())>=n}
 def audit(args):
  plan=json.loads(args.plan.read_text());summary=json.loads((args.selected/'summary.json').read_text())
  if sha(args.plan)!=args.plan_sha or summary['records']!=len(plan['cases']):raise ValueError('input identity')
- if plan.get('mix')!='hybrid':raise ValueError('hybrid plan required')
+ if plan.get('mix')!='hybrid' and plan.get('schema')!='emender-e97-hybrid-conversation-plan-v2':raise ValueError('hybrid plan required')
  metadata=[json.loads(x) for x in (args.selected/'candidate-authority/records.jsonl').read_text().splitlines()]
  ids={x['id'] for x in metadata}
  if not ids<=set(c['id'] for c in plan['cases']):raise ValueError('collected identity outside plan')
