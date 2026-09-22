@@ -626,6 +626,8 @@ def resolve_dynamic_v2(spec,observation):
 
 def execute_case_v2(case,panel,enc,root,pi_bin,manifest_path):
  workspace=root/'workspace';workspace.mkdir(parents=True)
+ for name,text in case['files'].items():
+  p=workspace/name;p.parent.mkdir(parents=True,exist_ok=True);p.write_text(text)
  fmt=case.get('date_fmt')
  utc=utc_family(fmt) if fmt else False
  clock_before=weekday_now(utc) if fmt else None
@@ -703,7 +705,8 @@ def collect(args):
  if (args.output/'candidate-authority/manifest.json').exists() and (args.output/'summary.json').exists():
   print('HYBRID_V2_ALREADY_COLLECTED',sha(args.output/'summary.json'));return
  enc=tiktoken.get_encoding('p50k_base')
- attempts=plan['cases'][:args.max_cases] if args.max_cases is not None else plan['cases'];total=len(attempts)
+ selected=plan['cases'] if args.stride==1 else plan['cases'][::args.stride]
+ attempts=selected[:args.max_cases] if args.max_cases is not None else selected;total=len(attempts)
  resume_path=args.output/'resume-state.json'
  transient_counts={}
  if resume_path.exists():transient_counts=json.loads(resume_path.read_text()).get('transient_failures',{})
@@ -744,7 +747,7 @@ def collect(args):
   interrupted=repr(exc);stop.set();print('HYBRID_V2_INTERRUPTED checkpointing',flush=True)
  finally:
   pool.shutdown(wait=True,cancel_futures=True)
- pending=[c['id'] for c in attempts if not ((args.output/c['id']/'episode-private.json').exists() or (args.output/c['id']/'rejection.json').exists())]
+ pending=[c['id'] for c in plan['cases'] if not ((args.output/c['id']/'episode-private.json').exists() or (args.output/c['id']/'rejection.json').exists())]
  resume_state={'schema':'emender-e97-hybrid-conversation-resume-v1','plan_sha256':args.plan_sha,'verified':len(rows),'rejected':len(rejections),'pending':pending,'transient_failures':transient_counts,'interrupted':interrupted}
  resume_path.write_text(json.dumps(resume_state,sort_keys=True,indent=1)+'\n')
  if interrupted is not None or pending:raise SystemExit(f'HYBRID_V2_INCOMPLETE verified={len(rows)} rejected={len(rejections)} pending={len(pending)}')
@@ -761,6 +764,6 @@ def main():
  os.umask(0o077);signal.signal(signal.SIGTERM,lambda s,f:(_ for _ in ()).throw(TimeoutError('interrupted')))
  parser=argparse.ArgumentParser();sub=parser.add_subparsers(dest='command',required=True)
  f=sub.add_parser('freeze');f.add_argument('--manifest',type=Path,required=True);f.add_argument('--records',type=int,required=True);f.add_argument('--minimum-verified-records',type=int);f.add_argument('--pi-bin',type=Path,required=True);f.add_argument('--output',type=Path,required=True)
- c=sub.add_parser('collect');c.add_argument('--plan',type=Path,required=True);c.add_argument('--plan-sha',required=True);c.add_argument('--pi-bin',type=Path,required=True);c.add_argument('--output',type=Path,required=True);c.add_argument('--workers',type=int,default=1);c.add_argument('--max-cases',type=int,default=None,help='pilot bound: attempt only the first N plan cases (resume-friendly checkpoint; the run stays incomplete)')
+ c=sub.add_parser('collect');c.add_argument('--plan',type=Path,required=True);c.add_argument('--plan-sha',required=True);c.add_argument('--pi-bin',type=Path,required=True);c.add_argument('--output',type=Path,required=True);c.add_argument('--workers',type=int,default=1);c.add_argument('--max-cases',type=int,default=None,help='pilot bound: attempt only the first N selected cases (resume-friendly checkpoint; the run stays incomplete)');c.add_argument('--stride',type=int,default=1,help='pilot sampling: attempt every Nth plan case (1 = full plan)')
  a=parser.parse_args();freeze(a) if a.command=='freeze' else collect(a)
 if __name__=='__main__':main()
