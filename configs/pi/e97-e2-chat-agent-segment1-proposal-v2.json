@@ -1,0 +1,458 @@
+{
+  "arc": {
+    "arc_id": "e97-e2-chat-agent",
+    "arc_keys": [
+      2200001,
+      2200002,
+      2200004,
+      2200005
+    ],
+    "arc_updates": 512,
+    "chaining": "Segment 1 trains 128 updates from the E1 u256 checkpoint (/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e1-chat-agent-segment2-training-v1/checkpoints/checkpoint_agent_sft_u000128_loss_0.8392.pt, the designated E2 parent: E1's best measured state \u2014 Stage-B 10/14+7/14 at u256, retention 1.515, chat greeting PASS \u2014 before the u384 tool-eager regression).",
+    "evaluation_caveats": "The document-NLL panel has no post-E2 baseline yet \u2014 the E2 parent (2.5973 nats) is the drift baseline; the chat-probe panel baseline is E1's u256 juncture (greeting PASS, 1/3); the reasoning cohort entered at E1 segment 1 (conversation NLL panel re-baselined there); the window-class cohorts' guarantee floor is per-32-update window, not per update.",
+    "juncture_policy": "Stage-B panel AND conversation NLL probe AND the E1 chat-probe panel AND the frozen document-NLL probe at every 128-update boundary; full frozen dual gate at u256 and u512 and at any detector-flagged checkpoint; fail-closed stopping if retention is decisively breached, the chat-probe panel regresses below the prior juncture, OR the document-NLL probe regresses below the E2 parent baseline; no automatic retries; no threshold changes.",
+    "rationale": "The E2 chat-agent pivot: E1's cohort families rebalanced against the u384 tool-eager regression, plus the long-document anchor cohorts at ~19.6% combined share re-introducing the base distribution's raw long-form text as ARBITRARY-ENTRY WINDOW CUTS per the operator design ruling (v2 fragment render: 64K windows over the concatenated book stream, hidden-state reset at every fragment start), chained from E1's best measured state (u256 checkpoint 853a3b95), with the document-NLL probe added to the standing juncture set.",
+    "segment_index": 1,
+    "segment_updates": 128,
+    "throughput_note": "Trained at 72s/update (chunk 2048/16384, trainer worktree pinned at 2255bb5a) per the throughput forensics in the progress ledger.",
+    "total_segments": 4
+  },
+  "authority_manifest_sha256": "e6280dc609f0ad9ac0dda783f3537e9c064789d61ff24d8fb047e2d251fe3a4e",
+  "automatic_expansion": false,
+  "automatic_retry": false,
+  "checkpoint_promotion": false,
+  "cohort_bindings": {
+    "authored_rehearsal": {
+      "authority_sha256": "08752c53e2199533252c77821ec9696012b19dc09ea0ff1508ef6676a6cd2140",
+      "consumed_target_tokens": 3704364,
+      "records": 10332,
+      "repeat_epochs": 4
+    },
+    "conversation_rehearsal": {
+      "authority_sha256": "d64f51abc615c097910900ffa7fc88f020ae5567b89958f607008078c271c7f6",
+      "consumed_target_tokens": 39000000,
+      "records": 37202
+    },
+    "extra3_rehearsal": {
+      "authority_sha256": "88e535b5bec8f704163eb45bab929d7c80e4eee92f575b3748ebb758d18b5229",
+      "cohort": "reasoning-rehearsal",
+      "records": 200,
+      "repeat_epochs": 4
+    },
+    "extra4_rehearsal": {
+      "authority_sha256": "7e5fec2a67b1e7ba45bcbcc866d86cb133bb0c454cdabdb274978eb42ebc0b1d",
+      "cohort": "hybrid-conversation-rehearsal",
+      "records": 1280,
+      "repeat_epochs": 4
+    },
+    "rehearsal_rehearsal": {
+      "authority_sha256": "a21dba6f80e58e87ea838a98018b40650decebed3cf4b0f98dacdb750520469d",
+      "cohort": "representation-bridge-rehearsal",
+      "records": 8892,
+      "repeat_epochs": 4
+    }
+  },
+  "context_size": 65536,
+  "conversation_rehearsal": {
+    "budget_targets": 39000000,
+    "manifest_sha256": "d64f51abc615c097910900ffa7fc88f020ae5567b89958f607008078c271c7f6",
+    "seed": 613120,
+    "source": "/mnt/nvme1n1/erikg/sft/e97-4b-smoltalk2-admitted-v1"
+  },
+  "data_world_size": 8,
+  "declared_cohorts": [
+    "compositional-rehearsal",
+    "conversation-rehearsal",
+    "cumulative-recovery-rehearsal",
+    "grounded-authored-rehearsal",
+    "hybrid-conversation-rehearsal",
+    "live-aligned-rehearsal",
+    "long-document-library-anchor",
+    "longcopy-rehearsal",
+    "loopbreak-rehearsal",
+    "mainmix-draws-anchor",
+    "pi-native-curriculum",
+    "pointerchase-rehearsal",
+    "reasoning-rehearsal",
+    "representation-bridge-rehearsal",
+    "tooltalk-rehearsal",
+    "verified-raw-oh"
+  ],
+  "evidence_basis": {
+    "anchor_cohorts": "long-document-library-anchor (v2 fragment render): seeded slice (seed 914206) of the sha-bound library-fragments authority (manifest 42372c8d..., 901 window-cut records / 58.96M targets), budget 15.0M targets -> 14,986,879 targets (11.32%) over 230 fragments (228 full 64K windows + both stream-edge fragments); mainmix-draws-anchor: seeded slice (seed 914207) of the sha-bound mainmix draws authority (manifest fc9192ab..., 50,826 raw-stream records / 61.3M targets), budget 11.0M -> 10,999,999 targets (8.31%) over 9,125 records. Both are probe-excluded (the frozen 8-doc NLL panel never trains) and holdout-excluded. The library cohort's records are exactly-65,536-token windows (one per boundary-aware pack; the 65,537-token pack sequence admits them whole \u2014 machinery commit 1d1c905a keeps the prep reader consistent with the packer's sequence capacity).",
+    "doc_nll_probe": "The frozen document-NLL probe (8 documents, 198,295 scored tokens, panel sha-bound) joins Stage-B + conversation NLL + the chat-probe panel at every 128-update juncture. Frozen baselines (q8_0, cap 32,768/doc): base y-form 2.491950, bridge 2.610475, v6-u96 2.658496; the E2 parent (853a3b95) measures 2.597301 and is E2's fail-closed floor: any juncture checkpoint scoring strictly above the parent baseline on the same panel is a document-NLL regression (fail-closed stop decision at the operator's juncture policy; quantization form held constant \u2014 every checkpoint is scored as its own per-checkpoint q8_0 conversion, quantization delta measured at +0.000062 nats on the f32 spot check).",
+    "fragment_render_receipt": "Render (scripts/build_e97_long_document_anchor_fragments.py; authority manifest 42372c8d..., packs e19f2e40...): the library authority's 1,928 TRAIN records (whole books, 58,961,765 tokens; the length-ranked selection unchanged \u2014 all 11 sources incl. peS2o) concatenated in authority record order, documents joined by their existing EOT (50256) record-separator tokens with NO re-tokenization (holdout/probe exclusions inherited; the 15 non-final 64K-segment records of segmented books join without a separator \u2014 only final segments carry EOT). Seeded phase 12,897 (seed 974206) + 65,536-token stride tiling -> 901 window records: 899 full 64K windows + 2 stream-edge fragments (head 12,897; tail 32,004 tokens). ENTRY POSITIONS: 900/901 windows (99.9%) enter mid-document at arbitrary stream positions (entry offsets spread over 0-65,535 tokens into the containing document; histogram in the authority manifest); only the stream-head window enters at a document start. SEPARATOR DENSITY: all 1,912 in-stream document separators are sampled ~2.12 per window; every in-window separator is a SUPERVISED token \u2014 the state carries across document boundaries inside each fragment (document-concatenation read), resetting ONLY at the fragment start. Fragment packs: 891 train packs / 891 records, zero oversize exclusions, one fragment per pack (100% pack fill), validate_e97_sft_packs PASS.",
+    "operator_design_ruling": "The anchor data must be DOCUMENT CONCATENATION read with hidden-state resets at the record separator \u2014 i.e. arbitrary-entry window cuts, NOT document-aligned whole books. Rationale on record: whole-book alignment overtrains document beginnings and never exercises mid-document state entry (a competence pretraining built via the pile's raw window cuts, and one the state-forking deployment demos depend on). The machinery already supports this: ndm/data/masked_sft_dataset.py has token-aligned reset_before masks (every record starts with a clean recurrent-state reset) and an explicit record-reset SFT mode \u2014 so a mid-book window-cut fragment is just a record and gets fresh-state arbitrary entry by construction. The mainmix-draws cohort already matches this design (scan-across fragments, window-edge fragments kept); ONLY the library cohort was re-rendered (v2).",
+    "pivot_rationale": "E1 stopped fail-closed at u384: late-arc behavioral oscillation \u2014 the model became tool-eager in wrong contexts (Stage-B 7/14 -> 10/14 -> 6/14 across u128/u256/u384; chat 1/3 -> 1/3 -> 0/3; the u128+u256-passing greeting failed at u384 with undeclared_pi_action \u2014 phantom tool calls on plain-chat prompts; retention held throughout at 1.52). The u384 forensics reading: emission-level dialect competition, dose-driven \u2014 not a retention failure. The E2 pivot therefore REBALANCES the tool-eager cohorts down (verified-raw-OH 15.01% -> 9.97% of targets, tooltalk 8.24% -> 4.99%) and folds in the long-document anchor cohorts (combined 19.64% of targets) that re-introduce the base pre-training distribution's raw long-form text \u2014 the distribution that formed the recurrent state dynamics, measured drifting +0.1665 nats (monotone on all 8 panel documents) from base y-form to v6.",
+    "rebalance_table": "E1 -> E2 target shares (v2 prep: identical budgets/seeds as v1, only the library render changed): conversation 29.72% -> 29.47% (fresh disjoint draw, seed 613120, 94,532 identities excluded = 57,196 prior + E1's 37,336); verified-raw-oh 15.01% -> 9.97% (fresh draw seed 914201, 1,149 records); tooltalk 8.24% -> 4.99% (fresh draw seed 914202, 6,437 records); cumulative 20.96% -> 14.96% and compositional 16.77% -> 12.01% and live-aligned 3.62% -> 3.32% (reduced to make room, epochs unchanged at 3/3/2); restored pools unchanged in full at 4 epochs (5.37% combined, >=5% floor held); seam families (hybrid, reasoning at 4 epochs) and repair families unchanged; NEW: library-anchor 11.32% (v2 fragment render; 230 records) + mainmix-anchor 8.31%; anchors combined 19.64%. ZERO instruction-mix, ZERO translated-Pi-frame-OH (fail-closed checked here).",
+    "reset_semantics_receipt": "v2/logs/reset-semantics-receipt.json (scripts/receipt_e97_e2_library_fragment_resets.py): PART A production path \u2014 MaskedSFTPackedDataset materialized every one of the 891 train fragment packs with reset_before=True at EVERY fragment start; the pack_at_with_boundaries derivation replication verified byte-identical on all packs. PART B prep level \u2014 all 230 library fragments in this prep carry reset_before=True at their fragment start (229/230 mid-document; 228 solo packs; the prediction into the one shared fragment start is loss-masked); 481 in-window EOT separators, all supervised. Trainer path: train_e97_4b_pi_sft.py --boundary-aware-packs -> get_boundary_aware_batch(1) -> packed_objective(reset_masks) -> model(reset_before=...) -> e88_fla_hybrid._process_chunk -> e88_triton_forward APPLY_RESET: S = tl.where((token_valid & token_reset), zeros, S) \u2014 the recurrent state is zeroed before every fragment's first token: fresh-state arbitrary entry by construction.",
+    "throughput_forensics": "chunk 2048/16384 qualified at 72s/update with losses matching to 5-6 digits (progress ledger); the E2 launchers use the same recipe; per-segment input ~60M tokens (same class as E1's ~60M).",
+    "window_class_ruling": "The established window-coverage floor rule (majors >=2% of targets in every update; minors every 32 updates) is kept unchanged for every small-record cohort. Supervisor-approved opt-in window-class cohorts: long-document-library-anchor (v2 fragment render: avg record 65,536.0 tokens = 100.00% of the 65,537-token pack sequence; pack coverage 4.06% (230 of 5,659 packs, 228 solo); a 1024-pack segment holds at most ~60 library packs vs the >=128 the every-update rule would require \u2014 structurally inapplicable) and verified-raw-oh (avg whole trajectory 49,279 tokens in this schedule slice = 75.19% of the pack sequence; pack coverage 20.30%; every-update admission infeasible). MECHANICAL CORRECTION ON RECORD: the earlier expectation that 64K fragment records would EXIT the window class back to ordinary stratification was a supervisor error (record-fills-pack conflated with cohort-covers-packs); validated against the machinery it is unsatisfiable, and the supervisor approved keeping window_cohorts = [long-document-library-anchor, verified-raw-oh] (training semantics are identical under either class; only the key-screen guarantee granularity differs). mainmix-draws-anchor stays an ORDINARY major (avg record 1,216 tokens; pack coverage 48.56%). The machine-checked ineligibility condition (avg record >= 10% of the pack sequence) rejects every ordinary small-record cohort (conversation, fillers, restored pools, tooltalk). Window-class guarantee floor: >=1 appearance per 32-update window (>=4 per 128-update segment); the actual per-epoch distribution is set by weighted-fair token-share interleave and is unchanged by the key screen. No further cohorts may be added to this class without a supervisor decision."
+  },
+  "identity_bindings": [
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e1-chat-agent-segment2-training-v1/checkpoints/checkpoint_agent_sft_u000128_loss_0.8392.pt",
+      "853a3b95d0b60a61f8cbfacf9564d4f7140a1bcaded4af091562e711ea91cd8b"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e1-chat-agent-segment2-training-v1/audit.json",
+      "929091e84b0fab3fc2ee7067229b74876fc7aa8950fc00dab1c6b8a13ad1446c"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e2-chat-agent-prep-v1/v2/e2-preparation/manifest.json",
+      "e6280dc609f0ad9ac0dda783f3537e9c064789d61ff24d8fb047e2d251fe3a4e"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e2-chat-agent-prep-v1/v2/e2-preparation/packs/manifest.json",
+      "7759fddcc37a109ed7d30418387a2cb70e510bb9ed3b59224663fe83ccc4c141"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e2-chat-agent-prep-v1/v2/e2-preparation/packs/validation.json",
+      "0af69d0a1fa72f8f9224b98a2bb19c64e704500292593538eeb1a52f27bfa2dc"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e2-chat-agent-prep-v1/v2/e2-preparation/audit.json",
+      "5b4304a0faa3f7b7f7f8ebd361b600745423ff53a86655f6528a01c9c277e521"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e2-chat-agent-prep-v1/v2/e2-preparation/schedule-segment1-proposal.json",
+      "d7f9ff3cfdf014efe48feaf29b0427495bd854303e51442977bed54aa5020230"
+    ],
+    [
+      "configs/pi/e97-active-tool-surface-v1.json",
+      "55421905438806223414d96a4e64f1a6ae64772afdb1fbc67fbbfb77e8d5d908"
+    ],
+    [
+      "configs/pi/e97-e1-chat-probe-panel-v1.json",
+      "21e958f1f926abc8ddc7be2428101b265852ec43ab6a4a6fbd86401a80b926ac"
+    ],
+    [
+      "scripts/eval_e97_e1_chat_probe_panel.py",
+      "0fdb909606355bac5f83f960eb408e6a4a78fc33946644422c6b2344e4cd97f2"
+    ],
+    [
+      "scripts/convert_e97_4b_to_gguf.py",
+      "1d9d0dc8583a4c5f5f51aaac87c805ebb431e32353800ef78314ce34460f2521"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/representation-bridge-v1-data/authority/manifest.json",
+      "a21dba6f80e58e87ea838a98018b40650decebed3cf4b0f98dacdb750520469d"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/grounded-expansion-v1-data-r2/authority/manifest.json",
+      "08752c53e2199533252c77821ec9696012b19dc09ea0ff1508ef6676a6cd2140"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e1-chat-agent-prep-v1/verified-raw-oh-authority/manifest.json",
+      "fa6a47daf69a3671ca523966cee38774db576d8d50d06520094b853759ee22e4"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e1-chat-agent-prep-v1/verified-raw-oh-authority/id-mapping.jsonl",
+      "dbacdcde7a6aaa33d2d144ded7949192ccd7909eeb3a5a25a8c546bfbf510376"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-oh-pi-native-translation-v1/candidate-authority/manifest.json",
+      "a179c140b4e8efa77a8163574bb78d4fe34dea91adfeb0439e8339d5002be1fb"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/sft/e97-4b-open-swe-source-native-fulltraj-v1/manifest.json",
+      "255b02f3b3bbdc85eb15a89d22e7ff2c4bf69f151c2dfb5941a22468711993f5"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e1-chat-agent-prep-v1/tooltalk-authority/manifest.json",
+      "fe0bfaffd8f00ab8011fc4a267c75686ac8caa04f4c862afeac3636d98294a9c"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e1-chat-agent-prep-v1/tooltalk-intake/download-receipt.json",
+      "b3a9a8b8aaed3899e831cb0f6994e9505057f21169aec6092a5d467519a815b3"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e1-chat-agent-prep-v1/tooltalk-intake/license-receipt.json",
+      "d51ffee1dd9a5542051044743b8643ee483aa944b0ea04a80d4d38bede9bace5"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e1-chat-agent-prep-v1/tooltalk-intake/overlap-audit.json",
+      "aa70dc94ac4e7102804773e4b7bdd67bca0f94e51741cc061718812d55f58746"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-hybrid-conversation-collection-v1/collect/candidate-authority/manifest.json",
+      "7e5fec2a67b1e7ba45bcbcc866d86cb133bb0c454cdabdb274978eb42ebc0b1d"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-hybrid-conversation-collection-v1/audit.json",
+      "64fa533a19c3a611cc1edf9f3e697ba0b2d8a6bebb3e1438e436c65363ec80e5"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-hybrid-conversation-collection-v1/overlap-audit.json",
+      "b13beba0eae016172a7296e0c2186aba7e0574a4ae6fbb5055c5ba706b895b2d"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-reasoning-rehearsal-collection-v1/collect/candidate-authority/manifest.json",
+      "88e535b5bec8f704163eb45bab929d7c80e4eee92f575b3748ebb758d18b5229"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-reasoning-rehearsal-collection-v1/audit.json",
+      "f62c86efb60de7c2df6329b043714000ea881c3c9d68adcda1c5f1eeb846ac4d"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-reasoning-rehearsal-collection-v1/overlap-audit.json",
+      "d8ed9720c9d55721a35420b43e1a753ea3d0034b1c35851f7f5a792363033ae6"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e1-chat-agent-prep-v1/conversation-prior-draw-identities.txt",
+      "fd875b053e3ad1b55d694402eb384de6852fc1ef22cc3854b74bfa5424b07353"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e2-chat-agent-prep-v1/conversation-prior-draw-identities.txt",
+      "a455d651ca0c7ba2dafa2d53063c62f136cecbcedad2c08fb4e0e2ad813d3709"
+    ],
+    [
+      "/mnt/nvme1n1/erikg/sft/e97-4b-smoltalk2-admitted-v1/manifest.json",
+      "d64f51abc615c097910900ffa7fc88f020ae5567b89958f607008078c271c7f6"
+    ],
+    [
+      "/mnt/nvme1n1/erikg/sft/e97-4b-pi-compositional-retention-mix-v1/manifest.json",
+      "79e7981077fc387c3e3759728ddd0f9e1ac16f687c628542e8313fb735c4cfb7"
+    ],
+    [
+      "/mnt/nvme1n1/erikg/sft/e97-4b-pi-cumulative-recovery-mix-v1/manifest.json",
+      "a17648481e5cf1183ea640b873d70e2b1c36ad3e976d0c4b4a2f19af54fe600f"
+    ],
+    [
+      "/mnt/nvme1n1/erikg/sft/e97-4b-pi-live-aligned-all-assistant-v1/manifest.json",
+      "4a1cf86f9089cc3f2f79884f845d26d487d88b20fb32b589a8095d4824bc6a20"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-extracterror-collection-v1/collect/candidate-authority/manifest.json",
+      "08817eb42ff835523cc62bc13208053daeb79479a4bb9a585f1f427b53659aa4"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-longcopy-collection-v1/collect/candidate-authority/manifest.json",
+      "27a7f97d64a1589f98e3ce851344aac51e4c7608b2fa86df6c92955a52e79536"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-pointerchase-collection-v1/collect/candidate-authority/manifest.json",
+      "f2361a86c3909083c93be6702f12ad8323844a2390069d368ebec92d52e0247e"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-curriculum-2000-selected-v1/candidate-authority/manifest.json",
+      "8cf83db8d608f6af74bbd2cbe60206ef435fb3003ab2bb63f4eadab17eb05562"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-curriculum-2000-selected-v1/selection-audit.json",
+      "de977726f0758206ee9defe9c3687d2485e3ba2b80eb9ef9ceafb065c5f6646b"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-curriculum-2000-selected-v1/overlap-audit.json",
+      "9c104d73b104f4d29a83ca1472b66ef2df681e020a2b9688eb4f87c6ef814a78"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-long-document-anchor-v1/library-authority/manifest.json",
+      "1bd7aa364d4111be0050360851d0292c5dae0e02dee9bae9de33fd2d6f68fcf8"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e2-chat-agent-prep-v1/v2/library-fragments-authority/manifest.json",
+      "42372c8d2c91fa3d93e6384c988c262f6bc665b667778a29d91f8ac122441508"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e2-chat-agent-prep-v1/v2/library-fragments-packs/manifest.json",
+      "e19f2e408b5faa6fe409721340d3147c2ec4ac16f4aa1bedb08334f94dac6360"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e2-chat-agent-prep-v1/v2/logs/reset-semantics-receipt.json",
+      "253c52c1f7e42d040519288121b50d2176fb7a4c8f367da7f1ee66c3c711ceb4"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-long-document-anchor-v1/mainmix-draws-authority/manifest.json",
+      "fc9192ab09795af88a767e4f8ef471bda8eee73d8bf9f8b82c2e324324d48bf0"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-long-document-anchor-v1/mainmix-draws-packs/manifest.json",
+      "043d6615fe7f5b01d57afeb227da77db1d67ed93179eb96523ca34870111b1a1"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-long-document-anchor-v1/probe/probe-panel-manifest.json",
+      "abca0b8b4ce9a917e8262b8d4ce0743565c594900a27fc1442f43dd42ed4540e"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-long-document-anchor-v1/probe/probe-panel.token-ids.jsonl",
+      "5725d8206ac90e5ad4bbb4acd492bf4832f704ccb1d39615bae1c87fd55edc9f"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-long-document-anchor-v1/probe/scores/nll-base-99B-y-q8_0.json",
+      "c1b60b68f79756d09a2dc6bf47b539a1ba6e848bc8aac85f398a62a46bc4fb3c"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-long-document-anchor-v1/probe/scores/nll-bridge-parent-9b78628d-q8_0.json",
+      "deaa8651f1a291ec135c83aafd5587d774e37e2249b4d8d2f91a4410c9b0d8bc"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-long-document-anchor-v1/probe/scores/nll-v6-u96-d8146498-q8_0.json",
+      "e1956decf8b29bcd80f166b66b4fb68a3aae0c1b647ba319486a63f26d36874c"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e2-chat-agent-prep-v1/parent-baseline/scores/nll-e2-parent-853a3b95-q8_0.json",
+      "896a08a26462c5c6f5ddb6c746a4f3643e7e42f141a96d92defd1c617b890f41"
+    ]
+  ],
+  "new_rl_updates": 0,
+  "operator_internal_training_authorized": false,
+  "optimizer_updates_authorized": 0,
+  "pack_manifest_sha256": "7759fddcc37a109ed7d30418387a2cb70e510bb9ed3b59224663fe83ccc4c141",
+  "packing_authorized": false,
+  "parent_checkpoint": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e1-chat-agent-segment2-training-v1/checkpoints/checkpoint_agent_sft_u000128_loss_0.8392.pt",
+  "parent_checkpoint_sha256": "853a3b95d0b60a61f8cbfacf9564d4f7140a1bcaded4af091562e711ea91cd8b",
+  "per_update_cohort_stratification": {
+    "min_target_fraction": 0.02,
+    "proposed_updates": 128,
+    "scheme": "window-coverage",
+    "window_class_eligibility": {
+      "compositional-rehearsal": {
+        "avg_record_tokens": 365.431,
+        "min_structural_record_tokens": 6553.7,
+        "window_class_eligible": false
+      },
+      "conversation-rehearsal": {
+        "avg_record_tokens": 1282.887,
+        "min_structural_record_tokens": 6553.7,
+        "window_class_eligible": false
+      },
+      "cumulative-recovery-rehearsal": {
+        "avg_record_tokens": 386.501,
+        "min_structural_record_tokens": 6553.7,
+        "window_class_eligible": false
+      },
+      "grounded-authored-rehearsal": {
+        "avg_record_tokens": 3505.264,
+        "min_structural_record_tokens": 6553.7,
+        "window_class_eligible": false
+      },
+      "hybrid-conversation-rehearsal": {
+        "avg_record_tokens": 5840.039,
+        "min_structural_record_tokens": 6553.7,
+        "window_class_eligible": false
+      },
+      "live-aligned-rehearsal": {
+        "avg_record_tokens": 279.401,
+        "min_structural_record_tokens": 6553.7,
+        "window_class_eligible": false
+      },
+      "long-document-library-anchor": {
+        "avg_record_tokens": 65536.0,
+        "min_structural_record_tokens": 6553.7,
+        "window_class_eligible": true
+      },
+      "longcopy-rehearsal": {
+        "avg_record_tokens": 21252.189,
+        "min_structural_record_tokens": 6553.7,
+        "window_class_eligible": true
+      },
+      "loopbreak-rehearsal": {
+        "avg_record_tokens": 6138.857,
+        "min_structural_record_tokens": 6553.7,
+        "window_class_eligible": false
+      },
+      "mainmix-draws-anchor": {
+        "avg_record_tokens": 1216.404,
+        "min_structural_record_tokens": 6553.7,
+        "window_class_eligible": false
+      },
+      "pi-native-curriculum": {
+        "avg_record_tokens": 8990.876,
+        "min_structural_record_tokens": 6553.7,
+        "window_class_eligible": true
+      },
+      "pointerchase-rehearsal": {
+        "avg_record_tokens": 6238.333,
+        "min_structural_record_tokens": 6553.7,
+        "window_class_eligible": false
+      },
+      "reasoning-rehearsal": {
+        "avg_record_tokens": 6650.196,
+        "min_structural_record_tokens": 6553.7,
+        "window_class_eligible": true
+      },
+      "representation-bridge-rehearsal": {
+        "avg_record_tokens": 2635.563,
+        "min_structural_record_tokens": 6553.7,
+        "window_class_eligible": false
+      },
+      "tooltalk-rehearsal": {
+        "avg_record_tokens": 3298.11,
+        "min_structural_record_tokens": 6553.7,
+        "window_class_eligible": false
+      },
+      "verified-raw-oh": {
+        "avg_record_tokens": 49278.564,
+        "min_structural_record_tokens": 6553.7,
+        "window_class_eligible": true
+      }
+    },
+    "window_class_note": "window_cohorts are verified at window granularity (>=1 per 32-update window); every other cohort keeps the floor rule (majors >=2% of targets every update; minors every 32 updates). The eligibility table is the machine-checked structural-capping test (avg whole record >= 10% of the 65,537-token pack sequence) applied to EVERY cohort \u2014 it rejects all ordinary small-record cohorts mechanically.",
+    "window_cohorts": [
+      "long-document-library-anchor",
+      "verified-raw-oh"
+    ],
+    "window_updates": 32
+  },
+  "preparation_root": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e2-chat-agent-prep-v1/v2/e2-preparation",
+  "proposed_behavioral_gate": {
+    "composition": ">= 4/16",
+    "openhands_execution_overall": ">= 64/96",
+    "openhands_fresh": ">= 30/32",
+    "openhands_prior_fresh": "= 16/16",
+    "openhands_prior_regression": ">= 10/16",
+    "openhands_transfer": ">= 5/16",
+    "pi_native_stage_b": "valid first frame >= 12/14 and correct first action >= 10/14",
+    "retention": "both saved-x/train-y retention gates pass"
+  },
+  "proposed_learning_rate": 1e-05,
+  "proposed_updates": 128,
+  "purpose": "E2 chat-agent arc segment 1 of 4 (the E2 pivot, v2 fragment render): E1's cohort families rebalanced against the u384 tool-eager regression (verified-raw-OH 9.97%, tooltalk 4.99%) plus the long-document anchor cohorts at 19.64% combined (library 11.32% as the operator-ruled 64K window-cut fragment render \u2014 document concatenation with EOT record separators in-stream, arbitrary mid-document entry, hidden-state reset at every fragment start via the record-reset SFT path, NOT document-aligned whole books; mainmix 8.31% scan-across fragments unchanged), fresh disjoint conversation 29.47%, restored pools 5.37% at 4 epochs, reasoning pilot + hybrid conversation at 4 epochs, repair families + tool-shaped fillers closing the remainder, chained from the E1 u256 checkpoint 853a3b95. Juncture detectors: Stage-B + conversation NLL probe + the E1 chat-probe panel + the frozen document-NLL probe (fail-closed below the parent baseline 2.597301). Frozen dual gates unchanged.",
+  "sampler_key": 2200001,
+  "schedule_selection": "Training-data-only screen over keys 2200001,2200002,2200004,2200005 (fresh v2 range 2200001.., screened independently for this manifest sha under the window-coverage rule with the supervisor-approved window-class cohorts long-document-library-anchor and verified-raw-oh; 4 keys admitted in 5 tried. Window-class cohorts per the supervisor-approved extension: long-document-library-anchor (the v2 fragment render remains structurally capped \u2014 a 65,536-token fragment fills a boundary-aware pack alone, pack coverage 4.06%) and verified-raw-oh; all other cohorts under the established floor rule (mainmix-draws-anchor stays an ordinary major). This segment trains key 2200001.",
+  "schedule_sha256": "d7f9ff3cfdf014efe48feaf29b0427495bd854303e51442977bed54aa5020230",
+  "scheduled_assistant_targets": 23768854,
+  "scheduled_input_tokens": 59139721,
+  "scheduled_source_targets": {
+    "compositional-rehearsal": 2862246,
+    "conversation-rehearsal": 7054049,
+    "cumulative-recovery-rehearsal": 3607131,
+    "grounded-authored-rehearsal": 667436,
+    "hybrid-conversation-rehearsal": 28411,
+    "live-aligned-rehearsal": 801551,
+    "long-document-library-anchor": 2555865,
+    "longcopy-rehearsal": 1501,
+    "loopbreak-rehearsal": 1148,
+    "mainmix-draws-anchor": 1981109,
+    "pi-native-curriculum": 14129,
+    "pointerchase-rehearsal": 7640,
+    "reasoning-rehearsal": 17322,
+    "representation-bridge-rehearsal": 609991,
+    "tooltalk-rehearsal": 1286430,
+    "verified-raw-oh": 2272895
+  },
+  "scheduled_source_unique_records": {
+    "compositional-rehearsal": 16261,
+    "conversation-rehearsal": 6798,
+    "cumulative-recovery-rehearsal": 23739,
+    "grounded-authored-rehearsal": 1886,
+    "hybrid-conversation-rehearsal": 229,
+    "live-aligned-rehearsal": 6653,
+    "long-document-library-anchor": 39,
+    "longcopy-rehearsal": 37,
+    "loopbreak-rehearsal": 21,
+    "mainmix-draws-anchor": 1630,
+    "pi-native-curriculum": 145,
+    "pointerchase-rehearsal": 54,
+    "reasoning-rehearsal": 56,
+    "representation-bridge-rehearsal": 1646,
+    "tooltalk-rehearsal": 1237,
+    "verified-raw-oh": 195
+  },
+  "scheduled_unique_packs": 1024,
+  "scheduled_unique_records": 60626,
+  "schema": "emender-e97-e2-chat-agent-segment1-proposal-v2",
+  "source_commit": "2255bb5a",
+  "status": "frozen-proposal-not-authorized"
+}
