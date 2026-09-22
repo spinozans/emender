@@ -155,6 +155,21 @@ def utc_family(fmt):return fmt.startswith('u-')
 def weekday_now(utc):
  now=datetime.datetime.now(datetime.timezone.utc) if utc else datetime.datetime.now()
  return now.strftime('%A')
+def utc_ymd_span(now):
+ """Acceptable UTC calendar dates for a u-ymd observation taken at `now`:
+ the observation date plus one day on either side, tolerating UTC-midnight
+ rollover between observation and check. Members are '%Y-%m-%d' strings only.
+ (Regression: an earlier revision seeded this span with weekday_now() — a
+ weekday name, never a date — so every u-ymd case was falsely rejected by the
+ clock check; the stride-100 pilot never sampled a u-ymd case and hid it.)"""
+ return {(now+datetime.timedelta(days=d)).strftime('%Y-%m-%d') for d in (-1,0,1)}
+def check_clock(fmt,values,clock_before,clock_after,now=None):
+ """Runtime clock sanity check for date observations. Raises ValueError when
+ the observed values cannot come from the live clock; returns nothing."""
+ if 'weekday' in values and values['weekday'] not in (clock_before,clock_after):
+  raise ValueError(f'clock mismatch: observed {values["weekday"]} vs clock {clock_before}/{clock_after}')
+ if 'ymd' in values and fmt=='u-ymd' and values['ymd'] not in utc_ymd_span(now or datetime.datetime.now(datetime.timezone.utc)):
+  raise ValueError(f'clock date mismatch: {values["ymd"]}')
 
 # ------------------------------------------------------------- phrasing banks
 GREETINGS=(
@@ -568,6 +583,25 @@ DISTRIBUTION=(
  ('hybrid-edit-verify',120,lambda i:edit_case(i,seam=False)),
  ('hybrid-tool-then-chat',850,tool_then_chat_case))
 
+def case_kind(case):
+ """Discriminating kind of a case for pilot-coverage purposes: family, date
+ format, and the set of dynamic finish (kind, fmt) pairs in its steps."""
+ dyn=tuple(sorted({(s.get('dynamic'),s.get('fmt')) for s in case['steps'] if isinstance(s,dict) and s.get('dynamic')},key=str))
+ return (case['family'],case.get('date_fmt'),dyn)
+
+def pilot_sample(cases,stride):
+ """Pilot attempt set: the first case of every case kind, then the stride
+ sample minus already-covered kinds. A pilot must exercise every case kind
+ at least once. (Regression: the original stride-100 pilot sampled 19 of 31
+ kinds, never hit a u-ymd case, and hid the clock-check span bug; the
+ kind-coverage prefix closes that gap.)"""
+ extras=[];seen=set()
+ for c in cases:
+  k=case_kind(c)
+  if k not in seen: extras.append(c);seen.add(k)
+ if stride<=1:return list(cases)
+ return extras+[c for c in cases[::stride] if case_kind(c) not in seen]
+
 def authority_files_v2():
  paths=[Path('scripts/build_e97_pi_native_curriculum.py'),Path(__file__),PROVIDER_V2,
   Path('configs/pi/e97-pi-native.ts'),Path('scripts/e97_pi_native_codec.py'),
@@ -675,12 +709,7 @@ def execute_case_v2(case,panel,enc,root,pi_bin,manifest_path):
   observation=results[-1]['content'][0]['text']
   values=parse_date_observation(observation,fmt)
   clock_after=weekday_now(utc)
-  if 'weekday' in values and values['weekday'] not in (clock_before,clock_after):raise ValueError(f'clock mismatch: observed {values["weekday"]} vs clock {clock_before}/{clock_after}')
-  if 'ymd' in values and fmt=='u-ymd':
-   span={clock_after}
-   span.add((datetime.datetime.now(datetime.timezone.utc)-datetime.timedelta(days=1)).strftime('%Y-%m-%d'))
-   span.add((datetime.datetime.now(datetime.timezone.utc)+datetime.timedelta(days=1)).strftime('%Y-%m-%d'))
-   if values['ymd'] not in span:raise ValueError(f'clock date mismatch: {values["ymd"]}')
+  check_clock(fmt,values,clock_before,clock_after)
   clock_check={'fmt':fmt,'weekday_before':clock_before,'weekday_after':clock_after,'observed':values,'final':bridge.final}
  ids,mask,units=encode_candidate(bridge.episode.text(),bridge.generations,case['supervise_from'],enc)
  private={'id':case['id'],'category':case['category'],'family':case['family'],'prompt':case['prompt'],'source_messages':bridge.episode.source_messages(),'native_record':bridge.episode.text(),'generations':bridge.generations,'public_history':bridge.history,'terminal':terminal,'snapshot':snapshot,'supervise_from':case['supervise_from'],'assistant_units':len(bridge.generations),'supervised_assistant_units':units,'targets':sum(mask),'record_sha256':hashlib.sha256(bridge.episode.text().encode()).hexdigest()}
@@ -709,7 +738,7 @@ def collect(args):
  if (args.output/'candidate-authority/manifest.json').exists() and (args.output/'summary.json').exists():
   print('HYBRID_V2_ALREADY_COLLECTED',sha(args.output/'summary.json'));return
  enc=tiktoken.get_encoding('p50k_base')
- selected=plan['cases'] if args.stride==1 else plan['cases'][::args.stride]
+ selected=pilot_sample(plan['cases'],args.stride)
  attempts=selected[:args.max_cases] if args.max_cases is not None else selected;total=len(attempts)
  resume_path=args.output/'resume-state.json'
  transient_counts={}

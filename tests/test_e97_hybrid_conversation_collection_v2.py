@@ -1,9 +1,11 @@
 import json
+import datetime
 import tiktoken
 import pytest
 from scripts.e97_open_swe_native_codec import compact
 from scripts.build_e97_hybrid_conversation_collection_v2 import (
-	edit_case,write_case,resolve_dynamic_v2,parse_date_observation,make_all_cases)
+	edit_case,write_case,resolve_dynamic_v2,parse_date_observation,make_all_cases,
+	utc_ymd_span,check_clock,case_kind,pilot_sample)
 from scripts.audit_e97_pi_native_curriculum import (
 	audit_date_values,verify_case,verify_hybrid_v2_case)
 
@@ -114,3 +116,86 @@ def test_verify_hybrid_v2_case_accepts_observation_exact_finish():
 	verify_hybrid_v2_case(case,turns,[result('Friday')],enc)
 	bad=[turns[0],frame('finish',{'message':'Saturday'},resolved['analysis'],resolved['commentary'])]
 	with pytest.raises(ValueError,match='v2 exact finish'):verify_hybrid_v2_case(case,bad,[result('Friday')],enc)
+
+# ------------------------------------------- u-ymd clock-check regression
+# The stride-100 pilot never sampled a u-ymd case, so a span seeded with a
+# weekday string (not a date) falsely rejected every u-ymd case at collect
+# time. These tests exercise a u-ymd case explicitly and pin the pilot rule:
+# a pilot sample must cover every case kind.
+def test_utc_ymd_span_is_date_strings():
+	now=datetime.datetime(2026,9,22,23,59,tzinfo=datetime.timezone.utc)
+	assert utc_ymd_span(now)=={'2026-09-21','2026-09-22','2026-09-23'}
+	assert not any(any(ch.isalpha() for ch in d) for d in utc_ymd_span(now))
+	live=datetime.datetime.now(datetime.timezone.utc)
+	assert live.strftime('%Y-%m-%d') in utc_ymd_span(live)
+
+def u_ymd_case_turns(case,observation):
+	"""Render a u-ymd case's emitted frames exactly as execute_case_v2 does at
+	collect time: the static bash step as authored, the dynamic finish resolved
+	against the real observation."""
+	turns=[]
+	for spec in case['steps']:
+		resolved=resolve_dynamic_v2(spec,observation) if 'dynamic' in spec else spec
+		turns.append(frame(spec['name'],resolved['arguments'],resolved.get('analysis'),resolved.get('commentary')))
+	return turns
+
+def verify_u_ymd_case_end_to_end(case,observation,enc):
+	"""Drive one u-ymd case through the collect-time clock check and the
+	independent auditor verification path: verify_case re-derives the
+	date-observation final from the plan spec, verify_hybrid_v2_case re-derives
+	every emitted frame."""
+	now=datetime.datetime.strptime(observation,'%Y-%m-%d').replace(tzinfo=datetime.timezone.utc)
+	check_clock('u-ymd',parse_date_observation(observation,'u-ymd'),now.strftime('%A'),now.strftime('%A'))
+	turns=u_ymd_case_turns(case,observation)
+	private={'source_messages':[assistant('bash',frame_arguments(turns[0])),result(observation),
+		{'role':'assistant','content':None,'reasoning_content':None,'think':None,
+		 'tool_calls':[{'type':'function','function':{'name':'finish','arguments':compact(frame_arguments(turns[-1]))}}]}],
+		'snapshot':{}}
+	tools=[{'name':'bash','label':'b','description':'b','parameters':{}}]
+	verify_results,actions=verify_case(case,private,tools)
+	verify_hybrid_v2_case(case,turns,verify_results,enc)
+	return actions[-1]
+
+def test_u_ymd_case_clock_check_and_finish():
+	cases,_=make_all_cases()
+	uymd=[c for c in cases if c['family']=='hybrid-date-question' and c.get('date_fmt')=='u-ymd']
+	assert len(uymd)==125
+	dated=[c for c in uymd if c['steps'][-1]['dynamic']=='observation-date']
+	exact=[c for c in uymd if c['steps'][-1]['dynamic']=='observation-exact']
+	assert (len(dated),len(exact))==(107,18)  # the exact-observation slice keeps its own finish kind
+	for case in (dated[0],exact[0]):
+		bash=[s for s in case['steps'] if s.get('name')=='bash'][0]
+		assert bash['arguments']=={'command':"date -u '+%Y-%m-%d'"}
+	now=datetime.datetime.now(datetime.timezone.utc);observation=now.strftime('%Y-%m-%d')
+	values=parse_date_observation(observation,'u-ymd')
+	assert values=={'ymd':observation}
+	# the fixed clock check accepts the live UTC date (the pre-fix span was
+	# seeded with a weekday string and rejected every u-ymd observation) and
+	# rejects a stale date
+	check_clock('u-ymd',values,now.strftime('%A'),now.strftime('%A'))
+	stale=parse_date_observation((now-datetime.timedelta(days=3)).strftime('%Y-%m-%d'),'u-ymd')
+	with pytest.raises(ValueError,match='clock date mismatch'):
+		check_clock('u-ymd',stale,now.strftime('%A'),now.strftime('%A'))
+	enc=tiktoken.get_encoding('p50k_base')
+	# end-to-end through the verification path, one case per rejected group:
+	# date-question observation-date (107), date-question observation-exact
+	# (18), and chat-into-tool-date seam (60) — all 185 falsely rejected at
+	# full-collect time by the pre-fix span.
+	action=verify_u_ymd_case_end_to_end(dated[0],observation,enc)
+	assert action['arguments']=={'message':dated[0]['steps'][-1]['template'].format(**values)}
+	action=verify_u_ymd_case_end_to_end(exact[0],observation,enc)
+	assert action['arguments']=={'message':observation}
+	seam=[c for c in cases if c['family']=='hybrid-chat-into-tool-date' and c.get('date_fmt')=='u-ymd']
+	assert len(seam)==60
+	action=verify_u_ymd_case_end_to_end(seam[0],observation,enc)
+	assert action['arguments']=={'message':seam[0]['steps'][-1]['template'].format(**values)}
+
+def test_pilot_sample_covers_every_case_kind():
+	cases,_=make_all_cases()
+	kinds={case_kind(c) for c in cases}
+	assert len(kinds)==31
+	stride_only={case_kind(c) for c in cases[::100]}
+	assert len(stride_only)<len(kinds)  # the sampling gap that hid the u-ymd bug
+	sample=pilot_sample(cases,100)
+	assert {case_kind(c) for c in sample}==kinds
+	assert pilot_sample(cases,1)==cases
