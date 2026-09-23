@@ -116,7 +116,7 @@ episode-private.json was ever deleted).
 - Independent pack validation PASS
   (`scripts/validate_e97_sft_packs.py`; `W/packs-64k/validation.json`
   sha256
-  `3e03b20e0768a224a587a3745bc17b01a3f8476e1638ebd031c32a7406b388e8`).
+  `c1d665bbcaa6b4c5ef0dd11d51df502d98412dd531dfb4d36d08cf6cacb493f8`).
 - Cohort-spec entry:
   `docs/validation/e97-hybrid-conversation-cohort-spec-v2.md` —
   recommendation **~2-4% of prep assistant targets via x4 whole-record
