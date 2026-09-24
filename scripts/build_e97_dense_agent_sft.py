@@ -10,7 +10,7 @@ SYSTEM=('You are a precise tool-using agent. Respond with either "Action:" and o
         '"Arguments:" object, or "Final:". Never invent tool results.')
 
 def split(identity): return 1 if int.from_bytes(hashlib.sha256(identity.encode()).digest()[:8],'little')%100==0 else 0
-def entry(p): return {'path':str(p.resolve()),'bytes':p.stat().st_size,'sha256':sha256(p)}
+def entry(p): return {'path':p.name,'bytes':p.stat().st_size,'sha256':sha256(p)}
 def trace(kind,i,rng):
  if kind=='calculator':
   a=rng.randint(11,999); b=rng.randint(11,999); op=rng.choice(['+','-','*']); value=eval(f'{a}{op}{b}'); expr=f'{a} {op} {b}'
@@ -46,5 +46,5 @@ def main():
     elif any(left>=x and right<=y for x,y in overlaps): masks.append(1)
     else: raise RuntimeError('token crosses target boundary')
    s=split(identity); to.write(struct.pack(f'<{len(toks)}I',*toks)); mo.write(bytes(masks)); io.write(RECORD_INDEX.pack(offset,len(toks),sum(masks),s)); meta.write(json.dumps({'id':identity,'source':f'emender-agent-{kind}-v1','split':s,'tokens':len(toks),'targets':sum(masks)},sort_keys=True)+'\n'); offset+=len(toks); counts['records']+=1; counts['tokens']+=len(toks); counts['assistant_target_tokens']+=sum(masks); counts['validation_records' if s else 'train_records']+=1
- manifest={'schema':AUTHORITY_SCHEMA,'status':'complete','purpose':'dense-e97-bounded-tool-agent-v1','serialization':'System/User/Assistant/Tool with RS after every assistant turn','seed':a.seed,'counts':counts,'outputs':{n:entry(x) for n,x in paths.items()}}; mp=a.output_root/'manifest.json'; mp.write_text(json.dumps(manifest,indent=2,sort_keys=True)+'\n'); print(json.dumps({'manifest_sha256':sha256(mp),**manifest},sort_keys=True))
+ manifest={'schema':AUTHORITY_SCHEMA,'status':'complete','training_eligible':True,'purpose':'dense-e97-bounded-tool-agent-v1','serialization':'System/User/Assistant/Tool with RS after every assistant turn','seed':a.seed,'counts':counts,'outputs':{n:entry(x) for n,x in paths.items()}}; mp=a.output_root/'manifest.json'; mp.write_text(json.dumps(manifest,indent=2,sort_keys=True)+'\n'); print(json.dumps({'manifest_sha256':sha256(mp),**manifest},sort_keys=True))
 if __name__=='__main__': main()

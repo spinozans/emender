@@ -77,7 +77,8 @@ def valid_record(*, split: str = "train") -> dict:
         "schema_digest": digest("runtime-schema-v1"),
         "controller_digest": digest("controller-v1"),
         "system_prompt_sha256": sha256_text(system),
-        "tool_schema_digest": digest("tool-schema-v1"),
+        "tool_schema_digest": sha256_json([]),
+        "sandbox_image_digest": digest("sandbox"),
     }
     limits = {
         "turns": 12,
@@ -169,6 +170,55 @@ def valid_record(*, split: str = "train") -> dict:
         {"role": "tool", "tool_call_id": "good", "content": "opal-731"},
         {"role": "assistant", "content": "Final: facts/value.txt contains opal-731."},
     ]
+    def attestation():
+        return {
+            "schema": "emender-e97-agent-service-attestation-v1", "checkpoint_path": "unit://checkpoint",
+            "checkpoint_sha256": digest("checkpoint"), "args_json_sha256": digest("args"),
+            "config_sha256": digest("config"), "weight_mode": "saved", "tokenizer": "unit",
+            "model_id": "unit-model", "server_build_sha256": digest("server"),
+            "controller_build_sha256": runtime["controller_digest"], "device": "cpu", "dtype": "unit",
+            "use_triton": False, "ingest_mode": "tokenwise", "runtime_image_path": "unit://runtime",
+            "runtime_image_sha256": runtime["sandbox_image_digest"], "tool_schema_sha256": runtime["tool_schema_digest"],
+            "system_prompt_override_sha256": digest(""), "runtime_identity_schema": "emender-e97-runtime-identity-v1",
+            "max_output_tokens": 512, "max_sessions": 1, "python_implementation": "CPython",
+            "python_version": "unit", "torch_version": "unit", "cuda_runtime": "", "cuda_available": False,
+            "platform": "unit", "machine": "unit",
+        }
+
+    def completion_receipts(messages):
+        receipts = []
+        for position, message in enumerate(messages):
+            if message.get("role") != "assistant":
+                continue
+            sequence = len(receipts)
+            request = {
+                "model": "unit-model", "messages": [dict(item) for item in messages[:position]],
+                "tools": [], "temperature": 0, "max_completion_tokens": limits["completion_tokens"],
+            }
+            identity = {
+                "messages_sha256": sha256_text(canonical_json(request["messages"])),
+                "system_prompt_sha256": runtime["system_prompt_sha256"],
+                "tool_schema_sha256": runtime["tool_schema_digest"],
+                "request_sha256": sha256_json(request),
+            }
+            service = attestation()
+            response = {
+                "model": "unit-model", "choices": [{"message": dict(message)}],
+                "usage": {"completion_tokens": 1}, "emender_request_identity": identity,
+                "emender_service_attestation": service,
+            }
+            receipts.append({"sequence": sequence, "request": request, "request_identity": identity,
+                             "request_sha256": identity["request_sha256"], "response": response,
+                             "response_sha256": sha256_json(response), "service_attestation": service,
+                             "service_attestation_sha256": sha256_json(service), "model_id": "unit-model",
+                             "completion_tokens": 1, "assistant_message_sha256": sha256_json(message)})
+        return receipts
+
+    metadata.update({
+        "model_id": "unit-model", "checkpoint_sha256": digest("checkpoint"),
+        "service_attestation": attestation(),
+        "completion_receipts": completion_receipts(failed_messages),
+    })
     corrective_metadata = {
         **metadata,
         "turn_count": 5,
@@ -182,9 +232,10 @@ def valid_record(*, split: str = "train") -> dict:
             {"sequence": 4, "completion_tokens": 1},
         ],
         "completion_tokens": 5,
+        "completion_receipts": completion_receipts(corrective_messages),
     }
     corrective = {
-        "schema": "emender-e97-corrective-terminal-v1",
+        "schema": "emender-e97-corrective-terminal-v2",
         "status": "success",
         "failed_terminal_sha256": sha256_json(failed),
         "correction_start_message_index": 8,
@@ -214,7 +265,7 @@ def valid_record(*, split: str = "train") -> dict:
             "artifact_sha256": digest("archive"),
             "tree_digest": task["fixture_tree_digest"],
         },
-        "runtime": {**runtime, "sandbox_image_digest": digest("sandbox")},
+        "runtime": runtime,
         "limits": limits,
         "validator": {
             "spec_digest": digest("validator-v1"),
@@ -224,19 +275,31 @@ def valid_record(*, split: str = "train") -> dict:
             "minefield_digest": digest("minefield"),
         },
     }
+    validator_spec_payload_sha256 = sha256_text("validator-spec-payload")
+    validator_terminal_payload_sha256 = sha256_text("validator-terminal-payload")
     validators = {}
     for mode in ("focused", "regression"):
-        logical = bundle["validator"][f"{mode}_argv"] + ["--spec", "<spec>", "--terminal", "<terminal>"]
+        logical = bundle["validator"][f"{mode}_argv"] + [
+            "--spec-fd", "<inherited-spec-fd>",
+            "--terminal-fd", "<inherited-terminal-fd>",
+        ]
         output = {"mode": mode, "status": "pass", "action_count": 4}
+        bound = ["@verified-interpreter-fd", "@private-verified-validator", "--mode", mode,
+                 "--spec-fd", "<inherited-spec-fd>",
+                 "--terminal-fd", "<inherited-terminal-fd>"]
         validators[mode] = {
             "logical_argv": logical,
             "logical_argv_sha256": sha256_json(logical),
+            "bound_argv": bound,
+            "bound_argv_sha256": sha256_json(bound),
             "stdout_sha256": sha256_text(canonical_json(output) + "\n"),
             "stderr_sha256": sha256_text(""),
+            "spec_payload_sha256": validator_spec_payload_sha256,
+            "terminal_payload_sha256": validator_terminal_payload_sha256,
             "output": output,
         }
     execution = {
-        "schema": "emender-e97-first-party-validator-receipt-v3",
+        "schema": "emender-e97-first-party-validator-receipt-v4",
         "status": "pass",
         "task_identity": task["identity"],
         "bundle_sha256": sha256_json(bundle),
@@ -245,6 +308,8 @@ def valid_record(*, split: str = "train") -> dict:
         "configured_limits": limits,
         "terminal_sha256": sha256_json(corrective),
         "validator_spec_digest": bundle["validator"]["spec_digest"],
+        "validator_spec_payload_sha256": validator_spec_payload_sha256,
+        "validator_terminal_payload_sha256": validator_terminal_payload_sha256,
         "runtime_schema_digest": runtime["schema_digest"],
         "validators": validators,
     }
@@ -277,7 +342,13 @@ def valid_record(*, split: str = "train") -> dict:
         "generation_receipt": {"sha256": digest("generation"), "path": "artifacts/bb/generation.json"},
         "generator_manifest": {"sha256": digest("generator-manifest"), "path": "artifacts/bc/generator-manifest.json"},
         "source_archive": {"sha256": digest("source-archive"), "path": "artifacts/bd/source-archive.tar"},
+        "environment_descriptor": {"sha256": digest("environment"), "path": "artifacts/be/environment.json"},
+        "overlap_firewall_audit": {"sha256": digest("overlap-audit"), "path": "artifacts/bf/overlap-audit.json"},
+        "authorization_license": {"sha256": digest("license"), "path": "artifacts/c0/license.json"},
         "overlap_receipt": {"sha256": digest("overlap"), "path": "artifacts/cc/overlap.json"},
+        "admission_receipt": {"sha256": digest("admission"), "path": "artifacts/cd/admission.json"},
+        "authority_state": {"sha256": digest("authority-state"), "path": "artifacts/ce/authority-state.json"},
+        "collection_authorization_allowlist": {"sha256": digest("allowlist"), "path": "artifacts/cf/allowlist.json"},
         "tasks_collection": {"sha256": digest("tasks"), "path": "artifacts/dd/tasks.jsonl"},
         "private_spec": {"sha256": digest("spec"), "path": "artifacts/ee/spec.json"},
     }
@@ -303,7 +374,8 @@ def valid_record(*, split: str = "train") -> dict:
         "split": split,
         "task": task,
         "student": {"rollout_identity": sha256_json(failed), "checkpoint_sha256": digest("checkpoint"), "decode": {"temperature": 0}},
-        "teacher": {"tier": "luna", "model_revision": "synthetic-unit-test"},
+        "teacher": {"tier": "luna", "model_revision": "synthetic-unit-test", "evidence": "closed-completion-receipts-v1"},
+        "provenance": {"scope": "teacher-evidenced", "training_eligible": True},
         "runtime": runtime,
         "first_divergence": {
             "message_index": 4,
@@ -351,6 +423,75 @@ def valid_record(*, split: str = "train") -> dict:
     }
 
 
+def _reseal_terminal_graph(record: dict) -> None:
+    """Recompute every enclosing receipt relation after a deliberate mutation."""
+
+    binding = record["terminal_binding"]
+    bundle = binding["bundle"]
+    failed = binding["failed_terminal"]
+    corrective = binding["corrective_terminal"]
+    execution = binding["validator_execution"]
+    completion = binding["completion_receipt"]
+
+    for terminal in (failed, corrective):
+        for receipt in terminal["metadata"]["completion_receipts"]:
+            attestation = receipt["service_attestation"]
+            receipt["service_attestation_sha256"] = sha256_json(attestation)
+            receipt["response"]["emender_service_attestation"] = attestation
+            receipt["response_sha256"] = sha256_json(receipt["response"])
+
+    bundle_digest = sha256_json(bundle)
+    failed_digest = sha256_json(failed)
+    corrective["failed_terminal_sha256"] = failed_digest
+    corrective_digest = sha256_json(corrective)
+    execution["bundle_sha256"] = bundle_digest
+    execution["terminal_sha256"] = corrective_digest
+    execution_digest = sha256_json(execution)
+    completion["receipt"].update({
+        "bundle_sha256": bundle_digest,
+        "failed_terminal_sha256": failed_digest,
+        "accepted_terminal_sha256": corrective_digest,
+        "validator_receipt_sha256": execution_digest,
+    })
+    completion_digest = sha256_json(completion)
+
+    binding.update({
+        "bundle_sha256": bundle_digest,
+        "failed_terminal_sha256": failed_digest,
+        "corrective_terminal_sha256": corrective_digest,
+        "validator_execution_sha256": execution_digest,
+        "completion_receipt_sha256": completion_digest,
+    })
+    record["student"]["rollout_identity"] = failed_digest
+    record["validator_receipt"].update({
+        "postcondition_digest": execution_digest,
+        "action_graph_digest": sha256_json(corrective["actions"]),
+    })
+    for name, digest_value in {
+        "bundle": bundle_digest,
+        "failed_terminal": failed_digest,
+        "corrective_terminal": corrective_digest,
+        "validator_execution": execution_digest,
+        "completion_receipt": completion_digest,
+    }.items():
+        binding["artifacts"][name]["sha256"] = digest_value
+    binding["artifacts"]["completion_receipt"]["path"] = completion_marker_relative_path(
+        record["task"]["identity"], completion_digest)
+
+
+def _set_all_persisted_attestations(record: dict, field: str, value: object) -> None:
+    """Mutate live-equivalent attestation data everywhere its receipt closes it."""
+
+    for terminal in (
+            record["terminal_binding"]["failed_terminal"],
+            record["terminal_binding"]["corrective_terminal"],
+    ):
+        terminal["metadata"]["service_attestation"][field] = value
+        for receipt in terminal["metadata"]["completion_receipts"]:
+            receipt["service_attestation"][field] = value
+            receipt["response"]["emender_service_attestation"][field] = value
+
+
 def test_action_and_progress_fingerprints_are_canonical():
     assert action_fingerprint("read", {"path": "a.txt", "limit": 40}) == action_fingerprint(
         "read", {"limit": 40, "path": "a.txt"},
@@ -374,7 +515,24 @@ def test_three_action_history_is_structurally_replayed():
     assert validate_recovery_record(record) == record
 
 
-def test_recovery_record_mutations_fail_closed():
+@pytest.mark.parametrize(("field", "value"), [
+    ("runtime_identity_schema", "forged-runtime-schema"),
+    ("use_triton", "false"),
+    ("cuda_available", 1),
+    ("weight_mode", "forged-weight-mode"),
+    ("ingest_mode", "forged-ingest-mode"),
+    ("max_output_tokens", True),
+    ("max_sessions", 0),
+])
+def test_resealed_persisted_attestation_reaches_full_live_validation(field, value):
+    record = valid_record()
+    _set_all_persisted_attestations(record, field, value)
+    _reseal_terminal_graph(record)
+    with pytest.raises(ValueError, match="completion receipt service attestation is invalid"):
+        validate_recovery_record(record)
+
+
+def test_recovery_record_stale_digest_mutations_fail_closed():
     mutations = [
         lambda record: record["messages"].__setitem__(4, {"role": "assistant", "text": "forged", "loss": 0}),
         lambda record: record["terminal_binding"]["failed_terminal"]["actions"][2].__setitem__("decision", "continue"),
@@ -385,9 +543,15 @@ def test_recovery_record_mutations_fail_closed():
         lambda record: record["terminal_binding"]["validator_execution"]["validators"]["regression"].__setitem__("stdout_sha256", digest("forged-stdout")),
         lambda record: record["terminal_binding"]["validator_execution"]["validators"]["regression"]["output"].__setitem__("action_count", 99),
         lambda record: record["terminal_binding"]["validator_execution"]["validators"]["focused"].__setitem__("stderr_sha256", digest("forged-stderr")),
+        lambda record: record["terminal_binding"]["validator_execution"].__setitem__("validator_spec_payload_sha256", digest("forged-spec-payload")),
+        lambda record: record["terminal_binding"]["validator_execution"]["validators"]["focused"].__setitem__("terminal_payload_sha256", digest("forged-terminal-payload")),
         lambda record: record["terminal_binding"]["failed_terminal"]["actions"][0].__setitem__("completion_tokens", 0),
         lambda record: record["terminal_binding"]["corrective_terminal"]["metadata"]["completion_usage"][4].__setitem__("completion_tokens", 0),
         lambda record: record["terminal_binding"]["corrective_terminal"]["metadata"]["completion_usage"][4].__setitem__("completion_tokens", 513),
+        lambda record: record["terminal_binding"]["corrective_terminal"]["metadata"]["completion_receipts"][4].__setitem__("assistant_message_sha256", digest("forged-assistant")),
+        lambda record: record["terminal_binding"]["failed_terminal"]["metadata"]["completion_receipts"][0]["request"].__setitem__("model", "forged-model"),
+        lambda record: record["terminal_binding"]["failed_terminal"]["metadata"]["completion_receipts"][0]["service_attestation"].__setitem__("runtime_image_sha256", digest("forged-runtime")),
+        lambda record: record["terminal_binding"]["corrective_terminal"].__setitem__("schema", "emender-e97-corrective-terminal-v1"),
         lambda record: record["terminal_binding"]["completion_receipt"]["receipt"].__setitem__("accepted_terminal_sha256", digest("other")),
         lambda record: record["terminal_binding"]["artifacts"]["completion_receipt"].__setitem__("path", "receipts/orphan.json"),
         lambda record: record["source_provenance"].__setitem__("source_digests", [digest("not-generator")]),
@@ -397,6 +561,22 @@ def test_recovery_record_mutations_fail_closed():
         mutate(record)
         with pytest.raises(ValueError):
             validate_recovery_record(record)
+
+
+@pytest.mark.parametrize("mutate", [
+    lambda completion: completion.__setitem__("forged", True),
+    lambda completion: completion["lease"].__setitem__("forged", True),
+    lambda completion: completion["lease"].__setitem__("owner", 7),
+    lambda completion: completion["lease"].__setitem__("attempt", True),
+    lambda completion: completion["lease"].__setitem__("deadline_ns", "late"),
+    lambda completion: completion["lease"].__setitem__("deadline_ns", 0),
+])
+def test_resealed_completion_and_lease_schemas_are_closed_and_typed(mutate):
+    record = valid_record()
+    mutate(record["terminal_binding"]["completion_receipt"])
+    _reseal_terminal_graph(record)
+    with pytest.raises(ValueError):
+        validate_recovery_record(record)
 
 
 def test_record_json_hash_is_stable():

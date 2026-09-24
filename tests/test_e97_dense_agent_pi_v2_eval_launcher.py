@@ -19,6 +19,7 @@ def test_v2_pi_eval_launcher_is_fixed_world_fail_closed_and_rs_free():
         "aggregate_e97_dense_agent_pi_v2.py",
         "completion cache=miss",
         "sha256sum -c -",
+        "--checkpoint-sha256 \"'$CHECKPOINT_SHA256'\"",
     ):
         assert required in text
     assert "--v1-canonical-system" not in text

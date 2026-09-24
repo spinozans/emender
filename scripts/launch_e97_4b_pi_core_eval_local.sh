@@ -6,6 +6,11 @@ ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd); cd "$ROOT"
 : "${CHECKPOINT_SHA256:?set the checkpoint SHA-256}"
 : "${CLI_IMAGE:?set CLI_IMAGE to the immutable Apptainer image}"
 : "${CLI_IMAGE_SHA256:?set CLI_IMAGE_SHA256}"
+: "${WEIGHT_MODE:?set WEIGHT_MODE explicitly to saved or train}"
+case "$WEIGHT_MODE" in
+  saved|train) ;;
+  *) echo "WEIGHT_MODE must be saved or train" >&2; exit 64 ;;
+esac
 SOURCE_COMMIT=${SOURCE_COMMIT:-HEAD}
 SOURCE_COMMIT=$(git rev-parse "${SOURCE_COMMIT}^{commit}")
 RUN_ID=${RUN_ID:-e97-4b-pi-core-local-$(date -u +%Y%m%dT%H%M%SZ)}
@@ -36,6 +41,7 @@ printf '%s\n' "$CHECKPOINT_SHA256  $CHECKPOINT" > "$RUN_ROOT/identity/checkpoint
 printf '%s\n' "$CLI_IMAGE_SHA256  $CLI_IMAGE" > "$RUN_ROOT/identity/cli-image.sha256"
 printf '%s\n' "$SOURCE_COMMIT" > "$RUN_ROOT/identity/source-commit.txt"
 printf '%s\n' "$USER_CONTEXT_VARIANT" > "$RUN_ROOT/identity/user-context-variant.txt"
+printf '%s\n' "$WEIGHT_MODE" > "$RUN_ROOT/identity/weight-mode.txt"
 snapshot="$RUN_ROOT/sources/$SOURCE_COMMIT"; mkdir -p "$snapshot"
 git archive "$SOURCE_COMMIT" | tar -xf - -C "$snapshot"
 if [[ ${DRY_RUN:-0} == 1 ]]; then echo "RUN_ROOT=$RUN_ROOT"; exit 0; fi
@@ -66,9 +72,9 @@ for rank in $(seq 0 7); do
     export CUDA_VISIBLE_DEVICES=${GPUS[$rank]} LOCAL_RANK=0
     export NUMA_LOCAL_RANK_TRITON_CACHE_PREFIX=/tmp/e97-4b-pi-core-${RUN_ID}-evalrank${rank}
     "$snapshot/scripts/numa_local_rank_exec.py" -- "$snapshot/scripts/serve_e97_agent_openai.py" \
-      --checkpoint "$CHECKPOINT" --args-json "$ARGS_JSON" --host 127.0.0.1 --port "$port" \
+      --checkpoint "$CHECKPOINT" --checkpoint-sha256 "$CHECKPOINT_SHA256" --args-json "$ARGS_JSON" --host 127.0.0.1 --port "$port" \
       --max-output-tokens 256 --max-sessions 2 --ingest-mode tokenwise \
-      "$SYSTEM_ARG" --trace-generated-errors
+      --weight-mode "$WEIGHT_MODE" "$SYSTEM_ARG" --trace-generated-errors
   ) > "$RUN_ROOT/shards/server-${rank}.out" 2> "$RUN_ROOT/shards/server-${rank}.log" &
   server_pids+=("$!")
 done

@@ -13,6 +13,8 @@ from typing import Any, Mapping
 import numpy as np
 import torch
 
+from ndm.e97_atomic import read_regular_file_no_follow
+
 
 AUTHORITY_SCHEMA = "emender-e97-tulu3-masked-sft-v1"
 PACK_SCHEMA = "emender-e97-sft-complete-record-packs-v1"
@@ -31,10 +33,44 @@ def sha256(path: str | Path) -> str:
     return digest.hexdigest()
 
 
+_MANIFEST_MAX_BYTES = 16 << 20
+
+
+def snapshot_manifest(path: str | Path, expected_sha256: str, *, name: str) -> dict[str, Any]:
+    """Read, hash, and parse one manifest from exactly one safe byte snapshot."""
+
+    try:
+        payload = read_regular_file_no_follow(path, maximum=_MANIFEST_MAX_BYTES)
+    except (FileNotFoundError, ValueError) as exc:
+        raise RuntimeError(f"{name} manifest cannot be snapshotted safely") from exc
+    if hashlib.sha256(payload).hexdigest() != _digest(expected_sha256, f"{name} manifest SHA-256"):
+        raise RuntimeError(f"{name} manifest digest mismatch")
+    try:
+        value = json.loads(payload)
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise RuntimeError(f"{name} manifest JSON is invalid") from exc
+    if not isinstance(value, dict):
+        raise RuntimeError(f"{name} manifest root is invalid")
+    return value
+
+
 def _digest(value: str, name: str) -> str:
     if len(value) != 64 or any(char not in "0123456789abcdef" for char in value):
         raise ValueError(f"{name} must be a lowercase SHA-256 digest")
     return value
+
+
+def _manifest_output_path(root: Path, descriptor: Mapping[str, Any], name: str) -> Path:
+    """Resolve only one publication-root-relative payload name."""
+
+    if not isinstance(descriptor, Mapping) or set(descriptor) != {"path", "bytes", "sha256"}:
+        raise RuntimeError(f"SFT payload descriptor is invalid: {name}")
+    relative = descriptor["path"]
+    candidate = Path(relative) if isinstance(relative, str) else None
+    if (candidate is None or candidate.is_absolute() or len(candidate.parts) != 1
+            or candidate.name != relative or relative in {"", ".", ".."}):
+        raise RuntimeError(f"SFT payload path is not publication-relative: {name}")
+    return root / candidate
 
 
 @dataclass(frozen=True)
@@ -136,7 +172,8 @@ class MaskedSFTPackedDataset:
         identity: SFTSamplerIdentity,
         rank: int,
         initial_absolute_rank_sample_index: int = 0,
-        verify_payload_hashes: bool = False,
+        verify_payload_hashes: bool = True,
+        diagnostic_cpu_system_gate: bool = False,
         pad_token_id: int = 0,
         sampler_mode: str = "hash-replacement",
     ) -> None:
@@ -149,6 +186,8 @@ class MaskedSFTPackedDataset:
         self.pad_token_id = int(pad_token_id)
         self.sampler_mode = str(sampler_mode)
         self._epoch_permutation_cache: dict[int, tuple[int, int]] = {}
+        if verify_payload_hashes is not True:
+            raise ValueError("immutable SFT payload digest verification cannot be disabled")
         if self.sampler_mode not in SAMPLER_MODES:
             raise ValueError(f"unsupported SFT sampler mode {self.sampler_mode!r}")
         if not 0 <= self.rank < identity.data_world_size:
@@ -158,17 +197,31 @@ class MaskedSFTPackedDataset:
 
         authority_manifest_path = self.authority_root / "manifest.json"
         pack_manifest_path = self.pack_root / "manifest.json"
-        if sha256(authority_manifest_path) != identity.authority_manifest_sha256:
-            raise RuntimeError("SFT authority manifest digest mismatch")
-        if sha256(pack_manifest_path) != identity.pack_manifest_sha256:
-            raise RuntimeError("SFT pack manifest digest mismatch")
-        self.authority_manifest = json.loads(authority_manifest_path.read_text())
-        self.pack_manifest = json.loads(pack_manifest_path.read_text())
-        if self.authority_manifest.get("schema") != AUTHORITY_SCHEMA:
-            raise RuntimeError("unsupported SFT token authority schema")
+        self.authority_manifest = snapshot_manifest(
+            authority_manifest_path, identity.authority_manifest_sha256, name="SFT authority")
+        self.pack_manifest = snapshot_manifest(
+            pack_manifest_path, identity.pack_manifest_sha256, name="SFT pack")
+        if (self.authority_manifest.get("schema") != AUTHORITY_SCHEMA
+                or self.authority_manifest.get("status") != "complete"):
+            raise RuntimeError("unsupported or incomplete SFT token authority schema")
+        training_eligible = self.authority_manifest.get("training_eligible")
+        if not isinstance(training_eligible, bool):
+            raise RuntimeError("SFT authority training eligibility must be an explicit boolean")
+        if diagnostic_cpu_system_gate:
+            # Kept only to fail closed for callers that relied on the old
+            # diagnostic escape hatch.  A Dataset must never materialize a
+            # mechanical authority into loss-bearing tensors.
+            raise RuntimeError("diagnostic_cpu_system_gate is not permitted by the training Dataset")
+        if not training_eligible:
+            raise RuntimeError("non-trainable mechanical authority is rejected by the training Dataset")
         pack_schema = self.pack_manifest.get("schema")
-        if pack_schema not in {PACK_SCHEMA, BOUNDARY_PACK_SCHEMA}:
-            raise RuntimeError("unsupported SFT pack authority schema")
+        if (pack_schema not in {PACK_SCHEMA, BOUNDARY_PACK_SCHEMA}
+                or self.pack_manifest.get("status") != "complete"):
+            raise RuntimeError("unsupported or incomplete SFT pack authority schema")
+        pack_training_eligible = self.pack_manifest.get("training_eligible")
+        if (not isinstance(pack_training_eligible, bool)
+                or pack_training_eligible is not training_eligible):
+            raise RuntimeError("SFT pack training eligibility must explicitly match authority")
         self.boundary_aware = pack_schema == BOUNDARY_PACK_SCHEMA
         declared_sampler_mode = self.pack_manifest.get(
             "sampler_mode", "hash-replacement")
@@ -183,11 +236,11 @@ class MaskedSFTPackedDataset:
         outputs = self.authority_manifest["outputs"]
         pack_outputs = self.pack_manifest["outputs"]
         paths = {
-            "tokens": self.authority_root / Path(outputs["tokens"]["path"]).name,
-            "mask": self.authority_root / Path(outputs["mask"]["path"]).name,
-            "records": self.authority_root / Path(outputs["index"]["path"]).name,
-            "pack_records": self.pack_root / Path(pack_outputs["pack_records"]["path"]).name,
-            "packs": self.pack_root / Path(pack_outputs[f"{identity.split}_index"]["path"]).name,
+            "tokens": _manifest_output_path(self.authority_root, outputs["tokens"], "tokens"),
+            "mask": _manifest_output_path(self.authority_root, outputs["mask"], "mask"),
+            "records": _manifest_output_path(self.authority_root, outputs["index"], "index"),
+            "pack_records": _manifest_output_path(self.pack_root, pack_outputs["pack_records"], "pack_records"),
+            "packs": _manifest_output_path(self.pack_root, pack_outputs[f"{identity.split}_index"], "packs"),
         }
         infos = {
             "tokens": outputs["tokens"], "mask": outputs["mask"],
@@ -197,7 +250,7 @@ class MaskedSFTPackedDataset:
         for name, path in paths.items():
             if not path.is_file() or path.stat().st_size != int(infos[name]["bytes"]):
                 raise RuntimeError(f"SFT payload size mismatch: {name}")
-            if verify_payload_hashes and sha256(path) != infos[name]["sha256"]:
+            if sha256(path) != infos[name]["sha256"]:
                 raise RuntimeError(f"SFT payload digest mismatch: {name}")
 
         self._files = {name: path.open("rb") for name, path in paths.items()}

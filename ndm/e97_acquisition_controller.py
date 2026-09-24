@@ -18,8 +18,12 @@ from typing import Any, Callable, Mapping, Protocol, Sequence
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
-from ndm.e97_agent_protocol import RS, AgentProtocolError, parse_agent_turn, serialize_pi_messages, validate_generated_tool
+from ndm.e97_agent_protocol import (
+    MAX_PRIVATE_ANALYSIS_BYTES, RS, AgentProtocolError, parse_agent_turn,
+    serialize_pi_messages, validate_generated_tool,
+)
 from ndm.e97_onpolicy_records import (
+    SERVICE_ATTESTATION_SCHEMA,
     ActionProgressReceipt,
     NoProgressDetector,
     action_fingerprint,
@@ -27,11 +31,11 @@ from ndm.e97_onpolicy_records import (
     progress_fingerprint,
     sha256_json,
     sha256_text,
+    validate_service_attestation,
 )
 
 
 ACQUISITION_CONTROLLER_SCHEMA = "emender-e97-dedicated-acquisition-controller-v1"
-SERVICE_ATTESTATION_SCHEMA = "emender-e97-agent-service-attestation-v1"
 _DIGEST_LENGTH = 64
 
 
@@ -40,53 +44,6 @@ def _require_digest(value: Any, name: str) -> str:
             or any(char not in "0123456789abcdef" for char in value)):
         raise ValueError(f"{name} must be a lowercase SHA-256 digest")
     return value
-
-
-def validate_service_attestation(value: Any) -> dict[str, Any]:
-    """Normalize the startup-only identity returned by an external service."""
-    required = {
-        "schema", "checkpoint_path", "checkpoint_sha256", "args_json_sha256", "config_sha256",
-        "weight_mode", "tokenizer", "model_id", "server_build_sha256", "controller_build_sha256",
-        "device", "dtype", "use_triton", "ingest_mode", "runtime_image_path", "runtime_image_sha256", "tool_schema_sha256",
-        "system_prompt_override_sha256", "runtime_identity_schema", "max_output_tokens", "max_sessions",
-        "python_implementation", "python_version", "torch_version", "cuda_runtime", "cuda_available",
-        "platform", "machine",
-    }
-    if not isinstance(value, Mapping) or set(value) != required:
-        raise ValueError("service attestation fields are invalid")
-    if value["schema"] != SERVICE_ATTESTATION_SCHEMA:
-        raise ValueError("unsupported service attestation schema")
-    normalized = dict(value)
-    for key in ("checkpoint_sha256", "args_json_sha256", "config_sha256", "server_build_sha256",
-                "system_prompt_override_sha256", "controller_build_sha256", "runtime_image_sha256",
-                "tool_schema_sha256"):
-        _require_digest(normalized[key], f"attestation {key}")
-    if not isinstance(normalized["checkpoint_path"], str) or not normalized["checkpoint_path"]:
-        raise ValueError("attestation checkpoint_path is invalid")
-    if not isinstance(normalized["runtime_image_path"], str) or not normalized["runtime_image_path"]:
-        raise ValueError("attestation runtime_image_path is invalid")
-    if not isinstance(normalized["model_id"], str) or not normalized["model_id"]:
-        raise ValueError("attestation model_id is invalid")
-    if not isinstance(normalized["device"], str) or not isinstance(normalized["dtype"], str):
-        raise ValueError("attestation device/dtype is invalid")
-    if not isinstance(normalized["use_triton"], bool) or normalized["ingest_mode"] not in {"tokenwise", "segment"}:
-        raise ValueError("attestation decode runtime is invalid")
-    if normalized["weight_mode"] not in {"saved", "train"}:
-        raise ValueError("attestation weight_mode is invalid")
-    if not isinstance(normalized["tokenizer"], str) or not normalized["tokenizer"]:
-        raise ValueError("attestation tokenizer is invalid")
-    if normalized["runtime_identity_schema"] != "emender-e97-runtime-identity-v1":
-        raise ValueError("attestation runtime identity schema is invalid")
-    if (isinstance(normalized["max_output_tokens"], bool) or not isinstance(normalized["max_output_tokens"], int)
-            or isinstance(normalized["max_sessions"], bool) or not isinstance(normalized["max_sessions"], int)
-            or normalized["max_output_tokens"] <= 0 or normalized["max_sessions"] <= 0):
-        raise ValueError("attestation service limits are invalid")
-    for key in ("python_implementation", "python_version", "torch_version", "cuda_runtime", "platform", "machine"):
-        if not isinstance(normalized[key], str):
-            raise ValueError(f"attestation {key} is invalid")
-    if not isinstance(normalized["cuda_available"], bool):
-        raise ValueError("attestation cuda availability is invalid")
-    return json.loads(canonical_json(normalized))
 
 
 READ_OBSERVE_TOOLS: tuple[dict[str, Any], ...] = (
@@ -620,6 +577,8 @@ class AcquisitionController:
         self.checkpoint_sha256 = _require_digest(checkpoint_sha256, "checkpoint_sha256")
         self.controller_build_sha256 = _require_digest(controller_build_sha256, "controller_build_sha256")
         self.expected_service_attestation = validate_service_attestation(expected_service_attestation)
+        self.private_analysis = bool(
+            self.expected_service_attestation.get("private_analysis", False))
         if self.expected_service_attestation["checkpoint_sha256"] != self.checkpoint_sha256:
             raise ValueError("service attestation checkpoint does not match controller checkpoint")
         if self.expected_service_attestation["controller_build_sha256"] != self.controller_build_sha256:
@@ -657,6 +616,7 @@ class AcquisitionController:
         self._completion_worker: _ForkWorker | None = None
         self._tool_worker: _ForkWorker | None = None
         self._completion_usage: list[dict[str, int]] = []
+        self._completion_receipts: list[dict[str, Any]] = []
         self._consumed = False
 
     @classmethod
@@ -709,8 +669,10 @@ class AcquisitionController:
             "tool_schema_sha256": sha256_json(self.tools),
             "controller_build_sha256": self.controller_build_sha256,
             "service_attestation": self.expected_service_attestation,
-            "serialized_messages_sha256": sha256_text(
-                serialize_pi_messages(messages, append_assistant_header=False)),
+            "serialized_messages_sha256": sha256_text(serialize_pi_messages(
+                messages, append_assistant_header=False,
+                private_analysis=self.private_analysis,
+            )),
             "configured_limits": dict(self.sealed_limits) if self.sealed_limits is not None else {
                 "turns": self.max_turns,
                 "seconds": int(self.max_seconds),
@@ -721,6 +683,7 @@ class AcquisitionController:
             "action_count": actions,
             "elapsed_seconds": elapsed_seconds,
             "completion_usage": [dict(item) for item in self._completion_usage],
+            "completion_receipts": [dict(item) for item in self._completion_receipts],
             "completion_tokens": sum(item["completion_tokens"] for item in self._completion_usage),
         }
         return metadata
@@ -760,18 +723,84 @@ class AcquisitionController:
             raise AgentProtocolError("completion response lacks bounded usage.completion_tokens")
         return tokens
 
+    def _completion_receipt(
+        self,
+        *,
+        request: Mapping[str, Any],
+        request_identity: Mapping[str, Any],
+        response: Mapping[str, Any],
+        assistant: Mapping[str, Any],
+        completion_tokens: int,
+    ) -> dict[str, Any]:
+        """Close one accepted service turn into replayable request/response bytes.
+
+        The raw service object may contain provider-specific fields that are not
+        part of the controller protocol.  Retain the complete *canonical
+        protocol response* instead: it is sufficient to recompute the response
+        digest and binds the exact accepted assistant, bounded usage, request
+        identity, model, and service attestation.
+        """
+
+        identity = dict(request_identity)
+        required_identity = {
+            "messages_sha256", "system_prompt_sha256", "tool_schema_sha256", "request_sha256",
+        }
+        if set(identity) != required_identity or sha256_json(dict(request)) != identity["request_sha256"]:
+            raise AgentProtocolError("completion request identity is not closed")
+        for name, digest in identity.items():
+            _require_digest(digest, f"completion request identity {name}")
+        attestation = validate_service_attestation(response.get("emender_service_attestation"))
+        assistant_digest = sha256_json(dict(assistant))
+        if self.private_analysis:
+            service_digest = response.get("emender_assistant_message_sha256")
+            try:
+                _require_digest(service_digest, "service assistant message SHA-256")
+            except ValueError as exc:
+                raise AgentProtocolError(
+                    "analysis completion lacks a server-bound assistant digest") from exc
+            if service_digest != assistant_digest:
+                raise AgentProtocolError(
+                    "analysis completion assistant bytes changed after service generation")
+        closed_response = {
+            "model": self.model_id,
+            "choices": [{"message": dict(assistant)}],
+            "usage": {"completion_tokens": completion_tokens},
+            "emender_request_identity": identity,
+            "emender_service_attestation": attestation,
+        }
+        if self.private_analysis:
+            closed_response["emender_assistant_message_sha256"] = assistant_digest
+        return {
+            "sequence": len(self._completion_receipts),
+            "request": dict(request),
+            "request_identity": identity,
+            "request_sha256": identity["request_sha256"],
+            "response": closed_response,
+            "response_sha256": sha256_json(closed_response),
+            "service_attestation": attestation,
+            "service_attestation_sha256": sha256_json(attestation),
+            "model_id": self.model_id,
+            "completion_tokens": completion_tokens,
+            "assistant_message_sha256": assistant_digest,
+        }
+
     def _validate_assistant_body_limit(self, message: Mapping[str, Any]) -> None:
         """Apply a deterministic UTF-8 ceiling when tokenizer details are unavailable."""
 
         try:
-            body = serialize_pi_messages([message], append_assistant_header=False).removeprefix("Assistant:\n")
+            body = serialize_pi_messages(
+                [message], append_assistant_header=False,
+                private_analysis=self.private_analysis,
+            ).removeprefix("Assistant:\n")
         except AgentProtocolError as exc:
             raise AgentProtocolError("completion assistant serialization is invalid") from exc
-        if len(body.encode("utf-8")) > self.max_completion_tokens * 8:
+        byte_ceiling = self.max_completion_tokens * 8
+        if self.private_analysis:
+            byte_ceiling += MAX_PRIVATE_ANALYSIS_BYTES
+        if len(body.encode("utf-8")) > byte_ceiling:
             raise AgentProtocolError("completion assistant body exceeds deterministic token byte ceiling")
 
-    @staticmethod
-    def _assistant(response: Mapping[str, Any]) -> tuple[dict[str, Any], Any]:
+    def _assistant(self, response: Mapping[str, Any]) -> tuple[dict[str, Any], Any]:
         try:
             choice = response["choices"][0]
             raw_message = choice["message"]
@@ -779,6 +808,12 @@ class AcquisitionController:
             raise AgentProtocolError("completion lacks one OpenAI assistant message") from exc
         if not isinstance(raw_message, Mapping) or raw_message.get("role") != "assistant":
             raise AgentProtocolError("completion message must be an assistant message")
+        reasoning = raw_message.get("reasoning_content")
+        if self.private_analysis:
+            if not isinstance(reasoning, str) or not reasoning.strip():
+                raise AgentProtocolError("analysis completion requires non-empty reasoning_content")
+        elif "reasoning_content" in raw_message:
+            raise AgentProtocolError("legacy completion cannot contain reasoning_content")
         if raw_message.get("tool_calls"):
             if raw_message.get("content") is not None:
                 raise AgentProtocolError("completion tool call must have null content")
@@ -797,9 +832,17 @@ class AcquisitionController:
             if RS in content:
                 raise AgentProtocolError("completion final contains a record-separator suffix")
             message = {"role": "assistant", "content": content}
+        if self.private_analysis:
+            message["reasoning_content"] = reasoning
         # serialize_pi_messages is the exact native serialization authority.
-        native = serialize_pi_messages([{"role": "user", "content": "validation"}, message], append_assistant_header=False)
-        turn = parse_agent_turn(native.split("Assistant:\n", 1)[1])
+        native = serialize_pi_messages(
+            [{"role": "user", "content": "validation"}, message],
+            append_assistant_header=False, private_analysis=self.private_analysis,
+        )
+        turn = parse_agent_turn(
+            native.split("Assistant:\n", 1)[1],
+            private_analysis=self.private_analysis,
+        )
         return message, turn
 
     def run(self, *, system_prompt: str, user_prompt: str) -> TerminalReceipt:
@@ -807,6 +850,7 @@ class AcquisitionController:
             raise RuntimeError("AcquisitionController is one-shot")
         self._consumed = True
         self._completion_usage = []
+        self._completion_receipts = []
         if not isinstance(system_prompt, str) or not system_prompt or not isinstance(user_prompt, str) or not user_prompt:
             raise ValueError("non-empty system and user prompts are required")
         started = self.clock()
@@ -851,7 +895,23 @@ class AcquisitionController:
                 return self._terminal("time_limit", started, messages, actions, system_prompt)
             except Exception as exc:
                 return self._terminal("completion_error", started, messages, actions, system_prompt, str(exc))
-            self._completion_usage.append({"sequence": len(self._completion_usage), "completion_tokens": completion_tokens})
+            try:
+                completion_receipt = self._completion_receipt(
+                    request=request,
+                    request_identity=expected_request_identity,
+                    response=response,
+                    assistant=assistant,
+                    completion_tokens=completion_tokens,
+                )
+            except Exception as exc:
+                return self._terminal(
+                    "completion_error", started, messages, actions,
+                    system_prompt, str(exc))
+            self._completion_usage.append({
+                "sequence": len(self._completion_usage),
+                "completion_tokens": completion_tokens,
+            })
+            self._completion_receipts.append(completion_receipt)
             requests += 1
             if self.clock() >= deadline:
                 return self._terminal("time_limit", started, messages, actions, system_prompt)

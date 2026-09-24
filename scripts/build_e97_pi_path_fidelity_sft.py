@@ -13,9 +13,14 @@ import tiktoken
 
 from ndm.data.masked_sft_dataset import AUTHORITY_SCHEMA, RECORD_INDEX, sha256
 from ndm.e97_agent_protocol import E97_PI_AGENT_SYSTEM_V2
-from scripts.build_e97_pi_finalization_repair_sft import serialize_live_aligned
-from scripts.build_e97_pi_instruction_sft import ENCODING, action, read_result, split
-from scripts.build_e97_pi_recover_read_sft import live_missing_read_result
+try:  # Support both ``python -m`` and the documented script-path invocation.
+    from scripts.build_e97_pi_finalization_repair_sft import serialize_live_aligned
+    from scripts.build_e97_pi_instruction_sft import ENCODING, action, read_result, split
+    from scripts.build_e97_pi_recover_read_sft import live_missing_read_result
+except ModuleNotFoundError:  # pragma: no cover - exercised by subprocess CLIs
+    from build_e97_pi_finalization_repair_sft import serialize_live_aligned
+    from build_e97_pi_instruction_sft import ENCODING, action, read_result, split
+    from build_e97_pi_recover_read_sft import live_missing_read_result
 
 KINDS = ("literal-read", "literal-pair", "literal-write", "literal-edit", "failed-read-recovery")
 EXTENSIONS = ("json", "txt", "toml", "yaml", "md", "py")
@@ -28,7 +33,7 @@ USER_TEMPLATES = (
 
 
 def entry(path: Path) -> dict[str, object]:
-    return {"path": str(path.resolve()), "bytes": path.stat().st_size, "sha256": sha256(path)}
+    return {"path": path.name, "bytes": path.stat().st_size, "sha256": sha256(path)}
 
 
 def random_path(rng: random.Random, index: int) -> str:
@@ -151,6 +156,7 @@ def main() -> None:
             kind_counts[kind] += 1
     manifest = {
         "schema": AUTHORITY_SCHEMA, "status": "complete",
+        "training_eligible": True,
         "purpose": "broad randomized Pi-v2 literal-path fidelity and failed-read recovery",
         "system_prompt": E97_PI_AGENT_SYSTEM_V2, "tokenizer": ENCODING,
         "seed": args.seed, "kinds": list(KINDS), "kind_counts": kind_counts,

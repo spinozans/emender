@@ -9,8 +9,23 @@ from pathlib import Path
 import numpy as np
 
 from ndm.data.masked_sft_dataset import (
-    BOUNDARY_PACK_SCHEMA, PACK_INDEX, PACK_SCHEMA, RECORD_INDEX, sha256,
+    AUTHORITY_SCHEMA, BOUNDARY_PACK_SCHEMA, PACK_INDEX, PACK_SCHEMA, RECORD_INDEX,
+    sha256, snapshot_manifest,
 )
+
+
+def _payload(root: Path, descriptor: object, name: str) -> Path:
+    if not isinstance(descriptor, dict) or set(descriptor) != {"path", "bytes", "sha256"}:
+        raise SystemExit(f"{name} descriptor is invalid")
+    relative = descriptor["path"]
+    candidate = Path(relative) if isinstance(relative, str) else None
+    if (candidate is None or candidate.is_absolute() or len(candidate.parts) != 1
+            or candidate.name != relative or relative in {"", ".", ".."}):
+        raise SystemExit(f"{name} path is not publication-relative")
+    path = root / candidate
+    if not path.is_file() or path.stat().st_size != descriptor["bytes"] or sha256(path) != descriptor["sha256"]:
+        raise SystemExit(f"{name} integrity mismatch")
+    return path
 
 
 def main() -> None:
@@ -19,41 +34,50 @@ def main() -> None:
     parser.add_argument("--pack-root", type=Path, required=True)
     parser.add_argument("--authority-manifest-sha256", required=True)
     parser.add_argument("--pack-manifest-sha256", required=True)
+    parser.add_argument("--diagnostic-cpu-system-gate", action="store_true")
     args = parser.parse_args()
     authority_path = args.authority_root / "manifest.json"
     pack_path = args.pack_root / "manifest.json"
-    if sha256(authority_path) != args.authority_manifest_sha256:
-        raise SystemExit("authority manifest digest mismatch")
-    if sha256(pack_path) != args.pack_manifest_sha256:
-        raise SystemExit("pack manifest digest mismatch")
-    authority = json.loads(authority_path.read_text())
-    packs = json.loads(pack_path.read_text())
+    try:
+        authority = snapshot_manifest(authority_path, args.authority_manifest_sha256, name="authority")
+        packs = snapshot_manifest(pack_path, args.pack_manifest_sha256, name="pack")
+    except RuntimeError as exc:
+        raise SystemExit(str(exc)) from exc
+    if authority.get("schema") != AUTHORITY_SCHEMA or authority.get("status") != "complete":
+        raise SystemExit("authority manifest is not complete")
     pack_schema = packs.get("schema")
     if pack_schema not in {PACK_SCHEMA, BOUNDARY_PACK_SCHEMA} or packs.get("status") != "complete":
         raise SystemExit("pack manifest is not complete")
     boundary_aware = pack_schema == BOUNDARY_PACK_SCHEMA
     if packs.get("authority_manifest_sha256") != args.authority_manifest_sha256:
         raise SystemExit("pack manifest does not bind the token authority")
-    for info in packs["outputs"].values():
-        path = args.pack_root / Path(info["path"]).name
-        if path.stat().st_size != info["bytes"] or sha256(path) != info["sha256"]:
-            raise SystemExit(f"pack output integrity mismatch: {path.name}")
+    training_eligible = authority.get("training_eligible")
+    pack_training_eligible = packs.get("training_eligible")
+    if (not isinstance(training_eligible, bool)
+            or not isinstance(pack_training_eligible, bool)
+            or pack_training_eligible is not training_eligible):
+        raise SystemExit("authority/pack training eligibility must be explicit matching booleans")
+    if not training_eligible and not args.diagnostic_cpu_system_gate:
+        raise SystemExit("non-trainable authority requires --diagnostic-cpu-system-gate")
+    if not isinstance(packs.get("outputs"), dict):
+        raise SystemExit("pack outputs are invalid")
+    for name, info in packs["outputs"].items():
+        _payload(args.pack_root, info, f"pack output {name}")
 
-    record_info = authority["outputs"]["index"]
-    record_path = args.authority_root / Path(record_info["path"]).name
-    if record_path.stat().st_size != record_info["bytes"] or sha256(record_path) != record_info["sha256"]:
-        raise SystemExit("record authority integrity mismatch")
+    outputs = authority.get("outputs")
+    if not isinstance(outputs, dict) or set(outputs) != {"tokens", "mask", "index", "metadata"}:
+        raise SystemExit("authority outputs are invalid")
+    # Integrity-check tokens too even though this validator only reads index/mask.
+    _payload(args.authority_root, outputs["tokens"], "token authority")
+    record_path = _payload(args.authority_root, outputs["index"], "record authority")
+    mask_path = _payload(args.authority_root, outputs["mask"], "target-mask authority")
+    metadata_path = _payload(args.authority_root, outputs["metadata"], "record metadata")
     records = np.memmap(
         record_path, mode="r", dtype=np.dtype([
             ("offset", "<u8"), ("tokens", "<u8"), ("targets", "<u8"),
             ("split", "u1"), ("pad", "V7")]))
     masks = None
     if boundary_aware:
-        mask_info = authority["outputs"]["mask"]
-        mask_path = args.authority_root / Path(mask_info["path"]).name
-        if (mask_path.stat().st_size != mask_info["bytes"]
-                or sha256(mask_path) != mask_info["sha256"]):
-            raise SystemExit("target-mask authority integrity mismatch")
         masks = np.memmap(mask_path, mode="r", dtype="u1")
     source_filter = packs.get("source_filter")
     source_selected = np.ones(len(records), dtype=np.bool_)
@@ -62,13 +86,7 @@ def main() -> None:
         if not isinstance(included, list) or not included or any(
                 not isinstance(value, str) for value in included):
             raise SystemExit("invalid pack source filter")
-        metadata_info = authority["outputs"].get("metadata")
-        if metadata_info is None:
-            raise SystemExit("source-filtered packs require authority metadata")
-        metadata_path = args.authority_root / Path(metadata_info["path"]).name
-        if (metadata_path.stat().st_size != metadata_info["bytes"]
-                or sha256(metadata_path) != metadata_info["sha256"]):
-            raise SystemExit("record metadata integrity mismatch")
+        # metadata_path was verified together with every immutable authority payload.
         wanted = set(included)
         selected_values = []
         with metadata_path.open() as stream:
@@ -79,7 +97,7 @@ def main() -> None:
         source_selected = np.asarray(selected_values, dtype=np.bool_)
     ids_info = packs["outputs"]["pack_records"]
     record_ids = np.memmap(
-        args.pack_root / Path(ids_info["path"]).name, mode="r", dtype="<u4")
+        _payload(args.pack_root, ids_info, "pack records"), mode="r", dtype="<u4")
     sequence_tokens = int(packs["sequence_tokens"])
     observed_ids = []
     for split_name, split_value in (("train", 0), ("validation", 1)):
@@ -87,7 +105,7 @@ def main() -> None:
         index_dtype = np.dtype([
             ("record_offset", "<u8"), ("record_count", "<u8"),
             ("tokens", "<u8"), ("targets", "<u8")])
-        index_path = args.pack_root / Path(info["path"]).name
+        index_path = _payload(args.pack_root, info, f"{split_name} pack index")
         index = (np.memmap(index_path, mode="r", dtype=index_dtype)
                  if int(info["bytes"]) else np.empty((0,), dtype=index_dtype))
         counts = {"packs": len(index), "records": 0, "tokens": 0,
@@ -131,6 +149,7 @@ def main() -> None:
         "schema": "emender-e97-sft-pack-validation-v1", "status": "pass",
         "authority_manifest_sha256": args.authority_manifest_sha256,
         "pack_manifest_sha256": args.pack_manifest_sha256,
+        "training_eligible": training_eligible,
         "records_validated": len(observed_ids),
         "packs_validated": sum(value["packs"] for value in packs["splits"].values()),
         "output_sha256": {name: value["sha256"] for name, value in packs["outputs"].items()},

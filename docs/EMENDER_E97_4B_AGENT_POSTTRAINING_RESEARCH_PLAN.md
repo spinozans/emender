@@ -12,6 +12,7 @@ tools, observation-conditioned recovery, and recurrent-state save/restore/fork
 
 - [`EMENDER_E97_4B_BROAD_POSTTRAINING_PLAN.md`](EMENDER_E97_4B_BROAD_POSTTRAINING_PLAN.md)
 - [`EMENDER_E97_4B_ONPOLICY_TASK_LAKE_EXECUTION_PLAN.md`](EMENDER_E97_4B_ONPOLICY_TASK_LAKE_EXECUTION_PLAN.md)
+- [`EMENDER_E97_4B_SYSTEMATIC_AGENT_POSTTRAINING_REGIME.md`](EMENDER_E97_4B_SYSTEMATIC_AGENT_POSTTRAINING_REGIME.md)
 - [`operations/e97-4b-pi-runtime.md`](operations/e97-4b-pi-runtime.md)
 - [`validation/e97-4b-pi-v4-post-broad-preflight.md`](validation/e97-4b-pi-v4-post-broad-preflight.md)
 
@@ -319,22 +320,27 @@ Complete RQ1 and run the untrained RQ2 baseline. No behavioral training begins
 until serialization, observation conditioning, and recurrent-state transitions
 are auditable.
 
-### Phase 2 — clean acquisition canary
+### Phase 2 — fixed-corpus sustained agent SFT
 
-Train a small, diverse, clean-trajectory stage. With the current global target
-rate, illustrative clocks are:
+An eight-update run is only a systems/numerical canary. It proves that the
+selected immutable corpus, optimizer, kernels, boundary semantics, checkpoint
+publication, and resume path work; it is not a behavioral training regime and
+must not trigger iterative mixture steering.
 
-- 8 updates: acquisition/systems canary;
-- 32 updates: about 6M targets;
-- 64 updates: about 12M targets;
-- 128 updates: about 25M targets.
+Before the canary, seal the complete 50--100M assistant-target stage described
+in [`EMENDER_E97_4B_SYSTEMATIC_AGENT_POSTTRAINING_REGIME.md`](EMENDER_E97_4B_SYSTEMATIC_AGENT_POSTTRAINING_REGIME.md).
+After numerical qualification, run one frozen mixture and learning-rate schedule
+continuously for its declared target-token horizon. Save exact checkpoints every
+eight updates for recovery, but evaluate behavior at predeclared consumed-target
+milestones such as 1M, 5M, 10M, 25M, 50M, and terminal targets rather than after
+every save.
 
-Actual target counts, not nominal update estimates, are authoritative. Use a
-learning rate large enough to move BF16 Schedule-Free parameters, save
-frequently, and evaluate every saved `x` checkpoint.
-
-If the canary does not improve one-step binding, observation conditioning, and
-cycle rate, stop. Do not scale a broken recipe.
+Actual consumed assistant targets, unique trajectories, and unique task
+identities are authoritative. Repetition of a tiny correction set is not a
+substitute for corpus scale or diversity. If milestone evidence does not improve
+unseen binding, observation conditioning, executable success, and cycle rate,
+stop the stage and redesign the next named corpus rather than steering the live
+run.
 
 ### Phase 3 — student-state correction
 

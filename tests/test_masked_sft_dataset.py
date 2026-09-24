@@ -1,5 +1,6 @@
 import hashlib
 import json
+import os
 from pathlib import Path
 import struct
 import subprocess
@@ -8,6 +9,7 @@ import sys
 import pytest
 import torch
 
+from ndm.data.e97_pack_inspector import inspect_nontrainable_pack
 from ndm.data.masked_sft_dataset import (
     AUTHORITY_SCHEMA, RECORD_INDEX, MaskedSFTPackedDataset, SFTSamplerIdentity,
     restore_sft_checkpoint_metadata, sft_checkpoint_metadata, sha256,
@@ -38,9 +40,12 @@ def _authority(root: Path):
     outputs = {}
     for name, path in (("tokens", token_path), ("mask", mask_path),
                        ("index", index_path), ("metadata", metadata_path)):
-        outputs[name] = {"path": str(path.resolve()), "bytes": path.stat().st_size,
+        outputs[name] = {"path": path.name, "bytes": path.stat().st_size,
                          "sha256": sha256(path)}
-    manifest = {"schema": AUTHORITY_SCHEMA, "status": "complete", "outputs": outputs}
+    manifest = {
+        "schema": AUTHORITY_SCHEMA, "status": "complete",
+        "training_eligible": True, "outputs": outputs,
+    }
     (root / "manifest.json").write_text(json.dumps(manifest, sort_keys=True) + "\n")
     return sha256(root / "manifest.json")
 
@@ -86,6 +91,250 @@ def test_complete_record_packing_and_counter_sampling(tmp_path):
     assert reset_dataset.next_absolute_rank_sample_index == 1
     with pytest.raises(ValueError, match="batch_size=1"):
         reset_dataset.get_batch_with_record_spans(2)
+
+
+def test_dataset_unconditionally_rejects_mechanical_authority_and_inspector_cannot_materialize(tmp_path):
+    authority, packs, identity = _fixture(tmp_path)
+    authority_path = authority / "manifest.json"
+    authority_manifest = json.loads(authority_path.read_text())
+    authority_manifest["training_eligible"] = False
+    authority_path.write_text(json.dumps(authority_manifest, sort_keys=True) + "\n")
+    authority_sha = sha256(authority_path)
+    pack_path = packs / "manifest.json"
+    pack_manifest = json.loads(pack_path.read_text())
+    pack_manifest.update({"authority_manifest_sha256": authority_sha, "training_eligible": False})
+    pack_path.write_text(json.dumps(pack_manifest, sort_keys=True) + "\n")
+    pack_sha = sha256(pack_path)
+    mechanical_identity = SFTSamplerIdentity(
+        authority_manifest_sha256=authority_sha, pack_manifest_sha256=pack_sha,
+        sampler_key=identity.sampler_key, data_world_size=identity.data_world_size,
+        context_size=identity.context_size,
+    )
+    with pytest.raises(RuntimeError, match="non-trainable"):
+        MaskedSFTPackedDataset(authority, packs, identity=mechanical_identity, rank=0)
+    with pytest.raises(RuntimeError, match="not permitted"):
+        MaskedSFTPackedDataset(
+            authority, packs, identity=mechanical_identity, rank=0,
+            diagnostic_cpu_system_gate=True,
+        )
+    inspection = inspect_nontrainable_pack(
+        authority, packs, authority_manifest_sha256=authority_sha,
+        pack_manifest_sha256=pack_sha,
+    )
+    assert inspection["training_eligible"] is False
+    assert "payloads" in inspection and not hasattr(inspection, "get_batch")
+
+
+def test_nontrainable_authority_cannot_be_laundered_by_mix_or_rewrite_or_dataset(tmp_path):
+    """Mechanical inputs stop at every retained transformer/training boundary."""
+
+    authority = tmp_path / "mechanical"
+    authority_sha = _authority(authority)
+    manifest_path = authority / "manifest.json"
+    manifest = json.loads(manifest_path.read_text())
+    manifest["training_eligible"] = False
+    manifest_path.write_text(json.dumps(manifest, sort_keys=True) + "\n")
+    authority_sha = sha256(manifest_path)
+
+    mixed = subprocess.run([
+        sys.executable, "scripts/build_e97_masked_sft_mix.py", "--output-root", str(tmp_path / "mixed"),
+        "--source", f"mechanical={authority},{authority_sha},1",
+    ], capture_output=True, text=True)
+    assert mixed.returncode != 0 and "non-trainable" in mixed.stderr
+    repaired = subprocess.run([
+        sys.executable, "scripts/build_e97_pi_finalization_repair_sft.py", "--source-root", str(authority),
+        "--source-sha256", authority_sha, "--output-root", str(tmp_path / "repaired"),
+    ], capture_output=True, text=True)
+    assert repaired.returncode != 0 and "non-trainable" in repaired.stderr
+    rewritten = subprocess.run([
+        sys.executable, "scripts/rewrite_e97_sft_system_prompt.py", "--input-root", str(authority),
+        "--input-manifest-sha256", authority_sha, "--output-root", str(tmp_path / "rewritten"),
+    ], capture_output=True, text=True)
+    assert rewritten.returncode != 0 and "non-trainable" in rewritten.stderr
+
+    packs = tmp_path / "mechanical-packs"
+    subprocess.run([
+        sys.executable, "scripts/build_e97_sft_packs.py", "--authority-root", str(authority),
+        "--output-root", str(packs), "--context-size", "4",
+        "--authority-manifest-sha256", authority_sha, "--diagnostic-cpu-system-gate",
+    ], check=True, capture_output=True, text=True)
+    identity = SFTSamplerIdentity(
+        authority_manifest_sha256=authority_sha,
+        pack_manifest_sha256=sha256(packs / "manifest.json"), sampler_key=7,
+        data_world_size=1, context_size=4,
+    )
+    with pytest.raises(RuntimeError, match="non-trainable"):
+        MaskedSFTPackedDataset(authority, packs, identity=identity, rank=0)
+
+
+def test_deleted_training_eligibility_fails_closed_at_every_training_boundary(tmp_path):
+    """Deleting false/true authority state cannot upgrade a retained authority."""
+
+    authority, packs, identity = _fixture(tmp_path)
+    manifest_path = authority / "manifest.json"
+    manifest = json.loads(manifest_path.read_text())
+    # An attacker can remove this prior mechanical false state rather than
+    # carrying it through a transformer; absence must not become trainable.
+    manifest["training_eligible"] = False
+    manifest_path.write_text(json.dumps(manifest, sort_keys=True) + "\n")
+    manifest = json.loads(manifest_path.read_text())
+    del manifest["training_eligible"]
+    manifest_path.write_text(json.dumps(manifest, sort_keys=True) + "\n")
+    authority_sha = sha256(manifest_path)
+
+    mixed = subprocess.run([
+        sys.executable, "scripts/build_e97_masked_sft_mix.py", "--output-root", str(tmp_path / "mixed"),
+        "--source", f"missing={authority},{authority_sha},1",
+    ], capture_output=True, text=True)
+    assert mixed.returncode != 0 and "eligibility" in mixed.stderr
+    repaired = subprocess.run([
+        sys.executable, "scripts/build_e97_pi_finalization_repair_sft.py", "--source-root", str(authority),
+        "--source-sha256", authority_sha, "--output-root", str(tmp_path / "repaired"),
+    ], capture_output=True, text=True)
+    assert repaired.returncode != 0 and "eligibility" in repaired.stderr
+    rewritten = subprocess.run([
+        sys.executable, "scripts/rewrite_e97_sft_system_prompt.py", "--input-root", str(authority),
+        "--input-manifest-sha256", authority_sha, "--output-root", str(tmp_path / "rewritten"),
+    ], capture_output=True, text=True)
+    assert rewritten.returncode != 0 and "eligibility" in rewritten.stderr
+    packed = subprocess.run([
+        sys.executable, "scripts/build_e97_sft_packs.py", "--authority-root", str(authority),
+        "--output-root", str(tmp_path / "missing-packs"), "--context-size", "4",
+        "--authority-manifest-sha256", authority_sha,
+    ], capture_output=True, text=True)
+    assert packed.returncode != 0 and "explicit boolean" in packed.stderr
+
+    # Rebinding an existing pack cannot launder the deleted authority field.
+    pack_path = packs / "manifest.json"
+    pack_manifest = json.loads(pack_path.read_text())
+    pack_manifest["authority_manifest_sha256"] = authority_sha
+    pack_path.write_text(json.dumps(pack_manifest, sort_keys=True) + "\n")
+    pack_sha = sha256(pack_path)
+    validated = subprocess.run([
+        sys.executable, "scripts/validate_e97_sft_packs.py",
+        "--authority-root", str(authority), "--pack-root", str(packs),
+        "--authority-manifest-sha256", authority_sha, "--pack-manifest-sha256", pack_sha,
+    ], capture_output=True, text=True)
+    assert validated.returncode != 0 and "explicit" in validated.stderr
+    deleted_identity = SFTSamplerIdentity(
+        authority_manifest_sha256=authority_sha, pack_manifest_sha256=pack_sha,
+        sampler_key=identity.sampler_key, data_world_size=identity.data_world_size,
+        context_size=identity.context_size,
+    )
+    with pytest.raises(RuntimeError, match="explicit boolean"):
+        MaskedSFTPackedDataset(authority, packs, identity=deleted_identity, rank=0)
+    with pytest.raises(ValueError, match="explicitly non-trainable"):
+        inspect_nontrainable_pack(
+            authority, packs, authority_manifest_sha256=authority_sha,
+            pack_manifest_sha256=sha256(pack_path),
+        )
+
+
+def test_dataset_requires_complete_authority_and_pack_manifests(tmp_path):
+    authority, packs, identity = _fixture(tmp_path)
+    authority_path, pack_path = authority / "manifest.json", packs / "manifest.json"
+    authority_manifest = json.loads(authority_path.read_text()); authority_manifest["status"] = "partial"
+    authority_path.write_text(json.dumps(authority_manifest, sort_keys=True) + "\n")
+    authority_sha = sha256(authority_path)
+    pack_manifest = json.loads(pack_path.read_text())
+    pack_manifest.update({"authority_manifest_sha256": authority_sha, "status": "partial"})
+    pack_path.write_text(json.dumps(pack_manifest, sort_keys=True) + "\n")
+    incomplete = SFTSamplerIdentity(
+        authority_manifest_sha256=authority_sha, pack_manifest_sha256=sha256(pack_path),
+        sampler_key=identity.sampler_key, data_world_size=identity.data_world_size,
+        context_size=identity.context_size,
+    )
+    with pytest.raises(RuntimeError, match="complete"):
+        MaskedSFTPackedDataset(authority, packs, identity=incomplete, rank=0)
+    validated = subprocess.run([
+        sys.executable, "scripts/validate_e97_sft_packs.py",
+        "--authority-root", str(authority), "--pack-root", str(packs),
+        "--authority-manifest-sha256", authority_sha,
+        "--pack-manifest-sha256", incomplete.pack_manifest_sha256,
+    ], capture_output=True, text=True)
+    assert validated.returncode != 0 and "authority manifest is not complete" in validated.stderr
+
+
+def test_dataset_manifest_snapshot_prevents_path_substitution_of_nontrainable_state(tmp_path, monkeypatch):
+    import ndm.data.masked_sft_dataset as dataset_module
+
+    authority, packs, identity = _fixture(tmp_path)
+    authority_path = authority / "manifest.json"
+    authority_manifest = json.loads(authority_path.read_text())
+    authority_manifest["training_eligible"] = False
+    authority_path.write_text(json.dumps(authority_manifest, sort_keys=True) + "\n")
+    authority_sha = sha256(authority_path)
+    pack_path = packs / "manifest.json"
+    pack_manifest = json.loads(pack_path.read_text())
+    pack_manifest.update({"authority_manifest_sha256": authority_sha, "training_eligible": False})
+    pack_path.write_text(json.dumps(pack_manifest, sort_keys=True) + "\n")
+    sealed = SFTSamplerIdentity(
+        authority_manifest_sha256=authority_sha, pack_manifest_sha256=sha256(pack_path),
+        sampler_key=identity.sampler_key, data_world_size=identity.data_world_size,
+        context_size=identity.context_size,
+    )
+    reader = dataset_module.read_regular_file_no_follow
+
+    def replace_after_snapshot(path, *, maximum):
+        payload = reader(path, maximum=maximum)
+        if Path(path) == authority_path:
+            replacement = json.loads(payload)
+            replacement["training_eligible"] = True
+            authority_path.write_text(json.dumps(replacement, sort_keys=True) + "\n")
+        return payload
+
+    monkeypatch.setattr(dataset_module, "read_regular_file_no_follow", replace_after_snapshot)
+    with pytest.raises(RuntimeError, match="non-trainable"):
+        MaskedSFTPackedDataset(authority, packs, identity=sealed, rank=0)
+    assert json.loads(authority_path.read_text())["training_eligible"] is True
+
+
+@pytest.mark.parametrize("kind", ("symlink", "fifo"))
+def test_manifest_snapshot_rejects_linked_and_special_manifest_inputs(tmp_path, kind):
+    from ndm.data.masked_sft_dataset import snapshot_manifest
+
+    manifest = tmp_path / "manifest.json"
+    if kind == "symlink":
+        outside = tmp_path / "outside.json"; outside.write_text("{}")
+        manifest.symlink_to(outside)
+    else:
+        os.mkfifo(manifest)
+    with pytest.raises(RuntimeError, match="cannot be snapshotted safely"):
+        snapshot_manifest(manifest, "0" * 64, name="authority")
+
+
+def test_dataset_rejects_stale_absolute_manifest_payload_paths(tmp_path):
+    authority, packs, identity = _fixture(tmp_path)
+    manifest_path = authority / "manifest.json"
+    manifest = json.loads(manifest_path.read_text())
+    manifest["outputs"]["tokens"]["path"] = "/vanished/.stage/tokens.uint32.bin"
+    manifest_path.write_text(json.dumps(manifest, sort_keys=True) + "\n")
+    authority_sha = sha256(manifest_path)
+    pack_path = packs / "manifest.json"; pack_manifest = json.loads(pack_path.read_text())
+    pack_manifest["authority_manifest_sha256"] = authority_sha
+    pack_path.write_text(json.dumps(pack_manifest, sort_keys=True) + "\n")
+    bad_identity = SFTSamplerIdentity(authority_manifest_sha256=authority_sha,
+                                      pack_manifest_sha256=sha256(pack_path),
+                                      sampler_key=identity.sampler_key, data_world_size=identity.data_world_size,
+                                      context_size=identity.context_size)
+    with pytest.raises(RuntimeError, match="publication-relative"):
+        MaskedSFTPackedDataset(authority, packs, identity=bad_identity, rank=0)
+
+
+def test_immutable_token_payload_is_verified_by_builder_validator_and_dataset(tmp_path):
+    authority, packs, identity = _fixture(tmp_path)
+    token_path = authority / "tokens.uint32.bin"
+    payload = bytearray(token_path.read_bytes()); payload[0] ^= 1; token_path.write_bytes(payload)
+    with pytest.raises(ValueError, match="cannot be disabled"):
+        MaskedSFTPackedDataset(authority, packs, identity=identity, rank=0, verify_payload_hashes=False)
+    with pytest.raises(RuntimeError, match="payload digest"):
+        MaskedSFTPackedDataset(authority, packs, identity=identity, rank=0)
+    failed = subprocess.run([
+        sys.executable, "scripts/build_e97_sft_packs.py", "--authority-root", str(authority),
+        "--output-root", str(tmp_path / "tampered-packs"), "--context-size", "4",
+        "--authority-manifest-sha256", identity.authority_manifest_sha256,
+    ], capture_output=True, text=True)
+    assert failed.returncode != 0 and "token payload integrity mismatch" in failed.stderr
 
 
 def test_boundary_aware_pack_materializes_resets_validity_and_loss(tmp_path):

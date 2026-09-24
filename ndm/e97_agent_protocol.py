@@ -44,6 +44,12 @@ E97_PI_AGENT_SYSTEM_V2 = (
     "identical failed call. Never invent tool results. Test or otherwise verify changes, then "
     "respond with Final and a concise evidence-grounded summary."
 )
+E97_PI_AGENT_ANALYSIS_SYSTEM_V1 = (
+    E97_PI_AGENT_SYSTEM_V2 + " Before every tool call or final answer, produce a bounded "
+    "private rationale in the dedicated reasoning field. The runtime will serialize it as "
+    "one canonical Analysis JSON string. Never place private rationale inside tool arguments "
+    "or the visible final answer."
+)
 ROLE_LABELS = {
     "system": "System",
     "user": "User",
@@ -51,6 +57,7 @@ ROLE_LABELS = {
     "tool": "Tool",
 }
 _TOOL_NAME = re.compile(r"^[A-Za-z0-9_.-]+$")
+MAX_PRIVATE_ANALYSIS_BYTES = 65_536
 
 
 class AgentProtocolError(ValueError):
@@ -64,6 +71,8 @@ class ParsedAgentTurn:
     tool_name: str | None = None
     arguments_json: str | None = None
     arguments: Mapping[str, Any] | None = None
+    private_analysis: str | None = None
+    final_text: str | None = None
 
 
 def _text_content(content: Any) -> str:
@@ -84,12 +93,27 @@ def _text_content(content: Any) -> str:
     raise AgentProtocolError("message content must be text, text items, or null")
 
 
-def _assistant_body(message: Mapping[str, Any]) -> str:
+def _private_analysis_prefix(message: Mapping[str, Any], *, enabled: bool) -> str:
+    present = "reasoning_content" in message
+    reasoning = message.get("reasoning_content")
+    if not enabled:
+        if present:
+            raise AgentProtocolError("private analysis requires the analysis protocol")
+        return ""
+    if not isinstance(reasoning, str) or not reasoning.strip():
+        raise AgentProtocolError("analysis protocol requires non-empty reasoning_content")
+    if len(reasoning.encode("utf-8")) > MAX_PRIVATE_ANALYSIS_BYTES:
+        raise AgentProtocolError("private analysis exceeds the decoded byte limit")
+    return "Analysis: " + json.dumps(reasoning, ensure_ascii=False, separators=(",", ":")) + "\n"
+
+
+def _assistant_body(message: Mapping[str, Any], *, private_analysis: bool) -> str:
     tool_calls = message.get("tool_calls")
     content = _text_content(message.get("content"))
+    prefix = _private_analysis_prefix(message, enabled=private_analysis)
     if tool_calls:
         if content:
-            raise AgentProtocolError("assistant tool calls cannot also contain text")
+            raise AgentProtocolError("assistant tool calls cannot also contain visible text")
         if not isinstance(tool_calls, list) or len(tool_calls) != 1:
             raise AgentProtocolError("E97 supports exactly one tool call per turn")
         call = tool_calls[0]
@@ -112,16 +136,17 @@ def _assistant_body(message: Mapping[str, Any]) -> str:
             raise AgentProtocolError("assistant tool arguments are invalid JSON") from exc
         if not isinstance(decoded, dict):
             raise AgentProtocolError("assistant tool arguments must decode to an object")
-        return f"Action: {name}\nArguments: {arguments}"
+        return prefix + f"Action: {name}\nArguments: {arguments}"
     if not content:
         raise AgentProtocolError("assistant message requires text or one tool call")
-    return content.removesuffix(RS)
+    return prefix + content.removesuffix(RS)
 
 
 def serialize_pi_messages(
     messages: Sequence[Mapping[str, Any]],
     *,
     append_assistant_header: bool = True,
+    private_analysis: bool = False,
 ) -> str:
     """Serialize a Pi/OpenAI message list into the native E97 transcript."""
 
@@ -137,7 +162,7 @@ def serialize_pi_messages(
         if role == "assistant":
             # RS was a pretraining record boundary, so never place it between
             # coherent agent turns. Role headers provide transcript framing.
-            body = _assistant_body(message)
+            body = _assistant_body(message, private_analysis=private_analysis)
         else:
             body = _text_content(message.get("content"))
             if role == "tool" and not body:
@@ -150,14 +175,34 @@ def serialize_pi_messages(
     return "\n\n".join(sections)
 
 
-def parse_agent_turn(text: str) -> ParsedAgentTurn:
+def parse_agent_turn(text: str, *, private_analysis: bool = False) -> ParsedAgentTurn:
     """Parse one complete E97 assistant turn (legacy terminal RS is accepted)."""
 
     if not isinstance(text, str):
         raise AgentProtocolError("generated turn must be text")
     raw = text.split(RS, 1)[0]
-    if raw.startswith("Action: "):
-        first_line, separator, arguments_json = raw.partition("\nArguments: ")
+    body = raw
+    analysis = None
+    if private_analysis:
+        first_line, separator, body = raw.partition("\n")
+        if not separator or not first_line.startswith("Analysis: "):
+            raise AgentProtocolError("analysis turn requires a canonical Analysis JSON string")
+        encoded = first_line[len("Analysis: "):]
+        try:
+            analysis = json.loads(encoded)
+        except json.JSONDecodeError as exc:
+            raise AgentProtocolError("private analysis is invalid JSON") from exc
+        if not isinstance(analysis, str) or not analysis.strip():
+            raise AgentProtocolError("private analysis must decode to a non-empty string")
+        if len(analysis.encode("utf-8")) > MAX_PRIVATE_ANALYSIS_BYTES:
+            raise AgentProtocolError("private analysis exceeds the decoded byte limit")
+        canonical = json.dumps(analysis, ensure_ascii=False, separators=(",", ":"))
+        if encoded != canonical:
+            raise AgentProtocolError("private analysis JSON string is not canonical")
+    elif raw.startswith("Analysis: "):
+        raise AgentProtocolError("private analysis requires the analysis protocol")
+    if body.startswith("Action: "):
+        first_line, separator, arguments_json = body.partition("\nArguments: ")
         if not separator or not arguments_json:
             raise AgentProtocolError("action requires one Arguments JSON object")
         name = first_line[len("Action: "):]
@@ -175,23 +220,27 @@ def parse_agent_turn(text: str) -> ParsedAgentTurn:
             tool_name=name,
             arguments_json=arguments_json,
             arguments=arguments,
+            private_analysis=analysis,
         )
-    if raw.startswith("Final:"):
-        return ParsedAgentTurn(kind="final", raw_text=raw)
-    raise AgentProtocolError("generated turn must begin with Action: or Final:")
+    if body.startswith("Final:"):
+        return ParsedAgentTurn(
+            kind="final", raw_text=raw, private_analysis=analysis, final_text=body)
+    expected = "analysis plus Action:/Final:" if private_analysis else "Action: or Final:"
+    raise AgentProtocolError(f"generated turn must begin with {expected}")
 
 
-def generated_turn_is_complete(text: str) -> bool:
+def generated_turn_is_complete(text: str, *, private_analysis: bool = False) -> bool:
     """Return whether incremental generation reached a safe Pi turn boundary."""
     try:
-        turn = parse_agent_turn(text)
+        turn = parse_agent_turn(text, private_analysis=private_analysis)
     except AgentProtocolError:
         return False
     if turn.kind == "tool_call":
         return True
     # Canonical SFT finals are one concise line. Stop at their first newline so
     # an otherwise correct final cannot drift into a memorized next transcript.
-    return turn.kind == "final" and ("\n" in turn.raw_text or RS in text)
+    final_text = turn.final_text or turn.raw_text
+    return turn.kind == "final" and ("\n" in final_text or RS in text)
 
 
 def allowed_tool_names(tools: Any) -> frozenset[str]:

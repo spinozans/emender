@@ -9,7 +9,10 @@ from pathlib import Path
 from typing import Any
 
 from ndm.data.masked_sft_dataset import sha256
-from scripts.build_e97_pi_eval_v2 import call
+try:  # Support both ``python -m`` and the documented script-path invocation.
+    from scripts.build_e97_pi_eval_v2 import call
+except ModuleNotFoundError:  # pragma: no cover - exercised by subprocess CLIs
+    from build_e97_pi_eval_v2 import call
 
 SCHEMA = "emender-e97-pi-core-eval-authority-v3"
 KINDS = (

@@ -15,7 +15,10 @@ import tiktoken
 
 from ndm.data.masked_sft_dataset import AUTHORITY_SCHEMA, RECORD_INDEX, sha256
 from ndm.e97_agent_protocol import E97_PI_AGENT_SYSTEM_V2, E97_PI_CORE_SYSTEM
-from scripts.build_e97_tulu3_sft import TOKENIZER_CACHE_KEY, TOKENIZER_SHA256
+try:  # Support both ``python -m`` and the documented script-path invocation.
+    from scripts.build_e97_tulu3_sft import TOKENIZER_CACHE_KEY, TOKENIZER_SHA256
+except ModuleNotFoundError:  # pragma: no cover - exercised by subprocess CLIs
+    from build_e97_tulu3_sft import TOKENIZER_CACHE_KEY, TOKENIZER_SHA256
 
 RS = "\x1e"
 
@@ -50,21 +53,23 @@ def main() -> None:
     parser.add_argument("--input-manifest-sha256", required=True)
     parser.add_argument("--output-root", type=Path, required=True)
     args = parser.parse_args()
-    cache = Path(os.environ.get("TIKTOKEN_CACHE_DIR", "")) / TOKENIZER_CACHE_KEY
-    if not cache.is_file() or sha256(cache) != TOKENIZER_SHA256:
-        raise SystemExit("verified p50k tokenizer cache is required")
     manifest_path = args.input_root / "manifest.json"
     if sha256(manifest_path) != args.input_manifest_sha256:
         raise SystemExit("input manifest mismatch")
     source = json.loads(manifest_path.read_text())
     if source.get("schema") != AUTHORITY_SCHEMA or source.get("status") != "complete":
         raise SystemExit("input is not a complete masked-SFT authority")
+    if source.get("training_eligible") is not True:
+        raise SystemExit("authority is non-trainable or lacks explicit training eligibility")
     paths = {key: args.input_root / Path(source["outputs"][key]["path"]).name
              for key in ("tokens", "mask", "index")}
     for key, path in paths.items():
         expected = source["outputs"][key]
         if path.stat().st_size != expected["bytes"] or sha256(path) != expected["sha256"]:
             raise SystemExit(f"input {key} integrity mismatch")
+    cache = Path(os.environ.get("TIKTOKEN_CACHE_DIR", "")) / TOKENIZER_CACHE_KEY
+    if not cache.is_file() or sha256(cache) != TOKENIZER_SHA256:
+        raise SystemExit("verified p50k tokenizer cache is required")
     records = np.memmap(paths["index"], mode="r", dtype=np.dtype([
         ("offset", "<u8"), ("tokens", "<u8"), ("targets", "<u8"),
         ("split", "u1"), ("pad", "V7")]))
@@ -119,10 +124,11 @@ def main() -> None:
                 offset += len(new_tokens); total_tokens += len(new_tokens); total_targets += target_count
                 split_counts[split] += 1
         token_map.close(); mask_map.close()
-    output_entries = {name: {"path": str(path.resolve()), "bytes": path.stat().st_size,
+    output_entries = {name: {"path": path.name, "bytes": path.stat().st_size,
                              "sha256": sha256(path)} for name, path in outputs.items()}
     manifest = {
         "schema": AUTHORITY_SCHEMA, "status": "complete",
+        "training_eligible": True,
         "purpose": "Pi cumulative retention replay under grounded system prompt v2",
         "source_manifest_sha256": args.input_manifest_sha256,
         "old_system_prompt": E97_PI_CORE_SYSTEM, "system_prompt": E97_PI_AGENT_SYSTEM_V2,

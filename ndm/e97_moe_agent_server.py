@@ -32,6 +32,7 @@ class TorchE97MoEAgentEngine:
         node_group,
         ingest_mode: str = "segment",
         worker_cache_limit: int = 32,
+        private_analysis: bool = False,
     ) -> None:
         import tiktoken
 
@@ -48,6 +49,7 @@ class TorchE97MoEAgentEngine:
         self.node_group = node_group
         self.ingest_mode = ingest_mode
         self.worker_cache_limit = int(worker_cache_limit)
+        self.private_analysis = bool(private_analysis)
         self.checkpoint = str(loaded.checkpoint_path)
         self.tokenizer = tiktoken.get_encoding(str(tokenizer_name))
         self._worker_caches: OrderedDict[tuple[int, ...], E97RecurrentCache] = OrderedDict()
@@ -117,7 +119,8 @@ class TorchE97MoEAgentEngine:
             self._broadcast_token(token)
             generated.append(token)
             shadow = self._advance_local((token,), shadow)
-            finished = bool(token == 218 or generated_turn_is_complete(self.decode(generated)))
+            finished = bool(token == 218 or generated_turn_is_complete(
+                self.decode(generated), private_analysis=self.private_analysis))
             self._broadcast_finished(finished)
             if finished:
                 break

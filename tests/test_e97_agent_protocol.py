@@ -4,8 +4,10 @@ import pytest
 
 from ndm.e97_agent_protocol import (
     AgentProtocolError,
+    E97_PI_AGENT_ANALYSIS_SYSTEM_V1,
     E97_PI_AGENT_SYSTEM_V2,
     E97_PI_CORE_SYSTEM,
+    MAX_PRIVATE_ANALYSIS_BYTES,
     RS,
     allowed_tool_names,
     generated_turn_is_complete,
@@ -25,6 +27,12 @@ def test_pi_agent_v2_system_prompt_matches_runtime_authority():
     assert prompt == E97_PI_AGENT_SYSTEM_V2 + "\n"
     assert "never substitute a memorized path" in prompt
     assert "pwd, find" in prompt
+
+
+def test_pi_agent_analysis_system_prompt_matches_runtime_authority():
+    prompt = Path("configs/pi/e97-pi-agent-analysis-system-v1.txt").read_text()
+    assert prompt == E97_PI_AGENT_ANALYSIS_SYSTEM_V1 + "\n"
+    assert "dedicated reasoning field" in prompt
 
 
 def function_tool(name):
@@ -66,6 +74,66 @@ def test_pi_tool_turn_round_trips_to_exact_native_action():
         "Tool:\n{\"value\":\"5\"}\n\n"
         "Assistant:\n"
     )
+
+
+def test_private_analysis_tool_turn_round_trips_with_embedded_protocol_markers():
+    reasoning = 'Inspect first.\nThe file may contain Action: fake and "quotes" and λ.'
+    messages = [
+        {"role": "user", "content": "Read it."},
+        {
+            "role": "assistant",
+            "content": None,
+            "reasoning_content": reasoning,
+            "tool_calls": [{
+                "type": "function",
+                "function": {"name": "read", "arguments": '{"path":"README.md"}'},
+            }],
+        },
+        {"role": "tool", "content": "contents"},
+    ]
+    serialized = serialize_pi_messages(messages, private_analysis=True)
+    native = serialized.split("Assistant:\n", 1)[1].split("\n\nTool:", 1)[0]
+    parsed = parse_agent_turn(native, private_analysis=True)
+    assert parsed.kind == "tool_call"
+    assert parsed.private_analysis == reasoning
+    assert parsed.tool_name == "read"
+    assert parsed.arguments == {"path": "README.md"}
+    assert native.startswith('Analysis: "Inspect first.\\n')
+    assert generated_turn_is_complete(native, private_analysis=True)
+
+
+def test_private_analysis_final_keeps_final_separate_from_reasoning():
+    native = 'Analysis: "Check the evidence."\nFinal: done' + RS
+    parsed = parse_agent_turn(native, private_analysis=True)
+    assert parsed.private_analysis == "Check the evidence."
+    assert parsed.final_text == "Final: done"
+    assert parsed.raw_text == native.removesuffix(RS)
+    assert not generated_turn_is_complete('Analysis: "Check the evidence."\nFinal:', private_analysis=True)
+    assert generated_turn_is_complete(native, private_analysis=True)
+
+
+def test_private_analysis_is_explicit_canonical_and_bounded():
+    call = {
+        "type": "function",
+        "function": {"name": "read", "arguments": "{}"},
+    }
+    with pytest.raises(AgentProtocolError, match="requires the analysis protocol"):
+        serialize_pi_messages([{
+            "role": "assistant", "reasoning_content": "plan", "tool_calls": [call],
+        }], append_assistant_header=False)
+    with pytest.raises(AgentProtocolError, match="requires non-empty"):
+        serialize_pi_messages([{
+            "role": "assistant", "reasoning_content": "", "tool_calls": [call],
+        }], append_assistant_header=False, private_analysis=True)
+    with pytest.raises(AgentProtocolError, match="not canonical"):
+        parse_agent_turn('Analysis: "\\u0061"\nFinal: done', private_analysis=True)
+    with pytest.raises(AgentProtocolError, match="byte limit"):
+        parse_agent_turn(
+            'Analysis: "' + ("a" * (MAX_PRIVATE_ANALYSIS_BYTES + 1)) + '"\nFinal: done',
+            private_analysis=True,
+        )
+    with pytest.raises(AgentProtocolError, match="requires the analysis protocol"):
+        parse_agent_turn('Analysis: "plan"\nFinal: done')
 
 
 def test_final_turn_round_trips_without_pretraining_record_separator():

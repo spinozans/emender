@@ -21,7 +21,10 @@ from .e97 import (
     e97_cache_suffix,
     generate_e97_from_cache,
 )
-from .e97_onpolicy_records import canonical_json, sha256_json, sha256_text
+from .e97_onpolicy_records import (
+    SERVICE_ATTESTATION_SCHEMA, SERVICE_ATTESTATION_SCHEMA_V2,
+    canonical_json, sha256_json, sha256_text,
+)
 from .e97_agent_protocol import (
     AgentProtocolError,
     ParsedAgentTurn,
@@ -30,9 +33,6 @@ from .e97_agent_protocol import (
     serialize_pi_messages,
     validate_generated_tool,
 )
-
-
-SERVICE_ATTESTATION_SCHEMA = "emender-e97-agent-service-attestation-v1"
 
 
 def _sha256_text(value: str) -> str:
@@ -45,14 +45,6 @@ def _torch_runtime_identity() -> tuple[str, str, bool]:
         return str(torch.__version__), str(torch.version.cuda or ""), bool(torch.cuda.is_available())
     except Exception:  # pragma: no cover - serving dependency is normally present
         return "unavailable", "", False
-
-
-def _sha256_file(path: str) -> str:
-    digest = hashlib.sha256()
-    with open(path, "rb") as handle:
-        while chunk := handle.read(1 << 20):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 def _require_sha256(value: Any, name: str) -> str:
@@ -183,6 +175,8 @@ class TorchE97AgentEngine:
         device: str = "cuda",
         dtype: str = "bfloat16",
         use_triton: bool = True,
+        checkpoint_sha256: str | None = None,
+        private_analysis: bool = False,
     ):
         import tiktoken
 
@@ -195,6 +189,8 @@ class TorchE97AgentEngine:
         self.dtype = dtype
         self.use_triton = use_triton
         self.checkpoint = str(loaded.checkpoint_path)
+        self.checkpoint_sha256 = checkpoint_sha256
+        self.private_analysis = bool(private_analysis)
         tokenizer_name = loaded.config.get("tokenizer")
         if not tokenizer_name:
             raise ValueError("Pi agent serving requires a named tokenizer")
@@ -242,7 +238,8 @@ class TorchE97AgentEngine:
                 stop_token_ids=(218,),
             )
             generated.extend(next_tokens)
-            if generated_turn_is_complete(self.decode(generated)):
+            if generated_turn_is_complete(
+                    self.decode(generated), private_analysis=self.private_analysis):
                 break
             if next_tokens and next_tokens[-1] == 218:
                 break
@@ -286,6 +283,8 @@ class AgentCompletionService:
         runtime_image_path: str | None = None,
         runtime_image_sha256: str | None = None,
         tool_schema_sha256: str | None = None,
+        server_build_sha256: str | None = None,
+        private_analysis: bool = False,
     ):
         if max_output_tokens <= 0:
             raise ValueError("max_output_tokens must be positive")
@@ -295,6 +294,11 @@ class AgentCompletionService:
         self.trace_generated_errors = bool(trace_generated_errors)
         self.system_prompt_override = system_prompt_override
         self.require_tool_call = bool(require_tool_call)
+        self.private_analysis = bool(private_analysis)
+        engine_private_analysis = getattr(engine, "private_analysis", None)
+        if (engine_private_analysis is not None
+                and bool(engine_private_analysis) != self.private_analysis):
+            raise ValueError("private-analysis protocol does not match loaded engine")
         # This is service configuration, never request data: the dedicated
         # acquisition controller owns state-sensitive recovery cycle policy.
         self.external_controller = bool(external_controller)
@@ -304,29 +308,32 @@ class AgentCompletionService:
                 raise ValueError("external-controller mode forbids server-side system prompt overrides")
             checkpoint = _require_sha256(checkpoint_sha256, "checkpoint_sha256")
             controller_build = _require_sha256(controller_build_sha256, "controller_build_sha256")
-            actual_controller_build = _sha256_file(os.path.join(os.path.dirname(__file__), "e97_acquisition_controller.py"))
-            if controller_build != actual_controller_build:
-                raise ValueError("controller_build_sha256 does not match local controller artifact")
-            controller_build = actual_controller_build
+            # Startup supplies a descriptor/load-bound identity receipt.  This
+            # service must consume that receipt, never reopen mutable source
+            # pathnames after the model has been loaded.
+            bound_checkpoint = getattr(engine, "checkpoint_sha256", None)
+            if bound_checkpoint != checkpoint:
+                raise ValueError("checkpoint_sha256 is not bound to the loaded engine")
             for value, name in ((args_json_sha256, "args_json_sha256"), (config_sha256, "config_sha256"),
-                                (runtime_image_sha256, "runtime_image_sha256"), (tool_schema_sha256, "tool_schema_sha256")):
+                                (runtime_image_sha256, "runtime_image_sha256"), (tool_schema_sha256, "tool_schema_sha256"),
+                                (server_build_sha256, "server_build_sha256")):
                 _require_sha256(value, name)
             if not isinstance(checkpoint_path, str) or not checkpoint_path:
-                raise ValueError("external-controller mode requires checkpoint_path")
+                raise ValueError("external-controller mode requires checkpoint_path identity")
             if checkpoint_path != str(getattr(engine, "checkpoint", "")):
-                raise ValueError("checkpoint_path does not match engine checkpoint")
-            if not os.path.isfile(checkpoint_path):
-                raise ValueError("external-controller mode requires an existing checkpoint_path artifact")
-            if _sha256_file(checkpoint_path) != checkpoint:
-                raise ValueError("checkpoint_sha256 does not match checkpoint bytes")
-            if not isinstance(args_json_path, str) or not os.path.isfile(args_json_path):
-                raise ValueError("external-controller mode requires an existing args_json_path")
-            if not isinstance(runtime_image_path, str) or not os.path.isfile(runtime_image_path):
-                raise ValueError("external-controller mode requires an immutable runtime_image_path artifact")
-            if _sha256_file(runtime_image_path) != runtime_image_sha256:
-                raise ValueError("runtime_image_sha256 does not match runtime image artifact")
-            if _sha256_file(args_json_path) != args_json_sha256:
-                raise ValueError("args_json_sha256 does not match args-json artifact")
+                raise ValueError("checkpoint_path does not match engine checkpoint identity")
+            if not isinstance(args_json_path, str) or not args_json_path:
+                raise ValueError("external-controller mode requires args_json_path identity")
+            if not isinstance(runtime_image_path, str) or not runtime_image_path:
+                raise ValueError("external-controller mode requires runtime_image_path identity")
+            for attribute, supplied, name in (
+                ("args_json_sha256", args_json_sha256, "args_json_sha256"),
+                ("runtime_image_sha256", runtime_image_sha256, "runtime_image_sha256"),
+                ("controller_build_sha256", controller_build, "controller_build_sha256"),
+                ("server_build_sha256", server_build_sha256, "server_build_sha256"),
+            ):
+                if getattr(engine, attribute, None) != supplied:
+                    raise ValueError(f"{name} is not bound to the loaded engine identity")
             if weight_mode not in {"saved", "train"}:
                 raise ValueError("external-controller mode requires weight_mode")
             if not isinstance(tokenizer, str) or not tokenizer:
@@ -350,21 +357,31 @@ class AgentCompletionService:
                 raise ValueError("tool_schema_sha256 does not match read-observe schema")
             # All values are construction-time inputs.  The request cannot
             # select or alter this response-body attestation.
-            self._service_attestation_json = json.dumps({
+            attestation = {
                 "schema": SERVICE_ATTESTATION_SCHEMA, "checkpoint_path": checkpoint_path,
                 "checkpoint_sha256": checkpoint, "args_json_sha256": args_json_sha256,
                 "config_sha256": config_sha256, "weight_mode": weight_mode, "tokenizer": tokenizer,
-                "model_id": model_id, "server_build_sha256": _sha256_file(__file__),
+                "model_id": model_id, "server_build_sha256": server_build_sha256,
                 "controller_build_sha256": controller_build, "device": device, "dtype": dtype,
                 "use_triton": use_triton, "ingest_mode": ingest_mode,
-                "runtime_image_path": os.path.realpath(runtime_image_path), "runtime_image_sha256": runtime_image_sha256, "tool_schema_sha256": tool_schema_sha256,
+                "runtime_image_path": runtime_image_path, "runtime_image_sha256": runtime_image_sha256,
+                "tool_schema_sha256": tool_schema_sha256,
                 "runtime_identity_schema": "emender-e97-runtime-identity-v1",
                 "max_output_tokens": max_output_tokens, "max_sessions": max_sessions,
                 "python_implementation": platform.python_implementation(), "python_version": platform.python_version(),
                 "torch_version": _torch_runtime_identity()[0], "cuda_runtime": _torch_runtime_identity()[1],
                 "cuda_available": _torch_runtime_identity()[2], "platform": platform.system(), "machine": platform.machine(),
                 "system_prompt_override_sha256": _sha256_text(""),
-            }, sort_keys=True, separators=(",", ":"), allow_nan=False)
+            }
+            if self.private_analysis:
+                attestation.update({
+                    "schema": SERVICE_ATTESTATION_SCHEMA_V2,
+                    "runtime_identity_schema": "emender-e97-runtime-identity-v2",
+                    "agent_protocol": "e97-pi-agent-analysis-v1",
+                    "private_analysis": True,
+                })
+            self._service_attestation_json = json.dumps(
+                attestation, sort_keys=True, separators=(",", ":"), allow_nan=False)
         self.sessions = RecurrentSessionStore(max_sessions=max_sessions)
 
     def prepare_completion(
@@ -426,7 +443,7 @@ class AgentCompletionService:
                     "role": "system",
                     "content": self.system_prompt_override,
                 })
-        prompt = serialize_pi_messages(messages)
+        prompt = serialize_pi_messages(messages, private_analysis=self.private_analysis)
         prompt_tokens = self.engine.encode(prompt)
         if not prompt_tokens:
             raise AgentProtocolError("serialized prompt has no tokens")
@@ -453,7 +470,8 @@ class AgentCompletionService:
         )
         generated_text = self.engine.decode(generated_tokens)
         try:
-            turn = parse_agent_turn(generated_text)
+            turn = parse_agent_turn(
+                generated_text, private_analysis=self.private_analysis)
             if self.require_tool_call and turn.kind != "tool_call":
                 raise AgentProtocolError("this agent protocol requires a structured tool call")
             validate_generated_tool(turn, request.get("tools"))
@@ -469,6 +487,8 @@ class AgentCompletionService:
         ).hexdigest()[:24]
         message: dict[str, Any] = {"role": "assistant", "content": None}
         finish_reason = "stop"
+        if turn.private_analysis is not None:
+            message["reasoning_content"] = turn.private_analysis
         if turn.kind == "tool_call":
             call_id = "call_" + hashlib.sha256(
                 (completion_id + turn.raw_text).encode("utf-8")
@@ -483,7 +503,7 @@ class AgentCompletionService:
             }]
             finish_reason = "tool_calls"
         else:
-            message["content"] = turn.raw_text
+            message["content"] = turn.final_text or turn.raw_text
 
         response = {
             "id": completion_id,
@@ -504,6 +524,11 @@ class AgentCompletionService:
         if self._service_attestation_json is not None:
             response["emender_service_attestation"] = json.loads(self._service_attestation_json)
             response["emender_request_identity"] = request_identity
+            if self.private_analysis:
+                # Bind the exact OpenAI message before it crosses the client
+                # boundary so loss or mutation of reasoning_content fails
+                # closed in the trusted controller.
+                response["emender_assistant_message_sha256"] = sha256_json(message)
         state_bytes = getattr(completed_cache, "state_bytes", 0)
         diagnostics = {
             "x-emender-cache": prepared.cache_event,
@@ -539,6 +564,8 @@ def chat_completion_sse(response: Mapping[str, Any]) -> list[bytes]:
         return b"data: " + json.dumps(payload, separators=(",", ":")).encode("utf-8") + b"\n\n"
 
     events = [event({"role": "assistant"}, None)]
+    if "reasoning_content" in message:
+        events.append(event({"reasoning_content": message["reasoning_content"]}, None))
     if message.get("tool_calls"):
         call = message["tool_calls"][0]
         events.append(event({"tool_calls": [{

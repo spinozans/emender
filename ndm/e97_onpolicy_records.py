@@ -12,10 +12,13 @@ import json
 import re
 from typing import Any, Mapping, Sequence
 
-from ndm.e97_agent_protocol import AgentProtocolError, parse_agent_turn, serialize_pi_messages
+from ndm.e97_agent_protocol import (
+    MAX_PRIVATE_ANALYSIS_BYTES, AgentProtocolError, parse_agent_turn,
+    serialize_pi_messages,
+)
 
 
-RECOVERY_RECORD_SCHEMA = "emender-e97-student-state-correction-v3"
+RECOVERY_RECORD_SCHEMA = "emender-e97-student-state-correction-v4"
 TASK_IDENTITY_SCHEMA = "emender-e97-onpolicy-task-identity-v1"
 NO_PROGRESS_SCHEMA = "emender-e97-no-progress-v1"
 CONSUMED_V3_MANIFEST_SHA256 = (
@@ -37,6 +40,8 @@ _DIGEST = re.compile(r"^[0-9a-f]{64}$")
 _NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 _VALIDATOR_LOGICAL_RUNTIME = "@runtime-python"
 _VALIDATOR_LOGICAL_PROGRAM = "@generator-source/scripts/e97_first_party_validator.py"
+SERVICE_ATTESTATION_SCHEMA = "emender-e97-agent-service-attestation-v1"
+SERVICE_ATTESTATION_SCHEMA_V2 = "emender-e97-agent-service-attestation-v2"
 
 
 def canonical_json(value: Any) -> str:
@@ -70,6 +75,67 @@ def _require_name(value: Any, name: str) -> str:
     if not isinstance(value, str) or not _NAME.fullmatch(value):
         raise ValueError(f"{name} is invalid")
     return value
+
+
+def validate_service_attestation(value: Any) -> dict[str, Any]:
+    """Normalize the exact startup-only service identity used at live and replay boundaries."""
+
+    required = {
+        "schema", "checkpoint_path", "checkpoint_sha256", "args_json_sha256", "config_sha256",
+        "weight_mode", "tokenizer", "model_id", "server_build_sha256", "controller_build_sha256",
+        "device", "dtype", "use_triton", "ingest_mode", "runtime_image_path", "runtime_image_sha256", "tool_schema_sha256",
+        "system_prompt_override_sha256", "runtime_identity_schema", "max_output_tokens", "max_sessions",
+        "python_implementation", "python_version", "torch_version", "cuda_runtime", "cuda_available",
+        "platform", "machine",
+    }
+    if not isinstance(value, Mapping):
+        raise ValueError("service attestation fields are invalid")
+    schema = value.get("schema")
+    if schema == SERVICE_ATTESTATION_SCHEMA_V2:
+        required = required | {"agent_protocol", "private_analysis"}
+    elif schema != SERVICE_ATTESTATION_SCHEMA:
+        raise ValueError("unsupported service attestation schema")
+    if set(value) != required:
+        raise ValueError("service attestation fields are invalid")
+    normalized = dict(value)
+    for key in ("checkpoint_sha256", "args_json_sha256", "config_sha256", "server_build_sha256",
+                "system_prompt_override_sha256", "controller_build_sha256", "runtime_image_sha256",
+                "tool_schema_sha256"):
+        _require_digest(normalized[key], f"attestation {key}")
+    if not isinstance(normalized["checkpoint_path"], str) or not normalized["checkpoint_path"]:
+        raise ValueError("attestation checkpoint_path is invalid")
+    if not isinstance(normalized["runtime_image_path"], str) or not normalized["runtime_image_path"]:
+        raise ValueError("attestation runtime_image_path is invalid")
+    if not isinstance(normalized["model_id"], str) or not normalized["model_id"]:
+        raise ValueError("attestation model_id is invalid")
+    if not isinstance(normalized["device"], str) or not isinstance(normalized["dtype"], str):
+        raise ValueError("attestation device/dtype is invalid")
+    if not isinstance(normalized["use_triton"], bool) or normalized["ingest_mode"] not in {"tokenwise", "segment"}:
+        raise ValueError("attestation decode runtime is invalid")
+    if normalized["weight_mode"] not in {"saved", "train"}:
+        raise ValueError("attestation weight_mode is invalid")
+    if not isinstance(normalized["tokenizer"], str) or not normalized["tokenizer"]:
+        raise ValueError("attestation tokenizer is invalid")
+    expected_runtime_schema = (
+        "emender-e97-runtime-identity-v2"
+        if normalized["schema"] == SERVICE_ATTESTATION_SCHEMA_V2
+        else "emender-e97-runtime-identity-v1")
+    if normalized["runtime_identity_schema"] != expected_runtime_schema:
+        raise ValueError("attestation runtime identity schema is invalid")
+    if normalized["schema"] == SERVICE_ATTESTATION_SCHEMA_V2:
+        if (normalized["agent_protocol"] != "e97-pi-agent-analysis-v1"
+                or normalized["private_analysis"] is not True):
+            raise ValueError("attestation private-analysis protocol is invalid")
+    if (isinstance(normalized["max_output_tokens"], bool) or not isinstance(normalized["max_output_tokens"], int)
+            or isinstance(normalized["max_sessions"], bool) or not isinstance(normalized["max_sessions"], int)
+            or normalized["max_output_tokens"] <= 0 or normalized["max_sessions"] <= 0):
+        raise ValueError("attestation service limits are invalid")
+    for key in ("python_implementation", "python_version", "torch_version", "cuda_runtime", "platform", "machine"):
+        if not isinstance(normalized[key], str):
+            raise ValueError(f"attestation {key} is invalid")
+    if not isinstance(normalized["cuda_available"], bool):
+        raise ValueError("attestation cuda availability is invalid")
+    return json.loads(canonical_json(normalized))
 
 
 def completion_marker_relative_path(task_id: str, receipt_sha256: str) -> str:
@@ -342,8 +408,18 @@ def _validate_action_progress_history(
     return normalized
 
 
-def _validate_terminal_completion_usage(terminal: Mapping[str, Any], limits: Mapping[str, Any]) -> None:
-    """Bind every accepted assistant turn to bounded service token accounting."""
+def _validate_terminal_completion_usage(
+    terminal: Mapping[str, Any], limits: Mapping[str, Any], *,
+    runtime: Mapping[str, Any] | None = None,
+    checkpoint_sha256: str | None = None,
+    allow_mechanical_suffix: bool = False,
+) -> None:
+    """Bind each authority assistant message to one closed service receipt.
+
+    A mechanical system-gate suffix is deliberately not authority-valid: it may
+    retain only the authentic failed-turn receipts and must be marked elsewhere
+    as non-trainable.  No trainable terminal may take that exception.
+    """
 
     limit = limits.get("completion_tokens")
     metadata, messages, actions = terminal.get("metadata"), terminal.get("messages"), terminal.get("actions")
@@ -352,10 +428,48 @@ def _validate_terminal_completion_usage(terminal: Mapping[str, Any], limits: Map
             or not isinstance(actions, list)):
         raise ValueError("terminal completion token limits are invalid")
     usage = metadata.get("completion_usage")
+    receipts = metadata.get("completion_receipts")
     assistants = [message for message in messages if isinstance(message, Mapping) and message.get("role") == "assistant"]
     if not isinstance(usage, list) or len(usage) != len(assistants):
         raise ValueError("terminal completion usage does not cover every assistant turn")
+    if not isinstance(receipts, list):
+        raise ValueError("terminal lacks durable completion receipts")
+    if len(receipts) != len(assistants) and not allow_mechanical_suffix:
+        raise ValueError("terminal completion receipts do not cover every assistant turn")
+    if allow_mechanical_suffix and not 0 < len(receipts) < len(assistants):
+        raise ValueError("mechanical terminal must retain only its authentic completion prefix")
     total = 0
+    previous_attestation: str | None = None
+    assistant_positions = [
+        position for position, message in enumerate(messages)
+        if isinstance(message, Mapping) and message.get("role") == "assistant"
+    ]
+    terminal_model = metadata.get("model_id")
+    if not isinstance(terminal_model, str) or not terminal_model:
+        raise ValueError("terminal model identity is invalid")
+    try:
+        terminal_attestation = validate_service_attestation(
+            metadata.get("service_attestation"))
+    except ValueError as exc:
+        raise ValueError("completion receipt service attestation is invalid") from exc
+    private_analysis = bool(terminal_attestation.get("private_analysis", False))
+    if runtime is not None:
+        required_runtime = {
+            "schema_digest", "controller_digest", "system_prompt_sha256",
+            "tool_schema_digest", "sandbox_image_digest",
+        }
+        if not isinstance(runtime, Mapping) or set(runtime) != required_runtime:
+            raise ValueError("terminal runtime identity is invalid")
+        for name in required_runtime:
+            _require_digest(runtime[name], f"terminal runtime {name}")
+        if (metadata.get("controller_build_sha256") != runtime["controller_digest"]
+                or metadata.get("tool_schema_sha256") != runtime["tool_schema_digest"]
+                or metadata.get("system_prompt_sha256") != runtime["system_prompt_sha256"]):
+            raise ValueError("terminal metadata does not bind bundle runtime")
+    if checkpoint_sha256 is not None:
+        _require_digest(checkpoint_sha256, "terminal checkpoint SHA-256")
+        if metadata.get("checkpoint_sha256") != checkpoint_sha256:
+            raise ValueError("terminal metadata checkpoint does not bind student")
     for index, (entry, message) in enumerate(zip(usage, assistants)):
         if (not isinstance(entry, Mapping) or set(entry) != {"sequence", "completion_tokens"}
                 or entry.get("sequence") != index or isinstance(entry.get("completion_tokens"), bool)
@@ -363,12 +477,93 @@ def _validate_terminal_completion_usage(terminal: Mapping[str, Any], limits: Map
                 or not 1 <= entry["completion_tokens"] <= limit):
             raise ValueError("terminal completion usage receipt is invalid")
         try:
-            body = serialize_pi_messages([message], append_assistant_header=False).removeprefix("Assistant:\n")
+            body = serialize_pi_messages(
+                [message], append_assistant_header=False,
+                private_analysis=private_analysis,
+            ).removeprefix("Assistant:\n")
         except AgentProtocolError as exc:
             raise ValueError("terminal assistant completion serialization is invalid") from exc
-        if len(body.encode("utf-8")) > limit * 8:
+        byte_ceiling = limit * 8 + (MAX_PRIVATE_ANALYSIS_BYTES if private_analysis else 0)
+        if len(body.encode("utf-8")) > byte_ceiling:
             raise ValueError("terminal assistant body exceeds deterministic token byte ceiling")
         total += entry["completion_tokens"]
+        if index >= len(receipts):
+            continue
+        receipt = _require_fields(receipts[index], {
+            "sequence", "request", "request_identity", "request_sha256", "response",
+            "response_sha256", "service_attestation", "service_attestation_sha256", "model_id",
+            "completion_tokens", "assistant_message_sha256",
+        }, f"completion receipt {index}")
+        identity = _require_fields(receipt["request_identity"], {
+            "messages_sha256", "system_prompt_sha256", "tool_schema_sha256", "request_sha256",
+        }, f"completion receipt {index} request identity")
+        for key, value in identity.items():
+            _require_digest(value, f"completion receipt {index} request identity {key}")
+        for key in ("request_sha256", "response_sha256", "service_attestation_sha256", "assistant_message_sha256"):
+            _require_digest(receipt[key], f"completion receipt {index} {key}")
+        request = _require_fields(receipt["request"], {
+            "model", "messages", "tools", "temperature", "max_completion_tokens",
+        }, f"completion receipt {index} canonical request")
+        position = assistant_positions[index]
+        expected_messages = [dict(item) for item in messages[:position]]
+        if (receipt["sequence"] != index or receipt["request_sha256"] != identity["request_sha256"]
+                or receipt["completion_tokens"] != entry["completion_tokens"]
+                or receipt["assistant_message_sha256"] != sha256_json(dict(message))
+                or request["messages"] != expected_messages
+                or request["model"] != terminal_model or receipt["model_id"] != terminal_model
+                or request["temperature"] != 0 or request["max_completion_tokens"] != limit
+                or identity["messages_sha256"] != sha256_text(canonical_json(expected_messages))
+                or identity["request_sha256"] != sha256_json(dict(request))):
+            raise ValueError("completion receipt does not bind canonical request/usage/assistant bytes")
+        system = expected_messages[0] if expected_messages else None
+        if (not isinstance(system, Mapping) or system.get("role") != "system"
+                or not isinstance(system.get("content"), str)
+                or identity["system_prompt_sha256"] != sha256_text(system["content"])):
+            raise ValueError("completion receipt system transcript binding is invalid")
+        if runtime is not None and (
+                identity["system_prompt_sha256"] != runtime["system_prompt_sha256"]
+                or identity["tool_schema_sha256"] != runtime["tool_schema_digest"]
+                or sha256_json(request["tools"]) != runtime["tool_schema_digest"]):
+            raise ValueError("completion receipt request does not bind bundle runtime")
+        try:
+            attestation = validate_service_attestation(receipt["service_attestation"])
+        except ValueError as exc:
+            raise ValueError("completion receipt service attestation is invalid") from exc
+        attestation_digest = sha256_json(attestation)
+        if receipt["service_attestation_sha256"] != attestation_digest:
+            raise ValueError("completion receipt service attestation digest mismatch")
+        response_fields = {
+            "model", "choices", "usage", "emender_request_identity", "emender_service_attestation",
+        }
+        if private_analysis:
+            response_fields.add("emender_assistant_message_sha256")
+        response = _require_fields(
+            receipt["response"], response_fields,
+            f"completion receipt {index} canonical response")
+        if (receipt["response_sha256"] != sha256_json(dict(response))
+                or response["model"] != terminal_model
+                or response["emender_request_identity"] != identity
+                or response["emender_service_attestation"] != attestation
+                or response["usage"] != {"completion_tokens": entry["completion_tokens"]}
+                or (private_analysis and response["emender_assistant_message_sha256"]
+                    != sha256_json(dict(message)))
+                or not isinstance(response["choices"], list) or response["choices"] != [{"message": dict(message)}]):
+            raise ValueError("completion receipt response does not bind accepted service fields")
+        if (receipt["model_id"] != attestation["model_id"]
+                or terminal_attestation != attestation
+                or attestation["tool_schema_sha256"] != identity["tool_schema_sha256"]
+                or attestation["max_output_tokens"] < limit):
+            raise ValueError("completion receipt model/service attestation binding is invalid")
+        if runtime is not None and (
+                attestation["controller_build_sha256"] != runtime["controller_digest"]
+                or attestation["runtime_image_sha256"] != runtime["sandbox_image_digest"]
+                or attestation["system_prompt_override_sha256"] != sha256_text("")):
+            raise ValueError("completion receipt attestation runtime/controller mismatch")
+        if checkpoint_sha256 is not None and attestation["checkpoint_sha256"] != checkpoint_sha256:
+            raise ValueError("completion receipt attestation checkpoint mismatch")
+        if previous_attestation is not None and previous_attestation != attestation_digest:
+            raise ValueError("terminal completion receipts mix service attestations")
+        previous_attestation = attestation_digest
     if metadata.get("completion_tokens") != total:
         raise ValueError("terminal completion token total is invalid")
     if len(actions) > len(usage):
@@ -385,11 +580,12 @@ def validate_recovery_record(
     forbidden_id_prefixes: Sequence[str] = CONSUMED_ID_PREFIXES,
     max_messages: int = 32,
     max_message_bytes: int = 64 << 10,
+    allow_diagnostic_cpu_system_gate: bool = False,
 ) -> dict[str, Any]:
     """Validate and normalize one deterministically accepted correction record."""
 
     record = _require_fields(value, {
-        "schema", "split", "task", "student", "teacher", "runtime",
+        "schema", "split", "task", "student", "teacher", "runtime", "provenance",
         "first_divergence", "messages", "validator_receipt", "source_provenance", "terminal_binding",
     }, "record")
     if record["schema"] != RECOVERY_RECORD_SCHEMA:
@@ -429,14 +625,33 @@ def validate_recovery_record(
         raise ValueError("student decode identity must be a non-empty object")
     canonical_json(student["decode"])
 
-    teacher = _require_fields(record["teacher"], {"tier", "model_revision"}, "teacher")
-    if teacher["tier"] not in {"luna", "terra", "sol", "human"}:
+    teacher = _require_fields(record["teacher"], {"tier", "model_revision", "evidence"}, "teacher")
+    if teacher["tier"] not in {"luna", "terra", "sol", "human", "mechanical-cpu-system-gate"}:
         raise ValueError("teacher tier is invalid")
-    if not isinstance(teacher["model_revision"], str) or not teacher["model_revision"]:
-        raise ValueError("teacher model revision is required")
+    if (not isinstance(teacher["model_revision"], str) or not teacher["model_revision"]
+            or not isinstance(teacher["evidence"], str) or not teacher["evidence"]):
+        raise ValueError("teacher model revision/evidence is required")
+    provenance = _require_fields(record["provenance"], {"scope", "training_eligible"}, "record provenance")
+    if provenance["scope"] not in {"teacher-evidenced", "cpu-system-gate-mechanical"}:
+        raise ValueError("record provenance scope is invalid")
+    if not isinstance(provenance["training_eligible"], bool):
+        raise ValueError("record training eligibility is invalid")
+    mechanical = provenance["scope"] == "cpu-system-gate-mechanical"
+    if mechanical != (teacher["tier"] == "mechanical-cpu-system-gate"):
+        raise ValueError("teacher tier/provenance scope mismatch")
+    if mechanical and provenance["training_eligible"]:
+        raise ValueError("mechanical CPU system-gate records are irrevocably non-trainable")
+    if mechanical and not allow_diagnostic_cpu_system_gate:
+        raise ValueError("mechanical CPU system-gate record requires explicit diagnostic mode")
+    if not mechanical and not provenance["training_eligible"]:
+        raise ValueError("teacher-evidenced records must be training eligible")
+    if mechanical and teacher["evidence"] != "mechanical-scripted-replay-v1":
+        raise ValueError("mechanical record evidence is invalid")
+    if not mechanical and teacher["evidence"] != "closed-completion-receipts-v1":
+        raise ValueError("teacher record lacks completion-receipt evidence")
 
     runtime = _require_fields(record["runtime"], {
-        "schema_digest", "controller_digest", "system_prompt_sha256", "tool_schema_digest",
+        "schema_digest", "controller_digest", "system_prompt_sha256", "tool_schema_digest", "sandbox_image_digest",
     }, "runtime")
     for key, item in runtime.items():
         _require_digest(item, f"runtime {key}")
@@ -474,8 +689,9 @@ def validate_recovery_record(
                 "validator_execution_sha256", "completion_receipt_sha256", "lease_identity", "prefix_sha256", "model_prefix_sha256"):
         _require_digest(binding[key], f"terminal binding {key}")
     artifacts = _require_fields(binding["artifacts"], {
-        "registry", "generation_receipt", "generator_manifest", "source_archive", "overlap_receipt",
-        "tasks_collection", "bundle", "archive", "private_spec", "failed_terminal",
+        "registry", "generation_receipt", "generator_manifest", "source_archive",
+        "environment_descriptor", "overlap_firewall_audit", "authorization_license", "overlap_receipt",
+        "admission_receipt", "authority_state", "collection_authorization_allowlist", "tasks_collection", "bundle", "archive", "private_spec", "failed_terminal",
         "corrective_terminal", "validator_execution", "completion_receipt",
     }, "terminal artifact references")
     for name, reference in artifacts.items():
@@ -519,7 +735,10 @@ def validate_recovery_record(
     if not isinstance(failed_actions, list) or not failed_actions or not isinstance(failed_messages, list):
         raise ValueError("failed terminal transcript/actions are required")
     _validate_action_progress_history(failed_actions, terminated=True)
-    _validate_terminal_completion_usage(failed, bundle["limits"])
+    _validate_terminal_completion_usage(
+        failed, bundle["limits"], runtime=runtime,
+        checkpoint_sha256=student["checkpoint_sha256"],
+    )
     if len(failed_messages) != 2 + len(failed_actions) * 2 - 1:
         raise ValueError("failed terminal must omit only its terminating observation")
 
@@ -597,6 +816,7 @@ def validate_recovery_record(
 
     corrective = binding["corrective_terminal"]
     if (not isinstance(corrective, Mapping) or sha256_json(corrective) != binding["corrective_terminal_sha256"]
+            or corrective.get("schema") != "emender-e97-corrective-terminal-v2"
             or corrective.get("status") != "success" or corrective.get("failed_terminal_sha256") != binding["failed_terminal_sha256"]
             or corrective.get("prefix_sha256") != binding["prefix_sha256"]
             or corrective.get("correction_start_message_index") != divergence["target_start_message_index"]):
@@ -612,7 +832,21 @@ def validate_recovery_record(
         terminated=False,
         permitted_termination_indexes={len(failed_actions) - 1},
     )
-    _validate_terminal_completion_usage(corrective, bundle["limits"])
+    _validate_terminal_completion_usage(
+        corrective, bundle["limits"], runtime=runtime,
+        checkpoint_sha256=student["checkpoint_sha256"],
+        allow_mechanical_suffix=mechanical,
+    )
+    mechanical_suffix = corrective.get("metadata", {}).get("mechanical_suffix")
+    if mechanical:
+        if mechanical_suffix != {
+            "schema": "emender-e97-mechanical-cpu-system-gate-v1",
+            "scope": "cpu-system-gate-mechanical",
+            "training_eligible": False,
+        }:
+            raise ValueError("mechanical correction suffix is not truthfully marked")
+    elif mechanical_suffix is not None:
+        raise ValueError("teacher-evidenced correction may not carry a mechanical suffix")
     expected_intervention = {"role": "tool", "tool_call_id": failed_actions[-1]["tool_call_id"],
                              "content": intervention["effective_observation"], "controller_intervention": True}
     if corrective_messages[len(failed_messages):divergence["target_start_message_index"]] != [expected_intervention]:
@@ -654,7 +888,7 @@ def validate_recovery_record(
     execution = binding["validator_execution"]
     if not isinstance(execution, Mapping) or sha256_json(execution) != binding["validator_execution_sha256"]:
         raise ValueError("validator execution bytes do not bind terminal relation")
-    if (execution.get("schema") != "emender-e97-first-party-validator-receipt-v3" or execution.get("status") != "pass"
+    if (execution.get("schema") != "emender-e97-first-party-validator-receipt-v4" or execution.get("status") != "pass"
             or execution.get("task_identity") != task["identity"] or execution.get("bundle_sha256") != binding["bundle_sha256"]
             or execution.get("fixture_tree_digest") != task["fixture_tree_digest"]
             or execution.get("terminal_sha256") != binding["corrective_terminal_sha256"]
@@ -664,6 +898,7 @@ def validate_recovery_record(
     execution_fields = {
         "schema", "status", "task_identity", "bundle_sha256", "fixture_tree_digest",
         "archive_expanded_bytes", "configured_limits", "terminal_sha256", "validator_spec_digest",
+        "validator_spec_payload_sha256", "validator_terminal_payload_sha256",
         "runtime_schema_digest", "validators",
     }
     if set(execution) != execution_fields or execution.get("configured_limits") != bundle.get("limits"):
@@ -673,22 +908,35 @@ def validate_recovery_record(
             or execution["archive_expanded_bytes"] < 0
             or execution["archive_expanded_bytes"] > bundle["limits"]["disk_bytes"]):
         raise ValueError("validator execution archive bounds are invalid")
+    _require_digest(execution.get("validator_spec_payload_sha256"), "validator execution spec payload")
+    _require_digest(execution.get("validator_terminal_payload_sha256"), "validator execution terminal payload")
     validators = _require_fields(execution.get("validators"), {"focused", "regression"}, "validator execution outputs")
     for mode in ("focused", "regression"):
         output = _require_fields(validators[mode], {
-            "logical_argv", "logical_argv_sha256", "stdout_sha256", "stderr_sha256", "output",
+            "logical_argv", "logical_argv_sha256", "bound_argv", "bound_argv_sha256",
+            "stdout_sha256", "stderr_sha256", "spec_payload_sha256", "terminal_payload_sha256", "output",
         }, f"validator {mode} output")
         expected_argv = [
             _VALIDATOR_LOGICAL_RUNTIME, _VALIDATOR_LOGICAL_PROGRAM, "--mode", mode,
-            "--spec", "<spec>", "--terminal", "<terminal>",
+            "--spec-fd", "<inherited-spec-fd>",
+            "--terminal-fd", "<inherited-terminal-fd>",
+        ]
+        expected_bound_argv = [
+            "@verified-interpreter-fd", "@private-verified-validator", "--mode", mode,
+            "--spec-fd", "<inherited-spec-fd>",
+            "--terminal-fd", "<inherited-terminal-fd>",
         ]
         if (bundle["validator"].get(f"{mode}_argv") != expected_argv[:4]
                 or output["logical_argv"] != expected_argv
                 or output["logical_argv_sha256"] != sha256_json(expected_argv)
+                or output["bound_argv"] != expected_bound_argv
+                or output["bound_argv_sha256"] != sha256_json(expected_bound_argv)
                 or output["stdout_sha256"] != sha256_text(canonical_json({
                     "action_count": len(corrective_actions), "mode": mode, "status": "pass",
                 }) + "\n")
                 or output["stderr_sha256"] != sha256_text("")
+                or output["spec_payload_sha256"] != execution["validator_spec_payload_sha256"]
+                or output["terminal_payload_sha256"] != execution["validator_terminal_payload_sha256"]
                 or output["output"] != {
                     "mode": mode, "status": "pass", "action_count": len(corrective_actions),
                 }):
@@ -709,17 +957,25 @@ def validate_recovery_record(
     completion = binding["completion_receipt"]
     if not isinstance(completion, Mapping) or sha256_json(completion) != binding["completion_receipt_sha256"]:
         raise ValueError("completion receipt bytes do not bind terminal relation")
-    lease = completion.get("lease")
-    completion_body = completion.get("receipt")
+    completion = _require_fields(completion, {"schema", "task_id", "lease", "receipt"}, "completion receipt")
+    lease = _require_fields(completion["lease"], {
+        "task_id", "owner", "attempt", "deadline_ns", "identity",
+    }, "completion lease")
+    completion_body = completion["receipt"]
     if not isinstance(completion_body, Mapping):
         raise ValueError("completion receipt body is invalid")
     _require_fields(completion_body, {
         "task_id", "bundle_sha256", "archive_sha256", "failed_terminal_sha256",
         "accepted_terminal_sha256", "validator_receipt_sha256", "validator_status",
     }, "completion receipt body")
-    if (completion.get("schema") != "emender-e97-task-completion-receipt-v3" or not isinstance(lease, Mapping)
+    if (completion.get("schema") != "emender-e97-task-completion-receipt-v3"
             or completion.get("task_id") != task["identity"]
             or lease.get("task_id") != task["identity"] or lease.get("identity") != binding["lease_identity"]
+            or not isinstance(lease.get("owner"), str) or not lease["owner"]
+            or isinstance(lease.get("attempt"), bool) or not isinstance(lease.get("attempt"), int) or lease["attempt"] < 1
+            or isinstance(lease.get("deadline_ns"), bool) or not isinstance(lease.get("deadline_ns"), int) or lease["deadline_ns"] <= 0
+            or not isinstance(lease.get("identity"), str) or len(lease["identity"]) != 64
+            or any(character not in "0123456789abcdef" for character in lease["identity"])
             or sha256_json({"task_id": lease.get("task_id"), "owner": lease.get("owner"), "attempt": lease.get("attempt"), "deadline_ns": lease.get("deadline_ns")}) != binding["lease_identity"]
             or completion_body.get("task_id") != task["identity"]
             or completion_body.get("bundle_sha256") != binding["bundle_sha256"]
@@ -755,8 +1011,12 @@ def validate_recovery_record(
     return json.loads(canonical_json(dict(record)))
 
 
-def recovery_record_fingerprint(record: Mapping[str, Any]) -> str:
+def recovery_record_fingerprint(
+    record: Mapping[str, Any], *, allow_diagnostic_cpu_system_gate: bool = False,
+) -> str:
     """Return the immutable identity of one validated correction record."""
 
-    normalized = validate_recovery_record(record)
+    normalized = validate_recovery_record(
+        record, allow_diagnostic_cpu_system_gate=allow_diagnostic_cpu_system_gate,
+    )
     return sha256_text(f"{RECOVERY_RECORD_SCHEMA}\0{canonical_json(normalized)}")

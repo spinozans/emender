@@ -11,7 +11,7 @@ import numpy as np
 
 from ndm.data.masked_sft_dataset import (
     AUTHORITY_SCHEMA, BOUNDARY_PACK_SCHEMA, PACK_INDEX, PACK_SCHEMA,
-    RECORD_INDEX, sha256,
+    RECORD_INDEX, sha256, snapshot_manifest,
 )
 
 
@@ -20,8 +20,21 @@ def _atomic(path: Path) -> Path:
 
 
 def _entry(path: Path) -> dict:
-    return {"path": str(path.resolve()), "bytes": path.stat().st_size,
-            "sha256": sha256(path)}
+    return {"path": path.name, "bytes": path.stat().st_size, "sha256": sha256(path)}
+
+
+def _authority_payload(root: Path, descriptor: object, name: str) -> Path:
+    if not isinstance(descriptor, dict) or set(descriptor) != {"path", "bytes", "sha256"}:
+        raise SystemExit(f"{name} descriptor is invalid")
+    relative = descriptor["path"]
+    candidate = Path(relative) if isinstance(relative, str) else None
+    if (candidate is None or candidate.is_absolute() or len(candidate.parts) != 1
+            or candidate.name != relative or relative in {"", ".", ".."}):
+        raise SystemExit(f"{name} path is not publication-relative")
+    path = root / candidate
+    if not path.is_file() or path.stat().st_size != descriptor["bytes"] or sha256(path) != descriptor["sha256"]:
+        raise SystemExit(f"{name} integrity mismatch")
+    return path
 
 
 def main() -> None:
@@ -42,43 +55,45 @@ def main() -> None:
         "--sampler-mode", choices=("hash-replacement", "epoch-permutation"),
         default="hash-replacement",
         help="Bind the intended counter sampler into the immutable pack manifest")
+    parser.add_argument("--diagnostic-cpu-system-gate", action="store_true",
+                        help="Allow only an explicitly non-trainable mechanical authority")
     args = parser.parse_args()
     if args.context_size <= 0:
         raise SystemExit("context-size must be positive")
     if args.max_records_per_pack < 0:
         raise SystemExit("max-records-per-pack must be nonnegative")
     authority_manifest_path = args.authority_root / "manifest.json"
-    if sha256(authority_manifest_path) != args.authority_manifest_sha256:
-        raise SystemExit("authority manifest SHA-256 mismatch")
-    authority = json.loads(authority_manifest_path.read_text())
+    try:
+        authority = snapshot_manifest(
+            authority_manifest_path, args.authority_manifest_sha256, name="authority")
+    except RuntimeError as exc:
+        raise SystemExit(str(exc)) from exc
     if authority.get("schema") != AUTHORITY_SCHEMA or authority.get("status") != "complete":
         raise SystemExit("input is not a complete masked-SFT authority")
-    record_path = args.authority_root / Path(authority["outputs"]["index"]["path"]).name
-    if (record_path.stat().st_size != authority["outputs"]["index"]["bytes"]
-            or sha256(record_path) != authority["outputs"]["index"]["sha256"]):
-        raise SystemExit("record index integrity mismatch")
+    training_eligible = authority.get("training_eligible")
+    if not isinstance(training_eligible, bool):
+        raise SystemExit("authority training eligibility must be an explicit boolean")
+    if not training_eligible and not args.diagnostic_cpu_system_gate:
+        raise SystemExit("non-trainable authority requires --diagnostic-cpu-system-gate")
+    outputs_info = authority.get("outputs")
+    if not isinstance(outputs_info, dict) or set(outputs_info) != {"tokens", "mask", "index", "metadata"}:
+        raise SystemExit("authority outputs are invalid")
+    # Every immutable payload is verified before any record offsets are trusted.
+    token_path = _authority_payload(args.authority_root, outputs_info["tokens"], "token payload")
+    mask_path = _authority_payload(args.authority_root, outputs_info["mask"], "target mask")
+    record_path = _authority_payload(args.authority_root, outputs_info["index"], "record index")
+    metadata_path = _authority_payload(args.authority_root, outputs_info["metadata"], "record metadata")
     records = np.memmap(
         record_path, mode="r",
         dtype=np.dtype([("offset", "<u8"), ("tokens", "<u8"),
                         ("targets", "<u8"), ("split", "u1"), ("pad", "V7")]))
     masks = None
     if args.boundary_aware:
-        mask_entry = authority["outputs"]["mask"]
-        mask_path = args.authority_root / Path(mask_entry["path"]).name
-        if (mask_path.stat().st_size != mask_entry["bytes"]
-                or sha256(mask_path) != mask_entry["sha256"]):
-            raise SystemExit("target-mask integrity mismatch")
         masks = np.memmap(mask_path, mode="r", dtype="u1")
     include_sources = tuple(sorted(set(args.include_source)))
     included_record_ids = None
     if include_sources:
-        metadata_entry = authority["outputs"].get("metadata")
-        if metadata_entry is None:
-            raise SystemExit("source filtering requires authority metadata")
-        metadata_path = args.authority_root / Path(metadata_entry["path"]).name
-        if (metadata_path.stat().st_size != metadata_entry["bytes"]
-                or sha256(metadata_path) != metadata_entry["sha256"]):
-            raise SystemExit("record metadata integrity mismatch")
+        # metadata_path was integrity-checked with all immutable authority payloads above.
         wanted = set(include_sources)
         included_record_ids = set()
         metadata_count = 0
@@ -177,6 +192,8 @@ def main() -> None:
         "schema": (BOUNDARY_PACK_SCHEMA if args.boundary_aware else PACK_SCHEMA),
         "status": "complete",
         "authority_manifest_sha256": args.authority_manifest_sha256,
+        "training_eligible": training_eligible,
+        "diagnostic_system_gate": ("cpu-system-gate" if not training_eligible else None),
         "context_size": args.context_size, "sequence_tokens": sequence_tokens,
         "packing": "stable-record-order greedy next-fit; no record splitting",
         "max_records_per_pack": (args.max_records_per_pack or None),

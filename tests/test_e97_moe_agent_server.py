@@ -22,11 +22,27 @@ def test_moe_agent_engine_requires_eight_rank_group(monkeypatch):
         TorchE97MoEAgentEngine(_FakeLoaded(), node_group=object())
 
 
+def test_moe_agent_engine_binds_private_analysis_completion_mode(monkeypatch):
+    monkeypatch.setattr("torch.distributed.get_world_size", lambda group: 8)
+    engine = TorchE97MoEAgentEngine(
+        _FakeLoaded(), node_group=object(), private_analysis=True)
+    assert engine.private_analysis is True
+
+
 def test_moe_agent_server_uses_structured_completion_not_rs_as_success():
     source = Path("ndm/e97_moe_agent_server.py").read_text()
     assert "generated_turn_is_complete" in source
+    assert "private_analysis=self.private_analysis" in source
     assert 'token == 218' in source
     assert "_broadcast_finished" in source
+
+
+def test_moe_openai_launcher_wires_explicit_analysis_protocol_identity():
+    source = Path("scripts/serve_e97_moe_agent_openai.py").read_text()
+    assert '"--private-analysis-protocol"' in source
+    assert '"--pi-agent-analysis-v1-canonical-system"' in source
+    assert "private_analysis=args.private_analysis_protocol" in source
+    assert "E97_PI_AGENT_ANALYSIS_SYSTEM_V1" in source
 
 
 def test_frontier_launcher_binds_partition_and_qos_explicitly():

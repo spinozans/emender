@@ -10,8 +10,10 @@ progress, and no task source is admitted until its immutable audit passes
 **Behavioral-parent SHA-256:**
 `aae654aa1db004ba9b9805fce54e005332361bbf536168a6618a1c22cce7af39`
 
-**Governing research plan:**
+**Governing research plans:**
 [`EMENDER_E97_4B_AGENT_POSTTRAINING_RESEARCH_PLAN.md`](EMENDER_E97_4B_AGENT_POSTTRAINING_RESEARCH_PLAN.md)
+and
+[`EMENDER_E97_4B_SYSTEMATIC_AGENT_POSTTRAINING_REGIME.md`](EMENDER_E97_4B_SYSTEMATIC_AGENT_POSTTRAINING_REGIME.md)
 
 ## Decision summary
 
@@ -78,11 +80,14 @@ Use `aae654aa...` in two roles:
 
 Within a correction-training run, optimize the live Schedule-Free `y` weights,
 save promotion checkpoints as averaged `x`, and evaluate paired `x`/`y` behavior
-at every aggressive continuation gate. The first training action is an
-8-update canary, not a long continuation. If behavior improves, extend through
-predeclared 32/64-update gates and optionally apply the proven bounded
-live-aligned repair stage. If it fails, retain `aae654aa...` and discard the
-branch; no ancestor is overwritten.
+at every aggressive continuation gate. The first training action is an eight-update systems and numerical canary, not
+a behavioral optimization interval. A successful canary authorizes one
+predeclared sustained stage over a sealed, diverse corpus; it does not authorize
+manual 8/16/32/64-update mixture steering. Checkpoints remain eight-update
+aligned for exact recovery, while paired behavioral evaluation occurs at
+predeclared consumed-assistant-target milestones. If a sustained stage fails its
+milestone floors, retain `aae654aa...` and redesign a new named corpus or
+objective; no ancestor is overwritten.
 
 The ready 1.35B-target general-continuation authority is not part of this branch
 and remains unlaunched pending separate broad-behavior justification.
@@ -580,7 +585,7 @@ telemetry only. A regression outside a predeclared tolerance stops the stage.
 - [x] Zero-loss failed-prefix and contiguous target-suffix validation.
 - [x] Consumed V3/V4 provenance rejection.
 - [x] Masked-SFT correction authority builder.
-- [x] Focused and adjacent protocol/SFT regression tests: 60 passed.
+- [x] Focused and adjacent protocol/SFT regression coverage is maintained with the implementation; the current candidate-only validation receipt is `docs/validation/e97-4b-onpolicy-task-lake-source-registry-v1.json` (no historical bare pass count is a release claim).
 
 Current implementation files:
 
@@ -596,7 +601,8 @@ Current implementation files:
 - [ ] Audit underlying repository licenses and environment requirements.
 - [x] Implement derived task-bundle identities, admitted-source enforcement,
   protected-panel collision checks, and whole-family/repository split isolation.
-- [ ] Author the first independent first-party generator families.
+- [x] Implement candidate/prototype first-party read-observe generator family definitions and task-bundle construction; these are not sealed or admitted collection families.
+- [ ] Seal the final first-party generator families and admit them only through the attended source-archive, overlap, and operator-authorization process.
 
 Current Phase B files:
 
@@ -614,9 +620,14 @@ Current Phase B files:
   observation, and action-linkage receipts.
 - [x] Capture bounded post-tool workspace/source/observation receipts in the dedicated read-observe controller.
 - [x] Wire the no-progress decision into that controller, with raw/effective observation separation and one recovery budget.
-- [ ] Add atomic task leases, interruption recovery, and deterministic replay.
+- [x] Add durable atomic task leases, interruption recovery, and deterministic replay for the local correction authority; this does not authorize a production rollout or training run.
 - [x] Run fresh fake-event adversarial tests and structural parsing checks
   against one historical success and one historical terminal-cycle trace.
+
+Masked-SFT authorities require an explicit boolean `training_eligible` at every
+producer and consumer boundary. Legacy authorities that omit it are rejected;
+they require an explicit migration that adds and validates the field, or a
+complete rebuild, before they can be packed or loaded for training.
 
 Current Phase C ingestion files:
 
@@ -652,14 +663,10 @@ The dedicated controller is a deterministic local/testable read-observe slice ar
 
 ## Immediate next action
 
-Implement Phase B's source-registry and task-bundle schemas before downloading
-or generating public-source tasks. Then implement the fake-event collector and
-prove one fresh first-party task can travel through:
-
-```text
-task bundle -> isolated rollout -> state receipts -> detected failure ->
-verified correction -> zero-loss-prefix SFT authority -> pack reload
-```
-
-Only after that vertical slice passes should the project acquire 128 tasks or
-start eight GPU actors.
+The checked-in registry and operator collection allowlist are intentionally
+candidate-only and empty. Do not generate, admit, collect, train, or promote a
+collection from this state. A future attended admission requires a clean
+implementation commit, refreshed closed source archive, real protected-overlap
+execution, exact operator authorization, and a separate review. The removed
+CPU vertical was a diagnostic prototype, not execution attestation or training
+evidence.

@@ -8,7 +8,12 @@ import pytest
 import tiktoken
 import torch
 
-from ndm.data.masked_sft_dataset import RECORD_INDEX, sha256
+from ndm.data.masked_sft_dataset import (
+    RECORD_INDEX,
+    MaskedSFTPackedDataset,
+    SFTSamplerIdentity,
+    sha256,
+)
 from ndm.schedulefree_offload import CPUOffloadAdamWScheduleFree
 from scripts import build_e97_pi_instruction_sft as builder
 from scripts import build_e97_pi_eval_v2 as eval_v2_builder
@@ -228,6 +233,44 @@ def test_build_and_mix_authorities_are_deterministic_and_target_weighted(tmp_pat
     ], text=True, capture_output=True)
     assert result.returncode != 0
     assert "unique eligible targets exist" in result.stderr
+
+
+def test_publication_relative_authorities_survive_relocation_into_packs(tmp_path):
+    """Retained Pi/recovery/mixture producers remain compatible with pack loading."""
+
+    pi = tmp_path / "pi"
+    recovery = tmp_path / "recovery"
+    run("scripts/build_e97_pi_instruction_sft.py", "--output-root", pi,
+        "--records", 12, "--seed", 101)
+    run("scripts/build_e97_pi_recover_read_sft.py", "--output-root", recovery,
+        "--records", 12, "--seed", 102)
+    pi_sha, recovery_sha = sha256(pi / "manifest.json"), sha256(recovery / "manifest.json")
+    mixture = tmp_path / "mixture"
+    run("scripts/build_e97_masked_sft_mix.py", "--output-root", mixture,
+        "--source", f"pi={pi},{pi_sha},20",
+        "--source", f"recovery={recovery},{recovery_sha},20", "--seed", 103)
+
+    for name, authority in (("pi", pi), ("recovery", recovery), ("mixture", mixture)):
+        relocated = tmp_path / f"relocated-{name}"
+        authority.rename(relocated)
+        authority_sha = sha256(relocated / "manifest.json")
+        manifest = json.loads((relocated / "manifest.json").read_text())
+        assert all(entry["path"] == __import__("pathlib").Path(entry["path"]).name
+                   for entry in manifest["outputs"].values())
+        packs = tmp_path / f"packs-{name}"
+        run("scripts/build_e97_sft_packs.py", "--authority-root", relocated,
+            "--output-root", packs, "--context-size", 4096,
+            "--authority-manifest-sha256", authority_sha)
+        identity = SFTSamplerIdentity(
+            authority_manifest_sha256=authority_sha,
+            pack_manifest_sha256=sha256(packs / "manifest.json"), sampler_key=99,
+            data_world_size=1, context_size=4096,
+        )
+        dataset = MaskedSFTPackedDataset(relocated, packs, identity=identity, rank=0)
+        try:
+            assert dataset.get_batch(1)[0].shape == (1, 4097)
+        finally:
+            dataset.close()
 
 
 def test_pi_evaluator_reconstructs_exact_bash_contract():
@@ -457,6 +500,10 @@ def test_local_core_eval_launcher_is_real_pi_and_fail_closed():
     assert "USER_CONTEXT_VARIANT=${USER_CONTEXT_VARIANT:-none}" in text
     assert '--user-context-variant "$USER_CONTEXT_VARIANT"' in text
     assert 'sha256sum "$CHECKPOINT"' in text
+    assert '--checkpoint-sha256 "$CHECKPOINT_SHA256"' in text
+    assert ': "${WEIGHT_MODE:?set WEIGHT_MODE explicitly to saved or train}"' in text
+    assert '--weight-mode "$WEIGHT_MODE"' in text
+    assert '"$RUN_ROOT/identity/weight-mode.txt"' in text
     assert 'sha256sum "$CLI_IMAGE"' in text
 
 
@@ -513,4 +560,5 @@ def test_real_pi_eval_uses_hash_pinned_sandbox_extension():
     assert "--pi-core-canonical-system" in launcher
     assert "configs/pi/e97-core-tools.ts" in launcher
     assert "--kill-on-bad-exit=1" in launcher
+    assert "--checkpoint-sha256 \"'$CHECKPOINT_SHA256'\"" in launcher
     assert 'git rev-parse HEAD' not in launcher

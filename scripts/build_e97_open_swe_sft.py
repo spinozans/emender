@@ -329,6 +329,7 @@ def main() -> None:
                 repos[record["repo"]] += 1
     manifest = {
         "schema": AUTHORITY_SCHEMA, "status": "complete",
+        "training_eligible": True,
         "purpose": "verified OpenHands action-only Pi v2 protocol distillation",
         "dataset_id": DATASET_ID, "dataset_revision": DATASET_REVISION,
         "dataset_card_sha256": DATASET_CARD_SHA256,
@@ -344,7 +345,7 @@ def main() -> None:
         "counts": dict(counts), "errors": dict(errors), "excluded": dict(excluded),
         "repository_counts": dict(repos),
         "input_files": [{"name": path.name, "bytes": path.stat().st_size, "sha256": sha256(path)} for path in paths],
-        "outputs": {name: {"path": str(path.resolve()), "bytes": path.stat().st_size,
+        "outputs": {name: {"path": path.name, "bytes": path.stat().st_size,
                              "sha256": sha256(path)} for name, path in outputs.items()},
     }
     manifest_path = args.output_root / "manifest.json"

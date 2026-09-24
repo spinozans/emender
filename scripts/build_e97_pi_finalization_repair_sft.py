@@ -12,11 +12,14 @@ from pathlib import Path
 import tiktoken
 
 from ndm.data.masked_sft_dataset import AUTHORITY_SCHEMA, RECORD_INDEX, sha256
-from scripts.build_e97_pi_instruction_sft import ENCODING, SYSTEM, serialize, split, trace
+try:  # Support both ``python -m`` and the documented script-path invocation.
+    from scripts.build_e97_pi_instruction_sft import ENCODING, SYSTEM, serialize, split, trace
+except ModuleNotFoundError:  # pragma: no cover - exercised by subprocess CLIs
+    from build_e97_pi_instruction_sft import ENCODING, SYSTEM, serialize, split, trace
 
 
 def entry(path: Path) -> dict[str, object]:
-    return {"path": str(path.resolve()), "bytes": path.stat().st_size, "sha256": sha256(path)}
+    return {"path": path.name, "bytes": path.stat().st_size, "sha256": sha256(path)}
 
 
 def normalize_live_tool_results(messages: list[tuple[str, str]]) -> list[tuple[str, str]]:
@@ -109,6 +112,8 @@ def main() -> None:
     source = json.loads(source_manifest_path.read_text())
     if source.get("schema") != AUTHORITY_SCHEMA or source.get("status") != "complete":
         raise SystemExit("unsupported source authority")
+    if source.get("training_eligible") is not True:
+        raise SystemExit("authority is non-trainable or lacks explicit training eligibility")
     metadata_path = args.source_root / Path(source["outputs"]["metadata"]["path"]).name
     expected_metadata = source["outputs"]["metadata"]
     if metadata_path.stat().st_size != expected_metadata["bytes"] or sha256(metadata_path) != expected_metadata["sha256"]:
@@ -163,6 +168,7 @@ def main() -> None:
     manifest = {
         "schema": AUTHORITY_SCHEMA,
         "status": "complete",
+        "training_eligible": True,
         "purpose": "E97 Pi live-aligned assistant repair",
         "target_mode": args.target_mode,
         "source_root": str(args.source_root.resolve()),

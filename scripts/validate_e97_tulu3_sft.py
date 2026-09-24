@@ -21,11 +21,18 @@ def main():
     manifest = json.loads((args.root / "manifest.json").read_text())
     if manifest.get("schema") != SCHEMA or manifest.get("status") != "complete":
         raise SystemExit("manifest is not a complete Tulu SFT authority")
-    paths = {name: Path(info["path"]) for name, info in manifest["outputs"].items()}
+    if manifest.get("training_eligible") is not True:
+        raise SystemExit("Tulu SFT authority must be explicitly training-eligible")
+    paths = {}
+    for name, info in manifest["outputs"].items():
+        relative = info.get("path") if isinstance(info, dict) else None
+        candidate = Path(relative) if isinstance(relative, str) else None
+        if (candidate is None or candidate.is_absolute() or len(candidate.parts) != 1
+                or candidate.name != relative or relative in {"", ".", ".."}):
+            raise RuntimeError(f"output is not publication-relative: {name}")
+        paths[name] = args.root / candidate
     for name, path in paths.items():
         info = manifest["outputs"][name]
-        if path.resolve() != (args.root / path.name).resolve():
-            raise RuntimeError(f"output escaped authority root: {name}")
         if path.stat().st_size != info["bytes"] or sha256(path) != info["sha256"]:
             raise RuntimeError(f"output integrity failure: {name}")
     counts = manifest["counts"]
@@ -83,7 +90,7 @@ def main():
     receipt = {
         "schema": "emender-e97-tulu3-masked-sft-validation-v1",
         "status": "pass", "authority_manifest_sha256": sha256(args.root / "manifest.json"),
-        "records": records, "tokens": tokens,
+        "training_eligible": True, "records": records, "tokens": tokens,
         "assistant_target_tokens": observed_targets,
         "sampled_records": len(sample_indices),
         "outputs": {name: info["sha256"] for name, info in manifest["outputs"].items()},
