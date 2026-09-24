@@ -201,7 +201,10 @@ def _contains_check(path,needle):return {'type':'file_contains','path':path,'nee
 def _absent_check(path):return {'type':'file_absent','path':path}
 def _command_check(argv,timeout=90):return {'type':'command','argv':argv,'timeout':timeout}
 def _output_check(argv,needle,timeout=60):return {'type':'command_output_contains','argv':argv,'needle':needle,'timeout':timeout}
-def _clean_check():return {'type':'command_output_empty','argv':['git','status','--porcelain'],'timeout':30}
+def _clean_check():
+ # Clean tracked tree; incidental __pycache__ noise from test/build runs is
+ # not a task failure (the checker itself creates it by running the suite).
+ return {'type':'command','argv':['sh','-c','[ -z "$(git status --porcelain | grep -v __pycache__)" ]'],'timeout':30}
 
 TERMINAL_TEMPLATES=(
  'merge-shards','rename-manifest','config-migration',
@@ -741,6 +744,7 @@ def aggregate(args):
  canonical authority layouts (independently reconstructible; nothing is
  admitted to training)."""
  enc=tiktoken.get_encoding('p50k_base')
+ convcodec._worker_init()
  terminal_dir=args.terminal;conv_dir=args.conversations
  plan=json.loads(args.terminal_plan.read_text())
  if plan['schema']!=TERMINAL_PLAN_SCHEMA:raise ValueError('plan schema')
@@ -760,7 +764,7 @@ def aggregate(args):
    'repository_discovery':0,'wall_s':row.get('wall_s'),'guide_quality':row.get('guide_quality')})
  authority=terminal_dir/'candidate-authority'
  if authority.exists():raise FileExistsError(authority)
- write_authority(trows,{'plan_sha256':args.terminal_plan_sha},authority)
+ write_authority(trows,{'plan_sha256':args.terminal_plan_sha},terminal_dir)
  verified=sum(1 for r in trows)
  cplan=json.loads(args.conversation_plan.read_text())
  if cplan['schema']!=CONVERSATION_PLAN_SCHEMA:raise ValueError('conversation plan schema')
@@ -798,6 +802,61 @@ def aggregate(args):
  print('TEACHER_PILOT_AGGREGATED',json.dumps(summary['terminal']['verified']),json.dumps(summary['conversation']['verified']),flush=True)
 
 
+def reverify(args):
+ """Corrective pass for the checker defect: cases rejected ONLY because the
+ clean-tree check saw __pycache__ noise are re-checked against their preserved
+ workspace with the corrected check, then guide-reviewed on their stored
+ (unchanged) teacher trace. First-attempt outcomes stay in the backup
+ checkpoint; this pass appends corrected rows."""
+ enc=tiktoken.get_encoding('p50k_base')
+ plan=json.loads(args.plan.read_text())
+ if plan['schema']!=TERMINAL_PLAN_SCHEMA or sha(args.plan)!=args.plan_sha:raise ValueError('plan authority')
+ if sha(Path(plan['pi_bin']))!=json.loads(Path(plan['tool_manifest']).read_text())['pi_bin_sha256']:raise ValueError('pi runtime identity')
+ panel=dict(TERMINAL_PANEL);panel['tools']=plan['model_visible_tools']
+ ctx={'enc':enc,'metrics':Metrics(),'generator':plan['generator_model'],'guide':args.guide,
+  'pi_bin':Path(plan['pi_bin']),'manifest':plan['tool_manifest'],'out':args.output}
+ checkpoint=args.output/'checkpoint.jsonl'
+ rows=load_checkpoint(checkpoint)
+ cases={c['id']:c for c in plan['cases']}
+ corrected=0
+ for row_id,row in sorted(rows.items()):
+  if row['status']!='rejected' or row['reason']!='mechanical-verification-failed':continue
+  case=cases[row_id];case_dir=args.output/row_id
+  if 'clean_check' not in str(case.get('verify')) and not any(c['type']=='command_output_empty' for c in case['verify']):continue
+  private=json.loads((case_dir/'episode-private.json').read_text())
+  fails=[v for v in private['verify_receipts'] if not v['ok']]
+  if len(fails)!=1 or '__pycache__' not in fails[0]['detail']:continue
+  workspace=case_dir/'workspace'
+  if not workspace.is_dir():raise FileNotFoundError(workspace)
+  receipts=[];ok=True
+  for check in case['verify']:
+   fixed=_clean_check() if check.get('type')=='command_output_empty' and check.get('argv')==['git','status','--porcelain'] else check
+   this,detail=run_check(fixed,workspace)
+   receipts.append({'type':fixed['type'],'ok':this,'detail':detail});ok&=this
+  if not ok:continue
+  verdict=None;guide_error=None
+  try:verdict=guide_review_terminal(args.guide,ctx['metrics'],case['prompt'],private['native_record'])
+  except Exception as exc:guide_error=f'{type(exc).__name__}: {exc}'
+  new=dict(row);new['verify_receipts']=receipts;new['checker_corrected']=True
+  if verdict is not None and verdict['exemplar']:
+   ids,mask,units=encode_candidate(private['native_record'],private['generations'],0,enc)
+   new.update(status='verified',reason=None,tokens=len(ids),targets=sum(mask),
+    assistant_units=len(private['generations']),supervised_units=units,
+    calls=sum(1 for m in private['public_history'] if m['role']=='toolResult'),
+    errors=sum(m['isError'] for m in private['public_history'] if m['role']=='toolResult'),
+    guide_quality=verdict.get('quality'),guide_transitions=verdict.get('model_worthy_transitions'))
+   corrected+=1
+  else:
+   new['reason']=f"guide-reject:{verdict.get('rejection_category') or 'unspecified'}" if verdict is not None else f'guide-error:{guide_error}'
+  new['reverify_receipts']=receipts
+  publish(case_dir/'reverify-private.json',{'result':new,'guide_verdict':verdict,'guide_error':guide_error,'receipts':receipts})
+  append_checkpoint(checkpoint,new)
+ publish(args.output/'reverify-summary.json',{'schema':'emender-teacher-pilot-reverify-v1','checker_defect':'clean-tree check polluted by __pycache__ from its own test run',
+  'cases_examined':sum(1 for r in rows.values() if r['status']=='rejected' and r['reason']=='mechanical-verification-failed'),
+  'verified_after_correction':corrected,'guide':args.guide})
+ print('REVERIFY_DONE corrected',corrected,flush=True)
+
+
 def main():
  os.umask(0o077);signal.signal(signal.SIGTERM,lambda s,f:(_ for _ in ()).throw(TimeoutError('interrupted')))
  p=argparse.ArgumentParser();sp=p.add_subparsers(dest='command',required=True)
@@ -820,12 +879,15 @@ def main():
  n.add_argument('--terminal-plan-sha',required=True);n.add_argument('--conversations',type=Path,required=True)
  n.add_argument('--conversation-plan',type=Path,required=True);n.add_argument('--conversation-plan-sha',required=True)
  n.add_argument('--output',type=Path,required=True)
+ v=sp.add_parser('reverify');v.add_argument('--plan',type=Path,required=True);v.add_argument('--plan-sha',required=True)
+ v.add_argument('--guide',default=GUIDE_DEFAULT);v.add_argument('--output',type=Path,required=True)
  a=p.parse_args()
  if a.command=='freeze-terminal':freeze_terminal(a)
  elif a.command=='collect-terminal':collect_terminal(a)
  elif a.command=='freeze-conversations':freeze_conversations(a)
  elif a.command=='collect-conversations':collect_conversations(a)
  elif a.command=='aggregate':aggregate(a)
+ elif a.command=='reverify':reverify(a)
 
 
 if __name__=='__main__':main()
