@@ -239,8 +239,8 @@ def terminal_case(i,template):
   contents=[f'# draft {k}\n\ncontent-{tag}-{k}\n' for k in range(3)]
   for s,c in zip(sources,contents):case['workspace_files'][s]=c
   case['workspace_files']['manifest.json']=manifest
-  case['prompt']=(f'{op} apply the renames listed in manifest.json exactly as specified, then delete manifest.json. '
-   f'Keep every file\'s contents unchanged.')
+  case['prompt']=(f'{op} in the project-{name} workspace, apply the renames listed in manifest.json exactly as specified, '
+   f'then delete manifest.json. Keep every file\'s contents unchanged.')
   checks=[_absent_check(s) for s in sources]+[_absent_check('manifest.json')]
   checks+= [_file_check(t,c) for t,c in zip(targets,contents)]
   case['verify']=checks
