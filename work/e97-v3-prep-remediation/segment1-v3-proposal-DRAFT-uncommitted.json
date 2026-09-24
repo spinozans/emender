@@ -1,0 +1,251 @@
+{
+  "arc": {
+    "arc_id": "repair-v9r-full-arc-v3-restart",
+    "arc_keys": [
+      1401011,
+      1401042,
+      1401043,
+      1401046,
+      1401052,
+      1401056,
+      1401057,
+      1401074
+    ],
+    "arc_updates": 1024,
+    "chaining": "Each segment trains 128 updates from the prior segment final checkpoint (segment 1 from the bridge parent, full retention headroom).",
+    "evaluation_caveats": "Thinking-trained emission may shift the conversation-retention NLL panel (T2 caveat: re-baseline at the reasoning cohort's first entry); conversational-behavior panel added per the first unscripted-session operator findings (no-chat-mode gap).",
+    "juncture_policy": "Stage-B panel AND conversation NLL probe AND conversational-behavior panel at every 128-update boundary; full frozen dual gate at u256, u512, u896, u1024 and at any detector-flagged checkpoint; fail-closed stopping if retention is decisively breached.",
+    "rationale": "The v10 arc stopped fail-closed at u256 because the v2 prep's scrub over-correction removed the execution dialect's training data. This restart trains on the v3 prep: the translated + replay-verified OH collection (replacing the raw cohort) PLUS the restored grounded-authored and representation-bridge cohorts; every other cohort and budget is identical to the v2 prep.",
+    "segment_index": 1,
+    "segment_updates": 128,
+    "throughput_note": "Trained at 72s/update (chunk 2048/16384, trainer worktree pinned at d77dcc46) per the throughput forensics in the progress ledger; per-step config deviation from prior arcs qualified by loss-matching evidence.",
+    "total_segments": 8
+  },
+  "authority_manifest_sha256": "3c4f0b38ba107cabd4d0505ceb789bf2bba81ee2e11890421b7a163a96877f9b",
+  "automatic_expansion": false,
+  "automatic_retry": false,
+  "checkpoint_promotion": false,
+  "cohort_bindings": {
+    "authored_rehearsal": {
+      "authority_sha256": "08752c53e2199533252c77821ec9696012b19dc09ea0ff1508ef6676a6cd2140",
+      "consumed_target_tokens": 926091,
+      "records": 2583
+    },
+    "conversation_rehearsal": {
+      "authority_sha256": "d64f51abc615c097910900ffa7fc88f020ae5567b89958f607008078c271c7f6",
+      "consumed_target_tokens": 60000000,
+      "records": 56835
+    },
+    "extra3_rehearsal": {
+      "authority_sha256": "88e535b5bec8f704163eb45bab929d7c80e4eee92f575b3748ebb758d18b5229",
+      "cohort": "reasoning-rehearsal",
+      "records": 50
+    },
+    "openhands_rehearsal": {
+      "authority_sha256": "a179c140b4e8efa77a8163574bb78d4fe34dea91adfeb0439e8339d5002be1fb",
+      "consumed_target_tokens": 25998219,
+      "records": 2413
+    },
+    "rehearsal_rehearsal": {
+      "authority_sha256": "a21dba6f80e58e87ea838a98018b40650decebed3cf4b0f98dacdb750520469d",
+      "cohort": "representation-bridge-rehearsal",
+      "records": 2223
+    }
+  },
+  "context_size": 65536,
+  "conversation_rehearsal": {
+    "budget_targets": 60000000,
+    "manifest_sha256": "d64f51abc615c097910900ffa7fc88f020ae5567b89958f607008078c271c7f6",
+    "seed": 613117,
+    "source": "/mnt/nvme1n1/erikg/sft/e97-4b-smoltalk2-admitted-v1"
+  },
+  "data_world_size": 8,
+  "declared_cohorts": [
+    "compositional-rehearsal",
+    "conversation-rehearsal",
+    "cumulative-recovery-rehearsal",
+    "grounded-authored-rehearsal",
+    "instruction-rehearsal",
+    "live-aligned-rehearsal",
+    "longcopy-rehearsal",
+    "loopbreak-rehearsal",
+    "openhands-translated-rehearsal",
+    "pi-native-curriculum",
+    "pointerchase-rehearsal",
+    "reasoning-rehearsal",
+    "representation-bridge-rehearsal"
+  ],
+  "evidence_basis": {
+    "overlap_coverage": "prep manifest binds the selected-curriculum provenance triple (authority 8cf83db8..., selection audit de977726..., overlap audit 9c104d73... = pi-native-curriculum-2000-selected-v1), the same whole-prep coverage every prior repair prep bound; no prior prep ever ran a whole-prep protected-overlap audit. Per-collection coverage: reasoning cohort overlap-audit d8ed9720... (zero significant entity collisions); translated OH cohort coverage = machine replay verification + OH-vocabulary scrub + public SWE-rebench provenance (no protected-panel entity overlap audit exists for it, as for every prior OH cohort). Restored cohorts: representation-bridge (a21dba6f...) and grounded-authored (08752c53...) are the previously-qualified training-eligible authorities of the promoted v6-u96 lineage; their historical audits are the representation-bridge and grounded-expansion receipts; no new protected-panel overlap audit was run for this restoration.",
+    "scrub_reversal": "Operator remediation ruling (scrub reversal): OH vocabulary in supervised targets is REQUIRED bidialectal behavior \u2014 the execution panel runs in the OpenHands-compatible runtime whose tool surface is str_replace_editor/execute_bash. The v3 prep restores grounded-authored (2,583 records, full pool) and representation-bridge (2,223 records, full pool) in full; the translated+replay-verified OH collection (replacing the raw cohort) and every other cohort are unchanged from the v2 prep. Sampling-based fractions in scrub-report.json 4af96b8f... are measurements, not drop lists.",
+    "t1_translation": "5969 raw trajectories -> 5940 translated (29 dropped: 26 invalid_view_range, 3 malformed_create_args) -> 5181 replay-PASSED / 759 fail-closed drops (read_missing_file 332, read_content_mismatch 141, final_state_mismatch 125, ...; replay-full.log OH_REPLAY_VERIFIED line) -> 5087-record sealed collection (231,652,231 tokens / 57,814,225 supervised targets, 104 excluded over-context); zero GPUs; commits 78904dd7 + 9099b92c",
+    "t2_reasoning_pilot": "50/50 verified, 230 real Pi tool calls, 30 authentic tool errors, 331,929 tokens / 15,853 supervised targets, observe-then-quote machine grounding; audit f62c86efb264d47eb88669132e5e8f17f5cb64b4335d20675c7d4b5805471580, overlap d8ed9720c9d55721a35420b43e1a753ea3d0034b1c35851f7f5a792363033ae6; commit cc016d31 + follow-ups",
+    "throughput_forensics": "75s step decomposed; chunk 2048/16384 qualified at 72s/update with losses matching to 5-6 digits; DDP bucket coarsening (946bda6c) neutral",
+    "v10_u256_stop": "repair-v9r (v2 prep) stopped fail-closed at u256: execution 0/96 (bridge control 67/96 in the same run), Stage-B 9/14 valid 6/14 correct, conversation windows PASS. Episode traces show valid OH-dialect frames on turn 0 then malformed frames; the scrub ruling dropped 80%-sampled grounded-authored and 57%-sampled representation-bridge records, removing the execution dialect's training data. Ledger: docs/validation/e97-pi-native-tool-copy-progress.md (v10 section); v2 prep 24919e73... retained as evidence."
+  },
+  "identity_bindings": [
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/representation-bridge-v1-train/checkpoints/checkpoint_agent_sft_u000032_loss_0.5302.pt",
+      "9b78628d47c48c304c14de50399fe1853d8c83386c7cf5d9bd4a0e878bf679fa"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-repair9-full-preparation-v3/manifest.json",
+      "3c4f0b38ba107cabd4d0505ceb789bf2bba81ee2e11890421b7a163a96877f9b"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-repair9-full-preparation-v3/packs/manifest.json",
+      "5a4baffbb0a3ac4e2b6531d2610bb4ae26e9ec0f790813326de42d90d03175a0"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-repair9-full-preparation-v3/schedule-proposal.json",
+      "843013a2dd19b4ce9db17f6ea3711836ef17733f53ba948d263004483679ffbc"
+    ],
+    [
+      "configs/pi/e97-active-tool-surface-v1.json",
+      "55421905438806223414d96a4e64f1a6ae64772afdb1fbc67fbbfb77e8d5d908"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/representation-bridge-v1-data/authority/manifest.json",
+      "a21dba6f80e58e87ea838a98018b40650decebed3cf4b0f98dacdb750520469d"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/grounded-expansion-v1-data-r2/authority/manifest.json",
+      "08752c53e2199533252c77821ec9696012b19dc09ea0ff1508ef6676a6cd2140"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-oh-pi-native-translation-v1/candidate-authority/manifest.json",
+      "a179c140b4e8efa77a8163574bb78d4fe34dea91adfeb0439e8339d5002be1fb"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-oh-pi-native-translation-v1/scrub-report.json",
+      "4af96b8fa60bfa4dd06dbede7ad47b20a0803c5ff24645dcc8ee0e01562248a8"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-oh-pi-native-translation-v1/translate-report.json",
+      "b6b702a078307f6ddbcf2b77fed373c19610c9a39c171ab05649d214d6296cf1"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-reasoning-rehearsal-collection-v1/collect/candidate-authority/manifest.json",
+      "88e535b5bec8f704163eb45bab929d7c80e4eee92f575b3748ebb758d18b5229"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-reasoning-rehearsal-collection-v1/audit.json",
+      "f62c86efb60de7c2df6329b043714000ea881c3c9d68adcda1c5f1eeb846ac4d"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-reasoning-rehearsal-collection-v1/overlap-audit.json",
+      "d8ed9720c9d55721a35420b43e1a753ea3d0034b1c35851f7f5a792363033ae6"
+    ],
+    [
+      "/mnt/nvme1n1/erikg/sft/e97-4b-smoltalk2-admitted-v1/manifest.json",
+      "d64f51abc615c097910900ffa7fc88f020ae5567b89958f607008078c271c7f6"
+    ],
+    [
+      "/mnt/nvme1n1/erikg/sft/e97-4b-pi-instruction-mix-v2/manifest.json",
+      "40d1650459c01756e0772a6058c100029c3b6e3a87aa68947515972ffaa6b1c5"
+    ],
+    [
+      "/mnt/nvme1n1/erikg/sft/e97-4b-pi-compositional-retention-mix-v1/manifest.json",
+      "79e7981077fc387c3e3759728ddd0f9e1ac16f687c628542e8313fb735c4cfb7"
+    ],
+    [
+      "/mnt/nvme1n1/erikg/sft/e97-4b-pi-cumulative-recovery-mix-v1/manifest.json",
+      "a17648481e5cf1183ea640b873d70e2b1c36ad3e976d0c4b4a2f19af54fe600f"
+    ],
+    [
+      "/mnt/nvme1n1/erikg/sft/e97-4b-pi-live-aligned-all-assistant-v1/manifest.json",
+      "4a1cf86f9089cc3f2f79884f845d26d487d88b20fb32b589a8095d4824bc6a20"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-extracterror-collection-v1/collect/candidate-authority/manifest.json",
+      "08817eb42ff835523cc62bc13208053daeb79479a4bb9a585f1f427b53659aa4"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-longcopy-collection-v1/collect/candidate-authority/manifest.json",
+      "27a7f97d64a1589f98e3ce851344aac51e4c7608b2fa86df6c92955a52e79536"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-pointerchase-collection-v1/collect/candidate-authority/manifest.json",
+      "f2361a86c3909083c93be6702f12ad8323844a2390069d368ebec92d52e0247e"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-curriculum-2000-selected-v1/candidate-authority/manifest.json",
+      "8cf83db8d608f6af74bbd2cbe60206ef435fb3003ab2bb63f4eadab17eb05562"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-curriculum-2000-selected-v1/selection-audit.json",
+      "de977726f0758206ee9defe9c3687d2485e3ba2b80eb9ef9ceafb065c5f6646b"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-curriculum-2000-selected-v1/overlap-audit.json",
+      "9c104d73b104f4d29a83ca1472b66ef2df681e020a2b9688eb4f87c6ef814a78"
+    ]
+  ],
+  "new_rl_updates": 0,
+  "operator_internal_training_authorized": false,
+  "optimizer_updates_authorized": 0,
+  "pack_manifest_sha256": "5a4baffbb0a3ac4e2b6531d2610bb4ae26e9ec0f790813326de42d90d03175a0",
+  "packing_authorized": false,
+  "parent_checkpoint": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/representation-bridge-v1-train/checkpoints/checkpoint_agent_sft_u000032_loss_0.5302.pt",
+  "parent_checkpoint_sha256": "9b78628d47c48c304c14de50399fe1853d8c83386c7cf5d9bd4a0e878bf679fa",
+  "per_update_cohort_stratification": {
+    "min_target_fraction": 0.02,
+    "proposed_updates": 128,
+    "scheme": "window-coverage",
+    "window_updates": 32
+  },
+  "preparation_root": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-repair9-full-preparation-v3",
+  "proposed_behavioral_gate": {
+    "composition": ">= 4/16",
+    "openhands_execution_overall": ">= 64/96",
+    "openhands_fresh": ">= 30/32",
+    "openhands_prior_fresh": "= 16/16",
+    "openhands_prior_regression": ">= 10/16",
+    "openhands_transfer": ">= 5/16",
+    "pi_native_stage_b": "valid first frame >= 12/14 and correct first action >= 10/14",
+    "retention": "both saved-x/train-y retention gates pass"
+  },
+  "proposed_learning_rate": 1e-05,
+  "proposed_updates": 128,
+  "purpose": "Repair-v9r v3 RESTART arc segment 1 of 8: the v10 (v2-prep) arc stopped fail-closed at u256 (execution 0/96; scrub over-correction removed the execution dialect's training data). This restart trains on the v3 preparation \u2014 the translated + replay-verified OH collection (5087 records replay-PASSED of 5940, byte-exact final-state oracle) with the grounded-authored (2,583) and representation-bridge (2,223) cohorts RESTORED IN FULL per the scrub-reversal remediation \u2014 plus the reasoning-rehearsal pilot, chained from the bridge parent with full retention headroom. Juncture detectors and frozen dual gates unchanged.",
+  "sampler_key": 1401011,
+  "schedule_selection": "Training-data-only screen over keys 1401002.. (fresh range; the v2-arc keys 1400005.. are invalid for this manifest sha and were re-screened from scratch) under the window-coverage rule (majors >=2% every update, minors every 32 updates); 8 keys admitted: 1401011,1401042,1401043,1401046,1401052,1401056,1401057,1401074; this segment trains key 1401011.",
+  "schedule_sha256": "843013a2dd19b4ce9db17f6ea3711836ef17733f53ba948d263004483679ffbc",
+  "scheduled_assistant_targets": 26719734,
+  "scheduled_input_tokens": 59205679,
+  "scheduled_source_targets": {
+    "compositional-rehearsal": 1289697,
+    "conversation-rehearsal": 10704996,
+    "cumulative-recovery-rehearsal": 1651127,
+    "grounded-authored-rehearsal": 156166,
+    "instruction-rehearsal": 7868253,
+    "live-aligned-rehearsal": 420671,
+    "longcopy-rehearsal": 1294,
+    "loopbreak-rehearsal": 1404,
+    "openhands-translated-rehearsal": 4469800,
+    "pi-native-curriculum": 14908,
+    "pointerchase-rehearsal": 5797,
+    "reasoning-rehearsal": 3223,
+    "representation-bridge-rehearsal": 132398
+  },
+  "scheduled_source_unique_records": {
+    "compositional-rehearsal": 7353,
+    "conversation-rehearsal": 10184,
+    "cumulative-recovery-rehearsal": 10699,
+    "grounded-authored-rehearsal": 448,
+    "instruction-rehearsal": 44197,
+    "live-aligned-rehearsal": 3520,
+    "longcopy-rehearsal": 32,
+    "loopbreak-rehearsal": 24,
+    "openhands-translated-rehearsal": 416,
+    "pi-native-curriculum": 156,
+    "pointerchase-rehearsal": 41,
+    "reasoning-rehearsal": 10,
+    "representation-bridge-rehearsal": 388
+  },
+  "scheduled_unique_packs": 1024,
+  "scheduled_unique_records": 77468,
+  "schema": "emender-e97-pi-native-repair9r-full-arc-v3-segment1-proposal-v1",
+  "source_commit": "d77dcc462e8b25c0b362b196347ddc9f50ffe683",
+  "status": "frozen-proposal-not-authorized"
+}

@@ -1,0 +1,90 @@
+{
+  "schema": "emender-e97-systematic-representation-training-v1",
+  "status": "frozen",
+  "parent": {
+    "checkpoint": "/mnt/nvme2n1/erikg/diloco_8gpu/e97_4b_pi_instruction_local/runs/e97-4b-post-broad-exact-live-aligned-repair-u8-2d6c77b2/checkpoints/checkpoint_agent_sft_u000008_loss_0.0010.pt",
+    "sha256": "aae654aa1db004ba9b9805fce54e005332361bbf536168a6618a1c22cce7af39",
+    "weight_mode": "train"
+  },
+  "source_args_json": "/mnt/nvme1n1/erikg/diloco_8gpu/e97_4b_frontier_100b_hf/checkpoints/step_024448_tokens_99723771904/args.json",
+  "stage": {
+    "root": "/mnt/nvme2n1/erikg/sft/e97-4b-systematic-representation-stage-50m-v1",
+    "receipt_sha256": "7058c9302aa1235b93a2ce75721db951124e5b4d8e822f08e254c28eba08bb8f",
+    "validation_sha256": "73bfada5b4c6a493a9c69882f3a96dcfcc139dafad3fff3e590b61cbee7c5764",
+    "recipe_sha256": "223c940a4258e5144a6bdcfdf46c96a6b063ac517b38680f880de0a684dcb536"
+  },
+  "arms": {
+    "action-only": {
+      "authority_sha256": "80304e9cd61669d2239556b096b570f7bd23b615fbfdc8ae458558720552eb99",
+      "pack_sha256": "14cf3002cd05f6ce76af23f7d54dcbfb3cb94b6295faaffc7db7f0eac596fd59",
+      "packs": 2563,
+      "steps": 320,
+      "pack_slots": 2560,
+      "expected_consumed_assistant_targets": 49987471,
+      "expected_consumed_input_tokens": 135859257
+    },
+    "private-analysis": {
+      "authority_sha256": "08c16e0fa08b960ada87e197ba94f1a842dd0062691aaf28911f1df6bc552247",
+      "pack_sha256": "22a69dd252773cf13c8803e191ae9f88d1d87cadaa51e10850095c47254c47ea",
+      "packs": 1919,
+      "steps": 240,
+      "pack_slots": 1920,
+      "expected_consumed_assistant_targets": 50016738,
+      "expected_consumed_input_tokens": 105894539
+    }
+  },
+  "sampling": {
+    "schema": "emender-record-pack-counter-v1",
+    "mode": "epoch-permutation",
+    "sampler_key": 974121,
+    "world_size": 8,
+    "context_size": 65536,
+    "target_difference": 29267,
+    "relative_target_difference": 0.0005851441171553411,
+    "policy": "branch-specific K8-aligned update horizons; primary fairness is consumed assistant-target tokens; input-token and update costs remain reported"
+  },
+  "optimizer": {
+    "type": "CPUOffloadAdamWScheduleFree",
+    "lr": 0.000002,
+    "betas": [0.9, 0.95],
+    "weight_decay": 0.01,
+    "warmup_steps": 8,
+    "grad_clip": 1.0,
+    "state_storage": "pinned-cpu-bf16-no-fp32-master"
+  },
+  "runtime": {
+    "world_size": 8,
+    "island_size": 8,
+    "diloco_k": 8,
+    "diloco_merge_enabled": false,
+    "boundary_aware_packs": true,
+    "gradient_checkpoint_group_size": 3,
+    "empty_cache_min_record_tokens": 32768,
+    "mlp_checkpoint_chunk_size": 4096,
+    "checkpoint_every_updates": 32,
+    "keep_checkpoints": 3,
+    "alloc_conf": "expandable_segments:True",
+    "numa_locality": true,
+    "isolated_triton_caches": true
+  },
+  "execution_order": ["action-only", "private-analysis"],
+  "qualification": {
+    "updates": 8,
+    "purpose": "numerical, mmap reload, exact-resume, reset/masking, and resource qualification only",
+    "not_behavioral_selection": true
+  },
+  "evaluation_weight_modes": ["saved", "train"],
+  "regression_floors": {
+    "pi_core_120": 116,
+    "pi_compositional_240": 228,
+    "parent_preflight_required": "120/120 core and 236/240 compositional",
+    "failure_policy": "stop the branch at a K8 checkpoint on nonfinite loss/gradient, payload identity failure, reload failure, or floor violation; do not adapt mixture or LR within an arm"
+  },
+  "selection": {
+    "primary": "unseen executable-task success with cycle and invalid-tool penalties",
+    "secondary": "conversation/instruction/document quality and paired saved-x/train-y retention",
+    "tie_break": "action-only",
+    "private_analysis_requires_meaningful_benefit": true,
+    "loss_only_selection_forbidden": true
+  }
+}
