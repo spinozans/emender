@@ -42,6 +42,7 @@ import urllib.error,urllib.request
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+import numpy as np
 import pyarrow.parquet as pq
 import tiktoken
 
@@ -725,6 +726,78 @@ def collect_conversations(args):
  print('CONVERSATION_COLLECT done',flush=True)
 
 
+def _encode_conversation(messages,enc):
+ pieces=[]
+ for i,message in enumerate(messages):
+  if i:pieces.append(('\n\n',False))
+  pieces.append((('User:\n' if message['role']=='user' else 'Assistant:\n'),False))
+  pieces.append((message['content'],message['role']=='assistant'))
+ pieces.append((convcodec.RS,True))
+ return convcodec._encode_pieces(pieces)
+
+
+def aggregate(args):
+ """Re-encode verified records from their private receipts into the
+ canonical authority layouts (independently reconstructible; nothing is
+ admitted to training)."""
+ enc=tiktoken.get_encoding('p50k_base')
+ terminal_dir=args.terminal;conv_dir=args.conversations
+ plan=json.loads(args.terminal_plan.read_text())
+ if plan['schema']!=TERMINAL_PLAN_SCHEMA:raise ValueError('plan schema')
+ if sha(args.terminal_plan)!=args.terminal_plan_sha:raise ValueError('plan identity')
+ trows=[];rejs=[]
+ for row in sorted(load_checkpoint(terminal_dir/'checkpoint.jsonl').values(),key=lambda r:r['id']):
+  private=json.loads((terminal_dir/row['id']/'episode-private.json').read_text())
+  if row['status']!='verified':rejs.append({'id':row['id'],'reason':row['reason']});continue
+  native=private['native_record'];generations=private['generations']
+  ids,mask,units=encode_candidate(native,generations,0,enc)
+  record_sha=hashlib.sha256(native.encode()).hexdigest()
+  trows.append({'id':row['id'],'category':row['family'],'family':row['template'],'tokens':np.asarray(ids,dtype='<u4').tobytes(),
+   'mask':mask,'targets':sum(mask),'assistant_units':len(generations),'supervised_units':units,
+   'errors':sum(m['isError'] for m in private['public_history'] if m['role']=='toolResult'),
+   'calls':sum(1 for m in private['public_history'] if m['role']=='toolResult'),
+   'episode_sha256':record_sha,'sequence_sha256':hashlib.sha256(np.asarray(ids,dtype='<u4').tobytes()+mask).hexdigest(),
+   'repository_discovery':0,'wall_s':row.get('wall_s'),'guide_quality':row.get('guide_quality')})
+ authority=terminal_dir/'candidate-authority'
+ if authority.exists():raise FileExistsError(authority)
+ write_authority(trows,{'plan_sha256':args.terminal_plan_sha},authority)
+ verified=sum(1 for r in trows)
+ cplan=json.loads(args.conversation_plan.read_text())
+ if cplan['schema']!=CONVERSATION_PLAN_SCHEMA:raise ValueError('conversation plan schema')
+ if sha(args.conversation_plan)!=args.conversation_plan_sha:raise ValueError('conversation plan identity')
+ crows=[];crejs=[]
+ for row in sorted(load_checkpoint(conv_dir/'checkpoint.jsonl').values(),key=lambda r:r['id']):
+  if row['status']!='verified':crejs.append({'id':row['id'],'reason':row['reason']});continue
+  private=json.loads((conv_dir/row['id']/'record-private.json').read_text())
+  tokens,masks,complete=_encode_conversation(private['messages'],enc)
+  crows.append({'id':row['id'],'seed_identity':row['seed_identity'],'tokens':tokens,'mask':masks,'targets':sum(masks),
+   'turns':len(private['messages']),'serialization_sha256':hashlib.sha256(complete.encode()).hexdigest(),'wall_s':row.get('wall_s'),
+   'guide_quality':row.get('guide_quality')})
+ cauthority=conv_dir/'candidate-authority'
+ if cauthority.exists():raise FileExistsError(cauthority)
+ cauthority.mkdir(parents=True,mode=0o700)
+ paths={'tokens':cauthority/'tokens.uint32.bin','mask':cauthority/'assistant_mask.uint8.bin','index':cauthority/'records.idx','metadata':cauthority/'records.jsonl'}
+ offset=0;targets=0
+ with paths['tokens'].open('xb') as tf,paths['mask'].open('xb') as mf,paths['index'].open('xb') as ix,paths['metadata'].open('x') as meta:
+  for row in crows:
+   n=len(row['mask']);tf.write(struct.pack(f'<{n}I',*row['tokens']));mf.write(bytes(row['mask']))
+   ix.write(RECORD_INDEX.pack(offset,n,row['targets'],0))
+   meta.write(json.dumps({k:v for k,v in row.items() if k not in ('tokens','mask')},sort_keys=True)+'\n')
+   offset+=n;targets+=row['targets']
+ publish(cauthority/'manifest.json',{'schema':'emender-teacher-pilot-conversation-authority-v1','status':'verified-candidates-not-admitted',
+  'training_eligible':False,'packing_authorized':False,'optimizer_updates_authorized':0,'tokenizer':'p50k_base',
+  'plan_sha256':args.conversation_plan_sha,'counts':{'records':len(crows),'tokens':offset,'assistant_target_tokens':targets},
+  'outputs':{k:{'path':p.name,'bytes':p.stat().st_size,'sha256':sha(p)} for k,p in paths.items()}})
+ summary={'schema':'emender-teacher-pilot-aggregate-v1','terminal':{'verified':verified,'rejected':len(rejs),
+  'rejections':dict(Counter(r['reason'] for r in rejs)),'tokens':sum(len(np.frombuffer(r['tokens'],dtype='<u4')) for r in trows),
+  'assistant_target_tokens':sum(r['targets'] for r in trows),'authority_sha256':sha(authority/'manifest.json')},
+  'conversation':{'verified':len(crows),'rejected':len(crejs),'rejections':dict(Counter(r['reason'] for r in crejs)),
+  'tokens':offset,'assistant_target_tokens':targets,'authority_sha256':sha(cauthority/'manifest.json')},
+  'training_eligible':False,'packing_authorized':False,'optimizer_updates':0}
+ publish(args.output,summary)
+ print('TEACHER_PILOT_AGGREGATED',json.dumps(summary['terminal']['verified']),json.dumps(summary['conversation']['verified']),flush=True)
+
+
 def main():
  os.umask(0o077);signal.signal(signal.SIGTERM,lambda s,f:(_ for _ in ()).throw(TimeoutError('interrupted')))
  p=argparse.ArgumentParser();sp=p.add_subparsers(dest='command',required=True)
@@ -743,11 +816,16 @@ def main():
  h.add_argument('--generator',default=GENERATOR_DEFAULT);h.add_argument('--guide',default=GUIDE_DEFAULT)
  h.add_argument('--lanes',type=int,required=True);h.add_argument('--target',type=int,required=True)
  h.add_argument('--output',type=Path,required=True)
+ n=sp.add_parser('aggregate');n.add_argument('--terminal',type=Path,required=True);n.add_argument('--terminal-plan',type=Path,required=True)
+ n.add_argument('--terminal-plan-sha',required=True);n.add_argument('--conversations',type=Path,required=True)
+ n.add_argument('--conversation-plan',type=Path,required=True);n.add_argument('--conversation-plan-sha',required=True)
+ n.add_argument('--output',type=Path,required=True)
  a=p.parse_args()
  if a.command=='freeze-terminal':freeze_terminal(a)
  elif a.command=='collect-terminal':collect_terminal(a)
  elif a.command=='freeze-conversations':freeze_conversations(a)
  elif a.command=='collect-conversations':collect_conversations(a)
+ elif a.command=='aggregate':aggregate(a)
 
 
 if __name__=='__main__':main()
