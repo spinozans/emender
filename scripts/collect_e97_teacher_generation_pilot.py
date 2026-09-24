@@ -274,6 +274,7 @@ def terminal_case(i,template):
    _output_check(['git','ls-tree','--name-only','HEAD',extra],extra)]
  elif template=='revert-broken-change':
   good=safe_num(rng,101,899)
+  while str(good+7) in FORBIDDEN_3DIGIT:good=safe_num(rng,101,899)
   case['workspace_files'][f'src/app_{name}.py']=f'def total(xs):\n    return sum(xs)\n'
   case['workspace_files'][f'tests/test_{name}.py']=f'import unittest,sys\nsys.path.insert(0,"src")\nfrom app_{name} import total\nclass T(unittest.TestCase):\n def test_total(self): self.assertEqual(total([2,{good},5]),{good+7})\n'
   case['setup']=[['git','init','-q'],['git','config','user.name','Pilot Fixture'],['git','config','user.email','fixture@invalid.example'],
@@ -308,6 +309,8 @@ def terminal_case(i,template):
   case['workspace_files'][f'data_{name}.csv']='group,value\n'+''.join(f'{g},{v}\n' for g,v in rows)
   agg={}
   for g,v in rows:agg.setdefault(g,[]).append(v)
+  for g,vs in agg.items():
+   while str(sum(vs)) in FORBIDDEN_3DIGIT:vs[0]=max(1,vs[0]-1)
   expected=''.join(f'{g} {sum(vs)} {len(vs)}\n' for g,vs in sorted(agg.items()))
   case['prompt']=(f'{op} data_{name}.csv holds group,value rows. Produce summary_{name}.txt with one line per group, '
    f'sorted by group name, each line exactly "group total count" separated by single spaces (total = sum of values, count = number of rows).')
@@ -346,6 +349,7 @@ def terminal_case(i,template):
   case['verify']=[_file_check(f'codes_{name}.txt',expected)]
  elif template=='make-repair':
   total=safe_num(rng,100,999)
+  while str(total+8) in FORBIDDEN_3DIGIT:total=safe_num(rng,100,999)
   case['workspace_files'].update({
    'Makefile':f'all: build test\n\nbuild:\n\tpython3 src/calc_{name}.py > artifact_{name}.txt\n\tpython3 -m py_compile src/calc_{name}.py\n\ntest:\n\tpython3 -m unittest discover -s tests -q\n',
    f'src/calc_{name}.py':f'def total(xs):\n    return sum(xs[1:])\n\nprint(total([3, {total}, 5]))\n',
