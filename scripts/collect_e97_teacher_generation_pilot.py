@@ -376,6 +376,9 @@ def terminal_case(i,template):
    f'Leave expected_{name}.txt and the input untouched.')
   case['verify']=[_command_check(['python3',f'pipeline_{name}.py']),_file_check(f'out_{name}.txt',expected)]
  else:raise ValueError(template)
+ # pi strips leading/trailing whitespace from the stdin prompt; frozen prompts
+ # must be byte-stable against that strip or the provider session guard rejects.
+ case['prompt']=case['prompt'].strip()
  for text in [case['prompt'],*case['workspace_files'].values(),json.dumps(case['verify'],sort_keys=True)]:check_text(text)
  if len(case['workspace_files'])>16 or sum(len(v.encode()) for v in case['workspace_files'].values())>32768:raise ValueError('workspace bound')
  return case
