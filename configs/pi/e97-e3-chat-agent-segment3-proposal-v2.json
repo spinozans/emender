@@ -1,0 +1,547 @@
+{
+  "arc": {
+    "arc_id": "e97-e3-chat-agent",
+    "arc_keys": [
+      2300002,
+      2300003,
+      2300004,
+      2300007
+    ],
+    "arc_updates": 512,
+    "chaining": "Segment 3 trains 128 updates from E3 segment 2's final audited checkpoint (/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e3-chat-agent-segment2-training-v1/checkpoints/checkpoint_agent_sft_u000128_loss_1.3049.pt); the prior segment's training audit (/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e3-chat-agent-segment2-training-v1/audit.json, status passed-training-not-promoted) verifies the exact parent sha256.",
+    "evaluation_caveats": "The chat-probe panel baseline is E2's u512 juncture (chat 0/3); the document-NLL floor is the E3 parent's bound reading (2.5566 nats); the reasoning cohort entered at E1 segment 1 (conversation NLL panel re-baselined there); the window-class cohorts' guarantee floor is per-32-update window, not per update; the admitted real-human-chat cohort (WildChat+LMSYS, ~15.2%% of targets) is blended into the conversation slice per the intake admission's dose arithmetic, replacing part of the synthetic SmolTalk2 slice (v2 supersedes the SmolTalk2-only v1 freeze).",
+    "juncture_policy": "Stage-B panel AND conversation NLL probe AND the E1 chat-probe panel AND the frozen document-NLL probe at every 128-update boundary; full frozen dual gate at u256 and u512 and at any detector-flagged checkpoint; fail-closed stopping if retention is decisively breached, the chat-probe panel regresses below the prior juncture, OR the document-NLL probe regresses below the E3 parent bound floor; no automatic retries; no threshold changes.",
+    "rationale": "The E3 chat-seam repair arc: E2's cohort families rebalanced with the verified hybrid-conversation v2 seam collection at x4 epochs (the primary chat-seam fix) and the NEW multi-episode session family at x4 (state carries across episode boundaries), fillers down to ~17-18%, anchors mainmix-dominant (option A), fresh disjoint conversation ~30% \u2014 BLENDED with the admitted real-human-chat cohort (WildChat+LMSYS, 20.0M targets at ~15.2%, seed 20260923) replacing part of the synthetic SmolTalk2 slice per the intake admission's dose arithmetic \u2014 restored pools >=5% at 4 epochs, chained from the E2 u512 checkpoint 5ea4e078, with the document-NLL probe fail-closed against the E3 parent baseline.",
+    "segment_index": 3,
+    "segment_updates": 128,
+    "throughput_note": "Trained at 72s/update (chunk 2048/16384, trainer worktree pinned at fca120ba) per the throughput forensics in the progress ledger.",
+    "total_segments": 4
+  },
+  "authority_manifest_sha256": "0a0e79457a1e7a772622ceea6a2c66fe28eb80a9eae434611995cb500d6e1a17",
+  "automatic_expansion": false,
+  "automatic_retry": false,
+  "checkpoint_promotion": false,
+  "cohort_bindings": {
+    "authored_rehearsal": {
+      "authority_sha256": "08752c53e2199533252c77821ec9696012b19dc09ea0ff1508ef6676a6cd2140",
+      "consumed_target_tokens": 3704364,
+      "records": 10332,
+      "repeat_epochs": 4
+    },
+    "conversation_rehearsal": {
+      "authority_sha256": "d64f51abc615c097910900ffa7fc88f020ae5567b89958f607008078c271c7f6",
+      "consumed_target_tokens": 19600000,
+      "freshness": {
+        "excluded_prior_draw_records": 131734,
+        "exclusion_authority": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e3-chat-agent-prep-v1/conversation-prior-draw-identities.txt",
+        "method": "identity-exclusion"
+      },
+      "records": 18636,
+      "seed": 613220
+    },
+    "extra3_rehearsal": {
+      "authority_sha256": "88e535b5bec8f704163eb45bab929d7c80e4eee92f575b3748ebb758d18b5229",
+      "cohort": "reasoning-rehearsal",
+      "records": 200,
+      "repeat_epochs": 4
+    },
+    "extra4_rehearsal": {
+      "authority_sha256": "f88ff570d3cee472a691df018bd72db30710f434a63418c571d0d0d6a014141c",
+      "cohort": "hybrid-conversation-rehearsal-v2",
+      "records": 20800,
+      "repeat_epochs": 4
+    },
+    "rehearsal_rehearsal": {
+      "authority_sha256": "a21dba6f80e58e87ea838a98018b40650decebed3cf4b0f98dacdb750520469d",
+      "cohort": "representation-bridge-rehearsal",
+      "records": 8892,
+      "repeat_epochs": 4
+    }
+  },
+  "context_size": 65536,
+  "conversation_rehearsal": {
+    "budget_targets": 19600000,
+    "manifest_sha256": "d64f51abc615c097910900ffa7fc88f020ae5567b89958f607008078c271c7f6",
+    "seed": 613220,
+    "source": "/mnt/nvme1n1/erikg/sft/e97-4b-smoltalk2-admitted-v1"
+  },
+  "data_world_size": 8,
+  "declared_cohorts": [
+    "compositional-rehearsal",
+    "conversation-rehearsal",
+    "cumulative-recovery-rehearsal",
+    "grounded-authored-rehearsal",
+    "hybrid-conversation-rehearsal-v2",
+    "live-aligned-rehearsal",
+    "long-document-library-anchor",
+    "longcopy-rehearsal",
+    "loopbreak-rehearsal",
+    "mainmix-draws-anchor",
+    "multi-episode-session-rehearsal",
+    "pi-native-curriculum",
+    "pointerchase-rehearsal",
+    "real-human-chat-rehearsal",
+    "reasoning-rehearsal",
+    "representation-bridge-rehearsal",
+    "tooltalk-rehearsal",
+    "verified-raw-oh"
+  ],
+  "evidence_basis": {
+    "doc_nll_probe": "The frozen document-NLL probe (8 documents, 198,295 scored tokens, panel sha-bound) joins Stage-B + conversation NLL + the chat-probe panel at every 128-update juncture. Frozen baselines (q8_0, cap 32,768/doc): base y-form 2.491950, bridge 2.610475, v6-u96 2.658496, E2 parent u256 2.597301, E2 u384 juncture 2.554730. The E3 fail-closed floor is the E3 parent's bound reading 2.556634 (E3 parent (E2-u512 checkpoint 5ea4e078) document-NLL panel mean, COMPLETE at freeze time; source (E2 lane, read-only): /mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e2-chat-agent-prep-v1/e2-juncture-evals/seg4-u128/doc-nll/nll.json). The E2 anchor trajectory SATURATED at u384 (2.554730) and HELD at the final u512 checkpoint (2.556634, +0.0019 nats, no regression vs the E2 u256 parent 2.597301): the E3 baseline is the parent's TERMINAL state, not its transient best. Any juncture checkpoint scoring strictly above the bound floor on the same panel is a document-NLL regression (fail-closed stop decision at the operator's juncture policy; quantization form held constant \u2014 every checkpoint is scored as its own per-checkpoint q8_0 conversion).",
+    "real_human_chat_blend": "The real-human-chat intake lane (e97-real-human-chat-intake-v1; WildChat + LMSYS-Chat-1M) is ADMITTED and BLENDED per Recipe B of W/logs/recipe-real-chat-blend.md: admission manifest 4984f89edc1aa45fa745f173005611cfb25578e059fee83bc881b2961264288a binds the combined authority (manifest sha 4521b87d4a912f77f437c281af2ff9b6cb240bacf67f3ff4e111511cc5e43f19; 213,936 records / 211,800 train / 156,124,762 train targets; 74,250 cumulative shingle/protected exclusions over four rounds; all five audits PASS \u2014 smoltalk2, tulu3, library, mainmix shingle re-audits at ZERO content collisions + the sealed protected-overlap firewall; license policy: LMSYS-Chat-1M research+commercial training use, no dataset redistribution, deletion-request retention; WildChat ODC-BY with attribution). Dose per the admission arithmetic: seed 20260923, budget 20,000,000 targets, single epoch, monotone-nested seeded whole-record draw from the train split (validation split 2,136 records reserved, never drawn) = 15.73% of this prep's 127145988 supervised targets (directive band 15-20%). The SmolTalk2 synthetic slice is reduced to 19,600,000 targets \u2014 the SAME seed-613220 seeded draw as the superseded SmolTalk2-only prep, and every record accepted at 19.6M was accepted at 39.6M (monotone-nested subset; the freshness exclusion set of 131,734 identities hit identically) \u2014 so the conversation total stays ~30% (SmolTalk2 15.42% + real-human-chat 15.73% = 31.15%). This v2 proposal supersedes the v1 freeze (f48f4866b2a07bc02eb57bbc07fb01fceffa3b2548affc00fb81423294689d2f, SmolTalk2-only, prep 5817602b...) with every other cohort byte-identical in budget and seed; the superseded prep stays on disk as fallback evidence.",
+    "rebalance_table": "E2 -> E3 target shares (blend manifest, machine-computed at freeze time over 127145988 supervised targets): conversation 29.47% -> 31.15% (BLEND: fresh disjoint SmolTalk2 draw reduced to 19.6M budget = 15.42% \u2014 seed 613220, 131,734 identities excluded = E2's 94,532 prior + E2's 37,202 consumed, monotone-nested subset of the superseded prep's 39.6M draw \u2014 PLUS the admitted real-human-chat cohort 20.0M budget = 15.73%, seed 20260923, single epoch); cumulative 14.96% -> 10.15% and compositional 12.01% -> 8.02% (fillers 18.17% combined, budgets 4.3M/3.4M at x3 \u2014 inside the ~15-18% design band); live-aligned 3.32% -> 3.46% (2.2M at x2); verified-raw-oh 9.97% -> 10.38% and tooltalk 4.99% -> 5.19% (unchanged budgets); anchors: mainmix 8.31% -> 16.52% (21M) + library 11.32% -> 4.72% (6M; option A mainmix-dominant, same fragment render) = 21.23% combined; restored pools (bridge+authored) unchanged in full at 4 epochs (5.58% combined, >=5% floor held); seam families: hybrid v1 0.31% -> hybrid v2 2.87% (x4) + NEW session 1.82% (x4) + NEW real-human-chat 15.73% (x1); reasoning pilot + repair families closing. ZERO instruction-mix, ZERO translated-Pi-frame-OH (fail-closed checked here).",
+    "seam_rationale": "E2 ended at chat 0/3 with retention at its best (1.509/1.511 vs parent-controls 1.515) and execution above the floor: a chat-seam gap, not a capability or retention failure. The E3 fix is dose at the seam: the verified hybrid-conversation v2 collection (5,200 records / 911,713 targets; machine-verified end-to-end through real Pi, zero rejections; reconstruction + protected-panel + SmolTalk2-shingle audits PASS) enters at x4 whole-record epochs = 3,646,852 targets (2.87%), within the cohort's ~2-4%-of-targets recommendation.",
+    "session_family_rationale": "NEW family: multi-episode session records (e97-multi-episode-session-collection-v1): conversations where the recurrent state carries ACROSS episode boundaries (finish -> new episode in the same state); the model is supervised on staying coherent when continuing from accumulated state (recall grounded in a referenced episode's recorded tool results; prior-observation dynamic finishes). 1,100/1,100 verified, 0 rejected (4,225 episodes, 2,925 native calls, 578,557 targets). Audits PASS this session: independent reconstruction (every episode machine-replayed from the recorded Pi transcripts, global sequence dedup 1,100/1,100), protected-panel overlap (zero significant entity collisions), SmolTalk2 shingle exclusion (0 content collisions vs 777M windows). Rendered to the cohort format (tulu3-masked-sft; eligibility key omitted per the verified-raw-oh/tooltalk precedent) and consumed whole-pool at x4 = 2,314,228 targets (1.82%; a MINOR under the floor rule).",
+    "throughput_forensics": "chunk 2048/16384 qualified at 72s/update with losses matching to 5-6 digits (progress ledger); the E3 launchers use the same recipe; per-segment input ~60M tokens (same class as E1/E2's ~60M).",
+    "window_class_ruling": "The established window-coverage floor rule (majors >=2% of targets in every update; minors every 32 updates) is kept unchanged for every small-record cohort. Supervisor-approved opt-in window-class cohorts: long-document-library-anchor (fragment render: avg record 65,536.0 tokens = 100.00% of the 65,537-token pack sequence; solo-pack-only coverage; the every-update rule is structurally inapplicable) and verified-raw-oh (avg whole trajectory ~11.6k tokens in this prep = ~17.7% of the pack sequence; structurally capped). mainmix-draws-anchor stays an ORDINARY major (avg record ~1.2k tokens). The NEW session family (avg 6,491.1 tokens = 9.90% of the pack sequence) and the hybrid v2 seam (avg ~5.9k tokens = ~9.0%) are mechanically UNDER the 10% window-class floor: ORDINARY cohorts. The NEW real-human-chat cohort (avg record ~1.1k tokens; whole conversations) is mechanically rejected from the window class and is an ORDINARY major at 15.73% of targets (every update under the floor rule). Window-class guarantee floor: >=1 appearance per 32-update window. No further cohorts may be added to this class without a supervisor decision."
+  },
+  "identity_bindings": [
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e3-chat-agent-segment2-training-v1/checkpoints/checkpoint_agent_sft_u000128_loss_1.3049.pt",
+      "3770621c66563e8d86eb10dc1320e068c12e4bb89815aef823c7f8f5bd9c36d0"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e3-chat-agent-segment2-training-v1/audit.json",
+      "bdba2a58029a229ff9d242d7e7420330424772c26b23ee25e779d428b3cf4b02"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e3-chat-agent-prep-v1/e3-preparation-blend/manifest.json",
+      "0a0e79457a1e7a772622ceea6a2c66fe28eb80a9eae434611995cb500d6e1a17"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e3-chat-agent-prep-v1/e3-preparation-blend/packs/manifest.json",
+      "291fed1610b915f80cd98653b3d26fb3ffe32e8a2bdb4665b8edd39b56adaea2"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e3-chat-agent-prep-v1/e3-preparation-blend/packs/validation.json",
+      "45f7d8a233a03e4c5f20389d1743600296c052e9b2fbc73b16a8a0cac8ad13fa"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e3-chat-agent-prep-v1/e3-preparation-blend/audit.json",
+      "5c1164dfb93a26fccc1b445c69440de1b5bbb1b2383a22a4bdc21f3ddf49bdd8"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e3-chat-agent-prep-v1/e3-preparation-blend/schedule-segment3-proposal.json",
+      "26d5fad9567ea6f69dca518ce6bc9640f6c4bfe4e2f07731132add7e5944b8bd"
+    ],
+    [
+      "configs/pi/e97-active-tool-surface-v1.json",
+      "55421905438806223414d96a4e64f1a6ae64772afdb1fbc67fbbfb77e8d5d908"
+    ],
+    [
+      "configs/pi/e97-e1-chat-probe-panel-v1.json",
+      "21e958f1f926abc8ddc7be2428101b265852ec43ab6a4a6fbd86401a80b926ac"
+    ],
+    [
+      "scripts/eval_e97_e1_chat_probe_panel.py",
+      "0fdb909606355bac5f83f960eb408e6a4a78fc33946644422c6b2344e4cd97f2"
+    ],
+    [
+      "scripts/convert_e97_4b_to_gguf.py",
+      "1d9d0dc8583a4c5f5f51aaac87c805ebb431e32353800ef78314ce34460f2521"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/representation-bridge-v1-data/authority/manifest.json",
+      "a21dba6f80e58e87ea838a98018b40650decebed3cf4b0f98dacdb750520469d"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/grounded-expansion-v1-data-r2/authority/manifest.json",
+      "08752c53e2199533252c77821ec9696012b19dc09ea0ff1508ef6676a6cd2140"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e1-chat-agent-prep-v1/verified-raw-oh-authority/manifest.json",
+      "fa6a47daf69a3671ca523966cee38774db576d8d50d06520094b853759ee22e4"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e1-chat-agent-prep-v1/verified-raw-oh-authority/id-mapping.jsonl",
+      "dbacdcde7a6aaa33d2d144ded7949192ccd7909eeb3a5a25a8c546bfbf510376"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-oh-pi-native-translation-v1/candidate-authority/manifest.json",
+      "a179c140b4e8efa77a8163574bb78d4fe34dea91adfeb0439e8339d5002be1fb"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/sft/e97-4b-open-swe-source-native-fulltraj-v1/manifest.json",
+      "255b02f3b3bbdc85eb15a89d22e7ff2c4bf69f151c2dfb5941a22468711993f5"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e1-chat-agent-prep-v1/tooltalk-authority/manifest.json",
+      "fe0bfaffd8f00ab8011fc4a267c75686ac8caa04f4c862afeac3636d98294a9c"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e1-chat-agent-prep-v1/tooltalk-intake/download-receipt.json",
+      "b3a9a8b8aaed3899e831cb0f6994e9505057f21169aec6092a5d467519a815b3"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e1-chat-agent-prep-v1/tooltalk-intake/license-receipt.json",
+      "d51ffee1dd9a5542051044743b8643ee483aa944b0ea04a80d4d38bede9bace5"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e1-chat-agent-prep-v1/tooltalk-intake/overlap-audit.json",
+      "aa70dc94ac4e7102804773e4b7bdd67bca0f94e51741cc061718812d55f58746"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-hybrid-conversation-collection-v2/collect/candidate-authority/manifest.json",
+      "f88ff570d3cee472a691df018bd72db30710f434a63418c571d0d0d6a014141c"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-hybrid-conversation-collection-v2/audit.json",
+      "93c41cc9dbeb5107e4f63acf9348224b2949ca26bd25592487a9a5b24d6d6991"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-hybrid-conversation-collection-v2/overlap-audit.json",
+      "4b21d8ead45d45eceb298707efa13c75fe0d22330c2a6f59b5498adc6f94af5b"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-hybrid-conversation-collection-v2/smoltalk2-shingle-audit.json",
+      "969d5f67a4f5cabba656c4413d2f9465b6fc9bc8e7e03da223df0e62cf14f62d"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-multi-episode-session-collection-v1/plan/plan-private.json",
+      "1194c1ea92826e41aaace265b53c0a6a58568de724122d43463752653b8bf2ff"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-multi-episode-session-collection-v1/collect/candidate-authority/manifest.json",
+      "0c1dcd3c2bf3b981206627e5a06c0454c4d84895a80ff68e317be8582fa319a9"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e3-chat-agent-prep-v1/session-family/audit.json",
+      "498519a979b3b61b481577f00f76d3f25a8cf8a0670041e7910563aa175ad8d1"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e3-chat-agent-prep-v1/session-family/overlap-audit.json",
+      "f7410cc41f6ca593c01ed94023265f66b3d2bea8bfa6c2194b1ca381d84d6600"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e3-chat-agent-prep-v1/session-family/smoltalk2-shingle-audit.json",
+      "43f83dc536a72a56f38fc817313403cb1178066fa45fb105c8e7153a1e58611a"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e3-chat-agent-prep-v1/session-family/sft-render/manifest.json",
+      "4d4d7202857c474ca583103113b16888c48eb18f16c43ac9a4bb647629cee4aa"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e3-chat-agent-prep-v1/session-family/sft-render-validation.json",
+      "61ea0a99454ae48e6922752d887faa5a53518529b768da1b713fa292ab9fc284"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e3-chat-agent-prep-v1/cohort-specs/session-family.json",
+      "a2f984b9621e524e03d2da014c8d6253ad09740583340bfd2b04edee2ba39000"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e2-chat-agent-prep-v1/conversation-prior-draw-identities.txt",
+      "a455d651ca0c7ba2dafa2d53063c62f136cecbcedad2c08fb4e0e2ad813d3709"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e3-chat-agent-prep-v1/conversation-prior-draw-identities.txt",
+      "35d978be39e1373f3680b1d6c96b40d713fe91ef9664f8515d05b3edf93960d5"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e3-chat-agent-prep-v1/logs/recipe-real-chat-blend.md",
+      "60404d6bfc3314cea274a4584ceb1837d9f1c9eaeea3b8aee77c61a3e43a8746"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e3-chat-agent-prep-v1/logs/build-e3-prep.sh",
+      "54de69661f5a5c55a0c00e516672080152960a0756a84a360f1b4fabd511adf7"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-real-human-chat-intake-v1/admission-real-human-chat.json",
+      "4984f89edc1aa45fa745f173005611cfb25578e059fee83bc881b2961264288a"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-real-human-chat-intake-v1/real-human-chat-authority/manifest.json",
+      "4521b87d4a912f77f437c281af2ff9b6cb240bacf67f3ff4e111511cc5e43f19"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-real-human-chat-intake-v1/real-human-chat-authority/record-identities.txt",
+      "e905a90e42ba31dcc064b177f13730a943b7d32335f2b78a27b1b34decd47a67"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-real-human-chat-intake-v1/exclude-ids.txt",
+      "f64919415620c52f9b7edcba800a1f76e8d844eba64e1b7ef7b14490ac9216fb"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-real-human-chat-intake-v1/REPORT.md",
+      "e2e37b4722f098c71dffe6959891d2d75b1e3a16f02f3f255179f0c4bb9ac563"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-real-human-chat-intake-v1/cohort-spec-real-human-chat.json",
+      "62b6f661ed1d55f435320bed828b91808ad47725e40287da471dfdc6f0da5c1b"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e3-chat-agent-prep-v1/cohort-specs/real-human-chat.json",
+      "62b6f661ed1d55f435320bed828b91808ad47725e40287da471dfdc6f0da5c1b"
+    ],
+    [
+      "/mnt/nvme1n1/erikg/sft/e97-4b-smoltalk2-admitted-v1/manifest.json",
+      "d64f51abc615c097910900ffa7fc88f020ae5567b89958f607008078c271c7f6"
+    ],
+    [
+      "/mnt/nvme1n1/erikg/sft/e97-4b-pi-compositional-retention-mix-v1/manifest.json",
+      "79e7981077fc387c3e3759728ddd0f9e1ac16f687c628542e8313fb735c4cfb7"
+    ],
+    [
+      "/mnt/nvme1n1/erikg/sft/e97-4b-pi-cumulative-recovery-mix-v1/manifest.json",
+      "a17648481e5cf1183ea640b873d70e2b1c36ad3e976d0c4b4a2f19af54fe600f"
+    ],
+    [
+      "/mnt/nvme1n1/erikg/sft/e97-4b-pi-live-aligned-all-assistant-v1/manifest.json",
+      "4a1cf86f9089cc3f2f79884f845d26d487d88b20fb32b589a8095d4824bc6a20"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-extracterror-collection-v1/collect/candidate-authority/manifest.json",
+      "08817eb42ff835523cc62bc13208053daeb79479a4bb9a585f1f427b53659aa4"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-longcopy-collection-v1/collect/candidate-authority/manifest.json",
+      "27a7f97d64a1589f98e3ce851344aac51e4c7608b2fa86df6c92955a52e79536"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-pointerchase-collection-v1/collect/candidate-authority/manifest.json",
+      "f2361a86c3909083c93be6702f12ad8323844a2390069d368ebec92d52e0247e"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-curriculum-2000-selected-v1/candidate-authority/manifest.json",
+      "8cf83db8d608f6af74bbd2cbe60206ef435fb3003ab2bb63f4eadab17eb05562"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-curriculum-2000-selected-v1/selection-audit.json",
+      "de977726f0758206ee9defe9c3687d2485e3ba2b80eb9ef9ceafb065c5f6646b"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-curriculum-2000-selected-v1/overlap-audit.json",
+      "9c104d73b104f4d29a83ca1472b66ef2df681e020a2b9688eb4f87c6ef814a78"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-long-document-anchor-v1/library-authority/manifest.json",
+      "1bd7aa364d4111be0050360851d0292c5dae0e02dee9bae9de33fd2d6f68fcf8"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e2-chat-agent-prep-v1/v2/library-fragments-authority/manifest.json",
+      "42372c8d2c91fa3d93e6384c988c262f6bc665b667778a29d91f8ac122441508"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e2-chat-agent-prep-v1/v2/library-fragments-packs/manifest.json",
+      "e19f2e408b5faa6fe409721340d3147c2ec4ac16f4aa1bedb08334f94dac6360"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e2-chat-agent-prep-v1/v2/logs/reset-semantics-receipt.json",
+      "253c52c1f7e42d040519288121b50d2176fb7a4c8f367da7f1ee66c3c711ceb4"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-long-document-anchor-v1/mainmix-draws-authority/manifest.json",
+      "fc9192ab09795af88a767e4f8ef471bda8eee73d8bf9f8b82c2e324324d48bf0"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-long-document-anchor-v1/mainmix-draws-packs/manifest.json",
+      "043d6615fe7f5b01d57afeb227da77db1d67ed93179eb96523ca34870111b1a1"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-long-document-anchor-v1/probe/probe-panel-manifest.json",
+      "abca0b8b4ce9a917e8262b8d4ce0743565c594900a27fc1442f43dd42ed4540e"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-long-document-anchor-v1/probe/probe-panel.token-ids.jsonl",
+      "5725d8206ac90e5ad4bbb4acd492bf4832f704ccb1d39615bae1c87fd55edc9f"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-long-document-anchor-v1/probe/scores/nll-base-99B-y-q8_0.json",
+      "c1b60b68f79756d09a2dc6bf47b539a1ba6e848bc8aac85f398a62a46bc4fb3c"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-long-document-anchor-v1/probe/scores/nll-bridge-parent-9b78628d-q8_0.json",
+      "deaa8651f1a291ec135c83aafd5587d774e37e2249b4d8d2f91a4410c9b0d8bc"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-long-document-anchor-v1/probe/scores/nll-v6-u96-d8146498-q8_0.json",
+      "e1956decf8b29bcd80f166b66b4fb68a3aae0c1b647ba319486a63f26d36874c"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e2-chat-agent-prep-v1/parent-baseline/scores/nll-e2-parent-853a3b95-q8_0.json",
+      "896a08a26462c5c6f5ddb6c746a4f3643e7e42f141a96d92defd1c617b890f41"
+    ],
+    [
+      "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e3-chat-agent-prep-v1/parent-baseline/scores/nll-e3-parent-u512-5ea4e078-q8_0.json",
+      "9bf2ed6427a667f12d7abb31116b04a8c5283208e224dedccc9ccfa9809062e1"
+    ]
+  ],
+  "new_rl_updates": 0,
+  "operator_internal_training_authorized": false,
+  "optimizer_updates_authorized": 0,
+  "pack_manifest_sha256": "291fed1610b915f80cd98653b3d26fb3ffe32e8a2bdb4665b8edd39b56adaea2",
+  "packing_authorized": false,
+  "parent_checkpoint": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e3-chat-agent-segment2-training-v1/checkpoints/checkpoint_agent_sft_u000128_loss_1.3049.pt",
+  "parent_checkpoint_sha256": "3770621c66563e8d86eb10dc1320e068c12e4bb89815aef823c7f8f5bd9c36d0",
+  "parent_doc_nll_baseline": {
+    "binding_note": "E3 parent (E2-u512 checkpoint 5ea4e078) document-NLL panel mean, COMPLETE at freeze time; source (E2 lane, read-only): /mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e2-chat-agent-prep-v1/e2-juncture-evals/seg4-u128/doc-nll/nll.json",
+    "mean_nll": 2.556634249,
+    "score_path": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e3-chat-agent-prep-v1/parent-baseline/scores/nll-e3-parent-u512-5ea4e078-q8_0.json"
+  },
+  "per_update_cohort_stratification": {
+    "min_target_fraction": 0.02,
+    "proposed_updates": 128,
+    "scheme": "window-coverage",
+    "window_class_eligibility": {
+      "compositional-rehearsal": {
+        "avg_record_tokens": 371.981,
+        "min_structural_record_tokens": 6553.7,
+        "window_class_eligible": false
+      },
+      "conversation-rehearsal": {
+        "avg_record_tokens": 1292.433,
+        "min_structural_record_tokens": 6553.7,
+        "window_class_eligible": false
+      },
+      "cumulative-recovery-rehearsal": {
+        "avg_record_tokens": 386.995,
+        "min_structural_record_tokens": 6553.7,
+        "window_class_eligible": false
+      },
+      "grounded-authored-rehearsal": {
+        "avg_record_tokens": 3537.935,
+        "min_structural_record_tokens": 6553.7,
+        "window_class_eligible": false
+      },
+      "hybrid-conversation-rehearsal-v2": {
+        "avg_record_tokens": 5911.448,
+        "min_structural_record_tokens": 6553.7,
+        "window_class_eligible": false
+      },
+      "live-aligned-rehearsal": {
+        "avg_record_tokens": 278.874,
+        "min_structural_record_tokens": 6553.7,
+        "window_class_eligible": false
+      },
+      "long-document-library-anchor": {
+        "avg_record_tokens": 65536.0,
+        "min_structural_record_tokens": 6553.7,
+        "window_class_eligible": true
+      },
+      "longcopy-rehearsal": {
+        "avg_record_tokens": 26817.636,
+        "min_structural_record_tokens": 6553.7,
+        "window_class_eligible": true
+      },
+      "loopbreak-rehearsal": {
+        "avg_record_tokens": 6139.565,
+        "min_structural_record_tokens": 6553.7,
+        "window_class_eligible": false
+      },
+      "mainmix-draws-anchor": {
+        "avg_record_tokens": 1220.093,
+        "min_structural_record_tokens": 6553.7,
+        "window_class_eligible": false
+      },
+      "multi-episode-session-rehearsal": {
+        "avg_record_tokens": 6489.387,
+        "min_structural_record_tokens": 6553.7,
+        "window_class_eligible": false
+      },
+      "pi-native-curriculum": {
+        "avg_record_tokens": 10832.878,
+        "min_structural_record_tokens": 6553.7,
+        "window_class_eligible": true
+      },
+      "pointerchase-rehearsal": {
+        "avg_record_tokens": 6248.949,
+        "min_structural_record_tokens": 6553.7,
+        "window_class_eligible": false
+      },
+      "real-human-chat-rehearsal": {
+        "avg_record_tokens": 1035.374,
+        "min_structural_record_tokens": 6553.7,
+        "window_class_eligible": false
+      },
+      "reasoning-rehearsal": {
+        "avg_record_tokens": 6655.29,
+        "min_structural_record_tokens": 6553.7,
+        "window_class_eligible": true
+      },
+      "representation-bridge-rehearsal": {
+        "avg_record_tokens": 2614.798,
+        "min_structural_record_tokens": 6553.7,
+        "window_class_eligible": false
+      },
+      "tooltalk-rehearsal": {
+        "avg_record_tokens": 3552.317,
+        "min_structural_record_tokens": 6553.7,
+        "window_class_eligible": false
+      },
+      "verified-raw-oh": {
+        "avg_record_tokens": 50630.048,
+        "min_structural_record_tokens": 6553.7,
+        "window_class_eligible": true
+      }
+    },
+    "window_class_note": "window_cohorts are verified at window granularity (>=1 per 32-update window); every other cohort keeps the floor rule (majors >=2% of targets every update; minors every 32 updates). The eligibility table is the machine-checked structural-capping test (avg whole record >= 10% of the 65,537-token pack sequence) applied to EVERY cohort \u2014 the session family (9.90%) and hybrid v2 (9.04%) are mechanically rejected from the class.",
+    "window_cohorts": [
+      "long-document-library-anchor",
+      "verified-raw-oh"
+    ],
+    "window_updates": 32
+  },
+  "preparation_root": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e3-chat-agent-prep-v1/e3-preparation-blend",
+  "proposed_behavioral_gate": {
+    "composition": ">= 4/16",
+    "openhands_execution_overall": ">= 64/96",
+    "openhands_fresh": ">= 30/32",
+    "openhands_prior_fresh": "= 16/16",
+    "openhands_prior_regression": ">= 10/16",
+    "openhands_transfer": ">= 5/16",
+    "pi_native_stage_b": "valid first frame >= 12/14 and correct first action >= 10/14",
+    "retention": "both saved-x/train-y retention gates pass"
+  },
+  "proposed_learning_rate": 1e-05,
+  "proposed_updates": 128,
+  "purpose": "E3 chat-agent arc segment 3 of 4 (the chat-seam repair, real-human-chat BLEND): the verified hybrid-conversation v2 seam collection at x4 whole-record epochs (2.87%) + the NEW multi-episode session family at x4 (1.82%), fillers 18.17% combined, anchors mainmix-dominant (mainmix 16.52% + library-fragment 4.72% = 21.23%, option A), verified-raw-OH 10.38%, tooltalk 5.19%, conversation 31.15% BLEND (fresh disjoint SmolTalk2 15.42% at seed 613220 with 131,734 identities excluded, monotone-nested subset of the superseded 39.6M draw + the ADMITTED real-human-chat cohort 15.73% \u2014 combined WildChat+LMSYS authority 4521b87d..., admission 4984f89e..., seed 20260923, single epoch), restored pools 5.58% at 4 epochs, reasoning pilot + repair families closing, chained from the E2 u512 checkpoint 5ea4e078. Juncture detectors: Stage-B + conversation NLL probe + the E1 chat-probe panel + the frozen document-NLL probe (fail-closed below the E3 parent bound 2.556634). Full frozen dual gates unchanged at u256/u512. ZERO instruction-mix, ZERO translated-Pi-frame-OH. This v2 freeze supersedes the SmolTalk2-only v1 (f48f4866...): every cohort other than the conversation slice is byte-identical in budget and seed.",
+  "sampler_key": 2300004,
+  "schedule_selection": "Training-data-only screen over keys 2300002,2300003,2300004,2300007 (fresh E3 range 2300001.., re-screened independently for the BLENDED manifest sha 0a0e7945... under the window-coverage rule with the supervisor-approved window-class cohorts long-document-library-anchor and verified-raw-oh; 4 keys admitted in 7 tried; vs the superseded SmolTalk2-only prep's screen (2300001/3/4/7): 2300001 rejected and 2300002 admitted on the blended pack content, 2300003/2300004/2300007 re-admitted). Window-class cohorts per the supervisor-approved extension: long-document-library-anchor (fragment render; structurally capped) and verified-raw-oh; all other cohorts under the established floor rule (mainmix-draws-anchor, hybrid v2 seam stay ordinary majors; the session family is an ordinary minor). This segment trains key 2300004.",
+  "schedule_sha256": "26d5fad9567ea6f69dca518ce6bc9640f6c4bfe4e2f07731132add7e5944b8bd",
+  "scheduled_assistant_targets": 16698749,
+  "scheduled_input_tokens": 60481590,
+  "scheduled_source_targets": {
+    "compositional-rehearsal": 1397882,
+    "conversation-rehearsal": 2606929,
+    "cumulative-recovery-rehearsal": 1732322,
+    "grounded-authored-rehearsal": 495605,
+    "hybrid-conversation-rehearsal-v2": 493856,
+    "live-aligned-rehearsal": 596017,
+    "long-document-library-anchor": 393210,
+    "longcopy-rehearsal": 889,
+    "loopbreak-rehearsal": 1181,
+    "mainmix-draws-anchor": 2859993,
+    "multi-episode-session-rehearsal": 311760,
+    "pi-native-curriculum": 11144,
+    "pointerchase-rehearsal": 5652,
+    "real-human-chat-rehearsal": 2664425,
+    "reasoning-rehearsal": 9640,
+    "representation-bridge-rehearsal": 420796,
+    "tooltalk-rehearsal": 1013569,
+    "verified-raw-oh": 1683879
+  },
+  "scheduled_source_unique_records": {
+    "compositional-rehearsal": 7745,
+    "conversation-rehearsal": 2493,
+    "cumulative-recovery-rehearsal": 11492,
+    "grounded-authored-rehearsal": 1388,
+    "hybrid-conversation-rehearsal-v2": 2837,
+    "live-aligned-rehearsal": 4968,
+    "long-document-library-anchor": 6,
+    "longcopy-rehearsal": 22,
+    "loopbreak-rehearsal": 23,
+    "mainmix-draws-anchor": 2346,
+    "multi-episode-session-rehearsal": 594,
+    "pi-native-curriculum": 123,
+    "pointerchase-rehearsal": 39,
+    "real-human-chat-rehearsal": 3688,
+    "reasoning-rehearsal": 31,
+    "representation-bridge-rehearsal": 1187,
+    "tooltalk-rehearsal": 838,
+    "verified-raw-oh": 145
+  },
+  "scheduled_unique_packs": 1024,
+  "scheduled_unique_records": 39965,
+  "schema": "emender-e3-chat-agent-segment3-proposal-v2",
+  "source_commit": "fca120ba",
+  "status": "frozen-proposal-not-authorized"
+}
