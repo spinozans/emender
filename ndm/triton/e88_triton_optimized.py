@@ -43,6 +43,7 @@ def e88_triton_optimized_apply(
     valid_mask: torch.Tensor = None,  # bool [B,T]
     recurrent_state_precision: str = 'legacy',
     uniform_workspace: bool = False,  # derived from composite policy, not an operator switch
+    validate_packed_masks: bool = True,
 ) -> Tuple[torch.Tensor, torch.Tensor]:
     """Triton-backed E88 recurrence with optional pre-norm and post-gate.
 
@@ -155,6 +156,7 @@ def e88_triton_optimized_apply(
             valid_mask=valid_t,
             recurrent_state_precision=workspace_precision,
             launch_config=launch_config,
+            validate_packed_masks=validate_packed_masks,
         )
         output = out_t.transpose(0, 1)
     else:
@@ -170,6 +172,7 @@ def e88_triton_optimized_apply(
             valid_mask=valid_t,
             recurrent_state_precision=workspace_precision,
             launch_config=launch_config,
+            validate_packed_masks=validate_packed_masks,
         )
         output = out_t.transpose(0, 1)
 

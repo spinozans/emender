@@ -495,6 +495,7 @@ def e88_triton_forward(
     reset_before: torch.Tensor = None,  # bool [T,B], clear state before token
     valid_mask: torch.Tensor = None,  # bool [T,B], invalid tokens are no-ops
     recurrent_state_precision: str = 'legacy',
+    validate_packed_masks: bool = True,
 ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     """Run the E88 forward recurrence in Triton.
 
@@ -614,7 +615,12 @@ def e88_triton_forward(
         if valid_mask.shape != (T, B) or valid_mask.dtype != torch.bool:
             raise ValueError(f"valid_mask must be boolean [T,B] = {(T, B)}")
         m_c = valid_mask if valid_mask.is_contiguous() else valid_mask.contiguous()
-        if apply_reset and bool((r_c & ~m_c).any().item()):
+        # The GPU-side reset/valid cross-check costs one host sync plus three
+        # small kernels per call. The model layer validates the FULL control
+        # masks once per layer call before chunking; its internal callers pass
+        # validate_packed_masks=False because a slice of a verified tensor
+        # cannot violate the invariant. External callers keep the check.
+        if apply_reset and validate_packed_masks and bool((r_c & ~m_c).any().item()):
             raise ValueError("reset_before cannot select an invalid/padding token")
         m_strides = (m_c.stride(0), m_c.stride(1))
     else:

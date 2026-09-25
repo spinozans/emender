@@ -953,6 +953,15 @@ class E88FLAHybrid(nn.Module):
         self.use_triton = use_triton
         self.use_chunked_e97 = use_chunked_e97
         self.e97_chunk_size = e97_chunk_size
+        # Trainer opt-in: capture the split-edit scan op in per-layer CUDA
+        # graphs (see _graphed_split_edit_scan). Default off; the SFT trainer
+        # sets it from --cuda-graph-chunk-scan. Capture scope is the scan op
+        # ONLY, so parameter gradients (and therefore DDP reduction) stay
+        # outside the captured region.
+        self.scan_cuda_graph = False
+        self._scan_graph = None
+        self._scan_graph_warmed = False
+        self._scan_graph_shapes = None
         self._runtime_path_logged = False
         if self.use_chunked_e97:
             if not (self.use_triton and self.use_split_edit and self.linear_state and not self.raw_write):
@@ -1390,11 +1399,124 @@ class E88FLAHybrid(nn.Module):
             f"recurrence={recurrence} state={state_map} eager_fallback={eager_fallback} "
             f"use_triton={self.use_triton} "
             f"use_chunked_e97={self.use_chunked_e97} e97_chunk_size={self.e97_chunk_size} "
+            f"scan_cuda_graph={getattr(self, 'scan_cuda_graph', False)} "
             f"linear_state={self.linear_state} raw_write={self.raw_write} "
             f"use_split_edit={self.use_split_edit} log_decay={log_decay}",
             flush=True,
         )
         self._runtime_path_logged = True
+
+    def _graphed_split_edit_scan(self, k, v, q, decay, g, S0, erase_gate,
+                                  value_write_gate, reset_before, valid_mask,
+                                  use_fused_l2, qkv_silu_in_kernel):
+        """CUDA-graph replay of the split-edit scan op, or ``None`` for eager.
+
+        Trainer opt-in via ``self.scan_cuda_graph``. ``torch.cuda.
+        make_graphed_callables`` captures ONE (forward, backward) graph pair
+        per layer around the scan op ONLY: the projection GEMMs stay eager,
+        parameter gradients finalize in eager GEMM backward, and DDP's
+        reducer/allreduce therefore remains OUTSIDE the captured region
+        (a backward that finalizes parameter gradients inside a graph is the
+        documented DDP-incompatible pattern). Design constraints honored:
+
+        - capture happens only after two eager scan calls settle the e88
+          forward autotune (H < 64 runs an in-process timing sweep) and
+          Triton JIT: the first chunk of each pack carries fresh
+          per-pack state (``S0.requires_grad=False``) and always runs
+          eager; the first STEADY-STATE call marks the layer warmed and
+          runs eager; the next steady-state call captures.
+          ``make_graphed_callables``' own warmup (3 eager
+          forward+``torch.autograd.grad`` iterations) additionally settles
+          the BACKWARD Triton kernel JIT before the backward graph is
+          captured;
+        - capture runs under a nested
+          ``torch.autocast(..., cache_enabled=False)`` wrapper: the trainer's
+          forward-level autocast keeps ``cache_enabled=True`` (torch
+          default) and ``make_graphed_callables`` refuses capture under
+          autocast caching (torch/cuda/graphs.py) — this is the armC
+          failure, fixed here. The wrapper restores the outer cache flag
+          on exit and is numerics-neutral (uncached casts are bit-identical
+          recomputations);
+        - internal callers skip per-chunk packed-mask re-validation
+          (``validate_packed_masks=False``), so the captured region contains
+          no host synchronization;
+        - the trainer requires the context size to divide evenly by the
+          projection chunk, so every replay matches the captured geometry; a
+          mismatch fails closed rather than silently falling back.
+
+        Ineligible configurations (eval/no-grad use, missing fused gate,
+        non-packed inputs, non-CUDA tensors) return ``None`` and run eager.
+        """
+        if not getattr(self, 'scan_cuda_graph', False):
+            return None
+        if (not self.training or g is None or reset_before is None
+                or valid_mask is None or not k.is_cuda):
+            return None
+        if not S0.requires_grad:
+            # Fresh per-pack initial state: keep eager (see docstring).
+            return None
+        graphed = getattr(self, '_scan_graph', None)
+        if graphed is None:
+            if not getattr(self, '_scan_graph_warmed', False):
+                # First call: settle autotune + JIT; capture on the next call.
+                self._scan_graph_warmed = True
+                return None
+
+            def _scan(S0_, k_, v_, q_, decay_, gate_, erase_, write_, reset_, valid_):
+                from ndm.triton.e97_sequential import e97_split_edit_triton_apply
+                return e97_split_edit_triton_apply(
+                    self.training, k_, v_, q_, decay_, gate_, S0_, self.n_heads,
+                    True, use_fused_l2, self.checkpoint_interval,
+                    uniform_workspace=getattr(self, 'uniform_recurrent_workspace', False),
+                    recurrent_state_precision=self.recurrent_state_precision,
+                    apply_silu_qkv=qkv_silu_in_kernel,
+                    raw_write=self.raw_write,
+                    linear_state=self.linear_state,
+                    erase_gate=erase_, value_write_gate=write_,
+                    reset_before=reset_, valid_mask=valid_,
+                    validate_packed_masks=False,
+                )
+
+            sample = (S0, k, v, q, decay, g, erase_gate, value_write_gate,
+                      reset_before, valid_mask)
+            self._scan_graph_shapes = tuple(
+                (tuple(t.shape), t.dtype) for t in sample)
+            # armC forensics: torch.cuda.make_graphed_callables refuses to
+            # run while CUDA autocast caching is enabled (torch/cuda/graphs.py
+            # raises "does not support the autocast caching"), and the SFT
+            # trainer runs every forward inside torch.autocast(...,
+            # cache_enabled=True) — that is what killed armC at update 1. A
+            # nested autocast with cache_enabled=False overrides the cache
+            # flag for the capture extent only (torch.amp.autocast_mode
+            # saves and restores the previous flag, and the cast cache is
+            # cleared only when the nesting level reaches 0, which a nested
+            # entry never does). Uncached casts are bit-identical
+            # recomputations, so this is numerics-neutral; the scan body
+            # invokes no autocast-castable eager ops anyway (custom
+            # autograd Function + Triton kernels), so mirroring the ambient
+            # dtype merely keeps the capture context truthful.
+            if torch.is_autocast_enabled():
+                capture_ctx = torch.autocast(
+                    device_type="cuda",
+                    dtype=torch.get_autocast_dtype("cuda"),
+                    cache_enabled=False,
+                )
+            else:
+                import contextlib
+                capture_ctx = contextlib.nullcontext()
+            with capture_ctx:
+                graphed = torch.cuda.make_graphed_callables(_scan, sample)
+            self._scan_graph = graphed
+        actual = tuple(
+            (tuple(t.shape), t.dtype)
+            for t in (S0, k, v, q, decay, g, erase_gate, value_write_gate,
+                      reset_before, valid_mask))
+        if actual != self._scan_graph_shapes:
+            raise RuntimeError(
+                "scan CUDA graph geometry mismatch: captured "
+                f"{self._scan_graph_shapes}, got {actual}")
+        return graphed(S0, k, v, q, decay, g, erase_gate, value_write_gate,
+                       reset_before, valid_mask)
 
     def _process_chunk(
         self, x_chunk, S_prev, input_dtype, use_fused_l2,
@@ -1421,20 +1543,44 @@ class E88FLAHybrid(nn.Module):
                 B, C, self.n_heads, self.n_state).to(input_dtype)
             value_write_gate = torch.sigmoid(self.value_write_gate_proj(x_chunk)).view(
                 B, C, self.n_heads, self.head_v_dim).to(input_dtype)
-            from ndm.triton.e97_sequential import e97_split_edit_triton_apply
-            S_new, output = e97_split_edit_triton_apply(
-                self.training, k, v, q, decay, g, S_prev,
-                self.n_heads, True, use_fused_l2, self.checkpoint_interval,
-                uniform_workspace=getattr(self, 'uniform_recurrent_workspace', False),
-                recurrent_state_precision=self.recurrent_state_precision,
-                apply_silu_qkv=qkv_silu_in_kernel,
-                raw_write=self.raw_write,
-                linear_state=self.linear_state,
-                erase_gate=erase_gate,
-                value_write_gate=value_write_gate,
-                reset_before=reset_before,
-                valid_mask=valid_mask,
-            )
+            graphed = self._graphed_split_edit_scan(
+                k, v, q, decay, g, S_prev, erase_gate, value_write_gate,
+                reset_before, valid_mask, use_fused_l2, qkv_silu_in_kernel)
+            if graphed is not None:
+                # make_graphed_callables returns the SAME static output
+                # tensors on every replay (torch/cuda/graphs.py Graphed.forward
+                # returns o.detach() of the static buffers). The chunk loop
+                # accumulates per-chunk output references across the whole
+                # pack and concatenates them AFTER the loop, so aliasing the
+                # static buffer would silently produce N copies of the LAST
+                # chunk's data — clone per replay, matching the eager path's
+                # fresh output tensors. S_new is cloned for the same reason:
+                # the next chunk's input copy is stream-ordered and safe, but
+                # the layer's returned state must not alias a buffer that any
+                # later replay overwrites.
+                S_new, output = graphed
+                S_new = S_new.clone()
+                output = output.clone()
+            else:
+                # The packed control masks were validated in full at layer
+                # entry; per-chunk re-validation inside the kernels is
+                # redundant and costs one host sync plus small kernels per
+                # chunk call across forward, recompute and backward.
+                from ndm.triton.e97_sequential import e97_split_edit_triton_apply
+                S_new, output = e97_split_edit_triton_apply(
+                    self.training, k, v, q, decay, g, S_prev,
+                    self.n_heads, True, use_fused_l2, self.checkpoint_interval,
+                    uniform_workspace=getattr(self, 'uniform_recurrent_workspace', False),
+                    recurrent_state_precision=self.recurrent_state_precision,
+                    apply_silu_qkv=qkv_silu_in_kernel,
+                    raw_write=self.raw_write,
+                    linear_state=self.linear_state,
+                    erase_gate=erase_gate,
+                    value_write_gate=value_write_gate,
+                    reset_before=reset_before,
+                    valid_mask=valid_mask,
+                    validate_packed_masks=False,
+                )
         elif self.use_triton:
             from ndm.triton.e88_triton_optimized import e88_triton_optimized_apply
             S_new, output = e88_triton_optimized_apply(
@@ -1447,6 +1593,7 @@ class E88FLAHybrid(nn.Module):
                 linear_state=self.linear_state,
                 reset_before=reset_before,
                 valid_mask=valid_mask,
+                validate_packed_masks=False,
             )
         else:
             S_new, output = E88OptimizedCUDAFunction.apply(
@@ -1981,6 +2128,7 @@ class E88FLAHybrid(nn.Module):
                             value_write_gate=value_write_for_kernel,
                             reset_before=reset_before,
                             valid_mask=valid_mask,
+                            validate_packed_masks=False,
                         )
                     else:
                         from ndm.triton.e88_triton_optimized import e88_triton_optimized_apply
@@ -1999,6 +2147,7 @@ class E88FLAHybrid(nn.Module):
                             value_write_gate=value_write_for_kernel,
                             reset_before=reset_before,
                             valid_mask=valid_mask,
+                            validate_packed_masks=False,
                         )
                 else:
                     # Call optimized kernel (auto-selects warp vs coalesced based on n_state)

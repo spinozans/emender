@@ -565,6 +565,7 @@ def e88_triton_backward(
     value_write_gate: torch.Tensor = None,
     reset_before: torch.Tensor = None,
     valid_mask: torch.Tensor = None,
+    validate_packed_masks: bool = True,
 ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
     """Run the E88 backward recurrence in Triton.
 
@@ -694,7 +695,9 @@ def e88_triton_backward(
         if valid_mask.shape != (T, B) or valid_mask.dtype != torch.bool:
             raise ValueError(f"valid_mask must be boolean [T,B] = {(T, B)}")
         m_c = valid_mask if valid_mask.is_contiguous() else valid_mask.contiguous()
-        if apply_reset and bool((r_c & ~m_c).any().item()):
+        # See e88_triton_forward: internal model callers validate the full
+        # control masks once per layer call and skip this per-chunk host sync.
+        if apply_reset and validate_packed_masks and bool((r_c & ~m_c).any().item()):
             raise ValueError("reset_before cannot select an invalid/padding token")
         m_strides = (m_c.stride(0), m_c.stride(1))
     else:
@@ -837,10 +840,12 @@ class E88TritonFunction(torch.autograd.Function):
         valid_mask=None,
         recurrent_state_precision='legacy',
         launch_config=None,
+        validate_packed_masks=True,
     ):
         from ndm.triton.e88_triton_forward import e88_triton_forward
         from ndm.recurrent_precision import recurrent_launch_config
         ctx.launch_config = recurrent_launch_config(recurrent_state_precision, launch_config)
+        ctx.validate_packed_masks = bool(validate_packed_masks)
         launch = {} if ctx.launch_config is None else dict(
             block_h=ctx.launch_config[0], num_warps=ctx.launch_config[1])
         out, S_final, S_ckpt = e88_triton_forward(
@@ -851,6 +856,7 @@ class E88TritonFunction(torch.autograd.Function):
             valid_length=valid_length, reset_before=reset_before,
             valid_mask=valid_mask,
             recurrent_state_precision=recurrent_state_precision,
+            validate_packed_masks=ctx.validate_packed_masks,
             **launch,
         )
         ctx.normalize_kq = bool(normalize_kq)
@@ -899,6 +905,7 @@ class E88TritonFunction(torch.autograd.Function):
         packed_controls = {
             "reset_before": None,
             "valid_mask": None,
+            "validate_packed_masks": ctx.validate_packed_masks,
         }
         if ctx.launch_config is not None:
             packed_controls.update(block_h=ctx.launch_config[0], num_warps=ctx.launch_config[1])
@@ -923,7 +930,7 @@ class E88TritonFunction(torch.autograd.Function):
             return (
                 d_S0, d_k, d_v, d_q, d_decay, d_g,
                 None, None, None, d_erase, d_value_write, None, None,
-                None, None, None, None,
+                None, None, None, None, None,
             )
         elif ctx.has_gate:
             k, v, q, decay, S_ckpt, g, reset_saved, valid_saved = ctx.saved_tensors
@@ -941,7 +948,7 @@ class E88TritonFunction(torch.autograd.Function):
                 **packed_controls,
             )
             return (d_S0, d_k, d_v, d_q, d_decay, d_g, None, None,
-                    None, None, None, None, None, None, None, None, None)
+                    None, None, None, None, None, None, None, None, None, None)
         elif ctx.has_split_edit:
             (k, v, q, decay, S_ckpt, erase_gate, value_write_gate,
              reset_saved, valid_saved) = ctx.saved_tensors
@@ -962,7 +969,7 @@ class E88TritonFunction(torch.autograd.Function):
             return (
                 d_S0, d_k, d_v, d_q, d_decay, None,
                 None, None, None, d_erase, d_value_write, None, None,
-                None, None, None, None,
+                None, None, None, None, None,
             )
         else:
             k, v, q, decay, S_ckpt, reset_saved, valid_saved = ctx.saved_tensors
@@ -979,7 +986,7 @@ class E88TritonFunction(torch.autograd.Function):
                 **packed_controls,
             )
             return (d_S0, d_k, d_v, d_q, d_decay, None, None, None,
-                    None, None, None, None, None, None, None, None, None)
+                    None, None, None, None, None, None, None, None, None, None)
 
 
 def e88_triton(
@@ -1000,6 +1007,7 @@ def e88_triton(
     valid_mask=None,
     recurrent_state_precision='legacy',
     launch_config=None,
+    validate_packed_masks=True,
 ):
     """Differentiable Triton E88 — returns (out, S_final).
 
@@ -1016,4 +1024,5 @@ def e88_triton(
         S0, k, v, q, decay, g, normalize_kq, apply_silu_qkv, raw_write,
         erase_gate, value_write_gate, linear_state, valid_length,
         reset_before, valid_mask, recurrent_state_precision, launch_config,
+        validate_packed_masks,
     )

@@ -187,6 +187,13 @@ def configure_precision(model, args) -> dict:
         "weight_decay": args.weight_decay,
         "warmup_steps": args.warmup_steps,
     }
+    # Record the throughput-lever geometry only when explicitly overridden, so
+    # default runs keep byte-identical policies while resume identity fails
+    # closed exactly when a mixed scan geometry is attempted.
+    if getattr(args, "projection_chunk_size", 0):
+        policy["projection_chunk_size"] = args.projection_chunk_size
+    if getattr(args, "cuda_graph_chunk_scan", 0):
+        policy["cuda_graph_chunk_scan"] = True
     # Preserve exact legacy resume metadata, but persist the new numerical policy.
     if state_precision != "legacy":
         from ndm.recurrent_precision import FIXED_RECURRENT_KERNEL
@@ -292,6 +299,16 @@ def main() -> None:
     parser.add_argument(
         "--mlp-checkpoint-chunk-size", type=int, default=0,
         help="Checkpoint SwiGLU projections in bounded time chunks; 0 disables")
+    parser.add_argument(
+        "--projection-chunk-size", type=int, default=0,
+        help="Override the mixer projection/scan chunk (checkpoint-inherited "
+             "default 512 for the E97 4B lineage); 0 inherits. Larger values cut "
+             "serialized chunk steps and per-chunk kernel launches per pack")
+    parser.add_argument(
+        "--cuda-graph-chunk-scan", type=int, choices=(0, 1), default=0,
+        help="Capture the per-chunk split-edit scan op in per-layer CUDA graphs "
+             "(scan op only: projections, parameter gradients and DDP reduction "
+             "stay eager/outside the graph); 0 disables")
     parser.add_argument("--island-size", type=int, default=8)
     parser.add_argument("--diloco-k", type=int, default=8)
     parser.add_argument(
@@ -344,6 +361,23 @@ def main() -> None:
         raise SystemExit("empty-cache-min-record-tokens must be nonnegative")
     if args.mlp_checkpoint_chunk_size < 0:
         raise SystemExit("mlp-checkpoint-chunk-size must be nonnegative")
+    if args.projection_chunk_size < 0:
+        raise SystemExit("projection-chunk-size must be nonnegative")
+    if args.projection_chunk_size and args.projection_chunk_size % 16:
+        raise SystemExit(
+            "projection-chunk-size must be a multiple of the 16-token scan alignment")
+    if args.projection_chunk_size and args.projection_chunk_size >= args.context_size:
+        raise SystemExit(
+            "projection-chunk-size must be smaller than context-size so the "
+            "chunked projection/scan path stays engaged")
+    if args.projection_chunk_size and args.context_size % args.projection_chunk_size:
+        raise SystemExit(
+            "context-size must divide evenly by projection-chunk-size so every "
+            "scan chunk is shape-static and 16-aligned")
+    if args.cuda_graph_chunk_scan and not args.projection_chunk_size:
+        raise SystemExit("cuda-graph-chunk-scan requires an explicit --projection-chunk-size")
+    if args.cuda_graph_chunk_scan and not args.boundary_aware_packs:
+        raise SystemExit("cuda-graph-chunk-scan is qualified for boundary-aware packs only")
 
     dist.init_process_group("nccl")
     rank, world = dist.get_rank(), dist.get_world_size()
@@ -380,6 +414,25 @@ def main() -> None:
             mlp_chunk_modules += 1
     if args.mlp_checkpoint_chunk_size > 0 and mlp_chunk_modules != 18:
         raise RuntimeError(f"expected 18 chunkable SwiGLU modules, found {mlp_chunk_modules}")
+    from ndm.models.e97 import E97SplitEditLayer
+    scan_modules = 0
+    for module in core_model.modules():
+        if isinstance(module, E97SplitEditLayer):
+            # Throughput lever 1: enlarge the serialized per-chunk projection+
+            # scan step (the chunked path loops T/projection_chunk_size times
+            # per layer per pack). 0 keeps the checkpoint-inherited value.
+            if args.projection_chunk_size:
+                if int(module.projection_chunk_size) <= 0:
+                    raise RuntimeError(
+                        "projection-chunk-size override requires an inherited chunked "
+                        "projection/scan geometry")
+                module.projection_chunk_size = args.projection_chunk_size
+            # Throughput lever 2 (default off): per-layer CUDA graph around the
+            # scan op; parameter gradients and DDP reduction stay outside.
+            module.scan_cuda_graph = bool(args.cuda_graph_chunk_scan)
+            scan_modules += 1
+    if scan_modules != 18:
+        raise RuntimeError(f"expected 18 E97 split-edit mixers, found {scan_modules}")
     parameter_count = sum(parameter.numel() for parameter in core_model.parameters())
     if parameter_count != EXPECTED_PARAMETERS:
         raise RuntimeError(f"E97 4B parameter mismatch: {parameter_count}")
@@ -471,6 +524,8 @@ def main() -> None:
          gradient_checkpoint_group_size=args.gradient_checkpoint_group_size,
          empty_cache_min_record_tokens=args.empty_cache_min_record_tokens,
          mlp_checkpoint_chunk_size=args.mlp_checkpoint_chunk_size,
+         projection_chunk_size=args.projection_chunk_size,
+         cuda_graph_chunk_scan=bool(args.cuda_graph_chunk_scan),
          total_parameters=parameter_count,
          optimizer_state_storage=optimizer_state_storage,
          optimizer_state_bucket_numel=(args.schedulefree_offload_bucket_numel
@@ -581,6 +636,8 @@ def main() -> None:
                     "gradient_checkpoint_group_size": args.gradient_checkpoint_group_size,
                     "empty_cache_min_record_tokens": args.empty_cache_min_record_tokens,
                     "mlp_checkpoint_chunk_size": args.mlp_checkpoint_chunk_size,
+                    "projection_chunk_size": args.projection_chunk_size,
+                    "cuda_graph_chunk_scan": bool(args.cuda_graph_chunk_scan),
                     "merge_bucket_numel": args.merge_bucket_numel,
                     "boundary_aware_packs": bool(args.boundary_aware_packs),
                 }
