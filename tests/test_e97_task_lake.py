@@ -339,7 +339,7 @@ def test_registry_validation_uses_one_descriptor_snapshot_for_hash_and_parse(tmp
     registry, observed = validator.load_registry_snapshot(registry_path, sha256(Path("configs/pi/e97-onpolicy-source-registry-v1.json")))
     assert observed == sha256(Path("configs/pi/e97-onpolicy-source-registry-v1.json"))
     assert [source["status"] for source in registry["sources"]] == [
-        "candidate", "candidate", "candidate"]
+        "candidate", "candidate", "candidate", "admitted", "admitted"]
 
     symlinked = tmp_path / "linked-registry.json"
     symlinked.symlink_to(replacement)
@@ -382,7 +382,7 @@ def test_checked_in_candidate_registry_is_valid_and_policy_bound(tmp_path):
     path = Path("configs/pi/e97-onpolicy-source-registry-v1.json")
     value = validate_source_registry(json.loads(path.read_text()))
     assert [source["status"] for source in value["sources"]] == [
-        "candidate", "candidate", "candidate"]
+        "candidate", "candidate", "candidate", "admitted", "admitted"]
     policy = Path("docs/EMENDER_E97_4B_ONPOLICY_TASK_LAKE_EXECUTION_PLAN.md")
     assert value["policy_sha256"] == sha256(policy)
     output = tmp_path / "receipt.json"
@@ -395,7 +395,7 @@ def test_checked_in_candidate_registry_is_valid_and_policy_bound(tmp_path):
     receipt = json.loads(output.read_text())
     assert receipt["status"] == "pass"
     assert receipt["registry"]["candidate_sources"] == 3
-    assert receipt["registry"]["admitted_sources"] == 0
+    assert receipt["registry"]["admitted_sources"] == 2
     assert receipt["task_validation"] == "not-run"
     assert "tasks" not in receipt
     assert receipt["claims"] == [

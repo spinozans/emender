@@ -533,17 +533,30 @@ def test_positive_generation_publishes_exact_private_authority_without_fixture_s
     assert not any("fixtures" in path.parts for path in output.rglob("*"))
 
 
-def test_checked_registry_is_non_generatable_until_revision_pin(tmp_path):
+def test_checked_registry_admits_first_party_sources_bound_to_current_artifacts(tmp_path):
+    """The lake-expansion registry commit (operator authorization 2026-09-27).
+
+    The original admitted lake was generated under an uncommitted registry
+    edit; the checked-in registry now carries the same first-party split
+    sources with receipts bound to the exact artifacts generation consumes.
+    """
     registry = validate_source_registry(json.loads(CHECKED_IN_REGISTRY.read_text()))
-    assert len(registry["sources"]) == 3
-    assert all(source["status"] == "candidate" for source in registry["sources"])
-    policy = Path("docs/EMENDER_E97_4B_ONPOLICY_TASK_LAKE_EXECUTION_PLAN.md")
-    with pytest.raises(ValueError, match="lacks pre-admitted first-party split sources"):
-        generate(
-            tmp_path / "quarantine",
-            seed="first-commit-refusal",
-            registry_path=CHECKED_IN_REGISTRY,
-            registry_sha256=hashlib.sha256(CHECKED_IN_REGISTRY.read_bytes()).hexdigest(),
-            policy_sha256=hashlib.sha256(policy.read_bytes()).hexdigest(),
-        )
-    assert not (tmp_path / "quarantine").exists()
+    assert len(registry["sources"]) == 5
+    first_party = {source["id"]: source for source in registry["sources"]
+                   if source["kind"] == "first-party"}
+    assert set(first_party) == {"e97-firstparty-train", "e97-firstparty-development"}
+    receipts = {
+        "source_archive_sha256": hashlib.sha256(
+            Path("configs/pi/e97-firstparty-source-v1.tar").read_bytes()).hexdigest(),
+        "license_sha256": hashlib.sha256(
+            Path("configs/pi/e97-firstparty-authorization-license-v1.json").read_bytes()).hexdigest(),
+        "environment_sha256": hashlib.sha256(
+            Path("configs/pi/e97-firstparty-cpu-environment-v1.json").read_bytes()).hexdigest(),
+        "overlap_sha256": hashlib.sha256(
+            Path("configs/pi/e97-firstparty-overlap-firewall-audit-v1.json").read_bytes()).hexdigest(),
+    }
+    for source in first_party.values():
+        assert source["status"] == "admitted"
+        assert source["receipts"] == receipts
+        assert source["revision"] == "2002ededaad108fd5837018da8e3253e90cdc89c"
+
