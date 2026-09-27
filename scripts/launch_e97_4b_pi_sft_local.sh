@@ -27,6 +27,10 @@ SAVE_EVERY=${SAVE_EVERY:-}
 KEEP_CHECKPOINTS=${KEEP_CHECKPOINTS:-3}
 RESUME=${RESUME:-}
 NEW_STAGE_FROM=${NEW_STAGE_FROM:-0}
+NEW_STAGE_WEIGHT_MODE=${NEW_STAGE_WEIGHT_MODE:-saved}
+SOURCE_IDENTITY=${SOURCE_IDENTITY:-$(git rev-parse HEAD)}
+SOURCE_ARCHIVE=${SOURCE_ARCHIVE:-}
+SOURCE_ARCHIVE_SHA256=${SOURCE_ARCHIVE_SHA256:-}
 case "$MODE" in
   qualification)
     [[ -z "$RESUME" ]] || { echo "qualification must start from the parent" >&2; exit 64; }
@@ -38,6 +42,11 @@ case "$MODE" in
     [[ -r "$RESUME" ]] || { echo "canary requires RESUME naming the qualification checkpoint" >&2; exit 66; }
     STEPS=${STEPS:-64}; SAVE_EVERY=${SAVE_EVERY:-32}
     ;;
+  stage)
+    [[ ${CONFIRM_STAGE:-0} == 1 ]] || { echo "stage requires CONFIRM_STAGE=1" >&2; exit 64; }
+    [[ -r "$RESUME" ]] || { echo "stage requires RESUME naming the qualification checkpoint" >&2; exit 66; }
+    STEPS=${STEPS:?stage requires explicit STEPS}; SAVE_EVERY=${SAVE_EVERY:-64}
+    ;;
   parity-control)
     [[ ${CONFIRM_PARITY_CONTROL:-0} == 1 ]] || {
       echo "parity-control requires CONFIRM_PARITY_CONTROL=1" >&2; exit 64;
@@ -47,8 +56,25 @@ case "$MODE" in
     }
     STEPS=${STEPS:-16}; SAVE_EVERY=${SAVE_EVERY:-8}
     ;;
-  *) echo "MODE must be qualification, canary, or parity-control" >&2; exit 64;;
+  *) echo "MODE must be qualification, canary, stage, or parity-control" >&2; exit 64;;
 esac
+[[ "$NEW_STAGE_WEIGHT_MODE" == saved || "$NEW_STAGE_WEIGHT_MODE" == train ]] || {
+  echo "NEW_STAGE_WEIGHT_MODE must be saved or train" >&2; exit 64;
+}
+if [[ "$NEW_STAGE_FROM" == 0 && -z "$RESUME" && "$NEW_STAGE_WEIGHT_MODE" != saved ]]; then
+  echo "NEW_STAGE_WEIGHT_MODE=train requires NEW_STAGE_FROM=1 or RESUME" >&2; exit 64
+fi
+if [[ -n "$SOURCE_ARCHIVE" || -n "$SOURCE_ARCHIVE_SHA256" ]]; then
+  [[ -r "$SOURCE_ARCHIVE" && ${#SOURCE_ARCHIVE_SHA256} == 64 ]] || {
+    echo "source archive and SHA-256 must be supplied together" >&2; exit 66;
+  }
+  [[ $(sha256sum "$SOURCE_ARCHIVE" | awk '{print $1}') == "$SOURCE_ARCHIVE_SHA256" ]] || {
+    echo "source archive SHA-256 mismatch" >&2; exit 66;
+  }
+  [[ "$SOURCE_IDENTITY" == "source-tree-sha256:$SOURCE_ARCHIVE_SHA256" ]] || {
+    echo "SOURCE_IDENTITY must bind the verified source archive" >&2; exit 66;
+  }
+fi
 [[ "$BOUNDARY_AWARE_PACKS" == 0 || "$BOUNDARY_AWARE_PACKS" == 1 ]] || {
   echo "BOUNDARY_AWARE_PACKS must be 0 or 1" >&2; exit 64;
 }
@@ -68,7 +94,7 @@ esac
 }
 [[ $(sha256sum "$AUTHORITY_ROOT/manifest.json" | awk '{print $1}') == "$AUTHORITY_SHA256" ]] || exit 66
 [[ $(sha256sum "$PACK_ROOT/manifest.json" | awk '{print $1}') == "$PACK_SHA256" ]] || exit 66
-SOURCE_COMMIT=$(git rev-parse HEAD)
+SOURCE_COMMIT=$SOURCE_IDENTITY
 RUN_ID=${RUN_ID:-e97-4b-pi-sft-local-${MODE}-$(date -u +%Y%m%dT%H%M%SZ)}
 RUN_ROOT=${RUN_ROOT:-/mnt/nvme1n1/erikg/diloco_8gpu/e97_4b_pi_instruction_local/runs/$RUN_ID}
 [[ "$RUN_ROOT" == /* && "$RUN_ID" != */* && ! -e "$RUN_ROOT" ]] || {
@@ -76,7 +102,7 @@ RUN_ROOT=${RUN_ROOT:-/mnt/nvme1n1/erikg/diloco_8gpu/e97_4b_pi_instruction_local/
 }
 mkdir -p "$RUN_ROOT"/{checkpoints,identity,logs,terminal}
 cat > "$RUN_ROOT/identity/launch.json" <<EOF
-{"schema":"emender-e97-4b-pi-sft-local-launch-v1","mode":"$MODE","source_commit":"$SOURCE_COMMIT","parent_sha256":"$PARENT_SHA256","authority_sha256":"$AUTHORITY_SHA256","pack_sha256":"$PACK_SHA256","world_size":8,"context_size":$CONTEXT_SIZE,"boundary_aware_packs":$BOUNDARY_AWARE_PACKS,"sampler_mode":"$SAMPLER_MODE","gradient_checkpoint_group_size":$GRADIENT_CHECKPOINT_GROUP_SIZE,"empty_cache_min_record_tokens":$EMPTY_CACHE_MIN_RECORD_TOKENS,"mlp_checkpoint_chunk_size":$MLP_CHECKPOINT_CHUNK_SIZE,"steps":$STEPS,"diloco_k":$DILOCO_K,"diloco_merge_enabled":$DILOCO_MERGE,"keep_checkpoints":$KEEP_CHECKPOINTS,"new_stage_from":$NEW_STAGE_FROM,"optimizer_state_storage":"pinned-cpu"}
+{"schema":"emender-e97-4b-pi-sft-local-launch-v1","mode":"$MODE","source_commit":"$SOURCE_COMMIT","source_archive":"$SOURCE_ARCHIVE","source_archive_sha256":"$SOURCE_ARCHIVE_SHA256","parent_sha256":"$PARENT_SHA256","authority_sha256":"$AUTHORITY_SHA256","pack_sha256":"$PACK_SHA256","world_size":8,"context_size":$CONTEXT_SIZE,"boundary_aware_packs":$BOUNDARY_AWARE_PACKS,"sampler_mode":"$SAMPLER_MODE","gradient_checkpoint_group_size":$GRADIENT_CHECKPOINT_GROUP_SIZE,"empty_cache_min_record_tokens":$EMPTY_CACHE_MIN_RECORD_TOKENS,"mlp_checkpoint_chunk_size":$MLP_CHECKPOINT_CHUNK_SIZE,"steps":$STEPS,"diloco_k":$DILOCO_K,"diloco_merge_enabled":$DILOCO_MERGE,"keep_checkpoints":$KEEP_CHECKPOINTS,"new_stage_from":$NEW_STAGE_FROM,"new_stage_weight_mode":"$NEW_STAGE_WEIGHT_MODE","optimizer_state_storage":"pinned-cpu"}
 EOF
 RESUME_ARGS=()
 BOUNDARY_ARGS=()
@@ -91,7 +117,10 @@ if [[ -n "$RESUME" ]]; then
   [[ "$NEW_STAGE_FROM" == 0 ]] || { echo "resume and new-stage-from are mutually exclusive" >&2; exit 64; }
   RESUME_ARGS=(--resume "$RESUME")
 elif [[ "$NEW_STAGE_FROM" == 1 ]]; then
-  RESUME_ARGS=(--new-stage-from "$PARENT")
+  RESUME_ARGS=(--new-stage-from "$PARENT" --new-stage-weight-mode "$NEW_STAGE_WEIGHT_MODE")
+fi
+if [[ -n "$RESUME" ]]; then
+  RESUME_ARGS+=(--new-stage-weight-mode "$NEW_STAGE_WEIGHT_MODE")
 fi
 COMMAND=(
   torchrun --standalone --nproc_per_node="$WORLD_SIZE"

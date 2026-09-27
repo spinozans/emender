@@ -13,6 +13,7 @@ def test_cli_eval_launcher_uses_real_pi_apptainer_and_fixed_frontier_world():
         "configs/pi/e97-cli-tools.ts", "eval_e97_dense_agent_pi_cli.py",
         "EMENDER_CLI_IMAGE", "EMENDER_CLI_IMAGE_SHA256", "sha256sum -c -",
         "completion cache=miss", "Partition=batch|QOS=debug",
+        "--checkpoint-sha256 \"'$CHECKPOINT_SHA256'\"",
     ):
         assert required in text
     assert "e97-v1-tools.ts" not in text

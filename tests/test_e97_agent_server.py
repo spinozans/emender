@@ -34,6 +34,13 @@ class FakeEngine:
     def __init__(self, outputs):
         self.outputs = list(outputs)
         self.advance_calls = []
+        self.checkpoint_sha256 = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+        self.args_json_sha256 = self.checkpoint_sha256
+        self.runtime_image_sha256 = self.checkpoint_sha256
+        self.controller_build_sha256 = hashlib.sha256(
+            (Path(__file__).parents[1] / "ndm" / "e97_acquisition_controller.py").read_bytes()).hexdigest()
+        self.server_build_sha256 = hashlib.sha256(
+            (Path(__file__).parents[1] / "ndm" / "e97_agent_server.py").read_bytes()).hexdigest()
 
     def encode(self, text):
         return list(text.encode("utf-8"))
@@ -64,6 +71,7 @@ def external_attestation_kwargs():
         "runtime_image_path": str(args_path), "runtime_image_sha256": args_sha,
         "tool_schema_sha256": sha256_text(json.dumps(READ_OBSERVE_TOOLS, sort_keys=True, separators=(",", ":"))),
         "controller_build_sha256":  hashlib.sha256((Path(__file__).parents[1] / "ndm" / "e97_acquisition_controller.py").read_bytes()).hexdigest(),
+        "server_build_sha256": hashlib.sha256((Path(__file__).parents[1] / "ndm" / "e97_agent_server.py").read_bytes()).hexdigest(),
     }
 
 
@@ -172,6 +180,75 @@ def test_completion_round_trip_uses_cached_suffix_and_structured_tool_call():
     assert service.commit(second) is True
 
 
+def test_service_rejects_engine_protocol_mode_mismatch():
+    engine = FakeEngine([])
+    engine.private_analysis = True
+    with pytest.raises(ValueError, match="does not match loaded engine"):
+        AgentCompletionService(engine, private_analysis=False)
+
+
+def test_private_analysis_round_trips_through_tool_turn_and_stays_out_of_final_content():
+    engine = FakeEngine([
+        'Analysis: "Inspect the requested file first."\nAction: read\nArguments: {"path":"README.md"}',
+        'Analysis: "The observation supports the answer."\nFinal: verified\n',
+    ])
+    service = AgentCompletionService(engine, max_sessions=2, private_analysis=True)
+    tools = [tool("read")]
+    first = service.prepare_completion({
+        "messages": [{"role": "user", "content": "Read it."}],
+        "tools": tools,
+    }, session_id="analysis-session")
+    first_message = first.response["choices"][0]["message"]
+    assert first_message["content"] is None
+    assert first_message["reasoning_content"] == "Inspect the requested file first."
+    assert first_message["tool_calls"][0]["function"]["name"] == "read"
+    assert service.commit(first) is True
+
+    second = service.prepare_completion({
+        "messages": [
+            {"role": "user", "content": "Read it."},
+            first_message,
+            {"role": "tool", "tool_call_id": first_message["tool_calls"][0]["id"],
+             "content": "verified contents"},
+        ],
+        "tools": tools,
+    }, session_id="analysis-session")
+    assert second.session.cache_event == "hit"
+    second_message = second.response["choices"][0]["message"]
+    assert second_message["reasoning_content"] == "The observation supports the answer."
+    assert second_message["content"] == "Final: verified\n"
+    assert "The observation" not in second_message["content"]
+    events = b"".join(chat_completion_sse(second.response))
+    assert b'"reasoning_content":"The observation supports the answer."' in events
+
+
+def test_private_analysis_bytes_are_part_of_recurrent_cache_prefix_identity():
+    engine = FakeEngine([
+        'Analysis: "original rationale"\nAction: read\nArguments: {"path":"README.md"}',
+        'Analysis: "new rationale"\nFinal: done\n',
+    ])
+    service = AgentCompletionService(engine, max_sessions=1, private_analysis=True)
+    tools = [tool("read")]
+    first = service.prepare_completion({
+        "messages": [{"role": "user", "content": "Read it."}], "tools": tools,
+    }, session_id="analysis-prefix")
+    assert service.commit(first) is True
+    changed = dict(first.response["choices"][0]["message"])
+    changed["reasoning_content"] = "client changed rationale"
+    second = service.prepare_completion({
+        "messages": [
+            {"role": "user", "content": "Read it."}, changed,
+            {"role": "tool", "tool_call_id": changed["tool_calls"][0]["id"], "content": "contents"},
+        ],
+        "tools": tools,
+    }, session_id="analysis-prefix")
+
+    assert second.session.cache_event == "replay"
+    replayed_prompt = bytes(engine.advance_calls[-1][1]).decode("utf-8")
+    assert "client changed rationale" in replayed_prompt
+    assert "original rationale" not in replayed_prompt
+
+
 def test_v2_tool_only_mode_rejects_unstructured_final():
     service = AgentCompletionService(
         FakeEngine(["Final: unsupported" + RS]), require_tool_call=True
@@ -257,13 +334,33 @@ def test_external_controller_mode_delegates_repeat_policy_without_request_switch
     assert attestation["system_prompt_override_sha256"] == sha256_text("")
 
 
-def test_external_controller_rejects_missing_checkpoint_artifact():
+def test_external_private_analysis_attestation_uses_versioned_protocol_identity():
+    service = AgentCompletionService(
+        FakeEngine(['Analysis: "reason"\nFinal: done\n']),
+        external_controller=True, private_analysis=True,
+        **external_attestation_kwargs(),
+    )
+    attestation = json.loads(service._service_attestation_json)
+    assert attestation["schema"] == "emender-e97-agent-service-attestation-v2"
+    assert attestation["runtime_identity_schema"] == "emender-e97-runtime-identity-v2"
+    assert attestation["agent_protocol"] == "e97-pi-agent-analysis-v1"
+    assert attestation["private_analysis"] is True
+    prepared = service.prepare_completion(
+        {"messages": [{"role": "system", "content": "system"}, {"role": "user", "content": "finish"}],
+         "tools": READ_OBSERVE_TOOLS},
+        session_id=None,
+    )
+    message = prepared.response["choices"][0]["message"]
+    assert prepared.response["emender_assistant_message_sha256"] == sha256_json(message)
+
+
+def test_external_controller_does_not_reopen_checkpoint_identity_path():
     engine = FakeEngine([])
     engine.checkpoint = "/missing/checkpoint.pt"
     identity = external_attestation_kwargs()
     identity["checkpoint_path"] = engine.checkpoint
-    with pytest.raises(ValueError, match="checkpoint_path"):
-        AgentCompletionService(engine, external_controller=True, **identity)
+    service = AgentCompletionService(engine, external_controller=True, **identity)
+    assert json.loads(service._service_attestation_json)["checkpoint_path"] == engine.checkpoint
 
 
 def test_external_controller_rejects_checkpoint_identity_that_disagrees_with_engine_bytes(tmp_path):
@@ -278,6 +375,22 @@ def test_external_controller_rejects_checkpoint_identity_that_disagrees_with_eng
         AgentCompletionService(engine, external_controller=True, **identity)
 
 
+def test_external_service_consumes_bound_checkpoint_identity_without_reopening_swapped_path(tmp_path):
+    checkpoint = tmp_path / "tiny-checkpoint.pt"
+    checkpoint.write_bytes(b"loaded-model-bytes")
+    digest_value = hashlib.sha256(checkpoint.read_bytes()).hexdigest()
+    engine = FakeEngine([])
+    engine.checkpoint = str(checkpoint)
+    engine.checkpoint_sha256 = digest_value
+    identity = external_attestation_kwargs()
+    identity.update({"checkpoint_path": str(checkpoint), "checkpoint_sha256": digest_value})
+    # Simulate a post-load pathname replacement.  A service that hashes or
+    # opens it again would reject or attest the substituted bytes.
+    checkpoint.write_bytes(b"substituted-path-bytes")
+    service = AgentCompletionService(engine, external_controller=True, **identity)
+    assert json.loads(service._service_attestation_json)["checkpoint_sha256"] == digest_value
+
+
 def test_external_request_identity_uses_canonical_unicode_json():
     service = AgentCompletionService(FakeEngine(["Final: done\n"]), external_controller=True, **external_attestation_kwargs())
     messages = [
@@ -289,17 +402,15 @@ def test_external_request_identity_uses_canonical_unicode_json():
     assert identity["request_sha256"] == sha256_json({"messages": messages, "tools": READ_OBSERVE_TOOLS})
 
 
-def test_external_controller_requires_and_verifies_args_and_controller_artifacts(tmp_path):
+def test_external_controller_requires_bound_identity_receipt_fields():
     missing = external_attestation_kwargs()
     del missing["args_json_path"]
     with pytest.raises(ValueError, match="args_json_path"):
         AgentCompletionService(FakeEngine([]), external_controller=True, **missing)
-    mismatch = external_attestation_kwargs()
-    artifact = tmp_path / "args.json"
-    artifact.write_text("{}")
-    mismatch["args_json_path"] = str(artifact)
+    bad_args = external_attestation_kwargs()
+    bad_args["args_json_sha256"] = "0" * 64
     with pytest.raises(ValueError, match="args_json_sha256"):
-        AgentCompletionService(FakeEngine([]), external_controller=True, **mismatch)
+        AgentCompletionService(FakeEngine([]), external_controller=True, **bad_args)
     bad_controller = external_attestation_kwargs()
     bad_controller["controller_build_sha256"] = "0" * 64
     with pytest.raises(ValueError, match="controller_build_sha256"):

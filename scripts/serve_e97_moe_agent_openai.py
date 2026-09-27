@@ -10,7 +10,10 @@ import torch
 import torch.distributed as dist
 
 from ndm.e97 import load_e97_checkpoint
-from ndm.e97_agent_protocol import DENSE_AGENT_CLI_DIRECT_SYSTEM, DENSE_AGENT_CLI_SYSTEM
+from ndm.e97_agent_protocol import (
+    DENSE_AGENT_CLI_DIRECT_SYSTEM, DENSE_AGENT_CLI_SYSTEM,
+    E97_PI_AGENT_ANALYSIS_SYSTEM_V1,
+)
 from ndm.e97_agent_server import AgentCompletionService, run_openai_server
 from ndm.e97_moe_agent_server import TorchE97MoEAgentEngine
 from ndm.e97_moe_checkpoint import load_node_sharded_model
@@ -36,8 +39,15 @@ def parse_args() -> argparse.Namespace:
     systems = parser.add_mutually_exclusive_group(required=True)
     systems.add_argument("--cli-canonical-system", action="store_true")
     systems.add_argument("--cli-direct-canonical-system", action="store_true")
+    systems.add_argument("--pi-agent-analysis-v1-canonical-system", action="store_true")
+    parser.add_argument("--private-analysis-protocol", action="store_true")
     parser.add_argument("--trace-generated-errors", action="store_true")
-    return parser.parse_args()
+    args = parser.parse_args()
+    if args.pi_agent_analysis_v1_canonical_system:
+        args.private_analysis_protocol = True
+    if args.private_analysis_protocol != args.pi_agent_analysis_v1_canonical_system:
+        parser.error("MoE private-analysis protocol requires its canonical system identity")
+    return args
 
 
 def main() -> None:
@@ -95,11 +105,18 @@ def main() -> None:
             loaded,
             node_group=groups.node_group,
             ingest_mode=args.ingest_mode,
+            private_analysis=args.private_analysis_protocol,
         )
         if not engine.is_coordinator:
             engine.worker_loop()
             return
-        system = DENSE_AGENT_CLI_DIRECT_SYSTEM if args.cli_direct_canonical_system else DENSE_AGENT_CLI_SYSTEM
+        system = (
+            E97_PI_AGENT_ANALYSIS_SYSTEM_V1
+            if args.pi_agent_analysis_v1_canonical_system
+            else DENSE_AGENT_CLI_DIRECT_SYSTEM
+            if args.cli_direct_canonical_system
+            else DENSE_AGENT_CLI_SYSTEM
+        )
         service = AgentCompletionService(
             engine,
             model_id=args.model_id,
@@ -107,7 +124,8 @@ def main() -> None:
             max_sessions=args.max_sessions,
             trace_generated_errors=args.trace_generated_errors,
             system_prompt_override=system,
-            require_tool_call=True,
+            require_tool_call=not args.private_analysis_protocol,
+            private_analysis=args.private_analysis_protocol,
         )
         print(
             f"serving synchronized MoE model={args.model_id} generation={args.generation} "

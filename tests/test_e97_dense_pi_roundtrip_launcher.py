@@ -18,6 +18,7 @@ def test_pi_roundtrip_launcher_is_fixed_world_immutable_and_bounded():
         "Requeue=0",
         "git archive \"$SOURCE_COMMIT\"",
         "sha256sum -c",
+        "--checkpoint-sha256 \"'$CHECKPOINT_SHA256'\"",
         "LOCAL_RANK=0",
         "--max-output-tokens 96",
         "--max-sessions 2",

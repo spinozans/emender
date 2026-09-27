@@ -17,7 +17,9 @@ from ndm.e97_acquisition_controller import (
     ToolExecution,
     WorkspaceToolExecutor,
 )
-from ndm.e97_onpolicy_records import CANONICAL_NO_PROGRESS_OBSERVATION, sha256_json, sha256_text
+from ndm.e97_onpolicy_records import (
+    CANONICAL_NO_PROGRESS_OBSERVATION, canonical_json, sha256_json, sha256_text,
+)
 from ndm.e97_agent_protocol import serialize_pi_messages
 
 
@@ -36,6 +38,13 @@ ATTESTATION = {
     "cuda_available": False, "platform": "Linux", "machine": "x86_64",
 }
 ATTESTATION["tool_schema_sha256"] = sha256_json(READ_OBSERVE_TOOLS)
+ATTESTATION_V2 = {
+    **ATTESTATION,
+    "schema": "emender-e97-agent-service-attestation-v2",
+    "runtime_identity_schema": "emender-e97-runtime-identity-v2",
+    "agent_protocol": "e97-pi-agent-analysis-v1",
+    "private_analysis": True,
+}
 
 
 class FakeClient:
@@ -56,11 +65,14 @@ class FakeClient:
         if self.attestation is not None:
             response["emender_service_attestation"] = self.attestation
             response["emender_request_identity"] = {
-                "messages_sha256": sha256_text(json.dumps(request["messages"], sort_keys=True, separators=(",", ":"))),
+                "messages_sha256": sha256_text(canonical_json(request["messages"])),
                 "system_prompt_sha256": sha256_text(request["messages"][0]["content"]),
                 "tool_schema_sha256": sha256_json(request["tools"]),
                 "request_sha256": sha256_json(request),
             }
+            if self.attestation.get("private_analysis") is True:
+                response["emender_assistant_message_sha256"] = sha256_json(
+                    response["choices"][0]["message"])
         return response
 
 
@@ -92,6 +104,105 @@ def controller(client, executor, **kwargs):
         controller_build_sha256=CONTROLLER_BUILD,
         **{"max_turns": 8, "max_seconds": 30, **kwargs},
     )
+
+
+def test_private_analysis_controller_preserves_reasoning_across_tool_round_trip():
+    first = action()
+    first["reasoning_content"] = "Inspect the file before answering."
+    final = {
+        "role": "assistant", "content": "Final: done",
+        "reasoning_content": "The observation is sufficient.",
+    }
+    client = FakeClient([first, final], attestation=ATTESTATION_V2)
+    executor = FakeExecutor(
+        [ToolExecution({"value": "done"}, '{"ok":true,"value":"done"}')],
+        [{"tree_sha256": "one"}],
+    )
+    instance = AcquisitionController(
+        client, executor, checkpoint_sha256=CHECKPOINT,
+        expected_service_attestation=ATTESTATION_V2,
+        controller_build_sha256=CONTROLLER_BUILD,
+        max_turns=8, max_seconds=30,
+    )
+    result = instance.run(system_prompt="system", user_prompt="read")
+
+    assert result.status == "success"
+    assert result.messages[2]["reasoning_content"] == "Inspect the file before answering."
+    assert result.messages[-1]["reasoning_content"] == "The observation is sufficient."
+    second_request = result.metadata["completion_receipts"][1]["request"]
+    assert second_request["messages"][2]["reasoning_content"] == "Inspect the file before answering."
+    native = serialize_pi_messages(
+        result.messages, append_assistant_header=False, private_analysis=True)
+    assert 'Analysis: "Inspect the file before answering."\nAction: read' in native
+    assert 'Analysis: "The observation is sufficient."\nFinal: done' in native
+
+
+def test_private_analysis_controller_rejects_client_mutation_after_service_digest():
+    class MutatingClient(FakeClient):
+        def complete(self, request, *, deadline):
+            response = super().complete(request, deadline=deadline)
+            response["choices"][0]["message"]["reasoning_content"] = "mutated"
+            return response
+
+    message = {
+        "role": "assistant", "content": "Final: done",
+        "reasoning_content": "service bytes",
+    }
+    instance = AcquisitionController(
+        MutatingClient([message], attestation=ATTESTATION_V2), FakeExecutor([], []),
+        checkpoint_sha256=CHECKPOINT, expected_service_attestation=ATTESTATION_V2,
+        controller_build_sha256=CONTROLLER_BUILD, max_turns=1, max_seconds=30,
+    )
+    result = instance.run(system_prompt="system", user_prompt="finish")
+    assert result.status == "completion_error"
+    assert "changed after service generation" in result.error
+
+
+def test_private_analysis_survives_eight_action_observation_round_trips_exactly():
+    analyses = [
+        f"turn {index}: preserve unicode λ and markers Action: read / Final: no"
+        for index in range(8)
+    ]
+    assistant_messages = []
+    for index, reasoning in enumerate(analyses):
+        message = action(
+            arguments=json.dumps({"path": f"note-{index}.txt", "offset": 1, "limit": 1}),
+            call_id=f"call-{index}",
+        )
+        message["reasoning_content"] = reasoning
+        assistant_messages.append(message)
+    assistant_messages.append({
+        "role": "assistant", "content": "Final: eight observations retained",
+        "reasoning_content": "terminal rationale\nwith a newline",
+    })
+    client = FakeClient(assistant_messages, attestation=ATTESTATION_V2)
+    executor = FakeExecutor(
+        [ToolExecution({"value": index}, json.dumps({"ok": True, "value": index})) for index in range(8)],
+        [{"tree_sha256": f"state-{index}"} for index in range(8)],
+    )
+    instance = AcquisitionController(
+        client, executor, checkpoint_sha256=CHECKPOINT,
+        expected_service_attestation=ATTESTATION_V2,
+        controller_build_sha256=CONTROLLER_BUILD,
+        max_turns=9, max_seconds=30,
+    )
+    result = instance.run(system_prompt="system", user_prompt="inspect eight files")
+
+    assert result.status == "success"
+    observed = [
+        message["reasoning_content"] for message in result.messages
+        if message.get("role") == "assistant"
+    ]
+    assert observed == analyses + ["terminal rationale\nwith a newline"]
+    receipts = result.metadata["completion_receipts"]
+    assert len(receipts) == 9
+    for index in range(1, 9):
+        request_messages = receipts[index]["request"]["messages"]
+        retained = [
+            message["reasoning_content"] for message in request_messages
+            if message.get("role") == "assistant"
+        ]
+        assert retained == analyses[:index]
 
 
 def test_workspace_tools_contain_paths_symlinks_and_bound_output(tmp_path):
@@ -325,6 +436,56 @@ def test_openai_client_rejects_oversized_response_without_unbounded_read(monkeyp
     with pytest.raises(Exception, match="exceeds byte limit"):
         client.complete({}, deadline=1)
     assert response.read_sizes == [65]
+
+
+def test_openai_client_preserves_reasoning_content_and_request_bytes(monkeypatch):
+    reasoning = "line one\nAction: marker collision λ"
+    payload = {
+        "model": "e97-dense-agent",
+        "choices": [{"message": {
+            "role": "assistant", "content": "Final: done",
+            "reasoning_content": reasoning,
+        }}],
+    }
+    encoded = canonical_json(payload).encode("utf-8")
+    captured = {}
+
+    class Response:
+        headers = {"Content-Length": str(len(encoded))}
+
+        def __init__(self):
+            self.done = False
+
+        def read(self, _size):
+            if self.done:
+                return b""
+            self.done = True
+            return encoded
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+    def open_request(request, **_kwargs):
+        captured["body"] = request.data
+        return Response()
+
+    monkeypatch.setattr("ndm.e97_acquisition_controller.urlopen", open_request)
+    client = OpenAICompletionClient(
+        "http://example.invalid/v1/chat/completions", clock=lambda: 0)
+    request = {"messages": [{
+        "role": "assistant", "content": None,
+        "reasoning_content": reasoning,
+        "tool_calls": [{"type": "function", "function": {
+            "name": "read", "arguments": '{"path":"x"}',
+        }}],
+    }]}
+    response = client.complete(request, deadline=1)
+
+    assert captured["body"] == canonical_json(request).encode("utf-8")
+    assert response["choices"][0]["message"]["reasoning_content"] == reasoning
 
 
 def test_descriptor_open_rejects_deterministic_symlink_swap(tmp_path, monkeypatch):
