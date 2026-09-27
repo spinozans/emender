@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import io
 import json
 import os
 import platform
@@ -16,23 +17,42 @@ import tarfile
 import tempfile
 import time
 from dataclasses import dataclass
-from typing import Any, Mapping
+from typing import Any, Callable, Mapping
 
 from ndm.e97_acquisition_controller import ACQUISITION_CONTROLLER_SCHEMA, READ_OBSERVE_TOOLS, WorkspaceToolExecutor
-from ndm.e97_atomic import publish_directory_no_replace
-from ndm.e97_onpolicy_records import ActionProgressReceipt, NoProgressDetector, action_fingerprint, progress_fingerprint
+from ndm.e97_atomic import (
+    cleanup_directory_best_effort,
+    durable_directory,
+    publish_directory_no_replace,
+    read_regular_file_no_follow,
+)
+from ndm.e97_onpolicy_records import (
+    ActionProgressReceipt, NoProgressDetector, _validate_terminal_completion_usage,
+    action_fingerprint, progress_fingerprint,
+)
 from ndm.e97_onpolicy_records import canonical_json, sha256_json, sha256_text, task_identity
 from ndm.e97_agent_protocol import serialize_pi_messages
 from ndm.e97_task_lake import TASK_BUNDLE_SCHEMA, canonical_intent_digest, validate_task_collection, validate_source_registry
-from ndm.e97_first_party_source_archive import verify_archive_members, verify_source_archive
-from ndm.e97_protected_overlap import validate_overlap_authorization, validate_overlap_receipt
+from ndm.e97_first_party_source_archive import (
+    source_archive_payload_verification,
+    verified_loaded_module_closure_sha256,
+    verified_source_member_payload,
+    verify_archive_members,
+)
+from ndm.e97_protected_overlap import (
+    validate_overlap_authorization, validate_authorized_overlap_receipt,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 CHECKED_IN_REGISTRY = ROOT / "configs/pi/e97-onpolicy-source-registry-v1.json"
 GENERATOR_MANIFEST = ROOT / "configs/pi/e97-firstparty-generator-manifest-v1.json"
 GENERATOR_SOURCE_ARCHIVE = ROOT / "configs/pi/e97-firstparty-source-v1.tar"
 ENVIRONMENT_DESCRIPTOR = ROOT / "configs/pi/e97-firstparty-cpu-environment-v1.json"
+OVERLAP_AUDIT = ROOT / "configs/pi/e97-firstparty-overlap-firewall-audit-v1.json"
+AUTHORIZATION_LICENSE = ROOT / "configs/pi/e97-firstparty-authorization-license-v1.json"
 VALIDATOR_PROGRAM = ROOT / "scripts/e97_first_party_validator.py"
+_CONTROLLER_SOURCE_MEMBER = "ndm/e97_acquisition_controller.py"
+_VALIDATOR_SOURCE_MEMBER = "scripts/e97_first_party_validator.py"
 VALIDATOR_LOGICAL_RUNTIME = "@runtime-python"
 VALIDATOR_LOGICAL_PROGRAM = "@generator-source/scripts/e97_first_party_validator.py"
 _REQUIRED_PANELS = {
@@ -43,7 +63,20 @@ _REQUIRED_PANELS = {
 
 
 def _sha_path(path: Path) -> str:
+    """Hash an executable or local generated file at its caller-owned path."""
+
+    # Interpreter executables may deliberately be symlinks in a virtualenv.
+    # Candidate/quarantine authority reads use ``_read_snapshot_file`` instead.
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _read_snapshot_file(path: Path, *, name: str, maximum: int = 64 << 20) -> bytes:
+    """Read one bounded regular file through no-follow descriptors at every level."""
+
+    try:
+        return read_regular_file_no_follow(path, maximum=maximum)
+    except (FileNotFoundError, ValueError) as exc:
+        raise ValueError(f"{name} cannot be opened safely") from exc
 
 
 def validator_logical_argv(mode: str) -> list[str]:
@@ -57,7 +90,23 @@ def _digest(seed: str, domain: str) -> str:
 
 
 def _tree_digest(root: Path) -> str:
-    return sha256_json([{"path": p.relative_to(root).as_posix(), "sha256": _sha_path(p)} for p in sorted(root.rglob("*")) if p.is_file()])
+    """Return the canonical observable identity of every fixture entry.
+
+    Directories are explicit because ``list_files`` exposes them, including an
+    otherwise empty directory.  A file-only digest could therefore approve an
+    archive whose observable workspace differs from the sealed fixture.
+    """
+
+    entries: list[dict[str, str]] = []
+    for path in sorted(root.rglob("*")):
+        relative = path.relative_to(root).as_posix()
+        if path.is_dir():
+            entries.append({"path": relative, "type": "directory"})
+        elif path.is_file():
+            entries.append({"path": relative, "type": "file", "sha256": _sha_path(path)})
+        else:
+            raise ValueError("fixture tree contains a non-regular non-directory entry")
+    return sha256_json(entries)
 
 
 def _archive_root_sha256(tasks: list[Mapping[str, Any]], authority_root: Path) -> str:
@@ -90,25 +139,47 @@ def _archive(root: Path, output: Path) -> None:
                 archive.addfile(info)
 
 
+def _verified_fixture_archive_payload(root: Path, archive_path: Path, *, tree_digest: str, disk_limit: int) -> bytes:
+    """Retain an archive then prove it expands to its declared pre-publication tree."""
+
+    payload = _read_snapshot_file(archive_path, name="generated fixture archive", maximum=256 << 20)
+    with tempfile.TemporaryDirectory(prefix="e97-first-party-fixture-verify-") as temporary:
+        extracted = Path(temporary) / "fixture"
+        extracted.mkdir()
+        safe_extract_fixture_archive(
+            payload,
+            extracted,
+            expected_sha256=_snapshot_digest(payload),
+            expected_tree_digest=tree_digest,
+            disk_limit=disk_limit,
+        )
+    return payload
+
+
 def safe_extract_fixture_archive(
-    archive: Path,
+    archive_payload: bytes,
     destination: Path,
     *,
     expected_sha256: str,
     expected_tree_digest: str,
     disk_limit: int,
 ) -> int:
-    """Extract only regular relative fixture members and verify the expanded tree."""
+    """Extract retained archive bytes without reopening an already-hashed pathname."""
 
-    if _sha_path(archive) != expected_sha256:
+    if not isinstance(archive_payload, bytes):
+        raise ValueError("fixture archive snapshot is invalid")
+    if hashlib.sha256(archive_payload).hexdigest() != expected_sha256:
         raise ValueError("fixture archive SHA-256 does not match sealed bundle")
     if disk_limit <= 0:
         raise ValueError("fixture disk limit is invalid")
     expanded = 0
     names: set[str] = set()
     try:
-        with tarfile.open(archive, "r:") as stream:
-            for member in stream.getmembers():
+        with tarfile.open(fileobj=io.BytesIO(archive_payload), mode="r:") as stream:
+            members = stream.getmembers()
+            if len(members) > 4096:
+                raise ValueError("fixture archive member count exceeds limit")
+            for member in members:
                 relative = Path(member.name)
                 if (member.name.startswith("/") or ".." in relative.parts or relative == Path(".")
                         or member.name != relative.as_posix() or member.name in names):
@@ -151,20 +222,45 @@ def _fsync_tree(root: Path) -> None:
     finally: os.close(fd)
 
 
-def _verify_manifest() -> tuple[str, str]:
-    """Verify both source component metadata and its immutable byte archive."""
+def _source_revision() -> str:
+    """Require a clean committed checkout before minting a generation receipt."""
 
-    manifest_sha256 = _sha_path(GENERATOR_MANIFEST)
-    source_archive_sha256 = verify_source_archive(
-        GENERATOR_MANIFEST,
-        GENERATOR_SOURCE_ARCHIVE,
-        checkout_root=ROOT,
-    )
-    return manifest_sha256, source_archive_sha256
+    try:
+        revision = subprocess.check_output(
+            ["git", "-C", str(ROOT), "rev-parse", "HEAD"], text=True, stderr=subprocess.DEVNULL,
+        ).strip()
+        status = subprocess.check_output(
+            ["git", "-C", str(ROOT), "status", "--porcelain", "--untracked-files=all"],
+            text=True, stderr=subprocess.DEVNULL,
+        )
+    except (OSError, subprocess.CalledProcessError) as exc:
+        raise ValueError("first-party generation requires a readable committed checkout") from exc
+    if len(revision) != 40 or any(char not in "0123456789abcdef" for char in revision) or status:
+        raise ValueError("first-party generation requires a clean committed checkout")
+    return revision
 
 
-def _verify_environment() -> None:
-    value = json.loads(ENVIRONMENT_DESCRIPTOR.read_text())
+@dataclass(frozen=True)
+class CheckedSourceAuthority:
+    """Exact source authority bytes consumed by first-party generation."""
+
+    registry: dict[str, Any]
+    registry_payload: bytes
+    manifest_payload: bytes
+    archive_payload: bytes
+    environment_payload: bytes
+    overlap_payload: bytes
+    license_payload: bytes
+    source_members: Mapping[str, bytes]
+    manifest_sha256: str
+    archive_sha256: str
+
+
+def _verify_environment(payload: bytes) -> None:
+    try:
+        value = json.loads(payload)
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ValueError("CPU environment receipt is invalid") from exc
     runtime = value.get("runtime") if isinstance(value, Mapping) else None
     observed = {"interpreter_sha256": _sha_path(Path(sys.executable)), "implementation": platform.python_implementation(),
                 "python_version": platform.python_version(), "platform_system": platform.system(), "machine": platform.machine()}
@@ -172,24 +268,83 @@ def _verify_environment() -> None:
         raise ValueError("CPU environment receipt does not match current runtime")
 
 
-def _verify_overlap(registry: Mapping[str, Any]) -> None:
-    """Verify static checker authorization, never a fabricated semantic pass."""
+def _verify_overlap(payload: bytes) -> None:
+    """Verify static checker authorization from one retained payload."""
 
-    value = json.loads((ROOT / "configs/pi/e97-firstparty-overlap-firewall-audit-v1.json").read_text())
+    try:
+        value = json.loads(payload)
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ValueError("protected overlap audit is invalid") from exc
     validate_overlap_authorization(value)
 
 
-def _checked_registry(path: Path, digest: str, policy_sha256: str) -> dict[str, Any]:
-    if path.resolve() != CHECKED_IN_REGISTRY.resolve():
+def _verify_license(payload: bytes) -> None:
+    """Require the retained first-party fixture license descriptor exactly once."""
+
+    try:
+        value = json.loads(payload)
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ValueError("first-party authorization license is invalid") from exc
+    if (not isinstance(value, Mapping)
+            or set(value) != {"schema", "authorization", "license", "scope"}
+            or value.get("schema") != "emender-e97-firstparty-authorization-license-v1"
+            or any(not isinstance(value.get(field), str) or not value[field]
+                   for field in ("authorization", "license", "scope"))):
+        raise ValueError("first-party authorization license is invalid")
+
+
+def _checked_registry(path: Path, digest: str, policy_sha256: str) -> tuple[dict[str, Any], bytes]:
+    if path.absolute() != CHECKED_IN_REGISTRY.absolute():
         raise ValueError("registry path must be the checked-in registry")
-    if _sha_path(path) != digest:
+    payload = _read_snapshot_file(path, name="checked-in registry")
+    if _snapshot_digest(payload) != digest:
         raise ValueError("registry SHA-256 does not match checked-in bytes")
-    registry = validate_source_registry(json.loads(path.read_text()))
+    try:
+        registry = validate_source_registry(json.loads(payload))
+    except (UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
+        raise ValueError("checked-in registry is invalid") from exc
     if registry["policy_sha256"] != policy_sha256:
         raise ValueError("policy SHA-256 does not match checked-in registry")
     if not _REQUIRED_PANELS.issubset({item["manifest_sha256"] for item in registry["protected_evaluation"]}):
         raise ValueError("registry is missing required protected panels")
-    return registry
+    return registry, payload
+
+
+def _checked_source_authority(
+    registry_path: Path, registry_sha256: str, policy_sha256: str,
+) -> CheckedSourceAuthority:
+    """Hash, parse, verify, and retain every external generation authority once."""
+
+    registry, registry_payload = _checked_registry(registry_path, registry_sha256, policy_sha256)
+    manifest_payload, archive_payload, manifest_sha256, archive_sha256 = source_archive_payload_verification(
+        GENERATOR_MANIFEST, GENERATOR_SOURCE_ARCHIVE, checkout_root=ROOT)
+    environment_payload = _read_snapshot_file(ENVIRONMENT_DESCRIPTOR, name="CPU environment descriptor")
+    overlap_payload = _read_snapshot_file(OVERLAP_AUDIT, name="protected overlap audit")
+    license_payload = _read_snapshot_file(AUTHORIZATION_LICENSE, name="authorization license")
+    _verify_environment(environment_payload)
+    _verify_overlap(overlap_payload)
+    _verify_license(license_payload)
+    source_members = {}
+    for member_path in (_CONTROLLER_SOURCE_MEMBER, _VALIDATOR_SOURCE_MEMBER):
+        member_payload, _member_sha256 = verified_source_member_payload(
+            manifest_payload, archive_payload, member_path)
+        source_members[member_path] = member_payload
+    receipt_payloads = {
+        "source_archive_sha256": archive_payload,
+        "license_sha256": license_payload,
+        "environment_sha256": environment_payload,
+        "overlap_sha256": overlap_payload,
+    }
+    for source in registry["sources"]:
+        if source["status"] == "admitted" and source["kind"] == "first-party":
+            for name, payload in receipt_payloads.items():
+                if source["receipts"][name] != _snapshot_digest(payload):
+                    raise ValueError("checked-in first-party registry receipt does not hash its artifact")
+    return CheckedSourceAuthority(
+        registry, registry_payload, manifest_payload, archive_payload,
+        environment_payload, overlap_payload, license_payload, source_members,
+        manifest_sha256, archive_sha256,
+    )
 
 
 def _write_json(path: Path, value: Any) -> None:
@@ -201,37 +356,42 @@ def generate(output: Path, *, seed: str, registry_path: Path = CHECKED_IN_REGIST
     """Create a sealed CPU-only task authority, publishing only by atomic rename."""
     if registry_sha256 is None or policy_sha256 is None:
         raise ValueError("checked-in registry SHA-256 and policy SHA-256 are required")
-    registry = _checked_registry(registry_path, registry_sha256, policy_sha256)
-    generator_manifest_sha256, generator_source_archive_sha256 = _verify_manifest()
-    _verify_environment()
-    _verify_overlap(registry)
+    authority = _checked_source_authority(registry_path, registry_sha256, policy_sha256)
+    registry = authority.registry
     admitted = {item["id"]: item for item in registry["sources"] if item["status"] == "admitted" and item["kind"] == "first-party"}
     if not {"e97-firstparty-train", "e97-firstparty-development"}.issubset(admitted):
         raise ValueError("checked-in registry lacks pre-admitted first-party split sources")
-    receipt_artifacts = {
-        "source_archive_sha256": GENERATOR_SOURCE_ARCHIVE,
-        "license_sha256": ROOT / "configs/pi/e97-firstparty-authorization-license-v1.json",
-        "environment_sha256": ENVIRONMENT_DESCRIPTOR,
-        "overlap_sha256": ROOT / "configs/pi/e97-firstparty-overlap-firewall-audit-v1.json",
-    }
-    for source in admitted.values():
-        for name, artifact in receipt_artifacts.items():
-            if source["receipts"][name] != _sha_path(artifact):
-                raise ValueError("checked-in first-party registry receipt does not hash its artifact")
+    source_revision = _source_revision()
+    generator_manifest_sha256 = authority.manifest_sha256
+    generator_source_archive_sha256 = authority.archive_sha256
     parent = output.parent
-    parent.mkdir(parents=True, exist_ok=True)
+    durable_directory(parent)
     stage = Path(tempfile.mkdtemp(prefix=f".{output.name}.stage.", dir=parent))
+    fixture_temporary = tempfile.TemporaryDirectory(prefix="e97-first-party-fixtures-")
     try:
-        fixtures, private, archives = stage / "fixtures", stage / "private_validators", stage / "archives"
-        fixtures.mkdir(); private.mkdir(); archives.mkdir()
-        shutil.copyfile(registry_path, stage / "source-registry.json")
-        shutil.copyfile(GENERATOR_MANIFEST, stage / "generator-manifest.json")
-        shutil.copyfile(GENERATOR_SOURCE_ARCHIVE, stage / "source-archive.tar")
+        # Fixture build roots never enter the publication stage.  Only their
+        # sealed archive derivatives are written below, so exact-payload
+        # publication cannot be poisoned by generator scratch trees.
+        fixtures = Path(fixture_temporary.name)
+        private, archives = stage / "private_validators", stage / "archives"
+        private.mkdir(); archives.mkdir()
+        # Every copied source artifact is the retained payload just checked
+        # above; generation never reopens a verified authority pathname.
+        (stage / "source-registry.json").write_bytes(authority.registry_payload)
+        (stage / "generator-manifest.json").write_bytes(authority.manifest_payload)
+        (stage / "source-archive.tar").write_bytes(authority.archive_payload)
+        (stage / "environment-descriptor.json").write_bytes(authority.environment_payload)
+        (stage / "overlap-firewall-audit.json").write_bytes(authority.overlap_payload)
+        (stage / "authorization-license.json").write_bytes(authority.license_payload)
+        # These are members of the retained, canonical verified source archive
+        # above, never a second mutable checkout read.
+        controller_payload = authority.source_members[_CONTROLLER_SOURCE_MEMBER]
         runtime = {"schema_digest": sha256_text(ACQUISITION_CONTROLLER_SCHEMA), "tool_schema_digest": sha256_json(READ_OBSERVE_TOOLS),
-                   "controller_digest": _sha_path(ROOT / "ndm/e97_acquisition_controller.py"),
-                   "sandbox_image_digest": _sha_path(ENVIRONMENT_DESCRIPTOR),
+                   "controller_digest": _loaded_replay_digest_from_archive(
+                       authority.manifest_payload, authority.archive_payload),
+                   "sandbox_image_digest": _snapshot_digest(authority.environment_payload),
                    "system_prompt_sha256": sha256_text("Use only the provided read-observe tools and ground the final in observations.")}
-        validator_program_digest = _sha_path(VALIDATOR_PROGRAM)
+        validator_program_digest = _snapshot_digest(authority.source_members[_VALIDATOR_SOURCE_MEMBER])
         tasks: list[dict[str, Any]] = []
         for split in ("train", "development"):
             for kind in ("direct", "opaque"):
@@ -248,24 +408,33 @@ def generate(output: Path, *, seed: str, registry_path: Path = CHECKED_IN_REGIST
                 tree, intent = _tree_digest(root), canonical_intent_digest(prompt)
                 namespace = f"e97-{'train' if split == 'train' else 'dev'}-{family}"
                 identity = task_identity(namespace=namespace, family_id=family, generator_source_digest=generator_source_archive_sha256, fixture_tree_digest=tree, intent_digest=intent)
-                archive = archives / f"{identity}.tar"; _archive(root, archive)
-                spec = {"schema": "emender-e97-first-party-validator-v1", "task_identity": identity, "fixture_tree_digest": tree,
-                        "archive_sha256": _sha_path(archive), "expected_token": token, "required_read_path": relative,
+                # Archive outside the publication stage, retain its exact bytes,
+                # then independently expand those bytes before they can be copied
+                # into a generation authority.  A mutation between tree digest and
+                # tar construction therefore fails before publication.
+                archive_scratch = fixtures / f"{identity}.tar"
+                _archive(root, archive_scratch)
+                archive_payload = _verified_fixture_archive_payload(
+                    root, archive_scratch, tree_digest=tree, disk_limit=1 << 20)
+                archive = archives / f"{identity}.tar"
+                archive.write_bytes(archive_payload)
+                spec = {"schema": "emender-e97-first-party-validator-v2", "task_identity": identity, "fixture_tree_digest": tree,
+                        "archive_sha256": _snapshot_digest(archive_payload), "expected_token": token, "required_read_path": relative,
                         "program_sha256": validator_program_digest, "interpreter_sha256": _sha_path(Path(sys.executable)),
                         "minefield": {"allowed_tools": ["list_files", "read"], "forbidden_paths": ["/", ".."]}}
                 _write_json(private / f"{identity}.json", spec)
                 source = admitted[f"e97-firstparty-{split}"]
                 tasks.append({"schema": TASK_BUNDLE_SCHEMA, "split": split,
                     "task": {"namespace": namespace, "family_id": family, "identity": identity, "generator_source_digest": generator_source_archive_sha256, "fixture_tree_digest": tree, "intent_digest": intent, "prompt": prompt, "difficulty": 1 if kind == "direct" else 2},
-                    "source": {"registry_id": source["id"], "kind": "first-party", "repository": f"firstparty/{split}-read-observe", "revision": source["revision"], "source_record_digest": sha256_json({"source": source["id"], "family": family, "generator": generator_source_archive_sha256}), "license_receipt_digest": source["receipts"]["license_sha256"]},
-                    "fixture": {"artifact_path": f"archives/{archive.name}", "artifact_bytes": archive.stat().st_size, "artifact_sha256": spec["archive_sha256"], "tree_digest": tree}, "runtime": runtime,
+                    "source": {"registry_id": source["id"], "kind": "first-party", "repository": f"firstparty/{split}-read-observe", "revision": source_revision, "source_record_digest": sha256_json({"source": source["id"], "family": family, "generator": generator_source_archive_sha256}), "license_receipt_digest": source["receipts"]["license_sha256"]},
+                    "fixture": {"artifact_path": f"archives/{archive.name}", "artifact_bytes": len(archive_payload), "artifact_sha256": spec["archive_sha256"], "tree_digest": tree}, "runtime": runtime,
                     "limits": {"turns": 12, "seconds": 60, "completion_tokens": 512, "output_bytes": 16384, "disk_bytes": 1 << 20, "processes": 1},
                     "validator": {"spec_digest": sha256_json(spec), "focused_argv": validator_logical_argv("focused"), "regression_argv": validator_logical_argv("regression"), "milestone_digest": sha256_text("required-read\0" + relative), "minefield_digest": sha256_json(spec["minefield"])}})
         tasks = validate_task_collection(tasks, registry=registry)
         task_path = stage / "tasks.jsonl"; task_path.write_text("".join(canonical_json(task) + "\n" for task in sorted(tasks, key=lambda x: x["task"]["identity"])))
         archive_root_sha256 = _archive_root_sha256(tasks, stage)
         receipt = {
-            "schema": "emender-e97-first-party-generation-receipt-v3",
+            "schema": "emender-e97-first-party-generation-receipt-v6",
             "state": "quarantined-pending-protected-overlap",
             "seed_sha256": sha256_text(seed),
             "generator_component_manifest_sha256": generator_manifest_sha256,
@@ -275,113 +444,327 @@ def generate(output: Path, *, seed: str, registry_path: Path = CHECKED_IN_REGIST
             "registry_sha256": registry_sha256,
             "policy_sha256": policy_sha256,
             "registry_copy_sha256": _sha_path(stage / "source-registry.json"),
-            "controller_source_sha256": runtime["controller_digest"],
+            "controller_source_sha256": _snapshot_digest(controller_payload),
+            "source_revision": source_revision,
             "environment_descriptor_sha256": runtime["sandbox_image_digest"],
+            "overlap_firewall_audit_sha256": _snapshot_digest(authority.overlap_payload),
+            "authorization_license_sha256": _snapshot_digest(authority.license_payload),
             "protected_manifest_sha256s": sorted(_REQUIRED_PANELS),
         }
         _write_json(stage / "generation-receipt.json", receipt)
         _write_json(stage / "authority-state.json", {
-            "schema": "emender-e97-first-party-authority-state-v1",
+            "schema": "emender-e97-first-party-authority-state-v2",
             "state": "quarantined-pending-protected-overlap",
             "generation_receipt_sha256": _sha_path(stage / "generation-receipt.json"),
         })
+        # Fixture scratch is outside ``stage`` and is removed before the
+        # exact approved payload map is constructed and published.
+        fixture_temporary.cleanup()
+        approved = dict(validate_generated_quarantine(stage).payloads)
         _fsync_tree(stage)
-        publish_directory_no_replace(stage, output)
+        publish_directory_no_replace(stage, output, expected_payloads=approved)
+        cleanup_directory_best_effort(stage)
     except BaseException:
         shutil.rmtree(stage, ignore_errors=True)
         raise
+    finally:
+        fixture_temporary.cleanup()
     return {"root": output, "registry": output / "source-registry.json", "tasks": output / "tasks.jsonl", "private": output / "private_validators", "receipt": output / "generation-receipt.json"}
 
 
-def validate_generated_quarantine(root: Path) -> tuple[dict[str, Any], list[dict[str, Any]], dict[str, Any]]:
-    """Validate an unadmitted generated collection before its private gate runs."""
+@dataclass(frozen=True)
+class ValidatedQuarantine:
+    """One descriptor-safe generated authority snapshot retained for admission."""
+
+    registry: dict[str, Any]
+    tasks: list[dict[str, Any]]
+    generation: dict[str, Any]
+    payloads: Mapping[str, bytes]
+
+
+def _snapshot_digest(payload: bytes) -> str:
+    return hashlib.sha256(payload).hexdigest()
+
+
+def _snapshot_archive_root(tasks: list[Mapping[str, Any]], payloads: Mapping[str, bytes]) -> str:
+    entries = []
+    for task in sorted(tasks, key=lambda item: item["fixture"]["artifact_path"]):
+        relative = task["fixture"]["artifact_path"]
+        payload = payloads.get(relative)
+        if payload is None:
+            raise ValueError("quarantine archive snapshot is missing")
+        entries.append({"path": relative, "bytes": len(payload), "sha256": _snapshot_digest(payload)})
+    return sha256_text(canonical_json(entries))
+
+
+def _snapshot_quarantine(root: Path) -> dict[str, bytes]:
+    """Retain every authority component before parsing or admission copying."""
+
+    required = (
+        "source-registry.json", "tasks.jsonl", "generation-receipt.json", "authority-state.json",
+        "generator-manifest.json", "source-archive.tar", "environment-descriptor.json",
+        "overlap-firewall-audit.json", "authorization-license.json",
+    )
+    return {relative: _read_snapshot_file(root / relative, name=f"quarantine {relative}") for relative in required}
+
+
+def _validate_quarantine_snapshot(payloads: dict[str, bytes]) -> ValidatedQuarantine:
+    """Validate retained source bytes without reopening mutable quarantine paths."""
 
     try:
-        registry = validate_source_registry(json.loads((root / "source-registry.json").read_text()))
-        tasks = [json.loads(line) for line in (root / "tasks.jsonl").read_text().splitlines() if line.strip()]
-        tasks = validate_task_collection(tasks, registry=registry)
-        receipt = json.loads((root / "generation-receipt.json").read_text())
-        state = json.loads((root / "authority-state.json").read_text())
-    except (OSError, json.JSONDecodeError, ValueError) as exc:
+        registry = validate_source_registry(json.loads(payloads["source-registry.json"]))
+        lines = payloads["tasks.jsonl"].decode("utf-8").splitlines()
+        if not lines or any(not line for line in lines):
+            raise ValueError("generated tasks are not strict JSONL")
+        tasks = validate_task_collection([json.loads(line) for line in lines], registry=registry)
+        generation = json.loads(payloads["generation-receipt.json"])
+        state = json.loads(payloads["authority-state.json"])
+    except (UnicodeDecodeError, json.JSONDecodeError, ValueError, KeyError) as exc:
         raise ValueError("generated quarantine is malformed") from exc
     expected = {
         "schema", "state", "seed_sha256", "generator_component_manifest_sha256",
         "generator_source_archive_sha256", "tasks_sha256", "archive_root_sha256", "registry_sha256",
-        "policy_sha256", "registry_copy_sha256", "controller_source_sha256",
-        "environment_descriptor_sha256", "protected_manifest_sha256s",
+        "policy_sha256", "registry_copy_sha256", "controller_source_sha256", "source_revision",
+        "environment_descriptor_sha256", "overlap_firewall_audit_sha256", "authorization_license_sha256", "protected_manifest_sha256s",
     }
-    if set(receipt) != expected or receipt["schema"] != "emender-e97-first-party-generation-receipt-v3" or receipt["state"] != "quarantined-pending-protected-overlap":
+    if (set(generation) != expected or generation["schema"] != "emender-e97-first-party-generation-receipt-v6"
+            or generation["state"] != "quarantined-pending-protected-overlap"):
         raise ValueError("generated quarantine receipt schema/state is invalid")
-    for field in expected - {"schema", "state", "protected_manifest_sha256s"}:
-        if not isinstance(receipt[field], str) or len(receipt[field]) != 64:
+    for field in expected - {"schema", "state", "protected_manifest_sha256s", "source_revision"}:
+        if not isinstance(generation[field], str) or len(generation[field]) != 64:
             raise ValueError("generated quarantine receipt digest is invalid")
-    verify_archive_members(root / "generator-manifest.json", root / "source-archive.tar")
-    if (receipt["tasks_sha256"] != _sha_path(root / "tasks.jsonl")
-            or receipt["archive_root_sha256"] != _archive_root_sha256(tasks, root)
-            or receipt["registry_copy_sha256"] != _sha_path(root / "source-registry.json")
-            or receipt["registry_sha256"] != _sha_path(root / "source-registry.json")
-            or receipt["generator_component_manifest_sha256"] != _sha_path(root / "generator-manifest.json")
-            or receipt["generator_source_archive_sha256"] != _sha_path(root / "source-archive.tar")
-            or receipt["protected_manifest_sha256s"] != sorted(item["manifest_sha256"] for item in registry["protected_evaluation"])):
+    if (not isinstance(generation["source_revision"], str)
+            or len(generation["source_revision"]) not in {40, 64}
+            or any(char not in "0123456789abcdef" for char in generation["source_revision"])):
+        raise ValueError("generated quarantine source revision is invalid")
+    controller_member_payload, _ = verified_source_member_payload(
+        payloads["generator-manifest.json"], payloads["source-archive.tar"], _CONTROLLER_SOURCE_MEMBER)
+    validator_member_payload, _ = verified_source_member_payload(
+        payloads["generator-manifest.json"], payloads["source-archive.tar"], _VALIDATOR_SOURCE_MEMBER)
+    if generation.get("controller_source_sha256") != _snapshot_digest(controller_member_payload):
+        raise ValueError("generated quarantine controller digest does not bind source archive")
+    for task in tasks:
+        archive_relative = task["fixture"]["artifact_path"]
+        private_relative = f"private_validators/{task['task']['identity']}.json"
+        if archive_relative not in payloads or private_relative not in payloads:
+            raise ValueError("generated quarantine snapshot lacks task authority")
+        archive_payload, spec_payload = payloads[archive_relative], payloads[private_relative]
+        if (_snapshot_digest(archive_payload) != task["fixture"]["artifact_sha256"]
+                or len(archive_payload) != task["fixture"]["artifact_bytes"]):
+            raise ValueError("generated quarantine archive snapshot does not bind task")
+        # Every retained archive must independently reconstruct the declared
+        # tree before a quarantine is accepted or published.
+        with tempfile.TemporaryDirectory(prefix="e97-quarantine-fixture-verify-") as temporary:
+            extracted = Path(temporary) / "fixture"
+            extracted.mkdir()
+            safe_extract_fixture_archive(
+                archive_payload,
+                extracted,
+                expected_sha256=task["fixture"]["artifact_sha256"],
+                expected_tree_digest=task["fixture"]["tree_digest"],
+                disk_limit=task["limits"]["disk_bytes"],
+            )
+        try:
+            spec = json.loads(spec_payload)
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise ValueError("generated quarantine private validator is invalid") from exc
+        if (sha256_json(spec) != task["validator"]["spec_digest"]
+                or spec.get("program_sha256") != _snapshot_digest(validator_member_payload)):
+            raise ValueError("generated quarantine private validator does not bind task")
+    _verify_environment(payloads["environment-descriptor.json"])
+    _verify_overlap(payloads["overlap-firewall-audit.json"])
+    _verify_license(payloads["authorization-license.json"])
+    with tempfile.TemporaryDirectory(prefix="e97-quarantine-source-") as temporary:
+        temporary_root = Path(temporary)
+        manifest_path, archive_path = temporary_root / "manifest.json", temporary_root / "source.tar"
+        manifest_path.write_bytes(payloads["generator-manifest.json"])
+        archive_path.write_bytes(payloads["source-archive.tar"])
+        verify_archive_members(manifest_path, archive_path)
+    if (generation["tasks_sha256"] != _snapshot_digest(payloads["tasks.jsonl"])
+            or generation["archive_root_sha256"] != _snapshot_archive_root(tasks, payloads)
+            or generation["registry_copy_sha256"] != _snapshot_digest(payloads["source-registry.json"])
+            or generation["registry_sha256"] != _snapshot_digest(payloads["source-registry.json"])
+            or generation["generator_component_manifest_sha256"] != _snapshot_digest(payloads["generator-manifest.json"])
+            or generation["generator_source_archive_sha256"] != _snapshot_digest(payloads["source-archive.tar"])
+            or generation["environment_descriptor_sha256"] != _snapshot_digest(payloads["environment-descriptor.json"])
+            or generation["overlap_firewall_audit_sha256"] != _snapshot_digest(payloads["overlap-firewall-audit.json"])
+            or generation["authorization_license_sha256"] != _snapshot_digest(payloads["authorization-license.json"])
+            or generation["protected_manifest_sha256s"] != sorted(item["manifest_sha256"] for item in registry["protected_evaluation"])):
         raise ValueError("generated quarantine receipt binding mismatch")
-    if (not isinstance(state, Mapping) or state != {
-            "schema": "emender-e97-first-party-authority-state-v1",
+    for source in registry["sources"]:
+        if source["status"] == "admitted" and source["kind"] == "first-party":
+            expected_receipts = {
+                "source_archive_sha256": generation["generator_source_archive_sha256"],
+                "license_sha256": generation["authorization_license_sha256"],
+                "environment_sha256": generation["environment_descriptor_sha256"],
+                "overlap_sha256": _snapshot_digest(payloads["overlap-firewall-audit.json"]),
+            }
+            if source["receipts"] != expected_receipts:
+                raise ValueError("generated quarantine source receipts do not bind retained authority")
+    if state != {
+            "schema": "emender-e97-first-party-authority-state-v2",
             "state": "quarantined-pending-protected-overlap",
-            "generation_receipt_sha256": _sha_path(root / "generation-receipt.json"),
-    }):
+            "generation_receipt_sha256": _snapshot_digest(payloads["generation-receipt.json"]),
+    }:
         raise ValueError("generated authority is not an immutable quarantine")
-    return registry, tasks, receipt
+    return ValidatedQuarantine(registry, tasks, generation, dict(payloads))
 
 
-def admit_generated_collection(quarantine: Path, overlap_receipt: Path, output: Path) -> dict[str, Path]:
-    """Copy a quarantine into a new admitted authority only after a bound pass receipt."""
+def validate_generated_quarantine(root: Path) -> ValidatedQuarantine:
+    """Snapshot then validate a quarantine; no later admission step rereads it."""
 
-    registry, _, generation = validate_generated_quarantine(quarantine)
+    payloads = _snapshot_quarantine(root)
     try:
-        overlap = json.loads(overlap_receipt.read_text())
-    except (OSError, json.JSONDecodeError) as exc:
-        raise ValueError("protected overlap receipt is unreadable") from exc
+        registry = validate_source_registry(json.loads(payloads["source-registry.json"]))
+        lines = payloads["tasks.jsonl"].decode("utf-8").splitlines()
+        tasks = validate_task_collection([json.loads(line) for line in lines if line], registry=registry)
+        for task in tasks:
+            for relative in (task["fixture"]["artifact_path"], f"private_validators/{task['task']['identity']}.json"):
+                if relative in {"", ".", ".."} or Path(relative).is_absolute() or ".." in Path(relative).parts:
+                    raise ValueError("generated quarantine authority path is invalid")
+                payloads[relative] = _read_snapshot_file(root / relative, name=f"quarantine {relative}")
+    except (UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
+        raise ValueError("generated quarantine is malformed") from exc
+    return _validate_quarantine_snapshot(payloads)
+
+
+def _write_snapshot_tree(stage: Path, payloads: Mapping[str, bytes]) -> None:
+    for relative, payload in sorted(payloads.items()):
+        if relative == "authority-state.json":
+            continue
+        target = stage / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(payload)
+
+
+def _allowlist_descriptor(payload: bytes) -> dict[str, Any]:
+    return {
+        "path": "collection-authorization-allowlist.json", "bytes": len(payload),
+        "sha256": _snapshot_digest(payload),
+    }
+
+
+def _validate_admitted_stage(
+    stage: Path, source: ValidatedQuarantine, overlap_payload: bytes, authorization: Mapping[str, Any],
+) -> dict[str, bytes]:
+    """Reopen and verify the final staged authority before its one-way publish."""
+
+    # Re-snapshot every copied component from the stage.  Substitute the
+    # retained quarantine state only for this semantic revalidation; the real
+    # admitted state is checked below as a separate final authority.
+    staged_payloads = {
+        relative: (_read_snapshot_file(stage / relative, name=f"admitted {relative}")
+                   if relative != "authority-state.json" else payload)
+        for relative, payload in source.payloads.items()
+    }
+    staged = _validate_quarantine_snapshot(staged_payloads)
+    for relative, payload in source.payloads.items():
+        if relative != "authority-state.json" and staged.payloads.get(relative) != payload:
+            raise ValueError("admitted stage differs from the validated quarantine snapshot")
+    # Inspect every final-only artifact from one safe read.
+    final_payloads = {
+        name: _read_snapshot_file(stage / name, name=f"admitted {name}")
+        for name in ("protected-overlap-receipt.json", "collection-authorization-allowlist.json",
+                     "authority-state.json", "admission-receipt.json")
+    }
+    if (final_payloads["protected-overlap-receipt.json"] != overlap_payload
+            or final_payloads["collection-authorization-allowlist.json"] != authorization["allowlist_payload"]):
+        raise ValueError("admitted stage final evidence differs from retained snapshots")
+    descriptor = _allowlist_descriptor(authorization["allowlist_payload"])
+    state, admission = json.loads(final_payloads["authority-state.json"]), json.loads(final_payloads["admission-receipt.json"])
+    expected_state = {
+        "schema": "emender-e97-first-party-authority-state-v3", "state": "admitted",
+        "generation_receipt_sha256": _snapshot_digest(source.payloads["generation-receipt.json"]),
+        "protected_overlap_receipt_sha256": _snapshot_digest(overlap_payload),
+        "collection_authorization_sha256": authorization["authorization_sha256"],
+        "collection_authorization_allowlist": descriptor,
+        "collection_authorization": authorization["authorization"],
+    }
+    expected_admission = {
+        "schema": "emender-e97-first-party-admission-receipt-v3",
+        "registry_sha256": _snapshot_digest(source.payloads["source-registry.json"]),
+        "generation_receipt_sha256": _snapshot_digest(source.payloads["generation-receipt.json"]),
+        "protected_overlap_receipt_sha256": _snapshot_digest(overlap_payload),
+        "tasks_sha256": source.generation["tasks_sha256"], "archive_root_sha256": source.generation["archive_root_sha256"],
+        "protected_manifest_sha256s": source.generation["protected_manifest_sha256s"],
+        "collection_authorization_sha256": authorization["authorization_sha256"],
+        "collection_authorization_allowlist": descriptor,
+        "collection_authorization": authorization["authorization"],
+    }
+    if state != expected_state or admission != expected_admission:
+        raise ValueError("admitted stage authorization/state binding is invalid")
+    # This exact map is the caller-approved tree manifest for immutable
+    # directory publication.  It includes every copied source payload and each
+    # final admission authority, so a child exchange during copying fails.
+    return {**{
+        relative: payload for relative, payload in source.payloads.items()
+        if relative != "authority-state.json"
+    }, **final_payloads}
+
+
+def admit_generated_collection(
+    quarantine: Path, overlap_receipt: Path, output: Path, *, diagnostic_cpu_system_gate: bool = False,
+) -> dict[str, Path]:
+    """Publish only the exact validated quarantine snapshots after authorization."""
+
+    source = validate_generated_quarantine(quarantine)
+    generation = source.generation
     if generation["protected_manifest_sha256s"] != sorted(_REQUIRED_PANELS):
         raise ValueError("generated quarantine does not bind the fixed protected panel set")
-    validate_overlap_receipt(
-        overlap,
-        candidate_collection_sha256=generation["tasks_sha256"],
-        candidate_archive_root_sha256=generation["archive_root_sha256"],
+    overlap_payload = _read_snapshot_file(overlap_receipt, name="protected overlap receipt")
+    try:
+        overlap = json.loads(overlap_payload)
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ValueError("protected overlap receipt is malformed") from exc
+    authorization = validate_authorized_overlap_receipt(
+        overlap, receipt_sha256=_snapshot_digest(overlap_payload),
+        registry_sha256=generation["registry_sha256"],
+        generation_receipt_sha256=_snapshot_digest(source.payloads["generation-receipt.json"]),
+        tasks_sha256=generation["tasks_sha256"], archive_root_sha256=generation["archive_root_sha256"],
+        generator_manifest_sha256=generation["generator_component_manifest_sha256"],
+        source_archive_sha256=generation["generator_source_archive_sha256"],
+        source_revision=generation["source_revision"], controller_source_sha256=generation["controller_source_sha256"],
+        diagnostic_cpu_system_gate=diagnostic_cpu_system_gate,
     )
     parent = output.parent
-    parent.mkdir(parents=True, exist_ok=True)
+    durable_directory(parent)
     stage = Path(tempfile.mkdtemp(prefix=f".{output.name}.stage.", dir=parent))
     try:
-        shutil.copytree(quarantine, stage, dirs_exist_ok=True)
-        shutil.copyfile(overlap_receipt, stage / "protected-overlap-receipt.json")
+        _write_snapshot_tree(stage, source.payloads)
+        (stage / "protected-overlap-receipt.json").write_bytes(overlap_payload)
+        (stage / "collection-authorization-allowlist.json").write_bytes(authorization["allowlist_payload"])
+        descriptor = _allowlist_descriptor(authorization["allowlist_payload"])
         _write_json(stage / "authority-state.json", {
-            "schema": "emender-e97-first-party-authority-state-v1",
-            "state": "admitted",
-            "generation_receipt_sha256": _sha_path(stage / "generation-receipt.json"),
-            "protected_overlap_receipt_sha256": _sha_path(stage / "protected-overlap-receipt.json"),
+            "schema": "emender-e97-first-party-authority-state-v3", "state": "admitted",
+            "generation_receipt_sha256": _snapshot_digest(source.payloads["generation-receipt.json"]),
+            "protected_overlap_receipt_sha256": _snapshot_digest(overlap_payload),
+            "collection_authorization_sha256": authorization["authorization_sha256"],
+            "collection_authorization_allowlist": descriptor,
+            "collection_authorization": authorization["authorization"],
         })
         _write_json(stage / "admission-receipt.json", {
-            "schema": "emender-e97-first-party-admission-receipt-v1",
-            "registry_sha256": _sha_path(stage / "source-registry.json"),
-            "generation_receipt_sha256": _sha_path(stage / "generation-receipt.json"),
-            "protected_overlap_receipt_sha256": _sha_path(stage / "protected-overlap-receipt.json"),
-            "tasks_sha256": generation["tasks_sha256"],
-            "archive_root_sha256": generation["archive_root_sha256"],
+            "schema": "emender-e97-first-party-admission-receipt-v3",
+            "registry_sha256": _snapshot_digest(source.payloads["source-registry.json"]),
+            "generation_receipt_sha256": _snapshot_digest(source.payloads["generation-receipt.json"]),
+            "protected_overlap_receipt_sha256": _snapshot_digest(overlap_payload),
+            "tasks_sha256": generation["tasks_sha256"], "archive_root_sha256": generation["archive_root_sha256"],
             "protected_manifest_sha256s": generation["protected_manifest_sha256s"],
+            "collection_authorization_sha256": authorization["authorization_sha256"],
+            "collection_authorization_allowlist": descriptor,
+            "collection_authorization": authorization["authorization"],
         })
+        approved = _validate_admitted_stage(stage, source, overlap_payload, authorization)
         _fsync_tree(stage)
-        publish_directory_no_replace(stage, output)
+        publish_directory_no_replace(stage, output, expected_payloads=approved)
+        # Successful publication is authoritative even if a stage-exchange
+        # racer leaves behind a symlink or cleanup otherwise fails.
+        cleanup_directory_best_effort(stage)
     except BaseException:
         shutil.rmtree(stage, ignore_errors=True)
         raise
-    return {
-        "root": output,
-        "registry": output / "source-registry.json",
-        "tasks": output / "tasks.jsonl",
-        "private": output / "private_validators",
-        "receipt": output / "generation-receipt.json",
-        "overlap": output / "protected-overlap-receipt.json",
-    }
+    return {"root": output, "registry": output / "source-registry.json", "tasks": output / "tasks.jsonl",
+            "private": output / "private_validators", "receipt": output / "generation-receipt.json",
+            "overlap": output / "protected-overlap-receipt.json"}
 
 
 @dataclass
@@ -449,6 +832,11 @@ def _validate_terminal_limits(bundle: Mapping[str, Any], terminal: Mapping[str, 
         total_completion_tokens += entry["completion_tokens"]
     if metadata.get("completion_tokens") != total_completion_tokens:
         raise ValueError("terminal completion token total is invalid")
+    mechanical = metadata.get("mechanical_suffix") is not None
+    _validate_terminal_completion_usage(
+        terminal, limits, runtime=bundle.get("runtime"),
+        allow_mechanical_suffix=mechanical,
+    )
     for index, action in enumerate(actions):
         observation = action.get("effective_observation") if isinstance(action, Mapping) else None
         if (not isinstance(observation, str) or len(observation.encode("utf-8")) > limits["output_bytes"]
@@ -562,6 +950,7 @@ def _replay_actions(
 def replay_corrective_suffix_from_failure(
     bundle: Mapping[str, Any], failed_terminal: Mapping[str, Any], fixture_root: Path,
     proposed_actions: list[Mapping[str, Any]], final_text: str, final_completion_tokens: int,
+    clock: Callable[[], float] = time.monotonic,
 ) -> dict[str, Any]:
     """Continue exactly one verified failure executor through a corrective suffix."""
 
@@ -579,7 +968,7 @@ def replay_corrective_suffix_from_failure(
     if remaining_seconds < 0:
         state.executor.close()
         raise ValueError("failed terminal exceeds sealed deadline")
-    started = time.monotonic()
+    started = clock()
     deadline = started + remaining_seconds
     messages = [dict(message) for message in failed_terminal["messages"]]
     try:
@@ -591,7 +980,7 @@ def replay_corrective_suffix_from_failure(
         combined_actions = [dict(action) for action in failed_actions]
         completion_usage = [dict(item) for item in failed_terminal["metadata"]["completion_usage"]]
         for sequence, proposed in enumerate(proposed_actions, start=len(combined_actions)):
-            if time.monotonic() >= deadline:
+            if clock() >= deadline:
                 raise ValueError("corrective replay exceeded one sealed bundle deadline")
             if set(proposed) != {"tool_name", "arguments", "arguments_json", "completion_tokens"}:
                 raise ValueError("proposed corrective action fields are invalid")
@@ -635,7 +1024,7 @@ def replay_corrective_suffix_from_failure(
             combined_actions.append(action)
             completion_usage.append({"sequence": len(completion_usage), "completion_tokens": completion_tokens})
             messages.append({"role": "tool", "tool_call_id": call_id, "content": effective})
-        if time.monotonic() > deadline:
+        if clock() > deadline:
             raise ValueError("corrective replay exceeded one sealed bundle deadline")
         if (not 1 <= final_completion_tokens <= limits["completion_tokens"]
                 or len(final_text.encode("utf-8")) > limits["completion_tokens"] * 8):
@@ -643,7 +1032,7 @@ def replay_corrective_suffix_from_failure(
         messages.append({"role": "assistant", "content": final_text})
         completion_usage.append({"sequence": len(completion_usage), "completion_tokens": final_completion_tokens})
         prefix = messages[:correction_start]
-        elapsed = failed_terminal["elapsed_seconds"] + (time.monotonic() - started)
+        elapsed = failed_terminal["elapsed_seconds"] + (clock() - started)
         metadata = dict(failed_terminal["metadata"])
         metadata.update({
             "turn_count": len(combined_actions) + 1,
@@ -651,8 +1040,13 @@ def replay_corrective_suffix_from_failure(
             "elapsed_seconds": elapsed,
             "completion_usage": completion_usage,
             "completion_tokens": sum(item["completion_tokens"] for item in completion_usage),
+            "mechanical_suffix": {
+                "schema": "emender-e97-mechanical-cpu-system-gate-v1",
+                "scope": "cpu-system-gate-mechanical",
+                "training_eligible": False,
+            },
         })
-        return {"schema": "emender-e97-corrective-terminal-v1", "status": "success",
+        return {"schema": "emender-e97-corrective-terminal-v2", "status": "success",
                 "failed_terminal_sha256": sha256_json(failed_terminal),
                 "correction_start_message_index": correction_start, "prefix_sha256": sha256_json(prefix),
                 "turns": len(combined_actions) + 1, "elapsed_seconds": elapsed,
@@ -660,81 +1054,285 @@ def replay_corrective_suffix_from_failure(
     finally:
         state.executor.close()
 
+class _PinnedValidatorArgv(list[str]):
+    """Physical validator argv backed by verified inherited executable fds."""
+
+    def __init__(self, interpreter_fd: int, program_fd: int, mode: str) -> None:
+        super().__init__([
+            f"/proc/self/fd/{interpreter_fd}", f"/proc/self/fd/{program_fd}", "--mode", mode,
+        ])
+        self.interpreter_fd = interpreter_fd
+        self.program_fd = program_fd
+
+    def close(self) -> None:
+        """Close each owned descriptor exactly once, including failure paths."""
+
+        for name in ("program_fd", "interpreter_fd"):
+            descriptor = getattr(self, name)
+            if descriptor >= 0:
+                try:
+                    os.close(descriptor)
+                except OSError:
+                    pass
+                setattr(self, name, -1)
+
+
+def _open_private_validator_payload(payload: bytes, *, label: str, mode: int) -> int:
+    """Pin one retained validator input in an unlinked inherited descriptor."""
+
+    if not isinstance(payload, bytes):
+        raise ValueError(f"validator {label} payload is invalid")
+    try:
+        descriptor = os.memfd_create(f"e97-private-validator-{label}", os.MFD_CLOEXEC)
+    except (AttributeError, OSError):
+        descriptor, path = tempfile.mkstemp(prefix=f"e97-private-validator-{label}-")
+        try:
+            os.unlink(path)
+        except BaseException:
+            os.close(descriptor)
+            raise
+    try:
+        view = memoryview(payload)
+        while view:
+            count = os.write(descriptor, view)
+            if count <= 0:  # pragma: no cover - regular-file write contract
+                raise OSError(f"validator private {label} write failed")
+            view = view[count:]
+        os.fchmod(descriptor, mode)
+        os.fsync(descriptor)
+        os.lseek(descriptor, 0, os.SEEK_SET)
+        return descriptor
+    except BaseException:
+        os.close(descriptor)
+        raise
+
+
+def _open_private_validator_program(payload: bytes) -> int:
+    """Pin verified program bytes in an unlinked private executable descriptor."""
+
+    return _open_private_validator_payload(payload, label="program", mode=0o500)
+
+
+@dataclass
+class _PinnedValidatorInputs:
+    """The exact spec/terminal bytes inherited by one validator child."""
+
+    spec_fd: int
+    terminal_fd: int
+    spec_sha256: str
+    terminal_sha256: str
+
+    @classmethod
+    def from_paths(cls, spec_path: Path, terminal_path: Path) -> "_PinnedValidatorInputs":
+        spec_payload = _read_snapshot_file(spec_path, name="validator spec", maximum=1 << 20)
+        terminal_payload = _read_snapshot_file(terminal_path, name="validator terminal", maximum=16 << 20)
+        spec_fd = _open_private_validator_payload(spec_payload, label="spec", mode=0o400)
+        try:
+            terminal_fd = _open_private_validator_payload(terminal_payload, label="terminal", mode=0o400)
+        except BaseException:
+            os.close(spec_fd)
+            raise
+        return cls(
+            spec_fd, terminal_fd, _snapshot_digest(spec_payload), _snapshot_digest(terminal_payload))
+
+    def close(self) -> None:
+        for name in ("terminal_fd", "spec_fd"):
+            descriptor = getattr(self, name)
+            if descriptor >= 0:
+                try:
+                    os.close(descriptor)
+                except OSError:
+                    pass
+                setattr(self, name, -1)
+
+
+def _hash_and_rewind(descriptor: int) -> str:
+    digest = hashlib.sha256()
+    os.lseek(descriptor, 0, os.SEEK_SET)
+    while True:
+        chunk = os.read(descriptor, 1 << 20)
+        if not chunk:
+            break
+        digest.update(chunk)
+    os.lseek(descriptor, 0, os.SEEK_SET)
+    return digest.hexdigest()
+
+
+def _open_verified_interpreter(expected_sha256: str) -> int:
+    """Pin the runtime executable by fd, hash it, and retain it for exec."""
+
+    try:
+        # Resolving a virtualenv launcher is acceptable only to select a final
+        # candidate: execution is through the no-follow descriptor below.
+        candidate = Path(sys.executable).resolve(strict=True)
+        descriptor = os.open(candidate, os.O_RDONLY | os.O_CLOEXEC | os.O_NOFOLLOW)
+    except OSError as exc:
+        raise ValueError("validator interpreter cannot be opened safely") from exc
+    try:
+        if not stat.S_ISREG(os.fstat(descriptor).st_mode):
+            raise ValueError("validator interpreter is not a regular file")
+        if _hash_and_rewind(descriptor) != expected_sha256:
+            raise ValueError("validator program/interpreter identity mismatch")
+        return descriptor
+    except BaseException:
+        os.close(descriptor)
+        raise
+
+
+def _archived_validator_payload() -> tuple[bytes, str]:
+    """Read the canonical archived validator member from one source snapshot."""
+
+    manifest_payload = _read_snapshot_file(
+        GENERATOR_MANIFEST, name="validator source manifest")
+    archive_payload = _read_snapshot_file(
+        GENERATOR_SOURCE_ARCHIVE, name="validator source archive", maximum=256 << 20)
+    return verified_source_member_payload(
+        manifest_payload, archive_payload, _VALIDATOR_SOURCE_MEMBER)
+
+
+def _loaded_replay_digest_from_archive(manifest_payload: bytes, archive_payload: bytes) -> str:
+    """Hash the two authoritative replay roots from one retained archive."""
+
+    roots = (
+        "ndm.e97_first_party_read_observe",
+        "ndm.e97_acquisition_controller",
+    )
+    digests = [verified_loaded_module_closure_sha256(
+        manifest_payload, archive_payload, root_module=root_module,
+    ) for root_module in roots]
+    return sha256_text(canonical_json({"roots": list(roots), "digests": digests}))
+
+
+def _verified_loaded_replay_digest(expected_archive_sha256: str) -> str:
+    """Bind every loaded replay implementation root to retained archive code.
+
+    Replay executes both the workspace controller and this module's replay
+    functions.  Checking only the former would leave an in-memory replacement
+    of ``_replay_actions`` outside the sealed loaded-code closure.
+    """
+
+    manifest_payload = _read_snapshot_file(
+        GENERATOR_MANIFEST, name="replay source manifest")
+    archive_payload = _read_snapshot_file(
+        GENERATOR_SOURCE_ARCHIVE, name="replay source archive", maximum=256 << 20)
+    if _snapshot_digest(archive_payload) != expected_archive_sha256:
+        raise ValueError("replay source archive does not match the task bundle")
+    return _loaded_replay_digest_from_archive(manifest_payload, archive_payload)
+
+
+# Backward-compatible private spelling used by focused callers/tests.  The
+# returned identity now covers replay itself as well as its controller.
+def _verified_loaded_controller_digest(expected_archive_sha256: str) -> str:
+    return _verified_loaded_replay_digest(expected_archive_sha256)
+
+
 def _validator_execution_argv(
     bundle: Mapping[str, Any], spec: Mapping[str, Any], *, mode: str,
     validator_program: Path | None = None, trusted_validator_sha256: str | None = None,
-) -> tuple[list[str], list[str]]:
-    """Resolve sealed logical validator IDs to one digest-verified physical argv."""
+) -> tuple[list[str], _PinnedValidatorArgv]:
+    """Resolve logical IDs to retained self-contained validator bytes and fds.
+
+    Normal replay always executes the canonical source-archive member.  The
+    explicit path/digest pair is retained for isolated private test injection;
+    it is snapshotted once and still executes only its inherited descriptor.
+    """
 
     logical = bundle["validator"].get(f"{mode}_argv") if isinstance(bundle.get("validator"), Mapping) else None
     expected_logical = validator_logical_argv(mode)
     if logical != expected_logical:
         raise ValueError("validator argv is not the sealed logical validator identity")
-    interpreter = Path(sys.executable)
-    program = VALIDATOR_PROGRAM if validator_program is None else Path(validator_program)
-    expected_program_sha256 = _sha_path(VALIDATOR_PROGRAM) if trusted_validator_sha256 is None else trusted_validator_sha256
+    if validator_program is None:
+        program_payload, expected_program_sha256 = _archived_validator_payload()
+    else:
+        if trusted_validator_sha256 is None:
+            raise ValueError("private validator injection requires a trusted digest")
+        program_payload = _read_snapshot_file(Path(validator_program), name="trusted validator program")
+        expected_program_sha256 = trusted_validator_sha256
     if (not isinstance(expected_program_sha256, str) or len(expected_program_sha256) != 64
             or any(char not in "0123456789abcdef" for char in expected_program_sha256)):
         raise ValueError("trusted validator digest is invalid")
-    try:
-        program_stat = os.stat(program, follow_symlinks=False)
-    except OSError as exc:
-        raise ValueError("trusted validator program is unavailable") from exc
-    if not stat.S_ISREG(program_stat.st_mode) or program.is_symlink():
-        raise ValueError("trusted validator program is not a regular file")
-    if (spec.get("program_sha256") != expected_program_sha256
-            or _sha_path(program) != expected_program_sha256
-            or spec.get("interpreter_sha256") != _sha_path(interpreter)):
+    if spec.get("program_sha256") != expected_program_sha256 or _snapshot_digest(program_payload) != expected_program_sha256:
         raise ValueError("validator program/interpreter identity mismatch")
-    return expected_logical, [str(interpreter), str(program), "--mode", mode]
+    interpreter_fd = _open_verified_interpreter(str(spec.get("interpreter_sha256", "")))
+    try:
+        program_fd = _open_private_validator_program(program_payload)
+        return expected_logical, _PinnedValidatorArgv(interpreter_fd, program_fd, mode)
+    except BaseException:
+        os.close(interpreter_fd)
+        raise
 
 
 def _run_validator(
-    logical_argv: list[str], execution_argv: list[str], spec_path: Path, terminal_path: Path,
+    logical_argv: list[str], execution_argv: _PinnedValidatorArgv, spec_path: Path, terminal_path: Path,
     *, mode: str, limit: int, timeout: int, processes: int, expected_action_count: int,
 ) -> dict[str, Any]:
     """Run physical argv while recording only its stable logical identity."""
 
     import resource
 
-    logical = logical_argv + ["--spec", "<spec>", "--terminal", "<terminal>"]
+    logical = logical_argv + [
+        "--spec-fd", "<inherited-spec-fd>",
+        "--terminal-fd", "<inherited-terminal-fd>",
+    ]
 
     def limit_process() -> None:
         resource.setrlimit(resource.RLIMIT_FSIZE, (limit, limit))
         resource.setrlimit(resource.RLIMIT_CPU, (max(1, int(timeout)), max(1, int(timeout))))
         resource.setrlimit(resource.RLIMIT_NPROC, (processes, processes))
 
-    with tempfile.NamedTemporaryFile(mode="w+b") as stdout, tempfile.NamedTemporaryFile(mode="w+b") as stderr:
-        process: subprocess.Popen[bytes] | None = None
-        try:
-            process = subprocess.Popen(
-                execution_argv + ["--spec", str(spec_path), "--terminal", str(terminal_path)],
-                stdin=subprocess.DEVNULL,
-                stdout=stdout,
-                stderr=stderr,
-                env={"PATH": os.environ.get("PATH", ""), "PYTHONPATH": str(ROOT), "LC_ALL": "C", "LANG": "C"},
-                preexec_fn=limit_process,
-                start_new_session=True,
-            )
-            code = process.wait(timeout=timeout)
-        except subprocess.TimeoutExpired as exc:
-            if process is not None:
-                try:
-                    os.killpg(process.pid, signal.SIGKILL)
-                except ProcessLookupError:
-                    pass
-                process.wait()
-            raise ValueError("validator timed out") from exc
-        finally:
-            if process is not None and process.poll() is None:
-                try:
-                    os.killpg(process.pid, signal.SIGKILL)
-                except ProcessLookupError:
-                    pass
-                process.wait()
-        stdout.seek(0)
-        stderr.seek(0)
-        out, err = stdout.read(limit + 1), stderr.read(limit + 1)
+    process: subprocess.Popen[bytes] | None = None
+    inputs: _PinnedValidatorInputs | None = None
+    try:
+        # Snapshot both evidence payloads before constructing child argv.  The
+        # child receives only these unlinked descriptors, never their mutable
+        # caller pathnames, and the returned receipt records their exact bytes.
+        inputs = _PinnedValidatorInputs.from_paths(spec_path, terminal_path)
+        with tempfile.NamedTemporaryFile(mode="w+b") as stdout, tempfile.NamedTemporaryFile(mode="w+b") as stderr:
+            # All executable and evidence paths are inherited descriptors.  The
+            # child never opens a validator/spec/terminal pathname, and its
+            # self-contained program imports only the standard library.
+            actual_argv = [
+                *execution_argv,
+                "--spec-fd", str(inputs.spec_fd),
+                "--terminal-fd", str(inputs.terminal_fd),
+            ]
+            try:
+                process = subprocess.Popen(
+                    actual_argv,
+                    stdin=subprocess.DEVNULL,
+                    stdout=stdout,
+                    stderr=stderr,
+                    env={"PATH": os.environ.get("PATH", ""), "LC_ALL": "C", "LANG": "C"},
+                    preexec_fn=limit_process,
+                    start_new_session=True,
+                    pass_fds=(
+                        execution_argv.interpreter_fd, execution_argv.program_fd,
+                        inputs.spec_fd, inputs.terminal_fd,
+                    ),
+                )
+                code = process.wait(timeout=timeout)
+            except subprocess.TimeoutExpired as exc:
+                if process is not None:
+                    try:
+                        os.killpg(process.pid, signal.SIGKILL)
+                    except ProcessLookupError:
+                        pass
+                    process.wait()
+                raise ValueError("validator timed out") from exc
+            finally:
+                if process is not None and process.poll() is None:
+                    try:
+                        os.killpg(process.pid, signal.SIGKILL)
+                    except ProcessLookupError:
+                        pass
+                    process.wait()
+            stdout.seek(0)
+            stderr.seek(0)
+            out, err = stdout.read(limit + 1), stderr.read(limit + 1)
+    finally:
+        if inputs is not None:
+            inputs.close()
+        execution_argv.close()
     if len(out) > limit or len(err) > limit or code != 0:
         raise ValueError("validator failed")
     try:
@@ -748,11 +1346,20 @@ def _run_validator(
             or decoded.get("action_count") != expected_action_count
             or out != (canonical_json(dict(decoded)) + "\n").encode("utf-8")):
         raise ValueError("validator did not emit its exact pass attestation")
+    bound_argv = [
+        "@verified-interpreter-fd", "@private-verified-validator", "--mode", mode,
+        "--spec-fd", "<inherited-spec-fd>",
+        "--terminal-fd", "<inherited-terminal-fd>",
+    ]
     return {
         "logical_argv": logical,
         "logical_argv_sha256": sha256_json(logical),
+        "bound_argv": bound_argv,
+        "bound_argv_sha256": sha256_json(bound_argv),
         "stdout_sha256": sha256_text(out.decode()),
         "stderr_sha256": sha256_text(err.decode()),
+        "spec_payload_sha256": inputs.spec_sha256,
+        "terminal_payload_sha256": inputs.terminal_sha256,
         "output": dict(decoded),
     }
 
@@ -770,46 +1377,63 @@ def validate_replay(
             or spec.get("task_identity") != bundle["task"]["identity"]):
         raise ValueError("fixture/task/disk binding mismatch")
     metadata = terminal.get("metadata")
+    loaded_controller_digest = _verified_loaded_controller_digest(
+        bundle["task"]["generator_source_digest"])
     if (not isinstance(metadata, Mapping)
             or metadata.get("controller_build_sha256") != bundle["runtime"]["controller_digest"]
+            or loaded_controller_digest != bundle["runtime"]["controller_digest"]
             or metadata.get("tool_schema_sha256") != bundle["runtime"]["tool_schema_digest"]
             or metadata.get("system_prompt_sha256") != bundle["runtime"]["system_prompt_sha256"]
             or metadata.get("configured_limits") != bundle["limits"]
             or runtime_schema_digest != bundle["runtime"]["schema_digest"]):
         raise ValueError("task/runtime/limits binding mismatch")
-    validator_argvs = {
-        mode: _validator_execution_argv(
-            bundle,
-            spec,
-            mode=mode,
-            validator_program=validator_program,
-            trusted_validator_sha256=trusted_validator_sha256,
-        )
-        for mode in ("focused", "regression")
-    }
-    state = _replay_actions(bundle, fixture_root, terminal)
-    state.executor.close()
-    with tempfile.TemporaryDirectory(prefix="e97-validator-") as temporary:
-        root = Path(temporary)
-        spec_path, terminal_path = root / "spec.json", root / "terminal.json"
-        _write_json(spec_path, spec)
-        _write_json(terminal_path, terminal)
-        results = {}
-        for name in ("focused", "regression"):
-            logical_argv, execution_argv = validator_argvs[name]
-            results[name] = _run_validator(
-                logical_argv,
-                execution_argv,
-                spec_path,
-                terminal_path,
-                mode=name,
-                limit=bundle["limits"]["output_bytes"],
-                timeout=min(30, int(bundle["limits"]["seconds"])),
-                processes=bundle["limits"]["processes"],
-                expected_action_count=len(terminal["actions"]),
+    validator_argvs: dict[str, tuple[list[str], _PinnedValidatorArgv]] = {}
+    try:
+        for mode in ("focused", "regression"):
+            validator_argvs[mode] = _validator_execution_argv(
+                bundle,
+                spec,
+                mode=mode,
+                validator_program=validator_program,
+                trusted_validator_sha256=trusted_validator_sha256,
             )
+        state = _replay_actions(bundle, fixture_root, terminal)
+        try:
+            with tempfile.TemporaryDirectory(prefix="e97-validator-") as temporary:
+                root = Path(temporary)
+                spec_path, terminal_path = root / "spec.json", root / "terminal.json"
+                spec_payload = (canonical_json(dict(spec)) + "\n").encode("utf-8")
+                terminal_payload = (canonical_json(dict(terminal)) + "\n").encode("utf-8")
+                spec_path.write_bytes(spec_payload)
+                terminal_path.write_bytes(terminal_payload)
+                results = {}
+                for name in ("focused", "regression"):
+                    logical_argv, execution_argv = validator_argvs[name]
+                    result = _run_validator(
+                        logical_argv,
+                        execution_argv,
+                        spec_path,
+                        terminal_path,
+                        mode=name,
+                        limit=bundle["limits"]["output_bytes"],
+                        timeout=min(30, int(bundle["limits"]["seconds"])),
+                        processes=bundle["limits"]["processes"],
+                        expected_action_count=len(terminal["actions"]),
+                    )
+                    if (result["spec_payload_sha256"] != _snapshot_digest(spec_payload)
+                            or result["terminal_payload_sha256"] != _snapshot_digest(terminal_payload)):
+                        raise ValueError("validator did not attest its inherited evidence payloads")
+                    results[name] = result
+        finally:
+            state.executor.close()
+    finally:
+        # ``_run_validator`` also closes its argument, but this encompassing
+        # idempotent cleanup covers partial construction, replay, temp-file,
+        # and focused-validator failures before regression can start.
+        for _logical, execution_argv in validator_argvs.values():
+            execution_argv.close()
     return {
-        "schema": "emender-e97-first-party-validator-receipt-v3",
+        "schema": "emender-e97-first-party-validator-receipt-v4",
         "status": "pass",
         "task_identity": bundle["task"]["identity"],
         "bundle_sha256": sha256_json(bundle),
@@ -818,6 +1442,8 @@ def validate_replay(
         "configured_limits": dict(bundle["limits"]),
         "terminal_sha256": sha256_json(terminal),
         "validator_spec_digest": sha256_json(spec),
+        "validator_spec_payload_sha256": _snapshot_digest(spec_payload),
+        "validator_terminal_payload_sha256": _snapshot_digest(terminal_payload),
         "runtime_schema_digest": runtime_schema_digest,
         "validators": results,
     }
