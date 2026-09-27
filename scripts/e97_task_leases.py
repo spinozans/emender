@@ -5,12 +5,18 @@ import argparse
 import json
 from pathlib import Path
 
-from ndm.e97_task_leases import Lease, LeaseError, TaskLeases
+from ndm.e97_task_leases import Lease, LeaseError, TaskLeases, validate_lease
 
 
 def _lease(value: str) -> Lease:
     raw = json.loads(value)
-    return Lease(**raw)
+    required = {"task_id", "owner", "attempt", "deadline_ns", "identity"}
+    if not isinstance(raw, dict) or set(raw) != required:
+        raise LeaseError("lease JSON must contain exactly the sealed lease fields")
+    return validate_lease(Lease(
+        task_id=raw["task_id"], owner=raw["owner"], attempt=raw["attempt"],
+        deadline_ns=raw["deadline_ns"], identity=raw["identity"],
+    ))
 
 
 def main() -> None:

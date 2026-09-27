@@ -7,14 +7,18 @@ roots, checker digest, counts, collision counts, and status.
 from __future__ import annotations
 
 import hashlib
+import io
 import json
+import os
 from pathlib import Path
+import stat
 import re
 import tarfile
 from typing import Any, Iterable, Mapping
 import unicodedata
 
-from ndm.e97_onpolicy_records import canonical_json, sha256_text
+from ndm.e97_atomic import open_directory_no_follow, read_regular_file_no_follow
+from ndm.e97_onpolicy_records import canonical_json, sha256_json, sha256_text
 from ndm.e97_task_lake import validate_task_collection
 
 PI_V3_SCHEMA = "emender-e97-pi-core-eval-authority-v3"
@@ -22,6 +26,13 @@ PI_V4_SCHEMA = "emender-e97-pi-core-eval-authority-v4"
 REAL_REPO_SCHEMA = "emender-e97-real-repo-holdout-v1"
 OVERLAP_RECEIPT_SCHEMA = "emender-e97-protected-overlap-receipt-v1"
 OVERLAP_AUTHORIZATION_SCHEMA = "emender-e97-firstparty-overlap-authorization-v3"
+COLLECTION_AUTHORIZATION_SCHEMA = "emender-e97-firstparty-collection-authorization-v1"
+COLLECTION_AUTHORIZATION_ALLOWLIST = (
+    Path(__file__).resolve().parents[1] / "configs/pi/e97-firstparty-collection-authorizations-v1.json"
+)
+_MAX_SNAPSHOT_FILE_BYTES = 64 << 20
+_MAX_SNAPSHOT_TOTAL_BYTES = 256 << 20
+_MAX_SNAPSHOT_FILES = 4096
 
 _EXPECTED_MANIFEST_SHA256S = {
     PI_V3_SCHEMA: "ef481c637fde5916b8b0fe1f80cc2b4f0a6b88262088cbb33aefe0fed6bd6d09",
@@ -52,7 +63,18 @@ class OverlapError(ValueError):
 
 
 def _sha_path(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+    return hashlib.sha256(_read_path_once(path, name="overlap input")).hexdigest()
+
+
+def _read_path_once(path: Path, *, name: str, maximum: int = _MAX_SNAPSHOT_FILE_BYTES) -> bytes:
+    """Snapshot one bounded regular path without following any component."""
+
+    try:
+        return read_regular_file_no_follow(path, maximum=maximum)
+    except FileNotFoundError as exc:
+        raise OverlapError(f"{name} is missing") from exc
+    except ValueError as exc:
+        raise OverlapError(f"{name} cannot be opened safely") from exc
 
 
 def _digest(value: Any, name: str) -> str:
@@ -77,7 +99,8 @@ def _bounded_text(value: Any, name: str, *, allow_empty: bool = False, maximum: 
 def _safe_relative_path(value: Any, name: str) -> str:
     path = _bounded_text(value, name, maximum=4096)
     candidate = Path(path)
-    if candidate.is_absolute() or ".." in candidate.parts or path != candidate.as_posix():
+    if (candidate.is_absolute() or ".." in candidate.parts or path != candidate.as_posix()
+            or path in {"", ".", ".."} or any(part in {"", ".", ".."} for part in candidate.parts)):
         raise OverlapError(f"{name} must be a safe relative path")
     return path
 
@@ -173,17 +196,17 @@ def extract_exact_scalars(values: Iterable[str]) -> set[str]:
     return scalars
 
 
-def _parse_jsonl_records(path: Path) -> list[Any]:
+def _parse_jsonl_records(payload: bytes, *, name: str) -> list[Any]:
     try:
-        lines = path.read_text(encoding="utf-8").splitlines()
-    except (OSError, UnicodeDecodeError) as exc:
-        raise OverlapError("protected records are unreadable JSONL") from exc
+        lines = payload.decode("utf-8").splitlines()
+    except UnicodeDecodeError as exc:
+        raise OverlapError(f"{name} is unreadable JSONL") from exc
     if not lines or any(not line.strip() for line in lines):
-        raise OverlapError("protected records must be non-empty strict JSONL")
+        raise OverlapError(f"{name} must be non-empty strict JSONL")
     try:
         return [json.loads(line) for line in lines]
     except json.JSONDecodeError as exc:
-        raise OverlapError("protected records are invalid JSONL") from exc
+        raise OverlapError(f"{name} is invalid JSONL") from exc
 
 
 def _output_descriptor(value: Any, name: str) -> Mapping[str, Any]:
@@ -296,7 +319,7 @@ def _real_repo_record(value: Any) -> dict[str, Any]:
     }
 
 
-def _load_pi_panel(manifest: Mapping[str, Any], records_path: Path, *, schema: str, records_sha256: str) -> list[dict[str, Any]]:
+def _load_pi_panel(manifest: Mapping[str, Any], records_payload: bytes, *, schema: str, records_sha256: str) -> list[dict[str, Any]]:
     fields = {
         "schema", "status", "purpose", "records", "seed", "kinds", "kind_counts",
         "training_exclusion", "outputs",
@@ -317,9 +340,9 @@ def _load_pi_panel(manifest: Mapping[str, Any], records_path: Path, *, schema: s
         raise OverlapError("protected Pi manifest kind counts are invalid")
     outputs = _exact_fields(manifest["outputs"], {"metadata"}, "protected Pi outputs")
     metadata = _output_descriptor(outputs["metadata"], "protected Pi metadata")
-    if metadata["sha256"] != records_sha256 or metadata["bytes"] != records_path.stat().st_size:
+    if metadata["sha256"] != records_sha256 or metadata["bytes"] != len(records_payload):
         raise OverlapError("protected Pi manifest metadata bytes/hash do not match records")
-    records = [_pi_record(record, schema=schema) for record in _parse_jsonl_records(records_path)]
+    records = [_pi_record(record, schema=schema) for record in _parse_jsonl_records(records_payload, name="protected records")]
     if len(records) != manifest["records"]:
         raise OverlapError("protected Pi manifest record count does not match records")
     if any(record["family_id"] not in manifest["kinds"] for record in records):
@@ -330,7 +353,7 @@ def _load_pi_panel(manifest: Mapping[str, Any], records_path: Path, *, schema: s
     return records
 
 
-def _load_real_repo_panel(manifest: Mapping[str, Any], records_path: Path, *, records_sha256: str) -> list[dict[str, Any]]:
+def _load_real_repo_panel(manifest: Mapping[str, Any], records_payload: bytes, *, records_sha256: str) -> list[dict[str, Any]]:
     fields = {"schema", "status", "purpose", "tasks", "repositories", "training_exclusion", "outputs"}
     manifest = _exact_fields(manifest, fields, "protected real-repository manifest")
     if manifest["schema"] != REAL_REPO_SCHEMA or manifest["status"] != "complete":
@@ -341,21 +364,23 @@ def _load_real_repo_panel(manifest: Mapping[str, Any], records_path: Path, *, re
         raise OverlapError("protected real-repository repositories are invalid")
     outputs = _exact_fields(manifest["outputs"], {"tasks"}, "protected real-repository outputs")
     descriptor = _output_descriptor(outputs["tasks"], "protected real-repository tasks")
-    if descriptor["sha256"] != records_sha256 or descriptor["bytes"] != records_path.stat().st_size:
+    if descriptor["sha256"] != records_sha256 or descriptor["bytes"] != len(records_payload):
         raise OverlapError("protected real-repository manifest task bytes/hash do not match records")
-    records = [_real_repo_record(record) for record in _parse_jsonl_records(records_path)]
+    records = [_real_repo_record(record) for record in _parse_jsonl_records(records_payload, name="protected records")]
     if len(records) != manifest["tasks"]:
         raise OverlapError("protected real-repository manifest task count does not match records")
     return records
 
 
 def load_protected_panel(manifest_path: Path, records_path: Path) -> tuple[str, str, list[dict[str, Any]]]:
-    """Verify one fixed sealed manifest/records pair and adapt it in memory."""
+    """Snapshot one fixed sealed manifest/records pair before parsing either."""
 
-    manifest_sha256, records_sha256 = _sha_path(manifest_path), _sha_path(records_path)
+    manifest_payload = _read_path_once(manifest_path, name="protected manifest")
+    records_payload = _read_path_once(records_path, name="protected records")
+    manifest_sha256, records_sha256 = hashlib.sha256(manifest_payload).hexdigest(), hashlib.sha256(records_payload).hexdigest()
     try:
-        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        manifest = json.loads(manifest_payload.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
         raise OverlapError("protected manifest is unreadable") from exc
     if not isinstance(manifest, Mapping) or not isinstance(manifest.get("schema"), str):
         raise OverlapError("protected manifest schema is missing")
@@ -365,21 +390,24 @@ def load_protected_panel(manifest_path: Path, records_path: Path) -> tuple[str, 
             or records_sha256 != _EXPECTED_RECORD_SHA256S[schema]):
         raise OverlapError("protected manifest or records SHA-256 does not match its sealed schema")
     if schema in {PI_V3_SCHEMA, PI_V4_SCHEMA}:
-        records = _load_pi_panel(manifest, records_path, schema=schema, records_sha256=records_sha256)
+        records = _load_pi_panel(manifest, records_payload, schema=schema, records_sha256=records_sha256)
     else:
-        records = _load_real_repo_panel(manifest, records_path, records_sha256=records_sha256)
+        records = _load_real_repo_panel(manifest, records_payload, records_sha256=records_sha256)
     return manifest_sha256, records_sha256, records
 
 
-def _archive_files(archive: Path, *, disk_limit: int) -> list[dict[str, str]]:
-    """Read candidate fixture text without retaining protected data anywhere."""
+def _archive_files(archive_payload: bytes, *, disk_limit: int) -> list[dict[str, str]]:
+    """Parse one already-snapshotted candidate archive under bounded expansion."""
 
     try:
-        with tarfile.open(archive, "r:") as stream:
+        with tarfile.open(fileobj=io.BytesIO(archive_payload), mode="r:") as stream:
             names: set[str] = set()
             expanded = 0
             files: list[dict[str, str]] = []
-            for member in stream.getmembers():
+            members = stream.getmembers()
+            if len(members) > _MAX_SNAPSHOT_FILES:
+                raise OverlapError("candidate archive has too many members")
+            for member in members:
                 path = _safe_relative_path(member.name, "candidate fixture path")
                 if path in names:
                     raise OverlapError("candidate archive has duplicate members")
@@ -404,14 +432,74 @@ def _archive_files(archive: Path, *, disk_limit: int) -> list[dict[str, str]]:
     return sorted(files, key=lambda item: item["path"])
 
 
-def candidate_collection_archive_root(tasks: Iterable[Mapping[str, Any]], candidate_root: Path) -> str:
-    """Hash exact candidate archive paths, bytes, and SHA-256s in canonical order."""
+def _snapshot_candidate_archives(tasks: Iterable[Mapping[str, Any]], candidate_root: Path) -> dict[str, bytes]:
+    """Read every candidate archive once via root-fd-relative no-follow paths."""
 
+    directory_flags = os.O_RDONLY | os.O_CLOEXEC | os.O_DIRECTORY | os.O_NOFOLLOW
+    # Reject a substituted FIFO before fstat rather than blocking a validator.
+    file_flags = os.O_RDONLY | os.O_CLOEXEC | os.O_NOFOLLOW | os.O_NONBLOCK
+    try:
+        root_fd = open_directory_no_follow(candidate_root)
+    except ValueError as exc:
+        raise OverlapError("candidate root cannot be opened safely") from exc
+    snapshots: dict[str, bytes] = {}
+    total = 0
+    try:
+        for task in tasks:
+            relative = task["fixture"]["artifact_path"]
+            if relative in snapshots:
+                continue
+            if _safe_relative_path(relative, "candidate archive path") != relative:
+                raise OverlapError("candidate archive path is invalid")
+            parts = Path(relative).parts
+            descriptors = [root_fd]
+            try:
+                current = root_fd
+                for part in parts[:-1]:
+                    current = os.open(part, directory_flags, dir_fd=current)
+                    descriptors.append(current)
+                fd = os.open(parts[-1], file_flags, dir_fd=current)
+                descriptors.append(fd)
+                info = os.fstat(fd)
+                if not stat.S_ISREG(info.st_mode) or info.st_size < 0 or info.st_size > _MAX_SNAPSHOT_FILE_BYTES:
+                    raise OverlapError("candidate archive is not a bounded regular file")
+                remaining, chunks = info.st_size, []
+                while remaining:
+                    chunk = os.read(fd, min(64 << 10, remaining))
+                    if not chunk:
+                        raise OverlapError("candidate archive changed while snapshotting")
+                    chunks.append(chunk); remaining -= len(chunk)
+                if os.read(fd, 1):
+                    raise OverlapError("candidate archive grew while snapshotting")
+                payload = b"".join(chunks)
+                total += len(payload)
+                if total > _MAX_SNAPSHOT_TOTAL_BYTES:
+                    raise OverlapError("candidate archives exceed aggregate snapshot bound")
+                snapshots[relative] = payload
+            except OSError as exc:
+                raise OverlapError("candidate archive cannot be opened safely") from exc
+            finally:
+                for fd in reversed(descriptors[1:]):
+                    os.close(fd)
+    finally:
+        os.close(root_fd)
+    return snapshots
+
+
+def candidate_collection_archive_root(tasks: Iterable[Mapping[str, Any]], candidate_root: Path) -> str:
+    """Hash the same descriptor-safe archive snapshots used for comparison."""
+
+    task_list = list(tasks)
+    return _archive_root_from_snapshots(task_list, _snapshot_candidate_archives(task_list, candidate_root))
+
+
+def _archive_root_from_snapshots(tasks: Iterable[Mapping[str, Any]], snapshots: Mapping[str, bytes]) -> str:
     entries = []
     for task in tasks:
         relative = task["fixture"]["artifact_path"]
-        path = candidate_root / relative
-        payload = path.read_bytes()
+        payload = snapshots.get(relative)
+        if payload is None:
+            raise OverlapError("candidate archive snapshot is missing")
         entries.append({"path": relative, "bytes": len(payload), "sha256": hashlib.sha256(payload).hexdigest()})
     return sha256_text(canonical_json(sorted(entries, key=lambda item: item["path"])))
 
@@ -440,9 +528,14 @@ def _domains(records: Iterable[Mapping[str, Any]]) -> dict[str, set[str]]:
 
 
 def candidate_records(tasks: list[Mapping[str, Any]], candidate_root: Path) -> list[dict[str, Any]]:
+    snapshots = _snapshot_candidate_archives(tasks, candidate_root)
+    return _candidate_records_from_snapshots(tasks, snapshots)
+
+
+def _candidate_records_from_snapshots(tasks: list[Mapping[str, Any]], snapshots: Mapping[str, bytes]) -> list[dict[str, Any]]:
     result = []
     for task in tasks:
-        files = _archive_files(candidate_root / task["fixture"]["artifact_path"], disk_limit=task["limits"]["disk_bytes"])
+        files = _archive_files(snapshots[task["fixture"]["artifact_path"]], disk_limit=task["limits"]["disk_bytes"])
         result.append({
             "task_id": task["task"]["identity"],
             "family_id": task["task"]["family_id"],
@@ -460,11 +553,13 @@ def check_protected_overlap(
 ) -> dict[str, Any]:
     """Compare a candidate only to the three fixed sealed evaluation panels."""
 
+    collection_payload = _read_path_once(candidate_collection, name="candidate collection")
     try:
-        tasks = [json.loads(line) for line in candidate_collection.read_text().splitlines() if line.strip()]
-    except json.JSONDecodeError as exc:
+        tasks = [json.loads(line) for line in collection_payload.decode("utf-8").splitlines() if line.strip()]
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
         raise OverlapError("candidate collection is invalid JSONL") from exc
     tasks = validate_task_collection(tasks, registry=registry)
+    snapshots = _snapshot_candidate_archives(tasks, candidate_root)
     expected_panels = sorted(_EXPECTED_MANIFEST_SHA256S.values())
     registry_panels = sorted(item["manifest_sha256"] for item in registry["protected_evaluation"])
     if registry_panels != expected_panels:
@@ -478,7 +573,7 @@ def check_protected_overlap(
         raise OverlapError("protected panel inputs do not exactly match the fixed sealed pairs")
     protected_records = [record for _, _, panel_records in loaded for record in panel_records]
     protected_domains = _domains(protected_records)
-    candidate_domains = _domains(candidate_records(tasks, candidate_root))
+    candidate_domains = _domains(_candidate_records_from_snapshots(tasks, snapshots))
     collision_counts = {
         field: len(candidate_domains[field].intersection(protected_domains[field]))
         for field in sorted(candidate_domains)
@@ -486,8 +581,8 @@ def check_protected_overlap(
     return {
         "schema": OVERLAP_RECEIPT_SCHEMA,
         "status": "pass" if not any(collision_counts.values()) else "fail",
-        "candidate_collection_sha256": _sha_path(candidate_collection),
-        "candidate_archive_root_sha256": candidate_collection_archive_root(tasks, candidate_root),
+        "candidate_collection_sha256": hashlib.sha256(collection_payload).hexdigest(),
+        "candidate_archive_root_sha256": _archive_root_from_snapshots(tasks, snapshots),
         "checker_source_sha256": _sha_path(Path(__file__)),
         "protected_manifest_sha256s": observed_panels,
         "protected_records_sha256s": observed_records,
@@ -556,3 +651,99 @@ def validate_overlap_receipt(
         if receipt["collision_counts"][field] != 0:
             raise OverlapError("protected overlap receipt contains a collision")
     return json.loads(canonical_json(dict(receipt)))
+
+
+def _collection_authorization_entry(value: Any) -> dict[str, Any]:
+    fields = {
+        "scope", "registry_sha256", "generation_receipt_sha256", "protected_overlap_receipt_sha256",
+        "tasks_sha256", "archive_root_sha256", "generator_manifest_sha256", "source_archive_sha256",
+        "source_revision", "controller_source_sha256",
+    }
+    entry = _exact_fields(value, fields, "collection authorization entry")
+    if entry["scope"] not in {"production-collection-admission", "non-production-cpu-system-gate"}:
+        raise OverlapError("collection authorization scope is invalid")
+    for name in fields - {"scope", "source_revision"}:
+        _digest(entry[name], f"collection authorization {name}")
+    if not isinstance(entry["source_revision"], str) or not re.fullmatch(r"[0-9a-f]{40,64}", entry["source_revision"]):
+        raise OverlapError("collection authorization source revision is invalid")
+    return json.loads(canonical_json(dict(entry)))
+
+
+def load_canonical_collection_authorizations() -> tuple[bytes, str, list[dict[str, Any]]]:
+    """Snapshot the one checked-in operator trust root; callers cannot supply it.
+
+    The payload is returned with its digest so admission can retain the exact
+    operator artifact whose entry authorized the collection.
+    """
+
+    payload = _read_path_once(COLLECTION_AUTHORIZATION_ALLOWLIST, name="collection authorization allowlist")
+    try:
+        value = json.loads(payload)
+    except json.JSONDecodeError as exc:
+        raise OverlapError("collection authorization allowlist is invalid JSON") from exc
+    root = _exact_fields(value, {"schema", "status", "authorizations"}, "collection authorization allowlist")
+    if root["schema"] != COLLECTION_AUTHORIZATION_SCHEMA or root["status"] not in {"candidate", "authorized"}:
+        raise OverlapError("collection authorization allowlist schema/status is invalid")
+    if not isinstance(root["authorizations"], list):
+        raise OverlapError("collection authorization allowlist entries are invalid")
+    entries = [_collection_authorization_entry(item) for item in root["authorizations"]]
+    if len({sha256_json(item) for item in entries}) != len(entries):
+        raise OverlapError("collection authorization allowlist has duplicate entries")
+    if root["status"] == "candidate" and entries:
+        raise OverlapError("candidate collection authorization allowlist must be empty")
+    return payload, hashlib.sha256(payload).hexdigest(), entries
+
+
+def validate_authorized_overlap_receipt(
+    receipt: Any,
+    *,
+    receipt_sha256: str,
+    registry_sha256: str,
+    generation_receipt_sha256: str,
+    tasks_sha256: str,
+    archive_root_sha256: str,
+    generator_manifest_sha256: str,
+    source_archive_sha256: str,
+    source_revision: str,
+    controller_source_sha256: str,
+    diagnostic_cpu_system_gate: bool = False,
+) -> dict[str, Any]:
+    """Validate a pass only after the canonical operator tuple authorizes it.
+
+    Structural receipt JSON is evidence metadata, never its own admission root.
+    The exact receipt digest and every generation/input identity must occur in
+    the checked-in allowlist before its zero-collision claim is consumed.
+    """
+
+    expected_receipt = _digest(receipt_sha256, "authorized overlap receipt SHA-256")
+    allowlist_payload, allowlist_sha256, entries = load_canonical_collection_authorizations()
+    observed = {
+        "registry_sha256": _digest(registry_sha256, "registry SHA-256"),
+        "generation_receipt_sha256": _digest(generation_receipt_sha256, "generation receipt SHA-256"),
+        "protected_overlap_receipt_sha256": expected_receipt,
+        "tasks_sha256": _digest(tasks_sha256, "tasks SHA-256"),
+        "archive_root_sha256": _digest(archive_root_sha256, "archive root SHA-256"),
+        "generator_manifest_sha256": _digest(generator_manifest_sha256, "generator manifest SHA-256"),
+        "source_archive_sha256": _digest(source_archive_sha256, "source archive SHA-256"),
+        "source_revision": source_revision,
+        "controller_source_sha256": _digest(controller_source_sha256, "controller source SHA-256"),
+    }
+    permitted_scopes = {"production-collection-admission"}
+    if diagnostic_cpu_system_gate:
+        permitted_scopes.add("non-production-cpu-system-gate")
+    entry = next((item for item in entries if item["scope"] in permitted_scopes
+                  and all(item[name] == value for name, value in observed.items())), None)
+    if entry is None:
+        raise OverlapError("collection tuple is not operator-authorized by the canonical allowlist")
+    normalized = validate_overlap_receipt(
+        receipt,
+        candidate_collection_sha256=observed["tasks_sha256"],
+        candidate_archive_root_sha256=observed["archive_root_sha256"],
+    )
+    return {
+        "allowlist_payload": allowlist_payload,
+        "allowlist_sha256": allowlist_sha256,
+        "authorization": entry,
+        "authorization_sha256": sha256_json(entry),
+        "overlap_receipt": normalized,
+    }

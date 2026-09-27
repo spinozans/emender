@@ -1,5 +1,7 @@
 import copy
+import hashlib
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -317,6 +319,65 @@ def test_validation_receipt_publication_is_no_replace_and_concurrent(tmp_path):
         atomic_write_json(output, {"status": "fail", "n": 2})
 
 
+def test_registry_validation_uses_one_descriptor_snapshot_for_hash_and_parse(tmp_path, monkeypatch):
+    from scripts import validate_e97_task_lake as validator
+
+    registry_path = tmp_path / "registry.json"
+    payload = Path("configs/pi/e97-onpolicy-source-registry-v1.json").read_bytes()
+    registry_path.write_bytes(payload)
+    replacement = tmp_path / "replacement.json"
+    replacement.write_text("{}")
+    original_reader = validator.read_regular_file_no_follow
+
+    def swap_after_snapshot(path, *, maximum):
+        snapshot = original_reader(path, maximum=maximum)
+        registry_path.unlink()
+        registry_path.symlink_to(replacement)
+        return snapshot
+
+    monkeypatch.setattr(validator, "read_regular_file_no_follow", swap_after_snapshot)
+    registry, observed = validator.load_registry_snapshot(registry_path, sha256(Path("configs/pi/e97-onpolicy-source-registry-v1.json")))
+    assert observed == sha256(Path("configs/pi/e97-onpolicy-source-registry-v1.json"))
+    assert [source["status"] for source in registry["sources"]] == [
+        "candidate", "candidate", "candidate"]
+
+    symlinked = tmp_path / "linked-registry.json"
+    symlinked.symlink_to(replacement)
+    with pytest.raises(ValueError, match="cannot be snapshotted safely"):
+        validator.load_registry_snapshot(symlinked, sha256(replacement))
+
+
+def test_task_jsonl_validation_uses_one_descriptor_snapshot_and_rejects_links_and_fifos(tmp_path, monkeypatch):
+    from scripts import validate_e97_task_lake as validator
+
+    tasks_path = tmp_path / "tasks.jsonl"
+    original, replacement = b'{"task":"first"}\n', b'{"task":"replacement"}\n'
+    tasks_path.write_bytes(original)
+    actual_reader = validator.read_regular_file_no_follow
+
+    def replace_after_snapshot(path, *, maximum):
+        payload = actual_reader(path, maximum=maximum)
+        if Path(path) == tasks_path:
+            tasks_path.write_bytes(replacement)
+        return payload
+
+    monkeypatch.setattr(validator, "read_regular_file_no_follow", replace_after_snapshot)
+    parsed, observed = validator.load_task_snapshot(
+        tasks_path, hashlib.sha256(original).hexdigest())
+    assert parsed == [{"task": "first"}]
+    assert observed == hashlib.sha256(original).hexdigest()
+    assert tasks_path.read_bytes() == replacement
+
+    linked = tmp_path / "linked-tasks.jsonl"
+    linked.symlink_to(tasks_path)
+    with pytest.raises(ValueError, match="cannot be snapshotted safely"):
+        validator.load_task_snapshot(linked, hashlib.sha256(replacement).hexdigest())
+    fifo = tmp_path / "tasks.fifo"
+    os.mkfifo(fifo)
+    with pytest.raises(ValueError, match="cannot be snapshotted safely"):
+        validator.load_task_snapshot(fifo, "0" * 64)
+
+
 def test_checked_in_candidate_registry_is_valid_and_policy_bound(tmp_path):
     path = Path("configs/pi/e97-onpolicy-source-registry-v1.json")
     value = validate_source_registry(json.loads(path.read_text()))
@@ -335,5 +396,12 @@ def test_checked_in_candidate_registry_is_valid_and_policy_bound(tmp_path):
     assert receipt["status"] == "pass"
     assert receipt["registry"]["candidate_sources"] == 3
     assert receipt["registry"]["admitted_sources"] == 0
-    assert receipt["tasks"]["records"] == 0
+    assert receipt["task_validation"] == "not-run"
+    assert "tasks" not in receipt
+    assert receipt["claims"] == [
+        "schema-valid registry",
+        "consumed V3/V4 manifests protected",
+        "registry task-source policy requires admitted sources",
+        "static protected metadata is schema-bound; semantic clearance requires a per-collection overlap receipt",
+    ]
     assert output.stat().st_mode & 0o777 == 0o600

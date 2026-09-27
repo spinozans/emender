@@ -73,6 +73,8 @@ class ArtifactStore:
         self.root = supplied.resolve()
 
     def put_bytes(self, payload: bytes, *, suffix: str) -> dict[str, str]:
+        if not isinstance(payload, bytes) or len(payload) > _MAX_ARTIFACT_BYTES:
+            raise ArtifactStoreError("artifact payload exceeds the bounded store limit")
         digest = sha256_bytes(payload)
         relative = artifact_relative_path(digest, suffix)
         publish_bytes_no_replace(self.root / relative, payload)
@@ -104,7 +106,7 @@ class ArtifactStore:
     def _read_regular_payload(cls, path: Path, *, name: str) -> bytes:
         """Read an external regular file without following its final symlink."""
 
-        flags = os.O_RDONLY | os.O_CLOEXEC | os.O_NOFOLLOW
+        flags = os.O_RDONLY | os.O_CLOEXEC | os.O_NOFOLLOW | os.O_NONBLOCK
         try:
             descriptor = os.open(path, flags)
         except FileNotFoundError as exc:
@@ -123,7 +125,7 @@ class ArtifactStore:
         if not parts or Path(relative).is_absolute() or ".." in parts:
             raise ArtifactStoreError(f"{name} path is invalid")
         directory_flags = os.O_RDONLY | os.O_CLOEXEC | os.O_DIRECTORY | os.O_NOFOLLOW
-        file_flags = os.O_RDONLY | os.O_CLOEXEC | os.O_NOFOLLOW
+        file_flags = os.O_RDONLY | os.O_CLOEXEC | os.O_NOFOLLOW | os.O_NONBLOCK
         descriptors: list[int] = []
         try:
             current = os.open(self.root, directory_flags)
