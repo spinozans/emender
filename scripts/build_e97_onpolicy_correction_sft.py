@@ -11,6 +11,7 @@ import struct
 import tiktoken
 
 from ndm.data.masked_sft_dataset import AUTHORITY_SCHEMA, RECORD_INDEX, sha256
+from ndm.e97_atomic import read_regular_file_no_follow
 from ndm.e97_onpolicy_records import (
     CONSUMED_PANEL_MANIFEST_SHA256S,
     CONSUMED_V3_MANIFEST_SHA256,
@@ -19,17 +20,36 @@ from ndm.e97_onpolicy_records import (
     recovery_record_fingerprint,
 )
 from ndm.e97_correction_artifacts import CorrectionArtifactError, validate_artifact_backed_recovery_record
-from scripts.build_e97_pi_finalization_repair_sft import serialize_live_aligned
-from scripts.build_e97_pi_instruction_sft import ENCODING
+try:  # Support both ``python -m`` and the documented script-path invocation.
+    from scripts.build_e97_pi_finalization_repair_sft import serialize_live_aligned
+    from scripts.build_e97_pi_instruction_sft import ENCODING
+except ModuleNotFoundError:  # pragma: no cover - exercised by subprocess CLIs
+    from build_e97_pi_finalization_repair_sft import serialize_live_aligned
+    from build_e97_pi_instruction_sft import ENCODING
 
 
 def entry(path: Path) -> dict[str, object]:
-    return {"path": str(path.resolve()), "bytes": path.stat().st_size, "sha256": sha256(path)}
+    return {"path": path.name, "bytes": path.stat().st_size, "sha256": sha256(path)}
 
 
 def accepted_set_digest(fingerprints: list[str]) -> str:
     payload = "".join(f"{value}\n" for value in sorted(fingerprints)).encode("ascii")
     return hashlib.sha256(payload).hexdigest()
+
+
+def load_source_jsonl_snapshot(path: Path, expected_sha256: str) -> list[str]:
+    """Retain, hash, decode, and split one bounded correction JSONL authority."""
+
+    try:
+        source_payload = read_regular_file_no_follow(path, maximum=64 << 20)
+    except (FileNotFoundError, ValueError) as exc:
+        raise ValueError("source JSONL cannot be snapshotted safely") from exc
+    if hashlib.sha256(source_payload).hexdigest() != expected_sha256:
+        raise ValueError("source JSONL SHA-256 mismatch")
+    try:
+        return source_payload.decode("utf-8").splitlines()
+    except UnicodeDecodeError as exc:
+        raise ValueError("source JSONL is not UTF-8") from exc
 
 
 def main() -> None:
@@ -39,26 +59,33 @@ def main() -> None:
     parser.add_argument("--output-root", type=Path, required=True)
     parser.add_argument("--artifact-root", type=Path, required=True)
     parser.add_argument("--max-record-tokens", type=int, default=4096)
+    parser.add_argument("--diagnostic-cpu-system-gate", action="store_true",
+                        help="Allow only a non-trainable mechanical CPU system-gate record")
     args = parser.parse_args()
     if args.max_record_tokens <= 0:
         raise SystemExit("max-record-tokens must be positive")
-    if sha256(args.source_jsonl) != args.source_sha256:
-        raise SystemExit("source JSONL SHA-256 mismatch")
+    try:
+        source_lines = load_source_jsonl_snapshot(args.source_jsonl, args.source_sha256)
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from exc
 
     rows = []
-    for line_number, line in enumerate(args.source_jsonl.read_text().splitlines(), start=1):
+    for line_number, line in enumerate(source_lines, start=1):
         if not line.strip():
             raise SystemExit(f"blank source record at line {line_number}")
         try:
             rows.append(validate_artifact_backed_recovery_record(
                 json.loads(line), artifact_root=args.artifact_root,
+                allow_diagnostic_cpu_system_gate=args.diagnostic_cpu_system_gate,
             ))
         except (json.JSONDecodeError, ValueError, CorrectionArtifactError) as exc:
             raise SystemExit(f"invalid source record at line {line_number}: {exc}") from exc
     if not rows:
         raise SystemExit("source JSONL contains no records")
 
-    fingerprints = [recovery_record_fingerprint(row) for row in rows]
+    fingerprints = [recovery_record_fingerprint(
+        row, allow_diagnostic_cpu_system_gate=args.diagnostic_cpu_system_gate,
+    ) for row in rows]
     if len(fingerprints) != len(set(fingerprints)):
         raise SystemExit("duplicate correction record fingerprint")
     task_identities = [row["task"]["identity"] for row in rows]
@@ -79,10 +106,17 @@ def main() -> None:
         "controller_digest": {row["runtime"]["controller_digest"] for row in rows},
         "system_prompt_sha256": {row["runtime"]["system_prompt_sha256"] for row in rows},
         "tool_schema_digest": {row["runtime"]["tool_schema_digest"] for row in rows},
+        "sandbox_image_digest": {row["runtime"]["sandbox_image_digest"] for row in rows},
     }
     mixed = [name for name, values in identity_fields.items() if len(values) != 1]
     if mixed:
         raise SystemExit(f"mixed correction authority identities: {mixed}")
+    training_eligible_values = {row["provenance"]["training_eligible"] for row in rows}
+    if len(training_eligible_values) != 1:
+        raise SystemExit("mixed trainable and mechanical correction records")
+    training_eligible = next(iter(training_eligible_values))
+    if not training_eligible and not args.diagnostic_cpu_system_gate:
+        raise SystemExit("mechanical correction records require --diagnostic-cpu-system-gate")
 
     args.output_root.mkdir(parents=True, exist_ok=False)
     paths = {
@@ -156,8 +190,10 @@ def main() -> None:
         "status": "complete",
         "purpose": "verified E97 student-state correction with zero-loss failure prefixes",
         "source_record_schema": RECOVERY_RECORD_SCHEMA,
-        "source_jsonl": str(args.source_jsonl.resolve()),
+        "source_jsonl": args.source_jsonl.name,
         "source_sha256": args.source_sha256,
+        "training_eligible": training_eligible,
+        "provenance_scope": ("cpu-system-gate-mechanical" if not training_eligible else "teacher-evidenced"),
         "tokenizer": ENCODING,
         "target_policy": "contiguous verified corrective assistant suffix only",
         "truncation_policy": "reject",

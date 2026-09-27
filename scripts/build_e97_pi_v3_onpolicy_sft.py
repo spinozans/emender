@@ -13,13 +13,18 @@ import tiktoken
 
 from ndm.data.masked_sft_dataset import AUTHORITY_SCHEMA, RECORD_INDEX, sha256
 from ndm.e97_agent_protocol import E97_PI_AGENT_SYSTEM_V2
-from scripts.build_e97_pi_eval_v3 import KINDS, trace
-from scripts.build_e97_pi_finalization_repair_sft import serialize_live_aligned
-from scripts.build_e97_pi_instruction_sft import ENCODING, action, read_result, split
+try:  # Support both ``python -m`` and the documented script-path invocation.
+    from scripts.build_e97_pi_eval_v3 import KINDS, trace
+    from scripts.build_e97_pi_finalization_repair_sft import serialize_live_aligned
+    from scripts.build_e97_pi_instruction_sft import ENCODING, action, read_result, split
+except ModuleNotFoundError:  # pragma: no cover - exercised by subprocess CLIs
+    from build_e97_pi_eval_v3 import KINDS, trace
+    from build_e97_pi_finalization_repair_sft import serialize_live_aligned
+    from build_e97_pi_instruction_sft import ENCODING, action, read_result, split
 
 
 def entry(path: Path) -> dict[str, object]:
-    return {"path": str(path.resolve()), "bytes": path.stat().st_size, "sha256": sha256(path)}
+    return {"path": path.name, "bytes": path.stat().st_size, "sha256": sha256(path)}
 
 
 def trajectory(kind: str, index: int, rng: random.Random, *, final_style: str = "legacy"):
@@ -143,6 +148,7 @@ def main() -> None:
             kind_counts[kind] += 1
     manifest = {
         "schema": AUTHORITY_SCHEMA, "status": "complete",
+        "training_eligible": True,
         "purpose": "on-policy correction for observed Pi-v2 diagnostic V3 failures",
         "system_prompt": E97_PI_AGENT_SYSTEM_V2, "tokenizer": ENCODING,
         "seed": args.seed, "source_index_offset": args.source_index_offset,

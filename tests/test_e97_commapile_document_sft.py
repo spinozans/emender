@@ -50,8 +50,9 @@ def test_commapile_excluded_authority_is_hash_bound(tmp_path):
     manifest = {
         "schema": builder.SCHEMA,
         "status": "complete",
+        "training_eligible": True,
         "outputs": {"metadata": {
-            "path": str(metadata),
+            "path": metadata.name,
             "bytes": metadata.stat().st_size,
             "sha256": builder.sha256(metadata),
         }},

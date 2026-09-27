@@ -143,6 +143,12 @@ def atomic_path(path: Path) -> Path:
     return path.with_name(path.name + f".partial-{Path('/proc/self').resolve().name}")
 
 
+def output_entry(path: Path) -> dict[str, object]:
+    """Describe a published payload relative to its relocatable authority root."""
+
+    return {"path": path.name, "bytes": path.stat().st_size, "sha256": sha256(path)}
+
+
 def main():
     cache_root = os.environ.get("TIKTOKEN_CACHE_DIR")
     if not cache_root:
@@ -248,6 +254,7 @@ def main():
 
     receipt = {
         "schema": SCHEMA, "status": "complete" if not args.limit else "fixture",
+        "training_eligible": True,
         "created_unix": time.time(), "dataset": DATASET_ID,
         "dataset_revision": DATASET_REVISION, "tokenizer": TOKENIZER,
         "tokenizer_sha256": TOKENIZER_SHA256, "rs_token_id": 218,
@@ -257,8 +264,7 @@ def main():
         "lengths": dict(length_counts),
         "inputs": [{"path": str(path.resolve()), "bytes": path.stat().st_size,
                     "sha256": sha256(path)} for path in paths],
-        "outputs": {name: {"path": str(path.resolve()), "bytes": path.stat().st_size,
-                            "sha256": sha256(path)} for name, path in outputs.items()},
+        "outputs": {name: output_entry(path) for name, path in outputs.items()},
         "index_record_bytes": INDEX.size, "token_dtype": "little-endian uint32",
         "mask_dtype": "uint8", "elapsed_seconds": time.time() - started,
     }

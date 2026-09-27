@@ -130,7 +130,7 @@ def trace(kind: str, index: int, rng: random.Random):
 
 
 def entry(path: Path) -> dict[str, object]:
-    return {"path": str(path.resolve()), "bytes": path.stat().st_size, "sha256": sha256(path)}
+    return {"path": path.name, "bytes": path.stat().st_size, "sha256": sha256(path)}
 
 
 def serialize(messages: list[tuple[str, str]], encoding) -> tuple[list[int], list[int], str]:
@@ -215,6 +215,7 @@ def main() -> None:
     manifest = {
         "schema": AUTHORITY_SCHEMA,
         "status": "complete",
+        "training_eligible": True,
         "purpose": "E97 4B exact-Pi core-tool instruction tuning",
         "serialization": "RS-free System/User/Assistant/Tool; assistant action and final targets only",
         "system_prompt": SYSTEM,

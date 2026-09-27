@@ -146,6 +146,7 @@ def main() -> None:
             sources[result["source"]] += 1
     manifest = {
         "schema": AUTHORITY_SCHEMA, "status": "complete",
+        "training_eligible": True,
         "purpose": "admitted Apache-2.0 SmolTalk2 broad instruction and reasoning SFT",
         "dataset_id": DATASET_ID, "dataset_revision": DATASET_REVISION,
         "dataset_card_sha256": DATASET_CARD_SHA256,
@@ -154,7 +155,7 @@ def main() -> None:
         "tokenizer": TOKENIZER, "counts": dict(counts), "errors": dict(errors),
         "source_counts": dict(sources),
         "input_files": [{"name": path.name, "bytes": path.stat().st_size, "sha256": sha256(path)} for path in paths],
-        "outputs": {name: {"path": str(path.resolve()), "bytes": path.stat().st_size,
+        "outputs": {name: {"path": path.name, "bytes": path.stat().st_size,
                              "sha256": sha256(path)} for name, path in outputs.items()},
     }
     manifest_path = args.output_root / "manifest.json"

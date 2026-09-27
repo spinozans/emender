@@ -13,12 +13,16 @@ import tiktoken
 
 from ndm.data.masked_sft_dataset import AUTHORITY_SCHEMA, RECORD_INDEX, sha256
 from ndm.e97_agent_protocol import E97_PI_CORE_SYSTEM
-from scripts.build_e97_pi_finalization_repair_sft import serialize_live_aligned
-from scripts.build_e97_pi_instruction_sft import ENCODING, split, trace
+try:  # Support both ``python -m`` and the documented script-path invocation.
+    from scripts.build_e97_pi_finalization_repair_sft import serialize_live_aligned
+    from scripts.build_e97_pi_instruction_sft import ENCODING, split, trace
+except ModuleNotFoundError:  # pragma: no cover - exercised by subprocess CLIs
+    from build_e97_pi_finalization_repair_sft import serialize_live_aligned
+    from build_e97_pi_instruction_sft import ENCODING, split, trace
 
 
 def entry(path: Path) -> dict[str, object]:
-    return {"path": str(path.resolve()), "bytes": path.stat().st_size, "sha256": sha256(path)}
+    return {"path": path.name, "bytes": path.stat().st_size, "sha256": sha256(path)}
 
 
 def live_missing_read_result(path: str) -> str:
@@ -90,6 +94,7 @@ def main() -> None:
             counts["validation_records" if validation else "train_records"] += 1
     manifest = {
         "schema": AUTHORITY_SCHEMA, "status": "complete",
+        "training_eligible": True,
         "purpose": "live-aligned missing-path read recovery retention repair",
         "serialization": (
             "all assistant actions/final/newline targeted; exact pinned-image "

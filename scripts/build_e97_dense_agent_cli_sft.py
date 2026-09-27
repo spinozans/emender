@@ -170,7 +170,7 @@ def trace(
 
 
 def entry(path: Path) -> dict[str, object]:
-    return {"path": str(path.resolve()), "bytes": path.stat().st_size, "sha256": sha256(path)}
+    return {"path": path.name, "bytes": path.stat().st_size, "sha256": sha256(path)}
 
 
 def main() -> None:
@@ -254,6 +254,7 @@ def main() -> None:
     manifest = {
         "schema": AUTHORITY_SCHEMA,
         "status": "complete",
+        "training_eligible": True,
         "purpose": f"dense-e97-cwd-cli-agent-{args.curriculum}-v2",
         "serialization": "RS-free CLI argv, compact typed observations, and grounded submit_answer" if args.compact_observations else "RS-free CLI argv and grounded submit_answer",
         "curriculum": args.curriculum,

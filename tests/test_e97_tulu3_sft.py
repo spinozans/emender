@@ -1,7 +1,13 @@
 import hashlib
+import json
+from pathlib import Path
+import subprocess
+import sys
 
+import pytest
 import tiktoken
 
+from ndm.data.masked_sft_dataset import MaskedSFTPackedDataset, SFTSamplerIdentity, sha256
 from scripts import build_e97_tulu3_sft as builder
 
 
@@ -62,6 +68,76 @@ def test_tulu_record_rejects_nonassistant_final_message_and_unknown_role():
             {"role": "tool", "content": "result"},
         ]})
     assert result["error"] == "unsupported_role:tool"
+
+
+def test_tulu_publication_descriptors_relocate_into_packs(tmp_path):
+    """The Tulu producer emits root-relative payload descriptors for pack users."""
+
+    root = tmp_path / "tulu-authority"
+    root.mkdir()
+    row = {
+        "id": "relocation-fixture", "source": "fixture",
+        "messages": [{"role": "user", "content": "Question"},
+                     {"role": "assistant", "content": "Answer"}],
+    }
+    result = builder.serialize_row(row)
+    assert "error" not in result
+    # Pick a deterministic train-side identity so Dataset materialization has a pack.
+    for suffix in range(100):
+        candidate = f"relocation-fixture-{suffix}"
+        if builder._split("fixture", candidate) == 0:
+            row["id"] = candidate
+            result = builder.serialize_row(row)
+            break
+    assert result["split"] == 0
+    outputs = {
+        "tokens": root / "tokens.uint32.bin", "mask": root / "assistant_mask.uint8.bin",
+        "index": root / "records.idx", "metadata": root / "records.jsonl",
+    }
+    outputs["tokens"].write_bytes(result["token_bytes"])
+    outputs["mask"].write_bytes(result["mask_bytes"])
+    outputs["index"].write_bytes(builder.INDEX.pack(0, result["tokens"], result["targets"], 0))
+    outputs["metadata"].write_text(json.dumps({"id": row["id"], "source": "fixture"}) + "\n")
+    manifest = {
+        "schema": builder.SCHEMA, "status": "complete", "training_eligible": True,
+        "outputs": {name: builder.output_entry(path) for name, path in outputs.items()},
+    }
+    (root / "manifest.json").write_text(json.dumps(manifest, sort_keys=True) + "\n")
+    relocated = tmp_path / "tulu-relocated"
+    root.rename(relocated)
+    authority_sha = sha256(relocated / "manifest.json")
+    packs = tmp_path / "tulu-packs"
+    subprocess.run([
+        sys.executable, "scripts/build_e97_sft_packs.py", "--authority-root", str(relocated),
+        "--output-root", str(packs), "--context-size", "128",
+        "--authority-manifest-sha256", authority_sha,
+    ], check=True, capture_output=True, text=True)
+    identity = SFTSamplerIdentity(
+        authority_manifest_sha256=authority_sha,
+        pack_manifest_sha256=sha256(packs / "manifest.json"), sampler_key=1,
+        data_world_size=1, context_size=128,
+    )
+    dataset = MaskedSFTPackedDataset(relocated, packs, identity=identity, rank=0)
+    try:
+        assert dataset.get_batch(1)[0].shape == (1, 129)
+    finally:
+        dataset.close()
+
+
+@pytest.mark.parametrize("training_eligible", (False, None))
+def test_tulu_validator_rejects_false_or_missing_training_eligibility_subprocess(tmp_path, training_eligible):
+    root = tmp_path / "authority"
+    root.mkdir()
+    manifest = {"schema": builder.SCHEMA, "status": "complete", "outputs": {}, "counts": {}}
+    if training_eligible is not None:
+        manifest["training_eligible"] = training_eligible
+    (root / "manifest.json").write_text(json.dumps(manifest))
+    result = subprocess.run(
+        [sys.executable, "scripts/validate_e97_tulu3_sft.py", "--root", str(root)],
+        capture_output=True, text=True,
+    )
+    assert result.returncode != 0
+    assert "explicitly training-eligible" in result.stderr
 
 
 def test_tulu_validation_split_is_stable_and_bound_to_source_and_id():

@@ -53,7 +53,7 @@ def parse_source(spec: str) -> tuple[str, Path, str, int]:
 
 
 def entry(path: Path) -> dict[str, object]:
-    return {"path": str(path.resolve()), "bytes": path.stat().st_size, "sha256": sha256(path)}
+    return {"path": path.name, "bytes": path.stat().st_size, "sha256": sha256(path)}
 
 
 def load_excluded_records(
@@ -71,6 +71,8 @@ def load_excluded_records(
         manifest = json.loads(manifest_path.read_text())
         if manifest.get("schema") != AUTHORITY_SCHEMA or manifest.get("status") != "complete":
             raise RuntimeError(f"unsupported excluded authority: {root}")
+        if manifest.get("training_eligible") is not True:
+            raise RuntimeError(f"excluded authority is non-trainable or lacks explicit training eligibility: {root}")
         metadata_receipt = manifest["outputs"]["metadata"]
         metadata_path = root / Path(metadata_receipt["path"]).name
         if (metadata_path.stat().st_size != int(metadata_receipt["bytes"])
@@ -104,6 +106,8 @@ def open_source(
     manifest = json.loads(manifest_path.read_text())
     if manifest.get("schema") != AUTHORITY_SCHEMA or manifest.get("status") != "complete":
         raise RuntimeError(f"{name}: unsupported authority")
+    if manifest.get("training_eligible") is not True:
+        raise RuntimeError(f"{name}: authority is non-trainable or lacks explicit training eligibility")
     outputs = manifest["outputs"]
     paths = {key: root / Path(outputs[key]["path"]).name for key in ("tokens", "mask", "index")}
     for key, path in paths.items():
@@ -253,6 +257,7 @@ def main() -> None:
     manifest = {
         "schema": AUTHORITY_SCHEMA,
         "status": "complete",
+        "training_eligible": True,
         "purpose": "target-token-weighted E97 Pi instruction mixture",
         "construction": (
             "deterministic sampling without replacement from immutable source records"

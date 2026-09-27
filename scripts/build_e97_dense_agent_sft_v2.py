@@ -23,7 +23,7 @@ def split(identity: str) -> int:
 
 
 def entry(path: Path) -> dict[str, object]:
-    return {"path": str(path.resolve()), "bytes": path.stat().st_size, "sha256": sha256(path)}
+    return {"path": path.name, "bytes": path.stat().st_size, "sha256": sha256(path)}
 
 
 def action(name: str, arguments: dict[str, object]) -> tuple[str, str]:
@@ -131,6 +131,7 @@ def main() -> None:
     manifest = {
         "schema": AUTHORITY_SCHEMA,
         "status": "complete",
+        "training_eligible": True,
         "purpose": "dense-e97-bounded-grounded-agent-v2",
         "serialization": "RS-free System/User/Assistant/Tool; structured assistant actions only",
         "seed": args.seed,

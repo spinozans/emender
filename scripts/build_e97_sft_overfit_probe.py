@@ -7,7 +7,7 @@ import tiktoken, torch
 from ndm.data.masked_sft_dataset import AUTHORITY_SCHEMA, RECORD_INDEX, sha256
 
 
-def entry(path): return {"path": str(path.resolve()), "bytes": path.stat().st_size, "sha256": sha256(path)}
+def entry(path): return {"path": path.name, "bytes": path.stat().st_size, "sha256": sha256(path)}
 
 def main():
     p=argparse.ArgumentParser(); p.add_argument('--panel',type=Path,required=True); p.add_argument('--output-root',type=Path,required=True); p.add_argument('--examples',type=int,default=8); a=p.parse_args()
@@ -21,7 +21,7 @@ def main():
         prefix=enc.encode_ordinary(row['prompt']); full=enc.encode_ordinary(row['prompt']+row['response'])
         if full[:len(prefix)]!=prefix: raise RuntimeError('response changes prompt tokenization')
         mask=[0]*len(prefix)+[1]*(len(full)-len(prefix)); to.write(struct.pack(f'<{len(full)}I',*full)); mo.write(bytes(mask)); io.write(RECORD_INDEX.pack(offset,len(full),sum(mask),0)); meta.write(json.dumps({'id':row['id'],'prompt':row['prompt'],'response':row['response']},sort_keys=True)+'\n'); offset+=len(full); total+=len(full); targets+=sum(mask)
-    manifest={'schema':AUTHORITY_SCHEMA,'status':'complete','purpose':'isolated-conversation-overfit-diagnostic-only','examples':len(rows),'tokens':total,'assistant_target_tokens':targets,'source_panel_sha256':sha256(a.panel),'outputs':{n:entry(x) for n,x in paths.items()}}
+    manifest={'schema':AUTHORITY_SCHEMA,'status':'complete','training_eligible':False,'purpose':'isolated-conversation-overfit-diagnostic-only','examples':len(rows),'tokens':total,'assistant_target_tokens':targets,'source_panel_sha256':sha256(a.panel),'outputs':{n:entry(x) for n,x in paths.items()}}
     mp=a.output_root/'manifest.json'; mp.write_text(json.dumps(manifest,indent=2,sort_keys=True)+'\n')
     probe_panel=dict(panel); probe_panel['generation_prompts']=[{'id':row['id'],'template':'overfit-probe','prompt':row['prompt']} for row in rows]; probe_panel['overfit_references']={row['id']:row['response'] for row in rows}; probe_panel_path=a.output_root/'overfit_panel.pt'; torch.save(probe_panel,probe_panel_path)
     print(json.dumps({'manifest_sha256':sha256(mp),'overfit_panel_sha256':sha256(probe_panel_path),**manifest},sort_keys=True))

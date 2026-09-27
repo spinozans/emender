@@ -25,8 +25,12 @@ from typing import Iterable
 import tiktoken
 
 from ndm.data.masked_sft_dataset import AUTHORITY_SCHEMA, RECORD_INDEX, sha256
-from scripts import build_e97_tulu3_sft as codec
-from scripts.build_commapile_mainmix import COMMA_MAIN_EFFECTIVE_TOKENS_B, stable_seed
+try:  # Support both ``python -m`` and the documented script-path invocation.
+    from scripts import build_e97_tulu3_sft as codec
+    from scripts.build_commapile_mainmix import COMMA_MAIN_EFFECTIVE_TOKENS_B, stable_seed
+except ModuleNotFoundError:  # pragma: no cover - exercised by subprocess CLIs
+    import build_e97_tulu3_sft as codec
+    from build_commapile_mainmix import COMMA_MAIN_EFFECTIVE_TOKENS_B, stable_seed
 
 DATASET_ID = "common-pile/comma_v0.1_training_dataset"
 DATASET_REVISION = "5afc546db324e7f39f297ba757c9a60547151e7c"
@@ -139,6 +143,8 @@ def _load_excluded_authorities(
         manifest = json.loads(manifest_path.read_text())
         if manifest.get("schema") != SCHEMA or manifest.get("status") != "complete":
             raise RuntimeError(f"unsupported excluded authority: {root}")
+        if manifest.get("training_eligible") is not True:
+            raise RuntimeError(f"excluded authority is non-trainable or lacks explicit training eligibility: {root}")
         metadata_receipt = manifest["outputs"]["metadata"]
         metadata_path = root / Path(metadata_receipt["path"]).name
         if (metadata_path.stat().st_size != int(metadata_receipt["bytes"])
@@ -162,7 +168,7 @@ def _load_excluded_authorities(
 
 
 def _entry(path: Path) -> dict[str, object]:
-    return {"path": str(path.resolve()), "bytes": path.stat().st_size,
+    return {"path": path.name, "bytes": path.stat().st_size,
             "sha256": sha256(path)}
 
 
@@ -325,6 +331,7 @@ def main() -> None:
         manifest = {
             "schema": SCHEMA,
             "status": "complete",
+            "training_eligible": True,
             "purpose": "source-filtered document-complete CommaPile causal replay",
             "dataset_id": DATASET_ID,
             "dataset_revision": DATASET_REVISION,

@@ -62,7 +62,7 @@ srun --label --kill-on-bad-exit=1 --wait=120 bash -lc '
   sed "s/127.0.0.1:8797/127.0.0.1:${port}/" configs/pi/e97-dense-agent.models.json > "$config/models.json"
   server_log="'$RUN_ROOT'/shards/server-${SLURM_PROCID}.log"
   "$EMENDER_PYTHON" scripts/serve_e97_agent_openai.py \
-    --checkpoint "'$local_checkpoint'" --args-json "'$local_args'" \
+    --checkpoint "'$local_checkpoint'" --checkpoint-sha256 "'$CHECKPOINT_SHA256'" --args-json "'$local_args'" \
     --host 127.0.0.1 --port "$port" --max-output-tokens 256 --max-sessions 2 \
     --ingest-mode tokenwise --pi-core-canonical-system --trace-generated-errors \
     > "'$RUN_ROOT'/shards/server-${SLURM_PROCID}.out" 2> "$server_log" &
