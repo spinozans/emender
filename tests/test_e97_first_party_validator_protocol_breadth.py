@@ -266,6 +266,23 @@ def test_outcome_write_full_content_passes(tmp_path):
     assert _run("focused", ERA4, spec, _terminal(actions), tmp_path)[0] == 0
 
 
+def test_outcome_write_trailing_newline_currency_passes(tmp_path):
+    # write entries carry the RAW final file content; the read-back receipt
+    # uses receipt currency (content minus one trailing newline)
+    spec = _outcome_spec()
+    spec["required_workspace_writes"] = [{
+        "path": "depot/state.txt", "original_text": "mode=alpha\nstatus=retired\n",
+        "expected_text": "mode=alpha\nstatus=active\n"}]
+    actions = [
+        _read_action("depot/state.txt", "mode=alpha\nstatus=retired\n", 0),
+        _edit_action("depot/state.txt",
+                     [{"oldText": "status=retired", "newText": "status=active"}], 1),
+        _read_action("depot/state.txt", "mode=alpha\nstatus=active", 2),
+    ]
+    assert _run("focused", ERA4, spec, _terminal(actions), tmp_path)[0] == 0
+    assert _run("regression", ERA4, spec, _terminal(actions), tmp_path)[0] == 0
+
+
 def test_outcome_missing_write_fails(tmp_path):
     spec = _outcome_spec()
     actions = [_read_action("depot/state.txt", "mode=alpha\nstatus=active", 0)]

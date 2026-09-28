@@ -341,7 +341,12 @@ def _check_workspace_write(actions: list[Mapping[str, Any]], entry: Mapping[str,
         raise SystemExit(f"required workspace write missing: {path}")
     if virtual != entry["expected_text"]:
         raise SystemExit(f"workspace write chain does not produce expected text: {path}")
-    _check_grounded_read(actions, path, entry["expected_text"],
+    # The write entry's expected_text is the RAW final file content (the
+    # edit/write chain replays over raw text); the read-back receipt uses
+    # the receipt currency (content minus exactly one trailing newline).
+    readback_expected = entry["expected_text"][:-1] \
+        if entry["expected_text"].endswith("\n") else entry["expected_text"]
+    _check_grounded_read(actions, path, readback_expected,
                          min_sequence=last_mutation)
 
 
