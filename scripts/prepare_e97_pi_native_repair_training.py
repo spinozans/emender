@@ -100,15 +100,19 @@ def read_authored_slice(root,expected_manifest_sha,seed,budget_targets,max_recor
  if not chosen:raise ValueError('empty authored slice')
  return chosen,consumed,len(eligible)
 
-def read_conversation_slice(root,expected_manifest_sha,seed,budget_targets,exclude_ids=None):
+def read_conversation_slice(root,expected_manifest_sha,seed,budget_targets,exclude_ids=None,*,schema=AUTHORITY_SCHEMA,status='complete',require_eligible=True):
  """Deterministic seeded whole-record slice of a production-admitted tulu3 conversation authority.
  Streams the metadata once and seek-reads only chosen records so very large authorities are tractable.
  The source manifest may mark training_eligible True or omit it (production-admitted raw source); the raw value is
- returned so the preparation manifest records exactly what was consumed."""
+ returned so the preparation manifest records exactly what was consumed.
+ schema/status/require_eligible override the default consumption criteria for cohort specs that bind a
+ verified-not-admitted candidate authority by its own schema (e.g. the teacher-pilot traces): the default
+ triple admits only production tulu3 authorities; a spec must name the candidate's schema and status
+ explicitly and waive the eligibility requirement to consume it."""
  manifest=json.loads((root/'manifest.json').read_text())
  if sha(root/'manifest.json')!=expected_manifest_sha:raise ValueError('conversation manifest identity')
- if manifest.get('schema')!=AUTHORITY_SCHEMA or manifest.get('status')!='complete':raise ValueError('conversation schema')
- if manifest.get('training_eligible') is not True and 'training_eligible' in manifest:raise ValueError('conversation source must be a production-admitted authority')
+ if manifest.get('schema')!=schema or manifest.get('status')!=status:raise ValueError('conversation schema')
+ if require_eligible and manifest.get('training_eligible') is not True and 'training_eligible' in manifest:raise ValueError('conversation source must be a production-admitted authority')
  paths={}
  for key,spec in manifest['outputs'].items():
   p=Path(spec['path'])
@@ -356,10 +360,18 @@ def prepare(args):
   name=spec['cohort']
   if name in cohort_names:raise ValueError(f'duplicate cohort {name}')
   cohort_names.append(name)
-  records,consumed,eligibility,_=read_conversation_slice(Path(spec['root']),spec['sha256'],spec.get('seed',0),spec['budget_targets'])
+  exclude=None
+  if spec.get('exclusion_ids') is not None:
+   exclude=set(x.strip() for x in Path(spec['exclusion_ids']).read_text().splitlines() if x.strip())
+  records,consumed,eligibility,excluded=read_conversation_slice(Path(spec['root']),spec['sha256'],spec.get('seed',0),spec['budget_targets'],exclude_ids=exclude,schema=spec.get('schema',AUTHORITY_SCHEMA),status=spec.get('admission_status','complete'),require_eligible=bool(spec.get('require_training_eligible',True)))
   records=repeat_records(records,int(spec.get('repeat_epochs',1)),name)
   streams.append((records,cohort_names[len(cohort_names)-1]))
-  spec_cohorts.append({'cohort':name,'authority':spec['root'],'authority_sha256':spec['sha256'],'seed':spec.get('seed',0),'target_token_budget':spec['budget_targets'],'consumed_target_tokens':consumed,'records':len(records),'source_training_eligible':eligibility,'repeat_epochs':int(spec.get('repeat_epochs',1))})
+  entry={'cohort':name,'authority':spec['root'],'authority_sha256':spec['sha256'],'seed':spec.get('seed',0),'target_token_budget':spec['budget_targets'],'consumed_target_tokens':consumed,'records':len(records),'source_training_eligible':eligibility,'repeat_epochs':int(spec.get('repeat_epochs',1))}
+  if spec.get('schema',AUTHORITY_SCHEMA)!=AUTHORITY_SCHEMA:
+   entry['source_schema']=spec['schema'];entry['source_admission_status']=spec.get('admission_status','complete')
+  if exclude is not None:
+   entry['freshness']={'method':'identity-exclusion','excluded_prior_draw_records':excluded,'exclusion_authority':spec['exclusion_ids']}
+  spec_cohorts.append(entry)
  order=interleave(streams)
  args.output.mkdir(parents=True,mode=0o700,exist_ok=False)
  restored=(rehearsal is not None and authored is not None)

@@ -60,7 +60,10 @@ TOKEN = "0123456789abcdef0123"
 
 
 def _canonical(value) -> str:
-    return json.dumps(value, sort_keys=True, separators=(",", ":"))
+    # Receipt currency: canonical_json (ensure_ascii=False) — the same form the
+    # dense controller and the bank's gym projection use for
+    # effective_observation.
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
 
 
 def _base_spec() -> dict:
@@ -452,6 +455,25 @@ def test_era2_mode_minefield_stays_exact(tmp_path):
             "required_grounded_reads": [{"path": "a.txt", "expected_text": "x"}]}
     spec["minefield"]["allowed_tools"] = ["list_files", "read", "write"]
     assert _run("focused", ERA4, spec, _terminal([_read_action()]), tmp_path)[0] != 0
+
+
+def test_outcome_non_ascii_fixture_text_verifies(tmp_path):
+    # Receipt currency: canonical_json is ensure_ascii=False; a grounded read
+    # of UTF-8 fixture text (em-dashes) must still verify as a real receipt.
+    spec = _base_spec()
+    spec["expected_final"] = TOKEN
+    spec["required_grounded_reads"] = [
+        {"path": "logs/night.txt", "expected_text": "café — night shift — ledger"}]
+    raw = {"ok": True, "tool": "read", "path": "logs/night.txt", "offset": 1,
+           "lines": [{"line": 1, "text": "café — night shift — ledger"}],
+           "truncated": False}
+    action = {"sequence": 0, "tool_name": "read",
+              "arguments": {"path": "logs/night.txt", "offset": 1, "limit": 2000},
+              "is_error": False, "raw_observation": raw,
+              "effective_observation": _canonical(raw)}
+    terminal = _terminal([action], final=f"Final: {TOKEN}")
+    assert _run("focused", ERA4, spec, terminal, tmp_path)[0] == 0
+    assert _run("regression", ERA4, spec, terminal, tmp_path)[0] == 0
 
 
 # The sealed replay proof passes spec/terminal via INHERITED DESCRIPTORS, not

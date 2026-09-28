@@ -415,3 +415,57 @@ def test_conversation_exclusion_ids(tmp_path):
  prepare(a)
  manifest=json.loads((a.output/'manifest.json').read_text())
  assert manifest['conversation_rehearsal']['freshness']['excluded_prior_draw_records']==2
+
+def test_cohort_spec_exclusion_ids_and_candidate_schema_overrides(tmp_path):
+ # E4 cohort-spec consumption criteria: (1) spec-level identity exclusion for
+ # fresh disjoint draws (real-human-chat/SmolTalk2 precedent), and (2) a
+ # verified-not-admitted candidate authority consumed ONLY by naming its own
+ # schema + status and waiving the eligibility requirement (teacher-pilot
+ # traces precedent) — the default criteria must still reject it.
+ from scripts.prepare_e97_pi_native_repair_training import read_conversation_slice
+ conv=tmp_path/'conv'
+ spec=[(bytes([4])*(4*10),bytes([1])*4,{'identity':f'rhc:row{i}','split':0}) for i in range(6)]
+ csha=write_tulu3(conv,[{'identity':f'rhc:row{i}','split':0} for i in range(6)],
+  eligible=None,records_spec=spec)
+ excl=tmp_path/'prior-draws.txt';excl.write_text('rhc:row0\nrhc:row1\nrhc:row2\n')
+ cand=tmp_path/'teacher-conv'
+ spec_c=[(bytes([6])*(4*10),bytes([1])*4,{'id':f't{i}','split':0}) for i in range(4)]
+ tsha=write_tulu3(cand,[{'id':f't{i}','split':0} for i in range(4)],eligible=False,
+  records_spec=spec_c,schema='emender-teacher-pilot-conversation-authority-v1',
+  status='verified-candidates-not-admitted')
+ # default criteria reject the candidate authority (wrong schema AND non-admitted)
+ try:read_conversation_slice(cand,tsha,seed=1,budget_targets=100)
+ except ValueError:pass
+ else:raise AssertionError('candidate authority admitted under default criteria')
+ try:read_conversation_slice(cand,tsha,seed=1,budget_targets=100,
+  schema='emender-teacher-pilot-conversation-authority-v1',
+  status='verified-candidates-not-admitted')
+ except ValueError:pass
+ else:raise AssertionError('non-admitted candidate accepted without eligibility waiver')
+ sel,ssha=_selected_authority(tmp_path)
+ a=_base_args(tmp_path,sel,ssha);a.allow_no_oh_cohort=True
+ (tmp_path/'spec-rhc.json').write_text(json.dumps({'cohort':'real-human-chat-rehearsal',
+  'root':str(conv),'sha256':csha,'seed':20260923,'budget_targets':100,
+  'exclusion_ids':str(excl)}))
+ (tmp_path/'spec-teacher.json').write_text(json.dumps({'cohort':'teacher-conversation-traces',
+  'root':str(cand),'sha256':tsha,'seed':1,'budget_targets':100,'repeat_epochs':2,
+  'schema':'emender-teacher-pilot-conversation-authority-v1',
+  'admission_status':'verified-candidates-not-admitted',
+  'require_training_eligible':False}))
+ a.cohort_spec=[tmp_path/'spec-rhc.json',tmp_path/'spec-teacher.json']
+ a.output=tmp_path/'out-e4'
+ prepare(a)
+ manifest=json.loads((a.output/'manifest.json').read_text())
+ rhc=next(e for e in manifest['spec_cohorts'] if e['cohort']=='real-human-chat-rehearsal')
+ assert rhc['freshness']=={'method':'identity-exclusion','excluded_prior_draw_records':3,
+  'exclusion_authority':str(excl)}
+ assert rhc['consumed_target_tokens']==12 and rhc['records']==3
+ assert 'source_schema' not in rhc
+ teacher=next(e for e in manifest['spec_cohorts'] if e['cohort']=='teacher-conversation-traces')
+ assert teacher['source_schema']=='emender-teacher-pilot-conversation-authority-v1'
+ assert teacher['source_admission_status']=='verified-candidates-not-admitted'
+ assert teacher['source_training_eligible'] is False
+ assert teacher['records']==8 and teacher['consumed_target_tokens']==16
+ rows=[json.loads(x) for x in (a.output/'records.jsonl').read_text().splitlines()]
+ assert {r['identity'] for r in rows if r['source']=='real-human-chat-rehearsal'}=={'rhc:row3','rhc:row4','rhc:row5'}
+ assert {r['source_record_id'] for r in rows if r['source']=='teacher-conversation-traces'}=={'t0','t1','t2','t3'}

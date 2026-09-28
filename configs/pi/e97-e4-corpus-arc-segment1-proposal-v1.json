@@ -1,0 +1,469 @@
+{
+ "arc": {
+  "arc_id": "e97-e4-corpus-arc",
+  "arc_keys": [
+   2400001,
+   2400002,
+   2400003,
+   2400004,
+   2400005,
+   2400006,
+   2400007,
+   2400008
+  ],
+  "arc_updates": 512,
+  "chaining": "Segment 1 trains 64 updates from the E3-u256 checkpoint (/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e3-chat-agent-segment2-training-v1/checkpoints/checkpoint_agent_sft_u000128_loss_1.3049.pt, sha 3770621c... \u2014 the designated E4 parent: E3's best balanced card and the best in programme history \u2014 chat 2/3 (best ever), Stage-B 11/14 valid, execution 63/96, retention 1.520, doc-NLL 2.555940; audit passed-training-not-promoted. NOT the bank lineages (merge-5 ruled a net regression: execution 63->0/96 despite 14/14 Stage-B valid). Segments 2..8 chain to the prior segment's final audited checkpoint and freeze only after that checkpoint exists.",
+  "evaluation_caveats": "The chat-probe panel baseline is the parent's 2/3 (best ever); the document-NLL floor is the parent's CPU q8_0 reading 2.555940 on the frozen 8-doc panel (5725d820...); the GPU doc-NLL probe (e97-rl-loop-v1/scripts/score_docnll_gpu.py) is a RELATIVE instrument through the identical GPU path and its values never enter the CPU q8_0 archival chain; the 24-episode execution slice is a fast-read trend instrument \u2014 only the full 96-episode panel is gate evidence; the window-class cohorts' guarantee floor is per-32-update window, not per update; the teacher-pilot cohorts are first consumption anywhere, bound under explicit candidate consumption criteria at their recorded verified-not-admitted statuses.",
+  "juncture_policy": "SHORTER SEGMENTS, EARLY READS (the E1-E3 lesson: every arc peaked mid-arc and degraded at terminal dose): checkpoint at every u64 boundary (segment = 64 updates); a FAST gate read (Stage-B panel on 1 GPU + the GPU doc-NLL probe vs parent 3770621c + a fixed 24-episode execution slice) at EVERY u64 boundary while the next segment trains; FULL frozen gates at u128, u256 and the u512 cap; PROMOTION-OR-STOP AT THE BEST READING rather than a fixed terminal dose \u2014 stop at the first boundary showing the E3-u512 terminal-collapse signature (Stage-B valid < 11/14 while execution holds) or a doc-NLL regression above the parent band (+0.008 class) or any full-gate floor failure, promoting the best full-gate-quality checkpoint so far. Fail-closed: no automatic retries; no threshold changes.",
+  "rationale": "The corpus-scale repair arc per the programme's original thin-film diagnosis (vision 1-2B post-train tokens; E1-E3 each ran ~450M-token preps): the full E3 blend kept and scaled on the operator's three levers \u2014 real-human-chat at 4.0x E3's dose (80.0M targets of the 156.1M combined WildChat+LMSYS authority, seed 20260923 with E3's 27,136 consumed identities excluded: the NEXT 80M in the seeded order, monotone and exactly disjoint), the long-document anchors at the operator's original CommaPile-mainmix design (mainmix 130M from the 36-window calibration superset + library fragments 45M; 175.0M anchor targets = 52.0%), and the teacher-pilot traces IN (both arms, whole-pool x4). SmolTalk2 conversation held at the E3 blend dose 19.6M as a fresh disjoint draw (seed 613220, extended exclusion set 150,370 identities). Pool: 696,755,185 tokens / 336,770,673 supervised targets / 11,721 packs (2.65x E3's target scale, 1.55x its token scale). Chained from E3-u256 3770621c with the document-NLL probe fail-closed below the parent bound 2.555940.",
+  "segment_index": 1,
+  "segment_updates": 64,
+  "throughput_note": "Projected at 76.1 s/update (524,296 tokens/update at the qualified chunk-2048 armB projection 6,885 tok/s per docs/validation/e97-throughput-qualification-standard-v1.md): one 64-update segment = ~30.4M input tokens = ~1.22 h; the u512 cap = 8 segments = ~241.9M trained tokens = ~9.8 h; expected promotion zone u128-u256 = 2.4-4.9 h of training.",
+  "total_segments": 8
+ },
+ "authority_manifest_sha256": "2de8385884c0730ef2059350b31df9f84e82b3de1f39b282120ab9ed8a1002d0",
+ "automatic_expansion": false,
+ "automatic_retry": false,
+ "checkpoint_promotion": false,
+ "cohort_bindings": {
+  "authored_rehearsal": {
+   "authority": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/grounded-expansion-v1-data-r2/authority",
+   "authority_sha256": "08752c53e2199533252c77821ec9696012b19dc09ea0ff1508ef6676a6cd2140",
+   "consumed_target_tokens": 3704364,
+   "records": 10332,
+   "repeat_epochs": 4,
+   "seed": 882843,
+   "target_token_budget": 1000000
+  },
+  "conversation_rehearsal": {
+   "authority": "/mnt/nvme1n1/erikg/sft/e97-4b-smoltalk2-admitted-v1",
+   "authority_sha256": "d64f51abc615c097910900ffa7fc88f020ae5567b89958f607008078c271c7f6",
+   "consumed_target_tokens": 19600000,
+   "freshness": {
+    "excluded_prior_draw_records": 150370,
+    "exclusion_authority": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e4-corpus-arc-v1/exclusion/conversation-prior-draw-identities.txt",
+    "method": "identity-exclusion"
+   },
+   "records": 18692,
+   "seed": 613220,
+   "source_training_eligible": null,
+   "target_token_budget": 19600000
+  },
+  "extra3_rehearsal": {
+   "authority": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-reasoning-rehearsal-collection-v1/collect/candidate-authority",
+   "authority_sha256": "88e535b5bec8f704163eb45bab929d7c80e4eee92f575b3748ebb758d18b5229",
+   "cohort": "reasoning-rehearsal",
+   "records": 200,
+   "repeat_epochs": 4
+  },
+  "extra4_rehearsal": {
+   "authority": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-hybrid-conversation-collection-v2/collect/candidate-authority",
+   "authority_sha256": "f88ff570d3cee472a691df018bd72db30710f434a63418c571d0d0d6a014141c",
+   "cohort": "hybrid-conversation-rehearsal-v2",
+   "records": 20800,
+   "repeat_epochs": 4
+  },
+  "rehearsal_rehearsal": {
+   "authority": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/representation-bridge-v1-data/authority",
+   "authority_sha256": "a21dba6f80e58e87ea838a98018b40650decebed3cf4b0f98dacdb750520469d",
+   "cohort": "representation-bridge-rehearsal",
+   "records": 8892,
+   "repeat_epochs": 4
+  },
+  "teacher_conversation_traces": {
+   "authority": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-teacher-generation-pilot-v1/conv-run/candidate-authority",
+   "authority_sha256": "6d48f062e89f80b277482e2df200792609dd5d97873b1178f58754c49a867693",
+   "cohort": "teacher-conversation-traces",
+   "consumed_target_tokens": 131796,
+   "records": 920,
+   "repeat_epochs": 4,
+   "seed": 916210,
+   "source_admission_status": "verified-candidates-not-admitted",
+   "source_schema": "emender-teacher-pilot-conversation-authority-v1",
+   "source_training_eligible": false,
+   "target_token_budget": 132000
+  },
+  "teacher_terminal_traces": {
+   "authority": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-teacher-generation-pilot-v1/terminal-run/candidate-authority",
+   "authority_sha256": "a4d73f49d1c774c49a4648057af31213f7d4584a7258aa1b5d488c3c61fd217f",
+   "cohort": "teacher-terminal-traces",
+   "consumed_target_tokens": 275854,
+   "records": 1424,
+   "repeat_epochs": 4,
+   "seed": 916209,
+   "source_admission_status": "verified-candidate-not-admitted",
+   "source_schema": "emender-e97-pi-native-candidate-authority-v1",
+   "source_training_eligible": false,
+   "target_token_budget": 276000
+  }
+ },
+ "context_size": 65536,
+ "conversation_rehearsal": {
+  "budget_targets": 19600000,
+  "manifest_sha256": "d64f51abc615c097910900ffa7fc88f020ae5567b89958f607008078c271c7f6",
+  "seed": 613220,
+  "source": "/mnt/nvme1n1/erikg/sft/e97-4b-smoltalk2-admitted-v1"
+ },
+ "data_world_size": 8,
+ "declared_cohorts": [
+  "compositional-rehearsal",
+  "conversation-rehearsal",
+  "cumulative-recovery-rehearsal",
+  "grounded-authored-rehearsal",
+  "hybrid-conversation-rehearsal-v2",
+  "live-aligned-rehearsal",
+  "long-document-library-anchor",
+  "longcopy-rehearsal",
+  "loopbreak-rehearsal",
+  "mainmix-draws-anchor",
+  "multi-episode-session-rehearsal",
+  "pi-native-curriculum",
+  "pointerchase-rehearsal",
+  "real-human-chat-rehearsal",
+  "reasoning-rehearsal",
+  "representation-bridge-rehearsal",
+  "teacher-conversation-traces",
+  "teacher-terminal-traces",
+  "tooltalk-rehearsal",
+  "verified-raw-oh"
+ ],
+ "evidence_basis": {
+  "corpus_scale_rationale": "The thin-film diagnosis: the programme's vision was ~1-2B post-train tokens; E1-E3 each trained ~450M-token preps at ~127M supervised targets and all three arcs failed the frozen gate with mid-arc peaks and terminal degradation \u2014 under-dosing is the standing hypothesis. E4 builds the corpus the vision asked for: 696,755,185 pool tokens / 336,770,673 supervised targets (2.65x E3 targets, 1.55x E3 tokens), inside the operator's 500M-1B+ band, entirely from already-admitted authorities at higher doses (standing-authorization class; NO new data sources). The human register \u2014 the thing that moved chat 0->2/3 \u2014 carries at 4.0x E3's dose: 80.0M real-human-chat targets (23.75%) + 19.6M fresh SmolTalk2 (5.82%) + the seam/session/teacher families. The anchors \u2014 the thing that held doc-NLL through 512 updates \u2014 carry at 175.0M targets (52.0%): mainmix 130M from the 36-window calibration superset (157.18M causal targets, kept on disk precisely to scale the mainmix share without new draws) + library fragments 45M of the 58.96M pool.",
+  "doc_nll_probe": "The frozen document-NLL probe (8 documents, 198,295 scored tokens, panel sha 5725d820...) runs at every boundary. The fail-closed floor is the E4 parent's (E3-u256 3770621c) reading 2.555940 (e3-juncture-evals/seg2-u256/doc-nll/summary.json; the E3 parent's own parent floor was 2.556634 \u2014 the E4 parent is 0.0007 nats BETTER than its parent, the best doc-NLL reading in programme history). Fast reads use the GPU probe (score_docnll_gpu.py, RELATIVE vs the parent through the identical GPU path); full gates use the CPU q8_0 archival chain (per-checkpoint q8_0 conversion). Any checkpoint scoring strictly above the parent bound on the same panel is a regression (fail-closed stop; quantization form held constant).",
+  "gate_read_cadence": "Gate-read cadence table (ARC-DESIGN.md section 4): fast reads (Stage-B 1-GPU + GPU doc-NLL probe + 24-ep execution slice) at u64/u128/u192/u256/u320/u384/u448/u512 \u2014 every 64-update boundary, HALF E3's first-read latency; full gates (96-ep execution + chat 3-panel + retention + conv-NLL) at u128/u256/u512; promotion-or-stop at the BEST reading, expected in the u128-u256 zone per the E1-E3 mid-arc-peak pattern; segments 5-8 are continuation options only if every read through u256 is still improving.",
+  "real_human_chat_freshness": "Same seed 20260923 as E3's 20.0M draw with E3's 27,136 consumed identities excluded (W/exclusion/real-human-chat-prior-draw-identities.txt, machine-extracted from the E3 blend's records): the E4 draw is the NEXT 80M in the seeded order \u2014 monotone and exactly disjoint from E3's draw; 76.1M authority targets remain undrawn for future arcs. Admission unchanged: combined WildChat+LMSYS authority 4521b87d..., admission 4984f89e..., all five intake audits PASS (smoltalk2/tulu3/library/mainmix shingles at 0 content collisions + the sealed protected-overlap firewall).",
+  "rebalance_table": "E3 -> E4 target shares (machine-computed over 336,770,673 supervised targets): real-human-chat 15.73% -> 23.75% (4.0x dose); mainmix 16.52% -> 38.60% (21M -> 130M, the operator's original CommaPile-mainmix design via the 36-window superset); library 4.72% -> 13.36% (6M -> 45M); conversation (SmolTalk2) 15.42% -> 5.82% (19.6M held, fresh disjoint draw); verified-raw-oh 10.38% -> 3.92%; cumulative 10.15% -> 3.83%; compositional 8.02% -> 3.03%; tooltalk 5.19% -> 1.96%; live-aligned 3.46% -> 1.31%; authored 2.91% -> 1.10%; hybrid v2 seam 2.87% -> 1.08%; bridge 2.67% -> 1.01%; session 1.82% -> 0.69%; NEW teacher-terminal 0.33% + teacher-conversation 0.16%; curriculum + repair families 0.06%. Anchors combined 21.24% -> 51.96%; human+synthetic conversation register 31.15% -> 29.57% (the human component 4x within it). ZERO instruction-mix, ZERO translated-Pi-frame-OH (fail-closed checked at freeze).",
+  "teacher_pilot_traces": "First consumption of the teacher-generation pilot corpus (operator directive: the teacher-pilot authorities are in the admitted inventory; existing authorities = recipe-level within standing authorizations): terminal arm 356 verified records / 275,854 targets (96.2% mechanical-verification rate through the real Pi sandbox \u2014 driver-side authored assertions against the workspace after every episode; 0 guide rejections among mechanically-verified traces; guide quality 348x5 + 8x4) at x4 = 1,103,416 targets; conversation arm 230 verified records / 131,796 targets (WildChat-seeded; structural + anti-fixture guards + guide verdicts; 201x5 + 29x4) at x4 = 527,184 targets. Bound under explicit candidate consumption criteria: emender-e97-pi-native-candidate-authority-v1 and emender-teacher-pilot-conversation-authority-v1 at their recorded verified-not-admitted statuses (the new cohort-spec schema/status/eligibility machinery in scripts/prepare_e97_pi_native_repair_training.py, tests 13/13 PASS); source_training_eligible recorded false in the prep manifest.",
+  "window_class_ruling": "Unchanged from E3 (supervisor-approved set, on record): window-class cohorts long-document-library-anchor (fragment render, avg record 65,487 tokens = 100% of the 65,537-token pack sequence; solo-pack coverage) and verified-raw-oh (avg whole trajectory ~50,312 tokens = 76.7%; structurally capped). Mechanically window-class-eligible but NOT added to the class (no supervisor decision on record): longcopy (21,322), pi-native-curriculum (10,115), teacher-terminal-traces (7,167 at x4 emission), reasoning (6,639). All other cohorts keep the established floor rule (majors >=2% of targets every update; minors every 32 updates). Key screen 2400001.. admitted 8/8 at --steps 64; all 8 schedules WINDOW_RULE_OK; E1 window-rule regression receipt re-verified UNCHANGED."
+ },
+ "identity_bindings": [
+  [
+   "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e3-chat-agent-segment2-training-v1/checkpoints/checkpoint_agent_sft_u000128_loss_1.3049.pt",
+   "3770621c66563e8d86eb10dc1320e068c12e4bb89815aef823c7f8f5bd9c36d0"
+  ],
+  [
+   "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e3-chat-agent-segment2-training-v1/audit.json",
+   "bdba2a58029a229ff9d242d7e7420330424772c26b23ee25e779d428b3cf4b02"
+  ],
+  [
+   "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e4-corpus-arc-v1/e4-preparation/manifest.json",
+   "2de8385884c0730ef2059350b31df9f84e82b3de1f39b282120ab9ed8a1002d0"
+  ],
+  [
+   "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e4-corpus-arc-v1/e4-preparation/packs/manifest.json",
+   "2be49f44ff805eb4d63ebc8829a1e46ea073cd411607d11a00ff56c0cbe93244"
+  ],
+  [
+   "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e4-corpus-arc-v1/e4-preparation/packs/validation.json",
+   "a8553ccfceaabb198b60665f411346093bcb4e57273da6124046005ce3966fee"
+  ],
+  [
+   "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e4-corpus-arc-v1/e4-preparation/audit.json",
+   "419ea1e055939e5bc022af122c96103a295640c324d00a3a5a55e1b8b9fd813a"
+  ],
+  [
+   "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e4-corpus-arc-v1/e4-preparation/schedule-segment1-proposal.json",
+   "7c83b452a938f2fc53ab3a53489a11018a85617f8400157253dbdc77ce1ec926"
+  ],
+  [
+   "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e4-corpus-arc-v1/exclusion/conversation-prior-draw-identities.txt",
+   "6360f5099b0b44810c9127449f871fc88aa306e5ad3535582090c716b54b058d"
+  ],
+  [
+   "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e4-corpus-arc-v1/exclusion/real-human-chat-prior-draw-identities.txt",
+   "7e86c2b834b8ce26c1784f9c6d6af7e9ef2ba34882c00e745b1021f6b9aec6ff"
+  ],
+  [
+   "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-real-human-chat-intake-v1/admission-real-human-chat.json",
+   "4984f89edc1aa45fa745f173005611cfb25578e059fee83bc881b2961264288a"
+  ],
+  [
+   "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-real-human-chat-intake-v1/real-human-chat-authority/manifest.json",
+   "4521b87d4a912f77f437c281af2ff9b6cb240bacf67f3ff4e111511cc5e43f19"
+  ],
+  [
+   "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-long-document-anchor-v1/mainmix-draws-authority-calibration-36w-157m/manifest.json",
+   "a2348923aa32bf874e8e698f322f95bf71f8d0f0095425e177582d704fa9b328"
+  ],
+  [
+   "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e2-chat-agent-prep-v1/v2/library-fragments-authority/manifest.json",
+   "42372c8d2c91fa3d93e6384c988c262f6bc665b667778a29d91f8ac122441508"
+  ],
+  [
+   "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-teacher-generation-pilot-v1/terminal-run/candidate-authority/manifest.json",
+   "a4d73f49d1c774c49a4648057af31213f7d4584a7258aa1b5d488c3c61fd217f"
+  ],
+  [
+   "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-teacher-generation-pilot-v1/conv-run/candidate-authority/manifest.json",
+   "6d48f062e89f80b277482e2df200792609dd5d97873b1178f58754c49a867693"
+  ],
+  [
+   "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-teacher-generation-pilot-v1/REPORT.md",
+   "8a702e4e91f663571067bda2f05a1e989d2761c3aa6b770d5b78d4911a1e5cbe"
+  ],
+  [
+   "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-teacher-generation-pilot-v1/aggregate-summary.json",
+   "dd1fd6b76833bacaf0e6f385da0fe410cf7e9b529f5de9bcdd4ac7b818bad25e"
+  ],
+  [
+   "/mnt/nvme2n1/erikg/e97_systematic_posttraining/representation-bridge-v1-data/authority/manifest.json",
+   "a21dba6f80e58e87ea838a98018b40650decebed3cf4b0f98dacdb750520469d"
+  ],
+  [
+   "/mnt/nvme2n1/erikg/e97_systematic_posttraining/grounded-expansion-v1-data-r2/authority/manifest.json",
+   "08752c53e2199533252c77821ec9696012b19dc09ea0ff1508ef6676a6cd2140"
+  ],
+  [
+   "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e1-chat-agent-prep-v1/verified-raw-oh-authority/manifest.json",
+   "fa6a47daf69a3671ca523966cee38774db576d8d50d06520094b853759ee22e4"
+  ],
+  [
+   "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e1-chat-agent-prep-v1/tooltalk-authority/manifest.json",
+   "fe0bfaffd8f00ab8011fc4a267c75686ac8caa04f4c862afeac3636d98294a9c"
+  ],
+  [
+   "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-hybrid-conversation-collection-v2/collect/candidate-authority/manifest.json",
+   "f88ff570d3cee472a691df018bd72db30710f434a63418c571d0d0d6a014141c"
+  ],
+  [
+   "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e3-chat-agent-prep-v1/session-family/sft-render/manifest.json",
+   "4d4d7202857c474ca583103113b16888c48eb18f16c43ac9a4bb647629cee4aa"
+  ],
+  [
+   "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-curriculum-2000-selected-v1/candidate-authority/manifest.json",
+   "8cf83db8d608f6af74bbd2cbe60206ef435fb3003ab2bb63f4eadab17eb05562"
+  ],
+  [
+   "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-curriculum-2000-selected-v1/selection-audit.json",
+   "de977726f0758206ee9defe9c3687d2485e3ba2b80eb9ef9ceafb065c5f6646b"
+  ],
+  [
+   "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-curriculum-2000-selected-v1/overlap-audit.json",
+   "9c104d73b104f4d29a83ca1472b66ef2df681e020a2b9688eb4f87c6ef814a78"
+  ],
+  [
+   "/mnt/nvme1n1/erikg/sft/e97-4b-smoltalk2-admitted-v1/manifest.json",
+   "d64f51abc615c097910900ffa7fc88f020ae5567b89958f607008078c271c7f6"
+  ],
+  [
+   "/mnt/nvme1n1/erikg/sft/e97-4b-pi-compositional-retention-mix-v1/manifest.json",
+   "79e7981077fc387c3e3759728ddd0f9e1ac16f687c628542e8313fb735c4cfb7"
+  ],
+  [
+   "/mnt/nvme1n1/erikg/sft/e97-4b-pi-cumulative-recovery-mix-v1/manifest.json",
+   "a17648481e5cf1183ea640b873d70e2b1c36ad3e976d0c4b4a2f19af54fe600f"
+  ],
+  [
+   "/mnt/nvme1n1/erikg/sft/e97-4b-pi-live-aligned-all-assistant-v1/manifest.json",
+   "4a1cf86f9089cc3f2f79884f845d26d487d88b20fb32b589a8095d4824bc6a20"
+  ],
+  [
+   "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-long-document-anchor-v1/probe/probe-panel-manifest.json",
+   "abca0b8b4ce9a917e8262b8d4ce0743565c594900a27fc1442f43dd42ed4540e"
+  ],
+  [
+   "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-long-document-anchor-v1/probe/probe-panel.token-ids.jsonl",
+   "5725d8206ac90e5ad4bbb4acd492bf4832f704ccb1d39615bae1c87fd55edc9f"
+  ],
+  [
+   "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e3-chat-agent-prep-v1/e3-juncture-evals/seg2-u256/doc-nll/summary.json",
+   "d8b6d506f2bcdf2f5defd84af5d3275c0992e93a2812022f7b13a0e8749ab8c9"
+  ],
+  [
+   "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e3-chat-agent-prep-v1/e3-juncture-evals/seg2-u256/doc-nll/nll.json",
+   "f99aa05b7595dc830f90e1691b28573ec18a39973eb298b935f05173fc58b318"
+  ]
+ ],
+ "new_rl_updates": 0,
+ "operator_internal_training_authorized": false,
+ "optimizer_updates_authorized": 0,
+ "pack_manifest_sha256": "2be49f44ff805eb4d63ebc8829a1e46ea073cd411607d11a00ff56c0cbe93244",
+ "packing_authorized": false,
+ "parent_checkpoint": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e3-chat-agent-segment2-training-v1/checkpoints/checkpoint_agent_sft_u000128_loss_1.3049.pt",
+ "parent_checkpoint_sha256": "3770621c66563e8d86eb10dc1320e068c12e4bb89815aef823c7f8f5bd9c36d0",
+ "parent_doc_nll_baseline": {
+  "binding_note": "E4 parent (E3-u256 checkpoint 3770621c) document-NLL panel mean on the frozen 8-doc panel; source (E3 lane, read-only): e3-juncture-evals/seg2-u256/doc-nll/summary.json (score file nll.json sha-bound in identity_bindings). The best doc-NLL reading in programme history.",
+  "mean_nll": 2.555940365,
+  "score_path": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e3-chat-agent-prep-v1/e3-juncture-evals/seg2-u256/doc-nll/summary.json"
+ },
+ "per_update_cohort_stratification": {
+  "min_target_fraction": 0.02,
+  "proposed_updates": 64,
+  "scheme": "window-coverage",
+  "window_class_eligibility": {
+   "compositional-rehearsal": {
+    "avg_record_tokens": 369.5,
+    "min_structural_record_tokens": 6553.7,
+    "window_class_eligible": false
+   },
+   "conversation-rehearsal": {
+    "avg_record_tokens": 1290.4,
+    "min_structural_record_tokens": 6553.7,
+    "window_class_eligible": false
+   },
+   "cumulative-recovery-rehearsal": {
+    "avg_record_tokens": 387.1,
+    "min_structural_record_tokens": 6553.7,
+    "window_class_eligible": false
+   },
+   "grounded-authored-rehearsal": {
+    "avg_record_tokens": 3502.9,
+    "min_structural_record_tokens": 6553.7,
+    "window_class_eligible": false
+   },
+   "hybrid-conversation-rehearsal-v2": {
+    "avg_record_tokens": 5914.0,
+    "min_structural_record_tokens": 6553.7,
+    "window_class_eligible": false
+   },
+   "live-aligned-rehearsal": {
+    "avg_record_tokens": 278.4,
+    "min_structural_record_tokens": 6553.7,
+    "window_class_eligible": false
+   },
+   "long-document-library-anchor": {
+    "avg_record_tokens": 65487.2,
+    "min_structural_record_tokens": 6553.7,
+    "window_class_eligible": true
+   },
+   "longcopy-rehearsal": {
+    "avg_record_tokens": 21321.8,
+    "min_structural_record_tokens": 6553.7,
+    "window_class_eligible": true
+   },
+   "loopbreak-rehearsal": {
+    "avg_record_tokens": 6141.3,
+    "min_structural_record_tokens": 6553.7,
+    "window_class_eligible": false
+   },
+   "mainmix-draws-anchor": {
+    "avg_record_tokens": 1213.3,
+    "min_structural_record_tokens": 6553.7,
+    "window_class_eligible": false
+   },
+   "multi-episode-session-rehearsal": {
+    "avg_record_tokens": 6491.1,
+    "min_structural_record_tokens": 6553.7,
+    "window_class_eligible": false
+   },
+   "pi-native-curriculum": {
+    "avg_record_tokens": 10115.3,
+    "min_structural_record_tokens": 6553.7,
+    "window_class_eligible": true
+   },
+   "pointerchase-rehearsal": {
+    "avg_record_tokens": 6239.2,
+    "min_structural_record_tokens": 6553.7,
+    "window_class_eligible": false
+   },
+   "real-human-chat-rehearsal": {
+    "avg_record_tokens": 1068.8,
+    "min_structural_record_tokens": 6553.7,
+    "window_class_eligible": false
+   },
+   "reasoning-rehearsal": {
+    "avg_record_tokens": 6638.6,
+    "min_structural_record_tokens": 6553.7,
+    "window_class_eligible": true
+   },
+   "representation-bridge-rehearsal": {
+    "avg_record_tokens": 2724.5,
+    "min_structural_record_tokens": 6553.7,
+    "window_class_eligible": false
+   },
+   "teacher-conversation-traces": {
+    "avg_record_tokens": 707.7,
+    "min_structural_record_tokens": 6553.7,
+    "window_class_eligible": false
+   },
+   "teacher-terminal-traces": {
+    "avg_record_tokens": 7166.7,
+    "min_structural_record_tokens": 6553.7,
+    "window_class_eligible": true
+   },
+   "tooltalk-rehearsal": {
+    "avg_record_tokens": 3354.1,
+    "min_structural_record_tokens": 6553.7,
+    "window_class_eligible": false
+   },
+   "verified-raw-oh": {
+    "avg_record_tokens": 50311.7,
+    "min_structural_record_tokens": 6553.7,
+    "window_class_eligible": true
+   }
+  },
+  "window_class_note": "window_cohorts are verified at window granularity (>=1 per 32-update window); every other cohort keeps the floor rule (majors >=2% of targets every update; minors every 32 updates). The eligibility table is the machine-checked structural-capping test (avg whole record >= 10% of the 65,537-token pack sequence) applied to EVERY cohort. The window CLASS membership is unchanged from E3's supervisor-approved set (long-document-library-anchor, verified-raw-oh): longcopy, pi-native-curriculum, teacher-terminal-traces and reasoning are mechanically eligible but are NOT added to the class \u2014 no supervisor decision on record for new members.",
+  "window_cohorts": [
+   "long-document-library-anchor",
+   "verified-raw-oh"
+  ],
+  "window_updates": 32
+ },
+ "preparation_root": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e4-corpus-arc-v1/e4-preparation",
+ "proposed_behavioral_gate": {
+  "composition": ">= 4/16",
+  "openhands_execution_overall": ">= 64/96",
+  "openhands_fresh": ">= 30/32",
+  "openhands_prior_fresh": "= 16/16",
+  "openhands_prior_regression": ">= 10/16",
+  "pi_native_stage_b": "valid first frame >= 12/14 and correct first action >= 10/14",
+  "retention": "both saved-x/train-y retention gates pass"
+ },
+ "proposed_learning_rate": 1e-05,
+ "proposed_updates": 64,
+ "purpose": "E4 CORPUS-SCALE arc segment 1 of 8 (max; the thin-film repair): the full E3 blend scaled on the operator's levers \u2014 real-human-chat 80.0M targets at 23.75% (4.0x E3's dose, seed 20260923, exactly disjoint from E3's draw), anchors 175.0M at 51.96% (mainmix 130M from the 36-window superset + library fragments 45M \u2014 the operator's original CommaPile-mainmix design), fresh SmolTalk2 19.6M (seed 613220, 150,370 identities excluded), verified-raw-OH 13.2M, tooltalk 6.6M, cumulative 4.3M x3 + compositional 3.4M x3 + live-aligned 2.2M x2, restored pools bridge+authored x4, hybrid v2 seam x4 + session family x4, NEW teacher-pilot traces (terminal 356 + conversation 230 verified records, whole-pool x4, explicit candidate consumption criteria), reasoning pilot + repair families closing. Pool: 696,755,185 tokens / 336,770,673 targets / 11,721 packs. SHORTER SEGMENTS (64 updates) with EARLY gate reads at every u64 boundary (Stage-B 1-GPU + GPU doc-NLL probe vs parent + 24-ep execution slice), full gates at u128/u256/u512, PROMOTION-OR-STOP AT THE BEST READING. Chained from E3-u256 3770621c (chat 2/3, Stage-B 11/14, exec 63/96, retention 1.520, doc-NLL 2.555940 \u2014 the best balanced card in programme history; NOT the bank lineages). Juncture detectors fail-closed below the parent bounds. ZERO instruction-mix, ZERO translated-Pi-frame-OH. DRAFT: not frozen, not audited, not committed, not authorized \u2014 the arc launch is the operator's call after proposal review.",
+ "sampler_key": 2400001,
+ "schedule_selection": "Training-data-only screen over the fresh E4 range 2400001.. (8 keys at --steps 64 under the window-coverage rule with the supervisor-approved window-class cohorts long-document-library-anchor and verified-raw-oh): 8/8 admitted (2400001-2400008), one key per 64-update segment of the designed u512 cap. This segment trains key 2400001. Schedule identity = pack-sequence + totals per the established staging rule.",
+ "schedule_sha256": "7c83b452a938f2fc53ab3a53489a11018a85617f8400157253dbdc77ce1ec926",
+ "scheduled_assistant_targets": 14851013,
+ "scheduled_input_tokens": 30364467,
+ "scheduled_source_targets": {
+  "compositional-rehearsal": 434485,
+  "conversation-rehearsal": 846071,
+  "cumulative-recovery-rehearsal": 548359,
+  "grounded-authored-rehearsal": 141405,
+  "hybrid-conversation-rehearsal-v2": 154234,
+  "live-aligned-rehearsal": 193479,
+  "long-document-library-anchor": 2031585,
+  "longcopy-rehearsal": 319,
+  "loopbreak-rehearsal": 284,
+  "mainmix-draws-anchor": 5842608,
+  "multi-episode-session-rehearsal": 99848,
+  "pi-native-curriculum": 3872,
+  "pointerchase-rehearsal": 1869,
+  "real-human-chat-rehearsal": 3527855,
+  "reasoning-rehearsal": 1577,
+  "representation-bridge-rehearsal": 149365,
+  "teacher-conversation-traces": 24336,
+  "teacher-terminal-traces": 49433,
+  "tooltalk-rehearsal": 225637,
+  "verified-raw-oh": 574392
+ },
+ "scheduled_source_unique_records": {
+  "compositional-rehearsal": 2490,
+  "conversation-rehearsal": 831,
+  "cumulative-recovery-rehearsal": 3702,
+  "grounded-authored-rehearsal": 452,
+  "hybrid-conversation-rehearsal-v2": 899,
+  "live-aligned-rehearsal": 1611,
+  "long-document-library-anchor": 31,
+  "longcopy-rehearsal": 8,
+  "loopbreak-rehearsal": 5,
+  "mainmix-draws-anchor": 4670,
+  "multi-episode-session-rehearsal": 187,
+  "pi-native-curriculum": 40,
+  "pointerchase-rehearsal": 13,
+  "real-human-chat-rehearsal": 4808,
+  "reasoning-rehearsal": 5,
+  "representation-bridge-rehearsal": 399,
+  "teacher-conversation-traces": 33,
+  "teacher-terminal-traces": 66,
+  "tooltalk-rehearsal": 278,
+  "verified-raw-oh": 48
+ },
+ "scheduled_unique_packs": 512,
+ "scheduled_unique_records": 20576,
+ "schema": "emender-e4-corpus-arc-segment1-proposal-v1",
+ "source_commit": "4a2e3ee6",
+ "status": "frozen-proposal-not-authorized"
+}

@@ -225,7 +225,14 @@ def _read_receipts(actions: list[Mapping[str, Any]], path: str,
         if not errors:
             raw = action.get("raw_observation")
             effective = action.get("effective_observation")
-            if not isinstance(raw, Mapping) or effective != json.dumps(raw, sort_keys=True, separators=(",", ":")):
+            # Receipt currency: both the dense controller and the bank's
+            # gym projection build effective_observation with canonical_json
+            # (ensure_ascii=False); token files are pure ASCII so era-2-mode
+            # behavior is unchanged, but era-4 grounded reads span arbitrary
+            # UTF-8 fixture text and must verify against the same canonical
+            # form (an em-dash must not void the receipt).
+            if not isinstance(raw, Mapping) or effective != json.dumps(
+                    raw, sort_keys=True, separators=(",", ":"), ensure_ascii=False):
                 continue
             lines = raw.get("lines")
             if (raw.get("ok") is not True or not isinstance(lines, list)
@@ -383,7 +390,8 @@ def _grounded_token(actions: list[Mapping[str, Any]], required_path: str) -> str
             continue
         raw = action.get("raw_observation")
         effective = action.get("effective_observation")
-        if not isinstance(raw, Mapping) or effective != json.dumps(raw, sort_keys=True, separators=(",", ":")):
+        if not isinstance(raw, Mapping) or effective != json.dumps(
+                raw, sort_keys=True, separators=(",", ":"), ensure_ascii=False):
             continue
         lines = raw.get("lines")
         if (raw.get("ok") is not True or not isinstance(lines, list) or len(lines) != 1

@@ -32,13 +32,19 @@ def build_prep(tmp_path):
  a.extra3_source=None;a.extra3_sha=None;a.extra3_cohort=None
  a.extra4_source=hyb;a.extra4_sha=hsha;a.extra4_cohort='hybrid-conversation-rehearsal'
  a.cohort_spec=None
+ a.allow_no_oh_cohort=False  # translated-oh mode (the stale fixture predates the E3-era args)
+ a.rehearsal_max_records=0;a.rehearsal_subsample_seed=0;a.authored_max_records=0
+ a.authored_budget_targets=0;a.authored_seed=0;a.authored_repeat_epochs=1
+ a.rehearsal_repeat_epochs=1;a.extra3_repeat_epochs=1;a.extra4_repeat_epochs=1
+ a.correction_sha=None;a.loopbreak_sha=None;a.conversation_exclusion_ids=None
+ a.purpose=None;a.purpose_sizing_note=False
  prepare(a)
  return sha(a.output/'manifest.json'),a.output,selroot
 
 def test_audit_passes_and_receipt_binds_cohorts(tmp_path):
  msha,out,selroot=build_prep(tmp_path)
  class B:pass
- b=B();b.preparation=out;b.manifest_sha256=msha;b.selected_root=selroot;b.output=tmp_path/'audit.json'
+ b=B();b.preparation=out;b.manifest_sha256=msha;b.selected_root=selroot;b.output=tmp_path/'audit.json';b.note=None
  audit(b)
  receipt=json.loads(b.output.read_text())
  assert receipt['status']=='qualified-preparation-not-admitted' and receipt['training_eligible'] is False
@@ -51,7 +57,7 @@ def test_audit_passes_and_receipt_binds_cohorts(tmp_path):
 def test_audit_rejects_tampered_mask(tmp_path):
  msha,out,selroot=build_prep(tmp_path)
  class B:pass
- b=B();b.preparation=out;b.manifest_sha256=msha;b.selected_root=selroot;b.output=tmp_path/'audit.json'
+ b=B();b.preparation=out;b.manifest_sha256=msha;b.selected_root=selroot;b.output=tmp_path/'audit.json';b.note=None
  with open(out/'assistant_mask.uint8.bin','r+b') as f:
   f.seek(0);f.write(b'\x00')
  try:audit(b)
