@@ -25,12 +25,12 @@ def admit(args):
  for descriptor in source['outputs'].values():
   src=args.preparation/Path(descriptor['path']).name;dst=args.output/src.name;shutil.copyfile(src,dst)
   if dst.stat().st_size!=descriptor['bytes'] or sha(dst)!=descriptor['sha256']:raise ValueError('authority payload copy')
- authority=dict(source);authority.update(purpose=f'Operator-authorized exact Pi-native {updates}-update SFT admission',training_eligible=True,packing_authorized=True,optimizer_updates_authorized=updates,operator_internal_training_authorized=True,admission_proposal_sha256=args.proposal_sha256,authorization_statement=statement,automatic_retry=False,automatic_expansion=False,checkpoint_promotion=False,new_rl_updates=0)
+ authority=dict(source);authority.update(purpose=f'Operator-authorized exact Pi-native {updates}-update SFT admission',training_eligible=True,packing_authorized=True,optimizer_updates_authorized=updates,operator_internal_training_authorized=True,automatic_retry=False,automatic_expansion=False,checkpoint_promotion=False,new_rl_updates=0)
  (args.output/'manifest.json').write_bytes(dump(authority));authority_sha=sha(args.output/'manifest.json')
  for descriptor in source_packs['outputs'].values():
   src=args.preparation/'packs'/Path(descriptor['path']).name;dst=args.output/'packs'/src.name;shutil.copyfile(src,dst)
   if dst.stat().st_size!=descriptor['bytes'] or sha(dst)!=descriptor['sha256']:raise ValueError('pack payload copy')
- packs=dict(source_packs);packs.update(authority_manifest_sha256=authority_sha,training_eligible=True,diagnostic_system_gate=None,packing_authorized=True,optimizer_updates_authorized=updates,operator_internal_training_authorized=True,admission_proposal_sha256=args.proposal_sha256,authorization_statement=statement)
+ packs=dict(source_packs);packs.update(authority_manifest_sha256=authority_sha,training_eligible=True,diagnostic_system_gate=None,packing_authorized=True,optimizer_updates_authorized=updates,operator_internal_training_authorized=True)
  payload=dump(packs);pack_sha=hashlib.sha256(payload).hexdigest()
  (args.output/'packs/manifest.json').write_bytes(payload)
  receipt={'schema':'emender-e97-pi-native-training-admission-v1','status':'authorized-exact-proposal','proposal_sha256':args.proposal_sha256,'authorization_statement':statement,'authority_manifest_sha256':authority_sha,'pack_manifest_sha256':pack_sha,'sampler_key':proposal['sampler_key'],'pack_order':'content-addressed (admitted manifest hashes; planner and trainer derive identically)','authorized_updates':updates,'learning_rate':proposal['proposed_learning_rate'],'automatic_retry':False,'automatic_expansion':False,'checkpoint_promotion':False,'new_rl_updates':0}
