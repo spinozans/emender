@@ -471,7 +471,7 @@ def _snapshot_json_fd(descriptor: int, *, name: str, maximum: int) -> Any:
     except OSError as exc:
         raise ValueError(f"validator {name} failed: input descriptor cannot be duplicated") from exc
     try:
-        return _read_regular_descriptor(duplicate, maximum=maximum)
+        return json.loads(_read_regular_descriptor(duplicate, maximum=maximum))
     except (ValueError, UnicodeDecodeError, json.JSONDecodeError) as exc:
         raise ValueError(f"validator {name} failed: {exc}") from exc
     finally:

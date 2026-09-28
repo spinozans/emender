@@ -435,3 +435,51 @@ def test_era2_mode_minefield_stays_exact(tmp_path):
             "required_grounded_reads": [{"path": "a.txt", "expected_text": "x"}]}
     spec["minefield"]["allowed_tools"] = ["list_files", "read", "write"]
     assert _run("focused", ERA4, spec, _terminal([_read_action()]), tmp_path)[0] != 0
+
+
+# The sealed replay proof passes spec/terminal via INHERITED DESCRIPTORS, not
+# pathnames; the fd snapshot path must parse exactly like the path branch
+# (a regression here is invisible to every pathname-based test).
+def test_pinned_fd_execution_parses_identically(tmp_path):
+    import os
+    spec = _outcome_spec()
+    actions = [
+        _read_action("depot/state.txt", "mode=alpha\nstatus=retired", 0),
+        _edit_action("depot/state.txt",
+                     [{"oldText": "status=retired", "newText": "status=active"}], 1),
+        _read_action("depot/state.txt", "mode=alpha\nstatus=active", 2),
+    ]
+    terminal = _terminal(actions)
+    spec_path = tmp_path / "spec.json"
+    spec_path.write_text(_canonical(spec))
+    terminal_path = tmp_path / "terminal.json"
+    terminal_path.write_text(_canonical(terminal))
+    for mode in ("focused", "regression"):
+        spec_fd = os.open(spec_path, os.O_RDONLY)
+        terminal_fd = os.open(terminal_path, os.O_RDONLY)
+        try:
+            completed = subprocess.run(
+                [sys.executable, str(ERA4), "--mode", mode,
+                 "--spec-fd", str(spec_fd), "--terminal-fd", str(terminal_fd)],
+                capture_output=True, text=True, timeout=60,
+                pass_fds=(spec_fd, terminal_fd))
+        finally:
+            os.close(spec_fd)
+            os.close(terminal_fd)
+        assert completed.returncode == 0, completed.stderr
+        assert json.loads(completed.stdout)["status"] == "pass"
+    # and a wrong-final terminal must FAIL through the fd path too
+    bad_path = tmp_path / "bad-terminal.json"
+    bad_path.write_text(_canonical(_terminal(actions, final="Final: done!")))
+    spec_fd = os.open(spec_path, os.O_RDONLY)
+    bad_fd = os.open(bad_path, os.O_RDONLY)
+    try:
+        completed = subprocess.run(
+            [sys.executable, str(ERA4), "--mode", "focused",
+             "--spec-fd", str(spec_fd), "--terminal-fd", str(bad_fd)],
+            capture_output=True, text=True, timeout=60,
+            pass_fds=(spec_fd, bad_fd))
+    finally:
+        os.close(spec_fd)
+        os.close(bad_fd)
+    assert completed.returncode != 0
