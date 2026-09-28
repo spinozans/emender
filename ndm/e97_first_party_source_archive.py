@@ -43,6 +43,7 @@ EXPECTED_GENERATOR_COMPONENT_PATHS = frozenset({
     "scripts/check_e97_protected_overlap.py",
     "scripts/e97_first_party_validator.py",
     "scripts/e97_first_party_validator_first_action.py",
+    "scripts/e97_first_party_validator_protocol_breadth.py",
     "scripts/validate_e97_first_party_task.py",
 })
 

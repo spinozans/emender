@@ -52,16 +52,19 @@ OVERLAP_AUDIT = ROOT / "configs/pi/e97-firstparty-overlap-firewall-audit-v1.json
 AUTHORIZATION_LICENSE = ROOT / "configs/pi/e97-firstparty-authorization-license-v1.json"
 VALIDATOR_PROGRAM = ROOT / "scripts/e97_first_party_validator.py"
 _CONTROLLER_SOURCE_MEMBER = "ndm/e97_acquisition_controller.py"
-# Era-3 sealed validator member (first-action criterion, operator directive
-# 2026-09-28): every NEW collection's private spec pins this member's bytes
-# (scripts/e97_first_party_validator_first_action.py, era-2 checks plus the
-# additive optional required_first_action field).  The era-2 program remains
-# a retained archive component and the repo's scripts/
-# e97_first_party_validator.py intentionally stays the era-2 bytes: 300
-# in-flight bank pool tasks byte-pin that absolute path at the era-2 sha, so
-# both eras coexist under their own shas (the bank's pinned-validator
-# pattern, extended).  The SEALED LOGICAL argv identity below is unchanged.
-_VALIDATOR_SOURCE_MEMBER = "scripts/e97_first_party_validator_first_action.py"
+# Era-4 sealed validator member (protocol-breadth curriculum, operator
+# directive 2026-09-28): every NEW collection's private spec pins this
+# member's bytes (scripts/e97_first_party_validator_protocol_breadth.py,
+# era-3 checks plus the additive optional outcome fields expected_final /
+# required_grounded_reads / required_error_read / required_workspace_writes
+# for the multi-step edit / lookup / recovery / sum / chat families).  The
+# era-2 and era-3 programs remain retained archive components and the
+# repo's scripts/e97_first_party_validator.py and scripts/
+# e97_first_party_validator_first_action.py intentionally stay their pinned
+# bytes: in-flight bank pool tasks byte-pin those absolute paths, so all
+# eras coexist under their own shas (the bank's pinned-validator pattern,
+# extended).  The SEALED LOGICAL argv identity below is unchanged.
+_VALIDATOR_SOURCE_MEMBER = "scripts/e97_first_party_validator_protocol_breadth.py"
 VALIDATOR_LOGICAL_RUNTIME = "@runtime-python"
 VALIDATOR_LOGICAL_PROGRAM = "@generator-source/scripts/e97_first_party_validator.py"
 _REQUIRED_PANELS = {

@@ -122,7 +122,8 @@ def test_sealed_logical_argv_identity_is_unchanged():
     assert validator_logical_argv("regression") == [
         "@runtime-python", "@generator-source/scripts/e97_first_party_validator.py",
         "--mode", "regression"]
-    assert _VALIDATOR_SOURCE_MEMBER == "scripts/e97_first_party_validator_first_action.py"
+    assert _VALIDATOR_SOURCE_MEMBER == \
+        "scripts/e97_first_party_validator_protocol_breadth.py"  # era-4 re-pin
 
 
 def test_generator_closure_and_registry_bind_current_artifacts():
