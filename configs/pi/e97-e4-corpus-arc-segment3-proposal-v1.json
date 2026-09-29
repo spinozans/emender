@@ -1,0 +1,321 @@
+{
+ "arc": {
+  "arc_id": "e97-e4-corpus-arc",
+  "arc_keys": [
+   2400001,
+   2400003,
+   2400006,
+   2400007,
+   2400008,
+   2400009,
+   2400011,
+   2400015
+  ],
+  "arc_updates": 512,
+  "chaining": "Segment 2 chains from segment 1's audited checkpoint (e97-e4-corpus-arc-segment1-training-v1, u64, checkpoint 1cca3561..., run-audit PI_NATIVE_TRAINING_AUDIT_PASS, passed-training-not-promoted; u64 fast-read card: doc-NLL 2.548322 GPU-series best, execution slice 13-14/24 held at parent, Stage-B 7/14 valid flagged soft \u2014 trend read only, u128 is the first decision boundary with the full gate).",
+  "evaluation_caveats": "The chat-probe panel baseline is the parent's 2/3 (best ever); the document-NLL floor is the parent's CPU q8_0 reading 2.555940 on the frozen 8-doc panel (5725d820...); the GPU doc-NLL probe (e97-rl-loop-v1/scripts/score_docnll_gpu.py) is a RELATIVE instrument through the identical GPU path and its values never enter the CPU q8_0 archival chain; the 24-episode execution slice is a fast-read trend instrument \u2014 only the full 96-episode panel is gate evidence; the window-class cohorts' guarantee floor is per-32-update window, not per update; the teacher-pilot cohorts are first consumption anywhere, bound under explicit candidate consumption criteria at their recorded verified-not-admitted statuses.",
+  "juncture_policy": "SHORTER SEGMENTS, EARLY READS (the E1-E3 lesson: every arc peaked mid-arc and degraded at terminal dose): checkpoint at every u64 boundary (segment = 64 updates); a FAST gate read (Stage-B panel on 1 GPU + the GPU doc-NLL probe vs parent 3770621c + a fixed 24-episode execution slice) at EVERY u64 boundary while the next segment trains; FULL frozen gates at u128, u256 and the u512 cap; PROMOTION-OR-STOP AT THE BEST READING rather than a fixed terminal dose \u2014 stop at the first boundary showing the E3-u512 terminal-collapse signature (Stage-B valid < 11/14 while execution holds) or a doc-NLL regression above the parent band (+0.008 class) or any full-gate floor failure, promoting the best full-gate-quality checkpoint so far. Fail-closed: no automatic retries; no threshold changes.",
+  "rationale": "The corpus-scale repair arc per the programme's original thin-film diagnosis (vision 1-2B post-train tokens; E1-E3 each ran ~450M-token preps): the full E3 blend kept and scaled on the operator's three levers \u2014 real-human-chat at 4.0x E3's dose (80.0M targets of the 156.1M combined WildChat+LMSYS authority, seed 20260923 with E3's 27,136 consumed identities excluded: the NEXT 80M in the seeded order, monotone and exactly disjoint), the long-document anchors at the operator's original CommaPile-mainmix design (mainmix 130M from the 36-window calibration superset + library fragments 45M; 175.0M anchor targets = 52.0%), and the teacher-pilot traces IN (both arms, whole-pool x4). SmolTalk2 conversation held at the E3 blend dose 19.6M as a fresh disjoint draw (seed 613220, extended exclusion set 150,370 identities). Pool: 696,755,185 tokens / 336,770,673 supervised targets / 11,721 packs (2.65x E3's target scale, 1.55x its token scale). Chained from E3-u256 3770621c with the document-NLL probe fail-closed below the parent bound 2.555940.",
+  "segment_index": 1,
+  "segment_updates": 64,
+  "throughput_note": "Projected at 76.1 s/update (524,296 tokens/update at the qualified chunk-2048 armB projection 6,885 tok/s per docs/validation/e97-throughput-qualification-standard-v1.md): one 64-update segment = ~30.4M input tokens = ~1.22 h; the u512 cap = 8 segments = ~241.9M trained tokens = ~9.8 h; expected promotion zone u128-u256 = 2.4-4.9 h of training.",
+  "total_segments": 8
+ },
+ "authority_manifest_sha256": "c2dff5886e2a02dc17b1f93032f99b9e5f29d6ed03a26469aac53e3c6a48cd26",
+ "automatic_expansion": false,
+ "automatic_retry": false,
+ "checkpoint_promotion": false,
+ "cohort_bindings": {
+  "authored_rehearsal": {
+   "authority": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/grounded-expansion-v1-data-r2/authority",
+   "authority_sha256": "08752c53e2199533252c77821ec9696012b19dc09ea0ff1508ef6676a6cd2140",
+   "consumed_target_tokens": 926091,
+   "records": 2583,
+   "repeat_epochs": 1,
+   "seed": 917320,
+   "target_token_budget": 1000000
+  },
+  "conversation_rehearsal": {
+   "authority": "/mnt/nvme1n1/erikg/sft/e97-4b-smoltalk2-admitted-v1",
+   "authority_sha256": "d64f51abc615c097910900ffa7fc88f020ae5567b89958f607008078c271c7f6",
+   "consumed_target_tokens": 1499999,
+   "freshness": {
+    "excluded_prior_draw_records": 169062,
+    "exclusion_authority": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e4-corpus-arc-v1/e4-frame-boost-supplement-v1/exclusion/conversation-prior-draw-identities.txt",
+    "method": "identity-exclusion"
+   },
+   "records": 1500,
+   "seed": 613220,
+   "source_training_eligible": null,
+   "target_token_budget": 1500000
+  },
+  "extra2_rehearsal": {
+   "authority": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-pointerchase-collection-v1/collect/candidate-authority",
+   "authority_sha256": "f2361a86c3909083c93be6702f12ad8323844a2390069d368ebec92d52e0247e",
+   "cohort": "pointerchase-rehearsal",
+   "records": 240
+  },
+  "extra3_rehearsal": {
+   "authority": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-reasoning-rehearsal-collection-v1/collect/candidate-authority",
+   "authority_sha256": "88e535b5bec8f704163eb45bab929d7c80e4eee92f575b3748ebb758d18b5229",
+   "cohort": "reasoning-rehearsal",
+   "records": 50,
+   "repeat_epochs": 1
+  },
+  "extra_rehearsal": {
+   "authority": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-longcopy-collection-v1/collect/candidate-authority",
+   "authority_sha256": "27a7f97d64a1589f98e3ce851344aac51e4c7608b2fa86df6c92955a52e79536",
+   "cohort": "longcopy-rehearsal",
+   "records": 180
+  },
+  "loopbreak_rehearsal": {
+   "authority": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/pi-native-extracterror-collection-v1/collect/candidate-authority",
+   "authority_sha256": "08817eb42ff835523cc62bc13208053daeb79479a4bb9a585f1f427b53659aa4",
+   "records": 150
+  },
+  "rehearsal_rehearsal": {
+   "authority": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/representation-bridge-v1-data/authority",
+   "authority_sha256": "a21dba6f80e58e87ea838a98018b40650decebed3cf4b0f98dacdb750520469d",
+   "cohort": "representation-bridge-rehearsal",
+   "records": 2223,
+   "repeat_epochs": 1
+  }
+ },
+ "context_size": 65536,
+ "conversation_rehearsal": {
+  "budget_targets": 19600000,
+  "manifest_sha256": "d64f51abc615c097910900ffa7fc88f020ae5567b89958f607008078c271c7f6",
+  "seed": 613220,
+  "source": "/mnt/nvme1n1/erikg/sft/e97-4b-smoltalk2-admitted-v1"
+ },
+ "data_world_size": 8,
+ "declared_cohorts": [
+  "compositional-rehearsal",
+  "conversation-rehearsal",
+  "cumulative-recovery-rehearsal",
+  "grounded-authored-rehearsal",
+  "live-aligned-rehearsal",
+  "long-document-library-anchor",
+  "longcopy-rehearsal",
+  "loopbreak-rehearsal",
+  "mainmix-draws-anchor",
+  "multi-episode-session-rehearsal",
+  "pi-native-curriculum",
+  "pointerchase-rehearsal",
+  "real-human-chat-rehearsal",
+  "reasoning-rehearsal",
+  "representation-bridge-rehearsal",
+  "teacher-conversation-traces",
+  "teacher-terminal-traces",
+  "tooltalk-rehearsal",
+  "verified-raw-oh"
+ ],
+ "evidence_basis": {
+  "amendment": "E4 frame-boost supplement: receipted diet amendment responding to the u128 full-gate failure receipts (operator directive). Failure evidence: Stage-B first-frame 8/14 valid with first_arguments_exact=True on every budget-limited row; ~28/32 execution failures generation_budget/turn_budget with output_ok=True - termination-discipline, not capability. Frame genres ~15% of E4 diet vs E3 ~30-35% -> ~E3-u48-equivalent frame exposure at u128. All cohort composition verbatim in the supplement prep manifest (sha-bound); teacher traces consumed under spec_cohorts candidate criteria (manifest sha-bound).",
+  "corpus_scale_rationale": "The thin-film diagnosis: the programme's vision was ~1-2B post-train tokens; E1-E3 each trained ~450M-token preps at ~127M supervised targets and all three arcs failed the frozen gate with mid-arc peaks and terminal degradation \u2014 under-dosing is the standing hypothesis. E4 builds the corpus the vision asked for: 696,755,185 pool tokens / 336,770,673 supervised targets (2.65x E3 targets, 1.55x E3 tokens), inside the operator's 500M-1B+ band, entirely from already-admitted authorities at higher doses (standing-authorization class; NO new data sources). The human register \u2014 the thing that moved chat 0->2/3 \u2014 carries at 4.0x E3's dose: 80.0M real-human-chat targets (23.75%) + 19.6M fresh SmolTalk2 (5.82%) + the seam/session/teacher families. The anchors \u2014 the thing that held doc-NLL through 512 updates \u2014 carry at 175.0M targets (52.0%): mainmix 130M from the 36-window calibration superset (157.18M causal targets, kept on disk precisely to scale the mainmix share without new draws) + library fragments 45M of the 58.96M pool."
+ },
+ "identity_bindings": [
+  [
+   "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e4-corpus-arc-v1/e4-juncture-evals/seg2-u128/docnll-gpu/docnll-gpu.json",
+   "99d77109989ce86edfcf70124098d96c3a63fcc0f4b9696c4531d61fb9c5a999"
+  ],
+  [
+   "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e4-corpus-arc-v1/e4-frame-boost-supplement-v1/e4-frame-boost-preparation/schedule-segment3-admitted.json",
+   "fba53fb1594c0fb82b7590e1d38b9d172e79214aadce5366063ee2dfd618b40e"
+  ],
+  [
+   "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e4-corpus-arc-v1/e4-frame-boost-supplement-v1/key-screen-receipt-segment3.json",
+   "924585e6f1a24fdcd295a57c407ff3c15fcb90d3797e7797053283af4d66088c"
+  ]
+ ],
+ "new_rl_updates": 0,
+ "operator_internal_training_authorized": false,
+ "optimizer_updates_authorized": 0,
+ "pack_manifest_sha256": "d29475e9b755750b676d3a52e3a687fbb99e8feb089e85b47abe0dc6d90ca163",
+ "packing_authorized": false,
+ "parent_checkpoint": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e4-corpus-arc-segment2-training-v1/checkpoints/checkpoint_agent_sft_u000064_loss_1.9169.pt",
+ "parent_checkpoint_sha256": "d65c871faf055de7915973542f3c7a8d63328dbf4e4bea721ba86d2e11e6e736",
+ "parent_doc_nll_baseline": {
+  "binding_note": "E4-u128 parent doc-NLL on the frozen 8-doc panel, GPU-bf16 series; the E4 arc anchor instrument reading at the u128 boundary.",
+  "mean_nll": 2.549604,
+  "score_path": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e4-corpus-arc-v1/e4-juncture-evals/seg2-u128/docnll-gpu/docnll-gpu.json"
+ },
+ "per_update_cohort_stratification": {
+  "min_target_fraction": 0.02,
+  "proposed_updates": 64,
+  "scheme": "window-coverage",
+  "window_class_eligibility": {
+   "compositional-rehearsal": {
+    "avg_record_tokens": 369.5,
+    "min_structural_record_tokens": 6553.7,
+    "window_class_eligible": false
+   },
+   "conversation-rehearsal": {
+    "avg_record_tokens": 1290.4,
+    "min_structural_record_tokens": 6553.7,
+    "window_class_eligible": false
+   },
+   "cumulative-recovery-rehearsal": {
+    "avg_record_tokens": 387.1,
+    "min_structural_record_tokens": 6553.7,
+    "window_class_eligible": false
+   },
+   "grounded-authored-rehearsal": {
+    "avg_record_tokens": 3502.9,
+    "min_structural_record_tokens": 6553.7,
+    "window_class_eligible": false
+   },
+   "hybrid-conversation-rehearsal-v2": {
+    "avg_record_tokens": 5914.0,
+    "min_structural_record_tokens": 6553.7,
+    "window_class_eligible": false
+   },
+   "live-aligned-rehearsal": {
+    "avg_record_tokens": 278.4,
+    "min_structural_record_tokens": 6553.7,
+    "window_class_eligible": false
+   },
+   "long-document-library-anchor": {
+    "avg_record_tokens": 65487.2,
+    "min_structural_record_tokens": 6553.7,
+    "window_class_eligible": true
+   },
+   "longcopy-rehearsal": {
+    "avg_record_tokens": 21321.8,
+    "min_structural_record_tokens": 6553.7,
+    "window_class_eligible": true
+   },
+   "loopbreak-rehearsal": {
+    "avg_record_tokens": 6141.3,
+    "min_structural_record_tokens": 6553.7,
+    "window_class_eligible": false
+   },
+   "mainmix-draws-anchor": {
+    "avg_record_tokens": 1213.3,
+    "min_structural_record_tokens": 6553.7,
+    "window_class_eligible": false
+   },
+   "multi-episode-session-rehearsal": {
+    "avg_record_tokens": 6491.1,
+    "min_structural_record_tokens": 6553.7,
+    "window_class_eligible": false
+   },
+   "pi-native-curriculum": {
+    "avg_record_tokens": 10115.3,
+    "min_structural_record_tokens": 6553.7,
+    "window_class_eligible": true
+   },
+   "pointerchase-rehearsal": {
+    "avg_record_tokens": 6239.2,
+    "min_structural_record_tokens": 6553.7,
+    "window_class_eligible": false
+   },
+   "real-human-chat-rehearsal": {
+    "avg_record_tokens": 1068.8,
+    "min_structural_record_tokens": 6553.7,
+    "window_class_eligible": false
+   },
+   "reasoning-rehearsal": {
+    "avg_record_tokens": 6638.6,
+    "min_structural_record_tokens": 6553.7,
+    "window_class_eligible": true
+   },
+   "representation-bridge-rehearsal": {
+    "avg_record_tokens": 2724.5,
+    "min_structural_record_tokens": 6553.7,
+    "window_class_eligible": false
+   },
+   "teacher-conversation-traces": {
+    "avg_record_tokens": 707.7,
+    "min_structural_record_tokens": 6553.7,
+    "window_class_eligible": false
+   },
+   "teacher-terminal-traces": {
+    "avg_record_tokens": 7166.7,
+    "min_structural_record_tokens": 6553.7,
+    "window_class_eligible": true
+   },
+   "tooltalk-rehearsal": {
+    "avg_record_tokens": 3354.1,
+    "min_structural_record_tokens": 6553.7,
+    "window_class_eligible": false
+   },
+   "verified-raw-oh": {
+    "avg_record_tokens": 50311.7,
+    "min_structural_record_tokens": 6553.7,
+    "window_class_eligible": true
+   }
+  },
+  "window_class_note": "window_cohorts are verified at window granularity (>=1 per 32-update window); every other cohort keeps the floor rule (majors >=2% of targets every update; minors every 32 updates). The eligibility table is the machine-checked structural-capping test (avg whole record >= 10% of the 65,537-token pack sequence) applied to EVERY cohort. The window CLASS membership is unchanged from E3's supervisor-approved set (long-document-library-anchor, verified-raw-oh): longcopy, pi-native-curriculum, teacher-terminal-traces and reasoning are mechanically eligible but are NOT added to the class \u2014 no supervisor decision on record for new members.",
+  "window_cohorts": [
+   "long-document-library-anchor",
+   "verified-raw-oh"
+  ],
+  "window_updates": 32
+ },
+ "preparation_root": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e4-corpus-arc-v1/e4-frame-boost-supplement-v1/e4-frame-boost-preparation",
+ "proposed_behavioral_gate": {
+  "composition": ">= 4/16",
+  "openhands_execution_overall": ">= 64/96",
+  "openhands_fresh": ">= 30/32",
+  "openhands_prior_fresh": "= 16/16",
+  "openhands_prior_regression": ">= 10/16",
+  "pi_native_stage_b": "valid first frame >= 12/14 and correct first action >= 10/14",
+  "retention": "both saved-x/train-y retention gates pass"
+ },
+ "proposed_learning_rate": 1e-05,
+ "proposed_updates": 64,
+ "purpose": "E4 FRAME-BOOST SUPPLEMENT segment 3 of the E4 corpus-scale arc (receipted diet amendment, operator directive: fold the response to the u128 failures into the next phase). Frame-genre share restored to E3-class (tooltalk 18.6% vs main-prep 2.0%; cumulative 12.1%, compositional 9.6%, verified-raw-oh 9.3%, live-aligned 6.2%) by re-dosing the SAME admitted authorities; winners kept fed (chat 3.0M monotone next-draw, anchors 23.6%). Parent: E4-u128 d65c871f (run-audit PASS; u128 full gate FAILED per frozen rules - Stage-B 8/14, prior-regression 7/16, composition 2/16 - passed-training-not-promoted). Schedule and key re-anchored to the content-addressed supplement admission (key 2400101, screen receipt sha-bound); the runtime schedule is byte-identical to this frozen schedule by construction.",
+ "sampler_key": 2400101,
+ "schedule_selection": "Training-data-only screen over the fresh E4-frame-boost-supplement range 2400101.. (24 keys at --steps 64 under the window-coverage rule with window-class cohorts long-document-library-anchor and verified-raw-oh), planned under the supplement content-addressed admission authority: 20/24 pass (receipt: e4-frame-boost-supplement-v1/key-screen-receipt-segment3.json). This segment trains key 2400101, the first passing key in ascending order.",
+ "schedule_sha256": "fba53fb1594c0fb82b7590e1d38b9d172e79214aadce5366063ee2dfd618b40e",
+ "scheduled_assistant_targets": 9415742,
+ "scheduled_input_tokens": 30207226,
+ "scheduled_source_targets": {
+  "compositional-rehearsal": 949456,
+  "conversation-rehearsal": 363180,
+  "cumulative-recovery-rehearsal": 1128094,
+  "grounded-authored-rehearsal": 260144,
+  "live-aligned-rehearsal": 598654,
+  "long-document-library-anchor": 393210,
+  "longcopy-rehearsal": 1960,
+  "loopbreak-rehearsal": 1513,
+  "mainmix-draws-anchor": 1659707,
+  "multi-episode-session-rehearsal": 160033,
+  "pi-native-curriculum": 21362,
+  "pointerchase-rehearsal": 10100,
+  "real-human-chat-rehearsal": 877387,
+  "reasoning-rehearsal": 6920,
+  "representation-bridge-rehearsal": 254467,
+  "teacher-conversation-traces": 37664,
+  "teacher-terminal-traces": 87701,
+  "tooltalk-rehearsal": 1845035,
+  "verified-raw-oh": 759155
+ },
+ "scheduled_source_unique_records": {
+  "compositional-rehearsal": 5210,
+  "conversation-rehearsal": 382,
+  "cumulative-recovery-rehearsal": 7636,
+  "grounded-authored-rehearsal": 708,
+  "live-aligned-rehearsal": 4972,
+  "long-document-library-anchor": 6,
+  "longcopy-rehearsal": 49,
+  "loopbreak-rehearsal": 32,
+  "mainmix-draws-anchor": 1358,
+  "multi-episode-session-rehearsal": 306,
+  "pi-native-curriculum": 224,
+  "pointerchase-rehearsal": 71,
+  "real-human-chat-rehearsal": 1150,
+  "reasoning-rehearsal": 21,
+  "representation-bridge-rehearsal": 582,
+  "teacher-conversation-traces": 68,
+  "teacher-terminal-traces": 115,
+  "tooltalk-rehearsal": 1699,
+  "verified-raw-oh": 64
+ },
+ "scheduled_unique_packs": 512,
+ "scheduled_unique_records": 24653,
+ "schema": "emender-e4-corpus-arc-segment3-proposal-v1",
+ "source_commit": "4a2e3ee6",
+ "status": "frozen-proposal-not-authorized"
+}
