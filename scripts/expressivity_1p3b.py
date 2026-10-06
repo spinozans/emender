@@ -104,6 +104,15 @@ def load_model(model_name: str, device):
         return model
 
 
+def build_task(task_name: str, mode: str = "running"):
+    """Instantiate an 8M-suite task; a few generators predate the mode kwarg."""
+    from experiments.expressivity_tasks.tasks import ALL_TASKS
+    try:
+        return ALL_TASKS[task_name](mode=mode)
+    except TypeError:
+        return ALL_TASKS[task_name]()
+
+
 def make_batch(task, B, T, rng, device):
     import numpy as np
 
@@ -151,7 +160,7 @@ def cmd_zeroshot(args, device):
         "eval_batch": args.batch, "tasks": {},
     }
     for task_name in ZERO_SHOT_TASKS:
-        task = ALL_TASKS[task_name](mode="running")
+        task = build_task(task_name)
         n_classes = TASK_CLASSES[task_name]
         rec = {
             "n_classes": n_classes,
@@ -183,7 +192,7 @@ def cmd_finetune(args, device):
     torch.manual_seed(args.seed)
     model = load_model(args.model, device)
     rng = np.random.default_rng(args.seed)
-    task = ALL_TASKS[args.task](mode="running")
+    task = build_task(args.task)
     n_classes = TASK_CLASSES.get(args.task, int(getattr(task, "n_classes", 0)))
     if not n_classes:
         raise SystemExit(f"no class count known for task {args.task}")
