@@ -30,6 +30,33 @@
 
 ---
 
+## CHANGELOG (latest first)
+
+- **2026-10 (paper-coherence-pass, task B):** The paper spine is rebound to the
+  completed E97/GDN2-MLP 1.3 B double-pairing and the three TODO "NC1 wording"
+  markers are RESOLVED (see "NC1 wording resolution" below). Current binding:
+  **Lean realizability -> learned at 8 M -> 1.3 B double-pairing (E97-MLP vs
+  GDN2-MLP, CMA-ES-hardened, matched tokens, same 2k-chunk Pile recipe) with
+  loss parity -> expressivity suite at 1.3 B (slot, TODO-EXPRESSIVITY-1P3B,
+  artifacts land in `paper/results/expressivity_1p3b/`).** E88 is demoted to a
+  developmental predecessor (predecessor-cohort 1.3 B study moved to a paper
+  appendix); the named scale limitation ("fine at 1.3 B — does the separation
+  or loss parity survive at 7 B+?") is an explicit limitations subsection; the
+  transformer baseline is one honest deferral sentence. Evidence bindings:
+  matched-token loss parity `docs/GDN2_OPS_SNAPSHOT_20260728.md` +
+  `docs/GDN2_E97_MATCHED_LOSS_COMPARISON_20260723.md`; training identities
+  `scripts/launch_emender_8gpu_diloco.sh`, `scripts/launch_gdn2_mlp_8gpu_diloco.sh`,
+  `docs/EMENDER_DILOCO_OPS_HANDOFF_20260722.md`,
+  `docs/validation/{e97-huggingface-dense-base-and-cli-agent-release,gdn2-huggingface-152b-control-release}.md`;
+  CMA-ES breadth `docs/E97_RAW_1P3B_LEADERBOARD.md`, `paper/results/cmaes_burst_v2/`,
+  `paper/results/cma_flop_rate/`, `experiments/lb_compare_20260613/`,
+  `docs/repro/lb_gdn2_mlp_20260612/`; iterated-map separation
+  `experiments/grok_symmetric_width/{RESULTS,CONFIRM}.md`; Lean theorems
+  `paper/data/lean-trust-gate-theorems.json` + commit `696299b4` (EmenderLatching).
+  The older changelog entries below predate this pass and are kept for history.
+
+---
+
 **Inputs read (cited inline below):**
 
 - `docs/related_work_nonlinear_rnns.md` — literature survey (lit-survey-nonlinear-rnns)
@@ -77,10 +104,14 @@ The three organizing pillars:
    under this recipe. The paper documents *how* to do it.
 2. **The update rule matters.** The delta-correcting write
    `v − Sᵀk` separates from raw-write matrix RNNs (the M2RNN family) on
-   state-tracking expressivity probes and approaches the NC1 limit via
-   S5 tracking. *(TODO: tighten the "approaches the NC1 limit" wording
-   after `lean-formalization-gap-audit` reports back on which side of
-   the formal/empirical boundary the claim sits.)*
+   state-tracking expressivity probes and reaches the canonical NC1
+   witness with a machine-checked recognizer floor. *(RESOLVED 2026-10: the
+   Lean artifact proves realization of the S5 tracker
+   (`NDMRealizesS5.emender_realizes_s5_tracker`) plus the 120-state
+   recognizer floor (`S5Inseparability.capacity_lower_bound_120`); NC1
+   completeness itself is Barrington, cited not formalized; the
+   linear-state ceiling is cited classical work. See paper §7 "The NC1
+   statement".)*
 3. **FLOPs-per-bit convergence under CMA-ES (N = 4).** When sensibly-tuned
    recurrent baselines are all CMA-ES-optimized for shape and
    hyperparameters, they learn at almost the same FLOPs-per-bit. The
@@ -122,11 +153,12 @@ The three organizing pillars:
 > update-family resource separation between the delta-correcting and
 > raw-write families, an S5 tracker construction, and a finite-state
 > ceiling for fixed-precision recurrent recognizers. The empirical
-> result is that the delta-correcting family approaches the NC1 limit
-> via S5 tracking, while raw-write and linear-scan families lag
-> noticeably. *(TODO: tighten "approaches the NC1 limit via S5
-> tracking" after `lean-formalization-gap-audit` resolves which
-> portion of this claim is Lean-proved vs empirical.)*
+> result is that the delta-correcting family realizes the canonical NC1
+> witness with a machine-checked 120-state recognizer floor, while
+> raw-write and linear-scan families lag
+> noticeably. *(RESOLVED 2026-10 — realization + recognizer floor are
+> Lean-proved; NC1 completeness and the linear-state ceiling are cited
+> classical results. See paper §7 "The NC1 statement".)*
 >
 > Third, **raw training speed is not the differentiator.** Under
 > matched CMA-ES hyperparameter and shape search (N = 4 recurrent
@@ -182,12 +214,9 @@ bullet cites the upstream synthesis doc that supplies the content.
        delta-correcting and raw-write families and a finite-state
        ceiling for fixed-precision recurrent recognizers; an S5 tracker
        is also constructed in Lean. The empirical headline is that the
-       delta-correcting family approaches the NC1 limit via S5
-       tracking. *(TODO: tighten this wording after the
-       `lean-formalization-gap-audit` task reports back; the present
-       phrasing reflects the trusted Lean surface as of 2026-05-23
-       together with empirical S5 separation, and does not claim a
-       formal NC1 lower bound.)*
+       delta-correcting family realizes the canonical NC1 witness
+       (Lean-proved) and learns it under SGD (empirical), with the
+       120-state recognizer floor Lean-proved. *(RESOLVED 2026-10.)*
     3. *FLOPs-per-bit convergence under CMA-ES (N = 4).* When the four
        compared recurrent baselines (NDM, FLA-GDN, Mamba2, M2RNN-class)
        are each given matched CMA-ES hyperparameter and shape budgets,
@@ -443,10 +472,10 @@ bullet cites the upstream synthesis doc that supplies the content.
   `v − Sᵀk` is the empirically separating mechanism: it pulls away
   from raw-write nonlinear matrix RNNs (M2RNN family) and from
   linear-state baselines on S3/S5 permutation composition and the
-  six-task canonical state-tracking sweep, and it approaches the NC1
-  limit via S5 tracking. Bounded nonlinearity *alone* is not
-  sufficient; nor is matrix state alone. *(TODO: tighten the NC1
-  wording after `lean-formalization-gap-audit` reports back.)*
+  six-task canonical state-tracking sweep, and it realizes the canonical
+  NC1 witness with a machine-checked 120-state recognizer floor. Bounded
+  nonlinearity *alone* is not
+  sufficient; nor is matrix state alone. *(RESOLVED 2026-10.)*
 - **Pillar 3 restated.** Under matched CMA-ES search, the FLOPs-per-bit
   learning rate of the four compared recurrent baselines converges.
   The paper does *not* claim a wallclock or FLOPs-per-bit advantage
@@ -554,7 +583,7 @@ that supplies its data.
 |---|---|---|---|
 | P2.a | The delta-correcting matrix write `v − Sᵀk` separates from raw-write matrix RNNs (M2RNN family) on S3/S5 permutation-composition probes at matched parameter count | `docs/EXPRESSIVITY_RESULTS_SUMMARY.md` §5a (S3/S5 numbers); `paper/ndmpapernotes.md` lines 153–173 | `PROOF_INVENTORY.md` `M2RNNComparison.write_rule_separates_m2rnn_and_e88`, `ndm_m2rnn_one_step_resource_separation`, `ndm_m2rnn_one_step_resource_separation_embeds` |
 | P2.b | The same separation persists across the six-task canonical state-tracking sweep (parity, modular counter, FSM tracking, dyck, associative recall, selective copy) at 8M parameter-matched | `docs/EXPRESSIVITY_RESULTS_SUMMARY.md` §§1a, 2a, 3a, 4a, 6a, 7a | — |
-| P2.c | The delta-correcting family **approaches the NC1 limit via S5 tracking** *(TODO: tighten this wording after `lean-formalization-gap-audit` reports back; current trusted Lean surface is the S5 tracker construction + finite-state ceiling, not a formal NC1 lower bound for linear-scan models)* | `docs/EXPRESSIVITY_RESULTS_SUMMARY.md` §5a; `formal/lean/PROOF_INVENTORY.md` §S5Witness, §S5Tracker, §S5NDMRealization | `PROOF_INVENTORY.md` `S5Witness.s5_state_count` (= 120), `s5_not_solvable`, `S5Tracker.recognizer_state_count`, `S5NDMRealization.s5_transition_key_count` (= 480) |
+| P2.c | The delta-correcting family **realizes the canonical NC1 witness (S5 tracker, Lean-proved) with a machine-checked 120-state recognizer floor; NC1 completeness and the linear-state ceiling are cited classical results** *(RESOLVED 2026-10; additionally proved since the audit: `S5Inseparability.capacity_lower_bound_120`, `run_surjective`, the k-step separation set C', and the latching set F at commit 696299b4)* | `docs/EXPRESSIVITY_RESULTS_SUMMARY.md` §5a; `formal/lean/PROOF_INVENTORY.md` §S5Witness, §S5Tracker, §S5NDMRealization | `PROOF_INVENTORY.md` `S5Witness.s5_state_count` (= 120), `s5_not_solvable`, `S5Tracker.recognizer_state_count`, `S5NDMRealization.s5_transition_key_count` (= 480) |
 | P2.d | A finite-state ceiling on fixed-precision recurrent recognizers is formalized in Lean | `formal/lean/PROOF_INVENTORY.md` §Module `RecurrentResourceFormalism` | `fixed_precision_state_space_finite`, `exactTransitionMemory_run` |
 
 ### Pillar 3 — FLOPs-per-bit convergence under CMA-ES (N = 4)
