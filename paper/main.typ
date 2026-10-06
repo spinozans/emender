@@ -80,23 +80,32 @@ CMA-ES configs, and the Triton kernel released.
     its update rule matters once it is. Here we show that a purely
     nonlinear recurrent language model, made trainable by running
     hundreds of small recurrent programs in parallel across the
-    network's width rather than across time, reaches below one bit per
-    byte on a standard corpus using a single workstation-class GPU,
-    matching strong linear-recurrent baselines. On held-out text these
-    models are statistically tied, so language-modeling loss does not
-    distinguish them; their differences emerge instead in state
-    tracking. A linear recurrence provably cannot follow certain
-    structured state as sequences grow, whereas a nonlinear one can.
-    Among the nonlinear rules, a delta-correcting update learns this
-    far more efficiently than a plain overwrite. A machine-checked proof
-    establishes the enabling direction: the delta-correcting update
-    is strictly more expressive per step than plain overwrite and can realize this
-    structured state-tracking. The matching impossibility for linear
-    recurrence rests on classical complexity results, and in the trained
-    billion-parameter models we observe the same ordering. These findings indicate that loss is a
-    poor guide to what a recurrent architecture can compute, and that
-    massively parallel nonlinear recurrence is a practical and largely
-    open design space.
+    network's width rather than across time, trains through 150.8
+    billion tokens at 1.3 billion parameters on a single eight-GPU
+    workstation, reaching an estimated 0.93 bits per byte. Its
+    linear-recurrent baseline — selected by the same search protocol,
+    built at a parameter count within 0.01%, and trained on literally
+    the same tokens under the same recipe — lands in the same loss
+    band, so language-modeling loss does not distinguish the two: the
+    1.3-billion-scale result is a pairing at matched tokens that
+    replicates the update-rule contrast across the tuning regime, not
+    across scale. The models' differences emerge instead in state
+    tracking, where a linear recurrence provably cannot follow certain
+    structured state as sequences grow. A machine-checked proof
+    establishes the enabling direction: a delta-correcting update is
+    strictly more expressive per step than a plain overwrite, an
+    explicit configuration of it realizes the canonical
+    state-tracking construction, and any finite recognizer that
+    reproduces that construction needs at least as many states as the
+    realized one. At parameter-matched 8-million scale the predicted
+    ordering is learned — the delta-correcting update tracks the
+    non-solvable-group state where the linear and raw-write updates
+    do not — and the same probes are run on the trained 1.3-billion
+    pair to close the loop between the theory and the trained models.
+    These findings indicate that loss is a poor guide to what a
+    recurrent architecture can compute, and that massively parallel
+    nonlinear recurrence is a practical and largely open design
+    space.
   ],
   keywords: (
     "recurrent neural networks",
@@ -243,19 +252,26 @@ overwritable when a sufficient counter-delta arrives. State tracking
 needs both. An add-only update accumulates without correction; a
 correction-only update cannot retain a binding long enough to use it. An *emender* is
 one such layer; the *Emender* is the architecture family obtained by
-stacking emender layers; *E88* is the 1.3 B instance
-evaluated throughout the paper.
+stacking emender layers; *E97* — the saturated delta-correcting cell
+extended with split erase/read and value-write gates — is the
+1.3 B instance evaluated throughout this paper, and *E88* is the
+developmental predecessor instance that preceded it (Appendix A).
 
 A Lean 4 trusted core is the spine of the argument. The core proves
 that delta-correcting and raw-write updates separate at one step and at
 every $k$-step composition at matched per-token FLOP cost; it proves
+that the split-gated E97 update strictly extends the E88 coupled update
+and shares its split-gated linear core with GDN-2; it proves
 the three latching properties (saturation insensitivity,
 sign-preserving hold, and counter-delta release); it proves that an
 orthonormal-key configuration of the Emender realizes the $S_5$ prefix
-tracker, the canonical NC#super[1] witness. The empirical work is a
+tracker, the canonical NC#super[1] witness — and that any finite
+recognizer that reproduces the tracker needs at least its 120 states.
+The empirical work is a
 separate trainability question: the Lean results establish realizability
 and representational scope, while the $S_5$/$S_3$ probes and the 1.3 B
-wallclock comparison measure what SGD actually finds under the stated protocols. At
+matched-token comparison measure what SGD actually finds under the stated
+protocols. At
 parameter-matched 8 M scale the Emender reaches 0.79 accuracy on the
 $S_5$ word problem against 0.36 for Gated DeltaNet and 0.22 for the
 raw-write baseline, with the §6 floor argument making capacity
@@ -317,18 +333,20 @@ correction.
 
 #heading(level: 2, numbering: none)[Contributions]
 
-The contributions are three results.
+The contributions are three results, plus one measurement slot that
+closes the loop between them.
 
 #set enum(numbering: "1.")
 
-+ *Viability.* E88 reaches 0.973 bits per byte on The Pile after about
-  23 wall-clock days of training on a single workstation-class
-  GPU, with no cluster and no sequence parallelism. The throughput
-  route is width-axis *multi-programming*: 22,200 small bounded
-  recurrent programs per token (370 heads $times$ batch size 5
-  $times$ depth 12), each a $32 times 32$ matrix-state tile that
++ *Viability.* E97 reaches an estimated 0.93 bits per byte on The
+  Pile after 150.8 billion tokens of training on a single
+  eight-GPU workstation, with no cluster and no sequence
+  parallelism. The throughput
+  route is width-axis *multi-programming*: 9,504 small bounded
+  recurrent programs per token (216 heads $times$ batch size 4
+  $times$ depth 11), each a $32 times 32$ matrix-state tile that
   fits in registers, with the time loop serial inside each program
-  (Lean-certified; see §4 and §7).
+  (§4).
   Pure-nonlinear-recurrent language models train into this regime at
   this scale without a time-axis parallelization trick or attention
   hybridization.
@@ -356,43 +374,65 @@ The contributions are three results.
   Emender reaches 0.79 on the $S_5$ word problem against 0.22 for
   raw-write M²RNN-CMA (§6).
 
-+ *Supporting comparison.* Under per-architecture CMA-ES @cmaes2003 at
-  matched candidate budget, E88 lands in the same loss-vs-wallclock
-  band as Gated DeltaNet @gated_deltanet2024, the linear-recurrent
-  baseline included here, at the 1.3 B-class on The Pile (§5).
++ *Paired 1.3 B comparison: loss does not distinguish the update
+  rules; matched tokens do not favor either.* Two 1.3 B-class models —
+  E97 (delta-correcting, nonlinear state) and GDN2-MLP (linear-state,
+  the strongest closely related recurrent baseline, CMA-ES-hardened
+  under the same search protocol) — train from scratch on the same
+  2k-chunk Pile recipe with literally matched aggregate tokens
+  (150.79 B) at a 0.01% parameter gap, and land in the same
+  loss-versus-tokens band (§5). At 480 M scale, four CMA-ES-tuned
+  recurrent families share one FLOPs-per-bit curve (§5). The
+  contribution is the architectural *option* plus the *mechanism*,
+  not a training-speed win — bulk loss is a convergent null across
+  the tuned families.
+
++ *Expressivity at 1.3 B (slot).* The $S_5$/$S_3$ probes that separate
+  the update rules at 8 M are run on the trained 1.3 B pair itself —
+  the same checkpoints the matched-token loss claims bind to — closing
+  the theory-to-empirics loop at the scale where the loss parity is
+  measured. TODO-EXPRESSIVITY-1P3B: results section pending
+  (§6); artifacts land in `paper/results/expressivity_1p3b/`.
 
 #set enum(numbering: "(a)")
 
-Three pure-recurrent instances are trained at the 1.3 B-class under
-the same protocol on The Pile @thepile2020: E88 (1.273 B, the
-Emender, delta-correcting update
-$S <- tanh(d S + k("silu"(v) - S^T k)^T)$); M²RNN-CMA (1.307 B, a
-CMA-reshaped pure-recurrent variant of the M²RNN architecture
-@m2rnn2026, raw-write update $tanh(H W + k v^T)$); and Gated DeltaNet
-(GDN @gated_deltanet2024, 1.352 B, the linear-recurrent baseline).
-Each received per-architecture CMA-ES @cmaes2003 hyperparameter and
-shape search at matched candidate budget, with range repositioning
-when limits were hit. The cohort runs at near-matched parameter count;
-exact configurations and results are reported in §5.
+The 1.3 B pairing is E97-MLP (1,286,589,072 parameters; the Emender
+split-edit delta-correcting update — a key-axis erase/read gate and a
+value-axis write gate around the bounded delta correction, §3 — with a
+bias-free SwiGLU MLP per layer) versus GDN2-MLP (1,286,713,448
+parameters; the official-style Gated DeltaNet-2 @gated_deltanet2_2026
+mixer with the same SwiGLU MLP), both selected by per-architecture
+CMA-ES @cmaes2003 search at the 1.3 B band on The Pile and both
+trained from scratch under the identical 8-island DiLoCo recipe
+(§5). The raw-write contrast (M²RNN @m2rnn2026) is not a 1.3 B arm —
+its public XMA kernels do not run on this machine's hardware stack,
+and a local reimplementation would add an implementation-fidelity
+confound — so it is carried at the 8 M probe scale and in the Lean
+separation instead (§6, §7). The exact per-arm search provenance,
+budgets, and training identities are reported in §5.
 
 The paper proceeds as follows. §2 and §3 set up the linear-state
 versus nonlinear-state classification and the Emender architecture;
 §4 covers the multi-programming systems contribution; §5 presents the
-1.3 B loss-vs-wallclock comparison with the per-architecture CMA-ES protocol; §6
+1.3 B matched-token E97-vs-GDN2-MLP pairing with the per-architecture
+CMA-ES search provenance; §6
 reports the 8 M expressivity probes with the capacity-non-binding
-justification; §7 the Lean 4 formalization, including Theorem set F
+justification, the causally isolated iterated-map separation, and the
+1.3 B expressivity slot on the trained pair; §7 the Lean 4
+formalization, including the $S_5$ capacity lower bound and Theorem
+set F
 on saturation latching alongside the separation, $S_5$-realization,
 and FLOP-class theorems; §8 related work, opening with the ancestry of
 the delta-correction line from Widrow–Hoff through fast-weight
 programmers to DeltaNet; §9 limitations; §10 conclusion; §11 testable
-predictions; §12 future work. The current release hub is
-`https://github.com/poietic-pbc/emender/blob/main/docs/RELEASE_V02_PUBLIC_RELEASE_HUB.md`.
-The release targets are E88
-(`https://huggingface.co/poietic-pbc/emender-e88-1.3b/tree/v0.3`),
-GDN (`https://huggingface.co/poietic-pbc/gdn-1.3b/tree/v0.3`), and
-M²RNN-CMA
-(`https://huggingface.co/poietic-pbc/m2rnn-cma-1.3b/tree/v0.3`), with
-the public paper PDF mirrored at
+predictions; §12 future work. The release targets for the 1.3 B pair
+are the immutable per-arm authorities:
+E97
+(`https://huggingface.co/spinozans/emender-e97-1.3b`, tag
+`tokens-150793748480`, the 150.79 B-token checkpoint of
+`emender_E97_1.3B_20260709_084606`) and GDN2-MLP
+(`https://huggingface.co/spinozans/gdn2-mlp-1.3b`, tag
+`tokens-152280498176`), with the public paper PDF mirrored at
 `http://hypervolu.me/~erik/ndm/Garrison_2026_Emender.pdf`.
 
 #heading(level: 2, numbering: none)[What we claim, and what we do not]
@@ -412,49 +452,61 @@ substantiate each row; the pointers are forward references.
       [*Claim*], [*Evidence*], [*Scope*], [*Non-claim*],
     ),
     [Pure nonlinear-recurrent LMs train at the 1.3 B-class],
-    [E88 reaches 0.973 train bpb on The Pile, no time-axis trick, no
-     attention hybrid (§1, §5)],
-    [One E88 run, single seed; viability demonstration],
+    [E97 reaches an estimated 0.93 bpb on The Pile at 150.8 B tokens,
+     no time-axis trick, no attention hybrid (§1, §5)],
+    [One E97 run, single seed; viability demonstration],
     [Not a scaling law and not seed-averaged; one artifact shown to exist],
 
-    [Bulk LM loss does *not* distinguish these architectures (a measured null result)],
-    [Held-out bpb 0.966 / 0.966 / 0.961 is a statistical tie across 5
-     slices; FLOP-locked after equal CMA-ES tuning (§5)],
-    [A measured null result: the loss tie is real and reproduces across 5 held-out
-     slices and the Common-Pile control (single-seed per architecture)],
-    [Does not license the train-loss ordering as an architecture verdict],
+    [Bulk LM loss does *not* distinguish the 1.3 B pair (a measured null
+     result)],
+    [Matched-token cutoff at 150.79 B: smoothed gap 0.010 nats/token,
+     sign window-dependent; both arms CMA-ES-hardened (§5)],
+    [A measured null result on *training-log* loss at exactly matched
+     tokens; the CMA-stage 5-model held-out band (2.01–2.10 bpb)
+     corroborates at search scale (§5)],
+    [Held-out bpb for the 150 B pair itself is pending
+     (TODO-NEEDS-EVIDENCE, §5); does not license a loss ordering],
 
     [Delta-correcting $>$ raw-write on state tracking, at every length],
-    [8 M $S_5$ probe, 3 seeds (@fig_s5_bars); 1.3 B symmetric-budget
-     length-extrapolation, delta $>$ raw-write $>$ linear to 16×
-     (@tab_s5_1p3b, @fig_s5_symmetric); Lean matched-resource separation
-     (§7, sets C/C′/D)],
-    [Budget-robust *ordering* and length-extrapolation efficiency: delta
-     strictly ahead at every length under a doubled, symmetric, no-tuning
-     budget],
-    [Not "delta solves / length-generalizes $S_5$": both nonlinear updates
-     plateau below ceiling at length; it is an efficiency gap, not
-     impossibility],
+    [8 M $S_5$ probe, 3 seeds (@fig_s5_bars); Lean matched-resource
+     separation (§7, sets C/C′/D)],
+    [Budget-robust *ordering* and representability statement inside the
+     formalized fixed-weight raw-write class],
+    [Not "delta solves / length-generalizes $S_5$": at 8 M both
+     nonlinear updates plateau below ceiling at length; it is an
+     efficiency gap, not impossibility],
 
-    [Raw-write's $S_5$ shortfall is an efficiency gap, not a converged wall],
-    [Raw-write fits the trained length (0.658 at $T=64$) but
-     under-reaches with length even at the symmetric doubled budget (§6)],
-    [A measured null result: its solvable-task curve was still rising; both nonlinear
-     updates plateau below ceiling at length],
-    [No converged expressivity wall asserted for raw-write],
+    [Per-step state nonlinearity is a causal lever for length-extrapolation],
+    [Iterated-map probes: E97 holds $approx 0.98$ flat from $T = 128$ to
+     $T = 4096$ where byte-identical E97-linear and GDN2 collapse;
+     two predicted-negative task families confirm the mechanism (§6)],
+    [Small-scale (dim 256–1024) grokking-regime statement,
+     causally isolated by the $tanh$-vs-identity ablation],
+    [Not a universal "nonlinear beats linear" law; the two negative
+     families forbid that overclaim],
 
     [Linear recurrence cannot track non-solvable $S_5$ at length],
     [GDN converges to a ceiling: $S_5$ decays to chance at length while it
-     stays competent on solvable $S_3$/parity (@fig_1p3b_lengthgen, §7)],
-    [Computability statement (Barrington / NC#super[1]), converged],
+     stays competent on solvable $S_3$/parity (@fig_1p3b_lengthgen, §7);
+     120-state Lean capacity bound (§7)],
+    [Computability statement (Barrington / NC#super[1], cited; the Lean
+     bound is the 120-state recognizer floor), converged],
     [Not a statement about finite-length memorization, which it can do],
+
+    [Expressivity at 1.3 B on the trained pair],
+    [TODO-EXPRESSIVITY-1P3B: pending; the $S_5$/$S_3$ and iterated-map
+     probes run on the E97 and GDN2-MLP checkpoints (§6),
+     `paper/results/expressivity_1p3b/`],
+    [Slot; protocol fixed before results were read],
+    [No 1.3 B expressivity claim is made until the slot is filled],
   )]],
   caption: [
     *Claim / Evidence / Scope / Non-claim.* Each row is substantiated in
     the cited section; the final column marks the boundary the result does
-    not cross. The two architectural separations are *efficiency* and
+    not cross. The architectural separations are *efficiency* and
     *computability* statements, not blanket can/can't claims; the bulk-loss
-    row is a measured null result.
+    row is a measured null result; the last row is an explicitly marked
+    pending slot.
   ],
 ) <tab_claims>
 
@@ -499,8 +551,11 @@ variants: state-space models such as Mamba and Mamba2 @mamba2024
 @deltanet2024. Each step in this lineage traded some expressive power
 for time-axis parallelism, because nonlinear-in-time recurrence resisted
 the parallel scan that makes GPU throughput tractable at modern scale.
-Gated DeltaNet @gated_deltanet2024 is the selected linear-recurrent
-baseline for the matched wallclock comparison reported here. Mamba-3
+Gated DeltaNet @gated_deltanet2024 is the linear-recurrent family the
+§6 8 M probes use as the linear baseline, and Gated DeltaNet-2
+@gated_deltanet2_2026 — its split erase/write-gate extension — is the
+linear-recurrent baseline of the 1.3 B matched-token comparison
+(§5). Mamba-3
 @mamba3_2026 is reported by its authors to outperform GDN; its
 compilation-heavy HPO does not fit the §5 matched protocol, so
 it is left to future work.
@@ -629,11 +684,14 @@ The grid these two axes span names every Emender head-type
 (@fig_taxonomy). Real $times$ linear at the positive end is `decay`,
 which is vanilla Gated DeltaNet; at the negative end it is `reflect`,
 Gated DeltaNet permitted a negative eigenvalue. Real $times$ saturated
-is `nonlin` — the saturated delta-correcting head carried as E88 (the
-head historically tagged E97). Complex $times$ linear is `rot`, the
+is `nonlin` — the saturated delta-correcting head, historically tagged
+E97, whose split-gated instance is the 1.3 B model of this paper
+(the earlier E88 instance carried the same cell without the split
+gates). Complex $times$ linear is `rot`, the
 complex-eigenvalue oscillator head. Complex $times$ saturated is
 `rot-nonlin`, a nonlinear oscillator left to future work, included only
-once both axes have earned it. The experiment tags E97, E98, and E99
+once both axes have earned it. The experiment tags E88, E97, E98, and
+E99
 are retained throughout only as historical run identifiers; the
 architecture vocabulary is this grid.
 
@@ -740,8 +798,10 @@ exact rather than rhetorical.
     $\{$`decay`, `reflect`$\} times$ linear corner (shaded); the Emender
     generalizes it to the full disk (`rot`) and to the saturated state
     map (`nonlin`), and is the within-layer pool over the grid.
-    `rot-nonlin` is reserved for future work. E97/E98/E99 are historical
-    run tags, not architecture names.
+    `rot-nonlin` is reserved for future work. E88/E97/E98/E99 are historical
+    run tags, not architecture names. The GDN-2 corner of this grid is
+    not a strawman: it is the mixer of the 1.3 B linear baseline of §5
+    (GDN2-MLP), selected by the same search protocol as E97.
   ],
 ) <fig_taxonomy>
 
@@ -763,42 +823,67 @@ An emender layer runs $H$ independent heads side by side. Each head $h$ owns
 its own matrix-state memory $S_h in RR^(N times V)$ — the matrix state of §2,
 here addressed by an $N$-dimensional key and holding a $V$-dimensional value
 at each addressed slot. (Section 7's theorems use a single symbol $d$ for the
-common matrix dimension; in E88, $d = N = V = 32$, so each head's memory is a
+common matrix dimension; in E97, $d = N = V = 32$, so each head's memory is a
 $32 times 32$ tile.) At each token, the layer's input projections supply, per
 head, a key $k_h$ and query $q_h$ in $RR^N$ that name the slots to write and
 read, a value $v_h in RR^V$ to store, a scalar decay $d_h in (0,1)$ that fades
-the old state, and an output gate $g_h in RR^V$. The display below is one
-head's full step in execution order: normalize the two addresses, read the
-memory at the key, form the retrieval error, update the bounded state, and
-gate the read at the query.
+the old state, and an output gate $g_h in RR^V$. E97 extends the E88 cell's
+write with two input-dependent gates, split along the two axes of the
+matrix state: a key-axis *erase/read* gate $e_h in (0,1)^N$ that scales the
+address under which the old content is retrieved, and a value-axis *write*
+gate $w_h in (0,1)^V$ that scales what is written (the GDN-2-inspired half of
+the design; §7's split-gated theorem set pins the relationship). The display
+below is one
+head's full step in execution order: normalize the two addresses, gate the
+read address and the write value, read the memory, form the retrieval error,
+update the bounded state, and gate the read output.
 
 $
 k_h &<- "silu"(k_h) / norm("silu"(k_h))_2 quad ("L"^2 "-normalized key")\
 q_h &<- "silu"(q_h) / norm("silu"(q_h))_2 quad ("L"^2 "-normalized query")\
-r_h &= S_h^T k_h \
-delta_h &= "silu"(v_h) - r_h \
+e_h &= sigma(E_h x_t) quad ("key-axis erase/read gate")\
+w_h &= sigma(W_h x_t) quad ("value-axis write gate")\
+r_h &= S_h^T (e_h dot k_h) quad ("gated read at the key")\
+delta_h &= w_h dot v_h - r_h \
 S_h &<- tanh(d_h dot S_h + k_h delta_h^T) \
 y_h &= "silu"(g_h) dot.o S_h^T q_h
 $
 
 Here $"silu"$ is the smooth pointwise activation $x dot sigma(x)$, with
-$sigma$ the logistic sigmoid, and $norm(dot)_2$ is the Euclidean norm. The first two lines put the key and query on
+$sigma$ the logistic sigmoid, $v_h$ is the post-activation value input (the
+$"silu"(v)$ of the E88 cell, so the write gate scales an already-bounded
+write), and $norm(dot)_2$ is the Euclidean norm. The first two lines put
+the key and query on
 the unit sphere so the addressing is bounded; the middle lines make the write
-a correction against the content already read, not a raw addition; and the
-final line gates only the read output. This is the per-head primitive; E88
-repeats it across a residual stack rather than changing the per-head equation.
+a correction against the content already read — under a gated address and at
+a gated magnitude — rather than a raw addition; and the
+final line gates only the read output. With both split gates fixed to one
+($e_h == 1$, $w_h == 1$) the step specializes exactly to the E88 cell (Lean:
+`SplitGatedDelta.e97_specializes_to_e88_all_one_gates_direct`), which is how
+the predecessor instance was defined; the state stays inside $tanh$, so the
+update is nonlinear-state for every gate setting. This is the per-head
+primitive; E97
+repeats it across a residual stack rather than changing the per-head
+equation.
 
-E88 fixes these family choices to one billion-parameter instance: model width
-1664, depth 12, $H = 370$ heads per layer, $N = V = 32$, expansion 1.0, batch
-size 5, a recurrence chunk length of 2048 tokens, and 1.273 B parameters in
-total. A Lean 4 definition (`emender_1p27B`) pins this geometry — twelve
-layers of 370 heads, each with a $32 times 32$ tile — and from it the trusted
-core derives the two counts §1 quoted: 22,200 independent recurrent programs
-per token at batch size 5, and $370 times (32 times 32)$ recurrent-state
-scalars per layer. Around the recurrent core the language-model wrapper is
+E97 fixes these family choices to one billion-parameter instance: model
+width 1792, depth 11, $H = 216$ heads per layer, $N = V = 32$, expansion 1.0,
+a bias-free SwiGLU MLP of hidden width 4,032 after each mixer (mlp ratio
+2.2623), per-rank batch size 4, a recurrence chunk length of 2048 tokens, and
+1,286,589,072 parameters in total ($1{,}048{,}152{,}720$ non-MLP plus
+$238{,}436{,}352$ in the eleven MLPs). A Lean 4 definition (`emender_1p27B`)
+pins the corresponding counts for the E88 predecessor geometry — twelve
+layers of 370 heads, each with a $32 times 32$ tile, yielding 22,200
+independent recurrent programs per token at batch size 5 and
+$370 times (32 times 32)$ recurrent-state scalars per layer — and the same
+arithmetic gives E97's counts directly: at depth 11, $H = 216$, and batch
+size 4 the stack runs $11 times 216 times 4 = 9{,}504$ independent recurrent
+programs per token, each carrying a $32 times 32$ state tile
+($216 times (32 times 32)$ recurrent-state scalars per layer). Around the
+recurrent core the language-model wrapper is
 conventional — a pre-norm residual stack with a final normalization and tied
 input/output embeddings. Heads never share recurrent state; each layer learns
-its own key, query, value, decay, and output-gate projections; and the
+its own key, query, value, decay, split-gate, and output-gate projections; and the
 recurrent state starts at zero when no prior state is carried in.
 
 #figure(
@@ -819,13 +904,15 @@ recurrent state starts at zero when no prior state is carried in.
                 rect(inset: 5pt, fill: rgb("#dde5f0"), text(size: 9pt)[$q_h$]),
                 rect(inset: 5pt, fill: rgb("#dde5f0"), text(size: 9pt)[$d_h$]),
                 rect(inset: 5pt, fill: rgb("#dde5f0"), text(size: 9pt)[$g_h$]),
+                rect(inset: 5pt, fill: rgb("#dde5f0"), text(size: 9pt)[$e_h$]),
+                rect(inset: 5pt, fill: rgb("#dde5f0"), text(size: 9pt)[$w_h$]),
               ),
               text(size: 8pt)[$arrow.b$ #h(0.4em) $L^2$ norm $q,k$  #h(0.4em) $arrow.b$],
               // Read at k
-              rect(inset: 5pt, fill: rgb("#ffe5cc"), width: 100%, align(center, text(size: 9pt)[$r_h = S_h^T k_h$  #sym.space  #text(size: 8pt)[(read at address $k$)]])),
+              rect(inset: 5pt, fill: rgb("#ffe5cc"), width: 100%, align(center, text(size: 9pt)[$r_h = S_h^T (e_h dot k_h)$  #sym.space  #text(size: 8pt)[(gated read at address $e_h dot k_h$)]])),
               text(size: 8pt)[$arrow.b$],
               // Delta
-              rect(inset: 5pt, fill: rgb("#ffe5cc"), width: 100%, align(center, text(size: 9pt)[$delta_h = "silu"(v_h) - r_h$  #sym.space  #text(size: 8pt)[(prediction error)]])),
+              rect(inset: 5pt, fill: rgb("#ffe5cc"), width: 100%, align(center, text(size: 9pt)[$delta_h = w_h dot v_h - r_h$  #sym.space  #text(size: 8pt)[(prediction error)]])),
               text(size: 8pt)[$arrow.b$],
               // State update
               rect(inset: 5pt, fill: rgb("#cfe9cf"), width: 100%, align(center, text(size: 9pt)[$S_h <- tanh(d_h dot S_h + k_h delta_h^T)$])),
@@ -841,7 +928,7 @@ recurrent state starts at zero when no prior state is carried in.
           #v(0.4em)
           #align(center)[
             #stack(dir: ttb, spacing: 0.4em,
-              text(size: 9pt)[$H = 370$ heads, each $S in RR^(32 times 32)$],
+              text(size: 9pt)[$H = 216$ heads, each $S in RR^(32 times 32)$],
               v(0.2em),
               // Grid of small squares representing heads
               {
@@ -853,11 +940,12 @@ recurrent state starts at zero when no prior state is carried in.
                   ..range(cols * rows).map(i => rect(width: 100%, height: 0.8em, fill: blue.lighten(40%), stroke: 0.3pt))
                 )
               },
-              text(size: 8pt)[$dots.h.c$  370 small recurrent programs per layer  $dots.h.c$],
+              text(size: 8pt)[$dots.h.c$  216 small recurrent programs per layer  $dots.h.c$],
               v(0.4em),
-              text(size: 9pt)[At batch size 5 and depth 12:],
-              text(size: 9pt)[*22,200 independent programs per token*],
-              text(size: 8pt, style: "italic")[(Lean: `emender_1p27B_programs_per_batch_token_bs5`)],
+              text(size: 9pt)[At batch size 4 and depth 11:],
+              text(size: 9pt)[*9,504 independent programs per token*],
+              text(size: 8pt, style: "italic")[(the E88 predecessor's 22,200-at-batch-5 count is Lean-certified:
+               `emender_1p27B_programs_per_batch_token_bs5`)],
               v(0.3em),
               rect(inset: 5pt, stroke: 0.5pt, [
                 #set text(size: 8pt)
@@ -872,24 +960,28 @@ recurrent state starts at zero when no prior state is carried in.
   ]),
   caption: [
     *Emender architecture and multi-programmed shape.*
-    *(A)* Per-head recurrent dataflow. Each head owns a small bounded
-    associative matrix memory $S_h$. The model reads at address $k_h$,
-    computes a prediction error $delta_h$, writes the bounded delta
+    *(A)* Per-head recurrent dataflow (E97). Each head owns a small bounded
+    associative matrix memory $S_h$. The model reads under the gated address
+    $e_h dot k_h$,
+    computes a prediction error $delta_h$ against the gated write value,
+    writes the bounded delta
     correction into $S_h$, and gates the read at $q_h$ for output. The
-    $tanh$ on the state, the delta-correcting write, and the
+    $tanh$ on the state, the delta-correcting write, the split erase/write
+    gates, and the
     $L^2$-normalization of $q,k$ are visible here; §3 enumerates the
     four load-bearing ingredients of the Emender family.
-    *(B)* The 1.3 B stack exposes 370 small
+    *(B)* The 1.3 B stack exposes 216 small
     independent heads per layer per batch element. Each head is a
     $32 times 32$ state tile that fits in registers/SRAM and runs its
     time loop serially; parallelism is harvested across heads, depth and
-    batch (§4). The Lean theorem
-    `emender_1p27B_programs_per_batch_token_bs5` certifies 22,200 programs
-    per token at batch size 5.
+    batch (§4), giving $11 times 216 times 4 = 9{,}504$ programs per token
+    at batch size 4. The Lean theorem
+    `emender_1p27B_programs_per_batch_token_bs5` certifies the
+    corresponding count (22,200) for the E88 predecessor geometry.
   ],
 ) <fig_arch>
 
-For the Emender family, four ingredients are load-bearing; E88 uses all four
+For the Emender family, four ingredients are load-bearing; E97 uses all four
 in the instance above.
 
 #set enum(numbering: "(a)")
@@ -899,8 +991,9 @@ in the instance above.
   the non-linearity on the state itself, not only on a gate or the
   output, is what makes an emender layer nonlinear-state.
 
-+ *Delta-correcting write $"silu"(v) - S^T k$.* The emender layer reads what memory
-  predicts at address $k$, computes the prediction error $delta$,
++ *Delta-correcting write $w dot v - S^T (e dot k)$.* The emender layer reads what memory
+  predicts at the gated address $e dot k$, computes the prediction error
+  $delta$ against the gated write value $w dot v$,
   and writes the correction. With an orthonormal key family this gives
   exact overwrite at one slot while preserving the others; with
   arbitrary keys it gives bounded error-correcting binding. A raw-write
@@ -918,10 +1011,11 @@ in the instance above.
   release) formalizes all three as slot-wise statements on the full
   emender-layer update.
 
-+ *Many small heads, not one large matrix.* E88 at 1.3 B
-  uses $H = 370$ heads of $32 times 32$ each (Lean-witnessed:
-  `RecurrentResourceFormalism.emender_1p27B_programs_per_batch_token`,
-  yielding 22,200 independent programs per token at batch size 5).
++ *Many small heads, not one large matrix.* E97 at 1.3 B
+  uses $H = 216$ heads of $32 times 32$ each ($11 times 216 times 4 =
+  9{,}504$ independent programs per token at batch size 4; the E88
+  predecessor's 22,200-at-batch-5 count is Lean-witnessed by
+  `RecurrentResourceFormalism.emender_1p27B_programs_per_batch_token`).
   Per-head $L^2$-normalized $q,k$ give many independent addressing
   programs and avoid the gradient-conditioning failure mode seen when a
   single shared $q,k$ pair feeds hundreds of value heads.
@@ -950,11 +1044,13 @@ $"silu"(g)$ acts on the read alone.
 The 1.3 B stack's shape is not arbitrary. Ingredient (d) sets its character —
 many small heads rather than one large matrix — and the numbers follow from
 it: each head's $32 times 32$ tile is small enough to live in registers (§4),
-the head count $H = 370$ is large enough to give that many independent
-addressing programs per layer, and twelve such layers reach the 1.3 B-class
-budget the cohort comparison fixes. The exact values were set by the
-per-architecture search of §5, not by hand. At batch size 5, depth 12 and
-$H = 370$ multiply to $12 times 370 times 5 = 22,200$ independent recurrent
+the head count $H = 216$ is large enough to give that many independent
+addressing programs per layer, and eleven such layers — each followed by its
+SwiGLU MLP, the channel-mixer that pairs with the token-mixing recurrence —
+reach the 1.3 B-class budget the paired comparison fixes. The exact values
+were set by the per-architecture search of §5, not by hand. At batch size 4,
+depth 11 and
+$H = 216$ multiply to $11 times 216 times 4 = 9{,}504$ independent recurrent
 programs per token, each carrying its own $32 times 32$ state tile. The
 reference implementation and the fused Triton recurrence kernel that steps
 these tiles are listed in the Appendix.
