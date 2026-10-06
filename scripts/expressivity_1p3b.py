@@ -54,6 +54,12 @@ CHECKPOINTS = {
 }
 
 ZERO_SHOT_TASKS = ["parity", "s3_permutation", "s5_permutation", "modular_counter", "fsm_tracking"]
+# Output-class count per task, from the task definitions: parity is 2-class
+# (running XOR), S3/S5 have 6/120 permutation ids, modular_counter K=5,
+# fsm_tracking n_states=4. Used for the class-restricted (forced-choice)
+# zero-shot readout.
+TASK_CLASSES = {"parity": 2, "s3_permutation": 6, "s5_permutation": 120,
+                "modular_counter": 5, "fsm_tracking": 4}
 ZERO_SHOT_LENGTHS = [64, 128, 256, 512]
 EVAL_LENGTHS = [16, 32, 48, 64, 96, 128, 192, 256, 384, 512, 768, 1024]
 TRAJ_LENGTHS = [64, 128, 512]
@@ -146,7 +152,7 @@ def cmd_zeroshot(args, device):
     }
     for task_name in ZERO_SHOT_TASKS:
         task = ALL_TASKS[task_name](mode="running")
-        n_classes = int(task.n_classes)
+        n_classes = TASK_CLASSES[task_name]
         rec = {
             "n_classes": n_classes,
             "random_baseline_acc": float(task.random_baseline_acc()),
@@ -178,7 +184,9 @@ def cmd_finetune(args, device):
     model = load_model(args.model, device)
     rng = np.random.default_rng(args.seed)
     task = ALL_TASKS[args.task](mode="running")
-    n_classes = int(task.n_classes)
+    n_classes = TASK_CLASSES.get(args.task, int(getattr(task, "n_classes", 0)))
+    if not n_classes:
+        raise SystemExit(f"no class count known for task {args.task}")
     log(f"[{args.model}/{args.task}] n_classes={n_classes} "
         f"baseline={task.random_baseline_acc():.4f}")
     opt = torch.optim.AdamW(model.parameters(), lr=args.lr, betas=(0.9, 0.95),
