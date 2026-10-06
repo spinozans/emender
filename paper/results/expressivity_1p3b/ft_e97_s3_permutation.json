@@ -1,0 +1,124 @@
+{
+  "model": "e97",
+  "task": "s3_permutation",
+  "phase": "finetune",
+  "checkpoint": "/mnt/nvme1n1/erikg/diloco_8gpu/emender/runs/emender_E97_1.3B_20260709_084606/checkpoint_step_2300930_loss_2.4365.pt",
+  "n_classes": 6,
+  "random_baseline_acc": 0.16666666666666666,
+  "recipe": {
+    "steps": 750,
+    "batch_size": 32,
+    "lr": 5e-05,
+    "lr_schedule": "const",
+    "warmup": 300,
+    "weight_decay": 0.01,
+    "grad_clip": 0.5,
+    "optimizer": "AdamW(betas=0.9,0.95)",
+    "train_lens": "16,32,48,64",
+    "eval_lens": "16,32,48,64,96,128,192,256,384,512,768,1024",
+    "seed": 42,
+    "dtype": "bf16",
+    "finetune": "full (all params)",
+    "mode": "running",
+    "init": "bound loss-parity checkpoint, Schedule-Free y-mode (train) weights",
+    "matched": "recipe IDENTICAL for e97 and gdn2 (see PLAN.md)"
+  },
+  "train_curve": [
+    {
+      "step": 0,
+      "lr": 1.6666666666666668e-07,
+      "loss": 6.935331344604492,
+      "acc_train_maxT": 0.061767578125
+    },
+    {
+      "step": 100,
+      "lr": 1.6833333333333337e-05,
+      "loss": 1.5305176973342896,
+      "acc_train_maxT": 0.2484130859375
+    },
+    {
+      "step": 200,
+      "lr": 3.35e-05,
+      "loss": 0.17943227291107178,
+      "acc_train_maxT": 0.92529296875
+    },
+    {
+      "step": 300,
+      "lr": 5e-05,
+      "loss": 0.0005957281682640314,
+      "acc_train_maxT": 0.9378662109375
+    },
+    {
+      "step": 400,
+      "lr": 5e-05,
+      "loss": 4.003476715297438e-05,
+      "acc_train_maxT": 0.9644775390625
+    },
+    {
+      "step": 500,
+      "lr": 5e-05,
+      "loss": 0.002883038017898798,
+      "acc_train_maxT": 0.9925537109375
+    },
+    {
+      "step": 600,
+      "lr": 5e-05,
+      "loss": 6.121787009760737e-05,
+      "acc_train_maxT": 0.9906005859375
+    },
+    {
+      "step": 700,
+      "lr": 5e-05,
+      "loss": 1.8547689251136035e-05,
+      "acc_train_maxT": 0.9962158203125
+    },
+    {
+      "step": 749,
+      "lr": 5e-05,
+      "loss": 0.0026653229724615812,
+      "acc_train_maxT": 0.9990234375
+    }
+  ],
+  "traj_curve": [
+    {
+      "step": 0,
+      "acc_vs_T": {
+        "64": 0.0664,
+        "128": 0.0863,
+        "512": 0.127
+      }
+    },
+    {
+      "step": 500,
+      "acc_vs_T": {
+        "64": 0.9882,
+        "128": 0.8668,
+        "512": 0.3947
+      }
+    },
+    {
+      "step": 749,
+      "acc_vs_T": {
+        "64": 0.9946,
+        "128": 0.935,
+        "512": 0.4299
+      }
+    }
+  ],
+  "acc_vs_T": {
+    "16": 1.0,
+    "32": 1.0,
+    "48": 0.999349,
+    "64": 0.999268,
+    "96": 0.97937,
+    "128": 0.924194,
+    "192": 0.759603,
+    "256": 0.672699,
+    "384": 0.51417,
+    "512": 0.436958,
+    "768": 0.339096,
+    "1024": 0.292747
+  },
+  "train_max_T": 64,
+  "elapsed_s": 711.1
+}
