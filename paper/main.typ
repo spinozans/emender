@@ -210,15 +210,26 @@ set aside as the expensive case to avoid rather than the case to
 measure.
 
 Here we show that it can be trained, and that the form of the update
-does matter. A purely nonlinear recurrent language model, made trainable
+does matter. A purely nonlinear recurrent language model — *E97*, the
+current 1.3 B-class instance of the Emender family — made trainable
 by running many small recurrent programs in parallel across the
-network's *width* rather than across time, reaches below one bit per
-byte on a standard byte-level corpus (The Pile @thepile2020) using a
-single workstation-class GPU, with no cluster and no sequence
-parallelism. Trained at the billion-parameter class against strong
-linear-recurrent baselines under matched per-architecture tuning, it
-lands in the same loss-versus-wallclock band; on held-out text the
-models are statistically tied, so language-modeling loss does not
+network's *width* rather than across time, trains through 150.8
+billion tokens on The Pile @thepile2020 using a single eight-GPU
+workstation, with no cluster and no sequence parallelism, reaching an
+estimated 0.93 bits per byte (§5). Its linear-recurrent baseline —
+*GDN2-MLP*, a Gated DeltaNet-2 @gated_deltanet2_2026 mixer followed by
+the same SwiGLU MLP, selected by the same CMA-ES @cmaes2003 search
+protocol at a parameter count within 0.01% — trains on literally
+matched tokens under the same 2k-chunk Pile recipe and lands in the
+same loss-versus-tokens band: at the matched 150.79-billion-token
+cutoff the smoothed loss gap between the two arms is 0.010 nats/token,
+with the sign of the gap depending on the averaging window (§5). The
+1.3 B result is therefore a replication across the *update rule and
+tuning regime*, not across scale: both arms sit in the same
+1.3 B-class parameter band, and whether the separation or the loss
+parity survives at 7 B and beyond is named openly as a limitation in
+§9. On bulk loss the two update families are statistically tied, so
+language-modeling loss does not
 separate them. Their differences emerge instead in state tracking, and
 there the nonlinear recurrence reaches something a linear one provably
 cannot: it can follow the prefix products of the non-solvable group
@@ -231,9 +242,11 @@ a plain overwrite, and the advantage holds across a large swing in
 training budget. The separation is established in two directions: a
 machine-checked proof that the delta-correcting update is strictly more
 expressive per step than plain overwrite and can realize the
-state-tracking construction, and the matching impossibility for linear
-recurrence resting on classical complexity results. In the trained
-billion-parameter models we observe the same ordering. Throughput on the
+state-tracking construction — with a matching machine-checked floor:
+any finite recognizer that reproduces the construction needs at least
+as many states as the realized one — and the matching impossibility for
+linear recurrence resting on classical complexity results. In the
+trained models we observe the same ordering. Throughput on the
 width axis comes from many small recurrent programs running side by side,
 each stepping its time loop serially, which is what makes the serial
 recurrence practical at scale.
@@ -676,8 +689,8 @@ two-axis grid:
 
 + *State map: linear or saturated.* Whether the state update is left
   linear or passed through a bounded saturating nonlinearity
-  (canonically $"hardtanh"$; the `-nonlin` axis; E88 uses the smooth
-  variant $tanh$). Saturation latches a driven slot and makes the head
+  (canonically $"hardtanh"$; the `-nonlin` axis; the Emender uses the
+  smooth variant $tanh$). Saturation latches a driven slot and makes the head
   finite-state, the boundedness-not-counting regime of §2.
 
 The grid these two axes span names every Emender head-type
@@ -814,9 +827,9 @@ exact rather than rhetorical.
 
 Section 1 named the emender layer by what it does — read what the memory
 predicts at the addressed slot, compute the prediction error, and write the
-correction — and named E88 as the 1.3 B instance carried through the paper.
+correction — and named E97 as the 1.3 B instance carried through the paper.
 This section makes the layer concrete: the per-step computation, the choices
-that fix it, and the shape numbers that make E88 one specific member of the
+that fix it, and the shape numbers that make E97 one specific member of the
 family.
 
 An emender layer runs $H$ independent heads side by side. Each head $h$ owns
@@ -1022,7 +1035,7 @@ in the instance above.
 
 #heading(level: 2, numbering: none)[Parameterization choices]
 
-E88 parameterizes the per-head decay $d_h$ in log space, following Mamba2
+E97 parameterizes the per-head decay $d_h$ in log space, following Mamba2
 @mamba2_2024: each head learns a scalar $A_(log)$ and a bias
 $delta_(text("bias"))$ — the code names `A_log` and `dt_bias` — and forms the
 decay as $d = exp(-exp(A_(log)) dot "softplus"(alpha(x) + delta_(text("bias"))))$,
@@ -1071,7 +1084,7 @@ Z_t &= tanh(H_(t-1) W + k_t v_t^T)\
 H_t &= f_t H_(t-1) + (1 - f_t) Z_t.
 $
 
-That split is exactly what E88 lacks: its carry sits inside the bounded
+That split is exactly what the Emender cell lacks: its carry sits inside the bounded
 delta-correcting update, and its gate appears only on the read output.
 M²RNN is *nonlinear-state* by the criterion of §2, since $H_(t-1)$
 appears inside $tanh$ via $H_(t-1) W$, but the write into $H$ is a raw
@@ -1156,7 +1169,8 @@ chunkwise WY product. The cost is paid in per-head serial time, most
 exposed at long sequence lengths where the serial loop is longest; the
 gain is that a nonlinear recurrence can keep a modern accelerator busy
 with no time-axis scan at all. The route is agnostic to the update
-rule: both pure-nonlinear instances trained here — the Emender and the
+rule: both pure-nonlinear instances of the predecessor cohort — the
+Emender and the
 raw-write M²RNN-CMA — satisfy the same multi-programming predicate at
 the 1.3 B-class, machine-checked in the Lean core as
 `RecurrentResourceFormalism.multiProgrammed_admits_m2rnn_and_emender`
@@ -1564,7 +1578,9 @@ configurations SGD finds under matched no-tuning conditions, where the
 
 The 8 M probe scale received no probe-specific hyperparameter search and
 no seed sweep for any family in the comparison. The Emender ran on the
-default configuration carried down from its 1.3 B stack; M²RNN-CMA ran on
+default configuration carried down from its 1.3 B stack (the
+E88-lineage default; the E97 instance of §5 postdates these probes);
+M²RNN-CMA ran on
 the analogous default from its CMA-tuned reshape; GDN and the M²RNN-paper
 shape ran on their respective published defaults. Each family is therefore
 evaluated on the reasonable-defaults configuration it would arrive at
