@@ -1,0 +1,17 @@
+{
+  "task": "taskA2-capacity",
+  "budget_gpu_seconds_total": 14400,
+  "reserve_seconds": 1500,
+  "smoke": {
+    "e97_median_s_per_step": 0.54,
+    "gdn2_median_s_per_step": 0.688,
+    "steps": 25,
+    "train_len": 256,
+    "batch": 32,
+    "logs": "logs/smoke_e97b.log, logs/smoke_gdn2b.log"
+  },
+  "formula": "cap = int(0.95*(14400-1500)/(sE+sG))",
+  "cap_steps": 9979,
+  "min_steps": 1000,
+  "matched": "cap and all rules identical for e97 and gdn2"
+}

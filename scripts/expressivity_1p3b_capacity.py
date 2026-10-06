@@ -130,17 +130,24 @@ def gen_split_batch(task, tables, heldout_lut, B, T, rng, device):
 
 @torch.no_grad()
 def eval_split(model, task, tables, heldout_lut, B, T, n_batches, seed, device,
-               return_loss=False):
-    """Full-vocab argmax accuracy, broken out as overall / seen / held-out."""
+               return_loss=False, fixed_batches=None):
+    """Full-vocab argmax accuracy, broken out as overall / seen / held-out.
+
+    fixed_batches: optional precomputed (x, y, seen, held) tuples (the val
+    probes reuse ONE fixed val set per stage instead of regenerating)."""
     import numpy as np
     import torch.nn.functional as F
-    rng = np.random.default_rng(seed)
+    if fixed_batches is None:
+        rng = np.random.default_rng(seed)
+        batches = [gen_split_batch(task, tables, heldout_lut, B, T, rng, device)
+                   for _ in range(n_batches)]
+    else:
+        batches = fixed_batches
     c = {"all": 0, "seen": 0, "held": 0}
     n = {"all": 0, "seen": 0, "held": 0}
     loss_sum = {"seen": 0.0, "held": 0.0}
     model.eval()
-    for _ in range(n_batches):
-        x, y, seen, held = gen_split_batch(task, tables, heldout_lut, B, T, rng, device)
+    for x, y, seen, held in batches:
         with torch.amp.autocast("cuda", dtype=torch.bfloat16):
             logits = model(x)
         preds = logits.argmax(dim=-1)
@@ -258,6 +265,13 @@ def cmd_capacity(args, device):
     stop_reason = "cap"
     t_train0 = time.time()
     model.train()
+
+    def build_val_set(T):
+        rngv = np.random.default_rng(args.seed + 3000)
+        return [gen_split_batch(task, tables, heldout_lut, VAL_BATCH_SIZE, T,
+                                rngv, device) for _ in range(VAL_BATCHES)]
+
+    val_batches = build_val_set(stage["train_len"])
     while step < args.steps:
         cur_lr = lr_at(step, args.lr, args.warmup)
         for pg in opt.param_groups:
@@ -284,7 +298,8 @@ def cmd_capacity(args, device):
         if (step + 1) % args.val_every == 0 or step == args.steps - 1:
             v = eval_split(model, task, tables, heldout_lut, VAL_BATCH_SIZE,
                            stage["train_len"], VAL_BATCHES,
-                           args.seed + 3000, device, return_loss=True)
+                           args.seed + 3000, device, return_loss=True,
+                           fixed_batches=val_batches)
             rec["val_curve"].append({"step": step, "train_len": stage["train_len"],
                                      **v})
             log(f"[{args.model}] step {step:>5d} lr={cur_lr:.2e} "
@@ -312,6 +327,7 @@ def cmd_capacity(args, device):
                     trained_lengths.append(CURRICULUM_T)
                     val_hist = []      # fresh plateau tracking at the new T
                     min_steps = 400   # PLAN.md: >=400 more steps in stage 2
+                    val_batches = build_val_set(CURRICULUM_T)
                     model.train()
                 else:
                     stop_reason = "plateau"
@@ -401,7 +417,8 @@ def cmd_capacity(args, device):
 
 def main():
     ap = argparse.ArgumentParser()
-    p = ap.add_parser("capacity")
+    sub = ap.add_subparsers(dest="cmd", required=True)
+    p = sub.add_parser("capacity")
     p.add_argument("--model", required=True, choices=list(CHECKPOINTS.keys()))
     p.add_argument("--steps", type=int, required=True,
                    help="hard cap (pre-registered, identical for both models)")
