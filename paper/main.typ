@@ -1814,22 +1814,33 @@ on paper. A trusted Lean 4 @lean42021 core built on Mathlib @mathlib4
 carries the formal spine: each result is stated as a theorem and
 compiled together with a proof of it. Trust rests on what those proofs
 are *not* allowed to assume. The import closure of the
-`ElmanProofs.PaperCore` module — ten source files at the time of writing
+`ElmanProofs.PaperCore` module — twelve modules at the time of writing
 — uses none of Lean's escape hatches: no `sorry` or `admit` (which would
 leave a step unproved), no added `axiom`, no `opaque` definitions, and no
 `native_decide` (which would defer a step to compiled code outside the
-proof kernel). Every result below is named by its exact theorem so a
+proof kernel). The machine-extracted inventory of the trusted surface is
+committed at `paper/data/lean-trust-gate-theorems.json` (667 named
+definitions and theorems at its extraction commit); the two modules
+recovered after that extraction — the split-gated relations
+(`SplitGatedDelta`) and the latching proofs (`EmenderLatching`, commit
+`696299b4`, `lake build` clean) — are cited by their own commits, and a
+refresh of the extraction to cover them is tracked as
+TODO-NEEDS-EVIDENCE. Every result below is named by its exact theorem so a
 reader can open the source and find it. What is proved here is
 realizability and representational scope; what a trained model actually
 learns under SGD is the separate empirical question of §5 and §6.
 
-Two results carry the spine. The first is that the delta-correcting and
+Three results carry the spine. The first is that the delta-correcting and
 raw-write updates stay apart not only at one step but at every step of a
 composition: for each $k >= 1$ there is an explicit $k$-token input on
 which their $k$-step trajectories disagree by a margin bounded away from
 zero — the *k-step separation* (`emender_m2rnn_k_step_separation`,
 theorem set C′ below). The gap compounds on the constructed witness
-alphabet rather than washing out under composition. The second
+alphabet rather than washing out under composition. The second is the
+$S_5$ *capacity lower bound* (set A below): any finite recognizer that
+reproduces the $S_5$ prefix-product tracker needs at least its 120
+states, and an explicit Emender configuration realizes it — realizability
+and the matching recognizer floor in one trusted core. The third
 formalizes the latching half of the Emender's write rule (theorem set F
 below): three slot-wise statements covering saturation insensitivity,
 sign-preserving hold under sub-threshold counter-input, and release
@@ -1858,13 +1869,30 @@ concrete, fully specified finite-state target.*
   composes correctly as tokens are appended (`S5Tracker.run_append`). A
   bridge lemma confirms the Lean tracker agrees with the Python
   evaluation harness on every input
-  (`S5Tracker.pythonRun_eq_tracker_tuple`).
+  (`S5Tracker.pythonRun_eq_tracker_tuple`). The four adjacent
+  transpositions generate all of $S_5$: the tracker's run map is
+  surjective (`S5Inseparability.run_surjective`, via Mathlib's
+  `Equiv.Perm.mclosure_swap_castSucc_succ`).
+
+- *Capacity lower bound (recognizer floor).* Any finite-state recognizer
+  with a state decoder that reproduces the tracker on every input word
+  needs at least 120 states
+  (`S5Inseparability.capacity_lower_bound_120`); equivalently, no
+  recognizer with fewer than 120 states can realize it under any
+  decoder (`S5Inseparability.small_recognizer_cannot_realize_s5`). The
+  bound has a distinguishing-pair form: any recognizer with too few
+  states admits two words it cannot tell apart that the tracker does
+  distinguish (`S5Inseparability.exists_distinguishing_word_pair`).
+  This is the existential form of the $S_5$-coset inseparability target:
+  it holds for *any* finite recognizer family, with no architectural
+  assumptions, and it is the load-bearing state-counting lemma any future
+  bounded-precision raw-write bound must land against.
 
 - *Lookup-table realization.* The tracker is small enough to write down
   as a table: it uses exactly $120 times 4 = 480$ state/input keys
-  (`S5EmenderRealization.s5_transition_key_count`), and any finite
+  (`S5NDMRealization.s5_transition_key_count`), and any finite
   recognizer admits such an exact lookup-table realization
-  (`S5EmenderRealization.exactTransitionMemory_run`).
+  (`S5NDMRealization.exactTransitionMemory_run`).
 
 #heading(level: 2, numbering: none)[Theorem set B: Emender realizes $S_5$]
 
@@ -1873,7 +1901,7 @@ there is a concrete setting of its weights that reproduces the tracker
 of set A.*
 
 The abstract lookup table of set A is realized by the Emender's own
-update equation (`EmenderRealizesS5.emender_realizes_s5_tracker`): there
+update equation (`NDMRealizesS5.emender_realizes_s5_tracker`): there
 exist a state dimension $d$, an orthonormal family of keys ${k_g}$
 indexed by the adjacent-transposition generators, a value family
 ${v_g}$, and a decay scalar $lambda = 1$ such that the Emender update
@@ -1957,8 +1985,9 @@ natural-language-shaped alphabet.
 #heading(level: 2, numbering: none)[Frontier and unproven targets]
 
 *What to take from this: the clean k-step result is the ceiling reachable
-by direct composition; the stronger $S_5$-specific inseparability bound
-is carried by the empirical sections here, not yet by the formal core.*
+by direct composition; the *existential* form of the $S_5$ capacity
+inseparability is now proved (set A), and what remains open is the
+bounded-precision raw-write form with an explicit $T(d)$.*
 
 The k-step separation above is the *clean ceiling reachable from the
 one-step proof by direct composition*. The scope of what it does and
@@ -1971,25 +2000,39 @@ does not establish is named below, before stating Theorem set D.
   (`emender_m2rnn_k_step_separation`). The gap *does* compound on this
   alphabet — it does not wash out.
 
-- *What is not proved.* That the gap compounds *on the $S_5$ generator
-  alphabet specifically* with an explicit length bound $T(d)$, i.e., a
+- *What is now also proved (set A).* The *existential* capacity form of
+  the $S_5$ inseparability target: no finite recognizer with fewer than
+  120 states realizes the tracker, for any architecture
+  (`S5Inseparability.capacity_lower_bound_120`), together with
+  generator surjectivity (`run_surjective`). Two items that earlier
+  drafts of this section listed as open — adjacent-transposition
+  generation of $S_5$, and a state-counting lower bound — are closed by
+  these theorems.
+
+- *What is still not proved.* That the gap compounds *on the $S_5$
+  generator alphabet specifically* against the raw-write resource class
+  with an explicit length bound $T(d)$, i.e., a
   statement of the form "for any fixed-weight raw-write RNN at state
   dimension $d$ there is an explicit $T(d)$ past which $S_5$ coset
   tracking is unreachable, while the Emender at the same $d$ tracks it".
   That is the stronger inseparability claim; the trusted Lean core does
   not contain it, and the empirical sections stand in for it.
 
-- *Why the stronger claim is not in the trusted core.* The $S_5$-coset
-  inseparability claim is a *capacity* statement, not a witness
-  statement; it requires bounded-precision raw-write RNNs and a
-  pigeonhole / state-counting lower bound in the style of Merrill,
-  Petty and Sabharwal @merrill2024transformers. Mathlib does not
+- *Why the stronger claim is not in the trusted core.* The remaining form
+  is a *capacity-over-continuous-state* statement: the raw-write class is
+  parameterised by continuous-valued matrices and vectors, so the finite
+  recognizer argument of set A does not directly apply. It requires a
+  bounded-precision discretization (Liu et al.-style fixed-point weights
+  and activations) or a direct trajectory-distinguishability counting
+  argument, plus Merrill-style state-counting machinery in the style of
+  Merrill, Petty and Sabharwal @merrill2024transformers. Mathlib does not
   currently provide NC#super[1] / TC#super[0] circuit classes,
   finite-state-tracking lower bounds for parameter-bounded RNNs, or
   pigeonhole capacity arguments specialized to recurrent maps with
   bounded weight matrices. Each piece is a research-grade
   mechanization project in its own right; the integration is what
-  would close the gap.
+  would close the gap. The set A bound is the load-bearing
+  state-counting lemma any such argument must land against.
 
 - *Connection to the empirical claim.* The $S_5$ accuracy curves of §6
   (@fig_s5_bars, @tab_s5) and the canonical-sweep length-extrapolation
@@ -2017,7 +2060,14 @@ explicit constants $c_1, c_2$
 Equal-token-budget comparisons at matched $d, H,$ and depth are therefore
 within a constant factor, so the within-class empirical ordering of §5
 cannot be charged to one PNR instance spending asymptotically more
-compute per token than the other.
+compute per token than the other. The split gates of the E97 instance
+stay inside the same class: at matched square state dimension the E97 and
+E88 heads share the same leading $d^2$ recurrent-update cost
+(`e97_e88_same_leading_per_head_recurrent_cost`), and with the two
+precomputed gate applications counted separately, E97 is bounded by
+$7 d^2$ where E88 is $6 d^2$ — a constant-factor overhead, with no
+empirical efficiency claim attached
+(`e97_precomputed_gates_same_quadratic_cost_class_as_e88`).
 
 #heading(level: 2, numbering: none)[Parameter-efficiency corollary (informal; follows from sets C and D)]
 
@@ -2053,6 +2103,57 @@ formalizes that class through its two instances — the Emender as the
 delta-correcting contribution of this work and M²RNN-CMA as the raw-write
 comparator.
 
+#heading(level: 2, numbering: none)[Theorem set G: the split-gated update — E97, E88, and GDN-2]
+
+*What to take from set G: the E97 cell of §3 is a strict extension of
+E88, and the 1.3 B baseline GDN-2 is exactly its linear, scan-compatible
+restriction — the formal counterpart of the §5 pairing.*
+
+The E97 split-gated update is defined in Lean alongside the E88 coupled
+update, and the module `SplitGatedDelta` (post-snapshot; see the
+extraction-refresh TODO at the top of this section) proves the
+structural relations the body relies on:
+
+#set list(indent: 1em)
+- *E97 strictly extends E88.* With both split gates fixed to one, the
+  E97 update specializes exactly to the E88 update, in both direct and
+  expanded form (`e97_specializes_to_e88_all_one_gates_direct`,
+  `e97_specializes_to_e88_all_one_gates_expanded`), so E97 weakly
+  generalizes E88 (`e97_expresses_e88_by_specialization`). The E88
+  parameterization is therefore a developmental special case, not a
+  rival.
+
+- *The extension is strict on a concrete witness.* E97 realizes a
+  2-dimensional split erase/write transition with non-parallel write and
+  erase directions (`e97_realizes_splitWitness_transition`) that *no*
+  E88 coupled transition can realize
+  (`e88_cannot_realize_splitWitness_transition`; the witness directions
+  are non-parallel by `splitWitness_dirs_not_parallel`), and a 1×1
+  zero-state witness separates the strict-gate E97 update from every
+  all-one-gate E88 setting on the same state/input
+  (`e97_split_gate_strict_witness_not_e88_all_one`).
+
+- *GDN-2 is the linear corner of the same split-gated core.* The GDN-2
+  linear core is the E97 linear core applied to a pre-decayed state
+  (`gdn2LinearCore_eq_e97LinearCore_on_decayed_state`), and under
+  identity decay the two coincide
+  (`gdn2LinearCore_identity_decay_eq_e97LinearCore_one`); the resource
+  signatures then split exactly on the axis the paper tests
+  empirically: E97 has matrix state, full-state temporal nonlinearity,
+  delta writes, and no scan-compatible state path
+  (`e97_split_gated_resource_signature_like_e88`), while the GDN-2-style
+  split erase/write resource has matrix state and delta-style writes but
+  *no* temporal state nonlinearity and a scan-compatible linear state
+  (`gdn2_split_erase_write_is_scan_compatible_linear_state`).
+
+#set list(indent: 0em)
+
+The §5 pairing is thus anchored on both sides: the two 1.3 B arms share
+the split-gated delta core and differ precisely on the per-step state
+nonlinearity — the same axis the §6 iterated-map ablation isolates
+causally (`e97` versus `e97-linear`) and the same axis set G names
+formally.
+
 #heading(level: 2, numbering: none)[Theorem set F: latching]
 
 *What to take from set F: the tanh latch behaves as the architecture
@@ -2068,7 +2169,11 @@ post-nonlinearity value input already supplied to the recurrent body,
 $S' = tanh(lambda dot S + k (v - S^T k)^T)$
 at slot $(i,j)$, with $W := k_i (v_j - (S^T k)_j)$ the write contribution
 into that slot. The proofs run through the standard tanh-perturbation
-foundation.
+foundation. The module carrying them (`EmenderLatching`) was recovered
+from an unmerged development branch and verified with a clean `lake
+build` (commit `696299b4`); it postdates the machine-extracted
+trust-gate snapshot, hence the extraction-refresh TODO at the top of
+this section.
 
 #set list(indent: 1em)
 - *Saturation insensitivity.* If the slot is saturated in the sense
@@ -2110,22 +2215,40 @@ foundation.
 
 #heading(level: 2, numbering: none)[The NC#super[1] statement]
 
-*What to take from this: the Emender reaches the top of NC#super[1] on
-the canonical witness — the realization is proved here, while the
-matching hardness is Barrington's theorem, cited rather than reproved.*
+*What to take from this: exactly three things are proved in Lean — the
+finite-state ceiling, the $S_5$ realization, and the 120-state recognizer
+floor — and everything complexity-theoretic beyond them is cited
+classical work, not ours.*
 
-The precise NC#super[1] claim, stated conservatively:
+The precise statement, with each clause tagged by its status:
 
 #block(inset: (x: 1.5em), [
-*The Emender is, at fixed width and precision, a finite-state recognizer (Lean:
-`fixed_precision_state_space_finite`). Within that ceiling, an
+*Lean-proved:* the Emender is, at fixed width and precision, a
+finite-state recognizer (`fixed_precision_state_space_finite`); an
 orthonormal-key configuration of the Emender update realizes the $S_5$
-prefix tracker (Lean: `EmenderRealizesS5.emender_realizes_s5_tracker`); $S_5$ is
-non-solvable (`s5_not_solvable`) and by Barrington's theorem
-@barrington1986 (cited; not formalized in this work) the $S_5$ word
-problem is NC#super[1]-complete. The Emender therefore reaches the top of
-NC#super[1] in the canonical regular-language witness.*
+prefix tracker at state dimension 12
+(`NDMRealizesS5.emender_realizes_s5_tracker`); $S_5$ is non-solvable
+(`s5_not_solvable`) and any finite recognizer that reproduces the
+tracker needs at least its 120 states
+(`S5Inseparability.capacity_lower_bound_120`). *Cited, not formalized
+here:* by Barrington's theorem @barrington1986 the $S_5$ word problem
+is NC#super[1]-complete, so the realized tracker is a witness at the
+top of NC#super[1]; and by the classical results on fixed-precision
+linear-state recurrence @merrill2024transformers @barrington1986, a
+linear-state model is held below the non-solvable word problems at
+length. *Conjecture (not proved, not cited as proved):* that the proved
+recognizer floor transfers to the continuous-parameter raw-write class
+via bounded precision — the open $T(d)$ target of the frontier list
+above.
 ])
+The earlier drafts of this paper said the Emender "reaches the top of
+NC#super[1]"; the wording above is the defensible form. What is ours is
+the realization and the floor; what is classical is the completeness
+and the linear-state ceiling; what is open is the bridge from the floor
+to the raw-write class. The corresponding TC#super[0]-membership
+statements for transformers and linear SSMs are likewise cited classical
+results @merrill_sabharwal2023log_precision @chiang2025uniform_tc0 and
+are not formalized in the trusted core.
 
 #heading(level: 2, numbering: none)[Explicit non-claims]
 
@@ -2135,12 +2258,15 @@ earlier results sections need not relitigate it.*
 
 The trusted core does *not* prove the following, and the paper does not
 claim them. (i) A Lean lower bound covering all linear-scan models on
-$S_5$. (ii) Barrington's theorem itself; we cite it. (iii) Any "the Emender
+$S_5$; the recognizer floor of set A is architecture-agnostic but stops
+at finite recognizers, and the linear-state ceiling is cited classical
+work. (ii) Barrington's theorem itself; we cite it. (iii) Any "the Emender
 goes beyond NC#super[1]" or "the Emender goes beyond TC#super[0]" claim;
 these are families-wide impossibility statements outside the trusted surface. (iv)
 A formal proof that a trained real-valued Emender with empirically learned
 weights exactly recovers the lookup table; only the realizability is
-proved.
+proved. (v) The $S_5$-generator-specific $T(d)$ bound for the raw-write
+class — the frontier item above, stated as a conjecture, not a theorem.
 
 // ── 8. Related Work ───────────────────────────────────────────────────────────
 = Related Work <sec:related>
@@ -2269,7 +2395,7 @@ bound: the k-step proof runs on the constructed alphabet, not the $S_5$
 generators, and a generator-specific bound needs a bounded-precision
 raw-write class plus Merrill-style state-counting machinery not yet in
 Mathlib. The second is the architecture-level latching lift
-(`MemorySemantics.latchAttractor` on the `RecurrentResourceFormalism`
+(`RecurrentResourceFormalism.MemorySemantics.latchAttractor`
 signature). The §6 $S_5$ accuracy of 0.79 at $T = 128$ and the
 length-extrapolation curves are the empirical companion to that k-step
 result, run on the $S_5$ generator alphabet itself.
@@ -2408,7 +2534,7 @@ trusted core establishes this through
 `emender_m2rnn_k_step_separation` (set C′), and
 `emender_m2rnn_flop_class_equiv` (set D), and proves that an
 orthonormal-key Emender configuration realizes the $S_5$ prefix tracker
-(`EmenderRealizesS5.emender_realizes_s5_tracker`); its import closure
+(`NDMRealizesS5.emender_realizes_s5_tracker`); its import closure
 carries no `sorry`, `admit`, `axiom`, `opaque`, or `native_decide`. The
 predicted ordering shows up in the trained models. At the 8 M
 parameter-matched probe shape, where the §6 floor argument makes
@@ -2635,7 +2761,7 @@ primitive: three theorems covering saturation insensitivity, default
 hold under a bounded delta, and release on a sufficient counter-delta.
 Two formal targets sit on top of it. The first is a formalism
 refinement — an architecture-level lift that promotes the slot-wise
-latching theorems to a `MemorySemantics.latchAttractor` label on the
+latching theorems to the `RecurrentResourceFormalism.MemorySemantics.latchAttractor` label on the
 Emender signature in the `RecurrentResourceFormalism`, recasting
 slot-level behavior as a statement about the matrix-state attractor
 structure of the whole layer. The second is a Lean-targeted theorem
