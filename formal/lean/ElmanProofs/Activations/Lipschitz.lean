@@ -305,6 +305,25 @@ theorem tanh_deriv_uniform_bound (δ : ℝ) (hδ : 0 < δ) :
       exact this
     linarith
 
+/-- When `|tanh x| > 1 - ε`, the tanh derivative is below `2ε`.
+    Quantitative form of saturation: at saturated pre-activations, the slope
+    `1 - tanh²(x)` is small. -/
+theorem tanh_deriv_small_at_saturation (x ε : ℝ) (hε : 0 < ε) (_hε1 : ε < 1)
+    (h_sat : 1 - ε < |Real.tanh x|) :
+    |deriv Real.tanh x| < 2 * ε := by
+  rw [deriv_tanh]
+  have h_tanh_bnd : |Real.tanh x| < 1 := tanh_bounded x
+  have h_sq_lt_one : (Real.tanh x)^2 < 1 := by
+    rw [sq_lt_one_iff_abs_lt_one]; exact h_tanh_bnd
+  have h_nonneg : 0 ≤ 1 - (Real.tanh x)^2 := by linarith
+  rw [abs_of_nonneg h_nonneg]
+  -- tanh²(x) = |tanh x|² and we want 1 - |tanh x|² < 2ε.
+  have h_sq_abs : (Real.tanh x)^2 = |Real.tanh x| * |Real.tanh x| := by
+    rw [← sq_abs]; ring
+  rw [h_sq_abs]
+  have h_abs_nn : 0 ≤ |Real.tanh x| := abs_nonneg _
+  nlinarith [h_sat, h_abs_nn, h_tanh_bnd]
+
 /-- Product of T tanh derivatives with inputs bounded away from zero tends to zero.
     If |x_t| ≥ δ > 0 for all t, then ∏_{t=0}^{T-1} |tanh'(x_t)| ≤ r^T → 0 as T → ∞
     where r = 1 - tanh²(δ) < 1. This is why deep tanh networks have vanishing gradients. -/
@@ -328,6 +347,105 @@ theorem tanh_lipschitz : LipschitzWith 1 Real.tanh := by
   intro x
   rw [← NNReal.coe_le_coe, NNReal.coe_one, coe_nnnorm]
   exact tanh_deriv_bound x
+
+/-- tanh is 1-Lipschitz in absolute-value form. -/
+theorem abs_tanh_sub_le (x y : ℝ) : |Real.tanh x - Real.tanh y| ≤ |x - y| := by
+  have h := tanh_lipschitz.dist_le_mul x y
+  simp only [Real.dist_eq, NNReal.coe_one, one_mul] at h
+  exact h
+
+/-- MVT-based perturbation bound at saturation: if `|tanh x| > 1 - ε` and
+    `|δ| ≤ M` with `ε + M < 1`, then `|tanh(x + δ) - tanh x| ≤ 2(ε + M) · |δ|`.
+
+    This is the core saturation insensitivity ingredient: every point `c` on the
+    line segment from `x` to `x + δ` lies within `|δ| ≤ M` of `x`, so by
+    1-Lipschitz `|tanh c| > 1 - ε - M`, hence `|tanh'(c)| < 2(ε + M)`, and the
+    MVT gives the perturbation bound. -/
+theorem tanh_perturbation_at_saturation (x δ ε M : ℝ)
+    (hε : 0 < ε) (hM : 0 ≤ M) (h_compat : ε + M < 1)
+    (h_δ : |δ| ≤ M) (h_sat : 1 - ε < |Real.tanh x|) :
+    |Real.tanh (x + δ) - Real.tanh x| ≤ 2 * (ε + M) * |δ| := by
+  by_cases hδ_zero : δ = 0
+  · simp [hδ_zero]
+  · have hε1 : ε < 1 := by linarith
+    have hεM_pos : 0 < ε + M := by linarith
+    have hεM_lt1 : ε + M < 1 := h_compat
+    have h_room : 0 < 1 - ε - M := by linarith
+    rcases lt_or_gt_of_ne hδ_zero with hδ_neg | hδ_pos
+    · -- δ < 0
+      have hxx : x + δ < x := by linarith
+      have hcont : ContinuousOn Real.tanh (Set.Icc (x + δ) x) :=
+        differentiable_tanh.continuous.continuousOn
+      have hdiff : DifferentiableOn ℝ Real.tanh (Set.Ioo (x + δ) x) :=
+        differentiable_tanh.differentiableOn
+      obtain ⟨c, hc_mem, hc_eq⟩ :=
+        exists_deriv_eq_slope Real.tanh hxx hcont hdiff
+      have h_denom_pos : 0 < x - (x + δ) := by linarith
+      have h_mvt : Real.tanh x - Real.tanh (x + δ) = deriv Real.tanh c * (x - (x + δ)) := by
+        rw [hc_eq]
+        field_simp
+      have h_c_close : |c - x| ≤ |δ| := by
+        rcases hc_mem with ⟨h1, h2⟩
+        have h_diff_neg : c - x < 0 := by linarith
+        rw [abs_of_neg hδ_neg, abs_of_neg h_diff_neg]
+        linarith
+      have h_tanh_close : |Real.tanh c - Real.tanh x| ≤ |c - x| := abs_tanh_sub_le c x
+      have h_tanh_c_lower : 1 - (ε + M) < |Real.tanh c| := by
+        have h1 : |Real.tanh x| - |Real.tanh c| ≤ |Real.tanh c - Real.tanh x| := by
+          have := abs_sub_abs_le_abs_sub (Real.tanh x) (Real.tanh c)
+          rw [abs_sub_comm] at this
+          exact this
+        linarith
+      have h_deriv_bound : |deriv Real.tanh c| < 2 * (ε + M) :=
+        tanh_deriv_small_at_saturation c (ε + M) hεM_pos hεM_lt1 h_tanh_c_lower
+      have h_eq : |Real.tanh (x + δ) - Real.tanh x| = |deriv Real.tanh c| * |δ| := by
+        have h_neg_eq : Real.tanh (x + δ) - Real.tanh x = -(deriv Real.tanh c * (x - (x + δ))) := by
+          linarith
+        rw [h_neg_eq, abs_neg, abs_mul]
+        congr 1
+        rw [show x - (x + δ) = -δ from by ring, abs_neg]
+      rw [h_eq]
+      have h_δ_nn : 0 ≤ |δ| := abs_nonneg _
+      have h_final : |deriv Real.tanh c| * |δ| ≤ 2 * (ε + M) * |δ| := by
+        apply mul_le_mul_of_nonneg_right _ h_δ_nn
+        linarith
+      exact h_final
+    · -- δ > 0
+      have hxx : x < x + δ := by linarith
+      have hcont : ContinuousOn Real.tanh (Set.Icc x (x + δ)) :=
+        differentiable_tanh.continuous.continuousOn
+      have hdiff : DifferentiableOn ℝ Real.tanh (Set.Ioo x (x + δ)) :=
+        differentiable_tanh.differentiableOn
+      obtain ⟨c, hc_mem, hc_eq⟩ :=
+        exists_deriv_eq_slope Real.tanh hxx hcont hdiff
+      have h_denom_pos : 0 < (x + δ) - x := by linarith
+      have h_mvt : Real.tanh (x + δ) - Real.tanh x = deriv Real.tanh c * ((x + δ) - x) := by
+        rw [hc_eq]
+        field_simp
+      have h_c_close : |c - x| ≤ |δ| := by
+        rcases hc_mem with ⟨h1, h2⟩
+        have h_diff_pos : 0 < c - x := by linarith
+        rw [abs_of_pos hδ_pos, abs_of_pos h_diff_pos]
+        linarith
+      have h_tanh_close : |Real.tanh c - Real.tanh x| ≤ |c - x| := abs_tanh_sub_le c x
+      have h_tanh_c_lower : 1 - (ε + M) < |Real.tanh c| := by
+        have h1 : |Real.tanh x| - |Real.tanh c| ≤ |Real.tanh c - Real.tanh x| := by
+          have := abs_sub_abs_le_abs_sub (Real.tanh x) (Real.tanh c)
+          rw [abs_sub_comm] at this
+          exact this
+        linarith
+      have h_deriv_bound : |deriv Real.tanh c| < 2 * (ε + M) :=
+        tanh_deriv_small_at_saturation c (ε + M) hεM_pos hεM_lt1 h_tanh_c_lower
+      have h_eq : |Real.tanh (x + δ) - Real.tanh x| = |deriv Real.tanh c| * |δ| := by
+        rw [h_mvt, abs_mul]
+        congr 1
+        rw [show (x + δ) - x = δ from by ring]
+      rw [h_eq]
+      have h_δ_nn : 0 ≤ |δ| := abs_nonneg _
+      have h_final : |deriv Real.tanh c| * |δ| ≤ 2 * (ε + M) * |δ| := by
+        apply mul_le_mul_of_nonneg_right _ h_δ_nn
+        linarith
+      exact h_final
 
 /-- sigmoid(x) = 1 / (1 + exp(-x)). -/
 noncomputable def sigmoid (x : ℝ) : ℝ := 1 / (1 + exp (-x))

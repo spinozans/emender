@@ -2,6 +2,7 @@
 Copyright (c) 2026 Elman-Proofs Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
+import ElmanProofs.Architectures.EmenderLatching
 import ElmanProofs.Architectures.M2RNNComparison
 import ElmanProofs.Architectures.MultiStepSeparation
 import ElmanProofs.Architectures.OnlineMemory
@@ -64,6 +65,15 @@ paper-space claims:
   core loads an orthonormal table whose readout, decoded and composed with any
   input state, reproduces `s5TransitionMemory.read` on every
   `(state, generator)` pair (`NDMRealizesS5.emender_realizes_s5_tracker`).
+* The Emender's full delta-correcting nonlinear update has three quantitative
+  latching properties checked at the slot level
+  (`EmenderLatching.emender_saturation_insensitivity`,
+  `EmenderLatching.emender_latch_holds_by_default`,
+  `EmenderLatching.emender_latch_releases_on_counter_delta`):
+  the post-tanh slope vanishes at saturation by an explicit `2(ε + M)` bound,
+  a saturated slot survives any bounded write below the latch threshold, and
+  the saturation latch releases on any counter-delta exceeding `λ · |S_ij|`
+  in the opposite sign.
 
 Use `scripts/check_paper_core.sh` to reject unfinished proof holes, explicit
 assumptions, opaque declarations, and kernel-bypassing computation in this
