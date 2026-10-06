@@ -309,6 +309,13 @@ def cmd_capacity(args, device):
                 f"({time.time()-t_train0:.0f}s)")
             val_hist.append((step, v["loss_seen"]))
             model.train()
+            # crash resilience: incremental dump after every probe (protocol-neutral)
+            if not args.smoke:
+                partial = dict(rec)
+                partial["partial"] = True
+                p_out = Path(args.out_prefix + "_train.json")
+                p_out.parent.mkdir(parents=True, exist_ok=True)
+                p_out.write_text(json.dumps(partial, indent=2))
             if plateau_fired(val_hist, min_steps + stage["start_step"]):
                 if args.smoke:
                     stop_reason = "plateau (ignored in smoke)"
@@ -327,6 +334,7 @@ def cmd_capacity(args, device):
                     trained_lengths.append(CURRICULUM_T)
                     val_hist = []      # fresh plateau tracking at the new T
                     min_steps = 400   # PLAN.md: >=400 more steps in stage 2
+                    torch.cuda.empty_cache()   # free T=256 blocks before T=512 stage
                     val_batches = build_val_set(CURRICULUM_T)
                     model.train()
                 else:
