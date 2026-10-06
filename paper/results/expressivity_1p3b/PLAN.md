@@ -83,9 +83,13 @@ seen, identical for both models, no task-specific tuning):
   train lengths {16, 32, 48, 64}, seed 42;
 - tasks: `s5_permutation` (headline) and `s3_permutation` (solvable control);
   `parity` only if budget remains;
-- steps: S5 3000, S3 1500 (adjusted only DOWNWARD, equally for both models,
-  if measured throughput would breach the timebox; never adjusted after
-  seeing a result);
+- steps: S5 2000, S3 750 (adjusted DOWNWARD from the initial 3000/1500
+  declaration, equally for both models, using ONLY the measured training
+  throughput of the two bound checkpoints — E97 ≈ 0.59 s/step, GDN2-MLP ≈
+  1.2 s/step at batch 32, T≤64 — so the full S5+S3 program fits the
+  90-minute GPU timebox; no accuracy result had been produced at 60 probe
+  steps beyond warmup-scale noise when this was fixed); final eval grid
+  uses 8 batches/length (16 was the initial declaration);
 - eval grid at end: T ∈ {16, 32, 48, 64, 96, 128, 192, 256, 384, 512, 768,
   1024}; trajectory probe (T ∈ {64, 128, 512}) every 500 steps.
 
