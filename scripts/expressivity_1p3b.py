@@ -35,6 +35,8 @@ import sys
 import time
 from pathlib import Path
 
+import torch
+
 REPO = Path(__file__).resolve().parent.parent
 if str(REPO) not in sys.path:
     sys.path.insert(0, str(REPO))
@@ -67,7 +69,7 @@ def load_model(model_name: str, device):
     if device.type == "cuda":
         assert os.environ.get("CUDA_VISIBLE_DEVICES"), "one GPU per process via CUDA_VISIBLE_DEVICES"
     if model_name == "e97":
-        import torch
+
         from ndm.e97 import load_e97_checkpoint
         loaded = load_e97_checkpoint(
             spec["path"], args_json=spec["args"], device=device,
@@ -77,7 +79,7 @@ def load_model(model_name: str, device):
         log(f"e97 loaded: step={loaded.step} loss={loaded.loss} weight_mode={loaded.weight_mode}")
         return loaded.model
     else:
-        import torch
+
         from scripts.eval_checkpoint import (
             build_model, load_checkpoint_weights, namespace_from_config,
         )
@@ -98,7 +100,7 @@ def load_model(model_name: str, device):
 
 def make_batch(task, B, T, rng, device):
     import numpy as np
-    import torch
+
     inp, tgt, msk = task.generate_batch(B, T, rng)
     return (torch.from_numpy(inp).to(device), torch.from_numpy(tgt).to(device),
             torch.from_numpy(msk).to(device))
@@ -108,7 +110,7 @@ def make_batch(task, B, T, rng, device):
 def eval_acc(model, task, B, T, n_batches, rng, device, class_ids=None):
     """Full-vocab argmax accuracy (and class-restricted accuracy if class_ids)."""
     model.eval()
-    import torch
+
     correct = total = 0
     correct_r = 0
     for _ in range(n_batches):
@@ -132,7 +134,7 @@ def eval_acc(model, task, B, T, n_batches, rng, device, class_ids=None):
 
 def cmd_zeroshot(args, device):
     import numpy as np
-    import torch
+
     from experiments.expressivity_tasks.tasks import ALL_TASKS
     model = load_model(args.model, device)
     rng = np.random.default_rng(args.seed)
@@ -169,7 +171,7 @@ def lr_at(step, base_lr, warmup):
 
 def cmd_finetune(args, device):
     import numpy as np
-    import torch
+
     import torch.nn.functional as F
     from experiments.expressivity_tasks.tasks import ALL_TASKS
     torch.manual_seed(args.seed)
@@ -280,7 +282,7 @@ def main():
     p2.add_argument("--traj_batches", type=int, default=4)
 
     args = ap.parse_args()
-    import torch
+
     device = torch.device("cuda")
     log(f"device={torch.cuda.get_device_name(0)} "
         f"(CUDA_VISIBLE_DEVICES={os.environ.get('CUDA_VISIBLE_DEVICES')})")
