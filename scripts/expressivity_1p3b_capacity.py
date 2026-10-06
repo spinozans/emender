@@ -266,12 +266,12 @@ def cmd_capacity(args, device):
     t_train0 = time.time()
     model.train()
 
-    def build_val_set(T):
+    def build_val_set(T, B, n):
         rngv = np.random.default_rng(args.seed + 3000)
-        return [gen_split_batch(task, tables, heldout_lut, VAL_BATCH_SIZE, T,
-                                rngv, device) for _ in range(VAL_BATCHES)]
+        return [gen_split_batch(task, tables, heldout_lut, B, T,
+                                rngv, device) for _ in range(n)]
 
-    val_batches = build_val_set(stage["train_len"])
+    val_batches = build_val_set(stage["train_len"], VAL_BATCH_SIZE, VAL_BATCHES)
     while step < args.steps:
         cur_lr = lr_at(step, args.lr, args.warmup)
         for pg in opt.param_groups:
@@ -280,18 +280,55 @@ def cmd_capacity(args, device):
         x, y, seen, held = gen_split_batch(task, tables, heldout_lut,
                                           args.batch_size, stage["train_len"],
                                           rng, device)
-        with torch.amp.autocast("cuda", dtype=torch.bfloat16):
-            logits = model(x)
-        loss_per = F.cross_entropy(logits.view(-1, logits.size(-1)).float(),
-                                   y.view(-1), reduction="none").view_as(seen)
-        loss = (loss_per * seen).sum() / seen.sum().clamp_min(1)
-        opt.zero_grad(set_to_none=True)
-        loss.backward()
+        try:
+            with torch.amp.autocast("cuda", dtype=torch.bfloat16):
+                logits = model(x)
+            loss_per = F.cross_entropy(logits.view(-1, logits.size(-1)).float(),
+                                       y.view(-1), reduction="none").view_as(seen)
+            loss = (loss_per * seen).sum() / seen.sum().clamp_min(1)
+            opt.zero_grad(set_to_none=True)
+            loss.backward()
+            loss_val = float(loss.item())
+        except RuntimeError as e:
+            if "out of memory" not in str(e).lower() and not isinstance(
+                    e, torch.cuda.OutOfMemoryError):
+                raise
+            # T=512 curriculum stage can exceed 47 GB with the full batch in
+            # one graph. Exact-gradient fallback: split THIS SAME batch into
+            # n sub-batches (identical data stream / effective batch), sum
+            # grads — numerically the same optimization step.
+            torch.cuda.empty_cache()
+            rec.setdefault("oom_grad_accum_fallback_steps", []).append(step)
+            n_split = 2
+            while True:
+                try:
+                    opt.zero_grad(set_to_none=True)
+                    tot = int(seen.sum().item())
+                    loss_val = 0.0
+                    for i in range(n_split):
+                        sl = slice(i * x.size(0) // n_split,
+                                   (i + 1) * x.size(0) // n_split)
+                        with torch.amp.autocast("cuda", dtype=torch.bfloat16):
+                            logits = model(x[sl])
+                        lp = F.cross_entropy(
+                            logits.view(-1, logits.size(-1)).float(),
+                            y[sl].view(-1), reduction="none").view_as(seen[sl])
+                        ((lp * seen[sl]).sum() / tot).backward()
+                        loss_val += float((lp * seen[sl]).sum().item())
+                    break
+                except RuntimeError as e2:
+                    if ("out of memory" not in str(e2).lower() and not isinstance(
+                            e2, torch.cuda.OutOfMemoryError)) or n_split >= x.size(0):
+                        raise
+                    torch.cuda.empty_cache()
+                    n_split *= 2
+            log(f"[{args.model}] OOM->grad-accum fallback step {step} "
+                f"n_split={n_split} T={stage['train_len']}")
         torch.nn.utils.clip_grad_norm_(model.parameters(), args.grad_clip)
         opt.step()
         dt = time.time() - t_step
         rec["train_curve"].append({
-            "step": step, "lr": cur_lr, "loss": float(loss.item()),
+            "step": step, "lr": cur_lr, "loss": loss_val,
             "train_len": stage["train_len"], "s_per_step": round(dt, 3),
         })
 
@@ -301,6 +338,8 @@ def cmd_capacity(args, device):
                            args.seed + 3000, device, return_loss=True,
                            fixed_batches=val_batches)
             rec["val_curve"].append({"step": step, "train_len": stage["train_len"],
+                                     "gpu_mem_alloc_gb": round(
+                                         torch.cuda.memory_allocated() / 2**30, 2),
                                      **v})
             log(f"[{args.model}] step {step:>5d} lr={cur_lr:.2e} "
                 f"loss={loss.item():.5f} val_seen={v['loss_seen']:.5f} "
@@ -335,7 +374,8 @@ def cmd_capacity(args, device):
                     val_hist = []      # fresh plateau tracking at the new T
                     min_steps = 400   # PLAN.md: >=400 more steps in stage 2
                     torch.cuda.empty_cache()   # free T=256 blocks before T=512 stage
-                    val_batches = build_val_set(CURRICULUM_T)
+                    # 8x16 batches at T=512 = same val token count as 4x32
+                    val_batches = build_val_set(CURRICULUM_T, 16, 2 * VAL_BATCHES)
                     model.train()
                 else:
                     stop_reason = "plateau"
