@@ -9,6 +9,7 @@ import ElmanProofs.Architectures.OnlineMemory
 import ElmanProofs.Architectures.RecurrentResourceFormalism
 import ElmanProofs.Architectures.S5Inseparability
 import ElmanProofs.Architectures.SplitGatedDelta
+import ElmanProofs.Expressivity.CompositionalDepthDuality
 import ElmanProofs.Expressivity.E88ExceedsE1HCapacity
 import ElmanProofs.Expressivity.NDMRealizesS5
 import ElmanProofs.Expressivity.S5NDMRealization
@@ -44,6 +45,15 @@ paper-space claims:
   the same split-gated read/write core applied to a pre-decayed state. A
   concrete 1x1 witness shows a non-all-one split write gate can leave the E88
   all-one-gate subfamily on a fixed state/input.
+* The compositional-depth duality is checked over those actual one-step maps:
+  the E97/E88 state after `T` steps is the `T`-fold left composition of the
+  nonlinear update map, so its per-layer temporal depth is `T`
+  (`CompositionalDepthDuality.e97_compositional_depth_grows_in_time`), while for
+  any GDN/gated-delta step schedule the state-channel map is affine in the
+  initial state, so its nonlinear temporal depth is constant in `T`
+  (`CompositionalDepthDuality.gdn_state_channel_depth_bounded_in_time`). The E1H
+  temporal-depth claim is strengthened to a structural composition theorem
+  (`CompositionalDepthDuality.e1hStateAfterT_eq_compose`).
 * The E97/E88/GDN-2 resource-cost surface is checked only at the coarse
   recurrent-state signature level: E97 has the same leading per-head
   `flopsPerToken` cost as E88, precomputed split-gate application is counted
