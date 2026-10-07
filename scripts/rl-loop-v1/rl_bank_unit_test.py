@@ -901,6 +901,90 @@ def test_fresh_solve_collect(scratch: Path) -> None:
                   ("original" if fresh else "policy mutation"))
 
 
+def test_no_signal_exposure_skip(scratch: Path) -> None:
+    from copy import deepcopy
+    from types import SimpleNamespace
+    from unittest.mock import patch
+    import rl_bank_lane as lane
+    from rl_common import workspace_paths
+
+    paths = workspace_paths(scratch / "no-signal")
+    paths["root"].mkdir(parents=True)
+    consumed = paths["root"] / "consumed-receipts.jsonl"
+    consumed.write_text(json.dumps({"receipt_sha256": "previous"}) + "\n")
+    before_ledger = consumed.read_bytes()
+    state = {"lineage_path": "parent.pt", "lineage_sha256": "parent", "updates_total": 4}
+    before_state = deepcopy(state)
+    args = SimpleNamespace(lane=0, args_json=Path("/dev/null"), pack_timeout=10, train_timeout=10)
+    candidate = paths["root"] / "low-loss.pt"
+
+    def spawn(cmd, **kwargs):
+        if cmd[1].endswith("rl_build_pack.py"):
+            cycle_packs = paths["packs"] / "cycle-0001"
+            cycle_packs.mkdir(parents=True)
+            (cycle_packs / "build-summary.json").write_text(json.dumps({
+                "authority_manifest_sha256": "authority", "pack_manifest_sha256": "packs",
+                "context_size": 2048}))
+        else:
+            candidate.write_text("unadopted checkpoint")
+            log = Path(cmd[cmd.index("--log-jsonl") + 1])
+            log.parent.mkdir(parents=True)
+            log.write_text(json.dumps({"event": "checkpoint", "checkpoint": str(candidate),
+                                       "checkpoint_sha256": "low-loss", "loss": 0.1}) + "\n")
+
+    with patch.object(lane, "_spawn", side_effect=spawn), \
+         patch.object(lane, "_record_adopted_exposure") as expose:
+        row = lane._sft_train_row(paths, state, args, 1, {}, paths["root"] / "log")
+    check("E1 no-signal skipped training advances no lineage counters or consumption",
+          row is None and state == before_state and consumed.read_bytes() == before_ledger
+          and not expose.called)
+    check("E1 no-signal checkpoint is reclaimed", not candidate.exists())
+
+
+def test_rejected_anchor_chain(scratch: Path) -> None:
+    from types import SimpleNamespace
+    from unittest.mock import patch
+    import rl_bank_lane as lane
+    from rl_common import workspace_paths
+
+    paths = workspace_paths(scratch / "rejected-anchor-chain")
+    paths["root"].mkdir(parents=True)
+    args = SimpleNamespace(lane=0, args_json=Path("/dev/null"), probe_timeout=10,
+                           anchor_period=1, anchor_authority_root=Path("fixture"))
+    summary = {"policy_checkpoint_sha256": "parent", "attempts": 1, "outcomes": []}
+    state = {"lineage_path": "parent.pt", "lineage_sha256": "parent",
+             "updates_total": 4, "anchor_updates_total": 2}
+    rows = {}
+
+    def train(channel, _paths, current, *_args):
+        row = {"checkpoint": channel + ".pt", "checkpoint_sha256": channel + "-sha",
+               "parent_checkpoint_sha256": current["lineage_sha256"], "loss": 1.0}
+        rows[channel] = row
+        return row
+
+    def spawn(cmd, **kwargs):
+        sha = cmd[cmd.index("--checkpoint-sha256") + 1]
+        out = Path(cmd[cmd.index("--output") + 1])
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps({"frame_valid": sha != "anchor-sha", "checkpoint_sha256": sha}))
+
+    with patch.object(lane, "_anchor_train_row", side_effect=lambda *a: train("anchor", *a)), \
+         patch.object(lane, "_sft_train_row", side_effect=lambda *a: train("receipts", *a)), \
+         patch.object(lane, "_spawn", side_effect=spawn), \
+         patch.object(lane, "write_lane_state"), \
+         patch.object(lane, "_unlink_orphan_checkpoint"), \
+         patch.object(lane, "_record_adopted_exposure") as expose, \
+         patch("rl_receipts.walk_stream", return_value=[]):
+        lane._train_cycle_channels({}, paths, state, args, 1, {}, paths["root"] / "log",
+                                  summary, "0", 1)
+    check("E2 E3 receipts parent excludes rejected anchor child",
+          rows["receipts"]["parent_checkpoint_sha256"] == "parent"
+          and state["updates_total"] == 5 and state["anchor_updates_total"] == 2)
+    metrics = json.loads((paths["cycles"] / "cycle-0001" / "metrics.json").read_text())
+    check("E3 rejected anchor and adopted receipts both remain in metrics",
+          [r["adopted"] for r in metrics["trains"]] == [False, True] and expose.call_count == 1)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--scratch", type=Path,
@@ -933,6 +1017,8 @@ def main() -> None:
     test_invalid_probe_rejection(scratch)
     test_fresh_solve_first_action(scratch)
     test_fresh_solve_collect(scratch)
+    test_no_signal_exposure_skip(scratch)
+    test_rejected_anchor_chain(scratch)
     print(json.dumps({"schema": "emender-rl-loop-bank-unit-test-v1",
                      "passed": len(PASSED), "tests": PASSED}, sort_keys=True))
 
