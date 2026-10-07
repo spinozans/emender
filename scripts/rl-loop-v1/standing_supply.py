@@ -89,10 +89,22 @@ REPO = Path("/home/erikg/emender")
 WORK = Path("/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-lake-expansion-v1")
 LOOP = Path("/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-rl-loop-v1")
 # Bank root for admitted-task injection (bank pool freeze).
-# Configurable since 2026-10-07 (single-learner restart): the audit-frozen
-# legacy bank stays the default for compatibility; set BANK_ROOT to inject
-# into a different bank (e.g. bank-singlelearner-v1).
-BANK = Path(os.environ.get("BANK_ROOT", str(LOOP / "bank")))
+# Configurable since 2026-10-07 (single-learner restart). Resolution order:
+#   1. daemon-state.json "bank_root" (durable — survives the cron
+#      watchdog's env-less relaunch; the watchdog respawns `daemon` without
+#      passing BANK_ROOT, so an env-only binding is lost on respawn)
+#   2. BANK_ROOT environment variable
+#   3. legacy default (the audit-frozen bank)
+def _persisted_bank_root():
+    # bank-root.txt is a one-line path file OWNED BY THE OPERATOR, only read
+    # by the daemon (never rewritten by it) — it survives daemon state rewrites
+    # and the cron watchdog's env-less respawns.
+    try:
+        return Path((WORK / "standing-supply" / "bank-root.txt").read_text().strip())
+    except Exception:
+        return None
+
+BANK = _persisted_bank_root() or Path(os.environ.get("BANK_ROOT", str(LOOP / "bank")))
 TASK_LAKE = Path("/mnt/nvme2n1/erikg/task_lake")
 SUPPLY = WORK / "standing-supply"
 LOGS = WORK / "logs"
