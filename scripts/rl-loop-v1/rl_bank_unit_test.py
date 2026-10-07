@@ -1040,6 +1040,210 @@ def test_channel_checkpoint_paths(scratch: Path) -> None:
           and commands[1][commands[1].index("--parent-sha256") + 1] == _sha(anchor_path))
 
 
+def test_block_training(scratch: Path) -> None:
+    from types import SimpleNamespace
+    from unittest.mock import patch
+    import rl_bank_lane as lane
+    import rl_build_pack as packer
+    from rl_common import workspace_paths
+    from rl_train_step import full_pass_sample_counts, train_pack_update
+    from ndm.data.masked_sft_dataset import MaskedSFTPackedDataset, SFTSamplerIdentity
+
+    args = SimpleNamespace(lane=0, args_json=Path('/dev/null'), probe_timeout=10,
+                           pack_timeout=60, train_timeout=60, anchor_period=1,
+                           anchor_authority_root=Path('fixture'), block_mode='on',
+                           block_min_targets=65536, block_max_targets=131072,
+                           block_max_wait_cycles=2)
+    inventory = [{'receipt_sha256': f'{i:064x}', 'kind': 'teacher-corrected' if i % 2 else
+                  'on-policy-success', 'task_id': str(i), 'task_sha256': 'a' * 64, 'cycle': 1,
+                  'policy_checkpoint': {'checkpoint_sha256': 'b' * 64},
+                  'episode': {'episode_text': 'fixture', 'generations': [],
+                              'supervise_from': 0, 'tokens': 1500, 'targets': 1499}}
+                 for i in range(1, 37)]
+    captured = []
+    run_argv = ['rl_bank_lane.py', 'run', '--bank', str(scratch), '--lane', '0',
+                '--args-json', '/dev/null']
+    with patch.dict(os.environ, {}, clear=True), patch.object(sys, 'argv', run_argv), \
+         patch.object(lane, 'lane_run', side_effect=lambda parsed: captured.append(parsed)):
+        lane.main()
+    check('F3 BLOCK_MODE defaults off with registered limits',
+          (captured[-1].block_mode, captured[-1].block_min_targets,
+           captured[-1].block_max_targets, captured[-1].block_max_wait_cycles) ==
+          ('off', 65536, 131072, 48))
+    with patch.dict(os.environ, {'BLOCK_MODE': 'on', 'BLOCK_MIN_TARGETS': '123',
+                               'BLOCK_MAX_TARGETS': '456', 'BLOCK_MAX_WAIT_CYCLES': '7'}, clear=True), \
+         patch.object(sys, 'argv', run_argv), \
+         patch.object(lane, 'lane_run', side_effect=lambda parsed: captured.append(parsed)):
+        lane.main()
+    check('F3 all four environment controls bind to run configuration',
+          (captured[-1].block_mode, captured[-1].block_min_targets,
+           captured[-1].block_max_targets, captured[-1].block_max_wait_cycles) ==
+          ('on', 123, 456, 7))
+    trigger_state = {}
+    lane._initialize_block_state(trigger_state, args)
+    threshold_inventory = [{'episode': {'targets': 65536}}]
+    check('F3 block trigger fires exactly at threshold',
+          lane._block_trigger(trigger_state, args, 1, threshold_inventory) == 'targets')
+    trigger_state = {}
+    lane._initialize_block_state(trigger_state, args)
+    check('F3 below threshold accumulates without early firing',
+          lane._block_trigger(trigger_state, args, 1, [{'episode': {'targets': 65535}}]) is None
+          and trigger_state['block_wait_cycles'] == 1)
+    check('F3 inventory reread in one cycle does not double count wait',
+          lane._block_trigger(trigger_state, args, 1, [{'episode': {'targets': 65535}}]) is None
+          and trigger_state['block_wait_cycles'] == 1)
+    check('F3 empty inventory never fires max wait',
+          all(lane._block_trigger(trigger_state, args, c, []) is None for c in range(1, 5)))
+    check('F3 teacher priority and strict cap retain remainder',
+          [r['task_id'] for r in packer.select_block_receipts(inventory, set(), 2998)] == ['1', '3'])
+    check('F3 consumed inventory excluded from full block',
+          len(packer.select_block_receipts(inventory, {inventory[0]['receipt_sha256']}, 131072)) == 35)
+    check('F3 density formula bounded and predeclared',
+          [lane.block_steps(n) for n in (1, 11200, 11201, 65536, 131072, 1000000)] ==
+          [8, 8, 9, 47, 94, 256])
+    check('F3 full pass budget covers more packs than updates without overrun',
+          full_pass_sample_counts(100, 8) == [13, 13, 13, 13, 12, 12, 12, 12]
+          and full_pass_sample_counts(3, 8) == [1] * 8)
+
+    paths = workspace_paths(scratch / 'block-training')
+    paths['root'].mkdir(parents=True)
+    state = {'schema': 'emender-rl-loop-bank-lane-state-v1',
+             'lineage_path': 'parent.pt', 'lineage_sha256': 'parent', 'updates_total': 0}
+    summary = {'policy_checkpoint_sha256': 'parent', 'attempts': 1, 'outcomes': []}
+    commands = []
+    block_parents = []
+    block_coverages = []
+    optimizer_steps = []
+
+    class TinyModel(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.weight = torch.nn.Parameter(torch.tensor(1.0))
+
+        def forward(self, tokens, *, loss_mask, **kwargs):
+            return self.weight.square() * loss_mask.sum()
+
+    def spawn(cmd, **kwargs):
+        commands.append(cmd)
+        if cmd[1].endswith('rl_build_pack.py'):
+            argv = [cmd[1], *cmd[2:], '--python', sys.executable]
+            with patch.object(sys, 'argv', argv), \
+                 patch.object(packer, 'walk_stream', return_value=inventory), \
+                 patch('scripts.build_e97_pi_native_curriculum.encode_candidate',
+                       return_value=([1] * 1500, [0] + [1] * 1499, [])):
+                packer.main()
+        elif cmd[1].endswith('rl_train_step.py'):
+            def option(name):
+                return cmd[cmd.index(name) + 1]
+            block_parents.append(option('--parent-sha256'))
+            authority, packs = Path(option('--authority-root')), Path(option('--pack-root'))
+            identity = SFTSamplerIdentity(authority_manifest_sha256=option('--authority-sha256'),
+                                          pack_manifest_sha256=option('--pack-sha256'),
+                                          sampler_key=970001, data_world_size=1, context_size=2048)
+            data = MaskedSFTPackedDataset(authority, packs, identity=identity, rank=0,
+                                         sampler_mode='epoch-permutation')
+            steps = int(option('--steps'))
+            model = TinyModel()
+            optimizer = torch.optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
+            samples = []
+            for count in full_pass_sample_counts(len(data.packs), steps):
+                result = train_pack_update(model, optimizer, data, sample_count=count,
+                                           device=torch.device('cpu'), grad_clip=1.0)
+                samples.extend(result['sampled_packs'])
+            optimizer_steps.append((steps, float(model.weight.detach()), bool(optimizer.state)))
+            block_coverages.append(len({r for s in samples for r in s['record_ids']}))
+            checkpoint = Path(option('--output-root')) / 'block.pt'
+            checkpoint.parent.mkdir(parents=True, exist_ok=True)
+            checkpoint.write_text('trained block')
+            event = {'event': 'checkpoint', 'checkpoint': str(checkpoint),
+                     'checkpoint_sha256': _sha(checkpoint), 'loss': 1.0,
+                     'authority_manifest_sha256': identity.authority_manifest_sha256,
+                     'pack_manifest_sha256': identity.pack_manifest_sha256,
+                     'sampled_packs': samples}
+            Path(option('--log-jsonl')).write_text(json.dumps(event) + '\n')
+            data.close()
+        elif 'probe' in cmd:
+            out = Path(cmd[cmd.index('--output') + 1])
+            out.parent.mkdir(parents=True, exist_ok=True)
+            candidate = cmd[cmd.index('--checkpoint-sha256') + 1]
+            out.write_text(json.dumps({'frame_valid': state['lane_cycle'] != 2 or
+                                      candidate.startswith('anchor'),
+                                      'checkpoint_sha256': candidate}))
+
+    def anchor(_paths, current, _args, cycle, *_rest):
+        return {'checkpoint': f'anchor-{cycle}.pt', 'checkpoint_sha256': f'anchor-{cycle}',
+                'loss': 1.0}
+
+    with patch.object(lane, '_spawn', side_effect=spawn), \
+         patch.object(lane, '_anchor_train_row', side_effect=anchor), \
+         patch('rl_receipts.walk_stream', return_value=inventory):
+        for cycle in range(1, 5):
+            state['lane_cycle'] = cycle
+            lane._train_cycle_channels({}, paths, state, args, cycle, {}, paths['root'] / 'log',
+                                      summary, '0', 0 if cycle > 1 else 36)
+            if cycle == 1:
+                check('F3 anchors continue and no receipts train during accumulation',
+                      state['lineage_sha256'] == 'anchor-1' and state['updates_total'] == 1
+                      and not commands[:-1] and state['block_inventory_targets'] == 53964)
+            if cycle == 2:
+                check('F3 rejected block preserves inventory and consumes nothing',
+                      state['lineage_sha256'] == 'anchor-2' and state['updates_total'] == 2
+                      and state['block_skipped_total'] == state['block_backoff_count'] == 1
+                      and state['block_inventory_targets'] == 53964
+                      and not (paths['root'] / 'consumed-receipts.jsonl').exists())
+            if cycle == 3:
+                check('F3 rejection cooldown retains anchors without block retry',
+                      state['lineage_sha256'] == 'anchor-3' and state['updates_total'] == 3
+                      and len(block_parents) == 1)
+    check('F3 blocks pack entire inventory beyond old 32-receipt window',
+          block_coverages == [36, 36] and all('--all-unconsumed' in c for c in commands
+                                              if c[1].endswith('rl_build_pack.py')))
+    check('F3 retry uses current adopted anchor and advances block lineage once',
+          block_parents == ['anchor-2', 'anchor-4'] and state['updates_total'] == 5
+          and state['anchor_updates_total'] == 4 and state['block_adopted_total'] == 1
+          and state['block_attempts_total'] == 2 and state['block_inventory_targets'] == 0
+          and state['block_backoff_count'] == 0)
+    check('F3 adopted block consumption names every sampled receipt exactly once',
+          packer.load_consumed_ledger(paths['root'] / 'consumed-receipts.jsonl') ==
+          {r['receipt_sha256'] for r in inventory}
+          and len((paths['root'] / 'consumed-receipts.jsonl').read_text().splitlines()) == 36)
+    check('F3 one invocation per block retains optimizer internally at density budget',
+          all('--full-pass' in c for c in commands if c[1].endswith('rl_train_step.py'))
+          and len(optimizer_steps) == 2
+          and all(steps == 39 and weight < 1 and persisted
+                  for steps, weight, persisted in optimizer_steps))
+    # Exercise serial accumulation on the same real CPU authority with packs > steps.
+    authority = paths['packs'] / 'cycle-0004' / 'authority'
+    packs = paths['packs'] / 'cycle-0004' / 'packs'
+    identity = SFTSamplerIdentity(authority_manifest_sha256=_sha(authority / 'manifest.json'),
+                                  pack_manifest_sha256=_sha(packs / 'manifest.json'), sampler_key=970001,
+                                  data_world_size=1, context_size=2048)
+    data = MaskedSFTPackedDataset(authority, packs, identity=identity, rank=0,
+                                 sampler_mode='epoch-permutation')
+    model = TinyModel()
+    optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
+    result = train_pack_update(model, optimizer, data, sample_count=5,
+                               device=torch.device('cpu'), grad_clip=0)
+    check('F3 serial accumulation normalizes by all targets and logs every pack',
+          result['targets'] == 5 * 1499 and len(result['sampled_packs']) == 5
+          and abs(float(model.weight.detach()) - 0.98) < 1e-6 and result['loss'] == 1.0)
+    data.close()
+    skip_paths = workspace_paths(scratch / 'block-no-signal')
+    skip_paths['root'].mkdir(parents=True)
+    skip_state = {'schema': 'emender-rl-loop-bank-lane-state-v1',
+                  'lineage_path': 'parent', 'updates_total': 0}
+    thin = [{'episode': {'targets': 65536}}]
+    with patch.object(lane, '_block_inventory', return_value=thin), \
+         patch.object(lane, '_sft_train_row', return_value=None), \
+         patch.object(lane, '_record_adopted_exposure') as expose:
+        lane._run_receipts_block(skip_paths, skip_state, args, 1, {}, skip_paths['root'] / 'log',
+                                 lambda row: check('F3 skipped block must not be probed', False))
+    check('F3 low-signal block skips without consumption or lineage advance',
+          skip_state['block_inventory_targets'] == 65536 and skip_state['updates_total'] == 0
+          and skip_state['block_backoff_count'] == 1 and skip_state['block_skipped_total'] == 1
+          and not expose.called and not (skip_paths['root'] / 'consumed-receipts.jsonl').exists())
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--scratch", type=Path,
@@ -1075,6 +1279,7 @@ def main() -> None:
     test_no_signal_exposure_skip(scratch)
     test_rejected_anchor_chain(scratch)
     test_channel_checkpoint_paths(scratch)
+    test_block_training(scratch)
     print(json.dumps({"schema": "emender-rl-loop-bank-unit-test-v1",
                      "passed": len(PASSED), "tests": PASSED}, sort_keys=True))
 

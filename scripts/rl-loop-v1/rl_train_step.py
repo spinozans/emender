@@ -51,6 +51,59 @@ def sampled_pack_records(data, absolute_index: int) -> dict:
             "record_ids": [int(i) for i in data.pack_record_ids[start:stop]]}
 
 
+def full_pass_sample_counts(pack_count: int, steps: int) -> list[int]:
+    """Distribute one complete permutation across updates; repeat only when
+    the minimum update budget exceeds the pack count. Accumulate packs serially
+    so block size does not increase peak model activation memory."""
+    if pack_count <= 0 or steps <= 0:
+        raise ValueError("pack count and steps must be positive")
+    samples = max(pack_count, steps)
+    return [samples // steps + int(i < samples % steps) for i in range(steps)]
+
+
+def train_pack_update(core_model, optimizer, data, *, sample_count: int,
+                      device, grad_clip: float) -> dict:
+    """One target-normalized update over serially accumulated sampled packs."""
+    optimizer.zero_grad(set_to_none=True)
+    cursor = data.next_absolute_rank_sample_index
+    expected_targets = sum(int(data.packs[data.pack_id_at(cursor + i)]["targets"])
+                           for i in range(sample_count))
+    if expected_targets <= 0:
+        raise RuntimeError("pack sampled no assistant targets")
+    loss_sum = 0.0
+    tokens_total = targets_total = 0
+    samples = []
+    sample_ids = []
+    for _ in range(sample_count):
+        sample = sampled_pack_records(data, data.next_absolute_rank_sample_index)
+        tokens, masks, valid_masks, reset_masks, lengths, target_counts = \
+            data.get_boundary_aware_batch(1, device=device)
+        if int(masks.sum()) != int(target_counts[0]):
+            raise RuntimeError("boundary-aware batch target accounting mismatch")
+        with torch.autocast(device_type=device.type, dtype=torch.bfloat16):
+            part = core_model(
+                tokens, return_loss=True, loss_mask=masks, valid_mask=valid_masks,
+                reset_before=reset_masks, loss_reduction="sum")
+            scaled = part * (1.0 / target_counts.sum().to(torch.float32)
+                             if sample_count == 1 else 1.0 / expected_targets)
+        scaled.backward()
+        loss_sum += float(part.detach().float())
+        tokens_total += int(lengths.sum())
+        targets_total += int(target_counts.sum())
+        samples.append(sample)
+        sample_ids.extend(data.last_batch_sample_ids)
+    if targets_total != expected_targets:
+        raise RuntimeError("accumulated target accounting mismatch")
+    grad_norm = torch.nn.utils.clip_grad_norm_(
+        core_model.parameters(), grad_clip if grad_clip > 0 else float("inf"))
+    if not torch.isfinite(grad_norm):
+        raise RuntimeError("nonfinite SFT gradient norm")
+    optimizer.step()
+    return {"loss": loss_sum / targets_total, "tokens": tokens_total,
+            "targets": targets_total, "sampled_packs": samples,
+            "sample_ids": sample_ids, "grad_norm": float(grad_norm)}
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--parent-checkpoint", type=Path, required=True)
@@ -64,6 +117,8 @@ def main() -> None:
     parser.add_argument("--log-jsonl", type=Path, required=True)
     parser.add_argument("--source-commit", required=True)
     parser.add_argument("--steps", type=int, default=1)
+    parser.add_argument("--full-pass", action="store_true",
+                        help="traverse every pack with serial gradient accumulation")
     parser.add_argument("--context-size", type=int, required=True)
     parser.add_argument("--lr", type=float, default=1e-5)
     parser.add_argument("--weight-decay", type=float, default=0.01)
@@ -177,43 +232,26 @@ def main() -> None:
     recent_losses: list[float] = []
     final_update = 0
     sampled_packs = []
+    sample_counts = (full_pass_sample_counts(len(data.packs), args.steps)
+                     if args.full_pass else [1] * args.steps)
     for update in range(1, args.steps + 1):
         final_update = update
         begin = time.monotonic()
-        optimizer.zero_grad(set_to_none=True)
-        sampled_pack = sampled_pack_records(data, data.next_absolute_rank_sample_index)
-        tokens, masks, valid_masks, reset_masks, lengths, target_counts = \
-            data.get_boundary_aware_batch(1, device=device)
-        island_targets = target_counts.sum().to(torch.int64)
-        if int(island_targets) <= 0:
-            raise RuntimeError("pack sampled no assistant targets")
-        observed = int(masks.sum())
-        if observed != int(target_counts[0]):
-            raise RuntimeError("boundary-aware batch target accounting mismatch")
-        with torch.autocast(device_type="cuda", dtype=torch.bfloat16):
-            part = core_model(
-                tokens, return_loss=True, loss_mask=masks, valid_mask=valid_masks,
-                reset_before=reset_masks, loss_reduction="sum")
-            # World of one: the target-token-normalized gradient of the pack.
-            scaled = part * (1.0 / island_targets.to(torch.float32))
-        scaled.backward()
-        grad_norm = torch.nn.utils.clip_grad_norm_(
-            core_model.parameters(),
-            args.grad_clip if args.grad_clip > 0 else float("inf"))
-        if not torch.isfinite(grad_norm):
-            raise RuntimeError("nonfinite SFT gradient norm")
-        optimizer.step()
-        sampled_packs.append(sampled_pack)
-        step_loss = float(part.detach().float()) / int(island_targets)
+        result = train_pack_update(core_model, optimizer, data,
+                                   sample_count=sample_counts[update - 1],
+                                   device=device, grad_clip=args.grad_clip)
+        sampled_packs.extend(result["sampled_packs"])
+        step_loss = result["loss"]
         recent_losses.append(step_loss)
-        total_tokens += int(lengths.sum())
-        total_targets += int(target_counts.sum())
+        total_tokens += result["tokens"]
+        total_targets += result["targets"]
         emit(args.log_jsonl, "step", 0, update=update, loss=step_loss,
-             global_tokens=int(lengths.sum()), global_targets=int(target_counts.sum()),
-             rank_sample_ids=list(data.last_batch_sample_ids),
-             sampled_pack=sampled_pack,
+             global_tokens=result["tokens"], global_targets=result["targets"],
+             rank_sample_ids=result["sample_ids"],
+             sampled_pack=result["sampled_packs"][0],
+             sampled_packs=result["sampled_packs"],
              total_tokens=total_tokens, total_targets=total_targets,
-             grad_norm=float(grad_norm),
+             grad_norm=result["grad_norm"],
              step_seconds=time.monotonic() - begin,
              max_hbm_allocated=torch.cuda.max_memory_allocated(),
              max_hbm_reserved=torch.cuda.max_memory_reserved())
@@ -248,7 +286,8 @@ def main() -> None:
         "diloco_merge_enabled": False,
         "source_commit": args.source_commit,
         "sampler_key": args.sampler_key,
-        "sampler_cursor": final_update,
+        "sampler_cursor": data.next_absolute_rank_sample_index,
+        "full_pass": args.full_pass,
         "sampled_packs": sampled_packs,
         "learning_rate": args.lr,
         "weight_decay": args.weight_decay,

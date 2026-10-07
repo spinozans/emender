@@ -540,6 +540,8 @@ def lane_run(args: argparse.Namespace) -> None:
     #      state (surfaces in every coordinator report; lane-owned write).
     #      Default sft-receipts keeps unflagged lanes byte-identical.
     state["train_step_channel"] = args.lane_train_step
+    if "block_mode" in state:
+        state["block_mode"] = args.block_mode
     if args.lane_train_step == "policy-gradient":
         state["pg_parameters"] = {
             "lr": args.pg_lr, "kl_beta": args.pg_kl_beta,
@@ -553,6 +555,9 @@ def lane_run(args: argparse.Namespace) -> None:
         state["pg_updates_total"] = int(state.get("pg_updates_total", 0))
         state["pg_fallbacks_total"] = int(state.get("pg_fallbacks_total", 0))
     write_lane_state(paths["root"], state)
+    if args.block_mode == "on":
+        _initialize_block_state(state, args)
+        write_lane_state(paths["root"], state)
     deadline = time.monotonic() + args.max_seconds
     failures = 0
     env = dict(os.environ)
@@ -763,12 +768,13 @@ def _train_cycle_channels(bank, paths, state, args, cycle, cycle_env, cycle_log,
     def probe_adopt(row, channel, event=None):
         nonlocal attempted, adopted
         if row is None:
-            return
+            return False
         accepted = _probe_adopt_train_row(
             bank, paths, state, args, cycle, cycle_env, cycle_log, summary, gpu,
             row, channel, row_idx=attempted, pg_event=event)
         attempted += 1
         adopted += int(accepted)
+        return accepted
 
     if state.get("train_step_channel") == "policy-gradient":
         row, pg_event = _pg_train_row(paths, state, args, cycle, cycle_env, cycle_log)
@@ -782,7 +788,10 @@ def _train_cycle_channels(bank, paths, state, args, cycle, cycle_env, cycle_log,
             and args.anchor_authority_root is not None:
         probe_adopt(_anchor_train_row(paths, state, args, cycle, cycle_env, cycle_log),
                     "sft-anchor-corpus")
-    if receipts:
+    if getattr(args, "block_mode", "off") == "on":
+        _run_receipts_block(paths, state, args, cycle, cycle_env, cycle_log,
+                            lambda row: probe_adopt(row, "sft-receipts"))
+    elif receipts:
         probe_adopt(_sft_train_row(paths, state, args, cycle, cycle_env, cycle_log),
                     "sft-receipts")
     if not adopted:
@@ -793,6 +802,99 @@ def _train_cycle_channels(bank, paths, state, args, cycle, cycle_env, cycle_log,
                                    train_channel=None, pg_event=pg_event)
         print(f"LANE_COLLECTED lane={args.lane} cycle={cycle} receipts={receipts} "
               "(no adopted train step)", flush=True)
+
+
+def block_steps(targets: int) -> int:
+    # Pre-registered density: ceil(authority assistant targets / 1400), clamped
+    # to [8, 256]. --full-pass accumulates multiple packs per update if needed
+    # to traverse every pack; packs repeat if the step budget exceeds their count.
+    return min(256, max(8, (targets + 1399) // 1400))
+
+
+def _initialize_block_state(state, args) -> None:
+    if min(args.block_min_targets, args.block_max_targets,
+           args.block_max_wait_cycles) <= 0:
+        raise _Stop("BLOCK limits must be positive")
+    if args.block_max_targets < args.block_min_targets:
+        raise _Stop("BLOCK_MAX_TARGETS must be >= BLOCK_MIN_TARGETS")
+    state["block_mode"] = "on"
+    for key in ("block_inventory_targets", "block_wait_cycles",
+                "block_attempts_total", "block_adopted_total", "block_skipped_total",
+                "block_backoff_count", "block_retry_after_cycle"):
+        state.setdefault(key, 0)
+
+
+def _block_inventory(paths) -> list[dict]:
+    from rl_build_pack import load_consumed_ledger, select_window_receipts
+    from rl_receipts import walk_stream
+
+    receipts = walk_stream(paths, enc=tiktoken.get_encoding("p50k_base"))
+    consumed = load_consumed_ledger(paths["root"] / "consumed-receipts.jsonl")
+    return select_window_receipts(receipts, consumed, len(receipts))
+
+
+def _block_trigger(state, args, cycle: int, inventory: list[dict]) -> str | None:
+    state["block_inventory_targets"] = sum(int(r["episode"]["targets"])
+                                            for r in inventory)
+    # Count completed collect cycles with inventory, not wall time or tasks.
+    if state.get("block_last_inventory_cycle") != cycle:
+        state["block_wait_cycles"] = (int(state["block_wait_cycles"]) + 1
+                                      if inventory else 0)
+        state["block_last_inventory_cycle"] = cycle
+    if not inventory or cycle < int(state["block_retry_after_cycle"]):
+        return None
+    if state["block_inventory_targets"] >= args.block_min_targets:
+        return "targets"
+    if state["block_wait_cycles"] >= args.block_max_wait_cycles:
+        return "max-wait"
+    return None
+
+
+def _run_receipts_block(paths, state, args, cycle, cycle_env, cycle_log,
+                         probe_adopt) -> None:
+    _initialize_block_state(state, args)
+    inventory = _block_inventory(paths)
+    reason = _block_trigger(state, args, cycle, inventory)
+    write_lane_state(paths["root"], state)
+    if reason is None:
+        return
+    state["block_attempts_total"] += 1
+    print(f"BLOCK_TRIGGER lane={args.lane} cycle={cycle} reason={reason} "
+          f"inventory_targets={state['block_inventory_targets']} "
+          f"wait_cycles={state['block_wait_cycles']}", flush=True)
+    write_lane_state(paths["root"], state)
+    try:
+        row = _sft_train_row(paths, state, args, cycle, cycle_env, cycle_log,
+                             block=True)
+        accepted = row is not None and probe_adopt(row)
+    except _Stop:
+        _block_skipped(paths, state, args, cycle, "stage-failure")
+        raise
+    if not accepted:
+        _block_skipped(paths, state, args, cycle, "no-signal-or-probe-rejection")
+        return
+    state["block_adopted_total"] += 1
+    state["block_backoff_count"] = 0
+    state["block_retry_after_cycle"] = 0
+    state["block_wait_cycles"] = 0
+    state["block_inventory_targets"] = sum(int(r["episode"]["targets"])
+                                            for r in _block_inventory(paths))
+    write_lane_state(paths["root"], state)
+    print(f"BLOCK_ADOPTED lane={args.lane} cycle={cycle} "
+          f"sha={row['checkpoint_sha256']} "
+          f"inventory_targets={state['block_inventory_targets']}", flush=True)
+
+
+def _block_skipped(paths, state, args, cycle, reason) -> None:
+    state["block_skipped_total"] += 1
+    state["block_backoff_count"] += 1
+    # A rejected block leaves its inventory/wait age intact, skips the next
+    # collect cycle, then retries. Bounded one-cycle cooldown, no silent drain.
+    state["block_retry_after_cycle"] = cycle + 2
+    write_lane_state(paths["root"], state)
+    print(f"BLOCK_SKIPPED lane={args.lane} cycle={cycle} reason={reason} "
+          f"backoff={state['block_backoff_count']} "
+          f"retry_after_cycle={state['block_retry_after_cycle']}", flush=True)
 
 
 def _adopted_exposure_rows(paths, cycle: int, row: dict) -> list[dict]:
@@ -831,25 +933,32 @@ def _record_adopted_exposure(paths, cycle: int, row: dict) -> None:
             ledger.write(json.dumps(entry, sort_keys=True) + "\n")
 
 
-def _sft_train_row(paths, state, args, cycle, cycle_env, cycle_log) -> dict | None:
-    """The proven receipts-SFT train stage: pack build + single-GPU masked-SFT
-    step.  Returns the train 'checkpoint' event row, or None on failure
+def _sft_train_row(paths, state, args, cycle, cycle_env, cycle_log,
+                   *, block: bool = False) -> dict | None:
+    """Receipts-SFT: one step by default, a complete pack pass in block mode.
+    Returns the train 'checkpoint' event row, or None on no signal
     (raises _Stop on hard stage failure — unchanged v1 behavior)."""
     import subprocess as _sp
 
     _spawn([PY, str(Path(__file__).resolve().parent /
                     "rl_build_pack.py"),
             "--workspace", str(paths["root"]),
-            "--cycle", str(cycle), "--min-targets", "8",
+            "--cycle", str(cycle), "--min-targets", "1" if block else "8",
             # era-10 dose fix: pack the oldest 32 UNCONSUMED receipts from the
             # whole verified stream (FIFO, ledger-tracked) instead of this
             # cycle's 1-4. Only sampled, adopted packs are consumed.
-            "--window", "32",
+            *(["--all-unconsumed", "--max-targets", str(args.block_max_targets)]
+              if block else ["--window", "32"]),
             "--consumed-ledger", str(paths["root"] / "consumed-receipts.jsonl")],
            env=cycle_env, timeout=args.pack_timeout,
            log_path=cycle_log)
     build = json.loads((paths["packs"] / f"cycle-{cycle:04d}" /
                         "build-summary.json").read_text())
+    steps = block_steps(build["targets"]) if block else 1
+    if block:
+        print(f"BLOCK_PACKED lane={args.lane} cycle={cycle} "
+              f"targets={build['targets']} packs={build['packs']} steps={steps}",
+              flush=True)
     training = paths["training"] / f"cycle-{cycle:04d}"
     source_commit = _sp.check_output(
         ["git", "-C", str(REPO_ROOT), "rev-parse", "HEAD"],
@@ -867,7 +976,8 @@ def _sft_train_row(paths, state, args, cycle, cycle_env, cycle_log) -> dict | No
             "--pack-sha256", build["pack_manifest_sha256"],
             "--output-root", str(training / "checkpoints"),
             "--log-jsonl", str(training / "log.jsonl"),
-            "--source-commit", source_commit, "--steps", "1",
+            "--source-commit", source_commit, "--steps", str(steps),
+            *(["--full-pass"] if block else []),
             "--context-size", str(build["context_size"]),
             "--projection-chunk-size", "2048"],
            env=cycle_env, timeout=args.train_timeout,
@@ -884,6 +994,13 @@ def _sft_train_row(paths, state, args, cycle, cycle_env, cycle_log) -> dict | No
             train_event = candidate
     if train_event is None or "checkpoint_sha256" not in train_event:
         raise _Stop("no checkpoint event from the train stage")
+    if block:
+        print(f"BLOCK_TRAINED lane={args.lane} cycle={cycle} "
+              f"steps={steps} sha={train_event['checkpoint_sha256']}", flush=True)
+        expected = build["receipts"]
+        if len(_adopted_exposure_rows(paths, cycle, train_event)) != expected:
+            _unlink_orphan_checkpoint(train_event, "incomplete block exposure")
+            raise _Stop("block did not sample every packed receipt")
     # era-8 no-signal step skip (2026-10-04, unified-collapse finding): a
     # fresh-optimizer Adam step at near-zero pack loss carries no learning
     # signal — the update is dominated by the +-lr*sign first-step jitter
@@ -1205,6 +1322,14 @@ def main() -> None:
     p.add_argument("--probe-timeout", type=int, default=1800)
     p.add_argument("--max-failures", type=int, default=3)
     p.add_argument("--max-seconds", type=int, default=4 * 3600)
+    p.add_argument("--block-mode", choices=("off", "on"),
+                   default=os.environ.get("BLOCK_MODE", "off"))
+    p.add_argument("--block-min-targets", type=int,
+                   default=int(os.environ.get("BLOCK_MIN_TARGETS", "65536")))
+    p.add_argument("--block-max-targets", type=int,
+                   default=int(os.environ.get("BLOCK_MAX_TARGETS", "131072")))
+    p.add_argument("--block-max-wait-cycles", type=int,
+                   default=int(os.environ.get("BLOCK_MAX_WAIT_CYCLES", "48")))
     # ---- v3 CORPUS-REPLAY ANCHOR (operator ruling 2026-09-29: RL shaping on
     #      the corpus checkpoint; the merge-5 collapse diagnosis — the gym must
     #      be a shaping layer on a corpus-dominant diet, never the whole meal).

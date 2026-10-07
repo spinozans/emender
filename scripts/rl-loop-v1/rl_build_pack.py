@@ -153,6 +153,25 @@ def select_window_receipts(receipts: list[dict], consumed: set,
     return (teacher + onpolicy)[:window]
 
 
+def select_block_receipts(receipts: list[dict], consumed: set,
+                          max_targets: int) -> list[dict]:
+    """Whole-record, teacher-priority prefix; never exceed the target cap."""
+    if max_targets <= 0:
+        raise ValueError("block target cap must be positive")
+    ordered = select_window_receipts(receipts, consumed, len(receipts))
+    selected = []
+    targets = 0
+    for receipt in ordered:
+        count = int(receipt["episode"]["targets"])
+        if targets + count > max_targets:
+            break
+        selected.append(receipt)
+        targets += count
+    if ordered and not selected:
+        raise SystemExit("first priority receipt exceeds block target cap")
+    return selected
+
+
 def load_consumed_ledger(path: Path | None) -> set:
     consumed: set = set()
     if path is not None and Path(path).is_file():
@@ -176,9 +195,12 @@ def main() -> None:
     parser.add_argument("--window", type=int, default=0,
                         help="era-10: pack the oldest N unconsumed receipts from "
                              "the whole stream (FIFO) instead of this cycle only")
+    parser.add_argument("--all-unconsumed", action="store_true",
+                        help="pack the full teacher-priority inventory up to --max-targets")
+    parser.add_argument("--max-targets", type=int, default=131072)
     parser.add_argument("--consumed-ledger", type=Path, default=None,
                         help="JSONL of consumed receipt shas; required with "
-                             "--window so nothing trains twice unintentionally")
+                             "--window/--all-unconsumed for exact exposure accounting")
     args = parser.parse_args()
     paths = workspace_paths(args.workspace)
     ensure_layout(paths)
@@ -186,12 +208,16 @@ def main() -> None:
     receipts = walk_stream(paths, enc=enc)
     if args.receipts_limit:
         receipts = receipts[:args.receipts_limit]
-    if args.window:
+    if args.all_unconsumed and (args.window or args.receipts_limit):
+        raise SystemExit("--all-unconsumed cannot truncate by window/receipts-limit")
+    if args.all_unconsumed or args.window:
         if not args.consumed_ledger:
-            raise SystemExit("--window requires --consumed-ledger")
+            raise SystemExit("unconsumed selection requires --consumed-ledger")
         consumed = load_consumed_ledger(args.consumed_ledger)
-        cycle_receipts = select_window_receipts(receipts, consumed, args.window)
-        if not cycle_receipts:
+        cycle_receipts = (select_block_receipts(receipts, consumed, args.max_targets)
+                          if args.all_unconsumed else
+                          select_window_receipts(receipts, consumed, args.window))
+        if not cycle_receipts and not args.all_unconsumed:
             # fallback: this cycle's fresh receipts, if any are unconsumed
             cycle_receipts = [r for r in receipts
                               if r["cycle"] == args.cycle
@@ -221,7 +247,7 @@ def main() -> None:
     print(f"PACK packs={packs['packs']} pack manifest sha256={packs['pack_manifest_sha256']} "
           f"context_size={context}", flush=True)
     # Packing is inventory, not optimizer exposure. Never advance consumption here.
-    if args.window:
+    if args.window or args.all_unconsumed:
         with (paths["root"] / "packed-receipts.jsonl").open("a") as ledger:
             for r in cycle_receipts:
                 ledger.write(json.dumps({
@@ -236,6 +262,9 @@ def main() -> None:
         "receipt_cycles_span": [min(r["cycle"] for r in cycle_receipts),
                                  max(r["cycle"] for r in cycle_receipts)],
         "window": args.window,
+        "all_unconsumed": args.all_unconsumed,
+        "targets": authority["targets"],
+        "packs": packs["packs"],
         "authority_manifest_sha256": authority["manifest_sha256"],
         "pack_manifest_sha256": packs["pack_manifest_sha256"],
         "context_size": context,
