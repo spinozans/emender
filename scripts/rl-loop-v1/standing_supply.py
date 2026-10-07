@@ -95,16 +95,21 @@ LOOP = Path("/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-rl-loop-v1")
 #      passing BANK_ROOT, so an env-only binding is lost on respawn)
 #   2. BANK_ROOT environment variable
 #   3. legacy default (the audit-frozen bank)
-def _persisted_bank_root():
-    # bank-root.txt is a one-line path file OWNED BY THE OPERATOR, only read
-    # by the daemon (never rewritten by it) — it survives daemon state rewrites
-    # and the cron watchdog's env-less respawns.
+def _persisted_bank_roots():
+    # bank-root.txt: ONE BANK ROOT PER LINE, owned by the operator, only read
+    # by the daemon (never rewritten by it) — survives daemon state rewrites
+    # and the cron watchdog's env-less respawns. Multiple banks each receive
+    # every admitted tranche (independent pools, independent consumption).
     try:
-        return Path((WORK / "standing-supply" / "bank-root.txt").read_text().strip())
+        lines = [l.strip() for l in
+                 (WORK / "standing-supply" / "bank-root.txt").read_text().splitlines()
+                 if l.strip() and not l.strip().startswith("#")]
+        return [Path(l) for l in lines] or [Path(os.environ.get("BANK_ROOT", str(LOOP / "bank")))]
     except Exception:
-        return None
+        return [Path(os.environ.get("BANK_ROOT", str(LOOP / "bank")))]
 
-BANK = _persisted_bank_root() or Path(os.environ.get("BANK_ROOT", str(LOOP / "bank")))
+BANKS = _persisted_bank_roots()
+BANK = BANKS[0]  # legacy single-bank references (metrics/reporting)
 TASK_LAKE = Path("/mnt/nvme2n1/erikg/task_lake")
 SUPPLY = WORK / "standing-supply"
 LOGS = WORK / "logs"
@@ -786,7 +791,6 @@ def inject_tranche(root: Path, tranche: int,
     import inject_pool
     from rl_bank import bank_paths, freeze_pool_task
     bundles, summary = verify_admitted(root)
-    bank = bank_paths(BANK)
     source_commit = subprocess.check_output(
         ["git", "-C", str(REPO), "rev-parse", "HEAD"], text=True).strip()
     program_sha = _sha_file(inject_pool.VALIDATOR_PROGRAM_FIRST_ACTION)
@@ -834,7 +838,8 @@ def inject_tranche(root: Path, tranche: int,
                              if "expected_final" in spec else "")),
             "source_commit": source_commit,
         }
-        freeze_pool_task(bank, task)
+        for _bank_root in BANKS:
+            freeze_pool_task(bank_paths(_bank_root), task)
         frozen_all.append({
             "task_id": task_id, "identity": identity,
             "split": bundle["split"], "family": bundle["task"]["family_id"],
