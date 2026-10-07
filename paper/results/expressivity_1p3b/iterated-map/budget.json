@@ -1,0 +1,22 @@
+{
+  "task": "taskA3-phase2-depthwall",
+  "budget_gpu_seconds_total": 18000,
+  "reserve_seconds": 1500,
+  "smoke": {
+    "e97_median_s_per_step": 0.422,
+    "gdn2_median_s_per_step": 0.436,
+    "steps": 20,
+    "train_len": 128,
+    "batch": 32,
+    "logs": "logs/smoke_e97.log, logs/smoke_gdn2.log"
+  },
+  "formula": "cap = int(0.95*(18000-1500)/(sE+sG))",
+  "cap_steps": 18269,
+  "min_steps": 1000,
+  "expected_gpu_seconds": {
+    "e97": 7710,
+    "gdn2": 7965,
+    "total_both": 15675
+  },
+  "matched": "cap and all rules identical for e97 and gdn2; derived from throughput only, before any accuracy result"
+}
