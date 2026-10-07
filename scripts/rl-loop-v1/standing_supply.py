@@ -88,7 +88,11 @@ from typing import Any, Mapping
 REPO = Path("/home/erikg/emender")
 WORK = Path("/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-lake-expansion-v1")
 LOOP = Path("/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-rl-loop-v1")
-BANK = LOOP / "bank"
+# Bank root for admitted-task injection (bank pool freeze).
+# Configurable since 2026-10-07 (single-learner restart): the audit-frozen
+# legacy bank stays the default for compatibility; set BANK_ROOT to inject
+# into a different bank (e.g. bank-singlelearner-v1).
+BANK = Path(os.environ.get("BANK_ROOT", str(LOOP / "bank")))
 TASK_LAKE = Path("/mnt/nvme2n1/erikg/task_lake")
 SUPPLY = WORK / "standing-supply"
 LOGS = WORK / "logs"
