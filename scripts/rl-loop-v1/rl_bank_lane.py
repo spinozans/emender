@@ -104,6 +104,40 @@ class _LeaseKeeper:
 
 
 # ------------------------------------------------------------------ collect
+def _correction_requires_fresh_solve(body, policy_record, tools) -> bool:
+    """A continuation cannot replace a retained, sealed-wrong first action."""
+    if not degeneracy_screen(policy_record)[0]:
+        return True
+    binding = body.get("task_lake")
+    if binding is None:
+        return False
+    validator = binding["validator"]
+    spec_path = Path(validator["spec_path"])
+    if sha256_file(spec_path) != validator["spec_sha256"]:
+        raise SystemExit("sealed validator spec identity drift")
+    from scripts.e97_first_party_validator_first_action import (
+        _check_first_action, _required_first_action)
+    from scripts.e97_pi_native_codec import semantic_turn
+
+    required = _required_first_action(json.loads(spec_path.read_text()))
+    if required is None:
+        return False
+    messages = policy_record.get("source_messages") or []
+    retained, _, _, _ = retained_prefix(messages, tools)
+    for index in retained:
+        turn = semantic_turn(messages[index], tools)
+        if turn["name"] in ("think", "finish"):
+            continue
+        try:
+            _check_first_action([{"tool_name": turn["name"],
+                                  "arguments": turn["arguments"]}], required)
+        except SystemExit:
+            return True
+        return False
+    # No retained real action: a continuation can still supply the first one.
+    return False
+
+
 def bank_collect(args: argparse.Namespace) -> None:
     """One lane cycle's GPU collect over the global pool (v1 collect shape).
 
@@ -291,10 +325,10 @@ def bank_collect(args: argparse.Namespace) -> None:
         # a clean first frame from a clean context and the degenerate mode was
         # self-perpetuating (0 screen passes in 24h). When the policy attempt
         # fails the degeneracy screen, the teacher solves FRESH: clean
-        # workspace, no prefix, supervise_from=0. Clean-but-mechanically-failed
-        # attempts keep the spliced continuation (repair-skill data, unpoisoned
-        # prefix).
-        fresh_solve = not degeneracy_screen(policy_record)[0]
+        # workspace, no prefix, supervise_from=0. E5 also starts fresh when
+        # a clean retained first action already violates its sealed criterion.
+        # Genuinely recoverable failures keep the spliced repair continuation.
+        fresh_solve = _correction_requires_fresh_solve(body, policy_record, tools)
         prefix_messages = (None if fresh_solve
                            else policy_record.get("source_messages"))
         policy_generations = [item for item in (policy_record.get("generations") or [])

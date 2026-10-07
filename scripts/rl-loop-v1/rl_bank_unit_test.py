@@ -758,6 +758,149 @@ def test_invalid_probe_rejection(scratch: Path) -> None:
               and not checkpoint.exists())
 
 
+def test_fresh_solve_first_action(scratch: Path) -> None:
+    from rl_bank_lane import _correction_requires_fresh_solve
+    from rl_loop_driver import degeneracy_screen, retained_prefix
+    from scripts.e97_first_party_validator_first_action import _check_first_action
+    from scripts.e97_pi_native_codec import semantic_turn
+
+    spec_path = scratch / "first-action-spec.json"
+    required = {"tool": "read", "arguments": {"path": "correct.txt"}}
+    spec_path.write_text(json.dumps({"required_first_action": required}))
+    body = {"task_lake": {"validator": {"spec_path": str(spec_path),
+                                        "spec_sha256": _sha(spec_path)}}}
+    tools = [{"name": name, "label": name, "description": "fixture",
+              "parameters": {"type": "object"}} for name in ("read", "bash")]
+
+    def action(name, arguments, analysis="clean distinct analysis"):
+        return {"role": "assistant", "reasoning_content": analysis,
+                "tool_calls": [{"type": "function", "function": {
+                    "name": name, "arguments": json.dumps(arguments)}}]}
+
+    def record(first):
+        return {"source_messages": [first, {"role": "toolResult", "isError": False,
+                  "content": [{"type": "text", "text": "clean observation"}]},
+                  action("finish", {"message": "wrong final"}, "different final analysis")]}
+
+    for name, arguments, label in [("bash", {"command": "cat correct.txt"}, "tool"),
+                                    ("read", {"path": "wrong.txt"}, "argument")]:
+        policy = record(action(name, arguments))
+        check(f"E5 wrong first {label} is clean but requires fresh solve",
+              degeneracy_screen(policy)[0]
+              and _correction_requires_fresh_solve(body, policy, tools))
+        # The bank passes no prefix for fresh solves; run_episode then has no
+        # retained prefix metadata, so the correction's supervised span starts at 0.
+        fresh = _correction_requires_fresh_solve(body, policy, tools)
+        prefix = None if fresh else policy["source_messages"]
+        frames = 0 if prefix is None else len(retained_prefix(prefix, tools)[0])
+        teacher = action("read", {"path": "correct.txt"})
+        corrected_first = semantic_turn(teacher if fresh else prefix[0], tools)
+        _check_first_action([{"tool_name": corrected_first["name"],
+                              "arguments": corrected_first["arguments"]}], required)
+        check(f"E5 fresh {label} correction supervises replaceable first action from zero",
+              prefix is None and frames == 0)
+    recoverable = record(action("read", {"path": "correct.txt", "offset": 1}))
+    check("E5 correct first action with wrong final keeps repair continuation",
+          not _correction_requires_fresh_solve(body, recoverable, tools))
+    no_action = {"source_messages": [action("finish", {"message": "wrong"})]}
+    check("E5 dropped finish leaves first action recoverable",
+          not _correction_requires_fresh_solve(body, no_action, tools))
+    unanswered = {"source_messages": [action("read", {"path": "wrong.txt"})]}
+    check("E5 dropped unresolved action leaves first action recoverable",
+          not _correction_requires_fresh_solve(body, unanswered, tools))
+    think_first = record(action("think", {"thought": "private"}))
+    check("E5 think is not a sealed first action",
+          not _correction_requires_fresh_solve(body, think_first, tools))
+    degenerate = record(action("read", {"path": "correct.txt"}))
+    degenerate["source_messages"][-1]["reasoning_content"] = "clean distinct analysis"
+    check("E5 degeneracy still requires fresh solve",
+          _correction_requires_fresh_solve(body, degenerate, tools))
+    spec_path.write_text("{}")
+    body["task_lake"]["validator"]["spec_sha256"] = _sha(spec_path)
+    check("E5 absent first-action criterion preserves clean repairs",
+          not _correction_requires_fresh_solve(body, recoverable, tools))
+    check("E5 seed tasks retain clean repair behavior",
+          not _correction_requires_fresh_solve({}, recoverable, tools))
+
+
+def test_fresh_solve_collect(scratch: Path) -> None:
+    """Exercise actual collection routing and receipt supervision, CPU stubs only."""
+    from contextlib import ExitStack
+    from types import SimpleNamespace
+    from unittest.mock import patch
+    import rl_bank_lane as lane
+
+    tools = [{"name": name, "label": name, "description": "fixture",
+              "parameters": {"type": "object"}} for name in ("read", "bash")]
+    for index, (name, arguments, fresh) in enumerate([
+            ("bash", {"command": "cat correct.txt"}, True),
+            ("read", {"path": "wrong.txt"}, True),
+            ("read", {"path": "correct.txt"}, False)]):
+        root = scratch / f"fresh-collect-{index}"
+        bank = bank_paths(root)
+        ensure_bank_layout(bank)
+        seed = root / "seed.pt"
+        _synthetic_checkpoint(seed, 1.0, "seed")
+        init_lane_state(bank, 0, checkpoint=seed, checkpoint_sha256=_sha(seed), note="unit")
+        spec_path = root / "spec.json"
+        spec_path.write_text(json.dumps({"required_first_action": {
+            "tool": "read", "arguments": {"path": "correct.txt"}}}))
+        body = {"template": "fixture", "prompt": "read correct.txt", "receipt_eligible": True,
+                "workspace_files": {"correct.txt": "original"},
+                "task_lake": {"limits": {"turns": 4}, "validator": {
+                    "spec_path": str(spec_path), "spec_sha256": _sha(spec_path)}}}
+        task = {"task_id": "fixture", "body": body, "task_sha256": "a" * 64}
+        first = {"role": "assistant", "tool_calls": [{"type": "function", "function": {
+            "name": name, "arguments": json.dumps(arguments)}}]}
+        policy = {"status": "stopped", "native_record": "fixture", "generations": [],
+                  "source_messages": [first, {"role": "toolResult", "isError": False,
+                    "content": [{"type": "text", "text": "clean"}]}]}
+        episodes = []
+        receipts = []
+
+        def run_episode(**kwargs):
+            episodes.append(kwargs)
+            if len(episodes) == 1:
+                (kwargs["workspace"] / "correct.txt").write_text("policy mutation")
+                (kwargs["episode_dir"] / "episode-private.json").write_text(json.dumps(policy))
+                return policy
+            prefix = kwargs["prefix_messages"]
+            return {"status": "finished", "generations": [],
+                    "prefix": None if prefix is None else {"retained_frames": 1}}
+
+        def receipt(**kwargs):
+            receipts.append(kwargs)
+            return {"receipt_sha256": "b" * 64, "episode": {"targets": 64}}
+
+        args = SimpleNamespace(bank=root, lane=0, cycle=1, args_json=Path("/dev/null"),
+                               teacher="fixture", teacher_model="fixture", preclaimed=None,
+                               max_tasks=1, claim_ttl=60, teacher_min_interval=0)
+        replacements = {"load_pilot": SimpleNamespace(Metrics=lambda: SimpleNamespace(calls=[])),
+                        "load_curriculum": SimpleNamespace(SYSTEM="fixture"),
+                        "tool_manifest": {"pi_bin": "/dev/null", "model_visible_tools": tools},
+                        "load_policy_engine": None, "make_policy_generate": None,
+                        "make_teacher_generate": None, "claim_pool_task": task,
+                        "heartbeat_claim": True, "retire_task": None,
+                        "append_receipt": "b" * 64}
+        with ExitStack() as stack:
+            for attribute, value in replacements.items():
+                stack.enter_context(patch.object(lane, attribute, return_value=value))
+            stack.enter_context(patch.object(lane, "run_episode", side_effect=run_episode))
+            stack.enter_context(patch.object(lane, "grade_episode", side_effect=[(False, {}), (True, {})]))
+            stack.enter_context(patch.object(lane, "_receipt_from_episode", side_effect=receipt))
+            lane.bank_collect(args)
+        correction = episodes[1]
+        check(f"E5 collect routes correction prefix and supervision {index}",
+              (correction["prefix_messages"] is None) == fresh
+              and receipts[0]["supervise_from"] == (0 if fresh else 1)
+              and receipts[0]["teacher"]["continuation"] ==
+                  ("fresh-episode" if fresh else "same-transcript-splice"))
+        check(f"E5 collect resets only irreversibly wrong workspaces {index}",
+              (correction["workspace"] != episodes[0]["workspace"]) == fresh
+              and (correction["workspace"] / "correct.txt").read_text() ==
+                  ("original" if fresh else "policy mutation"))
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--scratch", type=Path,
@@ -788,6 +931,8 @@ def main() -> None:
     test_receipt_exposure(scratch)
     test_lane_channel_chain(scratch)
     test_invalid_probe_rejection(scratch)
+    test_fresh_solve_first_action(scratch)
+    test_fresh_solve_collect(scratch)
     print(json.dumps({"schema": "emender-rl-loop-bank-unit-test-v1",
                      "passed": len(PASSED), "tests": PASSED}, sort_keys=True))
 
