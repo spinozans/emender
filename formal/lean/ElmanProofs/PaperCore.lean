@@ -12,6 +12,7 @@ import ElmanProofs.Architectures.SplitGatedDelta
 import ElmanProofs.Expressivity.CompositionalDepthDuality
 import ElmanProofs.Expressivity.E88ExceedsE1HCapacity
 import ElmanProofs.Expressivity.NDMRealizesS5
+import ElmanProofs.Expressivity.S5GDNBridge
 import ElmanProofs.Expressivity.S5NDMRealization
 import ElmanProofs.Expressivity.S5Tracker
 import ElmanProofs.Expressivity.S5Witness
@@ -75,6 +76,17 @@ paper-space claims:
   core loads an orthonormal table whose readout, decoded and composed with any
   input state, reproduces `s5TransitionMemory.read` on every
   `(state, generator)` pair (`NDMRealizesS5.emender_realizes_s5_tracker`).
+* The E97/GDN time-depth duality is checked over the actual one-step maps: the
+  E97/E88 state after `T` steps is the `T`-fold composition of the nonlinear
+  update map (compositional depth grows with sequence length), while the GDN
+  state channel is affine in the carried state for any finite schedule.
+* The S5 routing bridge is checked (`S5GDNBridge`): any GDN-family schedule that
+  realizes the S5 tracker (with a reachable-state-separating decoder) forces the
+  word-level state map to factor through the S5 element, makes the per-token fold
+  act as right multiplication by that element, and each such action is affine;
+  a token-independent schedule provably cannot realize the tracker. This is a
+  routing statement — the S5 action must be carried per token — and is **not** a
+  circuit-depth lower bound on the per-token network.
 * The Emender's full delta-correcting nonlinear update has three quantitative
   latching properties checked at the slot level
   (`EmenderLatching.emender_saturation_insensitivity`,
