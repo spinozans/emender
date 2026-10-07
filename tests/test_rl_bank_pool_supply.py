@@ -117,7 +117,8 @@ def test_coordinator_refresh_waits_for_empty_pending_and_claims(
         monkeypatch, pending, live, stale, expected):
     load_script("rl_bank", monkeypatch)
     coord = load_script("rl_bank_coordinator", monkeypatch)
-    assert coord.pool_refresh_needed({"pending": pending, "claims_live": live,
+    assert coord.pool_refresh_needed({"pending": pending + 155,
+                                      "pending_training": pending, "claims_live": live,
                                       "claims_stale": stale}) is expected
 
 
@@ -212,3 +213,45 @@ def test_supply_daemon_recovers_only_after_healthy_clean_tranches(monkeypatch, l
     supply.daemon_iteration(state)
     assert state["lanes"] == expected
     assert state["clean_streak"] == (2 if latency == 1 else 0)
+
+
+def test_claim_pool_task_preserves_and_skips_existing_development(pool, capsys):
+    bank, paths, *_ = pool
+    legacy = {"task_id": "000-development", "task_sha256": "dev-hash", "body": {
+        "split": "development", "receipt_eligible": False}}
+    pending = paths["pool_pending"] / "000-development.json"
+    pending.write_text(json.dumps(legacy))  # simulate a pre-repair frozen task
+    before = pending.read_bytes()
+    refresh(pool, 1)
+    status = bank.pool_status(paths)
+    assert status["pending"] == 3
+    assert status["pending_training"] == 2
+    for _ in range(2):
+        task = bank.claim_pool_task(paths, 0, ttl_seconds=3600)
+        assert task["body"]["split"] == "train"
+        bank.retire_task(paths, task, outcome={})
+    assert bank.claim_pool_task(paths, 0, ttl_seconds=3600) is None
+    assert pending.read_bytes() == before
+    assert bank.pool_status(paths)["pending_training"] == 0
+    assert "000-development reason=receipt-ineligible" in capsys.readouterr().out
+
+
+def test_claim_pool_task_blocks_already_retired_round_scoped_straggler(pool, capsys):
+    bank, paths, *_ = pool
+    first = refresh(pool, 1)
+    row = first["frozen"][0]
+    source = paths["pool_pending"] / (row["task_id"] + ".json")
+    task = json.loads(source.read_text())
+    source.rename(paths["pool_done"] / source.name)
+    task["task_id"] = "000-straggler-new-round"
+    task.pop("replay_count")
+    straggler = paths["pool_pending"] / (task["task_id"] + ".json")
+    straggler.write_text(json.dumps(task))
+    before = straggler.read_bytes()
+    status = bank.pool_status(paths)
+    assert status["pending"] == 2
+    assert status["pending_training"] == 1
+    claimed = bank.claim_pool_task(paths, 0, ttl_seconds=3600)
+    assert claimed["task_sha256"] != task["task_sha256"]
+    assert straggler.read_bytes() == before
+    assert "reason=replay-limit" in capsys.readouterr().out

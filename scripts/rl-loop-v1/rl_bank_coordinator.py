@@ -18,7 +18,7 @@ supervisor defaults:
   * the coordinator also sweeps expired task claims back to pending (lease
     semantics, filesystem-only — the crashed claimant's deadline bounds
     recovery), refreshes the pool from the admitted sealed first-party lake
-    when pending and claims are empty (global content dedupe prevents
+    when executable pending work and claims are empty (global content dedupe prevents
     accidental replay of retired tasks), and assembles the
     session metrics report.
 
@@ -172,8 +172,8 @@ def assemble_session_metrics(bank: Mapping[str, Path], lanes: int, *,
 
 
 def pool_refresh_needed(status: Mapping[str, Any]) -> bool:
-    """Do not refresh while tasks remain pending or in flight."""
-    return (status["pending"] == 0 and status["claims_live"] == 0
+    """Preserved ineligible/replay files must not block new-work discovery."""
+    return (status["pending_training"] == 0 and status["claims_live"] == 0
             and status["claims_stale"] == 0)
 
 
@@ -260,7 +260,7 @@ def main() -> None:
                     write_coordinator_state(bank, state)
 
             # ---- bounded discovery of unseen training content only, once
-            #      all pending/in-flight work has retired
+            #      all executable pending/in-flight work has retired
             status = pool_status(bank)
             if (pool_refresh_needed(status)
                     and time.monotonic() - last_refresh >=

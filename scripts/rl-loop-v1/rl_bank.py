@@ -223,10 +223,14 @@ def ensure_pinned_validator(paths: Mapping[str, Path]) -> Path:
 
 
 # ------------------------------------------------------------------- pool
+def training_task_eligible(task: Mapping[str, Any]) -> bool:
+    body = task.get("body", {})
+    return body.get("split") != "development" and body.get("receipt_eligible") is not False
+
+
 def freeze_pool_task(paths: Mapping[str, Path], task: Mapping[str, Any]) -> Path:
     """Write one immutable training task file into the global pool (pending)."""
-    body = task.get("body", {})
-    if body.get("split") == "development" or body.get("receipt_eligible") is False:
+    if not training_task_eligible(task):
         raise ValueError("receipt-ineligible task cannot enter the training pool")
     task_id = task["task_id"]
     if "/" in task_id or task_id != task_id.strip():
@@ -262,9 +266,25 @@ def claim_pool_task(paths: Mapping[str, Path], lane: int, *,
     ensure_bank_layout(paths)
     sweeps = 0
     while True:
+        # Backstop pre-repair pending files without moving/deleting evidence.
+        known = pool_task_replay_counts(paths, include_pending=False)
         for candidate in sorted(paths["pool_pending"].glob("*.json")):
             task_id = candidate.name[:-len(".json")]
             if skip is not None and task_id in skip:
+                continue
+            try:
+                task = json.loads(candidate.read_text())
+            except FileNotFoundError:
+                continue
+            if not training_task_eligible(task):
+                print(f"POOL_SKIPPED {task_id} reason=receipt-ineligible", flush=True)
+                continue
+            digest = task["task_sha256"]
+            replay_count = int(task.get("replay_count", 0))
+            if replay_count > MAX_TASK_REPLAYS or (
+                    digest in known and replay_count <= known[digest]):
+                print(f"POOL_SKIPPED {task_id} task_sha256={digest} "
+                      f"reason=replay-limit replay_count={replay_count}", flush=True)
                 continue
             destination = paths["pool_claims"] / f"{task_id}.claim"
             try:
@@ -437,6 +457,23 @@ def retire_task(paths: Mapping[str, Path], task: Mapping[str, Any], *,
     fsync_directory(paths["pool_claims"])
 
 
+def pending_training_count(paths: Mapping[str, Path]) -> int:
+    """Count executable pending work, excluding preserved ineligible/replay files."""
+    known = pool_task_replay_counts(paths, include_pending=False)
+    count = 0
+    for path in paths["pool_pending"].glob("*.json"):
+        try:
+            task = json.loads(path.read_text())
+        except FileNotFoundError:
+            continue
+        replay_count = int(task.get("replay_count", 0))
+        digest = task["task_sha256"]
+        if (training_task_eligible(task) and replay_count <= MAX_TASK_REPLAYS
+                and (digest not in known or replay_count > known[digest])):
+            count += 1
+    return count
+
+
 def pool_status(paths: Mapping[str, Path]) -> dict[str, Any]:
     now = time.time()
     claims_live = 0
@@ -454,6 +491,7 @@ def pool_status(paths: Mapping[str, Path]) -> dict[str, Any]:
     return {
         "schema": "emender-rl-loop-bank-pool-status-v1",
         "pending": len(list(paths["pool_pending"].glob("*.json"))),
+        "pending_training": pending_training_count(paths),
         "claims_live": claims_live,
         "claims_stale": claims_stale,
         "done": len(list(paths["pool_done"].glob("*.json"))),
@@ -679,11 +717,14 @@ def write_coordinator_state(paths: Mapping[str, Path],
 
 
 # ------------------------------------------------------------ pool refresh
-def pool_task_replay_counts(bank: Mapping[str, Path]) -> dict[str, int]:
+def pool_task_replay_counts(bank: Mapping[str, Path], *,
+                            include_pending: bool = True) -> dict[str, int]:
     """Global content identities, including in-flight and legacy round IDs."""
     counts: dict[str, int] = {}
-    for key, pattern in (("pool_pending", "*.json"),
-                         ("pool_claims", "*.claim"), ("pool_done", "*.json")):
+    sources = [("pool_claims", "*.claim"), ("pool_done", "*.json")]
+    if include_pending:
+        sources.insert(0, ("pool_pending", "*.json"))
+    for key, pattern in sources:
         for path in bank[key].glob(pattern):
             try:
                 task = json.loads(path.read_text())
