@@ -940,7 +940,7 @@ def _anchor_train_row(paths, state, args, cycle, cycle_env, cycle_log) -> dict |
             "--authority-sha256", args.anchor_authority_sha256,
             "--pack-root", str(args.anchor_pack_root),
             "--pack-sha256", args.anchor_pack_sha256,
-            "--output-root", str(training / "checkpoints"),
+            "--output-root", str(training / "anchor-checkpoints"),
             "--log-jsonl", str(training / "log.jsonl"),
             "--source-commit", source_commit, "--steps", "1",
             "--context-size", "65536",

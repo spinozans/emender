@@ -985,6 +985,61 @@ def test_rejected_anchor_chain(scratch: Path) -> None:
           [r["adopted"] for r in metrics["trains"]] == [False, True] and expose.call_count == 1)
 
 
+def test_channel_checkpoint_paths(scratch: Path) -> None:
+    """Equal rounded-loss filenames must not overwrite an adopted anchor."""
+    from types import SimpleNamespace
+    from unittest.mock import patch
+    import rl_bank_lane as lane
+    from rl_common import workspace_paths
+
+    paths = workspace_paths(scratch / "checkpoint-paths")
+    paths["root"].mkdir(parents=True)
+    state = {"lineage_path": "parent.pt", "lineage_sha256": "parent"}
+    args = SimpleNamespace(lane=0, args_json=Path("/dev/null"), pack_timeout=10,
+                           train_timeout=10, anchor_keys="1", anchor_authority_root=Path("fixture"),
+                           anchor_authority_sha256="anchor-authority", anchor_pack_root=Path("fixture"),
+                           anchor_pack_sha256="anchor-packs")
+    commands = []
+
+    def spawn(cmd, **kwargs):
+        if cmd[1].endswith("rl_build_pack.py"):
+            cycle_packs = paths["packs"] / "cycle-0001"
+            cycle_packs.mkdir(parents=True)
+            (cycle_packs / "build-summary.json").write_text(json.dumps({
+                "authority_manifest_sha256": "receipts-authority",
+                "pack_manifest_sha256": "receipts-packs", "context_size": 2048}))
+            return
+        commands.append(cmd)
+        out = Path(cmd[cmd.index("--output-root") + 1])
+        out.mkdir(parents=True, exist_ok=True)
+        checkpoint = out / "checkpoint_agent_sft_u000001_loss_1.0000.pt"
+        checkpoint.write_text("anchor" if len(commands) == 1 else "receipts")
+        log = Path(cmd[cmd.index("--log-jsonl") + 1])
+        with log.open("a") as stream:
+            stream.write(json.dumps({"event": "checkpoint", "checkpoint": str(checkpoint),
+                                     "checkpoint_sha256": _sha(checkpoint), "loss": 1.0}) + "\n")
+
+    with patch.object(lane, "_spawn", side_effect=spawn), \
+         patch.object(lane, "_adopted_exposure_rows", return_value=[]):
+        anchor = lane._anchor_train_row(paths, state, args, 1, {}, paths["root"] / "log")
+        state.update(lineage_path=anchor["checkpoint"], lineage_sha256=anchor["checkpoint_sha256"])
+        receipts = lane._sft_train_row(paths, state, args, 1, {}, paths["root"] / "log")
+    anchor_path, receipts_path = Path(anchor["checkpoint"]), Path(receipts["checkpoint"])
+    cycle_training = paths["training"] / "cycle-0001"
+    check("E2 anchor and receipts commands use disjoint checkpoint output roots",
+          anchor_path.parent == cycle_training / "anchor-checkpoints"
+          and receipts_path.parent == cycle_training / "checkpoints"
+          and commands[0][commands[0].index("--output-root") + 1] !=
+              commands[1][commands[1].index("--output-root") + 1])
+    check("E2 equal rounded-loss basenames retain both checkpoint identities",
+          anchor_path.name == receipts_path.name and anchor_path != receipts_path
+          and anchor_path.read_text() == "anchor" and _sha(anchor_path) == anchor["checkpoint_sha256"]
+          and receipts_path.read_text() == "receipts")
+    check("E2 receipts command names preserved anchor checkpoint parent",
+          commands[1][commands[1].index("--parent-checkpoint") + 1] == str(anchor_path)
+          and commands[1][commands[1].index("--parent-sha256") + 1] == _sha(anchor_path))
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--scratch", type=Path,
@@ -1019,6 +1074,7 @@ def main() -> None:
     test_fresh_solve_collect(scratch)
     test_no_signal_exposure_skip(scratch)
     test_rejected_anchor_chain(scratch)
+    test_channel_checkpoint_paths(scratch)
     print(json.dumps({"schema": "emender-rl-loop-bank-unit-test-v1",
                      "passed": len(PASSED), "tests": PASSED}, sort_keys=True))
 

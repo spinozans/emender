@@ -3,9 +3,9 @@
 ## Result and scope
 
 Implemented E1, E2, E3 and E5, in that order, while the bank remained paused.
-The final CPU bank suite passes **98/98 checks**: the original 52 checks (two
+The final CPU bank suite passes **101/101 checks**: the original 52 checks (two
 lake expectations updated with supervisor approval for F2's intentional E6
-change) plus 46 new regression checks. No GPU training, restart, scheduler
+change) plus 49 new regression checks. No GPU training, restart, scheduler
 submission, held-out read, or promotion was performed.
 
 Changed deployed scripts, all under
@@ -84,7 +84,13 @@ also advanced before behavioral acceptance.
 updates total/channel-specific adopted counters, and commits receipts exposure
 before returning. A subsequent receipts invocation therefore receives the
 anchor-adopted child's path/SHA; a rejected anchor does not become its parent.
-PG follows the same sequential rule. The existing metrics `trains[]` array is
+PG follows the same sequential rule. A supervisor-approved E2 follow-up also
+separates new anchor saves into `training/cycle-N/anchor-checkpoints/`, while
+receipts retains `training/cycle-N/checkpoints/`. Both channels previously used
+the same `u000001_loss_<4dp>` basename; equal rounded losses could overwrite the
+just-adopted anchor even with correct sequencing. Existing on-disk checkpoints
+and historical lineage paths are not moved or rewritten; this split applies
+only to new saves. The existing metrics `trains[]` array is
 preserved, retaining each channel's row in order.
 
 Tests: `test_lane_channel_chain` (5 checks) exercises the real channel
@@ -93,6 +99,10 @@ parent identity, exact train/probe/adopt ordering, both retained updates,
 supersession order, both metrics rows, and receipts-only exposure commit.
 `test_rejected_anchor_chain` (2 E2/E3 checks) proves a rejected anchor does not
 enter receipts ancestry and that rejected/adopted rows both remain in metrics.
+`test_channel_checkpoint_paths` (3 checks) drives the actual anchor/receipts
+command builders and event readers with identically named stub checkpoints,
+asserting separate output roots, preservation of both files/SHAs, and the
+receipts command's binding to the preserved anchor parent.
 
 ## E3 — Probe acceptance is explicit
 
@@ -172,7 +182,7 @@ Logs and results:
 | `F1-E2-tests.log` | 67/67 |
 | `F1-E3-tests.log` | 77/77 |
 | `F1-E5-tests.log` | 94/94 |
-| `F1-final-tests.log` | **98/98** |
+| `F1-final-tests.log` | **101/101** |
 
 The first E1 suite invocation failed at its historical four-bundle lake
 expectation because F2's concurrent E6 repair intentionally admits only train
@@ -191,8 +201,10 @@ after `git pull --rebase origin main`, without force pushing:
 - E2: `42a6d608` — `fix(rl-bank): E2 chain channel training through adopted lineage`
 - E3: `8c8f5f82` — `fix(rl-bank): E3 reject invalid probe candidates before adoption`
 - E5: `02024c80` — `fix(rl-bank): E5 fresh solve sealed first-action mismatches`
-- Supplemental E1/E3 rejection regressions and this report are committed
-  separately after those fixes.
+- Supplemental E1/E3 rejection regressions and the initial report:
+  `3b63a067` — `test(rl-bank): E1 E3 rejection regressions and F1 repair report`.
+- E2 checkpoint-path collision follow-up, its three regressions and updated
+  report are committed separately after supervisor approval.
 
 Architecture authority reviewed: `docs/RESILIENT_DILOCO_COMPUTE_POOL.md`, v1
 with ADR-003 amendments, and `docs/RESILIENT_DILOCO_GAP_MATRIX.md`. Relevant
@@ -230,6 +242,11 @@ reviewed action; newly correct accounting does not repair old consumed entries.
   seam can be regression-tested; no merge/coordinator/optimizer policy changed.
 - E3 additionally binds the valid probe to its candidate SHA and marks rejection
   explicitly in metrics, avoiding an unbound validity assertion.
+- The E2 checkpoint-directory split was separately approved after detecting
+  the rounded-loss cross-channel filename collision. No historical files were
+  moved. The basename remains collision-prone for intra-channel retries in the
+  same cycle/channel directory; this is a **residual P2**, not an expanded retry
+  or recovery-system redesign.
 - F2's train-only lake semantics required the approved test-only coordination
   described above.
 - CPU tests do not prove GPU model updates or improved competence. No bank
