@@ -649,6 +649,65 @@ def test_receipt_exposure(scratch: Path) -> None:
     data.close()
 
 
+def test_lane_channel_chain(scratch: Path) -> None:
+    from types import SimpleNamespace
+    from unittest.mock import patch
+    import rl_bank_lane as lane
+    from rl_common import workspace_paths
+
+    paths = workspace_paths(scratch / "channel-chain")
+    paths["root"].mkdir(parents=True)
+    args = SimpleNamespace(lane=0, args_json=Path("/dev/null"), probe_timeout=10,
+                           anchor_period=1, anchor_authority_root=Path("fixture"))
+    summary = {"policy_checkpoint_sha256": "parent", "attempts": 1, "outcomes": []}
+    state = {"lineage_path": "parent.pt", "lineage_sha256": "parent",
+             "updates_total": 4, "anchor_updates_total": 2,
+             "train_step_channel": "sft-receipts"}
+    order = []
+    rows = {}
+
+    def train(channel, _paths, current, *_args):
+        order.append(("train", channel, current["lineage_sha256"]))
+        row = {"checkpoint": channel + ".pt", "checkpoint_sha256": channel + "-sha",
+               "parent_checkpoint_sha256": current["lineage_sha256"], "loss": 1.0}
+        rows[channel] = row
+        return row
+
+    def spawn(cmd, **kwargs):
+        sha = cmd[cmd.index("--checkpoint-sha256") + 1]
+        order.append(("probe", sha))
+        out = Path(cmd[cmd.index("--output") + 1])
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps({"frame_valid": True, "checkpoint_sha256": sha}))
+
+    def persist(_root, current):
+        order.append(("adopt", current["lineage_sha256"]))
+
+    with patch.object(lane, "_anchor_train_row", side_effect=lambda *a: train("anchor", *a)), \
+         patch.object(lane, "_sft_train_row", side_effect=lambda *a: train("receipts", *a)), \
+         patch.object(lane, "_spawn", side_effect=spawn), \
+         patch.object(lane, "write_lane_state", side_effect=persist), \
+         patch.object(lane, "_record_adopted_exposure") as expose, \
+         patch("rl_receipts.walk_stream", return_value=[]):
+        lane._train_cycle_channels({}, paths, state, args, 1, {}, paths["root"] / "log",
+                                  summary, "0", 1)
+    check("E2 receipts parent is the adopted anchor child sha",
+          rows["receipts"]["parent_checkpoint_sha256"] == "anchor-sha")
+    check("E2 train probe adopt completes before next channel",
+          order == [("train", "anchor", "parent"), ("probe", "anchor-sha"),
+                    ("adopt", "anchor-sha"), ("train", "receipts", "anchor-sha"),
+                    ("probe", "receipts-sha"), ("adopt", "receipts-sha")])
+    check("E2 retained chain counts both adopted updates",
+          state["lineage_sha256"] == "receipts-sha" and state["updates_total"] == 6
+          and state["anchor_updates_total"] == 3
+          and [r["sha256"] for r in state["superseded_lineages"]] == ["parent", "anchor-sha"])
+    metrics = json.loads((paths["cycles"] / "cycle-0001" / "metrics.json").read_text())
+    check("E2 metrics trains array preserves both channels",
+          [r["train_step_channel"] for r in metrics["trains"]] ==
+          ["sft-anchor-corpus", "sft-receipts"])
+    check("E2 only adopted receipts channel commits exposure", expose.call_count == 1)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--scratch", type=Path,
@@ -677,6 +736,7 @@ def main() -> None:
     test_reclaim(scratch / "reclaim-bank")
     test_pg_channel(scratch)
     test_receipt_exposure(scratch)
+    test_lane_channel_chain(scratch)
     print(json.dumps({"schema": "emender-rl-loop-bank-unit-test-v1",
                      "passed": len(PASSED), "tests": PASSED}, sort_keys=True))
 

@@ -638,106 +638,10 @@ def lane_run(args: argparse.Namespace) -> None:
                         state["window_passes"] = int(state["window_passes"]) + 1
             state["window_receipts"] = int(state["window_receipts"]) + receipts
 
-            # ---- train stage: flag-gated per-lane channel selection
-            #      (default sft-receipts — the proven v1 path, byte-identical
-            #      behavior for lanes launched without the flag).  The
-            #      policy-gradient channel builds its trajectory batch from
-            #      this lane's recent train-split on-policy attempts (passes
-            #      AND failures — the reward contrast) and takes the guarded
-            #      PG step; on no-contrast batches or ANY fail-closed guard
-            #      trip it falls back to the receipts-SFT step so the bank
-            #      never loses a lane to the experimental train step.
-            # ---- train stage (era-9 fix, receipted 2026-10-06): BOTH the
-            #      corpus meal AND the gym seasoning run per cycle. The old
-            #      elif-priority (anchor first, receipts only when the
-            #      anchor skipped) starved the receipts channel to zero
-            #      whenever anchor losses stayed above the no-signal floor
-            #      — permanent, with rotating anchor packs: 271/271 adopted
-            #      steps were anchor-only since the reseed, ~7.4k receipts
-            #      collected and never trained. Policy-gradient stays
-            #      flag-gated; when it adopts, the receipts step still runs.
-            adopted_rows = []          # [(row, channel, pg_event)]
-            pg_event = None
-            if state.get("train_step_channel") == "policy-gradient":
-                train_row, pg_event = _pg_train_row(
-                    paths, state, args, cycle, cycle_env, cycle_log)
-                if train_row is not None:
-                    state["pg_updates_total"] = \
-                        int(state.get("pg_updates_total", 0)) + 1
-                    print(f"LANE_PG_UPDATE lane={args.lane} cycle={cycle} "
-                          f"loss={pg_event.get('loss')} "
-                          f"kl={pg_event.get('realized_kl_vs_old_mean')} "
-                          f"grad={pg_event.get('grad_norm')}", flush=True)
-                    adopted_rows.append((train_row, "policy-gradient", pg_event))
-                else:
-                    state["pg_fallbacks_total"] = \
-                        int(state.get("pg_fallbacks_total", 0)) + 1
-                    outcome = (pg_event or {}).get("outcome")
-                    print(f"LANE_PG_FALLBACK lane={args.lane} cycle={cycle} "
-                          f"outcome={outcome} — the receipts-SFT step "
-                          f"runs this cycle", flush=True)
-            if args.anchor_period > 0 \
-                    and cycle % args.anchor_period == 0 \
-                    and args.anchor_authority_root is not None:
-                # ---- v3 corpus-replay anchor (operator ruling 2026-09-29):
-                #      the corpus is the meal; the gym is the seasoning.
-                row = _anchor_train_row(
-                    paths, state, args, cycle, cycle_env, cycle_log)
-                if row is not None:
-                    adopted_rows.append((row, "sft-anchor-corpus", None))
-            if receipts:
-                # ---- receipts -> authority -> packs (CPU) -> single-GPU
-                #      masked-SFT step: the proven v1 train path.
-                row = _sft_train_row(
-                    paths, state, args, cycle, cycle_env, cycle_log)
-                if row is not None:
-                    adopted_rows.append((row, "sft-receipts", None))
-            for row_idx, (row, train_channel, pg_ev) in enumerate(adopted_rows):
-                probe_name = ("re-serve-probe.json" if row_idx == 0 else
-                             f"re-serve-probe-{row_idx}.json")
-                _spawn([PY, str(Path(__file__).resolve().parent /
-                                "rl_loop_driver.py"), "probe",
-                        "--args-json", str(args.args_json),
-                        "--checkpoint", row["checkpoint"],
-                        "--checkpoint-sha256", row["checkpoint_sha256"],
-                        "--output", str(paths["cycles"] /
-                                        f"cycle-{cycle:04d}" /
-                                        probe_name)],
-                       env=cycle_env, timeout=args.probe_timeout,
-                       log_path=cycle_log)
-                # ---- lineage advance: this lane's next cycle (and any
-                #      future merge) descends from the trained checkpoint.
-                #      The superseded parent enters the RECLAIM ledger.
-                ledger = list(state.get("superseded_lineages") or [])
-                ledger.append({"path": state["lineage_path"],
-                               "sha256": state["lineage_sha256"],
-                               "superseded_unix": time.time()})
-                state.update(lineage_path=row["checkpoint"],
-                             lineage_sha256=row["checkpoint_sha256"],
-                             superseded_lineages=ledger,
-                             updates_total=int(state["updates_total"]) + 1,
-                             status="trained", updated_unix=time.time())
-                write_lane_state(paths["root"], state)
-                if train_channel == "sft-receipts":
-                    _record_adopted_exposure(paths, cycle, row)
-                _assemble_lane_metrics(bank, paths, args, cycle, summary,
-                                      row, gpu, train_channel=train_channel,
-                                      pg_event=pg_ev, probe_name=probe_name)
-                print(f"LANE_TRAINED lane={args.lane} cycle={cycle} "
-                      f"channel={train_channel} "
-                      f"loss={row['loss']} new_ckpt={row['checkpoint_sha256'][:16]} "
-                      f"updates_total={state['updates_total']}", flush=True)
-            if not adopted_rows:
-                state.update(status="collected", updated_unix=time.time())
-                write_lane_state(paths["root"], state)
-                if train_channel == "sft-receipts":
-                    _record_adopted_exposure(paths, cycle, row)
-                _assemble_lane_metrics(bank, paths, args, cycle, summary,
-                                      None, gpu, train_channel=None,
-                                      pg_event=pg_event)
-                print(f"LANE_COLLECTED lane={args.lane} cycle={cycle} "
-                      f"receipts={receipts} (no train step — honest idle)",
-                      flush=True)
+            # Each channel completes train -> probe -> adopt before the next
+            # channel reads lineage_path. Anchor work must not become a sibling.
+            _train_cycle_channels(bank, paths, state, args, cycle, cycle_env,
+                                  cycle_log, summary, gpu, receipts)
             failures = 0
         except _Stop as stop:
             failures += 1
@@ -766,6 +670,81 @@ def lane_run(args: argparse.Namespace) -> None:
             _gpu_release(gpu)
             state.update(gpu=None, updated_unix=time.time())
             write_lane_state(paths["root"], state)
+
+
+def _probe_adopt_train_row(bank, paths, state, args, cycle, cycle_env,
+                           cycle_log, summary, gpu, row, train_channel,
+                           *, row_idx: int, pg_event=None) -> bool:
+    probe_name = ("re-serve-probe.json" if row_idx == 0 else
+                  f"re-serve-probe-{row_idx}.json")
+    _spawn([PY, str(Path(__file__).resolve().parent / "rl_loop_driver.py"), "probe",
+            "--args-json", str(args.args_json),
+            "--checkpoint", row["checkpoint"],
+            "--checkpoint-sha256", row["checkpoint_sha256"],
+            "--output", str(paths["cycles"] / f"cycle-{cycle:04d}" / probe_name)],
+           env=cycle_env, timeout=args.probe_timeout, log_path=cycle_log)
+    ledger = list(state.get("superseded_lineages") or [])
+    ledger.append({"path": state["lineage_path"], "sha256": state["lineage_sha256"],
+                   "superseded_unix": time.time()})
+    state.update(lineage_path=row["checkpoint"], lineage_sha256=row["checkpoint_sha256"],
+                 superseded_lineages=ledger, updates_total=int(state["updates_total"]) + 1,
+                 status="trained", updated_unix=time.time())
+    channel_counter = {"sft-anchor-corpus": "anchor_updates_total",
+                       "policy-gradient": "pg_updates_total"}.get(train_channel)
+    if channel_counter:
+        state[channel_counter] = int(state.get(channel_counter, 0)) + 1
+    write_lane_state(paths["root"], state)
+    if train_channel == "sft-receipts":
+        _record_adopted_exposure(paths, cycle, row)
+    _assemble_lane_metrics(bank, paths, args, cycle, summary, row, gpu,
+                           train_channel=train_channel, pg_event=pg_event,
+                           probe_name=probe_name)
+    print(f"LANE_TRAINED lane={args.lane} cycle={cycle} channel={train_channel} "
+          f"loss={row['loss']} new_ckpt={row['checkpoint_sha256'][:16]} "
+          f"updates_total={state['updates_total']}", flush=True)
+    return True
+
+
+def _train_cycle_channels(bank, paths, state, args, cycle, cycle_env, cycle_log,
+                          summary, gpu, receipts: int) -> None:
+    """Sequential channels retain every adopted update in the final lineage."""
+    attempted = 0
+    adopted = 0
+    pg_event = None
+
+    def probe_adopt(row, channel, event=None):
+        nonlocal attempted, adopted
+        if row is None:
+            return
+        accepted = _probe_adopt_train_row(
+            bank, paths, state, args, cycle, cycle_env, cycle_log, summary, gpu,
+            row, channel, row_idx=attempted, pg_event=event)
+        attempted += 1
+        adopted += int(accepted)
+
+    if state.get("train_step_channel") == "policy-gradient":
+        row, pg_event = _pg_train_row(paths, state, args, cycle, cycle_env, cycle_log)
+        if row is not None:
+            probe_adopt(row, "policy-gradient", pg_event)
+        else:
+            state["pg_fallbacks_total"] = int(state.get("pg_fallbacks_total", 0)) + 1
+            print(f"LANE_PG_FALLBACK lane={args.lane} cycle={cycle} "
+                  f"outcome={(pg_event or {}).get('outcome')}", flush=True)
+    if args.anchor_period > 0 and cycle % args.anchor_period == 0 \
+            and args.anchor_authority_root is not None:
+        probe_adopt(_anchor_train_row(paths, state, args, cycle, cycle_env, cycle_log),
+                    "sft-anchor-corpus")
+    if receipts:
+        probe_adopt(_sft_train_row(paths, state, args, cycle, cycle_env, cycle_log),
+                    "sft-receipts")
+    if not adopted:
+        state.update(status="collected", updated_unix=time.time())
+        write_lane_state(paths["root"], state)
+        if not attempted:
+            _assemble_lane_metrics(bank, paths, args, cycle, summary, None, gpu,
+                                   train_channel=None, pg_event=pg_event)
+        print(f"LANE_COLLECTED lane={args.lane} cycle={cycle} receipts={receipts} "
+              "(no adopted train step)", flush=True)
 
 
 def _adopted_exposure_rows(paths, cycle: int, row: dict) -> list[dict]:
@@ -944,8 +923,6 @@ def _anchor_train_row(paths, state, args, cycle, cycle_env, cycle_log) -> dict |
               flush=True)
         _unlink_orphan_checkpoint(train_event, "no-signal anchor skip")
         return None
-    state["anchor_updates_total"] = \
-        int(state.get("anchor_updates_total", 0)) + 1
     print(f"LANE_ANCHOR_UPDATE lane={args.lane} cycle={cycle} key={key} "
           f"loss={train_event.get('loss')}", flush=True)
     return train_event
