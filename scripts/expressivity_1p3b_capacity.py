@@ -16,6 +16,13 @@ per paper/results/expressivity_1p3b/capacity/PLAN.md:
     8192} (never trained), full-vocab argmax accuracy, identical metric to
     Task A.
 
+Task A3 phase-0 hardening (permanent, protocol-neutral): expandable_segments
+allocator + per-sub-batch empty_cache in the grad-accum fallback; if the
+curriculum-escape stage still cannot fit even at sub-batch 1, it is recorded
+`oom_infeasible_on_hardware`, T=512 stays a held-out length, and the completed
+T=256 stage is the training record; --save-weights persists the fine-tuned
+weights at the stop.
+
 Usage (one process = one GPU via CUDA_VISIBLE_DEVICES, under gpu_lease.sh):
   python scripts/expressivity_1p3b_capacity.py capacity --model e97 \
       --steps <cap> --out-prefix paper/results/expressivity_1p3b/capacity/cap_e97_s5
@@ -30,6 +37,12 @@ import os
 import sys
 import time
 from pathlib import Path
+
+# taskA3 phase-0 hardening: fragmentation was a contributing factor in the
+# taskA2 GDN2 OOM deaths (1.33-1.65 GiB reserved-but-unallocated at crash).
+# Must be set before torch creates the CUDA caching allocator.
+os.environ.setdefault("PYTORCH_ALLOC_CONF", "expandable_segments:True")
+os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
 
 import torch
 
@@ -163,6 +176,8 @@ def eval_split(model, task, tables, heldout_lut, B, T, n_batches, seed, device,
                                    y.view(-1), reduction="none").view_as(seen)
             loss_sum["seen"] += (lper * seen).sum().item()
             loss_sum["held"] += (lper * held).sum().item()
+        if T >= 2048:
+            torch.cuda.empty_cache()   # grad-free long-T eval: drop frag. early
     out = {}
     for k in ("all", "seen", "held"):
         out[f"acc_{k}"] = round(c[k] / max(n[k], 1), 6)
@@ -263,6 +278,7 @@ def cmd_capacity(args, device):
     val_hist = []
     step = 0
     stop_reason = "cap"
+    curriculum_oom_infeasible = False
     t_train0 = time.time()
     model.train()
 
@@ -315,13 +331,30 @@ def cmd_capacity(args, device):
                             y[sl].view(-1), reduction="none").view_as(seen[sl])
                         ((lp * seen[sl]).sum() / tot).backward()
                         loss_val += float((lp * seen[sl]).sum().item())
+                        torch.cuda.empty_cache()   # free each sub-batch graph
                     break
                 except RuntimeError as e2:
-                    if ("out of memory" not in str(e2).lower() and not isinstance(
-                            e2, torch.cuda.OutOfMemoryError)) or n_split >= x.size(0):
+                    oom2 = ("out of memory" in str(e2).lower() or isinstance(
+                        e2, torch.cuda.OutOfMemoryError))
+                    if oom2 and n_split >= x.size(0):
+                        if stage["train_len"] != TRAIN_T:
+                            # Curriculum-escape stage cannot fit even at
+                            # sub-batch 1 on this GPU: record it infeasible and
+                            # keep the completed T=256 stage as the training
+                            # record (approved taskA3 phase-0 salvage; no
+                            # protocol change -- data/optimizer untouched).
+                            curriculum_oom_infeasible = True
+                            log(f"[{args.model}] CURRICULUM T={stage['train_len']} "
+                                f"OOM-infeasible even at sub-batch 1 (step {step}); "
+                                f"stopping training; T=256 stage is the record")
+                            break
+                        raise
+                    if not oom2:
                         raise
                     torch.cuda.empty_cache()
                     n_split *= 2
+            if curriculum_oom_infeasible:
+                break
             log(f"[{args.model}] OOM->grad-accum fallback step {step} "
                 f"n_split={n_split} T={stage['train_len']}")
         torch.nn.utils.clip_grad_norm_(model.parameters(), args.grad_clip)
@@ -394,6 +427,14 @@ def cmd_capacity(args, device):
                 f"{ {k: entry['acc_vs_T'][k] for k in entry['acc_vs_T']} }")
             model.train()
         step += 1
+    if curriculum_oom_infeasible:
+        # The escape stage completed ZERO optimizer steps: T=512 was never
+        # trained, so it STAYS in the held-out sweep set.
+        trained_lengths = [t for t in trained_lengths if t != CURRICULUM_T]
+        if stage["end_step"] is None:
+            stage["end_step"] = step
+        stage["stop_reason"] = "oom_infeasible_on_hardware"
+        stop_reason = "curriculum_oom_infeasible"
     if stage["end_step"] is None:
         stage["end_step"] = step
         stage["stop_reason"] = "cap"
@@ -426,6 +467,24 @@ def cmd_capacity(args, device):
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(rec, indent=2))
     log(f"train json -> {out}")
+
+    # taskA3 phase-0 hardening (permanent): persist the fine-tuned weights at
+    # the pre-registered stop. The taskA2 runs never saved weights, which is
+    # why the crashed GDN2 run could not be evaluated post hoc.
+    if args.save_weights:
+        sw = Path(args.save_weights)
+        sw.parent.mkdir(parents=True, exist_ok=True)
+        torch.save({
+            "model_name": args.model,
+            "model_state": model.state_dict(),
+            "steps_trained": step,
+            "stages": rec["stages"],
+            "trained_lengths": trained_lengths,
+            "stop_reason": stop_reason,
+            "checkpoint": CHECKPOINTS[args.model]["path"],
+            "seed": args.seed,
+        }, sw)
+        log(f"weights saved -> {sw}")
 
     # ---- final sweeps: trained lengths + held-out extrapolation ----
     sweep_lens = [T for T in trained_lengths] + \
@@ -479,6 +538,9 @@ def main():
     p.add_argument("--batch-size", type=int, default=32)
     p.add_argument("--val-every", type=int, default=100)
     p.add_argument("--traj-every", type=int, default=250)
+    p.add_argument("--save-weights", default=None,
+                   help="persist fine-tuned weights at the pre-registered stop "
+                        "(recommended: a path OUTSIDE the git worktree)")
     p.add_argument("--smoke", action="store_true",
                    help="throughput measurement only: no plateau stop, no eval phase")
     args = ap.parse_args()

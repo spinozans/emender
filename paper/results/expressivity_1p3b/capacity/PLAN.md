@@ -84,3 +84,34 @@ squatting.
 Report plainly: trajectory shapes at cutoff (steepest-descent slopes,
 length-extrapolation curves still discriminate the hypotheses) — per task
 brief §6.
+
+## Task A3 Phase 0 — GDN2 salvage re-run (pre-registered BEFORE execution)
+
+Approved by the taskA3 operator decision round. State at pre-registration: the
+GDN2 capacity run's T=256 stage completed its pre-registered rule (high
+plateau at step 4699 of cap 9979, val loss 0.936), the curriculum escape to
+T=512 then OOM'd on its first training step in three attempts — even with the
+exact-gradient fallback at sub-batch 1 — and no eval phase was ever reached.
+No fine-tuned weights were persisted (the runner only dumped curves), so the
+"re-run only the eval phases" option does not exist. The salvage therefore
+RE-RUNS the training phase under the SAME pre-registered protocol — same seed
+42, same cap 9979, same plateau rule, same data stream — and then runs the
+eval phases in the same process on the resulting weights.
+
+Hardening applied (protocol-neutral only; no data/optimizer/step change):
+
+1. `PYTORCH_ALLOC_CONF=expandable_segments:True` (fragmentation was a
+   contributing factor in the crashes: 1.33–1.65 GiB reserved-but-unallocated).
+2. `empty_cache()` between grad-accum sub-batches and between long-T eval
+   batches.
+3. If the T=512 curriculum stage still OOMs at sub-batch 1, it is recorded
+   `oom_infeasible_on_hardware`, T=512 stays a HELD-OUT length (zero optimizer
+   steps completed there), and the completed T=256 plateau stage is the
+   training record.
+4. `--save-weights` persists the fine-tuned weights at the stop (kept
+   permanently in the runner; saved outside the git worktree).
+
+Eval batches: UNCHANGED from the A2 pre-registration (the
+`B*T <= 32768` rule already gives batch 8 at T=4096 and batch 4 at T=8192,
+with OOM-halving failover). The crash3 incremental dump is preserved as
+`cap_gdn2_s5_train_crash3_partial.json`.
