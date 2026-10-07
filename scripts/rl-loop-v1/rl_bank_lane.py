@@ -683,6 +683,20 @@ def _probe_adopt_train_row(bank, paths, state, args, cycle, cycle_env,
             "--checkpoint-sha256", row["checkpoint_sha256"],
             "--output", str(paths["cycles"] / f"cycle-{cycle:04d}" / probe_name)],
            env=cycle_env, timeout=args.probe_timeout, log_path=cycle_log)
+    probe_path = paths["cycles"] / f"cycle-{cycle:04d}" / probe_name
+    try:
+        probe = json.loads(probe_path.read_text())
+    except (OSError, ValueError) as exc:
+        raise _Stop(f"probe record unreadable: {exc}") from exc
+    if probe.get("frame_valid") is not True \
+            or probe.get("checkpoint_sha256") != row["checkpoint_sha256"]:
+        _assemble_lane_metrics(bank, paths, args, cycle, summary, row, gpu,
+                               train_channel=train_channel, pg_event=pg_event,
+                               probe_name=probe_name, adopted=False)
+        _unlink_orphan_checkpoint(row, "invalid probe")
+        print(f"LANE_REJECTED lane={args.lane} cycle={cycle} "
+              f"channel={train_channel} (probe not valid for candidate)", flush=True)
+        return False
     ledger = list(state.get("superseded_lineages") or [])
     ledger.append({"path": state["lineage_path"], "sha256": state["lineage_sha256"],
                    "superseded_unix": time.time()})
@@ -698,7 +712,7 @@ def _probe_adopt_train_row(bank, paths, state, args, cycle, cycle_env,
         _record_adopted_exposure(paths, cycle, row)
     _assemble_lane_metrics(bank, paths, args, cycle, summary, row, gpu,
                            train_channel=train_channel, pg_event=pg_event,
-                           probe_name=probe_name)
+                           probe_name=probe_name, adopted=True)
     print(f"LANE_TRAINED lane={args.lane} cycle={cycle} channel={train_channel} "
           f"loss={row['loss']} new_ckpt={row['checkpoint_sha256'][:16]} "
           f"updates_total={state['updates_total']}", flush=True)
@@ -1038,7 +1052,7 @@ def _pg_train_row(paths, state, args, cycle, cycle_env, cycle_log) -> tuple[dict
 
 def _assemble_lane_metrics(bank, paths, args, cycle, summary, train_row, gpu,
                           *, train_channel=None, pg_event=None,
-                          probe_name="re-serve-probe.json") -> None:
+                          probe_name="re-serve-probe.json", adopted=None) -> None:
     """Per-lane-cycle metrics in the loop's existing cycles/cycle-XXXX format."""
     from rl_receipts import walk_stream
 
@@ -1070,11 +1084,12 @@ def _assemble_lane_metrics(bank, paths, args, cycle, summary, train_row, gpu,
         metrics["train"] = train_row
         probe_path = paths["cycles"] / f"cycle-{cycle:04d}" / probe_name
         metrics["probe_frame_valid"] = json.loads(
-            probe_path.read_text())["frame_valid"]
+            probe_path.read_text()).get("frame_valid")
     else:
         metrics["train"] = None
         metrics["probe_frame_valid"] = None
     metrics["train_step_channel"] = train_channel
+    metrics["adopted"] = adopted
     if pg_event is not None:
         metrics["pg_event"] = pg_event
     cycle_dir = paths["cycles"] / f"cycle-{cycle:04d}"
@@ -1090,7 +1105,7 @@ def _assemble_lane_metrics(bank, paths, args, cycle, summary, train_row, gpu,
     # one cycle; every train row lands in the "trains" array (read-modify-
     # write so the second adoption does not clobber the first).
     trains = list(prior.get("trains") or [])
-    trains.append({"train": metrics.get("train"),
+    trains.append({"train": metrics.get("train"), "adopted": adopted,
                    "probe_frame_valid": metrics.get("probe_frame_valid"),
                    "train_step_channel": train_channel,
                    **({"pg_event": pg_event} if pg_event is not None else {})})

@@ -708,6 +708,56 @@ def test_lane_channel_chain(scratch: Path) -> None:
     check("E2 only adopted receipts channel commits exposure", expose.call_count == 1)
 
 
+def test_invalid_probe_rejection(scratch: Path) -> None:
+    from copy import deepcopy
+    from types import SimpleNamespace
+    from unittest.mock import patch
+    import rl_bank_lane as lane
+    from rl_common import workspace_paths
+
+    args = SimpleNamespace(lane=0, args_json=Path("/dev/null"), probe_timeout=10)
+    summary = {"policy_checkpoint_sha256": "parent", "attempts": 1, "outcomes": []}
+    original_spawn = lane._spawn
+    for index, (channel, frame_valid) in enumerate([
+            ("sft-anchor-corpus", False), ("sft-receipts", False),
+            ("policy-gradient", False), ("sft-receipts", "true"),
+            ("sft-receipts", None)]):
+        paths = workspace_paths(scratch / f"probe-reject-{index}")
+        paths["root"].mkdir(parents=True)
+        checkpoint = paths["root"] / "rejected.pt"
+        checkpoint.write_text("unadopted checkpoint")
+        state = {"lineage_path": "parent.pt", "lineage_sha256": "parent",
+                 "updates_total": 4, "anchor_updates_total": 2,
+                 "pg_updates_total": 1, "superseded_lineages": []}
+        before = deepcopy(state)
+        row = {"checkpoint": str(checkpoint), "checkpoint_sha256": "candidate", "loss": 1.0}
+
+        def zero_exit_probe(cmd, **kwargs):
+            out = cmd[cmd.index("--output") + 1]
+            record = {"checkpoint_sha256": "candidate"}
+            if frame_valid is not None:
+                record["frame_valid"] = frame_valid
+            script = ("from pathlib import Path; import json; "
+                      f"p=Path({out!r}); p.parent.mkdir(parents=True,exist_ok=True); "
+                      f"p.write_text(json.dumps({record!r}))")
+            original_spawn([sys.executable, "-c", script], **kwargs)
+
+        with patch.object(lane, "_spawn", side_effect=zero_exit_probe), \
+             patch.object(lane, "write_lane_state") as persist, \
+             patch.object(lane, "_record_adopted_exposure") as expose, \
+             patch("rl_receipts.walk_stream", return_value=[]):
+            adopted = lane._probe_adopt_train_row(
+                {}, paths, state, args, 1, os.environ, paths["root"] / "log",
+                summary, "0", row, channel, row_idx=0)
+        check(f"E3 zero-exit invalid probe rejects {channel} ({frame_valid!r})",
+              adopted is False and state == before and not persist.called and not expose.called)
+        metrics = json.loads((paths["cycles"] / "cycle-0001" / "metrics.json").read_text())
+        check(f"E3 rejected candidate logged without exposure {index}",
+              metrics["trains"][0]["adopted"] is False
+              and not (paths["root"] / "consumed-receipts.jsonl").exists()
+              and not checkpoint.exists())
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--scratch", type=Path,
@@ -737,6 +787,7 @@ def main() -> None:
     test_pg_channel(scratch)
     test_receipt_exposure(scratch)
     test_lane_channel_chain(scratch)
+    test_invalid_probe_rejection(scratch)
     print(json.dumps({"schema": "emender-rl-loop-bank-unit-test-v1",
                      "passed": len(PASSED), "tests": PASSED}, sort_keys=True))
 
