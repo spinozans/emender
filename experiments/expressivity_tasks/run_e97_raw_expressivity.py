@@ -62,6 +62,13 @@ ARMS: dict[str, tuple[list[str], list[str], bool]] = {
     'e97':        (['--layer_pattern', 'E97', *SHARED], ['--state_activation', 'tanh',     '--e88_raw_write', '0', '--use_triton_e88'], False),
     'e97-linear': (['--layer_pattern', 'E97', *SHARED], ['--state_activation', 'identity', '--e88_raw_write', '0', '--use_triton_e88'], False),
     'gdn':        (['--layer_pattern', 'gdn', *SHARED], [], False),
+    # taskA3 phase 1: PARAMETER-MATCHED gdn (7,937,536 params vs e97's
+    # 7,376,896, +7.6%; the closest count ABOVE e97 the layer's divisibility
+    # constraints allow -- the excess favors gdn, so the comparison is
+    # conservative). Same geometry as 'gdn' (head_dim 64) with d_inner=640
+    # -> 10 heads/layer. NOT in ARM_NAMES (opt-in arm, not a default-sweep arm).
+    'gdn-8m':     (['--layer_pattern', 'gdn', '--dim', '256', '--n_heads', '32',
+                     '--n_state', '32', '--expansion', '2.5'], [], False),
 }
 
 # Eager fp32 fallback arms (original behaviour): no Triton, autocast disabled.
@@ -70,6 +77,8 @@ ARMS_EAGER_FP32: dict[str, tuple[list[str], list[str], bool]] = {
     'e97':        (['--layer_pattern', 'E97', *SHARED], ['--state_activation', 'tanh',     '--e88_raw_write', '0'], True),
     'e97-linear': (['--layer_pattern', 'E97', *SHARED], ['--state_activation', 'identity', '--e88_raw_write', '0'], True),
     'gdn':        (['--layer_pattern', 'gdn', *SHARED], [], False),
+    'gdn-8m':     (['--layer_pattern', 'gdn', '--dim', '256', '--n_heads', '32',
+                     '--n_state', '32', '--expansion', '2.5'], [], False),
 }
 
 PROBES = {
