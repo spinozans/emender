@@ -42,6 +42,7 @@ from rl_bank import (CLAIM_SCHEMA, MIN_FREE_BYTES, bank_paths, claim_pool_task,
                      read_lane_state, read_merge_current, reclaim_superseded_lineages,
                      requeue_claim, requeue_lane_claims, retire_task, sweep_stale_claims,
                      write_lane_state)
+from rl_correction_pool import CorrectionPool
 from rl_correction_config import resolve_correction_config
 from rl_common import sha256_file
 from rl_receipts import (append_receipt, grade_receipt_digest,
@@ -139,6 +140,101 @@ def _correction_requires_fresh_solve(body, policy_record, tools) -> bool:
     return False
 
 
+def _execute_correction(args, task, policy_record, workspace, task_dir,
+                        pilot, curriculum, tools, enc, metrics):
+    from ndm.e97_atomic import publish_bytes_no_replace
+    from ndm.e97_onpolicy_records import canonical_json
+    body = task["body"]
+    gym = body.get("task_lake")
+    pi_bin = Path(tool_manifest(curriculum)["pi_bin"])
+    teacher_panel = make_panel(curriculum.SYSTEM, tools, TEACHER_PANEL)
+    teacher_generate = (None if args.teacher == "fixture" else make_teacher_generate(
+        args.teacher, args.teacher_model, tools, enc, pilot, metrics))
+    correction_dir = task_dir / "correction"
+    correction_dir.mkdir(parents=True, exist_ok=False)
+    if args.teacher == "fixture":
+        teacher_generate = make_teacher_generate(
+            args.teacher, args.teacher_model, tools, enc, pilot, metrics, body=body)
+    # era-7 (2026-10-03): a degenerate policy prefix POISONS the supervised
+    # context — 925/925 teacher receipts had supervise_from=1 (clean teacher
+    # frames only after a degenerate policy frame), so the model never saw
+    # a clean first frame from a clean context and the degenerate mode was
+    # self-perpetuating (0 screen passes in 24h). When the policy attempt
+    # fails the degeneracy screen, the teacher solves FRESH: clean
+    # workspace, no prefix, supervise_from=0. E5 also starts fresh when
+    # a clean retained first action already violates its sealed criterion.
+    # Genuinely recoverable failures keep the spliced repair continuation.
+    fresh_solve = _correction_requires_fresh_solve(body, policy_record, tools)
+    prefix_messages = (None if fresh_solve
+                       else policy_record.get("source_messages"))
+    teacher_panel_eff = teacher_panel
+    if gym is not None:
+        dense = 0
+        if prefix_messages:
+            _, dense, _, _ = retained_prefix(prefix_messages, tools)
+        teacher_panel_eff = make_panel(curriculum.SYSTEM, tools, {
+            **TEACHER_PANEL,
+            "max_turns": max(1, int(gym["limits"]["turns"]) - dense)})
+    workspace_corr = (prepare_workspace(correction_dir / "workspace", body)
+                      if fresh_solve else workspace)
+    teacher_record = run_episode(
+        episode_dir=correction_dir, workspace=workspace_corr, prompt=body["prompt"],
+        panel=teacher_panel_eff, generate=teacher_generate, enc=enc,
+        pi_bin=pi_bin, manifest_path=MANIFEST_PATH, pilot=pilot,
+        curriculum=curriculum, seconds=teacher_panel_eff["episode_seconds"],
+        prefix_messages=prefix_messages,
+        prefix_policy_text=(None if fresh_solve
+                            else policy_record.get("native_record")))
+    passed, grade = grade_episode(
+        body, workspace_corr if fresh_solve else workspace, pilot, task,
+        record=teacher_record,
+        episode_dir=correction_dir, stage="teacher", system=curriculum.SYSTEM,
+        judge_metrics=metrics, judge_model=DEFAULT_TEACHER_MODEL)
+    publish_bytes_no_replace(
+        correction_dir / "grade.json",
+        (canonical_json(dict(grade)) + "\n").encode("utf-8"), mode=0o400)
+    print(f"COLLECT teacher grade passed={passed} "
+          f"status={teacher_record['status']}", flush=True)
+    return {"passed": passed, "grade": grade, "teacher_record": teacher_record,
+            "fresh_solve": fresh_solve, "metrics": metrics.dump() if hasattr(metrics, "dump") else {"calls": []}}
+
+
+def execute_correction_spec(spec):
+    """Model-free child entry; it grades but NEVER appends/retire/publishes receipts."""
+    from types import SimpleNamespace
+    # Qualification binds an isolated, immutable pilot; production uses the
+    # normal source and never supplies this probe-only snapshot field.
+    snapshot = spec.get("pilot_snapshot")
+    if snapshot is None:
+        pilot = load_pilot()
+    else:
+        import importlib.util
+        if sha256_file(Path(snapshot["path"])) != snapshot["sha256"]:
+            raise ValueError("correction pilot snapshot identity drift")
+        module_spec = importlib.util.spec_from_file_location("correction_pilot_snapshot", snapshot["path"])
+        pilot = importlib.util.module_from_spec(module_spec)
+        module_spec.loader.exec_module(pilot)
+    curriculum = load_curriculum()
+    tools = tool_manifest(curriculum)["model_visible_tools"]
+    enc = tiktoken.get_encoding("p50k_base")
+    attempt_dir = Path(spec["task_dir"]) / "attempt"
+    if sha256_file(attempt_dir / "episode-private.json") != spec["episode_artifacts"]["attempt_episode_sha256"]:
+        raise ValueError("correction attempt identity drift")
+    grade = json.loads((attempt_dir / "grade.json").read_text())
+    if grade_receipt_digest(grade) != spec["episode_artifacts"]["attempt_grade_sha256"]:
+        raise ValueError("correction grade identity drift")
+    if _correction_requires_fresh_solve(spec["task"]["body"], spec["policy_record"], tools) != spec["fresh_solve"]:
+        raise ValueError("correction routing identity drift")
+    class DurableMetrics(pilot.Metrics):
+        def record(self, entry):
+            super().record(entry)
+            with (Path(spec["task_dir"]) / "correction-api.jsonl").open("a") as log:
+                log.write(json.dumps(entry, sort_keys=True) + "\n")
+    return _execute_correction(SimpleNamespace(**spec["settings"]), spec["task"],
+        spec["policy_record"], Path(spec["workspace"]), Path(spec["task_dir"]),
+        pilot, curriculum, tools, enc, DurableMetrics())
+
+
 def bank_collect(args: argparse.Namespace) -> None:
     """One lane cycle's GPU collect over the global pool (v1 collect shape).
 
@@ -188,13 +284,7 @@ def bank_collect(args: argparse.Namespace) -> None:
     print("COLLECT policy engine ready", flush=True)
 
     metrics = pilot.Metrics()
-    teacher_generate = None
-    if args.teacher != "fixture":
-        teacher_generate = make_teacher_generate(
-            args.teacher, args.teacher_model, tools, enc, pilot, metrics)
-
     policy_panel = make_panel(curriculum.SYSTEM, tools, POLICY_PANEL)
-    teacher_panel = make_panel(curriculum.SYSTEM, tools, TEACHER_PANEL)
 
     # the orchestrator pre-claimed one task so this GPU cycle has work;
     # claim more (work-stealing) until the pool drains or max-tasks
@@ -222,149 +312,32 @@ def bank_collect(args: argparse.Namespace) -> None:
     outcomes: list[dict[str, Any]] = []
     window_attempts = window_passes = window_receipts = 0
     last_teacher_call = 0.0
-    for task_id, task in claimed.items():
-        attempts += 1
-        heartbeat_claim(bank, task, lane=args.lane, ttl_seconds=args.claim_ttl)
+    pool = (CorrectionPool(config["pool_width"], cycle_dir / "correction-pool")
+            if config["async_enabled"] else None)
+    pending = {}
+    terminal_drain_s = 0.0
+
+    def _finalize_correction(context, result):
+        nonlocal prev_digest, receipts, window_receipts
+        task, outcome = context["task"], context["outcome"]
         body = task["body"]
-        task_dir = cycle_dir / task_id
-        print(f"COLLECT task={task_id} template={body['template']}", flush=True)
-        gym = body.get("task_lake")
         eligible = bool(body.get("receipt_eligible", True))
-        if eligible:
-            window_attempts += 1
-
-        attempt_panel = policy_panel
-        if gym is not None:
-            attempt_panel = make_panel(curriculum.SYSTEM, tools, {
-                **POLICY_PANEL,
-                "max_turns": min(POLICY_PANEL["max_turns"],
-                                 int(gym["limits"]["turns"]))})
-        attempt_dir = task_dir / "attempt"
-        workspace = prepare_workspace(attempt_dir / "workspace", body)
-        policy_record = run_episode(
-            episode_dir=attempt_dir, workspace=workspace, prompt=body["prompt"],
-            panel=attempt_panel, generate=policy_generate, enc=enc,
-            pi_bin=pi_bin, manifest_path=MANIFEST_PATH, pilot=pilot,
-            curriculum=curriculum, seconds=attempt_panel["episode_seconds"])
-        heartbeat_claim(bank, task, lane=args.lane, ttl_seconds=args.claim_ttl)
-        passed, grade = grade_episode(
-            body, workspace, pilot, task, record=policy_record,
-            episode_dir=attempt_dir, stage="policy", system=curriculum.SYSTEM,
-            judge_metrics=metrics, judge_model=args.teacher_model)
-        from ndm.e97_atomic import publish_bytes_no_replace
-        from ndm.e97_onpolicy_records import canonical_json
-
-        publish_bytes_no_replace(
-            attempt_dir / "grade.json",
-            (canonical_json(dict(grade)) + "\n").encode("utf-8"), mode=0o400)
-        print(f"COLLECT policy grade passed={passed} "
-              f"status={policy_record['status']}", flush=True)
-
-        episode_artifacts = {
-            "attempt_grade_sha256": grade_receipt_digest(grade),
-            "attempt_episode_sha256": sha256_file(
-                attempt_dir / "episode-private.json"),
-            "attempt_status": policy_record["status"],
-            "attempt_reason": policy_record.get("reason"),
-        }
-        outcome: dict[str, Any] = {
-            "task_id": task_id, "template": body.get("template"),
-            "split": body.get("split", "seed"), "receipt_eligible": eligible,
-            "attempt": {"status": policy_record["status"],
-                        "grade_passed": passed,
-                        "reason": policy_record.get("reason")},
-            "correction": None, "receipt": None, "targets": 0,
-        }
-
-        def _retire(stage: str, kind: str | None) -> None:
+        episode_artifacts = context["episode_artifacts"]
+        policy_generations = [item for item in context["policy_record"].get("generations", [])
+                              if item.get("reason") == "valid"]
+        def _retire(stage, kind):
             retire_task(bank, task, outcome={
                 "lane": args.lane, "cycle": args.cycle, "stage": stage,
                 "receipt_kind": kind, "receipt_eligible": eligible,
-                "split": body.get("split", "seed"),
-                "receipt": outcome.get("receipt"),
-                "attempt_grade_passed": outcome["attempt"]["grade_passed"],
-            })
-
-        if passed and policy_record["status"] == "finished":
-            if eligible:
-                receipt = _receipt_from_episode(
-                    cycle=args.cycle, task=task, kind="on-policy-success",
-                    policy_checkpoint=policy_checkpoint_binding,
-                    record=policy_record,
-                    supervise_from=0, grade=grade, teacher=None,
-                    attempt_link=None, enc=enc, prev=prev_digest)
-                prev_digest = append_receipt(paths, receipt)
-                receipts += 1
-                window_passes += 1
-                window_receipts += 1
-                outcome.update(receipt=receipt["receipt_sha256"],
-                               targets=receipt["episode"]["targets"],
-                               receipt_kind="on-policy-success")
-                print(f"COLLECT receipt=on-policy-success "
-                      f"{receipt['receipt_sha256'][:16]}", flush=True)
-            else:
-                print("COLLECT dev-split task measured (no receipt: sealed "
-                      "train/development split isolation)", flush=True)
-            outcome["receipt_kind"] = "on-policy-success" if eligible else None
-            _retire("policy", "on-policy-success" if eligible else None)
-            outcomes.append(outcome)
-            continue
-
-        # ---- teacher-correct (spliced continuation; throttled to queue
-        #      consumption: only failed claimed tasks reach here, with a
-        #      minimum interval between teacher calls per lane)
-        interval = time.monotonic() - last_teacher_call
-        if interval < args.teacher_min_interval:
-            time.sleep(args.teacher_min_interval - interval)
-        last_teacher_call = time.monotonic()
-        correction_dir = task_dir / "correction"
-        correction_dir.mkdir(parents=True, exist_ok=False)
-        if args.teacher == "fixture":
-            teacher_generate = make_teacher_generate(
-                args.teacher, args.teacher_model, tools, enc, metrics, body=body)
-        # era-7 (2026-10-03): a degenerate policy prefix POISONS the supervised
-        # context — 925/925 teacher receipts had supervise_from=1 (clean teacher
-        # frames only after a degenerate policy frame), so the model never saw
-        # a clean first frame from a clean context and the degenerate mode was
-        # self-perpetuating (0 screen passes in 24h). When the policy attempt
-        # fails the degeneracy screen, the teacher solves FRESH: clean
-        # workspace, no prefix, supervise_from=0. E5 also starts fresh when
-        # a clean retained first action already violates its sealed criterion.
-        # Genuinely recoverable failures keep the spliced repair continuation.
-        fresh_solve = _correction_requires_fresh_solve(body, policy_record, tools)
-        prefix_messages = (None if fresh_solve
-                           else policy_record.get("source_messages"))
-        policy_generations = [item for item in (policy_record.get("generations") or [])
-                              if item.get("reason") == "valid"]
-        teacher_panel_eff = teacher_panel
-        if gym is not None:
-            dense = 0
-            if prefix_messages:
-                _, dense, _, _ = retained_prefix(prefix_messages, tools)
-            teacher_panel_eff = make_panel(curriculum.SYSTEM, tools, {
-                **TEACHER_PANEL,
-                "max_turns": max(1, int(gym["limits"]["turns"]) - dense)})
-        workspace_corr = (prepare_workspace(correction_dir / "workspace", body)
-                          if fresh_solve else workspace)
-        teacher_record = run_episode(
-            episode_dir=correction_dir, workspace=workspace_corr, prompt=body["prompt"],
-            panel=teacher_panel_eff, generate=teacher_generate, enc=enc,
-            pi_bin=pi_bin, manifest_path=MANIFEST_PATH, pilot=pilot,
-            curriculum=curriculum, seconds=teacher_panel_eff["episode_seconds"],
-            prefix_messages=prefix_messages,
-            prefix_policy_text=(None if fresh_solve
-                                else policy_record.get("native_record")))
-        heartbeat_claim(bank, task, lane=args.lane, ttl_seconds=args.claim_ttl)
-        passed, grade = grade_episode(
-            body, workspace_corr if fresh_solve else workspace, pilot, task,
-            record=teacher_record,
-            episode_dir=correction_dir, stage="teacher", system=curriculum.SYSTEM,
-            judge_metrics=metrics, judge_model=args.teacher_model)
-        publish_bytes_no_replace(
-            correction_dir / "grade.json",
-            (canonical_json(dict(grade)) + "\n").encode("utf-8"), mode=0o400)
-        print(f"COLLECT teacher grade passed={passed} "
-              f"status={teacher_record['status']}", flush=True)
+                "split": body.get("split", "seed"), "receipt": outcome.get("receipt"),
+                "attempt_grade_passed": outcome["attempt"]["grade_passed"]})
+        if result.get("error"):
+            outcome["correction"] = {"status": "error", "grade_passed": False,
+                                     "reason": result["error"]}
+            _retire("failed", None)
+            return
+        passed, grade = result["passed"], result["grade"]
+        teacher_record, fresh_solve = result["teacher_record"], result["fresh_solve"]
         splice = teacher_record.get("prefix") or {}
         prefix_frames = int(splice.get("retained_frames", 0))
         teacher_identity = (
@@ -384,7 +357,8 @@ def bank_collect(args: argparse.Namespace) -> None:
             "reason": teacher_record.get("reason"),
             "prefix_frames": prefix_frames,
         }
-        if passed and teacher_record["status"] == "finished":
+        if (passed and teacher_record["status"] == "finished"
+                and teacher_record.get("close_verified", False)):
             if eligible:
                 merged = _merged_correction_record(
                     teacher_record, policy_generations[:prefix_frames])
@@ -420,7 +394,152 @@ def bank_collect(args: argparse.Namespace) -> None:
             # the round refresh re-attempts this sealed task against the
             # CURRENT lineages next round; retire honestly failed
             _retire("failed", None)
-        outcomes.append(outcome)
+
+    def _poll_corrections():
+        if pool is not None:
+            for sequence, result in pool.poll():
+                context = pending.pop(sequence)
+                for call in result.get("metrics", {}).get("calls", []):
+                    metrics.record(call)
+                _finalize_correction(context, result)
+            for context in pending.values():
+                heartbeat_claim(bank, context["task"], lane=args.lane,
+                                ttl_seconds=args.claim_ttl)
+
+    try:
+        for task_id, task in claimed.items():
+            _poll_corrections()
+            attempts += 1
+            heartbeat_claim(bank, task, lane=args.lane, ttl_seconds=args.claim_ttl)
+            body = task["body"]
+            task_dir = cycle_dir / task_id
+            print(f"COLLECT task={task_id} template={body['template']}", flush=True)
+            gym = body.get("task_lake")
+            eligible = bool(body.get("receipt_eligible", True))
+            if eligible:
+                window_attempts += 1
+
+            attempt_panel = policy_panel
+            if gym is not None:
+                attempt_panel = make_panel(curriculum.SYSTEM, tools, {
+                    **POLICY_PANEL,
+                    "max_turns": min(POLICY_PANEL["max_turns"],
+                                     int(gym["limits"]["turns"]))})
+            attempt_dir = task_dir / "attempt"
+            workspace = prepare_workspace(attempt_dir / "workspace", body)
+            policy_record = run_episode(
+                episode_dir=attempt_dir, workspace=workspace, prompt=body["prompt"],
+                panel=attempt_panel, generate=policy_generate, enc=enc,
+                pi_bin=pi_bin, manifest_path=MANIFEST_PATH, pilot=pilot,
+                curriculum=curriculum, seconds=attempt_panel["episode_seconds"])
+            heartbeat_claim(bank, task, lane=args.lane, ttl_seconds=args.claim_ttl)
+            passed, grade = grade_episode(
+                body, workspace, pilot, task, record=policy_record,
+                episode_dir=attempt_dir, stage="policy", system=curriculum.SYSTEM,
+                judge_metrics=metrics, judge_model=DEFAULT_TEACHER_MODEL)
+            from ndm.e97_atomic import publish_bytes_no_replace
+            from ndm.e97_onpolicy_records import canonical_json
+
+            publish_bytes_no_replace(
+                attempt_dir / "grade.json",
+                (canonical_json(dict(grade)) + "\n").encode("utf-8"), mode=0o400)
+            print(f"COLLECT policy grade passed={passed} "
+                  f"status={policy_record['status']}", flush=True)
+
+            episode_artifacts = {
+                "attempt_grade_sha256": grade_receipt_digest(grade),
+                "attempt_episode_sha256": sha256_file(
+                    attempt_dir / "episode-private.json"),
+                "attempt_status": policy_record["status"],
+                "attempt_reason": policy_record.get("reason"),
+            }
+            outcome: dict[str, Any] = {
+                "task_id": task_id, "template": body.get("template"),
+                "split": body.get("split", "seed"), "receipt_eligible": eligible,
+                "attempt": {"status": policy_record["status"],
+                            "grade_passed": passed,
+                            "reason": policy_record.get("reason")},
+                "correction": None, "receipt": None, "targets": 0,
+            }
+
+            def _retire(stage: str, kind: str | None) -> None:
+                retire_task(bank, task, outcome={
+                    "lane": args.lane, "cycle": args.cycle, "stage": stage,
+                    "receipt_kind": kind, "receipt_eligible": eligible,
+                    "split": body.get("split", "seed"),
+                    "receipt": outcome.get("receipt"),
+                    "attempt_grade_passed": outcome["attempt"]["grade_passed"],
+                })
+
+            if passed and policy_record["status"] == "finished":
+                if eligible:
+                    receipt = _receipt_from_episode(
+                        cycle=args.cycle, task=task, kind="on-policy-success",
+                        policy_checkpoint=policy_checkpoint_binding,
+                        record=policy_record,
+                        supervise_from=0, grade=grade, teacher=None,
+                        attempt_link=None, enc=enc, prev=prev_digest)
+                    prev_digest = append_receipt(paths, receipt)
+                    receipts += 1
+                    window_passes += 1
+                    window_receipts += 1
+                    outcome.update(receipt=receipt["receipt_sha256"],
+                                   targets=receipt["episode"]["targets"],
+                                   receipt_kind="on-policy-success")
+                    print(f"COLLECT receipt=on-policy-success "
+                          f"{receipt['receipt_sha256'][:16]}", flush=True)
+                else:
+                    print("COLLECT dev-split task measured (no receipt: sealed "
+                          "train/development split isolation)", flush=True)
+                outcome["receipt_kind"] = "on-policy-success" if eligible else None
+                _retire("policy", "on-policy-success" if eligible else None)
+                outcomes.append(outcome)
+                continue
+
+            # Admission preserves the existing lane-local minimum start interval.
+            _poll_corrections()
+            can_admit = pool is None or len(pending) < config["pool_width"]
+            if can_admit:
+                interval = time.monotonic() - last_teacher_call
+                if interval < args.teacher_min_interval:
+                    time.sleep(args.teacher_min_interval - interval)
+                last_teacher_call = time.monotonic()
+            context = {"task": task, "outcome": outcome, "policy_record": policy_record,
+                       "episode_artifacts": episode_artifacts}
+            outcomes.append(outcome)
+            if pool is None:
+                result = _execute_correction(args, task, policy_record, workspace, task_dir,
+                                             pilot, curriculum, tools, enc, metrics)
+                heartbeat_claim(bank, task, lane=args.lane, ttl_seconds=args.claim_ttl)
+                _finalize_correction(context, result)
+            else:
+                spec = {"settings": {"teacher": args.teacher, "teacher_model": args.teacher_model},
+                        "task": task, "policy_record": policy_record,
+                        "policy_checkpoint": policy_checkpoint_binding,
+                        "episode_artifacts": episode_artifacts,
+                        "fresh_solve": _correction_requires_fresh_solve(body, policy_record, tools),
+                        "workspace": str(workspace), "task_dir": str(task_dir)}
+                sequence, failure = pool.submit(spec)
+                if failure is not None:
+                    _finalize_correction(context, failure)
+                else:
+                    pending[sequence] = context
+
+        # End-of-cycle barrier: no unfinished correction can enter training or a
+        # later cycle. Every failure is finalized explicitly, without a receipt.
+        if pool is not None:
+            drain_started = time.monotonic()
+            try:
+                while pending:
+                    _poll_corrections()
+                    if pending:
+                        time.sleep(0.2)
+            finally:
+                terminal_drain_s = time.monotonic() - drain_started
+                pool.close()
+    finally:
+        if pool is not None:
+            pool.close()
 
     summary = {
         "schema": "emender-rl-loop-collect-summary-v1",
@@ -429,6 +548,11 @@ def bank_collect(args: argparse.Namespace) -> None:
         "teacher_calls": len(metrics.calls),
         "policy_checkpoint_sha256": state["lineage_sha256"],
         "teacher_mode": args.teacher,
+        "correction_config": config,
+        "correction_terminal_drain_s": terminal_drain_s,
+        "correction_pool_exhaustions": sum(
+            (outcome.get("correction") or {}).get("reason") == "pool exhausted"
+            for outcome in outcomes),
         "policy_generate_state": getattr(policy_generate, "state", {}),
         "outcomes": outcomes,
     }

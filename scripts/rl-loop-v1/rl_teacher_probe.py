@@ -178,6 +178,7 @@ def run_case(root, phase, model, index):
               "elapsed_s": time.monotonic()-start})
     row = json.loads((output / "result.json").read_text())
     row.update(owner_started_unix=owner_started_unix, owner_ended_unix=time.time(),
+               owner_started_monotonic=start, owner_ended_monotonic=time.monotonic(),
                owner_elapsed_s=time.monotonic()-start)
     return row
 
@@ -189,7 +190,7 @@ def run(args):
         design = args.root / "ladder-design.json"
         if not design.exists():
             write(design, {"models": models, "rungs": rungs, "waves": 2,
-                "approval": "supervisor approved two-wave bounded degradation probe",
+                "approval": "operator capped two-wave queue/capacity probe; 4/8/12 only",
                 "approved_before_first_rung_unix": time.time(),
                 "operator_endpoint_cap": 12, "cap_source": "operator statement 2026-10-08",
                 "queue_429_interpretation": "240s waits for a free background lane; not degradation",
@@ -210,8 +211,8 @@ def run(args):
             elapsed = time.monotonic()-start
             write(summary, {"model": model, "concurrency": width, "n": count,
                 "wall_s": elapsed, "started_unix": started_unix, "ended_unix": time.time(),
-                "terminal_drain_after_last_admission_s": max(r["owner_ended_unix"] for r in rows)
-                    - max(r["owner_started_unix"] for r in rows),
+                "terminal_drain_after_last_admission_s": max(r["owner_ended_monotonic"] for r in rows)
+                    - max(r["owner_started_monotonic"] for r in rows),
                 "background_bank_processes_at_start": [line for line in background.splitlines()
                     if "bank-singlelearner-B" in line and "rl_bank_lane.py collect" in line],
                 "capacity_definition": "burst+drain, finite sample, NOT sustained production limit",
@@ -225,10 +226,82 @@ def run(args):
                               "receipts": sum(r["receipt"] for r in rows)}), flush=True)
 
 
+def pool_timing(args):
+    """Actual pool/network; simulated four-task policy timing, no bank writes."""
+    import shutil
+    import rl_loop_driver as driver
+    from rl_correction_pool import CorrectionPool
+    from rl_correction_config import DEFAULT_WIDTH
+    from rl_receipts import grade_receipt_digest
+    plan = json.loads((args.root / "plan.json").read_text())
+    destination = args.root / "pool-timing" / args.model
+    destination.mkdir(parents=True, exist_ok=False)
+    specs = []
+    for index, item in enumerate(plan["tasks"][:4]):
+        task_dir = destination / f"case-{index:04d}"
+        attempt_dir = task_dir / "attempt"
+        attempt_dir.mkdir(parents=True)
+        source = Path(item["attempt_source"])
+        for name in ("episode-private.json", "grade.json"):
+            shutil.copyfile(source.parent / name, attempt_dir / name)
+            (attempt_dir / name).chmod(0o400)
+        workspace = driver.prepare_workspace(attempt_dir / "workspace", item["task"]["body"])
+        grade = json.loads((attempt_dir / "grade.json").read_text())
+        specs.append({"settings": {"teacher": "live", "teacher_model": args.model},
+            "task": item["task"], "policy_record": item["attempt"], "fresh_solve": True,
+            "policy_checkpoint": {"checkpoint_path": "archived-policy-not-loaded",
+                "checkpoint_sha256": json.loads((source.parents[2] / "collect-summary.json").read_text())["policy_checkpoint_sha256"]},
+            "episode_artifacts": {"attempt_episode_sha256": item["attempt_sha256"],
+                "attempt_grade_sha256": grade_receipt_digest(grade)},
+            "workspace": str(workspace), "task_dir": str(task_dir),
+            "pilot_snapshot": {"path": str(args.root / "pilot-isolated.py"), "sha256": plan["pilot_sha256"]}})
+    pool = CorrectionPool(DEFAULT_WIDTH, destination / "pool")
+    start = time.monotonic()
+    rows = []
+    pending = {}
+    def poll():
+        for sequence, result in pool.poll():
+            index = pending.pop(sequence)
+            record = result.get("teacher_record", {})
+            rows.append({"index": index, "finalized_s": time.monotonic()-start,
+                "eligible_receipt": bool(result.get("passed") and record.get("status") == "finished"
+                                         and record.get("close_verified")), "result": result})
+    drain_s = 0.0
+    try:
+        for index, spec in enumerate(specs):
+            attempt_end = start+(index+1)*11.69467115
+            while time.monotonic() < attempt_end:
+                poll()
+                time.sleep(min(.05, max(0, attempt_end-time.monotonic())))
+            poll()
+            sequence, failure = pool.submit(spec)
+            if failure is not None:
+                rows.append({"index": index, "finalized_s": time.monotonic()-start,
+                             "eligible_receipt": False, "result": failure})
+            else:
+                pending[sequence] = index
+        drain_started = time.monotonic()
+        while pending:
+            poll()
+            if pending:
+                time.sleep(.05)
+        drain_s = time.monotonic()-drain_started
+    finally:
+        pool.close()
+    summary = {"model": args.model, "pool_width": DEFAULT_WIDTH, "attempts": 4,
+        "admissions": pool.sequence, "exhaustions": 4-pool.sequence,
+        "terminal_drain_s": drain_s, "cycle_wall_s": time.monotonic()-start,
+        "simulated_policy_spacing_s": 11.69467115,
+        "qualification": "actual pool + isolated original pilot/API/Pi/sealed graders; simulated policy timing, no GPU/bank publication",
+        "rows": sorted(rows, key=lambda r: r["index"])}
+    write(destination / "summary.json", summary)
+    print(json.dumps({k: summary[k] for k in ("model", "admissions", "exhaustions", "terminal_drain_s", "cycle_wall_s")}), flush=True)
+
+
 def main():
     os.umask(0o077)
     parser = argparse.ArgumentParser()
-    parser.add_argument("command", choices=("freeze", "run", "worker"))
+    parser.add_argument("command", choices=("freeze", "run", "worker", "pool-timing"))
     parser.add_argument("--root", type=Path, required=True)
     parser.add_argument("--bank", type=Path)
     parser.add_argument("--phase", choices=("ab", "ladder"))
@@ -236,7 +309,15 @@ def main():
     parser.add_argument("--index", type=int)
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
-    {"freeze": freeze, "run": run, "worker": worker}[args.command](args)
+    if args.command == "freeze" and args.bank is None:
+        parser.error("freeze requires --bank")
+    if args.command == "run" and args.phase is None:
+        parser.error("run requires --phase")
+    if args.command in ("worker", "pool-timing") and args.model is None:
+        parser.error("correction work requires --model")
+    if args.command == "worker" and (args.index is None or args.output is None):
+        parser.error("worker requires --index and --output")
+    {"freeze": freeze, "run": run, "worker": worker, "pool-timing": pool_timing}[args.command](args)
 
 
 if __name__ == "__main__":

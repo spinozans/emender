@@ -35,12 +35,15 @@ def measure(path):
     calls = []
     calls_per_correction = []
     successful_calls_per_correction = []
+    complete_episode_calls = []
     retry_outcomes = {"receipt_after_api_error": 0, "no_receipt_after_api_error": 0}
     for row in rows:
         api = path.parent / f'case-{row["index"]:04d}' / "api.jsonl"
         attempt_calls = [json.loads(line) for line in api.read_text().splitlines()] if api.exists() else []
         calls.extend(attempt_calls)  # includes attempts in crashed/timeout workers
         calls_per_correction.append(len(attempt_calls))
+        if row.get("status") == "finished" and row.get("close_verified", False):
+            complete_episode_calls.append(len(attempt_calls))
         successful_calls_per_correction.append(sum(not c.get("error") for c in attempt_calls))
         if any(c.get("error") for c in attempt_calls):
             retry_outcomes["receipt_after_api_error" if row["receipt"] else "no_receipt_after_api_error"] += 1
@@ -65,6 +68,9 @@ def measure(path):
         "mean_call_latency_s": sum(c["latency_s"] for c in calls)/len(calls) if calls else None,
         "mean_calls_per_correction": len(calls)/len(rows),
         "calls_per_correction": distribution(calls_per_correction),
+        "calls_per_complete_correction": distribution(complete_episode_calls),
+        "mean_calls_per_complete_correction": sum(complete_episode_calls)/len(complete_episode_calls) if complete_episode_calls else None,
+        "complete_correction_api_attempts": sum(complete_episode_calls),
         "successful_calls_per_correction": distribution(successful_calls_per_correction),
         "sealed_complete_grade_failures": sum(r.get("status") == "finished" and
             r.get("close_verified", False) and not r["grade_passed"] for r in rows),
@@ -132,6 +138,16 @@ def main():
     report["paired_sealed_complete"] = {"n": len(complete), "indices": sorted(complete),
         "grade_passes": {m: sum(bool(r["grade_passed"]) for r in rows if r["index"] in complete)
                          for m, rows in zip(MODELS, cohorts)}}
+    report["pairwise_sealed_complete"] = []
+    for baseline_index in (0, 1):
+        paired = {r["index"] for r in cohorts[baseline_index] if r.get("status") == "finished"
+                  and r.get("close_verified", False)} & {r["index"] for r in cohorts[2]
+                  if r.get("status") == "finished" and r.get("close_verified", False)}
+        passes = [sum(bool(r["grade_passed"]) for r in cohorts[i] if r["index"] in paired)
+                  for i in (baseline_index, 2)]
+        report["pairwise_sealed_complete"].append({"baseline": MODELS[baseline_index], "n": len(paired),
+            "baseline_passes": passes[0], "deepseek_passes": passes[1], "indices": sorted(paired),
+            "deepseek_delta_pp": 100*(passes[1]-passes[0])/len(paired) if paired else None})
     ceilings = []
     grid = report["F6_same_grid_tasks_h_projected"]
     for model in MODELS:
@@ -140,7 +156,9 @@ def main():
         count = sum(r["n"] for r in samples)
         latency_sum = sum(r["mean_call_latency_s"]*r["api_attempts"] for r in samples)
         call_ceiling = 12*3600/(latency_sum/calls)
-        episode_ceiling = call_ceiling/(calls/count)
+        complete_n = sum(r["finished_closed"] for r in samples)
+        complete_calls = sum(r["complete_correction_api_attempts"] for r in samples)
+        episode_ceiling = call_ceiling/(complete_calls/complete_n)
         attempt_ceiling = episode_ceiling/.65
         campaign = []
         for label, attempts in (("current B arm (F6-normalized projected demand)", grid),
@@ -150,17 +168,24 @@ def main():
                 "minimum_policy_gpus_at_300_attempts_h": math.ceil(attempts/300),
                 "correction_demand_h": demand, "ideal_continuous_backlog_growth_h": max(0, demand-episode_ceiling)})
         ceilings.append({"model": model, "latency_mean_s": latency_sum/calls,
-            "mean_calls_per_correction": calls/count, "call_equivalent_ceiling_h": call_ceiling,
+            "mean_calls_per_correction_outcome": calls/count,
+            "mean_calls_per_complete_correction": complete_calls/complete_n,
+            "call_equivalent_ceiling_h": call_ceiling,
             "episode_proxy_ceiling_h": episode_ceiling, "attempt_proxy_ceiling_h": attempt_ceiling,
             "campaigns": campaign,
             "qualification": "operator formula using client wall latencies INCLUDING queue/retries; not queue-free service occupancy or a sustained measurement"})
     report["operator_formula_ceilings"] = ceilings
+    pool_path = args.root / "pool-timing" / MODELS[2] / "summary.json"
+    pool = json.loads(pool_path.read_text())
+    report["actual_pool_timing_replay"] = {k: v for k, v in pool.items() if k != "rows"}
+    report["actual_pool_timing_replay"]["eligible_receipts"] = sum(r["eligible_receipt"] for r in pool["rows"])
     args.output.write_text(json.dumps(report, sort_keys=True, indent=2)+"\n")
     # Raw evidence stays private. Manifest hashes contain no sealed prompts/answers.
     files = [p for p in args.root.rglob("*") if p.is_file() and
              (p.name in ("plan.json", "ladder-design.json", "pilot-isolated.py", "cohort.json", "result.json",
-                         "api.jsonl", "grade.json", "candidate-receipt.json", "episode-private.json")
-              or p.name.startswith("gym-terminal-projection"))]
+                         "api.jsonl", "correction-api.jsonl", "grade.json", "candidate-receipt.json",
+                         "episode-private.json", "summary.json")
+              or p.name.startswith(("gym-terminal-projection", "spec-", "result-")))]
     manifest = [{"path": str(p), "sha256": hashlib.sha256(p.read_bytes()).hexdigest()} for p in sorted(files)]
     args.manifest.write_text(json.dumps(manifest, sort_keys=True, indent=2)+"\n")
     print(json.dumps({"ab_receipts": [r["receipts"] for r in ab],

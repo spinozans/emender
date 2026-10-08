@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 
 DEFAULT_MODEL = "glm-5.3-flash-background"
-DEFAULT_WIDTH = 4  # Conservative until endpoint qualification selects a width.
+DEFAULT_WIDTH = 1  # Eight B lanes, twelve global background slots; leave four for other callers.
 
 
 def read_correction_config(bank: Path) -> dict:
@@ -21,8 +21,8 @@ def read_correction_config(bank: Path) -> dict:
         raise ValueError("teacher_model must be a nonempty model id")
     if type(config["async_enabled"]) is not bool:
         raise ValueError("async_enabled must be boolean")
-    if type(config["pool_width"]) is not int or not 1 <= config["pool_width"] <= 32:
-        raise ValueError("pool_width must be an integer in 1..32")
+    if type(config["pool_width"]) is not int or not 1 <= config["pool_width"] <= 12:
+        raise ValueError("pool_width must be an integer in 1..12")
     return config
 
 

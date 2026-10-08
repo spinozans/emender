@@ -865,7 +865,7 @@ def test_fresh_solve_collect(scratch: Path) -> None:
                 (kwargs["episode_dir"] / "episode-private.json").write_text(json.dumps(policy))
                 return policy
             prefix = kwargs["prefix_messages"]
-            return {"status": "finished", "generations": [],
+            return {"status": "finished", "close_verified": True, "generations": [],
                     "prefix": None if prefix is None else {"retained_frames": 1}}
 
         def receipt(**kwargs):
@@ -1826,6 +1826,220 @@ def test_pg_grid(scratch: Path) -> None:
                   str(exc) == "captured logprob count mismatch")
 
 
+def test_correction_pool(scratch: Path) -> None:
+    from unittest.mock import patch
+    from rl_correction_config import read_correction_config
+    import rl_correction_pool as module
+    root = scratch / "f7-config"
+    root.mkdir()
+    config = read_correction_config(root)
+    check("F7 absent durable config preserves live baseline and default-OFF",
+          config["teacher_model"] == "glm-5.3-flash-background" and not config["async_enabled"])
+    (root / "correction-config.json").write_text(json.dumps({
+        "teacher_model": "deepseek-4.1-flash-background", "async_enabled": True, "pool_width": 8}))
+    check("F7 durable config survives independent reread", read_correction_config(root)["pool_width"] == 8)
+    for bad in ({"pool_width": 0}, {"pool_width": True}, {"async_enabled": "yes"}, {"unknown": 1}):
+        (root / "correction-config.json").write_text(json.dumps(bad))
+        try:
+            read_correction_config(root)
+        except ValueError:
+            check("F7 invalid durable correction config fails closed " + str(bad), True)
+        else:
+            check("F7 invalid config accepted", False)
+    real_popen = subprocess.Popen
+    # Actual OS processes exercise capacity, partial/crashed results and teardown;
+    # substitute only child workload, never the production pool implementation.
+    script = ('import json,time,sys; from pathlib import Path; '
+              's=json.loads(Path(sys.argv[1]).read_text()); time.sleep(s["delay"]); '
+              'Path(sys.argv[2]).write_text(json.dumps({"passed":True,"value":s["value"]})); '
+              'sys.exit(s.get("exit",0))')
+    def spawn(command, **kwargs):
+        return real_popen([sys.executable, "-c", script,
+                          command[command.index("--spec")+1], command[command.index("--result")+1]], **kwargs)
+    with patch.object(module.subprocess, "Popen", side_effect=spawn):
+        pool = module.CorrectionPool(2, scratch / "f7-pool", timeout_s=2)
+        first, _ = pool.submit({"delay": .4, "value": "first"})
+        second, _ = pool.submit({"delay": .01, "value": "second"})
+        seq, error = pool.submit({"delay": 0, "value": "exhausted"})
+        check("F7 pool exhaustion is explicit and never silently queued",
+              seq is None and error["error"] == "pool exhausted" and len(pool.jobs) == 2)
+        immutable = pool.directory / "spec-0000.json"
+        check("F7 admitted correction specs immutable", immutable.stat().st_mode & 0o222 == 0)
+        time.sleep(.15)
+        ready = pool.poll()
+        check("F7 completion ordering reports ready correction without waiting for earlier one",
+              len(ready) == 1 and ready[0][0] == second and ready[0][1]["value"] == "second")
+        time.sleep(.45)
+        check("F7 earlier slow correction completes exactly once", pool.poll()[0][0] == first and pool.poll() == [])
+        crash_dir = scratch / "f7-crash-metrics"
+        crash_dir.mkdir()
+        call = {"model": "unit", "latency_s": .1, "attempt": 0}
+        (crash_dir / "correction-api.jsonl").write_text(json.dumps(call)+"\n{partial")
+        crashed, _ = pool.submit({"delay": .01, "value": "partial", "exit": 7,
+                                  "task_dir": str(crash_dir)})
+        time.sleep(.15)
+        ready = pool.poll()
+        check("F7 crash mid-correction cannot admit even a present result file",
+              ready[0][0] == crashed and not ready[0][1]["passed"] and "exit 7" in ready[0][1]["error"]
+              and ready[0][1]["metrics"]["calls"] == [call] and ready[0][1]["metrics_partial_tail"])
+        late, _ = pool.submit({"delay": 10, "value": "late"})
+        proc = pool.jobs[late][0]
+        cancelled = pool.close()
+        check("F7 late completion after cycle close is fenced and child is reaped",
+              cancelled == [late] and proc.poll() is not None and pool.poll() == [])
+        check("F7 closed cycle refuses further admission", pool.submit({})[1]["error"] == "pool closed")
+        timed = module.CorrectionPool(1, scratch / "f7-timeout", timeout_s=.05)
+        timed.submit({"delay": 10, "value": "never"})
+        time.sleep(.1)
+        ready = timed.poll()
+        check("F7 correction deadline bounded and publishes no success", ready[0][1]["error"] == "correction timeout")
+        timed.close()
+        twelve = module.CorrectionPool(12, scratch / "f7-twelve-drain", timeout_s=2)
+        for index in range(12):
+            twelve.submit({"delay": .05+.01*index, "value": index})
+        drain_started = time.monotonic()
+        finalized = []
+        while twelve.jobs:
+            finalized.extend(twelve.poll())
+            if twelve.jobs:
+                time.sleep(.01)
+        drain_s = time.monotonic()-drain_started
+        twelve.close()
+        (scratch / "F7-pool-drain-test.json").write_text(json.dumps({
+            "workers": 12, "terminal_drain_s": drain_s,
+            "qualification": "actual OS processes with CPU fixture sleeps, NOT LunarRoute latency"})+"\n")
+        check("F7 twelve-worker terminal fence measures bounded real drain gap",
+              len(finalized) == 12 and .05 <= drain_s < 2, f"drain_s={drain_s:.6f}")
+
+    # Real worker, real Linux parent-death signal; no GPU/model/API workload.
+    import signal
+    owner_script = ('import sys,time; from pathlib import Path; '
+                    'from rl_correction_pool import CorrectionPool; '
+                    'p=CorrectionPool(1,Path(sys.argv[1])); seq,_=p.submit({}); '
+                    'Path(sys.argv[2]).write_text(str(p.jobs[seq][0].pid)); time.sleep(60)')
+    child_id = scratch / "f7-owner-child.pid"
+    owner = real_popen([sys.executable, "-c", owner_script, str(scratch / "f7-owner-death"),
+                       str(child_id)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    try:
+        deadline = time.monotonic()+10
+        ready = False
+        while time.monotonic() < deadline:
+            if child_id.exists():
+                child = int(child_id.read_text())
+                status_path = Path(f"/proc/{child}/status")
+                if status_path.exists():
+                    caught = next(line.split()[1] for line in status_path.read_text().splitlines()
+                                  if line.startswith("SigCgt:"))
+                    if int(caught, 16) & (1 << (signal.SIGTERM-1)):
+                        ready = True
+                        break
+            time.sleep(.01)
+        check("F7 real worker installs owner-death fence before correction imports", ready)
+        owner.kill()
+        owner.wait(timeout=5)
+        stopped = False
+        deadline = time.monotonic()+5
+        while time.monotonic() < deadline:
+            status_path = Path(f"/proc/{child}/status")
+            if not status_path.exists() or "State:\tZ" in status_path.read_text():
+                stopped = True
+                break
+            time.sleep(.01)
+        check("F7 collect SIGKILL terminates isolated correction owner", stopped)
+    finally:
+        if owner.poll() is None:
+            owner.kill()
+            owner.wait(timeout=5)
+
+
+def test_async_correction_collect(scratch: Path) -> None:
+    """Real lane admission/single-writer finalization, isolated CPU fakes only."""
+    from contextlib import ExitStack
+    from types import SimpleNamespace
+    from unittest.mock import patch
+    import rl_bank_lane as lane
+    root = scratch / "f7-async-collect"
+    bank = bank_paths(root)
+    ensure_bank_layout(bank)
+    seed = root / "seed.pt"
+    _synthetic_checkpoint(seed, 1.0, "seed")
+    init_lane_state(bank, 0, checkpoint=seed, checkpoint_sha256=_sha(seed), note="unit")
+    (root / "correction-config.json").write_text(json.dumps({"async_enabled": True, "pool_width": 2}))
+    tasks = [{"task_id": f"f7-{i}", "task_sha256": str(i)*64,
+              "body": {"template": "fixture", "prompt": "x", "split": "train",
+                       "receipt_eligible": True, "workspace_files": {}}} for i in range(3)]
+    events, emitted, retired, specs = [], [], [], []
+    record = {"status": "stopped", "generations": [], "source_messages": [], "reason": "fixture"}
+    def episode(**kwargs):
+        events.append("attempt")
+        (kwargs["episode_dir"] / "episode-private.json").write_text(json.dumps(record))
+        return record
+    class Pool:
+        def __init__(self, width, directory):
+            self.jobs = {}
+            self.closed = False
+        def submit(self, spec):
+            events.append("admit")
+            specs.append(spec)
+            if len(self.jobs) == 2:
+                return None, {"passed": False, "error": "pool exhausted"}
+            sequence = len(self.jobs)
+            self.jobs[sequence] = spec
+            return sequence, None
+        def poll(self):
+            if events.count("attempt") < 3 or len(specs) < 3:
+                return []
+            rows = []
+            for seq in reversed(list(self.jobs)):
+                rows.append((seq, {"passed": True, "grade": {"passed": True},
+                    "fresh_solve": True, "teacher_record": {"status": "finished",
+                    "close_verified": True, "prefix": None, "reason": None, "generations": []}}))
+            self.jobs.clear()
+            return rows
+        def close(self):
+            self.closed = True
+    def receipt(**kwargs):
+        emitted.append(kwargs)
+        events.append("receipt")
+        return {"receipt_sha256": str(len(emitted))*64, "episode": {"targets": 10}}
+    def retire(bank, task, **kwargs):
+        retired.append((task["task_id"], kwargs["outcome"]))
+    args = SimpleNamespace(bank=root, lane=0, cycle=1, args_json=Path("/dev/null"),
+                           teacher="fixture", teacher_model=None, preclaimed=None,
+                           max_tasks=3, claim_ttl=60, teacher_min_interval=0)
+    with ExitStack() as stack:
+        replacements = {"load_pilot": SimpleNamespace(Metrics=lambda: SimpleNamespace(calls=[])),
+            "load_curriculum": SimpleNamespace(SYSTEM="fixture"),
+            "tool_manifest": {"pi_bin": "/dev/null", "model_visible_tools": []},
+            "load_policy_engine": None, "make_policy_generate": None,
+            "heartbeat_claim": True, "stream_tail_digest": None}
+        for attribute, value in replacements.items():
+            stack.enter_context(patch.object(lane, attribute, return_value=value))
+        stack.enter_context(patch.object(lane, "CorrectionPool", Pool))
+        stack.enter_context(patch.object(lane, "claim_pool_task", side_effect=tasks))
+        stack.enter_context(patch.object(lane, "run_episode", side_effect=episode))
+        stack.enter_context(patch.object(lane, "grade_episode", return_value=(False, {})))
+        stack.enter_context(patch.object(lane, "_receipt_from_episode", side_effect=receipt))
+        stack.enter_context(patch.object(lane, "append_receipt", side_effect=lambda paths, row: row["receipt_sha256"]))
+        stack.enter_context(patch.object(lane, "retire_task", side_effect=retire))
+        lane.bank_collect(args)
+    check("F7 next attempt runs before any asynchronous correction receipt",
+          events[:6] == ["attempt", "admit", "attempt", "admit", "attempt", "admit"])
+    check("F7 single writer chains out-of-order receipts using publication-time tail",
+          [x["task"]["task_id"] for x in emitted] == ["f7-1", "f7-0"]
+          and emitted[0]["prev"] is None and emitted[1]["prev"] == "1"*64)
+    summary = json.loads((lane_paths(bank, 0)["episodes"] / "cycle-0001/collect-summary.json").read_text())
+    check("F7 cycle summary reports terminal correction drain separately",
+          summary["correction_terminal_drain_s"] >= 0)
+    check("F7 exhausted task remains honestly uncorrected with no receipt",
+          summary["receipts"] == 2 and summary["correction_pool_exhaustions"] == 1
+          and summary["outcomes"][2]["receipt"] is None
+          and summary["outcomes"][2]["correction"]["reason"] == "pool exhausted"
+          and next(row for task_id, row in retired if task_id == "f7-2")["stage"] == "failed")
+    check("F7 correction specs preserve exact task/attempt and separate workspaces",
+          len({x["workspace"] for x in specs}) == 3 and all(x["policy_record"] == record for x in specs))
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--scratch", type=Path,
@@ -1864,6 +2078,8 @@ def main() -> None:
     test_block_training(scratch)
     test_parallel_collection(scratch)
     test_pg_grid(scratch)
+    test_correction_pool(scratch)
+    test_async_correction_collect(scratch)
     print(json.dumps({"schema": "emender-rl-loop-bank-unit-test-v1",
                      "passed": len(PASSED), "tests": PASSED}, sort_keys=True))
 
