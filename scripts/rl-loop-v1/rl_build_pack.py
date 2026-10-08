@@ -71,6 +71,7 @@ def build_authority(receipts: list[dict], output: Path, cycle: int) -> dict:
             metadata_out.write(json.dumps({
                 "id": f"rl-loop-{receipt['task_id']}-{receipt['receipt_sha256'][:16]}",
                 "receipt_sha256": receipt["receipt_sha256"],
+                **({"source_lane": receipt["source_lane"]} if "source_lane" in receipt else {}),
                 "kind": receipt["kind"],
                 "source": f"rl-loop-cycle-{cycle:04d}",
                 "task_id": receipt["task_id"],
@@ -127,6 +128,37 @@ def build_packs(authority_root: Path, packs_root: Path, *, authority_sha: str,
     return {"pack_manifest_sha256": pack_sha,
             "packs": pack_manifest["splits"]["train"]["packs"],
             "stdout_tail": completed.stdout.strip()[-400:]}
+
+
+def load_selection_receipts(paths, *, enc, streams_root: Path | None = None) -> list[dict]:
+    """Verify each lane chain before union/dedupe; annotate copies, not receipts.
+
+    Cross-stream FIFO uses receipt creation time, then numeric lane and stream
+    position for reproducible ties. The unflagged stream keeps its exact order.
+    """
+    if streams_root is None:
+        return walk_stream(paths, enc=enc)
+    if not streams_root.is_dir():
+        raise SystemExit(f"streams root is not a directory: {streams_root}")
+    lanes = sorted((p for p in streams_root.glob("lane-*")
+                    if p.is_dir() and p.name[5:].isdigit()),
+                   key=lambda p: (int(p.name[5:]), p.name))
+    ordered = []
+    for lane in lanes:
+        lane_paths = workspace_paths(lane)
+        if not lane_paths["stream"].is_file():
+            continue
+        for position, receipt in enumerate(walk_stream(lane_paths, enc=enc)):
+            ordered.append((receipt["created_unix"], int(lane.name[5:]), position,
+                            {**receipt, "source_lane": lane.name}))
+    seen = set()
+    receipts = []
+    for _, _, _, receipt in sorted(ordered, key=lambda item: item[:3]):
+        digest = receipt["receipt_sha256"]
+        if digest not in seen:
+            seen.add(digest)
+            receipts.append(receipt)
+    return receipts
 
 
 def select_window_receipts(receipts: list[dict], consumed: set,
@@ -187,6 +219,8 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--workspace", type=Path, default=None)
     parser.add_argument("--cycle", type=int, required=True)
+    parser.add_argument("--streams-root", type=Path, default=None,
+                        help="union verified lane streams for window/all-unconsumed selection")
     parser.add_argument("--receipts-limit", type=int, default=0,
                         help="0 = every verified receipt in the stream")
     parser.add_argument("--min-targets", type=int, default=512,
@@ -205,7 +239,9 @@ def main() -> None:
     paths = workspace_paths(args.workspace)
     ensure_layout(paths)
     enc = tiktoken.get_encoding("p50k_base")
-    receipts = walk_stream(paths, enc=enc)
+    receipts = load_selection_receipts(
+        paths, enc=enc,
+        streams_root=args.streams_root if (args.window or args.all_unconsumed) else None)
     if args.receipts_limit:
         receipts = receipts[:args.receipts_limit]
     if args.all_unconsumed and (args.window or args.receipts_limit):
@@ -252,6 +288,7 @@ def main() -> None:
             for r in cycle_receipts:
                 ledger.write(json.dumps({
                     "receipt_sha256": r["receipt_sha256"],
+                    **({"source_lane": r["source_lane"]} if "source_lane" in r else {}),
                     "packed_cycle": args.cycle,
                     "window": args.window,
                 }) + "\n")

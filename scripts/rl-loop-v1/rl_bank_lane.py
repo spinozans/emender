@@ -555,7 +555,7 @@ def lane_run(args: argparse.Namespace) -> None:
         state["pg_updates_total"] = int(state.get("pg_updates_total", 0))
         state["pg_fallbacks_total"] = int(state.get("pg_fallbacks_total", 0))
     write_lane_state(paths["root"], state)
-    if args.block_mode == "on":
+    if args.block_mode == "on" and not getattr(args, "collector_only", False):
         _initialize_block_state(state, args)
         write_lane_state(paths["root"], state)
     deadline = time.monotonic() + args.max_seconds
@@ -584,7 +584,8 @@ def lane_run(args: argparse.Namespace) -> None:
         #      Adoption resets this lane's per-window counters (soup weights
         #      are the pass rate since the LAST merge — supervisor-approved
         #      semantics; updates_total stays monotonic for the K trigger).
-        adopted = adopt_merge_current(bank, state)
+        adopted = (None if getattr(args, "collector_only", False) else
+                   adopt_merge_current(bank, state))
         # ---- RECLAIM-LOG discipline: reclaim THIS lane's superseded lineage
         #      checkpoints once past the grace window (merged checkpoints,
         #      every lane's current lineage, and anything outside this
@@ -761,6 +762,14 @@ def _probe_adopt_train_row(bank, paths, state, args, cycle, cycle_env,
 def _train_cycle_channels(bank, paths, state, args, cycle, cycle_env, cycle_log,
                           summary, gpu, receipts: int) -> None:
     """Sequential channels retain every adopted update in the final lineage."""
+    if getattr(args, "collector_only", False):
+        state.update(status="collected", updated_unix=time.time())
+        write_lane_state(paths["root"], state)
+        _assemble_lane_metrics(bank, paths, args, cycle, summary, None, gpu,
+                               train_channel=None)
+        print(f"LANE_COLLECTOR_ONLY lane={args.lane} cycle={cycle} receipts={receipts} "
+              "(seed lineage retained; training disabled)", flush=True)
+        return
     attempted = 0
     adopted = 0
     pg_event = None
@@ -824,11 +833,23 @@ def _initialize_block_state(state, args) -> None:
         state.setdefault(key, 0)
 
 
-def _block_inventory(paths) -> list[dict]:
-    from rl_build_pack import load_consumed_ledger, select_window_receipts
-    from rl_receipts import walk_stream
+def _block_streams_root(args) -> Path | None:
+    if getattr(args, "block_mode", "off") != "on":
+        return None
+    configured = getattr(args, "block_streams_root", None)
+    if configured is not None:
+        return Path(configured)
+    # Production run args always bind --bank; lightweight legacy test callers
+    # without a bank retain their workspace-only inventory.
+    return Path(args.bank) / "lanes" if hasattr(args, "bank") else None
 
-    receipts = walk_stream(paths, enc=tiktoken.get_encoding("p50k_base"))
+
+def _block_inventory(paths, streams_root: Path | None = None) -> list[dict]:
+    from rl_build_pack import (load_consumed_ledger, load_selection_receipts,
+                               select_window_receipts)
+
+    receipts = load_selection_receipts(paths, enc=tiktoken.get_encoding("p50k_base"),
+                                      streams_root=streams_root)
     consumed = load_consumed_ledger(paths["root"] / "consumed-receipts.jsonl")
     return select_window_receipts(receipts, consumed, len(receipts))
 
@@ -853,7 +874,7 @@ def _block_trigger(state, args, cycle: int, inventory: list[dict]) -> str | None
 def _run_receipts_block(paths, state, args, cycle, cycle_env, cycle_log,
                          probe_adopt) -> None:
     _initialize_block_state(state, args)
-    inventory = _block_inventory(paths)
+    inventory = _block_inventory(paths, _block_streams_root(args))
     reason = _block_trigger(state, args, cycle, inventory)
     write_lane_state(paths["root"], state)
     if reason is None:
@@ -878,7 +899,7 @@ def _run_receipts_block(paths, state, args, cycle, cycle_env, cycle_log,
     state["block_retry_after_cycle"] = 0
     state["block_wait_cycles"] = 0
     state["block_inventory_targets"] = sum(int(r["episode"]["targets"])
-                                            for r in _block_inventory(paths))
+                                            for r in _block_inventory(paths, _block_streams_root(args)))
     write_lane_state(paths["root"], state)
     print(f"BLOCK_ADOPTED lane={args.lane} cycle={cycle} "
           f"sha={row['checkpoint_sha256']} "
@@ -913,13 +934,18 @@ def _adopted_exposure_rows(paths, cycle: int, row: dict) -> list[dict]:
     if not sampled:
         raise _Stop("receipts checkpoint has no sampled-pack exposure log")
     receipt_packs = {}
+    sources = {}
     for pack in sampled:
         for record_id in pack["record_ids"]:
             if not isinstance(record_id, int) or not 0 <= record_id < len(records):
                 raise _Stop("sampled record outside receipt authority")
-            receipt = records[record_id]["receipt_sha256"]
+            record = records[record_id]
+            receipt = record["receipt_sha256"]
+            if "source_lane" in record:
+                sources[receipt] = record["source_lane"]
             receipt_packs.setdefault(receipt, set()).add(pack["pack_id"])
     return [{"receipt_sha256": receipt, "exposed_cycle": cycle,
+             **({"source_lane": sources[receipt]} if receipt in sources else {}),
              "sampled_pack_ids": sorted(pack_ids),
              "pack_manifest_sha256": row["pack_manifest_sha256"],
              "adopted_checkpoint_sha256": row["checkpoint_sha256"]}
@@ -949,7 +975,9 @@ def _sft_train_row(paths, state, args, cycle, cycle_env, cycle_log,
             # cycle's 1-4. Only sampled, adopted packs are consumed.
             *(["--all-unconsumed", "--max-targets", str(args.block_max_targets)]
               if block else ["--window", "32"]),
-            "--consumed-ledger", str(paths["root"] / "consumed-receipts.jsonl")],
+            "--consumed-ledger", str(paths["root"] / "consumed-receipts.jsonl"),
+            *(["--streams-root", str(_block_streams_root(args))]
+              if _block_streams_root(args) is not None else [])],
            env=cycle_env, timeout=args.pack_timeout,
            log_path=cycle_log)
     build = json.loads((paths["packs"] / f"cycle-{cycle:04d}" /
@@ -1322,6 +1350,11 @@ def main() -> None:
     p.add_argument("--probe-timeout", type=int, default=1800)
     p.add_argument("--max-failures", type=int, default=3)
     p.add_argument("--max-seconds", type=int, default=4 * 3600)
+    p.add_argument("--collector-only", action="store_true",
+                   default=os.environ.get("COLLECTOR_ONLY", "0") == "1",
+                   help="collect receipts at the init seed; never train or adopt merges")
+    p.add_argument("--block-streams-root", type=Path,
+                   default=os.environ.get("BLOCK_STREAMS_ROOT") or None)
     p.add_argument("--block-mode", choices=("off", "on"),
                    default=os.environ.get("BLOCK_MODE", "off"))
     p.add_argument("--block-min-targets", type=int,

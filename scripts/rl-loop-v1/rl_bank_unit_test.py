@@ -1176,7 +1176,7 @@ def test_block_training(scratch: Path) -> None:
 
     with patch.object(lane, '_spawn', side_effect=spawn), \
          patch.object(lane, '_anchor_train_row', side_effect=anchor), \
-         patch('rl_receipts.walk_stream', return_value=inventory):
+         patch.object(packer, 'walk_stream', return_value=inventory):
         for cycle in range(1, 5):
             state['lane_cycle'] = cycle
             lane._train_cycle_channels({}, paths, state, args, cycle, {}, paths['root'] / 'log',
@@ -1244,6 +1244,342 @@ def test_block_training(scratch: Path) -> None:
           and not expose.called and not (skip_paths['root'] / 'consumed-receipts.jsonl').exists())
 
 
+def test_parallel_collection(scratch: Path) -> None:
+    """F4: parallel collection feeds the single learner's block channel.
+
+    Collector lanes append verified receipts to their own lane-local streams;
+    with --streams-root (BLOCK_STREAMS_ROOT / the bank lanes default) the
+    learner's selection pool becomes the walk_stream-verified UNION of every
+    lanes/lane-0N stream, deduped by receipt sha, FIFO by created_unix with
+    deterministic (lane, stream-position) tiebreaks, teacher-corrected first.
+    The consumed ledger stays at the learner lane; its lines name the source
+    lane ONLY on cross-stream lines (absent flag = byte-identical behavior).
+    COLLECTOR_ONLY lanes form and chain receipts but never train, adopt a
+    merge, or advance their init-seed lineage.
+    """
+    from contextlib import redirect_stdout
+    from io import StringIO
+    from types import SimpleNamespace
+    from unittest.mock import MagicMock, patch
+    import hashlib
+
+    import tiktoken
+
+    import rl_bank_lane as lane
+    import rl_build_pack as packer
+    from ndm.e97_onpolicy_records import canonical_json
+    from ndm.data.masked_sft_dataset import MaskedSFTPackedDataset, SFTSamplerIdentity
+    from rl_common import workspace_paths
+    from rl_receipts import append_receipt, build_receipt, walk_stream
+    from rl_train_step import sampled_pack_records
+    from scripts.build_e97_pi_native_curriculum import encode_candidate
+
+    enc = tiktoken.get_encoding("p50k_base")
+
+    # ---- parser: the new controls are env-bindable with defaults off
+    run_argv = ["rl_bank_lane.py", "run", "--bank", str(scratch), "--lane", "0",
+                "--args-json", "/dev/null"]
+    captured = []
+    with patch.dict(os.environ, {"COLLECTOR_ONLY": "1",
+                                 "BLOCK_STREAMS_ROOT": "/tmp/streams"}, clear=True), \
+         patch.object(sys, "argv", run_argv), \
+         patch.object(lane, "lane_run", side_effect=lambda parsed: captured.append(parsed)):
+        lane.main()
+    with patch.dict(os.environ, {}, clear=True), \
+         patch.object(sys, "argv", run_argv), \
+         patch.object(lane, "lane_run", side_effect=lambda parsed: captured.append(parsed)):
+        lane.main()
+    check("F4 collector-only and block-streams-root env controls bind with defaults off",
+          captured[0].collector_only is True
+          and captured[0].block_streams_root == Path("/tmp/streams")
+          and captured[-1].collector_only is False
+          and captured[-1].block_streams_root is None)
+    check("F4 block streams root defaults to the bank lanes dir only in block mode",
+          lane._block_streams_root(SimpleNamespace(block_mode="on", block_streams_root=None,
+                                                   bank="/tmp/bank")) == Path("/tmp/bank/lanes")
+          and lane._block_streams_root(SimpleNamespace(
+              block_mode="on", block_streams_root=Path("/x"), bank="/tmp/bank")) == Path("/x")
+          and lane._block_streams_root(SimpleNamespace(
+              block_mode="off", block_streams_root=Path("/x"), bank="/tmp/bank")) is None)
+
+    # ---- a mini single-learner bank: lane-00 learner, lanes 01-03 collectors
+    episode_text = "User:\nhi\n\nAssistant:\nhello\n"
+    turn_ids = enc.encode("hello")
+    ids, episode_mask, _ = encode_candidate(episode_text, [{"token_ids": turn_ids}], 0, enc)
+
+    def mint(prev, *, kind, created, task_id):
+        receipt = build_receipt(
+            cycle=1, task={"task_id": task_id, "task_sha256": "a" * 64}, kind=kind,
+            policy_checkpoint={"checkpoint_sha256": "seed" + "0" * 60},
+            episode_text=episode_text, generations=[{"token_ids": turn_ids}],
+            supervise_from=0, tokens=len(ids), targets=int(sum(episode_mask)),
+            grade={"passed": True, "score": 1.0},
+            teacher=({"model": "fixture-teacher", "checkpoint_sha256": "d" * 64}
+                     if kind == "teacher-corrected" else None),
+            attempt_link=({"receipt_sha256": "b" * 64}
+                          if kind == "teacher-corrected" else None),
+            prev_receipt_sha256=prev)
+        receipt["created_unix"] = created
+        body = {key: value for key, value in receipt.items() if key != "receipt_sha256"}
+        receipt["receipt_sha256"] = hashlib.sha256(
+            canonical_json(body).encode("utf-8")).hexdigest()
+        return receipt
+
+    bank = bank_paths(scratch / "parallel-bank")
+    ensure_bank_layout(bank)
+    learner = lane_paths(bank, 0)
+    collector1 = lane_paths(bank, 1)
+    collector2 = lane_paths(bank, 2)
+    collector3 = lane_paths(bank, 3)
+    a = mint(None, kind="teacher-corrected", created=1000.0, task_id="A")
+    append_receipt(learner, a)
+    b = mint(a["receipt_sha256"], kind="on-policy-success", created=1001.0, task_id="B")
+    append_receipt(learner, b)
+    append_receipt(collector1, a)  # byte-identical duplicate across streams
+    c = mint(a["receipt_sha256"], kind="teacher-corrected", created=1000.5, task_id="C")
+    append_receipt(collector1, c)
+    f = mint(None, kind="teacher-corrected", created=1000.5, task_id="F")
+    append_receipt(collector2, f)
+    f2 = mint(f["receipt_sha256"], kind="teacher-corrected", created=1000.5, task_id="F2")
+    append_receipt(collector2, f2)
+    g = mint(None, kind="on-policy-success", created=1000.2, task_id="G")
+    append_receipt(collector3, g)
+    # decoys: a corrupt stream under a non-numeric lane, an empty lane, a file
+    decoy = bank["lanes"] / "lane-xx"
+    (decoy / "receipts").mkdir(parents=True)
+    (decoy / "receipts" / "stream.jsonl").write_text("not a receipt\n")
+    (bank["lanes"] / "lane-04").mkdir()
+    (bank["lanes"] / "lane-05").write_text("a file, not a lane")
+
+    union = packer.load_selection_receipts(learner, enc=enc, streams_root=bank["lanes"])
+    check("F4 cross-stream union verifies every lane stream and skips non-lane decoys",
+          len(union) == 6
+          and {r["task_id"] for r in union} == {"A", "B", "C", "F", "F2", "G"})
+    check("F4 cross-stream FIFO dedupes by receipt sha with lane and position tiebreaks",
+          [r["task_id"] for r in union] == ["A", "G", "C", "F", "F2", "B"]
+          and len({r["receipt_sha256"] for r in union}) == 6)
+    check("F4 source_lane annotations name the originating lane stream",
+          {r["task_id"]: r["source_lane"] for r in union} ==
+          {"A": "lane-00", "B": "lane-00", "C": "lane-01", "F": "lane-02",
+           "F2": "lane-02", "G": "lane-03"})
+    check("F4 window selection keeps teacher-corrected priority across streams",
+          [r["task_id"] for r in packer.select_window_receipts(union, set(), 6)] ==
+          ["A", "C", "F", "F2", "G", "B"])
+    own = packer.load_selection_receipts(learner, enc=enc)
+    check("F4 unflagged selection is byte-identical single-stream behavior",
+          own == walk_stream(learner, enc=enc)
+          and all("source_lane" not in r for r in own)
+          and packer.load_selection_receipts(collector3, enc=enc) == walk_stream(collector3, enc=enc)
+          and packer.load_selection_receipts(
+              workspace_paths(bank["lanes"] / "lane-04"), enc=enc) == [])
+    try:
+        packer.load_selection_receipts(learner, enc=enc, streams_root=scratch / "absent")
+        missing_root_failed = False
+    except SystemExit:
+        missing_root_failed = True
+    check("F4 streams root fails closed on a missing directory", missing_root_failed)
+    inventory = lane._block_inventory(learner, lane._block_streams_root(
+        SimpleNamespace(block_mode="on", block_streams_root=None, bank=bank["root"])))
+    check("F4 block inventory spans collector streams from the bank lanes root",
+          [r["task_id"] for r in inventory] == ["A", "C", "F", "F2", "G", "B"]
+          and all("source_lane" in r for r in inventory))
+    check("F4 single-stream block inventory keeps lane-local order without annotations",
+          [r["task_id"] for r in lane._block_inventory(learner)] == ["A", "B"]
+          and all("source_lane" not in r for r in lane._block_inventory(learner)))
+
+    # ---- end to end: the learner packs the union; ledgers stay lane-local
+    consumed_ledger = learner["root"] / "consumed-receipts.jsonl"
+    argv = ["rl_build_pack.py", "--workspace", str(learner["root"]), "--cycle", "1",
+            "--window", "6", "--consumed-ledger", str(consumed_ledger),
+            "--streams-root", str(bank["lanes"]), "--min-targets", "1",
+            "--python", sys.executable]
+    with patch.object(sys, "argv", argv):
+        packer.main()
+    packed = [json.loads(line) for line in
+              (learner["root"] / "packed-receipts.jsonl").read_text().splitlines()]
+    check("F4 streams-root packing pools every lane at the learner ledger",
+          len(packed) == 6
+          and {p["receipt_sha256"] for p in packed} == {r["receipt_sha256"] for r in union}
+          and not (collector1["root"] / "packed-receipts.jsonl").exists()
+          and not (collector2["root"] / "packed-receipts.jsonl").exists()
+          and not (collector3["root"] / "packed-receipts.jsonl").exists())
+    sources = {r["receipt_sha256"]: r["source_lane"] for r in union}
+    metadata = [json.loads(line) for line in
+                (learner["packs"] / "cycle-0001" / "authority" /
+                 "records.jsonl").read_text().splitlines()]
+    check("F4 packed and authority metadata name source lanes on cross-stream lines",
+          len(metadata) == 6
+          and all(row["source_lane"] == sources[row["receipt_sha256"]] for row in metadata)
+          and {p["receipt_sha256"]: p["source_lane"] for p in packed} == sources)
+
+    authority = learner["packs"] / "cycle-0001" / "authority"
+    packs = learner["packs"] / "cycle-0001" / "packs"
+    identity = SFTSamplerIdentity(
+        authority_manifest_sha256=_sha(authority / "manifest.json"),
+        pack_manifest_sha256=_sha(packs / "manifest.json"), sampler_key=970001,
+        data_world_size=1, context_size=2048)
+    data = MaskedSFTPackedDataset(authority, packs, identity=identity, rank=0,
+                                  sampler_mode="epoch-permutation")
+    samples = []
+    for _ in range(len(data.packs)):
+        sample = sampled_pack_records(data, data.next_absolute_rank_sample_index)
+        data.get_boundary_aware_batch(1, device="cpu")
+        samples.append(sample)
+    row = {"authority_manifest_sha256": identity.authority_manifest_sha256,
+           "pack_manifest_sha256": identity.pack_manifest_sha256,
+           "checkpoint_sha256": "c" * 64, "sampled_packs": samples}
+    exposure = lane._adopted_exposure_rows(learner, 1, row)
+    lane._record_adopted_exposure(learner, 1, row)
+    consumed = [json.loads(line) for line in consumed_ledger.read_text().splitlines()]
+    check("F4 adopted exposure consumption carries source lanes exactly once",
+          len(exposure) == len(consumed) == 6
+          and len({entry["receipt_sha256"] for entry in consumed}) == 6
+          and all(entry["source_lane"] == sources[entry["receipt_sha256"]]
+                  for entry in consumed)
+          and packer.load_consumed_ledger(consumed_ledger) == set(sources)
+          and lane._block_inventory(learner, bank["lanes"]) == [])
+    data.close()
+
+    # ---- absent flag: ledger lines byte-identical, no source_lane anywhere
+    single = workspace_paths(scratch / "single-stream")
+    single["root"].mkdir(parents=True)
+    a2 = mint(None, kind="teacher-corrected", created=2000.0, task_id="A2")
+    append_receipt(single, a2)
+    b2 = mint(a2["receipt_sha256"], kind="on-policy-success", created=2000.5, task_id="B2")
+    append_receipt(single, b2)
+    argv = ["rl_build_pack.py", "--workspace", str(single["root"]), "--cycle", "2",
+            "--window", "2", "--consumed-ledger",
+            str(single["root"] / "consumed-receipts.jsonl"),
+            "--min-targets", "1", "--python", sys.executable]
+    with patch.object(sys, "argv", argv):
+        packer.main()
+    lines = (single["root"] / "packed-receipts.jsonl").read_text().splitlines()
+    expected_lines = [
+        json.dumps({"receipt_sha256": a2["receipt_sha256"], "packed_cycle": 2, "window": 2}),
+        json.dumps({"receipt_sha256": b2["receipt_sha256"], "packed_cycle": 2, "window": 2}),
+    ]
+    metadata2 = [json.loads(line) for line in
+                 (single["packs"] / "cycle-0002" / "authority" /
+                  "records.jsonl").read_text().splitlines()]
+    authority2 = single["packs"] / "cycle-0002" / "authority"
+    packs2 = single["packs"] / "cycle-0002" / "packs"
+    identity2 = SFTSamplerIdentity(
+        authority_manifest_sha256=_sha(authority2 / "manifest.json"),
+        pack_manifest_sha256=_sha(packs2 / "manifest.json"), sampler_key=970001,
+        data_world_size=1, context_size=2048)
+    data2 = MaskedSFTPackedDataset(authority2, packs2, identity=identity2, rank=0,
+                                   sampler_mode="epoch-permutation")
+    samples2 = []
+    for _ in range(len(data2.packs)):
+        sample = sampled_pack_records(data2, data2.next_absolute_rank_sample_index)
+        data2.get_boundary_aware_batch(1, device="cpu")
+        samples2.append(sample)
+    row2 = {"authority_manifest_sha256": identity2.authority_manifest_sha256,
+            "pack_manifest_sha256": identity2.pack_manifest_sha256,
+            "checkpoint_sha256": "e" * 64, "sampled_packs": samples2}
+    rows2 = lane._adopted_exposure_rows(single, 2, row2)
+    data2.close()
+    check("F4 absent flag keeps ledger lines byte-identical without source lanes",
+          lines == expected_lines
+          and all("source_lane" not in record for record in metadata2)
+          and len(rows2) == 2
+          and all(set(entry) == {"receipt_sha256", "exposed_cycle", "sampled_pack_ids",
+                                 "pack_manifest_sha256", "adopted_checkpoint_sha256"}
+                  for entry in rows2)
+          and not (single["root"] / "consumed-receipts.jsonl").exists())
+
+    # ---- collector lane: receipts chain, no channel ever trains or adopts
+    seed = scratch / "collector-seed.pt"
+    _synthetic_checkpoint(seed, 1.0, "collector-seed")
+    collector_state = init_lane_state(bank, 1, checkpoint=seed,
+                                      checkpoint_sha256=_sha(seed), note="collector unit")
+    collector_args = SimpleNamespace(
+        lane=1, args_json=Path("/dev/null"), probe_timeout=10, pack_timeout=60,
+        train_timeout=60, collector_only=True, block_mode="on",
+        block_min_targets=65536, block_max_targets=131072, block_max_wait_cycles=2,
+        anchor_period=1, anchor_authority_root=Path("fixture"),
+        lane_train_step="sft-receipts")
+    summary = {"policy_checkpoint_sha256": _sha(seed), "attempts": 1, "outcomes": []}
+    guarded = []
+    with patch.object(lane, "_anchor_train_row",
+                      side_effect=lambda *a: guarded.append("anchor")), \
+         patch.object(lane, "_sft_train_row",
+                      side_effect=lambda *a: guarded.append("sft")), \
+         patch.object(lane, "_run_receipts_block",
+                      side_effect=lambda *a: guarded.append("block")), \
+         patch.object(lane, "_pg_train_row", side_effect=lambda *a: guarded.append("pg")), \
+         patch.object(lane, "_probe_adopt_train_row",
+                      side_effect=lambda *a: guarded.append("probe")), \
+         redirect_stdout(StringIO()) as output:
+        lane._train_cycle_channels(bank, collector1, collector_state, collector_args, 1, {},
+                                   collector1["root"] / "log", summary, "0", 2)
+    metrics = json.loads((collector1["cycles"] / "cycle-0001" /
+                          "metrics.json").read_text())
+    check("F4 collector lane collects without training adopting or advancing",
+          guarded == []
+          and collector_state["updates_total"] == 0
+          and collector_state["lineage_sha256"] == _sha(seed)
+          and collector_state["status"] == "collected"
+          and collector_state["superseded_lineages"] == []
+          and "LANE_COLLECTOR_ONLY" in output.getvalue())
+    check("F4 collector metrics record the cycle with no train row",
+          metrics["train"] is None
+          and metrics["trains"] == [{"train": None, "adopted": None,
+                                     "probe_frame_valid": None,
+                                     "train_step_channel": None}]
+          and metrics["receipts"] == 2
+          and metrics["receipt_kinds"] == {"teacher-corrected": 2})
+
+    # ---- lane_run gates: collectors skip merge adoption and block accounting
+    from rl_bank import read_lane_state
+
+    run_bank = bank_paths(scratch / "run-bank")
+    ensure_bank_layout(run_bank)
+    ensure_pinned_validator(run_bank)
+    seed2 = scratch / "run-seed.pt"
+    _synthetic_checkpoint(seed2, 2.0, "run-seed")
+    init_lane_state(run_bank, 0, checkpoint=seed2, checkpoint_sha256=_sha(seed2),
+                    note="learner")
+    init_lane_state(run_bank, 1, checkpoint=seed2, checkpoint_sha256=_sha(seed2),
+                    note="collector")
+    base_args = dict(bank=run_bank["root"], args_json=Path("/dev/null"),
+                     teacher="fixture", teacher_model="m", max_tasks=1,
+                     claim_ttl=60.0, teacher_min_interval=0.0, poll_seconds=0.05,
+                     lease_wait=1, lease_retry_seconds=0.05, collect_timeout=10,
+                     pack_timeout=10, train_timeout=10, probe_timeout=10,
+                     max_failures=3, max_seconds=0.4, lane_train_step="sft-receipts",
+                     block_min_targets=65536, block_max_targets=131072,
+                     block_max_wait_cycles=48)
+    learner_run = SimpleNamespace(lane=0, collector_only=False, block_mode="on",
+                                  block_streams_root=None, **base_args)
+    adopt_learner = MagicMock(side_effect=lambda *a, **k: None)
+    with patch.object(lane, "adopt_merge_current", adopt_learner), \
+         patch.object(lane, "reclaim_superseded_lineages", return_value=[]), \
+         redirect_stdout(StringIO()):
+        lane.lane_run(learner_run)
+    learner_state = read_lane_state(lane_paths(run_bank, 0)["root"])
+    check("F4 learner lane_run keeps merge polling and block accounting",
+          adopt_learner.call_count >= 1
+          and "block_inventory_targets" in learner_state
+          and learner_state["status"] == "stopped")
+    collector_run = SimpleNamespace(lane=1, collector_only=True, block_mode="on",
+                                    block_streams_root=None, **base_args)
+    adopt_collector = MagicMock(side_effect=lambda *a, **k: None)
+    with patch.object(lane, "adopt_merge_current", adopt_collector), \
+         patch.object(lane, "reclaim_superseded_lineages", return_value=[]), \
+         redirect_stdout(StringIO()):
+        lane.lane_run(collector_run)
+    collector_run_state = read_lane_state(lane_paths(run_bank, 1)["root"])
+    check("F4 collector lane_run never adopts merges nor initializes block accounting",
+          adopt_collector.call_count == 0
+          and all(key not in collector_run_state for key in
+                  ("block_mode", "block_inventory_targets", "block_wait_cycles",
+                   "block_attempts_total", "block_adopted_total"))
+          and collector_run_state["lineage_sha256"] == _sha(seed2)
+          and collector_run_state["updates_total"] == 0
+          and collector_run_state["status"] == "stopped")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--scratch", type=Path,
@@ -1280,6 +1616,7 @@ def main() -> None:
     test_rejected_anchor_chain(scratch)
     test_channel_checkpoint_paths(scratch)
     test_block_training(scratch)
+    test_parallel_collection(scratch)
     print(json.dumps({"schema": "emender-rl-loop-bank-unit-test-v1",
                      "passed": len(PASSED), "tests": PASSED}, sort_keys=True))
 
