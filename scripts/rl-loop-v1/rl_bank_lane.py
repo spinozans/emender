@@ -42,6 +42,7 @@ from rl_bank import (CLAIM_SCHEMA, MIN_FREE_BYTES, bank_paths, claim_pool_task,
                      read_lane_state, read_merge_current, reclaim_superseded_lineages,
                      requeue_claim, requeue_lane_claims, retire_task, sweep_stale_claims,
                      write_lane_state)
+from rl_correction_config import resolve_correction_config
 from rl_common import sha256_file
 from rl_receipts import (append_receipt, grade_receipt_digest,
                          stream_tail_digest)
@@ -151,6 +152,8 @@ def bank_collect(args: argparse.Namespace) -> None:
     consumption (min interval between correction calls, corrections only
     for claimed tasks that failed on-policy).
     """
+    config = resolve_correction_config(args)
+    args.teacher_model = config["teacher_model"]
     bank = bank_paths(args.bank)
     ensure_bank_layout(bank)
     paths = lane_paths(bank, args.lane)
@@ -657,7 +660,7 @@ def lane_run(args: argparse.Namespace) -> None:
                     "--lane", str(args.lane), "--cycle", str(cycle),
                     "--args-json", str(args.args_json),
                     "--teacher", args.teacher,
-                    "--teacher-model", args.teacher_model,
+                    "--teacher-model", resolve_correction_config(args)["teacher_model"],
                     "--max-tasks", str(args.max_tasks),
                     "--claim-ttl", str(args.claim_ttl),
                     "--teacher-min-interval", str(args.teacher_min_interval),
@@ -1342,7 +1345,8 @@ def main() -> None:
     p.add_argument("--cycle", type=int, required=True)
     p.add_argument("--args-json", type=Path, required=True)
     p.add_argument("--teacher", choices=("live", "fixture"), default="live")
-    p.add_argument("--teacher-model", default=DEFAULT_TEACHER_MODEL)
+    p.add_argument("--teacher-model", default=None,
+                   help="override durable bank/correction-config.json")
     p.add_argument("--max-tasks", type=int, default=2)
     p.add_argument("--claim-ttl", type=float, default=3600.0)
     p.add_argument("--teacher-min-interval", type=float, default=10.0)
@@ -1352,7 +1356,8 @@ def main() -> None:
     p.add_argument("--lane", type=int, required=True)
     p.add_argument("--args-json", type=Path, required=True)
     p.add_argument("--teacher", choices=("live", "fixture"), default="live")
-    p.add_argument("--teacher-model", default=DEFAULT_TEACHER_MODEL)
+    p.add_argument("--teacher-model", default=None,
+                   help="override durable bank/correction-config.json")
     p.add_argument("--max-tasks", type=int, default=2)
     p.add_argument("--claim-ttl", type=float, default=3600.0)
     p.add_argument("--teacher-min-interval", type=float, default=10.0)
