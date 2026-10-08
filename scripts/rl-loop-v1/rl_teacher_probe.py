@@ -216,6 +216,7 @@ def run(args):
 
 
 def main():
+    os.umask(0o077)
     parser = argparse.ArgumentParser()
     parser.add_argument("command", choices=("freeze", "run", "worker"))
     parser.add_argument("--root", type=Path, required=True)
