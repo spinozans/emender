@@ -1121,10 +1121,23 @@ def _anchor_train_row(paths, state, args, cycle, cycle_env, cycle_log) -> dict |
     return train_event
 
 
+def _pg_streams_root(args) -> Path | None:
+    configured = getattr(args, "block_streams_root", None)
+    if configured is not None:
+        return Path(configured)
+    root = _block_streams_root(args)
+    if root is not None:
+        return root
+    if int(os.environ.get("COLLECTOR_LANES", "0")) > 0:
+        return Path(args.bank) / "lanes"
+    return None
+
+
 def _pg_train_row(paths, state, args, cycle, cycle_env, cycle_log) -> tuple[dict | None, dict]:
     """The v2 policy-gradient train stage: build the trajectory batch from
-    this lane's recent cycles (ALL train-split on-policy attempts — passes
-    AND failures, the reward contrast), run the guarded single-GPU PG step.
+    recent cycles (this lane by default, the grid when configured; ALL
+    train-split attempts — passes AND failures), run the guarded PG step.
+    Grid batches explicitly replay every turn under the current lineage.
 
     Returns (train_row_or_None, pg_event).  The caller falls back to the SFT
     stage when the row is None (no contrastive group = no PG signal, or a
@@ -1143,6 +1156,8 @@ def _pg_train_row(paths, state, args, cycle, cycle_env, cycle_log) -> tuple[dict
             "--group-by", args.pg_group_by,
             "--max-episodes", str(args.pg_max_episodes),
             "--min-group", str(args.pg_min_group),
+            *(["--streams-root", str(_pg_streams_root(args))]
+              if _pg_streams_root(args) is not None else []),
             "--output", str(batch_path)],
            env=cycle_env, timeout=args.pg_batch_timeout,
            log_path=cycle_log)

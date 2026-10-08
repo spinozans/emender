@@ -65,10 +65,11 @@ $PY "$W/scripts/rl_bank_unit_test.py" --scratch "$BANK/unit-test" \
 tail -2 "$BANK/unit-test.log"
 # NOTE: this literal tracks rl_bank_unit_test.py's current total (52 at
 # authoring time; 101 after the 2026-10-07 audit fixes added 49 regressions;
-# 138 after task F4 added 18 parallel-collection regressions).
-grep -q '"passed": 138' "$BANK/unit-test.log" || {
+# 138 after task F4 added 18 parallel-collection regressions;
+# 162 after task F5 added 24 PG-grid regressions).
+grep -q '"passed": 162' "$BANK/unit-test.log" || {
   log "[preflight] UNIT VALIDATION FAILED"; exit 1; }
-log "[preflight] unit validation PASSED (138/138)"
+log "[preflight] unit validation PASSED (162/162)"
 
 rm -f "$BANK/STOP"
 

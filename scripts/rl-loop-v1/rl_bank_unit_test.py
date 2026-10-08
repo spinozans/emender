@@ -1580,6 +1580,252 @@ def test_parallel_collection(scratch: Path) -> None:
           and collector_run_state["status"] == "stopped")
 
 
+def test_pg_grid(scratch: Path) -> None:
+    """F5: grid evidence, unchanged legacy bytes, and real PG replay arithmetic."""
+    from contextlib import ExitStack, redirect_stdout
+    from io import StringIO
+    from types import SimpleNamespace
+    from unittest.mock import patch
+    import rl_bank_lane as lane
+    import rl_pg_batch as builder
+    import rl_policy_gradient_step as step
+    from ndm.e97_onpolicy_records import canonical_json
+
+    grid = scratch / "pg-grid" / "lanes"
+    roots = [grid / f"lane-{i:02d}" for i in range(4)]
+    for i, root in enumerate(roots):
+        for cycle in (1, 2):
+            _synthetic_episode(root, cycle, "bank-shared-id", "family",
+                               passed=i % 2 == 0,
+                               turn_text="Action: finish\nArguments: {}\nFinal: " +
+                                         ("ok" if i % 2 == 0 else "failed sealed task"))
+            summary = root / "episodes" / f"cycle-{cycle:04d}" / "collect-summary.json"
+            body = json.loads(summary.read_text())
+            body["policy_checkpoint_sha256"] = str(i) * 64
+            summary.write_text(json.dumps(body))
+            os.utime(summary, ns=(1000 + cycle * 100 + i, 1000 + cycle * 100 + i))
+    _synthetic_episode(roots[1], 2, "dev", "family", passed=True, split="development")
+    summary = roots[1] / "episodes" / "cycle-0002" / "collect-summary.json"
+    os.utime(summary, ns=(1201, 1201))
+    (grid / "lane-decoy").mkdir()
+    (grid / "lane-99").mkdir()  # no episodes yet
+    body = builder.collect_grid_batch(roots[0], grid, last_cycles=1, group_by="family")
+    manifest = builder.bind_batch_sha(body)
+    builder.verify_batch(manifest)
+    check("F5 pg-grid all lanes, colliding task ids remain distinct episodes",
+          len(body["entries"]) == 4 and {e["source_lane"] for e in body["entries"]} ==
+          {r.name for r in roots} and body["groups"]["family"]["episodes"] == 4)
+    check("F5 pg-grid family grouping, train split, pass/fail contrast",
+          body["contrastive_groups"] == ["family"] and body["groups"]["family"]["passes"] == 2
+          and all(e["split"] == "train" for e in body["entries"]))
+    check("F5 pg-grid per-lane windows and policy provenance",
+          all(e["cycle"] == 2 for e in body["entries"])
+          and len({e["policy_checkpoint_sha256"] for e in body["entries"]}) == 4
+          and body["lane_cycles"] == {r.name: [2] for r in roots})
+    capped = builder.collect_grid_batch(roots[0], grid, last_cycles=2,
+                                        group_by="family", max_episodes=2)
+    check("F5 pg-grid global recency cap uses immutable summary clocks",
+          [e["source_lane"] for e in capped["entries"]] == ["lane-02", "lane-03"]
+          and all(e["cycle"] == 2 for e in capped["entries"]) and capped["contrast"])
+    again = builder.collect_grid_batch(roots[0], grid, last_cycles=2,
+                                       group_by="family", max_episodes=2)
+    check("F5 pg-grid same-state mtime selection deterministic",
+          capped["entries"] == again["entries"] and capped["groups"] == again["groups"])
+    for root in roots:
+        summary = root / "episodes" / "cycle-0002" / "collect-summary.json"
+        os.utime(summary, ns=(2000, 2000))
+    tied = builder.collect_grid_batch(roots[0], grid, last_cycles=1, group_by="family")
+    check("F5 pg-grid recency ties numeric lane/cycle/task",
+          [e["source_lane"] for e in tied["entries"]] == [r.name for r in roots])
+    no_contrast = builder.collect_grid_batch(roots[0], grid, last_cycles=1,
+                                             group_by="family", max_episodes=1)
+    check("F5 pg-grid recency cannot manufacture contrast", not no_contrast["contrast"])
+    for label, mutate in [
+            ("source", lambda b: b["entries"][0].update(source_lane="../escape")),
+            ("split", lambda b: b["entries"][0].update(split="development")),
+            ("digest", lambda b: b["entries"][0].update(episode_sha256="f" * 64))]:
+        damaged = json.loads(json.dumps(body))
+        mutate(damaged)
+        try:
+            builder.verify_batch(builder.bind_batch_sha(damaged))
+        except ValueError:
+            check(f"F5 pg-grid {label} guard fail-closed", True)
+        else:
+            check(f"F5 pg-grid {label} guard fail-closed", False)
+    try:
+        builder.collect_grid_batch(roots[0], grid / "missing", last_cycles=1)
+    except SystemExit:
+        check("F5 pg-grid missing root fails closed", True)
+    else:
+        check("F5 pg-grid missing root fails closed", False)
+    # Golden digest captured from the pre-F5 deployed builder. Normalize only
+    # the scratch root and creation clock; every other canonical byte is bound.
+    with patch.object(builder.time, "time", return_value=123):
+        single = builder.collect_batch(roots[0], [1, 2], group_by="family", max_episodes=2)
+    single["episodes_root"] = "legacy-root"
+    check("F5 single-lane batch canonical bytes unchanged",
+          builder.bind_batch_sha(single)["batch_sha256"] ==
+          "db7140f5b9cc2d8732b201e03d7e457c571a7d413dd0a403d2f2c5018d54631f"
+          and "streams_root" not in single and all("source_lane" not in e for e in single["entries"]))
+    with patch.dict(os.environ, {"COLLECTOR_LANES": "0"}):
+        check("F5 PG streams-root explicit configuration works without SFT block mode",
+              lane._pg_streams_root(SimpleNamespace(block_mode="off", block_streams_root=grid)) == grid
+              and lane._pg_streams_root(SimpleNamespace(block_mode="off")) is None)
+    with patch.dict(os.environ, {"COLLECTOR_LANES": "3"}):
+        check("F5 collector grid automatically feeds PG with block mode off",
+              lane._pg_streams_root(SimpleNamespace(bank=grid.parent, block_mode="off")) == grid)
+
+    # Drive the lane's actual build command and SFT-fallback seam.
+    pg_paths = {"root": roots[0], "training": scratch / "pg-lane-training"}
+    pg_args = SimpleNamespace(bank=grid.parent, lane=0, block_mode="off",
+                              block_streams_root=grid, pg_window_cycles=1,
+                              pg_group_by="family", pg_max_episodes=4,
+                              pg_min_group=2, pg_batch_timeout=60,
+                              pg_train_timeout=60, args_json=Path("/dev/null"),
+                              pg_lr=2e-6, pg_kl_beta=0.01, pg_kl_guard=0.056)
+    built_commands = []
+
+    def failed_step(cmd, **kwargs):
+        log = Path(cmd[cmd.index("--log-jsonl") + 1])
+        log.write_text(json.dumps({"event": "guard", "guard": "realized-kl-blowout"}) + "\n")
+        return SimpleNamespace(returncode=1)
+
+    # Keep the real builder subprocess while stubbing only the PG step.
+    real_run = subprocess.run
+
+    def build_command(cmd, **kwargs):
+        built_commands.append(cmd)
+        real_run(cmd, env={**os.environ, "PYTHONPATH": str(REPO_ROOT) + ":" +
+                           os.environ.get("PYTHONPATH", "")}, check=True,
+                 stdout=subprocess.DEVNULL)
+    with patch.object(lane, "_spawn", side_effect=build_command), \
+         patch.object(subprocess, "check_output", return_value="0" * 40), \
+         patch.object(subprocess, "run", side_effect=failed_step):
+        row, event = lane._pg_train_row(pg_paths, {"lineage_path": "current.pt",
+                                                 "lineage_sha256": "a" * 64},
+                                        pg_args, 1, os.environ, scratch / "pg-lane.log")
+    lane_batch = json.loads((pg_paths["training"] / "cycle-0001" / "pg-batch.json").read_text())
+    check("F5 PG lane CLI builds verified grid attempts and retains SFT guard fallback",
+          "--streams-root" in built_commands[0] and len(lane_batch["entries"]) == 4
+          and row is None and event["outcome"] == "guard-trip"
+          and event["guard"]["guard"] == "realized-kl-blowout")
+
+    # Exercise main() with CPU tensors, a one-parameter model, real candidate
+    # loss/advantages/KL, and SGD. Only native loading/capture/CUDA are stubbed.
+    import ndm.e97 as e97
+    import ndm.e97_outcome_rl_candidate as candidate
+    import scripts.train_e97_4b_pi_sft as trainer
+
+    parent = scratch / "pg-parent.pt"
+    parent.write_bytes(b"current-lineage")
+    parent_sha = _sha(parent)
+    real_device = torch.device
+    real_advantages = candidate.group_advantages
+    real_loss = candidate.policy_loss
+
+    def run_step(grid_mode, *, guard=0.25, bad_ce=False, fault=None):
+        events, captured, ratios, emissions = [], [], [], []
+        model = torch.nn.Linear(1, 1, bias=False)
+        with torch.no_grad():
+            model.weight.fill_(1.0)
+        optimizer = torch.optim.SGD(model.parameters(), lr=0.1)
+        optimizer.initialize_state_ = lambda: None
+        optimizer.assert_state_offloaded = lambda: None
+        optimizer.train = lambda: None
+        optimizer.eval = lambda: None
+        batch = json.loads(json.dumps(manifest))
+        if not grid_mode:
+            batch.pop("streams_root")
+        # Poison generation-time traces: they must NEVER be read.
+        for entry in batch["entries"]:
+            entry["stored_logprobs"] = [-10000.0]
+        batch = builder.bind_batch_sha({k: v for k, v in batch.items() if k != "batch_sha256"})
+        batch_path = scratch / "pg-test-batch.json"
+        batch_path.write_text(json.dumps(batch))
+        out = scratch / f"pg-test-step-{grid_mode}-{guard}-{bad_ce}-{fault}"
+        out.mkdir()
+
+        def capture(current, prefix, generated, device, *, alignment, grad):
+            events.append("capture" if not grad else "update")
+            captured.append((current is model, float(current.weight.detach()), grad))
+            lp = -(current.weight.square().sum()).expand(len(generated))
+            return lp, float(-lp.detach().sum()) + (1 if bad_ce else 0)
+
+        def advantages(*args):
+            events.append("advantages")
+            result = real_advantages(*args)
+            return torch.full_like(result, float("inf")) if fault == "advantages" else result
+
+        def loss(new, old, *args, **kwargs):
+            ratios.append(torch.exp(new.detach() - old).clone())
+            result = real_loss(new, old, *args, **kwargs)
+            return result * float("nan") if fault == "loss" else result
+
+        argv = ["pg", "--parent-checkpoint", str(parent), "--parent-sha256", parent_sha,
+                "--args-json", "/dev/null", "--batch", str(batch_path),
+                "--batch-sha256", batch["batch_sha256"], "--output-root", str(out),
+                "--log-jsonl", str(out / "log"), "--pg-stream", str(out / "stream"),
+                "--source-commit", "0" * 40, "--skip-checkpoint-save", "--kl-guard", str(guard)]
+        error = None
+        with ExitStack() as stack:
+            for target, name, replacement in [
+                    (sys, "argv", argv), (torch.cuda, "set_device", lambda *a: None),
+                    (torch, "device", lambda *a, **k: real_device("cpu")),
+                    (torch.cuda, "max_memory_allocated", lambda: 0),
+                    (torch.cuda, "max_memory_reserved", lambda: 0),
+                    (e97, "load_e97_checkpoint", lambda *a, **k: SimpleNamespace(model=model)),
+                    (trainer, "EXPECTED_PARAMETERS", 1),
+                    (trainer, "configure_precision", lambda *a: {}),
+                    (trainer, "build_optimizer", lambda *a, **k: optimizer),
+                    (step, "_configure_train_geometry", lambda *a: None),
+                    (step, "_capture_row", capture),
+                    (step, "emit", lambda path, event, **k: emissions.append((event, k))),
+                    (candidate, "group_advantages", advantages), (candidate, "policy_loss", loss)]:
+                stack.enter_context(patch.object(target, name, replacement))
+            stack.enter_context(redirect_stdout(StringIO()))
+            try:
+                step.main()
+            except (RuntimeError, SystemExit, ValueError) as exc:
+                error = str(exc)
+        return events, captured, ratios, emissions, error, out
+
+    grid_run = run_step(True)
+    single_run = run_step(False)
+    check("F5 pg-grid current checkpoint pre-pass precedes advantages for every record",
+          grid_run[4] is None and grid_run[0][:5] == ["capture"] * 4 + ["advantages"]
+          and all(same and weight == 1 and not grad for same, weight, grad in grid_run[1][:4]))
+    check("F5 pg-grid poison stale traces ignored and ratio exactly one",
+          len(grid_run[2]) == 4 and all(torch.equal(r, torch.ones_like(r)) for r in grid_run[2]))
+    check("F5 single-lane retains detached-forward path without pre-pass",
+          single_run[4] is None and single_run[0][0] == "advantages"
+          and single_run[0][1:5] == ["update"] * 4)
+    grid_step = next(k for event, k in grid_run[3] if event == "step")
+    single_step = next(k for event, k in single_run[3] if event == "step")
+    check("F5 pg-grid matches legacy loss and realized pre/post-update KL",
+          all(grid_step[k] == single_step[k] for k in
+              ("loss", "grad_norm", "surrogate_part", "kl_part", "realized_kl_vs_old_mean")))
+    grid_ce, single_ce = run_step(True, bad_ce=True), run_step(False, bad_ce=True)
+    check("F5 pg-grid and legacy CE guard trip identically without checkpoint",
+          grid_ce[4] == single_ce[4] and "consistency failed" in grid_ce[4]
+          and not any(e == "checkpoint" for e, _ in grid_ce[3] + single_ce[3]))
+    grid_kl, single_kl = run_step(True, guard=1e-12), run_step(False, guard=1e-12)
+    check("F5 pg-grid and legacy realized-KL guard trip identically without receipt",
+          grid_kl[4] == single_kl[4] and "KL blowout guard" in grid_kl[4]
+          and not (grid_kl[5] / "stream").exists() and not (single_kl[5] / "stream").exists())
+    for fault in ("advantages", "loss"):
+        grid_fault, single_fault = run_step(True, fault=fault), run_step(False, fault=fault)
+        check(f"F5 pg-grid and legacy nonfinite {fault} guard trip identically",
+              grid_fault[4] == single_fault[4] and "nonfinite" in grid_fault[4]
+              and not any(e == "checkpoint" for e, _ in grid_fault[3] + single_fault[3]))
+    with patch.object(step, "_capture_row", side_effect=RuntimeError("captured logprob count mismatch")):
+        try:
+            step._replay_current_logprobs(None, [(0, {}, {"prefix": [1], "generated": [2]})],
+                                         "cpu", SimpleNamespace(alignment=128))
+        except RuntimeError as exc:
+            check("F5 pg-grid qualified coverage guard remains fail-closed",
+                  str(exc) == "captured logprob count mismatch")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--scratch", type=Path,
@@ -1617,6 +1863,7 @@ def main() -> None:
     test_channel_checkpoint_paths(scratch)
     test_block_training(scratch)
     test_parallel_collection(scratch)
+    test_pg_grid(scratch)
     print(json.dumps({"schema": "emender-rl-loop-bank-unit-test-v1",
                      "passed": len(PASSED), "tests": PASSED}, sort_keys=True))
 
