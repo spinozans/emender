@@ -795,6 +795,7 @@ def inject_tranche(root: Path, tranche: int,
         ["git", "-C", str(REPO), "rev-parse", "HEAD"], text=True).strip()
     program_sha = _sha_file(inject_pool.VALIDATOR_PROGRAM_FIRST_ACTION)
     frozen_all = []
+    skipped_ineligible = []
     first_action_bundles = 0
     protocol_breadth_bundles = 0
     for bundle in bundles:
@@ -838,6 +839,14 @@ def inject_tranche(root: Path, tranche: int,
                              if "expected_final" in spec else "")),
             "source_commit": source_commit,
         }
+        # E6 collision fix (2026-10-08): freeze_pool_task RAISES on
+        # receipt-ineligible tasks (development split) — correct for bank-side
+        # callers, but this supply-side loop was crashing and discarding every
+        # tranche at injection (tranches ~1001-1024 lost to the pool). Filter
+        # here instead: skip + log ineligible bundles; freeze only eligible.
+        if not body["receipt_eligible"]:
+            skipped_ineligible.append(task_id)
+            continue
         for _bank_root in BANKS:
             freeze_pool_task(bank_paths(_bank_root), task)
         frozen_all.append({
@@ -853,6 +862,7 @@ def inject_tranche(root: Path, tranche: int,
         "source_commit": source_commit, "program_sha256": program_sha,
         "first_action_bundles": first_action_bundles,
         "protocol_breadth_bundles": protocol_breadth_bundles,
+        "skipped_ineligible": skipped_ineligible,
         "collections": [summary], "frozen": frozen_all,
     }
     frozen_record_path.parent.mkdir(parents=True, exist_ok=True)
