@@ -80,7 +80,7 @@ def freeze(args):
         "archived_mix": mix, "bank_read_only": str(args.bank),
         "pilot_sha256": digest(pilot_source), "driver_sha256": digest(driver.__file__),
         "frozen_unix": time.time(), "convergence_n": 30,
-        "ladder": [4, 8, 16, 32], "repeats_per_rung": 64,
+        "ladder": [4, 8, 12], "repeats_per_rung": 64,
         "worker_timeout_s": 1200, "judge_model": MODELS[0]})
     print(json.dumps({"frozen": 30, "templates": sorted(by_template), "mix": mix}))
 
@@ -158,6 +158,7 @@ def run_case(root, phase, model, index):
     env = {**os.environ, "CUDA_VISIBLE_DEVICES": "", "OMP_NUM_THREADS": "1",
            "OPENBLAS_NUM_THREADS": "1", "MKL_NUM_THREADS": "1"}
     start = time.monotonic()
+    owner_started_unix = time.time()
     with (output / "worker.log").open("w") as log:
         proc = subprocess.Popen([sys.executable, __file__, "worker", "--root", str(root),
             "--output", str(output), "--model", model, "--index", str(index)],
@@ -175,18 +176,23 @@ def run_case(root, phase, model, index):
         write(output / "result.json", {"model": model, "index": index, "receipt": False,
               "grade_passed": False, "targets": 0, "error": f"worker exit {proc.returncode}",
               "elapsed_s": time.monotonic()-start})
-    return json.loads((output / "result.json").read_text())
+    row = json.loads((output / "result.json").read_text())
+    row.update(owner_started_unix=owner_started_unix, owner_ended_unix=time.time(),
+               owner_elapsed_s=time.monotonic()-start)
+    return row
 
 
 def run(args):
     models = MODELS if args.phase == "ab" else (MODELS[1], MODELS[2])
-    rungs = [4] if args.phase == "ab" else [4, 8, 16, 32]
+    rungs = [4] if args.phase == "ab" else [4, 8, 12]
     if args.phase == "ladder":
         design = args.root / "ladder-design.json"
         if not design.exists():
             write(design, {"models": models, "rungs": rungs, "waves": 2,
                 "approval": "supervisor approved two-wave bounded degradation probe",
                 "approved_before_first_rung_unix": time.time(),
+                "operator_endpoint_cap": 12, "cap_source": "operator statement 2026-10-08",
+                "queue_429_interpretation": "240s waits for a free background lane; not degradation",
                 "capacity_definition": "burst+drain, finite sample, NOT sustained production limit"})
     for width in rungs:
         count = 30 if args.phase == "ab" else 2*width
@@ -204,10 +210,14 @@ def run(args):
             elapsed = time.monotonic()-start
             write(summary, {"model": model, "concurrency": width, "n": count,
                 "wall_s": elapsed, "started_unix": started_unix, "ended_unix": time.time(),
+                "terminal_drain_after_last_admission_s": max(r["owner_ended_unix"] for r in rows)
+                    - max(r["owner_started_unix"] for r in rows),
                 "background_bank_processes_at_start": [line for line in background.splitlines()
                     if "bank-singlelearner-B" in line and "rl_bank_lane.py collect" in line],
                 "capacity_definition": "burst+drain, finite sample, NOT sustained production limit",
-                "completed_per_hour": count*3600/elapsed,
+                "finalized_outcomes_per_hour": count*3600/elapsed,
+                "completed_per_hour": sum(r.get("status") == "finished" and r.get("close_verified", False)
+                                           for r in rows)*3600/elapsed,
                 "receipts_per_hour": sum(r["receipt"] for r in rows)*3600/elapsed,
                 "targets_per_hour": sum(r["targets"] for r in rows)*3600/elapsed,
                 "rows": rows})
