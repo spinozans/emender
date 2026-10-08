@@ -95,6 +95,46 @@ def measure(path):
         "raw_cohort_path": str(path), "capacity_definition": "burst+drain, finite sample, NOT sustained production limit"}
 
 
+def audit_candidate_bindings(root, plan):
+    import sys
+    import tiktoken
+    sys.path.append(str(root.parent / "scripts"))
+    from rl_teacher_probe import validate_candidate_binding
+    enc = tiktoken.get_encoding("p50k_base")
+    audit = {"raw_candidates": 0, "strict_raw_eligible": 0, "corrected_eligible": 0,
+             "raw_errors": [], "ab_counts": {m: {"raw": 0, "strict_raw": 0, "corrected": 0} for m in MODELS}}
+    for path in sorted(root.glob("*-*/*/case-*/candidate-receipt.json")):
+        item = plan["tasks"][int(path.parent.name.split("-")[-1]) % len(plan["tasks"])]
+        raw = json.loads(path.read_text())
+        audit["raw_candidates"] += 1
+        valid = True
+        try:
+            validate_candidate_binding(raw, item, enc=enc)
+        except ValueError as exc:
+            valid = False
+            audit["raw_errors"].append({"path": str(path.relative_to(root)), "error": str(exc)})
+        audit["strict_raw_eligible"] += int(valid)
+        corrected_path = path.with_name("corrected-candidate-receipt.json")
+        corrected_valid = valid
+        if corrected_path.exists():
+            corrected = json.loads(corrected_path.read_text())
+            validate_candidate_binding(corrected, item, enc=enc)
+            assert all(raw[k] == corrected[k] for k in raw
+                       if k not in {"policy_checkpoint", "created_unix", "receipt_sha256"})
+            corrected_valid = True
+        audit["corrected_eligible"] += int(corrected_valid)
+        if path.parents[2].name == "ab-4":
+            counts = audit["ab_counts"][path.parents[1].name]
+            counts["raw"] += 1
+            counts["strict_raw"] += int(valid)
+            counts["corrected"] += int(corrected_valid)
+    for basis in ("strict_raw", "corrected"):
+        baseline, candidate = (audit["ab_counts"][m][basis] for m in (MODELS[0], MODELS[2]))
+        audit[basis+"_deepseek_delta_pp"] = 100*(candidate-baseline)/30
+        audit[basis+"_noninferiority_point_gate"] = candidate/30 >= baseline/30-.05
+    return audit
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", type=Path, required=True)
@@ -179,12 +219,13 @@ def main():
     pool = json.loads(pool_path.read_text())
     report["actual_pool_timing_replay"] = {k: v for k, v in pool.items() if k != "rows"}
     report["actual_pool_timing_replay"]["eligible_receipts"] = sum(r["eligible_receipt"] for r in pool["rows"])
+    report["candidate_binding_audit"] = audit_candidate_bindings(args.root, plan)
     args.output.write_text(json.dumps(report, sort_keys=True, indent=2)+"\n")
     # Raw evidence stays private. Manifest hashes contain no sealed prompts/answers.
     files = [p for p in args.root.rglob("*") if p.is_file() and
              (p.name in ("plan.json", "ladder-design.json", "pilot-isolated.py", "cohort.json", "result.json",
                          "api.jsonl", "correction-api.jsonl", "grade.json", "candidate-receipt.json",
-                         "episode-private.json", "summary.json")
+                         "episode-private.json", "summary.json", "corrected-candidate-receipt.json")
               or p.name.startswith(("gym-terminal-projection", "spec-", "result-")))]
     manifest = [{"path": str(p), "sha256": hashlib.sha256(p.read_bytes()).hexdigest()} for p in sorted(files)]
     args.manifest.write_text(json.dumps(manifest, sort_keys=True, indent=2)+"\n")

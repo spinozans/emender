@@ -67,10 +67,10 @@ tail -2 "$BANK/unit-test.log"
 # authoring time; 101 after the 2026-10-07 audit fixes added 49 regressions;
 # 138 after task F4 added 18 parallel-collection regressions;
 # 162 after task F5 added 24 PG-grid regressions;
-# 184 after F7 added 22 bounded-correction/config regressions).
-grep -q '"passed": 184' "$BANK/unit-test.log" || {
+# 185 after F7 added 23 bounded-correction/config regressions).
+grep -q '"passed": 185' "$BANK/unit-test.log" || {
   log "[preflight] UNIT VALIDATION FAILED"; exit 1; }
-log "[preflight] unit validation PASSED (184/184)"
+log "[preflight] unit validation PASSED (185/185)"
 
 rm -f "$BANK/STOP"
 

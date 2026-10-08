@@ -44,3 +44,29 @@ def test_distribution_empty_single_and_quantiles():
     assert module.distribution([])["p95"] is None
     assert module.distribution([7])["p95"] == 7
     assert module.distribution([0, 10])["p90"] == 9
+
+
+def test_validate_candidate_binding_rejects_attempt_sha_as_checkpoint(tmp_path, monkeypatch):
+    import sys
+    from types import SimpleNamespace
+    spec = importlib.util.spec_from_file_location("rl_teacher_probe",
+        Path(__file__).resolve().parents[1] / "scripts/rl-loop-v1/rl_teacher_probe.py")
+    probe = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(probe)
+    attempt = tmp_path / "cycle" / "task" / "attempt" / "episode-private.json"
+    attempt.parent.mkdir(parents=True)
+    (attempt.parents[2] / "collect-summary.json").write_text(json.dumps({"policy_checkpoint_sha256": "served"}))
+    item = {"attempt_source": str(attempt), "attempt_sha256": "attempt",
+            "task": {"task_id": "task", "task_sha256": "tasksha"}}
+    receipt = {"policy_checkpoint": {"checkpoint_sha256": "attempt"},
+               "attempt_link": {"attempt_episode_sha256": "attempt"},
+               "task_id": "task", "task_sha256": "tasksha"}
+    verified = []
+    monkeypatch.setitem(sys.modules, "rl_receipts", SimpleNamespace(
+        verify_receipt=lambda r, **kwargs: verified.append(r)))
+    with pytest.raises(ValueError, match="archived served checkpoint"):
+        probe.validate_candidate_binding(receipt, item, enc=None)
+    assert not verified
+    receipt["policy_checkpoint"]["checkpoint_sha256"] = "served"
+    probe.validate_candidate_binding(receipt, item, enc=None)
+    assert verified == [receipt]

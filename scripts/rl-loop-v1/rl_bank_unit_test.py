@@ -2040,6 +2040,25 @@ def test_async_correction_collect(scratch: Path) -> None:
           len({x["workspace"] for x in specs}) == 3 and all(x["policy_record"] == record for x in specs))
 
 
+def test_correction_spec_binding(scratch: Path) -> None:
+    """Hash-bound archived attempts must match immutable correction snapshots."""
+    from ndm.e97_onpolicy_records import canonical_json
+    from rl_bank_lane import execute_correction_spec
+    binding_dir = scratch / "f7-snapshot-binding" / "attempt"
+    binding_dir.mkdir(parents=True)
+    record = {"generations": [], "source_messages": []}
+    (binding_dir / "episode-private.json").write_text(canonical_json(record)+"\n")
+    spec = {"task_dir": str(binding_dir.parent), "episode_artifacts": {
+        "attempt_episode_sha256": _sha(binding_dir / "episode-private.json")},
+        "policy_record": {**record, "reason": "altered snapshot"}}
+    try:
+        execute_correction_spec(spec)
+        rejected_snapshot = False
+    except ValueError as exc:
+        rejected_snapshot = "snapshot differs" in str(exc)
+    check("F7 execute_correction_spec rejects a snapshot differing from hash-bound attempt", rejected_snapshot)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--scratch", type=Path,
@@ -2079,6 +2098,7 @@ def main() -> None:
     test_parallel_collection(scratch)
     test_pg_grid(scratch)
     test_correction_pool(scratch)
+    test_correction_spec_binding(scratch)
     test_async_correction_collect(scratch)
     print(json.dumps({"schema": "emender-rl-loop-bank-unit-test-v1",
                      "passed": len(PASSED), "tests": PASSED}, sort_keys=True))

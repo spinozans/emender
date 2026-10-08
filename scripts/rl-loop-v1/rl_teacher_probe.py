@@ -85,6 +85,19 @@ def freeze(args):
     print(json.dumps({"frozen": 30, "templates": sorted(by_template), "mix": mix}))
 
 
+def validate_candidate_binding(receipt, item, *, enc):
+    from rl_receipts import verify_receipt
+    expected = json.loads((Path(item["attempt_source"]).parents[2]
+                           / "collect-summary.json").read_text())["policy_checkpoint_sha256"]
+    if receipt["policy_checkpoint"]["checkpoint_sha256"] != expected:
+        raise ValueError("candidate checkpoint differs from archived served checkpoint")
+    if receipt["attempt_link"]["attempt_episode_sha256"] != item["attempt_sha256"]:
+        raise ValueError("candidate failed-attempt binding differs")
+    if (receipt["task_id"], receipt["task_sha256"]) != (item["task"]["task_id"], item["task"]["task_sha256"]):
+        raise ValueError("candidate task binding differs")
+    verify_receipt(receipt, enc=enc, expected_prev=None)
+
+
 def worker(args):
     import tiktoken
     import rl_loop_driver as driver
@@ -143,6 +156,7 @@ def worker(args):
                 teacher={"mode": "live", "model": args.model},
                 attempt_link={"attempt_episode_sha256": item["attempt_sha256"]},
                 enc=enc, prev=None)
+            validate_candidate_binding(receipt, item, enc=enc)
             write(args.output / "candidate-receipt.json", receipt)
             row.update(receipt=True, targets=receipt["episode"]["targets"])
     except BaseException as exc:

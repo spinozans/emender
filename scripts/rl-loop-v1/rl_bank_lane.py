@@ -224,6 +224,9 @@ def execute_correction_spec(spec):
     attempt_dir = Path(spec["task_dir"]) / "attempt"
     if sha256_file(attempt_dir / "episode-private.json") != spec["episode_artifacts"]["attempt_episode_sha256"]:
         raise ValueError("correction attempt identity drift")
+    from ndm.e97_onpolicy_records import canonical_json
+    if canonical_json(json.loads((attempt_dir / "episode-private.json").read_text())) != canonical_json(spec["policy_record"]):
+        raise ValueError("correction snapshot differs from immutable attempt")
     grade = json.loads((attempt_dir / "grade.json").read_text())
     if grade_receipt_digest(grade) != spec["episode_artifacts"]["attempt_grade_sha256"]:
         raise ValueError("correction grade identity drift")
