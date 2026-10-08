@@ -148,6 +148,9 @@ def _execute_correction(args, task, policy_record, workspace, task_dir,
     gym = body.get("task_lake")
     pi_bin = Path(tool_manifest(curriculum)["pi_bin"])
     teacher_panel = make_panel(curriculum.SYSTEM, tools, TEACHER_PANEL)
+    if args.teacher == "live" and not getattr(pilot, "_correction_probe_snapshot", False):
+        from rl_teacher_deadlines import harden_teacher_deadlines
+        harden_teacher_deadlines(pilot)
     teacher_generate = (None if args.teacher == "fixture" else make_teacher_generate(
         args.teacher, args.teacher_model, tools, enc, pilot, metrics))
     correction_dir = task_dir / "correction"
@@ -214,6 +217,7 @@ def execute_correction_spec(spec):
         module_spec = importlib.util.spec_from_file_location("correction_pilot_snapshot", snapshot["path"])
         pilot = importlib.util.module_from_spec(module_spec)
         module_spec.loader.exec_module(pilot)
+        pilot._correction_probe_snapshot = True
     curriculum = load_curriculum()
     tools = tool_manifest(curriculum)["model_visible_tools"]
     enc = tiktoken.get_encoding("p50k_base")
