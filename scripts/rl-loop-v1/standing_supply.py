@@ -123,10 +123,10 @@ ALLOWLIST_REL = "configs/pi/e97-firstparty-collection-authorizations-v1.json"
 ALLOWLIST = REPO / ALLOWLIST_REL
 VENV_PYTHON = REPO / ".venv" / "bin" / "python"
 POOL_PREFIX = "tas"
-TRANCHE_SIZE = 48
+TRANCHE_SIZE = 96
 LOW_WATER = 100
 HIGH_WATER = 288
-LANE_MIN, LANE_START, LANE_SOFT_CAP, LANE_HARD_CAP = 16, 16, 24, 24
+LANE_MIN, LANE_START, LANE_SOFT_CAP, LANE_HARD_CAP = 24, 24, 48, 48
 # LANE_MIN is the normal operating target, not a congestion safety floor.
 BACKOFF_FLOOR = 2
 PROBE_DEGRADE_S = 30.0
