@@ -126,7 +126,7 @@ POOL_PREFIX = "tas"
 TRANCHE_SIZE = 48
 LOW_WATER = 100
 HIGH_WATER = 288
-LANE_MIN, LANE_START, LANE_SOFT_CAP, LANE_HARD_CAP = 8, 8, 16, 24
+LANE_MIN, LANE_START, LANE_SOFT_CAP, LANE_HARD_CAP = 10, 10, 12, 12
 # LANE_MIN is the normal operating target, not a congestion safety floor.
 BACKOFF_FLOOR = 2
 PROBE_DEGRADE_S = 30.0
@@ -353,7 +353,7 @@ def control_probe() -> dict[str, Any]:
     url = os.environ.get("LUNAROUTE_ROUTING_URL",
                          "https://gw.lunaroute.com/v1") + "/chat/completions"
     body = json.dumps({
-        "model": "glm-5.3-flash-background",
+        "model": "deepseek-4.1-flash-background",
         "messages": [{"role": "user", "content": "Reply with the single word: ok"}],
         "temperature": 0, "max_tokens": 16}).encode()
     request = urllib.request.Request(
