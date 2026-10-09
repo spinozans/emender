@@ -1,0 +1,119 @@
+--- teacher_author.py
++++ teacher_author.py
+@@ -38,2 +38,2 @@
+-REPO = Path("/home/erikg/emender")
+-WORK = Path("/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-lake-expansion-v1")
++REPO = Path(os.environ["F9_STAGE_ROOT"])
++WORK = Path(os.environ["F9_AUTHOR_WORK"])
+@@ -49,0 +50,3 @@
++ERA8_VALIDATOR_MEMBER = "scripts/e97_first_party_validator_diversity.py"
++from scripts import e97_diversity as diversity
++from scripts import e97_diversity_author as diversity_author
+@@ -398 +401 @@
+-                      family: str | None = None) -> str:
++                      family: str | None = None, seed: dict | None = None) -> str:
+@@ -399,0 +403,6 @@
++    if seed is not None:
++        return author_instruction(genre, first_action, family) + diversity_author.seed_instruction(seed)
++    if family in diversity.FAMILIES:
++        if first_action:
++            raise ValueError("first action cannot use era8 family")
++        return diversity.INSTRUCTIONS[family] + diversity.OFFLINE_DISCIPLINE + ERA4_DISCIPLINE + diversity.JSON_HINT + (f"\nTheme: {genre}" if genre else "")
+@@ -432 +441 @@
+-                  family: str | None = None) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
++                  family: str | None = None, seed: dict | None = None) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+@@ -441,0 +451,3 @@
++    if seed is not None and seed.get('kind') == 'solved_bundle':
++        import standing_supply
++        diversity_author.verify_seed(seed, standing_supply.verify_admitted)
+@@ -443 +455 @@
+-        system_instruction = author_instruction(None, False, family)
++        system_instruction = author_instruction(None, False, family, seed=seed)
+@@ -446 +458 @@
+-        system_instruction = AUTHOR_INSTRUCTION + "\n" + AUTHOR_JSON_HINT
++        system_instruction = author_instruction(None, False, seed=seed)
+@@ -527 +539,7 @@
+-        if family == CHAIN_FAMILY:
++        if family in diversity.FAMILIES:
++            _era4_common(spec, known_tokens, known_trees, minimum_files=2, token_in_files=False)
++            diversity.guards(spec, _era4_common)
++            for word in FORBIDDEN_VOCAB:
++                if word in _canonical(spec["solution"]).lower():
++                    raise ValueError(f"forbidden sealed vocabulary: {word}")
++        elif family == CHAIN_FAMILY:
+@@ -1227,0 +1246,2 @@
++    if family in diversity.FAMILIES:
++        return files.keys().__iter__().__next__()
+@@ -1260,0 +1281,2 @@
++    if family in diversity.FAMILIES:
++        return list(_ERA4_WORKSPACE_TOOLS)
+@@ -1283,0 +1306,5 @@
++    if family in diversity.FAMILIES:
++        fields = {"end_state_assertions": solution["assertions"]}
++        if family == "conversation":
++            fields.update(user_script=solution["user_script"], final_pattern=solution["final_pattern"])
++        return fields
+@@ -1390 +1417 @@
+-        ["git", "-C", str(REPO), "rev-parse", "HEAD"], text=True).strip()
++        ["git", "-C", "/home/erikg/emender", "rev-parse", "HEAD"], text=True).strip()
+@@ -1401,0 +1429,2 @@
++        known_tokens, known_trees = lake_token_tree_index()
++        known_prompts, known_identities = diversity_author.lake_dedupe_index(TASK_LAKE)
+@@ -1402,0 +1432,7 @@
++            guards(spec, known_tokens, known_trees)
++            import standing_supply
++            diversity_author.admission_prescreen(spec, standing_supply.protected_prescreen)
++            prompt_sha = diversity_author.check_dedupe(spec, known_prompts)
++            known_prompts.add(prompt_sha)
++            known_tokens.add(spec["token"])
++            known_trees.add(fixture_tree_digest({f["path"]: f["content"] for f in spec["files"]}))
+@@ -1434,0 +1471,2 @@
++            diversity_author.check_dedupe(spec, set(), identity=identity, known_identities=known_identities)
++            known_identities.add(identity)
+@@ -1447,0 +1486,3 @@
++            task_validator_sha = validator_sha
++            if spec.get("family") in diversity.FAMILIES:
++                _, task_validator_sha = verified_source_member_payload(manifest_payload, archive_payload, ERA8_VALIDATOR_MEMBER)
+@@ -1453 +1494 @@
+-                         "program_sha256": validator_sha,
++                         "program_sha256": task_validator_sha,
+@@ -1523 +1564,3 @@
+-            if spec.get("family") == CHAIN_FAMILY:
++            if spec.get("family") in diversity.FAMILIES:
++                proofs.append(diversity_author.prove_bundle(task, spec, stage))
++            elif spec.get("family") == CHAIN_FAMILY:
+@@ -1559,0 +1603,2 @@
++        from ndm.e97_first_party_read_observe import validate_generated_quarantine
++        validate_generated_quarantine(stage)
+@@ -2406 +2451 @@
+-    parser.add_argument("command", choices=["author", "build"])
++    parser.add_argument("command", choices=["author", "build", "morph"])
+@@ -2411,0 +2457,2 @@
++    parser.add_argument("--seed", type=Path)
++    parser.add_argument("--morph-trick", choices=diversity.MORPHS)
+@@ -2416 +2463 @@
+-                                         family=args.family)
++                                         family=args.family, seed=json.loads(args.seed.read_bytes()) if args.seed else None)
+@@ -2419,0 +2467,22 @@
++        build_tranche(args.tranche)
++    elif args.command == "morph":
++        if args.seed is None or args.morph_trick is None:
++            parser.error("morph requires --seed (admitted solved seed) and --morph-trick")
++        seed = json.loads(args.seed.read_bytes())
++        if seed.get("kind") != "solved_bundle" or seed.get("provenance", {}).get("split") != "train":
++            raise ValueError("morph base must be an admitted solved TRAIN seed")
++        import standing_supply
++        from scripts.e97_diversity_author import verify_seed
++        base = verify_seed(seed, standing_supply.verify_admitted)
++        family = base.get("family")
++        instruction = author_instruction(None, False, family) + diversity_author.morph_instruction(base, args.morph_trick)
++        content, _ = lunaroute_call(TEACHER_MODEL, [{"role": "system", "content": instruction}, {"role": "user", "content": "Emit one perturbed variant now."}], 0.7, 8192, metrics)
++        candidate = parse_author_json(content)
++        tokens, trees = lake_token_tree_index()
++        prompts, _ = diversity_author.lake_dedupe_index(TASK_LAKE)
++        diversity_author.validate_morph(base, candidate, args.morph_trick, sys.modules[__name__], tokens, trees, prompts)
++        diversity_author.admission_prescreen(candidate, standing_supply.protected_prescreen)
++        out = WORK / "teacher-authored" / f"tranche-{args.tranche}"
++        out.mkdir(parents=True, exist_ok=False)
++        candidate["accepted_index"] = 0
++        (out / "authored-0000.json").write_text(json.dumps(candidate, indent=2))
