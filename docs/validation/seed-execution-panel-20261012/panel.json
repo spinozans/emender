@@ -1,0 +1,3055 @@
+{
+  "args_json": "/mnt/nvme1n1/erikg/diloco_8gpu/e97_4b_frontier_100b_hf/checkpoints/step_024448_tokens_99723771904/args.json",
+  "args_sha256": "4e3563462d345e6c9f76daf24ca544c565ecb43aaf433a2b1ee5b70c07625b4c",
+  "automatic_retry": false,
+  "bundle_files": {
+    "scripts/e97_native_execution_rpc.py": "f4323ede404a1cc95ceaa3469c8cb8d50263e5d885c395a7ad45d8e0834ca8bf",
+    "scripts/e97_openhands_native_backend.py": "b510d7b993b8aa9c2735f7680836cdd44ef1a833d33d1045241af6b7b0116032"
+  },
+  "case_module_sha256": "9176b178ddfab4114f130cf33fd02c8b0d4a8a353f2c25a07ada6354d60cffc7",
+  "cases": [
+    {
+      "answer": "54a25252115059c06255",
+      "cohort": "prior-regression",
+      "expected_output": null,
+      "family": "lookup",
+      "files": {
+        "config.json": "{\"active\": \"green\", \"values\": {\"blue\": \"d95743724100e86fcb5b\", \"green\": \"54a25252115059c06255\"}}"
+      },
+      "id": "regression-old-lookup-0",
+      "pair_index": 0,
+      "prompt": "Read /testbed/config.json. Return exactly the value selected by its active key using finish. Do not change any files.",
+      "variant": 0
+    },
+    {
+      "answer": "9c07a16fc2a491423c87",
+      "cohort": "prior-regression",
+      "expected_output": null,
+      "family": "lookup",
+      "files": {
+        "config.json": "{\"active\": \"blue\", \"values\": {\"blue\": \"9c07a16fc2a491423c87\", \"green\": \"ec1ea13603e841ffd5bf\"}}"
+      },
+      "id": "regression-old-lookup-1",
+      "pair_index": 0,
+      "prompt": "Read /testbed/config.json. Return exactly the value selected by its active key using finish. Do not change any files.",
+      "variant": 1
+    },
+    {
+      "answer": "15361754",
+      "cohort": "prior-regression",
+      "expected_output": null,
+      "family": "sum",
+      "files": {
+        "numbers.json": "{\"left\": 6340809, \"right\": 9020945}"
+      },
+      "id": "regression-old-sum-0",
+      "pair_index": 1,
+      "prompt": "Read /testbed/numbers.json. Return exactly the decimal sum of left and right using finish. Do not change any files.",
+      "variant": 0
+    },
+    {
+      "answer": "13650149",
+      "cohort": "prior-regression",
+      "expected_output": null,
+      "family": "sum",
+      "files": {
+        "numbers.json": "{\"left\": 8645238, \"right\": 5004911}"
+      },
+      "id": "regression-old-sum-1",
+      "pair_index": 1,
+      "prompt": "Read /testbed/numbers.json. Return exactly the decimal sum of left and right using finish. Do not change any files.",
+      "variant": 1
+    },
+    {
+      "answer": "done",
+      "cohort": "prior-regression",
+      "expected_output": {
+        "count": 10990428,
+        "owner": "fixture-owner",
+        "ticket": "9d8ed35d6c56e58176d6"
+      },
+      "family": "edit",
+      "files": {
+        "state.json": "{\"ticket\": \"9d8ed35d6c56e58176d6\", \"count\": 10990421, \"owner\": \"fixture-owner\"}"
+      },
+      "id": "regression-old-edit-0",
+      "pair_index": 2,
+      "prompt": "Read /testbed/state.json. Write /testbed/result.json containing the same JSON object but with count increased by 7. Preserve every other field and the original file. Verify the result, then finish with exactly done.",
+      "variant": 0
+    },
+    {
+      "answer": "done",
+      "cohort": "prior-regression",
+      "expected_output": {
+        "count": 392822,
+        "owner": "fixture-owner",
+        "ticket": "dbec0553567563d58260"
+      },
+      "family": "edit",
+      "files": {
+        "state.json": "{\"ticket\": \"dbec0553567563d58260\", \"count\": 392815, \"owner\": \"fixture-owner\"}"
+      },
+      "id": "regression-old-edit-1",
+      "pair_index": 2,
+      "prompt": "Read /testbed/state.json. Write /testbed/result.json containing the same JSON object but with count increased by 7. Preserve every other field and the original file. Verify the result, then finish with exactly done.",
+      "variant": 1
+    },
+    {
+      "answer": "82ac304fad17521b6b99",
+      "cohort": "prior-regression",
+      "expected_output": null,
+      "family": "recovery",
+      "files": {
+        "catalog.json": "{\"active_path\": \"/testbed/items/record.json\"}",
+        "items/record.json": "{\"value\": \"82ac304fad17521b6b99\"}"
+      },
+      "id": "regression-old-recovery-0",
+      "pair_index": 3,
+      "prompt": "First attempt to read /testbed/missing.json using str_replace_editor view; wait for its result before trying other paths. If it is absent, read /testbed/catalog.json to find active_path, then read that file and return exactly its value field using finish. Do not change any files.",
+      "variant": 0
+    },
+    {
+      "answer": "8feea6d93c408a864dfa",
+      "cohort": "prior-regression",
+      "expected_output": null,
+      "family": "recovery",
+      "files": {
+        "catalog.json": "{\"active_path\": \"/testbed/items/record.json\"}",
+        "items/record.json": "{\"value\": \"8feea6d93c408a864dfa\"}"
+      },
+      "id": "regression-old-recovery-1",
+      "pair_index": 3,
+      "prompt": "First attempt to read /testbed/missing.json using str_replace_editor view; wait for its result before trying other paths. If it is absent, read /testbed/catalog.json to find active_path, then read that file and return exactly its value field using finish. Do not change any files.",
+      "variant": 1
+    },
+    {
+      "answer": "bedab89b89e3f28370ba",
+      "cohort": "prior-regression",
+      "expected_output": null,
+      "family": "lookup",
+      "files": {
+        "config.json": "{\"active\": \"green\", \"values\": {\"blue\": \"bc0271ec755cb3243899\", \"green\": \"bedab89b89e3f28370ba\"}}"
+      },
+      "id": "regression-fresh-lookup-0",
+      "pair_index": 0,
+      "prompt": "Read /testbed/config.json. Return exactly the value selected by its active key using finish. Do not change any files.",
+      "variant": 0
+    },
+    {
+      "answer": "58757b3a4e8de409745a",
+      "cohort": "prior-regression",
+      "expected_output": null,
+      "family": "lookup",
+      "files": {
+        "config.json": "{\"active\": \"blue\", \"values\": {\"blue\": \"58757b3a4e8de409745a\", \"green\": \"7171aee803345f40587d\"}}"
+      },
+      "id": "regression-fresh-lookup-1",
+      "pair_index": 0,
+      "prompt": "Read /testbed/config.json. Return exactly the value selected by its active key using finish. Do not change any files.",
+      "variant": 1
+    },
+    {
+      "answer": "11398229",
+      "cohort": "prior-regression",
+      "expected_output": null,
+      "family": "sum",
+      "files": {
+        "numbers.json": "{\"left\": 399876, \"right\": 10998353}"
+      },
+      "id": "regression-fresh-sum-0",
+      "pair_index": 1,
+      "prompt": "Read /testbed/numbers.json. Return exactly the decimal sum of left and right using finish. Do not change any files.",
+      "variant": 0
+    },
+    {
+      "answer": "8155625",
+      "cohort": "prior-regression",
+      "expected_output": null,
+      "family": "sum",
+      "files": {
+        "numbers.json": "{\"left\": 5479528, \"right\": 2676097}"
+      },
+      "id": "regression-fresh-sum-1",
+      "pair_index": 1,
+      "prompt": "Read /testbed/numbers.json. Return exactly the decimal sum of left and right using finish. Do not change any files.",
+      "variant": 1
+    },
+    {
+      "answer": "done",
+      "cohort": "prior-regression",
+      "expected_output": {
+        "count": 2841353,
+        "owner": "fixture-owner",
+        "ticket": "e116bc40f815055439fa"
+      },
+      "family": "edit",
+      "files": {
+        "state.json": "{\"ticket\": \"e116bc40f815055439fa\", \"count\": 2841346, \"owner\": \"fixture-owner\"}"
+      },
+      "id": "regression-fresh-edit-0",
+      "pair_index": 2,
+      "prompt": "Read /testbed/state.json. Write /testbed/result.json containing the same JSON object but with count increased by 7. Preserve every other field and the original file. Verify the result, then finish with exactly done.",
+      "variant": 0
+    },
+    {
+      "answer": "done",
+      "cohort": "prior-regression",
+      "expected_output": {
+        "count": 14829873,
+        "owner": "fixture-owner",
+        "ticket": "9b5a87d8c37ca65d37d9"
+      },
+      "family": "edit",
+      "files": {
+        "state.json": "{\"ticket\": \"9b5a87d8c37ca65d37d9\", \"count\": 14829866, \"owner\": \"fixture-owner\"}"
+      },
+      "id": "regression-fresh-edit-1",
+      "pair_index": 2,
+      "prompt": "Read /testbed/state.json. Write /testbed/result.json containing the same JSON object but with count increased by 7. Preserve every other field and the original file. Verify the result, then finish with exactly done.",
+      "variant": 1
+    },
+    {
+      "answer": "b96dc136aa18cc8b7e03",
+      "cohort": "prior-regression",
+      "expected_output": null,
+      "family": "recovery",
+      "files": {
+        "catalog.json": "{\"active_path\": \"/testbed/items/record.json\"}",
+        "items/record.json": "{\"value\": \"b96dc136aa18cc8b7e03\"}"
+      },
+      "id": "regression-fresh-recovery-0",
+      "pair_index": 3,
+      "prompt": "First attempt to read /testbed/missing.json using str_replace_editor view; wait for its result before trying other paths. If it is absent, read /testbed/catalog.json to find active_path, then read that file and return exactly its value field using finish. Do not change any files.",
+      "variant": 0
+    },
+    {
+      "answer": "d3ae1d9064590522cb57",
+      "cohort": "prior-regression",
+      "expected_output": null,
+      "family": "recovery",
+      "files": {
+        "catalog.json": "{\"active_path\": \"/testbed/items/record.json\"}",
+        "items/record.json": "{\"value\": \"d3ae1d9064590522cb57\"}"
+      },
+      "id": "regression-fresh-recovery-1",
+      "pair_index": 3,
+      "prompt": "First attempt to read /testbed/missing.json using str_replace_editor view; wait for its result before trying other paths. If it is absent, read /testbed/catalog.json to find active_path, then read that file and return exactly its value field using finish. Do not change any files.",
+      "variant": 1
+    },
+    {
+      "answer": "36f50041",
+      "authored_failure_prefix": false,
+      "cohort": "prior-fresh",
+      "expected_output": null,
+      "family": "lookup",
+      "files": {
+        "grounded/fresh/16960bd5a4c9/source.json": "{\"active\": \"amber\", \"values\": {\"amber\": \"36f50041\", \"violet\": \"ad380ab1\", \"silver\": \"ef06cb90\"}}"
+      },
+      "id": "fresh-lookup-0000-world-0",
+      "missing_path": "/testbed/grounded/fresh/16960bd5a4c9/absent.json",
+      "output_path": "grounded/fresh/16960bd5a4c9/updated.json",
+      "pair_index": 0,
+      "path": "/testbed/grounded/fresh/16960bd5a4c9/source.json",
+      "prompt": "Read /testbed/grounded/fresh/16960bd5a4c9/source.json. Return exactly the values value selected by active using finish. Do not change files.",
+      "recipe": {
+        "delta": -1,
+        "expression": "d['values'][d['active']]",
+        "field_path": [
+          "count"
+        ],
+        "routes": [
+          "active_path"
+        ],
+        "selector": "active",
+        "table": "values",
+        "value_key": "value"
+      },
+      "source_style": false,
+      "variant": 0
+    },
+    {
+      "answer": "9ea6305d",
+      "authored_failure_prefix": false,
+      "cohort": "prior-fresh",
+      "expected_output": null,
+      "family": "lookup",
+      "files": {
+        "grounded/fresh/16960bd5a4c9/source.json": "{\"active\": \"violet\", \"values\": {\"amber\": \"8d746149\", \"violet\": \"9ea6305d\", \"silver\": \"4e09cf7c\"}}"
+      },
+      "id": "fresh-lookup-0000-world-1",
+      "missing_path": "/testbed/grounded/fresh/16960bd5a4c9/absent.json",
+      "output_path": "grounded/fresh/16960bd5a4c9/updated.json",
+      "pair_index": 0,
+      "path": "/testbed/grounded/fresh/16960bd5a4c9/source.json",
+      "prompt": "Read /testbed/grounded/fresh/16960bd5a4c9/source.json. Return exactly the values value selected by active using finish. Do not change files.",
+      "recipe": {
+        "delta": -1,
+        "expression": "d['values'][d['active']]",
+        "field_path": [
+          "count"
+        ],
+        "routes": [
+          "active_path"
+        ],
+        "selector": "active",
+        "table": "values",
+        "value_key": "value"
+      },
+      "source_style": false,
+      "variant": 1
+    },
+    {
+      "answer": "17af16e79c838487",
+      "authored_failure_prefix": false,
+      "cohort": "prior-fresh",
+      "expected_output": null,
+      "family": "lookup",
+      "files": {
+        "grounded/fresh/2d1825a402a5/source.json": "{\"chosen\": \"violet\", \"options\": {\"amber\": \"5370f98da2602803\", \"violet\": \"17af16e79c838487\", \"silver\": \"d09773f247c48835\"}}"
+      },
+      "id": "fresh-lookup-0001-world-0",
+      "missing_path": "/testbed/grounded/fresh/2d1825a402a5/absent.json",
+      "output_path": "grounded/fresh/2d1825a402a5/updated.json",
+      "pair_index": 1,
+      "path": "/testbed/grounded/fresh/2d1825a402a5/source.json",
+      "prompt": "Inspect /testbed/grounded/fresh/2d1825a402a5/source.json; chosen names the entry in options to select. Finish with that entry's exact string, without modifying files.",
+      "recipe": {
+        "delta": 3,
+        "expression": "d['options'][d['chosen']]",
+        "field_path": [
+          "stock"
+        ],
+        "routes": [
+          "next_file",
+          "active_path"
+        ],
+        "selector": "chosen",
+        "table": "options",
+        "value_key": "token"
+      },
+      "source_style": false,
+      "variant": 0
+    },
+    {
+      "answer": "9a3333b4f9e129ac",
+      "authored_failure_prefix": false,
+      "cohort": "prior-fresh",
+      "expected_output": null,
+      "family": "lookup",
+      "files": {
+        "grounded/fresh/2d1825a402a5/source.json": "{\"chosen\": \"silver\", \"options\": {\"amber\": \"6a110fa97b502633\", \"violet\": \"54acf6a88df9154a\", \"silver\": \"9a3333b4f9e129ac\"}}"
+      },
+      "id": "fresh-lookup-0001-world-1",
+      "missing_path": "/testbed/grounded/fresh/2d1825a402a5/absent.json",
+      "output_path": "grounded/fresh/2d1825a402a5/updated.json",
+      "pair_index": 1,
+      "path": "/testbed/grounded/fresh/2d1825a402a5/source.json",
+      "prompt": "Inspect /testbed/grounded/fresh/2d1825a402a5/source.json; chosen names the entry in options to select. Finish with that entry's exact string, without modifying files.",
+      "recipe": {
+        "delta": 3,
+        "expression": "d['options'][d['chosen']]",
+        "field_path": [
+          "stock"
+        ],
+        "routes": [
+          "next_file",
+          "active_path"
+        ],
+        "selector": "chosen",
+        "table": "options",
+        "value_key": "token"
+      },
+      "source_style": false,
+      "variant": 1
+    },
+    {
+      "answer": "25732906",
+      "authored_failure_prefix": false,
+      "cohort": "prior-fresh",
+      "expected_output": null,
+      "family": "sum",
+      "files": {
+        "grounded/fresh/32ec0148c063/source.json": "{\"left\": 13228321, \"right\": 12504585, \"note\": \"cf354873\"}"
+      },
+      "id": "fresh-sum-0000-world-0",
+      "missing_path": "/testbed/grounded/fresh/32ec0148c063/absent.json",
+      "output_path": "grounded/fresh/32ec0148c063/updated.json",
+      "pair_index": 2,
+      "path": "/testbed/grounded/fresh/32ec0148c063/source.json",
+      "prompt": "Read /testbed/grounded/fresh/32ec0148c063/source.json. Finish with exactly the decimal sum of left and right. Preserve all files.",
+      "recipe": {
+        "delta": -1,
+        "expression": "d['left']+d['right']",
+        "field_path": [
+          "count"
+        ],
+        "routes": [
+          "active_path"
+        ],
+        "selector": "active",
+        "table": "values",
+        "value_key": "value"
+      },
+      "source_style": false,
+      "variant": 0
+    },
+    {
+      "answer": "1711968",
+      "authored_failure_prefix": false,
+      "cohort": "prior-fresh",
+      "expected_output": null,
+      "family": "sum",
+      "files": {
+        "grounded/fresh/32ec0148c063/source.json": "{\"left\": 371787, \"right\": 1340181, \"note\": \"fa3998f6\"}"
+      },
+      "id": "fresh-sum-0000-world-1",
+      "missing_path": "/testbed/grounded/fresh/32ec0148c063/absent.json",
+      "output_path": "grounded/fresh/32ec0148c063/updated.json",
+      "pair_index": 2,
+      "path": "/testbed/grounded/fresh/32ec0148c063/source.json",
+      "prompt": "Read /testbed/grounded/fresh/32ec0148c063/source.json. Finish with exactly the decimal sum of left and right. Preserve all files.",
+      "recipe": {
+        "delta": -1,
+        "expression": "d['left']+d['right']",
+        "field_path": [
+          "count"
+        ],
+        "routes": [
+          "active_path"
+        ],
+        "selector": "active",
+        "table": "values",
+        "value_key": "value"
+      },
+      "source_style": false,
+      "variant": 1
+    },
+    {
+      "answer": "-2909267",
+      "authored_failure_prefix": false,
+      "cohort": "prior-fresh",
+      "expected_output": null,
+      "family": "sum",
+      "files": {
+        "grounded/fresh/eb0d4c6429b1/source.json": "{\"left\": -15487282, \"right\": 12578015, \"note\": \"df9a99a73190b729\"}"
+      },
+      "id": "fresh-sum-0001-world-0",
+      "missing_path": "/testbed/grounded/fresh/eb0d4c6429b1/absent.json",
+      "output_path": "grounded/fresh/eb0d4c6429b1/updated.json",
+      "pair_index": 3,
+      "path": "/testbed/grounded/fresh/eb0d4c6429b1/source.json",
+      "prompt": "Read /testbed/grounded/fresh/eb0d4c6429b1/source.json. Finish with exactly the decimal sum of left and right. Preserve all files.",
+      "recipe": {
+        "delta": 3,
+        "expression": "d['left']+d['right']",
+        "field_path": [
+          "stock"
+        ],
+        "routes": [
+          "next_file",
+          "active_path"
+        ],
+        "selector": "chosen",
+        "table": "options",
+        "value_key": "token"
+      },
+      "source_style": false,
+      "variant": 0
+    },
+    {
+      "answer": "3159341",
+      "authored_failure_prefix": false,
+      "cohort": "prior-fresh",
+      "expected_output": null,
+      "family": "sum",
+      "files": {
+        "grounded/fresh/eb0d4c6429b1/source.json": "{\"left\": -3966270, \"right\": 7125611, \"note\": \"14e2814da61afe9f\"}"
+      },
+      "id": "fresh-sum-0001-world-1",
+      "missing_path": "/testbed/grounded/fresh/eb0d4c6429b1/absent.json",
+      "output_path": "grounded/fresh/eb0d4c6429b1/updated.json",
+      "pair_index": 3,
+      "path": "/testbed/grounded/fresh/eb0d4c6429b1/source.json",
+      "prompt": "Read /testbed/grounded/fresh/eb0d4c6429b1/source.json. Finish with exactly the decimal sum of left and right. Preserve all files.",
+      "recipe": {
+        "delta": 3,
+        "expression": "d['left']+d['right']",
+        "field_path": [
+          "stock"
+        ],
+        "routes": [
+          "next_file",
+          "active_path"
+        ],
+        "selector": "chosen",
+        "table": "options",
+        "value_key": "token"
+      },
+      "source_style": false,
+      "variant": 1
+    },
+    {
+      "answer": "done",
+      "authored_failure_prefix": false,
+      "cohort": "prior-fresh",
+      "expected_output": {
+        "count": 1269165,
+        "owner": "owner-251f94",
+        "ticket": "252e62f1",
+        "untouched": [
+          0,
+          14
+        ]
+      },
+      "family": "edit",
+      "files": {
+        "grounded/fresh/84969e24e225/source.json": "{\"ticket\": \"252e62f1\", \"owner\": \"owner-251f94\", \"untouched\": [0, 14], \"count\": 1269166}"
+      },
+      "id": "fresh-edit-0000-world-0",
+      "missing_path": "/testbed/grounded/fresh/84969e24e225/absent.json",
+      "output_path": "grounded/fresh/84969e24e225/updated.json",
+      "pair_index": 4,
+      "path": "/testbed/grounded/fresh/84969e24e225/source.json",
+      "prompt": "Read /testbed/grounded/fresh/84969e24e225/source.json. Write /testbed/grounded/fresh/84969e24e225/updated.json with count increased by -1. Preserve every other field and the original source file. Read back the output to verify it, then finish with exactly done.",
+      "recipe": {
+        "delta": -1,
+        "field_path": [
+          "count"
+        ],
+        "routes": [
+          "active_path"
+        ],
+        "selector": "active",
+        "table": "values",
+        "value_key": "value"
+      },
+      "source_style": false,
+      "variant": 0
+    },
+    {
+      "answer": "done",
+      "authored_failure_prefix": false,
+      "cohort": "prior-fresh",
+      "expected_output": {
+        "count": 2008429,
+        "owner": "owner-251f94",
+        "ticket": "a6eee1e2",
+        "untouched": [
+          1,
+          16
+        ]
+      },
+      "family": "edit",
+      "files": {
+        "grounded/fresh/84969e24e225/source.json": "{\"ticket\": \"a6eee1e2\", \"owner\": \"owner-251f94\", \"untouched\": [1, 16], \"count\": 2008430}"
+      },
+      "id": "fresh-edit-0000-world-1",
+      "missing_path": "/testbed/grounded/fresh/84969e24e225/absent.json",
+      "output_path": "grounded/fresh/84969e24e225/updated.json",
+      "pair_index": 4,
+      "path": "/testbed/grounded/fresh/84969e24e225/source.json",
+      "prompt": "Read /testbed/grounded/fresh/84969e24e225/source.json. Write /testbed/grounded/fresh/84969e24e225/updated.json with count increased by -1. Preserve every other field and the original source file. Read back the output to verify it, then finish with exactly done.",
+      "recipe": {
+        "delta": -1,
+        "field_path": [
+          "count"
+        ],
+        "routes": [
+          "active_path"
+        ],
+        "selector": "active",
+        "table": "values",
+        "value_key": "value"
+      },
+      "source_style": false,
+      "variant": 1
+    },
+    {
+      "answer": "done",
+      "authored_failure_prefix": false,
+      "cohort": "prior-fresh",
+      "expected_output": {
+        "owner": "owner-b875f5",
+        "stock": 5525424,
+        "ticket": "c548d87cc329e239",
+        "untouched": [
+          0,
+          13
+        ]
+      },
+      "family": "edit",
+      "files": {
+        "grounded/fresh/97804a9246a3/source.json": "{\"ticket\": \"c548d87cc329e239\", \"owner\": \"owner-b875f5\", \"untouched\": [0, 13], \"stock\": 5525421}"
+      },
+      "id": "fresh-edit-0001-world-0",
+      "missing_path": "/testbed/grounded/fresh/97804a9246a3/absent.json",
+      "output_path": "grounded/fresh/97804a9246a3/updated.json",
+      "pair_index": 5,
+      "path": "/testbed/grounded/fresh/97804a9246a3/source.json",
+      "prompt": "Read /testbed/grounded/fresh/97804a9246a3/source.json. Write /testbed/grounded/fresh/97804a9246a3/updated.json with stock increased by 3. Preserve every other field and the original source file. Read back the output to verify it, then finish with exactly done.",
+      "recipe": {
+        "delta": 3,
+        "field_path": [
+          "stock"
+        ],
+        "routes": [
+          "next_file",
+          "active_path"
+        ],
+        "selector": "chosen",
+        "table": "options",
+        "value_key": "token"
+      },
+      "source_style": false,
+      "variant": 0
+    },
+    {
+      "answer": "done",
+      "authored_failure_prefix": false,
+      "cohort": "prior-fresh",
+      "expected_output": {
+        "owner": "owner-b875f5",
+        "stock": 3480116,
+        "ticket": "b5b8e425126fc7e9",
+        "untouched": [
+          1,
+          9
+        ]
+      },
+      "family": "edit",
+      "files": {
+        "grounded/fresh/97804a9246a3/source.json": "{\"ticket\": \"b5b8e425126fc7e9\", \"owner\": \"owner-b875f5\", \"untouched\": [1, 9], \"stock\": 3480113}"
+      },
+      "id": "fresh-edit-0001-world-1",
+      "missing_path": "/testbed/grounded/fresh/97804a9246a3/absent.json",
+      "output_path": "grounded/fresh/97804a9246a3/updated.json",
+      "pair_index": 5,
+      "path": "/testbed/grounded/fresh/97804a9246a3/source.json",
+      "prompt": "Read /testbed/grounded/fresh/97804a9246a3/source.json. Write /testbed/grounded/fresh/97804a9246a3/updated.json with stock increased by 3. Preserve every other field and the original source file. Read back the output to verify it, then finish with exactly done.",
+      "recipe": {
+        "delta": 3,
+        "field_path": [
+          "stock"
+        ],
+        "routes": [
+          "next_file",
+          "active_path"
+        ],
+        "selector": "chosen",
+        "table": "options",
+        "value_key": "token"
+      },
+      "source_style": false,
+      "variant": 1
+    },
+    {
+      "answer": "07b224a3",
+      "authored_failure_prefix": false,
+      "cohort": "prior-fresh",
+      "expected_output": null,
+      "family": "recovery",
+      "files": {
+        "grounded/fresh/29aa384404d5/source.json": "{\"active_path\": \"/testbed/grounded/fresh/29aa384404d5/value.json\"}",
+        "grounded/fresh/29aa384404d5/value.json": "{\"value\": \"07b224a3\", \"decoy\": \"06ad6b2d6139dfffcf01\"}"
+      },
+      "id": "fresh-recovery-0000-world-0",
+      "missing_path": "/testbed/grounded/fresh/29aa384404d5/absent.json",
+      "output_path": "grounded/fresh/29aa384404d5/updated.json",
+      "pair_index": 6,
+      "path": "/testbed/grounded/fresh/29aa384404d5/source.json",
+      "prompt": "First attempt /testbed/grounded/fresh/29aa384404d5/absent.json using str_replace_editor view and wait for the result. If absent, consult /testbed/grounded/fresh/29aa384404d5/source.json, follow active_path, and finish with exactly the observed value. Do not modify files.",
+      "recipe": {
+        "delta": -1,
+        "field_path": [
+          "count"
+        ],
+        "routes": [
+          "active_path"
+        ],
+        "selector": "active",
+        "table": "values",
+        "value_key": "value"
+      },
+      "source_style": false,
+      "variant": 0
+    },
+    {
+      "answer": "2b5792ed",
+      "authored_failure_prefix": false,
+      "cohort": "prior-fresh",
+      "expected_output": null,
+      "family": "recovery",
+      "files": {
+        "grounded/fresh/29aa384404d5/source.json": "{\"active_path\": \"/testbed/grounded/fresh/29aa384404d5/value.json\"}",
+        "grounded/fresh/29aa384404d5/value.json": "{\"value\": \"2b5792ed\", \"decoy\": \"b0c49225d8720e58cd34\"}"
+      },
+      "id": "fresh-recovery-0000-world-1",
+      "missing_path": "/testbed/grounded/fresh/29aa384404d5/absent.json",
+      "output_path": "grounded/fresh/29aa384404d5/updated.json",
+      "pair_index": 6,
+      "path": "/testbed/grounded/fresh/29aa384404d5/source.json",
+      "prompt": "First attempt /testbed/grounded/fresh/29aa384404d5/absent.json using str_replace_editor view and wait for the result. If absent, consult /testbed/grounded/fresh/29aa384404d5/source.json, follow active_path, and finish with exactly the observed value. Do not modify files.",
+      "recipe": {
+        "delta": -1,
+        "field_path": [
+          "count"
+        ],
+        "routes": [
+          "active_path"
+        ],
+        "selector": "active",
+        "table": "values",
+        "value_key": "value"
+      },
+      "source_style": false,
+      "variant": 1
+    },
+    {
+      "answer": "7dca189ab44798c0",
+      "authored_failure_prefix": false,
+      "cohort": "prior-fresh",
+      "expected_output": null,
+      "family": "recovery",
+      "files": {
+        "grounded/fresh/fbeb41c67e8f/pointer.json": "{\"active_path\": \"/testbed/grounded/fresh/fbeb41c67e8f/value.json\"}",
+        "grounded/fresh/fbeb41c67e8f/source.json": "{\"next_file\": \"/testbed/grounded/fresh/fbeb41c67e8f/pointer.json\"}",
+        "grounded/fresh/fbeb41c67e8f/value.json": "{\"token\": \"7dca189ab44798c0\", \"decoy\": \"91850c85066d4db3a37b\"}"
+      },
+      "id": "fresh-recovery-0001-world-0",
+      "missing_path": "/testbed/grounded/fresh/fbeb41c67e8f/absent.json",
+      "output_path": "grounded/fresh/fbeb41c67e8f/updated.json",
+      "pair_index": 7,
+      "path": "/testbed/grounded/fresh/fbeb41c67e8f/source.json",
+      "prompt": "First read /testbed/grounded/fresh/fbeb41c67e8f/absent.json using str_replace_editor view and wait for its result. If absent, read /testbed/grounded/fresh/fbeb41c67e8f/source.json, follow next_file to another JSON, then follow active_path to the value file. Finish with exactly its token. Do not change files.",
+      "recipe": {
+        "delta": 3,
+        "field_path": [
+          "stock"
+        ],
+        "routes": [
+          "next_file",
+          "active_path"
+        ],
+        "selector": "chosen",
+        "table": "options",
+        "value_key": "token"
+      },
+      "source_style": false,
+      "variant": 0
+    },
+    {
+      "answer": "2e293a372bb8e29b",
+      "authored_failure_prefix": false,
+      "cohort": "prior-fresh",
+      "expected_output": null,
+      "family": "recovery",
+      "files": {
+        "grounded/fresh/fbeb41c67e8f/pointer.json": "{\"active_path\": \"/testbed/grounded/fresh/fbeb41c67e8f/value.json\"}",
+        "grounded/fresh/fbeb41c67e8f/source.json": "{\"next_file\": \"/testbed/grounded/fresh/fbeb41c67e8f/pointer.json\"}",
+        "grounded/fresh/fbeb41c67e8f/value.json": "{\"token\": \"2e293a372bb8e29b\", \"decoy\": \"4c08cb5b5f5c682d1609\"}"
+      },
+      "id": "fresh-recovery-0001-world-1",
+      "missing_path": "/testbed/grounded/fresh/fbeb41c67e8f/absent.json",
+      "output_path": "grounded/fresh/fbeb41c67e8f/updated.json",
+      "pair_index": 7,
+      "path": "/testbed/grounded/fresh/fbeb41c67e8f/source.json",
+      "prompt": "First read /testbed/grounded/fresh/fbeb41c67e8f/absent.json using str_replace_editor view and wait for its result. If absent, read /testbed/grounded/fresh/fbeb41c67e8f/source.json, follow next_file to another JSON, then follow active_path to the value file. Finish with exactly its token. Do not change files.",
+      "recipe": {
+        "delta": 3,
+        "field_path": [
+          "stock"
+        ],
+        "routes": [
+          "next_file",
+          "active_path"
+        ],
+        "selector": "chosen",
+        "table": "options",
+        "value_key": "token"
+      },
+      "source_style": false,
+      "variant": 1
+    },
+    {
+      "answer": "48076400",
+      "authored_failure_prefix": false,
+      "cohort": "prior-transfer",
+      "expected_output": null,
+      "family": "lookup",
+      "files": {
+        "grounded/transfer/7a011c02fade/source.json": "{\"active_id\": \"amber\", \"records\": [{\"id\": \"amber\", \"payload\": \"48076400\"}, {\"id\": \"violet\", \"payload\": \"10c62c55\"}, {\"id\": \"silver\", \"payload\": \"9428b504\"}]}"
+      },
+      "id": "transfer-lookup-0000-world-0",
+      "missing_path": "/testbed/grounded/transfer/7a011c02fade/absent.json",
+      "output_path": "grounded/transfer/7a011c02fade/updated.json",
+      "pair_index": 0,
+      "path": "/testbed/grounded/transfer/7a011c02fade/source.json",
+      "prompt": "Read /testbed/grounded/transfer/7a011c02fade/source.json. Select the record whose id equals active_id. Finish with exactly its payload. Do not change files.",
+      "recipe": {
+        "delta": -1,
+        "expression": "next(r[\"payload\"] for r in d[\"records\"] if r[\"id\"]==d[\"active_id\"])",
+        "field_path": [
+          "count"
+        ],
+        "routes": [
+          "active_path"
+        ],
+        "selector": "active",
+        "table": "values",
+        "value_key": "value"
+      },
+      "source_style": false,
+      "variant": 0
+    },
+    {
+      "answer": "f4509799",
+      "authored_failure_prefix": false,
+      "cohort": "prior-transfer",
+      "expected_output": null,
+      "family": "lookup",
+      "files": {
+        "grounded/transfer/7a011c02fade/source.json": "{\"active_id\": \"violet\", \"records\": [{\"id\": \"amber\", \"payload\": \"d84a0eb4\"}, {\"id\": \"violet\", \"payload\": \"f4509799\"}, {\"id\": \"silver\", \"payload\": \"8d2507cf\"}]}"
+      },
+      "id": "transfer-lookup-0000-world-1",
+      "missing_path": "/testbed/grounded/transfer/7a011c02fade/absent.json",
+      "output_path": "grounded/transfer/7a011c02fade/updated.json",
+      "pair_index": 0,
+      "path": "/testbed/grounded/transfer/7a011c02fade/source.json",
+      "prompt": "Read /testbed/grounded/transfer/7a011c02fade/source.json. Select the record whose id equals active_id. Finish with exactly its payload. Do not change files.",
+      "recipe": {
+        "delta": -1,
+        "expression": "next(r[\"payload\"] for r in d[\"records\"] if r[\"id\"]==d[\"active_id\"])",
+        "field_path": [
+          "count"
+        ],
+        "routes": [
+          "active_path"
+        ],
+        "selector": "active",
+        "table": "values",
+        "value_key": "value"
+      },
+      "source_style": false,
+      "variant": 1
+    },
+    {
+      "answer": "217cd2b2f6279431",
+      "authored_failure_prefix": false,
+      "cohort": "prior-transfer",
+      "expected_output": null,
+      "family": "lookup",
+      "files": {
+        "grounded/transfer/27261d3f41cc/source.json": "{\"active_id\": \"violet\", \"records\": [{\"id\": \"amber\", \"payload\": \"c0da0317c79bf14a\"}, {\"id\": \"violet\", \"payload\": \"217cd2b2f6279431\"}, {\"id\": \"silver\", \"payload\": \"3ec0f85cc6d78918\"}]}"
+      },
+      "id": "transfer-lookup-0001-world-0",
+      "missing_path": "/testbed/grounded/transfer/27261d3f41cc/absent.json",
+      "output_path": "grounded/transfer/27261d3f41cc/updated.json",
+      "pair_index": 1,
+      "path": "/testbed/grounded/transfer/27261d3f41cc/source.json",
+      "prompt": "Read /testbed/grounded/transfer/27261d3f41cc/source.json. Select the record whose id equals active_id. Finish with exactly its payload. Do not change files.",
+      "recipe": {
+        "delta": 3,
+        "expression": "next(r[\"payload\"] for r in d[\"records\"] if r[\"id\"]==d[\"active_id\"])",
+        "field_path": [
+          "stock"
+        ],
+        "routes": [
+          "next_file",
+          "active_path"
+        ],
+        "selector": "chosen",
+        "table": "options",
+        "value_key": "token"
+      },
+      "source_style": false,
+      "variant": 0
+    },
+    {
+      "answer": "45c2471fa58c60cc",
+      "authored_failure_prefix": false,
+      "cohort": "prior-transfer",
+      "expected_output": null,
+      "family": "lookup",
+      "files": {
+        "grounded/transfer/27261d3f41cc/source.json": "{\"active_id\": \"silver\", \"records\": [{\"id\": \"amber\", \"payload\": \"31827ab99a9e06c7\"}, {\"id\": \"violet\", \"payload\": \"7f446bcfef539de3\"}, {\"id\": \"silver\", \"payload\": \"45c2471fa58c60cc\"}]}"
+      },
+      "id": "transfer-lookup-0001-world-1",
+      "missing_path": "/testbed/grounded/transfer/27261d3f41cc/absent.json",
+      "output_path": "grounded/transfer/27261d3f41cc/updated.json",
+      "pair_index": 1,
+      "path": "/testbed/grounded/transfer/27261d3f41cc/source.json",
+      "prompt": "Read /testbed/grounded/transfer/27261d3f41cc/source.json. Select the record whose id equals active_id. Finish with exactly its payload. Do not change files.",
+      "recipe": {
+        "delta": 3,
+        "expression": "next(r[\"payload\"] for r in d[\"records\"] if r[\"id\"]==d[\"active_id\"])",
+        "field_path": [
+          "stock"
+        ],
+        "routes": [
+          "next_file",
+          "active_path"
+        ],
+        "selector": "chosen",
+        "table": "options",
+        "value_key": "token"
+      },
+      "source_style": false,
+      "variant": 1
+    },
+    {
+      "answer": "22467029",
+      "authored_failure_prefix": false,
+      "cohort": "prior-transfer",
+      "expected_output": null,
+      "family": "sum",
+      "files": {
+        "grounded/transfer/67bee9e23710/source.json": "{\"measurements\": [11981261, 10476287, 9481], \"note\": \"e509110d\"}"
+      },
+      "id": "transfer-sum-0000-world-0",
+      "missing_path": "/testbed/grounded/transfer/67bee9e23710/absent.json",
+      "output_path": "grounded/transfer/67bee9e23710/updated.json",
+      "pair_index": 2,
+      "path": "/testbed/grounded/transfer/67bee9e23710/source.json",
+      "prompt": "Read /testbed/grounded/transfer/67bee9e23710/source.json. Sum every number in measurements. Finish with exactly the decimal total. Preserve all files.",
+      "recipe": {
+        "delta": -1,
+        "expression": "sum(d[\"measurements\"])",
+        "field_path": [
+          "count"
+        ],
+        "routes": [
+          "active_path"
+        ],
+        "selector": "active",
+        "table": "values",
+        "value_key": "value"
+      },
+      "source_style": false,
+      "variant": 0
+    },
+    {
+      "answer": "22733125",
+      "authored_failure_prefix": false,
+      "cohort": "prior-transfer",
+      "expected_output": null,
+      "family": "sum",
+      "files": {
+        "grounded/transfer/67bee9e23710/source.json": "{\"measurements\": [12661201, 10013251, 58673], \"note\": \"d924fa30\"}"
+      },
+      "id": "transfer-sum-0000-world-1",
+      "missing_path": "/testbed/grounded/transfer/67bee9e23710/absent.json",
+      "output_path": "grounded/transfer/67bee9e23710/updated.json",
+      "pair_index": 2,
+      "path": "/testbed/grounded/transfer/67bee9e23710/source.json",
+      "prompt": "Read /testbed/grounded/transfer/67bee9e23710/source.json. Sum every number in measurements. Finish with exactly the decimal total. Preserve all files.",
+      "recipe": {
+        "delta": -1,
+        "expression": "sum(d[\"measurements\"])",
+        "field_path": [
+          "count"
+        ],
+        "routes": [
+          "active_path"
+        ],
+        "selector": "active",
+        "table": "values",
+        "value_key": "value"
+      },
+      "source_style": false,
+      "variant": 1
+    },
+    {
+      "answer": "-12700351",
+      "authored_failure_prefix": false,
+      "cohort": "prior-transfer",
+      "expected_output": null,
+      "family": "sum",
+      "files": {
+        "grounded/transfer/85a2d45a06ff/source.json": "{\"measurements\": [-13835536, 1076821, 58364], \"note\": \"dec78b70dfcf9099\"}"
+      },
+      "id": "transfer-sum-0001-world-0",
+      "missing_path": "/testbed/grounded/transfer/85a2d45a06ff/absent.json",
+      "output_path": "grounded/transfer/85a2d45a06ff/updated.json",
+      "pair_index": 3,
+      "path": "/testbed/grounded/transfer/85a2d45a06ff/source.json",
+      "prompt": "Read /testbed/grounded/transfer/85a2d45a06ff/source.json. Sum every number in measurements. Finish with exactly the decimal total. Preserve all files.",
+      "recipe": {
+        "delta": 3,
+        "expression": "sum(d[\"measurements\"])",
+        "field_path": [
+          "stock"
+        ],
+        "routes": [
+          "next_file",
+          "active_path"
+        ],
+        "selector": "chosen",
+        "table": "options",
+        "value_key": "token"
+      },
+      "source_style": false,
+      "variant": 0
+    },
+    {
+      "answer": "-393518",
+      "authored_failure_prefix": false,
+      "cohort": "prior-transfer",
+      "expected_output": null,
+      "family": "sum",
+      "files": {
+        "grounded/transfer/85a2d45a06ff/source.json": "{\"measurements\": [-738597, 339015, 6064], \"note\": \"7bacf4e6979e279b\"}"
+      },
+      "id": "transfer-sum-0001-world-1",
+      "missing_path": "/testbed/grounded/transfer/85a2d45a06ff/absent.json",
+      "output_path": "grounded/transfer/85a2d45a06ff/updated.json",
+      "pair_index": 3,
+      "path": "/testbed/grounded/transfer/85a2d45a06ff/source.json",
+      "prompt": "Read /testbed/grounded/transfer/85a2d45a06ff/source.json. Sum every number in measurements. Finish with exactly the decimal total. Preserve all files.",
+      "recipe": {
+        "delta": 3,
+        "expression": "sum(d[\"measurements\"])",
+        "field_path": [
+          "stock"
+        ],
+        "routes": [
+          "next_file",
+          "active_path"
+        ],
+        "selector": "chosen",
+        "table": "options",
+        "value_key": "token"
+      },
+      "source_style": false,
+      "variant": 1
+    },
+    {
+      "answer": "done",
+      "authored_failure_prefix": false,
+      "cohort": "prior-transfer",
+      "expected_output": {
+        "change": 1,
+        "count": 12216879,
+        "owner": "owner-d377d1",
+        "ticket": "9eced720",
+        "untouched": [
+          0,
+          15
+        ]
+      },
+      "family": "edit",
+      "files": {
+        "grounded/transfer/8d502c185e66/source.json": "{\"ticket\": \"9eced720\", \"owner\": \"owner-d377d1\", \"untouched\": [0, 15], \"count\": 12216878, \"change\": 1}"
+      },
+      "id": "transfer-edit-0000-world-0",
+      "missing_path": "/testbed/grounded/transfer/8d502c185e66/absent.json",
+      "output_path": "grounded/transfer/8d502c185e66/updated.json",
+      "pair_index": 4,
+      "path": "/testbed/grounded/transfer/8d502c185e66/source.json",
+      "prompt": "Read /testbed/grounded/transfer/8d502c185e66/source.json. Write /testbed/grounded/transfer/8d502c185e66/updated.json with count increased by the number in change. Preserve every other field and the original source file. Read back the output to verify it, then finish with exactly done.",
+      "recipe": {
+        "delta": -1,
+        "delta_from": "change",
+        "field_path": [
+          "count"
+        ],
+        "routes": [
+          "active_path"
+        ],
+        "selector": "active",
+        "table": "values",
+        "value_key": "value"
+      },
+      "source_style": false,
+      "variant": 0
+    },
+    {
+      "answer": "done",
+      "authored_failure_prefix": false,
+      "cohort": "prior-transfer",
+      "expected_output": {
+        "change": 2,
+        "count": 8333313,
+        "owner": "owner-d377d1",
+        "ticket": "250b0715",
+        "untouched": [
+          1,
+          13
+        ]
+      },
+      "family": "edit",
+      "files": {
+        "grounded/transfer/8d502c185e66/source.json": "{\"ticket\": \"250b0715\", \"owner\": \"owner-d377d1\", \"untouched\": [1, 13], \"count\": 8333311, \"change\": 2}"
+      },
+      "id": "transfer-edit-0000-world-1",
+      "missing_path": "/testbed/grounded/transfer/8d502c185e66/absent.json",
+      "output_path": "grounded/transfer/8d502c185e66/updated.json",
+      "pair_index": 4,
+      "path": "/testbed/grounded/transfer/8d502c185e66/source.json",
+      "prompt": "Read /testbed/grounded/transfer/8d502c185e66/source.json. Write /testbed/grounded/transfer/8d502c185e66/updated.json with count increased by the number in change. Preserve every other field and the original source file. Read back the output to verify it, then finish with exactly done.",
+      "recipe": {
+        "delta": -1,
+        "delta_from": "change",
+        "field_path": [
+          "count"
+        ],
+        "routes": [
+          "active_path"
+        ],
+        "selector": "active",
+        "table": "values",
+        "value_key": "value"
+      },
+      "source_style": false,
+      "variant": 1
+    },
+    {
+      "answer": "done",
+      "authored_failure_prefix": false,
+      "cohort": "prior-transfer",
+      "expected_output": {
+        "change": 5,
+        "owner": "owner-7710f4",
+        "stock": 8241883,
+        "ticket": "a288b20c3c27b502",
+        "untouched": [
+          0,
+          6
+        ]
+      },
+      "family": "edit",
+      "files": {
+        "grounded/transfer/92f79b0ebdb2/source.json": "{\"ticket\": \"a288b20c3c27b502\", \"owner\": \"owner-7710f4\", \"untouched\": [0, 6], \"stock\": 8241878, \"change\": 5}"
+      },
+      "id": "transfer-edit-0001-world-0",
+      "missing_path": "/testbed/grounded/transfer/92f79b0ebdb2/absent.json",
+      "output_path": "grounded/transfer/92f79b0ebdb2/updated.json",
+      "pair_index": 5,
+      "path": "/testbed/grounded/transfer/92f79b0ebdb2/source.json",
+      "prompt": "Read /testbed/grounded/transfer/92f79b0ebdb2/source.json. Write /testbed/grounded/transfer/92f79b0ebdb2/updated.json with stock increased by the number in change. Preserve every other field and the original source file. Read back the output to verify it, then finish with exactly done.",
+      "recipe": {
+        "delta": 3,
+        "delta_from": "change",
+        "field_path": [
+          "stock"
+        ],
+        "routes": [
+          "next_file",
+          "active_path"
+        ],
+        "selector": "chosen",
+        "table": "options",
+        "value_key": "token"
+      },
+      "source_style": false,
+      "variant": 0
+    },
+    {
+      "answer": "done",
+      "authored_failure_prefix": false,
+      "cohort": "prior-transfer",
+      "expected_output": {
+        "change": 6,
+        "owner": "owner-7710f4",
+        "stock": 15014845,
+        "ticket": "37ef7c97e5ab82cc",
+        "untouched": [
+          1,
+          14
+        ]
+      },
+      "family": "edit",
+      "files": {
+        "grounded/transfer/92f79b0ebdb2/source.json": "{\"ticket\": \"37ef7c97e5ab82cc\", \"owner\": \"owner-7710f4\", \"untouched\": [1, 14], \"stock\": 15014839, \"change\": 6}"
+      },
+      "id": "transfer-edit-0001-world-1",
+      "missing_path": "/testbed/grounded/transfer/92f79b0ebdb2/absent.json",
+      "output_path": "grounded/transfer/92f79b0ebdb2/updated.json",
+      "pair_index": 5,
+      "path": "/testbed/grounded/transfer/92f79b0ebdb2/source.json",
+      "prompt": "Read /testbed/grounded/transfer/92f79b0ebdb2/source.json. Write /testbed/grounded/transfer/92f79b0ebdb2/updated.json with stock increased by the number in change. Preserve every other field and the original source file. Read back the output to verify it, then finish with exactly done.",
+      "recipe": {
+        "delta": 3,
+        "delta_from": "change",
+        "field_path": [
+          "stock"
+        ],
+        "routes": [
+          "next_file",
+          "active_path"
+        ],
+        "selector": "chosen",
+        "table": "options",
+        "value_key": "token"
+      },
+      "source_style": false,
+      "variant": 1
+    },
+    {
+      "answer": "f60cce07",
+      "authored_failure_prefix": false,
+      "cohort": "prior-transfer",
+      "expected_output": null,
+      "family": "recovery",
+      "files": {
+        "grounded/transfer/6b36c9ed11a3/pointer.json": "{\"active_path\": \"/testbed/grounded/transfer/6b36c9ed11a3/value.json\"}",
+        "grounded/transfer/6b36c9ed11a3/source.json": "{\"active\": \"right\", \"selected_paths\": {\"left\": \"/testbed/grounded/transfer/6b36c9ed11a3/decoy.json\", \"right\": \"/testbed/grounded/transfer/6b36c9ed11a3/pointer.json\"}}",
+        "grounded/transfer/6b36c9ed11a3/value.json": "{\"value\": \"f60cce07\", \"decoy\": \"55c8da7ae5ca0e6d014f\"}"
+      },
+      "id": "transfer-recovery-0000-world-0",
+      "missing_path": "/testbed/grounded/transfer/6b36c9ed11a3/absent.json",
+      "output_path": "grounded/transfer/6b36c9ed11a3/updated.json",
+      "pair_index": 6,
+      "path": "/testbed/grounded/transfer/6b36c9ed11a3/source.json",
+      "prompt": "First try /testbed/grounded/transfer/6b36c9ed11a3/absent.json with str_replace_editor view and wait for the result. If missing, read /testbed/grounded/transfer/6b36c9ed11a3/source.json; active selects an entry in selected_paths. Read that file, follow active_path, and finish with exactly its value. Preserve all files.",
+      "recipe": {
+        "delta": -1,
+        "field_path": [
+          "count"
+        ],
+        "routes": [
+          "selected_paths",
+          "active_path"
+        ],
+        "selector": "active",
+        "table": "values",
+        "value_key": "value"
+      },
+      "source_style": false,
+      "variant": 0
+    },
+    {
+      "answer": "904ff4cf",
+      "authored_failure_prefix": false,
+      "cohort": "prior-transfer",
+      "expected_output": null,
+      "family": "recovery",
+      "files": {
+        "grounded/transfer/6b36c9ed11a3/pointer.json": "{\"active_path\": \"/testbed/grounded/transfer/6b36c9ed11a3/value.json\"}",
+        "grounded/transfer/6b36c9ed11a3/source.json": "{\"active\": \"right\", \"selected_paths\": {\"left\": \"/testbed/grounded/transfer/6b36c9ed11a3/decoy.json\", \"right\": \"/testbed/grounded/transfer/6b36c9ed11a3/pointer.json\"}}",
+        "grounded/transfer/6b36c9ed11a3/value.json": "{\"value\": \"904ff4cf\", \"decoy\": \"d193831d79b2557f8c14\"}"
+      },
+      "id": "transfer-recovery-0000-world-1",
+      "missing_path": "/testbed/grounded/transfer/6b36c9ed11a3/absent.json",
+      "output_path": "grounded/transfer/6b36c9ed11a3/updated.json",
+      "pair_index": 6,
+      "path": "/testbed/grounded/transfer/6b36c9ed11a3/source.json",
+      "prompt": "First try /testbed/grounded/transfer/6b36c9ed11a3/absent.json with str_replace_editor view and wait for the result. If missing, read /testbed/grounded/transfer/6b36c9ed11a3/source.json; active selects an entry in selected_paths. Read that file, follow active_path, and finish with exactly its value. Preserve all files.",
+      "recipe": {
+        "delta": -1,
+        "field_path": [
+          "count"
+        ],
+        "routes": [
+          "selected_paths",
+          "active_path"
+        ],
+        "selector": "active",
+        "table": "values",
+        "value_key": "value"
+      },
+      "source_style": false,
+      "variant": 1
+    },
+    {
+      "answer": "21f67e4d2e978d30",
+      "authored_failure_prefix": false,
+      "cohort": "prior-transfer",
+      "expected_output": null,
+      "family": "recovery",
+      "files": {
+        "grounded/transfer/c37b911b55d3/pointer.json": "{\"active_path\": \"/testbed/grounded/transfer/c37b911b55d3/value.json\"}",
+        "grounded/transfer/c37b911b55d3/source.json": "{\"active\": \"right\", \"selected_paths\": {\"left\": \"/testbed/grounded/transfer/c37b911b55d3/decoy.json\", \"right\": \"/testbed/grounded/transfer/c37b911b55d3/pointer.json\"}}",
+        "grounded/transfer/c37b911b55d3/value.json": "{\"token\": \"21f67e4d2e978d30\", \"decoy\": \"8882b0617d494a61bc27\"}"
+      },
+      "id": "transfer-recovery-0001-world-0",
+      "missing_path": "/testbed/grounded/transfer/c37b911b55d3/absent.json",
+      "output_path": "grounded/transfer/c37b911b55d3/updated.json",
+      "pair_index": 7,
+      "path": "/testbed/grounded/transfer/c37b911b55d3/source.json",
+      "prompt": "First try /testbed/grounded/transfer/c37b911b55d3/absent.json with str_replace_editor view and wait for the result. If missing, read /testbed/grounded/transfer/c37b911b55d3/source.json; active selects an entry in selected_paths. Read that file, follow active_path, and finish with exactly its token. Preserve all files.",
+      "recipe": {
+        "delta": 3,
+        "field_path": [
+          "stock"
+        ],
+        "routes": [
+          "selected_paths",
+          "active_path"
+        ],
+        "selector": "chosen",
+        "table": "options",
+        "value_key": "token"
+      },
+      "source_style": false,
+      "variant": 0
+    },
+    {
+      "answer": "e30979bdda9acea2",
+      "authored_failure_prefix": false,
+      "cohort": "prior-transfer",
+      "expected_output": null,
+      "family": "recovery",
+      "files": {
+        "grounded/transfer/c37b911b55d3/pointer.json": "{\"active_path\": \"/testbed/grounded/transfer/c37b911b55d3/value.json\"}",
+        "grounded/transfer/c37b911b55d3/source.json": "{\"active\": \"right\", \"selected_paths\": {\"left\": \"/testbed/grounded/transfer/c37b911b55d3/decoy.json\", \"right\": \"/testbed/grounded/transfer/c37b911b55d3/pointer.json\"}}",
+        "grounded/transfer/c37b911b55d3/value.json": "{\"token\": \"e30979bdda9acea2\", \"decoy\": \"b232ccc2eb41af700b15\"}"
+      },
+      "id": "transfer-recovery-0001-world-1",
+      "missing_path": "/testbed/grounded/transfer/c37b911b55d3/absent.json",
+      "output_path": "grounded/transfer/c37b911b55d3/updated.json",
+      "pair_index": 7,
+      "path": "/testbed/grounded/transfer/c37b911b55d3/source.json",
+      "prompt": "First try /testbed/grounded/transfer/c37b911b55d3/absent.json with str_replace_editor view and wait for the result. If missing, read /testbed/grounded/transfer/c37b911b55d3/source.json; active selects an entry in selected_paths. Read that file, follow active_path, and finish with exactly its token. Preserve all files.",
+      "recipe": {
+        "delta": 3,
+        "field_path": [
+          "stock"
+        ],
+        "routes": [
+          "selected_paths",
+          "active_path"
+        ],
+        "selector": "chosen",
+        "table": "options",
+        "value_key": "token"
+      },
+      "source_style": false,
+      "variant": 1
+    },
+    {
+      "answer": "68cd47b5",
+      "authored_failure_prefix": false,
+      "bridge_layout": 0,
+      "cohort": "fresh",
+      "expected_output": null,
+      "family": "lookup",
+      "files": {
+        "bridge/fresh/978a45e1ee61/config.json": "{\"active\": \"amber\", \"values\": {\"amber\": \"68cd47b5\", \"silver\": \"53724a4e\", \"violet\": \"aa386921\"}}"
+      },
+      "id": "bridge-fresh-lookup-0000-world-0",
+      "missing_path": "/testbed/bridge/fresh/978a45e1ee61/missing.json",
+      "naming_index": 0,
+      "output_path": "bridge/fresh/978a45e1ee61/updated.json",
+      "pair_index": 0,
+      "path": "/testbed/bridge/fresh/978a45e1ee61/config.json",
+      "prompt": "Read /testbed/bridge/fresh/978a45e1ee61/config.json. active names an entry in the values object. Finish with exactly the selected string. Preserve all files.",
+      "recipe": {
+        "expression": "d['values'][d['active']]"
+      },
+      "source_style": false,
+      "variant": 0
+    },
+    {
+      "answer": "53724a4e",
+      "authored_failure_prefix": false,
+      "bridge_layout": 0,
+      "cohort": "fresh",
+      "expected_output": null,
+      "family": "lookup",
+      "files": {
+        "bridge/fresh/978a45e1ee61/config.json": "{\"active\": \"silver\", \"values\": {\"amber\": \"68cd47b5\", \"silver\": \"53724a4e\", \"violet\": \"aa386921\"}}"
+      },
+      "id": "bridge-fresh-lookup-0000-world-1",
+      "missing_path": "/testbed/bridge/fresh/978a45e1ee61/missing.json",
+      "naming_index": 0,
+      "output_path": "bridge/fresh/978a45e1ee61/updated.json",
+      "pair_index": 0,
+      "path": "/testbed/bridge/fresh/978a45e1ee61/config.json",
+      "prompt": "Read /testbed/bridge/fresh/978a45e1ee61/config.json. active names an entry in the values object. Finish with exactly the selected string. Preserve all files.",
+      "recipe": {
+        "expression": "d['values'][d['active']]"
+      },
+      "source_style": false,
+      "variant": 1
+    },
+    {
+      "answer": "a1531f15",
+      "authored_failure_prefix": false,
+      "bridge_layout": 1,
+      "cohort": "fresh",
+      "expected_output": null,
+      "family": "lookup",
+      "files": {
+        "bridge/fresh/6b3327149078/config.json": "{\"active\": \"amber\", \"values\": [{\"id\": \"amber\", \"payload\": \"a1531f15\"}, {\"id\": \"silver\", \"payload\": \"f213d385\"}, {\"id\": \"violet\", \"payload\": \"1e0d0beb\"}]}"
+      },
+      "id": "bridge-fresh-lookup-0001-world-0",
+      "missing_path": "/testbed/bridge/fresh/6b3327149078/missing.json",
+      "naming_index": 0,
+      "output_path": "bridge/fresh/6b3327149078/updated.json",
+      "pair_index": 1,
+      "path": "/testbed/bridge/fresh/6b3327149078/config.json",
+      "prompt": "Read /testbed/bridge/fresh/6b3327149078/config.json. Find the row in values whose id equals active. Finish with exactly its payload. Preserve all files.",
+      "recipe": {
+        "expression": "next(row['payload'] for row in d['values'] if row['id']==d['active'])"
+      },
+      "source_style": false,
+      "variant": 0
+    },
+    {
+      "answer": "f213d385",
+      "authored_failure_prefix": false,
+      "bridge_layout": 1,
+      "cohort": "fresh",
+      "expected_output": null,
+      "family": "lookup",
+      "files": {
+        "bridge/fresh/6b3327149078/config.json": "{\"active\": \"silver\", \"values\": [{\"id\": \"amber\", \"payload\": \"a1531f15\"}, {\"id\": \"silver\", \"payload\": \"f213d385\"}, {\"id\": \"violet\", \"payload\": \"1e0d0beb\"}]}"
+      },
+      "id": "bridge-fresh-lookup-0001-world-1",
+      "missing_path": "/testbed/bridge/fresh/6b3327149078/missing.json",
+      "naming_index": 0,
+      "output_path": "bridge/fresh/6b3327149078/updated.json",
+      "pair_index": 1,
+      "path": "/testbed/bridge/fresh/6b3327149078/config.json",
+      "prompt": "Read /testbed/bridge/fresh/6b3327149078/config.json. Find the row in values whose id equals active. Finish with exactly its payload. Preserve all files.",
+      "recipe": {
+        "expression": "next(row['payload'] for row in d['values'] if row['id']==d['active'])"
+      },
+      "source_style": false,
+      "variant": 1
+    },
+    {
+      "answer": "3dd1e16c",
+      "authored_failure_prefix": false,
+      "bridge_layout": 2,
+      "cohort": "fresh",
+      "expected_output": null,
+      "family": "lookup",
+      "files": {
+        "bridge/fresh/e15bb30878ee/config.json": "{\"payload\": \"3dd1e16c\", \"note\": \"f9694e94\"}"
+      },
+      "id": "bridge-fresh-lookup-0002-world-0",
+      "missing_path": "/testbed/bridge/fresh/e15bb30878ee/missing.json",
+      "naming_index": 0,
+      "output_path": "bridge/fresh/e15bb30878ee/updated.json",
+      "pair_index": 2,
+      "path": "/testbed/bridge/fresh/e15bb30878ee/config.json",
+      "prompt": "Read /testbed/bridge/fresh/e15bb30878ee/config.json and finish with exactly the string in payload, not note. Preserve all files.",
+      "recipe": {
+        "expression": "d['payload']"
+      },
+      "source_style": false,
+      "variant": 0
+    },
+    {
+      "answer": "f9694e94",
+      "authored_failure_prefix": false,
+      "bridge_layout": 2,
+      "cohort": "fresh",
+      "expected_output": null,
+      "family": "lookup",
+      "files": {
+        "bridge/fresh/e15bb30878ee/config.json": "{\"payload\": \"f9694e94\", \"note\": \"14a11415\"}"
+      },
+      "id": "bridge-fresh-lookup-0002-world-1",
+      "missing_path": "/testbed/bridge/fresh/e15bb30878ee/missing.json",
+      "naming_index": 0,
+      "output_path": "bridge/fresh/e15bb30878ee/updated.json",
+      "pair_index": 2,
+      "path": "/testbed/bridge/fresh/e15bb30878ee/config.json",
+      "prompt": "Read /testbed/bridge/fresh/e15bb30878ee/config.json and finish with exactly the string in payload, not note. Preserve all files.",
+      "recipe": {
+        "expression": "d['payload']"
+      },
+      "source_style": false,
+      "variant": 1
+    },
+    {
+      "answer": "0777fe0b6a8feee4",
+      "authored_failure_prefix": false,
+      "bridge_layout": 0,
+      "cohort": "fresh",
+      "expected_output": null,
+      "family": "lookup",
+      "files": {
+        "bridge/fresh/40fffd777d2f/config.json": "{\"selected\": \"silver\", \"records\": {\"amber\": \"74b0a48b8d28bbd6\", \"silver\": \"0777fe0b6a8feee4\", \"violet\": \"b1c3a752dcac377c\"}}"
+      },
+      "id": "bridge-fresh-lookup-0003-world-0",
+      "missing_path": "/testbed/bridge/fresh/40fffd777d2f/missing.json",
+      "naming_index": 1,
+      "output_path": "bridge/fresh/40fffd777d2f/updated.json",
+      "pair_index": 3,
+      "path": "/testbed/bridge/fresh/40fffd777d2f/config.json",
+      "prompt": "Read /testbed/bridge/fresh/40fffd777d2f/config.json. selected names an entry in the records object. Finish with exactly the selected string. Preserve all files.",
+      "recipe": {
+        "expression": "d['records'][d['selected']]"
+      },
+      "source_style": false,
+      "variant": 0
+    },
+    {
+      "answer": "b1c3a752dcac377c",
+      "authored_failure_prefix": false,
+      "bridge_layout": 0,
+      "cohort": "fresh",
+      "expected_output": null,
+      "family": "lookup",
+      "files": {
+        "bridge/fresh/40fffd777d2f/config.json": "{\"selected\": \"violet\", \"records\": {\"amber\": \"74b0a48b8d28bbd6\", \"silver\": \"0777fe0b6a8feee4\", \"violet\": \"b1c3a752dcac377c\"}}"
+      },
+      "id": "bridge-fresh-lookup-0003-world-1",
+      "missing_path": "/testbed/bridge/fresh/40fffd777d2f/missing.json",
+      "naming_index": 1,
+      "output_path": "bridge/fresh/40fffd777d2f/updated.json",
+      "pair_index": 3,
+      "path": "/testbed/bridge/fresh/40fffd777d2f/config.json",
+      "prompt": "Read /testbed/bridge/fresh/40fffd777d2f/config.json. selected names an entry in the records object. Finish with exactly the selected string. Preserve all files.",
+      "recipe": {
+        "expression": "d['records'][d['selected']]"
+      },
+      "source_style": false,
+      "variant": 1
+    },
+    {
+      "answer": "353278",
+      "authored_failure_prefix": false,
+      "bridge_layout": 0,
+      "cohort": "fresh",
+      "expected_output": null,
+      "family": "sum",
+      "files": {
+        "bridge/fresh/88e2d9f8f067/numbers.json": "{\"left\": 422228, \"right\": -68950, \"ignored\": 731}"
+      },
+      "id": "bridge-fresh-sum-0000-world-0",
+      "missing_path": "/testbed/bridge/fresh/88e2d9f8f067/missing.json",
+      "naming_index": 0,
+      "output_path": "bridge/fresh/88e2d9f8f067/updated.json",
+      "pair_index": 4,
+      "path": "/testbed/bridge/fresh/88e2d9f8f067/numbers.json",
+      "prompt": "Read /testbed/bridge/fresh/88e2d9f8f067/numbers.json. Add left and right; finish with exactly the decimal result. Preserve all files.",
+      "recipe": {
+        "expression": "d['left']+d['right']"
+      },
+      "source_style": false,
+      "variant": 0
+    },
+    {
+      "answer": "353451",
+      "authored_failure_prefix": false,
+      "bridge_layout": 0,
+      "cohort": "fresh",
+      "expected_output": null,
+      "family": "sum",
+      "files": {
+        "bridge/fresh/88e2d9f8f067/numbers.json": "{\"left\": 422228, \"right\": -68777, \"ignored\": 731}"
+      },
+      "id": "bridge-fresh-sum-0000-world-1",
+      "missing_path": "/testbed/bridge/fresh/88e2d9f8f067/missing.json",
+      "naming_index": 0,
+      "output_path": "bridge/fresh/88e2d9f8f067/updated.json",
+      "pair_index": 4,
+      "path": "/testbed/bridge/fresh/88e2d9f8f067/numbers.json",
+      "prompt": "Read /testbed/bridge/fresh/88e2d9f8f067/numbers.json. Add left and right; finish with exactly the decimal result. Preserve all files.",
+      "recipe": {
+        "expression": "d['left']+d['right']"
+      },
+      "source_style": false,
+      "variant": 1
+    },
+    {
+      "answer": "334344",
+      "authored_failure_prefix": false,
+      "bridge_layout": 1,
+      "cohort": "fresh",
+      "expected_output": null,
+      "family": "sum",
+      "files": {
+        "bridge/fresh/f9351ff353be/numbers.json": "{\"values\": [313573, -60624, 81395], \"ignored\": 731}"
+      },
+      "id": "bridge-fresh-sum-0001-world-0",
+      "missing_path": "/testbed/bridge/fresh/f9351ff353be/missing.json",
+      "naming_index": 0,
+      "output_path": "bridge/fresh/f9351ff353be/updated.json",
+      "pair_index": 5,
+      "path": "/testbed/bridge/fresh/f9351ff353be/numbers.json",
+      "prompt": "Read /testbed/bridge/fresh/f9351ff353be/numbers.json. Sum all numbers in the values list. Finish with exactly the decimal total. Preserve all files.",
+      "recipe": {
+        "expression": "sum(d['values'])"
+      },
+      "source_style": false,
+      "variant": 0
+    },
+    {
+      "answer": "334517",
+      "authored_failure_prefix": false,
+      "bridge_layout": 1,
+      "cohort": "fresh",
+      "expected_output": null,
+      "family": "sum",
+      "files": {
+        "bridge/fresh/f9351ff353be/numbers.json": "{\"values\": [313573, -60624, 81568], \"ignored\": 731}"
+      },
+      "id": "bridge-fresh-sum-0001-world-1",
+      "missing_path": "/testbed/bridge/fresh/f9351ff353be/missing.json",
+      "naming_index": 0,
+      "output_path": "bridge/fresh/f9351ff353be/updated.json",
+      "pair_index": 5,
+      "path": "/testbed/bridge/fresh/f9351ff353be/numbers.json",
+      "prompt": "Read /testbed/bridge/fresh/f9351ff353be/numbers.json. Sum all numbers in the values list. Finish with exactly the decimal total. Preserve all files.",
+      "recipe": {
+        "expression": "sum(d['values'])"
+      },
+      "source_style": false,
+      "variant": 1
+    },
+    {
+      "answer": "314904",
+      "authored_failure_prefix": false,
+      "bridge_layout": 2,
+      "cohort": "fresh",
+      "expected_output": null,
+      "family": "sum",
+      "files": {
+        "bridge/fresh/cb25e1fb7a37/numbers.json": "{\"values\": [{\"id\": \"row-0\", \"payload\": 289143, \"ignored\": 731}, {\"id\": \"row-1\", \"payload\": -79123, \"ignored\": 731}, {\"id\": \"row-2\", \"payload\": 78396, \"ignored\": 731}, {\"id\": \"row-3\", \"payload\": 26488, \"ignored\": 731}]}"
+      },
+      "id": "bridge-fresh-sum-0002-world-0",
+      "missing_path": "/testbed/bridge/fresh/cb25e1fb7a37/missing.json",
+      "naming_index": 0,
+      "output_path": "bridge/fresh/cb25e1fb7a37/updated.json",
+      "pair_index": 6,
+      "path": "/testbed/bridge/fresh/cb25e1fb7a37/numbers.json",
+      "prompt": "Read /testbed/bridge/fresh/cb25e1fb7a37/numbers.json. Add the payload fields from every row of values; finish with exactly the decimal total. Preserve all files.",
+      "recipe": {
+        "expression": "sum(row['payload'] for row in d['values'])"
+      },
+      "source_style": false,
+      "variant": 0
+    },
+    {
+      "answer": "315077",
+      "authored_failure_prefix": false,
+      "bridge_layout": 2,
+      "cohort": "fresh",
+      "expected_output": null,
+      "family": "sum",
+      "files": {
+        "bridge/fresh/cb25e1fb7a37/numbers.json": "{\"values\": [{\"id\": \"row-0\", \"payload\": 289143, \"ignored\": 731}, {\"id\": \"row-1\", \"payload\": -79123, \"ignored\": 731}, {\"id\": \"row-2\", \"payload\": 78396, \"ignored\": 731}, {\"id\": \"row-3\", \"payload\": 26661, \"ignored\": 731}]}"
+      },
+      "id": "bridge-fresh-sum-0002-world-1",
+      "missing_path": "/testbed/bridge/fresh/cb25e1fb7a37/missing.json",
+      "naming_index": 0,
+      "output_path": "bridge/fresh/cb25e1fb7a37/updated.json",
+      "pair_index": 6,
+      "path": "/testbed/bridge/fresh/cb25e1fb7a37/numbers.json",
+      "prompt": "Read /testbed/bridge/fresh/cb25e1fb7a37/numbers.json. Add the payload fields from every row of values; finish with exactly the decimal total. Preserve all files.",
+      "recipe": {
+        "expression": "sum(row['payload'] for row in d['values'])"
+      },
+      "source_style": false,
+      "variant": 1
+    },
+    {
+      "answer": "242606",
+      "authored_failure_prefix": false,
+      "bridge_layout": 0,
+      "cohort": "fresh",
+      "expected_output": null,
+      "family": "sum",
+      "files": {
+        "bridge/fresh/f066846e3808/numbers.json": "{\"a\": 299735, \"b\": -57129, \"ignored\": 731}"
+      },
+      "id": "bridge-fresh-sum-0003-world-0",
+      "missing_path": "/testbed/bridge/fresh/f066846e3808/missing.json",
+      "naming_index": 1,
+      "output_path": "bridge/fresh/f066846e3808/updated.json",
+      "pair_index": 7,
+      "path": "/testbed/bridge/fresh/f066846e3808/numbers.json",
+      "prompt": "Read /testbed/bridge/fresh/f066846e3808/numbers.json. Add a and b; finish with exactly the decimal result. Preserve all files.",
+      "recipe": {
+        "expression": "d['a']+d['b']"
+      },
+      "source_style": false,
+      "variant": 0
+    },
+    {
+      "answer": "242779",
+      "authored_failure_prefix": false,
+      "bridge_layout": 0,
+      "cohort": "fresh",
+      "expected_output": null,
+      "family": "sum",
+      "files": {
+        "bridge/fresh/f066846e3808/numbers.json": "{\"a\": 299735, \"b\": -56956, \"ignored\": 731}"
+      },
+      "id": "bridge-fresh-sum-0003-world-1",
+      "missing_path": "/testbed/bridge/fresh/f066846e3808/missing.json",
+      "naming_index": 1,
+      "output_path": "bridge/fresh/f066846e3808/updated.json",
+      "pair_index": 7,
+      "path": "/testbed/bridge/fresh/f066846e3808/numbers.json",
+      "prompt": "Read /testbed/bridge/fresh/f066846e3808/numbers.json. Add a and b; finish with exactly the decimal result. Preserve all files.",
+      "recipe": {
+        "expression": "d['a']+d['b']"
+      },
+      "source_style": false,
+      "variant": 1
+    },
+    {
+      "answer": "done",
+      "authored_failure_prefix": false,
+      "bridge_layout": 0,
+      "cohort": "fresh",
+      "expected_output": {
+        "change": 23,
+        "count": 106348,
+        "owner": "preserve-this",
+        "ticket": "7388f20164f9f43ccbdf",
+        "untouched": [
+          17,
+          29
+        ]
+      },
+      "family": "edit",
+      "files": {
+        "bridge/fresh/7388f20164f9/state.json": "{\"ticket\": \"7388f20164f9f43ccbdf\", \"owner\": \"preserve-this\", \"untouched\": [17, 29], \"count\": 106347, \"change\": 23}"
+      },
+      "id": "bridge-fresh-edit-0000-world-0",
+      "missing_path": "/testbed/bridge/fresh/7388f20164f9/missing.json",
+      "naming_index": 0,
+      "output_path": "bridge/fresh/7388f20164f9/updated.json",
+      "pair_index": 8,
+      "path": "/testbed/bridge/fresh/7388f20164f9/state.json",
+      "prompt": "Read /testbed/bridge/fresh/7388f20164f9/state.json. Write /testbed/bridge/fresh/7388f20164f9/updated.json, adding the literal number 1 (ignore the unrelated change field) to count. Preserve all other fields and the original file. Read back and check the result before finishing with exactly done.",
+      "recipe": {
+        "delta": 1,
+        "field_path": [
+          "count"
+        ],
+        "verify_edit": true
+      },
+      "source_style": false,
+      "variant": 0
+    },
+    {
+      "answer": "done",
+      "authored_failure_prefix": false,
+      "bridge_layout": 0,
+      "cohort": "fresh",
+      "expected_output": {
+        "change": 23,
+        "count": 106521,
+        "owner": "preserve-this",
+        "ticket": "7388f20164f9f43ccbdf",
+        "untouched": [
+          17,
+          29
+        ]
+      },
+      "family": "edit",
+      "files": {
+        "bridge/fresh/7388f20164f9/state.json": "{\"ticket\": \"7388f20164f9f43ccbdf\", \"owner\": \"preserve-this\", \"untouched\": [17, 29], \"count\": 106520, \"change\": 23}"
+      },
+      "id": "bridge-fresh-edit-0000-world-1",
+      "missing_path": "/testbed/bridge/fresh/7388f20164f9/missing.json",
+      "naming_index": 0,
+      "output_path": "bridge/fresh/7388f20164f9/updated.json",
+      "pair_index": 8,
+      "path": "/testbed/bridge/fresh/7388f20164f9/state.json",
+      "prompt": "Read /testbed/bridge/fresh/7388f20164f9/state.json. Write /testbed/bridge/fresh/7388f20164f9/updated.json, adding the literal number 1 (ignore the unrelated change field) to count. Preserve all other fields and the original file. Read back and check the result before finishing with exactly done.",
+      "recipe": {
+        "delta": 1,
+        "field_path": [
+          "count"
+        ],
+        "verify_edit": true
+      },
+      "source_style": false,
+      "variant": 1
+    },
+    {
+      "answer": "done",
+      "authored_failure_prefix": false,
+      "bridge_layout": 1,
+      "cohort": "fresh",
+      "expected_output": {
+        "change": 71,
+        "count": 140403,
+        "owner": "preserve-this",
+        "ticket": "7f10906afd7b93198c81",
+        "untouched": [
+          17,
+          29
+        ]
+      },
+      "family": "edit",
+      "files": {
+        "bridge/fresh/7f10906afd7b/state.json": "{\"ticket\": \"7f10906afd7b93198c81\", \"owner\": \"preserve-this\", \"untouched\": [17, 29], \"count\": 140332, \"change\": 71}"
+      },
+      "id": "bridge-fresh-edit-0001-world-0",
+      "missing_path": "/testbed/bridge/fresh/7f10906afd7b/missing.json",
+      "naming_index": 0,
+      "output_path": "bridge/fresh/7f10906afd7b/updated.json",
+      "pair_index": 9,
+      "path": "/testbed/bridge/fresh/7f10906afd7b/state.json",
+      "prompt": "Read /testbed/bridge/fresh/7f10906afd7b/state.json. Write /testbed/bridge/fresh/7f10906afd7b/updated.json, adding the observed number in change to count. Preserve all other fields and the original file. Read back and check the result before finishing with exactly done.",
+      "recipe": {
+        "delta_path": [
+          "change"
+        ],
+        "field_path": [
+          "count"
+        ],
+        "verify_edit": true
+      },
+      "source_style": false,
+      "variant": 0
+    },
+    {
+      "answer": "done",
+      "authored_failure_prefix": false,
+      "bridge_layout": 1,
+      "cohort": "fresh",
+      "expected_output": {
+        "change": -22,
+        "count": 140310,
+        "owner": "preserve-this",
+        "ticket": "7f10906afd7b93198c81",
+        "untouched": [
+          17,
+          29
+        ]
+      },
+      "family": "edit",
+      "files": {
+        "bridge/fresh/7f10906afd7b/state.json": "{\"ticket\": \"7f10906afd7b93198c81\", \"owner\": \"preserve-this\", \"untouched\": [17, 29], \"count\": 140332, \"change\": -22}"
+      },
+      "id": "bridge-fresh-edit-0001-world-1",
+      "missing_path": "/testbed/bridge/fresh/7f10906afd7b/missing.json",
+      "naming_index": 0,
+      "output_path": "bridge/fresh/7f10906afd7b/updated.json",
+      "pair_index": 9,
+      "path": "/testbed/bridge/fresh/7f10906afd7b/state.json",
+      "prompt": "Read /testbed/bridge/fresh/7f10906afd7b/state.json. Write /testbed/bridge/fresh/7f10906afd7b/updated.json, adding the observed number in change to count. Preserve all other fields and the original file. Read back and check the result before finishing with exactly done.",
+      "recipe": {
+        "delta_path": [
+          "change"
+        ],
+        "field_path": [
+          "count"
+        ],
+        "verify_edit": true
+      },
+      "source_style": false,
+      "variant": 1
+    },
+    {
+      "answer": "done",
+      "authored_failure_prefix": false,
+      "bridge_layout": 2,
+      "cohort": "fresh",
+      "expected_output": {
+        "owner": "preserve-this",
+        "request": {
+          "change": 18
+        },
+        "stats": {
+          "count": 892384
+        },
+        "ticket": "19eb77ad1b8679f42e36",
+        "untouched": [
+          17,
+          29
+        ]
+      },
+      "family": "edit",
+      "files": {
+        "bridge/fresh/19eb77ad1b86/state.json": "{\"ticket\": \"19eb77ad1b8679f42e36\", \"owner\": \"preserve-this\", \"untouched\": [17, 29], \"stats\": {\"count\": 892366}, \"request\": {\"change\": 18}}"
+      },
+      "id": "bridge-fresh-edit-0002-world-0",
+      "missing_path": "/testbed/bridge/fresh/19eb77ad1b86/missing.json",
+      "naming_index": 0,
+      "output_path": "bridge/fresh/19eb77ad1b86/updated.json",
+      "pair_index": 10,
+      "path": "/testbed/bridge/fresh/19eb77ad1b86/state.json",
+      "prompt": "Read /testbed/bridge/fresh/19eb77ad1b86/state.json. Write /testbed/bridge/fresh/19eb77ad1b86/updated.json, adding the observed number in request.change to stats.count. Preserve all other fields and the original file. Read back and check the result before finishing with exactly done.",
+      "recipe": {
+        "delta_path": [
+          "request",
+          "change"
+        ],
+        "field_path": [
+          "stats",
+          "count"
+        ],
+        "verify_edit": true
+      },
+      "source_style": false,
+      "variant": 0
+    },
+    {
+      "answer": "done",
+      "authored_failure_prefix": false,
+      "bridge_layout": 2,
+      "cohort": "fresh",
+      "expected_output": {
+        "owner": "preserve-this",
+        "request": {
+          "change": -36
+        },
+        "stats": {
+          "count": 892330
+        },
+        "ticket": "19eb77ad1b8679f42e36",
+        "untouched": [
+          17,
+          29
+        ]
+      },
+      "family": "edit",
+      "files": {
+        "bridge/fresh/19eb77ad1b86/state.json": "{\"ticket\": \"19eb77ad1b8679f42e36\", \"owner\": \"preserve-this\", \"untouched\": [17, 29], \"stats\": {\"count\": 892366}, \"request\": {\"change\": -36}}"
+      },
+      "id": "bridge-fresh-edit-0002-world-1",
+      "missing_path": "/testbed/bridge/fresh/19eb77ad1b86/missing.json",
+      "naming_index": 0,
+      "output_path": "bridge/fresh/19eb77ad1b86/updated.json",
+      "pair_index": 10,
+      "path": "/testbed/bridge/fresh/19eb77ad1b86/state.json",
+      "prompt": "Read /testbed/bridge/fresh/19eb77ad1b86/state.json. Write /testbed/bridge/fresh/19eb77ad1b86/updated.json, adding the observed number in request.change to stats.count. Preserve all other fields and the original file. Read back and check the result before finishing with exactly done.",
+      "recipe": {
+        "delta_path": [
+          "request",
+          "change"
+        ],
+        "field_path": [
+          "stats",
+          "count"
+        ],
+        "verify_edit": true
+      },
+      "source_style": false,
+      "variant": 1
+    },
+    {
+      "answer": "done",
+      "authored_failure_prefix": false,
+      "bridge_layout": 0,
+      "cohort": "fresh",
+      "expected_output": {
+        "adjustment": 23,
+        "owner": "preserve-this",
+        "stock": 458544,
+        "ticket": "e937ac08c6cfc8c89317",
+        "untouched": [
+          17,
+          29
+        ]
+      },
+      "family": "edit",
+      "files": {
+        "bridge/fresh/e937ac08c6cf/state.json": "{\"ticket\": \"e937ac08c6cfc8c89317\", \"owner\": \"preserve-this\", \"untouched\": [17, 29], \"stock\": 458547, \"adjustment\": 23}"
+      },
+      "id": "bridge-fresh-edit-0003-world-0",
+      "missing_path": "/testbed/bridge/fresh/e937ac08c6cf/missing.json",
+      "naming_index": 1,
+      "output_path": "bridge/fresh/e937ac08c6cf/updated.json",
+      "pair_index": 11,
+      "path": "/testbed/bridge/fresh/e937ac08c6cf/state.json",
+      "prompt": "Read /testbed/bridge/fresh/e937ac08c6cf/state.json. Write /testbed/bridge/fresh/e937ac08c6cf/updated.json, adding the literal number -3 (ignore the unrelated adjustment field) to stock. Preserve all other fields and the original file. Read back and check the result before finishing with exactly done.",
+      "recipe": {
+        "delta": -3,
+        "field_path": [
+          "stock"
+        ],
+        "verify_edit": true
+      },
+      "source_style": false,
+      "variant": 0
+    },
+    {
+      "answer": "done",
+      "authored_failure_prefix": false,
+      "bridge_layout": 0,
+      "cohort": "fresh",
+      "expected_output": {
+        "adjustment": 23,
+        "owner": "preserve-this",
+        "stock": 458717,
+        "ticket": "e937ac08c6cfc8c89317",
+        "untouched": [
+          17,
+          29
+        ]
+      },
+      "family": "edit",
+      "files": {
+        "bridge/fresh/e937ac08c6cf/state.json": "{\"ticket\": \"e937ac08c6cfc8c89317\", \"owner\": \"preserve-this\", \"untouched\": [17, 29], \"stock\": 458720, \"adjustment\": 23}"
+      },
+      "id": "bridge-fresh-edit-0003-world-1",
+      "missing_path": "/testbed/bridge/fresh/e937ac08c6cf/missing.json",
+      "naming_index": 1,
+      "output_path": "bridge/fresh/e937ac08c6cf/updated.json",
+      "pair_index": 11,
+      "path": "/testbed/bridge/fresh/e937ac08c6cf/state.json",
+      "prompt": "Read /testbed/bridge/fresh/e937ac08c6cf/state.json. Write /testbed/bridge/fresh/e937ac08c6cf/updated.json, adding the literal number -3 (ignore the unrelated adjustment field) to stock. Preserve all other fields and the original file. Read back and check the result before finishing with exactly done.",
+      "recipe": {
+        "delta": -3,
+        "field_path": [
+          "stock"
+        ],
+        "verify_edit": true
+      },
+      "source_style": false,
+      "variant": 1
+    },
+    {
+      "answer": "c0ac38ed",
+      "authored_failure_prefix": false,
+      "bridge_layout": 0,
+      "cohort": "fresh",
+      "expected_output": null,
+      "family": "recovery",
+      "files": {
+        "bridge/fresh/06f6816d2707/amber.json": "{\"payload\": \"c0ac38ed\", \"note\": \"not the answer\"}",
+        "bridge/fresh/06f6816d2707/catalog.json": "{\"active_path\": \"/testbed/bridge/fresh/06f6816d2707/amber.json\"}",
+        "bridge/fresh/06f6816d2707/silver.json": "{\"payload\": \"cb8a2548\", \"note\": \"not the answer\"}",
+        "bridge/fresh/06f6816d2707/violet.json": "{\"payload\": \"cdceb9cc\", \"note\": \"not the answer\"}"
+      },
+      "id": "bridge-fresh-recovery-0000-world-0",
+      "missing_path": "/testbed/bridge/fresh/06f6816d2707/missing.json",
+      "naming_index": 0,
+      "output_path": "bridge/fresh/06f6816d2707/updated.json",
+      "pair_index": 12,
+      "path": "/testbed/bridge/fresh/06f6816d2707/catalog.json",
+      "prompt": "First try /testbed/bridge/fresh/06f6816d2707/missing.json using str_replace_editor view and wait for the result. If missing, read /testbed/bridge/fresh/06f6816d2707/catalog.json; follow active_path. Finish with exactly the final file's payload. Preserve all files.",
+      "recipe": {
+        "pointer_specs": [
+          {
+            "kind": "direct",
+            "path": [
+              "active_path"
+            ]
+          }
+        ],
+        "value_key": "payload"
+      },
+      "source_style": false,
+      "variant": 0
+    },
+    {
+      "answer": "cb8a2548",
+      "authored_failure_prefix": false,
+      "bridge_layout": 0,
+      "cohort": "fresh",
+      "expected_output": null,
+      "family": "recovery",
+      "files": {
+        "bridge/fresh/06f6816d2707/amber.json": "{\"payload\": \"c0ac38ed\", \"note\": \"not the answer\"}",
+        "bridge/fresh/06f6816d2707/catalog.json": "{\"active_path\": \"/testbed/bridge/fresh/06f6816d2707/silver.json\"}",
+        "bridge/fresh/06f6816d2707/silver.json": "{\"payload\": \"cb8a2548\", \"note\": \"not the answer\"}",
+        "bridge/fresh/06f6816d2707/violet.json": "{\"payload\": \"cdceb9cc\", \"note\": \"not the answer\"}"
+      },
+      "id": "bridge-fresh-recovery-0000-world-1",
+      "missing_path": "/testbed/bridge/fresh/06f6816d2707/missing.json",
+      "naming_index": 0,
+      "output_path": "bridge/fresh/06f6816d2707/updated.json",
+      "pair_index": 12,
+      "path": "/testbed/bridge/fresh/06f6816d2707/catalog.json",
+      "prompt": "First try /testbed/bridge/fresh/06f6816d2707/missing.json using str_replace_editor view and wait for the result. If missing, read /testbed/bridge/fresh/06f6816d2707/catalog.json; follow active_path. Finish with exactly the final file's payload. Preserve all files.",
+      "recipe": {
+        "pointer_specs": [
+          {
+            "kind": "direct",
+            "path": [
+              "active_path"
+            ]
+          }
+        ],
+        "value_key": "payload"
+      },
+      "source_style": false,
+      "variant": 1
+    },
+    {
+      "answer": "2480b7b4",
+      "authored_failure_prefix": false,
+      "bridge_layout": 1,
+      "cohort": "fresh",
+      "expected_output": null,
+      "family": "recovery",
+      "files": {
+        "bridge/fresh/8754b35b24de/amber.json": "{\"payload\": \"2480b7b4\", \"note\": \"not the answer\"}",
+        "bridge/fresh/8754b35b24de/catalog.json": "{\"active\": \"amber\", \"values\": {\"amber\": \"/testbed/bridge/fresh/8754b35b24de/amber.json\", \"silver\": \"/testbed/bridge/fresh/8754b35b24de/silver.json\", \"violet\": \"/testbed/bridge/fresh/8754b35b24de/violet.json\"}}",
+        "bridge/fresh/8754b35b24de/silver.json": "{\"payload\": \"cd9d2731\", \"note\": \"not the answer\"}",
+        "bridge/fresh/8754b35b24de/violet.json": "{\"payload\": \"6db7c4f4\", \"note\": \"not the answer\"}"
+      },
+      "id": "bridge-fresh-recovery-0001-world-0",
+      "missing_path": "/testbed/bridge/fresh/8754b35b24de/missing.json",
+      "naming_index": 0,
+      "output_path": "bridge/fresh/8754b35b24de/updated.json",
+      "pair_index": 13,
+      "path": "/testbed/bridge/fresh/8754b35b24de/catalog.json",
+      "prompt": "First try /testbed/bridge/fresh/8754b35b24de/missing.json using str_replace_editor view and wait for the result. If missing, read /testbed/bridge/fresh/8754b35b24de/catalog.json; active selects the path from the values object. Finish with exactly the final file's payload. Preserve all files.",
+      "recipe": {
+        "pointer_specs": [
+          {
+            "kind": "map",
+            "selector": [
+              "active"
+            ],
+            "table": [
+              "values"
+            ]
+          }
+        ],
+        "value_key": "payload"
+      },
+      "source_style": false,
+      "variant": 0
+    },
+    {
+      "answer": "cd9d2731",
+      "authored_failure_prefix": false,
+      "bridge_layout": 1,
+      "cohort": "fresh",
+      "expected_output": null,
+      "family": "recovery",
+      "files": {
+        "bridge/fresh/8754b35b24de/amber.json": "{\"payload\": \"2480b7b4\", \"note\": \"not the answer\"}",
+        "bridge/fresh/8754b35b24de/catalog.json": "{\"active\": \"silver\", \"values\": {\"amber\": \"/testbed/bridge/fresh/8754b35b24de/amber.json\", \"silver\": \"/testbed/bridge/fresh/8754b35b24de/silver.json\", \"violet\": \"/testbed/bridge/fresh/8754b35b24de/violet.json\"}}",
+        "bridge/fresh/8754b35b24de/silver.json": "{\"payload\": \"cd9d2731\", \"note\": \"not the answer\"}",
+        "bridge/fresh/8754b35b24de/violet.json": "{\"payload\": \"6db7c4f4\", \"note\": \"not the answer\"}"
+      },
+      "id": "bridge-fresh-recovery-0001-world-1",
+      "missing_path": "/testbed/bridge/fresh/8754b35b24de/missing.json",
+      "naming_index": 0,
+      "output_path": "bridge/fresh/8754b35b24de/updated.json",
+      "pair_index": 13,
+      "path": "/testbed/bridge/fresh/8754b35b24de/catalog.json",
+      "prompt": "First try /testbed/bridge/fresh/8754b35b24de/missing.json using str_replace_editor view and wait for the result. If missing, read /testbed/bridge/fresh/8754b35b24de/catalog.json; active selects the path from the values object. Finish with exactly the final file's payload. Preserve all files.",
+      "recipe": {
+        "pointer_specs": [
+          {
+            "kind": "map",
+            "selector": [
+              "active"
+            ],
+            "table": [
+              "values"
+            ]
+          }
+        ],
+        "value_key": "payload"
+      },
+      "source_style": false,
+      "variant": 1
+    },
+    {
+      "answer": "d2e83156",
+      "authored_failure_prefix": false,
+      "bridge_layout": 2,
+      "cohort": "fresh",
+      "expected_output": null,
+      "family": "recovery",
+      "files": {
+        "bridge/fresh/0f82a3f1f5c0/amber.json": "{\"payload\": \"d2e83156\", \"note\": \"not the answer\"}",
+        "bridge/fresh/0f82a3f1f5c0/catalog.json": "{\"active\": \"amber\", \"values\": [{\"id\": \"amber\", \"path\": \"/testbed/bridge/fresh/0f82a3f1f5c0/amber.json\"}, {\"id\": \"silver\", \"path\": \"/testbed/bridge/fresh/0f82a3f1f5c0/silver.json\"}, {\"id\": \"violet\", \"path\": \"/testbed/bridge/fresh/0f82a3f1f5c0/violet.json\"}]}",
+        "bridge/fresh/0f82a3f1f5c0/silver.json": "{\"payload\": \"7a364387\", \"note\": \"not the answer\"}",
+        "bridge/fresh/0f82a3f1f5c0/violet.json": "{\"payload\": \"d2af2558\", \"note\": \"not the answer\"}"
+      },
+      "id": "bridge-fresh-recovery-0002-world-0",
+      "missing_path": "/testbed/bridge/fresh/0f82a3f1f5c0/missing.json",
+      "naming_index": 0,
+      "output_path": "bridge/fresh/0f82a3f1f5c0/updated.json",
+      "pair_index": 14,
+      "path": "/testbed/bridge/fresh/0f82a3f1f5c0/catalog.json",
+      "prompt": "First try /testbed/bridge/fresh/0f82a3f1f5c0/missing.json using str_replace_editor view and wait for the result. If missing, read /testbed/bridge/fresh/0f82a3f1f5c0/catalog.json; active selects a row of values by id; follow its path. Finish with exactly the final file's payload. Preserve all files.",
+      "recipe": {
+        "pointer_specs": [
+          {
+            "key_field": "id",
+            "kind": "rows",
+            "selector": [
+              "active"
+            ],
+            "table": [
+              "values"
+            ],
+            "value_field": "path"
+          }
+        ],
+        "value_key": "payload"
+      },
+      "source_style": false,
+      "variant": 0
+    },
+    {
+      "answer": "7a364387",
+      "authored_failure_prefix": false,
+      "bridge_layout": 2,
+      "cohort": "fresh",
+      "expected_output": null,
+      "family": "recovery",
+      "files": {
+        "bridge/fresh/0f82a3f1f5c0/amber.json": "{\"payload\": \"d2e83156\", \"note\": \"not the answer\"}",
+        "bridge/fresh/0f82a3f1f5c0/catalog.json": "{\"active\": \"silver\", \"values\": [{\"id\": \"amber\", \"path\": \"/testbed/bridge/fresh/0f82a3f1f5c0/amber.json\"}, {\"id\": \"silver\", \"path\": \"/testbed/bridge/fresh/0f82a3f1f5c0/silver.json\"}, {\"id\": \"violet\", \"path\": \"/testbed/bridge/fresh/0f82a3f1f5c0/violet.json\"}]}",
+        "bridge/fresh/0f82a3f1f5c0/silver.json": "{\"payload\": \"7a364387\", \"note\": \"not the answer\"}",
+        "bridge/fresh/0f82a3f1f5c0/violet.json": "{\"payload\": \"d2af2558\", \"note\": \"not the answer\"}"
+      },
+      "id": "bridge-fresh-recovery-0002-world-1",
+      "missing_path": "/testbed/bridge/fresh/0f82a3f1f5c0/missing.json",
+      "naming_index": 0,
+      "output_path": "bridge/fresh/0f82a3f1f5c0/updated.json",
+      "pair_index": 14,
+      "path": "/testbed/bridge/fresh/0f82a3f1f5c0/catalog.json",
+      "prompt": "First try /testbed/bridge/fresh/0f82a3f1f5c0/missing.json using str_replace_editor view and wait for the result. If missing, read /testbed/bridge/fresh/0f82a3f1f5c0/catalog.json; active selects a row of values by id; follow its path. Finish with exactly the final file's payload. Preserve all files.",
+      "recipe": {
+        "pointer_specs": [
+          {
+            "key_field": "id",
+            "kind": "rows",
+            "selector": [
+              "active"
+            ],
+            "table": [
+              "values"
+            ],
+            "value_field": "path"
+          }
+        ],
+        "value_key": "payload"
+      },
+      "source_style": false,
+      "variant": 1
+    },
+    {
+      "answer": "69b20e8a6a675a52",
+      "authored_failure_prefix": false,
+      "bridge_layout": 0,
+      "cohort": "fresh",
+      "expected_output": null,
+      "family": "recovery",
+      "files": {
+        "bridge/fresh/d82a68cccbdd/amber.json": "{\"value\": \"076915a72d8e83d1\", \"note\": \"not the answer\"}",
+        "bridge/fresh/d82a68cccbdd/catalog.json": "{\"current_file\": \"/testbed/bridge/fresh/d82a68cccbdd/silver.json\"}",
+        "bridge/fresh/d82a68cccbdd/silver.json": "{\"value\": \"69b20e8a6a675a52\", \"note\": \"not the answer\"}",
+        "bridge/fresh/d82a68cccbdd/violet.json": "{\"value\": \"f70c2a5fdd63a042\", \"note\": \"not the answer\"}"
+      },
+      "id": "bridge-fresh-recovery-0003-world-0",
+      "missing_path": "/testbed/bridge/fresh/d82a68cccbdd/missing.json",
+      "naming_index": 1,
+      "output_path": "bridge/fresh/d82a68cccbdd/updated.json",
+      "pair_index": 15,
+      "path": "/testbed/bridge/fresh/d82a68cccbdd/catalog.json",
+      "prompt": "First try /testbed/bridge/fresh/d82a68cccbdd/missing.json using str_replace_editor view and wait for the result. If missing, read /testbed/bridge/fresh/d82a68cccbdd/catalog.json; follow current_file. Finish with exactly the final file's value. Preserve all files.",
+      "recipe": {
+        "pointer_specs": [
+          {
+            "kind": "direct",
+            "path": [
+              "current_file"
+            ]
+          }
+        ],
+        "value_key": "value"
+      },
+      "source_style": false,
+      "variant": 0
+    },
+    {
+      "answer": "f70c2a5fdd63a042",
+      "authored_failure_prefix": false,
+      "bridge_layout": 0,
+      "cohort": "fresh",
+      "expected_output": null,
+      "family": "recovery",
+      "files": {
+        "bridge/fresh/d82a68cccbdd/amber.json": "{\"value\": \"076915a72d8e83d1\", \"note\": \"not the answer\"}",
+        "bridge/fresh/d82a68cccbdd/catalog.json": "{\"current_file\": \"/testbed/bridge/fresh/d82a68cccbdd/violet.json\"}",
+        "bridge/fresh/d82a68cccbdd/silver.json": "{\"value\": \"69b20e8a6a675a52\", \"note\": \"not the answer\"}",
+        "bridge/fresh/d82a68cccbdd/violet.json": "{\"value\": \"f70c2a5fdd63a042\", \"note\": \"not the answer\"}"
+      },
+      "id": "bridge-fresh-recovery-0003-world-1",
+      "missing_path": "/testbed/bridge/fresh/d82a68cccbdd/missing.json",
+      "naming_index": 1,
+      "output_path": "bridge/fresh/d82a68cccbdd/updated.json",
+      "pair_index": 15,
+      "path": "/testbed/bridge/fresh/d82a68cccbdd/catalog.json",
+      "prompt": "First try /testbed/bridge/fresh/d82a68cccbdd/missing.json using str_replace_editor view and wait for the result. If missing, read /testbed/bridge/fresh/d82a68cccbdd/catalog.json; follow current_file. Finish with exactly the final file's value. Preserve all files.",
+      "recipe": {
+        "pointer_specs": [
+          {
+            "kind": "direct",
+            "path": [
+              "current_file"
+            ]
+          }
+        ],
+        "value_key": "value"
+      },
+      "source_style": false,
+      "variant": 1
+    },
+    {
+      "answer": "bdb51859",
+      "authored_failure_prefix": false,
+      "bridge_layout": "composition",
+      "cohort": "composition",
+      "expected_output": null,
+      "family": "lookup",
+      "files": {
+        "bridge/composition/d40e3e6f9a0b/config.json": "{\"request\": {\"active\": \"amber\"}, \"data\": {\"values\": [{\"id\": \"amber\", \"payload\": \"bdb51859\"}, {\"id\": \"silver\", \"payload\": \"2123bf63\"}, {\"id\": \"violet\", \"payload\": \"2664cbe9\"}]}}"
+      },
+      "id": "bridge-composition-lookup-0000-world-0",
+      "missing_path": "/testbed/bridge/composition/d40e3e6f9a0b/missing.json",
+      "naming_index": 0,
+      "output_path": "bridge/composition/d40e3e6f9a0b/updated.json",
+      "pair_index": 0,
+      "path": "/testbed/bridge/composition/d40e3e6f9a0b/config.json",
+      "prompt": "In /testbed/bridge/composition/d40e3e6f9a0b/config.json, request.active selects a row in data.values by its id. Finish with exactly that row's payload. Preserve all files.",
+      "recipe": {
+        "expression": "next(row['payload'] for row in d['data']['values'] if row['id']==d['request']['active'])"
+      },
+      "source_style": false,
+      "variant": 0
+    },
+    {
+      "answer": "2123bf63",
+      "authored_failure_prefix": false,
+      "bridge_layout": "composition",
+      "cohort": "composition",
+      "expected_output": null,
+      "family": "lookup",
+      "files": {
+        "bridge/composition/d40e3e6f9a0b/config.json": "{\"request\": {\"active\": \"silver\"}, \"data\": {\"values\": [{\"id\": \"amber\", \"payload\": \"bdb51859\"}, {\"id\": \"silver\", \"payload\": \"2123bf63\"}, {\"id\": \"violet\", \"payload\": \"2664cbe9\"}]}}"
+      },
+      "id": "bridge-composition-lookup-0000-world-1",
+      "missing_path": "/testbed/bridge/composition/d40e3e6f9a0b/missing.json",
+      "naming_index": 0,
+      "output_path": "bridge/composition/d40e3e6f9a0b/updated.json",
+      "pair_index": 0,
+      "path": "/testbed/bridge/composition/d40e3e6f9a0b/config.json",
+      "prompt": "In /testbed/bridge/composition/d40e3e6f9a0b/config.json, request.active selects a row in data.values by its id. Finish with exactly that row's payload. Preserve all files.",
+      "recipe": {
+        "expression": "next(row['payload'] for row in d['data']['values'] if row['id']==d['request']['active'])"
+      },
+      "source_style": false,
+      "variant": 1
+    },
+    {
+      "answer": "0ab76b9c",
+      "authored_failure_prefix": false,
+      "bridge_layout": "composition",
+      "cohort": "composition",
+      "expected_output": null,
+      "family": "lookup",
+      "files": {
+        "bridge/composition/885b13f42d04/config.json": "{\"request\": {\"active\": \"amber\"}, \"data\": {\"values\": [{\"id\": \"amber\", \"payload\": \"0ab76b9c\"}, {\"id\": \"silver\", \"payload\": \"3f0df433\"}, {\"id\": \"violet\", \"payload\": \"01dd3553\"}]}}"
+      },
+      "id": "bridge-composition-lookup-0001-world-0",
+      "missing_path": "/testbed/bridge/composition/885b13f42d04/missing.json",
+      "naming_index": 0,
+      "output_path": "bridge/composition/885b13f42d04/updated.json",
+      "pair_index": 1,
+      "path": "/testbed/bridge/composition/885b13f42d04/config.json",
+      "prompt": "In /testbed/bridge/composition/885b13f42d04/config.json, request.active selects a row in data.values by its id. Finish with exactly that row's payload. Preserve all files.",
+      "recipe": {
+        "expression": "next(row['payload'] for row in d['data']['values'] if row['id']==d['request']['active'])"
+      },
+      "source_style": false,
+      "variant": 0
+    },
+    {
+      "answer": "3f0df433",
+      "authored_failure_prefix": false,
+      "bridge_layout": "composition",
+      "cohort": "composition",
+      "expected_output": null,
+      "family": "lookup",
+      "files": {
+        "bridge/composition/885b13f42d04/config.json": "{\"request\": {\"active\": \"silver\"}, \"data\": {\"values\": [{\"id\": \"amber\", \"payload\": \"0ab76b9c\"}, {\"id\": \"silver\", \"payload\": \"3f0df433\"}, {\"id\": \"violet\", \"payload\": \"01dd3553\"}]}}"
+      },
+      "id": "bridge-composition-lookup-0001-world-1",
+      "missing_path": "/testbed/bridge/composition/885b13f42d04/missing.json",
+      "naming_index": 0,
+      "output_path": "bridge/composition/885b13f42d04/updated.json",
+      "pair_index": 1,
+      "path": "/testbed/bridge/composition/885b13f42d04/config.json",
+      "prompt": "In /testbed/bridge/composition/885b13f42d04/config.json, request.active selects a row in data.values by its id. Finish with exactly that row's payload. Preserve all files.",
+      "recipe": {
+        "expression": "next(row['payload'] for row in d['data']['values'] if row['id']==d['request']['active'])"
+      },
+      "source_style": false,
+      "variant": 1
+    },
+    {
+      "answer": "352023",
+      "authored_failure_prefix": false,
+      "bridge_layout": "composition",
+      "cohort": "composition",
+      "expected_output": null,
+      "family": "sum",
+      "files": {
+        "bridge/composition/1f3e29b9f485/numbers.json": "{\"data\": {\"values\": [{\"payload\": 364529, \"ignored\": 731}, {\"payload\": -12506, \"ignored\": 731}]}, \"note\": \"1f3e29b9\"}"
+      },
+      "id": "bridge-composition-sum-0000-world-0",
+      "missing_path": "/testbed/bridge/composition/1f3e29b9f485/missing.json",
+      "naming_index": 0,
+      "output_path": "bridge/composition/1f3e29b9f485/updated.json",
+      "pair_index": 2,
+      "path": "/testbed/bridge/composition/1f3e29b9f485/numbers.json",
+      "prompt": "Read /testbed/bridge/composition/1f3e29b9f485/numbers.json. Sum the payload fields of every row in data.values, ignoring other fields. Finish with exactly the decimal total. Preserve all files.",
+      "recipe": {
+        "expression": "sum(row['payload'] for row in d[\"data\"]['values'])"
+      },
+      "source_style": false,
+      "variant": 0
+    },
+    {
+      "answer": "352196",
+      "authored_failure_prefix": false,
+      "bridge_layout": "composition",
+      "cohort": "composition",
+      "expected_output": null,
+      "family": "sum",
+      "files": {
+        "bridge/composition/1f3e29b9f485/numbers.json": "{\"data\": {\"values\": [{\"payload\": 364529, \"ignored\": 731}, {\"payload\": -12333, \"ignored\": 731}]}, \"note\": \"1f3e29b9\"}"
+      },
+      "id": "bridge-composition-sum-0000-world-1",
+      "missing_path": "/testbed/bridge/composition/1f3e29b9f485/missing.json",
+      "naming_index": 0,
+      "output_path": "bridge/composition/1f3e29b9f485/updated.json",
+      "pair_index": 2,
+      "path": "/testbed/bridge/composition/1f3e29b9f485/numbers.json",
+      "prompt": "Read /testbed/bridge/composition/1f3e29b9f485/numbers.json. Sum the payload fields of every row in data.values, ignoring other fields. Finish with exactly the decimal total. Preserve all files.",
+      "recipe": {
+        "expression": "sum(row['payload'] for row in d[\"data\"]['values'])"
+      },
+      "source_style": false,
+      "variant": 1
+    },
+    {
+      "answer": "323046",
+      "authored_failure_prefix": false,
+      "bridge_layout": "composition",
+      "cohort": "composition",
+      "expected_output": null,
+      "family": "sum",
+      "files": {
+        "bridge/composition/e3bc42228ad1/numbers.json": "{\"data\": {\"values\": [{\"payload\": 286065, \"ignored\": 731}, {\"payload\": -53034, \"ignored\": 731}, {\"payload\": 90015, \"ignored\": 731}]}, \"note\": \"e3bc4222\"}"
+      },
+      "id": "bridge-composition-sum-0001-world-0",
+      "missing_path": "/testbed/bridge/composition/e3bc42228ad1/missing.json",
+      "naming_index": 0,
+      "output_path": "bridge/composition/e3bc42228ad1/updated.json",
+      "pair_index": 3,
+      "path": "/testbed/bridge/composition/e3bc42228ad1/numbers.json",
+      "prompt": "Read /testbed/bridge/composition/e3bc42228ad1/numbers.json. Sum the payload fields of every row in data.values, ignoring other fields. Finish with exactly the decimal total. Preserve all files.",
+      "recipe": {
+        "expression": "sum(row['payload'] for row in d[\"data\"]['values'])"
+      },
+      "source_style": false,
+      "variant": 0
+    },
+    {
+      "answer": "323219",
+      "authored_failure_prefix": false,
+      "bridge_layout": "composition",
+      "cohort": "composition",
+      "expected_output": null,
+      "family": "sum",
+      "files": {
+        "bridge/composition/e3bc42228ad1/numbers.json": "{\"data\": {\"values\": [{\"payload\": 286065, \"ignored\": 731}, {\"payload\": -53034, \"ignored\": 731}, {\"payload\": 90188, \"ignored\": 731}]}, \"note\": \"e3bc4222\"}"
+      },
+      "id": "bridge-composition-sum-0001-world-1",
+      "missing_path": "/testbed/bridge/composition/e3bc42228ad1/missing.json",
+      "naming_index": 0,
+      "output_path": "bridge/composition/e3bc42228ad1/updated.json",
+      "pair_index": 3,
+      "path": "/testbed/bridge/composition/e3bc42228ad1/numbers.json",
+      "prompt": "Read /testbed/bridge/composition/e3bc42228ad1/numbers.json. Sum the payload fields of every row in data.values, ignoring other fields. Finish with exactly the decimal total. Preserve all files.",
+      "recipe": {
+        "expression": "sum(row['payload'] for row in d[\"data\"]['values'])"
+      },
+      "source_style": false,
+      "variant": 1
+    },
+    {
+      "answer": "done",
+      "authored_failure_prefix": false,
+      "bridge_layout": "composition",
+      "cohort": "composition",
+      "expected_output": {
+        "changes": {
+          "amber": 34,
+          "silver": 19,
+          "violet": 19
+        },
+        "owner": "preserve-this",
+        "request": {
+          "active": "amber"
+        },
+        "stats": {
+          "count": 396907
+        },
+        "ticket": "b3cd6f62e81459faa904",
+        "untouched": [
+          17,
+          29
+        ]
+      },
+      "family": "edit",
+      "files": {
+        "bridge/composition/b3cd6f62e814/state.json": "{\"ticket\": \"b3cd6f62e81459faa904\", \"owner\": \"preserve-this\", \"untouched\": [17, 29], \"stats\": {\"count\": 396873}, \"request\": {\"active\": \"amber\"}, \"changes\": {\"amber\": 34, \"silver\": 19, \"violet\": 19}}"
+      },
+      "id": "bridge-composition-edit-0000-world-0",
+      "missing_path": "/testbed/bridge/composition/b3cd6f62e814/missing.json",
+      "naming_index": 0,
+      "output_path": "bridge/composition/b3cd6f62e814/updated.json",
+      "pair_index": 4,
+      "path": "/testbed/bridge/composition/b3cd6f62e814/state.json",
+      "prompt": "Read /testbed/bridge/composition/b3cd6f62e814/state.json. Write /testbed/bridge/composition/b3cd6f62e814/updated.json, adding the entry of changes selected by request.active to stats.count. Preserve all other fields and the original file. Read back and check the result before finishing with exactly done.",
+      "recipe": {
+        "delta_spec": {
+          "kind": "map",
+          "selector": [
+            "request",
+            "active"
+          ],
+          "table": [
+            "changes"
+          ]
+        },
+        "field_path": [
+          "stats",
+          "count"
+        ],
+        "verify_edit": true
+      },
+      "source_style": false,
+      "variant": 0
+    },
+    {
+      "answer": "done",
+      "authored_failure_prefix": false,
+      "bridge_layout": "composition",
+      "cohort": "composition",
+      "expected_output": {
+        "changes": {
+          "amber": 19,
+          "silver": -80,
+          "violet": 19
+        },
+        "owner": "preserve-this",
+        "request": {
+          "active": "silver"
+        },
+        "stats": {
+          "count": 396793
+        },
+        "ticket": "b3cd6f62e81459faa904",
+        "untouched": [
+          17,
+          29
+        ]
+      },
+      "family": "edit",
+      "files": {
+        "bridge/composition/b3cd6f62e814/state.json": "{\"ticket\": \"b3cd6f62e81459faa904\", \"owner\": \"preserve-this\", \"untouched\": [17, 29], \"stats\": {\"count\": 396873}, \"request\": {\"active\": \"silver\"}, \"changes\": {\"amber\": 19, \"silver\": -80, \"violet\": 19}}"
+      },
+      "id": "bridge-composition-edit-0000-world-1",
+      "missing_path": "/testbed/bridge/composition/b3cd6f62e814/missing.json",
+      "naming_index": 0,
+      "output_path": "bridge/composition/b3cd6f62e814/updated.json",
+      "pair_index": 4,
+      "path": "/testbed/bridge/composition/b3cd6f62e814/state.json",
+      "prompt": "Read /testbed/bridge/composition/b3cd6f62e814/state.json. Write /testbed/bridge/composition/b3cd6f62e814/updated.json, adding the entry of changes selected by request.active to stats.count. Preserve all other fields and the original file. Read back and check the result before finishing with exactly done.",
+      "recipe": {
+        "delta_spec": {
+          "kind": "map",
+          "selector": [
+            "request",
+            "active"
+          ],
+          "table": [
+            "changes"
+          ]
+        },
+        "field_path": [
+          "stats",
+          "count"
+        ],
+        "verify_edit": true
+      },
+      "source_style": false,
+      "variant": 1
+    },
+    {
+      "answer": "done",
+      "authored_failure_prefix": false,
+      "bridge_layout": "composition",
+      "cohort": "composition",
+      "expected_output": {
+        "changes": {
+          "amber": 60,
+          "silver": 19,
+          "violet": 19
+        },
+        "owner": "preserve-this",
+        "request": {
+          "active": "amber"
+        },
+        "stats": {
+          "count": 362036
+        },
+        "ticket": "de3b6d24722a71dc585c",
+        "untouched": [
+          17,
+          29
+        ]
+      },
+      "family": "edit",
+      "files": {
+        "bridge/composition/de3b6d24722a/state.json": "{\"ticket\": \"de3b6d24722a71dc585c\", \"owner\": \"preserve-this\", \"untouched\": [17, 29], \"stats\": {\"count\": 361976}, \"request\": {\"active\": \"amber\"}, \"changes\": {\"amber\": 60, \"silver\": 19, \"violet\": 19}}"
+      },
+      "id": "bridge-composition-edit-0001-world-0",
+      "missing_path": "/testbed/bridge/composition/de3b6d24722a/missing.json",
+      "naming_index": 0,
+      "output_path": "bridge/composition/de3b6d24722a/updated.json",
+      "pair_index": 5,
+      "path": "/testbed/bridge/composition/de3b6d24722a/state.json",
+      "prompt": "Read /testbed/bridge/composition/de3b6d24722a/state.json. Write /testbed/bridge/composition/de3b6d24722a/updated.json, adding the entry of changes selected by request.active to stats.count. Preserve all other fields and the original file. Read back and check the result before finishing with exactly done.",
+      "recipe": {
+        "delta_spec": {
+          "kind": "map",
+          "selector": [
+            "request",
+            "active"
+          ],
+          "table": [
+            "changes"
+          ]
+        },
+        "field_path": [
+          "stats",
+          "count"
+        ],
+        "verify_edit": true
+      },
+      "source_style": false,
+      "variant": 0
+    },
+    {
+      "answer": "done",
+      "authored_failure_prefix": false,
+      "bridge_layout": "composition",
+      "cohort": "composition",
+      "expected_output": {
+        "changes": {
+          "amber": 19,
+          "silver": -94,
+          "violet": 19
+        },
+        "owner": "preserve-this",
+        "request": {
+          "active": "silver"
+        },
+        "stats": {
+          "count": 361882
+        },
+        "ticket": "de3b6d24722a71dc585c",
+        "untouched": [
+          17,
+          29
+        ]
+      },
+      "family": "edit",
+      "files": {
+        "bridge/composition/de3b6d24722a/state.json": "{\"ticket\": \"de3b6d24722a71dc585c\", \"owner\": \"preserve-this\", \"untouched\": [17, 29], \"stats\": {\"count\": 361976}, \"request\": {\"active\": \"silver\"}, \"changes\": {\"amber\": 19, \"silver\": -94, \"violet\": 19}}"
+      },
+      "id": "bridge-composition-edit-0001-world-1",
+      "missing_path": "/testbed/bridge/composition/de3b6d24722a/missing.json",
+      "naming_index": 0,
+      "output_path": "bridge/composition/de3b6d24722a/updated.json",
+      "pair_index": 5,
+      "path": "/testbed/bridge/composition/de3b6d24722a/state.json",
+      "prompt": "Read /testbed/bridge/composition/de3b6d24722a/state.json. Write /testbed/bridge/composition/de3b6d24722a/updated.json, adding the entry of changes selected by request.active to stats.count. Preserve all other fields and the original file. Read back and check the result before finishing with exactly done.",
+      "recipe": {
+        "delta_spec": {
+          "kind": "map",
+          "selector": [
+            "request",
+            "active"
+          ],
+          "table": [
+            "changes"
+          ]
+        },
+        "field_path": [
+          "stats",
+          "count"
+        ],
+        "verify_edit": true
+      },
+      "source_style": false,
+      "variant": 1
+    },
+    {
+      "answer": "a1e33a28",
+      "authored_failure_prefix": false,
+      "bridge_layout": "composition",
+      "cohort": "composition",
+      "expected_output": null,
+      "family": "recovery",
+      "files": {
+        "bridge/composition/b225c28fa576/amber.json": "{\"payload\": \"a1e33a28\", \"note\": \"not the answer\"}",
+        "bridge/composition/b225c28fa576/catalog.json": "{\"request\": {\"active\": \"amber\"}, \"data\": {\"values\": [{\"id\": \"amber\", \"path\": \"/testbed/bridge/composition/b225c28fa576/pointer.json\"}, {\"id\": \"silver\", \"path\": \"/testbed/bridge/composition/b225c28fa576/silver.json\"}, {\"id\": \"violet\", \"path\": \"/testbed/bridge/composition/b225c28fa576/violet.json\"}]}}",
+        "bridge/composition/b225c28fa576/pointer.json": "{\"next\": \"/testbed/bridge/composition/b225c28fa576/amber.json\"}",
+        "bridge/composition/b225c28fa576/silver.json": "{\"payload\": \"c54a01ec\", \"note\": \"not the answer\"}",
+        "bridge/composition/b225c28fa576/violet.json": "{\"payload\": \"4c601d1b\", \"note\": \"not the answer\"}"
+      },
+      "id": "bridge-composition-recovery-0000-world-0",
+      "missing_path": "/testbed/bridge/composition/b225c28fa576/missing.json",
+      "naming_index": 0,
+      "output_path": "bridge/composition/b225c28fa576/updated.json",
+      "pair_index": 6,
+      "path": "/testbed/bridge/composition/b225c28fa576/catalog.json",
+      "prompt": "First try /testbed/bridge/composition/b225c28fa576/missing.json using str_replace_editor view and wait for the result. If missing, read /testbed/bridge/composition/b225c28fa576/catalog.json; request.active selects the row of data.values by id; follow its path, then the next field in that file. Finish with exactly the final file's payload. Preserve all files.",
+      "recipe": {
+        "pointer_specs": [
+          {
+            "key_field": "id",
+            "kind": "rows",
+            "selector": [
+              "request",
+              "active"
+            ],
+            "table": [
+              "data",
+              "values"
+            ],
+            "value_field": "path"
+          },
+          {
+            "kind": "direct",
+            "path": [
+              "next"
+            ]
+          }
+        ],
+        "value_key": "payload"
+      },
+      "source_style": false,
+      "variant": 0
+    },
+    {
+      "answer": "c54a01ec",
+      "authored_failure_prefix": false,
+      "bridge_layout": "composition",
+      "cohort": "composition",
+      "expected_output": null,
+      "family": "recovery",
+      "files": {
+        "bridge/composition/b225c28fa576/amber.json": "{\"payload\": \"a1e33a28\", \"note\": \"not the answer\"}",
+        "bridge/composition/b225c28fa576/catalog.json": "{\"request\": {\"active\": \"silver\"}, \"data\": {\"values\": [{\"id\": \"amber\", \"path\": \"/testbed/bridge/composition/b225c28fa576/amber.json\"}, {\"id\": \"silver\", \"path\": \"/testbed/bridge/composition/b225c28fa576/pointer.json\"}, {\"id\": \"violet\", \"path\": \"/testbed/bridge/composition/b225c28fa576/violet.json\"}]}}",
+        "bridge/composition/b225c28fa576/pointer.json": "{\"next\": \"/testbed/bridge/composition/b225c28fa576/silver.json\"}",
+        "bridge/composition/b225c28fa576/silver.json": "{\"payload\": \"c54a01ec\", \"note\": \"not the answer\"}",
+        "bridge/composition/b225c28fa576/violet.json": "{\"payload\": \"4c601d1b\", \"note\": \"not the answer\"}"
+      },
+      "id": "bridge-composition-recovery-0000-world-1",
+      "missing_path": "/testbed/bridge/composition/b225c28fa576/missing.json",
+      "naming_index": 0,
+      "output_path": "bridge/composition/b225c28fa576/updated.json",
+      "pair_index": 6,
+      "path": "/testbed/bridge/composition/b225c28fa576/catalog.json",
+      "prompt": "First try /testbed/bridge/composition/b225c28fa576/missing.json using str_replace_editor view and wait for the result. If missing, read /testbed/bridge/composition/b225c28fa576/catalog.json; request.active selects the row of data.values by id; follow its path, then the next field in that file. Finish with exactly the final file's payload. Preserve all files.",
+      "recipe": {
+        "pointer_specs": [
+          {
+            "key_field": "id",
+            "kind": "rows",
+            "selector": [
+              "request",
+              "active"
+            ],
+            "table": [
+              "data",
+              "values"
+            ],
+            "value_field": "path"
+          },
+          {
+            "kind": "direct",
+            "path": [
+              "next"
+            ]
+          }
+        ],
+        "value_key": "payload"
+      },
+      "source_style": false,
+      "variant": 1
+    },
+    {
+      "answer": "a419f78b",
+      "authored_failure_prefix": false,
+      "bridge_layout": "composition",
+      "cohort": "composition",
+      "expected_output": null,
+      "family": "recovery",
+      "files": {
+        "bridge/composition/c2ec1c61fd80/amber.json": "{\"payload\": \"a419f78b\", \"note\": \"not the answer\"}",
+        "bridge/composition/c2ec1c61fd80/catalog.json": "{\"request\": {\"active\": \"amber\"}, \"data\": {\"values\": [{\"id\": \"amber\", \"path\": \"/testbed/bridge/composition/c2ec1c61fd80/pointer.json\"}, {\"id\": \"silver\", \"path\": \"/testbed/bridge/composition/c2ec1c61fd80/silver.json\"}, {\"id\": \"violet\", \"path\": \"/testbed/bridge/composition/c2ec1c61fd80/violet.json\"}]}}",
+        "bridge/composition/c2ec1c61fd80/pointer.json": "{\"next\": \"/testbed/bridge/composition/c2ec1c61fd80/amber.json\"}",
+        "bridge/composition/c2ec1c61fd80/silver.json": "{\"payload\": \"a90a40f3\", \"note\": \"not the answer\"}",
+        "bridge/composition/c2ec1c61fd80/violet.json": "{\"payload\": \"cae29367\", \"note\": \"not the answer\"}"
+      },
+      "id": "bridge-composition-recovery-0001-world-0",
+      "missing_path": "/testbed/bridge/composition/c2ec1c61fd80/missing.json",
+      "naming_index": 0,
+      "output_path": "bridge/composition/c2ec1c61fd80/updated.json",
+      "pair_index": 7,
+      "path": "/testbed/bridge/composition/c2ec1c61fd80/catalog.json",
+      "prompt": "First try /testbed/bridge/composition/c2ec1c61fd80/missing.json using str_replace_editor view and wait for the result. If missing, read /testbed/bridge/composition/c2ec1c61fd80/catalog.json; request.active selects the row of data.values by id; follow its path, then the next field in that file. Finish with exactly the final file's payload. Preserve all files.",
+      "recipe": {
+        "pointer_specs": [
+          {
+            "key_field": "id",
+            "kind": "rows",
+            "selector": [
+              "request",
+              "active"
+            ],
+            "table": [
+              "data",
+              "values"
+            ],
+            "value_field": "path"
+          },
+          {
+            "kind": "direct",
+            "path": [
+              "next"
+            ]
+          }
+        ],
+        "value_key": "payload"
+      },
+      "source_style": false,
+      "variant": 0
+    },
+    {
+      "answer": "a90a40f3",
+      "authored_failure_prefix": false,
+      "bridge_layout": "composition",
+      "cohort": "composition",
+      "expected_output": null,
+      "family": "recovery",
+      "files": {
+        "bridge/composition/c2ec1c61fd80/amber.json": "{\"payload\": \"a419f78b\", \"note\": \"not the answer\"}",
+        "bridge/composition/c2ec1c61fd80/catalog.json": "{\"request\": {\"active\": \"silver\"}, \"data\": {\"values\": [{\"id\": \"amber\", \"path\": \"/testbed/bridge/composition/c2ec1c61fd80/amber.json\"}, {\"id\": \"silver\", \"path\": \"/testbed/bridge/composition/c2ec1c61fd80/pointer.json\"}, {\"id\": \"violet\", \"path\": \"/testbed/bridge/composition/c2ec1c61fd80/violet.json\"}]}}",
+        "bridge/composition/c2ec1c61fd80/pointer.json": "{\"next\": \"/testbed/bridge/composition/c2ec1c61fd80/silver.json\"}",
+        "bridge/composition/c2ec1c61fd80/silver.json": "{\"payload\": \"a90a40f3\", \"note\": \"not the answer\"}",
+        "bridge/composition/c2ec1c61fd80/violet.json": "{\"payload\": \"cae29367\", \"note\": \"not the answer\"}"
+      },
+      "id": "bridge-composition-recovery-0001-world-1",
+      "missing_path": "/testbed/bridge/composition/c2ec1c61fd80/missing.json",
+      "naming_index": 0,
+      "output_path": "bridge/composition/c2ec1c61fd80/updated.json",
+      "pair_index": 7,
+      "path": "/testbed/bridge/composition/c2ec1c61fd80/catalog.json",
+      "prompt": "First try /testbed/bridge/composition/c2ec1c61fd80/missing.json using str_replace_editor view and wait for the result. If missing, read /testbed/bridge/composition/c2ec1c61fd80/catalog.json; request.active selects the row of data.values by id; follow its path, then the next field in that file. Finish with exactly the final file's payload. Preserve all files.",
+      "recipe": {
+        "pointer_specs": [
+          {
+            "key_field": "id",
+            "kind": "rows",
+            "selector": [
+              "request",
+              "active"
+            ],
+            "table": [
+              "data",
+              "values"
+            ],
+            "value_field": "path"
+          },
+          {
+            "kind": "direct",
+            "path": [
+              "next"
+            ]
+          }
+        ],
+        "value_key": "payload"
+      },
+      "source_style": false,
+      "variant": 1
+    }
+  ],
+  "checkpoint_promotion": false,
+  "diagnostic_derivation": {
+    "checkpoint_sha256": "34660c0ce911b8b0f2b356c7c0a3c903fc379accbb79ce2446293cf020f62aa0",
+    "note": "E3 u512 full gate execution leg; seg3 (u384) controls; frozen E2-instrument byte-identical; 4-model panel."
+  },
+  "episode_generation_budget": 8192,
+  "episode_seconds": 600,
+  "executor_receipt_sha256": "46584aa4538682e4575ad7d78905b3390392f2023aa5aaf289d400db7ecb3f59",
+  "generation_budget": 4096,
+  "image_id": "sha256:036df5d48772c58190d5e4702976d7a865f5963358d503a35a36ec00a54726f7",
+  "image_manifest": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/native-runtime-image-build-v2/manifest.json",
+  "image_manifest_sha256": "eaab33b7d60b2989e05344e60d092990f04f3f4547f521d9e343b3361c38a98d",
+  "max_turns": 8,
+  "models": [
+    {
+      "checkpoint": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-rl-loop-v1/wash-v1/checkpoints/wash_u256_y_seed_fresh_state.pt",
+      "mode": "train",
+      "name": "seed-r0",
+      "sha256": "cb50c6586c91cb8f01e3c614b504ecc53dbad087a38af225b9e62ef762a24737"
+    },
+    {
+      "checkpoint": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-rl-loop-v1/wash-v1/checkpoints/wash_u256_y_seed_fresh_state.pt",
+      "mode": "train",
+      "name": "seed-r1",
+      "sha256": "cb50c6586c91cb8f01e3c614b504ecc53dbad087a38af225b9e62ef762a24737"
+    },
+    {
+      "checkpoint": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-rl-loop-v1/wash-v1/checkpoints/wash_u256_y_seed_fresh_state.pt",
+      "mode": "train",
+      "name": "seed-r2",
+      "sha256": "cb50c6586c91cb8f01e3c614b504ecc53dbad087a38af225b9e62ef762a24737"
+    },
+    {
+      "checkpoint": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-rl-loop-v1/wash-v1/checkpoints/wash_u256_y_seed_fresh_state.pt",
+      "mode": "train",
+      "name": "seed-r3",
+      "sha256": "cb50c6586c91cb8f01e3c614b504ecc53dbad087a38af225b9e62ef762a24737"
+    }
+  ],
+  "schema": "emender-e97-native-execution-panel-v1",
+  "schema_template": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-e3-chat-agent-u512-dual-gate-v1/execution/panel.json",
+  "schema_template_sha256": "631a13143582704f5e97873123096944033e2b3b394638dd9b2a80cb7cb7659b",
+  "scope": "Wash seed frozen execution gate; four identical train-mode slots, 96 unchanged E3 cases each. No training or promotion; divide aggregate counts by four only if all replicas agree.",
+  "snapshot_method": "paused-pid-namespace-reader-v2",
+  "snapshot_reader_sha256": "b821532ca6d7a48d79e8f47ef74ee80429f343410db7cbc084a121d45780babb",
+  "source_panel_sha256": "7f03244fca9437ebdfbc7044287c9ddeff61d1953c8a80f062032e46f097ad67",
+  "system": "Complete the task with the declared source-native tools in /testbed. Use tool observations, including errors, to decide what to do next. Finish only when the task is complete. Keep workspace operations inside /testbed.",
+  "tokenizer_vocabulary_sha256": "b5fabd070f2e32461f8254168e8f91457e086885479e3d1bb3651638a97d5788",
+  "tools": [
+    {
+      "function": {
+        "description": "Execute a bash command in the terminal within a persistent shell session.\n\n\n### Command Execution\n* One command at a time: You can only execute one bash command at a time. If you need to run multiple commands sequentially, use `&&` or `;` to chain them together.\n* Persistent session: Commands execute in a persistent shell session where environment variables, virtual environments, and working directory persist between commands.\n* Soft timeout: Commands have a soft timeout of 10 seconds, once that's reached, you have the option to continue or interrupt the command (see section below for details)\n\n### Long-running Commands\n* For commands that may run indefinitely, run them in the background and redirect output to a file, e.g. `python3 app.py > server.log 2>&1 &`.\n* For commands that may run for a long time (e.g. installation or testing commands), or commands that run for a fixed amount of time (e.g. sleep), you should set the \"timeout\" parameter of your function call to an appropriate value.\n* If a bash command returns exit code `-1`, this means the process hit the soft timeout and is not yet finished. By setting `is_input` to `true`, you can:\n  - Send empty `command` to retrieve additional logs\n  - Send text (set `command` to the text) to STDIN of the running process\n  - Send control commands like `C-c` (Ctrl+C), `C-d` (Ctrl+D), or `C-z` (Ctrl+Z) to interrupt the process\n  - If you do C-c, you can re-start the process with a longer \"timeout\" parameter to let it run to completion\n\n### Best Practices\n* Directory verification: Before creating new directories or files, first verify the parent directory exists and is the correct location.\n* Directory management: Try to maintain working directory by using absolute paths and avoiding excessive use of `cd`.\n\n### Output Handling\n* Output truncation: If the output exceeds a maximum length, it will be truncated before being returned.\n",
+        "name": "execute_bash",
+        "parameters": {
+          "properties": {
+            "command": {
+              "description": "The bash command to execute. Can be empty string to view additional logs when previous exit code is `-1`. Can be `C-c` (Ctrl+C) to interrupt the currently running process. Note: You can only execute one bash command at a time. If you need to run multiple commands sequentially, you can use `&&` or `;` to chain them together.",
+              "type": "string"
+            },
+            "is_input": {
+              "description": "If True, the command is an input to the running process. If False, the command is a bash command to be executed in the terminal. Default is False.",
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            },
+            "timeout": {
+              "description": "Optional. Sets a hard timeout in seconds for the command execution. If not provided, the command will use the default soft timeout behavior.",
+              "type": "number"
+            }
+          },
+          "required": [
+            "command"
+          ],
+          "type": "object"
+        }
+      },
+      "type": "function"
+    },
+    {
+      "function": {
+        "description": "Use the tool to think about something. It will not obtain new information or make any changes to the repository, but just log the thought. Use it when complex reasoning or brainstorming is needed.\n\nCommon use cases:\n1. When exploring a repository and discovering the source of a bug, call this tool to brainstorm several unique ways of fixing the bug, and assess which change(s) are likely to be simplest and most effective.\n2. After receiving test results, use this tool to brainstorm ways to fix failing tests.\n3. When planning a complex refactoring, use this tool to outline different approaches and their tradeoffs.\n4. When designing a new feature, use this tool to think through architecture decisions and implementation details.\n5. When debugging a complex issue, use this tool to organize your thoughts and hypotheses.\n\nThe tool simply logs your thought process for better transparency and does not execute any code or make changes.",
+        "name": "think",
+        "parameters": {
+          "properties": {
+            "thought": {
+              "description": "The thought to log.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "thought"
+          ],
+          "type": "object"
+        }
+      },
+      "type": "function"
+    },
+    {
+      "function": {
+        "description": "Signals the completion of the current task or conversation.\n\nUse this tool when:\n- You have successfully completed the user's requested task\n- You cannot proceed further due to technical limitations or missing information\n\nThe message should include:\n- A clear summary of actions taken and their results\n- Any next steps for the user\n- Explanation if you're unable to complete the task\n- Any follow-up questions if more information is needed\n",
+        "name": "finish",
+        "parameters": {
+          "properties": {
+            "message": {
+              "description": "Final message to send to the user",
+              "type": "string"
+            }
+          },
+          "required": [
+            "message"
+          ],
+          "type": "object"
+        }
+      },
+      "type": "function"
+    },
+    {
+      "function": {
+        "description": "Custom editing tool for viewing, creating and editing files in plain-text format\n* State is persistent across command calls and discussions with the user\n* If `path` is a text file, `view` displays the result of applying `cat -n`. If `path` is a directory, `view` lists non-hidden files and directories up to 2 levels deep\n* The following binary file extensions can be viewed in Markdown format: [\".xlsx\", \".pptx\", \".wav\", \".mp3\", \".m4a\", \".flac\", \".pdf\", \".docx\"]. IT DOES NOT HANDLE IMAGES.\n* The `create` command cannot be used if the specified `path` already exists as a file\n* If a `command` generates a long output, it will be truncated and marked with `<response clipped>`\n* The `undo_edit` command will revert the last edit made to the file at `path`\n* This tool can be used for creating and editing files in plain-text format.\n\n\nBefore using this tool:\n1. Use the view tool to understand the file's contents and context\n2. Verify the directory path is correct (only applicable when creating new files):\n   - Use the view tool to verify the parent directory exists and is the correct location\n\nWhen making edits:\n   - Ensure the edit results in idiomatic, correct code\n   - Do not leave the code in a broken state\n   - Always use absolute file paths (starting with /)\n\nCRITICAL REQUIREMENTS FOR USING THIS TOOL:\n\n1. EXACT MATCHING: The `old_str` parameter must match EXACTLY one or more consecutive lines from the file, including all whitespace and indentation. The tool will fail if `old_str` matches multiple locations or doesn't match exactly with the file content.\n\n2. UNIQUENESS: The `old_str` must uniquely identify a single instance in the file:\n   - Include sufficient context before and after the change point (3-5 lines recommended)\n   - If not unique, the replacement will not be performed\n\n3. REPLACEMENT: The `new_str` parameter should contain the edited lines that replace the `old_str`. Both strings must be different.\n\nRemember: when making multiple file edits in a row to the same file, you should prefer to send all edits in a single message with multiple calls to this tool, rather than multiple messages with a single call each.\n",
+        "name": "str_replace_editor",
+        "parameters": {
+          "properties": {
+            "command": {
+              "description": "The commands to run. Allowed options are: `view`, `create`, `str_replace`, `insert`, `undo_edit`.",
+              "enum": [
+                "view",
+                "create",
+                "str_replace",
+                "insert",
+                "undo_edit"
+              ],
+              "type": "string"
+            },
+            "file_text": {
+              "description": "Required parameter of `create` command, with the content of the file to be created.",
+              "type": "string"
+            },
+            "insert_line": {
+              "description": "Required parameter of `insert` command. The `new_str` will be inserted AFTER the line `insert_line` of `path`.",
+              "type": "integer"
+            },
+            "new_str": {
+              "description": "Optional parameter of `str_replace` command containing the new string (if not given, no string will be added). Required parameter of `insert` command containing the string to insert.",
+              "type": "string"
+            },
+            "old_str": {
+              "description": "Required parameter of `str_replace` command containing the string in `path` to replace.",
+              "type": "string"
+            },
+            "path": {
+              "description": "Absolute path to file or directory, e.g. `/workspace/file.py` or `/workspace`.",
+              "type": "string"
+            },
+            "view_range": {
+              "description": "Optional parameter of `view` command when `path` points to a file. If none is given, the full file is shown. If provided, the file will be shown in the indicated line number range, e.g. [11, 12] will show lines 11 and 12. Indexing at 1 to start. Setting `[start_line, -1]` shows all lines from `start_line` to the end of the file.",
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "command",
+            "path"
+          ],
+          "type": "object"
+        }
+      },
+      "type": "function"
+    }
+  ],
+  "tools_sha256": "c52c7807b9498498b4f64d06ae98c2856f6621afcd543fee8f561a84db767609",
+  "training_eligible": false
+}
