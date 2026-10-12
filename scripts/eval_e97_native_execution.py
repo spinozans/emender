@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 import signal
+import shlex
 import time
 
 from ndm.e97_atomic import publish_bytes_no_replace
@@ -252,14 +253,20 @@ def smoke(args):
         with NativeSandbox(panel, args.output/('smoke-'+c['id'])) as sandbox:
             sandbox.request('setup', files=c['files'])
             if c['family'] == 'recovery':
-                call = dict(name='str_replace_editor', arguments=dict(command='view', path='/testbed/missing.json'))
+                call = dict(name='str_replace_editor', arguments=dict(command='view', path=c.get('missing_path', '/testbed/missing.json')))
                 reply = sandbox.request('execute', call=call); calls.append(dict(request=call, result=reply['result']))
             command = 'cat ' + ' '.join('/testbed/'+p for p in c['files'])
             if c['family'] == 'edit':
-                command += '; python -c \'import json; p=json.load(open("/testbed/state.json")); p["count"]+=7; json.dump(p,open("/testbed/result.json","w"))\''
+                if 'output_path' in c:
+                    output_path = '/testbed/' + c['output_path']
+                    script = ('import json; '
+                              f'json.dump({c["expected_output"]!r},open({output_path!r},"w"))')
+                    command += '; python -c ' + shlex.quote(script)
+                else:
+                    command += '; python -c \'import json; p=json.load(open("/testbed/state.json")); p["count"]+=7; json.dump(p,open("/testbed/result.json","w"))\''
             call = dict(name='execute_bash', arguments=dict(command=command, timeout=10))
             reply = sandbox.request('execute', call=call); calls.append(dict(request=call, result=reply['result']))
-            snapshot = sandbox.snapshot(list(c['files']) + (['result.json'] if c['expected_output'] is not None else []))
+            snapshot = sandbox.snapshot(list(c['files']) + ([c.get('output_path', 'result.json')] if c['expected_output'] is not None else []))
         verdict = grade(c, c['answer'], calls, snapshot)
         publish(args.output/('smoke-'+c['id'])/'oracle-check.json',
                 dict(id=c['id'], calls=calls, snapshot=snapshot, verdict=verdict, panel_sha256=args.panel_sha))

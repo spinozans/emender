@@ -162,3 +162,56 @@ def test_paused_reader_no_follow_and_bounded_files(tmp_path):
     for names in (['../escape'], ['/absolute'], [], ['good', 'good']):
         with pytest.raises(ValueError):
             read_regular_files(tmp_path, names)
+
+
+@pytest.mark.parametrize('expanded', [False, True], ids=['legacy', 'expanded'])
+def test_smoke_respects_frozen_case_paths(monkeypatch, tmp_path, expanded):
+    import subprocess
+    import sys
+    from argparse import Namespace
+    import scripts.eval_e97_native_execution as evaluator
+
+    selected = [deepcopy(cases('smoke-paths')[i]) for i in (4, 6)]
+    if expanded:
+        edit, recovery = selected
+        edit.update(files={'nested/source.json': json.dumps({'stats': {'count': 20}, 'keep': True})},
+                    output_path='nested/updated.json',
+                    expected_output={'stats': {'count': 17}, 'keep': True})
+        recovery['missing_path'] = '/testbed/nested/absent.json'
+    panel = {'cases': selected}
+    observed_commands = []
+
+    class Sandbox:
+        def __init__(self, panel, output):
+            output.mkdir()
+            self.root = output / 'testbed'
+            self.root.mkdir()
+        def __enter__(self): return self
+        def __exit__(self, *args): pass
+        def request(self, op, **kwargs):
+            if op == 'setup':
+                for name, text in kwargs['files'].items():
+                    path = self.root / name
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    path.write_text(text)
+                return {}
+            call = kwargs['call']
+            if call['name'] == 'str_replace_editor':
+                assert call['arguments']['path'] == selected[1].get('missing_path', '/testbed/missing.json')
+                content = 'ERROR: missing file'
+            else:
+                command = call['arguments']['command']
+                observed_commands.append(command)
+                command = command.replace('/testbed/', str(self.root) + '/').replace('python -c', sys.executable + ' -c')
+                content = subprocess.check_output(command, shell=True, text=True)
+            return {'result': {'message': {'content': content}}}
+        def snapshot(self, names):
+            return {name: (self.root / name).read_text() if (self.root / name).exists() else None for name in names}
+
+    monkeypatch.setattr(evaluator, 'load_panel', lambda args: panel)
+    monkeypatch.setattr(evaluator, 'NativeSandbox', Sandbox)
+    evaluator.smoke(Namespace(output=tmp_path, panel_sha='test-panel'))
+    summary = json.loads((tmp_path / 'smoke-summary.json').read_text())
+    assert summary['status'] == 'passed' and summary['model_loaded'] is False
+    assert all(row['success'] for row in summary['checks'])
+    assert ('nested/updated.json' in observed_commands[0]) is expanded
