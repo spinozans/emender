@@ -68,7 +68,7 @@ tail -2 "$BANK/unit-test.log"
 # 138 after task F4 added 18 parallel-collection regressions;
 # 162 after task F5 added 24 PG-grid regressions;
 # 185 after F7 added 23 bounded-correction/config regressions).
-grep -q '"passed": 185' "$BANK/unit-test.log" || {
+grep -q '"passed": 215' "$BANK/unit-test.log" || {
   log "[preflight] UNIT VALIDATION FAILED"; exit 1; }
 log "[preflight] unit validation PASSED (185/185)"
 
