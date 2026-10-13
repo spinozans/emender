@@ -7,7 +7,7 @@ into the repo. `prepare.py` builds a separate import overlay and versioned
 source archive/registry; never deploys, admits, commits an allowlist or restarts.
 The old `F9-staged/checkout` exploratory snapshot is superseded; use
 `F9-staged/qualified-final` ONLY for historical Pi artifacts; the repaired
-source closure for re-review is `F9-staged/qualified-F9C-reviewed`.
+source closure for re-review is `F9-staged/qualified-F9E-final`.
 
 ## Reproduce without touching the daemon
 
@@ -19,7 +19,7 @@ On lambda01, using the project `.venv` (Frontier requires the canonical activati
 .venv/bin/python scripts/rl-loop-v1/F9-staged/prepare.py --root /new/private/F9-checkout
 source /new/private/F9-checkout/activate.sh
 cd "$F9_STAGE_ROOT"  # required: avoid importing live ndm from the working directory
-PYTHONDONTWRITEBYTECODE=1 /home/erikg/emender/.venv/bin/python -m pytest -q -p no:cacheprovider /home/erikg/emender/scripts/rl-loop-v1/F9-staged/unit_tests.py -k 'not real_pi and not failed_reference_solution'
+PYTHONDONTWRITEBYTECODE=1 /home/erikg/emender/.venv/bin/python -m pytest -q -p no:cacheprovider /home/erikg/emender/scripts/rl-loop-v1/F9-staged/unit_tests.py /home/erikg/emender/scripts/rl-loop-v1/F9-staged/test_f9r2_grammar.py -k 'not real_pi and not failed_reference_solution'
 PYTHONDONTWRITEBYTECODE=1 /home/erikg/emender/.venv/bin/python loop/rl_bank_unit_test.py --scratch /new/private/bank-fixtures
 # Harvest is a separate owner-local operation, NOT needed for CPU checks.
 ```
@@ -85,11 +85,15 @@ qualifying bwrap is a separately reviewed safety/coverage change.
 ## Attended release/rollback runbook (NOT executed by F9C)
 
 Do not run this section during ongoing collection. Deployment is **NO-GO**
-until independent review of the F9C exact-byte closure and separate operator
+until independent review of the F9E exact-byte closure and separate operator
 approval. Run on lambda01 with `PY=/home/erikg/emender/.venv/bin/python`;
 Frontier instead requires canonical activation and `PY="$EMENDER_PYTHON"`.
 Set `REPO=/home/erikg/emender`, `LOOP=/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-rl-loop-v1`,
 `LAKE=/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-lake-expansion-v1`.
+Set `F9_TOOLS="$REPO/scripts/rl-loop-v1/F9-staged"` before either boundary
+sequence; this retained release-tool directory contains `rollback_gate.py`.
+Record its absolute path and tool hashes in `release.manifest.json` and retain
+it through rollback (do not substitute restored old-only runtime tools).
 `BANK` MUST be the operator's current explicit bank path (not a guessed default).
 `RELEASE` is a new owner-private directory outside all three roots. Maintain:
 
