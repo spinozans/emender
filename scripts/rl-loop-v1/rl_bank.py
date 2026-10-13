@@ -364,6 +364,9 @@ def sweep_stale_claims(paths: Mapping[str, Path], *, grace_fraction: float = 0.5
         else:
             stale = (now - candidate.stat().st_mtime) > \
                 grace_fraction * ttl_default
+        from rl_correction_service import claim_has_correction
+        if claim_has_correction(paths["root"], task):
+            continue
         if not stale:
             continue
         # NOTE: the stale claim block stays inside the requeued file — it is
@@ -418,6 +421,9 @@ def requeue_lane_claims(paths: Mapping[str, Path], lane: int) -> int:
         claim = task.get("claim") if isinstance(task, Mapping) else None
         if not (isinstance(claim, Mapping)
                 and claim.get("lane") == int(lane)):
+            continue
+        from rl_correction_service import claim_has_correction
+        if claim_has_correction(paths["root"], task):
             continue
         destination = paths["pool_pending"] / \
             f"{candidate.name[:-len('.claim')]}.json"

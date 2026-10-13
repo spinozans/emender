@@ -886,7 +886,7 @@ def test_fresh_solve_collect(scratch: Path) -> None:
             for attribute, value in replacements.items():
                 stack.enter_context(patch.object(lane, attribute, return_value=value))
             stack.enter_context(patch.object(lane, "run_episode", side_effect=run_episode))
-            stack.enter_context(patch.object(lane, "grade_episode", side_effect=[(False, {}), (True, {})]))
+            stack.enter_context(patch.object(lane, "grade_episode", side_effect=[(False, {"passed": False}), (True, {"passed": True})]))
             stack.enter_context(patch.object(lane, "_receipt_from_episode", side_effect=receipt))
             lane.bank_collect(args)
         correction = episodes[1]
@@ -1838,7 +1838,8 @@ def test_correction_pool(scratch: Path) -> None:
     (root / "correction-config.json").write_text(json.dumps({
         "teacher_model": "deepseek-4.1-flash-background", "async_enabled": True, "pool_width": 8}))
     check("F7 durable config survives independent reread", read_correction_config(root)["pool_width"] == 8)
-    for bad in ({"pool_width": 0}, {"pool_width": True}, {"async_enabled": "yes"}, {"unknown": 1}):
+    for bad in ({"pool_width": 0}, {"pool_width": True}, {"async_enabled": "yes"}, {"unknown": 1},
+                {"backlog_capacity": 0}, {"backlog_capacity": True}, {"backlog_capacity": 4097}):
         (root / "correction-config.json").write_text(json.dumps(bad))
         try:
             read_correction_config(root)
@@ -1953,91 +1954,304 @@ def test_correction_pool(scratch: Path) -> None:
 
 
 def test_async_correction_collect(scratch: Path) -> None:
-    """Real lane admission/single-writer finalization, isolated CPU fakes only."""
+    """Actual collect loop + durable spool + mid-flight OS correction worker."""
     from contextlib import ExitStack
     from types import SimpleNamespace
     from unittest.mock import patch
     import rl_bank_lane as lane
-    root = scratch / "f7-async-collect"
+    import rl_correction_pool as pool_module
+    import tiktoken
+    from rl_correction_service import CorrectionService, immutable, read
+    from rl_bank import requeue_lane_claims
+    root = scratch / "f8-async-collect"
     bank = bank_paths(root)
     ensure_bank_layout(bank)
     seed = root / "seed.pt"
     _synthetic_checkpoint(seed, 1.0, "seed")
     init_lane_state(bank, 0, checkpoint=seed, checkpoint_sha256=_sha(seed), note="unit")
-    (root / "correction-config.json").write_text(json.dumps({"async_enabled": True, "pool_width": 2}))
-    tasks = [{"task_id": f"f7-{i}", "task_sha256": str(i)*64,
+    (root / "correction-config.json").write_text(json.dumps({"async_enabled": True,
+                                                            "pool_width": 1, "backlog_capacity": 2}))
+    tasks = [{"task_id": f"f8-{i}", "task_sha256": str(i)*64,
+              "claim": {"lane": 0, "claimed_unix": i, "deadline_unix": 0, "schema": lane.CLAIM_SCHEMA},
               "body": {"template": "fixture", "prompt": "x", "split": "train",
-                       "receipt_eligible": True, "workspace_files": {}}} for i in range(3)]
-    events, emitted, retired, specs = [], [], [], []
+                       "receipt_eligible": True, "workspace_files": {}}} for i in range(6)]
+    for task in tasks:
+        (bank["pool_claims"] / f"{task['task_id']}.claim").write_text(json.dumps(task))
+    events, emitted = [], []
     record = {"status": "stopped", "generations": [], "source_messages": [], "reason": "fixture"}
+    result = {"passed": True, "grade": {"passed": True}, "fresh_solve": True,
+              "teacher_record": {"status": "finished", "close_verified": True,
+                                 "prefix": None, "reason": None,
+                                 "native_record": "User:\nhi\n\nAssistant:\nhello\n",
+                                 "generations": [{"token_ids": tiktoken.get_encoding("p50k_base").encode("hello")} ]}}
+    service = CorrectionService(root, 0)
+    pool = pool_module.CorrectionPool(1, scratch / "f8-slow-worker")
+    real_popen = subprocess.Popen
+    def spawn(command, **kwargs):
+        return real_popen([sys.executable, "-c", "import time; time.sleep(3)"], **kwargs)
+    real_submit = service.submit
+    def admit(spec, **kwargs):
+        events.append("admit")
+        answer = real_submit(spec, **kwargs)
+        if answer[0] is not None and not pool.jobs:
+            with patch.object(pool_module.subprocess, "Popen", side_effect=spawn):
+                pool.submit(read(service.root / answer[0] / "spec.json"))
+        return answer
     def episode(**kwargs):
         events.append("attempt")
+        if events.count("attempt") > 1:
+            check(f"F8 GPU next attempt {events.count('attempt')} while correction mid-flight",
+                  bool(pool.jobs) and next(iter(pool.jobs.values()))[0].poll() is None)
         (kwargs["episode_dir"] / "episode-private.json").write_text(json.dumps(record))
         return record
-    class Pool:
-        def __init__(self, width, directory):
-            self.jobs = {}
-            self.closed = False
-        def submit(self, spec):
-            events.append("admit")
-            specs.append(spec)
-            if len(self.jobs) == 2:
-                return None, {"passed": False, "error": "pool exhausted"}
-            sequence = len(self.jobs)
-            self.jobs[sequence] = spec
-            return sequence, None
-        def poll(self):
-            if events.count("attempt") < 3 or len(specs) < 3:
-                return []
-            rows = []
-            for seq in reversed(list(self.jobs)):
-                rows.append((seq, {"passed": True, "grade": {"passed": True},
-                    "fresh_solve": True, "teacher_record": {"status": "finished",
-                    "close_verified": True, "prefix": None, "reason": None, "generations": []}}))
-            self.jobs.clear()
-            return rows
-        def close(self):
-            self.closed = True
+    real_receipt = lane._receipt_from_episode
     def receipt(**kwargs):
         emitted.append(kwargs)
-        events.append("receipt")
-        return {"receipt_sha256": str(len(emitted))*64, "episode": {"targets": 10}}
-    def retire(bank, task, **kwargs):
-        retired.append((task["task_id"], kwargs["outcome"]))
+        return real_receipt(**kwargs)
     args = SimpleNamespace(bank=root, lane=0, cycle=1, args_json=Path("/dev/null"),
                            teacher="fixture", teacher_model=None, preclaimed=None,
-                           max_tasks=3, claim_ttl=60, teacher_min_interval=0)
-    with ExitStack() as stack:
-        replacements = {"load_pilot": SimpleNamespace(Metrics=lambda: SimpleNamespace(calls=[])),
-            "load_curriculum": SimpleNamespace(SYSTEM="fixture"),
-            "tool_manifest": {"pi_bin": "/dev/null", "model_visible_tools": []},
-            "load_policy_engine": None, "make_policy_generate": None,
-            "heartbeat_claim": True, "stream_tail_digest": None}
-        for attribute, value in replacements.items():
-            stack.enter_context(patch.object(lane, attribute, return_value=value))
-        stack.enter_context(patch.object(lane, "CorrectionPool", Pool))
-        stack.enter_context(patch.object(lane, "claim_pool_task", side_effect=tasks))
-        stack.enter_context(patch.object(lane, "run_episode", side_effect=episode))
-        stack.enter_context(patch.object(lane, "grade_episode", return_value=(False, {})))
-        stack.enter_context(patch.object(lane, "_receipt_from_episode", side_effect=receipt))
-        stack.enter_context(patch.object(lane, "append_receipt", side_effect=lambda paths, row: row["receipt_sha256"]))
-        stack.enter_context(patch.object(lane, "retire_task", side_effect=retire))
-        lane.bank_collect(args)
-    check("F7 next attempt runs before any asynchronous correction receipt",
-          events[:6] == ["attempt", "admit", "attempt", "admit", "attempt", "admit"])
-    check("F7 single writer chains out-of-order receipts using publication-time tail",
-          [x["task"]["task_id"] for x in emitted] == ["f7-1", "f7-0"]
-          and emitted[0]["prev"] is None and emitted[1]["prev"] == "1"*64)
-    summary = json.loads((lane_paths(bank, 0)["episodes"] / "cycle-0001/collect-summary.json").read_text())
-    check("F7 cycle summary reports terminal correction drain separately",
-          summary["correction_terminal_drain_s"] >= 0)
-    check("F7 exhausted task remains honestly uncorrected with no receipt",
-          summary["receipts"] == 2 and summary["correction_pool_exhaustions"] == 1
-          and summary["outcomes"][2]["receipt"] is None
-          and summary["outcomes"][2]["correction"]["reason"] == "pool exhausted"
-          and next(row for task_id, row in retired if task_id == "f7-2")["stage"] == "failed")
-    check("F7 correction specs preserve exact task/attempt and separate workspaces",
-          len({x["workspace"] for x in specs}) == 3 and all(x["policy_record"] == record for x in specs))
+                           max_tasks=6, claim_ttl=60, teacher_min_interval=10)
+    started = time.monotonic()
+    try:
+        with ExitStack() as stack:
+            replacements = {"load_pilot": SimpleNamespace(Metrics=lambda: SimpleNamespace(calls=[])),
+                "load_curriculum": SimpleNamespace(SYSTEM="fixture"),
+                "tool_manifest": {"pi_bin": "/dev/null", "model_visible_tools": []},
+                "load_policy_engine": None, "make_policy_generate": None, "heartbeat_claim": True}
+            for attribute, value in replacements.items():
+                stack.enter_context(patch.object(lane, attribute, return_value=value))
+            stack.enter_context(patch.object(lane, "CorrectionService", return_value=service))
+            stack.enter_context(patch.object(service, "ensure_running"))
+            stack.enter_context(patch.object(service, "submit", side_effect=admit))
+            stack.enter_context(patch.object(lane, "claim_pool_task", side_effect=tasks))
+            stack.enter_context(patch.object(lane, "run_episode", side_effect=episode))
+            stack.enter_context(patch.object(lane, "grade_episode", return_value=(False, {})))
+            lane.bank_collect(args)
+        elapsed = time.monotonic()-started
+        summary_path = lane.lane_paths(bank, 0)["episodes"] / "cycle-0001/collect-summary.json"
+        summary = json.loads(summary_path.read_text())
+        check("F8 enqueue storm at bound never waits for 10s pacing or 3s correction",
+              elapsed < 2 and summary["attempts"] == 6 and summary["correction_terminal_drain_s"] == 0)
+        check("F8 bounded backlog explicitly exhausts all four excess attempts",
+              summary["correction_pool_exhaustions"] == 4 and summary["receipts"] == 0
+              and len(summary["corrections_pending"]) == 2)
+        metrics = summary["correction_backlog"]
+        check("F8 backlog and generation/correction balance are first-class summary metrics",
+              metrics["backlog_depth"] == 2 and metrics["queue_depth"] == 2
+              and len(metrics["wait_s_by_correction"]) == 2 and metrics["generation_attempts_per_h"] > 0
+              and metrics["correction_outcomes_per_h"] == 0 and metrics["backlog_growth_per_h"] > 0)
+        check("F8 collect crash requeue and expired-claim sweep respect durable admission",
+              requeue_lane_claims(bank, 0) == 0 and sweep_stale_claims(bank) == 0)
+        # A crashed cycle archive cannot invalidate the service's copied splice.
+        cycle_dir = summary_path.parent
+        cycle_dir.rename(cycle_dir.with_name("cycle-0001-crashed-unit"))
+        specs = [read(job / "spec.json") for job in service.active()]
+        check("F8 archive interaction preserves owned immutable attempts/workspaces",
+              all(Path(spec["workspace"]).is_dir() and Path(spec["task_dir"]).is_dir() for spec in specs)
+              and len({spec["workspace"] for spec in specs}) == 2
+              and all(spec["policy_checkpoint"]["checkpoint_sha256"] == _sha(seed) for spec in specs))
+        # Complete in reverse order across the closed cycle, then replay a crash
+        # after append but before retirement/acknowledgement.
+        jobs = service.active()
+        result["fresh_solve"] = specs[0]["fresh_solve"]
+        immutable(jobs[1] / "result.json", result)
+        tail_path = lane.lane_paths(bank, 0)["stream"]
+        with patch.object(lane, "_receipt_from_episode", side_effect=receipt):
+            def copy_then_crash(path, value):
+                immutable(path, value)
+                if "receipt_sha256" in value:
+                    raise RuntimeError("owner crashed after immutable copy")
+            with patch("rl_correction_service.immutable", side_effect=copy_then_crash):
+                try:
+                    lane.publish_corrections(root, 0, service=service)
+                except RuntimeError:
+                    pass
+            check("F8 owner crash before stream append preserves a replayable intent/copy",
+                  (jobs[1] / "publication.json").exists() and not tail_path.exists())
+            with patch.object(lane, "retire_task", side_effect=RuntimeError("owner crashed after append")):
+                try:
+                    lane.publish_corrections(root, 0, service=service)
+                except RuntimeError:
+                    pass
+            check("F8 owner crash leaves durable publication intent and one stream row",
+                  (jobs[1] / "publication.json").exists() and len(tail_path.read_text().splitlines()) == 1)
+            lane.publish_corrections(root, 0, service=service)
+            immutable(jobs[0] / "result.json", result)
+            lane.publish_corrections(root, 0, service=service)
+            check("F8 restart/late completion appends once with current tail and served provenance",
+                  [x["task"]["task_id"] for x in emitted] == ["f8-1", "f8-0"]
+                  and emitted[0]["prev"] is None and emitted[1]["prev"] == json.loads(tail_path.read_text().splitlines()[0])["receipt_sha256"]
+                  and len(tail_path.read_text().splitlines()) == 2
+                  and all(x["cycle"] == 1 and x["policy_checkpoint"]["checkpoint_sha256"] == _sha(seed) for x in emitted))
+            check("F8 published backlog releases task claims and cannot republish",
+                  not service.active() and lane.publish_corrections(root, 0, service=service) == []
+                  and not list(bank["pool_claims"].glob("*.claim")))
+            from rl_receipts import walk_stream
+            rows = walk_stream(lane.lane_paths(bank, 0), enc=tiktoken.get_encoding("p50k_base"))
+            check("F8 cross-cycle receipts pass real digest-chain and full token/mask re-encoding",
+                  len(rows) == 2 and all(row["episode"]["targets"] > 0 for row in rows))
+        # Late failed, unclosed and malformed results all finalize explicitly
+        # after the original summary, with no receipt and no leftover claim.
+        for index, late_result in enumerate(({"passed": False, "error": "late fixture failure"},
+                {**result, "teacher_record": {**result["teacher_record"], "close_verified": False}},
+                {"passed": True})):
+            spec = json.loads(json.dumps(specs[0]))
+            spec["task"]["task_id"] = f"late-{index}"
+            spec["outcome"]["task_id"] = f"late-{index}"
+            spec["task"]["claim"]["claimed_unix"] = index+20
+            (bank["pool_claims"] / f"late-{index}.claim").write_text(json.dumps(spec["task"]))
+            job_id, _ = service.submit(spec, capacity=2, min_interval=10)
+            immutable(service.root / job_id / "result.json", late_result)
+            plans = lane.publish_corrections(root, 0, service=service)
+            check(f"F8 late failed/unclosed/malformed result {index} closes explicitly without receipt",
+                  len(plans) == 1 and plans[0]["receipt"] is None
+                  and plans[0]["retirement"]["stage"] == "failed" and not service.active())
+        # F9 scripted conversations deliberately fail closed in F8's baseline.
+        conversation_spec = root / "conversation-spec.json"
+        conversation_spec.write_text(json.dumps({"user_script": []}))
+        conversation = json.loads(json.dumps(tasks[0]))
+        conversation["task_id"] = "conversation-f8"
+        conversation["body"]["task_lake"] = {"validator": {
+            "spec_path": str(conversation_spec), "spec_sha256": _sha(conversation_spec)}}
+        (bank["pool_claims"] / "conversation-f8.claim").write_text(json.dumps(conversation))
+        check("F8 conversation family is fresh-only and rejects worker execution explicitly",
+              lane._correction_requires_fresh_solve(conversation["body"], record, [])
+              and "F9 deployment" in lane.execute_correction_spec({"task": conversation})["error"])
+        args.cycle = 2
+        args.max_tasks = 1
+        with ExitStack() as stack:
+            for attribute, value in replacements.items():
+                stack.enter_context(patch.object(lane, attribute, return_value=value))
+            stack.enter_context(patch.object(service, "ensure_running"))
+            stack.enter_context(patch.object(lane, "CorrectionService", return_value=service))
+            stack.enter_context(patch.object(lane, "claim_pool_task", return_value=conversation))
+            run = stack.enter_context(patch.object(lane, "run_episode"))
+            lane.bank_collect(args)
+            check("F8 conversation baseline never silently generates or splices scripted work", not run.called)
+        conversation_summary = json.loads((lane.lane_paths(bank, 0)["episodes"] / "cycle-0002/collect-summary.json").read_text())
+        check("F8 conversation admission failure is defined ineligible/un-correctable with round retry",
+              conversation_summary["outcomes"][0]["receipt_eligible"] is False
+              and "F9 deployment" in conversation_summary["outcomes"][0]["correction"]["reason"]
+              and (bank["pool_done"] / "conversation-f8.json").exists())
+        (scratch / "F8-gpu-never-blocks.json").write_text(json.dumps({"collect_wall_s": elapsed,
+            "correction_sleep_s": 3, "episode_start_interval_s": 10, "attempts": 6,
+            "admitted": 2, "exhaustions": 4, "terminal_drain_s": 0, "qualification": "CPU fixtures, actual collect loop and OS mid-flight worker; no GPU/API benchmark"})+"\n")
+    finally:
+        pool.close()
+
+
+def test_persistent_correction_service(scratch: Path) -> None:
+    """Real persistent manager/worker/Pi-like group crash and pacing fixture."""
+    import signal
+    from rl_correction_service import CorrectionService, immutable, read
+    root = scratch / "f8-service-bank"
+    bank = bank_paths(root)
+    ensure_bank_layout(bank)
+    (root / "correction-config.json").write_text(json.dumps({"pool_width": 1, "async_enabled": True}))
+    service = CorrectionService(root, 0)
+    task_dir = scratch / "f8-service-source"
+    (task_dir / "attempt/workspace").mkdir(parents=True)
+    (task_dir / "attempt/workspace/file").write_text("original")
+    specs = []
+    for i in range(3):
+        spec = {"task_dir": str(task_dir), "workspace": str(task_dir / "attempt/workspace"),
+                "task": {"task_id": str(i), "body": {}}, "delay": 30}
+        job_id, _ = service.submit(spec, capacity=3, min_interval=.25)
+        specs.append(service.root / job_id)
+    (task_dir / "attempt/workspace/file").write_text("mutated original")
+    check("F8 owned workspace snapshot does not alias later policy mutations",
+          all((Path(read(job / "spec.json")["workspace"]) / "file").read_text() == "original" for job in specs))
+    worker = '''import sys,types,time,os,subprocess,json
+from pathlib import Path
+import rl_correction_pool
+def execute(spec):
+    path=Path(spec['task_dir'])
+    child=subprocess.Popen([sys.executable,'-c','import time;time.sleep(60)'])
+    (path/'worker-pids.json').write_text(json.dumps([os.getpid(),child.pid]))
+    time.sleep(spec['delay'])
+    return {'passed':False,'error':'fixture failure after cycle'}
+sys.modules['rl_bank_lane']=types.SimpleNamespace(execute_correction_spec=execute)
+rl_correction_pool.main()
+'''
+    runner = '''import sys,subprocess
+from unittest.mock import patch
+import rl_correction_pool as pool
+from rl_correction_service import CorrectionService
+real=subprocess.Popen
+worker=sys.argv[3]
+def spawn(cmd,**kwargs):
+    return real([sys.executable,'-c',worker,*cmd[2:]],**kwargs)
+with patch.object(pool.subprocess,'Popen',side_effect=spawn):
+    CorrectionService(sys.argv[1],0).run(2)
+'''
+    def launch():
+        return subprocess.Popen([sys.executable, "-c", runner, str(root), "unused", worker],
+                                stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+    def wait_for(predicate, timeout=10):
+        deadline = time.monotonic()+timeout
+        while time.monotonic() < deadline:
+            if predicate():
+                return True
+            time.sleep(.01)
+        return False
+    def pids(job):
+        return read(Path(read(job / "spec.json")["task_dir"]) / "worker-pids.json")
+    def dead(pid):
+        status = Path(f"/proc/{pid}/status")
+        return not status.exists() or "State:\tZ" in status.read_text()
+    manager = launch()
+    other = None
+    restarted = None
+    try:
+        check("F8 persistent service starts isolated correction worker",
+              wait_for(lambda: (Path(read(specs[0] / "spec.json")["task_dir"]) / "worker-pids.json").exists()))
+        other = launch()
+        check("F8 singleton service rejects competing manager without disturbing worker",
+              other.wait(timeout=20) == 0 and manager.poll() is None)
+        first_pid, descendant = pids(specs[0])
+        os.kill(first_pid, signal.SIGKILL)
+        check("F8 crashed worker releases slot with explicit durable failure",
+              wait_for(lambda: (specs[0] / "result.json").exists())
+              and "worker exit" in read(specs[0] / "result.json")["error"]
+              and wait_for(lambda: dead(descendant)))
+        check("F8 correction start pacing moves to service without collect sleeps",
+              wait_for(lambda: (specs[1] / "execution.json").exists())
+              and read(specs[1] / "execution.json")["started_unix"]-read(specs[0] / "execution.json")["started_unix"] >= .25)
+        check("F8 second worker owns its own isolated group",
+              wait_for(lambda: (Path(read(specs[1] / "spec.json")["task_dir"]) / "worker-pids.json").exists()))
+        second_pid, child = pids(specs[1])
+        api = Path(read(specs[1] / "spec.json")["task_dir"]) / "correction-api.jsonl"
+        api.write_text('{"latency_s":1}\n{partial')
+        manager.kill()
+        manager.wait(timeout=5)
+        check("F8 service SIGKILL contains correction and Pi-like descendant",
+              wait_for(lambda: dead(second_pid) and dead(child)))
+        restarted = launch()
+        check("F8 restart fails interrupted splice closed and retains completed API metrics",
+              wait_for(lambda: (specs[1] / "result.json").exists())
+              and read(specs[1] / "result.json")["error"] == "correction service lost execution claim"
+              and read(specs[1] / "result.json")["metrics"]["calls"] == [{"latency_s": 1}]
+              and read(specs[1] / "result.json")["metrics_partial_tail"])
+        check("F8 restart resumes queued admission rather than losing backlog",
+              wait_for(lambda: (specs[2] / "execution.json").exists())
+              and len(service.active()) == 3)
+        metrics = service.metrics()
+        check("F8 backlog distinguishes finalized failures from pending execution",
+              metrics["finalized_total"] >= 2 and metrics["ready_to_publish"] >= 2
+              and metrics["in_flight"] <= 1 and len(metrics["wait_s_by_correction"]) == 3)
+    finally:
+        for proc in (manager, other, restarted):
+            if proc is not None:
+                if proc.poll() is None:
+                    proc.kill()
+                proc.wait(timeout=5)
+                if proc.stderr:
+                    proc.stderr.close()
+        # Real parent-death fencing kills workers; wait before fixture teardown.
+        for job in specs:
+            path = Path(read(job / "spec.json")["task_dir"]) / "worker-pids.json"
+            if path.exists():
+                wait_for(lambda: all(dead(pid) for pid in read(path)))
 
 
 def test_correction_spec_binding(scratch: Path) -> None:
@@ -2048,7 +2262,7 @@ def test_correction_spec_binding(scratch: Path) -> None:
     binding_dir.mkdir(parents=True)
     record = {"generations": [], "source_messages": []}
     (binding_dir / "episode-private.json").write_text(canonical_json(record)+"\n")
-    spec = {"task_dir": str(binding_dir.parent), "episode_artifacts": {
+    spec = {"task": {"body": {}}, "task_dir": str(binding_dir.parent), "episode_artifacts": {
         "attempt_episode_sha256": _sha(binding_dir / "episode-private.json")},
         "policy_record": {**record, "reason": "altered snapshot"}}
     try:
@@ -2057,6 +2271,16 @@ def test_correction_spec_binding(scratch: Path) -> None:
     except ValueError as exc:
         rejected_snapshot = "snapshot differs" in str(exc)
     check("F7 execute_correction_spec rejects a snapshot differing from hash-bound attempt", rejected_snapshot)
+    owned = binding_dir / "workspace-file"
+    owned.write_text("changed")
+    spec["owned_files_sha256"] = {"attempt/workspace-file": "0"*64}
+    try:
+        execute_correction_spec(spec)
+        rejected_owned = False
+    except ValueError as exc:
+        rejected_owned = "owned workspace identity drift" in str(exc)
+    check("F8 immutable owned workspace hashes fail closed before worker launch", rejected_owned)
+
 
 
 def main() -> None:
@@ -2100,6 +2324,7 @@ def main() -> None:
     test_correction_pool(scratch)
     test_correction_spec_binding(scratch)
     test_async_correction_collect(scratch)
+    test_persistent_correction_service(scratch)
     print(json.dumps({"schema": "emender-rl-loop-bank-unit-test-v1",
                      "passed": len(PASSED), "tests": PASSED}, sort_keys=True))
 

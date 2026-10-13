@@ -11,7 +11,7 @@ DEFAULT_WIDTH = 1  # Eight B lanes, twelve global background slots; leave four f
 def read_correction_config(bank: Path) -> dict:
     path = Path(bank) / "correction-config.json"
     config = {"teacher_model": DEFAULT_MODEL, "async_enabled": False,
-              "pool_width": DEFAULT_WIDTH}
+              "pool_width": DEFAULT_WIDTH, "backlog_capacity": 64}
     if path.exists():
         supplied = json.loads(path.read_text())
         if not isinstance(supplied, dict) or set(supplied) - set(config):
@@ -23,6 +23,8 @@ def read_correction_config(bank: Path) -> dict:
         raise ValueError("async_enabled must be boolean")
     if type(config["pool_width"]) is not int or not 1 <= config["pool_width"] <= 12:
         raise ValueError("pool_width must be an integer in 1..12")
+    if type(config["backlog_capacity"]) is not int or not 1 <= config["backlog_capacity"] <= 4096:
+        raise ValueError("backlog_capacity must be an integer in 1..4096")
     return config
 
 
