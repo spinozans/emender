@@ -21,7 +21,7 @@
     "regression_checks": 148,
     "regression_files": {
       "scripts/rl-loop-v1/F9-staged/F9R2-grammar-results.json": "fd938f83067a37985e8a1f99ed989db87fab41aee0d60e00df7d63d1daa5e5d4",
-      "scripts/rl-loop-v1/F9-staged/test_f9r2_grammar.py": "621ab566be981b6fd0bc45894f844cdbebc7f4d2f74ebc75c715f82b7fe75cba"
+      "scripts/rl-loop-v1/F9-staged/test_f9r2_grammar.py": "7c34c44fe91ac9684feba52a223d1318b471221cd8bf01b92a92cb6904ddae2e"
     },
     "reject_cases": 104,
     "requirements": [
@@ -29,6 +29,51 @@
       "R16 exact-source evidence discipline"
     ],
     "strategy": "full-consumption parse then canonical execution; generated raw frames retained only for PG"
+  },
+  "f9g": {
+    "bank_checks": 215,
+    "bound_cases": 10,
+    "candidate_negatives_executed": 0,
+    "canonical_bound_violations": 0,
+    "f9_cpu_checks": 74,
+    "f9_pi_deselected": 3,
+    "finding": "B1-R3 canonical serialization exceeded the sealed raw-input bound",
+    "legacy_cpu_checks": 44,
+    "legacy_pi_deselected": 5,
+    "legacy_validator_checks": 59,
+    "matrix_cases": 117,
+    "new_literal_controls": 4,
+    "new_reject_cases": 233,
+    "pi_run": false,
+    "qualification_logs": {
+      "/home/erikg/emender-scratch/fix-fanout/F9G-final-bank.log": "cfd3da75991002fdec657c23cb35e264b2de98765c63f928a1539c33246b53e6",
+      "/home/erikg/emender-scratch/fix-fanout/F9G-final-byte.log": "9ff652c86b1cd8ed9c136724ba6a25fa60e825a2ac2124a21fc02edd3f5ae247",
+      "/home/erikg/emender-scratch/fix-fanout/F9G-final-cpu.log": "ba4b65fd38d050c54afc59e3f4e716944533b2e4e9f507bd9ebbcde088ac852b",
+      "/home/erikg/emender-scratch/fix-fanout/F9G-final-legacy44.log": "d4e34f0afa6138f2fea7fa13cbac75a6a8da92ca47106791fbca4b69c7d1c56c",
+      "/home/erikg/emender-scratch/fix-fanout/F9G-final-old-byte.log": "7697c97c36f5f2a15a764fc6acc846398b4017f2a4f9b1d545941f72aa651e16",
+      "/home/erikg/emender-scratch/fix-fanout/F9G-final-prepare.log": "f979f7809345fedd2c72301436e6246d7d97b7bb91edf8684ac731ee876aabc1",
+      "/home/erikg/emender-scratch/fix-fanout/F9G-final-regression.log": "e0a8456382c093324952a91d7254260757c3424dbbf8a981e7edbb0ac0c1e9e2",
+      "/home/erikg/emender-scratch/fix-fanout/F9G-final-validators.log": "0384ff11775500b660efbc5a626f708efc4f06a4d940188caf0fc84f1470e058"
+    },
+    "regression_checks": 417,
+    "regression_files": {
+      "scripts/rl-loop-v1/F9-staged/F9R3-grammar-cases.json": "72af4185f7072f4839171e749938df8592392d0289678159098cfad2e19fda37",
+      "scripts/rl-loop-v1/F9-staged/test_f9g_canonical_bound.py": "502659ee2d081ac1bc4550057e00ae581a703168443d59668e570abd84868ffd",
+      "scripts/rl-loop-v1/F9-staged/test_f9r2_grammar.py": "7c34c44fe91ac9684feba52a223d1318b471221cd8bf01b92a92cb6904ddae2e",
+      "scripts/rl-loop-v1/F9-staged/verify_f9g_evidence.py": "83d1c27cc932089b565f7957edea9eae2caed39b18dada2f9abd46453cd43c9f"
+    },
+    "requirements": [
+      "R14/NDP13 safety intent",
+      "R16 exact-source execution evidence discipline"
+    ],
+    "reviewer_artifacts": {
+      "/home/erikg/emender-scratch/fix-fanout/F9R3-boundary-results.json": "72b56d83120a03dfa588da0d0370348a59d61d89595809224256d04bad4b70f4",
+      "/home/erikg/emender-scratch/fix-fanout/F9R3-boundary.log": "dcbef9e2f0727ee6fc5ae5e611ba7ac65388f6614c9aa5c2981328c26fcd508e",
+      "/home/erikg/emender-scratch/fix-fanout/F9R3-grammar-results.json": "1632caf575acec35187fcd5268beca55487f95b500e46c91be54739c45562bee",
+      "/home/erikg/emender-scratch/fix-fanout/F9R3-review.md": "7859f0a46cec5546dc6fab1bab1fb3701946d0dcacf5d3d32ac7949d613ff91e"
+    },
+    "sealed_bound_grade_tests": 20,
+    "strategy": "MAX_SHELL_LENGTH defined once in offline_shell source; raw and canonical checks use it; existing generator embeds exactly the same definition into the self-contained sealed validator"
   },
   "historical_live_retained_sources": {
     "/home/erikg/emender/configs/pi/e97-pi-native-frozen-tools-v2.ts": "a9ae7e2cf4fb92323709e4b7f91ed7b1630c6427e50e4810d89d1ae644ee8706",
@@ -44,10 +89,10 @@
     "configs/pi/e97-firstparty-authorization-license-v1.json": "ba681180202b76381ad937ce76e0e7922291f38ea60da30e79e5258bd5f35ea1",
     "configs/pi/e97-firstparty-collection-authorizations-v1.json": "ab9eabf5134a395d2712650dbed441e7e52dcdc18d43ab971d90316459c37c7e",
     "configs/pi/e97-firstparty-cpu-environment-v1.json": "a99f3d9f9922e5ee67218d4f4e5648c0fb49f911aa52a87932b8b8f7a3c4d5fc",
-    "configs/pi/e97-firstparty-generator-manifest-v1.json": "3365ad158dac74ff285e6bea0c4cf88b88ccb3c5c1005a8f73e535a0c6f5c690",
+    "configs/pi/e97-firstparty-generator-manifest-v1.json": "f12e7210ac8b3a232a95db42279c3c399560bc5d08e5de01349a2973b73994ec",
     "configs/pi/e97-firstparty-overlap-firewall-audit-v1.json": "64ff6a4fb20a98b586913bd1b73c68850d963d0711c4bbd0fe4e1f34e8c3996f",
-    "configs/pi/e97-firstparty-source-v1.tar": "061133d6f564f19e580bc864876e65dd032c5832f9c7ce2aaee50f1470270f69",
-    "configs/pi/e97-onpolicy-source-registry-v1.json": "41505806b2999c8c71ad40c3c327abe270b9cca7241c9c75f1fba3e0db2e9eb1",
+    "configs/pi/e97-firstparty-source-v1.tar": "73ea83a69f2ae79d2fc8748b26d1d61e3da1cb0fce23db4e2ef322dd91c1f954",
+    "configs/pi/e97-onpolicy-source-registry-v1.json": "29292e2558b6a1de6ead3394ad1f35b8237c619790ea9f273f2ecf5412528d17",
     "configs/pi/e97-pi-native-scripted-v8.ts": "3529e9c633117ddbecca6c0f169c8fb1d0fd746e587b65784cec83f645c36924",
     "loop/inject_pool.py": "9ba3d0bc760513ad6fe76f5cc599ffa96024f3592b8c5c21663fa54f15c9c664",
     "loop/lake_expand.py": "bd5bfe52d1334c2fd39ebab1fc64e2de8c0d0b6a69a87e5dc14f974b91d9b585",
@@ -95,15 +140,15 @@
     "scripts/e97_diversity.py": "9c4b2ad76fbf2b6cce243cdda3df443fafb977f01f97a8c141f0824493c0f9fa",
     "scripts/e97_diversity_author.py": "14566c82533df5a20d3c6dd683cb8a291de9a8d941343c30a5a5d48155e67bdf",
     "scripts/e97_first_party_validator.py": "72820d63ce20e60cebb2e5951275d48522e17b22eb2bd2695f5ef8202f8d8582",
-    "scripts/e97_first_party_validator_diversity.py": "7abebc445b1cf48feba7a24bb585bf8644c9c144d972b651fa4f9d599d522cd0",
+    "scripts/e97_first_party_validator_diversity.py": "975d389c085bdf97f670d88e66629a7547c64074801c7f8df009ddd488f2bf90",
     "scripts/e97_first_party_validator_first_action.py": "ebfb08b784142a2cb77361cb5b7b41529e4ab5cf7386f0e712b3eb3efd23a70a",
     "scripts/e97_first_party_validator_protocol_breadth.py": "3ba17474b4ae4905c2c91b568bb3052a7dad4c439ddc37bff9b91fa62fe6969f",
-    "scripts/e97_offline_shell.py": "06672334b8312ad393158d6f8e0e03bcea31a8daf0ec4b4da1e147b841cbdc7d",
+    "scripts/e97_offline_shell.py": "18d0b28a2a3bbedf8e869502d0b365ec15e47633931f5d31afd8934b0ed92ef5",
     "scripts/e97_pi_scripted_v8.py": "eba227cadcfbea5c81ad6a560fc9f35a762824b72f6c543e280f0a9800214f6f",
     "scripts/validate_e97_first_party_task.py": "4bcb049ee42731e6c7d952491a77a5caf71fdbf1af9a56653aa467ca3ae5aebb"
   },
   "live_daemon_pid": 450261,
-  "live_source_claim": "Historical only; no process, daemon, bank, GPU or live runtime validation in F9C/F9E.",
+  "live_source_claim": "Historical only; no process, daemon, bank, GPU or live runtime validation in F9C/F9E/F9G.",
   "new_live_admissions": 0,
   "private_artifacts": {
     "author-work/seed-corpus.json": "1855368bf374849e94c2bfd6fb46b4ef36f025a5b509e04ce7819ef30568d101",
@@ -154,7 +199,7 @@
     "pi_run": false
   },
   "schema": "emender-f9-staged-diversity-evidence-v1",
-  "sealed_validator_sha256": "7abebc445b1cf48feba7a24bb585bf8644c9c144d972b651fa4f9d599d522cd0",
+  "sealed_validator_sha256": "975d389c085bdf97f670d88e66629a7547c64074801c7f8df009ddd488f2bf90",
   "seed_intake": {
     "corpus_sha256": "1855368bf374849e94c2bfd6fb46b4ef36f025a5b509e04ce7819ef30568d101",
     "deployment_owner": "operator; F9_AUTHOR_WORK; F9_SEED_MANIFEST_SHA256 explicitly required",
@@ -162,8 +207,8 @@
     "verified_actual_entries": 12,
     "verified_solved_entries": 8
   },
-  "source_archive_sha256": "061133d6f564f19e580bc864876e65dd032c5832f9c7ce2aaee50f1470270f69",
-  "source_closure_root": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-lake-expansion-v1/F9-staged/qualified-F9E-final",
+  "source_archive_sha256": "73ea83a69f2ae79d2fc8748b26d1d61e3da1cb0fce23db4e2ef322dd91c1f954",
+  "source_closure_root": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-lake-expansion-v1/F9-staged/qualified-F9G-final",
   "staged_source_files": {
     "scripts/rl-loop-v1/F9-staged/configs/pi/e97-pi-native-scripted-v8.ts": "3529e9c633117ddbecca6c0f169c8fb1d0fd746e587b65784cec83f645c36924",
     "scripts/rl-loop-v1/F9-staged/harvest_seeds.py": "d71923b80c1f615b2b0f8d8bb8cf878ce895ce6a33c503f1e396913dae720398",
@@ -177,12 +222,12 @@
     "scripts/rl-loop-v1/F9-staged/loop/standing_supply.py": "c02ba42ee7b9dc0ed8047b050254163e9a4033069f819651ddcd98ed15302c76",
     "scripts/rl-loop-v1/F9-staged/ndm/e97_first_party_read_observe.py": "76662bf3c6ad9287ad1add83cf9e5ccefc6f60d234473afad77a96b2c64f4c89",
     "scripts/rl-loop-v1/F9-staged/ndm/e97_first_party_source_archive.py": "c0a10d94e2377d7ad0b97dd33c783f7321825d197a20566d0a0075e3d462a02d",
-    "scripts/rl-loop-v1/F9-staged/prepare.py": "33c16fdde94f9ff2ae6733ce327dc10b76e76d4faea6ba35f0a3761c78a675d9",
+    "scripts/rl-loop-v1/F9-staged/prepare.py": "6c5ddfc44f695671b0cba923be4efca47bf385abee1939ebf62deabac471cbee",
     "scripts/rl-loop-v1/F9-staged/rollback_gate.py": "cc3451c5f5f5e5228d92c7213e6250029efe6f917c10832bb02ea2ca16474214",
     "scripts/rl-loop-v1/F9-staged/scripts/e97_diversity.py": "9c4b2ad76fbf2b6cce243cdda3df443fafb977f01f97a8c141f0824493c0f9fa",
     "scripts/rl-loop-v1/F9-staged/scripts/e97_diversity_author.py": "14566c82533df5a20d3c6dd683cb8a291de9a8d941343c30a5a5d48155e67bdf",
-    "scripts/rl-loop-v1/F9-staged/scripts/e97_first_party_validator_diversity.py": "7abebc445b1cf48feba7a24bb585bf8644c9c144d972b651fa4f9d599d522cd0",
-    "scripts/rl-loop-v1/F9-staged/scripts/e97_offline_shell.py": "06672334b8312ad393158d6f8e0e03bcea31a8daf0ec4b4da1e147b841cbdc7d",
+    "scripts/rl-loop-v1/F9-staged/scripts/e97_first_party_validator_diversity.py": "975d389c085bdf97f670d88e66629a7547c64074801c7f8df009ddd488f2bf90",
+    "scripts/rl-loop-v1/F9-staged/scripts/e97_offline_shell.py": "18d0b28a2a3bbedf8e869502d0b365ec15e47633931f5d31afd8934b0ed92ef5",
     "scripts/rl-loop-v1/F9-staged/scripts/e97_pi_scripted_v8.py": "eba227cadcfbea5c81ad6a560fc9f35a762824b72f6c543e280f0a9800214f6f",
     "scripts/rl-loop-v1/F9-staged/sync_validator.py": "7411f6b985179491ef62907a7b01fd515aa77da5405d32138ed23193b29c58c4",
     "scripts/rl-loop-v1/F9-staged/teacher_author.patch": "cd6dd41cdd1e0aaba07b477c3e9a6de9f2394333f582741839c1809e75429d91",

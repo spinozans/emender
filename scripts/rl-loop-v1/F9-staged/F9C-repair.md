@@ -222,3 +222,82 @@ scope: independent review still REQUIRED; deployment remains **NO-GO** pending
 review and separate attended approval. Historical Pi receipts remain historical;
 no fresh corrected-closure Pi proof or new protected-overlap receipt is claimed.
 Old immutable sources, archives, pins, receipts and all live systems untouched.
+
+## F9G — F9R3 B1-R3 canonical-bound closure (staged only)
+
+F9R3 correctly found four raw commands admitted before dispatch whose canonical
+serializations exceeded the sealed grammar's character bound. F9G rejects them
+**at admission**, without returning to raw execution or rewriting honest PG/
+execution receipts. No language forms, interpreter access, transport behavior,
+live source, bank admission, teacher API or deployment authority were added.
+
+| F9R3 finding / F9G obligation | Repair and permanent evidence (paths relative to this directory) |
+|---|---|
+| B1-R3 four admission/grade disagreements | `scripts/e97_offline_shell.py:182-186` serializes during the gate check and rejects over-bound canonical forms with `canonical offline shell exceeds length bound`; `test_f9g_canonical_bound.py:22-26,73` retains the exact source-named ordinary-raw-4091, ordinary-raw-4096, apostrophes-817 and apostrophes-1000 probes. All four reject at direct, embedded sealed, reference and policy gates before dispatch. |
+| One bound, admission and grading agree by construction | `scripts/e97_offline_shell.py:14` is the sole authored `MAX_SHELL_LENGTH` definition; raw parsing at `:137` and canonical admission at `:184` use it. `sync_validator.py:15-17` embeds the exact source (including that definition), not a separately retyped value. The sealed validator remains self-contained and the closure remains 18 components. The supervisor explicitly approved generation/embedding as the shared binding rather than an external import that would break self-containment. `test_f9g_canonical_bound.py:50-69` enforces constant and all nine function AST identities and rejects any second independent bound literal in either implementation. |
+| Raw and canonical exact/one-over boundaries | `test_f9g_canonical_bound.py:27-32,73-90` tests raw length exactly at/one over the shared limit (whitespace padding isolates raw length), ordinary canonical length exactly at/one over, and apostrophe-expanded canonical length exactly at/one over. Accepted canonical forms also pass all four gates and are idempotent. Ten named rows cover nine distinct strings; the ordinary canonical-one-over repeats the source-named ordinary-raw-4091 case intentionally. |
+| Both real sealed grading modes | `test_f9g_canonical_bound.py:93-131` invokes the sealed executable in focused and regression modes for raw/canonical representations: **20 test nodes / 38 synthetic mode-form verdicts**, all consistent with admission. Borrowed historical end-state fields are explicitly synthetic validator inputs, NOT execution/solution proof. No negative command executes. |
+| 117 + 233 retained permanently | Existing `F9R2-grammar-results.json` remains byte-identical and its 117-case battery remains. `F9R3-grammar-cases.json` adopts the reviewer's 233 distinct new negatives plus four literal controls; `test_f9g_canonical_bound.py:36-47` enforces counts, uniqueness, disjointness and the four gates. Full historical F9R3 results/report/boundary evidence remain untouched and are separately pinned. `test_f9r2_grammar.py:147-164` now independently compares POSIX argv and uses `a,2` so all 13 authorized equivalence controls actually exercise AWK arithmetic. The gate helper also permits already-canonical accepted inputs. |
+| Rebinding / exact-byte qualification | `prepare.py:20` binds the regenerated validator; existing archive construction rebinds BOTH admitted first-party registry pins. `verify_f9g_evidence.py:21-93` rechecks every applicable file-pin occurrence, exact adoption from the pinned reviewer results, in-memory regeneration, staged/runtime equality, current helpers, old17/additive18 closures, extra-component rejection, all 18 archive members and era2/3/4 byte identities. Historical live-source digest annotations are not asserted against current sources (in particular historical supply is not current). |
+
+Current validator SHA256:
+`975d389c085bdf97f670d88e66629a7547c64074801c7f8df009ddd488f2bf90`.
+Current additive source archive SHA256:
+`73ea83a69f2ae79d2fc8748b26d1d61e3da1cb0fce23db4e2ef322dd91c1f954`.
+Current private source closure: `$LAKE/F9-staged/qualified-F9G-final`.
+F9-evidence.json rebinds every current source/archive pin occurrence and pins four
+regression/verification files, eight F9G qualification logs and four retained
+reviewer artifacts. Historical private artifacts, archives and qualification
+logs are unchanged. Earlier F9C/F9E sections above describe historical closures,
+not the current repaired validator. F9-deployment.md names the current closure.
+
+### F9G reproducible qualification
+
+On lambda01, project Python 3.12.3; bytecode and pytest cache disabled:
+
+```bash
+export PYTHONDONTWRITEBYTECODE=1 CUDA_VISIBLE_DEVICES=''
+PY=/home/erikg/emender/.venv/bin/python
+S=/home/erikg/emender/scripts/rl-loop-v1/F9-staged
+E=/home/erikg/emender-scratch/fix-fanout
+LAKE=/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-lake-expansion-v1
+"$PY" "$S/prepare.py" --root "$LAKE/F9-staged/qualified-F9G-final"
+source "$LAKE/F9-staged/qualified-F9G-final/activate.sh"
+cd "$F9_STAGE_ROOT"
+"$PY" -m pytest -q -p no:cacheprovider "$S/test_f9r2_grammar.py" "$S/test_f9g_canonical_bound.py"
+"$PY" -m pytest -q -p no:cacheprovider "$S/unit_tests.py" -k 'not real_pi and not failed_reference_solution'
+"$PY" loop/rl_bank_unit_test.py --scratch "$E/F9G-final-bank-fixtures"
+"$PY" "$S/verify_f9g_evidence.py"
+"$PY" "$E/F9R2-byte-qa.py"
+"$PY" "$E/F9R3-extra-byte-qa.py"
+cd /home/erikg/emender
+"$PY" -m pytest -q -p no:cacheprovider tests/test_e97_first_party_validator_protocol_breadth.py tests/test_e97_pi_native_codec.py tests/test_e97_pi_native_tool_bridge.py -k 'not real_pi'
+"$PY" -m pytest -q -p no:cacheprovider tests/test_e97_first_party_validator*.py
+rg -n 'MAX_SHELL_LENGTH|len\(command\).*4096|len\(canonical_command\).*4096' "$S/scripts/e97_offline_shell.py" "$S/scripts/e97_first_party_validator_diversity.py"
+git diff --check
+git diff --cached --name-only
+```
+
+Receipts `E/F9G-final-{regression,cpu,bank,legacy44,validators}.log`:
+**417 regression passed** (the previous 148 plus 269 F9R3/F9G test nodes),
+**74 F9 CPU passed / 3 Pi-dependent deselected**, **215 same-tree bank passed**,
+**44 legacy CPU passed / 5 real-Pi deselected**, and **59 full legacy validator
+passed**. Counts overlap intentionally and are NOT summed into unique cases.
+`F9G-final-byte.log`: **136 applicable file-pin occurrences MATCH**, regeneration,
+prepare pin, current helpers, all archive members and both registry pins pass.
+`F9G-final-old-byte.log` also re-runs the original 111-pin census, nine F9E
+additional pins, exact documented rollback fixture abort/restore and F9_TOOLS
+resolution. The grep lists only the source definition plus its generated copy
+and uses of the symbol, with no independent literal shell-length comparison;
+other unrelated 4096 token/workspace/backlog limits are not shell bounds.
+The original intentional F9R3 failure logs remain intact; all F9G suites passed
+on their first run and again after the already-canonical gate coverage update.
+
+Applicable IDs remain **R14/NDP13 bounded local safety intent** and **R16
+exact-source/execution evidence discipline** (normative compute-pool doc
+:113-122; gap matrix :33-39); this is not resilient-training conformance.
+Independent review remains REQUIRED; deployment remains **NO-GO** pending that
+review and separate attended operator approval. No fresh Pi transport proof,
+protected-overlap receipt, live ownership/environment/STOP/restart/rollback,
+GPU training or scheduler qualification is claimed. Existing untracked F9R2/
+F9R3 review reports are left untouched and outside the scoped commit.

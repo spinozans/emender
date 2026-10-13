@@ -7,7 +7,7 @@ into the repo. `prepare.py` builds a separate import overlay and versioned
 source archive/registry; never deploys, admits, commits an allowlist or restarts.
 The old `F9-staged/checkout` exploratory snapshot is superseded; use
 `F9-staged/qualified-final` ONLY for historical Pi artifacts; the repaired
-source closure for re-review is `F9-staged/qualified-F9E-final`.
+source closure for re-review is `F9-staged/qualified-F9G-final`.
 
 ## Reproduce without touching the daemon
 

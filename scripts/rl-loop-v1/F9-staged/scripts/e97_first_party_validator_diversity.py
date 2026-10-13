@@ -843,6 +843,9 @@ import re
 import shlex
 
 
+# Single source for raw and canonical bounds; sync_validator embeds this source.
+MAX_SHELL_LENGTH = 4096
+
 
 def workspace_path(value):
     path = safe_path(value)
@@ -964,7 +967,7 @@ def parse_shell(command):
     Each command is a finite approved argv form, optionally redirected (only
     before end or ';'). Quoted operator-looking data stays a word, never syntax.
     """
-    if not isinstance(command, str) or not 1 <= len(command) <= 4096 or any(
+    if not isinstance(command, str) or not 1 <= len(command) <= MAX_SHELL_LENGTH or any(
             ord(c) < 32 and c != '\t' or ord(c) == 127 for c in command):
         raise ValueError('bounded offline shell required')
     tokens = _shell_tokens(command)
@@ -1010,7 +1013,10 @@ def serialize_shell(parsed):
 
 
 def shell_allowed(command):
-    return serialize_shell(parse_shell(command))
+    canonical_command = serialize_shell(parse_shell(command))
+    if len(canonical_command) > MAX_SHELL_LENGTH:
+        raise ValueError('canonical offline shell exceeds length bound')
+    return canonical_command
 
 
 def assertion_argv_allowed(argv):

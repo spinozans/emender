@@ -128,7 +128,7 @@ def test_f9r2_four_gate_matrix(category, command, expected, gates):
         result = bridge.next(request)
         canonical_command = shell_allowed(command)
         assert result['stop_reason'] == 'toolUse' and not bridge.failed
-        assert canonical_command != command
+        # Already-canonical inputs must pass the same admission/dispatch gate.
         assert bridge.pending['arguments']['command'] == canonical_command
         for message in (result['message'], bridge.history[-1]):
             call = next(b for b in message['content'] if b['type'] == 'toolCall')
@@ -147,11 +147,12 @@ def test_f9r2_four_gate_matrix(category, command, expected, gates):
 def test_f9r2_authorized_canonical_execution_equivalence(command, tmp_path):
     # Only the 13 explicitly approved controls execute, in isolated CPU fixtures.
     # No negative candidate or loader command ever reaches subprocess.
+    assert shlex.split(command, posix=True) == shlex.split(shell_allowed(command), posix=True)
     outputs = []
     for index, form in enumerate((command, shell_allowed(command))):
         cwd = tmp_path / str(index)
         cwd.mkdir()
-        (cwd / 'metrics.csv').write_text('north,7\nsouth,11\n')
+        (cwd / 'metrics.csv').write_text('north,7\nsouth,11\na,2\n')
         result = subprocess.run(['/bin/bash', '--noprofile', '--norc', '-c', form],
             cwd=cwd, env={'PATH': '/usr/bin:/bin', 'LC_ALL': 'C'}, capture_output=True, timeout=5)
         outputs.append((result.returncode, result.stdout, result.stderr,

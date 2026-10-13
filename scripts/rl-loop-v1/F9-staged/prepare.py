@@ -17,7 +17,7 @@ REPO = Path('/home/erikg/emender')
 WORK = Path('/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-lake-expansion-v1')
 LOOP = Path('/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-rl-loop-v1')
 SOURCE = Path(__file__).resolve().parent
-EXPECTED_VALIDATOR_SHA256 = '7abebc445b1cf48feba7a24bb585bf8644c9c144d972b651fa4f9d599d522cd0'
+EXPECTED_VALIDATOR_SHA256 = '975d389c085bdf97f670d88e66629a7547c64074801c7f8df009ddd488f2bf90'
 
 
 def prepare(root):
