@@ -1,0 +1,1353 @@
+{
+  "summary": {
+    "cases": 117,
+    "consistent_gates": true,
+    "unexpected_cases": [
+      {
+        "category": "operator-boundary",
+        "command": "printf %s x || printf %b literal",
+        "expected": "REJECT",
+        "gates": {
+          "direct": "ACCEPT",
+          "sealed": "ACCEPT",
+          "reference": "ACCEPT",
+          "policy": "ACCEPT"
+        }
+      },
+      {
+        "category": "operator-boundary",
+        "command": "printf %s x || python evil.py",
+        "expected": "REJECT",
+        "gates": {
+          "direct": "ACCEPT",
+          "sealed": "ACCEPT",
+          "reference": "ACCEPT",
+          "policy": "ACCEPT"
+        }
+      },
+      {
+        "category": "operator-boundary",
+        "command": "printf %s 'x' || 'sh' 'evil.sh'",
+        "expected": "REJECT",
+        "gates": {
+          "direct": "ACCEPT",
+          "sealed": "ACCEPT",
+          "reference": "ACCEPT",
+          "policy": "ACCEPT"
+        }
+      },
+      {
+        "category": "operator-boundary",
+        "command": "printf %s x ;; printf %s y",
+        "expected": "REJECT",
+        "gates": {
+          "direct": "ACCEPT",
+          "sealed": "ACCEPT",
+          "reference": "ACCEPT",
+          "policy": "ACCEPT"
+        }
+      },
+      {
+        "category": "operator-boundary",
+        "command": "printf %s x || printf %s y",
+        "expected": "REJECT",
+        "gates": {
+          "direct": "ACCEPT",
+          "sealed": "ACCEPT",
+          "reference": "ACCEPT",
+          "policy": "ACCEPT"
+        }
+      }
+    ],
+    "validator_sha256": "a06740f36101bf571791510fde93f4c06739e27f94bec91245cf0b160c5eb634"
+  },
+  "cases": [
+    {
+      "category": "original",
+      "command": "printf %s {1..999999999}",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "original",
+      "command": "printf %s ~root",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "original",
+      "command": "printf %s *",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "raw-expansion",
+      "command": "printf %s {1..999999999}",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "raw-expansion",
+      "command": "printf '%s' {1..999999999}",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "raw-expansion",
+      "command": "pr\"int\"f %s {1..999999999}",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "raw-expansion",
+      "command": "printf '%s\\n' {1..999999999}",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "raw-expansion",
+      "command": "printf\t%s\t{1..999999999}",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "fragmented-or-unicode-expansion",
+      "command": "printf %s x\"\"{1..999999999}",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "fragmented-or-unicode-expansion",
+      "command": "printf %s 'prefix'{1..999999999}'suffix'",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "fragmented-or-unicode-expansion",
+      "command": "printf %s \"nested'quote\"{1..999999999}",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "fragmented-or-unicode-expansion",
+      "command": "printf %s {1..999999999}\u00a0",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "fragmented-or-unicode-expansion",
+      "command": "printf %s \u2003{1..999999999}",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "raw-expansion",
+      "command": "printf %s ~root",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "raw-expansion",
+      "command": "printf '%s' ~root",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "raw-expansion",
+      "command": "pr\"int\"f %s ~root",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "raw-expansion",
+      "command": "printf '%s\\n' ~root",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "raw-expansion",
+      "command": "printf\t%s\t~root",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "fragmented-or-unicode-expansion",
+      "command": "printf %s x\"\"~root",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "fragmented-or-unicode-expansion",
+      "command": "printf %s 'prefix'~root'suffix'",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "fragmented-or-unicode-expansion",
+      "command": "printf %s \"nested'quote\"~root",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "fragmented-or-unicode-expansion",
+      "command": "printf %s ~root\u00a0",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "fragmented-or-unicode-expansion",
+      "command": "printf %s \u2003~root",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "raw-expansion",
+      "command": "printf %s *",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "raw-expansion",
+      "command": "printf '%s' *",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "raw-expansion",
+      "command": "pr\"int\"f %s *",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "raw-expansion",
+      "command": "printf '%s\\n' *",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "raw-expansion",
+      "command": "printf\t%s\t*",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "fragmented-or-unicode-expansion",
+      "command": "printf %s x\"\"*",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "fragmented-or-unicode-expansion",
+      "command": "printf %s 'prefix'*'suffix'",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "fragmented-or-unicode-expansion",
+      "command": "printf %s \"nested'quote\"*",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "fragmented-or-unicode-expansion",
+      "command": "printf %s *\u00a0",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "fragmented-or-unicode-expansion",
+      "command": "printf %s \u2003*",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "raw-expansion",
+      "command": "printf %s file?",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "raw-expansion",
+      "command": "printf '%s' file?",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "raw-expansion",
+      "command": "pr\"int\"f %s file?",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "raw-expansion",
+      "command": "printf '%s\\n' file?",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "raw-expansion",
+      "command": "printf\t%s\tfile?",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "fragmented-or-unicode-expansion",
+      "command": "printf %s x\"\"file?",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "fragmented-or-unicode-expansion",
+      "command": "printf %s 'prefix'file?'suffix'",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "fragmented-or-unicode-expansion",
+      "command": "printf %s \"nested'quote\"file?",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "fragmented-or-unicode-expansion",
+      "command": "printf %s file?\u00a0",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "fragmented-or-unicode-expansion",
+      "command": "printf %s \u2003file?",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "raw-expansion",
+      "command": "printf %s [ab]",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "raw-expansion",
+      "command": "printf '%s' [ab]",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "raw-expansion",
+      "command": "pr\"int\"f %s [ab]",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "raw-expansion",
+      "command": "printf '%s\\n' [ab]",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "raw-expansion",
+      "command": "printf\t%s\t[ab]",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "fragmented-or-unicode-expansion",
+      "command": "printf %s x\"\"[ab]",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "fragmented-or-unicode-expansion",
+      "command": "printf %s 'prefix'[ab]'suffix'",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "fragmented-or-unicode-expansion",
+      "command": "printf %s \"nested'quote\"[ab]",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "fragmented-or-unicode-expansion",
+      "command": "printf %s [ab]\u00a0",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "fragmented-or-unicode-expansion",
+      "command": "printf %s \u2003[ab]",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "raw-expansion",
+      "command": "printf %s {a,b}",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "raw-expansion",
+      "command": "printf '%s' {a,b}",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "raw-expansion",
+      "command": "pr\"int\"f %s {a,b}",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "raw-expansion",
+      "command": "printf '%s\\n' {a,b}",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "raw-expansion",
+      "command": "printf\t%s\t{a,b}",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "fragmented-or-unicode-expansion",
+      "command": "printf %s x\"\"{a,b}",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "fragmented-or-unicode-expansion",
+      "command": "printf %s 'prefix'{a,b}'suffix'",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "fragmented-or-unicode-expansion",
+      "command": "printf %s \"nested'quote\"{a,b}",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "fragmented-or-unicode-expansion",
+      "command": "printf %s {a,b}\u00a0",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "fragmented-or-unicode-expansion",
+      "command": "printf %s \u2003{a,b}",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "quoting-format-whitespace",
+      "command": "printf %s \"$(pwd)\"",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "quoting-format-whitespace",
+      "command": "printf %s \"`pwd`\"",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "quoting-format-whitespace",
+      "command": "printf %s \"$HOME\"",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "quoting-format-whitespace",
+      "command": "printf %s \"\\*\"",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "quoting-format-whitespace",
+      "command": "printf %s \\*",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "quoting-format-whitespace",
+      "command": "printf %s $'x'",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "quoting-format-whitespace",
+      "command": "printf %s \"a'$(pwd)'b\"",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "quoting-format-whitespace",
+      "command": "printf %s 'a'\"$(pwd)\"'b'",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "quoting-format-whitespace",
+      "command": "printf %s \"unterminated",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "quoting-format-whitespace",
+      "command": "printf %s 'unterminated",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "quoting-format-whitespace",
+      "command": "printf %s *\n",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "quoting-format-whitespace",
+      "command": "printf %s ~root\r",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "quoting-format-whitespace",
+      "command": "printf %s {1..9}\u0000",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "quoting-format-whitespace",
+      "command": "printf %b literal",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "quoting-format-whitespace",
+      "command": "printf %n literal",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "quoting-format-whitespace",
+      "command": "printf '%s%s' literal",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "quoting-format-whitespace",
+      "command": "printf '%s\\x41' literal",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "quoting-format-whitespace",
+      "command": "printf -- '%s' literal",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "quoting-format-whitespace",
+      "command": "printf\u00a0%s *",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "quoting-format-whitespace",
+      "command": "printf\u2003%s ~root",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "awk-boundary",
+      "command": "awk -F, \"/^[a-z]+,[0-9]+$/{print $1 \":\" $2+2}\" metrics.csv",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "awk-boundary",
+      "command": "awk -F, '/^[a-z]+,[0-9]+$/{print $1 \":\" $2+1000000}' metrics.csv",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "awk-boundary",
+      "command": "awk -F, '/^[a-z]+,[0-9]+$/{print $1 \":\" $2/2}' metrics.csv",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "awk-boundary",
+      "command": "awk -F, '/^[a-z]+,[0-9]+$/{print $1 \":\" $3+2}' metrics.csv",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "awk-boundary",
+      "command": "awk -F, '/^[a-z]+,[0-9]+$/{system $1 \":\" $2+2}' metrics.csv",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "awk-boundary",
+      "command": "awk -F, '/^[a-z]+,[0-9]+$/{print $1 \":\" $2+2;system(\"id\")}' metrics.csv",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "awk-boundary",
+      "command": "awk -F: '/^[a-z]+,[0-9]+$/{print $1 \":\" $2+2}' metrics.csv",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "awk-boundary",
+      "command": "awk -F, '/^[a-z]+,[0-9]+$/{print $1 \":\" $2+2}' ../metrics.csv",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "awk-boundary",
+      "command": "awk -F, '/^[a-z]+,[0-9]+$/{print $1 \":\" $2+2}' ~root",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "awk-boundary",
+      "command": "awk -F, '/^[a-z]+,[0-9]+$/{print $1 \":\" $2+2}' *.csv",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "awk-boundary",
+      "command": "awk -F, '/^[a-z]+,[0-9]+$/{print $1 \":\" $2+\u0662}' metrics.csv",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "awk-boundary",
+      "command": "awk -F, '/^[a-z]+,[0-9]+$/{print\t$1 \":\" $2+2}' metrics.csv",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "operator-boundary",
+      "command": "printf %s x || printf %b literal",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "ACCEPT",
+        "sealed": "ACCEPT",
+        "reference": "ACCEPT",
+        "policy": "ACCEPT"
+      }
+    },
+    {
+      "category": "operator-boundary",
+      "command": "printf %s x || python evil.py",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "ACCEPT",
+        "sealed": "ACCEPT",
+        "reference": "ACCEPT",
+        "policy": "ACCEPT"
+      }
+    },
+    {
+      "category": "operator-boundary",
+      "command": "printf %s 'x' || 'sh' 'evil.sh'",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "ACCEPT",
+        "sealed": "ACCEPT",
+        "reference": "ACCEPT",
+        "policy": "ACCEPT"
+      }
+    },
+    {
+      "category": "operator-boundary",
+      "command": "printf %s x ;; printf %s y",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "ACCEPT",
+        "sealed": "ACCEPT",
+        "reference": "ACCEPT",
+        "policy": "ACCEPT"
+      }
+    },
+    {
+      "category": "operator-boundary",
+      "command": "printf %s x | | printf %s y",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "operator-boundary",
+      "command": "printf %s x && printf %s y",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "operator-boundary",
+      "command": "printf %s x & printf %s y",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "operator-boundary",
+      "command": "printf %s x > ../outside",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "REJECT",
+        "sealed": "REJECT",
+        "reference": "REJECT",
+        "policy": "REJECT"
+      }
+    },
+    {
+      "category": "authorized-literal-control",
+      "command": "awk -F, '/^[a-z]+,[0-9]+$/{print $1 \":\" $2+2}' metrics.csv",
+      "expected": "ACCEPT",
+      "gates": {
+        "direct": "ACCEPT",
+        "sealed": "ACCEPT",
+        "reference": "ACCEPT",
+        "policy": "ACCEPT"
+      }
+    },
+    {
+      "category": "authorized-literal-control",
+      "command": "awk -F, '/^[a-z]+,[0-9]+$/{print $1 \":\" $2*999999}' metrics.csv",
+      "expected": "ACCEPT",
+      "gates": {
+        "direct": "ACCEPT",
+        "sealed": "ACCEPT",
+        "reference": "ACCEPT",
+        "policy": "ACCEPT"
+      }
+    },
+    {
+      "category": "authorized-literal-control",
+      "command": "awk -F, '/^[a-z]+,[0-9]+$/{print $1 \":\" $2-0}' metrics.csv",
+      "expected": "ACCEPT",
+      "gates": {
+        "direct": "ACCEPT",
+        "sealed": "ACCEPT",
+        "reference": "ACCEPT",
+        "policy": "ACCEPT"
+      }
+    },
+    {
+      "category": "authorized-literal-control",
+      "command": "printf '%s\\n' '{1..999999999} ~root * [ab] ?' > report.txt",
+      "expected": "ACCEPT",
+      "gates": {
+        "direct": "ACCEPT",
+        "sealed": "ACCEPT",
+        "reference": "ACCEPT",
+        "policy": "ACCEPT"
+      }
+    },
+    {
+      "category": "authorized-literal-control",
+      "command": "printf %s \"{1..999999999} ~root * [ab] ?\"",
+      "expected": "ACCEPT",
+      "gates": {
+        "direct": "ACCEPT",
+        "sealed": "ACCEPT",
+        "reference": "ACCEPT",
+        "policy": "ACCEPT"
+      }
+    },
+    {
+      "category": "authorized-literal-control",
+      "command": "printf %s 'a\"*\"b'",
+      "expected": "ACCEPT",
+      "gates": {
+        "direct": "ACCEPT",
+        "sealed": "ACCEPT",
+        "reference": "ACCEPT",
+        "policy": "ACCEPT"
+      }
+    },
+    {
+      "category": "authorized-literal-control",
+      "command": "printf %s \"a'*'b\"",
+      "expected": "ACCEPT",
+      "gates": {
+        "direct": "ACCEPT",
+        "sealed": "ACCEPT",
+        "reference": "ACCEPT",
+        "policy": "ACCEPT"
+      }
+    },
+    {
+      "category": "authorized-literal-control",
+      "command": "printf %s '*'\"*\"",
+      "expected": "ACCEPT",
+      "gates": {
+        "direct": "ACCEPT",
+        "sealed": "ACCEPT",
+        "reference": "ACCEPT",
+        "policy": "ACCEPT"
+      }
+    },
+    {
+      "category": "authorized-literal-control",
+      "command": "printf\t%s\tliteral",
+      "expected": "ACCEPT",
+      "gates": {
+        "direct": "ACCEPT",
+        "sealed": "ACCEPT",
+        "reference": "ACCEPT",
+        "policy": "ACCEPT"
+      }
+    },
+    {
+      "category": "authorized-literal-control",
+      "command": "printf %s \uff0a",
+      "expected": "ACCEPT",
+      "gates": {
+        "direct": "ACCEPT",
+        "sealed": "ACCEPT",
+        "reference": "ACCEPT",
+        "policy": "ACCEPT"
+      }
+    },
+    {
+      "category": "authorized-literal-control",
+      "command": "printf %s \uff5eroot",
+      "expected": "ACCEPT",
+      "gates": {
+        "direct": "ACCEPT",
+        "sealed": "ACCEPT",
+        "reference": "ACCEPT",
+        "policy": "ACCEPT"
+      }
+    },
+    {
+      "category": "authorized-literal-control",
+      "command": "printf %s \uff5b1..9\uff5d",
+      "expected": "ACCEPT",
+      "gates": {
+        "direct": "ACCEPT",
+        "sealed": "ACCEPT",
+        "reference": "ACCEPT",
+        "policy": "ACCEPT"
+      }
+    },
+    {
+      "category": "authorized-literal-control",
+      "command": "pr'int'f '%s' literal",
+      "expected": "ACCEPT",
+      "gates": {
+        "direct": "ACCEPT",
+        "sealed": "ACCEPT",
+        "reference": "ACCEPT",
+        "policy": "ACCEPT"
+      }
+    },
+    {
+      "category": "operator-boundary",
+      "command": "printf %s x || printf %s y",
+      "expected": "REJECT",
+      "gates": {
+        "direct": "ACCEPT",
+        "sealed": "ACCEPT",
+        "reference": "ACCEPT",
+        "policy": "ACCEPT"
+      }
+    }
+  ]
+}

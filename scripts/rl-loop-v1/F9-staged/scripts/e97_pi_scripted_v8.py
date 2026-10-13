@@ -41,7 +41,7 @@ class SafeWorkspaceBridgeV8(NativePiToolBridge):
         if self.pending is not None:
             from scripts.e97_offline_shell import action_allowed
             try:
-                action_allowed(self.pending['name'], self.pending['arguments'])
+                arguments = action_allowed(self.pending['name'], self.pending['arguments'])
             except ValueError:
                 # Pi has not received the call; public history must stay at the
                 # pre-generation prefix. The valid native failure frame remains
@@ -49,6 +49,13 @@ class SafeWorkspaceBridgeV8(NativePiToolBridge):
                 self.history.pop()
                 self.pending = None
                 self.stop('invalid_native_turn')
+            # Retain raw generated frames for PG, but every execution-facing
+            # representation must use the parsed canonical action.
+            self.pending['arguments'] = arguments
+            for message in (result['message'], self.history[-1]):
+                for block in message['content']:
+                    if block.get('type') == 'toolCall':
+                        block['arguments'] = deepcopy(arguments)
         return result
 
 

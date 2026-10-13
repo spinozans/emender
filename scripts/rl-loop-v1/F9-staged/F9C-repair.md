@@ -1,12 +1,11 @@
 # F9C blocker repairs (staged only; deployment remains NO-GO pending review)
 
-## B1 — raw grammar, regenerated sealed validator
+## B1 — F9C raw grammar, regenerated sealed validator (superseded by F9E)
 
-Raw checking is safer here than changing execution serialization: it preserves
-approved single-quoted AWK and printf forms while rejecting expansion before
-POSIX shlex strips quoting. Unquoted brace/tilde/glob/group/comment syntax and
-unquoted or double-quoted substitution/escapes are refused. Original command
-bytes are returned only after this raw check and the finite parsed grammar.
+F9C used raw checking before POSIX shlex stripped quoting, preserving
+approved single-quoted AWK and printf forms while rejecting expansion. It
+returned original command bytes after checks. F9R2 proved that insufficient;
+the F9E structural parser/canonical-execution strategy below supersedes it.
 
 - F9R B1 and scope 1: `scripts/e97_offline_shell.py:78` raw boundary;
   `unit_tests.py:373` exact reviewer repro at direct/reference/policy gates;
@@ -151,3 +150,75 @@ SystemExit on schema/hash drift. Intake now catches that authority failure as
 an explicit logged disable (not KeyboardInterrupt), with regression coverage.
 Final integrated count is 215 bank / 74 F9 CPU; 3 Pi tests excluded.
 The committed rebuild below is byte-bound to this same qualified closure.
+
+## F9E — F9R2 structural grammar repair (supersedes F9C B1 strategy)
+
+The supervisor's strategy ruling replaces validate-then-return-original with
+**full-consumption parse then canonical execution**. F9C's raw-only strategy
+above is historical and superseded. The original source bytes never dispatch:
+`scripts/e97_offline_shell.py:78` lexes words/operators with quote provenance;
+`:128` consumes the complete finite argv/separator/redirect grammar; `:165`
+serializes only parsed structure with single-quoted words and supported syntax.
+Unsupported operator runs, expansions, escapes, control bytes, empty/trailing
+commands and unconsumed redirect suffixes reject. No argv fallthrough for syntax.
+
+| F9R2 finding | F9E fix and permanent evidence |
+|---|---|
+| B1-R2 five accepted `||`/`;;` negatives | `test_f9r2_grammar.py:62` names forbidden printf format, Python loader, quoted sh loader, double-semicolon and plain-double-pipe cases; `:100` checks all four direct/sealed/reference/policy gates. All five now reject. |
+| Full 117-case representation matrix | Reviewer construction is retained in `test_f9r2_grammar.py`; exact original results JSON is retained as HISTORICAL baseline in `F9R2-grammar-results.json`. `:75` asserts matrix identity/counts (104 reject, 13 accept); `:100` fails on any gate regression, never executing negative strings. |
+| Authorized forms preserved and original bytes never execute | `:147` executes ONLY the 13 approved controls in isolated scratch CPU workspaces, comparing exit/stdout/stderr/all file bytes for original and canonical forms. `:100` proves pending, returned calls and public history contain canonical bytes, raw frames/positive PG masks remain, and subsequent canonical-history ingest succeeds. |
+| Exact execution receipts after canonicalization | Supervisor-approved R16 fix: `loop/rl_loop_driver.py:369,530` marks only end-state/safe scripted records and projects canonical executed action arguments, retaining generated raw actions in native_record/source_messages for PG. `test_f9r2_grammar.py:192` tests differing and identical forms plus unchanged ordinary projections. Labels now distinguish executed versus generated actions. |
+| Sealed rebinding and 111 pins | Regenerated validator equality, old 17/additive 18 closures, extra-component rejection, both first-party registry pins, exact era2/3/4 archive members, 22 staged + 60 runtime + 17 historical artifact + 12 retained log pins all pass; `prepare.py:20` binds the new validator. Historical receipts/archives/qualification logs were not overwritten. |
+| C2 undefined F9_TOOLS | Separate runbook commit sets `F9_TOOLS="$REPO/scripts/rl-loop-v1/F9-staged"` at `F9-deployment.md:93` before both boundary sequences, records/retains tool path and hashes in release.manifest.json; boundary command now resolves to the retained `rollback_gate.py`, not `/rollback_gate.py`. |
+| B2/C1/B3 previously passing findings | Same integrated tree retains current durable service, 96/24/24/48/48 knobs, verified seed intake, read-only boundary gate, legacy compatibility and historical proof hashes. No live qualification is claimed. |
+
+New sealed validator SHA256:
+`7abebc445b1cf48feba7a24bb585bf8644c9c144d972b651fa4f9d599d522cd0`.
+New additive source archive SHA256:
+`061133d6f564f19e580bc864876e65dd032c5832f9c7ce2aaee50f1470270f69`.
+Private integrated source closure: `$LAKE/F9-staged/qualified-F9E-final`.
+`F9-evidence.json` rebinds all applicable source pins, retains historical pins,
+and separately pins the permanent regression sources and seven new CPU logs.
+
+### Reproducible validation (lambda01, project Python 3.12.3)
+
+`E=/home/erikg/emender-scratch/fix-fanout`; `S` is this staged directory.
+No Frontier, scheduler, training, daemon, GPU, teacher, admission/injection or
+live Pi transport was used. Only approved literal equivalence controls execute;
+bank-suite processes/signals are CPU fixtures, as in F9R2.
+
+```bash
+export PYTHONDONTWRITEBYTECODE=1 CUDA_VISIBLE_DEVICES=''
+PY=/home/erikg/emender/.venv/bin/python
+"$PY" "$S/prepare.py" --root "$LAKE/F9-staged/qualified-F9E-final"
+source "$LAKE/F9-staged/qualified-F9E-final/activate.sh"
+cd "$F9_STAGE_ROOT"
+"$PY" -m pytest -q -p no:cacheprovider "$S/unit_tests.py" "$S/test_f9r2_grammar.py" -k 'not real_pi and not failed_reference_solution'
+"$PY" loop/rl_bank_unit_test.py --scratch "$E/F9E-final-bank-fixtures"
+"$PY" "$E/F9R2-byte-qa.py"
+cd /home/erikg/emender
+"$PY" -m pytest -q -p no:cacheprovider tests/test_e97_first_party_validator_protocol_breadth.py tests/test_e97_pi_native_codec.py tests/test_e97_pi_native_tool_bridge.py -k 'not real_pi'
+git diff --check
+git diff --cached --name-only
+```
+
+Receipts: `F9E-final-grammar.log` **148 passed**, including the entire **117**
+four-gate matrix, **13** actual authorized equivalence tests, matrix identity,
+**12** suffix negatives, **3** canonical composition checks and **2** execution
+projection checks. `F9E-final-cpu.log` **74 passed / 3 Pi-dependent deselected**;
+combined documented suite `F9E-final-integrated-cpu.log` **222 passed / 3
+deselected**. `F9E-final-bank.log` **215 passed** in the SAME integrated tree.
+`F9E-final-legacy44.log` **44 passed / 5 real-Pi deselected**.
+`F9E-final-byte.log`: **all 111 pin occurrences MATCH**, regeneration/closures/
+archive pins/legacy members pass; exact documented restore block passes both
+corrupt-backup abort and valid restore using new scratch-only fixtures.
+Initial battery run: 145 passed/1 failed because an added pipeline test used
+`wc -c` without the required path; corrected to supported `cat | sort` path
+forms, then all 148 pass. No implementation or approved grammar was broadened.
+
+Applicable IDs: **R14/NDP13 bounded local safety intent, R16 exact-source
+execution evidence discipline**, not resilient-training conformance. Residual
+scope: independent review still REQUIRED; deployment remains **NO-GO** pending
+review and separate attended approval. Historical Pi receipts remain historical;
+no fresh corrected-closure Pi proof or new protected-overlap receipt is claimed.
+Old immutable sources, archives, pins, receipts and all live systems untouched.

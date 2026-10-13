@@ -75,71 +75,109 @@ def argv_allowed(argv):
         raise ValueError('command outside offline grammar')
 
 
-def _raw_shell_literals(command):
-    """Reject expansion BEFORE shlex loses quoting; execute only checked bytes.
+def _shell_tokens(command):
+    """Lex the entire finite grammar, retaining word/operator identity.
 
-    Single quotes authorize literal AWK/printf DSL text. Double quotes protect
-    glob/brace/tilde characters, but never substitution or escape processing.
-    Outside quotes we conservatively reject every expansion metacharacter,
-    including literal braces (not just ranges), comments and shell grouping.
+    Only space/tab separate words. Quotes concatenate literal fragments; no
+    escape processing or expansion is supported (even in double quotes).
+    Operator runs are never words, including when adjacent to quoted data.
     """
-    quote = None
-    for char in command:
-        if quote == "'":
-            if char == "'":
-                quote = None
-        elif char in {'$', '`', '\\'}:
-            raise ValueError('raw shell expansion/escape forbidden')
-        elif quote == '"':
-            if char == '"':
-                quote = None
-        elif char in {"'", '"'}:
-            quote = char
-        elif char in '{}~*?[]()#':
-            raise ValueError('raw shell expansion/grouping forbidden')
-    if quote is not None:
-        raise ValueError('unterminated shell quote')
+    tokens = []
+    i = 0
+    operators = ';&|<>'
+    while i < len(command):
+        char = command[i]
+        if char in ' \t':
+            i += 1
+            continue
+        if char in operators:
+            end = i + 1
+            while end < len(command) and command[end] in operators:
+                end += 1
+            operator = command[i:end]
+            if operator not in {';', '|', '>'}:
+                raise ValueError('shell operator outside grammar')
+            tokens.append(('operator', operator))
+            i = end
+            continue
+        word = []
+        while i < len(command) and command[i] not in ' \t' + operators:
+            char = command[i]
+            if char in {"'", '"'}:
+                quote = char
+                i += 1
+                while i < len(command) and command[i] != quote:
+                    char = command[i]
+                    if quote == '"' and char in {'$', '`', '\\'}:
+                        raise ValueError('raw shell expansion/escape forbidden')
+                    word.append(char)
+                    i += 1
+                if i == len(command):
+                    raise ValueError('unterminated shell quote')
+            else:
+                if char in '$`\\{}~*?[]()#' or char.isspace():
+                    raise ValueError('raw shell expansion/grouping/whitespace forbidden')
+                word.append(char)
+            i += 1
+        tokens.append(('word', ''.join(word)))
+    if not tokens or len(tokens) > 128:
+        raise ValueError('bounded nonempty shell tokens required')
+    return tokens
+
+
+def parse_shell(command):
+    """Fully consume: command ((';' | '|') command)*, terminal > path.
+
+    Each command is a finite approved argv form, optionally redirected (only
+    before end or ';'). Quoted operator-looking data stays a word, never syntax.
+    """
+    if not isinstance(command, str) or not 1 <= len(command) <= 4096 or any(
+            ord(c) < 32 and c != '\t' or ord(c) == 127 for c in command):
+        raise ValueError('bounded offline shell required')
+    tokens = _shell_tokens(command)
+    parsed = []
+    i = 0
+    while i < len(tokens):
+        argv = []
+        while i < len(tokens) and tokens[i][0] == 'word':
+            argv.append(tokens[i][1])
+            i += 1
+        argv_allowed(argv)
+        target = None
+        if i < len(tokens) and tokens[i] == ('operator', '>'):
+            i += 1
+            if i == len(tokens) or tokens[i][0] != 'word':
+                raise ValueError('redirect target missing')
+            target = workspace_path(tokens[i][1])
+            i += 1
+        separator = None
+        if i < len(tokens):
+            kind, separator = tokens[i]
+            if kind != 'operator' or separator not in {';', '|'} or (target is not None and separator != ';'):
+                raise ValueError('unsupported command suffix')
+            i += 1
+            if i == len(tokens):
+                raise ValueError('trailing shell operator')
+        parsed.append((tuple(argv), target, separator))
+    return tuple(parsed)
+
+
+def serialize_shell(parsed):
+    """Emit only parsed syntax and single-quoted words, never original bytes."""
+    def literal(value):
+        return "'" + value.replace("'", "'\"'\"'") + "'"
+    parts = []
+    for argv, target, separator in parsed:
+        parts.append(' '.join(literal(word) for word in argv))
+        if target is not None:
+            parts.extend(('>', literal(target)))
+        if separator is not None:
+            parts.append(separator)
+    return ' '.join(parts)
 
 
 def shell_allowed(command):
-    if not isinstance(command, str) or not 1 <= len(command) <= 4096 or any(c in command for c in ('\x00', '\n', '\r')):
-        raise ValueError('bounded offline shell required')
-    _raw_shell_literals(command)
-    lexer = shlex.shlex(command, posix=True, punctuation_chars=';&|<>')
-    lexer.whitespace_split = True
-    lexer.commenters = ''
-    tokens = list(lexer)
-    if len(tokens) > 128:
-        raise ValueError('shell token bound')
-    command_tokens = []
-    i = 0
-    while i < len(tokens):
-        token = tokens[i]
-        if token in {';', '|'}:
-            argv_allowed(command_tokens)
-            command_tokens = []
-        elif token == '>':
-            argv_allowed(command_tokens)
-            command_tokens = []
-            i += 1
-            if i >= len(tokens):
-                raise ValueError('redirect target missing')
-            workspace_path(tokens[i])
-            if i+1 < len(tokens) and tokens[i+1] != ';':
-                raise ValueError('redirect must end command')
-            if i+1 < len(tokens):
-                i += 1
-        elif any(c in token for c in ('&', '<', '>')):
-            raise ValueError('shell operator outside grammar')
-        else:
-            command_tokens.append(token)
-        i += 1
-    if command_tokens:
-        argv_allowed(command_tokens)
-    elif tokens and tokens[-1] in {';', '|'}:
-        raise ValueError('trailing shell operator')
-    if not tokens:
-        raise ValueError('empty shell')
+    return serialize_shell(parse_shell(command))
 
 
 def assertion_argv_allowed(argv):
@@ -154,8 +192,11 @@ def action_allowed(tool, arguments):
     elif tool == 'bash':
         if set(arguments) - {'command', 'timeout'}:
             raise ValueError('bash arguments outside grammar')
-        shell_allowed(arguments.get('command'))
+        command = shell_allowed(arguments.get('command'))
         if 'timeout' in arguments and (type(arguments['timeout']) is not int or not 1 <= arguments['timeout'] <= 30):
             raise ValueError('bash timeout outside bounds')
+        return dict(arguments, command=command)
     elif tool not in {'finish','think'}:
         raise ValueError('tool outside era8 offline surface')
+
+    return dict(arguments)

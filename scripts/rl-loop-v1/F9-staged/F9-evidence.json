@@ -1,5 +1,35 @@
 {
   "deployment_performed": false,
+  "f9e": {
+    "authorized_controls": 13,
+    "bank_checks": 215,
+    "f9_cpu_checks": 74,
+    "f9_pi_deselected": 3,
+    "grammar_cases": 117,
+    "legacy_cpu_checks": 44,
+    "legacy_pi_deselected": 5,
+    "pi_run": false,
+    "qualification_logs": {
+      "/home/erikg/emender-scratch/fix-fanout/F9E-final-bank.log": "4a9d222bd267ad9daf74516a985b577e58c03fdaab4d7f2b41fb39f2f1d0f942",
+      "/home/erikg/emender-scratch/fix-fanout/F9E-final-byte.log": "233ef4824c99cc2cbcabc091298154ffed00faefd08886ac60893a117b6b85d7",
+      "/home/erikg/emender-scratch/fix-fanout/F9E-final-cpu.log": "ec037b6a5c0e6aa89a6c646461a38816f5546a205f3c871a28e059fa4671f556",
+      "/home/erikg/emender-scratch/fix-fanout/F9E-final-grammar.log": "deb09e992fa97b207121e014de9367daa71fdb28571c54a41d4aa641220d3713",
+      "/home/erikg/emender-scratch/fix-fanout/F9E-final-integrated-cpu.log": "e7ef99bb0e6d7550026ade203cebd33da44230d1f96dd1532b0a5479fcbeee74",
+      "/home/erikg/emender-scratch/fix-fanout/F9E-final-legacy44.log": "d4e34f0afa6138f2fea7fa13cbac75a6a8da92ca47106791fbca4b69c7d1c56c",
+      "/home/erikg/emender-scratch/fix-fanout/F9E-final-prepare.log": "1ec2d7f6b48788ec4799fe7c0ffc1573fddffcf88af6b846a499fcbf3e6c1cc6"
+    },
+    "regression_checks": 148,
+    "regression_files": {
+      "scripts/rl-loop-v1/F9-staged/F9R2-grammar-results.json": "fd938f83067a37985e8a1f99ed989db87fab41aee0d60e00df7d63d1daa5e5d4",
+      "scripts/rl-loop-v1/F9-staged/test_f9r2_grammar.py": "621ab566be981b6fd0bc45894f844cdbebc7f4d2f74ebc75c715f82b7fe75cba"
+    },
+    "reject_cases": 104,
+    "requirements": [
+      "R14/NDP13 safety intent",
+      "R16 exact-source evidence discipline"
+    ],
+    "strategy": "full-consumption parse then canonical execution; generated raw frames retained only for PG"
+  },
   "historical_live_retained_sources": {
     "/home/erikg/emender/configs/pi/e97-pi-native-frozen-tools-v2.ts": "a9ae7e2cf4fb92323709e4b7f91ed7b1630c6427e50e4810d89d1ae644ee8706",
     "/home/erikg/emender/scripts/e97_first_party_validator_protocol_breadth.py": "3ba17474b4ae4905c2c91b568bb3052a7dad4c439ddc37bff9b91fa62fe6969f",
@@ -12,12 +42,12 @@
   "host": "lambda01",
   "integrated_runtime_files": {
     "configs/pi/e97-firstparty-authorization-license-v1.json": "ba681180202b76381ad937ce76e0e7922291f38ea60da30e79e5258bd5f35ea1",
-    "configs/pi/e97-firstparty-collection-authorizations-v1.json": "8b170fc7e182f3c2915a75ca0bd17308796ea0bf459315e34d13c81538c152d3",
+    "configs/pi/e97-firstparty-collection-authorizations-v1.json": "ab9eabf5134a395d2712650dbed441e7e52dcdc18d43ab971d90316459c37c7e",
     "configs/pi/e97-firstparty-cpu-environment-v1.json": "a99f3d9f9922e5ee67218d4f4e5648c0fb49f911aa52a87932b8b8f7a3c4d5fc",
-    "configs/pi/e97-firstparty-generator-manifest-v1.json": "2eb501c2bd6bd4b6765dfba42572cad280982a7d53c25076d0250a754034286d",
+    "configs/pi/e97-firstparty-generator-manifest-v1.json": "3365ad158dac74ff285e6bea0c4cf88b88ccb3c5c1005a8f73e535a0c6f5c690",
     "configs/pi/e97-firstparty-overlap-firewall-audit-v1.json": "64ff6a4fb20a98b586913bd1b73c68850d963d0711c4bbd0fe4e1f34e8c3996f",
-    "configs/pi/e97-firstparty-source-v1.tar": "ba0a76b26fb8ae0d5df1883d34601413f4fdb974380306838509ed94b3c489a8",
-    "configs/pi/e97-onpolicy-source-registry-v1.json": "e057181fc1a3e770d3e7ea86b9c5da364e5a04f14c89b3a06db568e36c1fd717",
+    "configs/pi/e97-firstparty-source-v1.tar": "061133d6f564f19e580bc864876e65dd032c5832f9c7ce2aaee50f1470270f69",
+    "configs/pi/e97-onpolicy-source-registry-v1.json": "41505806b2999c8c71ad40c3c327abe270b9cca7241c9c75f1fba3e0db2e9eb1",
     "configs/pi/e97-pi-native-scripted-v8.ts": "3529e9c633117ddbecca6c0f169c8fb1d0fd746e587b65784cec83f645c36924",
     "loop/inject_pool.py": "9ba3d0bc760513ad6fe76f5cc599ffa96024f3592b8c5c21663fa54f15c9c664",
     "loop/lake_expand.py": "bd5bfe52d1334c2fd39ebab1fc64e2de8c0d0b6a69a87e5dc14f974b91d9b585",
@@ -33,7 +63,7 @@
     "loop/rl_correction_service.py": "14e49b9d8c40299cadb2f825577db1ef888dd14761c613bf5fa4be41f1a78787",
     "loop/rl_cpu_dryrun.py": "c9fd1e8e4b17203a16c0f19ad2c97e8c66b18cef63cf30ddd234657928044d97",
     "loop/rl_gym_tasks.py": "7ac4e4a9276c9898906564fba0a73af1002254ce361f5b8bec94c642bf0beb16",
-    "loop/rl_loop_driver.py": "85a08bff4828311da42b56ba561d4b2f652165ae1577d1ce4704f5d28087c74b",
+    "loop/rl_loop_driver.py": "ffcbd0f75fec152dc3ef0f6295f20c0e9d3c2072a1a0d9228892691e9079689b",
     "loop/rl_pg_batch.py": "e49abd86be9b104884de121b51227d4d2ec06607023ccaa2400a7f565976d3b5",
     "loop/rl_pg_screen.py": "095eb285067c8f4fc574ead1019c4d872cd0f1e4879bc73e9e7bcad32b381348",
     "loop/rl_policy_gradient_step.py": "71f9cf2d29b9fff0696f89877a6461a450a690e2cbf242f729c3cd877b7b5532",
@@ -65,15 +95,15 @@
     "scripts/e97_diversity.py": "9c4b2ad76fbf2b6cce243cdda3df443fafb977f01f97a8c141f0824493c0f9fa",
     "scripts/e97_diversity_author.py": "14566c82533df5a20d3c6dd683cb8a291de9a8d941343c30a5a5d48155e67bdf",
     "scripts/e97_first_party_validator.py": "72820d63ce20e60cebb2e5951275d48522e17b22eb2bd2695f5ef8202f8d8582",
-    "scripts/e97_first_party_validator_diversity.py": "a06740f36101bf571791510fde93f4c06739e27f94bec91245cf0b160c5eb634",
+    "scripts/e97_first_party_validator_diversity.py": "7abebc445b1cf48feba7a24bb585bf8644c9c144d972b651fa4f9d599d522cd0",
     "scripts/e97_first_party_validator_first_action.py": "ebfb08b784142a2cb77361cb5b7b41529e4ab5cf7386f0e712b3eb3efd23a70a",
     "scripts/e97_first_party_validator_protocol_breadth.py": "3ba17474b4ae4905c2c91b568bb3052a7dad4c439ddc37bff9b91fa62fe6969f",
-    "scripts/e97_offline_shell.py": "c66e55b4265b8bedf1c5f1bc8052acfe29d6204dff95e3c5dc12237271f75196",
-    "scripts/e97_pi_scripted_v8.py": "27db2f102be9cb73e772fdc130acdc00297d548500ee2f0ff9826309a5d63d1a",
+    "scripts/e97_offline_shell.py": "06672334b8312ad393158d6f8e0e03bcea31a8daf0ec4b4da1e147b841cbdc7d",
+    "scripts/e97_pi_scripted_v8.py": "eba227cadcfbea5c81ad6a560fc9f35a762824b72f6c543e280f0a9800214f6f",
     "scripts/validate_e97_first_party_task.py": "4bcb049ee42731e6c7d952491a77a5caf71fdbf1af9a56653aa467ca3ae5aebb"
   },
   "live_daemon_pid": 450261,
-  "live_source_claim": "Historical only; no process, daemon, bank, GPU or live runtime validation in F9C.",
+  "live_source_claim": "Historical only; no process, daemon, bank, GPU or live runtime validation in F9C/F9E.",
   "new_live_admissions": 0,
   "private_artifacts": {
     "author-work/seed-corpus.json": "1855368bf374849e94c2bfd6fb46b4ef36f025a5b509e04ce7819ef30568d101",
@@ -124,7 +154,7 @@
     "pi_run": false
   },
   "schema": "emender-f9-staged-diversity-evidence-v1",
-  "sealed_validator_sha256": "a06740f36101bf571791510fde93f4c06739e27f94bec91245cf0b160c5eb634",
+  "sealed_validator_sha256": "7abebc445b1cf48feba7a24bb585bf8644c9c144d972b651fa4f9d599d522cd0",
   "seed_intake": {
     "corpus_sha256": "1855368bf374849e94c2bfd6fb46b4ef36f025a5b509e04ce7819ef30568d101",
     "deployment_owner": "operator; F9_AUTHOR_WORK; F9_SEED_MANIFEST_SHA256 explicitly required",
@@ -132,8 +162,8 @@
     "verified_actual_entries": 12,
     "verified_solved_entries": 8
   },
-  "source_archive_sha256": "ba0a76b26fb8ae0d5df1883d34601413f4fdb974380306838509ed94b3c489a8",
-  "source_closure_root": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-lake-expansion-v1/F9-staged/qualified-F9C-reviewed",
+  "source_archive_sha256": "061133d6f564f19e580bc864876e65dd032c5832f9c7ce2aaee50f1470270f69",
+  "source_closure_root": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-lake-expansion-v1/F9-staged/qualified-F9E-final",
   "staged_source_files": {
     "scripts/rl-loop-v1/F9-staged/configs/pi/e97-pi-native-scripted-v8.ts": "3529e9c633117ddbecca6c0f169c8fb1d0fd746e587b65784cec83f645c36924",
     "scripts/rl-loop-v1/F9-staged/harvest_seeds.py": "d71923b80c1f615b2b0f8d8bb8cf878ce895ce6a33c503f1e396913dae720398",
@@ -143,17 +173,17 @@
     "scripts/rl-loop-v1/F9-staged/loop/rl_correction_config.py": "0e370857840b320deba6aa90880d02ed8861fc899099607fa5d5d980240ffec3",
     "scripts/rl-loop-v1/F9-staged/loop/rl_correction_pool.py": "33792e6b5b7e3e4fdfa20a5d79b43a4fb4462b2cf1efd1849ea7d6e18c8bccf1",
     "scripts/rl-loop-v1/F9-staged/loop/rl_correction_service.py": "14e49b9d8c40299cadb2f825577db1ef888dd14761c613bf5fa4be41f1a78787",
-    "scripts/rl-loop-v1/F9-staged/loop/rl_loop_driver.py": "85a08bff4828311da42b56ba561d4b2f652165ae1577d1ce4704f5d28087c74b",
+    "scripts/rl-loop-v1/F9-staged/loop/rl_loop_driver.py": "ffcbd0f75fec152dc3ef0f6295f20c0e9d3c2072a1a0d9228892691e9079689b",
     "scripts/rl-loop-v1/F9-staged/loop/standing_supply.py": "c02ba42ee7b9dc0ed8047b050254163e9a4033069f819651ddcd98ed15302c76",
     "scripts/rl-loop-v1/F9-staged/ndm/e97_first_party_read_observe.py": "76662bf3c6ad9287ad1add83cf9e5ccefc6f60d234473afad77a96b2c64f4c89",
     "scripts/rl-loop-v1/F9-staged/ndm/e97_first_party_source_archive.py": "c0a10d94e2377d7ad0b97dd33c783f7321825d197a20566d0a0075e3d462a02d",
-    "scripts/rl-loop-v1/F9-staged/prepare.py": "4ddee0438fe20f47c7ffd19303086d3220fccce5e796b51e9c4d5312bf6e9323",
+    "scripts/rl-loop-v1/F9-staged/prepare.py": "33c16fdde94f9ff2ae6733ce327dc10b76e76d4faea6ba35f0a3761c78a675d9",
     "scripts/rl-loop-v1/F9-staged/rollback_gate.py": "cc3451c5f5f5e5228d92c7213e6250029efe6f917c10832bb02ea2ca16474214",
     "scripts/rl-loop-v1/F9-staged/scripts/e97_diversity.py": "9c4b2ad76fbf2b6cce243cdda3df443fafb977f01f97a8c141f0824493c0f9fa",
     "scripts/rl-loop-v1/F9-staged/scripts/e97_diversity_author.py": "14566c82533df5a20d3c6dd683cb8a291de9a8d941343c30a5a5d48155e67bdf",
-    "scripts/rl-loop-v1/F9-staged/scripts/e97_first_party_validator_diversity.py": "a06740f36101bf571791510fde93f4c06739e27f94bec91245cf0b160c5eb634",
-    "scripts/rl-loop-v1/F9-staged/scripts/e97_offline_shell.py": "c66e55b4265b8bedf1c5f1bc8052acfe29d6204dff95e3c5dc12237271f75196",
-    "scripts/rl-loop-v1/F9-staged/scripts/e97_pi_scripted_v8.py": "27db2f102be9cb73e772fdc130acdc00297d548500ee2f0ff9826309a5d63d1a",
+    "scripts/rl-loop-v1/F9-staged/scripts/e97_first_party_validator_diversity.py": "7abebc445b1cf48feba7a24bb585bf8644c9c144d972b651fa4f9d599d522cd0",
+    "scripts/rl-loop-v1/F9-staged/scripts/e97_offline_shell.py": "06672334b8312ad393158d6f8e0e03bcea31a8daf0ec4b4da1e147b841cbdc7d",
+    "scripts/rl-loop-v1/F9-staged/scripts/e97_pi_scripted_v8.py": "eba227cadcfbea5c81ad6a560fc9f35a762824b72f6c543e280f0a9800214f6f",
     "scripts/rl-loop-v1/F9-staged/sync_validator.py": "7411f6b985179491ef62907a7b01fd515aa77da5405d32138ed23193b29c58c4",
     "scripts/rl-loop-v1/F9-staged/teacher_author.patch": "cd6dd41cdd1e0aaba07b477c3e9a6de9f2394333f582741839c1809e75429d91",
     "scripts/rl-loop-v1/F9-staged/unit_tests.py": "839e71275b1787e7ffa076ceaa51595e0548a0b74e80cb5e4100af802d2faa29"

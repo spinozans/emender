@@ -366,6 +366,8 @@ def run_episode(*, episode_dir: Path, workspace: Path, prompt: str, panel: dict,
         "started_unix": time.time(),
         "prefix": prefix_info,
     }
+    if end_state_task or user_script is not None:
+        record['end_state_task'] = True
     try:
         terminal = serve_pi_native_tools(
             bridge, episode_dir / "pi", pi_bin=pi_bin,
@@ -466,8 +468,10 @@ def gym_terminal_projection(record: Mapping[str, Any], system: str,
                             prompt: str) -> dict[str, Any]:
     """Project one real Pi-native episode into the dense terminal format.
 
-    Format-only translation (no content invention): every action is a tool
-    call the episode really made, every observation text is the real Pi tool
+    Every projected action describes the executed call. End-state actions
+    use the safe bridge's canonical arguments, not the generated raw shell
+    bytes retained in source_messages/native_record for policy gradients.
+    Ordinary actions are unchanged. Every observation is the real Pi tool
     result, and the final answer is the episode's real finish message. The
     dense-format projection exists because the sealed first-party validator
     is spec-digest-bound to the dense read-observe controller terminal,
@@ -523,6 +527,10 @@ def gym_terminal_projection(record: Mapping[str, Any], system: str,
             if pending is None:
                 continue  # the skipped think frame's private acknowledgement
             text = "".join(block["text"] for block in message["content"])
+            if record.get('end_state_task'):
+                from scripts.e97_offline_shell import action_allowed
+                pending['arguments'] = action_allowed(pending['tool_name'], pending['arguments'])
+                messages[-1]['tool_calls'][0]['function']['arguments'] = canonical_json(pending['arguments'])
             action = {"sequence": sequence, **pending,
                      "is_error": bool(message["isError"])}
             if (action["tool_name"] == "read" and not action["is_error"]):
@@ -556,9 +564,12 @@ def gym_terminal_projection(record: Mapping[str, Any], system: str,
         "status": status,
         "messages": messages,
         "actions": actions,
-        "projection_note": ("faithful dense-format projection of the real "
-                            "Pi-native episode; every action and observation "
-                            "is real; format-only translation"),
+        "projection_note": (("executed canonical end-state actions and real observations; "
+                             "generated raw actions retained in native_record/source_messages")
+                            if record.get('end_state_task') else
+                            ("faithful dense-format projection of the real "
+                             "Pi-native episode; every action and observation "
+                             "is real; format-only translation")),
     }
 
 
