@@ -1,0 +1,126 @@
+{
+  "architecture_requirement_intent": [
+    "R14",
+    "NDP13",
+    "R15",
+    "R16"
+  ],
+  "artifact_sha256": {
+    "F8-tests-staged.log": "e8528bc30863055bb6426cd4539cbe1996d3a18ce0b2c2bce255a6b409a866e6",
+    "F8-tests.log": "c473ea83e080d8bac26dba719c29f7f997f0448865079f8bc6eab803d38910d1",
+    "F8-unit-staged/F8-gpu-never-blocks.json": "f1f11d4dd8c2836a4772fc7d1ee7981d395a1ac60f14842607a2bb6da5a17a73",
+    "F8-unit/F8-gpu-never-blocks.json": "b00891bf1706a7e5e481945a1ab7723e5c0f01498e8df8789157adbdfab6c215"
+  },
+  "async_default": false,
+  "backlog_default": 64,
+  "gpu_never_blocks": {
+    "F8-unit-staged/F8-gpu-never-blocks.json": {
+      "admitted": 2,
+      "attempts": 6,
+      "collect_wall_s": 0.022051521111279726,
+      "correction_sleep_s": 3,
+      "episode_start_interval_s": 10,
+      "exhaustions": 4,
+      "qualification": "CPU fixtures, actual collect loop and OS mid-flight worker; no GPU/API benchmark",
+      "terminal_drain_s": 0
+    },
+    "F8-unit/F8-gpu-never-blocks.json": {
+      "admitted": 2,
+      "attempts": 6,
+      "collect_wall_s": 0.021913322154432535,
+      "correction_sleep_s": 3,
+      "episode_start_interval_s": 10,
+      "exhaustions": 4,
+      "qualification": "CPU fixtures, actual collect loop and OS mid-flight worker; no GPU/API benchmark",
+      "terminal_drain_s": 0
+    }
+  },
+  "host": "lambda01",
+  "implementation_commit": "8a5c89e7f6b4afd14ee34d772fa8b61f27d29e60",
+  "live_collector_pid": 3127801,
+  "live_unchanged_sha256": {
+    "bank-singlelearner-B/correction-config.json": "5519dbc52e1ea6f37539f36810f8041c3664ae514c8bc838a8b4df4835bc5876",
+    "scripts/rl_bank.py": "3da594e8c9a27dabcab834d02e3d8d295ef2cbcffcdb26fe3e4296ebc4bd5e98",
+    "scripts/rl_bank_lane.py": "0c1257f1207a0fabd721571b566465597ee2c8ee7610be5d3900128cae4b9a0c",
+    "scripts/rl_loop_driver.py": "da9c5f79d3584c69e933c04e8b4719c792c1ed2b4d6fae2e22ede4e19af00821"
+  },
+  "operator_resolutions": [
+    "10s gate moves to correction episode starts; enqueue never sleeps",
+    "Conversation async fails closed in F8 baseline until separately qualified F9 deployment"
+  ],
+  "pytest_passed": 6,
+  "qualification": "CPU fixtures only; no live GPU/API/scheduler claim",
+  "repo_staged_equal": {
+    "F8-deployment.md": true,
+    "F8-report.md": true,
+    "rl_bank.py": true,
+    "rl_bank_coordinator.py": true,
+    "rl_bank_lane.py": true,
+    "rl_bank_unit_test.py": true,
+    "rl_build_pack.py": true,
+    "rl_correction_config.py": true,
+    "rl_correction_pool.py": true,
+    "rl_correction_service.py": true,
+    "rl_pg_batch.py": true,
+    "rl_policy_gradient_step.py": true,
+    "rl_teacher_deadlines.py": true,
+    "rl_teacher_probe.py": true,
+    "rl_teacher_probe_report.py": true,
+    "rl_train_step.py": true,
+    "run_bank.sh": true
+  },
+  "residual_risks": [
+    "Independent review and controlled rollout required",
+    "All-caller global endpoint budget not enforced by a semaphore",
+    "Sustained/mixed workload and large-history I/O retention unqualified",
+    "Corrupt receipt stream requires attended repair",
+    "Conversation async deferred to F9 deployment"
+  ],
+  "schema": "emender-f8-staged-evidence-v1",
+  "source_sha256": {
+    "F8-deployment.md": "bd374f1f0a05077dce162877ab4d6aff23dc043d601c9e9d60a901449ab8e07c",
+    "F8-report.md": "e06c526639454e0d442e3fc8b0c284a234aa63c08a224c30a6b31df51942ceb4",
+    "rl_bank.py": "d0dc5c66dea5b9b52ee1bd8a7c7ab14de74bce1ed2bfc4fda1e66d999d392781",
+    "rl_bank_lane.py": "82c35abd19b57a6725f00f40302944433d617a6169e7abf9a1aa01662bb441ba",
+    "rl_bank_unit_test.py": "8f762401d02608b68ef9269cbecbcde9532de819bfce2ce07b7746b1e95dc373",
+    "rl_correction_config.py": "0e370857840b320deba6aa90880d02ed8861fc899099607fa5d5d980240ffec3",
+    "rl_correction_service.py": "14e49b9d8c40299cadb2f825577db1ef888dd14761c613bf5fa4be41f1a78787"
+  },
+  "staged_bundle_sha256": {
+    "F8-deployment.md": "bd374f1f0a05077dce162877ab4d6aff23dc043d601c9e9d60a901449ab8e07c",
+    "F8-report.md": "e06c526639454e0d442e3fc8b0c284a234aa63c08a224c30a6b31df51942ceb4",
+    "rl_bank.py": "d0dc5c66dea5b9b52ee1bd8a7c7ab14de74bce1ed2bfc4fda1e66d999d392781",
+    "rl_bank_coordinator.py": "abc59a5e650418934982091f03c2f343f7d09bf3ee18e42aa04579c83adced98",
+    "rl_bank_lane.py": "82c35abd19b57a6725f00f40302944433d617a6169e7abf9a1aa01662bb441ba",
+    "rl_bank_merge.py": "a17d75884b99539eead0f54ab9addd1dcdc1e5d4cfd2c2cf466fa444f98430f1",
+    "rl_bank_unit_test.py": "8f762401d02608b68ef9269cbecbcde9532de819bfce2ce07b7746b1e95dc373",
+    "rl_build_pack.py": "28cbbd067e8183563b6a5dda264563944672c885fea5fc910aadbc40b54ec5d6",
+    "rl_common.py": "5ce8c2ac675d70f219b33511eefecb84d748168f0376b66edc53e2f6562e66b2",
+    "rl_correction_config.py": "0e370857840b320deba6aa90880d02ed8861fc899099607fa5d5d980240ffec3",
+    "rl_correction_pool.py": "33792e6b5b7e3e4fdfa20a5d79b43a4fb4462b2cf1efd1849ea7d6e18c8bccf1",
+    "rl_correction_service.py": "14e49b9d8c40299cadb2f825577db1ef888dd14761c613bf5fa4be41f1a78787",
+    "rl_cpu_dryrun.py": "c9fd1e8e4b17203a16c0f19ad2c97e8c66b18cef63cf30ddd234657928044d97",
+    "rl_gym_tasks.py": "7ac4e4a9276c9898906564fba0a73af1002254ce361f5b8bec94c642bf0beb16",
+    "rl_loop_driver.py": "da9c5f79d3584c69e933c04e8b4719c792c1ed2b4d6fae2e22ede4e19af00821",
+    "rl_pg_batch.py": "e49abd86be9b104884de121b51227d4d2ec06607023ccaa2400a7f565976d3b5",
+    "rl_pg_screen.py": "095eb285067c8f4fc574ead1019c4d872cd0f1e4879bc73e9e7bcad32b381348",
+    "rl_policy_gradient_step.py": "71f9cf2d29b9fff0696f89877a6461a450a690e2cbf242f729c3cd877b7b5532",
+    "rl_receipts.py": "e519328ab5761f028e7302937c45eae35b793e7aa2525242e7635fe6a6121991",
+    "rl_seed_tasks.py": "eb9278245be3dd8b49e8c8eeb7489bb4ddfbf93c5038d1d65ecf6e3e8aa18d3a",
+    "rl_splice_test.py": "e5835a24649cb7b841db251938b79f2d5fb7af15ae57f37fb12c292f612d4153",
+    "rl_teacher_deadlines.py": "51146faf3ddf731e54aa5ff989d9351dbae04a54fb404f0f8cfac9333568fbca",
+    "rl_teacher_fixture.py": "68282bcd1633b9eb33c1326aa4b8ad00cf82248e3cfc85207f335c6335358fec",
+    "rl_teacher_probe.py": "97f6774a3ddd22da4347f721a4b3935da2c5377d1eaea4b1b41755c03da8a8cb",
+    "rl_teacher_probe_report.py": "84d06b3914b5e0b57e2a2c1b4ec07a602952833148b65b6b751474076b9ba81a",
+    "rl_train_step.py": "9936f5ceef24daa99342de4c26d7c6c5dc9aa0e1a8b4bb19dac30f6637bcc4dc",
+    "rl_writing_judge.py": "395e7351038c8bccdc58e59be6b18161e73ffc29adfe26b0ad443abe8035f070",
+    "run_bank.sh": "23c1c7c27d9f86d892a62fee1915ec144d13cbd3028b884565a20382d40b20d1",
+    "score_docnll_gpu.py": "15b4e20ca3ba33aabf390f78111961de61caa29d335d4638e3e9467d365a9dfd",
+    "wash_build_packs.py": "9f37e80d350818f6bd2b095e1c936f881422bc7dd08e5ede5d1b63f98ba5ad72"
+  },
+  "unit_checks": {
+    "F8-tests-staged.log": 215,
+    "F8-tests.log": 215
+  },
+  "worker_default": 1
+}
