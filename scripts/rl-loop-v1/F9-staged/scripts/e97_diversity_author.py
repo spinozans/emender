@@ -149,7 +149,7 @@ def load_verified_seed_corpus(corpus_path, manifest_sha256, verify_admitted, log
                 raise ValueError('seed manifest entry mismatch')
             if seed['kind'] == 'solved_bundle':
                 verify_seed(seed, verify_admitted)  # TRAIN/proof/receipt/bundle/fixtures
-    except (OSError, ValueError, KeyError, TypeError, StopIteration) as exc:
+    except (OSError, ValueError, KeyError, TypeError, StopIteration, SystemExit) as exc:
         log(f'SEED_INTAKE disabled: {type(exc).__name__}: {exc}')
         return []
     log(f'SEED_INTAKE verified: {len(seeds)} entries; manifest_sha256={manifest_sha256}')

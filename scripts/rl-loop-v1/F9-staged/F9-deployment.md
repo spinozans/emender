@@ -7,7 +7,7 @@ into the repo. `prepare.py` builds a separate import overlay and versioned
 source archive/registry; never deploys, admits, commits an allowlist or restarts.
 The old `F9-staged/checkout` exploratory snapshot is superseded; use
 `F9-staged/qualified-final` ONLY for historical Pi artifacts; the repaired
-source closure for re-review is `F9-staged/qualified-F9C-committed`.
+source closure for re-review is `F9-staged/qualified-F9C-reviewed`.
 
 ## Reproduce without touching the daemon
 
@@ -314,7 +314,7 @@ Unseeded authoring retains all candidate gates. If seeded deployment was
 intended, a disable log is NO-GO for ramp-up: stop supply, repair ownership/pins
 and requalify. Never recompute a pin to bless unreviewed bytes.
 
-Final CPU closure: **215 bank checks** + **73 F9 CPU tests** (the original 42
-plus 31 repair checks); 3 Pi-dependent tests remain excluded. This count does
+Final CPU closure: **215 bank checks** + **74 F9 CPU tests** (the original 42
+plus 32 repair checks); 3 Pi-dependent tests remain excluded. This count does
 NOT change bank preflight's literal 215. No new live Pi/API/GPU proof or rollback
 rehearsal is asserted.

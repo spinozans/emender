@@ -496,7 +496,7 @@ def test_seed_intake_checks_manifest_corpus_and_authority_before_use(tmp_path, m
     assert verified == [seeds[1]] and logs[0].startswith('SEED_INTAKE verified:')
 
 
-@pytest.mark.parametrize('fault', ['no_pin', 'no_manifest', 'manifest_bytes', 'no_corpus', 'corpus_bytes', 'count', 'entry', 'authority', 'external_fragment'])
+@pytest.mark.parametrize('fault', ['no_pin', 'no_manifest', 'manifest_bytes', 'no_corpus', 'corpus_bytes', 'count', 'entry', 'authority', 'authority_exit', 'external_fragment'])
 def test_seed_intake_explicitly_disables_absent_corrupt_or_unauthorized(tmp_path, monkeypatch, fault):
     seeds, corpus, manifest, pin = _seed_corpus_fixture(tmp_path)
     checked, logs = [], []
@@ -504,6 +504,8 @@ def test_seed_intake_explicitly_disables_absent_corrupt_or_unauthorized(tmp_path
         checked.append(seed)
         if fault == 'authority':
             raise ValueError('admission authority drift')
+        if fault == 'authority_exit':
+            raise SystemExit('admission receipt schema mismatch')
     monkeypatch.setattr(engine, 'verify_seed', authority)
     if fault == 'no_pin': pin = None
     elif fault == 'no_manifest': manifest.unlink()
@@ -522,7 +524,7 @@ def test_seed_intake_explicitly_disables_absent_corrupt_or_unauthorized(tmp_path
         pin = hashlib.sha256(manifest.read_bytes()).hexdigest()
     assert engine.load_verified_seed_corpus(corpus, pin, object(), logs.append) == []
     assert len(logs) == 1 and logs[0].startswith('SEED_INTAKE disabled:')
-    if fault != 'authority': assert not checked
+    if fault not in {'authority', 'authority_exit'}: assert not checked
 
 
 def test_retained_real_seed_corpus_reverified_for_supply():

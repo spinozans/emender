@@ -85,7 +85,7 @@ historical evidence recertified by documentation.
 - `F9-deployment.md:293` names corpus owner/location, exact corpus+manifest pins,
   read-only install and persistent watchdog/supply env. Unpinned seeding is
   explicitly disabled; intended seeded rollout is NO-GO on a disable log.
-- `unit_tests.py:487,500,528,536` cover pin/hash/schema/count/entry/authority
+- `unit_tests.py:487,500,530,538` cover pin/hash/schema/count/entry/authority
   failures, absent corpus/manifest, external fragments, all 12 actual retained
   corpus entries (eight solved), and the REAL supply callsite's logged disable.
 
@@ -99,21 +99,21 @@ rather than silently widened into new feature work.
 |---|---|
 | 1 Reference/policy expansion safety | B1; scripts/e97_offline_shell.py:78; unit_tests.py:373 uses exact repro at BOTH gates, also pip/python/sh/env/bash loaders. |
 | 1 Failing native PG evidence, read-only assertions, descriptor capture | unit_tests.py:246,267,103 remain passing; unsafe public calls never dispatched. No OS sandbox claim. |
-| 2 Self-contained equality, old/additive closure and registry pins | unit_tests.py:411,551; prepare.py:20,74; regenerated validator SHA a06740f36101bf571791510fde93f4c06739e27f94bec91245cf0b160c5eb634; repaired archive SHA ba0a76b26fb8ae0d5df1883d34601413f4fdb974380306838509ed94b3c489a8. |
-| 2 Era2/3/4 immutability and old verdict compatibility | unit_tests.py:178,203,551; all three archive members compare byte-exact; old validators not edited. |
+| 2 Self-contained equality, old/additive closure and registry pins | unit_tests.py:411,553; prepare.py:20,78; regenerated validator SHA a06740f36101bf571791510fde93f4c06739e27f94bec91245cf0b160c5eb634; repaired archive SHA ba0a76b26fb8ae0d5df1883d34601413f4fdb974380306838509ed94b3c489a8. |
+| 2 Era2/3/4 immutability and old verdict compatibility | unit_tests.py:178,203,553; all three archive members compare byte-exact; old validators not edited. |
 | 3 Sealed conversation/full exchange and irrevocable legacy finish | unit_tests.py:119,132,293 remain passing. |
 | 3 Current F8-service fresh-conversation path formerly unqualified | loop/rl_bank_unit_test.py:2109 integrates durable admission, actual manager/worker, identity checks, workspace/prefix reset, passed fixture result and exactly-once fresh publication. CPU transport/grade fixtures explicitly not real-Pi proof. |
 | 4 Harvest/morph/revalidation/dedupe gates | unit_tests.py:151,310,353 remain passing; C1 intake fixes production authority gap, no cached admission reuse. |
 | 5 Exact 60-cycle rotation / operational knob drift | unit_tests.py:170,434; loop/standing_supply.py:126,129,151 retain CURRENT knobs + F9 rotation. |
-| 6 Historical 45/45 and three Pi proofs | F9-evidence.json preserves private_evidence_root and private_artifacts unchanged with explicit historical labels; unit_tests.py:569 fresh CPU regrades six modes and rejects three missing-output controls. No replay/transport/API. |
-| 6 Independent 42 CPU cases / source closure | Final 73 includes original 42 + 31 repair cases; exact-source evidence now binds the integrated closure and all unchanged helper bytes. Historical supply hash not represented as current. |
+| 6 Historical 45/45 and three Pi proofs | F9-evidence.json preserves private_evidence_root and private_artifacts unchanged with explicit historical labels; unit_tests.py:571 fresh CPU regrades six modes and rejects three missing-output controls. No replay/transport/API. |
+| 6 Independent 42 CPU cases / source closure | Final 74 includes original 42 + 32 repair cases; exact-source evidence now binds the integrated closure and all unchanged helper bytes. Historical supply hash not represented as current. |
 | 6 Protected-overlap receipt limitation | No new separately pinned protected-overlap proof is claimed; retained historical Pi build assertions remain historical. No admission/injection performed. |
 | 7 Five legacy v1 Pi failures | tests/test_e97_pi_native_tool_bridge.py unchanged; five real-Pi cases excluded. Exact inner failure reason is NOT recertified; no live v1 qualification claimed. |
 | 8 Deployment ownership/import/restart/watchdog gates, rollback omission | F9-deployment.md:85–290 supplies exact roster/manifests/probes, named stop/drain/ownership, restore commands, first-injection boundary, isolation/completion and GO/NO-GO/ABORT; rollback_gate.py:8 + unit_tests.py:444 test the boundary offline. Actual process/env verification remains deploy-time. |
 
 ## Integrated exact-byte qualification and scope receipts
 
-Final private source closure: `$LAKE/F9-staged/qualified-F9C-committed`, rebuilt
+Final private source closure: `$LAKE/F9-staged/qualified-F9C-reviewed`, rebuilt
 from committed staged files for independent re-review. Historical Pi artifacts
 remain at qualified-final; neither their pins nor archives were modified.
 F9-evidence.json separates historical artifact roots from repaired source root,
@@ -121,16 +121,17 @@ sealed pin, all staged hashes and the complete integrated helper/runtime roster.
 
 Commands (lambda01 project Python 3.12.3; bytecode/cache disabled):
 - prepare.py --root qualified-F9C-final (private overlay only), then stage cwd;
-- loop/rl_bank_unit_test.py --scratch E/F9C-final-bank-fixtures: **215 passed**;
+- loop/rl_bank_unit_test.py --scratch E/F9C-C1-final-bank-fixtures: **215 passed**;
 - pytest unit_tests.py -k 'not real_pi and not failed_reference_solution':
-  **73 passed / 3 deselected** (E/F9C-final-tests.log);
+  **74 passed / 3 deselected** (E/F9C-C1-final-tests.log);
 - repo cwd pytest tests/test_e97_first_party_validator*.py
   tests/test_e97_pi_native_codec.py tests/test_e97_pi_native_tool_bridge.py
   -k 'not real_pi': **66 passed / 5 deselected** (E/F9C-final-legacy.log).
   The full validator-only set independently passed 59 in F9C-validator-tests.log.
 - git diff --check; source/private artifact digest census; no staged files after
   commits. Scoped commits pushed: B1 a7c08222, B2 b9fc1d14, B3 6c68391f;
-  C1 commit is the commit containing this final report/evidence.
+  C1 initial 6eb365b5; the follow-up commit containing this final report/evidence
+  also covers SystemExit-based admission rejection, explicitly logged disable.
 
 `E` is /home/erikg/emender-scratch/fix-fanout; `$LAKE` is the review's L parent.
 Only F9-staged repo/lake sources and private CPU fixture artifacts were changed.
@@ -144,3 +145,9 @@ Applicable IDs: R14/NDP13 bounded local safety and R16 exact-source evidence;
 no training, scaling, checkpoint or resilient-conformance claim. Ready for new
 independent review, NOT operator deployment. Live rollback, watchdog relaunch,
 and new fresh-Pi closure are deliberately unclaimed deploy-time gates.
+
+Final C1 inspection found production verify_admitted intentionally raises
+SystemExit on schema/hash drift. Intake now catches that authority failure as
+an explicit logged disable (not KeyboardInterrupt), with regression coverage.
+Final integrated count is 215 bank / 74 F9 CPU; 3 Pi tests excluded.
+The committed rebuild below is byte-bound to this same qualified closure.
