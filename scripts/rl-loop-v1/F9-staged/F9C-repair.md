@@ -54,5 +54,23 @@ used the wrong receipt field path; fixed to episode.supervise_from, rerun 215.
 The additional source/knob identity test will be included in final qualification.
 Historical supply digest is labeled historical, not a retained-current claim.
 
-## Pending sections
-B3 rollback and C1 verified corpus intake are not yet complete.
+## B3 — executable rollback boundaries and ownership
+
+- F9R B3/scope 8: `F9-deployment.md:88` names backup/release/launch manifests,
+  repo-to-deployed roster, exact import/hash probes and preflight literal;
+  `:123` stop/drain and watchdog-race guard includes durable service ownership;
+  `:212` before-injection restore commands and restart order;
+  `:268` after-injection completion or whole-bank isolation, preserving sealed
+  absolute paths and all immutable evidence. Every step has GO/NO-GO/ABORT gates.
+- `rollback_gate.py:8` is read-only and fails closed on layout/spec/publication
+  drift; it refuses old-only restore with new pending/claimed work or ANY
+  unpublished durable jobs. `unit_tests.py:449` tests both boundaries, no writes
+  by the gate, and retained published evidence.
+
+Validation: F9C-B3-tests.log **52 passed / 3 deselected**. No live stop, drain,
+process inspection, restart or rollback was executed. Watchdog/PID ownership
+and actual restored runtime probes remain explicit deploy-time gates, not
+historical evidence recertified by documentation.
+
+## Pending section
+C1 verified corpus intake is not yet complete.

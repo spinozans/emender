@@ -439,3 +439,33 @@ def test_integrated_current_correction_sources_and_supply_knobs():
     repo = Path('/home/erikg/emender/scripts/rl-loop-v1')
     for name in ('rl_correction_service.py', 'rl_correction_pool.py', 'rl_correction_config.py', 'rl_bank.py'):
         assert (ROOT / 'loop' / name).read_bytes() == (repo / name).read_bytes()
+
+
+def test_rollback_boundary_is_read_only_and_refuses_inflight_work(tmp_path):
+    import runpy
+    gate = runpy.run_path(str(Path(__file__).resolve().parent / 'rollback_gate.py'))['rollback_inventory']
+    for directory in ('pool/pending', 'pool/claims', 'lanes'):
+        (tmp_path / directory).mkdir(parents=True)
+    assert gate(tmp_path)['old_only_restore_allowed']
+    spec = tmp_path / 'sealed.json'
+    spec.write_text(mechanics.canonical({'user_script': conversation_fixture()['solution']['user_script']}))
+    task = {'task_id': 'new', 'body': {'task_lake': {'validator': {'spec_path': str(spec), 'spec_sha256': hashlib.sha256(spec.read_bytes()).hexdigest()}}}}
+    pending = tmp_path / 'pool/pending/new.json'
+    pending.write_text(mechanics.canonical(task))
+    assert not gate(tmp_path)['old_only_restore_allowed']
+    pending.rename(tmp_path / 'pool/claims/new.claim')
+    assert not gate(tmp_path)['old_only_restore_allowed']
+    job = tmp_path / 'lanes/lane-00/corrections/job-new'
+    job.mkdir(parents=True)
+    (job / 'spec.json').write_text(mechanics.canonical({'task': task}))
+    assert len(gate(tmp_path)['unpublished_correction_jobs']) == 1
+    (tmp_path / 'pool/claims/new.claim').unlink()  # fixture only: simulate compatible retirement
+    assert not gate(tmp_path)['old_only_restore_allowed']
+    (job / 'published.json').write_text(mechanics.canonical({'published_unix': 1, 'outcome': {'task_id': 'new'}}))
+    before = {str(p): p.read_bytes() for p in tmp_path.rglob('*') if p.is_file()}
+    assert gate(tmp_path)['old_only_restore_allowed']
+    assert before == {str(p): p.read_bytes() for p in tmp_path.rglob('*') if p.is_file()}
+    pending.write_text(mechanics.canonical(task))
+    spec.write_text('corrupted')
+    with pytest.raises(ValueError):
+        gate(tmp_path)
