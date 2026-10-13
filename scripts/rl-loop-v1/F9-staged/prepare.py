@@ -17,9 +17,12 @@ REPO = Path('/home/erikg/emender')
 WORK = Path('/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-lake-expansion-v1')
 LOOP = Path('/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-rl-loop-v1')
 SOURCE = Path(__file__).resolve().parent
+EXPECTED_VALIDATOR_SHA256 = 'a06740f36101bf571791510fde93f4c06739e27f94bec91245cf0b160c5eb634'
 
 
 def prepare(root):
+    if hashlib.sha256((SOURCE / 'scripts/e97_first_party_validator_diversity.py').read_bytes()).hexdigest() != EXPECTED_VALIDATOR_SHA256:
+        raise ValueError('sealed validator bytes differ from reviewed pin; regenerate/requalify/rebind')
     root = Path(root).resolve()
     root.mkdir(parents=True, exist_ok=False)
     manifest = json.loads((REPO / 'configs/pi/e97-firstparty-generator-manifest-v1.json').read_bytes())

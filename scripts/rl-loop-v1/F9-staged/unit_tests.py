@@ -366,3 +366,66 @@ def test_seed_harvest_is_admitted_solved_train_and_reverified():
 def test_new_families_reject_token_echo_artifacts(check):
     with pytest.raises(ValueError):
         mechanics.assertions_schema([check])
+
+
+# F9R's exact validation-only repro: never send any command to a transport.
+@pytest.mark.parametrize('command', ['printf %s {1..999999999}', 'printf %s ~root', 'printf %s *', 'printf %s file?', 'printf %s [ab]', 'printf %s {a,b}'])
+def test_f9r_expansion_rejected_by_reference_and_policy(command):
+    from scripts.e97_offline_shell import shell_allowed
+    from scripts.e97_pi_scripted_v8 import SafeWorkspaceBridgeV8
+    from scripts.e97_pi_native_tool_bridge import MODEL, PROVIDER, BridgeStopped
+    import rl_loop_driver as driver
+    with pytest.raises(ValueError):
+        shell_allowed(command)
+    spec = terminal_fixture()
+    spec['solution']['actions'][1]['arguments']['command'] = command
+    with pytest.raises(ValueError):
+        author.guards(spec, set(), set())
+    enc = tiktoken.get_encoding('p50k_base')
+    c = driver.load_curriculum()
+    tools = driver.tool_manifest(c)['model_visible_tools']
+    frame = native_turn({'role': 'assistant', 'content': None,
+        'reasoning_content': 'Check admission only; do not execute.',
+        'tool_calls': [{'id': 'probe', 'type': 'function', 'function': {
+            'name': 'bash', 'arguments': mechanics.canonical({'command': command})}}]}, tools)
+    b = SafeWorkspaceBridgeV8(driver.make_panel(c.SYSTEM, tools, driver.POLICY_PANEL),
+        'opening', enc, lambda *a: (frame, enc.encode_ordinary(frame), 'valid'))
+    with pytest.raises(BridgeStopped):
+        b.next({'systemPrompt': c.SYSTEM, 'model': MODEL, 'provider': PROVIDER,
+            'tools': tools, 'messages': deepcopy(b.history)})
+    assert b.failed and b.pending is None and len(b.history) == 1
+    assert b.episode.text().endswith(frame)
+
+
+def test_raw_quote_boundary_preserves_authorized_literals():
+    from scripts.e97_offline_shell import shell_allowed
+    shell_allowed(terminal_fixture()['solution']['actions'][1]['arguments']['command'])
+    shell_allowed("printf '%s\\n' '{a,b} ~root * [ab] ?' > report.txt")
+    shell_allowed('printf %s "{a,b} ~root * [ab] ?"')
+    for command in ['printf %s "$(pwd)"', 'printf %s \\*', 'printf %s x # ignored',
+                    terminal_fixture()['solution']['actions'][1]['arguments']['command'].replace("'", '"')]:
+        with pytest.raises(ValueError):
+            shell_allowed(command)
+
+
+def test_sealed_validator_regeneration_and_both_archive_closures():
+    import runpy
+    source = Path(__file__).resolve().parent
+    generated = runpy.run_path(str(source / 'sync_validator.py'))['validator_source']()
+    assert generated.encode() == (source / 'scripts/e97_first_party_validator_diversity.py').read_bytes()
+    namespace = {}
+    exec(compile(generated, '<sealed-validator>', 'exec'), namespace)
+    for command in ['printf %s {1..999999999}', 'printf %s ~root', 'printf %s *']:
+        with pytest.raises(ValueError):
+            namespace['shell_allowed'](command)
+    from ndm.e97_first_party_source_archive import _manifest_components_payload
+    old = json.loads(Path('/home/erikg/emender/configs/pi/e97-firstparty-generator-manifest-v1.json').read_bytes())
+    _manifest_components_payload(mechanics.canonical(old).encode())
+    additive = deepcopy(old)
+    additive['components'].append({'path': 'scripts/e97_first_party_validator_diversity.py',
+        'sha256': hashlib.sha256(generated.encode()).hexdigest()})
+    additive['components'].sort(key=lambda c: c['path'])
+    _manifest_components_payload(mechanics.canonical(additive).encode())
+    additive['components'].append({'path': 'scripts/unauthorized.py', 'sha256': 'a'*64})
+    with pytest.raises(ValueError):
+        _manifest_components_payload(mechanics.canonical(additive).encode())

@@ -75,9 +75,36 @@ def argv_allowed(argv):
         raise ValueError('command outside offline grammar')
 
 
+def _raw_shell_literals(command):
+    """Reject expansion BEFORE shlex loses quoting; execute only checked bytes.
+
+    Single quotes authorize literal AWK/printf DSL text. Double quotes protect
+    glob/brace/tilde characters, but never substitution or escape processing.
+    Outside quotes we conservatively reject every expansion metacharacter,
+    including literal braces (not just ranges), comments and shell grouping.
+    """
+    quote = None
+    for char in command:
+        if quote == "'":
+            if char == "'":
+                quote = None
+        elif char in {'$', '`', '\\'}:
+            raise ValueError('raw shell expansion/escape forbidden')
+        elif quote == '"':
+            if char == '"':
+                quote = None
+        elif char in {"'", '"'}:
+            quote = char
+        elif char in '{}~*?[]()#':
+            raise ValueError('raw shell expansion/grouping forbidden')
+    if quote is not None:
+        raise ValueError('unterminated shell quote')
+
+
 def shell_allowed(command):
     if not isinstance(command, str) or not 1 <= len(command) <= 4096 or any(c in command for c in ('\x00', '\n', '\r')):
         raise ValueError('bounded offline shell required')
+    _raw_shell_literals(command)
     lexer = shlex.shlex(command, posix=True, punctuation_chars=';&|<>')
     lexer.whitespace_split = True
     lexer.commenters = ''
