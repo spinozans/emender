@@ -42,7 +42,7 @@ from rl_bank import (CLAIM_SCHEMA, MIN_FREE_BYTES, bank_paths, claim_pool_task,
                      read_lane_state, read_merge_current, reclaim_superseded_lineages,
                      requeue_claim, requeue_lane_claims, retire_task, sweep_stale_claims,
                      write_lane_state)
-from rl_correction_pool import CorrectionPool
+from rl_correction_service import CorrectionService
 from rl_correction_config import resolve_correction_config
 from rl_common import sha256_file
 from rl_receipts import (append_receipt, grade_receipt_digest,
@@ -145,6 +145,7 @@ def _correction_requires_fresh_solve(body, policy_record, tools) -> bool:
 
 def _execute_correction(args, task, policy_record, workspace, task_dir,
                         pilot, curriculum, tools, enc, metrics):
+    from rl_loop_driver import sealed_user_script, is_end_state_task
     from ndm.e97_atomic import publish_bytes_no_replace
     from ndm.e97_onpolicy_records import canonical_json
     body = task["body"]
@@ -170,7 +171,6 @@ def _execute_correction(args, task, policy_record, workspace, task_dir,
     # workspace, no prefix, supervise_from=0. E5 also starts fresh when
     # a clean retained first action already violates its sealed criterion.
     # Genuinely recoverable failures keep the spliced repair continuation.
-    from rl_loop_driver import sealed_user_script, is_end_state_task
     fresh_solve = _correction_requires_fresh_solve(body, policy_record, tools)
     prefix_messages = (None if fresh_solve
                        else policy_record.get("source_messages"))
@@ -191,7 +191,8 @@ def _execute_correction(args, task, policy_record, workspace, task_dir,
         curriculum=curriculum, seconds=teacher_panel_eff["episode_seconds"],
         prefix_messages=prefix_messages,
         prefix_policy_text=(None if fresh_solve
-                            else policy_record.get("native_record")), user_script=sealed_user_script(body), end_state_task=is_end_state_task(body))
+                            else policy_record.get("native_record")),
+        user_script=sealed_user_script(body), end_state_task=is_end_state_task(body))
     passed, grade = grade_episode(
         body, workspace_corr if fresh_solve else workspace, pilot, task,
         record=teacher_record,
@@ -209,6 +210,9 @@ def _execute_correction(args, task, policy_record, workspace, task_dir,
 def execute_correction_spec(spec):
     """Model-free child entry; it grades but NEVER appends/retire/publishes receipts."""
     from types import SimpleNamespace
+    for name, digest in spec.get("owned_files_sha256", {}).items():
+        if sha256_file(Path(spec["task_dir"]) / name) != digest:
+            raise ValueError("correction owned workspace identity drift")
     # Qualification binds an isolated, immutable pilot; production uses the
     # normal source and never supplies this probe-only snapshot field.
     snapshot = spec.get("pilot_snapshot")
@@ -246,6 +250,163 @@ def execute_correction_spec(spec):
         pilot, curriculum, tools, enc, DurableMetrics())
 
 
+def _correction_publication(context, result, *, cycle, lane, settings, checkpoint, enc, prev):
+    """Pure publication plan: served provenance is never the current lineage."""
+    receipt = None
+    retirement = None
+    correction_metrics = result.get("metrics", {"calls": []})
+    metrics_partial_tail = bool(result.get("metrics_partial_tail"))
+    task, outcome = context["task"], context["outcome"]
+    body = task["body"]
+    eligible = bool(body.get("receipt_eligible", True))
+    episode_artifacts = context["episode_artifacts"]
+    policy_generations = [item for item in context["policy_record"].get("generations", [])
+                          if item.get("reason") == "valid"]
+    def _retire(stage, kind):
+        nonlocal retirement
+        retirement = {
+            "lane": lane, "cycle": cycle, "stage": stage,
+            "receipt_kind": kind, "receipt_eligible": eligible,
+            "split": body.get("split", "seed"), "receipt": outcome.get("receipt"),
+            "attempt_grade_passed": outcome["attempt"]["grade_passed"]}
+    if not result.get("error") and (not {"passed", "grade", "teacher_record", "fresh_solve"} <= result.keys()
+            or not isinstance(result.get("teacher_record"), dict)
+            or not isinstance(result.get("grade"), dict)
+            or "status" not in result["teacher_record"]
+            or type(result["passed"]) is not bool
+            or result["grade"].get("passed") != result["passed"]):
+        result = {"passed": False, "error": "invalid correction result"}
+    if result.get("error"):
+        outcome["correction"] = {"status": "error", "grade_passed": False,
+                                 "reason": result["error"]}
+        _retire("failed", None)
+        return {"outcome": outcome, "retirement": retirement, "receipt": receipt,
+                "correction_metrics": correction_metrics, "metrics_partial_tail": metrics_partial_tail}
+    passed, grade = result["passed"], result["grade"]
+    teacher_record, fresh_solve = result["teacher_record"], result["fresh_solve"]
+    splice = teacher_record.get("prefix") or {}
+    prefix_frames = int(splice.get("retained_frames", 0))
+    teacher_identity = (
+        {"mode": "live", "model": settings["teacher_model"],
+         "api": "lunaroute /v1/chat/completions"}
+        if settings["teacher"] == "live" else
+        {"mode": "fixture",
+         "note": "authored deterministic continuation stub (not GLM-5.3)"})
+    teacher_identity.update(
+        continuation=("fresh-episode" if fresh_solve
+                      else "same-transcript-splice"),
+        prefix_frames=prefix_frames,
+        dropped_trailing_finish=bool(splice.get("dropped_trailing_finish")),
+        dropped_unresolved_call=bool(splice.get("dropped_unresolved_call")))
+    outcome["correction"] = {
+        "status": teacher_record["status"], "grade_passed": passed,
+        "reason": teacher_record.get("reason"),
+        "prefix_frames": prefix_frames,
+    }
+    if (passed and teacher_record["status"] == "finished"
+            and teacher_record.get("close_verified", False)):
+        if eligible:
+            merged = _merged_correction_record(
+                teacher_record, policy_generations[:prefix_frames])
+            receipt = _receipt_from_episode(
+                cycle=cycle, task=task, kind="teacher-corrected",
+                policy_checkpoint=checkpoint, record=merged,
+                supervise_from=prefix_frames, grade=grade,
+                teacher=teacher_identity,
+                attempt_link={**episode_artifacts,
+                              "policy_generations": len(policy_generations),
+                              "retained_prefix_frames": prefix_frames,
+                              "dropped_trailing_finish": bool(
+                                  splice.get("dropped_trailing_finish")),
+                              "dropped_unresolved_call": bool(
+                                  splice.get("dropped_unresolved_call"))},
+                enc=enc, prev=prev)
+            outcome.update(receipt=receipt["receipt_sha256"],
+                           targets=receipt["episode"]["targets"],
+                           receipt_kind="teacher-corrected",
+                           supervise_from=prefix_frames)
+            mode = "fresh" if fresh_solve else "spliced"
+            print(f"COLLECT receipt=teacher-corrected({mode}, "
+                  f"supervise_from={prefix_frames}) "
+                  f"{receipt['receipt_sha256'][:16]}", flush=True)
+        else:
+            print("COLLECT dev-split correction measured (no receipt: "
+                  "sealed train/development split isolation)", flush=True)
+        _retire("teacher", "teacher-corrected" if eligible else None)
+    else:
+        # the round refresh re-attempts this sealed task against the
+        # CURRENT lineages next round; retire honestly failed
+        _retire("failed", None)
+
+    return {"outcome": outcome, "retirement": retirement, "receipt": receipt,
+                "correction_metrics": correction_metrics, "metrics_partial_tail": metrics_partial_tail}
+
+
+def publish_corrections(bank_root, lane, *, service=None):
+    """Replay publication intents before any new stream write; no worker wait.
+
+    The daemon and its synchronous collect child are the same logical owner.
+    A receipt intent precedes append; restart detects an already appended digest,
+    repairs an immutable-copy-only crash, and retires exactly once. Malformed
+    stream tails fail closed instead of guessing whether bytes were committed.
+    """
+    from rl_correction_service import immutable
+    from rl_receipts import verify_receipt, walk_stream
+    from ndm.e97_onpolicy_records import canonical_json
+    bank = bank_paths(bank_root)
+    paths = lane_paths(bank, lane)
+    service = service or CorrectionService(bank_root, lane)
+    enc = tiktoken.get_encoding("p50k_base")
+
+    def build(spec, result):
+        if not result.get("error") and result.get("fresh_solve") != spec["fresh_solve"]:
+            result = {**result, "passed": False, "error": "correction result routing identity drift"}
+        try:
+            return _correction_publication(spec, result, cycle=spec["cycle"], lane=lane,
+                settings=spec["settings"], checkpoint=spec["policy_checkpoint"], enc=enc,
+                prev=stream_tail_digest(paths["stream"]))
+        except ValueError as exc:
+            return _correction_publication(spec, {**result, "passed": False,
+                "error": f"correction receipt rejected: {exc}"}, cycle=spec["cycle"], lane=lane,
+                settings=spec["settings"], checkpoint=spec["policy_checkpoint"], enc=enc,
+                prev=stream_tail_digest(paths["stream"]))
+
+    def apply(spec, plan):
+        receipt = plan["receipt"]
+        if receipt is not None:
+            rows = walk_stream(paths)
+            verify_receipt(receipt, enc=enc)
+            matching = [row for row in rows if row["receipt_sha256"] == receipt["receipt_sha256"]]
+            if matching and (len(matching) != 1 or matching[0] != receipt):
+                raise ValueError("correction stream publication conflict")
+            if not matching:
+                verify_receipt(receipt, enc=enc, expected_prev=rows[-1]["receipt_sha256"] if rows else None)
+                copy = paths["receipts"] / f"cycle-{receipt['cycle']:04d}" / f"{receipt['receipt_sha256']}.json"
+                if copy.exists():
+                    if json.loads(copy.read_text()) != receipt:
+                        raise ValueError("correction immutable receipt conflict")
+                else:
+                    immutable(copy, receipt)
+                with paths["stream"].open("a") as stream:
+                    stream.write(canonical_json(receipt)+"\n")
+                    stream.flush()
+                    os.fsync(stream.fileno())
+        task = spec["task"]
+        done = bank["pool_done"] / f"{task['task_id']}.json"
+        if done.exists():
+            if json.loads(done.read_text())["retired"]["outcome"] != plan["retirement"]:
+                raise ValueError("correction task retirement conflict")
+            # Retirement rename may have survived before claim removal.
+            claim = bank["pool_claims"] / f"{task['task_id']}.claim"
+            claim.unlink(missing_ok=True)
+            from rl_common import fsync_directory
+            fsync_directory(bank["pool_claims"])
+        else:
+            retire_task(bank, task, outcome=plan["retirement"])
+
+    return service.publish_ready(build, apply)
+
+
 def bank_collect(args: argparse.Namespace) -> None:
     """One lane cycle's GPU collect over the global pool (v1 collect shape).
 
@@ -259,6 +420,9 @@ def bank_collect(args: argparse.Namespace) -> None:
     consumption (min interval between correction calls, corrections only
     for claimed tasks that failed on-policy).
     """
+    from ndm.e97_atomic import publish_bytes_no_replace
+    from ndm.e97_onpolicy_records import canonical_json
+    from rl_loop_driver import sealed_user_script, is_end_state_task
     config = resolve_correction_config(args)
     args.teacher_model = config["teacher_model"]
     bank = bank_paths(args.bank)
@@ -323,235 +487,162 @@ def bank_collect(args: argparse.Namespace) -> None:
     outcomes: list[dict[str, Any]] = []
     window_attempts = window_passes = window_receipts = 0
     last_teacher_call = 0.0
-    pool = (CorrectionPool(config["pool_width"], cycle_dir / "correction-pool")
-            if config["async_enabled"] else None)
-    pending = {}
+    service = CorrectionService(args.bank, args.lane) if config["async_enabled"] else None
+    if service is not None:
+        service.ensure_running(config["pool_width"])
     terminal_drain_s = 0.0
+    correction_publications = []
+    generation_started = time.monotonic()
 
     def _finalize_correction(context, result):
         nonlocal prev_digest, receipts, window_receipts
-        task, outcome = context["task"], context["outcome"]
+        plan = _correction_publication(context, result, cycle=args.cycle, lane=args.lane,
+            settings={"teacher": args.teacher, "teacher_model": args.teacher_model},
+            checkpoint=policy_checkpoint_binding, enc=enc, prev=stream_tail_digest(paths["stream"]))
+        if plan["receipt"] is not None:
+            prev_digest = append_receipt(paths, plan["receipt"])
+            receipts += 1
+            window_receipts += 1
+        retire_task(bank, context["task"], outcome=plan["retirement"])
+
+    def _poll_corrections():
+        nonlocal prev_digest, receipts, window_receipts
+        if service is not None:
+            plans = publish_corrections(args.bank, args.lane, service=service)
+            correction_publications.extend(plan["job_id"] for plan in plans)
+            for plan in plans:
+                for call in plan["correction_metrics"].get("calls", []):
+                    metrics.record(call)
+            for plan in plans:
+                if plan["retirement"]["cycle"] == args.cycle:
+                    for outcome in outcomes:
+                        if outcome["task_id"] == plan["outcome"]["task_id"]:
+                            outcome.update(plan["outcome"])
+            count = sum(plan["receipt"] is not None for plan in plans)
+            receipts += count
+            window_receipts += count
+            prev_digest = stream_tail_digest(paths["stream"])
+
+    for task_id, task in claimed.items():
+        _poll_corrections()
+        attempts += 1
+        heartbeat_claim(bank, task, lane=args.lane, ttl_seconds=args.claim_ttl)
         body = task["body"]
+        task_dir = cycle_dir / task_id
+        print(f"COLLECT task={task_id} template={body['template']}", flush=True)
+        gym = body.get("task_lake")
         eligible = bool(body.get("receipt_eligible", True))
-        episode_artifacts = context["episode_artifacts"]
-        policy_generations = [item for item in context["policy_record"].get("generations", [])
-                              if item.get("reason") == "valid"]
-        def _retire(stage, kind):
+        if eligible:
+            window_attempts += 1
+
+        attempt_panel = policy_panel
+        if gym is not None:
+            attempt_panel = make_panel(curriculum.SYSTEM, tools, {
+                **POLICY_PANEL,
+                "max_turns": min(POLICY_PANEL["max_turns"],
+                                 int(gym["limits"]["turns"]))})
+        attempt_dir = task_dir / "attempt"
+        workspace = prepare_workspace(attempt_dir / "workspace", body)
+        policy_record = run_episode(
+            episode_dir=attempt_dir, workspace=workspace, prompt=body["prompt"],
+            panel=attempt_panel, generate=policy_generate, enc=enc,
+            pi_bin=pi_bin, manifest_path=MANIFEST_PATH, pilot=pilot,
+            curriculum=curriculum, seconds=attempt_panel["episode_seconds"],
+            user_script=sealed_user_script(body), end_state_task=is_end_state_task(body))
+        heartbeat_claim(bank, task, lane=args.lane, ttl_seconds=args.claim_ttl)
+        passed, grade = grade_episode(
+            body, workspace, pilot, task, record=policy_record,
+            episode_dir=attempt_dir, stage="policy", system=curriculum.SYSTEM,
+            judge_metrics=metrics, judge_model=DEFAULT_TEACHER_MODEL)
+        publish_bytes_no_replace(
+            attempt_dir / "grade.json",
+            (canonical_json(dict(grade)) + "\n").encode("utf-8"), mode=0o400)
+        print(f"COLLECT policy grade passed={passed} "
+              f"status={policy_record['status']}", flush=True)
+
+        episode_artifacts = {
+            "attempt_grade_sha256": grade_receipt_digest(grade),
+            "attempt_episode_sha256": sha256_file(
+                attempt_dir / "episode-private.json"),
+            "attempt_status": policy_record["status"],
+            "attempt_reason": policy_record.get("reason"),
+        }
+        outcome: dict[str, Any] = {
+            "task_id": task_id, "template": body.get("template"),
+            "split": body.get("split", "seed"), "receipt_eligible": eligible,
+            "attempt": {"status": policy_record["status"],
+                        "grade_passed": passed,
+                        "reason": policy_record.get("reason")},
+            "correction": None, "receipt": None, "targets": 0,
+        }
+
+        def _retire(stage: str, kind: str | None) -> None:
             retire_task(bank, task, outcome={
                 "lane": args.lane, "cycle": args.cycle, "stage": stage,
                 "receipt_kind": kind, "receipt_eligible": eligible,
-                "split": body.get("split", "seed"), "receipt": outcome.get("receipt"),
-                "attempt_grade_passed": outcome["attempt"]["grade_passed"]})
-        if result.get("error"):
-            outcome["correction"] = {"status": "error", "grade_passed": False,
-                                     "reason": result["error"]}
-            _retire("failed", None)
-            return
-        passed, grade = result["passed"], result["grade"]
-        teacher_record, fresh_solve = result["teacher_record"], result["fresh_solve"]
-        splice = teacher_record.get("prefix") or {}
-        prefix_frames = int(splice.get("retained_frames", 0))
-        teacher_identity = (
-            {"mode": "live", "model": args.teacher_model,
-             "api": "lunaroute /v1/chat/completions"}
-            if args.teacher == "live" else
-            {"mode": "fixture",
-             "note": "authored deterministic continuation stub (not GLM-5.3)"})
-        teacher_identity.update(
-            continuation=("fresh-episode" if fresh_solve
-                          else "same-transcript-splice"),
-            prefix_frames=prefix_frames,
-            dropped_trailing_finish=bool(splice.get("dropped_trailing_finish")),
-            dropped_unresolved_call=bool(splice.get("dropped_unresolved_call")))
-        outcome["correction"] = {
-            "status": teacher_record["status"], "grade_passed": passed,
-            "reason": teacher_record.get("reason"),
-            "prefix_frames": prefix_frames,
-        }
-        if (passed and teacher_record["status"] == "finished"
-                and teacher_record.get("close_verified", False)):
+                "split": body.get("split", "seed"),
+                "receipt": outcome.get("receipt"),
+                "attempt_grade_passed": outcome["attempt"]["grade_passed"],
+            })
+
+        if passed and policy_record["status"] == "finished":
             if eligible:
-                merged = _merged_correction_record(
-                    teacher_record, policy_generations[:prefix_frames])
                 receipt = _receipt_from_episode(
-                    cycle=args.cycle, task=task, kind="teacher-corrected",
-                    policy_checkpoint=policy_checkpoint_binding, record=merged,
-                    supervise_from=prefix_frames, grade=grade,
-                    teacher=teacher_identity,
-                    attempt_link={**episode_artifacts,
-                                  "policy_generations": len(policy_generations),
-                                  "retained_prefix_frames": prefix_frames,
-                                  "dropped_trailing_finish": bool(
-                                      splice.get("dropped_trailing_finish")),
-                                  "dropped_unresolved_call": bool(
-                                      splice.get("dropped_unresolved_call"))},
-                    enc=enc, prev=prev_digest)
+                    cycle=args.cycle, task=task, kind="on-policy-success",
+                    policy_checkpoint=policy_checkpoint_binding,
+                    record=policy_record,
+                    supervise_from=0, grade=grade, teacher=None,
+                    attempt_link=None, enc=enc, prev=prev_digest)
                 prev_digest = append_receipt(paths, receipt)
                 receipts += 1
+                window_passes += 1
                 window_receipts += 1
                 outcome.update(receipt=receipt["receipt_sha256"],
                                targets=receipt["episode"]["targets"],
-                               receipt_kind="teacher-corrected",
-                               supervise_from=prefix_frames)
-                mode = "fresh" if fresh_solve else "spliced"
-                print(f"COLLECT receipt=teacher-corrected({mode}, "
-                      f"supervise_from={prefix_frames}) "
+                               receipt_kind="on-policy-success")
+                print(f"COLLECT receipt=on-policy-success "
                       f"{receipt['receipt_sha256'][:16]}", flush=True)
             else:
-                print("COLLECT dev-split correction measured (no receipt: "
-                      "sealed train/development split isolation)", flush=True)
-            _retire("teacher", "teacher-corrected" if eligible else None)
-        else:
-            # the round refresh re-attempts this sealed task against the
-            # CURRENT lineages next round; retire honestly failed
-            _retire("failed", None)
-
-    def _poll_corrections():
-        if pool is not None:
-            for sequence, result in pool.poll():
-                context = pending.pop(sequence)
-                for call in result.get("metrics", {}).get("calls", []):
-                    metrics.record(call)
-                _finalize_correction(context, result)
-            for context in pending.values():
-                heartbeat_claim(bank, context["task"], lane=args.lane,
-                                ttl_seconds=args.claim_ttl)
-
-    try:
-        for task_id, task in claimed.items():
-            _poll_corrections()
-            attempts += 1
-            heartbeat_claim(bank, task, lane=args.lane, ttl_seconds=args.claim_ttl)
-            body = task["body"]
-            task_dir = cycle_dir / task_id
-            print(f"COLLECT task={task_id} template={body['template']}", flush=True)
-            gym = body.get("task_lake")
-            eligible = bool(body.get("receipt_eligible", True))
-            if eligible:
-                window_attempts += 1
-
-            attempt_panel = policy_panel
-            if gym is not None:
-                attempt_panel = make_panel(curriculum.SYSTEM, tools, {
-                    **POLICY_PANEL,
-                    "max_turns": min(POLICY_PANEL["max_turns"],
-                                     int(gym["limits"]["turns"]))})
-            attempt_dir = task_dir / "attempt"
-            workspace = prepare_workspace(attempt_dir / "workspace", body)
-            from rl_loop_driver import sealed_user_script, is_end_state_task
-            policy_record = run_episode(
-                episode_dir=attempt_dir, workspace=workspace, prompt=body["prompt"],
-                panel=attempt_panel, generate=policy_generate, enc=enc,
-                pi_bin=pi_bin, manifest_path=MANIFEST_PATH, pilot=pilot,
-                curriculum=curriculum, seconds=attempt_panel["episode_seconds"], user_script=sealed_user_script(body), end_state_task=is_end_state_task(body))
-            heartbeat_claim(bank, task, lane=args.lane, ttl_seconds=args.claim_ttl)
-            passed, grade = grade_episode(
-                body, workspace, pilot, task, record=policy_record,
-                episode_dir=attempt_dir, stage="policy", system=curriculum.SYSTEM,
-                judge_metrics=metrics, judge_model=DEFAULT_TEACHER_MODEL)
-            from ndm.e97_atomic import publish_bytes_no_replace
-            from ndm.e97_onpolicy_records import canonical_json
-
-            publish_bytes_no_replace(
-                attempt_dir / "grade.json",
-                (canonical_json(dict(grade)) + "\n").encode("utf-8"), mode=0o400)
-            print(f"COLLECT policy grade passed={passed} "
-                  f"status={policy_record['status']}", flush=True)
-
-            episode_artifacts = {
-                "attempt_grade_sha256": grade_receipt_digest(grade),
-                "attempt_episode_sha256": sha256_file(
-                    attempt_dir / "episode-private.json"),
-                "attempt_status": policy_record["status"],
-                "attempt_reason": policy_record.get("reason"),
-            }
-            outcome: dict[str, Any] = {
-                "task_id": task_id, "template": body.get("template"),
-                "split": body.get("split", "seed"), "receipt_eligible": eligible,
-                "attempt": {"status": policy_record["status"],
-                            "grade_passed": passed,
-                            "reason": policy_record.get("reason")},
-                "correction": None, "receipt": None, "targets": 0,
-            }
-
-            def _retire(stage: str, kind: str | None) -> None:
-                retire_task(bank, task, outcome={
-                    "lane": args.lane, "cycle": args.cycle, "stage": stage,
-                    "receipt_kind": kind, "receipt_eligible": eligible,
-                    "split": body.get("split", "seed"),
-                    "receipt": outcome.get("receipt"),
-                    "attempt_grade_passed": outcome["attempt"]["grade_passed"],
-                })
-
-            if passed and policy_record["status"] == "finished":
-                if eligible:
-                    receipt = _receipt_from_episode(
-                        cycle=args.cycle, task=task, kind="on-policy-success",
-                        policy_checkpoint=policy_checkpoint_binding,
-                        record=policy_record,
-                        supervise_from=0, grade=grade, teacher=None,
-                        attempt_link=None, enc=enc, prev=prev_digest)
-                    prev_digest = append_receipt(paths, receipt)
-                    receipts += 1
-                    window_passes += 1
-                    window_receipts += 1
-                    outcome.update(receipt=receipt["receipt_sha256"],
-                                   targets=receipt["episode"]["targets"],
-                                   receipt_kind="on-policy-success")
-                    print(f"COLLECT receipt=on-policy-success "
-                          f"{receipt['receipt_sha256'][:16]}", flush=True)
-                else:
-                    print("COLLECT dev-split task measured (no receipt: sealed "
-                          "train/development split isolation)", flush=True)
-                outcome["receipt_kind"] = "on-policy-success" if eligible else None
-                _retire("policy", "on-policy-success" if eligible else None)
-                outcomes.append(outcome)
-                continue
-
-            # Admission preserves the existing lane-local minimum start interval.
-            _poll_corrections()
-            can_admit = pool is None or len(pending) < config["pool_width"]
-            if can_admit:
-                interval = time.monotonic() - last_teacher_call
-                if interval < args.teacher_min_interval:
-                    time.sleep(args.teacher_min_interval - interval)
-                last_teacher_call = time.monotonic()
-            context = {"task": task, "outcome": outcome, "policy_record": policy_record,
-                       "episode_artifacts": episode_artifacts}
+                print("COLLECT dev-split task measured (no receipt: sealed "
+                      "train/development split isolation)", flush=True)
+            outcome["receipt_kind"] = "on-policy-success" if eligible else None
+            _retire("policy", "on-policy-success" if eligible else None)
             outcomes.append(outcome)
-            if pool is None:
-                result = _execute_correction(args, task, policy_record, workspace, task_dir,
-                                             pilot, curriculum, tools, enc, metrics)
-                heartbeat_claim(bank, task, lane=args.lane, ttl_seconds=args.claim_ttl)
-                _finalize_correction(context, result)
-            else:
-                spec = {"settings": {"teacher": args.teacher, "teacher_model": args.teacher_model},
-                        "task": task, "policy_record": policy_record,
-                        "policy_checkpoint": policy_checkpoint_binding,
-                        "episode_artifacts": episode_artifacts,
-                        "fresh_solve": _correction_requires_fresh_solve(body, policy_record, tools),
-                        "workspace": str(workspace), "task_dir": str(task_dir)}
-                sequence, failure = pool.submit(spec)
-                if failure is not None:
-                    _finalize_correction(context, failure)
-                else:
-                    pending[sequence] = context
+            continue
 
-        # End-of-cycle barrier: no unfinished correction can enter training or a
-        # later cycle. Every failure is finalized explicitly, without a receipt.
-        if pool is not None:
-            drain_started = time.monotonic()
-            try:
-                while pending:
-                    _poll_corrections()
-                    if pending:
-                        time.sleep(0.2)
-            finally:
-                terminal_drain_s = time.monotonic() - drain_started
-                pool.close()
-    finally:
-        if pool is not None:
-            pool.close()
+        # Async enqueue never sleeps; the service owns the 10s episode-start gate.
+        _poll_corrections()
+        if service is None:
+            interval = time.monotonic() - last_teacher_call
+            if interval < args.teacher_min_interval:
+                time.sleep(args.teacher_min_interval - interval)
+            last_teacher_call = time.monotonic()
+        context = {"task": task, "outcome": outcome, "policy_record": policy_record,
+                   "episode_artifacts": episode_artifacts}
+        outcomes.append(outcome)
+        if service is None:
+            result = _execute_correction(args, task, policy_record, workspace, task_dir,
+                                         pilot, curriculum, tools, enc, metrics)
+            heartbeat_claim(bank, task, lane=args.lane, ttl_seconds=args.claim_ttl)
+            _finalize_correction(context, result)
+        else:
+            spec = {"settings": {"teacher": args.teacher, "teacher_model": args.teacher_model},
+                    "task": task, "policy_record": policy_record,
+                    "outcome": outcome, "cycle": args.cycle, "lane": args.lane,
+                    "policy_checkpoint": policy_checkpoint_binding,
+                    "episode_artifacts": episode_artifacts,
+                    "fresh_solve": _correction_requires_fresh_solve(body, policy_record, tools),
+                    "workspace": str(workspace), "task_dir": str(task_dir)}
+            job_id, failure = service.submit(spec, capacity=config["backlog_capacity"],
+                                             min_interval=args.teacher_min_interval)
+            if failure is not None:
+                _finalize_correction(context, failure)
+            else:
+                outcome["correction"] = {"status": "pending", "grade_passed": False,
+                                         "job_id": job_id, "reason": "durably admitted"}
+
+    # No correction fence: GPU work ends even with a full, slow backlog.
+    _poll_corrections()
 
     summary = {
         "schema": "emender-rl-loop-collect-summary-v1",
@@ -562,6 +653,11 @@ def bank_collect(args: argparse.Namespace) -> None:
         "teacher_mode": args.teacher,
         "correction_config": config,
         "correction_terminal_drain_s": terminal_drain_s,
+        "correction_publications": correction_publications,
+        "correction_backlog": (service.metrics(generation_attempts=attempts,
+            generation_wall_s=time.monotonic()-generation_started) if service else None),
+        "corrections_pending": [o["correction"]["job_id"] for o in outcomes
+                                if (o.get("correction") or {}).get("status") == "pending"],
         "correction_pool_exhaustions": sum(
             (outcome.get("correction") or {}).get("reason") == "pool exhausted"
             for outcome in outcomes),
@@ -718,6 +814,23 @@ def lane_run(args: argparse.Namespace) -> None:
                   flush=True)
             return
 
+        correction_root = paths["root"] / "corrections"
+        if resolve_correction_config(args)["async_enabled"] or correction_root.exists():
+            service = CorrectionService(args.bank, args.lane)
+            service.ensure_running(resolve_correction_config(args)["pool_width"])
+            publish_corrections(args.bank, args.lane, service=service)
+            accounted = set(state.get("correction_publications_accounted", []))
+            late_receipts = 0
+            for job in service.jobs():
+                publication = job / "published.json"
+                if publication.exists() and job.name not in accounted:
+                    late_receipts += bool(json.loads(publication.read_text())["outcome"].get("receipt"))
+                    accounted.add(job.name)
+            state["correction_publications_accounted"] = sorted(accounted)
+            state["receipts_total"] = int(state["receipts_total"]) + late_receipts
+            state["window_receipts"] = int(state["window_receipts"]) + late_receipts
+            write_lane_state(paths["root"], state)
+
         # ---- merge adoption: the pointer advances only from a readable,
         #      complete, sha-verified merged checkpoint (ADR-003 R07).
         #      Adoption resets this lane's per-window counters (soup weights
@@ -810,6 +923,9 @@ def lane_run(args: argparse.Namespace) -> None:
             receipts = int(summary["receipts"])
             state["lane_cycle"] = cycle
             state["receipts_total"] = int(state["receipts_total"]) + receipts
+            state["correction_publications_accounted"] = sorted(
+                set(state.get("correction_publications_accounted", [])) |
+                set(summary.get("correction_publications", [])))
             for outcome in summary["outcomes"]:
                 if outcome.get("receipt_eligible"):
                     state["window_attempts"] = int(state["window_attempts"]) + 1
@@ -1405,6 +1521,9 @@ def _assemble_lane_metrics(bank, paths, args, cycle, summary, train_row, gpu,
         "teacher_pass": sum(1 for o in summary["outcomes"]
                             if o["correction"] and o["correction"]["grade_passed"]),
         "teacher_calls": summary.get("teacher_calls", 0),
+        "correction_backlog": summary.get("correction_backlog"),
+        "correction_terminal_drain_s": summary.get("correction_terminal_drain_s", 0),
+        "corrections_pending": summary.get("corrections_pending", []),
         "receipts": len(cycle_rows),
         "receipt_kinds": {kind: sum(1 for r in cycle_rows if r["kind"] == kind)
                           for kind in sorted({r["kind"] for r in cycle_rows})},

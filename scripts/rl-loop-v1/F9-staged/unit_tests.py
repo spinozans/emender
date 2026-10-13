@@ -429,3 +429,13 @@ def test_sealed_validator_regeneration_and_both_archive_closures():
     additive['components'].append({'path': 'scripts/unauthorized.py', 'sha256': 'a'*64})
     with pytest.raises(ValueError):
         _manifest_components_payload(mechanics.canonical(additive).encode())
+
+
+def test_integrated_current_correction_sources_and_supply_knobs():
+    import rl_bank_lane
+    assert supply.TRANCHE_SIZE == 96
+    assert (supply.LANE_MIN, supply.LANE_START, supply.LANE_SOFT_CAP, supply.LANE_HARD_CAP) == (24, 24, 48, 48)
+    assert rl_bank_lane.CorrectionService.__module__ == 'rl_correction_service'
+    repo = Path('/home/erikg/emender/scripts/rl-loop-v1')
+    for name in ('rl_correction_service.py', 'rl_correction_pool.py', 'rl_correction_config.py', 'rl_bank.py'):
+        assert (ROOT / 'loop' / name).read_bytes() == (repo / name).read_bytes()

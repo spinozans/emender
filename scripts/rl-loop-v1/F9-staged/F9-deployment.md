@@ -42,6 +42,11 @@ without explicit `F9_DEPLOYMENT_APPROVED=1`; do not set it during validation.
    directory into their corresponding repo paths. The archived checker and all
    era-2/3/4 validator bytes remain unchanged. Materialize staged loop changes
    into matching repo loop sources AND the operator's deployed loop copies.
+   Deploy the staged `rl_bank_unit_test.py`: its three obsolete F8-only
+   conversation-rejection assertions are replaced by real durable fresh-worker
+   publication checks; the other 212 are unchanged. Integrated count remains
+   **215**: explicitly check/update `run_bank.sh` preflight literal to 215 at
+   deployment (repo and deployed wrapper), never leave it at 185 or infer it.
    Put patched `teacher_author.py` ONLY into lake `scripts/teacher_author.py`,
    and `inject_pool.py` into lake `scripts/inject_pool.py`. Standing supply stays
    repo-owned (its lake launch copy, if used, is an operator deployment copy).

@@ -39,6 +39,11 @@ def prepare(root):
     # roots first. Nothing in the live checkout/lake is overwritten.
     for package in ('ndm', 'scripts'):
         (root / package / '__init__.py').write_text('from pkgutil import extend_path\n__path__ = extend_path(__path__, __name__)\n')
+    # Current repo helpers win over deployed copies; F9 overlays only its seams.
+    (root / 'loop').mkdir()
+    for directory in (LOOP / 'scripts', REPO / 'scripts/rl-loop-v1'):
+        for path in directory.glob('*.py'):
+            shutil.copyfile(path, root / 'loop' / path.name)
     for directory in ('scripts', 'ndm', 'configs', 'loop'):
         for path in (SOURCE / directory).rglob('*'):
             if not path.is_file() or '__pycache__' in path.parts:
@@ -58,7 +63,7 @@ def prepare(root):
     manifest['components'] = [{'path': name, 'sha256': hashlib.sha256((root / name).read_bytes()).hexdigest()} for name in sorted(members)]
     (root / 'configs/pi/e97-firstparty-generator-manifest-v1.json').write_text(json.dumps(manifest, indent=2) + '\n')
     env = dict(os.environ, F9_STAGE_ROOT=str(root), F9_AUTHOR_WORK=str(root / 'author-work'),
-               PYTHONPATH=f'{root}:{root / "loop"}:{REPO}:{LOOP / "scripts"}')
+               PYTHONPATH=f'{root}:{root / "loop"}:{REPO}')
     # Run closure verification in a NEW interpreter so it cannot accidentally
     # mix live and staged ndm modules already imported by this preparer.
     subprocess.run([str(REPO / '.venv/bin/python'), '-m', 'scripts.build_e97_first_party_source_archive',
