@@ -545,7 +545,12 @@ def author_parallel(tranche: int, count: int, lanes: int,
     known_tokens, known_trees = ta.lake_token_tree_index()
     known_prompts, _ = ta.diversity_author.lake_dedupe_index(TASK_LAKE)
     corpus_path = Path(os.environ["F9_AUTHOR_WORK"]) / "seed-corpus.json"
-    seeds = json.loads(corpus_path.read_bytes()) if corpus_path.is_file() else []
+    def seed_intake_log(message):
+        print(f'{_now_iso()} {message}', flush=True)
+        (tranche_dir / 'seed-intake.log').write_text(message + '\n')
+    seeds = ta.diversity_author.load_verified_seed_corpus(
+        corpus_path, os.environ.get('F9_SEED_MANIFEST_SHA256'), verify_admitted,
+        seed_intake_log)
     lock = threading.Lock()
     stats: dict[str, Any] = {"calls": 0, "accepted": 0, "rejected": 0,
                              "prescreen_rejects": 0, "first_action_accepted": 0,

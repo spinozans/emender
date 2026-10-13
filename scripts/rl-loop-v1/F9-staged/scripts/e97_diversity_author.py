@@ -116,6 +116,46 @@ def verify_seed(seed, verify_admitted):
     return deepcopy(seed['payload'])
 
 
+def load_verified_seed_corpus(corpus_path, manifest_sha256, verify_admitted, log):
+    """Enable seeds only after a pinned manifest and every entry's authority pass.
+
+    Failure explicitly disables seeded authoring for this tranche. Candidates
+    still run all ordinary gates; no seed carries cached admission authority.
+    """
+    try:
+        if (not isinstance(manifest_sha256, str) or len(manifest_sha256) != 64
+                or any(c not in '0123456789abcdef' for c in manifest_sha256)):
+            raise ValueError('F9_SEED_MANIFEST_SHA256 absent/invalid; seed deployment not authorized')
+        corpus_path = Path(corpus_path)
+        manifest_bytes = (corpus_path.parent / 'seed-manifest.json').read_bytes()
+        if hashlib.sha256(manifest_bytes).hexdigest() != manifest_sha256:
+            raise ValueError('seed manifest pin mismatch')
+        manifest = json.loads(manifest_bytes)
+        if (not isinstance(manifest, dict)
+                or set(manifest) != {'schema', 'seeds', 'corpus_sha256', 'items'}
+                or manifest['schema'] != 'emender-era8-local-seed-corpus-v1'):
+            raise ValueError('seed manifest schema mismatch')
+        corpus_bytes = corpus_path.read_bytes()
+        if hashlib.sha256(corpus_bytes).hexdigest() != manifest['corpus_sha256']:
+            raise ValueError('seed corpus hash mismatch')
+        seeds = json.loads(corpus_bytes)
+        if (not isinstance(seeds, list) or not seeds or type(manifest['seeds']) is not int
+                or manifest['seeds'] != len(seeds) or not isinstance(manifest['items'], list)
+                or len(manifest['items']) != len(seeds)):
+            raise ValueError('seed corpus count mismatch')
+        for seed, item in zip(seeds, manifest['items']):
+            seed_instruction(seed)  # bounded schema + invented-fragment provenance
+            if item != {'kind': seed['kind'], 'seed_sha256': digest(seed), 'provenance': seed['provenance']}:
+                raise ValueError('seed manifest entry mismatch')
+            if seed['kind'] == 'solved_bundle':
+                verify_seed(seed, verify_admitted)  # TRAIN/proof/receipt/bundle/fixtures
+    except (OSError, ValueError, KeyError, TypeError, StopIteration) as exc:
+        log(f'SEED_INTAKE disabled: {type(exc).__name__}: {exc}')
+        return []
+    log(f'SEED_INTAKE verified: {len(seeds)} entries; manifest_sha256={manifest_sha256}')
+    return seeds
+
+
 def morph_instruction(base, trick):
     if trick not in MORPHS:
         raise ValueError("unknown morph")

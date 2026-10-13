@@ -6,19 +6,22 @@ patch reproduces the lake-local staged teacher without moving its ownership
 into the repo. `prepare.py` builds a separate import overlay and versioned
 source archive/registry; never deploys, admits, commits an allowlist or restarts.
 The old `F9-staged/checkout` exploratory snapshot is superseded; use
-`F9-staged/qualified-final` for the retained qualification evidence.
+`F9-staged/qualified-final` ONLY for historical Pi artifacts; the repaired
+source closure for re-review is `F9-staged/qualified-F9C-committed`.
 
 ## Reproduce without touching the daemon
 
 On lambda01, using the project `.venv` (Frontier requires the canonical activation):
 
 ```bash
-.venv/bin/python -m pytest -q tests/test_f9_task_diversity.py
+# CPU-only: the legacy wrapper below would run Pi and is NOT a CPU check.
+# tests/test_f9_task_diversity.py requires separate operator Pi approval.
 .venv/bin/python scripts/rl-loop-v1/F9-staged/prepare.py --root /new/private/F9-checkout
 source /new/private/F9-checkout/activate.sh
 cd "$F9_STAGE_ROOT"  # required: avoid importing live ndm from the working directory
-/home/erikg/emender/.venv/bin/python -m pytest -q /home/erikg/emender/scripts/rl-loop-v1/F9-staged/unit_tests.py
-/home/erikg/emender/.venv/bin/python /home/erikg/emender/scripts/rl-loop-v1/F9-staged/harvest_seeds.py
+PYTHONDONTWRITEBYTECODE=1 /home/erikg/emender/.venv/bin/python -m pytest -q -p no:cacheprovider /home/erikg/emender/scripts/rl-loop-v1/F9-staged/unit_tests.py -k 'not real_pi and not failed_reference_solution'
+PYTHONDONTWRITEBYTECODE=1 /home/erikg/emender/.venv/bin/python loop/rl_bank_unit_test.py --scratch /new/private/bank-fixtures
+# Harvest is a separate owner-local operation, NOT needed for CPU checks.
 ```
 
 Corpus is 8 admitted solved TRAIN bundles plus 4 invented fragments, owner-local
@@ -286,3 +289,32 @@ jobs NO-GO, retained published evidence GO, byte preservation and hash-drift
 failure. The integrated 215 suite exercises real durable manager/worker loss,
 queued resume and idempotent publication. This is not a live rollback rehearsal;
 actual launcher ownership, restart and watchdog race proof are deploy-time gates.
+
+### Seed corpus deployment ownership (C1)
+
+The operator owns the corpus under `$F9_AUTHOR_WORK/seed-corpus.json` with the
+sibling `seed-manifest.json`, not a relative cwd file or a teacher download.
+Copy the retained owner-local corpus from historical
+`$LAKE/F9-staged/qualified-final/author-work/` only AFTER verifying against the
+reviewed release pins. Install both read-only, e.g. `install -m 0400`, without
+modifying the historical originals; refuse an existing different corpus.
+For this release the corpus SHA256 is
+`1855368bf374849e94c2bfd6fb46b4ef36f025a5b509e04ce7819ef30568d101`, and manifest
+SHA256 is `bfa5e4418afd8f20aeaaccbe44cafcec413baa568cc904c988e5878b5d950a13`.
+Record both in release.manifest.json; carry
+`F9_SEED_MANIFEST_SHA256=bfa5e4418afd8f20aeaaccbe44cafcec413baa568cc904c988e5878b5d950a13`
+in supply AND watchdog's persistent launch environment. Supply verifies the
+manifest pin, corpus hash, item hashes/count/provenance and ALL solved entries
+via verify_seed (TRAIN admission/proof/bundle/prompt/fixtures) before constructing
+any seeded instruction. Entries remain verified in memory for that tranche.
+Absent/unpinned/corrupt/unauthorized corpus explicitly disables seeded authoring,
+prints `SEED_INTAKE disabled: <reason>` and writes tranche `seed-intake.log`;
+there is no silent fallback. Verified intake logs count and manifest pin.
+Unseeded authoring retains all candidate gates. If seeded deployment was
+intended, a disable log is NO-GO for ramp-up: stop supply, repair ownership/pins
+and requalify. Never recompute a pin to bless unreviewed bytes.
+
+Final CPU closure: **215 bank checks** + **73 F9 CPU tests** (the original 42
+plus 31 repair checks); 3 Pi-dependent tests remain excluded. This count does
+NOT change bank preflight's literal 215. No new live Pi/API/GPU proof or rollback
+rehearsal is asserted.

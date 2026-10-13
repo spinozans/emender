@@ -369,7 +369,7 @@ def test_new_families_reject_token_echo_artifacts(check):
 
 
 # F9R's exact validation-only repro: never send any command to a transport.
-@pytest.mark.parametrize('command', ['printf %s {1..999999999}', 'printf %s ~root', 'printf %s *', 'printf %s file?', 'printf %s [ab]', 'printf %s {a,b}'])
+@pytest.mark.parametrize('command', ['printf %s {1..999999999}', 'printf %s ~root', 'printf %s *', 'printf %s file?', 'printf %s [ab]', 'printf %s {a,b}', 'pip install x', 'python evil.py', 'sh evil.sh', 'env cat file', 'bash -c cat'])
 def test_f9r_expansion_rejected_by_reference_and_policy(command):
     from scripts.e97_offline_shell import shell_allowed
     from scripts.e97_pi_scripted_v8 import SafeWorkspaceBridgeV8
@@ -469,3 +469,116 @@ def test_rollback_boundary_is_read_only_and_refuses_inflight_work(tmp_path):
     spec.write_text('corrupted')
     with pytest.raises(ValueError):
         gate(tmp_path)
+
+
+def _seed_corpus_fixture(tmp_path):
+    seeds = [{'kind': 'error', 'payload': 'invented broken config', 'provenance': {'origin': 'invented'}},
+             {'kind': 'solved_bundle', 'payload': {'prompt': 'admitted training task'}, 'provenance': {'split': 'train'}}]
+    corpus = tmp_path / 'seed-corpus.json'
+    corpus.write_text(mechanics.canonical(seeds))
+    manifest = {'schema': 'emender-era8-local-seed-corpus-v1', 'seeds': len(seeds),
+                'corpus_sha256': hashlib.sha256(corpus.read_bytes()).hexdigest(),
+                'items': [{'kind': s['kind'], 'seed_sha256': engine.digest(s), 'provenance': s['provenance']} for s in seeds]}
+    path = tmp_path / 'seed-manifest.json'
+    path.write_text(mechanics.canonical(manifest))
+    return seeds, corpus, path, hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def test_seed_intake_checks_manifest_corpus_and_authority_before_use(tmp_path, monkeypatch):
+    seeds, corpus, manifest, pin = _seed_corpus_fixture(tmp_path)
+    verified, logs = [], []
+    admitted = object()
+    def authority(seed, verify_admitted):
+        assert verify_admitted is admitted
+        verified.append(seed)
+    monkeypatch.setattr(engine, 'verify_seed', authority)
+    assert engine.load_verified_seed_corpus(corpus, pin, admitted, logs.append) == seeds
+    assert verified == [seeds[1]] and logs[0].startswith('SEED_INTAKE verified:')
+
+
+@pytest.mark.parametrize('fault', ['no_pin', 'no_manifest', 'manifest_bytes', 'no_corpus', 'corpus_bytes', 'count', 'entry', 'authority', 'external_fragment'])
+def test_seed_intake_explicitly_disables_absent_corrupt_or_unauthorized(tmp_path, monkeypatch, fault):
+    seeds, corpus, manifest, pin = _seed_corpus_fixture(tmp_path)
+    checked, logs = [], []
+    def authority(seed, verify_admitted):
+        checked.append(seed)
+        if fault == 'authority':
+            raise ValueError('admission authority drift')
+    monkeypatch.setattr(engine, 'verify_seed', authority)
+    if fault == 'no_pin': pin = None
+    elif fault == 'no_manifest': manifest.unlink()
+    elif fault == 'manifest_bytes': manifest.write_text('{}')
+    elif fault == 'no_corpus': corpus.unlink()
+    elif fault == 'corpus_bytes': corpus.write_text('[]')
+    elif fault in {'count', 'entry', 'external_fragment'}:
+        m = json.loads(manifest.read_bytes())
+        if fault == 'count': m['seeds'] += 1
+        elif fault == 'entry': m['items'][1]['seed_sha256'] = '0'*64
+        else:
+            seeds[0]['provenance']['origin'] = 'external-benchmark'
+            corpus.write_text(mechanics.canonical(seeds))
+            m['corpus_sha256'] = hashlib.sha256(corpus.read_bytes()).hexdigest()
+        manifest.write_text(mechanics.canonical(m))
+        pin = hashlib.sha256(manifest.read_bytes()).hexdigest()
+    assert engine.load_verified_seed_corpus(corpus, pin, object(), logs.append) == []
+    assert len(logs) == 1 and logs[0].startswith('SEED_INTAKE disabled:')
+    if fault != 'authority': assert not checked
+
+
+def test_retained_real_seed_corpus_reverified_for_supply():
+    corpus = Path('/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-lake-expansion-v1/F9-staged/qualified-final/author-work/seed-corpus.json')
+    logs = []
+    seeds = engine.load_verified_seed_corpus(corpus, 'bfa5e4418afd8f20aeaaccbe44cafcec413baa568cc904c988e5878b5d950a13', supply.verify_admitted, logs.append)
+    assert len(seeds) == 12 and sum(s['kind'] == 'solved_bundle' for s in seeds) == 8
+    assert logs[0].startswith('SEED_INTAKE verified:')
+
+
+def test_supply_seed_intake_logs_disable_at_production_callsite(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(supply, 'WORK', tmp_path)
+    monkeypatch.setenv('F9_AUTHOR_WORK', str(tmp_path))
+    monkeypatch.delenv('F9_SEED_MANIFEST_SHA256', raising=False)
+    monkeypatch.setattr(author, 'lake_token_tree_index', lambda: (set(), set()))
+    monkeypatch.setattr(engine, 'lake_dedupe_index', lambda lake: (set(), set()))
+    def no_teacher(*args, **kwargs):
+        raise AssertionError('no teacher API authorized in this test')
+    monkeypatch.setattr(author, 'lunaroute_call', no_teacher)
+    result = supply.author_parallel(0, count=0, lanes=0, state={})
+    assert result['calls'] == 0
+    assert 'SEED_INTAKE disabled:' in capsys.readouterr().out
+    assert 'F9_SEED_MANIFEST_SHA256 absent/invalid' in (tmp_path / 'teacher-authored/tranche-000/seed-intake.log').read_text()
+
+
+def test_repaired_archive_pins_and_legacy_validator_bytes():
+    import tarfile
+    from ndm.e97_first_party_source_archive import verify_archive_members
+    manifest = ROOT / 'configs/pi/e97-firstparty-generator-manifest-v1.json'
+    archive = ROOT / 'configs/pi/e97-firstparty-source-v1.tar'
+    digest = verify_archive_members(manifest, archive)
+    assert digest == hashlib.sha256(archive.read_bytes()).hexdigest()
+    registry = json.loads((ROOT / 'configs/pi/e97-onpolicy-source-registry-v1.json').read_bytes())
+    pins = [s['receipts']['source_archive_sha256'] for s in registry['sources'] if s['kind'] == 'first-party' and s['status'] == 'admitted']
+    assert len(pins) == 2 and pins == [digest, digest]
+    with tarfile.open(archive) as tar:
+        for name in ['scripts/e97_first_party_validator.py', 'scripts/e97_first_party_validator_first_action.py', 'scripts/e97_first_party_validator_protocol_breadth.py']:
+            assert tar.extractfile(name).read() == (Path('/home/erikg/emender') / name).read_bytes()
+        name = 'scripts/e97_first_party_validator_diversity.py'
+        assert tar.extractfile(name).read() == (ROOT / name).read_bytes()
+
+
+@pytest.mark.parametrize('identity', ['18c99597ae7d714c927c6362f59339e241abe6310299e971b00a22e6d9fc0cb9', 'b839a3659911beee5feeadf86726fbc63d6a044ae9aef098cb68dff92745e805', 'aae2fc331246ad5b7f332493206bc0ee8e9ceb988a1eea90c9c900819d486aa2'])
+def test_retained_terminals_regraded_under_repaired_sealed_bytes(identity, tmp_path):
+    historical = Path('/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-lake-expansion-v1/F9-staged/qualified-final/author-work/teacher-authored/tranche-test-diversity-test_real_pi_new_families_and_0/quarantine')
+    spec = historical / 'private_validators' / f'{identity}.json'
+    terminal = historical / 'era8-proofs' / identity / 'gym-terminal-projection-proof.json'
+    command = [sys.executable, str(ROOT / 'scripts/e97_first_party_validator_diversity.py')]
+    for mode in ('focused', 'regression'):
+        cp = subprocess.run([*command, '--mode', mode, '--spec', str(spec), '--terminal', str(terminal)], capture_output=True, timeout=30)
+        assert cp.returncode == 0, cp.stderr.decode()
+    mutant = json.loads(terminal.read_bytes())
+    private = json.loads(spec.read_bytes())
+    check = next(c for c in private['end_state_assertions'] if c['kind'] in {'exact', 'regex'})
+    mutant['sealed_end_state']['files'][check['path']] = None
+    path = tmp_path / 'missing-output.json'
+    path.write_text(mechanics.canonical(mutant))
+    cp = subprocess.run([*command, '--mode', 'focused', '--spec', str(spec), '--terminal', str(path)], capture_output=True, timeout=30)
+    assert cp.returncode != 0 and b'sealed end state failed' in cp.stderr
