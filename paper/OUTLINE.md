@@ -1,9 +1,39 @@
 # Emender Paper Outline
 
-**Status:** Draft outline (not the paper itself).
+**Status:** Assembled section map below is current; older planning prose is historical, not claim authority.
 **Generated:** 2026-05-23 by task `paper-outline`.
 
 ---
+
+## P3 assembled map and corrected claim authority
+
+The current manuscript, not the historical planning entries below, is the
+claim authority. All body references use Typst labels; applications are numbered.
+
+1. Introduction
+2. Background
+3. Architecture
+4. Multi-Programming and Systems (CUDA-only measurements)
+5. Language-Modeling Results (matched-token training-log null; U3.1)
+6. Expressivity Results (modular-quadratic positive; verbatim S5 negative)
+7. Repeated nonlinear maps in the wild (EXHIBIT / ANALOGY / OPEN)
+8. Formal Results (sets A–H; exact statement scopes)
+9. Related Work
+10. Limitations (G1–G3, F1, U3.1, empirical and application gaps)
+11. Conclusion
+12. Testable Predictions
+13. Future Work
+A. Lineage of E63 → E88 → E97
+B. Predecessor 1.3 B cohort
+C. Held-out bits-per-byte measurement (predecessor cohort)
+References (unnumbered)
+
+**Correctness corrections:** generator-table lookup plus external group
+multiplication is not a recurrent tanh-tracker realization (F1); finite-k
+non-equality is not a compounding or uniform-margin theorem; circuit containment
+does not establish TC0 ≠ NC1 or blanket affine-channel S5 impossibility (G3).
+State-count headroom motivates an inductive-bias hypothesis, not a proof that
+capacity is non-binding. The refreshed inventory covers all 15 trusted files.
 
 ## CHANGELOG
 
@@ -363,12 +393,11 @@ bullet cites the upstream synthesis doc that supplies the content.
   alone (M2RNN) is *not* sufficient; the delta correction is the
   load-bearing piece. Mirrors the Lean `ndm_m2rnn_one_step_resource_separation`.
 
-### 2.6a Repeated nonlinear maps in the wild — applications bridge
+### 2.7 Repeated nonlinear maps in the wild — applications bridge
 
-- **Placement and numbering.** Unnumbered level-1 bridge immediately after
-  §6 Expressivity Results, before §7 Formal Results; `main.typ` label
-  `sec:applications`. Preserves existing numbered sections and their literal
-  cross-references pending the final single-owner assembly pass.
+- **Placement and numbering.** Numbered §7 immediately after expressivity;
+   label `sec:applications`. Formal results follow as §8.
+
 - **Family and theory scope.** Fixed input-driven update `s' = F_theta(s,u)`,
   generally non-affine in the carried state; the coupled Emender update is
   E97's all-one split-gate specialization. Cite the actual structural
@@ -390,7 +419,7 @@ bullet cites the upstream synthesis doc that supplies the content.
   countercases. Close on many low-cost streaming programs at the edge,
   with no measured hardware, energy, safety, or deployment advantage claimed.
 
-### 2.7 Formal Results — Trusted Lean 4 Core
+### 2.8 Formal Results — Trusted Lean 4 Core
 
 - **Trust gate and surface** — `formal/lean/PROOF_INVENTORY.md` §Trust-Gate
   Status: 8 trusted source files in the `PaperCore` import closure, scripts
@@ -420,7 +449,7 @@ bullet cites the upstream synthesis doc that supplies the content.
   exactly recovers the lookup table. Cite
   `formal/lean/PROOF_INVENTORY.md` §"Claimed-but-Not-Formalized".
 
-### 2.8 Related Work
+### 2.9 Related Work
 
 - **The linear-state cohort** — Mamba/Mamba2, DeltaNet/Gated DeltaNet,
   RetNet, GLA, RWKV-4/5/6/7, HGRN/HGRN2, mLSTM, RG-LRU/Griffin/RecurrentGemma.
@@ -462,7 +491,7 @@ bullet cites the upstream synthesis doc that supplies the content.
   update rule (delta-correcting), and a multi-programming recipe that
   is shown to be general across the nonlinear matrix-state family."
 
-### 2.9 Limitations
+### 2.10 Limitations
 
 - **No completed Lean lower bound** for all linear scan models on S5
   (`formal/lean/PROOF_INVENTORY.md` §"Claimed-but-Not-Formalized";
@@ -486,7 +515,7 @@ bullet cites the upstream synthesis doc that supplies the content.
   Production keeps the more conservative settings; revalidation at
   1.27B is flagged as the highest-value early follow-up.
 
-### 2.10 Conclusion
+### 2.11 Conclusion
 
 - **Pillar 1 restated.** Pure nonlinear recurrent language models are
   trainable at billion-parameter scale when the recurrent computation
