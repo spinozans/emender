@@ -1200,7 +1200,11 @@ therefore asks nothing of parallelism *along time*: the parallelism
 across these programs is already enough to fill it. How fully it does
 is something the next section measures directly.
 
-#heading(level: 2, numbering: none)[Measured throughput and utilization]
+#heading(level: 2, numbering: none)[Measured throughput and utilization (CUDA only)]
+
+All throughput measurements and throughput-budget smokes reported here
+are CUDA-only; none establishes correctness, performance, or parity
+on ROCm.
 
 That the card stays busy is a claim about occupancy, and it is measured
 directly. Driving the 1.273 B E88 predecessor instance (batch 5,
@@ -1276,16 +1280,16 @@ the kernel is $T / K + 1$ checkpoint slots instead of $T$. At $K = 16$
 this is approximately a $16 times$ shrink, at the cost of a single
 extra forward pass per segment.
 
-#heading(level: 2, numbering: none)[Portable kernels]
+#heading(level: 2, numbering: none)[Triton source portability; CUDA-only validation]
 
-The kernel is written once in Triton @triton2019. All results in this
-paper were produced on NVIDIA CUDA; the same source is dispatchable on
-AMD ROCm, but no ROCm production run backs a parity claim here, and
-none is made — the production E97/GDN2-MLP pair of §5 ran on CUDA
-(the successor E97 Frontier continuation is a separate, single-arm
-line of work). The practical reason to choose Triton over hand-tuned
-HIP is engineering economy: one source targets both stacks, versus
-three to six weeks to port to HIP from scratch.
+The kernel is written in Triton @triton2019, a source-portability route
+rather than evidence of cross-backend parity. The pair's production
+runs, kernel throughput measurements, and expressivity throughput
+smokes all ran on NVIDIA CUDA. No ROCm smoke or paired production
+artifact supports a correctness or throughput claim here; no CUDA/ROCm
+parity is claimed. The successor E97 Frontier continuation is a
+separate, single-arm line of work, not a portability benchmark for the
+E97/GDN2-MLP pair.
 
 #heading(level: 2, numbering: none)[Distributed training]
 

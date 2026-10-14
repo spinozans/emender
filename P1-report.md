@@ -54,7 +54,16 @@ Validation so far: `typst compile paper/main.typ /tmp/P1-section6.pdf`
 and `git diff --check` passed. GPU experiments were not rerun; this task
 integrates frozen results, not resilient-training behavior.
 
-## Remaining task milestones
+## Milestone 2: U2 closed — CUDA-only evidence scope
 
-U2 CUDA scope and U3 per-sweep decomposition will be recorded below when
-implemented and validated.
+`grep -nE 'CUDA|ROCm|Portable|throughput' paper/main.typ` located the
+backend claim in Section 4. Throughput heading and prose now explicitly
+scope all performance measurements and budget smokes to CUDA only.
+Triton source portability is not reported as ROCm correctness, throughput,
+or parity; the separate single-arm Frontier continuation cannot establish
+paired portability. Removed the unmeasured dispatchability/port-time claim.
+No ROCm measurement was invented. `typst compile` and `git diff --check`
+passed after this milestone.
+
+U3 per-sweep decomposition will be recorded below when implemented and
+validated.
