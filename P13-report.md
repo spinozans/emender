@@ -23,8 +23,8 @@ index 3d2956a1..4794e91b 100644
 -but the honest statement is descriptive closeness with the reported
 +but the statement is descriptive closeness with the reported
 @@ -1529 +1529 @@ surprising, and why the paper's positive claims live in #ref(<sec:expressivity>)
--Downstream capability panels: an honest null, on the predecessor cohort]
-+Downstream capability panels: a null, on the predecessor cohort]
+-#heading(level: 2, numbering: none)[Downstream capability panels: an honest null, on the predecessor cohort]
++#heading(level: 2, numbering: none)[Downstream capability panels: a null, on the predecessor cohort]
 @@ -1534,2 +1534,2 @@ from the predecessor 1.3 B racer cohort (E88, FLA-GDN, M²RNN, Mamba2 —
 -#ref(<sec:appendix_cohort>)), and it is reported here without spin as the honest
 -expectation to beat: at $approx 1 M$-step training extents, on a
