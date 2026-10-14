@@ -10,7 +10,6 @@
 \usepackage{xurl}
 \usepackage[hidelinks]{hyperref}
 \usepackage{caption}
-\captionsetup{font=small}
 % Unnumbered amsthm statements retain the original statement headings verbatim.
 \newtheoremstyle{canonical}{3pt}{3pt}{\normalfont}{}{}{}{0pt}{}
 \theoremstyle{canonical}
@@ -114,7 +113,7 @@ To make the scope legible up front, the table below states each load-bearing cla
 
 \begin{table}[htbp]
 \centering
-\begingroup\fontsize{8}{10}\selectfont\setlength{\tabcolsep}{3pt}
+\begingroup\setlength{\tabcolsep}{3pt}
 \begin{tabularx}{\linewidth}{|>{\hsize=0.85294\hsize\linewidth=\hsize\raggedright\arraybackslash}X|>{\hsize=1.20588\hsize\linewidth=\hsize\raggedright\arraybackslash}X|>{\hsize=0.79412\hsize\linewidth=\hsize\raggedright\arraybackslash}X|>{\hsize=1.14706\hsize\linewidth=\hsize\raggedright\arraybackslash}X|}\hline
 \emph{Claim} & \emph{Evidence} & \emph{Scope} & \emph{Non-claim} \\ \hline
 Pure nonlinear-recurrent LMs train at the 1.3 B-class & E97 reaches an estimated 0.93 bpb on The Pile at 150.8 B tokens, no time-axis trick, no attention hybrid (Section~\ref{sec:intro}, Section~\ref{sec:lm}) & One E97 run, single seed; viability demonstration & Not a scaling law and not seed-averaged; one artifact shown to exist \\ \hline
@@ -263,7 +262,7 @@ That split is exactly what the Emender cell lacks: its carry sits inside the bou
 
 \begin{table}[htbp]
 \centering
-\begingroup\fontsize{8}{10}\selectfont\setlength{\tabcolsep}{3pt}
+\begingroup\setlength{\tabcolsep}{3pt}
 \begin{tabularx}{\linewidth}{|>{\hsize=1.25000\hsize\linewidth=\hsize\raggedright\arraybackslash}X|>{\hsize=0.62500\hsize\linewidth=\hsize\raggedright\arraybackslash}X|>{\hsize=0.62500\hsize\linewidth=\hsize\raggedright\arraybackslash}X|>{\hsize=0.62500\hsize\linewidth=\hsize\raggedright\arraybackslash}X|>{\hsize=1.87500\hsize\linewidth=\hsize\raggedright\arraybackslash}X|}\hline
 \emph{Property} & \emph{GDN} & \emph{M\textsuperscript{2}RNN} & \emph{Emender} & \emph{What it shows} \\ \hline
 Matrix state & yes & yes & yes & Cannot separate: GDN has it and fails ${S }_{5}$ \\ \hline
@@ -349,7 +348,7 @@ The 1.3 B comparison is a \emph{pairing}: one nonlinear-state model and one line
 
 \begin{table}[htbp]
 \centering
-\begingroup\fontsize{8}{10}\selectfont\setlength{\tabcolsep}{3pt}
+\begingroup\setlength{\tabcolsep}{3pt}
 \begin{tabularx}{\linewidth}{|>{\hsize=0.63636\hsize\linewidth=\hsize\raggedright\arraybackslash}X|>{\hsize=1.18182\hsize\linewidth=\hsize\raggedright\arraybackslash}X|>{\hsize=1.18182\hsize\linewidth=\hsize\raggedright\arraybackslash}X|}\hline
 \emph{Training identity} & \emph{E97-MLP} & \emph{GDN2-MLP} \\ \hline
 Parameters & 1,286,589,072 & 1,286,713,448 (+0.0097\%) \\ \hline
@@ -385,7 +384,7 @@ The primary read-out is the training-log loss of both arms aligned on exact comm
 
 \begin{table}[htbp]
 \centering
-\begingroup\fontsize{8}{10}\selectfont\setlength{\tabcolsep}{3pt}
+\begingroup\setlength{\tabcolsep}{3pt}
 \begin{tabularx}{\linewidth}{|>{\hsize=1.60000\hsize\linewidth=\hsize\raggedright\arraybackslash}X|>{\hsize=0.80000\hsize\linewidth=\hsize\raggedright\arraybackslash}X|>{\hsize=0.80000\hsize\linewidth=\hsize\raggedright\arraybackslash}X|>{\hsize=0.80000\hsize\linewidth=\hsize\raggedright\arraybackslash}X|}\hline
 \emph{Statistic at the 150.79 B-token cutoff} & \emph{E97} & \emph{GDN2-MLP} & \emph{$\Delta $ (GDN2 $- $ E97)} \\ \hline
 Raw loss at cutoff step & 2.4770 & 2.4324 & $- 0.0446$ \\ \hline
@@ -427,7 +426,7 @@ Because the central 1.3 B claim is a \emph{null} on loss, the credibility of the
 
 \begin{table}[htbp]
 \centering
-\begingroup\fontsize{8}{10}\selectfont\setlength{\tabcolsep}{3pt}
+\begingroup\setlength{\tabcolsep}{3pt}
 \begin{tabularx}{\linewidth}{|>{\hsize=2.51799\hsize\linewidth=\hsize\raggedright\arraybackslash}X|>{\hsize=0.75540\hsize\linewidth=\hsize\raggedright\arraybackslash}X|>{\hsize=0.55396\hsize\linewidth=\hsize\raggedright\arraybackslash}X|>{\hsize=0.55396\hsize\linewidth=\hsize\raggedright\arraybackslash}X|>{\hsize=0.90647\hsize\linewidth=\hsize\raggedright\arraybackslash}X|>{\hsize=0.90647\hsize\linewidth=\hsize\raggedright\arraybackslash}X|>{\hsize=0.80576\hsize\linewidth=\hsize\raggedright\arraybackslash}X|}\hline
 \emph{Sweep ID} & \emph{Status} & \emph{Evals} & \emph{Gens} & \emph{Gen-0 best} & \emph{Observed best} & \emph{Gain} \\ \hline
 redo 1300m e88 & partial & 34 & 7 & 6.2124 & 6.1086 & 0.1038 \\ \hline
@@ -468,7 +467,7 @@ No downstream capability evaluation of the 150 B E97/GDN2-MLP pair has been run 
 
 \begin{table}[htbp]
 \centering
-\begingroup\fontsize{8}{10}\selectfont\setlength{\tabcolsep}{3pt}
+\begingroup\setlength{\tabcolsep}{3pt}
 \begin{tabularx}{\linewidth}{|>{\hsize=1.66667\hsize\linewidth=\hsize\raggedright\arraybackslash}X|>{\hsize=0.83333\hsize\linewidth=\hsize\raggedright\arraybackslash}X|>{\hsize=0.83333\hsize\linewidth=\hsize\raggedright\arraybackslash}X|>{\hsize=0.83333\hsize\linewidth=\hsize\raggedright\arraybackslash}X|>{\hsize=0.83333\hsize\linewidth=\hsize\raggedright\arraybackslash}X|}\hline
 \emph{Panel (predecessor cohort)} & \emph{E88} & \emph{FLA-GDN} & \emph{M\textsuperscript{2}RNN} & \emph{Mamba2} \\ \hline
 Fact panel, 2,049 items (accuracy) & 0.345 & 0.373 & 0.358 & 0.353 \\ \hline
@@ -511,7 +510,7 @@ The symmetric-group word problem in ${S }_{5}$ (track the running product of adj
 
 \begin{table}[htbp]
 \centering
-\begingroup\fontsize{8}{10}\selectfont\setlength{\tabcolsep}{3pt}
+\begingroup\setlength{\tabcolsep}{3pt}
 \begin{tabularx}{\linewidth}{|>{\hsize=1.66667\hsize\linewidth=\hsize\raggedright\arraybackslash}X|>{\hsize=0.83333\hsize\linewidth=\hsize\raggedright\arraybackslash}X|>{\hsize=0.83333\hsize\linewidth=\hsize\raggedright\arraybackslash}X|>{\hsize=0.83333\hsize\linewidth=\hsize\raggedright\arraybackslash}X|>{\hsize=0.83333\hsize\linewidth=\hsize\raggedright\arraybackslash}X|}\hline
 \emph{Model} & \emph{${S }_{3}$ T=128} & \emph{${S }_{5}$ T=128} & \emph{${S }_{5}$ T=256} & \emph{${S }_{5}$ T=512} \\ \hline
 Emender & \emph{1.0000} & \emph{0.7918} & \emph{0.4158} & \emph{0.2150} \\ \hline
@@ -583,7 +582,7 @@ The pre-registered parameter control closes the historical small-GDN mismatch wi
 
 \begin{table}[htbp]
 \centering
-\begingroup\fontsize{8}{10}\selectfont\setlength{\tabcolsep}{3pt}
+\begingroup\setlength{\tabcolsep}{3pt}
 \begin{tabularx}{\linewidth}{|>{\hsize=1.71429\hsize\linewidth=\hsize\raggedright\arraybackslash}X|>{\hsize=0.85714\hsize\linewidth=\hsize\raggedright\arraybackslash}X|>{\hsize=0.85714\hsize\linewidth=\hsize\raggedright\arraybackslash}X|>{\hsize=0.85714\hsize\linewidth=\hsize\raggedright\arraybackslash}X|>{\hsize=0.85714\hsize\linewidth=\hsize\raggedright\arraybackslash}X|>{\hsize=0.85714\hsize\linewidth=\hsize\raggedright\arraybackslash}X|}\hline
 \emph{Arm} & \emph{Parameters (M)} & \emph{T=128} & \emph{T=256} & \emph{T=512} & \emph{T=1024} \\ \hline
 e97 & 7.38 & 0.885 & 0.879 & 0.878 & 0.876 \\ \hline
@@ -607,7 +606,7 @@ The decisive experiment uses the E97 and GDN2-MLP checkpoints of Section~\ref{se
 
 \begin{table}[htbp]
 \centering
-\begingroup\fontsize{8}{10}\selectfont\setlength{\tabcolsep}{3pt}
+\begingroup\setlength{\tabcolsep}{3pt}
 \begin{tabularx}{\linewidth}{|>{\hsize=1.60000\hsize\linewidth=\hsize\raggedright\arraybackslash}X|>{\hsize=0.80000\hsize\linewidth=\hsize\raggedright\arraybackslash}X|>{\hsize=0.80000\hsize\linewidth=\hsize\raggedright\arraybackslash}X|>{\hsize=0.80000\hsize\linewidth=\hsize\raggedright\arraybackslash}X|}\hline
 \emph{Length} & \emph{Train-length multiple} & \emph{E97} & \emph{GDN2-MLP} \\ \hline
 128 & 1\ensuremath{\times} & 99.96\% & 76.09\% \\ \hline
@@ -637,7 +636,7 @@ The initial suite's negative is retained verbatim: ``The 8M S5 separation does N
 
 \begin{table}[htbp]
 \centering
-\begingroup\fontsize{8}{10}\selectfont\setlength{\tabcolsep}{3pt}
+\begingroup\setlength{\tabcolsep}{3pt}
 \begin{tabularx}{\linewidth}{|>{\hsize=1.50000\hsize\linewidth=\hsize\raggedright\arraybackslash}X|>{\hsize=0.75000\hsize\linewidth=\hsize\raggedright\arraybackslash}X|>{\hsize=0.75000\hsize\linewidth=\hsize\raggedright\arraybackslash}X|}\hline
 \emph{Length} & \emph{E97} & \emph{GDN2-MLP} \\ \hline
 256 & 0.397 & 0.685 \\ \hline
@@ -668,7 +667,7 @@ The expressivity claim rests on two complementary measurements that are load-bea
 The iterated-map probes ask a question that arises well beyond language modeling: can an architecture keep applying a nonlinear transformation to its own evolving state? Consider the broad family
 \[\begin{aligned}{s }_{t + 1} =  {F }_{\theta ( {s }_{t }, {u }_{t }) }, \end{aligned}\]
  where $\theta $ is fixed across steps, ${u }_{t }$ injects the current input, and ${F }_{\theta ( \cdot , u ) }$ is generally non-affine in the carried state. A common form is ${s }_{t + 1} =  \varphi ( A ( {u }_{t })  {s }_{t } +  b ( {u }_{t }) ) $; neither an additive injection nor a smooth $\varphi $ is required. Fixed $\theta $ describes the update law, not identical token-dependent coefficients: in the Lean schedule, each step supplies its own key, gates, and value. The formal E97 fold fixes $\lambda $; the architecture additionally supplies input-dependent decay. Autonomous maps have no input injection. The Emender's coupled update
-\[\begin{aligned}{S } =  \operatorname{tanh}( \lambda  S  +  {k ( v  -  {S }^{T } k ) }^{T }) \end{aligned}\]
+\[\begin{aligned}{S }' =  \operatorname{tanh}( \lambda  S  +  {k ( v  -  {S }^{T } k ) }^{T }) \end{aligned}\]
  is an instance with state $S $, input $( \lambda , k , v ) $, and a fixed delta-correcting $\operatorname{tanh}$ update; it is the all-one split-gate specialization of E97 (Section~\ref{sec:arch}). This is a structural family, not a claim that the systems below share E97's weights, learning rule, or computational difficulty.
 
 The depth-duality gives a precise lens, but not an application-level lower bound. \protect\path|CompositionalDepthDuality.e97_compositional_depth_grows_in_time| records one additional nonlinear update per time step; \protect\path|gdn_state_channel_depth_bounded_in_time| proves that a GDN state fold is affine in its initial state \emph{conditional on a state-independent input/gate/value schedule}. Neither proves that the resulting function has no shallower representation in other coordinates. The ${S }_{5}$ bridge (\protect\path|S5GDNBridge.gdn_s5_realization_requires_per_token_action|) is a routing statement under its reachable-state-separating decoder hypothesis, not a depth lower bound. It does not transfer a separation to the applications below; group actions can admit affine representations. Here \emph{EXHIBIT} means a definitional or structural instance of the family, \emph{ANALOGY} a related but non-identical mechanism, and \emph{OPEN} a prediction not yet established. In each case the question is whether a fixed-depth GDN-style linear-state approximator can reproduce the required trajectories, not whether the original engineered system already works.
@@ -882,11 +881,11 @@ The Section~\ref{sec:lm} pairing is thus anchored on both sides: the two 1.3 B a
 
 \emph{What to take from set F: conditional slot-level saturation, hold, and release bounds, not production-default persistent binding.}
 
-These three results formalize the latching half of the Emender primitive: saturation makes a slot insensitive to further bounded writes, sign is preserved under sub-threshold counter-input, and a sufficient counter-delta releases the latch. All three are slot-wise statements on the full abstract Emender update, where $v $ denotes the bounded post-nonlinearity value input already supplied to the recurrent body, ${S } =  \operatorname{tanh}( \lambda  \cdot  S  +  k  {( v  -  {S }^{T } k ) }^{T }) $ at slot $( i , j ) $, with $W  :=  {k }_{i } ( {v }_{j } -  {( {S }^{T } k ) }_{j }) $ the write contribution into that slot. The proofs run through the standard tanh-perturbation foundation. The module carrying them (\protect\path|EmenderLatching|, introduced at \protect\path|696299b4|) is included in the refreshed inventory and the current clean \protect\path|lake build ElmanProofs.PaperCore|.
+These three results formalize the latching half of the Emender primitive: saturation makes a slot insensitive to further bounded writes, sign is preserved under sub-threshold counter-input, and a sufficient counter-delta releases the latch. All three are slot-wise statements on the full abstract Emender update, where $v $ denotes the bounded post-nonlinearity value input already supplied to the recurrent body, ${S }' =  \operatorname{tanh}( \lambda  \cdot  S  +  k  {( v  -  {S }^{T } k ) }^{T }) $ at slot $( i , j ) $, with $W  :=  {k }_{i } ( {v }_{j } -  {( {S }^{T } k ) }_{j }) $ the write contribution into that slot. The proofs run through the standard tanh-perturbation foundation. The module carrying them (\protect\path|EmenderLatching|, introduced at \protect\path|696299b4|) is included in the refreshed inventory and the current clean \protect\path|lake build ElmanProofs.PaperCore|.
 
 
 \begin{theorembullet}
-\emph{Saturation insensitivity.} If the slot is saturated in the sense $| {{S }_{i , j }}|  >  1 -  \epsilon $, and a perturbation $\delta $ to the pre-activation entry has $| \delta |  \leq  M $ with $\epsilon  +  M  <  1$, then the post-tanh slot moves by at most $2( \epsilon  +  M )  | \delta | $. The bound shrinks linearly in both the saturation slack $\epsilon $ and the perturbation magnitude $M $; at deep saturation a bounded write barely moves the slot. Lean: \protect\path|EmenderLatching.emender_saturation_insensitivity|. A two-input corollary \protect\path|EmenderLatching.emender_saturation_two_inputs_close| lifts the bound to two value vectors sharing one key.
+\emph{Saturation insensitivity.} If the slot is saturated in the sense $| {{S }'_{i , j }}|  >  1 -  \epsilon $, and a perturbation $\delta $ to the pre-activation entry has $| \delta |  \leq  M $ with $\epsilon  +  M  <  1$, then the post-tanh slot moves by at most $2( \epsilon  +  M )  | \delta | $. The bound shrinks linearly in both the saturation slack $\epsilon $ and the perturbation magnitude $M $; at deep saturation a bounded write barely moves the slot. Lean: \protect\path|EmenderLatching.emender_saturation_insensitivity|. A two-input corollary \protect\path|EmenderLatching.emender_saturation_two_inputs_close| lifts the bound to two value vectors sharing one key.
 \end{theorembullet}
 \begin{theorembullet}
 \emph{Sign-preserving hold.} With $\lambda  \geq  1$ and a bounded write $| W |  \leq  T  <  \lambda  ( 1 -  \eta ) $ at slot $( i , j ) $, a slot already saturated with $| {S }_{i , j }|  >  1 -  \eta $ keeps its sign after one Emender step and stays bounded below in magnitude by $\operatorname{tanh}( \lambda  ( 1 -  \eta )  -  T ) $. For $\lambda  >  1$ and small $\eta ,  T $ the argument $\lambda  ( 1 -  \eta )  -  T $ exceeds $1$, so the lower bound exceeds $\operatorname{tanh} 1 \approx  0.76$ and the latch holds with margin. The hypothesis $T  <  \lambda  ( 1 -  \eta ) $ is the "no sufficient counter-delta" clause; counter-delta release is the next result. Lean: \protect\path|EmenderLatching.emender_latch_holds_by_default|.
@@ -1117,7 +1116,7 @@ Before the E97/GDN2-MLP pairing of Section~\ref{sec:lm}, the same questions were
 
 We train three pure-recurrent language models at the 1.3 B-class parameter band on The Pile \citep{thepile2020} with a 2048-token context window, byte-pair encoding (p50k\_base, 50,281-vocab), schedule-free AdamW \citep{schedulefree2024}, and bf16 mixed precision. The three models and their CMA-tuned shapes are:
 
-\begingroup\fontsize{8}{10}\selectfont\setlength{\tabcolsep}{3pt}
+\begingroup\setlength{\tabcolsep}{3pt}
 \begin{tabularx}{\linewidth}{|>{\hsize=1.60000\hsize\linewidth=\hsize\raggedright\arraybackslash}X|>{\hsize=0.80000\hsize\linewidth=\hsize\raggedright\arraybackslash}X|>{\hsize=0.80000\hsize\linewidth=\hsize\raggedright\arraybackslash}X|>{\hsize=0.80000\hsize\linewidth=\hsize\raggedright\arraybackslash}X|}\hline
 \emph{Model} & \emph{Params} & \emph{Batch} & \emph{Shape} \\ \hline
 Emender & 1.273 B & 5 & dim=1664, depth=12, H=370, N=32 \\ \hline
@@ -1146,7 +1145,7 @@ Under the addressing-bottleneck hypothesis, the relevant geometry may be an \emp
 
 \begin{table}[htbp]
 \centering
-\begingroup\fontsize{8}{10}\selectfont\setlength{\tabcolsep}{3pt}
+\begingroup\setlength{\tabcolsep}{3pt}
 \begin{tabularx}{\linewidth}{|>{\hsize=0.85470\hsize\linewidth=\hsize\raggedright\arraybackslash}X|>{\hsize=0.99145\hsize\linewidth=\hsize\raggedright\arraybackslash}X|>{\hsize=1.16239\hsize\linewidth=\hsize\raggedright\arraybackslash}X|>{\hsize=0.99145\hsize\linewidth=\hsize\raggedright\arraybackslash}X|}\hline
 \emph{Configuration} & \emph{Role in this paper} & \emph{Geometry} & \emph{Outcome} \\ \hline
 M\textsuperscript{2}RNN paper shape & Stability control, not main comparator & High value-head multiplicity with shared $q , k $ addressing & Diverges under the pure-recurrent 1.3 B setup \\ \hline
@@ -1204,7 +1203,7 @@ That to-competence procedure removed the \emph{baseline's} trainability confound
 
 \begin{table}[htbp]
 \centering
-\begingroup\fontsize{8}{10}\selectfont\setlength{\tabcolsep}{3pt}
+\begingroup\setlength{\tabcolsep}{3pt}
 \begin{tabularx}{\linewidth}{|>{\hsize=1.71429\hsize\linewidth=\hsize\raggedright\arraybackslash}X|>{\hsize=0.85714\hsize\linewidth=\hsize\raggedright\arraybackslash}X|>{\hsize=0.85714\hsize\linewidth=\hsize\raggedright\arraybackslash}X|>{\hsize=0.85714\hsize\linewidth=\hsize\raggedright\arraybackslash}X|>{\hsize=0.85714\hsize\linewidth=\hsize\raggedright\arraybackslash}X|>{\hsize=0.85714\hsize\linewidth=\hsize\raggedright\arraybackslash}X|}\hline
 \emph{Model} & \emph{${S }_{5}$ T=64} & \emph{${S }_{5}$ T=128} & \emph{${S }_{5}$ T=256} & \emph{${S }_{5}$ T=512} & \emph{${S }_{5}$ T=1024} \\ \hline
 E88 (delta) & \emph{0.921} & \emph{0.536} & \emph{0.272} & \emph{0.143} & \emph{0.076} \\ \hline
@@ -1297,7 +1296,7 @@ The three held-out checkpoints (Emender step 1,542,000; GDN 2,031,000; M\textsup
 
 \begin{table}[htbp]
 \centering
-\begingroup\fontsize{8}{10}\selectfont\setlength{\tabcolsep}{3pt}
+\begingroup\setlength{\tabcolsep}{3pt}
 \begin{tabularx}{\linewidth}{|>{\hsize=1.66667\hsize\linewidth=\hsize\raggedright\arraybackslash}X|>{\hsize=0.83333\hsize\linewidth=\hsize\raggedright\arraybackslash}X|>{\hsize=0.83333\hsize\linewidth=\hsize\raggedright\arraybackslash}X|>{\hsize=0.83333\hsize\linewidth=\hsize\raggedright\arraybackslash}X|>{\hsize=0.83333\hsize\linewidth=\hsize\raggedright\arraybackslash}X|}\hline
 \emph{Tier} & \emph{Model / coder} & \emph{Params} & \emph{Held-out bpb} & \emph{Trained on Pile?} \\ \hline
 Ours (matched budget) & Emender (E88) & 1.273 B & 0.966 & yes, \ensuremath{\approx}0.05 epoch \\ \hline

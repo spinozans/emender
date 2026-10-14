@@ -3,9 +3,10 @@ import fs from 'node:fs';
 import {execFileSync} from 'node:child_process';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {checkCanonicalSource} from './canonical-guard.mjs';
 const dir=path.dirname(fileURLToPath(import.meta.url));
 const root=path.resolve(dir,'../..');
-execFileSync('git',['diff','--exit-code','eb2b9636','--','paper/main.typ','paper/refs.bib','paper/build.sh'],{cwd:root});
+checkCanonicalSource(root);
 const json=execFileSync('typst',['query','--root',root,path.join(dir,'serialize.typ'),'<manuscript>','--field','value'],{maxBuffer:16*1024*1024});
 const doc=JSON.parse(json)[0];
 const bib=fs.readFileSync(path.join(dir,'../refs.bib'),'utf8');
@@ -25,7 +26,11 @@ case 'space':return ' ';
 case 'text':return /^[\d.,]+$/.test(x.text)?x.text:'\\text{'+esc(x.text)+'}';
 case 'symbol':return (symbols[x.text]??x.text)+' ';
 case 'op':return '\\operatorname{'+esc(plain(x.text))+'}';
-case 'attach':return '{'+math(x.base)+'}'+(x.b?'_{'+math(x.b)+'}':'')+(x.t?'^{'+math(x.t)+'}':'');
+case 'attach':{
+  for(const field of Object.keys(x))if(!['func','base','b','t','tr'].includes(field))throw Error('Unsupported attachment field '+field);
+  if(x.tr && (x.tr.func!=='primes'||x.t))throw Error('Unsupported top-right attachment');
+  return '{'+math(x.base)+'}'+(x.tr?math(x.tr):'')+(x.b?'_{'+math(x.b)+'}':'')+(x.t?'^{'+math(x.t)+'}':'');
+}
 case 'lr':return math(x.body);
 case 'frac':return '\\frac{'+math(x.num)+'}{'+math(x.denom)+'}';
 case 'align-point':return '&';
@@ -56,7 +61,7 @@ if(section==='Formal Results'&&/^Theorem set [ACGF]:/.test(formalSet)){
 }return out}
 function table(x){const cols=x.columns.length;let weights=x.columns.map(c=>parseFloat(c)||1);if(x.columns.every(c=>c==='auto'))weights=Array.from({length:cols},(_,i)=>i===0?2:1);if(section==='Architecture'&&cols===5)weights=[2,1,1,1,3];const sum=weights.reduce((a,b)=>a+b,0);let cells=[],headerCount=0;for(const e of x.children){if(e.func==='header'){headerCount=e.children.length;cells.push(...e.children)}else cells.push(e)}if(cells.length%cols)throw Error('Partial table row');inventory.tables.push({section,columns:cols,rows:cells.length/cols});
 const spec=weights.map(w=>'>{\\hsize='+((w/sum)*cols).toFixed(5)+'\\hsize\\linewidth=\\hsize\\raggedright\\arraybackslash}X').join('|');
-let out='\\begingroup\\fontsize{8}{10}\\selectfont\\setlength{\\tabcolsep}{3pt}\n\\begin{tabularx}{\\linewidth}{|'+spec+'|}\\hline\n';
+let out='\\begingroup\\setlength{\\tabcolsep}{3pt}\n\\begin{tabularx}{\\linewidth}{|'+spec+'|}\\hline\n';
 for(let i=0;i<cells.length;i+=cols){out+=cells.slice(i,i+cols).map(e=>render(e.body)).join(' & ')+' \\\\ \\hline\n'}return out+'\\end{tabularx}\n\\endgroup\n';}
 function render(x){if(!x)return '';switch(x.func){
 case 'sequence':return seq(x.children);
@@ -107,7 +112,6 @@ const tex=String.raw`% Generated packaging layer; canonical source: paper/main.t
 \usepackage{xurl}
 \usepackage[hidelinks]{hyperref}
 \usepackage{caption}
-\captionsetup{font=small}
 % Unnumbered amsthm statements retain the original statement headings verbatim.
 \newtheoremstyle{canonical}{3pt}{3pt}{\normalfont}{}{}{}{0pt}{}
 \theoremstyle{canonical}

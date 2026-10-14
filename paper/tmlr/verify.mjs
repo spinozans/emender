@@ -4,6 +4,8 @@ import path from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import assert from 'node:assert/strict';
+import {checkCanonicalSource} from './canonical-guard.mjs';
+import {verifySymbols} from './verify-symbols.mjs';
 const dir=path.dirname(fileURLToPath(import.meta.url)),root=path.resolve(dir,'../..');
 const pdftotext=process.env.PDFTOTEXT||'pdftotext',pdfinfo=process.env.PDFINFO||'pdfinfo';
 const files={canonical:path.resolve(dir,'../Garrison_2026_Emender-eb2b9636.pdf'),submission:path.join(dir,'submission.pdf'),preprint:path.join(dir,'preprint.pdf')};
@@ -57,7 +59,7 @@ for(const file of ['tmlr.sty','tmlr.bst','fancyhdr.sty','LICENSE']){
  // Vendored SHA-256 digests are frozen in the provenance manifest.
  assert(fs.existsSync(path.join(dir,file)));
 }
-execFileSync('git',['diff','--exit-code','eb2b9636','--','paper/main.typ','paper/refs.bib','paper/build.sh'],{cwd:root});
+checkCanonicalSource(root);
 // Additional all-prose audit: every >=30-character canonical text/raw leaf.
 // Float insertions can split a leaf in PDF reading order. Permit one insertion,
 // but require the two exact halves in their original order and record it.
@@ -88,9 +90,13 @@ function inspect(x){
 }
 inspect(ast);
 const pages=Object.fromEntries(Object.entries(info).map(([k,v])=>[k,Number(v.match(/^Pages:\s+(\d+)/m)[1])]));
-const report={acceptedCommit:'eb2b9636',styleCommit:fs.readFileSync(path.join(dir,'STYLE-COMMIT'),'utf8').trim(),pages,samples:results,fragmentAudit,identityChecks:'passed (third-person literature self-citation retained)',canonicalSourceUnchanged:true,bibliographyByteIdentical:true};
+const generatedTex=fs.readFileSync(path.join(dir,'main.tex'),'utf8');
+assert(!/\\(?:fontsize|tiny|scriptsize|footnotesize|small|normalsize|large|Large|LARGE|huge|Huge)\b|\\captionsetup\{[^}]*font\s*=/.test(generatedTex),'Explicit font-size override');
+const symbolAudit=verifySymbols(ast,generatedTex,text);
+const report={symbolAudit,approvedBibliographyAmendment:'mathlib4: explicit 2026 access year (not publication year)',acceptedCommit:'eb2b9636',styleCommit:fs.readFileSync(path.join(dir,'STYLE-COMMIT'),'utf8').trim(),pages,samples:results,fragmentAudit,identityChecks:'passed (third-person literature self-citation retained)',canonicalManuscriptUnchanged:true,bibliographyByteIdentical:true};
 fs.mkdirSync(path.join(dir,'validation'),{recursive:true});
 fs.writeFileSync(path.join(dir,'validation/drift-check.json'),JSON.stringify(report,null,2)+'\n');
 for(const [k,v] of Object.entries(text))fs.writeFileSync(path.join(dir,'validation',k+'-text.txt'),v);
 console.log(`PASS: ${results.length} samples × 3 PDFs; exact numeric strings; ${fragmentAudit.checked} long source fragments; identity and canonical-source guards.`);
+console.log(`PASS: ${symbolAudit.equations} complete math expressions; ${symbolAudit.attachments} attachments; ${symbolAudit.primes} S primes in each PDF.`);
 console.log(JSON.stringify(pages));

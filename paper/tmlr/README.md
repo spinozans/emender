@@ -2,12 +2,16 @@
 
 `paper/main.typ` at `eb2b96363e3ff800d7eefe2ba7386e7cf673d1cf` remains the
 canonical manuscript. This directory is a formatting/packaging layer, not a
-scientific revision. The original Typst build and 62-page PDF are untouched.
+scientific revision. The original Typst build and frozen 62-page accepted PDF
+are untouched.
+Only the explicit supervisor-approved mathlib4 access-year bibliography amendment
+may differ from the accepted canonical bibliography; `canonical-guard.mjs`
+checks that exact change and forbids any other canonical source drift.
 
 ## Deliverables
 
-- `submission.pdf`: anonymous, **51 pages**, default official TMLR submission style.
-- `preprint.pdf`: identified, **51 pages**, official TMLR `preprint` option.
+- `submission.pdf`: anonymous, **53 pages**, default official TMLR submission style.
+- `preprint.pdf`: identified, **53 pages**, official TMLR `preprint` option.
 - `arxiv-source.tar.gz`: self-contained identified source archive, with exactly
   one master (`main.tex`), explicitly selecting preprint mode. It was unpacked
   and rebuilt separately; its PDF text is identical to `preprint.pdf`.
@@ -24,6 +28,7 @@ and Poppler (`pdftotext`, `pdfinfo`, `pdfseparate`). No Python is needed.
 ```bash
 cd paper/tmlr
 bash build.sh
+node --test verify-symbols.test.mjs
 node verify.mjs
 bash bundle-arxiv.sh
 ```
@@ -41,6 +46,7 @@ typst compile --root ../.. --pdf-standard 1.5 --no-pdf-tags --pages 1,2 \
 pdfseparate /tmp/emender-packaging-figures.pdf assets/figure-%d.pdf
 node convert.mjs
 bash build.sh
+node --test verify-symbols.test.mjs
 node verify.mjs
 bash bundle-arxiv.sh
 ```
@@ -75,12 +81,21 @@ submodule dependency. `STYLE-COMMIT` records the revision.
 checked in the accepted PDF and both new PDFs, plus a 2,500-fragment all-prose
 audit. Decimal digits/percentages in samples match exactly (only whitespace,
 ligatures, mathematical letter styling, and punctuation formatting normalize).
+The independent symbol oracle also checks 643 complete LaTeX math expressions,
+including all 417 converted attachments and all three primes in each PDF.
+It preserves operators and script boundaries instead of using prose normalization.
+The 28 attachments in the two imported vector drawings are not converted; those
+assets remain hash-identical. Regression tests reject the actual P10 TeX and
+removal of any one of the three primes, missing attachment features, and PDF
+prime loss. Explicit caption/table font-size overrides are forbidden.
 PDF text, final engine logs, archive-build logs, and SHA-256 digests are retained
-in `validation/`; the sample-by-sample human report is `../../P9-report.md`.
+in `validation/`; the sample-by-sample baseline report is `../../P9-report.md`
+and the repair validation/push receipt is `../../P11-report.md`.
 
 Builds have no errors, missing glyphs, undefined citations/references,
 overfull boxes, or oversized floats. Nonfatal underfull-box spacing warnings
-remain. BibTeX warns that canonical `mathlib4` has no `year`; this packaging
-layer deliberately does not invent bibliography metadata. The canonical
-conclusion's Arkheion/compliance caveat and existing TODO-NEEDS-EVIDENCE text
+remain. The supervisor-approved canonical `mathlib4` entry uses 2026 explicitly as
+an access year, not a publication year, with that basis labeled in its note;
+the bibliography copies remain byte-identical and no empty-year warning remains.
+The canonical conclusion's Arkheion/compliance caveat and existing TODO-NEEDS-EVIDENCE text
 are preserved verbatim, not silently revised during packaging.
