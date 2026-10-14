@@ -363,6 +363,33 @@ bullet cites the upstream synthesis doc that supplies the content.
   alone (M2RNN) is *not* sufficient; the delta correction is the
   load-bearing piece. Mirrors the Lean `ndm_m2rnn_one_step_resource_separation`.
 
+### 2.6a Repeated nonlinear maps in the wild — applications bridge
+
+- **Placement and numbering.** Unnumbered level-1 bridge immediately after
+  §6 Expressivity Results, before §7 Formal Results; `main.typ` label
+  `sec:applications`. Preserves existing numbered sections and their literal
+  cross-references pending the final single-owner assembly pass.
+- **Family and theory scope.** Fixed input-driven update `s' = F_theta(s,u)`,
+  generally non-affine in the carried state; the coupled Emender update is
+  E97's all-one split-gate specialization. Cite the actual structural
+  statements in `CompositionalDepthDuality.lean` and the routing-only
+  `S5GDNBridge.lean`; neither is an application-level depth lower bound.
+- **Six equation-level cases.** Sigma–delta residue feedback (Candy–Temes
+  1992); normalized LMS versus clipped updates and bounded AGC (Haykin
+  2002; Lyons 2011); ISTA/FISTA with augmented momentum state (Daubechies,
+  Defrise–De Mol 2004; Beck–Teboulle 2009); driven reservoirs versus the
+  conventional echo-state protocol (Jaeger 2001); autonomous logistic
+  population dynamics and the contractive control (May 1976); bounded
+  actuator feedback (Khalil 2002). Each identifies state, fixed map, input
+  injection or its absence, and the conditional GDN-surrogate prediction.
+- **Honesty labels and architecture choice.** EXHIBIT marks structural
+  matches, ANALOGY marks non-identical mechanisms (ordinary normalized LMS
+  remains affine; E97 is not automatically an echo-state network), and
+  OPEN marks every application-level separation prediction. Contractive,
+  affine-representable, fixed-support and unsaturated regimes are explicit
+  countercases. Close on many low-cost streaming programs at the edge,
+  with no measured hardware, energy, safety, or deployment advantage claimed.
+
 ### 2.7 Formal Results — Trusted Lean 4 Core
 
 - **Trust gate and surface** — `formal/lean/PROOF_INVENTORY.md` §Trust-Gate
