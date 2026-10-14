@@ -292,14 +292,16 @@ and direct capability measurements.
 + *Power separation within the formalized resource class: for the
   matched-signature update family studied here, delta correction
   supplies a mixed-key step absent from the fixed-right raw-write
-  class at matched per-token FLOP class.* A Lean 4 trusted core machine-verifies that no
+  class in a shared synthetic state-pass accounting model.* A Lean 4 trusted core machine-verifies that no
   fixed-weight raw-write matrix RNN with row, column, or cell forget
   gates can match the Emender's delta-correcting update in one step
   (`emender_m2rnn_one_step_resource_separation_embeds`, set C in #ref(<sec:formal>)),
   and that the gap persists for every finite $k$ under composition on
   a constructed witness alphabet
-  (`emender_m2rnn_k_step_separation`, set C′), at matched per-token
-  FLOP class (`emender_m2rnn_flop_class_equiv`, set D). This is a
+  (`emender_m2rnn_k_step_separation`, set C′). The cost comparison
+  (`emender_m2rnn_flop_class_equiv`, set D) uses coarse state-pass
+  charges, excluding actual dense right-multiplication $H W$ and
+  feature-network costs; it does not certify matched empirical compute. This is a
   representability statement inside the formalized fixed-weight
   raw-write resource class, not a claim of general or learned-weight
   superiority. Empirically the delta-vs-raw-write contrast is a
@@ -549,15 +551,15 @@ pure-nonlinear-recurrent class introduced in #ref(<sec:intro>) and differ in one
 place: the per-step update rule on the matrix state. The Emender uses a
 *delta-correcting* update; M²RNN uses a *raw-write* update; both are
 pure-nonlinear-recurrent instances. The within-class observation in #ref(<sec:intro>)
-is that, *at matched per-token FLOP class and under per-architecture
-CMA-ES*, the delta-correcting write is the ingredient identified here
-that makes $S_5$/$S_3$-style prefix-tracking *learnable in practice*.
-The matched-cost condition is what makes the within-class ordering
-meaningful; without it, "more expressive" collapses into "spends more
-compute". The Lean anchor for the matched cost is
-`RecurrentResourceFormalism.emender_m2rnn_flop_class_equiv`, which bounds
-the per-token FLOP count of an Emender head and an M²RNN head sit inside
-a common $c_1 d^2 + c_2 d$ envelope (#ref(<sec:formal>) Theorem set D).
+is a task-dependent learning-efficiency ordering under the reported
+budgets and per-architecture CMA-ES, not a general learnability theorem.
+The Lean cost anchor
+`RecurrentResourceFormalism.emender_m2rnn_flop_class_equiv` establishes
+only equivalence in a synthetic, coarse state-pass accounting model
+(#ref(<sec:formal>) Theorem set D). It excludes the actual dense
+right-multiplication $H W$ and feature-network costs, charging a
+state-sized atom rather than the arithmetic of that multiplication.
+It therefore does not certify actual matched empirical compute.
 
 #heading(level: 2, numbering: none)[Matrix state]
 
@@ -2354,33 +2356,34 @@ be required (bounded-precision raw-write class, reachable-state
 counting, Merrill-style capacity lemma), is documented in
 `formal/lean/LEAN_FRONTIER.md`.
 
-#heading(level: 2, numbering: none)[Theorem set D: per-token FLOP class]
+#heading(level: 2, numbering: none)[Theorem set D: synthetic state-pass cost class]
 
-*What to take from set D: the per-step separation is not bought with
-extra compute — both updates cost the same per token to within a
-constant.*
+*What to take from set D: the updates share a quadratic envelope in a
+coarse state-pass accounting model, not a verified actual FLOP count.*
 
-One Emender head and one M²RNN head have per-token floating-point
-operation counts bounded by a common $c_1 d^2 + c_2 d$ form, with
-explicit constants $c_1, c_2$
-(`RecurrentResourceFormalism.emender_m2rnn_flop_class_equiv`).
-Equal-token-budget comparisons at matched $d, H,$ and depth are therefore
-within a constant factor, so the within-class empirical ordering of #ref(<sec:lm>)
-cannot be charged to one PNR instance spending asymptotically more
-compute per token than the other. The split gates of the E97 instance
-stay inside the same class: at matched square state dimension the E97 and
-E88 heads share the same leading $d^2$ recurrent-update cost
-(`e97_e88_same_leading_per_head_recurrent_cost`), and with the two
-precomputed gate applications counted separately, E97 is bounded by
-$7 d^2$ where E88 is $6 d^2$ — a constant-factor overhead, with no
-empirical efficiency claim attached
-(`e97_precomputed_gates_same_quadratic_cost_class_as_e88`).
+`RecurrentResourceFormalism.emender_m2rnn_flop_class_equiv` bounds the
+declared six/seven-state-pass charges by a common $c_1 d^2 + c_2 d$ form.
+This synthetic model excludes the actual dense right-multiplication
+$H W$ and feature-network costs. An arbitrary dense square $H W$
+has cubic arithmetic cost, whereas the model charges one state-sized
+atom. Thus this theorem does not certify actual matched empirical
+compute or explain away implementation-level cost differences.
+
+The separately valid E97-versus-E88 result uses the stated
+*precomputed-gate recurrent-update accounting model*: at matched square
+state dimension the heads share the same leading $d^2$ charge
+(`e97_e88_same_leading_per_head_recurrent_cost`), and with gate
+applications counted separately, for $d >= 2$ E97 is bounded by
+$7 d^2$ where E88 is $6 d^2$
+(`e97_precomputed_gates_same_quadratic_cost_class_as_e88`). This excludes
+gate/feature-network computation and carries no empirical efficiency claim.
 
 #heading(level: 2, numbering: none)[Resource scope, not a parameter-efficiency lower bound]
 
-Sets C and D prove nonrepresentability at a matched update signature and
-a shared asymptotic per-token FLOP envelope. They do not show how many
-extra parameters would suffice, or that extra state is the only remedy:
+Set C proves nonrepresentability at the specified update signature;
+set D supplies only a shared synthetic state-pass envelope. Neither
+shows how many extra parameters would suffice, or that extra state is
+the only remedy:
 `M2RNNComparison.m2rnn_read_then_delta_embeds_e88_delta_update`
 supplies a different resource, the missing read-then-delta operation.
 No minimal parameter-count corollary is claimed.
