@@ -4,11 +4,11 @@ Every `refs.bib` entry is accounted for below. VERIFIED means an independent
 publication metadata page was retrieved; it is not a verification of every
 claim attributed to that paper. FLAG means metadata remains unresolved and
 requires review before submission; no fabrication is inferred solely from a
-failed lookup. Full receipts: `/home/erikg/emender-scratch/fix-fanout/P3-reference-receipts/`.
+failed lookup. P5 resolves the nine named P4 flags below (unused self-placeholder removed);
+remaining rows retain their original P3 evidence boundary. Full P3 receipts: `/home/erikg/emender-scratch/fix-fanout/P3-reference-receipts/`.
 
 | Key | Status | Verifiable locator / unresolved lookup |
 |---|---|---|
-| `ndm2026` | FLAG: unused self-preprint, arXiv identifier unassigned | Publication search: Nonlinear Delta Memory: Scaling Pure Recurrent Language Models by Multi-Programming, Garrison, Erik, 2026 |
 | `m2rnn2026` | VERIFIED: title/author metadata retrieved | https://arxiv.org/abs/2603.14360 |
 | `xlstm2024` | VERIFIED: title/author metadata retrieved | https://arxiv.org/abs/2405.04517 |
 | `xlstm7b2025` | VERIFIED: title/author metadata retrieved | https://arxiv.org/abs/2503.13427 |
@@ -30,7 +30,7 @@ failed lookup. Full receipts: `/home/erikg/emender-scratch/fix-fanout/P3-referen
 | `elman1990` | VERIFIED: Crossref title/author metadata retrieved | https://doi.org/10.1207/s15516709cog1402_1 |
 | `lstm1997` | VERIFIED: Crossref title/author metadata retrieved | https://doi.org/10.1162/neco.1997.9.8.1735 |
 | `siegelmann1995` | VERIFIED: Crossref title/author metadata retrieved | https://doi.org/10.1006/jcss.1995.1013 |
-| `widrow_hoff_1960` | FLAG: independent metadata lookup not performed | Publication search: Adaptive Switching Circuits, Widrow, Bernard and Hoff, Marcian E., 1960 |
+| `widrow_hoff_1960` | VERIFIED by P4 author-hosted scan: title/authors; not every venue detail | https://isl.stanford.edu/~widrow/papers/c1960adaptiveswitching.pdf |
 | `schmidhuber_1992_fastweights` | VERIFIED: Crossref title/author metadata retrieved | https://doi.org/10.1162/neco.1992.4.1.131 |
 | `schlag_irie_schmidhuber_2021` | VERIFIED: title/author metadata retrieved | https://arxiv.org/abs/2102.11174 |
 | `barrington1986` | VERIFIED: Crossref title/author metadata retrieved | https://doi.org/10.1145/12130.12131 |
@@ -52,20 +52,20 @@ failed lookup. Full receipts: `/home/erikg/emender-scratch/fix-fanout/P3-referen
 | `reclor2020` | VERIFIED: title/author metadata retrieved | https://arxiv.org/abs/2002.04326 |
 | `folio2022` | VERIFIED: title/author metadata retrieved | https://arxiv.org/abs/2209.00840 |
 | `lean42021` | VERIFIED: Crossref title/author metadata retrieved | https://doi.org/10.1007/978-3-030-79876-5_37 |
-| `mathlib4` | FLAG: publication-page metadata not established | https://leanprover-community.github.io/mathlib4_docs/ |
-| `olmohybrid2026` | FLAG: no persistent publication locator | Publication search: OLMo-Hybrid 7B: A 7-Billion-Parameter Hybrid State-Space-Attention Language Model, Allen Institute for AI, 2026 |
+| `mathlib4` | VERIFIED by P4: real project docs, cited as software/docs rather than a 2024 paper | https://leanprover-community.github.io/mathlib4_docs/ |
+| `olmohybrid2026` | VERIFIED by P4 and P5: corrected report title/all 22 authors from arXiv metadata | https://arxiv.org/abs/2604.03444 |
 | `mamba3_2026` | VERIFIED: title/author metadata retrieved | https://arxiv.org/abs/2603.15569 |
 | `hprc2023` | VERIFIED: Crossref title/author metadata retrieved | https://doi.org/10.1038/s41586-023-05896-x |
 | `guarracino2023acrocentric` | VERIFIED: Crossref title/author metadata retrieved | https://doi.org/10.1038/s41586-023-05976-y |
 | `pggb2024` | VERIFIED: Crossref title/author metadata retrieved | https://doi.org/10.1038/s41592-024-02430-3 |
-| `candy_temes1992` | FLAG: independent metadata lookup not performed | Catalog search: Oversampling Delta-Sigma Data Converters: Theory, Design, and Simulation, Candy, James C. and Temes, Gabor C., 1992 |
-| `haykin2002` | FLAG: independent metadata lookup not performed | Catalog search: Adaptive Filter Theory, Haykin, Simon, 2002 |
-| `lyons2011` | FLAG: independent metadata lookup not performed | Catalog search: Understanding Digital Signal Processing, Lyons, Richard G., 2011 |
+| `candy_temes1992` | VERIFIED by P4: 1992 print book/editors confirmed; retained, not overwritten by digital Crossref year; representative equations not checked page-by-page | https://openlibrary.org/isbn/0879422858.json |
+| `haykin2002` | VERIFIED by P4: fourth edition metadata confirmed; representative equations not checked page-by-page | https://openlibrary.org/isbn/0130901261.json |
+| `lyons2011` | VERIFIED by P4: third edition, copyright 2011 confirmed; representative equations not checked page-by-page | https://www.informit.com/store/understanding-digital-signal-processing-9780137027415 |
 | `daubechies2004` | VERIFIED: Crossref title/author metadata retrieved | https://doi.org/10.1002/cpa.20042 |
 | `beck_teboulle2009` | VERIFIED: Crossref title/author metadata retrieved | https://doi.org/10.1137/080716542 |
-| `jaeger2001` | FLAG: independent metadata lookup not performed | Publication search: The ``Echo State'' Approach to Analysing and Training Recurrent Neural Networks, Jaeger, Herbert, 2001 |
+| `jaeger2001` | VERIFIED by P4: original 2001 GMD report; linked copy has 2010 erratum | https://www.ai.rug.nl/minds/uploads/EchoStatesTechRep.pdf |
 | `may1976` | VERIFIED: Crossref title/author metadata retrieved | https://doi.org/10.1038/261459a0 |
-| `khalil2002` | FLAG: independent metadata lookup not performed | Catalog search: Nonlinear Systems, Khalil, Hassan K., 2002 |
+| `khalil2002` | VERIFIED by P4: third edition 2002 metadata confirmed; representative equations not checked page-by-page | https://www.egr.msu.edu/~khalil/NonlinearSystems/ |
 
 ## Metadata requiring comparison
 

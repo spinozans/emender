@@ -240,10 +240,12 @@ sense of "no cross-token attention mechanism"; gating, projections,
 normalizations and other intra-token nonlinear operations are
 permitted and load-bearing (#ref(<sec:arch>) ingredient (d) and #ref(<sec:lm>) on gradient
 conditioning). The PNR arena is where the contrast is cleanest (a
-delta-vs-raw-write contrast at matched per-token FLOP class, #ref(<sec:formal>)),
-where the Lean 4 separation theorems are tractable (sets C and C′),
-and where the scaling demonstration leaves no architectural escape
-hatch from the recurrent state.
+delta-vs-raw-write contrast in the specified update-resource class,
+#ref(<sec:formal>)). Set D uses synthetic state-pass charges, excluding
+actual dense $H W$ and feature-network costs; it is not an actual
+matched-compute certificate. The Lean 4 separation theorems are tractable in this arena (sets C and C′),
+and the scaling demonstration leaves no architectural escape hatch
+from the recurrent state.
 
 The two recent attempts to scale nonlinear recurrence each took a
 different concession. M²RNN @m2rnn2026 trains nonlinear matrix-state
@@ -410,14 +412,14 @@ substantiate each row; the pointers are forward references.
      nonlinear updates plateau below ceiling at length; it is an
      efficiency gap, not impossibility],
 
-    [Per-step state nonlinearity is a causal lever for length-extrapolation],
+    [A controlled tanh/identity update-map intervention tests length transfer],
     [Iterated-map probes: E97 holds $approx 0.98$ flat from $T = 128$ to
      $T = 4096$ where byte-identical E97-linear and GDN2 collapse;
-     two predicted-negative task families confirm the mechanism (#ref(<sec:expressivity>))],
+     two negative task families are consistent with the mechanism hypothesis (#ref(<sec:expressivity>))],
     [Small-scale (dim 256–1024) grokking-regime statement,
-     causally isolated by the $tanh$-vs-identity ablation],
-    [Not a universal "nonlinear beats linear" law; the two negative
-     families forbid that overclaim],
+     with an isolated update-map flag but different successful-seed subsets],
+    [Not an unconditional causal effect or exact algorithm-recovery result;
+     the two negative families reject a universal superiority claim],
 
     [Group-state tracking is protocol-dependent],
     [8 M and predecessor GDN probes decay at length; the current
@@ -488,9 +490,10 @@ The recurrent language model lineage runs from Elman networks
 @elman1990 and the LSTM @lstm1997 through the modern linear-recurrent
 variants: state-space models such as Mamba and Mamba2 @mamba2024
 @mamba2_2024, gated linear attention @gla2023, and the delta rule
-@deltanet2024. Each step in this lineage traded some expressive power
-for time-axis parallelism, because nonlinear-in-time recurrence resisted
-the parallel scan that makes GPU throughput tractable at modern scale.
+@deltanet2024. Many modern designs favor time-axis parallelism via
+linear-state updates, whereas nonlinear-in-time recurrence generally
+resists that scan. This structural tradeoff is not a universal historical
+claim of declining expressive power across the lineage.
 Gated DeltaNet @gated_deltanet2024 is the linear-recurrent family the
 #ref(<sec:expressivity>) 8 M probes use as the linear baseline, and Gated DeltaNet-2
 @gated_deltanet2_2026 — its split erase/write-gate extension — is the
@@ -649,19 +652,16 @@ exact rather than rhetorical.
   stroke: 0.6pt + rgb("#e08a2e"),
   fill: rgb("#fdf4e8"),
 )[
-  *Proposition (GDN-2 as a special case of the Emender).* Gated
-  DeltaNet-2 — the GDN baseline of #ref(<sec:background>), the gated-delta variant that
-  admits a negative eigenvalue — is exactly the restriction of the
-  Emender to the *real diameter* of the unit disk with *no saturation*:
-  the $\{$`decay`, `reflect`$\} times$ linear sub-grid. The Emender
-  generalizes GDN-2 along two axes: from the real diameter to the full
-  unit disk (adding `rot`), and from the linear state map to the
-  saturated one (adding `nonlin`). The Emender layer is the *within-layer
-  pool* — a mixture over this grid of head-types within a single layer —
-  and GDN-2 is the linear, real-axis corner of that pool. The
-  negative-eigenvalue result is "walking to the far end of the real
-  diameter"; the complex-rotation head is "walking off the real axis";
-  $"hardtanh"$ is "turning on saturation".
+  *Shared split-gated cores, with different decay placement.* Gated
+  DeltaNet-2 and E97 have adjacent split erase/write cores, but deleting
+  $tanh$ at otherwise equal parameters does not identify them: E97 uses
+  $lambda H - k(b dot.o k)^T H + "write"$, whereas GDN-2 uses
+  $(I - k(b dot.o k)^T) D H + "write"$. The exact Lean identity applies
+  E97's unit-decay linear core to the *pre-decayed* state $D H$; with
+  identity decay the cores coincide (set G, #ref(<sec:formal>)). No
+  whole-production-stack inclusion or production-domain parameter
+  remapping is proved. The eigenvalue/saturation grid is a descriptive
+  head taxonomy, not such an inclusion theorem.
 ]
 
 #figure(
@@ -727,7 +727,7 @@ exact rather than rhetorical.
               text(fill: gray)[`rot-nonlin` \ #text(size: 7pt)[(future)]],
           )]
           #v(0.3em)
-          #align(center)[#text(size: 7.5pt)[Shaded corner $=$ GDN-2 special case (\{`decay`, `reflect`\} $times$ linear).]]
+          #align(center)[#text(size: 7.5pt)[Shading: GDN-2-adjacent linear cores; decay placement differs.]]
         ]),
       )
     ]
@@ -738,10 +738,11 @@ exact rather than rhetorical.
     eigenvalue sits in the complex unit disk — real-positive `decay`,
     real-negative `reflect`, or complex `rot` — and by whether the state
     map is linear or saturated. The orange real diameter is the locus
-    GDN-2 occupies. *(B)* The two axes name five cells. GDN-2 is the
-    $\{$`decay`, `reflect`$\} times$ linear corner (shaded); the Emender
-    generalizes it to the full disk (`rot`) and to the saturated state
-    map (`nonlin`), and is the within-layer pool over the grid.
+    GDN-2 occupies. *(B)* The two axes name five cells. Shading marks
+    GDN-2-adjacent linear cores; the Emender also explores off-axis
+    rotation (`rot`) and saturated state maps (`nonlin`) as a within-layer
+    pool. This taxonomy is descriptive: different decay placement
+    prevents an exact equal-parameter restriction of the production cores.
     `rot-nonlin` is reserved for future work. E88/E97/E98/E99 are historical
     run tags, not architecture names. The GDN-2 corner of this grid is
     not a strawman: it is the mixer of the 1.3 B linear baseline of #ref(<sec:lm>)
@@ -780,7 +781,9 @@ the design; #ref(<sec:formal>)'s split-gated theorem set pins the relationship).
 below is one
 head's full step in execution order: normalize the two addresses, gate the
 read address and the write value, read the memory, form the retrieval error,
-update the bounded state, and gate the read output.
+update the bounded state, and gate the read output. The abstract witnesses
+of sets C/C′/G in #ref(<sec:formal>) use broader key/gate/state domains
+than this production step; they are not its reachable-trajectory proofs.
 
 $
 k_h &<- "silu"(k_h) / norm("silu"(k_h))_2 quad ("L"^2 "-normalized key")\
@@ -1090,10 +1093,13 @@ gain is that a nonlinear recurrence can keep a modern accelerator busy
 with no time-axis scan at all. The route is agnostic to the update
 rule: both pure-nonlinear instances of the predecessor cohort — the
 Emender and the
-raw-write M²RNN-CMA — satisfy the same multi-programming predicate at
-the 1.3 B-class, machine-checked in the Lean core as
+raw-write M²RNN-CMA — have geometries consistent with the same simple
+resource predicate. The named Lean theorem
 `RecurrentResourceFormalism.multiProgrammed_admits_m2rnn_and_emender`
-(#ref(<sec:formal>)).
+checks E88 and a different M²RNN proxy (depth 22, 70 heads, 256 state
+scalars/head), not the trained depth-21, 370-head M²RNN-CMA. The latter
+satisfies the four signature-field conditions by inspection/arithmetic,
+not by this exact-instance theorem (#ref(<sec:formal>)).
 
 #heading(level: 2, numbering: none)[The 1.3 B Emender shape under multi-programming]
 
@@ -1268,7 +1274,7 @@ of everything at once.
     [Final step], [2,300,930], [2,323,616],
     [Final aggregate tokens], [150,793,748,480], [152,280,498,176],
     [Final last-100 loss (nats/token)], [2.4365], [2.4034],
-    [Final checkpoint SHA-256],
+    [Source .pt checkpoint SHA-256],
       [#text(size: 7pt)[#raw("0239706e1f67e4823008a3a2754894b5\nb94dc1663580d2e40c1c74f7dd6a72b2")]],
       [#text(size: 7pt)[#raw("ffae61cfeeeff820f469f7d66dd31c60\ne48c455872ff9102e57b15ad75bad59b")]],
   )],
@@ -1753,19 +1759,21 @@ The hybrid result is the same finding as #ref(<sec:arch>) from the other side:
 linear-scan blocks do not inherit state tracking from neighboring
 Emender blocks.
 
-#heading(level: 2, numbering: none)[A causally isolated separation on iterated maps]
+#heading(level: 2, numbering: none)[A controlled update-map ablation on iterated maps]
 
 Before measuring the trained 1.3 B pair, the *mechanism* — the per-step
-state nonlinearity — is isolated in a regime where every confound is
-controlled. On the iterated map $x_t = (x_(t-1)^2 + c_t) mod p$ with
+state nonlinearity — is tested by a controlled tanh/identity
+update-map ablation. This does not control every confound in the
+post-selected seed averages or cross-architecture comparison. On the iterated map $x_t = (x_(t-1)^2 + c_t) mod p$ with
 per-position supervision (train length $T = 128$, evaluate to
 $T = 4096$), three arms are trained with width applied *symmetrically*
 across all of them: `e97` (the nonlinear cell), `e97-linear` (byte-identical
 code on the same fused kernel — the only difference is the per-step
 state map, $tanh$ versus identity), and `gdn2` (the linear baseline of
-#ref(<sec:lm>)'s pairing). Scoring at far lengths defeats the capacity-buys-memorization
-escape: a model that fits the train length but collapses at $T = 4096$
-has memorized, not learned the recurrence.
+#ref(<sec:lm>)'s pairing). Far-length scoring tests transfer beyond the
+training-length distribution. Length failure is consistent with finite-length
+heuristics or memorization, but also with approximate recurrence learning
+and accumulated error; it does not establish algorithm recovery or its absence.
 
 The nonlinear arm is length-invariant where both linear arms collapse:
 at $p = 256$, dim 1024, E97 holds $0.982 -> 0.981$ from $T = 128$ to
@@ -1778,14 +1786,15 @@ $T = 4096$ across the decisive cells, and the 4-seed symmetric-width
 sweep shows decisive-cell gaps up to $+0.42$
 (`experiments/grok_symmetric_width/RESULTS.md`,
 `experiments/grok_symmetric_width/CONFIRM.md`). Because `e97` and
-`e97-linear` differ by a single flag in the same kernel, the lever is
-*causally* the per-step nonlinearity — not capacity, depth, or the
-choice of linear architecture.
+`e97-linear` differ by a single flag in the same kernel, the
+intervention isolates the update map rather than capacity, depth, or
+kernel choice. The reported successful-seed subsets nevertheless
+differ, so their conditional curve gap is not an unconditional causal
+effect estimate or proof of algorithm recovery.
 
-The separation is also two-sided, which is what makes it a mechanism
-claim rather than a cherry-pick: on two other task families that fail
-one of the theory's two required conditions, the signature is correctly
-*absent*. On a contractive logistic map (no long memory to
+The tested mechanism hypothesis is also probed on two other task
+families lacking one of its hypothesized conditions; the observed
+separation is *absent* there. On a contractive logistic map (no long memory to
 memorize-then-fail), 0 of 24 runs grok and all arms plateau flat across
 length. On $a^n b^n c^n$ counting (additive accumulation, which linear
 cumulative state extrapolates as well as bounded nonlinear state), all
@@ -2243,10 +2252,14 @@ stronger, currently unproved architecture claim.
 
 *What to take from set C: in a single step the delta-correcting write
 does something no fixed-weight raw-write update of the matched shape can
-reproduce.*
+reproduce on the abstract witness domain.*
 
 The Emender's delta-correcting write and M²RNN's raw outer-product write
-are provably distinct as update families.
+are provably distinct as update families over unrestricted real-valued
+keys, values, and states. The mixed key is $(1,1)$ (not unit-normalized),
+and the prescribed initial state is nonzero. These witnesses are not
+production zero-state trajectories with normalized keys and finite-logit
+sigmoid gates, nor full-network separation under arbitrary reparameterization.
 
 - *Mechanism separation.* The delta write exactly overwrites the
   addressed slot while leaving every orthogonal query untouched
@@ -2287,7 +2300,11 @@ $k$-step trajectory by a nonzero entry for each finite $k$ (Lean:
 
 The witness alphabet is the 2-dimensional construction from set C
 followed by zero-input filler tokens
-(`kStepWitnessInputs k = (mixedKey, 0) :: zeroSteps (k - 1)`). The proof
+(`kStepWitnessInputs k = (mixedKey, 0) :: zeroSteps (k - 1)`). It starts
+from the prescribed nonzero `lowerLeftState`, with unnormalized key
+$(1,1)$ and zero-key fillers. Like set C, set C′ is over an unrestricted
+abstract real-valued signature, not the production normalized-key,
+zero-initial-state domain. The proof
 inducts on the tail, using a lemma that keeps entry $(0, 0)$ pinned at
 zero on the raw-write side for every $k$
 (`FixedRightRawExternalForget2_preserves_zero_row`), while the Emender
@@ -2404,42 +2421,43 @@ No minimal parameter-count corollary is claimed.
 
 #heading(level: 2, numbering: none)[Theorem set E: multi-programming as a structural predicate]
 
-*What to take from set E: multi-programming is a property of the resource
-class, shared by both trained instances, not a quirk of the Emender.*
+*What to take from set E: a simple signature-field predicate is shared
+by E88 and a declared M²RNN proxy, not a kernel concurrency certificate.*
 
-A predicate `IsMultiProgrammed` on architecture signatures captures the
-three multi-programming features — many independent heads per layer, a
-per-head state tile, and per-batch independence
-(`RecurrentResourceFormalism.multiProgrammed_admits_m2rnn_and_emender`).
-Both the 1.3 B Emender signature and a CMA-reshaped pure M²RNN signature
-satisfy the predicate, while a non-trivial hybrid signature *fails* it.
-This is the small formal anchor for the *class-level* claim of #ref(<sec:intro>):
-multi-programming belongs to the pure-nonlinear-recurrent class shared by
-both instances trained here, not to the Emender alone. The trusted core
-formalizes that class through its two instances — the Emender as the
-delta-correcting contribution of this work and M²RNN-CMA as the raw-write
-comparator.
+The predicate `IsMultiProgrammed` requires four declared fields:
+at least two heads per layer, positive state scalars per head, a pure
+recurrent stack, and `sequentialManyProgram` implementation mode.
+`RecurrentResourceFormalism.multiProgrammed_admits_m2rnn_and_emender`
+proves it for `e88NDM_1p27B` and `m2rnnCMAShape = m2rnnPure 22 70 256`.
+That M²RNN instance is a CMA-representative proxy, not the trained
+1.3 B predecessor (depth 21, $H = 370$, $N = 16$, hence 256 state
+scalars/head). The trained geometry meets the same field conditions
+by inspection/arithmetic. The predicate does not verify kernel scheduling,
+per-batch independence, or concurrent execution across layers; its
+class-level meaning is limited to these declared signature conditions.
 
 #heading(level: 2, numbering: none)[Theorem set G: the split-gated update — E97, E88, and GDN-2]
 
-*What to take from set G: the E97 cell of #ref(<sec:arch>) is a strict extension of
-E88, and the 1.3 B baseline GDN-2 is exactly its linear, scan-compatible
-restriction — the formal counterpart of the #ref(<sec:lm>) pairing.*
+*What to take from set G: over abstract real-valued gate/key/state
+signatures, E97 extends E88; GDN-2 has an adjacent scan-compatible
+linear core with different decay placement. This is not a whole-stack
+production inclusion theorem for the #ref(<sec:lm>) pairing.*
 
 The E97 split-gated update is defined in Lean alongside the E88 coupled
 update, and the module `SplitGatedDelta` in the refreshed inventory proves the
 structural relations the body relies on:
 
 #set list(indent: 1em)
-- *E97 strictly extends E88.* With both split gates fixed to one, the
+- *E97 extends E88 in the abstract gate domain.* With both split gates fixed to one, the
   E97 update specializes exactly to the E88 update, in both direct and
   expanded form (`e97_specializes_to_e88_all_one_gates_direct`,
   `e97_specializes_to_e88_all_one_gates_expanded`), so E97 weakly
   generalizes E88 (`e97_expresses_e88_by_specialization`). The E88
   parameterization is therefore a developmental special case, not a
-  rival.
+  rival in this abstract domain. Exact all-one gates are limiting values,
+  not finite-logit production sigmoid outputs.
 
-- *The extension is strict on a concrete witness.* E97 realizes a
+- *The extension is strict on an abstract concrete witness.* E97 realizes a
   2-dimensional split erase/write transition with non-parallel write and
   erase directions (`e97_realizes_splitWitness_transition`) that *no*
   E88 coupled transition can realize
@@ -2447,9 +2465,13 @@ structural relations the body relies on:
   are non-parallel by `splitWitness_dirs_not_parallel`), and a 1×1
   zero-state witness separates the strict-gate E97 update from every
   all-one-gate E88 setting on the same state/input
-  (`e97_split_gate_strict_witness_not_e88_all_one`).
+  (`e97_split_gate_strict_witness_not_e88_all_one`). The 2D witness
+  uses key $(1,1)$ and erase gate $(1,0)$ and compares transition
+  factors, not arbitrary reparameterized full-network functions. The
+  1×1 witness uses write gate *2*, outside the production sigmoid
+  range $(0,1)$; it does not demonstrate production-gate expressivity.
 
-- *GDN-2 is the linear corner of the same split-gated core.* The GDN-2
+- *Adjacent split-gated cores with different decay placement.* The GDN-2
   linear core is the E97 linear core applied to a pre-decayed state
   (`gdn2LinearCore_eq_e97LinearCore_on_decayed_state`), and under
   identity decay the two coincide
@@ -2466,16 +2488,16 @@ structural relations the body relies on:
 
 The #ref(<sec:lm>) pairing is thus anchored on both sides: the two 1.3 B arms share
 adjacent split-gated delta cores and differ on the per-step state
-nonlinearity, as well as geometry and input processing in the trained
+nonlinearity and decay placement, as well as geometry and input processing in the trained
 stacks — the same state-map axis the #ref(<sec:expressivity>) iterated-map ablation isolates
-causally (`e97` versus `e97-linear`) and the same axis set G names
+as an update-map intervention (`e97` versus `e97-linear`), distinct from
+the post-selected curve comparison, and the same axis set G names
 formally.
 
 #heading(level: 2, numbering: none)[Theorem set F: latching]
 
-*What to take from set F: the tanh latch behaves as the architecture
-story needs — a saturated slot resists bounded writes and keeps its sign,
-yet still releases when a strong enough opposite write arrives.*
+*What to take from set F: conditional slot-level saturation, hold,
+and release bounds, not production-default persistent binding.*
 
 These three results formalize the latching half of the Emender primitive:
 saturation makes a slot insensitive to further bounded writes, sign is
@@ -2606,8 +2628,10 @@ the delta rule into a parallelizable linear-recurrent language model,
 demonstrating the rule at billion-parameter scale in the linear-state
 regime. The Emender extends this line with three properties the linear
 instantiations forfeit: a nonlinear matrix state, the saturation
-latching of #ref(<sec:arch>) ingredient (c) that turns slot-wise overwrite
-into persistent binding, and width-axis parallelism via
+latching of #ref(<sec:arch>) ingredient (c), which motivates persistent
+binding under the conditional slot-level hold result ($lambda >= 1$
+plus a write budget), not an achieved production-default property; and
+width-axis parallelism via
 multi-programming that recovers throughput without time-axis
 linearization.
 
@@ -2615,7 +2639,10 @@ linearization.
 
 The dominant comparison cohort is the family of linear-state
 billion-parameter recurrent LMs surveyed in #ref(<sec:background>): Mamba @mamba2024 and
-Mamba2 @mamba2_2024 (selective SSMs); RetNet @retnet2023 (decayed
+Mamba2 @mamba2_2024 (selective SSMs); S5 @s5_2022
+(simplified state-space layers with a multi-input multi-output linear
+state-space recurrence, distinct from the permutation group $S_5$
+used as a probe here); RetNet @retnet2023 (decayed
 linear attention); GLA @gla2023 (gated linear attention); DeltaNet
 @deltanet2024 (delta rule, linear in $S$); Gated DeltaNet
 @gated_deltanet2024 (gated delta rule); RWKV-4/5/6/7 @rwkv4_2023
@@ -2875,17 +2902,25 @@ negative transfers are the contribution's basis for TMLR, rather than
 priority, universal nonlinear superiority, or an unproved circuit-class
 separation. The next tests are multi-seed common-budget probes, held-out
 pair evaluation, and the constrained realizability questions of #ref(<sec:limitations>).
+This identified Arkheion preprint build does not establish TMLR
+template or anonymization compliance; journal-specific submission
+packaging remains a separate step.
 
 *Reproducibility.* The checkpoints, loading code, and measurement
 scripts behind the 1.3 B pairing are public: the two immutable
 per-arm authorities are published as
 E97 (`https://huggingface.co/spinozans/emender-e97-1.3b`, tag
 `tokens-150793748480`, the 150.79 B-token checkpoint of
-`emender_E97_1.3B_20260709_084606`, SHA-256
+`emender_E97_1.3B_20260709_084606`, source .pt checkpoint SHA-256
 `0239706e1f67e4823008a3a2754894b5b94dc1663580d2e40c1c74f7dd6a72b2`)
 and GDN2-MLP (`https://huggingface.co/spinozans/gdn2-mlp-1.3b`, tag
-`tokens-152280498176`, SHA-256
+`tokens-152280498176`, source .pt checkpoint SHA-256
 `ffae61cfeeeff820f469f7d66dd31c60e48c455872ff9102e57b15ad75bad59b`),
+The hashes above identify the source `.pt` checkpoints in the release
+provenance, not the converted `model.safetensors` files. The immutable
+HF revisions are `119c6623f414aa7fc6e101667d3ad89b7ed6af73` (E97)
+and `e6087fa6984265404d99c419c095692d840da472` (GDN2). Converted-weight
+digests are in each revision’s `SHA256SUMS`. The releases ship
 with the per-architecture CMA-ES configurations, the training
 protocol (launcher manifests in `scripts/launch_emender_8gpu_diloco.sh`
 and `scripts/launch_gdn2_mlp_8gpu_diloco.sh`), and the Triton
@@ -3064,10 +3099,10 @@ of the proposed $S_5$ capacity bound or of a uniformly widening gap.
 
 #heading(level: 2, numbering: none)[A partial order on PNR update rules]
 
-The ordering established here, delta-correcting above raw-write, is the
+The ordering established here, delta-correcting above raw-write, is
 a noncontainment witness between two matched-signature
 update families, not a proved strict set-inclusion order on the PNR class
-(`emender_m2rnn_flop_class_equiv`, set D in #ref(<sec:formal>)). Whether that relation
+(`emender_m2rnn_one_step_resource_separation_embeds`, set C in #ref(<sec:formal>)). Whether that relation
 extends to a *partial order* over the broader PNR space — whether
 antisymmetry and transitivity hold across the full space, under an
 explicit common resource class — is open. The horizon is the maximal
@@ -3145,9 +3180,9 @@ availability statement in #ref(<sec:conclusion>)).
   depth = 21, $H = 370$, $N = 16$) is stable, and it is the M²RNN-CMA
   baseline used in the 8 M probes of #ref(<sec:expressivity>) and in #ref(<sec:appendix_cohort>). That the
   paper shape diverges while the
-  CMA-tuned shape is stable locates the gradient-conditioning failure in
-  the *geometry* (shared $q, k$ across many value heads), not in the
-  raw-write update family itself.
+  CMA-tuned shape is stable shows that raw-write need not diverge;
+  addressing geometry is a stability hypothesis, not an isolated cause
+  because width, depth, and head count also changed.
 
 - *The split-edit extension (E97).* E97 extends the E88 cell with the
   two input-dependent split gates of #ref(<sec:arch>) — the key-axis erase/read gate
@@ -3157,7 +3192,8 @@ availability statement in #ref(<sec:conclusion>)).
   comparison is MLP-controlled. E97 specializes exactly to E88 when
   both gates are one (Lean:
   `SplitGatedDelta.e97_specializes_to_e88_all_one_gates_direct`), so
-  the lineage is a strict extension, not a fork. The E97 150 B-token
+  this is an abstract cell specialization, not a production-domain
+  strict-inclusion proof. The E97 150 B-token
   run of #ref(<sec:lm>) (`emender_E97_1.3B_20260709_084606`) is the first instance
   of the family trained past 100 B tokens.
 
@@ -3237,15 +3273,13 @@ with gradient norm $approx 4.2 times 10^7$. The CMA-tuned reshape
 *M²RNN-CMA* (dim=1920, depth=21, H=370, N=16) of the same update family
 is stable under the same optimizer and the same data; the divergent
 paper shape is the stability control and is not in the comparison panel. The
-two configurations differ in one structural parameter: the ratio of
-$q,k$ projections to value heads. Many value heads sharing few $q,k$
-pairs concentrate gradient through a narrow projection and accumulate
-gradient norm at high step counts; redistributing toward more
-independent $q,k$ pairs per value head (the same ratio the Emender uses
-at 1.3 B, $H = 370$) removes the explosion. This is a property of
-head geometry, not of the algebraic form of the write: a third recipe
-axis the multi-programmed family must respect alongside matrix state
-and update rule.
+two configurations differ in width (3072 vs 1920), depth (10 vs 21),
+head count (759 vs 370), and addressing geometry. Concentrating many
+value heads behind few $q,k$ projections is a possible gradient-conditioning
+mechanism, consistent with the observed stability difference, but these
+runs do not isolate it. A matched single-factor geometry ablation is
+needed to distinguish that hypothesis from the other changed dimensions;
+the update-family comparison alone does not establish the cause.
 
 Named in geometry terms, this is an *addressing* bottleneck rather than
 a generic head-count effect. The paper-default shape has high
@@ -3354,11 +3388,11 @@ context of 2048 tokens (@sec:appendix_bpb), so
 $"bpb" = "nats/token" times log_2(e) / "bytes/token" approx "nats/token" times 0.368$.
 These training-loss curves are a training-dynamics diagnostic, not the
 basis for the architecture comparison: the reported measurement is the
-held-out bpb (next subsection), where the three models are a
-statistical tie, and the architectures separate on the #ref(<sec:expressivity>)
+held-out bpb (next subsection), where the three models are
+descriptively close, and the architectures separate on the #ref(<sec:expressivity>)
 state-tracking probes rather than on bulk language-model bits-per-byte.
 
-#heading(level: 2, numbering: none)[Held-out bits-per-byte: the three are a statistical tie]
+#heading(level: 2, numbering: none)[Held-out bits-per-byte: the three are descriptively close]
 
 The loss-vs-wallclock curve above plots *training-loss* bpb under the fixed
 canonical $"bytes/token" = 3.92$ normalization. To test whether that
@@ -3383,9 +3417,10 @@ Across five independent held-out Pile slices drawn from random deep
 offsets across the 1.31 TB corpus, the three models sit inside a
 0.006-bpb band of mean bpb, narrower than the largest cross-slice
 standard deviation (0.025 bpb); the between-model mean gaps are
-0.05–0.31$times$ the pooled cross-slice std, i.e. within noise. On
-held-out bulk bits-per-byte the three update rules are a *statistical
-tie*: which model is lowest is slice-dependent (lowest-bpb counts:
+0.05–0.31$times$ the pooled cross-slice std. On held-out bulk
+bits-per-byte the three update rules are *descriptively close*, not
+shown statistically equivalent by a seed-level or paired equivalence
+test. Which model is lowest is slice-dependent (lowest-bpb counts:
 Emender 0/5, GDN 1/5, M²RNN-CMA 4/5), so bulk held-out perplexity does
 *not* distinguish the architectures at this budget. This is the expected
 reading: the architectures separate on the #ref(<sec:expressivity>) state-tracking
