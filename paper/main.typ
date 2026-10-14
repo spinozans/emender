@@ -1657,10 +1657,12 @@ $T in {128, 256, 512, 1024}$, three seeds.
   image("figures/s5_expressivity_seeds.png", width: 95%),
   caption: [
     *Expressivity separation on the permutation-composition probes at
-    parameter-matched 8 M scale.* Three independent seeds per
-    architecture shown as individual points; error bars span the SEM
-    (standard error of the mean across 3 seeds). Bars are the seed mean
-    (light fill). The Emender separates from linear-recurrent (GDN)
+    parameter-matched 8 M scale.* Dots and SEM are approximate
+    reconstructions from rounded three-seed mean/min/max summaries,
+    not retained individual observations. The middle point uses
+    $3 times "mean" - "min" - "max"$, clamped to the reported min/max
+    interval; SEM is computed from this reconstructed triple. Bars
+    show the reported rounded mean (light fill). The Emender separates from linear-recurrent (GDN)
     and raw-write nonlinear matrix RNN (M²RNN) baselines on the
     non-solvable $S_5$ probe at training length. On the solvable $S_3$
     control, the Emender is perfect (1.0000); GDN reaches 0.72; both
@@ -2897,6 +2899,17 @@ HuggingFace v0.3 trees of that cohort, and the measurement scripts
 sha-verified held-out slice manifests are in the public `emender` repo;
 the same pipeline is the one the pending 150 B-pair held-out measurement
 will run.
+
+The historical 8 M $S_3$/$S_5$ means/minima/maxima are retained as
+four-decimal summaries in `paper/ndmpapernotes.md`, but the exact
+three-seed records have not been located in the checked local results
+and archives. Thus @fig_s5_bars shows approximate reconstructed points
+and SEM using the $3 times "mean" - "min" - "max"$ midpoint method,
+clamped to the reported extrema. Rounding can alter that triple and
+its SEM, especially near the $S_3$ ceiling; seed identity/order is not
+recoverable. This limits seed-level statistical reanalysis. Newer
+$S_5$ JSONs describe different experiments and are not provenance for
+this historical figure.
 
 // ── 12. Testable Predictions ─────────────────────────────────────────────────
 = Testable Predictions <sec:predictions>
