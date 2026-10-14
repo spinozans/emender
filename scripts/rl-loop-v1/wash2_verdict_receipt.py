@@ -113,6 +113,13 @@ def execution_replicas(aggregate, panel):
             disagreements.append(dict(id=case_id, family=family, grades=grades,
                                       success_disagrees=len({g['success'] for g in grades.values()}) > 1,
                                       reasons={name: outcomes[name][case_id]['reason'] for name in names}))
+    family_counts = Counter(d['family'] for d in disagreements)
+    if not family_counts:
+        family_note = 'No cross-replica grade disagreements.'
+    else:
+        top_family, count = family_counts.most_common(1)[0]
+        family_note = (f'Disagreements span {len(family_counts)} families; '
+                       f'largest concentration is {top_family}: {count}/{len(disagreements)} cases.')
     totals = [models[name]['successes'] for name in names]
     max_pairwise = max(sum(outcomes[a][c]['grade']['success'] != outcomes[b][c]['grade']['success']
                            for c in family_by_id) for a in names for b in names)
@@ -123,7 +130,7 @@ def execution_replicas(aggregate, panel):
                              families=models[name]['families'], floor_passed=models[name]['successes'] >= 64)
                   for name in names},
         replica_grades_identical=not disagreements, disagreements=disagreements,
-        disagreement_family_counts=dict(Counter(d['family'] for d in disagreements)),
+        disagreement_family_counts=dict(family_counts), disagreement_family_note=family_note,
         success_range=[min(totals), max(totals)], observed_total_spread=max(totals)-min(totals),
         max_pairwise_success_disagreements=max_pairwise,
         all_replicas_clear_floor=all(n >= 64 for n in totals),
