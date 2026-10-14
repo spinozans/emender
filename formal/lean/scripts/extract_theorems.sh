@@ -4,7 +4,7 @@
 #
 # What it does:
 #   1. Resolves the trust-gate source-file list via
-#        lake env lean --src-deps ElmanProofs/PaperCore.lean
+#        scripts/local_import_closure.sh ElmanProofs/PaperCore.lean
 #      (the same enumeration used by `check_paper_core.sh`).
 #   2. Runs `scripts/extract_theorems.lean`, which imports `PaperCore`,
 #      walks the elaborated environment, and emits a JSON array
@@ -38,14 +38,9 @@ trap 'rm -f "$INNER_TMP"' EXIT
 mkdir -p "$(dirname -- "$OUTPUT")"
 
 # 1. Enumerate trust-gate source files (project-local only).
-mapfile -t sources < <(
-  {
-    printf '%s\n' "$lean_root/ElmanProofs/PaperCore.lean"
-    lake env lean --src-deps ElmanProofs/PaperCore.lean
-  } |
-    awk -v prefix="$lean_root/" 'index($0, prefix) == 1 { print substr($0, length(prefix)+1) }' |
-    sort -u
-)
+source_list="$("$script_dir/local_import_closure.sh" "ElmanProofs/PaperCore.lean")"
+mapfile -t sources <<< "$source_list"
+for i in "${!sources[@]}"; do sources[i]="${sources[i]#"$lean_root/"}"; done
 
 if [[ ${#sources[@]} -eq 0 ]]; then
   echo "extract_theorems: ERROR — empty trust-gate source list" >&2
@@ -61,7 +56,7 @@ EXTRACT_SRC_ROOT="$lean_root" \
 commit_hash="$(cd "$repo_root" && git rev-parse HEAD)"
 extracted_at="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 
-python3 - "$INNER_TMP" "$OUTPUT" "$commit_hash" "$extracted_at" "${sources[@]}" <<'PY'
+"${PYTHON_BIN:?Set PYTHON_BIN to the activated project interpreter}" - "$INNER_TMP" "$OUTPUT" "$commit_hash" "$extracted_at" "${sources[@]}" <<'PY'
 import json
 import sys
 

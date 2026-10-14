@@ -30,21 +30,12 @@ open Lean Elab Meta
 
 namespace ExtractTheorems
 
-/-- Modules in the trust-gate import closure of `ElmanProofs.PaperCore`.
-Derived from `lake env lean --src-deps ElmanProofs/PaperCore.lean`. -/
-def trustGateModules : Array Name := #[
-  `ElmanProofs.PaperCore,
-  `ElmanProofs.Architectures.M2RNNComparison,
-  `ElmanProofs.Architectures.MultiStepSeparation,
-  `ElmanProofs.Architectures.OnlineMemory,
-  `ElmanProofs.Architectures.RecurrentResourceFormalism,
-  `ElmanProofs.Architectures.S5Inseparability,
-  `ElmanProofs.Expressivity.E88ExceedsE1HCapacity,
-  `ElmanProofs.Expressivity.NDMRealizesS5,
-  `ElmanProofs.Expressivity.S5NDMRealization,
-  `ElmanProofs.Expressivity.S5Tracker,
-  `ElmanProofs.Expressivity.S5Witness
-]
+/-- The elaborated import environment contains the full recursive closure.
+Filter project modules rather than maintaining a selected-module allowlist.
+The only project root imported by this extractor is PaperCore. -/
+def trustGateModules (env : Environment) : Array Name :=
+  env.allImportedModuleNames.filter fun m =>
+    m.toString.startsWith "ElmanProofs."
 
 /-- Relative source path (under `formal/lean/`) for a module name. -/
 def moduleToPath (m : Name) : String :=
@@ -200,7 +191,7 @@ def extractDecl (name : Name) (info : ConstantInfo) (modName : Name)
 def runExtraction (srcRoot : System.FilePath) : MetaM (Array DeclEntry) := do
   let env ← getEnv
   let moduleSet : Std.HashSet Name :=
-    trustGateModules.foldl (init := ∅) fun acc m => acc.insert m
+    (trustGateModules env).foldl (init := ∅) fun acc m => acc.insert m
   let mut entries : Array DeclEntry := #[]
   for (name, info) in env.constants.toList do
     let some modIdx := env.getModuleIdxFor? name | continue

@@ -58,8 +58,15 @@ for (const old of ['margin bounded away from zero', 'strictly inside NC#super[1]
   assert.ok(!normalized.includes(old), `overstatement absent: ${old}`);
 }
 const inventory = JSON.parse(fs.readFileSync('paper/data/lean-trust-gate-theorems.json', 'utf8'));
-assert.equal(inventory.trust_gate_files.length, 15);
+assert.equal(inventory.trust_gate_files.length, 17);
 assert.equal(inventory.theorem_count, inventory.theorems.length);
+const closure = execFileSync('bash', ['formal/lean/scripts/local_import_closure.sh'],
+  { encoding: 'utf8' }).trim().split('\n').map(path => path.split('/formal/lean/')[1]);
+assert.deepEqual(inventory.trust_gate_files, closure, 'inventory covers recursive closure');
+for (const file of ['ElmanProofs/Activations/Lipschitz.lean',
+  'ElmanProofs/Expressivity/E1HDefinition.lean']) {
+  assert.ok(inventory.theorems.some(d => d.file === file), file);
+}
 for (const name of [
   'CompositionalDepthDuality.e97_compositional_depth_grows_in_time',
   'CompositionalDepthDuality.gdn_state_channel_depth_bounded_in_time',
@@ -91,5 +98,5 @@ for (const key of keys) assert.ok(ledger.includes(`| \`${key}\` |`), key);
 assert.equal((ledger.match(/^\| `[^`]+` \|/gm) || []).length, keys.length);
 assert.ok(bib.includes('The Road Less Scheduled'));
 assert.ok(bib.includes('Danieli, Federico'));
-console.log(`PASS: 13 numbered body sections, 3 lettered appendices, ${layout.pages} pages; references, G1–G3/F1/U3.1, theorem scopes, 15-file inventory, and all ${keys.length} bibliography entries checked.`);
+console.log(`PASS: 13 numbered body sections, 3 lettered appendices, ${layout.pages} pages; references, G1–G3/F1/U3.1, theorem scopes, 17-file inventory, and all ${keys.length} bibliography entries checked.`);
 console.log(JSON.stringify(layout));

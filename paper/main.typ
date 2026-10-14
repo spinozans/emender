@@ -2144,15 +2144,19 @@ on paper. A trusted Lean 4 @lean42021 core built on Mathlib @mathlib4
 carries the formal spine: each result is stated as a theorem and
 compiled together with a proof of it. Trust rests on what those proofs
 are *not* allowed to assume. The import closure of the
-`ElmanProofs.PaperCore` module — 15 project source files in the checked
-closure — uses none of Lean's escape hatches: no `sorry`, `admit`,
+`ElmanProofs.PaperCore` module — 17 project source files in the recursive
+local closure — uses none of Lean's escape hatches: no `sorry`, `admit`,
 added `axiom`, `opaque` declarations, or `native_decide`. The gate
 is `formal/lean/scripts/check_paper_core.sh`; compiling
 `ElmanProofs.PaperCore` additionally checks elaboration of the proofs.
 The refreshed machine-extracted inventory is committed at
-`paper/data/lean-trust-gate-theorems.json` (790 named
-declarations, 15 files, source commit `b643a544`), including the
-split-gated, latching, duality, and routing modules.
+`paper/data/lean-trust-gate-theorems.json` (857 named
+declarations, 723 user-written, 17 files; unchanged theorem-source
+commit `f7182e8b`), including the split-gated, latching, duality,
+routing, Lipschitz, and E1H-definition modules. Both the gate and
+extractor traverse the recursive local imports rather than a selected
+module allowlist. This check covers project sources, not the axioms
+or source files of Lean and Mathlib dependencies.
 
 Every result below is named by its exact theorem so a
 reader can open the source and find it. What is proved here is
