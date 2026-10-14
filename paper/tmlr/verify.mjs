@@ -98,5 +98,5 @@ fs.mkdirSync(path.join(dir,'validation'),{recursive:true});
 fs.writeFileSync(path.join(dir,'validation/drift-check.json'),JSON.stringify(report,null,2)+'\n');
 for(const [k,v] of Object.entries(text))fs.writeFileSync(path.join(dir,'validation',k+'-text.txt'),v);
 console.log(`PASS: ${results.length} samples × 3 PDFs; exact numeric strings; ${fragmentAudit.checked} long source fragments; identity and canonical-source guards.`);
-console.log(`PASS: ${symbolAudit.equations} complete math expressions; ${symbolAudit.attachments} attachments; ${symbolAudit.primes} S primes in each PDF.`);
+console.log(`PASS: ${symbolAudit.equations} complete math expressions; ${symbolAudit.attachments} attachments; ${symbolAudit.pdfPrimes} S primes in each PDF (${symbolAudit.vectorPrimes} in drawings).`);
 console.log(JSON.stringify(pages));

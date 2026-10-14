@@ -1,7 +1,7 @@
 // Independent math oracle: compare complete evaluated equations, without
 // stripping operators, primes, or script boundaries. Never import convert.mjs.
 import assert from 'node:assert/strict';
-const symbols={'λ':'\\lambda','≥':'\\geq','×':'\\times','≈':'\\approx','−':'-','…':'\\ldots','≠':'\\neq','∈':'\\in','ℝ':'\\mathbb{R}','γ':'\\gamma','δ':'\\delta','⊙':'\\odot','←':'\\leftarrow','‖':'\\Vert','σ':'\\sigma','⋅':'\\cdot','↓':'\\downarrow','⋯':'\\cdots','±':'\\pm','α':'\\alpha','τ':'\\tau','β':'\\beta','Δ':'\\Delta','→':'\\rightarrow','θ':'\\theta','φ':'\\varphi','μ':'\\mu','ε':'\\epsilon','ρ':'\\rho','η':'\\eta','≔':':=','≤':'\\leq','∗':'\\ast','∼':'\\sim',' ':'~','%':'\\%','{':'\\{','}':'\\}'};
+const symbols={'λ':'\\lambda','≥':'\\geq','×':'\\times','≈':'\\approx','−':'-','…':'\\ldots','≠':'\\neq','∈':'\\in','ℝ':'\\mathbb{R}','γ':'\\gamma','δ':'\\delta','⊙':'\\odot','←':'\\leftarrow','‖':'\\Vert','σ':'\\sigma','⋅':'\\cdot','↓':'\\downarrow','⋯':'\\cdots','±':'\\pm','α':'\\alpha','τ':'\\tau','β':'\\beta','Δ':'\\Delta','→':'\\rightarrow','θ':'\\theta','φ':'\\varphi','μ':'\\mu','ε':'\\epsilon','ρ':'\\rho','η':'\\eta','ω':'\\omega','ℓ':'\\ell','≔':':=','≤':'\\leq','∗':'\\ast','∼':'\\sim',' ':'~','%':'\\%','{':'\\{','}':'\\}'};
 const compact=s=>s.replace(/\s/g,'');
 function expectedMath(x){
   switch(x.func){
@@ -27,12 +27,19 @@ function expectedMath(x){
   }
 }
 export function verifySymbols(ast,tex,pdfTexts={}){
-  const expected=new Map(),attachmentVariants={};let equations=0,attachments=0,primes=0;
+  const expected=new Map(),attachmentVariants={};let equations=0,attachments=0,primes=0,vectorPrimes=0;
+  function countPrimes(x){
+    if(!x||typeof x!=='object')return 0;
+    return (x.func==='primes'?x.count:0)+Object.values(x).reduce((sum,v)=>
+      sum+(Array.isArray(v)?v.reduce((n,e)=>n+countPrimes(e),0):countPrimes(v)),0);
+  }
   function visit(x){
     if(!x||typeof x!=='object')return;
     // Vector figure bodies are imported PDFs, not converted math. Captions
     // remain in this audit; asset hashes independently guard the two drawings.
-    if(x.func==='figure'&&x.kind==='image'){visit(x.caption);return;}
+    if(x.func==='figure'&&x.kind==='image'){
+      vectorPrimes+=countPrimes(x.body);visit(x.caption);return;
+    }
     if(x.func==='equation'){
       const key=compact(expectedMath(x.body));expected.set(key,(expected.get(key)||0)+1);equations++;
     }
@@ -51,10 +58,10 @@ export function verifySymbols(ast,tex,pdfTexts={}){
   for(const [key,count] of expected)assert.equal(actual.get(key)||0,count,`Math expression or attachment lost/changed: ${key}`);
   assert.equal([...actual.values()].reduce((a,b)=>a+b,0),equations,'Unexpected math expressions');
   for(const [variant,text] of Object.entries(pdfTexts)){
-    // The current canonical census is three primed S attachments; preserve
-    // the prime glyph rather than the punctuation-stripping prose normalizer.
+    // All current prime attachments are on S (including the symbol table).
+    // Preserve the glyph rather than using the prose normalizer.
     const normalized=text.normalize('NFKC').replace(/\s/g,'');
-    assert.equal((normalized.match(/S[′']/g)||[]).length,primes,`S prime lost in ${variant} PDF`);
+    assert.equal((normalized.match(/S[′']/g)||[]).length,primes+vectorPrimes,`S prime lost in ${variant} PDF`);
   }
-  return {equations,attachments,attachmentVariants,primes,pdfVariantsChecked:Object.keys(pdfTexts)};
+  return {equations,attachments,attachmentVariants,primes,vectorPrimes,pdfPrimes:primes+vectorPrimes,pdfVariantsChecked:Object.keys(pdfTexts)};
 }

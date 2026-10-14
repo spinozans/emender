@@ -28,6 +28,11 @@
     {
       "section": "Background",
       "level": 2,
+      "title": "Notation"
+    },
+    {
+      "section": "Background",
+      "level": 2,
       "title": "Linear-state and nonlinear-state recurrence"
     },
     {
@@ -54,6 +59,11 @@
       "section": "Architecture",
       "level": 2,
       "title": "Per-head update"
+    },
+    {
+      "section": "Architecture",
+      "level": 2,
+      "title": "GDN2-MLP state channel"
     },
     {
       "section": "Architecture",
@@ -495,7 +505,7 @@
     {
       "label": "<fig_arch>",
       "kind": "figure",
-      "caption": "Emender architecture and multi-programmed shape.(A)Per-head recurrent dataflow(E97). Each head owns a small boundedassociative matrix memory. The model reads under the gated address⋅,computes a prediction erroragainst the gated write value,writes the bounded deltacorrection into, and gates the read atfor output. Theon the state, the delta-correcting write, the split erase/writegates, and the-normalization ofq,kare visible here;enumerates thefour load-bearing ingredients of the Emender family.(B)The 1.3 B stack exposes 216 smallindependent heads per layer per batch element. Each head is a32×32state tile that fits in registers/SRAM and runs itstime loop serially; parallelism is harvested across heads, depth andbatch(), giving11×216×4=9{,}504programs per tokenat batch size 4. The Lean theorememender_1p27B_programs_per_batch_token_bs5certifies thecorresponding count(22,200) for the E88 predecessor geometry."
+      "caption": "Emender architecture and multi-programmed shape.(A)Per-head recurrent dataflow(E97). Each head owns a small boundedassociative matrix memory. The model reads under the gated address⊙,computes a prediction erroragainst the gated write value,writes the bounded deltacorrection into, and gates the read atfor output. Theon the state, the delta-correcting write, the split erase/writegates, and the-normalization ofq,kare visible here;enumerates thefour load-bearing ingredients of the Emender family.(B)The 1.3 B stack exposes 216 smallindependent heads per layer per batch element. Each head is a32×32state tile that fits in registers/SRAM and runs itstime loop serially; parallelism is harvested across heads, depth andbatch(), giving11×216×4=9{,}504programs per tokenat batch size 4. The Lean theorememender_1p27B_programs_per_batch_token_bs5certifies thecorresponding count(22,200) for the E88 predecessor geometry."
     },
     {
       "label": "<tab_ablation>",
@@ -588,6 +598,11 @@
       "section": "Introduction",
       "columns": 4,
       "rows": 7
+    },
+    {
+      "section": "Background",
+      "columns": 2,
+      "rows": 12
     },
     {
       "section": "Architecture",
@@ -722,15 +737,15 @@
     },
     {
       "environment": "theorembullet",
-      "statement": "\\emph{Sign-preserving hold.} With $\\lambda  \\geq  1$ and a bounded write $| W |  \\leq  T  <  \\lambda  ( 1 -  \\eta ) $ at slot $( i , j ) $, a slot alr"
+      "statement": "\\emph{Sign-preserving hold.} With $\\lambda  \\geq  1$ and a bounded write $| \\omega |  \\leq  T  <  \\lambda  ( 1 -  \\eta ) $ at slot $( i , j ) $, a slo"
     },
     {
       "environment": "theorembullet",
-      "statement": "\\emph{Counter-delta release.} With $\\lambda  >  0$, ${S }_{i , j } >  0$, and a write contribution $W  <  - \\lambda  {S }_{i , j }$ in the opposite si"
+      "statement": "\\emph{Counter-delta release.} With $\\lambda  >  0$, ${S }_{i , j } >  0$, and a write contribution $\\omega  <  - \\lambda  {S }_{i , j }$ in the opposi"
     },
     {
       "environment": "theorem",
-      "statement": "The concrete repeated-map family is the schedule of \\protect\\path|CompositionalDepthDuality.E97Step| values $( k , b , w , v ) $ at fixed $\\lambda $, "
+      "statement": "The concrete repeated-map family is the schedule of \\protect\\path|CompositionalDepthDuality.E97Step| values $( k , e , w , v ) $ at fixed $\\lambda $ ("
     },
     {
       "environment": "theorem",

@@ -4,7 +4,8 @@
 The pre-revision accepted snapshot is `eb2b96363e3ff800d7eefe2ba7386e7cf673d1cf`;
 its frozen `paper/Garrison_2026_Emender-eb2b9636.pdf` is retained unchanged.
 P13 (operator directive, 2026-10-15) moves the guarded source baseline for the
-language sweep; every changed source line is recorded in `../../P13-report.md`.
+language sweep and notation/protocol audit; every sweep line and the separate
+notation corrections are recorded in `../../P13-report.md`.
 `canonical-baseline.json` freezes the current source SHA-256 and this lineage.
 The drift/symbol checks now compare the rebuilt current PDF and both TMLR
 variants to the current evaluated source, not to the pre-sweep snapshot.
@@ -13,8 +14,8 @@ bibliography; `canonical-guard.mjs` checks it and the source SHA-256.
 
 ## Deliverables
 
-- `submission.pdf`: anonymous, **53 pages**, default official TMLR submission style.
-- `preprint.pdf`: identified, **53 pages**, official TMLR `preprint` option.
+- `submission.pdf`: anonymous, **58 pages**, default official TMLR submission style.
+- `preprint.pdf`: identified, **58 pages**, official TMLR `preprint` option.
 - `arxiv-source.tar.gz`: self-contained identified source archive, with exactly
   one master (`main.tex`), explicitly selecting preprint mode. It was unpacked
   and rebuilt separately; its PDF text is identical to `preprint.pdf`.
@@ -31,7 +32,7 @@ and Poppler (`pdftotext`, `pdfinfo`, `pdfseparate`). No Python is needed.
 ```bash
 cd paper/tmlr
 bash build.sh
-node --test verify-symbols.test.mjs
+node --test verify-symbols.test.mjs notation-audit.test.mjs
 node verify.mjs
 bash bundle-arxiv.sh
 ```
@@ -49,7 +50,7 @@ typst compile --root ../.. --pdf-standard 1.5 --no-pdf-tags --pages 1,2 \
 pdfseparate /tmp/emender-packaging-figures.pdf assets/figure-%d.pdf
 node convert.mjs
 bash build.sh
-node --test verify-symbols.test.mjs
+node --test verify-symbols.test.mjs notation-audit.test.mjs
 node verify.mjs
 bash bundle-arxiv.sh
 ```
@@ -60,7 +61,9 @@ that tree to LaTeX, failing on unsupported nodes. It does not paraphrase prose.
 The two original vector diagrams are exported as figure assets, not manuscript
 page images. The other five figures are byte-identical copies of the canonical
 PNG assets. All 20 captions are independently typeset in LaTeX; all 14 body
-tables are actual LaTeX tables. The theorem descriptions are in 21 unnumbered
+tables are actual LaTeX tables. P13 adds eight plain numbered pseudocode blocks, rendered as verbatim blocks
+without font-size overrides, and a manuscript-wide symbol table.
+The theorem descriptions are in 21 unnumbered
 amsthm environments (13 original bullet statements, seven prose statements,
 one definition), without adding theorem labels, numbers, or statement text.
 
@@ -87,8 +90,10 @@ ligatures, mathematical letter styling, and punctuation formatting normalize).
 The independent symbol oracle checks all complete LaTeX math expressions,
 converted attachments, and state primes in each PDF (counts in the drift report).
 It preserves operators and script boundaries instead of using prose normalization.
-The 28 attachments in the two imported vector drawings are not converted; those
-assets remain hash-identical. Regression tests reject the actual P10 TeX and
+Attachments in the imported vector drawings are not converted; the drawings
+were regenerated for the P13 gate/operator and returned-state notation changes.
+Their hashes are frozen in the validation manifest; two drawing primes are also
+checked independently in extracted PDFs. Regression tests reject the actual P10 TeX and
 removal of any one of the three primes, missing attachment features, and PDF
 prime loss. Explicit caption/table font-size overrides are forbidden.
 PDF text, final engine logs, archive-build logs, and SHA-256 digests are retained

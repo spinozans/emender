@@ -33,11 +33,12 @@ const ast=JSON.parse(execFileSync('typst',['query','--root',root,new URL('serial
 const tex=fs.readFileSync(new URL('main.tex',import.meta.url),'utf8');
 test('canonical complete math and all rendered attachments match',()=>{
   const report=verifySymbols(ast,tex);
-  assert.equal(report.primes,3);assert.equal(report.attachments,417);assert.equal(report.equations,643);
+  assert.equal(report.primes,6);assert.equal(report.vectorPrimes,2);
+  assert.equal(report.pdfPrimes,8);assert.equal(report.attachments,441);assert.equal(report.equations,707);
 });
-test('regression: dropping any one of the three canonical primes fails',()=>{
+test('regression: dropping any converted canonical prime fails',()=>{
   const positions=[...tex.matchAll(/\{S \}'/g)].map(m=>m.index+m[0].length-1);
-  assert.equal(positions.length,3);
+  assert.equal(positions.length,6);
   for(const i of positions)assert.throws(()=>verifySymbols(ast,tex.slice(0,i)+tex.slice(i+1)),/lost\/changed/);
 });
 test('P10 generated TeX is rejected (actual original defect)',()=>{
