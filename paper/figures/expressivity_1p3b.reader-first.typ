@@ -33,12 +33,10 @@
     Full-vocabulary argmax accuracy at the pre-registered plateau stops;
     trained length #train-e97.recipe.train_len, seed #wall-e97.seed,
     #wall-e97.acc_vs_T.at("128").n scored token positions per length.
-    The identical cap is #budget.cap_steps steps, not identical realized
-    training: E97 stopped after #train-e97.steps_trained steps and GDN2-MLP
-    after #train-gdn2.steps_trained. E97 decays gracefully rather than
-    remaining length-invariant; GDN2-MLP approaches a roughly 50% plateau,
-    *not* the declared #percent(wall-gdn2.random_baseline_acc) random
-    baseline. Source: `paper/results/expressivity_1p3b/iterated-map/`,
+    The common cap is #budget.cap_steps steps. E97 stopped after
+    #train-e97.steps_trained steps and GDN2-MLP after #train-gdn2.steps_trained.
+    E97 accuracy declines with length; GDN2-MLP approaches a roughly 50%
+    plateau, above the #percent(wall-gdn2.random_baseline_acc) random baseline. Source: `paper/results/expressivity_1p3b/iterated-map/`,
     `ft_{e97,gdn2}_modular_quadratic{,_sweep}.json` (commit `9dc3afd7`);
     `budget.json` (pre-registration `1989656c`).
   ],
@@ -59,7 +57,7 @@
     Full-vocabulary argmax accuracy, seed #s5-e97.seed;
     both curves decay and GDN2-MLP stays ahead. \*GDN2-MLP completed one
     optimizer step at length 512 before the curriculum stage proved
-    OOM-infeasible even at sub-batch 1; this point is not wholly untrained.
+    OOM-infeasible even at sub-batch 1.
     Source: `capacity/cap_{e97,gdn2}_s5_sweep.json` and
     `cap_gdn2_s5_train.json` under `paper/results/expressivity_1p3b/`
     (E97 `f1ed5615`, GDN2 salvage `6f916843`).
