@@ -23,8 +23,8 @@ index 3d2956a1..4794e91b 100644
 -but the honest statement is descriptive closeness with the reported
 +but the statement is descriptive closeness with the reported
 @@ -1529 +1529 @@ surprising, and why the paper's positive claims live in #ref(<sec:expressivity>)
--#heading(level: 2, numbering: none)[Downstream capability panels: an honest null, on the predecessor cohort]
-+#heading(level: 2, numbering: none)[Downstream capability panels: a null, on the predecessor cohort]
+-Downstream capability panels: an honest null, on the predecessor cohort]
++Downstream capability panels: a null, on the predecessor cohort]
 @@ -1534,2 +1534,2 @@ from the predecessor 1.3 B racer cohort (E88, FLA-GDN, M²RNN, Mamba2 —
 -#ref(<sec:appendix_cohort>)), and it is reported here without spin as the honest
 -expectation to beat: at $approx 1 M$-step training extents, on a
@@ -102,18 +102,18 @@ curricula, or stops.
 
 Every standalone display block was inspected in context (current line ranges):
 
-- 834–843: #heading(level: 2, numbering: none)[Per-head update; adjacent prose defines the variables and operation.
-- 1098–1101: #heading(level: 2, numbering: none)[Architectural contrasts: delta correction and state nonlinearity; adjacent prose defines the variables and operation.
+- 834–843: Per-head update; adjacent prose defines the variables and operation.
+- 1098–1101: Architectural contrasts: delta correction and state nonlinearity; adjacent prose defines the variables and operation.
 - 2122–2124: Repeated nonlinear maps in the wild <sec:applications>; adjacent prose defines the variables and operation.
 - 2133–2135: Repeated nonlinear maps in the wild <sec:applications>; adjacent prose defines the variables and operation.
-- 2176–2179: #heading(level: 2, numbering: none)[Sigma–delta conversion: quantization inside the loop; adjacent prose defines the variables and operation.
-- 2201–2204: #heading(level: 2, numbering: none)[Adaptive filtering and automatic gain control; adjacent prose defines the variables and operation.
-- 2213–2217: #heading(level: 2, numbering: none)[Adaptive filtering and automatic gain control; adjacent prose defines the variables and operation.
-- 2233–2236: #heading(level: 2, numbering: none)[Proximal iterations and unrolled optimization; adjacent prose defines the variables and operation.
-- 2242–2245: #heading(level: 2, numbering: none)[Proximal iterations and unrolled optimization; adjacent prose defines the variables and operation.
-- 2259–2261: #heading(level: 2, numbering: none)[Reservoirs and echo-state networks; adjacent prose defines the variables and operation.
-- 2282–2284: #heading(level: 2, numbering: none)[Discrete ecology: the logistic map; adjacent prose defines the variables and operation.
-- 2304–2307: #heading(level: 2, numbering: none)[Feedback control with limited actuators; adjacent prose defines the variables and operation.
+- 2176–2179: Sigma–delta conversion: quantization inside the loop; adjacent prose defines the variables and operation.
+- 2201–2204: Adaptive filtering and automatic gain control; adjacent prose defines the variables and operation.
+- 2213–2217: Adaptive filtering and automatic gain control; adjacent prose defines the variables and operation.
+- 2233–2236: Proximal iterations and unrolled optimization; adjacent prose defines the variables and operation.
+- 2242–2245: Proximal iterations and unrolled optimization; adjacent prose defines the variables and operation.
+- 2259–2261: Reservoirs and echo-state networks; adjacent prose defines the variables and operation.
+- 2282–2284: Discrete ecology: the logistic map; adjacent prose defines the variables and operation.
+- 2304–2307: Feedback control with limited actuators; adjacent prose defines the variables and operation.
 
 ### Author calls — left open rather than changing the science
 
@@ -212,3 +212,22 @@ without changing resilient training behavior.
 
 Next: independent review of these three parts, then author disposition of
 the five structural/naming/protocol calls above. No venue submission occurred.
+
+### Verified delivery receipt
+
+- Part 1 commit: `96aad6f907cf24508f6205fdfd742e0c576bdc5a`.
+- Part 2 commit: `738236d6b7ad4517d35815c18b8ea0c1ce92e367`.
+- Part 3 commit: `fe108b211674f3c245f82fd17002b85bb1d83959`.
+- All three pushed to `origin/paper-1p3b-spine`; origin is
+  `git@github.com:spinozans/emender.git`. After push, `git ls-remote origin
+  refs/heads/paper-1p3b-spine` exactly equaled Part 3 HEAD
+  `fe108b211674f3c245f82fd17002b85bb1d83959`.
+- Final 17-test replay, 152 tracked-result digest/blob checks, five external
+  hashes, five missing-path checks, and all 15 PDF/bundle/source digest checks
+  passed. `git diff --check` passed; index empty. Only the seven pre-existing
+  untracked review files remain. This receipt is committed/pushed separately
+  after the per-part push, following the previous packaging report convention.
+- Self-review found no unreported implementation blocker. Independent review
+  is still required; normalization/full-stack fidelity and the other author
+  calls are not certified as resolved. Underfull TeX spacing and Typst's
+  pre-existing Poppler “Suspects object is wrong type” diagnostic persist.
