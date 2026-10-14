@@ -65,5 +65,63 @@ paired portability. Removed the unmeasured dispatchability/port-time claim.
 No ROCm measurement was invented. `typst compile` and `git diff --check`
 passed after this milestone.
 
-U3 per-sweep decomposition will be recorded below when implemented and
-validated.
+## Milestone 3: U3 closed as an audited decomposition plus explicit gap
+
+At the Section 5 loss-parity binding, the new table computes all 14 retained
+sweep rows directly from the normalized CSVs: snapshot status, candidate
+trajectories, retained generation records, generation-zero best candidate
+mean-loss fitness, best observed fitness, and their difference. Failed and
+partial sweeps remain visible. This is an observational within-sweep gain,
+not a causal architecture-versus-tuning decomposition.
+
+These historical/redo snapshots differ from the later eleven-family
+leaderboard and **are not mapped to the carried-in final winner searches**.
+The additional E97-MLP and GDN2-MLP rows identify those searches explicitly.
+GDN2's retained winner/count/generation values remain cited in the existing
+provenance prose, rather than copied or silently substituted from a snapshot.
+
+Numbered **Open item U3.1** covers only those two carried-in winner rows:
+“carried-in winner first-generation fitness unavailable; within-sweep gain
+not computable from retained artifacts”. Missing first-generation spread and
+E97 candidate/generation totals in this normalized snapshot are also stated.
+No unavailable quantity is estimated; failed sweeps' missing generation-zero
+fitness stays a dash, not zero.
+
+Sources:
+- `paper/results/cmaes_burst_v2/cmaes_eval_summary.csv` and
+  `cmaes_generation_summary.csv` at
+  `899e91cd6716d0867fba928306f9437a7af97cbc`.
+- Carried-in GDN2 metadata: `docs/repro/lb_gdn2_mlp_20260612/best.json` at
+  `f2e88dc2d4cb3e3fc3142efe8c485da8db3f6ac3` (first-generation data absent).
+- Carried-in E97 identity: existing provenance in
+  `experiments/lb_compare_20260613/REPRODUCTION.md`; no normalized winner
+  generation series is retained.
+
+## Final validation and acceptance evidence
+
+- Added `paper/figures/validate_section6.js`: CPU-only, independent result/CSV
+  parsing compared against **rendered Typst query cells**, not merely source
+  text. Checks all 7 wall-grid rows, 5 control rows, 6 S5 rows, 14 snapshot CMA
+  rows plus both U3.1 rows; verifies verbatim negatives, common-cap versus
+  unequal-realized-step caveat, non-baseline GDN2 result, CUDA scope, and no
+  remaining TODO-EXPRESSIVITY-1P3B.
+- `node paper/figures/validate_section6.js` — PASS, all rows match.
+- `typst compile paper/main.typ /tmp/P1-final.pdf` — PASS (Typst 0.14.2).
+- `typst query` independently exposed the figure bodies for the numeric tests.
+- `typst compile paper/main.typ '/tmp/P1-page-{p}.png' --format png
+  --pages 21,26-28 --ppi 85` — PASS. Visually inspected CMA and all three new
+  expressivity table pages: no clipping; tightened the CMA count header to
+  avoid crowding. These local validation renders are not committed.
+- `git diff --check` — PASS. No new GPU run, Slurm submission, native build,
+  Python execution, or resilient-training change was needed.
+- Milestones committed and pushed to `origin/paper-1p3b-spine`: Section 6
+  `f734a0b5`; CUDA/U2 `3d3885c1`; U3/validation is the commit containing this
+  final report. No files are left staged at completion.
+
+Residual risks: single-seed 1.3 B probes; common cap but unequal realized
+training; interim-versus-terminal variation; GDN2 S5 curriculum OOM; U3.1
+winner-series evidence gap. Existing held-out bpb/downstream and formal
+inventory-refresh TODOs are outside P1. Review gate remains required.
+Recommended next step: independent review of the frozen-data bindings and
+U3.1 disclosure; recover winner generation logs and run pre-registered
+multi-seed/common-budget follow-ups separately if authorized.

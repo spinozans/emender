@@ -1443,7 +1443,10 @@ predecessor cohort) has not yet been run and is the pending evaluation
 item — TODO-NEEDS-EVIDENCE. Second, it is one run per arm, single-seed;
 the window-dependent sign of the $Delta$ in @tab_matched_loss is the
 honest summary of a tie at this precision, not evidence for either
-ordering.
+ordering. The search process behind this parity binding is decomposed
+per retained sweep in @tab_cma_sweeps; the historical snapshots are not
+silently substituted for the carried-in winner searches, whose missing
+first-generation fitness is tracked as Open item U3.1 below.
 
 #heading(level: 2, numbering: none)[The convergent-loss null already appears at search scale]
 
@@ -1507,6 +1510,81 @@ only 64 evaluations against the $> 96$ target, so its standing there
 was provisional; the committed `lb_gdn2_mlp_20260612` search (104
 evals) is the one the 150 B run launched from. M²RNN was searched under
 the same protocol (fitness 6.1161 at 1.3 B) but is not a 150 B arm (§1).
+
+*Per-sweep decomposition (U3).* For each retained sweep, report the
+number of candidate trajectories and generation records, the best
+candidate mean-loss fitness in generation zero, and the best observed
+fitness across the snapshot. Their difference is the within-sweep
+search gain, not a causal attribution of improvement to architecture
+or tuning. Complete, partial, and failed snapshots remain distinct.
+These earlier retained snapshots are not the later eleven-family
+leaderboard totals or the two carried-in winner searches.
+
+// Read the retained snapshot rather than duplicating its numeric cells.
+#let cma-eval-csv = csv("results/cmaes_burst_v2/cmaes_eval_summary.csv")
+#let cma-gen-csv = csv("results/cmaes_burst_v2/cmaes_generation_summary.csv")
+#let cma-eval-header = cma-eval-csv.first()
+#let cma-gen-header = cma-gen-csv.first()
+#let cma-evals = cma-eval-csv.slice(1)
+#let cma-gens = cma-gen-csv.slice(1)
+#let cma-field(row, name) = row.at(cma-eval-header.position(field => field == name))
+#let cma-sweeps = cma-evals.map(row => cma-field(row, "sweep_id")).dedup()
+#let cma-status(status) = {
+  if status == "complete_usable" { "complete" }
+  else if status.starts-with("partial") { "partial" } else { "failed" }
+}
+#let cma-fitness(rows) = {
+  rows.filter(row => cma-field(row, "cma_loss") != "")
+    .map(row => float(cma-field(row, "cma_loss")))
+}
+#figure(
+  text(size: 7.5pt)[#table(
+    columns: (2.5fr, 0.75fr, 0.55fr, 0.55fr, 0.9fr, 0.9fr, 0.8fr),
+    align: (left, left, right, right, right, right, right),
+    stroke: 0.5pt, inset: 4pt,
+    table.header([*Sweep ID*], [*Status*], [*Evals*], [*Gens*],
+      [*Gen-0 best*], [*Observed best*], [*Gain*]),
+    ..cma-sweeps.map(sweep => {
+      let rows = cma-evals.filter(row => cma-field(row, "sweep_id") == sweep)
+      let generations = cma-gens.filter(row =>
+        row.at(cma-gen-header.position(field => field == "sweep_id")) == sweep)
+      let initial = cma-fitness(rows.filter(row => cma-field(row, "generation") == "0"))
+      let fitness = cma-fitness(rows)
+      let best = calc.min(..fitness)
+      (sweep.replace("_", " "), cma-status(cma-field(rows.first(), "run_status")),
+       str(rows.len()), str(generations.len()),
+       if initial.len() > 0 { expressivity.fixed(calc.min(..initial)) } else { [—] },
+       expressivity.fixed(best),
+       if initial.len() > 0 { expressivity.fixed(calc.min(..initial) - best) } else { [—] })
+    }).flatten(),
+    [Carried-in E97-MLP], [U3.1], [—], [—], [—], [see prose], [—],
+    [Carried-in GDN2-MLP], [U3.1], [see prose], [see prose], [—],
+      [see prose], [—],
+  )],
+  caption: [
+    *Per-sweep CMA audit at the loss-parity binding.* Fitness and gains
+    are nats/token, from retained candidate mean-loss fields, not the
+    final long-run loss. Counts are snapshot coverage, including failed
+    one-evaluation attempts; generation count is retained generation
+    records, not an inferred total. The first
+    #cma-sweeps.len() rows derive directly from
+    `paper/results/cmaes_burst_v2/cmaes_{eval,generation}_summary.csv`
+    (`899e91cd`), a different snapshot from the later leaderboard.
+    U3.1 applies to the last two rows only, the carried-in E97-MLP and
+    GDN2-MLP searches; they are not mapped to an earlier normalized sweep.
+    GDN2-MLP's retained `docs/repro/lb_gdn2_mlp_20260612/best.json`
+    supplies its count and winner fitness in the provenance prose above,
+    but not first-generation data.
+    Dashes indicate unavailable fields, not zeros or no improvement.
+  ],
+) <tab_cma_sweeps>
+
+*Open item U3.1 — carried-in winner first-generation fitness unavailable;
+within-sweep gain not computable from retained artifacts.* This covers
+both final carried-in rows. First-generation spread is also unavailable;
+E97-MLP's candidate/generation totals are not retained in this normalized
+snapshot. Recover the winner searches' generation logs before computing
+these quantities; do not estimate them from the earlier sweeps.
 
 *One search per family, then one training run per family.* No
 post-search per-arm tuning was applied to either 150 B arm: the
@@ -1829,8 +1907,8 @@ The decisive experiment uses the E97 and GDN2-MLP checkpoints of §5,
 with Schedule-Free y-mode recovery, on
 $x_t = (x_(t-1)^2 + c_t) mod #expressivity.wall-e97.task_args.p$,
 #expressivity.wall-e97.task_args.G input drivers and running supervision.
-Both arms receive the identical full-fine-tune recipe: bf16 AdamW
-(#expressivity.train-e97.recipe.optimizer), constant learning rate
+Both arms receive the identical full-fine-tune recipe: bf16
+#expressivity.train-e97.recipe.optimizer, constant learning rate
 #expressivity.train-e97.recipe.lr, warmup
 #expressivity.train-e97.recipe.warmup, weight decay
 #expressivity.train-e97.recipe.weight_decay, gradient clip
