@@ -51,10 +51,28 @@ for (const phrase of [
   '150,793,420,800',
   'five optimizer steps',
   'not an unconditional four-seed mean',
+  'synthetic, coarse state-pass accounting model',
+  'right-multiplication $H W$ and feature-network costs',
+  'precomputed-gate recurrent-update accounting model',
+  'smallest non-solvable symmetric group',
+  'gap peaks near 0.359 at $T = 320$',
+  'approximate reconstructions from rounded three-seed mean/min/max summaries',
+  'write gate *2*, outside the production sigmoid',
+  'm2rnnCMAShape = m2rnnPure 22 70 256',
+  'different decay placement',
+  'not shown statistically equivalent',
+  'journal-specific submission packaging remains a separate step',
+  'source .pt checkpoint SHA-256',
 ]) assert.ok(normalized.includes(phrase), phrase);
 for (const old of ['margin bounded away from zero', 'strictly inside NC#super[1]',
   'linear recurrence provably cannot maintain', 'explicit configuration of it realizes',
-  'strictly more expressive than raw-write', "Section 7's theorems"]) {
+  'strictly more expressive than raw-write', "Section 7's theorems",
+  'smallest non-solvable group', 'widens monotonically',
+  'widening monotonically', 'gap grows with sequence length',
+  'regime where every confound is controlled',
+  'has memorized, not learned the recurrence',
+  "the theory's two required conditions", 'differ in one structural parameter',
+  'GDN-2 special case', 'is the a noncontainment', 'statistical tie']) {
   assert.ok(!normalized.includes(old), `overstatement absent: ${old}`);
 }
 const inventory = JSON.parse(fs.readFileSync('paper/data/lean-trust-gate-theorems.json', 'utf8'));
@@ -63,6 +81,19 @@ assert.equal(inventory.theorem_count, inventory.theorems.length);
 const closure = execFileSync('bash', ['formal/lean/scripts/local_import_closure.sh'],
   { encoding: 'utf8' }).trim().split('\n').map(path => path.split('/formal/lean/')[1]);
 assert.deepEqual(inventory.trust_gate_files, closure, 'inventory covers recursive closure');
+const imported = new Set();
+function visitLocal(module) {
+  const file = module.replaceAll('.', '/') + '.lean';
+  if (imported.has(file)) return;
+  imported.add(file);
+  const text = fs.readFileSync('formal/lean/' + file, 'utf8');
+  for (const match of text.matchAll(/^import[ \t]+(ElmanProofs(?:\.[A-Za-z0-9_]+)+)[ \t]*$/gm)) {
+    visitLocal(match[1]);
+  }
+}
+visitLocal('ElmanProofs.PaperCore');
+assert.deepEqual(inventory.trust_gate_files, [...imported].sort(),
+  'independent local source import audit');
 for (const file of ['ElmanProofs/Activations/Lipschitz.lean',
   'ElmanProofs/Expressivity/E1HDefinition.lean']) {
   assert.ok(inventory.theorems.some(d => d.file === file), file);

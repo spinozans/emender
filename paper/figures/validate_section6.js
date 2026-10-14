@@ -97,3 +97,22 @@ assert.ok(source.includes('within-sweep gain not computable from retained artifa
 assert.ok(source.includes('throughput-budget smokes reported here\nare CUDA-only'));
 assert.ok(!source.includes('TODO-EXPRESSIVITY-1P3B'));
 console.log(`PASS: all ${Object.keys(wallE97.acc_vs_T).length} modular-quadratic, ${Object.keys(control.arms).length} control, ${Object.keys(s5E97.acc_vs_T).length} S5, and ${sweeps.length} CMA rendered rows match committed results; negatives, common-cap caveats, CUDA scope, and U3.1 checked.`);
+
+// B3: retained length advantages are positive but not monotone; arithmetic
+// comes from the cited canonical summary, not manuscript wording.
+const curves = fs.readFileSync('experiments/expressivity_tasks/LENGTH_EXTRAP_RESULTS.md', 'utf8');
+for (const [section, expected] of [
+  ['parity', [0.003, 0.156, 0.311, 0.359, 0.337]],
+  ['modular_counter K=5', [0.496, 0.455, 0.249, 0.116, 0.075]],
+  ['fsm_tracking K=4', [0.012, 0.076, 0.226, 0.238, 0.204]],
+]) {
+  const block = curves.split('## ' + section + ' (random')[1].split('\n## ')[0];
+  const means = block.split('\n').filter(line => /^\| \*\*pure_E88\*\*|^\| pure_FLA\s/.test(line))
+    .map(row => row.split('|').slice(2, -1).map(cell =>
+      Number(cell.replaceAll('*', '').trim().split(' ')[0])));
+  const gap = means[0].map((value, i) => Number((value - means[1][i]).toFixed(3)));
+  assert.deepEqual(gap, expected, section);
+  assert.ok(gap.every(value => value > 0), 'positive ordering');
+  assert.ok(gap.some((value, i) => i > 0 && value < gap[i - 1]), 'non-monotone separation');
+}
+console.log('PASS: all three length-gap sequences reproduce positive, non-monotone ordering.');

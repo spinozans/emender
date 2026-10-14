@@ -2162,8 +2162,8 @@ is `formal/lean/scripts/check_paper_core.sh`; compiling
 `ElmanProofs.PaperCore` additionally checks elaboration of the proofs.
 The refreshed machine-extracted inventory is committed at
 `paper/data/lean-trust-gate-theorems.json` (857 named
-declarations, 723 user-written, 17 files; unchanged theorem-source
-commit `f7182e8b`), including the split-gated, latching, duality,
+declarations, 723 user-written, 17 files; extraction source
+commit `e58ae937`), including the split-gated, latching, duality,
 routing, Lipschitz, and E1H-definition modules. Both the gate and
 extractor traverse the recursive local imports rather than a selected
 module allowlist. This check covers project sources, not the axioms
@@ -3816,8 +3816,8 @@ usable for reproduction — cite `@v0.3` only.
     Pile paper's published 1.0468 @thepile2020, a ≈0.03-bpb pipeline
     check confirming this single slice reads slightly low against the full
     Pile test set. The architecture-focused comparison is the
-    matched-budget three-way at the top, which #ref(<sec:appendix_cohort>) reports as a statistical
-    tie.
+    matched-budget three-way at the top, which #ref(<sec:appendix_cohort>) reports as
+    descriptively close, not as a statistical equivalence result.
   ],
 ) <tab_bpb_landscape>
 
