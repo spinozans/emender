@@ -6,6 +6,10 @@ The accepted manuscript at **eb2b96363e3ff800d7eefe2ba7386e7cf673d1cf** is
 packaged in the official TMLR LaTeX style, with no scientific edits.
 Worktree: `/home/erikg/emender-paper`; branch: `paper-1p3b-spine`.
 Delivery remote: `origin` (`git@github.com:spinozans/emender.git`), same branch.
+Packaging commit: **13115501ebf85aad3a46938269d41d1ff1e5e292**, pushed successfully;
+`git ls-remote origin refs/heads/paper-1p3b-spine` matched the local packaging
+commit after push. This delivery receipt is committed separately. The index is
+empty; the pre-existing untracked review artifacts are the only unrelated files.
 
 | Deliverable | Absolute path | Pages |
 |---|---|---:|
