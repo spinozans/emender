@@ -1704,14 +1704,18 @@ selective copy 1.00 vs 1.00). GDN is ahead of the Emender on associative recall
 Under length extrapolation (train $T = 40$, evaluate up to $T = 500$),
 the Emender retains 0.89 accuracy on parity at $T = 500$ where GDN collapses
 to 0.55 (near random 0.50). On FSM tracking at $T = 500$, the Emender is at
-0.59 versus GDN 0.39. The gap widens monotonically with length.
+0.59 versus GDN 0.39. The parity gap widens to a peak of about 0.359
+at $T = 320$, then narrows to about 0.337 at $T = 500$.
 
-The gap grows with sequence length on parity, FSM tracking, and
-modular counter: *multi-step persistence* on natural-language-shaped
-sequences, the empirical companion of the #ref(<sec:formal>) k-step separation
+Positive gaps persist across the measured lengths for parity, FSM
+tracking, and modular counter, but they are not monotone: the FSM gap
+also peaks at $T = 320$, while the counter gap shrinks throughout.
+This retained empirical advantage is distinct from the exact finite-$k$
+non-equality of #ref(<sec:formal>)
 (`emender_m2rnn_k_step_separation`, Theorem set C′) and the one-step
 resource separation
-(`emender_m2rnn_one_step_resource_separation_embeds`, set C). The
+(`emender_m2rnn_one_step_resource_separation_embeds`, set C). Neither
+formal statement predicts an increasing empirical accuracy gap. The
 remaining frontier, an $S_5$-generator-specific capacity bound with
 explicit $T(d)$, is named in #ref(<sec:future_work>).
 
@@ -2290,10 +2294,11 @@ exposed separately as the inductive base
 (`emender_m2rnn_two_step_separation`). All three live in
 `ElmanProofs.Architectures.MultiStepSeparation`, part of the trusted
 import closure of `PaperCore`. The #ref(<sec:expressivity>) length-extrapolation
-curves (parity, FSM tracking, modular counter; Emender-vs-baseline gap
-widening monotonically with sequence length) are the empirical
-companion of this formal multi-step persistence on a
-natural-language-shaped alphabet.
+curves retain positive, non-monotone gaps on parity, FSM tracking, and
+modular counter. The parity gap peaks near 0.359 at $T = 320$ before
+narrowing to about 0.337 at $T = 500$. These measurements are separate
+evidence of retained advantage, not consequences of the exact-real
+finite-$k$ theorem or an increasing-gap prediction.
 
 #heading(level: 2, numbering: none)[Frontier and unproven targets]
 
@@ -3033,11 +3038,12 @@ fixed-weight raw-write recurrence at state dimension $d$, an explicit
 length $T(d)$ past which tracking the $S_5$ cosets becomes unreachable,
 while the Emender at the same $d$ still tracks them. That bound needs a
 bounded-precision raw-write class and Merrill-style state-counting lower
-bounds not yet available in Mathlib. Its empirical companion is already
-in hand: the #ref(<sec:expressivity>) length-extrapolation curves on parity, finite-state
-tracking, and the modular counter — where the Emender-versus-baseline
-gap widens monotonically with sequence length — are the signature such
-a bound would explain on natural-language-shaped sequences.
+bounds not yet available in Mathlib. The #ref(<sec:expressivity>)
+length-extrapolation curves on parity, finite-state tracking, and the
+modular counter show positive but non-monotone gaps. For parity the
+gap peaks near 0.359 at $T = 320$, then narrows to about 0.337 at
+$T = 500$. These are retained-advantage observations, not evidence
+of the proposed $S_5$ capacity bound or of a uniformly widening gap.
 
 #heading(level: 2, numbering: none)[A partial order on PNR update rules]
 
