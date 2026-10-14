@@ -127,7 +127,7 @@ that is linear in the state can be parallelized, but it also bounds what
 the state can compute as the sequence grows: restricted linear-state recurrence can have limited circuit complexity
 under explicit arithmetic and architectural assumptions; the prefix
 products of a non-solvable group are a canonical diagnostic @merrill2024transformers
-@barrington1986. The direct way to lift that ceiling is to pass the
+@barrington1986. A direct way to add nonlinear temporal computation is to pass the
 state through a nonlinearity at every step. But a nonlinear-in-time
 update breaks the parallel scan and forces the time loop to run
 serially, and serial training at billion-parameter scale was presumed
@@ -191,13 +191,13 @@ pairs a matrix-state memory with a write rule that has two halves.
 predicts at the addressed slot, computes the prediction error, and
 writes the correction. Memory overwrites a stale binding when a later
 token addresses the same slot with a different value. *Tanh-with-latching* is the second
-half. A slot driven near $plus.minus 1$ becomes insensitive to further
-bounded writes, sub-threshold counter-input leaves the sign unchanged,
-and a sufficient counter-delta releases the slot. Memory persists,
-holding a binding across many irrelevant tokens, and remains
-overwritable when a sufficient counter-delta arrives. State tracking
-needs both. An add-only update accumulates without correction; a
-correction-only update cannot retain a binding long enough to use it. An *emender* is
+half. Under the hypotheses of theorem set F (#ref(<sec:formal>)), a
+saturated slot resists perturbations, keeps its sign below a write
+threshold, and releases under a sufficient counter-delta. These are
+conditional slot-level guarantees; the hold theorem
+`EmenderLatching.emender_latch_holds_by_default` assumes $lambda >= 1$,
+not the production decay below one. Persistent, revisable memory is the
+design motivation, not a proved default behavior of the trained stack. An *emender* is
 one such layer; the *Emender* is the architecture family obtained by
 stacking emender layers; *E97* — the saturated delta-correcting cell
 extended with split erase/read and value-write gates — is the
@@ -290,9 +290,9 @@ and direct capability measurements.
   hybridization.
 
 + *Power separation within the formalized resource class: for the
-  matched-signature update family studied here, the delta-correcting
-  update is strictly more expressive than raw-write at matched
-  per-token compute.* A Lean 4 trusted core machine-verifies that no
+  matched-signature update family studied here, delta correction
+  supplies a mixed-key step absent from the fixed-right raw-write
+  class at matched per-token FLOP class.* A Lean 4 trusted core machine-verifies that no
   fixed-weight raw-write matrix RNN with row, column, or cell forget
   gates can match the Emender's delta-correcting update in one step
   (`emender_m2rnn_one_step_resource_separation_embeds`, set C in #ref(<sec:formal>)),
@@ -751,7 +751,7 @@ exact rather than rhetorical.
 
 #heading(level: 2, numbering: none)[Per-head update]
 
-Section 1 named the emender layer by what it does — read what the memory
+#ref(<sec:intro>) named the emender layer by what it does — read what the memory
 predicts at the addressed slot, compute the prediction error, and write the
 correction — and named E97 as the 1.3 B instance carried through the paper.
 This section makes the layer concrete: the per-step computation, the choices
@@ -761,7 +761,7 @@ family.
 An emender layer runs $H$ independent heads side by side. Each head $h$ owns
 its own matrix-state memory $S_h in RR^(N times V)$ — the matrix state of #ref(<sec:background>),
 here addressed by an $N$-dimensional key and holding a $V$-dimensional value
-at each addressed slot. (Section 7's theorems use a single symbol $d$ for the
+at each addressed slot. (#ref(<sec:formal>)'s resource theorems use a single symbol $d$ for the
 common matrix dimension; in E97, $d = N = V = 32$, so each head's memory is a
 $32 times 32$ tile.) At each token, the layer's input projections supply, per
 head, a key $k_h$ and query $q_h$ in $RR^N$ that name the slots to write and
@@ -790,7 +790,7 @@ $
 
 Here $"silu"$ is the smooth pointwise activation $x dot sigma(x)$, with
 $sigma$ the logistic sigmoid, $v_h$ is the post-activation value input (the
-$"silu"(v)$ of the E88 cell, so the write gate scales an already-bounded
+$"silu"(v)$ of the E88 cell, so the write gate scales an already-activated
 write), and $norm(dot)_2$ is the Euclidean norm. The first two lines put
 the key and query on
 the unit sphere so the addressing is bounded; the middle lines make the write
@@ -932,19 +932,19 @@ in the instance above.
 + *Delta-correcting write $w dot v - S^T (e dot k)$.* The emender layer reads what memory
   predicts at the gated address $e dot k$, computes the prediction error
   $delta$ against the gated write value $w dot v$,
-  and writes the correction. With an orthonormal key family this gives
-  exact overwrite at one slot while preserving the others; with
-  arbitrary keys it gives bounded error-correcting binding. A raw-write
+  and writes the correction. Under unit decay and all-one gates,
+  the pre-$tanh$ core with orthonormal keys gives exact overwrite at one
+  slot while preserving orthogonal slots (`linearDeltaWrite_overwrites_one_preserves_others`);
+  full-state $tanh$, split gates, and arbitrary keys change that guarantee. A raw-write
   update $S <- S + k v^T$ (the M²RNN family) accumulates without
   correction and cannot, with fixed weights, satisfy a uniform one-step
   overwrite specification (#ref(<sec:formal>)).
 
 + *Saturation latching of the $tanh$ bound.* A slot driven near
-  $plus.minus 1$ is insensitive to further bounded writes, sub-threshold
-  counter-input leaves the sign unchanged, and a sufficient
-  counter-delta releases the slot. Together these properties let a
-  binding persist across many irrelevant tokens while keeping the
-  memory revisable when the data demand it. #ref(<sec:formal>)'s Theorem set F
+  $plus.minus 1$ resists perturbations under the saturation theorem's
+  hypotheses; sign-preserving hold and counter-delta release have
+  separate decay and write-budget assumptions. These motivate revisable
+  memory rather than guarantee persistent bindings in production E97. #ref(<sec:formal>)'s Theorem set F
   (saturation insensitivity, sign-preserving hold, counter-delta
   release) formalizes all three as slot-wise statements on the full
   emender-layer update.
@@ -994,7 +994,7 @@ programs per token, each carrying its own $32 times 32$ state tile. The
 reference implementation and the fused Triton recurrence kernel that steps
 these tiles are listed in the Appendix.
 
-#heading(level: 2, numbering: none)[Ablation by architecture: isolating the write rule]
+#heading(level: 2, numbering: none)[Architectural contrasts: delta correction and state nonlinearity]
 
 Three architectural properties are candidates for the one that lets a model
 track state: *matrix state*, *temporal nonlinearity on that state*, and *delta
@@ -1015,9 +1015,8 @@ delta-correcting update, and E97's split gates act inside the delta path rather 
 external carry with a candidate.
 M²RNN is *nonlinear-state* by the criterion of #ref(<sec:background>), since $H_(t-1)$
 appears inside $tanh$ via $H_(t-1) W$, but the write into $H$ is a raw
-outer product $k v^T$ rather than a delta correction. A three-row ablation
-across the three candidate properties isolates the write rule by
-elimination:
+outer product $k v^T$ rather than a delta correction. A three-row structural comparison
+shows the shared and distinct ingredients; it is not a causal ablation:
 
 #figure(
   align(center)[#table(
@@ -1241,7 +1240,7 @@ of everything at once.
 
 #figure(
   align(center)[#table(
-    columns: (auto, auto, auto),
+    columns: (1.05fr, 1.95fr, 1.95fr),
     align: (left, left, left),
     stroke: 0.5pt,
     inset: 6pt,
@@ -1265,8 +1264,8 @@ of everything at once.
     [Final aggregate tokens], [150,793,748,480], [152,280,498,176],
     [Final last-100 loss (nats/token)], [2.4365], [2.4034],
     [Final checkpoint SHA-256],
-      [`0239706e1f67e4823008a3a2754894b5b94dc1663580d2e40c1c74f7dd6a72b2`],
-      [`ffae61cfeeeff820f469f7d66dd31c60e48c455872ff9102e57b15ad75bad59b`],
+      [#text(size: 7pt)[#raw("0239706e1f67e4823008a3a2754894b5\nb94dc1663580d2e40c1c74f7dd6a72b2")]],
+      [#text(size: 7pt)[#raw("ffae61cfeeeff820f469f7d66dd31c60\ne48c455872ff9102e57b15ad75bad59b")]],
   )],
   caption: [
     *Training identities of the 1.3 B pair.* Both arms ran the same
@@ -1288,15 +1287,19 @@ Both arms consumed 65,536 tokens per optimizer step (8 ranks $times$
 batch 4 $times$ chunk 2,048, validated from the launch manifests and
 log deltas), so matched optimizer steps *are* matched aggregate tokens.
 GDN2-MLP was run 1.49 B tokens past E97's final step so that the
-comparison could be cut at E97's exact terminal authority; nothing
-downstream depends on GDN2's extra tokens.
+comparison could be read near E97's terminal authority. The final common
+logged read-out is five optimizer steps earlier than that checkpoint;
+no paired loss statistic uses GDN2's extra tokens.
 
 #heading(level: 2, numbering: none)[Loss parity at matched tokens]
 
 The primary read-out is the training-log loss of both arms aligned on
-exact common logged steps through E97's final authority (150.79 B
+exact common logged steps through step 2,300,925 (150,793,420,800
 tokens): 92,037 aligned records, zero E97-only and zero GDN2-only
-records through the cutoff, no interpolation.
+records through the cutoff, no interpolation. This is 327,680 tokens
+(five optimizer steps) before E97's terminal checkpoint at step
+2,300,930; the table is a last-common-log comparison, not an unlogged
+terminal-step measurement.
 
 #figure(
   align(center)[#table(
@@ -1316,7 +1319,8 @@ records through the cutoff, no interpolation.
       [$-0.0713$],
   )],
   caption: [
-    *Matched-token loss comparison (nats/token, The Pile).* At the
+    *Matched-token loss comparison (nats/token, The Pile).* The common
+    logged cutoff is step 2,300,925, not checkpoint step 2,300,930. At the
     matched cutoff the two arms sit within $0.010$ nats/token smoothed
     ($approx 0.4%$ relative), and the *sign of the gap depends on the
     averaging window*: GDN2-MLP is lower on the full-trajectory and
@@ -1754,7 +1758,10 @@ has memorized, not learned the recurrence.
 
 The nonlinear arm is length-invariant where both linear arms collapse:
 at $p = 256$, dim 1024, E97 holds $0.982 -> 0.981$ from $T = 128$ to
-$T = 4096$, while e97-linear falls to 0.619 and GDN2 to 0.560; an
+$T = 4096$, while e97-linear falls to 0.619 and GDN2 to 0.560. These
+source length curves condition on successful training-length seeds
+(`final_test >= 0.9`): 2 E97, 1 e97-linear, and 4 GDN2 seeds in this cell,
+not an unconditional four-seed mean. Separately, an
 8-seed confirmation run puts the E97−GDN2 gap at $+0.17$ to $+0.32$ at
 $T = 4096$ across the decisive cells, and the 4-seed symmetric-width
 sweep shows decisive-cell gaps up to $+0.42$
@@ -2441,8 +2448,9 @@ structural relations the body relies on:
 #set list(indent: 0em)
 
 The #ref(<sec:lm>) pairing is thus anchored on both sides: the two 1.3 B arms share
-the split-gated delta core and differ precisely on the per-step state
-nonlinearity — the same axis the #ref(<sec:expressivity>) iterated-map ablation isolates
+adjacent split-gated delta cores and differ on the per-step state
+nonlinearity, as well as geometry and input processing in the trained
+stacks — the same state-map axis the #ref(<sec:expressivity>) iterated-map ablation isolates
 causally (`e97` versus `e97-linear`) and the same axis set G names
 formally.
 
@@ -3028,8 +3036,8 @@ a bound would explain on natural-language-shaped sequences.
 #heading(level: 2, numbering: none)[A partial order on PNR update rules]
 
 The ordering established here, delta-correcting above raw-write, is the
-first strict instance of an expressivity order on the
-pure-nonlinear-recurrent (PNR) class at matched per-token FLOP class
+a noncontainment witness between two matched-signature
+update families, not a proved strict set-inclusion order on the PNR class
 (`emender_m2rnn_flop_class_equiv`, set D in #ref(<sec:formal>)). Whether that relation
 extends to a *partial order* over the broader PNR space — whether
 antisymmetry and transitivity hold across the full space, under an
@@ -3454,7 +3462,7 @@ was chosen and frozen before any $S_5$ result was seen. @tab_s5_1p3b and
     frozen before any $S_5$ result was seen. $T = 64$ is the longest trained
     length; columns to its right are extrapolation out to 16× ($T = 1024$).
     Chance is $1 / 120 = 0.0083$. At the trained length E88 (delta) nearly
-    solves $S_5$ (0.921) while the linear GDN never learns it (0.117, far
+    solves the tested prefixes (0.921) while this GDN run under-fits them (0.117, far
     below competence); raw-write M²RNN reaches 0.658. Under extrapolation all
     three degrade and E88 $>$ M²RNN $>$ GDN at *every* length, but E88
     plateaus below ceiling (0.143 at $T = 512$, flat from $approx 12,000$
@@ -3476,7 +3484,7 @@ was chosen and frozen before any $S_5$ result was seen. @tab_s5_1p3b and
     shown for contrast. Trained on $T <= 64$ (vertical marker), evaluated out
     to $T = 1024$ (16× the longest trained length); chance is the dotted line
     ($1 / 120$). At the trained length the delta model nearly solves $S_5$
-    while the linear GDN never learns it; under extrapolation E88 $>$ M²RNN
+    while this GDN run under-fits it; under extrapolation E88 $>$ M²RNN
     $>$ GDN at *every* length, with E88 plateauing below ceiling rather than
     tracking $S_5$ to arbitrary length. Numbers match @tab_s5_1p3b. Real
     data: `paper/review/s5_symmetric_data/{e88,m2rnn,gdn}.json`; figure
@@ -3505,8 +3513,8 @@ was chosen and frozen before any $S_5$ result was seen. @tab_s5_1p3b and
     shape. The ordering is consistent across both runs, but all three degrade
     with length and none tracks $S_5$ to arbitrary length. On the solvable
     controls all three are competent at the trained length and degrade only
-    with extrapolation, confirming the $S_5$ gap is the non-solvability
-    obstruction, not a generic difficulty gap. Real data:
+    with extrapolation, motivating a structure-sensitive learning
+    hypothesis without proving non-solvability causes the gap. Real data:
     `paper/review/s3_s5_finetune_v03_data_tocomp/`; figure script:
     `paper/figures/plot_s5_s3_1p3b_lengthgen.py`.
   ],
@@ -3515,7 +3523,7 @@ was chosen and frozen before any $S_5$ result was seen. @tab_s5_1p3b and
 *Trained-length competence vs length-extrapolation plateau.* Two facts must
 be kept apart. First, *at the trained length* ($T = 64$) the delta model
 fits the held-out $S_5$ prefixes substantially better: E88 reaches 0.921, near-solving a
-non-solvable task, whereas the linear-recurrent GDN never learns it even at
+non-solvable task, whereas this linear-recurrent GDN run under-fits it even at
 the trained length (0.117, far below competence) and raw-write M²RNN reaches
 0.658. Thus the delta update nearly solves the tested trained-length prefixes
 where this GDN run under-fits them; this is not an acquisition impossibility. Second, *under
@@ -3743,8 +3751,8 @@ usable for reproduction — cite `@v0.3` only.
     and is not a quality knock; GPT-2 XL measures 1.0137 here versus the
     Pile paper's published 1.0468 @thepile2020, a ≈0.03-bpb pipeline
     check confirming this single slice reads slightly low against the full
-    Pile test set. The only architecture-isolating comparison is the
-    matched-budget three-way at the top, which #ref(<sec:lm>) shows is a statistical
+    Pile test set. The architecture-focused comparison is the
+    matched-budget three-way at the top, which #ref(<sec:appendix_cohort>) reports as a statistical
     tie.
   ],
 ) <tab_bpb_landscape>
