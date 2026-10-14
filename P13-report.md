@@ -147,3 +147,68 @@ were updated to the source-derived census. No acceptance check was disabled.
 Git initially treated the new Typst PDF as text and flagged its PDF xref CRLF
 as whitespace; paper/.gitattributes now marks current.pdf binary.
 
+## Part 3 — committed results durability inventory
+
+`paper/results/RESULTS_INVENTORY.md` contains 152 TRACKED artifacts, each
+with exact byte size, SHA-256, and role. Its 40KB manifest includes all
+paper/results CSV/JSON inputs, depth-wall sweeps and training records, the
+matched throughput budget, 8 M control aggregate plus 15 per-seed sources,
+S5 capacity and crash records, CMA winners/search records, trust inventory,
+evidence/source ledgers, release identity receipts, and key-table sources.
+Fourteen tracked artifacts exceed 100,000 bytes, including the 3.27MB trust
+inventory and historical multi-MB loss CSVs; every exception is marked.
+No scientific input artifact was changed or copied into Git for this part.
+
+Findings: the E97 winner is tracked as RESULT/results.json, not a separate
+best.json (GDN2's best.json is tracked); five external metadata files are
+SCRATCH-ONLY (both runs' args/run_manifest plus GDN2 launch_manifest), with
+hashes; four old /tmp probes and the requested E97 best.json spelling are
+MISSING. The historical exact 8 M S3/S5 seed records remain unlocated.
+The evidence dossier is a stale historical snapshot, not a current claim
+oracle. Current-pair aligned-loss CSV/JSON and full QA per-item manifest
+snapshots are not in paper/results; committed summary receipts/CSVs are
+not represented as complete raw-data preservation. Existing unrelated
+untracked review files are untouched. No checkpoint-scale payload was hashed
+or added, and no remote S3 durability claim was inferred from Git status.
+
+Independent verification parses the delivered Markdown (not its generator),
+uses sha256sum, checks sizes and >100KB marks, requires exact git ls-files
+membership, and compares every tracked input byte-for-byte to git show HEAD.
+Result: 152 tracked checks, five external hashes, five explicit missing
+paths, fourteen size exceptions, all PASS. Scratch scripts/output are under
+/home/erikg/emender-scratch/fix-fanout/P13-validation/. An initial whole-index
+listing exceeded Node's default stdout buffer; the explicit buffer was
+raised before generating any inventory. No digest or membership was skipped.
+
+## Validation commands and delivery
+
+Executed on lambda01. No Python, Slurm/native build, training, or WorksGood
+service was used. Resilient-DiLoCo requirement IDs are not applicable to
+this manuscript-only audit; protocol pseudocode documents existing recipes
+without changing resilient training behavior.
+
+- `typst compile paper/main.typ paper/current.pdf` — PASS (65 pages).
+- `node paper/tmlr/convert.mjs` — PASS (98 headings, 20 figure/table captions,
+  21 amsthm statements; bibliography identity retained).
+- `typst compile --root . --pdf-standard 1.5 --no-pdf-tags --pages 1,2
+  paper/tmlr/figures.typ ...`; Poppler `pdfseparate` — PASS, both vector
+  drawings regenerated; Figure 2 carries the fixed gate/returned-state notation.
+- `TECTONIC_BIN=/tmp/tectonic bash paper/tmlr/build.sh` — PASS (58/58 pages).
+- `bash paper/tmlr/bundle-arxiv.sh`; fresh tar extraction and
+  `/tmp/tectonic --keep-intermediates --keep-logs main.tex`; raw PDF text
+  `cmp` against preprint — PASS standalone.
+- With `LD_LIBRARY_PATH=/tmp/p9-poppler/usr/lib/x86_64-linux-gnu`,
+  `PDFTOTEXT=/tmp/p9-poppler/usr/bin/pdftotext`,
+  `PDFINFO=/tmp/p9-poppler/usr/bin/pdfinfo`, `node paper/tmlr/verify.mjs`
+  — PASS (20×3 samples, 2,587 source fragments, 707 math / 441 attachments,
+  eight primes in each PDF, identity/source guards).
+- `node --test paper/tmlr/verify-symbols.test.mjs
+  paper/tmlr/notation-audit.test.mjs` — PASS (17/17).
+- `node paper/figures/validate_assembly.js` — PASS.
+- `sha256sum -c validation/SHA256SUMS` in paper/tmlr — PASS (15 entries).
+- `node .../P13-validation/verify-inventory.mjs` — PASS as detailed above.
+- `git diff --check`, explicit-path per-part commits, empty-index check,
+  push and remote-branch hash comparison — required delivery checks below.
+
+Next: independent review of these three parts, then author disposition of
+the five structural/naming/protocol calls above. No venue submission occurred.
