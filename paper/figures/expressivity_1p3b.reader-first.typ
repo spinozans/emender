@@ -34,8 +34,8 @@
     trained length #train-e97.recipe.train_len, seed #wall-e97.seed,
     #wall-e97.acc_vs_T.at("128").n scored token positions per length.
     The common cap is #budget.cap_steps steps. E97 stopped after
-    #train-e97.steps_trained steps and GDN2-MLP after #train-gdn2.steps_trained.
-    E97 accuracy declines with length; GDN2-MLP approaches a roughly 50%
+    #train-e97.steps_trained steps and GDN2 after #train-gdn2.steps_trained.
+    E97 accuracy declines with length; GDN2 approaches a roughly 50%
     plateau, above the #percent(wall-gdn2.random_baseline_acc) random baseline. Source: `paper/results/expressivity_1p3b/iterated-map/`,
     `ft_{e97,gdn2}_modular_quadratic{,_sweep}.json` (commit `9dc3afd7`);
     `budget.json` (pre-registration `1989656c`).
@@ -55,7 +55,7 @@
   caption: [
     *S5 group-state tracking on the current 1.3 B pair.*
     Full-vocabulary argmax accuracy, seed #s5-e97.seed;
-    both curves decay and GDN2-MLP stays ahead. \*GDN2-MLP completed one
+    both curves decay and GDN2 stays ahead. \*GDN2 completed one
     optimizer step at length 512 before the curriculum stage proved
     OOM-infeasible even at sub-batch 1.
     Source: `capacity/cap_{e97,gdn2}_s5_sweep.json` and

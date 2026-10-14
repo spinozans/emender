@@ -4,9 +4,9 @@
 
 Fast interaction and feedback motivate ongoing computation with predictable per-input cost. Textual scratchpads and chains of thought use additional generated tokens to carry intermediate computation forward. The introduction now connects that established approach to the possibility of doing iterative computation directly in fixed-size recurrent state. The primary scratchpad and chain-of-thought papers are cited in the alternate-specific bibliography.
 
-E97 makes carried memory part of an ongoing computation. Each input reads the current state, writes a correction, and applies a nonlinear transformation before that state enters the next step. Spatial parallelism across small heads and batch elements makes this sequential computation practical. The current E97/GDN2-MLP 1.3 B comparison then asks whether the architectural distinction matters for what the trained models learn to compute.
+E97 makes carried memory part of an ongoing computation. Each input reads the current state, writes a correction, and applies a nonlinear transformation before that state enters the next step. Spatial parallelism across small heads and batch elements makes this sequential computation practical. The current E97/GDN2 1.3 B comparison then asks whether the architectural distinction matters for what the trained models learn to compute.
 
-The main empirical story is one study: comparable training loss, closely matched parameter counts and measured throughput, an E97 advantage on an iterated nonlinear map, and a strong GDN2-MLP result on S5 group-state tracking. The mathematical mechanism makes these task choices intelligible. Their interpretation concerns the computations learned under the recorded protocols.
+The main empirical story is one study: comparable training loss, closely matched parameter counts and measured throughput, an E97 advantage on an iterated nonlinear map, and a strong GDN2 result on S5 group-state tracking. The mathematical mechanism makes these task choices intelligible. Their interpretation concerns the computations learned under the recorded protocols.
 
 This revision supersedes the first reader-first draft's cross-cohort framing. Older benchmark results and their extended interpretations have been removed from the alternate paper, including its appendix. A short development register retains process history and source pointers. See `EXCLUDED_HISTORICAL_EVIDENCE.md` for the evidence-scope decision. The canonical paper, original results, and proof sources remain untouched.
 
@@ -15,6 +15,14 @@ This revision supersedes the first reader-first draft's cross-cohort framing. Ol
 State the mechanism, result, or theorem directly. Give the actual assumptions and protocol where the reader needs them. Delete imagined counterclaims instead of moving them into limitations or an appendix. The latest pass removes the repeated full-stack impossibility, universal-superiority, deployment, and alternative-representation rebuttals from the abstract, introduction, captions, results, formal discussion, applications, and conclusion.
 
 The abstract carries motivation and findings. The methods carry seeds, stopping rules, evaluation status, and checkpoint selection. Formal statements name their schedules, domains, decoders, and parameter ranges. The open questions ask for concrete experiments or constructions. Actual negative observations, such as an OOM stage or the zero-shot comparison, remain part of the evidence.
+
+## Naming, background, and applications
+
+Use GDN2 in the narrative. Define once that the experimental arm is recorded as `GDN2-MLP`, since both models use a SwiGLU MLP design. Preserve the exact experimental table labels, checkpoint names, paths, and data records.
+
+Explain the architectural distinction with named examples: Mamba and Gated DeltaNet have nonlinear input processing and gates; a layer's carried-state update is affine when its input-derived transition parameters are fixed. Describe a standard Transformer's fixed layer stack and its successive autoregressive decoding steps separately. This gives the reader the actual computation in each design.
+
+Begin utility with balance, motion tracking, and movement feedback. Order the application groups as feedback and movement, signal processing, iterative optimization, conversation and perception, and biological dynamics. The conversation paragraph proposes studying continual revision of internal state alongside visible intermediate computation. The biological motivation is efficient nonlinear recurrence for interactions among sequence features, regulatory signals, and cellular state; Enformer supplies a concrete nonlinear genomic-model example.
 
 ## Recommended flow
 
@@ -36,7 +44,7 @@ Use the actual pair's measurements. Parameters are 1,286,589,072 versus 1,286,71
 
 ### 3. Establish comparable language-model training
 
-Introduce the E97/GDN2-MLP pair, the shared data/tokenizer/chunk/optimizer/DiLoCo recipe, and the separately selected geometries and learning rates. Keep the exact run identities and matched-token table.
+Introduce the E97/GDN2 pair, the shared data/tokenizer/chunk/optimizer/DiLoCo recipe, and the separately selected geometries and learning rates. Keep the exact run identities and matched-token table.
 
 Suggested result paragraph:
 
@@ -52,7 +60,7 @@ Keep the actual results: 99.96% versus 76.09% at trained length, and 76.07% vers
 
 ### 5. Give S5 its own computational interpretation
 
-S5 tests composition of finite-group actions. The current GDN2-MLP result is strong: it leads the reported long-horizon comparison at every evaluated length. Both curves decline with length; the attempted length-512 GDN2 curriculum encountered OOM after one completed optimizer step.
+S5 tests composition of finite-group actions. The current GDN2 result is strong: it leads the reported long-horizon comparison at every evaluated length. Both curves decline with length; the attempted length-512 GDN2 curriculum encountered OOM after one completed optimizer step.
 
 Describe this directly as learned group-state tracking under the recorded protocol. Do not call it a failed replication of an older E88 or 8 M experiment. Do not reduce the paper to “mixed results.” The meaningful contrast is between the computations tested and the learning efficiency observed within each task.
 
@@ -66,7 +74,7 @@ Unrelated raw-write comparisons, predecessor resource counts, and interpretation
 
 ### 7. End with utility and decisive next tests
 
-The applications section gives equations and specific proposed comparisons for feedback, iterative optimization, and driven dynamics. Each example identifies the state, the nonlinear operation, and a regime or error measure worth testing.
+The applications section begins with familiar feedback and movement examples, then develops signal processing, iterative optimization, conversation/perception, and biological dynamics through equations and specific proposed comparisons. Each example identifies the state, the nonlinear operation, and a regime or error measure worth testing.
 
 The next tests should arise from the current pair: additional seeds, common realized budgets and checkpoint-selection controls, a current-scale state-nonlinearity ablation, held-out language-model evaluation, and matched scaling. This keeps the research program broad without making older exploratory results carry the present argument.
 
@@ -81,7 +89,9 @@ The next tests should arise from the current pair: additional seeds, common real
 - Deleted defensive counterclaim passages across the entire manuscript. They were removed rather than collected elsewhere.
 - Rewrote the applications as compact state equations plus useful test questions, and replaced the limitations inventory with concrete open questions.
 - Corrected two residual references to excluded older comparisons in the related-work and logistic-map discussion; both now describe the current study or a proposed task directly.
-- Added primary citations for scratchpads and chain-of-thought in `paper/refs.reader-first.bib`, leaving the canonical bibliography untouched.
+- Added primary citations for scratchpads, chain-of-thought, the Transformer architecture, and Enformer in `paper/refs.reader-first.bib`, leaving the canonical bibliography untouched.
+- Reordered the applications around intuitive feedback and movement, with biological dynamics fifth.
+- Simplified baseline prose to GDN2 while preserving experiment labels and machine-readable identities.
 
 ## Files and validation
 
