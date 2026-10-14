@@ -1,0 +1,72 @@
+diff --git a/paper/OUTLINE.md b/paper/OUTLINE.md
+index da45aa58..ff768a78 100644
+--- a/paper/OUTLINE.md
++++ b/paper/OUTLINE.md
+@@ -22 +22 @@ claim authority. All body references use Typst labels; applications are numbered
+-10. Limitations (G1–G3, F1, U3.1, empirical and application gaps)
++10. Limitations (G1–G3, O1, U3.1, empirical and application gaps)
+@@ -32 +32 @@ References (unnumbered)
+-multiplication is not a recurrent tanh-tracker realization (F1); finite-k
++multiplication is not a recurrent tanh-tracker realization (O1); finite-k
+diff --git a/paper/figures/validate_assembly.js b/paper/figures/validate_assembly.js
+index 34229759..0caba6f6 100644
+--- a/paper/figures/validate_assembly.js
++++ b/paper/figures/validate_assembly.js
+@@ -38 +38 @@ for (const phrase of [
+-  'Open item F1 — recurrent $tanh$-tracker realization unavailable.',
++  'Open item O1 — recurrent $tanh$-tracker realization unavailable.',
+@@ -132 +132 @@ assert.ok(bib.includes('Danieli, Federico'));
+-console.log(`PASS: 13 numbered body sections, 3 lettered appendices, ${layout.pages} pages; references, G1–G3/F1/U3.1, theorem scopes, 17-file inventory, and all ${keys.length} bibliography entries checked.`);
++console.log(`PASS: 13 numbered body sections, 3 lettered appendices, ${layout.pages} pages; references, G1–G3/O1/U3.1, theorem scopes, 17-file inventory, and all ${keys.length} bibliography entries checked.`);
+diff --git a/paper/main.typ b/paper/main.typ
+index 6acb7a8e..e39e407f 100644
+--- a/paper/main.typ
++++ b/paper/main.typ
+@@ -179 +179 @@ $tanh$ recurrence implements the full tracker; this missing trajectory
+-bridge is Open item F1 (#ref(<sec:formal>)). Neither the duality nor the cited
++bridge is Open item O1 (#ref(<sec:formal>)). Neither the duality nor the cited
+@@ -838,0 +839,2 @@ $
++The displayed normalization is idealized for nonzero addresses; production regularizes with `norm+1e-6` (local E88 fused normalization: `elman/models/e88_fused.py:239-242`).
++
+@@ -1032,0 +1035 @@ specification does not assert that a multilayer stack has input-only gates.
++Algorithms 1 and 2 present the abstract core; the released baselines add projection, normalization, gate-domain, and residual machinery whose full-stack binding is carried by limitation G2 (#ref(<sec:limitations>)).
+@@ -1696 +1699 @@ headroom and the 1.3 B parallel-decay boundary result, not a consequence
+-of the lookup theorem (Open item F1, #ref(<sec:formal>)). The probes measure what SGD
++of the lookup theorem (Open item O1, #ref(<sec:formal>)). The probes measure what SGD
+@@ -1730 +1733 @@ The recognizer floor is architecture-agnostic, and the lookup theorem
+-is not a recurrent realizability theorem (#ref(<sec:formal>), Open item F1). A matched
++is not a recurrent realizability theorem (#ref(<sec:formal>), Open item O1). A matched
+@@ -2421 +2424 @@ that iterating the nonlinear cell from zero tracks every input word.
+-*Open item F1 — recurrent $tanh$-tracker realization unavailable.* The
++*Open item O1 — recurrent $tanh$-tracker realization unavailable.* The
+@@ -2423 +2426 @@ loaded generator memory does not carry the running group product;
+-external composition supplies the missing state computation. Closing F1
++external composition supplies the missing state computation. Closing O1
+@@ -2769 +2772 @@ abstract tracker, the recognizer floor
+-lookup of set B. Full recurrent $tanh$-tracker realization is F1, not a
++lookup of set B. Full recurrent $tanh$-tracker realization is O1, not a
+@@ -2920 +2923 @@ This is the assumption this paper revisits.
+-#heading(level: 2, numbering: none)[Formal gaps: G1–G3 and F1]
++#heading(level: 2, numbering: none)[Formal gaps: G1–G3 and O1]
+@@ -2951 +2954 @@ silently identified with scalar-decay production restrictions.
+-*F1 — the nonlinear recurrent tracker is not realized by the lookup
++*O1 — the nonlinear recurrent tracker is not realized by the lookup
+@@ -2956 +2959 @@ cell. This matters because the claimed architecture-to-task existence
+-bridge otherwise exceeds the checked theorem. Closing Open item F1
++bridge otherwise exceeds the checked theorem. Closing Open item O1
+@@ -2961 +2964 @@ These gaps are recorded in `formal/lean/GAPS-D2.md` (G1–G3) and
+-#ref(<sec:formal>) (F1). Circuit containment does not establish
++#ref(<sec:formal>) (O1). Circuit containment does not establish
+@@ -3080 +3083 @@ recognizer floor do not predict what SGD must learn; the generator-table
+-lookup is not a recurrent tracker realization (F1), and affine-channel
++lookup is not a recurrent tracker realization (O1), and affine-channel
+@@ -3314 +3317 @@ that connects #ref(<sec:formal>) to the #ref(<sec:expressivity>) empirics: a bas
+-an $S_5$ coset in a future recurrent realization (first closing F1)
++an $S_5$ coset in a future recurrent realization (first closing O1)
+diff --git a/paper/results/RESULTS_INVENTORY.md b/paper/results/RESULTS_INVENTORY.md
+index 312f8955..f8bd1cf1 100644
+--- a/paper/results/RESULTS_INVENTORY.md
++++ b/paper/results/RESULTS_INVENTORY.md
+@@ -213 +213 @@ rehashed at checkpoint scale. Missing paths have no fabricated size/digest.
+-  manuscript's F1/G1–G3/U3.1 boundaries remain the claim authority.
++  manuscript's O1/G1–G3/U3.1 boundaries remain the claim authority.

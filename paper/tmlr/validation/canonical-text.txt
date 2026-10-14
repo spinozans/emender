@@ -73,7 +73,7 @@ the tested protocols. At 1.3 B, the modular-quadratic probe reproduces a depth-w
 but the 𝑆5 ordering does not transfer (Section 6). The Lean core proves matched-signature one-
 step separation, exact non-equality at every finite 𝑘 on a constructed witness, and a 120-state
 recognizer floor. Its generator-table lookup construction is not a proof that the tanh recurrence
-implements the full tracker; this missing trajectory bridge is Open item F1 (Section 8). Neither
+implements the full tracker; this missing trajectory bridge is Open item O1 (Section 8). Neither
 the duality nor the cited complexity results establish a blanket linear-state 𝑆5 impossibility.
 Throughput on the width axis comes from many small recurrent programs running side by side,
 each stepping its time loop serially, which is what makes the serial recurrence practical at scale.
@@ -583,13 +583,15 @@ silu(𝑞ℎ)
 𝑦ℎ = silu(𝑔ℎ) ⊙ (𝑆′
 ℎ)𝑇
 𝑞ℎ
+The displayed normalization is idealized for nonzero addresses; production regularizes with
+norm+1e-6 (local E88 fused normalization: elman/models/e88_fused.py:239-242).
 Here silu is the smooth pointwise activation 𝑥 ⊙ 𝜎(𝑥), with 𝜎 the logistic sigmoid, 𝑣ℎ is the
 post-activation value input (the silu(𝑣) of the E88 cell, so the write gate scales an already-
 activated write), and ‖⋅‖2 is the Euclidean norm. The first two lines put the key and
-query on the unit sphere so the addressing is bounded; the middle lines make the write
-a correction against the content already read — under a gated address and at a gated
 11
-magnitude — rather than a raw addition; and the final line gates only the read output. With
+query on the unit sphere so the addressing is bounded; the middle lines make the write
+a correction against the content already read — under a gated address and at a gated
+magnitude — rather than a raw addition; and the final line gates only the read output. With
 both split gates fixed to one (𝑒ℎ == 1, 𝑤ℎ == 1) the step specializes exactly to the E88
 cell (Lean: SplitGatedDelta.e97_specializes_to_e88_all_one_gates_direct), which is how the
 predecessor instance was defined; the state stays inside tanh, so the update is nonlinear-state
@@ -634,8 +636,6 @@ core with orthonormal keys gives exact overwrite at one slot while preserving or
 slots (linearDeltaWrite_overwrites_one_preserves_others); full-state tanh, split gates,
 and arbitrary keys change that guarantee. A raw-write update 𝑆 ← 𝑆 + 𝑘𝑣𝑇
 (the M²RNN
-family) accumulates without correction and cannot, with fixed weights, satisfy a uniform
-one-step overwrite specification (Section 8).
 12
 A. Per-head update step
 𝑘ℎ 𝑣ℎ 𝑞ℎ 𝑑ℎ 𝑔ℎ 𝑒ℎ 𝑤ℎ
@@ -674,6 +674,8 @@ head is a 32 × 32 state tile that fits in registers/SRAM and runs its time loop
 across heads, depth and batch (Section 4), giving 11 × 216 × 4 = 9{, }504 programs per token at batch size 4.
 The Lean theorem emender_1p27B_programs_per_batch_token_bs5 certifies the corresponding count (22,200) for
 the E88 predecessor geometry.
+family) accumulates without correction and cannot, with fixed weights, satisfy a uniform
+one-step overwrite specification (Section 8).
 (c) Saturation latching of the tanh bound. A slot driven near ±1 resists perturbations under
 the saturation theorem’s hypotheses; sign-preserving hold and counter-delta release have
 separate decay and write-budget assumptions. These motivate revisable memory rather
@@ -692,10 +694,12 @@ applied before retrieval and correction, and no tanh is applied to the returned 
 are an already supplied key, split gates, value, and pre-decay matrix; it does not impose E97′s
 projection processing on GDN2-MLP. In the trained stack the mixer is followed by the SwiGLU
 MLP of Section 5, not by a state activation. This core specification does not assert that a
-multilayer stack has input-only gates.
-Algorithm 2 — GDN-2 split-gated linear core.
+multilayer stack has input-only gates. Algorithms 1 and 2 present the abstract core; the released
 13
-Input: S, D, k, e, w, v
+baselines add projection, normalization, gate-domain, and residual machinery whose full-stack
+binding is carried by limitation G2 (Section 10).
+Algorithm 2 — GDN-2 split-gated linear core.
+Input: S, D, k, e, w, v
 1. P <- D S
 2. r <- transpose(P) (e hadamard k)
 3. delta <- (w hadamard v) - r
@@ -736,12 +740,12 @@ update has two parts, written here as one display: the first line builds a nonli
 𝑍𝑡 = tanh(𝐻𝑡−1𝑊 + 𝑘𝑡𝑣𝑇
 𝑡 )
 𝐻𝑡 = 𝑓𝑡𝐻𝑡−1 + (1 − 𝑓𝑡)𝑍𝑡.
-Algorithm 3 makes the displayed scalar-forget version explicit. The row/column/cell external-
+14
+Algorithm 3 makes the displayed scalar-forget version explicit. The row/column/cell external-
 forget resource classes in Section 8 retain their separately stated broadcasting signatures; this
 is not a substitution for those quantified definitions.
 Algorithm 3 — raw-write nonlinear comparator step.
-14
-Input: H, fixed W, k, v, scalar forget gate f
+Input: H, fixed W, k, v, scalar forget gate f
 1. Z <- tanh(H W + outer(k, v))
 2. H_next <- f H + (1 - f) Z
 Return: H_next
@@ -780,12 +784,12 @@ Width-axis multi-programming supplies throughput while each head’s time loop r
 A linear recurrence earns its throughput on the time axis: because 𝑆𝑡 = 𝐴𝑡𝑆𝑡−1 + 𝑏𝑡 unfolds
 into a product that depends on the inputs alone, the step-by-step loop can be re-expressed as
 a prefix scan or a chunkwise matrix multiplication over the whole sequence at once. A purely
-nonlinear recurrence cannot be rewritten that way without giving up the nonlinear update
+15
+nonlinear recurrence cannot be rewritten that way without giving up the nonlinear update
 that makes it expressive, so its time loop has to run serially. Multi-programming recovers the
 throughput on the other axis. Rather than parallelize one recurrence along time, it replicates
 the recurrent computation across many independent heads — each with its own small bounded
-15
-matrix state — and harvests parallelism across those heads, across state tiles, and across batch
+matrix state — and harvests parallelism across those heads, across state tiles, and across batch
 elements, while the time loop inside each head still runs one step at a time.
 The design choice is a decoupling: it frees throughput from the shape of the update. The
 recurrent body must stay a bounded, register-resident per-step map at a fixed matrix-
@@ -824,12 +828,12 @@ E88 occupancy measurement is not an E97 occupancy measurement.
 At the literal 1.3 B pair geometry the two arms are measured head to head: on a leased RTX
 6000 Ada under identical conditions, E97-MLP sustains 3,211 tokens/s per GPU at batch 4
 against 3,290 for GDN2-MLP — a 0.976× tie — while using 28.9 GB against GDN2-MLP’s
-35.7 GB peak memory, so E97 fits batch 6 (4,470 tokens/s per GPU) where GDN2-MLP OOMs
+16
+35.7 GB peak memory, so E97 fits batch 6 (4,470 tokens/s per GPU) where GDN2-MLP OOMs
 (experiments/preflight_100b/RESULTS.md). The Emender’s edge at this scale is memory, not
 kernel speed; an earlier 1.26–1.56× speedup measured at small grok-scale dims is not reproduced
 at 1.3 B.
-16
-Occupancy and peak-arithmetic utilization measure different quantities. Model-FLOPs
+Occupancy and peak-arithmetic utilization measure different quantities. Model-FLOPs
 utilization (MFU) — computed with the standard 6𝑁 convention against the card’s dense bf16
 peak of 364 TFLOPS — is 15.7%, and that is a conservative lower bound: 6𝑁 counts only the
 weight-matmul FLOPs and excludes the recurrence and gate operations, so the true MFU is
@@ -868,12 +872,12 @@ throughput smokes all ran on NVIDIA CUDA. No ROCm smoke or paired production art
 supports a correctness or throughput claim here; no CUDA/ROCm parity is claimed. The
 successor E97 Frontier continuation is a separate, single-arm line of work, not a portability
 benchmark for the E97/GDN2-MLP pair.
-Distributed training
+17
+Distributed training
 The 1.3 B-class result reported here was produced on a single eight-GPU workstation, with
 no cluster and no sequence parallelism — both 150 B-token arms of Section 5 ran the same
 local DiLoCo recipe on that one machine: eight independent islands (one per GPU), schedule-
-17
-free AdamW [29] inside each island, and plain model-weight averaging across islands every 𝜏 =
+free AdamW [29] inside each island, and plain model-weight averaging across islands every 𝜏 =
 250 local steps (outer learning rate 1.0, momentum 0 — the conservative plain-average form of
 DiLoCo [30]). Scaling the same recipe past one machine pairs schedule-free AdamW per island
 with hierarchical local-SGD averaging: each island is one node of 8 GPUs with intra-island DDP,
@@ -1131,7 +1135,7 @@ by roughly seven orders of magnitude in parameter bits and five in recurrent-sta
 token. These counts rule out fewer-than-120-state storage as the explanation, not a constrained-
 map expressivity or optimization bottleneck. A learning-failure interpretation is a hypothesis
 consistent with this headroom and the 1.3 B parallel-decay boundary result, not a consequence
-of the lookup theorem (Open item F1, Section 8). The probes measure what SGD finds under
+of the lookup theorem (Open item O1, Section 8). The probes measure what SGD finds under
 the stated no-tuning protocol.
 Matched no probe-tuning, and the one selection asymmetry it does
 not cover
@@ -1157,7 +1161,7 @@ within-class 𝑆5 gap.
 Two observations bound, but do not eliminate, that confound. Raw-write M²RNN under-reaches
 even on solvable 𝑆3; GDN is stronger on 𝑆3 than 𝑆5. Neither observation proves the cause of
 the 𝑆5 shortfall. The recognizer floor is architecture-agnostic, and the lookup theorem is not a
-recurrent realizability theorem (Section 8, Open item F1). A matched state-tracking search on
+recurrent realizability theorem (Section 8, Open item O1). A matched state-tracking search on
 each family at the 8 M shape would test the inductive-bias hypothesis and the magnitude of
 the advantage (Section 13).
 The 𝑆5 permutation-composition probe
@@ -1658,9 +1662,9 @@ reproduces the transition 𝑠 ⋅ 𝑔. The linear readout retrieves a generato
 product. The supporting OnlineMemory.linearDeltaWrite_overwrites_one_preserves_others is
 an exact pre-tanh overwrite statement. Neither theorem states that iterating the nonlinear cell
 from zero tracks every input word.
-Open item F1 — recurrent tanh-tracker realization unavailable. The loaded generator memory
+Open item O1 — recurrent tanh-tracker realization unavailable. The loaded generator memory
 does not carry the running group product; external composition supplies the missing state
-computation. Closing F1 requires a configuration of the actual nonlinear update, an explicit
+computation. Closing O1 requires a configuration of the actual nonlinear update, an explicit
 initial state and decoder, and an all-words trajectory theorem. This is not a missing proof of
 the already-proved lookup identity, but a stronger, currently unproved architecture claim.
 Theorem set C: update-family separation
@@ -1902,7 +1906,7 @@ Lean-proved: finite-state memory at fixed precision
 (S5Witness.fixed_precision_state_space_finite), a non-solvable 120-element group
 (s5_not_solvable, s5_state_count), the exact abstract tracker, the recognizer floor
 (S5Inseparability.capacity_lower_bound_120), and the generator-table lookup of set B. Full
-recurrent tanh-tracker realization is F1, not a theorem. Cited, not formalized here: Barrington’s
+recurrent tanh-tracker realization is O1, not a theorem. Cited, not formalized here: Barrington’s
 NC1
 completeness result [9] and circuit containments for restricted SSMs and transformers
 under their respective arithmetic assumptions [8], [24], [25]. No strict separation of TC0
@@ -2002,7 +2006,7 @@ model has reached ≥ 500 M parameters on a Pile-class corpus. It is the unsucce
 record that motivated the field’s move to linear-state and hybrid alternatives. This is the
 assumption this paper revisits.
 10 Limitations
-Formal gaps: G1–G3 and F1
+Formal gaps: G1–G3 and O1
 G1 — no per-token circuit-size or depth lower bound.
 S5GDNBridge.gdn_s5_realization_requires_per_token_action routes a hypothesized realizer’s
 affine group actions through token-dependent parameters, but a four-symbol schedule may be
@@ -2023,14 +2027,14 @@ a temporal-depth theorem. Closing it requires either a concrete representation s
 production channel constraints (including allowed decay and gate ranges), or a non-realizability
 proof for precisely those constraints. The Lean decay parameter is an arbitrary matrix, so the
 formal family must not be silently identified with scalar-decay production restrictions.
-F1 — the nonlinear recurrent tracker is not realized by the lookup artifact.
+O1 — the nonlinear recurrent tracker is not realized by the lookup artifact.
 NDMRealizesS5.emender_realizes_s5_tracker proves a preloaded pre-tanh generator lookup
 plus external multiplication of a supplied group state, not all-words execution of the recurrent
 tanh cell. This matters because the claimed architecture-to-task existence bridge otherwise
-exceeds the checked theorem. Closing Open item F1 requires an actual update configuration,
+exceeds the checked theorem. Closing Open item O1 requires an actual update configuration,
 initialization, decoder, and trajectory proof as specified in Section 8, set B.
 43
-These gaps are recorded in formal/lean/GAPS-D2.md (G1–G3) and Section 8 (F1). Circuit
+These gaps are recorded in formal/lean/GAPS-D2.md (G1–G3) and Section 8 (O1). Circuit
 containment does not establish TC0
 ≠ NC1
 no conclusion here assumes that open complexity
@@ -2112,7 +2116,7 @@ terminal-accuracy and length-robustness gap, not length-invariant tracking (Sect
 negative transfer is: “The 8M S5 separation does NOT replicate at 1.3B on this pair.” The 1.3 B
 GDN2-MLP model is ahead on that group-state protocol. Real-valued update-family separation
 and the 120-state recognizer floor do not predict what SGD must learn; the generator-table
-lookup is not a recurrent tracker realization (F1), and affine-channel 𝑆5 realizability remains
+lookup is not a recurrent tracker realization (O1), and affine-channel 𝑆5 realizability remains
 open (G3).
 Repeated nonlinear maps in engineering and dynamics (Section 7) define a broader structural
 scope, not six demonstrated deployments. Correctness of each formal statement, reproducible
@@ -2271,7 +2275,7 @@ RecurrentResourceFormalism.MemorySemantics.latchAttractor label on the Emender s
 in the RecurrentResourceFormalism, recasting slot-level behavior as a statement about the
 matrix-state attractor structure of the whole layer. The second is a Lean-targeted theorem that
 connects Section 8 to the Section 6 empirics: a basin-survival bridge that takes an 𝑆5 coset in a
-future recurrent realization (first closing F1) and shows it survives an adversary whose per-slot
+future recurrent realization (first closing O1) and shows it survives an adversary whose per-slot
 perturbation budget stays below the Section 8 release threshold, lifting the slot-level guarantees
 to a coset-level guarantee on the state-tracking task.
 49

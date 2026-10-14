@@ -176,7 +176,7 @@ proves matched-signature one-step separation, exact non-equality at
 every finite $k$ on a constructed witness, and a 120-state recognizer
 floor. Its generator-table lookup construction is not a proof that the
 $tanh$ recurrence implements the full tracker; this missing trajectory
-bridge is Open item F1 (#ref(<sec:formal>)). Neither the duality nor the cited
+bridge is Open item O1 (#ref(<sec:formal>)). Neither the duality nor the cited
 complexity results establish a blanket linear-state $S_5$ impossibility.
 
 Throughput on the
@@ -836,6 +836,8 @@ S'_h &= tanh(d_h S_h + k_h delta_h^T) \
 y_h &= "silu"(g_h) dot.o (S'_h)^T q_h
 $
 
+The displayed normalization is idealized for nonzero addresses; production regularizes with `norm+1e-6` (local E88 fused normalization: `elman/models/e88_fused.py:239-242`).
+
 Here $"silu"$ is the smooth pointwise activation $x dot.o sigma(x)$, with
 $sigma$ the logistic sigmoid, $v_h$ is the post-activation value input (the
 $"silu"(v)$ of the E88 cell, so the write gate scales an already-activated
@@ -1030,6 +1032,7 @@ key, split gates, value, and pre-decay matrix; it does not impose E97's
 projection processing on GDN2-MLP. In the trained stack the mixer is followed
 by the SwiGLU MLP of #ref(<sec:lm>), not by a state activation. This core
 specification does not assert that a multilayer stack has input-only gates.
+Algorithms 1 and 2 present the abstract core; the released baselines add projection, normalization, gate-domain, and residual machinery whose full-stack binding is carried by limitation G2 (#ref(<sec:limitations>)).
 
 *Algorithm 2 — GDN-2 split-gated linear core.*
 ```text
@@ -1693,7 +1696,7 @@ token. These counts rule out fewer-than-120-state storage as the explanation,
 not a constrained-map expressivity or optimization bottleneck. A
 learning-failure interpretation is a hypothesis consistent with this
 headroom and the 1.3 B parallel-decay boundary result, not a consequence
-of the lookup theorem (Open item F1, #ref(<sec:formal>)). The probes measure what SGD
+of the lookup theorem (Open item O1, #ref(<sec:formal>)). The probes measure what SGD
 finds under the stated no-tuning protocol.
 
 #heading(level: 2, numbering: none)[Matched no probe-tuning, and the one selection asymmetry it does not cover]
@@ -1727,7 +1730,7 @@ Two observations bound, but do not eliminate, that confound. Raw-write
 M²RNN under-reaches even on solvable $S_3$; GDN is stronger on $S_3$
 than $S_5$. Neither observation proves the cause of the $S_5$ shortfall.
 The recognizer floor is architecture-agnostic, and the lookup theorem
-is not a recurrent realizability theorem (#ref(<sec:formal>), Open item F1). A matched
+is not a recurrent realizability theorem (#ref(<sec:formal>), Open item O1). A matched
 state-tracking search on each family at the 8 M shape would test the
 inductive-bias hypothesis and the magnitude of the advantage (#ref(<sec:future_work>)).
 
@@ -2418,9 +2421,9 @@ generator value, not the running product. The supporting
 is an exact *pre-$tanh$* overwrite statement. Neither theorem states
 that iterating the nonlinear cell from zero tracks every input word.
 
-*Open item F1 — recurrent $tanh$-tracker realization unavailable.* The
+*Open item O1 — recurrent $tanh$-tracker realization unavailable.* The
 loaded generator memory does not carry the running group product;
-external composition supplies the missing state computation. Closing F1
+external composition supplies the missing state computation. Closing O1
 requires a configuration of the actual nonlinear update, an explicit
 initial state and decoder, and an all-words trajectory theorem. This is
 not a missing proof of the already-proved lookup identity, but a
@@ -2766,7 +2769,7 @@ network generating their parameters. G1–G3 (#ref(<sec:limitations>)) record th
 120-element group (`s5_not_solvable`, `s5_state_count`), the exact
 abstract tracker, the recognizer floor
 (`S5Inseparability.capacity_lower_bound_120`), and the generator-table
-lookup of set B. Full recurrent $tanh$-tracker realization is F1, not a
+lookup of set B. Full recurrent $tanh$-tracker realization is O1, not a
 theorem. *Cited, not formalized here:* Barrington's NC#super[1]
 completeness result @barrington1986 and circuit containments for
 restricted SSMs and transformers under their respective arithmetic
@@ -2917,7 +2920,7 @@ This is the assumption this paper revisits.
 // ── 10. Limitations ───────────────────────────────────────────────────────────
 = Limitations <sec:limitations>
 
-#heading(level: 2, numbering: none)[Formal gaps: G1–G3 and F1]
+#heading(level: 2, numbering: none)[Formal gaps: G1–G3 and O1]
 
 *G1 — no per-token circuit-size or depth lower bound.*
 `S5GDNBridge.gdn_s5_realization_requires_per_token_action` routes a
@@ -2948,17 +2951,17 @@ non-realizability proof for precisely those constraints. The Lean decay
 parameter is an arbitrary matrix, so the formal family must not be
 silently identified with scalar-decay production restrictions.
 
-*F1 — the nonlinear recurrent tracker is not realized by the lookup
+*O1 — the nonlinear recurrent tracker is not realized by the lookup
 artifact.* `NDMRealizesS5.emender_realizes_s5_tracker` proves a
 preloaded pre-$tanh$ generator lookup plus external multiplication of a
 supplied group state, not all-words execution of the recurrent $tanh$
 cell. This matters because the claimed architecture-to-task existence
-bridge otherwise exceeds the checked theorem. Closing Open item F1
+bridge otherwise exceeds the checked theorem. Closing Open item O1
 requires an actual update configuration, initialization, decoder, and
 trajectory proof as specified in #ref(<sec:formal>), set B.
 
 These gaps are recorded in `formal/lean/GAPS-D2.md` (G1–G3) and
-#ref(<sec:formal>) (F1). Circuit containment does not establish
+#ref(<sec:formal>) (O1). Circuit containment does not establish
 TC#super[0] $!= $ NC#super[1]; no conclusion here assumes that open
 complexity separation.
 
@@ -3077,7 +3080,7 @@ transfer is: “The 8M S5 separation does NOT replicate at
 1.3B on this pair.” The 1.3 B GDN2-MLP model is ahead on that group-state
 protocol. Real-valued update-family separation and the 120-state
 recognizer floor do not predict what SGD must learn; the generator-table
-lookup is not a recurrent tracker realization (F1), and affine-channel
+lookup is not a recurrent tracker realization (O1), and affine-channel
 $S_5$ realizability remains open (G3).
 
 Repeated nonlinear maps in engineering and dynamics (#ref(<sec:applications>)) define a
@@ -3311,7 +3314,7 @@ Emender signature in the `RecurrentResourceFormalism`, recasting
 slot-level behavior as a statement about the matrix-state attractor
 structure of the whole layer. The second is a Lean-targeted theorem
 that connects #ref(<sec:formal>) to the #ref(<sec:expressivity>) empirics: a basin-survival bridge that takes
-an $S_5$ coset in a future recurrent realization (first closing F1)
+an $S_5$ coset in a future recurrent realization (first closing O1)
 and shows it
 survives an adversary whose per-slot perturbation budget stays below the
 #ref(<sec:formal>) release threshold, lifting the slot-level guarantees to a coset-level

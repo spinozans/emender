@@ -210,7 +210,7 @@ rehashed at checkpoint scale. Missing paths have no fabricated size/digest.
 - The evidence DOSSIER is a historical snapshot (21 claims, 17 bound, four
   unbound), with old section identifiers and stronger claim wording. Hashing
   it does not endorse that framing or fill its missing bindings. The current
-  manuscript's F1/G1–G3/U3.1 boundaries remain the claim authority.
+  manuscript's O1/G1–G3/U3.1 boundaries remain the claim authority.
 - The final loss table currently relies on committed operational Markdown
   parsing receipts; a standalone current-pair aligned-loss CSV/JSON is not
   present in paper/results. Predecessor figure_2 CSVs are not substitutes.

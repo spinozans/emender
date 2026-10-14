@@ -24,11 +24,13 @@
   "canonicalBaseline": {
     "acceptedSnapshot": "eb2b96363e3ff800d7eefe2ba7386e7cf673d1cf",
     "acceptedPdf": "paper/Garrison_2026_Emender-eb2b9636.pdf",
-    "revision": "P13 part 1: operator-directed language sweep (2026-10-15); exact changed lines in P13-report.md; part 2: notation unification and source-bound pseudocode, separately enumerated in P13-report.md; P14: operator-directed section-by-section de-hedging, rebased on a0d1654c; every removal and scope check in P14-report.md; exact source diff in validation/dehedging-revision.diff",
-    "mainTypSha256": "c899544128ebd08948edf721e86f1b15d249ecfbbfee00166b3a9e6b7314f7ad",
+    "revision": "P13 part 1: operator-directed language sweep (2026-10-15); exact changed lines in P13-report.md; part 2: notation unification and source-bound pseudocode, separately enumerated in P13-report.md; P14: operator-directed section-by-section de-hedging, rebased on a0d1654c; every removal and scope check in P14-report.md; exact source diff in validation/dehedging-revision.diff; P15: supervisor author rulings for P13 calls #1/#2/#5 on c8e5e69b; exact sites and preservation checks in P15-report.md; exact source and live-label diff in validation/author-rulings-revision.diff",
+    "mainTypSha256": "2841f1432eec22ac4357829dbfef583006da65f921335dc9a57d565964aad59c",
     "part1MainTypSha256": "2366daeb586fab63e3897379da22a6bb8ca545721ab46dabe7935e0809abac43",
     "p13MainTypSha256": "989ea5f940d70be77b2d435fecc616040fe14d67ca54def6255a271d215059ee",
-    "p14BaseCommit": "a0d1654c"
+    "p14BaseCommit": "a0d1654c",
+    "p14MainTypSha256": "c899544128ebd08948edf721e86f1b15d249ecfbbfee00166b3a9e6b7314f7ad",
+    "p15BaseCommit": "c8e5e69b"
   },
   "styleCommit": "7bf90efe3a0debbba703c05c43f3ff7e4d4a2992",
   "pages": {
@@ -320,7 +322,7 @@
     }
   ],
   "fragmentAudit": {
-    "checked": 2567,
+    "checked": 2571,
     "layoutSplitFragments": [
       {
         "variant": "submission",
@@ -338,14 +340,9 @@
         "split": 30
       },
       {
-        "variant": "submission",
-        "fragment": "Input: arm, seed set, task generator, recorded study recipe\n1. For each seed and arm, initialize from scratch or bound weights\n   as specified by that study; initialize its optimizer.\n2. Generate training batches at the declared trained length(s).\n3. Optimize the declared objective until the study's stop rule.\n   Record completed stages/updates and any failed stage.\n4. For each declared evaluation length, generate held-out batches.\n5. Run grad-free forward; count correct predictions on the mask.\n6. Save per-seed records; aggregate only the declared seed subset.\nReturn: accuracy-by-length records and protocol/failure metadata",
-        "split": 246
-      },
-      {
-        "variant": "preprint",
-        "fragment": "Input: arm, seed set, task generator, recorded study recipe\n1. For each seed and arm, initialize from scratch or bound weights\n   as specified by that study; initialize its optimizer.\n2. Generate training batches at the declared trained length(s).\n3. Optimize the declared objective until the study's stop rule.\n   Record completed stages/updates and any failed stage.\n4. For each declared evaluation length, generate held-out batches.\n5. Run grad-free forward; count correct predictions on the mask.\n6. Save per-seed records; aggregate only the declared seed subset.\nReturn: accuracy-by-length records and protocol/failure metadata",
-        "split": 246
+        "variant": "canonical",
+        "fragment": "(the M²RNN family) accumulates without",
+        "split": 8
       },
       {
         "variant": "canonical",
@@ -354,13 +351,13 @@
       },
       {
         "variant": "submission",
-        "fragment": "kernel choice. The reported successful-seed subsets nevertheless",
-        "split": 15
+        "fragment": "theorem, not a per-token circuit-depth lower bound",
+        "split": 11
       },
       {
         "variant": "preprint",
-        "fragment": "kernel choice. The reported successful-seed subsets nevertheless",
-        "split": 15
+        "fragment": "theorem, not a per-token circuit-depth lower bound",
+        "split": 11
       },
       {
         "variant": "canonical",

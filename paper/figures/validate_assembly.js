@@ -35,7 +35,7 @@ for (const match of source.matchAll(/#ref\(<([^>]+)>\)/g)) {
   assert.ok(source.includes(`<${match[1]}>`), `resolved source label ${match[1]}`);
 }
 for (const phrase of [
-  'Open item F1 — recurrent $tanh$-tracker realization unavailable.',
+  'Open item O1 — recurrent $tanh$-tracker realization unavailable.',
   'No strict separation of TC#super[0] and NC#super[1] is known or assumed here.',
   'No minimal parameter-count corollary is claimed.',
   'not uniformly bounded away from zero',
@@ -129,5 +129,5 @@ for (const key of keys) assert.ok(ledger.includes(`| \`${key}\` |`), key);
 assert.equal((ledger.match(/^\| `[^`]+` \|/gm) || []).length, keys.length);
 assert.ok(bib.includes('The Road Less Scheduled'));
 assert.ok(bib.includes('Danieli, Federico'));
-console.log(`PASS: 13 numbered body sections, 3 lettered appendices, ${layout.pages} pages; references, G1–G3/F1/U3.1, theorem scopes, 17-file inventory, and all ${keys.length} bibliography entries checked.`);
+console.log(`PASS: 13 numbered body sections, 3 lettered appendices, ${layout.pages} pages; references, G1–G3/O1/U3.1, theorem scopes, 17-file inventory, and all ${keys.length} bibliography entries checked.`);
 console.log(JSON.stringify(layout));

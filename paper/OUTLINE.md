@@ -19,7 +19,7 @@ claim authority. All body references use Typst labels; applications are numbered
 7. Repeated nonlinear maps in the wild (EXHIBIT / ANALOGY / OPEN)
 8. Formal Results (sets A–H; exact statement scopes)
 9. Related Work
-10. Limitations (G1–G3, F1, U3.1, empirical and application gaps)
+10. Limitations (G1–G3, O1, U3.1, empirical and application gaps)
 11. Conclusion
 12. Testable Predictions
 13. Future Work
@@ -29,7 +29,7 @@ C. Held-out bits-per-byte measurement (predecessor cohort)
 References (unnumbered)
 
 **Correctness corrections:** generator-table lookup plus external group
-multiplication is not a recurrent tanh-tracker realization (F1); finite-k
+multiplication is not a recurrent tanh-tracker realization (O1); finite-k
 non-equality is not a compounding or uniform-margin theorem; circuit containment
 does not establish TC0 ≠ NC1 or blanket affine-channel S5 impossibility (G3).
 State-count headroom motivates an inductive-bias hypothesis, not a proof that
