@@ -909,13 +909,13 @@ from the linear-state recurrence. Under the run’s recorded byte normalization 
 3.783 from the frozen args.json), E97′s final-window loss of 2.4365 nats/token corresponds to
 an estimated 0.93 bits per byte — sub-1-bpb territory for a purely nonlinear recurrence.
 Two boundaries on this measurement are stated plainly. First, it is a training-log comparison:
-a held-out, tokenizer-invariant bpb measurement on the 150 B pair (as Section APPENDIX B
-performs for the predecessor cohort) has not yet been run and is the pending evaluation item —
-TODO-NEEDS-EVIDENCE. Second, it is one run per arm, single-seed; the window-dependent
-sign of the Δ in Table 4 is the honest summary of a tie at this precision, not evidence for either
-ordering. The search process behind this parity binding is decomposed per retained sweep in
-Table 5; the historical snapshots are not silently substituted for the carried-in winner searches,
-whose missing first-generation fitness is tracked as Open item U3.1 below.
+a held-out, tokenizer-invariant bpb measurement on the 150 B pair (as Section APPENDIX
+B performs for the predecessor cohort) has not yet been run and is the pending evaluation
+item — TODO-NEEDS-EVIDENCE. Second, it is one run per arm, single-seed; the window-
+dependent sign of the Δ in Table 4 is the summary of a tie at this precision, not evidence
+for either ordering. The search process behind this parity binding is decomposed per retained
+sweep in Table 5; the historical snapshots are not silently substituted for the carried-in winner
+searches, whose missing first-generation fitness is tracked as Open item U3.1 below.
 The convergent-loss null already appears at search scale
 The 150 B parity extends a null that is visible much earlier and much more broadly. At the
 CMA-search stage — five CMA-best 1.3 B models at their own found geometry, one fixed
@@ -924,10 +924,10 @@ budget the searches used — all five architectures land in a 0.088-bpb held-out
 E97 2.0126, M²RNN 2.0344, Emender-mix 2.0402, E97-MLP 2.0911, GDN2-MLP 2.1013 bits
 per byte (non-averaged weights, the basis consistent with the search fitness; experiments/
 lb_compare_20260613/LEADERBOARD.md). Within that band E97-MLP is ahead of GDN2-MLP on
-both primary metrics — search fitness 5.8606 vs 5.8949 and held-out bpb 2.0911 vs 2.1013 —
-but the honest statement is descriptive closeness with the reported ordering, not a statistically
-established win or equivalence: bulk loss occupies a narrow observed band across the tuned
-families, and the distinguisher must be capability (Section 6), not loss.
+both primary metrics — search fitness 5.8606 vs 5.8949 and held-out bpb 2.0911 vs 2.1013 — but
+the statement is descriptive closeness with the reported ordering, not a statistically established
+win or equivalence: bulk loss occupies a narrow observed band across the tuned families, and
+the distinguisher must be capability (Section 6), not loss.
 19
 Matched-control transparency: search breadth, budgets, and
 configurations
@@ -1014,16 +1014,15 @@ losses 1.14–1.34 nats at matched FLOP budgets; paper/results/cma_flop_rate/). 
 tuned, the choice of recurrent family changes what is trained, not how much compute per bit
 — which is why the 1.3 B loss null is expected rather than surprising, and why the paper’s
 positive claims live in Section 6 and Section 8.
-Downstream capability panels: an honest null, on the predecessor
-cohort
+Downstream capability panels: a null, on the predecessor cohort
 No downstream capability evaluation of the 150 B E97/GDN2-MLP pair has been run yet
 (TODO-NEEDS-EVIDENCE). What exists is committed evidence from the predecessor 1.3 B
+racer cohort (E88, FLA-GDN, M²RNN, Mamba2 — Section APPENDIX B), and it provides the
 21
-racer cohort (E88, FLA-GDN, M²RNN, Mamba2 — Section APPENDIX B), and it is reported
-here without spin as the honest expectation to beat: at ≈ 1𝑀-step training extents, on a 2,049-
-item multi-choice fact panel and a 2,048-item reasoning panel (BBH + ReCLor + FOLIO), the
-four architectures sit within a few percentage points of one another in narrow observed bands
-(Table 6), without a paired or seed-level equivalence test.
+reference comparison: at ≈ 1𝑀-step training extents, on a 2,049-item multi-choice fact panel
+and a 2,048-item reasoning panel (BBH + ReCLor + FOLIO), the four architectures sit within
+a few percentage points of one another in narrow observed bands (Table 6), without a paired
+or seed-level equivalence test.
 Panel (predecessor cohort) E88 FLA-GDN M²RNN Mamba2
 Fact panel, 2,049 items (accuracy) 0.345 0.373 0.358 0.353
 Reasoning panel, 2,048 items (accuracy) 0.319 0.350 0.336 0.324

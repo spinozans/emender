@@ -1364,7 +1364,7 @@ measurement on the 150 B pair (as #ref(<sec:appendix_cohort>) performs for the
 predecessor cohort) has not yet been run and is the pending evaluation
 item — TODO-NEEDS-EVIDENCE. Second, it is one run per arm, single-seed;
 the window-dependent sign of the $Delta$ in @tab_matched_loss is the
-honest summary of a tie at this precision, not evidence for either
+summary of a tie at this precision, not evidence for either
 ordering. The search process behind this parity binding is decomposed
 per retained sweep in @tab_cma_sweeps; the historical snapshots are not
 silently substituted for the carried-in winner searches, whose missing
@@ -1382,7 +1382,7 @@ band: pure-E97 2.0126, M²RNN 2.0344, Emender-mix 2.0402, E97-MLP
 consistent with the search fitness; `experiments/lb_compare_20260613/LEADERBOARD.md`).
 Within that band E97-MLP is ahead of GDN2-MLP on *both* primary metrics
 — search fitness 5.8606 vs 5.8949 and held-out bpb 2.0911 vs 2.1013 —
-but the honest statement is descriptive closeness with the reported
+but the statement is descriptive closeness with the reported
 ordering, not a statistically established win or equivalence: bulk loss
 occupies a narrow observed band across the tuned families, and the
 distinguisher must be capability (#ref(<sec:expressivity>)), not loss.
@@ -1526,13 +1526,13 @@ recurrent family changes *what* is trained, not *how much compute per
 bit* — which is why the 1.3 B loss null is expected rather than
 surprising, and why the paper's positive claims live in #ref(<sec:expressivity>) and #ref(<sec:formal>).
 
-#heading(level: 2, numbering: none)[Downstream capability panels: an honest null, on the predecessor cohort]
+#heading(level: 2, numbering: none)[Downstream capability panels: a null, on the predecessor cohort]
 
 No downstream capability evaluation of the 150 B E97/GDN2-MLP pair has
 been run yet (TODO-NEEDS-EVIDENCE). What exists is committed evidence
 from the predecessor 1.3 B racer cohort (E88, FLA-GDN, M²RNN, Mamba2 —
-#ref(<sec:appendix_cohort>)), and it is reported here without spin as the honest
-expectation to beat: at $approx 1 M$-step training extents, on a
+#ref(<sec:appendix_cohort>)), and it provides the
+reference comparison: at $approx 1 M$-step training extents, on a
 2,049-item multi-choice fact panel and a 2,048-item reasoning panel
 (BBH + ReCLor + FOLIO), the four architectures sit within a few
 percentage points of one another in narrow observed bands

@@ -8,7 +8,7 @@ import {checkCanonicalSource} from './canonical-guard.mjs';
 import {verifySymbols} from './verify-symbols.mjs';
 const dir=path.dirname(fileURLToPath(import.meta.url)),root=path.resolve(dir,'../..');
 const pdftotext=process.env.PDFTOTEXT||'pdftotext',pdfinfo=process.env.PDFINFO||'pdfinfo';
-const files={canonical:path.resolve(dir,'../Garrison_2026_Emender-eb2b9636.pdf'),submission:path.join(dir,'submission.pdf'),preprint:path.join(dir,'preprint.pdf')};
+const files={canonical:path.resolve(dir,'../current.pdf'),submission:path.join(dir,'submission.pdf'),preprint:path.join(dir,'preprint.pdf')};
 // NFKC folds math italic letters and ligatures, not numeric values. Remove
 // running furniture and typography only; retain decimal points and percentages.
 function clean(s){return s.replaceAll('Under review as submission to TMLR','').replace(/(?:^|\n)\d+\s*(?=\n|\f|$)/g,'\n').normalize('NFKC')}
@@ -93,7 +93,7 @@ const pages=Object.fromEntries(Object.entries(info).map(([k,v])=>[k,Number(v.mat
 const generatedTex=fs.readFileSync(path.join(dir,'main.tex'),'utf8');
 assert(!/\\(?:fontsize|tiny|scriptsize|footnotesize|small|normalsize|large|Large|LARGE|huge|Huge)\b|\\captionsetup\{[^}]*font\s*=/.test(generatedTex),'Explicit font-size override');
 const symbolAudit=verifySymbols(ast,generatedTex,text);
-const report={symbolAudit,approvedBibliographyAmendment:'mathlib4: explicit 2026 access year (not publication year)',acceptedCommit:'eb2b9636',styleCommit:fs.readFileSync(path.join(dir,'STYLE-COMMIT'),'utf8').trim(),pages,samples:results,fragmentAudit,identityChecks:'passed (third-person literature self-citation retained)',canonicalManuscriptUnchanged:true,bibliographyByteIdentical:true};
+const report={symbolAudit,approvedBibliographyAmendment:'mathlib4: explicit 2026 access year (not publication year)',acceptedCommit:'eb2b9636',canonicalBaseline:JSON.parse(fs.readFileSync(path.join(dir,'canonical-baseline.json'),'utf8')),styleCommit:fs.readFileSync(path.join(dir,'STYLE-COMMIT'),'utf8').trim(),pages,samples:results,fragmentAudit,identityChecks:'passed (third-person literature self-citation retained)',canonicalManuscriptMatchesApprovedBaseline:true,bibliographyByteIdentical:true};
 fs.mkdirSync(path.join(dir,'validation'),{recursive:true});
 fs.writeFileSync(path.join(dir,'validation/drift-check.json'),JSON.stringify(report,null,2)+'\n');
 for(const [k,v] of Object.entries(text))fs.writeFileSync(path.join(dir,'validation',k+'-text.txt'),v);

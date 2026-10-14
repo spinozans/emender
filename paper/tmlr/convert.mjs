@@ -100,7 +100,8 @@ let abstractTex=render(abstract).replace(/\\section\*\{Abstract\}/,'').trim();
 let bodyTex=render(body);
 // Only these identifying public-repository mentions are variant-gated.
 bodyTex=bodyTex.replace(/public \\protect\\path\|emender\| repo/g,'public \\artifactrepo{}');
-const tex=String.raw`% Generated packaging layer; canonical source: paper/main.typ at eb2b9636.
+const tex=String.raw`% Generated packaging layer; canonical source: paper/main.typ (P13 baseline).
+% Pre-revision accepted snapshot: eb2b9636; see canonical-baseline.json.
 \documentclass[10pt]{article}
 \ifdefined\EmenderPreprint
   \usepackage[preprint]{tmlr}

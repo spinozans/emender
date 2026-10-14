@@ -1,12 +1,15 @@
-# TMLR packaging of the accepted manuscript
+# TMLR packaging of the current manuscript
 
-`paper/main.typ` at `eb2b96363e3ff800d7eefe2ba7386e7cf673d1cf` remains the
-canonical manuscript. This directory is a formatting/packaging layer, not a
-scientific revision. The original Typst build and frozen 62-page accepted PDF
-are untouched.
-Only the explicit supervisor-approved mathlib4 access-year bibliography amendment
-may differ from the accepted canonical bibliography; `canonical-guard.mjs`
-checks that exact change and forbids any other canonical source drift.
+`paper/main.typ` is canonical; `paper/current.pdf` is its rebuilt PDF.
+The pre-revision accepted snapshot is `eb2b96363e3ff800d7eefe2ba7386e7cf673d1cf`;
+its frozen `paper/Garrison_2026_Emender-eb2b9636.pdf` is retained unchanged.
+P13 (operator directive, 2026-10-15) moves the guarded source baseline for the
+language sweep; every changed source line is recorded in `../../P13-report.md`.
+`canonical-baseline.json` freezes the current source SHA-256 and this lineage.
+The drift/symbol checks now compare the rebuilt current PDF and both TMLR
+variants to the current evaluated source, not to the pre-sweep snapshot.
+Only the approved mathlib4 access-year amendment may differ from the accepted
+bibliography; `canonical-guard.mjs` checks it and the source SHA-256.
 
 ## Deliverables
 
@@ -38,7 +41,7 @@ Verification accepts `PDFTOTEXT` and `PDFINFO` overrides.
 The standalone LaTeX builds do not depend on Typst or the repository's data
 artifacts; only regeneration and the canonical-content audit need them.
 
-To regenerate the packaging layer from the frozen canonical source:
+To regenerate the packaging layer from the guarded current source:
 
 ```bash
 typst compile --root ../.. --pdf-standard 1.5 --no-pdf-tags --pages 1,2 \
@@ -78,11 +81,11 @@ and vendored at **7bf90efe3a0debbba703c05c43f3ff7e4d4a2992**. `tmlr.sty`,
 submodule dependency. `STYLE-COMMIT` records the revision.
 
 `validation/drift-check.json` records 20 load-bearing samples across the paper,
-checked in the accepted PDF and both new PDFs, plus a 2,500-fragment all-prose
+checked in the current PDF and both TMLR PDFs, plus a whole-source all-prose
 audit. Decimal digits/percentages in samples match exactly (only whitespace,
 ligatures, mathematical letter styling, and punctuation formatting normalize).
-The independent symbol oracle also checks 643 complete LaTeX math expressions,
-including all 417 converted attachments and all three primes in each PDF.
+The independent symbol oracle checks all complete LaTeX math expressions,
+converted attachments, and state primes in each PDF (counts in the drift report).
 It preserves operators and script boundaries instead of using prose normalization.
 The 28 attachments in the two imported vector drawings are not converted; those
 assets remain hash-identical. Regression tests reject the actual P10 TeX and
@@ -91,6 +94,7 @@ prime loss. Explicit caption/table font-size overrides are forbidden.
 PDF text, final engine logs, archive-build logs, and SHA-256 digests are retained
 in `validation/`; the sample-by-sample baseline report is `../../P9-report.md`
 and the repair validation/push receipt is `../../P11-report.md`.
+The current baseline revision and checks are recorded in `../../P13-report.md`.
 
 Builds have no errors, missing glyphs, undefined citations/references,
 overfull boxes, or oversized floats. Nonfatal underfull-box spacing warnings

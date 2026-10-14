@@ -931,8 +931,8 @@ recurrence.
 Two boundaries on this measurement are stated plainly. First, it is a training-log comparison: a held-out,
 tokenizer-invariant bpb measurement on the 150 B pair (as Section B performs for the predecessor cohort)
 has not yet been run and is the pending evaluation item — TODO-NEEDS-EVIDENCE. Second, it is one
-run per arm, single-seed; the window-dependent sign of the ∆ in Table 4 is the honest summary of a tie at
-this precision, not evidence for either ordering. The search process behind this parity binding is decomposed
+run per arm, single-seed; the window-dependent sign of the ∆ in Table 4 is the summary of a tie at this
+precision, not evidence for either ordering. The search process behind this parity binding is decomposed
 per retained sweep in Table 5; the historical snapshots are not silently substituted for the carried-in winner
 searches, whose missing ﬁrst-generation ﬁtness is tracked as Open item U3.1 below.
 The convergent-loss null already appears at search scale
@@ -943,10 +943,10 @@ architectures land in a 0.088-bpb held-out band: pure-E97 2.0126, M2
 RNN 2.0344, Emender-mix 2.0402,
 E97-MLP 2.0911, GDN2-MLP 2.1013 bits per byte (non-averaged weights, the basis consistent with the
 search ﬁtness; experiments/lb_compare_20260613/LEADERBOARD.md). Within that band E97-MLP is
-ahead of GDN2-MLP on both primary metrics — search ﬁtness 5.8606 vs 5.8949 and held-out bpb 2.0911
-vs 2.1013 — but the honest statement is descriptive closeness with the reported ordering, not a statistically
-established win or equivalence: bulk loss occupies a narrow observed band across the tuned families, and the
-distinguisher must be capability (Section 6), not loss.
+ahead of GDN2-MLP on both primary metrics — search ﬁtness 5.8606 vs 5.8949 and held-out bpb 2.0911 vs
+2.1013 — but the statement is descriptive closeness with the reported ordering, not a statistically established
+win or equivalence: bulk loss occupies a narrow observed band across the tuned families, and the distinguisher
+must be capability (Section 6), not loss.
 Matched-control transparency: search breadth, budgets, and conﬁgurations
 Because the central 1.3 B claim is a null on loss, the credibility of the baseline is load-bearing: a reader must
 be able to verify that GDN2-MLP was optimizer-hardened, not strawmanned. The full provenance chain is
@@ -1033,14 +1033,14 @@ how much compute per bit — which is why the 1.3 B loss null is expected rather
 the paper’s positive claims live in Section 6 and Section 8.
 17
 Under review as submission to TMLR
-Downstream capability panels: an honest null, on the predecessor cohort
+Downstream capability panels: a null, on the predecessor cohort
 No downstream capability evaluation of the 150 B E97/GDN2-MLP pair has been run yet (TODO-NEEDS-
 EVIDENCE). What exists is committed evidence from the predecessor 1.3 B racer cohort (E88, FLA-GDN,
 M2
-RNN, Mamba2 — Section B), and it is reported here without spin as the honest expectation to beat: at
-≈ 1M-step training extents, on a 2,049-item multi-choice fact panel and a 2,048-item reasoning panel (BBH
-+ ReCLor + FOLIO), the four architectures sit within a few percentage points of one another in narrow
-observed bands (Table 6), without a paired or seed-level equivalence test.
+RNN, Mamba2 — Section B), and it provides the reference comparison: at ≈ 1M-step training extents,
+on a 2,049-item multi-choice fact panel and a 2,048-item reasoning panel (BBH + ReCLor + FOLIO), the
+four architectures sit within a few percentage points of one another in narrow observed bands (Table 6),
+without a paired or seed-level equivalence test.
 Panel (predecessor cohort) E88 FLA-GDN M2
 RNN Mamba2
 Fact panel, 2,049 items
