@@ -474,8 +474,11 @@ at the byte level means ingesting trillions of tokens for any downstream
 operation, which rules out routine use. Linear-recurrent byte-level
 foundation models were the first attempt in this regime and did not scale
 reliably. The Merrill–Petty–Sabharwal results @merrill2024transformers
-make the limitation legible: a linear-in-time recurrence sits inside a
-complexity class too weak for non-solvable state-tracking. This motivated studying nonlinear-in-time updates, not a theorem that
+give conditional circuit-containment results for restricted linear SSMs
+under their transition and arithmetic assumptions. Containment alone
+does not rule out non-solvable state tracking without an unproved
+complexity-class separation. This motivated studying nonlinear-in-time
+updates, not a theorem that
 every pangenomic workload requires them; the Emender of #ref(<sec:arch>) is the
 construction evaluated here.
 
@@ -531,7 +534,7 @@ transformers with $O("poly"(n))$ floating-point precision or
 $2^(-O("poly"(n)))$ absolute-error approximation, lie in DLOGTIME-uniform
 TC#super[0] @chiang2025uniform_tc0.
 The classical empirical witness is the symmetric-group $S_5$, which has
-120 elements and is the smallest non-solvable group.
+120 elements and is the smallest non-solvable symmetric group.
 
 Nonlinear-state recurrences include the classical LSTM and GRU; the
 sLSTM block of xLSTM @xlstm2024 (memory-mixing through the hidden state
@@ -578,7 +581,7 @@ baselines, not as a contribution.
 #heading(level: 2, numbering: none)[The $S_5$ state-tracking probe]
 
 The symmetric group $S_5$ is the group of permutations of five items; it
-has $120$ elements and is the smallest non-solvable group. Its *word
+has $120$ elements and is the smallest non-solvable symmetric group. Its *word
 problem* is the following task: the model reads a sequence of
 permutations — here, adjacent transpositions, the swaps of two
 neighboring items — one at a time, and after each one must report the
@@ -1678,8 +1681,8 @@ falls slower than the baselines but does not reach ceiling at length.
 
 The $S_3$/$S_5$ split is also where the scope of the M²RNN paper's own
 state-tracking evaluation matters. Mishra et al. @m2rnn2026, section 3.2 report
-length generalization on $S_3$ alone (the smallest non-trivial
-*solvable* group, which lives inside TC#super[0]) and do not evaluate
+length generalization on $S_3$ alone (a nonabelian *solvable* symmetric
+group, whose word problem is in TC#super[0]) and do not evaluate
 $S_5$ or any other non-solvable group. The "perfect state-tracking
 generalization" framing in that paper does not bear on the
 NC#super[1] regime: at parameter-matched 8 M, the Emender reaches
