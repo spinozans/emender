@@ -6,6 +6,7 @@
 // See paper/template_choice_v7.md for rationale and the porting notes.
 
 #import "@preview/arkheion:0.1.2": arkheion, arkheion-appendices
+#import "figures/expressivity_1p3b.typ" as expressivity
 
 // ALTERNATE ABSTRACTS — kept for A/B reference. The active (rendered)
 // abstract is the result-first version below (passed to arkheion).
@@ -100,8 +101,9 @@ CMA-ES configs, and the Triton kernel released.
     realized one. At parameter-matched 8-million scale the predicted
     ordering is learned — the delta-correcting update tracks the
     non-solvable-group state where the linear and raw-write updates
-    do not — and the same probes are run on the trained 1.3-billion
-    pair to close the loop between the theory and the trained models.
+    do not. On the trained billion-scale pair, an iterated nonlinear
+    map separates terminal accuracy and length robustness, but the
+    group-state probe does not reproduce the small-scale ordering.
     These findings indicate that loss is a poor guide to what a
     recurrent architecture can compute, and that massively parallel
     nonlinear recurrence is a practical and largely open design
@@ -246,7 +248,9 @@ state-tracking construction — with a matching machine-checked floor:
 any finite recognizer that reproduces the construction needs at least
 as many states as the realized one — and the matching impossibility for
 linear recurrence resting on classical complexity results. In the
-trained models we observe the same ordering. Throughput on the
+small-scale trained models we observe that ordering; the current
+billion-scale pair instead separates on the iterated map and supplies
+an explicit negative $S_5$ boundary finding (§6). Throughput on the
 width axis comes from many small recurrent programs running side by side,
 each stepping its time loop serially, which is what makes the serial
 recurrence practical at scale.
@@ -400,12 +404,13 @@ closes the loop between them.
   not a training-speed win — bulk loss is a convergent null across
   the tuned families.
 
-+ *Expressivity at 1.3 B (slot).* The $S_5$/$S_3$ probes that separate
-  the update rules at 8 M are run on the trained 1.3 B pair itself —
-  the same checkpoints the matched-token loss claims bind to — closing
-  the theory-to-empirics loop at the scale where the loss parity is
-  measured. TODO-EXPRESSIVITY-1P3B: results section pending
-  (§6); artifacts land in `paper/results/expressivity_1p3b/`.
++ *Expressivity at 1.3 B: a task-dependent separation.* On the trained
+  pair itself, the modular-quadratic probe separates terminal accuracy
+  and length robustness under a pre-registered common optimization cap
+  (§6, @tab_depth_wall). The $S_5$ separation does *not* replicate:
+  GDN2-MLP is ahead in the long-horizon probe (@tab_s5_boundary).
+  Realizability is not a guarantee of learning; the two findings jointly
+  delimit the theory-to-empirics transfer.
 
 #set enum(numbering: "(a)")
 
@@ -431,7 +436,8 @@ versus nonlinear-state classification and the Emender architecture;
 CMA-ES search provenance; §6
 reports the 8 M expressivity probes with the capacity-non-binding
 justification, the causally isolated iterated-map separation, and the
-1.3 B expressivity slot on the trained pair; §7 the Lean 4
+1.3 B modular-quadratic separation and $S_5$ boundary finding on the
+trained pair; §7 the Lean 4
 formalization, including the $S_5$ capacity lower bound and Theorem
 set F
 on saturation latching alongside the separation, $S_5$-realization,
@@ -507,19 +513,23 @@ substantiate each row; the pointers are forward references.
     [Not a statement about finite-length memorization, which it can do],
 
     [Expressivity at 1.3 B on the trained pair],
-    [TODO-EXPRESSIVITY-1P3B: pending; the $S_5$/$S_3$ and iterated-map
-     probes run on the E97 and GDN2-MLP checkpoints (§6),
-     `paper/results/expressivity_1p3b/`],
-    [Slot; protocol fixed before results were read],
-    [No 1.3 B expressivity claim is made until the slot is filled],
+    [Modular-quadratic terminal accuracy:
+     #expressivity.percent(expressivity.wall-acc(expressivity.wall-e97, 128)) vs
+     #expressivity.percent(expressivity.wall-acc(expressivity.wall-gdn2, 128));
+     E97 is more length-robust (@tab_depth_wall); $S_5$ does not separate
+     in the predicted direction (@tab_s5_boundary)],
+    [One seed, released checkpoints, common pre-registered cap and
+     plateau rule; unequal realized step counts (§6)],
+    [Not universal nonlinear superiority; GDN2-MLP's long-length plateau
+     is not the random baseline, and $S_5$ is a boundary finding],
   )]],
   caption: [
     *Claim / Evidence / Scope / Non-claim.* Each row is substantiated in
     the cited section; the final column marks the boundary the result does
     not cross. The architectural separations are *efficiency* and
     *computability* statements, not blanket can/can't claims; the bulk-loss
-    row is a measured null result; the last row is an explicitly marked
-    pending slot.
+    row is a measured null result; the last row reports a task-dependent
+    separation together with its negative boundary finding.
   ],
 ) <tab_claims>
 
@@ -1555,7 +1565,7 @@ panels cannot resolve: at the predecessor cohort's training extent,
 multi-choice QA does not separate the update rules, and the separation
 the theory predicts is expected in state tracking, not in fact
 recall — the §6 length-extrapolation results and the 1.3 B expressivity
-slot measure it directly.
+suite measure it directly.
 
 // ── 6. Expressivity Results ───────────────────────────────────────────────────
 = Expressivity Results <sec:expressivity>
@@ -1786,23 +1796,119 @@ names — a per-step nonlinearity the linear arm cannot represent, and
 non-contractive long memory so the failure compounds with length — and
 it appears exactly where both hold and nowhere else.
 
-#heading(level: 2, numbering: none)[Expressivity at 1.3 B on the trained pair (slot)]
+#heading(level: 2, numbering: none)[The parameter-matched contractive control]
 
-TODO-EXPRESSIVITY-1P3B: this section is the slot for the 1.3 B
-expressivity suite on the E97 / GDN2-MLP checkpoints of §5 — the same
-checkpoints the matched-token loss claims bind to — closing the
-theory-to-empirics loop at the scale where the loss parity is measured.
-The protocol is fixed before results are read: the $S_5$/$S_3$
-permutation-composition probes and the iterated-map/length-extrapolation
-battery of this section, with the same task definitions and metrics as
-the 8 M suite; zero-shot evaluation of both 150 B checkpoints first,
-and the matched fine-tune protocol of the 8 M suite (matched steps and
-data budget on both models) only if zero-shot is inconclusive — the
-claim is then about learnability under matched optimization, exactly as
-at 8 M. Results land in `paper/results/expressivity_1p3b/` and are
-reported verbatim, including negative outcomes. Until the slot is
-filled, no 1.3 B expressivity claim is made; the predecessor cohort's
-1.3 B fine-tune study (E88-era checkpoints) is preserved in Appendix B.
+The pre-registered parameter control closes the historical small-GDN
+mismatch without changing the task or optimization protocol. On the
+contractive logistic family, `gdn-8m` has
+#expressivity.fixed(expressivity.control.arms.at("gdn-8m").params / 1000000, digits: 2) M
+parameters versus E97's
+#expressivity.fixed(expressivity.control.arms.e97.params / 1000000, digits: 2) M
+(#expressivity.fixed(100 * (expressivity.control.arms.at("gdn-8m").params / expressivity.control.arms.e97.params - 1), digits: 1)%
+more, favoring GDN). Its accuracy falls only from
+#expressivity.fixed(expressivity.control.arms.at("gdn-8m").pooled_acc_vs_T.at("128").mean_acc, digits: 3)
+to #expressivity.fixed(expressivity.control.arms.at("gdn-8m").pooled_acc_vs_T.at("1024").mean_acc, digits: 3)
+over the evaluation range (@tab_contractive_control). The measured
+mixed-driver Lyapunov exponent is
+$lambda = #expressivity.fixed(expressivity.lyapunov.mixed_driver_lambda_mean, digits: 3) < 0$:
+this is a contractive control, not a chaotic depth-wall vehicle. Larger
+parameter count improves the linear arm's accuracy but does not change
+its mild-decay regime; parameters are not the lever for a compounding
+wall on this family. Protocol: `iterated-map/PLAN.md`, pre-registration
+`0038ad84`; completed control `384e657c`.
+
+#expressivity.control-table <tab_contractive_control>
+
+#heading(level: 2, numbering: none)[Expressivity at 1.3 B on the trained pair]
+
+The decisive experiment uses the E97 and GDN2-MLP checkpoints of §5,
+with Schedule-Free y-mode recovery, on
+$x_t = (x_(t-1)^2 + c_t) mod #expressivity.wall-e97.task_args.p$,
+#expressivity.wall-e97.task_args.G input drivers and running supervision.
+Both arms receive the identical full-fine-tune recipe: bf16 AdamW
+(#expressivity.train-e97.recipe.optimizer), constant learning rate
+#expressivity.train-e97.recipe.lr, warmup
+#expressivity.train-e97.recipe.warmup, weight decay
+#expressivity.train-e97.recipe.weight_decay, gradient clip
+#expressivity.train-e97.recipe.grad_clip, batch
+#expressivity.train-e97.recipe.batch_size, trained length
+#expressivity.train-e97.recipe.train_len, seed
+#expressivity.wall-e97.seed. The throughput-derived common cap of
+#expressivity.budget.cap_steps steps was fixed before accuracy was seen
+(`budget.json`, `1989656c`). It projects
+#expressivity.fixed(expressivity.budget.expected_gpu_seconds.total_both / 3600, digits: 2)
+GPU-hours of capped training, *not* actual expenditure. The same
+pre-registered validation-loss plateau rule stopped E97 after
+#expressivity.train-e97.steps_trained steps and GDN2-MLP after
+#expressivity.train-gdn2.steps_trained steps; actual training elapsed
+#expressivity.fixed((expressivity.train-e97.elapsed_train_s + expressivity.train-gdn2.elapsed_train_s) / 3600, digits: 3)
+GPU-hours, excluding loading and final evaluation. Thus this is a
+common-cap/common-stop-rule comparison, not equal realized training
+steps or tokens.
+
+#expressivity.wall-table <tab_depth_wall>
+
+At the terminal sweep E97 reaches
+#expressivity.percent(expressivity.wall-acc(expressivity.wall-e97, 128))
+at trained length, retaining
+#expressivity.percent(expressivity.wall-acc(expressivity.wall-e97, 512))
+at four times and
+#expressivity.percent(expressivity.wall-acc(expressivity.wall-e97, 1024))
+at eight times that length. GDN2-MLP ends at
+#expressivity.percent(expressivity.wall-acc(expressivity.wall-gdn2, 128))
+at trained length and
+#expressivity.percent(expressivity.wall-acc(expressivity.wall-gdn2, 1024))
+at eight times. E97 at eight times approximately matches GDN2-MLP's
+terminal trained-length accuracy, then decays further; it is not
+length-invariant. GDN2-MLP approaches a roughly 50% plateau at the
+longest lengths, explicitly *not* the declared
+#expressivity.percent(expressivity.wall-gdn2.random_baseline_acc) random
+baseline. The terminal trained-length value is not a hard ceiling:
+intermediate GDN2-MLP trajectory probes were higher. One seed, unequal
+plateau-stop lengths, and validation fluctuations limit the inference;
+this is the measured modular-quadratic separation under this protocol,
+not a theorem that the full stack cannot learn the task.
+
+This is the empirical complement to the duality theorems
+`CompositionalDepthDuality.e97_compositional_depth_grows_in_time` and
+`gdn_state_channel_depth_bounded_in_time` (`32cfcc9c`): E97 composes one
+nonlinear state update per time step, whereas the input-only-scheduled
+GDN state fold remains affine in its initial state, with bounded
+nonlinear temporal depth. The theorem concerns the state channel, not
+an impossibility or depth lower bound for a multilayer GDN2-MLP stack.
+The bridge theorem
+`S5GDNBridge.gdn_s5_realization_requires_per_token_action` (`82eec14d`)
+requires an $S_5$ realizer to supply the group action through per-token
+parameters; a token-independent schedule cannot track it. It is a
+*routing* theorem, not a per-token circuit-depth lower bound
+(`formal/lean/GAPS-D2.md`). The $S_5$ results below mark exactly that
+boundary: an affine state channel does not itself imply failure on
+group actions.
+
+#heading(level: 2, numbering: none)[S5 does not replicate the predicted separation]
+
+The initial suite's negative is retained verbatim:
+“The 8M S5 separation does NOT replicate at 1.3B on this pair.”
+(`paper/results/expressivity_1p3b/SUMMARY.md`, `5e1e60ef`).
+Zero-shot did not separate either model; matched fine-tuning favored
+E97 on the solvable $S_3$ control but did not reproduce the small-scale
+$S_5$ ordering. The longer-horizon capacity probe and phase-0 salvage
+confirmed the boundary finding, verbatim:
+“in the capacity-exceeded regime on S5 there is no wall for
+either model — both decay in parallel toward the random baseline, and GDN2-MLP
+is ahead of E97 at every length.”
+(`capacity/SUMMARY.md`, `6f916843`).
+
+#expressivity.s5-table <tab_s5_boundary>
+
+Both capacity curves decay rather than learn length-invariant tracking;
+held-out transitions remain weaker than seen ones. GDN2-MLP's attempted
+length-512 curriculum stage was OOM-infeasible even at sub-batch 1,
+after one completed optimizer step. This hardware limitation and the
+single seed remain part of the result, not hidden protocol changes.
+Neither the bridge nor the duality turns this no-separation finding
+into an $S_5$ impossibility. The predecessor cohort's different
+fine-tune study remains in Appendix B, not substituted for this pair.
 
 #heading(level: 2, numbering: none)[Micro and mega: the two probes bracket the mechanism]
 
@@ -1812,15 +1918,14 @@ sweep (@fig_s5_bars, three seeds): it isolates expressivity in the cleanest
 setting, where the §6 floor argument makes capacity non-binding by
 orders of magnitude, so any gap is inductive bias and not size; its
 limitation is that an 8 M model is small. The
-*mega* probe is the 1.3 B slot above: the same probes on the trained
-E97/GDN2-MLP pair itself — the released 150 B checkpoints, the same
-artifacts the loss-parity claims bind to. Neither probe alone closes both
-questions; *together* they bracket the mechanism. The micro probe
+*mega* probe is the completed 1.3 B suite above, on the released
+E97/GDN2-MLP artifacts the loss-parity claims bind to. The micro probe
 controls capacity and seeds; the mega probe controls scale and the
-trained artifact. The separation that appears in both, under opposite
-confounds, is the one the paper claims; the predecessor cohort's 1.3 B
-fine-tune study (Appendix B) saw the same ordering under its own
-protocol, and the slot above re-runs it on the current pair.
+trained artifact but supplies only one seed. Together they support a
+modular-quadratic separation, with graceful rather than invariant E97
+extrapolation at 1.3 B, and a negative $S_5$ transfer. The predecessor
+cohort's ordering (Appendix B) cannot override this current-pair
+boundary finding.
 
 // ── Applications bridge (unnumbered; preserves existing section references) ────
 #heading(level: 1, numbering: none)[Repeated nonlinear maps in the wild] <sec:applications>
@@ -2643,7 +2748,7 @@ of §5 — E97 and GDN2-MLP — sit in the same 1.3 B-class parameter band
 update-rule contrast across the *tuning regime* and the *pairing*, not
 across scale. Whether the loss parity survives at 3–7 B and beyond,
 and whether the state-tracking separation — at 8 M, on the iterated
-maps, and (pending) at 1.3 B — grows, shrinks, or vanishes with
+maps, and on the 1.3 B modular-quadratic probe — grows, shrinks, or vanishes with
 parameter count, is open. A single-arm E97 continuation to 513 B
 tokens exists on Frontier hardware but has no matched GDN2-MLP
 counterpart, so it cannot answer the question; the matched 3–7 B pair
@@ -2668,8 +2773,9 @@ predecessor-cohort held-out tie (Appendix B), and in the 480 M
 FLOPs-per-bit convergence across four families (§5); and the search
 provenance of both arms is committed end-to-end (§5's transparency
 subsection). Still pending: a held-out bpb measurement and downstream
-panels for the 150 B pair itself, and the 1.3 B expressivity slot of
-§6 — all marked TODO-NEEDS-EVIDENCE where they sit.
+panels for the 150 B pair itself — marked TODO-NEEDS-EVIDENCE where
+they sit. The completed §6 suite instead supplies both a positive
+modular-quadratic result and the negative $S_5$ transfer finding.
 
 #heading(level: 2, numbering: none)[Length extrapolation is the next frontier on $S_5$]
 
@@ -2888,9 +2994,11 @@ falsify it, so that later training rounds can settle them.
   is at grok scale. At longer training-token budgets
   at 1.3 B and beyond, the within-PNR ordering and the Emender-vs-GDN2
   gap on state-tracking probes should hold qualitatively — the
-  TODO-EXPRESSIVITY-1P3B slot of §6 is the first direct test, on the
-  trained 150 B pair. Falsified if
-  the $S_5$ or $S_3$ gap closes under matched-compute training at scale.
+  completed expressivity suite of §6 is the first direct test, on the
+  trained 150 B pair. The predicted $S_5$ ordering already fails on this
+  pair under the tested protocols; the modular-quadratic result supports
+  only a task-dependent version. Further scale/budget persistence is
+  falsified if that map gap closes under a common optimization protocol.
 
 - *Emender fine-tuned on reasoning benchmarks separates from
   GDN2-MLP on tasks requiring multi-step state-tracking.* The §6 QA
