@@ -1,0 +1,224 @@
+diff --git a/paper/main.typ b/paper/main.typ
+index ebf6fcd4..6acb7a8e 100644
+--- a/paper/main.typ
++++ b/paper/main.typ
+@@ -40 +40 @@
+-    extrapolation. The negative transfer is explicit: “The 8M S5
++    extrapolation. The negative transfer is: “The 8M S5
+@@ -134,2 +134 @@ serially, and serial training at billion-parameter scale was presumed
+-too slow to be practical. The field's response has been to route around
+-the obstruction rather than meet it: parallelize the time axis by other
++too slow to be practical. Alternative routes parallelize the time axis by other
+@@ -147 +146 @@ do. Neither had been tested directly, because the pure setting had been
+-set aside as the expensive case to avoid rather than the case to
++regarded as too expensive to
+@@ -168 +167 @@ tuning regime*, not across scale: both arms sit in the same
+-parity survives at 7 B and beyond is named openly as a limitation in
++parity survives at 7 B and beyond remains a limitation in
+@@ -232,2 +231 @@ writes at each step from a raw additive overwrite to a correction
+-against the existing slot. The two responses are complementary, not
+-rival: a hybrid stack can use any update rule in its recurrent layers,
++against the existing slot. The two responses are complementary: a hybrid stack can use any update rule in its recurrent layers,
+@@ -255,2 +253 @@ nonlinear-recurrent LSTM and GRU at 7 B by parallelizing the time loop
+-via Newton iteration on a block-bidiagonal Jacobian. In both cases the
+-pure-recurrent setting was set aside rather than filled. This work
++via Newton iteration on a block-bidiagonal Jacobian. These routes use attention or time-axis parallelization. This work
+@@ -329,2 +326,2 @@ and direct capability measurements.
+-  contribution is the architectural *option* plus the *mechanism*,
+-  not a training-speed win — bulk loss is a convergent null across
++  contribution is the architectural *option* plus the *mechanism*;
++  training speed supplies no win, and bulk loss is a convergent null across
+@@ -377 +374 @@ E97
+-To make the scope legible up front, the table below
++The table below
+@@ -454,3 +451,2 @@ substantiate each row; the pointers are forward references.
+-One scope note belongs with M²RNN specifically. We do not claim that
+-M²RNN lacked width or batch parallelism, or missed that a nonlinear
+-recurrence is serial in time; the distinction is that its published
++M²RNN uses width and batch parallelism for a nonlinear
++recurrence that is serial in time. Its published
+@@ -650,4 +646,2 @@ state may decay, reflect, or oscillate, are two independent axes of a
+-single design grid rather than a list of unrelated tricks. Reading a
+-head by the *dynamics* of its per-token state map — not by the
+-experiment that first produced it — fixes it as one point in a
+-two-axis grid:
++single design grid. The *dynamics* of a head’s per-token state map
++locate it in a two-axis grid:
+@@ -685,2 +679,2 @@ complex-eigenvalue oscillator head. Complex $times$ saturated is
+-`rot-nonlin`, a nonlinear oscillator left to future work, included only
+-once both axes have earned it. The experiment tags E88, E97, E98, and
++`rot-nonlin`, a nonlinear oscillator left to future work, included as
++the combination of the two axes. The experiment tags E88, E97, E98, and
+@@ -691,2 +685,2 @@ architecture vocabulary is this grid.
+-This grid makes the relationship to the linear-recurrent baseline
+-exact rather than rhetorical.
++The adjacent split-gated cores locate the linear-recurrent baseline
++in this grid.
+@@ -875,2 +869 @@ E97
+-repeats it across a residual stack rather than changing the per-head
+-equation.
++repeats the same per-head equation across a residual stack.
+@@ -1063,2 +1056,2 @@ numerically stable form $tanh(z) = 2 sigma(2 z) - 1$ in the fused kernel to
+-avoid overflow at large pre-activations. Three remaining choices are
+-deliberate omissions rather than additions: there is no output normalization
++avoid overflow at large pre-activations. Three remaining choices are:
++there is no output normalization
+@@ -1073 +1066 @@ on the read alone.
+-The 1.3 B stack's shape is not arbitrary. Ingredient (d) sets its character —
++Ingredient (d) sets the 1.3 B stack’s shape —
+@@ -1167 +1160,2 @@ which also uses a delta correction.
+-Throughput comes from width, not from time. A linear recurrence earns
++Width-axis multi-programming supplies throughput while each head’s
++time loop remains serial. A linear recurrence earns
+@@ -1219,2 +1213 @@ on ROCm.
+-That the card stays busy is a claim about occupancy, and it is measured
+-directly. Driving the 1.273 B E88 predecessor instance (batch 5,
++Driving the 1.273 B E88 predecessor instance (batch 5,
+@@ -1243,2 +1236,2 @@ speedup measured at small grok-scale dims is *not* reproduced at
+-This figure is occupancy, not peak arithmetic, and the two should not
+-be run together. Model-FLOPs utilization (MFU) — computed with the
++Occupancy and peak-arithmetic utilization measure different quantities.
++Model-FLOPs utilization (MFU) — computed with the
+@@ -1266 +1259 @@ slightly larger parameter count and a different batch — so the standing
+-is parity-class, not superiority.
++is parity-class.
+@@ -1343,3 +1336,2 @@ mixer with the *same* SwiGLU MLP, bound to external source commit
+-`95709fc`. Holding the channel-mixer (MLP) fixed on both arms is what
+-makes this a comparison of token mixers — the recurrence — rather than
+-of everything at once.
++`95709fc`. Holding the channel-mixer (MLP) fixed on both arms
++makes this a comparison of token mixers — the recurrence.
+@@ -1475 +1467 @@ nonlinear recurrence.
+-Two boundaries on this measurement are stated plainly. First, it is a
++Two boundaries apply to this measurement. First, it is a
+@@ -1499,2 +1491,2 @@ Within that band E97-MLP is ahead of GDN2-MLP on *both* primary metrics
+-but the statement is descriptive closeness with the reported
+-ordering, not a statistically established win or equivalence: bulk loss
++but these values show descriptive closeness with the reported
++ordering; statistical superiority or equivalence remains unestablished: bulk loss
+@@ -1507,2 +1499,2 @@ Because the central 1.3 B claim is a *null* on loss, the credibility of
+-the baseline is load-bearing: a reader must be able to verify that
+-GDN2-MLP was optimizer-hardened, not strawmanned. The full provenance
++the baseline is load-bearing: the search protocol and records must establish
++GDN2-MLP’s optimizer hardening. The provenance
+@@ -1638 +1630 @@ FLOPs (final losses 1.14–1.34 nats at matched FLOP budgets;
+-`paper/results/cma_flop_rate/`). Once sensibly tuned, the choice of
++`paper/results/cma_flop_rate/`). Once tuned, the choice of
+@@ -1640,2 +1632 @@ recurrent family changes *what* is trained, not *how much compute per
+-bit* — which is why the 1.3 B loss null is expected rather than
+-surprising, and why the paper's positive claims live in #ref(<sec:expressivity>) and #ref(<sec:formal>).
++bit* — consistent with the 1.3 B loss null. Capability and formal results appear in #ref(<sec:expressivity>) and #ref(<sec:formal>).
+@@ -1724,2 +1715 @@ That matched-no-tuning condition controls for probe-specific *effort*; it
+-does not control for one *selection-criterion* asymmetry, stated here in
+-full. The Emender's defaults are the
++does not control for one *selection-criterion* asymmetry. The Emender's defaults are the
+@@ -1842 +1832 @@ Return: accuracy-by-length records and protocol/failure metadata
+-To verify that the $S_5$ result is not a single-task artefact we run a
++Alongside the $S_5$ probe we run a
+@@ -2049 +2039 @@ length-invariant. GDN2-MLP approaches a roughly 50% plateau at the
+-longest lengths, explicitly *not* the declared
++longest lengths, above the declared
+@@ -2094 +2084 @@ after one completed optimizer step. This hardware limitation and the
+-single seed remain part of the result, not hidden protocol changes.
++single seed constrain the result.
+@@ -2155,2 +2145,2 @@ Return: S
+-The depth-duality gives a precise lens, but not an application-level
+-lower bound. `CompositionalDepthDuality.e97_compositional_depth_grows_in_time`
++The depth-duality characterizes executed state-channel composition;
++application-level lower bounds remain open. `CompositionalDepthDuality.e97_compositional_depth_grows_in_time`
+@@ -2292 +2282 @@ a long-horizon surrogate comparison only when nonlinear dependence on
+-prior state remains relevant. The control is the important countercase:
++prior state remains relevant. The control is a countercase:
+@@ -2334,2 +2324,2 @@ low-cost, low-intelligence streaming processors operating in parallel at
+-the edge: local feedback and correction rather than a large reasoning
+-model per sensor. Width-axis multi-programming suggests how many such
++the edge: local feedback and
++correction. Width-axis multi-programming suggests how many such
+@@ -2343,2 +2333 @@ would require separate measurements.
+-The claims in this section are checked by a machine rather than argued
+-on paper. A trusted Lean 4 @lean42021 core built on Mathlib @mathlib4
++A trusted Lean 4 @lean42021 core built on Mathlib @mathlib4
+@@ -2346,2 +2335 @@ carries the formal spine: each result is stated as a theorem and
+-compiled together with a proof of it. Trust rests on what those proofs
+-are *not* allowed to assume. The import closure of the
++compiled together with a proof of it. The import closure of the
+@@ -2376 +2364 @@ margin, and table lookup is not recurrent $tanh$-tracker realizability.
+-*What to take from set A: at fixed width and precision the Emender is a
++*At fixed width and precision the Emender is a
+@@ -2443 +2431 @@ stronger, currently unproved architecture claim.
+-*What to take from set C: in a single step the delta-correcting write
++*In a single step the delta-correcting write
+@@ -2469,2 +2457,2 @@ sigmoid gates, nor full-network separation under arbitrary reparameterization.
+-- *Positive embedding.* The separation is about resources, not raw
+-  capability. *Given* the extra read-then-delta resource, M²RNN can embed
++- *Positive embedding.* The separation concerns the specified resource
++  class. *Given* the extra read-then-delta resource, M²RNN can embed
+@@ -2477,2 +2465,2 @@ sigmoid gates, nor full-network separation under arbitrary reparameterization.
+-*What to take from set C′: the one-step gap does not average out under
+-composition — it persists at every length on a constructed input.*
++*The one-step gap persists at every length under
++composition on a constructed input.*
+@@ -2518 +2506 @@ finite-$k$ theorem or an increasing-gap prediction.
+-*What to take from this: the clean k-step result is the ceiling reachable
++*The k-step result is the ceiling reachable
+@@ -2523 +2511 @@ bounded-precision raw-write form with an explicit $T(d)$.*
+-The k-step separation above is the *clean ceiling reachable from the
++The k-step separation above is the *ceiling reachable from the
+@@ -2582 +2570 @@ counting, Merrill-style capacity lemma), is documented in
+-*What to take from set D: the updates share a quadratic envelope in a
++*The updates share a quadratic envelope in a
+@@ -2614 +2602 @@ No minimal parameter-count corollary is claimed.
+-*What to take from set E: a simple signature-field predicate is shared
++*A signature-field predicate is shared
+@@ -2631 +2619 @@ class-level meaning is limited to these declared signature conditions.
+-*What to take from set G: over abstract real-valued gate/key/state
++*Over abstract real-valued gate/key/state
+@@ -2689 +2677 @@ formally.
+-*What to take from set F: conditional slot-level saturation, hold,
++*Set F establishes conditional slot-level saturation, hold,
+@@ -2864 +2852 @@ a *nonlinear* state map, so the two architectures are adjacent by
+-design (#ref(<sec:formal>), set G) rather than by coincidence. Its decoupled
++design (#ref(<sec:formal>), set G). Its decoupled
+@@ -2886,2 +2874 @@ within-class baseline at the 8 M probes of #ref(<sec:expressivity>) and in the L
+-separation of #ref(<sec:formal>), is therefore not a
+-strawman: it is the same raw-write family after CMA-ES has moved it into
++separation of #ref(<sec:formal>), is the same raw-write family after CMA-ES has moved it into
+@@ -2912,2 +2899,2 @@ one. It is the closest scale band among prior nonlinear-recurrent
+-results, included here as a peer, with the note that its
+-nonlinear-block share is small. The xLSTM-7B follow-up @xlstm7b2025
++results, included here as a peer with a small
++nonlinear-block share. The xLSTM-7B follow-up @xlstm7b2025
+@@ -3089 +3076 @@ length-robustness gap, not length-invariant tracking (#ref(<sec:expressivity>)).
+-is equally load-bearing: “The 8M S5 separation does NOT replicate at
++transfer is: “The 8M S5 separation does NOT replicate at
+@@ -3251,2 +3238,2 @@ here") from the family-level reading ("under any matched
+-optimization"). It is the sharpest single experiment for fixing where
+-the Emender-versus-raw-write gap actually sits, and #ref(<sec:limitations>) names it as the
++optimization"). This experiment would locate
++the Emender-versus-raw-write gap, and #ref(<sec:limitations>) names it as the
+@@ -3342,3 +3329,2 @@ choice was settled at
+-which stage, and what each one fixed. It is here for reproducibility of
+-the design history, so the choices in #ref(<sec:arch>) read as the residue of
+-measurements rather than as bare assertions. The milestone labels (E63,
++which stage, and what each one fixed. The design history documents the measurements behind
++the choices in #ref(<sec:arch>). The milestone labels (E63,
+@@ -3614 +3600 @@ Held-out bpb and train-loss bpb are different objects — different data
+-Critically, the train-loss ordering does *not* reproduce held-out.
++The train-loss ordering does *not* reproduce held-out.
+@@ -3662 +3648 @@ loss runs: they rest on the 3-seed 8 M expressivity probes (#ref(<sec:expressivi
+-genuinely come apart.
++come apart.
+@@ -3788,2 +3774 @@ was chosen and frozen before any $S_5$ result was seen. @tab_s5_1p3b and
+-*Trained-length competence vs length-extrapolation plateau.* Two facts must
+-be kept apart. First, *at the trained length* ($T = 64$) the delta model
++*Trained-length competence vs length-extrapolation plateau.* Trained-length fit and length extrapolation differ. First, *at the trained length* ($T = 64$) the delta model
+@@ -3853,3 +3838,3 @@ difficulty: full fine-tuning of the 1.3 B raw-write model is unstable
+-and needed the gentler/longer recipe merely to fit parity. We therefore
+-do *not* claim a pure-expressivity wall for either raw-write or
+-linear GDN; the statement here is the matched-FLOP efficiency one:
++and needed the gentler/longer recipe merely to fit parity. These observations support a matched-FLOP efficiency reading;
++a pure-expressivity wall for either raw-write or linear GDN remains
++unestablished:
+@@ -3864 +3849 @@ length-extrapolation collapse and stays below the delta update's reach at
+-every length; as noted above, the delta update too
++every length; the delta update too
