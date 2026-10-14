@@ -1,0 +1,871 @@
+{
+  "headings": [
+    {
+      "section": "Introduction",
+      "level": 1,
+      "title": "Introduction"
+    },
+    {
+      "section": "Introduction",
+      "level": 2,
+      "title": "Delta correction is one response; hybrids are another"
+    },
+    {
+      "section": "Introduction",
+      "level": 2,
+      "title": "Contributions"
+    },
+    {
+      "section": "Introduction",
+      "level": 2,
+      "title": "What we claim, and what we do not"
+    },
+    {
+      "section": "Background",
+      "level": 1,
+      "title": "Background"
+    },
+    {
+      "section": "Background",
+      "level": 2,
+      "title": "Linear-state and nonlinear-state recurrence"
+    },
+    {
+      "section": "Background",
+      "level": 2,
+      "title": "Matrix state"
+    },
+    {
+      "section": "Background",
+      "level": 2,
+      "title": "The ${S }_{5}$ state-tracking probe"
+    },
+    {
+      "section": "Background",
+      "level": 2,
+      "title": "A dynamics taxonomy of head-types: eigenvalue placement $\\times $ saturation"
+    },
+    {
+      "section": "Architecture",
+      "level": 1,
+      "title": "Architecture"
+    },
+    {
+      "section": "Architecture",
+      "level": 2,
+      "title": "Per-head update"
+    },
+    {
+      "section": "Architecture",
+      "level": 2,
+      "title": "Parameterization choices"
+    },
+    {
+      "section": "Architecture",
+      "level": 2,
+      "title": "The 1.3 B stack"
+    },
+    {
+      "section": "Architecture",
+      "level": 2,
+      "title": "Architectural contrasts: delta correction and state nonlinearity"
+    },
+    {
+      "section": "Multi-Programming and Systems",
+      "level": 1,
+      "title": "Multi-Programming and Systems"
+    },
+    {
+      "section": "Multi-Programming and Systems",
+      "level": 2,
+      "title": "Multi-programming: the throughput-enabling design choice"
+    },
+    {
+      "section": "Multi-Programming and Systems",
+      "level": 2,
+      "title": "The 1.3 B Emender shape under multi-programming"
+    },
+    {
+      "section": "Multi-Programming and Systems",
+      "level": 2,
+      "title": "Measured throughput and utilization (CUDA only)"
+    },
+    {
+      "section": "Multi-Programming and Systems",
+      "level": 2,
+      "title": "Fused Triton recurrence kernel"
+    },
+    {
+      "section": "Multi-Programming and Systems",
+      "level": 2,
+      "title": "Sparse-checkpoint backward"
+    },
+    {
+      "section": "Multi-Programming and Systems",
+      "level": 2,
+      "title": "Triton source portability; CUDA-only validation"
+    },
+    {
+      "section": "Multi-Programming and Systems",
+      "level": 2,
+      "title": "Distributed training"
+    },
+    {
+      "section": "Language-Modeling Results",
+      "level": 1,
+      "title": "Language-Modeling Results"
+    },
+    {
+      "section": "Language-Modeling Results",
+      "level": 2,
+      "title": "The 1.3 B double-pairing: setup and training identities"
+    },
+    {
+      "section": "Language-Modeling Results",
+      "level": 2,
+      "title": "Loss parity at matched tokens"
+    },
+    {
+      "section": "Language-Modeling Results",
+      "level": 2,
+      "title": "The convergent-loss null already appears at search scale"
+    },
+    {
+      "section": "Language-Modeling Results",
+      "level": 2,
+      "title": "Matched-control transparency: search breadth, budgets, and configurations"
+    },
+    {
+      "section": "Language-Modeling Results",
+      "level": 2,
+      "title": "Downstream capability panels: an honest null, on the predecessor cohort"
+    },
+    {
+      "section": "Expressivity Results",
+      "level": 1,
+      "title": "Expressivity Results"
+    },
+    {
+      "section": "Expressivity Results",
+      "level": 2,
+      "title": "State-count headroom at 8 M parameters"
+    },
+    {
+      "section": "Expressivity Results",
+      "level": 2,
+      "title": "Matched no probe-tuning, and the one selection asymmetry it does not cover"
+    },
+    {
+      "section": "Expressivity Results",
+      "level": 2,
+      "title": "The ${S }_{5}$ permutation-composition probe"
+    },
+    {
+      "section": "Expressivity Results",
+      "level": 2,
+      "title": "The six-task canonical sweep"
+    },
+    {
+      "section": "Expressivity Results",
+      "level": 2,
+      "title": "Hybrid degradation: purity matters"
+    },
+    {
+      "section": "Expressivity Results",
+      "level": 2,
+      "title": "A controlled update-map ablation on iterated maps"
+    },
+    {
+      "section": "Expressivity Results",
+      "level": 2,
+      "title": "The parameter-matched contractive control"
+    },
+    {
+      "section": "Expressivity Results",
+      "level": 2,
+      "title": "Expressivity at 1.3 B on the trained pair"
+    },
+    {
+      "section": "Expressivity Results",
+      "level": 2,
+      "title": "S5 does not replicate the predicted separation"
+    },
+    {
+      "section": "Expressivity Results",
+      "level": 2,
+      "title": "Micro and mega: the two probes bracket the mechanism"
+    },
+    {
+      "section": "Repeated nonlinear maps in the wild",
+      "level": 1,
+      "title": "Repeated nonlinear maps in the wild"
+    },
+    {
+      "section": "Repeated nonlinear maps in the wild",
+      "level": 2,
+      "title": "Sigma--delta conversion: quantization inside the loop"
+    },
+    {
+      "section": "Repeated nonlinear maps in the wild",
+      "level": 2,
+      "title": "Adaptive filtering and automatic gain control"
+    },
+    {
+      "section": "Repeated nonlinear maps in the wild",
+      "level": 2,
+      "title": "Proximal iterations and unrolled optimization"
+    },
+    {
+      "section": "Repeated nonlinear maps in the wild",
+      "level": 2,
+      "title": "Reservoirs and echo-state networks"
+    },
+    {
+      "section": "Repeated nonlinear maps in the wild",
+      "level": 2,
+      "title": "Discrete ecology: the logistic map"
+    },
+    {
+      "section": "Repeated nonlinear maps in the wild",
+      "level": 2,
+      "title": "Feedback control with limited actuators"
+    },
+    {
+      "section": "Formal Results",
+      "level": 1,
+      "title": "Formal Results"
+    },
+    {
+      "section": "Formal Results",
+      "level": 2,
+      "title": "Theorem set A: finite-state ceiling and ${S }_{5}$ tracker"
+    },
+    {
+      "section": "Formal Results",
+      "level": 2,
+      "title": "Theorem set B: generator-table lookup, not a recurrent tracker"
+    },
+    {
+      "section": "Formal Results",
+      "level": 2,
+      "title": "Theorem set C: update-family separation"
+    },
+    {
+      "section": "Formal Results",
+      "level": 2,
+      "title": "Theorem set C\\ensuremath{^{\\prime}}: multi-step (k-step) separation"
+    },
+    {
+      "section": "Formal Results",
+      "level": 2,
+      "title": "Frontier and unproven targets"
+    },
+    {
+      "section": "Formal Results",
+      "level": 2,
+      "title": "Theorem set D: synthetic state-pass cost class"
+    },
+    {
+      "section": "Formal Results",
+      "level": 2,
+      "title": "Resource scope, not a parameter-efficiency lower bound"
+    },
+    {
+      "section": "Formal Results",
+      "level": 2,
+      "title": "Theorem set E: multi-programming as a structural predicate"
+    },
+    {
+      "section": "Formal Results",
+      "level": 2,
+      "title": "Theorem set G: the split-gated update --- E97, E88, and GDN-2"
+    },
+    {
+      "section": "Formal Results",
+      "level": 2,
+      "title": "Theorem set F: latching"
+    },
+    {
+      "section": "Formal Results",
+      "level": 2,
+      "title": "Theorem set H: compositional-depth duality and routing"
+    },
+    {
+      "section": "Formal Results",
+      "level": 2,
+      "title": "Complexity statements and explicit non-claims"
+    },
+    {
+      "section": "Related Work",
+      "level": 1,
+      "title": "Related Work"
+    },
+    {
+      "section": "Related Work",
+      "level": 2,
+      "title": "Ancestry: the fast-weight line on delta correction"
+    },
+    {
+      "section": "Related Work",
+      "level": 2,
+      "title": "Linear-state recurrent language models"
+    },
+    {
+      "section": "Related Work",
+      "level": 2,
+      "title": "Pure-nonlinear-recurrent peers and adjacent nonlinear-state work"
+    },
+    {
+      "section": "Limitations",
+      "level": 1,
+      "title": "Limitations"
+    },
+    {
+      "section": "Limitations",
+      "level": 2,
+      "title": "Formal gaps: G1--G3 and F1"
+    },
+    {
+      "section": "Limitations",
+      "level": 2,
+      "title": "Exact separation versus robust tracking"
+    },
+    {
+      "section": "Limitations",
+      "level": 2,
+      "title": "Single-seed 1.3 B evidence and protocol boundaries"
+    },
+    {
+      "section": "Limitations",
+      "level": 2,
+      "title": "Evaluation and winner-series evidence"
+    },
+    {
+      "section": "Limitations",
+      "level": 2,
+      "title": "Untested application predictions"
+    },
+    {
+      "section": "Limitations",
+      "level": 2,
+      "title": "Scale, architecture selection, and comparators"
+    },
+    {
+      "section": "Limitations",
+      "level": 2,
+      "title": "Backend and citation verification"
+    },
+    {
+      "section": "Conclusion",
+      "level": 1,
+      "title": "Conclusion"
+    },
+    {
+      "section": "Testable Predictions",
+      "level": 1,
+      "title": "Testable Predictions"
+    },
+    {
+      "section": "Future Work",
+      "level": 1,
+      "title": "Future Work"
+    },
+    {
+      "section": "Future Work",
+      "level": 2,
+      "title": "A stronger raw-write baseline"
+    },
+    {
+      "section": "Future Work",
+      "level": 2,
+      "title": "Scale beyond 1.3 B"
+    },
+    {
+      "section": "Future Work",
+      "level": 2,
+      "title": "Additional seeds and architecture-internal revalidation"
+    },
+    {
+      "section": "Future Work",
+      "level": 2,
+      "title": "A capacity bound on the ${S }_{5}$ generators themselves"
+    },
+    {
+      "section": "Future Work",
+      "level": 2,
+      "title": "A partial order on PNR update rules"
+    },
+    {
+      "section": "Future Work",
+      "level": 2,
+      "title": "Lifting the latching theorems to the whole layer"
+    },
+    {
+      "section": "Lineage of the E63→E88→E97 experimental program",
+      "level": 1,
+      "title": "Lineage of the E63 $\\rightarrow $ E88 $\\rightarrow $ E97 experimental program"
+    },
+    {
+      "section": "The predecessor 1.3 B cohort(E88 era)",
+      "level": 1,
+      "title": "The predecessor 1.3 B cohort (E88 era)"
+    },
+    {
+      "section": "The predecessor 1.3 B cohort(E88 era)",
+      "level": 2,
+      "title": "Setup"
+    },
+    {
+      "section": "The predecessor 1.3 B cohort(E88 era)",
+      "level": 2,
+      "title": "Per-architecture CMA-ES protocol"
+    },
+    {
+      "section": "The predecessor 1.3 B cohort(E88 era)",
+      "level": 2,
+      "title": "Gradient conditioning is a third recipe property"
+    },
+    {
+      "section": "The predecessor 1.3 B cohort(E88 era)",
+      "level": 2,
+      "title": "Loss-vs-wallclock comparison"
+    },
+    {
+      "section": "The predecessor 1.3 B cohort(E88 era)",
+      "level": 2,
+      "title": "Held-out bits-per-byte: the three are descriptively close"
+    },
+    {
+      "section": "The predecessor 1.3 B cohort(E88 era)",
+      "level": 2,
+      "title": "Narrow observed loss bands under matched compute"
+    },
+    {
+      "section": "The predecessor 1.3 B cohort(E88 era)",
+      "level": 2,
+      "title": "1.3 B fine-tune study on the predecessor cohort"
+    },
+    {
+      "section": "The predecessor 1.3 B cohort(E88 era)",
+      "level": 2,
+      "title": "QA and reasoning panel at 1.3 B: parity-rate evidence"
+    },
+    {
+      "section": "Held-out bits-per-byte measurement(predecessor cohort)",
+      "level": 1,
+      "title": "Held-out bits-per-byte measurement (predecessor cohort)"
+    },
+    {
+      "section": "Held-out bits-per-byte measurement(predecessor cohort)",
+      "level": 2,
+      "title": "Tokenizer-invariant held-out bpb"
+    },
+    {
+      "section": "Held-out bits-per-byte measurement(predecessor cohort)",
+      "level": 2,
+      "title": "Held-out slice provenance"
+    },
+    {
+      "section": "Held-out bits-per-byte measurement(predecessor cohort)",
+      "level": 2,
+      "title": "Second distribution: Common Pile (contamination control)"
+    },
+    {
+      "section": "Held-out bits-per-byte measurement(predecessor cohort)",
+      "level": 2,
+      "title": "Checkpoints and reproducibility"
+    },
+    {
+      "section": "Held-out bits-per-byte measurement(predecessor cohort)",
+      "level": 2,
+      "title": "Where the held-out bpb sits --- landscape, not a ranking"
+    }
+  ],
+  "figures": [
+    {
+      "label": "<tab_claims>",
+      "kind": "table",
+      "caption": "Claim/Evidence/Scope/Non-claim.Each row is substantiated inthe cited section; the final column marks the boundary the result doesnot cross. The architectural separations areefficiencyandcomputabilitystatements, not blanket can/cant claims; the bulk-lossrow is a measured null result; the last row reports a task-dependentseparation together with its negative boundary finding."
+    },
+    {
+      "label": "<fig_taxonomy>",
+      "kind": "figure",
+      "caption": "The Emender head-type taxonomy:eigenvalue placement×saturation.(A)Each head is fixed by where its along-keyeigenvalue sits in the complex unit disk— real-positivedecay,real-negativereflect, or complexrot— and by whether the statemap is linear or saturated. The orange real diameter is the locusGDN-2 occupies.(B)The two axes name five cells. Shading marksGDN-2-adjacent linear cores; the Emender also explores off-axisrotation(rot) and saturated state maps(nonlin) as a within-layerpool. This taxonomy is descriptive:different decay placementprevents an exact equal-parameter restriction of the production cores.rot-nonlinis reserved for future work. E88/E97/E98/E99 are historicalrun tags, not architecture names. The GDN-2 corner of this grid isnot a strawman:it is the mixer of the 1.3 B linear baseline of(GDN2-MLP), selected by the same search protocol as E97."
+    },
+    {
+      "label": "<fig_arch>",
+      "kind": "figure",
+      "caption": "Emender architecture and multi-programmed shape.(A)Per-head recurrent dataflow(E97). Each head owns a small boundedassociative matrix memory. The model reads under the gated address⋅,computes a prediction erroragainst the gated write value,writes the bounded deltacorrection into, and gates the read atfor output. Theon the state, the delta-correcting write, the split erase/writegates, and the-normalization ofq,kare visible here;enumerates thefour load-bearing ingredients of the Emender family.(B)The 1.3 B stack exposes 216 smallindependent heads per layer per batch element. Each head is a32×32state tile that fits in registers/SRAM and runs itstime loop serially; parallelism is harvested across heads, depth andbatch(), giving11×216×4=9{,}504programs per tokenat batch size 4. The Lean theorememender_1p27B_programs_per_batch_token_bs5certifies thecorresponding count(22,200) for the E88 predecessor geometry."
+    },
+    {
+      "label": "<tab_ablation>",
+      "kind": "table",
+      "caption": "Structural comparison, not causal elimination.Matrix state isshared by all three families; temporal state nonlinearity is sharedby M²RNN and the Emender; delta correction is shared by GDN and theEmender. Theordering(0.79/0.36/0.22,) motivates testingtheir combination, but does not isolate every architectural choice."
+    },
+    {
+      "label": "<tab_pair_identities>",
+      "kind": "table",
+      "caption": "Training identities of the 1.3 B pair.Both arms ran the samelauncher harness on the same eight-GPU workstation:same data file,chunk size, tokenizer, optimizer, DiLoCo policy, token cadence, andcheckpoint cadence(saves every 500 steps, on merge boundaries);the arms differ only in mixer, geometry, and the CMA-selectedlearning rate. Sources:launch manifestsscripts/launch_emender_8gpu_diloco.shandscripts/launch_gdn2_mlp_8gpu_diloco.sh; per-runargs.json/release validation receipts(docs/EMENDER_DILOCO_OPS_HANDOFF_20260722.md,docs/validation/e97-huggingface-dense-base-and-cli-agent-release.md,docs/validation/gdn2-huggingface-152b-control-release.md)."
+    },
+    {
+      "label": "<tab_matched_loss>",
+      "kind": "table",
+      "caption": "Matched-token loss comparison(nats/token, The Pile).The commonlogged cutoff is step 2,300,925, not checkpoint step 2,300,930. At thematched cutoff the two arms sit within0.010nats/token smoothed(≈0.4%relative), and thesign of the gap depends on theaveraging window:GDN2-MLP is lower on the full-trajectory and1,000-step windows, E97 is lower on the most recent 100-stepwindow. Early in training(5.1 B tokens) GDN2-MLP led by 0.071nats; the gap closed as training progressed. Source:docs/GDN2_OPS_SNAPSHOT_20260728.md(final matched cutoff) anddocs/GDN2_E97_MATCHED_LOSS_COMPARISON_20260723.md(earlycomparison); both parse rank-0 logs only, deduplicate by optimizerstep, and align on exact common steps."
+    },
+    {
+      "label": "<tab_cma_sweeps>",
+      "kind": "table",
+      "caption": "Per-sweep CMA audit at the loss-parity binding.Fitness and gainsare nats/token, from retained candidate mean-loss fields, not thefinal long-run loss. Counts are snapshot coverage, including failedone-evaluation attempts; generation count is retained generationrecords, not an inferred total. The first14rows derive directly frompaper/results/cmaes_burst_v2/cmaes_{eval,generation}_summary.csv(899e91cd), a different snapshot from the later leaderboard.U3.1 applies to the last two rows only, the carried-in E97-MLP andGDN2-MLP searches; they are not mapped to an earlier normalized sweep.GDN2-MLPs retaineddocs/repro/lb_gdn2_mlp_20260612/best.jsonsupplies its count and winner fitness in the provenance prose above,but not first-generation data.Dashes indicate unavailable fields, not zeros or no improvement."
+    },
+    {
+      "label": "<tab_downstream>",
+      "kind": "table",
+      "caption": "Downstream panels at the predecessor cohorts training extent— anull, reported as a null.All four 1.3 B-class models are within≈3.5percentage points on both panels; none has crossed thethreshold where these benchmarks differentiate architectures.Measured on the predecessor E88-era checkpoints(steps 0.86 M–1.72 Mper model); the 150 B pairs downstream evaluation is pending.Source:paper/results/qa_reasoning/fact_panel_latest.csv,paper/results/qa_reasoning/reasoning_panel_latest.csv."
+    },
+    {
+      "label": "<tab_s5>",
+      "kind": "table",
+      "caption": "State-tracking accuracy on the permutation-composition probes.Mean over three seeds.is the solvable-group control;is the non-solvable NC1witness. The Emender separates from allthree baselinesat training length, not only under lengthextrapolation. M²RNN, the head of the raw-write nonlinear matrixRNN family, underperforms both attraining length and at, supporting the mechanism claim that nonlinear matrix statealoneis not sufficient. Source numbers inpaper/ndmpapernotes.mdlines 153–173."
+    },
+    {
+      "label": "<fig_s5_bars>",
+      "kind": "figure",
+      "caption": "Expressivity separation on the permutation-composition probes atparameter-matched 8 M scale.Dots and SEM are approximatereconstructions from rounded three-seed mean/min/max summaries,not retained individual observations. The middle point uses3×mean−min−max, clamped to the reported min/maxinterval; SEM is computed from this reconstructed triple. Barsshow the reported rounded mean(light fill). The Emender separates from linear-recurrent(GDN)and raw-write nonlinear matrix RNN(M²RNN) baselines on thenon-solvableprobe at training length. On the solvablecontrol, the Emender has rounded mean 1.0000; GDN reaches 0.72; bothM²RNN variants stall in the 0.31–0.38 band, indicating that atmatched no-tuning budget the raw-write update under-reaches on theprefix-tracking task even on the solvable-group control. Source:paper/ndmpapernotes.mdlines 153–173; figure script:paper/figures/plot_expressivity_seeds.py."
+    },
+    {
+      "label": "<fig_hybrid>",
+      "kind": "figure",
+      "caption": "Hybrid degradation:per-seed accuracy at 8 M scale, 3 seeds percondition.Interleaving Emender layers with linear-scan(GatedDeltaNet) layers in an[Emender, Emender, GDN, GDN]AABB patternunderperformspure Emender on both modular counter(K=5) andFSM tracking(K=4states), and underperforms pure GDN on modularcounter. Bars show the seed mean; error bars span the SEM(standarderror of the mean across 3 seeds); individual seed points areoverlaid(seeds 42, 123, 456). The dashed line is the randombaseline(). State-trackingcapability is reduced in this tested AABB pairing;prediction 5 addresses Emender+attention. Source:per-seed JSON underpaper/results/figure_4_hybrid/; figure script:paper/figures/plot_hybrid_degradation.py. Mean±stdmirrorsexperiments/expressivity_tasks/CANONICAL_SWEEP_RESULTS.md."
+    },
+    {
+      "label": "<tab_contractive_control>",
+      "kind": "table",
+      "caption": "Contractive logistic-map control, from scratch.Seed-mean accuracy;the historicalgdnrow is parameter-mismatched, whereasgdn-8mhas7.6%more parameters than E97, conservatively favoring the linear baseline.All arms use the same training/evaluation protocol and3seeds.Source:phase1_8m_control_table.json(commit384e657c), underpaper/results/expressivity_1p3b/iterated-map/;protocol pre-registered inPLAN.md(0038ad84)."
+    },
+    {
+      "label": "<tab_depth_wall>",
+      "kind": "table",
+      "caption": "Modular-quadratic length extrapolation on the released 1.3 B pair.Full-vocabulary argmax accuracy at the pre-registered plateau stops;trained length128, seed42,262144scored token positions per length.The identical cap is18269steps, not identical realizedtraining:E97 stopped after2500steps and GDN2-MLPafter2200. E97 decays gracefully rather thanremaining length-invariant; GDN2-MLP approaches a roughly 50% plateau,notthe declared0.39%randombaseline. Source:paper/results/expressivity_1p3b/iterated-map/,ft_{e97,gdn2}_modular_quadratic{,_sweep}.json(commit9dc3afd7);budget.json(pre-registration1989656c)."
+    },
+    {
+      "label": "<tab_s5_boundary>",
+      "kind": "table",
+      "caption": "S5 capacity/long-horizon boundary finding, not a depth-wall separation.Full-vocabulary argmax accuracy, seed42both curves decay and GDN2-MLP stays ahead.*GDN2-MLP completed oneoptimizer step at length 512 before the curriculum stage provedOOM-infeasible even at sub-batch 1; this point is not wholly untrained.Source:capacity/cap_{e97,gdn2}_s5_sweep.jsonandcap_gdn2_s5_train.jsonunderpaper/results/expressivity_1p3b/(E97f1ed5615, GDN2 salvage6f916843)."
+    },
+    {
+      "label": "<tab_geometry>",
+      "kind": "table",
+      "caption": "Three pure-recurrent configurations of the nonlinear matrix-statefamily.The paper-default M²RNN shape is a stability control;M²RNN-CMA is the raw-write comparator once CMA-ES has moved it intothe address-program-multiplexed regime; the Emender is thedelta-correcting model. Outcomes are the descriptive held-out bpb closeness of thissection and the/separation of."
+    },
+    {
+      "label": "<fig_lm_racers>",
+      "kind": "figure",
+      "caption": "Training-dynamics diagnostic for the 1.3 B comparison:training-loss-vs-wallclock trajectories on The Pile under matchedper-architecture CMA-ES. These curves are a diagnostic of trainingdynamics, not the basis for the architecture comparison— thereported measurement is the held-out bpb(below). All threetrajectories occupy the same sub-1-bpb band; at their released v0.3checkpoints E88 and GDN are at 0.973 BPB and M²RNN-CMA at 0.979across the sampled window.Schedule-free AdamW on ThePile with a 2048-token context. The single panel uses linearwall-clock hours from the start of the run to each models releasedv0.3 checkpoint step, but each curve is drawn only after the 100K-steptrailing window is fully populated and the curve is inside theplotted BPB range. Curves are 100K-step trailing moving averagesof training loss in bits per byte; the nats/token→bits/byte conversion uses the canonicalbytes/token=3.92forp50k_baseon The Pile(). E88 is at1.273 B parameters; M²RNN-CMA at 1.307 B; GDN at 1.352 B; thethree plotted models have trained about 22.1-23.8GPU-days at their released v0.3 checkpoints. The plottedtrajectory is one realization per architecture. These training-losstrajectories are a diagnostic; the architecture comparison rests onthe held-out bpb(below) and the predecessor ablations and CMA-ESsweeps(250+ configs/architecture), not on these curves. Themulti-week per-architecture training extent is the standard unitat this scale class. Endpoint values are 100K-step trailingaverages read at each models released v0.3 checkpoint step(E88 step 1,542,000; GDN step 2,031,000; M²RNN-CMA step1,491,000):E88 0.973 BPB, GDN 0.973 BPB, and M²RNN-CMA0.979 BPB. E88 and GDN remain in the same sub-1-bpbwallclock band. M²RNN-CMA hashigher loss than the other two across the sampled window. Thepaper-shape M²RNN baseline(not shown)diverged at step 8,400. Color convention used throughout thepaper:Emender=blue, GDN=orange, M²RNN-CMA=red. Curves endat each models released v0.3 checkpoint step— the samecheckpoints used for the held-out bpb below; training continuedpast these points."
+    },
+    {
+      "label": "<tab_s5_1p3b>",
+      "kind": "table",
+      "caption": "length-extrapolation at 1.3 B scale, symmetric24,000-step budget; all three models, one identical a-priori recipe, no-tuning.Each released@v0.3checkpoint is loaded strictly andfull-fine-tuned onalone under a single fixed recipe(lr5×constant, 24,000 steps=2× M²RNNs to-competencebudget, identical length curriculumT≤64, seed 42), chosen andfrozen before anyresult was seen.T=64is the longest trainedlength; columns to its right are extrapolation out to 16×(T=1024).Chance is=0.0083. At the trained length E88(delta) nearlysolves the tested prefixes(0.921) while this GDN run under-fits them(0.117, farbelow competence); raw-write M²RNN reaches 0.658. Under extrapolation allthree degrade and E88>M²RNN>GDN ateverylength, but E88plateaus below ceiling(0.143 atT=512, flat from≈12,000steps) rather than trackingto arbitrary length. Source:paper/review/S5_SYMMETRIC_BUDGET.md; datapaper/review/s5_symmetric_data/{e88,m2rnn,gdn}.json."
+    },
+    {
+      "label": "<fig_s5_symmetric>",
+      "kind": "figure",
+      "caption": "length-extrapolation at the symmetric 24,000-step budget.Running-state accuracy vs sequence lengthT(log axis) for the threereleased 1.3 B architectures, each fine-tuned onunder thesamea-priori recipe(lr5×constant, 24,000 steps, no-tuning):solid curves are this symmetric run(E88 blue, M²RNN red,GDN green); faint dashed curves are the prior per-model to-competence run,shown for contrast. Trained onT≤64(vertical marker), evaluated outtoT=1024(16× the longest trained length); chance is the dotted line(). At the trained length the delta model nearly solveswhile this GDN run under-fits it; under extrapolation E88>M²RNN>GDN ateverylength, with E88 plateauing below ceiling rather thantrackingto arbitrary length. Numbers match. Realdata:paper/review/s5_symmetric_data/{e88,m2rnn,gdn}.json; figuregenerated byscripts/finetune_s5_symmetric.py/scripts/analyze_s5_symmetric.py."
+    },
+    {
+      "label": "<fig_1p3b_lengthgen>",
+      "kind": "figure",
+      "caption": "Solvable controls and the prior to-competencecross-check at1.3 B scale.Accuracy vs sequence lengthTfor the three releasedarchitectures on the non-solvableprobe(left) and the solvableand parity controls(center, right). All three are fine-tuned onT≤64(dotted marker) and evaluated out toT=512— 8× the longesttrained length; chance is the dashed line(,,).Colors follow the paper convention(E88 blue, M²RNN-CMA red, GDNorange). Thepanel here is the earlier per-modelto-competencerun(the headline symmetric-budgetresult is/); it is retained as a cross-check and reproduces thesame E88(delta)>M²RNN(raw-write)>GDN(linear) ordering ateverylength under a different recipe and budget:E88 degrades themost slowly(0.162 atT=512, far from solving), the linear GDNconverges toward the chance floor, and raw-write tracks GDNs collapseshape. The ordering is consistent across both runs, but all three degradewith length and none tracksto arbitrary length. On the solvablecontrols all three are competent at the trained length and degrade onlywith extrapolation, motivating a structure-sensitive learninghypothesis without proving non-solvability causes the gap. Real data:paper/review/s3_s5_finetune_v03_data_tocomp/; figure script:paper/figures/plot_s5_s3_1p3b_lengthgen.py."
+    },
+    {
+      "label": "<tab_bpb_landscape>",
+      "kind": "table",
+      "caption": "Held-out bits-per-byte landscape— context, not an architectureranking.All neural numbers are tokenizer-invariant held-out bpb onthe canonical 10 MB Pile slice; classical coders are single-streamover the same bytes. The vertical ordering isdominated by trainingbudget and train/test distribution, not by the update rule, and mustnot be read as a quality verdict. Our three models trained on≈15–16 B tokens(≈0.05 epoch of the Pile); the open Pile-trainedreferences saw≈10–20×more(≈1 epoch,≈300 B tokens)andarein-distribution on this slice(it is effectively training data forthem— possible contamination), so their 0.72–0.74 is closer to atrain-loss than a held-out number. The OOD anchors(OPT, GPT-2 XL)are out-of-distribution on the Pile, so their higher bpb is expectedand is not a quality knock; GPT-2 XL measures 1.0137 here versus thePile papers published 1.0468, a≈0.03-bpb pipelinecheck confirming this single slice reads slightly low against the fullPile test set. The architecture-focused comparison is thematched-budget three-way at the top, whichreports asdescriptively close, not as a statistical equivalence result."
+    }
+  ],
+  "tables": [
+    {
+      "section": "Introduction",
+      "columns": 4,
+      "rows": 7
+    },
+    {
+      "section": "Architecture",
+      "columns": 5,
+      "rows": 4
+    },
+    {
+      "section": "Language-Modeling Results",
+      "columns": 3,
+      "rows": 14
+    },
+    {
+      "section": "Language-Modeling Results",
+      "columns": 4,
+      "rows": 6
+    },
+    {
+      "section": "Language-Modeling Results",
+      "columns": 7,
+      "rows": 17
+    },
+    {
+      "section": "Language-Modeling Results",
+      "columns": 5,
+      "rows": 3
+    },
+    {
+      "section": "Expressivity Results",
+      "columns": 5,
+      "rows": 6
+    },
+    {
+      "section": "Expressivity Results",
+      "columns": 6,
+      "rows": 6
+    },
+    {
+      "section": "Expressivity Results",
+      "columns": 4,
+      "rows": 8
+    },
+    {
+      "section": "Expressivity Results",
+      "columns": 3,
+      "rows": 7
+    },
+    {
+      "section": "The predecessor 1.3 B cohort(E88 era)",
+      "columns": 4,
+      "rows": 4
+    },
+    {
+      "section": "The predecessor 1.3 B cohort(E88 era)",
+      "columns": 4,
+      "rows": 4
+    },
+    {
+      "section": "The predecessor 1.3 B cohort(E88 era)",
+      "columns": 6,
+      "rows": 5
+    },
+    {
+      "section": "Held-out bits-per-byte measurement(predecessor cohort)",
+      "columns": 5,
+      "rows": 11
+    }
+  ],
+  "theoremEnvironments": [
+    {
+      "environment": "theorembullet",
+      "statement": "\\emph{Finite-state ceiling at fixed precision.} At fixed width and precision, every online recognizer of this kind has only finitely many distinct sta"
+    },
+    {
+      "environment": "theorembullet",
+      "statement": "\\emph{${S }_{5}$ word problem.} The target is pinned down exactly in Lean. The group ${S }_{5}$ has 120 elements (\\protect\\path|S5Witness.s5_state_cou"
+    },
+    {
+      "environment": "theorembullet",
+      "statement": "\\emph{Capacity lower bound (recognizer floor).} Any finite-state recognizer with a state decoder that reproduces the tracker on every input word needs"
+    },
+    {
+      "environment": "theorembullet",
+      "statement": "\\emph{Lookup-table realization.} The tracker is small enough to write down as a table: it uses exactly $120 \\times  4 =  480$ state/input keys (\\prote"
+    },
+    {
+      "environment": "theorem",
+      "statement": "The exact statement of \\protect\\path|NDMRealizesS5.emender_realizes_s5_tracker| supplies $d = 12$, four orthonormal keys and one-hot values, queries, "
+    },
+    {
+      "environment": "theorembullet",
+      "statement": "\\emph{Mechanism separation.} The delta write exactly overwrites the addressed slot while leaving every orthogonal query untouched (\\protect\\path|Onlin"
+    },
+    {
+      "environment": "theorembullet",
+      "statement": "\\emph{One-step resource separation.} For every $K  \\geq  2$ and $V  \\geq  1$, no fixed-weight M\\textsuperscript{2}RNN parameterization with row, colum"
+    },
+    {
+      "environment": "theorembullet",
+      "statement": "\\emph{Positive embedding.} The separation is about resources, not raw capability. \\emph{Given} the extra read-then-delta resource, M\\textsuperscript{2"
+    },
+    {
+      "environment": "theorem",
+      "statement": " \\emph{For every $k  \\geq  1$, there is an explicit $k $-token input sequence such that the $k $-step trajectory of any fixed-weight raw-write resourc"
+    },
+    {
+      "environment": "theorem",
+      "statement": "\\protect\\path|RecurrentResourceFormalism.emender_m2rnn_flop_class_equiv| bounds the declared six/seven-state-pass charges by a common ${c }_{1} {d }^{"
+    },
+    {
+      "environment": "theorem",
+      "statement": "The separately valid E97-versus-E88 result uses the stated \\emph{precomputed-gate recurrent-update accounting model}: at matched square state dimensio"
+    },
+    {
+      "environment": "definition",
+      "statement": "The predicate \\protect\\path|IsMultiProgrammed| requires four declared fields: at least two heads per layer, positive state scalars per head, a pure re"
+    },
+    {
+      "environment": "theorembullet",
+      "statement": "\\emph{E97 extends E88 in the abstract gate domain.} With both split gates fixed to one, the E97 update specializes exactly to the E88 update, in both "
+    },
+    {
+      "environment": "theorembullet",
+      "statement": "\\emph{The extension is strict on an abstract concrete witness.} E97 realizes a 2-dimensional split erase/write transition with non-parallel write and "
+    },
+    {
+      "environment": "theorembullet",
+      "statement": "\\emph{Adjacent split-gated cores with different decay placement.} The GDN-2 linear core is the E97 linear core applied to a pre-decayed state (\\protec"
+    },
+    {
+      "environment": "theorembullet",
+      "statement": "\\emph{Saturation insensitivity.} If the slot is saturated in the sense $| {{S }_{i , j }}|  >  1 -  \\epsilon $, and a perturbation $\\delta $ to the pr"
+    },
+    {
+      "environment": "theorembullet",
+      "statement": "\\emph{Sign-preserving hold.} With $\\lambda  \\geq  1$ and a bounded write $| W |  \\leq  T  <  \\lambda  ( 1 -  \\eta ) $ at slot $( i , j ) $, a slot alr"
+    },
+    {
+      "environment": "theorembullet",
+      "statement": "\\emph{Counter-delta release.} With $\\lambda  >  0$, ${S }_{i , j } >  0$, and a write contribution $W  <  - \\lambda  {S }_{i , j }$ in the opposite si"
+    },
+    {
+      "environment": "theorem",
+      "statement": "The concrete repeated-map family is the schedule of \\protect\\path|CompositionalDepthDuality.E97Step| values $( k , b , w , v ) $ at fixed $\\lambda $, "
+    },
+    {
+      "environment": "theorem",
+      "statement": "For a fixed, state-independent schedule of \\protect\\path|CompositionalDepthDuality.GdnStepParams|, \\protect\\path|gdn_state_channel_depth_bounded_in_ti"
+    },
+    {
+      "environment": "theorem",
+      "statement": "\\protect\\path|S5GDNBridge.gdn_s5_realization_requires_per_token_action| assumes a token-only schedule and a decoder that recovers \\protect\\path|S5Trac"
+    }
+  ],
+  "citations": [
+    "mamba2024",
+    "mamba2_2024",
+    "mamba3_2026",
+    "gla2023",
+    "rwkv7_2025",
+    "deltanet2024",
+    "gated_deltanet2024",
+    "merrill2024transformers",
+    "barrington1986",
+    "pararnn2025",
+    "m2rnn2026",
+    "olmohybrid2026",
+    "titans2025",
+    "griffin2024",
+    "thepile2020",
+    "gated_deltanet2_2026",
+    "cmaes2003",
+    "m2rnn2026",
+    "olmohybrid2026",
+    "titans2025",
+    "griffin2024",
+    "merrill2024transformers",
+    "m2rnn2026",
+    "pararnn2025",
+    "gated_deltanet2_2026",
+    "cmaes2003",
+    "m2rnn2026",
+    "hprc2023",
+    "guarracino2023acrocentric",
+    "pggb2024",
+    "merrill2024transformers",
+    "elman1990",
+    "lstm1997",
+    "mamba2024",
+    "mamba2_2024",
+    "gla2023",
+    "deltanet2024",
+    "gated_deltanet2024",
+    "gated_deltanet2_2026",
+    "mamba3_2026",
+    "mingru_2024",
+    "griffin2024",
+    "merrill2024transformers",
+    "merrill_sabharwal2023log_precision",
+    "chiang2025uniform_tc0",
+    "xlstm2024",
+    "m2rnn2026",
+    "titans2025",
+    "siegelmann1995",
+    "barrington1986",
+    "mamba2_2024",
+    "m2rnn2026",
+    "triton2019",
+    "schedulefree2024",
+    "diloco2023",
+    "pararnn2025",
+    "gated_deltanet2_2026",
+    "cmaes2003",
+    "m2rnn2026",
+    "candy_temes1992",
+    "haykin2002",
+    "lyons2011",
+    "daubechies2004",
+    "beck_teboulle2009",
+    "jaeger2001",
+    "may1976",
+    "khalil2002",
+    "lean42021",
+    "mathlib4",
+    "merrill2024transformers",
+    "barrington1986",
+    "merrill2024transformers",
+    "merrill_sabharwal2023log_precision",
+    "chiang2025uniform_tc0",
+    "widrow_hoff_1960",
+    "schmidhuber_1992_fastweights",
+    "schlag_irie_schmidhuber_2021",
+    "deltanet2024",
+    "mamba2024",
+    "mamba2_2024",
+    "retnet2023",
+    "gla2023",
+    "deltanet2024",
+    "gated_deltanet2024",
+    "rwkv4_2023",
+    "rwkv7_2025",
+    "hgrn2_2024",
+    "mingru_2024",
+    "xlstm7b2025",
+    "griffin2024",
+    "merrill2024transformers",
+    "s5_2022",
+    "gated_deltanet2_2026",
+    "m2rnn2026",
+    "xlstm2024",
+    "xlstm7b2025",
+    "titans2025",
+    "lstm_zoo_2025",
+    "lstm1997",
+    "gated_deltanet2_2026",
+    "gated_deltanet2_2026",
+    "siegelmann1995",
+    "thepile2020",
+    "schedulefree2024",
+    "cmaes2003",
+    "m2rnn2026",
+    "m2rnn2026",
+    "arc2018",
+    "hellaswag2019",
+    "sciq2017",
+    "openbookqa2018",
+    "boolq2019",
+    "bbh2022",
+    "reclor2020",
+    "folio2022",
+    "schedulefree2024",
+    "thepile2020"
+  ],
+  "anonymizedURLs": [
+    "https://huggingface.co/spinozans/emender-e97-1.3b",
+    "https://huggingface.co/spinozans/gdn2-mlp-1.3b",
+    "http://hypervolu.me/~erik/ndm/Garrison_2026_Emender.pdf",
+    "https://huggingface.co/spinozans/emender-e97-1.3b",
+    "https://huggingface.co/spinozans/gdn2-mlp-1.3b",
+    "http://hypervolu.me/~erik/ndm/Garrison_2026_Emender.pdf"
+  ]
+}
