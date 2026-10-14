@@ -1,9 +1,9 @@
-# Math-notation spec for §7 spine theorems (in-paper)
+# Math-notation spec for §8 spine theorems (in-paper)
 
-**Scope.** This spec governs **§7 inline use only**: the symbols, the
+**Scope.** This spec governs **§8 inline use only**: the symbols, the
 quantitative-bound notation, the witness/margin notation, the theorem-statement
 style (inline form), and the machine-verification anchor convention used by the
-two-to-four spine theorems lifted into §7 math notation. The arXiv PDF carries
+two-to-four spine theorems lifted into §8 math notation. The arXiv PDF carries
 the spine theorems inline; it does *not* carry full prose proofs.
 
 The full statement list, the lemma DAG, and the prose proofs live in a
@@ -12,12 +12,19 @@ post. Conventions for that companion (proof-presentation style, lemma citations,
 length norms, reinterpretability-of-proofs discipline) are deferred and live
 at the bottom of this file under "Deferred: blueprint companion spec".
 
-**Status.** Decisive for the in-paper §7 scope. No "either/or" choices left
-for the §7 spine-theorem render tasks.
+**Status.** Decisive for the in-paper §8 scope. No "either/or" choices left
+for the §8 spine-theorem render tasks.
 
 ---
 
 ## 1. Symbols for the core objects
+
+The manuscript-wide table in `paper/main.typ` (§2, Notation) is the
+reader-facing authority. This implementation reference and the deferred
+companion examples must preserve its explicit source-name mappings: Lean
+`H` → paper `S` for E97/GDN; Lean erase gate `b` → paper `e`; the
+M²RNN comparator retains `H`. P13 also uses `omega` for the slot write
+contribution, reserving `W` for learned/recurrent weight matrices.
 
 These symbols are **fixed**. Render tasks must not substitute alternatives.
 
@@ -25,11 +32,11 @@ These symbols are **fixed**. Render tasks must not substitute alternatives.
 |---|---|---|---|
 | Emender matrix state at head $h$ | $S_h$ or $S$ | `S_h`, `S` | Matches paper §3 exactly. Drop the $h$ subscript when the theorem statement is single-head. |
 | M²RNN matrix state | $H$ | `H` | Matches paper §3 ablation block and Lean side-by-side. Never use $H$ for the Emender state. |
-| Key vector (write address) | $k$ | `k` | $L^2$-normalised in body; theorem statements should say "with $\|k\| \le 1$" or "$\|k\|=1$" as the hypothesis requires. |
+| Key vector (write address) | $k$ | `k` | $L^2$-normalised in body; theorem statements preserve their actual norm hypotheses; C/C′ use the unnormalized key `(1,1)` and zero-key fillers, not production normalized keys. |
 | Value vector | $v$ | `v` | |
 | Query vector (read address) | $q$ | `q` | |
-| Prediction error / delta | $\delta$ | `delta` | $\delta = v - S^{\!\top} k$. Body §3 uses the same symbol. |
-| Scalar decay | $\lambda$ | `lambda` | Theorem-statement parameter. Body §3 uses $d_h \in (0,1)$ for the learned per-token decay; the trusted-core theorems use $\lambda$ as a free scalar with $\lambda > 0$ stated. Bridge the two by a single sentence in §7 preamble; do not rename. |
+| Prediction error / delta | $\delta$ | `delta` | $\delta = v - S^{\!\top} k$. Split-gated body §3 uses `delta = w hadamard v - transpose(S)(e hadamard k)`. |
+| Scalar decay | $\lambda$ | `lambda` | Theorem-statement parameter. Body §3 uses $d_h \in (0,1)$ for the learned per-token decay; the trusted-core theorems use $\lambda$ as a free scalar with $\lambda > 0$ stated. Bridge the two by a single sentence in §8 preamble; do not rename. |
 | State dimension (common) | $d$ | `d` | $d = N = V$ in body §3; the trusted-core theorems use $d$ for the common matrix dimension. |
 | State rows (keys) | $N$ | `N` | |
 | State columns (values) | $V$ | `V` | |
@@ -99,10 +106,10 @@ when the proof produces an explicit constant.**
 
 ### Release threshold (counter-delta release)
 
-$T^\star := \lambda |S_{i,j}|$. Any write contribution $W$ with $W$ in the
-opposite sign of $S_{i,j}$ and $|W| > T^\star$ releases the latch. The
+$T^\star := \lambda |S_{i,j}|$. Any write contribution $\omega$ with $\omega$ in the
+opposite sign of $S_{i,j}$ and $|\omega| > T^\star$ releases the latch. The
 quantitative companion gives post-update magnitude at least $\tanh(\mu)$
-where $\mu := |W| - T^\star > 0$.
+where $\mu := |\omega| - T^\star > 0$.
 
 ---
 
@@ -116,12 +123,12 @@ $$
 S^\star = \begin{pmatrix} 0 & 0 \\ 1 & 0 \end{pmatrix},
 $$
 
-and the witness key is $k^\star = (\tfrac{1}{\sqrt 2}, \tfrac{1}{\sqrt 2})^{\!\top}$,
+and the witness key is $k^\star = (1,1)^{\!\top}$,
 the "mixed" key. Typst:
 
 ```typst
 S^* = mat(0, 0; 1, 0), quad
-k^* = vec(1/sqrt(2), 1/sqrt(2)).
+k^* = vec(1, 1).
 ```
 
 ### The $k$-step witness sequence
@@ -159,12 +166,12 @@ $\Delta^{(k)}_{0,0} = -\tanh^{\circ k}(-1) \neq 0$.
 
 ---
 
-## 4. Theorem-statement style (§7 inline form)
+## 4. Theorem-statement style (§8 inline form)
 
-Theorem statements inside §7 are written as **a single English sentence (or
+Theorem statements inside §8 are written as **a single English sentence (or
 two)** that carries every Lean-side hypothesis inline, ends in the displayed
 or inline bound, and is followed by a parenthetical "(Lean: `<qualified
-name>`)" anchor. The existing §7 already uses this convention for theorem
+name>`)" anchor. The existing §8 already uses this convention for theorem
 sets A–F; subsequent spine-theorem renders must match it.
 
 Form template:
@@ -179,24 +186,24 @@ Lean: `EmenderLatching.emender_saturation_insensitivity`).
 
 ### Rules
 
-- **No proofs in §7.** The inline form is statement + ~1-sentence intuition
+- **No proofs in §8.** The inline form is statement + ~1-sentence intuition
   only. Full proofs live in the blueprint companion (see "Deferred" section
   below); the in-paper version cites the Lean anchor and moves on.
 - **One sentence per theorem statement.** If the sentence is unreadable at
   one sentence, that is a sign the theorem belongs in the appendix /
   companion rather than inline. The four-to-six load-bearing latch /
   separation results are short enough to read as one sentence; the longer
-  capacity-style targets are not §7 candidates.
+  capacity-style targets are not §8 candidates.
 - **Hypotheses inline, not numbered.** Numbered (i), (ii), (iii) form belongs
-  in the verbose appendix/companion style, not §7 inline.
+  in the verbose appendix/companion style, not §8 inline.
 - **Theorem name + Lean anchor at the end.** Format
   `(Theorem F1, *saturation insensitivity*; Lean: \`<qualified name>\`)`.
-  Variants like `(Lean: ...)` alone are acceptable when the §7 prose already
-  named the result; the bare `(Lean: ...)` form is the existing §7 default.
+  Variants like `(Lean: ...)` alone are acceptable when the §8 prose already
+  named the result; the bare `(Lean: ...)` form is the existing §8 default.
 
 ### Faithfulness discipline (fidelity > cleanliness)
 
-Every §7 inline statement must include every hypothesis the Lean statement
+Every §8 inline statement must include every hypothesis the Lean statement
 quantifies over. In particular:
 
 - The **external-forget class** qualifier ("for every fixed-right raw-write
@@ -229,8 +236,8 @@ reads cleanly but omits a hypothesis is wrong.
 Machine-verified in Lean: ElmanProofs.Architectures.<Module>.<theorem_name>
 ```
 
-In §7 inline form the anchor appears in parenthetical short form
-"(Lean: `<qualified name>`)" — already the existing §7 convention. The
+In §8 inline form the anchor appears in parenthetical short form
+"(Lean: `<qualified name>`)" — already the existing §8 convention. The
 **full** "Machine-verified in Lean:" phrase is reserved for the longer
 appendix / companion form (deferred).
 
@@ -241,10 +248,10 @@ placement, not URL rendering.
 ### Placement
 
 **Parenthetical, at the end of the theorem-statement sentence, before the
-sentence-ending period.** This matches existing §7 conventions where
+sentence-ending period.** This matches existing §8 conventions where
 `(Lean: \`emender_realizes_s5_tracker\`)` is the trailing parenthetical.
 
-Concretely, the structure of a §7 inline entry is:
+Concretely, the structure of a §8 inline entry is:
 
 ```
 <English sentence carrying hypotheses and conclusion>
@@ -263,7 +270,7 @@ The Lean has several specifications that are mathematically faithful but
 verbose: the external-forget sub-class taxonomy (row/column/cell), the
 fixed-right parameterisation condition, the orthonormal-key family
 restriction, the unit-key inner-product hypothesis ($\|k\|^2 = 1$), etc.
-**These must appear in the §7 inline math statement, translated to standard
+**These must appear in the §8 inline math statement, translated to standard
 notation, not paraphrased away.**
 
 Examples:
@@ -288,9 +295,9 @@ a different system will need it.
 
 ---
 
-## 7. Worked example: F1 (saturation insensitivity), §7 inline form
+## 7. Worked example: F1 (saturation insensitivity), §8 inline form
 
-The worked example is **§7-inline only**: a one-to-two-sentence English
+The worked example is **§8-inline only**: a one-to-two-sentence English
 statement carrying every hypothesis, a displayed or inline bound, and the
 machine-verification anchor.
 
@@ -310,12 +317,12 @@ The first sentence is the theorem statement (hypotheses inline, displayed
 bound at the end, parenthetical label-and-Lean anchor). The second sentence
 is the one-sentence intuition.
 
-No prose proof is rendered in §7. The proof lives in the blueprint companion
+No prose proof is rendered in §8. The proof lives in the blueprint companion
 that ships after the arXiv post.
 
 ---
 
-## Summary of the seven decisions (in-paper / §7 scope)
+## Summary of the seven decisions (in-paper / §8 scope)
 
 For the `wg log` summary record:
 
@@ -329,10 +336,10 @@ For the `wg log` summary record:
 3. **Witnesses.** 2-D alphabet with $S^\star$, $k^\star$; sequence
    $[(k^\star, 0), (0, 0), \dots, (0, 0)]$ of length $k$; trajectory
    difference $\Delta^{(k)}$ with entrywise margin at $(0,0)$.
-4. **Theorem statements (§7 inline).** One English sentence carrying all
+4. **Theorem statements (§8 inline).** One English sentence carrying all
    Lean-side hypotheses, ending in the displayed or inline bound, followed
    by `(Theorem <label>, *<name>*; Lean: \`<qualified name>\`)`. No proofs
-   in §7; one-sentence intuition only.
+   in §8; one-sentence intuition only.
 5. **Fidelity > cleanliness.** External-forget sub-class taxonomy,
    fixed-weight conditions, unit-key inner products, $k \ge 1$ lower bounds —
    all preserved verbatim in the math statement.
@@ -344,7 +351,7 @@ For the `wg log` summary record:
    paraphrase them away.
 
 **Worked theorem rendered.** F1 (saturation insensitivity) as it would
-appear in §7: one statement sentence + one intuition sentence + Lean anchor.
+appear in §8: one statement sentence + one intuition sentence + Lean anchor.
 Typst-renderability confirmed via scratch compile (`paper/data/_scratch_F1_render.typ`,
 deleted after verification).
 
@@ -354,7 +361,7 @@ deleted after verification).
 
 The following conventions are **deferred** to a separate
 `leanblueprint`-style web companion that ships after the arXiv post. They
-do not govern the in-paper §7 spine theorems; they govern the companion
+do not govern the in-paper §8 spine theorems; they govern the companion
 where the full statement list, the lemma DAG, and the prose proofs live.
 
 This section is a placeholder so the conventions are not lost; the companion

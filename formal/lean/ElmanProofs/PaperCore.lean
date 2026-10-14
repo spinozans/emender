@@ -2,14 +2,17 @@
 Copyright (c) 2026 Elman-Proofs Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
+import ElmanProofs.Architectures.EmenderLatching
 import ElmanProofs.Architectures.M2RNNComparison
 import ElmanProofs.Architectures.MultiStepSeparation
 import ElmanProofs.Architectures.OnlineMemory
 import ElmanProofs.Architectures.RecurrentResourceFormalism
 import ElmanProofs.Architectures.S5Inseparability
 import ElmanProofs.Architectures.SplitGatedDelta
+import ElmanProofs.Expressivity.CompositionalDepthDuality
 import ElmanProofs.Expressivity.E88ExceedsE1HCapacity
 import ElmanProofs.Expressivity.NDMRealizesS5
+import ElmanProofs.Expressivity.S5GDNBridge
 import ElmanProofs.Expressivity.S5NDMRealization
 import ElmanProofs.Expressivity.S5Tracker
 import ElmanProofs.Expressivity.S5Witness
@@ -43,6 +46,15 @@ paper-space claims:
   the same split-gated read/write core applied to a pre-decayed state. A
   concrete 1x1 witness shows a non-all-one split write gate can leave the E88
   all-one-gate subfamily on a fixed state/input.
+* The compositional-depth duality is checked over those actual one-step maps:
+  the E97/E88 state after `T` steps is the `T`-fold left composition of the
+  nonlinear update map, so its per-layer temporal depth is `T`
+  (`CompositionalDepthDuality.e97_compositional_depth_grows_in_time`), while for
+  any GDN/gated-delta step schedule the state-channel map is affine in the
+  initial state, so its nonlinear temporal depth is constant in `T`
+  (`CompositionalDepthDuality.gdn_state_channel_depth_bounded_in_time`). The E1H
+  temporal-depth claim is strengthened to a structural composition theorem
+  (`CompositionalDepthDuality.e1hStateAfterT_eq_compose`).
 * The E97/E88/GDN-2 resource-cost surface is checked only at the coarse
   recurrent-state signature level: E97 has the same leading per-head
   `flopsPerToken` cost as E88, precomputed split-gate application is counted
@@ -64,6 +76,26 @@ paper-space claims:
   core loads an orthonormal table whose readout, decoded and composed with any
   input state, reproduces `s5TransitionMemory.read` on every
   `(state, generator)` pair (`NDMRealizesS5.emender_realizes_s5_tracker`).
+* The E97/GDN time-depth duality is checked over the actual one-step maps: the
+  E97/E88 state after `T` steps is the `T`-fold composition of the nonlinear
+  update map (compositional depth grows with sequence length), while the GDN
+  state channel is affine in the carried state for any finite schedule.
+* The S5 routing bridge is checked (`S5GDNBridge`): any GDN-family schedule that
+  realizes the S5 tracker (with a reachable-state-separating decoder) forces the
+  word-level state map to factor through the S5 element, makes the per-token fold
+  act as right multiplication by that element, and each such action is affine;
+  a token-independent schedule provably cannot realize the tracker. This is a
+  routing statement — the S5 action must be carried per token — and is **not** a
+  circuit-depth lower bound on the per-token network.
+* The Emender's full delta-correcting nonlinear update has three quantitative
+  latching properties checked at the slot level
+  (`EmenderLatching.emender_saturation_insensitivity`,
+  `EmenderLatching.emender_latch_holds_by_default`,
+  `EmenderLatching.emender_latch_releases_on_counter_delta`):
+  the post-tanh slope vanishes at saturation by an explicit `2(ε + M)` bound,
+  a saturated slot survives any bounded write below the latch threshold, and
+  the saturation latch releases on any counter-delta exceeding `λ · |S_ij|`
+  in the opposite sign.
 
 Use `scripts/check_paper_core.sh` to reject unfinished proof holes, explicit
 assumptions, opaque declarations, and kernel-bypassing computation in this

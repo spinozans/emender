@@ -1,0 +1,29 @@
+{
+  "task": "iterated_nonlinear_map (logistic, binned; the taskA3-brief-named family)",
+  "drivers": {
+    "n": 5,
+    "a_values": [
+      2.6,
+      2.85,
+      3.1,
+      3.35,
+      3.6
+    ]
+  },
+  "definition": "lambda = time-avg log|a_t*(1-2h_{t-1})| along the task's own h-orbit (h_0=0.5, iid drivers, task clip applied)",
+  "mixed_driver_lambda_per_seed": {
+    "42": -0.201146,
+    "7": -0.201094,
+    "2026": -0.201299
+  },
+  "mixed_driver_lambda_mean": -0.20118,
+  "fixed_driver_lambda": {
+    "a=2.6": -0.510826,
+    "a=2.85": -0.162519,
+    "a=3.1": -0.263816,
+    "a=3.35": -0.324565,
+    "a=3.6": 0.183405
+  },
+  "clip_hits_total": 0,
+  "verdict": "lambda = -0.2012 < 0: the system is CONTRACTIVE on average (4/5 drivers are period-1/2 attractors; the sole chaotic driver a=3.6 has fixed-driver lambda = +0.183, but the mixed-driver average is negative). T* = ln(1/eps)/lambda is therefore NOT a finite kill length on this family: state error DECAYS rather than compounds. This matches the paper's section-6 contractive-control finding and is why this family is the 8M control, not the 1.3B depth-wall test vehicle (operator ruling taskA3-D2)."
+}

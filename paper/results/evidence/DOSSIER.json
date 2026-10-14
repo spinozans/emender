@@ -1,0 +1,255 @@
+{
+  "dossier_version": "1.0",
+  "generated": "2026-10-06",
+  "worktree": "/home/erikg/emender-paper",
+  "branch": "paper-1p3b-spine",
+  "head_commit": "29bb9d0d",
+  "paper_source": "paper/main.typ",
+  "purpose": "Machine-readable provenance dossier binding every load-bearing claim in the Emender paper to committed artifacts (results CSVs/JSON, figures, Lean theorem sources, eval CSVs), so the paper can point readers at a 'committed run artifacts' surface. Each artifact records the path, the most recent commit that touched it (git -C /home/erikg/emender-paper log --format=%h -1 -- <path>), and what the artifact shows.",
+  "summary": {
+    "total_claims": 21,
+    "bound": 17,
+    "unbound": 4
+  },
+  "claims": [
+    {
+      "id": "C1-viability-bpb",
+      "claim": "The Emender/E88 1.273B pure-nonlinear-recurrent LM (dim=1664, depth=12, H=370, N=32) reaches 0.973 bits-per-byte on The Pile after ~22-24 GPU-days on a single workstation-class GPU, with no cluster and no sequence parallelism.",
+      "section": "s5 (Language-Modeling Results); s1 contributions (Viability)",
+      "status": "bound",
+      "artifacts": [
+        {"path": "paper/results/figure_2/E88_NDM.csv", "commit": "4a18eda1", "shows": "Normalized 100K-trailing nats/bpb vs wallclock trajectory for the E88 v0.3 run; endpoint 0.973 BPB at step 1,542,000."},
+        {"path": "paper/results/figure_2/AS_OF.md", "commit": "4a18eda1", "shows": "Records the v0.3 checkpoint steps and 100K-trailing loss/bpb endpoints for E88/GDN/M2RNN-CMA with per-model configs and the bpb conversion constant."},
+        {"path": "paper/results/figure_2/figure_2.png", "commit": "4a18eda1", "shows": "Rendered training-loss-vs-wallclock panel for the three 1.3B racers referenced as fig_lm_racers."},
+        {"path": "paper/review/THROUGHPUT.md", "commit": "d86ee36b", "shows": "Measured 7,492 tok/s sustained and 99.8% median GPU utilization for E88 1.273B on an RTX 6000 Ada; substantiates the single-GPU throughput/viability route."}
+      ]
+    },
+    {
+      "id": "C2-multiprogram-geometry",
+      "claim": "The throughput comes from width-axis multi-programming: 22,200 small bounded recurrent programs per token (370 heads x batch 5 x depth 12), each a 32x32 matrix-state tile held in registers, with the time loop serial inside each program.",
+      "section": "s1 (contribution 1); s4 (Multi-Programming and Systems)",
+      "status": "bound",
+      "artifacts": [
+        {"path": "formal/lean/ElmanProofs/Architectures/RecurrentResourceFormalism.lean", "commit": "f6dfe8ae", "shows": "Defines ndm_1p27B_programs_per_batch_token_bs5 (=22200) and the 1.27B state-scalar geometry theorems cited in the paper."},
+        {"path": "formal/lean/PROOF_INVENTORY.md", "commit": "8b5e9502", "shows": "Coverage table binds the 1.27B production-geometry claim to those Lean witnesses."},
+        {"path": "paper/results/figure_2/SOURCES.md", "commit": "53816515", "shows": "Records the E88 shape dim=1664, depth=12, heads=370, n_state=32 and 1,273,191,856 params."}
+      ]
+    },
+    {
+      "id": "C3-cma-per-architecture-protocol",
+      "claim": "All three 1.3B-class architectures (Emender, M2RNN-CMA, Gated DeltaNet) received independent per-architecture CMA-ES hyperparameter-and-shape search over the same six knobs under matched candidate budget; the search repeatedly selected high head count for E88 (final H=370).",
+      "section": "s5 (Per-architecture CMA-ES protocol)",
+      "status": "bound-partial",
+      "artifacts": [
+        {"path": "paper/results/cmaes_burst_v2/cmaes_eval_summary.csv", "commit": "899e91cd", "shows": "Normalized per-candidate CMA-ES eval summary across architecture families (1,285 candidate configurations total)."},
+        {"path": "paper/results/cmaes_burst_v2/cmaes_generation_summary.csv", "commit": "899e91cd", "shows": "Per-generation CMA-ES summary per architecture family."},
+        {"path": "paper/results/cmaes_burst_v2/SYNTHESIS.md", "commit": "14e7dd82", "shows": "Describes the normalized CMA-ES burst dataset and its coverage; states the selected-racer mapping figure was not produced."},
+        {"path": "paper/results/cmaes_burst_v2/CMAES_LOG_INVENTORY.md", "commit": "e436f0cd", "shows": "Inventory of the CMA-ES logs folded into the normalized burst dataset."}
+      ]
+    },
+    {
+      "id": "C4-trainloss-tie",
+      "claim": "At the released v0.3 checkpoints the training-loss bpb is 0.973 (E88) / 0.973 (GDN) / 0.979 (M2RNN-CMA): all sub-1-bpb and in the same loss-versus-wallclock band.",
+      "section": "s5 (Loss-vs-wallclock comparison)",
+      "status": "bound",
+      "artifacts": [
+        {"path": "paper/results/figure_2/AS_OF.md", "commit": "4a18eda1", "shows": "Endpoints table: 100K-trailing loss 2.644/2.644/2.660 nats and bpb 0.973/0.973/0.979 at the pinned v0.3 steps."},
+        {"path": "paper/results/figure_2/E88_NDM.csv", "commit": "4a18eda1", "shows": "E88 smoothed/trailing loss trajectory underlying the E88 endpoint."},
+        {"path": "paper/results/figure_2/FLA_GDN.csv", "commit": "4a18eda1", "shows": "GDN smoothed/trailing loss trajectory underlying the GDN endpoint."},
+        {"path": "paper/results/figure_2/M2RNN_CMA.csv", "commit": "4a18eda1", "shows": "M2RNN-CMA smoothed/trailing loss trajectory underlying the M2RNN-CMA endpoint."}
+      ]
+    },
+    {
+      "id": "C5-heldout-bpb-tie",
+      "claim": "Held-out bpb is 0.966 (Emender) / 0.966 (GDN) / 0.961 (M2RNN-CMA) on the canonical 10MB Pile slice, and the three update rules are a statistical tie across five independent held-out Pile slices (between-model gaps inside cross-slice noise).",
+      "section": "s5 (Held-out bits-per-byte); Appendix B (Held-out bits-per-byte measurement)",
+      "status": "bound",
+      "artifacts": [
+        {"path": "paper/review/HELDOUT_MULTISLICE.md", "commit": "b1dfca62", "shows": "Five-slice held-out bpb table and per-slice ordering; documents the tie and the slice-dependent lowest-bpb model."},
+        {"path": "paper/review/heldout_multislice_slices.json", "commit": "b1dfca62", "shows": "Machine-readable slice manifest (offsets, byte counts, sha256) for the five held-out Pile slices."},
+        {"path": "paper/review/BPB_FULL_TABLE.md", "commit": "76c46332", "shows": "Consolidated held-out bpb landscape separating the absolute-table context from the matched-budget three-way."},
+        {"path": "paper/review/PILE_BPB_MEASURED.md", "commit": "fdca5edc", "shows": "Measured held-out bpb for the three v0.3 checkpoints and the open Pile-trained/ OOD anchors."},
+        {"path": "paper/review/heldout_slice.json", "commit": "268844cc", "shows": "Canonical single-slice manifest (path, length, sha256, extraction recipe)."},
+        {"path": "paper/review/heldout_harness_json/e88.json", "commit": "b3c2782b", "shows": "Per-model held-out measurement record for E88 through the eval harness."},
+        {"path": "scripts/measure_pile_bpb_elman.py", "commit": "b1dfca62", "shows": "The in-harness sliding-window bpb measurement code for the paper's own models."},
+        {"path": "scripts/measure_pile_bpb.py", "commit": "268844cc", "shows": "The open-model bpb measurement code used for the reference anchors."}
+      ]
+    },
+    {
+      "id": "C6-commonpile-control",
+      "claim": "The held-out tie reproduces on an independent Common Pile slice (contamination control); the Pile-trained open references do not show contamination-inflated Pile numbers.",
+      "section": "Appendix B (Second distribution: Common Pile)",
+      "status": "bound",
+      "artifacts": [
+        {"path": "paper/review/COMMA_PILE_BPB.md", "commit": "76c46332", "shows": "Common-Pile held-out bpb measurements for the three models and the reference/classical coders."},
+        {"path": "paper/review/comma_slice.json", "commit": "76c46332", "shows": "Common-Pile slice manifest (offset, byte length, extraction)."}
+      ]
+    },
+    {
+      "id": "C7-gradient-conditioning",
+      "claim": "The paper-default M2RNN shape (dim=3072, depth=10, H=759, N=16) diverged at step 8,400 with gradient norm ~4.2e7 under the pure-recurrent 1.3B setup, while the CMA-reshaped M2RNN-CMA of the same update family is stable; the difference is q/k-to-value-head addressing geometry.",
+      "section": "s5 (Gradient conditioning is a third recipe property)",
+      "status": "bound-partial",
+      "artifacts": [
+        {"path": "paper/results/figure_2/SOURCES.md", "commit": "53816515", "shows": "Record of the abandoned M2RNN-paper run (stopped step 8,400, loss ~11.5) and the M2RNN-CMA stable run configuration; raw log path cited."},
+        {"path": "docs/M2RNN_E88_COMPARISON.md", "commit": "cbcc726c", "shows": "Production stability table: paper M2RNN step 8,400 loss 11.574 grad 4.19e7 vs CMA/tied M2RNN stable, with the q/k-head mechanism explanation."},
+        {"path": "formal/lean/M2RNN_E88_COMPARISON.md", "commit": "cbcc726c", "shows": "Companion comparison note tying the geometry/update-family distinction to the Lean resource formalism."}
+      ]
+    },
+    {
+      "id": "C8-flops-per-bit-convergence",
+      "claim": "Under per-architecture CMA-ES at matched budget (N=4 recurrent families: NDM/E88, FLA-GDN, Mamba2, vanilla Elman), the FLOPs-per-bit-of-compression curves collapse onto nearly one learning rate; NDM is in the same band as the leading linear baselines but not the fastest.",
+      "section": "s5 (The loss tie reproduces under matched compute); supporting comparison (contribution 3)",
+      "status": "bound",
+      "artifacts": [
+        {"path": "paper/results/cma_flop_rate/convergence.png", "commit": "0e007010", "shows": "Rendered bits-per-token vs cumulative-FLOPs and FLOPs-per-bit panels for the four families."},
+        {"path": "paper/results/cma_flop_rate/summary.csv", "commit": "193ddaea", "shows": "Best CMA-tuned config per family with params, final nats, and bits/token."},
+        {"path": "paper/results/cma_flop_rate/thresholds.csv", "commit": "193ddaea", "shows": "FLOPs per bit of compression at the 2.50/2.00/1.80 bit thresholds."},
+        {"path": "paper/results/cma_flop_rate/SOURCES.md", "commit": "193ddaea", "shows": "Upstream run directories and consumed fields for the extraction; records the out-of-repo ~/elman source and the M2RNN data gap."},
+        {"path": "docs/CMA_FLOP_RATE_FINDING.md", "commit": "193ddaea", "shows": "Internal finding write-up with the N=4 caveat and the convergence tables."}
+      ]
+    },
+    {
+      "id": "C9-s5-s3-8m-micro",
+      "claim": "At parameter-matched 8M scale, the Emender separates from baselines on S5 permutation composition at training length (E88 0.7918 vs GDN 0.3552 vs M2RNN 0.2157 vs M2RNN-paper 0.1698, seed mean); on S3 E88 1.0000 vs GDN 0.7185 vs M2RNN 0.3124.",
+      "section": "s6 (The S5 permutation-composition probe)",
+      "status": "bound-partial",
+      "artifacts": [
+        {"path": "paper/figures/s5_expressivity_seeds.png", "commit": "da77796c", "shows": "Per-seed bar figure of the S3/S5 separation at 8M used as fig_s5_bars."},
+        {"path": "paper/figures/plot_expressivity_seeds.py", "commit": "da77796c", "shows": "Script that renders the S3/S5 seeded bars from the probe numbers."},
+        {"path": "paper/ndmpapernotes.md", "commit": "aea195db", "shows": "Lines 153-173 carry the numeric S3/S5 table and the S5 length-extrapolation table that the figure encodes."}
+      ]
+    },
+    {
+      "id": "C10-canonical-6task-sweep",
+      "claim": "On the six-task canonical state-tracking sweep at 8M the Emender ties or exceeds GDN on five of six tasks, and under length extrapolation the parity/FSM/track gaps widen monotonically with length.",
+      "section": "s6 (The six-task canonical sweep)",
+      "status": "bound-partial",
+      "artifacts": [
+        {"path": "experiments/expressivity_tasks/CANONICAL_SWEEP_RESULTS.md", "commit": "cbcc726c", "shows": "6-task x 3-pattern in-distribution accuracy table (parity, modular counter, fsm, dyck, assoc recall, selective copy)."},
+        {"path": "experiments/expressivity_tasks/LENGTH_EXTRAP_RESULTS.md", "commit": "cbcc726c", "shows": "parity / modular_counter / fsm_tracking length-extrapolation curves."}
+      ]
+    },
+    {
+      "id": "C11-hybrid-degradation",
+      "claim": "An [Emender, Emender, GDN, GDN] AABB hybrid underperforms pure Emender on modular counter and FSM tracking at 8M, and underperforms pure GDN on modular counter: state-tracking capability does not survive dilution by linear-scan blocks.",
+      "section": "s6 (Hybrid degradation: purity matters)",
+      "status": "bound",
+      "artifacts": [
+        {"path": "paper/results/figure_4_hybrid/canon_hybrid_AABB__fsm_tracking__seed42.json", "commit": "b2b80e2d", "shows": "Per-seed JSON for the AABB hybrid on FSM tracking (seeds 42/123/456 present in the directory)."},
+        {"path": "paper/figures/hybrid_degradation_seeds.png", "commit": "b2b80e2d", "shows": "Per-seed hybrid-degradation bar figure (fig_hybrid)."},
+        {"path": "paper/figures/plot_hybrid_degradation.py", "commit": "b2b80e2d", "shows": "Script that renders the hybrid-degradation figure from the figure_4_hybrid JSONs."}
+      ]
+    },
+    {
+      "id": "C12-s5-1p3b-symmetric-budget",
+      "claim": "At 1.3B scale, under a single symmetric 24,000-step recipe with no S5 tuning, the S5 length-extrapolation ordering is E88 > M2RNN > GDN at every length out to T=1024; E88 nearly solves S5 at the trained length (0.921) but plateaus below ceiling.",
+      "section": "s6 (The same separation at 1.3 B scale; The delta update is also length-bounded)",
+      "status": "bound",
+      "artifacts": [
+        {"path": "paper/review/s5_symmetric_data/e88.json", "commit": "4b89e64e", "shows": "Raw run JSON for E88 S5 symmetric-budget fine-tune (recipe, per-length accuracy; gdn.json and m2rnn.json siblings)."},
+        {"path": "paper/review/S5_SYMMETRIC_BUDGET.md", "commit": "4b89e64e", "shows": "The symmetric-budget result table (E88/M2RNN/GDN at T=64/128/256/512/1024) and the plateau finding."},
+        {"path": "paper/review/S5_SYMMETRIC_RESULTS.md", "commit": "1ba292ed", "shows": "CMA-tuned symmetric winner-eval results (Emender 0.9997 > GDN 0.5446 > M2RNN 0.1655 at S5 T=128)."},
+        {"path": "paper/figures/s5_symmetric_acc_vs_T.png", "commit": "94704e60", "shows": "Rendered S5 accuracy vs length figure (fig_s5_symmetric)."},
+        {"path": "experiments/expressivity_tasks/results/s5_symmetric_20260603/eval/summary.json", "commit": "1ba292ed", "shows": "Seed-mean roll-up of the committed symmetric winner-eval per-seed JSONs."}
+      ]
+    },
+    {
+      "id": "C13-s3-s5-1p3b-to-competence",
+      "claim": "In the prior 1.3B run with the M2RNN under-training confound removed, the ordering E88 (delta) > M2RNN (raw-write) > GDN (linear) holds at every length, and all three models are competent on the solvable S3 and parity controls at the trained length.",
+      "section": "s6 (The same separation at 1.3 B scale; The solvable controls hold)",
+      "status": "bound",
+      "artifacts": [
+        {"path": "paper/review/s3_s5_finetune_v03_data_tocomp/e88.json", "commit": "56d7a2d3", "shows": "Raw per-model run JSON for the to-competence 1.3B S3/S5 fine-tune (gdn.json and m2rnn.json siblings)."},
+        {"path": "paper/review/S3_S5_FINETUNE_V03.md", "commit": "56d7a2d3", "shows": "Report of the to-competence run: S5 and solvable-control tables read from the committed JSONs."},
+        {"path": "paper/figures/s5_s3_1p3b_lengthgen.png", "commit": "77dbb281", "shows": "Rendered 1.3B S5 plus S3/parity solvable-control figure (fig_1p3b_lengthgen)."},
+        {"path": "paper/figures/plot_s5_s3_1p3b_lengthgen.py", "commit": "77dbb281", "shows": "Script that renders fig_1p3b_lengthgen from the to-competence JSONs."}
+      ]
+    },
+    {
+      "id": "C14-qa-reasoning-panel",
+      "claim": "On the 300-item multi-choice fact panel the three 1.3B models are within one SE (E88 0.367, GDN 0.380, M2RNN-CMA 0.367, random ~0.29); on the reasoning panel E88 overall 0.319 vs M2RNN-CMA 0.336, all near-random on multi-step tracking; no reasoning separation at this budget.",
+      "section": "s6 (QA and reasoning panel at 1.3 B)",
+      "status": "bound",
+      "artifacts": [
+        {"path": "paper/results/qa_reasoning/racer_panel_300item_progression.csv", "commit": "43e7cda8", "shows": "300-item racer panel progression (50 items x 6 tasks) across model snapshots."},
+        {"path": "paper/results/qa_reasoning/reasoning_panel_latest.csv", "commit": "43e7cda8", "shows": "Latest BBH + ReCLor + FOLIO reasoning-panel per-item results."},
+        {"path": "paper/results/qa_reasoning/fact_panel_latest.csv", "commit": "43e7cda8", "shows": "Larger fact panel snapshot per-item results."},
+        {"path": "paper/results/qa_reasoning/SOURCES.md", "commit": "43e7cda8", "shows": "Eval-log provenance under ~/racer_eval_runs/ and the panel/CSV manifest."}
+      ]
+    },
+    {
+      "id": "C15-lean-update-family-separation",
+      "claim": "A trusted Lean 4 core proves the one-step resource separation between the delta-correcting and raw-write update families (set C), the k-step separation that does not wash out under composition (set C'), the positive embedding (M2RNN embeds an Emender step given read-then-delta), and a matched per-token FLOP class (set D), with no sorry/admit/axiom/opaque/native_decide.",
+      "section": "s7 (Theorem sets C, C', D); s2 contribution 2",
+      "status": "bound",
+      "artifacts": [
+        {"path": "formal/lean/ElmanProofs/Architectures/RecurrentResourceFormalism.lean", "commit": "f6dfe8ae", "shows": "emender_m2rnn_one_step_resource_separation_embeds and emender_m2rnn_flop_class_equiv."},
+        {"path": "formal/lean/ElmanProofs/Architectures/MultiStepSeparation.lean", "commit": "aea195db", "shows": "emender_m2rnn_k_step_separation, _exists, and emender_m2rnn_two_step_separation."},
+        {"path": "formal/lean/ElmanProofs/Architectures/M2RNNComparison.lean", "commit": "cbcc726c", "shows": "m2rnn_read_then_delta_embeds_e88_delta_update and the write-rule separation lemmas."},
+        {"path": "formal/lean/ElmanProofs/Architectures/OnlineMemory.lean", "commit": "dd35ac12", "shows": "linearDeltaWrite_overwrites_one_preserves_others and rawOuterWrite_not_uniformOneStepOverwrite."},
+        {"path": "formal/lean/ElmanProofs/PaperCore.lean", "commit": "f6dfe8ae", "shows": "Trusted import closure (PaperCore root) that the trust gate operates on."},
+        {"path": "formal/lean/PROOF_INVENTORY.md", "commit": "8b5e9502", "shows": "Claim-to-theorem coverage table and trust-gate status for the import closure."},
+        {"path": "formal/lean/LEAN_FRONTIER.md", "commit": "3ddda58e", "shows": "Multi-step separation frontier record (v16 push past one-step)."}
+      ]
+    },
+    {
+      "id": "C16-lean-s5-and-finite-state-ceiling",
+      "claim": "The Lean core pins down the S5 word problem (120 states, non-solvable, 120-state tracker, run_append composition, Python-semantics bridge) (set A) and proves an orthonormal-key Emender configuration realizes the S5 prefix tracker (set B), with a finite-state ceiling for fixed-precision recognizers and an exact lookup-table realization (480 state/input keys).",
+      "section": "s7 (Theorem sets A and B); s7 (The NC1 statement)",
+      "status": "bound",
+      "artifacts": [
+        {"path": "formal/lean/ElmanProofs/Expressivity/S5Witness.lean", "commit": "cbcc726c", "shows": "fixed_precision_state_space_finite, s5_state_count, s5_not_solvable."},
+        {"path": "formal/lean/ElmanProofs/Expressivity/S5Tracker.lean", "commit": "cbcc726c", "shows": "recognizer_state_count, run_append, pythonRun_eq_tracker_tuple."},
+        {"path": "formal/lean/ElmanProofs/Expressivity/S5NDMRealization.lean", "commit": "cbcc726c", "shows": "s5_transition_key_count (480) and exactTransitionMemory_run (namespace S5NDMRealization, cited in the paper as S5EmenderRealization)."},
+        {"path": "formal/lean/ElmanProofs/Expressivity/NDMRealizesS5.lean", "commit": "aea195db", "shows": "emender_realizes_s5_tracker (namespace NDMRealizesS5, cited in the paper as EmenderRealizesS5)."},
+        {"path": "formal/lean/ElmanProofs/PaperCore.lean", "commit": "f6dfe8ae", "shows": "Import closure containing the S5 surface."},
+        {"path": "formal/lean/PROOF_INVENTORY.md", "commit": "8b5e9502", "shows": "Coverage table binding each S5 statement to its theorem."}
+      ]
+    },
+    {
+      "id": "C17-triton-kernel-correctness",
+      "claim": "The multi-programmed recurrence is packaged into a fused Triton kernel (fused L2 norm, sparse checkpointing, fused output gate) with committed unit tests for the forward/backward/optimized kernels.",
+      "section": "s1 contribution 1; s4 (Multi-Programming and Systems)",
+      "status": "bound-partial",
+      "artifacts": [
+        {"path": "ndm/triton/e88_triton_forward.py", "commit": "3cf6439e", "shows": "Forward recurrence kernel with sparse checkpointing."},
+        {"path": "ndm/triton/e88_triton_backward.py", "commit": "3cf6439e", "shows": "Sparse-checkpoint backward kernel."},
+        {"path": "ndm/triton/e88_triton_optimized.py", "commit": "3cf6439e", "shows": "Optimized kernel with fused L2 norm and fused output gate."},
+        {"path": "tests/test_e88_triton.py", "commit": "0631411b", "shows": "Correctness test for the Triton forward/backward kernel."},
+        {"path": "tests/test_e88_triton_optimized.py", "commit": "0631411b", "shows": "Correctness test for the optimized kernel."}
+      ]
+    }
+  ],
+  "unbound_claims": [
+    {
+      "id": "U1-lean-latching-setF",
+      "claim": "Theorem set F (latching): the trusted Lean core proves saturation insensitivity (EmenderLatching.emender_saturation_insensitivity), sign-preserving hold (emender_latch_holds_by_default), and counter-delta release (emender_latch_releases_on_counter_delta / _release_quantitative).",
+      "section": "s7 (Theorem set F: latching); s1 (Lean spine); Limitations",
+      "status": "unbound",
+      "gap": "No Lean module ElmanProofs/Architectures/EmenderLatching.lean exists in the worktree, the theorems are absent from the PaperCore import closure, and no such path appears anywhere in this worktree's git history. The cited names appear only in paper main.typ and paper/data/math-notation-spec.md. The three latching theorems cited by the paper are not backed by any committed Lean source here."
+    },
+    {
+      "id": "U2-rocm-cuda-parity",
+      "claim": "The Triton multi-programming kernel runs identically on CUDA and ROCm.",
+      "section": "s1 contribution 1; s4 (Multi-Programming and Systems)",
+      "status": "unbound",
+      "gap": "No ROCm/AMD test or benchmark is committed. paper/review/THROUGHPUT.md measures an RTX 6000 Ada (CUDA) only. There is no committed artifact demonstrating ROCm parity."
+    },
+    {
+      "id": "U3-cma-four-sweep-replication",
+      "claim": "The within-class ordering recorded by the single 1.3B racer trajectory is replicated across four independent CMA-ES sweeps spanning 250+ candidate configurations per architecture.",
+      "section": "s5 (Loss-vs-wallclock caption; Limitations 'Evidence structure')",
+      "status": "unbound",
+      "gap": "No committed per-sweep artifact enumerates four CMA-ES sweeps at 250+ configs/architecture. The aggregated burst dataset (paper/results/cmaes_burst_v2) covers 1,285 configurations total across 13 architecture-family panels but is not decomposed into the claimed four 250+ sweeps. The claim is only asserted in the paper caption and in the paper/review/rigor.md audit note."
+    },
+    {
+      "id": "U4-hf-v03-release",
+      "claim": "The three 1.3B-class checkpoints, the per-architecture CMA-ES configurations, and the Triton multi-programming kernel are released to the HuggingFace v0.3 target.",
+      "section": "s1 abstract; s10 (availability statement)",
+      "status": "unbound",
+      "gap": "No checkpoint or release manifest is committed in this worktree; the v0.3 weights and CMA-ES configs live off-repo (HuggingFace / ~/elman). The Appendix B readback (Emender 0.96613 / GDN 0.96612 / M2RNN-CMA 0.96132) is documented but the released artifacts themselves are not in-repo."
+    }
+  ],
+  "notes": "Status values: 'bound' = at least one committed artifact exists at a known commit; 'bound-partial' = a committed artifact exists but a sub-claim's raw run data or an auxiliary measurement is not committed; 'unbound' = no committed artifact. Commit hashes are the most-recent commit touching each path (git log --format=%h -1 -- <path>), not necessarily the commit that first added it. The paper source is Typst (paper/main.typ), not LaTeX."
+}

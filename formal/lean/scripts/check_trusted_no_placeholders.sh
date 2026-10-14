@@ -8,17 +8,8 @@ if [[ ! -f "$root" ]]; then
   exit 2
 fi
 
-repo_root="$(pwd)"
-root_abs="$(realpath "$root")"
-
-mapfile -t sources < <(
-  {
-    printf '%s\n' "$root_abs"
-    lake env lean --src-deps "$root"
-  } |
-    awk -v prefix="$repo_root/" 'index($0, prefix) == 1 { print }' |
-    sort -u
-)
+source_list="$("$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/local_import_closure.sh" "$root")"
+mapfile -t sources <<< "$source_list"
 
 if [[ "${#sources[@]}" -eq 0 ]]; then
   echo "trusted check: no project sources found for $root" >&2

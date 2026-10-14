@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """
-Generate §6 expressivity bar charts with per-seed points + SEM error bars.
+Generate §6 bars with approximate reconstructed points and SEM.
 
 Data source: paper/ndmpapernotes.md lines 153-173
-Three seeds per condition; seed values recovered from (mean, min, max):
-  seed_min = min, seed_max = max, seed_middle = 3*mean - min - max
+No exact raw three-seed records are bound to this historical figure.
+Approximate reconstruction from rounded (mean, min, max) summaries:
+  min, max, middle = 3*mean - min - max (clamped to [min, max]).
+Rounding/clamping changes the triple and SEM; dots are not raw observations.
 """
 
 import numpy as np
@@ -30,11 +32,11 @@ data_s3 = {
     "M²RNN-paper": {"mean": 0.3773, "min": 0.3669, "max": 0.3855},
 }
 
-def recover_seeds(d):
-    """Recover three seed values from (mean, min, max) of 3 seeds."""
+def reconstruct_points(d):
+    """Approximate three unordered points via the 3mean-min-max midpoint method."""
     mn, mx, mu = d["min"], d["max"], d["mean"]
     middle = 3 * mu - mn - mx
-    # Clamp to [0, 1] due to floating-point rounding
+    # Clamp to the reported [min, max] interval due to summary rounding
     middle = max(mn, min(mx, middle))
     return sorted([mn, middle, mx])
 
@@ -73,9 +75,9 @@ for ax, data, task, random_bl, title in [
     width = 0.55
 
     for i, model in enumerate(models):
-        seeds = recover_seeds(data[model])
+        points = reconstruct_points(data[model])
         mean = data[model]["mean"]
-        sem = np.std(seeds, ddof=1) / np.sqrt(3)
+        sem = np.std(points, ddof=1) / np.sqrt(3)
 
         color = COLORS[model]
         light_color = color + "55"  # semi-transparent
@@ -87,7 +89,7 @@ for ax, data, task, random_bl, title in [
             edgecolor="none"
         )
 
-        # SEM error bar
+        # Approximate SEM from the reconstructed triple
         ax.errorbar(
             i, mean, yerr=sem,
             fmt="none", color=color,
@@ -95,9 +97,9 @@ for ax, data, task, random_bl, title in [
             zorder=3
         )
 
-        # Individual seed points
+        # Approximate reconstructed points, not retained seed observations
         jitter = np.linspace(-0.08, 0.08, 3)
-        for j, (s, jit) in enumerate(zip(seeds, jitter)):
+        for j, (s, jit) in enumerate(zip(points, jitter)):
             ax.scatter(
                 i + jit, s,
                 color=color, s=32, zorder=4,
@@ -117,7 +119,7 @@ for ax, data, task, random_bl, title in [
     ax.legend(loc="upper right", frameon=False)
 
 fig.suptitle(
-    "Expressivity separation: permutation-composition probes (8 M scale, 3 seeds)",
+    "Permutation probes (8 M): approximate points + SEM from rounded 3-seed summaries",
     fontsize=9, y=1.01
 )
 fig.tight_layout()

@@ -1,0 +1,126 @@
+{
+  "model": "gdn2",
+  "checkpoint": "/mnt/nvme1n1/erikg/diloco_8gpu/gdn2_mlp/runs/gdn2_gdn2-mlp_1.3B_20260722_083444/checkpoint_step_2323616_loss_2.4034.pt",
+  "phase": "zeroshot",
+  "seed": 42,
+  "eval_lengths": [
+    64,
+    128,
+    256,
+    512
+  ],
+  "batches_per_length": 8,
+  "eval_batch": 64,
+  "tasks": {
+    "parity": {
+      "n_classes": 2,
+      "random_baseline_acc": 0.5,
+      "acc_vs_T": {
+        "64": {
+          "acc": 0.463684,
+          "acc_restricted": 0.501831
+        },
+        "128": {
+          "acc": 0.480469,
+          "acc_restricted": 0.498703
+        },
+        "256": {
+          "acc": 0.490829,
+          "acc_restricted": 0.500099
+        },
+        "512": {
+          "acc": 0.495739,
+          "acc_restricted": 0.500244
+        }
+      }
+    },
+    "s3_permutation": {
+      "n_classes": 6,
+      "random_baseline_acc": 0.16666666666666666,
+      "acc_vs_T": {
+        "64": {
+          "acc": 0.157654,
+          "acc_restricted": 0.167694
+        },
+        "128": {
+          "acc": 0.163467,
+          "acc_restricted": 0.168259
+        },
+        "256": {
+          "acc": 0.162041,
+          "acc_restricted": 0.164696
+        },
+        "512": {
+          "acc": 0.165028,
+          "acc_restricted": 0.166264
+        }
+      }
+    },
+    "s5_permutation": {
+      "n_classes": 120,
+      "random_baseline_acc": 0.008333333333333333,
+      "acc_vs_T": {
+        "64": {
+          "acc": 0.011963,
+          "acc_restricted": 0.012787
+        },
+        "128": {
+          "acc": 0.009964,
+          "acc_restricted": 0.010239
+        },
+        "256": {
+          "acc": 0.00901,
+          "acc_restricted": 0.009186
+        },
+        "512": {
+          "acc": 0.008366,
+          "acc_restricted": 0.008469
+        }
+      }
+    },
+    "modular_counter": {
+      "n_classes": 5,
+      "random_baseline_acc": 0.2,
+      "acc_vs_T": {
+        "64": {
+          "acc": 0.190155,
+          "acc_restricted": 0.201416
+        },
+        "128": {
+          "acc": 0.191788,
+          "acc_restricted": 0.197342
+        },
+        "256": {
+          "acc": 0.19622,
+          "acc_restricted": 0.199112
+        },
+        "512": {
+          "acc": 0.198032,
+          "acc_restricted": 0.199448
+        }
+      }
+    },
+    "fsm_tracking": {
+      "n_classes": 4,
+      "random_baseline_acc": 0.25,
+      "acc_vs_T": {
+        "64": {
+          "acc": 0.235199,
+          "acc_restricted": 0.248993
+        },
+        "128": {
+          "acc": 0.243774,
+          "acc_restricted": 0.250504
+        },
+        "256": {
+          "acc": 0.247215,
+          "acc_restricted": 0.250763
+        },
+        "512": {
+          "acc": 0.248787,
+          "acc_restricted": 0.250603
+        }
+      }
+    }
+  }
+}

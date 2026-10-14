@@ -9,15 +9,8 @@ cd "$repo_root"
 
 "$script_dir/check_trusted_no_placeholders.sh" "$root"
 
-root_abs="$(realpath "$root")"
-mapfile -t sources < <(
-  {
-    printf '%s\n' "$root_abs"
-    lake env lean --src-deps "$root"
-  } |
-    awk -v prefix="$repo_root/" 'index($0, prefix) == 1 { print }' |
-    sort -u
-)
+source_list="$("$script_dir/local_import_closure.sh" "$root")"
+mapfile -t sources <<< "$source_list"
 
 if rg -n '\bnative_decide\b' "${sources[@]}"; then
   echo "paper core check failed: native_decide found in trusted paper core" >&2
