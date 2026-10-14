@@ -1822,6 +1822,213 @@ confounds, is the one the paper claims; the predecessor cohort's 1.3 B
 fine-tune study (Appendix B) saw the same ordering under its own
 protocol, and the slot above re-runs it on the current pair.
 
+// ── Applications bridge (unnumbered; preserves existing section references) ────
+#heading(level: 1, numbering: none)[Repeated nonlinear maps in the wild] <sec:applications>
+
+The iterated-map probes ask a question that arises well beyond language
+modeling: can an architecture keep applying a nonlinear transformation to
+its own evolving state? Consider the broad family
+$
+  s_(t+1) = F_theta(s_t, u_t),
+$
+where $theta$ is fixed across steps, $u_t$ injects the current input, and
+$F_theta(dot, u)$ is generally non-affine in the carried state. A common
+form is $s_(t+1) = phi(A(u_t) s_t + b(u_t))$; neither an additive injection
+nor a smooth $phi$ is required. Autonomous maps have no input injection.
+The Emender's coupled update
+$
+  S' = tanh(lambda S + k(v - S^T k)^T)
+$
+is an instance with state $S$, input $(k,v)$, and a fixed delta-correcting
+$tanh$ update; it is the all-one split-gate specialization of E97 (§3).
+This is a structural family, not a claim that the systems below share
+E97's weights, learning rule, or computational difficulty.
+
+The depth-duality gives a precise lens, but not an application-level
+lower bound. `CompositionalDepthDuality.e97_compositional_depth_grows_in_time`
+records one additional nonlinear update per time step;
+`gdn_state_channel_depth_bounded_in_time` proves that a GDN state fold is
+affine in its initial state *conditional on a state-independent
+input/gate/value schedule*. Neither proves that the resulting function
+has no shallower representation in other coordinates. The $S_5$ bridge
+(`S5GDNBridge.gdn_s5_realization_requires_per_token_action`) is a routing
+statement under its reachable-state-separating decoder hypothesis, not a
+depth lower bound. It does not transfer a separation to the applications
+below; group actions can admit affine representations. Here *EXHIBIT*
+means a definitional or structural instance of the family, *ANALOGY* a
+related but non-identical mechanism, and *OPEN* a prediction not yet
+established. In each case the question is whether a fixed-depth GDN-style
+linear-state approximator can reproduce the required trajectories, not
+whether the original engineered system already works.
+
+#heading(level: 2, numbering: none)[Sigma–delta conversion: quantization inside the loop]
+
+*EXHIBIT.* A first-order sigma–delta modulator accumulates an analog
+sample and feeds back a quantized output @candy_temes1992:
+$
+  a_t = r_t + x_t, quad q_t = Q(a_t), quad
+  r_(t+1) = a_t - q_t.
+$
+Here $r_t$ is the integrator residue, $x_t$ the injected sample, and the
+fixed state map is $F(r,x) = r+x-Q(r+x)$. For a one-bit converter,
+$Q(a)$ selects one of two output levels: a hard, discontinuous
+nonlinearity rather than E97's smooth saturation. The nonlinear result
+is fed back into the next state, not merely placed in an output readout.
+Such streaming error-feedback loops are implemented directly in converter
+circuitry; they need no large learned processor to execute the update.
+*OPEN:* the duality suggests testing a GDN surrogate near quantizer
+thresholds over long streams, where residual errors can change later
+bits. A nonlinear state update represents this feedback directly; a
+linear residue integrator with an output-only quantizer omits the
+feedback dependence. No GDN lower bound follows: finite-resolution
+states, alternative encodings, or a different error metric may make a
+linear-state surrogate adequate. Predicting filtered signal quality is
+also weaker than predicting the exact bitstream.
+
+#heading(level: 2, numbering: none)[Adaptive filtering and automatic gain control]
+
+*ANALOGY for ordinary normalized LMS; EXHIBIT for the nonlinear variants.*
+For regressor $x_t$, desired sample $d_t$, and coefficient state $w_t$,
+normalized LMS @haykin2002 uses
+$
+  e_t = d_t - w_t^T x_t, quad
+  w_(t+1) = w_t + mu x_t e_t / (epsilon + norm(x_t)^2).
+$
+With inputs fixed this is *affine* in $w_t$: normalization alone is not a
+nonlinear-state example. A componentwise coefficient-limited variant,
+$w_(t+1) = "clip"_B(w_t + mu x_t e_t/(epsilon + norm(x_t)^2))$,
+is one: state $w$, map the normalized correction followed by clipping,
+injection $(x,d)$. The clipping is an additional engineering choice,
+not part of standard normalized LMS. Automatic gain control similarly
+feeds the measured output level back into the gain @lyons2011. A
+representative bounded log-gain controller is
+$
+  y_t = exp(g_t) x_t, quad
+  g_(t+1) = "clip"_([g_(min),g_(max)])
+    (g_t + mu(P_0 - y_t^2)).
+$
+Its state is $g_t$, its injection is the sample $x_t$ and target power
+$P_0$, and its fixed map includes the state-dependent power measurement
+and gain limiter. These equations specify representative variants, not
+universal implementations. *OPEN:* the duality predicts a possible
+surrogate gap when repeated limiter crossings or gain changes retain
+consequential history. Ordinary normalized LMS needs no such gap, and a
+stable AGC loop may forget errors rapidly enough for a linear-state
+approximation to suffice. These are natural per-sample edge and sensor
+workloads, but no IoT deployment advantage is measured here.
+
+#heading(level: 2, numbering: none)[Proximal iterations and unrolled optimization]
+
+*EXHIBIT.* For the objective
+$1/2 norm(A z-b)^2 + rho norm(z)_1$, iterative soft-thresholding (ISTA)
+@daubechies2004 repeatedly applies
+$
+  z_(j+1) = "soft"_(eta rho)
+    ((I - eta A^T A) z_j + eta A^T b),
+$
+where $"soft"_tau(a) = "sign"(a) max(|a|-tau,0)$ acts componentwise.
+The iterate $z_j$ is the state, the fixed map is a gradient step followed
+by soft-thresholding, and $eta A^T b$ injects the problem data at every
+iteration. Here time means optimization iteration, not arriving samples.
+FISTA @beck_teboulle2009 adds extrapolation,
+$
+  z_(j+1) = "soft"_(eta rho)(y_j - eta A^T(A y_j-b)), quad
+  y_(j+1) = z_(j+1) + beta_j(z_(j+1)-z_j).
+$
+Its state must include the previous iterate and momentum schedule (or
+its clock); it is not a single fixed map on $z_j$ alone. Unrolling these
+updates exposes their nonlinear depth explicitly; changing weights at
+every unrolled stage forfeits the fixed-map identification. *OPEN:* the
+duality predicts difficulty for a fixed-depth linear-state surrogate
+when support changes must be recomputed over many iterations. It does
+not say ISTA always requires growing nonlinear depth: after support and
+signs stabilize, soft-thresholding is affine on the visited region, and
+convergence can make a bounded-accuracy shortcut sufficient.
+
+#heading(level: 2, numbering: none)[Reservoirs and echo-state networks]
+
+*EXHIBIT.* The standard driven echo-state network @jaeger2001 has
+$
+  h_(t+1) = tanh(W h_t + U u_t + b).
+$
+The reservoir state is $h$, the fixed recurrent map is $tanh$ after
+mixing by $W$, and the injection is $U u_t+b$. With recurrent parameters
+held fixed, E97 likewise defines a driven nonlinear dynamical reservoir:
+its matrix state is mixed, corrected by the input, and passed through
+$tanh$ again at each step. *ANALOGY:* it is not the conventional
+fixed-$W$ echo-state architecture or training protocol. E97's effective
+state mixing depends on the input key and gates, its recurrent weights
+are trained, and bounded $tanh$ state alone does not establish the
+echo-state property (forgetting the initial condition).
+*OPEN:* for a reservoir task with persistent nonlinear history the
+duality motivates comparing E97 with a linear-state surrogate across
+length. A contractive reservoir instead has fading memory and may admit
+a good short-history approximation. The structural match does not
+predict a universal advantage over linear reservoirs with nonlinear
+readouts, nor establish that E97 satisfies the echo-state property.
+
+#heading(level: 2, numbering: none)[Discrete ecology: the logistic map]
+
+*EXHIBIT.* May's population-dynamics example @may1976 is the autonomous
+logistic map
+$
+  n_(t+1) = r n_t(1-n_t).
+$
+State is normalized population $n_t$; $r$ is a fixed model parameter;
+$F_r(n) = r n(1-n)$ is applied to its own output with *no* input injection.
+An environmentally driven variant can supply $r_t$ as the input, but is
+then an extension of the autonomous model. This is the same logistic
+family as the contractive control in §6, not a claim that its parameter
+regime represents all ecological dynamics. *OPEN:* the duality motivates
+a long-horizon surrogate comparison only when nonlinear dependence on
+prior state remains relevant. The control is the important countercase:
+contraction suppresses trajectory errors and no depth-wall signature is
+observed. Periodic attraction can also simplify prediction; chaotic
+regimes can make precise long-horizon prediction difficult for *both*
+architectures. Nonlinearity alone therefore cannot imply a separation,
+and an ecological population equation is not evidence of a deployed
+forecasting improvement.
+
+#heading(level: 2, numbering: none)[Feedback control with limited actuators]
+
+*EXHIBIT.* A discrete-time linear plant with a smooth actuator limit and
+state feedback can be written
+$
+  a_t = a_(max) tanh((K x_t + L r_t)/a_(max)), quad
+  x_(t+1) = A x_t + B a_t + E d_t.
+$
+Here $x_t$ is plant state; reference $r_t$ and disturbance $d_t$ are the
+injections; the fixed closed-loop map is
+$F(x,(r,d)) = A x + B a_(max) tanh((K x+L r)/a_(max)) + E d$.
+Saturation in feedback is a standard nonlinear-control concern
+@khalil2002; $tanh$ is a smooth bounded-actuator model, not a claim that
+all actuators implement it. *ANALOGY:* unlike E97, the nonlinearity
+acts on the control path and the plant state need not be bounded.
+*OPEN:* the duality predicts a possible linear-state-surrogate deficit
+when state-dependent saturation repeatedly determines subsequent
+control decisions. It makes no prediction of a gap in the unsaturated,
+approximately linear regime, or for a sufficiently contracting closed
+loop. A learned surrogate would additionally need stability and safety
+validation; a state-tracking result is not a control guarantee.
+
+These examples make the architecture question concrete. When a workload
+requires persistent, repeated nonlinear transformation of its carried
+state, the duality says that nonlinear *state computation* cannot simply
+be dropped while leaving the same update in the same coordinates: an
+affine state channel does not perform that operation. In that restricted
+sense nonlinear-state recurrence is not optional; an alternative must
+supply an adequate representation or approximation elsewhere. Whether a
+fixed-depth GDN-style stack can do so at acceptable width, precision,
+latency, and horizon remains *OPEN* for these applications. Stable,
+fading-memory and affine-representable cases are explicit exceptions to
+any blanket advantage claim. The practical opportunity is many small,
+low-cost, low-intelligence streaming processors operating in parallel at
+the edge: local feedback and correction rather than a large reasoning
+model per sensor. Width-axis multi-programming suggests how many such
+nonlinear programs can coexist without linearizing their internal time
+loops; low-power silicon, energy savings, and task-level superiority
+would require separate measurements.
+
 // ── 7. Formal Results ─────────────────────────────────────────────────────────
 = Formal Results <sec:formal>
 
