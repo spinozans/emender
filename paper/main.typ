@@ -262,14 +262,15 @@ recurrence cannot be scanned across time, so useful parallelism must
 come from batch and head parallelism rather than from the time axis. The
 difference here is how far that principle is pushed and what it is used
 to test. M²RNN promotes nonlinear matrix recurrence mainly as a sparse
-ingredient in hybrid stacks; in the pure setting the issue is not simply
-having many value heads but having many independent *address programs* —
-what we call *address-program multiplicity*. The CMA-reshaped raw-write
-comparator used here moves M²RNN into that same pure multi-programmed
-regime, removing the shared-address bottleneck that destabilizes the
-paper-default shape. Once that systems bottleneck is gone, the remaining
-controlled contrast is the write rule: raw overwrite versus delta
-correction.
+ingredient in hybrid stacks; under the addressing-bottleneck hypothesis,
+the pure setting may benefit from many independent *address programs*
+rather than simply many value heads — what we call *address-program
+multiplicity*. The CMA-reshaped raw-write comparator used here moves
+M²RNN into that same pure multi-programmed regime and is stable where
+the paper-default shape diverged. This controls the broad pure-recurrent
+systems setting for comparing raw overwrite with delta correction;
+it does not uniquely isolate the cause of divergence, since width,
+depth, and head count also changed.
 
 #heading(level: 2, numbering: none)[Contributions]
 
@@ -454,8 +455,10 @@ One scope note belongs with M²RNN specifically. We do not claim that
 M²RNN lacked width or batch parallelism, or missed that a nonlinear
 recurrence is serial in time; the distinction is that its published
 scaling route emphasizes *hybrid* use, while the CMA-reshaped raw-write
-control here shows what the raw-write family does *after* the
-pure-recurrent addressing bottleneck has been removed.
+control here shows what the raw-write family does in a stable
+pure-recurrent configuration. Under the addressing-bottleneck hypothesis,
+that reshape may reduce shared-address concentration, but the runs do
+not isolate this mechanism.
 
 // ── 2. Background ─────────────────────────────────────────────────────────────
 = Background <sec:background>
@@ -1379,8 +1382,9 @@ band: pure-E97 2.0126, M²RNN 2.0344, Emender-mix 2.0402, E97-MLP
 consistent with the search fitness; `experiments/lb_compare_20260613/LEADERBOARD.md`).
 Within that band E97-MLP is ahead of GDN2-MLP on *both* primary metrics
 — search fitness 5.8606 vs 5.8949 and held-out bpb 2.0911 vs 2.1013 —
-but the honest statement is ties-or-leads inside the noise band, not a
-win: bulk loss is a convergent null across the tuned families, and the
+but the honest statement is descriptive closeness with the reported
+ordering, not a statistically established win or equivalence: bulk loss
+occupies a narrow observed band across the tuned families, and the
 distinguisher must be capability (#ref(<sec:expressivity>)), not loss.
 
 #heading(level: 2, numbering: none)[Matched-control transparency: search breadth, budgets, and configurations]
@@ -1531,8 +1535,8 @@ from the predecessor 1.3 B racer cohort (E88, FLA-GDN, M²RNN, Mamba2 —
 expectation to beat: at $approx 1 M$-step training extents, on a
 2,049-item multi-choice fact panel and a 2,048-item reasoning panel
 (BBH + ReCLor + FOLIO), the four architectures sit within a few
-percentage points of one another and well inside task noise
-(@tab_downstream).
+percentage points of one another in narrow observed bands
+(@tab_downstream), without a paired or seed-level equivalence test.
 
 #figure(
   align(center)[#table(
@@ -1608,7 +1612,7 @@ full. The Emender's defaults are the
 endpoint of an ablation lineage ranked on language-modeling loss — the
 same objective GDN's and M²RNN's authors used for their published
 defaults — with one exception: the state nonlinearity ($tanh$ versus a
-linear state) tied the linear variant on language-modeling loss and was
+linear state) was descriptively close to the linear variant on language-modeling loss and was
 kept on state-tracking grounds. That one component is load-bearing for
 these probes, so the Emender's configuration was settled partly on a proxy
 of the very quantity the probes measure, whereas no baseline's was. The
@@ -1671,10 +1675,10 @@ $T in {128, 256, 512, 1024}$, three seeds.
     show the reported rounded mean (light fill). The Emender separates from linear-recurrent (GDN)
     and raw-write nonlinear matrix RNN (M²RNN) baselines on the
     non-solvable $S_5$ probe at training length. On the solvable $S_3$
-    control, the Emender is perfect (1.0000); GDN reaches 0.72; both
+    control, the Emender has rounded mean 1.0000; GDN reaches 0.72; both
     M²RNN variants stall in the 0.31–0.38 band, indicating that at
     matched no-tuning budget the raw-write update under-reaches on the
-    prefix-tracking task even without the non-solvability obstruction. Source: `paper/ndmpapernotes.md`
+    prefix-tracking task even on the solvable-group control. Source: `paper/ndmpapernotes.md`
     lines 153–173; figure script: `paper/figures/plot_expressivity_seeds.py`.
   ],
 ) <fig_s5_bars>
@@ -2639,10 +2643,7 @@ linearization.
 
 The dominant comparison cohort is the family of linear-state
 billion-parameter recurrent LMs surveyed in #ref(<sec:background>): Mamba @mamba2024 and
-Mamba2 @mamba2_2024 (selective SSMs); S5 @s5_2022
-(simplified state-space layers with a multi-input multi-output linear
-state-space recurrence, distinct from the permutation group $S_5$
-used as a probe here); RetNet @retnet2023 (decayed
+Mamba2 @mamba2_2024 (selective SSMs); RetNet @retnet2023 (decayed
 linear attention); GLA @gla2023 (gated linear attention); DeltaNet
 @deltanet2024 (delta rule, linear in $S$); Gated DeltaNet
 @gated_deltanet2024 (gated delta rule); RWKV-4/5/6/7 @rwkv4_2023
@@ -2656,6 +2657,12 @@ SSM families require their stated transition and arithmetic assumptions
 classification. The empirical panel in #ref(<sec:expressivity>) directly tests
 Gated DeltaNet as the matched representative of this cohort and observes
 $S_5$ collapse at length.
+
+In the broader SSM/sequence-model lineage, S5 @s5_2022 introduces
+simplified state-space layers with a multi-input multi-output linear
+state-space recurrence. It is distinct from the permutation group $S_5$
+used as a probe here; the cited S5 results concern sequence models,
+not billion-parameter recurrent LMs.
 
 A newer linear-state result, Gated DeltaNet-2 @gated_deltanet2_2026,
 decouples channel-wise erase and write gates and is reported by its
@@ -2684,8 +2691,10 @@ update trains at 410 M dense and 7 B MoE scale on Nemotron-CC-v2. Its
 headline demonstrations and promoted deployment recipe, however, use
 the nonlinear-matrix-recurrent layer *sparingly inside hybrid stacks*
 (interleaved with attention layers), and its paper-default pure shape
-exposes a shared-address bottleneck when run as a pure recurrent
-backbone at 1.3 B in our setup (#ref(<sec:appendix_cohort>)). Our M²RNN-CMA comparator, used as a
+diverged as a pure recurrent backbone at 1.3 B in our setup
+(#ref(<sec:appendix_cohort>)). Under the addressing-bottleneck hypothesis,
+shared-address concentration may contribute, but the reshape also changes
+width, depth, and head count. Our M²RNN-CMA comparator, used as a
 within-class baseline at the 8 M probes of #ref(<sec:expressivity>) and in the Lean
 separation of #ref(<sec:formal>), is therefore not a
 strawman: it is the same raw-write family after CMA-ES has moved it into
@@ -2695,12 +2704,14 @@ layers, CMA-tuned to restore stable training at 1.3 B. The contribution
 of this work relative to M²RNN is to extend the viability demonstration
 to that *pure-recurrent* setting and to add the direct comparison with
 the Emender under matched per-architecture CMA-ES. In the
-predecessor-cohort regime (#ref(<sec:appendix_cohort>)) the raw-write model tied the
-Emender on held-out language-modeling bpb but
-remained behind on $S_3$/$S_5$ tracking, so the #ref(<sec:expressivity>) empirical separation
-and the formal one-step resource separation in #ref(<sec:formal>) isolate the *write
-rule* — delta-correcting (the Emender) versus raw-write (M²RNN-CMA) —
-rather than the systems substrate. Mishra et al.
+predecessor-cohort regime (#ref(<sec:appendix_cohort>)) the raw-write model was
+descriptively close to the Emender on held-out language-modeling bpb but
+remained behind on $S_3$/$S_5$ tracking. The empirical comparison in
+#ref(<sec:expressivity>) controls the broad pure-recurrent systems setting
+for comparing the *write rule* — delta-correcting (the Emender) versus
+raw-write (M²RNN-CMA) — without uniquely isolating a causal mechanism;
+the formal one-step resource separation in #ref(<sec:formal>) applies
+under its declared accounting model. Mishra et al.
 also report hybrid M²RNN configurations favorably against
 Mamba2 and Gated DeltaNet hybrids at matched parameter and token
 budgets under a uniform fixed-hyperparameter protocol (their section 5.2);
@@ -3205,7 +3216,7 @@ developmental predecessor instance), M²RNN-CMA (1.307 B, the raw-write
 comparator), and GDN (1.352 B, the linear baseline of that generation),
 each with its own CMA-ES search and each trained for roughly 22–24 GPU-days
 to released `v0.3` checkpoints. That study established two results the
-body still leans on — the held-out loss tie as a *measured null* with a
+body still leans on — the descriptive closeness of held-out losses with a
 contamination control, and the 1.3 B $S_5$ fine-tune ordering — and it is
 preserved here unchanged, both for its own evidentiary weight and so the
 E97-era claims can be read against it. Section references inside this
@@ -3281,18 +3292,19 @@ runs do not isolate it. A matched single-factor geometry ablation is
 needed to distinguish that hypothesis from the other changed dimensions;
 the update-family comparison alone does not establish the cause.
 
-Named in geometry terms, this is an *addressing* bottleneck rather than
-a generic head-count effect. The paper-default shape has high
-*value-head multiplicity* — many value channels, or heads — but routes
-many of them through a narrower shared $q,k$ addressing interface; in a
-pure recurrent stack that concentrates both credit assignment and
-gradient flow through the shared address projections. The CMA reshape
-reduces that bottleneck by moving toward *address-program multiplicity*:
-more independently addressed recurrent programs, each with its own small
-state tile, rather than more value channels behind the same address
-path. This is why M²RNN-CMA is the relevant raw-write control — it tests
-the raw-write update after the pure-PNR geometry has been stabilized,
-isolating the write rule from the systems substrate.
+Under the addressing-bottleneck hypothesis, the relevant geometry may be
+an *addressing* bottleneck rather than a generic head-count effect. The
+paper-default shape has high *value-head multiplicity* — many value
+channels, or heads — but routes many of them through a narrower shared
+$q,k$ addressing interface; in a pure recurrent stack that may concentrate
+both credit assignment and gradient flow through the shared address
+projections. The CMA reshape may reduce that bottleneck by moving toward
+*address-program multiplicity*: more independently addressed recurrent
+programs, each with its own small state tile, rather than more value
+channels behind the same address path. The stable M²RNN-CMA is therefore
+a relevant raw-write comparator controlling the broad pure-recurrent
+systems setting, not uniquely isolating the cause of the paper-default
+shape's divergence or the write rule from all other changed dimensions.
 
 #figure(
   align(center)[#text(size: 8pt)[#table(
@@ -3323,7 +3335,7 @@ isolating the write rule from the systems substrate.
     family.* The paper-default M²RNN shape is a stability control;
     M²RNN-CMA is the raw-write comparator once CMA-ES has moved it into
     the address-program-multiplexed regime; the Emender is the
-    delta-correcting model. Outcomes are the held-out bpb tie of this
+    delta-correcting model. Outcomes are the descriptive held-out bpb closeness of this
     section and the $S_3$/$S_5$ separation of #ref(<sec:expressivity>).
   ],
 ) <tab_geometry>
@@ -3421,16 +3433,16 @@ standard deviation (0.025 bpb); the between-model mean gaps are
 bits-per-byte the three update rules are *descriptively close*, not
 shown statistically equivalent by a seed-level or paired equivalence
 test. Which model is lowest is slice-dependent (lowest-bpb counts:
-Emender 0/5, GDN 1/5, M²RNN-CMA 4/5), so bulk held-out perplexity does
-*not* distinguish the architectures at this budget. This is the expected
+Emender 0/5, GDN 1/5, M²RNN-CMA 4/5), so bulk held-out perplexity
+shows descriptive closeness rather than tested equivalence at this budget. This is the expected
 reading: the architectures separate on the #ref(<sec:expressivity>) state-tracking
 probes, not on bulk language-model bits-per-byte. @sec:appendix_bpb
 places these numbers in the landscape of open Pile-trained models,
 out-of-distribution anchors, and classical compressors.
 
-#heading(level: 2, numbering: none)[The loss tie reproduces under matched compute]
+#heading(level: 2, numbering: none)[Narrow observed loss bands under matched compute]
 
-The tie reflects the matched compute given to each update rule. The three
+The narrow observed bands occur under matched compute for each update rule. The three
 rules — delta-correcting (E88), raw-write (M²RNN-CMA), and linear (GDN) —
 each received the *same* per-architecture CMA-ES hyperparameter-and-shape
 search budget and were then trained to *matched* FLOPs, and they converge
@@ -3439,22 +3451,24 @@ to within $approx 0.005$–$0.006$ bpb of one another on *both* axes: held-out
 effort and equal compute land three structurally different recurrences in
 the same narrow loss band.
 
-So even after each family is tuned to its own best operating point, the
-converged loss does not move with the update rule: bulk language-modeling
-loss does not distinguish what these architectures compute. Where they come
-apart is the #ref(<sec:expressivity>) state-tracking probes, not bpb, and so far that separation
-shows only on synthetic algebraic state-tracking ($S_5$/parity/FSM, #ref(<sec:expressivity>)) —
-tasks that *no* model in the cohort solves. The non-synthetic signals tie:
-bulk held-out loss, the QA panel, and the reasoning panel (#ref(<sec:lm>)) are all
-within noise.
+After each family is tuned to its own best operating point, the converged
+losses occupy a narrow observed band; this does not establish equal loss
+across update rules. Where they come apart is the
+#ref(<sec:expressivity>) state-tracking probes, not the reported bpb bands,
+and so far that separation shows only on synthetic algebraic state-tracking
+($S_5$/parity/FSM, #ref(<sec:expressivity>)) — tasks that *no* model in the
+cohort solves. The non-synthetic signals — bulk held-out loss, the QA
+panel, and the reasoning panel (#ref(<sec:lm>)) — occupy narrow observed
+bands, without a tested equivalence claim.
 
-The loss figures of this appendix are single-seed per architecture, so the loss-tie
-reading is corroborated independently of any within-run spread: the five
-held-out Pile slices (@sec:appendix_bpb) put the lowest-bpb model
-slice-dependent with the between-model gaps inside cross-slice noise; the
-Common-Pile contamination control (@sec:appendix_bpb) reproduces the tie on
-a second distribution; and the converged value is consistent with an
-architecture-agnostic compute-optimal loss at this matched FLOP budget. The
+The loss figures of this appendix are single-seed per architecture. The
+five held-out Pile slices (@sec:appendix_bpb) show slice-dependent ordering
+of the lowest-bpb model and narrow observed bands of between-model means;
+their cross-slice standard deviations do not measure uncertainty of a
+paired difference. The Common-Pile contamination control
+(@sec:appendix_bpb) also shows descriptive closeness on a second
+distribution. These observations do not establish an architecture-agnostic
+compute-optimal loss at this matched FLOP budget. The
 state-tracking results that carry the paper do not rest on these single-seed
 loss runs: they rest on the 3-seed 8 M expressivity probes (#ref(<sec:expressivity>)) and the
 1.3 B length-generalization separation (below), where the architectures
@@ -3697,7 +3711,7 @@ at longer training horizons; #ref(<sec:predictions>) states the prediction expli
 
 = Held-out bits-per-byte measurement (predecessor cohort) <sec:appendix_bpb>
 
-This appendix is the evidentiary backbone of the held-out tie reported
+This appendix is the evidentiary backbone of the held-out descriptive closeness reported
 in #ref(<sec:appendix_cohort>): it documents exactly how the held-out bits-per-byte figures are
 measured and places them in a landscape of reference models and
 classical compressors. Every number is measured by the eval harness
