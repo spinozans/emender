@@ -18,7 +18,7 @@ test('convert: P20 section order, captions, tables, algorithms and amsthm counts
     'Next tests for the current pair', 'Future Work', 'Development history and source register'
   ]);
   assert.deepEqual(inventory.tables.map(t => [t.columns, t.rows]), [[2,11],[3,14],[4,6],[4,5],[4,8],[3,7],[5,6]]);
-  assert.equal((tex.match(/\\caption\{/g) || []).length, 9);
+  assert.equal((tex.match(/\\caption\{/g) || []).length, 10);
   assert.equal((tex.match(/\\begin\{tabularx\}/g) || []).length, 7);
   assert.equal((tex.match(/\\begin\{verbatim\}/g) || []).length, 5);
   assert.deepEqual(inventory.theoremEnvironments.map(t => t.environment), [
@@ -26,14 +26,22 @@ test('convert: P20 section order, captions, tables, algorithms and amsthm counts
     'theorembullet','theorem','theorembullet','theorem','theorembullet','theorembullet','theorembullet'
   ]);
 });
-test('convert: exact current figure/table labels and byte-identical Frontier PNG', () => {
+test('convert: exact current figure/table labels and byte-identical recorded-loss and Frontier PNGs', () => {
   assert.deepEqual(inventory.figures.map(f => f.label), ['<fig_taxonomy>','<fig_arch>',
-    '<tab_pair_identities>','<tab_matched_loss>','<tab_frontier_anchors>','<fig_frontier_segment>',
+    '<tab_pair_identities>','<tab_matched_loss>','<fig_recorded_loss>','<tab_frontier_anchors>','<fig_frontier_segment>',
     '<tab_depth_wall>','<tab_s5_boundary>','<tab_s5>']);
   assert(read('assets/frontier_segment_5134243.png').equals(read('../figures/frontier_segment_5134243.png')));
+  assert(read('assets/e97_recorded_loss.png').equals(read('../figures/e97_recorded_loss.png')));
   assert.deepEqual(fs.readdirSync(new URL('assets/', import.meta.url)).sort(), [
-    'figure-1.pdf', 'figure-2.pdf', 'frontier_segment_5134243.png'
+    'e97_recorded_loss.png', 'figure-1.pdf', 'figure-2.pdf', 'frontier_segment_5134243.png'
   ]);
+  const caption = inventory.figures.find(f => f.label === '<fig_recorded_loss>').caption.replace(/\s+/g, ' ');
+  for (const fragment of ['three raw log windows', 'separate markers', 'single retained checkpoint',
+    'last-window loss 2.4034', 'Pile/CommaPile boundary', 'matched-token comparison']) {
+    assert(caption.replace(/\s+/g, '').includes(fragment.replace(/\s+/g, '')), fragment);
+  }
+  assert(tex.includes('\\ref{tab_matched_loss}'));
+  assert(!/\b(?:no|not|without)\b/i.test(caption), 'Caption keeps the forward voice');
   for (const fragment of ['513,013,841,920', '2.2798', '6.320', '72 s', 'CommaPile mainmix']) assert(tex.includes(fragment), fragment);
 });
 test('convert: all 50 current citations, official fonts and exact copied bibliography', () => {

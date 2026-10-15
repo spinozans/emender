@@ -1,10 +1,12 @@
 # TMLR packaging of the integrated manuscript
 
-`paper/main.typ` and `paper/figures/expressivity_1p3b.typ` exactly match the
-approved S5 clarification **7bc278704d56f2f8f6a0d1ca7ec944e0eaaeb0af**, based on
-the author revision **5b16e273518f7ab20463e5a4826bd78851c4f6bf**. The author's
-no-raw-logs correction is retained. `paper/current.pdf` is the rebuilt
-**33-page** canonical PDF; the two TMLR variants and source bundle are generated
+`paper/main.typ` retains the approved S5 clarification
+**7bc278704d56f2f8f6a0d1ca7ec944e0eaaeb0af**, based on the author revision
+**5b16e273518f7ab20463e5a4826bd78851c4f6bf**, plus the operator-directed P22a
+recorded-training-loss figure and its introduction. The exact insertion is in
+`validation/p22a-lossfigure-revision.diff`; `paper/figures/expressivity_1p3b.typ`
+and the author's no-raw-logs correction retain their bytes. `paper/current.pdf`
+is the rebuilt **34-page** canonical PDF; the two TMLR variants and source bundle are generated
 from that same source. `canonical-baseline.json` retains the historical accepted
 snapshot and revision lineage while pinning the current approved source hash.
 
@@ -42,14 +44,22 @@ bash paper/tmlr/bundle-arxiv.sh
 (cd paper/tmlr && sha256sum -c validation/SHA256SUMS)
 ```
 
+The recorded-loss figure is regenerated with
+`python3 paper/figures/plot_recorded_loss.py` (Python 3.12 / Matplotlib on the
+workstation), reading the receipted tails and checkpoint directory names at
+the paths documented in the script. Its JSON receipt retains every plotted
+measurement and source hash; four figure tests run with
+`python3 -m unittest discover -s paper/figures -p test_plot_recorded_loss.py`.
+`validation/p22a-validation.md` records the complete figure and rebuild checks.
+
 `serialize.typ` exports the evaluated content tree, including dynamic tables
 and math. `convert.mjs` translates it directly and fails on unsupported nodes.
 The structure is 13 numbered body sections, 63 converted headings, seven LaTeX
-tables (including notation), nine independently typeset captions, five numbered
+tables (including notation), ten independently typeset captions, five numbered
 pseudocode blocks, and 13 unnumbered amsthm statements. Formal blocks follow
 the current subsection names and stable section labels. The two vector drawings
-are freshly exported; the Frontier PNG is a byte-identical copy. The standalone
-asset tree contains exactly these three figures.
+are freshly exported; the Frontier and recorded-training-loss PNGs are
+byte-identical copies. The standalone asset tree contains exactly these four figures.
 
 Appendix A is the compact development/source register: one heading, four source
 categories. `verify.mjs` checks evidence inside each category, the current-pair
@@ -72,7 +82,7 @@ the active checksum manifest covers the current repository deliverables.
 `validation/p21-guard-delta.json` retains full old/new guard definitions;
 `validation/p21-inputs.json` binds the transferred inputs. `p21-audit.mjs`
 is the historical P21-only replay, not a validator for later source revisions.
-`integration-audit.mjs` checks the exact approved S5 source, all six empirical
+`integration-audit.mjs` checks the exact approved S5 source plus the pinned P22a insertion, all six empirical
 table bodies, all seven table structures, unchanged data/results/formal sources,
 and unchanged production code and CI. Earlier P13–P21 receipts remain evidence
 for their own revisions; `validation/p21-release-SHA256SUMS` preserves the
@@ -80,14 +90,14 @@ inherited release manifest.
 
 `validation/drift-check.json` checks 20 load-bearing current-manuscript samples
 across all three PDFs, including Frontier findings and current-pair scopes,
-and 1,143 long source fragments. The independent symbol oracle checks every
+and 1,155 long source fragments. The independent symbol oracle checks every
 complete expression and attachment: **335 expressions, 285 attachments, eight
 PDF state primes** (two in drawings). The historical P20 delta remains in `validation/p21-math-delta.json`;
 S5 adds ten expressions and nineteen attachments, with no prime-count change,
 as recorded in `validation/integration-audit.json`. Negative regressions retain
 prime/attachment loss and actual P10 conversion-defect coverage and add all
-current live-scope and source-register loss tests. The source remains exactly the approved S5 revision; packaging does not
-paraphrase it. The 67 packaging tests retain negative conversion, prime-loss,
+current live-scope and source-register loss tests. The source retains the S5 revision
+plus the exact P22a insertion; packaging translates that source directly. The 67 packaging tests retain negative conversion, prime-loss,
 source-drift, scope-loss, appendix-order and anonymization checks.
 
 Three release/mirror URLs are variant-gated. The anonymous-PDF receipt screens

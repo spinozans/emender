@@ -408,6 +408,16 @@ Each arm has one training seed. The quantities above come from training logs; he
 
 The 1.2866-billion-parameter E97-MLP model was also continued on Frontier from the released 150.794-billion-token workstation checkpoint to a retained checkpoint at 513.014 billion accepted training tokens. The continuation ran 256 nodes and 2,048 accelerator ranks, per-rank batch size 4 and context length 2,048, schedule-free optimization, and hierarchical DiLoCo averaging every 40 local updates. The configuration strip reads: 256 nodes / 2,048 ranks, batch 4 / context 2,048, $K  =  40$ DiLoCo, final segment CommaPile mainmix; the paired workstation study trained on The Pile. Its final recorded rank-0 training-loss average is 2.2798 nats/token over the last 100 logging windows. Continued training reduced the recorded loss stage by stage across the retained checkpoints.
 
+Figure~\ref{fig_recorded_loss} shows E97's recorded training loss across the workstation and Frontier stages, with the retained GDN2 checkpoint as a reference point. The matched-token comparison is in Table~\ref{tab_matched_loss}.
+
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.95\linewidth]{assets/e97_recorded_loss.png}
+\caption{ E97 recorded training loss: thin blue traces show three raw log windows (expanded above), circles show workstation checkpoint losses, and diamonds show Frontier checkpoint losses; each trace spans its recorded window and checkpoints appear as separate markers. The orange star is GDN2's single retained checkpoint at 152.28 B tokens (last-window loss 2.4034), the vertical rule marks the Pile/CommaPile boundary at the 150.794 B-token Frontier handoff, and Table~\ref{tab_matched_loss} gives the matched-token comparison. Sources and figure script: \protect\path|paper/figures/plot_recorded_loss.py|. }\label{fig_recorded_loss}
+\end{figure}
+
+
 
 \begin{table}[htbp]
 \centering

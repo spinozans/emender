@@ -338,6 +338,11 @@
       "caption": "Matched-token loss comparison(nats/token, The Pile).The commonlogged cutoff is step 2,300,925, five steps before the E97 checkpoint. At thematched cutoff the two arms sit within0.010nats/token smoothed(≈0.4%relative), and thesign of the gap depends on theaveraging window:GDN2 is lower on the full-trajectory and1,000-step windows, E97 is lower on the most recent 100-stepwindow. Early in training(5.1 B tokens) GDN2 led by 0.071nats; the gap closed as training progressed. Source:docs/GDN2_OPS_SNAPSHOT_20260728.md(final matched cutoff) anddocs/GDN2_E97_MATCHED_LOSS_COMPARISON_20260723.md(earlycomparison); both parse rank-0 logs only, deduplicate by optimizerstep, and align on exact common steps."
     },
     {
+      "label": "<fig_recorded_loss>",
+      "kind": "figure",
+      "caption": "E97 recorded training loss:thin blue traces show three raw log windows(expanded above), circles show workstation checkpoint losses, and diamondsshow Frontier checkpoint losses; each trace spans its recorded window andcheckpoints appear as separate markers. The orange star is GDN2s singleretained checkpoint at 152.28 B tokens(last-window loss 2.4034), thevertical rule marks the Pile/CommaPile boundary at the 150.794 B-tokenFrontier handoff, andgives the matched-tokencomparison. Sources and figure script:paper/figures/plot_recorded_loss.py."
+    },
+    {
       "label": "<tab_frontier_anchors>",
       "kind": "table",
       "caption": "Retained-checkpoint accepted-token lineage of the E97-MLP Frontiercontinuation(nats/token, rank-0 training log).The workstation seedcontains 150.794 B tokens; a one-time migration receipt binds the firstFrontier continuations legacy checkpoint to 199.615 B tokens, afterwhich the embedded accepted-token counter governs resumption. Eachrecorded loss is a training-log statistic taken before theschedule-free optimizers evaluation export. Sources:docs/validation/e97-final-seed-production-256n-5134243.md,docs/validation/e97-total-token-migration-step2303840.json,docs/validation/e97-4h-normal-preflight-step2315840.md, and thecorrected 513 B audit."

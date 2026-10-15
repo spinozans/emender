@@ -660,7 +660,16 @@ averaging every 40 local updates. The configuration strip reads: 256 nodes / 2,0
 study trained on The Pile. Its final recorded rank-0 training-loss average is 2.2798 nats/token
 over the last 100 logging windows. Continued training reduced the recorded loss stage by stage
 across the retained checkpoints.
-Stage Worker step Accepted tokens Recorded loss
+Figure 3 shows E97′s recorded training loss across the workstation and Frontier stages, with the
+retained GDN2 checkpoint as a reference point. The matched-token comparison is in Table 2.
+Figure 3: E97 recorded training loss: thin blue traces show three raw log windows (expanded above), circles
+show workstation checkpoint losses, and diamonds show Frontier checkpoint losses; each trace spans its recorded
+window and checkpoints appear as separate markers. The orange star is GDN2′s single retained checkpoint at
+152.28 B tokens (last-window loss 2.4034), the vertical rule marks the Pile/CommaPile boundary at the 150.794
+B-token Frontier handoff, and Table 2 gives the matched-token comparison. Sources and figure script: paper/
+figures/plot_recorded_loss.py.
+15
+Stage Worker step Accepted tokens Recorded loss
 Released workstation seed 2,300,930 150,793,748,480 2.4365
 First 256-node continuation 2,303,840 199,615,447,040 2.3178
 Intermediate milestone 2,315,840 400,942,039,040 2.2928
@@ -675,12 +684,18 @@ the corrected 513 B audit.
 A verified 256-node production segment initialized all 2,048 ranks from the same released seed
 and completed 73 hierarchical K40 merges, with median merge duration 6.320 s and median
 inter-merge interval 72 s. Its last ten logged windows reported a median aggregate throughput
-of 9.410 million tokens/s. Figure 3 plots those 73 merge durations and the 72 between-merge
+of 9.410 million tokens/s. Figure 4 plots those 73 merge durations and the 72 between-merge
 intervals from the committed verdict data.
 Selection of the two models
 Both arms were selected by CMA-ES with 15 minutes of Pile training per candidate at 2,048-
 token context, bf16, fused kernels, and a 1,300 M parameter target with ±3% tolerance. The
-family-specific search selected geometry and learning rate; no subsequent per-arm retuning was
+Figure 4: Hierarchical RCCL communication during the first final-seed 256-node E97 continuation (job 5134243).
+Seventy-three 𝐾 = 40 merges had median duration 6.320 s (5.068–15.227 s); the 72 between-merge intervals had
+median 72 s (71–87 s). The allocation resumed the released 150.794 B-token seed and retained a checkpoint at
+199.615 B tokens. These are measurements from one production segment. Source: reports/frontier/e97-final-
+seed-production-256n-5134243-verdict.json; figure script paper/figures/plot_frontier_segment.py.
+16
+family-specific search selected geometry and learning rate; no subsequent per-arm retuning was
 applied to either long run.
 E97-MLP carries the emender-mlp winner: width 1792, 216 heads, depth 11, state size 32,
 MLP ratio 2.2623, and learning rate 1.007 × 10−3
@@ -692,12 +707,6 @@ The exact configurations and retained search records are in experiments/lb_compa
 REPRODUCTION.md and docs/repro/lb_gdn2_mlp_20260612/best.json.
 First-generation fitness is unavailable for these carried-in winner searches, and E97′s candidate/
 generation totals are absent from the normalized snapshot. Recovering the original winner-series
-15
-Figure 3: Hierarchical RCCL communication during the first final-seed 256-node E97 continuation (job 5134243).
-Seventy-three 𝐾 = 40 merges had median duration 6.320 s (5.068–15.227 s); the 72 between-merge intervals had
-median 72 s (71–87 s). The allocation resumed the released 150.794 B-token seed and retained a checkpoint at
-199.615 B tokens. These are measurements from one production segment. Source: reports/frontier/e97-final-
-seed-production-256n-5134243-verdict.json; figure script paper/figures/plot_frontier_segment.py.
 logs would supply total search effort and within-search improvement for these two configurations
 (Open item U3.1).
 6 What the current models learn to compute
@@ -719,8 +728,7 @@ arms receive the identical full-fine-tune recipe: bf16 AdamW(betas=0.9,0.95), co
 rate 0.00005, warmup 300, weight decay 0.01, gradient clip 0.5, batch 32, trained length 128,
 seed 42. The throughput-derived common cap of 18269 steps was fixed before accuracy was seen
 (budget.json, 1989656c). It projects 4.35 GPU-hours if both arms reach the cap. The same pre-
-16
-registered validation-loss plateau rule stopped E97 after 2500 steps and GDN2 after 2200 steps;
+registered validation-loss plateau rule stopped E97 after 2500 steps and GDN2 after 2200 steps;
 actual training elapsed 0.649 GPU-hours, excluding loading and final evaluation. The common
 rule therefore yields different realized training durations.
 The protocol below summarizes the retained driver, scripts/expressivity_1p3b_depthwall.py,
@@ -732,7 +740,8 @@ Input: bound y-mode weights; common recipe, cap, seed
 1. Build fixed validation batches; initialize AdamW.
 2. For step j = 0,...,cap-1:
 a. Draw a batch at T=128; run bf16 forward.
-b. Backpropagate masked cross-entropy over all positions.
+17
+b. Backpropagate masked cross-entropy over all positions.
 On OOM, split the same batch and accumulate gradients.
 c. Warm up LR for 300 steps, then keep LR constant;
 clip gradient norm to 0.5; take an optimizer step.
@@ -765,8 +774,7 @@ per length. The common cap is 18269 steps, with unequal realized training: E97 s
 and GDN2 after 2200. E97 shows graceful length transfer; GDN2 approaches a roughly 50% plateau, above
 the declared 0.39% random baseline. Source: paper/results/expressivity_1p3b/iterated-map/, ft_{e97,gdn2}
 _modular_quadratic{,_sweep}.json (commit 9dc3afd7); budget.json (pre-registration 1989656c).
-17
-At the terminal sweep E97 reaches 99.96% at trained length, retaining 90.16% at four times and
+At the terminal sweep E97 reaches 99.96% at trained length, retaining 90.16% at four times and
 76.07% at eight times that length. GDN2 ends at 76.09% at trained length and 53.36% at eight
 times. E97 at eight times approximately matches GDN2′s terminal trained-length accuracy,
 then decays further. GDN2 approaches a roughly 50% plateau at the longest lengths, above the
@@ -778,7 +786,8 @@ Section 7: E97 executes one nonlinear state update per step, while a GDN fold co
 on an input-only schedule is affine in its initial state. The second probe tests permutation
 composition, for which a linear transformation of carried matrix state already implements each
 required update.
-S5 group-state tracking on the same pair
+18
+S5 group-state tracking on the same pair
 The 𝑆5 word problem tests repeated composition of permutation actions. Its exact permutation-
 matrix representation uses a token-selected linear map at every step (Section 2). This makes
 𝑆5 a direct test of learning a computation within the general linear-state class. The modular-
@@ -807,8 +816,7 @@ Both capacity curves decline with length; held-out transitions remain weaker tha
 GDN2′s attempted length-512 curriculum stage was OOM-infeasible even at sub-batch 1, after
 one completed optimizer step. The next comparison should use a curriculum feasible for both
 models and additional seeds.
-18
-Parameter-matched probes at 8 M
+Parameter-matched probes at 8 M
 The two architectures were also compared at 8 M parameters, where a parameter-matched
 sweep trains each model from scratch under its reasonable-default configuration (dim 384, depth
 4, 𝐻 = 32, 𝑁 = 32, schedule-free AdamW, three seeds; GDN uses dim 640 to match parameter
@@ -818,7 +826,8 @@ write M²RNN-CMA 0.2157. The Emender starts at 0.79 and declines to 0.42, 0.22, 
 both raw-write variants stall in the 0.31–0.38 band. Each family runs its default configuration
 with no probe-specific hyperparameter search, which is the seeds-controlled companion to the
 current-pair measurements above.
-Model 𝑆3 T=128 𝑆5 T=128 𝑆5 T=256 𝑆5 T=512
+19
+Model 𝑆3 T=128 𝑆5 T=128 𝑆5 T=256 𝑆5 T=512
 Emender 1.0000 0.7918 0.4158 0.2150
 GDN 0.7185 0.3552 0.1843 0.0974
 M²RNN-CMA 0.3124 0.2157 0.1120 0.0593
@@ -848,8 +857,7 @@ Temporal composition and routing
 The concrete repeated-map family is the schedule of CompositionalDepthDuality.E97Step values
 (𝑘, 𝑒, 𝑤, 𝑣) at fixed 𝜆 (Lean field b is the paper’s erase gate 𝑒), acting through e97Step on
 matrix state. e97Step_eq_tanh_comp identifies the step as elementwise tanh after the state-
-19
-affine split-gated core. e97StateAfter_eq_compose gives its time-ordered composition, and
+affine split-gated core. e97StateAfter_eq_compose gives its time-ordered composition, and
 e97_compositional_depth_grows_in_time states that appending a step applies one more such
 map. Thus the executed composition contains one tanh per token.
 For a fixed, state-independent schedule of CompositionalDepthDuality.GdnStepParams,
@@ -859,7 +867,8 @@ this fixed, state-independent schedule.
 The permutation-matrix construction in Section 2 gives an exact 𝑆5 tracker in the general
 linear-state class. The Lean bridge characterizes realizers in the formal GDN family under
 explicit assumptions. S5GDNBridge.gdn_s5_realization_requires_per_token_action starts from
-zero state with a token-only parameter schedule and a decoder that recovers S5Tracker.run on
+20
+zero state with a token-only parameter schedule and a decoder that recovers S5Tracker.run on
 every word. It also assumes that equal decoded outputs imply equal reachable states. It then
 gives a state map 𝐹 through the group element, with affine word actions implementing right
 multiplication on the reachable image. gdn_s5_constant_parameters_cannot_realize rules out
@@ -894,8 +903,7 @@ decoder (S5Inseparability.small_recognizer_cannot_realize_s5). The bound has
 a distinguishing-pair form: any recognizer with too few states admits
 two words it cannot tell apart that the tracker does distinguish
 (S5Inseparability.exists_distinguishing_word_pair). This is the existential form of the
-20
-𝑆5-coset inseparability target: it holds for any finite recognizer family, with no architectural
+𝑆5-coset inseparability target: it holds for any finite recognizer family, with no architectural
 assumptions.
 • Lookup-table realization. The tracker is small enough to write down as a table: it uses
 exactly 120 × 4 = 480 state/input keys (S5NDMRealization.s5_transition_key_count),
@@ -905,7 +913,8 @@ Generator memory and recurrent realization
 The exact statement of NDMRealizesS5.emender_realizes_s5_tracker supplies 𝑑 = 12, four
 orthonormal keys and one-hot values, queries, a decoder, and 𝜆 = 1. Reading a
 preloaded table retrieves the current generator; decoding it and externally multiplying
-a supplied 𝑆5 state 𝑠 reproduces the transition 𝑠 ⋅ 𝑔. The linear readout supplies
+21
+a supplied 𝑆5 state 𝑠 reproduces the transition 𝑠 ⋅ 𝑔. The linear readout supplies
 the generator value, and the external multiplication updates the group state. The
 supporting OnlineMemory.linearDeltaWrite_overwrites_one_preserves_others is an exact pre-
 tanh overwrite statement.
@@ -935,8 +944,7 @@ step (RecurrentResourceFormalism.emender_m2rnn_one_step_resource_separation_embe
 and that the gap persists for every finite 𝑘 under composition on a constructed witness alphabet
 (emender_m2rnn_k_step_separation). Exact non-equality holds on that real-valued witness for
 each finite 𝑘. The statement is a representability result inside the formalized fixed-weight raw-
-21
-write resource class, over abstract real-valued gate/key/state signatures; the probes of Section 6
+write resource class, over abstract real-valued gate/key/state signatures; the probes of Section 6
 measure trained-model accuracy.
 Conditional latching
 Saturation, hold, and release are described by slot-level bounds.
@@ -952,7 +960,8 @@ to the recurrent body, 𝑆′
 𝑘)𝑗
 )
 the write contribution into that slot. The proofs run through the standard tanh-perturbation
-foundation. The module carrying them (EmenderLatching, introduced at 696299b4) is included
+22
+foundation. The module carrying them (EmenderLatching, introduced at 696299b4) is included
 in the refreshed inventory and the current clean lake build ElmanProofs.PaperCore.
 • Saturation insensitivity. If the slot is saturated in the sense |𝑆′
 𝑖,𝑗| > 1 − 𝜀, and a
@@ -987,8 +996,7 @@ closure — uses none of Lean’s escape hatches: no sorry, admit, added axiom, 
 declarations, or native_decide. The gate is formal/lean/scripts/check_paper_core.sh;
 compiling ElmanProofs.PaperCore additionally checks elaboration of the proofs. The refreshed
 machine-extracted inventory is committed at paper/data/lean-trust-gate-theorems.json (857
-22
-named declarations, 723 user-written, 17 files; extraction source commit e58ae937), including
+named declarations, 723 user-written, 17 files; extraction source commit e58ae937), including
 the split-gated, latching, duality, routing, Lipschitz, and E1H-definition modules. Both the gate
 and extractor traverse the recursive local imports rather than a selected module allowlist. The
 checked project sources use Lean and Mathlib as their proof foundation.
@@ -998,7 +1006,8 @@ observation revises an estimate that guides the next action. The iterated-map st
 related computational question: how well can a recurrent model learn to keep transforming an
 evolving state? A common description is
 𝑆𝑡+1 = 𝐹𝜃(𝑆𝑡,𝑢𝑡),
-where 𝜃 fixes the update law and 𝑢𝑡 supplies the input at each step. E97′s all-one split-gate
+23
+where 𝜃 fixes the update law and 𝑢𝑡 supplies the input at each step. E97′s all-one split-gate
 specialization is
 𝑆′
 = tanh(𝜆𝑆 + 𝑘(𝑣 − 𝑆𝑇
@@ -1036,8 +1045,7 @@ Signal processing
 Sigma–delta conversion
 A first-order sigma–delta modulator accumulates an analog sample and feeds back a quantized
 output [30]:
-23
-𝑎𝑡 = 𝑟𝑡 + 𝑥𝑡, 𝑞𝑡 = 𝑄(𝑎𝑡), 𝑟𝑡+1 = 𝑎𝑡 − 𝑞𝑡.
+𝑎𝑡 = 𝑟𝑡 + 𝑥𝑡, 𝑞𝑡 = 𝑄(𝑎𝑡), 𝑟𝑡+1 = 𝑎𝑡 − 𝑞𝑡.
 The residue 𝑟𝑡 is the state, 𝑥𝑡 is the sample, and the fixed map is 𝐹(𝑟, 𝑥) = 𝑟 + 𝑥 − 𝑄(𝑟 + 𝑥).
 A one-bit quantizer selects between two output levels. Its discontinuous output changes the
 residue used at the next step. A useful surrogate test would compare exact bitstream accuracy
@@ -1051,11 +1059,13 @@ Normalized LMS [31] updates coefficient state 𝑤𝑡 using regressor 𝑥𝑡 
 𝜀 + ‖𝑥𝑡‖
 2
 .
-For fixed inputs this update is affine in 𝑤𝑡. Adding a componentwise coefficient limit gives
+24
+For fixed inputs this update is affine in 𝑤𝑡. Adding a componentwise coefficient limit gives
 𝑤𝑡+1 = clip
 𝐵(𝑤𝑡+𝜇𝑥𝑡
 𝑒𝑡
-𝜀+‖𝑥𝑡‖2 )
+𝜀+‖𝑥𝑡‖
+2 )
 , which applies a nonlinear state transformation after the correction.
 Automatic gain control feeds measured output level back into gain [32]. A bounded log-gain
 controller can use
@@ -1091,8 +1101,7 @@ use the revised information, alongside state size, generated-token budget, and r
 Driven reservoirs
 A standard echo-state network [35] uses
 ℎ𝑡+1 = tanh(𝑊ℎ𝑡 + 𝑈𝑢𝑡 + 𝑏).
-24
-With recurrent parameters fixed, E97 also defines a driven nonlinear dynamical system, with
+With recurrent parameters fixed, E97 also defines a driven nonlinear dynamical system, with
 state mixing determined by its input keys and gates. Training such a model on long-horizon
 reservoir trajectories would test how well it retains consequential nonlinear history. Varying
 contraction and the rate of forgetting the initial condition would connect the comparison to the
@@ -1102,7 +1111,8 @@ Genomic function depends on nonlinear interactions among sequence features, regu
 signals, and cellular state. Enformer provides one example of using a nonlinear sequence model
 to integrate distal regulatory information for cell-type-specific predictions [36]. Pangenomic
 datasets run to terabases per study [37], [38], [39], motivating efficient nonlinear recurrence
-for long, structured inputs. A future study could ask whether recurrent memory can integrate
+25
+for long, structured inputs. A future study could ask whether recurrent memory can integrate
 sequence features with changing regulatory signals and cellular context, evaluated through held-
 out expression or perturbation-response prediction.
 Population dynamics
@@ -1132,8 +1142,7 @@ which writes the error between target and current output back into the weight ve
 adaptive linear element. Schmidhuber recast the same idea in a recurrent setting under the name
 fast-weight programmers [42]: a slow controller emits keys and values that update a fast-weight
 matrix online, with the update being a correction against what the matrix currently predicts
-25
-at the addressed slot. Schlag, Irie, and Schmidhuber made the bridge to modern attention
+at the addressed slot. Schlag, Irie, and Schmidhuber made the bridge to modern attention
 explicit [43], showing that linear-transformer kernels with cumulative outer-product updates
 are fast-weight programmers with a raw additive write, and proposing the delta-rule write as
 a stability and capacity fix. DeltaNet [14] carried the delta rule into a parallelizable linear-
@@ -1141,7 +1150,8 @@ recurrent language model, demonstrating the rule at billion-parameter scale in t
 regime. Emender combines delta correction with a nonlinear matrix-state update and width-
 axis multi-programming. Its saturating update also motivates the conditional latching analysis
 in Section 7.
-Linear-state recurrent language models
+26
+Linear-state recurrent language models
 The dominant comparison cohort is the family of linear-state billion-parameter recurrent LMs
 surveyed in Section 2: Mamba [3] and Mamba2 [4] (selective SSMs); RetNet [44] (decayed linear
 attention); GLA [13] (gated linear attention); DeltaNet [14] (delta rule, linear in 𝑆); Gated
@@ -1177,15 +1187,15 @@ mixer against a matched GDN2 control. This connects the present work to other no
 matrix-state designs.
 xLSTM-1.3B [20] is a 7:1 mixture of mLSTM (linear) and sLSTM (nonlinear) blocks; with
 87.5% of its blocks linear-state, it sits closer to the linear-state class than to the pure-nonlinear-
-26
-recurrent one. It is the closest scale band among prior nonlinear-recurrent results, included here
+recurrent one. It is the closest scale band among prior nonlinear-recurrent results, included here
 as a peer with a small nonlinear-block share. The xLSTM-7B follow-up [48] uses only mLSTM
 (linear) blocks, further from the pure-nonlinear-recurrent class still.
 Titans [21] uses an MLP memory with online gradient updates and is qualitatively nonlinear-
 state, but it interleaves attention layers and has not been evaluated as a pure recurrent model at
 Pile-class scale. Zeroth-order LSTM scaling [50] demonstrates 1 B-scale LSTM training under
 a non-gradient regime, outside the standard-gradient comparison drawn here.
-Classical LSTM and GRU provide the foundational gated nonlinear recurrences [12]. E97
+27
+Classical LSTM and GRU provide the foundational gated nonlinear recurrences [12]. E97
 explores a matrix-memory implementation organized around many independently addressed
 recurrent heads.
 10 Open questions
@@ -1217,13 +1227,13 @@ four-symbol group schedule provides a concrete case for this analysis.
 G1–G3 are recorded in formal/lean/GAPS-D2.md. Persistence also needs a production-range
 result: the stated hold theorem assumes 𝜆 ≥ 1, while production decay lies below one. A layer-
 level and finite-precision analysis would connect that result to practical memory retention.
-27
-Scale and implementation
+Scale and implementation
 A matched 3–7 B pair would test how training loss, memory use, and computational
 behavior change with scale. Current-scale internal ablations would separate the effects of state
 nonlinearity, gates, and geometry. Direct E97 occupancy profiling, actual FLOP accounting,
 and paired ROCm measurements would extend the systems evidence.
-The application tests in Section 8 call for long-horizon error and latency measurements in their
+28
+The application tests in Section 8 call for long-horizon error and latency measurements in their
 stated regimes; feedback applications additionally call for stability testing. The bibliography’s
 flagged publication metadata should be resolved during submission preparation.
 11 Conclusion
@@ -1260,11 +1270,11 @@ revision’s SHA256SUMS. The releases ship with the per-architecture CMA-ES conf
 training protocol (launcher manifests in scripts/launch_emender_8gpu_diloco.sh and scripts/
 launch_gdn2_mlp_8gpu_diloco.sh), and the Triton multi-programming kernel source in the
 public emender repo; the canonical paper PDF is mirrored at http://hypervolu.me/~erik/ndm/
-28
-Garrison_2026_Emender.pdf. The Frontier continuation’s retained-checkpoint lineage, accepted-
+Garrison_2026_Emender.pdf. The Frontier continuation’s retained-checkpoint lineage, accepted-
 token anchors, and the job-5134243 communication measurements are recorded in docs/
 validation/, reports/frontier/, and the corrected 513 B audit.
-12 Next tests for the current pair
+29
+12 Next tests for the current pair
 The current results motivate three direct tests. First, repeat the iterated-map and 𝑆5 protocols
 across seeds and common realized training budgets, recording both terminal and best-validation
 checkpoints. Persistence of the map advantage would strengthen the mechanism hypothesis;
@@ -1299,10 +1309,10 @@ Parallel Training of Nonlinear RNNs for Large Language Models,” arXiv preprint
 arXiv:2510.21450, 2025.
 [9] L. Gao et al., “The Pile: An 800GB Dataset of Diverse Text for Language Modeling,”
 arXiv preprint arXiv:2101.00027, 2020.
-29
-[10] A. Vaswani et al., “Attention Is All You Need,” Advances in Neural Information Processing
+[10] A. Vaswani et al., “Attention Is All You Need,” Advances in Neural Information Processing
 Systems, vol. 30, 2017.
-[11] J. L. Elman, “Finding Structure in Time,” Cognitive Science, vol. 14, no. 2, pp. 179–211,
+30
+[11] J. L. Elman, “Finding Structure in Time,” Cognitive Science, vol. 14, no. 2, pp. 179–211,
 1990, doi: 10.1207/s15516709cog1402_1.
 [12] S. Hochreiter and J. Schmidhuber, “Long Short-Term Memory,” Neural Computation, vol.
 9, no. 8, pp. 1735–1780, 1997, doi: 10.1162/neco.1997.9.8.1735.
@@ -1339,10 +1349,10 @@ International Workshop on Machine Learning and Programming Languages, pp. 10–1
 2019, doi: 10.1145/3315508.3329973.
 [25] A. Defazio, X. A. Yang, H. Mehta, K. Mishchenko, A. Khaled, and A. Cutkosky, “The
 Road Less Scheduled,” arXiv preprint arXiv:2405.15682, 2024.
-30
-[26] A. Douillard et al., “DiLoCo: Distributed Low-Communication Training of Language
+[26] A. Douillard et al., “DiLoCo: Distributed Low-Communication Training of Language
 Models,” arXiv preprint arXiv:2311.08105, 2023.
-[27] L. de Moura and S. Ullrich, “The Lean 4 Theorem Prover and Programming Language,”
+31
+[27] L. de Moura and S. Ullrich, “The Lean 4 Theorem Prover and Programming Language,”
 in Automated Deduction – CADE 28, 2021. doi: 10.1007/978-3-030-79876-5_37.
 [28] The Mathlib Community, “Mathlib 4: Library Documentation.” [Online]. Available:
 https://leanprover-community.github.io/mathlib4_docs/
@@ -1378,11 +1388,11 @@ papers/c1960adaptiveswitching.pdf
 [42] J. Schmidhuber, “Learning to Control Fast-Weight Memories: An Alternative to Dynamic
 Recurrent Networks,” Neural Computation, vol. 4, no. 1, pp. 131–139, 1992, doi: 10.1162/
 neco.1992.4.1.131.
-31
-[43] I. Schlag, K. Irie, and J. Schmidhuber, “Linear Transformers Are Secretly Fast Weight
+[43] I. Schlag, K. Irie, and J. Schmidhuber, “Linear Transformers Are Secretly Fast Weight
 Programmers,” in Proceedings of the 38th International Conference on Machine Learning
 (ICML), in Proceedings of Machine Learning Research, vol. 139. 2021, pp. 9355–9366.
-[44] Y. Sun et al., “Retentive Network: A Successor to Transformer for Large Language
+32
+[44] Y. Sun et al., “Retentive Network: A Successor to Transformer for Large Language
 Models,” arXiv preprint arXiv:2307.08621, 2023.
 [45] B. Peng and others, “RWKV: Reinventing RNNs for the Transformer Era,” arXiv preprint
 arXiv:2305.13048, 2023.
@@ -1396,7 +1406,7 @@ arXiv preprint arXiv:2503.13427, 2025.
 Sequence Modeling,” arXiv preprint arXiv:2208.04933, 2022.
 [50] F. Chaubard and M. J. Kochenderfer, “Scaling Recurrent Neural Networks to a Billion
 Parameters with Zero-Order Optimization,” arXiv preprint arXiv:2505.17852, 2025.
-32
+33
 APPENDIX A Development history and source register
 The project developed through successive recurrent-memory designs, implementation changes,
 and increasingly controlled comparisons. This register records that process and points to its
@@ -1417,5 +1427,5 @@ this paper read the corresponding result JSONs directly.
 in Section 7 identify the specific statements used here.
 The original records remain available in the repository. The present comparison is defined by
 its own model identities, data, and protocols.
-33
+34
 
