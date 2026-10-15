@@ -39,7 +39,10 @@
     Fine-tuning the workstation pair on an iterated nonlinear map gives
     E97 99.96% accuracy versus GDN2's 76.09% at the trained length, and
     76.07% versus 53.36% at eight times that length. GDN2 leads on
-    long-horizon $S_5$ group-state tracking. Formal results characterize
+    long-horizon $S_5$ permutation composition, a task that admits an exact
+    linear-state representation. Its strong learning on this task
+    demonstrates the utility of linear-state recurrence, alongside E97's
+    advantage on repeated nonlinear transformation. Formal results characterize
     E97's repeated nonlinear state transformation and GDN's affine state
     composition under a fixed, state-independent parameter schedule.
     Together, these findings establish a practical route to training
@@ -177,18 +180,25 @@ fine-tuning on a modular-quadratic recurrence, E97 reaches 99.96%
 versus 76.09% accuracy at the trained length and 76.07% versus 53.36%
 at eight times that length. Its higher accuracy and greater length
 robustness support nonlinear transformation in the carried-state path
-as a useful inductive bias. The $S_5$ group-state task instead asks the
-models to compose permutation actions. GDN2 leads that
-long-horizon comparison. #ref(<sec:expressivity>) gives the protocols,
+as a useful inductive bias. The $S_5$ group-state task asks the
+models to compose permutation actions. This computation admits an exact
+linear-state representation: each token multiplies a carried permutation
+matrix by its generator matrix. GDN2 learns this task more effectively
+in the long-horizon comparison, demonstrating a useful learned capability
+on a computation compatible with linear-state recurrence.
+#ref(<sec:expressivity>) gives the protocols,
 learning trajectories, and length-dependent results for both tasks.
 
 The formal analysis describes the state computations behind this
 comparison. Lean 4 verifies E97's time-ordered nonlinear composition
 and the affine GDN state fold under a fixed, state-independent parameter
-schedule. It also relates their split-gated cores and formalizes the
-$S_5$ tracker and routing conditions (#ref(<sec:formal>)). These
-statements make the mechanism precise and supply concrete targets for
-further experiments and proofs.
+schedule. It also relates their split-gated cores and characterizes the
+affine group actions of an exact $S_5$ tracker under a token-only schedule
+and a decoder that separates reachable states (#ref(<sec:formal>)).
+An exact construction within GDN2's production gate and decay ranges
+is the more specific realization question G3. These statements make
+the mechanism precise and supply concrete targets for further
+experiments and proofs.
 
 The resulting program joins a practical architecture to a testable
 computational hypothesis. Feedback systems, iterative optimization,
@@ -334,6 +344,21 @@ words. The experiments measure prefix-product accuracy at specified lengths. The
 $S_3$ (permutations of three items, 6 elements) is included to factor out
 the part of difficulty that comes from prefix tracking *per se* rather
 than from non-solvability.
+
+Permutation composition has a direct linear-state realization. Choose
+$5 times 5$ permutation matrices $P_s$ with $P_(s r) = P_s P_r$ and
+carry the running matrix $R_t$:
+$ R_0 = I_5, quad R_t = R_(t-1) P_(a_t), $
+where $a_t$ is the incoming adjacent transposition. Then
+$R_t = P_(a_1 dots a_t)$, which identifies the full group element.
+For each token, right multiplication by its fixed generator matrix is
+linear in the carried matrix, and remains linear after vectorization.
+Thus $S_5$ tracking belongs to the general linear-state class despite
+the group's noncommutativity and the word problem's NC#super[1]
+completeness. This representation explains why learning the task is a
+meaningful success for a linear-state architecture. Its realization
+within a particular gated transition family is a separate, more
+specific question (#ref(<sec:formal>), G3 in #ref(<sec:limitations>)).
 
 #heading(level: 2, numbering: none)[A dynamics taxonomy of head-types: eigenvalue placement $times$ saturation]
 
@@ -1130,9 +1155,14 @@ can learn to compute. We fine-tune the same 1.3 B E97 and GDN2
 checkpoints on two explicit computations. The modular-quadratic task
 repeatedly applies a nonlinear map to a running value; E97's advantage
 supports the mechanism hypothesis that motivates its state update.
-The $S_5$ task composes finite-group actions; GDN2's strong result
-shows a contrasting learned capability on group actions. Both studies concern learned
-performance under stated budgets and protocols.
+The $S_5$ task composes permutations, whose running product admits the
+linear matrix-state update in #ref(<sec:background>). GDN2's stronger
+performance on this task is positive evidence for learning a computation
+compatible with linear-state recurrence. The two probes therefore test
+useful learned capabilities with different state-update structure:
+linear permutation actions and a map nonlinear in its running scalar
+value. Both studies concern learned performance under stated budgets
+and protocols.
 
 #heading(level: 2, numbering: none)[Iterating a nonlinear map with the trained pair]
 
@@ -1217,22 +1247,27 @@ repeats that compare fixed training budgets and checkpoint-selection rules.
 The modular-quadratic finding is consistent with the temporal-composition
 contrast in #ref(<sec:formal>): E97 executes one nonlinear state update
 per step, while a GDN fold conditioned on an input-only schedule is
-affine in its initial state. The $S_5$ routing result describes affine
-group actions under a token-only schedule and a decoder separating
-reachable states. This leads to a second computational test.
+affine in its initial state. The second probe tests permutation
+composition, for which a linear transformation of carried matrix state
+already implements each required update.
 
 #heading(level: 2, numbering: none)[S5 group-state tracking on the same pair]
 
 The $S_5$ word problem tests repeated composition of permutation
-actions. Finite-group actions admit affine representations, making
-this a useful contrast with repeated application of the modular-quadratic map.
+actions. Its exact permutation-matrix representation uses a token-selected
+linear map at every step (#ref(<sec:background>)). This makes $S_5$
+a direct test of learning a computation within the general linear-state
+class. The modular-quadratic probe instead repeatedly transforms its
+running scalar through a nonlinear map, testing the inductive bias
+provided by E97's nonlinear state path.
 
 Zero-shot evaluation did not separate the two models. Matched
 fine-tuning favored E97 on the solvable $S_3$ control. In the
 longer-horizon $S_5$ capacity study, GDN2 is ahead of E97 at every
 reported length, and both curves decline toward the random baseline.
 GDN2 learns this group-state computation more effectively under
-the recorded protocol. Sources: `paper/results/expressivity_1p3b/SUMMARY.md`
+the recorded protocol. This is a substantive success of the linear-state
+model on a task admitting linear state updates. Sources: `paper/results/expressivity_1p3b/SUMMARY.md`
 (`5e1e60ef`) and `capacity/SUMMARY.md` (`6f916843`).
 
 #expressivity.s5-table <tab_s5_boundary>
@@ -1291,11 +1326,14 @@ mechanism: E97's nonlinear state path repeatedly transforms the value
 that will enter the next update. Its measured advantage is consistent
 with that hypothesis, while optimization, geometry, and checkpoint
 selection remain possible contributors. The $S_5$ result demonstrates
-that GDN2 learns a different carried-state computation strongly.
-Together with comparable language-modeling loss, these measurements
-make the useful question concrete: which computations benefit from
-placing the nonlinearity directly in the temporal state path, and under
-what training and resource conditions?
+that GDN2 learns permutation composition strongly, as measured by its
+lead at every reported length. The task has an exact linear-state
+representation, so this result establishes a useful learned capability
+on a computation of that class. It complements E97's advantage on
+iterated nonlinear maps and the pair's comparable language-modeling
+loss. Together, these measurements make the useful question concrete:
+which computations benefit from placing the nonlinearity directly in
+the temporal state path, and under what training and resource conditions?
 
 // ── 8. Formal Results ─────────────────────────────────────────────────────────
 = What the update rules establish <sec:formal>
@@ -1324,14 +1362,21 @@ $S_T=A S_0+C$ for every initial state (Lean writes $H$ for this
 matrix). The theorem's state-channel depth is zero under this fixed,
 state-independent schedule.
 
-`S5GDNBridge.gdn_s5_realization_requires_per_token_action` assumes a
-token-only schedule and a decoder that recovers `S5Tracker.run` on
-every word and separates reachable states. It then gives a state map
-$F$ through the group element, with affine word actions implementing
-right multiplication on the reachable image.
+The permutation-matrix construction in #ref(<sec:background>) gives
+an exact $S_5$ tracker in the general linear-state class. The Lean bridge
+characterizes realizers in the formal GDN family under explicit
+assumptions. `S5GDNBridge.gdn_s5_realization_requires_per_token_action`
+starts from zero state with a token-only parameter schedule and a
+decoder that recovers `S5Tracker.run` on every word. It also assumes
+that equal decoded outputs imply equal reachable states. It then gives
+a state map $F$ through the group element, with affine word actions
+implementing right multiplication on the reachable image.
 `gdn_s5_constant_parameters_cannot_realize` rules out a
-token-independent schedule. The bridge identifies the token-dependent affine actions required by
-the decoder. #ref(<sec:limitations>) develops the associated realization questions.
+token-independent schedule. The input token selects the action; the
+carried state accumulates the running group product through that action.
+The bridge is a necessary-condition theorem for an assumed exact
+realizer. Constructing such a realizer within GDN2's production gate
+and decay ranges remains G3 in #ref(<sec:limitations>).
 The $S_5$ word problem is NC#super[1]-complete. The complexity
 separation TC#super[0] $!=$ NC#super[1] remains open, and no result here
 depends on it.
@@ -1742,8 +1787,9 @@ mLSTM/xLSTM-7B @xlstm7b2025 (covariance update); Griffin/RecurrentGemma
 @griffin2024 (RG-LRU, often hybridized with local attention). Circuit-containment results for restricted
 SSM families require their stated transition and arithmetic assumptions
 @merrill2024transformers. The current empirical comparison uses
-GDN2, which leads the long-horizon $S_5$ result in
-#ref(<sec:expressivity>).
+GDN2. Its long-horizon $S_5$ result in #ref(<sec:expressivity>)
+demonstrates strong learning of permutation composition, a task with
+an exact linear-state representation.
 
 In the broader SSM/sequence-model lineage, S5 @s5_2022 introduces
 simplified state-space layers with a multi-input multi-output linear
@@ -1820,12 +1866,15 @@ would support a matched-total-budget search comparison.
 initial state, and decoder that carry the running $S_5$ product, then
 prove the trajectory property over all words.
 
-*G3: realizing group actions in the constrained affine channel.* Find
-a representation satisfying the split-gated decay-minus-rank-one
-transition and the production gate and decay ranges, or characterize
-the algebraic obstruction. The current Lean identities allow an
-arbitrary decay matrix; the production restrictions define a more
-specific realization problem.
+*G3: realizing group actions in the constrained affine channel.* The
+permutation-matrix construction establishes $S_5$ tracking in the
+general linear-state class. Find a representation satisfying GDN2's
+split-gated decay-minus-rank-one transition and production gate and
+decay ranges, or characterize the algebraic obstruction. The current
+Lean identities allow an arbitrary decay matrix; the production
+restrictions define this more specific realization problem. The
+observed learning results establish GDN2's empirical capability under
+the reported protocol; G3 asks for an exact all-words construction.
 
 *G2: state-dependent parameter schedules.* Extend the formal update
 class to gates that read carried state, and characterize its composition
@@ -1870,9 +1919,13 @@ with the recorded rank-0 loss falling to 2.2798 nats/token.
 The iterated nonlinear-map experiment connects that practicality to
 the architectural motivation. E97 learns the recurrence more accurately
 and retains a larger fraction of its accuracy as sequence length grows.
-GDN2 learns the distinct $S_5$ group-state task strongly and leads
-its long-horizon comparison. The formal state-channel results make the
-underlying computational distinction precise: repeated nonlinear
+GDN2 learns $S_5$ permutation composition strongly and leads
+its long-horizon comparison. Since this task admits an exact
+linear-state representation, GDN2's result is a meaningful success
+on a computation compatible with linear-state recurrence. Alongside
+E97's advantage on iterated nonlinear maps, it shows why the
+computational structure of the task matters. The formal state-channel
+results make the architectural distinction precise: repeated nonlinear
 composition in E97, and an affine GDN fold under a fixed,
 state-independent schedule.
 
