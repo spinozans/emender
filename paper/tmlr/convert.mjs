@@ -4,6 +4,7 @@ import {execFileSync} from 'node:child_process';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {checkCanonicalSource} from './canonical-guard.mjs';
+import {headingLevel} from './heading-level.mjs';
 const dir=path.dirname(fileURLToPath(import.meta.url));
 const root=path.resolve(dir,'../..');
 checkCanonicalSource(root);
@@ -81,7 +82,7 @@ case 'raw':{
 case 'smartquote':return x.double?'"':"'";
 case 'super':return '\\textsuperscript{'+render(x.body)+'}';
 case 'equation':return x.block?'\n\\[\\begin{aligned}'+math(x.body)+'\\end{aligned}\\]\n':'$'+math(x.body)+'$';
-case 'heading':{const title=render(x.body);const level=x.level??1;if(level===1){section=plain(x.body);formalSet='';}else formalSet=plain(x.body);inventory.headings.push({section,level,title});const appendix=x.label==='<sec:appendix>'?'\n\\clearpage\\appendix\n':'';return appendix+'\n\\'+(level===1?'section':level===2?'subsection':'subsubsection')+(x.numbering===null?'*':'')+'{'+title+'}'+(x.label?'\\label{'+stripLabel(x.label)+'}':'')+'\n';}
+case 'heading':{const title=render(x.body);const level=headingLevel(x);if(level===1){section=plain(x.body);formalSet='';}else formalSet=plain(x.body);inventory.headings.push({section,level,title});const appendix=x.label==='<sec:appendix>'?'\n\\clearpage\\appendix\n':'';return appendix+'\n\\'+(level===1?'section':level===2?'subsection':'subsubsection')+(x.numbering===null?'*':'')+'{'+title+'}'+(x.label?'\\label{'+stripLabel(x.label)+'}':'')+'\n';}
 case 'ref':{const key=stripLabel(x.target);if(keys.has(key)){inventory.citations.push(key);return '\\citep{'+key+'}'}return (key.startsWith('sec:')?'Section~':key.startsWith('fig')?'Figure~':'Table~')+'\\ref{'+key+'}';}
 case 'figure':{const isImage=x.kind==='image'||x.body.func==='image';let body;if(x.kind==='image')body='\\includegraphics[width=\\linewidth]{assets/figure-'+(++figureNumber)+'.pdf}';else body=render(x.body);const env=isImage?'figure':'table';inventory.figures.push({label:x.label,kind:env,caption:plain(x.caption.body)});return '\n\\begin{'+env+'}[htbp]\n\\centering\n'+body+'\n\\caption{'+render(x.caption.body).replace(/\n\s*\n/g,' ')+'}\\label{'+stripLabel(x.label)+'}\n\\end{'+env+'}\n';}
 case 'image':{const file=path.basename(x.source);fs.copyFileSync(path.join(dir,'..',x.source),path.join(dir,'assets',file));return '\\includegraphics[width=0.95\\linewidth]{assets/'+file+'}';}
