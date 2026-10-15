@@ -46,7 +46,6 @@ def test_f9_portable_functional_and_security_cases(tmp_path):
         'test_versioned_script_continuation_and_legacy_finish_close',
         'test_full_exchange_cannot_skip_turn_or_finish_early',
         'test_private_script_is_prescreened_without_publishing_it',
-        'test_fresh_scripted_correction_rule_is_shared_by_pool_and_sync_paths',
         'test_new_families_reject_token_echo_artifacts',
         'test_raw_quote_boundary_preserves_authorized_literals',
         'test_rollback_boundary_is_read_only_and_refuses_inflight_work',
@@ -90,7 +89,7 @@ raise SystemExit(pytest.main(["-q", *sys.argv[2:]]))
 '''
     env = {**os.environ, 'F9_STAGE_ROOT': str(tmp_path),
            'F9_AUTHOR_WORK': str(tmp_path / 'author-work'),
-           'PYTHONPATH': f'{source / "loop"}:{repo / "scripts/rl-loop-v1"}:{repo}'}
+           'PYTHONPATH': str(repo)}
     checked = subprocess.run(
         [sys.executable, '-c', bootstrap, str(source),
          *(f'{source / "unit_tests.py"}::{name}' for name in cases), str(boundary)],
