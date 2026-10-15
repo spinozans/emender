@@ -1080,8 +1080,7 @@ median merge duration 6.320 s and median inter-merge interval 72 s. Its
 last ten logged windows reported a median aggregate throughput of 9.410
 million tokens/s. #ref(<fig_frontier_segment>) plots those 73 merge
 durations and the 72 between-merge intervals from the committed verdict
-data. A continuous loss curve over the retained lineage will be
-published with the recovered raw logs.
+data.
 
 #figure(
   image("figures/frontier_segment_5134243.png", width: 92%),
