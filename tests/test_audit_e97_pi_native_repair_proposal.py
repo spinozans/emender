@@ -67,7 +67,11 @@ def prepared_proposal(tmp_path, monkeypatch):
         'world_size': proposal['data_world_size'],
         'context_size': proposal['context_size'],
         'steps': [
-            {'update': update, 'source_targets': proposal['scheduled_source_targets']}
+            {'update': update, 'source_targets': {
+                source: total // proposal['proposed_updates']
+                + (update < total % proposal['proposed_updates'])
+                for source, total in proposal['scheduled_source_targets'].items()
+            }}
             for update in range(proposal['proposed_updates'])
         ],
         'source_target_totals': proposal['scheduled_source_targets'],
@@ -79,6 +83,7 @@ def prepared_proposal(tmp_path, monkeypatch):
     checkpoint = tmp_path / 'checkpoint.pt'
     checkpoint.write_bytes(b'bounded checkpoint identity fixture')
     proposal['parent_checkpoint'] = str(checkpoint)
+    checkpoint_sha256 = proposal['parent_checkpoint_sha256']
     original_sha = auditor.sha
 
     def fixture_sha(path):
@@ -86,7 +91,7 @@ def prepared_proposal(tmp_path, monkeypatch):
         # only that exact fixture input, retaining rejection of changed bytes
         # and real SHA-256 checks for every manifest and proposal.
         if Path(path) == checkpoint and checkpoint.read_bytes() == b'bounded checkpoint identity fixture':
-            return proposal['parent_checkpoint_sha256']
+            return checkpoint_sha256
         return original_sha(path)
 
     monkeypatch.setattr(auditor, 'sha', fixture_sha)

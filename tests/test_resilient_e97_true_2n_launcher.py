@@ -28,6 +28,18 @@ def _fixture_launcher(tmp_path):
     assignment = f"APPROVED_EMENDER_CONDA_ENV={APPROVED_ENV}"
     text = source.read_text()
     assert text.count(assignment) == 1
+    import platform
+    import torch
+    import triton
+    expected = '''expected = {
+    "python": "3.12.13", "torch": "2.10.0+rocm7.1",
+    "torch_hip": "7.1.25424", "triton": "3.6.0",
+}'''
+    assert text.count(expected) == 1
+    text = text.replace(expected, "expected = " + repr({
+        "python": platform.python_version(), "torch": torch.__version__,
+        "torch_hip": torch.version.hip, "triton": triton.__version__,
+    }))
     launcher = tmp_path / "resilient-launcher.sbatch"
     launcher.write_text(text.replace(assignment, f"APPROVED_EMENDER_CONDA_ENV={sys.prefix}"))
     return launcher

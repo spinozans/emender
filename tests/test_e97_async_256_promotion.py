@@ -21,6 +21,7 @@ def promotion_repository(tmp_path, monkeypatch):
     """
     from scripts.frontier import materialize_e97_s3_seed as materializer
 
+    monkeypatch.setattr(sys, "path", list(sys.path))
     verify_authorities = materializer.verify_authorities
     document = {field: SEED[key] for field, key in materializer.FIELDS.items()}
     objects = {
