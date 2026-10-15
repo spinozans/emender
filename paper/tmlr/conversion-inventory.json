@@ -63,7 +63,7 @@
     {
       "section": "Architecture",
       "level": 2,
-      "title": "GDN2-MLP state channel"
+      "title": "GDN2 state channel"
     },
     {
       "section": "Architecture",
@@ -510,7 +510,7 @@
     {
       "label": "<fig_taxonomy>",
       "kind": "figure",
-      "caption": "The Emender head-type taxonomy:eigenvalue placement×saturation.(A)Each head is fixed by where its along-keyeigenvalue sits in the complex unit disk— real-positivedecay,real-negativereflect, or complexrot— and by whether the statemap is linear or saturated. The orange real diameter is the locusGDN-2 occupies.(B)The two axes name five cells. Shading marksGDN-2-adjacent linear cores; the Emender also explores off-axisrotation(rot) and saturated state maps(nonlin) as a within-layerpool. This taxonomy is descriptive:different decay placementprevents an exact equal-parameter restriction of the production cores.rot-nonlinis reserved for future work. E88/E97/E98/E99 are historicalrun tags, not architecture names. The GDN-2 corner of this grid isnot a strawman:it is the mixer of the 1.3 B linear baseline of(GDN2-MLP), selected by the same search protocol as E97."
+      "caption": "The Emender head-type taxonomy:eigenvalue placement×saturation.(A)Each head is fixed by where its along-keyeigenvalue sits in the complex unit disk— real-positivedecay,real-negativereflect, or complexrot— and by whether the statemap is linear or saturated. The orange real diameter is the locusGDN-2 occupies.(B)The two axes name five cells. Shading marksGDN-2-adjacent linear cores; the Emender also explores off-axisrotation(rot) and saturated state maps(nonlin) as a within-layerpool. This taxonomy is descriptive:different decay placementprevents an exact equal-parameter restriction of the production cores.rot-nonlinis reserved for future work. E88/E97/E98/E99 are historicalrun tags, not architecture names. The GDN-2 corner of this grid isnot a strawman:it is the mixer of the 1.3 B linear baseline of(GDN2), selected by the same search protocol as E97."
     },
     {
       "label": "<fig_arch>",
@@ -530,12 +530,12 @@
     {
       "label": "<tab_matched_loss>",
       "kind": "table",
-      "caption": "Matched-token loss comparison(nats/token, The Pile).The commonlogged cutoff is step 2,300,925, not checkpoint step 2,300,930. At thematched cutoff the two arms sit within0.010nats/token smoothed(≈0.4%relative), and thesign of the gap depends on theaveraging window:GDN2-MLP is lower on the full-trajectory and1,000-step windows, E97 is lower on the most recent 100-stepwindow. Early in training(5.1 B tokens) GDN2-MLP led by 0.071nats; the gap closed as training progressed. Source:docs/GDN2_OPS_SNAPSHOT_20260728.md(final matched cutoff) anddocs/GDN2_E97_MATCHED_LOSS_COMPARISON_20260723.md(earlycomparison); both parse rank-0 logs only, deduplicate by optimizerstep, and align on exact common steps."
+      "caption": "Matched-token loss comparison(nats/token, The Pile).The commonlogged cutoff is step 2,300,925, not checkpoint step 2,300,930. At thematched cutoff the two arms sit within0.010nats/token smoothed(≈0.4%relative), and thesign of the gap depends on theaveraging window:GDN2 is lower on the full-trajectory and1,000-step windows, E97 is lower on the most recent 100-stepwindow. Early in training(5.1 B tokens) GDN2 led by 0.071nats; the gap closed as training progressed. Source:docs/GDN2_OPS_SNAPSHOT_20260728.md(final matched cutoff) anddocs/GDN2_E97_MATCHED_LOSS_COMPARISON_20260723.md(earlycomparison); both parse rank-0 logs only, deduplicate by optimizerstep, and align on exact common steps."
     },
     {
       "label": "<tab_cma_sweeps>",
       "kind": "table",
-      "caption": "Per-sweep CMA audit at the loss-parity binding.Fitness and gainsare nats/token, from retained candidate mean-loss fields, not thefinal long-run loss. Counts are snapshot coverage, including failedone-evaluation attempts; generation count is retained generationrecords, not an inferred total. The first14rows derive directly frompaper/results/cmaes_burst_v2/cmaes_{eval,generation}_summary.csv(899e91cd), a different snapshot from the later leaderboard.U3.1 applies to the last two rows only, the carried-in E97-MLP andGDN2-MLP searches; they are not mapped to an earlier normalized sweep.GDN2-MLPs retaineddocs/repro/lb_gdn2_mlp_20260612/best.jsonsupplies its count and winner fitness in the provenance prose above,but not first-generation data.Dashes indicate unavailable fields, not zeros or no improvement."
+      "caption": "Per-sweep CMA audit at the loss-parity binding.Fitness and gainsare nats/token, from retained candidate mean-loss fields, not thefinal long-run loss. Counts are snapshot coverage, including failedone-evaluation attempts; generation count is retained generationrecords, not an inferred total. The first14rows derive directly frompaper/results/cmaes_burst_v2/cmaes_{eval,generation}_summary.csv(899e91cd), a different snapshot from the later leaderboard.U3.1 applies to the last two rows only, the carried-in E97-MLP andGDN2 searches; they are not mapped to an earlier normalized sweep.GDN2s retaineddocs/repro/lb_gdn2_mlp_20260612/best.jsonsupplies its count and winner fitness in the provenance prose above,but not first-generation data.Dashes indicate unavailable fields, not zeros or no improvement."
     },
     {
       "label": "<tab_s5>",
@@ -560,12 +560,12 @@
     {
       "label": "<tab_depth_wall>",
       "kind": "table",
-      "caption": "Modular-quadratic length extrapolation on the released 1.3 B pair.Full-vocabulary argmax accuracy at the pre-registered plateau stops;trained length128, seed42,262144scored token positions per length.The identical cap is18269steps, not identical realizedtraining:E97 stopped after2500steps and GDN2-MLPafter2200. E97 decays gracefully rather thanremaining length-invariant; GDN2-MLP approaches a roughly 50% plateau,notthe declared0.39%randombaseline. Source:paper/results/expressivity_1p3b/iterated-map/,ft_{e97,gdn2}_modular_quadratic{,_sweep}.json(commit9dc3afd7);budget.json(pre-registration1989656c)."
+      "caption": "Modular-quadratic length extrapolation on the released 1.3 B pair.Full-vocabulary argmax accuracy at the pre-registered plateau stops;trained length128, seed42,262144scored token positions per length.The identical cap is18269steps, not identical realizedtraining:E97 stopped after2500steps and GDN2after2200. E97 decays gracefully rather thanremaining length-invariant; GDN2 approaches a roughly 50% plateau,notthe declared0.39%randombaseline. Source:paper/results/expressivity_1p3b/iterated-map/,ft_{e97,gdn2}_modular_quadratic{,_sweep}.json(commit9dc3afd7);budget.json(pre-registration1989656c)."
     },
     {
       "label": "<tab_s5_boundary>",
       "kind": "table",
-      "caption": "S5 capacity/long-horizon boundary finding, not a depth-wall separation.Full-vocabulary argmax accuracy, seed42both curves decay and GDN2-MLP stays ahead.*GDN2-MLP completed oneoptimizer step at length 512 before the curriculum stage provedOOM-infeasible even at sub-batch 1; this point is not wholly untrained.Source:capacity/cap_{e97,gdn2}_s5_sweep.jsonandcap_gdn2_s5_train.jsonunderpaper/results/expressivity_1p3b/(E97f1ed5615, GDN2 salvage6f916843)."
+      "caption": "S5 capacity/long-horizon boundary finding, not a depth-wall separation.Full-vocabulary argmax accuracy, seed42both curves decay and GDN2 stays ahead.*GDN2 completed oneoptimizer step at length 512 before the curriculum stage provedOOM-infeasible even at sub-batch 1; this point is not wholly untrained.Source:capacity/cap_{e97,gdn2}_s5_sweep.jsonandcap_gdn2_s5_train.jsonunderpaper/results/expressivity_1p3b/(E97f1ed5615, GDN2 salvage6f916843)."
     },
     {
       "label": "<tab_downstream>",

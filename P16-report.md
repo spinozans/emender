@@ -206,6 +206,36 @@ or number was removed.
 appendix count (13 numbered body sections + 1 register appendix) and the
 section-label list; its phrase list and `verify.mjs`'s sample set are unchanged.
 
+## Ruling 5 — GDN2 naming sweep (drop the `-MLP` suffix)
+
+Operator ruling 2026-10-15: the control is named **GDN2**; the `-MLP` suffix is
+dropped everywhere in the manuscript (the feedforward is an MLP by
+construction). Applied as a whole-manuscript naming sweep.
+
+**Rename sites: 56** — 50 in `paper/main.typ` (abstract; introduction; the
+claim/scope table and its caption; the 1.3 B pairing description; the pair
+identities table header; running prose; the `GDN2 state channel` feature
+heading and its cross-references; related work; conclusion; future work) and 6
+in `paper/figures/expressivity_1p3b.typ` (the `tab_depth_wall` and
+`tab_s5_boundary` column headers `[*GDN2-MLP*]`, and the caption text). Every
+`GDN2-MLP` occurrence became `GDN2`; the figure-source table columns and
+captions are manuscript-side labels and were renamed in place.
+
+**First use (clean).** Per the existing expansion convention (E97 is likewise
+left unexpanded in the abstract and defined in the introduction), the
+introduction's first definitional mention now reads “*GDN2* (Gated DeltaNet-2
+@gated_deltanet2_2026), a mixer followed by the same SwiGLU MLP”. The abstract
+keeps the bare abbreviation, matching how E97 is presented.
+
+**Infrastructure identifiers NOT renamed** (paper-side naming only): the six
+lowercase `gdn2-mlp` sites inside `paper/main.typ` — the Hugging Face release
+URL `…/gdn2-mlp-1.3b`, the checkpoint run id `gdn2_gdn2-mlp_1.3B_20260722_083444`,
+and the leaderboard keys `` `gdn2-mlp` `` / `` `lb-gdn2-mlp` `` — plus the
+`paper/results/**` summaries and `RESULTS_INVENTORY.md` artifact keys.
+`paper/figures/validate_section6.js` still contains one `GDN2-MLP` phrase in an
+already-stale caption regression that is not part of the acceptance chain; it
+is not manuscript-side and was left untouched rather than re-fitted.
+
 ## Validation evidence
 
 Durable receipts are under `paper/tmlr/validation/`; the exact source diff is
@@ -261,8 +291,9 @@ new experimental, formal, or deployment claim is certified. Independent
 reviewer acceptance is still required.
 
 Delivery: the first commit `609ce671` (`merge reader-first voice, positive
-assertions, genre reorder per operator rulings`) carried Rulings 1–3; this
-follow-up commit carries Ruling 4 (E97 focus + the consolidated development
-history / source register appendix), rebuilding every generated artifact and
-receipt, then pushes to `origin/paper-1p3b-spine`. The seven pre-existing
-untracked review files are not staged; no unrelated file is staged.
+assertions, genre reorder per operator rulings`) carried Rulings 1–3; the second
+`c8256c8d` carried Ruling 4 (E97 focus + consolidated development history /
+source register appendix); this follow-up carries Ruling 5 (GDN2 naming sweep),
+rebuilding every generated artifact and receipt, then pushes to
+`origin/paper-1p3b-spine`. The seven pre-existing untracked review files are not
+staged; no unrelated file is staged.

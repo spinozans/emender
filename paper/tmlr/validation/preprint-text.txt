@@ -4,14 +4,14 @@ Poietic PBC / UTHSC, Memphis, TN, USA
 Abstract
 Nonlinear-state recurrence grows executed compositional depth in time: E97 applies one
 tanh-of-aﬃne state update per token. In the dual regime, a linear-state GDN fold with a
-state-independent parameter schedule remains aﬃne in its initial state, with zero nonlinear
-temporal depth. Lean 4 artifacts establish this structural duality, matched-signature delta-
-versus-raw-write separation, and an S5 routing bridge; minimal circuit-depth lower bounds
-and a full-stack impossibility remain open. Width-axis multi-programming makes the non-
-linear route practical: a 1.3 B Emender trains through 150.8 B Pile tokens on one eight-GPU
-workstation, while a parameter-matched, CMA-selected GDN2-MLP control occupies the
-same training-loss band. Multi-seed small-scale iterated-map probes show a depth-wall sig-
-nature that is replicated on this trained 1.3 B pair: modular-quadratic terminal accuracy
+state-independent parameter schedule remains aﬃne in its initial state, with zero nonlin-
+ear temporal depth. Lean 4 artifacts establish this structural duality, matched-signature
+delta-versus-raw-write separation, and an S5 routing bridge; minimal circuit-depth lower
+bounds and a full-stack impossibility remain open. Width-axis multi-programming makes
+the nonlinear route practical: a 1.3 B Emender trains through 150.8 B Pile tokens on one
+eight-GPU workstation, while a parameter-matched, CMA-selected GDN2 control occupies
+the same training-loss band. Multi-seed small-scale iterated-map probes show a depth-wall
+signature that is replicated on this trained 1.3 B pair: modular-quadratic terminal accuracy
 is 99.96% versus 76.09% at trained length, and 76.07% versus 53.36% at eight times that
 length. This is a single-seed, common-cap comparison with unequal realized training over
 the tested lengths. The negative transfer is: “The 8M S5 separation does NOT replicate
@@ -60,10 +60,10 @@ recurrent language model — E97, the current 1.3 B-class instance of the Emende
 by running many small recurrent programs in parallel across the network’s width rather than across time,
 trains through 150.8 billion tokens on The Pile (Gao et al., 2020) using a single eight-GPU workstation,
 with no cluster and no sequence parallelism, reaching an estimated 0.93 bits per byte (Section 6). Its linear-
-recurrent baseline — GDN2-MLP, a Gated DeltaNet-2 (Hatamizadeh et al., 2026) mixer followed by the
-same SwiGLU MLP, selected by the same CMA-ES (Hansen et al., 2003) search protocol at a parameter
-count within 0.01% — trains on literally matched tokens under the same 2k-chunk Pile recipe and lands in
-the same loss-versus-tokens band: at the matched 150.79-billion-token cutoﬀ the smoothed loss gap between
+recurrent baseline — GDN2 (Gated DeltaNet-2 (Hatamizadeh et al., 2026)), a mixer followed by the same
+SwiGLU MLP, selected by the same CMA-ES (Hansen et al., 2003) search protocol at a parameter count
+within 0.01% — trains on literally matched tokens under the same 2k-chunk Pile recipe and lands in the
+same loss-versus-tokens band: at the matched 150.79-billion-token cutoﬀ the smoothed loss gap between
 the two arms is 0.010 nats/token, with the sign of the gap depending on the averaging window (Section 6).
 The 1.3 B result is therefore a replication across the update rule and tuning regime, not across scale: both
 arms sit in the same 1.3 B-class parameter band, and whether the separation or the loss parity survives at
@@ -168,29 +168,29 @@ storage headroom: the Emender reaches 0.79 on the S5 word problem against 0.22 f
 M2
 RNN-CMA (Section 7).
 3. Paired 1.3 B comparison: loss does not distinguish the update rules; matched tokens do not favor
-either. Two 1.3 B-class models — E97 (delta-correcting, nonlinear state) and GDN2-MLP (linear-
-state, the strongest closely related recurrent baseline, CMA-ES-hardened under the same search
-protocol) — train from scratch on the same 2k-chunk Pile recipe with literally matched aggre-
-gate tokens (150.79 B) at a 0.01% parameter gap, and land in the same loss-versus-tokens band
-(Section 6). At 480 M scale, four CMA-ES-tuned recurrent families share one FLOPs-per-bit curve
-(Section 6). The contribution is the architectural option plus the mechanism; training speed supplies
-no win, and bulk loss is a convergent null across the tuned families.
+either. Two 1.3 B-class models — E97 (delta-correcting, nonlinear state) and GDN2 (linear-state,
+the strongest closely related recurrent baseline, CMA-ES-hardened under the same search protocol)
+— train from scratch on the same 2k-chunk Pile recipe with literally matched aggregate tokens
+(150.79 B) at a 0.01% parameter gap, and land in the same loss-versus-tokens band (Section 6). At
+480 M scale, four CMA-ES-tuned recurrent families share one FLOPs-per-bit curve (Section 6). The
+contribution is the architectural option plus the mechanism; training speed supplies no win, and
+bulk loss is a convergent null across the tuned families.
 4. Expressivity at 1.3 B: a task-dependent separation. On the trained pair itself, the modular-quadratic
 probe separates terminal accuracy and length robustness under a pre-registered common optimiza-
-tion cap (Section 7, Table 8). The S5 separation does not replicate: GDN2-MLP is ahead in the
-long-horizon probe (Table 9). Realizability is not a guarantee of learning; the two ﬁndings jointly
-delimit the theory-to-empirics transfer.
+tion cap (Section 7, Table 8). The S5 separation does not replicate: GDN2 is ahead in the long-
+horizon probe (Table 9). Realizability is not a guarantee of learning; the two ﬁndings jointly delimit
+the theory-to-empirics transfer.
 The 1.3 B pairing is E97-MLP (1,286,589,072 parameters; the Emender split-edit delta-correcting update
-— a key-axis erase/read gate and a value-axis write gate around the bounded delta correction, Section 3
-— with a bias-free SwiGLU MLP per layer) versus GDN2-MLP (1,286,713,448 parameters; the oﬃcial-style
-Gated DeltaNet-2 (Hatamizadeh et al., 2026) mixer with the same SwiGLU MLP), both selected by per-
-architecture CMA-ES (Hansen et al., 2003) search at the 1.3 B band on The Pile and both trained from
-scratch under the identical 8-island DiLoCo recipe (Section 6). The raw-write contrast (M2
-RNN (Mishra
-et al., 2026)) is not a 1.3 B arm — its public XMA kernels do not run on this machine’s hardware stack,
-and a local reimplementation would add an implementation-ﬁdelity confound — so it is carried at the 8 M
-probe scale and in the Lean separation instead (Section 7, Section 4). The exact per-arm search provenance,
-budgets, and training identities are reported in Section 6.
+— a key-axis erase/read gate and a value-axis write gate around the bounded delta correction, Section 3 —
+with a bias-free SwiGLU MLP per layer) versus GDN2 (1,286,713,448 parameters; the oﬃcial-style Gated
+DeltaNet-2 (Hatamizadeh et al., 2026) mixer with the same SwiGLU MLP), both selected by per-architecture
+CMA-ES (Hansen et al., 2003) search at the 1.3 B band on The Pile and both trained from scratch under
+the identical 8-island DiLoCo recipe (Section 6). The raw-write contrast (M2
+RNN (Mishra et al., 2026))
+is not a 1.3 B arm — its public XMA kernels do not run on this machine’s hardware stack, and a local
+reimplementation would add an implementation-ﬁdelity confound — so it is carried at the 8 M probe scale
+and in the Lean separation instead (Section 7, Section 4). The exact per-arm search provenance, budgets,
+and training identities are reported in Section 6.
 The paper proceeds from background (Section 2) and architecture (Section 3) through formal results (Sec-
 tion 4), systems (Section 5), matched-token language modeling (Section 6), and expressivity probes (Sec-
 tion 7). The applications class (Section 8) extends the structural question without claiming new deployments;
@@ -198,9 +198,9 @@ related work (Section 9), limitations (Section 10), conclusion (Section 11), tes
 and future work (Section 13) complete the body.
 The release targets for the 1.3 B pair are the immutable per-arm authorities: E97 (https://huggingf
 ace.co/spinozans/emender-e97-1.3b, tag tokens-150793748480, the 150.79 B-token checkpoint of
-emender_E97_1.3B_20260709_084606) and GDN2-MLP (https://huggingface.co/spinozans/gdn2-
-mlp-1.3b, tag tokens-152280498176), with the public paper PDF mirrored at http://hypervolu.me/~e
-rik/ndm/Garrison_2026_Emender.pdf.
+emender_E97_1.3B_20260709_084606) and GDN2 (https://huggingface.co/spinozans/gdn2-mlp-
+1.3b, tag tokens-152280498176), with the public paper PDF mirrored at http://hypervolu.me/~erik/
+ndm/Garrison_2026_Emender.pdf.
 4
 Claims, evidence, and scope
 The table below states each load-bearing claim with its evidence, its scope, and — in the last column —
@@ -328,9 +328,9 @@ Group-state tracking
 is protocol-dependent
 8 M and predecessor GDN
 probes decay at length; the
-current GDN2-MLP pair
-reverses the predicted
-ordering (Table 9)
+current GDN2 pair reverses
+the predicted ordering
+(Table 9)
 Measured learning
 behavior; Lean
 proves the
@@ -362,7 +362,7 @@ unequal realized
 step counts
 (Section 7)
 Not universal nonlinear
-superiority; GDN2-MLP’s
+superiority; GDN2’s
 long-length plateau is not
 the random baseline, and S5
 is a boundary ﬁnding
@@ -583,7 +583,7 @@ Emender also explores oﬀ-axis rotation (rot) and saturated state maps (nonlin)
 This taxonomy is descriptive: diﬀerent decay placement prevents an exact equal-parameter restriction of the
 production cores. rot-nonlin is reserved for future work. E88/E97/E98/E99 are historical run tags, not
 architecture names. The GDN-2 corner of this grid is not a strawman: it is the mixer of the 1.3 B linear
-baseline of Section 6 (GDN2-MLP), selected by the same search protocol as E97.
+baseline of Section 6 (GDN2), selected by the same search protocol as E97.
 3 Architecture
 Per-head update
 Section 1 named the emender layer by what it does — read what the memory predicts at the addressed
@@ -738,10 +738,10 @@ update.
 -normalized q, k give many independent addressing
 programs and avoid the gradient-conditioning failure mode seen when a single shared q, k pair feeds
 hundreds of value heads.
-GDN2-MLP state channel
+GDN2 state channel
 Algorithm 2 deﬁnes the adjacent GDN-2 linear core used by the formal comparison: decay is applied before
-retrieval and correction, and no tanh is applied to the returned state. Its inputs are an already supplied key,
-split gates, value, and pre-decay matrix; it does not impose E97’s projection processing on GDN2-MLP. In
+retrieval and correction, and no tanh is applied to the returned state. Its inputs are an already supplied
+key, split gates, value, and pre-decay matrix; it does not impose E97’s projection processing on GDN2. In
 the trained stack the mixer is followed by the SwiGLU MLP of Section 6, not by a state activation. This
 core speciﬁcation does not assert that a multilayer stack has input-only gates. Algorithms 1 and 2 present
 the abstract core; the released baselines add projection, normalization, gate-domain, and residual machinery
@@ -1088,11 +1088,11 @@ teAfter_eq_compose gives its time-ordered composition, and e97_compositional_dep
 states that appending a step applies one more such map. Thus the executed composition contains one tanh
 per token. This is not a proof that the resulting function has no shallower representation.
 For a ﬁxed, state-independent schedule of CompositionalDepthDuality.GdnStepParams, gdn_state_chan
-nel_depth_bounded_in_time gives matrices A, C with ST = AS0 + C for every initial state (Lean writes
-H for this matrix, not the head count or the M2
-RNN comparator state). The nonlinear temporal depth of
-that state channel is zero; a multilayer GDN2-MLP stack, state-dependent gates, approximation error, and
-alternative encodings are not covered.
+nel_depth_bounded_in_time gives matrices A, C with ST = AS0 + C for every initial state (Lean writes H
+for this matrix, not the head count or the M2
+RNN comparator state). The nonlinear temporal depth of that
+state channel is zero; a multilayer GDN2 stack, state-dependent gates, approximation error, and alternative
+encodings are not covered.
 S5GDNBridge.gdn_s5_realization_requires_per_token_action assumes a token-only schedule and
 a decoder that recovers S5Tracker.run on every word and separates reachable states. It then gives a
 state map F through the group element, with aﬃne word actions implementing right multiplication on the
@@ -1156,12 +1156,12 @@ therefore asks nothing of parallelism along time: the parallelism across these p
 Measured throughput and utilization (CUDA only)
 All throughput measurements and throughput-budget smokes reported here are CUDA-only; none establishes
 correctness, performance, or parity on ROCm.
-At the literal 1.3 B pair geometry the two arms are measured head to head: on a leased RTX 6000 Ada under
-identical conditions, E97-MLP sustains 3,211 tokens/s per GPU at batch 4 against 3,290 for GDN2-MLP
-— a 0.976× tie — while using 28.9 GB against GDN2-MLP’s 35.7 GB peak memory, so E97 ﬁts batch 6
-(4,470 tokens/s per GPU) where GDN2-MLP OOMs (experiments/preflight_100b/RESULTS.md). The
-Emender’s edge at this scale is memory, not kernel speed; an earlier 1.26–1.56× speedup measured at small
-grok-scale dims is not reproduced at 1.3 B.
+At the literal 1.3 B pair geometry the two arms are measured head to head: on a leased RTX 6000 Ada
+under identical conditions, E97-MLP sustains 3,211 tokens/s per GPU at batch 4 against 3,290 for GDN2
+— a 0.976× tie — while using 28.9 GB against GDN2’s 35.7 GB peak memory, so E97 ﬁts batch 6 (4,470
+tokens/s per GPU) where GDN2 OOMs (experiments/preflight_100b/RESULTS.md). The Emender’s
+edge at this scale is memory, not kernel speed; an earlier 1.26–1.56× speedup measured at small grok-scale
+dims is not reproduced at 1.3 B.
 Predecessor-cohort occupancy, MFU, and the linear-scan kernel comparison are recorded in Section A.
 Fused Triton recurrence kernel
 The forward kernel uses an internal [T,B,H,*] layout (time, batch, head, . . .) and dispatches one program
@@ -1184,8 +1184,8 @@ The kernel is written in Triton (Tillet et al., 2019), a source-portability choi
 would require ROCm measurement. The pair’s production runs, kernel throughput measurements, and
 expressivity throughput smokes all ran on NVIDIA CUDA. No ROCm smoke or paired production artifact
 supports a correctness or throughput claim here; no CUDA/ROCm parity is claimed. The successor E97
-Frontier continuation is a separate, single-arm line of work, not a portability benchmark for the E97/GDN2-
-MLP pair.
+Frontier continuation is a separate, single-arm line of work, not a portability benchmark for the E97/GDN2
+pair.
 Distributed training
 The 1.3 B-class result reported here was produced on a single eight-GPU workstation, with no cluster and
 no sequence parallelism — both 150 B-token arms of Section 6 ran the same local DiLoCo recipe on that one
@@ -1207,13 +1207,13 @@ carries a data-dependent solve count per step, and its convergence on the bounde
 whereas multi-programming is a single serial pass per head.
 6 Language-Modeling Results
 The 1.3 B double-pairing: setup and training identities
-The 1.3 B comparison is a pairing: one nonlinear-state model and one linear-state model, each selected by its
-own CMA-ES search, trained from scratch under a literally identical recipe, and read out at exactly matched
-aggregate tokens. The two arms are E97 — the Emender split-edit instance of Section 3, paired with a
-bias-free SwiGLU MLP per layer — and GDN2-MLP — the oﬃcial-style Gated DeltaNet-2 (Hatamizadeh
+The 1.3 B comparison is a pairing: one nonlinear-state model and one linear-state model, each selected by
+its own CMA-ES search, trained from scratch under a literally identical recipe, and read out at exactly
+matched aggregate tokens. The two arms are E97 — the Emender split-edit instance of Section 3, paired
+with a bias-free SwiGLU MLP per layer — and GDN2 — the oﬃcial-style Gated DeltaNet-2 (Hatamizadeh
 et al., 2026) mixer with the same SwiGLU MLP, bound to external source commit 95709fc. Holding the
 channel-mixer (MLP) ﬁxed on both arms makes this a comparison of token mixers — the recurrence.
-Training identity E97-MLP GDN2-MLP
+Training identity E97-MLP GDN2
 Parameters 1,286,589,072 1,286,713,448 (+0.0097%)
 Mixer Emender split-edit delta (Section 3) Gated DeltaNet-2, 4-token conv
 Geometry dim 1792, depth 11, H = 216,
@@ -1259,8 +1259,8 @@ co.sh and scripts/launch_gdn2_mlp_8gpu_diloco.sh; per-run args.json/release vali
 (docs/EMENDER_DILOCO_OPS_HANDOFF_20260722.md, docs/validation/e97-huggingface-dense-base-
 and-cli-agent-release.md, docs/validation/gdn2-huggingface-152b-control-release.md).
 22
-Both arms consumed 65,536 tokens per optimizer step (8 ranks × batch 4 × chunk 2,048, validated from the
-launch manifests and log deltas), so matched optimizer steps are matched aggregate tokens. GDN2-MLP was
+Both arms consumed 65,536 tokens per optimizer step (8 ranks × batch 4 × chunk 2,048, validated from
+the launch manifests and log deltas), so matched optimizer steps are matched aggregate tokens. GDN2 was
 run 1.49 B tokens past E97’s ﬁnal step so that the comparison could be read near E97’s terminal authority.
 The ﬁnal common logged read-out is ﬁve optimizer steps earlier than that checkpoint; no paired loss statistic
 uses GDN2’s extra tokens.
@@ -1286,7 +1286,7 @@ step 2,300,925 (150,793,420,800 tokens): 92,037 aligned records, zero E97-only a
 through the cutoﬀ, no interpolation. This is 327,680 tokens (ﬁve optimizer steps) before E97’s terminal
 checkpoint at step 2,300,930; the table is a last-common-log comparison, not an unlogged terminal-step
 measurement.
-Statistic at the 150.79 B-token cutoﬀ E97 GDN2-MLP ∆ (GDN2 − E97)
+Statistic at the 150.79 B-token cutoﬀ E97 GDN2 ∆ (GDN2 − E97)
 Raw loss at cutoﬀ step 2.4770 2.4324 −0.0446
 80-point trailing smoothed 2.4370 2.4267 −0.0103
 Mean, last 100 steps 2.4284 2.4423 +0.0139
@@ -1296,10 +1296,10 @@ Early comparison, 5.118 B tokens
 2.9300 2.8588 −0.0713
 Table 4: Matched-token loss comparison (nats/token, The Pile). The common logged cutoﬀ is step 2,300,925,
 not checkpoint step 2,300,930. At the matched cutoﬀ the two arms sit within 0.010 nats/token smoothed
-(≈ 0.4% relative), and the sign of the gap depends on the averaging window: GDN2-MLP is lower on the full-
+(≈ 0.4% relative), and the sign of the gap depends on the averaging window: GDN2 is lower on the full-
 trajectory and 1,000-step windows, E97 is lower on the most recent 100-step window. Early in training (5.1
-B tokens) GDN2-MLP led by 0.071 nats; the gap closed as training progressed. Source: docs/GDN2_OPS_SN
-APSHOT_20260728.md (ﬁnal matched cutoﬀ) and docs/GDN2_E97_MATCHED_LOSS_COMPARISON_20260723.md
+B tokens) GDN2 led by 0.071 nats; the gap closed as training progressed. Source: docs/GDN2_OPS_SNAP
+SHOT_20260728.md (ﬁnal matched cutoﬀ) and docs/GDN2_E97_MATCHED_LOSS_COMPARISON_20260723.md
 (early comparison); both parse rank-0 logs only, deduplicate by optimizer step, and align on exact common
 steps.
 The reading is parity, and it is a null result of the same kind the predecessor cohort measured (Section E): after
@@ -1321,16 +1321,16 @@ The 150 B parity extends a null that is visible much earlier and much more broad
 stage — ﬁve CMA-best 1.3 B models at their own found geometry, one ﬁxed held-out Pile-tail slice of
 131,072 scored tokens, and the same 15-minute per-candidate training budget the searches used — all ﬁve
 architectures land in a 0.088-bpb held-out band: pure-E97 2.0126, M2
-RNN 2.0344, Emender-mix 2.0402,
-E97-MLP 2.0911, GDN2-MLP 2.1013 bits per byte (non-averaged weights, the basis consistent with the
-search ﬁtness; experiments/lb_compare_20260613/LEADERBOARD.md). Within that band E97-MLP is
-ahead of GDN2-MLP on both primary metrics — search ﬁtness 5.8606 vs 5.8949 and held-out bpb 2.0911
-vs 2.1013 — but these values show descriptive closeness with the reported ordering; statistical superiority
-or equivalence remains unestablished: bulk loss occupies a narrow observed band across the tuned families,
-and the distinguisher must be capability (Section 7), not loss.
+RNN 2.0344, Emender-mix 2.0402, E97-
+MLP 2.0911, GDN2 2.1013 bits per byte (non-averaged weights, the basis consistent with the search ﬁtness;
+experiments/lb_compare_20260613/LEADERBOARD.md). Within that band E97-MLP is ahead of GDN2
+on both primary metrics — search ﬁtness 5.8606 vs 5.8949 and held-out bpb 2.0911 vs 2.1013 — but these
+values show descriptive closeness with the reported ordering; statistical superiority or equivalence remains
+unestablished: bulk loss occupies a narrow observed band across the tuned families, and the distinguisher
+must be capability (Section 7), not loss.
 Matched-control transparency: search breadth, budgets, and conﬁgurations
 Because the central 1.3 B claim is a null on loss, the credibility of the baseline is load-bearing: the search
-protocol and records must establish GDN2-MLP’s optimizer hardening. The provenance chain is as follows.
+protocol and records must establish GDN2’s optimizer hardening. The provenance chain is as follows.
 Search protocol (all families). Each family was searched with the same driver (scripts/cmaes_search_v2.
 py): CMA-ES (Hansen et al., 2003) with population 8 over the family’s structural knobs (width, depth, head
 count, state width, learning rate, batch size), 15 minutes of training per candidate at 2,048-token context on
@@ -1348,16 +1348,16 @@ candidate window — is committed at paper/results/cmaes_burst_v2/ (per-family t
 manifest in cmaes_trajectory_points.csv.gz, cmaes_eval_summary.csv).
 The two carried-in winners. E97-MLP carries the emender-mlp search winner (dim 1792, H = 216, depth
 11, n_state 32, mlp ratio 2.2623, lr 1.007 × 10−3
-; search ﬁtness 5.8606, experiments/lb_compare_20260
-613/REPRODUCTION.md), and GDN2-MLP carries the lb-gdn2-mlp winner (dim 2176, H = 30, depth 12,
-expansion 1, mlp ratio 3.2587, lr 4.743 × 10−4
-; 104 completed evaluations over 13 generations, best ﬁtness
-5.8949 at eval 86, docs/repro/lb_gdn2_mlp_20260612/best.json). One asymmetry is disclosed: in the
-earlier redo sweep the gdn2-mlp arm had completed only 64 evaluations against the > 96 target, so its
-standing there was provisional; the committed lb_gdn2_mlp_20260612 search (104 evals) is the one the 150
-B run launched from. M2
-RNN was searched under the same protocol (ﬁtness 6.1161 at 1.3 B) but is not a
-150 B arm (Section 1).
+; search ﬁtness 5.8606, experiments/lb_compare_2026061
+3/REPRODUCTION.md), and GDN2 carries the lb-gdn2-mlp winner (dim 2176, H = 30, depth 12, expansion
+1, mlp ratio 3.2587, lr 4.743 × 10−4
+; 104 completed evaluations over 13 generations, best ﬁtness 5.8949 at
+eval 86, docs/repro/lb_gdn2_mlp_20260612/best.json). One asymmetry is disclosed: in the earlier
+redo sweep the gdn2-mlp arm had completed only 64 evaluations against the > 96 target, so its standing
+there was provisional; the committed lb_gdn2_mlp_20260612 search (104 evals) is the one the 150 B run
+launched from. M2
+RNN was searched under the same protocol (ﬁtness 6.1161 at 1.3 B) but is not a 150 B
+arm (Section 1).
 Per-sweep decomposition (U3). For each retained sweep, report the number of candidate trajectories and
 generation records, the best candidate mean-loss ﬁtness in generation zero, and the best observed ﬁtness
 across the snapshot. Their diﬀerence is the within-sweep search gain, not a causal attribution of improvement
@@ -1382,7 +1382,7 @@ ctx2k transformer complete 160 20 5.9357 5.9046 0.0312
 emender e97 failed 1 0 — 6.3260 —
 emender gdn2 failed 1 0 — 7.1571 —
 Carried-in E97-MLP U3.1 — — — see prose —
-Carried-in GDN2-MLP U3.1 see
+Carried-in GDN2 U3.1 see
 prose
 see
 prose
@@ -1392,10 +1392,10 @@ candidate mean-loss ﬁelds, not the ﬁnal long-run loss. Counts are snapshot c
 evaluation attempts; generation count is retained generation records, not an inferred total. The ﬁrst 14
 rows derive directly from paper/results/cmaes_burst_v2/cmaes_{eval,generation}_summary.csv
 (899e91cd), a diﬀerent snapshot from the later leaderboard. U3.1 applies to the last two rows only, the
-carried-in E97-MLP and GDN2-MLP searches; they are not mapped to an earlier normalized sweep. GDN2-
-MLP’s retained docs/repro/lb_gdn2_mlp_20260612/best.json supplies its count and winner ﬁtness in
-the provenance prose above, but not ﬁrst-generation data. Dashes indicate unavailable ﬁelds, not zeros or
-no improvement.
+carried-in E97-MLP and GDN2 searches; they are not mapped to an earlier normalized sweep. GDN2’s
+retained docs/repro/lb_gdn2_mlp_20260612/best.json supplies its count and winner ﬁtness in the
+provenance prose above, but not ﬁrst-generation data. Dashes indicate unavailable ﬁelds, not zeros or no
+improvement.
 Open item U3.1 — carried-in winner ﬁrst-generation ﬁtness unavailable; within-sweep gain not computable
 from retained artifacts. This covers both ﬁnal carried-in rows. First-generation spread is also unavailable;
 E97-MLP’s candidate/generation totals are not retained in this normalized snapshot. Recover the winner
@@ -1608,17 +1608,17 @@ linear baseline. All arms use the same training/evaluation protocol and 3 seeds.
 l_table.json (commit 384e657c), under paper/results/expressivity_1p3b/iterated-map/; protocol
 pre-registered in PLAN.md (0038ad84).
 Expressivity at 1.3 B on the trained pair
-The decisive experiment uses the E97 and GDN2-MLP checkpoints of Section 6, with Schedule-Free y-
-mode recovery, on xt = (x2
-t−1 + ct) mod 256, 5 input drivers and running supervision. Both arms receive
+The decisive experiment uses the E97 and GDN2 checkpoints of Section 6, with Schedule-Free y-mode
+recovery, on xt = (x2
+t−1 + ct) mod 256, 5 input drivers and running supervision. Both arms receive the
 30
-the identical full-ﬁne-tune recipe: bf16 AdamW(betas=0.9,0.95), constant learning rate 0.00005, warmup
-300, weight decay 0.01, gradient clip 0.5, batch 32, trained length 128, seed 42. The throughput-derived
-common cap of 18269 steps was ﬁxed before accuracy was seen (budget.json, 1989656c). It projects 4.35
-GPU-hours of capped training, not actual expenditure. The same pre-registered validation-loss plateau rule
-stopped E97 after 2500 steps and GDN2-MLP after 2200 steps; actual training elapsed 0.649 GPU-hours,
-excluding loading and ﬁnal evaluation. Thus this is a common-cap/common-stop-rule comparison, not equal
-realized training steps or tokens.
+identical full-ﬁne-tune recipe: bf16 AdamW(betas=0.9,0.95), constant learning rate 0.00005, warmup 300,
+weight decay 0.01, gradient clip 0.5, batch 32, trained length 128, seed 42. The throughput-derived common
+cap of 18269 steps was ﬁxed before accuracy was seen (budget.json, 1989656c). It projects 4.35 GPU-hours
+of capped training, not actual expenditure. The same pre-registered validation-loss plateau rule stopped E97
+after 2500 steps and GDN2 after 2200 steps; actual training elapsed 0.649 GPU-hours, excluding loading
+and ﬁnal evaluation. Thus this is a common-cap/common-stop-rule comparison, not equal realized training
+steps or tokens.
 The protocol below summarizes the retained driver, scripts/expressivity_1p3b_depthwall.py, includ-
 ing its zero-based probe indices. It selects the stop weights, not the best observed validation checkpoint.
 The terminal sweep is grad-free and scores every masked position using full-vocabulary argmax; reduced
@@ -1647,26 +1647,26 @@ Relative gain divides the loss decrease by the earlier loss magnitude (ﬂoored 
 ); both trailing windows
 must pass. The implemented minimum uses the zero-based index j, so 1,000 updates alone do not trigger
 it. The cap, stopping criterion and recipe are common; realized training lengths in updates are not equal.
-At the terminal sweep E97 reaches 99.96% at trained length, retaining 90.16% at four times and 76.07% at
-eight times that length. GDN2-MLP ends at 76.09% at trained length and 53.36% at eight times. E97 at eight
-times approximately matches GDN2-MLP’s terminal trained-length accuracy, then decays further; it is not
-length-invariant. GDN2-MLP approaches a roughly 50% plateau at the longest lengths, above the declared
-0.39% random baseline. The terminal trained-length value is not a hard ceiling: intermediate GDN2-MLP
-trajectory probes were higher. One seed, unequal plateau-stop lengths, and validation ﬂuctuations limit the
-inference; this is the measured modular-quadratic separation under this protocol, not a theorem that the
-full stack cannot learn the task.
+At the terminal sweep E97 reaches 99.96% at trained length, retaining 90.16% at four times and 76.07%
+at eight times that length. GDN2 ends at 76.09% at trained length and 53.36% at eight times. E97 at
+eight times approximately matches GDN2’s terminal trained-length accuracy, then decays further; it is not
+length-invariant. GDN2 approaches a roughly 50% plateau at the longest lengths, above the declared 0.39%
+random baseline. The terminal trained-length value is not a hard ceiling: intermediate GDN2 trajectory
+probes were higher. One seed, unequal plateau-stop lengths, and validation ﬂuctuations limit the inference;
+this is the measured modular-quadratic separation under this protocol, not a theorem that the full stack
+cannot learn the task.
 This is the empirical complement to the duality theorems CompositionalDepthDuality.e97_compositio
 nal_depth_grows_in_time and gdn_state_channel_depth_bounded_in_time (32cfcc9c): E97 composes
 one nonlinear state update per time step, whereas the input-only-scheduled GDN state fold remains aﬃne
-in its initial state, with bounded nonlinear temporal depth. The theorem concerns the state channel, not
-an impossibility or depth lower bound for a multilayer GDN2-MLP stack. The bridge theorem S5GDNB
-ridge.gdn_s5_realization_requires_per_token_action (82eec14d) assumes a token-only schedule
-and a reachable-state-separating decoder; under those hypotheses the word action factors through S5 and is
-aﬃne on the reachable image; a token-independent schedule cannot track it. It is a routing theorem, not a
+in its initial state, with bounded nonlinear temporal depth. The theorem concerns the state channel, not an
+impossibility or depth lower bound for a multilayer GDN2 stack. The bridge theorem S5GDNBridge.gdn_s5
+_realization_requires_per_token_action (82eec14d) assumes a token-only schedule and a reachable-
+state-separating decoder; under those hypotheses the word action factors through S5 and is aﬃne on the
+reachable image; a token-independent schedule cannot track it. It is a routing theorem, not a per-token
 31
 Length Train-length
 multiple
-E97 GDN2-MLP
+E97 GDN2
 128 1× 99.96% 76.09%
 256 2× 99.14% 62.85%
 512 4× 90.16% 56.55%
@@ -1675,22 +1675,22 @@ E97 GDN2-MLP
 4096 32× 55.79% 50.74%
 8192 64× 51.79% 50.53%
 Table 8: Modular-quadratic length extrapolation on the released 1.3 B pair. Full-vocabulary argmax accuracy
-at the pre-registered plateau stops; trained length 128, seed 42, 262144 scored token positions per length. The
-identical cap is 18269 steps, not identical realized training: E97 stopped after 2500 steps and GDN2-MLP
-after 2200. E97 decays gracefully rather than remaining length-invariant; GDN2-MLP approaches a roughly
-50% plateau, not the declared 0.39% random baseline. Source: paper/results/expressivity_1p3b/it
-erated-map/, ft_{e97,gdn2}_modular_quadratic{,_sweep}.json (commit 9dc3afd7); budget.json
-(pre-registration 1989656c).
-per-token circuit-depth lower bound (formal/lean/GAPS-D2.md). The S5 results below mark exactly that
-boundary: an aﬃne state channel does not itself imply failure on group actions.
+at the pre-registered plateau stops; trained length 128, seed 42, 262144 scored token positions per length.
+The identical cap is 18269 steps, not identical realized training: E97 stopped after 2500 steps and GDN2
+after 2200. E97 decays gracefully rather than remaining length-invariant; GDN2 approaches a roughly 50%
+plateau, not the declared 0.39% random baseline. Source: paper/results/expressivity_1p3b/iterated-
+map/, ft_{e97,gdn2}_modular_quadratic{,_sweep}.json (commit 9dc3afd7); budget.json (pre-
+registration 1989656c).
+circuit-depth lower bound (formal/lean/GAPS-D2.md). The S5 results below mark exactly that boundary:
+an aﬃne state channel does not itself imply failure on group actions.
 S5 does not replicate the predicted separation
 The initial suite’s negative is retained verbatim: “The 8M S5 separation does NOT replicate at 1.3B on this
 pair.” (paper/results/expressivity_1p3b/SUMMARY.md, 5e1e60ef). Zero-shot did not separate either
 model; matched ﬁne-tuning favored E97 on the solvable S3 control but did not reproduce the small-scale S5
 ordering. The longer-horizon capacity probe and phase-0 salvage conﬁrmed the boundary ﬁnding, verbatim:
-“in the capacity-exceeded regime on S5 there is no wall for either model — both decay in parallel toward the
-random baseline, and GDN2-MLP is ahead of E97 at every length.” (capacity/SUMMARY.md, 6f916843).
-Length E97 GDN2-MLP
+“in the capacity-exceeded regime on S5 there is no wall for either model — both decay in parallel toward
+the random baseline, and GDN2 is ahead of E97 at every length.” (capacity/SUMMARY.md, 6f916843).
+Length E97 GDN2
 256 0.397 0.685
 512* 0.204 0.363
 1024 0.109 0.190
@@ -1698,12 +1698,12 @@ Length E97 GDN2-MLP
 4096 0.033 0.054
 8192 0.021 0.034
 Table 9: S5 capacity/long-horizon boundary ﬁnding, not a depth-wall separation. Full-vocabulary argmax
-accuracy, seed 42 both curves decay and GDN2-MLP stays ahead. ∗GDN2-MLP completed one optimizer
-step at length 512 before the curriculum stage proved OOM-infeasible even at sub-batch 1; this point is not
-wholly untrained. Source: capacity/cap_{e97,gdn2}_s5_sweep.json and cap_gdn2_s5_train.json
-under paper/results/expressivity_1p3b/ (E97 f1ed5615, GDN2 salvage 6f916843).
+accuracy, seed 42 both curves decay and GDN2 stays ahead. ∗GDN2 completed one optimizer step at
+length 512 before the curriculum stage proved OOM-infeasible even at sub-batch 1; this point is not wholly
+untrained. Source: capacity/cap_{e97,gdn2}_s5_sweep.json and cap_gdn2_s5_train.json under
+paper/results/expressivity_1p3b/ (E97 f1ed5615, GDN2 salvage 6f916843).
 Both capacity curves decay rather than learn length-invariant tracking; held-out transitions remain weaker
-than seen ones. GDN2-MLP’s attempted length-512 curriculum stage was OOM-infeasible even at sub-batch
+than seen ones. GDN2’s attempted length-512 curriculum stage was OOM-infeasible even at sub-batch
 1, after one completed optimizer step. This hardware limitation and the single seed constrain the result.
 Neither the bridge nor the duality turns this no-separation ﬁnding into an S5 impossibility. The predecessor
 cohort’s diﬀerent ﬁne-tune study remains in Section E, not substituted for this pair.
@@ -1712,12 +1712,12 @@ The expressivity claim rests on two complementary measurements that are load-bea
 micro probe is the 8 M from-scratch sweep (Figure 3, three seeds): it isolates expressivity in the cleanest
 32
 setting, where the Section 7 state-count argument gives large storage headroom, so a gap plausibly reﬂects
-a diﬀerence in inductive bias; raw state count is controlled by that headroom. Its limitation is that an 8
-M model is small. The mega probe is the completed 1.3 B suite above, on the released E97/GDN2-MLP
-artifacts the loss-parity claims bind to. The micro probe controls parameter count and seeds; the mega probe
-controls scale and the trained artifact but supplies only one seed. Together they support a modular-quadratic
-separation, with graceful rather than invariant E97 extrapolation at 1.3 B, and a negative S5 transfer. The
-predecessor cohort’s ordering (Section E) cannot override this current-pair boundary ﬁnding.
+a diﬀerence in inductive bias; raw state count is controlled by that headroom. Its limitation is that an 8 M
+model is small. The mega probe is the completed 1.3 B suite above, on the released E97/GDN2 artifacts the
+loss-parity claims bind to. The micro probe controls parameter count and seeds; the mega probe controls scale
+and the trained artifact but supplies only one seed. Together they support a modular-quadratic separation,
+with graceful rather than invariant E97 extrapolation at 1.3 B, and a negative S5 transfer. The predecessor
+cohort’s ordering (Section E) cannot override this current-pair boundary ﬁnding.
 8 Repeated nonlinear maps in the wild
 Balance, motion tracking, and movement correction oﬀer an intuitive starting point: each new observation
 revises an estimate that guides the next action. The iterated-map probes ask a question that arises well
@@ -1905,10 +1905,10 @@ with a multi-input multi-output linear state-space recurrence. It is distinct fr
 used as a probe here; the cited S5 results concern sequence models, not billion-parameter recurrent LMs.
 A newer linear-state result, Gated DeltaNet-2 (Hatamizadeh et al., 2026), decouples channel-wise erase and
 write gates and is reported by its authors to outperform GDN. It extends retrieval and state-tracking behavior
-inside the linear-state envelope, and it is the linear-recurrent baseline of this paper’s 1.3 B pairing: the GDN2-
-MLP arm of Section 6 is the oﬃcial-style Gated DeltaNet-2 mixer (external source commit 95709fc) with
-the same SwiGLU MLP as E97, selected by the same CMA-ES protocol. The E97 split gates of Section 3
-are the Emender’s corresponding edit — key-axis erase/read plus value-axis write — inside a nonlinear state
+inside the linear-state envelope, and it is the linear-recurrent baseline of this paper’s 1.3 B pairing: the GDN2
+arm of Section 6 is the oﬃcial-style Gated DeltaNet-2 mixer (external source commit 95709fc) with the
+same SwiGLU MLP as E97, selected by the same CMA-ES protocol. The E97 split gates of Section 3 are
+the Emender’s corresponding edit — key-axis erase/read plus value-axis write — inside a nonlinear state
 map, so the two architectures are adjacent by design (Section 4, set G). Its decoupled gates are a natural
 next ablation for the multi-programmed substrate, being the kind of bounded per-step-body variant that
 does not require a new time-parallel scan.
@@ -2012,8 +2012,8 @@ the matched-loss null use training logs, not a held-out evaluation or an equival
 because generalization and useful capability need not follow training-loss parity. Closing it requires running
 the released evaluation pipeline on both immutable checkpoints and reporting sample uncertainty without
 substituting predecessor results.
-U3.1 — carried-in winner ﬁrst-generation ﬁtness unavailable. The retained CMA snapshots do not supply
-the ﬁnal E97-MLP/GDN2-MLP winner searches’ generation-zero ﬁtness or spread; E97’s normalized candi-
+U3.1 — carried-in winner ﬁrst-generation ﬁtness unavailable. The retained CMA snapshots do not sup-
+ply the ﬁnal E97-MLP/GDN2 winner searches’ generation-zero ﬁtness or spread; E97’s normalized candi-
 date/generation totals are also absent (Section 6). This matters because their within-search improvement
 cannot be computed or attributed to tuning from the retained rows. Closing it requires the winner searches’
 original generation logs and identity mapping, not imputation from earlier sweeps. Equal per-candidate rules
@@ -2049,15 +2049,15 @@ The duality gives the paper’s structural distinction: E97 executes a nonlinear
 whereas an input-only-scheduled GDN state fold remains aﬃne in its initial state (Section 4). Width-axis
 multi-programming makes the nonlinear route practical at 1.3 B; E97 trains through 150.8 B Pile tokens on
 one eight-GPU workstation with an estimated training-log 0.93 bpb. Its parameter-matched, CMA-selected
-GDN2-MLP control occupies the same training-loss band at matched tokens (Section 6); the current pair’s
-held-out evaluation is still unavailable.
+GDN2 control occupies the same training-loss band at matched tokens (Section 6); the current pair’s held-out
+evaluation is still unavailable.
 Direct probes distinguish capability from bulk loss. The iterated-map signature appears in multi-seed small-
 scale controls and is replicated on the trained 1.3 B pair as a modular-quadratic terminal-accuracy and
 length-robustness gap, not length-invariant tracking (Section 7). The negative transfer is: “The 8M S5
-separation does NOT replicate at 1.3B on this pair.” The 1.3 B GDN2-MLP model is ahead on that group-
-state protocol. Real-valued update-family separation and the 120-state recognizer ﬂoor do not predict what
-SGD must learn; the generator-table lookup is not a recurrent tracker realization (O1), and aﬃne-channel
-S5 realizability remains open (G3).
+separation does NOT replicate at 1.3B on this pair.” The 1.3 B GDN2 model is ahead on that group-state
+protocol. Real-valued update-family separation and the 120-state recognizer ﬂoor do not predict what SGD
+must learn; the generator-table lookup is not a recurrent tracker realization (O1), and aﬃne-channel S5
+realizability remains open (G3).
 Repeated nonlinear maps in engineering and dynamics (Section 8) deﬁne a broader structural scope of
 prospective applications, distinct from six demonstrated deployments. Correctness of each formal state-
 ment, reproducible artifact bindings, and disclosed negative transfers are the contribution’s basis for TMLR;
@@ -2070,9 +2070,9 @@ compliance; journal-speciﬁc submission packaging remains a separate step.
 the two immutable per-arm authorities are published as E97 (https://huggingface.co/spinozans/emend
 er-e97-1.3b, tag tokens-150793748480, the 150.79 B-token checkpoint of emender_E97_1.3B_20260709_
 084606, source .pt checkpoint SHA-256 0239706e1f67e4823008a3a2754894b5b94dc1663580d2e40c1c74f7
-dd6a72b2) and GDN2-MLP (https://huggingface.co/spinozans/gdn2-mlp-1.3b, tag tokens-152280
-498176, source .pt checkpoint SHA-256 ffae61cfeeeff820f469f7d66dd31c60e48c455872ff9102e57b15ad
-75bad59b), The hashes above identify the source .pt checkpoints in the release provenance, not the converted
+dd6a72b2) and GDN2 (https://huggingface.co/spinozans/gdn2-mlp-1.3b, tag tokens-152280498176,
+source .pt checkpoint SHA-256 ffae61cfeeeff820f469f7d66dd31c60e48c455872ff9102e57b15ad75ba
+d59b), The hashes above identify the source .pt checkpoints in the release provenance, not the converted
 model.safetensors ﬁles. The immutable HF revisions are 119c6623f414aa7fc6e101667d3ad89b7ed6af73
 (E97) and e6087fa6984265404d99c419c095692d840da472 (GDN2). Converted-weight digests are in each
 revision’s SHA256SUMS. The releases ship with the per-architecture CMA-ES conﬁgurations, the training
@@ -2107,13 +2107,13 @@ completed expressivity suite of Section 7 is the ﬁrst direct test, on the trai
 predicted S5 ordering already fails on this pair under the tested protocols; the modular-quadratic
 result supports only a task-dependent version. Further scale/budget persistence is falsiﬁed if that
 map gap closes under a common optimization protocol.
-• Emender ﬁne-tuned on reasoning benchmarks separates from GDN2-MLP on tasks requiring multi-
-step state-tracking. The Section 7 QA panels at the predecessor cohort’s training budget sit below
-the threshold where reasoning benchmarks diﬀerentiate. After targeted ﬁne-tuning on a reasoning
-suite (BIG-Bench Hard, ReCLor, FOLIO, multi-step object tracking), the Emender is expected to
-separate from the linear baseline speciﬁcally on items where multi-step preﬁx tracking is load-bearing
-(object tracking, formal fallacies, multi-step entailment). Falsiﬁed if E97 and GDN2-MLP remain
-within standard error on state-tracking-shaped subsets after matched ﬁne-tuning.
+• Emender ﬁne-tuned on reasoning benchmarks separates from GDN2 on tasks requiring multi-step
+state-tracking. The Section 7 QA panels at the predecessor cohort’s training budget sit below the
+threshold where reasoning benchmarks diﬀerentiate. After targeted ﬁne-tuning on a reasoning suite
+(BIG-Bench Hard, ReCLor, FOLIO, multi-step object tracking), the Emender is expected to separate
+from the linear baseline speciﬁcally on items where multi-step preﬁx tracking is load-bearing (object
+tracking, formal fallacies, multi-step entailment). Falsiﬁed if E97 and GDN2 remain within standard
+error on state-tracking-shaped subsets after matched ﬁne-tuning.
 40
 • PNR update-rule variants are per-step-body edits under the multi-programmed kernel. The fused
 forward/backward Triton kernel (Section 5) is parameterized by the update map and the gating.
@@ -2158,7 +2158,7 @@ Scale beyond 1.3 B
 The matched-token loss parity is measured at the 1.3 B class on The Pile, at a single 30-GPU-day training
 extent per arm. This is the named scale limitation of Section 10: whether the parity holds at larger parameter
 counts, and whether the state-tracking separation grows or vanishes with scale, is open. The load-bearing
-experiment is a matched 3–7 B E97/GDN2-MLP pair under the same recipe; the single-arm E97 513 B-token
+experiment is a matched 3–7 B E97/GDN2 pair under the same recipe; the single-arm E97 513 B-token
 Frontier continuation that exists cannot answer a paired question, and a corpus move (e.g. to a license-clean
 stream) would need its own matched pair. Section 12 states the throughput-scaling form of this question as
 a falsiﬁable prediction.
@@ -2232,7 +2232,7 @@ at all. Width-axis multi-programming therefore recovers linear-scan-class throug
 does not beat the chunked-scan kernel on raw tokens/s — FLA is about 10% faster here, at a slightly larger
 parameter count and a diﬀerent batch — so the standing is parity-class.
 C Downstream capability panels: a null, on the predecessor cohort
-No downstream capability evaluation of the 150 B E97/GDN2-MLP pair has been run yet (TODO-NEEDS-
+No downstream capability evaluation of the 150 B E97/GDN2 pair has been run yet (TODO-NEEDS-
 EVIDENCE). What exists is committed evidence from the predecessor 1.3 B racer cohort (E88, FLA-GDN,
 M2
 RNN, Mamba2 — Section E), and it provides the reference comparison: at ≈ 1M-step training extents,
@@ -2302,18 +2302,17 @@ _gates_direct), so this is an abstract cell specialization, not a production-dom
 proof. The E97 150 B-token run of Section 6 (emender_E97_1.3B_20260709_084606) is the ﬁrst
 instance of the family trained past 100 B tokens.
 E The predecessor 1.3 B cohort (E88 era)
-Before the E97/GDN2-MLP pairing of Section 6, the same questions were asked of a three-model cohort at
-the 1.3 B class on The Pile: E88 (1.273 B, the developmental predecessor instance), M2
-RNN-CMA (1.307
-B, the raw-write comparator), and GDN (1.352 B, the linear baseline of that generation), each with its
-own CMA-ES search and each trained for roughly 22–24 GPU-days to released v0.3 checkpoints. That
+Before the E97/GDN2 pairing of Section 6, the same questions were asked of a three-model cohort at the 1.3
+B class on The Pile: E88 (1.273 B, the developmental predecessor instance), M2
+RNN-CMA (1.307 B, the
+raw-write comparator), and GDN (1.352 B, the linear baseline of that generation), each with its own CMA-ES
+search and each trained for roughly 22–24 GPU-days to released v0.3 checkpoints. That study established
 44
-study established two results the body still leans on — the descriptive closeness of held-out losses with a
-contamination control, and the 1.3 B S5 ﬁne-tune ordering — and it is preserved here unchanged, both for
-its own evidentiary weight and so the E97-era claims can be read against it. Section references inside this
-appendix point to the body of the paper; all E88/M2
-RNN-CMA/GDN numbers in it belong to that cohort,
-not to the Section 6 pair.
+two results the body still leans on — the descriptive closeness of held-out losses with a contamination control,
+and the 1.3 B S5 ﬁne-tune ordering — and it is preserved here unchanged, both for its own evidentiary weight
+and so the E97-era claims can be read against it. Section references inside this appendix point to the body
+of the paper; all E88/M2
+RNN-CMA/GDN numbers in it belong to that cohort, not to the Section 6 pair.
 Setup
 We train three pure-recurrent language models at the 1.3 B-class parameter band on The Pile (Gao et al.,
 2020) with a 2048-token context window, byte-pair encoding (p50k_base, 50,281-vocab), schedule-free
@@ -2570,8 +2569,8 @@ budget under constant LR (see The delta update is also length-bounded below). Th
 that the delta update learns S5 at the trained length and leads at every length on that S5 task, with its S5
 length-extrapolation plateauing below ceiling at this width.
 The historical GDN run plateaus. GDN reaches 0.117 at trained length, 0.022 at T = 512, and 0.015 at
-T = 1024, near chance, with a ﬂat curve by about step 6,000. The same run is stronger on parity and S3.
-These are protocol-speciﬁc observations, not proof of a non-solvable computation barrier. The GDN2-MLP
+T = 1024, near chance, with a ﬂat curve by about step 6,000. The same run is stronger on parity and
+S3. These are protocol-speciﬁc observations, not proof of a non-solvable computation barrier. The GDN2
 reversal in Section 7 and open constrained realizability question G3 prevent a families-wide interpretation.
 Delta vs raw-write: a budget-robust ordering, not solve-vs-fail. The symmetric run removes the recipe
 asymmetry directly. E88 received the same doubled budget M2
