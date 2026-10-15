@@ -22,6 +22,17 @@ ROOT = Path(__file__).parents[1]
 APPROVED_ENV = Path("/lustre/orion/bif148/scratch/erikgarrison/emender/.envs/olcf-rocm711-torch210-py312")
 
 
+def _fixture_launcher(tmp_path):
+    """Retain the immutable-runtime checks with a bounded local interpreter."""
+    source = ROOT / "scripts/frontier/resilient_e97_true_2n.sbatch"
+    assignment = f"APPROVED_EMENDER_CONDA_ENV={APPROVED_ENV}"
+    text = source.read_text()
+    assert text.count(assignment) == 1
+    launcher = tmp_path / "resilient-launcher.sbatch"
+    launcher.write_text(text.replace(assignment, f"APPROVED_EMENDER_CONDA_ENV={sys.prefix}"))
+    return launcher
+
+
 def _publish_commit_chain(
         root: Path, *, fence: int, generation: int, run_id: str = "run",
         payload_id: str = "payload", source_id: str = "source",
@@ -292,8 +303,8 @@ def test_launcher_omits_empty_resume_argument(tmp_path):
     native_manifest = _fake_native_manifest(tmp_path)
     env = {
         **os.environ,
-        "PATH": f"{bindir}:{APPROVED_ENV / 'bin'}:{os.environ['PATH']}",
-        "EMENDER_CONDA_ENV": str(APPROVED_ENV),
+        "PATH": f"{bindir}:{Path(sys.prefix) / 'bin'}:{os.environ['PATH']}",
+        "EMENDER_CONDA_ENV": sys.prefix,
         "SLURM_JOB_NUM_NODES": "2",
         "SLURM_JOB_PARTITION": "batch",
         "SLURM_JOB_QOS": "debug",
@@ -314,7 +325,7 @@ def test_launcher_omits_empty_resume_argument(tmp_path):
         **_canonical_seed_env(seed_config, seed, "pytest-empty-resume"),
     }
     result = subprocess.run(
-        ["bash", str(ROOT / "scripts/frontier/resilient_e97_true_2n.sbatch")],
+        ["bash", str(_fixture_launcher(tmp_path))],
         env=env, text=True, capture_output=True, check=False,
     )
     assert result.returncode == 0, result.stderr
@@ -450,8 +461,8 @@ def test_startup_smoke_accepts_explicit_walltime_when_slurm_omits_environment(tm
     native_manifest = _fake_native_manifest(tmp_path)
     env = {
         **os.environ,
-        "PATH": f"{bindir}:{APPROVED_ENV / 'bin'}:{os.environ['PATH']}",
-        "EMENDER_CONDA_ENV": str(APPROVED_ENV),
+        "PATH": f"{bindir}:{Path(sys.prefix) / 'bin'}:{os.environ['PATH']}",
+        "EMENDER_CONDA_ENV": sys.prefix,
         "SLURM_JOB_NUM_NODES": "2",
         "SLURM_JOB_PARTITION": "batch",
         "SLURM_JOB_QOS": "debug",
@@ -474,7 +485,7 @@ def test_startup_smoke_accepts_explicit_walltime_when_slurm_omits_environment(tm
         "NDP_REQUIRED_GATE": "G2",
         **_canonical_seed_env(seed_config, seed, "pytest-startup-smoke"),
     }
-    subprocess.run(["bash", str(ROOT / "scripts/frontier/resilient_e97_true_2n.sbatch")],
+    subprocess.run(["bash", str(_fixture_launcher(tmp_path))],
                    env=env, text=True, capture_output=True, check=True)
 
 
@@ -515,6 +526,10 @@ def test_launch_modes_preserve_identical_local_role_identity_and_environment(tmp
     launched = []
     monkeypatch.setenv("RESILIENT_E97_RUN_ID", "cache-isolation-test")
     monkeypatch.setenv("RESILIENT_E97_KERNEL_CACHE_ROOT", str(tmp_path / "kernel-cache"))
+    # Popen is mocked below, so model the Frontier allocation's 56-CPU cpuset
+    # rather than depending on the CPU count of the CI runner.
+    monkeypatch.setattr("scripts.frontier.resilient_e97_allocation_supervisor.os.sched_getaffinity",
+                        lambda _pid: set(range(56)))
 
     class Process:
         pid = 123

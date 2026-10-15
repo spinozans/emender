@@ -13,6 +13,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+      - name: Check out pinned GDN2 baseline source
+        uses: actions/checkout@v6
+        with:
+          repository: NVlabs/GatedDeltaNet-2
+          ref: 95709fc250357c2dd109361c353192f2aa5913f9
+          path: src/GatedDeltaNet-2
+          persist-credentials: false
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
@@ -21,6 +28,8 @@ jobs:
           enable-cache: true
       - name: Install package
         run: uv sync --locked --extra dev --extra eval
+      - name: Build native service for CPU integration tests
+        uses: ./.github/actions/build-native
       - name: Syntax check
         run: |
           uv run python -m py_compile train.py scripts/*.py scripts/conformance/*.py ndm/native_lean_conformance.py ndm/triton/*.py ndm/models/e88_fused.py ndm/models/e88_fla_hybrid.py ndm/models/m2rnn_baseline.py ndm/models/mamba2_baseline.py ndm/models/fla_gated_delta.py
@@ -84,51 +93,19 @@ jobs:
       - uses: astral-sh/setup-uv@v5
         with:
           enable-cache: true
-      - name: Install package and native build dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y cmake libssl-dev pkg-config
-          uv sync --locked --extra dev
-      - name: Build pinned libfabric
-        # Ubuntu 24.04 ships 1.17, below the native transport's 1.18 minimum.
-        # Keep testing the oldest supported release series without weakening
-        # the production build requirement or depending on a floating runner.
-        run: |
-          version=1.18.1
-          archive="$RUNNER_TEMP/libfabric-$version.tar.bz2"
-          prefix="$RUNNER_TEMP/libfabric"
-          curl -fsSL --retry 3 \
-            "https://github.com/ofiwg/libfabric/releases/download/v$version/libfabric-$version.tar.bz2" \
-            -o "$archive"
-          echo "4615ae1e22009e59c72ae03c20adbdbd4a3dce95aeefbc86cc2bf1acc81c9e38  $archive" \
-            | sha256sum --check
-          tar -xjf "$archive" -C "$RUNNER_TEMP"
-          cd "$RUNNER_TEMP/libfabric-$version"
-          ./configure --prefix="$prefix" --libdir="$prefix/lib" \
-            --enable-tcp=yes --enable-rxm=yes
-          make -j4
-          make install
-          echo "PKG_CONFIG_PATH=$prefix/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}" >> "$GITHUB_ENV"
-          echo "LD_LIBRARY_PATH=$prefix/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" >> "$GITHUB_ENV"
-      - name: Verify native transport dependency
-        run: |
-          pkg-config --modversion libfabric
-          pkg-config --atleast-version=1.18 libfabric
+      - name: Install package
+        run: uv sync --locked --extra dev
+      - name: Build native service
+        uses: ./.github/actions/build-native
       - name: Cache exact project-local Lean toolchain
         uses: actions/cache@v4
         with:
           path: formal/resilient/.cache/resilient-lean
           key: lean-4.26.0-linux-873c252b1c6b1392e5720ad8d5a137aabbe72c9f96a930fdb5a1dd1ddc5da454
-      - name: Build Lean oracle and native production service
+      - name: Build Lean oracle
+        run: formal/resilient/scripts/lake.sh build resilient-conformance resilient-conformance-corpus
+      - name: Attest native production service
         run: |
-          formal/resilient/scripts/lake.sh build resilient-conformance resilient-conformance-corpus
-          cmake -S native -B build/native-resilient-dataplane-build \
-            -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-            -DCMAKE_INSTALL_PREFIX="$PWD/build/native-resilient-dataplane" \
-            -DNDP_ENABLE_XPMEM=OFF -DNDP_BUILD_TESTS=ON
-          cmake --build build/native-resilient-dataplane-build --parallel 4
-          ctest --test-dir build/native-resilient-dataplane-build --output-on-failure
-          cmake --install build/native-resilient-dataplane-build
           uv run python scripts/frontier/attest_native_dataplane.py record-build \
             --prefix build/native-resilient-dataplane \
             --source-root "$PWD" \

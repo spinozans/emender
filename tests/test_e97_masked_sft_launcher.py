@@ -32,7 +32,8 @@ def test_masked_sft_launcher_binds_all_immutable_authorities():
 def test_masked_sft_recipe_uses_fresh_parent_and_conservative_objective():
     text = LAUNCHER.read_text()
     assert '--sft-parent-root "$PARENT_ROOT"' in text
-    assert '--lr "$LR" --weight-decay 0.0' in text
+    assert 'WEIGHT_DECAY=${WEIGHT_DECAY:-0.0}' in text
+    assert '--lr "$LR" --weight-decay "$WEIGHT_DECAY"' in text
     assert '--batch-size "$BATCH_SIZE" --chunk-size "$CONTEXT_SIZE"' in text
     assert "--offload-schedulefree-state" in text
     assert '--sft-validation-batches "$VALIDATION_BATCHES"' in text

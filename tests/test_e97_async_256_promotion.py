@@ -1,14 +1,87 @@
-import hashlib, importlib.util, json, os, subprocess, sys
+import hashlib, importlib.util, io, json, os, shutil, subprocess, sys
 from pathlib import Path
 import pytest
 
 ROOT=Path(__file__).resolve().parents[1]
+PROJECT_ROOT=ROOT
 SEED=json.loads((ROOT/"configs/frontier/e97_async_256.yaml").read_text())["seed"]
 def module(path):
     spec=importlib.util.spec_from_file_location("e97_render",path); result=importlib.util.module_from_spec(spec); spec.loader.exec_module(result); return result
 RENDER=module(ROOT/"scripts/frontier/render_e97_async_256.py")
 CHECK=[sys.executable,str(ROOT/"scripts/frontier/check_e97_async_promotion.py")]
 POLICY=str(ROOT/"configs/frontier/e97_async_256_parity_policy.json")
+
+@pytest.fixture(autouse=True)
+def promotion_repository(tmp_path, monkeypatch):
+    """Exercise the real gate against bounded, committed provenance and S3 fixtures.
+
+    The retained job-4962400 manifest is deliberately not refreshed: current
+    production helpers have moved beyond that historical qualification. A
+    separate regression below checks that the real snapshot remains rejected.
+    """
+    from scripts.frontier import materialize_e97_s3_seed as materializer
+
+    verify_authorities = materializer.verify_authorities
+    document = {field: SEED[key] for field, key in materializer.FIELDS.items()}
+    objects = {
+        materializer.https_url(SEED[key]): json.dumps(document).encode()
+        for key in ("manifest_uri", "latest_pointer_uri")
+    }
+
+    def open_metadata(url, timeout):
+        assert timeout == 60
+        assert url in objects, f"unexpected external metadata request: {url}"
+        return io.BytesIO(objects[url])
+
+    monkeypatch.setattr(materializer, "verify_authorities",
+                        lambda seed: verify_authorities(seed, open_metadata))
+    root = tmp_path / "provenance-repo"
+    root.mkdir()
+    config_path = Path("configs/frontier/e97_async_256.yaml")
+    config = json.loads((PROJECT_ROOT / config_path).read_text())
+    golden_path = Path(config["golden_manifest"])
+    golden = json.loads((PROJECT_ROOT / golden_path).read_text())
+    paths = set(golden["files"]) | {
+        str(config_path), str(golden_path),
+        "configs/frontier/e97_async_256_parity_policy.json",
+        "scripts/frontier/render_e97_async_256.py",
+        "scripts/frontier/check_e97_async_promotion.py",
+    }
+    for relative in paths:
+        destination = root / relative
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(PROJECT_ROOT / relative, destination)
+
+    def git(*args):
+        return subprocess.check_output(
+            ["git", "-c", "user.name=CI fixture", "-c",
+             "user.email=ci-fixture@example.invalid", *args],
+            cwd=root, text=True, stderr=subprocess.DEVNULL).strip()
+
+    git("init", "-b", "main")
+    git("add", ".")
+    git("commit", "-m", "Historical fixture")
+    historical = git("rev-parse", "HEAD")
+    helper = root / "scripts/frontier/materialize_e97_s3_seed.py"
+    helper.write_text(helper.read_text() + "\n# New fixture qualification.\n")
+    golden["source_commit"] = historical
+    golden["files"] = {
+        path: hashlib.sha256((root / path).read_bytes()).hexdigest()
+        for path in golden["files"]
+    }
+    (root / golden_path).write_text(json.dumps(golden))
+    git("add", ".")
+    git("commit", "-m", "Current fixture qualification")
+    git("update-ref", "refs/remotes/origin/main", "HEAD")
+    for name, value in {
+        "ROOT": root,
+        "RENDER": module(root / "scripts/frontier/render_e97_async_256.py"),
+        "CHECK": [sys.executable, str(root / "scripts/frontier/check_e97_async_promotion.py")],
+        "POLICY": str(root / "configs/frontier/e97_async_256_parity_policy.json"),
+        "HISTORICAL_COMMIT": historical,
+    }.items():
+        monkeypatch.setitem(globals(), name, value)
+
 def bundles(tmp_path):
     s=tmp_path/"smoke"; p=tmp_path/"production"; RENDER.render("smoke",s); RENDER.render("production",p); return s,p
 def captured_run(argv, **kwargs):
@@ -130,9 +203,21 @@ def test_unknown_or_unpushed_attested_commit_fails(tmp_path):
     assert result.returncode!=0
     assert json.loads(result.stderr)["kind"]=="origin_commit"
 
+def test_unpushed_review_head_fails_closed(tmp_path):
+    s,p=bundles(tmp_path); promotion(s)
+    (ROOT / "review-only.txt").write_text("not on the qualified remote ref\n")
+    subprocess.run(["git", "add", "review-only.txt"], cwd=ROOT, check=True)
+    subprocess.run(["git", "-c", "user.name=CI fixture", "-c",
+                    "user.email=ci-fixture@example.invalid", "commit", "-m",
+                    "Unpushed review fixture"], cwd=ROOT, check=True,
+                   capture_output=True)
+    result=captured_run(CHECK+['--smoke',str(s),'--production',str(p),'--policy',POLICY,'--require-promotion'])
+    assert result.returncode!=0
+    assert json.loads(result.stderr)["kind"]=="origin_commit"
+
 def test_historical_evidence_is_rejected_after_pinned_helper_changes(tmp_path):
     s,p=bundles(tmp_path)
-    promotion(s,origin_commit="d554965461428bd9ff040329812b09d413e9b723")
+    promotion(s,origin_commit=HISTORICAL_COMMIT)
     result=captured_run(CHECK+['--smoke',str(s),'--production',str(p),'--policy',POLICY,'--require-promotion'])
     assert result.returncode!=0
     assert json.loads(result.stderr)["kind"]=="attested_tree_drift"
@@ -216,8 +301,20 @@ def test_actual_complete_proven_batch_prologue_executes_cleanly(tmp_path):
 def test_proven_sources_match_success_commit():
     golden=json.loads((ROOT/"configs/frontier/e97_async_256_job4962400_golden.json").read_text())
     for path,want in golden["files"].items(): assert RENDER.digest(ROOT/path)==want
-    historical=subprocess.check_output(["git","show",golden["source_commit"]+":"+golden["script"]])
+    historical=subprocess.check_output(["git","show",golden["source_commit"]+":"+golden["script"]], cwd=ROOT)
     assert historical==(ROOT/golden["script"]).read_bytes()
+
+def test_production_snapshot_enforces_pinned_helper_hashes():
+    renderer = module(PROJECT_ROOT / "scripts/frontier/render_e97_async_256.py")
+    config = json.loads(renderer.CONFIG.read_text())
+    golden = json.loads((PROJECT_ROOT / config["golden_manifest"]).read_text())
+    drift = [path for path, digest in golden["files"].items()
+             if renderer.digest(PROJECT_ROOT / path) != digest]
+    if drift:
+        with pytest.raises(ValueError, match="golden source drift"):
+            renderer.load()
+    else:
+        assert renderer.load() == (config, golden)
 
 def test_exact_durable_job_4962400_artifact_paths_and_hashes():
     golden=json.loads((ROOT/"configs/frontier/e97_async_256_job4962400_golden.json").read_text())
