@@ -8,6 +8,7 @@ import {checkCanonicalSource} from './canonical-guard.mjs';
 import {verifySymbols} from './verify-symbols.mjs';
 import {verifyAppendixOrder} from './appendix-order.mjs';
 import {verifyRegisterAppendix} from './register-appendix.mjs';
+import {verifyArmor} from './armor-audit.mjs';
 const dir=path.dirname(fileURLToPath(import.meta.url)),root=path.resolve(dir,'../..');
 const pdftotext=process.env.PDFTOTEXT||'pdftotext',pdfinfo=process.env.PDFINFO||'pdfinfo';
 const files={canonical:path.resolve(dir,'../current.pdf'),submission:path.join(dir,'submission.pdf'),preprint:path.join(dir,'preprint.pdf')};
@@ -25,18 +26,18 @@ const samples=[
  ['Introduction','at the matched 150.79-billion-token cutoff the smoothed loss gap between the two arms is 0.010 nats/token'],
  ['Background','At fixed precision and width, both state regimes are finite-state recognizers.'],
  ['Architecture','1,286,589,072 parameters in total'],
- ['Systems','All throughput measurements and throughput-budget smokes reported here are CUDA-only; none establishes correctness, performance, or parity on ROCm.'],
+ ['Systems','All throughput measurements and throughput-budget smokes reported here use CUDA; paired ROCm correctness, performance, and parity measurements remain pending.'],
  ['Language modeling','exact common logged steps through step 2,300,925 (150,793,420,800 tokens): 92,037 aligned records, zero E97-only and zero GDN2-only records through the cutoff, no interpolation.'],
  ['Expressivity / contractive control','gdn-8m has 7.94 M parameters versus E97’s 7.38 M (7.6% more, favoring GDN).'],
  ['Expressivity / pre-registered budget','The throughput-derived common cap of 18269 steps was fixed before accuracy was seen (budget.json, 1989656c).'],
  ['Expressivity / terminal sweep','At the terminal sweep E97 reaches 99.96% at trained length, retaining 90.16% at four times and 76.07% at eight times that length.'],
- ['Applications','A learned surrogate would additionally need stability and safety validation; a state-tracking result is not a control guarantee.'],
+ ['Applications','Feedback-surrogate use additionally requires stability and safety validation.'],
  ['Formal / trust inventory','857 named declarations, 723 user-written, 17 files; extraction source commit e58ae937'],
  ['Formal / recognizer floor','Any finite-state recognizer with a state decoder that reproduces the tracker on every input word needs at least 120 states'],
  ['Formal / latching boundary','the hold theorem assumes λ ≥ 1, whereas production decay is below one'],
  ['Related work','with 87.5% of its blocks linear-state, it sits closer to the linear-state class than to the pure-nonlinear-recurrent one.'],
  ['Limitations','The current modular-quadratic comparison shares a cap and plateau rule but realizes 2,500 versus 2,200 steps'],
- ['Conclusion / negative transfer','The 8M S5 separation does NOT replicate at 1.3B on this pair.'],
+ ['Expressivity / current-pair S5 finding','both models’ accuracy declines toward random with length, and GDN2 leads E97 at every tested length.'],
  ['Testable predictions','Falsified if per-token throughput degrades faster than the parameter count grows, beyond the kernel-arithmetic baseline.'],
  ['Future work','the single-arm E97 513 B-token Frontier continuation that exists cannot answer a paired question'],
  ['Appendix B / predecessor cohort','E88 0.973 BPB, GDN 0.973 BPB, and M²RNN-CMA 0.979 BPB.'],
@@ -62,6 +63,7 @@ for(const file of ['tmlr.sty','tmlr.bst','fancyhdr.sty','LICENSE']){
  assert(fs.existsSync(path.join(dir,file)));
 }
 checkCanonicalSource(root);
+const armorAudit=verifyArmor(fs.readFileSync(path.join(root,'paper/main.typ'),'utf8'),fs.readFileSync(path.join(root,'paper/figures/expressivity_1p3b.typ'),'utf8'));
 // Additional all-prose audit: every >=30-character canonical text/raw leaf.
 // Float insertions can split a leaf in PDF reading order. Permit one insertion,
 // but require the two exact halves in their original order and record it.
@@ -106,7 +108,7 @@ const registerAppendix=Object.fromEntries(['submission','preprint'].map(variant=
  variant,verifyRegisterAppendix(text[variant],generatedTex,fs.readFileSync(path.join(dir,variant+'.aux'),'utf8'))
 ]));
 fs.writeFileSync(path.join(dir,'validation/p17c-register-appendix.json'),JSON.stringify(registerAppendix,null,2)+'\n');
-const report={registerAppendix,appendixOrder,symbolAudit,approvedBibliographyAmendment:'mathlib4: explicit 2026 access year (not publication year)',acceptedCommit:'eb2b9636',canonicalBaseline:JSON.parse(fs.readFileSync(path.join(dir,'canonical-baseline.json'),'utf8')),styleCommit:fs.readFileSync(path.join(dir,'STYLE-COMMIT'),'utf8').trim(),pages,samples:results,fragmentAudit,identityChecks:'passed (third-person literature self-citation retained)',canonicalManuscriptMatchesApprovedBaseline:true,bibliographyByteIdentical:true};
+const report={armorAudit,registerAppendix,appendixOrder,symbolAudit,approvedBibliographyAmendment:'mathlib4: explicit 2026 access year (not publication year)',acceptedCommit:'eb2b9636',canonicalBaseline:JSON.parse(fs.readFileSync(path.join(dir,'canonical-baseline.json'),'utf8')),styleCommit:fs.readFileSync(path.join(dir,'STYLE-COMMIT'),'utf8').trim(),pages,samples:results,fragmentAudit,identityChecks:'passed (third-person literature self-citation retained)',canonicalManuscriptMatchesApprovedBaseline:true,bibliographyByteIdentical:true};
 fs.mkdirSync(path.join(dir,'validation'),{recursive:true});
 fs.writeFileSync(path.join(dir,'validation/drift-check.json'),JSON.stringify(report,null,2)+'\n');
 for(const [k,v] of Object.entries(text))fs.writeFileSync(path.join(dir,'validation',k+'-text.txt'),v);

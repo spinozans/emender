@@ -37,7 +37,7 @@ for (const match of source.matchAll(/#ref\(<([^>]+)>\)/g)) {
 for (const phrase of [
   'Open item O1 — recurrent $tanh$-tracker realization unavailable.',
   'No strict separation of TC#super[0] and NC#super[1] is known or assumed here.',
-  'No minimal parameter-count corollary is claimed.',
+  'Minimal parameter requirements remain open.',
   'not uniformly bounded away from zero',
   'input $(lambda,k,v)$',
   'The formal E97 fold fixes $lambda$',
@@ -47,7 +47,7 @@ for (const phrase of [
   'U3.1 — carried-in winner first-generation fitness unavailable.',
   'Single-seed 1.3 B evidence and protocol boundaries',
   'Untested application predictions',
-  'TMLR',
+  'Feedback-surrogate use additionally requires stability and safety validation.',
   '150,793,420,800',
   'five optimizer steps',
   'the reported mean is conditional on that subset',
@@ -61,7 +61,7 @@ for (const phrase of [
   'm2rnnCMAShape = m2rnnPure 22 70 256',
   'different decay placement',
   'not shown statistically equivalent',
-  'journal-specific submission packaging remains a separate step',
+  'GDN2 leads E97 at every tested length',
   'source .pt checkpoint SHA-256',
 ]) assert.ok(normalized.includes(phrase), phrase);
 for (const old of ['margin bounded away from zero', 'strictly inside NC#super[1]',

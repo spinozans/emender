@@ -113,7 +113,7 @@
     {
       "section": "Formal Results",
       "level": 2,
-      "title": "Frontier and unproven targets"
+      "title": "The bounded-precision tracking target"
     },
     {
       "section": "Formal Results",
@@ -148,7 +148,7 @@
     {
       "section": "Formal Results",
       "level": 2,
-      "title": "Complexity statements and explicit non-claims"
+      "title": "Complexity statements and their scope"
     },
     {
       "section": "Multi-Programming and Systems",
@@ -228,7 +228,7 @@
     {
       "section": "Expressivity Results",
       "level": 2,
-      "title": "Matched no probe-tuning, and the one selection asymmetry it does not cover"
+      "title": "Probe defaults and the state-tracking selection asymmetry"
     },
     {
       "section": "Expressivity Results",
@@ -273,7 +273,7 @@
     {
       "section": "Expressivity Results",
       "level": 2,
-      "title": "Micro and mega: the two probes bracket the mechanism"
+      "title": "Measurements across scales and protocols"
     },
     {
       "section": "Repeated nonlinear maps in the wild",
@@ -515,12 +515,12 @@
     {
       "label": "<tab_claims>",
       "kind": "table",
-      "caption": "Claim/Evidence/Scope/Non-claim.Each row is substantiated inthe cited section; the final column marks the boundary the result doesnot cross. The architectural separations areefficiencyandcomputabilitystatements, not blanket can/cant claims; the bulk-lossrow is a measured null result; the last row reports a task-dependentseparation together with its negative boundary finding."
+      "caption": "Claim/Evidence/Scope.Each row is substantiated in the citedsection, with its protocol and resource boundaries in the same row.The bulk-loss row is a measured null; the current-pair capabilityrow reports the distinct ordering on each task."
     },
     {
       "label": "<fig_taxonomy>",
       "kind": "figure",
-      "caption": "The Emender head-type taxonomy:eigenvalue placement×saturation.(A)Each head is fixed by where its along-keyeigenvalue sits in the complex unit disk— real-positivedecay,real-negativereflect, or complexrot— and by whether the statemap is linear or saturated. The orange real diameter is the locusGDN-2 occupies.(B)The two axes name five cells. Shading marksGDN-2-adjacent linear cores; the Emender also explores off-axisrotation(rot) and saturated state maps(nonlin) as a within-layerpool. This taxonomy is descriptive:different decay placementprevents an exact equal-parameter restriction of the production cores.rot-nonlinis reserved for future work. E88/E97/E98/E99 are historicalrun tags, not architecture names. The GDN-2 corner of this grid isnot a strawman:it is the mixer of the 1.3 B linear baseline of(GDN2), selected by the same search protocol as E97."
+      "caption": "The Emender head-type taxonomy:eigenvalue placement×saturation.(A)Each head is fixed by where its along-keyeigenvalue sits in the complex unit disk— real-positivedecay,real-negativereflect, or complexrot— and by whether the statemap is linear or saturated. The orange real diameter is the locusGDN-2 occupies.(B)The two axes name five cells. Shading marksGDN-2-adjacent linear cores; the Emender also explores off-axisrotation(rot) and saturated state maps(nonlin) as a within-layerpool. This taxonomy is descriptive:different decay placementprevents an exact equal-parameter restriction of the production cores.rot-nonlinis reserved for future work. E88/E97/E98/E99 are historicalrun tags, not architecture names. The GDN-2 corner of this grid isthe mixer of the 1.3 B linear baseline of(GDN2), selected by the same search protocol as E97."
     },
     {
       "label": "<fig_arch>",
@@ -530,7 +530,7 @@
     {
       "label": "<tab_ablation>",
       "kind": "table",
-      "caption": "Structural comparison, not causal elimination.Matrix state isshared by all three families; temporal state nonlinearity is sharedby M²RNN and the Emender; delta correction is shared by GDN and theEmender. Theordering(0.79/0.36/0.22,) motivates testingtheir combination, but does not isolate every architectural choice."
+      "caption": "Structural ingredient comparison.Matrix state isshared by all three families; temporal state nonlinearity is sharedby M²RNN and the Emender; delta correction is shared by GDN and theEmender. Theordering(0.79/0.36/0.22,) motivates testingtheir combination, but does not isolate every architectural choice."
     },
     {
       "label": "<tab_pair_identities>",
@@ -570,12 +570,12 @@
     {
       "label": "<tab_depth_wall>",
       "kind": "table",
-      "caption": "Modular-quadratic length extrapolation on the released 1.3 B pair.Full-vocabulary argmax accuracy at the pre-registered plateau stops;trained length128, seed42,262144scored token positions per length.The identical cap is18269steps, not identical realizedtraining:E97 stopped after2500steps and GDN2after2200. E97 decays gracefully rather thanremaining length-invariant; GDN2 approaches a roughly 50% plateau,notthe declared0.39%randombaseline. Source:paper/results/expressivity_1p3b/iterated-map/,ft_{e97,gdn2}_modular_quadratic{,_sweep}.json(commit9dc3afd7);budget.json(pre-registration1989656c)."
+      "caption": "Modular-quadratic length extrapolation on the released 1.3 B pair.Full-vocabulary argmax accuracy at the pre-registered plateau stops;trained length128, seed42,262144scored token positions per length.The common cap is18269steps, with unequal realizedtraining:E97 stopped after2500steps and GDN2after2200. E97 shows graceful length transfer; GDN2 approaches a roughly 50%plateau, above the declared0.39%random baseline. Source:paper/results/expressivity_1p3b/iterated-map/,ft_{e97,gdn2}_modular_quadratic{,_sweep}.json(commit9dc3afd7);budget.json(pre-registration1989656c)."
     },
     {
       "label": "<tab_s5_boundary>",
       "kind": "table",
-      "caption": "S5 capacity/long-horizon boundary finding, not a depth-wall separation.Full-vocabulary argmax accuracy, seed42both curves decay and GDN2 stays ahead.*GDN2 completed oneoptimizer step at length 512 before the curriculum stage provedOOM-infeasible even at sub-batch 1; this point is not wholly untrained.Source:capacity/cap_{e97,gdn2}_s5_sweep.jsonandcap_gdn2_s5_train.jsonunderpaper/results/expressivity_1p3b/(E97f1ed5615, GDN2 salvage6f916843)."
+      "caption": "S5 capacity/long-horizon accuracy on the released pair.Full-vocabulary argmax accuracy, seed42both curves decay and GDN2 stays ahead.*GDN2 completed oneoptimizer step at length 512 before the curriculum stage provedOOM-infeasible even at sub-batch 1; the length-512 point includesthat completed update.Source:capacity/cap_{e97,gdn2}_s5_sweep.jsonandcap_gdn2_s5_train.jsonunderpaper/results/expressivity_1p3b/(E97f1ed5615, GDN2 salvage6f916843)."
     },
     {
       "label": "<tab_downstream>",
@@ -610,13 +610,13 @@
     {
       "label": "<tab_bpb_landscape>",
       "kind": "table",
-      "caption": "Held-out bits-per-byte landscape— context, not an architectureranking.All neural numbers are tokenizer-invariant held-out bpb onthe canonical 10 MB Pile slice; classical coders are single-streamover the same bytes. The vertical ordering isdominated by trainingbudget and train/test distribution, not by the update rule, and mustnot be read as a quality verdict. Our three models trained on≈15–16 B tokens(≈0.05 epoch of the Pile); the open Pile-trainedreferences saw≈10–20×more(≈1 epoch,≈300 B tokens)andarein-distribution on this slice(it is effectively training data forthem— possible contamination), so their 0.72–0.74 is closer to atrain-loss than a held-out number. The OOD anchors(OPT, GPT-2 XL)are out-of-distribution on the Pile, so their higher bpb is expectedand is not a quality knock; GPT-2 XL measures 1.0137 here versus thePile papers published 1.0468, a≈0.03-bpb pipelinecheck confirming this single slice reads slightly low against the fullPile test set. The architecture-focused comparison is thematched-budget three-way at the top, whichreports asdescriptively close, not as a statistical equivalence result."
+      "caption": "Held-out bits-per-byte landscape— context, not an architectureranking.All neural numbers are tokenizer-invariant held-out bpb onthe canonical 10 MB Pile slice; classical coders are single-streamover the same bytes. The vertical ordering isdominated by trainingbudget and train/test distribution, not by the update rule. Our three models trained on≈15–16 B tokens(≈0.05 epoch of the Pile); the open Pile-trainedreferences saw≈10–20×more(≈1 epoch,≈300 B tokens)andarein-distribution on this slice(it is effectively training data forthem— possible contamination), so their 0.72–0.74 is closer to atrain-loss than a held-out number. The OOD anchors(OPT, GPT-2 XL)are out-of-distribution on the Pile, so their higher bpb is expectedunder those distribution conditions; GPT-2 XL measures 1.0137 here versus thePile papers published 1.0468, a≈0.03-bpb pipelinecheck confirming this single slice reads slightly low against the fullPile test set. The architecture-focused comparison is thematched-budget three-way at the top, whichreports asdescriptively close, not as a statistical equivalence result."
     }
   ],
   "tables": [
     {
       "section": "Introduction",
-      "columns": 4,
+      "columns": 3,
       "rows": 7
     },
     {
