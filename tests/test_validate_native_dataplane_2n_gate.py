@@ -142,7 +142,7 @@ def test_native_gate_checksum_manifest_tolerates_monitoring_directories():
     assert 'sha256sum -- "$artifact"' in payload
 
 
-def test_installed_gate_resolves_rocm_from_clean_loader_environment():
+def _installed_gate():
     if not NATIVE_MANIFEST.is_file():
         pytest.skip("canonical native bundle has not been built")
     gate = NATIVE_MANIFEST.parent / "bin/ndp_frontier_2n_gate"
@@ -150,6 +150,35 @@ def test_installed_gate_resolves_rocm_from_clean_loader_environment():
         ["readelf", "-d", gate], check=True, text=True, capture_output=True
     ).stdout
     assert "RUNPATH" in dynamic or "RPATH" in dynamic
+    return gate
+
+
+def test_installed_gate_resolves_native_libraries_from_clean_loader_environment():
+    """The CPU bundle must resolve without inherited Python/ROCm loader state."""
+    gate = _installed_gate()
+    helper = ROOT / "scripts/frontier/frontier_runtime_env.sh"
+    loader_command = f'''set -euo pipefail
+source "{helper}"
+fabric_runtime=$(frontier_resolve_libfabric_runtime_dir)
+env -i PATH=/usr/bin:/bin LD_LIBRARY_PATH="$fabric_runtime" ldd "{gate}"
+'''
+    loader = subprocess.run(
+        ["bash", "-c", loader_command],
+        check=True, text=True, capture_output=True,
+    ).stdout
+    assert "libemender_ndp_transport.so.1" in loader
+    assert "libfabric.so.1" in loader
+    assert "not found" not in loader
+
+
+def test_installed_gate_resolves_rocm_from_clean_loader_environment():
+    """Qualify the reviewed Frontier module stack when running on that host."""
+    gate = _installed_gate()
+    modules = subprocess.run(
+        ["bash", "-c", "type module"], text=True, capture_output=True,
+    )
+    if modules.returncode:
+        pytest.skip("requires Frontier environment modules and the reviewed ROCm stack")
     helper = ROOT / "scripts/frontier/frontier_runtime_env.sh"
     loader_command = f'''set -euo pipefail
 source "{helper}"

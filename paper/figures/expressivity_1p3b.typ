@@ -81,8 +81,10 @@
   ),
   caption: [
     *S5 capacity/long-horizon accuracy on the released pair.*
-    Full-vocabulary argmax accuracy, seed #s5-e97.seed;
-    both curves decay and GDN2 stays ahead. \*GDN2 completed one
+    Full-vocabulary argmax accuracy, seed #s5-e97.seed.
+    GDN2 leads at every reported length on permutation composition,
+    a task admitting linear state updates; both curves decay.
+    \*GDN2 completed one
     optimizer step at length 512 before the curriculum stage proved
     OOM-infeasible even at sub-batch 1; the length-512 point includes
     that completed update.

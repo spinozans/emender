@@ -1,0 +1,43 @@
+name: Build native service
+description: Build and test the CPU native bundle with a pinned supported libfabric.
+runs:
+  using: composite
+  steps:
+    - name: Install native build dependencies
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake libssl-dev pkg-config
+    - name: Build pinned libfabric
+      # Ubuntu 24.04 ships 1.17, below the native transport's 1.18 minimum.
+      # Test the oldest supported release series without weakening that floor.
+      shell: bash
+      run: |
+        version=1.18.1
+        archive="$RUNNER_TEMP/libfabric-$version.tar.bz2"
+        prefix="$RUNNER_TEMP/libfabric"
+        curl -fsSL --retry 3 \
+          "https://github.com/ofiwg/libfabric/releases/download/v$version/libfabric-$version.tar.bz2" \
+          -o "$archive"
+        echo "4615ae1e22009e59c72ae03c20adbdbd4a3dce95aeefbc86cc2bf1acc81c9e38  $archive" \
+          | sha256sum --check
+        tar -xjf "$archive" -C "$RUNNER_TEMP"
+        cd "$RUNNER_TEMP/libfabric-$version"
+        ./configure --prefix="$prefix" --libdir="$prefix/lib" \
+          --enable-tcp=yes --enable-rxm=yes
+        make -j4
+        make install
+        echo "PKG_CONFIG_PATH=$prefix/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}" >> "$GITHUB_ENV"
+        echo "LD_LIBRARY_PATH=$prefix/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" >> "$GITHUB_ENV"
+    - name: Build, test, and install native service
+      shell: bash
+      run: |
+        pkg-config --modversion libfabric
+        pkg-config --atleast-version=1.18 libfabric
+        cmake -S native -B build/native-resilient-dataplane-build \
+          -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+          -DCMAKE_INSTALL_PREFIX="$PWD/build/native-resilient-dataplane" \
+          -DNDP_ENABLE_XPMEM=OFF -DNDP_BUILD_TESTS=ON
+        cmake --build build/native-resilient-dataplane-build --parallel 4
+        ctest --test-dir build/native-resilient-dataplane-build --output-on-failure
+        cmake --install build/native-resilient-dataplane-build

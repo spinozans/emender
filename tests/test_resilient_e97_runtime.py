@@ -1019,6 +1019,16 @@ def test_production_trainer_entrypoint_overlaps_blocked_native_result_and_applie
     train_calls = {"count": 0}
     published_intervals = []
     translated = []
+    training_lanes = []
+
+    original_lane_start = real.PersistentAsyncTrainingLane.start
+
+    def record_lane_start(self, **kwargs):
+        training_lanes.append(self)
+        return original_lane_start(self, **kwargs)
+
+    monkeypatch.setattr(
+        real.PersistentAsyncTrainingLane, "start", record_lane_start)
 
     class OneParamModel(torch.nn.Module):
         def __init__(self):
@@ -1351,6 +1361,15 @@ def test_production_trainer_entrypoint_overlaps_blocked_native_result_and_applie
             assert following_k_started.wait(2)
             assert publication_verified.wait(2)
             assert not first_apply.is_set()
+            # Publication precedes candidate preparation and the boundary
+            # rendezvous. Keep the fixture's third K active until the real
+            # lane requests a stop; otherwise fast mock optimizer steps can
+            # race through extra windows before finish_at_boundary runs.
+            assert len(training_lanes) == 1
+            lane = training_lanes[0]
+            with lane._condition:
+                assert lane._condition.wait_for(
+                    lambda: lane._stop_requested, timeout=2)
             allow_following_k_finish.set()
         except BaseException as error:
             releaser_errors.append(error)

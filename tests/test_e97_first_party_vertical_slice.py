@@ -478,7 +478,19 @@ def test_positive_generation_publishes_exact_private_authority_without_fixture_s
     environment = private / "environment.json"
     overlap = private / "overlap.json"
     license_path = private / "license.json"
-    environment.write_bytes(first_party.ENVIRONMENT_DESCRIPTOR.read_bytes())
+    # Bind the synthetic authority to the interpreter actually running this
+    # test, rather than a receipt from the original author's private machine.
+    import platform
+    import sys
+    environment_value = json.loads(first_party.ENVIRONMENT_DESCRIPTOR.read_bytes())
+    environment_value["runtime"] = {
+        "interpreter_sha256": hashlib.sha256(Path(sys.executable).read_bytes()).hexdigest(),
+        "implementation": platform.python_implementation(),
+        "python_version": platform.python_version(),
+        "platform_system": platform.system(),
+        "machine": platform.machine(),
+    }
+    environment.write_text(json.dumps(environment_value, sort_keys=True))
     overlap.write_bytes(first_party.OVERLAP_AUDIT.read_bytes())
     license_path.write_bytes(first_party.AUTHORIZATION_LICENSE.read_bytes())
     policy = Path("docs/EMENDER_E97_4B_ONPOLICY_TASK_LAKE_EXECUTION_PLAN.md")
