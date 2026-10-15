@@ -14,7 +14,7 @@ Emending Nonlinear Recurrence: identified preprint packaging.
 Compile main.tex with pdflatex + BibTeX (or Tectonic).
 The preprint option is selected explicitly in main.tex.
 Official TMLR style revision is recorded in STYLE-COMMIT; see LICENSE.
-This archive does not contain the anonymous submission driver.
+The anonymous submission PDF is distributed separately.
 EOF
 tar --sort=name --mtime='@0' --owner=0 --group=0 --numeric-owner \
   -czf arxiv-source.tar.gz -C "$staging" .

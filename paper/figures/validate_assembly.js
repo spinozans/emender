@@ -7,7 +7,7 @@ const fs = require('node:fs');
 const { execFileSync } = require('node:child_process');
 const source = fs.readFileSync('paper/main.typ', 'utf8');
 const normalized = source.replace(/\s+/g, ' ');
-const labels = ['intro', 'background', 'arch', 'formal', 'systems', 'lm', 'expressivity',
+const labels = ['intro', 'background', 'arch', 'systems', 'lm', 'expressivity', 'formal',
   'applications', 'related', 'limitations', 'conclusion', 'predictions',
   'future_work', 'appendix'];
 const probe = 'paper/figures/.assembly-query.typ';
@@ -35,34 +35,27 @@ for (const match of source.matchAll(/#ref\(<([^>]+)>\)/g)) {
   assert.ok(source.includes(`<${match[1]}>`), `resolved source label ${match[1]}`);
 }
 for (const phrase of [
-  'Open item O1 — recurrent $tanh$-tracker realization unavailable.',
-  'No strict separation of TC#super[0] and NC#super[1] is known or assumed here.',
-  'Minimal parameter requirements remain open.',
-  'not uniformly bounded away from zero',
-  'input $(lambda,k,v)$',
-  'The formal E97 fold fixes $lambda$',
-  'G1 — no per-token circuit-size or depth lower bound.',
-  'G2 — state-dependent gates are unmodeled.',
-  'G3 — constrained affine/reflection realizability is open.',
-  'U3.1 — carried-in winner first-generation fitness unavailable.',
-  'Single-seed 1.3 B evidence and protocol boundaries',
-  'Untested application predictions',
-  'Feedback-surrogate use additionally requires stability and safety validation.',
-  '150,793,420,800',
-  'five optimizer steps',
-  'the reported mean is conditional on that subset',
-  'synthetic, coarse state-pass accounting model',
-  'right-multiplication $H W$ and feature-network costs',
-  'precomputed-gate recurrent-update accounting model',
-  'smallest non-solvable symmetric group',
-  'gap peaks near 0.359 at $T = 320$',
-  'approximate reconstructions from rounded three-seed mean/min/max summaries',
-  'write gate *2*, outside the production sigmoid',
-  'm2rnnCMAShape = m2rnnPure 22 70 256',
-  'different decay placement',
-  'not shown statistically equivalent',
-  'GDN2 leads E97 at every tested length',
-  'source .pt checkpoint SHA-256',
+  "At fixed width and precision the Emender is a finite-state machine",
+  "The complexity separation TC#super[0] $!=$ NC#super[1] remains open, and no result here depends on it.",
+  "Open item O1 asks for a configuration of the nonlinear update, an initial state and decoder, and an all-words trajectory proof",
+  "*G1: the cost of generating token-dependent actions.*",
+  "*G2: state-dependent parameter schedules.*",
+  "*G3: realizing group actions in the constrained affine channel.*",
+  "supply total search effort and within-search improvement for these two configurations (Open item U3.1)",
+  "150,793,420,800",
+  "five optimizer steps",
+  "Each arm has one training seed.",
+  "fixed-weight raw-write resource class, over abstract real-valued gate/key/state signatures",
+  "With $lambda >= 1$",
+  "while production decay lies below one",
+  "smallest non-solvable symmetric group",
+  "length-512 curriculum stage was OOM-infeasible even at sub-batch 1, after one completed optimizer step",
+  "GDN2 is ahead of E97 at every reported length, and both curves decline toward the random baseline",
+  "source .pt checkpoint SHA-256",
+  "513.014 billion accepted training tokens",
+  "final segment CommaPile mainmix",
+  "median merge duration 6.320 s and median inter-merge interval 72 s",
+  "error, latency, and closed-loop stability across operating regimes"
 ]) assert.ok(normalized.includes(phrase), phrase);
 for (const old of ['margin bounded away from zero', 'strictly inside NC#super[1]',
   'linear recurrence provably cannot maintain', 'explicit configuration of it realizes',
@@ -129,5 +122,5 @@ for (const key of keys) assert.ok(ledger.includes(`| \`${key}\` |`), key);
 assert.equal((ledger.match(/^\| `[^`]+` \|/gm) || []).length, keys.length);
 assert.ok(bib.includes('The Road Less Scheduled'));
 assert.ok(bib.includes('Danieli, Federico'));
-console.log(`PASS: 13 numbered body sections, 1 register appendix, ${layout.pages} pages; references, G1–G3/O1/U3.1, theorem scopes, 17-file inventory, and all ${keys.length} bibliography entries checked.`);
+console.log(`PASS: 13 numbered body sections, 1 register appendix, ${layout.pages} pages; references, current findings, G1–G3/O1/U3.1, theorem scopes, 17-file inventory, and all ${keys.length} bibliography entries checked.`);
 console.log(JSON.stringify(layout));

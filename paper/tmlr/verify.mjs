@@ -22,26 +22,86 @@ for(const [variant,file] of Object.entries(files)){
  info[variant]=execFileSync(pdfinfo,[file],{encoding:'utf8'});
 }
 const samples=[
- ['Abstract','modular-quadratic terminal accuracy is 99.96% versus 76.09% at trained length, and 76.07% versus 53.36% at eight times that length.'],
- ['Introduction','at the matched 150.79-billion-token cutoff the smoothed loss gap between the two arms is 0.010 nats/token'],
- ['Background','At fixed precision and width, both state regimes are finite-state recognizers.'],
- ['Architecture','1,286,589,072 parameters in total'],
- ['Systems','All throughput measurements and throughput-budget smokes reported here use CUDA; paired ROCm correctness, performance, and parity measurements remain pending.'],
- ['Language modeling','exact common logged steps through step 2,300,925 (150,793,420,800 tokens): 92,037 aligned records, zero E97-only and zero GDN2-only records through the cutoff, no interpolation.'],
- ['Expressivity / contractive control','gdn-8m has 7.94 M parameters versus E97’s 7.38 M (7.6% more, favoring GDN).'],
- ['Expressivity / pre-registered budget','The throughput-derived common cap of 18269 steps was fixed before accuracy was seen (budget.json, 1989656c).'],
- ['Expressivity / terminal sweep','At the terminal sweep E97 reaches 99.96% at trained length, retaining 90.16% at four times and 76.07% at eight times that length.'],
- ['Applications','Feedback-surrogate use additionally requires stability and safety validation.'],
- ['Formal / trust inventory','857 named declarations, 723 user-written, 17 files; extraction source commit e58ae937'],
- ['Formal / recognizer floor','Any finite-state recognizer with a state decoder that reproduces the tracker on every input word needs at least 120 states'],
- ['Formal / latching boundary','the hold theorem assumes λ ≥ 1, whereas production decay is below one'],
- ['Related work','with 87.5% of its blocks linear-state, it sits closer to the linear-state class than to the pure-nonlinear-recurrent one.'],
- ['Limitations','The current modular-quadratic comparison shares a cap and plateau rule but realizes 2,500 versus 2,200 steps'],
- ['Expressivity / current-pair S5 finding','both models’ accuracy declines toward random with length, and GDN2 leads E97 at every tested length.'],
- ['Testable predictions','Falsified if per-token throughput degrades faster than the parameter count grows, beyond the kernel-arithmetic baseline.'],
- ['Future work','the single-arm E97 513 B-token Frontier continuation that exists cannot answer a paired question'],
- ['Appendix B / predecessor cohort','E88 0.973 BPB, GDN 0.973 BPB, and M²RNN-CMA 0.979 BPB.'],
- ['Appendix C / Common Pile','Our three models on the same Common-Pile slice measure Emender 0.981, GDN 0.963, M²RNN-CMA 0.973']
+  [
+    "Abstract / iterated map",
+    "E97 99.96% accuracy versus GDN2’s 76.09% at the trained length, and 76.07% versus 53.36% at eight times that length."
+  ],
+  [
+    "Introduction / matched geometry",
+    "Its GDN2 control is within 0.01% of its parameter count."
+  ],
+  [
+    "Background / fixed precision",
+    "At fixed precision and width, both state regimes are finite-state recognizers."
+  ],
+  [
+    "Architecture / stack",
+    "1,286,589,072 parameters in total"
+  ],
+  [
+    "Systems / actual geometry",
+    "The ratio is 0.976: comparable throughput, with GDN2 slightly faster. E97 uses 28,942 MB peak memory per GPU against 35,715 MB for GDN2."
+  ],
+  [
+    "Language modeling / matched tokens",
+    "exact common logged steps through step 2,300,925 (150,793,420,800 tokens): 92,037 aligned records, zero E97-only and zero GDN2-only records through the cutoff, no interpolation."
+  ],
+  [
+    "Language modeling / interpretation",
+    "The nonlinear recurrence trains competitively under this substantial shared workload, with a small difference whose sign varies by averaging window."
+  ],
+  [
+    "Expressivity / budget",
+    "The throughput-derived common cap of 18269 steps was fixed before accuracy was seen (budget.json, 1989656c)."
+  ],
+  [
+    "Expressivity / terminal sweep",
+    "At the terminal sweep E97 reaches 99.96% at trained length, retaining 90.16% at four times and 76.07% at eight times that length."
+  ],
+  [
+    "Applications / stability",
+    "A learned surrogate comparison could vary how often saturation determines subsequent decisions, measuring trajectory error, latency, and closed-loop stability across operating regimes."
+  ],
+  [
+    "Formal / inventory",
+    "857 named declarations, 723 user-written, 17 files; extraction source commit e58ae937"
+  ],
+  [
+    "Formal / recognizer floor",
+    "Any finite-state recognizer with a state decoder that reproduces the tracker on every input word needs at least 120 states"
+  ],
+  [
+    "Open questions / persistence",
+    "the stated hold theorem assumes λ ≥ 1, while production decay lies below one."
+  ],
+  [
+    "Related work / state path",
+    "with 87.5% of its blocks linear-state, it sits closer to the linear-state class than to the pure-nonlinear-recurrent one."
+  ],
+  [
+    "Open questions / sampling",
+    "The current pair supplies one language-model training seed and one seed for each reported computational probe."
+  ],
+  [
+    "Expressivity / S5 finding",
+    "GDN2 is ahead of E97 at every reported length, and both curves decline toward the random baseline."
+  ],
+  [
+    "Next tests / mechanism",
+    "Persistence of the map advantage would strengthen the mechanism hypothesis; its disappearance under those controls would locate an optimization or protocol dependence."
+  ],
+  [
+    "Future work / scale",
+    "A matched 3–7 B E97/GDN2 study would test training viability, memory cost, and computational behavior across scale."
+  ],
+  [
+    "Frontier / endpoint",
+    "Its final recorded rank-0 training-loss average is 2.2798 nats/token over the last 100 logging windows."
+  ],
+  [
+    "Frontier / communication",
+    "completed 73 hierarchical K40 merges, with median merge duration 6.320 s and median inter-merge interval 72 s."
+  ]
 ];
 const results=samples.map(([section,sentence],i)=>{
  const matched={};for(const variant of Object.keys(files)){
@@ -50,7 +110,11 @@ const results=samples.map(([section,sentence],i)=>{
  }
  return {sample:i+1,section,sentence,exactNumbers:sentence.match(/\d[\d,]*(?:\.\d+)?%?/g)||[],matched};
 });
-for(const variant of ['submission','preprint'])assert(!/\b0pt\b/.test(text[variant]),'Unexpected theorem-head text');
+for(const variant of ['submission','preprint']){
+ assert(!/\b0pt\b/.test(text[variant]),'Unexpected theorem-head text');
+ assert(text[variant].includes('Žiga Avsec'),'Bibliography caron glyph lost');
+ assert(/M2rnn:/.test(text[variant].normalize('NFKC').replace(/\s/g,'')),'Bibliography superscript glyph lost');
+}
 assert(/Anonymous authors/.test(text.submission));
 assert(/Author:\s+Anonymous\s*\n/.test(info.submission));
 assert(!/spinozans|hypervolu\.me|erik\.garrison@gmail|Poietic|UTHSC|0000-0003-3821-631X/.test(text.submission+info.submission));
@@ -101,18 +165,18 @@ const approvedSymbolCounts=JSON.parse(fs.readFileSync(path.join(dir,'canonical-b
 assert.deepEqual({equations:symbolAudit.equations,attachments:symbolAudit.attachments,pdfPrimes:symbolAudit.pdfPrimes},approvedSymbolCounts,'Unapproved symbol-inventory drift');
 const appendixOrder=Object.fromEntries(Object.entries(text).map(([variant,pdf])=>[
  variant,verifyAppendixOrder(pdf,variant==='canonical'?null:generatedTex,
-   variant==='canonical'?null:'10.18653/v1/P19-1472')
+   variant==='canonical'?'arXiv:2505.17852':'arXiv:2406.06484')
 ]));
 fs.writeFileSync(path.join(dir,'validation/p16b-appendix-order.json'),JSON.stringify(appendixOrder,null,2)+'\n');
 const registerAppendix=Object.fromEntries(['submission','preprint'].map(variant=>[
  variant,verifyRegisterAppendix(text[variant],generatedTex,fs.readFileSync(path.join(dir,variant+'.aux'),'utf8'))
 ]));
 fs.writeFileSync(path.join(dir,'validation/p17c-register-appendix.json'),JSON.stringify(registerAppendix,null,2)+'\n');
-const report={armorAudit,registerAppendix,appendixOrder,symbolAudit,approvedBibliographyAmendment:'mathlib4: explicit 2026 access year (not publication year)',acceptedCommit:'eb2b9636',canonicalBaseline:JSON.parse(fs.readFileSync(path.join(dir,'canonical-baseline.json'),'utf8')),styleCommit:fs.readFileSync(path.join(dir,'STYLE-COMMIT'),'utf8').trim(),pages,samples:results,fragmentAudit,identityChecks:'passed (third-person literature self-citation retained)',canonicalManuscriptMatchesApprovedBaseline:true,bibliographyByteIdentical:true};
+const report={armorAudit,registerAppendix,appendixOrder,symbolAudit,approvedBibliographyAmendment:'mathlib4 access year plus four P20 transferred entries (exact SHA-256 guarded)',acceptedCommit:'eb2b9636',canonicalBaseline:JSON.parse(fs.readFileSync(path.join(dir,'canonical-baseline.json'),'utf8')),styleCommit:fs.readFileSync(path.join(dir,'STYLE-COMMIT'),'utf8').trim(),pages,samples:results,fragmentAudit,identityChecks:'passed (third-person literature self-citation retained)',canonicalManuscriptMatchesApprovedBaseline:true,bibliographyByteIdentical:true};
 fs.mkdirSync(path.join(dir,'validation'),{recursive:true});
 fs.writeFileSync(path.join(dir,'validation/drift-check.json'),JSON.stringify(report,null,2)+'\n');
 for(const [k,v] of Object.entries(text))fs.writeFileSync(path.join(dir,'validation',k+'-text.txt'),v);
 console.log(`PASS: ${results.length} samples × 3 PDFs; exact numeric strings; ${fragmentAudit.checked} long source fragments; identity and canonical-source guards.`);
 console.log(`PASS: ${symbolAudit.equations} complete math expressions; ${symbolAudit.attachments} attachments; ${symbolAudit.pdfPrimes} S primes in each PDF (${symbolAudit.vectorPrimes} in drawings).`);
-console.log('PASS: one Appendix A with A.1–A.5; scoped evidence, built-label destination pages, and every register reference in each TMLR PDF.');
+console.log('PASS: one compact Appendix A; scoped source categories, built-label destination page, and every register reference in each TMLR PDF.');
 console.log(JSON.stringify(pages));

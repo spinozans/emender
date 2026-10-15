@@ -69,3 +69,16 @@ remaining rows retain their original P3 evidence boundary. Full P3 receipts: `/h
 
 ## Metadata requiring comparison
 
+
+## P21 packaging intake of the four P20 entries
+
+P20 supplied these entries at 883131ae. The locators below reproduce their
+canonical metadata; independent publication-metadata review remains a submission
+preparation step. The original P3 verification rows retain their evidence scope.
+
+| Key | Status | Canonical locator |
+|---|---|---|
+| `nye2021scratchpads` | P20 TRANSFER: canonical metadata retained; independent review pending | https://arxiv.org/abs/2112.00114 |
+| `wei2022chain` | P20 TRANSFER: canonical metadata retained; independent review pending | https://arxiv.org/abs/2201.11903 |
+| `vaswani2017attention` | P20 TRANSFER: canonical metadata retained; independent review pending | https://arxiv.org/abs/1706.03762 |
+| `avsec2021enformer` | P20 TRANSFER: canonical metadata retained; independent review pending | https://doi.org/10.1038/s41592-021-01252-x |
