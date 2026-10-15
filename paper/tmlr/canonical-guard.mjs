@@ -1,5 +1,5 @@
-// P13 moves the source baseline by operator directive; the accepted snapshot
-// remains frozen. Only the approved mathlib4 bibliography amendment may differ.
+// The accepted snapshot remains frozen; P20 transfers the manuscript and adds
+// four bibliography entries. Exact approved source hashes retain both boundaries.
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
@@ -9,10 +9,9 @@ export function checkCanonicalSource(root) {
   const baseline=JSON.parse(fs.readFileSync(path.join(root,'paper/tmlr/canonical-baseline.json'),'utf8'));
   const source=fs.readFileSync(path.join(root,'paper/main.typ'));
   assert.equal(createHash('sha256').update(source).digest('hex'),baseline.mainTypSha256,'Unapproved canonical manuscript drift');
+  const bibliography=fs.readFileSync(path.join(root,'paper/refs.bib'));
+  assert.equal(createHash('sha256').update(bibliography).digest('hex'),baseline.refsBibSha256,'Unapproved canonical bibliography change');
   execFileSync('git',['diff','--exit-code',baseline.acceptedSnapshot,'--','paper/build.sh'],{cwd:root});
-  const original=execFileSync('git',['show','eb2b9636:paper/refs.bib'],{cwd:root,encoding:'utf8'});
-  const before='  note         = {Lean 4 project/library documentation; Lean 4.26.0 toolchain; accessed 2026-10-14},';
-  const after='  year         = {2026},\n  note         = {Lean 4 project/library documentation; Lean 4.26.0 toolchain; accessed 2026-10-14; citation year is the access year, not a publication year},';
-  assert.equal(original.split(before).length,2,'Access-year amendment must match exactly once');
-  assert.equal(fs.readFileSync(path.join(root,'paper/refs.bib'),'utf8'),original.replace(before,after),'Unapproved canonical bibliography change');
+  const transferred=execFileSync('git',['show',baseline.p21BaseCommit+':paper/refs.bib'],{cwd:root});
+  assert(bibliography.equals(transferred),'Bibliography must match approved P20 transfer');
 }

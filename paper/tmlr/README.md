@@ -1,127 +1,97 @@
-# TMLR packaging of the current manuscript
+# TMLR packaging of the transferred manuscript
 
-`paper/main.typ` is canonical; `paper/current.pdf` is its rebuilt PDF.
-The pre-revision accepted snapshot is `eb2b96363e3ff800d7eefe2ba7386e7cf673d1cf`;
-its frozen `paper/Garrison_2026_Emender-eb2b9636.pdf` is retained unchanged.
-P13 (operator directive, 2026-10-15) moves the guarded source baseline for the
-language sweep and notation/protocol audit; every sweep line and the separate
-notation corrections are recorded in `../../P13-report.md`.
-`canonical-baseline.json` freezes the current source SHA-256 and this lineage.
-The drift/symbol checks now compare the rebuilt current PDF and both TMLR
-variants to the current evaluated source, not to the pre-sweep snapshot.
-Only the approved mathlib4 access-year amendment may differ from the accepted
-bibliography; `canonical-guard.mjs` checks it and the source SHA-256.
+`paper/main.typ` at **883131ae** is the P20 canonical manuscript;
+`paper/current.pdf` is its rebuilt **33-page** PDF. P21 regenerates this
+packaging tree from that exact source. `canonical-baseline.json` retains the
+accepted snapshot `eb2b96363e3ff800d7eefe2ba7386e7cf673d1cf`, its frozen PDF,
+and the complete P13–P21 lineage. Source and bibliography SHA-256 guards bind
+the current transfer. The four P20 bibliography additions and the earlier
+Mathlib access-year amendment are retained byte-for-byte.
 
 ## Deliverables
 
-- `submission.pdf`: anonymous, **59 pages**, default official TMLR submission style.
-- `preprint.pdf`: identified, **59 pages**, official TMLR `preprint` option.
-- `arxiv-source.tar.gz`: self-contained identified source archive, with exactly
-  one master (`main.tex`), explicitly selecting preprint mode. It was unpacked
-  and rebuilt separately; its PDF text is identical to `preprint.pdf`.
+- `submission.pdf`: anonymous, **28 pages**, official TMLR submission style.
+- `preprint.pdf`: identified, **28 pages**, official TMLR preprint style.
+- `arxiv-source.tar.gz`: self-contained identified source, one `main.tex`
+  master, explicitly selecting preprint mode. A fresh extraction rebuilds to
+  **28 pages** with PDF raw text byte-identical to `preprint.pdf`.
 
-For OpenReview double-blind submission upload **submission.pdf**, not
-`preprint.pdf` or the source archive. Shared source contains conditionally
-excluded author details/URLs; it is not an anonymized-source artifact.
+Upload **submission.pdf** to OpenReview. The preprint and source archive are
+identified artifacts. Shared source conditionally selects author details and
+release links for the appropriate variant.
 
-## Build / verify
+## Regenerate, build, verify
 
-Install TeX Live with latexmk (pdflatex/BibTeX), or Tectonic; Node.js; Typst;
-and Poppler (`pdftotext`, `pdfinfo`, `pdfseparate`). No Python is needed.
-
-```bash
-cd paper/tmlr
-bash build.sh
-node --test verify-symbols.test.mjs notation-audit.test.mjs author-rulings.test.mjs appendix-order.test.mjs register-appendix.test.mjs armor-audit.test.mjs
-node verify.mjs
-bash bundle-arxiv.sh
-```
-
-Tectonic can be specified with `TECTONIC_BIN=/path/to/tectonic`.
-Verification accepts `PDFTOTEXT` and `PDFINFO` overrides.
-The standalone LaTeX builds do not depend on Typst or the repository's data
-artifacts; only regeneration and the canonical-content audit need them.
-
-To regenerate the packaging layer from the guarded current source:
+Dependencies: Node.js, Typst, Poppler, and Tectonic or TeX Live with latexmk.
+Tectonic and Poppler paths accept `TECTONIC_BIN`, `PDFTOTEXT`, and `PDFINFO`.
+Run from the repository root:
 
 ```bash
-typst compile --root ../.. --pdf-standard 1.5 --no-pdf-tags --pages 1,2 \
-  figures.typ /tmp/emender-packaging-figures.pdf
-pdfseparate /tmp/emender-packaging-figures.pdf assets/figure-%d.pdf
-node convert.mjs
-bash build.sh
-node --test verify-symbols.test.mjs notation-audit.test.mjs author-rulings.test.mjs appendix-order.test.mjs register-appendix.test.mjs armor-audit.test.mjs
-node verify.mjs
-bash bundle-arxiv.sh
+typst compile --root . paper/main.typ paper/current.pdf
+typst compile --root . --pdf-standard 1.5 --no-pdf-tags --pages 1,2 \
+  paper/tmlr/figures.typ /tmp/emender-packaging-figures.pdf
+pdfseparate /tmp/emender-packaging-figures.pdf paper/tmlr/assets/figure-%d.pdf
+node paper/figures/validate_assembly.js
+node paper/tmlr/convert.mjs
+bash paper/tmlr/build.sh
+node paper/tmlr/verify.mjs
+node --test paper/tmlr/*.test.mjs
+node paper/tmlr/validation/p21-audit.mjs
+node paper/tmlr/validation/p21-anonymity.mjs
+bash paper/tmlr/bundle-arxiv.sh
+(cd paper/tmlr && sha256sum -c validation/SHA256SUMS)
 ```
 
-`serialize.typ` exports Typst's **evaluated content tree**, retaining exact
-text/math and evaluating artifact-derived tables/numbers. `convert.mjs` maps
-that tree to LaTeX, failing on unsupported nodes. It does not paraphrase prose.
-Markup headings retain their serialized `depth`; explicit headings retain `level`.
-The register renders as one Appendix A with five subsections A.1–A.5.
-`verify.mjs` checks both built TMLR PDFs for this hierarchy, evidence within each
-subsection, built-label destination pages, and every rendered register-reference
-number/count. The receipt is `validation/p17c-register-appendix.json`.
-The two original vector diagrams are exported as figure assets, not manuscript
-page images. The other five figures are byte-identical copies of the canonical
-PNG assets. All 20 captions are independently typeset in LaTeX; all 14 body
-tables are actual LaTeX tables. P13 adds eight plain numbered pseudocode blocks, rendered as verbatim blocks
-without font-size overrides, and a manuscript-wide symbol table.
-The theorem descriptions are in 21 unnumbered
-amsthm environments (13 original bullet statements, seven prose statements,
-one definition), without adding theorem labels, numbers, or statement text.
+`serialize.typ` exports the evaluated content tree, including dynamic tables
+and math. `convert.mjs` translates it directly and fails on unsupported nodes.
+The structure is 13 numbered body sections, 63 converted headings, seven LaTeX
+tables (including notation), nine independently typeset captions, five numbered
+pseudocode blocks, and 13 unnumbered amsthm statements. Formal blocks follow
+the current subsection names and stable section labels. The two vector drawings
+are freshly exported; the Frontier PNG is a byte-identical copy. The standalone
+asset tree contains exactly these three figures.
 
-`refs.bib` is byte-identical to the canonical bibliography; official TMLR
-natbib author-year citations and `tmlr.bst` replace IEEE numeric formatting.
-Six occurrences of three identifying release/mirror URLs and two public
-repository mentions are gated to "the artifact repository (anonymized)" or
-"artifact repository (anonymized)" in submission mode. No acknowledgments or
-funding statement exists in the accepted body. Normal third-person scholarly
-self-citations are retained, not marked as the anonymous author's work.
+Appendix A is the compact development/source register: one heading, four source
+categories. `verify.mjs` checks evidence inside each category, the current-pair
+scope, built label A and its physical PDF destination, and every rendered
+appendix pointer. Ruling 6 checks the References heading and the actual final
+bibliography entry on the physical page immediately preceding Appendix A in
+all three PDFs. The current receipts retain the established paths
+`validation/p16b-appendix-order.json` and `validation/p17c-register-appendix.json`.
 
-## Provenance / evidence
+## Provenance and guards
 
-The official https://github.com/JmlrOrg/tmlr-style-file repository was cloned
-and vendored at **7bf90efe3a0debbba703c05c43f3ff7e4d4a2992**. `tmlr.sty`,
-`tmlr.bst`, `fancyhdr.sty`, and `LICENSE` are unchanged upstream files;
-`upstream/` retains its sample sources. There is no nested Git repository or
-submodule dependency. `STYLE-COMMIT` records the revision.
+Official style files retain upstream revision
+**7bf90efe3a0debbba703c05c43f3ff7e4d4a2992**, recorded in `STYLE-COMMIT`.
+`tmlr.sty`, `tmlr.bst`, `fancyhdr.sty`, `LICENSE`, and the original accepted
+PDF retain their frozen hashes.
 
-`validation/drift-check.json` records 20 load-bearing samples across the paper,
-checked in the current PDF and both TMLR PDFs, plus a whole-source all-prose
-audit. Decimal digits/percentages in samples match exactly (only whitespace,
-ligatures, mathematical letter styling, and punctuation formatting normalize).
-The independent symbol oracle checks all complete LaTeX math expressions,
-converted attachments, and state primes in each PDF (counts in the drift report).
-It preserves operators and script boundaries instead of using prose normalization.
-Attachments in the imported vector drawings are not converted; the drawings
-were regenerated for the P13 gate/operator and returned-state notation changes.
-Their hashes are frozen in the validation manifest; two drawing primes are also
-checked independently in extracted PDFs. Regression tests reject the actual P10 TeX and
-removal of any one of the three primes, missing attachment features, and PDF
-prime loss. Explicit caption/table font-size overrides are forbidden.
-PDF text, final engine logs, archive-build logs, and SHA-256 digests are retained
-in `validation/`; the sample-by-sample baseline report is `../../P9-report.md`
-and the repair validation/push receipt is `../../P11-report.md`.
-The current baseline revision and checks are recorded in `../../P18-report.md`.
-P18 audits each defensive element against a live claim, folds the claim table to
-Claim / Evidence / Scope, and states the current-pair S5 ordering as a finding.
-`validation/p18-edit-ledger.json` replays the exact source/caption delta from
-`aa28773f`; `node paper/tmlr/validation/p18-audit.mjs` (from the repository root)
-checks its preservation boundaries. Three prose samples are re-voiced without
-losing their scopes; the other 17 are unchanged. The exact symbol pins are
-706 expressions, 444 attachments and eight PDF state primes; all display
-equations and pseudocode are unchanged. `armor-audit.test.mjs` rejects lost
-claim-row scopes, findings, unequal steps, OOM facts, formal ceilings, and
-the retired replication/Non-claim framing.
+`../../P21-report.md` documents every regenerated baseline and its reason.
+`validation/p20-transfer-revision.diff` enumerates the approved source delta;
+`validation/p21-guard-delta.json` retains full old/new guard definitions;
+`validation/p21-inputs.json` binds the transferred inputs. `p21-audit.mjs`
+checks exact provenance replay and the narrow packaging scope. Earlier P13–P18
+audits remain historical receipts for their own source revisions.
 
-Builds have no errors, missing glyphs, undefined citations/references,
-overfull boxes, or oversized floats. Nonfatal underfull-box spacing warnings
-remain. The supervisor-approved canonical `mathlib4` entry uses 2026 explicitly as
-an access year, not a publication year, with that basis labeled in its note;
-the bibliography copies remain byte-identical and no empty-year warning remains.
-P18 removes the conclusion's obsolete packaging-as-claim caveat; packaging
-compliance is checked here, outside the scientific narrative. Existing
-TODO-NEEDS-EVIDENCE disclosures remain. The rebuilt canonical PDF has 65 pages;
-References precede the single register Appendix A in all three PDFs.
+`validation/drift-check.json` checks 20 load-bearing current-manuscript samples
+across all three PDFs, including Frontier findings and current-pair scopes,
+and 1,099 long source fragments. The independent symbol oracle checks every
+complete expression and attachment: **325 expressions, 266 attachments, eight
+PDF state primes** (two in drawings). All old/new expression multiplicities are
+enumerated in `validation/p21-math-delta.json`. Negative regressions retain
+prime/attachment loss and actual P10 conversion-defect coverage and add all
+current live-scope and source-register loss tests. The source remains exactly
+P20's forward-narrated text; packaging reproduces its tone.
+
+Three release/mirror URLs are variant-gated. The anonymous-PDF receipt screens
+visible text, author metadata, XMP, embedded files, annotation destinations and
+embedded fonts; scholarly third-person citations are retained. The identified
+preprint retains its author and release links. Canonical bibliography bytes are
+copied exactly; narrow Unicode mappings preserve Ž and superscript ² in the
+official style font. P3's ledger records all 61 entries; the four P20 intake rows
+retain their pending independent metadata-review scope.
+
+Builds pass the existing fail-closed error, glyph, reference, citation, overflow
+and oversized-float checks. Underfull spacing warnings remain. Receipts, logs,
+PDF extractions, bundle rebuild comparison and SHA-256 digests are retained in
+`validation/`. Independent acceptance review is the delivery gate.

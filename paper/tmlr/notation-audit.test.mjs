@@ -1,4 +1,4 @@
-// Source-named regression checks for the P13 notation/protocol revision.
+// Source-named regression checks for the transferred notation and protocols.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -6,20 +6,21 @@ import {verifySymbols} from './verify-symbols.mjs';
 const root=new URL('../../',import.meta.url);
 const read=p=>fs.readFileSync(new URL(p,root),'utf8');
 const source=read('paper/main.typ');
-test('main.typ and all current manuscript variants exclude self-vouching words',()=>{
+test('main.typ and current manuscript variants retain the operator tone',()=>{
   for(const p of ['paper/main.typ','paper/figures/expressivity_1p3b.typ',
     'paper/tmlr/main.tex','paper/tmlr/submission.tex','paper/tmlr/preprint.tex',
     'paper/tmlr/validation/canonical-text.txt','paper/tmlr/validation/submission-text.txt',
     'paper/tmlr/validation/preprint-text.txt'])assert.doesNotMatch(read(p),/honest|carefully|rigorously/i,p);
-  for(const label of ['EXHIBIT','ANALOGY','OPEN'])assert.ok(source.includes(label));
+  assert.ok(source.includes('The formal results describe the state computations tested above'));
+  assert.doesNotMatch(source, /this is not|must not be described|do not call it|do not describe|is not a|not merely/i);
 });
-test('main.typ has one notation table and time-ordered numbered pseudocode',()=>{
+test('main.typ has one notation table and five time-ordered numbered algorithms',()=>{
   assert.equal(source.match(/\[Notation\]/g).length,1);
-  assert.deepEqual([...source.matchAll(/\*Algorithm (\d+) —/g)].map(m=>Number(m[1])),[1,2,3,4,5,6,7,8]);
+  assert.deepEqual([...source.matchAll(/\*Algorithm (\d+) —/g)].map(m=>Number(m[1])),[1,2,3,4,5]);
   const blocks=[...source.matchAll(/```text\n([\s\S]*?)\n```/g)].map(m=>m[1]);
-  assert.equal(blocks.length,8);
+  assert.equal(blocks.length,5);
   for(const block of blocks){assert.match(block,/^Input:/);assert.match(block,/\n1\. /);assert.match(block,/\nReturn:/);}
-  assert.equal(read('paper/tmlr/main.tex').match(/\\begin\{verbatim\}/g).length,8);
+  assert.equal(read('paper/tmlr/main.tex').match(/\\begin\{verbatim\}/g).length,5);
 });
 test('E97 uses returned state for output and Hadamard split gates consistently',()=>{
   for(const fragment of ['r_h &= S_h^T (e_h dot.o k_h)',
