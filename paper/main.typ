@@ -27,8 +27,8 @@
     schedule remains affine in its initial state, with zero nonlinear
     temporal depth. Lean 4 artifacts establish this structural duality,
     matched-signature delta-versus-raw-write separation, and an $S_5$
-    routing bridge; they do not lower-bound minimal circuit depth or prove
-    a full-stack impossibility. Width-axis multi-programming makes the
+    routing bridge; minimal circuit-depth lower bounds and a full-stack
+    impossibility remain open. Width-axis multi-programming makes the
     nonlinear route practical: a 1.3 B Emender trains through 150.8 B Pile
     tokens on one eight-GPU workstation, while a parameter-matched,
     CMA-selected GDN2-MLP control occupies the same training-loss band.
@@ -36,11 +36,12 @@
     that is replicated on this trained 1.3 B pair: modular-quadratic
     terminal accuracy is 99.96% versus 76.09% at trained length, and
     76.07% versus 53.36% at eight times that length. This is a single-seed,
-    common-cap comparison with unequal realized training, not invariant
-    extrapolation. The negative transfer is: “The 8M S5
+    common-cap comparison with unequal realized training over the tested
+    lengths. The negative transfer is: “The 8M S5
     separation does NOT replicate at 1.3B on this pair.” Repeated
     nonlinear maps in feedback, optimization, reservoirs, and dynamics
-    define the applications scope, not demonstrated deployments. For
+    define the applications scope as structural families, with no
+    demonstrated deployments. For
     TMLR, the contribution is correctness-first: inspectable Lean
     statements, artifact-derived results, disclosed negatives, and
     numbered gaps, including recurrent tracker realization and
@@ -106,6 +107,16 @@
 
 // ── 1. Introduction ───────────────────────────────────────────────────────────
 = Introduction <sec:intro>
+
+Keeping balance, following a moving object, and correcting a movement
+require continual revision of an internal estimate as observations
+arrive; conversation and perception likewise call for a model to update
+what it understands while an interaction unfolds. Fast feedback puts this
+computation under a per-input time budget, which makes it a question of
+how much of an ongoing computation can happen directly in carried memory
+as inputs arrive. A fixed-width, fixed-depth nonlinear recurrence
+transforms fixed-size state with bounded work per update, and that is the
+path this paper takes.
 
 A recurrent sequence model reads its input one step at a time, folding
 each token into an internal state that summarizes everything seen so
@@ -174,10 +185,11 @@ protocols. At 1.3 B, the modular-quadratic probe reproduces a depth-wall
 signature, but the $S_5$ ordering does not transfer (#ref(<sec:expressivity>)). The Lean core
 proves matched-signature one-step separation, exact non-equality at
 every finite $k$ on a constructed witness, and a 120-state recognizer
-floor. Its generator-table lookup construction is not a proof that the
-$tanh$ recurrence implements the full tracker; this missing trajectory
-bridge is Open item O1 (#ref(<sec:formal>)). Neither the duality nor the cited
-complexity results establish a blanket linear-state $S_5$ impossibility.
+floor. Its generator-table lookup construction proves the lookup bridge;
+a theorem that the $tanh$ recurrence implements the full tracker is the
+trajectory bridge still open as Open item O1 (#ref(<sec:formal>)). The duality and
+the cited complexity results hold at their stated resource classes; a
+blanket linear-state $S_5$ impossibility remains open.
 
 Throughput on the
 width axis comes from many small recurrent programs running side by side,
@@ -195,8 +207,9 @@ saturated slot resists perturbations, keeps its sign below a write
 threshold, and releases under a sufficient counter-delta. These are
 conditional slot-level guarantees; the hold theorem
 `EmenderLatching.emender_latch_holds_by_default` assumes $lambda >= 1$,
-not the production decay below one. Persistent, revisable memory is the
-design motivation, not a proved default behavior of the trained stack. An *emender* is
+while production decay sits below one. Persistent, revisable memory is
+the design motivation; a proved default persistence behavior of the
+trained stack remains open. An *emender* is
 one such layer; the *Emender* is the architecture family obtained by
 stacking emender layers; *E97* — the saturated delta-correcting cell
 extended with split erase/read and value-write gates — is the
@@ -353,10 +366,9 @@ separation instead (#ref(<sec:expressivity>), #ref(<sec:formal>)). The exact per
 budgets, and training identities are reported in #ref(<sec:lm>).
 
 The paper proceeds from background (#ref(<sec:background>)) and architecture (#ref(<sec:arch>)) through
-systems (#ref(<sec:systems>)), matched-token language modeling (#ref(<sec:lm>)), and expressivity
-probes (#ref(<sec:expressivity>)). The applications class (#ref(<sec:applications>)) extends the structural question
-without claiming new deployments; formal results (#ref(<sec:formal>)) state the exact
-Lean scope; related work (#ref(<sec:related>)), limitations (#ref(<sec:limitations>)), conclusion (#ref(<sec:conclusion>)),
+formal results (#ref(<sec:formal>)), systems (#ref(<sec:systems>)), matched-token language modeling (#ref(<sec:lm>)),
+and expressivity probes (#ref(<sec:expressivity>)). The applications class (#ref(<sec:applications>)) extends the structural question
+without claiming new deployments; related work (#ref(<sec:related>)), limitations (#ref(<sec:limitations>)), conclusion (#ref(<sec:conclusion>)),
 testable predictions (#ref(<sec:predictions>)), and future work (#ref(<sec:future_work>)) complete the body.
 
 The release targets for the 1.3 B pair
@@ -369,11 +381,11 @@ E97
 `tokens-152280498176`), with the public paper PDF mirrored at
 `http://hypervolu.me/~erik/ndm/Garrison_2026_Emender.pdf`.
 
-#heading(level: 2, numbering: none)[What we claim, and what we do not]
+#heading(level: 2, numbering: none)[Claims, evidence, and scope]
 
 The table below
 states each load-bearing claim with its evidence, its scope, and — in the
-last column — what the same result does *not* license. The body sections
+last column — the boundary the same result observes. The body sections
 substantiate each row; the pointers are forward references.
 
 #figure(
@@ -532,8 +544,9 @@ variants: state-space models such as Mamba and Mamba2 @mamba2024
 @mamba2_2024, gated linear attention @gla2023, and the delta rule
 @deltanet2024. Many modern designs favor time-axis parallelism via
 linear-state updates, whereas nonlinear-in-time recurrence generally
-resists that scan. This structural tradeoff is not a universal historical
-claim of declining expressive power across the lineage.
+resists that scan. This structural tradeoff describes how an update
+parallelizes at fixed width and precision, a per-architecture property
+distinct from any lineage-wide historical trend in expressive power.
 Gated DeltaNet @gated_deltanet2024 is the linear-recurrent family the
 #ref(<sec:expressivity>) 8 M probes use as the linear baseline, and Gated DeltaNet-2
 @gated_deltanet2_2026 — its split erase/write-gate extension — is the
@@ -565,10 +578,10 @@ DeltaNet, Gated DeltaNet, RWKV-4/5/6/7, HGRN2, mLSTM, MinGRU/MinLSTM
 this criterion. At fixed precision and width, both state regimes are finite-state
 recognizers. Circuit-complexity containment results for restricted
 linear SSMs require additional arithmetic and transition assumptions
-@merrill2024transformers. Containment in TC#super[0] alone does not prove
-inability to solve an NC#super[1]-complete word problem: that conclusion
-would require the unproved separation TC#super[0] $!= $ NC#super[1].
-In particular, affinity alone does not prohibit a finite-group action;
+@merrill2024transformers. Containment in TC#super[0] places restricted
+linear SSMs in that class; an inability to solve an NC#super[1]-complete
+word problem would require the still-unproved separation
+TC#super[0] $!= $ NC#super[1]. Affinity admits a finite-group action;
 realizability in the constrained GDN channel remains open (G3, #ref(<sec:limitations>)).
 For fixed-depth transformers in the same formal-language setting, this is
 also the relevant ceiling under explicit arithmetic assumptions:
@@ -632,9 +645,9 @@ permutations — here, adjacent transpositions, the swaps of two
 neighboring items — one at a time, and after each one must report the
 running composition of everything read so far, its *prefix product*. By
 Barrington's theorem @barrington1986 this task is complete for the
-complexity class NC#super[1]. Exact recognition over all words, not finite-length accuracy, is the
-complexity-theoretic question; a failure to learn at training length
-does not locate a model in a smaller circuit class. The solvable-group control
+complexity class NC#super[1]. The complexity-theoretic question is exact
+recognition over all words; training-length learning failure is an
+empirical observation about SGD, separate from circuit-class membership. The solvable-group control
 $S_3$ (permutations of three items, 6 elements) is included to factor out
 the part of difficulty that comes from prefix tracking *per se* rather
 than from non-solvability.
@@ -654,8 +667,7 @@ locate it in a two-axis grid:
   fades toward zero along the key. A real-negative eigenvalue is a
   *reflection* that flips sign each step (`reflect`); reaching it is the
   lever that lets a recurrence track non-solvable group structure such
-  as $S_5$, within the restricted transition analyses motivating this grid, not
-  from affinity alone. A
+  as $S_5$, within the restricted transition analyses motivating this grid. A
   complex-conjugate pair is a *rotation* (`rot`) that oscillates the
   stored value. Real-positive and real-negative are the two ends of the
   *real diameter*; complex placement walks off that diameter into the
@@ -853,7 +865,8 @@ the predecessor instance was defined; the state stays inside $tanh$, so the
 update is nonlinear-state for every gate setting. This is the per-head
 primitive. Algorithm 1 spells out the same read-before-write order;
 its inputs are the projected quantities described above, and its output
-uses the returned state. It is not a full-stack implementation.
+uses the returned state. It is the per-head core, bound to the full stack
+by limitation G2 (#ref(<sec:limitations>)).
 
 *Algorithm 1 — E97 per-head step.*
 ```text
@@ -1009,7 +1022,8 @@ in the instance above.
   $plus.minus 1$ resists perturbations under the saturation theorem's
   hypotheses; sign-preserving hold and counter-delta release have
   separate decay and write-budget assumptions. These motivate revisable
-  memory rather than guarantee persistent bindings in production E97. #ref(<sec:formal>)'s Theorem set F
+  memory; persistent bindings in production E97 remain a conditional
+  property. #ref(<sec:formal>)'s Theorem set F
   (saturation insensitivity, sign-preserving hold, counter-delta
   release) formalizes all three as slot-wise statements on the full
   emender-layer update.
@@ -1143,7 +1157,7 @@ shows the shared and distinct ingredients; it is not a causal ablation:
   ],
 ) <tab_ablation>
 
-Two checks motivate, rather than prove, a learning-efficiency reading.
+Two checks support a learning-efficiency reading.
 M²RNN-CMA reaches only 0.31 on solvable $S_3$, so non-solvability alone
 cannot explain its shortfall. At the 8 M shape, the recurrent state has
 131,072 scalars versus the $log_2 6 approx 2.6$-bit information floor.
@@ -1155,8 +1169,470 @@ trained-model accuracy guarantee. Delta correction distinguishes the
 Emender from raw-write; nonlinear state distinguishes it from GDN,
 which also uses a delta correction.
 
-// ── 4. Systems ─────────────────────────────────────────────────────────────
+// ── 4. Formal Results ─────────────────────────────────────────────────────────
+= Formal Results <sec:formal>
+
+The architecture fixes the mechanism; this section states what it
+provably computes. A trusted Lean 4 @lean42021 core built on Mathlib @mathlib4
+carries the formal spine: each result is stated as a theorem and
+compiled together with a proof of it. The import closure of the
+`ElmanProofs.PaperCore` module — 17 project source files in the recursive
+local closure — uses none of Lean's escape hatches: no `sorry`, `admit`,
+added `axiom`, `opaque` declarations, or `native_decide`. The gate
+is `formal/lean/scripts/check_paper_core.sh`; compiling
+`ElmanProofs.PaperCore` additionally checks elaboration of the proofs.
+The refreshed machine-extracted inventory is committed at
+`paper/data/lean-trust-gate-theorems.json` (857 named
+declarations, 723 user-written, 17 files; extraction source
+commit `e58ae937`), including the split-gated, latching, duality,
+routing, Lipschitz, and E1H-definition modules. Both the gate and
+extractor traverse the recursive local imports rather than a selected
+module allowlist. This check covers project sources, not the axioms
+or source files of Lean and Mathlib dependencies.
+
+Every result below is named by its exact theorem so a
+reader can open the source and find it. What is proved here is
+realizability and representational scope; what a trained model actually
+learns under SGD is the separate empirical question of #ref(<sec:lm>) and #ref(<sec:expressivity>).
+
+The formal spine starts with the compositional-depth duality and routing
+bridge (set H below), which explain the lens used in #ref(<sec:expressivity>) and #ref(<sec:formal>). The
+remaining sets specify exact lookup, recognizer count, matched-signature
+update separation, resource cost, and conditional latching. Exact
+non-equality on a constructed real-valued witness is not a uniform error
+margin, and table lookup is not recurrent $tanh$-tracker realizability.
+
+#heading(level: 2, numbering: none)[Theorem set A: finite-state ceiling and $S_5$ tracker]
+
+*At fixed width and precision the Emender is a
+finite-state machine, and the $S_5$ word problem it is tested on is a
+concrete, fully specified finite-state target.*
+
+#set list(indent: 1em)
+- *Finite-state ceiling at fixed precision.* At fixed width and
+  precision, every online recognizer of this kind has only finitely many
+  distinct states (`S5Witness.fixed_precision_state_space_finite`). This
+  bounds its online memory to finitely many states; it does not prove
+  strict containment below NC#super[1].
+
+- *$S_5$ word problem.* The target is pinned down exactly in Lean. The
+  group $S_5$ has 120 elements (`S5Witness.s5_state_count`) and is
+  non-solvable (`S5Witness.s5_not_solvable`); the prefix-product tracker
+  that reads a word of transpositions and reports the running product is
+  a 120-state recognizer (`S5Tracker.recognizer_state_count`) whose state
+  composes correctly as tokens are appended (`S5Tracker.run_append`). A
+  bridge lemma confirms the Lean tracker agrees with the Python
+  evaluation harness on every input
+  (`S5Tracker.pythonRun_eq_tracker_tuple`). The four adjacent
+  transpositions generate all of $S_5$: the tracker's run map is
+  surjective (`S5Inseparability.run_surjective`, via Mathlib's
+  `Equiv.Perm.mclosure_swap_castSucc_succ`).
+
+- *Capacity lower bound (recognizer floor).* Any finite-state recognizer
+  with a state decoder that reproduces the tracker on every input word
+  needs at least 120 states
+  (`S5Inseparability.capacity_lower_bound_120`); equivalently, no
+  recognizer with fewer than 120 states can realize it under any
+  decoder (`S5Inseparability.small_recognizer_cannot_realize_s5`). The
+  bound has a distinguishing-pair form: any recognizer with too few
+  states admits two words it cannot tell apart that the tracker does
+  distinguish (`S5Inseparability.exists_distinguishing_word_pair`).
+  This is the existential form of the $S_5$-coset inseparability target:
+  it holds for *any* finite recognizer family, with no architectural
+  assumptions, and it is the load-bearing state-counting lemma any future
+  bounded-precision raw-write bound must land against.
+
+- *Lookup-table realization.* The tracker is small enough to write down
+  as a table: it uses exactly $120 times 4 = 480$ state/input keys
+  (`S5NDMRealization.s5_transition_key_count`), and any finite
+  recognizer admits such an exact lookup-table realization
+  (`S5NDMRealization.exactTransitionMemory_run`).
+
+#heading(level: 2, numbering: none)[Theorem set B: generator-table lookup and the recurrent-tracker target]
+
+The exact statement of
+`NDMRealizesS5.emender_realizes_s5_tracker` supplies $d=12$, four
+orthonormal keys and one-hot values, queries, a decoder, and
+$lambda=1$. Reading a *preloaded* table retrieves the current generator;
+decoding it and *externally multiplying a supplied* $S_5$ state $s$
+reproduces the transition $s dot g$. The linear readout retrieves a
+generator value, not the running product. The supporting
+`OnlineMemory.linearDeltaWrite_overwrites_one_preserves_others`
+is an exact *pre-$tanh$* overwrite statement. Neither theorem states
+that iterating the nonlinear cell from zero tracks every input word.
+
+*Open item O1 — recurrent $tanh$-tracker realization unavailable.* The
+loaded generator memory does not carry the running group product;
+external composition supplies the missing state computation. Closing O1
+requires a configuration of the actual nonlinear update, an explicit
+initial state and decoder, and an all-words trajectory theorem. This is a
+stronger, currently unproved architecture claim, beyond the
+already-proved lookup identity.
+
+#heading(level: 2, numbering: none)[Theorem set C: update-family separation]
+
+*In a single step the delta-correcting write
+does something no fixed-weight raw-write update of the matched shape can
+reproduce on the abstract witness domain.*
+
+The Emender's delta-correcting write and M²RNN's raw outer-product write
+are provably distinct as update families over unrestricted real-valued
+keys, values, and states. The mixed key is $(1,1)$ (not unit-normalized),
+and the prescribed initial state is nonzero. These witnesses are not
+production zero-state trajectories with normalized keys and finite-logit
+sigmoid gates, nor full-network separation under arbitrary reparameterization.
+
+- *Mechanism separation.* The delta write exactly overwrites the
+  addressed slot while leaving every orthogonal query untouched
+  (`OnlineMemory.linearDeltaWrite_overwrites_one_preserves_others`),
+  whereas the raw outer-product write cannot satisfy that uniform
+  one-step overwrite specification
+  (`OnlineMemory.rawOuterWrite_not_uniformOneStepOverwrite`).
+
+- *One-step resource separation.* For every $K >= 2$ and $V >= 1$, no
+  fixed-weight M²RNN parameterization with row, column, or cell forget
+  gates can match the Emender's mixed-key delta correction in a single
+  recurrent step
+  (`RecurrentResourceFormalism.emender_m2rnn_one_step_resource_separation_embeds`).
+  The result is sharp: it covers every external-forget shape the M²RNN
+  signature allows.
+
+- *Positive embedding.* The separation concerns the specified resource
+  class. *Given* the extra read-then-delta resource, M²RNN can embed
+  one Emender step
+  (`M2RNNComparison.m2rnn_read_then_delta_embeds_e88_delta_update`); the
+  previous bullet says that without that extra resource it cannot.
+
+#heading(level: 2, numbering: none)[Theorem set C′: multi-step (k-step) separation]
+
+*The one-step gap persists at every length under
+composition on a constructed input.*
+
+The one-step separation persists as exact non-equality at each finite
+length, not as a length-independent accuracy margin.
+
+#block(inset: (x: 1.5em), [
+*For every $k >= 1$, there is an explicit $k$-token input sequence such
+that the $k$-step trajectory of any fixed-weight raw-write resource (in
+the row/column/cell external-forget class) diverges from the Emender's
+$k$-step trajectory by a nonzero entry for each finite $k$ (Lean:
+`emender_m2rnn_k_step_separation`).*
+])
+
+The witness alphabet is the 2-dimensional construction from set C
+followed by zero-input filler tokens
+(`kStepWitnessInputs k = (mixedKey, 0) :: zeroSteps (k - 1)`). It starts
+from the prescribed nonzero `lowerLeftState`, with unnormalized key
+$(1,1)$ and zero-key fillers. Like set C, set C′ is over an unrestricted
+abstract real-valued signature, not the production normalized-key,
+zero-initial-state domain. The proof
+inducts on the tail, using a lemma that keeps entry $(0, 0)$ pinned at
+zero on the raw-write side for every $k$
+(`FixedRightRawExternalForget2_preserves_zero_row`), while the Emender
+side reduces to the $k$-fold composition of $tanh$ at $-1$, which is
+nonzero because $tanh$ is injective. Its magnitude need not stay bounded
+away from zero as $k$ grows; the statement uses exact real arithmetic. A second form of the theorem
+packages the same statement existentially over $k$-step input sequences
+(`emender_m2rnn_k_step_separation_exists`), and the two-step case is
+exposed separately as the inductive base
+(`emender_m2rnn_two_step_separation`). All three live in
+`ElmanProofs.Architectures.MultiStepSeparation`, part of the trusted
+import closure of `PaperCore`. The #ref(<sec:expressivity>) length-extrapolation
+curves retain positive, non-monotone gaps on parity, FSM tracking, and
+modular counter. The parity gap peaks near 0.359 at $T = 320$ before
+narrowing to about 0.337 at $T = 500$. These measurements are separate
+evidence of retained advantage, not consequences of the exact-real
+finite-$k$ theorem or an increasing-gap prediction.
+
+#heading(level: 2, numbering: none)[Frontier and unproven targets]
+
+*The k-step result is the ceiling reachable
+by direct composition; the *existential* form of the $S_5$ capacity
+inseparability is now proved (set A), and what remains open is the
+bounded-precision raw-write form with an explicit $T(d)$.*
+
+The k-step separation above is the *strongest separation reachable from
+the one-step proof by direct composition*. Its scope is named below,
+before stating Theorem set D.
+
+#set list(indent: 1em)
+- *What is proved.* k-step trajectory separation on a constructed 2D
+  input alphabet, for every $k >= 1$ and every resource in the
+  row/column/cell external-forget class
+  (`emender_m2rnn_k_step_separation`). The outputs differ at every finite $k$ on this
+  alphabet; no compounding or uniform margin is proved.
+
+- *What is now also proved (set A).* The *existential* capacity form of
+  the $S_5$ inseparability target: no finite recognizer with fewer than
+  120 states realizes the tracker, for any architecture
+  (`S5Inseparability.capacity_lower_bound_120`), together with
+  generator surjectivity (`run_surjective`). Two items that earlier
+  drafts of this section listed as open — adjacent-transposition
+  generation of $S_5$, and a state-counting lower bound — are closed by
+  these theorems.
+
+- *What is still not proved.* That the gap compounds *on the $S_5$
+  generator alphabet specifically* against the raw-write resource class
+  with an explicit length bound $T(d)$, i.e., a
+  statement of the form "for any fixed-weight raw-write RNN at state
+  dimension $d$ there is an explicit $T(d)$ past which $S_5$ coset
+  tracking is unreachable, while the Emender at the same $d$ tracks it".
+  That is the stronger inseparability claim; the trusted Lean core does
+  not contain it, and the empirical sections stand in for it.
+
+- *Why the stronger claim is not in the trusted core.* The remaining form
+  is a *capacity-over-continuous-state* statement: the raw-write class is
+  parameterised by continuous-valued matrices and vectors, so the finite
+  recognizer argument of set A does not directly apply. It requires a
+  bounded-precision discretization (Liu et al.-style fixed-point weights
+  and activations) or a direct trajectory-distinguishability counting
+  argument, plus Merrill-style state-counting machinery in the style of
+  Merrill, Petty and Sabharwal @merrill2024transformers. Mathlib does not
+  currently provide NC#super[1] / TC#super[0] circuit classes,
+  finite-state-tracking lower bounds for parameter-bounded RNNs, or
+  pigeonhole capacity arguments specialized to recurrent maps with
+  bounded weight matrices. Each piece is a research-grade
+  mechanization project in its own right; the integration is what
+  would close the gap. The set A bound is the load-bearing
+  state-counting lemma any such argument must land against.
+
+- *Connection to the empirical claim.* The $S_5$ accuracy curves of #ref(<sec:expressivity>)
+  (@fig_s5_bars, @tab_s5) and the canonical-sweep length-extrapolation
+  curves are the *empirical* evidence for the stronger claim that the
+  formal core does not yet reach. #ref(<sec:formal>) proves finite-$k$ non-equality on
+  a constructed witness; #ref(<sec:expressivity>) measures finite-length learning behavior on
+  the $S_5$ generators, not the stronger $T(d)$ impossibility.
+
+The full status of this push, including what bridging machinery would
+be required (bounded-precision raw-write class, reachable-state
+counting, Merrill-style capacity lemma), is documented in
+`formal/lean/LEAN_FRONTIER.md`.
+
+#heading(level: 2, numbering: none)[Theorem set D: synthetic state-pass cost class]
+
+*The updates share a quadratic envelope in a
+coarse state-pass accounting model, not a verified actual FLOP count.*
+
+`RecurrentResourceFormalism.emender_m2rnn_flop_class_equiv` bounds the
+declared six/seven-state-pass charges by a common $c_1 d^2 + c_2 d$ form.
+This synthetic model excludes the actual dense right-multiplication
+$H W$ and feature-network costs. An arbitrary dense square $H W$
+has cubic arithmetic cost, whereas the model charges one state-sized
+atom. Thus this theorem does not certify actual matched empirical
+compute or explain away implementation-level cost differences.
+
+The separately valid E97-versus-E88 result uses the stated
+*precomputed-gate recurrent-update accounting model*: at matched square
+state dimension the heads share the same leading $d^2$ charge
+(`e97_e88_same_leading_per_head_recurrent_cost`), and with gate
+applications counted separately, for $d >= 2$ E97 is bounded by
+$7 d^2$ where E88 is $6 d^2$
+(`e97_precomputed_gates_same_quadratic_cost_class_as_e88`). This excludes
+gate/feature-network computation and carries no empirical efficiency claim.
+
+#heading(level: 2, numbering: none)[The resource scope of the separation]
+
+Set C proves nonrepresentability at the specified update signature;
+set D supplies only a shared synthetic state-pass envelope. Neither
+shows how many extra parameters would suffice, or that extra state is
+the only remedy:
+`M2RNNComparison.m2rnn_read_then_delta_embeds_e88_delta_update`
+supplies a different resource, the missing read-then-delta operation.
+No minimal parameter-count corollary is claimed.
+
+#heading(level: 2, numbering: none)[Theorem set E: multi-programming as a structural predicate]
+
+*A signature-field predicate is shared
+by E88 and a declared M²RNN proxy, not a kernel concurrency certificate.*
+
+The predicate `IsMultiProgrammed` requires four declared fields:
+at least two heads per layer, positive state scalars per head, a pure
+recurrent stack, and `sequentialManyProgram` implementation mode.
+`RecurrentResourceFormalism.multiProgrammed_admits_m2rnn_and_emender`
+proves it for `e88NDM_1p27B` and `m2rnnCMAShape = m2rnnPure 22 70 256`.
+That M²RNN instance is a CMA-representative proxy, not the trained
+1.3 B predecessor (depth 21, $H = 370$, $N = 16$, hence 256 state
+scalars/head). The trained geometry meets the same field conditions
+by inspection/arithmetic. The predicate does not verify kernel scheduling,
+per-batch independence, or concurrent execution across layers; its
+class-level meaning is limited to these declared signature conditions.
+
+#heading(level: 2, numbering: none)[Theorem set G: the split-gated update — E97, E88, and GDN-2]
+
+*Over abstract real-valued gate/key/state
+signatures, E97 extends E88; GDN-2 has an adjacent scan-compatible
+linear core with different decay placement. This is not a whole-stack
+production inclusion theorem for the #ref(<sec:lm>) pairing.*
+
+The E97 split-gated update is defined in Lean alongside the E88 coupled
+update, and the module `SplitGatedDelta` in the refreshed inventory proves the
+structural relations the body relies on:
+
+#set list(indent: 1em)
+- *E97 extends E88 in the abstract gate domain.* With both split gates fixed to one, the
+  E97 update specializes exactly to the E88 update, in both direct and
+  expanded form (`e97_specializes_to_e88_all_one_gates_direct`,
+  `e97_specializes_to_e88_all_one_gates_expanded`), so E97 weakly
+  generalizes E88 (`e97_expresses_e88_by_specialization`). The E88
+  parameterization is therefore a developmental special case, not a
+  rival in this abstract domain. Exact all-one gates are limiting values,
+  not finite-logit production sigmoid outputs.
+
+- *The extension is strict on an abstract concrete witness.* E97 realizes a
+  2-dimensional split erase/write transition with non-parallel write and
+  erase directions (`e97_realizes_splitWitness_transition`) that *no*
+  E88 coupled transition can realize
+  (`e88_cannot_realize_splitWitness_transition`; the witness directions
+  are non-parallel by `splitWitness_dirs_not_parallel`), and a 1×1
+  zero-state witness separates the strict-gate E97 update from every
+  all-one-gate E88 setting on the same state/input
+  (`e97_split_gate_strict_witness_not_e88_all_one`). The 2D witness
+  uses key $(1,1)$ and erase gate $(1,0)$ and compares transition
+  factors, not arbitrary reparameterized full-network functions. The
+  1×1 witness uses write gate *2*, outside the production sigmoid
+  range $(0,1)$; it does not demonstrate production-gate expressivity.
+
+- *Adjacent split-gated cores with different decay placement.* The GDN-2
+  linear core is the E97 linear core applied to a pre-decayed state
+  (`gdn2LinearCore_eq_e97LinearCore_on_decayed_state`), and under
+  identity decay the two coincide
+  (`gdn2LinearCore_identity_decay_eq_e97LinearCore_one`); the resource
+  signatures then split exactly on the axis the paper tests
+  empirically: E97 has matrix state, full-state temporal nonlinearity,
+  delta writes, and no scan-compatible state path
+  (`e97_split_gated_resource_signature_like_e88`), while the GDN-2-style
+  split erase/write resource has matrix state and delta-style writes but
+  *no* temporal state nonlinearity and a scan-compatible linear state
+  (`gdn2_split_erase_write_is_scan_compatible_linear_state`).
+
+#set list(indent: 0em)
+
+The #ref(<sec:lm>) pairing is thus anchored on both sides: the two 1.3 B arms share
+adjacent split-gated delta cores and differ on the per-step state
+nonlinearity and decay placement, as well as geometry and input processing in the trained
+stacks — the same state-map axis the #ref(<sec:expressivity>) iterated-map ablation isolates
+as an update-map intervention (`e97` versus `e97-linear`), distinct from
+the post-selected curve comparison, and the same axis set G names
+formally.
+
+#heading(level: 2, numbering: none)[Theorem set F: latching]
+
+*Set F establishes conditional slot-level saturation, hold,
+and release bounds, not production-default persistent binding.*
+
+These three results formalize the latching half of the Emender primitive:
+saturation makes a slot insensitive to further bounded writes, sign is
+preserved under sub-threshold counter-input, and a sufficient
+counter-delta releases the latch. All three are slot-wise statements on
+the full abstract Emender update, where $v$ denotes the bounded
+post-nonlinearity value input already supplied to the recurrent body,
+$S' = tanh(lambda S + k (v - S^T k)^T)$
+at slot $(i,j)$, with $omega := k_i (v_j - (S^T k)_j)$ the write contribution
+into that slot. The proofs run through the standard tanh-perturbation
+foundation. The module carrying them (`EmenderLatching`, introduced at
+`696299b4`) is included in the refreshed inventory and the current clean
+`lake build ElmanProofs.PaperCore`.
+
+#set list(indent: 1em)
+- *Saturation insensitivity.* If the slot is saturated in the sense
+  $|S'_(i,j)| > 1 - epsilon$, and a perturbation $delta$ to the
+  pre-activation entry has $|delta| <= M$ with $epsilon + M < 1$, then
+  the post-tanh slot moves by at most $2(epsilon + M) |delta|$. The
+  bound shrinks linearly in both the saturation slack $epsilon$ and the
+  perturbation magnitude $M$; at deep saturation a bounded write barely
+  moves the slot. Lean:
+  `EmenderLatching.emender_saturation_insensitivity`. A two-input
+  corollary `EmenderLatching.emender_saturation_two_inputs_close` lifts
+  the bound to two value vectors sharing one key.
+
+- *Sign-preserving hold.* With $lambda >= 1$ and a bounded write
+  $|omega| <= T < lambda (1 - eta)$ at slot $(i,j)$, a slot already
+  saturated with $|S_(i,j)| > 1 - eta$ keeps its sign after one Emender
+  step and stays bounded below in magnitude by
+  $tanh(lambda (1 - eta) - T)$. For $lambda > 1$ and small $eta, T$ the
+  argument $lambda (1 - eta) - T$ exceeds $1$, so the lower bound
+  exceeds $tanh 1 approx 0.76$ and the latch holds with margin. The
+  hypothesis $T < lambda (1 - eta)$ is the "no sufficient counter-delta"
+  clause; counter-delta release is the next result. Lean:
+  `EmenderLatching.emender_latch_holds_by_default`.
+
+- *Counter-delta release.* With $lambda > 0$, $S_(i,j) > 0$, and a write
+  contribution $omega < -lambda S_(i,j)$ in the opposite sign, the
+  post-update slot is strictly negative — the latch flips out of its
+  basin in one step. Symmetrically for the negative basin. The release
+  threshold is $T^* := lambda |S_(i,j)|$; any counter-delta exceeding
+  $T^*$ in the opposite sign suffices. Lean:
+  `EmenderLatching.emender_latch_releases_on_counter_delta`. The
+  quantitative companion
+  `EmenderLatching.emender_latch_release_quantitative` shows that if the
+  counter-delta exceeds the threshold by margin $mu > 0$, the
+  post-update slot lies on the opposite side of the origin with
+  magnitude at least $tanh mu$.
+
+#set list(indent: 0em)
+
+#heading(level: 2, numbering: none)[Theorem set H: compositional-depth duality and routing]
+
+The concrete repeated-map family is the schedule of
+`CompositionalDepthDuality.E97Step` values $(k,e,w,v)$ at fixed
+$lambda$ (Lean field `b` is the paper's erase gate $e$), acting through `e97Step` on matrix state.
+`e97Step_eq_tanh_comp` identifies the step as elementwise $tanh$
+after the state-affine split-gated core.
+`e97StateAfter_eq_compose` gives its time-ordered composition, and
+`e97_compositional_depth_grows_in_time` states that appending a step
+applies one more such map. Thus the *executed* composition contains one
+$tanh$ per token. This is not a proof that the resulting function has
+no shallower representation.
+
+For a fixed, state-independent schedule of
+`CompositionalDepthDuality.GdnStepParams`,
+`gdn_state_channel_depth_bounded_in_time` gives matrices $A,C$ with
+$S_T=A S_0+C$ for every initial state (Lean writes $H$ for this
+matrix, not the head count or the M²RNN comparator state). The nonlinear temporal depth of
+that *state channel* is zero; a multilayer GDN2-MLP stack, state-dependent
+gates, approximation error, and alternative encodings are not covered.
+
+`S5GDNBridge.gdn_s5_realization_requires_per_token_action` assumes a
+token-only schedule and a decoder that recovers `S5Tracker.run` on
+every word and separates reachable states. It then gives a state map
+$F$ through the group element, with affine word actions implementing
+right multiplication on the reachable image.
+`gdn_s5_constant_parameters_cannot_realize` rules out a
+token-independent schedule. The bridge locates token-dependent actions;
+it does not rule out affine group representations or lower-bound the
+network generating their parameters. G1–G3 (#ref(<sec:limitations>)) record those gaps.
+
+#heading(level: 2, numbering: none)[Complexity statements and explicit non-claims]
+
+*Lean-proved:* finite-state memory at fixed precision
+(`S5Witness.fixed_precision_state_space_finite`), a non-solvable
+120-element group (`s5_not_solvable`, `s5_state_count`), the exact
+abstract tracker, the recognizer floor
+(`S5Inseparability.capacity_lower_bound_120`), and the generator-table
+lookup of set B. Full recurrent $tanh$-tracker realization is O1, not a
+theorem. *Cited, not formalized here:* Barrington's NC#super[1]
+completeness result @barrington1986 and circuit containments for
+restricted SSMs and transformers under their respective arithmetic
+assumptions @merrill2024transformers @merrill_sabharwal2023log_precision
+@chiang2025uniform_tc0. No strict separation of TC#super[0] and
+NC#super[1] is known or assumed here.
+
+The core establishes the separations and bounds stated above; a
+families-wide linear-scan $S_5$ impossibility, Barrington's theorem, a
+per-token circuit-size/depth lower bound, learned
+weight recovery of a recurrent tracker, and the raw-write
+$S_5$-generator-specific $T(d)$ target remain open targets. Exact finite-$k$ non-equality holds
+at exact precision. Latching also remains conditional:
+the hold theorem assumes $lambda >= 1$, whereas production decay is
+below one, a conditional persistence property for the trained
+E97. These are the boundaries that the empirical and applications
+sections retain.
+
+// ── 5. Systems ─────────────────────────────────────────────────────────────
 = Multi-Programming and Systems <sec:systems>
+
+The formal results establish the mechanism; the next question is whether
+a serial nonlinear recurrence can be trained to competitive scale at all.
 
 #heading(level: 2, numbering: none)[Multi-programming: the throughput-enabling design choice]
 
@@ -1239,7 +1715,7 @@ speedup measured at small grok-scale dims is *not* reproduced at
 Occupancy and peak-arithmetic utilization measure different quantities.
 Model-FLOPs utilization (MFU) — computed with the
 standard $6N$ convention against the card's dense bf16 peak of
-364 TFLOPS — is *15.7%*, and that is a conservative lower bound: $6N$
+364 TFLOPS — is *15.7%*, a lower bound: $6N$
 counts only the weight-matmul FLOPs and excludes the recurrence and
 gate operations, so the true MFU is slightly higher. High occupancy
 with modest MFU is the expected profile of a model bound by memory
@@ -1287,8 +1763,8 @@ extra forward pass per segment.
 
 #heading(level: 2, numbering: none)[Triton source portability; CUDA-only validation]
 
-The kernel is written in Triton @triton2019, a source-portability route
-rather than evidence of cross-backend parity. The pair's production
+The kernel is written in Triton @triton2019, a source-portability choice;
+cross-backend parity evidence would require ROCm measurement. The pair's production
 runs, kernel throughput measurements, and expressivity throughput
 smokes all ran on NVIDIA CUDA. No ROCm smoke or paired production
 artifact supports a correctness or throughput claim here; no CUDA/ROCm
@@ -1324,7 +1800,7 @@ data-dependent solve count per step, and its convergence on the bounded
 $tanh$ map is unestablished, whereas multi-programming is a single
 serial pass per head.
 
-// ── 5. Language Modeling Results ────────────────────────────────────────────
+// ── 6. Language Modeling Results ────────────────────────────────────────────
 = Language-Modeling Results <sec:lm>
 
 #heading(level: 2, numbering: none)[The 1.3 B double-pairing: setup and training identities]
@@ -1680,7 +2156,7 @@ the theory predicts is expected in state tracking, not in fact
 recall — the #ref(<sec:expressivity>) length-extrapolation results and the 1.3 B expressivity
 suite measure it directly.
 
-// ── 6. Expressivity Results ───────────────────────────────────────────────────
+// ── 7. Expressivity Results ───────────────────────────────────────────────────
 = Expressivity Results <sec:expressivity>
 
 #heading(level: 2, numbering: none)[State-count headroom at 8 M parameters]
@@ -1694,9 +2170,9 @@ floors of $log_2 120 approx 6.9$ bits and $log_2 6 approx 2.6$ bits; an
 magnitude in parameter bits and five in recurrent-state scalars per
 token. These counts rule out fewer-than-120-state storage as the explanation,
 not a constrained-map expressivity or optimization bottleneck. A
-learning-failure interpretation is a hypothesis consistent with this
-headroom and the 1.3 B parallel-decay boundary result, not a consequence
-of the lookup theorem (Open item O1, #ref(<sec:formal>)). The probes measure what SGD
+learning-failure interpretation is a hypothesis supported by this
+headroom and the 1.3 B parallel-decay boundary result; deriving it from
+the lookup theorem remains Open item O1 (#ref(<sec:formal>)). The probes measure what SGD
 finds under the stated no-tuning protocol.
 
 #heading(level: 2, numbering: none)[Matched no probe-tuning, and the one selection asymmetry it does not cover]
@@ -1912,8 +2388,8 @@ The nonlinear arm is length-invariant where both linear arms collapse:
 at $p = 256$, dim 1024, E97 holds $0.982 -> 0.981$ from $T = 128$ to
 $T = 4096$, while e97-linear falls to 0.619 and GDN2 to 0.560. These
 source length curves condition on successful training-length seeds
-(`final_test >= 0.9`): 2 E97, 1 e97-linear, and 4 GDN2 seeds in this cell,
-not an unconditional four-seed mean. Separately, an
+(`final_test >= 0.9`): 2 E97, 1 e97-linear, and 4 GDN2 seeds in this cell;
+the reported mean is conditional on that subset. Separately, an
 8-seed confirmation run puts the E97−GDN2 gap at $+0.17$ to $+0.32$ at
 $T = 4096$ across the decisive cells, and the 4-seed symmetric-width
 sweep shows decisive-cell gaps up to $+0.42$
@@ -2095,7 +2571,8 @@ The expressivity claim rests on two complementary measurements that are
 load-bearing only *together*. The *micro* probe is the 8 M from-scratch
 sweep (@fig_s5_bars, three seeds): it isolates expressivity in the cleanest
 setting, where the #ref(<sec:expressivity>) state-count argument gives large
-storage headroom, so a gap plausibly reflects inductive bias rather than raw state count; its
+storage headroom, so a gap plausibly reflects a difference in inductive
+bias; raw state count is controlled by that headroom. Its
 limitation is that an 8 M model is small. The
 *mega* probe is the completed 1.3 B suite above, on the released
 E97/GDN2-MLP artifacts the loss-parity claims bind to. The micro probe
@@ -2106,12 +2583,14 @@ extrapolation at 1.3 B, and a negative $S_5$ transfer. The predecessor
 cohort's ordering (#ref(<sec:appendix_cohort>)) cannot override this current-pair
 boundary finding.
 
-// ── 7. Applications ──────────────────────────────────────────────────────────
+// ── 8. Applications ──────────────────────────────────────────────────────────
 = Repeated nonlinear maps in the wild <sec:applications>
 
-The iterated-map probes ask a question that arises well beyond language
-modeling: can an architecture keep applying a nonlinear transformation to
-its own evolving state? Consider the broad family
+Balance, motion tracking, and movement correction offer an intuitive
+starting point: each new observation revises an estimate that guides the
+next action. The iterated-map probes ask a question that arises well
+beyond language modeling: can an architecture keep applying a nonlinear
+transformation to its own evolving state? Consider the broad family
 $
   S_(t+1) = F_theta(S_t, u_t),
 $
@@ -2128,8 +2607,9 @@ $
 $
 is an instance with state $S$, input $(lambda,k,v)$, and a fixed delta-correcting
 $tanh$ update; it is the all-one split-gate specialization of E97 (#ref(<sec:arch>)).
-This is a structural family, not a claim that the systems below share
-E97's weights, learning rule, or computational difficulty. Algorithm 7
+This is a structural family: the systems below share its update form,
+while each keeps its own weights, learning rule, and computational
+difficulty. Algorithm 7
 is its time-ordered execution: each returned state is the next step's
 input. For the abstract E97 fold, the schedule supplies $(k,e,w,v)$ at
 fixed $lambda$; for GDN it additionally supplies $D$ and is independent
@@ -2157,8 +2637,8 @@ statement under its reachable-state-separating decoder hypothesis, not a
 depth lower bound. It does not transfer a separation to the applications
 below; group actions can admit affine representations. Here *EXHIBIT*
 means a definitional or structural instance of the family, *ANALOGY* a
-related but non-identical mechanism, and *OPEN* a prediction not yet
-established. In each case the question is whether a fixed-depth GDN-style
+related but non-identical mechanism, and *OPEN* a prediction open for
+future test. In each case the question is whether a fixed-depth GDN-style
 linear-state approximator can reproduce the required trajectories, not
 whether the original engineered system already works.
 
@@ -2330,463 +2810,6 @@ nonlinear programs can coexist without linearizing their internal time
 loops; low-power silicon, energy savings, and task-level superiority
 would require separate measurements.
 
-// ── 8. Formal Results ─────────────────────────────────────────────────────────
-= Formal Results <sec:formal>
-
-A trusted Lean 4 @lean42021 core built on Mathlib @mathlib4
-carries the formal spine: each result is stated as a theorem and
-compiled together with a proof of it. The import closure of the
-`ElmanProofs.PaperCore` module — 17 project source files in the recursive
-local closure — uses none of Lean's escape hatches: no `sorry`, `admit`,
-added `axiom`, `opaque` declarations, or `native_decide`. The gate
-is `formal/lean/scripts/check_paper_core.sh`; compiling
-`ElmanProofs.PaperCore` additionally checks elaboration of the proofs.
-The refreshed machine-extracted inventory is committed at
-`paper/data/lean-trust-gate-theorems.json` (857 named
-declarations, 723 user-written, 17 files; extraction source
-commit `e58ae937`), including the split-gated, latching, duality,
-routing, Lipschitz, and E1H-definition modules. Both the gate and
-extractor traverse the recursive local imports rather than a selected
-module allowlist. This check covers project sources, not the axioms
-or source files of Lean and Mathlib dependencies.
-
-Every result below is named by its exact theorem so a
-reader can open the source and find it. What is proved here is
-realizability and representational scope; what a trained model actually
-learns under SGD is the separate empirical question of #ref(<sec:lm>) and #ref(<sec:expressivity>).
-
-The formal spine starts with the compositional-depth duality and routing
-bridge (set H below), which explain the lens used in #ref(<sec:expressivity>) and #ref(<sec:formal>). The
-remaining sets specify exact lookup, recognizer count, matched-signature
-update separation, resource cost, and conditional latching. Exact
-non-equality on a constructed real-valued witness is not a uniform error
-margin, and table lookup is not recurrent $tanh$-tracker realizability.
-
-#heading(level: 2, numbering: none)[Theorem set A: finite-state ceiling and $S_5$ tracker]
-
-*At fixed width and precision the Emender is a
-finite-state machine, and the $S_5$ word problem it is tested on is a
-concrete, fully specified finite-state target.*
-
-#set list(indent: 1em)
-- *Finite-state ceiling at fixed precision.* At fixed width and
-  precision, every online recognizer of this kind has only finitely many
-  distinct states (`S5Witness.fixed_precision_state_space_finite`). This
-  bounds its online memory to finitely many states; it does not prove
-  strict containment below NC#super[1].
-
-- *$S_5$ word problem.* The target is pinned down exactly in Lean. The
-  group $S_5$ has 120 elements (`S5Witness.s5_state_count`) and is
-  non-solvable (`S5Witness.s5_not_solvable`); the prefix-product tracker
-  that reads a word of transpositions and reports the running product is
-  a 120-state recognizer (`S5Tracker.recognizer_state_count`) whose state
-  composes correctly as tokens are appended (`S5Tracker.run_append`). A
-  bridge lemma confirms the Lean tracker agrees with the Python
-  evaluation harness on every input
-  (`S5Tracker.pythonRun_eq_tracker_tuple`). The four adjacent
-  transpositions generate all of $S_5$: the tracker's run map is
-  surjective (`S5Inseparability.run_surjective`, via Mathlib's
-  `Equiv.Perm.mclosure_swap_castSucc_succ`).
-
-- *Capacity lower bound (recognizer floor).* Any finite-state recognizer
-  with a state decoder that reproduces the tracker on every input word
-  needs at least 120 states
-  (`S5Inseparability.capacity_lower_bound_120`); equivalently, no
-  recognizer with fewer than 120 states can realize it under any
-  decoder (`S5Inseparability.small_recognizer_cannot_realize_s5`). The
-  bound has a distinguishing-pair form: any recognizer with too few
-  states admits two words it cannot tell apart that the tracker does
-  distinguish (`S5Inseparability.exists_distinguishing_word_pair`).
-  This is the existential form of the $S_5$-coset inseparability target:
-  it holds for *any* finite recognizer family, with no architectural
-  assumptions, and it is the load-bearing state-counting lemma any future
-  bounded-precision raw-write bound must land against.
-
-- *Lookup-table realization.* The tracker is small enough to write down
-  as a table: it uses exactly $120 times 4 = 480$ state/input keys
-  (`S5NDMRealization.s5_transition_key_count`), and any finite
-  recognizer admits such an exact lookup-table realization
-  (`S5NDMRealization.exactTransitionMemory_run`).
-
-#heading(level: 2, numbering: none)[Theorem set B: generator-table lookup, not a recurrent tracker]
-
-The exact statement of
-`NDMRealizesS5.emender_realizes_s5_tracker` supplies $d=12$, four
-orthonormal keys and one-hot values, queries, a decoder, and
-$lambda=1$. Reading a *preloaded* table retrieves the current generator;
-decoding it and *externally multiplying a supplied* $S_5$ state $s$
-reproduces the transition $s dot g$. The linear readout retrieves a
-generator value, not the running product. The supporting
-`OnlineMemory.linearDeltaWrite_overwrites_one_preserves_others`
-is an exact *pre-$tanh$* overwrite statement. Neither theorem states
-that iterating the nonlinear cell from zero tracks every input word.
-
-*Open item O1 — recurrent $tanh$-tracker realization unavailable.* The
-loaded generator memory does not carry the running group product;
-external composition supplies the missing state computation. Closing O1
-requires a configuration of the actual nonlinear update, an explicit
-initial state and decoder, and an all-words trajectory theorem. This is
-not a missing proof of the already-proved lookup identity, but a
-stronger, currently unproved architecture claim.
-
-#heading(level: 2, numbering: none)[Theorem set C: update-family separation]
-
-*In a single step the delta-correcting write
-does something no fixed-weight raw-write update of the matched shape can
-reproduce on the abstract witness domain.*
-
-The Emender's delta-correcting write and M²RNN's raw outer-product write
-are provably distinct as update families over unrestricted real-valued
-keys, values, and states. The mixed key is $(1,1)$ (not unit-normalized),
-and the prescribed initial state is nonzero. These witnesses are not
-production zero-state trajectories with normalized keys and finite-logit
-sigmoid gates, nor full-network separation under arbitrary reparameterization.
-
-- *Mechanism separation.* The delta write exactly overwrites the
-  addressed slot while leaving every orthogonal query untouched
-  (`OnlineMemory.linearDeltaWrite_overwrites_one_preserves_others`),
-  whereas the raw outer-product write cannot satisfy that uniform
-  one-step overwrite specification
-  (`OnlineMemory.rawOuterWrite_not_uniformOneStepOverwrite`).
-
-- *One-step resource separation.* For every $K >= 2$ and $V >= 1$, no
-  fixed-weight M²RNN parameterization with row, column, or cell forget
-  gates can match the Emender's mixed-key delta correction in a single
-  recurrent step
-  (`RecurrentResourceFormalism.emender_m2rnn_one_step_resource_separation_embeds`).
-  The result is sharp: it covers every external-forget shape the M²RNN
-  signature allows.
-
-- *Positive embedding.* The separation concerns the specified resource
-  class. *Given* the extra read-then-delta resource, M²RNN can embed
-  one Emender step
-  (`M2RNNComparison.m2rnn_read_then_delta_embeds_e88_delta_update`); the
-  previous bullet says that without that extra resource it cannot.
-
-#heading(level: 2, numbering: none)[Theorem set C′: multi-step (k-step) separation]
-
-*The one-step gap persists at every length under
-composition on a constructed input.*
-
-The one-step separation persists as exact non-equality at each finite
-length, not as a length-independent accuracy margin.
-
-#block(inset: (x: 1.5em), [
-*For every $k >= 1$, there is an explicit $k$-token input sequence such
-that the $k$-step trajectory of any fixed-weight raw-write resource (in
-the row/column/cell external-forget class) diverges from the Emender's
-$k$-step trajectory by a nonzero entry for each finite $k$ (Lean:
-`emender_m2rnn_k_step_separation`).*
-])
-
-The witness alphabet is the 2-dimensional construction from set C
-followed by zero-input filler tokens
-(`kStepWitnessInputs k = (mixedKey, 0) :: zeroSteps (k - 1)`). It starts
-from the prescribed nonzero `lowerLeftState`, with unnormalized key
-$(1,1)$ and zero-key fillers. Like set C, set C′ is over an unrestricted
-abstract real-valued signature, not the production normalized-key,
-zero-initial-state domain. The proof
-inducts on the tail, using a lemma that keeps entry $(0, 0)$ pinned at
-zero on the raw-write side for every $k$
-(`FixedRightRawExternalForget2_preserves_zero_row`), while the Emender
-side reduces to the $k$-fold composition of $tanh$ at $-1$, which is
-nonzero because $tanh$ is injective. Its magnitude need not stay bounded
-away from zero as $k$ grows; the statement uses exact real arithmetic. A second form of the theorem
-packages the same statement existentially over $k$-step input sequences
-(`emender_m2rnn_k_step_separation_exists`), and the two-step case is
-exposed separately as the inductive base
-(`emender_m2rnn_two_step_separation`). All three live in
-`ElmanProofs.Architectures.MultiStepSeparation`, part of the trusted
-import closure of `PaperCore`. The #ref(<sec:expressivity>) length-extrapolation
-curves retain positive, non-monotone gaps on parity, FSM tracking, and
-modular counter. The parity gap peaks near 0.359 at $T = 320$ before
-narrowing to about 0.337 at $T = 500$. These measurements are separate
-evidence of retained advantage, not consequences of the exact-real
-finite-$k$ theorem or an increasing-gap prediction.
-
-#heading(level: 2, numbering: none)[Frontier and unproven targets]
-
-*The k-step result is the ceiling reachable
-by direct composition; the *existential* form of the $S_5$ capacity
-inseparability is now proved (set A), and what remains open is the
-bounded-precision raw-write form with an explicit $T(d)$.*
-
-The k-step separation above is the *ceiling reachable from the
-one-step proof by direct composition*. The scope of what it does and
-does not establish is named below, before stating Theorem set D.
-
-#set list(indent: 1em)
-- *What is proved.* k-step trajectory separation on a constructed 2D
-  input alphabet, for every $k >= 1$ and every resource in the
-  row/column/cell external-forget class
-  (`emender_m2rnn_k_step_separation`). The outputs differ at every finite $k$ on this
-  alphabet; no compounding or uniform margin is proved.
-
-- *What is now also proved (set A).* The *existential* capacity form of
-  the $S_5$ inseparability target: no finite recognizer with fewer than
-  120 states realizes the tracker, for any architecture
-  (`S5Inseparability.capacity_lower_bound_120`), together with
-  generator surjectivity (`run_surjective`). Two items that earlier
-  drafts of this section listed as open — adjacent-transposition
-  generation of $S_5$, and a state-counting lower bound — are closed by
-  these theorems.
-
-- *What is still not proved.* That the gap compounds *on the $S_5$
-  generator alphabet specifically* against the raw-write resource class
-  with an explicit length bound $T(d)$, i.e., a
-  statement of the form "for any fixed-weight raw-write RNN at state
-  dimension $d$ there is an explicit $T(d)$ past which $S_5$ coset
-  tracking is unreachable, while the Emender at the same $d$ tracks it".
-  That is the stronger inseparability claim; the trusted Lean core does
-  not contain it, and the empirical sections stand in for it.
-
-- *Why the stronger claim is not in the trusted core.* The remaining form
-  is a *capacity-over-continuous-state* statement: the raw-write class is
-  parameterised by continuous-valued matrices and vectors, so the finite
-  recognizer argument of set A does not directly apply. It requires a
-  bounded-precision discretization (Liu et al.-style fixed-point weights
-  and activations) or a direct trajectory-distinguishability counting
-  argument, plus Merrill-style state-counting machinery in the style of
-  Merrill, Petty and Sabharwal @merrill2024transformers. Mathlib does not
-  currently provide NC#super[1] / TC#super[0] circuit classes,
-  finite-state-tracking lower bounds for parameter-bounded RNNs, or
-  pigeonhole capacity arguments specialized to recurrent maps with
-  bounded weight matrices. Each piece is a research-grade
-  mechanization project in its own right; the integration is what
-  would close the gap. The set A bound is the load-bearing
-  state-counting lemma any such argument must land against.
-
-- *Connection to the empirical claim.* The $S_5$ accuracy curves of #ref(<sec:expressivity>)
-  (@fig_s5_bars, @tab_s5) and the canonical-sweep length-extrapolation
-  curves are the *empirical* evidence for the stronger claim that the
-  formal core does not yet reach. #ref(<sec:formal>) proves finite-$k$ non-equality on
-  a constructed witness; #ref(<sec:expressivity>) measures finite-length learning behavior on
-  the $S_5$ generators, not the stronger $T(d)$ impossibility.
-
-The full status of this push, including what bridging machinery would
-be required (bounded-precision raw-write class, reachable-state
-counting, Merrill-style capacity lemma), is documented in
-`formal/lean/LEAN_FRONTIER.md`.
-
-#heading(level: 2, numbering: none)[Theorem set D: synthetic state-pass cost class]
-
-*The updates share a quadratic envelope in a
-coarse state-pass accounting model, not a verified actual FLOP count.*
-
-`RecurrentResourceFormalism.emender_m2rnn_flop_class_equiv` bounds the
-declared six/seven-state-pass charges by a common $c_1 d^2 + c_2 d$ form.
-This synthetic model excludes the actual dense right-multiplication
-$H W$ and feature-network costs. An arbitrary dense square $H W$
-has cubic arithmetic cost, whereas the model charges one state-sized
-atom. Thus this theorem does not certify actual matched empirical
-compute or explain away implementation-level cost differences.
-
-The separately valid E97-versus-E88 result uses the stated
-*precomputed-gate recurrent-update accounting model*: at matched square
-state dimension the heads share the same leading $d^2$ charge
-(`e97_e88_same_leading_per_head_recurrent_cost`), and with gate
-applications counted separately, for $d >= 2$ E97 is bounded by
-$7 d^2$ where E88 is $6 d^2$
-(`e97_precomputed_gates_same_quadratic_cost_class_as_e88`). This excludes
-gate/feature-network computation and carries no empirical efficiency claim.
-
-#heading(level: 2, numbering: none)[Resource scope, not a parameter-efficiency lower bound]
-
-Set C proves nonrepresentability at the specified update signature;
-set D supplies only a shared synthetic state-pass envelope. Neither
-shows how many extra parameters would suffice, or that extra state is
-the only remedy:
-`M2RNNComparison.m2rnn_read_then_delta_embeds_e88_delta_update`
-supplies a different resource, the missing read-then-delta operation.
-No minimal parameter-count corollary is claimed.
-
-#heading(level: 2, numbering: none)[Theorem set E: multi-programming as a structural predicate]
-
-*A signature-field predicate is shared
-by E88 and a declared M²RNN proxy, not a kernel concurrency certificate.*
-
-The predicate `IsMultiProgrammed` requires four declared fields:
-at least two heads per layer, positive state scalars per head, a pure
-recurrent stack, and `sequentialManyProgram` implementation mode.
-`RecurrentResourceFormalism.multiProgrammed_admits_m2rnn_and_emender`
-proves it for `e88NDM_1p27B` and `m2rnnCMAShape = m2rnnPure 22 70 256`.
-That M²RNN instance is a CMA-representative proxy, not the trained
-1.3 B predecessor (depth 21, $H = 370$, $N = 16$, hence 256 state
-scalars/head). The trained geometry meets the same field conditions
-by inspection/arithmetic. The predicate does not verify kernel scheduling,
-per-batch independence, or concurrent execution across layers; its
-class-level meaning is limited to these declared signature conditions.
-
-#heading(level: 2, numbering: none)[Theorem set G: the split-gated update — E97, E88, and GDN-2]
-
-*Over abstract real-valued gate/key/state
-signatures, E97 extends E88; GDN-2 has an adjacent scan-compatible
-linear core with different decay placement. This is not a whole-stack
-production inclusion theorem for the #ref(<sec:lm>) pairing.*
-
-The E97 split-gated update is defined in Lean alongside the E88 coupled
-update, and the module `SplitGatedDelta` in the refreshed inventory proves the
-structural relations the body relies on:
-
-#set list(indent: 1em)
-- *E97 extends E88 in the abstract gate domain.* With both split gates fixed to one, the
-  E97 update specializes exactly to the E88 update, in both direct and
-  expanded form (`e97_specializes_to_e88_all_one_gates_direct`,
-  `e97_specializes_to_e88_all_one_gates_expanded`), so E97 weakly
-  generalizes E88 (`e97_expresses_e88_by_specialization`). The E88
-  parameterization is therefore a developmental special case, not a
-  rival in this abstract domain. Exact all-one gates are limiting values,
-  not finite-logit production sigmoid outputs.
-
-- *The extension is strict on an abstract concrete witness.* E97 realizes a
-  2-dimensional split erase/write transition with non-parallel write and
-  erase directions (`e97_realizes_splitWitness_transition`) that *no*
-  E88 coupled transition can realize
-  (`e88_cannot_realize_splitWitness_transition`; the witness directions
-  are non-parallel by `splitWitness_dirs_not_parallel`), and a 1×1
-  zero-state witness separates the strict-gate E97 update from every
-  all-one-gate E88 setting on the same state/input
-  (`e97_split_gate_strict_witness_not_e88_all_one`). The 2D witness
-  uses key $(1,1)$ and erase gate $(1,0)$ and compares transition
-  factors, not arbitrary reparameterized full-network functions. The
-  1×1 witness uses write gate *2*, outside the production sigmoid
-  range $(0,1)$; it does not demonstrate production-gate expressivity.
-
-- *Adjacent split-gated cores with different decay placement.* The GDN-2
-  linear core is the E97 linear core applied to a pre-decayed state
-  (`gdn2LinearCore_eq_e97LinearCore_on_decayed_state`), and under
-  identity decay the two coincide
-  (`gdn2LinearCore_identity_decay_eq_e97LinearCore_one`); the resource
-  signatures then split exactly on the axis the paper tests
-  empirically: E97 has matrix state, full-state temporal nonlinearity,
-  delta writes, and no scan-compatible state path
-  (`e97_split_gated_resource_signature_like_e88`), while the GDN-2-style
-  split erase/write resource has matrix state and delta-style writes but
-  *no* temporal state nonlinearity and a scan-compatible linear state
-  (`gdn2_split_erase_write_is_scan_compatible_linear_state`).
-
-#set list(indent: 0em)
-
-The #ref(<sec:lm>) pairing is thus anchored on both sides: the two 1.3 B arms share
-adjacent split-gated delta cores and differ on the per-step state
-nonlinearity and decay placement, as well as geometry and input processing in the trained
-stacks — the same state-map axis the #ref(<sec:expressivity>) iterated-map ablation isolates
-as an update-map intervention (`e97` versus `e97-linear`), distinct from
-the post-selected curve comparison, and the same axis set G names
-formally.
-
-#heading(level: 2, numbering: none)[Theorem set F: latching]
-
-*Set F establishes conditional slot-level saturation, hold,
-and release bounds, not production-default persistent binding.*
-
-These three results formalize the latching half of the Emender primitive:
-saturation makes a slot insensitive to further bounded writes, sign is
-preserved under sub-threshold counter-input, and a sufficient
-counter-delta releases the latch. All three are slot-wise statements on
-the full abstract Emender update, where $v$ denotes the bounded
-post-nonlinearity value input already supplied to the recurrent body,
-$S' = tanh(lambda S + k (v - S^T k)^T)$
-at slot $(i,j)$, with $omega := k_i (v_j - (S^T k)_j)$ the write contribution
-into that slot. The proofs run through the standard tanh-perturbation
-foundation. The module carrying them (`EmenderLatching`, introduced at
-`696299b4`) is included in the refreshed inventory and the current clean
-`lake build ElmanProofs.PaperCore`.
-
-#set list(indent: 1em)
-- *Saturation insensitivity.* If the slot is saturated in the sense
-  $|S'_(i,j)| > 1 - epsilon$, and a perturbation $delta$ to the
-  pre-activation entry has $|delta| <= M$ with $epsilon + M < 1$, then
-  the post-tanh slot moves by at most $2(epsilon + M) |delta|$. The
-  bound shrinks linearly in both the saturation slack $epsilon$ and the
-  perturbation magnitude $M$; at deep saturation a bounded write barely
-  moves the slot. Lean:
-  `EmenderLatching.emender_saturation_insensitivity`. A two-input
-  corollary `EmenderLatching.emender_saturation_two_inputs_close` lifts
-  the bound to two value vectors sharing one key.
-
-- *Sign-preserving hold.* With $lambda >= 1$ and a bounded write
-  $|omega| <= T < lambda (1 - eta)$ at slot $(i,j)$, a slot already
-  saturated with $|S_(i,j)| > 1 - eta$ keeps its sign after one Emender
-  step and stays bounded below in magnitude by
-  $tanh(lambda (1 - eta) - T)$. For $lambda > 1$ and small $eta, T$ the
-  argument $lambda (1 - eta) - T$ exceeds $1$, so the lower bound
-  exceeds $tanh 1 approx 0.76$ and the latch holds with margin. The
-  hypothesis $T < lambda (1 - eta)$ is the "no sufficient counter-delta"
-  clause; counter-delta release is the next result. Lean:
-  `EmenderLatching.emender_latch_holds_by_default`.
-
-- *Counter-delta release.* With $lambda > 0$, $S_(i,j) > 0$, and a write
-  contribution $omega < -lambda S_(i,j)$ in the opposite sign, the
-  post-update slot is strictly negative — the latch flips out of its
-  basin in one step. Symmetrically for the negative basin. The release
-  threshold is $T^* := lambda |S_(i,j)|$; any counter-delta exceeding
-  $T^*$ in the opposite sign suffices. Lean:
-  `EmenderLatching.emender_latch_releases_on_counter_delta`. The
-  quantitative companion
-  `EmenderLatching.emender_latch_release_quantitative` shows that if the
-  counter-delta exceeds the threshold by margin $mu > 0$, the
-  post-update slot lies on the opposite side of the origin with
-  magnitude at least $tanh mu$.
-
-#set list(indent: 0em)
-
-#heading(level: 2, numbering: none)[Theorem set H: compositional-depth duality and routing]
-
-The concrete repeated-map family is the schedule of
-`CompositionalDepthDuality.E97Step` values $(k,e,w,v)$ at fixed
-$lambda$ (Lean field `b` is the paper's erase gate $e$), acting through `e97Step` on matrix state.
-`e97Step_eq_tanh_comp` identifies the step as elementwise $tanh$
-after the state-affine split-gated core.
-`e97StateAfter_eq_compose` gives its time-ordered composition, and
-`e97_compositional_depth_grows_in_time` states that appending a step
-applies one more such map. Thus the *executed* composition contains one
-$tanh$ per token. This is not a proof that the resulting function has
-no shallower representation.
-
-For a fixed, state-independent schedule of
-`CompositionalDepthDuality.GdnStepParams`,
-`gdn_state_channel_depth_bounded_in_time` gives matrices $A,C$ with
-$S_T=A S_0+C$ for every initial state (Lean writes $H$ for this
-matrix, not the head count or the M²RNN comparator state). The nonlinear temporal depth of
-that *state channel* is zero; a multilayer GDN2-MLP stack, state-dependent
-gates, approximation error, and alternative encodings are not covered.
-
-`S5GDNBridge.gdn_s5_realization_requires_per_token_action` assumes a
-token-only schedule and a decoder that recovers `S5Tracker.run` on
-every word and separates reachable states. It then gives a state map
-$F$ through the group element, with affine word actions implementing
-right multiplication on the reachable image.
-`gdn_s5_constant_parameters_cannot_realize` rules out a
-token-independent schedule. The bridge locates token-dependent actions;
-it does not rule out affine group representations or lower-bound the
-network generating their parameters. G1–G3 (#ref(<sec:limitations>)) record those gaps.
-
-#heading(level: 2, numbering: none)[Complexity statements and explicit non-claims]
-
-*Lean-proved:* finite-state memory at fixed precision
-(`S5Witness.fixed_precision_state_space_finite`), a non-solvable
-120-element group (`s5_not_solvable`, `s5_state_count`), the exact
-abstract tracker, the recognizer floor
-(`S5Inseparability.capacity_lower_bound_120`), and the generator-table
-lookup of set B. Full recurrent $tanh$-tracker realization is O1, not a
-theorem. *Cited, not formalized here:* Barrington's NC#super[1]
-completeness result @barrington1986 and circuit containments for
-restricted SSMs and transformers under their respective arithmetic
-assumptions @merrill2024transformers @merrill_sabharwal2023log_precision
-@chiang2025uniform_tc0. No strict separation of TC#super[0] and
-NC#super[1] is known or assumed here.
-
-The core proves neither a families-wide linear-scan $S_5$ impossibility,
-Barrington's theorem, a per-token circuit-size/depth lower bound, learned
-weight recovery of a recurrent tracker, nor the raw-write
-$S_5$-generator-specific $T(d)$ target. Exact finite-$k$ non-equality is
-not robustness at finite precision. Latching also remains conditional:
-the hold theorem assumes $lambda >= 1$, whereas production decay is
-below one, so it is not a default persistence guarantee for the trained
-E97. These are the boundaries that the empirical and applications
-sections retain.
-
 // ── 9. Related Work ───────────────────────────────────────────────────────────
 = Related Work <sec:related>
 
@@ -2812,7 +2835,7 @@ regime. The Emender extends this line with three properties the linear
 instantiations forfeit: a nonlinear matrix state, the saturation
 latching of #ref(<sec:arch>) ingredient (c), which motivates persistent
 binding under the conditional slot-level hold result ($lambda >= 1$
-plus a write budget), not an achieved production-default property; and
+plus a write budget), a conditional production property; and
 width-axis parallelism via
 multi-programming that recovers throughput without time-axis
 linearization.
@@ -2920,7 +2943,7 @@ This is the assumption this paper revisits.
 // ── 10. Limitations ───────────────────────────────────────────────────────────
 = Limitations <sec:limitations>
 
-#heading(level: 2, numbering: none)[Formal gaps: G1–G3 and O1]
+#heading(level: 2, numbering: none)[Formal scope: G1–G3 and O1]
 
 *G1 — no per-token circuit-size or depth lower bound.*
 `S5GDNBridge.gdn_s5_realization_requires_per_token_action` routes a
@@ -3084,11 +3107,12 @@ lookup is not a recurrent tracker realization (O1), and affine-channel
 $S_5$ realizability remains open (G3).
 
 Repeated nonlinear maps in engineering and dynamics (#ref(<sec:applications>)) define a
-broader structural scope, not six demonstrated deployments. Correctness
+broader structural scope of prospective applications, distinct from six
+demonstrated deployments. Correctness
 of each formal statement, reproducible artifact bindings, and disclosed
-negative transfers are the contribution's basis for TMLR, rather than
-priority, universal nonlinear superiority, or an unproved circuit-class
-separation. The next tests are multi-seed common-budget probes, held-out
+negative transfers are the contribution's basis for TMLR; priority,
+universal nonlinear superiority, and an unproved circuit-class
+separation lie outside it. The next tests are multi-seed common-budget probes, held-out
 pair evaluation, and the constrained realizability questions of #ref(<sec:limitations>).
 This identified Arkheion preprint build does not establish TMLR
 template or anonymization compliance; journal-specific submission
@@ -3229,9 +3253,9 @@ The within-class ordering reported here — the Emender ahead of the
 raw-write update M²RNN-CMA at the 8 M probes — is conditional on the
 no-tuning probe protocol, and the raw-write family is not a 1.3 B arm
 (#ref(<sec:intro>)). One contrast in
-the current evidence stays entangled because of that: the gap could be
-a genuine difference in what the two update rules express, or it could
-be the residue of a raw-write configuration that received less effective
+the current evidence stays entangled because of that: the gap reflects
+either a genuine difference in what the two update rules express or the
+residue of a raw-write configuration that received less effective
 optimization. The way to separate the two is a stronger raw-write
 baseline — a matched state-tracking search on the raw-write family at
 the 8 M probe shape, and a 1.3 B raw-write arm once its kernels run on
@@ -3368,8 +3392,8 @@ availability statement in #ref(<sec:conclusion>)).
   baseline used in the 8 M probes of #ref(<sec:expressivity>) and in #ref(<sec:appendix_cohort>). That the
   paper shape diverges while the
   CMA-tuned shape is stable shows that raw-write need not diverge;
-  addressing geometry is a stability hypothesis, not an isolated cause
-  because width, depth, and head count also changed.
+  addressing geometry is a stability hypothesis under the tested width,
+  depth, and head count, which also changed.
 
 - *The split-edit extension (E97).* E97 extends the E88 cell with the
   two input-dependent split gates of #ref(<sec:arch>) — the key-axis erase/read gate
@@ -3786,10 +3810,9 @@ but it *plateaus below ceiling* (0.143 at $T = 512$, 0.076 at $T = 1024$).
 This is a measured length-generalization plateau, not a proved
 capacity limit or expressive impossibility: the $T = 512$ curve
 is flat from $approx 12,000$ steps at 2× M²RNN's budget under constant LR
-(see *The delta update is also length-bounded* below). The accurate statement is therefore neither
-"E88 length-generalizes on $S_5$" nor "E88 fails $S_5$": the delta update
-learns $S_5$ at the trained length and leads at every length, with its
-length-extrapolation plateauing below ceiling at this width.
+(see *The delta update is also length-bounded* below). The accurate statement is that the delta update
+learns $S_5$ at the trained length and leads at every length on that $S_5$
+task, with its $S_5$ length-extrapolation plateauing below ceiling at this width.
 
 *The historical GDN run plateaus.* GDN reaches 0.117 at trained length,
 0.022 at $T=512$, and 0.015 at $T=1024$, near chance, with a flat curve
@@ -3830,9 +3853,9 @@ while E88 remains ahead under the recorded budgets.
 and test-disjoint; the generator alphabet gives exponentially many
 possible words. Above-chance accuracy out to $T=1024$ supports learning
 transferable structure rather than memorizing the enumerated training
-examples. It does not establish exact algorithm recovery or exclude
-finite-context heuristics. The solvable controls are useful diagnostics,
-not a theorem that non-solvability causes the difference.
+examples; exact algorithm recovery and finite-context heuristics remain
+open. The solvable controls are useful diagnostics for the
+non-solvability difference.
 
 *Raw-write's shortfall is partly trainability.* M²RNN's $S_5$ (and $S_3$) accuracy was still slowly
 rising at 12,000 steps — its curve is not the flat, converged ceiling
@@ -3905,8 +3928,8 @@ $ "bpb" = ("total NLL"_"nats" \/ ln 2) \/ "total UTF-8 bytes". $
 Each model uses its *own* tokenizer, and the denominator is the shared
 byte count, so bytes/token is a *measured* per-tokenizer quantity (4.00
 for the GPT-NeoX BPE, 3.82 for our `p50k_base` runs on the canonical
-slice) — *not* the fixed $"bytes/token" = 3.92$ constant used for the
-train-loss curve in #ref(<sec:lm>). The held-out and train-loss figures are
+slice), whereas the train-loss curve uses the fixed
+$"bytes/token" = 3.92$ constant in #ref(<sec:lm>). The held-out and train-loss figures are
 therefore distinct objects: they differ in normalization as well as in
 the data scored. Every token is scored once under a sliding window
 (context 2048, stride 1024) with up to 2047 tokens of left context, the

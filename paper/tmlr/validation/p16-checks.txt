@@ -1,0 +1,33 @@
+P16 — merge reader-first voice + positive assertions + genre reorder
+Base commit f17b3be2 (paper-1p3b-spine); operator rulings 2026-10-15.
+Source of reader-first material: origin/editorial/reader-first-paper-20261014
+(tip fba15ce5).
+
+exact source diff: validation/reader-first-merge-revision.diff (zero context)
+guard delta:        validation/p16-guard-delta.json
+                    2841f143… → 1ed8ebba… (main.typ)
+
+convert.mjs     : 98 headings, 20 figures/tables, 21 amsthm statements;
+                  bibliography byte-for-byte. (validation/convert.txt)
+typst compile   : paper/current.pdf, 66 pages (was 65).
+build.sh        : submission.pdf 58 pages, preprint.pdf 58 pages; no missing
+                  glyphs, unresolved refs, overflows or errors.
+                  (validation/build-output.txt, submission-build.txt,
+                   preprint-build.txt)
+bundle+arxiv    : fresh standalone archive rebuild; extracted raw text
+                  byte-identical to preprint. (validation/arxiv-build.txt,
+                  arxiv-compare.txt)
+verify.mjs      : PASS 20 samples × 3 PDFs, 2591 long source fragments,
+                  707 complete math expressions, 441 attachments, 8 S primes
+                  per PDF; source/bibliography/identity guards.
+                  (validation/verify-output.txt, drift-check.json)
+symbol tests    : 20/20 pass (verify-symbols, notation-audit,
+                  author-rulings). (validation/symbol-tests-output.txt)
+assembly        : PASS 13 body sections, 3 appendices, 57 references,
+                  G1–G3/O1/U3.1, 17-file inventory, checkpoint bindings.
+                  (validation/assembly-check.txt)
+lean core       : 17 project sources, no sorry/admit/axiom/opaque/native_decide.
+                  (validation/p16-lean.txt)
+lean import     : recursive imports, external exclusion, fail-closed fixtures.
+SHA256SUMS      : all 15 paths OK. (validation/p16-checksums.txt)
+git diff --check: clean.
