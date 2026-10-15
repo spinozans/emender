@@ -22,7 +22,10 @@ test('Algorithms 1 and 2 define abstract cores with a resolved G2 limitation ref
 });
 
 test('O1 consistently names tracker realization and leaves saturation Theorem F1 intact', () => {
-  assert.equal(source.match(/\bO1\b/g).length, 12);
+  // P16b imports the reader-first realization target and future-work synopsis.
+  assert.equal(source.match(/\bO1\b/g).length, 14);
+  assert.ok(source.includes('*O1: realizing the group tracker.*'));
+  assert.ok(source.includes('recurrent $tanh$ tracker (O1)'));
   assert.ok(source.includes('Open item O1 — recurrent $tanh$-tracker realization unavailable.'));
   for (const path of ['paper/main.typ', 'paper/OUTLINE.md',
     'paper/results/RESULTS_INVENTORY.md', 'paper/figures/validate_assembly.js']) {

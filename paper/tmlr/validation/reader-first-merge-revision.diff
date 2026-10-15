@@ -1,0 +1,151 @@
+diff --git a/paper/main.typ b/paper/main.typ
+index 38ea57ee..0a50428b 100644
+--- a/paper/main.typ
++++ b/paper/main.typ
+@@ -34 +34 @@
+-    CMA-selected GDN2-MLP control occupies the same training-loss band.
++    CMA-selected GDN2 control occupies the same training-loss band.
+@@ -168 +168 @@ estimated 0.93 bits per byte (#ref(<sec:lm>)). Its linear-recurrent baseline —
+-*GDN2-MLP*, a Gated DeltaNet-2 @gated_deltanet2_2026 mixer followed by
++*GDN2* (Gated DeltaNet-2 @gated_deltanet2_2026), a mixer followed by
+@@ -332 +332 @@ and direct capability measurements.
+-  E97 (delta-correcting, nonlinear state) and GDN2-MLP (linear-state,
++  E97 (delta-correcting, nonlinear state) and GDN2 (linear-state,
+@@ -347 +347 @@ and direct capability measurements.
+-  GDN2-MLP is ahead in the long-horizon probe (@tab_s5_boundary).
++  GDN2 is ahead in the long-horizon probe (@tab_s5_boundary).
+@@ -356 +356 @@ value-axis write gate around the bounded delta correction, #ref(<sec:arch>) —
+-bias-free SwiGLU MLP per layer) versus GDN2-MLP (1,286,713,448
++bias-free SwiGLU MLP per layer) versus GDN2 (1,286,713,448
+@@ -379 +379 @@ E97
+-`emender_E97_1.3B_20260709_084606`) and GDN2-MLP
++`emender_E97_1.3B_20260709_084606`) and GDN2
+@@ -436 +436 @@ substantiate each row; the pointers are forward references.
+-     GDN2-MLP pair reverses the predicted ordering (@tab_s5_boundary)],
++     GDN2 pair reverses the predicted ordering (@tab_s5_boundary)],
+@@ -450 +450 @@ substantiate each row; the pointers are forward references.
+-    [Not universal nonlinear superiority; GDN2-MLP's long-length plateau
++    [Not universal nonlinear superiority; GDN2's long-length plateau
+@@ -801 +801 @@ in this grid.
+-    (GDN2-MLP), selected by the same search protocol as E97.
++    (GDN2), selected by the same search protocol as E97.
+@@ -1040 +1040 @@ in the instance above.
+-#heading(level: 2, numbering: none)[GDN2-MLP state channel]
++#heading(level: 2, numbering: none)[GDN2 state channel]
+@@ -1046 +1046 @@ key, split gates, value, and pre-decay matrix; it does not impose E97's
+-projection processing on GDN2-MLP. In the trained stack the mixer is followed
++projection processing on GDN2. In the trained stack the mixer is followed
+@@ -1592 +1592 @@ matrix, not the head count or the M²RNN comparator state). The nonlinear tempor
+-that *state channel* is zero; a multilayer GDN2-MLP stack, state-dependent
++that *state channel* is zero; a multilayer GDN2 stack, state-dependent
+@@ -1694,3 +1694,3 @@ head: on a leased RTX 6000 Ada under identical conditions, E97-MLP
+-sustains 3,211 tokens/s per GPU at batch 4 against 3,290 for GDN2-MLP —
+-a *0.976× tie* — while using 28.9 GB against GDN2-MLP's 35.7 GB peak
+-memory, so E97 fits batch 6 (4,470 tokens/s per GPU) where GDN2-MLP
++sustains 3,211 tokens/s per GPU at batch 4 against 3,290 for GDN2 —
++a *0.976× tie* — while using 28.9 GB against GDN2's 35.7 GB peak
++memory, so E97 fits batch 6 (4,470 tokens/s per GPU) where GDN2
+@@ -1737 +1737 @@ separate, single-arm line of work, not a portability benchmark for the
+-E97/GDN2-MLP pair.
++E97/GDN2 pair.
+@@ -1777 +1777 @@ instance of #ref(<sec:arch>), paired with a bias-free SwiGLU MLP per layer — a
+-GDN2-MLP — the official-style Gated DeltaNet-2 @gated_deltanet2_2026
++GDN2 — the official-style Gated DeltaNet-2 @gated_deltanet2_2026
+@@ -1789 +1789 @@ makes this a comparison of token mixers — the recurrence.
+-      [*Training identity*], [*E97-MLP*], [*GDN2-MLP*],
++      [*Training identity*], [*E97-MLP*], [*GDN2*],
+@@ -1830 +1830 @@ log deltas), so matched optimizer steps *are* matched aggregate tokens.
+-GDN2-MLP was run 1.49 B tokens past E97's final step so that the
++GDN2 was run 1.49 B tokens past E97's final step so that the
+@@ -1874 +1874 @@ terminal-step measurement.
+-      [*Statistic at the 150.79 B-token cutoff*], [*E97*], [*GDN2-MLP*],
++      [*Statistic at the 150.79 B-token cutoff*], [*E97*], [*GDN2*],
+@@ -1889 +1889 @@ terminal-step measurement.
+-    averaging window*: GDN2-MLP is lower on the full-trajectory and
++    averaging window*: GDN2 is lower on the full-trajectory and
+@@ -1891 +1891 @@ terminal-step measurement.
+-    window. Early in training (5.1 B tokens) GDN2-MLP led by 0.071
++    window. Early in training (5.1 B tokens) GDN2 led by 0.071
+@@ -1930 +1930 @@ band: pure-E97 2.0126, M²RNN 2.0344, Emender-mix 2.0402, E97-MLP
+-2.0911, GDN2-MLP 2.1013 bits per byte (non-averaged weights, the basis
++2.0911, GDN2 2.1013 bits per byte (non-averaged weights, the basis
+@@ -1932 +1932 @@ consistent with the search fitness; `experiments/lb_compare_20260613/LEADERBOARD
+-Within that band E97-MLP is ahead of GDN2-MLP on *both* primary metrics
++Within that band E97-MLP is ahead of GDN2 on *both* primary metrics
+@@ -1943 +1943 @@ the baseline is load-bearing: the search protocol and records must establish
+-GDN2-MLP’s optimizer hardening. The provenance
++GDN2’s optimizer hardening. The provenance
+@@ -1975 +1975 @@ $1.007 times 10^(-3)$; search fitness 5.8606,
+-`experiments/lb_compare_20260613/REPRODUCTION.md`), and GDN2-MLP
++`experiments/lb_compare_20260613/REPRODUCTION.md`), and GDN2
+@@ -2033 +2033 @@ leaderboard totals or the two carried-in winner searches.
+-    [Carried-in GDN2-MLP], [U3.1], [see prose], [see prose], [—],
++    [Carried-in GDN2], [U3.1], [see prose], [see prose], [—],
+@@ -2046,2 +2046,2 @@ leaderboard totals or the two carried-in winner searches.
+-    GDN2-MLP searches; they are not mapped to an earlier normalized sweep.
+-    GDN2-MLP's retained `docs/repro/lb_gdn2_mlp_20260612/best.json`
++    GDN2 searches; they are not mapped to an earlier normalized sweep.
++    GDN2's retained `docs/repro/lb_gdn2_mlp_20260612/best.json`
+@@ -2362 +2362 @@ wall on this family. Protocol: `iterated-map/PLAN.md`, pre-registration
+-The decisive experiment uses the E97 and GDN2-MLP checkpoints of #ref(<sec:lm>),
++The decisive experiment uses the E97 and GDN2 checkpoints of #ref(<sec:lm>),
+@@ -2380 +2380 @@ pre-registered validation-loss plateau rule stopped E97 after
+-#expressivity.train-e97.steps_trained steps and GDN2-MLP after
++#expressivity.train-e97.steps_trained steps and GDN2 after
+@@ -2431 +2431 @@ at four times and
+-at eight times that length. GDN2-MLP ends at
++at eight times that length. GDN2 ends at
+@@ -2435 +2435 @@ at trained length and
+-at eight times. E97 at eight times approximately matches GDN2-MLP's
++at eight times. E97 at eight times approximately matches GDN2's
+@@ -2437 +2437 @@ terminal trained-length accuracy, then decays further; it is not
+-length-invariant. GDN2-MLP approaches a roughly 50% plateau at the
++length-invariant. GDN2 approaches a roughly 50% plateau at the
+@@ -2441 +2441 @@ baseline. The terminal trained-length value is not a hard ceiling:
+-intermediate GDN2-MLP trajectory probes were higher. One seed, unequal
++intermediate GDN2 trajectory probes were higher. One seed, unequal
+@@ -2452 +2452 @@ nonlinear temporal depth. The theorem concerns the state channel, not
+-an impossibility or depth lower bound for a multilayer GDN2-MLP stack.
++an impossibility or depth lower bound for a multilayer GDN2 stack.
+@@ -2473 +2473 @@ confirmed the boundary finding, verbatim:
+-either model — both decay in parallel toward the random baseline, and GDN2-MLP
++either model — both decay in parallel toward the random baseline, and GDN2
+@@ -2480 +2480 @@ Both capacity curves decay rather than learn length-invariant tracking;
+-held-out transitions remain weaker than seen ones. GDN2-MLP's attempted
++held-out transitions remain weaker than seen ones. GDN2's attempted
+@@ -2498 +2498 @@ limitation is that an 8 M model is small. The
+-E97/GDN2-MLP artifacts the loss-parity claims bind to. The micro probe
++E97/GDN2 artifacts the loss-parity claims bind to. The micro probe
+@@ -2792 +2792 @@ behavior inside the linear-state envelope, and it is the
+-linear-recurrent baseline of this paper's 1.3 B pairing: the GDN2-MLP
++linear-recurrent baseline of this paper's 1.3 B pairing: the GDN2
+@@ -2955 +2955 @@ substituting predecessor results.
+-retained CMA snapshots do not supply the final E97-MLP/GDN2-MLP winner
++retained CMA snapshots do not supply the final E97-MLP/GDN2 winner
+@@ -3015 +3015 @@ estimated training-log 0.93 bpb. Its parameter-matched, CMA-selected
+-GDN2-MLP control occupies the same training-loss band at matched tokens
++GDN2 control occupies the same training-loss band at matched tokens
+@@ -3023 +3023 @@ transfer is: “The 8M S5 separation does NOT replicate at
+-1.3B on this pair.” The 1.3 B GDN2-MLP model is ahead on that group-state
++1.3B on this pair.” The 1.3 B GDN2 model is ahead on that group-state
+@@ -3048 +3048 @@ E97 (`https://huggingface.co/spinozans/emender-e97-1.3b`, tag
+-and GDN2-MLP (`https://huggingface.co/spinozans/gdn2-mlp-1.3b`, tag
++and GDN2 (`https://huggingface.co/spinozans/gdn2-mlp-1.3b`, tag
+@@ -3111 +3111 @@ falsify it, so that later training rounds can settle them.
+-  GDN2-MLP on tasks requiring multi-step state-tracking.* The #ref(<sec:expressivity>) QA
++  GDN2 on tasks requiring multi-step state-tracking.* The #ref(<sec:expressivity>) QA
+@@ -3119 +3119 @@ falsify it, so that later training rounds can settle them.
+-  multi-step entailment). Falsified if E97 and GDN2-MLP
++  multi-step entailment). Falsified if E97 and GDN2
+@@ -3196 +3196 @@ grows or vanishes with scale, is open. The load-bearing experiment is
+-a matched 3–7 B E97/GDN2-MLP pair under the same recipe; the
++a matched 3–7 B E97/GDN2 pair under the same recipe; the
+@@ -3320 +3320 @@ is parity-class.
+-No downstream capability evaluation of the 150 B E97/GDN2-MLP pair has
++No downstream capability evaluation of the 150 B E97/GDN2 pair has
+@@ -3427 +3427 @@ availability statement in #ref(<sec:conclusion>)).
+-Before the E97/GDN2-MLP pairing of #ref(<sec:lm>), the same questions were asked of a
++Before the E97/GDN2 pairing of #ref(<sec:lm>), the same questions were asked of a
+@@ -3835 +3835 @@ These are protocol-specific observations, not proof of a non-solvable
+-computation barrier. The GDN2-MLP reversal in #ref(<sec:expressivity>) and open constrained
++computation barrier. The GDN2 reversal in #ref(<sec:expressivity>) and open constrained

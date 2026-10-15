@@ -14,8 +14,8 @@ bibliography; `canonical-guard.mjs` checks it and the source SHA-256.
 
 ## Deliverables
 
-- `submission.pdf`: anonymous, **58 pages**, default official TMLR submission style.
-- `preprint.pdf`: identified, **58 pages**, official TMLR `preprint` option.
+- `submission.pdf`: anonymous, **60 pages**, default official TMLR submission style.
+- `preprint.pdf`: identified, **60 pages**, official TMLR `preprint` option.
 - `arxiv-source.tar.gz`: self-contained identified source archive, with exactly
   one master (`main.tex`), explicitly selecting preprint mode. It was unpacked
   and rebuilt separately; its PDF text is identical to `preprint.pdf`.
@@ -32,7 +32,7 @@ and Poppler (`pdftotext`, `pdfinfo`, `pdfseparate`). No Python is needed.
 ```bash
 cd paper/tmlr
 bash build.sh
-node --test verify-symbols.test.mjs notation-audit.test.mjs
+node --test verify-symbols.test.mjs notation-audit.test.mjs author-rulings.test.mjs appendix-order.test.mjs register-appendix.test.mjs
 node verify.mjs
 bash bundle-arxiv.sh
 ```
@@ -50,7 +50,7 @@ typst compile --root ../.. --pdf-standard 1.5 --no-pdf-tags --pages 1,2 \
 pdfseparate /tmp/emender-packaging-figures.pdf assets/figure-%d.pdf
 node convert.mjs
 bash build.sh
-node --test verify-symbols.test.mjs notation-audit.test.mjs
+node --test verify-symbols.test.mjs notation-audit.test.mjs author-rulings.test.mjs appendix-order.test.mjs register-appendix.test.mjs
 node verify.mjs
 bash bundle-arxiv.sh
 ```
@@ -58,6 +58,11 @@ bash bundle-arxiv.sh
 `serialize.typ` exports Typst's **evaluated content tree**, retaining exact
 text/math and evaluating artifact-derived tables/numbers. `convert.mjs` maps
 that tree to LaTeX, failing on unsupported nodes. It does not paraphrase prose.
+Markup headings retain their serialized `depth`; explicit headings retain `level`.
+The register renders as one Appendix A with five subsections A.1–A.5.
+`verify.mjs` checks both built TMLR PDFs for this hierarchy, evidence within each
+subsection, built-label destination pages, and every rendered register-reference
+number/count. The receipt is `validation/p17c-register-appendix.json`.
 The two original vector diagrams are exported as figure assets, not manuscript
 page images. The other five figures are byte-identical copies of the canonical
 PNG assets. All 20 captions are independently typeset in LaTeX; all 14 body

@@ -6,6 +6,8 @@ import {fileURLToPath} from 'node:url';
 import assert from 'node:assert/strict';
 import {checkCanonicalSource} from './canonical-guard.mjs';
 import {verifySymbols} from './verify-symbols.mjs';
+import {verifyAppendixOrder} from './appendix-order.mjs';
+import {verifyRegisterAppendix} from './register-appendix.mjs';
 const dir=path.dirname(fileURLToPath(import.meta.url)),root=path.resolve(dir,'../..');
 const pdftotext=process.env.PDFTOTEXT||'pdftotext',pdfinfo=process.env.PDFINFO||'pdfinfo';
 const files={canonical:path.resolve(dir,'../current.pdf'),submission:path.join(dir,'submission.pdf'),preprint:path.join(dir,'preprint.pdf')};
@@ -93,10 +95,22 @@ const pages=Object.fromEntries(Object.entries(info).map(([k,v])=>[k,Number(v.mat
 const generatedTex=fs.readFileSync(path.join(dir,'main.tex'),'utf8');
 assert(!/\\(?:fontsize|tiny|scriptsize|footnotesize|small|normalsize|large|Large|LARGE|huge|Huge)\b|\\captionsetup\{[^}]*font\s*=/.test(generatedTex),'Explicit font-size override');
 const symbolAudit=verifySymbols(ast,generatedTex,text);
-const report={symbolAudit,approvedBibliographyAmendment:'mathlib4: explicit 2026 access year (not publication year)',acceptedCommit:'eb2b9636',canonicalBaseline:JSON.parse(fs.readFileSync(path.join(dir,'canonical-baseline.json'),'utf8')),styleCommit:fs.readFileSync(path.join(dir,'STYLE-COMMIT'),'utf8').trim(),pages,samples:results,fragmentAudit,identityChecks:'passed (third-person literature self-citation retained)',canonicalManuscriptMatchesApprovedBaseline:true,bibliographyByteIdentical:true};
+const approvedSymbolCounts=JSON.parse(fs.readFileSync(path.join(dir,'canonical-baseline.json'),'utf8')).symbolCounts;
+assert.deepEqual({equations:symbolAudit.equations,attachments:symbolAudit.attachments,pdfPrimes:symbolAudit.pdfPrimes},approvedSymbolCounts,'Unapproved symbol-inventory drift');
+const appendixOrder=Object.fromEntries(Object.entries(text).map(([variant,pdf])=>[
+ variant,verifyAppendixOrder(pdf,variant==='canonical'?null:generatedTex,
+   variant==='canonical'?null:'10.18653/v1/P19-1472')
+]));
+fs.writeFileSync(path.join(dir,'validation/p16b-appendix-order.json'),JSON.stringify(appendixOrder,null,2)+'\n');
+const registerAppendix=Object.fromEntries(['submission','preprint'].map(variant=>[
+ variant,verifyRegisterAppendix(text[variant],generatedTex,fs.readFileSync(path.join(dir,variant+'.aux'),'utf8'))
+]));
+fs.writeFileSync(path.join(dir,'validation/p17c-register-appendix.json'),JSON.stringify(registerAppendix,null,2)+'\n');
+const report={registerAppendix,appendixOrder,symbolAudit,approvedBibliographyAmendment:'mathlib4: explicit 2026 access year (not publication year)',acceptedCommit:'eb2b9636',canonicalBaseline:JSON.parse(fs.readFileSync(path.join(dir,'canonical-baseline.json'),'utf8')),styleCommit:fs.readFileSync(path.join(dir,'STYLE-COMMIT'),'utf8').trim(),pages,samples:results,fragmentAudit,identityChecks:'passed (third-person literature self-citation retained)',canonicalManuscriptMatchesApprovedBaseline:true,bibliographyByteIdentical:true};
 fs.mkdirSync(path.join(dir,'validation'),{recursive:true});
 fs.writeFileSync(path.join(dir,'validation/drift-check.json'),JSON.stringify(report,null,2)+'\n');
 for(const [k,v] of Object.entries(text))fs.writeFileSync(path.join(dir,'validation',k+'-text.txt'),v);
 console.log(`PASS: ${results.length} samples × 3 PDFs; exact numeric strings; ${fragmentAudit.checked} long source fragments; identity and canonical-source guards.`);
 console.log(`PASS: ${symbolAudit.equations} complete math expressions; ${symbolAudit.attachments} attachments; ${symbolAudit.pdfPrimes} S primes in each PDF (${symbolAudit.vectorPrimes} in drawings).`);
+console.log('PASS: one Appendix A with A.1–A.5; scoped evidence, built-label destination pages, and every register reference in each TMLR PDF.');
 console.log(JSON.stringify(pages));
