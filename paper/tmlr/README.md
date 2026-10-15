@@ -1,20 +1,20 @@
-# TMLR packaging of the transferred manuscript
+# TMLR packaging of the integrated manuscript
 
-`paper/main.typ` at **883131ae** is the P20 canonical manuscript;
-`paper/current.pdf` is its rebuilt **33-page** PDF. P21 regenerates this
-packaging tree from that exact source. `canonical-baseline.json` retains the
-accepted snapshot `eb2b96363e3ff800d7eefe2ba7386e7cf673d1cf`, its frozen PDF,
-and the complete P13–P21 lineage. Source and bibliography SHA-256 guards bind
-the current transfer. The four P20 bibliography additions and the earlier
-Mathlib access-year amendment are retained byte-for-byte.
+`paper/main.typ` and `paper/figures/expressivity_1p3b.typ` exactly match the
+approved S5 clarification **7bc278704d56f2f8f6a0d1ca7ec944e0eaaeb0af**, based on
+the author revision **5b16e273518f7ab20463e5a4826bd78851c4f6bf**. The author's
+no-raw-logs correction is retained. `paper/current.pdf` is the rebuilt
+**33-page** canonical PDF; the two TMLR variants and source bundle are generated
+from that same source. `canonical-baseline.json` retains the historical accepted
+snapshot and revision lineage while pinning the current approved source hash.
 
 ## Deliverables
 
-- `submission.pdf`: anonymous, **28 pages**, official TMLR submission style.
-- `preprint.pdf`: identified, **28 pages**, official TMLR preprint style.
+- `submission.pdf`: anonymous, **29 pages**, official TMLR submission style.
+- `preprint.pdf`: identified, **29 pages**, official TMLR preprint style.
 - `arxiv-source.tar.gz`: self-contained identified source, one `main.tex`
   master, explicitly selecting preprint mode. A fresh extraction rebuilds to
-  **28 pages** with PDF raw text byte-identical to `preprint.pdf`.
+  **29 pages** with PDF raw text byte-identical to `preprint.pdf`.
 
 Upload **submission.pdf** to OpenReview. The preprint and source archive are
 identified artifacts. Shared source conditionally selects author details and
@@ -36,7 +36,7 @@ node paper/tmlr/convert.mjs
 bash paper/tmlr/build.sh
 node paper/tmlr/verify.mjs
 node --test paper/tmlr/*.test.mjs
-node paper/tmlr/validation/p21-audit.mjs
+node paper/tmlr/integration-audit.mjs
 node paper/tmlr/validation/p21-anonymity.mjs
 bash paper/tmlr/bundle-arxiv.sh
 (cd paper/tmlr && sha256sum -c validation/SHA256SUMS)
@@ -63,25 +63,32 @@ all three PDFs. The current receipts retain the established paths
 
 Official style files retain upstream revision
 **7bf90efe3a0debbba703c05c43f3ff7e4d4a2992**, recorded in `STYLE-COMMIT`.
-`tmlr.sty`, `tmlr.bst`, `fancyhdr.sty`, `LICENSE`, and the original accepted
-PDF retain their frozen hashes.
+`tmlr.sty`, `tmlr.bst`, `fancyhdr.sty`, `LICENSE`, retain their frozen hashes. The historical accepted PDF is an external,
+untracked artifact; its recorded digest remains in the baseline/history, while
+the active checksum manifest covers the current repository deliverables.
 
 `../../P21-report.md` documents every regenerated baseline and its reason.
 `validation/p20-transfer-revision.diff` enumerates the approved source delta;
 `validation/p21-guard-delta.json` retains full old/new guard definitions;
 `validation/p21-inputs.json` binds the transferred inputs. `p21-audit.mjs`
-checks exact provenance replay and the narrow packaging scope. Earlier P13–P18
-audits remain historical receipts for their own source revisions.
+is the historical P21-only replay, not a validator for later source revisions.
+`integration-audit.mjs` checks the exact approved S5 source, all six empirical
+table bodies, all seven table structures, unchanged data/results/formal sources,
+and unchanged production code and CI. Earlier P13–P21 receipts remain evidence
+for their own revisions; `validation/p21-release-SHA256SUMS` preserves the
+inherited release manifest.
 
 `validation/drift-check.json` checks 20 load-bearing current-manuscript samples
 across all three PDFs, including Frontier findings and current-pair scopes,
-and 1,099 long source fragments. The independent symbol oracle checks every
-complete expression and attachment: **325 expressions, 266 attachments, eight
-PDF state primes** (two in drawings). All old/new expression multiplicities are
-enumerated in `validation/p21-math-delta.json`. Negative regressions retain
+and 1,143 long source fragments. The independent symbol oracle checks every
+complete expression and attachment: **335 expressions, 285 attachments, eight
+PDF state primes** (two in drawings). The historical P20 delta remains in `validation/p21-math-delta.json`;
+S5 adds ten expressions and nineteen attachments, with no prime-count change,
+as recorded in `validation/integration-audit.json`. Negative regressions retain
 prime/attachment loss and actual P10 conversion-defect coverage and add all
-current live-scope and source-register loss tests. The source remains exactly
-P20's forward-narrated text; packaging reproduces its tone.
+current live-scope and source-register loss tests. The source remains exactly the approved S5 revision; packaging does not
+paraphrase it. The 67 packaging tests retain negative conversion, prime-loss,
+source-drift, scope-loss, appendix-order and anonymization checks.
 
 Three release/mirror URLs are variant-gated. The anonymous-PDF receipt screens
 visible text, author metadata, XMP, embedded files, annotation destinations and
@@ -94,4 +101,6 @@ retain their pending independent metadata-review scope.
 Builds pass the existing fail-closed error, glyph, reference, citation, overflow
 and oversized-float checks. Underfull spacing warnings remain. Receipts, logs,
 PDF extractions, bundle rebuild comparison and SHA-256 digests are retained in
-`validation/`. Independent acceptance review is the delivery gate.
+`validation/`. The integrated source and regenerated packaging receive independent review
+before merge. Local builds use Typst 0.14.2 and TeX Live 2025/pdfTeX; the source
+bundle rebuild must match the preprint raw text exactly.

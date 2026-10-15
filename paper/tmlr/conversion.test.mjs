@@ -60,3 +60,11 @@ for (const [file, message] of [['main.typ', /Unapproved canonical manuscript dri
     } finally { fs.rmSync(temporary, {recursive: true, force: true}); }
   });
 }
+
+test('convert: notation definitions receive two-thirds of the table width', () => {
+  const notation = tex.slice(tex.indexOf('\\subsection*{Notation}'), tex.indexOf('\\subsection*{Linear-state and nonlinear-state recurrence}'));
+  assert(notation.includes('hsize=0.66667\\hsize'));
+  assert(notation.includes('hsize=1.33333\\hsize'));
+  assert(notation.indexOf('hsize=0.66667') < notation.indexOf('hsize=1.33333'));
+  assert(notation.includes('Meaning and source-name correspondence'));
+});
