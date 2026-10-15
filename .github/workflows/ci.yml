@@ -37,6 +37,12 @@ jobs:
         run: uv sync --locked --extra dev --extra eval
       - name: Build native service for CPU integration tests
         uses: ./.github/actions/build-native
+      - name: Attest native bundle for CPU integration tests
+        run: |
+          uv run python scripts/frontier/attest_native_dataplane.py record-build \
+            --prefix build/native-resilient-dataplane \
+            --source-root "$PWD" \
+            --cmake-cache build/native-resilient-dataplane-build/CMakeCache.txt
       - name: Syntax check
         run: |
           uv run python -m py_compile train.py scripts/*.py scripts/conformance/*.py ndm/native_lean_conformance.py ndm/triton/*.py ndm/models/e88_fused.py ndm/models/e88_fla_hybrid.py ndm/models/m2rnn_baseline.py ndm/models/mamba2_baseline.py ndm/models/fla_gated_delta.py
