@@ -23,6 +23,7 @@ def load_script(name, monkeypatch):
 @pytest.fixture
 def pool(tmp_path, monkeypatch):
     bank = load_script("rl_bank", monkeypatch)
+    monkeypatch.setattr(bank, "REPO_ROOT", SCRIPTS.parents[1])
     paths = bank.bank_paths(tmp_path / "bank")
     bank.ensure_bank_layout(paths)
     program = tmp_path / "validator.py"
@@ -122,12 +123,16 @@ def test_coordinator_refresh_waits_for_empty_pending_and_claims(
                                       "claims_stale": stale}) is expected
 
 
-def test_supply_severe_backoff_is_monotonic_and_recovers_on_clean_streaks(monkeypatch):
+@pytest.mark.parametrize("normal,soft,hard", [(8, 16, 24), (24, 48, 48)])
+def test_supply_severe_backoff_is_monotonic_and_recovers_on_clean_streaks(monkeypatch, normal, soft, hard):
     supply = load_script("standing_supply", monkeypatch)
+    monkeypatch.setattr(supply, "LANE_MIN", normal)
+    monkeypatch.setattr(supply, "LANE_SOFT_CAP", soft)
+    monkeypatch.setattr(supply, "LANE_HARD_CAP", hard)
     monkeypatch.setattr(supply, "control_probe", lambda: {"ok": False, "latency_s": 61})
     monkeypatch.setattr(supply, "scan_bank_failures", lambda state: [])
     monkeypatch.setattr(supply, "append_metrics", lambda record: None)
-    state = {"lanes": supply.LANE_MIN, "clean_streak": 4, "backoff_events": []}
+    state = {"lanes": 8, "clean_streak": 4, "backoff_events": []}
     history = []
     for _ in range(5):
         supply.health_adjust(state)
@@ -140,11 +145,11 @@ def test_supply_severe_backoff_is_monotonic_and_recovers_on_clean_streaks(monkey
     assert supply.recovery_lanes(2, 2, 0) == 4
     assert supply.recovery_lanes(4, 2, 0) == 6
     assert supply.recovery_lanes(6, 2, 0) == 8
-    assert supply.recovery_lanes(15, 2, 0) == supply.LANE_SOFT_CAP
-    assert supply.recovery_lanes(16, 3, 0) == 16
-    assert supply.recovery_lanes(16, 4, supply.LOW_WATER) == 16
-    assert supply.recovery_lanes(16, 4, 0) == 18
-    assert supply.recovery_lanes(23, 4, 0) == supply.LANE_HARD_CAP
+    assert supply.recovery_lanes(soft - 1, 2, 0) == soft
+    assert supply.recovery_lanes(soft, 3, 0) == soft
+    assert supply.recovery_lanes(soft, 4, supply.LOW_WATER) == soft
+    assert supply.recovery_lanes(soft, 4, 0) == min(soft + 2, hard)
+    assert supply.recovery_lanes(hard - 1, 4, 0) == hard
     assert supply.recovery_lanes(supply.LANE_HARD_CAP, 10, 0) == supply.LANE_HARD_CAP
 
 

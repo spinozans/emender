@@ -4,6 +4,7 @@ import hashlib
 import json
 import math
 from pathlib import Path
+import subprocess
 
 import numpy as np
 import pytest
@@ -21,6 +22,9 @@ from tests.native_dataplane_test_support import (
 ROOT = Path(__file__).resolve().parents[1]
 BASELINE = ROOT / "reports/frontier/native-dataplane-reference-v1.json"
 REPORT = ROOT / "reports/frontier/native-dataplane-reference-v1.md"
+# Last qualification of this retained reference, before later architecture
+# amendments. Historical evidence must bind its own tree rather than HEAD.
+REFERENCE_COMMIT = "76385074da8e22bfef0044c99fe0063d2f346edf"
 
 
 def _sha256(path: Path) -> str:
@@ -44,10 +48,18 @@ def test_native_dataplane_reference_is_checksum_linked_and_machine_readable():
     ]
 
     repo_evidence = baseline["evidence"]["repository"]
+    retained_baseline = subprocess.check_output(
+        ["git", "show", f"{REFERENCE_COMMIT}:{BASELINE.relative_to(ROOT).as_posix()}"],
+        cwd=ROOT,
+    )
+    assert retained_baseline == BASELINE.read_bytes()
     for item in repo_evidence:
         path = ROOT / item["path"]
         assert path.is_file()
-        assert item["sha256"] == _sha256(path)
+        retained_source = subprocess.check_output(
+            ["git", "show", f"{REFERENCE_COMMIT}:{item['path']}"], cwd=ROOT,
+        )
+        assert item["sha256"] == hashlib.sha256(retained_source).hexdigest()
 
     retained = baseline["evidence"]["retained_job_4974616"]
     assert retained["job_id"] == 4974616

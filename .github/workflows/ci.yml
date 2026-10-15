@@ -13,6 +13,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          # Reference-evidence tests verify blobs from their retained commit.
+          fetch-depth: 0
+      - name: Check out pinned GDN2 baseline source
+        uses: actions/checkout@v6
+        with:
+          repository: NVlabs/GatedDeltaNet-2
+          ref: 95709fc250357c2dd109361c353192f2aa5913f9
+          path: src/GatedDeltaNet-2
+          persist-credentials: false
+      - name: Bind canonical baseline origin
+        # The checked-in source receipts include the canonical .git URL;
+        # actions/checkout creates its origin without that suffix.
+        run: git -C src/GatedDeltaNet-2 remote set-url origin https://github.com/NVlabs/GatedDeltaNet-2.git
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
@@ -21,6 +35,14 @@ jobs:
           enable-cache: true
       - name: Install package
         run: uv sync --locked --extra dev --extra eval
+      - name: Build native service for CPU integration tests
+        uses: ./.github/actions/build-native
+      - name: Attest native bundle for CPU integration tests
+        run: |
+          uv run python scripts/frontier/attest_native_dataplane.py record-build \
+            --prefix build/native-resilient-dataplane \
+            --source-root "$PWD" \
+            --cmake-cache build/native-resilient-dataplane-build/CMakeCache.txt
       - name: Syntax check
         run: |
           uv run python -m py_compile train.py scripts/*.py scripts/conformance/*.py ndm/native_lean_conformance.py ndm/triton/*.py ndm/models/e88_fused.py ndm/models/e88_fla_hybrid.py ndm/models/m2rnn_baseline.py ndm/models/mamba2_baseline.py ndm/models/fla_gated_delta.py
@@ -84,26 +106,19 @@ jobs:
       - uses: astral-sh/setup-uv@v5
         with:
           enable-cache: true
-      - name: Install package and native build dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y cmake libfabric-dev libssl-dev pkg-config
-          uv sync --locked --extra dev
+      - name: Install package
+        run: uv sync --locked --extra dev
+      - name: Build native service
+        uses: ./.github/actions/build-native
       - name: Cache exact project-local Lean toolchain
         uses: actions/cache@v4
         with:
           path: formal/resilient/.cache/resilient-lean
           key: lean-4.26.0-linux-873c252b1c6b1392e5720ad8d5a137aabbe72c9f96a930fdb5a1dd1ddc5da454
-      - name: Build Lean oracle and native production service
+      - name: Build Lean oracle
+        run: formal/resilient/scripts/lake.sh build resilient-conformance resilient-conformance-corpus
+      - name: Attest native production service
         run: |
-          formal/resilient/scripts/lake.sh build resilient-conformance resilient-conformance-corpus
-          cmake -S native -B build/native-resilient-dataplane-build \
-            -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-            -DCMAKE_INSTALL_PREFIX="$PWD/build/native-resilient-dataplane" \
-            -DNDP_ENABLE_XPMEM=OFF -DNDP_BUILD_TESTS=ON
-          cmake --build build/native-resilient-dataplane-build --parallel 4
-          ctest --test-dir build/native-resilient-dataplane-build --output-on-failure
-          cmake --install build/native-resilient-dataplane-build
           uv run python scripts/frontier/attest_native_dataplane.py record-build \
             --prefix build/native-resilient-dataplane \
             --source-root "$PWD" \
