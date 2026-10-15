@@ -1,0 +1,754 @@
+diff --git a/paper/figures/expressivity_1p3b.typ b/paper/figures/expressivity_1p3b.typ
+index ab75dbf7..5c7b30e7 100644
+--- a/paper/figures/expressivity_1p3b.typ
++++ b/paper/figures/expressivity_1p3b.typ
+@@ -38 +38 @@
+-    The identical cap is #budget.cap_steps steps, not identical realized
++    The common cap is #budget.cap_steps steps, with unequal realized
+@@ -40,4 +40,3 @@
+-    after #train-gdn2.steps_trained. E97 decays gracefully rather than
+-    remaining length-invariant; GDN2 approaches a roughly 50% plateau,
+-    *not* the declared #percent(wall-gdn2.random_baseline_acc) random
+-    baseline. Source: `paper/results/expressivity_1p3b/iterated-map/`,
++    after #train-gdn2.steps_trained. E97 shows graceful length transfer; GDN2 approaches a roughly 50%
++    plateau, above the declared #percent(wall-gdn2.random_baseline_acc)
++    random baseline. Source: `paper/results/expressivity_1p3b/iterated-map/`,
+@@ -84 +83 @@
+-    *S5 capacity/long-horizon boundary finding, not a depth-wall separation.*
++    *S5 capacity/long-horizon accuracy on the released pair.*
+@@ -88 +87,2 @@
+-    OOM-infeasible even at sub-batch 1; this point is not wholly untrained.
++    OOM-infeasible even at sub-batch 1; the length-512 point includes
++    that completed update.
+diff --git a/paper/main.typ b/paper/main.typ
+index 44dfde2e..ea47f970 100644
+--- a/paper/main.typ
++++ b/paper/main.typ
+@@ -37,3 +37 @@
+-    group-state tracking, GDN2 leads the long-horizon comparison. The
+-    negative transfer is: “The 8M S5 separation does NOT replicate at
+-    1.3B on this pair.” Lean 4 results describe the underlying state
++    group-state tracking, GDN2 leads the long-horizon comparison. Lean 4 results describe the underlying state
+@@ -49,2 +47 @@
+-    define prospective structural applications; demonstrated deployments
+-    remain open. Recurrent tracker realization and constrained
++    define prospective structural applications. Recurrent tracker realization and constrained
+@@ -164,5 +161,3 @@ with the sign of the gap depending on the averaging window (#ref(<sec:lm>)). The
+-1.3 B result is therefore a replication across the *update rule and
+-tuning regime* at a single scale: both arms sit in the same
+-1.3 B-class parameter band, and whether the separation or the loss
+-parity survives at 7 B and beyond remains a limitation in
+-#ref(<sec:limitations>). On bulk training-log loss the two update families are operationally tied, so
++1.3 B result establishes training viability for both update rules
++after per-family tuning at this scale; loss parity and probe ordering
++at 7 B and beyond remain open (#ref(<sec:limitations>)). On bulk training-log loss the two update families are operationally tied, so
+@@ -173,2 +168,2 @@ efficiently than the raw-write and GDN baselines under the tested
+-protocols. At 1.3 B, the modular-quadratic probe reproduces a depth-wall
+-signature, but the $S_5$ ordering does not transfer (#ref(<sec:expressivity>)). The Lean core
++protocols. On the current 1.3 B pair, E97 leads the modular-quadratic probe,
++while GDN2 leads long-horizon $S_5$ tracking (#ref(<sec:expressivity>)). The Lean core
+@@ -232,2 +227,2 @@ the Emender reaches 0.79 on $S_5$ against 0.36 for GDN and 0.22 for
+-raw-write (#ref(<sec:expressivity>)), whereas the current 1.3 B pair supplies a positive
+-iterated-map result and a negative group-state result. Width-axis
++raw-write (#ref(<sec:expressivity>)), whereas the current 1.3 B pair favors E97 on the iterated map
++and GDN2 on long-horizon group-state tracking. Width-axis
+@@ -261,2 +256,2 @@ actual dense $H W$ and feature-network costs; actual matched-compute certificati
+-and the scaling demonstration leaves no architectural escape hatch
+-from the recurrent state.
++and the scaling demonstration trains this attention-free, time-serial
++architecture directly.
+@@ -321 +316 @@ and direct capability measurements.
+-  raw-write resource class; general or learned-weight superiority remains open. Empirically the delta-vs-raw-write contrast is a
++  raw-write resource class. Empirically the delta-vs-raw-write contrast is a
+@@ -324,2 +319,2 @@ and direct capability measurements.
+-  best-effort budget it does not catch up (#ref(<sec:expressivity>)). The predicted ordering
+-  already appears at the 8 M parameter-matched probe shape where the #ref(<sec:expressivity>)
++  best-effort budget it does not catch up (#ref(<sec:expressivity>)). This ordering
++  is measured at the 8 M parameter-matched probe shape where the #ref(<sec:expressivity>)
+@@ -346 +341 @@ and direct capability measurements.
+-  (#ref(<sec:expressivity>), @tab_depth_wall). The $S_5$ separation does *not* replicate:
++  (#ref(<sec:expressivity>), @tab_depth_wall). On $S_5$,
+@@ -371 +366 @@ and expressivity probes (#ref(<sec:expressivity>)). The applications class (#ref
+-without claiming new deployments; related work (#ref(<sec:related>)), limitations (#ref(<sec:limitations>)), conclusion (#ref(<sec:conclusion>)),
++to prospective workloads; related work (#ref(<sec:related>)), limitations (#ref(<sec:limitations>)), conclusion (#ref(<sec:conclusion>)),
+@@ -386,4 +381,3 @@ E97
+-The table below
+-states each load-bearing claim with its evidence, its scope, and — in the
+-last column — the boundary the same result observes. The body sections
+-substantiate each row; the pointers are forward references.
++The table below states each load-bearing claim with its evidence and
++scope. The body sections substantiate each row; the pointers are forward
++references.
+@@ -393,2 +387,2 @@ substantiate each row; the pointers are forward references.
+-    columns: (1.45fr, 2.05fr, 1.35fr, 1.95fr),
+-    align: (left + top, left + top, left + top, left + top),
++    columns: (1.45fr, 2.05fr, 3.3fr),
++    align: (left + top, left + top, left + top),
+@@ -398 +392 @@ substantiate each row; the pointers are forward references.
+-      [*Claim*], [*Evidence*], [*Scope*], [*Non-claim*],
++      [*Claim*], [*Evidence*], [*Scope*],
+@@ -403,2 +397 @@ substantiate each row; the pointers are forward references.
+-    [One E97 run, single seed; viability demonstration],
+-    [Not a scaling law and not seed-averaged; one artifact shown to exist],
++    [One E97 run, single seed; a viability demonstration at this scale],
+@@ -410,5 +403,4 @@ substantiate each row; the pointers are forward references.
+-    [A measured null result on *training-log* loss at exactly matched
+-     tokens; the CMA-stage 5-model held-out band (2.01–2.10 bpb)
+-     corroborates at search scale (#ref(<sec:lm>))],
+-    [Held-out bpb for the 150 B pair itself is pending
+-     (TODO-NEEDS-EVIDENCE, #ref(<sec:lm>)); does not license a loss ordering],
++    [Training-log loss at exactly matched tokens; held-out bpb for the
++     150 B pair is pending (TODO-NEEDS-EVIDENCE, #ref(<sec:lm>)).
++     The CMA-stage 5-model held-out band (2.01–2.10 bpb) corroborates
++     descriptive closeness at search scale (#ref(<sec:lm>))],
+@@ -416 +408 @@ substantiate each row; the pointers are forward references.
+-    [Delta-correcting $>$ raw-write on state tracking, at every length],
++    [Delta-correcting $>$ raw-write on state tracking, at every tested length],
+@@ -419,5 +411,3 @@ substantiate each row; the pointers are forward references.
+-    [Budget-robust *ordering* and representability statement inside the
+-     formalized fixed-weight raw-write class],
+-    [Not "delta solves / length-generalizes $S_5$": at 8 M both
+-     nonlinear updates plateau below ceiling at length; it is an
+-     efficiency gap, not impossibility],
++    [Budget-robust learning-efficiency ordering: at 8 M both nonlinear
++     updates plateau below ceiling at length. The representability
++     statement concerns the formalized fixed-weight raw-write class],
+@@ -428,5 +418,5 @@ substantiate each row; the pointers are forward references.
+-     two negative task families are consistent with the mechanism hypothesis (#ref(<sec:expressivity>))],
+-    [Small-scale (dim 256–1024) grokking-regime statement,
+-     with an isolated update-map flag but different successful-seed subsets],
+-    [Not an unconditional causal effect or exact algorithm-recovery result;
+-     the two negative families reject a universal superiority claim],
++     two task families show an absent separation (#ref(<sec:expressivity>))],
++    [Small-scale (dim 256–1024) grokking regime; isolated update-map
++     flag with different successful-seed subsets. Conditional curve
++     comparisons leave unconditional causal effect and exact algorithm
++     recovery open],
+@@ -435,6 +425,6 @@ substantiate each row; the pointers are forward references.
+-    [8 M and predecessor GDN probes decay at length; the current
+-     GDN2 pair reverses the predicted ordering (@tab_s5_boundary)],
+-    [Measured learning behavior; Lean proves the architecture-agnostic
+-     120-state recognizer floor (#ref(<sec:formal>))],
+-    [No blanket affine-channel impossibility; constrained realizability
+-     is open (G3), and TC#super[0] versus NC#super[1] is unresolved],
++    [8 M and predecessor GDN probes decay at length; on the current
++     pair GDN2 leads at every tested capacity-probe length (@tab_s5_boundary)],
++    [Finite-length learning behavior under each study's protocol; Lean
++     proves the architecture-agnostic 120-state recognizer floor
++     (#ref(<sec:formal>)). Constrained affine-channel realizability
++     remains open (G3); TC#super[0] versus NC#super[1] is unresolved],
+@@ -446,2 +436,2 @@ substantiate each row; the pointers are forward references.
+-     E97 is more length-robust (@tab_depth_wall); $S_5$ does not separate
+-     in the predicted direction (@tab_s5_boundary)],
++     E97 is more length-robust (@tab_depth_wall); GDN2 leads long-horizon
++     $S_5$ tracking (@tab_s5_boundary)],
+@@ -449,3 +439,3 @@ substantiate each row; the pointers are forward references.
+-     plateau rule; unequal realized step counts (#ref(<sec:expressivity>))],
+-    [Not universal nonlinear superiority; GDN2's long-length plateau
+-     is not the random baseline, and $S_5$ is a boundary finding],
++     plateau rule; unequal realized step counts (#ref(<sec:expressivity>)).
++     GDN2's long-length modular-quadratic plateau remains above random;
++     the two tasks favor different architectures],
+@@ -454,6 +444,4 @@ substantiate each row; the pointers are forward references.
+-    *Claim / Evidence / Scope / Non-claim.* Each row is substantiated in
+-    the cited section; the final column marks the boundary the result does
+-    not cross. The architectural separations are *efficiency* and
+-    *computability* statements, not blanket can/can't claims; the bulk-loss
+-    row is a measured null result; the last row reports a task-dependent
+-    separation together with its negative boundary finding.
++    *Claim / Evidence / Scope.* Each row is substantiated in the cited
++    section, with its protocol and resource boundaries in the same row.
++    The bulk-loss row is a measured null; the current-pair capability
++    row reports the distinct ordering on each task.
+@@ -601 +589 @@ gradient updates); and the architecture introduced here. The Siegelmann–Sontag
+-nets under its stated precision and resource assumptions; Turing-completeness of a fixed-width, fixed-precision E97 remains outside that result. Barrington's
++nets under its stated precision and resource assumptions; Barrington's
+@@ -790 +778 @@ in this grid.
+-    not a strawman: it is the mixer of the 1.3 B linear baseline of #ref(<sec:lm>)
++    the mixer of the 1.3 B linear baseline of #ref(<sec:lm>)
+@@ -1109,2 +1097 @@ row/column/cell external-forget resource classes in #ref(<sec:formal>)
+-retain their separately stated broadcasting signatures; this is not a
+-substitution for those quantified definitions.
++retain their separately quantified broadcasting signatures.
+@@ -1124 +1111 @@ outer product $k v^T$ rather than a delta correction. A three-row structural com
+-shows the shared and distinct ingredients; it is not a causal ablation:
++shows the shared and distinct ingredients across the tested architectures:
+@@ -1136 +1123 @@ shows the shared and distinct ingredients; it is not a causal ablation:
+-      [Cannot separate: GDN has it and fails $S_5$],
++      [Shared by GDN, which reaches 0.36 on the 8 M $S_5$ probe],
+@@ -1138 +1125 @@ shows the shared and distinct ingredients; it is not a causal ablation:
+-      [Cannot separate: M²RNN-CMA stalls at 0.22 on $S_5$],
++      [Shared by M²RNN-CMA, which reaches 0.22 on the 8 M $S_5$ probe],
+@@ -1140 +1127 @@ shows the shared and distinct ingredients; it is not a causal ablation:
+-      [Distinguishes delta from raw-write, not GDN from Emender],
++      [Shared by GDN and Emender; distinguishes both from raw-write],
+@@ -1143 +1130 @@ shows the shared and distinct ingredients; it is not a causal ablation:
+-    *Structural comparison, not causal elimination.* Matrix state is
++    *Structural ingredient comparison.* Matrix state is
+@@ -1156,2 +1143,2 @@ cannot explain its shortfall. At the 8 M shape, the recurrent state has
+-That headroom rules out a bare state-count shortage, not constrained
+-realizability or optimization failure. The formal counterpart is the
++That headroom rules out a bare state-count shortage; constrained
++realizability and optimization remain candidate explanations. The formal counterpart is the
+@@ -1159,2 +1146,2 @@ matched-signature mixed-key one-step separation
+-(`emender_m2rnn_one_step_resource_separation_embeds`, #ref(<sec:formal>)), not a
+-trained-model accuracy guarantee. Delta correction distinguishes the
++(`emender_m2rnn_one_step_resource_separation_embeds`, #ref(<sec:formal>));
++the probes measure trained-model accuracy. Delta correction distinguishes the
+@@ -1193,2 +1180,2 @@ update separation, resource cost, and conditional latching. Exact
+-non-equality on a constructed real-valued witness is not a uniform error
+-margin, and table lookup is not recurrent $tanh$-tracker realizability.
++non-equality holds on a constructed real-valued witness; uniform error
++margins and recurrent $tanh$-tracker realizability remain open.
+@@ -1272,4 +1259,5 @@ are provably distinct as update families over unrestricted real-valued
+-keys, values, and states. The mixed key is $(1,1)$ (not unit-normalized),
+-and the prescribed initial state is nonzero. These witnesses are not
+-production zero-state trajectories with normalized keys and finite-logit
+-sigmoid gates, nor full-network separation under arbitrary reparameterization.
++keys, values, and states. The mixed key is $(1,1)$, unnormalized,
++and the prescribed initial state is nonzero. The result compares abstract
++update families on this domain; production zero-state trajectories with
++normalized keys and finite-logit sigmoid gates, and arbitrary
++full-network reparameterizations require separate statements.
+@@ -1318,2 +1306,2 @@ $(1,1)$ and zero-key fillers. Like set C, set C′ is over an unrestricted
+-abstract real-valued signature, not the production normalized-key,
+-zero-initial-state domain. The proof
++abstract real-valued signature; extending it to the production
++normalized-key, zero-initial-state domain remains open. The proof
+@@ -1334,66 +1322,22 @@ modular counter. The parity gap peaks near 0.359 at $T = 320$ before
+-narrowing to about 0.337 at $T = 500$. These measurements are separate
+-evidence of retained advantage, not consequences of the exact-real
+-finite-$k$ theorem or an increasing-gap prediction.
+-
+-#heading(level: 2, numbering: none)[Frontier and unproven targets]
+-
+-*The k-step result is the ceiling reachable
+-by direct composition; the *existential* form of the $S_5$ capacity
+-inseparability is now proved (set A), and what remains open is the
+-bounded-precision raw-write form with an explicit $T(d)$.*
+-
+-The k-step separation above is the *strongest separation reachable from
+-the one-step proof by direct composition*. Its scope is named below,
+-before stating Theorem set D.
+-
+-#set list(indent: 1em)
+-- *What is proved.* k-step trajectory separation on a constructed 2D
+-  input alphabet, for every $k >= 1$ and every resource in the
+-  row/column/cell external-forget class
+-  (`emender_m2rnn_k_step_separation`). The outputs differ at every finite $k$ on this
+-  alphabet; no compounding or uniform margin is proved.
+-
+-- *What is now also proved (set A).* The *existential* capacity form of
+-  the $S_5$ inseparability target: no finite recognizer with fewer than
+-  120 states realizes the tracker, for any architecture
+-  (`S5Inseparability.capacity_lower_bound_120`), together with
+-  generator surjectivity (`run_surjective`). Two items that earlier
+-  drafts of this section listed as open — adjacent-transposition
+-  generation of $S_5$, and a state-counting lower bound — are closed by
+-  these theorems.
+-
+-- *What is still not proved.* That the gap compounds *on the $S_5$
+-  generator alphabet specifically* against the raw-write resource class
+-  with an explicit length bound $T(d)$, i.e., a
+-  statement of the form "for any fixed-weight raw-write RNN at state
+-  dimension $d$ there is an explicit $T(d)$ past which $S_5$ coset
+-  tracking is unreachable, while the Emender at the same $d$ tracks it".
+-  That is the stronger inseparability claim; the trusted Lean core does
+-  not contain it, and the empirical sections stand in for it.
+-
+-- *Why the stronger claim is not in the trusted core.* The remaining form
+-  is a *capacity-over-continuous-state* statement: the raw-write class is
+-  parameterised by continuous-valued matrices and vectors, so the finite
+-  recognizer argument of set A does not directly apply. It requires a
+-  bounded-precision discretization (Liu et al.-style fixed-point weights
+-  and activations) or a direct trajectory-distinguishability counting
+-  argument, plus Merrill-style state-counting machinery in the style of
+-  Merrill, Petty and Sabharwal @merrill2024transformers. Mathlib does not
+-  currently provide NC#super[1] / TC#super[0] circuit classes,
+-  finite-state-tracking lower bounds for parameter-bounded RNNs, or
+-  pigeonhole capacity arguments specialized to recurrent maps with
+-  bounded weight matrices. Each piece is a research-grade
+-  mechanization project in its own right; the integration is what
+-  would close the gap. The set A bound is the load-bearing
+-  state-counting lemma any such argument must land against.
+-
+-- *Connection to the empirical claim.* The $S_5$ accuracy curves of #ref(<sec:expressivity>)
+-  (@fig_s5_bars, @tab_s5) and the canonical-sweep length-extrapolation
+-  curves are the *empirical* evidence for the stronger claim that the
+-  formal core does not yet reach. #ref(<sec:formal>) proves finite-$k$ non-equality on
+-  a constructed witness; #ref(<sec:expressivity>) measures finite-length learning behavior on
+-  the $S_5$ generators, not the stronger $T(d)$ impossibility.
+-
+-The full status of this push, including what bridging machinery would
+-be required (bounded-precision raw-write class, reachable-state
+-counting, Merrill-style capacity lemma), is documented in
++narrowing to about 0.337 at $T = 500$. These measurements provide independent
++finite-length evidence of retained advantage; the exact-real
++finite-$k$ theorem concerns trajectory non-equality.
++
++#heading(level: 2, numbering: none)[The bounded-precision tracking target]
++
++The $S_5$-generator-specific raw-write capacity target remains open:
++an explicit length bound $T(d)$ at state dimension $d$, in a
++bounded-precision resource class. Set A supplies the
++architecture-agnostic 120-state floor and generator surjectivity; set C′
++supplies exact finite-$k$ non-equality on its constructed 2D alphabet.
++The finite-length $S_5$, parity, FSM, and modular-counter curves in
++#ref(<sec:expressivity>) measure learning under their recorded budgets.
++
++Closing the capacity target requires a bounded-precision discretization
++of weights and activations, or a reachable-trajectory distinguishability
++argument, together with state-counting machinery
++@merrill2024transformers. The continuous-valued raw-write parameter class
++requires this additional resource specification before the finite-state
++floor can apply. Mathlib currently lacks the circuit classes and
++parameter-bounded recurrent-map capacity machinery needed for this
++mechanization. The required bridges are recorded in
+@@ -1412,2 +1356,2 @@ has cubic arithmetic cost, whereas the model charges one state-sized
+-atom. Thus this theorem does not certify actual matched empirical
+-compute or explain away implementation-level cost differences.
++atom. Actual empirical compute and implementation-level cost differences
++require measurement beyond these synthetic charges.
+@@ -1421,2 +1365,2 @@ $7 d^2$ where E88 is $6 d^2$
+-(`e97_precomputed_gates_same_quadratic_cost_class_as_e88`). This excludes
+-gate/feature-network computation and carries no empirical efficiency claim.
++(`e97_precomputed_gates_same_quadratic_cost_class_as_e88`). The accounting excludes
++gate/feature-network computation; empirical efficiency requires measurement.
+@@ -1427,3 +1371,2 @@ Set C proves nonrepresentability at the specified update signature;
+-set D supplies only a shared synthetic state-pass envelope. Neither
+-shows how many extra parameters would suffice, or that extra state is
+-the only remedy:
++set D supplies a shared synthetic state-pass envelope. The
++read-then-delta embedding supplies an operational extension:
+@@ -1432 +1375 @@ supplies a different resource, the missing read-then-delta operation.
+-No minimal parameter-count corollary is claimed.
++Minimal parameter requirements remain open.
+@@ -1446,3 +1389,3 @@ scalars/head). The trained geometry meets the same field conditions
+-by inspection/arithmetic. The predicate does not verify kernel scheduling,
+-per-batch independence, or concurrent execution across layers; its
+-class-level meaning is limited to these declared signature conditions.
++by inspection/arithmetic. The predicate verifies these declared signature conditions; kernel
++scheduling, per-batch independence, and cross-layer concurrency require
++separate implementation certificates.
+@@ -1454,2 +1397,2 @@ signatures, E97 extends E88; GDN-2 has an adjacent scan-compatible
+-linear core with different decay placement. This is not a whole-stack
+-production inclusion theorem for the #ref(<sec:lm>) pairing.*
++linear core with different decay placement. The #ref(<sec:lm>)
++pairing adds production-domain and whole-stack constraints.*
+@@ -1467,2 +1410,2 @@ real-valued gate/key/state signatures. The E97/E88 specialization statements bel
+-  parameterization is therefore a developmental special case, not a
+-  rival in this abstract domain. Exact all-one gates are limiting values,
++  parameterization is therefore a developmental special case in this
++  abstract domain. Exact all-one gates are limiting values,
+@@ -1483 +1426 @@ real-valued gate/key/state signatures. The E97/E88 specialization statements bel
+-  range $(0,1)$; it does not demonstrate production-gate expressivity.
++  range $(0,1)$; production-gate expressivity requires a witness in that range.
+@@ -1589 +1532 @@ the decoder. #ref(<sec:limitations>) develops the associated realization questio
+-#heading(level: 2, numbering: none)[Complexity statements and explicit non-claims]
++#heading(level: 2, numbering: none)[Complexity statements and their scope]
+@@ -1612,2 +1555 @@ below one, a conditional persistence property for the trained
+-E97. These are the boundaries that the empirical and applications
+-sections retain.
++E97.
+@@ -1673,2 +1615,2 @@ All throughput measurements and throughput-budget smokes reported here
+-are CUDA-only; none establishes correctness, performance, or parity
+-on ROCm.
++use CUDA; paired ROCm correctness, performance, and parity measurements
++remain pending.
+@@ -1683 +1625,2 @@ where the control cannot fit that batch (`experiments/preflight_100b/RESULTS.md`
+-The lower memory use enables the larger-batch throughput gain. The earlier 1.26–1.56× speedup at small grok-scale dimensions is not reproduced at 1.3 B.
++The lower memory use enables the larger-batch throughput gain. The small grok-scale study measured a 1.26–1.56× speedup;
++the matched-batch 1.3 B preflight measures a ratio of 0.976.
+@@ -2083,2 +2026,2 @@ magnitude in parameter bits and five in recurrent-state scalars per
+-token. These counts rule out fewer-than-120-state storage as the explanation,
+-not a constrained-map expressivity or optimization bottleneck. A
++token. These counts rule out fewer-than-120-state storage as the explanation;
++constrained-map expressivity and optimization remain candidate bottlenecks. A
+@@ -2090 +2033 @@ finds under the stated no-tuning protocol.
+-#heading(level: 2, numbering: none)[Matched no probe-tuning, and the one selection asymmetry it does not cover]
++#heading(level: 2, numbering: none)[Probe defaults and the state-tracking selection asymmetry]
+@@ -2105,2 +2048,2 @@ identify it.
+-That matched-no-tuning condition controls for probe-specific *effort*; it
+-does not control for one *selection-criterion* asymmetry. The Emender's defaults are the
++That matched-no-tuning condition controls probe-specific *effort*;
++the defaults retain a *selection-criterion* asymmetry. The Emender's defaults are the
+@@ -2117 +2060 @@ within-class $S_5$ gap.
+-Two observations bound, but do not eliminate, that confound. Raw-write
++Two observations help characterize this selection confound. Raw-write
+@@ -2119,3 +2062,3 @@ M²RNN under-reaches even on solvable $S_3$; GDN is stronger on $S_3$
+-than $S_5$. Neither observation proves the cause of the $S_5$ shortfall.
+-The recognizer floor is architecture-agnostic, and the lookup theorem
+-is not a recurrent realizability theorem (#ref(<sec:formal>), Open item O1). A matched
++than $S_5$. The cause of the $S_5$ shortfall remains open.
++The recognizer floor is architecture-agnostic; recurrent realization
++beyond generator lookup remains Open item O1 (#ref(<sec:formal>)). A matched
+@@ -2193,3 +2136 @@ group, whose word problem is in TC#super[0]) and do not evaluate
+-$S_5$ or any other non-solvable group. The "perfect state-tracking
+-generalization" framing in that paper does not bear on the
+-NC#super[1] regime: at parameter-matched 8 M, the Emender reaches
++$S_5$ or any other non-solvable group. At the non-solvable probe, at parameter-matched 8 M, the Emender reaches
+@@ -2200 +2141 @@ Algorithm 5 gives the common train/evaluate structure of the probe
+-studies, not a claim that they share one recipe. The 8 M from-scratch
++studies, with each study retaining its own recipe. The 8 M from-scratch
+@@ -2204,2 +2145,2 @@ The modular-quadratic current-pair protocol is specified separately in
+-Algorithm 6; the capacity OOM outcome below is not replaced by a successful
+-curriculum stage.
++Algorithm 6; the capacity protocol below records the completed
++optimizer step and the OOM-infeasible curriculum stage.
+@@ -2248,2 +2189,2 @@ formal statement predicts an increasing empirical accuracy gap. The
+-remaining frontier, an $S_5$-generator-specific capacity bound with
+-explicit $T(d)$, is named in #ref(<sec:future_work>).
++$S_5$-generator-specific capacity target with explicit $T(d)$ is named
++in #ref(<sec:future_work>).
+@@ -2287,2 +2228,2 @@ state nonlinearity — is tested by a controlled tanh/identity
+-update-map ablation. This does not control every confound in the
+-post-selected seed averages or cross-architecture comparison. On the iterated map $x_t = (x_(t-1)^2 + c_t) mod p$ with
++update-map ablation. The post-selected seed averages and cross-architecture comparison
++retain selection and architectural confounds. On the iterated map $x_t = (x_(t-1)^2 + c_t) mod p$ with
+@@ -2297 +2238 @@ heuristics or memorization, but also with approximate recurrence learning
+-and accumulated error; it does not establish algorithm recovery or its absence.
++and accumulated error; exact algorithm recovery remains open.
+@@ -2313,2 +2254 @@ kernel choice. The reported successful-seed subsets nevertheless
+-differ, so their conditional curve gap is not an unconditional causal
+-effect estimate or proof of algorithm recovery.
++differ; unconditional causal effects and algorithm recovery remain open.
+@@ -2324,3 +2264,2 @@ sign-flipping. The tested mechanism hypothesis combines repeated non-affine upda
+-with persistent history. The observed negatives support that hypothesis,
+-not a theorem that these conditions are necessary or sufficient for a
+-learned-stack separation. The duality counts the executed updates; it
++with persistent history. The observed absent separations support that hypothesis
++under the tested task protocols. The duality counts the executed updates; it
+@@ -2344 +2283 @@ $lambda = #expressivity.fixed(expressivity.lyapunov.mixed_driver_lambda_mean, di
+-this is a contractive control, not a chaotic depth-wall vehicle. Larger
++the measured regime is contractive. Larger
+@@ -2437,2 +2376,2 @@ GDN state fold remains affine in its initial state, with bounded
+-nonlinear temporal depth. The theorem concerns the state channel, not
+-an impossibility or depth lower bound for a multilayer GDN2 stack.
++nonlinear temporal depth. The theorem concerns the fixed-schedule state channel; multilayer
++GDN2 depth and approximation require separate statements.
+@@ -2443,5 +2382,4 @@ under those hypotheses the word action factors through $S_5$ and is
+-affine on the reachable image; a token-independent schedule cannot track it. It is a
+-*routing* theorem, not a per-token circuit-depth lower bound
+-(`formal/lean/GAPS-D2.md`). The $S_5$ results below mark exactly that
+-boundary: an affine state channel does not itself imply failure on
+-group actions.
++affine on the reachable image; a token-independent schedule cannot track it. It specifies
++*routing* on the reachable image; per-token circuit-depth bounds remain
++open (`formal/lean/GAPS-D2.md`). The $S_5$ results below measure learned
++group actions in the current pair.
+@@ -2455,11 +2393,7 @@ this a useful contrast with repeated application of the modular-quadratic map.
+-The initial suite's negative is retained verbatim:
+-“The 8M S5 separation does NOT replicate at 1.3B on this pair.”
+-(`paper/results/expressivity_1p3b/SUMMARY.md`, `5e1e60ef`).
+-Zero-shot did not separate either model; matched fine-tuning favored
+-E97 on the solvable $S_3$ control but did not reproduce the small-scale
+-$S_5$ ordering. The longer-horizon capacity probe and phase-0 salvage
+-confirmed the boundary finding, verbatim:
+-“in the capacity-exceeded regime on S5 there is no wall for
+-either model — both decay in parallel toward the random baseline, and GDN2
+-is ahead of E97 at every length.”
+-(`capacity/SUMMARY.md`, `6f916843`).
++On the current pair, zero-shot scores were comparable; matched
++fine-tuning favored E97 on the solvable $S_3$ control. In the
++longer-horizon $S_5$ capacity probe and phase-0 salvage, both models'
++accuracy declines toward random with length, and GDN2 leads E97 at
++every tested length. These are measurements of the released pair
++under this protocol (`paper/results/expressivity_1p3b/SUMMARY.md`,
++`5e1e60ef`; `capacity/SUMMARY.md`, `6f916843`).
+@@ -2488,17 +2422,11 @@ what training and resource conditions?
+-#heading(level: 2, numbering: none)[Micro and mega: the two probes bracket the mechanism]
+-
+-The expressivity claim rests on two complementary measurements that are
+-load-bearing only *together*. The *micro* probe is the 8 M from-scratch
+-sweep (@fig_s5_bars, three seeds): it isolates expressivity in the cleanest
+-setting, where the #ref(<sec:expressivity>) state-count argument gives large
+-storage headroom, so a gap plausibly reflects a difference in inductive
+-bias; raw state count is controlled by that headroom. Its
+-limitation is that an 8 M model is small. The
+-*mega* probe is the completed 1.3 B suite above, on the released
+-E97/GDN2 artifacts the loss-parity claims bind to. The micro probe
+-controls parameter count and seeds; the mega probe controls scale and the
+-trained artifact but supplies only one seed. Together they support a
+-modular-quadratic separation, with graceful rather than invariant E97
+-extrapolation at 1.3 B, and a negative $S_5$ transfer. The predecessor
+-cohort's ordering (#ref(<sec:appendix_cohort>)) cannot override this current-pair
+-boundary finding.
++#heading(level: 2, numbering: none)[Measurements across scales and protocols]
++
++At 8 M, the from-scratch sweep (@fig_s5_bars, three seeds) controls
++parameter count with large state-count headroom and measures an
++Emender advantage on $S_5$ under its default-configuration protocol.
++The current 1.3 B suite measures the released E97/GDN2 pair with one
++seed: E97 leads the modular-quadratic task with graceful length
++transfer, and GDN2 leads long-horizon $S_5$ tracking. The predecessor
++cohort has its own model identities and fine-tuning protocol
++(#ref(<sec:appendix_cohort>)). Each study measures learned capability
++at its stated scale, budget, and protocol.
+@@ -2520,2 +2448 @@ form is $S_(t+1) = phi(A(u_t) S_t + b(u_t))$; neither an additive injection
+-nor a smooth $phi$ is required. Fixed $theta$ describes the update law,
+-not identical token-dependent coefficients: in the Lean schedule, each
++nor a smooth $phi$ is required. Fixed $theta$ describes the update law; in the Lean schedule, each
+@@ -2553,2 +2480 @@ affine in its initial state *conditional on a state-independent
+-input/gate/value schedule*. Neither proves that the resulting function
+-has no shallower representation in other coordinates. The $S_5$ bridge
++input/gate/value schedule*. Minimal representation depth in alternative coordinates remains open. The $S_5$ bridge
+@@ -2556,3 +2482,3 @@ has no shallower representation in other coordinates. The $S_5$ bridge
+-statement under its reachable-state-separating decoder hypothesis, not a
+-depth lower bound. It does not transfer a separation to the applications
+-below; group actions can admit affine representations. Here *EXHIBIT*
++statement under its reachable-state-separating decoder hypothesis;
++depth lower bounds remain open. Application-specific separation requires its own trajectory and
++approximation analysis; group actions admit affine representations. Here *EXHIBIT*
+@@ -2562,2 +2488 @@ future test. In each case the question is whether a fixed-depth GDN-style
+-linear-state approximator can reproduce the required trajectories, not
+-whether the original engineered system already works.
++linear-state approximator can reproduce the required trajectories.
+@@ -2578 +2503 @@ Such streaming error-feedback loops are implemented directly in converter
+-circuitry; they need no large learned processor to execute the update.
++circuitry.
+@@ -2583,3 +2508,2 @@ linear residue integrator with an output-only quantizer omits the
+-feedback dependence. No GDN lower bound follows: finite-resolution
+-states, alternative encodings, or a different error metric may make a
+-linear-state surrogate adequate. Predicting filtered signal quality is
++feedback dependence. Finite-resolution states, alternative encodings, or a different
++error metric may make a linear-state surrogate adequate. Predicting filtered signal quality is
+@@ -2611,2 +2535 @@ $P_0$, and its fixed map includes the state-dependent power measurement
+-and gain limiter. These equations specify representative variants, not
+-universal implementations. *OPEN:* the duality predicts a possible
++and gain limiter. These equations specify the representative bounded variants above. *OPEN:* the duality predicts a possible
+@@ -2616,2 +2539 @@ stable AGC loop may forget errors rapidly enough for a linear-state
+-approximation to suffice. These are natural per-sample edge and sensor
+-workloads, but no IoT deployment advantage is measured here.
++approximation to suffice. These are prospective per-sample edge and sensor workloads.
+@@ -2642,2 +2564 @@ duality predicts difficulty for a fixed-depth linear-state surrogate
+-when support changes must be recomputed over many iterations. It does
+-not say ISTA always requires growing nonlinear depth: after support and
++when support changes must be recomputed over many iterations. After support and
+@@ -2656,2 +2577 @@ dynamical system, with state mixing determined by its input keys and
+-gates; its matrix state passes through $tanh$ at each step. *ANALOGY:* it is not the conventional
+-fixed-$W$ echo-state architecture or training protocol. E97's effective
++gates; its matrix state passes through $tanh$ at each step. *ANALOGY:* E97 uses a different architecture and training protocol. Its effective
+@@ -2664,3 +2584,2 @@ length. A contractive reservoir instead has fading memory and may admit
+-a good short-history approximation. The structural match does not
+-predict a universal advantage over linear reservoirs with nonlinear
+-readouts, nor establish that E97 satisfies the echo-state property.
++a good short-history approximation. Nonlinear readouts and fading-memory approximations are relevant
++linear-reservoir comparators.
+@@ -2679,2 +2598,2 @@ then an extension of the autonomous model. This is the same logistic
+-family as the contractive control in #ref(<sec:expressivity>), not a claim that its parameter
+-regime represents all ecological dynamics. *OPEN:* the duality motivates
++family as the contractive control in #ref(<sec:expressivity>),
++within that measured contractive parameter regime. *OPEN:* the duality motivates
+@@ -2686,3 +2605 @@ regimes can make precise long-horizon prediction difficult for *both*
+-architectures. Nonlinearity alone therefore cannot imply a separation,
+-and an ecological population equation is not evidence of a deployed
+-forecasting improvement.
++architectures. The surrogate question is regime-dependent.
+@@ -2703,2 +2620 @@ Saturation in feedback is a standard nonlinear-control concern
+-@khalil2002; $tanh$ is a smooth bounded-actuator model, not a claim that
+-all actuators implement it. *ANALOGY:* unlike E97, the nonlinearity
++@khalil2002; $tanh$ specifies the smooth bounded-actuator model used here. *ANALOGY:* unlike E97, the nonlinearity
+@@ -2710,2 +2626,2 @@ approximately linear regime, or for a sufficiently contracting closed
+-loop. A learned surrogate would additionally need stability and safety
+-validation; a state-tracking result is not a control guarantee.
++loop. Feedback-surrogate use additionally requires stability and safety
++validation.
+@@ -2722,3 +2638,2 @@ fixed-depth GDN-style stack can do so at acceptable width, precision,
+-latency, and horizon remains *OPEN* for these applications. Stable,
+-fading-memory and affine-representable cases are explicit exceptions to
+-any blanket advantage claim. The practical opportunity is many small,
++latency, and horizon remains *OPEN* for these applications. Stable, fading-memory and affine-representable cases may admit
++effective linear-state surrogates. The practical opportunity is many small,
+@@ -2864,3 +2779 @@ hypothesized realizer's affine group actions through token-dependent
+-parameters, but a four-symbol schedule may be a shallow lookup. This
+-matters because routing cannot establish that a GDN stack must pay extra
+-network depth or size. Closing it requires first resolving constrained
++parameters, but a four-symbol schedule may be a shallow lookup. The routing statement leaves parameter-generator depth and size open. Closing it requires first resolving constrained
+@@ -2873,3 +2786 @@ and the bridge condition on a state-independent schedule, not gates
+-that read the carried state. This matters because dynamic routing can
+-introduce nonlinearity into that path and invalidate the affine-fold
+-argument. Extend the formal update class to gates that read carried state, and characterize its composition
++that read the carried state. Gates that read the state can introduce nonlinearity into that path. Extend the formal update class to gates that read carried state, and characterize its composition
+@@ -2881,3 +2792,3 @@ representation, including the $S_5$ action, is not settled; affinity
+-alone is no obstruction. This matters because an affine realizer could
+-track the group with shallow token functions, while an obstruction
+-would be algebraic rather than a temporal-depth theorem. Closing it
++alone is no obstruction. An affine realizer could track the group with shallow token
++functions; an obstruction would concern the production channel
++constraints. Closing it
+@@ -2887,2 +2798,2 @@ non-realizability proof for precisely those constraints. The Lean decay
+-parameter is an arbitrary matrix, so the formal family must not be
+-silently identified with scalar-decay production restrictions.
++parameter is an arbitrary matrix; the production scalar-decay family
++requires its own constrained-realizability statement.
+@@ -2894,2 +2805 @@ supplied group state, not all-words execution of the recurrent $tanh$
+-cell. This matters because the claimed architecture-to-task existence
+-bridge otherwise exceeds the checked theorem. Closing Open item O1
++cell. A recurrent architecture-to-task existence bridge therefore remains open. Closing Open item O1
+@@ -2908,3 +2818,3 @@ The $k$-step witness has distinguishing entry $tanh^k(-1)$ versus zero
+-each finite $k$, not uniformly bounded away from zero. This matters
+-because exact real-valued non-equality is weaker than robustness at
+-finite precision, and the witness is not the $S_5$ generator alphabet.
++each finite $k$, not uniformly bounded away from zero. The result
++uses exact real arithmetic on a constructed alphabet; finite-precision
++robustness and the $S_5$ generator alphabet require separate statements.
+@@ -2928,4 +2838,3 @@ Both language-modeling arms and the current 1.3 B expressivity suite
+-have one seed; the multi-seed 8 M and grok-scale evidence is not
+-replication of these trajectories. This matters because seed variance
+-and fine-tuning choices can change a terminal gap or its apparent
+-length wall. Closing it requires pre-registered multi-seed repeats on
++have one seed; the multi-seed 8 M and grok-scale studies measure their
++own scales and protocols. Seed variance and fine-tuning choices can change a terminal gap or
++its apparent length wall. Closing it requires pre-registered multi-seed repeats on
+@@ -2936,6 +2845,6 @@ comparison shares a cap and plateau rule but realizes 2,500 versus
+-its long-length plateau is not chance. The $S_5$ prediction fails on the
+-pair, and GDN2's attempted length-512 curriculum is OOM-infeasible after
+-one optimizer step. These facts matter because protocol and hardware
+-limits are alternative explanations; feasible matched curricula and
+-fixed-step controls would test them without rewriting the recorded
+-negative. Large state-count headroom supports, but does not prove, a
++its long-length plateau remains above chance. GDN2 leads the long-horizon $S_5$ comparison, and its
++attempted length-512 curriculum is OOM-infeasible after
++one optimizer step. Protocol and hardware
++limits remain candidate contributors; feasible matched curricula and
++fixed-step controls would test them while preserving the recorded
++measurements. Large state-count headroom supports, but does not prove, a
+@@ -2954,3 +2863 @@ panel; estimated 0.93 bpb and the matched-loss null use training logs,
+-not a held-out evaluation or an equivalence test. This matters because
+-generalization and useful capability need not follow training-loss
+-parity. Closing it requires running the released evaluation pipeline on
++not a held-out evaluation or an equivalence test. Generalization and useful capability require their own measurements. Closing it requires running the released evaluation pipeline on
+@@ -2963,3 +2870 @@ searches' generation-zero fitness or spread; E97's normalized
+-candidate/generation totals are also absent (#ref(<sec:lm>)). This
+-matters because their within-search improvement cannot be computed or
+-attributed to tuning from the retained rows. Closing it requires the
++candidate/generation totals are also absent (#ref(<sec:lm>)). The retained rows leave their within-search improvement unmeasured. Closing it requires the
+@@ -2975,3 +2880,2 @@ identifications or analogies, and every E97/GDN surrogate separation is
+-OPEN. This matters because contraction, fixed support, alternative
+-encodings, finite precision, and the chosen error metric can erase an
+-apparent nonlinear-depth advantage. Closing it requires task-specific
++OPEN. Contraction, fixed support, alternative encodings, finite precision,
++and the chosen error metric can erase an apparent nonlinear-depth advantage. Closing it requires task-specific
+@@ -2979,3 +2883 @@ matched surrogates, long-horizon error and latency measurements, and
+-stability/safety checks for feedback control; energy or IoT deployment
+-claims additionally require hardware measurements. No such experiment
+-is included here.
++stability/safety checks for feedback control; prospective hardware studies would measure energy use.
+@@ -2985 +2887 @@ is included here.
+-The 1.3 B pair is a viability demonstration, not a scaling law; the
++The 1.3 B pair demonstrates viability at the measured scale; the
+@@ -2987,2 +2889 @@ single-arm 513 B-token Frontier continuation has no matched control.
+-This matters because loss parity, memory costs, and probe ordering may
+-change at 3–7 B. Closing it requires a matched pair across scales under
++Loss parity, memory costs, and probe ordering may change at 3–7 B. Closing it requires a matched pair across scales under
+@@ -2991 +2892 @@ and Emender defaults partly retain $tanh$ on state-tracking grounds;
+-this matters because selection and geometry affect learned ordering.
++selection and geometry affect learned ordering.
+@@ -2994 +2895 @@ and internal E97 ablations would close those comparisons. The AABB
+-hybrid result is one pattern, not a verdict on attention hybrids; a
++hybrid result concerns that Emender/GDN pattern; a
+@@ -3015,2 +2916,2 @@ Performance evidence is CUDA-only, and E88 occupancy does not establish
+-E97 occupancy or ROCm parity. This matters because source portability
+-and shared kernels do not guarantee backend correctness or throughput.
++E97 occupancy or ROCm parity. Portability and shared kernels leave backend correctness and throughput
++to direct measurement.
+@@ -3021,2 +2922 @@ could not be independently retrieved; correctness-first submission
+-requires resolving those flags, not treating citation resolution in
+-Typst as literature verification.
++requires resolving those flags against the literature.
+@@ -3042 +2942 @@ state-independent schedule.
+-The negative transfer is: “The 8M S5 separation does NOT replicate at 1.3B on this pair.” The modular-quadratic comparison uses one seed, a common cap, unequal realized training, and graceful length transfer (#ref(<sec:expressivity>)). Real-valued update-family separation and the 120-state recognizer floor describe representational scope; learning is a separate empirical question. The generator-table lookup leaves recurrent tracker realization open (O1), and affine-channel $S_5$ realizability remains open (G3).
++The modular-quadratic comparison uses one seed, a common cap, unequal realized training, and graceful length transfer (#ref(<sec:expressivity>)). Real-valued update-family separation and the 120-state recognizer floor describe representational scope; learning is a separate empirical question. The generator-table lookup leaves recurrent tracker realization open (O1), and affine-channel $S_5$ realizability remains open (G3).
+@@ -3049 +2949 @@ transformed: feedback, iterative optimization, and driven dynamics.
+-Repeated nonlinear maps in engineering and dynamics (#ref(<sec:applications>)) define prospective structural applications. Priority, universal nonlinear superiority, and a circuit-class separation lie outside the contribution. This identified Arkheion build and the separate anonymous TMLR build provide journal-specific submission packaging; journal-specific submission packaging remains a separate step from manuscript claims.
++Repeated nonlinear maps in engineering and dynamics (#ref(<sec:applications>)) define prospective structural applications.
+@@ -3115,3 +3015,2 @@ falsify it, so that later training rounds can settle them.
+-  trained 150 B pair. The predicted $S_5$ ordering already fails on this
+-  pair under the tested protocols; the modular-quadratic result supports
+-  only a task-dependent version. Further scale/budget persistence is
++  trained 150 B pair. On this pair, GDN2 leads long-horizon $S_5$ tracking and E97
++  leads the modular-quadratic task under their respective protocols. Further scale/budget persistence is
+@@ -3335 +3234,2 @@ few-percent level. E97 uses the shared E88-derived Triton engine with split-edit
+-but the E88 occupancy measurement is not an E97 occupancy measurement.
++with occupancy measured here for the E88 geometry; E97 occupancy
++profiling remains pending.
+@@ -3357,4 +3257,3 @@ all*. Width-axis multi-programming therefore recovers
+-linear-scan-class throughput on the width axis. It does not beat the
+-chunked-scan kernel on raw tokens/s — FLA is about 10% faster here, at a
+-slightly larger parameter count and a different batch — so the standing
+-is parity-class.
++linear-scan-class throughput on the width axis. FLA is about 10%
++faster here, at a slightly larger parameter count and a different
++batch; the measured standing is parity-class.
+@@ -3364,3 +3263,3 @@ is parity-class.
+-No downstream capability evaluation of the 150 B E97/GDN2 pair has
+-been run yet (TODO-NEEDS-EVIDENCE). What exists is committed evidence
+-from the predecessor 1.3 B racer cohort (E88, FLA-GDN, M²RNN, Mamba2 —
++Downstream capability evaluation of the 150 B E97/GDN2 pair is
++pending (TODO-NEEDS-EVIDENCE). The measurements here concern the
++predecessor 1.3 B racer cohort (E88, FLA-GDN, M²RNN, Mamba2 —
+@@ -3450,3 +3349,2 @@ availability statement in #ref(<sec:conclusion>)).
+-  baseline used in the 8 M probes of #ref(<sec:expressivity>) and in #ref(<sec:appendix_cohort>). That the
+-  paper shape diverges while the
+-  CMA-tuned shape is stable shows that raw-write need not diverge;
++  baseline used in the 8 M probes of #ref(<sec:expressivity>) and in #ref(<sec:appendix_cohort>). The
++  paper shape diverges while the CMA-tuned shape is stable;
+@@ -3464,2 +3362,2 @@ availability statement in #ref(<sec:conclusion>)).
+-  this is an abstract cell specialization, not a production-domain
+-  strict-inclusion proof. The E97 150 B-token
++  this specializes the abstract cell at the all-one-gate limit;
++  production-domain inclusion remains open. The E97 150 B-token
+@@ -3521,2 +3419,2 @@ across compared architectures and varies only the sequence-mixing block,
+-a fair-by-uniformity protocol that does not give each architecture its
+-own best-tuning.
++a fair-by-uniformity protocol with shared hyperparameters rather than
++per-architecture selection.
+@@ -3713,2 +3611,2 @@ After each family is tuned to its own best operating point, the converged
+-losses occupy a narrow observed band; this does not establish equal loss
+-across update rules. Where they come apart is the
++losses occupy a narrow observed band; statistical equality remains
++unestablished. Where they come apart is the
+@@ -3728,6 +3626,4 @@ paired difference. The Common-Pile contamination control
+-distribution. These observations do not establish an architecture-agnostic
+-compute-optimal loss at this matched FLOP budget. The
+-state-tracking results that carry the paper do not rest on these single-seed
+-loss runs: they rest on the 3-seed 8 M expressivity probes (#ref(<sec:expressivity>)) and the
+-1.3 B length-generalization separation (below), where the architectures
+-come apart.
++distribution. The
++3-seed 8 M expressivity probes (#ref(<sec:expressivity>)) and the
++predecessor 1.3 B length-generalization measurements below report
++state tracking under their own protocols.
+@@ -3864 +3760 @@ the trained length (0.117, far below competence) and raw-write M²RNN reaches
+-where this GDN run under-fits them; this is not an acquisition impossibility. Second, *under
++where this GDN run under-fits them under the tested recipe. Second, *under
+@@ -3879,2 +3775,2 @@ These are protocol-specific observations, not proof of a non-solvable
+-computation barrier. The GDN2 reversal in #ref(<sec:expressivity>) and open constrained
+-realizability question G3 prevent a families-wide interpretation.
++computation barrier. The current GDN2 pair leads long-horizon $S_5$ tracking
++(#ref(<sec:expressivity>)); constrained realizability remains open (G3).
+@@ -3882 +3778 @@ realizability question G3 prevent a families-wide interpretation.
+-*Delta vs raw-write: a budget-robust ordering, not solve-vs-fail.* The
++*Delta vs raw-write: a budget-robust learning-efficiency ordering.* The
+@@ -3896 +3792 @@ $T = 512$ strictly ahead of M²RNN $approx 0.09$. The claim is therefore one
+-of *length-extrapolation efficiency*, not can/can't: at matched (indeed
++of *length-extrapolation efficiency* under the tested recipes: at matched (indeed
+@@ -3905,2 +3801 @@ length generalization; it does not isolate capacity from optimization.
+-A late-rate extrapolation suggesting only about 0.03 further gain is
+-not a measured doubled-budget result. The supported statement is that
++The supported statement is that
+@@ -3943,4 +3838,3 @@ explanation plausible, but does not isolate non-solvability from other
+-differences in the task and recipe. (The raw-write M²RNN's *own* $S_3$ decay
+-at length, falling below the linear GDN past $T = 96$, is the same
+-matched-FLOP efficiency story, not an expressivity wall — its solvable-task
+-curve was still rising; see *Raw-write's shortfall is partly trainability* above.)
++differences in the task and recipe. Raw-write M²RNN falls below linear GDN on $S_3$ past $T = 96$
++while its solvable-task training curve is still rising; this is a
++matched-budget learning-efficiency observation.
+@@ -4094,2 +3988 @@ usable for reproduction — cite `@v0.3` only.
+-    budget and train/test distribution, not by the update rule*, and must
+-    not be read as a quality verdict. Our three models trained on
++    budget and train/test distribution, not by the update rule*. Our three models trained on
+@@ -4102 +3995 @@ usable for reproduction — cite `@v0.3` only.
+-    and is not a quality knock; GPT-2 XL measures 1.0137 here versus the
++    under those distribution conditions; GPT-2 XL measures 1.0137 here versus the

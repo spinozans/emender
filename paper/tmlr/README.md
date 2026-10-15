@@ -14,8 +14,8 @@ bibliography; `canonical-guard.mjs` checks it and the source SHA-256.
 
 ## Deliverables
 
-- `submission.pdf`: anonymous, **60 pages**, default official TMLR submission style.
-- `preprint.pdf`: identified, **60 pages**, official TMLR `preprint` option.
+- `submission.pdf`: anonymous, **59 pages**, default official TMLR submission style.
+- `preprint.pdf`: identified, **59 pages**, official TMLR `preprint` option.
 - `arxiv-source.tar.gz`: self-contained identified source archive, with exactly
   one master (`main.tex`), explicitly selecting preprint mode. It was unpacked
   and rebuilt separately; its PDF text is identical to `preprint.pdf`.
@@ -32,7 +32,7 @@ and Poppler (`pdftotext`, `pdfinfo`, `pdfseparate`). No Python is needed.
 ```bash
 cd paper/tmlr
 bash build.sh
-node --test verify-symbols.test.mjs notation-audit.test.mjs author-rulings.test.mjs appendix-order.test.mjs register-appendix.test.mjs
+node --test verify-symbols.test.mjs notation-audit.test.mjs author-rulings.test.mjs appendix-order.test.mjs register-appendix.test.mjs armor-audit.test.mjs
 node verify.mjs
 bash bundle-arxiv.sh
 ```
@@ -50,7 +50,7 @@ typst compile --root ../.. --pdf-standard 1.5 --no-pdf-tags --pages 1,2 \
 pdfseparate /tmp/emender-packaging-figures.pdf assets/figure-%d.pdf
 node convert.mjs
 bash build.sh
-node --test verify-symbols.test.mjs notation-audit.test.mjs author-rulings.test.mjs appendix-order.test.mjs register-appendix.test.mjs
+node --test verify-symbols.test.mjs notation-audit.test.mjs author-rulings.test.mjs appendix-order.test.mjs register-appendix.test.mjs armor-audit.test.mjs
 node verify.mjs
 bash bundle-arxiv.sh
 ```
@@ -104,12 +104,24 @@ prime loss. Explicit caption/table font-size overrides are forbidden.
 PDF text, final engine logs, archive-build logs, and SHA-256 digests are retained
 in `validation/`; the sample-by-sample baseline report is `../../P9-report.md`
 and the repair validation/push receipt is `../../P11-report.md`.
-The current baseline revision and checks are recorded in `../../P13-report.md`.
+The current baseline revision and checks are recorded in `../../P18-report.md`.
+P18 audits each defensive element against a live claim, folds the claim table to
+Claim / Evidence / Scope, and states the current-pair S5 ordering as a finding.
+`validation/p18-edit-ledger.json` replays the exact source/caption delta from
+`aa28773f`; `node paper/tmlr/validation/p18-audit.mjs` (from the repository root)
+checks its preservation boundaries. Three prose samples are re-voiced without
+losing their scopes; the other 17 are unchanged. The exact symbol pins are
+706 expressions, 444 attachments and eight PDF state primes; all display
+equations and pseudocode are unchanged. `armor-audit.test.mjs` rejects lost
+claim-row scopes, findings, unequal steps, OOM facts, formal ceilings, and
+the retired replication/Non-claim framing.
 
 Builds have no errors, missing glyphs, undefined citations/references,
 overfull boxes, or oversized floats. Nonfatal underfull-box spacing warnings
 remain. The supervisor-approved canonical `mathlib4` entry uses 2026 explicitly as
 an access year, not a publication year, with that basis labeled in its note;
 the bibliography copies remain byte-identical and no empty-year warning remains.
-The canonical conclusion's Arkheion/compliance caveat and existing TODO-NEEDS-EVIDENCE text
-are preserved verbatim, not silently revised during packaging.
+P18 removes the conclusion's obsolete packaging-as-claim caveat; packaging
+compliance is checked here, outside the scientific narrative. Existing
+TODO-NEEDS-EVIDENCE disclosures remain. The rebuilt canonical PDF has 65 pages;
+References precede the single register Appendix A in all three PDFs.

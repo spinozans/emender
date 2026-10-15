@@ -1,0 +1,1206 @@
+[
+  {
+    "id": "A1",
+    "baseLine": 37,
+    "old": "The\n    negative transfer is: “The 8M S5 separation does NOT replicate at\n    1.3B on this pair.” ",
+    "replacement": "",
+    "claim": null,
+    "decision": "retire",
+    "reason": "The current pair is not a replication claim; its GDN2-leading finding is already in the preceding sentence.",
+    "baseEndLine": 39
+  },
+  {
+    "id": "A2",
+    "baseLine": 164,
+    "old": "1.3 B result is therefore a replication across the *update rule and\ntuning regime* at a single scale: both arms sit in the same\n1.3 B-class parameter band, and whether the separation or the loss\nparity survives at 7 B and beyond remains a limitation in\n#ref(<sec:limitations>).",
+    "replacement": "1.3 B result establishes training viability for both update rules\nafter per-family tuning at this scale; loss parity and probe ordering\nat 7 B and beyond remain open (#ref(<sec:limitations>)).",
+    "claim": "Training viability and matched-loss null",
+    "decision": "fold",
+    "reason": "Scope attached to the live claim.",
+    "baseEndLine": 168
+  },
+  {
+    "id": "A3",
+    "baseLine": 173,
+    "old": "At 1.3 B, the modular-quadratic probe reproduces a depth-wall\nsignature, but the $S_5$ ordering does not transfer",
+    "replacement": "On the current 1.3 B pair, E97 leads the modular-quadratic probe,\nwhile GDN2 leads long-horizon $S_5$ tracking",
+    "claim": "Task-dependent current-pair capability",
+    "decision": "keep-as-finding",
+    "reason": "Scope attached to the live claim.",
+    "baseEndLine": 174
+  },
+  {
+    "id": "A4",
+    "baseLine": 232,
+    "old": "the current 1.3 B pair supplies a positive\niterated-map result and a negative group-state result.",
+    "replacement": "the current 1.3 B pair favors E97 on the iterated map\nand GDN2 on long-horizon group-state tracking.",
+    "claim": "Task-dependent current-pair capability",
+    "decision": "keep-as-finding",
+    "reason": "Scope attached to the live claim.",
+    "baseEndLine": 233
+  },
+  {
+    "id": "A5",
+    "baseLine": 319,
+    "old": "This is a\n  representability statement inside the formalized fixed-weight\n  raw-write resource class; general or learned-weight superiority remains open.",
+    "replacement": "This is a\n  representability statement inside the formalized fixed-weight\n  raw-write resource class.",
+    "claim": "Matched-signature update-family separation",
+    "decision": "fold",
+    "reason": "Retain the quantified resource class; retire an unsolicited general-superiority defense.",
+    "baseEndLine": 321
+  },
+  {
+    "id": "A6",
+    "baseLine": 346,
+    "old": "The $S_5$ separation does *not* replicate:\n  GDN2 is ahead in the long-horizon probe",
+    "replacement": "On $S_5$,\n  GDN2 is ahead in the long-horizon probe",
+    "claim": "Task-dependent current-pair capability",
+    "decision": "keep-as-finding",
+    "reason": "Scope attached to the live claim.",
+    "baseEndLine": 347
+  },
+  {
+    "id": "A7",
+    "baseLine": 370,
+    "old": "extends the structural question\nwithout claiming new deployments",
+    "replacement": "extends the structural question\nto prospective workloads",
+    "claim": "Prospective structural applications",
+    "decision": "fold",
+    "reason": "Scope attached to the live claim.",
+    "baseEndLine": 371
+  },
+  {
+    "id": "A8",
+    "baseLine": 386,
+    "old": "The table below\nstates each load-bearing claim with its evidence, its scope, and — in the\nlast column — the boundary the same result observes. The body sections\nsubstantiate each row; the pointers are forward references.\n\n#figure(\n  align(center)[#text(size: 8pt)[#table(\n    columns: (1.45fr, 2.05fr, 1.35fr, 1.95fr),\n    align: (left + top, left + top, left + top, left + top),\n    stroke: 0.5pt,\n    inset: 5pt,\n    table.header(\n      [*Claim*], [*Evidence*], [*Scope*], [*Non-claim*],\n    ),\n    [Pure nonlinear-recurrent LMs train at the 1.3 B-class],\n    [E97 reaches an estimated 0.93 bpb on The Pile at 150.8 B tokens,\n     no time-axis trick, no attention hybrid (#ref(<sec:intro>), #ref(<sec:lm>))],\n    [One E97 run, single seed; viability demonstration],\n    [Not a scaling law and not seed-averaged; one artifact shown to exist],\n\n    [Bulk LM loss does *not* distinguish the 1.3 B pair (a measured null\n     result)],\n    [Matched-token cutoff at 150.79 B: smoothed gap 0.010 nats/token,\n     sign window-dependent; both arms CMA-ES-hardened (#ref(<sec:lm>))],\n    [A measured null result on *training-log* loss at exactly matched\n     tokens; the CMA-stage 5-model held-out band (2.01–2.10 bpb)\n     corroborates at search scale (#ref(<sec:lm>))],\n    [Held-out bpb for the 150 B pair itself is pending\n     (TODO-NEEDS-EVIDENCE, #ref(<sec:lm>)); does not license a loss ordering],\n\n    [Delta-correcting $>$ raw-write on state tracking, at every length],\n    [8 M $S_5$ probe, 3 seeds (@fig_s5_bars); Lean matched-resource\n     separation (#ref(<sec:formal>), sets C/C′/D)],\n    [Budget-robust *ordering* and representability statement inside the\n     formalized fixed-weight raw-write class],\n    [Not \"delta solves / length-generalizes $S_5$\": at 8 M both\n     nonlinear updates plateau below ceiling at length; it is an\n     efficiency gap, not impossibility],\n\n    [A controlled tanh/identity update-map intervention tests length transfer],\n    [Iterated-map probes: E97 holds $approx 0.98$ flat from $T = 128$ to\n     $T = 4096$ where byte-identical E97-linear and GDN2 collapse;\n     two negative task families are consistent with the mechanism hypothesis (#ref(<sec:expressivity>))],\n    [Small-scale (dim 256–1024) grokking-regime statement,\n     with an isolated update-map flag but different successful-seed subsets],\n    [Not an unconditional causal effect or exact algorithm-recovery result;\n     the two negative families reject a universal superiority claim],\n\n    [Group-state tracking is protocol-dependent],\n    [8 M and predecessor GDN probes decay at length; the current\n     GDN2 pair reverses the predicted ordering (@tab_s5_boundary)],\n    [Measured learning behavior; Lean proves the architecture-agnostic\n     120-state recognizer floor (#ref(<sec:formal>))],\n    [No blanket affine-channel impossibility; constrained realizability\n     is open (G3), and TC#super[0] versus NC#super[1] is unresolved],\n\n    [Expressivity at 1.3 B on the trained pair],\n    [Modular-quadratic terminal accuracy:\n     #expressivity.percent(expressivity.wall-acc(expressivity.wall-e97, 128)) vs\n     #expressivity.percent(expressivity.wall-acc(expressivity.wall-gdn2, 128));\n     E97 is more length-robust (@tab_depth_wall); $S_5$ does not separate\n     in the predicted direction (@tab_s5_boundary)],\n    [One seed, released checkpoints, common pre-registered cap and\n     plateau rule; unequal realized step counts (#ref(<sec:expressivity>))],\n    [Not universal nonlinear superiority; GDN2's long-length plateau\n     is not the random baseline, and $S_5$ is a boundary finding],\n  )]],\n  caption: [\n    *Claim / Evidence / Scope / Non-claim.* Each row is substantiated in\n    the cited section; the final column marks the boundary the result does\n    not cross. The architectural separations are *efficiency* and\n    *computability* statements, not blanket can/can't claims; the bulk-loss\n    row is a measured null result; the last row reports a task-dependent\n    separation together with its negative boundary finding.\n  ],\n) <tab_claims>\n",
+    "replacement": "The table below states each load-bearing claim with its evidence and\nscope. The body sections substantiate each row; the pointers are forward\nreferences.\n\n#figure(\n  align(center)[#text(size: 8pt)[#table(\n    columns: (1.45fr, 2.05fr, 3.3fr),\n    align: (left + top, left + top, left + top),\n    stroke: 0.5pt,\n    inset: 5pt,\n    table.header(\n      [*Claim*], [*Evidence*], [*Scope*],\n    ),\n    [Pure nonlinear-recurrent LMs train at the 1.3 B-class],\n    [E97 reaches an estimated 0.93 bpb on The Pile at 150.8 B tokens,\n     no time-axis trick, no attention hybrid (#ref(<sec:intro>), #ref(<sec:lm>))],\n    [One E97 run, single seed; a viability demonstration at this scale],\n\n    [Bulk LM loss does *not* distinguish the 1.3 B pair (a measured null\n     result)],\n    [Matched-token cutoff at 150.79 B: smoothed gap 0.010 nats/token,\n     sign window-dependent; both arms CMA-ES-hardened (#ref(<sec:lm>))],\n    [Training-log loss at exactly matched tokens; held-out bpb for the\n     150 B pair is pending (TODO-NEEDS-EVIDENCE, #ref(<sec:lm>)).\n     The CMA-stage 5-model held-out band (2.01–2.10 bpb) corroborates\n     descriptive closeness at search scale (#ref(<sec:lm>))],\n\n    [Delta-correcting $>$ raw-write on state tracking, at every tested length],\n    [8 M $S_5$ probe, 3 seeds (@fig_s5_bars); Lean matched-resource\n     separation (#ref(<sec:formal>), sets C/C′/D)],\n    [Budget-robust learning-efficiency ordering: at 8 M both nonlinear\n     updates plateau below ceiling at length. The representability\n     statement concerns the formalized fixed-weight raw-write class],\n\n    [A controlled tanh/identity update-map intervention tests length transfer],\n    [Iterated-map probes: E97 holds $approx 0.98$ flat from $T = 128$ to\n     $T = 4096$ where byte-identical E97-linear and GDN2 collapse;\n     two task families show an absent separation (#ref(<sec:expressivity>))],\n    [Small-scale (dim 256–1024) grokking regime; isolated update-map\n     flag with different successful-seed subsets. Conditional curve\n     comparisons leave unconditional causal effect and exact algorithm\n     recovery open],\n\n    [Group-state tracking is protocol-dependent],\n    [8 M and predecessor GDN probes decay at length; on the current\n     pair GDN2 leads at every tested capacity-probe length (@tab_s5_boundary)],\n    [Finite-length learning behavior under each study's protocol; Lean\n     proves the architecture-agnostic 120-state recognizer floor\n     (#ref(<sec:formal>)). Constrained affine-channel realizability\n     remains open (G3); TC#super[0] versus NC#super[1] is unresolved],\n\n    [Expressivity at 1.3 B on the trained pair],\n    [Modular-quadratic terminal accuracy:\n     #expressivity.percent(expressivity.wall-acc(expressivity.wall-e97, 128)) vs\n     #expressivity.percent(expressivity.wall-acc(expressivity.wall-gdn2, 128));\n     E97 is more length-robust (@tab_depth_wall); GDN2 leads long-horizon\n     $S_5$ tracking (@tab_s5_boundary)],\n    [One seed, released checkpoints, common pre-registered cap and\n     plateau rule; unequal realized step counts (#ref(<sec:expressivity>)).\n     GDN2's long-length modular-quadratic plateau remains above random;\n     the two tasks favor different architectures],\n  )]],\n  caption: [\n    *Claim / Evidence / Scope.* Each row is substantiated in the cited\n    section, with its protocol and resource boundaries in the same row.\n    The bulk-loss row is a measured null; the current-pair capability\n    row reports the distinct ordering on each task.\n  ],\n) <tab_claims>\n",
+    "claim": "All six load-bearing claims; row-specific scope",
+    "decision": "fold",
+    "reason": "Six Non-claim cells merge into Scope. Retire scaling-law/seed-average redundancy, blanket solve/impossibility, universal-superiority and predicted-ordering armor; preserve every measured/protocol/formal boundary.",
+    "baseEndLine": 462
+  },
+  {
+    "id": "A9",
+    "baseLine": 789,
+    "old": "The GDN-2 corner of this grid is\n    not a strawman: it is the mixer of the 1.3 B linear baseline of #ref(<sec:lm>)",
+    "replacement": "The GDN-2 corner of this grid is\n    the mixer of the 1.3 B linear baseline of #ref(<sec:lm>)",
+    "claim": "Taxonomy identifies the actual control",
+    "decision": "fold",
+    "reason": "Retire reviewer-answering strawman defense; keep baseline identity and search protocol.",
+    "baseEndLine": 790
+  },
+  {
+    "id": "A10",
+    "baseLine": 1109,
+    "old": "retain their separately stated broadcasting signatures; this is not a\nsubstitution for those quantified definitions.",
+    "replacement": "retain their separately quantified broadcasting signatures.",
+    "claim": "Scalar-forget pseudocode and row/column/cell theorem signatures",
+    "decision": "fold",
+    "reason": "Scope attached to the live claim.",
+    "baseEndLine": 1110
+  },
+  {
+    "id": "A11",
+    "baseLine": 1124,
+    "old": "shows the shared and distinct ingredients; it is not a causal ablation:",
+    "replacement": "shows the shared and distinct ingredients across the tested architectures:",
+    "claim": "Structural ingredient comparison",
+    "decision": "fold",
+    "reason": "Scope attached to the live claim.",
+    "baseEndLine": 1124
+  },
+  {
+    "id": "A12",
+    "baseLine": 1143,
+    "old": "*Structural comparison, not causal elimination.*",
+    "replacement": "*Structural ingredient comparison.*",
+    "claim": "Structural ingredient comparison",
+    "decision": "fold",
+    "reason": "The following caption already retains the non-isolation of architectural choices.",
+    "baseEndLine": 1143
+  },
+  {
+    "id": "A13",
+    "baseLine": 1156,
+    "old": "That headroom rules out a bare state-count shortage, not constrained\nrealizability or optimization failure.",
+    "replacement": "That headroom rules out a bare state-count shortage; constrained\nrealizability and optimization remain candidate explanations.",
+    "claim": "8 M learning-efficiency interpretation",
+    "decision": "fold",
+    "reason": "Scope attached to the live claim.",
+    "baseEndLine": 1157
+  },
+  {
+    "id": "A14",
+    "baseLine": 1157,
+    "old": "The formal counterpart is the\nmatched-signature mixed-key one-step separation\n(`emender_m2rnn_one_step_resource_separation_embeds`, #ref(<sec:formal>)), not a\ntrained-model accuracy guarantee.",
+    "replacement": "The formal counterpart is the\nmatched-signature mixed-key one-step separation\n(`emender_m2rnn_one_step_resource_separation_embeds`, #ref(<sec:formal>));\nthe probes measure trained-model accuracy.",
+    "claim": "Learning measurements and formal update-family separation",
+    "decision": "fold",
+    "reason": "Scope attached to the live claim.",
+    "baseEndLine": 1160
+  },
+  {
+    "id": "A15",
+    "baseLine": 1192,
+    "old": "Exact\nnon-equality on a constructed real-valued witness is not a uniform error\nmargin, and table lookup is not recurrent $tanh$-tracker realizability.",
+    "replacement": "Exact\nnon-equality holds on a constructed real-valued witness; uniform error\nmargins and recurrent $tanh$-tracker realizability remain open.",
+    "claim": "Formal spine: exact witness separation and lookup scope",
+    "decision": "fold",
+    "reason": "Scope attached to the live claim.",
+    "baseEndLine": 1194
+  },
+  {
+    "id": "A16",
+    "baseLine": 1272,
+    "old": "The mixed key is $(1,1)$ (not unit-normalized),\nand the prescribed initial state is nonzero. These witnesses are not\nproduction zero-state trajectories with normalized keys and finite-logit\nsigmoid gates, nor full-network separation under arbitrary reparameterization.",
+    "replacement": "The mixed key is $(1,1)$, unnormalized,\nand the prescribed initial state is nonzero. The result compares abstract\nupdate families on this domain; production zero-state trajectories with\nnormalized keys and finite-logit sigmoid gates, and arbitrary\nfull-network reparameterizations require separate statements.",
+    "claim": "Set C abstract-domain update-family separation",
+    "decision": "fold",
+    "reason": "Scope attached to the live claim.",
+    "baseEndLine": 1275
+  },
+  {
+    "id": "A17",
+    "baseLine": 1317,
+    "old": "Like set C, set C′ is over an unrestricted\nabstract real-valued signature, not the production normalized-key,\nzero-initial-state domain.",
+    "replacement": "Like set C, set C′ is over an unrestricted\nabstract real-valued signature; extending it to the production\nnormalized-key, zero-initial-state domain remains open.",
+    "claim": "Set C-prime witness domain",
+    "decision": "fold",
+    "reason": "Scope attached to the live claim.",
+    "baseEndLine": 1319
+  },
+  {
+    "id": "A18",
+    "baseLine": 1334,
+    "old": "These measurements are separate\nevidence of retained advantage, not consequences of the exact-real\nfinite-$k$ theorem or an increasing-gap prediction.",
+    "replacement": "These measurements provide independent\nfinite-length evidence of retained advantage; the exact-real\nfinite-$k$ theorem concerns trajectory non-equality.",
+    "claim": "Set C-prime versus measured length curves",
+    "decision": "fold",
+    "reason": "Scope attached to the live claim.",
+    "baseEndLine": 1336
+  },
+  {
+    "id": "A19",
+    "baseLine": 1338,
+    "old": "#heading(level: 2, numbering: none)[Frontier and unproven targets]\n\n*The k-step result is the ceiling reachable\nby direct composition; the *existential* form of the $S_5$ capacity\ninseparability is now proved (set A), and what remains open is the\nbounded-precision raw-write form with an explicit $T(d)$.*\n\nThe k-step separation above is the *strongest separation reachable from\nthe one-step proof by direct composition*. Its scope is named below,\nbefore stating Theorem set D.\n\n#set list(indent: 1em)\n- *What is proved.* k-step trajectory separation on a constructed 2D\n  input alphabet, for every $k >= 1$ and every resource in the\n  row/column/cell external-forget class\n  (`emender_m2rnn_k_step_separation`). The outputs differ at every finite $k$ on this\n  alphabet; no compounding or uniform margin is proved.\n\n- *What is now also proved (set A).* The *existential* capacity form of\n  the $S_5$ inseparability target: no finite recognizer with fewer than\n  120 states realizes the tracker, for any architecture\n  (`S5Inseparability.capacity_lower_bound_120`), together with\n  generator surjectivity (`run_surjective`). Two items that earlier\n  drafts of this section listed as open — adjacent-transposition\n  generation of $S_5$, and a state-counting lower bound — are closed by\n  these theorems.\n\n- *What is still not proved.* That the gap compounds *on the $S_5$\n  generator alphabet specifically* against the raw-write resource class\n  with an explicit length bound $T(d)$, i.e., a\n  statement of the form \"for any fixed-weight raw-write RNN at state\n  dimension $d$ there is an explicit $T(d)$ past which $S_5$ coset\n  tracking is unreachable, while the Emender at the same $d$ tracks it\".\n  That is the stronger inseparability claim; the trusted Lean core does\n  not contain it, and the empirical sections stand in for it.\n\n- *Why the stronger claim is not in the trusted core.* The remaining form\n  is a *capacity-over-continuous-state* statement: the raw-write class is\n  parameterised by continuous-valued matrices and vectors, so the finite\n  recognizer argument of set A does not directly apply. It requires a\n  bounded-precision discretization (Liu et al.-style fixed-point weights\n  and activations) or a direct trajectory-distinguishability counting\n  argument, plus Merrill-style state-counting machinery in the style of\n  Merrill, Petty and Sabharwal @merrill2024transformers. Mathlib does not\n  currently provide NC#super[1] / TC#super[0] circuit classes,\n  finite-state-tracking lower bounds for parameter-bounded RNNs, or\n  pigeonhole capacity arguments specialized to recurrent maps with\n  bounded weight matrices. Each piece is a research-grade\n  mechanization project in its own right; the integration is what\n  would close the gap. The set A bound is the load-bearing\n  state-counting lemma any such argument must land against.\n\n- *Connection to the empirical claim.* The $S_5$ accuracy curves of #ref(<sec:expressivity>)\n  (@fig_s5_bars, @tab_s5) and the canonical-sweep length-extrapolation\n  curves are the *empirical* evidence for the stronger claim that the\n  formal core does not yet reach. #ref(<sec:formal>) proves finite-$k$ non-equality on\n  a constructed witness; #ref(<sec:expressivity>) measures finite-length learning behavior on\n  the $S_5$ generators, not the stronger $T(d)$ impossibility.\n\nThe full status of this push, including what bridging machinery would\nbe required (bounded-precision raw-write class, reachable-state\ncounting, Merrill-style capacity lemma), is documented in\n`formal/lean/LEAN_FRONTIER.md`.\n\n",
+    "replacement": "#heading(level: 2, numbering: none)[The bounded-precision tracking target]\n\nThe $S_5$-generator-specific raw-write capacity target remains open:\nan explicit length bound $T(d)$ at state dimension $d$, in a\nbounded-precision resource class. Set A supplies the\narchitecture-agnostic 120-state floor and generator surjectivity; set C′\nsupplies exact finite-$k$ non-equality on its constructed 2D alphabet.\nThe finite-length $S_5$, parity, FSM, and modular-counter curves in\n#ref(<sec:expressivity>) measure learning under their recorded budgets.\n\nClosing the capacity target requires a bounded-precision discretization\nof weights and activations, or a reachable-trajectory distinguishability\nargument, together with state-counting machinery\n@merrill2024transformers. The continuous-valued raw-write parameter class\nrequires this additional resource specification before the finite-state\nfloor can apply. Mathlib currently lacks the circuit classes and\nparameter-bounded recurrent-map capacity machinery needed for this\nmechanization. The required bridges are recorded in\n`formal/lean/LEAN_FRONTIER.md`.\n\n",
+    "claim": "Open bounded-precision raw-write tracking target",
+    "decision": "fold",
+    "reason": "Retire stronger-claim/earlier-draft status confessional and empirical-stand-in language; retain the named target, witness scope, precision/counting requirements and source pointer.",
+    "baseEndLine": 1402
+  },
+  {
+    "id": "A20",
+    "baseLine": 1412,
+    "old": "Thus this theorem does not certify actual matched empirical\ncompute or explain away implementation-level cost differences.",
+    "replacement": "Actual empirical compute and implementation-level cost differences\nrequire measurement beyond these synthetic charges.",
+    "claim": "Set D synthetic state-pass cost ceiling",
+    "decision": "fold",
+    "reason": "Scope attached to the live claim.",
+    "baseEndLine": 1413
+  },
+  {
+    "id": "A21",
+    "baseLine": 1421,
+    "old": "This excludes\ngate/feature-network computation and carries no empirical efficiency claim.",
+    "replacement": "The accounting excludes\ngate/feature-network computation; empirical efficiency requires measurement.",
+    "claim": "E97/E88 precomputed-gate recurrent cost",
+    "decision": "fold",
+    "reason": "Scope attached to the live claim.",
+    "baseEndLine": 1422
+  },
+  {
+    "id": "A22",
+    "baseLine": 1427,
+    "old": "set D supplies only a shared synthetic state-pass envelope. Neither\nshows how many extra parameters would suffice, or that extra state is\nthe only remedy:",
+    "replacement": "set D supplies a shared synthetic state-pass envelope. The\nread-then-delta embedding supplies an operational extension:",
+    "claim": "Resource scope of update-family separation",
+    "decision": "fold",
+    "reason": "Scope attached to the live claim.",
+    "baseEndLine": 1429
+  },
+  {
+    "id": "A23",
+    "baseLine": 1432,
+    "old": "No minimal parameter-count corollary is claimed.",
+    "replacement": "Minimal parameter requirements remain open.",
+    "claim": "Resource scope of update-family separation",
+    "decision": "fold",
+    "reason": "Scope attached to the live claim.",
+    "baseEndLine": 1432
+  },
+  {
+    "id": "A24",
+    "baseLine": 1446,
+    "old": "The predicate does not verify kernel scheduling,\nper-batch independence, or concurrent execution across layers; its\nclass-level meaning is limited to these declared signature conditions.",
+    "replacement": "The predicate verifies these declared signature conditions; kernel\nscheduling, per-batch independence, and cross-layer concurrency require\nseparate implementation certificates.",
+    "claim": "Set E signature-field predicate",
+    "decision": "fold",
+    "reason": "Scope attached to the live claim.",
+    "baseEndLine": 1448
+  },
+  {
+    "id": "A25",
+    "baseLine": 1454,
+    "old": "linear core with different decay placement. This is not a whole-stack\nproduction inclusion theorem for the #ref(<sec:lm>) pairing.",
+    "replacement": "linear core with different decay placement. The #ref(<sec:lm>)\npairing adds production-domain and whole-stack constraints.",
+    "claim": "Set G abstract core relations",
+    "decision": "fold",
+    "reason": "Scope attached to the live claim.",
+    "baseEndLine": 1455
+  },
+  {
+    "id": "A26",
+    "baseLine": 1466,
+    "old": "The E88\n  parameterization is therefore a developmental special case, not a\n  rival in this abstract domain.",
+    "replacement": "The E88\n  parameterization is therefore a developmental special case in this\n  abstract domain.",
+    "claim": "E97/E88 abstract specialization",
+    "decision": "fold",
+    "reason": "Scope attached to the live claim.",
+    "baseEndLine": 1468
+  },
+  {
+    "id": "A27",
+    "baseLine": 1482,
+    "old": "outside the production sigmoid\n  range $(0,1)$; it does not demonstrate production-gate expressivity.",
+    "replacement": "outside the production sigmoid\n  range $(0,1)$; production-gate expressivity requires a witness in that range.",
+    "claim": "Set G abstract witness range",
+    "decision": "fold",
+    "reason": "Scope attached to the live claim.",
+    "baseEndLine": 1483
+  },
+  {
+    "id": "A28",
+    "baseLine": 1589,
+    "old": "#heading(level: 2, numbering: none)[Complexity statements and explicit non-claims]",
+    "replacement": "#heading(level: 2, numbering: none)[Complexity statements and their scope]",
+    "claim": "Formal complexity claims",
+    "decision": "fold",
+    "reason": "Scope attached to the live claim.",
+    "baseEndLine": 1589
+  },
+  {
+    "id": "A29",
+    "baseLine": 1612,
+    "old": "These are the boundaries that the empirical and applications\nsections retain.",
+    "replacement": "",
+    "claim": null,
+    "decision": "retire",
+    "reason": "Meta-commentary about defenses has no scientific claim.",
+    "baseEndLine": 1613
+  },
+  {
+    "id": "A30",
+    "baseLine": 1672,
+    "old": "All throughput measurements and throughput-budget smokes reported here\nare CUDA-only; none establishes correctness, performance, or parity\non ROCm.",
+    "replacement": "All throughput measurements and throughput-budget smokes reported here\nuse CUDA; paired ROCm correctness, performance, and parity measurements\nremain pending.",
+    "claim": "Measured systems throughput backend scope",
+    "decision": "fold",
+    "reason": "Scope attached to the live claim.",
+    "baseEndLine": 1674
+  },
+  {
+    "id": "A31",
+    "baseLine": 1683,
+    "old": "The earlier 1.26–1.56× speedup at small grok-scale dimensions is not reproduced at 1.3 B.",
+    "replacement": "The small grok-scale study measured a 1.26–1.56× speedup;\nthe matched-batch 1.3 B preflight measures a ratio of 0.976.",
+    "claim": "Independent systems measurements at two scales",
+    "decision": "keep-as-finding",
+    "reason": "Scope attached to the live claim.",
+    "baseEndLine": 1683
+  },
+  {
+    "id": "A32",
+    "baseLine": 2083,
+    "old": "These counts rule out fewer-than-120-state storage as the explanation,\nnot a constrained-map expressivity or optimization bottleneck.",
+    "replacement": "These counts rule out fewer-than-120-state storage as the explanation;\nconstrained-map expressivity and optimization remain candidate bottlenecks.",
+    "claim": "8 M state-count headroom interpretation",
+    "decision": "fold",
+    "reason": "Scope attached to the live claim.",
+    "baseEndLine": 2084
+  },
+  {
+    "id": "A33",
+    "baseLine": 2090,
+    "old": "[Matched no probe-tuning, and the one selection asymmetry it does not cover]",
+    "replacement": "[Probe defaults and the state-tracking selection asymmetry]",
+    "claim": "8 M no-probe-tuning comparison",
+    "decision": "fold",
+    "reason": "Scope attached to the live claim.",
+    "baseEndLine": 2090
+  },
+  {
+    "id": "A34",
+    "baseLine": 2117,
+    "old": "Two observations bound, but do not eliminate, that confound.",
+    "replacement": "Two observations help characterize this selection confound.",
+    "claim": "8 M no-probe-tuning selection scope",
+    "decision": "fold",
+    "reason": "Scope attached to the live claim.",
+    "baseEndLine": 2117
+  },
+  {
+    "id": "A35",
+    "baseLine": 2193,
+    "old": "The \"perfect state-tracking\ngeneralization\" framing in that paper does not bear on the\nNC#super[1] regime:",
+    "replacement": "At the non-solvable probe,",
+    "claim": "8 M S5 versus published S3 measurements",
+    "decision": "fold",
+    "reason": "Published study/task identity is already specified; retire a response to another paper’s framing.",
+    "baseEndLine": 2195
+  },
+  {
+    "id": "A36",
+    "baseLine": 2200,
+    "old": "studies, not a claim that they share one recipe.",
+    "replacement": "studies, with each study retaining its own recipe.",
+    "claim": "Algorithm 5 protocol summary",
+    "decision": "fold",
+    "reason": "Scope attached to the live claim.",
+    "baseEndLine": 2200
+  },
+  {
+    "id": "A37",
+    "baseLine": 2247,
+    "old": "The\nremaining frontier, an $S_5$-generator-specific capacity bound with\nexplicit $T(d)$, is named in #ref(<sec:future_work>).",
+    "replacement": "The\n$S_5$-generator-specific capacity target with explicit $T(d)$ is named\nin #ref(<sec:future_work>).",
+    "claim": "Synthetic learning curves versus formal capacity target",
+    "decision": "fold",
+    "reason": "Scope attached to the live claim.",
+    "baseEndLine": 2249
+  },
+  {
+    "id": "A38",
+    "baseLine": 2287,
+    "old": "This does not control every confound in the\npost-selected seed averages or cross-architecture comparison.",
+    "replacement": "The post-selected seed averages and cross-architecture comparison\nretain selection and architectural confounds.",
+    "claim": "Controlled update-map intervention versus conditional curve comparison",
+    "decision": "fold",
+    "reason": "Scope attached to the live claim.",
+    "baseEndLine": 2288
+  },
+  {
+    "id": "A39",
+    "baseLine": 2324,
+    "old": "The observed negatives support that hypothesis,\nnot a theorem that these conditions are necessary or sufficient for a\nlearned-stack separation.",
+    "replacement": "The observed absent separations support that hypothesis\nunder the tested task protocols.",
+    "claim": "Mechanism hypothesis from two measured controls",
+    "decision": "fold",
+    "reason": "Retain measured absences and hypothesis modality; retire an unsolicited necessary/sufficient-theorem defense.",
+    "baseEndLine": 2326
+  },
+  {
+    "id": "A40",
+    "baseLine": 2437,
+    "old": "The theorem concerns the state channel, not\nan impossibility or depth lower bound for a multilayer GDN2 stack.",
+    "replacement": "The theorem concerns the fixed-schedule state channel; multilayer\nGDN2 depth and approximation require separate statements.",
+    "claim": "Formal state-channel duality",
+    "decision": "fold",
+    "reason": "Scope attached to the live claim.",
+    "baseEndLine": 2438
+  },
+  {
+    "id": "A41",
+    "baseLine": 2443,
+    "old": "It is a\n*routing* theorem, not a per-token circuit-depth lower bound\n(`formal/lean/GAPS-D2.md`). The $S_5$ results below mark exactly that\nboundary: an affine state channel does not itself imply failure on\ngroup actions.",
+    "replacement": "It specifies\n*routing* on the reachable image; per-token circuit-depth bounds remain\nopen (`formal/lean/GAPS-D2.md`). The $S_5$ results below measure learned\ngroup actions in the current pair.",
+    "claim": "Routing bridge and learned S5 actions",
+    "decision": "fold",
+    "reason": "Scope attached to the live claim.",
+    "baseEndLine": 2447
+  },
+  {
+    "id": "A42",
+    "baseLine": 2455,
+    "old": "The initial suite's negative is retained verbatim:\n“The 8M S5 separation does NOT replicate at 1.3B on this pair.”\n(`paper/results/expressivity_1p3b/SUMMARY.md`, `5e1e60ef`).\nZero-shot did not separate either model; matched fine-tuning favored\nE97 on the solvable $S_3$ control but did not reproduce the small-scale\n$S_5$ ordering. The longer-horizon capacity probe and phase-0 salvage\nconfirmed the boundary finding, verbatim:\n“in the capacity-exceeded regime on S5 there is no wall for\neither model — both decay in parallel toward the random baseline, and GDN2\nis ahead of E97 at every length.”\n(`capacity/SUMMARY.md`, `6f916843`).\n\n",
+    "replacement": "On the current pair, zero-shot scores were comparable; matched\nfine-tuning favored E97 on the solvable $S_3$ control. In the\nlonger-horizon $S_5$ capacity probe and phase-0 salvage, both models'\naccuracy declines toward random with length, and GDN2 leads E97 at\nevery tested length. These are measurements of the released pair\nunder this protocol (`paper/results/expressivity_1p3b/SUMMARY.md`,\n`5e1e60ef`; `capacity/SUMMARY.md`, `6f916843`).\n\n",
+    "claim": "Current-pair S5 finite-length learning finding",
+    "decision": "keep-as-finding",
+    "reason": "Replace both verbatim failed-expectation quotations by what this pair measures; original records remain unmodified.",
+    "baseEndLine": 2467
+  },
+  {
+    "id": "A43",
+    "baseLine": 2488,
+    "old": "#heading(level: 2, numbering: none)[Micro and mega: the two probes bracket the mechanism]\n\nThe expressivity claim rests on two complementary measurements that are\nload-bearing only *together*. The *micro* probe is the 8 M from-scratch\nsweep (@fig_s5_bars, three seeds): it isolates expressivity in the cleanest\nsetting, where the #ref(<sec:expressivity>) state-count argument gives large\nstorage headroom, so a gap plausibly reflects a difference in inductive\nbias; raw state count is controlled by that headroom. Its\nlimitation is that an 8 M model is small. The\n*mega* probe is the completed 1.3 B suite above, on the released\nE97/GDN2 artifacts the loss-parity claims bind to. The micro probe\ncontrols parameter count and seeds; the mega probe controls scale and the\ntrained artifact but supplies only one seed. Together they support a\nmodular-quadratic separation, with graceful rather than invariant E97\nextrapolation at 1.3 B, and a negative $S_5$ transfer. The predecessor\ncohort's ordering (#ref(<sec:appendix_cohort>)) cannot override this current-pair\nboundary finding.\n\n",
+    "replacement": "#heading(level: 2, numbering: none)[Measurements across scales and protocols]\n\nAt 8 M, the from-scratch sweep (@fig_s5_bars, three seeds) controls\nparameter count with large state-count headroom and measures an\nEmender advantage on $S_5$ under its default-configuration protocol.\nThe current 1.3 B suite measures the released E97/GDN2 pair with one\nseed: E97 leads the modular-quadratic task with graceful length\ntransfer, and GDN2 leads long-horizon $S_5$ tracking. The predecessor\ncohort has its own model identities and fine-tuning protocol\n(#ref(<sec:appendix_cohort>)). Each study measures learned capability\nat its stated scale, budget, and protocol.\n\n",
+    "claim": "Independent capability measurements across scales",
+    "decision": "keep-as-finding",
+    "reason": "Retire micro/mega mutual-validation and predecessor-override defenses; keep each seed/scale/protocol boundary and independent 8 M finding.",
+    "baseEndLine": 2506
+  },
+  {
+    "id": "A44",
+    "baseLine": 2553,
+    "old": "Neither proves that the resulting function\nhas no shallower representation in other coordinates.",
+    "replacement": "Minimal representation depth in alternative coordinates remains open.",
+    "claim": "Applications motivated by executed state-channel composition",
+    "decision": "fold",
+    "reason": "Scope attached to the live claim.",
+    "baseEndLine": 2554
+  },
+  {
+    "id": "A45",
+    "baseLine": 2557,
+    "old": "It does not transfer a separation to the applications\nbelow; group actions can admit affine representations.",
+    "replacement": "Application-specific separation requires its own trajectory and\napproximation analysis; group actions admit affine representations.",
+    "claim": "Prospective structural application tests",
+    "decision": "fold",
+    "reason": "Scope attached to the live claim.",
+    "baseEndLine": 2558
+  },
+  {
+    "id": "A46",
+    "baseLine": 2561,
+    "old": "In each case the question is whether a fixed-depth GDN-style\nlinear-state approximator can reproduce the required trajectories, not\nwhether the original engineered system already works.",
+    "replacement": "In each case the question is whether a fixed-depth GDN-style\nlinear-state approximator can reproduce the required trajectories.",
+    "claim": "Prospective surrogate approximation tests",
+    "decision": "fold",
+    "reason": "Retire defense of engineered systems’ original functioning; preserve the actual surrogate question.",
+    "baseEndLine": 2563
+  },
+  {
+    "id": "A47",
+    "baseLine": 2583,
+    "old": "No GDN lower bound follows: finite-resolution\nstates, alternative encodings, or a different error metric may make a\nlinear-state surrogate adequate.",
+    "replacement": "Finite-resolution states, alternative encodings, or a different\nerror metric may make a linear-state surrogate adequate.",
+    "claim": "Sigma-delta surrogate hypothesis and approximation scope",
+    "decision": "fold",
+    "reason": "Scope attached to the live claim.",
+    "baseEndLine": 2585
+  },
+  {
+    "id": "A48",
+    "baseLine": 2577,
+    "old": "Such streaming error-feedback loops are implemented directly in converter\ncircuitry; they need no large learned processor to execute the update.",
+    "replacement": "Such streaming error-feedback loops are implemented directly in converter\ncircuitry.",
+    "claim": "Sigma-delta structural exhibit",
+    "decision": "fold",
+    "reason": "Retire defense against a large-processor requirement the paper never claims.",
+    "baseEndLine": 2578
+  },
+  {
+    "id": "A49",
+    "baseLine": 2611,
+    "old": "These equations specify representative variants, not\nuniversal implementations.",
+    "replacement": "These equations specify the representative bounded variants above.",
+    "claim": "AGC/LMS structural exhibit",
+    "decision": "fold",
+    "reason": "Scope attached to the live claim.",
+    "baseEndLine": 2612
+  },
+  {
+    "id": "A50",
+    "baseLine": 2616,
+    "old": "These are natural per-sample edge and sensor\nworkloads, but no IoT deployment advantage is measured here.",
+    "replacement": "These are prospective per-sample edge and sensor workloads.",
+    "claim": "Prospective AGC/LMS workloads",
+    "decision": "fold",
+    "reason": "No IoT deployment advantage is claimed; retain prospective modality.",
+    "baseEndLine": 2617
+  },
+  {
+    "id": "A51",
+    "baseLine": 2642,
+    "old": "It does\nnot say ISTA always requires growing nonlinear depth: after support and\nsigns stabilize,",
+    "replacement": "After support and\nsigns stabilize,",
+    "claim": "ISTA surrogate hypothesis",
+    "decision": "fold",
+    "reason": "Retire universal-depth rebuttal; keep fixed-support affine regime and bounded-error shortcut.",
+    "baseEndLine": 2644
+  },
+  {
+    "id": "A52",
+    "baseLine": 2656,
+    "old": "*ANALOGY:* it is not the conventional\nfixed-$W$ echo-state architecture or training protocol. E97's effective",
+    "replacement": "*ANALOGY:* E97 uses a different architecture and training protocol. Its effective",
+    "claim": "Reservoir analogy versus E97 dynamics",
+    "decision": "fold",
+    "reason": "Scope attached to the live claim.",
+    "baseEndLine": 2657
+  },
+  {
+    "id": "A53",
+    "baseLine": 2664,
+    "old": "The structural match does not\npredict a universal advantage over linear reservoirs with nonlinear\nreadouts, nor establish that E97 satisfies the echo-state property.",
+    "replacement": "Nonlinear readouts and fading-memory approximations are relevant\nlinear-reservoir comparators.",
+    "claim": "Reservoir surrogate hypothesis",
+    "decision": "fold",
+    "reason": "Retire universal-superiority rebuttal; echo-state-property boundary already lives in the same paragraph.",
+    "baseEndLine": 2666
+  },
+  {
+    "id": "A54",
+    "baseLine": 2679,
+    "old": "family as the contractive control in #ref(<sec:expressivity>), not a claim that its parameter\nregime represents all ecological dynamics.",
+    "replacement": "family as the contractive control in #ref(<sec:expressivity>),\nwithin that measured contractive parameter regime.",
+    "claim": "Logistic-map structural exhibit",
+    "decision": "fold",
+    "reason": "Scope attached to the live claim.",
+    "baseEndLine": 2680
+  },
+  {
+    "id": "A55",
+    "baseLine": 2686,
+    "old": "Nonlinearity alone therefore cannot imply a separation,\nand an ecological population equation is not evidence of a deployed\nforecasting improvement.",
+    "replacement": "The surrogate question is regime-dependent.",
+    "claim": "Logistic-map surrogate hypothesis",
+    "decision": "fold",
+    "reason": "Retain contraction/periodic/chaotic regimes in preceding sentences; retire an unclaimed forecasting deployment defense.",
+    "baseEndLine": 2688
+  },
+  {
+    "id": "A56",
+    "baseLine": 2703,
+    "old": "$tanh$ is a smooth bounded-actuator model, not a claim that\nall actuators implement it.",
+    "replacement": "$tanh$ specifies the smooth bounded-actuator model used here.",
+    "claim": "Limited-actuator feedback structural exhibit",
+    "decision": "fold",
+    "reason": "Scope attached to the live claim.",
+    "baseEndLine": 2704
+  },
+  {
+    "id": "A57",
+    "baseLine": 2722,
+    "old": "Stable,\nfading-memory and affine-representable cases are explicit exceptions to\nany blanket advantage claim.",
+    "replacement": "Stable, fading-memory and affine-representable cases may admit\neffective linear-state surrogates.",
+    "claim": "Applications approximation hypothesis",
+    "decision": "fold",
+    "reason": "Scope attached to the live claim.",
+    "baseEndLine": 2724
+  },
+  {
+    "id": "A58",
+    "baseLine": 2936,
+    "old": "The $S_5$ prediction fails on the\npair, and GDN2's attempted length-512 curriculum is OOM-infeasible after",
+    "replacement": "GDN2 leads the long-horizon $S_5$ comparison, and its\nattempted length-512 curriculum is OOM-infeasible after",
+    "claim": "Current-pair S5 result and hardware scope",
+    "decision": "keep-as-finding",
+    "reason": "Scope attached to the live claim.",
+    "baseEndLine": 2937
+  },
+  {
+    "id": "A59",
+    "baseLine": 2940,
+    "old": "without rewriting the recorded\nnegative.",
+    "replacement": "while preserving the recorded\nmeasurements.",
+    "claim": "S5 follow-up controls",
+    "decision": "fold",
+    "reason": "Scope attached to the live claim.",
+    "baseEndLine": 2941
+  },
+  {
+    "id": "A60",
+    "baseLine": 2993,
+    "old": "The AABB\nhybrid result is one pattern, not a verdict on attention hybrids;",
+    "replacement": "The AABB\nhybrid result concerns that Emender/GDN pattern;",
+    "claim": "AABB hybrid measurement scope",
+    "decision": "fold",
+    "reason": "Scope attached to the live claim.",
+    "baseEndLine": 2994
+  },
+  {
+    "id": "A61",
+    "baseLine": 2980,
+    "old": "No such experiment\nis included here.",
+    "replacement": "",
+    "claim": null,
+    "decision": "retire",
+    "reason": "The application paragraph already labels every surrogate separation OPEN and specifies required tests.",
+    "baseEndLine": 2981
+  },
+  {
+    "id": "A62",
+    "baseLine": 3042,
+    "old": "The negative transfer is: “The 8M S5 separation does NOT replicate at 1.3B on this pair.” ",
+    "replacement": "",
+    "claim": null,
+    "decision": "retire",
+    "reason": "No cross-scale replication claim; the preceding conclusion paragraph already states the measured GDN2 lead.",
+    "baseEndLine": 3042
+  },
+  {
+    "id": "A63",
+    "baseLine": 3049,
+    "old": "Priority, universal nonlinear superiority, and a circuit-class separation lie outside the contribution. This identified Arkheion build and the separate anonymous TMLR build provide journal-specific submission packaging; journal-specific submission packaging remains a separate step from manuscript claims.",
+    "replacement": "",
+    "claim": null,
+    "decision": "retire",
+    "reason": "The paper claims none of priority, universal superiority, class separation or packaging-as-science. The live formal class-separation refusal stays in Formal Results/Limitations.",
+    "baseEndLine": 3049
+  },
+  {
+    "id": "A64",
+    "baseLine": 3115,
+    "old": "The predicted $S_5$ ordering already fails on this\n  pair under the tested protocols; the modular-quadratic result supports\n  only a task-dependent version.",
+    "replacement": "On this pair, GDN2 leads long-horizon $S_5$ tracking and E97\n  leads the modular-quadratic task under their respective protocols.",
+    "claim": "Falsifiable task-dependent scale/budget prediction",
+    "decision": "keep-as-finding",
+    "reason": "Scope attached to the live claim.",
+    "baseEndLine": 3117
+  },
+  {
+    "id": "A65",
+    "baseLine": 3879,
+    "old": "The GDN2 reversal in #ref(<sec:expressivity>) and open constrained\nrealizability question G3 prevent a families-wide interpretation.",
+    "replacement": "The current GDN2 pair leads long-horizon $S_5$ tracking\n(#ref(<sec:expressivity>)); constrained realizability remains open (G3).",
+    "claim": "Independent predecessor GDN and current GDN2 results",
+    "decision": "keep-as-finding",
+    "reason": "Scope attached to the live claim.",
+    "baseEndLine": 3880
+  },
+  {
+    "id": "A66",
+    "baseLine": 261,
+    "old": "and the scaling demonstration leaves no architectural escape hatch\nfrom the recurrent state.",
+    "replacement": "and the scaling demonstration trains this attention-free, time-serial\narchitecture directly.",
+    "claim": "Pure nonlinear recurrent viability",
+    "decision": "fold",
+    "reason": "Attach positive scope to the live claim.",
+    "baseEndLine": 262
+  },
+  {
+    "id": "A67",
+    "baseLine": 324,
+    "old": "The predicted ordering\n  already appears at the 8 M parameter-matched probe shape",
+    "replacement": "This ordering\n  is measured at the 8 M parameter-matched probe shape",
+    "claim": "8 M delta-versus-raw-write learning finding",
+    "decision": "keep-as-finding",
+    "reason": "Attach positive scope to the live claim.",
+    "baseEndLine": 325
+  },
+  {
+    "id": "A68",
+    "baseLine": 1136,
+    "old": "[Cannot separate: GDN has it and fails $S_5$]",
+    "replacement": "[Shared by GDN, which reaches 0.36 on the 8 M $S_5$ probe]",
+    "claim": "8 M structural ingredient comparison",
+    "decision": "keep-as-finding",
+    "reason": "Attach positive scope to the live claim.",
+    "baseEndLine": 1136
+  },
+  {
+    "id": "A69",
+    "baseLine": 1138,
+    "old": "[Cannot separate: M²RNN-CMA stalls at 0.22 on $S_5$]",
+    "replacement": "[Shared by M²RNN-CMA, which reaches 0.22 on the 8 M $S_5$ probe]",
+    "claim": "8 M structural ingredient comparison",
+    "decision": "keep-as-finding",
+    "reason": "Attach positive scope to the live claim.",
+    "baseEndLine": 1138
+  },
+  {
+    "id": "A70",
+    "baseLine": 1140,
+    "old": "[Distinguishes delta from raw-write, not GDN from Emender]",
+    "replacement": "[Shared by GDN and Emender; distinguishes both from raw-write]",
+    "claim": "8 M structural ingredient comparison",
+    "decision": "fold",
+    "reason": "Attach positive scope to the live claim.",
+    "baseEndLine": 1140
+  },
+  {
+    "id": "A71",
+    "baseLine": 2105,
+    "old": "That matched-no-tuning condition controls for probe-specific *effort*; it\ndoes not control for one *selection-criterion* asymmetry.",
+    "replacement": "That matched-no-tuning condition controls probe-specific *effort*;\nthe defaults retain a *selection-criterion* asymmetry.",
+    "claim": "8 M probe-selection confound",
+    "decision": "fold",
+    "reason": "Attach positive scope to the live claim.",
+    "baseEndLine": 2106
+  },
+  {
+    "id": "A72",
+    "baseLine": 2119,
+    "old": "Neither observation proves the cause of the $S_5$ shortfall.\nThe recognizer floor is architecture-agnostic, and the lookup theorem\nis not a recurrent realizability theorem (#ref(<sec:formal>), Open item O1).",
+    "replacement": "The cause of the $S_5$ shortfall remains open.\nThe recognizer floor is architecture-agnostic; recurrent realization\nbeyond generator lookup remains Open item O1 (#ref(<sec:formal>)).",
+    "claim": "8 M learning interpretation and recurrent realizability",
+    "decision": "fold",
+    "reason": "Attach positive scope to the live claim.",
+    "baseEndLine": 2121
+  },
+  {
+    "id": "A73",
+    "baseLine": 2204,
+    "old": "Algorithm 6; the capacity OOM outcome below is not replaced by a successful\ncurriculum stage.",
+    "replacement": "Algorithm 6; the capacity protocol below records the completed\noptimizer step and the OOM-infeasible curriculum stage.",
+    "claim": "Probe-specific training protocols",
+    "decision": "keep-as-finding",
+    "reason": "Attach positive scope to the live claim.",
+    "baseEndLine": 2205
+  },
+  {
+    "id": "A74",
+    "baseLine": 2297,
+    "old": "and accumulated error; it does not establish algorithm recovery or its absence.",
+    "replacement": "and accumulated error; exact algorithm recovery remains open.",
+    "claim": "Iterated-map length-transfer interpretation",
+    "decision": "fold",
+    "reason": "Attach positive scope to the live claim.",
+    "baseEndLine": 2297
+  },
+  {
+    "id": "A75",
+    "baseLine": 2313,
+    "old": "differ, so their conditional curve gap is not an unconditional causal\neffect estimate or proof of algorithm recovery.",
+    "replacement": "differ; unconditional causal effects and algorithm recovery remain open.",
+    "claim": "Successful-seed-conditioned curve comparison",
+    "decision": "fold",
+    "reason": "Attach positive scope to the live claim.",
+    "baseEndLine": 2314
+  },
+  {
+    "id": "A76",
+    "baseLine": 2344,
+    "old": "this is a contractive control, not a chaotic depth-wall vehicle.",
+    "replacement": "the measured regime is contractive.",
+    "claim": "Measured negative-Lyapunov control",
+    "decision": "keep-as-finding",
+    "reason": "Attach positive scope to the live claim.",
+    "baseEndLine": 2344
+  },
+  {
+    "id": "A77",
+    "baseLine": 2520,
+    "old": "Fixed $theta$ describes the update law,\nnot identical token-dependent coefficients: in the Lean schedule, each",
+    "replacement": "Fixed $theta$ describes the update law; in the Lean schedule, each",
+    "claim": "Repeated-map family with input-dependent coefficients",
+    "decision": "fold",
+    "reason": "Attach positive scope to the live claim.",
+    "baseEndLine": 2521
+  },
+  {
+    "id": "A78",
+    "baseLine": 2556,
+    "old": "statement under its reachable-state-separating decoder hypothesis, not a\ndepth lower bound.",
+    "replacement": "statement under its reachable-state-separating decoder hypothesis;\ndepth lower bounds remain open.",
+    "claim": "Applications routing-bridge scope",
+    "decision": "fold",
+    "reason": "Attach positive scope to the live claim.",
+    "baseEndLine": 2557
+  },
+  {
+    "id": "A79",
+    "baseLine": 2985,
+    "old": "The 1.3 B pair is a viability demonstration, not a scaling law;",
+    "replacement": "The 1.3 B pair demonstrates viability at the measured scale;",
+    "claim": "Scale of viability demonstration",
+    "decision": "fold",
+    "reason": "Attach positive scope to the live claim.",
+    "baseEndLine": 2985
+  },
+  {
+    "id": "A80",
+    "baseLine": 2927,
+    "old": "Both language-modeling arms and the current 1.3 B expressivity suite\nhave one seed; the multi-seed 8 M and grok-scale evidence is not\nreplication of these trajectories.",
+    "replacement": "Both language-modeling arms and the current 1.3 B expressivity suite\nhave one seed; the multi-seed 8 M and grok-scale studies measure their\nown scales and protocols.",
+    "claim": "Single-seed current-pair protocol scope",
+    "decision": "fold",
+    "reason": "Attach positive scope to the live claim.",
+    "baseEndLine": 2929
+  },
+  {
+    "id": "A81",
+    "baseLine": 2936,
+    "old": "its long-length plateau is not chance.",
+    "replacement": "its long-length plateau remains above chance.",
+    "claim": "Modular-quadratic measured plateau",
+    "decision": "keep-as-finding",
+    "reason": "Attach positive scope to the live claim.",
+    "baseEndLine": 2936
+  },
+  {
+    "id": "A82",
+    "baseLine": 2894,
+    "old": "This matters because the claimed architecture-to-task existence\nbridge otherwise exceeds the checked theorem.",
+    "replacement": "A recurrent architecture-to-task existence bridge therefore remains open.",
+    "claim": "O1 generator lookup versus recurrent tracker",
+    "decision": "fold",
+    "reason": "Attach positive scope to the live claim.",
+    "baseEndLine": 2895
+  },
+  {
+    "id": "A83",
+    "baseLine": 2864,
+    "old": "This\nmatters because routing cannot establish that a GDN stack must pay extra\nnetwork depth or size.",
+    "replacement": "The routing statement leaves parameter-generator depth and size open.",
+    "claim": "G1 routing resource scope",
+    "decision": "fold",
+    "reason": "Attach positive scope to the live claim.",
+    "baseEndLine": 2866
+  },
+  {
+    "id": "A84",
+    "baseLine": 2873,
+    "old": "This matters because dynamic routing can\nintroduce nonlinearity into that path and invalidate the affine-fold\nargument.",
+    "replacement": "Gates that read the state can introduce nonlinearity into that path.",
+    "claim": "G2 state-independent-schedule assumption",
+    "decision": "fold",
+    "reason": "Attach positive scope to the live claim.",
+    "baseEndLine": 2875
+  },
+  {
+    "id": "A85",
+    "baseLine": 2886,
+    "old": "The Lean decay\nparameter is an arbitrary matrix, so the formal family must not be\nsilently identified with scalar-decay production restrictions.",
+    "replacement": "The Lean decay\nparameter is an arbitrary matrix; the production scalar-decay family\nrequires its own constrained-realizability statement.",
+    "claim": "G3 formal versus production decay domains",
+    "decision": "fold",
+    "reason": "Attach positive scope to the live claim.",
+    "baseEndLine": 2888
+  },
+  {
+    "id": "A86",
+    "baseLine": 2908,
+    "old": "This matters\nbecause exact real-valued non-equality is weaker than robustness at\nfinite precision, and the witness is not the $S_5$ generator alphabet.",
+    "replacement": "The result\nuses exact real arithmetic on a constructed alphabet; finite-precision\nrobustness and the $S_5$ generator alphabet require separate statements.",
+    "claim": "Exact finite-k witness versus robust S5 tracking",
+    "decision": "fold",
+    "reason": "Attach positive scope to the live claim.",
+    "baseEndLine": 2910
+  },
+  {
+    "id": "A87",
+    "baseLine": 2938,
+    "old": "These facts matter because protocol and hardware\nlimits are alternative explanations;",
+    "replacement": "Protocol and hardware\nlimits remain candidate contributors;",
+    "claim": "Current-pair hardware and optimization scope",
+    "decision": "fold",
+    "reason": "Attach positive scope to the live claim.",
+    "baseEndLine": 2939
+  },
+  {
+    "id": "A88",
+    "baseLine": 2929,
+    "old": "This matters because seed variance\nand fine-tuning choices can change a terminal gap or its apparent\nlength wall.",
+    "replacement": "Seed variance and fine-tuning choices can change a terminal gap or\nits apparent length wall.",
+    "claim": "Single-seed fine-tuning interpretation",
+    "decision": "fold",
+    "reason": "Attach positive scope to the live claim.",
+    "baseEndLine": 2931
+  },
+  {
+    "id": "A89",
+    "baseLine": 2954,
+    "old": "This matters because\ngeneralization and useful capability need not follow training-loss\nparity.",
+    "replacement": "Generalization and useful capability require their own measurements.",
+    "claim": "Training-log loss versus pending held-out capability",
+    "decision": "fold",
+    "reason": "Attach positive scope to the live claim.",
+    "baseEndLine": 2956
+  },
+  {
+    "id": "A90",
+    "baseLine": 2963,
+    "old": "This\nmatters because their within-search improvement cannot be computed or\nattributed to tuning from the retained rows.",
+    "replacement": "The retained rows leave their within-search improvement unmeasured.",
+    "claim": "U3.1 unavailable winner-generation records",
+    "decision": "fold",
+    "reason": "Attach positive scope to the live claim.",
+    "baseEndLine": 2965
+  },
+  {
+    "id": "A91",
+    "baseLine": 2975,
+    "old": "This matters because contraction, fixed support, alternative\nencodings, finite precision, and the chosen error metric can erase an\napparent nonlinear-depth advantage.",
+    "replacement": "Contraction, fixed support, alternative encodings, finite precision,\nand the chosen error metric can erase an apparent nonlinear-depth advantage.",
+    "claim": "Untested application-specific surrogate hypothesis",
+    "decision": "fold",
+    "reason": "Attach positive scope to the live claim.",
+    "baseEndLine": 2977
+  },
+  {
+    "id": "A92",
+    "baseLine": 2979,
+    "old": "energy or IoT deployment\nclaims additionally require hardware measurements.",
+    "replacement": "prospective hardware studies would measure energy use.",
+    "claim": "Applications future measurements",
+    "decision": "fold",
+    "reason": "No IoT deployment claim survives; retain prospective energy measurement.",
+    "baseEndLine": 2980
+  },
+  {
+    "id": "A93",
+    "baseLine": 2987,
+    "old": "This matters because loss parity, memory costs, and probe ordering may\nchange at 3–7 B.",
+    "replacement": "Loss parity, memory costs, and probe ordering may change at 3–7 B.",
+    "claim": "Single-scale viability and paired loss",
+    "decision": "fold",
+    "reason": "Attach positive scope to the live claim.",
+    "baseEndLine": 2988
+  },
+  {
+    "id": "A94",
+    "baseLine": 2991,
+    "old": "this matters because selection and geometry affect learned ordering.",
+    "replacement": "selection and geometry affect learned ordering.",
+    "claim": "Comparator and selection scope",
+    "decision": "fold",
+    "reason": "Attach positive scope to the live claim.",
+    "baseEndLine": 2991
+  },
+  {
+    "id": "A95",
+    "baseLine": 3015,
+    "old": "This matters because source portability\nand shared kernels do not guarantee backend correctness or throughput.",
+    "replacement": "Portability and shared kernels leave backend correctness and throughput\nto direct measurement.",
+    "claim": "CUDA systems evidence versus prospective ROCm tests",
+    "decision": "fold",
+    "reason": "Attach positive scope to the live claim.",
+    "baseEndLine": 3016
+  },
+  {
+    "id": "A96",
+    "baseLine": 3021,
+    "old": "requires resolving those flags, not treating citation resolution in\nTypst as literature verification.",
+    "replacement": "requires resolving those flags against the literature.",
+    "claim": "Bibliography metadata provenance",
+    "decision": "fold",
+    "reason": "Retire reviewer-answering Typst-versus-literature aside; retain unresolved metadata requirement.",
+    "baseEndLine": 3022
+  },
+  {
+    "id": "A97",
+    "baseLine": 3335,
+    "old": "but the E88 occupancy measurement is not an E97 occupancy measurement.",
+    "replacement": "with occupancy measured here for the E88 geometry; E97 occupancy\nprofiling remains pending.",
+    "claim": "Predecessor occupancy versus current-pair systems",
+    "decision": "fold",
+    "reason": "Attach positive scope to the live claim.",
+    "baseEndLine": 3335
+  },
+  {
+    "id": "A98",
+    "baseLine": 3357,
+    "old": "linear-scan-class throughput on the width axis. It does not beat the\nchunked-scan kernel on raw tokens/s — FLA is about 10% faster here, at a\nslightly larger parameter count and a different batch — so the standing\nis parity-class.",
+    "replacement": "linear-scan-class throughput on the width axis. FLA is about 10%\nfaster here, at a slightly larger parameter count and a different\nbatch; the measured standing is parity-class.",
+    "claim": "Predecessor E88 versus FLA throughput",
+    "decision": "keep-as-finding",
+    "reason": "Attach positive scope to the live claim.",
+    "baseEndLine": 3360
+  },
+  {
+    "id": "A99",
+    "baseLine": 3450,
+    "old": "That the\n  paper shape diverges while the\n  CMA-tuned shape is stable shows that raw-write need not diverge;",
+    "replacement": "The\n  paper shape diverges while the CMA-tuned shape is stable;",
+    "claim": "Predecessor geometry stability measurements",
+    "decision": "keep-as-finding",
+    "reason": "Attach positive scope to the live claim.",
+    "baseEndLine": 3452
+  },
+  {
+    "id": "A100",
+    "baseLine": 3463,
+    "old": "so\n  this is an abstract cell specialization, not a production-domain\n  strict-inclusion proof.",
+    "replacement": "so\n  this specializes the abstract cell at the all-one-gate limit;\n  production-domain inclusion remains open.",
+    "claim": "E97/E88 abstract specialization",
+    "decision": "fold",
+    "reason": "Attach positive scope to the live claim.",
+    "baseEndLine": 3465
+  },
+  {
+    "id": "A101",
+    "baseLine": 3521,
+    "old": "a fair-by-uniformity protocol that does not give each architecture its\nown best-tuning.",
+    "replacement": "a fair-by-uniformity protocol with shared hyperparameters rather than\nper-architecture selection.",
+    "claim": "Predecessor versus published comparison protocols",
+    "decision": "fold",
+    "reason": "Attach positive scope to the live claim.",
+    "baseEndLine": 3522
+  },
+  {
+    "id": "A102",
+    "baseLine": 3712,
+    "old": "After each family is tuned to its own best operating point, the converged\nlosses occupy a narrow observed band; this does not establish equal loss\nacross update rules.",
+    "replacement": "After each family is tuned to its own best operating point, the converged\nlosses occupy a narrow observed band; statistical equality remains\nunestablished.",
+    "claim": "Predecessor descriptive loss closeness",
+    "decision": "fold",
+    "reason": "Attach positive scope to the live claim.",
+    "baseEndLine": 3714
+  },
+  {
+    "id": "A103",
+    "baseLine": 3728,
+    "old": "These observations do not establish an architecture-agnostic\ncompute-optimal loss at this matched FLOP budget. ",
+    "replacement": "",
+    "claim": null,
+    "decision": "retire",
+    "reason": "The appendix claims measured descriptive closeness, not an architecture-agnostic compute optimum.",
+    "baseEndLine": 3729
+  },
+  {
+    "id": "A104",
+    "baseLine": 3729,
+    "old": "The\nstate-tracking results that carry the paper do not rest on these single-seed\nloss runs: they rest on the 3-seed 8 M expressivity probes (#ref(<sec:expressivity>)) and the\n1.3 B length-generalization separation (below), where the architectures\ncome apart.",
+    "replacement": "The\n3-seed 8 M expressivity probes (#ref(<sec:expressivity>)) and the\npredecessor 1.3 B length-generalization measurements below report\nstate tracking under their own protocols.",
+    "claim": "Independent loss and capability measurements",
+    "decision": "fold",
+    "reason": "Attach positive scope to the live claim.",
+    "baseEndLine": 3733
+  },
+  {
+    "id": "A105",
+    "baseLine": 3864,
+    "old": "where this GDN run under-fits them; this is not an acquisition impossibility.",
+    "replacement": "where this GDN run under-fits them under the tested recipe.",
+    "claim": "Predecessor trained-length S5 learning finding",
+    "decision": "keep-as-finding",
+    "reason": "Attach positive scope to the live claim.",
+    "baseEndLine": 3864
+  },
+  {
+    "id": "A106",
+    "baseLine": 3882,
+    "old": "*Delta vs raw-write: a budget-robust ordering, not solve-vs-fail.*",
+    "replacement": "*Delta vs raw-write: a budget-robust learning-efficiency ordering.*",
+    "claim": "Predecessor delta-versus-raw-write learning finding",
+    "decision": "fold",
+    "reason": "Attach positive scope to the live claim.",
+    "baseEndLine": 3882
+  },
+  {
+    "id": "A107",
+    "baseLine": 3896,
+    "old": "of *length-extrapolation efficiency*, not can/can't:",
+    "replacement": "of *length-extrapolation efficiency* under the tested recipes:",
+    "claim": "Predecessor delta-versus-raw-write learning finding",
+    "decision": "fold",
+    "reason": "Attach positive scope to the live claim.",
+    "baseEndLine": 3896
+  },
+  {
+    "id": "A108",
+    "baseLine": 3905,
+    "old": "A late-rate extrapolation suggesting only about 0.03 further gain is\nnot a measured doubled-budget result. ",
+    "replacement": "",
+    "claim": null,
+    "decision": "retire",
+    "reason": "Unmeasured extrapolation is not a result or a live claim; measured plateau and optimization ambiguity remain adjacent.",
+    "baseEndLine": 3906
+  },
+  {
+    "id": "A109",
+    "baseLine": 3943,
+    "old": "(The raw-write M²RNN's *own* $S_3$ decay\nat length, falling below the linear GDN past $T = 96$, is the same\nmatched-FLOP efficiency story, not an expressivity wall — its solvable-task\ncurve was still rising; see *Raw-write's shortfall is partly trainability* above.)",
+    "replacement": "Raw-write M²RNN falls below linear GDN on $S_3$ past $T = 96$\nwhile its solvable-task training curve is still rising; this is a\nmatched-budget learning-efficiency observation.",
+    "claim": "Predecessor measured S3 trajectory and optimization scope",
+    "decision": "keep-as-finding",
+    "reason": "Attach positive scope to the live claim.",
+    "baseEndLine": 3946
+  },
+  {
+    "id": "A110",
+    "baseLine": 3364,
+    "old": "No downstream capability evaluation of the 150 B E97/GDN2 pair has\nbeen run yet (TODO-NEEDS-EVIDENCE). What exists is committed evidence\nfrom the predecessor 1.3 B racer cohort",
+    "replacement": "Downstream capability evaluation of the 150 B E97/GDN2 pair is\npending (TODO-NEEDS-EVIDENCE). The measurements here concern the\npredecessor 1.3 B racer cohort",
+    "claim": "Cohort-specific downstream null",
+    "decision": "fold",
+    "reason": "Attach positive scope to the live claim.",
+    "baseEndLine": 3366
+  },
+  {
+    "id": "A111",
+    "baseLine": 4094,
+    "old": "rule*, and must\n    not be read as a quality verdict.",
+    "replacement": "rule*.",
+    "claim": "Reference bpb landscape across unequal budgets",
+    "decision": "fold",
+    "reason": "Retain actual budget/distribution differences; retire an unclaimed model-quality verdict defense.",
+    "baseEndLine": 4095
+  },
+  {
+    "id": "A112",
+    "baseLine": 4102,
+    "old": "and is not a quality knock;",
+    "replacement": "under those distribution conditions;",
+    "claim": "OOD reference bpb measurement",
+    "decision": "fold",
+    "reason": "Attach positive scope to the live claim.",
+    "baseEndLine": 4102
+  },
+  {
+    "id": "A113",
+    "file": "paper/figures/expressivity_1p3b.typ",
+    "baseLine": 38,
+    "old": "The identical cap is #budget.cap_steps steps, not identical realized\n    training:",
+    "replacement": "The common cap is #budget.cap_steps steps, with unequal realized\n    training:",
+    "claim": "Current-pair common cap and unequal steps",
+    "decision": "fold",
+    "reason": "Keep the measured boundary in the caption, as a result or protocol scope.",
+    "baseEndLine": 39
+  },
+  {
+    "id": "A114",
+    "file": "paper/figures/expressivity_1p3b.typ",
+    "baseLine": 40,
+    "old": "E97 decays gracefully rather than\n    remaining length-invariant; GDN2 approaches a roughly 50% plateau,\n    *not* the declared #percent(wall-gdn2.random_baseline_acc) random\n    baseline.",
+    "replacement": "E97 shows graceful length transfer; GDN2 approaches a roughly 50%\n    plateau, above the declared #percent(wall-gdn2.random_baseline_acc)\n    random baseline.",
+    "claim": "Current-pair measured length transfer and above-random GDN2 plateau",
+    "decision": "keep-as-finding",
+    "reason": "Keep the measured boundary in the caption, as a result or protocol scope.",
+    "baseEndLine": 43
+  },
+  {
+    "id": "A115",
+    "file": "paper/figures/expressivity_1p3b.typ",
+    "baseLine": 84,
+    "old": "*S5 capacity/long-horizon boundary finding, not a depth-wall separation.*",
+    "replacement": "*S5 capacity/long-horizon accuracy on the released pair.*",
+    "claim": "Current-pair S5 measured accuracy",
+    "decision": "keep-as-finding",
+    "reason": "Keep the measured boundary in the caption, as a result or protocol scope.",
+    "baseEndLine": 84
+  },
+  {
+    "id": "A116",
+    "file": "paper/figures/expressivity_1p3b.typ",
+    "baseLine": 88,
+    "old": "OOM-infeasible even at sub-batch 1; this point is not wholly untrained.",
+    "replacement": "OOM-infeasible even at sub-batch 1; the length-512 point includes\n    that completed update.",
+    "claim": "Current-pair S5 OOM and one completed update",
+    "decision": "keep-as-finding",
+    "reason": "Keep the measured boundary in the caption, as a result or protocol scope.",
+    "baseEndLine": 88
+  },
+  {
+    "id": "A117",
+    "old": "Turing-completeness of a fixed-width, fixed-precision E97 remains outside that result. ",
+    "replacement": "",
+    "claim": null,
+    "decision": "retire",
+    "reason": "The paper does not claim E97 Turing completeness. The cited result retains its stated precision/resource assumptions.",
+    "baseLine": 601,
+    "baseEndLine": 601
+  },
+  {
+    "id": "A118",
+    "old": "A learned surrogate would additionally need stability and safety\nvalidation; a state-tracking result is not a control guarantee.",
+    "replacement": "Feedback-surrogate use additionally requires stability and safety\nvalidation.",
+    "claim": "Prospective learned feedback surrogates",
+    "decision": "fold",
+    "reason": "Keep the live boundary attached as positive scope.",
+    "baseLine": 2710,
+    "baseEndLine": 2711
+  },
+  {
+    "id": "A119",
+    "old": "This matters because an affine realizer could\ntrack the group with shallow token functions, while an obstruction\nwould be algebraic rather than a temporal-depth theorem.",
+    "replacement": "An affine realizer could track the group with shallow token\nfunctions; an obstruction would concern the production channel\nconstraints.",
+    "claim": "G3 production-channel realizability",
+    "decision": "fold",
+    "reason": "Keep the live boundary attached as positive scope.",
+    "baseLine": 2881,
+    "baseEndLine": 2883
+  },
+  {
+    "id": "A120",
+    "old": "; demonstrated deployments\n    remain open",
+    "replacement": "",
+    "claim": null,
+    "decision": "retire",
+    "reason": "Prospective structural applications are the live claim; a separate rebuttal of demonstrated deployments is redundant and guards no deployment claim.",
+    "baseLine": 49,
+    "baseEndLine": 50
+  }
+]
