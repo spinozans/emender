@@ -15,7 +15,7 @@ const keys=new Set([...bib.matchAll(/@\w+\s*\{\s*([^,]+),/g)].map(m=>m[1].trim()
 const stripLabel=s=>s.replace(/^<|>$/g,'');
 const symbols={'λ':'\\lambda','≥':'\\geq','×':'\\times','≈':'\\approx','−':'-','…':'\\ldots','≠':'\\neq','∈':'\\in','ℝ':'\\mathbb{R}','γ':'\\gamma','δ':'\\delta','⊙':'\\odot','←':'\\leftarrow','‖':'\\Vert','σ':'\\sigma','⋅':'\\cdot','↓':'\\downarrow','⋯':'\\cdots','±':'\\pm','α':'\\alpha','τ':'\\tau','β':'\\beta','Δ':'\\Delta','→':'\\rightarrow','θ':'\\theta','φ':'\\varphi','μ':'\\mu','ε':'\\epsilon','ρ':'\\rho','η':'\\eta','ω':'\\omega','ℓ':'\\ell','≔':':=','≤':'\\leq','∗':'\\ast','∼':'\\sim',' ':'~','%':'\\%','{':'\\{','}':'\\}'};
 function esc(s){s=s.replaceAll('—','---').replaceAll('–','--').replaceAll('“','``').replaceAll('”',"''").replaceAll('’',"'");return [...s].map(c=>({'′':'\\ensuremath{^{\\prime}}','·':'\\textperiodcentered{}','…':'\\ldots{}','\\':'\\textbackslash{}','{':'\\{','}':'\\}','%':'\\%','&':'\\&','#':'\\#','_':'\\_','$':'\\$','^':'\\textasciicircum{}','~':'\\textasciitilde{}','²':'\\textsuperscript{2}','³':'\\textsuperscript{3}','×':'\\ensuremath{\\times}','≤':'\\ensuremath{\\leq}','≥':'\\ensuremath{\\geq}','≈':'\\ensuremath{\\approx}','→':'\\ensuremath{\\rightarrow}','−':'\\ensuremath{-}','∞':'\\ensuremath{\\infty}','Δ':'\\ensuremath{\\Delta}','λ':'\\ensuremath{\\lambda}','τ':'\\ensuremath{\\tau}','μ':'\\ensuremath{\\mu}','σ':'\\ensuremath{\\sigma}','ε':'\\ensuremath{\\epsilon}'}[c]??c)).join('')}
-let section='',formalSet='',figureNumber=0,enumGroup=0;
+let section='',sectionLabel='',formalSet='',figureNumber=0,enumGroup=0;
 const inventory={headings:[],figures:[],tables:[],theoremEnvironments:[],citations:[],anonymizedURLs:[]};
 function plain(x){if(!x)return '';if(typeof x.text==='string')return x.text;return (x.child?plain(x.child):'')+(x.body?plain(x.body):'')+(x.children?x.children.map(plain).join(''):'')}
 function flatten(xs){return xs.flatMap(x=>x.func==='sequence'?flatten(x.children):x.func==='styled'?flatten([x.child]):[x])}
@@ -43,24 +43,24 @@ default:throw Error('Unsupported math '+x.func);
 function theorem(body,env='theorem'){inventory.theoremEnvironments.push({environment:env,statement:body.slice(0,150)});return '\\begin{'+env+'}\n'+body+'\n\\end{'+env+'}'}
 function seq(xs){xs=flatten(xs);let out='';for(let i=0;i<xs.length;i++){
 const x=xs[i];
-// Sets B/D/E/H state their results in prose rather than bullet lists. Keep
+// Current formal subsections state these results in prose. Keep
 // the complete original paragraph in an unheaded amsthm environment.
-if(section==='Formal Results'&&/^Theorem set [BDEH]:/.test(formalSet)&&!['space','parbreak','heading'].includes(x.func)){
+if(sectionLabel==='<sec:formal>'&&['Temporal composition and routing','Generator memory and recurrent realization','Matched-signature delta-versus-raw-write separation'].includes(formalSet)&&!['space','parbreak','heading'].includes(x.func)){
   let end=i;while(end<xs.length&&!['parbreak','heading'].includes(xs[end].func))end++;
   const paragraph=xs.slice(i,end),text=paragraph.map(plain).join('');
-  if(paragraph.some(e=>e.func==='raw')&&!/^(What to take|Open item)/.test(text)){
-    out+='\n'+theorem(paragraph.map(render).join(''),formalSet.startsWith('Theorem set E:')?'definition':'theorem')+'\n';i=end-1;continue;
+  if(paragraph.some(e=>e.func==='raw')&&!/^(A recurrent realization|Open item)/.test(text)){
+    out+='\n'+theorem(paragraph.map(render).join(''),'theorem')+'\n';i=end-1;continue;
   }
 }
 if(['enum-item','list-item'].includes(x.func)){
 const group=[x];let j=i+1;for(;j<xs.length;j++){if(['space','parbreak'].includes(xs[j].func))continue;if(xs[j].func===x.func)group.push(xs[j]);else break;}i=j-1;
 const env=x.func==='enum-item'?'enumerate':'itemize';const opt=x.func==='enum-item'?(enumGroup++===0?'[label=\\arabic*.]':section==='Background'?'[label=\\arabic*.]':'[label=(\\alph*)]'):'';
-if(section==='Formal Results'&&/^Theorem set [ACGF]:/.test(formalSet)){
+if(sectionLabel==='<sec:formal>'&&['The finite-state tracker','Split-gated E97 and GDN-2 cores','Conditional latching'].includes(formalSet)){
   out+='\n'+group.map(e=>theorem(render(e.body),'theorembullet')).join('\n')+'\n';
 }else out+='\n\\begin{'+env+'}'+opt+'\n'+group.map(e=>'\\item '+render(e.body)).join('\n')+'\n\\end{'+env+'}\n';
 }else out+=render(x);
 }return out}
-function table(x){const cols=x.columns.length;let weights=x.columns.map(c=>parseFloat(c)||1);if(x.columns.every(c=>c==='auto'))weights=Array.from({length:cols},(_,i)=>i===0?2:1);if(section==='Architecture'&&cols===5)weights=[2,1,1,1,3];const sum=weights.reduce((a,b)=>a+b,0);let cells=[],headerCount=0;for(const e of x.children){if(e.func==='header'){headerCount=e.children.length;cells.push(...e.children)}else cells.push(e)}if(cells.length%cols)throw Error('Partial table row');inventory.tables.push({section,columns:cols,rows:cells.length/cols});
+function table(x){const cols=x.columns.length;let weights=x.columns.map(c=>parseFloat(c)||1);if(x.columns.every(c=>c==='auto'))weights=Array.from({length:cols},(_,i)=>i===0?2:1);if(sectionLabel==='<sec:background>'&&cols===2)weights=[1,2];if(sectionLabel==='<sec:arch>'&&cols===5)weights=[2,1,1,1,3];const sum=weights.reduce((a,b)=>a+b,0);let cells=[],headerCount=0;for(const e of x.children){if(e.func==='header'){headerCount=e.children.length;cells.push(...e.children)}else cells.push(e)}if(cells.length%cols)throw Error('Partial table row');inventory.tables.push({section,columns:cols,rows:cells.length/cols});
 const spec=weights.map(w=>'>{\\hsize='+((w/sum)*cols).toFixed(5)+'\\hsize\\linewidth=\\hsize\\raggedright\\arraybackslash}X').join('|');
 let out='\\begingroup\\setlength{\\tabcolsep}{3pt}\n\\begin{tabularx}{\\linewidth}{|'+spec+'|}\\hline\n';
 for(let i=0;i<cells.length;i+=cols){out+=cells.slice(i,i+cols).map(e=>render(e.body)).join(' & ')+' \\\\ \\hline\n'}return out+'\\end{tabularx}\n\\endgroup\n';}
@@ -82,13 +82,13 @@ case 'raw':{
 case 'smartquote':return x.double?'"':"'";
 case 'super':return '\\textsuperscript{'+render(x.body)+'}';
 case 'equation':return x.block?'\n\\[\\begin{aligned}'+math(x.body)+'\\end{aligned}\\]\n':'$'+math(x.body)+'$';
-case 'heading':{const title=render(x.body);const level=headingLevel(x);if(level===1){section=plain(x.body);formalSet='';}else formalSet=plain(x.body);inventory.headings.push({section,level,title});const appendix=x.label==='<sec:appendix>'?'\n\\clearpage\\appendix\n':'';return appendix+'\n\\'+(level===1?'section':level===2?'subsection':'subsubsection')+(x.numbering===null?'*':'')+'{'+title+'}'+(x.label?'\\label{'+stripLabel(x.label)+'}':'')+'\n';}
+case 'heading':{const title=render(x.body);const level=headingLevel(x);if(level===1){section=plain(x.body);sectionLabel=x.label;formalSet='';}else formalSet=plain(x.body);inventory.headings.push({section,level,title});const appendix=x.label==='<sec:appendix>'?'\n\\clearpage\\appendix\n':'';return appendix+'\n\\'+(level===1?'section':level===2?'subsection':'subsubsection')+(x.numbering===null?'*':'')+'{'+title+'}'+(x.label?'\\label{'+stripLabel(x.label)+'}':'')+'\n';}
 case 'ref':{const key=stripLabel(x.target);if(keys.has(key)){inventory.citations.push(key);return '\\citep{'+key+'}'}return (key.startsWith('sec:')?'Section~':key.startsWith('fig')?'Figure~':'Table~')+'\\ref{'+key+'}';}
 case 'figure':{const isImage=x.kind==='image'||x.body.func==='image';let body;if(x.kind==='image')body='\\includegraphics[width=\\linewidth]{assets/figure-'+(++figureNumber)+'.pdf}';else body=render(x.body);const env=isImage?'figure':'table';inventory.figures.push({label:x.label,kind:env,caption:plain(x.caption.body)});return '\n\\begin{'+env+'}[htbp]\n\\centering\n'+body+'\n\\caption{'+render(x.caption.body).replace(/\n\s*\n/g,' ')+'}\\label{'+stripLabel(x.label)+'}\n\\end{'+env+'}\n';}
 case 'image':{const file=path.basename(x.source);fs.copyFileSync(path.join(dir,'..',x.source),path.join(dir,'assets',file));return '\\includegraphics[width=0.95\\linewidth]{assets/'+file+'}';}
 case 'table':return table(x);
 case 'align':case 'pad':return render(x.body);
-case 'block':{const body=render(x.body);if(section==='Formal Results'&&formalSet.startsWith('Theorem set C′'))return '\n'+theorem(body)+'\n';return '\n'+body+'\n';}
+case 'block':{const body=render(x.body);return '\n'+body+'\n';}
 case 'h':return '\\quad ';
 case 'v':return '\n';
 case 'linebreak':return '\\newline{}';
@@ -107,7 +107,7 @@ let abstractTex=render(abstract).replace(/\\section\*\{Abstract\}/,'').trim();
 let bodyTex=render(body);
 // Only these identifying public-repository mentions are variant-gated.
 bodyTex=bodyTex.replace(/public \\protect\\path\|emender\| repo/g,'public \\artifactrepo{}');
-const tex=String.raw`% Generated packaging layer; canonical source: paper/main.typ (P13 baseline).
+const tex=String.raw`% Generated packaging layer; canonical source: paper/main.typ (P20 transfer, P21 packaging).
 % Pre-revision accepted snapshot: eb2b9636; see canonical-baseline.json.
 \documentclass[10pt]{article}
 \ifdefined\EmenderPreprint
@@ -118,6 +118,10 @@ const tex=String.raw`% Generated packaging layer; canonical source: paper/main.t
 \usepackage{amsmath,amssymb,amsthm,graphicx,tabularx,array,enumitem}
 \usepackage[hyphens]{url}
 \usepackage{xurl}
+% Preserve the canonical bibliography's Unicode glyphs in the official font.
+\usepackage{newunicodechar}
+\newunicodechar{Ž}{\v{Z}}
+\newunicodechar{²}{\textsuperscript{2}}
 \usepackage[hidelinks]{hyperref}
 \usepackage{caption}
 % Unnumbered amsthm statements retain the original statement headings verbatim.

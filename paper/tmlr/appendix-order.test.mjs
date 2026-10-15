@@ -14,10 +14,10 @@ test('appendix-order: rejects old appendix-before-references PDF and TeX orders'
     '\\appendix\\bibliography{refs}'), /TeX references/);
 });
 test('appendix-order: rejects missing headings, same-page appendix, and bibliography spill', () => {
-  assert.throws(() => verifyAppendixOrder(title), /heading missing/);
-  assert.throws(() => verifyAppendixOrder('References'), /physical page/);
+  assert.throws(() => verifyAppendixOrder(title), /One References heading/);
+  assert.throws(() => verifyAppendixOrder('References'), /One Appendix A heading/);
   assert.throws(() => verifyAppendixOrder(`References\n${title}`), /physical page/);
-  assert.throws(() => verifyAppendixOrder(`References\f${title} Last DOI`, tex, 'Last DOI'), /Final bibliography/);
+  assert.throws(() => verifyAppendixOrder(`References\f${title}\nLast DOI`, tex, 'Last DOI'), /Final bibliography/);
   assert.throws(() => verifyAppendixOrder(`References\f${title}`, tex, 'Last DOI'), /Final bibliography/);
 });
 test('appendix-order: rejects multiple appendices or bibliographies', () => {
