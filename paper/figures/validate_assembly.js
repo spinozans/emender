@@ -9,7 +9,7 @@ const source = fs.readFileSync('paper/main.typ', 'utf8');
 const normalized = source.replace(/\s+/g, ' ');
 const labels = ['intro', 'background', 'arch', 'formal', 'systems', 'lm', 'expressivity',
   'applications', 'related', 'limitations', 'conclusion', 'predictions',
-  'future_work', 'appendix', 'appendix_cohort', 'appendix_bpb'];
+  'future_work', 'appendix'];
 const probe = 'paper/figures/.assembly-query.typ';
 assert.ok(!fs.existsSync(probe), 'do not overwrite a pre-existing probe');
 fs.writeFileSync(probe, `#include "../main.typ"
@@ -28,7 +28,7 @@ try {
 assert.deepEqual(layout.sections.map(h => h.label), labels.map(label => `sec:${label}`));
 assert.deepEqual(layout.sections.slice(0, 13).map(h => h.counter),
   Array.from({ length: 13 }, (_, i) => [i + 1]));
-assert.deepEqual(layout.sections.slice(13).map(h => h.counter), [[1], [2], [3]]);
+assert.deepEqual(layout.sections.slice(13).map(h => h.counter), [[1]]);
 assert.ok(!/§\d/.test(source), 'no stale literal manuscript numbers');
 assert.ok(source.includes('#show: arkheion-appendices'));
 for (const match of source.matchAll(/#ref\(<([^>]+)>\)/g)) {
@@ -129,5 +129,5 @@ for (const key of keys) assert.ok(ledger.includes(`| \`${key}\` |`), key);
 assert.equal((ledger.match(/^\| `[^`]+` \|/gm) || []).length, keys.length);
 assert.ok(bib.includes('The Road Less Scheduled'));
 assert.ok(bib.includes('Danieli, Federico'));
-console.log(`PASS: 13 numbered body sections, 3 lettered appendices, ${layout.pages} pages; references, G1–G3/O1/U3.1, theorem scopes, 17-file inventory, and all ${keys.length} bibliography entries checked.`);
+console.log(`PASS: 13 numbered body sections, 1 register appendix, ${layout.pages} pages; references, G1–G3/O1/U3.1, theorem scopes, 17-file inventory, and all ${keys.length} bibliography entries checked.`);
 console.log(JSON.stringify(layout));

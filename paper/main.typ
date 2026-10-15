@@ -1689,19 +1689,6 @@ All throughput measurements and throughput-budget smokes reported here
 are CUDA-only; none establishes correctness, performance, or parity
 on ROCm.
 
-Driving the 1.273 B E88 predecessor instance (batch 5,
-context 2048) through its own training path on a free NVIDIA RTX 6000
-Ada (48 GB) and
-sampling `nvidia-smi` once a second over a sustained post-warmup window,
-the GPU holds *median 100% utilization (mean 99.8%, minimum 96% across
-133 samples)* while drawing 97% of its 300 W power cap. The accelerator
-stays busy on width-axis multi-programming alone, with no time-axis
-scan. Sustained throughput is *7,492 tokens/s* (mean over steady
-50-step windows; median 7,468); a slower sibling GPU sustained
-7,277 tokens/s, so the absolute figure is GPU-dependent at the
-few-percent level. E97 uses the shared E88-derived Triton engine with split-edit inputs,
-but the E88 occupancy measurement is not an E97 occupancy measurement.
-
 At the literal 1.3 B pair geometry the two arms are measured head to
 head: on a leased RTX 6000 Ada under identical conditions, E97-MLP
 sustains 3,211 tokens/s per GPU at batch 4 against 3,290 for GDN2-MLP —
@@ -1712,30 +1699,7 @@ this scale is memory, not kernel speed; an earlier 1.26–1.56×
 speedup measured at small grok-scale dims is *not* reproduced at
 1.3 B.
 
-Occupancy and peak-arithmetic utilization measure different quantities.
-Model-FLOPs utilization (MFU) — computed with the
-standard $6N$ convention against the card's dense bf16 peak of
-364 TFLOPS — is *15.7%*, a lower bound: $6N$
-counts only the weight-matmul FLOPs and excludes the recurrence and
-gate operations, so the true MFU is slightly higher. High occupancy
-with modest MFU is the expected profile of a model bound by memory
-bandwidth and the serial recurrence rather than by arithmetic: the GPU
-is busy nearly all of the time but converts about 16% of its peak FLOPs
-into useful work.
-
-What that throughput buys on the width axis is best read against a real
-time-axis kernel. A chunkwise linear-scan baseline — Gated DeltaNet as
-implemented in the flash-linear-attention (FLA) library (1.352 B, the
-CMA-matched shape of the predecessor cohort), run on the same GPU,
-context, and time budget — sustains 8,248 tokens/s at MFU 18.4% and the
-same near-100% occupancy. The E88 predecessor reaches *≈ 91% of that
-linear-scan kernel's tokens/s*
-(7,492 / 8,248) *without performing the sequential time-axis scan at
-all*. Width-axis multi-programming therefore recovers
-linear-scan-class throughput on the width axis. It does not beat the
-chunked-scan kernel on raw tokens/s — FLA is about 10% faster here, at a
-slightly larger parameter count and a different batch — so the standing
-is parity-class.
+Predecessor-cohort occupancy, MFU, and the linear-scan kernel comparison are recorded in #ref(<sec:appendix>).
 
 #heading(level: 2, numbering: none)[Fused Triton recurrence kernel]
 
@@ -2110,51 +2074,7 @@ FLOPs (final losses 1.14–1.34 nats at matched FLOP budgets;
 recurrent family changes *what* is trained, not *how much compute per
 bit* — consistent with the 1.3 B loss null. Capability and formal results appear in #ref(<sec:expressivity>) and #ref(<sec:formal>).
 
-#heading(level: 2, numbering: none)[Downstream capability panels: a null, on the predecessor cohort]
-
-No downstream capability evaluation of the 150 B E97/GDN2-MLP pair has
-been run yet (TODO-NEEDS-EVIDENCE). What exists is committed evidence
-from the predecessor 1.3 B racer cohort (E88, FLA-GDN, M²RNN, Mamba2 —
-#ref(<sec:appendix_cohort>)), and it provides the
-reference comparison: at $approx 1 M$-step training extents, on a
-2,049-item multi-choice fact panel and a 2,048-item reasoning panel
-(BBH + ReCLor + FOLIO), the four architectures sit within a few
-percentage points of one another in narrow observed bands
-(@tab_downstream), without a paired or seed-level equivalence test.
-
-#figure(
-  align(center)[#table(
-    columns: (auto, auto, auto, auto, auto),
-    align: (left, right, right, right, right),
-    stroke: 0.5pt,
-    inset: 6pt,
-    table.header(
-      [*Panel (predecessor cohort)*], [*E88*], [*FLA-GDN*], [*M²RNN*],
-      [*Mamba2*],
-    ),
-    [Fact panel, 2,049 items (accuracy)], [0.345], [0.373], [0.358],
-      [0.353],
-    [Reasoning panel, 2,048 items (accuracy)], [0.319], [0.350], [0.336],
-      [0.324],
-  )],
-  caption: [
-    *Downstream panels at the predecessor cohort's training extent — a
-    null, reported as a null.* All four 1.3 B-class models are within
-    $approx 3.5$ percentage points on both panels; none has crossed the
-    threshold where these benchmarks differentiate architectures.
-    Measured on the predecessor E88-era checkpoints (steps 0.86 M–1.72 M
-    per model); the 150 B pair's downstream evaluation is pending.
-    Source: `paper/results/qa_reasoning/fact_panel_latest.csv`,
-    `paper/results/qa_reasoning/reasoning_panel_latest.csv`.
-  ],
-) <tab_downstream>
-
-The 8 M probes of #ref(<sec:expressivity>) are the controlled instrument for what these
-panels cannot resolve: at the predecessor cohort's training extent,
-multi-choice QA does not separate the update rules, and the separation
-the theory predicts is expected in state tracking, not in fact
-recall — the #ref(<sec:expressivity>) length-extrapolation results and the 1.3 B expressivity
-suite measure it directly.
+Predecessor-cohort downstream capability panels are recorded in #ref(<sec:appendix>).
 
 // ── 7. Expressivity Results ───────────────────────────────────────────────────
 = Expressivity Results <sec:expressivity>
@@ -3347,7 +3267,101 @@ guarantee on the state-tracking task.
 // ── #ref(<sec:appendix>) — E63→E88 lineage and ablation notes ────────────────────────────
 #show: arkheion-appendices
 
-= Lineage of the E63 $arrow$ E88 $arrow$ E97 experimental program <sec:appendix>
+= Development history and source register <sec:appendix>
+
+The project developed through successive recurrent-memory designs,
+implementation changes, and increasingly controlled comparisons. This
+register records that process and points to its source material. The
+empirical study in this paper is the current E97/GDN2 pair; the
+subsections below preserve the development trail.
+
+== Predecessor-cohort systems measurements
+
+Driving the 1.273 B E88 predecessor instance (batch 5,
+context 2048) through its own training path on a free NVIDIA RTX 6000
+Ada (48 GB) and
+sampling `nvidia-smi` once a second over a sustained post-warmup window,
+the GPU holds *median 100% utilization (mean 99.8%, minimum 96% across
+133 samples)* while drawing 97% of its 300 W power cap. The accelerator
+stays busy on width-axis multi-programming alone, with no time-axis
+scan. Sustained throughput is *7,492 tokens/s* (mean over steady
+50-step windows; median 7,468); a slower sibling GPU sustained
+7,277 tokens/s, so the absolute figure is GPU-dependent at the
+few-percent level. E97 uses the shared E88-derived Triton engine with split-edit inputs,
+but the E88 occupancy measurement is not an E97 occupancy measurement.
+
+Occupancy and peak-arithmetic utilization measure different quantities.
+Model-FLOPs utilization (MFU) — computed with the
+standard $6N$ convention against the card's dense bf16 peak of
+364 TFLOPS — is *15.7%*, a lower bound: $6N$
+counts only the weight-matmul FLOPs and excludes the recurrence and
+gate operations, so the true MFU is slightly higher. High occupancy
+with modest MFU is the expected profile of a model bound by memory
+bandwidth and the serial recurrence rather than by arithmetic: the GPU
+is busy nearly all of the time but converts about 16% of its peak FLOPs
+into useful work.
+
+What that throughput buys on the width axis is best read against a real
+time-axis kernel. A chunkwise linear-scan baseline — Gated DeltaNet as
+implemented in the flash-linear-attention (FLA) library (1.352 B, the
+CMA-matched shape of the predecessor cohort), run on the same GPU,
+context, and time budget — sustains 8,248 tokens/s at MFU 18.4% and the
+same near-100% occupancy. The E88 predecessor reaches *≈ 91% of that
+linear-scan kernel's tokens/s*
+(7,492 / 8,248) *without performing the sequential time-axis scan at
+all*. Width-axis multi-programming therefore recovers
+linear-scan-class throughput on the width axis. It does not beat the
+chunked-scan kernel on raw tokens/s — FLA is about 10% faster here, at a
+slightly larger parameter count and a different batch — so the standing
+is parity-class.
+
+== Downstream capability panels: a null, on the predecessor cohort
+
+No downstream capability evaluation of the 150 B E97/GDN2-MLP pair has
+been run yet (TODO-NEEDS-EVIDENCE). What exists is committed evidence
+from the predecessor 1.3 B racer cohort (E88, FLA-GDN, M²RNN, Mamba2 —
+#ref(<sec:appendix_cohort>)), and it provides the
+reference comparison: at $approx 1 M$-step training extents, on a
+2,049-item multi-choice fact panel and a 2,048-item reasoning panel
+(BBH + ReCLor + FOLIO), the four architectures sit within a few
+percentage points of one another in narrow observed bands
+(@tab_downstream), without a paired or seed-level equivalence test.
+
+#figure(
+  align(center)[#table(
+    columns: (auto, auto, auto, auto, auto),
+    align: (left, right, right, right, right),
+    stroke: 0.5pt,
+    inset: 6pt,
+    table.header(
+      [*Panel (predecessor cohort)*], [*E88*], [*FLA-GDN*], [*M²RNN*],
+      [*Mamba2*],
+    ),
+    [Fact panel, 2,049 items (accuracy)], [0.345], [0.373], [0.358],
+      [0.353],
+    [Reasoning panel, 2,048 items (accuracy)], [0.319], [0.350], [0.336],
+      [0.324],
+  )],
+  caption: [
+    *Downstream panels at the predecessor cohort's training extent — a
+    null, reported as a null.* All four 1.3 B-class models are within
+    $approx 3.5$ percentage points on both panels; none has crossed the
+    threshold where these benchmarks differentiate architectures.
+    Measured on the predecessor E88-era checkpoints (steps 0.86 M–1.72 M
+    per model); the 150 B pair's downstream evaluation is pending.
+    Source: `paper/results/qa_reasoning/fact_panel_latest.csv`,
+    `paper/results/qa_reasoning/reasoning_panel_latest.csv`.
+  ],
+) <tab_downstream>
+
+The 8 M probes of #ref(<sec:expressivity>) are the controlled instrument for what these
+panels cannot resolve: at the predecessor cohort's training extent,
+multi-choice QA does not separate the update rules, and the separation
+the theory predicts is expected in state tracking, not in fact
+recall — the #ref(<sec:expressivity>) length-extrapolation results and the 1.3 B expressivity
+suite measure it directly.
+
+== Lineage of the E63 $arrow$ E88 $arrow$ E97 experimental program
 
 The architecture presented in #ref(<sec:arch>) is the endpoint of a multi-year
 ablation program, and this appendix records how its 1.3 B instances —
@@ -3408,7 +3422,7 @@ availability statement in #ref(<sec:conclusion>)).
   run of #ref(<sec:lm>) (`emender_E97_1.3B_20260709_084606`) is the first instance
   of the family trained past 100 B tokens.
 
-= The predecessor 1.3 B cohort (E88 era) <sec:appendix_cohort>
+== The predecessor 1.3 B cohort (E88 era) <sec:appendix_cohort>
 
 Before the E97/GDN2-MLP pairing of #ref(<sec:lm>), the same questions were asked of a
 three-model cohort at the 1.3 B class on The Pile: E88 (1.273 B, the
@@ -3907,7 +3921,7 @@ consistent with #ref(<sec:intro>)'s class-level claim at this training budget. T
 state-tracking-specific reasoning separation, if it exists, will emerge
 at longer training horizons; #ref(<sec:predictions>) states the prediction explicitly.
 
-= Held-out bits-per-byte measurement (predecessor cohort) <sec:appendix_bpb>
+== Held-out bits-per-byte measurement (predecessor cohort) <sec:appendix_bpb>
 
 This appendix is the evidentiary backbone of the held-out descriptive closeness reported
 in #ref(<sec:appendix_cohort>): it documents exactly how the held-out bits-per-byte figures are
