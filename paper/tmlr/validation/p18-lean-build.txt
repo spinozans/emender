@@ -1,0 +1,199 @@
+⚠ [2065/2196] Replayed ElmanProofs.Architectures.M2RNNComparison
+warning: ElmanProofs/Architectures/M2RNNComparison.lean:267:2: 'simp [e88DeltaTransition, e88Delta, queryReadout, outerKV,
+    Matrix.mul_apply, Matrix.mulVec, dotProduct]' is a flexible tactic modifying '⊢'. Try 'simp?' and use the suggested 'simp only [...]'. Alternatively, use `suffices` to explicitly state the simplified form.
+
+Note: This linter can be disabled with `set_option linter.flexible false`
+info: ElmanProofs/Architectures/M2RNNComparison.lean:269:2: 'have h_id : (∑ x : Fin K, lambda * ((1 : Matrix (Fin K) (Fin K) Real) i x) * H x j) = lambda * H i j :=
+  by
+  rw [Fintype.sum_eq_single i]
+  · simp
+  · intro x hx
+    have hix : i ≠ x := by
+      intro h
+      exact hx h.symm
+    simp [hix]' uses '⊢'!
+warning: ElmanProofs/Architectures/M2RNNComparison.lean:267:2: 'simp [e88DeltaTransition, e88Delta, queryReadout, outerKV,
+    Matrix.mul_apply, Matrix.mulVec, dotProduct]' is a flexible tactic modifying '⊢'. Try 'simp?' and use the suggested 'simp only [...]'. Alternatively, use `suffices` to explicitly state the simplified form.
+
+Note: This linter can be disabled with `set_option linter.flexible false`
+info: ElmanProofs/Architectures/M2RNNComparison.lean:279:2: 'have h_k : (∑ x : Fin K, k i * k x * H x j) = k i * ∑ x : Fin K, H x j * k x :=
+  by
+  rw [Finset.mul_sum]
+  apply Finset.sum_congr rfl
+  intro x _
+  ring' uses '⊢'!
+warning: ElmanProofs/Architectures/M2RNNComparison.lean:267:2: 'simp [e88DeltaTransition, e88Delta, queryReadout, outerKV,
+    Matrix.mul_apply, Matrix.mulVec, dotProduct]' is a flexible tactic modifying '⊢'. Try 'simp?' and use the suggested 'simp only [...]'. Alternatively, use `suffices` to explicitly state the simplified form.
+
+Note: This linter can be disabled with `set_option linter.flexible false`
+info: ElmanProofs/Architectures/M2RNNComparison.lean:286:2: 'have h_sum :
+  (∑ x : Fin K, (lambda * ((1 : Matrix (Fin K) (Fin K) Real) i x) - k i * k x) * H x j) =
+    lambda * H i j - k i * ∑ x : Fin K, H x j * k x :=
+  by
+  calc
+    (∑ x : Fin K, (lambda * ((1 : Matrix (Fin K) (Fin K) Real) i x) - k i * k x) * H x j) =
+        ∑ x : Fin K, (lambda * ((1 : Matrix (Fin K) (Fin K) Real) i x) * H x j - k i * k x * H x j) :=
+      by
+      apply Finset.sum_congr rfl
+      intro x _
+      ring
+    _ = (∑ x : Fin K, lambda * ((1 : Matrix (Fin K) (Fin K) Real) i x) * H x j) - (∑ x : Fin K, k i * k x * H x j) := by
+      rw [Finset.sum_sub_distrib]
+    _ = lambda * H i j - k i * ∑ x : Fin K, H x j * k x := by rw [h_id, h_k]' uses '⊢'!
+warning: ElmanProofs/Architectures/M2RNNComparison.lean:267:2: 'simp [e88DeltaTransition, e88Delta, queryReadout, outerKV,
+    Matrix.mul_apply, Matrix.mulVec, dotProduct]' is a flexible tactic modifying '⊢'. Try 'simp?' and use the suggested 'simp only [...]'. Alternatively, use `suffices` to explicitly state the simplified form.
+
+Note: This linter can be disabled with `set_option linter.flexible false`
+info: ElmanProofs/Architectures/M2RNNComparison.lean:302:2: 'rw [h_sum]' uses '⊢'!
+⚠ [2066/2196] Replayed ElmanProofs.Architectures.OnlineMemory
+warning: ElmanProofs/Architectures/OnlineMemory.lean:106:2: 'simp [read, M2RNNComparison.queryReadout, Matrix.mulVec, dotProduct]' is a flexible tactic modifying '⊢'. Try 'simp?' and use the suggested 'simp only [...]'. Alternatively, use `suffices` to explicitly state the simplified form.
+
+Note: This linter can be disabled with `set_option linter.flexible false`
+info: ElmanProofs/Architectures/OnlineMemory.lean:107:2: 'calc
+  Finset.univ.sum (fun x : Fin K => (A x j + B x j) * q x) =
+      Finset.univ.sum (fun x : Fin K => A x j * q x + B x j * q x) :=
+    by
+    apply Finset.sum_congr rfl
+    intro i _
+    ring
+  _ = Finset.univ.sum (fun x : Fin K => A x j * q x) + Finset.univ.sum (fun x : Fin K => B x j * q x) := by
+    rw [Finset.sum_add_distrib]' uses '⊢'!
+warning: ElmanProofs/Architectures/OnlineMemory.lean:126:2: 'simp [read, M2RNNComparison.queryReadout, M2RNNComparison.outerKV,
+    keyDot, Matrix.mulVec, dotProduct]' is a flexible tactic modifying '⊢'. Try 'simp?' and use the suggested 'simp only [...]'. Alternatively, use `suffices` to explicitly state the simplified form.
+
+Note: This linter can be disabled with `set_option linter.flexible false`
+info: ElmanProofs/Architectures/OnlineMemory.lean:128:2: 'calc
+  Finset.univ.sum (fun x : Fin K => k x * e j * q x) = Finset.univ.sum (fun x : Fin K => (k x * q x) * e j) :=
+    by
+    apply Finset.sum_congr rfl
+    intro i _
+    ring
+  _ = (Finset.univ.sum fun i : Fin K => k i * q i) * e j := by rw [Finset.sum_mul]
+  _ = (Finset.univ.sum fun i : Fin K => k i * q i) * e j := rfl' uses '⊢'!
+warning: ElmanProofs/Architectures/OnlineMemory.lean:144:2: 'simp [linearDeltaWrite, read, correction, M2RNNComparison.queryReadout,
+    M2RNNComparison.outerKV, keyDot, Matrix.mulVec, dotProduct]' is a flexible tactic modifying '⊢'. Try 'simp?' and use the suggested 'simp only [...]'. Alternatively, use `suffices` to explicitly state the simplified form.
+
+Note: This linter can be disabled with `set_option linter.flexible false`
+info: ElmanProofs/Architectures/OnlineMemory.lean:146:2: 'calc
+  Finset.univ.sum (fun x : Fin K => (S x j + k x * (v j - Finset.univ.sum (fun x => S x j * k x))) * q x) =
+      Finset.univ.sum (fun x : Fin K => S x j * q x + (k x * q x) * (v j - Finset.univ.sum (fun x => S x j * k x))) :=
+    by
+    apply Finset.sum_congr rfl
+    intro i _
+    ring
+  _ =
+      Finset.univ.sum (fun x : Fin K => S x j * q x) +
+        Finset.univ.sum (fun x : Fin K => (k x * q x) * (v j - Finset.univ.sum (fun x => S x j * k x))) :=
+    by rw [Finset.sum_add_distrib]
+  _ =
+      Finset.univ.sum (fun x : Fin K => S x j * q x) +
+        (Finset.univ.sum fun i : Fin K => k i * q i) * (v j - Finset.univ.sum (fun x => S x j * k x)) :=
+    by rw [Finset.sum_mul]' uses '⊢'!
+warning: ElmanProofs/Architectures/OnlineMemory.lean:214:2: 'simp [stateIndependentAdditiveWrite, read_add] at h' is a flexible tactic modifying 'h'. Try 'simp?' and use the suggested 'simp only [...]'. Alternatively, use `suffices` to explicitly state the simplified form.
+
+Note: This linter can be disabled with `set_option linter.flexible false`
+info: ElmanProofs/Architectures/OnlineMemory.lean:215:2: 'have h₁ := congrFun h.1 j' uses 'h'!
+warning: ElmanProofs/Architectures/OnlineMemory.lean:214:2: 'simp [stateIndependentAdditiveWrite, read_add] at h' is a flexible tactic modifying 'h'. Try 'simp?' and use the suggested 'simp only [...]'. Alternatively, use `suffices` to explicitly state the simplified form.
+
+Note: This linter can be disabled with `set_option linter.flexible false`
+info: ElmanProofs/Architectures/OnlineMemory.lean:216:2: 'have h₂ := congrFun h.2 j' uses 'h'!
+warning: ElmanProofs/Architectures/OnlineMemory.lean:280:2: 'simp [memoryTable, read, M2RNNComparison.queryReadout,
+    M2RNNComparison.outerKV, Matrix.sum_apply, Matrix.of_apply,
+    Matrix.mulVec, dotProduct]' is a flexible tactic modifying '⊢'. Try 'simp?' and use the suggested 'simp only [...]'. Alternatively, use `suffices` to explicitly state the simplified form.
+
+Note: This linter can be disabled with `set_option linter.flexible false`
+info: ElmanProofs/Architectures/OnlineMemory.lean:283:2: 'calc
+  Finset.univ.sum (fun x : Fin K => (Finset.univ.sum fun i : Fin N => keys i x * values i dim) * keys j x) =
+      Finset.univ.sum (fun x : Fin K => Finset.univ.sum fun i : Fin N => values i dim * keys i x * keys j x) :=
+    by
+    apply Finset.sum_congr rfl
+    intro x _
+    rw [Finset.sum_mul]
+    apply Finset.sum_congr rfl
+    intro i _
+    ring
+  _ = Finset.univ.sum (fun i : Fin N => Finset.univ.sum fun x : Fin K => values i dim * keys i x * keys j x) := by
+    rw [Finset.sum_comm]
+  _ = Finset.univ.sum (fun i : Fin N => values i dim * Finset.univ.sum (fun x : Fin K => keys i x * keys j x)) :=
+    by
+    apply Finset.sum_congr rfl
+    intro i _
+    rw [Finset.mul_sum]
+    apply Finset.sum_congr rfl
+    intro x _
+    ring
+  _ = Finset.univ.sum (fun i : Fin N => values i dim * keyDot (keys i) (keys j)) := by rfl
+  _ = Finset.univ.sum (fun i : Fin N => values i dim * (if i = j then 1 else 0)) :=
+    by
+    apply Finset.sum_congr rfl
+    intro i _
+    rw [horth i j]
+  _ = values j dim := by
+    rw [Fintype.sum_eq_single j]
+    · simp
+    · intro i hi
+      simp [hi]' uses '⊢'!
+warning: ElmanProofs/Architectures/OnlineMemory.lean:364:6: 'simp [hi.symm] at h' is a flexible tactic modifying 'h'. Try 'simp?' and use the suggested 'simp only [...]'. Alternatively, use `suffices` to explicitly state the simplified form.
+
+Note: This linter can be disabled with `set_option linter.flexible false`
+info: ElmanProofs/Architectures/OnlineMemory.lean:365:6: 'exact h' uses 'h'!
+⚠ [2069/2196] Replayed ElmanProofs.Architectures.MultiStepSeparation
+warning: ElmanProofs/Architectures/MultiStepSeparation.lean:348:55: unused variable `hk`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: ElmanProofs/Architectures/MultiStepSeparation.lean:624:60: unused variable `hk`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+⚠ [2076/2196] Replayed ElmanProofs.Architectures.SplitGatedDelta
+warning: ElmanProofs/Architectures/SplitGatedDelta.lean:155:2: 'simp [queryReadout, outerKV, Matrix.mul_apply, Matrix.mulVec, dotProduct]' is a flexible tactic modifying '⊢'. Try 'simp?' and use the suggested 'simp only [...]'. Alternatively, use `suffices` to explicitly state the simplified form.
+
+Note: This linter can be disabled with `set_option linter.flexible false`
+info: ElmanProofs/Architectures/SplitGatedDelta.lean:156:2: 'have h_id : (∑ x : Fin K, lambda * ((1 : Matrix (Fin K) (Fin K) Real) i x) * H x j) = lambda * H i j :=
+  by
+  rw [Fintype.sum_eq_single i]
+  · simp
+  · intro x hx
+    have hix : i ≠ x := by
+      intro h
+      exact hx h.symm
+    simp [hix]' uses '⊢'!
+warning: ElmanProofs/Architectures/SplitGatedDelta.lean:155:2: 'simp [queryReadout, outerKV, Matrix.mul_apply, Matrix.mulVec, dotProduct]' is a flexible tactic modifying '⊢'. Try 'simp?' and use the suggested 'simp only [...]'. Alternatively, use `suffices` to explicitly state the simplified form.
+
+Note: This linter can be disabled with `set_option linter.flexible false`
+info: ElmanProofs/Architectures/SplitGatedDelta.lean:166:2: 'have h_k : (∑ x : Fin K, k i * (b x * k x) * H x j) = k i * ∑ x : Fin K, H x j * (b x * k x) :=
+  by
+  rw [Finset.mul_sum]
+  apply Finset.sum_congr rfl
+  intro x _
+  ring' uses '⊢'!
+warning: ElmanProofs/Architectures/SplitGatedDelta.lean:155:2: 'simp [queryReadout, outerKV, Matrix.mul_apply, Matrix.mulVec, dotProduct]' is a flexible tactic modifying '⊢'. Try 'simp?' and use the suggested 'simp only [...]'. Alternatively, use `suffices` to explicitly state the simplified form.
+
+Note: This linter can be disabled with `set_option linter.flexible false`
+info: ElmanProofs/Architectures/SplitGatedDelta.lean:173:2: 'have h_sum :
+  (∑ x : Fin K, (lambda * ((1 : Matrix (Fin K) (Fin K) Real) i x) - k i * (b x * k x)) * H x j) =
+    lambda * H i j - k i * ∑ x : Fin K, H x j * (b x * k x) :=
+  by
+  calc
+    (∑ x : Fin K, (lambda * ((1 : Matrix (Fin K) (Fin K) Real) i x) - k i * (b x * k x)) * H x j) =
+        ∑ x : Fin K, (lambda * ((1 : Matrix (Fin K) (Fin K) Real) i x) * H x j - k i * (b x * k x) * H x j) :=
+      by
+      apply Finset.sum_congr rfl
+      intro x _
+      ring
+    _ =
+        (∑ x : Fin K, lambda * ((1 : Matrix (Fin K) (Fin K) Real) i x) * H x j) -
+          (∑ x : Fin K, k i * (b x * k x) * H x j) :=
+      by rw [Finset.sum_sub_distrib]
+    _ = lambda * H i j - k i * ∑ x : Fin K, H x j * (b x * k x) := by rw [h_id, h_k]' uses '⊢'!
+warning: ElmanProofs/Architectures/SplitGatedDelta.lean:155:2: 'simp [queryReadout, outerKV, Matrix.mul_apply, Matrix.mulVec, dotProduct]' is a flexible tactic modifying '⊢'. Try 'simp?' and use the suggested 'simp only [...]'. Alternatively, use `suffices` to explicitly state the simplified form.
+
+Note: This linter can be disabled with `set_option linter.flexible false`
+info: ElmanProofs/Architectures/SplitGatedDelta.lean:194:2: 'rw [h_sum]' uses '⊢'!
+warning: ElmanProofs/Architectures/SplitGatedDelta.lean:381:2: 'simp [e97UpdateDirect, e97LinearCore, splitGatedLinearCore, splitGatedDelta,
+    e97Retrieved, e97ReadKey, e97WriteValue, strictWitnessZeroState,
+    strictWitnessOneVec, strictWitnessTwoVec, e88DeltaUpdateDirect, e88Delta,
+    matrixTanh, matrixMap, outerKV, queryReadout, hadamard] at hentry' is a flexible tactic modifying 'hentry'. Try 'simp?' and use the suggested 'simp only [...]'. Alternatively, use `suffices` to explicitly state the simplified form.
+
+Note: This linter can be disabled with `set_option linter.flexible false`
+info: ElmanProofs/Architectures/SplitGatedDelta.lean:385:2: 'have hpre : (2 : Real) = 1 := Activation.tanh_injective hentry' uses 'hentry'!
+Build completed successfully (2196 jobs).

@@ -1,0 +1,492 @@
+[
+  {
+    "readerParagraph": 11,
+    "reason": "Scratchpad/chain-of-thought sentences excluded: citations absent from frozen canonical bibliography.",
+    "text": "Keeping balance, following a moving object, and adjusting a movement\nrequire continual revision of an internal estimate as observations\narrive. Conversation and perception likewise require a model to update\nwhat it understands while the interaction unfolds. Fast feedback puts\nthis computation under a per-input time budget. Textual scratchpads\nand chains of thought let language models perform visible intermediate\ncomputations through generated tokens @nye2021scratchpads @wei2022chain.\nEach additional token adds a decoding step and extends the working\nsequence. A complementary question is how much of this ongoing\ncomputation can happen directly in carried memory as inputs arrive.\nEfficient nonlinear recurrence offers such a path: at inference, a\nfixed-width, fixed-depth model transforms fixed-size state with bounded\nwork per update."
+  },
+  {
+    "readerParagraph": 12,
+    "reason": "Reader-first wording within the same accepted scope.",
+    "text": "A sequence can require more than a record of what arrived. Its elements\nmay be instructions that change a running calculation, measurements that\nalter a feedback response, or observations that revise an earlier\nassociation. In each case the current state is part of the next\ncomputation. A recurrent model reads an input, updates its internal\nstate, and carries that state into the following step. The question is\nwhat computation the update performs, and how to train it efficiently\nat language-model scale."
+  },
+  {
+    "readerParagraph": 15,
+    "reason": "Retain canonical conditional circuit-containment scope after reader-first systems framing.",
+    "text": "This choice creates a systems problem. Modern linear-state recurrences\nuse the composability of affine state updates to parallelize training\nalong time @mamba2024 @mamba2_2024 @gated_deltanet2024\n@gated_deltanet2_2026. E97 keeps each head's nonlinear time loop serial\nand obtains parallelism across heads and batch elements. We call this\n*width-axis multi-programming*: many small memory programs run side by\nside, with each state tile kept on the accelerator (#ref(<sec:systems>)).\nThis complements hybrid recurrent-attention stacks and iterative\nmethods for parallelizing nonlinear recurrence @m2rnn2026 @pararnn2025."
+  },
+  {
+    "readerParagraph": 19,
+    "reason": "Keep genre-order roadmap at its canonical site; reader-first final sentence puts theorems after experiments.",
+    "text": "The resulting program joins a practical architecture to a testable\ncomputational hypothesis. Feedback systems, iterative optimization,\nand driven dynamics provide further settings in which a running state\nmust be transformed repeatedly (#ref(<sec:applications>)). We proceed\nfrom the update and its implementation to the matched language-model\ncomparison and computational probes, then develop the formal results\nand next questions."
+  },
+  {
+    "readerParagraph": 13,
+    "reason": "The read/correct/transform description is supported by the per-head update.",
+    "text": "Emender uses a nonlinear matrix memory. At each step, a head reads its\ncurrent prediction at an input-supplied key, writes a correction toward\nthe supplied value, and passes the updated state through $tanh$.\nThe write uses what the memory already contains; the nonlinearity\ntransforms what the next step will receive. Processing a long sequence\ntherefore executes a long composition of nonlinear state updates."
+  },
+  {
+    "readerParagraph": 14,
+    "reason": "Retain conditional latching scope, exact theorem, and predecessor pointer after reader-first layer definition.",
+    "text": "An *emender* is one recurrent layer, and *Emender* is the family of\nnetworks formed by stacking these layers. The current instance, *E97*,\nuses separate key-axis erase/read and value-axis write gates. Each head\nhas a small matrix state, while projections, gates, and a SwiGLU MLP\nconnect the memories to the rest of the network (#ref(<sec:arch>)).\nThe memory is revisable: later inputs can correct earlier associations."
+  },
+  {
+    "readerParagraph": 18,
+    "reason": "Keep canonical matched-signature separation, recognizer floor, learning evidence, and scope after the reader-first formal synopsis.",
+    "text": "The formal analysis describes the state computations behind this\ncomparison. Lean 4 verifies E97's time-ordered nonlinear composition\nand the affine GDN state fold under a fixed, state-independent parameter\nschedule. It also relates their split-gated cores and formalizes the\n$S_5$ tracker and routing conditions (#ref(<sec:formal>)). These\nstatements make the mechanism precise and supply concrete targets for\nfurther experiments and proofs."
+  },
+  {
+    "readerParagraph": 16,
+    "reason": "Practical-question sentence adopted; exact 150.79 B cutoff, bpb, scale and lookup ceilings retained; experimental-arm alias sentence omitted per Ruling 5.",
+    "text": "The first empirical question is whether this route is practical. E97\ntrains through 150.8 billion tokens on The Pile @thepile2020 on one\neight-GPU workstation. Its GDN2 control is within 0.01% of its\nparameter count. Both arms include the same SwiGLU MLP design; we use\n*GDN2* in the prose for the experimental arm recorded as `GDN2-MLP`.\nThe pair uses the same tokenizer, 2,048-token chunks,\noptimizer, and local DiLoCo recipe; CMA-ES selects each model's geometry\nand learning rate. Their training losses converge to the same narrow\nband at matched tokens (#ref(<sec:lm>)). The actual-geometry systems\npreflight also measures comparable throughput and lower peak memory\nuse for E97."
+  },
+  {
+    "readerParagraph": 21,
+    "reason": "Reader-first wording within the same accepted scope.",
+    "text": "The central distinction is where nonlinear computation occurs.\nMamba @mamba2024 and Gated DeltaNet @gated_deltanet2024 use nonlinear\ninput processing and gates, and their full networks are nonlinear\nfunctions of the sequence. Once a recurrent layer's input-derived\ntransition parameters are fixed, its carried-state update is affine\nin the previous state. E97 instead transforms the carried state\nnonlinearly at each step. These choices organize computation across\ntime differently and call for different execution strategies."
+  },
+  {
+    "readerParagraph": 24,
+    "reason": "Reader-first wording within the same accepted scope.",
+    "text": "The same state-channel symbols are used in the architecture, applications,\nand formal sections. Head and time subscripts may be omitted for a single\nstep. A prime denotes the returned state. Matrix products\nand scalar scaling use juxtaposition; $dot.o$ denotes componentwise\nmultiplication, and $T$ in a superscript denotes transpose."
+  },
+  {
+    "readerParagraph": 27,
+    "reason": "Retain 8 M comparator identity and Mamba-3 protocol exclusion after reader-first lineage.",
+    "text": "The recurrent language model lineage runs from Elman networks\n@elman1990 and the LSTM @lstm1997 through the modern linear-recurrent\nvariants: state-space models such as Mamba and Mamba2 @mamba2024\n@mamba2_2024, gated linear attention @gla2023, and the delta rule\n@deltanet2024. Many modern designs favor time-axis parallelism via\nlinear-state updates, whereas nonlinear-in-time recurrence generally\nuses a different execution strategy.\nGated DeltaNet-2 @gated_deltanet2_2026, the split erase/write-gate\nextension of Gated DeltaNet @gated_deltanet2024, supplies the\nlinear-state mixer in the current GDN2 control (#ref(<sec:lm>))."
+  },
+  {
+    "readerParagraph": 34,
+    "reason": "Retain the empirical learning-versus-circuit-membership boundary.",
+    "text": "The symmetric group $S_5$ is the group of permutations of five items; it\nhas $120$ elements and is the smallest non-solvable symmetric group. Its *word\nproblem* is the following task: the model reads a sequence of\npermutations — here, adjacent transpositions, the swaps of two\nneighboring items — one at a time, and after each one must report the\nrunning composition of everything read so far, its *prefix product*. By\nBarrington's theorem @barrington1986 this task is complete for the\ncomplexity class NC#super[1] when exact recognition is required over all\nwords. The experiments measure prefix-product accuracy at specified lengths. The solvable-group control\n$S_3$ (permutations of three items, 6 elements) is included to factor out\nthe part of difficulty that comes from prefix tracking *per se* rather\nthan from non-solvability."
+  },
+  {
+    "readerParagraph": 38,
+    "reason": "Reader-first wording within the same accepted scope.",
+    "text": "+ *Eigenvalue placement in the unit disk.* Where the along-key\n  eigenvalue of the per-token state transition sits in the complex unit\n  disk. A real-positive eigenvalue is a *decay* — the stored value\n  fades toward zero along the key. A real-negative eigenvalue is a\n  *reflection* that flips sign each step (`reflect`); reaching it is the\n  lever that lets a recurrence track non-solvable group structure such\n  as $S_5$ in the restricted transition analyses motivating this grid. A\n  complex-conjugate pair is a *rotation* (`rot`) that oscillates the\n  stored value. Real-positive and real-negative are the two ends of the\n  *real diameter*; complex placement walks off that diameter into the\n  rest of the disk."
+  },
+  {
+    "readerParagraph": 39,
+    "reason": "Bounded saturation needs finite precision to yield finite-state memory.",
+    "text": "+ *State map: linear or saturated.* Whether the state update is left\n  linear or passed through a bounded saturating nonlinearity\n  (canonically $\"hardtanh\"$; the `-nonlin` axis; the Emender uses the\n  smooth variant $tanh$). Saturation latches a driven slot and makes the head\n  bounded; finite precision then gives a finite state space."
+  },
+  {
+    "readerParagraph": 40,
+    "reason": "Historical E88/E98/E99 identifiers remain in the development register.",
+    "text": "The grid these two axes span names every Emender head-type\n(@fig_taxonomy). Real $times$ linear at the positive end is `decay`,\nwhich is vanilla Gated DeltaNet; at the negative end it is `reflect`,\nGated DeltaNet permitted a negative eigenvalue. Real $times$ saturated\nis `nonlin` — the saturated delta-correcting head, historically tagged\nE97, whose split-gated instance is the 1.3 B model of this paper\nwith split erase/read and write gates. Complex $times$ linear is `rot`, the\ncomplex-eigenvalue oscillator head. Complex $times$ saturated is\n`rot-nonlin`, a nonlinear oscillator left to future work, included as\nthe combination of the two axes. E97 identifies the trained instance;\nthe architecture vocabulary is this grid."
+  },
+  {
+    "readerParagraph": 48,
+    "reason": "Abstract-domain/reachable-trajectory boundary remains explicit after reader-first per-head description.",
+    "text": "An emender layer runs $H$ independent heads side by side. Each head $h$ owns\nits own matrix-state memory $S_h in RR^(N times V)$ — the matrix state of #ref(<sec:background>),\nhere addressed by an $N$-dimensional key and holding a $V$-dimensional value\nat each addressed slot. (#ref(<sec:formal>)'s resource theorems use a single symbol $d$ for the\ncommon matrix dimension; in E97, $d = N = V = 32$, so each head's memory is a\n$32 times 32$ tile.) At each token, the layer's input projections supply, per\nhead, a key $k_h$ and query $q_h$ in $RR^N$ that name the slots to write and\nread, a value $v_h in RR^V$ to store, a scalar decay $d_h in (0,1)$ that fades\nthe old state, and an output gate $g_h in RR^V$. E97 controls its\nwrite with two input-dependent gates, split along the two axes of the\nmatrix state: a key-axis *erase/read* gate $e_h in (0,1)^N$ that scales the\naddress under which the old content is retrieved, and a value-axis *write*\ngate $w_h in (0,1)^V$ that scales what is written (the GDN-2-inspired half of\nthe design; #ref(<sec:formal>)'s split-gated theorem set pins the relationship). The display\nbelow is one\nhead's full step in execution order: normalize the two addresses, gate the\nread address and the write value, read the memory, form the retrieval error,\nupdate the bounded state, and gate the read output. The formal core identities in #ref(<sec:formal>) use abstract\nreal-valued key/gate/state domains. The production ranges are specified above."
+  },
+  {
+    "readerParagraph": 50,
+    "reason": "Reader-first wording within the same accepted scope.",
+    "text": "The displayed normalization is idealized for nonzero addresses; production regularizes with `norm+1e-6` (shared fused normalization: `elman/models/e88_fused.py:239-242`)."
+  },
+  {
+    "readerParagraph": 58,
+    "reason": "Reader-first wording within the same accepted scope.",
+    "text": "+ *Bounded matrix state via $tanh$ on $S$.* The state-channel duality (#ref(<sec:formal>)) distinguishes the executed\n  nonlinear composition from an affine fold. Applying the nonlinearity to\n  the carried state makes an emender layer nonlinear-state."
+  },
+  {
+    "readerParagraph": 60,
+    "reason": "Keep production persistence conditional and theorem-set binding.",
+    "text": "+ *Saturation latching of the $tanh$ bound.* A slot driven near\n  $plus.minus 1$ resists perturbations under the saturation theorem's\n  hypotheses; sign-preserving hold and counter-delta release have\n  separate decay and write-budget assumptions. These motivate revisable\n  memory and motivate studying persistence in production E97. #ref(<sec:formal>)\n  (saturation insensitivity, sign-preserving hold, counter-delta\n  release) formalizes all three as slot-wise statements on the full\n  emender-layer update."
+  },
+  {
+    "readerParagraph": 63,
+    "reason": "Keep the exact P15 abstract-core/full-stack limitation sentence and projection-processing boundary.",
+    "text": "Algorithm 2 defines the adjacent GDN-2 linear core used by the formal\ncomparison: decay is applied *before* retrieval and correction, and no\n$tanh$ is applied to the returned state. Its inputs are an already supplied\nkey, split gates, value, and pre-decay matrix. E97 applies $tanh$ to\nits updated state. Both trained models also use nonlinear input\nprocessing and the SwiGLU MLP described in #ref(<sec:lm>)."
+  },
+  {
+    "readerParagraph": 66,
+    "reason": "E88 no-write-gate history is already preserved in the lineage subsection.",
+    "text": "E97 parameterizes the per-head decay $d_h$ in log space, following Mamba2\n@mamba2_2024: each head learns a scalar $A_(log)$ and a bias\n$delta_(text(\"bias\"))$ — the code names `A_log` and `dt_bias` — and forms the\ndecay as $d = exp(-exp(A_(log)) dot \"softplus\"(alpha(x) + delta_(text(\"bias\"))))$,\nwhere $alpha(x)$ is the input-dependent term and $sigma$ is again the logistic\nsigmoid. Both decay parameters are exempt from weight decay, as is\nstandard for such timescale parameters. The recurrence is computed in float32 and cast\nback to the storage precision, and the $tanh$ on the state uses the\nnumerically stable form $tanh(z) = 2 sigma(2 z) - 1$ in the fused kernel to\navoid overflow at large pre-activations. Three remaining choices are:\nthere is no output normalization\ninside the recurrent layer — an ablation removed it for a 0.10-nat gain, and\nthe wrapper's block-level pre-norm plus final norm suffice — no short\nconvolution on the input. E97 uses the split\nerase/read and write gates above; its output gate $\"silu\"(g)$ still acts\non the read alone."
+  },
+  {
+    "readerParagraph": 68,
+    "reason": "Reader-first wording within the same accepted scope.",
+    "text": "Ingredient (d) sets the 1.3 B stack’s shape —\nmany small heads — and the numbers follow from\nit: each head's $32 times 32$ tile is small enough to live in registers (#ref(<sec:systems>)),\nthe head count $H = 216$ is large enough to give that many independent\naddressing programs per layer, and eleven such layers — each followed by its\nSwiGLU MLP, the channel-mixer that pairs with the token-mixing recurrence —\nreach the 1.3 B-class budget the paired comparison fixes. The exact values\nwere selected by the per-architecture search of #ref(<sec:lm>). At batch size 4,\ndepth 11 and\n$H = 216$ multiply to $11 times 216 times 4 = 9{,}504$ independent recurrent\nprograms per token, each carrying its own $32 times 32$ state tile. The\nreference implementation and the fused Triton recurrence kernel that steps\nthese tiles are identified by the source register and release manifests."
+  },
+  {
+    "readerParagraph": 69,
+    "reason": "Adopted before the retained resource comparison; no accepted evidence deleted.",
+    "text": "#heading(level: 2, numbering: none)[The matched architectural contrast]"
+  },
+  {
+    "readerParagraph": 70,
+    "reason": "Adopted before the retained resource comparison; no accepted evidence deleted.",
+    "text": "E97 and GDN2 both use matrix memory, delta correction, split\nediting gates, and a SwiGLU channel-mixing MLP. The key distinction\nfor the present hypothesis is the operation performed on carried state:\nE97 applies $tanh$ after its correction, whereas the GDN2 state update\nis affine when its input-supplied parameters are fixed. Decay placement\nalso differs, as the core identities above specify. The full networks\ncontain nonlinear projections, gates, and MLPs. The comparison centers\non the transformation applied to carried state. The matched-pair probes test what the trained architectures learn\nunder the recorded protocol (#ref(<sec:expressivity>)); the formal\nanalysis states the narrower update-map facts (#ref(<sec:formal>))."
+  },
+  {
+    "readerParagraph": 151,
+    "reason": "Keep Lean/Mathlib dependency trust boundary.",
+    "text": "A trusted Lean 4 @lean42021 core built on Mathlib @mathlib4\ncarries the formal spine: each result is stated as a theorem and\ncompiled together with a proof of it. The import closure of the\n`ElmanProofs.PaperCore` module — 17 project source files in the recursive\nlocal closure — uses none of Lean's escape hatches: no `sorry`, `admit`,\nadded `axiom`, `opaque` declarations, or `native_decide`. The gate\nis `formal/lean/scripts/check_paper_core.sh`; compiling\n`ElmanProofs.PaperCore` additionally checks elaboration of the proofs.\nThe refreshed machine-extracted inventory is committed at\n`paper/data/lean-trust-gate-theorems.json` (857 named\ndeclarations, 723 user-written, 17 files; extraction source\ncommit `e58ae937`), including the split-gated, latching, duality,\nrouting, Lipschitz, and E1H-definition modules. Both the gate and\nextractor traverse the recursive local imports rather than a selected\nmodule allowlist. The checked project sources use Lean and Mathlib as\ntheir proof foundation."
+  },
+  {
+    "readerParagraph": 131,
+    "reason": "Finite-state scope is retained in the explicit complexity non-claims below.",
+    "text": "#set list(indent: 1em)\n- *Finite-state ceiling at fixed precision.* At fixed width and\n  precision, every online recognizer of this kind has only finitely many\n  distinct states (`S5Witness.fixed_precision_state_space_finite`). This\n  gives a finite online state space."
+  },
+  {
+    "readerParagraph": 133,
+    "reason": "Retain future bounded-precision counting dependency.",
+    "text": "- *Capacity lower bound (recognizer floor).* Any finite-state recognizer\n  with a state decoder that reproduces the tracker on every input word\n  needs at least 120 states\n  (`S5Inseparability.capacity_lower_bound_120`); equivalently, no\n  recognizer with fewer than 120 states can realize it under any\n  decoder (`S5Inseparability.small_recognizer_cannot_realize_s5`). The\n  bound has a distinguishing-pair form: any recognizer with too few\n  states admits two words it cannot tell apart that the tracker does\n  distinguish (`S5Inseparability.exists_distinguishing_word_pair`).\n  This is the existential form of the $S_5$-coset inseparability target:\n  it holds for *any* finite recognizer family, with no architectural\n  assumptions."
+  },
+  {
+    "readerParagraph": 134,
+    "reason": "Reader-first wording within the same accepted scope.",
+    "text": "- *Lookup-table realization.* The tracker is small enough to write down\n  as a table: it uses exactly $120 times 4 = 480$ state/input keys\n  (`S5NDMRealization.s5_transition_key_count`), and any finite\n  recognizer admits such an exact lookup-table realization\n  (`S5NDMRealization.exactTransitionMemory_run`)."
+  },
+  {
+    "readerParagraph": 136,
+    "reason": "Retain the accepted specification: preloaded generator lookup plus external group multiplication.",
+    "text": "The exact statement of\n`NDMRealizesS5.emender_realizes_s5_tracker` supplies $d=12$, four\northonormal keys and one-hot values, queries, a decoder, and\n$lambda=1$. Reading a *preloaded* table retrieves the current generator;\ndecoding it and *externally multiplying a supplied* $S_5$ state $s$\nreproduces the transition $s dot g$. The linear readout supplies the\ngenerator value, and the external multiplication updates the group state.\nThe supporting\n`OnlineMemory.linearDeltaWrite_overwrites_one_preserves_others`\nis an exact *pre-$tanh$* overwrite statement."
+  },
+  {
+    "readerParagraph": 142,
+    "reason": "Retain controlled-update intervention versus post-selected-curve distinction.",
+    "text": "The current pair therefore shares adjacent split-gated delta cores\nand differs on the nonlinear state path and decay placement, as well\nas geometry and input processing in the trained stacks. This identifies\nthe formal structural distinction relevant to the iterated-map\nhypothesis."
+  },
+  {
+    "readerParagraph": 144,
+    "reason": "Conditional production persistence remains explicit in the hold theorem and limitations.",
+    "text": "*Saturation, hold, and release are described by slot-level bounds.*"
+  },
+  {
+    "readerParagraph": 126,
+    "reason": "Keep minimal-representation-depth boundary.",
+    "text": "The concrete repeated-map family is the schedule of\n`CompositionalDepthDuality.E97Step` values $(k,e,w,v)$ at fixed\n$lambda$ (Lean field `b` is the paper's erase gate $e$), acting through `e97Step` on matrix state.\n`e97Step_eq_tanh_comp` identifies the step as elementwise $tanh$\nafter the state-affine split-gated core.\n`e97StateAfter_eq_compose` gives its time-ordered composition, and\n`e97_compositional_depth_grows_in_time` states that appending a step\napplies one more such map. Thus the *executed* composition contains one\n$tanh$ per token."
+  },
+  {
+    "readerParagraph": 127,
+    "reason": "Keep multilayer, state-dependent, approximation and encoding exclusions.",
+    "text": "For a fixed, state-independent schedule of\n`CompositionalDepthDuality.GdnStepParams`,\n`gdn_state_channel_depth_bounded_in_time` gives matrices $A,C$ with\n$S_T=A S_0+C$ for every initial state (Lean writes $H$ for this\nmatrix). The theorem's state-channel depth is zero under this fixed,\nstate-independent schedule."
+  },
+  {
+    "readerParagraph": 128,
+    "reason": "Keep parameter-generator resource boundary and named gap pointer.",
+    "text": "`S5GDNBridge.gdn_s5_realization_requires_per_token_action` assumes a\ntoken-only schedule and a decoder that recovers `S5Tracker.run` on\nevery word and separates reachable states. It then gives a state map\n$F$ through the group element, with affine word actions implementing\nright multiplication on the reachable image.\n`gdn_s5_constant_parameters_cannot_realize` rules out a\ntoken-independent schedule. The bridge identifies the token-dependent affine actions required by\nthe decoder. #ref(<sec:limitations>) develops the associated realization questions."
+  },
+  {
+    "readerParagraph": 73,
+    "reason": "Reader-first wording within the same accepted scope.",
+    "text": "Width-axis multi-programming supplies throughput while each head’s\ntime loop remains serial. A linear recurrence earns\nits throughput on the *time axis*: because $S_t = A_t S_(t-1) + b_t$\nunfolds into a product that depends on the inputs alone, the\nstep-by-step loop can be re-expressed as a prefix scan or a chunkwise\nmatrix multiplication over the whole sequence at once. E97 executes its nonlinear state update in a serial time loop.\n*Multi-programming* obtains throughput on the other axis by replicating\nthe recurrent computation across many independent heads — each with its\nown small bounded matrix state — and harvests parallelism across those\nheads, across state tiles, and across batch elements, while the time\nloop inside each head still runs one step at a time."
+  },
+  {
+    "readerParagraph": 74,
+    "reason": "Retain accepted proxy/instance predicate distinction after reader-first decoupling prose.",
+    "text": "The design choice is a decoupling: it frees throughput from the *shape*\nof the update. The recurrent body must stay a bounded, register-resident\nper-step map at a fixed matrix-state signature — that is what keeps each\nhead cheap. This implementation supports a programmable nonlinear\nupdate body. The cost is paid in per-head serial time, most\nexposed at long sequence lengths where the serial loop is longest; the\ngain is that a nonlinear recurrence can keep a modern accelerator busy\nwith no time-axis scan at all. #heading(level: 2, numbering: none)[The 1.3 B Emender shape under multi-programming]"
+  },
+  {
+    "readerParagraph": 75,
+    "reason": "Reader-first wording within the same accepted scope.",
+    "text": "A modern GPU exposes many independent streaming\nmultiprocessors, each able to run a small program out of its own\nregisters and shared memory, and multi-programming is built to fill\nthem. E97, the 1.3 B Emender instance, runs 216 such programs per layer\nper batch element — one per head — so at depth 11 and batch size 4 the\nlayer stack issues $11 times 216 times 4 = 9{,}504$ small independent\nrecurrent programs per token, each carrying its own $32 times 32$ state\ntile small enough to live in registers. Keeping the accelerator busy\ntherefore uses parallelism across memory programs. The paired\nthroughput and memory measurements below test the practical consequence\nat the actual E97/GDN2 geometries; direct E97 occupancy profiling\nremains to be measured."
+  },
+  {
+    "readerParagraph": 78,
+    "reason": "Preserve CUDA preflight measurements; retain earlier small-scale speedup non-replication finding.",
+    "text": "At the actual 1.3 B pair geometries, the matched-batch preflight on\nseven RTX 6000 Ada GPUs under DDP measures E97-MLP at 3,211 tokens/s\nper GPU and GDN2 at 3,290, both at batch 4. The ratio is 0.976:\ncomparable throughput, with GDN2 slightly faster. E97 uses\n28,942 MB peak memory per GPU against 35,715 MB for GDN2.\nE97 therefore fits batch 6 under DDP, reaching 4,470 tokens/s per GPU,\nwhere the control cannot fit that batch (`experiments/preflight_100b/RESULTS.md`).\nThe lower memory use enables the larger-batch throughput gain."
+  },
+  {
+    "readerParagraph": 79,
+    "reason": "DDP preflight versus eight-island production distinction adopted.",
+    "text": "The preflight uses DDP at the actual pair geometries. The long-run\ntraining below uses eight independent local-DiLoCo islands. Parameter\ncount, measured throughput, and peak memory are the reported resource\ncomparisons; measuring each implementation's actual FLOPs is a further\nsystems experiment."
+  },
+  {
+    "readerParagraph": 85,
+    "reason": "Retain single-arm Frontier continuation exclusion.",
+    "text": "The recurrence is implemented in Triton @triton2019. The paired\nproduction runs, throughput measurements, and expressivity smokes use\nNVIDIA CUDA. Porting the pair to ROCm would add a direct test of\ncorrectness and performance on that backend."
+  },
+  {
+    "readerParagraph": 87,
+    "reason": "Reader-first wording within the same accepted scope.",
+    "text": "The 1.3 B-class result reported here was produced on a single\neight-GPU workstation, with no cluster and no sequence parallelism —\nboth 150 B-token arms of #ref(<sec:lm>) ran the same *local DiLoCo* recipe on that\none machine: eight independent islands (one per GPU), schedule-free\nAdamW @schedulefree2024 inside each island, and plain model-weight\naveraging across islands every $tau = 250$ local steps (outer learning\nrate 1.0, momentum 0 — the conservative plain-average form of\nDiLoCo @diloco2023). Scaling the same recipe past one machine pairs\nschedule-free AdamW per island with hierarchical local-SGD averaging:\neach island is one node of 8 GPUs with intra-island DDP, and\ninter-island synchronization averages model weights on the same\n$tau = 250$ cadence. The structural point holds either way: because the\nEmender distributes work across programs, the 1.3 B implementation\nuses ordinary head and batch parallelism while preserving each head's\ntime loop."
+  },
+  {
+    "readerParagraph": 90,
+    "reason": "Adopted; full search/provenance evidence remains.",
+    "text": "The systems design earns its place if the model can be trained on a\nsubstantial language-modeling workload. We compare E97 with a closely\nparameter-matched GDN2 control under the same long-run recipe. The\nresult is a narrow training-loss band at matched tokens. The following\nidentities, alignment rules, and search records define that comparison."
+  },
+  {
+    "readerParagraph": 91,
+    "reason": "Adopted; full search/provenance evidence remains.",
+    "text": "#heading(level: 2, numbering: none)[The matched pair and its training recipe]"
+  },
+  {
+    "readerParagraph": 92,
+    "reason": "Reader-first wording within the same accepted scope.",
+    "text": "The 1.3 B comparison is a *pairing*: one nonlinear-state model and one\nlinear-state model, each selected by its own CMA-ES search, trained from\nscratch with the shared data, tokenizer, optimizer, and local DiLoCo\nrecipe, and read out at matched aggregate tokens. Geometry and learning\nrate are selected separately for each arm. The two arms are E97 — the Emender split-edit\ninstance of #ref(<sec:arch>), paired with a bias-free SwiGLU MLP per layer — and\nGDN2 — the official-style Gated DeltaNet-2 @gated_deltanet2_2026\nmixer with the *same* SwiGLU MLP, bound to external source commit\n`95709fc`. Holding the channel-mixer (MLP) fixed on both arms\nmakes this a comparison of token mixers — the recurrence."
+  },
+  {
+    "readerParagraph": 95,
+    "reason": "Algorithm number follows retained raw-write algorithm; search evidence remains in place.",
+    "text": "Algorithm 3 separates selection, training, and comparison. It summarizes\nthe recorded pair protocol; the selection account below identifies the retained winner\nconfigurations and the missing first-generation search records. The comparison reports several averaging windows."
+  },
+  {
+    "readerParagraph": 97,
+    "reason": "Reader-first wording within the same accepted scope.",
+    "text": "#heading(level: 2, numbering: none)[Training loss at matched tokens]"
+  },
+  {
+    "readerParagraph": 98,
+    "reason": "Reader-first wording within the same accepted scope.",
+    "text": "The primary read-out is the training-log loss of both arms aligned on\nexact common logged steps through step 2,300,925 (150,793,420,800\ntokens): 92,037 aligned records, zero E97-only and zero GDN2-only\nrecords through the cutoff, no interpolation. This is 327,680 tokens\n(five optimizer steps) before E97's terminal checkpoint at step\n2,300,930. The table uses the last common logged step."
+  },
+  {
+    "readerParagraph": 100,
+    "reason": "Reader-first wording within the same accepted scope.",
+    "text": "The two current models reach *comparable training loss* after each\nfamily's geometry and learning rate have been selected by search.\nThe nonlinear recurrence trains competitively under this substantial\nshared workload, with a small difference whose sign varies by averaging window. Under the run's recorded\nbyte normalization (`bytes/token` $= 3.783$ from the frozen `args.json`),\nE97's final-window loss of 2.4365 nats/token corresponds to an\nestimated *0.93 bits per byte* — sub-1-bpb territory for a purely\nnonlinear recurrence."
+  },
+  {
+    "readerParagraph": 101,
+    "reason": "Retain window-dependent Delta scope and missing winner-series evidence.",
+    "text": "Each arm has one training seed. The quantities above come from\ntraining logs; held-out tokenizer-invariant bpb and downstream\nevaluation of the released pair are pending. The carried-in winner\nconfigurations and available search records are described below."
+  },
+  {
+    "readerParagraph": 107,
+    "reason": "Adopted as section framing, with scope conditioned on recorded budgets/protocols.",
+    "text": "Comparable language-modeling loss leaves open what the carried state\ncan learn to compute. We fine-tune the same 1.3 B E97 and GDN2\ncheckpoints on two explicit computations. The modular-quadratic task\nrepeatedly applies a nonlinear map to a running value; E97's advantage\nsupports the mechanism hypothesis that motivates its state update.\nThe $S_5$ task composes finite-group actions; GDN2's strong result\nshows a contrasting learned capability on group actions. Both studies concern learned\nperformance under stated budgets and protocols."
+  },
+  {
+    "readerParagraph": 108,
+    "reason": "Reader-first wording within the same accepted scope.",
+    "text": "#heading(level: 2, numbering: none)[Iterating a nonlinear map with the trained pair]"
+  },
+  {
+    "readerParagraph": 109,
+    "reason": "Reader-first wording within the same accepted scope.",
+    "text": "The decisive experiment uses the E97 and GDN2 checkpoints of #ref(<sec:lm>),\nwith Schedule-Free y-mode recovery, on\n$x_t = (x_(t-1)^2 + c_t) mod #expressivity.wall-e97.task_args.p$,\n#expressivity.wall-e97.task_args.G input drivers and running supervision.\nBoth arms receive the identical full-fine-tune recipe: bf16\n#expressivity.train-e97.recipe.optimizer, constant learning rate\n#expressivity.train-e97.recipe.lr, warmup\n#expressivity.train-e97.recipe.warmup, weight decay\n#expressivity.train-e97.recipe.weight_decay, gradient clip\n#expressivity.train-e97.recipe.grad_clip, batch\n#expressivity.train-e97.recipe.batch_size, trained length\n#expressivity.train-e97.recipe.train_len, seed\n#expressivity.wall-e97.seed. The throughput-derived common cap of\n#expressivity.budget.cap_steps steps was fixed before accuracy was seen\n(`budget.json`, `1989656c`). It projects\n#expressivity.fixed(expressivity.budget.expected_gpu_seconds.total_both / 3600, digits: 2)\nGPU-hours if both arms reach the cap. The same\npre-registered validation-loss plateau rule stopped E97 after\n#expressivity.train-e97.steps_trained steps and GDN2 after\n#expressivity.train-gdn2.steps_trained steps; actual training elapsed\n#expressivity.fixed((expressivity.train-e97.elapsed_train_s + expressivity.train-gdn2.elapsed_train_s) / 3600, digits: 3)\nGPU-hours, excluding loading and final evaluation. The common rule\ntherefore yields different realized training durations."
+  },
+  {
+    "readerParagraph": 110,
+    "reason": "Retain explicit terminal-versus-best checkpoint distinction.",
+    "text": "The protocol below summarizes the retained driver,\n`scripts/expressivity_1p3b_depthwall.py`, including its zero-based probe\nindices. Evaluation uses the weights at each arm's plateau stop. The terminal sweep is grad-free and scores every masked\nposition using full-vocabulary argmax; reduced evaluation batches on OOM\nare recorded with the results."
+  },
+  {
+    "readerParagraph": 112,
+    "reason": "The zero-based implemented minimum remains explicit.",
+    "text": "Relative gain divides the loss decrease by the earlier loss magnitude\n(floored at $10^(-12)$); both trailing windows must pass. The implemented\nminimum uses the zero-based index $j$. Both arms use the stated cap,\nstopping criterion, and recipe."
+  },
+  {
+    "readerParagraph": 114,
+    "reason": "Retain terminal-versus-intermediate checkpoint and interpretation scope.",
+    "text": "At the terminal sweep E97 reaches\n#expressivity.percent(expressivity.wall-acc(expressivity.wall-e97, 128))\nat trained length, retaining\n#expressivity.percent(expressivity.wall-acc(expressivity.wall-e97, 512))\nat four times and\n#expressivity.percent(expressivity.wall-acc(expressivity.wall-e97, 1024))\nat eight times that length. GDN2 ends at\n#expressivity.percent(expressivity.wall-acc(expressivity.wall-gdn2, 128))\nat trained length and\n#expressivity.percent(expressivity.wall-acc(expressivity.wall-gdn2, 1024))\nat eight times. E97 at eight times approximately matches GDN2's\nterminal trained-length accuracy, then decays further. GDN2 approaches a roughly 50% plateau at the\nlongest lengths, above the declared\n#expressivity.percent(expressivity.wall-gdn2.random_baseline_acc) random\nbaseline. Intermediate GDN2 trajectory probes had higher accuracy\nthan its terminal checkpoint. These single-seed trajectories motivate\nrepeats that compare fixed training budgets and checkpoint-selection rules."
+  },
+  {
+    "readerParagraph": 120,
+    "reason": "Retain hardware limitation and single-seed scope.",
+    "text": "Both capacity curves decline with length;\nheld-out transitions remain weaker than seen ones. GDN2's attempted\nlength-512 curriculum stage was OOM-infeasible even at sub-batch 1,\nafter one completed optimizer step. The next comparison should use a\ncurriculum feasible for both models and additional seeds."
+  },
+  {
+    "readerParagraph": 121,
+    "reason": "Adopted; canonical small-scale controls and scope remain.",
+    "text": "#heading(level: 2, numbering: none)[Interpreting the current-pair evidence]"
+  },
+  {
+    "readerParagraph": 122,
+    "reason": "Adopted; canonical small-scale controls and scope remain.",
+    "text": "The iterated-map result is the direct empirical test of the motivating\nmechanism: E97's nonlinear state path repeatedly transforms the value\nthat will enter the next update. Its measured advantage is consistent\nwith that hypothesis, while optimization, geometry, and checkpoint\nselection remain possible contributors. The $S_5$ result demonstrates\nthat GDN2 learns a different carried-state computation strongly.\nTogether with comparable language-modeling loss, these measurements\nmake the useful question concrete: which computations benefit from\nplacing the nonlinearity directly in the temporal state path, and under\nwhat training and resource conditions?"
+  },
+  {
+    "readerParagraph": 153,
+    "reason": "Opening adopted; canonical equations, fixed-law schedule and structural-family ceilings retained.",
+    "text": "Balance, motion tracking, and movement correction offer an intuitive\nstarting point: each new observation revises an estimate that guides\nthe next action. The iterated-map study isolates a related computational\nquestion: how well can a recurrent model learn to keep\ntransforming an evolving state? A common description is\n$\n  S_(t+1) = F_theta(S_t, u_t),\n$\nwhere $theta$ fixes the update law and $u_t$ supplies the input at each\nstep. E97's all-one split-gate specialization is\n$\n  S' = tanh(lambda S + k(v - S^T k)^T)\n$\nwith state $S$ and input $(lambda,k,v)$. Its returned state becomes the\nnext step's input. The abstract E97 fold fixes $lambda$ and supplies\n$(k,e,w,v)$ at each step; the production architecture also supplies\ninput-dependent decay."
+  },
+  {
+    "readerParagraph": 155,
+    "reason": "Prospective-surrogate framing adopted; conversation/biology additions lack canonical citations; six canonical exhibits and all exceptions retained.",
+    "text": "The examples below move from feedback and signal processing to\noptimization, conversation, and biological dynamics. They suggest\nfurther tests of learned recurrent surrogates. For each one, the state equation identifies the computation,\nand the proposed comparison identifies the regime and error measure\nthat would make a difference useful."
+  },
+  {
+    "readerParagraph": 160,
+    "reason": "Feedback/state framing adopted; quantizer-equation spelling and finite-resolution/alternative-encoding/metric ceilings retained.",
+    "text": "A first-order sigma–delta modulator accumulates an analog sample and\nfeeds back a quantized output @candy_temes1992:\n$\n  a_t = r_t + x_t, quad q_t = Q(a_t), quad\n  r_(t+1) = a_t - q_t.\n$\nThe residue $r_t$ is the state, $x_t$ is the sample, and the fixed map\nis $F(r,x)=r+x-Q(r+x)$. A one-bit quantizer selects between two output\nlevels. Its discontinuous output changes the residue used at the next\nstep. A useful surrogate test would compare exact bitstream accuracy\nand filtered signal quality near quantizer thresholds over long\nstreams, varying state precision and representation."
+  },
+  {
+    "readerParagraph": 162,
+    "reason": "Affine LMS sentence adopted; canonical equations, engineering-variant caveat, AGC state coordinates and contracting-regime exception retained.",
+    "text": "Normalized LMS @haykin2002 updates coefficient state $w_t$ using\nregressor $x_t$ and desired sample $d_t$:\n$\n  e_t = d_t - w_t^T x_t, quad\n  w_(t+1) = w_t + mu x_t e_t / (epsilon + norm(x_t)^2).\n$\nFor fixed inputs this update is affine in $w_t$. Adding a componentwise\ncoefficient limit gives\n$w_(t+1)=\"clip\"_B(w_t+mu x_t e_t/(epsilon+norm(x_t)^2))$,\nwhich applies a nonlinear state transformation after the correction.\nAutomatic gain control feeds measured output level back into gain\n@lyons2011. A bounded log-gain controller can use\n$\n  y_t = exp(g_t) x_t, quad\n  g_(t+1) = \"clip\"_([g_(min),g_(max)])\n    (g_t + mu(P_0 - y_t^2)).\n$\nHere $g_t$ is the state and $(x_t,P_0)$ is the input. Repeated limiter\ncrossings and state-dependent power measurements provide tests of\nnonlinear history. Stable operating regimes provide a complementary\ntest of how much short-history approximation suffices."
+  },
+  {
+    "readerParagraph": 164,
+    "reason": "Shared FISTA framing adopted; original objective/equations/coordinates and fixed-weight, fixed-support and convergence ceilings retained.",
+    "text": "For the objective $1/2 norm(A z-b)^2+rho norm(z)_1$, ISTA\n@daubechies2004 repeatedly applies\n$\n  z_(j+1) = \"soft\"_(eta rho)\n    ((I - eta A^T A) z_j + eta A^T b),\n$\nwhere $\"soft\"_tau(a)=\"sign\"(a) max(|a|-tau,0)$ acts componentwise.\nThe iterate is the state; each optimization step combines a gradient\nupdate with soft-thresholding. FISTA @beck_teboulle2009 adds momentum:\n$\n  z_(j+1) = \"soft\"_(eta rho)(y_j - eta A^T(A y_j-b)), quad\n  y_(j+1) = z_(j+1) + beta_j(z_(j+1)-z_j).\n$\nIts state includes the previous iterate and the momentum schedule or\nclock. A surrogate study could compare accuracy and latency while the\nactive support changes repeatedly. After support and signs stabilize,\nsoft-thresholding is affine on the visited region, providing a useful\nsecond regime for the comparison."
+  },
+  {
+    "readerParagraph": 168,
+    "reason": "Driven-system framing adopted; fixed-W convention, trained weights, echo-state-property and contraction exceptions retained.",
+    "text": "A standard echo-state network @jaeger2001 uses\n$\n  h_(t+1) = tanh(W h_t + U u_t + b).\n$\nWith recurrent parameters fixed, E97 also defines a driven nonlinear\ndynamical system, with state mixing determined by its input keys and\ngates. Training such a model on long-horizon reservoir trajectories\nwould test how well it retains consequential nonlinear history.\nVarying contraction and the rate of forgetting the initial condition\nwould connect the comparison to the echo-state property."
+  },
+  {
+    "readerParagraph": 172,
+    "reason": "Canonical logistic equation/state-input coordinates retained: extra autonomous-versus-driven, contractive/periodic/chaotic and deployed-improvement scope is load-bearing.",
+    "text": "May's logistic population model @may1976 is\n$\n  n_(t+1) = r n_t(1-n_t).\n$\nThe normalized population $n_t$ is the state and $r$ is a fixed\nparameter. An environmentally driven extension can use $r_t$ as an\ninput. Comparing learned trajectories across contracting, periodic,\nand chaotic regimes would test how error growth and history retention\nshape recurrent-model performance. The evaluation horizon and error\nmetric should reflect each regime's predictability."
+  },
+  {
+    "readerParagraph": 157,
+    "reason": "Feedback motivation adopted; canonical plant-state/actuator analogy, contracting/unsaturated regime and stability/safety ceiling retained.",
+    "text": "A controller must update its estimate and response while a system moves.\nA discrete-time plant with a smooth actuator limit and state feedback\ncan be written\n$\n  a_t = a_(max) tanh((K x_t + L r_t)/a_(max)), quad\n  x_(t+1) = A x_t + B a_t + E d_t.\n$\nThe state is $x_t$ and the inputs are reference $r_t$ and disturbance\n$d_t$. The resulting closed-loop map is\n$F(x,(r,d))=A x+B a_(max) tanh((K x+L r)/a_(max))+E d$.\nActuator saturation is a standard nonlinear-control concern\n@khalil2002. A learned surrogate comparison could vary how often\nsaturation determines subsequent decisions, measuring trajectory\nerror, latency, and closed-loop stability across operating regimes."
+  },
+  {
+    "readerParagraph": 173,
+    "reason": "Opening adopted; canonical alternative-representation and hardware/deployment conditions retained.",
+    "text": "These tasks put the computational idea to work: learn a state update\nwhose output remains consequential over many iterations. Width-axis\nmulti-programming offers a practical way to run many such learned\nprograms concurrently. Task-specific comparisons across horizon,\nprecision, state size, and latency would establish where that design\nis useful."
+  },
+  {
+    "readerParagraph": 178,
+    "reason": "Keep conditional hold range and budget (canonical inline math).",
+    "text": "The Emender update belongs to a long line that treats memory as a\nstructure updated by prediction error. The earliest formulation is\nWidrow and Hoff's least-mean-square rule @widrow_hoff_1960, which writes\nthe error between target and current output back into the weight vector\nof an adaptive linear element. Schmidhuber recast the same idea in a\nrecurrent setting under the name *fast-weight programmers*\n@schmidhuber_1992_fastweights: a slow controller emits keys and values\nthat update a fast-weight matrix online, with the update being a\ncorrection against what the matrix currently predicts at the addressed\nslot. Schlag, Irie, and Schmidhuber made the bridge to modern attention\nexplicit @schlag_irie_schmidhuber_2021, showing that linear-transformer\nkernels with cumulative outer-product updates *are* fast-weight\nprogrammers with a raw additive write, and proposing the delta-rule\nwrite as a stability and capacity fix. DeltaNet @deltanet2024 carried\nthe delta rule into a parallelizable linear-recurrent language model,\ndemonstrating the rule at billion-parameter scale in the linear-state\nregime. Emender combines delta correction with a nonlinear matrix-state\nupdate and width-axis multi-programming. Its saturating update also\nmotivates the conditional latching analysis in #ref(<sec:formal>)."
+  },
+  {
+    "readerParagraph": 180,
+    "reason": "Predecessor GDN evidence remains in expressivity and the register; current-pair comparison foregrounded.",
+    "text": "The dominant comparison cohort is the family of linear-state\nbillion-parameter recurrent LMs surveyed in #ref(<sec:background>): Mamba @mamba2024 and\nMamba2 @mamba2_2024 (selective SSMs); RetNet @retnet2023 (decayed\nlinear attention); GLA @gla2023 (gated linear attention); DeltaNet\n@deltanet2024 (delta rule, linear in $S$); Gated DeltaNet\n@gated_deltanet2024 (gated delta rule); RWKV-4/5/6/7 @rwkv4_2023\n@rwkv7_2025 (linear-state WKV / generalized delta rule with linear\nstate); HGRN2 @hgrn2_2024 (gated linear RNN with state expansion);\nMinGRU/MinLSTM @mingru_2024 (input-only gates, linear scan);\nmLSTM/xLSTM-7B @xlstm7b2025 (covariance update); Griffin/RecurrentGemma\n@griffin2024 (RG-LRU, often hybridized with local attention). Circuit-containment results for restricted\nSSM families require their stated transition and arithmetic assumptions\n@merrill2024transformers. The current empirical comparison uses\nGDN2, which leads the long-horizon $S_5$ result in\n#ref(<sec:expressivity>)."
+  },
+  {
+    "readerParagraph": 182,
+    "reason": "Exact theorem set-G cross-reference retained.",
+    "text": "A newer linear-state result, Gated DeltaNet-2 @gated_deltanet2_2026,\ndecouples channel-wise erase and write gates and is reported by its\nauthors to outperform GDN. It extends retrieval and state-tracking\nbehavior inside the linear-state envelope, and it is the\nlinear-recurrent baseline of this paper's 1.3 B pairing: the GDN2\narm of #ref(<sec:lm>) is the official-style Gated DeltaNet-2 mixer (external source\ncommit `95709fc`) with the same SwiGLU MLP as E97, selected by the same\nCMA-ES protocol. The E97 split gates of #ref(<sec:arch>) are the Emender's\ncorresponding edit — key-axis erase/read plus value-axis write — inside\na *nonlinear* state map, so the two architectures are adjacent by\ndesign (#ref(<sec:formal>)). Its decoupled\ngates are a natural next ablation for the multi-programmed substrate,\nas a bounded edit to the per-step update body."
+  },
+  {
+    "readerParagraph": 184,
+    "reason": "Retain predecessor comparator/fairness/geometry qualifications after reader-first M2RNN synopsis.",
+    "text": "*M²RNN* @m2rnn2026 (Mishra, Tan, Stoica, Gonzalez, Dao 2026) introduces\nnonlinear matrix-state recurrence with a raw-write update\n$Z = tanh(H W + k v^T)$. It shares the central systems premise of this\nwork — that a nonlinear recurrence is serial in time and must take its\nparallelism from the batch and head axes — and demonstrates that the\nupdate trains at 410 M dense and 7 B MoE scale on Nemotron-CC-v2. Its\nheadline demonstrations use hybrid stacks that interleave attention\nand nonlinear recurrence. The current study instead evaluates the pure\nrecurrent E97 mixer against a matched GDN2 control. This connects the present work to other nonlinear matrix-state designs."
+  },
+  {
+    "readerParagraph": 193,
+    "reason": "Adopted as target, canonical lookup/trajectory non-claim unchanged.",
+    "text": "*O1: realizing the group tracker.* Find an E97 update configuration,\ninitial state, and decoder that carry the running $S_5$ product, then\nprove the trajectory property over all words."
+  },
+  {
+    "readerParagraph": 190,
+    "reason": "Adopted; realized steps/intermediate checkpoints and non-chance plateau remain explicit.",
+    "text": "The current pair supplies one language-model training seed and one\nseed for each reported computational probe. Repeated seeds, common\nfixed-step budgets, and comparison of terminal with best-validation\ncheckpoints would measure the stability of the observed gaps. A\nfeasible matched $S_5$ curriculum would test the contribution of the\nlength-512 memory limit encountered by GDN2."
+  },
+  {
+    "readerParagraph": 191,
+    "reason": "Adopted; held-out/statistical/search-budget limitations retained.",
+    "text": "Held-out tokenizer-invariant bpb and downstream evaluation are the\nnext language-model measurements. Recovering the original CMA winner\nlogs would also supply generation-zero fitness, spread, and total\nsearch effort for the carried-in configurations (U3.1). These records\nwould support a matched-total-budget search comparison."
+  },
+  {
+    "readerParagraph": 199,
+    "reason": "Adopted; canonical CUDA-only and bibliographic-verification boundaries retained.",
+    "text": "A matched 3–7 B pair would test how training loss, memory use, and\ncomputational behavior change with scale. Current-scale internal\nablations would separate the effects of state nonlinearity, gates,\nand geometry. Direct E97 occupancy profiling, actual FLOP accounting,\nand paired ROCm measurements would extend the systems evidence."
+  },
+  {
+    "readerParagraph": 200,
+    "reason": "Adopted; canonical CUDA-only and bibliographic-verification boundaries retained.",
+    "text": "The application tests in #ref(<sec:applications>) call for\nlong-horizon error and latency measurements in their stated regimes;\nfeedback applications additionally call for stability testing. The\nbibliography's flagged publication metadata should be resolved during\nsubmission preparation."
+  },
+  {
+    "readerParagraph": 202,
+    "reason": "Retain canonical bpb and unavailable held-out evaluation.",
+    "text": "Emender makes recurrent memory a site of ongoing computation. Each\ninput corrects the stored state and transforms what the next step\nreceives. Running many small heads in parallel makes this sequential\ncomputation practical: E97 trains through 150.8 B Pile tokens at 1.3 B\nparameters and reaches comparable training loss to GDN2."
+  },
+  {
+    "readerParagraph": 203,
+    "reason": "Retain negative transfer verbatim, seed/protocol scope, and lookup/affine-channel ceilings.",
+    "text": "The iterated nonlinear-map experiment connects that practicality to\nthe architectural motivation. E97 learns the recurrence more accurately\nand retains a larger fraction of its accuracy as sequence length grows.\nGDN2 learns the distinct $S_5$ group-state task strongly and leads\nits long-horizon comparison. The formal state-channel results make the\nunderlying computational distinction precise: repeated nonlinear\ncomposition in E97, and an affine GDN fold under a fixed,\nstate-independent schedule."
+  },
+  {
+    "readerParagraph": 204,
+    "reason": "Retain applications/deployment, contribution and journal packaging scope.",
+    "text": "These findings support studying nonlinear memory as a computational\nresource. The next step is to test that resource across training\nbudgets, scales, and tasks in which an evolving state must keep being\ntransformed: feedback, iterative optimization, and driven dynamics."
+  },
+  {
+    "readerParagraph": 210,
+    "reason": "Adopted before detailed targets; all raw-write-budget, scale, partial-order and latching conditions retained.",
+    "text": "A matched 3–7 B E97/GDN2 study would test training viability, memory\ncost, and computational behavior across scale. The feedback,\noptimization, and driven-dynamics tasks in #ref(<sec:applications>)\nwould test utility beyond language. Mathematical targets are a\nrecurrent $tanh$ tracker (O1), constrained affine/reflection\nrealizability (G3), production-range persistence, and finite-precision\nrobustness."
+  },
+  {
+    "readerParagraph": 3,
+    "reason": "Abstract sentence adoption with all canonical claim ceilings; numeric sentence kept in hardcoded sample wording, scratchpad sentence excluded as unsupported by frozen bibliography.",
+    "text": "#show: arkheion.with(\n  title: \"Emending Nonlinear Recurrence\",\n  authors: (\n    (\n      name: \"Erik Garrison\",\n      email: \"erik.garrison@gmail.com\",\n      affiliation: \"Poietic PBC / UTHSC, Memphis, TN, USA\",\n      orcid: \"0000-0003-3821-631X\",\n    ),\n  ),\n  abstract: [\n    Conversation, perception, and feedback call for ongoing computation\n    with predictable per-input cost. Textual scratchpads make intermediate\n    computation visible through additional autoregressive decoding steps.\n    Emender explores a complementary path through efficient nonlinear\n    recurrence within bounded memory:\n    each input corrects the memory's current prediction and transforms\n    the state carried forward. Width-axis multi-programming runs many\n    small memory heads in parallel while preserving each head's\n    sequential update. At 1.3 billion parameters, E97 trains through\n    150.8 billion Pile tokens on one eight-GPU workstation and reaches\n    comparable training loss to a tightly parameter-matched GDN2\n    control. Fine-tuning these models on an iterated nonlinear map gives\n    E97 99.96% versus 76.09% accuracy at the trained length and\n    76.07% versus 53.36% at eight times that length. On $S_5$\n    group-state tracking, GDN2 leads the long-horizon comparison.\n    Lean 4 results describe the underlying state computations: E97\n    composes a nonlinear update at each step, while a GDN state fold\n    under a fixed, state-independent schedule is affine in its initial\n    state. The practical training result and iterated-map advantage\n    support repeated nonlinear state transformation as a useful\n    computational bias, motivating sequence models that learn to\n    compute through memory.\n  ],\n  keywords: (\n    \"recurrent neural networks\",\n    \"language modeling\",\n    \"nonlinear recurrence\",\n    \"state-space models\",\n    \"expressivity\",\n    \"Lean 4\",\n  ),\n)"
+  },
+  {
+    "readerParagraph": 28,
+    "reason": "Adopted with canonical activation examples retained.",
+    "text": "A single explicit criterion classifies recurrent architectures.\nA recurrent layer is *linear-state* if its update can be written\n$S_t = A_t S_(t-1) + b_t$\nwith $A_t$ and $b_t$ determined by input-derived features, independently\nof that layer's previous carried state. Conditioning on these parameters\nmakes the update affine in $S_(t-1)$.\nHere the state is expressed in vector coordinates; a matrix state may be\nvectorized for this criterion.\nIf the previous state $S_(t-1)$ appears nonlinearly in\nits own update equation, the layer is *nonlinear-state*. The\ndistinction is structural and applies across choices of nonlinear\nactivation."
+  },
+  {
+    "readerParagraph": 32,
+    "reason": "Shared opening adopted, vector-state coordinate and precondition role retained; all following equations unchanged.",
+    "text": "Matrix state $S in RR^(N times V)$ is shared by several recurrent\narchitectures. Linear-state designs\n(mLSTM, RWKV-5/6, DeltaNet) already use matrix or expanded states;\nRetNet's accumulation $S_t = gamma S_(t-1) + k_t v_t^T$ is matrix-valued.\nThe point of matrix state is that an outer-product update\n$S_t = ... + k_t delta_t^T$ provides $O(N V)$ scalars of dynamic state\nat $O(N V)$ computational cost per token, with content-addressable\nretrieval via $S^T q$. Matrix state is common to the post-Mamba\nlandscape (Mamba2 with `d_state`, GLA, DeltaNet, RWKV-5/6/7, mLSTM,\nM²RNN). E97 and GDN2 both use this structure."
+  },
+  {
+    "readerParagraph": 42,
+    "reason": "Adopted; whole-stack inclusion and production parameter remapping remain open; core equations unchanged.",
+    "text": "#block(\n  width: 100%,\n  inset: 8pt,\n  radius: 3pt,\n  stroke: 0.6pt + rgb(\"#e08a2e\"),\n  fill: rgb(\"#fdf4e8\"),\n)[\n  *Shared split-gated cores, with different decay placement.* Gated\n  DeltaNet-2 and E97 have adjacent split erase/write cores. E97 uses\n  $lambda S - k(e dot.o k)^T S + k(w dot.o v)^T$, whereas GDN-2 uses\n  $(I - k(e dot.o k)^T) D S + k(w dot.o v)^T$. The exact Lean identity applies\n  E97's unit-decay linear core to the *pre-decayed* state $D S$; with\n  identity decay the cores coincide (#ref(<sec:formal>)). The grid\n  organizes these heads by their state dynamics.\n]"
+  },
+  {
+    "readerParagraph": 54,
+    "reason": "E97 foreground adopted; predecessor count evidence relocated, not deleted; exact model geometry/numbers and wrapper conditions retained.",
+    "text": "E97 fixes these family choices to one billion-parameter instance: model\nwidth 1792, depth 11, $H = 216$ heads per layer, $N = V = 32$, expansion 1.0,\na bias-free SwiGLU MLP of hidden width 4,032 after each mixer (mlp ratio\n2.2623), per-rank batch size 4, a recurrence chunk length of 2048 tokens, and\n1,286,589,072 parameters in total ($1{,}048{,}152{,}720$ non-MLP plus\n$238{,}436{,}352$ in the eleven MLPs). For E97, at depth 11, $H = 216$, and batch\nsize 4 the stack runs $11 times 216 times 4 = 9{,}504$ independent recurrent\nprograms per token, each carrying a $32 times 32$ state tile\n($216 times (32 times 32)$ recurrent-state scalars per layer). Around the\nrecurrent core the language-model wrapper is\nconventional — a pre-norm residual stack with a final normalization and tied\ninput/output embeddings. Heads never share recurrent state; each layer learns\nits own key, query, value, decay, split-gate, and output-gate projections; and the\nrecurrent state starts at zero when no prior state is carried in."
+  },
+  {
+    "readerParagraph": 61,
+    "reason": "Independent-small-head framing adopted; canonical gradient-conditioning observation and Lean-certified predecessor pointer retained.",
+    "text": "+ *Many independent small heads.* E97 at 1.3 B\n  uses $H = 216$ heads of $32 times 32$ each ($11 times 216 times 4 =\n  9{,}504$ independent programs per token at batch size 4).\n  Per-head $L^2$-normalized $q,k$ give many independent addressing\n  programs across the value heads."
+  },
+  {
+    "readerParagraph": 88,
+    "reason": "Adopted before canonical local trial, whose map/block-size/throughput and convergence caveat are retained.",
+    "text": "ParaRNN @pararnn2025 offers a different systems route, using an\niterative solver to parallelize nonlinear recurrence along time.\nThe present implementation instead retains one serial pass per head\nand obtains its parallelism across heads and batch elements."
+  },
+  {
+    "readerParagraph": 116,
+    "reason": "Adopted; exact negative-transfer quotes, capacity/phase-0 evidence and limitations retained.",
+    "text": "#heading(level: 2, numbering: none)[S5 group-state tracking on the same pair]"
+  },
+  {
+    "readerParagraph": 117,
+    "reason": "Adopted; exact negative-transfer quotes, capacity/phase-0 evidence and limitations retained.",
+    "text": "The $S_5$ word problem tests repeated composition of permutation\nactions. Finite-group actions admit affine representations, making\nthis a useful contrast with repeated application of the modular-quadratic map."
+  },
+  {
+    "readerParagraph": 206,
+    "reason": "Shared release-hash identity adopted; canonical predecessor reproducibility paragraph retained, review-alternate artifact sentence excluded as false for this canonical build.",
+    "text": "The checkpoints, loading code, and measurement\nscripts behind the 1.3 B pairing are public: the two immutable\nper-arm authorities are published as\nE97 (`https://huggingface.co/spinozans/emender-e97-1.3b`, tag\n`tokens-150793748480`, the 150.79 B-token checkpoint of\n`emender_E97_1.3B_20260709_084606`, source .pt checkpoint SHA-256\n`0239706e1f67e4823008a3a2754894b5b94dc1663580d2e40c1c74f7dd6a72b2`)\nand GDN2 (`https://huggingface.co/spinozans/gdn2-mlp-1.3b`, tag\n`tokens-152280498176`, source .pt checkpoint SHA-256\n`ffae61cfeeeff820f469f7d66dd31c60e48c455872ff9102e57b15ad75bad59b`).\nThe hashes above identify the source `.pt` checkpoints in the release\nprovenance. The immutable\nHF revisions are `119c6623f414aa7fc6e101667d3ad89b7ed6af73` (E97)\nand `e6087fa6984265404d99c419c095692d840da472` (GDN2). Converted-weight\ndigests are in each revision’s `SHA256SUMS`. The releases ship\nwith the per-architecture CMA-ES configurations, the training\nprotocol (launcher manifests in `scripts/launch_emender_8gpu_diloco.sh`\nand `scripts/launch_gdn2_mlp_8gpu_diloco.sh`), and the Triton\nmulti-programming kernel source in the public `emender` repo; the\ncanonical paper PDF is mirrored at `http://hypervolu.me/~erik/ndm/Garrison_2026_Emender.pdf`;\nthis reader-first alternate is a separate review-branch artifact."
+  },
+  {
+    "readerParagraph": 213,
+    "reason": "Opening adopted; evidence retained under Option A rather than replaced with source-only links.",
+    "text": "The project developed through successive recurrent-memory designs,\nimplementation changes, and increasingly controlled comparisons.\nThis register records that process and points to its source material.\nThe empirical study in this paper is the current E97/GDN2 pair;\nthe entries below preserve the development trail."
+  },
+  {
+    "readerParagraph": 17,
+    "reason": "Adopted verbatim: all numerical facts are already in canonical tables; local protocol and theory ceilings retained.",
+    "text": "The second question is what these trained models can learn to compute.\nAn iterated nonlinear map repeatedly transforms a running value,\ndirectly testing the computational pattern that motivates E97. After\nfine-tuning on a modular-quadratic recurrence, E97 reaches 99.96%\nversus 76.09% accuracy at the trained length and 76.07% versus 53.36%\nat eight times that length. Its higher accuracy and greater length\nrobustness support nonlinear transformation in the carried-state path\nas a useful inductive bias. The $S_5$ group-state task instead asks the\nmodels to compose permutation actions. GDN2 leads that\nlong-horizon comparison. #ref(<sec:expressivity>) gives the protocols,\nlearning trajectories, and length-dependent results for both tasks."
+  },
+  {
+    "readerParagraph": 137,
+    "reason": "Reader-first recurrent-realization sentence precedes full canonical O1 specification.",
+    "text": "A recurrent realization would carry the running group product in its\nown state. Open item O1 asks for a configuration of the nonlinear\nupdate, an initial state and decoder, and an all-words trajectory\nproof realizing that computation."
+  },
+  {
+    "readerParagraph": 139,
+    "reason": "Reader-first module framing; original exact specialization results below unchanged.",
+    "text": "The module `SplitGatedDelta` identifies adjacent split-gated linear\ncores with different decay placement. The identities are over abstract\nreal-valued gate/key/state signatures."
+  },
+  {
+    "readerParagraph": 195,
+    "reason": "Reader-first G2 research target; prior fixed-schedule limitation remains.",
+    "text": "*G2: state-dependent parameter schedules.* Extend the formal update\nclass to gates that read carried state, and characterize its composition\nand cost."
+  },
+  {
+    "readerParagraph": 214,
+    "reason": "Reader-first source inventory, supported by canonical release identities and existing repositories; Option A full evidence remains.",
+    "text": "The source record remains available for provenance:"
+  },
+  {
+    "readerParagraph": 215,
+    "reason": "Reader-first source inventory, supported by canonical release identities and existing repositories; Option A full evidence remains.",
+    "text": "- *Architecture development.* `paper/main.typ` at base commit\n  `f17b3be20b395cef914cd7034e8691c997164230` records the E63-to-E97\n  development sequence, ablations, and implementation decisions.\n  It records how the program evolved.\n- *Exploratory task and search work.* `experiments/expressivity_tasks/`,\n  `experiments/grok_symmetric_width/`, `paper/ndmpapernotes.md`, and\n  `paper/results/cmaes_burst_v2/` retain development records. These\n  records identify their own protocols and model versions.\n- *The present comparison.* The two immutable model releases and\n  launcher manifests in the reproducibility section identify the\n  actual E97 and GDN2 arms. `paper/results/expressivity_1p3b/`\n  contains their computational-probe records. The current-pair\n  tables in this paper read the corresponding result JSONs directly.\n- *Formal development.* `formal/lean/` retains the full proof project.\n  The theorem names cited in #ref(<sec:formal>) identify the specific\n  statements used here."
+  },
+  {
+    "readerParagraph": 216,
+    "reason": "Reader-first source inventory, supported by canonical release identities and existing repositories; Option A full evidence remains.",
+    "text": "The original records remain available in the repository. The present\ncomparison is defined by its own model identities, data, and protocols."
+  }
+]

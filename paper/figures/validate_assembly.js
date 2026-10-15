@@ -7,9 +7,9 @@ const fs = require('node:fs');
 const { execFileSync } = require('node:child_process');
 const source = fs.readFileSync('paper/main.typ', 'utf8');
 const normalized = source.replace(/\s+/g, ' ');
-const labels = ['intro', 'background', 'arch', 'systems', 'lm', 'expressivity',
-  'applications', 'formal', 'related', 'limitations', 'conclusion', 'predictions',
-  'future_work', 'appendix', 'appendix_cohort', 'appendix_bpb'];
+const labels = ['intro', 'background', 'arch', 'formal', 'systems', 'lm', 'expressivity',
+  'applications', 'related', 'limitations', 'conclusion', 'predictions',
+  'future_work', 'appendix'];
 const probe = 'paper/figures/.assembly-query.typ';
 assert.ok(!fs.existsSync(probe), 'do not overwrite a pre-existing probe');
 fs.writeFileSync(probe, `#include "../main.typ"
@@ -28,7 +28,7 @@ try {
 assert.deepEqual(layout.sections.map(h => h.label), labels.map(label => `sec:${label}`));
 assert.deepEqual(layout.sections.slice(0, 13).map(h => h.counter),
   Array.from({ length: 13 }, (_, i) => [i + 1]));
-assert.deepEqual(layout.sections.slice(13).map(h => h.counter), [[1], [2], [3]]);
+assert.deepEqual(layout.sections.slice(13).map(h => h.counter), [[1]]);
 assert.ok(!/§\d/.test(source), 'no stale literal manuscript numbers');
 assert.ok(source.includes('#show: arkheion-appendices'));
 for (const match of source.matchAll(/#ref\(<([^>]+)>\)/g)) {
@@ -37,7 +37,7 @@ for (const match of source.matchAll(/#ref\(<([^>]+)>\)/g)) {
 for (const phrase of [
   'Open item O1 — recurrent $tanh$-tracker realization unavailable.',
   'No strict separation of TC#super[0] and NC#super[1] is known or assumed here.',
-  'No minimal parameter-count corollary is claimed.',
+  'Minimal parameter requirements remain open.',
   'not uniformly bounded away from zero',
   'input $(lambda,k,v)$',
   'The formal E97 fold fixes $lambda$',
@@ -47,10 +47,10 @@ for (const phrase of [
   'U3.1 — carried-in winner first-generation fitness unavailable.',
   'Single-seed 1.3 B evidence and protocol boundaries',
   'Untested application predictions',
-  'TMLR',
+  'Feedback-surrogate use additionally requires stability and safety validation.',
   '150,793,420,800',
   'five optimizer steps',
-  'not an unconditional four-seed mean',
+  'the reported mean is conditional on that subset',
   'synthetic, coarse state-pass accounting model',
   'right-multiplication $H W$ and feature-network costs',
   'precomputed-gate recurrent-update accounting model',
@@ -61,7 +61,7 @@ for (const phrase of [
   'm2rnnCMAShape = m2rnnPure 22 70 256',
   'different decay placement',
   'not shown statistically equivalent',
-  'journal-specific submission packaging remains a separate step',
+  'GDN2 leads E97 at every tested length',
   'source .pt checkpoint SHA-256',
 ]) assert.ok(normalized.includes(phrase), phrase);
 for (const old of ['margin bounded away from zero', 'strictly inside NC#super[1]',
@@ -129,5 +129,5 @@ for (const key of keys) assert.ok(ledger.includes(`| \`${key}\` |`), key);
 assert.equal((ledger.match(/^\| `[^`]+` \|/gm) || []).length, keys.length);
 assert.ok(bib.includes('The Road Less Scheduled'));
 assert.ok(bib.includes('Danieli, Federico'));
-console.log(`PASS: 13 numbered body sections, 3 lettered appendices, ${layout.pages} pages; references, G1–G3/O1/U3.1, theorem scopes, 17-file inventory, and all ${keys.length} bibliography entries checked.`);
+console.log(`PASS: 13 numbered body sections, 1 register appendix, ${layout.pages} pages; references, G1–G3/O1/U3.1, theorem scopes, 17-file inventory, and all ${keys.length} bibliography entries checked.`);
 console.log(JSON.stringify(layout));

@@ -34,7 +34,9 @@ const tex=fs.readFileSync(new URL('main.tex',import.meta.url),'utf8');
 test('canonical complete math and all rendered attachments match',()=>{
   const report=verifySymbols(ast,tex);
   assert.equal(report.primes,6);assert.equal(report.vectorPrimes,2);
-  assert.equal(report.pdfPrimes,8);assert.equal(report.attachments,441);assert.equal(report.equations,707);
+  // P18 inline-mention deltas are enumerated in p18-math-delta.json;
+  // all display equations and pseudocode retain their exact source.
+  assert.equal(report.pdfPrimes,8);assert.equal(report.attachments,444);assert.equal(report.equations,706);
 });
 test('regression: dropping any converted canonical prime fails',()=>{
   const positions=[...tex.matchAll(/\{S \}'/g)].map(m=>m.index+m[0].length-1);

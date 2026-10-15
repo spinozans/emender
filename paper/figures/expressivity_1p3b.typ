@@ -23,7 +23,7 @@
   table(
     columns: (auto, auto, auto, auto),
     align: (left, right, right, right), stroke: 0.5pt, inset: 6pt,
-    table.header([*Length*], [*Train-length multiple*], [*E97*], [*GDN2-MLP*]),
+    table.header([*Length*], [*Train-length multiple*], [*E97*], [*GDN2*]),
     ..wall-e97.acc_vs_T.pairs().map(pair => {
       let (length, result) = pair
       (length, str(int(length) / train-e97.recipe.train_len) + "×",
@@ -35,12 +35,11 @@
     Full-vocabulary argmax accuracy at the pre-registered plateau stops;
     trained length #train-e97.recipe.train_len, seed #wall-e97.seed,
     #wall-e97.acc_vs_T.at("128").n scored token positions per length.
-    The identical cap is #budget.cap_steps steps, not identical realized
-    training: E97 stopped after #train-e97.steps_trained steps and GDN2-MLP
-    after #train-gdn2.steps_trained. E97 decays gracefully rather than
-    remaining length-invariant; GDN2-MLP approaches a roughly 50% plateau,
-    *not* the declared #percent(wall-gdn2.random_baseline_acc) random
-    baseline. Source: `paper/results/expressivity_1p3b/iterated-map/`,
+    The common cap is #budget.cap_steps steps, with unequal realized
+    training: E97 stopped after #train-e97.steps_trained steps and GDN2
+    after #train-gdn2.steps_trained. E97 shows graceful length transfer; GDN2 approaches a roughly 50%
+    plateau, above the declared #percent(wall-gdn2.random_baseline_acc)
+    random baseline. Source: `paper/results/expressivity_1p3b/iterated-map/`,
     `ft_{e97,gdn2}_modular_quadratic{,_sweep}.json` (commit `9dc3afd7`);
     `budget.json` (pre-registration `1989656c`).
   ],
@@ -73,7 +72,7 @@
   table(
     columns: (auto, auto, auto),
     align: (left, right, right), stroke: 0.5pt, inset: 6pt,
-    table.header([*Length*], [*E97*], [*GDN2-MLP*]),
+    table.header([*Length*], [*E97*], [*GDN2*]),
     ..s5-e97.acc_vs_T.pairs().map(pair => {
       let (length, result) = pair
       (length + if length == "512" { "*" } else { "" },
@@ -81,11 +80,12 @@
     }).flatten(),
   ),
   caption: [
-    *S5 capacity/long-horizon boundary finding, not a depth-wall separation.*
+    *S5 capacity/long-horizon accuracy on the released pair.*
     Full-vocabulary argmax accuracy, seed #s5-e97.seed;
-    both curves decay and GDN2-MLP stays ahead. \*GDN2-MLP completed one
+    both curves decay and GDN2 stays ahead. \*GDN2 completed one
     optimizer step at length 512 before the curriculum stage proved
-    OOM-infeasible even at sub-batch 1; this point is not wholly untrained.
+    OOM-infeasible even at sub-batch 1; the length-512 point includes
+    that completed update.
     Source: `capacity/cap_{e97,gdn2}_s5_sweep.json` and
     `cap_gdn2_s5_train.json` under `paper/results/expressivity_1p3b/`
     (E97 `f1ed5615`, GDN2 salvage `6f916843`).
