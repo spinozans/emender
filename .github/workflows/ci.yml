@@ -23,6 +23,10 @@ jobs:
           ref: 95709fc250357c2dd109361c353192f2aa5913f9
           path: src/GatedDeltaNet-2
           persist-credentials: false
+      - name: Bind canonical baseline origin
+        # The checked-in source receipts include the canonical .git URL;
+        # actions/checkout creates its origin without that suffix.
+        run: git -C src/GatedDeltaNet-2 remote set-url origin https://github.com/NVlabs/GatedDeltaNet-2.git
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
