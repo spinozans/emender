@@ -13,6 +13,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          # Reference-evidence tests verify blobs from their retained commit.
+          fetch-depth: 0
       - name: Check out pinned GDN2 baseline source
         uses: actions/checkout@v6
         with:
