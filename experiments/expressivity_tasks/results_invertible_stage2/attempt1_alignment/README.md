@@ -13,3 +13,8 @@ padding comes strictly after real tokens, masks exclude it, and no targets are
 inputs. Tests permanently verify real logits/loss equality and zero padded-logit
 gradients. All attempts remain available; restart uses unchanged initialization,
 data seeds, optimizer, geometry, and stopping/selection rules.
+
+`checkpoint_relocation.json` maps historical creation paths in these first-attempt
+ledgers to the preserved binary paths after the restart-directory move, with
+freshly verified SHA256 values. First-attempt checkpoints are not selected as
+results of the restarted runs.

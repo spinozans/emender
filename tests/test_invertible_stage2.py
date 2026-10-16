@@ -118,6 +118,7 @@ def test_training_masked_padding_equals_sliced_loss_and_gradients():
                      n_state=4, use_triton=False, mlp_ratio=1., mlp_multiple=16).train()
     x = torch.randint(0, 64, (2, 3))
     y = torch.randint(0, 64, x.shape)
+    reference = copy.deepcopy(model)
     xpad = torch.nn.functional.pad(x, (0, 13))
     ypad = torch.nn.functional.pad(y, (0, 13))
     mask = torch.zeros_like(xpad, dtype=torch.bool)
@@ -133,6 +134,12 @@ def test_training_masked_padding_equals_sliced_loss_and_gradients():
     assert not logits.grad[:, :2].any()
     assert logits.grad[:, 2].any()
     assert any(p.grad is not None and p.grad.abs().sum() > 0 for p in model.parameters())
+    reference_loss = torch.nn.functional.cross_entropy(reference(xpad)[:, 2], y[:, 2])
+    reference_loss.backward()
+    torch.optim.SGD(model.parameters(), lr=0.01).step()
+    torch.optim.SGD(reference.parameters(), lr=0.01).step()
+    for actual, expected in zip(model.parameters(), reference.parameters()):
+        torch.testing.assert_close(actual, expected, rtol=0, atol=0)
 
 
 def test_report_missing_arms_is_explicit_and_fail_closed(tmp_path):

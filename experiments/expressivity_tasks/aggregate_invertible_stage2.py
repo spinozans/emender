@@ -80,7 +80,13 @@ def build(root, report):
             contrasts.append({"seed": seed, "best_validation": e["best_validation"]["accuracy"] - g["best_validation"]["accuracy"],
                               **{length: e["test"][length]["accuracy"] - g["test"][length]["accuracy"]
                                  for length in ("test_1x", "test_4x", "test_8x")}})
+    contingency = None
+    if (root / "contingency_amendment.json").exists():
+        contingency = json.loads((root / "contingency_amendment.json").read_text())
+        contingency["triggered"] = (all(aggregates[a]["best_validation"]["mean"] <= contingency["threshold_accuracy_fraction"]
+                                       for a in ("e97", "gdn2")) if len(aggregates) == 2 else None)
     summary = {"status": "complete" if complete else "incomplete_fail_closed", "suffix_floor": FLOOR,
+               "contingency": contingency,
                "contract_sha256": digest(root / "contract.json"), "runs": runs,
                "aggregate": aggregates, "paired_e97_minus_gdn2": contrasts,
                "uncertainty": "sample SD and SEM across all three training seeds, not token-binomial intervals; correlated running positions are not independent trajectories"}
@@ -135,11 +141,15 @@ def build(root, report):
         e, g = aggregates["e97"], aggregates["gdn2"]
         cal = [runs[f"calibration_{a}_seed0"]["test"]["test_1x"]["accuracy"] for a in ("e97", "gdn2", "e97_identity")]
         text.append(f"At p=61, selected-checkpoint test1x means are E97 {number(e['test_1x']['mean'])} and GDN2 {number(g['test_1x']['mean'])}, against the {number(FLOOR)} suffix reference. One-step held-out full-state scores are E97/GDN2/identity {', '.join(number(v) for v in cal)}. These arithmetic controls and the extrapolation panels must constrain any interpretation: failure to learn the one-step arithmetic blocks a depth-specific conclusion. This frozen128-example fine-tune tests learning efficiency of this released pair under one fixed recipe, not universal representability, impossibility, or CMA causality. The single-seed identity contrast is exploratory and not a multi-seed causal result; initialization and optimization confounds remain. The exact numbers, not a chosen narrative or best seed, govern whether any practical separation is supported.")
+    if contingency:
+        text += ["", "## Disclosed mid-run conditional protocol amendment", "",
+                 f"Registered **{contingency['registered_at']}** after headline validation through750/1000 updates had already been observed. This was registered before any headline stop/final-test evaluation, **not pre-launch**. `contingency_amendment.json` preserves exact per-arm observation counters. No stopping, selection, recipe, metric, or data changes followed.", "",
+                 f"Trigger iff BOTH architectures' three-seed mean best-val full-state accuracy <= **0.127%** (operator's binding rounded floor+0.1pp threshold). Trigger state: **{contingency['triggered']}**. If triggered, released-pair p13/p31 calibrations disambiguating state-space size from task-family learning failure are a **separately authorized follow-up task**, NOT launched here. Fresh CPU13/31/61 arithmetic/data/suffix checks plus completed p61 one-step diagnostics across all three architectures satisfy current calibration scope by explicit supervisor ruling."]
     text += ["", "## Receipts and reproducibility", "",
              "- `contract.json`: committed/pushed preregistration and explicit live amendments; configs bind seeds, optimizer, source checkpoint/args and runner hashes.",
              "- Per run: `frozen_pools.npz`, data hashes, `training.jsonl`, `validation.json`, selected/frozen checkpoints and SHA256 ledger, best-test and matched-test counts, full summary. Binary model files are local ignored artifacts, NOT in git; hashes/absolute paths reconstruct and identify them.",
              "- `receipts/`: exact commands, GPU UUID/index snapshots, per-arm lease/console/exit records; local lambda01, no Slurm and no WorksGood service. `attempt1_alignment/` is preserved, never mislabeled as complete.",
-             "- CPU protocol/task suite:54 passed; fresh suffix verification passes. Final commands and clean-index proof accompany acceptance. DiLoCo resilience is unchanged: requirement matrix IDs not applicable.",
+             "- CPU protocol/task/facade suite:71 passed (including54 protocol/task tests); fresh suffix verification passes. Final commands and clean-index proof accompany acceptance. DiLoCo resilience is unchanged: requirement matrix IDs not applicable.",
              "- Independent acceptance review remains required. Three-seed intervals are limited; fixed small training data and a single recipe cannot establish general task learnability. Any incomplete/failure arm is explicit above."]
     report.write_text("\n".join(text) + "\n")
     return complete
