@@ -89,6 +89,8 @@ def build(root, report):
                "contingency": contingency,
                "contract_sha256": digest(root / "contract.json"), "runs": runs,
                "aggregate": aggregates, "paired_e97_minus_gdn2": contrasts,
+               "paired_e97_minus_gdn2_aggregate": ({k: aggregate([c[k] for c in contrasts])
+                   for k in ("best_validation", "test_1x", "test_4x", "test_8x")} if len(contrasts) == 3 else {}),
                "uncertainty": "sample SD and SEM across all three training seeds, not token-binomial intervals; correlated running positions are not independent trajectories"}
     write_json(root / "results_summary.json", summary)
     text = ["# X2 — released-pair invertible-map probes", "", "## Status and preregistered instrument", "",
@@ -117,9 +119,15 @@ def build(root, report):
         if r["status"] == "complete":
             t = r["test"]["test_1x"]
             text.append(f"| {name} | {number(t['x_accuracy'])} | {number(t['y_accuracy'])} | {number(t['terminal_accuracy'])} | {r['trainable_parameters']} | {r['stop_step']} | {r['total_training_tokens']} | {r['training_tokens_per_second']:.1f} | {r['wall_seconds']:.1f} | {number(FLOOR)} |")
+    text.append("")
+    for arm in ("e97", "gdn2", "e97_identity"):
+        r = runs[f"headline_{arm}_seed0"]
+        if r["status"] == "complete":
+            states = r["config"]["recurrent_states"]
+            text.append(f"- {arm}: {len(states)} matrix-state layers, {sum(s['elements'] for s in states):,} recurrent matrix elements per sequence (short-conv caches excluded); per-layer shapes/flags in config.")
     text += ["", "Real training tokens include the two initialization positions but exclude right-padding overhead. Physical padded tokens/sequence and matrix-state element counts per layer are in each config. Released heads are retained (full vocab), not replaced by the scratch plan's 3721-class heads. Released GDN2 configuration governs even where it differs from the old scratch control's eigenvalue setting; actual flags are recorded in headline configs.", "",
              "## Matched-step panels", "",
-             "Selected-checkpoint panels above are not equal-step comparisons. Below: every retained mandatory fixed step and the union of actual headline stopping steps. Arms are NEVER trained past their plateau to fill a later panel. No arm reaching10K means10K+ panels are not reached, not zero accuracy.", "",
+             "Selected-checkpoint panels above are not equal-step comparisons. Below: every retained mandatory fixed step and the union of actual headline stopping steps. Arms are NEVER trained past their plateau to fill a later panel. Any fixed panel beyond an arm's stop (4000/8000/12000/16000/18269 or the10K grid) is not reached, not zero accuracy.", "",
              "| Run | Update | Test1x | Test4x | Test8x | Suffix floor |", "|---|---:|---:|---:|---:|---:|"]
     for name, r in runs.items():
         if r["status"] != "complete" or not name.startswith("headline"):
@@ -140,7 +148,9 @@ def build(root, report):
     else:
         e, g = aggregates["e97"], aggregates["gdn2"]
         cal = [runs[f"calibration_{a}_seed0"]["test"]["test_1x"]["accuracy"] for a in ("e97", "gdn2", "e97_identity")]
-        text.append(f"At p=61, selected-checkpoint test1x means are E97 {number(e['test_1x']['mean'])} and GDN2 {number(g['test_1x']['mean'])}, against the {number(FLOOR)} suffix reference. One-step held-out full-state scores are E97/GDN2/identity {', '.join(number(v) for v in cal)}. These arithmetic controls and the extrapolation panels must constrain any interpretation: failure to learn the one-step arithmetic blocks a depth-specific conclusion. This frozen128-example fine-tune tests learning efficiency of this released pair under one fixed recipe, not universal representability, impossibility, or CMA causality. The single-seed identity contrast is exploratory and not a multi-seed causal result; initialization and optimization confounds remain. The exact numbers, not a chosen narrative or best seed, govern whether any practical separation is supported.")
+        stop_steps = sorted({r["stop_step"] for name, r in runs.items() if name.startswith("headline")})
+        initial_selections = [name for name, r in runs.items() if name.startswith("headline") and r["step"] == 0]
+        text.append(f"No practical learned-computation separation is demonstrated: headline stop updates are {stop_steps} (the first possible plateau is2000), with full-state scores near or below the suffix reference rather than successful map computation. At p=61, selected-checkpoint test1x means are E97 {number(e['test_1x']['mean'])} and GDN2 {number(g['test_1x']['mean'])}, against the {number(FLOOR)} suffix reference. One-step held-out full-state scores are E97/GDN2/identity {', '.join(number(v) for v in cal)}. These arithmetic controls and the extrapolation panels must constrain any interpretation: failure to learn the one-step arithmetic blocks a depth-specific conclusion. This frozen128-example fine-tune tests learning efficiency of this released pair under one fixed recipe, not universal representability, impossibility, or CMA causality. The single-seed identity contrast is exploratory and not a multi-seed causal result; initialization and optimization confounds remain. Update0 selections, not learned checkpoints: {initial_selections}. Every finite-state map still admits a sufficiently large one-hot linear-state representation; these failures are not an expressivity impossibility result.")
     if contingency:
         text += ["", "## Disclosed mid-run conditional protocol amendment", "",
                  f"Registered **{contingency['registered_at']}** after headline validation through750/1000 updates had already been observed. This was registered before any headline stop/final-test evaluation, **not pre-launch**. `contingency_amendment.json` preserves exact per-arm observation counters. No stopping, selection, recipe, metric, or data changes followed.", "",
@@ -150,7 +160,18 @@ def build(root, report):
              "- Per run: `frozen_pools.npz`, data hashes, `training.jsonl`, `validation.json`, selected/frozen checkpoints and SHA256 ledger, best-test and matched-test counts, full summary. Binary model files are local ignored artifacts, NOT in git; hashes/absolute paths reconstruct and identify them.",
              "- `receipts/`: exact commands, GPU UUID/index snapshots, per-arm lease/console/exit records; local lambda01, no Slurm and no WorksGood service. `attempt1_alignment/` is preserved, never mislabeled as complete.",
              "- CPU protocol/task/facade suite:71 passed (including54 protocol/task tests); fresh suffix verification passes. Final commands and clean-index proof accompany acceptance. DiLoCo resilience is unchanged: requirement matrix IDs not applicable.",
-             "- Independent acceptance review remains required. Three-seed intervals are limited; fixed small training data and a single recipe cannot establish general task learnability. Any incomplete/failure arm is explicit above."]
+             ("- `receipts/final_audit.json`: all10 exit codes zero; selected and matched checkpoint binaries rehashed; observation counts, paired identity data, best/matched agreement, and selection-before-test chronology verified. All GPU leases released and all eight GPUs idle."
+              if complete and (root / "receipts/final_audit.json").exists() else "- Final ten-arm artifact audit unavailable; do not claim complete validation."),
+             "- Independent acceptance review remains required. Three-seed intervals are limited; fixed small training data and a single recipe cannot establish general task learnability. Any incomplete/failure arm is explicit above.",
+             "", "## Validation commands", "", "```text",
+             "CUDA_VISIBLE_DEVICES='' /usr/bin/python3 -m pytest -q tests/test_invertible_stage2.py tests/test_invertible_quadratic.py tests/test_e97_facade.py  # 71 passed",
+             "CUDA_VISIBLE_DEVICES='' /usr/bin/python3 -m experiments.expressivity_tasks.verify_invertible_quadratic --output experiments/expressivity_tasks/results_invertible_stage2/suffix_calibration.json  # all checks passed",
+             "bash experiments/expressivity_tasks/launch_invertible_stage2.sh calibration  # three completed diagnostics, exit0 after documented restart",
+             "bash experiments/expressivity_tasks/launch_invertible_stage2.sh headline  # seven completed headline runs, exit0",
+             "CUDA_VISIBLE_DEVICES='' /usr/bin/python3 -m experiments.expressivity_tasks.aggregate_invertible_stage2  # complete, receipt audit passed",
+             "CUDA_VISIBLE_DEVICES='' /usr/bin/python3 -m experiments.expressivity_tasks.results_invertible_stage2.receipts.audit_command  # ten-arm artifact audit passed",
+             "bash -n experiments/expressivity_tasks/launch_invertible_stage2.sh; compileall; cmp AGENTS.md CLAUDE.md; git diff --check  # passed",
+             "```"]
     report.write_text("\n".join(text) + "\n")
     return complete
 
