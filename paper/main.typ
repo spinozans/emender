@@ -1077,14 +1077,12 @@ reference point. The matched-token comparison is in #ref(<tab_matched_loss>).
 #figure(
   image("figures/e97_recorded_loss.png", width: 100%),
   caption: [
-    E97 recorded training loss: thin blue traces show three raw log windows
-    (expanded above), circles show workstation checkpoint losses, and diamonds
-    show Frontier checkpoint losses; each trace spans its recorded window and
-    checkpoints appear as separate markers. The orange star is GDN2's single
-    retained checkpoint at 152.28 B tokens (last-window loss 2.4034), the
-    vertical rule marks the Pile/CommaPile boundary at the 150.794 B-token
-    Frontier handoff, and #ref(<tab_matched_loss>) gives the matched-token
-    comparison. Sources and figure script: `paper/figures/plot_recorded_loss.py`.
+    E97 recorded training loss at every retained checkpoint, from the
+    workstation run through the Frontier continuation (circles: workstation;
+    diamonds: Frontier). The star is GDN2's retained checkpoint at 152.28 B
+    tokens (2.4034). The dotted rule marks the Pile/CommaPile handoff at
+    150.794 B tokens; the connector joins known points. Figure script and
+    value receipt: `paper/figures/plot_recorded_loss.py`.
   ],
 ) <fig_recorded_loss>
 
