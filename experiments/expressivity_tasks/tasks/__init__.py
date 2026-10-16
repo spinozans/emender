@@ -11,6 +11,9 @@ Vocabulary is small per-task (e.g. 4 for parity). Models can use vocab=256
 (byte-level) by mapping task tokens into the byte range.
 """
 
+from functools import partial
+
+from .invertible_quadratic import InvertibleQuadraticTask, InvertibleQuadraticOneStepTask
 from .parity import ParityTask
 from .modular_counter import ModularCounterTask
 from .dyck import DyckTask
@@ -33,6 +36,12 @@ from .periodic_pattern import PeriodicPatternTask
 from .boolean_assoc import BooleanAssocTask
 
 ALL_TASKS = {
+    'invertible_quadratic': InvertibleQuadraticTask,
+    'invertible_quadratic_p13': partial(InvertibleQuadraticTask, p=13),
+    'invertible_quadratic_p31': partial(InvertibleQuadraticTask, p=31),
+    'invertible_quadratic_one_step': InvertibleQuadraticOneStepTask,
+    'invertible_quadratic_p13_one_step': partial(InvertibleQuadraticOneStepTask, p=13),
+    'invertible_quadratic_p31_one_step': partial(InvertibleQuadraticOneStepTask, p=31),
     'parity': ParityTask,
     'modular_counter': ModularCounterTask,
     'dyck': DyckTask,
