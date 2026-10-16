@@ -5,6 +5,7 @@ import argparse
 import json
 from pathlib import Path
 import statistics
+import math
 
 from experiments.expressivity_tasks.run_invertible_stage2 import FLOOR, digest, plateau, selected, write_json
 
@@ -45,6 +46,18 @@ def read_result(root, name):
     if digest(run / "frozen_pools.npz") != data_receipt["sha256"]:
         raise RuntimeError(f"data hash mismatch: {name}")
     result["config"] = json.loads((run / "config.json").read_text())
+    if result["config"].get("protocol_amendment") == 2:
+        losses = [json.loads(line)["loss"] for line in lines]
+        for row in history:
+            step = row["step"]
+            if step >= 2000:
+                first = statistics.mean(losses[step-2000:step-1750])
+                last = statistics.mean(losses[step-250:step])
+                if not (math.isclose(row["train_loss_window_first250"], first, rel_tol=1e-12)
+                        and math.isclose(row["train_loss_window_final250"], last, rel_tol=1e-12)):
+                    raise RuntimeError(f"train-loss plateau window mismatch: {name}/{step}")
+        if result["stop_step"] < 10000:
+            raise RuntimeError(f"ineligible amendment2 stop: {name}")
     result["data_receipt"] = data_receipt
     if name.startswith("headline"):
         result["cross_plateau_test"] = json.loads((run / "cross_plateau_test.json").read_text())
@@ -61,6 +74,7 @@ def number(value):
 
 
 def build(root, report):
+    amendment = json.loads((root / "amendment2.json").read_text()) if (root / "amendment2.json").exists() else None
     runs = {name: read_result(root, name) for name in ARMS}
     complete = all(r["status"] == "complete" for r in runs.values())
     aggregates = {}
@@ -86,7 +100,7 @@ def build(root, report):
         contingency["triggered"] = (all(aggregates[a]["best_validation"]["mean"] <= contingency["threshold_accuracy_fraction"]
                                        for a in ("e97", "gdn2")) if len(aggregates) == 2 else None)
     summary = {"status": "complete" if complete else "incomplete_fail_closed", "suffix_floor": FLOOR,
-               "contingency": contingency,
+               "contingency": contingency, "amendment2": amendment,
                "contract_sha256": digest(root / "contract.json"), "runs": runs,
                "aggregate": aggregates, "paired_e97_minus_gdn2": contrasts,
                "paired_e97_minus_gdn2_aggregate": ({k: aggregate([c[k] for c in contrasts])
@@ -133,13 +147,15 @@ def build(root, report):
         if r["status"] != "complete" or not name.startswith("headline"):
             continue
         panels = dict(r["matched_test"])
+        unavailable = {}
         for step, v in r["cross_plateau_test"].items():
             if v["status"] == "evaluated":
                 panels[step] = v["panels"]
             else:
                 panels[step] = None
+                unavailable[step] = v["reason"]
         for step, v in sorted(panels.items(), key=lambda pair: int(pair[0])):
-            cells = [number(v[f"test_{x}x"]["accuracy"]) for x in (1,4,8)] if v else ["already stopped"] * 3
+            cells = [number(v[f"test_{x}x"]["accuracy"]) for x in (1,4,8)] if v else [f"unavailable: {unavailable[step]}"] * 3
             text.append(f"| {name} | {step} | {' | '.join(cells)} | {number(FLOOR)} |")
     text += ["", "## Suffix calibration", "",
              f"Analytic suffix0/1/7 cap = {number(FLOOR)} once at least two drivers are omitted (width7 starts at driver9). The CPU verification rerun and `suffix_calibration.json` retain fresh 2,000,000-independent-trajectory measurements per prime, known initialization, seeds, exact counts, six-sigma checks, and the empirical old parity-transfer control. These are not learned-model upper bounds.", "", "## Honest interpretation", ""]
@@ -172,7 +188,32 @@ def build(root, report):
              "CUDA_VISIBLE_DEVICES='' /usr/bin/python3 -m experiments.expressivity_tasks.results_invertible_stage2.receipts.audit_command  # ten-arm artifact audit passed",
              "bash -n experiments/expressivity_tasks/launch_invertible_stage2.sh; compileall; cmp AGENTS.md CLAUDE.md; git diff --check  # passed",
              "```"]
-    report.write_text("\n".join(text) + "\n")
+    if amendment:
+        text[0] = "# X2b — fresh procedural training, frozen evaluation"
+        text = [line.replace("Frozen paired full-input-deduplicated 128 train/512 val/512 test per depth.",
+                             "Fresh procedural training batch32; unchanged X2 frozen512 val/512 test per depth. Archived128 training pool is not sampled.")
+                .replace("first running-best gain <0.001 accuracy over2000 updates stops training", amendment["plateau"])
+                .replace("The first calibration attempt", "In the preserved X2 run, the first calibration attempt")
+                .replace("`attempt1_alignment/`", "X2's archived `attempt1_alignment/`") for line in text]
+        start = text.index("## Honest interpretation")
+        end = text.index("## Disclosed mid-run conditional protocol amendment") if contingency else text.index("## Receipts and reproducibility")
+        text[start:end] = ["## Honest interpretation", "",
+            (f"Fresh data rescues arithmetic learning: one-step test E97/GDN2/identity = {', '.join(number(runs[f'calibration_{a}_seed0']['test']['test_1x']['accuracy']) for a in ('e97', 'gdn2', 'e97_identity'))}. "
+             f"The long-task ordering favors GDN2, not E97: selected test1x means {number(aggregates['gdn2']['test_1x']['mean'])} versus {number(aggregates['e97']['test_1x']['mean'])}; "
+             f"at matched10000 updates, GDN2/E97 means are {number(statistics.mean(runs[f'headline_gdn2_seed{s}']['matched_test']['10000']['test_1x']['accuracy'] for s in range(3)))}/{number(statistics.mean(runs[f'headline_e97_seed{s}']['matched_test']['10000']['test_1x']['accuracy'] for s in range(3)))}. "
+             f"All compare with the {number(FLOOR)} suffix reference. Both architectures remain low in absolute full-state accuracy and degrade with depth; this does not establish robust invertible-map computation. "
+             "Unequal stopping/selection steps are explicit, and the single-seed identity contrast is exploratory. These released-pair fixed-recipe results do not prove universal expressivity, impossibility, or CMA causality."
+             if complete else "Incomplete/fail-closed: absent measurements support no architecture or depth conclusion."), ""]
+        start = text.index("## Disclosed mid-run conditional protocol amendment") if contingency else text.index("## Receipts and reproducibility")
+        text[start:] = ["## Amendment #2 registration", "", "```json", json.dumps(amendment, indent=2), "```", "",
+            "## Contingency", "", amendment["contingency"],
+            f"Corrected-protocol trigger state: {contingency['triggered'] if contingency else None}; both three-seed mean best-val scores must be <=0.127% (floor0.026874%). No p13/p31 training launched here.", "",
+            "## Receipts and validation", "",
+            "The results root holds contracts, frozen-pool identities, all ten run logs, best/matched/cross-stop eval receipts, loss-window replay, selected checkpoint hashes, resource/command/exit receipts and final audit. Binary checkpoints are local ignored artifacts identified by SHA256, not pushed to git.",
+            "X2 receipts are unchanged. Local lambda01 execution only, exclusive scripts/gpu_lease.sh leases; no Slurm or WorksGood service. DiLoCo requirement matrix IDs are not applicable: no resilient training or scale behavior changed.",
+            "Concurrent-source disclosure: all ten X2b configs bind launched fb2c1b6e runner bytes (archived in receipts/runner_at_launch.py). HEAD advanced to X2c mid-run; no X2b runner edits after launch. The final audit verifies git-show launch bytes, not the current X2c-extended runner. Initial source-identity audit failure is retained and its correction disclosed in receipts/final_audit.json.",
+            "CPU validation output: receipts/cpu_tests.txt. Final commands and audit: receipts/validation_commands.txt and receipts/final_audit.json. Independent acceptance review remains required.", ""]
+    report.write_text("\n".join(text).rstrip() + "\n")
     return complete
 
 

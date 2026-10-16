@@ -1,0 +1,28 @@
+Host lambda01, /usr/bin/python3=Python3.12.3; not Frontier, no Slurm submission. No WorksGood service or workers launched.
+Preregistration committed/pushed fb2c1b6e before any X2b launch; executed runner preserved as runner_at_launch.py and verified against git-show fb2c1b6e.
+
+PASSED: CUDA_VISIBLE_DEVICES='' /usr/bin/python3 -m pytest -q tests/test_invertible_stage2.py tests/test_invertible_quadratic.py tests/test_e97_facade.py
+Initial74 tests; final amendment-specific suite76 tests after capacity/report tests added. See cpu_tests.txt.
+PASSED: OUT=/home/erikg/emender/experiments/expressivity_tasks/results_invertible_stage2b PYTHON_BIN=/usr/bin/python3 bash experiments/expressivity_tasks/launch_invertible_stage2.sh calibration
+Three diagnostics exit0. All individual exact commands, GPU UUIDs, leases, logs and timestamps are under receipts/calibration_*/.
+PASSED: bash experiments/expressivity_tasks/results_invertible_stage2b/receipts/launch_after_calibration.sh
+Launches seven headline runs only after three diagnostic exits0; all seven exit0. Individual exact commands and resource receipts under receipts/headline_*/.
+PASSED: /usr/bin/python3 -m experiments.expressivity_tasks.results_invertible_stage2b.receipts.check_completed_capacity
+Applied the pre-registered <400GiB fallback to completed runs as needed. Per-run pruning.jsonl records pruned steps and retained hashes; completed_calibration_capacity_check.txt records checks. Live runs applied the same function every validation boundary.
+PASSED: bash experiments/expressivity_tasks/results_invertible_stage2b/receipts/evaluate_cross_stops.sh
+Seven cross-stop eval processes exit0, each exclusively leased; per-process receipts under matched_headline_*/.
+PASSED: CUDA_VISIBLE_DEVICES='' /usr/bin/python3 -m experiments.expressivity_tasks.aggregate_invertible_stage2 --root experiments/expressivity_tasks/results_invertible_stage2b --report X2b-report.md
+Replays all update counters, selection, plateau windows and first eligible stop; verifies selected checkpoint and frozen-pool hashes; summary complete.
+INITIAL FAILED, CORRECTED AND PASSED: CUDA_VISIBLE_DEVICES='' /usr/bin/python3 -m experiments.expressivity_tasks.results_invertible_stage2b.receipts.audit_command
+Initial audit compared launch SHA to current runner, which X2c had extended mid-run. Under supervisor ruling, bind executed git-show fb2c1b6e bytes instead; original failure retained in audit_initial_source_identity_failure.txt. Corrected audit verifies all10 configs match executed SHA, all10 frozen-pool receipts match X2, all selected/matched/cross checkpoint hashes, metrics/counts, all17 process exits, chronology, and pruning retention. See final_audit.json and audit_output.txt.
+PASSED: CUDA_VISIBLE_DEVICES='' /usr/bin/python3 -m pytest -q tests/test_invertible_stage2.py tests/test_invertible_quadratic.py tests/test_e97_facade.py tests/test_invertible_stage2c.py
+88 passed; cpu_tests_final.txt. X2c regression included without changing its commits/artifacts.
+PASSED: CUDA_VISIBLE_DEVICES='' /usr/bin/python3 -m experiments.expressivity_tasks.verify_invertible_quadratic --output experiments/expressivity_tasks/results_invertible_stage2b/suffix_calibration_rerun.json
+Fresh arithmetic/data/suffix CPU verification; original X2 suffix_calibration.json retained unchanged too.
+PASSED: bash -n experiments/expressivity_tasks/launch_invertible_stage2.sh experiments/expressivity_tasks/results_invertible_stage2b/receipts/evaluate_cross_stops.sh experiments/expressivity_tasks/results_invertible_stage2b/receipts/launch_after_calibration.sh
+PASSED: /usr/bin/python3 -m compileall -q experiments/expressivity_tasks/run_invertible_stage2.py experiments/expressivity_tasks/aggregate_invertible_stage2.py experiments/expressivity_tasks/eval_invertible_matched.py
+PASSED: cmp AGENTS.md CLAUDE.md; git diff --check
+PASSED: git diff ca79f05b -- X2-report.md experiments/expressivity_tasks/results_invertible_stage2/ (empty: X2 evidence untouched)
+PASSED: bash scripts/gpu_lease.sh status; nvidia-smi --query-gpu=index,uuid,memory.used,utilization.gpu --format=csv
+All eight GPUs idle at4MiB; no active leases. Snapshots in leases_final.txt and gpu_final.txt.
+Independent reviewer acceptance still required. Model .pt checkpoints remain ignored locally; frozen .npz pools are committed (as in X2), together with hashes, generators and launch-source identity. One GDN2-seed1 cross-stop21500 panel unavailable because already pruned before another arm required it; disclosed in table and receipt, never imputed. Beyond-stop cells unavailable without extra training.

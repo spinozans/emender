@@ -1,0 +1,131 @@
+{
+  "arm": "e97_identity",
+  "seed": 0,
+  "drivers": 1,
+  "train_sequences": "fresh procedural per batch",
+  "archived_train_sequences": 128,
+  "val_sequences": 512,
+  "test_sequences": 512,
+  "optimizer": "AdamW",
+  "betas": [
+    0.9,
+    0.95
+  ],
+  "lr": 5e-05,
+  "warmup": 300,
+  "weight_decay": 0.01,
+  "grad_clip": 0.5,
+  "batch": 32,
+  "dtype": "bf16",
+  "emission": "full-vocab argmax joint class 61*x+y",
+  "eval_every": 250,
+  "plateau_window": 2000,
+  "min_improvement": 0.001,
+  "plateau_eligible_step": 10000,
+  "min_relative_train_loss_improvement": 0.01,
+  "protocol_amendment": 2,
+  "hard_cap": 60000,
+  "suffix_floor": 0.0002687449610319806,
+  "padding": "constant-zero right padding to multiple16, slice all pad logits before loss/scoring; causal real prefixes unchanged; no target leakage",
+  "physical_train_tokens_per_sequence": 16,
+  "cuda_visible_devices": "0",
+  "source_sha256": "7e3aa7b17d98e8911598b00f0ff14432cf8462ad7cd6e83daee314c13acee10a",
+  "matched_steps": [
+    1000,
+    4000,
+    8000,
+    10000,
+    12000,
+    16000,
+    18269,
+    20000,
+    30000,
+    40000,
+    50000,
+    60000
+  ],
+  "source_checkpoint": "/mnt/nvme1n1/erikg/diloco_8gpu/emender/runs/emender_E97_1.3B_20260709_084606/checkpoint_step_2300930_loss_2.4365.pt",
+  "source_checkpoint_sha256": "0239706e1f67e4823008a3a2754894b5b94dc1663580d2e40c1c74f7dd6a72b2",
+  "source_args_sha256": "27e4beafac1a80d58d63edb816b3a5b20e4c268540cc738fe40470bfeb2ddec2",
+  "identity_layers": 11,
+  "trainable_parameters": 1286589072,
+  "recurrent_states": [
+    {
+      "module": "layers.0.mixer",
+      "heads": 216,
+      "key_dim": 32,
+      "value_dim": 32,
+      "elements": 221184
+    },
+    {
+      "module": "layers.1.mixer",
+      "heads": 216,
+      "key_dim": 32,
+      "value_dim": 32,
+      "elements": 221184
+    },
+    {
+      "module": "layers.2.mixer",
+      "heads": 216,
+      "key_dim": 32,
+      "value_dim": 32,
+      "elements": 221184
+    },
+    {
+      "module": "layers.3.mixer",
+      "heads": 216,
+      "key_dim": 32,
+      "value_dim": 32,
+      "elements": 221184
+    },
+    {
+      "module": "layers.4.mixer",
+      "heads": 216,
+      "key_dim": 32,
+      "value_dim": 32,
+      "elements": 221184
+    },
+    {
+      "module": "layers.5.mixer",
+      "heads": 216,
+      "key_dim": 32,
+      "value_dim": 32,
+      "elements": 221184
+    },
+    {
+      "module": "layers.6.mixer",
+      "heads": 216,
+      "key_dim": 32,
+      "value_dim": 32,
+      "elements": 221184
+    },
+    {
+      "module": "layers.7.mixer",
+      "heads": 216,
+      "key_dim": 32,
+      "value_dim": 32,
+      "elements": 221184
+    },
+    {
+      "module": "layers.8.mixer",
+      "heads": 216,
+      "key_dim": 32,
+      "value_dim": 32,
+      "elements": 221184
+    },
+    {
+      "module": "layers.9.mixer",
+      "heads": 216,
+      "key_dim": 32,
+      "value_dim": 32,
+      "elements": 221184
+    },
+    {
+      "module": "layers.10.mixer",
+      "heads": 216,
+      "key_dim": 32,
+      "value_dim": 32,
+      "elements": 221184
+    }
+  ]
+}

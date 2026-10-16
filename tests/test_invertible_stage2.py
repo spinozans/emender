@@ -1,5 +1,6 @@
 """Source-named CPU tests for released-pair Stage-2 protocol plumbing."""
 import copy
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -190,3 +191,44 @@ def test_amendment2_fresh_training_batches_reproducible_not_pool_sampling(driver
     assert not np.array_equal(first[0], second[0])
     archived = {tuple(row) for row in frozen_pools(0, drivers)["train"][0]}
     assert any(tuple(row) not in archived for row in first[0])
+
+
+def test_amendment2_pruning_retains_required_hashes_and_records_removals(tmp_path, monkeypatch):
+    import json
+    from collections import namedtuple
+    from experiments.expressivity_tasks import run_invertible_stage2 as runner
+    run = tmp_path / 'headline_e97_seed0'
+    run.mkdir()
+    other = tmp_path / 'headline_gdn2_seed0'
+    other.mkdir()
+    (other / 'selection_frozen.json').write_text(json.dumps({'stop_step': 10750}))
+    checkpoints = {}
+    for step in [0, 250, 1000, 4000, 10000, 10750, 11000]:
+        path = run / f'step_{step:06d}.pt'
+        path.write_bytes(str(step).encode())
+        checkpoints[str(step)] = {'path': str(path), 'sha256': runner.digest(path)}
+    usage = namedtuple('Usage', 'total used free')
+    monkeypatch.setattr(runner.shutil, 'disk_usage', lambda _: usage(1000, 900, 100))
+    runner.prune_checkpoints(run, checkpoints, {0}, 11000)
+    assert not (run / 'step_000250.pt').exists()
+    assert all(Path(cp['path']).exists() for key, cp in checkpoints.items() if key != '250')
+    receipt = json.loads((run / 'pruning.jsonl').read_text())
+    assert receipt['pruned_steps'] == [250]
+    assert receipt['known_stop_steps'] == [10750]
+    assert set(receipt['retained_hashes']) == set(checkpoints) - {'250'}
+
+
+def test_amendment2_report_keeps_registration_and_missing_results_fail_closed(tmp_path):
+    import json
+    from experiments.expressivity_tasks.aggregate_invertible_stage2 import build
+    amendment = {'amendment': 2, 'plateau': 'JOINT-STAGNATION-RULE',
+                 'contingency': 'X2 trigger SUPERSEDED'}
+    (tmp_path / 'contract.json').write_text('{}')
+    (tmp_path / 'amendment2.json').write_text(json.dumps(amendment))
+    report = tmp_path / 'X2b-report.md'
+    assert not build(tmp_path, report)
+    text = report.read_text()
+    assert 'X2b' in text and 'JOINT-STAGNATION-RULE' in text
+    assert 'X2 trigger SUPERSEDED' in text
+    assert 'Fresh procedural training batch32' in text
+    assert 'Incomplete/fail-closed' in text
