@@ -93,6 +93,12 @@ def build(root, report):
             raise RuntimeError("common LR was not selected by E97 gate")
         if len(trials) == 2 and trials[0]["e97"]["gate"]["passed"]:
             raise RuntimeError("unauthorized escalation after passing gate")
+        if decision["status"] == "failed_both_rates":
+            if len(trials) != 2 or passes or decision["lr"] is not None:
+                raise RuntimeError("invalid failed-both-rates decision")
+        elif decision["status"] != "passed":
+            raise RuntimeError("unknown LR decision status")
+    gate_failed = bool(decision and decision["status"] == "failed_both_rates")
     runs, audits = {}, {}
     for name in ARMS:
         run = root / name
@@ -100,6 +106,10 @@ def build(root, report):
             runs[name] = {"status": "awaiting_cross_stop_panels"}
             continue
         result = read_result(root, name)
+        if gate_failed and result["status"] == "not_completed":
+            if run.exists() or (root / "receipts" / name).exists():
+                raise RuntimeError("a full run was launched despite failed gate")
+            result = {"status": "not_launched_gate_failed", "reason": "no authorized common LR"}
         if result["status"] == "complete":
             if not decision or decision["status"] != "passed":
                 raise RuntimeError("full run without passing gate")
@@ -127,16 +137,27 @@ def build(root, report):
         write_json(root / "receipts/final_audit.json", {"status": "passed", "audited_at": now(), "runs": audits,
                    "pilot_trials_replayed": True, "common_lr_gate_replayed": True,
                    "all_ten_exit_codes_zero": True, "all_frozen_pools_identical_to_X2b": True})
-    status = "complete" if complete else ("gate_failed_no_full_runs" if decision and decision["status"] == "failed_both_rates" else "incomplete_fail_closed")
+    if gate_failed:
+        if any(r["status"] != "not_launched_gate_failed" for r in runs.values()):
+            raise RuntimeError("full-run artifacts exist after failed gate")
+        write_json(root / "receipts/final_audit.json", {"status": "passed", "audited_at": now(),
+                   "pilot_trials_replayed": True, "common_lr_gate_replayed": True,
+                   "all_four_pilot_exit_codes_zero": True, "all_frozen_pools_identical_to_X2b": True,
+                   "full_runs_launched": 0, "reason": "both registered E97 LR gates failed; stop per supervisor ruling"})
+    status = "complete" if complete else ("gate_failed_no_full_runs" if gate_failed else "incomplete_fail_closed")
     summary = {"status": status, "amendment3": amendment, "lr_decision": decision, "pilot_trials": trials,
                "suffix_floor": FLOOR, "runs": runs, "aggregate": aggregates, "paired_e97_minus_gdn2": contrasts,
                "uncertainty": "three training seeds; sample SD and SEM, not token-binomial independent-observation errors"}
     write_json(root / "results_summary.json", summary)
     text = ["# X2c — fresh both-arm fine-tunes at an E97-gated common LR", "",
             f"Status: **{status}**. Exact suffix floor **{number(FLOOR)}** (printed rounded: **0.0269%**, 1/3721).", "",
+            ("Neither registered LR rescued E97 by the approved gate. No gated LR exists: the seven full runs and three one-step diagnostics were NOT launched. Three-seed means, steps-to-plateau, x4/x8 and ablation effects are unavailable, not zero or imputed. Stopping after both gates fail is the binding supervisor ruling."
+             if gate_failed else "Primary comparison is pending unless all ten full-run receipts pass audit."), "",
             "## Amendment #3 registration", "", "```json", json.dumps(amendment, indent=2), "```", "",
             "## Fairness rule (verbatim)", "", FAIRNESS, "",
-            amendment["x2b_status"], "", "## Pilot stall/rescue evidence", "",
+            amendment["x2b_status"], "",
+            ("That is the registration's intended primary-comparison designation, not a claim of completed replacement evidence: the gate failed, so no gated-LR primary comparison exists and no X2b measurement has been replaced."
+             if gate_failed else "X2b remains the archived 5e-5 sensitivity point."), "", "## Pilot stall/rescue evidence", "",
             "Gate preregistered before launch: 3000 fresh updates, trailing2000 first250/final250 means, >1% improvement AND negative OLS slope. Both arms use fresh released weights/cleared AdamW states for every attempt. No test-pool selection.", "",
             "| Pilot | LR | First250 loss | Final250 loss | Improvement | OLS nats/update | Gate | Floor |",
             "|---|---:|---:|---:|---:|---:|---|---:|"]
@@ -162,6 +183,9 @@ def build(root, report):
         cells = [f"{number(a[k]['mean'])} ± {number(a[k]['sample_sd'])}" for k in ("best_validation", "test_1x", "test_4x", "test_8x")]
         s = a["steps_to_plateau"]
         text.append(f"| {arm} | {cells[0]} | {s['mean']:.1f} ± {s['sample_sd']:.1f} | {' | '.join(cells[1:])} | {number(FLOOR)} |")
+    if gate_failed:
+        for arm in ("e97", "gdn2"):
+            text.append(f"| {arm} | unavailable: gate failed | unavailable | unavailable | unavailable | unavailable | {number(FLOOR)} |")
     text += ["", "## Coordinates and cost", "",
              "| Run | x1x | y1x | Terminal1x | Parameters | Matrix state elements | Real train tokens | Tokens/s | Wall seconds | Floor |",
              "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|"]
@@ -183,8 +207,12 @@ def build(root, report):
             cells = [number(row["panels"][f"test_{x}x"]["accuracy"]) for x in (1, 4, 8)] if row["status"] == "evaluated" else [f"unavailable: {row['reason']}"] * 3
             text.append(f"| {name} | {s} | {' | '.join(cells)} | {number(FLOOR)} |")
     text += ["", "## Interpretation and receipts", "",
+             ("The observed pilot loss slopes are negative but the required >1% window movement is absent at both registered LRs. This is a failed rescue gate, not a seven-run architecture comparison, arithmetic diagnostic, extrapolation result, or impossibility claim. The requested full comparison remains unperformed; any further training requires a new operator decision."
+              if gate_failed else "No architecture conclusion is claimed from an incomplete experiment."), "",
              "This comparison tests learning efficiency of this released pair under one common LR, not universal representability or CMA causality. A one-step arithmetic failure blocks a depth-specific interpretation; a single-seed tanh-removal contrast is exploratory. Near-floor results are not learned map computation. All seeds and incomplete/failing arms remain visible.", "",
-             "Receipts bind source checkpoint/args/runner hashes, exact commands, leased GPU UUID/index snapshots, logs, fresh optimizer declaration, exit codes, frozen pool hashes, loss-window replay, selected/matched/cross-stop checkpoint hashes and metric counts. Binary checkpoints are local ignored artifacts, identified by hashes, not git payloads. See receipts/cpu_tests.txt, receipts/environment.txt, receipts/final_audit.json. Independent acceptance review remains required.", "",
+             ("Pilot receipts bind source checkpoint/args/runner hashes, exact commands, leased GPU UUID/index snapshots, training/validation logs, fresh optimizer declaration, exit0 for all four pilots, unchanged frozen-pool hashes, replayed gate windows/slopes and final checkpoint hashes. No full-run selected/test/matched/cross-stop measurements exist."
+              if gate_failed else "Receipts bind source checkpoint/args/runner hashes, exact commands, leased GPU UUID/index snapshots, logs, optimizer declaration, exit codes, frozen pool hashes, loss-window replay, selected/matched/cross-stop checkpoint hashes and metric counts."), "",
+             "Binary checkpoints are local ignored artifacts, identified by hashes, not git payloads. See receipts/cpu_tests.txt, receipts/environment.txt, receipts/validation_commands.txt and receipts/final_audit.json. Independent acceptance review remains required.", "",
              "X2 and X2b evidence is preserved. Local lambda01, exclusive scripts/gpu_lease.sh leases; no Slurm or WorksGood service. Resilient DiLoCo gap-matrix IDs: not applicable (no resilient behavior changed).", ""]
     report.write_text("\n".join(text) + "\n")
     return status in ("complete", "gate_failed_no_full_runs")

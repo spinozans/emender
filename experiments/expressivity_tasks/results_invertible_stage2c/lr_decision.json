@@ -1,0 +1,260 @@
+{
+  "decided_at": "2026-10-16T18:30:03.291305+00:00",
+  "status": "failed_both_rates",
+  "lr": null,
+  "fairness_rule": "whichever lr rescues E97 is the lr BOTH arms run; no per-arm tuning; if 1e-3 is needed to move E97, GDN2 runs 1e-3 too.",
+  "trials": [
+    {
+      "e97": {
+        "name": "pilot_2e-4_e97_seed0",
+        "lr": 0.0002,
+        "gate": {
+          "passed": false,
+          "first250_mean": 8.2153642578125,
+          "final250_mean": 8.203115364074707,
+          "relative_improvement": 0.001490973906135016,
+          "ols_slope_nats_per_update": -6.395560714538451e-06,
+          "window_start_update": 1001,
+          "window_end_update": 3000
+        },
+        "data_receipt": {
+          "sha256": "93146340c49620188803292d5df1416f2f5bbf6a9bb64f895d4ce4f101b677a7",
+          "seed": 0,
+          "pools": {
+            "train": {
+              "shape": [
+                128,
+                130
+              ],
+              "input_sha256": "f47e08c37df6f71b62d5b76dd0f352e00df95fcf82e71d0b5d7e9dc8ccd1f3ad"
+            },
+            "val": {
+              "shape": [
+                512,
+                130
+              ],
+              "input_sha256": "3a96282a28ead06cfc3e77818368b4a7d2e368d1ffe543a41f35f143216ae2a9"
+            },
+            "test_1x": {
+              "shape": [
+                512,
+                130
+              ],
+              "input_sha256": "acabe2cea91c288e54cbe67b4ec8a15bf32fd05c0147905e291fa031ba11fb94"
+            },
+            "test_4x": {
+              "shape": [
+                512,
+                514
+              ],
+              "input_sha256": "40e0eb958cf63b07e05d92c97732eae8ae05e6832b7f327e3a124a130dd74943"
+            },
+            "test_8x": {
+              "shape": [
+                512,
+                1026
+              ],
+              "input_sha256": "961e353b6cae1269364cc943545a8cf869b3ff8a320a2142cd0be0cd7de06347"
+            }
+          }
+        },
+        "training_sha256": "a8bf7361b421276a242917ee168e86a58715a406e85387660b586d6c8fb2c864",
+        "pilot_result_sha256": "79dad2cc8d80aa1d888e45cf40cea049a3778c95cd63433c4d058350c0e2c03d",
+        "checkpoint": {
+          "path": "/home/erikg/emender/experiments/expressivity_tasks/results_invertible_stage2c/pilot_2e-4_e97_seed0/step_003000.pt",
+          "sha256": "571cc73e5e3726753a9f74ed703387ae269eafbe5d2cd0bb786a214df2d48962",
+          "step": 3000,
+          "bytes": 2573235001
+        }
+      },
+      "gdn2": {
+        "name": "pilot_2e-4_gdn2_seed0",
+        "lr": 0.0002,
+        "gate": {
+          "passed": false,
+          "first250_mean": 8.229950958251953,
+          "final250_mean": 8.220161853790284,
+          "relative_improvement": 0.0011894486991874313,
+          "ols_slope_nats_per_update": -5.2645366974513125e-06,
+          "window_start_update": 1001,
+          "window_end_update": 3000
+        },
+        "data_receipt": {
+          "sha256": "93146340c49620188803292d5df1416f2f5bbf6a9bb64f895d4ce4f101b677a7",
+          "seed": 0,
+          "pools": {
+            "train": {
+              "shape": [
+                128,
+                130
+              ],
+              "input_sha256": "f47e08c37df6f71b62d5b76dd0f352e00df95fcf82e71d0b5d7e9dc8ccd1f3ad"
+            },
+            "val": {
+              "shape": [
+                512,
+                130
+              ],
+              "input_sha256": "3a96282a28ead06cfc3e77818368b4a7d2e368d1ffe543a41f35f143216ae2a9"
+            },
+            "test_1x": {
+              "shape": [
+                512,
+                130
+              ],
+              "input_sha256": "acabe2cea91c288e54cbe67b4ec8a15bf32fd05c0147905e291fa031ba11fb94"
+            },
+            "test_4x": {
+              "shape": [
+                512,
+                514
+              ],
+              "input_sha256": "40e0eb958cf63b07e05d92c97732eae8ae05e6832b7f327e3a124a130dd74943"
+            },
+            "test_8x": {
+              "shape": [
+                512,
+                1026
+              ],
+              "input_sha256": "961e353b6cae1269364cc943545a8cf869b3ff8a320a2142cd0be0cd7de06347"
+            }
+          }
+        },
+        "training_sha256": "7a4cca26fbbb95ae1cb07fa1340a2eeaf5cfaae402f509188310e85c8716cf5e",
+        "pilot_result_sha256": "88a8c6a4e4034fc8d136ea1f0f1769dcdc9f7005fc480e68561eb1513104ac67",
+        "checkpoint": {
+          "path": "/home/erikg/emender/experiments/expressivity_tasks/results_invertible_stage2c/pilot_2e-4_gdn2_seed0/step_003000.pt",
+          "sha256": "3bd6886608d660d9399ad0b260efd119b864dd0fd012449d037c51b231efa002",
+          "step": 3000,
+          "bytes": 2573532331
+        }
+      }
+    },
+    {
+      "e97": {
+        "name": "pilot_1e-3_e97_seed0",
+        "lr": 0.001,
+        "gate": {
+          "passed": false,
+          "first250_mean": 8.238054298400879,
+          "final250_mean": 8.231817073822022,
+          "relative_improvement": 0.0007571235091358973,
+          "ols_slope_nats_per_update": -3.3295951135953712e-06,
+          "window_start_update": 1001,
+          "window_end_update": 3000
+        },
+        "data_receipt": {
+          "sha256": "93146340c49620188803292d5df1416f2f5bbf6a9bb64f895d4ce4f101b677a7",
+          "seed": 0,
+          "pools": {
+            "train": {
+              "shape": [
+                128,
+                130
+              ],
+              "input_sha256": "f47e08c37df6f71b62d5b76dd0f352e00df95fcf82e71d0b5d7e9dc8ccd1f3ad"
+            },
+            "val": {
+              "shape": [
+                512,
+                130
+              ],
+              "input_sha256": "3a96282a28ead06cfc3e77818368b4a7d2e368d1ffe543a41f35f143216ae2a9"
+            },
+            "test_1x": {
+              "shape": [
+                512,
+                130
+              ],
+              "input_sha256": "acabe2cea91c288e54cbe67b4ec8a15bf32fd05c0147905e291fa031ba11fb94"
+            },
+            "test_4x": {
+              "shape": [
+                512,
+                514
+              ],
+              "input_sha256": "40e0eb958cf63b07e05d92c97732eae8ae05e6832b7f327e3a124a130dd74943"
+            },
+            "test_8x": {
+              "shape": [
+                512,
+                1026
+              ],
+              "input_sha256": "961e353b6cae1269364cc943545a8cf869b3ff8a320a2142cd0be0cd7de06347"
+            }
+          }
+        },
+        "training_sha256": "88321e49aff1dfdc8ca299cf2b6b75f6190e24faeb9db5bfdb728cdb3d3d06f7",
+        "pilot_result_sha256": "386d4a7edb5f8090a655bed1b36e7563baf2e8663d1cb55e2820c55468905b02",
+        "checkpoint": {
+          "path": "/home/erikg/emender/experiments/expressivity_tasks/results_invertible_stage2c/pilot_1e-3_e97_seed0/step_003000.pt",
+          "sha256": "15116c42a846de4dcdd11f79ee03b49a1a4ad73b817f7689c23382e19a8ad8ee",
+          "step": 3000,
+          "bytes": 2573235001
+        }
+      },
+      "gdn2": {
+        "name": "pilot_1e-3_gdn2_seed0",
+        "lr": 0.001,
+        "gate": {
+          "passed": false,
+          "first250_mean": 8.285579166412354,
+          "final250_mean": 8.258979866027833,
+          "relative_improvement": 0.003210312743416729,
+          "ols_slope_nats_per_update": -1.626006655834092e-05,
+          "window_start_update": 1001,
+          "window_end_update": 3000
+        },
+        "data_receipt": {
+          "sha256": "93146340c49620188803292d5df1416f2f5bbf6a9bb64f895d4ce4f101b677a7",
+          "seed": 0,
+          "pools": {
+            "train": {
+              "shape": [
+                128,
+                130
+              ],
+              "input_sha256": "f47e08c37df6f71b62d5b76dd0f352e00df95fcf82e71d0b5d7e9dc8ccd1f3ad"
+            },
+            "val": {
+              "shape": [
+                512,
+                130
+              ],
+              "input_sha256": "3a96282a28ead06cfc3e77818368b4a7d2e368d1ffe543a41f35f143216ae2a9"
+            },
+            "test_1x": {
+              "shape": [
+                512,
+                130
+              ],
+              "input_sha256": "acabe2cea91c288e54cbe67b4ec8a15bf32fd05c0147905e291fa031ba11fb94"
+            },
+            "test_4x": {
+              "shape": [
+                512,
+                514
+              ],
+              "input_sha256": "40e0eb958cf63b07e05d92c97732eae8ae05e6832b7f327e3a124a130dd74943"
+            },
+            "test_8x": {
+              "shape": [
+                512,
+                1026
+              ],
+              "input_sha256": "961e353b6cae1269364cc943545a8cf869b3ff8a320a2142cd0be0cd7de06347"
+            }
+          }
+        },
+        "training_sha256": "889406f3fa5b17b201f41db0ebd122d6ee621fb258de01a260d3c842fc8fe7e6",
+        "pilot_result_sha256": "0ccf70ed65089429f2e384e38d742eb7b1495a5fe07254036d065d7f485f2924",
+        "checkpoint": {
+          "path": "/home/erikg/emender/experiments/expressivity_tasks/results_invertible_stage2c/pilot_1e-3_gdn2_seed0/step_003000.pt",
+          "sha256": "61cbe3a19533c1ea30883ac5684a17075de9819a64679ec25ec2b3bfea68cd0b",
+          "step": 3000,
+          "bytes": 2573532331
+        }
+      }
+    }
+  ]
+}

@@ -99,6 +99,37 @@ def test_stage2c_gate_fails_closed_when_both_rates_stall(tmp_path, monkeypatch):
     assert d["status"] == "failed_both_rates" and d["lr"] is None and len(d["trials"]) == 2
 
 
+def test_stage2c_failed_gate_report_never_imputes_full_results(tmp_path, monkeypatch):
+    import json
+    from experiments.expressivity_tasks import aggregate_invertible_stage2c as reporting
+    from experiments.expressivity_tasks.invertible_stage2c import FAIRNESS
+    (tmp_path / "amendment3.json").write_text(json.dumps({"x2b_status": "X2b retained at5e-5"}))
+
+    def audit(root, arm, tag, lr):
+        return {"lr": lr, "gate": {"passed": False, "first250_mean": 8.3, "final250_mean": 8.29,
+                                 "relative_improvement": .001, "ols_slope_nats_per_update": -1e-6},
+                "name": f"pilot_{tag}_{arm}_seed0", "data_receipt": {"same": True}}
+
+    trials = [{a: audit(tmp_path, a, t, lr) for a in ("e97", "gdn2")}
+              for t, lr in [("2e-4", 2e-4), ("1e-3", 1e-3)]]
+    for tag in ["2e-4", "1e-3"]:
+        (tmp_path / f"pilot_gate_{tag}.json").write_text("{}")
+    (tmp_path / "lr_decision.json").write_text(json.dumps({
+        "status": "failed_both_rates", "lr": None, "trials": trials, "decided_at": "timestamp"}))
+    monkeypatch.setattr(reporting, "audit_pilot", audit)
+    report = tmp_path / "X2c-report.md"
+    assert reporting.build(tmp_path, report)
+    result = json.loads((tmp_path / "results_summary.json").read_text())
+    assert result["status"] == "gate_failed_no_full_runs" and result["aggregate"] == {}
+    assert len(result["runs"]) == 10
+    assert all(r["status"] == "not_launched_gate_failed" for r in result["runs"].values())
+    assert FAIRNESS in report.read_text() and "0.0269%" in report.read_text()
+    assert "NOT launched" in report.read_text()
+    (tmp_path / "headline_e97_seed0").mkdir()
+    with pytest.raises(RuntimeError, match="launched despite failed gate"):
+        reporting.build(tmp_path, report)
+
+
 @pytest.mark.parametrize("losses", [[1.] * 2999, [1.] * 3001, [float("nan")] * 3000, [0.] * 3000])
 def test_stage2c_pilot_gate_fails_closed_on_invalid_losses(losses):
     with pytest.raises(ValueError):

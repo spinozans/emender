@@ -61,6 +61,11 @@ def audit_pilot(root, arm, tag, lr):
     prior = root.with_name("results_invertible_stage2b") / f"headline_{arm}_seed0"
     if data != json.loads((prior / "data_receipt.json").read_text()):
         raise RuntimeError(f"pilot pools differ from X2b: {run}")
+    prior_config = json.loads((prior / "config.json").read_text())
+    for key in ("source_checkpoint_sha256", "source_args_sha256", "trainable_parameters", "recurrent_states",
+                "padding", "emission", "batch", "betas", "weight_decay", "grad_clip", "warmup", "dtype"):
+        if config[key] != prior_config[key]:
+            raise RuntimeError(f"pilot recipe differs from X2b: {run}/{key}")
     if config["source_sha256"] != digest(root / "receipts/runner_at_launch.py"):
         raise RuntimeError(f"pilot execution source mismatch: {run}")
     exit_receipt = (root / "receipts" / run.name / "exit.txt").read_text()

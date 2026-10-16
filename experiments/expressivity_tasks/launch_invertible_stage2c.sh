@@ -24,7 +24,7 @@ case "${1:?choose pilot, full, or worker}" in
     nvidia-smi --query-gpu=index,uuid,memory.used,memory.total,utilization.gpu --format=csv > "$receipt/gpu_before.txt"
     cmd=("$PYTHON_BIN" -m experiments.expressivity_tasks.run_invertible_stage2 --arm "$arm" --seed "$seed" --drivers "$drivers" --out "$OUT/$name" --lr "$lr" --protocol-amendment 3)
     if [[ "$mode" == pilot ]]; then cmd+=(--pilot); fi
-    printf '%q ' "${cmd[@]}" > "$receipt/command.txt"; printf '\n' >> "$receipt/command.txt"
+    { printf '%q' "${cmd[0]}"; printf ' %q' "${cmd[@]:1}"; printf '\n'; } > "$receipt/command.txt"
     set +e
     OMP_NUM_THREADS=2 MKL_NUM_THREADS=2 "${cmd[@]}" > "$receipt/console.txt" 2>&1
     rc=$?

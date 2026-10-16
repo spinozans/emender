@@ -1,6 +1,8 @@
 # X2c — fresh both-arm fine-tunes at an E97-gated common LR
 
-Status: **incomplete_fail_closed**. Exact suffix floor **0.026874%** (printed rounded: **0.0269%**, 1/3721).
+Status: **gate_failed_no_full_runs**. Exact suffix floor **0.026874%** (printed rounded: **0.0269%**, 1/3721).
+
+Neither registered LR rescued E97 by the approved gate. No gated LR exists: the seven full runs and three one-step diagnostics were NOT launched. Three-seed means, steps-to-plateau, x4/x8 and ablation effects are unavailable, not zero or imputed. Stopping after both gates fail is the binding supervisor ruling.
 
 ## Amendment #3 registration
 
@@ -33,14 +35,20 @@ whichever lr rescues E97 is the lr BOTH arms run; no per-arm tuning; if 1e-3 is 
 
 X2b's 5e-5 results are retained as the lr-sensitivity data point, superseded as the primary comparison by the gated-lr runs. Active X2b GDN2 runs finish naturally and are archived, never cancelled or modified by X2c.
 
+That is the registration's intended primary-comparison designation, not a claim of completed replacement evidence: the gate failed, so no gated-LR primary comparison exists and no X2b measurement has been replaced.
+
 ## Pilot stall/rescue evidence
 
 Gate preregistered before launch: 3000 fresh updates, trailing2000 first250/final250 means, >1% improvement AND negative OLS slope. Both arms use fresh released weights/cleared AdamW states for every attempt. No test-pool selection.
 
 | Pilot | LR | First250 loss | Final250 loss | Improvement | OLS nats/update | Gate | Floor |
 |---|---:|---:|---:|---:|---:|---|---:|
+| pilot_2e-4_e97_seed0 | 0.0002 | 8.215364 | 8.203115 | 0.1491% | -6.39556071e-06 | False | 0.026874% |
+| pilot_2e-4_gdn2_seed0 | 0.0002 | 8.229951 | 8.220162 | 0.1189% | -5.2645367e-06 | False | 0.026874% |
+| pilot_1e-3_e97_seed0 | 0.001 | 8.238054 | 8.231817 | 0.0757% | -3.32959511e-06 | False | 0.026874% |
+| pilot_1e-3_gdn2_seed0 | 0.001 | 8.285579 | 8.258980 | 0.3210% | -1.62600666e-05 | False | 0.026874% |
 
-Common LR decision: `pending`; decision timestamp: `pending`.
+Common LR decision: `None`; decision timestamp: `2026-10-16T18:30:03.291305+00:00`.
 
 ## Honest per-seed comparison
 
@@ -48,21 +56,23 @@ Full-vocabulary argmax exact joint class `61*x+y`; invalid classes are wrong. Be
 
 | Run | Best val | Selected update | Stop update/reason | Test1x | Test4x | Test8x | Floor |
 |---|---:|---:|---|---:|---:|---:|---:|
-| headline_e97_seed0 | not_completed | — | — | — | — | — | 0.026874% |
-| headline_e97_seed1 | not_completed | — | — | — | — | — | 0.026874% |
-| headline_e97_seed2 | not_completed | — | — | — | — | — | 0.026874% |
-| headline_gdn2_seed0 | not_completed | — | — | — | — | — | 0.026874% |
-| headline_gdn2_seed1 | not_completed | — | — | — | — | — | 0.026874% |
-| headline_gdn2_seed2 | not_completed | — | — | — | — | — | 0.026874% |
-| headline_e97_identity_seed0 | not_completed | — | — | — | — | — | 0.026874% |
-| calibration_e97_seed0 | not_completed | — | — | — | — | — | 0.026874% |
-| calibration_gdn2_seed0 | not_completed | — | — | — | — | — | 0.026874% |
-| calibration_e97_identity_seed0 | not_completed | — | — | — | — | — | 0.026874% |
+| headline_e97_seed0 | not_launched_gate_failed | — | — | — | — | — | 0.026874% |
+| headline_e97_seed1 | not_launched_gate_failed | — | — | — | — | — | 0.026874% |
+| headline_e97_seed2 | not_launched_gate_failed | — | — | — | — | — | 0.026874% |
+| headline_gdn2_seed0 | not_launched_gate_failed | — | — | — | — | — | 0.026874% |
+| headline_gdn2_seed1 | not_launched_gate_failed | — | — | — | — | — | 0.026874% |
+| headline_gdn2_seed2 | not_launched_gate_failed | — | — | — | — | — | 0.026874% |
+| headline_e97_identity_seed0 | not_launched_gate_failed | — | — | — | — | — | 0.026874% |
+| calibration_e97_seed0 | not_launched_gate_failed | — | — | — | — | — | 0.026874% |
+| calibration_gdn2_seed0 | not_launched_gate_failed | — | — | — | — | — | 0.026874% |
+| calibration_e97_identity_seed0 | not_launched_gate_failed | — | — | — | — | — | 0.026874% |
 
 ## Three-seed means ± sample SD (SEM in JSON)
 
 | Arm | Best val | Steps to plateau/cap | Test1x | Test4x | Test8x | Floor |
 |---|---:|---:|---:|---:|---:|---:|
+| e97 | unavailable: gate failed | unavailable | unavailable | unavailable | unavailable | 0.026874% |
+| gdn2 | unavailable: gate failed | unavailable | unavailable | unavailable | unavailable | 0.026874% |
 
 ## Coordinates and cost
 
@@ -80,9 +90,13 @@ No extra training beyond stop; pruned-before-required cells are unavailable, nev
 
 ## Interpretation and receipts
 
+The observed pilot loss slopes are negative but the required >1% window movement is absent at both registered LRs. This is a failed rescue gate, not a seven-run architecture comparison, arithmetic diagnostic, extrapolation result, or impossibility claim. The requested full comparison remains unperformed; any further training requires a new operator decision.
+
 This comparison tests learning efficiency of this released pair under one common LR, not universal representability or CMA causality. A one-step arithmetic failure blocks a depth-specific interpretation; a single-seed tanh-removal contrast is exploratory. Near-floor results are not learned map computation. All seeds and incomplete/failing arms remain visible.
 
-Receipts bind source checkpoint/args/runner hashes, exact commands, leased GPU UUID/index snapshots, logs, fresh optimizer declaration, exit codes, frozen pool hashes, loss-window replay, selected/matched/cross-stop checkpoint hashes and metric counts. Binary checkpoints are local ignored artifacts, identified by hashes, not git payloads. See receipts/cpu_tests.txt, receipts/environment.txt, receipts/final_audit.json. Independent acceptance review remains required.
+Pilot receipts bind source checkpoint/args/runner hashes, exact commands, leased GPU UUID/index snapshots, training/validation logs, fresh optimizer declaration, exit0 for all four pilots, unchanged frozen-pool hashes, replayed gate windows/slopes and final checkpoint hashes. No full-run selected/test/matched/cross-stop measurements exist.
+
+Binary checkpoints are local ignored artifacts, identified by hashes, not git payloads. See receipts/cpu_tests.txt, receipts/environment.txt, receipts/validation_commands.txt and receipts/final_audit.json. Independent acceptance review remains required.
 
 X2 and X2b evidence is preserved. Local lambda01, exclusive scripts/gpu_lease.sh leases; no Slurm or WorksGood service. Resilient DiLoCo gap-matrix IDs: not applicable (no resilient behavior changed).
 
