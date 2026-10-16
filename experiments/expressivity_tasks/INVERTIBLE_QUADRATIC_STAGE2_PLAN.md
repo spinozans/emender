@@ -1,4 +1,14 @@
-# Stage 2 proposal — NOT LAUNCHED, requires explicit operator approval
+# Stage 2 original proposal — execution amended by the operator
+
+**Execution record (2026-10-16):** operator authorized Stage 2 via
+`/home/erikg/emender-scratch/fix-fanout/taskX2-probes.md`. The binding released-pair,
+emission, optimizer, seed, stopping, and causal-right-padding amendments are
+preregistered in `results_invertible_stage2/contract.json`; see `X2-report.md`
+at repository root for actual status and receipts. The original scratch-model
+proposal below is retained as historical design context, NOT the launched
+geometry or update budget. Released E97/GDN2 fine-tunes replace scratch arms;
+validation every250 updates, 2000-update/0.1pp plateau stopping and60000 cap
+replace the fixed18269-update budget. No scratch learned pilots are launched.
 
 This is a designed experiment, not authorization to run it. Stage 1 performed
 no training, GPU inspection, GPU allocation, or scheduler submission. The

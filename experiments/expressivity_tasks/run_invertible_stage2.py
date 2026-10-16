@@ -191,9 +191,17 @@ def run(args):
     if args.arm == "e97_identity":
         config["identity_layers"] = remove_state_tanh(model)
     config["trainable_parameters"] = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    config["recurrent_states"] = [{"module": n, "elements": m.n_heads * m.n_state * m.head_v_dim}
-                                   for n, m in model.named_modules()
-                                   if hasattr(m, "n_state") and hasattr(m, "head_v_dim") and hasattr(m, "n_heads")]
+    config["recurrent_states"] = []
+    for name, layer in model.named_modules():
+        if all(hasattr(layer, k) for k in ("n_heads", "n_state", "head_v_dim")):
+            config["recurrent_states"].append({"module": name, "heads": layer.n_heads,
+                "key_dim": layer.n_state, "value_dim": layer.head_v_dim,
+                "elements": layer.n_heads * layer.n_state * layer.head_v_dim})
+        elif all(hasattr(layer, k) for k in ("num_v_heads", "head_k_dim", "head_v_dim")):
+            config["recurrent_states"].append({"module": name, "heads": layer.num_v_heads,
+                "key_dim": layer.head_k_dim, "value_dim": layer.head_v_dim,
+                "elements": layer.num_v_heads * layer.head_k_dim * layer.head_v_dim,
+                "allow_neg_eigval": layer.allow_neg_eigval})
     write_json(out / "config.json", config)
     opt = torch.optim.AdamW(model.parameters(), lr=5e-5, betas=(0.9, 0.95), weight_decay=0.01)
     rng = np.random.default_rng(args.seed)

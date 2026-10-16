@@ -133,3 +133,23 @@ def test_training_masked_padding_equals_sliced_loss_and_gradients():
     assert not logits.grad[:, :2].any()
     assert logits.grad[:, 2].any()
     assert any(p.grad is not None and p.grad.abs().sum() > 0 for p in model.parameters())
+
+
+def test_report_missing_arms_is_explicit_and_fail_closed(tmp_path):
+    from experiments.expressivity_tasks.aggregate_invertible_stage2 import ARMS, build
+    import json
+    (tmp_path / 'contract.json').write_text('{}')
+    report = tmp_path / 'report.md'
+    assert not build(tmp_path, report)
+    summary = json.loads((tmp_path / 'results_summary.json').read_text())
+    assert summary['status'] == 'incomplete_fail_closed'
+    assert len(summary['runs']) == len(ARMS) == 10
+    assert all(r['status'] == 'not_completed' for r in summary['runs'].values())
+    assert 'support no architecture' in report.read_text()
+
+
+def test_aggregate_reports_all_three_seed_uncertainty():
+    from experiments.expressivity_tasks.aggregate_invertible_stage2 import aggregate
+    a = aggregate([1., 2., 3.])
+    assert a['n_seeds'] == 3 and a['mean'] == 2. and a['sample_sd'] == 1.
+    assert a['sem'] == pytest.approx(1 / 3**0.5)

@@ -13,8 +13,7 @@ run_arm() (
     eval "$(bash scripts/gpu_lease.sh acquire 1 --no-wait)"
     printf '%s\n' "host=$(hostname)" "pid=$$" "gpu=$CUDA_VISIBLE_DEVICES" "start=$(date -Is)" > "$receipt/lease.txt"
     nvidia-smi --query-gpu=index,uuid,memory.used,memory.total,utilization.gpu --format=csv > "$receipt/gpu_before.txt"
-    printf '%q ' "$PYTHON_BIN" -m experiments.expressivity_tasks.run_invertible_stage2 --arm "$arm" --seed "$seed" --drivers "$drivers" --out "$OUT/$name" > "$receipt/command.txt"
-    printf '\n' >> "$receipt/command.txt"
+    { printf '%q' "$PYTHON_BIN"; printf ' %q' -m experiments.expressivity_tasks.run_invertible_stage2 --arm "$arm" --seed "$seed" --drivers "$drivers" --out "$OUT/$name"; printf '\n'; } > "$receipt/command.txt"
     set +e
     OMP_NUM_THREADS=2 MKL_NUM_THREADS=2 "$PYTHON_BIN" -m experiments.expressivity_tasks.run_invertible_stage2 \
         --arm "$arm" --seed "$seed" --drivers "$drivers" --out "$OUT/$name" > "$receipt/console.txt" 2>&1
