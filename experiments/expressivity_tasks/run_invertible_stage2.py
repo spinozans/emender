@@ -25,6 +25,12 @@ if str(ROOT) not in sys.path:
 from experiments.expressivity_tasks.tasks.invertible_quadratic import InvertibleQuadraticTask
 
 FLOOR = 1 / 61**2
+MARGINAL_OPTIMAL_LOSS = math.log(61**2)
+MARGINAL_REFERENCE = {
+    "name": "marginal-optimal loss ln(3721)",
+    "nats": MARGINAL_OPTIMAL_LOSS,
+    "display": f"marginal-optimal loss ln(3721) = {MARGINAL_OPTIMAL_LOSS:.6f} nats",
+}
 MATCHED_STEPS = {1000, 4000, 8000, 12000, 16000, 18269, *range(10000, 60001, 10000)}
 
 
@@ -50,7 +56,7 @@ def selected(candidate, best):
         -best["accuracy"], best["loss"], best["step"])
 
 
-def plateau(history):
+def plateau(history, min_relative_train_loss_improvement=0.01):
     """Amendment #2; legacy histories remain readable, never relabeled."""
     if len(history) < 9:
         return False
@@ -62,7 +68,7 @@ def plateau(history):
     first = history[-1]["train_loss_window_first250"]
     last = history[-1]["train_loss_window_final250"]
     return (history[-1]["step"] >= 10000 and val_stagnant
-            and first is not None and (first - last) / first < 0.01 - 1e-12)
+            and first is not None and (first - last) / first < min_relative_train_loss_improvement - 1e-12)
 
 
 def pilot_gate(losses):
@@ -87,9 +93,9 @@ def fresh_training_batch(task, batch, drivers, training_rng):
     return task.generate_batch(batch, drivers + 2, training_rng)
 
 
-def prune_checkpoints(out, checkpoints, best_steps, step):
+def prune_checkpoints(out, checkpoints, best_steps, step, checkpoint_dir=None):
     """Registered capacity fallback; ledger keeps identities of removed files."""
-    if shutil.disk_usage(out).free >= 400 * 1024**3:
+    if shutil.disk_usage(checkpoint_dir or out).free >= 400 * 1024**3:
         return
     stops = set()
     for frozen in out.parent.glob("*/selection_frozen.json"):
@@ -155,7 +161,8 @@ def finish_metrics(counts, loss_sum):
             "terminal_accuracy": counts["terminal_correct"] / counts["terminal_count"],
             "post_suffix7_accuracy": (counts["post_suffix7_correct"] / counts["post_suffix7_count"]
                                       if counts["post_suffix7_count"] else None),
-            "suffix_floor": FLOOR, "suffix_floor_percent": 100 * FLOOR}
+            "suffix_floor": FLOOR, "suffix_floor_percent": 100 * FLOOR,
+            "marginal_optimal_reference": MARGINAL_REFERENCE}
 
 
 def remove_state_tanh(model):
@@ -215,6 +222,10 @@ def run(args):
     from scripts.expressivity_1p3b import load_model, CHECKPOINTS, lr_at
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=False)
+    checkpoint_dir = Path(args.checkpoint_dir) if args.checkpoint_dir else out
+    if args.checkpoint_dir:
+        checkpoint_dir.mkdir(parents=True, exist_ok=False)
+    train_threshold = 0.001 if args.protocol_amendment == 5 else 0.01
     config = {"arm": args.arm, "seed": args.seed, "drivers": args.drivers,
               "train_sequences": "fresh procedural per batch", "archived_train_sequences": 128, "val_sequences": 512, "test_sequences": 512,
               "optimizer": "AdamW", "betas": [0.9, 0.95], "lr": args.lr,
@@ -224,7 +235,9 @@ def run(args):
               "warmup": 300, "weight_decay": 0.01, "grad_clip": 0.5,
               "batch": 32, "dtype": "bf16", "emission": "full-vocab argmax joint class 61*x+y",
               "eval_every": 250, "plateau_window": 2000, "min_improvement": 0.001,
-              "plateau_eligible_step": 10000, "min_relative_train_loss_improvement": 0.01,
+              "plateau_eligible_step": 10000, "min_relative_train_loss_improvement": train_threshold,
+              "checkpoint_dir": str(checkpoint_dir.resolve()),
+              "marginal_optimal_reference": MARGINAL_REFERENCE,
               "protocol_amendment": args.protocol_amendment, "hard_cap": 3000 if args.pilot else 60000, "suffix_floor": FLOOR,
               "padding": "constant-zero right padding to multiple16, slice all pad logits before loss/scoring; causal real prefixes unchanged; no target leakage",
               "physical_train_tokens_per_sequence": math.ceil((args.drivers + 2) / 16) * 16,
@@ -241,11 +254,20 @@ def run(args):
     write_json(out / "data_receipt.json", {"sha256": digest(data_path), "seed": args.seed,
                "pools": {k: {"shape": list(v[0].shape), "input_sha256": hashlib.sha256(v[0].tobytes()).hexdigest()}
                          for k, v in pools.items()}})
+    if args.protocol_amendment == 5:
+        amendment = json.loads((out.parent / "amendment5.json").read_text())
+        expected = amendment["frozen_data_receipts"][str(args.seed)]
+        if json.loads((out / "data_receipt.json").read_text()) != expected:
+            raise RuntimeError("amendment #5 frozen pools differ from X-series registration")
     torch.manual_seed(args.seed)
     model = load_model(model_name, torch.device("cuda"))
     if args.arm == "e97_identity":
         config["identity_layers"] = remove_state_tanh(model)
     config["trainable_parameters"] = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    if args.protocol_amendment == 5:
+        expected_parameters = {"e97": 1286589072, "gdn2": 1286713448}
+        if config["trainable_parameters"] != expected_parameters[args.arm]:
+            raise RuntimeError("amendment #5 released-pair parameter count mismatch")
     config["recurrent_states"] = []
     for name, layer in model.named_modules():
         if all(hasattr(layer, k) for k in ("n_heads", "n_state", "head_v_dim")):
@@ -293,11 +315,12 @@ def run(args):
                 train_seconds += time.time() - t
                 tokens += x.numel()
                 log.write(json.dumps({"step": step, "loss": loss.item(), "grad_norm": norm.item(),
-                                      "elapsed_s": time.time() - start_time, "suffix_floor": FLOOR}) + "\n")
+                                      "elapsed_s": time.time() - start_time, "suffix_floor": FLOOR,
+                                      "marginal_optimal_reference": MARGINAL_REFERENCE}) + "\n")
                 del logits, loss, x, y, m
             if step % 250 and step not in MATCHED_STEPS:
                 continue
-            ckpt = save_checkpoint(model, out / f"step_{step:06d}.pt", step, config)
+            ckpt = save_checkpoint(model, checkpoint_dir / f"step_{step:06d}.pt", step, config)
             checkpoints[str(step)] = ckpt
             write_json(out / "checkpoints.json", checkpoints)
             if step % 250:
@@ -312,9 +335,9 @@ def run(args):
             write_json(out / "validation.json", history)
             write_json(out / "checkpoints.json", checkpoints)
             write_json(out / "selected.json", best)
-            prune_checkpoints(out, checkpoints, best_steps, step)
+            prune_checkpoints(out, checkpoints, best_steps, step, checkpoint_dir)
             print(json.dumps({"arm": args.arm, "seed": args.seed, **history[-1]}), flush=True)
-            if (not args.pilot and plateau(history)) or step == config["hard_cap"]:
+            if (not args.pilot and plateau(history, train_threshold)) or step == config["hard_cap"]:
                 break
         if args.pilot:
             write_json(out / "pilot_result.json", {
@@ -323,7 +346,7 @@ def run(args):
                 "total_training_tokens": tokens, "training_seconds": train_seconds,
                 "checkpoint": ckpt, "best_validation": best, "suffix_floor": FLOOR})
             return
-        reason = "plateau" if plateau(history) else "hard_cap"
+        reason = "plateau" if plateau(history, train_threshold) else "hard_cap"
         selection = {"frozen": True, "step": best["step"], "checkpoint": best["checkpoint"],
                      "stop_step": step, "stop_reason": reason}
         # This receipt is persisted BEFORE any test-set forward pass.
@@ -348,7 +371,8 @@ def run(args):
                    "test": panels, "matched_test": matched, "trainable_parameters": config["trainable_parameters"],
                    "total_training_tokens": tokens, "training_seconds": train_seconds,
                    "training_tokens_per_second": tokens / train_seconds,
-                   "wall_seconds": time.time() - start_time, "suffix_floor": FLOOR}
+                   "wall_seconds": time.time() - start_time, "suffix_floor": FLOOR,
+                   "marginal_optimal_reference": MARGINAL_REFERENCE}
         write_json(out / "result.json", summary)
 
 
@@ -359,13 +383,17 @@ def parse_args(argv=None):
     p.add_argument("--drivers", type=int, choices=[1, 128], required=True)
     p.add_argument("--out", required=True)
     p.add_argument("--lr", type=float, default=5e-5)
-    p.add_argument("--protocol-amendment", type=int, choices=[2, 3], default=2)
+    p.add_argument("--protocol-amendment", type=int, choices=[2, 3, 5], default=2)
+    p.add_argument("--checkpoint-dir", help="Optional off-repo binary storage; receipts retain absolute paths")
     p.add_argument("--pilot", action="store_true")
     args = p.parse_args(argv)
     if not math.isfinite(args.lr) or args.lr <= 0:
         p.error("lr must be positive and finite")
     if args.protocol_amendment == 2 and (args.lr != 5e-5 or args.pilot):
         p.error("LR changes/pilots require amendment #3")
+    if args.protocol_amendment == 5 and (args.lr != 1e-3 or args.pilot or args.drivers != 128
+                                         or args.arm == "e97_identity" or args.seed not in (0, 1, 2)):
+        p.error("amendment #5 requires released pair, seeds0/1/2, matched1e-3, drivers128, no pilots")
     if args.pilot and (args.drivers != 128 or args.seed != 0 or args.arm == "e97_identity"):
         p.error("pilot requires a released arm, seed0, drivers128")
     return args

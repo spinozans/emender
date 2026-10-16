@@ -19,6 +19,8 @@ def read_result(root, name):
         failure = json.loads((run / "failure.json").read_text()) if (run / "failure.json").exists() else None
         return {"status": "failed" if failure else "not_completed", "failure": failure}
     result = json.loads((run / "result.json").read_text())
+    config = json.loads((run / "config.json").read_text())
+    threshold = config.get("min_relative_train_loss_improvement", 0.01)
     history = json.loads((run / "validation.json").read_text())
     best = None
     for i, row in enumerate(history):
@@ -28,11 +30,11 @@ def read_result(root, name):
             best = row
         if row["best_accuracy"] != best["accuracy"]:
             raise RuntimeError(f"inconsistent running best: {name}")
-        if i < len(history) - 1 and plateau(history[:i + 1]):
+        if i < len(history) - 1 and plateau(history[:i + 1], threshold):
             raise RuntimeError(f"arm trained beyond first plateau: {name}")
     if best["step"] != result["step"] or history[-1]["step"] != result["stop_step"]:
         raise RuntimeError(f"selection/stop mismatch: {name}")
-    if result["stop_reason"] == "plateau" and not plateau(history):
+    if result["stop_reason"] == "plateau" and not plateau(history, threshold):
         raise RuntimeError(f"invalid plateau claim: {name}")
     frozen = json.loads((run / "selection_frozen.json").read_text())
     if not frozen["frozen"] or frozen["checkpoint"]["sha256"] != result["checkpoint"]["sha256"]:
@@ -45,8 +47,8 @@ def read_result(root, name):
     data_receipt = json.loads((run / "data_receipt.json").read_text())
     if digest(run / "frozen_pools.npz") != data_receipt["sha256"]:
         raise RuntimeError(f"data hash mismatch: {name}")
-    result["config"] = json.loads((run / "config.json").read_text())
-    if result["config"].get("protocol_amendment") == 2:
+    result["config"] = config
+    if config.get("protocol_amendment") in (2, 3, 5):
         losses = [json.loads(line)["loss"] for line in lines]
         for row in history:
             step = row["step"]

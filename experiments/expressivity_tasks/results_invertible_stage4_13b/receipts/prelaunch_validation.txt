@@ -1,0 +1,9 @@
+Base HEAD:8ea0c761f234e0a4d535bf463d7ef55ddcbda024; initial worktree clean.
+Local lambda01, Python /usr/bin/python3=3.12.3, torch2.9.1+cu128; not Frontier.
+CUDA_VISIBLE_DEVICES='' /usr/bin/python3 -m pytest -q tests/test_invertible_stage4_13b.py tests/test_invertible_stage2.py tests/test_invertible_stage2c.py tests/test_invertible_stage3_8m.py tests/test_aggregate_invertible_stage3_8m.py tests/test_invertible_quadratic.py tests/test_e97_facade.py
+110 passed in67.04s; see cpu_tests.txt.
+/usr/bin/python3 -m experiments.expressivity_tasks.invertible_stage4_13b register
+/usr/bin/python3 -m experiments.expressivity_tasks.invertible_stage4_13b report
+bash -n experiments/expressivity_tasks/launch_invertible_stage4_13b.sh; cmp AGENTS.md CLAUDE.md; git diff --check
+All passed. Report explicitly incomplete before launch; no measurements fabricated.
+Supervisor explicitly approved six concurrent single-GPU exclusive leases, NVMe checkpoint-only split storage, and corrected mathematical marginal reference8.221748 (task-spec shorthand8.224 not equality).
