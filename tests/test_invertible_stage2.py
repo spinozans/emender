@@ -91,3 +91,45 @@ def test_identity_ablation_changes_only_activation_attributes():
         torch.testing.assert_close(value, weights[key], rtol=0, atol=0)
     with pytest.raises(RuntimeError):
         remove_state_tanh(layer)
+
+
+@pytest.mark.parametrize("real_length", [3, 130])
+def test_right_padding_preserves_e97_real_logits_and_loss(real_length):
+    from ndm.models import LadderLM
+    from experiments.expressivity_tasks.run_invertible_stage2 import padded_forward
+    torch.manual_seed(41)
+    model = LadderLM(vocab_size=64, dim=16, depth=1, level="E97", n_heads=2,
+                     n_state=4, use_triton=False, mlp_ratio=1., mlp_multiple=16).eval()
+    x = torch.randint(0, 64, (2, real_length))
+    target = torch.randint(0, 64, x.shape)
+    with torch.no_grad():
+        original = model(x)
+        padded = padded_forward(model, x)
+    torch.testing.assert_close(original, padded, rtol=0, atol=1e-6)
+    torch.testing.assert_close(torch.nn.functional.cross_entropy(original.flatten(0, 1), target.flatten()),
+                               torch.nn.functional.cross_entropy(padded.flatten(0, 1), target.flatten()),
+                               rtol=0, atol=1e-6)
+
+
+def test_training_masked_padding_equals_sliced_loss_and_gradients():
+    from ndm.models import LadderLM
+    torch.manual_seed(42)
+    model = LadderLM(vocab_size=64, dim=16, depth=1, level="E97", n_heads=2,
+                     n_state=4, use_triton=False, mlp_ratio=1., mlp_multiple=16).train()
+    x = torch.randint(0, 64, (2, 3))
+    y = torch.randint(0, 64, x.shape)
+    xpad = torch.nn.functional.pad(x, (0, 13))
+    ypad = torch.nn.functional.pad(y, (0, 13))
+    mask = torch.zeros_like(xpad, dtype=torch.bool)
+    mask[:, 2] = True  # Both initialization and padding positions excluded.
+    logits = model(xpad)
+    logits.retain_grad()
+    per = torch.nn.functional.cross_entropy(logits.flatten(0, 1), ypad.flatten(), reduction="none").view_as(mask)
+    masked = (per * mask).sum() / mask.sum()
+    sliced = torch.nn.functional.cross_entropy(logits[:, 2], y[:, 2])
+    torch.testing.assert_close(masked, sliced, rtol=0, atol=0)
+    masked.backward()
+    assert not logits.grad[:, 3:].any()
+    assert not logits.grad[:, :2].any()
+    assert logits.grad[:, 2].any()
+    assert any(p.grad is not None and p.grad.abs().sum() > 0 for p in model.parameters())

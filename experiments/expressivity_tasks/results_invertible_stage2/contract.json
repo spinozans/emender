@@ -5,15 +5,60 @@
   "models": "released E97 1.2866B and matched released GDN2-MLP; strict existing expressivity_1p3b loaders with Schedule-Free train/y recovery",
   "geometry_amendment": "Do not run proposed scratch dim1024/depth2 design or scratch learned pilots. Released-pair fine-tune is headline instrument.",
   "emission_amendment": "Existing raw input integer IDs and full-vocab argmax; joint class 61*x+y. Out-of-range argmax incorrect for full-state and both coordinates.",
-  "headline_arms": ["e97/seed0", "e97/seed1", "e97/seed2", "gdn2/seed0", "gdn2/seed1", "gdn2/seed2", "e97_identity/seed0"],
-  "calibration_arms": ["one_step/e97/seed0", "one_step/gdn2/seed0", "one_step/e97_identity/seed0", "analytic_suffix_0_1_7"],
-  "recipe": {"lr": 0.00005, "batch": 32, "weight_decay": 0.01, "betas": [0.9, 0.95], "warmup": 300, "grad_clip": 0.5, "precision": "bf16", "fine_tune": "all parameters"},
-  "data": {"train": 128, "validation": 512, "test_per_depth": 512, "train_drivers": 128, "test_drivers": [128, 512, 1024], "prefix_tokens": 2, "deduplication": "full input including initialization; frozen independent pools; paired by seed across arms"},
-  "stopping": {"eval_every_updates": 250, "plateau_window_updates": 2000, "minimum_absolute_accuracy_improvement": 0.001, "hard_cap_updates": 60000, "baseline_eval_update": 0, "comparison": "running best at current boundary minus running best eight eval boundaries earlier < 0.001"},
+  "headline_arms": [
+    "e97/seed0",
+    "e97/seed1",
+    "e97/seed2",
+    "gdn2/seed0",
+    "gdn2/seed1",
+    "gdn2/seed2",
+    "e97_identity/seed0"
+  ],
+  "calibration_arms": [
+    "one_step/e97/seed0",
+    "one_step/gdn2/seed0",
+    "one_step/e97_identity/seed0",
+    "analytic_suffix_0_1_7"
+  ],
+  "recipe": {
+    "lr": 5e-05,
+    "batch": 32,
+    "weight_decay": 0.01,
+    "betas": [
+      0.9,
+      0.95
+    ],
+    "warmup": 300,
+    "grad_clip": 0.5,
+    "precision": "bf16",
+    "fine_tune": "all parameters"
+  },
+  "data": {
+    "train": 128,
+    "validation": 512,
+    "test_per_depth": 512,
+    "train_drivers": 128,
+    "test_drivers": [
+      128,
+      512,
+      1024
+    ],
+    "prefix_tokens": 2,
+    "deduplication": "full input including initialization; frozen independent pools; paired by seed across arms"
+  },
+  "stopping": {
+    "eval_every_updates": 250,
+    "plateau_window_updates": 2000,
+    "minimum_absolute_accuracy_improvement": 0.001,
+    "hard_cap_updates": 60000,
+    "baseline_eval_update": 0,
+    "comparison": "running best at current boundary minus running best eight eval boundaries earlier < 0.001"
+  },
   "selection": "max validation full-state exact accuracy; lower CE then earlier update. Persist frozen checkpoint identity and SHA256 before any extrapolation test evaluation.",
   "checkpoint_policy": "retain every 250 updates plus original matched steps and 10K steps to permit cross-arm plateau-step evaluation; fail closed if disk free <8GiB; no optimizer resume claimed",
   "suffix_floor": 0.0002687449610319806,
   "interpretation": "Arithmetic control failure blocks depth-specific interpretation, not publication. No impossibility, universal expressivity, or CMA-causal claim.",
   "resource_policy": "local lambda01 GPUs only; scripts/gpu_lease.sh exclusive lease per arm; no WorksGood service or scheduler",
-  "reporting": "all per-seed results and counts, paired contrasts, sample SD/SEM for three-seed headline arms; one-seed mechanism exploratory"
+  "reporting": "all per-seed results and counts, paired contrasts, sample SD/SEM for three-seed headline arms; one-seed mechanism exploratory",
+  "padding_amendment": "Supervisor approved identical constant-zero right padding to multiple16 for every architecture and split; slice logits before loss/scoring. Real prefixes causally unchanged, no target leakage. CPU tests verify real logits/loss equality and zero padded-logit gradient."
 }

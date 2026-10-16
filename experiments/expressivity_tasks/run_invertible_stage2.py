@@ -120,6 +120,13 @@ def remove_state_tanh(model):
     return len(layers)
 
 
+def padded_forward(model, x):
+    """Right-pad only, then discard pad logits; real causal prefixes are intact."""
+    import torch.nn.functional as F
+    real_length = x.shape[1]
+    return model(F.pad(x, (0, (-real_length) % 16), value=0))[:, :real_length]
+
+
 def evaluate(model, pool, batch=8):
     import torch
     import torch.nn.functional as F
@@ -130,7 +137,7 @@ def evaluate(model, pool, batch=8):
         for start in range(0, len(pool[0]), batch):
             x, y, m = [torch.from_numpy(a[start:start + batch]).cuda() for a in pool]
             with torch.amp.autocast("cuda", dtype=torch.bfloat16):
-                logits = model(x)
+                logits = padded_forward(model, x)
             if not torch.isfinite(logits).all():
                 raise FloatingPointError("nonfinite evaluation logits")
             loss_sum += F.cross_entropy(logits[m].float(), y[m], reduction="sum").item()
@@ -164,6 +171,8 @@ def run(args):
               "batch": 32, "dtype": "bf16", "emission": "full-vocab argmax joint class 61*x+y",
               "eval_every": 250, "plateau_window": 2000, "min_improvement": 0.001,
               "hard_cap": 60000, "suffix_floor": FLOOR,
+              "padding": "constant-zero right padding to multiple16, slice all pad logits before loss/scoring; causal real prefixes unchanged; no target leakage",
+              "physical_train_tokens_per_sequence": math.ceil((args.drivers + 2) / 16) * 16,
               "cuda_visible_devices": os.environ.get("CUDA_VISIBLE_DEVICES"),
               "source_sha256": digest(__file__), "matched_steps": sorted(MATCHED_STEPS)}
     model_name = "gdn2" if args.arm == "gdn2" else "e97"
@@ -205,7 +214,7 @@ def run(args):
                     pg["lr"] = lr_at(step - 1, 5e-5, 300)
                 opt.zero_grad(set_to_none=True)
                 with torch.amp.autocast("cuda", dtype=torch.bfloat16):
-                    logits = model(x)
+                    logits = padded_forward(model, x)
                 loss = F.cross_entropy(logits[m].float(), y[m])
                 if not torch.isfinite(loss):
                     raise FloatingPointError("nonfinite training loss")
