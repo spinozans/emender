@@ -65,6 +65,24 @@ def plateau(history):
             and first is not None and (first - last) / first < 0.01 - 1e-12)
 
 
+def pilot_gate(losses):
+    """Amendment #3: strict >1% window improvement AND negative trailing OLS slope."""
+    if len(losses) != 3000 or not np.isfinite(losses).all():
+        raise ValueError("pilot gate requires exactly 3000 finite training losses")
+    window = np.asarray(losses[-2000:], dtype=np.float64)
+    first, last = float(window[:250].mean()), float(window[-250:].mean())
+    if first <= 0:
+        raise ValueError("pilot gate requires positive initial window loss")
+    improvement = (first - last) / first
+    x = np.arange(len(window), dtype=np.float64)
+    x -= x.mean()
+    slope = float(np.dot(x, window - window.mean()) / np.dot(x, x))
+    return {"passed": improvement > 0.01 + 1e-12 and slope < 0,
+            "first250_mean": first, "final250_mean": last,
+            "relative_improvement": improvement, "ols_slope_nats_per_update": slope,
+            "window_start_update": 1001, "window_end_update": 3000}
+
+
 def fresh_training_batch(task, batch, drivers, training_rng):
     return task.generate_batch(batch, drivers + 2, training_rng)
 
@@ -199,12 +217,15 @@ def run(args):
     out.mkdir(parents=True, exist_ok=False)
     config = {"arm": args.arm, "seed": args.seed, "drivers": args.drivers,
               "train_sequences": "fresh procedural per batch", "archived_train_sequences": 128, "val_sequences": 512, "test_sequences": 512,
-              "optimizer": "AdamW", "betas": [0.9, 0.95], "lr": 5e-5,
+              "optimizer": "AdamW", "betas": [0.9, 0.95], "lr": args.lr,
+              "optimizer_state": "fresh; no released or previous fine-tune optimizer state loaded",
+              "schedule": "constant after 300-update warmup; released weights recovered to Schedule-Free y-mode",
+              "pilot": args.pilot,
               "warmup": 300, "weight_decay": 0.01, "grad_clip": 0.5,
               "batch": 32, "dtype": "bf16", "emission": "full-vocab argmax joint class 61*x+y",
               "eval_every": 250, "plateau_window": 2000, "min_improvement": 0.001,
               "plateau_eligible_step": 10000, "min_relative_train_loss_improvement": 0.01,
-              "protocol_amendment": 2, "hard_cap": 60000, "suffix_floor": FLOOR,
+              "protocol_amendment": args.protocol_amendment, "hard_cap": 3000 if args.pilot else 60000, "suffix_floor": FLOOR,
               "padding": "constant-zero right padding to multiple16, slice all pad logits before loss/scoring; causal real prefixes unchanged; no target leakage",
               "physical_train_tokens_per_sequence": math.ceil((args.drivers + 2) / 16) * 16,
               "cuda_visible_devices": os.environ.get("CUDA_VISIBLE_DEVICES"),
@@ -237,7 +258,9 @@ def run(args):
                 "elements": layer.num_v_heads * layer.head_k_dim * layer.head_v_dim,
                 "allow_neg_eigval": layer.allow_neg_eigval})
     write_json(out / "config.json", config)
-    opt = torch.optim.AdamW(model.parameters(), lr=5e-5, betas=(0.9, 0.95), weight_decay=0.01)
+    opt = torch.optim.AdamW(model.parameters(), lr=args.lr, betas=(0.9, 0.95), weight_decay=0.01)
+    if opt.state:
+        raise RuntimeError("fine-tune optimizer must start with cleared state")
     rng = np.random.default_rng(args.seed)
     task = InvertibleQuadraticTask()
     training_losses = []
@@ -249,13 +272,13 @@ def run(args):
     tokens = 0
     train_seconds = 0.
     with open(out / "training.jsonl", "a", buffering=1) as log:
-        for step in range(60001):
+        for step in range(config["hard_cap"] + 1):
             if step:
                 t = time.time()
                 model.train()
                 x, y, m = [torch.from_numpy(a).cuda() for a in fresh_training_batch(task, 32, args.drivers, rng)]
                 for pg in opt.param_groups:
-                    pg["lr"] = lr_at(step - 1, 5e-5, 300)
+                    pg["lr"] = lr_at(step - 1, args.lr, 300)
                 opt.zero_grad(set_to_none=True)
                 with torch.amp.autocast("cuda", dtype=torch.bfloat16):
                     logits = padded_forward(model, x)
@@ -291,8 +314,15 @@ def run(args):
             write_json(out / "selected.json", best)
             prune_checkpoints(out, checkpoints, best_steps, step)
             print(json.dumps({"arm": args.arm, "seed": args.seed, **history[-1]}), flush=True)
-            if plateau(history) or step == 60000:
+            if (not args.pilot and plateau(history)) or step == config["hard_cap"]:
                 break
+        if args.pilot:
+            write_json(out / "pilot_result.json", {
+                "status": "complete", "arm": args.arm, "lr": args.lr, "completed_updates": step,
+                "gate": pilot_gate(training_losses), "wall_seconds": time.time() - start_time,
+                "total_training_tokens": tokens, "training_seconds": train_seconds,
+                "checkpoint": ckpt, "best_validation": best, "suffix_floor": FLOOR})
+            return
         reason = "plateau" if plateau(history) else "hard_cap"
         selection = {"frozen": True, "step": best["step"], "checkpoint": best["checkpoint"],
                      "stop_step": step, "stop_reason": reason}
@@ -322,13 +352,27 @@ def run(args):
         write_json(out / "result.json", summary)
 
 
-def main():
+def parse_args(argv=None):
     p = argparse.ArgumentParser(__doc__)
     p.add_argument("--arm", choices=["e97", "gdn2", "e97_identity"], required=True)
     p.add_argument("--seed", type=int, required=True)
     p.add_argument("--drivers", type=int, choices=[1, 128], required=True)
     p.add_argument("--out", required=True)
-    args = p.parse_args()
+    p.add_argument("--lr", type=float, default=5e-5)
+    p.add_argument("--protocol-amendment", type=int, choices=[2, 3], default=2)
+    p.add_argument("--pilot", action="store_true")
+    args = p.parse_args(argv)
+    if not math.isfinite(args.lr) or args.lr <= 0:
+        p.error("lr must be positive and finite")
+    if args.protocol_amendment == 2 and (args.lr != 5e-5 or args.pilot):
+        p.error("LR changes/pilots require amendment #3")
+    if args.pilot and (args.drivers != 128 or args.seed != 0 or args.arm == "e97_identity"):
+        p.error("pilot requires a released arm, seed0, drivers128")
+    return args
+
+
+def main():
+    args = parse_args()
     try:
         run(args)
     except Exception as exc:
