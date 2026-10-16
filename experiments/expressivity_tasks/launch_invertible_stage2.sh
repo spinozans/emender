@@ -3,7 +3,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 ROOT="$PWD"
-OUT="$ROOT/experiments/expressivity_tasks/results_invertible_stage2"
+OUT="${OUT:-$ROOT/experiments/expressivity_tasks/results_invertible_stage2}"
 PYTHON_BIN="${PYTHON_BIN:-/usr/bin/python3}"
 run_arm() (
     local arm="$1" seed="$2" drivers="$3" kind="$4"

@@ -1,4 +1,4 @@
-"""Released-pair Stage-2 probe, with frozen splits and auditable selection.
+"""Released-pair Stage-2 probe, with fresh training and frozen evaluation splits and auditable selection.
 
 Operator amendments to INVERTIBLE_QUADRATIC_STAGE2_PLAN.md are recorded in
 results_invertible_stage2/contract.json. This runner never selects on test data.
@@ -51,12 +51,45 @@ def selected(candidate, best):
 
 
 def plateau(history):
-    """Eight eval intervals = 2000 completed updates; 0.1pp = 0.001."""
+    """Amendment #2; legacy histories remain readable, never relabeled."""
     if len(history) < 9:
         return False
     if history[-1]["step"] - history[-9]["step"] != 2000:
         raise ValueError("plateau requires nine boundaries spanning exactly 2000 updates")
-    return history[-1]["best_accuracy"] - history[-9]["best_accuracy"] < 0.001 - 1e-12
+    val_stagnant = history[-1]["best_accuracy"] - history[-9]["best_accuracy"] < 0.001 - 1e-12
+    if "train_loss_window_first250" not in history[-1]:
+        return val_stagnant  # Archived X2 protocol only.
+    first = history[-1]["train_loss_window_first250"]
+    last = history[-1]["train_loss_window_final250"]
+    return (history[-1]["step"] >= 10000 and val_stagnant
+            and first is not None and (first - last) / first < 0.01 - 1e-12)
+
+
+def fresh_training_batch(task, batch, drivers, training_rng):
+    return task.generate_batch(batch, drivers + 2, training_rng)
+
+
+def prune_checkpoints(out, checkpoints, best_steps, step):
+    """Registered capacity fallback; ledger keeps identities of removed files."""
+    if shutil.disk_usage(out).free >= 400 * 1024**3:
+        return
+    stops = set()
+    for frozen in out.parent.glob("*/selection_frozen.json"):
+        stops.add(json.loads(frozen.read_text())["stop_step"])
+    required = best_steps | MATCHED_STEPS | stops | {step}
+    pruned = []
+    retained = {}
+    for key, cp in checkpoints.items():
+        path = Path(cp["path"])
+        if int(key) in required:
+            if path.exists():
+                retained[key] = cp["sha256"]
+        elif path.exists():
+            path.unlink()
+            pruned.append(int(key))
+    with (out / "pruning.jsonl").open("a") as f:
+        f.write(json.dumps({"at_step": step, "timestamp": time.time(), "pruned_steps": pruned,
+                            "retained_hashes": retained, "known_stop_steps": sorted(stops)}) + "\n")
 
 
 def frozen_pools(seed, drivers):
@@ -165,12 +198,13 @@ def run(args):
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=False)
     config = {"arm": args.arm, "seed": args.seed, "drivers": args.drivers,
-              "train_sequences": 128, "val_sequences": 512, "test_sequences": 512,
+              "train_sequences": "fresh procedural per batch", "archived_train_sequences": 128, "val_sequences": 512, "test_sequences": 512,
               "optimizer": "AdamW", "betas": [0.9, 0.95], "lr": 5e-5,
               "warmup": 300, "weight_decay": 0.01, "grad_clip": 0.5,
               "batch": 32, "dtype": "bf16", "emission": "full-vocab argmax joint class 61*x+y",
               "eval_every": 250, "plateau_window": 2000, "min_improvement": 0.001,
-              "hard_cap": 60000, "suffix_floor": FLOOR,
+              "plateau_eligible_step": 10000, "min_relative_train_loss_improvement": 0.01,
+              "protocol_amendment": 2, "hard_cap": 60000, "suffix_floor": FLOOR,
               "padding": "constant-zero right padding to multiple16, slice all pad logits before loss/scoring; causal real prefixes unchanged; no target leakage",
               "physical_train_tokens_per_sequence": math.ceil((args.drivers + 2) / 16) * 16,
               "cuda_visible_devices": os.environ.get("CUDA_VISIBLE_DEVICES"),
@@ -205,6 +239,9 @@ def run(args):
     write_json(out / "config.json", config)
     opt = torch.optim.AdamW(model.parameters(), lr=5e-5, betas=(0.9, 0.95), weight_decay=0.01)
     rng = np.random.default_rng(args.seed)
+    task = InvertibleQuadraticTask()
+    training_losses = []
+    best_steps = set()
     history = []
     checkpoints = {}
     best = None
@@ -216,8 +253,7 @@ def run(args):
             if step:
                 t = time.time()
                 model.train()
-                ids = rng.integers(128, size=32)
-                x, y, m = [torch.from_numpy(a[ids]).cuda() for a in pools["train"]]
+                x, y, m = [torch.from_numpy(a).cuda() for a in fresh_training_batch(task, 32, args.drivers, rng)]
                 for pg in opt.param_groups:
                     pg["lr"] = lr_at(step - 1, 5e-5, 300)
                 opt.zero_grad(set_to_none=True)
@@ -226,6 +262,7 @@ def run(args):
                 loss = F.cross_entropy(logits[m].float(), y[m])
                 if not torch.isfinite(loss):
                     raise FloatingPointError("nonfinite training loss")
+                training_losses.append(loss.item())
                 loss.backward()
                 norm = torch.nn.utils.clip_grad_norm_(model.parameters(), 0.5, error_if_nonfinite=True)
                 opt.step()
@@ -245,10 +282,14 @@ def run(args):
             val = {**evaluate(model, pools["val"]), "step": step}
             if selected(val, best):
                 best = {**val, "checkpoint": ckpt}
+                best_steps.add(step)
+            val["train_loss_window_first250"] = (float(np.mean(training_losses[-2000:-1750])) if step >= 2000 else None)
+            val["train_loss_window_final250"] = (float(np.mean(training_losses[-250:])) if step >= 2000 else None)
             history.append({**val, "best_accuracy": best["accuracy"]})
             write_json(out / "validation.json", history)
             write_json(out / "checkpoints.json", checkpoints)
             write_json(out / "selected.json", best)
+            prune_checkpoints(out, checkpoints, best_steps, step)
             print(json.dumps({"arm": args.arm, "seed": args.seed, **history[-1]}), flush=True)
             if plateau(history) or step == 60000:
                 break

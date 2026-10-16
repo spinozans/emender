@@ -1,0 +1,82 @@
+{
+  "authority": "taskX2-probes.md operator 2026-10-16 plus live supervisor released-pair amendments",
+  "base_commit": "ca79f05b195f7af9ba7a110140254eff044ea902",
+  "production_p": 61,
+  "models": "released E97 1.2866B and matched released GDN2-MLP; strict existing expressivity_1p3b loaders with Schedule-Free train/y recovery",
+  "geometry_amendment": "Do not run proposed scratch dim1024/depth2 design or scratch learned pilots. Released-pair fine-tune is headline instrument.",
+  "emission_amendment": "Existing raw input integer IDs and full-vocab argmax; joint class 61*x+y. Out-of-range argmax incorrect for full-state and both coordinates.",
+  "headline_arms": [
+    "e97/seed0",
+    "e97/seed1",
+    "e97/seed2",
+    "gdn2/seed0",
+    "gdn2/seed1",
+    "gdn2/seed2",
+    "e97_identity/seed0"
+  ],
+  "calibration_arms": [
+    "one_step/e97/seed0",
+    "one_step/gdn2/seed0",
+    "one_step/e97_identity/seed0",
+    "analytic_suffix_0_1_7"
+  ],
+  "recipe": {
+    "lr": 5e-05,
+    "batch": 32,
+    "weight_decay": 0.01,
+    "betas": [
+      0.9,
+      0.95
+    ],
+    "warmup": 300,
+    "grad_clip": 0.5,
+    "precision": "bf16",
+    "fine_tune": "all parameters"
+  },
+  "data": {
+    "train": "fresh procedural per batch",
+    "validation": 512,
+    "test_per_depth": 512,
+    "train_drivers": 128,
+    "test_drivers": [
+      128,
+      512,
+      1024
+    ],
+    "prefix_tokens": 2,
+    "deduplication": "full input including initialization; frozen independent pools; paired by seed across arms"
+  },
+  "stopping": {
+    "eval_every_updates": 250,
+    "plateau_window_updates": 2000,
+    "minimum_absolute_accuracy_improvement": 0.001,
+    "hard_cap_updates": 60000,
+    "baseline_eval_update": 0,
+    "comparison": "running best at current boundary minus running best eight eval boundaries earlier < 0.001",
+    "amendment2": "trailing train-loss improvement = (mean loss over the first 250 updates of the 2,000-step window minus mean loss over the final 250 updates) / first-window mean; plateau iff that ratio < 1% AND best-val gain < 0.001 (0.1pp) at step >= 10,000"
+  },
+  "selection": "max validation full-state exact accuracy; lower CE then earlier update. Persist frozen checkpoint identity and SHA256 before any extrapolation test evaluation.",
+  "checkpoint_policy": "If free capacity <400GiB at a checkpoint check, retain best-val chain, every10K grid, latest250 rolling, own stop, legacy fixed {1000,4000,8000,12000,16000,18269}, and all known headline stop steps; scan published frozen selections each prune. Each prune records removed steps and retained hashes. Any cross-arm panel cell whose checkpoint was already pruned before its step became required is reported as unavailable/pruned - never imputed, never re-created by interpolation, never silently dropped. Stop steps broadcast via selection_frozen.json; running arms scan each250 check.",
+  "suffix_floor": 0.0002687449610319806,
+  "interpretation": "Arithmetic control failure blocks depth-specific interpretation, not publication. No impossibility, universal expressivity, or CMA-causal claim.",
+  "resource_policy": "local lambda01 GPUs only; scripts/gpu_lease.sh exclusive lease per arm; no WorksGood service or scheduler",
+  "reporting": "all per-seed results and counts, paired contrasts, sample SD/SEM for three-seed headline arms; one-seed mechanism exploratory",
+  "padding_amendment": "Supervisor approved identical constant-zero right padding to multiple16 for every architecture and split; slice logits before loss/scoring. Real prefixes causally unchanged, no target leakage. CPU tests verify real logits/loss equality and zero padded-logit gradient.",
+  "amendment2": {
+    "amendment": 2,
+    "registered_at": "2026-10-16T13:56:49.456820+00:00",
+    "base_commit": "ca79f05b195f7af9ba7a110140254eff044ea902",
+    "authority": "taskX2b-freshdata.md and live supervisor window-mean/capacity rulings before launch",
+    "training": "task.generate_batch(32, drivers+2, training_rng) fresh procedural per batch; seed0/1/2; archived train pool not used",
+    "evaluation": "X2 frozen validation and test pools unchanged, same seeds and hashes",
+    "plateau": "trailing train-loss improvement = (mean loss over the first 250 updates of the 2,000-step window minus mean loss over the final 250 updates) / first-window mean; plateau iff that ratio < 1% AND best-val gain < 0.001 (0.1pp) at step >= 10,000",
+    "capacity": "If free capacity <400GiB at a checkpoint check, retain best-val chain, every10K grid, latest250 rolling, own stop, legacy fixed {1000,4000,8000,12000,16000,18269}, and all known headline stop steps; scan published frozen selections each prune. Each prune records removed steps and retained hashes. Any cross-arm panel cell whose checkpoint was already pruned before its step became required is reported as unavailable/pruned - never imputed, never re-created by interpolation, never silently dropped. Stop steps broadcast via selection_frozen.json; running arms scan each250 check.",
+    "evidence_basis": {
+      "X2_report_sha256": "548651e16a2d05a886b90a7fac0d14e4562e9fa4171dd6e46b17601c13bd7923",
+      "X2_results_summary_sha256": "eb6a7289186edbc0218941f9952ac2ebece12b68573e5c844e2bcd5e47fb60a2",
+      "observed_train_loss": "13.2->0.03 nats, frozen128 pool memorization while validation stayed floor-level",
+      "precedent": "scripts/expressivity_1p3b.py make_batch fresh generate_batch"
+    },
+    "contingency": "X2 trigger state SUPERSEDED by this relaunch; X2 floor-level result was an artifact of the memorizable pool. p13/p31 remains separately authorized-if-triggered under corrected protocol; not launched here."
+  }
+}

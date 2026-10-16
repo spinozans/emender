@@ -38,11 +38,12 @@ def main():
     pools = {name: tuple(data[f"{name}_{i}"] for i in range(3))
              for name in ("test_1x", "test_4x", "test_8x")}
     needed = [s for s in sorted(stops) if s <= result["stop_step"] and str(s) not in matched]
-    if needed:
+    available = [s for s in needed if Path(checkpoints[str(s)]["path"]).exists()]
+    if available:
         model = load_model("gdn2" if cfg["arm"] == "gdn2" else "e97", torch.device("cuda"))
         if cfg["arm"] == "e97_identity":
             remove_state_tanh(model)
-        for step in needed:
+        for step in available:
             cp = checkpoints[str(step)]
             if digest(cp["path"]) != cp["sha256"]:
                 raise RuntimeError("matched checkpoint hash mismatch")
@@ -56,6 +57,8 @@ def main():
     for step in sorted(stops):
         if step > result["stop_step"]:
             panels[str(step)] = {"status": "unavailable", "reason": "arm already stopped; no extra training"}
+        elif str(step) not in matched and str(step) not in additional:
+            panels[str(step)] = {"status": "unavailable", "reason": "checkpoint pruned before stop step became required"}
         else:
             panels[str(step)] = {"status": "evaluated", "checkpoint": checkpoints[str(step)],
                                  "panels": matched.get(str(step), additional.get(str(step)))}

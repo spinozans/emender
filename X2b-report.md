@@ -1,0 +1,24 @@
+# X2b — amendment #2 relaunch
+
+Status: registered, not yet launched; no new learned numbers claimed. Floor 0.026874%.
+
+## Amendment #2 registration
+```json
+{
+  "amendment": 2,
+  "registered_at": "2026-10-16T13:56:49.456820+00:00",
+  "base_commit": "ca79f05b195f7af9ba7a110140254eff044ea902",
+  "authority": "taskX2b-freshdata.md and live supervisor window-mean/capacity rulings before launch",
+  "training": "task.generate_batch(32, drivers+2, training_rng) fresh procedural per batch; seed0/1/2; archived train pool not used",
+  "evaluation": "X2 frozen validation and test pools unchanged, same seeds and hashes",
+  "plateau": "trailing train-loss improvement = (mean loss over the first 250 updates of the 2,000-step window minus mean loss over the final 250 updates) / first-window mean; plateau iff that ratio < 1% AND best-val gain < 0.001 (0.1pp) at step >= 10,000",
+  "capacity": "If free capacity <400GiB at a checkpoint check, retain best-val chain, every10K grid, latest250 rolling, own stop, legacy fixed {1000,4000,8000,12000,16000,18269}, and all known headline stop steps; scan published frozen selections each prune. Each prune records removed steps and retained hashes. Any cross-arm panel cell whose checkpoint was already pruned before its step became required is reported as unavailable/pruned - never imputed, never re-created by interpolation, never silently dropped. Stop steps broadcast via selection_frozen.json; running arms scan each250 check.",
+  "evidence_basis": {
+    "X2_report_sha256": "548651e16a2d05a886b90a7fac0d14e4562e9fa4171dd6e46b17601c13bd7923",
+    "X2_results_summary_sha256": "eb6a7289186edbc0218941f9952ac2ebece12b68573e5c844e2bcd5e47fb60a2",
+    "observed_train_loss": "13.2->0.03 nats, frozen128 pool memorization while validation stayed floor-level",
+    "precedent": "scripts/expressivity_1p3b.py make_batch fresh generate_batch"
+  },
+  "contingency": "X2 trigger state SUPERSEDED by this relaunch; X2 floor-level result was an artifact of the memorizable pool. p13/p31 remains separately authorized-if-triggered under corrected protocol; not launched here."
+}
+```

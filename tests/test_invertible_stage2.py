@@ -160,3 +160,33 @@ def test_aggregate_reports_all_three_seed_uncertainty():
     a = aggregate([1., 2., 3.])
     assert a['n_seeds'] == 3 and a['mean'] == 2. and a['sample_sd'] == 1.
     assert a['sem'] == pytest.approx(1 / 3**0.5)
+
+
+def test_amendment2_plateau_requires_10k_and_both_stagnations():
+    history = [{"step": s, "best_accuracy": .2,
+                "train_loss_window_first250": 10., "train_loss_window_final250": 9.95}
+               for s in range(0, 10250, 250)]
+    assert not plateau(history[:-1])
+    assert plateau(history)
+    history[-1]["train_loss_window_final250"] = 9.9
+    assert not plateau(history)  # Exactly 1% improvement is not stagnant.
+    history[-1]["train_loss_window_final250"] = 10.1
+    assert plateau(history)
+    history[-1]["best_accuracy"] = .201
+    assert not plateau(history)
+
+
+@pytest.mark.parametrize("drivers", [1, 128])
+def test_amendment2_fresh_training_batches_reproducible_not_pool_sampling(drivers):
+    from experiments.expressivity_tasks.run_invertible_stage2 import fresh_training_batch
+    from experiments.expressivity_tasks.tasks.invertible_quadratic import InvertibleQuadraticTask
+    task = InvertibleQuadraticTask()
+    a, b = np.random.default_rng(0), np.random.default_rng(0)
+    first = fresh_training_batch(task, 32, drivers, a)
+    expected = task.generate_batch(32, drivers + 2, b)
+    for actual, want in zip(first, expected):
+        np.testing.assert_array_equal(actual, want)
+    second = fresh_training_batch(task, 32, drivers, a)
+    assert not np.array_equal(first[0], second[0])
+    archived = {tuple(row) for row in frozen_pools(0, drivers)["train"][0]}
+    assert any(tuple(row) not in archived for row in first[0])
