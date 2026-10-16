@@ -630,12 +630,10 @@ GDN2 checkpoint as a reference point. The matched-token comparison is in Table 2
 A veriﬁed 256-node production segment initialized all 2,048 ranks from the same released seed and completed
 73 hierarchical K40 merges, with median merge duration 6.320 s and median inter-merge interval 72 s. Its
 12
-Figure 3: E97 recorded training loss: thin blue traces show three raw log windows (expanded above), cir-
-cles show workstation checkpoint losses, and diamonds show Frontier checkpoint losses; each trace spans its
-recorded window and checkpoints appear as separate markers. The orange star is GDN2’s single retained
-checkpoint at 152.28 B tokens (last-window loss 2.4034), the vertical rule marks the Pile/CommaPile bound-
-ary at the 150.794 B-token Frontier handoﬀ, and Table 2 gives the matched-token comparison. Sources and
-ﬁgure script: paper/figures/plot_recorded_loss.py.
+Figure 3: E97 recorded training loss at every retained checkpoint, from the workstation run through the
+Frontier continuation (circles: workstation; diamonds: Frontier). The star is GDN2’s retained checkpoint
+at 152.28 B tokens (2.4034). The dotted rule marks the Pile/CommaPile handoﬀ at 150.794 B tokens; the
+connector joins known points. Figure script and value receipt: paper/figures/plot_recorded_loss.py.
 Stage Worker step Accepted tokens Recorded loss
 Released workstation seed 2,300,930 150,793,748,480 2.4365
 First 256-node continuation 2,303,840 199,615,447,040 2.3178
