@@ -213,6 +213,20 @@ def build(root, report):
             "X2 receipts are unchanged. Local lambda01 execution only, exclusive scripts/gpu_lease.sh leases; no Slurm or WorksGood service. DiLoCo requirement matrix IDs are not applicable: no resilient training or scale behavior changed.",
             "Concurrent-source disclosure: all ten X2b configs bind launched fb2c1b6e runner bytes (archived in receipts/runner_at_launch.py). HEAD advanced to X2c mid-run; no X2b runner edits after launch. The final audit verifies git-show launch bytes, not the current X2c-extended runner. Initial source-identity audit failure is retained and its correction disclosed in receipts/final_audit.json.",
             "CPU validation output: receipts/cpu_tests.txt. Final commands and audit: receipts/validation_commands.txt and receipts/final_audit.json. Independent acceptance review remains required.", ""]
+    capacity_path = root / "receipts/postcompletion_capacity_prune.json"
+    if amendment and capacity_path.exists():
+        capacity = json.loads(capacity_path.read_text())
+        text += ["## Post-completion capacity prune", "",
+                 f"Executed {capacity['registered_at']} under the queued operator ruling, after all ten runs and seven cross-stop evaluations completed. No live training/evaluation process existed; no active checkpoint was touched.",
+                 f"Removed {capacity['pruned_bytes'] / 1024**3:.3f} GiB of checkpoint weights. Observed free space increased by {capacity['observed_free_increase_bytes'] / 1024**3:.3f} GiB to {capacity['final_free_bytes'] / 1024**3:.3f} GiB (volume accounting may differ from file-byte totals).",
+                 "X2b retains the best-val chain, 10K grid, legacy fixed points, available broadcast stops, and own stop/latest. X2 completed runs retain ONLY their selected best-val and stop checkpoint. All original X2 non-checkpoint receipts/logs/manifests remain byte-identical; their historical ledgers are not assertions that pruned weights still exist.",
+                 "The four weights in X2's failed/aborted alignment archive remain unchanged (those attempts have no completed best/stop contract). Full retained SHA256/byte inventories, removed steps, evidence hashes, and the interrupted-first-attempt disclosure are in receipts/postcompletion_capacity_prune.json; X2b per-run pruning.jsonl also records the action.", "",
+                 "| Root | Run | Retained checkpoint steps | Removed GiB |", "|---|---|---|---:|"]
+        for run, inventory in capacity["runs"].items():
+            run_path = Path(run)
+            steps = ", ".join(sorted(inventory["retained"], key=int))
+            text.append(f"| {run_path.parent.name} | {run_path.name} | {steps} | {inventory['pruned_bytes'] / 1024**3:.3f} |")
+        text += ["", "Headline state after pruning: all seven complete; E97 seeds0/1/2 and identity stopped10000, GDN2 seeds0/1/2 stopped21500/23750/23500. No training restarted; learned measurements are unchanged.", ""]
     report.write_text("\n".join(text).rstrip() + "\n")
     return complete
 

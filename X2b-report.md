@@ -163,3 +163,35 @@ The results root holds contracts, frozen-pool identities, all ten run logs, best
 X2 receipts are unchanged. Local lambda01 execution only, exclusive scripts/gpu_lease.sh leases; no Slurm or WorksGood service. DiLoCo requirement matrix IDs are not applicable: no resilient training or scale behavior changed.
 Concurrent-source disclosure: all ten X2b configs bind launched fb2c1b6e runner bytes (archived in receipts/runner_at_launch.py). HEAD advanced to X2c mid-run; no X2b runner edits after launch. The final audit verifies git-show launch bytes, not the current X2c-extended runner. Initial source-identity audit failure is retained and its correction disclosed in receipts/final_audit.json.
 CPU validation output: receipts/cpu_tests.txt. Final commands and audit: receipts/validation_commands.txt and receipts/final_audit.json. Independent acceptance review remains required.
+
+## Post-completion capacity prune
+
+Executed 2026-10-16T19:47:56.267612+00:00 under the queued operator ruling, after all ten runs and seven cross-stop evaluations completed. No live training/evaluation process existed; no active checkpoint was touched.
+Removed 237.265 GiB of checkpoint weights. Observed free space increased by 238.110 GiB to 527.655 GiB (volume accounting may differ from file-byte totals).
+X2b retains the best-val chain, 10K grid, legacy fixed points, available broadcast stops, and own stop/latest. X2 completed runs retain ONLY their selected best-val and stop checkpoint. All original X2 non-checkpoint receipts/logs/manifests remain byte-identical; their historical ledgers are not assertions that pruned weights still exist.
+The four weights in X2's failed/aborted alignment archive remain unchanged (those attempts have no completed best/stop contract). Full retained SHA256/byte inventories, removed steps, evidence hashes, and the interrupted-first-attempt disclosure are in receipts/postcompletion_capacity_prune.json; X2b per-run pruning.jsonl also records the action.
+
+| Root | Run | Retained checkpoint steps | Removed GiB |
+|---|---|---|---:|
+| results_invertible_stage2b | calibration_e97_identity_seed0 | 0, 250, 500, 750, 1000, 1250, 2750, 3500, 3750, 4000, 4250, 4500, 4750, 5000, 5250, 5500, 6000, 6500, 6750, 7000, 7750, 8000, 8250, 8750, 9000, 9250, 9500, 9750, 10000, 10250, 11000, 11750, 12000, 12250, 12750, 13750, 14500, 14750, 15000, 15750, 16000, 16750, 17250, 17500, 18269, 18500, 18750, 19250, 20000, 20250, 20500, 20750, 21000, 21250, 21750, 22750, 23250, 24000, 24750, 27000 | 0.000 |
+| results_invertible_stage2b | calibration_e97_seed0 | 0, 250, 500, 750, 1000, 2250, 2500, 2750, 3250, 3500, 3750, 4000, 4250, 4500, 4750, 5250, 5500, 5750, 6000, 6250, 6750, 7000, 7250, 7750, 8000, 9000, 9250, 9500, 10000, 10500, 11000, 11250, 11500, 12000, 12250, 12500, 13500, 13750, 14500, 14750, 15750, 16000, 18000, 18269, 19000, 20000, 20250, 22000, 22750, 24000, 24250, 27000, 28000 | 0.000 |
+| results_invertible_stage2b | calibration_gdn2_seed0 | 0, 250, 750, 1000, 2500, 2750, 3000, 3250, 3500, 3750, 4000, 4500, 4750, 5250, 5500, 5750, 6000, 6250, 6500, 7000, 7250, 8000, 8250, 8500, 8750, 9000, 9500, 10000, 10750, 11000, 11500, 12000, 12500, 13000, 13500, 14250, 15750, 16000, 17750, 18000, 18269, 20000, 20250 | 0.000 |
+| results_invertible_stage2b | headline_e97_identity_seed0 | 0, 1000, 1250, 2250, 3750, 4000, 4500, 5250, 5500, 5750, 6000, 6250, 6500, 6750, 7000, 7750, 8000, 8500, 8750, 9250, 9500, 10000 | 4.793 |
+| results_invertible_stage2b | headline_e97_seed0 | 0, 250, 1000, 1750, 2250, 4000, 4500, 5000, 5250, 5500, 5750, 6000, 6500, 6750, 7000, 7750, 8000, 8750, 9000, 9250, 10000 | 9.586 |
+| results_invertible_stage2b | headline_e97_seed1 | 0, 500, 750, 1000, 3000, 3250, 4000, 4500, 5750, 6000, 6500, 7000, 7250, 7750, 8000, 8750, 9000, 9250, 10000 | 4.793 |
+| results_invertible_stage2b | headline_e97_seed2 | 0, 250, 500, 1000, 1500, 1750, 2000, 3500, 4000, 4250, 4500, 4750, 5500, 5750, 6000, 6250, 6500, 6750, 7000, 7250, 8000, 8500, 9000, 9500, 10000 | 7.190 |
+| results_invertible_stage2b | headline_gdn2_seed0 | 0, 500, 750, 1000, 4000, 5000, 5250, 5500, 5750, 6000, 6250, 6500, 6750, 7000, 7500, 7750, 8000, 8500, 8750, 9000, 9250, 9750, 10000, 10250, 10500, 11250, 11500, 11750, 12000, 12250, 12500, 12750, 13000, 13500, 13750, 14250, 14500, 14750, 15250, 16000, 16250, 17000, 17250, 17750, 18250, 18269, 18750, 19000, 19500, 20000, 20250, 20750, 21000, 21500 | 0.000 |
+| results_invertible_stage2b | headline_gdn2_seed1 | 0, 500, 750, 1000, 4000, 4500, 4750, 5500, 6000, 6250, 6500, 6750, 7000, 7250, 7500, 7750, 8000, 8500, 8750, 9000, 9500, 9750, 10000, 10250, 10500, 11000, 11250, 11500, 11750, 12000, 12250, 12750, 13000, 13250, 13500, 14000, 14250, 15500, 15750, 16000, 17250, 17750, 18000, 18250, 18269, 19000, 19750, 20000, 20250, 20500, 21250, 21750, 22250, 22500, 22750, 23000, 23500, 23750 | 0.000 |
+| results_invertible_stage2b | headline_gdn2_seed2 | 0, 250, 500, 750, 1000, 1750, 4000, 5000, 5250, 5500, 5750, 6250, 6750, 7250, 7500, 7750, 8000, 8250, 8500, 9000, 9250, 9500, 10000, 10250, 10500, 10750, 11250, 11500, 11750, 12000, 12750, 13000, 13250, 13500, 13750, 14250, 14500, 14750, 15750, 16000, 16500, 16750, 17000, 18000, 18250, 18269, 19000, 19250, 19750, 20000, 20250, 20750, 21000, 21500, 22000, 22500, 23500 | 0.000 |
+| results_invertible_stage2 | calibration_e97_identity_seed0 | 3500, 3750 | 33.551 |
+| results_invertible_stage2 | calibration_e97_seed0 | 750, 2750 | 23.965 |
+| results_invertible_stage2 | calibration_gdn2_seed0 | 3000, 3750 | 33.555 |
+| results_invertible_stage2 | headline_e97_identity_seed0 | 0, 2000 | 16.776 |
+| results_invertible_stage2 | headline_e97_seed0 | 1500, 2000 | 16.776 |
+| results_invertible_stage2 | headline_e97_seed1 | 1000, 2000 | 16.776 |
+| results_invertible_stage2 | headline_e97_seed2 | 0, 2000 | 16.776 |
+| results_invertible_stage2 | headline_gdn2_seed0 | 1250, 2000 | 16.778 |
+| results_invertible_stage2 | headline_gdn2_seed1 | 1000, 2000 | 16.778 |
+| results_invertible_stage2 | headline_gdn2_seed2 | 2000 | 19.174 |
+
+Headline state after pruning: all seven complete; E97 seeds0/1/2 and identity stopped10000, GDN2 seeds0/1/2 stopped21500/23750/23500. No training restarted; learned measurements are unchanged.
