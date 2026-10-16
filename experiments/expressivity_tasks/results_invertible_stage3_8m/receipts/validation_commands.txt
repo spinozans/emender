@@ -1,0 +1,42 @@
+Working directory: /home/erikg/emender, starting commit f8225a95f6f875902444de6678784b9c4c2398be, host lambda01 (not Frontier).
+Interpreter: /home/erikg/emender/.venv/bin/python (Python3.12.3; see environment.txt).
+
+PASS — OMP_NUM_THREADS=2 .venv/bin/python -m pytest -q tests/test_invertible_stage3_8m.py tests/test_invertible_stage2.py tests/test_invertible_stage2c.py tests/test_invertible_quadratic.py
+83 passed; cpu_tests.txt.
+PASS — OMP_NUM_THREADS=2 .venv/bin/python -m pytest -q tests/test_aggregate_invertible_stage3_8m.py tests/test_invertible_stage3_8m.py tests/test_invertible_stage2.py tests/test_invertible_stage2c.py tests/test_invertible_quadratic.py
+87 passed; final_cpu_tests.txt.
+PASS — OMP_NUM_THREADS=2 .venv/bin/python -m pytest -q tests/test_aggregate_invertible_stage3_8m.py
+4 passed after final report-wording changes; aggregate_tests.txt.
+PASS — bash -n experiments/expressivity_tasks/launch_invertible_stage3_8m.sh
+PASS — bash experiments/expressivity_tasks/launch_invertible_stage3_8m.sh smoke
+Two250-update instrument runs exited0; not experiment cells.
+PASS — OMP_NUM_THREADS=2 .venv/bin/python -m experiments.expressivity_tasks.aggregate_invertible_stage3_8m register
+Amendment4 and prelaunch instantiated counts persisted before full launch.
+PASS — bash experiments/expressivity_tasks/launch_invertible_stage3_8m.sh full
+36 experiment cells exited0, full_launch/exit.txt exit_code=0. Per-cell exact commands, lease records, GPU UUID/index snapshots and exits are in receipts/<name>/. All8 leases released normally.
+PASS — OMP_NUM_THREADS=2 .venv/bin/python -m experiments.expressivity_tasks.aggregate_invertible_stage3_8m report
+complete_audited,36/36,errors=[]; final_audit.json, results_summary.json, X3-report.md. Replays loss windows, earliest eligible stopping boundary, best-validation and LR selection; verifies selected checkpoint hashes, exact frozen-pool identity to X2, source hash, metrics, and successful exits.
+NOTE — an interim inline batch replay over completed cells exceeded its120-second tool timeout (CPU frozen-pool regeneration); it wrote no run state and was superseded by the successful full36-cell audit with a540-second tool budget. No training process failed or was cancelled.
+
+PASS — retained-checkpoint replay, output recorded in checkpoint_inventory.json:
+.venv/bin/python - <<'PY'
+import json, shutil, time
+from pathlib import Path
+from experiments.expressivity_tasks.run_invertible_stage3_8m import ROOT, matrix, digest, write_json
+inventory=[]
+for row in matrix():
+    out=ROOT/row['name']
+    cps=json.loads((out/'checkpoints.json').read_text())
+    retained=[]
+    for step,cp in cps.items():
+        path=Path(cp['path'])
+        if path.exists():
+            assert path.stat().st_size==cp['bytes'] and digest(path)==cp['sha256'],path
+            retained.append(int(step))
+    assert all(s in retained for s in range(0,json.loads((out/'result.json').read_text())['stop_step']+1,1000))
+    inventory.append({'name':row['name'],'retained_checkpoint_count':len(retained),'retained_steps':retained,'bytes':sum(Path(cp['path']).stat().st_size for cp in cps.values() if Path(cp['path']).exists())})
+write_json(ROOT/'receipts/checkpoint_inventory.json',{'checked_at':time.time(),'runs':inventory,'total_checkpoint_bytes':sum(r['bytes'] for r in inventory),'free_bytes_after':shutil.disk_usage(ROOT).free,'pruning_activated':bool(list(ROOT.glob('*/pruning.jsonl'))),'all_retained_hashes_replayed':True})
+PY
+
+PASS — git diff --check
+Final source hashes and artifact inventory are in validation_summary.json. Binary checkpoints remain local ignored artifacts; their identities/hashes are in committed ledgers. Validation does not assert ultimate convergence, arithmetic success at a primary model's earlier stop, or a recurrent-depth separation. Independent acceptance review remains required.

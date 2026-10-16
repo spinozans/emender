@@ -1,0 +1,69 @@
+{
+  "arm": "gdn2",
+  "p": 13,
+  "drivers": 128,
+  "seed": 0,
+  "lr": 0.001,
+  "out": "/home/erikg/emender/experiments/expressivity_tasks/results_invertible_stage3_8m/difficulty_p13_gdn2_lr0.001_seed0",
+  "hard_cap": 60000,
+  "protocol_amendment": 4,
+  "initialization": "from scratch; no checkpoint loaded",
+  "optimizer": "AdamWScheduleFree",
+  "betas": [
+    0.9,
+    0.95
+  ],
+  "weight_decay": 0.01,
+  "clip": 1.0,
+  "warmup": 0,
+  "dtype": "bf16 autocast, fp32 parameters",
+  "batch": 32,
+  "eval_every": 250,
+  "checkpoint_every": 1000,
+  "plateau_eligible": 10000,
+  "plateau_window": 2000,
+  "val_gain_threshold": 0.001,
+  "relative_train_loss_threshold": 0.001,
+  "train": "fresh procedural batch each update; archived train pool never sampled",
+  "head": "trainable task-sized tied embedding/output; joint p*x+y argmax",
+  "geometry": {
+    "dim": 256,
+    "depth": 4,
+    "n_heads": 32,
+    "n_state": 32,
+    "expansion": 8.625,
+    "mlp_ratio": 2.0
+  },
+  "padding": "causal right-pad to16; slice padding before loss and metrics",
+  "source_sha256": "0cdb079c88d87d85ae3b6874e2e8d16530264bd54c2f0f250f6d7f57a0e0f65d",
+  "cuda_visible_devices": "7",
+  "floor": 0.005917159763313609,
+  "started_at": 1792184383.3110669,
+  "trainable_parameters": 8977744,
+  "recurrent_states": [
+    {
+      "heads": 2,
+      "key_dim": 128,
+      "value_dim": 1104,
+      "elements": 282624
+    },
+    {
+      "heads": 2,
+      "key_dim": 128,
+      "value_dim": 1104,
+      "elements": 282624
+    },
+    {
+      "heads": 2,
+      "key_dim": 128,
+      "value_dim": 1104,
+      "elements": 282624
+    },
+    {
+      "heads": 2,
+      "key_dim": 128,
+      "value_dim": 1104,
+      "elements": 282624
+    }
+  ]
+}

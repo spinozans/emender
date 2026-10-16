@@ -1,0 +1,15 @@
+Live prelaunch decisions, received through contact_supervisor before registration/training.
+
+1. Scratch recipe and matrix approved:
+Prior 8M suite recipe governs: ScheduleFree AdamW (0.9,0.95), wd0.01, clip1.0, bf16, no warmup. The X2 AdamW+300-warmup fine-tune recipe does not apply. Dedicated trainable p^2 vocabulary is approved, documented as an instrument difference from full-vocabulary pretrained 1.3B fine-tunes. The two experiment classes must not be presented as directly numerically comparable. 18 primary (2 architectures x3 LRs x3 seeds),6 one-step (seed0,all LRs,both architectures),12 p13/p31 difficulty runs (seed0,all LRs,both architectures). Three co-tenant training processes/card under exclusive leases approved.
+
+2. Geometry correction after code inspection:
+The initially proposed legacy gdn-8m wrapper was rejected BEFORE training: it uses fla.DeltaNet, does not implement the approved GDN2 reflection capability, and silently ignores allow_neg_eigval. Its measured parameter count also contradicted the initial estimate. No legacy-gdn training was performed.
+Supervisor approved retaining E97 dim256/depth4/H32/N32/expansion1/MLP2 unchanged and replacing the comparator with actual FLA fla-gdn / FLAGatedDeltaNetLayer with allow_neg_eigval=True. Dim256/depth4, expansion selected from instantiated parameter counts to bring GDN2 within~1% of E97; actual head geometry/counts must be documented in the amendment and prelaunch receipt. Same recipe/matrix/rules otherwise.
+
+Final registered instantiation:
+E97:9,900,800 parameters; four layers, each32x32x32 state; split-edit,tanh,raw_write=False, fused sequential Triton.
+True GDN2:9,887,056 parameters (-0.138817% relative E97); expansion8.625; wrapper default2 heads, key128,value1104 per layer; FLA GatedDeltaNet allow_neg_eigval=True; not a state-size-matched or one-factor mechanism ablation.
+Both:trainable tied3721-class embedding/output,MLP2,from scratch. Nominal8M suite designation does not override these measured total counts.
+
+Full prelaunch receipt and amendment4.json were persisted before full-matrix launch;250-update GPU smoke checks for both corrected architectures exited0. Smoke runs are not experiment cells.
