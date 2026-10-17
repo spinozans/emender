@@ -1,0 +1,54 @@
+{
+  "method": "10 warmup+30 timed updates at all8 depths and both curricula/architectures; all-lower eval+checkpoint every500; slowest measured depth charged for all4M; entire cost inflated by isolated_T1/min_live_T1 factor if above1",
+  "rows": [
+    {
+      "curriculum": "A",
+      "arm": "e97",
+      "min_live_T1_updates_per_second": 51.26845790619331,
+      "isolated_T1_updates_per_second": 62.78804601153962,
+      "contention_factor": 1.2246915272236953,
+      "slowest_calibrated_depth": 128,
+      "stage_500k_hours": 7.872996051946389,
+      "global_4m_hours": 62.98396841557111,
+      "T1_only_4m_hours": 21.67241139072543
+    },
+    {
+      "curriculum": "A",
+      "arm": "gdn2",
+      "min_live_T1_updates_per_second": 28.599254830699874,
+      "isolated_T1_updates_per_second": 30.743308863645986,
+      "contention_factor": 1.0749688775332906,
+      "slowest_calibrated_depth": 128,
+      "stage_500k_hours": 5.652624703256181,
+      "global_4m_hours": 45.220997626049446,
+      "T1_only_4m_hours": 38.85105110914949
+    },
+    {
+      "curriculum": "B",
+      "arm": "e97",
+      "min_live_T1_updates_per_second": 49.66620004746296,
+      "isolated_T1_updates_per_second": 58.71139505914782,
+      "contention_factor": 1.1821197313875618,
+      "slowest_calibrated_depth": 128,
+      "stage_500k_hours": 11.97624645235929,
+      "global_4m_hours": 95.80997161887431,
+      "T1_only_4m_hours": 22.371574834581466
+    },
+    {
+      "curriculum": "B",
+      "arm": "gdn2",
+      "min_live_T1_updates_per_second": 28.41240939257475,
+      "isolated_T1_updates_per_second": 31.013629843370104,
+      "contention_factor": 1.0915522655912155,
+      "slowest_calibrated_depth": 128,
+      "stage_500k_hours": 5.638677564206424,
+      "global_4m_hours": 45.10942051365139,
+      "T1_only_4m_hours": 39.10654305162472
+    }
+  ],
+  "fourth_initial_run_projected_finish_hours": 45.220997626049446,
+  "queued_matrix_projected_hours": 141.03096924492377,
+  "queued_matrix_projected_days": 5.876290385205157,
+  "queue_method": "Four queued workers can all start by the fourth initial completion, assuming measured-cost planning horizons hold and no outside GPU contention",
+  "warning": "Planning estimates, not guarantees or steps-to-learning. JIT, future depth contention, failures, throughput drift, disk and host availability can change these. All12 overlap where leases permit; do not sum their individual hours."
+}
