@@ -2058,8 +2058,13 @@ with the recorded rank-0 loss falling to 2.2798 nats/token.
 The invertible nonlinear-map study finds no robust trained-depth
 separation at matched 1e-3 across three seeds. E97 has lower
 extrapolation cross-entropy in every seed at 4× and 8× depth, while
-both classes remain near marginal-like loss behavior with limited
-predictive signal. GDN2 leads the long-horizon $S_5$ comparison, a
+under flat full-depth training both classes remain near marginal-like
+loss behavior with limited predictive signal; the open-horizon
+curriculum then resolves a learned composition frontier on the
+four-driver stage — one sequential map application for E97, three
+(two seeds) and two (one seed) for GDN2, with the four-application
+position unsolved in every run. GDN2 leads the long-horizon $S_5$
+comparison, a
 meaningful success on a task with an exact linear-state representation.
 These task-dependent observations leave learned nonlinear-composition
 efficiency open. The formal state-channel results make the architectural

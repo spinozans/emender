@@ -1344,8 +1344,11 @@ parameters and reaches comparable training loss to GDN2. A Frontier continuation
 same architecture to 513.0 B accepted tokens, with the recorded rank-0 loss falling to 2.2798
 nats/token.
 The invertible nonlinear-map study finds no robust trained-depth separation at matched 1e-3
-across three seeds. E97 has lower extrapolation cross-entropy in every seed at 4× and 8× depth,
-while both classes remain near marginal-like loss behavior with limited predictive signal. GDN2
+across three seeds. E97 has lower extrapolation cross-entropy in every seed at 4× and 8×
+depth, while under flat full-depth training both classes remain near marginal-like loss behavior
+with limited predictive signal; the open-horizon curriculum then resolves a learned composition
+frontier on the four-driver stage — one sequential map application for E97, three (two seeds)
+and two (one seed) for GDN2, with the four-application position unsolved in every run. GDN2
 leads the long-horizon 𝑆5 comparison, a meaningful success on a task with an exact linear-
 state representation. These task-dependent observations leave learned nonlinear-composition
 efficiency open. The formal state-channel results make the architectural distinction precise:
@@ -1367,11 +1370,11 @@ The immutable HF revisions are 119c6623f414aa7fc6e101667d3ad89b7ed6af73 (E97) an
 e6087fa6984265404d99c419c095692d840da472 (GDN2). Converted-weight digests are in each
 revision’s SHA256SUMS. The releases ship with the per-architecture CMA-ES configurations, the
 training protocol (launcher manifests in scripts/launch_emender_8gpu_diloco.sh and scripts/
-launch_gdn2_mlp_8gpu_diloco.sh), and the Triton multi-programming kernel source in the
+31
+launch_gdn2_mlp_8gpu_diloco.sh), and the Triton multi-programming kernel source in the
 public emender repo; the canonical paper PDF is mirrored at http://hypervolu.me/~erik/ndm/
 Garrison_2026_Emender.pdf. The Frontier continuation’s retained-checkpoint lineage, accepted-
-31
-token anchors, and the job-5134243 communication measurements are recorded in docs/
+token anchors, and the job-5134243 communication measurements are recorded in docs/
 validation/, reports/frontier/, and the corrected 513 B audit.
 12 Next tests for the current pair
 The X-series motivates controlled tests rather than a predicted architecture ordering. First, cross

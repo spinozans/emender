@@ -1291,12 +1291,14 @@ computation practical: E97 trains through 150.8 B Pile tokens at 1.3 B parameter
 training loss to GDN2. A Frontier continuation extends the same architecture to 513.0 B accepted tokens,
 with the recorded rank-0 loss falling to 2.2798 nats/token.
 The invertible nonlinear-map study ﬁnds no robust trained-depth separation at matched 1e-3 across three
-seeds. E97 has lower extrapolation cross-entropy in every seed at 4× and 8× depth, while both classes
-remain near marginal-like loss behavior with limited predictive signal. GDN2 leads the long-horizon S5
-comparison, a meaningful success on a task with an exact linear-state representation. These task-dependent
-observations leave learned nonlinear-composition eﬃciency open. The formal state-channel results make the
-architectural distinction precise: repeated nonlinear composition in E97, and an aﬃne GDN fold under a
-ﬁxed, state-independent schedule.
+seeds. E97 has lower extrapolation cross-entropy in every seed at 4× and 8× depth, while under ﬂat full-depth
+training both classes remain near marginal-like loss behavior with limited predictive signal; the open-horizon
+curriculum then resolves a learned composition frontier on the four-driver stage — one sequential map appli-
+cation for E97, three (two seeds) and two (one seed) for GDN2, with the four-application position unsolved in
+every run. GDN2 leads the long-horizon S5 comparison, a meaningful success on a task with an exact linear-
+state representation. These task-dependent observations leave learned nonlinear-composition eﬃciency open.
+The formal state-channel results make the architectural distinction precise: repeated nonlinear composition
+in E97, and an aﬃne GDN fold under a ﬁxed, state-independent schedule.
 These ﬁndings support studying nonlinear memory as a computational resource. The next step is to test that
 resource across training budgets, scales, and tasks in which an evolving state must keep being transformed:
 feedback, iterative optimization, and driven dynamics.
