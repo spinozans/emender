@@ -1,0 +1,319 @@
+{
+  "arm": "gdn2",
+  "depth": 2,
+  "budget": 10000,
+  "threshold": 0.9,
+  "eval_every": 500,
+  "initialization": "independent scratch, seed 0",
+  "batches": 10000,
+  "input_tokens": 1280000,
+  "supervised_positions": 640000,
+  "unpadded_shape": [
+    32,
+    4
+  ],
+  "padded_length": 16,
+  "overrides": [
+    "DEPTHS",
+    "STAGE_BUDGET",
+    "THRESHOLD",
+    "EVAL_EVERY",
+    "archive_pools (same X3 pool function, selected diagnostic depth)",
+    "InvertibleQuadraticTask (instrumented subclass, unchanged generation)"
+  ],
+  "validation": {
+    "shape": [
+      512,
+      4
+    ],
+    "driver_count": 2,
+    "supervised_positions": 1024,
+    "decoded": [
+      {
+        "tokens": [
+          101,
+          151,
+          6,
+          30
+        ],
+        "initial": [
+          40,
+          29
+        ],
+        "drivers": [
+          6,
+          30
+        ],
+        "composed": [
+          {
+            "state": [
+              29,
+              33
+            ],
+            "joint_class": 1802
+          },
+          {
+            "state": [
+              33,
+              50
+            ],
+            "joint_class": 2063
+          }
+        ],
+        "targets": [
+          0,
+          0,
+          1802,
+          2063
+        ],
+        "mask": [
+          false,
+          false,
+          true,
+          true
+        ]
+      },
+      {
+        "tokens": [
+          86,
+          139,
+          33,
+          18
+        ],
+        "initial": [
+          25,
+          17
+        ],
+        "drivers": [
+          33,
+          18
+        ],
+        "composed": [
+          {
+            "state": [
+              17,
+              42
+            ],
+            "joint_class": 1079
+          },
+          {
+            "state": [
+              42,
+              30
+            ],
+            "joint_class": 2592
+          }
+        ],
+        "targets": [
+          0,
+          0,
+          1079,
+          2592
+        ],
+        "mask": [
+          false,
+          false,
+          true,
+          true
+        ]
+      },
+      {
+        "tokens": [
+          79,
+          150,
+          24,
+          55
+        ],
+        "initial": [
+          18,
+          28
+        ],
+        "drivers": [
+          24,
+          55
+        ],
+        "composed": [
+          {
+            "state": [
+              28,
+              33
+            ],
+            "joint_class": 1741
+          },
+          {
+            "state": [
+              33,
+              13
+            ],
+            "joint_class": 2026
+          }
+        ],
+        "targets": [
+          0,
+          0,
+          1741,
+          2026
+        ],
+        "mask": [
+          false,
+          false,
+          true,
+          true
+        ]
+      }
+    ],
+    "array_sha256": [
+      "ec60a4044cb82880129fda338324ff64636a5d646e374d0eb44962ac1d86281a",
+      "752bab355a9945effdbcd8020368edf14821ff60fc3184f0028026b80d0ea927",
+      "d0772a1140056c3e6c3edbdcd51642f41157cbed1bd3036763818ac1b14887a7"
+    ]
+  },
+  "first_training_batch": {
+    "shape": [
+      32,
+      4
+    ],
+    "driver_count": 2,
+    "supervised_positions": 64,
+    "decoded": [
+      {
+        "tokens": [
+          112,
+          160,
+          53,
+          8
+        ],
+        "initial": [
+          51,
+          38
+        ],
+        "drivers": [
+          53,
+          8
+        ],
+        "composed": [
+          {
+            "state": [
+              38,
+              23
+            ],
+            "joint_class": 2341
+          },
+          {
+            "state": [
+              23,
+              26
+            ],
+            "joint_class": 1429
+          }
+        ],
+        "targets": [
+          0,
+          0,
+          2341,
+          1429
+        ],
+        "mask": [
+          false,
+          false,
+          true,
+          true
+        ]
+      },
+      {
+        "tokens": [
+          92,
+          138,
+          35,
+          44
+        ],
+        "initial": [
+          31,
+          16
+        ],
+        "drivers": [
+          35,
+          44
+        ],
+        "composed": [
+          {
+            "state": [
+              16,
+              17
+            ],
+            "joint_class": 993
+          },
+          {
+            "state": [
+              17,
+              44
+            ],
+            "joint_class": 1081
+          }
+        ],
+        "targets": [
+          0,
+          0,
+          993,
+          1081
+        ],
+        "mask": [
+          false,
+          false,
+          true,
+          true
+        ]
+      },
+      {
+        "tokens": [
+          79,
+          124,
+          51,
+          32
+        ],
+        "initial": [
+          18,
+          2
+        ],
+        "drivers": [
+          51,
+          32
+        ],
+        "composed": [
+          {
+            "state": [
+              2,
+              12
+            ],
+            "joint_class": 134
+          },
+          {
+            "state": [
+              12,
+              56
+            ],
+            "joint_class": 788
+          }
+        ],
+        "targets": [
+          0,
+          0,
+          134,
+          788
+        ],
+        "mask": [
+          false,
+          false,
+          true,
+          true
+        ]
+      }
+    ],
+    "array_sha256": [
+      "653744b2b02b2912812c5052e9299c04644051b74f5363d47675905ad4fa1ada",
+      "380faa33e1bb9581478522d9ff119fdde45e833d585b8979103595f4655fee3d",
+      "638105c3baa35648554c0dbeb7678a7fac55a94a7efca73ef4948208a4693f98"
+    ]
+  },
+  "training_stream_sha256": "b96424aadf804df9ca211fe535ee7f1b9828296396a1344bdad2346a176580df"
+}

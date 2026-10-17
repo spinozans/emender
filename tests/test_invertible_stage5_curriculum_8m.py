@@ -72,10 +72,12 @@ def test_runner_carries_optimizer_and_stops_on_first_failed_depth(tmp_path, monk
     monkeypatch.setattr(torch.cuda, 'synchronize', lambda: None)
     monkeypatch.setattr(runner, 'archive_pools', lambda out, seed: {d: d for d in runner.DEPTHS})
     monkeypatch.setattr(runner, 'padded_forward', lambda m, x: m.embed.weight[0, :2].expand(*x.shape, 2))
+    generated_lengths = []
     class Task:
         def __init__(self, p):
             pass
         def generate_batch(self, batch, length, rng):
+            generated_lengths.append((batch, length))
             return (np.zeros((batch, length), dtype=np.int64),
                     np.zeros((batch, length), dtype=np.int64), np.ones((batch, length), dtype=bool))
     monkeypatch.setattr(runner, 'InvertibleQuadraticTask', Task)
@@ -103,6 +105,8 @@ def test_runner_carries_optimizer_and_stops_on_first_failed_depth(tmp_path, monk
     result = json.loads((out / 'result.json').read_text())
     assert result['frontier'] == 4 and result['stopping_depth'] == 8
     assert result['total_steps'] == 3 and result['stop_reason'] == 'budget_exhausted'
+    assert generated_lengths == [(32, 6), (32, 10), (32, 10)]
+    assert result['input_tokens'] == 32 * (6 + 10 + 10)
     assert [s['steps_to_threshold'] for s in result['stages']] == [1, None]
     assert seen == [4, 4, 4, 8, 4, 8, 4, 8]
     assert len({s[0] for s in states}) == 1

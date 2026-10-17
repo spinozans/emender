@@ -1,0 +1,451 @@
+{
+  "arm": "gdn2",
+  "depth": 4,
+  "budget": 10000,
+  "threshold": 0.9,
+  "eval_every": 500,
+  "initialization": "independent scratch, seed 0",
+  "batches": 10000,
+  "input_tokens": 1920000,
+  "supervised_positions": 1280000,
+  "unpadded_shape": [
+    32,
+    6
+  ],
+  "padded_length": 16,
+  "overrides": [
+    "DEPTHS",
+    "STAGE_BUDGET",
+    "THRESHOLD",
+    "EVAL_EVERY",
+    "archive_pools (same X3 pool function, selected diagnostic depth)",
+    "InvertibleQuadraticTask (instrumented subclass, unchanged generation)"
+  ],
+  "validation": {
+    "shape": [
+      512,
+      6
+    ],
+    "driver_count": 4,
+    "supervised_positions": 2048,
+    "decoded": [
+      {
+        "tokens": [
+          62,
+          162,
+          33,
+          60,
+          2,
+          12
+        ],
+        "initial": [
+          1,
+          40
+        ],
+        "drivers": [
+          33,
+          60,
+          2,
+          12
+        ],
+        "composed": [
+          {
+            "state": [
+              40,
+              48
+            ],
+            "joint_class": 2488
+          },
+          {
+            "state": [
+              48,
+              25
+            ],
+            "joint_class": 2953
+          },
+          {
+            "state": [
+              25,
+              4
+            ],
+            "joint_class": 1529
+          },
+          {
+            "state": [
+              4,
+              53
+            ],
+            "joint_class": 297
+          }
+        ],
+        "targets": [
+          0,
+          0,
+          2488,
+          2953,
+          1529,
+          297
+        ],
+        "mask": [
+          false,
+          false,
+          true,
+          true,
+          true,
+          true
+        ]
+      },
+      {
+        "tokens": [
+          96,
+          169,
+          54,
+          48,
+          56,
+          56
+        ],
+        "initial": [
+          35,
+          47
+        ],
+        "drivers": [
+          54,
+          48,
+          56,
+          56
+        ],
+        "composed": [
+          {
+            "state": [
+              47,
+              41
+            ],
+            "joint_class": 2908
+          },
+          {
+            "state": [
+              41,
+              7
+            ],
+            "joint_class": 2508
+          },
+          {
+            "state": [
+              7,
+              24
+            ],
+            "joint_class": 451
+          },
+          {
+            "state": [
+              24,
+              29
+            ],
+            "joint_class": 1493
+          }
+        ],
+        "targets": [
+          0,
+          0,
+          2908,
+          2508,
+          451,
+          1493
+        ],
+        "mask": [
+          false,
+          false,
+          true,
+          true,
+          true,
+          true
+        ]
+      },
+      {
+        "tokens": [
+          106,
+          152,
+          49,
+          12,
+          43,
+          12
+        ],
+        "initial": [
+          45,
+          30
+        ],
+        "drivers": [
+          49,
+          12,
+          43,
+          12
+        ],
+        "composed": [
+          {
+            "state": [
+              30,
+              18
+            ],
+            "joint_class": 1848
+          },
+          {
+            "state": [
+              18,
+              0
+            ],
+            "joint_class": 1098
+          },
+          {
+            "state": [
+              0,
+              0
+            ],
+            "joint_class": 0
+          },
+          {
+            "state": [
+              0,
+              12
+            ],
+            "joint_class": 12
+          }
+        ],
+        "targets": [
+          0,
+          0,
+          1848,
+          1098,
+          0,
+          12
+        ],
+        "mask": [
+          false,
+          false,
+          true,
+          true,
+          true,
+          true
+        ]
+      }
+    ],
+    "array_sha256": [
+      "a1e0070b459916fbe4ed73d07d84755e5d1011510d30c2b94815388bff5dfba9",
+      "e8e1148126370e4fd389f3580d2b6903b3bb263db70158f2d579adcb01ecb290",
+      "fa92e3094f0d6111355cdca9ae80f31b6a19d18cb09941d1f875f4b17369c1b0"
+    ]
+  },
+  "first_training_batch": {
+    "shape": [
+      32,
+      6
+    ],
+    "driver_count": 4,
+    "supervised_positions": 128,
+    "decoded": [
+      {
+        "tokens": [
+          112,
+          160,
+          53,
+          8,
+          35,
+          44
+        ],
+        "initial": [
+          51,
+          38
+        ],
+        "drivers": [
+          53,
+          8,
+          35,
+          44
+        ],
+        "composed": [
+          {
+            "state": [
+              38,
+              23
+            ],
+            "joint_class": 2341
+          },
+          {
+            "state": [
+              23,
+              26
+            ],
+            "joint_class": 1429
+          },
+          {
+            "state": [
+              26,
+              2
+            ],
+            "joint_class": 1588
+          },
+          {
+            "state": [
+              2,
+              13
+            ],
+            "joint_class": 135
+          }
+        ],
+        "targets": [
+          0,
+          0,
+          2341,
+          1429,
+          1588,
+          135
+        ],
+        "mask": [
+          false,
+          false,
+          true,
+          true,
+          true,
+          true
+        ]
+      },
+      {
+        "tokens": [
+          92,
+          138,
+          51,
+          32,
+          22,
+          18
+        ],
+        "initial": [
+          31,
+          16
+        ],
+        "drivers": [
+          51,
+          32,
+          22,
+          18
+        ],
+        "composed": [
+          {
+            "state": [
+              16,
+              33
+            ],
+            "joint_class": 1009
+          },
+          {
+            "state": [
+              33,
+              39
+            ],
+            "joint_class": 2052
+          },
+          {
+            "state": [
+              39,
+              51
+            ],
+            "joint_class": 2430
+          },
+          {
+            "state": [
+              51,
+              35
+            ],
+            "joint_class": 3146
+          }
+        ],
+        "targets": [
+          0,
+          0,
+          1009,
+          2052,
+          2430,
+          3146
+        ],
+        "mask": [
+          false,
+          false,
+          true,
+          true,
+          true,
+          true
+        ]
+      },
+      {
+        "tokens": [
+          79,
+          124,
+          25,
+          29,
+          43,
+          54
+        ],
+        "initial": [
+          18,
+          2
+        ],
+        "drivers": [
+          25,
+          29,
+          43,
+          54
+        ],
+        "composed": [
+          {
+            "state": [
+              2,
+              47
+            ],
+            "joint_class": 169
+          },
+          {
+            "state": [
+              47,
+              44
+            ],
+            "joint_class": 2911
+          },
+          {
+            "state": [
+              44,
+              13
+            ],
+            "joint_class": 2697
+          },
+          {
+            "state": [
+              13,
+              23
+            ],
+            "joint_class": 816
+          }
+        ],
+        "targets": [
+          0,
+          0,
+          169,
+          2911,
+          2697,
+          816
+        ],
+        "mask": [
+          false,
+          false,
+          true,
+          true,
+          true,
+          true
+        ]
+      }
+    ],
+    "array_sha256": [
+      "6c51f61ff35c48802b6a8c05dbfa9a8e809d76c16307aeb9b61a0e2ba117f5bd",
+      "4cc6996f104fd01e9e4879c9e9ad8bd02f738fd159ef7515e86dcb4a7310f2f5",
+      "6127d138e61e4c4ca56493616b90d3d98f591d7115fcd5e3e8dc597a22c8f861"
+    ]
+  },
+  "training_stream_sha256": "7d5508129f599c6e5c8cef5dd0ad76e881a7ca4a3cdbd865ae1a94cebdc29096"
+}

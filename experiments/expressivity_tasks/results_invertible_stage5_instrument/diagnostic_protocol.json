@@ -1,0 +1,15 @@
+{
+  "base_commit": "ca426f1c34b40aef16a84d26296d992bcae0fdf3",
+  "task": "/home/erikg/emender-scratch/fix-fanout/taskX5D-debug.md",
+  "authority": "Live supervisor approval before diagnostic launch; this portable transcript receipt was written after launch, not claimed as a preregistration timestamp",
+  "approval": "Approved - interpretation (a), the budget/task-reconciliation, with your exact proposed budgets: independent scratch T1 runs at X3-matched stopping (E97 budget 60,000, GDN2 budget 18,500, threshold 97% for the match), then independent scratch T2 and T4 at 10,000 each. The verdict framing is fixed by the audit: NO task/plumbing bug - the stage budget was the binding constraint (my miscalibration, the third of the series: X3's own receipts show one-step learning needs 13,750-54,750 updates, so a flat 10K-per-stage budget under-trains every stage; the X5 frontier '<4' is an under-training artifact, not a capability frontier). If T1 reproduces the X3 trajectory shape at the matched budgets AND T2/T4 remain low at 10K, close X5D as no-bug + budget-reconciliation, with the runner-equivalence receipt that the X5 runner reproduces X3's known behavior. The carry-forward curriculum (b) is NOT part of this diagnostic - it is the subsequent relaunch, which will return to the supervisor with the corrected stage-budget design (threshold-advancement with per-stage budgets on the order of the measured learning times, e.g. 60K/stage, global cap scaled accordingly) for approval before the six runs relaunch. Proceed.",
+  "diagnostic_seed": 0,
+  "arms": ["e97", "gdn2"],
+  "depth_order": [1, 2, 4],
+  "execution": "serial, one exclusively leased local GPU; independent scratch initialization for every arm/depth; no carry-forward curriculum",
+  "T1": {"budgets": {"e97": 60000, "gdn2": 18500}, "threshold": 0.97, "eval_every": 250},
+  "T2_T4": {"budget": 10000, "threshold": 0.9, "eval_every": 500},
+  "six_original_X5_runs_relaunched": false,
+  "production_runner_changed": false,
+  "claim_limit": "Low accuracy at 10K is a budget-conditioned observation, not proof that longer training succeeds or fails at T2/T4. No capability frontier is established."
+}
