@@ -1,0 +1,193 @@
+{
+  "task": "X5cP",
+  "name": "e97_seed2",
+  "depth": 4,
+  "examples_per_position": 512,
+  "selection": "existing stage.best; accuracy descending, loss ascending; no re-selection",
+  "weights": "ScheduleFree eval x; model.eval(); no optimizer transform or training",
+  "checkpoint": {
+    "path": "/home/erikg/emender/experiments/expressivity_tasks/results_invertible_stage5c_growth_8m/e97_seed2/step_102000_T4_s102000.pt",
+    "sha256": "cb72cdc9317012ecec7e0f501edf3cc4c82b80f7bbfb6f6bc47e07d6260f58c0",
+    "step": 102000,
+    "depth": 4,
+    "stage_step": 102000,
+    "optimizer_state_saved": true
+  },
+  "recorded_final_checkpoint": {
+    "path": "/home/erikg/emender/experiments/expressivity_tasks/results_invertible_stage5c_growth_8m/e97_seed2/step_104000_T4_s104000.pt",
+    "sha256": "ac3a261b3d12642958c2df22ca17ca15d66e82361f413ab5b5e954169ee47531",
+    "step": 104000,
+    "depth": 4,
+    "stage_step": 104000,
+    "optimizer_state_saved": true
+  },
+  "data": {
+    "path": "experiments/expressivity_tasks/results_invertible_stage5c_growth_8m/e97_seed2/frozen_validation.npz",
+    "sha256": "7d0ca54560fc9bee3ee03524ce7e7b09bea651b88e7b0910b8ff048027a80705",
+    "T4_array_sha256": [
+      "f8ceec8598c10da4746e38b4f03e66385c4a761eec3d95637e90cdb2c3d40286",
+      "22a7c382c01b3da4ff55b8f48b9b3978d35b236496ce15cf9209b9c2f5bcedf3",
+      "fa92e3094f0d6111355cdca9ae80f31b6a19d18cb09941d1f875f4b17369c1b0"
+    ]
+  },
+  "sources": {
+    "experiments/expressivity_tasks/results_invertible_stage5c_growth_8m/e97_seed2/result.json": "62ac7d14a1f3f1185773bdce40255243ed56775c6da411209b08a3be97d95cc0",
+    "experiments/expressivity_tasks/results_invertible_stage5c_growth_8m/e97_seed2/validation.json": "6c465df1379f44f4b33d8560399e8136b7697e0af59493fabef16aa6dffa1e93",
+    "experiments/expressivity_tasks/results_invertible_stage5c_growth_8m/e97_seed2/config.json": "e508e3f082900b69e2e5a45462c4a281a00af0599e68f70252fd45dc81777786",
+    "experiments/expressivity_tasks/results_invertible_stage5c_growth_8m/e97_seed2/data_receipt.json": "8c7b981a5d841c24b17a295eb1a8f4d220cf92c7bf8e21ec0106f580e9ea4dcd",
+    "/home/erikg/emender/experiments/expressivity_tasks/eval_invertible_stage5c_positions.py": "e3887ea8964d2dc0d5b53031d27aacb3d9b0cdc47ede41f005f1dcfaf38befdd",
+    "experiments/expressivity_tasks/run_invertible_stage3_8m.py": "0cdb079c88d87d85ae3b6874e2e8d16530264bd54c2f0f250f6d7f57a0e0f65d",
+    "experiments/expressivity_tasks/run_invertible_stage2.py": "223adc88b6ed3e179b7a490f8c4ca065aa2d66f83082aef1218d2e163a2b1997",
+    "ndm/models/hybrid_ladder.py": "0e10ee82942ba519af98e50a155d1c19509c6e995342b566538563b4f7e311c9"
+  },
+  "runtime": {
+    "host": "lambda01",
+    "python": "3.12.3",
+    "torch": "2.9.1+cu128",
+    "cuda": "12.8",
+    "gpu": "NVIDIA RTX 6000 Ada Generation",
+    "CUDA_VISIBLE_DEVICES": "0",
+    "source_commit": "7f252b4ba3cb194f031b055e06a163f7dd926cb9",
+    "deterministic_algorithms": true,
+    "batch": 32,
+    "forward_batches": 16,
+    "precision": "bf16 autocast, fp32 parameters",
+    "padding": "causal right-pad to16, slice before metrics"
+  },
+  "coordinate_definition": "decode the same joint argmax as x=token//61, y=token%61; exclude invalid tokens",
+  "positions": [
+    {
+      "driver_position": 1,
+      "token_index": 2,
+      "correct": 511,
+      "count": 512,
+      "x_correct": 511,
+      "y_correct": 511,
+      "out_of_range": 0,
+      "loss": 0.017285647290895503
+    },
+    {
+      "driver_position": 2,
+      "token_index": 3,
+      "correct": 1,
+      "count": 512,
+      "x_correct": 21,
+      "y_correct": 6,
+      "out_of_range": 0,
+      "loss": 8.217255430296063
+    },
+    {
+      "driver_position": 3,
+      "token_index": 4,
+      "correct": 0,
+      "count": 512,
+      "x_correct": 7,
+      "y_correct": 11,
+      "out_of_range": 0,
+      "loss": 8.220816817134619
+    },
+    {
+      "driver_position": 4,
+      "token_index": 5,
+      "correct": 1,
+      "count": 512,
+      "x_correct": 11,
+      "y_correct": 11,
+      "out_of_range": 0,
+      "loss": 8.221745574846864
+    }
+  ],
+  "aggregate": {
+    "correct": 513,
+    "count": 2048,
+    "x_correct": 550,
+    "y_correct": 539,
+    "terminal_correct": 1,
+    "terminal_count": 512,
+    "post_suffix7_correct": 0,
+    "post_suffix7_count": 0,
+    "out_of_range": 0,
+    "accuracy": 0.25048828125,
+    "loss": 6.1692758202552795,
+    "x_accuracy": 0.2685546875,
+    "y_accuracy": 0.26318359375,
+    "terminal_accuracy": 0.001953125,
+    "post_suffix7_accuracy": null,
+    "suffix_floor": 0.0002687449610319806,
+    "suffix_floor_percent": 0.026874496103198066
+  },
+  "reconciliation": {
+    "position_sums": {
+      "correct": 513,
+      "count": 2048,
+      "x_correct": 550,
+      "y_correct": 539,
+      "out_of_range": 0
+    },
+    "best_count_differences": {},
+    "best_counts_match": true,
+    "best_loss_delta": 0.0,
+    "best_loss_matches_at_1e-6": true,
+    "recorded_best": {
+      "correct": 513,
+      "count": 2048,
+      "x_correct": 550,
+      "y_correct": 539,
+      "terminal_correct": 1,
+      "terminal_count": 512,
+      "post_suffix7_correct": 0,
+      "post_suffix7_count": 0,
+      "out_of_range": 0,
+      "accuracy": 0.25048828125,
+      "loss": 6.1692758202552795,
+      "x_accuracy": 0.2685546875,
+      "y_accuracy": 0.26318359375,
+      "terminal_accuracy": 0.001953125,
+      "post_suffix7_accuracy": null,
+      "suffix_floor": 0.0002687449610319806,
+      "suffix_floor_percent": 0.026874496103198066,
+      "stage_step": 102000,
+      "step": 102000,
+      "checkpoint": {
+        "path": "/home/erikg/emender/experiments/expressivity_tasks/results_invertible_stage5c_growth_8m/e97_seed2/step_102000_T4_s102000.pt",
+        "sha256": "cb72cdc9317012ecec7e0f501edf3cc4c82b80f7bbfb6f6bc47e07d6260f58c0",
+        "step": 102000,
+        "depth": 4,
+        "stage_step": 102000,
+        "optimizer_state_saved": true
+      }
+    },
+    "recorded_final": {
+      "correct": 511,
+      "count": 2048,
+      "x_correct": 550,
+      "y_correct": 539,
+      "terminal_correct": 0,
+      "terminal_count": 512,
+      "post_suffix7_correct": 0,
+      "post_suffix7_count": 0,
+      "out_of_range": 0,
+      "accuracy": 0.24951171875,
+      "loss": 6.16822013258934,
+      "x_accuracy": 0.2685546875,
+      "y_accuracy": 0.26318359375,
+      "terminal_accuracy": 0.0,
+      "post_suffix7_accuracy": null,
+      "suffix_floor": 0.0002687449610319806,
+      "suffix_floor_percent": 0.026874496103198066
+    },
+    "best_minus_final_counts": {
+      "correct": 2,
+      "count": 0,
+      "x_correct": 0,
+      "y_correct": 0,
+      "out_of_range": 0,
+      "terminal_correct": 1,
+      "terminal_count": 0,
+      "post_suffix7_correct": 0,
+      "post_suffix7_count": 0
+    },
+    "best_minus_final_loss": 0.001055687665939331,
+    "position_mean_loss_delta": 4.71368304388875e-08
+  }
+}
