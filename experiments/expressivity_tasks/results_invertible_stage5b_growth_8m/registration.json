@@ -1,0 +1,118 @@
+{
+  "registered_at": 1792248299.3800128,
+  "base_commit": "ad40bcebb8c0e70be898333e53ef0d4664854217",
+  "task": "/home/erikg/emender-scratch/fix-fanout/taskX5b-grow.md",
+  "arms": {
+    "e97": 9900800,
+    "gdn2": 9887056
+  },
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "depths": [
+    4,
+    8,
+    16,
+    32,
+    64,
+    128
+  ],
+  "threshold": 0.9,
+  "eval_every": 500,
+  "stage_safety_ceiling": 500000,
+  "global_safety_cap": 2000000,
+  "safety_policy": "ceilings are infinite-loop guards, never evidence of stagnation or architecture incapacity",
+  "stagnation": {
+    "window_updates": 2000,
+    "disjoint": true,
+    "best_val_gain_absolute_lt": 0.001,
+    "relative_mean_train_loss_decrease_lt": 0.001,
+    "consecutive_comparisons": 2,
+    "earliest_stop_updates": 6000,
+    "definition": "Cumulative best validation accuracy at successive 2K boundaries; mean training CE in each disjoint window. Joint plateau compares each to the preceding window. Negative improvements count plateau. Either signal meeting its minimum resets the consecutive count. Threshold crossing takes priority over all stops.",
+    "supervisor_binding": "Approved before launch via contact_supervisor: disjoint 2000-update windows, two consecutive comparisons, earliest 6000; safety stops not stagnation."
+  },
+  "recipe": {
+    "batch": 32,
+    "lr": 0.001,
+    "optimizer": "AdamWScheduleFree",
+    "betas": [
+      0.9,
+      0.95
+    ],
+    "weight_decay": 0.01,
+    "clip": 1,
+    "warmup": 0,
+    "vocab": 3721,
+    "p": 61,
+    "precision": "bf16 autocast; fp32 parameters",
+    "initialization": "six independent scratch runs",
+    "continuity": "same model, optimizer and training RNG across stages",
+    "data": "fresh procedural at current depth; X3 frozen val pools; validation-only selection"
+  },
+  "checkpoint_policy": {
+    "rolling_every": 1000,
+    "best": "best-val chain per stage, bound by checkpoint hashes",
+    "boundaries": "entry and exit every stage; full optimizer + NumPy/Torch/CUDA RNG",
+    "capacity": "existing X5 prune below 400GiB; retain all boundaries, each stage best, latest, every10K; audited pruning"
+  },
+  "retention": "current and all lower registered depths at entry, every500, every exit",
+  "growth_receipts": [
+    "training.jsonl",
+    "validation.json",
+    "stagnation_window in validation rows",
+    "transitions.jsonl",
+    "stages.json",
+    "growth_curve.json",
+    "result.json"
+  ],
+  "references": {
+    "suffix_floor_percent": 0.026874496103198066,
+    "marginal_nats": 8.221747728
+  },
+  "logistics": {
+    "detach": "nohup setsid per run; independent exclusive heartbeat lease; DONE or FAIL marker per run",
+    "markers": "markers/{e97,gdn2}_seed{0,1,2}.{DONE,FAIL}",
+    "watcher": "scripts/watch_invertible_stage5b_growth.py",
+    "watcher_interval_seconds": 900,
+    "watcher_log": "receipts/completion_watcher.log",
+    "wake": "Supervisor-side supervised watcher exits after six DONE, or immediately nonzero on FAIL/dead PID; supervisor arms session wake. No wg services used."
+  },
+  "throughput_calibration": {
+    "purpose": "operational estimate, no reported accuracy or learning inference",
+    "arms": [
+      "e97",
+      "gdn2"
+    ],
+    "seed": 0,
+    "depths": [
+      4,
+      8,
+      16,
+      32,
+      64,
+      128
+    ],
+    "warmup_updates_per_depth": 10,
+    "timed_updates_per_depth": 30,
+    "extra_gpu_leases": 1,
+    "retention_eval": "all lower val depths timed, scores discarded",
+    "checkpoint_timing": "save/hash timed then payload removed",
+    "projection": "2M updates at slowest depth rate, including eval+checkpoint every500, conservative against stage constraints; not a guaranteed walltime bound"
+  },
+  "source_sha256": {
+    "experiments/expressivity_tasks/run_invertible_stage5b_growth_8m.py": "8dcbb034355f7448368c9c02068e01855de44e5f858662766828596cf2414d85",
+    "experiments/expressivity_tasks/launch_invertible_stage5b_growth_8m.sh": "8b059d5d1d1aa130bd6b7eb58226a4aaf434c4e074715d833f5966f2ac664ac4",
+    "experiments/expressivity_tasks/benchmark_invertible_stage5b_growth.py": "ddedc0a88e23507c958a37d28ca9ef462fccf869ae19f8f2f34131340f9862f6",
+    "experiments/expressivity_tasks/run_invertible_stage5_curriculum_8m.py": "a24b6272347f953db67f880ce3730445c0e61015e21d3b16affb48e09a1f018f",
+    "experiments/expressivity_tasks/run_invertible_stage3_8m.py": "0cdb079c88d87d85ae3b6874e2e8d16530264bd54c2f0f250f6d7f57a0e0f65d",
+    "experiments/expressivity_tasks/run_invertible_stage2.py": "223adc88b6ed3e179b7a490f8c4ca065aa2d66f83082aef1218d2e163a2b1997",
+    "experiments/expressivity_tasks/tasks/invertible_quadratic.py": "874966ed85339d3e879c4fd57e52be5be09735ec628c0b2f4dd325e990d57119",
+    "scripts/watch_invertible_stage5b_growth.py": "abbec8a99baa658e92b58bf164a97840dde164891ee02457c49f0edb55d234d1",
+    "scripts/gpu_lease.sh": "553cd9ab764e137fc4e33b7c20eeeda1b2a13f47870f5f4b679f153c68feb27f",
+    "ndm/models/hybrid_ladder.py": "0e10ee82942ba519af98e50a155d1c19509c6e995342b566538563b4f7e311c9"
+  },
+  "claims": "observations only; no superiority claims before completed growth curves; local single-GPU task probes, no DiLoCo/Slurm conformance; R16 evidence discipline only"
+}
