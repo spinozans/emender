@@ -1,6 +1,6 @@
 # X4 — released 1.3B pair, matched lr 1e-3
 
-Status: **incomplete_fail_closed**.
+Status: **complete**.
 
 Named reference throughout: **marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874%**. Task-spec shorthand `8.224` was corrected before launch; it is not ln(3721).
 Loss below the marginal-optimal reference indicates predictive signal, not alone learned deep computation. Full-vocabulary argmax exact joint class61*x+y; invalid classes fail both coordinates. All table accuracy units are percent; CE is nats.
@@ -217,38 +217,94 @@ Fresh released weights and cleared AdamW states, not pilot continuation. Both ar
 
 | Arm / LR | Best val % | Val CE | Test1x % / CE | x4 % / CE | x8 % / CE | Stop updates | Named references |
 |---|---:|---:|---:|---:|---:|---|---|
+| e97 / 0.001 | 0.290934% ± 0.081750% | 8.187417 ± 0.004465 | 0.268046% ± 0.090547% / 8.188895 ± 0.005370 | 0.088755% ± 0.022277% / 8.222450 ± 0.000761 | 0.056330% ± 0.010493% / 8.227873 ± 0.000715 | [10000, 10750, 10500] | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
+| gdn2 / 0.001 | 0.237528% ± 0.286241% | 8.222555 ± 0.050120 | 0.227356% ± 0.290923% / 8.223262 ± 0.049952 | 0.078710% ± 0.074176% / 8.267019 ± 0.012408 | 0.055313% ± 0.038397% / 8.274224 ± 0.006709 | [10000, 10000, 12000] | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
 
 ## Per-seed selected results
 
 | Run | Best val % / CE | Selected | Stop / reason | Test1x % / CE | x4 % / CE | x8 % / CE | Named references |
 |---|---:|---:|---|---:|---:|---:|---|
-| headline_e97_seed0 | not_completed | — | — | — | — | — | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
-| headline_e97_seed1 | not_completed | — | — | — | — | — | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
-| headline_e97_seed2 | not_completed | — | — | — | — | — | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
-| headline_gdn2_seed0 | not_completed | — | — | — | — | — | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
-| headline_gdn2_seed1 | not_completed | — | — | — | — | — | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
-| headline_gdn2_seed2 | not_completed | — | — | — | — | — | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
+| headline_e97_seed0 | 0.254822% / 8.190513 | 9250 | 10000 / plateau | 0.233459% / 8.192425 | 0.069809% / 8.223181 | 0.048637% / 8.228573 | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
+| headline_e97_seed1 | 0.233459% / 8.189439 | 10500 | 10750 / plateau | 0.199890% / 8.191545 | 0.083160% / 8.222506 | 0.052071% / 8.227902 | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
+| headline_e97_seed2 | 0.384521% / 8.182298 | 10000 | 10500 / plateau | 0.370789% / 8.182716 | 0.113297% / 8.221662 | 0.068283% / 8.227144 | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
+| headline_gdn2_seed0 | 0.086975% / 8.246042 | 10000 | 10000 / plateau | 0.090027% / 8.245719 | 0.045776% / 8.273456 | 0.037575% / 8.278212 | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
+| headline_gdn2_seed1 | 0.057983% / 8.256618 | 3250 | 10000 / plateau | 0.030518% / 8.258045 | 0.026703% / 8.274886 | 0.028992% / 8.277981 | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
+| headline_gdn2_seed2 | 0.567627% / 8.165004 | 12000 | 12000 / plateau | 0.561523% / 8.166023 | 0.163651% / 8.252715 | 0.099373% / 8.266478 | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
 
 ## Matched-step panels and union of stopping steps
 
-Never train beyond a stop to fill a cell; pruned-before-required cells are unavailable, never imputed. Selection panels above are not equal-step comparisons.
+Never train beyond a stop to fill a cell; pruned-before-required cells are unavailable, never imputed. Fixed steps16000/18269 and20K–60K are not reached by any run. Selection panels above are not equal-step comparisons.
 
 | Run | Step | Test1x % / CE | x4 % / CE | x8 % / CE | Named references |
 |---|---:|---:|---:|---:|---|
+| headline_e97_seed0 | 1000 | 0.038147% / 8.238213 | 0.026321% / 8.237921 | 0.026131% / 8.238349 | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
+| headline_e97_seed0 | 4000 | 0.032043% / 8.227817 | 0.028229% / 8.232145 | 0.022697% / 8.232610 | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
+| headline_e97_seed0 | 8000 | 0.144958% / 8.196345 | 0.063705% / 8.223934 | 0.044823% / 8.228891 | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
+| headline_e97_seed0 | 10000 | 0.244141% / 8.187838 | 0.083542% / 8.221796 | 0.053978% / 8.227838 | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
+| headline_e97_seed0 | 10500 | unavailable: arm already stopped; no extra training | unavailable: arm already stopped; no extra training | unavailable: arm already stopped; no extra training | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
+| headline_e97_seed0 | 10750 | unavailable: arm already stopped; no extra training | unavailable: arm already stopped; no extra training | unavailable: arm already stopped; no extra training | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
+| headline_e97_seed0 | 12000 | unavailable: arm already stopped; no extra training | unavailable: arm already stopped; no extra training | unavailable: arm already stopped; no extra training | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
+| headline_e97_seed1 | 1000 | 0.045776% / 8.235784 | 0.024033% / 8.237443 | 0.024796% / 8.237838 | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
+| headline_e97_seed1 | 4000 | 0.028992% / 8.229621 | 0.026703% / 8.231875 | 0.029755% / 8.232651 | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
+| headline_e97_seed1 | 8000 | 0.093079% / 8.203170 | 0.040054% / 8.226018 | 0.033188% / 8.229651 | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
+| headline_e97_seed1 | 10000 | 0.195312% / 8.191131 | 0.067520% / 8.223450 | 0.047302% / 8.228463 | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
+| headline_e97_seed1 | 10500 | 0.199890% / 8.191545 | 0.083160% / 8.222506 | 0.052071% / 8.227902 | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
+| headline_e97_seed1 | 10750 | 0.239563% / 8.190419 | 0.082397% / 8.222485 | 0.057411% / 8.228327 | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
+| headline_e97_seed1 | 12000 | unavailable: arm already stopped; no extra training | unavailable: arm already stopped; no extra training | unavailable: arm already stopped; no extra training | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
+| headline_e97_seed2 | 1000 | 0.030518% / 8.236677 | 0.026321% / 8.238790 | 0.024796% / 8.239426 | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
+| headline_e97_seed2 | 4000 | 0.039673% / 8.210585 | 0.040054% / 8.227917 | 0.029182% / 8.231318 | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
+| headline_e97_seed2 | 8000 | 0.285339% / 8.186957 | 0.086594% / 8.223213 | 0.060654% / 8.228416 | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
+| headline_e97_seed2 | 10000 | 0.370789% / 8.182716 | 0.113297% / 8.221662 | 0.068283% / 8.227144 | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
+| headline_e97_seed2 | 10500 | 0.392151% / 8.182751 | 0.107574% / 8.221289 | 0.070763% / 8.227613 | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
+| headline_e97_seed2 | 10750 | unavailable: arm already stopped; no extra training | unavailable: arm already stopped; no extra training | unavailable: arm already stopped; no extra training | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
+| headline_e97_seed2 | 12000 | unavailable: arm already stopped; no extra training | unavailable: arm already stopped; no extra training | unavailable: arm already stopped; no extra training | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
+| headline_gdn2_seed0 | 1000 | 0.025940% / 8.283833 | 0.024033% / 8.284862 | 0.022507% / 8.285512 | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
+| headline_gdn2_seed0 | 4000 | 0.038147% / 8.256615 | 0.025177% / 8.274883 | 0.031662% / 8.277300 | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
+| headline_gdn2_seed0 | 8000 | 0.042725% / 8.254222 | 0.035095% / 8.273309 | 0.030327% / 8.277201 | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
+| headline_gdn2_seed0 | 10000 | 0.090027% / 8.245719 | 0.045776% / 8.273456 | 0.037575% / 8.278212 | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
+| headline_gdn2_seed0 | 10500 | unavailable: arm already stopped; no extra training | unavailable: arm already stopped; no extra training | unavailable: arm already stopped; no extra training | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
+| headline_gdn2_seed0 | 10750 | unavailable: arm already stopped; no extra training | unavailable: arm already stopped; no extra training | unavailable: arm already stopped; no extra training | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
+| headline_gdn2_seed0 | 12000 | unavailable: arm already stopped; no extra training | unavailable: arm already stopped; no extra training | unavailable: arm already stopped; no extra training | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
+| headline_gdn2_seed1 | 1000 | 0.028992% / 8.282714 | 0.037003% / 8.286677 | 0.024605% / 8.286473 | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
+| headline_gdn2_seed1 | 4000 | 0.039673% / 8.256803 | 0.029373% / 8.274266 | 0.025940% / 8.278119 | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
+| headline_gdn2_seed1 | 8000 | 0.028992% / 8.251113 | 0.033951% / 8.275012 | 0.028801% / 8.278400 | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
+| headline_gdn2_seed1 | 10000 | 0.033569% / 8.252317 | 0.032043% / 8.272528 | 0.032234% / 8.275964 | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
+| headline_gdn2_seed1 | 10500 | unavailable: arm already stopped; no extra training | unavailable: arm already stopped; no extra training | unavailable: arm already stopped; no extra training | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
+| headline_gdn2_seed1 | 10750 | unavailable: arm already stopped; no extra training | unavailable: arm already stopped; no extra training | unavailable: arm already stopped; no extra training | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
+| headline_gdn2_seed1 | 12000 | unavailable: arm already stopped; no extra training | unavailable: arm already stopped; no extra training | unavailable: arm already stopped; no extra training | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
+| headline_gdn2_seed2 | 1000 | 0.030518% / 8.292104 | 0.024414% / 8.289998 | 0.026321% / 8.290459 | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
+| headline_gdn2_seed2 | 4000 | 0.090027% / 8.246507 | 0.043869% / 8.273535 | 0.035095% / 8.276771 | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
+| headline_gdn2_seed2 | 8000 | 0.363159% / 8.191889 | 0.100708% / 8.260084 | 0.068665% / 8.269830 | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
+| headline_gdn2_seed2 | 10000 | 0.454712% / 8.175762 | 0.125122% / 8.257415 | 0.083160% / 8.270125 | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
+| headline_gdn2_seed2 | 10500 | 0.477600% / 8.175132 | 0.138092% / 8.252799 | 0.084877% / 8.266014 | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
+| headline_gdn2_seed2 | 10750 | 0.526428% / 8.171138 | 0.138092% / 8.253031 | 0.084686% / 8.266835 | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
+| headline_gdn2_seed2 | 12000 | 0.561523% / 8.166023 | 0.163651% / 8.252715 | 0.099373% / 8.266478 | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
 
 ## Coordinates, depth-relevant post-suffix7, and cost
 
 | Run | x1x % | y1x % | Terminal1x % | Post7 1x % | Post7 x4 % | Post7 x8 % | Parameters | Real tokens | Train tokens/s | Wall seconds | Named references |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| headline_e97_seed0 | 2.438354% | 1.828003% | 0.000000% | 0.030924% | 0.025964% | 0.024991% | 1286589072 | 41600000 | 7556.1 | 5979.9 | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
+| headline_e97_seed1 | 2.362061% | 1.794434% | 0.000000% | 0.029297% | 0.026739% | 0.025952% | 1286589072 | 44720000 | 7463.2 | 6533.9 | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
+| headline_e97_seed2 | 2.484131% | 2.015686% | 0.000000% | 0.027669% | 0.031002% | 0.028067% | 1286589072 | 43680000 | 7736.0 | 6183.1 | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
+| headline_gdn2_seed0 | 2.432251% | 1.699829% | 0.000000% | 0.026042% | 0.024414% | 0.029028% | 1286713448 | 41600000 | 7911.5 | 5708.7 | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
+| headline_gdn2_seed1 | 2.464294% | 1.649475% | 0.000000% | 0.019531% | 0.024414% | 0.026721% | 1286713448 | 41600000 | 8175.5 | 5544.8 | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
+| headline_gdn2_seed2 | 2.728271% | 2.096558% | 0.000000% | 0.021159% | 0.031390% | 0.026144% | 1286713448 | 49920000 | 7582.1 | 7145.2 | marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874% |
 
 Real tokens include initialization, exclude pad overhead. Per-layer matrix-state geometry and flags are in configs. Seed-paired contrasts/counts and all full-vocabulary CE are retained in JSON.
 
+## Observed matched-lr reading
+
+All-three-seed selected test1x point estimate favors E97: E97 0.268046%, GDN2 0.227356%. Paired E97−GDN2 mean difference 0.040690 ± 0.200839 pp (sample SD): not an established architecture advantage. Their selected test1x CE means are 8.188895/8.223262 nats; post7 joint1x means are 0.029297%/0.022244%. Named references: marginal-optimal loss ln(3721) = 8.221748 nats; suffix floor 0.026874%. Read these with x4/x8 and matched-step panels, not as a best-seed or equal-step selection claim.
+
+Both arms' post7 scores remain near the suffix floor and terminal joint accuracy is zero for every seed. E97's below-marginal1x CE is predictive signal concentrated in early drivers, not evidence of successful deep recurrence; mean extrapolation CE is at/above the marginal reference for both arms.
+
 ## Interpretation across the X-series
 
-Incomplete/fail-closed: no final architecture conclusion is supported.
+The released-pair matched1e-3 measurements above must be read alongside X2b's matched5e-5 fine-tunes, not as an LR-invariant architecture verdict. X2b favored GDN2, whereas X4's small reversed point-estimate ordering is dominated by seed uncertainty; neither establishes practical deep-map computation. X2b used a1% train-window plateau threshold versus X4's calibrated0.1%, so the cross-stage change is not a controlled LR-only effect. X2's frozen128 training pool memorization is superseded as primary evidence by fresh-data X2b; X2c's failed3K rescue gates remain failed gates, not completed full runs. X3's symmetric nominal8M (measured9.90M/9.887M) tuned grid selects1e-3 for both architectures on p61; both best-grid and matched-LR readings remain near the suffix reference on post7/x4/x8. Its p13/p31 ladder shows easier-task signal without establishing deep invertible-map computation. Late one-step arithmetic successes do not certify arithmetic mastery at an earlier long-task plateau, and failed arithmetic controls block a depth-specific interpretation. X2b's single-seed tanh-removal contrast is exploratory, not a causal recurrent-nonlinearity result. Full pretrained vocabulary/AdamW fine-tunes and task-sized-vocabulary/ScheduleFree scratch runs are different experiment classes; raw scale comparisons are not architecture-only effects. Differences in recurrence state size, pretraining and optimization remain confounds. Loss departures below the named marginal-optimal reference show predictive signal but do not by themselves establish robust deep computation, universal expressivity, impossibility, or CMA causality. The calibrated task-observed stopping rule is not proof of eventual convergence.
 
 ## Receipts, storage, and validation
 
-Each run binds command, GPU lease/UUID, source checkpoint/args/runner hashes, optimizer freshness, paired frozen NPZ/input identities, every actual update/validation boundary, selected-before-test receipt, binary SHA256 and required-set pruning ledgers. NVMe weights are local off-repo artifacts; textual evidence and pools stay in the tracked results root. No old result roots modified. See receipts/cpu_tests.txt, launch_commit.json, environment.txt, final_audit.json and validation_commands.txt. Independent acceptance review remains required.
+Each run binds command, GPU lease/UUID, source checkpoint/args/runner hashes, optimizer freshness, paired frozen NPZ/input identities, every actual update/validation boundary, selected-before-test receipt, binary SHA256 and required-set pruning ledgers. NVMe weights are local off-repo artifacts; textual evidence and pools stay in the tracked results root. No old result roots modified. See receipts/cpu_tests.txt, receipts/cpu_tests_final.txt, receipts/launch_commit.json, receipts/environment.txt, receipts/final_audit.json and receipts/validation_commands.txt. Training/evaluation sources remained identical to the prelaunch commit throughout; report-generation wording alone was refined after launch. Final audit replays all six stops, window means, selected-before-test chronology, exact observation counts and required checkpoint hashes; all six training and six cross-evaluation processes exited0. No capacity prune was needed (NVMe stayed above400GiB free). Independent acceptance review remains required.
 
 Local lambda01; six exclusive GPU leases explicitly approved; no Slurm, Frontier, or WorksGood service. Resilient DiLoCo requirement IDs: not applicable (no resilient behavior changed).

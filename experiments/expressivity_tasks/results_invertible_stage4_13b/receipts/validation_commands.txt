@@ -1,0 +1,37 @@
+X4 local lambda01 validation and execution record (not Frontier; no Slurm/WorksGood).
+
+Base HEAD: 8ea0c761f234e0a4d535bf463d7ef55ddcbda024; initial worktree clean.
+Preregistered and pushed BEFORE training: c849812c (launch_commit.json binds full SHA and remote main).
+
+CUDA_VISIBLE_DEVICES='' /usr/bin/python3 -m pytest -q tests/test_invertible_stage4_13b.py tests/test_invertible_stage2.py tests/test_invertible_stage2c.py tests/test_invertible_stage3_8m.py tests/test_aggregate_invertible_stage3_8m.py tests/test_invertible_quadratic.py tests/test_e97_facade.py
+PASS: 110 tests before launch (67.04s); final rerun 110 passed (69.38s), including six new X4 tests. See cpu_tests.txt and cpu_tests_final.txt.
+
+/usr/bin/python3 -m experiments.expressivity_tasks.invertible_stage4_13b register
+PASS: immutable amendment5.json registered before launch, frozen hashes sourced from X2.
+
+bash experiments/expressivity_tasks/launch_invertible_stage4_13b.sh train
+PASS: six fresh full fine-tunes, exclusive single-GPU leases, matched1e-3. All six exit0. E97 stops10000/10750/10500; GDN2 stops10000/10000/12000; all first eligible calibrated plateaus. No cap hit, no cancellation, no resume.
+
+bash experiments/expressivity_tasks/launch_invertible_stage4_13b.sh eval
+PASS: six cross-stop evaluation processes exit0; no training. All union-stop cells evaluated or explicitly unavailable because the arm had already stopped. No pruned-before-required cells occurred.
+
+CUDA_VISIBLE_DEVICES='' /usr/bin/python3 -m experiments.expressivity_tasks.invertible_stage4_13b report
+PASS: results_summary.json and X4-report.md, all3 seeds, sample SD/SEM, exact named marginal reference and suffix floor, selected/matched/x4/x8/post7 panels. Reporting-only wording refined after launch; no training/evaluation source changed.
+
+CUDA_VISIBLE_DEVICES='' /usr/bin/python3 -m experiments.expressivity_tasks.results_invertible_stage4_13b.receipts.audit_command
+PASS: all six actual update counters, strict first-plateau and loss-window replay, best-validation selection before test, selected/best-chain/fixed/stop/cross-stop checkpoint SHA256 and bytes, frozen NPZ/input hashes identical to X2/X2b/X2c/X3, source checkpoint/args rehash, exact metric counts/aggregates and all twelve exit codes. See final_audit.json and audit_output.txt.
+
+CUDA_VISIBLE_DEVICES='' /usr/bin/python3 -m compileall -q experiments/expressivity_tasks/run_invertible_stage2.py experiments/expressivity_tasks/aggregate_invertible_stage2.py experiments/expressivity_tasks/invertible_stage4_13b.py experiments/expressivity_tasks/results_invertible_stage4_13b/receipts/audit_command.py
+bash -n experiments/expressivity_tasks/launch_invertible_stage4_13b.sh
+cmp AGENTS.md CLAUDE.md
+cmp experiments/expressivity_tasks/run_invertible_stage2.py experiments/expressivity_tasks/results_invertible_stage4_13b/receipts/runner_at_launch.py
+git diff --check
+PASS: compilation, shell syntax, synchronized guides, unchanged launched runner and whitespace.
+The first prelaunch cached-diff whitespace check caught trailing spaces in raw nvidia-smi environment output; only environment.txt trailing whitespace was normalized before the successful preregistration commit/push. No training had launched at that check.
+
+nvidia-smi --query-gpu=index,uuid,memory.used,memory.total,utilization.gpu --format=csv
+bash scripts/gpu_lease.sh status
+df -h /home/erikg /mnt/nvme1n1
+PASS: all8 GPUs idle at4MiB/0%, no active leases. NVMe weights remained above400GiB free; no capacity pruning needed. Every checkpoint receipt binds absolute off-repo NVMe path and SHA256. No weights in tracked results root; no old roots modified. See gpu_final.txt, leases_final.txt, capacity_final.txt and checkpoint_storage.json.
+
+Scientific limits: three training seeds, large GDN2 seed variance; post7 near suffix floor and zero terminal accuracy; no successful deep-map computation or robust architecture separation established. Cross-stage LR readings also differ in plateau threshold. Resilient DiLoCo requirement IDs not applicable (no resilient behavior changed). Independent acceptance review remains required.
