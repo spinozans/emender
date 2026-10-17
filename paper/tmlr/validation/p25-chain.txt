@@ -1,0 +1,24 @@
++ typst compile --root . paper/main.typ paper/current.pdf
++ typst compile --root . --pdf-standard 1.5 --no-pdf-tags --pages 1,2 paper/tmlr/figures.typ /tmp/p25-figures.pdf
++ /tmp/p9-poppler/usr/bin/pdfseparate /tmp/p25-figures.pdf paper/tmlr/assets/figure-%d.pdf
++ node paper/figures/validate_assembly.js
++ node paper/tmlr/convert.mjs
+Converted 67 headings, 11 figures/tables, 13 amsthm statements; bibliography copied byte-for-byte.
++ bash paper/tmlr/build.sh
++ node paper/tmlr/verify.mjs
++ cat paper/tmlr/validation/p25-verify.txt
+Syntax Error: Suspects object is wrong type (boolean)
+PASS: 20 samples × 3 PDFs; exact numeric strings; 1290 long source fragments; identity and canonical-source guards.
+PASS: 352 complete math expressions; 293 attachments; 8 S primes in each PDF (2 in drawings).
+PASS: one compact Appendix A; scoped source categories, built-label destination page, and every register reference in each TMLR PDF.
+{"canonical":36,"submission":31,"preprint":31}
++ node --test paper/tmlr/appendix-order.test.mjs paper/tmlr/armor-audit.test.mjs paper/tmlr/author-rulings.test.mjs paper/tmlr/conversion.test.mjs paper/tmlr/expressivity.test.mjs paper/tmlr/growth-curriculum.test.mjs paper/tmlr/notation-audit.test.mjs paper/tmlr/register-appendix.test.mjs paper/tmlr/verify-symbols.test.mjs
++ node paper/tmlr/integration-audit.mjs
++ cat paper/tmlr/validation/p25-integration.txt
+PASS: exact P25 delta; all six prior empirical table bodies and seven table structures preserved; S5 definition unchanged; existing evidence, formal sources, production and CI unchanged.
+PASS: 36/31/31 pages; 352 expressions, 293 attachments, eight primes; 20 samples and 1290 long source fragments; references immediately before Appendix A.
++ node paper/tmlr/validation/p21-anonymity.mjs
+PASS: 31 extracted pages; anonymous visible author and metadata; 11 approved literature/documentation URI destinations (7 unique); empty XMP and embedded-file inventories; 26 embedded fonts.
+PASS: third-person literature citations retained; release and mirror identities variant-gated.
++ bash paper/tmlr/bundle-arxiv.sh
+Created arxiv-source.tar.gz (one identified main.tex master).

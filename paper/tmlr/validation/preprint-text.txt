@@ -782,6 +782,64 @@ limited predictive signal. Both arms’ post-seven-driver accuracy stays near th
 full-state accuracy is zero in every seed at all three depths. Mean extrapolation losses are at or above the
 reference. We call this marginal-like loss behavior, not an identiﬁed internal marginal-solution mechanism
 or successful deep recurrence.
+Delayed learning and the composition frontier
+A short run can miss learning altogether. In the instrumented one-step E97 run, validation accuracy stays
+near zero for roughly 20,000 updates (2.93% at update 20,000), then follows a clean S-curve to 97.85% at
+57,000 updates. This silent-then-ignite signature explains why a shallow training horizon can read as failure.
+It describes the learning curve, not its mechanism. Replaying the earlier stopping rule would have ended
+this successful run at update 10,000.
+The growth curriculum therefore uses an open horizon, advances only at 90% joint validation accuracy, and
+stops for registered stagnation rather than a ﬁxed training budget. Its 100,000-update stage-local ﬂoor is
+calibrated against the successful one-step replay, not a guarantee of later learning. The plateau streak resets
+through that ﬂoor. Two consecutive eligible comparisons of disjoint 2,000-update windows must each show
+both best-validation gain below 0.1 percentage points and relative mean-training-loss decrease below 0.1%;
+the earliest stop is update 104,000. Threshold advancement takes priority. Safety ceilings remain separate
+stop reasons; none ﬁred in these six runs.
+The scratch models retain the nominal 8 M conﬁgurations above, matched learning rate 1e-3 and seeds
+0/1/2, using Schedule-Free AdamW, fresh procedural training and frozen validation pools. The planned
+stages are 4, 8, 16, 32, 64 and 128 drivers, carrying weights, optimizer and training RNG between stages.
+All six learned solutions stopped by the registered stagnation rule at the initial four-driver stage, so no later
+stage was entered. E97 stopped at 190,000/104,000/104,000 updates and GDN2 at 324,000/372,000/204,000.
+Final joint validation accuracies were 25.15/25.00/24.95% for E97 and 75.00/74.80/50.05% for GDN2 in seed
+order: ranges of 24.95–25.15% and 50.05–75.00%. Every ﬁnal checkpoint had terminal accuracy 0/512. The
+suﬃx-only reference remains 0.026874% for initialization plus a proper driver suﬃx with at least two omitted
+drivers; it does not bound a recurrent model retaining the preﬁx. The uniform marginal loss reference remains
+8.221748 nats.
+The aggregate fractions suggest a frontier, but do not locate it. A frozen positional evaluation of the
+six existing best-validation checkpoints does (Table 5). Four drivers follow two unscored initial-coordinate
+tokens, processed causally without target feedback. Position 1 requires one application of the nonlinear map.
+Model Seed Position 1 Position 2 Position 3 Position 4
+E97 0 512 10 2 0
+E97 1 512 0 0 1
+E97 2 511 1 0 1
+GDN2 0 512 512 512 0
+GDN2 1 512 512 508 0
+GDN2 2 512 512 4 0
+Table 5: Four-driver curriculum: joint correct out of 512 at each position. Existing best-aggregate-validation
+checkpoints; one frozen positional evaluation per checkpoint, with no training or re-selection. Each position
+adds one nonlinear-map application. GDN2 reaches the 90% tracking threshold through position 3 in two
+seeds and position 2 in one; E97 through position 1 in all three. None reaches position 4. Best and ﬁnal
+checkpoints diﬀer: these counts are not ﬁnal scores or independent test results. Source: paper/results/in
+vertible_quadratic/growth/.
+17
+E97 tracks the ﬁrst application almost perfectly in every seed (511–512/512), then collapses at position 2
+(0–10/512). GDN2 tracks through position 3 in seeds 0/1 (512/512 and 508/512 there), but only through
+position 2 in seed 2 (4/512 at position 3). The four-application position remains unsolved in every run (0–
+1/512). Here tracking means at least the registered 90% accuracy level, not exact correctness. The shorthand
+does not erase partial-coordinate signal: E97 seed 0 has 338/512 ﬁrst-coordinate predictions correct at
+position 2 despite only 10/512 joint hits; GDN2 seed 2 has 105/512 ﬁrst-coordinate hits at position 3.
+These are pre-existing best-aggregate-validation checkpoints, selected by joint accuracy and then loss on ties,
+not selected anew by position. They use the same 512 frozen sequences per seed as training validation, not an
+independent test pool. E97 best seeds 1/2 each have one terminal hit, unlike their ﬁnal checkpoints; isolated
+hits do not solve the fourth application. Full counts, coordinate scores, losses, hashes and best-versus-ﬁnal
+reconciliation are retained in paper/results/invertible_quadratic/growth/.
+Together, ﬂat full-depth training leaves both architectures near the marginal reference, while the progressive-
+depth protocol reveals a composition frontier at its ﬁrst stage. The learned GDN2 solutions chain three
+sequential applications of the nonlinear map through the recurrence in two seeds and two in the third;
+the learned E97 solutions chain one. Neither reaches four. This is a ﬁnding about learned solutions un-
+der this training regime and protocol, not an architectural capacity limit or impossibility result, nor an
+identiﬁed internal mechanism. The positional receipts, rather than aggregate fractions alone, support this
+high-accuracy-depth reading.
 Every ﬁnite-state task admits a suﬃciently large one-hot linear-state representation; here each driver acts
 through a 3721-by-3721 permutation matrix. The benchmark tests learned eﬃciency at practical state
 sizes, not an impossibility for linear state. These ﬁndings establish neither architecture superiority in either
@@ -805,13 +863,14 @@ Length E97 GDN2
 2048 0.061 0.103
 4096 0.033 0.054
 8192 0.021 0.034
-Table 5: S5 capacity/long-horizon accuracy on the released pair. Full-vocabulary argmax accuracy, seed 42.
+Table 6: S5 capacity/long-horizon accuracy on the released pair. Full-vocabulary argmax accuracy, seed 42.
 GDN2 leads at every reported length on permutation composition, a task admitting linear state updates; both
 curves decay. ∗GDN2 completed one optimizer step at length 512 before the curriculum stage proved OOM-
 infeasible even at sub-batch 1; the length-512 point includes that completed update. Source: capacity/cap
 _{e97,gdn2}_s5_sweep.json and cap_gdn2_s5_train.json under paper/results/expressivity_1p3b/
 (E97 f1ed5615, GDN2 salvage 6f916843).
-Both capacity curves decline with length; held-out transitions remain weaker than seen ones. GDN2’s at-
+18
+Both capacity curves decline with length; held-out transitions remain weaker than seen ones. GDN2’s at-
 tempted length-512 curriculum stage was OOM-infeasible even at sub-batch 1, after one completed optimizer
 step. The next comparison should use a curriculum feasible for both models and additional seeds.
 Parameter-matched probes at 8 M
@@ -821,8 +880,7 @@ free AdamW, three seeds; GDN uses dim 640 to match parameter count). At S5 train
 the Emender reaches 0.7918, GDN 0.3552, and raw-write M2
 RNN-CMA 0.2157. The Emender starts at 0.79
 and declines to 0.42, 0.22, and 0.11 at T = 256, 512, 1024. On the solvable S3 control the Emender is at
-17
-1.0000 and GDN at 0.7185, and both raw-write variants stall in the 0.31–0.38 band. Each family runs its
+1.0000 and GDN at 0.7185, and both raw-write variants stall in the 0.31–0.38 band. Each family runs its
 default conﬁguration with no probe-speciﬁc hyperparameter search, which is the seeds-controlled companion
 to the current-pair measurements above.
 Model S3 T=128 S5 T=128 S5 T=256 S5 T=512
@@ -833,7 +891,7 @@ RNN-CMA 0.3124 0.2157 0.1120 0.0593
 M2
 RNN-paper 0.3773 0.1698 0.0884 0.0488
 random 0.1667 0.0083 0.0083 0.0083
-Table 6: State-tracking accuracy on the permutation-composition probes at parameter-matched 8 M scale.
+Table 7: State-tracking accuracy on the permutation-composition probes at parameter-matched 8 M scale.
 Mean over three seeds. S3 is the solvable-group control; S5 is the non-solvable NC1
 witness. The Emender
 separates from the linear-recurrent (GDN) and raw-write nonlinear matrix RNN (M2
@@ -860,7 +918,8 @@ per token.
 For a ﬁxed, state-independent schedule of CompositionalDepthDuality.GdnStepParams, gdn_state_chan
 nel_depth_bounded_in_time gives matrices A, C with ST = AS0 + C for every initial state (Lean writes
 H for this matrix). The theorem’s state-channel depth is zero under this ﬁxed, state-independent schedule.
-The permutation-matrix construction in Section 2 gives an exact S5 tracker in the general linear-state class.
+19
+The permutation-matrix construction in Section 2 gives an exact S5 tracker in the general linear-state class.
 The Lean bridge characterizes realizers in the formal GDN family under explicit assumptions. S5GDNBridg
 e.gdn_s5_realization_requires_per_token_action starts from zero state with a token-only parameter
 schedule and a decoder that recovers S5Tracker.run on every word. It also assumes that equal decoded
@@ -873,8 +932,7 @@ remains G3 in Section 10. The S5 word problem is NC1
 -complete. The complexity separation TC0
 ̸= NC1
 remains open, and no result here depends on it.
-18
-The ﬁnite-state tracker
+The ﬁnite-state tracker
 At ﬁxed width and precision the Emender is a ﬁnite-state machine, and the S5 word problem it is tested on
 is a concrete, fully speciﬁed ﬁnite-state target.
 • Finite-state ceiling at ﬁxed precision. At ﬁxed width and precision, every online recognizer of this kind
@@ -908,7 +966,8 @@ overwrite statement.
 A recurrent realization would carry the running group product in its own state. Open item O1 asks for a
 conﬁguration of the nonlinear update, an initial state and decoder, and an all-words trajectory proof realizing
 that computation.
-Split-gated E97 and GDN-2 cores
+20
+Split-gated E97 and GDN-2 cores
 The module SplitGatedDelta identiﬁes adjacent split-gated linear cores with diﬀerent decay placement.
 The identities are over abstract real-valued gate/key/state signatures.
 • Adjacent split-gated cores with diﬀerent decay placement. The GDN-2 linear core is the E97 linear core
@@ -919,8 +978,7 @@ nonlinearity, delta writes, and no scan-compatible state path (e97_split_gated_r
 ike_e88), while the GDN-2-style split erase/write resource has matrix state and delta-style writes but no
 temporal state nonlinearity and a scan-compatible linear state (gdn2_split_erase_write_is_scan_compa
 tible_linear_state).
-19
-The current pair therefore shares adjacent split-gated delta cores and diﬀers on the nonlinear state path and
+The current pair therefore shares adjacent split-gated delta cores and diﬀers on the nonlinear state path and
 decay placement, as well as geometry and input processing in the trained stacks. This identiﬁes the formal
 structural distinction relevant to the iterated-map hypothesis.
 Matched-signature delta-versus-raw-write separation
@@ -964,7 +1022,8 @@ the negative basin. The release threshold is T∗
 := λ|Si,j|; any counter-delta exceeding T∗
 in the opposite
 sign suﬃces. Lean: EmenderLatching.emender_latch_releases_on_counter_delta. The quantitative
-companion EmenderLatching.emender_latch_release_quantitative shows that if the counter-delta
+21
+companion EmenderLatching.emender_latch_release_quantitative shows that if the counter-delta
 exceeds the threshold by margin µ > 0, the post-update slot lies on the opposite side of the origin with
 magnitude at least tanh µ.
 Veriﬁcation of the formal artifact
@@ -975,8 +1034,7 @@ none of Lean’s escape hatches: no sorry, admit, added axiom, opaque declaratio
 gate is formal/lean/scripts/check_paper_core.sh; compiling ElmanProofs.PaperCore additionally
 checks elaboration of the proofs. The refreshed machine-extracted inventory is committed at paper/da
 ta/lean-trust-gate-theorems.json (857 named declarations, 723 user-written, 17 ﬁles; extraction
-20
-source commit e58ae937), including the split-gated, latching, duality, routing, Lipschitz, and E1H-deﬁnition
+source commit e58ae937), including the split-gated, latching, duality, routing, Lipschitz, and E1H-deﬁnition
 modules. Both the gate and extractor traverse the recursive local imports rather than a selected module
 allowlist. The checked project sources use Lean and Mathlib as their proof foundation.
 8 Repeated nonlinear maps in the wild
@@ -1016,7 +1074,8 @@ amax
 ) + Ed. Actuator saturation is a standard nonlinear-control con-
 cern (Khalil, 2002). A learned surrogate comparison could vary how often saturation determines subsequent
 decisions, measuring trajectory error, latency, and closed-loop stability across operating regimes.
-Signal processing
+22
+Signal processing
 Sigma–delta conversion
 A ﬁrst-order sigma–delta modulator accumulates an analog sample and feeds back a quantized output (Candy
 & Temes, 1992):
@@ -1025,8 +1084,7 @@ The residue rt is the state, xt is the sample, and the ﬁxed map is F(r, x) = r
 bit quantizer selects between two output levels. Its discontinuous output changes the residue used at the
 next step. A useful surrogate test would compare exact bitstream accuracy and ﬁltered signal quality near
 quantizer thresholds over long streams, varying state precision and representation.
-21
-Adaptive ﬁltering and gain control
+Adaptive ﬁltering and gain control
 Normalized LMS (Haykin, 2002) updates coeﬃcient state wt using regressor xt and desired sample dt:
 et = dt − wT
 t xt, wt+1 = wt + µxt
@@ -1066,7 +1124,8 @@ ate computation in generated form (Nye et al., 2021) (Wei et al., 2022). Nonline
 complementary place for that computation between observations and outputs. A useful study would vary
 the frequency of corrections and measure whether later responses use the revised information, alongside state
 size, generated-token budget, and response latency.
-Driven reservoirs
+23
+Driven reservoirs
 A standard echo-state network (Jaeger, 2001) uses
 ht+1 = tanh(Wht + Uut + b).
 With recurrent parameters ﬁxed, E97 also deﬁnes a driven nonlinear dynamical system, with state mixing
@@ -1076,8 +1135,7 @@ initial condition would connect the comparison to the echo-state property.
 Biological dynamics
 Genomic function depends on nonlinear interactions among sequence features, regulatory signals, and cellu-
 lar state. Enformer provides one example of using a nonlinear sequence model to integrate distal regulatory
-22
-information for cell-type-speciﬁc predictions (Avsec et al., 2021). Pangenomic datasets run to terabases per
+information for cell-type-speciﬁc predictions (Avsec et al., 2021). Pangenomic datasets run to terabases per
 study (Liao et al., 2023) (Guarracino et al., 2023) (Garrison et al., 2024), motivating eﬃcient nonlinear
 recurrence for long, structured inputs. A future study could ask whether recurrent memory can integrate se-
 quence features with changing regulatory signals and cellular context, evaluated through held-out expression
@@ -1108,7 +1166,8 @@ ror. The earliest formulation is Widrow and Hoﬀ’s least-mean-square rule (Wi
 writes the error between target and current output back into the weight vector of an adaptive linear ele-
 ment. Schmidhuber recast the same idea in a recurrent setting under the name fast-weight programmers
 (Schmidhuber, 1992): a slow controller emits keys and values that update a fast-weight matrix online, with
-the update being a correction against what the matrix currently predicts at the addressed slot. Schlag,
+24
+the update being a correction against what the matrix currently predicts at the addressed slot. Schlag,
 Irie, and Schmidhuber made the bridge to modern attention explicit (Schlag et al., 2021), showing that
 linear-transformer kernels with cumulative outer-product updates are fast-weight programmers with a raw
 additive write, and proposing the delta-rule write as a stability and capacity ﬁx. DeltaNet (Yang et al.,
@@ -1120,8 +1179,7 @@ Linear-state recurrent language models
 The dominant comparison cohort is the family of linear-state billion-parameter recurrent LMs surveyed in
 Section 2: Mamba (Gu & Dao, 2024) and Mamba2 (Dao & Gu, 2024) (selective SSMs); RetNet (Sun et al.,
 2023) (decayed linear attention); GLA (Yang et al., 2023) (gated linear attention); DeltaNet (Yang et al.,
-23
-2024b) (delta rule, linear in S); Gated DeltaNet (Yang et al., 2024a) (gated delta rule); RWKV-4/5/6/7 (Peng
+2024b) (delta rule, linear in S); Gated DeltaNet (Yang et al., 2024a) (gated delta rule); RWKV-4/5/6/7 (Peng
 et al., 2023) (Peng et al., 2025) (linear-state WKV / generalized delta rule with linear state); HGRN2 (Qin
 et al., 2024) (gated linear RNN with state expansion); MinGRU/MinLSTM (Feng et al., 2024) (input-only
 gates, linear scan); mLSTM/xLSTM-7B (Beck et al., 2025) (covariance update); Griﬃn/RecurrentGemma
@@ -1159,7 +1217,8 @@ Titans (Behrouz et al., 2025) uses an MLP memory with online gradient updates an
 nonlinear-state, but it interleaves attention layers and has not been evaluated as a pure recurrent model
 at Pile-class scale. Zeroth-order LSTM scaling (Chaubard & Kochenderfer, 2025) demonstrates 1 B-scale
 LSTM training under a non-gradient regime, outside the standard-gradient comparison drawn here.
-Classical LSTM and GRU provide the foundational gated nonlinear recurrences (Hochreiter & Schmidhuber,
+25
+Classical LSTM and GRU provide the foundational gated nonlinear recurrences (Hochreiter & Schmidhuber,
 1997). E97 explores a matrix-memory implementation organized around many independently addressed
 recurrent heads.
 10 Open questions
@@ -1168,8 +1227,7 @@ The current pair supplies one language-model training seed; the matched-rate inv
 three ﬁne-tuning seeds per arm. The current-pair S5 study has one seed. Common ﬁxed-step budgets and
 additional seeds would measure stability across optimization regimes. A feasible matched S5 curriculum
 would test the contribution of the length-512 memory limit encountered by GDN2.
-24
-Held-out tokenizer-invariant bpb and downstream evaluation are the next language-model measurements.
+Held-out tokenizer-invariant bpb and downstream evaluation are the next language-model measurements.
 Recovering the original CMA winner logs would also supply generation-zero ﬁtness, spread, and total search
 eﬀort for the carried-in conﬁgurations (U3.1). These records would support a matched-total-budget search
 comparison.
@@ -1202,7 +1260,8 @@ metadata should be resolved during submission preparation.
 Emender makes recurrent memory a site of ongoing computation. Each input corrects the stored state
 and transforms what the next step receives. Running many small heads in parallel makes this sequential
 computation practical: E97 trains through 150.8 B Pile tokens at 1.3 B parameters and reaches comparable
-training loss to GDN2. A Frontier continuation extends the same architecture to 513.0 B accepted tokens,
+26
+training loss to GDN2. A Frontier continuation extends the same architecture to 513.0 B accepted tokens,
 with the recorded rank-0 loss falling to 2.2798 nats/token.
 The invertible nonlinear-map study ﬁnds no robust trained-depth separation at matched 1e-3 across three
 seeds. E97 has lower extrapolation cross-entropy in every seed at 4× and 8× depth, while both classes
@@ -1211,8 +1270,7 @@ comparison, a meaningful success on a task with an exact linear-state representa
 observations leave learned nonlinear-composition eﬃciency open. The formal state-channel results make the
 architectural distinction precise: repeated nonlinear composition in E97, and an aﬃne GDN fold under a
 ﬁxed, state-independent schedule.
-25
-These ﬁndings support studying nonlinear memory as a computational resource. The next step is to test that
+These ﬁndings support studying nonlinear memory as a computational resource. The next step is to test that
 resource across training budgets, scales, and tasks in which an evolving state must keep being transformed:
 feedback, iterative optimization, and driven dynamics.
 Reproducibility
@@ -1247,7 +1305,8 @@ A matched 3–7 B E97/GDN2 study would test training viability, memory cost, and
 across scale. The feedback, optimization, and driven-dynamics tasks in Section 8 would test utility beyond
 language. Mathematical targets are a recurrent tanh tracker (O1), constrained aﬃne/reﬂection realizability
 (G3), production-range persistence, and ﬁnite-precision robustness.
-References
+27
+References
 Žiga Avsec, Vikram Agarwal, Daniel Visentin, Joseph R. Ledsam, Agnieszka Grabska-Barwinska, Kyle R.
 Taylor, Yannis Assael, John Jumper, Pushmeet Kohli, and David R. Kelley. Eﬀective gene expression
 prediction from sequence by integrating long-range interactions. Nature Methods, 18:1196–1203, 2021.
@@ -1258,8 +1317,7 @@ languages in NC1
 (STOC 1986), pp. 1–5. ACM, 1986. doi: 10.1145/12130.12131.
 Amir Beck and Marc Teboulle. A fast iterative shrinkage-thresholding algorithm for linear inverse problems.
 SIAM Journal on Imaging Sciences, 2(1):183–202, 2009. doi: 10.1137/080716542.
-26
-Maximilian Beck, Korbinian Pöppel, Markus Spanring, Andreas Auer, Oleksandra Prudnikova, Michael
+Maximilian Beck, Korbinian Pöppel, Markus Spanring, Andreas Auer, Oleksandra Prudnikova, Michael
 Kopp, Günter Klambauer, Johannes Brandstetter, and Sepp Hochreiter. xLSTM: Extended long short-
 term memory. arXiv preprint arXiv:2405.04517, 2024.
 Maximilian Beck et al. xLSTM-7B: A recurrent LLM for fast and eﬃcient inference. arXiv preprint
@@ -1291,7 +1349,8 @@ Marc’Aurelio Ranzato, Arthur Szlam, and Jiajun Shen. DiLoCo: Distributed low-c
 of language models. arXiv preprint arXiv:2311.08105, 2023.
 Jeﬀrey L. Elman. Finding structure in time. Cognitive Science, 14(2):179–211, 1990. doi: 10.1207/s1551670
 9cog1402_1.
-Leo Feng, Frederick Tung, Mohamed Osama Ahmed, Yoshua Bengio, and Hossein Hajimirsadeghi. Were
+28
+Leo Feng, Frederick Tung, Mohamed Osama Ahmed, Yoshua Bengio, and Hossein Hajimirsadeghi. Were
 RNNs all we needed? arXiv preprint arXiv:2410.01201, 2024.
 Leo Gao, Stella Biderman, Sid Black, Laurence Golding, Travis Hoppe, Charles Foster, et al. The Pile: An
 800GB dataset of diverse text for language modeling. arXiv preprint arXiv:2101.00027, 2020.
@@ -1300,8 +1359,7 @@ mann, Sebastian Vorbrugg, Santiago Marco-Sola, Christian Kubica, et al. Building
 Nature Methods, 21:2008–2012, 2024. doi: 10.1038/s41592-024-02430-3.
 Albert Gu and Tri Dao. Mamba: Linear-time sequence modeling with selective state spaces. arXiv preprint
 arXiv:2312.00752, 2024.
-27
-Andrea Guarracino, Silvia Buonaiuto, Leonardo G. de Lima, Tamara Potapova, Arang Rhie, Sergey Ko-
+Andrea Guarracino, Silvia Buonaiuto, Leonardo G. de Lima, Tamara Potapova, Arang Rhie, Sergey Ko-
 ren, Boris Rubinstein, Christian Fischer, et al. Recombination between heterologous human acrocentric
 chromosomes. Nature, 617(7960):335–343, 2023. doi: 10.1038/s41586-023-05976-y.
 Ali Hatamizadeh, Yejin Choi, and Jan Kautz. Gated DeltaNet-2: Decoupling erase and write in linear
@@ -1335,7 +1393,8 @@ arXiv:2112.00114, 2021. doi: 10.48550/arXiv.2112.00114. URL https://arxiv.org/ab
 Bo Peng et al. RWKV: Reinventing RNNs for the transformer era. arXiv preprint arXiv:2305.13048, 2023.
 Bo Peng et al. RWKV-7 “goose” with expressive dynamic state evolution. arXiv preprint arXiv:2503.14456,
 2025.
-Zhen Qin, Songlin Yang, Weixuan Sun, Xuyang Shen, Dong Li, Weigao Sun, and Yiran Zhong. HGRN2:
+29
+Zhen Qin, Songlin Yang, Weixuan Sun, Xuyang Shen, Dong Li, Weigao Sun, and Yiran Zhong. HGRN2:
 Gated linear RNNs with state expansion. arXiv preprint arXiv:2404.07904, 2024.
 Imanol Schlag, Kazuki Irie, and Jürgen Schmidhuber. Linear transformers are secretly fast weight program-
 mers. In Proceedings of the 38th International Conference on Machine Learning (ICML), volume 139 of
@@ -1344,8 +1403,7 @@ Jürgen Schmidhuber. Learning to control fast-weight memories: An alternative to
 works. Neural Computation, 4(1):131–139, 1992. doi: 10.1162/neco.1992.4.1.131.
 Hava T. Siegelmann and Eduardo D. Sontag. On the computational power of neural nets. Journal of
 Computer and System Sciences, 50(1):132–150, 1995. doi: 10.1006/jcss.1995.1013.
-28
-Jimmy T. H. Smith, Andrew Warrington, and Scott W. Linderman. Simpliﬁed state space layers for sequence
+Jimmy T. H. Smith, Andrew Warrington, and Scott W. Linderman. Simpliﬁed state space layers for sequence
 modeling. arXiv preprint arXiv:2208.04933, 2022.
 Yutao Sun, Li Dong, Shaohan Huang, Shuming Ma, Yuqing Xia, Jilong Xue, Jianyong Wang, and Furu Wei.
 Retentive network: A successor to transformer for large language models. arXiv preprint arXiv:2307.08621,
@@ -1371,7 +1429,7 @@ Songlin Yang, Jan Kautz, and Ali Hatamizadeh. Gated delta networks: Improving Ma
 arXiv preprint arXiv:2412.06464, 2024a.
 Songlin Yang, Bailin Wang, Yu Zhang, Yikang Shen, and Yoon Kim. Parallelizing linear transformers with
 the delta rule over sequence length. arXiv preprint arXiv:2406.06484, 2024b.
-29
+30
 A Development history and source register
 The project developed through successive recurrent-memory designs, implementation changes, and increas-
 ingly controlled comparisons. This register records that process and points to its source material. The
@@ -1393,5 +1451,5 @@ the corresponding result JSONs directly.
 Section 7 identify the speciﬁc statements used here.
 The original records remain available in the repository. The present comparison is deﬁned by its own model
 identities, data, and protocols.
-30
+31
 

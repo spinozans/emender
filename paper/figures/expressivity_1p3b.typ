@@ -36,6 +36,30 @@
     separation. Source: `paper/results/invertible_quadratic/stage4_13b.json`.
   ],
 )
+#let growth-root = "../results/invertible_quadratic/growth/"
+#let growth-table = figure(
+  table(
+    columns: (auto, auto, auto, auto, auto, auto),
+    align: (left, right, right, right, right, right), stroke: 0.5pt, inset: 5pt,
+    table.header([*Model*], [*Seed*], [*Position 1*], [*Position 2*], [*Position 3*], [*Position 4*]),
+    ..("e97", "gdn2").map(arm => range(3).map(seed => {
+      let receipt = json(growth-root + arm + "_seed" + str(seed) + "/positions.json")
+      (if arm == "e97" { "E97" } else { "GDN2" }, str(seed),
+       ..receipt.positions.map(position => str(position.correct)))
+    }).flatten()).flatten(),
+  ),
+  caption: [
+    *Four-driver curriculum: joint correct out of 512 at each position.*
+    Existing best-aggregate-validation checkpoints; one frozen positional
+    evaluation per checkpoint, with no training or re-selection. Each
+    position adds one nonlinear-map application. GDN2 reaches the 90%
+    tracking threshold through position 3 in two seeds and position 2
+    in one; E97 through position 1 in all three. None reaches position 4.
+    Best and final checkpoints differ: these counts are not final scores
+    or independent test results. Source:
+    `paper/results/invertible_quadratic/growth/`.
+  ],
+)
 #let s5-table = figure(
   table(
     columns: (auto, auto, auto),

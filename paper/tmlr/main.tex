@@ -533,6 +533,43 @@ At matched 1e-3, the seed-0 one-step diagnostics reach 97.66\% for E97 (500/512)
 
 Losses stay close to the marginal-optimal reference, with a sliver below it: selected 1\ensuremath{\times} cross-entropy means are 8.188895 for E97 and 8.223262 for GDN2, against 8.221748 nats. E97's below-reference loss indicates limited predictive signal. Both arms' post-seven-driver accuracy stays near the suffix reference, and terminal full-state accuracy is zero in every seed at all three depths. Mean extrapolation losses are at or above the reference. We call this marginal-like loss behavior, not an identified internal marginal-solution mechanism or successful deep recurrence.
 
+
+\subsection*{Delayed learning and the composition frontier}
+
+
+A short run can miss learning altogether. In the instrumented one-step E97 run, validation accuracy stays near zero for roughly 20,000 updates (2.93\% at update 20,000), then follows a clean S-curve to 97.85\% at 57,000 updates. This silent-then-ignite signature explains why a shallow training horizon can read as failure. It describes the learning curve, not its mechanism. Replaying the earlier stopping rule would have ended this successful run at update 10,000.
+
+The growth curriculum therefore uses an open horizon, advances only at 90\% joint validation accuracy, and stops for registered stagnation rather than a fixed training budget. Its 100,000-update stage-local floor is calibrated against the successful one-step replay, not a guarantee of later learning. The plateau streak resets through that floor. Two consecutive eligible comparisons of disjoint 2,000-update windows must each show both best-validation gain below 0.1 percentage points and relative mean-training-loss decrease below 0.1\%; the earliest stop is update 104,000. Threshold advancement takes priority. Safety ceilings remain separate stop reasons; none fired in these six runs.
+
+The scratch models retain the nominal 8 M configurations above, matched learning rate 1e-3 and seeds 0/1/2, using Schedule-Free AdamW, fresh procedural training and frozen validation pools. The planned stages are 4, 8, 16, 32, 64 and 128 drivers, carrying weights, optimizer and training RNG between stages. All six learned solutions stopped by the registered stagnation rule at the initial four-driver stage, so no later stage was entered. E97 stopped at 190,000/104,000/104,000 updates and GDN2 at 324,000/372,000/204,000. Final joint validation accuracies were 25.15/25.00/24.95\% for E97 and 75.00/74.80/50.05\% for GDN2 in seed order: ranges of 24.95--25.15\% and 50.05--75.00\%. Every final checkpoint had terminal accuracy 0/512. The suffix-only reference remains 0.026874\% for initialization plus a proper driver suffix with at least two omitted drivers; it does not bound a recurrent model retaining the prefix. The uniform marginal loss reference remains 8.221748 nats.
+
+The aggregate fractions suggest a frontier, but do not locate it. A frozen positional evaluation of the six existing best-validation checkpoints does (Table~\ref{tab_growth_positions}). Four drivers follow two unscored initial-coordinate tokens, processed causally without target feedback. Position 1 requires one application of the nonlinear map.
+
+
+\begin{table}[htbp]
+\centering
+\begingroup\setlength{\tabcolsep}{3pt}
+\begin{tabularx}{\linewidth}{|>{\hsize=1.71429\hsize\linewidth=\hsize\raggedright\arraybackslash}X|>{\hsize=0.85714\hsize\linewidth=\hsize\raggedright\arraybackslash}X|>{\hsize=0.85714\hsize\linewidth=\hsize\raggedright\arraybackslash}X|>{\hsize=0.85714\hsize\linewidth=\hsize\raggedright\arraybackslash}X|>{\hsize=0.85714\hsize\linewidth=\hsize\raggedright\arraybackslash}X|>{\hsize=0.85714\hsize\linewidth=\hsize\raggedright\arraybackslash}X|}\hline
+\emph{Model} & \emph{Seed} & \emph{Position 1} & \emph{Position 2} & \emph{Position 3} & \emph{Position 4} \\ \hline
+E97 & 0 & 512 & 10 & 2 & 0 \\ \hline
+E97 & 1 & 512 & 0 & 0 & 1 \\ \hline
+E97 & 2 & 511 & 1 & 0 & 1 \\ \hline
+GDN2 & 0 & 512 & 512 & 512 & 0 \\ \hline
+GDN2 & 1 & 512 & 512 & 508 & 0 \\ \hline
+GDN2 & 2 & 512 & 512 & 4 & 0 \\ \hline
+\end{tabularx}
+\endgroup
+
+\caption{ \emph{Four-driver curriculum: joint correct out of 512 at each position.} Existing best-aggregate-validation checkpoints; one frozen positional evaluation per checkpoint, with no training or re-selection. Each position adds one nonlinear-map application. GDN2 reaches the 90\% tracking threshold through position 3 in two seeds and position 2 in one; E97 through position 1 in all three. None reaches position 4. Best and final checkpoints differ: these counts are not final scores or independent test results. Source: \protect\path|paper/results/invertible_quadratic/growth/|. }\label{tab_growth_positions}
+\end{table}
+
+
+E97 tracks the first application almost perfectly in every seed (511--512/512), then collapses at position 2 (0--10/512). GDN2 tracks through position 3 in seeds 0/1 (512/512 and 508/512 there), but only through position 2 in seed 2 (4/512 at position 3). The four-application position remains unsolved in every run (0--1/512). Here tracking means at least the registered 90\% accuracy level, not exact correctness. The shorthand does not erase partial-coordinate signal: E97 seed 0 has 338/512 first-coordinate predictions correct at position 2 despite only 10/512 joint hits; GDN2 seed 2 has 105/512 first-coordinate hits at position 3.
+
+These are pre-existing best-aggregate-validation checkpoints, selected by joint accuracy and then loss on ties, not selected anew by position. They use the same 512 frozen sequences per seed as training validation, not an independent test pool. E97 best seeds 1/2 each have one terminal hit, unlike their final checkpoints; isolated hits do not solve the fourth application. Full counts, coordinate scores, losses, hashes and best-versus-final reconciliation are retained in \protect\path|paper/results/invertible_quadratic/growth/|.
+
+Together, flat full-depth training leaves both architectures near the marginal reference, while the progressive-depth protocol reveals a composition frontier at its first stage. The learned GDN2 solutions chain three sequential applications of the nonlinear map through the recurrence in two seeds and two in the third; the learned E97 solutions chain one. Neither reaches four. This is a finding about learned solutions under this training regime and protocol, not an architectural capacity limit or impossibility result, nor an identified internal mechanism. The positional receipts, rather than aggregate fractions alone, support this high-accuracy-depth reading.
+
 Every finite-state task admits a sufficiently large one-hot linear-state representation; here each driver acts through a 3721-by-3721 permutation matrix. The benchmark tests learned efficiency at practical state sizes, not an impossibility for linear state. These findings establish neither architecture superiority in either direction nor a universal expressivity separation. Optimization, state size, pretraining, and selection remain part of the empirical question.
 
 

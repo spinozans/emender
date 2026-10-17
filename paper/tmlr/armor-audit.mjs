@@ -25,14 +25,20 @@ export const liveScopes = [
   'the stated hold theorem assumes $lambda >= 1$, while production decay lies below one',
   'error, latency, and closed-loop stability across operating regimes',
   'Its final recorded rank-0 training-loss average is 2.2798 nats/token over the last 100 logging windows',
-  'These are measurements from one production segment'
+  'These are measurements from one production segment',
+  'Its 100,000-update stage-local floor is calibrated against the successful one-step replay, not a guarantee of later learning',
+  'All six learned solutions stopped by the registered stagnation rule at the initial four-driver stage, so no later stage was entered',
+  'but only through position 2 in seed 2 (4/512 at position 3)',
+  'E97 best seeds 1/2 each have one terminal hit, unlike their final checkpoints',
+  'This is a finding about learned solutions under this training regime and protocol, not an architectural capacity limit or impossibility result, nor an identified internal mechanism'
 ];
 export const captionScopes = [
   'Mean and sample SD over three paired seeds',
   'with validation-only checkpoint selection frozen before test',
   'S5 capacity/long-horizon accuracy on the released pair',
   'GDN2 completed one optimizer step at length 512',
-  'OOM-infeasible even at sub-batch 1'
+  'OOM-infeasible even at sub-batch 1',
+  'these counts are not final scores or independent test results'
 ];
 export function verifyArmor(source, captions) {
   const s = norm(source), c = norm(captions);

@@ -158,6 +158,11 @@
     {
       "section": "What the current models learn to compute",
       "level": 2,
+      "title": "Delayed learning and the composition frontier"
+    },
+    {
+      "section": "What the current models learn to compute",
+      "level": 2,
       "title": "S5 group-state tracking on the same pair"
     },
     {
@@ -373,6 +378,11 @@
       "caption": "Invertible quadratic tracking on the released 1.3 B pair.Trained-depth full-state test accuracy at matched learning rate 1e-3;65,536 scored driver positions per seed. Mean and sample SD over threepaired seeds, with validation-only checkpoint selection frozen beforetest. Running positions within a sequence are correlated. E97 leadson seeds 0/1 and GDN2 on seed 2; the paired difference shows no robustseparation. Source:paper/results/invertible_quadratic/stage4_13b.json."
     },
     {
+      "label": "<tab_growth_positions>",
+      "kind": "table",
+      "caption": "Four-driver curriculum:joint correct out of 512 at each position.Existing best-aggregate-validation checkpoints; one frozen positionalevaluation per checkpoint, with no training or re-selection. Eachposition adds one nonlinear-map application. GDN2 reaches the 90%tracking threshold through position 3 in two seeds and position 2in one; E97 through position 1 in all three. None reaches position 4.Best and final checkpoints differ:these counts are not final scoresor independent test results. Source:paper/results/invertible_quadratic/growth/."
+    },
+    {
       "label": "<tab_s5_boundary>",
       "kind": "table",
       "caption": "S5 capacity/long-horizon accuracy on the released pair.Full-vocabulary argmax accuracy, seed42.GDN2 leads at every reported length on permutation composition,a task admitting linear state updates; both curves decay.*GDN2 completed oneoptimizer step at length 512 before the curriculum stage provedOOM-infeasible even at sub-batch 1; the length-512 point includesthat completed update.Source:capacity/cap_{e97,gdn2}_s5_sweep.jsonandcap_gdn2_s5_train.jsonunderpaper/results/expressivity_1p3b/(E97f1ed5615, GDN2 salvage6f916843)."
@@ -408,6 +418,11 @@
       "section": "What the current models learn to compute",
       "columns": 4,
       "rows": 5
+    },
+    {
+      "section": "What the current models learn to compute",
+      "columns": 6,
+      "rows": 7
     },
     {
       "section": "What the current models learn to compute",
