@@ -138,7 +138,22 @@
     {
       "section": "What the current models learn to compute",
       "level": 2,
-      "title": "Iterating a nonlinear map with the trained pair"
+      "title": "An invertible nonlinear-map benchmark"
+    },
+    {
+      "section": "What the current models learn to compute",
+      "level": 2,
+      "title": "Matched-rate fine-tuning at 1.3 B"
+    },
+    {
+      "section": "What the current models learn to compute",
+      "level": 2,
+      "title": "Tuned small models, difficulty, and local arithmetic"
+    },
+    {
+      "section": "What the current models learn to compute",
+      "level": 2,
+      "title": "Marginal-like behavior and limited signal"
     },
     {
       "section": "What the current models learn to compute",
@@ -353,9 +368,9 @@
       "caption": "Hierarchical RCCL communication during the first final-seed256-node E97 continuation(job 5134243).Seventy-threeK=40merges had median duration 6.320 s(5.068–15.227 s); the 72between-merge intervals had median 72 s(71–87 s). The allocationresumed the released 150.794 B-token seed and retained a checkpointat 199.615 B tokens. These are measurements from one productionsegment. Source:reports/frontier/e97-final-seed-production-256n-5134243-verdict.json;figure scriptpaper/figures/plot_frontier_segment.py."
     },
     {
-      "label": "<tab_depth_wall>",
+      "label": "<tab_invertible>",
       "kind": "table",
-      "caption": "Modular-quadratic length extrapolation on the released 1.3 B pair.Full-vocabulary argmax accuracy at the pre-registered plateau stops;trained length128, seed42,262144scored token positions per length.The common cap is18269steps, with unequal realizedtraining:E97 stopped after2500steps and GDN2after2200. E97 shows graceful length transfer; GDN2 approaches a roughly 50%plateau, above the declared0.39%random baseline. Source:paper/results/expressivity_1p3b/iterated-map/,ft_{e97,gdn2}_modular_quadratic{,_sweep}.json(commit9dc3afd7);budget.json(pre-registration1989656c)."
+      "caption": "Invertible quadratic tracking on the released 1.3 B pair.Trained-depth full-state test accuracy at matched learning rate 1e-3;65,536 scored driver positions per seed. Mean and sample SD over threepaired seeds, with validation-only checkpoint selection frozen beforetest. Running positions within a sequence are correlated. E97 leadson seeds 0/1 and GDN2 on seed 2; the paired difference shows no robustseparation. Source:paper/results/invertible_quadratic/stage4_13b.json."
     },
     {
       "label": "<tab_s5_boundary>",
@@ -392,7 +407,7 @@
     {
       "section": "What the current models learn to compute",
       "columns": 4,
-      "rows": 8
+      "rows": 5
     },
     {
       "section": "What the current models learn to compute",

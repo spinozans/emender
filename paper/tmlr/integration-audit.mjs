@@ -1,4 +1,4 @@
-// Current-paper integration checks; P21 provenance receipts remain historical.
+// P23 integration replay: exact source delta, scoped evidence addition, S5 preserved.
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
@@ -6,57 +6,59 @@ import {execFileSync} from 'node:child_process';
 import path from 'node:path';
 import {checkCanonicalSource} from './canonical-guard.mjs';
 const root = new URL('../../', import.meta.url).pathname;
-const main = 'baf6e56464d23d855ff88ff9c2ba78d2d64f0c6e';
-const author = '5b16e273518f7ab20463e5a4826bd78851c4f6bf';
-const source = '7bc278704d56f2f8f6a0d1ca7ec944e0eaaeb0af';
+const base = '5cc34e8c';
 const git = args => execFileSync('git', args, {cwd: root, maxBuffer: 16 * 1024 * 1024});
 const read = p => fs.readFileSync(path.join(root, p));
 const sha = b => createHash('sha256').update(b).digest('hex');
-const sourceFiles = ['paper/main.typ', 'paper/refs.bib', 'paper/figures/expressivity_1p3b.typ'];
 checkCanonicalSource(root);
-for (const file of sourceFiles.filter(f => f !== 'paper/main.typ')) {
-  assert(read(file).equals(git(['show', source + ':' + file])), `Approved source changed: ${file}`);
-}
-// P22a adds only the recorded-loss figure and its two-sentence introduction.
-assert(git(['diff', '--unified=0', source, '--', 'paper/main.typ']).equals(read('paper/tmlr/validation/p22a-lossfigure-revision.diff')),
-  'Canonical source must be the exact S5 source plus the reviewed P22a insertion');
-// Integration must retain the author's evidence and all existing production/CI code.
+assert(git(['diff', '--unified=0', base, '--', 'paper/main.typ', 'paper/figures/expressivity_1p3b.typ'])
+  .equals(read('paper/tmlr/validation/p23-expressivity-revision.diff')), 'Exact P23 manuscript/table delta');
+// Preserve every existing evidence/formal asset, including retired scalar records.
 for (const directory of ['paper/data', 'paper/results', 'formal']) {
-  assert.equal(git(['diff', '--name-only', author, '--', directory]).length, 0, `Evidence/theorem drift: ${directory}`);
+  for (const file of git(['ls-tree', '-r', '--name-only', base, '--', directory]).toString().trim().split('\n').filter(Boolean)) {
+    assert(read(file).equals(git(['show', base + ':' + file])), `Existing evidence/theorem drift: ${file}`);
+  }
 }
-const changed = git(['diff', '--name-only', main]).toString().trim().split('\n').filter(Boolean);
-for (const file of changed) assert(file.startsWith('paper/') || ['P20-report.md', 'P21-report.md'].includes(file), `Non-paper change: ${file}`);
-for (const file of ['paper/tmlr/tmlr.sty', 'paper/tmlr/tmlr.bst', 'paper/tmlr/fancyhdr.sty', 'paper/tmlr/LICENSE']) {
-  assert(read(file).equals(git(['show', author + ':' + file])), `Official style changed: ${file}`);
+const changed = git(['diff', '--name-only', base]).toString().trim().split('\n').filter(Boolean);
+for (const file of changed) assert(file.startsWith('paper/') || file === 'P23-report.md', `Non-paper change: ${file}`);
+for (const file of ['paper/refs.bib', 'paper/tmlr/tmlr.sty', 'paper/tmlr/tmlr.bst', 'paper/tmlr/fancyhdr.sty', 'paper/tmlr/LICENSE']) {
+  assert(read(file).equals(git(['show', base + ':' + file])), `Frozen bibliography/style changed: ${file}`);
 }
+const captions = read('paper/figures/expressivity_1p3b.typ').toString();
+assert.equal(captions.slice(captions.indexOf('#let s5-table')), git(['show', base + ':paper/figures/expressivity_1p3b.typ']).toString().split('#let s5-table')[1].replace(/^/, '#let s5-table'), 'S5 definition unchanged');
 const inventory = JSON.parse(read('paper/tmlr/conversion-inventory.json'));
-const oldInventory = JSON.parse(git(['show', author + ':paper/tmlr/conversion-inventory.json']));
-assert.deepEqual(inventory.tables, oldInventory.tables, 'All seven table structures retained');
-const labels = inventory.figures.filter(f => f.kind === 'table').map(f => f.label);
+const oldInventory = JSON.parse(git(['show', base + ':paper/tmlr/conversion-inventory.json']));
+assert.deepEqual(inventory.tables.filter((_,i)=>i!==4), oldInventory.tables.filter((_,i)=>i!==4), 'Six unchanged table structures');
+assert.deepEqual(inventory.tables[4], {section:'What the current models learn to compute',columns:4,rows:5});
+const labels = inventory.figures.filter(f => f.kind === 'table' && f.label !== '<tab_invertible>').map(f => f.label);
 const baselinePath = path.join(root, 'paper/.integration-baseline.typ');
-assert(!fs.existsSync(baselinePath), 'Do not overwrite a pre-existing baseline probe');
+assert(!fs.existsSync(baselinePath));
 const tables = [];
 try {
-  fs.writeFileSync(baselinePath, git(['show', author + ':paper/main.typ']));
+  // The old table import is intentionally retired; compare all unaffected bodies.
+  const previous = git(['show', base + ':paper/main.typ']).toString();
+  const start = previous.indexOf('Comparable language-modeling loss leaves open');
+  const end = previous.indexOf('#heading(level: 2, numbering: none)[S5 group-state', start);
+  fs.writeFileSync(baselinePath, previous.slice(0,start) + previous.slice(end));
   const query = (file, label) => JSON.parse(execFileSync('typst', ['query', '--root', root, file, label, '--field', 'body'], {cwd: root, maxBuffer: 16 * 1024 * 1024}));
   for (const label of labels) {
     const current = query('paper/main.typ', label);
-    assert.deepEqual(current, query(baselinePath, label), `Empirical table changed: ${label}`);
-    tables.push({label, sha256: sha(JSON.stringify(current)), identicalToAuthor: true});
+    assert.deepEqual(current, query(baselinePath, label), `Unchanged table body: ${label}`);
+    tables.push({label, sha256: sha(JSON.stringify(current)), identicalToBase: true});
   }
 } finally { fs.unlinkSync(baselinePath); }
 const drift = JSON.parse(read('paper/tmlr/validation/drift-check.json'));
-assert.deepEqual(drift.pages, {canonical: 34, submission: 29, preprint: 29});
-assert.deepEqual([drift.symbolAudit.equations, drift.symbolAudit.attachments, drift.symbolAudit.pdfPrimes], [335, 285, 8]);
+assert.deepEqual(drift.pages, {canonical: 35, submission: 30, preprint: 30});
+assert.deepEqual([drift.symbolAudit.equations, drift.symbolAudit.attachments, drift.symbolAudit.pdfPrimes], [352, 293, 8]);
 assert.equal(drift.samples.length, 20);
 assert(drift.samples.every(s => Object.values(s.matched).every(Boolean)));
 for (const order of Object.values(drift.appendixOrder)) assert.equal(order.finalReferencePage + 1, order.appendixPage);
-const report = {main, author, source, approvedInsertion: 'validation/p22a-lossfigure-revision.diff',
-  sourceFiles: sourceFiles.map(file => ({file, sha256: sha(read(file))})),
-  tables, allSevenTableStructuresPreserved: true, dataResultsAndFormalUnchanged: true, productionAndCIUnchanged: true,
-  pages: drift.pages, symbolCounts: {equations: 335, attachments: 285, pdfPrimes: 8},
-  mathInventoryDeltaFromAuthor: {equations: 10, attachments: 19, pdfPrimes: 0},
-  samples: drift.samples.length, longSourceFragments: drift.fragmentAudit.checked};
-fs.writeFileSync(path.join(root, 'paper/tmlr/validation/integration-audit.json'), JSON.stringify(report, null, 2) + '\n');
-console.log('PASS: exact approved S5 sources plus the P22a figure insertion; six empirical table bodies and all seven table structures preserved; data, results, formal sources, production code and CI unchanged.');
-console.log('PASS: 34/29/29 pages; 335 expressions, 285 attachments, eight primes; 20 samples across all PDFs and references immediately before Appendix A.');
+const report = {base, approvedDelta:'validation/p23-expressivity-revision.diff',
+  sourceFiles:['paper/main.typ','paper/figures/expressivity_1p3b.typ'].map(file=>({file,sha256:sha(read(file))})),
+  preservedTables:tables, changedTable:'<tab_depth_wall> retired; <tab_invertible> added',
+  existingDataResultsAndFormalUnchanged:true, productionAndCIUnchanged:true,
+  pages:drift.pages, symbolCounts:{equations:352,attachments:293,pdfPrimes:8},
+  samples:drift.samples.length,longSourceFragments:drift.fragmentAudit.checked};
+fs.writeFileSync(path.join(root,'paper/tmlr/validation/integration-audit.json'),JSON.stringify(report,null,2)+'\n');
+console.log('PASS: exact P23 delta; all five unaffected empirical table bodies and six table structures preserved; S5 definition unchanged; existing evidence, formal sources, production and CI unchanged.');
+console.log('PASS: 35/30/30 pages; 352 expressions, 293 attachments, eight primes; 20 samples and 1215 long source fragments; references immediately before Appendix A.');

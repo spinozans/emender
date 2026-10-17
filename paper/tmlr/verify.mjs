@@ -23,8 +23,8 @@ for(const [variant,file] of Object.entries(files)){
 }
 const samples=[
   [
-    "Abstract / iterated map",
-    "E97 99.96% accuracy versus GDN2’s 76.09% at the trained length, and 76.07% versus 53.36% at eight times that length."
+    "Abstract / invertible map",
+    "across three seeds gives 0.268% versus 0.227% full-state accuracy, with no robust trained-length separation."
   ],
   [
     "Introduction / matched geometry",
@@ -51,12 +51,12 @@ const samples=[
     "The nonlinear recurrence trains competitively under this substantial shared workload, with a small difference whose sign varies by averaging window."
   ],
   [
-    "Expressivity / budget",
-    "The throughput-derived common cap of 18269 steps was fixed before accuracy was seen (budget.json, 1989656c)."
+    "Expressivity / paired uncertainty",
+    "The paired E97 minus GDN2 difference is 0.041 ± 0.201 percentage points (mean ± sample SD over three seeds), giving no robust separation."
   ],
   [
-    "Expressivity / terminal sweep",
-    "At the terminal sweep E97 reaches 99.96% at trained length, retaining 90.16% at four times and 76.07% at eight times that length."
+    "Expressivity / rate confound",
+    "The cross-rate comparison is observational with a protocol confound, not an identified learning-rate mechanism."
   ],
   [
     "Applications / stability",
@@ -80,15 +80,15 @@ const samples=[
   ],
   [
     "Open questions / sampling",
-    "The current pair supplies one language-model training seed and one seed for each reported computational probe."
+    "The current pair supplies one language-model training seed; the matched-rate invertible-map study uses three fine-tuning seeds per arm."
   ],
   [
     "Expressivity / S5 finding",
     "GDN2 is ahead of E97 at every reported length, and both curves decline toward the random baseline."
   ],
   [
-    "Next tests / mechanism",
-    "Persistence of the map advantage would strengthen the mechanism hypothesis; its disappearance under those controls would locate an optimization or protocol dependence."
+    "Next tests / regime",
+    "This would test whether the observed regime difference survives the protocol confound."
   ],
   [
     "Future work / scale",

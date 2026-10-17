@@ -1,38 +1,37 @@
 # TMLR packaging of the integrated manuscript
 
-`paper/main.typ` retains the approved S5 clarification
-**7bc278704d56f2f8f6a0d1ca7ec944e0eaaeb0af**, based on the author revision
-**5b16e273518f7ab20463e5a4826bd78851c4f6bf**, plus the operator-directed P22a
-recorded-training-loss figure and its introduction. The exact insertion is in
-`validation/p22a-lossfigure-revision.diff`; `paper/figures/expressivity_1p3b.typ`
-and the author's no-raw-logs correction retain their bytes. `paper/current.pdf`
-is the rebuilt **34-page** canonical PDF; the two TMLR variants and source bundle are generated
-from that same source. `canonical-baseline.json` retains the historical accepted
-snapshot and revision lineage while pinning the current approved source hash.
+`paper/main.typ` includes the operator-directed P23 expressivity surgery on
+**5cc34e8c**, following the S5 clarification and P22 recorded-loss figure.
+`../../P23-report.md` gives the retire/keep map and validation evidence.
+The exact manuscript/table delta is `validation/p23-expressivity-revision.diff`;
+`canonical-baseline.json` pins the source and preserves the historical lineage.
 
 ## Deliverables
 
-- `submission.pdf`: anonymous, **29 pages**, official TMLR submission style.
-- `preprint.pdf`: identified, **29 pages**, official TMLR preprint style.
-- `arxiv-source.tar.gz`: self-contained identified source, one `main.tex`
-  master, explicitly selecting preprint mode. A fresh extraction rebuilds to
-  **29 pages** with PDF raw text byte-identical to `preprint.pdf`.
+- `paper/current.pdf`: canonical Typst PDF, **35 pages**.
+- `submission.pdf`: anonymous, **30 pages**, official TMLR submission style.
+- `preprint.pdf`: identified, **30 pages**, official TMLR preprint style.
+- `arxiv-source.tar.gz`: self-contained identified source with one `main.tex`
+  master; fresh extraction rebuilds to **30 pages**, with raw PDF text identical
+  to `preprint.pdf`.
 
-Upload **submission.pdf** to OpenReview. The preprint and source archive are
-identified artifacts. Shared source conditionally selects author details and
-release links for the appropriate variant.
+Upload `submission.pdf` to OpenReview. The preprint and archive are identified.
+Shared source conditionally selects author details and release links.
 
 ## Regenerate, build, verify
 
-Dependencies: Node.js, Typst, Poppler, and Tectonic or TeX Live with latexmk.
-Tectonic and Poppler paths accept `TECTONIC_BIN`, `PDFTOTEXT`, and `PDFINFO`.
-Run from the repository root:
+Run from the repository root with Node.js, Typst, Poppler and Tectonic:
 
 ```bash
+export TECTONIC_BIN=/tmp/tectonic
+export LD_LIBRARY_PATH=/tmp/p9-poppler/usr/lib/x86_64-linux-gnu
+export PDFTOTEXT=/tmp/p9-poppler/usr/bin/pdftotext
+export PDFINFO=/tmp/p9-poppler/usr/bin/pdfinfo
 typst compile --root . paper/main.typ paper/current.pdf
 typst compile --root . --pdf-standard 1.5 --no-pdf-tags --pages 1,2 \
   paper/tmlr/figures.typ /tmp/emender-packaging-figures.pdf
-pdfseparate /tmp/emender-packaging-figures.pdf paper/tmlr/assets/figure-%d.pdf
+/tmp/p9-poppler/usr/bin/pdfseparate /tmp/emender-packaging-figures.pdf \
+  paper/tmlr/assets/figure-%d.pdf
 node paper/figures/validate_assembly.js
 node paper/tmlr/convert.mjs
 bash paper/tmlr/build.sh
@@ -44,73 +43,47 @@ bash paper/tmlr/bundle-arxiv.sh
 (cd paper/tmlr && sha256sum -c validation/SHA256SUMS)
 ```
 
-The recorded-loss figure is regenerated with
-`python3 paper/figures/plot_recorded_loss.py` (Python 3.12 / Matplotlib on the
-workstation), reading the receipted tails and checkpoint directory names at
-the paths documented in the script. Its JSON receipt retains every plotted
-measurement and source hash; four figure tests run with
-`python3 -m unittest discover -s paper/figures -p test_plot_recorded_loss.py`.
-`validation/p22a-validation.md` records the complete figure and rebuild checks.
-
-`serialize.typ` exports the evaluated content tree, including dynamic tables
-and math. `convert.mjs` translates it directly and fails on unsupported nodes.
-The structure is 13 numbered body sections, 63 converted headings, seven LaTeX
-tables (including notation), ten independently typeset captions, five numbered
-pseudocode blocks, and 13 unnumbered amsthm statements. Formal blocks follow
-the current subsection names and stable section labels. The two vector drawings
-are freshly exported; the Frontier and recorded-training-loss PNGs are
-byte-identical copies. The standalone asset tree contains exactly these four figures.
-
-Appendix A is the compact development/source register: one heading, four source
-categories. `verify.mjs` checks evidence inside each category, the current-pair
-scope, built label A and its physical PDF destination, and every rendered
-appendix pointer. Ruling 6 checks the References heading and the actual final
-bibliography entry on the physical page immediately preceding Appendix A in
-all three PDFs. The current receipts retain the established paths
-`validation/p16b-appendix-order.json` and `validation/p17c-register-appendix.json`.
+`serialize.typ` exports the evaluated content tree. `convert.mjs` translates it
+and fails on unsupported nodes. Current inventory: 13 numbered body sections,
+66 headings, seven tables including notation, ten captions, five numbered
+algorithms and 13 amsthm statements. The scalar-map display is retired; the
+new table reads the matched-rate three-seed JSON directly. The S5 table
+retains its exact definition. Two vector drawings are freshly exported; the
+Frontier and recorded-loss PNGs retain their bytes. These are the four assets.
+P23 adds a mathematical plus-minus text mapping, with PDF glyph regression
+coverage for the uncertainty statistics.
 
 ## Provenance and guards
 
-Official style files retain upstream revision
-**7bf90efe3a0debbba703c05c43f3ff7e4d4a2992**, recorded in `STYLE-COMMIT`.
-`tmlr.sty`, `tmlr.bst`, `fancyhdr.sty`, `LICENSE`, retain their frozen hashes. The historical accepted PDF is an external,
-untracked artifact; its recorded digest remains in the baseline/history, while
-the active checksum manifest covers the current repository deliverables.
+`paper/results/invertible_quadratic/provenance.json` binds byte-identical
+read-only copies of the X-series summaries, task proof, reports, scoped X4R
+review, and earlier GDN2 selections to their original paths and SHA-256 hashes.
+`expressivity.test.mjs` independently replays paired counts/statistics, seed
+ordering, extrapolation CE, the nine primary grid cells, ladder/one-step counts,
+and the 1.73% regime observation with its stopping-rule confound.
 
-`../../P21-report.md` documents every regenerated baseline and its reason.
-`validation/p20-transfer-revision.diff` enumerates the approved source delta;
-`validation/p21-guard-delta.json` retains full old/new guard definitions;
-`validation/p21-inputs.json` binds the transferred inputs. `p21-audit.mjs`
-is the historical P21-only replay, not a validator for later source revisions.
-`integration-audit.mjs` checks the exact approved S5 source plus the pinned P22a insertion, all six empirical
-table bodies, all seven table structures, unchanged data/results/formal sources,
-and unchanged production code and CI. Earlier P13–P21 receipts remain evidence
-for their own revisions; `validation/p21-release-SHA256SUMS` preserves the
-inherited release manifest.
+`integration-audit.mjs` checks the exact P23 delta, unchanged S5 definition,
+five unaffected empirical table bodies, six unaffected table structures,
+all pre-existing evidence/formal bytes, bibliography, official styles, and
+production/CI scope. Historical P13–P22 receipts retain their original scope;
+`validation/p21-release-SHA256SUMS` preserves the inherited release manifest.
 
-`validation/drift-check.json` checks 20 load-bearing current-manuscript samples
-across all three PDFs, including Frontier findings and current-pair scopes,
-and 1,155 long source fragments. The independent symbol oracle checks every
-complete expression and attachment: **335 expressions, 285 attachments, eight
-PDF state primes** (two in drawings). The historical P20 delta remains in `validation/p21-math-delta.json`;
-S5 adds ten expressions and nineteen attachments, with no prime-count change,
-as recorded in `validation/integration-audit.json`. Negative regressions retain
-prime/attachment loss and actual P10 conversion-defect coverage and add all
-current live-scope and source-register loss tests. The source retains the S5 revision
-plus the exact P22a insertion; packaging translates that source directly. The 67 packaging tests retain negative conversion, prime-loss,
-source-drift, scope-loss, appendix-order and anonymization checks.
+`verify.mjs` checks 20 samples across all three PDFs and 1,215 long source
+fragments. The independent symbol oracle checks all **352 expressions,
+293 attachments and eight PDF state primes**. Negative tests retain source
+and bibliography drift, complete-expression/prime loss, live-scope loss,
+appendix-order and anonymity regressions. The full current suite has **77 tests**.
 
-Three release/mirror URLs are variant-gated. The anonymous-PDF receipt screens
-visible text, author metadata, XMP, embedded files, annotation destinations and
-embedded fonts; scholarly third-person citations are retained. The identified
-preprint retains its author and release links. Canonical bibliography bytes are
-copied exactly; narrow Unicode mappings preserve Ž and superscript ² in the
-official style font. P3's ledger records all 61 entries; the four P20 intake rows
-retain their pending independent metadata-review scope.
+Appendix A is one compact register with four source categories. Built-PDF
+checks cover category-local evidence, label/destination, every appendix pointer,
+and the actual final reference on the physical page immediately before A.
+Three release/mirror URLs are variant-gated. The anonymous-PDF audit screens
+visible text, metadata, XMP, embedded files, URI annotations and font embedding.
+The 61-entry bibliography and official style revision
+**7bf90efe3a0debbba703c05c43f3ff7e4d4a2992** retain their exact bytes.
 
-Builds pass the existing fail-closed error, glyph, reference, citation, overflow
-and oversized-float checks. Underfull spacing warnings remain. Receipts, logs,
-PDF extractions, bundle rebuild comparison and SHA-256 digests are retained in
-`validation/`. The integrated source and regenerated packaging receive independent review
-before merge. Local builds use Typst 0.14.2 and TeX Live 2025/pdfTeX; the source
-bundle rebuild must match the preprint raw text exactly.
+The active checksum manifest binds current deliverables and receipts. Builds
+fail on errors, missing glyphs, unresolved references/citations, overflow and
+oversized floats. Existing underfull TeX spacing warnings and the Typst-PDF
+Poppler diagnostic remain nonfatal. Independent reviewer acceptance remains
+required; packaging evidence adds no training or mechanism certification.

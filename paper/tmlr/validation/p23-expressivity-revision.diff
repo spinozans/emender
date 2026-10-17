@@ -1,0 +1,468 @@
+diff --git a/paper/figures/expressivity_1p3b.typ b/paper/figures/expressivity_1p3b.typ
+index b7ba322c..d3ef6bcf 100644
+--- a/paper/figures/expressivity_1p3b.typ
++++ b/paper/figures/expressivity_1p3b.typ
+@@ -1 +1 @@
+-// Section 6 tables are computed from the committed result JSONs at build time.
++// Current Section 6 tables read frozen result JSONs directly.
+@@ -3,8 +2,0 @@
+-#let wall-root = result-root + "iterated-map/"
+-#let wall-e97 = json(wall-root + "ft_e97_modular_quadratic_sweep.json")
+-#let wall-gdn2 = json(wall-root + "ft_gdn2_modular_quadratic_sweep.json")
+-#let train-e97 = json(wall-root + "ft_e97_modular_quadratic.json")
+-#let train-gdn2 = json(wall-root + "ft_gdn2_modular_quadratic.json")
+-#let budget = json(wall-root + "budget.json")
+-#let control = json(wall-root + "phase1_8m_control_table.json").logistic_contractive_control
+-#let lyapunov = json(wall-root + "lyapunov_logistic_map.json")
+@@ -12,0 +5 @@
++#let invertible = json("../results/invertible_quadratic/stage4_13b.json")
+@@ -21,2 +14 @@
+-#let wall-acc(model, length) = model.acc_vs_T.at(str(length)).acc
+-#let wall-table = figure(
++#let invertible-table = figure(
+@@ -26,5 +18,5 @@
+-    table.header([*Length*], [*Train-length multiple*], [*E97*], [*GDN2*]),
+-    ..wall-e97.acc_vs_T.pairs().map(pair => {
+-      let (length, result) = pair
+-      (length, str(int(length) / train-e97.recipe.train_len) + "×",
+-       percent(result.acc), percent(wall-acc(wall-gdn2, length)))
++    table.header([*Seed*], [*E97 accuracy*], [*GDN2 accuracy*], [*E97 − GDN2 (pp)*]),
++    ..range(3).map(seed => {
++      let e = invertible.runs.at("headline_e97_seed" + str(seed)).test.test_1x.accuracy
++      let g = invertible.runs.at("headline_gdn2_seed" + str(seed)).test.test_1x.accuracy
++      (str(seed), percent(e), percent(g), fixed(100 * (e - g), digits: 3))
+@@ -31,0 +24,4 @@
++    [Mean ± SD],
++    [#fixed(100 * invertible.aggregate.e97.test_1x_accuracy.mean, digits: 3)% ± #fixed(100 * invertible.aggregate.e97.test_1x_accuracy.sample_sd, digits: 3)%],
++    [#fixed(100 * invertible.aggregate.gdn2.test_1x_accuracy.mean, digits: 3)% ± #fixed(100 * invertible.aggregate.gdn2.test_1x_accuracy.sample_sd, digits: 3)%],
++    [#fixed(100 * invertible.paired_aggregate.test_1x_accuracy.mean, digits: 3) ± #fixed(100 * invertible.paired_aggregate.test_1x_accuracy.sample_sd, digits: 3)],
+@@ -34,35 +30,7 @@
+-    *Modular-quadratic length extrapolation on the released 1.3 B pair.*
+-    Full-vocabulary argmax accuracy at the pre-registered plateau stops;
+-    trained length #train-e97.recipe.train_len, seed #wall-e97.seed,
+-    #wall-e97.acc_vs_T.at("128").n scored token positions per length.
+-    The common cap is #budget.cap_steps steps, with unequal realized
+-    training: E97 stopped after #train-e97.steps_trained steps and GDN2
+-    after #train-gdn2.steps_trained. E97 shows graceful length transfer; GDN2 approaches a roughly 50%
+-    plateau, above the declared #percent(wall-gdn2.random_baseline_acc)
+-    random baseline. Source: `paper/results/expressivity_1p3b/iterated-map/`,
+-    `ft_{e97,gdn2}_modular_quadratic{,_sweep}.json` (commit `9dc3afd7`);
+-    `budget.json` (pre-registration `1989656c`).
+-  ],
+-)
+-#let control-table = figure(
+-  table(
+-    columns: (auto, auto, auto, auto, auto, auto),
+-    align: (left, right, right, right, right, right), stroke: 0.5pt, inset: 5pt,
+-    table.header([*Arm*], [*Parameters (M)*], [*T=128*], [*T=256*], [*T=512*], [*T=1024*]),
+-    ..control.arms.pairs().map(pair => {
+-      let (arm, result) = pair
+-      (arm, fixed(result.params / 1000000, digits: 2),
+-       ..(128, 256, 512, 1024).map(length =>
+-         fixed(result.pooled_acc_vs_T.at(str(length)).mean_acc, digits: 3)))
+-    }).flatten(),
+-  ),
+-  caption: [
+-    *Contractive logistic-map control, from scratch.* Seed-mean accuracy;
+-    the historical `gdn` row is parameter-mismatched, whereas `gdn-8m`
+-    has #fixed(100 * (control.arms.at("gdn-8m").params / control.arms.e97.params - 1), digits: 1)%
+-    more parameters than E97, conservatively favoring the linear baseline.
+-    All arms use the same training/evaluation protocol and
+-    #control.arms.e97.pooled_acc_vs_T.at("128").n_seeds seeds.
+-    Source: `phase1_8m_control_table.json` (commit `384e657c`), under
+-    `paper/results/expressivity_1p3b/iterated-map/`;
+-    protocol pre-registered in `PLAN.md` (`0038ad84`).
++    *Invertible quadratic tracking on the released 1.3 B pair.*
++    Trained-depth full-state test accuracy at matched learning rate 1e-3;
++    65,536 scored driver positions per seed. Mean and sample SD over three
++    paired seeds, with validation-only checkpoint selection frozen before
++    test. Running positions within a sequence are correlated. E97 leads
++    on seeds 0/1 and GDN2 on seed 2; the paired difference shows no robust
++    separation. Source: `paper/results/invertible_quadratic/stage4_13b.json`.
+diff --git a/paper/main.typ b/paper/main.typ
+index 7f8754fa..a99206c3 100644
+--- a/paper/main.typ
++++ b/paper/main.typ
+@@ -39,3 +39,5 @@
+-    Fine-tuning the workstation pair on an iterated nonlinear map gives
+-    E97 99.96% accuracy versus GDN2's 76.09% at the trained length, and
+-    76.07% versus 53.36% at eight times that length. GDN2 leads on
++    On an invertible nonlinear-map benchmark, matched-rate fine-tuning
++    across three seeds gives 0.268% versus 0.227% full-state accuracy,
++    with no robust trained-length separation. E97 has lower extrapolation
++    cross-entropy in every seed at four and eight times the trained depth.
++    GDN2 leads on
+@@ -44,2 +46,3 @@
+-    demonstrates the utility of linear-state recurrence, alongside E97's
+-    advantage on repeated nonlinear transformation. Formal results characterize
++    demonstrates the utility of linear-state recurrence. Neither model
++    learns robust deep composition on the invertible map at these scales.
++    Formal results characterize
+@@ -177,14 +180,13 @@ The second question is what these trained models can learn to compute.
+-An iterated nonlinear map repeatedly transforms a running value,
+-directly testing the computational pattern that motivates E97. After
+-fine-tuning on a modular-quadratic recurrence, E97 reaches 99.96%
+-versus 76.09% accuracy at the trained length and 76.07% versus 53.36%
+-at eight times that length. Its higher accuracy and greater length
+-robustness support nonlinear transformation in the carried-state path
+-as a useful inductive bias. The $S_5$ group-state task asks the
+-models to compose permutation actions. This computation admits an exact
+-linear-state representation: each token multiplies a carried permutation
+-matrix by its generator matrix. GDN2 learns this task more effectively
+-in the long-horizon comparison, demonstrating a useful learned capability
+-on a computation compatible with linear-state recurrence.
+-#ref(<sec:expressivity>) gives the protocols,
+-learning trajectories, and length-dependent results for both tasks.
++An invertible two-coordinate quadratic map tests repeated nonlinear
++transformation without state merging. At matched learning rate 1e-3,
++three-seed fine-tuning gives E97 0.268 ± 0.091% and GDN2
++0.227 ± 0.291% full-state accuracy at the trained depth. The paired
++difference is 0.041 ± 0.201 percentage points (mean ± sample SD):
++there is no robust separation. E97 has lower extrapolation cross-entropy
++in every seed at four and eight times that depth. The $S_5$ group-state
++task asks the models to compose permutation actions. This computation
++admits an exact linear-state representation: each token multiplies a
++carried permutation matrix by its generator matrix. GDN2 learns this
++task more effectively in the long-horizon comparison, demonstrating a
++useful learned capability on a computation compatible with linear-state
++recurrence. #ref(<sec:expressivity>) gives the protocols and their limits.
+@@ -1170,46 +1172,56 @@ Comparable language-modeling loss leaves open what the carried state
+-can learn to compute. We fine-tune the same 1.3 B E97 and GDN2
+-checkpoints on two explicit computations. The modular-quadratic task
+-repeatedly applies a nonlinear map to a running value; E97's advantage
+-supports the mechanism hypothesis that motivates its state update.
+-The $S_5$ task composes permutations, whose running product admits the
+-linear matrix-state update in #ref(<sec:background>). GDN2's stronger
+-performance on this task is positive evidence for learning a computation
+-compatible with linear-state recurrence. The two probes therefore test
+-useful learned capabilities with different state-update structure:
+-linear permutation actions and a map nonlinear in its running scalar
+-value. Both studies concern learned performance under stated budgets
+-and protocols.
+-
+-#heading(level: 2, numbering: none)[Iterating a nonlinear map with the trained pair]
+-
+-The decisive experiment uses the E97 and GDN2 checkpoints of #ref(<sec:lm>),
+-with Schedule-Free y-mode recovery, on
+-$x_t = (x_(t-1)^2 + c_t) mod #expressivity.wall-e97.task_args.p$,
+-#expressivity.wall-e97.task_args.G input drivers and running supervision.
+-Both arms receive the identical full-fine-tune recipe: bf16
+-#expressivity.train-e97.recipe.optimizer, constant learning rate
+-#expressivity.train-e97.recipe.lr, warmup
+-#expressivity.train-e97.recipe.warmup, weight decay
+-#expressivity.train-e97.recipe.weight_decay, gradient clip
+-#expressivity.train-e97.recipe.grad_clip, batch
+-#expressivity.train-e97.recipe.batch_size, trained length
+-#expressivity.train-e97.recipe.train_len, seed
+-#expressivity.wall-e97.seed. The throughput-derived common cap of
+-#expressivity.budget.cap_steps steps was fixed before accuracy was seen
+-(`budget.json`, `1989656c`). It projects
+-#expressivity.fixed(expressivity.budget.expected_gpu_seconds.total_both / 3600, digits: 2)
+-GPU-hours if both arms reach the cap. The same
+-pre-registered validation-loss plateau rule stopped E97 after
+-#expressivity.train-e97.steps_trained steps and GDN2 after
+-#expressivity.train-gdn2.steps_trained steps; actual training elapsed
+-#expressivity.fixed((expressivity.train-e97.elapsed_train_s + expressivity.train-gdn2.elapsed_train_s) / 3600, digits: 3)
+-GPU-hours, excluding loading and final evaluation. The common rule
+-therefore yields different realized training durations.
+-
+-The protocol below summarizes the retained driver,
+-`scripts/expressivity_1p3b_depthwall.py`, including its zero-based probe
+-indices. Evaluation uses the weights at each arm's plateau stop. The terminal sweep is grad-free and scores every masked
+-position using full-vocabulary argmax; reduced evaluation batches on OOM
+-are recorded with the results.
+-
+-*Algorithm 4 — matched-cap fine-tune and terminal evaluation.*
++can learn to compute. We compare the released 1.3 B E97 and GDN2
++checkpoints on invertible quadratic tracking and permutation composition,
++and use a tuned small-model grid to check the first task at lower cost.
++The invertible map yields limited predictive signal for both classes;
++the $S_5$ study provides a companion finding on a computation with an
++exact linear-state representation.
++
++#heading(level: 2, numbering: none)[An invertible nonlinear-map benchmark]
++
++The earlier scalar task, $z_(t+1) = (z_t^2 + c_t) mod 256$, admits exact recovery
++from a parity summary of the omitted prefix plus the last seven drivers.
++Parity updates as $(z + c) mod 2$. Two states of equal parity have an
++even difference; each shared squaring step multiplies that difference
++by their even sum. Seven steps therefore erase the difference modulo 256.
++This task property retires the earlier accuracy comparison as a test of
++deep nonlinear composition. It does not identify which shortcut,
++if any, the trained models used.
++
++The replacement tracks two coordinates over the field with $p = 61$:
++$
++  F_(c)(x,y) = (y, x + y^2 + c) mod p,
++  quad F_c^(-1)(u,v) = (v - u^2 - c, u) mod p.
++$
++Each fixed-driver map is a permutation of all $p^2 = 3721$ states.
++Distinct full states never merge under any shared driver sequence.
++Uniform initial coordinates are given once in two typed prefix tokens;
++iid uniform field-valued drivers follow. At every driver position the
++model predicts the joint class $p x + y$ from the inputs alone. Previous
++targets and model predictions are never fed back. Training uses 128
++drivers; extrapolation uses 512 and 1024, with two prefix tokens at each
++length. Accuracy scores the complete state, rather than one coordinate.
++
++A predictor observing only the initialization and a bounded suffix of
++$k$ drivers has full-state accuracy $1 / p^2 = 0.0269%$ once at least
++two drivers are hidden before that suffix. To see this, two fresh drivers
++$a,b$ send any fixed state to $(u,v)$ with
++$a = u - x - y^2$ and $b = v - y - u^2$. Every target pair has exactly
++one driver pair, so the hidden state is uniform; subsequent known
++permutations preserve uniformity. The bound excludes the first $k+1$
++driver positions and predictors retaining additional prefix summaries.
++A recurrent model can retain the history beyond this observer class.
++We report accuracy after the first eight drivers separately for $k=7$.
++The named marginal-optimal loss reference is $ln(3721) = 8.221748$ nats,
++the cross-entropy of a uniform prediction over the joint state classes.
++
++#heading(level: 2, numbering: none)[Matched-rate fine-tuning at 1.3 B]
++
++Both released checkpoints receive fresh AdamW states and a full bf16
++fine-tune at matched learning rate 1e-3, with batch 32, weight decay
++0.01, gradient clip 0.5, and 300 warmup updates followed by a constant
++rate. Training batches are freshly generated, with streams paired by
++seed across arms. Frozen validation and test pools contain 512 sequences
++per seed and depth. Full pretrained-vocabulary logits are scored;
++initialization and padding positions are masked.
++
++*Algorithm 4 — validation selection before test.*
+@@ -1217,19 +1229,10 @@ are recorded with the results.
+-Input: bound y-mode weights; common recipe, cap, seed
+-1. Build fixed validation batches; initialize AdamW.
+-2. For step j = 0,...,cap-1:
+-   a. Draw a batch at T=128; run bf16 forward.
+-   b. Backpropagate masked cross-entropy over all positions.
+-      On OOM, split the same batch and accumulate gradients.
+-   c. Warm up LR for 300 steps, then keep LR constant;
+-      clip gradient norm to 0.5; take an optimizer step.
+-   d. Every 100 updates (and at cap), probe validation loss.
+-      With 4 probes and j >= min(1000,cap), stop if
+-      loss <= 1e-4 OR both 200/300-step gains are < 1%.
+-   e. Every 250 updates, record trajectory probes unless stopped.
+-3. Retain stop weights and actual update count for each arm.
+-4. For T in {128,256,512,1024,2048,4096,8192}:
+-   a. Set B=max(1,floor(32768/T)); build 8 seeded batches.
+-   b. Compute masked accuracy and loss without gradients.
+-      On OOM, halve B and rebuild with the same length seed.
+-      If B=1 fails, record an error rather than a score.
+-Return: training record, stop reason, terminal length sweep
++Input: released weights; fresh AdamW; seed-paired streams
++1. Train on fresh 128-driver batches; validate every 250 updates.
++2. After at least 10,000 updates, stop when BOTH hold:
++   a. Best-validation accuracy gain over 2,000 updates < 0.001.
++   b. Relative train-loss gain, first/final 250-update windows
++      within those 2,000 updates, < 0.001. Cap: 60,000 updates.
++3. Select maximum validation full-state accuracy, breaking ties
++   by lower validation cross-entropy, then earlier update.
++4. Freeze selection; evaluate test at 128/512/1024 drivers.
++Return: all three seeds, selected checkpoints and stop counts
+@@ -1238,31 +1241,83 @@ Return: training record, stop reason, terminal length sweep
+-Relative gain divides the loss decrease by the earlier loss magnitude
+-(floored at $10^(-12)$); both trailing windows must pass. The implemented
+-minimum uses the zero-based index $j$. Both arms use the stated cap,
+-stopping criterion, and recipe.
+-
+-#expressivity.wall-table <tab_depth_wall>
+-
+-At the terminal sweep E97 reaches
+-#expressivity.percent(expressivity.wall-acc(expressivity.wall-e97, 128))
+-at trained length, retaining
+-#expressivity.percent(expressivity.wall-acc(expressivity.wall-e97, 512))
+-at four times and
+-#expressivity.percent(expressivity.wall-acc(expressivity.wall-e97, 1024))
+-at eight times that length. GDN2 ends at
+-#expressivity.percent(expressivity.wall-acc(expressivity.wall-gdn2, 128))
+-at trained length and
+-#expressivity.percent(expressivity.wall-acc(expressivity.wall-gdn2, 1024))
+-at eight times. E97 at eight times approximately matches GDN2's
+-terminal trained-length accuracy, then decays further. GDN2 approaches a roughly 50% plateau at the
+-longest lengths, above the declared
+-#expressivity.percent(expressivity.wall-gdn2.random_baseline_acc) random
+-baseline. Intermediate GDN2 trajectory probes had higher accuracy
+-than its terminal checkpoint. These single-seed trajectories motivate
+-repeats that compare fixed training budgets and checkpoint-selection rules.
+-
+-The modular-quadratic finding is consistent with the temporal-composition
+-contrast in #ref(<sec:formal>): E97 executes one nonlinear state update
+-per step, while a GDN fold conditioned on an input-only schedule is
+-affine in its initial state. The second probe tests permutation
+-composition, for which a linear transformation of carried matrix state
+-already implements each required update.
++The plateau rule is calibrated to this task, rather than a certificate
++of convergence. E97 stops at 10,000/10,750/10,500 updates and GDN2 at
++10,000/10,000/12,000 for seeds 0/1/2. Selection is validation-only and
++frozen before any test or extrapolation evaluation; these are selected
++checkpoints, not equal-step comparisons.
++
++#expressivity.invertible-table <tab_invertible>
++
++At trained depth, E97 reaches 0.268 ± 0.091% and GDN2
++0.227 ± 0.291% full-state accuracy. The paired E97 minus GDN2
++difference is 0.041 ± 0.201 percentage points (mean ± sample SD over
++three seeds), giving no robust separation. The seed structure matters:
++E97 is ahead on seeds 0 and 1; GDN2 is ahead on seed 2, including
++cross-entropy. One directional observation survives across seeds:
++E97 has lower extrapolation cross-entropy in every seed at both 4× and
++8× depth. The means are 8.222450 versus 8.267019 nats at 4× and
++8.227873 versus 8.274224 at 8×. This is an observation, not an
++identified mechanism or architecture superiority.
++
++An earlier matched-5e-5 fine-tune reached 1.73% test accuracy for GDN2
++while E97's loss froze. That regime observation is receipt-backed, but
++the stopping-rule thresholds also differed: the earlier train-window
++threshold was 1%, compared with 0.1% here. The cross-rate comparison
++is observational with a protocol confound, not an identified
++learning-rate mechanism. Sources and frozen selections for these
++comparisons are in `paper/results/invertible_quadratic/`,
++including the X3/X4 reports and the scoped X4R review.
++
++#heading(level: 2, numbering: none)[Tuned small models, difficulty, and local arithmetic]
++
++The nominal 8 M grid trains from scratch (measured parameters
++9,900,800 for E97 and 9,887,056 for GDN2), using the actual Gated
++DeltaNet-2 mixer with negative eigenvalues enabled. The symmetric grid
++uses learning rates 1e-3, 3e-4, and 1e-4, each with seeds 0/1/2,
++fresh procedural training, and validation-only checkpoint and rate
++selection. Both architectures select 1e-3 by mean validation accuracy.
++At that best grid point, test-1× accuracy is 0.0356 ± 0.0023% for
++E97 and 0.0493 ± 0.0112% for GDN2. At matched 3e-4 the means are
++0.0219% versus 0.0331%; at 1e-4 they are 0.0290% versus 0.0381%.
++GDN2 is at least as accurate as E97 in all nine primary matched
++learning-rate/seed test-1× cells. This scope is the primary matched
++cells, not every metric or post-seven-driver comparison. Both models'
++post-seven-driver and extrapolation results remain near the suffix
++reference. These task-sized-vocabulary Schedule-Free scratch runs and
++the pretrained full-vocabulary AdamW fine-tunes are different experiment
++classes; their raw scale comparison includes more than architecture.
++
++The seed-0 difficulty ladder reduces the field size. At matched 1e-3,
++$p=13$ gives 3.006% versus 4.538% test accuracy and $p=31$ gives
++0.786% versus 1.666%, for E97 and GDN2 respectively. E97's best
++validation-selected rate is 1e-3 for both; GDN2's is 3e-4 at $p=13$
++(6.038% test accuracy) and 1e-3 at $p=31$. Easier fields yield more
++signal, while accuracy after seven drivers stays near the corresponding
++suffix references (0.5917% and 0.1041%).
++
++At matched 1e-3, the seed-0 one-step diagnostics reach 97.66% for E97
++(500/512) and 100% for GDN2 (512/512). The local arithmetic is learnable;
++robust 128-deep composition is not learned at these scales by either
++class under the tested protocols. These late one-step successes do not
++certify arithmetic mastery at earlier long-task plateaus. The finite
++one-step input domain can also be revisited during procedural training,
++so this is an arithmetic/encoding diagnostic rather than a novel-input
++generalization certificate.
++
++#heading(level: 2, numbering: none)[Marginal-like behavior and limited signal]
++
++Losses stay close to the marginal-optimal reference, with a sliver below
++it: selected 1× cross-entropy means are 8.188895 for E97 and 8.223262
++for GDN2, against 8.221748 nats. E97's below-reference loss indicates
++limited predictive signal. Both arms' post-seven-driver accuracy stays
++near the suffix reference, and terminal full-state accuracy is zero in
++every seed at all three depths. Mean extrapolation losses are at or
++above the reference. We call this marginal-like loss behavior, not an
++identified internal marginal-solution mechanism or successful deep
++recurrence.
++
++Every finite-state task admits a sufficiently large one-hot linear-state
++representation; here each driver acts through a 3721-by-3721 permutation
++matrix. The benchmark tests learned efficiency at practical state sizes,
++not an impossibility for linear state. These findings establish neither
++architecture superiority in either direction nor a universal expressivity
++separation. Optimization, state size, pretraining, and selection remain
++part of the empirical question.
+@@ -1276,3 +1331,2 @@ a direct test of learning a computation within the general linear-state
+-class. The modular-quadratic probe instead repeatedly transforms its
+-running scalar through a nonlinear map, testing the inductive bias
+-provided by E97's nonlinear state path.
++class. The invertible quadratic probe tests learned composition of
++nonlinear coordinate updates at practical state sizes.
+@@ -1340,13 +1394,7 @@ companion to the current-pair measurements above.
+-The iterated-map result is the direct empirical test of the motivating
+-mechanism: E97's nonlinear state path repeatedly transforms the value
+-that will enter the next update. Its measured advantage is consistent
+-with that hypothesis, while optimization, geometry, and checkpoint
+-selection remain possible contributors. The $S_5$ result demonstrates
+-that GDN2 learns permutation composition strongly, as measured by its
+-lead at every reported length. The task has an exact linear-state
+-representation, so this result establishes a useful learned capability
+-on a computation of that class. It complements E97's advantage on
+-iterated nonlinear maps and the pair's comparable language-modeling
+-loss. Together, these measurements make the useful question concrete:
+-which computations benefit from placing the nonlinearity directly in
+-the temporal state path, and under what training and resource conditions?
++The invertible-map results leave the nonlinear-state efficiency question
++open: neither class learns robust deep composition in the tested regimes.
++GDN2's $S_5$ result demonstrates a useful learned capability on a task
++with an exact linear-state representation. Together with comparable
++language-modeling loss, these findings motivate controlled tests of
++which computations benefit from nonlinearity in the temporal state path,
++and under what training and resource conditions.
+@@ -1866,4 +1914,4 @@ organized around many independently addressed recurrent heads.
+-The current pair supplies one language-model training seed and one
+-seed for each reported computational probe. Repeated seeds, common
+-fixed-step budgets, and comparison of terminal with best-validation
+-checkpoints would measure the stability of the observed gaps. A
++The current pair supplies one language-model training seed; the
++matched-rate invertible-map study uses three fine-tuning seeds per arm.
++The current-pair $S_5$ study has one seed. Common fixed-step budgets and
++additional seeds would measure stability across optimization regimes. A
+@@ -1935,12 +1983,10 @@ with the recorded rank-0 loss falling to 2.2798 nats/token.
+-The iterated nonlinear-map experiment connects that practicality to
+-the architectural motivation. E97 learns the recurrence more accurately
+-and retains a larger fraction of its accuracy as sequence length grows.
+-GDN2 learns $S_5$ permutation composition strongly and leads
+-its long-horizon comparison. Since this task admits an exact
+-linear-state representation, GDN2's result is a meaningful success
+-on a computation compatible with linear-state recurrence. Alongside
+-E97's advantage on iterated nonlinear maps, it shows why the
+-computational structure of the task matters. The formal state-channel
+-results make the architectural distinction precise: repeated nonlinear
+-composition in E97, and an affine GDN fold under a fixed,
+-state-independent schedule.
++The invertible nonlinear-map study finds no robust trained-depth
++separation at matched 1e-3 across three seeds. E97 has lower
++extrapolation cross-entropy in every seed at 4× and 8× depth, while
++both classes remain near marginal-like loss behavior with limited
++predictive signal. GDN2 leads the long-horizon $S_5$ comparison, a
++meaningful success on a task with an exact linear-state representation.
++These task-dependent observations leave learned nonlinear-composition
++efficiency open. The formal state-channel results make the architectural
++distinction precise: repeated nonlinear composition in E97, and an
++affine GDN fold under a fixed, state-independent schedule.
+@@ -1981,10 +2027,15 @@ anchors, and the job-5134243 communication measurements are recorded in
+-The current results motivate three direct tests. First, repeat the
+-iterated-map and $S_5$ protocols across seeds and common realized
+-training budgets, recording both terminal and best-validation
+-checkpoints. Persistence of the map advantage would strengthen the
+-mechanism hypothesis; its disappearance under those controls would
+-locate an optimization or protocol dependence. Second, ablate the state
+-nonlinearity within the current E97 geometry, holding the remaining
+-implementation and training choices fixed, to test its causal role at
+-this scale. Third, evaluate the two immutable language-model
+-checkpoints on held-out text and downstream tasks.
++The X-series motivates controlled tests rather than a predicted
++architecture ordering. First, cross learning rate with a common stopping
++rule and matched realized budgets, retaining all seeds and both selected
++and terminal checkpoints. This would test whether the observed regime
++difference survives the protocol confound. Second, track local arithmetic
++and post-seven-driver full-state accuracy throughout training across the
++difficulty ladder. Joint improvement beyond the suffix reference and
++across held-out depths would support learned composition; lower aggregate
++loss alone would still indicate only predictive signal. Repeat the
++per-seed extrapolation cross-entropy comparison under these controls.
++A same-geometry nonlinearity ablation becomes interpretable once the
++arithmetic diagnostic and depth test succeed under matched conditions.
++Third, repeat $S_5$ with a mutually feasible curriculum and additional
++seeds, and evaluate the two immutable language-model checkpoints on
++held-out text and downstream tasks.
+@@ -2027,2 +2078,4 @@ The source record remains available for provenance:
+-  contains their computational-probe records. The current-pair
+-  tables in this paper read the corresponding result JSONs directly.
++  contains the permutation-probe and retired scalar-map records.
++  `paper/results/invertible_quadratic/` retains the X-series result
++  summaries, task proof, and reports. The current-pair tables read
++  the corresponding result JSONs directly.
