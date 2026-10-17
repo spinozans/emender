@@ -1,0 +1,193 @@
+{
+  "task": "X5cP",
+  "name": "gdn2_seed1",
+  "depth": 4,
+  "examples_per_position": 512,
+  "selection": "existing stage.best; accuracy descending, loss ascending; no re-selection",
+  "weights": "ScheduleFree eval x; model.eval(); no optimizer transform or training",
+  "checkpoint": {
+    "path": "/home/erikg/emender/experiments/expressivity_tasks/results_invertible_stage5c_growth_8m/gdn2_seed1/step_372000_T4_s372000.pt",
+    "sha256": "23a6550cb4c5254bafc3a91544ae41c2b7849353dbeb968abce9f256f4262c72",
+    "step": 372000,
+    "depth": 4,
+    "stage_step": 372000,
+    "optimizer_state_saved": true
+  },
+  "recorded_final_checkpoint": {
+    "path": "/home/erikg/emender/experiments/expressivity_tasks/results_invertible_stage5c_growth_8m/gdn2_seed1/step_372000_T4_s372000.pt",
+    "sha256": "23a6550cb4c5254bafc3a91544ae41c2b7849353dbeb968abce9f256f4262c72",
+    "step": 372000,
+    "depth": 4,
+    "stage_step": 372000,
+    "optimizer_state_saved": true
+  },
+  "data": {
+    "path": "experiments/expressivity_tasks/results_invertible_stage5c_growth_8m/gdn2_seed1/frozen_validation.npz",
+    "sha256": "5e051705e045d7fff0acbfa1a953ef8ba4e7160ecc8d63b9175c4b8fa03f3c40",
+    "T4_array_sha256": [
+      "2ecce16b123231f24dc3621e79d5db7c550efb407550737cd4aceed276cae213",
+      "0d9ca7e10429547344ff2836f2289211549ee5aca908d395969ec7f5d287a372",
+      "fa92e3094f0d6111355cdca9ae80f31b6a19d18cb09941d1f875f4b17369c1b0"
+    ]
+  },
+  "sources": {
+    "experiments/expressivity_tasks/results_invertible_stage5c_growth_8m/gdn2_seed1/result.json": "76cb8564c9ce61ca313fe9dbd79567883830c6921be55652ec73753fba7b15b5",
+    "experiments/expressivity_tasks/results_invertible_stage5c_growth_8m/gdn2_seed1/validation.json": "2c174d7468dcc73bd9fb47dba1665553bf87674b6fde5bcb726a67271233554d",
+    "experiments/expressivity_tasks/results_invertible_stage5c_growth_8m/gdn2_seed1/config.json": "f8f9cbf9ebabccefd67e836f1240664650e457bba8e58b97804e1fa9fd364e34",
+    "experiments/expressivity_tasks/results_invertible_stage5c_growth_8m/gdn2_seed1/data_receipt.json": "858590dee893dae33e389a7b46941e388f7c552cba3b0e746d6c7e41ef7b920b",
+    "/home/erikg/emender/experiments/expressivity_tasks/eval_invertible_stage5c_positions.py": "e3887ea8964d2dc0d5b53031d27aacb3d9b0cdc47ede41f005f1dcfaf38befdd",
+    "experiments/expressivity_tasks/run_invertible_stage3_8m.py": "0cdb079c88d87d85ae3b6874e2e8d16530264bd54c2f0f250f6d7f57a0e0f65d",
+    "experiments/expressivity_tasks/run_invertible_stage2.py": "223adc88b6ed3e179b7a490f8c4ca065aa2d66f83082aef1218d2e163a2b1997",
+    "ndm/models/hybrid_ladder.py": "0e10ee82942ba519af98e50a155d1c19509c6e995342b566538563b4f7e311c9"
+  },
+  "runtime": {
+    "host": "lambda01",
+    "python": "3.12.3",
+    "torch": "2.9.1+cu128",
+    "cuda": "12.8",
+    "gpu": "NVIDIA RTX 6000 Ada Generation",
+    "CUDA_VISIBLE_DEVICES": "0",
+    "source_commit": "7f252b4ba3cb194f031b055e06a163f7dd926cb9",
+    "deterministic_algorithms": true,
+    "batch": 32,
+    "forward_batches": 16,
+    "precision": "bf16 autocast, fp32 parameters",
+    "padding": "causal right-pad to16, slice before metrics"
+  },
+  "coordinate_definition": "decode the same joint argmax as x=token//61, y=token%61; exclude invalid tokens",
+  "positions": [
+    {
+      "driver_position": 1,
+      "token_index": 2,
+      "correct": 512,
+      "count": 512,
+      "x_correct": 512,
+      "y_correct": 512,
+      "out_of_range": 0,
+      "loss": 8.206762681511881e-06
+    },
+    {
+      "driver_position": 2,
+      "token_index": 3,
+      "correct": 512,
+      "count": 512,
+      "x_correct": 512,
+      "y_correct": 512,
+      "out_of_range": 0,
+      "loss": 3.102977390705142e-05
+    },
+    {
+      "driver_position": 3,
+      "token_index": 4,
+      "correct": 508,
+      "count": 512,
+      "x_correct": 512,
+      "y_correct": 508,
+      "out_of_range": 0,
+      "loss": 0.046445122066542055
+    },
+    {
+      "driver_position": 4,
+      "token_index": 5,
+      "correct": 0,
+      "count": 512,
+      "x_correct": 8,
+      "y_correct": 13,
+      "out_of_range": 0,
+      "loss": 8.208929455839097
+    }
+  ],
+  "aggregate": {
+    "correct": 1532,
+    "count": 2048,
+    "x_correct": 1544,
+    "y_correct": 1545,
+    "terminal_correct": 0,
+    "terminal_count": 512,
+    "post_suffix7_correct": 0,
+    "post_suffix7_count": 0,
+    "out_of_range": 0,
+    "accuracy": 0.748046875,
+    "loss": 2.0638534277677536,
+    "x_accuracy": 0.75390625,
+    "y_accuracy": 0.75439453125,
+    "terminal_accuracy": 0.0,
+    "post_suffix7_accuracy": null,
+    "suffix_floor": 0.0002687449610319806,
+    "suffix_floor_percent": 0.026874496103198066
+  },
+  "reconciliation": {
+    "position_sums": {
+      "correct": 1532,
+      "count": 2048,
+      "x_correct": 1544,
+      "y_correct": 1545,
+      "out_of_range": 0
+    },
+    "best_count_differences": {},
+    "best_counts_match": true,
+    "best_loss_delta": 0.0,
+    "best_loss_matches_at_1e-6": true,
+    "recorded_best": {
+      "correct": 1532,
+      "count": 2048,
+      "x_correct": 1544,
+      "y_correct": 1545,
+      "terminal_correct": 0,
+      "terminal_count": 512,
+      "post_suffix7_correct": 0,
+      "post_suffix7_count": 0,
+      "out_of_range": 0,
+      "accuracy": 0.748046875,
+      "loss": 2.0638534277677536,
+      "x_accuracy": 0.75390625,
+      "y_accuracy": 0.75439453125,
+      "terminal_accuracy": 0.0,
+      "post_suffix7_accuracy": null,
+      "suffix_floor": 0.0002687449610319806,
+      "suffix_floor_percent": 0.026874496103198066,
+      "stage_step": 372000,
+      "step": 372000,
+      "checkpoint": {
+        "path": "/home/erikg/emender/experiments/expressivity_tasks/results_invertible_stage5c_growth_8m/gdn2_seed1/step_372000_T4_s372000.pt",
+        "sha256": "23a6550cb4c5254bafc3a91544ae41c2b7849353dbeb968abce9f256f4262c72",
+        "step": 372000,
+        "depth": 4,
+        "stage_step": 372000,
+        "optimizer_state_saved": true
+      }
+    },
+    "recorded_final": {
+      "correct": 1532,
+      "count": 2048,
+      "x_correct": 1544,
+      "y_correct": 1545,
+      "terminal_correct": 0,
+      "terminal_count": 512,
+      "post_suffix7_correct": 0,
+      "post_suffix7_count": 0,
+      "out_of_range": 0,
+      "accuracy": 0.748046875,
+      "loss": 2.0638534277677536,
+      "x_accuracy": 0.75390625,
+      "y_accuracy": 0.75439453125,
+      "terminal_accuracy": 0.0,
+      "post_suffix7_accuracy": null,
+      "suffix_floor": 0.0002687449610319806,
+      "suffix_floor_percent": 0.026874496103198066
+    },
+    "best_minus_final_counts": {
+      "correct": 0,
+      "count": 0,
+      "x_correct": 0,
+      "y_correct": 0,
+      "out_of_range": 0,
+      "terminal_correct": 0,
+      "terminal_count": 0,
+      "post_suffix7_correct": 0,
+      "post_suffix7_count": 0
+    },
+    "best_minus_final_loss": 0.0,
+    "position_mean_loss_delta": 2.584280345274692e-08
+  }
+}

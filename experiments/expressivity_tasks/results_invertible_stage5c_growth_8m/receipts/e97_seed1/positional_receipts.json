@@ -1,0 +1,193 @@
+{
+  "task": "X5cP",
+  "name": "e97_seed1",
+  "depth": 4,
+  "examples_per_position": 512,
+  "selection": "existing stage.best; accuracy descending, loss ascending; no re-selection",
+  "weights": "ScheduleFree eval x; model.eval(); no optimizer transform or training",
+  "checkpoint": {
+    "path": "/home/erikg/emender/experiments/expressivity_tasks/results_invertible_stage5c_growth_8m/e97_seed1/step_102500_T4_s102500.pt",
+    "sha256": "36036cb91df847adda4eb6e86d4e516fea3ced21811aca97216a0f4b96f71deb",
+    "step": 102500,
+    "depth": 4,
+    "stage_step": 102500,
+    "optimizer_state_saved": true
+  },
+  "recorded_final_checkpoint": {
+    "path": "/home/erikg/emender/experiments/expressivity_tasks/results_invertible_stage5c_growth_8m/e97_seed1/step_104000_T4_s104000.pt",
+    "sha256": "17646e1d97b9a48ebca2a1ebb51a8b287c4d97935dd0a11853df123dbedaf05f",
+    "step": 104000,
+    "depth": 4,
+    "stage_step": 104000,
+    "optimizer_state_saved": true
+  },
+  "data": {
+    "path": "experiments/expressivity_tasks/results_invertible_stage5c_growth_8m/e97_seed1/frozen_validation.npz",
+    "sha256": "5e051705e045d7fff0acbfa1a953ef8ba4e7160ecc8d63b9175c4b8fa03f3c40",
+    "T4_array_sha256": [
+      "2ecce16b123231f24dc3621e79d5db7c550efb407550737cd4aceed276cae213",
+      "0d9ca7e10429547344ff2836f2289211549ee5aca908d395969ec7f5d287a372",
+      "fa92e3094f0d6111355cdca9ae80f31b6a19d18cb09941d1f875f4b17369c1b0"
+    ]
+  },
+  "sources": {
+    "experiments/expressivity_tasks/results_invertible_stage5c_growth_8m/e97_seed1/result.json": "2e06a3335dc3a8a02cca25b96171b072eb3acf8a3e21848bb84cb5ba390bcf47",
+    "experiments/expressivity_tasks/results_invertible_stage5c_growth_8m/e97_seed1/validation.json": "a22528939f01c67ffc90f3c874e36aa3e03a3ace6d017ba0732659eb3e1bb4d1",
+    "experiments/expressivity_tasks/results_invertible_stage5c_growth_8m/e97_seed1/config.json": "541784813bba42460addfe30f50fa3e42c70e954689394859b36c7a2a2681939",
+    "experiments/expressivity_tasks/results_invertible_stage5c_growth_8m/e97_seed1/data_receipt.json": "97d7e49ea3d8918393726e3a913218df009024fc7ed36ed35343a8286ffe543e",
+    "/home/erikg/emender/experiments/expressivity_tasks/eval_invertible_stage5c_positions.py": "e3887ea8964d2dc0d5b53031d27aacb3d9b0cdc47ede41f005f1dcfaf38befdd",
+    "experiments/expressivity_tasks/run_invertible_stage3_8m.py": "0cdb079c88d87d85ae3b6874e2e8d16530264bd54c2f0f250f6d7f57a0e0f65d",
+    "experiments/expressivity_tasks/run_invertible_stage2.py": "223adc88b6ed3e179b7a490f8c4ca065aa2d66f83082aef1218d2e163a2b1997",
+    "ndm/models/hybrid_ladder.py": "0e10ee82942ba519af98e50a155d1c19509c6e995342b566538563b4f7e311c9"
+  },
+  "runtime": {
+    "host": "lambda01",
+    "python": "3.12.3",
+    "torch": "2.9.1+cu128",
+    "cuda": "12.8",
+    "gpu": "NVIDIA RTX 6000 Ada Generation",
+    "CUDA_VISIBLE_DEVICES": "0",
+    "source_commit": "7f252b4ba3cb194f031b055e06a163f7dd926cb9",
+    "deterministic_algorithms": true,
+    "batch": 32,
+    "forward_batches": 16,
+    "precision": "bf16 autocast, fp32 parameters",
+    "padding": "causal right-pad to16, slice before metrics"
+  },
+  "coordinate_definition": "decode the same joint argmax as x=token//61, y=token%61; exclude invalid tokens",
+  "positions": [
+    {
+      "driver_position": 1,
+      "token_index": 2,
+      "correct": 512,
+      "count": 512,
+      "x_correct": 512,
+      "y_correct": 512,
+      "out_of_range": 0,
+      "loss": 0.0017589703058072392
+    },
+    {
+      "driver_position": 2,
+      "token_index": 3,
+      "correct": 0,
+      "count": 512,
+      "x_correct": 8,
+      "y_correct": 9,
+      "out_of_range": 0,
+      "loss": 8.220418164506555
+    },
+    {
+      "driver_position": 3,
+      "token_index": 4,
+      "correct": 0,
+      "count": 512,
+      "x_correct": 8,
+      "y_correct": 10,
+      "out_of_range": 0,
+      "loss": 8.2226742208004
+    },
+    {
+      "driver_position": 4,
+      "token_index": 5,
+      "correct": 1,
+      "count": 512,
+      "x_correct": 5,
+      "y_correct": 6,
+      "out_of_range": 0,
+      "loss": 8.220819551497698
+    }
+  ],
+  "aggregate": {
+    "correct": 513,
+    "count": 2048,
+    "x_correct": 533,
+    "y_correct": 537,
+    "terminal_correct": 1,
+    "terminal_count": 512,
+    "post_suffix7_correct": 0,
+    "post_suffix7_count": 0,
+    "out_of_range": 0,
+    "accuracy": 0.25048828125,
+    "loss": 6.166417598724365,
+    "x_accuracy": 0.26025390625,
+    "y_accuracy": 0.26220703125,
+    "terminal_accuracy": 0.001953125,
+    "post_suffix7_accuracy": null,
+    "suffix_floor": 0.0002687449610319806,
+    "suffix_floor_percent": 0.026874496103198066
+  },
+  "reconciliation": {
+    "position_sums": {
+      "correct": 513,
+      "count": 2048,
+      "x_correct": 533,
+      "y_correct": 537,
+      "out_of_range": 0
+    },
+    "best_count_differences": {},
+    "best_counts_match": true,
+    "best_loss_delta": 0.0,
+    "best_loss_matches_at_1e-6": true,
+    "recorded_best": {
+      "correct": 513,
+      "count": 2048,
+      "x_correct": 533,
+      "y_correct": 537,
+      "terminal_correct": 1,
+      "terminal_count": 512,
+      "post_suffix7_correct": 0,
+      "post_suffix7_count": 0,
+      "out_of_range": 0,
+      "accuracy": 0.25048828125,
+      "loss": 6.166417598724365,
+      "x_accuracy": 0.26025390625,
+      "y_accuracy": 0.26220703125,
+      "terminal_accuracy": 0.001953125,
+      "post_suffix7_accuracy": null,
+      "suffix_floor": 0.0002687449610319806,
+      "suffix_floor_percent": 0.026874496103198066,
+      "stage_step": 102500,
+      "step": 102500,
+      "checkpoint": {
+        "path": "/home/erikg/emender/experiments/expressivity_tasks/results_invertible_stage5c_growth_8m/e97_seed1/step_102500_T4_s102500.pt",
+        "sha256": "36036cb91df847adda4eb6e86d4e516fea3ced21811aca97216a0f4b96f71deb",
+        "step": 102500,
+        "depth": 4,
+        "stage_step": 102500,
+        "optimizer_state_saved": true
+      }
+    },
+    "recorded_final": {
+      "correct": 512,
+      "count": 2048,
+      "x_correct": 537,
+      "y_correct": 543,
+      "terminal_correct": 0,
+      "terminal_count": 512,
+      "post_suffix7_correct": 0,
+      "post_suffix7_count": 0,
+      "out_of_range": 0,
+      "accuracy": 0.25,
+      "loss": 6.166159301996231,
+      "x_accuracy": 0.26220703125,
+      "y_accuracy": 0.26513671875,
+      "terminal_accuracy": 0.0,
+      "post_suffix7_accuracy": null,
+      "suffix_floor": 0.0002687449610319806,
+      "suffix_floor_percent": 0.026874496103198066
+    },
+    "best_minus_final_counts": {
+      "correct": 1,
+      "count": 0,
+      "x_correct": -4,
+      "y_correct": -6,
+      "out_of_range": 0,
+      "terminal_correct": 1,
+      "terminal_count": 0,
+      "post_suffix7_correct": 0,
+      "post_suffix7_count": 0
+    },
+    "best_minus_final_loss": 0.0002582967281341553,
+    "position_mean_loss_delta": 1.2805324978160115e-07
+  }
+}
