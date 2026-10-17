@@ -8,9 +8,12 @@ export const liveScopes = [
   'GDN2 is ahead of E97 at every reported length, and both curves decline toward the random baseline',
   "GDN2's attempted length-512 curriculum stage was OOM-infeasible even at sub-batch 1, after one completed optimizer step",
   'reaches 0.7918, GDN 0.3552, and raw-write M²RNN-CMA 0.2157',
-  'The common rule therefore yields different realized training durations',
-  'Intermediate GDN2 trajectory probes had higher accuracy than its terminal checkpoint',
-  'These single-seed trajectories motivate repeats that compare fixed training budgets and checkpoint-selection rules',
+  'these are selected checkpoints, not equal-step comparisons',
+  'It does not identify which shortcut, if any, the trained models used',
+  'The cross-rate comparison is observational with a protocol confound',
+  'This scope is the primary matched cells, not every metric or post-seven-driver comparison',
+  'We call this marginal-like loss behavior, not an identified internal marginal-solution mechanism or successful deep recurrence',
+  'These findings establish neither architecture superiority in either direction nor a universal expressivity separation',
   'fixed-weight raw-write resource class, over abstract real-valued gate/key/state signatures',
   'Exact non-equality holds on that real-valued witness for each finite $k$',
   'The complexity separation TC#super[0] $!=$ NC#super[1] remains open, and no result here depends on it',
@@ -25,8 +28,8 @@ export const liveScopes = [
   'These are measurements from one production segment'
 ];
 export const captionScopes = [
-  'with unequal realized training: E97 stopped after #train-e97.steps_trained steps and GDN2 after #train-gdn2.steps_trained',
-  'plateau, above the declared #percent(wall-gdn2.random_baseline_acc) random baseline',
+  'Mean and sample SD over three paired seeds',
+  'with validation-only checkpoint selection frozen before test',
   'S5 capacity/long-horizon accuracy on the released pair',
   'GDN2 completed one optimizer step at length 512',
   'OOM-infeasible even at sub-batch 1'

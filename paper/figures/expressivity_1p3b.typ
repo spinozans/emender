@@ -1,15 +1,8 @@
-// Section 6 tables are computed from the committed result JSONs at build time.
+// Current Section 6 tables read frozen result JSONs directly.
 #let result-root = "../results/expressivity_1p3b/"
-#let wall-root = result-root + "iterated-map/"
-#let wall-e97 = json(wall-root + "ft_e97_modular_quadratic_sweep.json")
-#let wall-gdn2 = json(wall-root + "ft_gdn2_modular_quadratic_sweep.json")
-#let train-e97 = json(wall-root + "ft_e97_modular_quadratic.json")
-#let train-gdn2 = json(wall-root + "ft_gdn2_modular_quadratic.json")
-#let budget = json(wall-root + "budget.json")
-#let control = json(wall-root + "phase1_8m_control_table.json").logistic_contractive_control
-#let lyapunov = json(wall-root + "lyapunov_logistic_map.json")
 #let s5-e97 = json(result-root + "capacity/cap_e97_s5_sweep.json")
 #let s5-gdn2 = json(result-root + "capacity/cap_gdn2_s5_sweep.json")
+#let invertible = json("../results/invertible_quadratic/stage4_13b.json")
 #let fixed(value, digits: 4) = {
   let parts = str(calc.round(value, digits: digits)).split(".")
   if digits == 0 { parts.first() } else {
@@ -18,54 +11,29 @@
   }
 }
 #let percent(value) = fixed(100 * value, digits: 2) + "%"
-#let wall-acc(model, length) = model.acc_vs_T.at(str(length)).acc
-#let wall-table = figure(
+#let invertible-table = figure(
   table(
     columns: (auto, auto, auto, auto),
     align: (left, right, right, right), stroke: 0.5pt, inset: 6pt,
-    table.header([*Length*], [*Train-length multiple*], [*E97*], [*GDN2*]),
-    ..wall-e97.acc_vs_T.pairs().map(pair => {
-      let (length, result) = pair
-      (length, str(int(length) / train-e97.recipe.train_len) + "×",
-       percent(result.acc), percent(wall-acc(wall-gdn2, length)))
+    table.header([*Seed*], [*E97 accuracy*], [*GDN2 accuracy*], [*E97 − GDN2 (pp)*]),
+    ..range(3).map(seed => {
+      let e = invertible.runs.at("headline_e97_seed" + str(seed)).test.test_1x.accuracy
+      let g = invertible.runs.at("headline_gdn2_seed" + str(seed)).test.test_1x.accuracy
+      (str(seed), percent(e), percent(g), fixed(100 * (e - g), digits: 3))
     }).flatten(),
+    [Mean ± SD],
+    [#fixed(100 * invertible.aggregate.e97.test_1x_accuracy.mean, digits: 3)% ± #fixed(100 * invertible.aggregate.e97.test_1x_accuracy.sample_sd, digits: 3)%],
+    [#fixed(100 * invertible.aggregate.gdn2.test_1x_accuracy.mean, digits: 3)% ± #fixed(100 * invertible.aggregate.gdn2.test_1x_accuracy.sample_sd, digits: 3)%],
+    [#fixed(100 * invertible.paired_aggregate.test_1x_accuracy.mean, digits: 3) ± #fixed(100 * invertible.paired_aggregate.test_1x_accuracy.sample_sd, digits: 3)],
   ),
   caption: [
-    *Modular-quadratic length extrapolation on the released 1.3 B pair.*
-    Full-vocabulary argmax accuracy at the pre-registered plateau stops;
-    trained length #train-e97.recipe.train_len, seed #wall-e97.seed,
-    #wall-e97.acc_vs_T.at("128").n scored token positions per length.
-    The common cap is #budget.cap_steps steps, with unequal realized
-    training: E97 stopped after #train-e97.steps_trained steps and GDN2
-    after #train-gdn2.steps_trained. E97 shows graceful length transfer; GDN2 approaches a roughly 50%
-    plateau, above the declared #percent(wall-gdn2.random_baseline_acc)
-    random baseline. Source: `paper/results/expressivity_1p3b/iterated-map/`,
-    `ft_{e97,gdn2}_modular_quadratic{,_sweep}.json` (commit `9dc3afd7`);
-    `budget.json` (pre-registration `1989656c`).
-  ],
-)
-#let control-table = figure(
-  table(
-    columns: (auto, auto, auto, auto, auto, auto),
-    align: (left, right, right, right, right, right), stroke: 0.5pt, inset: 5pt,
-    table.header([*Arm*], [*Parameters (M)*], [*T=128*], [*T=256*], [*T=512*], [*T=1024*]),
-    ..control.arms.pairs().map(pair => {
-      let (arm, result) = pair
-      (arm, fixed(result.params / 1000000, digits: 2),
-       ..(128, 256, 512, 1024).map(length =>
-         fixed(result.pooled_acc_vs_T.at(str(length)).mean_acc, digits: 3)))
-    }).flatten(),
-  ),
-  caption: [
-    *Contractive logistic-map control, from scratch.* Seed-mean accuracy;
-    the historical `gdn` row is parameter-mismatched, whereas `gdn-8m`
-    has #fixed(100 * (control.arms.at("gdn-8m").params / control.arms.e97.params - 1), digits: 1)%
-    more parameters than E97, conservatively favoring the linear baseline.
-    All arms use the same training/evaluation protocol and
-    #control.arms.e97.pooled_acc_vs_T.at("128").n_seeds seeds.
-    Source: `phase1_8m_control_table.json` (commit `384e657c`), under
-    `paper/results/expressivity_1p3b/iterated-map/`;
-    protocol pre-registered in `PLAN.md` (`0038ad84`).
+    *Invertible quadratic tracking on the released 1.3 B pair.*
+    Trained-depth full-state test accuracy at matched learning rate 1e-3;
+    65,536 scored driver positions per seed. Mean and sample SD over three
+    paired seeds, with validation-only checkpoint selection frozen before
+    test. Running positions within a sequence are correlated. E97 leads
+    on seeds 0/1 and GDN2 on seed 2; the paired difference shows no robust
+    separation. Source: `paper/results/invertible_quadratic/stage4_13b.json`.
   ],
 )
 #let s5-table = figure(

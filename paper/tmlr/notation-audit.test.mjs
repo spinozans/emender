@@ -31,14 +31,11 @@ test('E97 uses returned state for output and Hadamard split gates consistently',
   assert.ok(read('formal/lean/ElmanProofs/Architectures/SplitGatedDelta.lean').includes('hadamard b k'));
   assert.ok(read('formal/lean/ElmanProofs/Architectures/SplitGatedDelta.lean').includes('splitGatedLinearCore 1 (D * H)'));
 });
-test('depthwall pseudocode preserves implemented indexing and terminal-not-best selection',()=>{
-  for(const fragment of ['step j = 0,...,cap-1','j >= min(1000,cap)',
-    'loss <= 1e-4 OR both 200/300-step gains are < 1%',
-    'Retain stop weights','full-vocabulary argmax','halve B'])assert.ok(source.includes(fragment),fragment);
-  const driver=read('scripts/expressivity_1p3b_depthwall.py');
-  for(const fragment of ['if hist[-1][0] < min_step:','if v3 <= 1e-4:',
-    'return rel300 < 0.01 and rel200 < 0.01','for step in range(args.steps):',
-    'preds = logits.argmax(dim=-1)','B //= 2'])assert.ok(driver.includes(fragment),fragment);
+test('invertible-map pseudocode retains validation-only selection and calibrated plateau',()=>{
+  for(const fragment of ['validate every 250 updates','at least 10,000 updates',
+    'accuracy gain over 2,000 updates < 0.001','within those 2,000 updates, < 0.001',
+    'Cap: 60,000 updates','Freeze selection; evaluate test at 128/512/1024 drivers',
+    'by lower validation cross-entropy, then earlier update'])assert.ok(source.includes(fragment),fragment);
 });
 test('verify-symbols counts primes in imported vector drawings without converting them',()=>{
   const prime={func:'equation',body:{func:'attach',base:{func:'symbol',text:'S'},tr:{func:'primes',count:1}}};

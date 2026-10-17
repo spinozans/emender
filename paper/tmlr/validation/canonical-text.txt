@@ -6,22 +6,24 @@ Abstract
 Fast interaction and feedback require models to update what they know as
 new inputs arrive. Emender performs this computation in bounded recurrent
 memory: each input corrects the memory’s prediction and applies a nonlinear
-transformation to the state carried forward. Many small memory heads execute
-in parallel, making the sequential update practical to train. At 1.3 billion
-parameters, E97 trains through 150.8 billion Pile tokens on one eight-GPU
-workstation, reaching training loss comparable to a closely parameter-matched
-Gated DeltaNet-2 control. An extended Frontier run reaches 513.0 billion
-cumulative tokens, with its final segment trained on CommaPile. Fine-tuning
-the workstation pair on an iterated nonlinear map gives E97 99.96% accuracy
-versus GDN2′s 76.09% at the trained length, and 76.07% versus 53.36% at eight
-times that length. GDN2 leads on long-horizon 𝑆5 permutation composition, a
-task that admits an exact linear-state representation. Its strong learning on this
-task demonstrates the utility of linear-state recurrence, alongside E97′s advantage
-on repeated nonlinear transformation. Formal results characterize E97′s repeated
-nonlinear state transformation and GDN’s affine state composition under a
-fixed, state-independent parameter schedule. Together, these findings establish
-a practical route to training nonlinear recurrence and support further study of
-computation through memory in feedback, optimization, and driven dynamics.
+transformation to the state carried forward. Many small memory heads execute in
+parallel, making the sequential update practical to train. At 1.3 billion parameters,
+E97 trains through 150.8 billion Pile tokens on one eight-GPU workstation,
+reaching training loss comparable to a closely parameter-matched Gated
+DeltaNet-2 control. An extended Frontier run reaches 513.0 billion cumulative
+tokens, with its final segment trained on CommaPile. On an invertible nonlinear-
+map benchmark, matched-rate fine-tuning across three seeds gives 0.268% versus
+0.227% full-state accuracy, with no robust trained-length separation. E97 has
+lower extrapolation cross-entropy in every seed at four and eight times the
+trained depth. GDN2 leads on long-horizon 𝑆5 permutation composition, a task
+that admits an exact linear-state representation. Its strong learning on this task
+demonstrates the utility of linear-state recurrence. Neither model learns robust
+deep composition on the invertible map at these scales. Formal results characterize
+E97′s repeated nonlinear state transformation and GDN’s affine state composition
+under a fixed, state-independent parameter schedule. Together, these findings
+establish a practical route to training nonlinear recurrence and support further
+study of computation through memory in feedback, optimization, and driven
+dynamics.
 Keywords recurrent neural networks · language modeling · nonlinear recurrence · state-
 space models · expressivity · Lean 4
 1 Introduction
@@ -34,10 +36,10 @@ tokens [1], [2]. Each additional token adds a decoding step and extends the work
 A complementary question is how much of this ongoing computation can happen directly in
 carried memory as inputs arrive. Efficient nonlinear recurrence offers such a path: at inference,
 a fixed-width, fixed-depth model transforms fixed-size state with bounded work per update.
-A sequence can require more than a record of what arrived. Its elements may be instructions
-that change a running calculation, measurements that alter a feedback response, or observations
 1
-that revise an earlier association. In each case the current state is part of the next computation.
+A sequence can require more than a record of what arrived. Its elements may be instructions
+that change a running calculation, measurements that alter a feedback response, or observations
+that revise an earlier association. In each case the current state is part of the next computation.
 A recurrent model reads an input, updates its internal state, and carries that state into the
 following step. The question is what computation the update performs, and how to train it
 efficiently at language-model scale.
@@ -68,21 +70,21 @@ lower peak memory use for E97. The same E97-MLP architecture was then continued 
 Frontier from the 150.79-billion-token checkpoint to 513.0 billion cumulative accepted tokens,
 and continued training reduced the recorded rank-0 loss from 2.4365 to 2.2798 nats/token, with
 the final segment on CommaPile mainmix (Section 5).
-The second question is what these trained models can learn to compute. An iterated nonlinear
-map repeatedly transforms a running value, directly testing the computational pattern that
-motivates E97. After fine-tuning on a modular-quadratic recurrence, E97 reaches 99.96% versus
-76.09% accuracy at the trained length and 76.07% versus 53.36% at eight times that length. Its
-higher accuracy and greater length robustness support nonlinear transformation in the carried-
-state path as a useful inductive bias. The 𝑆5 group-state task asks the models to compose
-permutation actions. This computation admits an exact linear-state representation: each token
-multiplies a carried permutation matrix by its generator matrix. GDN2 learns this task more
-effectively in the long-horizon comparison, demonstrating a useful learned capability on a
-computation compatible with linear-state recurrence. Section 6 gives the protocols, learning
-trajectories, and length-dependent results for both tasks.
-The formal analysis describes the state computations behind this comparison. Lean 4 verifies
-E97′s time-ordered nonlinear composition and the affine GDN state fold under a fixed, state-
+The second question is what these trained models can learn to compute. An invertible two-
+coordinate quadratic map tests repeated nonlinear transformation without state merging.
+At matched learning rate 1e-3, three-seed fine-tuning gives E97 0.268 ± 0.091% and GDN2
+0.227 ± 0.291% full-state accuracy at the trained depth. The paired difference is 0.041 ±
+0.201 percentage points (mean ± sample SD): there is no robust separation. E97 has lower
+extrapolation cross-entropy in every seed at four and eight times that depth. The 𝑆5 group-
+state task asks the models to compose permutation actions. This computation admits an exact
+linear-state representation: each token multiplies a carried permutation matrix by its generator
+matrix. GDN2 learns this task more effectively in the long-horizon comparison, demonstrating
+a useful learned capability on a computation compatible with linear-state recurrence. Section 6
+gives the protocols and their limits.
 2
-independent parameter schedule. It also relates their split-gated cores and characterizes the
+The formal analysis describes the state computations behind this comparison. Lean 4 verifies
+E97′s time-ordered nonlinear composition and the affine GDN state fold under a fixed, state-
+independent parameter schedule. It also relates their split-gated cores and characterizes the
 affine group actions of an exact 𝑆5 tracker under a token-only schedule and a decoder that
 separates reachable states (Section 7). An exact construction within GDN2′s production gate
 and decay ranges is the more specific realization question G3. These statements make the
@@ -709,88 +711,131 @@ logs would supply total search effort and within-search improvement for these tw
 (Open item U3.1).
 6 What the current models learn to compute
 Comparable language-modeling loss leaves open what the carried state can learn to compute.
-We fine-tune the same 1.3 B E97 and GDN2 checkpoints on two explicit computations. The
-modular-quadratic task repeatedly applies a nonlinear map to a running value; E97′s advantage
-supports the mechanism hypothesis that motivates its state update. The 𝑆5 task composes
-permutations, whose running product admits the linear matrix-state update in Section 2.
-GDN2′s stronger performance on this task is positive evidence for learning a computation
-compatible with linear-state recurrence. The two probes therefore test useful learned capabilities
-with different state-update structure: linear permutation actions and a map nonlinear in its
-running scalar value. Both studies concern learned performance under stated budgets and
-protocols.
-Iterating a nonlinear map with the trained pair
-The decisive experiment uses the E97 and GDN2 checkpoints of Section 5, with Schedule-Free
-y-mode recovery, on 𝑥𝑡 = (𝑥2
-𝑡−1 + 𝑐𝑡) mod 256, 5 input drivers and running supervision. Both
-arms receive the identical full-fine-tune recipe: bf16 AdamW(betas=0.9,0.95), constant learning
-rate 0.00005, warmup 300, weight decay 0.01, gradient clip 0.5, batch 32, trained length 128,
-seed 42. The throughput-derived common cap of 18269 steps was fixed before accuracy was seen
-(budget.json, 1989656c). It projects 4.35 GPU-hours if both arms reach the cap. The same pre-
-registered validation-loss plateau rule stopped E97 after 2500 steps and GDN2 after 2200 steps;
-actual training elapsed 0.649 GPU-hours, excluding loading and final evaluation. The common
-rule therefore yields different realized training durations.
-The protocol below summarizes the retained driver, scripts/expressivity_1p3b_depthwall.py,
-including its zero-based probe indices. Evaluation uses the weights at each arm’s plateau stop.
-The terminal sweep is grad-free and scores every masked position using full-vocabulary argmax;
-reduced evaluation batches on OOM are recorded with the results.
-Algorithm 4 — matched-cap fine-tune and terminal evaluation.
-Input: bound y-mode weights; common recipe, cap, seed
-1. Build fixed validation batches; initialize AdamW.
-2. For step j = 0,...,cap-1:
-a. Draw a batch at T=128; run bf16 forward.
+We compare the released 1.3 B E97 and GDN2 checkpoints on invertible quadratic tracking
+and permutation composition, and use a tuned small-model grid to check the first task at lower
+cost. The invertible map yields limited predictive signal for both classes; the 𝑆5 study provides
+a companion finding on a computation with an exact linear-state representation.
+An invertible nonlinear-map benchmark
+The earlier scalar task, 𝑧𝑡+1 = (𝑧2
+𝑡 + 𝑐𝑡) mod 256, admits exact recovery from a parity summary
+of the omitted prefix plus the last seven drivers. Parity updates as (𝑧 + 𝑐) mod 2. Two states
+of equal parity have an even difference; each shared squaring step multiplies that difference by
+their even sum. Seven steps therefore erase the difference modulo 256. This task property retires
+the earlier accuracy comparison as a test of deep nonlinear composition. It does not identify
+which shortcut, if any, the trained models used.
+The replacement tracks two coordinates over the field with 𝑝 = 61:
+𝐹𝑐(𝑥, 𝑦) = (𝑦, 𝑥 + 𝑦2
++ 𝑐) mod 𝑝, 𝐹−1
+𝑐 (𝑢, 𝑣) = (𝑣 − 𝑢2
+− 𝑐, 𝑢) mod 𝑝.
+Each fixed-driver map is a permutation of all 𝑝2
+= 3721 states. Distinct full states never merge
+under any shared driver sequence. Uniform initial coordinates are given once in two typed prefix
+tokens; iid uniform field-valued drivers follow. At every driver position the model predicts the
+joint class 𝑝𝑥 + 𝑦 from the inputs alone. Previous targets and model predictions are never fed
+back. Training uses 128 drivers; extrapolation uses 512 and 1024, with two prefix tokens at each
+length. Accuracy scores the complete state, rather than one coordinate.
+A predictor observing only the initialization and a bounded suffix of 𝑘 drivers has full-state
+accuracy 1
+𝑝2 = 0.0269% once at least two drivers are hidden before that suffix. To see this,
+two fresh drivers 𝑎, 𝑏 send any fixed state to (𝑢, 𝑣) with 𝑎 = 𝑢 − 𝑥 − 𝑦2
+and 𝑏 = 𝑣 − 𝑦 − 𝑢2
+.
+Every target pair has exactly one driver pair, so the hidden state is uniform; subsequent
+known permutations preserve uniformity. The bound excludes the first 𝑘 + 1 driver positions
+and predictors retaining additional prefix summaries. A recurrent model can retain the history
+beyond this observer class. We report accuracy after the first eight drivers separately for 𝑘 =
+7. The named marginal-optimal loss reference is ln(3721) = 8.221748 nats, the cross-entropy of
+a uniform prediction over the joint state classes.
 17
-b. Backpropagate masked cross-entropy over all positions.
-On OOM, split the same batch and accumulate gradients.
-c. Warm up LR for 300 steps, then keep LR constant;
-clip gradient norm to 0.5; take an optimizer step.
-d. Every 100 updates (and at cap), probe validation loss.
-With 4 probes and j >= min(1000,cap), stop if
-loss <= 1e-4 OR both 200/300-step gains are < 1%.
-e. Every 250 updates, record trajectory probes unless stopped.
-3. Retain stop weights and actual update count for each arm.
-4. For T in {128,256,512,1024,2048,4096,8192}:
-a. Set B=max(1,floor(32768/T)); build 8 seeded batches.
-b. Compute masked accuracy and loss without gradients.
-On OOM, halve B and rebuild with the same length seed.
-If B=1 fails, record an error rather than a score.
-Return: training record, stop reason, terminal length sweep
-Relative gain divides the loss decrease by the earlier loss magnitude (floored at 10−12
-); both
-trailing windows must pass. The implemented minimum uses the zero-based index 𝑗. Both arms
-use the stated cap, stopping criterion, and recipe.
-Length Train-length multiple E97 GDN2
-128 1× 99.96% 76.09%
-256 2× 99.14% 62.85%
-512 4× 90.16% 56.55%
-1024 8× 76.07% 53.36%
-2048 16× 62.92% 51.91%
-4096 32× 55.79% 50.74%
-8192 64× 51.79% 50.53%
-Table 4: Modular-quadratic length extrapolation on the released 1.3 B pair. Full-vocabulary argmax
-accuracy at the pre-registered plateau stops; trained length 128, seed 42, 262144 scored token positions
-per length. The common cap is 18269 steps, with unequal realized training: E97 stopped after 2500 steps
-and GDN2 after 2200. E97 shows graceful length transfer; GDN2 approaches a roughly 50% plateau, above
-the declared 0.39% random baseline. Source: paper/results/expressivity_1p3b/iterated-map/, ft_{e97,gdn2}
-_modular_quadratic{,_sweep}.json (commit 9dc3afd7); budget.json (pre-registration 1989656c).
-At the terminal sweep E97 reaches 99.96% at trained length, retaining 90.16% at four times and
-76.07% at eight times that length. GDN2 ends at 76.09% at trained length and 53.36% at eight
-times. E97 at eight times approximately matches GDN2′s terminal trained-length accuracy,
-then decays further. GDN2 approaches a roughly 50% plateau at the longest lengths, above the
-declared 0.39% random baseline. Intermediate GDN2 trajectory probes had higher accuracy
-than its terminal checkpoint. These single-seed trajectories motivate repeats that compare fixed
-training budgets and checkpoint-selection rules.
-The modular-quadratic finding is consistent with the temporal-composition contrast in
-Section 7: E97 executes one nonlinear state update per step, while a GDN fold conditioned
-on an input-only schedule is affine in its initial state. The second probe tests permutation
-composition, for which a linear transformation of carried matrix state already implements each
-required update.
+Matched-rate fine-tuning at 1.3 B
+Both released checkpoints receive fresh AdamW states and a full bf16 fine-tune at matched
+learning rate 1e-3, with batch 32, weight decay 0.01, gradient clip 0.5, and 300 warmup updates
+followed by a constant rate. Training batches are freshly generated, with streams paired by seed
+across arms. Frozen validation and test pools contain 512 sequences per seed and depth. Full
+pretrained-vocabulary logits are scored; initialization and padding positions are masked.
+Algorithm 4 — validation selection before test.
+Input: released weights; fresh AdamW; seed-paired streams
+1. Train on fresh 128-driver batches; validate every 250 updates.
+2. After at least 10,000 updates, stop when BOTH hold:
+a. Best-validation accuracy gain over 2,000 updates < 0.001.
+b. Relative train-loss gain, first/final 250-update windows
+within those 2,000 updates, < 0.001. Cap: 60,000 updates.
+3. Select maximum validation full-state accuracy, breaking ties
+by lower validation cross-entropy, then earlier update.
+4. Freeze selection; evaluate test at 128/512/1024 drivers.
+Return: all three seeds, selected checkpoints and stop counts
+The plateau rule is calibrated to this task, rather than a certificate of convergence. E97 stops
+at 10,000/10,750/10,500 updates and GDN2 at 10,000/10,000/12,000 for seeds 0/1/2. Selection
+is validation-only and frozen before any test or extrapolation evaluation; these are selected
+checkpoints, not equal-step comparisons.
+Seed E97 accuracy GDN2 accuracy E97 − GDN2 (pp)
+0 0.23% 0.09% 0.143
+1 0.20% 0.03% 0.169
+2 0.37% 0.56% −0.191
+Mean ± SD 0.268% ± 0.091% 0.227% ± 0.291% 0.041 ± 0.201
+Table 4: Invertible quadratic tracking on the released 1.3 B pair. Trained-depth full-state test accuracy at
+matched learning rate 1e-3; 65,536 scored driver positions per seed. Mean and sample SD over three paired seeds,
+with validation-only checkpoint selection frozen before test. Running positions within a sequence are correlated.
+E97 leads on seeds 0/1 and GDN2 on seed 2; the paired difference shows no robust separation. Source: paper/
+results/invertible_quadratic/stage4_13b.json.
+At trained depth, E97 reaches 0.268 ± 0.091% and GDN2 0.227 ± 0.291% full-state accuracy.
+The paired E97 minus GDN2 difference is 0.041 ± 0.201 percentage points (mean ± sample
+SD over three seeds), giving no robust separation. The seed structure matters: E97 is ahead on
+seeds 0 and 1; GDN2 is ahead on seed 2, including cross-entropy. One directional observation
+survives across seeds: E97 has lower extrapolation cross-entropy in every seed at both 4× and
+8× depth. The means are 8.222450 versus 8.267019 nats at 4× and 8.227873 versus 8.274224
+at 8×. This is an observation, not an identified mechanism or architecture superiority.
+An earlier matched-5e-5 fine-tune reached 1.73% test accuracy for GDN2 while E97′s loss froze.
+That regime observation is receipt-backed, but the stopping-rule thresholds also differed: the
+earlier train-window threshold was 1%, compared with 0.1% here. The cross-rate comparison is
+observational with a protocol confound, not an identified learning-rate mechanism. Sources and
 18
-S5 group-state tracking on the same pair
+frozen selections for these comparisons are in paper/results/invertible_quadratic/, including
+the X3/X4 reports and the scoped X4R review.
+Tuned small models, difficulty, and local arithmetic
+The nominal 8 M grid trains from scratch (measured parameters 9,900,800 for E97 and 9,887,056
+for GDN2), using the actual Gated DeltaNet-2 mixer with negative eigenvalues enabled. The
+symmetric grid uses learning rates 1e-3, 3e-4, and 1e-4, each with seeds 0/1/2, fresh procedural
+training, and validation-only checkpoint and rate selection. Both architectures select 1e-3 by
+mean validation accuracy. At that best grid point, test-1× accuracy is 0.0356 ± 0.0023% for
+E97 and 0.0493 ± 0.0112% for GDN2. At matched 3e-4 the means are 0.0219% versus 0.0331%;
+at 1e-4 they are 0.0290% versus 0.0381%. GDN2 is at least as accurate as E97 in all nine
+primary matched learning-rate/seed test-1× cells. This scope is the primary matched cells, not
+every metric or post-seven-driver comparison. Both models’ post-seven-driver and extrapolation
+results remain near the suffix reference. These task-sized-vocabulary Schedule-Free scratch runs
+and the pretrained full-vocabulary AdamW fine-tunes are different experiment classes; their
+raw scale comparison includes more than architecture.
+The seed-0 difficulty ladder reduces the field size. At matched 1e-3, 𝑝 = 13 gives 3.006% versus
+4.538% test accuracy and 𝑝 = 31 gives 0.786% versus 1.666%, for E97 and GDN2 respectively.
+E97′s best validation-selected rate is 1e-3 for both; GDN2′s is 3e-4 at 𝑝 = 13 (6.038% test
+accuracy) and 1e-3 at 𝑝 = 31. Easier fields yield more signal, while accuracy after seven drivers
+stays near the corresponding suffix references (0.5917% and 0.1041%).
+At matched 1e-3, the seed-0 one-step diagnostics reach 97.66% for E97 (500/512) and 100% for
+GDN2 (512/512). The local arithmetic is learnable; robust 128-deep composition is not learned
+at these scales by either class under the tested protocols. These late one-step successes do not
+certify arithmetic mastery at earlier long-task plateaus. The finite one-step input domain can
+also be revisited during procedural training, so this is an arithmetic/encoding diagnostic rather
+than a novel-input generalization certificate.
+Marginal-like behavior and limited signal
+Losses stay close to the marginal-optimal reference, with a sliver below it: selected 1× cross-
+entropy means are 8.188895 for E97 and 8.223262 for GDN2, against 8.221748 nats. E97′s
+below-reference loss indicates limited predictive signal. Both arms’ post-seven-driver accuracy
+stays near the suffix reference, and terminal full-state accuracy is zero in every seed at all three
+depths. Mean extrapolation losses are at or above the reference. We call this marginal-like loss
+behavior, not an identified internal marginal-solution mechanism or successful deep recurrence.
+Every finite-state task admits a sufficiently large one-hot linear-state representation; here each
+driver acts through a 3721-by-3721 permutation matrix. The benchmark tests learned efficiency
+at practical state sizes, not an impossibility for linear state. These findings establish neither
+architecture superiority in either direction nor a universal expressivity separation. Optimization,
+state size, pretraining, and selection remain part of the empirical question.
+S5 group-state tracking on the same pair
 The 𝑆5 word problem tests repeated composition of permutation actions. Its exact permutation-
 matrix representation uses a token-selected linear map at every step (Section 2). This makes
-𝑆5 a direct test of learning a computation within the general linear-state class. The modular-
-quadratic probe instead repeatedly transforms its running scalar through a nonlinear map,
-testing the inductive bias provided by E97′s nonlinear state path.
+𝑆5 a direct test of learning a computation within the general linear-state class. The invertible
+19
+quadratic probe tests learned composition of nonlinear coordinate updates at practical state
+sizes.
 Zero-shot evaluation did not separate the two models. Matched fine-tuning favored E97 on the
 solvable 𝑆3 control. In the longer-horizon 𝑆5 capacity study, GDN2 is ahead of E97 at every
 reported length, and both curves decline toward the random baseline. GDN2 learns this group-
@@ -824,7 +869,7 @@ write M²RNN-CMA 0.2157. The Emender starts at 0.79 and declines to 0.42, 0.22, 
 both raw-write variants stall in the 0.31–0.38 band. Each family runs its default configuration
 with no probe-specific hyperparameter search, which is the seeds-controlled companion to the
 current-pair measurements above.
-19
+20
 Model 𝑆3 T=128 𝑆5 T=128 𝑆5 T=256 𝑆5 T=512
 Emender 1.0000 0.7918 0.4158 0.2150
 GDN 0.7185 0.3552 0.1843 0.0974
@@ -837,16 +882,11 @@ witness. The Emender separates from
 the linear-recurrent (GDN) and raw-write nonlinear matrix RNN (M²RNN) baselines at training length. Source
 numbers in paper/ndmpapernotes.md lines 153–173; figure script paper/figures/plot_expressivity_seeds.py.
 Interpreting the current-pair evidence
-The iterated-map result is the direct empirical test of the motivating mechanism: E97′s
-nonlinear state path repeatedly transforms the value that will enter the next update. Its
-measured advantage is consistent with that hypothesis, while optimization, geometry, and
-checkpoint selection remain possible contributors. The 𝑆5 result demonstrates that GDN2 learns
-permutation composition strongly, as measured by its lead at every reported length. The task
-has an exact linear-state representation, so this result establishes a useful learned capability on
-a computation of that class. It complements E97′s advantage on iterated nonlinear maps and
-the pair’s comparable language-modeling loss. Together, these measurements make the useful
-question concrete: which computations benefit from placing the nonlinearity directly in the
-temporal state path, and under what training and resource conditions?
+The invertible-map results leave the nonlinear-state efficiency question open: neither class
+learns robust deep composition in the tested regimes. GDN2′s 𝑆5 result demonstrates a useful
+learned capability on a task with an exact linear-state representation. Together with comparable
+language-modeling loss, these findings motivate controlled tests of which computations benefit
+from nonlinearity in the temporal state path, and under what training and resource conditions.
 7 What the update rules establish
 The formal results describe the state computations tested above: time-ordered nonlinear
 composition, the conditioned affine fold, finite-group tracking, adjacent split-gated cores, and
@@ -865,13 +905,13 @@ this fixed, state-independent schedule.
 The permutation-matrix construction in Section 2 gives an exact 𝑆5 tracker in the general
 linear-state class. The Lean bridge characterizes realizers in the formal GDN family under
 explicit assumptions. S5GDNBridge.gdn_s5_realization_requires_per_token_action starts from
-20
-zero state with a token-only parameter schedule and a decoder that recovers S5Tracker.run on
+zero state with a token-only parameter schedule and a decoder that recovers S5Tracker.run on
 every word. It also assumes that equal decoded outputs imply equal reachable states. It then
 gives a state map 𝐹 through the group element, with affine word actions implementing right
 multiplication on the reachable image. gdn_s5_constant_parameters_cannot_realize rules out
 a token-independent schedule. The input token selects the action; the carried state accumulates
-the running group product through that action. The bridge is a necessary-condition theorem
+21
+the running group product through that action. The bridge is a necessary-condition theorem
 for an assumed exact realizer. Constructing such a realizer within GDN2′s production gate and
 decay ranges remains G3 in Section 10. The 𝑆5 word problem is NC1
 -complete. The complexity
@@ -911,12 +951,12 @@ Generator memory and recurrent realization
 The exact statement of NDMRealizesS5.emender_realizes_s5_tracker supplies 𝑑 = 12, four
 orthonormal keys and one-hot values, queries, a decoder, and 𝜆 = 1. Reading a
 preloaded table retrieves the current generator; decoding it and externally multiplying
-21
-a supplied 𝑆5 state 𝑠 reproduces the transition 𝑠 ⋅ 𝑔. The linear readout supplies
+a supplied 𝑆5 state 𝑠 reproduces the transition 𝑠 ⋅ 𝑔. The linear readout supplies
 the generator value, and the external multiplication updates the group state. The
 supporting OnlineMemory.linearDeltaWrite_overwrites_one_preserves_others is an exact pre-
 tanh overwrite statement.
-A recurrent realization would carry the running group product in its own state. Open item O1
+22
+A recurrent realization would carry the running group product in its own state. Open item O1
 asks for a configuration of the nonlinear update, an initial state and decoder, and an all-words
 trajectory proof realizing that computation.
 Split-gated E97 and GDN-2 cores
@@ -958,14 +998,14 @@ to the recurrent body, 𝑆′
 𝑘)𝑗
 )
 the write contribution into that slot. The proofs run through the standard tanh-perturbation
-22
-foundation. The module carrying them (EmenderLatching, introduced at 696299b4) is included
+foundation. The module carrying them (EmenderLatching, introduced at 696299b4) is included
 in the refreshed inventory and the current clean lake build ElmanProofs.PaperCore.
 • Saturation insensitivity. If the slot is saturated in the sense |𝑆′
 𝑖,𝑗| > 1 − 𝜀, and a
 perturbation 𝛿 to the pre-activation entry has |𝛿| ≤ 𝑀 with 𝜀 + 𝑀 < 1, then the post-tanh
 slot moves by at most 2(𝜀 + 𝑀) |𝛿|. The bound shrinks linearly in both the saturation
-slack 𝜀 and the perturbation magnitude 𝑀; at deep saturation a bounded write barely
+23
+slack 𝜀 and the perturbation magnitude 𝑀; at deep saturation a bounded write barely
 moves the slot. Lean: EmenderLatching.emender_saturation_insensitivity. A two-input
 corollary EmenderLatching.emender_saturation_two_inputs_close lifts the bound to two
 value vectors sharing one key.
@@ -1004,15 +1044,15 @@ observation revises an estimate that guides the next action. The iterated-map st
 related computational question: how well can a recurrent model learn to keep transforming an
 evolving state? A common description is
 𝑆𝑡+1 = 𝐹𝜃(𝑆𝑡,𝑢𝑡),
-23
-where 𝜃 fixes the update law and 𝑢𝑡 supplies the input at each step. E97′s all-one split-gate
+where 𝜃 fixes the update law and 𝑢𝑡 supplies the input at each step. E97′s all-one split-gate
 specialization is
 𝑆′
 = tanh(𝜆𝑆 + 𝑘(𝑣 − 𝑆𝑇
 𝑘)
 𝑇
 )
-with state 𝑆 and input (𝜆, 𝑘, 𝑣). Its returned state becomes the next step’s input. The abstract
+24
+with state 𝑆 and input (𝜆, 𝑘, 𝑣). Its returned state becomes the next step’s input. The abstract
 E97 fold fixes 𝜆 and supplies (𝑘, 𝑒, 𝑤, 𝑣) at each step; the production architecture also supplies
 input-dependent decay.
 Algorithm 5 — repeated-map fold.
@@ -1057,8 +1097,7 @@ Normalized LMS [31] updates coefficient state 𝑤𝑡 using regressor 𝑥𝑡 
 𝜀 + ‖𝑥𝑡‖
 2
 .
-24
-For fixed inputs this update is affine in 𝑤𝑡. Adding a componentwise coefficient limit gives
+For fixed inputs this update is affine in 𝑤𝑡. Adding a componentwise coefficient limit gives
 𝑤𝑡+1 = clip
 𝐵(𝑤𝑡+𝜇𝑥𝑡
 𝑒𝑡
@@ -1067,7 +1106,8 @@ Normalized LMS [31] updates coefficient state 𝑤𝑡 using regressor 𝑥𝑡 
 , which applies a nonlinear state transformation after the correction.
 Automatic gain control feeds measured output level back into gain [32]. A bounded log-gain
 controller can use
-𝑦𝑡 = exp(𝑔𝑡)𝑥𝑡, 𝑔𝑡+1 = clip[𝑔min,𝑔max](𝑔𝑡 + 𝜇(𝑃0 − 𝑦2
+25
+𝑦𝑡 = exp(𝑔𝑡)𝑥𝑡, 𝑔𝑡+1 = clip[𝑔min,𝑔max](𝑔𝑡 + 𝜇(𝑃0 − 𝑦2
 𝑡 )).
 Here 𝑔𝑡 is the state and (𝑥𝑡, 𝑃0) is the input. Repeated limiter crossings and state-dependent
 power measurements provide tests of nonlinear history. Stable operating regimes provide a
@@ -1109,11 +1149,11 @@ Genomic function depends on nonlinear interactions among sequence features, regu
 signals, and cellular state. Enformer provides one example of using a nonlinear sequence model
 to integrate distal regulatory information for cell-type-specific predictions [36]. Pangenomic
 datasets run to terabases per study [37], [38], [39], motivating efficient nonlinear recurrence
-25
-for long, structured inputs. A future study could ask whether recurrent memory can integrate
+for long, structured inputs. A future study could ask whether recurrent memory can integrate
 sequence features with changing regulatory signals and cellular context, evaluated through held-
 out expression or perturbation-response prediction.
-Population dynamics
+26
+Population dynamics
 May’s logistic population model [40] is
 𝑛𝑡+1 = 𝑟𝑛𝑡(1−𝑛𝑡).
 The normalized population 𝑛𝑡 is the state and 𝑟 is a fixed parameter. An environmentally driven
@@ -1148,13 +1188,13 @@ recurrent language model, demonstrating the rule at billion-parameter scale in t
 regime. Emender combines delta correction with a nonlinear matrix-state update and width-
 axis multi-programming. Its saturating update also motivates the conditional latching analysis
 in Section 7.
-26
-Linear-state recurrent language models
+Linear-state recurrent language models
 The dominant comparison cohort is the family of linear-state billion-parameter recurrent LMs
 surveyed in Section 2: Mamba [3] and Mamba2 [4] (selective SSMs); RetNet [44] (decayed linear
 attention); GLA [13] (gated linear attention); DeltaNet [14] (delta rule, linear in 𝑆); Gated
 DeltaNet [5] (gated delta rule); RWKV-4/5/6/7 [45], [46] (linear-state WKV / generalized
-delta rule with linear state); HGRN2 [47] (gated linear RNN with state expansion); MinGRU/
+27
+delta rule with linear state); HGRN2 [47] (gated linear RNN with state expansion); MinGRU/
 MinLSTM [15] (input-only gates, linear scan); mLSTM/xLSTM-7B [48] (covariance update);
 Griffin/RecurrentGemma [16] (RG-LRU, often hybridized with local attention). Circuit-
 containment results for restricted SSM families require their stated transition and arithmetic
@@ -1192,17 +1232,17 @@ Titans [21] uses an MLP memory with online gradient updates and is qualitatively
 state, but it interleaves attention layers and has not been evaluated as a pure recurrent model at
 Pile-class scale. Zeroth-order LSTM scaling [50] demonstrates 1 B-scale LSTM training under
 a non-gradient regime, outside the standard-gradient comparison drawn here.
-27
-Classical LSTM and GRU provide the foundational gated nonlinear recurrences [12]. E97
+Classical LSTM and GRU provide the foundational gated nonlinear recurrences [12]. E97
 explores a matrix-memory implementation organized around many independently addressed
 recurrent heads.
-10 Open questions
+28
+10 Open questions
 Learning and evaluation
-The current pair supplies one language-model training seed and one seed for each reported
-computational probe. Repeated seeds, common fixed-step budgets, and comparison of terminal
-with best-validation checkpoints would measure the stability of the observed gaps. A feasible
-matched 𝑆5 curriculum would test the contribution of the length-512 memory limit encountered
-by GDN2.
+The current pair supplies one language-model training seed; the matched-rate invertible-map
+study uses three fine-tuning seeds per arm. The current-pair 𝑆5 study has one seed. Common
+fixed-step budgets and additional seeds would measure stability across optimization regimes.
+A feasible matched 𝑆5 curriculum would test the contribution of the length-512 memory limit
+encountered by GDN2.
 Held-out tokenizer-invariant bpb and downstream evaluation are the next language-model
 measurements. Recovering the original CMA winner logs would also supply generation-zero
 fitness, spread, and total search effort for the carried-in configurations (U3.1). These records
@@ -1230,26 +1270,25 @@ A matched 3–7 B pair would test how training loss, memory use, and computation
 behavior change with scale. Current-scale internal ablations would separate the effects of state
 nonlinearity, gates, and geometry. Direct E97 occupancy profiling, actual FLOP accounting,
 and paired ROCm measurements would extend the systems evidence.
-28
-The application tests in Section 8 call for long-horizon error and latency measurements in their
+The application tests in Section 8 call for long-horizon error and latency measurements in their
 stated regimes; feedback applications additionally call for stability testing. The bibliography’s
 flagged publication metadata should be resolved during submission preparation.
-11 Conclusion
+29
+11 Conclusion
 Emender makes recurrent memory a site of ongoing computation. Each input corrects the
 stored state and transforms what the next step receives. Running many small heads in parallel
 makes this sequential computation practical: E97 trains through 150.8 B Pile tokens at 1.3 B
 parameters and reaches comparable training loss to GDN2. A Frontier continuation extends the
 same architecture to 513.0 B accepted tokens, with the recorded rank-0 loss falling to 2.2798
 nats/token.
-The iterated nonlinear-map experiment connects that practicality to the architectural
-motivation. E97 learns the recurrence more accurately and retains a larger fraction of its
-accuracy as sequence length grows. GDN2 learns 𝑆5 permutation composition strongly and
-leads its long-horizon comparison. Since this task admits an exact linear-state representation,
-GDN2′s result is a meaningful success on a computation compatible with linear-state recurrence.
-Alongside E97′s advantage on iterated nonlinear maps, it shows why the computational
-structure of the task matters. The formal state-channel results make the architectural distinction
-precise: repeated nonlinear composition in E97, and an affine GDN fold under a fixed, state-
-independent schedule.
+The invertible nonlinear-map study finds no robust trained-depth separation at matched 1e-3
+across three seeds. E97 has lower extrapolation cross-entropy in every seed at 4× and 8× depth,
+while both classes remain near marginal-like loss behavior with limited predictive signal. GDN2
+leads the long-horizon 𝑆5 comparison, a meaningful success on a task with an exact linear-
+state representation. These task-dependent observations leave learned nonlinear-composition
+efficiency open. The formal state-channel results make the architectural distinction precise:
+repeated nonlinear composition in E97, and an affine GDN fold under a fixed, state-independent
+schedule.
 These findings support studying nonlinear memory as a computational resource. The next step
 is to test that resource across training budgets, scales, and tasks in which an evolving state
 must keep being transformed: feedback, iterative optimization, and driven dynamics.
@@ -1271,15 +1310,19 @@ public emender repo; the canonical paper PDF is mirrored at http://hypervolu.me/
 Garrison_2026_Emender.pdf. The Frontier continuation’s retained-checkpoint lineage, accepted-
 token anchors, and the job-5134243 communication measurements are recorded in docs/
 validation/, reports/frontier/, and the corrected 513 B audit.
-29
-12 Next tests for the current pair
-The current results motivate three direct tests. First, repeat the iterated-map and 𝑆5 protocols
-across seeds and common realized training budgets, recording both terminal and best-validation
-checkpoints. Persistence of the map advantage would strengthen the mechanism hypothesis;
-its disappearance under those controls would locate an optimization or protocol dependence.
-Second, ablate the state nonlinearity within the current E97 geometry, holding the remaining
-implementation and training choices fixed, to test its causal role at this scale. Third, evaluate
-the two immutable language-model checkpoints on held-out text and downstream tasks.
+12 Next tests for the current pair
+The X-series motivates controlled tests rather than a predicted architecture ordering. First, cross
+learning rate with a common stopping rule and matched realized budgets, retaining all seeds and
+both selected and terminal checkpoints. This would test whether the observed regime difference
+survives the protocol confound. Second, track local arithmetic and post-seven-driver full-state
+accuracy throughout training across the difficulty ladder. Joint improvement beyond the suffix
+30
+reference and across held-out depths would support learned composition; lower aggregate loss
+alone would still indicate only predictive signal. Repeat the per-seed extrapolation cross-entropy
+comparison under these controls. A same-geometry nonlinearity ablation becomes interpretable
+once the arithmetic diagnostic and depth test succeed under matched conditions. Third, repeat
+𝑆5 with a mutually feasible curriculum and additional seeds, and evaluate the two immutable
+language-model checkpoints on held-out text and downstream tasks.
 13 Future Work
 A matched 3–7 B E97/GDN2 study would test training viability, memory cost, and
 computational behavior across scale. The feedback, optimization, and driven-dynamics tasks in
@@ -1309,12 +1352,12 @@ arXiv:2510.21450, 2025.
 arXiv preprint arXiv:2101.00027, 2020.
 [10] A. Vaswani et al., “Attention Is All You Need,” Advances in Neural Information Processing
 Systems, vol. 30, 2017.
-30
-[11] J. L. Elman, “Finding Structure in Time,” Cognitive Science, vol. 14, no. 2, pp. 179–211,
+[11] J. L. Elman, “Finding Structure in Time,” Cognitive Science, vol. 14, no. 2, pp. 179–211,
 1990, doi: 10.1207/s15516709cog1402_1.
 [12] S. Hochreiter and J. Schmidhuber, “Long Short-Term Memory,” Neural Computation, vol.
 9, no. 8, pp. 1735–1780, 1997, doi: 10.1162/neco.1997.9.8.1735.
-[13] S. Yang, B. Wang, Y. Shen, R. Panda, and Y. Kim, “Gated Linear Attention Transformers
+31
+[13] S. Yang, B. Wang, Y. Shen, R. Panda, and Y. Kim, “Gated Linear Attention Transformers
 with Hardware-Efficient Training,” arXiv preprint arXiv:2312.06635, 2023.
 [14] S. Yang, B. Wang, Y. Zhang, Y. Shen, and Y. Kim, “Parallelizing Linear Transformers
 with the Delta Rule over Sequence Length,” arXiv preprint arXiv:2406.06484, 2024.
@@ -1349,13 +1392,13 @@ International Workshop on Machine Learning and Programming Languages, pp. 10–1
 Road Less Scheduled,” arXiv preprint arXiv:2405.15682, 2024.
 [26] A. Douillard et al., “DiLoCo: Distributed Low-Communication Training of Language
 Models,” arXiv preprint arXiv:2311.08105, 2023.
-31
-[27] L. de Moura and S. Ullrich, “The Lean 4 Theorem Prover and Programming Language,”
+[27] L. de Moura and S. Ullrich, “The Lean 4 Theorem Prover and Programming Language,”
 in Automated Deduction – CADE 28, 2021. doi: 10.1007/978-3-030-79876-5_37.
 [28] The Mathlib Community, “Mathlib 4: Library Documentation.” [Online]. Available:
 https://leanprover-community.github.io/mathlib4_docs/
 [29] H. K. Khalil, Nonlinear Systems, 3rd ed. Prentice Hall, 2002.
-[30] J. C. Candy and G. C. Temes, Eds., Oversampling Delta-Sigma Data Converters: Theory,
+32
+[30] J. C. Candy and G. C. Temes, Eds., Oversampling Delta-Sigma Data Converters: Theory,
 Design, and Simulation. IEEE Press, 1992.
 [31] S. Haykin, Adaptive Filter Theory, 4th ed. Prentice Hall, 2002.
 [32] R. G. Lyons, Understanding Digital Signal Processing, 3rd ed. Prentice Hall, 2011.
@@ -1389,14 +1432,14 @@ neco.1992.4.1.131.
 [43] I. Schlag, K. Irie, and J. Schmidhuber, “Linear Transformers Are Secretly Fast Weight
 Programmers,” in Proceedings of the 38th International Conference on Machine Learning
 (ICML), in Proceedings of Machine Learning Research, vol. 139. 2021, pp. 9355–9366.
-32
-[44] Y. Sun et al., “Retentive Network: A Successor to Transformer for Large Language
+[44] Y. Sun et al., “Retentive Network: A Successor to Transformer for Large Language
 Models,” arXiv preprint arXiv:2307.08621, 2023.
 [45] B. Peng and others, “RWKV: Reinventing RNNs for the Transformer Era,” arXiv preprint
 arXiv:2305.13048, 2023.
 [46] B. Peng and others, “RWKV-7 ``Goose'' with Expressive Dynamic State Evolution,” arXiv
 preprint arXiv:2503.14456, 2025.
-[47] Z. Qin et al., “HGRN2: Gated Linear RNNs with State Expansion,” arXiv preprint
+33
+[47] Z. Qin et al., “HGRN2: Gated Linear RNNs with State Expansion,” arXiv preprint
 arXiv:2404.07904, 2024.
 [48] M. Beck and others, “xLSTM-7B: A Recurrent LLM for Fast and Efficient Inference,”
 arXiv preprint arXiv:2503.13427, 2025.
@@ -1404,7 +1447,7 @@ arXiv preprint arXiv:2503.13427, 2025.
 Sequence Modeling,” arXiv preprint arXiv:2208.04933, 2022.
 [50] F. Chaubard and M. J. Kochenderfer, “Scaling Recurrent Neural Networks to a Billion
 Parameters with Zero-Order Optimization,” arXiv preprint arXiv:2505.17852, 2025.
-33
+34
 APPENDIX A Development history and source register
 The project developed through successive recurrent-memory designs, implementation changes,
 and increasingly controlled comparisons. This register records that process and points to its
@@ -1419,11 +1462,12 @@ grok_symmetric_width/, paper/ndmpapernotes.md, and paper/results/cmaes_burst_v2/
 retain development records. These records identify their own protocols and model versions.
 • The present comparison. The two immutable model releases and launcher manifests in
 the reproducibility section identify the actual E97 and GDN2 arms. paper/results/
-expressivity_1p3b/ contains their computational-probe records. The current-pair tables in
-this paper read the corresponding result JSONs directly.
+expressivity_1p3b/ contains the permutation-probe and retired scalar-map records. paper/
+results/invertible_quadratic/ retains the X-series result summaries, task proof, and
+reports. The current-pair tables read the corresponding result JSONs directly.
 • Formal development. formal/lean/ retains the full proof project. The theorem names cited
 in Section 7 identify the specific statements used here.
 The original records remain available in the repository. The present comparison is defined by
 its own model identities, data, and protocols.
-34
+35
 

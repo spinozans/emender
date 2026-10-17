@@ -9,7 +9,7 @@ const read = p => fs.readFileSync(new URL(p, import.meta.url));
 const inventory = JSON.parse(read('conversion-inventory.json'));
 const tex = read('main.tex').toString();
 test('convert: P20 section order, captions, tables, algorithms and amsthm counts', () => {
-  assert.equal(inventory.headings.length, 63);
+  assert.equal(inventory.headings.length, 66);
   assert.deepEqual(inventory.headings.filter(h => h.level === 1).map(h => h.title), [
     'Introduction', 'Background', 'Computing with a nonlinear memory',
     'Making sequential updates practical', 'Language modeling at 1.3 billion parameters',
@@ -17,7 +17,7 @@ test('convert: P20 section order, captions, tables, algorithms and amsthm counts
     'Repeated nonlinear maps in the wild', 'Related Work', 'Open questions', 'Conclusion',
     'Next tests for the current pair', 'Future Work', 'Development history and source register'
   ]);
-  assert.deepEqual(inventory.tables.map(t => [t.columns, t.rows]), [[2,11],[3,14],[4,6],[4,5],[4,8],[3,7],[5,6]]);
+  assert.deepEqual(inventory.tables.map(t => [t.columns, t.rows]), [[2,11],[3,14],[4,6],[4,5],[4,5],[3,7],[5,6]]);
   assert.equal((tex.match(/\\caption\{/g) || []).length, 10);
   assert.equal((tex.match(/\\begin\{tabularx\}/g) || []).length, 7);
   assert.equal((tex.match(/\\begin\{verbatim\}/g) || []).length, 5);
@@ -29,15 +29,15 @@ test('convert: P20 section order, captions, tables, algorithms and amsthm counts
 test('convert: exact current figure/table labels and byte-identical recorded-loss and Frontier PNGs', () => {
   assert.deepEqual(inventory.figures.map(f => f.label), ['<fig_taxonomy>','<fig_arch>',
     '<tab_pair_identities>','<tab_matched_loss>','<fig_recorded_loss>','<tab_frontier_anchors>','<fig_frontier_segment>',
-    '<tab_depth_wall>','<tab_s5_boundary>','<tab_s5>']);
+    '<tab_invertible>','<tab_s5_boundary>','<tab_s5>']);
   assert(read('assets/frontier_segment_5134243.png').equals(read('../figures/frontier_segment_5134243.png')));
   assert(read('assets/e97_recorded_loss.png').equals(read('../figures/e97_recorded_loss.png')));
   assert.deepEqual(fs.readdirSync(new URL('assets/', import.meta.url)).sort(), [
     'e97_recorded_loss.png', 'figure-1.pdf', 'figure-2.pdf', 'frontier_segment_5134243.png'
   ]);
   const caption = inventory.figures.find(f => f.label === '<fig_recorded_loss>').caption.replace(/\s+/g, ' ');
-  for (const fragment of ['three raw log windows', 'separate markers', 'single retained checkpoint',
-    'last-window loss 2.4034', 'Pile/CommaPile boundary', 'matched-token comparison']) {
+  for (const fragment of ['every retained checkpoint', 'circles:', 'diamonds:', 'star is GDN2',
+    '2.4034', 'Pile/CommaPile handoff', 'connector joins known points']) {
     assert(caption.replace(/\s+/g, '').includes(fragment.replace(/\s+/g, '')), fragment);
   }
   assert(tex.includes('\\ref{tab_matched_loss}'));

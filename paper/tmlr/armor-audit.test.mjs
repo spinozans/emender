@@ -6,7 +6,7 @@ const read = p => fs.readFileSync(new URL(p, import.meta.url), 'utf8');
 const source = read('../main.typ'), captions = read('../figures/expressivity_1p3b.typ');
 const remove = (text, phrase) => text.replaceAll(new RegExp(phrase.split(/\s+/).map(s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('\\s+'), 'g'), '');
 test('P21 current source keeps P20 live scopes and findings', () => {
-  assert.equal(verifyArmor(source, captions).liveScopes, 21);
+  assert.equal(verifyArmor(source, captions).liveScopes, 24);
 });
 test('P21 rejects retired expectation armor', () => {
   for (const armor of ['The negative transfer is:', 'The 8M S5 separation does NOT replicate',
