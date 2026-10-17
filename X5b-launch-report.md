@@ -75,3 +75,7 @@ Crash markers use the same names with **`.FAIL`**. Exit 0 requires all six DONE 
 Reviewed authority: `docs/RESILIENT_DILOCO_COMPUTE_POOL.md` (ADR-003) and `docs/RESILIENT_DILOCO_GAP_MATRIX.md`. These are local single-GPU task probes, **not resilient DiLoCo or production E97 training**: R16 evidence discipline only, no R/NDP/V21S/ISP systems gate, Frontier submission or Slurm Partition/QOS claim. Historical X5/X5D code and results remain unchanged. Independent reviewer gate is supervisor-owned; no training result is asserted accepted by this launch report.
 
 **Next:** supervisor watcher handles completion/failure; inspect terminal receipts and aggregate the six stage-growth curves with retention and both references. Claim architectural separation only if those completed growth curves earn it.
+
+## Post-snapshot terminal update (2026-10-17 14:54 UTC)
+
+e97_seed0 T=4, 14,000 updates, 0.4395% final validation; e97_seed1 T=4, 12,000 updates, 0.3418% final validation. These runs published **DONE with registered stagnation**, each with two consecutive joint-plateau receipts; no budget/safety ceiling or manual stop fired. Four other runs were still live at the 14:53:28 UTC check. `G/receipts/early_terminal_status.json` retains the exact window evidence and result hashes. The launch-rate snapshot and cap projections above remain planning evidence, not claims that every run needs that time. Watcher remains armed for the remaining runs; no partial-matrix superiority claim is made.
