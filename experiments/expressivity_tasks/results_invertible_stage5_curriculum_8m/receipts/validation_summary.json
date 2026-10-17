@@ -1,0 +1,21 @@
+{
+  "tests": "94 passed",
+  "test_output": "receipts/tests_final.txt",
+  "commands": [
+    {
+      "command": ".venv/bin/python -m pytest -q tests/test_aggregate_invertible_stage5_curriculum_8m.py tests/test_invertible_stage5_curriculum_8m.py tests/test_invertible_stage3_8m.py tests/test_invertible_quadratic.py tests/test_invertible_stage2.py",
+      "result": "passed"
+    },
+    {
+      "command": "bash -n experiments/expressivity_tasks/launch_invertible_stage5_curriculum_8m.sh",
+      "result": "passed"
+    },
+    {
+      "command": ".venv/bin/python -m experiments.expressivity_tasks.aggregate_invertible_stage5_curriculum_8m",
+      "result": "passed"
+    }
+  ],
+  "training": "six runs, 10000 updates each; all exits zero; no threshold crossed at T4",
+  "scope": "Local supervised task probes; no resilient DiLoCo or Slurm conformance claim. R16 evidence discipline; R07/R12/NDP checkpoint recovery behavior is not claimed.",
+  "review_gate": "independent reviewer required; not represented as already reviewed"
+}

@@ -1,0 +1,64 @@
+{
+  "experiment": "X5 curriculum depth-frontier",
+  "registered_at": 1792239316.8145964,
+  "authority": "/home/erikg/emender-scratch/fix-fanout/taskX5-curriculum.md",
+  "task_sha256": "15ab8174ad1bd0cac6bb8a183995eb940747bfb59a2608b51e70ae6aba377fa4",
+  "source_commit": "fedb5cc7fcd5a3c8e0cea6de51e35c1475597eba",
+  "matrix": [
+    {
+      "name": "e97_seed0",
+      "arm": "e97",
+      "seed": 0
+    },
+    {
+      "name": "gdn2_seed0",
+      "arm": "gdn2",
+      "seed": 0
+    },
+    {
+      "name": "e97_seed1",
+      "arm": "e97",
+      "seed": 1
+    },
+    {
+      "name": "gdn2_seed1",
+      "arm": "gdn2",
+      "seed": 1
+    },
+    {
+      "name": "e97_seed2",
+      "arm": "e97",
+      "seed": 2
+    },
+    {
+      "name": "gdn2_seed2",
+      "arm": "gdn2",
+      "seed": 2
+    }
+  ],
+  "depths": [
+    4,
+    8,
+    16,
+    32,
+    64,
+    128
+  ],
+  "threshold": 0.9,
+  "stage_budget": 10000,
+  "eval_every": 500,
+  "total_cap": 60000,
+  "stop_rule": "first budget exhaustion below 90%; deepest crossed stage is frontier; 0 means none",
+  "optimizer_transition": "carry model, optimizer and RNG without reset; eval ScheduleFree x",
+  "lr": 0.001,
+  "batch": 32,
+  "capacity": "400GiB free floor; retain stage boundaries, stage best, current, 10K checkpoints; hash ledger for pruned files",
+  "suffix_theorem": "For this invertible map, a predictor restricted to a proper driver suffix with at least two omitted drivers has full-state accuracy 1/3721 (0.026874%) under uniform independent inputs; this is a suffix-only information bound, not a capacity bound on either recurrent model.",
+  "suffix_floor_percent": 0.026874496103198062,
+  "marginal_reference_nats": 8.221747728346623,
+  "concurrency_authority": "supervisor authorized six independent concurrent runs, one exclusive GPU each; implementation single-writer",
+  "runner_sha256": "4f88b07bf67dbec69b604d5b3c66d2bf1738cf02568b83252fd577e04f988582",
+  "launcher_sha256": "b2fc1b7a7ad176bce9e1d28f53058e4d9d23df3cf217e674f1895693b5400aa7",
+  "tests_sha256": "ba215e15adc76307203404ae3181dc59a34f253a6d7218b8b24144c276e501c1",
+  "preflight_note": "First preflight failed before GPU acquisition: venv lacks pip. Metadata collection switched to stdlib importlib.metadata, no training or recipe changed."
+}

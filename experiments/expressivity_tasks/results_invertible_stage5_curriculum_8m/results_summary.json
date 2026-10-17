@@ -1,0 +1,685 @@
+{
+  "status": "complete_audited",
+  "generated_at": 1792239756.155849,
+  "registration": {
+    "experiment": "X5 curriculum depth-frontier",
+    "registered_at": 1792239316.8145964,
+    "authority": "/home/erikg/emender-scratch/fix-fanout/taskX5-curriculum.md",
+    "task_sha256": "15ab8174ad1bd0cac6bb8a183995eb940747bfb59a2608b51e70ae6aba377fa4",
+    "source_commit": "fedb5cc7fcd5a3c8e0cea6de51e35c1475597eba",
+    "matrix": [
+      {
+        "name": "e97_seed0",
+        "arm": "e97",
+        "seed": 0
+      },
+      {
+        "name": "gdn2_seed0",
+        "arm": "gdn2",
+        "seed": 0
+      },
+      {
+        "name": "e97_seed1",
+        "arm": "e97",
+        "seed": 1
+      },
+      {
+        "name": "gdn2_seed1",
+        "arm": "gdn2",
+        "seed": 1
+      },
+      {
+        "name": "e97_seed2",
+        "arm": "e97",
+        "seed": 2
+      },
+      {
+        "name": "gdn2_seed2",
+        "arm": "gdn2",
+        "seed": 2
+      }
+    ],
+    "depths": [
+      4,
+      8,
+      16,
+      32,
+      64,
+      128
+    ],
+    "threshold": 0.9,
+    "stage_budget": 10000,
+    "eval_every": 500,
+    "total_cap": 60000,
+    "stop_rule": "first budget exhaustion below 90%; deepest crossed stage is frontier; 0 means none",
+    "optimizer_transition": "carry model, optimizer and RNG without reset; eval ScheduleFree x",
+    "lr": 0.001,
+    "batch": 32,
+    "capacity": "400GiB free floor; retain stage boundaries, stage best, current, 10K checkpoints; hash ledger for pruned files",
+    "suffix_theorem": "For this invertible map, a predictor restricted to a proper driver suffix with at least two omitted drivers has full-state accuracy 1/3721 (0.026874%) under uniform independent inputs; this is a suffix-only information bound, not a capacity bound on either recurrent model.",
+    "suffix_floor_percent": 0.026874496103198062,
+    "marginal_reference_nats": 8.221747728346623,
+    "concurrency_authority": "supervisor authorized six independent concurrent runs, one exclusive GPU each; implementation single-writer",
+    "runner_sha256": "4f88b07bf67dbec69b604d5b3c66d2bf1738cf02568b83252fd577e04f988582",
+    "launcher_sha256": "b2fc1b7a7ad176bce9e1d28f53058e4d9d23df3cf217e674f1895693b5400aa7",
+    "tests_sha256": "ba215e15adc76307203404ae3181dc59a34f253a6d7218b8b24144c276e501c1",
+    "preflight_note": "First preflight failed before GPU acquisition: venv lacks pip. Metadata collection switched to stdlib importlib.metadata, no training or recipe changed."
+  },
+  "runs": [
+    {
+      "arm": "e97",
+      "seed": 0,
+      "status": "complete",
+      "frontier": 0,
+      "stopping_depth": 4,
+      "stopping_accuracy": 0.00537109375,
+      "stop_reason": "budget_exhausted",
+      "total_steps": 10000,
+      "stages": [
+        {
+          "depth": 4,
+          "entry_step": 0,
+          "steps": 10000,
+          "exit_step": 10000,
+          "decision": "budget_exhausted",
+          "steps_to_threshold": null,
+          "final_accuracy": 0.00537109375,
+          "final_loss": 7.707434237003326,
+          "best": {
+            "correct": 13,
+            "count": 2048,
+            "x_correct": 528,
+            "y_correct": 40,
+            "terminal_correct": 1,
+            "terminal_count": 512,
+            "post_suffix7_correct": 0,
+            "post_suffix7_count": 0,
+            "out_of_range": 0,
+            "accuracy": 0.00634765625,
+            "loss": 7.677338749170303,
+            "x_accuracy": 0.2578125,
+            "y_accuracy": 0.01953125,
+            "terminal_accuracy": 0.001953125,
+            "post_suffix7_accuracy": null,
+            "suffix_floor": 0.0002687449610319806,
+            "suffix_floor_percent": 0.026874496103198066,
+            "stage_step": 9500,
+            "step": 9500,
+            "checkpoint": {
+              "path": "/home/erikg/emender/experiments/expressivity_tasks/results_invertible_stage5_curriculum_8m/e97_seed0/step_009500_T4_s09500.pt",
+              "sha256": "d93f1c90ff21f89c2518fbac881bb140d74b135e5d2278046e1fea9fcf2be0f6",
+              "step": 9500,
+              "depth": 4,
+              "stage_step": 9500,
+              "optimizer_state_saved": true
+            }
+          },
+          "retention": {
+            "4": {
+              "correct": 11,
+              "count": 2048,
+              "x_correct": 521,
+              "y_correct": 45,
+              "terminal_correct": 1,
+              "terminal_count": 512,
+              "post_suffix7_correct": 0,
+              "post_suffix7_count": 0,
+              "out_of_range": 0,
+              "accuracy": 0.00537109375,
+              "loss": 7.707434237003326,
+              "x_accuracy": 0.25439453125,
+              "y_accuracy": 0.02197265625,
+              "terminal_accuracy": 0.001953125,
+              "post_suffix7_accuracy": null,
+              "suffix_floor": 0.0002687449610319806,
+              "suffix_floor_percent": 0.026874496103198066
+            }
+          },
+          "checkpoint": {
+            "path": "/home/erikg/emender/experiments/expressivity_tasks/results_invertible_stage5_curriculum_8m/e97_seed0/step_010000_T4_s10000.pt",
+            "sha256": "577bd5cf27b6a80c1da032ddb652bb9f2c485beccd5a4d99bc4f5320a64b7e4c",
+            "step": 10000,
+            "depth": 4,
+            "stage_step": 10000,
+            "optimizer_state_saved": true
+          },
+          "train_loss_first500": 34.13972848892212,
+          "train_loss_final500": 7.794520452499389
+        }
+      ],
+      "input_tokens": 1920000,
+      "train_seconds": 165.78323984146118,
+      "wall_seconds": 184.8650906085968,
+      "suffix_floor_percent": 0.026874496103198062,
+      "marginal_reference_nats": 8.221747728346623,
+      "suffix_theorem": "For this invertible map, a predictor restricted to a proper driver suffix with at least two omitted drivers has full-state accuracy 1/3721 (0.026874%) under uniform independent inputs; this is a suffix-only information bound, not a capacity bound on either recurrent model.",
+      "finished_at": 1792239522.988006,
+      "name": "e97_seed0",
+      "loss_trends": {
+        "4": {
+          "trailing_updates": 2000,
+          "ols_nats_per_update": 7.262047836878127e-05
+        }
+      },
+      "retained_checkpoints_verified": 14,
+      "config_sha256": "032494069c93ad822159c7b7dd462d1a633b16fa9fc2367bc73ae95a5fdd69af",
+      "result_sha256": "8976da42eef31a86b6f3f46ac21f476a6d4e2bcbc090fab4baa4125add998820",
+      "checkpoint_payloads_verified": true
+    },
+    {
+      "arm": "gdn2",
+      "seed": 0,
+      "status": "complete",
+      "frontier": 0,
+      "stopping_depth": 4,
+      "stopping_accuracy": 0.00390625,
+      "stop_reason": "budget_exhausted",
+      "total_steps": 10000,
+      "stages": [
+        {
+          "depth": 4,
+          "entry_step": 0,
+          "steps": 10000,
+          "exit_step": 10000,
+          "decision": "budget_exhausted",
+          "steps_to_threshold": null,
+          "final_accuracy": 0.00390625,
+          "final_loss": 7.548789411783218,
+          "best": {
+            "correct": 17,
+            "count": 2048,
+            "x_correct": 539,
+            "y_correct": 51,
+            "terminal_correct": 0,
+            "terminal_count": 512,
+            "post_suffix7_correct": 0,
+            "post_suffix7_count": 0,
+            "out_of_range": 0,
+            "accuracy": 0.00830078125,
+            "loss": 7.420424938201904,
+            "x_accuracy": 0.26318359375,
+            "y_accuracy": 0.02490234375,
+            "terminal_accuracy": 0.0,
+            "post_suffix7_accuracy": null,
+            "suffix_floor": 0.0002687449610319806,
+            "suffix_floor_percent": 0.026874496103198066,
+            "stage_step": 6000,
+            "step": 6000,
+            "checkpoint": {
+              "path": "/home/erikg/emender/experiments/expressivity_tasks/results_invertible_stage5_curriculum_8m/gdn2_seed0/step_006000_T4_s06000.pt",
+              "sha256": "b71c57ba41c4cfc3e2665761cce2adc194c1035dcd8cfe4b1dac7693b5747f2a",
+              "step": 6000,
+              "depth": 4,
+              "stage_step": 6000,
+              "optimizer_state_saved": true
+            }
+          },
+          "retention": {
+            "4": {
+              "correct": 8,
+              "count": 2048,
+              "x_correct": 527,
+              "y_correct": 35,
+              "terminal_correct": 0,
+              "terminal_count": 512,
+              "post_suffix7_correct": 0,
+              "post_suffix7_count": 0,
+              "out_of_range": 0,
+              "accuracy": 0.00390625,
+              "loss": 7.548789411783218,
+              "x_accuracy": 0.25732421875,
+              "y_accuracy": 0.01708984375,
+              "terminal_accuracy": 0.0,
+              "post_suffix7_accuracy": null,
+              "suffix_floor": 0.0002687449610319806,
+              "suffix_floor_percent": 0.026874496103198066
+            }
+          },
+          "checkpoint": {
+            "path": "/home/erikg/emender/experiments/expressivity_tasks/results_invertible_stage5_curriculum_8m/gdn2_seed0/step_010000_T4_s10000.pt",
+            "sha256": "2f22e83dddc611942a21510b2e45774e942279a9c48dce7fbd975c332ed81c3a",
+            "step": 10000,
+            "depth": 4,
+            "stage_step": 10000,
+            "optimizer_state_saved": true
+          },
+          "train_loss_first500": 33.67333451461792,
+          "train_loss_final500": 7.629732583999634
+        }
+      ],
+      "input_tokens": 1920000,
+      "train_seconds": 317.91252279281616,
+      "wall_seconds": 326.9052484035492,
+      "suffix_floor_percent": 0.026874496103198062,
+      "marginal_reference_nats": 8.221747728346623,
+      "suffix_theorem": "For this invertible map, a predictor restricted to a proper driver suffix with at least two omitted drivers has full-state accuracy 1/3721 (0.026874%) under uniform independent inputs; this is a suffix-only information bound, not a capacity bound on either recurrent model.",
+      "finished_at": 1792239665.5003414,
+      "name": "gdn2_seed0",
+      "loss_trends": {
+        "4": {
+          "trailing_updates": 2000,
+          "ols_nats_per_update": 5.8297030304994294e-05
+        }
+      },
+      "retained_checkpoints_verified": 13,
+      "config_sha256": "7f8fa205aeeca6892decb097f0c01a2e91f9452b863f71eb961336b884374813",
+      "result_sha256": "125d26e8480ad10f2f1f54972a559d0a4dd3c500ac6378a36513d74efde9d9b5",
+      "checkpoint_payloads_verified": true
+    },
+    {
+      "arm": "e97",
+      "seed": 1,
+      "status": "complete",
+      "frontier": 0,
+      "stopping_depth": 4,
+      "stopping_accuracy": 0.0029296875,
+      "stop_reason": "budget_exhausted",
+      "total_steps": 10000,
+      "stages": [
+        {
+          "depth": 4,
+          "entry_step": 0,
+          "steps": 10000,
+          "exit_step": 10000,
+          "decision": "budget_exhausted",
+          "steps_to_threshold": null,
+          "final_accuracy": 0.0029296875,
+          "final_loss": 7.669476568698883,
+          "best": {
+            "correct": 14,
+            "count": 2048,
+            "x_correct": 530,
+            "y_correct": 41,
+            "terminal_correct": 0,
+            "terminal_count": 512,
+            "post_suffix7_correct": 0,
+            "post_suffix7_count": 0,
+            "out_of_range": 0,
+            "accuracy": 0.0068359375,
+            "loss": 7.642612963914871,
+            "x_accuracy": 0.2587890625,
+            "y_accuracy": 0.02001953125,
+            "terminal_accuracy": 0.0,
+            "post_suffix7_accuracy": null,
+            "suffix_floor": 0.0002687449610319806,
+            "suffix_floor_percent": 0.026874496103198066,
+            "stage_step": 9000,
+            "step": 9000,
+            "checkpoint": {
+              "path": "/home/erikg/emender/experiments/expressivity_tasks/results_invertible_stage5_curriculum_8m/e97_seed1/step_009000_T4_s09000.pt",
+              "sha256": "7e2c5f0c221081f4e1225dad62d0131dbd84ea65801e5028648864c39b7d348a",
+              "step": 9000,
+              "depth": 4,
+              "stage_step": 9000,
+              "optimizer_state_saved": true
+            }
+          },
+          "retention": {
+            "4": {
+              "correct": 6,
+              "count": 2048,
+              "x_correct": 526,
+              "y_correct": 23,
+              "terminal_correct": 0,
+              "terminal_count": 512,
+              "post_suffix7_correct": 0,
+              "post_suffix7_count": 0,
+              "out_of_range": 0,
+              "accuracy": 0.0029296875,
+              "loss": 7.669476568698883,
+              "x_accuracy": 0.2568359375,
+              "y_accuracy": 0.01123046875,
+              "terminal_accuracy": 0.0,
+              "post_suffix7_accuracy": null,
+              "suffix_floor": 0.0002687449610319806,
+              "suffix_floor_percent": 0.026874496103198066
+            }
+          },
+          "checkpoint": {
+            "path": "/home/erikg/emender/experiments/expressivity_tasks/results_invertible_stage5_curriculum_8m/e97_seed1/step_010000_T4_s10000.pt",
+            "sha256": "82ea76d8def450f93fa2c06fa007827e4d2d380d15724d3f0668be1f96271336",
+            "step": 10000,
+            "depth": 4,
+            "stage_step": 10000,
+            "optimizer_state_saved": true
+          },
+          "train_loss_first500": 33.95009418106079,
+          "train_loss_final500": 7.718500639915466
+        }
+      ],
+      "input_tokens": 1920000,
+      "train_seconds": 166.4166328907013,
+      "wall_seconds": 185.41012287139893,
+      "suffix_floor_percent": 0.026874496103198062,
+      "marginal_reference_nats": 8.221747728346623,
+      "suffix_theorem": "For this invertible map, a predictor restricted to a proper driver suffix with at least two omitted drivers has full-state accuracy 1/3721 (0.026874%) under uniform independent inputs; this is a suffix-only information bound, not a capacity bound on either recurrent model.",
+      "finished_at": 1792239523.5348141,
+      "name": "e97_seed1",
+      "loss_trends": {
+        "4": {
+          "trailing_updates": 2000,
+          "ols_nats_per_update": 3.9558806627731666e-05
+        }
+      },
+      "retained_checkpoints_verified": 14,
+      "config_sha256": "d58720fe173d3b681b03b142a3925903655f9755343ef8264c74ca1acb9c426d",
+      "result_sha256": "d69033d5fdcb365c54becccb593a4aff6775a3cc8eae6e7781b49371049ef299",
+      "checkpoint_payloads_verified": true
+    },
+    {
+      "arm": "gdn2",
+      "seed": 1,
+      "status": "complete",
+      "frontier": 0,
+      "stopping_depth": 4,
+      "stopping_accuracy": 0.00830078125,
+      "stop_reason": "budget_exhausted",
+      "total_steps": 10000,
+      "stages": [
+        {
+          "depth": 4,
+          "entry_step": 0,
+          "steps": 10000,
+          "exit_step": 10000,
+          "decision": "budget_exhausted",
+          "steps_to_threshold": null,
+          "final_accuracy": 0.00830078125,
+          "final_loss": 7.550844430923462,
+          "best": {
+            "correct": 17,
+            "count": 2048,
+            "x_correct": 527,
+            "y_correct": 41,
+            "terminal_correct": 1,
+            "terminal_count": 512,
+            "post_suffix7_correct": 0,
+            "post_suffix7_count": 0,
+            "out_of_range": 0,
+            "accuracy": 0.00830078125,
+            "loss": 7.550844430923462,
+            "x_accuracy": 0.25732421875,
+            "y_accuracy": 0.02001953125,
+            "terminal_accuracy": 0.001953125,
+            "post_suffix7_accuracy": null,
+            "suffix_floor": 0.0002687449610319806,
+            "suffix_floor_percent": 0.026874496103198066,
+            "stage_step": 10000,
+            "step": 10000,
+            "checkpoint": {
+              "path": "/home/erikg/emender/experiments/expressivity_tasks/results_invertible_stage5_curriculum_8m/gdn2_seed1/step_010000_T4_s10000.pt",
+              "sha256": "290d15c314420a0f16b9ef16f249da57bf6ccb733ea59c2a14b3ade1c7c5fae9",
+              "step": 10000,
+              "depth": 4,
+              "stage_step": 10000,
+              "optimizer_state_saved": true
+            }
+          },
+          "retention": {
+            "4": {
+              "correct": 17,
+              "count": 2048,
+              "x_correct": 527,
+              "y_correct": 41,
+              "terminal_correct": 1,
+              "terminal_count": 512,
+              "post_suffix7_correct": 0,
+              "post_suffix7_count": 0,
+              "out_of_range": 0,
+              "accuracy": 0.00830078125,
+              "loss": 7.550844430923462,
+              "x_accuracy": 0.25732421875,
+              "y_accuracy": 0.02001953125,
+              "terminal_accuracy": 0.001953125,
+              "post_suffix7_accuracy": null,
+              "suffix_floor": 0.0002687449610319806,
+              "suffix_floor_percent": 0.026874496103198066
+            }
+          },
+          "checkpoint": {
+            "path": "/home/erikg/emender/experiments/expressivity_tasks/results_invertible_stage5_curriculum_8m/gdn2_seed1/step_010000_T4_s10000.pt",
+            "sha256": "290d15c314420a0f16b9ef16f249da57bf6ccb733ea59c2a14b3ade1c7c5fae9",
+            "step": 10000,
+            "depth": 4,
+            "stage_step": 10000,
+            "optimizer_state_saved": true
+          },
+          "train_loss_first500": 34.87560549163818,
+          "train_loss_final500": 7.660903328895569
+        }
+      ],
+      "input_tokens": 1920000,
+      "train_seconds": 317.1623876094818,
+      "wall_seconds": 327.0133638381958,
+      "suffix_floor_percent": 0.026874496103198062,
+      "marginal_reference_nats": 8.221747728346623,
+      "suffix_theorem": "For this invertible map, a predictor restricted to a proper driver suffix with at least two omitted drivers has full-state accuracy 1/3721 (0.026874%) under uniform independent inputs; this is a suffix-only information bound, not a capacity bound on either recurrent model.",
+      "finished_at": 1792239665.640987,
+      "name": "gdn2_seed1",
+      "loss_trends": {
+        "4": {
+          "trailing_updates": 2000,
+          "ols_nats_per_update": 0.0001108798238903075
+        }
+      },
+      "retained_checkpoints_verified": 16,
+      "config_sha256": "5779937f8af7e00fa2f8925fdd50085e1f4aaa6a9cb98b8986593c593b9f30e4",
+      "result_sha256": "99865d136d61ab86c9c5d521d971b413f57cd24c555cc64f91cad7ef141debc4",
+      "checkpoint_payloads_verified": true
+    },
+    {
+      "arm": "e97",
+      "seed": 2,
+      "status": "complete",
+      "frontier": 0,
+      "stopping_depth": 4,
+      "stopping_accuracy": 0.0048828125,
+      "stop_reason": "budget_exhausted",
+      "total_steps": 10000,
+      "stages": [
+        {
+          "depth": 4,
+          "entry_step": 0,
+          "steps": 10000,
+          "exit_step": 10000,
+          "decision": "budget_exhausted",
+          "steps_to_threshold": null,
+          "final_accuracy": 0.0048828125,
+          "final_loss": 7.704744637012482,
+          "best": {
+            "correct": 14,
+            "count": 2048,
+            "x_correct": 508,
+            "y_correct": 31,
+            "terminal_correct": 0,
+            "terminal_count": 512,
+            "post_suffix7_correct": 0,
+            "post_suffix7_count": 0,
+            "out_of_range": 0,
+            "accuracy": 0.0068359375,
+            "loss": 7.693671554327011,
+            "x_accuracy": 0.248046875,
+            "y_accuracy": 0.01513671875,
+            "terminal_accuracy": 0.0,
+            "post_suffix7_accuracy": null,
+            "suffix_floor": 0.0002687449610319806,
+            "suffix_floor_percent": 0.026874496103198066,
+            "stage_step": 9500,
+            "step": 9500,
+            "checkpoint": {
+              "path": "/home/erikg/emender/experiments/expressivity_tasks/results_invertible_stage5_curriculum_8m/e97_seed2/step_009500_T4_s09500.pt",
+              "sha256": "f142800df76918624e6bb5622cef3cc5f7bba3b0c55cc427484523e373041a44",
+              "step": 9500,
+              "depth": 4,
+              "stage_step": 9500,
+              "optimizer_state_saved": true
+            }
+          },
+          "retention": {
+            "4": {
+              "correct": 10,
+              "count": 2048,
+              "x_correct": 518,
+              "y_correct": 30,
+              "terminal_correct": 0,
+              "terminal_count": 512,
+              "post_suffix7_correct": 0,
+              "post_suffix7_count": 0,
+              "out_of_range": 0,
+              "accuracy": 0.0048828125,
+              "loss": 7.704744637012482,
+              "x_accuracy": 0.2529296875,
+              "y_accuracy": 0.0146484375,
+              "terminal_accuracy": 0.0,
+              "post_suffix7_accuracy": null,
+              "suffix_floor": 0.0002687449610319806,
+              "suffix_floor_percent": 0.026874496103198066
+            }
+          },
+          "checkpoint": {
+            "path": "/home/erikg/emender/experiments/expressivity_tasks/results_invertible_stage5_curriculum_8m/e97_seed2/step_010000_T4_s10000.pt",
+            "sha256": "e95f660baeda19fb27d2b62a9adac7beca8ef7efc9071af886f4ef1a1af03846",
+            "step": 10000,
+            "depth": 4,
+            "stage_step": 10000,
+            "optimizer_state_saved": true
+          },
+          "train_loss_first500": 33.91310085678101,
+          "train_loss_final500": 7.756800846099853
+        }
+      ],
+      "input_tokens": 1920000,
+      "train_seconds": 167.10840272903442,
+      "wall_seconds": 186.33774280548096,
+      "suffix_floor_percent": 0.026874496103198062,
+      "marginal_reference_nats": 8.221747728346623,
+      "suffix_theorem": "For this invertible map, a predictor restricted to a proper driver suffix with at least two omitted drivers has full-state accuracy 1/3721 (0.026874%) under uniform independent inputs; this is a suffix-only information bound, not a capacity bound on either recurrent model.",
+      "finished_at": 1792239524.868884,
+      "name": "e97_seed2",
+      "loss_trends": {
+        "4": {
+          "trailing_updates": 2000,
+          "ols_nats_per_update": 2.8526031079580564e-05
+        }
+      },
+      "retained_checkpoints_verified": 16,
+      "config_sha256": "a8b1be09268093ee50c0a9509f522b7e31f6b3949f04232d09aa676dc24b6601",
+      "result_sha256": "b5249e8336d7447e3d77c8b61518956275daf97c305a23109894fc5e54c47f6e",
+      "checkpoint_payloads_verified": true
+    },
+    {
+      "arm": "gdn2",
+      "seed": 2,
+      "status": "complete",
+      "frontier": 0,
+      "stopping_depth": 4,
+      "stopping_accuracy": 0.00244140625,
+      "stop_reason": "budget_exhausted",
+      "total_steps": 10000,
+      "stages": [
+        {
+          "depth": 4,
+          "entry_step": 0,
+          "steps": 10000,
+          "exit_step": 10000,
+          "decision": "budget_exhausted",
+          "steps_to_threshold": null,
+          "final_accuracy": 0.00244140625,
+          "final_loss": 7.503760576248169,
+          "best": {
+            "correct": 14,
+            "count": 2048,
+            "x_correct": 527,
+            "y_correct": 42,
+            "terminal_correct": 0,
+            "terminal_count": 512,
+            "post_suffix7_correct": 0,
+            "post_suffix7_count": 0,
+            "out_of_range": 0,
+            "accuracy": 0.0068359375,
+            "loss": 7.616873264312744,
+            "x_accuracy": 0.25732421875,
+            "y_accuracy": 0.0205078125,
+            "terminal_accuracy": 0.0,
+            "post_suffix7_accuracy": null,
+            "suffix_floor": 0.0002687449610319806,
+            "suffix_floor_percent": 0.026874496103198066,
+            "stage_step": 9000,
+            "step": 9000,
+            "checkpoint": {
+              "path": "/home/erikg/emender/experiments/expressivity_tasks/results_invertible_stage5_curriculum_8m/gdn2_seed2/step_009000_T4_s09000.pt",
+              "sha256": "3e2aa24e3df8989f4703a00e1c8151a93f89aada74eb83de37cfe24c31493532",
+              "step": 9000,
+              "depth": 4,
+              "stage_step": 9000,
+              "optimizer_state_saved": true
+            }
+          },
+          "retention": {
+            "4": {
+              "correct": 5,
+              "count": 2048,
+              "x_correct": 539,
+              "y_correct": 30,
+              "terminal_correct": 0,
+              "terminal_count": 512,
+              "post_suffix7_correct": 0,
+              "post_suffix7_count": 0,
+              "out_of_range": 0,
+              "accuracy": 0.00244140625,
+              "loss": 7.503760576248169,
+              "x_accuracy": 0.26318359375,
+              "y_accuracy": 0.0146484375,
+              "terminal_accuracy": 0.0,
+              "post_suffix7_accuracy": null,
+              "suffix_floor": 0.0002687449610319806,
+              "suffix_floor_percent": 0.026874496103198066
+            }
+          },
+          "checkpoint": {
+            "path": "/home/erikg/emender/experiments/expressivity_tasks/results_invertible_stage5_curriculum_8m/gdn2_seed2/step_010000_T4_s10000.pt",
+            "sha256": "55927fbabcb8132647c29e9ad8ff7835a315a1df11db54e9ec037e9a8e5afc63",
+            "step": 10000,
+            "depth": 4,
+            "stage_step": 10000,
+            "optimizer_state_saved": true
+          },
+          "train_loss_first500": 33.227087381362914,
+          "train_loss_final500": 7.495136610031128
+        }
+      ],
+      "input_tokens": 1920000,
+      "train_seconds": 314.54743909835815,
+      "wall_seconds": 324.20181465148926,
+      "suffix_floor_percent": 0.026874496103198062,
+      "marginal_reference_nats": 8.221747728346623,
+      "suffix_theorem": "For this invertible map, a predictor restricted to a proper driver suffix with at least two omitted drivers has full-state accuracy 1/3721 (0.026874%) under uniform independent inputs; this is a suffix-only information bound, not a capacity bound on either recurrent model.",
+      "finished_at": 1792239662.8191218,
+      "name": "gdn2_seed2",
+      "loss_trends": {
+        "4": {
+          "trailing_updates": 2000,
+          "ols_nats_per_update": -0.00010152165215484736
+        }
+      },
+      "retained_checkpoints_verified": 16,
+      "config_sha256": "8603c4ca33947111d3aaa05210c54fe06144afef54ae0834cfd52a3acb68cefb",
+      "result_sha256": "9cb1dba795b0289765cd8100cadcbd411c4a27c9468c3ffe281dc1d14f2c5d35",
+      "checkpoint_payloads_verified": true
+    }
+  ],
+  "frontiers": {
+    "e97": [
+      0,
+      0,
+      0
+    ],
+    "gdn2": [
+      0,
+      0,
+      0
+    ]
+  },
+  "suffix_theorem": "For this invertible map, a predictor restricted to a proper driver suffix with at least two omitted drivers has full-state accuracy 1/3721 (0.026874%) under uniform independent inputs; this is a suffix-only information bound, not a capacity bound on either recurrent model.",
+  "suffix_floor_percent": 0.026874496103198062,
+  "marginal_reference_nats": 8.221747728346623
+}
