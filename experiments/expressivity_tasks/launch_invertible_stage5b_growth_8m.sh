@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# X5b: six detached sessions, independent exclusive leases and terminal receipts.
+# X5c: six detached sessions, independent exclusive leases and terminal receipts.
 set -euo pipefail
 cd "$(dirname "$0")/../.."
-export OUT="${OUT:-$PWD/experiments/expressivity_tasks/results_invertible_stage5b_growth_8m}"
+export OUT="${OUT:-$PWD/experiments/expressivity_tasks/results_invertible_stage5c_growth_8m}"
 export PYTHON_BIN="${PYTHON_BIN:-$PWD/.venv/bin/python}"
 export OMP_NUM_THREADS=2 MKL_NUM_THREADS=2
 if [[ "${1:-}" == --worker ]]; then

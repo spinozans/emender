@@ -19,6 +19,7 @@ def test_six_matched_from_scratch_arms_and_registered_constants():
     assert runner.STAGE_CEILING == 500000 and runner.GLOBAL_CAP == 2000000
     assert runner.WINDOW == 2000 and runner.EVAL_EVERY == 500
     assert runner.VAL_GAIN == .001 and runner.LOSS_GAIN == .001
+    assert runner.STAGNATION_MIN_UPDATES == 100000
     assert runner.THRESHOLD == .9
     assert runner.MARGINAL == pytest.approx(8.221747728)
     assert 100 * runner.FLOOR == pytest.approx(.0268744961)
@@ -92,7 +93,9 @@ def test_safety_caps_are_not_stagnation_and_no_10k_budget():
     assert runner.stage_decision(.5, 10000, 10000) == 'continue'
     assert runner.stage_decision(.5, 500000, 500000) == 'stage_safety_ceiling'
     assert runner.stage_decision(.5, 100, 2000000) == 'global_safety_cap'
-    assert runner.stage_decision(.5, 6000, 6000, True) == 'stagnation'
+    for step in (6000, 98000, 100000, 102000):
+        assert runner.stage_decision(.5, step, 1500000, True) == 'continue'
+    assert runner.stage_decision(.5, 104000, 1500000, True) == 'stagnation'
 
 
 @pytest.mark.parametrize('accuracy,step,total', [(float('nan'), 0, 0), (-.1, 0, 0), (1.1, 0, 0), (.5, 500001, 500001), (.5, -1, 0), (.5, 1, 2000001)])
@@ -101,7 +104,8 @@ def test_invalid_observations_fail_closed(accuracy, step, total):
         runner.stage_decision(accuracy, step, total)
 
 
-def test_two_consecutive_disjoint_windows_earliest_6000():
+def test_two_consecutive_disjoint_windows_without_floor(monkeypatch):
+    monkeypatch.setattr(runner, 'STAGNATION_MIN_UPDATES', 0)
     detector = runner.Stagnation()
     assert detector.observe(0, [], .1) is None
     assert detector.observe(500, [8.] * 500, .1) is None
@@ -115,7 +119,8 @@ def test_two_consecutive_disjoint_windows_earliest_6000():
 
 
 @pytest.mark.parametrize('val_gain,loss_ratio', [(.002, 1.), (0., .998), (.0011, .998)])
-def test_either_learning_signal_resets_plateau_streak(val_gain, loss_ratio):
+def test_either_learning_signal_resets_plateau_streak(val_gain, loss_ratio, monkeypatch):
+    monkeypatch.setattr(runner, 'STAGNATION_MIN_UPDATES', 0)
     detector = runner.Stagnation()
     detector.observe(2000, [8.] * 2000, .1)
     assert detector.observe(4000, [8.] * 4000, .1)['consecutive_joint_plateaus'] == 1
@@ -124,7 +129,8 @@ def test_either_learning_signal_resets_plateau_streak(val_gain, loss_ratio):
     assert detector.observe(8000, [8. * loss_ratio] * 8000, .1 + val_gain)['consecutive_joint_plateaus'] == 1
 
 
-def test_worsening_loss_counts_plateau_and_means_use_only_current_window():
+def test_worsening_loss_counts_plateau_and_means_use_only_current_window(monkeypatch):
+    monkeypatch.setattr(runner, 'STAGNATION_MIN_UPDATES', 0)
     detector = runner.Stagnation()
     detector.observe(2000, [8.] * 2000, .1)
     row = detector.observe(4000, [8.] * 2000 + [9.] * 2000, .1)
@@ -132,7 +138,8 @@ def test_worsening_loss_counts_plateau_and_means_use_only_current_window():
     assert detector.observe(6000, [8.] * 2000 + [9.] * 4000, .1)['stagnated']
 
 
-def test_stage_detector_reset():
+def test_stage_detector_reset(monkeypatch):
+    monkeypatch.setattr(runner, 'STAGNATION_MIN_UPDATES', 0)
     old = runner.Stagnation()
     for step in (2000, 4000, 6000):
         row = old.observe(step, [8.] * step, .1)
@@ -186,6 +193,7 @@ def test_watcher_dead_process_without_marker_and_pid_reuse(tmp_path, monkeypatch
 def test_run_terminal_paths_emit_growth_receipts(tmp_path, monkeypatch, mode, expected, steps):
     import torch
     import torch.nn.functional as functional
+    monkeypatch.setattr(runner, 'STAGNATION_MIN_UPDATES', 0)
     monkeypatch.setattr(runner, 'WINDOW', 2)
     monkeypatch.setattr(runner, 'EVAL_EVERY', 1)
     monkeypatch.setattr(runner, 'STAGE_CEILING', 10)
@@ -213,3 +221,18 @@ def test_run_terminal_paths_emit_growth_receipts(tmp_path, monkeypatch, mode, ex
     if mode == 'complete':
         assert result['frontier'] == 128
         assert sorted(result['stages'][-1]['retention'], key=int) == ['4', '8', '16', '32', '64', '128']
+
+
+def test_100k_floor_discards_silent_phase_streak_and_resets_at_each_stage():
+    losses = [8.] * 104000
+    for _ in range(2):  # A newly entered stage has its own floor, not global step.
+        detector = runner.Stagnation()
+        for step in range(2000, 104001, 2000):
+            row = detector.observe(step, losses[:step], .1)
+            assert row['stagnated'] == (step == 104000)
+            if step <= 100000:
+                assert row['consecutive_joint_plateaus'] == 0
+                assert not row['comparison_eligible']
+            if step == 102000:
+                assert row['consecutive_joint_plateaus'] == 1
+        assert runner.stage_decision(.9, 104000, 104000, True) == 'threshold'

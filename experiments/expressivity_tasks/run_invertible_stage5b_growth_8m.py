@@ -1,4 +1,4 @@
-"""X5b: open-horizon, threshold-driven growth with calibrated stagnation."""
+"""X5c: threshold-driven growth with replay-verified, post-100K stagnation."""
 from __future__ import annotations
 
 import argparse
@@ -22,12 +22,13 @@ from experiments.expressivity_tasks.run_invertible_stage5_curriculum_8m import (
 
 from experiments.expressivity_tasks.tasks.invertible_quadratic import InvertibleQuadraticTask
 
-ROOT = Path('experiments/expressivity_tasks/results_invertible_stage5b_growth_8m')
+ROOT = Path('experiments/expressivity_tasks/results_invertible_stage5c_growth_8m')
 DEPTHS = (4, 8, 16, 32, 64, 128)
 THRESHOLD = .90
 STAGE_CEILING = 500000
 GLOBAL_CAP = 2000000
 WINDOW = 2000
+STAGNATION_MIN_UPDATES = 100000
 VAL_GAIN = .001
 LOSS_GAIN = .001
 EVAL_EVERY = 500
@@ -40,7 +41,7 @@ SUFFIX_THEOREM = ('For this invertible map, a predictor restricted to a proper d
 
 
 class Stagnation:
-    """Two consecutive joint plateaus between disjoint 2K-update windows."""
+    """Two post-floor comparisons; the 100K boundary is baseline, not evidence."""
 
     def __init__(self):
         self.previous = None
@@ -63,7 +64,11 @@ class Stagnation:
             row['relative_train_loss_decrease'] = (self.previous['mean_train_loss'] - mean_loss) / self.previous['mean_train_loss']
             row['joint_plateau'] = (row['best_val_gain'] < VAL_GAIN and
                                     row['relative_train_loss_decrease'] < LOSS_GAIN)
-            self.consecutive = self.consecutive + 1 if row['joint_plateau'] else 0
+            self.consecutive = (self.consecutive + 1 if row['joint_plateau'] else 0)
+        # Pre-ignition flatness cannot supply evidence at the floor's edge.
+        row['comparison_eligible'] = stage_step > STAGNATION_MIN_UPDATES
+        if not row['comparison_eligible']:
+            self.consecutive = 0
         row['consecutive_joint_plateaus'] = self.consecutive
         row['stagnated'] = self.consecutive >= 2
         self.previous = row
@@ -76,7 +81,7 @@ def stage_decision(accuracy, stage_step, total_step, stagnated=False):
         raise ValueError('invalid growth observation')
     if accuracy >= THRESHOLD:
         return 'threshold'
-    if stagnated:
+    if stagnated and stage_step >= STAGNATION_MIN_UPDATES + 2 * WINDOW:
         return 'stagnation'
     if total_step == GLOBAL_CAP:
         return 'global_safety_cap'
@@ -95,7 +100,9 @@ def run(args):
               'hard_cap': GLOBAL_CAP, 'stagnation_window': WINDOW,
               'stagnation_val_gain': VAL_GAIN, 'stagnation_loss_gain': LOSS_GAIN,
               'stagnation_comparisons': 2,
-              'stagnation_definition': 'disjoint windows; cumulative best-val gain and relative mean-loss decrease; two consecutive joint plateaus; earliest 6000; negative gains count plateau', 'eval_every': EVAL_EVERY, 'batch': 32, 'p': 61, 'vocab': 3721,
+              'stagnation_min_updates': STAGNATION_MIN_UPDATES,
+              'stagnation_earliest_stop': STAGNATION_MIN_UPDATES + 2 * WINDOW,
+              'stagnation_definition': 'disjoint windows; cumulative best-val gain and relative mean-loss decrease; two consecutive joint plateaus after stage-local 100000 floor; reset streak through floor boundary; earliest 104000; negative gains count plateau', 'eval_every': EVAL_EVERY, 'batch': 32, 'p': 61, 'vocab': 3721,
               'lr': .001, 'optimizer': 'AdamWScheduleFree', 'betas': [.9, .95], 'weight_decay': .01,
               'clip': 1., 'warmup': 0, 'dtype': 'bf16 autocast, fp32 parameters',
               'initialization': 'from scratch; no checkpoint loaded',

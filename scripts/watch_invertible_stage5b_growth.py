@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Supervisor-side X5b completion watcher; zero only for six successful receipts."""
+"""Supervisor-side X5c completion watcher; zero only for six successful receipts."""
 from __future__ import annotations
 
 import argparse
@@ -9,7 +9,7 @@ import socket
 import time
 
 NAMES = [f'{arm}_seed{seed}' for seed in range(3) for arm in ('e97', 'gdn2')]
-DEFAULT_ROOT = Path(__file__).resolve().parents[1] / 'experiments/expressivity_tasks/results_invertible_stage5b_growth_8m'
+DEFAULT_ROOT = Path(__file__).resolve().parents[1] / 'experiments/expressivity_tasks/results_invertible_stage5c_growth_8m'
 
 
 def process_alive(record):
