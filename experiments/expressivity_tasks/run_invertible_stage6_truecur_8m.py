@@ -222,6 +222,7 @@ def run(args):
     assert not opt.state
     rng, task = np.random.default_rng(args.seed), InvertibleQuadraticTask(61)
     history, stages, checkpoints, required = [], [], {}, set()
+    boundary_checkpoints = set()
     total_step, tokens, train_seconds = 0, 0, 0.
     latest_path = None
     started = time.time()
@@ -269,12 +270,14 @@ def run(args):
                     checkpoints[cp['path']] = cp
                     latest_path = cp['path']
                 if is_best:
-                    if previous_best_path:
+                    # An entry can stop being best without ceasing to be a boundary.
+                    if previous_best_path and previous_best_path not in boundary_checkpoints:
                         required.discard(previous_best_path)
                     previous_best_path = cp['path']
                     required.add(cp['path'])
                     best = {**current, 'stage_step': stage_step, 'step': total_step, 'checkpoint': cp}
                 if stage_step == 0 or decision != 'continue':
+                    boundary_checkpoints.add(cp['path'])
                     required.add(cp['path'])
                 row = {'step': total_step, 'depth': depth, 'stage_step': stage_step, 'decision': decision,
                        'validation_by_depth': metrics, 'best_accuracy': best['accuracy'],

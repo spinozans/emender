@@ -108,7 +108,7 @@ def test_restore_best_restores_weights_and_optimizer_but_not_rng(tmp_path):
     assert rng.bit_generator.state == state
 
 
-@pytest.mark.parametrize('mode', ['ceiling', 'threshold', 'global'])
+@pytest.mark.parametrize('mode', ['ceiling', 'threshold', 'global', 'retention'])
 def test_run_carries_optimizer_and_continues_after_ceiling(tmp_path, monkeypatch, mode):
     import torch
     monkeypatch.setattr(runner, 'DEPTHS', (1, 2, 4))
@@ -128,7 +128,8 @@ def test_run_carries_optimizer_and_continues_after_ceiling(tmp_path, monkeypatch
     monkeypatch.setattr(runner, 'forward_batch', forward)
     def evaluate(model, depth, curriculum):
         evaluations.append(depth)
-        return {'accuracy': .9 if mode == 'threshold' else .1, 'loss': 8.}
+        return {'accuracy': .9 if mode == 'threshold' else .1,
+                'loss': 8. - len(evaluations) / 100 if mode == 'retention' else 8.}
     monkeypatch.setattr(runner, 'evaluate', evaluate)
     real_checkpoint = runner.checkpoint
     def checkpoint(out, model, opt, *args):
@@ -140,13 +141,26 @@ def test_run_carries_optimizer_and_continues_after_ceiling(tmp_path, monkeypatch
         restores.append(best['checkpoint']['step'])
         return real_restore(best, model, opt)
     monkeypatch.setattr(runner, 'restore_best', restore)
-    monkeypatch.setattr(runner, 'prune', lambda *args: None)
+    if mode == 'retention':
+        import shutil
+        monkeypatch.setattr(shutil, 'disk_usage', lambda _: namedtuple('Usage', 'total used free')(1, 1, 1))
+    else:
+        monkeypatch.setattr(runner, 'prune', lambda *args: None)
     out = tmp_path / mode
     runner.run(argparse.Namespace(arm='e97', curriculum='A', seed=0, out=str(out)))
     result = json.loads((out / 'result.json').read_text())
     assert len(set(ids)) == 1
     assert 'frontier' not in result
-    if mode == 'ceiling':
+    if mode == 'retention':
+        events = [json.loads(line) for line in (out / 'transitions.jsonl').read_text().splitlines()]
+        for event in events:
+            if event['event'] in ('stage_entry', 'stage_exit'):
+                assert Path(event['checkpoint']['path']).exists()
+        for stage in result['stages']:
+            assert Path(stage['best']['checkpoint']['path']).exists()
+        assert result['stages'][0]['best']['stage_step'] == 2  # entry ceased being best
+        assert (out / 'pruning.jsonl').exists()  # nonboundary superseded best was removed
+    elif mode == 'ceiling':
         assert lengths == [3, 3, 4, 4, 6, 6]
         assert result['total_steps'] == 6
         assert restores == [0, 2]  # All validation ties: stage-entry best wins.
