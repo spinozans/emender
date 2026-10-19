@@ -234,6 +234,46 @@ def _resolve_dtype(dtype: torch.dtype | str | None) -> torch.dtype | None:
         raise ValueError(f"unsupported dtype {dtype!r}; choose {sorted(names)}") from exc
 
 
+def _validate_checkpoint_optimizer_identity(checkpoint: Mapping[str, Any], config: Mapping[str, Any]) -> str | None:
+    """Typed nonaveraged checkpoints must never enter SF reconstruction.
+
+    Legacy SF checkpoints retain their existing reconstruction path. Explicit
+    AdamW identity overrides only optimizer interpretation, not frozen model args.
+    """
+    identity = checkpoint.get("optimizer_identity")
+    optimizer = checkpoint.get("optimizer_state_dict", {})
+    states = optimizer.get("state", {}) if isinstance(optimizer, Mapping) else {}
+    groups = optimizer.get("param_groups", []) if isinstance(optimizer, Mapping) else []
+    sf_marked = any("z" in state for state in states.values()) or any(
+        "train_mode" in group for group in groups)
+    adamw_marked = any("exp_avg" in state for state in states.values())
+    if identity is None:
+        if config.get("optimizer") == "schedulefree" and adamw_marked:
+            raise ValueError("ordinary AdamW state requires explicit optimizer identity, not the SF path")
+        if config.get("optimizer", "adamw") != "schedulefree" and sf_marked:
+            raise ValueError("ScheduleFree state conflicts with ordinary AdamW configuration")
+        return None
+    if (not isinstance(identity, Mapping) or set(identity) != {"schema", "class", "version", "weight_point"}
+            or identity["schema"] != "emender-e97-optimizer-identity-v1"):
+        raise ValueError("invalid checkpoint optimizer identity")
+    if identity["class"] == "torch.optim.AdamW":
+        if (identity["version"] != torch.__version__ or identity["weight_point"] != "live-nonaveraged"
+                or checkpoint.get("weight_mode") != "live-nonaveraged" or sf_marked
+                or not groups or not adamw_marked):
+            raise ValueError("ordinary AdamW optimizer identity/state mismatch")
+        if any(set(state) != {"step", "exp_avg", "exp_avg_sq"} for state in states.values()):
+            raise ValueError("ordinary AdamW checkpoint has unsupported state")
+        return "torch.optim.AdamW"
+    if identity["class"] == "schedulefree.AdamWScheduleFree":
+        from importlib.metadata import version
+        if (identity["version"] != version("schedulefree") or identity["weight_point"] != "saved-eval-x"
+                or checkpoint.get("weight_mode") != "saved-eval-x" or adamw_marked or not sf_marked
+                or config.get("optimizer") != "schedulefree"):
+            raise ValueError("ScheduleFree optimizer identity/state mismatch")
+        return "schedulefree.AdamWScheduleFree"
+    raise ValueError("unsupported checkpoint optimizer class")
+
+
 def _apply_schedulefree_train_weights(
     model: torch.nn.Module,
     checkpoint: Mapping[str, Any],
@@ -371,6 +411,7 @@ def load_e97_checkpoint(
         raise ValueError(f"{resolved_checkpoint_path} is not a train.py checkpoint")
     state_dict = checkpoint["model_state_dict"]
     config = e97_checkpoint_config(resolved_checkpoint_path, checkpoint, args_json)
+    optimizer_class = _validate_checkpoint_optimizer_identity(checkpoint, config)
     resolved_device = torch.device(device)
     effective_use_triton = use_triton
     if resolved_device.type != "cuda" and effective_use_triton is None:
@@ -383,7 +424,7 @@ def load_e97_checkpoint(
     model.load_state_dict(state_dict, strict=True)
     swapped = (
         _apply_schedulefree_train_weights(model, checkpoint, config)
-        if weight_mode == "train"
+        if weight_mode == "train" and optimizer_class != "torch.optim.AdamW"
         else False
     )
     step = int(checkpoint["step"]) if checkpoint.get("step") is not None else None
