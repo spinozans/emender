@@ -1,0 +1,93 @@
+{
+  "task": "X8",
+  "registered_utc": "2026-10-19T15:03:16.125818+00:00",
+  "host": "lambda01",
+  "predictions_verbatim": [
+    "(a) Incentive theory (X7's surviving reading): removing the free lunch breaks E97's position-1 attractor - Run 1 shows materially more position-2+ structure than X7's flat 512,2,0,... (threshold: any position >=2 reaching >=50/512 counts as material; report exact columns).",
+    "(b) If Run 1 still flat: E97's basin is initialization-structural, not incentive-structural - the next suspect is the optimizer (lr shaping) and/or scale (8M -> 1.3B).",
+    "(c) GDN2 prediction: deeper-weighted loss extends its frontier past P4 relative to X7 deep-first's 116/512 at P4 (or not - either is informative for the capacity question)."
+  ],
+  "runs": [
+    "e97_bf16_seed0",
+    "gdn2_bf16_seed0"
+  ],
+  "gpu_binding": {
+    "e97_bf16_seed0": 2,
+    "gdn2_bf16_seed0": 7
+  },
+  "seed": 0,
+  "depths": [
+    16
+  ],
+  "position_weights": [
+    0.007352941176470588,
+    0.014705882352941176,
+    0.022058823529411766,
+    0.029411764705882353,
+    0.03676470588235294,
+    0.04411764705882353,
+    0.051470588235294115,
+    0.058823529411764705,
+    0.0661764705882353,
+    0.07352941176470588,
+    0.08088235294117647,
+    0.08823529411764706,
+    0.09558823529411764,
+    0.10294117647058823,
+    0.11029411764705882,
+    0.11764705882352941
+  ],
+  "objective": "mean_batch(sum_t (t/136) * CE_t); unweighted per-position validation",
+  "position1_loss_coefficient": 0.007352941176470588,
+  "intervention": "training loss weights only vs X7 bf16 recipe; GDN2 uses stock bf16 FLA, NOT the X7 fp32 pilot adapter",
+  "lr": 0.001,
+  "optimizer": "AdamWScheduleFree",
+  "betas": [
+    0.9,
+    0.95
+  ],
+  "weight_decay": 0.01,
+  "clip": 1.0,
+  "warmup": 0,
+  "batch": 32,
+  "safety_ceiling": 500000,
+  "eval_every": 500,
+  "per_position_examples": 512,
+  "ladder": false,
+  "carry_supervision": false,
+  "stagnation_kill": false,
+  "threshold_stop": false,
+  "initialization": "scratch, empty optimizer, no checkpoint load",
+  "validation": "same frozen X3/X6/X7 seed0 T16 pool, array hashes and archive hash in each data receipt; P1-P16 joint/x/y/loss every 500 steps",
+  "retention": "X6D immutable entry (never overwritten by best), best, latest/exit; prune below400GiB free; checkpoint hashes and pruning manifests; no historical deletion",
+  "eval_backend": "X7 E97 fused_inference=True with legacy recurrent precision; GDN2 stock FLA no adapter",
+  "authority": "Local expressivity only. R16 evidence discipline; not a resilient DiLoCo or Slurm/scale acceptance.",
+  "sources": {
+    "experiments/expressivity_tasks/run_invertible_stage8_paydepth_8m.py": "e83ea82d65db46ebfa577ce0790f89a3fc588835b8f13ef03b8f6e5b38757f3c",
+    "experiments/expressivity_tasks/launch_invertible_stage8_paydepth_8m.sh": "51cdc3026f20014c5842413a98928d8ce0a11c09926ef27941a8bdf648bb4103",
+    "scripts/watch_invertible_stage8_paydepth.py": "fc498a2938a54bbd300e52117fa62d3a945477ed61cc7fdfef4ab660b1207f87",
+    "tests/test_invertible_stage8_paydepth_8m.py": "318fb6bf14da3b04ff307f4abf265f07ffe3bb07f7d9c6440ce884ed4f1329b0",
+    "experiments/expressivity_tasks/results_invertible_stage8_paydepth_8m/receipts/verify_launch.py": "66903ad7950ebc0c5bb46e838229c77f046b1181438a3855c1f69818c6ee5967",
+    "scripts/gpu_lease.sh": "553cd9ab764e137fc4e33b7c20eeeda1b2a13f47870f5f4b679f153c68feb27f",
+    "experiments/expressivity_tasks/eval_invertible_stage6_positions.py": "2cd3e103e8861eeb051d877ac9f507c49bae88987687249221fefb15eb4f5625",
+    "experiments/expressivity_tasks/tasks/invertible_quadratic.py": "874966ed85339d3e879c4fd57e52be5be09735ec628c0b2f4dd325e990d57119",
+    "ndm/models/hybrid_ladder.py": "0e10ee82942ba519af98e50a155d1c19509c6e995342b566538563b4f7e311c9",
+    "ndm/models/e88_fla_hybrid.py": "9e38d9d1820c4e9e0bd08fdbd5a577161290381762ebc6c374017cbda434ba0b",
+    "ndm/models/fla_gated_delta.py": "0663169040a769ff43da9da7cf2c56687d69bc95ee09e5a035d367138f50762f",
+    "ndm/recurrent_precision.py": "0dd2d7d9a926b4f328bc69f94d0e8438196838409c7180b8ac2461c703917ba0",
+    "ndm/triton/e88_triton_forward.py": "8aa17795f582d8065dbf921057da25fe5f43f02bdc709aedc4afe6ffe1b861f5",
+    "ndm/triton/e88_triton_backward.py": "15b44c184057476a958d6dccbbf98f5ff04ac7ddeddcaa520066a1ce26077d92",
+    "ndm/triton/e88_triton_optimized.py": "64fca13128e2e2b184db46cc065760c614ecf9b1ad3728fccef70cb57e2a5ce1",
+    "experiments/expressivity_tasks/run_invertible_stage7_deepfirst_8m.py": "b4c295f657ddd7ffedaf31e270e64bda8cdee114c2f0ef87d61410b19f3c150c",
+    "experiments/expressivity_tasks/run_invertible_stage6_truecur_8m.py": "3cf2aeb88c7e61ef74e9366ce52702a2d240069de7416380681e1ed6fd1bfcde",
+    "experiments/expressivity_tasks/run_invertible_stage5_curriculum_8m.py": "a24b6272347f953db67f880ce3730445c0e61015e21d3b16affb48e09a1f018f",
+    "experiments/expressivity_tasks/run_invertible_stage3_8m.py": "0cdb079c88d87d85ae3b6874e2e8d16530264bd54c2f0f250f6d7f57a0e0f65d",
+    "experiments/expressivity_tasks/run_invertible_stage2.py": "223adc88b6ed3e179b7a490f8c4ca065aa2d66f83082aef1218d2e163a2b1997"
+  },
+  "preflight_receipts": {
+    "receipts/tests_prelaunch.txt": "83a18336d1dc88b7dd0628b7d291aa465a6514c44f470162ebc52919ac8ea3e0",
+    "receipts/tests_exit_code.txt": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+    "receipts/existing_runs_before.json": "0130b28ac3c3329434534c0ad6815d22491ad09e36ed729573faf1056cff8755"
+  },
+  "watcher": "native supervisor will arm scripts/watch_invertible_stage8_paydepth.py --interval 300 after launch identities are verified; growth report on wake"
+}
