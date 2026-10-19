@@ -1,0 +1,81 @@
+{
+  "task": "X9",
+  "registered_utc": "2026-10-19T18:23:53.632852+00:00",
+  "host": "lambda01",
+  "approved_scope_amendment": "Supervisor ruling: REGIME SWAP, not schedule bolted onto ScheduleFree. Ordinary AdamW, standard betas, matching nominal weight decay, warmup/cosine. Everything else X7 bf16 unchanged.",
+  "control": "X7 e97_bf16_seed0: AdamWScheduleFree constant1e-3, betas(.9,.95), decay.01. X6 best-vs-final degradation already occurred UNDER ScheduleFree, weakening a plain oscillation reading.",
+  "predictions": [
+    "(a) Optimizer-regime structural reading: ordinary AdamW plus anneal permits consolidation once a partial-carry circuit is found. Any driver position >=2 reaching >=50/512 counts as material against X7 flat512,2,0,...; report exact P1-P16 columns.",
+    "(b) If still flat, the tested optimizer-regime bundle fails to unlock basin entry. Fixed-lr/ScheduleFree is weakened as the explanation, exhausting the planned 8M probes in this series; next interrogations are scale (1.3B deep-first and ladder-then-deep) and supervision-schedule redesign (proven unlock, current wean fails depth4+). This single seed does not prove all optimizers fail.",
+    "Honest asymmetry: anneal plausibly helps CONSOLIDATION, not basin ENTRY. Partial-P2-only/small-P2 evidence is consolidation-only, not proof of a deep entry unlock.",
+    "Attribution between anneal, ScheduleFree removal, and standard-beta change remains unresolved: a registered follow-up decomposition is required; no schedule-only causality claim."
+  ],
+  "runs": [
+    "e97_bf16_seed0"
+  ],
+  "gpu_binding": {
+    "e97_bf16_seed0": 2
+  },
+  "seed": 0,
+  "depths": [
+    16
+  ],
+  "objective": "uniform mean cross entropy over all driver targets; unweighted validation",
+  "intervention": "one optimizer REGIME bundle vs X7 SF-constant control: class, betas and explicit schedule",
+  "optimizer": "AdamW",
+  "betas": [
+    0.9,
+    0.999
+  ],
+  "eps": 1e-08,
+  "weight_decay": 0.01,
+  "weight_decay_comparison": "Closest practical nominal matching .01, not exact equivalence: SF adds decay*y after variance normalization before averaged y/z updates; AdamW applies decoupled lr*.01 parameter shrink. Integrated shrink differs under anneal.",
+  "lr": 0.001,
+  "min_lr": 1e-05,
+  "warmup": 5000,
+  "schedule": "update1:2e-7; linear step/5000 through5000:1e-3; cosine (step-5000)/495000, terminal500000:1e-5; actual LR logged every update",
+  "clip": 1.0,
+  "batch": 32,
+  "safety_ceiling": 500000,
+  "eval_every": 500,
+  "per_position_examples": 512,
+  "ladder": false,
+  "carry_supervision": false,
+  "stagnation_kill": false,
+  "threshold_stop": false,
+  "initialization": "scratch, identical X7 bf16 seed0 weights, empty ordinary AdamW state, no checkpoint loaded",
+  "validation": "same frozen X3/X6/X7 seed0 T16 pool; archive/array hashes; unweighted P1-P16 joint/x/y/loss each500 updates",
+  "retention": "X6D immutable entry + best + latest/exit; below400GiB prune other checkpoints with hash manifests; no historical deletion",
+  "eval_backend": "X7 E97 fused_inference=True; legacy recurrent precision; bf16 autocast and fp32 parameters; ordinary unaveraged weights",
+  "authority": "Local single-card expressivity only; R16 evidence discipline, no resilient DiLoCo/Slurm/scale acceptance claimed.",
+  "sources": {
+    "scripts/gpu_lease.sh": "553cd9ab764e137fc4e33b7c20eeeda1b2a13f47870f5f4b679f153c68feb27f",
+    "experiments/expressivity_tasks/eval_invertible_stage6_positions.py": "2cd3e103e8861eeb051d877ac9f507c49bae88987687249221fefb15eb4f5625",
+    "experiments/expressivity_tasks/tasks/invertible_quadratic.py": "874966ed85339d3e879c4fd57e52be5be09735ec628c0b2f4dd325e990d57119",
+    "ndm/models/hybrid_ladder.py": "0e10ee82942ba519af98e50a155d1c19509c6e995342b566538563b4f7e311c9",
+    "ndm/models/e88_fla_hybrid.py": "9e38d9d1820c4e9e0bd08fdbd5a577161290381762ebc6c374017cbda434ba0b",
+    "ndm/models/fla_gated_delta.py": "0663169040a769ff43da9da7cf2c56687d69bc95ee09e5a035d367138f50762f",
+    "ndm/recurrent_precision.py": "0dd2d7d9a926b4f328bc69f94d0e8438196838409c7180b8ac2461c703917ba0",
+    "ndm/triton/e88_triton_forward.py": "8aa17795f582d8065dbf921057da25fe5f43f02bdc709aedc4afe6ffe1b861f5",
+    "ndm/triton/e88_triton_backward.py": "15b44c184057476a958d6dccbbf98f5ff04ac7ddeddcaa520066a1ce26077d92",
+    "ndm/triton/e88_triton_optimized.py": "64fca13128e2e2b184db46cc065760c614ecf9b1ad3728fccef70cb57e2a5ce1",
+    "experiments/expressivity_tasks/run_invertible_stage7_deepfirst_8m.py": "b4c295f657ddd7ffedaf31e270e64bda8cdee114c2f0ef87d61410b19f3c150c",
+    "experiments/expressivity_tasks/run_invertible_stage6_truecur_8m.py": "3cf2aeb88c7e61ef74e9366ce52702a2d240069de7416380681e1ed6fd1bfcde",
+    "experiments/expressivity_tasks/run_invertible_stage5_curriculum_8m.py": "a24b6272347f953db67f880ce3730445c0e61015e21d3b16affb48e09a1f018f",
+    "experiments/expressivity_tasks/run_invertible_stage3_8m.py": "0cdb079c88d87d85ae3b6874e2e8d16530264bd54c2f0f250f6d7f57a0e0f65d",
+    "experiments/expressivity_tasks/run_invertible_stage2.py": "223adc88b6ed3e179b7a490f8c4ca065aa2d66f83082aef1218d2e163a2b1997",
+    "experiments/expressivity_tasks/run_invertible_stage9_anneal_8m.py": "7e6c77b8e597c1f312e5371e43e6c13253c4854afe1d2f8cf9816b756e313d0d",
+    "experiments/expressivity_tasks/launch_invertible_stage9_anneal_8m.sh": "05d8d174c5a105800d7a954f647fd73908c7da3de023cf912f3d91f0aa688e5a",
+    "scripts/watch_invertible_stage9_anneal.py": "2033a30b38be0100979aaee26c9c534520f87700cae37781b546f3623f76fff9",
+    "tests/test_invertible_stage9_anneal_8m.py": "c06f5486d6c1dba9c8ad3966c086f77c93c06dfd9911849de9521c9a9f6f85f6",
+    "experiments/expressivity_tasks/results_invertible_stage9_anneal_8m/receipts/verify_launch.py": "8899a3583d7d6cd1da59fae0a5c28e840adc695a292d85e43fa1efa696e2d891",
+    "experiments/expressivity_tasks/results_invertible_stage9_anneal_8m/receipts/register.py": "c0031d229dfc942543201dc40ee063765c5c946f8333e9e9d73214da4e322b55"
+  },
+  "preflight_receipts": {
+    "receipts/tests_prelaunch.txt": "576ff6c84419e57efc125d3f050fd59b46bd09562c658bc8c04c0dc7b6ae9e8a",
+    "receipts/tests_exit_code.txt": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+    "receipts/tests_cpu.txt": "783739ac71cea3d2da642c76a6aa25fa9398da2d90735528de944c7fec04fc1c",
+    "receipts/existing_runs_before.json": "73ca2cb2cb95c6377a068999e9aa998a9217cae3ae52449777e7cef8198b288e"
+  },
+  "watcher": "Parent-owned native supervisor arms scripts/watch_invertible_stage9_anneal.py --interval300 after verified launch; growth report on wake."
+}
