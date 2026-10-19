@@ -1,0 +1,51 @@
+{
+  "task": "X7",
+  "registered_utc": "2026-10-19T04:29:12.947336+00:00",
+  "predictions_verbatim": [
+    "(a) Operator's horizon theory (ladder/starvation is structural): Run 1 learns carries at T16 (per-position structure shows P2+ substantially solved, no T1/T2 pre-training needed).",
+    "(b) Precision-wall theory (bf16 cannot pay y^2's per-step error-doubling beyond a few steps): Run 1 stalls shallow BUT Run 2 extends the perfect-prefix depth materially beyond bf16's ~3.",
+    "(c) Optimization theory (fixed-lr oscillation): later follow-up arm (lr anneal) - not in this pilot; note as registered follow-up."
+  ],
+  "runs": [
+    "e97_bf16_seed0",
+    "e97_fp32_seed0",
+    "gdn2_fp32_seed0"
+  ],
+  "precision_scopes": {
+    "e97_bf16_seed0": "X6 legacy: bf16 projections/gates/output/replay checkpoints/scratch/state gradients; live scan accumulator already fp32; fp32 parameters",
+    "e97_fp32_seed0": "existing fp32 state knob: fp32 initial/final state, replay checkpoints/scratch/state gradients; live scan accumulator already fp32; fixed BH1/NW4 geometry; bf16 projections/gates/output, fp32 parameters; discarded eval workspace remains legacy",
+    "gdn2_fp32_seed0": "pilot sequential adapter: bf16 projected/convolved q/k/v and raw gate logits promoted to fp32 for q/k normalization, gate transforms, delta read/write/state/readout arithmetic and autograd; recurrence output cast back to bf16 before unchanged output norm/gate/projection; fp32 parameters; stock accumulator was already fp32"
+  },
+  "seed": 0,
+  "depths": [
+    16
+  ],
+  "lr": 0.001,
+  "batch": 32,
+  "safety_ceiling": 500000,
+  "eval_every": 500,
+  "per_position_examples": 512,
+  "ladder": false,
+  "carry_supervision": false,
+  "stagnation_kill": false,
+  "threshold_stop": false,
+  "initialization": "from scratch, empty optimizer, no checkpoint load",
+  "sources": {
+    "experiments/expressivity_tasks/run_invertible_stage7_deepfirst_8m.py": "b4c295f657ddd7ffedaf31e270e64bda8cdee114c2f0ef87d61410b19f3c150c",
+    "experiments/expressivity_tasks/launch_invertible_stage7_deepfirst_8m.sh": "33d30822fb222a1c8b3690eaf36bc5f2b560e43dbf41f0015b2843dd3b8b0dde",
+    "scripts/watch_invertible_stage7_deepfirst.py": "8b9893911e7eb0a664d0be2c4a6e9a7773aa0c88046c91e2ac826c1e6b45beed",
+    "tests/test_invertible_stage7_deepfirst_8m.py": "efac88b9b88b2e37be8e5a6dde6970ff2873c180fa8f03a65b26ca6ce2fcd236"
+  },
+  "approved_gdn_adapter": "pilot-local fp32 sequential recurrence; launch gated by full-fp32 stock chunk equivalence incl gradients",
+  "interpretation_limit": "E97 legacy live forward scan already fp32; knob also fixes launch geometry and changes backward state storage. GDN stock live accumulator already fp32; adapter removes bf16 chunk intermediates and lifts normalization/gate arithmetic, not projection quantization. No claim of exclusively forward bf16 error-doubling isolation.",
+  "retention": "reuse X6 bounded below400GiB: protect entry, best, latest and terminal; no historical file deletion",
+  "authority": "Local single-GPU expressivity probe; R16 evidence discipline only, no DiLoCo or Slurm conformance claim.",
+  "finalized_prelaunch_utc": "2026-10-19T04:42:01.385704+00:00",
+  "eval_backend": "Supervisor-approved fused_inference=True for BOTH E97 arms; training unchanged, X6 legacy eval was eager. See scratch parity receipt; no trained-model parity claim.",
+  "equivalence_guard": "Supervisor-approved each output/state/VJP relative-L2 <=1% AND max_abs/stock_max <=1%; stock fp32 tensor inputs use TF32 dots. Stricter independent naive fp32 output/state/VJP test also passes. Initial overly strict kernel comparison failure retained.",
+  "preflight_receipts": {
+    "receipts/tests_prelaunch.txt": "07d11c43fcd213fda030b3e26c697845eed320d64d3ddfb93590d4deda42e32b",
+    "receipts/precision_equivalence.json": "fb449cea7623c1fe3d0485494772d9a421b4bc1852739a87c461bbc4da22df8a",
+    "receipts/e97_eval_backend_parity.json": "55e3c78030b68e2afb373df872fc27ae2330771698c839aaac6e40fe8f94742e"
+  }
+}

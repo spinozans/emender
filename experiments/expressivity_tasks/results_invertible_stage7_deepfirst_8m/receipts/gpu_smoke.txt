@@ -1,0 +1,36 @@
+[pin-autotune] pinned mode: 18 kernels / 30 (name,key) configs from registry (set NDM_PIN_TRITON_AUTOTUNE=0 to restore sweep)
+[e97-runtime] model=emender/nonlin historical_level=E97 backend=cuda path=e97-sequential-split-edit-triton kernel_api=e97-sequential-split-edit-triton kernel_core=e88-shared-triton recurrence=sequential state=tanh eager_fallback=False use_triton=True use_chunked_e97=False e97_chunk_size=32 scan_cuda_graph=False linear_state=False raw_write=False use_split_edit=True log_decay=True
+[e97-runtime] model=emender/nonlin historical_level=E97 backend=cuda path=e97-sequential-split-edit-triton kernel_api=e97-sequential-split-edit-triton kernel_core=e88-shared-triton recurrence=sequential state=tanh eager_fallback=False use_triton=True use_chunked_e97=False e97_chunk_size=32 scan_cuda_graph=False linear_state=False raw_write=False use_split_edit=True log_decay=True
+[e97-runtime] model=emender/nonlin historical_level=E97 backend=cuda path=e97-sequential-split-edit-triton kernel_api=e97-sequential-split-edit-triton kernel_core=e88-shared-triton recurrence=sequential state=tanh eager_fallback=False use_triton=True use_chunked_e97=False e97_chunk_size=32 scan_cuda_graph=False linear_state=False raw_write=False use_split_edit=True log_decay=True
+[e97-runtime] model=emender/nonlin historical_level=E97 backend=cuda path=e97-sequential-split-edit-triton kernel_api=e97-sequential-split-edit-triton kernel_core=e88-shared-triton recurrence=sequential state=tanh eager_fallback=False use_triton=True use_chunked_e97=False e97_chunk_size=32 scan_cuda_graph=False linear_state=False raw_write=False use_split_edit=True log_decay=True
+{"arm": "e97", "precision": "bf16", "loss": 251.16015625, "forward_backward_seconds": [1.0126619380898774, 0.018920097034424543, 0.017739715985953808], "finite": true}
+[e97-runtime] model=emender/nonlin historical_level=E97 backend=cuda path=e97-sequential-split-edit-triton kernel_api=e97-sequential-split-edit-triton kernel_core=e88-shared-triton recurrence=sequential state=tanh eager_fallback=False use_triton=True use_chunked_e97=False e97_chunk_size=32 scan_cuda_graph=False linear_state=False raw_write=False use_split_edit=True log_decay=True
+[e97-runtime] model=emender/nonlin historical_level=E97 backend=cuda path=e97-sequential-split-edit-triton kernel_api=e97-sequential-split-edit-triton kernel_core=e88-shared-triton recurrence=sequential state=tanh eager_fallback=False use_triton=True use_chunked_e97=False e97_chunk_size=32 scan_cuda_graph=False linear_state=False raw_write=False use_split_edit=True log_decay=True
+[e97-runtime] model=emender/nonlin historical_level=E97 backend=cuda path=e97-sequential-split-edit-triton kernel_api=e97-sequential-split-edit-triton kernel_core=e88-shared-triton recurrence=sequential state=tanh eager_fallback=False use_triton=True use_chunked_e97=False e97_chunk_size=32 scan_cuda_graph=False linear_state=False raw_write=False use_split_edit=True log_decay=True
+[e97-runtime] model=emender/nonlin historical_level=E97 backend=cuda path=e97-sequential-split-edit-triton kernel_api=e97-sequential-split-edit-triton kernel_core=e88-shared-triton recurrence=sequential state=tanh eager_fallback=False use_triton=True use_chunked_e97=False e97_chunk_size=32 scan_cuda_graph=False linear_state=False raw_write=False use_split_edit=True log_decay=True
+Traceback (most recent call last):
+  File "<stdin>", line 9, in <module>
+  File "/home/erikg/emender/experiments/expressivity_tasks/run_invertible_stage7_deepfirst_8m.py", line 116, in forward_batch
+    logits = padded_forward(model, x)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/run_invertible_stage2.py", line 185, in padded_forward
+    return model(F.pad(x, (0, (-real_length) % 16), value=0))[:, :real_length]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/ndm/models/hybrid_ladder.py", line 205, in forward
+    out = layer(normed)
+          ^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/ndm/models/e88_fla_hybrid.py", line 1933, in forward
+    raise NotImplementedError(
+NotImplementedError: FP32 recurrent state requires optimized BF16 sequential CUDA/Triton, N/V <= 64

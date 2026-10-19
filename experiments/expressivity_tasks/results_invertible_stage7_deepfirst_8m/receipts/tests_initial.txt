@@ -1,0 +1,31 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /home/erikg/emender/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /home/erikg/emender
+configfile: pyproject.toml
+plugins: timeout-2.4.0, anyio-4.13.0
+collecting ... collected 8 items
+
+tests/test_invertible_stage7_deepfirst_8m.py::test_registered_scratch_t16_recipe_and_precision_scope [pin-autotune] pinned mode: 18 kernels / 30 (name,key) configs from registry (set NDM_PIN_TRITON_AUTOTUNE=0 to restore sweep)
+PASSED
+tests/test_invertible_stage7_deepfirst_8m.py::test_gdn_adapter_is_instance_local_and_preserves_parameters PASSED
+tests/test_invertible_stage7_deepfirst_8m.py::test_fp32_adapter_matches_independent_naive_reference_and_gradients PASSED
+tests/test_invertible_stage7_deepfirst_8m.py::test_fp32_adapter_stock_chunk_equivalence[32] FAILED
+
+=================================== FAILURES ===================================
+________________ test_fp32_adapter_stock_chunk_equivalence[32] _________________
+tests/test_invertible_stage7_deepfirst_8m.py:94: in test_fp32_adapter_stock_chunk_equivalence
+    torch.testing.assert_close(actual, expected, rtol=3e-4, atol=3e-5)
+E   AssertionError: Tensor-likes are not close!
+E   
+E   Mismatched elements: 4209 / 141312 (3.0%)
+E   Greatest absolute difference: 0.00016736984252929688 at index (1, 15, 1, 511) (up to 3e-05 allowed)
+E   Greatest relative difference: 0.004187730140984058 at index (0, 13, 0, 169) (up to 0.0003 allowed)
+=========================== short test summary info ============================
+FAILED tests/test_invertible_stage7_deepfirst_8m.py::test_fp32_adapter_stock_chunk_equivalence[32] - AssertionError: Tensor-likes are not close!
+
+Mismatched elements: 4209 / 141312 (3.0%)
+Greatest absolute difference: 0.00016736984252929688 at index (1, 15, 1, 511) (up to 3e-05 allowed)
+Greatest relative difference: 0.004187730140984058 at index (0, 13, 0, 169) (up to 0.0003 allowed)
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+========================= 1 failed, 3 passed in 14.94s =========================
