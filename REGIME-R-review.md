@@ -1,0 +1,7 @@
+## Review — ACCEPTED-WITH-CONDITIONS; merge verdict: OK with notes.
+- Correct: 13 receipt spot-checks across all three roots support classifications; extraction records 192 SF/9 unresolved—zero **verified** annealed, not universal absence (`REGIME-extraction.json:128735–128743`).
+- Correct: capability rules consistently yield 7 improving/6 stuck/26 mixed/14 unassessed; loss-only gains remain unassessed (`REGIME-audit-report.md:51–120`).
+- Correct: wash-2 preserves 12/6/1→12/5/0, execution64→59, seed gap+4; consumed154,386 differs from available741,553 (`REGIME-audit-report.md:32–46`; `wash-v2/logs/training.jsonl:513–515`).
+- Correct: receipt-bound suspicion/exoneration, both X9b branches, matched exposure, preregistered predictions, frozen dual gates and operator approval are explicit (`REGIME-audit-report.md:123–139`; applicable R12/R16).
+- Finding P1: required ~90-minute-class cost estimate is absent from the complete spec; add approximately90 minutes/arm, ~180 serial training minutes plus evaluation/preflight overhead (`REGIME-audit-report.md:129–139`; `wash-v2/logs/training.jsonl:1,515`).
+- Finding P2: wash-1 warmup is incorrectly0 in the anchor table; change to8, matching its start receipt and census (`REGIME-audit-report.md:36,197`; `wash-v1/logs/training.jsonl:4`).
