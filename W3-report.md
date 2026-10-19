@@ -1,6 +1,6 @@
 # W3 matched-dose wash-2 regime experiment
 
-Status: **preflight in progress; neither production arm launched; branch WAIT_X9b_FINAL**.
+Status: **preflight frozen; launch held for X9b's final DONE and completed-trajectory attestation. Neither production arm launched.** W3R's sole P1 condition is addressed and regression-tested. Preregistration SHA256 `3def402b19269932b7a484ca3b2c1f959347e22005a0b2d8f651460eb0545ccf` (supersedes the preserved pre-W3R snapshot).
 Operator go and frozen contract: `/home/erikg/emender-scratch/fix-fanout/taskW3-matcheddose.md`, `REGIME-audit-report.md` sections 1–8, REGIME-R, and its disclosed W3 prelaunch amendments. No production growth verdict exists.
 
 ## Preflight verification table
@@ -15,12 +15,13 @@ Operator go and frozen contract: `/home/erikg/emender-scratch/fix-fanout/taskW3-
 | Batch identities | Every sampled pack/record ID, historical sample ID, prediction-aligned loss mask, recurrent reset/valid mask and padded token digests | frozen in `preflight.json` |
 | Stage-B | exact 14 cases, Pi inventory, CLI image, tools, args, tokenizer receipt | bound; four evaluator sources byte-match wash-2 |
 | Execution | exact 96 cases, case/grading module, runtime image manifest, backend bundle | bound; four replicas, fixed lowest-rank primary [0,1] |
-| docNLL | 8-doc / 198,295-target panel `5725d820…`, saved-x | authority found; trajectory-only under original operator ruling; see amendment |
+| docNLL | 8-doc / 198,295-target panel `5725d820…`, saved-x | scorer, phase scripts, panel, substrate and original ruling hash-bound; diagnostic trajectory only |
 | AdamW serialization | explicit typed class/version, live-nonaveraged point; frozen args unchanged | 47 identity/facade/precision tests pass |
-| AdamW viability | full production BF16 update and both-mode reload/hash equality | pending |
+| AdamW viability | full production BF16 update and both-mode reload/hash equality | **passed** GPU6; 33,362,854,400 bytes peak allocated; train/saved point hashes both `fcdfcedcb16210af11c48f588b08a5b31ba19471b831553eb44ca9f723f8e5df` |
 | Regime branch | X9b final receipt only; no partial-score branching | waiting; final receipt absent |
-| Topology / training | single GPU per arm; free cards 6/7 observed, not reserved | no production launch; topology not yet selected |
-| Preregistration / final reads | no threshold stops, retries or best checkpoint; pin before any gate read | pending runner binding/validation and preregistration commit |
+| Topology / training | **serial A then B, one leased free card from 6/7**, world1 per arm | selected before results; actual card/UUID retained at launch; no production launch |
+| Source / runtime | `runtime-freeze-v2.json`; all 512 current Dataset/sample/token/loss/valid/reset hashes match independent recount | exact Python source/package/optimizer versions frozen; tokenizer agrees; **14,070 Pi payload files verified** |
+| Preregistration / final reads | no threshold stops, retries or best checkpoint; pin before any gate read | committed prerequisite in runner; completed-trajectory selector, bounded serial launcher, watcher, frozen read/tally harness prepared; W3R review completed with sole P1 condition addressed |
 
 All local receipt paths above are under `receipts/w3-matcheddose/` unless absolute. The raw historical receipts are unmodified. The independent recount decodes little-endian indexes and drops the first target of every independent record; it does not trust manifest target totals or call the training Dataset to count targets.
 
@@ -38,9 +39,25 @@ A = contemporaneous SF constant 1e-5, warmup0. B = SF external cosine if X9b fin
 
 - `.venv/bin/python scripts/w3_matcheddose_preflight.py --output receipts/w3-matcheddose/preflight.json`: passed; exact 512-step exposure and frozen instrument hashes.
 - `PYTHONPATH=$PWD OMP_NUM_THREADS=2 .venv/bin/python scripts/w3_verify_parent.py --output receipts/w3-matcheddose/parent-conversion.json`: passed. First attempt exposed tied embedding/head alias (237 state-dict entries versus 236 unique parameters); verification now derives named-parameter layout from the exact production model on meta and independently verifies the alias. No data/seed changes or training retries occurred.
-- `OMP_NUM_THREADS=1 .venv/bin/python -m pytest -q tests/test_w3_matcheddose_preflight.py tests/test_e97_facade.py tests/test_e97_sft_precision_integration.py`: **47 passed in 22.83s**. Covers independent boundary masking, hard mismatch stop, typed optimizer conflicts in both modes, AdamW point-hash equality, SF typed-versus-legacy byte equality, existing facade and precision regression tests.
+- Initial identity/facade/precision suite: **47 passed in 22.83s**, committed before GPU viability. Initial harness suite including `tests/test_w3_regime_and_gate.py`: **55 passed in 20.30s** (`tests-launch.txt`); W3R P1 regression suite: **60 passed in 20.65s**, exit0 (`tests-attestor.txt` / `tests-attestor-exit.txt`). Covers independent boundary masking, hard mismatch stop, typed optimizer conflicts in both modes, AdamW point-hash equality, SF typed-versus-legacy byte equality, final-receipt-only branching, max-anywhere materiality, exact LR endpoints/fixed stop, conservative repetition comparisons, prediction falsifiers and serving nondeterminism.
+- Disposable one-update `scripts/w3_run_adamw_viability.sh`: **passed**, detached PID3610471, GPU6 lease released, terminal exit0, no retry. Full 4B BF16 model/moments finite; first pack loss **1.2679857436057442**, exactly reproducing historical wash-2's first-pack loss. Peak reserved35,418,800,128 bytes. Both read-mode hashes agree. Receipt/checkpoint identities in `adamw-viability.json`; this is not arm B and had no gate reads.
+- `scripts/w3_freeze_runtime.py`: all512 Dataset samples/masks/tokens independently cross-checked; Pi inventory all14,070 files and tokenizer verified; docNLL authority chain/substrate bound. Initial environment inventory attempt found no pip module, so inventory uses `importlib.metadata.distributions` without installing or altering the environment. `runtime-freeze-v2.json` supersedes earlier source snapshots by adding completed harness and W3R attestor sources; initial and pre-W3R snapshots are retained.
+- `bash -n scripts/w3_run_adamw_viability.sh scripts/w3_run_arms.sh scripts/w3_run_gate_reads.sh` and `git diff --check`: passed. No production-arm or gate invocation occurred.
 
 Applicable architecture intent: **R07/NDP15 atomic publication, R12 exact parent/state binding, R14/NDP13 bounded fail-stop execution, R16 immutable evidence discipline**, per `docs/RESILIENT_DILOCO_COMPUTE_POOL.md` ADR-003 and its gap matrix. This is local world1 full-model SFT, not resilient systems acceptance, Frontier submission, or a new scale rung. Elastic/native/async requirements remain explicitly unclaimed. No WG service, scheduler, dispatcher or workers started. GPU lease utility alone is used for resource exclusion as explicitly required by W3.
+
+## Prelaunch rulings and runbook
+
+Before any production results, supervisor approved: (1) docNLL original trajectory-only ruling supersedes nonexistent retention limits; (2) typed AdamW live-point serialization with train/saved equality, without SF shim state or changing frozen args; (3) X9b **max-anywhere P2+≥50/512 over its completed trajectory**, with fixed-final counts alongside and escape-without-consolidation disclosed; (4) EACH Stage-B repetition must pass, and advantages use min(B)−max(parent)≥4 and min(B)−max(A)≥3, also reporting historical parent6. Any divergent case grades/reasons or tallies are a serving-nondeterminism finding, not independent samples or an averaged rescue.
+
+Next actions, strictly in order:
+
+1. Await existing X9b watcher/verified 500K DONE. First run `.venv/bin/python -m scripts.w3_attest_x9b_completion` (enforces its source/tests/green test evidence are committed). It creates `x9b-completed-trajectory.json` once, binding original DONE/terminal/result/config/data/frozen-pool and the complete1001-row validation digest/order without modifying any original receipt or live trainer. Then run `.venv/bin/python -m scripts.w3_fix_regime_branch --output receipts/w3-matcheddose/fixed-branch.json`. Missing/failed/partial/malformed/tampered terminal or supplemental evidence hard-stops before reading intermediate counts. Inspect/report completed maximum and final values; commit the branch receipt **before either arm**. The training runner enforces both preregistration and branch bytes are committed.
+2. W3R review is persisted in `W3R-review.md`; its sole P1 condition (full trajectory digest in consumed terminal evidence, including intermediate49→50 and missing-receipt rejection) is implemented and covered by the60-test suite. Supervisor approved the supplemental completion-only attestation seam because the live Bash publisher was already parsed at launch. After the final attestation/branch receipt is committed, launch `nohup setsid bash scripts/w3_run_arms.sh > /home/erikg/emender-scratch/w3-arms-console.txt 2>&1 < /dev/null &`. One serial pair, same leased card, bounded3h per arm, no retries. Arm directories are create-once. Monitor `.venv/bin/python -m scripts.watch_w3_arms`; it checks live PID/starttime and terminal receipts, never launches, retries or grades.
+3. After both fixed-final completions, obtain a **free eight-GPU window** and run the detached `scripts/w3_run_gate_reads.sh`. This is required by the unmodified frozen execution CLI; current cards0–5 are occupied, so no gate launch is claimed. It fails before any read if eight free GPUs cannot be leased. Parent/A/B are re-pinned before reads; same three Stage-B repetitions, exact four execution replicas with lowest rank primary; original saved-x docNLL scorer; pinned verdict receipt.
+4. Fill the full results table from pinned case-level receipts, apply predictions verbatim with only the disclosed prelaunch amendments, commit and push. No quality verdict or checkpoint promotion before then.
+
+The ordinary-AdamW viability establishes one finite full-size update and exact point serialization, not a 512-update quality outcome. All original historical receipts remain unchanged. The report's readiness is **conditional on X9b final plus completion-only attestation and committed branch**, never a claim that production training/readout finished. Original W3R review was BLOCKED pending P1; that historical review is preserved unedited, with remediation/test evidence disclosed here.
 
 ## Results
 
