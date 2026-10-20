@@ -39,13 +39,18 @@ def completed_gate(ref='origin/main'):
     completion. Unknown receipt formats remain pending for attended clarification.
     """
     report = git('show', f'{ref}:W3-report.md')
-    if not re.search(r'^##+\s+.*(?:gate verdict|final.verdict)', report, re.I | re.M):
+    # Attended clarification 2026-10-20T20:40Z: the W3 frozen contract's terminal state for
+    # instrument divergence publishes as a final INVALID/INCONCLUSIVE publication section
+    # (heading 'W3G final publication: INVALID/INCONCLUSIVE') with partial-verdict.json
+    # (schema emender-w3g-partial-publication-v1). Both admission patterns accepted; the
+    # open operator decision on an amended B re-read is decoupled from X12 admission.
+    if not re.search(r'^##+\s+.*(?:gate verdict|final.verdict|final publication: INVALID/INCONCLUSIVE)', report, re.I | re.M):
         return None
     paths = git('ls-tree', '-r', '--name-only', ref, str(RECEIPTS)).splitlines()
     receipts = []
     for path in paths:
         name = Path(path).name.lower()
-        if path.endswith('.json') and (name.startswith('gate-read') or ('gate' in name and 'verdict' in name)):
+        if path.endswith('.json') and (name.startswith('gate-read') or ('gate' in name and 'verdict' in name) or name == 'partial-verdict.json'):
             content = git('show', f'{ref}:{path}')
             try:
                 row = json.loads(content)
