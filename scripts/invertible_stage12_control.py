@@ -124,7 +124,7 @@ def register():
         'pool_discipline': 'exact X3 frozen seed0 T64 validation; never sampled for training; no test or held-out performance inspected',
         'retention': 'entry + aggregate-best + latest/final, at most3 checkpoints plus one atomic staging file per run; deletion hashes retained',
         'resource_bounds': 'one GPU each; 1M update ceiling; no metric-based or wall-based early stop; OOM/disk/process failures censored, no automatic retries',
-        'gate_policy': 'origin/main final Gate verdict heading in W3-report.md PLUS committed gate-read*/gate-verdict JSON with emender-w3-verdict-v1 measurements-complete; unknown formats fail closed pending attended clarification',
+        'gate_policy': 'origin/main final Gate verdict heading in W3-report.md PLUS committed gate-read*/gate-verdict JSON with emender-w3-verdict-v1 measurements-complete OR the attended-clarified INVALID/INCONCLUSIVE partial publication (emender-w3g-partial-publication-v1, supervisor clarification 2026-10-20T20:40Z, commit recorded in control); unknown formats fail closed pending attended clarification',
         'scope': 'standalone single-card expressivity only; not resilient DiLoCo or Frontier; no distributed requirements claimed',
         'environment': {k: v for k, v in os.environ.items() if k.startswith(('NDM_', 'TRITON_', 'OMP_', 'MKL_', 'OPENBLAS_'))}}
     run.x7.write_json(run.ROOT / 'registration.json', registration)
@@ -146,7 +146,7 @@ def schedule(interval=300):
     run.x7.write_json(receipt / 'worker.json', identity(os.getpid()))
     try:
         run.x10.verify_registration(run.ROOT)
-        with (receipt / 'polls.jsonl').open('x', buffering=1) as log:
+        with (receipt / 'polls.jsonl').open('a', buffering=1) as log:
             while True:
                 try:
                     git('fetch', 'origin', 'main')
