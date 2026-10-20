@@ -22,6 +22,14 @@ PY
 eval "$(bash scripts/gpu_lease.sh acquire 1 --wait --timeout 7200)"
 printf '{"world_size_per_arm":1,"arms":"serial","physical_gpu":"%s","automatic_retry":false}\n' "$CUDA_VISIBLE_DEVICES" > "$RUN/arms/topology.json"
 for arm in A B; do
+  # Supervisor's amended preflight gate: root capacity must be green at each
+  # actual arm start, not merely at launch-readiness or before lease wait.
+  if ! .venv/bin/python -m scripts.w3_disk_preflight --arm "$arm" \
+       --output "$RUN/arms/$arm-disk-gate.json"; then
+    printf '{"arm":"%s","exit_code":1,"reason":"root-disk-preflight-blocked","automatic_retry":false}\n' "$arm" > "$RUN/arms/$arm-terminal.json"
+    touch "$RUN/arms/FAIL"
+    exit 1
+  fi
   set +e
   timeout --signal=TERM --kill-after=30 10800 .venv/bin/python -m scripts.w3_train_arm \
     --arm "$arm" --branch "$RECEIPTS/fixed-branch.json" \
