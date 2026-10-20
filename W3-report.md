@@ -1,6 +1,6 @@
 # W3 matched-dose wash-2 regime experiment
 
-Status: **launched, detached: A is running on GPU6; B is serially queued on the same leased card.** X9b final DONE/full-trajectory attestation verified; B is fixed to the operator-preselected AdamW+cosine regime bundle. A's immediate root-capacity gate passed; **B must re-pass it at its own start**. No gate read or final quality verdict yet. W3R's sole P1 condition is addressed and regression-tested. Preregistration SHA256 `4976d3761102c6e28cf556a8b897db397edc3e0e813758644f83d2053420c52a` (supersedes preserved pre-W3R/pre-capacity snapshots).
+Status: **both arms DONE at exactly 512 updates / 3,571,182 inputs / 154,386 targets; W3G frozen reads scheduled behind the eight-free-GPU window.** Both arms trained serially on GPU6 and passed their own root-capacity gates. X9b final DONE/full-trajectory attestation verified; B used the operator-preselected AdamW+cosine regime bundle. No gate read or final quality verdict yet. W3R's sole P1 condition is addressed and regression-tested. Preregistration SHA256 `4976d3761102c6e28cf556a8b897db397edc3e0e813758644f83d2053420c52a` (supersedes preserved pre-W3R/pre-capacity snapshots).
 Operator go and frozen contract: `/home/erikg/emender-scratch/fix-fanout/taskW3-matcheddose.md`, `REGIME-audit-report.md` sections 1–8, REGIME-R, and its disclosed W3 prelaunch amendments. No production growth verdict exists.
 
 ## Preflight verification table
@@ -20,7 +20,7 @@ Operator go and frozen contract: `/home/erikg/emender-scratch/fix-fanout/taskW3-
 | AdamW viability | full production BF16 update and both-mode reload/hash equality | **passed** GPU6; 33,362,854,400 bytes peak allocated; train/saved point hashes both `fcdfcedcb16210af11c48f588b08a5b31ba19471b831553eb44ca9f723f8e5df` |
 | Regime branch | X9b verified DONE at500K + completed1001-row trajectory SHA `42c859d9…` | **fixed AdamW+cosine**: max-anywhere P2+ **11/512 <50**, fixed-final counts `[95,2,0,0,0,1,0,0,0,0,0,0,0,0,0,0]`; no material composition anywhere |
 | Root-capacity launch gate | user-available free space on `/` ≥**214,748,364,800 bytes (200GiB)** | enforced/logged immediately before A and rechecked before B; failed gate hard-stops; no readiness reading authorizes launch |
-| Topology / training | **serial A then B, one leased free card from 6/7**, world1 per arm | selected before results; actual **GPU6** / UUID `GPU-6d8d6161-e8e8-0b81-9abb-1a8f7d15e65d`; A running, B queued |
+| Topology / training | **serial A then B, one leased free card from 6/7**, world1 per arm | selected before results; actual **GPU6** / UUID `GPU-6d8d6161-e8e8-0b81-9abb-1a8f7d15e65d`; both DONE |
 | Source / runtime | `runtime-freeze-v2.json`; all 512 current Dataset/sample/token/loss/valid/reset hashes match independent recount | exact Python source/package/optimizer versions frozen; tokenizer agrees; **14,070 Pi payload files verified** |
 | Preregistration / final reads | no threshold stops, retries or best checkpoint; pin before any gate read | committed prerequisite in runner; completed-trajectory selector, bounded serial launcher, watcher, frozen read/tally harness prepared; W3R review completed with sole P1 condition addressed |
 
@@ -81,7 +81,24 @@ The ordinary-AdamW viability establishes one finite full-size update and exact p
 | checkpoint | Stage-B repetitions (valid/correct) | Execution replicas /96 | Primary | saved-x docNLL |
 |---|---|---|---|---|
 | parent contemporaneous | pending | pending | rank-pair [0,1] fixed | pending |
-| A fixed u512 | training; fixed final pending | pending | rank-pair [0,1] fixed | pending |
-| B fixed u512 | serially queued; fixed final pending | pending | rank-pair [0,1] fixed | pending |
+| A fixed u512 | DONE; read pending eight-free-GPU window | pending | rank-pair [0,1] fixed | pending |
+| B fixed u512 | DONE; read pending eight-free-GPU window | pending | rank-pair [0,1] fixed | pending |
 
 Verdict: **not read; no optimizer finding**. Final verdict receipt/commit/push follow completed fixed training and frozen reads, not a partial-score decision.
+
+## W3G gate-read scheduling (2026-10-20 04:02:22Z)
+
+- Detached external supervisor PID **3965152**, `/proc` starttime **253493066**, polls the eight-free-GPU window every300s. Initial free set was GPU6 only; no co-resident reads were launched. Console: `/home/erikg/emender-scratch/w3-gate-window-console.txt`.
+- The approved external guard `scripts/watch_w3_gate_window.py` leaves the frozen runner and all bound instrument sources untouched. It re-verifies both entry and fixed-final training pins before the frozen runner re-pins parent/A/B, checks the window again, and monitors all eight GPUs every5s for non-descendant compute processes. A collision terminates the entire read process group, preserves partial evidence and waits; no automatic replay/retry or negative optimizer finding is permitted.
+- Durable append-only occupancy evidence, read-time pin verification, process identities and terminal receipt: `/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-rl-loop-v1/w3-matcheddose/gate-supervision/`. Frozen runner SHA256 `79afa82dd50ddc8ea6b1aac3f167e8986958b097a3b80e73c07410fe00144d6b`.
+- A final checkpoint SHA256 `d61b9475b10059635095aa4de11222e68c57b91576780665fc3daed40b630b0a`; B `aef26f5f9c78210e071dfd9c5f8c040675c8c489511ffd6288bfa33b6bac1e23`. Training entries were pinned before training and will be freshly SHA-verified at read time.
+- Publication applies every frozen scalar rule without averaging/best-rescue. Instrument divergence, including serving-nondeterminism, overrides any raw classifier label to **invalid/inconclusive**; the raw classifier flags and all case-level findings remain reported alongside, never rewritten.
+- Guard/regime validation: `PYTHONPATH=$PWD PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest -q tests/test_watch_w3_gate_window.py tests/test_w3_regime_and_gate.py`: **18 passed in10.98s**; frozen Bash syntax and `git diff --check` passed. Applicable safety intent remains R12 exact binding, R14/NDP13 bounded termination, R16 immutable evidence; no resilient systems/Frontier acceptance is claimed.
+
+### Attended continuation (2026-10-20 11:40Z)
+
+The prior supervisor workflow timed out while waiting; the detached guard **remained alive with the same PID/starttime and source/runner hashes**. No duplicate launcher, retry, checkpoint read or gate invocation was made. Its append-only occupancy log is continuous; the read directory does not yet exist. At continuation only X6 B_e97_seed1 occupies GPU5 (final T128 stage409K/500K); all eight cards must still be free before reads.
+
+Personally re-verified the committed frozen receipts and source bindings, all preregistration bindings, X9b completed-trajectory/branch selection, runtime versions, tokenizer, docNLL chain, all14,070 Pi payloads, and every512-step independent exposure/mask recount plus current sampler/token/loss/valid/reset replay. `gate-resume-preflight.json` binds this read-only verification and its script; `gate-resume-verify.py` preserves the exact script bytes. Fresh entry/final checkpoint SHA verification remains scheduled at the window itself, not substituted by this earlier preflight. The frozen runner will pin all parent/A/B checkpoints before serving.
+
+Continuation validation: `PYTHONPATH=$PWD PYTHONDONTWRITEBYTECODE=1 OMP_NUM_THREADS=2 .venv/bin/python -m pytest -q tests/test_watch_w3_gate_window.py tests/test_w3_regime_and_gate.py tests/test_w3_matcheddose_preflight.py tests/test_w3_disk_preflight.py`: **31 passed in9.31s** (`tests-gate-resume.txt`). Frozen Bash syntax and `git diff --check` passed. `A/B-complete-receipt.json`, `A/B-terminal.json`, both launch disk gates and `gate-launcher.json` preserve original evidence bytes; originals are unchanged.
