@@ -1,6 +1,6 @@
 # W3 matched-dose wash-2 regime experiment
 
-Status: **launch-ready; X9b final DONE and full-trajectory terminal attestation verified. B is fixed to the operator-preselected AdamW+cosine regime bundle. The ≥200GiB root-volume gate remains mandatory immediately before each arm.** W3R's sole P1 condition is addressed and regression-tested. Preregistration SHA256 `4976d3761102c6e28cf556a8b897db397edc3e0e813758644f83d2053420c52a` (supersedes preserved pre-W3R/pre-capacity snapshots).
+Status: **launched, detached: A is running on GPU6; B is serially queued on the same leased card.** X9b final DONE/full-trajectory attestation verified; B is fixed to the operator-preselected AdamW+cosine regime bundle. A's immediate root-capacity gate passed; **B must re-pass it at its own start**. No gate read or final quality verdict yet. W3R's sole P1 condition is addressed and regression-tested. Preregistration SHA256 `4976d3761102c6e28cf556a8b897db397edc3e0e813758644f83d2053420c52a` (supersedes preserved pre-W3R/pre-capacity snapshots).
 Operator go and frozen contract: `/home/erikg/emender-scratch/fix-fanout/taskW3-matcheddose.md`, `REGIME-audit-report.md` sections 1–8, REGIME-R, and its disclosed W3 prelaunch amendments. No production growth verdict exists.
 
 ## Preflight verification table
@@ -20,7 +20,7 @@ Operator go and frozen contract: `/home/erikg/emender-scratch/fix-fanout/taskW3-
 | AdamW viability | full production BF16 update and both-mode reload/hash equality | **passed** GPU6; 33,362,854,400 bytes peak allocated; train/saved point hashes both `fcdfcedcb16210af11c48f588b08a5b31ba19471b831553eb44ca9f723f8e5df` |
 | Regime branch | X9b verified DONE at500K + completed1001-row trajectory SHA `42c859d9…` | **fixed AdamW+cosine**: max-anywhere P2+ **11/512 <50**, fixed-final counts `[95,2,0,0,0,1,0,0,0,0,0,0,0,0,0,0]`; no material composition anywhere |
 | Root-capacity launch gate | user-available free space on `/` ≥**214,748,364,800 bytes (200GiB)** | enforced/logged immediately before A and rechecked before B; failed gate hard-stops; no readiness reading authorizes launch |
-| Topology / training | **serial A then B, one leased free card from 6/7**, world1 per arm | selected before results; actual card/UUID retained at launch; no production launch |
+| Topology / training | **serial A then B, one leased free card from 6/7**, world1 per arm | selected before results; actual **GPU6** / UUID `GPU-6d8d6161-e8e8-0b81-9abb-1a8f7d15e65d`; A running, B queued |
 | Source / runtime | `runtime-freeze-v2.json`; all 512 current Dataset/sample/token/loss/valid/reset hashes match independent recount | exact Python source/package/optimizer versions frozen; tokenizer agrees; **14,070 Pi payload files verified** |
 | Preregistration / final reads | no threshold stops, retries or best checkpoint; pin before any gate read | committed prerequisite in runner; completed-trajectory selector, bounded serial launcher, watcher, frozen read/tally harness prepared; W3R review completed with sole P1 condition addressed |
 
@@ -43,7 +43,7 @@ A = contemporaneous SF constant 1e-5, warmup0. B = SF external cosine if X9b fin
 - Initial identity/facade/precision suite: **47 passed in 22.83s**, committed before GPU viability. Initial harness suite including `tests/test_w3_regime_and_gate.py`: **55 passed in 20.30s** (`tests-launch.txt`); W3R P1 regression suite: **60 passed in 20.65s**, exit0 (`tests-attestor.txt` / `tests-attestor-exit.txt`); amended capacity suite **63 passed in20.85s**, exit0 (`tests-capacity.txt` / `tests-capacity-exit.txt`). Covers independent boundary masking, hard mismatch stop, typed optimizer conflicts in both modes, AdamW point-hash equality, SF typed-versus-legacy byte equality, final-receipt-only branching, max-anywhere materiality, exact LR endpoints/fixed stop, conservative repetition comparisons, prediction falsifiers and serving nondeterminism.
 - Disposable one-update `scripts/w3_run_adamw_viability.sh`: **passed**, detached PID3610471, GPU6 lease released, terminal exit0, no retry. Full 4B BF16 model/moments finite; first pack loss **1.2679857436057442**, exactly reproducing historical wash-2's first-pack loss. Peak reserved35,418,800,128 bytes. Both read-mode hashes agree. Receipt/checkpoint identities in `adamw-viability.json`; this is not arm B and had no gate reads. Per the later supervisor capacity directive, its24,276,152,095-byte disposable checkpoint was hash-verified then deleted with its disposable latest symlink; hashes/results remain receipted in Git and `viability-checkpoint-retirement.json`. No additional4B preflight checkpoints were written.
 - `scripts/w3_freeze_runtime.py`: all512 Dataset samples/masks/tokens independently cross-checked; Pi inventory all14,070 files and tokenizer verified; docNLL authority chain/substrate bound. Initial environment inventory attempt found no pip module, so inventory uses `importlib.metadata.distributions` without installing or altering the environment. `runtime-freeze-v2.json` supersedes earlier source snapshots by adding completed harness and W3R attestor sources; initial, pre-W3R and pre-capacity snapshots are retained.
-- `bash -n scripts/w3_run_adamw_viability.sh scripts/w3_run_arms.sh scripts/w3_run_gate_reads.sh` and `git diff --check`: passed. No production-arm or gate invocation occurred.
+- `bash -n scripts/w3_run_adamw_viability.sh scripts/w3_run_arms.sh scripts/w3_run_gate_reads.sh` and `git diff --check`: passed. At this prelaunch-validation point no production arm or gate had been invoked; the subsequent detached launch is separately receipted below.
 
 Applicable architecture intent: **R07/NDP15 atomic publication, R12 exact parent/state binding, R14/NDP13 bounded fail-stop execution, R16 immutable evidence discipline**, per `docs/RESILIENT_DILOCO_COMPUTE_POOL.md` ADR-003 and its gap matrix. This is local world1 full-model SFT, not resilient systems acceptance, Frontier submission, or a new scale rung. Elastic/native/async requirements remain explicitly unclaimed. No WG service, scheduler, dispatcher or workers started. GPU lease utility alone is used for resource exclusion as explicitly required by W3.
 
@@ -68,12 +68,20 @@ Next actions, strictly in order:
 
 The ordinary-AdamW viability establishes one finite full-size update and exact point serialization, not a 512-update quality outcome. All original historical receipts remain unchanged. The report's readiness is **conditional on X9b final plus completion-only attestation, committed branch, and a green root-capacity gate at each actual arm start**, never a claim that production training/readout finished. Original W3R review was BLOCKED pending P1; that historical review is preserved unedited, with remediation/test evidence disclosed here.
 
+## Launch-readiness receipt (2026-10-20 01:27:55Z)
+
+- Detached launcher **PID963676**, starttime252566296, lambda01; trainer A PID963769. Serial A→B, one physicalGPU6, world1 per arm,3h fail-stop timeout per arm; no restart/retry.
+- Mandatory root-capacity gate immediately before A: **1,023,977,017,344 free bytes** on `/`, versus214,748,364,800 required; passed at01:27:55Z. The wrapper must repeat the actual check immediately before B; today's A reading cannot authorize B.
+- A's immutable entry pin/start receipt exists. Update1 reproduced historical first-pack loss **1.2679857436057442**,482 targets/6,677 inputs, scheduled=actual LR1e-5, objective-weighted cumulative exposure1.0. This is training telemetry, not a capability read.
+- Supervisor-side completion watcher **PID964036**, command `.venv/bin/python -m scripts.watch_w3_arms --interval 300`; log `/home/erikg/emender-scratch/w3-arms-watcher.txt`. Launcher console `/home/erikg/emender-scratch/w3-arms-console.txt`. Completion/failure markers and exact process/source bindings are in `receipts/w3-matcheddose/launch-readiness.json` (SHA `4cb556af134aa3bedb60fae0f6d6ae183d246537478137d5dd355c9fc014b9bb`).
+- Actual training roots: `e97-rl-loop-v1/w3-matcheddose/arms/{A,B}`. The frozen gate follows BOTH fixed-u512 completions and an eight-free-GPU window. No partial-score read, best selection or changed dose is authorized.
+
 ## Results
 
 | checkpoint | Stage-B repetitions (valid/correct) | Execution replicas /96 | Primary | saved-x docNLL |
 |---|---|---|---|---|
 | parent contemporaneous | pending | pending | rank-pair [0,1] fixed | pending |
-| A fixed u512 | not trained | not trained | rank-pair [0,1] fixed | pending |
-| B fixed u512 | not trained | not trained | rank-pair [0,1] fixed | pending |
+| A fixed u512 | training; fixed final pending | pending | rank-pair [0,1] fixed | pending |
+| B fixed u512 | serially queued; fixed final pending | pending | rank-pair [0,1] fixed | pending |
 
 Verdict: **not read; no optimizer finding**. Final verdict receipt/commit/push follow completed fixed training and frozen reads, not a partial-score decision.
