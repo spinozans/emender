@@ -53,6 +53,13 @@ def completed_gate(ref='origin/main'):
                 continue
             if row.get('schema') == 'emender-w3-verdict-v1' and row.get('status') == 'measurements-complete':
                 receipts.append({'path': path, 'sha256': hashlib.sha256(content.encode()).hexdigest()})
+            # Attended supervisor clarification 2026-10-20T20:35Z: the W3 frozen contract's
+            # terminal state for instrument divergence is a committed INVALID/INCONCLUSIVE
+            # partial publication (schema emender-w3g-partial-publication-v1, commit 49686810).
+            # That publication constitutes completed W3 gate evidence for admission purposes;
+            # the open operator decision on an amended B re-read is decoupled from X12 admission.
+            elif row.get('schema') == 'emender-w3g-partial-publication-v1' and row.get('status') == 'INVALID/INCONCLUSIVE':
+                receipts.append({'path': path, 'sha256': hashlib.sha256(content.encode()).hexdigest()})
     if not receipts:
         return None
     return {'origin_commit': git('rev-parse', ref).strip(),
