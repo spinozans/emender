@@ -1,0 +1,45 @@
+{
+  "name": "B_e97_seed2",
+  "corrected_at": "2026-10-20T14:04:23.259645+00:00",
+  "authority": "Supervisor-approved receipt-first correction during X6 growth-report review; original numerical shorthand was written from memory, not seed2 primary receipts.",
+  "original_record": "markers/B_e97_seed2.INFRA-FAILURE-DISK.json",
+  "original_sha256": "83fd022c1fd2dc5d044fbd8c283c6626dda8702247c68477fd1effc213ef2bb3",
+  "original_record_text_verbatim": "{\n  \"name\": \"B_e97_seed2\",\n  \"classification\": \"infrastructure_failure_disk_exhaustion\",\n  \"original_marker\": \"B_e97_seed2.FAIL (exit_code 1)\",\n  \"cause\": \"OSError: [Errno 28] No space left on device at global step ~2705484, T64 stage_step ~272983 of 500000 (receipts/B_e97_seed2/terminal.json; console.txt traceback)\",\n  \"not_a_training_verdict\": true,\n  \"banked_science\": \"T1 threshold (506,945 steps), T2 threshold (448K-class supervised-carry replication, third of three seeds), ladder receipts through T32 exits and mid-T64 validation_by_depth rows\",\n  \"disposition\": \"partial ladder registered; no rerun (no resume path; production arms and remaining matrix take the freed compute)\",\n  \"reclassified_at\": \"2026-10-20T00:55:00Z\",\n  \"authority\": \"supervisor, post capacity-prune (receipts_capacity_prune_20261020, commit 68a3fe0c)\"\n}\n",
+  "corrected_banked_science": {
+    "T1": {
+      "stage_steps_to_threshold": 53500,
+      "global_step": 53500,
+      "correct": 465,
+      "count": 512,
+      "loss_nats": 0.39878652803599834
+    },
+    "T2": {
+      "stage_steps_to_threshold": 379000,
+      "global_step": 432500,
+      "correct": 923,
+      "count": 1024
+    },
+    "completed_stage_exits": [
+      1,
+      2,
+      4,
+      8,
+      16,
+      32
+    ],
+    "last_validation": {
+      "depth": 64,
+      "stage_step": 272500,
+      "global_step": 2705000
+    },
+    "positional_scope": "X6D diagnosed B_e97_seed0, not B_e97_seed2. Its real deeper Arm-A exception is A_e97_seed2: T8-best P2=511/512; T16-best P3=370/512, P4=349/512 with P1=412/512 and P2=474/512. Do not transfer these counts to B_e97_seed2."
+  },
+  "primary_sources": [
+    "B_e97_seed2/transitions.jsonl",
+    "B_e97_seed2/validation.json",
+    "receipts/positional_X6D/",
+    "X6D-report.md (repository root)"
+  ],
+  "disposition_unchanged": "infrastructure_failure_disk_exhaustion; not a training verdict; partial ladder, banked science preserved, no rerun",
+  "stale_shorthand": "The original banked_science T1 506,945 and T2 448K-class statements are superseded by the exact seed2 values above; original adjudication is retained unchanged."
+}
