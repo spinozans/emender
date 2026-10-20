@@ -1,6 +1,6 @@
 # W3 matched-dose wash-2 regime experiment
 
-Status: **preflight frozen; launch held for X9b's final DONE/completed-trajectory attestation **and ≥200GiB root-volume free space immediately before each arm**. Neither production arm launched.** W3R's sole P1 condition is addressed and regression-tested. Preregistration SHA256 `4976d3761102c6e28cf556a8b897db397edc3e0e813758644f83d2053420c52a` (supersedes preserved pre-W3R/pre-capacity snapshots).
+Status: **launch-ready; X9b final DONE and full-trajectory terminal attestation verified. B is fixed to the operator-preselected AdamW+cosine regime bundle. The ≥200GiB root-volume gate remains mandatory immediately before each arm.** W3R's sole P1 condition is addressed and regression-tested. Preregistration SHA256 `4976d3761102c6e28cf556a8b897db397edc3e0e813758644f83d2053420c52a` (supersedes preserved pre-W3R/pre-capacity snapshots).
 Operator go and frozen contract: `/home/erikg/emender-scratch/fix-fanout/taskW3-matcheddose.md`, `REGIME-audit-report.md` sections 1–8, REGIME-R, and its disclosed W3 prelaunch amendments. No production growth verdict exists.
 
 ## Preflight verification table
@@ -18,7 +18,7 @@ Operator go and frozen contract: `/home/erikg/emender-scratch/fix-fanout/taskW3-
 | docNLL | 8-doc / 198,295-target panel `5725d820…`, saved-x | scorer, phase scripts, panel, substrate and original ruling hash-bound; diagnostic trajectory only |
 | AdamW serialization | explicit typed class/version, live-nonaveraged point; frozen args unchanged | 47 identity/facade/precision tests pass |
 | AdamW viability | full production BF16 update and both-mode reload/hash equality | **passed** GPU6; 33,362,854,400 bytes peak allocated; train/saved point hashes both `fcdfcedcb16210af11c48f588b08a5b31ba19471b831553eb44ca9f723f8e5df` |
-| Regime branch | X9b final receipt only; no partial-score branching | waiting; final receipt absent |
+| Regime branch | X9b verified DONE at500K + completed1001-row trajectory SHA `42c859d9…` | **fixed AdamW+cosine**: max-anywhere P2+ **11/512 <50**, fixed-final counts `[95,2,0,0,0,1,0,0,0,0,0,0,0,0,0,0]`; no material composition anywhere |
 | Root-capacity launch gate | user-available free space on `/` ≥**214,748,364,800 bytes (200GiB)** | enforced/logged immediately before A and rechecked before B; failed gate hard-stops; no readiness reading authorizes launch |
 | Topology / training | **serial A then B, one leased free card from 6/7**, world1 per arm | selected before results; actual card/UUID retained at launch; no production launch |
 | Source / runtime | `runtime-freeze-v2.json`; all 512 current Dataset/sample/token/loss/valid/reset hashes match independent recount | exact Python source/package/optimizer versions frozen; tokenizer agrees; **14,070 Pi payload files verified** |
@@ -46,6 +46,12 @@ A = contemporaneous SF constant 1e-5, warmup0. B = SF external cosine if X9b fin
 - `bash -n scripts/w3_run_adamw_viability.sh scripts/w3_run_arms.sh scripts/w3_run_gate_reads.sh` and `git diff --check`: passed. No production-arm or gate invocation occurred.
 
 Applicable architecture intent: **R07/NDP15 atomic publication, R12 exact parent/state binding, R14/NDP13 bounded fail-stop execution, R16 immutable evidence discipline**, per `docs/RESILIENT_DILOCO_COMPUTE_POOL.md` ADR-003 and its gap matrix. This is local world1 full-model SFT, not resilient systems acceptance, Frontier submission, or a new scale rung. Elastic/native/async requirements remain explicitly unclaimed. No WG service, scheduler, dispatcher or workers started. GPU lease utility alone is used for resource exclusion as explicitly required by W3.
+
+## Final X9b branch receipt
+
+X9b completed its fixed500K ceiling with successful original DONE/terminal/result. The committed/tested completion-only attestor bound all1001 validation rows/order, original config/data/frozen pool and terminal evidence; `x9b-completed-trajectory.json` SHA `5eeee50585408ced35bc105945eb2c06b02a3dc2f6ed2bf9980b24c267121130`. Full trajectory SHA `42c859d94706e8c42dbfbd57a8f3eb1adc9a064c3f97c4280f533c6428ede22f`.
+
+Maximum P2+ was **11/512**, below the registered50/512 materiality bar. Fixed-final vector was `[95,2,0,0,0,1,0,0,0,0,0,0,0,0,0,0]`. Arm B is therefore **ordinary AdamW+the exact external cosine**, betas(.9,.95), eps1e-8, wd.01, internal warmup0. A remains contemporaneous fresh SF constant1e-5. This is explicitly the operator-preselected **regime-bundle** contrast, not unique attribution to SF averaging. No partial X9b score selected the branch. `fixed-branch.json` records the complete evidence chain and both maximum/fixed-final statistics.
 
 ## Prelaunch rulings and runbook
 
