@@ -1,0 +1,342 @@
+{
+  "actions": [
+    {
+      "arguments": {
+        "path": "result.txt"
+      },
+      "name": "read",
+      "public_summary": "Reading the result file first.",
+      "turn": 0
+    },
+    {
+      "arguments": {
+        "path": "result.txt"
+      },
+      "name": "read",
+      "public_summary": "The file content is 'result.txt'. The newline is 'done'.",
+      "turn": 1
+    },
+    {
+      "arguments": {
+        "message": "done"
+      },
+      "name": "finish",
+      "public_summary": "The file content is 'done'.",
+      "turn": 2
+    }
+  ],
+  "case": "choice-write-file",
+  "case_order": 11,
+  "checkpoint": "aef26f5f9c78210e071dfd9c5f8c040675c8c489511ffd6288bfa33b6bac1e23",
+  "exact_trigger": {
+    "earlier_public_summary_turn_zero_based": 1,
+    "event_matches": [
+      {
+        "line": 20,
+        "role": "assistant",
+        "type": "message_start"
+      },
+      {
+        "line": 22,
+        "role": null,
+        "type": "message_update"
+      },
+      {
+        "line": 23,
+        "role": null,
+        "type": "message_update"
+      },
+      {
+        "line": 27,
+        "role": "assistant",
+        "type": "message_end"
+      },
+      {
+        "line": 32,
+        "role": "assistant",
+        "type": "turn_end"
+      },
+      {
+        "line": 43,
+        "role": null,
+        "type": "agent_end"
+      }
+    ],
+    "match_characters": 56,
+    "matching_text_sha256": "41b8e2352dcedb27d8d1013d8d06ded496fe1eff7d1b216df834833e82845a4b",
+    "private_turn_zero_based": 2,
+    "public_text": "The file content is 'result.txt'. The newline is 'done'."
+  },
+  "gate_evaluable": false,
+  "generation_performed": false,
+  "interpretation": "Private Analysis on third turn repeats second-turn public Summary. Frozen guard searches all private strings in the entire event stream, including earlier public events. This is a lexical collision with previously public text, not evidence that the transport serialized a private field. No malformed frame/reasoning-close marker was needed to trigger the guard.",
+  "neighboring_observations": [
+    {
+      "actions": [
+        {
+          "arguments": {
+            "path": "facts.txt"
+          },
+          "name": "read"
+        },
+        {
+          "arguments": {
+            "message": "1"
+          },
+          "name": "finish"
+        }
+      ],
+      "case": "choice-read-explicit",
+      "reason": "finished"
+    },
+    {
+      "actions": [
+        {
+          "arguments": {
+            "path": "fetch.txt"
+          },
+          "name": "read"
+        },
+        {
+          "arguments": {
+            "path": "fetch.txt"
+          },
+          "name": "read"
+        },
+        {
+          "arguments": {
+            "path": "fetch.txt"
+          },
+          "name": "read"
+        },
+        {
+          "arguments": {
+            "path": "fetch.txt"
+          },
+          "name": "read"
+        },
+        {
+          "arguments": {
+            "path": "fetch.txt"
+          },
+          "name": "read"
+        },
+        {
+          "arguments": {
+            "path": "fetch.txt"
+          },
+          "name": "read"
+        },
+        {
+          "arguments": {
+            "path": "fetch.txt"
+          },
+          "name": "read"
+        },
+        {
+          "arguments": {
+            "path": "fetch.txt"
+          },
+          "name": "read"
+        },
+        {
+          "arguments": {
+            "path": "fetch.txt"
+          },
+          "name": "read"
+        },
+        {
+          "arguments": {
+            "path": "fetch.txt"
+          },
+          "name": "read"
+        },
+        {
+          "arguments": {
+            "path": "fetch.txt"
+          },
+          "name": "read"
+        },
+        {
+          "arguments": {
+            "path": "fetch.txt"
+          },
+          "name": "read"
+        }
+      ],
+      "case": "choice-grep-symbol",
+      "reason": "turn_budget"
+    },
+    {
+      "actions": [
+        {
+          "arguments": {
+            "path": "a/b/c/d/e/f"
+          },
+          "name": "read"
+        },
+        {
+          "arguments": {
+            "path": "a/b/c/d/e/f"
+          },
+          "name": "read"
+        },
+        {
+          "arguments": {
+            "path": "a/b/c/d/e/f"
+          },
+          "name": "read"
+        },
+        {
+          "arguments": {
+            "path": "a/b/c/d/e/f"
+          },
+          "name": "read"
+        },
+        {
+          "arguments": {
+            "path": "a/b/c/d/e/f"
+          },
+          "name": "read"
+        },
+        {
+          "arguments": {
+            "path": "a/b/c/d/e/f"
+          },
+          "name": "read"
+        },
+        {
+          "arguments": {
+            "path": "a/b/c/d/e/f"
+          },
+          "name": "read"
+        },
+        {
+          "arguments": {
+            "path": "a/b/c/d/e/f"
+          },
+          "name": "read"
+        },
+        {
+          "arguments": {
+            "path": "a/b/c/d/e/f"
+          },
+          "name": "read"
+        },
+        {
+          "arguments": {
+            "path": "a/b/c/d/e/f"
+          },
+          "name": "read"
+        },
+        {
+          "arguments": {
+            "path": "a/b/c/d/e/f"
+          },
+          "name": "read"
+        },
+        {
+          "arguments": {
+            "path": "a/b/c/d/e/f"
+          },
+          "name": "read"
+        }
+      ],
+      "case": "choice-bash-command",
+      "reason": "turn_budget"
+    },
+    {
+      "actions": [
+        {
+          "arguments": {
+            "path": "state.txt"
+          },
+          "name": "read"
+        },
+        {
+          "arguments": {
+            "path": "state.txt"
+          },
+          "name": "read"
+        },
+        {
+          "arguments": {
+            "message": "done"
+          },
+          "name": "finish"
+        }
+      ],
+      "case": "choice-edit-file",
+      "reason": "finished"
+    }
+  ],
+  "pi_terminal": {
+    "bridge_failed": false,
+    "close_verified": true,
+    "closed": true,
+    "model_failure_verified": false,
+    "pi_exit": 0,
+    "pi_pid": 456974,
+    "reason": "finished",
+    "requests": [
+      {
+        "op": "next",
+        "peer_pid": 456974,
+        "peer_uid": 1001
+      },
+      {
+        "op": "next",
+        "peer_pid": 456974,
+        "peer_uid": 1001
+      },
+      {
+        "op": "next",
+        "peer_pid": 456974,
+        "peer_uid": 1001
+      },
+      {
+        "op": "close",
+        "peer_pid": 456974,
+        "peer_uid": 1001
+      }
+    ],
+    "schema": "emender-e97-pi-native-tool-terminal-v1"
+  },
+  "regrading_performed": false,
+  "repetition": 1,
+  "schema": "emender-w3g-readonly-boundary-observation-v1",
+  "source_bindings": [
+    {
+      "bytes": 3173,
+      "path": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-rl-loop-v1/w3-matcheddose/reads/B/stage-b-1/choice-write-file/generations-private.json",
+      "sha256": "955240fffef889d6c635dfce24fb5992b9e032a0d1ac4a2ea1ce6bbc6091902c"
+    },
+    {
+      "bytes": 29604,
+      "path": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-rl-loop-v1/w3-matcheddose/reads/B/stage-b-1/choice-write-file/pi/pi-events-private.jsonl",
+      "sha256": "d42161bf85212137cbe5aa7982f5d7ac6fca8e70cf092a4dd5e67f55c2ec2d91"
+    },
+    {
+      "bytes": 395,
+      "path": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-rl-loop-v1/w3-matcheddose/reads/B/stage-b-1/choice-write-file/pi/transport-terminal.json",
+      "sha256": "ed41864714cccf00ea97ddc56c2a3dda42607ea90281cfb380ddd8c85666c5f3"
+    },
+    {
+      "bytes": 308,
+      "path": "/mnt/nvme2n1/erikg/e97_systematic_posttraining/e97-rl-loop-v1/w3-matcheddose/reads/B/stage-b-1/model-after-private.json",
+      "sha256": "27b7c9a48b84ac5950547f2b95384da4edea5bb7d862a4d85f8dc514adb027a2"
+    },
+    {
+      "bytes": 10860,
+      "path": "/home/erikg/emender/scripts/eval_e97_pi_native_stage_b.py",
+      "sha256": "b30d42f2eabc93b6a7871bd9f4c213dba94459244b888e8b95f8949012fdb788"
+    }
+  ],
+  "token_counts": [
+    83,
+    62,
+    48
+  ],
+  "valid_generated_frames": 3,
+  "workspace_empty": true
+}
