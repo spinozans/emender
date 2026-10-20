@@ -1,8 +1,8 @@
 {
   "task": "X12",
-  "registered_utc": "2026-10-20T12:24:44.291431+00:00",
+  "registered_utc": "2026-10-20T20:36:16.310093+00:00",
   "host": "lambda01",
-  "python_executable": "/home/erikg/emender/.venv/bin/python",
+  "python_executable": "/home/erikg/emender/.venv/bin/python3.12",
   "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
   "torch": "2.9.1+cu128",
   "fla": "0.5.1",
@@ -191,7 +191,7 @@
     "ndm/triton/unified_cell_forward.py": "196c052a6f63d3c0b7737eecf2ab1ca5250b779be38ac5e24002b75129a55f11",
     "scripts/gpu_lease.sh": "553cd9ab764e137fc4e33b7c20eeeda1b2a13f47870f5f4b679f153c68feb27f",
     "scripts/invertible_stage10_control.py": "cd77c3efb5ad2662fd56d1f08f14bfd79582d035ddaa2f03fdde910a73d51749",
-    "scripts/invertible_stage12_control.py": "e01a33d177ce4242142c9718cc49437c4d2d3702a2e38a4176ea3e3c3a2d30b1",
+    "scripts/invertible_stage12_control.py": "206af71e9fe3b29d545c8e40e014b5d7c5dc25dbad0199ebb6916413acf87e98",
     "scripts/watch_invertible_stage10_optimizers.py": "34bb43b37a0679b2c5a8f5829c0117ce85241675a6b84e308b824b36c0f84c21",
     "scripts/watch_invertible_stage12_separation.py": "ec9e7d88842477b3b5991cb0a67b41b0bdd9cd98cdcd95eb8816d42b3287ab6b",
     "tests/test_invertible_stage12_separation_8m.py": "2d599cea0ebcf36497f21e1d967c24bb1f30c9a99283f3a6376dc30b785a1403"
@@ -690,11 +690,7 @@
   "pool_discipline": "exact X3 frozen seed0 T64 validation; never sampled for training; no test or held-out performance inspected",
   "retention": "entry + aggregate-best + latest/final, at most3 checkpoints plus one atomic staging file per run; deletion hashes retained",
   "resource_bounds": "one GPU each; 1M update ceiling; no metric-based or wall-based early stop; OOM/disk/process failures censored, no automatic retries",
-  "gate_policy": "origin/main final Gate verdict heading in W3-report.md PLUS committed gate-read*/gate-verdict JSON with emender-w3-verdict-v1 measurements-complete; unknown formats fail closed pending attended clarification",
+  "gate_policy": "origin/main final Gate verdict heading in W3-report.md PLUS committed gate-read*/gate-verdict JSON with emender-w3-verdict-v1 measurements-complete OR the attended-clarified INVALID/INCONCLUSIVE partial publication (emender-w3g-partial-publication-v1, supervisor clarification 2026-10-20T20:40Z, commit recorded in control); unknown formats fail closed pending attended clarification",
   "scope": "standalone single-card expressivity only; not resilient DiLoCo or Frontier; no distributed requirements claimed",
-  "environment": {
-    "MKL_NUM_THREADS": "1",
-    "OPENBLAS_NUM_THREADS": "1",
-    "OMP_NUM_THREADS": "2"
-  }
+  "environment": {}
 }
