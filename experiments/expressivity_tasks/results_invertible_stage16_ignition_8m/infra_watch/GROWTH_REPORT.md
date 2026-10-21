@@ -117,4 +117,3 @@ T16: observed through phase update 252500; any-position first50=26500; fixed-fin
 |P14|0|2|None|None|None|
 |P15|0|2|None|None|None|
 |P16|0|2|None|None|None|
-
