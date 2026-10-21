@@ -2,7 +2,7 @@
 
 **STEP 0 verdict: CLEAN.** The hash-pinned four-perfect T16 champion reads exactly at its receipted levels through the suspect stage12 path; CPU T64 construction agrees token-by-token. Trusted-stage10 T64 zero-shot retains **P1–P4=512/512 each**, P5=8/512. The audited E97 data path is exonerated. **No mechanism claim.**
 
-**STEP 1 status: RUNNING, final replication verdict PENDING.** Scratch seeds1/2 launched after CLEAN audit and committed/pushed preregistration; exact X12 recipe, ceiling1M. GPU4/5, workers1078839/1078840, trainers1079579/1079699. No partial-zero inference.
+**STEP 1 status: COMPLETE, split replication verdict.** Both scratch seeds1/2 completed the exact-X12 1M ceiling after the CLEAN audit: seed1 stayed marginal (global maximum4/512); seed2 escaped to final P1=P2=512/512 and P3=309/512 (maximum321). The registered marginal-escape and composition criteria are met by seed2. See the [completed growth companion](X13-growth-report.md) for all64 final/maxima, crossing times, loss trajectories and the scoped lottery finding. Sections2–4 below retain the historical prelaunch/startup record, not current pending status.
 
 Evidence root **R/**: `experiments/expressivity_tasks/results_invertible_stage13_zerocheck_8m`. Task authority: `/home/erikg/emender-scratch/fix-fanout/taskX13-zerocheck-v2.md` (supersedes v1); [registration](experiments/expressivity_tasks/results_invertible_stage13_zerocheck_8m/REGISTRATION.md), executable [registration.json](experiments/expressivity_tasks/results_invertible_stage13_zerocheck_8m/registration.json).
 
@@ -164,3 +164,9 @@ Workers heartbeat their own GPU leases and publish hash-bound terminal/DONE or
 FAIL receipts before releasing them. No automatic rerun is authorized. On wake,
 read the final/censored per-position columns and update this report; until then,
 the finite-ceiling replication decision remains OPEN.
+
+## 5. Final synthesis — completed seed replication
+
+The pending language above records the launch-time state and is superseded by the hash-bound successful1M terminals. The [completed X13 growth report](X13-growth-report.md) receipts seed1's no-escape marginal trajectory and seed2's late sequential P1→P2→P3 acquisition: first50 at523K/661.5K/840.5K, first512 at540K/726.5K/not reached. Historical X12 seed0 plus X13 seeds1/2 give **1/3 observed cold-T64 escape**: can-learn is established, reliably-learn is not; no architectural impossibility follows. A deterministic1/64-to1/16 threshold account is revised to a probability-landscape hypothesis, not a measured causal curve. The claimed T16 two-seed evidence was corrected by the supervisor (concession #8): repeated seed0 working-recipe runs are not independent-seed replication.
+
+The companion records motivation and limits for the already registered X16 share sweep/curriculum and X17 carry-wean, a T16 independent-seed follow-up commitment, and **GDN2 symmetric cold-T64 seed replication as OPEN** (X12 success is one seed). No new launch, mechanism claim or distributed-training acceptance is authorized. STEP0's detailed audit and the historical launch evidence remain unchanged.
