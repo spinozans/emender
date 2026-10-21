@@ -2,7 +2,7 @@
 
 **STEP 0 verdict: CLEAN.** The hash-pinned four-perfect T16 champion reads exactly at its receipted levels through the suspect stage12 path; CPU T64 construction agrees token-by-token. Trusted-stage10 T64 zero-shot retains **P1–P4=512/512 each**, P5=8/512. The audited E97 data path is exonerated. **No mechanism claim.**
 
-**STEP 1 status: preregistered, not yet launched.** Seeds1/2 use the exact X12 recipe at the fixed1M ceiling; final replication verdict pending. This section will be updated after audited admission.
+**STEP 1 status: RUNNING, final replication verdict PENDING.** Scratch seeds1/2 launched after CLEAN audit and committed/pushed preregistration; exact X12 recipe, ceiling1M. GPU4/5, workers1078839/1078840, trainers1079579/1079699. No partial-zero inference.
 
 Evidence root **R/**: `experiments/expressivity_tasks/results_invertible_stage13_zerocheck_8m`. Task authority: `/home/erikg/emender-scratch/fix-fanout/taskX13-zerocheck-v2.md` (supersedes v1); [registration](experiments/expressivity_tasks/results_invertible_stage13_zerocheck_8m/REGISTRATION.md), executable [registration.json](experiments/expressivity_tasks/results_invertible_stage13_zerocheck_8m/registration.json).
 
@@ -113,7 +113,7 @@ The task's "material composition anywhere" needed a positional definition. Befor
 2. **Composition:** separately, ANY P2..P64 >=50/512 at ANY validation. P1-only learning is NOT composition.
 3. BOTH seeds with NO position>=50 => the learned-nothing zero replicates as3/3 (with historical seed0), bounded to this finite recipe/ceiling. Partial zeros are right-censored. Report P1 and P2+ separately, all64 counts/maxima/first50/first512, and fixed-final perfect prefixes.
 
-No seed outcome or replication verdict is claimed yet. See `R/GROWTH_REPORT.md` for live per-position columns after launch.
+No completed seed outcome or replication verdict is claimed yet. See `R/GROWTH_REPORT.md` for live per-position columns, explicitly right-censored while training is pending.
 
 ## 3. Validation, reproducibility and supervision
 
@@ -129,3 +129,38 @@ CUDA_VISIBLE_DEVICES='' .venv/bin/python -m scripts.watch_invertible_stage13_zer
 ```
 
 On wake, regenerate growth table and update this report with final or explicitly censored results. No WorksGood service. Local single-card expressivity only: no resilient DiLoCo/Frontier/distributed training behavior or requirement IDs are tested or claimed. Independent review is required.
+
+## 4. Launch receipts and armed training-phase watcher
+
+Preregistration/audit commit **309a6da3** was pushed before launch. Actual trainer
+`source_commit` is **3891fc6a4e8347d45eaff513f883e8d748e30973**, a descendant
+containing an unrelated X14 launch receipt; the full bound-source verification
+passed at launch and at the independent startup audit. This is not source drift
+or a changed X13 recipe. Initial source-commit validation first assumed literal
+309a6da3 and failed on that harmless descendant; it was corrected to ancestry
+plus exhaustive registered-byte verification before recording launch acceptance.
+
+| Run | GPU | Worker PID / starttime | Trainer PID / starttime | Finite consecutive training/LR checked through | Validation checked through |
+|---|---:|---|---|---:|---:|
+| seed1 | 4 | 1078839 / 264995911 | 1079579 / 264996140 | 5500 | 5500 |
+| seed2 | 5 | 1078840 / 264995911 | 1079699 / 264996162 | 5390 | 5000 |
+
+`R/receipts/launch_verification.json` binds fixed startup snapshots under
+`receipts/launch_snapshot/<name>/` (config, data receipt, validation and last
+training row). Independent CPU checks confirmed each entry checkpoint exactly
+matches a fresh model initialized with its own seed and that the ordinary AdamW
+state is initially empty; no champion initialization. The seed-specific frozen
+arrays/archive, validation grid and all64 denominators, finite consecutive
+loss/gradient rows, exact per-update LR, registered bytes, live identities and
+owner-PID/starttime lease binding all passed. This is startup evidence only.
+Model checkpoints and full live training streams remain local, not pushed.
+
+Local native reporting watcher **PID1081705 / starttime265002491** is running;
+identity in `R/receipts/watcher/detached.json`, reports/logs every900 seconds.
+`--once --report` returned **2 (pending)**. The supervisor was given the native
+wake command and launch identities for completion arming; the local reporting
+watcher itself is not a claim that an external supervisor wake is confirmed.
+Workers heartbeat their own GPU leases and publish hash-bound terminal/DONE or
+FAIL receipts before releasing them. No automatic rerun is authorized. On wake,
+read the final/censored per-position columns and update this report; until then,
+the finite-ceiling replication decision remains OPEN.
