@@ -1,0 +1,16 @@
+# INFRA-INTERRUPTION
+2026-10-21 ~21:00 UTC ENOSPC.
+{
+  "last_full_step": 130148,
+  "partial_step": 130149,
+  "prefix_diagnostics": {},
+  "completed_replay_updates": 148,
+  "status": "verified",
+  "bitwise_full_state_proven": false,
+  "proof_scope": "Exact replayed diagnostics are evidence, not proof of bitwise full-state trajectory identity.",
+  "checkpoint": {
+    "path": "experiments/expressivity_tasks/results_invertible_stage16_ignition_8m/gdn2_w2048_seed0/T16/step_130000.pt",
+    "sha256": "741c4b394b5d11024e544d0c6620fa9f42423130ff31f668accbc9522c8bf616",
+    "step": 130000
+  }
+}
