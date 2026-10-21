@@ -1,0 +1,15 @@
+[pin-autotune] pinned mode: 18 kernels / 30 (name,key) configs from registry (set NDM_PIN_TRITON_AUTOTUNE=0 to restore sweep)
+[e97-runtime] model=emender/nonlin historical_level=E97 backend=cuda path=e97-sequential-split-edit-triton kernel_api=e97-sequential-split-edit-triton kernel_core=e88-shared-triton recurrence=sequential state=tanh eager_fallback=False use_triton=True use_chunked_e97=False e97_chunk_size=32 scan_cuda_graph=False linear_state=False raw_write=False use_split_edit=True log_decay=True
+[e97-runtime] model=emender/nonlin historical_level=E97 backend=cuda path=e97-sequential-split-edit-triton kernel_api=e97-sequential-split-edit-triton kernel_core=e88-shared-triton recurrence=sequential state=tanh eager_fallback=False use_triton=True use_chunked_e97=False e97_chunk_size=32 scan_cuda_graph=False linear_state=False raw_write=False use_split_edit=True log_decay=True
+[e97-runtime] model=emender/nonlin historical_level=E97 backend=cuda path=e97-sequential-split-edit-triton kernel_api=e97-sequential-split-edit-triton kernel_core=e88-shared-triton recurrence=sequential state=tanh eager_fallback=False use_triton=True use_chunked_e97=False e97_chunk_size=32 scan_cuda_graph=False linear_state=False raw_write=False use_split_edit=True log_decay=True
+[e97-runtime] model=emender/nonlin historical_level=E97 backend=cuda path=e97-sequential-split-edit-triton kernel_api=e97-sequential-split-edit-triton kernel_core=e88-shared-triton recurrence=sequential state=tanh eager_fallback=False use_triton=True use_chunked_e97=False e97_chunk_size=32 scan_cuda_graph=False linear_state=False raw_write=False use_split_edit=True log_decay=True
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/erikg/emender/scripts/invertible_stage15_muon_resume.py", line 326, in <module>
+    globals()[args.action]()
+  File "/home/erikg/emender/scripts/invertible_stage15_muon_resume.py", line 192, in train
+    compare_replay(step, metrics, reference)
+  File "/home/erikg/emender/scripts/invertible_stage15_muon_resume.py", line 104, in compare_replay
+    raise ValueError(f'replay mismatch step={step} {key}: {metrics[key]} != {expected}')
+ValueError: replay mismatch step=433044 muon_update_rms: 0.11409317095890362 != 0.11409317090657782
