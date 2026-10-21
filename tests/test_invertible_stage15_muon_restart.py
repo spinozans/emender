@@ -77,7 +77,7 @@ def test_restart_branch_boundary_new_updates_guard_and_checkpoint(tmp_path, monk
         updates.append(args[-1])
         return {'loss': 8.16, 'lr': r.original.learning_rate(args[-1]), 'optimizer_seconds': .01}
     monkeypatch.setattr(r.original, 'train_update', update)
-    monkeypatch.setattr(r, 'CEILING', 433002)
+    monkeypatch.setattr(r, 'CEILING', 433002 if abort else 435000)
     monkeypatch.setattr(torch.cuda, 'max_memory_allocated', lambda: 0)
     monkeypatch.setattr(r.original, 'evaluate', lambda *_: {'aggregate': {'accuracy': 0., 'loss': 8.17},
         'positions': [{'driver_position': j+1, 'correct': 0, 'loss': 8.17} for j in range(64)]})
@@ -99,11 +99,19 @@ def test_restart_branch_boundary_new_updates_guard_and_checkpoint(tmp_path, monk
         assert not (r.OUT / 'result.json').exists()
     else:
         r.train()
-        assert updates == [433001, 433002]
+        assert updates == list(range(433001, 435001))
         result = json.loads((r.OUT / 'result.json').read_text())
-        assert result['status'] == 'complete' and result['total_steps'] == 433002
-        assert result['final']['step'] == 433002
+        assert result['status'] == 'complete' and result['total_steps'] == 435000
+        assert result['final']['step'] == 435000
         assert result['final']['checkpoint']['sha256'] == r.x7.digest(result['final']['checkpoint']['path'])
+        pruned = r.OUT / 'step_434000.pt'
+        receipts = [json.loads(line) for line in (r.OUT / 'pruning.jsonl').read_text().splitlines()]
+        index = json.loads((r.OUT / 'checkpoints.json').read_text())
+        assert not pruned.exists()
+        assert len(receipts) == 1
+        assert receipts[0]['path'] == str(pruned)
+        assert receipts[0]['sha256'] == index[str(pruned)]['sha256']
+        assert receipts[0]['step'] == 434000
     assert checkpoint.read_bytes() == b'immutable original checkpoint'
     rows = [json.loads(line) for line in (r.OUT / 'training.jsonl').read_text().splitlines()]
     assert rows[0]['event'] == 'restart_from_checkpoint' and rows[0]['step'] == 433000
@@ -111,3 +119,67 @@ def test_restart_branch_boundary_new_updates_guard_and_checkpoint(tmp_path, monk
     receipt = json.loads((r.OUT / 'checkpoint_restored.json').read_text())
     assert receipt['model_optimizer_rng_exact'] and not receipt['at_death_restoration_claimed']
     assert receipt['fresh_updates_to_execute'] == 567000
+
+
+def test_pruning_receipts_append_and_verify_at_deletion(tmp_path, monkeypatch):
+    from datetime import datetime, timezone
+    import hashlib
+    from pathlib import Path
+
+    out = tmp_path / 'restart'
+    out.mkdir()
+    monkeypatch.setattr(r, 'OUT', out)
+    monkeypatch.setattr(r, 'disk_guard', lambda: None)
+    retained = out / 'step_435000.pt'
+    retained.write_bytes(b'keep')
+    original = tmp_path / 'step_433000.pt'
+    original.write_bytes(b'immutable original')
+    keep = {str(retained), str(original)}
+    checkpoints = {}
+    before = datetime.now(timezone.utc)
+    real_unlink = Path.unlink
+    def receipted_unlink(path, *args, **kwargs):
+        receipt = json.loads((out / 'pruning.jsonl').read_text().splitlines()[-1])
+        assert receipt['path'] == str(path)
+        assert receipt['sha256'] == hashlib.sha256(path.read_bytes()).hexdigest()
+        assert receipt['event'] == 'pre_unlink'
+        assert before <= datetime.fromisoformat(receipt['timestamp']) <= datetime.now(timezone.utc)
+        return real_unlink(path, *args, **kwargs)
+    monkeypatch.setattr(Path, 'unlink', receipted_unlink)
+    for step in (434000, 434500):
+        path = out / f'step_{step:06d}.pt'
+        path.write_bytes(str(step).encode())
+        checkpoints[str(path)] = {'path': str(path), 'step': step, 'sha256': r.x7.digest(path)}
+        r.prune_checkpoints(keep, checkpoints)
+        assert not path.exists()
+    receipts = [json.loads(line) for line in (out / 'pruning.jsonl').read_text().splitlines()]
+    assert [row['step'] for row in receipts] == [434000, 434500]
+    assert retained.read_bytes() == b'keep'
+    assert original.read_bytes() == b'immutable original'
+
+
+@pytest.mark.parametrize('failure', ['hash', 'receipt', 'guard'])
+def test_pruning_failure_preserves_checkpoint(tmp_path, monkeypatch, failure):
+    monkeypatch.setattr(r, 'OUT', tmp_path)
+    monkeypatch.setattr(r, 'disk_guard', lambda: None)
+    path = tmp_path / 'step_434000.pt'
+    path.write_bytes(b'checkpoint')
+    checkpoint = {'path': str(path), 'step': 434000, 'sha256': r.x7.digest(path)}
+    if failure == 'hash':
+        path.write_bytes(b'changed since write-time index receipt')
+        error = ValueError
+    elif failure == 'receipt':
+        def fail_fsync(_):
+            raise OSError('injected receipt persistence failure')
+        monkeypatch.setattr(r.os, 'fsync', fail_fsync)
+        error = OSError
+    else:
+        def fail_guard():
+            raise DiskGuardError('injected low disk')
+        monkeypatch.setattr(r, 'disk_guard', fail_guard)
+        error = DiskGuardError
+    with pytest.raises(error):
+        r.prune_checkpoints(set(), {str(path): checkpoint})
+    assert path.exists()
+    if failure != 'receipt':
+        assert not (tmp_path / 'pruning.jsonl').exists()

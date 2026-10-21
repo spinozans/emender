@@ -47,6 +47,7 @@ def register():
     sources = dict(base['source_sha256'])
     paths = [Path(__file__).relative_to(Path.cwd()), Path('scripts/watch_invertible_stage15_muon_restart.py'),
         Path('tests/test_invertible_stage15_muon_restart.py'), ROOT / 'AMENDMENT-2-2026-10-21.md',
+        ROOT / 'AMENDMENT-3-2026-10-21.md',
         ROOT / 'registration-supersession.json', ROOT / 'receipts/checkpoint_preflight.json',
         ROOT / 'receipts/tests_prelaunch.txt', original.ROOT / 'registration.json',
         Path('scripts/invertible_stage15_muon_resume.py'),
@@ -67,6 +68,26 @@ def register():
         'original_registration_sha256': x7.digest(original.ROOT / 'registration.json'),
         'protocol': (ROOT / 'AMENDMENT-2-2026-10-21.md').read_text()}
     x7.write_json(ROOT / 'registration.json', registration)
+
+
+def prune_checkpoints(keep, checkpoints):
+    """Durably receipt verified bytes before unlink; a receipt is not unlink success."""
+    for path in sorted(OUT.glob('step_*.pt')):
+        if str(path) in keep:
+            continue
+        disk_guard()
+        checkpoint = checkpoints[str(path)]
+        sha256 = x7.digest(path)
+        if checkpoint['path'] != str(path) or sha256 != checkpoint['sha256']:
+            raise ValueError('refuse to prune unverified checkpoint: ' + str(path))
+        receipt = {'path': str(path), 'sha256': sha256, 'step': checkpoint['step'],
+            'timestamp': datetime.now(timezone.utc).isoformat(), 'event': 'pre_unlink'}
+        disk_guard()
+        with (OUT / 'pruning.jsonl').open('a') as stream:
+            stream.write(json.dumps(receipt) + '\n')
+            stream.flush()
+            os.fsync(stream.fileno())
+        path.unlink()
 
 
 def train():
@@ -158,9 +179,7 @@ def train():
                 print(json.dumps(row), flush=True)
                 # Never prune the immutable original files, only new resume checkpoints.
                 keep = {best['checkpoint']['path'], latest['path']}
-                for path in OUT.glob('step_*.pt'):
-                    if str(path) not in keep:
-                        path.unlink()
+                prune_checkpoints(keep, checkpoints)
         disk_guard()
         x7.write_json(OUT / 'result.json', {'name': 'muon3x_seed0', 'status': 'complete',
             'total_steps': CEILING, 'stop_reason': 'safety_ceiling', 'best': best,
