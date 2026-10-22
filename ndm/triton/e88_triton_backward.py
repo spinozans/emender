@@ -61,6 +61,7 @@ from typing import Tuple
 import torch
 import triton
 import triton.language as tl
+from triton.language.extra import libdevice
 
 from ndm.triton.e88_triton_forward import DEFAULT_CKPT_INTERVAL
 
@@ -128,6 +129,7 @@ def _e88_backward_kernel(
     NORMALIZE_KQ: tl.constexpr,
     APPLY_SILU_QKV: tl.constexpr,
     RAW_WRITE: tl.constexpr,
+    SOFTPLUS_STATE: tl.constexpr,
     LINEAR_STATE: tl.constexpr,
     SPLIT_EDIT: tl.constexpr,
     APPLY_RESET: tl.constexpr,
@@ -268,6 +270,8 @@ def _e88_backward_kernel(
             pre = decay_val[:, None, None] * S + outer
             if LINEAR_STATE:
                 S_next = pre
+            elif SOFTPLUS_STATE:
+                S_next = tl.maximum(pre, 0.0) + libdevice.log1p(tl.exp(-tl.abs(pre)))
             else:
                 # Match forward's stable tanh path. The raw exp formula can
                 # overflow and turn saturation into inf/inf = NaN.
@@ -409,6 +413,9 @@ def _e88_backward_kernel(
             # d_pre = dS_t for linear-state ablation, otherwise tanh chain rule.
             if LINEAR_STATE:
                 d_pre = dS_t
+            elif SOFTPLUS_STATE:
+                # sigmoid(pre) = 1-exp(-softplus(pre)); use the replayed state.
+                d_pre = dS_t * (-libdevice.expm1(-S_t))
             else:
                 d_pre = dS_t * (1.0 - S_t * S_t)
             d_pre = tl.where(token_valid[:, None, None], d_pre, 0.0)
@@ -566,6 +573,7 @@ def e88_triton_backward(
     reset_before: torch.Tensor = None,
     valid_mask: torch.Tensor = None,
     validate_packed_masks: bool = True,
+    softplus_state: bool = False,
 ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
     """Run the E88 backward recurrence in Triton.
 
@@ -787,7 +795,7 @@ def e88_triton_backward(
         NORMALIZE_KQ=bool(normalize_kq),
         APPLY_SILU_QKV=bool(apply_silu_qkv),
         RAW_WRITE=bool(raw_write),
-        LINEAR_STATE=bool(linear_state),
+        LINEAR_STATE=bool(linear_state), SOFTPLUS_STATE=bool(softplus_state),
         SPLIT_EDIT=bool(split_edit),
         APPLY_RESET=bool(apply_reset),
         APPLY_VALID=bool(apply_valid),
@@ -841,6 +849,7 @@ class E88TritonFunction(torch.autograd.Function):
         recurrent_state_precision='legacy',
         launch_config=None,
         validate_packed_masks=True,
+        softplus_state=False,
     ):
         from ndm.triton.e88_triton_forward import e88_triton_forward
         from ndm.recurrent_precision import recurrent_launch_config
@@ -852,6 +861,7 @@ class E88TritonFunction(torch.autograd.Function):
             S0, k, v, q, decay, g=g, normalize_kq=normalize_kq,
             apply_silu_qkv=apply_silu_qkv, raw_write=raw_write,
             linear_state=linear_state,
+            softplus_state=softplus_state,
             erase_gate=erase_gate, value_write_gate=value_write_gate,
             valid_length=valid_length, reset_before=reset_before,
             valid_mask=valid_mask,
@@ -863,6 +873,7 @@ class E88TritonFunction(torch.autograd.Function):
         ctx.apply_silu_qkv = bool(apply_silu_qkv)
         ctx.raw_write = bool(raw_write)
         ctx.linear_state = bool(linear_state)
+        ctx.softplus_state = bool(softplus_state)
         ctx.has_split_edit = erase_gate is not None or value_write_gate is not None
         ctx.has_reset = reset_before is not None
         ctx.has_valid = valid_mask is not None
@@ -903,6 +914,7 @@ class E88TritonFunction(torch.autograd.Function):
         raw_write = ctx.raw_write
         linear_state = ctx.linear_state
         packed_controls = {
+            "softplus_state": ctx.softplus_state,
             "reset_before": None,
             "valid_mask": None,
             "validate_packed_masks": ctx.validate_packed_masks,
@@ -930,7 +942,7 @@ class E88TritonFunction(torch.autograd.Function):
             return (
                 d_S0, d_k, d_v, d_q, d_decay, d_g,
                 None, None, None, d_erase, d_value_write, None, None,
-                None, None, None, None, None,
+                None, None, None, None, None, None,
             )
         elif ctx.has_gate:
             k, v, q, decay, S_ckpt, g, reset_saved, valid_saved = ctx.saved_tensors
@@ -948,7 +960,7 @@ class E88TritonFunction(torch.autograd.Function):
                 **packed_controls,
             )
             return (d_S0, d_k, d_v, d_q, d_decay, d_g, None, None,
-                    None, None, None, None, None, None, None, None, None, None)
+                    None, None, None, None, None, None, None, None, None, None, None)
         elif ctx.has_split_edit:
             (k, v, q, decay, S_ckpt, erase_gate, value_write_gate,
              reset_saved, valid_saved) = ctx.saved_tensors
@@ -969,7 +981,7 @@ class E88TritonFunction(torch.autograd.Function):
             return (
                 d_S0, d_k, d_v, d_q, d_decay, None,
                 None, None, None, d_erase, d_value_write, None, None,
-                None, None, None, None, None,
+                None, None, None, None, None, None,
             )
         else:
             k, v, q, decay, S_ckpt, reset_saved, valid_saved = ctx.saved_tensors
@@ -986,7 +998,7 @@ class E88TritonFunction(torch.autograd.Function):
                 **packed_controls,
             )
             return (d_S0, d_k, d_v, d_q, d_decay, None, None, None,
-                    None, None, None, None, None, None, None, None, None, None)
+                    None, None, None, None, None, None, None, None, None, None, None)
 
 
 def e88_triton(
@@ -1008,6 +1020,7 @@ def e88_triton(
     recurrent_state_precision='legacy',
     launch_config=None,
     validate_packed_masks=True,
+    softplus_state=False,
 ):
     """Differentiable Triton E88 — returns (out, S_final).
 
@@ -1020,9 +1033,11 @@ def e88_triton(
     `aten::div` per layer call). The backward applies the standard
     norm chain rule to recover gradients w.r.t. the raw k, q.
     """
+    if softplus_state and (linear_state or erase_gate is None or value_write_gate is None):
+        raise ValueError('softplus state requires nonlinear split-edit E97')
     return E88TritonFunction.apply(
         S0, k, v, q, decay, g, normalize_kq, apply_silu_qkv, raw_write,
         erase_gate, value_write_gate, linear_state, valid_length,
         reset_before, valid_mask, recurrent_state_precision, launch_config,
-        validate_packed_masks,
+        validate_packed_masks, softplus_state,
     )

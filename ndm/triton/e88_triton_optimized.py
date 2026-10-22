@@ -44,6 +44,7 @@ def e88_triton_optimized_apply(
     recurrent_state_precision: str = 'legacy',
     uniform_workspace: bool = False,  # derived from composite policy, not an operator switch
     validate_packed_masks: bool = True,
+    softplus_state: bool = False,
 ) -> Tuple[torch.Tensor, torch.Tensor]:
     """Triton-backed E88 recurrence with optional pre-norm and post-gate.
 
@@ -51,6 +52,8 @@ def e88_triton_optimized_apply(
         S_final: [B, H, n_state, head_v_dim]
         output:  [B, T, H, head_v_dim]   (after gate if apply_gate=True)
     """
+    if softplus_state and (linear_state or erase_gate is None or value_write_gate is None):
+        raise ValueError('softplus state requires nonlinear split-edit E97')
     assert k.dim() == 4 and v.dim() == 4 and q.dim() == 4, \
         "k/v/q must be [B, T, H, *]"
     B, T, H, N = k.shape
@@ -149,6 +152,7 @@ def e88_triton_optimized_apply(
             apply_silu_qkv=apply_silu_qkv,
             raw_write=raw_write,
             linear_state=linear_state,
+            softplus_state=softplus_state,
             erase_gate=erase_t,
             value_write_gate=value_write_t,
             valid_length=T_orig,
@@ -165,6 +169,7 @@ def e88_triton_optimized_apply(
             apply_silu_qkv=apply_silu_qkv,
             raw_write=raw_write,
             linear_state=linear_state,
+            softplus_state=softplus_state,
             erase_gate=erase_t,
             value_write_gate=value_write_t,
             valid_length=T_orig,

@@ -60,6 +60,7 @@ from typing import Tuple
 import torch
 import triton
 import triton.language as tl
+from triton.language.extra import libdevice
 
 
 # Default checkpoint stride. Matches the CUDA register-owned kernel
@@ -117,6 +118,7 @@ def _e88_forward_kernel(
     NORMALIZE_KQ: tl.constexpr,  # if True, L2-normalize k and q on load (per head, last dim)
     APPLY_SILU_QKV: tl.constexpr,  # if True, apply silu to raw q/k/v projection loads
     RAW_WRITE: tl.constexpr,  # if True, ablate delta correction: delta = v
+    SOFTPLUS_STATE: tl.constexpr,
     LINEAR_STATE: tl.constexpr,  # if True, ablate tanh: S = pre
     SPLIT_EDIT: tl.constexpr,  # if True, use E97 b/w edit gates
     APPLY_RESET: tl.constexpr,  # reset recurrent state before selected tokens
@@ -255,6 +257,8 @@ def _e88_forward_kernel(
         pre = d_val[:, None, None] * S + outer
         if LINEAR_STATE:
             S_next = pre
+        elif SOFTPLUS_STATE:
+            S_next = tl.maximum(pre, 0.0) + libdevice.log1p(tl.exp(-tl.abs(pre)))
         else:
             # Stable tanh. The raw exp formula overflows for pre > ~44 in fp32,
             # yielding inf/inf = NaN. sigmoid saturates without forming inf/inf.
@@ -366,6 +370,7 @@ def _autotune_kernel(
     valid_length,
     apply_reset,
     apply_valid,
+    softplus_state=False,
 ):
     """Tiny in-process autotune. Tries (BLOCK_H, num_warps) and caches winner.
 
@@ -378,7 +383,7 @@ def _autotune_kernel(
     """
     cache_key = (
         B, T, H, N, Vsz, str(dtype), ckpt_interval, bool(normalize_kq),
-        bool(apply_silu_qkv), bool(raw_write), bool(linear_state),
+        bool(apply_silu_qkv), bool(raw_write), bool(linear_state), bool(softplus_state),
         bool(split_edit), bool(apply_reset), bool(apply_valid),
     )
     if cache_key in _AUTOTUNE_CACHE:
@@ -431,7 +436,7 @@ def _autotune_kernel(
                         NORMALIZE_KQ=bool(normalize_kq),
                         APPLY_SILU_QKV=bool(apply_silu_qkv),
                         RAW_WRITE=bool(raw_write),
-                        LINEAR_STATE=bool(linear_state),
+                        LINEAR_STATE=bool(linear_state), SOFTPLUS_STATE=bool(softplus_state),
                         SPLIT_EDIT=bool(split_edit),
                         APPLY_RESET=bool(apply_reset),
                         APPLY_VALID=bool(apply_valid),
@@ -453,7 +458,7 @@ def _autotune_kernel(
                         NORMALIZE_KQ=bool(normalize_kq),
                         APPLY_SILU_QKV=bool(apply_silu_qkv),
                         RAW_WRITE=bool(raw_write),
-                        LINEAR_STATE=bool(linear_state),
+                        LINEAR_STATE=bool(linear_state), SOFTPLUS_STATE=bool(softplus_state),
                         SPLIT_EDIT=bool(split_edit),
                         APPLY_RESET=bool(apply_reset),
                         APPLY_VALID=bool(apply_valid),
@@ -496,6 +501,7 @@ def e88_triton_forward(
     valid_mask: torch.Tensor = None,  # bool [T,B], invalid tokens are no-ops
     recurrent_state_precision: str = 'legacy',
     validate_packed_masks: bool = True,
+    softplus_state: bool = False,
 ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     """Run the E88 forward recurrence in Triton.
 
@@ -699,7 +705,7 @@ def e88_triton_forward(
             block_h_chosen, nw = _autotune_kernel(
                 launch_args, B, T, H, N, Vsz, out_dtype, ckpt_interval,
                 normalize_kq, apply_silu_qkv, raw_write, linear_state,
-                split_edit, valid_length, apply_reset, apply_valid,
+                split_edit, valid_length, apply_reset, apply_valid, softplus_state=softplus_state,
             )
     else:
         block_h_chosen = int(block_h)
@@ -719,7 +725,7 @@ def e88_triton_forward(
         NORMALIZE_KQ=bool(normalize_kq),
         APPLY_SILU_QKV=bool(apply_silu_qkv),
         RAW_WRITE=bool(raw_write),
-        LINEAR_STATE=bool(linear_state),
+        LINEAR_STATE=bool(linear_state), SOFTPLUS_STATE=bool(softplus_state),
         SPLIT_EDIT=bool(split_edit),
         APPLY_RESET=bool(apply_reset),
         APPLY_VALID=bool(apply_valid),

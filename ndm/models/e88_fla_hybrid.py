@@ -932,9 +932,8 @@ class E88FLAHybrid(nn.Module):
         # on linear_state to drop the tanh) stays correct for the identity case.
         if state_activation == 'identity':
             self.linear_state = True
-        # The non-saturating variants (relu/softplus) are only implemented in the
-        # PyTorch reference recurrence; the fused bf16 CUDA/Triton kernels bake in
-        # tanh-or-linear and would silently run the wrong nonlinearity.
+        # ReLU and non-split softplus are only implemented in the
+        # PyTorch reference recurrence; other fused kernels bake in tanh-or-linear.
         self._nonsat_state = state_activation in ('relu', 'softplus')
         self.use_gate = use_gate
         self.use_write_gate = use_write_gate
@@ -1390,7 +1389,7 @@ class E88FLAHybrid(nn.Module):
             path = "e97-sequential-split-edit-triton"
             kernel_core = "e88-shared-triton"
         recurrence = "chunked" if use_chunked else "sequential"
-        state_map = "linear" if self.linear_state else "tanh"
+        state_map = "linear" if self.linear_state else self.state_activation
         eager_fallback = path == "eager-reference"
         print(
             "[e97-runtime] "
@@ -1472,6 +1471,7 @@ class E88FLAHybrid(nn.Module):
                     apply_silu_qkv=qkv_silu_in_kernel,
                     raw_write=self.raw_write,
                     linear_state=self.linear_state,
+                    softplus_state=self.state_activation == 'softplus',
                     erase_gate=erase_, value_write_gate=write_,
                     reset_before=reset_, valid_mask=valid_,
                     validate_packed_masks=False,
@@ -1575,6 +1575,7 @@ class E88FLAHybrid(nn.Module):
                     apply_silu_qkv=qkv_silu_in_kernel,
                     raw_write=self.raw_write,
                     linear_state=self.linear_state,
+                    softplus_state=self.state_activation == 'softplus',
                     erase_gate=erase_gate,
                     value_write_gate=value_write_gate,
                     reset_before=reset_before,
@@ -1643,20 +1644,26 @@ class E88FLAHybrid(nn.Module):
         value_write_gate = None
         glog_chunked = None  # LOG-decay for the chunked e97_delta kernel (set in decay block)
 
-        # The non-saturating state variants (relu/softplus) are implemented only in
-        # the PyTorch reference recurrence below. The fused bf16 CUDA/Triton kernels
-        # hard-code tanh-or-linear, so route relu/softplus to the fp32 fallback by
-        # forcing x to fp32 here -- the kernel guards all require bf16 and will be
-        # skipped, and we fail loudly rather than silently running tanh.
-        if getattr(self, '_nonsat_state', False):
+        # Plain softplus is supported by the fused split-edit Triton engine.
+        # Other non-saturating configurations must retain the FP32 reference
+        # route, never silently execute a tanh-only CUDA kernel.
+        fused_softplus = (self.state_activation == 'softplus'
+                          and self.use_split_edit and self.use_triton)
+        if getattr(self, '_nonsat_state', False) and not fused_softplus:
             if x.dtype == torch.bfloat16:
                 x = x.float()
             if self.use_triton or getattr(self, 'use_cuda_kernel', False):
-                # use_triton routes to kernels that don't implement relu/softplus.
                 raise RuntimeError(
                     f"state_activation={self.state_activation!r} is only supported in the "
-                    "PyTorch reference recurrence; disable use_triton / bf16 kernels "
-                    "(run fp32 via disable_autocast) for non-saturating E88 state.")
+                    "PyTorch reference recurrence unless using softplus split-edit Triton")
+
+        if fused_softplus and not (
+                x.is_cuda and x.dtype == torch.bfloat16
+                and (self.training or getattr(self, 'fused_inference', False))
+                and self.use_gate and self.gate_activation == 'silu'
+                and not self.use_write_gate and not self.use_value_residual
+                and not self.pos_eigval_clamp and n <= 64 and self.head_v_dim <= 64):
+            x = x.float()  # unsupported fused geometry uses the existing FP32 oracle
 
         # fused_inference lets a forward-only EVAL run the SAME fused kernel that
         # training used, instead of the eager per-step PyTorch scan (NON-NEGOTIABLE
@@ -2124,6 +2131,7 @@ class E88FLAHybrid(nn.Module):
                             apply_silu_qkv=qkv_silu_in_kernel,
                             raw_write=self.raw_write,
                             linear_state=self.linear_state,
+                            softplus_state=self.state_activation == 'softplus',
                             erase_gate=erase_for_kernel,
                             value_write_gate=value_write_for_kernel,
                             reset_before=reset_before,

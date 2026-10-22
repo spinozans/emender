@@ -1,0 +1,45 @@
+{
+  "status": "passed",
+  "optimizer_updates": 0,
+  "seed": 24002,
+  "shape": [
+    2,
+    48,
+    32
+  ],
+  "oracle": "existing E88 eager FP32 softplus layer",
+  "policy": "legacy: FP32 in-kernel live / bf16 training boundaries and replay",
+  "tolerances": {
+    "output_state": 0.03,
+    "gradients": 0.08
+  },
+  "cases": {
+    "0": {
+      "metrics": {
+        "output_relative_error": 0.0054321928150154125,
+        "state_relative_error": 0.0049204299409890484,
+        "input_gradient_relative_error": 0.00739460351819708,
+        "parameter_gradient_relative_error": 0.010769722869089489,
+        "eval_output_relative_error": 0.004594427039493438
+      },
+      "fused_facade_calls": 2
+    },
+    "16": {
+      "metrics": {
+        "output_relative_error": 0.0054321928150154125,
+        "state_relative_error": 0.004114004917009185,
+        "input_gradient_relative_error": 0.00739460351819708,
+        "parameter_gradient_relative_error": 0.010474772061809473,
+        "eval_output_relative_error": 0.005544302940712681
+      },
+      "fused_facade_calls": 9
+    }
+  },
+  "metrics": {
+    "output_relative_error": 0.0054321928150154125,
+    "state_relative_error": 0.0049204299409890484,
+    "input_gradient_relative_error": 0.00739460351819708,
+    "parameter_gradient_relative_error": 0.010769722869089489,
+    "eval_output_relative_error": 0.005544302940712681
+  }
+}
