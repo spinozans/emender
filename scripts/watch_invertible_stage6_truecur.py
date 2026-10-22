@@ -27,6 +27,12 @@ def status(root):
     for name in NAMES:
         if (root / 'markers' / f'{name}.FAIL').exists():
             return 1, f'FAIL {name}; inspect receipts/{name}/terminal.json'
+        if (root / 'markers' / f'{name}.INFRA-FAILURE-DISK.json').exists():
+            # Adjudicated infrastructure failure (receipted in the markers dir with its
+            # reclassification record and the preserved original FAIL receipt);
+            # not a training verdict - excluded from the pending matrix per the
+            # supervisor adjudication of 2026-10-20.
+            continue
         done = root / 'markers' / f'{name}.DONE'
         if done.exists():
             row = json.loads(done.read_text())
