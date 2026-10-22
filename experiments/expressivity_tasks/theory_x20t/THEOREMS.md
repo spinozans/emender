@@ -9,21 +9,27 @@ Formal receipt: `formal/lean/ElmanProofs/Expressivity/LinTanhExpressivity.lean`
 
 ## Verdict
 
-**COMPENSATION — and, in fact, LIN dominates.**  There is **no** TANH-favoring
-separator of the asked form
+**COMPENSATION / LIN dominates non-strictly, at each fixed finite horizon**
+over a finite alphabet, **with exact scalar state, no imposed precision budget,
+and an arbitrary terminal decoder that may depend on the horizon and the
+target.** There is **no** TANH-favoring separator of the asked form
 
-> ∃ task family `F`, dimension `d₀`, such that some `TANH(d₀)` computes `F` while
+> ∃ task family `F`, dimension `d₀ ≥ 1`, such that some `TANH(d₀)` computes `F` while
 > **no** `LIN(d)`, `d ≤ d₀`, with arbitrary encoders/decoders computes `F`.
 
 It is false: at any fixed sequence horizon `T` over a finite alphabet, **`LIN(1)`**
 — a *single* affine state coordinate — already realizes **every** function of the
-length-`T` word, exactly, with an arbitrary readout. So for every `d₀` and every
-target `F`, a `LIN(1)` readout (dimension `1 ≤ d₀`) computes the same `F`; the
+length-`T` word, exactly, with an arbitrary terminal readout (applied after the
+full word; intermediate/online behavior is not claimed). So for every `d₀ ≥ 1` and
+every target `F`, a `LIN(1)` readout (dimension `1 ≤ d₀`) computes the same `F`; the
 premise "no LIN(d≤d₀) computes `F`" can never hold. The in-fold `tanh`
-nonlinearity of the E97 arm is real, but it buys **no expressivity** over a linear
-state channel once the encoder and decoder are arbitrary — it is a
-*precision / parameter-efficiency* story, not a function-class gap at bounded
-dimension.
+nonlinearity of the E97 arm is real, but within this theorem's scope it buys **no
+expressivity** over a linear state channel once the encoder and decoder are
+arbitrary. What actually distinguishes the arms in practice is **not settled by
+this theorem**: learnability (the X-series ignition-window receipts), decoder
+complexity, precision/parameter-efficiency, and robustness are all unaddressed —
+precision/parameter-efficiency is *not* claimed as the only remaining
+distinction.
 
 (Consistent with the tracked constraints: S5 is not a separator — paper
 `main.typ` lines 350–363; `S5GDNBridge.lean:49–80` disclaims lower bounds; the
@@ -122,8 +128,11 @@ injective on length-`T` digit strings (digits `< b`), so the state separates all
   `tanh`'s surjectivity — a standard, unformalized argument.)
 * **Uniform-across-`T` architecture.** The Lean statements are per fixed horizon
   `T` (a parameter). If a task family requires one *shared* architecture across all
-  `T`, the readout `ψ` may depend on `T` in the construction; the uniform version
-  reduces to the precision caveat above and is not settled.
+  `T`, the readout `ψ` may depend on `T` in the construction; a shared decoder
+  across horizons is not proved — and this positional encoding also has
+  cross-length collisions (e.g. `[0]` and `[0,0]` both reach zero), independently
+  of finite precision. This does not establish that a different uniform encoding
+  is impossible; the uniform version remains open and is not settled here.
 * The `ℕ` model of a `ℝ` state coordinate assumes "arbitrary precision real
   state", which is exactly what `LIN(d)`'s definition permits; it is *not* a claim
   about finite-precision floating point.
@@ -135,7 +144,8 @@ injective on length-`T` digit strings (digits `< b`), so the state separates all
 1. **"Affine state maps have no genuine attractors/bistability; tanh maps do"
    (task constraint 3) is not a task-relevant resource.** Per-token affine maps
    *can* contract to any chosen per-token fixed point
-   (`s ↦ c·s + (1−c)·target`, `c<1`, or exactly `s ↦ s` for a null token), so a
+   (`s ↦ c·s + (1−c)·target`, `0 ≤ c < 1`, or exactly `s ↦ s` for a null token;
+  contraction requires `|c|<1`, not `c<1` — e.g. `c = −2` expands), so a
    latch that must hold a value across intervening/noise tokens is affine-
    realizable — indeed *exactly*, via the identity transition
    (`lin_identity_token_preserves`). Genuine *bistability of a single map* exists

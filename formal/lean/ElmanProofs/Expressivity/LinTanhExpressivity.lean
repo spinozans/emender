@@ -257,9 +257,13 @@ theorem lin_one_dim_realizes_any_function (b : Nat) (hb : 1 < b) (T : Nat)
 /-- **The compensation / no-separator theorem.** Every function computed by *any*
 recurrent model `MT` on length-`T` words over a finite alphabet `Fin b` — in
 particular `TANH(d)` for any `d`, whose state channel is such a `RecurrentModel`
-with `σ = Fin d → ℝ` — is computed by a `LIN(1)` model with a suitable readout.
-So there is no dimension `d₀` at which `TANH(d₀)` computes a function no
-`LIN(d)`, `d ≤ d₀`, computes: `LIN(1)` already computes it. -/
+with `σ = Fin d → ℝ` — is computed by a `LIN(1)` model with a suitable readout, at
+this fixed finite horizon, with exact (unbounded-precision) scalar state and an
+arbitrary terminal decoder that may depend on the horizon and target. So there is
+no dimension `d₀ ≥ 1` at which `TANH(d₀)` computes a function no `LIN(d)`,
+`d ≤ d₀`, computes at this horizon: `LIN(1)` already computes it. (Learnability,
+decoder complexity, finite precision, and cross-horizon uniformity are not
+addressed by this theorem.) -/
 theorem tanh_computations_are_lin_one_dim (b : Nat) (hb : 1 < b) (T : Nat)
     {σ β : Type*} (MT : RecurrentModel σ (Fin b) T) (ψT : σ → β) :
     ∃ ψ : Nat → β, ∀ w,
