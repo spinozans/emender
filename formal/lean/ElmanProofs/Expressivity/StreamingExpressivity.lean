@@ -28,43 +28,66 @@ apply to either activation at *any* dimension at once.
 Bounded precision is formalized *semantically*, as a bound on how many values the
 state channel can carry (`BoundedAbstraction`): a quotient `q : σ → Fin n`
 through which all future behaviour and the readout factor. `B` bits of state
-precision means `n = 2 ^ B`; the formalization deliberately does not model
-rounding modes, only the information the channel carries.
+precision means `n = 2 ^ B`, where `B` counts total channel bits, not bits per
+coordinate; the formalization deliberately does not model rounding modes, only
+the information the channel carries. It constrains all ambient states, not just
+the initialized reachable orbit.
 
 ## Load-bearing results (all proved, no `sorry`)
 
 * `StreamingExpressivity.StreamModel.runFrom_sim` — the simulation engine: a
   state-level correspondence plus readout agreement gives identical online output
   streams. Every realization statement below is an instance.
-* `exists_fin_model_of_abstraction` — **collapse**: a model whose state channel
-  carries `n` values is simulated *exactly* (same online output at every position
-  of every word) by a model with `n` states (`Fin n`), i.e. by a deterministic
-  finite automaton with output. So at bounded precision both `LIN` and `TANH` are
-  finite-state, whatever the dimension.
+Both activation classes admit the finite-automaton upper bound under the stated
+abstraction hypothesis. Every n-state automaton has a dimension-n LINEAR
+realization. No TANH converse or equality at fixed dimension is established.
+
+* `exists_fin_model_of_abstraction` — **surjective abstraction collapse**: given
+  `BoundedAbstraction M n` and a surjective quotient, an `n`-state model (`Fin n`)
+  simulates the online stream exactly.
 * `moore_realized_by_onehot_linear`, `finLinModel_reachable_onehot`,
-  `onehot_entries` — **the converse at dimension `n`**: every `n`-state automaton
-  is realized exactly by a *linear* state channel `s ↦ A(x) s` of dimension `n`
-  whose reachable states are the one-hot vectors, i.e. coordinates in `{0, 1}` —
-  one bit each. Precision is not the binding resource; dimension is.
-* `bounded_precision_class_characterization` — the two together: at budget `n` the
-  bounded-precision class *is* the class of `n`-state automata.
+  `onehot_entries` — **finite-reachable one-hot realization at dimension `n`**:
+  every `n`-state automaton is realized exactly by a *linear* state channel
+  `s ↦ A(x) s` whose reachable states are one-hot, with coordinates in `{0, 1}`.
+  This is a sufficient construction, not a dimension lower bound or an ambient
+  bounded abstraction.
+* `bounded_precision_class_characterization` — **surjective abstraction collapse
+  plus finite-reachable one-hot realization**, not a stronger characterization.
+  The reverse conjunct supplies no bounded abstraction on the ambient state space.
 * `countModel_out` / `count_needs_unbounded_state`, `balanced_needs_unbounded_state`
   — **what bounded precision cannot do at any dimension or activation**: exact
   `LIN(1)` counts (`s ↦ s + 1`), while the counting task and the `aᵏ bᵏ`
   discrimination admit *no* state channel with finitely many values. This is the
   precision-collapse boundary in miniature.
-* `lin_one_dim_no_three_cycle`, `tanh_one_dim_no_three_cycle` — at dimension 1
-  *both* activations are stuck below a 3-state automaton (one-dimensional steps
-  are monotone, so they have no 3-cycle); `rot3Model_three_cycle` exhibits the
-  2-dimensional **linear** channel that does cycle three distinct states. The
-  stratum is dimension, not activation.
+* `lin_one_dim_no_three_cycle`, `tanh_one_dim_no_three_cycle` — neither scalar
+  activation has a literal three-state cycle; `rot3Model_three_cycle` exhibits
+  one in dimension 2. This separates **literal state-cycle realizations** only,
+  not automaton/stream-function expressivity: scalar `s ↦ s + 1` from zero with
+  `q(s) = floor(s) mod 3` and `out = q` emits `1,2,0,…` without a real state cycle.
 * `tanhStreamModel_state_bounded` — a scalar `TANH(1)` state is confined to
   `(-1, 1)`, the bounded region that at fixed resolution is a finite value set.
 * `tanh_one_dim_two_fixed_points` — a correction: scalar `tanh` can latch two
   values *exactly*, so "`tanh` cannot hold a value" is not a separator.
 
-The literature anchors this development leans on are labelled verified-vs-secondary
-in `experiments/expressivity_tasks/theory_x21t/THEOREMS.md`.
+For 1,024 bf16 coordinates the nominal whole-channel bit-pattern bound is
+`2^16384`, distinct from the ≤1,024-state one-hot LINEAR construction guarantee.
+Empirical learning/generalization is separate: 4× transfer is consistent,
+interpretation only. These results neither identify the learned automaton nor
+predict unseen-horizon correctness.
+
+The literature anchors are scoped in
+`experiments/expressivity_tasks/theory_x21t/THEOREMS.md`: Weiss's finite-precision
+states, input-bound counting and architecture-dependent range arguments require
+explicit modeling to relate to this abstraction. No bounded-mantissa/unbounded-
+exponent identification or blanket failure of `BoundedAbstraction` from unbounded
+numerical range is asserted. Rational-series terminology concerns weighted linear
+channels and the linear-readout subcase, not arbitrary decoded LINEAR streams.
+The indicator of `aⁿbⁿ` is not rational (its Hankel matrix contains arbitrarily
+large identity submatrices). Merrill 2019's asymptotic/saturated `O(log L)` bits at
+length `L` is distinct from fixed total bits here; Delétang's empirical outcomes
+are in their tested task subset, and Siegelmann–Sontag remains secondary-via-Weiss.
+All six X21TR acceptance conditions are recorded in that document's corrections
+section; Lean changes are documentation only.
 -/
 
 namespace StreamingExpressivity
@@ -142,7 +165,7 @@ end StreamModel
 
 /-- **Bounded precision at budget `n`.** The state channel is `n`-valued: a
 quotient `q : σ → Fin n` determines both the next quotient state and the emitted
-output. `B` bits of state precision is the case `n = 2 ^ B` (a state quantized to
+output. `B` total channel bits is the case `n = 2 ^ B` (a state quantized to
 `2^B` values, or confined to a bounded region at fixed resolution, always admits
 such a `q`); the definition records the information the channel carries and
 deliberately does not model rounding modes. -/
@@ -193,11 +216,11 @@ theorem out_apply (A : BoundedAbstraction M n) (hq : Surjective A.q) (s : σ) :
 
 end collapse
 
-/-- **Collapse theorem.** A model whose state channel carries only `n` values is
-simulated *exactly* — same online output at every position of every word — by a
-model with `n` finite states. At bounded precision `LIN(d)` and `TANH(d)` are
-therefore both finite-state; the dimension `d` no longer separates anything at the
-class level. -/
+/-- **Surjective abstraction collapse theorem.** Given `BoundedAbstraction M n`
+and a surjective quotient, an `n`-state model simulates the online output exactly
+at every position of every word. This finite-automaton upper bound applies to
+either activation under the stated hypotheses; it establishes no activation
+converse or equality at fixed dimension. -/
 theorem exists_fin_model_of_abstraction {σ α β : Type*} {M : StreamModel σ α β} {n : Nat}
     (A : BoundedAbstraction M n) (hq : Surjective A.q) :
     ∃ M' : StreamModel (Fin n) α β, ∀ w, M'.run w = M.run w := by
@@ -208,8 +231,10 @@ theorem exists_fin_model_of_abstraction {σ α β : Type*} {M : StreamModel σ �
   change (collapse A hq).runFrom (A.q M.init) w = M.runFrom M.init w
   exact h.symm
 
-/-! ## Converse at dimension `n`: every finite automaton is an exact one-hot
-linear state channel with one-bit coordinates -/
+/-! ## Finite-reachable one-hot realization at dimension `n`
+
+Every `n`-state automaton has an exact linear realization with one-bit reachable
+coordinates. No bounded abstraction on the ambient state space is supplied. -/
 
 /-- The one-hot state vector at index `j`. -/
 def onehot {n : Nat} (j : Fin n) : Fin n → ℚ := fun i => if i = j then 1 else 0
@@ -292,8 +317,8 @@ theorem finLinModel_reachable_onehot {n : Nat} {α β : Type*} (step : Fin n →
 
 /-- **Every finite automaton is an exact linear model at dimension `n`.** The
 online output streams agree at every position of every word, with a single shared
-readout. So the whole of the `n`-state bounded-precision class is reached by
-`LIN(n)` — and by anything at least as expressive. -/
+readout and reachable one-hot states. This does not supply a bounded abstraction
+on the ambient rational-vector state space or prove a dimension lower bound. -/
 theorem moore_realized_by_onehot_linear {n : Nat} {α β : Type*} (step : Fin n → α → Fin n)
     (init : Fin n) (outM : Fin n → β) :
     ∀ w, (finLinModel step init outM).run w = (finModel step init outM).run w := by
@@ -314,11 +339,20 @@ theorem moore_realized_by_onehot_linear {n : Nat} {α β : Type*} (step : Fin n 
     = (finModel step init outM).runFrom init w
   exact h.symm
 
-/-- **Characterization at budget `n`.** The online stream functions computed by
-models whose state channel carries at most `n` values — the bounded-precision
-`LIN(d,B)` and `TANH(d,B)` classes with `2 ^ B = n`, at *any* dimension — are
-exactly the functions computed by `n`-state finite automata; and the linear side
-realizes all of them at dimension `n` with one-bit coordinates. -/
+/-- **Surjective abstraction collapse plus finite-reachable one-hot realization.**
+Both activation classes admit the finite-automaton upper bound under the stated
+abstraction hypothesis. Every n-state automaton has a dimension-n LINEAR
+realization. No TANH converse or equality at fixed dimension is established.
+
+The forward direction assumes a surjective quotient. The reverse conjunct proves
+stream equivalence and reachable one-hot states but supplies no bounded
+abstraction on the ambient state space; this is not a stronger characterization.
+For a two-state swapping automaton with distinct outputs, the ambient `finLinModel`
+has three distinguishable states: its two one-hot vectors and zero. Zero always
+produces the fallback output; swapping distinguishes it from the corresponding
+one-hot state. Thus the ambient model need not admit a two-valued abstraction.
+Likewise, `rot3Model.out = id` prevents any finite abstraction on its entire
+rational-pair state space, although its initialized orbit is finite. -/
 theorem bounded_precision_class_characterization (n : Nat) :
     (∀ (σ α β : Type*) (M : StreamModel σ α β) (A : BoundedAbstraction M n)
         (_hq : Surjective A.q), ∃ M' : StreamModel (Fin n) α β, ∀ w, M'.run w = M.run w) ∧
@@ -423,13 +457,21 @@ theorem balanced_needs_unbounded_state {σ β : Type*} (M : StreamModel σ Bool 
   have hle : n + 1 ≤ n := by simpa using Fintype.card_le_of_injective _ hinjq
   omega
 
-/-! ## The stratum is dimension, not activation
+/-! ## Separation in literal state-cycle realizations only
 
 A one-dimensional state channel moves its single coordinate by a map of the form
 `s ↦ a·s + b` (linear) or `s ↦ tanh (a·s + b)` (saturated). Both are monotone,
-antitone, or constant — and **no such map has a 3-cycle**. So at dimension 1 both
-classes are strictly weaker than a 3-state automaton; a two-dimensional *linear*
-channel already cycles three states (`rot3Model_three_cycle`). -/
+antitone, or constant — and **no such map has a literal 3-cycle**. A two-dimensional
+*linear* channel cycles three states (`rot3Model_three_cycle`). This is not an
+automaton/stream-function expressivity separation.
+
+Counterexample: scalar LINEAR transition `s ↦ s + 1`, initial state zero, with
+`q(s) = floor(s) mod 3` and `out = q` is a surjective three-valued abstraction
+emitting `1,2,0,…` at `d = 1`. Its real state never cycles, but arbitrary readout
+implements the three-cycle automaton. A stronger hierarchy requires additional
+hypotheses and proof. Dimension `n` is sufficient for an `n`-state automaton, not
+proved necessary; the dimension-two literal three-cycle contradicts blanket
+necessity of one coordinate per state. -/
 
 /-- **No weakly monotone or weakly antitone self-map of `ℝ` has a 3-cycle.** Every
 one-dimensional state step studied below — `s ↦ a·s + b` and `s ↦ tanh (a·s + b)`
@@ -494,8 +536,9 @@ theorem tanhStep_mono_or_antitone (a b : ℝ) :
     have : a * x + b < a * y + b := by nlinarith
     exact le_of_lt ((hkey x y).mpr this)
 
-/-- **`LIN(1)` cannot cycle three states**: no one-dimensional affine state
-channel `s ↦ a·s + b` has a 3-cycle, at any precision and with any readout. -/
+/-- **`LIN(1)` cannot literally cycle three states**: no one-dimensional affine
+state channel `s ↦ a·s + b` has a literal 3-cycle. This does not constrain periodic
+outputs under arbitrary readout. -/
 theorem lin_one_dim_no_three_cycle (a b v0 v1 v2 : ℝ)
     (h01 : a * v0 + b = v1) (h12 : a * v1 + b = v2) (h20 : a * v2 + b = v0)
     (hd01 : v0 ≠ v1) (hd12 : v1 ≠ v2) (hd20 : v2 ≠ v0) : False :=
@@ -520,15 +563,16 @@ theorem rot3Pair_cube (p : ℚ × ℚ) : rot3Pair (rot3Pair (rot3Pair p)) = p :=
   simp [rot3Pair]
   ring_nf
 
-/-- A two-dimensional linear state channel with a single token that cycles three
-distinct states: dimension 2 clears the stratum dimension 1 provably cannot. -/
+/-- A two-dimensional linear state channel with a single token that literally
+cycles three distinct states, unlike scalar affine or TANH state steps.
+`out = id` precludes any finite abstraction on the entire rational-pair space. -/
 def rot3Model : StreamModel (ℚ × ℚ) Unit (ℚ × ℚ) where
   init := (1, 0)
   step := fun s _ => rot3Pair s
   out := id
 
-/-- **Dimension 2 suffices for a 3-cycle** — the three states are explicitly
-distinct, so this needs just two bits of state description. -/
+/-- **Dimension 2 suffices for a literal state 3-cycle** — the three states are
+explicitly distinct, with exactly representable coordinates in `{-1, 0, 1}`. -/
 theorem rot3Model_three_cycle :
     rot3Model.stateAfter [(), (), ()] = (1, 0) ∧
       rot3Model.stateAfter [()] = (0, 1) ∧
