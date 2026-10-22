@@ -1,0 +1,69 @@
+{
+  "task": "X20-separationdesign",
+  "status": "NO_LICENSED_CONSTRUCTION",
+  "recorded_utc": "2026-10-22T14:25:42.339556+00:00",
+  "host": "lambda01",
+  "base_commit": "42e036063648f6b6491ac64520f2ff0ebf3d9cbe",
+  "terminal_reason": "Supervisor approved terminal source-audit finding and prohibited launch without a citable wrapper-proof; none is licensed by the audited sources.",
+  "source_sha256": {
+    "paper/main.typ": "03a9983107d85f24411eff180be82f6fcd742dfb91755d4a8a44164826ddc434",
+    "formal/lean/ElmanProofs/Expressivity/CompositionalDepthDuality.lean": "79ae485f395c3e2196f23cfbdc4c8a71f4c7fbb5b6923dea6280f3b996c8c371",
+    "formal/lean/ElmanProofs/Expressivity/S5GDNBridge.lean": "3ebb8d65b81cf6d9aca4272ff507d116c8883a90e157fc2dafbaf82d609b8474",
+    "formal/lean/ElmanProofs/Architectures/S5Inseparability.lean": "eaa59039c1c411d818b0ea36f8a5a8e3325f0b94b94384c6641f66c2bf2ce6da",
+    "formal/lean/ElmanProofs/Architectures/RecurrentResourceFormalism.lean": "4642ff73269be801751f8b01409cd6975a699d7c18aeeca8278abff2f64b6296",
+    "formal/lean/ElmanProofs/Architectures/MultiStepSeparation.lean": "300d5c5df875e2a08f57542a5b018bc1c215a8f1a640a145b44ca496ba810d50",
+    "formal/lean/ElmanProofs/Architectures/EmenderLatching.lean": "82e5b5788cd4d2789baba7818b3119638b9b72345a39e908fcc58dfc29cf591c",
+    "formal/lean/GAPS-D2.md": "109264d538257aab24f732ea421014399e45077e3d7d1c69cc319b2acf34181e"
+  },
+  "task_brief": {
+    "path": "/home/erikg/emender-scratch/fix-fanout/taskX20-separationdesign.md",
+    "sha256": "f8e096c3697a1b73dcfd93ced20e6170ca082f997cc60c9d8931c2ee8f088dc7"
+  },
+  "artifact_sha256": {
+    "experiments/expressivity_tasks/results_stage20_separationdesign/REPORT.md": "9acd37c5a56f7d524701f0f2fe66d30ec77142b915071bc478d8417e4dc9910d",
+    "experiments/expressivity_tasks/results_stage20_separationdesign/registration.json": "c0a9af86911f93ac0e9f59fa71ea6f0102008e9258e1362c1689eab47180145f",
+    "experiments/expressivity_tasks/results_stage20_separationdesign/receipts/validation.txt": "b56660e8c66527540bb63408a61909c6e580c178b1aea93927accb3264441e94"
+  },
+  "execution": {
+    "launch_authorized": false,
+    "primary_runs_launched": 0,
+    "auxiliary_runs_launched": 0,
+    "gpu_cards_consumed": 0,
+    "training_updates": 0,
+    "watcher_armed": false,
+    "native_supervisor_armed": false,
+    "censoring_applied": false,
+    "run_ids": []
+  },
+  "validation": {
+    "interpreter": ".venv/bin/python (Python 3.12.3; lambda01, not Frontier)",
+    "method": "CPU-only standard-library assertions; no CUDA libraries imported",
+    "registration_consistency": "passed",
+    "s5_linear_realization": {
+      "method": "Exhaust all 120 permutations times 4 adjacent generators; exact integer matrix multiplication versus tuple-entry swaps",
+      "transitions_checked": 480,
+      "result": "passed"
+    },
+    "scalar_second_difference": {
+      "states": [
+        0,
+        0.5,
+        1
+      ],
+      "expression": "tanh(1) - 2*tanh(0.5) + tanh(0)",
+      "value": -0.1626401585642546,
+      "decoder_compensation": "identity state propagation followed by tanh agrees at all three points",
+      "result": "passed"
+    },
+    "output_path": "experiments/expressivity_tasks/results_stage20_separationdesign/receipts/validation.txt",
+    "tests_added": [],
+    "lean_build_run": false,
+    "limits": "Illustrative checks are not a formal proof, a production-gate S5 realization, or empirical training evidence."
+  },
+  "scope": {
+    "model_code_changed": false,
+    "lean_sources_changed": false,
+    "existing_runs_modified_by_x20": false,
+    "frontier_or_resilient_diloco_applicable": false
+  }
+}

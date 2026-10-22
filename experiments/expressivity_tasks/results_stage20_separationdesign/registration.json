@@ -1,0 +1,100 @@
+{
+  "task": "X20-separationdesign",
+  "status": "NO_LICENSED_CONSTRUCTION",
+  "record_type": "terminal_design_gate_finding_not_training_preregistration",
+  "registered_utc": "2026-10-22T14:22:12Z",
+  "host": "lambda01",
+  "base_commit": "42e036063648f6b6491ac64520f2ff0ebf3d9cbe",
+  "authority": {
+    "task_path": "/home/erikg/emender-scratch/fix-fanout/taskX20-separationdesign.md",
+    "final_supervisor_decision": "Record NO LICENSED CONSTRUCTION for the e97-tanh-state vs fla-gdn pair; DO NOT LAUNCH; commit and push the terminal finding with concession #16 and the S5 correction.",
+    "design_gate": "No launch without a citable wrapper-proof for the requested experimental pair and dimensions."
+  },
+  "requested_pair": {
+    "nonlinear_arm": "e97 with state_activation=tanh",
+    "linear_arm": "fla-gdn with allow_neg_eigval=True",
+    "wrapped_shape_as_requested": "32x32x4"
+  },
+  "selected_construction": null,
+  "wrapper_proof": null,
+  "finding": "The tracked theory licenses no expressivity separation between the experimental architecture pair.",
+  "scope_limit": "Absence of a licensed separator is not a proof of equal capacity, a proof that wrappers compensate for every task, or a training outcome.",
+  "candidate_audit": [
+    {
+      "construction": "E97 temporal composition versus GDN conditioned affine fold",
+      "source": "formal/lean/ElmanProofs/Expressivity/CompositionalDepthDuality.lean:77-130,177-242",
+      "disposition": "Structural raw-state characterization only; arbitrary input-only schedule generators preserve conditional affinity, but nonlinear encoders/decoders do not preserve the output affine identity. No wrapped task lower bound."
+    },
+    {
+      "construction": "S5 tracker and GDN routing bridge",
+      "source": "paper/main.typ:350-363,1496-1521; formal/lean/ElmanProofs/Expressivity/S5GDNBridge.lean:49-80",
+      "disposition": "S5 has an explicit 5x5 general linear-state realization. Bridge excludes only token-independent schedules, not the experimental arm; production-constrained realization remains open G3."
+    },
+    {
+      "construction": "120-state recognizer floor, 480-key lookup table, d=12 generator memory",
+      "source": "paper/main.typ:1530-1583,2004-2006",
+      "disposition": "Capacity floor applies to both arms; table/generator memory is not an autonomous E97 all-words realization or a GDN impossibility."
+    },
+    {
+      "construction": "One-step and finite-k delta/raw-write resource separation",
+      "source": "formal/lean/ElmanProofs/Architectures/RecurrentResourceFormalism.lean:940-963,1127-1150; formal/lean/ElmanProofs/Architectures/MultiStepSeparation.lean:447-472",
+      "disposition": "Excluded fixed-right/raw-write M2RNN resource is not fla-gdn; no arbitrary-wrapper separation for the requested pair."
+    },
+    {
+      "construction": "Conditional saturation, hold, and release",
+      "source": "formal/lean/ElmanProofs/Architectures/EmenderLatching.lean:94-105,157-167,268-275; paper/main.typ:2027-2031",
+      "disposition": "Sufficient tanh slot bounds only, with additional production-range applicability gaps; no bare or wrapped GDN impossibility."
+    },
+    {
+      "construction": "Scalar T=1 tanh second-difference specialization",
+      "source": "Elementary specialization of CompositionalDepthDuality definitions and affine identity, not an additional Lean theorem",
+      "disposition": "Rejected: bare continuous-state structural regression, compensated by identity state propagation plus tanh decoder; not a temporal token-task separator."
+    }
+  ],
+  "outcomes": [
+    {
+      "name": "SEPARATION",
+      "requested_meaning": "E97 fits and linear fla-gdn remains below a preregistered ceiling after at least 2x strong-arm convergence updates plus LR annealing.",
+      "assigned": false,
+      "ceiling_criterion": null
+    },
+    {
+      "name": "WRAPPER-COMPENSATES",
+      "requested_meaning": "Both wrapped arms fit a valid selected task.",
+      "assigned": false
+    },
+    {
+      "name": "TASK-BROKEN",
+      "requested_meaning": "Linear arm fits and nonlinear arm fails.",
+      "assigned": false
+    },
+    {
+      "name": "TRAINING-BROKEN",
+      "requested_meaning": "Neither arm fits.",
+      "assigned": false
+    }
+  ],
+  "outcome_registration_limit": "All four categories are retained but inactive. No target passed the design gate, so no empirical outcome, numerical ceiling, update budget, or task protocol is registered. A future experiment requires a new approved preregistration before data collection.",
+  "execution": {
+    "launch_authorized": false,
+    "primary_runs_launched": 0,
+    "auxiliary_runs_launched": 0,
+    "gpu_cards_consumed": 0,
+    "training_updates": 0,
+    "watcher_armed": false,
+    "native_supervisor_armed": false,
+    "censoring_applied": false,
+    "run_ids": []
+  },
+  "corrections": [
+    {
+      "id": "concession-16",
+      "correction": "Supervisor retracted triangle-map / 3g1 construction names cited from memory: they do not identify constructions in the tracked theory."
+    },
+    {
+      "id": "s5-suggestion-retracted",
+      "correction": "Supervisor also retracted the suggestion that noncommutative S5 accumulation is a licensed separator from bounded-dimensional linear-state folds: the tracked paper explicitly supplies a 5x5 linear realization."
+    }
+  ],
+  "recommended_next_step": "Independent review of this source audit; require a new dimension- and wrapper-aware lower bound before designing a separation launch."
+}
