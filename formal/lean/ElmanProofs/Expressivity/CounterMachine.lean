@@ -9,14 +9,17 @@ import ElmanProofs.Expressivity.WeightedAutomata
 
 Merrill et al. (ICML 2026) prove (their Lemma 3) that a log-precision **MLP** RNN simulates
 any real-time counter machine, and hence (their Thm. 2) that such an RNN solves an
-`L`-complete problem. This file re-proves the simulation in our own framework, so that the
-constructive heart of the operator's indefinitely-running-programs claim does not rest on
-their synthesis. Everything below is a Lean theorem about our `StreamModel`.
+`L`-complete problem. This file proves an exact embedding of the defined additive-update
+machine in our `StreamModel` framework, not their complete Lemma-3 closed-form simulation.
+`cmRealStep` retains discrete control, Boolean equality decisions, and arbitrary lookup
+functions. Only `zeroMaskForm` has an arithmetic-expression correctness theorem; complete
+transition assembly is unproved, including for the one-counter witness (O14).
 
 ## What is proved
 
-* `CounterMachine` — a real-time counter machine: finite control `Fin m`, `c` integer
-  counters, a step determined by `(control, token, zero-masks)`.
+* `CounterMachine` — a defined additive-update machine: finite control `Fin m`, `c`
+  integer counters, arbitrary lookups from `(control, token, zero-masks)`. Reset updates
+  allowed by the paper's Lemma 3 are not modelled.
 * `cmStep` — its exact one-step semantics.
 * `zeroMaskR` / `zeroMaskForm` / `eval_zeroMaskForm` — the **zero test is a closed form**
   in their Def. 2 sense: `max 0 (1 − |r|)`, built from `max`, `−`, `√` and `·`.
@@ -26,9 +29,11 @@ their synthesis. Everything below is a Lean theorem about our `StreamModel`.
   (control × real counters), one step per token.
 * `cmModel_fold` / `cmModel_simulates` — **the simulation theorem**: the real model's state
   after any word is the image of the counter machine's state after that word. Hence a
-  recurrent real-state model *runs any real-time counter machine*, forever.
+  `StreamModel` exactly embeds the defined additive-update machine, forever; this is
+  not closed-form-arithmetic completeness.
 * `balancedCM`, `cmModel_fold_blocks`, `cmModel_separates_balanced` — the concrete
-  one-counter machine that accepts exactly `aᵏbᵏ`: the **positive counterpart** of F3(a)'s
+  one-counter machine with **balanced-block discrimination**, not exact language
+  recognition (it also accepts `abab`): the positive counterpart of F3(a)'s
   impossibility (no bounded-precision channel can do this at any dimension).
 * `cmModel_reachable_card` — **the log-precision content**: after a word of length `≤ n`
   the machine's reachable state set has at most `3 · (n + 1)` elements, i.e. `O(log n)`
@@ -36,20 +41,18 @@ their synthesis. Everything below is a Lean theorem about our `StreamModel`.
 
 ## Divergences from their Lemma 3 — flagged
 
-1. **We do not synthesize an MLP, and we do not need one.** Their Lemma 3 builds ReLU
-   networks for the zero-mask and the finite lookup tables, with an equality check at
-   tolerance `ε = 1/3` (citing Yang et al. 2026 §4.7). Our zero test is the *exact* closed
-   form `max 0 (1 − |r|)`, which on integer-valued reals returns `1`/`0` with no error. So
-   our re-proof is **strictly stronger in exactness** on this point — a finding, and also a
-   warning: *any* claim that a `tanh`- or softmax-based arm cannot do exact zero tests does
-   not apply to the class we formalize here, because that class has `max` in its closed
-   form (their Def. 2 includes `max`).
-2. **Saturating activations are excluded by construction.** Our `cmModel` is a `StreamModel`
-   with an unrestricted per-token step, i.e. a Def.-3 closed-form RNN *because* it has
-   `max`/`√`; it is **not** a `tanh`-state model. A `tanh` state lives in `(−1,1)`, so
-   a counter cannot be stored there and the simulation does not apply to that arm. This is
-   the formal version of the operator-Note in X22T O10: the counter-machine side of the
-   growing-precision regime is the *non-saturating* arm.
+1. **No complete closed-form or MLP transition is synthesized.** Their Lemma 3 builds
+   ReLU networks for zero masks and finite lookup tables. Our arithmetic gadget
+   `max 0 (1 − |r|)` is exact on integer-valued reals, but `cmRealStep` retains
+   Boolean equality decisions, discrete control, and arbitrary lookups. The gadget
+   theorem does not establish a Def.-2 expression for the complete step, even for
+   one counter (O14).
+2. **No configured-activation realization is proved.** `cmModel` is a `StreamModel`
+   with an unrestricted per-token step, not a proved Def.-3 closed-form RNN or a
+   `tanh`-state model. Its unbounded counter coordinates do not prove impossibility
+   of other encodings in bounded states. E97 ReLU/softplus are candidate hosts only:
+   a configured elementwise activation is not a ReLU MLP transition, and the paper
+   supplies no softplus construction.
 3. **Precision is modelled as cardinality, not as bits.** "Log precision" is
    `cmModel_reachable_card`: a reachable-set *cardinality* bound `3 · (n+1)`. We do not
    model bit-lengths, rounding, or their Def. 10 `p_h(n)` as such.
@@ -70,9 +73,9 @@ open ArmMapping
 
 /-! ## Real-time counter machines -/
 
-/-- **A real-time counter machine** (Fischer, Meyer & Rosenberg 1968; Weiss et al. 2018;
-Merrill et al. 2026 Lemma 3): a finite control, `c` integer counters, and a step determined
-by the control, the input token, and the zero-masks of the counters. -/
+/-- An additive-update counter machine: finite control, `c` integer counters, and
+arbitrary lookups from control, token, and zero masks. Unlike the paper's Lemma 3,
+this definition does not include reset updates. -/
 structure CounterMachine (α : Type*) (m c : ℕ) where
   /-- Next control state. -/
   next : Fin m → α → (Fin c → Bool) → Fin m
@@ -147,8 +150,9 @@ reals. -/
 noncomputable def cmEmbed {m c : ℕ} (s : CMState m c) : Fin m × (Fin c → ℝ) :=
   (s.1, fun i => (s.2 i : ℝ))
 
-/-- **The simulation step**: control lookup, exact zero tests, counter updates, all on the
-real channel. -/
+/-- The embedding step retains discrete control, Boolean equality decisions, and
+arbitrary `next`/`delta` lookups. Only `zeroMaskForm` has an arithmetic-expression
+correctness theorem; a closed form for this whole step is not proved. -/
 noncomputable def cmRealStep {α : Type*} {m c : ℕ} (CM : CounterMachine α m c)
     (s : Fin m × (Fin c → ℝ)) (x : α) : Fin m × (Fin c → ℝ) :=
   (CM.next s.1 x (fun i => isZeroR (s.2 i)),
@@ -168,8 +172,8 @@ theorem cmRealStep_embed {α : Type*} {m c : ℕ} (CM : CounterMachine α m c)
   push_cast
   ring
 
-/-- The stream model with the real channel. The readout is arbitrary: the point is that the
-*state* is a real channel of dimension `m + c`. -/
+/-- The `StreamModel` with discrete `Fin m` control and `c` real counter coordinates.
+The readout is arbitrary; no fully real-coded arithmetic transition is assembled. -/
 noncomputable def cmModel {α β : Type*} {m c : ℕ} (CM : CounterMachine α m c)
     (q₀ : Fin m) (readout : Fin m × (Fin c → ℝ) → β) : StreamModel (Fin m × (Fin c → ℝ)) α β where
   init := cmEmbed (q₀, fun _ => 0)
@@ -188,9 +192,10 @@ theorem fold_embed {α : Type*} {m c : ℕ} (CM : CounterMachine α m c) :
       intro s
       rw [List.foldl_cons, List.foldl_cons, cmRealStep_embed, ih]
 
-/-- **The simulation theorem.** After any word, the real model's state is the embedded
-counter-machine configuration — for every word, hence forever on an `ω`-stream (the `ω`
-state is the same fold, `StreamModel.omegaState`). -/
+/-- **Exact additive-update embedding, not closed-form completeness.** After any
+word, the model's state is the embedded configuration of the defined machine —
+for every word, hence forever on an `ω`-stream (the `ω` state is the same fold,
+`StreamModel.omegaState`). -/
 theorem cmModel_fold {α β : Type*} {m c : ℕ} (CM : CounterMachine α m c) (q₀ : Fin m)
     (out : Fin m × (Fin c → ℝ) → β) (w : List α) :
     (cmModel CM q₀ out).stateAfter w = cmEmbed (cmRun CM (q₀, fun _ => (0 : ℤ)) w) := by
@@ -202,10 +207,11 @@ theorem cmModel_fold {α β : Type*} {m c : ℕ} (CM : CounterMachine α m c) (q
   rw [h, fold_embed CM w]
   rfl
 
-/-! ## The concrete one-counter machine for `aᵏbᵏ` -/
+/-! ## The concrete one-counter machine for balanced-block discrimination -/
 
-/-- **A one-counter machine that accepts exactly `aᵏbᵏ`.** Controls: `0` pushing, `1` popping,
-`2` underflow. `aᵏ` pushes one counter unit; `b` pops one, and popping at zero underflows. -/
+/-- A one-counter machine for balanced-block discrimination (`SeparatesBalanced`),
+not exact `aᵏbᵏ` recognition: it also accepts `abab`. Controls: `0` pushing, `1` popping,
+`2` underflow. Updates ignore the prior phase; `a` increments and `b` decrements unless zero. -/
 def balancedCM : CounterMachine Bool 3 1 where
   next := fun _ x z => match x with
     | true => 0

@@ -26,7 +26,7 @@ mapping is taken on trust. Every claim below is a Lean theorem about explicit fo
 * `deltaNetMatrix_isDPLR`, `gdnMatrix_isDPLR`, `gdnMatrixPerChannel_isDPLR`,
   `diagM_isDPLR` — the step matrix is **Def. 5 DPLR** `D − k vᵀ` in the zero-decay,
   scalar-decay and per-channel-decay forms.
-* `expTaylorForm`, `eval_expTaylorForm`, `expTaylor_one_ne_exp` — the nonlinear activation
+* `expTaylorForm`, `eval_expTaylorForm`, `expTaylor_two_ne_exp` — the nonlinear activation
   is closed-form arithmetic, *including* the Taylor-truncation reading of their datatype
   (Def. 1), and the truncation is provably not `Real.exp`.
 * `negEigval_beta_range` (imported) — `allow_neg_eigval` gives `β ∈ (0,2)`.
@@ -43,17 +43,18 @@ mapping is taken on trust. Every claim below is a Lean theorem about explicit fo
    the exact special case where the two agree.
 3. **`β` range.** Their DeltaNet has `β_t ∈ (0,1)`; with `allow_neg_eigval` ours is
    `β_t = 2·σ(z) ∈ (0,2)`. DPLR-ness is *insensitive* to the range (any real `β` gives a
-   DPLR matrix), so their Thm. 3 upper bound does not care; the range matters only for the
-   parity-recognition result of Grazzi et al., which we do **not** re-prove.
+   DPLR matrix), so their Thm. 3 upper bound is insensitive to that range under
+   paper-compatible rational-approximation semantics (exact-real transfer unproved);
+   the range matters only for the parity-recognition result of Grazzi et al., which we do **not** re-prove.
 4. **Per-channel decay flips the orientation of the rank-one term.** With a per-row decay
    the step matrix is `D − k (D k)ᵀ`, not `D(I − β k kᵀ)`. Both are DPLR
    (`gdnMatrixPerChannel_isDPLR`), but they are *different matrices*, so any claim about
    "the DPLR arm" must fix a decay placement. The kernel supports both
    (`USE_GK`/`USE_GV`), which the paper's single `DeltaNet` formula does not model.
 5. **Exact `exp` vs Taylor-truncated `exp`.** Their datatype uses finite Taylor
-   approximations (Def. 1); we use `Real.exp`, which is strictly stronger and provably
-   different (`expTaylor_one_ne_exp`). Any claim about their datatype must be routed
-   through `expTaylorForm`.
+   approximations (Def. 1); we use `Real.exp`. `expTaylor_two_ne_exp` proves a
+   discrepancy only, not computational-class strictness or a transfer theorem. Cited
+   upper bounds require paper-compatible rational-approximation semantics.
 -/
 
 namespace ArmMapping
@@ -223,10 +224,10 @@ theorem eval_expTaylorForm {k : ℕ} (N : ℕ) (t : ArithClosedForm k) (v : Fin 
 
 /-- **The exactness gap, stated rather than hidden.** Our Lean models use exact `Real.exp`;
 their datatype uses a finite Taylor truncation. The two are not the same function — already
-the one-term truncation `1 + x` disagrees with `exp` at `x = 1` (`2 < e`). A closed-form
-statement about `Real.exp` is therefore strictly stronger than, and does not imply, the
-truncated-datatype statement. Any claim about their datatype must route through
-`expTaylorForm`. -/
+the two-term truncation `1 + x` disagrees with `exp` at `x = 1` (`2 < e`). This
+proves a discrepancy only, not computational-class strictness or a transfer theorem.
+The paper's upper bounds require paper-compatible rational-approximation semantics;
+no exact-real transfer is established here. -/
 theorem expTaylor_two_ne_exp :
     Real.exp 1 ≠ (expTaylorForm 2 (ArithClosedForm.var (0 : Fin 1))).eval (fun _ => (1 : ℝ)) := by
   have h : (2 : ℝ) < Real.exp 1 := by

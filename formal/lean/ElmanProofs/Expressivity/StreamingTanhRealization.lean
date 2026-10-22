@@ -33,9 +33,9 @@ This file closes O2 in the reachable-realization sense, at dimension exactly `n`
   — every reachable state is a corner of the cube `{0, τ}ⁿ` inside `(-1,1)ⁿ`: `n`
   states, each coordinate one of two values.
 * `enc_diff_at`, `enc_robust_decode` — distinct corners are separated by the full
-  level `τ`, so any state within `τ / 2` coordinatewise of a corner decodes to that
-  corner uniquely: the bounded-precision content is one bit per coordinate plus a
-  positive margin, not exact reals.
+  level `τ`: a state cannot be within `τ / 2` coordinatewise of two corners. This
+  is geometric uniqueness, not an implemented robust decoder; the readout below
+  requires exact corner equality. No finite-precision dynamical guarantee follows.
 * `finite_program_class_equality` — the finite-program answer: at dimension `n`,
   both activation classes realize *every* `n`-state automaton's online behaviour,
   so for indefinitely-running *finite* programs the two classes coincide at
@@ -50,9 +50,10 @@ the ambient state space `Fin n → ℝ` (the reachable orbit is finite, the ambi
 space is not), no dimension lower bound, and no claim about ambient
 `BoundedAbstraction` for `TANH`. Exactness is exact-real-arithmetic exactness: the
 pre-activations are the *rational* levels `0` and `1`, but the reachable code level
-`τ = tanh 1` is irrational, so a fixed-point implementation approximates the code
-levels (never the pre-activations); the level is `τ = tanh 1 ≈ 0.7616` and the
-decoding margin is `τ / 2 ≈ 0.381`.
+`τ = tanh 1` is irrational. A finite-precision implementation would approximate
+parameters, states, and arithmetic; no error propagation or dynamical invariance
+is proved. The geometric separation margin is `τ / 2 ≈ 0.381`, not a guarantee
+that the exact-equality readout decodes perturbed states.
 -/
 
 namespace StreamingTanhRealization
@@ -110,13 +111,11 @@ theorem enc_diff_at {n : Nat} {j j' : Fin n} (h : j ≠ j') :
     enc j j = tau ∧ enc j' j = 0 :=
   ⟨enc_self j, enc_of_ne h⟩
 
-/-- **Corner separation gives robust decoding.** Any two distinct corner codes are
-separated by `τ`, so a state within `τ / 2` (coordinatewise) of a corner decodes to
-*that* corner uniquely. This is the bounded-precision content of the construction:
-one bit per coordinate plus a positive margin, not exact reals. (The pre-activations
-are already exact — the levels `0` and `1` — so only the code level `τ = tanh 1`
-needs a finite-resolution representation, and any resolution finer than `τ / 2`
-suffices.) -/
+/-- Geometric corner separation: a state cannot be within `τ / 2` coordinatewise
+of two distinct corners. Despite its name, this theorem does not implement a robust
+decoder. `tanhCornerModel.out` requires exact corner equality and otherwise returns
+the initial-state output, so a small perturbation of a noninitial corner need not
+decode correctly. No finite-precision dynamical guarantee is claimed. -/
 theorem enc_robust_decode {n : Nat} {j j' : Fin n} (s : Fin n → ℝ)
     (h : ∀ i, |s i - enc j i| < tau / 2) (h' : ∀ i, |s i - enc j' i| < tau / 2) :
     j = j' := by
@@ -180,7 +179,8 @@ theorem tanh_cornerMatrix_mul_enc {n : Nat} {α : Type*} (step : Fin n → α �
 
 /-- The saturated-corner `TANH(n)` realization of the `n`-state automaton
 `step`/`init`/`outM`: state space `Fin n → ℝ`, the `tanh`-saturated corner step
-above, and the shared readout reading the corner code back. -/
+above, and a shared readout requiring exact corner equality. Off the exact corners
+it returns the initial-state output; it is not a robust decoder. -/
 noncomputable def tanhCornerModel {n : Nat} {α β : Type*} (step : Fin n → α → Fin n)
     (init : Fin n) (outM : Fin n → β) : StreamModel (Fin n → ℝ) α β where
   init := enc init

@@ -8,14 +8,18 @@ below are transcribed from that text; section/theorem numbers are the paper's.
 
 **Status of this receipt.** Every mapping claim has two sides: (i) the paper-side
 definition, quoted; (ii) our-side object, with a repo file:line citation **and** a Lean
-theorem that proves the algebraic/syntactic match.
+theorem that proves the algebraic/syntactic match, where available. Algebraic shape
+does not establish transfer of the paper's rational-approximation complexity bounds to
+exact reals, nor realization by a configured Emender activation.
 
 **Pass-2 update (operator directive: re-prove, do not cite).** The mapping claims are no
 longer citations. R1 lives in `formal/lean/ElmanProofs/Expressivity/ArmMapping.lean`, R3/R4
 in `WeightedAutomata.lean`, R2 in `CounterMachine.lean`. Each claim below now carries the
 declaration that proves it, and every place where our re-proof *cannot* reproduce the paper
-is marked **DIVERGENCE**. The only surviving citation is `PNC¹`-membership (their Thm. 3),
-for which we can reproduce the associative-scan reduction but not the circuit class.
+is marked **DIVERGENCE**. The paper's complexity results and four-layer construction remain citations.
+The counter-machine result is an additive-update `StreamModel` embedding, not a
+completed closed-form transition proof. R4 gives homogeneous-product identities and
+padding/depth arithmetic, not circuit-class membership.
 
 ---
 
@@ -34,7 +38,12 @@ theorems do not address, while our fixed-budget theorems address a regime they d
 study. The two developments are **complementary regimes of the same object**, and the
 Lean file says exactly that: `PrecisionRegime.log2_schedule_is_growing` proves `log₂` is
 a growing schedule, and `PrecisionRegime.precision_regime_split` proves the fixed-budget
-half.
+half. The counting implication in that skeleton is an
+**impossible-global-abstraction corollary**: its premise gives an all-length global
+abstraction for each `n`, and already `h 0` contradicts
+`countModel_no_omega_finite_state`, for every schedule (growing or not). The
+length-restricted abstraction bridge to Def. 10 is **UNPROVED**; the skeleton does
+not show that growing budget buys counting.
 
 ---
 
@@ -108,7 +117,9 @@ Differences that matter and are *not* covered by the paper's theorems:
 
 1. **Decay diagonal.** Our `D_t = diag(exp g_t) ≠ I`: our arm is DPLR with a nontrivial
    time-varying gate, like RWKV-7, not plain DeltaNet. Both are DPLR, so the paper's
-   *upper* bound (Thm. 3: any LRNN over ℚ is in `PNC¹`) applies to ours; their
+   *upper* bound (Thm. 3: any LRNN over ℚ is in `PNC¹`) applies only under
+   **paper-compatible rational-approximation semantics**, not automatically to our
+   exact-real model; their
    *lower* bounds (Thm. 5/6: 4-layer DeltaNet/RWKV-7 simulate iterated `3×3` matrix
    multiplication and every WFA) are proved for their specific layer stacks with a
    router + token buffer + `O(n²)` arithmetic steps — **not** for a single Emender head.
@@ -122,11 +133,14 @@ Differences that matter and are *not* covered by the paper's theorems:
 4. **The parity statement is theirs.** `β ∈ (0,2)` is what *licenses* parity at fixed
    precision per Grazzi et al.; we prove only the range, not the parity recognition.
 
-**Placement in their Figure 1:** the *DPLR LRNN* box (`PNC¹`), automaton class WFA.
+**Placement in their Figure 1, under paper-compatible rational-approximation
+semantics only:** the *DPLR LRNN* upper-bound box (`PNC¹`). Exact-real transfer is
+unproved; WFA completeness of their sufficient four-layer construction is not
+claimed for a single configured head.
 
 ---
 
-## 2. Arm B — our E97 `tanh`-state recurrence: **Def. 3 nonlinear RNN instance (upper bound only)**
+## 2. Arm B — our E97 `tanh`-state recurrence: **exact-real closed-form shape; semantics-qualified upper bound only**
 
 ### Paper side
 
@@ -156,9 +170,8 @@ S_t = f(decay_t ⊙ S_{t−1} + β_t · outer(delta_t, k_t)),   f = tanh (defaul
 ```
 
 * Repo: `ndm/models/e88_fla_hybrid.py:1356–1368` (`_apply_state_activation`;
-  the docstring there states the classification we independently prove at fixed budget:
-  `'tanh'` = "saturating; |S| ≤ 1, finite-state expressivity, cannot count",
-  `'relu'/'softplus'` = "NON-SATURATING … → counter"); `:310`, `:833`
+  the docstring labels `'tanh'` saturating and `'relu'/'softplus'` non-saturating;
+  these implementation labels are not counter-machine realization proofs); `:310`, `:833`
   (`S = tanh(decay * S + beta * outer(delta, k))`); `ndm/models/typed_head_mixture.py:228`
   (`e97_state_nonlin: str = 'tanh'`) and `:454` (`state_activation=self.e97_state_nonlin`).
 * **Lean proof of closed form:** `PrecisionRegime.tanhStreamModel_isClosedFormRNN`
@@ -170,27 +183,30 @@ S_t = f(decay_t ⊙ S_{t−1} + β_t · outer(delta_t, k_t)),   f = tanh (defaul
   `ArmMapping.eval_expTaylorForm` build their Def. 1 `exp` as an `N`-term Taylor
   truncation inside the closed-form language, and `ArmMapping.expTaylor_two_ne_exp`
   proves that truncation is **not** `Real.exp` (at `x = 1`, `2 < e`). Our models use exact
-  `Real.exp`, which is strictly stronger — see divergence 5.
+  `Real.exp`; this is a discrepancy only, not computational-class strictness or an
+  upper-bound transfer theorem — see divergence 5.
 
-### Verdict: **instance of Def. 3 — but only their UPPER bounds transfer**
+### Verdict: **exact-real closed-form shape; UPPER bounds require paper-compatible rational-approximation semantics**
 
 | | our E97 `tanh` state | paper's nonlinear RNN (Thm. 1/2) |
 |---|---|---|
 | closed form `f` | **yes (proved)** | definition |
 | activation | `tanh` (saturating, `|S| < 1`) | **ReLU MLP** (non-saturating) |
-| upper bounds (Prop. 1 / Cor. 1) | **apply** (any closed-form RNN over ℚ at log/poly precision) | theirs |
+| upper bounds (Prop. 1 / Cor. 1) | **apply only under paper-compatible rational-approximation semantics**; no exact-real transfer theorem | theirs |
 | lower bounds (Thm. 1, Thm. 2, Cor. 2: multi-stack machines, L/P-completeness) | **do not transfer verbatim** — proved for ReLU MLPs, whose counter registers are unbounded above | theirs |
 | state shape | matrix `head_v_dim × head_k_dim` per head, elementwise `tanh` | vector `h_t ∈ K^d`; same class, bookkeeping only |
 
-So the paper places our **saturating** nonlinear arm at `⊆ L` (log precision) /
-`⊆ P` (poly precision) but gives **no lower bound** for it. Whether a `tanh`-state RNN at
+Under **paper-compatible rational-approximation semantics only**, the paper
+places the saturating nonlinear shape at `⊆ L` (log precision) / `⊆ P` (poly precision),
+with **no lower bound** for it. No transfer to our exact-real model is proved. Whether a `tanh`-state RNN at
 growing precision reaches counter machines is **open** (X22T open item O10), and the
 literature's counter-machine constructions (their Lemma 3) are explicitly ReLU-based.
-This matches our repo's own long-standing comment and X21T's `tanh_one_dim_two_fixed_points`
-/ `tanhStreamModel_state_bounded` results, which put saturating arms on the bounded side.
+X21T's `tanh_one_dim_two_fixed_points` / `tanhStreamModel_state_bounded` describe
+fixed points and bounded state values, not a growing-precision counter impossibility
+or an upper-bound transfer theorem.
 
-**Placement in their Figure 1:** the *Nonlinear RNN* box is entered only up to its upper
-bound; the "Counter machine" automaton class is **not** claimed for our `tanh` arm.
+**Placement in their Figure 1, under paper-compatible rational-approximation
+semantics only:** the *Nonlinear RNN* upper-bound side (exact-real transfer unproved); the "Counter machine" automaton class is **not** claimed for our `tanh` arm.
 
 ---
 
@@ -203,37 +219,43 @@ bound; the "Counter machine" automaton class is **not** claimed for our `tanh` a
 * This is the counter-machine model of Fischer et al. / Weiss et al. / Merrill et al.
   Lemma 3, i.e. the model class their **Theorem 1** (poly-precision MLP RNN simulates a
   multi-stack machine) and **Theorem 2** (log-precision MLP RNN simulates a counter
-  machine) act on. We therefore **derive** the corollary for our architecture class
-  instead of re-proving Turing completeness: *ours is a counter machine, so their
-  theorems cover its RNN realization.*
+  machine) act on. Their theorem supplies an abstract ReLU-MLP realization, not
+  a realization by a configured Emender head. Our `cmModel_fold` instead proves an
+  exact `StreamModel` embedding of the defined additive-update machine; its discrete
+  control, Boolean equality decisions, and arbitrary lookups remain. Only
+  `zeroMaskForm` has an arithmetic-expression correctness theorem. Closed-form
+  transition assembly, even for one counter, and reset updates from their Lemma 3
+  remain unproved (O14).
 * Caveat, stated plainly: the RNN that their theorem produces has a **ReLU** gate. Our
-  E97 `tanh` configuration is not that RNN; the E97 `relu`/`softplus` configurations are
-  the addressable ones.
+  E97 `tanh` configuration is not that RNN; E97 `relu`/`softplus` configurations are
+  **CANDIDATE HOSTS** requiring a realization proof, not covered configurations.
+  A single configured elementwise activation (`e88_fla_hybrid.py:1356–1374`) is not
+  a ReLU MLP transition, and the paper gives no softplus construction.
 
 ---
 
 ## 4. Taxonomy placement (their Figure 1) and what the X21E receipts mean
 
-Their Figure 1 rows: `TC⁰`(S4/Mamba) → `NC¹`(PD-SSM) → `PNC¹`(**DPLR: DeltaNet, RWKV-7**)
+**The following upper-bound placements require paper-compatible rational-approximation
+semantics; no exact-real transfer is proved.** Their Figure 1 rows: `TC⁰`(S4/Mamba) → `NC¹`(PD-SSM) → `PNC¹`(**DPLR: DeltaNet, RWKV-7**)
 → `L`(**nonlinear RNN, log precision**) → `P`(poly precision); automaton classes: — /
 DWFA / WFA / counter machine / Turing machine.
 
 | our arm | Figure-1 box | basis |
 |---|---|---|
-| `fla-gdn` (`allow_neg_eigval=True`) | **DPLR LRNN, `PNC¹`**, WFA | `gatedDelta_isDPLR` (proved) + their Thm. 3 |
-| `e97_state_nonlin='tanh'` (E97/E88) | **Nonlinear RNN**, `⊆ L`/`⊆ P` upper bound only | `tanhStreamModel_isClosedFormRNN` (proved) + their Prop. 1/Cor. 1 |
-| `e97_state_nonlin='relu'/'softplus'` | **Nonlinear RNN, `L`/`P` box with lower bounds** | their Thm. 1/Thm. 2 (cited; not re-proved) |
+| `fla-gdn` (`allow_neg_eigval=True`) | **DPLR LRNN, `PNC¹` upper bound under paper-compatible rational-approximation semantics only**; no single-head WFA completeness | algebraic `gatedDelta_isDPLR` + cited Thm. 3; exact-real transfer unproved |
+| `e97_state_nonlin='tanh'` (E97/E88) | **Nonlinear RNN**, `⊆ L`/`⊆ P` only under paper-compatible rational-approximation semantics | exact-real closed-form shape + cited Prop. 1/Cor. 1; exact-real transfer unproved |
+| `e97_state_nonlin='relu'/'softplus'` | **CANDIDATE HOSTS**, not established `L`/`P` lower-bound placements | realization proof required: single elementwise activation ≠ ReLU MLP; paper gives no softplus construction |
 | `stackModel` (framework construction only) | **Counter machine** | `stackModel_run_eq_counterModel` (proved) |
 | all of the above *at a fixed budget* | **finite automata (both arms)** | X21T collapse + `PrecisionRegime.fixed_budget_collapses_to_finite_state` (proved) |
 
-**The X21E receipts read as the fixed-budget regime manifesting in practice.** X21E
-measured trained champions retaining only start-anchored shallow prefixes at extended
-horizons and learning the cumulative 3721-state automaton only 2–6 steps deep. That is
-exactly what the fixed-budget theorems predict for *both* arms: inside the automata band,
-with the band fixed by the channel width, so a large automaton is learned only as a
-shallow prefix-specialized function. It is **not** evidence about the growing-precision
-boxes, since the trained models are bf16/fp32 (fixed budget). No training was launched
-by X22T; this paragraph is an interpretation of pre-existing receipts, labelled as such.
+**The X21E receipts are empirical observations, not fixed-budget theorem predictions.**
+X21E measured trained champions retaining only start-anchored shallow prefixes at
+extended horizons and learning the cumulative 3721-state automaton only 2–6 steps deep.
+The fixed-budget theorems provide neither a 3721-state capacity obstruction for these
+models nor a learnability bound, and prove no necessary causal explanation of this
+shallow-prefix learning. These bf16/fp32 receipts do not establish growing-precision
+class placements. No training was launched by X22T.
 
 
 ---
@@ -253,15 +275,15 @@ by X22T; this paragraph is an interpretation of pre-existing receipts, labelled 
 | their Taylor `exp` ≠ `Real.exp` | `ArmMapping.expTaylor_two_ne_exp` | **proved** |
 | every WFA is computed in one layer | `WeightedAutomata.wfaModel_readout` | **proved** |
 | deterministic automaton = `0/1` WFA = X21T one-hot model | `WeightedAutomata.detWFA_state_eq_onehot` | **proved** |
-| a single DPLR step cannot realize a 3-cycle | `WeightedAutomata.cycle3_not_dplr`, `dplr_cycle_identity` | **proved (new obstruction)** |
+| the literal `cycle3` matrix is not DPLR in its specified coordinates | `WeightedAutomata.cycle3_not_dplr`, `dplr_cycle_identity` | **proved (new obstruction)** |
 | LRNN state = iterated matrix product | `WeightedAutomata.lrnn_hom_state` | **proved** |
 | associative ⇒ balanced evaluation of depth `log₂n+1` | `WeightedAutomata.prodL_balanced_eval` | **proved** |
-| every real-time counter machine is run by a real recurrent model | `CounterMachineSim.cmModel_fold` | **proved** |
+| the defined additive-update machine is exactly embedded in a `StreamModel` (not closed-form assembly) | `CounterMachineSim.cmModel_fold` | **proved** |
 | the zero test is an *exact* closed form | `CounterMachineSim.zeroMaskR_int`, `eval_zeroMaskForm` | **proved** |
-| the counter-machine class computes `aᵏbᵏ` | `CounterMachineSim.cmModel_separates_balanced` | **proved** |
+| the `StreamModel` construction has balanced-block discrimination (also accepts `abab`) | `CounterMachineSim.cmModel_separates_balanced` | **proved** |
 | "log precision suffices" | `CounterMachineSim.cmModel_reachable_card` (`3·(n+1)` states) | **proved as cardinality, not bits** (divergence 3) |
-| their Lemma 3's MLP synthesis | — | **NOT reproduced — and not needed** (divergence 1) |
-| their Thm. 6's 4-layer router+buffer | — | **NOT reproduced**; the obstruction above explains why layers are needed |
+| their Lemma 3's MLP synthesis, reset updates, complete closed-form assembly (including one counter) | — | **NOT reproduced**; O14, only the arithmetic zero-mask gadget is proved |
+| their Thm. 6's 4-layer router+buffer | — | **NOT reproduced**; cited sufficient construction, not proved necessary |
 | their Thm. 3: LRNN ⊆ `PNC¹` | — | **NOT reproduced**; only the associative-scan reduction (O13) |
 | their Thm. 1: poly-precision ⇒ `P`-complete | — | **NOT reproduced** (no circuit/space complexity model in Lean) |
 
@@ -278,20 +300,40 @@ by X22T; this paragraph is an interpretation of pre-existing receipts, labelled 
    model.
 4. **Their ε-tolerance is unnecessary in our class.** Their Lemma 3 builds ReLU equality
    checks with tolerance `1/3`; our closed form has `max` (Def. 2 allows it) and tests zero
-   *exactly* (`zeroMaskR_int`). Consequence: any argument that a `tanh`/softmax arm cannot do
-   exact zero tests does not touch this class.
-5. **Exact `exp` vs Taylor `exp`.** Their datatype truncates; we do not. Ours is strictly
-   stronger, so their results do not transfer *to* us automatically — the direction matters
-   and is stated in `expTaylor_two_ne_exp`.
+   *exactly* on integer-valued reals (`zeroMaskR_int`). This is a gadget result only:
+   `cmRealStep` still has discrete control, Boolean equality decisions, and arbitrary
+   lookup functions, so no assembled closed-form transition is established.
+5. **Exact `exp` vs Taylor `exp`.** Their datatype truncates; we do not.
+   `expTaylor_two_ne_exp` establishes a discrepancy only, not computational-class
+   strictness and not a transfer theorem. Every cited upper-bound placement here is
+   qualified to paper-compatible rational-approximation semantics; exact-real
+   transfer remains unproved.
 
 ### Two findings the operator asked for
 
-* **A single DPLR layer is strictly weaker than a single LRNN layer.** The cycle identity
-  `A i j A j l A l i = A i l A l j A j i` holds for every DPLR matrix and fails for the
-  3-cycle permutation. So their 4-layer router+buffer construction is *necessary*: it is the
-  price of the rank-one restriction, not a proof artifact.
-* **The counter-machine side is a `max`/`√` phenomenon, not a `tanh` phenomenon.** Our
-  simulation stores counters in unbounded reals and tests zero with `max 0 (1 − |r|)`. A
-  saturating `tanh` state lives in `(−1, 1)` and cannot be a counter, so the nonlinear class
-  that reaches `L` is the *non-saturating* one. This is the formal version of the
-  `state_activation` table in `e88_fla_hybrid.py:1356–1368`.
+* **Literal matrix obstruction only, not behavioral strictness.** The cycle identity
+  `A i j A j l A l i = A i l A l j A j i` holds for every DPLR matrix and fails for
+  the literal `cycle3` permutation matrix in its specified coordinates. The reviewer's
+  rot3-is-DPLR counterexample shows why this scope matters:
+  `B = [[0,-1],[1,-1]] = diag(-1,0) - (1,1)ᵀ(-1,1)` **is DPLR** and cycles
+  `(1,0) → (0,1) → (-1,-1) → (1,0)`, realizing the X21T three-cycle.
+  Thus the paper's four-layer router+buffer construction is **sufficient, not proved
+  necessary**; no behavioral strictness or minimal-depth theorem follows.
+* **Exact embedding with an arithmetic zero-mask gadget, not a completed Lemma-3
+  construction.** The `StreamModel` stores counters in unbounded real coordinates;
+  `zeroMaskForm` arithmetically implements `max 0 (1 − |r|)`. No complete transition
+  expression is proved, including for the one-counter witness. This is neither a
+  growing-precision impossibility for encoded `tanh` counters nor a realization
+  theorem for E97 ReLU/softplus configurations; those remain **CANDIDATE HOSTS**.
+
+### X22TR corrections register
+
+All eight narrowing applications are recorded with the reviewer's counterexample in
+`THEOREMS.md` §7, corrections 14–21: (1) impossible global abstraction / unproved Def.-10
+bridge; (2) additive-update embedding / unproved closed-form assembly; (3) semantics-
+qualified upper bounds / discrepancy only; (4) literal matrix obstruction / rot3-is-DPLR /
+sufficient four-layer construction; (5) candidate ReLU/softplus hosts; (6) balanced-block
+discrimination; (7) geometric separation, not a robust decoder or finite-precision
+dynamics; (8) no shallow-prefix capacity or learnability prediction. For (7),
+`enc_robust_decode` proves nearby-corner uniqueness, but `tanhCornerModel.out` requires
+exact corner equality and otherwise emits the initial-state output.

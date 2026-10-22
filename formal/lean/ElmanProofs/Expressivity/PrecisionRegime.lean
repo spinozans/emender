@@ -29,23 +29,28 @@ This file proves the parts of that picture that live inside *our* framework, and
 carries the (at the time) uncited parts as explicit hypotheses. **Superseding note
 (X22T pass 2):** the mapping lemmas and the constructive simulations are now
 *independently re-proved* in `ArmMapping.lean` (R1), `WeightedAutomata.lean` (R3, R4) and
-`CounterMachine.lean` (R2). The single item that remains unreproduced is `PNC¹`-membership
-itself — we have only the associative-scan reduction (`prodL_balanced_eval`), not the
-circuit class (open item O13).
+`CounterMachine.lean` (R2). These are narrower than complete paper re-proofs:
+`cmModel_fold` is an additive-update embedding, not assembled closed-form arithmetic
+(O14), and `cycle3_not_dplr` is a literal matrix obstruction, not behavioral strictness
+or four-layer necessity. We have homogeneous-product identities and padding/depth
+arithmetic (`prodL_balanced_eval`), not circuit-class membership (O13). All cited
+upper-bound placements require paper-compatible rational-approximation semantics;
+no exact-real transfer is proved.
 
 ## 1. Precision schedules and the fixed-budget regime (proved here)
 
-`PrecisionSchedule = ℕ → ℕ` is their Def. 10 read as total channel bits.
+`PrecisionSchedule = ℕ → ℕ` is schedule notation inspired by Def. 10. The bridge
+from length-restricted bit precision to our global abstraction predicates is unproved.
 `IsFixedBudget p` is `p = O(1)`; `IsGrowingBudget p` is `p` unbounded — their log and
 poly precision are *growing*, so their whole analysis sits on the growing side.
 
 * `fixed_budget_collapses_to_finite_state` — **at a fixed budget, uniformly in the
   length, every arm collapses to finitely many states** (X21T's collapse, in schedule
   form and without a surjectivity hypothesis).
-* `countModel_needs_growing_budget` — **the sharp pivot**: the exact counting program
-  is a member of *no* fixed-budget class, so any schedule presenting it must be
-  growing. Combined with X21T's impossibility theorems, this is the fixed-budget half
-  of the regime split.
+* `countModel_needs_growing_budget` — impossible-global-abstraction corollary: its
+  premise supplies global all-length abstractions, and already `h 0` contradicts
+  `countModel_no_omega_finite_state` for any schedule, growing or not. No
+  length-restricted Def.-10 schedule lower bound or counting realization follows.
 * `log2_schedule_is_growing` — `O(log n)` precision is a growing schedule.
 
 ## 2. Mapping our arms onto their definitions (proved here)
@@ -65,9 +70,10 @@ poly precision are *growing*, so their whole analysis sits on the growing side.
 
 ## 3. The regime split and the conditional arm separation
 
-* `precision_regime_split` — the proved halves, pivoting explicitly on the schedule:
-  fixed budget ⇒ finite automata for every arm; and the counting behaviour forces a
-  growing budget.
+* `precision_regime_split` — a regime skeleton, not a Def.-10 schedule bridge:
+  fixed budget ⇒ finite automata under the abstraction hypothesis; the counting
+  implication has an impossible global premise. It does not show that growing
+  budget buys counting; the length-restricted Def.-10 bridge is unproved.
 * `arm_separation_at_growing_precision` — the cited half, as a conditional statement
   whose hypotheses are named after the theorems that supply them: DPLR `⊆ PNC¹`
   (their Thm. 3), a nonlinear-arm witness outside `PNC¹` (their Thm. 2 + `PNC¹ ≠ L`),
@@ -88,9 +94,9 @@ open MemoryBoundary
 
 /-! ## 1. Precision schedules -/
 
-/-- A precision schedule in the sense of Merrill et al. (2026, Def. 10): `p n` is the
-number of bits the state channel carries at input length `n` (total channel bits; the
-`B` of `BoundedAbstraction` is the case `p ≡ B`). -/
+/-- Schedule notation inspired by Merrill et al. (2026, Def. 10): `p n` denotes a
+putative total bit budget at length `n`. The length-restricted precision bridge is
+unproved; `BoundedAbstraction` below is global and all-length, not length-restricted. -/
 def PrecisionSchedule := ℕ → ℕ
 
 /-- A **fixed** budget: `O(1)` bits, independent of length. This is the regime of
@@ -173,10 +179,10 @@ theorem fixed_budget_collapses_to_finite_state (p : PrecisionSchedule) (hp : IsF
   exact exists_fin_model_of_abstraction'
     (boundedAbstraction_mono (Nat.pow_le_pow_right (by norm_num) (hB n)) (A n))
 
-/-- **The pivot, made explicit: the counting program needs a growing budget.** The
-exact `LIN(1)` counter cannot be presented under any fixed schedule, so any schedule
-that presents it is *growing*. This is X21T's `countModel_no_omega_finite_state`
-restated as a statement about precision growth. -/
+/-- Impossible-global-abstraction corollary, not a Def.-10 schedule lower bound.
+The premise gives an all-length global abstraction for every `n`; already `h 0`
+contradicts `countModel_no_omega_finite_state`, regardless of the schedule. Even a
+growing schedule cannot satisfy it. A length-restricted precision bridge is unproved. -/
 theorem countModel_needs_growing_budget (p : PrecisionSchedule)
     (h : ∀ n, BoundedAbstraction countModel (2 ^ p n)) : IsGrowingBudget p := by
   intro B
@@ -185,10 +191,10 @@ theorem countModel_needs_growing_budget (p : PrecisionSchedule)
   exact countModel_no_omega_finite_state (2 ^ B)
     (boundedAbstraction_mono (Nat.pow_le_pow_right (by norm_num) (hcon 0)) (h 0))
 
-/-- **The proved half of the regime split.** (A) a fixed budget puts every arm,
-uniformly in the length, in the finite-state band; (B) the counting behaviour is in no
-fixed-budget class, so it forces a growing budget — and `O(log n)` precision is such a
-growing schedule. Both halves pivot explicitly on the schedule `p`. -/
+/-- Regime skeleton: fixed-budget global abstractions give a uniform finite-state
+bound; the counting implication has an impossible global premise; and `log₂` is
+unbounded. This proves neither a length-restricted Def.-10 precision lower bound nor
+that growing budget buys counting. The schedule bridge remains unproved. -/
 theorem precision_regime_split :
     (∀ (p : PrecisionSchedule) (_hp : IsFixedBudget p) (_σ _α _β : Type*)
         (_M : ℕ → StreamModel _σ _α _β) (_A : ∀ n, BoundedAbstraction (_M n) (2 ^ p n)),
@@ -272,8 +278,9 @@ theorem tanhStep_scalarClosedForm :
 /-- **Mapping lemma (F1 side).** Our scalar saturated stream model
 (`tanhStreamModel`) *is* a Merrill et al. Def. 3 nonlinear RNN, with the two-vector
 `(A x, B x)` as the token encoding and `f(h, x) = tanh (A x · h + B x)` as the single
-closed-form step. Their classification of this class is cited, not re-proved; their
-Lemma 1 (citing Chiang 2025) is what places a closed form inside `FO`-uniform `TC⁰`. -/
+closed-form step over exact reals. Their complexity classification is cited only
+under paper-compatible rational-approximation semantics; this shape lemma proves no
+exact-real upper-bound transfer. -/
 theorem tanhStreamModel_isClosedFormRNN {α β : Type*} (A B : α → ℝ) (ψ : ℝ → β) :
     ∃ step : ℝ → (Fin 2 → ℝ) → ℝ, ScalarStepClosedForm step ∧
       ∀ (s : ℝ) (x : α), (tanhStreamModel A B ψ).step s x = step s ![A x, B x] :=
@@ -290,8 +297,10 @@ def IsDPLR {d : ℕ} (A : Fin d → Fin d → ℝ) : Prop :=
 DeltaNet rank-one correction — *is* their Def. 5 DPLR form, with
 `D = diag (exp g)`, `k̃ = β ⊙ exp g ⊙ k` and `ṽ = k`. Differences from the paper's
 DeltaNet parameterization: their `A_t = I − β_t k_t k_tᵀ` has `D_t = I` (no decay),
-ours carries the gate `diag (exp g_t)`; both are DPLR, so both fall under their
-Thm. 3 (`PNC¹` upper bound) and their WFA-simulation lower bound (Thm. 6). -/
+ours carries the gate `diag (exp g_t)`. Their Thm. 3 upper bound applies under
+paper-compatible rational-approximation semantics only; no exact-real transfer
+follows from this identity. Their sufficient four-layer WFA construction (Thm. 6)
+is not a lower bound for a single configured head. -/
 theorem gatedDelta_isDPLR {d : ℕ} (g k : Fin d → ℝ) (β : ℝ) :
     IsDPLR (fun i j => Real.exp (g i) * ((if i = j then 1 else 0) - β * k i * k j)) := by
   refine ⟨fun i => Real.exp (g i), fun i => β * Real.exp (g i) * k i, k, fun i j => ?_⟩
@@ -343,9 +352,10 @@ theorem counterModel_out_depth (p : StackPhase × List Unit) :
 collapse to its depth, so `stackModel` is a counter machine in the sense of Fischer et
 al. / Weiss et al. / Merrill et al. Lemma 3. The *simulation* of counter machines by a
 real-state recurrent model is re-proved in `CounterMachine.lean`
-(`CounterMachineSim.cmModel_fold`), including the exact closed-form zero test
-(`zeroMaskR_int`), so this mapping is now backed by a construction rather than a
-citation. -/
+(`CounterMachineSim.cmModel_fold`) as an additive-update `StreamModel` embedding.
+Only `zeroMaskForm` has an arithmetic-expression correctness theorem; discrete
+control, Boolean equality decisions, and arbitrary lookups remain in `cmRealStep`.
+Complete closed-form assembly, including one counter and reset updates, is unproved. -/
 theorem stackModel_run_eq_counterModel : ∀ w,
     stackModel.run w = counterModel.run w := by
   have hsim : ∀ w, stackModel.runFrom stackModel.init w
@@ -365,7 +375,8 @@ theorem stackModel_run_eq_counterModel : ∀ w,
 
 * `hDPLR` — every LRNN over `ℚ`, in particular every DPLR arm (Thm. 3; refined to
   `AC⁰[ENC¹]` at log precision by Thm. 4). Our `gatedDelta_isDPLR` puts the fla-gdn
-  arm here.
+  shape here only under paper-compatible rational-approximation semantics; the
+  identity proves no exact-real upper-bound transfer.
 * `hwit` — the nonlinear arm contains a language outside `PNC¹`: their Thm. 2 gives a
   log-precision nonlinear RNN solving an `L`-complete problem, which is outside
   `PNC¹` unless `PNC¹ = L`.
@@ -374,12 +385,13 @@ Conclusion: the nonlinear arm is **not** contained in the DPLR arm — the opera
 separation claim, located exactly on the precision-*growth* axis and conditional on
 `PNC¹ ≠ L`. **Status after X22T pass 2:** this is deliberately kept as the *logical
 skeleton* only. Its inputs are the class memberships, of which we now re-prove the
-constructive halves — `CounterMachineSim.cmModel_fold` (counter machines are realizable
-exactly by our recurrent class) and `WeightedAutomata.wfaModel_readout` (every WFA is
-realizable in one layer) — but **not** the `PNC¹` upper bound, which remains open
-(O13). The class-side caveat stands: their lower bounds are ReLU-MLP constructions, so
-this transfer covers the *non-saturating* nonlinear configuration; the saturating `tanh`
-arm is not covered (O10). -/
+pieces — `CounterMachineSim.cmModel_fold` (exact additive-update embedding in a
+`StreamModel`, not closed-form completeness) and `WeightedAutomata.wfaModel_readout`
+(every WFA in an unrestricted LRNN layer) — but not circuit-class membership (O13)
+or complete arithmetic transition assembly (O14). The paper's lower bounds are
+ReLU-MLP constructions, not configured elementwise E97 activations. ReLU/softplus
+configurations are candidate hosts requiring a realization proof; no softplus
+construction is supplied, and the saturating `tanh` arm is not covered (O10). -/
 theorem arm_separation_at_growing_precision
     (PNC1 DPLR Nonlin : Set (ℕ → Bool))
     (hDPLR : DPLR ⊆ PNC1)

@@ -8,19 +8,21 @@ paper changes what the targets mean:
 * its **precision axis is a function of input length** (Def. 10), so its entire analysis
   sits on the *growing*-precision side, while X20T/X21T/X22T-F1/F2 study a *fixed* budget;
 * its **nonlinear arm reaches counter machines / `L` / `P`** (Thm. 1, Thm. 2, Cor. 2),
-  which subsumes "TANH realizes finite automata" (target F1) and supplies the positive
-  direction of target F3;
+  which subsumes "TANH realizes finite automata" (target F1) and supplies a cited positive
+  direction for target F3 under the paper-compatible semantics;
 * its **DPLR arm is bounded by `PNC¹`** (Thm. 3, Thm. 4) and reaches WFA/`PNC¹`
-  completeness with 4-layer stacks (Thm. 5, Thm. 6) — which is where our fla-gdn arm sits.
+  completeness with 4-layer stacks (Thm. 5, Thm. 6), under paper-compatible
+  rational-approximation semantics — not an automatic placement of our exact-real
+  fla-gdn model.
 
 **Pass 2 (superseding operator directive): RE-PROVE, do not cite.** Because a mistake is
-possible — theirs, ours, or in the mapping — every load-bearing construction of the paper
-that lives inside our framework is now independently re-proved in Lean: the arm mapping
-(R1), the counter-machine simulation with an *exact* closed-form zero test (R2), the WFA
-simulation plus a **new obstruction** showing why a single DPLR layer cannot do it (R3),
-and the associative-scan reduction underlying their `PNC¹` upper bound (R4). The one thing
-we could **not** reproduce is `PNC¹`-membership itself (no circuit model in Lean) — flagged
-as **O13**, not glossed over.
+possible — theirs, ours, or in the mapping — the algebraic arm mapping (R1), an
+exact embedding of additive-update counter machines
+with an arithmetic zero-mask gadget (R2), one-layer unrestricted LRNN WFA evaluation
+and a literal matrix obstruction (R3), and homogeneous-product identities with
+padding/depth arithmetic (R4) are independently proved in Lean. These are not complete
+re-proofs of the paper: closed-form transition assembly is **O14**, the precision
+bridge is **O4**, and circuit-class membership is **O13**.
 
 Formal receipts (`lake build` green, no `sorry`, headline declarations depend only on
 `propext`, `Classical.choice`, `Quot.sound`):
@@ -28,11 +30,11 @@ Formal receipts (`lake build` green, no `sorry`, headline declarations depend on
 | file | role |
 |---|---|
 | `formal/lean/ElmanProofs/Expressivity/ArmMapping.lean` | **R1** — gdn step = Def. 4 LRNN step; `D_t = I` ⇒ DeltaNet exactly; DPLR in three decay placements; Taylor-`exp` datatype; `β ∈ (0,2)` |
-| `formal/lean/ElmanProofs/Expressivity/CounterMachine.lean` | **R2** — counter machines, exact closed-form zero mask, general simulation, `aᵏbᵏ` witness, `3·(n+1)`-state bound |
+| `formal/lean/ElmanProofs/Expressivity/CounterMachine.lean` | **R2** — counter machines, exact closed-form zero mask, additive-update embedding, balanced-block discrimination witness, `3·(n+1)`-state bound |
 | `formal/lean/ElmanProofs/Expressivity/WeightedAutomata.lean` | **R3/R4** — WFA simulation in one layer, deterministic special case, DPLR cycle obstruction, associative-scan log-depth reduction |
-| `formal/lean/ElmanProofs/Expressivity/PrecisionRegime.lean` | the regime theorem (schedule language) + the mapping predicates |
+| `formal/lean/ElmanProofs/Expressivity/PrecisionRegime.lean` | fixed-budget collapse, impossible-global-abstraction corollary + mapping predicates |
 | `formal/lean/ElmanProofs/Expressivity/OmegaStreamExpressivity.lean` | **F2** — `ω`-stream transduction, collapse, bounded-precision activation independence |
-| `formal/lean/ElmanProofs/Expressivity/StreamingTanhRealization.lean` | **F1** — saturated-corner `TANH(n)` realization + robust decoding |
+| `formal/lean/ElmanProofs/Expressivity/StreamingTanhRealization.lean` | **F1** — exact saturated-corner `TANH(n)` realization + geometric corner separation |
 | `formal/lean/ElmanProofs/Expressivity/MemoryBoundary.lean` | **F3** — context-free impossibility + stack augmentation |
 | `experiments/expressivity_tasks/theory_x22t/MAPPING_RECEIPT.md` | definition-by-definition mapping with the re-proof status table and the five divergences |
 
@@ -41,34 +43,39 @@ cited, never re-measured.
 
 ---
 
-## 1. The regime theorem (X22T centerpiece)
+## 1. The regime skeleton (narrowed after X22TR review)
 
-**Statement.** Let `p : ℕ → ℕ` be a precision schedule — `p n` bits of state channel at
-input length `n` (Merrill et al. Def. 10). Then:
+**Scope.** Let `p : ℕ → ℕ` be schedule notation inspired by Def. 10. Our
+`BoundedAbstraction` assumptions are global and all-length, not length-restricted
+precision assumptions. The cited complexity placements in this table require
+**paper-compatible rational-approximation semantics**, not exact-real transfer:
 
 | regime | both arms | the two arms |
 |---|---|---|
 | **`p` fixed** (`∃ B, ∀ n, p n ≤ B`) | **finite automata, uniformly in `n`** — proved here | indistinguishable at this precision: both are `N`-state machines, and exactly the `n`-state class is realized at `d = n` by both activations |
-| **`p` growing** (unbounded) | proved: exact counting escapes every fixed budget, so it *requires* a growing schedule | **cited (Merrill et al.)**: nonlinear (ReLU-MLP) arm reaches counter machines — `L`-complete at log precision (Thm. 2), `P`-complete at poly precision (Thm. 1, Cor. 2); DPLR arm `⊆ PNC¹` (Thm. 3), `⊆ AC⁰[ENC¹]` at log precision (Thm. 4). Since `PNC¹ ⊆ L`, the arms separate **iff `PNC¹ ≠ L`** |
+| **`p` growing** (unbounded) | exact counting escapes every finite global abstraction; the length-restricted Def.-10 schedule bridge is **UNPROVED**, not a theorem that growing budget buys counting | **cited (Merrill et al.)**: nonlinear (ReLU-MLP) arm reaches counter machines — `L`-complete at log precision (Thm. 2), `P`-complete at poly precision (Thm. 1, Cor. 2); DPLR arm `⊆ PNC¹` (Thm. 3), `⊆ AC⁰[ENC¹]` at log precision (Thm. 4). Since `PNC¹ ⊆ L`, the arms separate **iff `PNC¹ ≠ L`** |
 
-**The pivot is precision growth, explicitly.** `PrecisionRegime.precision_regime_split`
-(:21) proves the two halves we own:
+**Precision growth distinguishes the cited regimes, not a proved schedule bridge.**
+`PrecisionRegime.precision_regime_split` packages:
 
 1. `fixed_budget_collapses_to_finite_state` — a family of models whose channel carries
    `2 ^ p n` values with `p` bounded is, *uniformly in the length*, simulated by an
    `N`-state model for one fixed `N`. Activation-agnostic: the statement only sees
    `BoundedAbstraction`. (This is X21T's collapse in schedule form, and without X21T's
    surjectivity hypothesis — `exists_fin_model_of_abstraction'`, `collapseFin`.)
-2. `countModel_needs_growing_budget` — **the pivot made sharp**: the exact `LIN(1)`
-   counter is in *no* fixed-budget class, so every schedule presenting it is growing.
-   (`IsGrowingBudget p := ∀ B, ∃ n, B < p n`.)
+2. `countModel_needs_growing_budget` — **impossible-global-abstraction corollary**.
+   Its premise supplies a global, all-length `BoundedAbstraction countModel (2 ^ p n)`
+   for every `n`; already `h 0` contradicts `countModel_no_omega_finite_state`,
+   regardless of whether `p` grows. No schedule satisfies it. A length-restricted
+   abstraction and the bridge to Def. 10 are **UNPROVED**.
 3. `log2_schedule_is_growing` — `O(log n)` precision **is** a growing schedule. This is
    the sentence that keeps our theorems and theirs from being in conflict: their log
    precision is not our fixed budget (`2^{O(log n)} = poly(n)` values).
 
 `PrecisionRegime.arm_separation_at_growing_precision` (:22) carries the cited half as an
-explicit conditional: given `DPLR ⊆ PNC¹` (their Thm. 3 — applicable to our arm because
-`gatedDelta_isDPLR`) and a nonlinear-arm witness outside `PNC¹` (their Thm. 2 plus
+explicit conditional: given `DPLR ⊆ PNC¹` (their Thm. 3 under paper-compatible
+rational-approximation semantics, not transferred by `gatedDelta_isDPLR` alone) and
+a nonlinear-arm witness outside `PNC¹` (their Thm. 2 plus
 `PNC¹ ≠ L`), the nonlinear arm is **not** contained in the DPLR arm. Nothing about
 complexity classes is formalized in Lean; the cited statements enter as named hypotheses
 so the conditional structure is auditable.
@@ -81,22 +88,26 @@ so the conditional structure is auditable.
 |---|---|---|---|
 | `fla-gdn`, gated delta rule, `A_t = diag(exp g_t)(I − β k kᵀ)`, `allow_neg_eigval=True` | **Def. 5 DPLR** `A_t = D_t − k_t v_tᵀ`; DeltaNet is the `D_t = I` case | **instance (DPLR)**; differs by the nontrivial decay diagonal (RWKV-7-like), by being a single head rather than their 4-layer router+buffer stack, and by fixed (bf16/fp32) precision | `gatedDelta_isDPLR` |
 | β range under `allow_neg_eigval` | paper §2.3 cites Grazzi et al.: `β ∈ (0,1)` cannot recognize parity, `(0,2)` can | `β = 2·sigmoid z ∈ (0,2)` — the parity-capable range | `negEigval_beta_range` |
-| E97 `state_nonlin='tanh'`: `S_t = tanh(decay ⊙ S_{t−1} + β ⊙ outer(delta,k))` | **Def. 3 nonlinear RNN** with Def. 2 closed-form `f` | **instance of Def. 3** — but their *upper* bounds apply and their *lower* bounds do **not**: those (Thm. 1/2, Lemma 3) are built from **ReLU** networks, whose counters are unbounded above, while `tanh` saturates into `(−1,1)` | `tanhStreamModel_isClosedFormRNN`, `ArithClosedForm.eval_tanhForm` |
+| E97 `state_nonlin='tanh'`: `S_t = tanh(decay ⊙ S_{t−1} + β ⊙ outer(delta,k))` | **Def. 3 nonlinear RNN** with Def. 2 closed-form `f` | **exact-real closed-form shape** — their *upper* bounds apply only under paper-compatible rational-approximation semantics (transfer unproved), and their *lower* bounds do **not**: those (Thm. 1/2, Lemma 3) are built from **ReLU** networks, whose counters are unbounded above, while `tanh` saturates into `(−1,1)` | `tanhStreamModel_isClosedFormRNN`, `ArithClosedForm.eval_tanhForm` |
 | `MemoryBoundary.stackModel` (unary stack) | counter machine (Fischer et al. / Weiss et al. / their Lemma 3) | **is a one-counter machine**: the stack collapses to its depth | `stackModel_run_eq_counterModel` |
 | all of the above at a fixed budget | — | **finite automata** (the fixed-budget band) | `fixed_budget_collapses_to_finite_state` |
 
-Figure-1 placement: `fla-gdn` → **DPLR LRNN box (`PNC¹`, WFA)**; E97-`tanh` → **Nonlinear
-RNN box, upper-bound side only**; E97-`relu`/`softplus` → **Nonlinear RNN box with the
-`L`/`P` lower bounds** (cited); `stackModel` → **counter machine**; everything at a fixed
-budget → **finite automata for both arms**.
+Figure-1 placement **under paper-compatible rational-approximation semantics only**:
+`fla-gdn` → **DPLR LRNN upper-bound box (`PNC¹`)**, with no WFA-completeness claim
+for a single head; E97-`tanh` → **Nonlinear RNN upper-bound side only**. No exact-real
+transfer theorem is proved. E97-`relu`/`softplus` are **CANDIDATE HOSTS**, requiring a
+realization proof: one configured elementwise activation is not a ReLU MLP transition
+(`ndm/models/e88_fla_hybrid.py:1356–1374`), and the paper gives no softplus construction.
+`stackModel` → **counter machine**; at a fixed budget, the abstraction hypothesis gives
+**finite automata for both arms**.
 
 **How the X21E receipts read now.** Trained champions retain only start-anchored shallow
 prefixes at extended horizons and learn the cumulative 3721-state automaton
-(`(x,y) ↦ (y, x+y²+c) mod 61`) only 2–6 steps deep. Under the regime theorem that is the
-*fixed-budget regime manifesting in practice*: bf16/fp32 training pins the channel, both
-arms are inside the automata band, and a 3721-state machine cannot sit in a narrow band —
-so only a shallow, prefix-anchored approximation is learnable. **Interpretation only**;
-no theorem here predicts that number, and no training was launched.
+(`(x,y) ↦ (y, x+y²+c) mod 61`) only 2–6 steps deep. These are empirical observations,
+not predictions of the fixed-budget theorems.
+Those theorems provide neither a 3721-state capacity obstruction for these models nor
+a learnability bound, and establish no necessary cause for shallow-prefix learning.
+No training was launched.
 
 ---
 
@@ -111,8 +122,11 @@ via the **saturated-corner** construction: code `enc j = τ·e_j` with `τ = tan
 pre-activation is *exactly* the `0/1` successor indicator (so no precision hypothesis is
 needed for exactness), `tanh_cornerMatrix_mul_enc` that `tanh` lands exactly on the
 successor corner. `finite_program_class_equality`: both activations reach every `n`-state
-behaviour at `d = n`; `enc_robust_decode`: corners are separated by `τ`, so any per-
-coordinate resolution finer than `τ/2 ≈ 0.381` decodes correctly.
+behaviour at `d = n`; `enc_robust_decode` proves geometric uniqueness: two corners
+cannot both be within `τ/2 ≈ 0.381` coordinatewise of one state. It does **not**
+implement a robust decoder. `tanhCornerModel.out` requires exact corner equality and
+otherwise returns the initial-state output; small perturbations of a noninitial corner
+need not decode correctly. No finite-precision dynamical guarantee is claimed.
 
 *Re-scoped:* at growing precision this is **subsumed** by Merrill et al. — a nonlinear
 RNN with `O(log n)` bits simulates a *counter machine* (Thm. 2, Lemma 3), and counter
@@ -166,9 +180,14 @@ channel computes the `aᵏbᵏ` discrimination, at any word length.
 **(b) Positive direction (re-proved in R2).** Our stack augmentation is a **one-counter
 machine** (`stackModel_run_eq_counterModel`), and `CounterMachine.lean` now re-proves the
 simulation itself: `CounterMachineSim.cmModel_fold` shows a real-state recurrent model
-reproduces *any* real-time counter machine's configuration after every word, using an
-**exact** closed-form zero test `max 0 (1 − |r|)` (`zeroMaskR_int`, no `ε`-tolerance), and
-`cmModel_separates_balanced` proves the class computes `aᵏbᵏ`. `stackModel_cells_unary`
+exactly embeds the **defined additive-update** machine after every word. `cmRealStep`
+retains discrete control, Boolean equality decisions, and arbitrary lookup functions;
+only `zeroMaskForm` has an arithmetic-expression correctness theorem, with exact
+`max 0 (1 − |r|)` on integers. No assembled closed-form transition is proved, even for
+the one-counter witness; reset updates from the paper's Lemma 3 are not modelled.
+`cmModel_separates_balanced` proves **balanced-block discrimination** for the
+`StreamModel` construction, not closed-form-arithmetic completeness or exact language
+recognition (the witness also accepts `abab`). `stackModel_cells_unary`
 shows the memory is one cell symbol at unbounded depth and
 `stackModel_no_finite_abstraction` that it lies outside every bounded-precision class.
 `cmModel_reachable_card` supplies the log-precision content as a **cardinality** bound
@@ -187,14 +206,16 @@ Operator (2026-10-22): *"we want to prove we can have indefinitely running progr
 Emender series… the whole class that's expressible as an indefinitely running program is
 different."*
 
-**Vindicated, in the growing-precision model, by Merrill et al. + our regime theorem:
-the separation is real and it lives on the precision-growth axis.**
+**A conditional separation for the paper's growing-precision classes, not an
+exact-real transfer or a realized separation between configured Emender heads.**
 
 > At a *fixed* budget both arms are finite automata (our theorems: X21T collapse,
 > `fixed_budget_collapses_to_finite_state`), so no arm separation exists there. At a
 > *growing* budget the nonlinear arm reaches counter machines and hence `L`-complete /
 > `P`-complete problems (their Thm. 1, Thm. 2, Cor. 2) while every LRNN — our DPLR fla-gdn
-> arm included — is confined to `PNC¹` (their Thm. 3; `PNC¹ ⊆ L`). So
+> arm's algebraic shape included — is confined to `PNC¹` **under paper-compatible
+> rational-approximation semantics** (their Thm. 3; `PNC¹ ⊆ L`). No exact-real transfer
+> theorem is proved. So
 > **nonlinear ⊄ DPLR, conditional on `PNC¹ ≠ L`**
 > (`arm_separation_at_growing_precision`), and the pivot variable is precisely the
 > length-dependence of the state channel's precision.
@@ -204,16 +225,17 @@ What bends, stated plainly:
 1. It is **not** a claim about our `tanh` arm. Their lower bounds are ReLU-MLP
    constructions; a saturating `tanh` state is confined to `(−1,1)`, and whether it can
    reach counter machines at growing precision is **open** (O10). The addressable Emender
-   configurations for the nonlinear side are `state_activation ∈ {relu, softplus}` — which
-   our own code documents as the non-saturating, counter-capable side.
+   configurations `state_activation ∈ {relu, softplus}` are only **CANDIDATE HOSTS**:
+   their single elementwise activation is not the paper's ReLU MLP, and no softplus
+   construction is given. A realization proof is required.
 2. It is **not** an unbounded-precision claim either. Exact real arithmetic is outside all
    of these classes (their Proposition 1 caps at poly precision); X20T's exact-`LIN(1)`
    universality lives outside the picture and stays open (O6).
 3. It is **conditional** on `PNC¹ ≠ L` (`NC ≠ P` for the poly-precision version) — a
    long-standing open problem, exactly as their Corollaries 4/6 state.
-4. It says nothing about *learnability*. X21E's shallow-prefix finding is a fixed-budget
-   phenomenon (see §2); whether the extra growing-precision power is learnable is not
-   addressed by either development.
+4. It says nothing about *learnability*. X21E's shallow-prefix finding is empirical,
+   with no proved causal link to fixed-budget collapse (see §2); whether the extra
+   growing-precision power is learnable is not addressed by either development.
 
 **And the honest re-labelling of X22T's own earlier results:** F1's "TANH realizes
 automata" is an *equality*, not a separation, and at growing precision it is subsumed.
@@ -242,7 +264,8 @@ X22T adds: `tau`/`enc`/`cornerMatrix`/`tanhCornerModel` (F1); `omegaPrefix`, `om
 **`StreamingTanhRealization.lean` (F1)**
 1. `tau_eq_tanh_one`, `tau_pos`, `tau_ne_zero`, `tau_abs_lt_one`.
 2. `enc_self`, `enc_of_ne`, `enc_injective`, `enc_entries`, `enc_abs_lt_one`.
-3. `enc_diff_at`, `enc_robust_decode` — corner separation, `τ/2` decoding margin.
+3. `enc_diff_at`, `enc_robust_decode` — geometric corner separation, not an
+   implemented robust decoder or a finite-precision dynamical guarantee.
 4. `cornerMatrix_mul_enc_apply`, `cornerMatrix_mul_enc` — the pre-activation is exactly
    the `0/1` successor indicator.
 5. `tanh_cornerMatrix_mul_enc` — `tanh` lands exactly on the successor corner.
@@ -274,7 +297,8 @@ X22T adds: `tau`/`enc`/`cornerMatrix`/`tanhCornerModel` (F1); `omegaPrefix`, `om
 22. `boundedAbstraction_mono`, `collapseFin`, `collapseFin_step`, `collapseFin_out`,
     `exists_fin_model_of_abstraction'` (collapse **without** surjectivity).
 23. `fixed_budget_collapses_to_finite_state` — uniform-in-`n` finite-state bound.
-24. `countModel_needs_growing_budget` — the pivot, sharp.
+24. `countModel_needs_growing_budget` — impossible-global-abstraction corollary; premise
+    contradicted by `h 0` for every schedule, not a Def.-10 schedule lower bound.
 25. `precision_regime_split` — (23) ∧ (24) ∧ `log₂` growing.
 26. `ArithClosedForm` (+ `eval`, `tanhForm`, `eval_tanhForm`), `ScalarStepClosedForm`,
     `tanhStep_scalarClosedForm`, `tanhStreamModel_isClosedFormRNN` — **Def. 2/3 mapping**.
@@ -301,7 +325,8 @@ X22T adds: `tau`/`enc`/`cornerMatrix`/`tanhCornerModel` (F1); `omegaPrefix`, `om
     computes every WFA score at every position**.
 39. `detTrans`, `detWFA`, `detTrans_rowStep_onehot`, `detWFA_state_eq_onehot` — **the
     deterministic special case is X21T's one-hot model**.
-40. `dplr_cycle_identity`, `cycle3`, `cycle3_not_dplr` — **the DPLR obstruction**.
+40. `dplr_cycle_identity`, `cycle3`, `cycle3_not_dplr` — **literal matrix obstruction
+    in the specified coordinates only**, not behavioral strictness.
 41. `prodL`, `prodL_append`, `prodL_splitAt`, `prodL_singleton`, `foldl_matMul_eq_rev`,
     `lrnn_hom_state` — the LRNN state is an iterated product.
 42. `halvingDepth`, `halvingDepth_pow_two`, `le_two_pow_log2_succ`, `prodL_pad`,
@@ -312,10 +337,12 @@ X22T adds: `tau`/`enc`/`cornerMatrix`/`tanhCornerModel` (F1); `omegaPrefix`, `om
 44. `zeroMaskR`, `zeroMaskForm`, `eval_zeroMaskForm`, `zeroMaskR_int`, `isZeroR`,
     `isZeroR_int`, `isZeroR_natCast` — **the zero test is an exact closed form**.
 45. `cmEmbed`, `cmRealStep`, `cmModel`, `cmRealStep_embed`, `fold_embed`, `cmModel_fold` —
-    **the simulation theorem**.
+    **exact embedding of the defined additive-update machine**, not closed-form
+    transition assembly (discrete control, Boolean decisions, arbitrary lookups remain).
 46. `balancedCM`, `phaseIdx`, `toReal`, `cmRealStep_balanced_toReal`, `cmStep_balanced_toCounter`,
     `cmRun_balanced_aux`, `fold_counterStep_eq_stack`, `fold_counterStep_init`, `cmRun_blocks`,
-    `outR`, `outR_cmEmbed`, `cmModel_separates_balanced` — the `aᵏbᵏ` witness.
+    `outR`, `outR_cmEmbed`, `cmModel_separates_balanced` — balanced-block discrimination
+    (also accepts `abab`), not exact `aᵏbᵏ` recognition.
 47. `counterStep_snd_le`, `counterFold_snd_le`, `cmModel_reachable_card` — the `O(log n)`
     cardinality content.
 
@@ -339,15 +366,17 @@ the F1/F2/F3 and regime-theorem headlines.
    precision is `p(n)` bits at length `n`, and log precision means `poly(n)` values. Our
    `BoundedAbstraction` is the `O(1)`-bit case, which **they do not analyse**. Every X22T
    theorem is therefore a statement about a *different* regime, and the regime theorem
-   (`precision_regime_split`) states both sides and pivots on the schedule.
+   (`precision_regime_split`) packages fixed-budget collapse and a vacuous counting
+   implication; the length-restricted Def.-10 bridge remains unproved.
 2. **F1's content is subsumed at growing precision.** Counter machines subsume finite
    automata (their Thm. 2 path), so "TANH realizes automata" is not evidence of nonlinear
    power. F1 is kept as the exact dimension-`n` construction and as the fixed-budget half
    of the equality; it is **not** a separator.
 3. **The F1 construction needed no precision hypothesis, and the "large-magnitude
    saturation" route was unnecessary.** The pre-activations are *solved for* and are
-   exactly `0`/`1`; only the code level `τ = tanh 1` needs finite resolution, with margin
-   `τ/2` (`enc_robust_decode`).
+   exactly `0`/`1` in exact real arithmetic. The geometric margin `τ/2`
+   (`enc_robust_decode`) supplies neither an implemented robust readout nor a
+   finite-precision dynamical guarantee.
 4. **The ambient form of "class equality at bounded precision" is impossible**
    (`no_ambient_abstraction_of_injective_readout`), generalizing X21T's `rot3Model.out = id`
    remark to every model with a distinguishing readout.
@@ -363,19 +392,20 @@ the F1/F2/F3 and regime-theorem headlines.
    DPLR but with a nontrivial decay diagonal (RWKV-7-like, not DeltaNet's `D_t = I`), and it
    is a single head, not their 4-layer router+buffer stack, so their *completeness* results
    (Thm. 5/6) are not claimed for it. Our E97 `tanh` arm is Def.-3 closed form, so their
-   *upper* bounds apply, but their *lower* bounds are ReLU constructions and do not transfer.
+   *upper* bounds apply only under paper-compatible rational-approximation semantics
+   (exact-real transfer unproved); their *lower* bounds are ReLU MLP constructions
+   and do not transfer to the configured elementwise activations.
 8. **`SeparatesBalanced` is a finite-word statement already quantifying over all lengths**;
    the `ω` reading follows from `omegaState` being the finite-word prefix fold, and no
    separate `ω` impossibility theorem is formalized (the docstring says exactly this).
 9. **`PNC¹ ⊆ L ⊆ P` and `PNC¹ ≠ L`/`NC ≠ P` are not formalized.** They enter
    `arm_separation_*` as explicit hypotheses so the conditional is auditable; the
    separation claim is only as strong as those citations.
-10. **Pass-2 correction: the constructive content is now ours, and two things broke.**
-    Re-proving the paper's constructions produced (i) `cycle3_not_dplr` — a single DPLR
-    layer is *strictly weaker* than a single LRNN layer, so their Thm. 6's four layers plus
-    a router are necessary, not incidental; and (ii) the observation that their Lemma 3's
-    `ε = 1/3` tolerance is an artifact of ReLU-only gadgets — their own Def. 2 admits `max`,
-    which gives an *exact* zero test. Both are recorded in `MAPPING_RECEIPT.md` §5.
+10. **Pass-2 scope corrected by X22TR.** `cycle3_not_dplr` excludes a literal
+    `3×3` transition matrix in its specified coordinates only. It proves neither
+    behavioral strictness nor four-layer necessity (see correction 17).
+    `zeroMaskForm` is exact on integer-valued reals; the complete closed-form
+    counter-machine transition is not assembled (O14).
 11. **Pass-2 correction: what we could not reproduce.** `PNC¹`-membership (their Thm. 3),
     their Thm. 1's space-complexity wrapper, and their 4-layer router/buffer construction.
     We have the associative-scan reduction and the obstruction, not the classes. **O13.**
@@ -383,9 +413,43 @@ the F1/F2/F3 and regime-theorem headlines.
     `p_h(n)` bit accounting is not modelled; `cmModel_reachable_card` gives `3·(n+1)`
     reachable states for the witness machine. Any statement that needs *bit-lengths* (e.g.
     accumulation error) is outside what we re-proved.
-13. **X21E interpretation, labelled as interpretation.** The shallow-prefix / 2–6-step
-    depth finding is the fixed-budget band showing up in training. No theorem predicts it,
-    no training was launched, and it says nothing about the growing-precision boxes.
+13. **X21E observations, not a theorem consequence.** No fixed-budget theorem
+    predicts the shallow-prefix / 2–6-step depth finding, supplies a 3721-state
+    capacity obstruction here, or proves a learnability bound. No training was launched.
+14. **X22TR condition 1 — impossible global premise.** For any schedule, `h 0` in
+    `countModel_needs_growing_budget` contradicts `countModel_no_omega_finite_state`.
+    The theorem is demoted to an impossible-global-abstraction corollary; the
+    length-restricted Def.-10 schedule bridge is **UNPROVED**. No claim that a growing
+    budget buys counting follows from the regime skeleton.
+15. **X22TR condition 2 — embedding, not closed-form completeness.** `cmRealStep`
+    retains discrete control, Boolean equality decisions, and arbitrary lookups.
+    Only `zeroMaskForm` has an arithmetic-expression correctness theorem. O14 includes
+    the one-counter witness, general lookup assembly, and the paper's reset updates;
+    the counter-machine class claim concerns the defined additive-update `StreamModel`.
+16. **X22TR condition 3 — semantics-qualified placements.** Every cited upper-bound
+    placement requires paper-compatible rational-approximation semantics; exact-real
+    transfer is unproved. `expTaylor_two_ne_exp` proves a discrepancy only, not
+    computational-class strictness or a transfer theorem.
+17. **X22TR condition 4 — literal coordinates only; reviewer's rot3-is-DPLR
+    counterexample.** `B = [[0,-1],[1,-1]] = diag(-1,0) - (1,1)ᵀ(-1,1)` **is DPLR**
+    and cycles `(1,0) → (0,1) → (-1,-1) → (1,0)`, realizing the X21T three-cycle.
+    Thus `cycle3_not_dplr` is only a literal matrix obstruction, not behavioral
+    strictness. The paper's four-layer construction is **sufficient, not proved
+    necessary**; neither minimal depth nor necessity of its router/buffer is proved.
+18. **X22TR condition 5 — candidate hosts only.** E97 ReLU/softplus configurations
+    require a realization proof: `e88_fla_hybrid.py:1356–1374` applies one configured
+    elementwise activation, not a ReLU MLP transition; the paper gives no softplus
+    construction. Non-saturation does not establish its lower bounds.
+19. **X22TR condition 6 — balanced-block discrimination.** `balancedCM` also accepts
+    `abab`; `SeparatesBalanced` is the correct narrow statement, not exact recognition
+    of `aᵏbᵏ`. Lean comments and the witness descriptions are corrected accordingly.
+20. **X22TR condition 7 — separation, not robust implementation.**
+    `enc_robust_decode` proves geometric corner uniqueness; `tanhCornerModel.out`
+    requires exact corner equality and otherwise emits the initial-state output.
+    No implemented robust decoder or finite-precision dynamical guarantee is proved.
+21. **X22TR condition 8 — no training prediction.** Removed the predictive/necessary
+    causal claim about shallow-prefix learning; the fixed-budget theorems give neither
+    a 3721-state capacity obstruction for these models nor a learnability bound.
 
 ---
 
@@ -433,9 +497,11 @@ the F1/F2/F3 and regime-theorem headlines.
   (Thm. 1, Thm. 2, Lemma 3) are ReLU constructions. Whether a `tanh`-state RNN at log
   precision reaches counter machines — and whether our E97-`tanh` configuration therefore
   sits in the `L` box with a *lower* bound — is **open**. The `relu`/`softplus`
-  configurations are the ones their theorems address.
-* **O11 — how much of `PNC¹` our fla-gdn head actually reaches.** Their Thm. 5/6 need 4
-  layers with a router and a token buffer; what a single Emender head with `d ≤ 64` and
+  configurations are **CANDIDATE HOSTS**, not configurations covered by their
+  ReLU-MLP lower bounds; both require a realization proof, and no softplus construction
+  is supplied by the paper.
+* **O11 — how much of `PNC¹` our fla-gdn head actually reaches.** Their Thm. 5/6 provide a sufficient 4-layer
+  construction with a router and a token buffer (not a minimal-depth theorem); what a single Emender head with `d ≤ 64` and
   bf16 reaches inside `PNC¹` is unaddressed.
 * **O12 — `PNC¹ ≠ L`.** The separation is conditional on a longstanding open problem, as in
   their own Corollaries 4 and 6.
@@ -444,15 +510,16 @@ the F1/F2/F3 and regime-theorem headlines.
   power of two, `halvingDepth_pow_two`, `log₂n+1` bound) but the step from that to "the
   language is in `PNC¹`" is the paper's and remains unverified by us. This is the largest
   single gap left by pass 2.
-* **O14 — the general closed-form assembly for `c ≥ 2` counters.** `cmModel`'s step is
-  closed-form *coordinatewise* in the zero masks (proved for the one-counter witness and via
-  the exact `zeroMaskForm`); assembling arbitrary many-counter lookup tables into a single
-  Def. 2 expression requires a bit-vector interpolation lemma we did not formalize. Their
-  Lemma 3's MLP synthesis is exactly the machinery that papers over this, so the gap is
-  theirs too — but our re-proof is not yet complete for `c ≥ 2`.
+* **O14 — complete closed-form transition assembly, including one counter.**
+  `cmRealStep` retains discrete control, Boolean equality decisions, and arbitrary
+  lookup functions. Only `zeroMaskForm` has an arithmetic-expression correctness
+  theorem; no assembled Def.-2 transition is proved even for the one-counter witness.
+  `cmModel_fold` exactly embeds the defined additive-update machine, not the paper's
+  complete Lemma-3 closed-form simulation. Reset updates allowed there are not modelled.
+  Realizing these controls/lookups/updates arithmetically remains unproved.
 * **O15 — the 4-layer router/buffer construction.** Their Thm. 5/6 positive direction for
-  DPLR stacks is not reproduced; we have the one-layer LRNN simulation and the obstruction
-  that motivates the stack. Whether *our* fla-gdn head reaches `PNC¹`-completeness at 4
+  DPLR stacks is not reproduced; we have the one-layer LRNN simulation and a literal coordinate-matrix obstruction
+  that proves no stack-depth necessity. Whether *our* fla-gdn head reaches `PNC¹`-completeness at 4
   layers with `d ≤ 64` is unaddressed (O11).
 
 ---

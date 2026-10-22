@@ -7,35 +7,37 @@ import ElmanProofs.Expressivity.ArmMapping
 /-!
 # R3/R4 — Weighted-automata simulation re-proved, and the log-depth reduction
 
-## R3: their Theorem 6 (weighted automata), re-proved in our framework
+## R3: unrestricted LRNN weighted-automata evaluation and a literal matrix obstruction
 
 Merrill et al. (ICML 2026) state that DPLR LRNNs simulate every weighted finite automaton
 (their Thm. 6), via a 4-layer DeltaNet/RWKV-7 stack with a position router and a token
-buffer. We re-prove the *simulation* here and re-derive *why* their construction needs
-that machinery.
+buffer. Here we prove unrestricted one-layer LRNN WFA evaluation and a literal
+coordinate-matrix obstruction only; we do not prove that their extra machinery is necessary.
 
 * `WFA` — their Def. 13 path form `f_A(w) = αᵀ M_{w₁} ⋯ M_{wₙ} ω` over `ℝ`.
 * `wfaModel` — the **one-layer, dimension-`n`** `StreamModel` whose state is the running
   row vector `αᵀ M_{w₁} ⋯ M_{w_t}` and whose shared readout emits `· ω` at **every**
   position; `wfaModel_readout` proves the emitted value at each prefix *is* the WFA score
   of that prefix. So an *unrestricted* LRNN (their Def. 4) simulates any WFA in one layer
-  — the statement their Thm. 3 side licenses, not their Thm. 6.
+  — this is an exact-real algebraic construction, not a circuit-class placement or
+  their Thm. 6 DPLR construction.
 * `detWFA_fold_onehot` — **our X21T one-hot linear realization is exactly the deterministic
   special case**: a deterministic automaton is a `0/1` WFA, whose running row vector is the
   one-hot vector of the current state.
-* `dplr_cycle_identity`, `cycle_perm_not_dplr` — **the DPLR obstruction**: every DPLR
+* `dplr_cycle_identity`, `cycle3_not_dplr` — **literal matrix obstruction**: every DPLR
   matrix satisfies `A i j · A j l · A l i = A i l · A l j · A j i` on distinct indices
   (its off-diagonal part is an outer product), and the `3`-cycle permutation violates it.
-  A **single** DPLR step therefore cannot implement even a bare 3-cycle, let alone an
-  arbitrary WFA transition matrix.
+  This excludes that literal matrix in its specified coordinates, not three-cycle
+  behavior under other encodings. The reviewer's counterexample
+  `B = [[0,-1],[1,-1]] = diag(-1,0) - (1,1)ᵀ(-1,1)` is DPLR and cycles
+  `(1,0) → (0,1) → (-1,-1) → (1,0)`, realizing the X21T three-cycle.
 
 **Divergence flag (R3).** The paper's Thm. 6 is a statement about a *stack* of DPLR layers
 with routing; we reproduce the one-layer LRNN simulation (trivial in our framework, where
-`A_t` is an arbitrary token-indexed matrix) and we *prove the obstruction* that forces
-their extra layers. We do **not** reproduce the 4-layer DeltaNet/RWKV-7 construction:
-stating it would require formalizing their router (`t mod 2m`), the token buffer and the
-`O(n²)` transvection program. The finding is the obstruction, and it is positive evidence
-that their construction is not padding.
+`A_t` is an arbitrary token-indexed matrix) and prove a literal matrix obstruction.
+We do **not** reproduce the 4-layer DeltaNet/RWKV-7 construction, which is sufficient,
+not proved necessary. Neither behavioral strictness nor minimal depth follows. Its
+router (`t mod 2m`), token buffer and `O(n²)` transvection program are unformalized.
 
 ## R4: the upper-bound side, in reduced form (their Theorem 3)
 
@@ -199,9 +201,11 @@ def cycle3 : Fin 3 → Fin 3 → ℝ :=
   fun i j =>
     if (i, j) = (0, 1) then 1 else if (i, j) = (1, 2) then 1 else if (i, j) = (2, 0) then 1 else 0
 
-/-- **A 3-cycle is not DPLR**: the cycle identity fails (`1` versus `0`). So no single
-DPLR layer can implement even this transition matrix — the reason their Thm. 6 needs four
-layers plus a router and a buffer. -/
+/-- The literal `cycle3` matrix is not DPLR in these coordinates: its cycle identity
+fails (`1` versus `0`). This is not a behavioral or depth lower bound. In particular,
+`B = [[0,-1],[1,-1]] = diag(-1,0) - (1,1)ᵀ(-1,1)` is DPLR and realizes the X21T
+three-cycle on `(1,0), (0,1), (-1,-1)`. The paper's four-layer construction is
+sufficient, not proved necessary. -/
 theorem cycle3_not_dplr : ¬ IsDPLR cycle3 := by
   intro h
   have hcyc := dplr_cycle_identity h (i := 0) (j := 1) (l := 2) (by decide) (by decide)
