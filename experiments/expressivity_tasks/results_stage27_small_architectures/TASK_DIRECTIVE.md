@@ -1,0 +1,13 @@
+TASK X27 - OUR ARCHITECTURES AT THEIR SCALE: the size hypothesis (operator-directed 2026-10-23: "maybe our models are too big - maybe the 50x smaller model is essential for actually learning these tasks"). Repo /home/erikg/emender. Card 6 is free NOW; more free as X25 graph arms complete - queue accordingly. Companion to X26 (their models) and X25 (our big models): this is the missing cell of the falsification grid.
+
+THE HYPOTHESIS: overparameterization lets our 9.9M-param models sit in shortcut basins on synthetic algorithmic tasks (memorization/partial fits that never compose into the procedure), while sub-million-parameter models are forced toward the algorithm. Test: OUR architectures at THEIR scale (their models: 232k-791k params, 1-2 layers, small embeddings) on the SAME reviewed generators and reconciled protocol. If small-ours learn where big-ours sat at chance, SIZE is implicated; if small-ours also fail while small-theirs (X26) learn, ARCHITECTURE-CLASS is the difference, not size.
+
+ARMS (all on the graph task first - the headline; IMM smalls queue behind):
+- small-e97-tanh-graph: HybridLadderLM E97 core scaled to ~1 layer, small dim (target total params in the 200k-800k band to match their scale - compute the actual config: depth 1, dim ~128-256, heads/state reduced; receipt the parameter count and config)
+- small-e97-softplus-graph: same with the X24 fused softplus state (the activation question at small scale)
+- small-gdn2-graph: fla-gdn at matched small scale
+- optional queued: the same three on IMM as cards free
+Same reconciled protocol (AdamW 1e-4/wd 1e-4, batch 128, 60k, clip 1.0, early stop), same reviewed task generators, same single-variable discipline: small-vs-big differs ONLY in size (recipe/task/protocol identical to X25).
+
+PRE-REGISTERED PREDICTIONS (before launch): (a) SIZE-BINDING: small-ours learn graph connectivity with OOD generalization where big-ours sat at chance - overparameterization was the obstruction; the production implication (train small for algorithmic behavior, transplant/distill after) is receipted; (b) ARCHITECTURE-BINDING: small-ours also fail while X26 small-theirs learn - the architecture class, not size, is the difference (DPLR/nonlinear-core implementations vs ours); (c) NOTHING-LEARNS: small-ours and X26 small-theirs BOTH fail on our generators - the task implementation is implicated and the native-tokenization control fires. Every outcome locates the divergence one cell further.
+Standard chain: registration with predictions first (commit+push), launch on card 6 then freed cards, smokes at max length before each arm, disk guard, receipts, watcher wiring. Return 10 lines with the small-arm configs (parameter counts), registration commit, and launched rungs.
