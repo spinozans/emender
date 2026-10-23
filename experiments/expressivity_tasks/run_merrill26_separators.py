@@ -19,6 +19,7 @@ from experiments.expressivity_tasks.tasks.merrill26_separators import (
 
 ROOT = Path('experiments/expressivity_tasks/results_stage23e_separators')
 CEILING, EVAL_EVERY, BATCH = 60000, 500, 64
+WEIGHT_DECAY = .01
 FREE_BYTES, RUN_BYTES, WALL_SECONDS = 400 * 1024**3, 40 * 1024**3, 7 * 86400
 
 
@@ -211,11 +212,14 @@ def run(arm, task):
             raise RuntimeError('max-bin smoke did not pass')
         torch.manual_seed(0)
         model = build_model(arm, task).cuda()
-        opt = torch.optim.AdamW(model.parameters(), lr=0., betas=(.9, .999), eps=1e-8, weight_decay=.01)
+        opt = torch.optim.AdamW(model.parameters(), lr=0., betas=(.9, .999), eps=1e-8, weight_decay=WEIGHT_DECAY)
         torch.cuda.reset_peak_memory_stats()
         rng = np.random.default_rng(23000)
         train, validation = data(task, 'train'), data(task, 'validation')
         config = {'name': name, 'architecture': arm, 'task': task, 'seed': 0,
+            'optimizer': {'name': 'AdamW', 'betas': [.9, .999], 'eps': 1e-8,
+                          'weight_decay': WEIGHT_DECAY, 'lr_update1': learning_rate(1),
+                          'lr_update5000': learning_rate(5000), 'lr_update60000': learning_rate(60000)},
             'registration_sha256': digest(ROOT / 'registration.json'),
             'source_commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
             'parameters': sum(p.numel() for p in model.parameters()),

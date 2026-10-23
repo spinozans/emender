@@ -1,0 +1,24 @@
+{
+  "run": "experiments/expressivity_tasks/results_stage23e_separators/gdn2_graph_seed0",
+  "crash_step": 5340,
+  "last_logged_update": 5339,
+  "error": "FloatingPointError('nonfinite logits')",
+  "crash_location": "forward_rows, training forward pass before backward/optimizer update5340",
+  "stream_fields": [
+    "elapsed_s",
+    "grad_norm",
+    "loss",
+    "lr",
+    "peak_allocated_bytes",
+    "step"
+  ],
+  "state_norms_logged": false,
+  "kernel_telemetry_in_crash": false,
+  "console_sha256": "0437b3ae3e7048d7d2bdb6064f49719d1b5a267a4a35d5213bfd5fb77d3ff414",
+  "source_sha256": {
+    "experiments/expressivity_tasks/results_stage23e_separators/gdn2_graph_seed0/training.jsonl": "881a2231cdb06fff03f03e3a54548f7e5cac50f7d9c5e4835116ef2fb31f34db",
+    "experiments/expressivity_tasks/results_stage23e_separators/gdn2_graph_seed0/validation.json": "5c610b5dedf544732c998e912035efe924b3d53a6b3284d645a29831ecac1bff",
+    "experiments/expressivity_tasks/results_stage23e_separators/gdn2_graph_seed0/result.json": "ed2e79e34aff9aafa1dc7939a2bccf1c1a65909afcf8a5fc7ab5eb3be60ff0d9"
+  },
+  "diagnosis": "No direct state magnitude growth extractable: stream has scalar loss, LR, preclip grad_norm, elapsed and peak allocation only; traceback has no kernel telemetry. Do not infer state overflow from nonfinite logits alone. Diagnosis rides on the X25 paper-recipe GDN2 graph outcome; no new instrumented runs."
+}
