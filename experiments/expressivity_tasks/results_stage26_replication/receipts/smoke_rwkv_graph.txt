@@ -1,0 +1,70 @@
+/home/erikg/emender/.venv/lib/python3.12/site-packages/fla/layers/rwkv7.py:148: UserWarning: According to Bo, you are using a potentially buggy FLA implementation of RWKV. If you plan to report any numbers based on this implementation, we strongly recommend cross-checking with the official repo: https://github.com/BlinkDL/RWKV-LM. Bo may disagree with results reported from this version.
+  warnings.warn(
+Traceback (most recent call last):
+  File "/home/erikg/emender/experiments/expressivity_tasks/results_stage26_replication/sources/LinearRNN/dgc/train_rwkv7.py", line 361, in forward
+    out = self.attn(x, **fwd_kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/fla/layers/rwkv7.py", line 279, in forward
+    v = torch.lerp(v, v_first, self.v_lora(xv).sigmoid())
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: lerp() received an invalid combination of arguments - got (Tensor, NoneType, Tensor), but expected one of:
+ * (Tensor input, Tensor end, Tensor weight, *, Tensor out = None)
+ * (Tensor input, Tensor end, Number weight, *, Tensor out = None)
+
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/erikg/emender/experiments/expressivity_tasks/run_merrill26_replication.py", line 257, in <module>
+    smoke(args.arm, args.task, args.smoke)
+  File "/home/erikg/emender/experiments/expressivity_tasks/run_merrill26_replication.py", line 130, in smoke
+    loss, _, _ = forward_rows(model, [(tokens, y)], task, auxiliary=task == 'integer',
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/run_merrill26_replication.py", line 90, in forward_rows
+    logits = model(torch.from_numpy(x).to(device), lengths).float()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/results_stage26_replication/sources/LinearRNN/dgc/train_rwkv7.py", line 516, in forward
+    x = blk(x, attn_mask)
+        ^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/results_stage26_replication/sources/LinearRNN/dgc/train_rwkv7.py", line 443, in forward
+    x = x + self.attn(self.norm1(x), attn_mask)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/results_stage26_replication/sources/LinearRNN/dgc/train_rwkv7.py", line 366, in forward
+    raise TypeError(
+TypeError: RWKV7Attention crashed at torch.lerp(v, v_first, ...) with v_first=None.
+This is a known bug in some rwkvfla/fla builds.
+This script tries to disable v_first features + use fused_recurrent, but your build still hits it.
+Next practical options:
+  (A) install a different rwkv-fla version (pin/upgrade/downgrade)
+  (B) patch site-packages rwkvfla/layers/rwkv7.py to guard v_first
+  (C) switch to a different RWKV7 implementation
+Original error: lerp() received an invalid combination of arguments - got (Tensor, NoneType, Tensor), but expected one of:
+ * (Tensor input, Tensor end, Tensor weight, *, Tensor out = None)
+ * (Tensor input, Tensor end, Number weight, *, Tensor out = None)
+

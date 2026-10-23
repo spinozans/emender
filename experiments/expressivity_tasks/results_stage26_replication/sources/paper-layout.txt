@@ -1,0 +1,1917 @@
+                              Why Are Linear RNNs More Parallelizable?
+
+
+                William Merrill 1 Hongjian Jiang 2 Yanhong Li 1 Anthony Lin 2 3 Ashish Sabharwal 1
+
+
+                          Abstract                                       (Merrill & Sabharwal, 2023). RNN architecture design re-
+                                                                         flects this tradeoff: while older RNNs were nonlinear and
+       The community is increasingly exploring linear                    highly sequential (Elman, 1990; Hochreiter & Schmidhuber,
+       RNNs (LRNNs) as language models, motivated                        1997), more recent RNN architectures prefer a linear state
+       by their expressive power and parallelizability.                  update (Bradbury et al., 2017; Katharopoulos et al., 2020;
+       While prior work establishes the expressivity ben-                Gu & Dao, 2024, inter alia) to enable parallel processing of
+       efits of LRNNs over transformers, it is unclear                   long sequences (Blelloch, 1990). Linear RNNs (LRNNs)
+       what makes LRNNs—but not traditional, nonlin-                     have been shown to be surprisingly theoretically expres-
+       ear RNNs—as easy to parallelize in practice as                    sive relative to transformers (Merrill et al., 2024; Grazzi
+       transformers. We answer this question by provid-                  et al., 2025) and practically performant (Beck et al., 2024;
+       ing a tight connection between types of RNNs                      Yang et al., 2025; Peng et al., 2025), but it remains unclear
+       and standard complexity classes. We show that                     how LRNNs and nonlinear RNNs compare in expressive
+       LRNNs can be viewed as log-depth (bounded                         power, or, conversely, whether fundamental barriers prevent
+       fan-in) arithmetic circuits, which represents only                parallelizing nonlinear RNNs to the same degree as LRNNs.
+       a slight depth overhead relative to log-depth
+       boolean circuits that transformers admit. Further-                In this work, we theoretically compare the parallelizabil-
+       more, we show that nonlinear RNNs can solve                       ity and expressive power of nonlinear RNNs and LRNNs
+       L-complete problems (and even P-complete ones,                    through the lens of computational complexity theory. A
+       under polynomial precision), revealing a funda-                   core result is a conditional separation in expressive power
+       mental barrier to parallelizing them as efficiently               between the two classes: whereas LRNNs can only solve
+       as transformers. Our theory also identifies fine-                 tasks that are in the circuit complexity class PNC1 (Theo-
+       grained expressivity differences between recent                   rem 3), nonlinear RNNs can express P-complete problems
+       popular LRNN variants: permutation-diagonal                       with polynomial precision (Corollary 2) or L-complete prob-
+       LRNNs are NC1 -complete whereas diagonal-plus-                    lems when restricted to log precision (Theorem 2). In either
+       low-rank LRNNs are more expressive (PNC1 -                        regime, this suggests nonlinear RNNs can represent sub-
+       complete). We provide further insight by asso-                    stantially less parallelizable computation that’s beyond the
+       ciating each type of RNN with a corresponding                     capabilities of LRNNs, assuming PNC1 ̸= P with poly
+       automata-theoretic model that it can simulate. To-                precision, or PNC1 ̸= L with log precision.
+       gether, our results reveal fundamental tradeoffs                  Conversely, these expressivity results have implications for
+       between nonlinear RNNs and different variants                     the parallelizability of different types of RNNs. It follows
+       of LRNNs, providing a foundation for designing                    that LRNNs—regardless of precision—can be simulated by
+       LLM architectures that achieve an optimal bal-                    NC circuits of depth O(log n log∗ n), i.e., with a negligible
+       ance between expressivity and parallelism.                        depth overhead of O(log∗ n) beyond the wall-clock time we
+                                                                         would expect for simulating a transformer. In contrast, our
+                                                                         results imply that nonlinear RNNs with log precision likely
+1. Introduction                                                          require Ω(log2 n) depth, constituting a O(log n) overhead
+                                                                         relative to a transformer. Moreover, with polynomial preci-
+Parallelism and expressive power are both desirable proper-              sion, nonlinear RNNs require more than polylog depth to
+ties in an LLM architecture that are, unfortunately, at odds             simulate with bounded fan-in circuits, assuming NC ̸= P.
+   1
+    Allen Institute for AI 2 Rheinland-Pfälzische Technische Uni-       Beyond comparing nonlinear RNNs and LRNNs, we also
+versität 3 Max-Planck Institute for Software Systems. Correspon-        compare the fine-grained expressivity of different LRNN
+dence to: William Merrill <willm@allenai.org>.
+                                                                         variants within PNC1 . In particular, we consider differences
+Proceedings of the 43 rd International Conference on Machine             between several different parameterizations that can express
+Learning, Seoul, South Korea. PMLR 306, 2026. Copyright 2026             NC1 -complete problems, showing that diagonal-plus-low-
+by the author(s).
+
+                                                                     1
+                                              Why are Linear RNNs More Parallelizable?
+
+
+
+
+   Complexity class:
+                                          TC0             NC1                   PNC1                    L                     P
+
+  RNN model class:                   Ungated / Diag.    PD LRNN              DPLR LRNN           Nonlinear RNN         Nonlinear RNN
+   Specific models:                   (S4, Mamba)       (PD-SSM)          (DeltaNet, RWKV-7)    with log precision
+
+
+
+
+   NC circuit depth (upper bound):         log(n)          log(n)           log(n) log∗ (n)             log2 (n)       beyond polylog(n)
+
+   Automaton class (lower bound):            —             DWFA                 WFA                Counter machine      Turing machine
+
+Figure 1. Main results, summarized as a hierarchy of increasingly expressive RNN classes with popular models within each class. Each
+RNN shown is “tight” for the respective complexity class C (PNC1 , L, etc.) in the sense that both falls in C and can solve a C-complete
+problem. LRNNs are in PNC1 , implying they can be nearly as efficiently parallelized as transformers, incurring only a small O(log∗ (n))
+depth overhead in terms of bounded fan-in boolean circuits. Nonlinear RNNs, in contrast, can solve L-complete and even P-complete
+problems, but this comes at the cost of being less parallelizable, requiring notably deeper circuits. Bottom row lists the classes of automata
+that each RNN model class can simulate, where WFA stands for weighted finite automaton and DWFA stands for deterministic WFA.
+
+
+rank (DPLR) LRNNs like DeltaNet (Yang et al., 2024;                        2. Preliminaries
+Grazzi et al., 2025) and RWKV-7 (Peng et al., 2025) can
+express PNC1 -complete problems, whereas permutation-                     We first introduce the datatypes we use to model bounded-
+diagonal (PD) LRNNs (Terzic et al., 2025) are in NC1 .                    precision arithmetic, as well as various LRNN architectures.
+These results, combined with our other results about nonlin-              We then turn to introducing computational models from
+ear RNNs, yield a comprehensive hierarchy of the expres-                  circuit complexity and and formal language theory that will
+sivity landscape for RNNs that is summarized in Figure 1.                 be relevant in our analysis of LRNNs.
+
+Beyond our complexity characterization, we also associate                  2.1. Datatypes
+each RNN and LRNN class with a corresponding automata-
+theoretic model from prior work (Peng et al., 2018; Weiss                 Analyzing LLM architectures via circuit complexity re-
+et al., 2018; Merrill et al., 2020) that this class can simulate.         quires making assumptions about the underlying datatype.
+                                                                          Prior work has considered various options while trying to
+Finally, we find empirically that our results 1 about RNNs’               ensure nice numerical properties like associativity and com-
+expressivity predict their behavior when trained on syn-                  mutativity (Merrill et al., 2024). In this work, guided by the
+thetic tasks. On an L-complete graph connectivity task,                   theory of weighted finite automata, we make these desider-
+only nonlinear RNNs achieve good performance, as the-                     ata more explicit by asserting that the numeric datatype
+ory predicts. In addition, both nonlinear RNNs and DPLR                   should be a semiring, denoted ⟨K, ⊕, ⊗⟩. That is, addition
+LRNNs learn iterated matrix multiplication problem (PNC1 -                and multiplication should be associative with identities, ad-
+complete), but transformers and Mamba cannot, in line with                dition should commute, and multiplication should distribute
+theory. These tasks provide potential synthetic benchmarks                over addition This makes the output of LRNNs more cleanly
+for LRNN architecture development beyond the traditional                  defined in an implementation-agnostic way, and also makes
+state tracking and recall tasks that are currently popular (e.g.,         WFA and matrix multiplication computations well-defined
+Arora et al., 2024; Beck et al., 2024; Peng et al., 2025).                for these datatypes (which will be important).
+Overall, our theoretical results reveal the fundamental trade-             In particular, we will work with the standard rational semir-
+offs in expressivity and parallelism between linear and non-               ing used in prior analysis, (i.e., polynomial-precision ratio-
+linear RNNs. Moreover, we show fine-grained differences                    nal numbers; Chiang, 2025), though other semirings are
+in expressivity between LRNNs. Taken together, we hope                     possible in principle.
+our results can help the community continue to refine LRNN
+architectures to push the frontier between expressivity and                Definition 1. Rational numbers, Q, form the rational semir-
+parallelism as much as possible up to fundamental barriers.                ing with the standard arithmetic semantics for ⊕ and ⊗.
+   1
+   Code link: https://arg-git.informatik.uni-k
+l.de/pub/LinearRNN
+                                                                          We assume Q admits an order > in the standard way. Addi-
+                                                                          tionally, we equip Q with division in order to capture layer
+                                                                                                                                   √
+                                                                          normalization Finally, we define non-linear functions ·
+                                                                          and exp via their Taylor series approximation in terms of
+
+                                                                      2
+                                           Why are Linear RNNs More Parallelizable?
+
+⊕ and ⊗ to O(poly(n)) terms (cf. Chiang, 2025). Each of                 constrained parameterizations (time-invariant or diagonal)
+these operations can be given poly- or log-precision variants,          were explored in early LRNNs, but these were shown to
+which return an (nc )- or (c log n)-bit approximation using             limit expressivity to TC0 (Merrill et al., 2024). Since then,
+this technique, respectively (see Definition 10 ).                      newer LRNNs have adopted richer parameterizations that
+                                                                        are non-diagonal but still efficient. Two broad classes of
+A natural notion for describing “simple” arithmetic func-
+                                                                        “slightly non-diagonal” parameterizations are diagonal-plus-
+tions will be the following:
+                                                                        low-rank (DPLR) and permutation-diagonal (PD) LRNNs.2
+Definition 2 (Arithmetic Closed Form). f : Kk → K has
+                                                                        Definition 5 (DPLR). An LRNN is DPLR if it satisfies
+an arithmetic closed form if it can √
+                                    be written as a finite
+                                                                        At = Dt − k⊤  t vt , where Dt is diagonal, kt , vt are vectors,
+composition of ⊕, ⊗, max, exp, and · as defined for K.
+                                                                        and all have an arithmetic closed form in terms of xt .
+The following property about closed forms will be useful:               In particular, we consider specific DPLR variants:
+Lemma 1 (Chiang, 2025). If f : Qk → Q has an arithmetic
+                                                                           • RWKV-7 (Peng et al., 2025):
+closed form, then f can be computed in FO-uniform TC0 .
+                                                                               At = diag(wt ) − λt κt (at ⊙ κt )⊤          bt = vt k̃⊤
+                                                                                                                                     t ,
+2.2. Nonlinear RNNs
+                                                                             for per-token vectors wt , at , κt , vt , λt , k̃t ∈ Kd are
+An RNN over a datatype K (generally Q) is a neural net-                      produced from xt via linear projection.
+work component that takes as input a sequence of vectors                   • DeltaNet (Yang et al., 2024):
+x1 , . . . , xn ∈ Kd and outputs a new sequence y1 , . . . , yn ∈
+Kd that sequentially mixes them. Classical RNNs (Elman,                               At = I − βt k⊤
+                                                                                                   t kt             bt = vt k⊤
+                                                                                                                             t ,
+1990; Hochreiter & Schmidhuber, 1997) were defined by
+updating a recurrent state vector via the application of some                where kt , vt , βt depend on xt via projection.
+(generally nonlinear) function:                                         A key difference between RWKV-7 and DeltaNet is that
+Definition 3 (Nonlinear RNN). Given x1 , . . . , xn ∈                   the state update is symmetric in DeltaNet. Related to this,
+Kd , an RNN computes a a sequence of recurrent states                   Grazzi et al. (2025) show how, for fixed-precision DeltaNet,
+h1 , . . . , hn ∈ Kd via ht = f (ht−1 , xt ), where f is a              the range of βt is crucial for expressivity: restricting βt ∈
+closed-form arithmetic function (cf. Definition 2).                     (0, 1) prevents recognizes parity, but βt ∈ (0, 2) allows it.
+                                                                        Both architectures have recently been trained at large scale
+We consider two nonlinear RNN parameterizations. First,                 (Peng et al., 2025; Kimi Team, 2025).
+ReLU RNNs are nonlinear RNNs with f (ht−1 , xt ) =                      Definition 6 (PD; Terzic et al., 2025). An LRNN is PD if
+max{Aht−1 +Bxt , 0}, where A and B are matrices Kd×d .                  it satisfies At = Pt Dt for a column one-hot 0-1 matrix Pt
+More generally, we will sometimes consider the more gen-                and a diagonal matrix Dt , both with an arithmetic closed
+eral MLP RNN where f can be a multi-layer feedforward                   form in terms of xt .
+network using ReLU activations.
+                                                                        Pt represents a function π : {1, 2, . . . , d} → {1, 2, . . . , d}.
+2.3. Linear RNNs                                                        Despite the name, Pt need not represent a permutation
+                                                                        matrix, though it will be a permutation when Pt is full rank.
+Going beyond classical RNNs, there has recently been inter-
+est in RNNs with linear state updates due to the advantages             2.4. Multilayer RNNs
+for parallelizing on the sequence dimension. These linear
+RNNs (LRNNs) can be defined as follows:                                 In line with current practice (Yang et al., 2025), we will
+Definition 4 (LRNN). Given x1 , . . . , xn ∈ K , an       d             imagine that these RNN components (Sections 2.2 and 2.3,
+LRNN head computes a sequence of matrix valued states                   respectively) are used as “heads” within a larger architecture
+S1 , . . . , Sn ∈ Kd×d via                                              resembling the transformer. A head is computed by pass-
+                                                                        ing x1 , . . . , xn to each head; the specific parameterizations
+                 St = At (xt )St−1 + bt (xt ),                          mentioned above will compute quantities resembling keys
+                                                                        and values in the transformer. After this, the head output yt
+where At (xt ) ∈ Kd×d and bt (xt ) ∈ Kd have arithmetic                 is determined as to be ht in a nonlinear RNN and q⊤      t St−1
+closed forms independent of t.                                          in an LRNN, where qt = Qxt is analogous to a query.
+                                                                        The overall architecture of a multilayer RNN then works as
+Definition 4 leaves open the specific parameterization of
+                                                                        follows. The first layer maps each token to an embedding.
+At and bt as a function of xt . The choice of parameteri-
+zation is crucial for theoretical expressivity (Merrill et al.,             2
+                                                                              Henceforth, for brevity, we will write At , kt , etc. to mean
+2024) as well practical concerns like memory. For instance,             At (xt ), kt (xt ), etc., leaving the dependence on xt implicit.
+
+                                                                    3
+                                         Why are Linear RNNs More Parallelizable?
+
+This is followed by alternating LRNN sublayers, which                languages recognized by bounded-fan-in boolean circuits
+mix information across tokens, and feedforward sublayers,            of
+                                                                     S polynomial    size and depth O(logd n). Write NC for
+                                                                              d      d                      d
+which apply local computation at each token. More formally,            d≥0 NC . AC is the extension of NC that allows un-
+these sublayers have the form:                                                              d           d
+                                                                     bounded fan in, and TC extends AC by allowing majority
+Definition 7 (Multihead RNN Sublayer). Given                         (MAJ) gates in addition to AND, OR, and NOT.
+x1 , . . . , xn ∈ Kd , we first apply layer-norm, com-
+                                                                     In general, circuit families are a non-uniform model of com-
+pute heads y1 , . . . , yh in parallel, and then aggregate the
+                                                                     putation: since there is a different circuit for each input
+outputs. Formally, the sublayer computes the mapping
+                                                                     length, there is no finite description of the overall computa-
+xt 7→ xt + O · ⟨y1 , . . . , yh ⟩.
+                                                                     tion. To rectify this issue, we can define uniform variants
+Definition 8 (Feedforward Sublayer). Given x1 , . . . , xn ∈         of circuit classes where the structure of Cn is determined as
+Kd , we first apply layer-norm and then apply a standard             as a function of n via some kind of computable procedure.
+two-layer ReLU network. Letting x̃ = lnorm(x), the feed-             There are different natural variants of circuit classes with
+forward sublayer computes xt 7→ xt + W · ReLU(Ux̃t ).                different levels of uniformity; unless otherwise specified,
+                                                                     we work with first-order (FO) uniformity. See Strobl et al.
+A full RNN network consists of serial composition of multi-          (2024) for more background on these classes.
+head RNN and feedforward sublayers.
+Definition 9 (Language Recognition). Given a datatype K,             We will focus on the bounded fan-in classes, which are
+we define the language recognized by an RNN as follows.              more aligned with real hardware. The expressivity of trans-
+Let $ ∈ Σ be a beginning-of-sequence symbol. For every               formers (Hao et al., 2022; Merrill & Sabharwal, 2023) and
+string w ∈ Σn , we pass $w through the RNN and apply a               simple LRNNs like Mamba (Merrill et al., 2024) is upper
+linear transformation o to the final layer output ynℓ at the         bounded by TC0 , which is an unbounded fan-in class but
+last token and accept if and only if o⊤ ynℓ > 0.                     known to be contained in the log-depth bounded fan-in class
+                                                                     NC1 . This latter class is efficiently parallelizable in the
+                                                                     sense that problems in it can be solved by an appropriate
+Precision. Let f : Σ∗ → Kd be a representation in a
+                                                                     hardware implementation in time proportional to the depth
+neural sequence model (e.g., a transformer or RNN). We
+                                                                     of the corresponding circuits, i.e., in logarithmic wall-clock
+can define the precision of this representation as follows:
+                                                                     time. With today’s LLMs often trained for context lengths
+Definition 10. Let encode be the function that serializes            of 64K to 1M tokens, log depth is proportional to 16 to
+each value in a vector x ∈ Kd in binary. The precision of            20 whereas the log-squared depth of NC2 circuits is pro-
+h : Σ∗ → Kd is ph (n) = maxw∈Σn |encode(h(w))|.                      portional to 256 to 400. Thus, log-squared depth increases
+                                                                     sequential runtime by a factor of 16 to 20 relative to log
+We define the precision of an RNN as the maximum pre-
+                                                                     depth, rendering the resulting computation significantly less
+cision over all components in its computation graph. By
+                                                                     parallelizable. We thus treat log-depth as the boundary of
+definition, all RNN over Q have a poly-size computation
+                                                                     efficient parallelization.
+graph and hence at most poly-precision, i.e., O(nc ) for some
+c. Some RNNs attain log precision, i.e., satisfy O(log n).           A more liberal notion of efficient parallelizability allows
+When talking about log-precision networks,
+                                         √ we will assume            for arithmetic circuits instead of boolean ones. For our
+that log-precision variants of exp and · are used in the             purpose, an arithmetic circuit is defined with respect to
+computation graph, so that extra precision is not added to           a ring (R, ⊕, ⊖, ⊗, 0, 1). In particular, it uses gates that
+intermediate values needlessly.                                      correspond to ⊕, ⊖, ⊗ : R × R → R. Such a circuit gives
+                                                                     rise to a function f : Σn → R, where n is the number of
+2.5. Circuit Complexity                                              input nodes.
+We will leverage circuit complexity (Vollmer, 1999) to for-          Central to our results will be the class PNC1 , which cor-
+malize the tradeoff between parallelizability and expressiv-         responds to the class of languages L for which there is a
+ity of RNNs. We first recall standard circuit complexity             family C1 = {Cn }n≥0 of log-depth arithmetic circuits with
+classes. A circuit is a directed acyclic graph where leaf            Cn represents a function with n input nodes such that, for
+nodes represent input variables and internal nodes represent         all w ∈ Σn , we have w ∈ L iff Cn (w) > 0 (positivity
+logic gates (e.g., AND, OR, NOT) applied to their children;          check). If we replace the positivity check Cn (w) > 0 with
+a circuit Cn define a boolean function {0, 1}n → {0, 1},             the zero or equality check Cn (w) = 0, we obtain the class
+or, more generally, a function Σn → {0, 1} for some fi-              ENC1 .3 The following relations are known between these
+nite vocabulary Σ, in the standard way. A circuit family             classes (assuming some level of uniformity for the circuit
+C = {Cn }∞  n=0 is then a collection of circuits indexed by              3
+                                                                           While this class is often denoted as C= NC1 , we use the sim-
+input length that defines a formal language L ⊆ Σ∗ where             plified notation ENC1 for succinctness.
+w ∈ L if and only if C|w| (w) = 1. NCd is the class of
+
+                                                                 4
+                                              Why are Linear RNNs More Parallelizable?
+
+classes when compared with L or P):                                        3.1. Poly-Precision Nonlinear RNNs Are P-Complete
+
+             TC0 ⊆ NC1 ⊆ ENC1 ⊆ PNC1 ⊆ L                                   We first show that nonlinear RNNs with polynomial preci-
+                                                                           sion can simulate Turing machines, taking inspiration from
+                   ⊆ NC2 ⊆ · · · ⊆ NC ⊆ P.
+                                                                           the classical construction of Siegelmann & Sontag (1995). It
+Whether these relations are proper is a long-standing open                 will follow that they can solve P-complete problems, which
+question in complexity theory (just as the question of P vs.               means they cannot be parallelized (to poly-log depth) un-
+NP). That said, we will proceed as in complexity theory,                   less NC = P. Towards showing this, we prove that RNNs
+namely, associate a neural model with one of the above com-                whose gating function is an MLP can simulate a multi-stack
+plexity class by showing that it captures a complete problem               machine, which is Turing-complete (proof in Appendix A):
+in the class and is subsumed by the class. We define com-                  Theorem 1 (Turing-Completeness). For any multi-stack ma-
+plete problems for these circuit classes in the standard way,              chine M , there exists a one-layer MLP RNN that recognizes
+i.e., under first-order (FO) reductions. For NC1 , natural                 the same language as M .
+complete problems include simulating a DFA (i.e., the word
+problem for S5 ), multiplying matrices over the boolean                    Proof sketch. The idea follows Siegelmann & Sontag
+semiring, and evaluating boolean formulas (Buss, 1987).                    (1995). We use a poly-precision scalar in the RNN state
+For PNC1 , complete problems can be defined that, infor-                   to represent each stack and leverage the fact that a ReLU
+mally, extend these NC1 -complete problems with arithmetic                 network (used in the recurrence) can update the stack by
+values (cf. Proposition 3; Caussinus et al., 1998).                        pushing and popping.
+We note that PNC1 is generally thought to be “just above”
+NC1 in the sense that it can be simulated by NC circuits                   Since a multi-stack machine is Turing complete, it follows
+of depth O(log n log∗ n).4 For sequence of length 64K to                   from Theorem 1 that poly-precision nonlinear RNNs can
+1M, the overhead factor in parallel runtime relative to NC1                solve a P-complete problem (proof in Appendix A):
+is just 3. We will therefore think of the class PNC1 as                    Corollary 2 (P-Completeness). There is a one-layer MLP
+nearly as efficiently parallelizable as NC1 in general and as              RNN whose language is P-complete under FO reductions.
+transformers in particular.
+                                                                           It follows that, under standard complexity conjectures, poly-
+                                                                           precision nonlinear RNNs cannot be parallelized effectively:
+3. Parallelizability Limits of Nonlinear RNNs                              Corollary 3 (Poly-Precision Depth Lower Bound). If NC ̸=
+We start with a folklore upper bound on the expressivity of                P, there is a nonlinear RNN that, for any k, cannot be
+nonlinear RNNs (proof in Appendix A for completeness):                     simulated by an NC circuit family of depth O(logk n).
+Proposition 1 (Upper Bound). Let M be an RNN over
+                                                                           3.2. Log-Precision Nonlinear RNNs Are L-Complete
+Q with s = O(poly(n)) precision. Then the language
+recognized by M is also recognizable by a Turing machine                   We have established that poly-precision nonlinear RNNs
+that uses O(max{s, log n}) space and poly(n) time.                         cannot be parallelized effectively assuming NC ̸= P. How-
+Corollary 1. Poly-precision RNNs can be simulated in P                     ever, in practice, LLMs use bounded precision, which moti-
+and log-precision RNNs can be simulated in L.                              vates similarly analyzing nonlinear RNNs with log precision.
+                                                                           Corollary 1 shows such RNNs are in L; we now show they
+This result gives a fully sequential simulation for poly-                  can also solve an L-complete problem, establishing that they
+precision RNNs in P. On the other hand, since L ⊆ NC2 ,                    likely cannot be parallelized as effectively as transformers
+log-precision nonlinear RNNs can be parallelized to depth                  or linear RNNs under standard conjectures.
+O(log2 n), incurring a factor of O(log n) in circuit depth
+                                                                           Prior work (Merrill & Sabharwal, 2025b) has used the graph
+compared to transformers. We will next show that both
+                                                                           connectivity problem as a prototypical L-complete problem
+of these upper bounds are essentially tight, barring major
+                                                                           when analyzing models such as log-depth transformers. This
+breakthroughs in complexity theory. That is, poly-precision
+                                                                           problem, however, does not naturally lend to a left-to-right
+RNNs likely cannot be parallelized at all to poly-logarithmic
+                                                                           single-pass solution that would be suitable for formalizing
+depth, and, for log-precision RNNs, the O(log n) penalty
+                                                                           the additional expressive power of nonlinear RNNs. To work
+relative to transformers likely cannot be removed.
+                                                                           around this hurdle, we consider the following sorted and
+    4
+      Mereghetti & Palano (2000) mention that the iterated matrix          deterministic variant of the problem where each graph node
+multiplication problem is in NC1 . However, they do not provide a          has exactly one outgoing edge and the nodes are presented
+proof or reference, and this turns out to be not quite accurate. The       in a topologically sorted order:
+best known simulation of PNC1 by NC circuits recursively uses
+the Chinese Remainder Theorem and incurs a small overhead of               Definition 11. Sorted deterministic graph connectivity is
+O(log∗ n), requiring total depth O(log n log∗ n) (Jung, 1985).             the problem that takes as input a source node s, sequence
+
+                                                                       5
+                                               Why are Linear RNNs More Parallelizable?
+
+of directed edges (i1 , j1 ), . . . (in , jn ), and target node t, all       depth, there exists a log-precision nonlinear RNN that re-
+encoded in unary. The edges are deterministic — meaning                      quires NC circuit families of depth Ω(log2 n) to simulate.
+that each i has at most one outgoing edge (i, j) — and
+topologically sorted — meaning i1 < · · · < in . The output                  Corollary 4 relates to recent work on parallelizing nonlin-
+is 1 if and only if there is a path of edges from s to t.                    ear RNNs via Newton’s method, i.e., exactly computing
+                                                                             the nonlinear RNN through iterated linear approximation
+Perhaps surprisingly, this simpler variant of deterministic                  (Danieli et al., 2026; Gonzalez et al., 2026). Gonzalez et al.
+graph connectivity remains L-complete:                                       (2025) show that this method runs in time O(log2 n) for
+Proposition 2. Sorted deterministic graph connectivity is                    predictable dynamical systems, matching our theoretical
+L-complete under FO-reductions.                                              expectation for parallel runtime of nonlinear RNNs.
+
+We defer the proof to Appendix A.2. Intuitively, this is                     4. Simulating LRNNs with Parallel Circuits
+achieved by reduction from deterministic (but not necessar-
+ily sorted) graph connectivity. The latter is well-known                     Having established the limits of parallelizing nonlinear
+to be L-complete (cf. Jones, 1975; Cook & McKenzie,                          RNNs, we turn to understanding the degree to which linear
+1987; Sipser, 1997), and is in fact also complete under                      RNNs can be parallelized and, conversely, their limitations
+FO-reductions just like the general graph connectivity prob-                 for expressing inherently sequential computation. Prior theo-
+lem (Immerman, 1998). The reduction makes O(n) copies                        retical work has also studied the expressivity of linear RNNs
+of the deterministic graph and connects the i-th copy to                     from a circuit complexity perspective, revealing expressivity
+(i + 1)-st copy. In this way, the resulting deterministic graph              advantages of some linear RNNs over transformers (Mer-
+is polynomial in the size of the original graph and at the                   rill et al., 2024). In particular, whereas linear RNNs with
+same time topologically sorted.                                              simple parameterizations like S4 and Mamba fall into TC0 ,
+                                                                             the same complexity class as transformers, more complex
+The topological sortedness condition allows a logspace ma-
+                                                                             parameterizations like DeltaNet (Grazzi et al., 2025) and
+chine to solve the sorted deterministic graph connectivity
+                                                                             RWKV (Peng et al., 2025) can express NC1 -complete fi-
+problem by reading the graph in one direction (from left to
+                                                                             nite state tracking problems. This past work suggests a key
+right). This is also the reason that a single-layer nonlinear
+                                                                             advantage of well-parameterized linear RNN architectures
+RNN can solve the sorted deterministic graph connectiv-
+                                                                             over transformers, but leaves open a precise understanding
+ity problem. Since the indices of the vertices (given in
+                                                                             of whether this additional expressivity implies drawbacks
+unary) can be encoded in binary with O(log n) bits, nonlin-
+                                                                             in parallelism, i.e, additional overhead in the sequential run-
+ear RNNs can solve this problem with only log precision.
+                                                                             time required to simulate LRNNs relative to transformers.
+Theorem 2 (L-Complete). There exists a one-layer log-
+precision MLP RNN that solves sorted deterministic graph                     Transformers only compute functions in TC0 , which implies
+connectivity, an L-complete problem.                                         they can be simulated by NC1 circuits of depth O(log n). It
+                                                                             is known that linear RNNs can be parallelized to near log
+Proof sketch. The proof leverages the computational model                    depth using the parallel SCAN algorithm (Blelloch, 1990),
+of counter machines (Fischer et al., 1968; Weiss et al.,                     but this does not immediately yield a circuit complexity
+2018; Merrill, 2021), a generalization of finite automata                    characterization comparable to that of transformers. We
+augmented with a fixed number of integer-valued registers                    address this gap by showing that all linear RNNs, indepen-
+that has been heavily used to analyze RNNs (Weiss et al.,                    dent of parameterization details, can be simulated in the
+2018; Merrill, 2019). Lemma 2 shows a counter machine                        complexity class PNC1 of bounded fan-in log-depth circuits
+can solve sorted deterministic graph connectivity. Moreover,                 with arithmetic gates:
+Lemma 3 shows a log-precision MLP RNN can simulate a                         Theorem 3 (LRNN Upper Bound). The language recog-
+counter machine.5 Thus, we conclude that an MLP RNN                          nized by any LRNN over Q is in PNC1 .
+can also solve sorted deterministic graph connectivity.
+                                                                             Proof. Since FO-uniform polynomial-size circuit families
+It is a longstanding open problem (Allender, 2023) if any                    are closed under finite composition (Merrill & Sabharwal,
+L-complete problem has a boolean circuit family of depth                     2025a, Proposition 3), the proof proceeds by simulating
+o(log2 n). Thus, we have:                                                    each component in the network in FO-uniform PNC1 .
+Corollary 4 (Log-Precision Parallelism Limit). Unless ev-                    As a building block, we need gates that take as input bit
+ery problem in L admits an NC circuit family of o(log2 n)                    representations for (s, t) and output the integer-pair repre-
+   5
+    While counter machines have been leveraged extensively to                sentation (s, t) for the rational number s/t. This can be
+analyze RNNs in the past (Weiss et al., 2018; Merrill et al., 2020),         done by an FO-uniform poly-sized log-depth arithmetic
+Lemma 3 is novel and interesting in its own right.                           Z-circuit (here, the measurement is with respect to the num-
+
+                                                                         6
+                                         Why are Linear RNNs More Parallelizable?
+
+ber of bits of s and t), as follows: if s is represented by
+                                  Pn−1                               Corollary 5. The language recognized by any LRNN over
+bn−1 . . . b0 ∈ {0, 1}∗ , then s = i=0 bi · 2i . Iterated sum,       Q is also recognized by an NC circuit family of depth
+fast exponentiation, and multiplication by a constant can            O(log n log∗ n).
+all be done by a uniform arithmetic Z-circuit with depth
+O(log n) and size polynomial in n.                                   It follows that LRNNs are nearly as efficiently paralleliz-
+                                                                     able on hardware as transformers, paying only an O(log∗ n)
+Next, we write the output in a convolutional form (Merrill           depth penalty beyond the O(log n) depth needed to imple-
+& Sabharwal, 2023; Merrill et al., 2024):                            ment transformers with NC circuits. On the other hand, we
+                      i         j
+                                         !                           will show next that well-parameterized LRNNs significantly
+                                                                     gain (over transformers) on the side of expressivity.
+                    X          Y
+                          ⊤
+         yt = xt +      qt         Aj−k bi−j .        (1)
+                      j=0       k=0                                  As a by-product of our above results, we also obtain the
+                                                                     following boundary between linear RNNs and nonlinear
+By Lemma 1, there is an FO-uniform TC0 , and hence NC1 ,             RNNs. Recall that (sorted, deterministic) graph connectivity
+circuit family that maps the inputs x̄ to each At and bt .           problem is L-complete.
+Using the previously described bits-to-rational conversion
+gates, we turn these into rational representations. Each             Corollary 6. Assuming L does not admit NC circuits of
+of these matrices has bounded dimension d. Iterated ma-              depth O(log n log∗ n), LRNNs over Q cannot solve (sorted,
+trix multiplication, as well as iterated matrix addition, for        deterministic) graph connectivity, but nonlinear RNNs can.
+matrices of a bounded dimension over any semiring K                  It is only known that L ⊆ NC2 . It is still a long-standing
+(here K = Q) can be done using a log depth poly-sized                open problem (Allender, 2023) whether any L-complete
+K-arithmetic circuit (Vollmer, 1999). Since Q-arithmetic             problem admits NC circuits with depth o(log2 n).
+circuits can be simulated using Z-circuits incurring only a
+constant number of operations for each gate (see Proposition
+4), we obtain a GapNC1 circuit for outputting w⊤ yt . The            5. Expressivity Differences Between LRNNs
+last step is to perform a positivity check, w⊤ yt > 0, which         In Section 4, we showed all linear RNNs can only solve
+puts the problem in PNC1 .                                           problems in PNC1 . A natural question is whether this upper
+                                                                     bound is tight, i.e., whether each linear RNN variant can
+Theorem 3 applies generally to LRNNs over Q (i.e., poly-             solve hard problems in PNC1 . For some variants like S4 and
+precision LRNNs). For the subclass of log-precision                  Mamba, we already know a tighter upper bound of TC0 can
+LRNNs, it is in fact possible to obtain a tighter charac-            be given (Merrill et al., 2024), meaning these architectures
+terization. Let AC0 [ENC1 ] denote languages that can be             do not achieve full expressivity in PNC1 . However, several
+solved by boolean AC0 circuits that can make use (as a               newer LRNN parameterizations of LRNNs that can express
+blackbox) of any boolean circuit that comes from an ENC1 -           NC1 -complete problems have been proposed: in particular
+arithmetic circuit. It is known (cf. Datta et al., 2012) that        several flavors of DLPR LRNNs as well as PD LRNNs (Sec-
+ENC1 ⊆ AC0 [ENC1 ] ⊆ PNC1 .                                          tion 2.3). We now analyze the expressivity of these different
+Theorem 4 (Log-Precision LRNN Upper Bound). The lan-                 parameterizations, showing a conditional separation: while
+guage recognized by any log-precision LRNN over Q is in              DPLR LRNNs attain PNC1 -complete expressivity, we can
+AC0 [ENC1 ].                                                         show that PD LRNNs are contained within NC1 .
+
+Proof. Let C denote the FO-uniform GapNC1 circuit con-               5.1. DPLR LRNNs are PNC1 -Complete
+structed in the proof of Theorem 3 that computes w⊤ yt > 0.
+Owing to log precision of the LRNN, this output can take             Two common popular DPLR LRNNs are RWKV-7 (Peng
+only polynomially many possible values v. Thus, instead of           et al., 2025) and DeltaNet (Schlag et al., 2021). We will
+performing a positivity check on w⊤ yt (as in construction           show both of these architectures can solve PNC1 -complete
+in Theorem 3), we leverage log-precision to simulate the             problems, achieving the upper bound on LRNN expressivity
+positivity check with polynomially many equality checks.             from Section 4. We begin by defining a PNC1 -complete
+Specifically, for each possible v, we extend C to build an           problem, namely iterated matrix multiplication:
+FO-uniform ENC1 -circuit Cv that checks whether the out-             Definition 12 (Iterated 3 × 3 Matrix Multiplication). The
+put w⊤ yt equals v. The positivity check is then simply              input is a token stream of length 9n over {−1, 0, 1}, par-
+an unbounded fan-in OR, and hence an AC0 circuit, whose              titioned into n consecutive blocks of length 9. Block t
+inputs are the outputs of Cv for v > 0.                              encodes a matrix At ∈ K3×3 . The iterated
+                                                                                                          Qn matrix multipli-
+                                                                     cation problem is to compute Pn = t=1 At ∈ Z3×3 .
+As noted in Section 2.5, PNC1 can be simulated by                    Proposition 3 (Caussinus et al., 1998, Corollary 3.4). The
+O(log n log∗ n) depth NC circuits. We therefore have:                3 × 3 iterated multiplication problem is GapNC1 -complete
+
+                                                                 7
+                                        Why are Linear RNNs More Parallelizable?
+
+under FO reductions, and thus checking if the (0, 0) entry         sive power, showing that, in contrast to DPLR LRNNs, PD
+of Pn is positive is PNC1 complete under FO reductions.            LRNNs are constrained to NC1 :
+                                                                   Theorem 7. Let M be a multi-layer PD LRNN over Q.
+We show RWKV-7 and DeltaNet can express this iterated
+                                                                   Then the language recognized by M is in FO-uniform NC1 .
+matrix multiplication problem, establishing that they can
+solve PNC1 -complete problems:
+                                                                   Proof Sketch. The theorem reduces to showing that the
+Theorem 5 (DPLR PNC1 -Completeness). There exist a
+                                                                   product of a sequence of matrices P1 D1 , . . . , Pn Dn can
+4-layer RWKV-7 and a 4-layer DeltaNet that solves the iter-
+                                                                   be computed in FO-uniform NC1 . Terzic et al. (2025) ob-
+ated 3 × 3 matrix multiplication problem and, in particular,
+                                                                   serve PD matrices are closed under
+                                                                                                   Qn multiplication, so this
+checks if the (0, 0) entry of Pn is positive.
+                                                                   product also has PD form. Let i=1 Pi Di = P̃n D̃n . We
+                                                                   derive a closed form for P̃i and D̃i , and show these can be
+Proof sketch. For a full proof, see Appendix B.3 for RWKV-
+                                                                   computed in uniform NC1 ; full proof in Appendix C.
+7 and Appendix B.5 for DeltaNet. The goal is to multiply
+a sequence of arbitrary matrices. If the transition matrices
+were allowed to have an arbitrary form, the construction           Theorem 7 establishes a conditional expressivity gap be-
+would be easy with a single RNN layer. However, since the          tween DPLR and PD LRNNs: while DPLR architec-
+transition matrices are constrained to have DPLR form, we          tures like DeltaNet and RWKV-7 can express some PNC1 -
+need a few extra layers to factor blocks of the given 3 × 3        complete problems, PD LRNNs are restricted to NC1 . More-
+matrices into blocks of DPLR matrices. To this end, we             over, since it has previously been shown that PD LRNNs
+generalize an idea from Peng et al. (2025): use layers 1–3         can recognize regular languages (Terzic et al., 2025), we see
+to factor blocks of arbitrary matrices into DPLR matrices          that they can solve NC1 -complete problems as well.
+with the same product, and then multiply all of these DPLR         In the one-layer case, we can show that deterministic WFAs
+matrices to get the overall product Pn .                           can be simulated by PD LRNNS in the following sense:
+                                                                   Theorem 8. Any language recognized by a deterministic
+Theorem 5 shows that RWKV-7 and DeltaNet, two DPLR
+                                                                   WFA with a zero threshold over Q can also be recognized
+LRNNs, can indeed solve a PNC1 -complete problem, pro-
+                                                                   by a one-layer PD LRNN over Q.
+viding a lower bound on their expressivity that matches the
+upper bound from Theorem 3. This however leaves open the           Proof in Appendix D.2. From Theorems 7 and 8, we have:
+possibility that even such LRNNs may not be able to solve
+much simpler problems within PNC1 . To address this gap,           Corollary 7. Any language defined by a deterministic WFA
+we extend the argument to also derive a more general lower         with a zero threshold can be simulated in NC1 . Moreover,
+bound, stating that RWKV-7 can, in fact, solve every prob-         there exists an NC1 -complete language that can be recog-
+lem solvable by a Weighted Finite Automaton (WFA) over             nized by a deterministic WFA with a zero threshold.
+the semiring Z (WFA; see Definition 13 for a definition).
+WFA subsume the problem of iterated 3-by-3 matrix multi-           6. Experiments
+plications with matrices over {−1, 0, 1}, which we already
+remarked (see Exercise 5.10 of Vollmer, 1999 and Caussinus         We have provided a concise theoretical characterization of
+et al., 1998) to be GapNC1 -complete. In other words, the          the expressive strengths and limitations of (non)linear RNNs.
+set of functions f : Σ∗ → Z definable by WFAs contains a           We now empirically evaluate the learnable capacity of recur-
+GapNC1 -complete problem. Thus, considering “acceptance”           rent models on the Deterministic Graph Connectivity and
+by a WFA of an input string w with the condition f (w) > 0,        Iterated 3 × 3 Matrix Multiplication. Specifically, we com-
+there is a PNC1 -complete WFA language.                            pare nonlinear RNNs with linear RNN models (DeltaNet
+                                                                   and RWKV-7), the linear RNN variant Mamba, and include
+Theorem 6 (DPLR WFA Simulation). For any n-state WFA               Transformers as an additional baseline.
+A over Q, there exist a 4-layer RWKV-7 and a 4-layer
+DeltaNet that both compute fA (w).
+                                                                   Experimental Setup. To better evaluate learning capacity,
+A proof sketch and details are deferred to Appendix B.2 for        we construct balanced datasets with length generalization.
+RWKV-7 and to Appendix B.4 for DeltaNet.                           The train set contains 70K samples uniformly drawn from
+                                                                   N ∈ [1, 100] and the validation set contains 20K samples
+                                                                   drawn from the same range. We evaluated on three test
+5.2. PD LRNNs are NC1 -Complete
+                                                                   splits, each containing 10K samples, drawn from [1, 100],
+PD LRNNs are another recently proposed LRNN variant                [101, 200], and [201, 300]. Here, N denotes the number of
+that can succinctly represent the NC1 -complete state track-       nodes in the graph task and the size of the matrix in the
+ing problem (Terzic et al., 2025). We analyze the expres-          matrix multiplication task.
+
+                                                               8
+                                                   Why are Linear RNNs More Parallelizable?
+
+                           [1,100]     [101,200]     [201,300]             Iterated Matrix Multiplication. RWKV-7, the nonlin-
+                                                                           ear RNN, and DeltaNet achieve near-perfect accuracy on
+                     (a) Sorted Deterministic Graph Connectivity           the in-distribution data and degrade only moderately on
+              100                                                          the longer out-of-distribution sequences in (b). In contrast,
+Accuracy(%)
+
+
+
+
+               75                                                          Transformer and Mamba perform poorly across all lengths,
+               50                                                          suggesting limited capacity to capture the underlying alge-
+               25
+                                                                           braic structure even within the training regime. Architec-
+                                                                           tural differences are more pronounced in the non-modular
+                0
+                    RNN      RWKV-7    DeltaNet    Mamba Transformer       (c). RWKV-7, the nonlinear RNN, and DeltaNet retain
+                                                                           perfect or near-perfect accuracy across both in-distribution
+                           (b) Matrix Multiplication over Zm               and out-of-distribution lengths, despite unbounded integer
+              100                                                          growth. Mamba improves with increasing sequence length
+Accuracy(%)
+
+
+
+
+               75                                                          but remains substantially below the top-performing models,
+               50                                                          while the Transformer degrades sharply beyond training
+               25                                                          lengths. Overall, these results indicate that architectures
+                0                                                          with explicit recurrence or state-space structure are substan-
+                    RNN      RWKV-7    DeltaNet    Mamba Transformer       tially better suited for iterated linear-algebraic computations
+                          (c) Unbounded Matrix Multiplication
+                                                                           than standard attention-based Transformers.
+              100
+Accuracy(%)
+
+
+
+
+               75                                                          7. Conclusion
+               50
+                                                                           We have given a comprehensive characterization of the ex-
+               25                                                          pressive power and parallelizability of different RNNs and
+                0                                                          LRNNs. First, we reveal fundamental expressivity gaps
+                    RNN      RWKV-7    DeltaNet    Mamba Transformer
+                                                                           between linear and nonlinear RNNs, highlighting the deter-
+Figure 2. Accuracy across size/length ranges. (a) Deterministic            ministic graph connectivity problem as a simple separator.
+graph connectivity over graph-size ranges. (b) Iterated 3×3 matrix         This circuit complexity perspective refines an older line
+multiplication over Zm . (c) Iterated 3 × 3 matrix multiplication          of work on rational recurrences (Peng et al., 2018; Merrill
+over Z. Models are evaluated on in-distribution ranges [1, 100]
+and out-of-distribution ranges [101, 200] and [201, 300].
+                                                                           et al., 2020), formalizing a fundamental tradeoff between
+                                                                           the expressivity of the state update and the parallelizability
+                                                                           of an RNN. Second, we compare the expressivity of dif-
+We used the nonlinear RNN and transformer (Sarrof et al.,                  ferent types of linear RNN. Whereas both PD and DPLR
+2024), and linear models from Yang & Zhang (2024). All                     parameterizations have been shown to be capable of regular
+models are trained using the BCEWithLogitsLoss function.                   language recognition in prior work, our theory reveals fine-
+All models are trained using AdamW with learning rate                      grained differences between these variants, with PD being
+1e−4 and weight decay 10−4 , batch size 64, gradient clip-                 NC1 -complete while DPLR LRNNs are PNC1 -complete.
+ping at norm 1.0, and early stopping either when the ac-                   Experiments agree with our theoretical predictions about
+curacy of the in-distribution data reaches 100% for three                  the expressivity differences between nonlinear RNNs and
+consecutive evaluations or when a maximum of 60K train-                    LRNNs and different LRNN variants.
+ing steps are reached. Full benchmark details and training                 Hybrid transformer–LRNN models have recently seen wide
+configurations are provided in the Appendix.                               adoption (e.g., Waleffe et al., 2024; Kimi Team, 2025; Qwen
+                                                                           Team, 2026) informed by emerging understanding of LRNN
+Sorted Deterministic Graph Connectivity. As shown                          expressivity (Merrill et al., 2024; Grazzi et al., 2025; Peng
+in Figure 2 (a), all models achieve high in-distribution ac-               et al., 2025; Merrill et al., 2026). Thus, we hope our the-
+curacy, indicating that sorted deterministic graph connec-                 ory can guide the design of LRNN and hybrid architectures
+tivity is learnable under matched training and test lengths.               that effectively balance expressivity and parallelism. Our
+However, performance diverges markedly under length ex-                    results also suggest recent methods to parallelize nonlin-
+trapolation. The nonlinear RNN maintains near-perfect                      ear RNNs (Danieli et al., 2026; Gonzalez et al., 2025) are
+accuracy across all bins, demonstrating strong length gener-               one pathway to more expressive hybrid models, though
+alization. In contrast, Transformer, RWKV-7, Mamba, and                    nonlinear RNNs must fundamentally pay a Θ(log n) cost in
+DeltaNet exhibit substantial degradation as graph size in-                 parallel runtime under standard conjectures (cf. Corollary 4).
+creases, despite competitive performance. These results                    It is an open question whether the additional expressivity of
+highlight the importance of recurrent inductive bias for                   nonlinear RNNs justifies this overhead in practice.
+length-generalizable algorithmic reasoning.
+
+                                                                       9
+                                         Why are Linear RNNs More Parallelizable?
+
+Impact Statement                                                       ACM Symposium on Theory of Computing, STOC ’87,
+                                                                       pp. 123–131, New York, NY, USA, 1987. Association
+This paper presents foundational work whose goal is to                 for Computing Machinery. ISBN 0897912217. doi:
+advance the field of machine learning. There are many                  10.1145/28395.28409. URL https://doi.org/10
+potential societal consequences of our work, none of which             .1145/28395.28409.
+we feel must be specifically highlighted here.
+                                                                     Carlyle, J. W. and Paz, A. Realizations by stochastic finite
+Acknowledgments                                                        automata. JCSS, 5(1):26–40, 1971.
+
+WM thanks Mehryar Mohri for insightful discussions re-               Caussinus, H., McKenzie, P., Thérien, D., and Vollmer, H.
+lated to RNNs and WFAs as well as Brian Kitano and Alek-               Nondeterministic NC1 computation. Journal of Computer
+sandar Terzić for finding issues in early drafts.                     and System Sciences, 57(2):200–212, 1998. ISSN 0022-
+This material is based in part upon work supported by the              0000. doi: https://doi.org/10.1006/jcss.1998.1588. URL
+European Union         (ERC, LASD, 101089343, https:                   https://www.sciencedirect.com/scienc
+//doi.org/10.3030/101089343).                                          e/article/pii/S0022000098915884.
+
+                                                                     Chiang, D. Transformers in uniform TC0 . TMLR, 2025.
+References                                                             ISSN 2835-8856. URL https://openreview.n
+Allender, E. Discussion on parallelizing logspace problems.            et/forum?id=ZA7D4nQuQF.
+  https://cstheory.stackexchange.com/q
+  uestions/52459/what-circuit-depth-i                                Cook, S. A. and McKenzie, P. Problems complete for de-
+  s-enough-to-compute-a-log-space-com                                  terministic logarithmic space. Journal of Algorithms, 8
+  plete-problem, 2023. [Online; accessed 27 Jan                        (5):385–394, September 1987. ISSN 0196-6774. doi:
+  2026].                                                              10.1016/0196-6774(87)90018-6. URL https://doi.
+                                                                       org/10.1016/0196-6774(87)90018-6.
+Arora, S., Eyuboglu, S., Zhang, M., Timalsina, A., Alberti,
+  S., Zou, J., Rudra, A., and Re, C. Simple linear attention         Danieli, F., Rodriguez, P., Sarabia, M., Suau, X., and Zap-
+  language models balance the recall-throughput tradeoff.              pella, L. ParaRNN: Unlocking parallel training of nonlin-
+  In ICLR 2024 Workshop on Mathematical and Empirical                  ear RNNs for large language models. In The Fourteenth
+  Understanding of Foundation Models, 2024. URL http                   International Conference on Learning Representations,
+  s://openreview.net/forum?id=qRlcoPhE                                 2026. URL https://openreview.net/forum
+  oD.                                                                  ?id=mX8b64iUaa.
+
+Barcelo, P., Chiang, D., Cybenko, G., Strobl, L., and Yang,          Datta, S., Mahajan, M., Rao, B. V. R., Thomas, M., and
+  A. Theory of Neural Language Models (Dagstuhl Semi-                  Vollmer, H. Counting classes and the fine structure be-
+  nar 25282). Dagstuhl Reports, 15(7):22–52, 2026. ISSN                tween NC1 and L. Theor. Comput. Sci., 417:36–49, 2012.
+  2192-5283. doi: 10.4230/DagRep.15.7.22. URL                          doi: 10.1016/J.TCS.2011.05.050. URL https:
+  https://drops.dagstuhl.de/entities/d                                //doi.org/10.1016/j.tcs.2011.05.050.
+  ocument/10.4230/DagRep.15.7.22.
+                                                                     Elman, J. L. Finding structure in time. Cognitive Science,
+Beck, M., Pöppel, K., Spanring, M., Auer, A., Prudnikova,             14(2):179–211, 1990. doi: https://doi.org/10.1207/s155
+  O., Kopp, M. K., Klambauer, G., Brandstetter, J., and                16709cog1402\ 1. URL https://onlinelibrar
+  Hochreiter, S. xLSTM: Extended long short-term mem-                  y.wiley.com/doi/abs/10.1207/s1551670
+  ory. In NeurIPS, 2024. URL https://openreview                        9cog1402_1.
+  .net/forum?id=ARAxPPIAhq.
+                                                                     Fischer, P. C., Meyer, A. R., and Rosenberg, A. L. Counter
+Blelloch, G. E. Prefix sums and their applications. Technical
+                                                                       machines and counter languages. Mathematical systems
+  Report CMU-CS-90-190, School of Computer Science,
+                                                                       theory, 2:265–283, 1968. URL https://api.sema
+  Carnegie Mellon University, November 1990.
+                                                                       nticscholar.org/CorpusID:13006433.
+Bradbury, J., Merity, S., Xiong, C., and Socher, R. Quasi-
+  recurrent neural networks. In ICLR, 2017. URL https:               Gonzalez, X., Kozachkov, L., Zoltowski, D. M., Clarkson,
+  //openreview.net/forum?id=H1zJ-v5xl.                                 K. L., and Linderman, S. Predictability enables paral-
+                                                                       lelization of nonlinear state space models. In NeurIPS,
+Buss, S. R. The boolean formula value problem is in                    2025. URL https://openreview.net/forum
+  alogtime. In Proceedings of the Nineteenth Annual                    ?id=7AGXSlXcK6.
+
+                                                                10
+                                        Why are Linear RNNs More Parallelizable?
+
+Gonzalez, X., Buchanan, E. K., Lee, H. D., Liu, J. W., Wang,        Merrill, W. Sequential neural networks as automata. In Eis-
+  K. A., Zoltowski, D. M., Kozachkov, L., Re, C., and                ner, J., Gallé, M., Heinz, J., Quattoni, A., and Rabusseau,
+  Linderman, S. A unifying framework for parallelizing               G. (eds.), Proceedings of the Workshop on Deep Learn-
+  sequential models with linear dynamical systems. TMLR,             ing and Formal Languages: Building Bridges, pp. 1–
+  April 2026. URL https://openreview.net/f                           13, Florence, August 2019. Association for Computa-
+  orum?id=fw6GgAIGur.                                                tional Linguistics. doi: 10.18653/v1/W19-3901. URL
+                                                                     https://aclanthology.org/W19-3901/.
+Grazzi, R., Siems, J., Franke, J. K., Zela, A., Hutter, F.,
+  and Pontil, M. Unlocking state-tracking in linear RNNs            Merrill, W. On the linguistic capacity of real-time counter
+  through negative eigenvalues. In ICLR, 2025. URL ht                automata, 2021. URL https://arxiv.org/abs/
+  tps://openreview.net/forum?id=UvTo3t                               2004.06866.
+  VBk2.
+                                                                    Merrill, W. and Sabharwal, A. The parallelism tradeoff:
+Gu, A. and Dao, T. Mamba: Linear-time sequence modeling              Limitations of log-precision transformers. TACL, 11:531–
+  with selective state spaces, 2024. URL https://op                  545, 2023. doi: 10.1162/tacl a 00562. URL https:
+  enreview.net/forum?id=AL1fq05o7H.                                  //aclanthology.org/2023.tacl-1.31/.
+Hao, Y., Angluin, D., and Frank, R. Formal language recog-          Merrill, W. and Sabharwal, A. Exact expressive power of
+  nition by hard attention transformers: Perspectives from           transformers with padding. In NeurIPS, 2025a. URL
+  circuit complexity. TACL, 10:800–810, 2022.                        https://openreview.net/forum?id=O1ab
+                                                                     xStFcy.
+Hochreiter, S. and Schmidhuber, J. Long short-term memory.
+  Neural Comput., 9(8):1735–1780, November 1997. ISSN               Merrill, W. and Sabharwal, A. A little depth goes a long
+  0899-7667. doi: 10.1162/neco.1997.9.8.1735. URL                    way: The expressive power of log-depth transformers. In
+  https://doi.org/10.1162/neco.1997.9.8.                             NeurIPS, 2025b. URL https://openreview.net
+  1735.                                                              /forum?id=5pHfYe10iX.
+Immerman, N. Descriptive Complexity. Springer Verlag,               Merrill, W., Weiss, G., Goldberg, Y., Schwartz, R., Smith,
+  1998.                                                              N. A., and Yahav, E. A formal hierarchy of RNN architec-
+                                                                     tures. In Jurafsky, D., Chai, J., Schluter, N., and Tetreault,
+Immerman, N. and Landau, S. The complexity of iter-
+                                                                     J. (eds.), Proceedings of the 58th Annual Meeting of the
+  ated multiplication. Technical report, University of Mas-
+                                                                     Association for Computational Linguistics, pp. 443–459,
+  sachusetts, USA, 1992.
+                                                                     Online, July 2020. Association for Computational Lin-
+Jones, N. D. Space-bounded reducibility among combinato-             guistics. doi: 10.18653/v1/2020.acl-main.43. URL
+  rial problems. JCSS, 11(1):68–85, August 1975. ISSN                https://aclanthology.org/2020.acl-mai
+  0022-0000. doi: 10.1016/S0022-0000(75)80050-X. URL                 n.43/.
+  https://doi.org/10.1016/S0022-0000(75
+                                                                    Merrill, W., Petty, J., and Sabharwal, A. The illusion of
+  )80050-X.
+                                                                     state in state-space models. In Forty-first International
+Jung, H. Depth efficient transformations of arithmetic into          Conference on Machine Learning, 2024. URL https:
+  boolean circuits. In Proceedings of Fundamentals of                //openreview.net/forum?id=QZgo9JZpLq.
+  Computation Theory. Springer, 1985. doi: 10.1007/BF
+  b0028801. URL https://link.springer.com/                          Merrill, W., Li, Y., Romero, T., Svete, A., Costello, C.,
+  chapter/10.1007/BFb0028801.                                        Dasigi, P., Groeneveld, D., Heineman, D., Kuehl, B.,
+                                                                     Lambert, N., Li, C., Lo, K., Malik, S., Matusz, D., Minix-
+Katharopoulos, A., Vyas, A., Pappas, N., and Fleuret, F.             hofer, B., Morrison, J., Soldaini, L., Timbers, F., Walsh,
+  Transformers are RNNs: fast autoregressive transformers            P., Smith, N. A., Hajishirzi, H., and Sabharwal, A. Olmo
+  with linear attention. In ICML, 2020.                              hybrid: From theory to practice and back, 2026. URL
+                                                                     https://arxiv.org/abs/2604.03444.
+Kimi Team. Kimi Linear: An expressive, efficient attention
+  architecture, 2025. URL https://arxiv.org/ab                      Mohri, M. Rational transductors, 2026. URL https:
+  s/2510.26692.                                                      //arxiv.org/abs/2602.07599.
+
+Mereghetti, C. and Palano, B. Threshold circuits for iter-          Peng, B., Zhang, R., Goldstein, D., Alcaide, E., Du, X.,
+ ated matrix product and powering. RAIRO - Theoretical                Hou, H., Lin, J., Liu, J., Lu, J., Merrill, W., Song, G., Tan,
+ Informatics and Applications, 34(1):39–46, 2000. doi:                K., Utpala, S., Wilce, N., Wind, J. S., Wu, T., Wuttke, D.,
+ 10.1051/ita:2000105.                                                 and Zhou-Zheng, C. RWKV-7 ”goose” with expressive
+
+                                                               11
+                                        Why are Linear RNNs More Parallelizable?
+
+  dynamic state evolution. In COLM, 2025. URL https:                  language recognition. In Gurevych, I. and Miyao, Y.
+  //openreview.net/forum?id=ayB1PACN5j.                               (eds.), Proceedings of the 56th Annual Meeting of the
+                                                                      Association for Computational Linguistics (Volume 2:
+Peng, H., Schwartz, R., Thomson, S., and Smith, N. A.                 Short Papers), pp. 740–745, Melbourne, Australia, July
+  Rational recurrences. In EMNLP, October-November                    2018. Association for Computational Linguistics. doi:
+  2018. doi: 10.18653/v1/D18-1152. URL https:                         10.18653/v1/P18-2117. URL https://aclantho
+  //aclanthology.org/D18-1152/.                                       logy.org/P18-2117/.
+Qwen Team. Qwen3.5-omni technical report, 2026. URL                 Yang, A., Watson, C., Xue, A., Bhattamishra, S., Llarena,
+ https://arxiv.org/abs/2604.15804.                                    J., Merrill, W., Ferreira, E. D. S., Svete, A., and Chiang,
+Sarrof, Y., Veitsman, Y., and Hahn, M. The expressive capac-          D. The transformer cookbook. TMLR, Jan 2026. URL
+  ity of state space models: a formal language perspective.           https://openreview.net/forum?id=sPsh
+  In Proceedings of the 38th International Conference on              CSvDrX.
+  Neural Information Processing Systems, NIPS ’24, Red              Yang, S. and Zhang, Y. FLA: A triton-based library for
+  Hook, NY, USA, 2024. Curran Associates Inc. ISBN                    hardware-efficient implementations of linear attention
+  9798331314385.                                                      mechanism, January 2024. URL https://github
+Schlag, I., Irie, K., and Schmidhuber, J. Linear transformers         .com/fla-org/flash-linear-attention.
+  are secretly fast weight programmers. In ICML, pp. 9355–          Yang, S., Wang, B., Zhang, Y., Shen, Y., and Kim, Y. Par-
+  9366, 2021. URL https://proceedings.mlr.                            allelizing linear transformers with the delta rule over
+  press/v139/schlag21a.html.                                          sequence length. In NeurIPS, 2024. URL https:
+Siegelmann, H. and Sontag, E. On the computational power              //openreview.net/forum?id=y8Rm4VNRPH.
+  of neural nets. Journal of Computer and System Sciences,          Yang, S., Kautz, J., and Hatamizadeh, A. Gated delta net-
+  50(1):132–150, 1995. ISSN 0022-0000. doi: https:                    works: Improving mamba2 with delta rule. In The Thir-
+  //doi.org/10.1006/jcss.1995.1013. URL https://www.                  teenth International Conference on Learning Represen-
+  sciencedirect.com/science/article/pi                                tations, 2025. URL https://openreview.net/f
+  i/S0022000085710136.                                                orum?id=r8H7xhYPwz.
+Sipser, M. Introduction to the Theory of Computation. PWS
+  Publishing Company, 1997.
+
+Strobl, L., Merrill, W., Weiss, G., Chiang, D., and Angluin,
+   D. What formal languages can transformers express? a
+   survey. TACL, 12:543–561, 2024. doi: 10.1162/tacl a 0
+   0663. URL https://aclanthology.org/2024.
+   tacl-1.30/.
+
+Terzic, A., Menet, N., Hersche, M., Hofmann, T., and
+  Rahimi, A. Structured sparse transition matrices to enable
+  state tracking in state-space models. In The Thirty-ninth
+  Annual Conference on Neural Information Processing
+  Systems, 2025. URL https://openreview.net
+  /forum?id=RDbuSCWhad.
+
+Vollmer, H. Introduction to Circuit Complexity. Springer,
+  1999.
+
+Waleffe, R., Byeon, W., Riach, D., Norick, B., Kor-
+ thikanti, V., Dao, T., Gu, A., Hatamizadeh, A., Singh,
+ S., Narayanan, D., Kulshreshtha, G., Singh, V., Casper,
+ J., Kautz, J., Shoeybi, M., and Catanzaro, B. An empiri-
+ cal study of mamba-based language models, 2024. URL
+ https://arxiv.org/abs/2406.07887.
+
+Weiss, G., Goldberg, Y., and Yahav, E. On the practi-
+ cal computational power of finite precision RNNs for
+
+                                                               12
+                                               Why are Linear RNNs More Parallelizable?
+
+A. Nonlinear RNNs
+Proposition 1 (Upper Bound). Let M be an RNN over Q with s = O(poly(n)) precision. Then the language recognized by
+M is also recognizable by a Turing machine that uses O(max{s, log n}) space and poly(n) time.
+
+Proof. Given a log-precision RNN of depth d, we will simulate it left-to-right using a Turing machine T . Let s′ =
+max{s, log n}. At each step t, for each layer, T stores the hidden state ht at that layer using s bits. Given ht−1 and
+input xt , by Lemma 1, ht can be computed in FO-uniform TC0 , which is contained in L. Thus, T can compute ht using
+O(max{s, log n}) space6 and poly(n) time. This space can be reused for computing ht+1 , ht+2 , etc. Overall, the Turing
+machine uses d · O(max{s, log n}) bits of storage space and runs in poly(n) time, as desired.
+
+A.1. Polynomial Precision
+Theorem 1 (Turing-Completeness). For any multi-stack machine M , there exists a one-layer MLP RNN that recognizes the
+same language as M .
+
+Proof. The idea is the same as the proof of Lemma 3, except that we will simulate an automaton with stacks of binary
+values rather than counters. The stacks allow update operations push0 , push1 , pop, and noop. Additionally, it has a head,
+which is the top element. We view each stack s as a positive number s ∈ [0, 2] that starts off as s = 1 and is modified using
+the following update operations:
+                                                head(s) = 1[s ≥ 1]
+                                                               1
+                                               pushv (s) = v + s
+                                                           ( 2
+                                                             2(s − head(s))        if s ̸= 1
+                                                 pop(s) =
+                                                             noop(s)               otherwise
+                                                noop(s) = s.
+
+Moreover, we will let st ∈ [0, 2]k denote the vector of stacks at time t. The update operation ut ∈ {head, push, pop, noop}
+is determined via a finite lookup table u as a function of qt , σt , and head(st ). The state transition δ depends on the same
+inputs.
+The implementation of these operations with a ReLU network follows the same idea as the proof of Lemma 3. We first
+construct a ReLU network to compute head(s) from s as a threshold with ϵ = 1/3 (Yang et al., 2026, Section 4.7). Next,
+we compute qt = δ(qt−1 , σt , head(st )) and ut = u(qt−1 , σt , head(st−1 )) as finite lookup tables (Yang et al., 2026, Section
+4.8). At this point, we have the correct next state, and it just remains to be shown that we can update the stacks. Let
+pop1 (s) = 2s − 2 and pop0 (s) = 2s. We compute the possible updated stacks pushv (st−1 ), popv (st−1 ), and noop(st−1 )
+with parallel ReLU networks, using the fact that each is a linear function. For each stack [st ]i , we then compute its new value
+from these u(st−1 )’s using a selector gadget based on [ut ]i , head(st−1 )i , and whether s = 1 (Yang et al., 2026, Section
+4.9). Thus, we can correctly compute qt and st at each step.
+Corollary 2 (P-Completeness). There is a one-layer MLP RNN whose language is P-complete under FO reductions.
+
+Proof. We leverage the same idea as Barcelo et al. (2026, Section 4.8). Let L be any P-complete language under FO
+reductions. By construction L can be recognized by a poly-time Turing machine and thus also by a multi-stack machine
+                                                                           c
+running in time O(nc ) for some c. Define a new padded language L′ = {w□|w| | w ∈ L}. Then L′ is P-complete and can
+be solved by a multi-stack machine, and thus also by an MLP RNN by Theorem 1.
+
+A.2. Logarithmic Precision
+Proposition 2. Sorted deterministic graph connectivity is L-complete under FO-reductions.
+
+Proof. We describe a simple FO reduction from deterministic (but not necessarily sorted) graph connectivity. The latter is
+well-known to be L-complete (cf. Jones, 1975; Cook & McKenzie, 1987; Sipser, 1997), and is in fact also complete under
+   6
+       Here log n space is for intermediate computation of the L machine, and s space is for its output.
+
+                                                                     13
+                                            Why are Linear RNNs More Parallelizable?
+
+FO-reductions just like the general graph connectivity problem (Immerman, 1998). We are given a deterministic graph G
+with source s = 1, target t = n, and edges
+                                                  (i1 , j1 ), . . . , (im , jm )
+with ik , jk ∈ {1, . . . , n}, for each k = 1, . . . , m, and i1 = s and jm = t = n. We create a new deterministic graph G′ with
+edges
+                                      (i1 + hn, j1 + (h + 1)n), . . . , (im + hn, jm + (h + 1)n)
+for each h = 0, . . . , m − 1. We also add an additional node vF = nm + 1 and edges (n + hn, vF ). Note that n has no
+outgoing edge in G, so G′ remains deterministic. That is, v0 , . . . , vs is a path in G iff v0 , v1 + n, v2 + 2n, . . . , vs + sn is a
+path in G′ . Thus, t is reachable from s in G iff vF is reachable from s in G′ .
+The above reduction can easily be seen to be implementable by a logspace-uniform AC0 reduction. The values hn (for each
+h = 1, . . . , m) can be precomputed by a logspace machine since this depends only on the input size (more precisely, one
+can enumerate enough of hn for up to m = O(n)). The AC0 circuit simply needs to perform simple additions.
+Theorem 2 (L-Complete). There exists a one-layer log-precision MLP RNN that solves sorted deterministic graph
+connectivity, an L-complete problem.
+
+Our proof of this theorem will leverage the computational model of counter machines (CMs; Fischer et al., 1968; Weiss et al.,
+2018; Merrill, 2021). Also called counter automata, CMs are a generalization of finite automata augmented with a fixed
+number of integer-valued registers. CMs been heavily used to analyze the expressive power of RNNs (Weiss et al., 2018;
+Merrill, 2019). Lemma 2 shows a counter machine can solve sorted deterministic graph connectivity. Moreover, Lemma 3
+shows a log-precision RNN with a ReLU MLP gating function can simulate a counter machine. Thus, we conclude that a
+log-precision RNN with ReLU MLP gating can also solve sorted deterministic graph connectivity.
+Lemma 2. Sorted deterministic graph connectivity can be solved by counter machine.
+
+Proof. Fix a unary encoding of an instance
+
+                                                    (s, (i1 , j1 ), . . . , (in , jn ), t)
+
+with separators between s, each im , each jm , and t. We assume that vertices are numbered in a topological order and
+encoded in unary by their numbers, so for every edge (im , jm ) we have jm ≥ im . The machine uses three counters S, I, T
+and O(1) states to maintain the invariant that, after k edges, S encodes the furthest state reachable from s.
+The first step is to process the initial block 0s . The machine starts in a state qs and increments S on each symbol (leaving
+I, T at 0), so after this block S = s.
+We next enter a state qedge and process each edge (im , jm ) in turn, maintaining the invariant that after m edges we have
+S = sm (the node reached from s after the first m edges) and I = 0. For edge (im , jm ), in a state qi the machine reads the
+unary block 0im and on each symbol performs
+
+                                                   S ← S − 1,              I ← I + 1.
+
+At the following separator it tests whether S = 0 using the zero-mask. If S = 0 (i.e. sm−1 = im ), it moves to a state qj=
+and on each symbol of the jm -block simply does S ← S + 1 (leaving I unchanged); since S starts at 0, after 0jm we have
+S = jm , and at the next separator it resets I ← 0 and returns to qedge , so sm = jm . If instead S ̸= 0, the machine moves to
+a state qj̸= . On each symbol of the jm -block it now performs
+
+                              S ← S + 1, I ← I − 1           if I ̸= 0,          and does nothing if I = 0,
+
+where the choice again uses only the zero-mask bit of I. Initially I = im , so after min{im , jm } symbols we have added
+that many units back to S and subtracted them from I. Because jm ≥ im , by the end of the jm -block we have I = 0 and
+
+                                                S = (sm−1 − im ) + im = sm−1 ,
+
+and at the next separator we return to qedge with S = sm = sm−1 and I = 0. Thus the invariant is preserved across every
+edge.
+
+                                                                     14
+                                          Why are Linear RNNs More Parallelizable?
+
+After the last edge the machine enters a state qt with S = sn and I = 0. On the target block 0t it updates
+
+                                                 S ← S − 1,         T ←T +1
+
+on each symbol, so at the end S = sn − t. On the end-of-input marker it moves to an accepting state iff the zero-mask bit of
+S is 0, i.e. iff S = 0, which is equivalent to sn = t.
+
+Lemma 3. Let M be a real-time counter machine. There exists a one-layer MLP RNN with log precision that recognizes
+the same language as M .
+
+Proof. We divide partition the hidden state ht into three parts: st , which encodes a finite state as a one-hot vector, c+
+                                                                                                                         t , which
+encodes the value of positive counters, and c−t , which encodes the absolute value of negative counters. Define qt as the state
+                                 −
+encoded by st and ct = c+   t − ct . We will show how to construct an MLP f such that, applying ht = f (ht−1 , xt ), we will
+           + −
+have st , ct , ct such that
+
+                                               qt = δ(qt−1 , σt , z(ct−1 ))
+                                               ct = u(qt−1 , σt , z(ct−1 ))(ct−1 ).
+                                                                                      −
+We first construct a ReLU network to compute z(ct−1 ) as a function of c+    t−1 and ct−1 using the standard construction for
+equality checks with a tolerance of ϵ = 1/3 (Yang et al., 2026, Section 4.7). We then construct ReLU networks to compute δ
+and u (with output encoded as one-hot vectors) given qt−1 , σt , z(ct−1 ), which is possible since both are finite lookup tables
+(Yang et al., 2026, Section 4.8). We compute z with δ to get a one-hot encoding of qt = δ(qt−1 , σt , z(ct−1 )), i.e., our updated
+state vector st . Similarly, we compose z with u to get a one-hot encoding of the update function ut = u(qt−1 , σt , z(ct−1 ))
+                                                       −
+to apply to the counters. The new values of c+t and ct can be obtained by a ReLU network that computes several continuous
+                                 +    −
+piecewise-linear functions of ct−1 , ct−1 in parallel for different updates u ∈ {×0, +0, +1, −1} (Yang et al., 2026, Section
+4.1) and then applies a conditional selector for u = ut (Yang et al., 2026, Section 4.9).
+                                                                      −
+We can then accept or reject a string of length n based on sn , c+
+                                                                 n , cn using an MLP. The construction uses log precision
+                                   + −
+because qt is in a finite set and ct , ct = O(n) .
+
+B. Lower Bounds for DPLR LRNNS
+This section contains four simulation results, organized by architecture and target computation:
+
+   • RWKV-7 simulates WFAs over Q (Subsection B.2).
+
+   • RWKV-7 computes iterated 3 × 3 matrix multiplication over Q (Subsection B.3).
+
+   • DeltaNet simulates WFAs over Q (Subsection B.4).
+
+   • DeltaNet computes iterated 3 × 3 matrix multiplication over Q (Subsection B.5).
+
+B.1. Preliminaries
+Definition 13 (WFA Path Form). Let ⟨K, ⊕, ⊗⟩ be a semiring. A weighted finite automaton (WFA) is a tuple A =
+(Q, Σ, {Mσ }σ∈Σ , α, ω) where Q = {1, . . . , n} is a finite state set, each Mσ ∈ Kn×n is a transition matrix, and α, ω ∈ Kn
+are initial/final weight vectors, respectively. The WFA assigns a score to a string w = w1 · · · wn ∈ Σ∗ via
+                                                                                       !
+                                                 M                   O
+                                 fA (w) =                 απ1 ⊗          [Mwi ]πk ,πk+1 ⊗ ωπn ,
+                                           π={(sk ,tk )}n
+                                                        k=1
+                                                                    i=1
+
+
+where π iterates over all paths of states of length n.
+Equivalently, defining matrix multiplication over ⟨K, ⊕, ⊗⟩, the computation of a WFA can be defined according to
+
+                                        fA (w) = α⊤ ⊗ Mw1 ⊗ . . . ⊗ Mwn ⊗ ω ∈ K.
+
+                                                               15
+                                         Why are Linear RNNs More Parallelizable?
+
+Definition 14 (Streaming iterated 3 × 3 matrix multiplication over Z). The input is a token stream of length 9N over
+alphabet Z, partitioned into N consecutive blocks of length 9. The t-th block encodes a matrix A(t) ∈ Z3×3 in row-major
+order:
+                                    (t)   (t)    (t)    (t)    (t)    (t)    (t)    (t)    (t) 
+                                  A1,1 , A1,2 , A1,3 , A2,1 , A2,2 , A2,3 , A3,1 , A3,2 , A3,3 .
+The task is to output the product
+
+                            PN := A(1) A(2) · · · A(N ) ∈ Z3×3           (equivalently, its 9 entries).
+
+B.2. Simulating WFAs with RWKV-7
+Let ei ∈ Kd denote the ith standard basis column vector.
+Definition 15 (RWKV-style transition matrix (Peng et al., 2025)). Fix a dimension d. Given w, a, κ ∈ Kd and a scalar
+λ ∈ K, define
+                                   A(w, a, κ; λ) := diag(w) − λ κ (a ⊙ κ)⊤ ,
+where ⊙ is elementwise product.
+
+To handle WFA transition matrices, we use a primitive that overwrites one coordinate by a dot product of the current state
+against a prescribed coefficient vector.
+Definition 16 (Dot-product overwrite matrix). Fix a dimension d, an index dst ∈ {1, . . . , d}, and a coefficient vector
+c ∈ Kd with cdst = 0. Define
+                                    U (dst; c) := I − edst e⊤        ⊤
+                                                            dst + c edst ∈ K
+                                                                            d×d
+                                                                                .
+Equivalently, U (dst; c) is the identity matrix with its dst-th column replaced by c.
+Lemma 4 (Effect on row vectors). For any row vector r ∈ K1×d ,
+                                                   d
+                                                   X
+                             (r U (dst; c))dst =         ri ci ,    (r U (dst; c))j = rj (j ̸= dst).
+                                                   i=1
+
+Lemma 5 (Dot-product overwrite as an RWKV transition). Fix d, dst, and c ∈ Kd with cdst = 0. Set
+
+                                    w = 1,      a = edst ,          κ = edst − c,       λ = 1.
+
+Then A(w, a, κ; 1) = U (dst; c).
+
+Proof. Since a = edst , we have a ⊙ κ = κdst edst . Because cdst = 0, κdst = 1, so a ⊙ κ = edst . Thus
+
+                       A = I − κ e⊤                    ⊤               ⊤        ⊤
+                                  dst = I − (edst − c)edst = I − edst edst + c edst = U (dst; c).
+
+
+We now show that any n × n matrix can be applied to a row vector using Θ(n) overwrite steps, provided we have n
+additional scratch coordinates.
+Lemma 6 (Apply an arbitrary n × n matrix using 2n overwrites). Let P ∈ Kn×n . Consider row vectors in dimension 2n
+written as [x | s] with x, s ∈ K1×n . There exist m := 2n overwrite matrices G1 (P ), . . . , Gm (P ) ∈ K2n×2n such that for
+all x, s,
+                                         [x | s] G1 (P ) · · · Gm (P ) = [xP | xP ].
+
+                                                                                                     (j)
+Proof. Phase 1 (compute xP into scratch). For each j ∈ {1, . . . , n}, define c(j) ∈ K2n by ci = Pi,j for 1 ≤ i ≤ n and
+ (j)
+cP
+ i   = 0 for n + 1 ≤ i ≤ 2n. Let Gj (P ) := U (n + j; c(j) ). By Lemma 4, this overwrites scratch coordinate n + j with
+   n
+   i=1 xi Pi,j = (xP )j , leaving all other coordinates unchanged. After n steps, [x | s]G1 (P ) · · · Gn (P ) = [x | xP ].
+
+Phase 2 (copy scratch back to main). For each j ∈ {1, . . . , n} let d(j) := en+j ∈ K2n and set Gn+j (P ) := U (j; d(j) ).
+This overwrites main coordinate j with the dot product against en+j , i.e. the current scratch coordinate n + j = (xP )j ,
+leaving scratch unchanged. Thus after n more steps, [x | xP ]Gn+1 (P ) · · · G2n (P ) = [xP | xP ].
+
+                                                                   16
+                                           Why are Linear RNNs More Parallelizable?
+
+B.2.1. S IMULATION THEOREM
+Theorem 9 (RWKV-7 simulates weighted finite automata over Q). Fix K = Q. Let A = (Q, Σ, {Mσ }, α, ω) be an n-state
+WFA over K (Definition 13), and let w = w1 · · · wT be an input word. Then there exists a 4-layer RWKV-7 network whose
+output at position T equals fA (w) = αMw1 · · · MwT ω ∈ Q.
+
+Proof. We use the “3-layer router + 1-layer multiplicative simulator” template of Peng et al. (2025) (Appendix D),
+instantiated with a block length m := 2n and arithmetic dimension 2n.
+
+Block parameters. Let m := 2n. Write each position as t = ℓm + τ with ℓ ≥ 0 and 1 ≤ τ ≤ m. Introduce a padding
+token ⊥ and set wt := ⊥ for all t ≤ 0, with M⊥ := I. Let the previous block string be
+
+                                          w̃(ℓ) := w(ℓ−1)m+1 · · · wℓm ∈ (Σ ∪ {⊥})m ,
+
+which is well-defined for all ℓ due to padding.
+
+Offline factorization of block products.       For each length-m block string w̃ = w̃1 · · · w̃m , define the block product
+
+                                               P (w̃) := Mw̃1 · · · Mw̃m ∈ Kn×n .
+
+Apply Lemma 6 to obtain overwrite matrices Gw̃,1 , . . . , Gw̃,m ∈ K2n×2n such that for all x, s ∈ K1×n ,
+                                                      m
+                                                      Y
+                                            [x | s]         Gw̃,i = [xP (w̃) | xP (w̃)].
+                                                      i=1
+
+Fix one such factorization for each w̃.
+
+Router (layers 1–3).     Define a lookup table Ξ whose key is
+                                                                                 
+                                           t mod 2m, wt , wt−1 , . . . , wt−(2m−1) ,
+
+and whose outputs are:
+
+  1. the next factor Gw̃(ℓ) ,τ to apply at time t (encoded so that the arithmetic layer can set (w, a, κ) accordingly, using
+     Lemma 5);
+  2. a “completion” readout vector ω̂t (defined below).
+
+Both depend only on the key: w̃(ℓ) is contained in the last 2m tokens whenever ℓ ≥ 1 (and is all padding when ℓ = 0), and
+τ is determined by t mod 2m. By the finite-window lookup construction of Peng et al. (2025) (Appendix D; instantiated
+with block length m), a 3-layer RWKV-7 can compute Ξ at every position and write its outputs into the residual stream.
+
+Arithmetic layer (layer 4). Use a single wkv head of dimension 2n. Initialize the first row of the wkv matrix state using a
+single additive update on the first token: set v1 = e1 and k̃1 = [α | α], so the state becomes e⊤
+                                                                                                1 k̃1 . For all t ≥ 2, set the
+additive term to 0 (i.e. vt = k̃t = 0), so evolution is purely multiplicative: St = St−1 At .
+At each time t, the router specifies the factor Gw̃(ℓ) ,τ . Choose RWKV transition parameters so that At = Gw̃(ℓ) ,τ ; since
+each factor is an overwrite matrix, this is possible by Lemma 5.
+
+Completion vector and correctness. Let pt denote the first row of the arithmetic layer’s wkv state St . As in Peng et al.
+(2025) (Appendix D), one checks by induction that for t = ℓm + τ ,
+                                                       ℓ−2
+                                                        YY  m                    τ
+                                                                               Y               
+                                      pt = [α | α]                Gw̃(b) ,i           Gw̃(ℓ−1) ,i ,
+                                                        b=0 i=1                 i=1
+
+with the convention that empty products are I.
+
+                                                                   17
+                                          Why are Linear RNNs More Parallelizable?
+
+Define the within-block prefix product
+
+                                      Rt := Mwℓm+1 · · · Mwt ,          vt := Rt ω ∈ Kn×1 .
+
+Now define the completion vector:
+                                                      m
+                                                                         !  
+                                                      Y                     v
+                                          ω̂t :=              Gw̃(ℓ−1) ,i · t ∈ K2n×1 .
+                                                                            0
+                                                     i=τ +1
+
+This ω̂t is a fixed function of the router key (position mod 2m and last 2m tokens), hence it can be returned by the lookup
+table Ξ.
+Finally, compute the scalar readout pt ω̂t :
+                                                     pt ω̂t = α Mw1 · · · Mwt ω
+using Lemma 6 on each completed block. In particular, at t = T the RWKV-7 output equals fA (w).
+
+B.3. Iterated 3 × 3 Matrix Multiplication with RWKV-7
+Theorem 10 (RWKV-7 computes iterated 3 × 3 matrix products over Q). Fix K = Q. There exists a 4-layer RWKV-7
+network such that, given the length-9N stream encoding A(1) , . . . , A(N ) , the network outputs the 9 entries of PN :=
+A(1) A(2) · · · A(N ) (equivalently, vec(PN ) ∈ Q9 ) at the final position t = 9N .
+
+Proof sketch; full proof follows later. Layers 1–2 compute the position modulo 18. This yields (i) the within-block offset
+τ ∈ {1, . . . , 9} and (ii) a block-parity bit b ∈ {0, 1} that we use to alternate between two halves of an arithmetic state.
+Layer 3 stores the last 18 tokens (two consecutive length-9 blocks) and, from the key (t mod 18, wt , . . . , wt−17 ), look
+up the RWKV transition parameters needed at time t. Concretely, at each token it outputs (in the residual stream) the
+destination index and coefficient vector for a single dot-product overwrite update implementing one coordinate of the map
+x 7→ x B(A(ℓ−1) ), where A(ℓ−1) is the previous block’s matrix. (We treat the pre-sequence padding as “block 0” encoding
+A(0) := I3 .) Layer 4 maintains an 18-dimensional row state [x(0) | x(1) ] ∈ Q1×18 inside the first row of a wkv matrix state,
+where each half has length 9. During each length-9 block, layer 4 applies nine dot-product overwrites that compute a new
+vector xnew = xold B(A(ℓ−1) ) in the inactive half, using the parity bit b to select which half is source vs. destination. At the
+final position t = 9N , the destination half contains vec(A(1) · · · A(N −1) ). A completion readout (computed by the router
+from the final finite-window key, which contains the entire last block and hence determines A(N ) ) outputs the 9 coordinates
+of vec(A(1) · · · A(N ) ) via nine dot products.
+
+Proof. We follow the same “router (layers 1–3) + multiplicative arithmetic (layer 4)” template used in the RWKV-7
+regular-language construction (Appendix D of Peng et al. (2025)).
+
+Step 1: reduce 3 × 3 matrix multiplication to a 9-dimensional linear recurrence. Let vec : Q3×3 → Q1×9 be
+row-major vectorization:
+                          vec(P ) := (P1,1 , P1,2 , P1,3 , P2,1 , P2,2 , P2,3 , P3,1 , P3,2 , P3,3 ).
+Define the block-diagonal embedding                                      
+                                                          A         0   0
+                                                 B(A) :=  0        A   0  ∈ Q9×9 .
+                                                                         
+                                                           0        0   A
+Right-multiplication by A acts independently on the three rows of P , hence
+
+                                     vec(P A) = vec(P ) B(A)            for all P, A ∈ Q3×3 .                                (2)
+
+Let Pt := A(1) · · · A(t) and xt := vec(Pt ). Then
+
+                                               x0 = vec(I3 ),      xt = xt−1 B(A(t) ).
+
+Thus it suffices to maintain the 9-dimensional state xt and repeatedly apply the linear map x 7→ xB(A).
+
+                                                                  18
+                                         Why are Linear RNNs More Parallelizable?
+
+Step 2: implement x 7→ xB(A) with dot-product overwrites in dimension 18. We use the dot-product overwrite
+primitive: for any destination coordinate dst and coefficient vector c with cdst = 0, the overwrite matrix U (dst; c) replaces
+exactly one coordinate of a row vector with a dot product (Lemmas 4 and 5). In particular, each overwrite matrix can be
+realized as a single RWKV multiplicative transition (Lemma 5).
+We maintain an arithmetic row state in dimension 18 written as
+
+                                          p = [x(0) | x(1) ],        x(0) , x(1) ∈ Q1×9 ,
+
+together with a bit b ∈ {0, 1} indicating the active half x(b) (source for dot products). Let π(i, j) := 3(i − 1) + j be the
+row-major index map for i, j ∈ {1, 2, 3}.
+Fix a 3 × 3 matrix A. The coordinates of xB(A) are length-3 dot products:
+                                                                 3
+                                                                 X
+                                              (xB(A))π(i,j) =          xπ(i,k) Ak,j .                                        (3)
+                                                                 k=1
+
+
+We compute these 9 values into the inactive half x(1−b) using 9 overwrite steps. For each pair (i, j) ∈ {1, 2, 3}2 , define:
+
+   • Destination coordinate in the inactive half:
+
+                                        dst(b; i, j) := 9(1 − b) + π(i, j) ∈ {1, . . . , 18}.
+
+   • Coefficient vector c(b;i,j) (A) ∈ Q18 supported only on the three active coordinates corresponding to row i:
+
+                         c(b;i,j) (A) 9b+π(i,k) := Ak,j    (k = 1, 2, 3),        c(b;i,j) (A)u := 0 otherwise.
+
+Since dst(b; i, j) lies in the inactive half, we have c(b;i,j) (A)dst(b;i,j) = 0, so the overwrite is well-formed. Applying
+U (dst(b; i, j); c(b;i,j) (A)) overwrites precisely the destination coordinate with the dot product of the current row state
+against c(b;i,j) (A) (Lemma 4), which equals the right-hand side of (3). Moreover, because each coefficient vector is
+supported only on the active half, these overwrites do not depend on (and hence do not interfere with) already-written
+coordinates in the inactive half.
+If we apply these overwrites for all (i, j) (in any order, e.g. row-major order), then the inactive half becomes x(b) B(A)
+while the active half remains unchanged:
+                                            Y                               
+        [x(0) | x(1) ] 7−→ [x(0) | x(1) ] ·    U (dst(b; i, j); c(b;i,j) (A)) = [x(0) | x(1) ] with x(1−b) ← x(b) B(A). (4)
+                                           (i,j)
+
+
+Step 3: align the 9 overwrites with the token stream using a 3-layer router. We now explain how layers 1–3 produce,
+at each time t, exactly the overwrite parameters needed by layer 4.
+Partition the input stream into N blocks of length 9. For convenience, define an additional “block 0” consisting of padding
+symbols before the sequence; the router will interpret this as encoding I3 and we write A(0) := I3 . Let A(ℓ) be the matrix
+encoded by block ℓ for ℓ = 1, . . . , N . At any position t in block ℓ (so ℓ ∈ {1, . . . , N }), the model will apply the update
+corresponding to the previous matrix A(ℓ−1) (one-block delay).
+Computing (τ, b) from position. Let τ ∈ {1, . . . , 9} be the within-block offset and let b ∈ {0, 1} be the parity bit
+indicating whether the active half is the first (b = 0) or second (b = 1) half. Both are determined by t mod 18: specifically,
+τ = 1 + ((t − 1) mod 9) and b is the indicator of whether t mod 18 ∈ {10, . . . , 18}. By Peng et al. (2025, Lemma 6)
+instantiated with n = 9, a 2-layer RWKV-7 can output t mod 18, hence can provide τ and b to deeper layers.
+Recovering the previous block. At time t in block ℓ, the last 18 tokens (wt , wt−1 , . . . , wt−17 ) contain the entire previous
+block ℓ − 1 (all 9 tokens encoding A(ℓ−1) ), together with a prefix of the current block. Therefore, the tuple
+                                                                                  
+                                              t mod 18, wt , wt−1 , . . . , wt−17
+
+                                                                19
+                                                Why are Linear RNNs More Parallelizable?
+
+uniquely determines the matrix entries of A(ℓ−1) and the current offset τ . By Peng et al. (2025, Lemma 7) instantiated with
+n = 9, a 3-layer RWKV-7 can implement an arbitrary lookup table on this finite key and write its outputs into the residual
+stream.
+What the router outputs. Define a lookup table Ξ keyed by (t mod 18, wt , . . . , wt−17 ) whose output at time t is:
+
+  1. the destination index dst(b; i, j) and coefficient vector c(b;i,j) (A(ℓ−1) ) for the overwrite corresponding to τ = π(i, j);
+     and
+  2. (optionally) the bit b for the final readout.
+
+The existence of such a lookup table is immediate because the key space is finite. By the previous paragraph, layers 1–3 can
+compute Ξ at every position.
+Finally, using the weight-preparation linear maps in the time-mixing block, layer 4 converts (dst, c) into RWKV transition
+parameters realizing the overwrite matrix U (dst; c) via Lemma 5.
+
+Step 4: arithmetic in layer 4 and correctness. Layer 4 uses a single wkv head of head dimension 18. Initialize the first
+row of the wkv matrix state at the first token by setting
+
+                                                v1 = e1 ,           k̃1 = [vec(I3 ) | 0] ∈ Q1×18 ,
+
+so the wkv state becomes e⊤   1 k̃1 and its first row equals p1 = [vec(I3 ) | 0]. For all subsequent positions t ≥ 2, set the
+additive term to 0 (i.e. vt = k̃t = 0), so the first row evolves purely multiplicatively as pt = pt−1 At .
+At each position t in block ℓ, the router provides the overwrite parameters corresponding to the matrix A(ℓ−1) and the
+overwrite index τ . By the discussion above, we choose At = U (dst; c) so that exactly one coordinate of pt−1 is overwritten.
+After consuming all 9 tokens of block ℓ, equation (4) implies that the inactive half has been filled with
+
+                                                         x(1−b) = x(b) B(A(ℓ−1) ).
+
+By (2), this corresponds to right-multiplying the current 3 × 3 product by A(ℓ−1) .
+By induction over blocks, after finishing block ℓ the destination half contains
+                                                                         
+                                                vec A(1) A(2) · · · A(ℓ−1) .
+
+In particular, after finishing the final block ℓ = N , the destination half contains vec(PN −1 ) where PN −1 := A(1) · · · A(N −1) .
+We now remove the need for an additional padding block by applying the final multiplication by A(N ) in the readout at the
+last token.
+                                                                                       (0)   (1)
+Completion readout at t = T = 9N . Let T := 9N . Let pT = [xT | xT ] ∈ Q1×18 denote the arithmetic layer’s row
+state at time T , and let bT ∈ {0, 1} be the block-parity bit computed from T mod 18. Define the destination-half index
+                                                                 (h )
+hT := 1 − bT ∈ {0, 1} (equivalently, hT = N mod 2). Then xT T = vec(PN −1 ).
+Since T is the last token of block N , the router key (T mod 18, wT , . . . , wT −17 ) contains the entire block N and hence
+determines A(N ) . For each (i, j) ∈ {1, 2, 3}2 , define the completion vector
+                                        3
+                           (i,j)               (N )
+                                        X
+                         ω̂T       :=         Ak,j e 9hT +π(i,k) ∈ Q18 ,               where π(i, j) = 3(i − 1) + j.
+                                        k=1
+
+Then
+                                                             3
+                                                 (i,j)              (h )        (N )
+                                                             X
+                                                                      T
+                                          pT ω̂T         =         xT,π(i,k) Ak,j = vec(PN )π(i,j) .
+                                                             k=1
+       (i,j)
+Each ω̂T is a fixed function of the router key, so it can be returned by the finite-window lookup in layer 3 at time T . Using
+                                                                                                         (i,j)
+nine parallel readouts at the final position (one per (i, j)), the network outputs the nine scalars pT ω̂T in row-major order,
+which equal vec(PN ).
+
+                                                                           20
+                                         Why are Linear RNNs More Parallelizable?
+
+B.4. Simulating WFAs with DeltaNet
+This subsection shows that a 4-layer stacked DeltaNet can simulate any weighted finite automaton over Q. Throughout this
+subsection we fix K = Q and interpret all arithmetic in Q.
+
+B.4.1. D ELTA N ET MEMORY UPDATE AND THE MULTIPLICATIVE STEP MATRIX
+We consider a DeltaNet layer with matrix state St ∈ Kd×d updated by
+
+                                        St = St−1 I − βt kt kt⊤ + βt vt kt⊤ ,
+                                                                
+                                                                                                                        (5)
+
+where βt ∈ K and kt , vt ∈ Kd are computed from the layer input xt (via linear maps / an MLP, as in standard stacked
+DeltaNet blocks).
+We will repeatedly use the multiplicative step matrix
+
+                                              H(β, k) := I − βkk ⊤ ∈ Kd×d .                                             (6)
+
+When vt = 0, the update is purely multiplicative:
+
+                                                    St = St−1 H(βt , kt ).
+
+B.4.2. ROUTER PRIMITIVES : POSITION MODULO AND TOKEN BUFFERING
+Notation. Let ei denote the standard basis column vector. We assume the input stream contains an explicit BOS token at
+t = 1.
+
+Computing t mod 2m.        The router needs a cyclic write index t̃ ≡ t (mod 2m) to address a 2m-slot token buffer.
+Lemma 7 (DeltaNet can compute position modulo 2m). For any positive integer m, there exists a 2-layer stacked DeltaNet
+whose output includes a one-hot encoding of t̃ := t mod 2m at every position t.
+
+Proof. The construction mirrors a standard “two-reflections-make-a-rotation” argument. Layer 1 produces the parity bit
+of t (and can also detect t = 1 via the BOS token). Layer 2 maintains a 2-dimensional continuous state that advances by
+a fixed angle every two steps: it alternates between two Householder reflections of the form I − 2κκ⊤ , which is exactly
+H(β, k) with β = 2 and k = κ (and vt = 0). The state therefore cycles through 2m distinct values, one for each residue
+class modulo 2m. A finite MLP on top of a bank of linear readouts can map these 2m discrete states to a one-hot encoding
+of t̃.
+
+Exact token buffering by column overwrite. We store the last 2m tokens by overwriting one designated column per step.
+Lemma 8 (Exact column overwrite). Fix d and an index dst ∈ {1, . . . , d}. If βt = 1 and kt = edst , then
+
+                                             St = St−1 (I − edst e⊤           ⊤
+                                                                  dst ) + vt edst ,
+
+so all columns of St−1 are unchanged except column dst, which becomes exactly vt .
+
+Proof. Right-multiplying by (I − edst e⊤                                                                         ⊤
+                                       dst ) zeros column dst and leaves all other columns unchanged; adding vt edst writes
+vt into that column.
+
+Buffer layout.    Let L := 2m. In the buffer layer, use a DeltaNet head dimension
+
+                                                   dbuf := (|Σ| + 1) + L.
+
+We interpret:
+
+   • the first |Σ| + 1 coordinates as a one-hot token space (including padding/BOS as needed);
+   • the last L coordinates as buffer-slot selectors.
+
+                                                              21
+                                          Why are Linear RNNs More Parallelizable?
+
+At time t, let t̃ ∈ {1, . . . , L} be the residue class from Lemma 7. Write the current token into the t̃-th buffer slot by setting
+
+                                     βt = 1,       kt = e(|Σ|+1)+t̃ ,        vt = ewt ∈ Kdbuf .
+
+By Lemma 8, column (|Σ| + 1) + t̃ stores exactly the one-hot token vector ewt . Using L read heads with fixed queries
+q (j) = e(|Σ|+1)+j , the layer can read out all L stored tokens (each as a one-hot vector in the first |Σ| + 1 coordinates) into
+the residual stream.
+
+Finite lookup. Given the one-hot encoding of t̃ and the last 2m tokens (read from the buffer), the key space is finite. Thus,
+an (exponentially wide) feedforward network can implement an arbitrary lookup table on this key and output: (i) the next
+arithmetic-step parameters (β, k) for Layer 4, and (ii) a readout vector used to decode the desired scalar output.
+
+B.4.3. A RITHMETIC PRIMITIVES REALIZABLE BY MULTIPLICATIVE D ELTA N ET STEPS
+We now show that the multiplicative matrix H(β, k) = I − βkk ⊤ can realize the linear operations needed to apply arbitrary
+matrices.
+Lemma 9 (Coordinate scaling / clearing). Fix j ∈ {1, . . . , d} and s ∈ K. Let k = ej and β = 1 − s. Then
+
+                                                  H(β, ej ) = I − (1 − s)ej e⊤
+                                                                             j
+
+scales coordinate j by s and leaves all other coordinates unchanged. In particular, s = 0 clears coordinate j.
+
+Proof. For any row vector r ∈ K1×d ,
+                                               rH(β, ej ) = r − (1 − s)(rej )e⊤
+                                                                              j ,
+
+so (rH)j = rj − (1 − s)rj = srj and (rH)ℓ = rℓ for ℓ ̸= j.
+Definition 17 (Unit transvection). For src ̸= dst define the (column) unit transvection
+
+                                                T (src → dst) := I + esrc e⊤
+                                                                           dst .
+
+Right-multiplication by T (src → dst) updates a row vector r by rdst ← rdst + rsrc and leaves all other coordinates
+unchanged.
+Lemma 10 (Unit transvection as three multiplicative DeltaNet steps). Assume 12 , 13 ∈ K. Fix src ̸= dst and define (in
+dimension d)
+                                     u := esrc + edst ,   w := esrc + 2edst .
+Then
+                             H(2, u) H 12 , esrc H 13 , w = T (src → dst) = I + esrc e⊤
+                                                        
+                                                                                      dst .
+
+
+Proof. All three factors act as the identity outside the 2D subspace spanned by esrc , edst , so it suffices to verify the 2 × 2
+restriction. In the ordered basis (esrc , edst ), we have:
+                                                                                                          2
+                                                                                                                 − 23
+                                                                      1                                           
+                                  −1      −2                                 0
+                  H(2, (1, 1)) =              ,     H( 12 , (1, 0)) =    2       ,   H( 13 , (1, 2)) =     3
+                                                                                                                        .
+                                  −2      −1                             0   1                            − 23   − 13
+
+Multiplying gives                                     2
+                                         −2 12                  − 32
+                                                                            
+                                  −1                0                   1       1
+                                                        3
+                                                                   1 = 0           = I + esrc e⊤
+                                                                                               dst .
+                                  −2     −1 0       1 − 23      −3              1
+Embedding back into the full d-dimensional space proves the claim.
+Lemma 11 (Scaled add via a temp register). Assume 12 , 13 ∈ K. Fix distinct indices src, dst, tmp and a scalar λ ∈ K. There
+exists a length-8 sequence of multiplicative matrices of the form H(β, k) such that for every row vector r with rtmp = 0,
+the resulting row vector r′ satisfies:
+                                  ′
+                                 rdst = rdst + λrsrc ,       rj′ = rj (j ̸= dst),          ′
+                                                                                          rtmp = 0.
+
+                                                                 22
+                                           Why are Linear RNNs More Parallelizable?
+
+Proof. Use the following four-stage program, each stage implementable by multiplicative DeltaNet steps:
+
+  1. Copy src into tmp by a unit transvection T (src → tmp), implemented using 3 steps via Lemma 10.
+  2. Scale tmp by λ using one coordinate scaling: apply H(1 − λ, etmp ) (Lemma 9).
+  3. Add tmp into dst by a unit transvection T (tmp → dst), implemented using 3 steps via Lemma 10.
+  4. Clear tmp by scaling it by 0: apply H(1, etmp ) (Lemma 9).
+
+Starting from rtmp = 0, the net effect is rdst ← rdst + λrsrc and tmp returns to 0. The total number of multiplicative steps
+is 3 + 1 + 3 + 1 = 8.
+
+Applying an arbitrary matrix with scratch coordinates. We now show that any n × n matrix can be applied to a row
+vector using O(n2 ) multiplicative DeltaNet steps, given n scratch coordinates and one additional temp coordinate.
+Lemma 12 (Apply any n × n matrix with scratch in O(n2 ) multiplicative steps). Assume 12 , 13 ∈ K. Let P ∈ Kn×n .
+Consider row vectors in dimension 2n + 1 written as
+
+                                               [x | s | t],      x, s ∈ K1×n , t ∈ K.
+
+There exists an explicit sequence of
+                                                       m := 8n2 + 5n + 1
+matrices G1 (P ), . . . , Gm (P ) ∈ K(2n+1)×(2n+1) , each of the form H(β, k), such that for all x, s, t,
+
+                                        [x | s | t] G1 (P ) · · · Gm (P ) = [xP | xP | 0].
+
+Proof. Let the coordinates be indexed as:
+
+                                 main: 1, . . . , n,   scratch: n + 1, . . . , 2n,       temp: 2n + 1.
+
+Phase 1 (clear scratch and temp).         For each scratch coordinate n + j apply a clear:
+
+                                                   H(1, en+j )     (j = 1, . . . , n),
+
+and clear temp by H(1, e2n+1 ). This uses n + 1 steps and yields [x | 0 | 0].
+
+Phase 2 (accumulate xP into scratch). For each destination j ∈ {1, . . . , n} and source i ∈ {1, . . . , n}, update scratch
+coordinate n + j by
+                                   (scratch j) ← (scratch j) + Pi,j · (main i)
+using Lemma 11 with
+                               src = i,        dst = n + j,         tmp = 2n + 1,             λ = Pi,j .
+                                                                                              2
+Each scaled add costs 8 multiplicative steps and leaves temp equal to 0. After all n updates, scratch equals xP while main
+remains x.
+
+Phase 3 (clear main). Clear the main coordinates by applying H(1, ei ) for i = 1, . . . , n. This uses n steps and yields
+[0 | xP | 0].
+
+Phase 4 (copy scratch back to main). For each j = 1, . . . , n, add scratch coordinate n + j into main coordinate j using
+a unit transvection T (n + j → j), implemented by 3 multiplicative steps via Lemma 10. Since main is 0, after these 3n
+steps we have main = xP and scratch remains xP .
+Summing the step counts gives
+                                           (n + 1) + 8n2 + n + 3n = 8n2 + 5n + 1.
+
+
+
+                                                                  23
+                                              Why are Linear RNNs More Parallelizable?
+
+B.4.4. S IMULATION THEOREM : A 4- LAYER D ELTA N ET SIMULATES ANY WFA
+Theorem 11 (DeltaNet simulates weighted finite automata). Fix K = Q. Let A = (Q, Σ, {Mσ }, α, ω) be an n-state WFA
+over K (Definition 13), and let w = w1 · · · wT be an input word. Then there exists a 4-layer stacked DeltaNet whose scalar
+output at every position t equals
+                                                α Mw1 Mw2 · · · Mwt ω ∈ K.
+In particular, at t = T the output equals fA (w).
+
+Proof sketch; full proof follows later. We use the same finite-window router + arithmetic template as in Theorem 9 (compute
+t mod 2m, buffer the last 2m tokens, and look up the next arithmetic step), but implement these router components using
+DeltaNet primitives.
+The arithmetic layer now uses only multiplicative DeltaNet steps H(β, k) = I − βkk ⊤ (Definition 2.3) over K = Q,
+which guarantees 12 , 13 ∈ K. Lemma 9 shows that H(β, k) can implement coordinate scalings, and Lemma 10 shows
+that constant-length products of such steps implement unit transvections rdst ← rdst + rsrc . Combining these primitives,
+Lemma 12 gives an explicit program applying an arbitrary n × n matrix in m = 8n2 + 5n + 1 multiplicative steps (using
+scratch space and one temporary coordinate). The router streams the corresponding (βt , kt ) parameters to the arithmetic
+layer exactly as in Theorem 9, and the same completion-vector decoding yields fA (w).
+
+Proof. Let
+                                                           m := 8n2 + 5n + 1
+be the step budget from Lemma 12. For each position t ≥ 1, write t = ℓm + τ with ℓ = ⌊(t − 1)/m⌋ ≥ 0 and 1 ≤ τ ≤ m.
+
+Offline factorization of block products. Introduce a padding symbol ⊥ and set wt = ⊥ for t ≤ 0 with M⊥ := I. For
+any length-m block string w̃ = w̃1 · · · w̃m ∈ (Σ ∪ {⊥})m , define the block product
+
+                                               P (w̃) := Mw̃1 Mw̃2 · · · Mw̃m ∈ Kn×n .
+
+Apply Lemma 12 to P (w̃) to obtain a fixed sequence
+
+                                 Gw̃,1 , . . . , Gw̃,m ∈ K(2n+1)×(2n+1) ,        Gw̃,τ = H(βw̃,τ , kw̃,τ ),
+
+such that for all [x | s | t],
+                                                         m
+                                                         Y
+                                           [x | s | t]          Gw̃,τ = [xP (w̃) | xP (w̃) | 0].
+                                                         τ =1
+
+Fix one such factorization for each possible w̃.
+
+Layer 1 (parity / first-position features). Layer 1 produces a finite-valued encoding that distinguishes the first position
+(via BOS) and encodes parity. This can be done by a 1D multiplicative recurrence that toggles sign each step, together with
+the BOS token.
+
+Layer 2 (compute t mod 2m). By Lemma 7, Layer 2 outputs a one-hot encoding of t̃ := t mod 2m in the residual
+stream.
+
+Layer 3 (buffer last 2m tokens and perform a finite lookup). Set L := 2m and build a 2m-slot cyclic token buffer
+using Lemma 8, with the buffer layout described earlier. At time t, the buffer contains the last 2m tokens
+
+                                                     (wt , wt−1 , . . . , wt−(2m−1) ),
+
+and Layer 2 provides t̃ = t mod 2m. Define a lookup table Ξ whose key is
+                                                                             
+                                             t̃, wt , wt−1 , . . . , wt−(2m−1) ,
+
+and whose outputs are:
+
+                                                                       24
+                                           Why are Linear RNNs More Parallelizable?
+
+                                    (4)   (4)
+  1. the arithmetic parameters (βt , kt ) specifying the matrix Gw̃(ℓ−1) ,τ to apply in Layer 4 (defined below);
+  2. a completion/readout vector ω̂t ∈ K2n+1 (also defined below).
+
+Since the key space is finite, an MLP can implement Ξ exactly and write these outputs into the residual stream.
+
+Layer 4 (arithmetic: purely multiplicative DeltaNet simulation). Layer 4 uses one DeltaNet head of dimension 2n + 1.
+We maintain only the first row of St as the arithmetic row vector.
+Initialization. Let p0 = [α | 0 | 0] ∈ K1×(2n+1) . On the first token, set S0 = 0 and write S1 = e1 p0 by choosing
+                                                β1 = 1,         v1 = e1 ,          k1 = p⊤
+                                                                                         0.
+
+Then S1 = β1 v1 k1⊤ = e1 p0 .
+Updates. For all t ≥ 2, set vt = 0. Let w̃(ℓ−1) := w(ℓ−1)m+1 · · · wℓm be the previous completed block string (using ⊥
+                                                                                                 (4)      (4)
+padding when ℓ = 0), and let τ be the within-block offset of t. Layer 3 outputs (βt , kt ) so that
+                                                          (4)   (4)
+                                                   H(βt , kt ) = Gw̃(ℓ−1) ,τ .
+Thus, for t ≥ 2 we have St = St−1 Gw̃(ℓ−1) ,τ . Let pt denote the first row of St ; then pt = pt−1 Gw̃(ℓ−1) ,τ .
+
+Correctness via a completion vector.        Unrolling the recurrence, if t = ℓm + τ then
+                                                          ℓ−2
+                                                           YY  m                     τ
+                                                                                   Y               
+                                     pt = [α | 0 | 0]                 Gw̃(b) ,s           Gw̃(ℓ−1) ,s ,
+                                                           b=0 s=1                  s=1
+
+with the convention that empty products are identity.
+Define the current-block prefix product
+                                 Rt := Mwℓm+1 · · · Mwt ∈ Kn×n ,                   vt := Rt ω ∈ Kn×1 .
+Define the completion vector
+                                                                 ! 
+                                                      m
+                                                      Y            vt
+                                       ω̂t :=         Gw̃(ℓ−1) ,s  0  ∈ K2n+1 .
+                                               s=τ +1               0
+This depends only on the router key (position mod 2m and the last 2m tokens), hence can be output by Ξ.
+Now compute the scalar pt ω̂t : multiplying pt by the remaining factors GQw̃(ℓ−1) ,τ +1 · · · Gw̃(ℓ−1) ,m completes the application
+                                                                             m
+of the previous block product. By Lemma 12, the full block product s=1 Gw̃(ℓ−1) ,s maps the first n coordinates x to
+xP (w̃(ℓ−1) ) (and duplicates it into scratch), so telescoping over completed blocks yields
+                                                    pt ω̂t = α Mw1 · · · Mwt ω.
+
+Readout. At position t, set a DeltaNet query vector qt := ω̂t (routed from Layer 3) and read ot = St qt . Because
+St = e1 pt has only the first row nonzero, we have ot = e1 · (pt ω̂t ). An output head returns the first coordinate, which
+equals αMw1 · · · Mwt ω.
+
+B.5. Iterated 3 × 3 Matrix Multiplication with DeltaNet
+We now show that DeltaNet can solve the streaming iterated 3 × 3 matrix multiplication problem (Definition 14) over a
+bounded-precision modulus, using the same router+arithmetic template as Theorem 11. The main difference is that the
+arithmetic state dimension is constant (n = 9 after vectorization), so the required per-superblock step budget is a constant.
+Theorem 12 (DeltaNet computes iterated 3 × 3 matrix products over Q). Fix K = Q. There exists a 4-layer stacked
+DeltaNet such that, given the stream encoding A(1) , . . . , A(N ) ∈ Q3×3 (Definition 14), the network outputs the 9 entries of
+                                                 PN := A(1) A(2) · · · A(N ) ∈ Q3×3
+at the final position t = 9N .
+
+Proof. Work over K = Q.
+
+                                                                      25
+                                              Why are Linear RNNs More Parallelizable?
+
+Step 1: reduce right-multiplication to a 9-dimensional linear update. Let vec : Q3×3 → Q1×9 be row-major
+vectorization. Define the block-diagonal embedding
+                                                           
+                                                    A 0 0
+                                           B(A) :=  0 A 0  ∈ Q9×9 .
+                                                           
+                                                     0 0 A
+
+Then for all P, A ∈ Q3×3 ,
+                                                     vec(P A) = vec(P ) B(A).
+                  (1)        (t)
+Let xt := vec(A         · · · A ). Then
+                                               x0 = vec(I3 ),     xt = xt−1 B(A(t) ).
+Thus it suffices to maintain a 9-dimensional row state and repeatedly apply the linear map x 7→ xB(A).
+
+Step 2: choose a superblock length and step budget. We will apply Lemma 12 with n = 9, i.e. we maintain an arithmetic
+state of dimension 2n + 1 = 19 (main 9, scratch 9, temp 1), and can apply any 9 × 9 matrix in
+
+                                          marith := 8n2 + 5n + 1 = 8 · 81 + 45 + 1 = 694
+
+multiplicative steps.
+Each input matrix A(t) arrives as 9 tokens. We group matrices into superblocks of length
+
+                                     L := 78,        so each superblock has 9L = 702 tokens.
+
+Since 702 ≥ 694, we can schedule the 694 arithmetic steps for a superblock and use the remaining 702 − 694 = 8 token
+times as identity steps (i.e. apply H(0, k) = I).
+We handle the one-superblock delay by a completion readout at the final position T = 9N , analogous to the RWKV
+completion-vector trick: the router computes a readout vector that (i) finishes the remaining multiplicative steps for the
+previous superblock and (ii) applies the final superblock product in the readout.
+
+Step 3: define superblock transition matrices. Partition the matrix sequence into superblocks of length L = 78, except
+that the final superblock may be shorter. Let B := ⌈N/L⌉ and let
+
+                                                 r := N − (B − 1)L ∈ {1, . . . , L}.
+
+For each superblock index b < B define the full-superblock product
+
+                                           Πb := B(A((b−1)L+1) ) · · · B(A(bL) ) ∈ Q9×9 .
+
+For the final superblock define the (possibly partial) product
+
+                                           ΠB := B(A((B−1)L+1) ) · · · B(A(N ) ) ∈ Q9×9 .
+
+Then
+                                          vec(PN ) = x0 Π1 Π2 · · · ΠB ,     x0 = vec(I3 ).
+
+Partition the matrix sequence into superblocks of length L = 78, except that the final superblock may be shorter. Let
+B := ⌈N/L⌉ and let
+                                          r := N − (B − 1)L ∈ {1, . . . , L}.
+For each superblock index b < B define the full-superblock product
+
+                                           Πb := B(A((b−1)L+1) ) · · · B(A(bL) ) ∈ Q9×9 .
+
+For the final superblock define the (possibly partial) product
+
+                                           ΠB := B(A((B−1)L+1) ) · · · B(A(N ) ) ∈ Q9×9 .
+
+                                                                 26
+                                          Why are Linear RNNs More Parallelizable?
+
+Step 4: offline factorization of each Πb into multiplicative DeltaNet steps. By Lemma 12 (with n = 9), for each full
+superblock product Πb with b < B there exists a length-694 sequence of 19 × 19 matrices of the form H(β, k). Extend this
+to a length-702 sequence by appending 8 identity steps. Thus each full superblock b < B is associated with a fixed sequence
+
+                                  Gb,1 , . . . , Gb,702 ∈ Q19×19 ,            Gb,τ = H(βb,τ , kb,τ ).
+
+(We also define G0,τ := I for all τ , corresponding to Π0 := I.)
+By Lemma 12 (with n = 9), for each Πb there exists a length-694 sequence of 19 × 19 matrices of the form H(β, k) that
+maps
+                                          [x | s | t] 7→ [xΠb | xΠb | 0].
+Extend this to a length-702 sequence by appending 8 identity steps. Thus each superblock b is associated with a fixed
+sequence
+                                Gb,1 , . . . , Gb,702 ∈ Q19×19 , Gb,τ = H(βb,τ , kb,τ )
+such that after applying all 702 steps,
+                                                         702
+                                                         Y
+                                           [x | s | t]          Gb,τ = [xΠb | xΠb | 0].
+                                                         τ =1
+
+Fix one such factorization for each possible superblock token string.
+
+Step 5: the 4-layer DeltaNet construction (router + arithmetic). Layers 1–2 (position modulo). Let mtok := 702 be the
+token length per superblock. Use Layers 1–2 to compute a one-hot encoding of t mod (2mtok ) = t mod 1404 (Lemma 7
+with m = mtok ) and write it to the residual stream.
+Layer 3 (token buffer + lookup). Maintain a cyclic buffer of the last 2mtok = 1404 tokens using the column overwrite
+mechanism (Lemma 8) with L = 1404 slots. At time t, the last 1404 tokens contain:
+
+   • the entire previous superblock (the last 702 tokens), encoding the L = 78 matrices whose product is Πb−1 ,
+
+   • and a prefix of the current superblock.
+
+Define a lookup table Ξ keyed by                                                          
+                                               t mod 1404, wt , wt−1 , . . . , wt−1403
+                                                                (4)     (4)
+whose output is the next arithmetic-step parameters (βt , kt ) specifying the factor Gb−1,τ to apply at this time (one-
+superblock delay). Because the key space is finite (and of size at most m1404 ≤ N O(1) under m ≤ N c ), an MLP can
+implement Ξ exactly.
+Layer 4 (arithmetic in dimension 19). Layer 4 uses one DeltaNet head of dimension 19 and interprets the first row of St as
+the arithmetic row vector [x | s | t], where x, s ∈ Q1×9 and t ∈ Q.
+Initialization (first token). Write [vec(I3 ) | 0 | 0] into the first row of S1 using one additive write: set β1 = 1, v1 = e1 ,
+and k1 = [vec(I3 ) | 0 | 0]⊤ .
+Purely multiplicative evolution (all later tokens). For all t ≥ 2, set vt = 0 so St = St−1 H(βt , kt ). Layer 3 provides
+(βt , kt ) so that H(βt , kt ) = Gb−1,τ , i.e. the τ -th factor for the previous superblock’s product Πb−1 . During the first
+superblock, take Π0 = I and apply identity steps.
+Let T := 9N be the final position. Write
+
+                               T = (B − 1) mtok + τ,                  mtok := 702,       1 ≤ τ ≤ mtok .
+
+(So τ = 9r, where r = N − (B − 1)L is the number of matrices in the final superblock.) By construction, at time T the
+arithmetic layer has applied the first τ factors of the previous full superblock GB−1,1 , . . . , GB−1,τ (or identity factors if
+B = 1), but it has not applied ΠB . We therefore decode vec(PN ) = x0 Π1 · · · ΠB using a completion readout at time T .
+
+                                                                      27
+                                             Why are Linear RNNs More Parallelizable?
+
+Final readout via completion vectors. Let pT ∈ Q1×19 denote the arithmetic layer’s first-row state at time T . For each
+output coordinate j ∈ {1, . . . , 9} define the completion vector
+                                                                           
+                                                          m
+                                                                   ! ΠB e j
+                                                           tok
+                                         (j)
+                                                          Y
+                                       ω̂T     :=            GB−1,s  0  ∈ Q19×1 ,
+                                                                           
+                                                      s=τ +1          0
+
+                                                                                     (j)
+where the product is interpreted as identity when B = 1 or τ = mtok . This ω̂T is a fixed function of the finite router key
+(T mod 1404, wT , wT −1 , . . . , wT −1403 ), so it can be returned by the layer-3 lookup.
+The network outputs the nine scalars
+
+                                                (j)                 
+                                          pT ω̂T      =     vec(PN ) j ,   j = 1, . . . , 9,
+
+i.e. the 9 entries of PN in row-major order, at the final position T = 9N .
+
+C. Upper Bounds on PD LRNNs
+Theorem 7. Let M be a multi-layer PD LRNN over Q. Then the language recognized by M is in FO-uniform NC1 .
+
+
+
+Proof. Similar to the proof of Theorem 3, specifically the convolutional form of LRNNs in Equation (1), this proof reduces to
+                                                                                                               1
+showing that the product of a sequence P1 D1 , . . . , Pn Dn of PD matrices can be computed in FO-uniform
+                                                                                                       Qn NC . Terzic et al.
+(2025) observe PD matrices are closed under multiplication, so this product also has PD form. Let i=1 Pi Di = P̃n D̃n .
+We will provide a closed form for P̃i and D̃i , and then argue that it can be easily computed using FO-uniform NC1 circuits.
+Recall that Di is a diagonal matrix. Each Pi is a column one-hot matrix in {0, 1}d×d and thus represents a function
+πi : {1, 2, . . . , d} → {1, 2, . . . , d}. When Pi is full rank, πi represents a permutation of d elements. In general, πi may map
+two inputs to the same output, i.e., collapse two elements into one. We will thus refer to it as a relaxed permutation.
+We first observe that for any d × d matrix A, both APi and ADi have a very simple form: APi is the matrix obtained by
+applying the relaxed permutation πi to the columns of A, and ADi is the matrix obtained by scaling the j-th column of
+A by the j-th diagonal entry of Di . It follows that AP1 D1 , . . . , Pn Dn is nothing but an alternating sequence of relaxed
+permutations and scaling of columns of A. Intuitively, as long as we adjust the scaling terms appropriately, we can switch
+the order, i.e., first apply all relaxed permutations to the columns of A and then apply appropriate scaling; this, as we will
+                                                                                  1
+shortly see, will Q make the matrix product
+                       n                                                 Qj+1 NC circuits. Formalizing this, we will indeed
+                                          Qn easy to compute using uniform
+show that P̃n = i=1 Pi and D̃n = j=1 π̃n,j (Dj ), where π̃n,j = i=n πi is the composition of the last n − j relaxed
+permutations (by convention, π̃n,n is the identity permutation) and π(Dj ) denotes the relaxed permutation of the diagonal
+entries of Dj according to π, leading to another diagonal matrix.
+Conveniently, it is well-known that the product of n fixed size matrices that take only finitely many values (in particular fixed
+size 0-1 matrices) can be computed in FO-uniform NC1 (Immerman & Landau, 1992). Thus P̃n can be computed using
+such circuits. The relaxed permutation π̃j can also be similarly computed, and applied to Dj . Lastly, D̃n , being a product of
+n diagonal matrices, consists of n products of n rationals each, which again can be computed in FO-uniform NC1 .
+                                         Qn                    Qn
+All that remains to show is that P̃n = i=1 Pi and D̃n = j=1 π̃n,j (Dj ). We prove this by induction on n. The base
+                                                                    Qn−1                                          Qn−1
+case of n = 1 holds trivially. For n ≥ 2, assume by induction that i=1 Pi Di = P̃n−1 D̃n−1 where P̃n−1 = i=1 Pi and
+          Qn−1                       Qn
+D̃n−1 = j=1 π̃n−1,j (Dj ). Then i=1 Pi Di = P̃n−1 D̃n−1 Pn Dn .
+We will use a “swap” property of P and D matrices, as well as the column one-hot nature of the P matrices, to show that
+D̃n−1 Pn Dn = Pn D̃n , which will finish the proof.
+For this last part, observe that left-multiplying Pn by the diagonal matrix D̃n−1 amounts to scaling the j-th row of Pn by
+the j-th diagonal entry of D̃n−1 . Since Pn is column one-hot and thus has at most one non-zero entry in each column, this
+operation is the same as right-multiplying Pn with a relax-permuted version of the diagonal matrix, namely πn (D̃n−1 ).
+
+                                                                   28
+                                          Why are Linear RNNs More Parallelizable?
+
+That is,
+
+                                   D̃n−1 Pn = Pn πn (D̃n−1 )
+                                                                       
+                                                       n−1
+                                                       Y
+                                            = Pn πn       π̃n−1,j (Dj )
+                                                         j=1
+                                                   n−1
+                                                   Y                             n−1
+                                                                                 Y
+                                            = Pn         πn π̃n−1,j (Dj ) = Pn         π̃n,j (Dj )
+                                                   j=1                           j=1
+
+
+
+Right-multiplying both sides by Dn , we obtain:
+                                                            
+                                              n−1
+                                               Y                       n
+                                                                       Y
+                         D̃n−1 Pn Dn = Pn        π̃n,j (Dj ) Dn = Pn   π̃n,j (Dj ) = Pn D̃n
+                                                 j=1                        j=1
+
+as desired, finishing the proof.
+
+D. Single-Layer LRNNs
+D.1. Inexpressibility of Deterministic Graph Connectivity
+Our main results (Section 3) show that, assuming PNC1 ̸= L, multilayer linear RNNs cannot solve the sorted deterministic
+graph connectivity problem. The same result holds unconditionally in the single layer case, since a single-layer linear RNN
+is a WFA and no WFA can represent the sorted deterministic graph connectivity problem (cf. Section 3):
+Theorem 13. No weighted finite automaton can recognize sorted deterministic graph connectivity.
+
+Proof. Assume by way of contradiction that we can represent sorted deterministic graph connectivity. Then the Hankel
+matrix for this language has finite rank (Carlyle & Paz, 1971). But we can easily construct an unbounded-rank subblock of
+the Hankel matrix where the rows are s and columns are t, and there are no edges in the graph (this yields the identity).
+Thus, we have reached a contradiction and this problem must not be representable.
+
+A single-layer linear RNN can be simulated by a weighted finite automaton (Merrill et al., 2020, Theorem 4). Therefore, no
+linear RNN with just one layer can solve sorted deterministic graph connectivity, in the following sense:
+Corollary 8. The hidden state of a single linear RNN layer cannot solve sorted deterministic graph connectivity.
+
+The connection between LRNNs and WFAs shown here motivates considering a connection with an older line of work on
+rational recurrences (Peng et al., 2018). The central idea here, before the emergence of transformer, was that constraining
+RNNs so that their state was computable by a WFA was desirable because it made them more computationally efficient. Our
+results here reveal why: one-layer LRNNs are a kind of rational recurrence, and all rational recurrences can be computed in
+PNC1 , i.e., in a highly parallel fashion. While stacking multiple LRNN layers may not remain a WFA (Merrill et al., 2020;
+Mohri, 2026), it will remain in PNC1 by Theorem 3.
+
+D.2. Single-Layer PD LRNNs and Deterministic WFAs
+We say that a WFA (Definition 13) is deterministic if the initial state vector α and each column over every transition matrix
+Aσ have at most one non-zero entry.
+Theorem 8. Any language recognized by a deterministic WFA with a zero threshold over Q can also be recognized by a
+one-layer PD LRNN over Q.
+
+Proof. We can represent an arbitrary deterministic WFA transition matrix in PD form as follows. Let d be the number of
+states. We set bt to be a one-hot encoding of the initial state at $ and the zero vector elsewhere. For each σ and state q, we
+set Pσ to be 1 at the unique q ′ to which q transitions. We set the entry in Dσ corresponding to q to have the weight of this
+transition. Thus, a single-layer PD LRNN is equivalent to a deterministic WFA.
+
+                                                               29
+                                         Why are Linear RNNs More Parallelizable?
+
+E. Arithmetic Circuits over Q
+We define arithmetic circuits over the rational field ⟨Q; +, −, ×, 0, 1⟩, which we often write simply as Q. We represent a
+rational number a/b as a pair (a, b) of integers. An arithmetic circuit C over Q with n input nodes gives rise to a function
+f : {0, 1}n → Z× Z. That is, the circuit will output a representation a/b of a rational number, but it might not be normalized.
+We show below that no problems arise in this way.
+Proposition 4. Any arithmetic circuit family C = {Cn }n≥1 over Q with logarithmic depth gives rise to a GapNC1 function.
+Therefore, it can be expressed as a boolean bounded-fan-in circuit family with O(log n log∗ n) depth.
+
+Proof. To prove this, simply note that over Q:
+                                                     a  c  ad + bc
+                                                       + =
+                                                     b  d    bc
+and
+                                                        a  c ac
+                                                          × = .
+                                                        b  d bd
+Similarly, − ab = −a
+                   b . Therefore, each Q-operation can be simulated with at most four Z-operations. Therefore, if C has log
+depth, then so are the Z-circuits simulating C.
+So, as a corollary, C can be expressed as a boolean bounded-fan-in circuit family with O(log n log∗ n) depth.
+
+F. Additional Details for Experiments
+Benchmark.      We evaluate models on a suite of synthetic algorithmic tasks designed to test length generalization.
+Deterministic graph reachability. We construct a synthetic reachability dataset over directed graphs with n vertices.
+Vertices are assigned to two buckets under label-dependent constraints: for positive samples, vertices 0 and n lie in the same
+bucket, while for negative samples, they lie in different buckets. All remaining vertices are assigned independently with
+probability p. Directed edges are then added deterministically by connecting consecutive vertices within each bucket, yielding
+two disjoint directed paths. Each instance encodes a reachability query from vertex 0 to vertex n as a binary-serialized
+sequence.
+Iterated matrix multiplication with modulus. This task requires computing prefix products of a sequence of 3 × 3
+matrices over the finite ring Zm , where m is a fixed prime. Each example has the form SOS T | m | qk | M1 | · · · | MT
+EOS, where T denotes the sequence length, qk is a fixed query index, and each matrix Mt ∈ {−1, 0, 1}3×3 is sampled
+independently and rejected until invertible modulo m. Let Pt = M1 · · · Mt mod m denote the prefix product at step t.
+The target sequence is v1 | · · · | vT , where vt equals the qk -th entry of Pt modulo m. Models are trained with a stepwise
+classification loss to predict vt at each step. The minimum sequence length for this task is 1.
+Iterated matrix multiplication without modulus. In this task, models multiply a sequence of 3 × 3 integer matrices over
+Z and predict a single binary label. Each example has the form SOS T | M1 | · · · | MT EOS, where T is the number
+of matrices and each Mt ∈ {−1, 0, 1}3×3 is sampled i.i.d. with probabilities (0.45, 0.10, 0.45) for entries (−1, 0, 1). Let
+PT = M1 M2 · · · MT denote the product over Z; the target label is defined as y = 1 iff (PT )0,0 = 0, and y = 0 otherwise.
+We optionally construct balanced splits via rejection sampling to mitigate length-dependent artifacts. Since integer products
+may overflow for large T , labeling can be performed with an optional clipping cap that truncates intermediate values during
+multiplication. The minimum sequence length of this task is 1.
+Across both deterministic graph connectivity and iterated matrix multiplication, we use a largely standardized training setup
+to enable fair comparison across architectures. As shown in Table 1, all models are trained with AdamW, a fixed batch
+size of 128, and gradient clipping at 1.0. Learning rates and weight decay are kept consistent within each task, with minor
+adjustments for architectures that require stronger regularization, such as DeltaNet. Training is capped at 60k steps for
+deterministic graph connectivity and 60k steps for iterated matrix multiplication, ensuring comparable optimization budgets
+while isolating architectural inductive biases as the primary source of performance differences.
+
+
+
+
+                                                              30
+                                           Why are Linear RNNs More Parallelizable?
+
+
+
+
+                               Task    Model          Configuration                      LR    Steps
+                                       RNN            dm =256, L=2, dh = 256,      3×10−4        60k
+                                       Transformer    dm =256, L=2, h = 4          3×10−4        60k
+                               DGC     Mamba          dm =256, L=2, dstate =128    3×10−4        60k
+                                       RWKV-7         dm =256, L=2, h = 4          3×10−4        60k
+                                       DeltaNet       dm =256, L=2, h = 4          3×10−4        60k
+                                       RNN            dm =256, L=2, dh = 256,      3×10−4        60k
+                                       Transformer    dm =256, L=2, h = 4          3×10−4        60k
+                               IMM     Mamba          dm =256, L=2, dstate =64     3×10−4        60k
+                                       RWKV-7         dm =256, L=2, h = 4          3×10−4        60k
+                                       DeltaNet       dm =256, L=2, h = 4          3×10−4        60k
+Table 1. Training hyperparameters for deterministic graph connectivity (DGC) and iterated matrix multiplication (IMM). dm , L, dh , h,
+dstate , and LR denote the model dimension, number of layers, hidden size, number of attention heads, SSM state expansion factor, and
+learning rate, respectively. All models are trained with AdamW, batch size 128, and gradient clipping at 1.0.
+
+
+
+
+                                                                 31
+
