@@ -1,0 +1,61 @@
+{
+  "name": "delta_integer_seed0",
+  "claim": "partial replication under reconciled sources",
+  "seed": 0,
+  "batch": 128,
+  "clip": 1.0,
+  "maximum_steps": 60000,
+  "optimizer": {
+    "name": "AdamW",
+    "lr": 0.0001,
+    "weight_decay": 0.0001,
+    "betas": [
+      0.9,
+      0.999
+    ],
+    "eps": 1e-08
+  },
+  "auxiliary_weight": 0.3,
+  "curriculum": "T5->100 over 150 eligible-pool epochs",
+  "registration_sha256": "e8b236cc273158a447e9cda04fb4246d384640611ed6b13d37626ec64c7e58d4",
+  "source_commit": "af649fd84c494bacf9a08b074f36b39f7d792b10",
+  "parameters": 267841,
+  "cuda_visible_devices": "5",
+  "host": "lambda01",
+  "datasets": {
+    "train": {
+      "task": "integer",
+      "split": "train",
+      "sha256": "89aeae171d393d4070499c21db47c133136f156269e9300174bb7ca58d2c416e",
+      "spec": [
+        70000,
+        1,
+        100,
+        23001
+      ],
+      "labels": [
+        35000,
+        35000
+      ],
+      "lengths_sha256": "e19d3bdceab4f07a6568461dfd14fba3bcbc95f39a5e1d7f6a9daf58c4c1b0f6",
+      "created_at": 1792698306.4395854
+    },
+    "validation": {
+      "task": "integer",
+      "split": "validation",
+      "sha256": "3145e44633267be62e890aadcd04f56142c21851d237521d49fe1455433f136d",
+      "spec": [
+        20000,
+        1,
+        100,
+        23002
+      ],
+      "labels": [
+        10000,
+        10000
+      ],
+      "lengths_sha256": "c3330cf745e93079f8a55b1f2888f486e45afd65950bf72e14d940795b0d19e8",
+      "created_at": 1792698343.2562885
+    }
+  }
+}
