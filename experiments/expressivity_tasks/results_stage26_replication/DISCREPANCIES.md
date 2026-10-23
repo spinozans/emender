@@ -61,3 +61,18 @@ No Figure2 numeric values are reconstructed from the scrambled markdown; only th
 paper's stated qualitative pattern is targeted. No resilient DiLoCo behavior changes
 (R01–R16/NDP01–NDP17/V21S01–V21S17/ISP01–ISP07 not applicable); local lambda01 CUDA,
 no Frontier scheduler queue binding claimed.
+
+---
+
+## Clarification (X26R review, parent-receipted 2026-10-23)
+
+Per the X26R acceptance condition: the registered predictions are QUALITATIVE
+(the Figure 2 pattern: RNN generalizes OOD on DGC; DeltaNet degrades OOD on
+DGC; both learn IMM in-dist) - no numerical success thresholds or Figure 2
+accuracy coordinates were registered, and none may be applied post hoc. The
+wording above ('numerical thresholds are registered') referred to the
+deterministic data/label checks in the test suite, not to evaluation
+thresholds. The hash-bound registration is unchanged; this clarification is
+receipted separately. No exact-Figure-2 claim and no task-bug attribution are
+licensed by the registration; the failure-triggered native-tokenization control
+procedure stands as registered.
