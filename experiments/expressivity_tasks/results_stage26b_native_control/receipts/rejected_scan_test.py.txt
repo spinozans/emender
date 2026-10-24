@@ -1,0 +1,81 @@
+"""X26b: the unchanged upstream eager clamped RNN is the scan oracle."""
+import copy
+import json
+import os
+from pathlib import Path
+import time
+
+import pytest
+import torch
+
+from experiments.expressivity_tasks.merrill26_replication_models import build_model
+from experiments.expressivity_tasks.merrill26_clamped_scan import optimize
+
+
+def relative_error(actual, expected):
+    return float((actual.float() - expected.float()).abs().max() / expected.float().abs().max().clamp_min(1e-8))
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason='leased CUDA required')
+def test_clamped_scan_matches_upstream_forward_parameter_gradients_and_eval():
+    # X24-style launch budgets registered before running: output .03, grads .08.
+    metrics = []
+    for batch, tokens in ((1, 11), (4, 33), (17, 65)):
+        for amp in (False, True):
+            torch.manual_seed(26002)
+            eager = build_model('rnn', 'graph').cuda()
+            fused = optimize(copy.deepcopy(eager))
+            assert list(eager.state_dict()) == list(fused.state_dict())
+            for name in eager.state_dict():
+                assert torch.equal(eager.state_dict()[name], fused.state_dict()[name])
+            x = torch.randint(1, 8, (batch, tokens), device='cuda')
+            lengths = torch.linspace(1, tokens, batch, device='cuda').long()
+            lengths[-1] = tokens - 2  # global padded tail as well as partial padding
+            x[torch.arange(tokens, device='cuda')[None, :] >= lengths[:, None]] = 0
+            outputs = []
+            for model in (eager, fused):
+                torch.manual_seed(26003)
+                with torch.amp.autocast('cuda', dtype=torch.bfloat16, enabled=amp):
+                    y = model(x, lengths)
+                y.float().square().sum().backward()
+                outputs.append(y)
+            output_error = relative_error(outputs[1], outputs[0])
+            gradients = {name: relative_error(p.grad, dict(eager.named_parameters())[name].grad)
+                         for name, p in fused.named_parameters()}
+            eager.eval(); fused.eval()
+            with torch.no_grad(), torch.amp.autocast('cuda', dtype=torch.bfloat16, enabled=amp):
+                eval_error = relative_error(fused(x, lengths), eager(x, lengths))
+            row = {'batch': batch, 'tokens': tokens, 'amp': amp, 'output_error': output_error,
+                   'gradient_errors': gradients, 'eval_error': eval_error}
+            metrics.append(row)
+            path = os.environ.get('X26B_SCAN_RECEIPT')
+            if path:
+                Path(path).write_text(json.dumps({'status': 'pending', 'optimizer_updates': 0,
+                    'tolerances': {'output': .03, 'parameter_gradients': .08}, 'cases': metrics}, indent=2))
+            assert output_error < (.03 if amp else 1e-5), row
+            assert max(gradients.values()) < (.08 if amp else 2e-4), row
+            assert eval_error < (.03 if amp else 1e-5), row
+    if path:
+        Path(path).write_text(json.dumps({'status': 'passed', 'optimizer_updates': 0,
+            'tolerances': {'output': .03, 'parameter_gradients': .08}, 'cases': metrics}, indent=2))
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason='leased CUDA required')
+@pytest.mark.parametrize('amp', [False, True])
+def test_clamped_scan_recurrence_inputs_saturation_and_padding(amp):
+    torch.manual_seed(26004)
+    eager = build_model('rnn', 'graph').rnn.cuda()
+    fused = optimize(copy.deepcopy(build_model('rnn', 'graph')).cuda()).rnn
+    fused.load_state_dict(eager.state_dict())
+    lengths = torch.tensor([3, 17, 2, 31] + [7] * 13, device='cuda')
+    x = torch.randn(17, 35, 256, device='cuda') * 20
+    a, b = x.clone().requires_grad_(), x.clone().requires_grad_()
+    with torch.amp.autocast('cuda', dtype=torch.bfloat16, enabled=amp):
+        expected, actual = eager(a, lengths), fused(b, lengths)
+    assert relative_error(actual, expected) < (.03 if amp else 1e-5)
+    assert (actual == 6).any() and (actual == 0).any()
+    assert actual[:, 31:].count_nonzero() == 0
+    expected.square().sum().backward(); actual.square().sum().backward()
+    assert relative_error(b.grad, a.grad) < (.08 if amp else 2e-4)
+    for p, q in zip(fused.parameters(), eager.parameters()):
+        assert relative_error(p.grad, q.grad) < (.08 if amp else 2e-4)

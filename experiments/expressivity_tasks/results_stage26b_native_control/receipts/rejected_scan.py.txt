@@ -1,0 +1,118 @@
+"""Persistent batch-fused clamped-ReLU scan, qualified against X26's eager oracle.
+
+Only the recurrence execution changes. Weights, rounding at each autocast linear
+and sum, masking, output dtype, pooling and classifier remain source-defined.
+"""
+import torch
+from torch import nn
+import torch.nn.functional as F
+import triton
+import triton.language as tl
+
+
+@triton.jit
+def _forward(U, W, Bias, Lengths, Out, Active, T: tl.constexpr, H: tl.constexpr,
+             B: tl.constexpr, CLIP: tl.constexpr, BF16: tl.constexpr, BLOCK_B: tl.constexpr):
+    b = tl.program_id(0) * BLOCK_B + tl.arange(0, BLOCK_B)
+    i = tl.arange(0, H)
+    k = tl.arange(0, 64)
+    bias = tl.load(Bias + i)
+    lengths = tl.load(Lengths + b, b < B, 0)
+    all_b = tl.arange(0, triton.next_power_of_2(B))
+    end = tl.max(tl.load(Lengths + all_b, all_b < B, 0), 0)
+    h = tl.full((BLOCK_B, H), 0, tl.float32)
+    for t in range(T):
+        u = tl.load(U + (b[:, None] * T + t) * H + i[None, :], b[:, None] < B, 0)
+        r = tl.full((BLOCK_B, H), 0, tl.float32)
+        for block in range(H // 64):
+            # Gather the corresponding persistent hidden slice for the dot.
+            hk = tl.gather(h, tl.broadcast_to((block * 64 + k)[None, :], (BLOCK_B, 64)), 1).to(u.dtype)
+            w = tl.load(W + (block * 64 + k)[:, None] + i[None, :] * H).to(u.dtype)
+            r += tl.dot(hk, w, input_precision='ieee')
+        r = (r + bias[None, :]).to(u.dtype)
+        z = (u + r).to(u.dtype)
+        new = tl.minimum(tl.maximum(z.to(tl.float32), 0.), CLIP)
+        valid = t < lengths
+        h = tl.where(valid[:, None], new, h)
+        output = tl.where(t < end, h, 0.)
+        active = valid[:, None] & (z > 0.) & (z <= CLIP)
+        tl.store(Out + (b[:, None] * T + t) * H + i[None, :], output, b[:, None] < B)
+        tl.store(Active + (b[:, None] * T + t) * H + i[None, :], active, b[:, None] < B)
+
+
+@triton.jit
+def _backward(G, Out, W, Lengths, Active, DZ, T: tl.constexpr, H: tl.constexpr,
+              B: tl.constexpr, BLOCK_B: tl.constexpr):
+    b = tl.program_id(0) * BLOCK_B + tl.arange(0, BLOCK_B)
+    i = tl.arange(0, H)
+    k = tl.arange(0, 64)
+    lengths = tl.load(Lengths + b, b < B, 0)
+    all_b = tl.arange(0, triton.next_power_of_2(B))
+    end = tl.max(tl.load(Lengths + all_b, all_b < B, 0), 0)
+    dh = tl.full((BLOCK_B, H), 0, tl.float32)
+    for offset in range(T):
+        t = T - 1 - offset
+        go = tl.load(G + (b[:, None] * T + t) * H + i[None, :], b[:, None] < B, 0)
+        dh += tl.where(t < end, go.to(tl.float32), 0.)
+        active = tl.load(Active + (b[:, None] * T + t) * H + i[None, :], b[:, None] < B, 0)
+        dz = tl.where(active, dh.to(go.dtype), 0.).to(go.dtype)
+        tl.store(DZ + (b[:, None] * T + t) * H + i[None, :], dz, b[:, None] < B)
+        recurrent = tl.full((BLOCK_B, H), 0, tl.float32)
+        for block in range(H // 64):
+            dk = tl.gather(dz, tl.broadcast_to((block * 64 + k)[None, :], (BLOCK_B, 64)), 1).to(go.dtype)
+            w = tl.load(W + (block * 64 + k)[:, None] * H + i[None, :]).to(go.dtype)
+            recurrent += tl.dot(dk, w, input_precision='ieee')
+        recurrent = recurrent.to(go.dtype).to(tl.float32)
+        dh = tl.where((t < lengths)[:, None], recurrent, dh)
+
+
+class _Scan(torch.autograd.Function):
+    @staticmethod
+    def forward(ctx, u, weight, bias, lengths, clip):
+        u, weight, bias = u.contiguous(), weight.contiguous(), bias.contiguous()
+        b, t, h = u.shape
+        out = torch.empty_like(u)
+        active = torch.empty_like(u, dtype=torch.uint8)
+        _forward[(triton.cdiv(b, 16),)](u, weight, bias, lengths, out, active,
+            t, h, b, clip, u.dtype == torch.bfloat16, 16, num_stages=1)
+        ctx.save_for_backward(out, weight, lengths, active)
+        return out
+
+    @staticmethod
+    def backward(ctx, gradient):
+        out, weight, lengths, active = ctx.saved_tensors
+        b, t, h = out.shape
+        dz = torch.empty_like(out)
+        _backward[(triton.cdiv(b, 16),)](gradient.contiguous(), out, weight, lengths, active,
+                                       dz, t, h, b, 16, num_stages=1)
+        previous = F.pad(out[:, :-1], (0, 0, 1, 0)).reshape(-1, h)
+        # These reductions replace the eager per-token accumulation; the gate
+        # explicitly covers their finite-precision difference under bf16 autocast.
+        dw = dz.reshape(-1, h).T @ previous
+        db = dz.sum((0, 1))
+        return dz, dw, db, None, None
+
+
+class ClampedScan(nn.Module):
+    """Reuse the source ParameterLists, preserving state_dict names and init."""
+    def __init__(self, oracle):
+        super().__init__()
+        if oracle.layers != 1 or oracle.hidden != 256 or oracle.act_clip != 6.:
+            raise ValueError('only the registered X26 clamped256/layer1/clip6 recurrence is qualified')
+        self.W_ih, self.W_hh = oracle.W_ih, oracle.W_hh
+        self.b_ih, self.b_hh = oracle.b_ih, oracle.b_hh
+        self.layers, self.hidden, self.act_clip = oracle.layers, oracle.hidden, oracle.act_clip
+
+    def forward(self, x, lengths, force_fp32=True):
+        if not x.is_cuda:
+            raise ValueError('qualified persistent scan requires CUDA')
+        x_math = x.float() if force_fp32 else x
+        u = F.linear(x_math, self.W_ih[0], self.b_ih[0])
+        dtype = u.dtype
+        out = _Scan.apply(u, self.W_hh[0].to(dtype), self.b_hh[0].to(dtype), lengths, self.act_clip)
+        return out.to(x.dtype)
+
+
+def optimize(model):
+    model.rnn = ClampedScan(model.rnn)
+    return model

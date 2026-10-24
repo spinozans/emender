@@ -1,0 +1,99 @@
+{
+  "at": 1792844070.2202547,
+  "status": "passed",
+  "launch": {
+    "commit": "7251c265a5e80ed76f337e0ab6cf5f566c440ff2",
+    "remote": "7251c265a5e80ed76f337e0ab6cf5f566c440ff2\trefs/heads/main",
+    "registration_sha256": "9e67415d0e031560db72a40385054f82c4bff6c948accc2a0e1cb5f7b1d453b8",
+    "launched_at": 1792843756.1397173,
+    "watcher": {
+      "pid": 1369463,
+      "starttime": "290974166",
+      "host": "lambda01"
+    },
+    "gpu_before": "index, uuid, memory.used [MiB], utilization.gpu [%]\n0, GPU-5265d71b-3b75-00e3-d129-2ed12b9be786, 2 MiB, 0 %\n1, GPU-d6b2101f-63f1-60f6-563a-36f1d22ccf6f, 3968 MiB, 37 %\n2, GPU-d1b85657-fee1-7219-48a0-52b1b323f9c1, 2 MiB, 0 %\n3, GPU-e316c33c-fbf1-5e77-041e-36161c04652a, 2 MiB, 0 %\n4, GPU-76581993-9fdb-55b9-05b2-97621aac8629, 2 MiB, 0 %\n5, GPU-ed7c9f77-649d-1583-1fd9-a4e8b160d94f, 2 MiB, 0 %\n6, GPU-6d8d6161-e8e8-0b81-9abb-1a8f7d15e65d, 842 MiB, 75 %\n7, GPU-8f63894f-5b64-755c-060f-7022c603e7d2, 2850 MiB, 100 %\n"
+  },
+  "registration_sha256": "9e67415d0e031560db72a40385054f82c4bff6c948accc2a0e1cb5f7b1d453b8",
+  "gpu_compute_apps": "GPU-d6b2101f-63f1-60f6-563a-36f1d22ccf6f, 4176006, 3958 MiB\nGPU-76581993-9fdb-55b9-05b2-97621aac8629, 1369677, 698 MiB\nGPU-ed7c9f77-649d-1583-1fd9-a4e8b160d94f, 1369696, 684 MiB\nGPU-6d8d6161-e8e8-0b81-9abb-1a8f7d15e65d, 2038148, 834 MiB\nGPU-8f63894f-5b64-755c-060f-7022c603e7d2, 4175994, 2842 MiB\n",
+  "runs": {
+    "rnn_integer_seed0": {
+      "card": 4,
+      "gpu_uuid": "GPU-76581993-9fdb-55b9-05b2-97621aac8629",
+      "worker": {
+        "pid": 1369527,
+        "starttime": "290974444",
+        "host": "lambda01",
+        "card": 4,
+        "command": [
+          "bash",
+          "scripts/launch_merrill26_native_control.sh",
+          "--worker",
+          "rnn",
+          "integer",
+          "4"
+        ],
+        "launched_at": 1792843756.246814
+      },
+      "trainer": {
+        "pid": 1369677,
+        "starttime": "290974498",
+        "host": "lambda01"
+      },
+      "config_sha256": "f7b46a47a77e6133a8b089c5dec43dd3eb7a1f0fe37e584a220b96f638f350a9",
+      "latest_step": 3121,
+      "latest_validation_step": 3000,
+      "latest_validation_accuracy": 0.55525,
+      "batch": 128,
+      "optimizer": {
+        "name": "AdamW",
+        "lr": 0.0001,
+        "weight_decay": 0.0001,
+        "betas": [
+          0.9,
+          0.999
+        ],
+        "eps": 1e-08
+      }
+    },
+    "delta_integer_seed0": {
+      "card": 5,
+      "gpu_uuid": "GPU-ed7c9f77-649d-1583-1fd9-a4e8b160d94f",
+      "worker": {
+        "pid": 1369528,
+        "starttime": "290974444",
+        "host": "lambda01",
+        "card": 5,
+        "command": [
+          "bash",
+          "scripts/launch_merrill26_native_control.sh",
+          "--worker",
+          "delta",
+          "integer",
+          "5"
+        ],
+        "launched_at": 1792843756.2486484
+      },
+      "trainer": {
+        "pid": 1369696,
+        "starttime": "290974500",
+        "host": "lambda01"
+      },
+      "config_sha256": "83c789a893f6753405fd8137d6fb50e17239b620cbe223dd4e4df7b051a357b9",
+      "latest_step": 3000,
+      "latest_validation_step": 2500,
+      "latest_validation_accuracy": 0.5523,
+      "batch": 128,
+      "optimizer": {
+        "name": "AdamW",
+        "lr": 0.0001,
+        "weight_decay": 0.0001,
+        "betas": [
+          0.9,
+          0.999
+        ],
+        "eps": 1e-08
+      }
+    }
+  },
+  "graph_disposition": "censored eager; failed optimization gate; no relaunch"
+}

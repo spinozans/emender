@@ -1,0 +1,45 @@
+{
+  "status": "rejected; relaunch deferred",
+  "decision": "NO GRAPH LAUNCH: failed BF16 saturation/input-gradient gate; eager remains INFRA-RESOURCE-INFEASIBLE censored",
+  "optimizer_updates": 0,
+  "architecture_changed": false,
+  "candidate": "persistent batch-fused Triton clamped-ReLU recurrence with vectorized input affine; exact source parameter lists/head/pooling",
+  "tolerances": {
+    "bf16_outputs": 0.03,
+    "bf16_gradients": 0.08,
+    "fp32_outputs": 1e-05,
+    "fp32_gradients": 0.0002
+  },
+  "ordinary_model_gate": "six cases pass: B1/T11,B4/T33,B17/T65 each fp32+bf16; normal BF16 max parameter gradient error .015625",
+  "stress_gate": "FP32 recurrence saturation+padding passes; BF16 fails input-gradient max-relative error .2734375 >.08 with B17/T35 and x scale20",
+  "diagnosis": "vectorized affine changes bf16 rounding near clamp boundary; not proven equivalent across stress gate",
+  "candidate_artifacts": {
+    "/home/erikg/emender-scratch/fix-fanout/X26b-rejected-scan/merrill26_clamped_scan.py": "6c8323ad43c8054c72a51d83f2f523934d62eba1fc26e5f4877d72dc6b66058f",
+    "/home/erikg/emender-scratch/fix-fanout/X26b-rejected-scan/test_merrill26_clamped_scan.py": "452a14381512cae8b1f5c57573156ae7782b8d9512ffaf32913fe216d49bfc58"
+  },
+  "failure_log_sha256": "ae1686e8625c5610e3edd4bd35993c12e5f452073a75ba67df5ab90e8158cfba",
+  "ordinary_match_sha256": "ad897a90e40b4ca1c3d67d542a33bdf9e2766057ce5f0f4f4183b989531c952a",
+  "censor_terminal": {
+    "name": "rnn_graph_seed0",
+    "exit_code": 143,
+    "status": "censored",
+    "finished_at": 1792843416.6689093,
+    "result_sha256": "a633cd7516ce082a965ba9ce22f64aa06d101b435fbf7e651da502b43429ef4b",
+    "stop_reason": "infrastructure resource guard; right-censored"
+  },
+  "censor_result": {
+    "name": "rnn_graph_seed0",
+    "status": "censored",
+    "stop_reason": "infrastructure resource guard; right-censored",
+    "scientific_verdict": "not adjudicated; right-censored",
+    "finished_at": 1792843416.6685193
+  },
+  "at": 1792844070.0159624,
+  "post_censor_worker_alive": false,
+  "post_censor_trainer_alive": false,
+  "post_censor_gpu_compute_apps": "gpu_uuid, pid, used_gpu_memory [MiB]\nGPU-d6b2101f-63f1-60f6-563a-36f1d22ccf6f, 4176006, 3958 MiB\nGPU-76581993-9fdb-55b9-05b2-97621aac8629, 1369677, 698 MiB\nGPU-ed7c9f77-649d-1583-1fd9-a4e8b160d94f, 1369696, 686 MiB\nGPU-6d8d6161-e8e8-0b81-9abb-1a8f7d15e65d, 2038148, 834 MiB\nGPU-8f63894f-5b64-755c-060f-7022c603e7d2, 4175994, 2842 MiB\n",
+  "non_executable_source_receipts": {
+    "experiments/expressivity_tasks/results_stage26b_native_control/receipts/rejected_scan_test.py.txt": "452a14381512cae8b1f5c57573156ae7782b8d9512ffaf32913fe216d49bfc58",
+    "experiments/expressivity_tasks/results_stage26b_native_control/receipts/rejected_scan.py.txt": "6c8323ad43c8054c72a51d83f2f523934d62eba1fc26e5f4877d72dc6b66058f"
+  }
+}
