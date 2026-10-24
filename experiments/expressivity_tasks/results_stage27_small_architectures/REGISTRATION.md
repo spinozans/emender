@@ -108,3 +108,29 @@ implicitly authorized in this graph-only registration.
 Local lambda01 .venv Python3.12/CUDA research, not Frontier or resilient DiLoCo.
 R01–R16/NDP01–NDP17/V21S01–V21S17/ISP01–ISP07 do not apply; no Slurm Partition/QOS
 or resilient conformance claimed. Independent acceptance review required.
+
+## X27q infrastructure/queue amendment — 2026-10-24 UTC
+
+Supervisor-approved before pending-arm launches: registered card if free at
+launch time, else next-free card, with the actual card receipted in the per-arm
+launch receipt. Next-free means ascending physical index; reserve each chosen
+card once per poll, with the existing atomic idle/unleased GPU lease and no
+preemption. The original cards remain preferences, not scientific variables.
+No new arms, model/recipe/data changes, or new smoke qualification are authorized.
+
+The original registration is preserved verbatim in
+`receipts/queuefix/registration_before.json`; `registration.json.amendments`
+records its SHA and only the changed infrastructure, test and amendment hashes.
+The old `queue` field and earlier text above describe the original policy;
+this dated amendment supersedes only that card-binding/queue constraint.
+
+The original launcher PID2037421 crashed parsing comma-joined `4,5` as an int
+(`receipts/queuefix/original_crash.txt`). Restart also encountered the shared
+`launch.json` one-shot guard at watch_merrill26_separators.launch; the original
+launch receipt must not be deleted or overwritten. X27 alone opts into
+`restartable_x27=True` (task identity checked); every other caller keeps the
+one-shot guard. All registration, smoke and pushed-HEAD gates remain required.
+X27 reserves each arm's receipt directory exclusively before mutation and writes
+`receipts/<arm>/launch.json` with actual/preferred card, source commit,
+registration SHA and watcher identity. Existing worker/terminal arms are never
+relaunched. A failed partial spawn remains fail-closed, not automatically retried.

@@ -92,21 +92,27 @@ def spawn(name, card):
     return process
 
 
-def launch():
+def launch(*, restartable_x27=False):
     reg = verify_registration()
+    if restartable_x27 and reg['task'] != 'X27':
+        raise ValueError('restartable launch is X27-only')
     commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
     upstream = subprocess.check_output(['git', 'rev-parse', '--abbrev-ref', '@{upstream}'], text=True).strip()
     remote, branch = upstream.split('/', 1)
     remote_row = subprocess.check_output(['git', 'ls-remote', remote, 'refs/heads/' + branch], text=True).strip()
     if not remote_row or remote_row.split()[0] != commit:
         raise ValueError('registration must be pushed before launching')
-    if (ROOT / 'receipts' / 'launch.json').exists():
+    launch_exists = (ROOT / 'receipts' / 'launch.json').exists()
+    if launch_exists and not restartable_x27:
         raise ValueError('launch already exists; do not repeat mutations')
     for name in reg['runs']:
         arm, task, _ = name.split('_')
         path = ROOT / 'receipts' / f'smoke_{arm}_{task}.json'
         if json.loads(path.read_text())['status'] != 'passed':
             raise ValueError('smoke gate failed: ' + name)
+    if launch_exists:
+        # X27 reserves each arm's receipt directory exclusively before spawning.
+        return reg
     write_json(ROOT / 'receipts' / 'launch.json', {'commit': commit, 'remote': remote_row,
         'registration_sha256': digest(ROOT / 'registration.json'), 'launched_at': time.time(),
         'watcher': identity(os.getpid()), 'gpu_before': subprocess.check_output([

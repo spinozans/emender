@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import shutil
 import signal
 import subprocess
@@ -16,6 +17,8 @@ from experiments.expressivity_tasks.run_merrill26_separators import (
 )
 from scripts import watch_merrill26_separators as protocol
 
+QUEUE_RULE = 'registered card if free at launch time, else next-free card, with the actual card receipted in the per-arm launch receipt'
+
 
 def configure_watcher():
     configure()
@@ -23,10 +26,16 @@ def configure_watcher():
 
 
 def spawn(name, card):
-    if CARDS.get(name) != card:
+    if name not in CARDS or card not in range(8):
         raise ValueError('unauthorized X27 card binding')
     receipt = ROOT / 'receipts' / name
-    receipt.mkdir(parents=True, exist_ok=False)
+    receipt.mkdir(parents=True, exist_ok=False)  # per-arm, fail-closed launch guard
+    write_json(receipt / 'launch.json', {
+        'name': name, 'registered_card': CARDS[name], 'card': card,
+        'queue_rule': QUEUE_RULE, 'launched_at': time.time(),
+        'commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
+        'registration_sha256': digest(ROOT / 'registration.json'),
+        'watcher': protocol.identity(os.getpid())})
     arm, task, _ = name.split('_')
     command = ['bash', 'scripts/launch_small_architecture_separators.sh', '--worker', arm, task, str(card)]
     with (receipt / 'worker_console.txt').open('w') as stream:
@@ -42,13 +51,17 @@ def launch_queued(states):
     if not any(state == 'queued' for state in states.values()):
         return []
     output = subprocess.check_output(['bash', 'scripts/gpu_lease.sh', 'list-free'], text=True)
-    free_cards = {int(card) for card in output.split()}
+    free_cards = {int(card) for card in re.split(r'[,\s]+', output.strip()) if card}
     children = []
-    for name, card in CARDS.items():
-        if states[name] == 'queued' and card in free_cards:
+    for name, preferred_card in CARDS.items():
+        if states[name] == 'queued' and free_cards:
             # Recheck all registered bytes after potentially spending days in queue.
-            protocol.verify_registration()
+            reg = protocol.verify_registration()
+            if reg['amendments'][-1]['queue_rule'] != QUEUE_RULE:
+                raise ValueError('unregistered X27 queue fallback')
+            card = preferred_card if preferred_card in free_cards else min(free_cards)
             children.append(spawn(name, card))
+            free_cards.remove(card)
             states[name] = 'running'
     return children
 
@@ -59,7 +72,7 @@ def watch(initial=False, once=False):
     if initial:
         if shutil.disk_usage(ROOT).free < FREE_BYTES:
             raise OSError('disk guard: less than 400 GiB free before launch')
-        reg = protocol.launch()  # hashes, smoke, HEAD and remote push checked before spawn
+        reg = protocol.launch(restartable_x27=True)  # hashes, smoke, HEAD and remote push checked before spawn
         assert set(reg['runs']) == set(CARDS) and reg['cards'] == CARDS
         write_json(ROOT / 'receipts' / 'watcher_wiring.json', {
             'watcher': protocol.identity(os.getpid()),

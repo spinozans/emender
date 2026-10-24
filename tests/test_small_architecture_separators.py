@@ -58,7 +58,7 @@ def test_graph_only_authorization_and_fixed_queue():
         with pytest.raises(ValueError):
             run.build_model(arm, task)
     with pytest.raises(ValueError, match='card binding'):
-        watcher.spawn('e97_graph_seed0', 0)
+        watcher.spawn('e97_graph_seed0', 8)
 
 
 def test_shared_dataset_link_never_creates_a_replica(tmp_path, monkeypatch):
@@ -73,17 +73,46 @@ def test_shared_dataset_link_never_creates_a_replica(tmp_path, monkeypatch):
         run.link_datasets()
 
 
-def test_queue_uses_only_bound_idle_cards_and_rechecks_registration(monkeypatch):
+@pytest.mark.parametrize('output,expected', [
+    ('0', [0]), ('4,5', [4, 5]), ('0,2,3', [0, 2, 3]), ('', []),
+    ('0,2,3\n', [0, 2, 3]), ('4, 5\n', [4, 5]), ('  \n', []),
+])
+def test_queue_parses_gpu_lease_comma_and_whitespace_output(monkeypatch, output, expected):
     states = {name: 'queued' for name in run.CARDS}
-    monkeypatch.setattr(watcher.subprocess, 'check_output', lambda *a, **kw: '2\n6\n')
+    monkeypatch.setattr(watcher.subprocess, 'check_output', lambda *a, **kw: output)
     checked, spawned = [], []
-    monkeypatch.setattr(watcher.protocol, 'verify_registration', lambda: checked.append(True))
+    def verify():
+        checked.append(True)
+        return {'amendments': [{'queue_rule': watcher.QUEUE_RULE}]}
+    monkeypatch.setattr(watcher.protocol, 'verify_registration', verify)
     monkeypatch.setattr(watcher, 'spawn', lambda name, card: spawned.append((name, card)) or name)
-    assert watcher.launch_queued(states) == ['e97_graph_seed0']
-    assert spawned == [('e97_graph_seed0', 6)] and checked == [True]
-    assert states == {'e97_graph_seed0': 'running', 'e97softplus_graph_seed0': 'queued', 'gdn2_graph_seed0': 'queued'}
-    assert watcher.launch_queued(states) == []  # never relaunch a running arm
-    assert len(checked) == 1
+    watcher.launch_queued(states)
+    assert [card for _, card in spawned] == expected
+    assert len(checked) == len(expected)
+    assert all(states[name] == 'running' for name, _ in spawned)
+
+
+def test_queue_prefers_registered_card_then_next_free_without_overlap(monkeypatch):
+    states = {'e97_graph_seed0': 'running', 'e97softplus_graph_seed0': 'queued',
+              'gdn2_graph_seed0': 'queued'}
+    monkeypatch.setattr(watcher.subprocess, 'check_output', lambda *a, **kw: '0,2,3\n')
+    monkeypatch.setattr(watcher.protocol, 'verify_registration',
+                        lambda: {'amendments': [{'queue_rule': watcher.QUEUE_RULE}]})
+    spawned = []
+    monkeypatch.setattr(watcher, 'spawn', lambda name, card: spawned.append((name, card)) or name)
+    watcher.launch_queued(states)
+    assert spawned == [('e97softplus_graph_seed0', 0), ('gdn2_graph_seed0', 2)]
+    assert watcher.launch_queued(states) == []
+    assert len(spawned) == 2
+
+
+def test_queue_fallback_requires_registered_amendment(monkeypatch):
+    monkeypatch.setattr(watcher.subprocess, 'check_output', lambda *a, **kw: '0,2,3')
+    monkeypatch.setattr(watcher.protocol, 'verify_registration',
+                        lambda: {'amendments': [{'queue_rule': 'old fixed cards'}]})
+    monkeypatch.setattr(watcher, 'spawn', lambda *a: pytest.fail('unregistered spawn'))
+    with pytest.raises(ValueError, match='unregistered X27 queue fallback'):
+        watcher.launch_queued({name: 'queued' for name in run.CARDS})
 
 
 def test_queue_fails_closed_if_registration_changed(monkeypatch):
@@ -133,3 +162,72 @@ def test_terminal_hash_and_marker_validation(tmp_path, monkeypatch):
     (tmp_path / name / 'result.json').write_text('{}')
     with pytest.raises((ValueError, KeyError)):
         watcher.protocol.rung_status(name)
+
+
+def mock_launch_gates(tmp_path, monkeypatch, task='X27'):
+    reg = {'task': task, 'runs': list(run.CARDS), 'cards': run.CARDS,
+           'amendments': [{'queue_rule': watcher.QUEUE_RULE}]}
+    (tmp_path / 'registration.json').write_text(json.dumps(reg))
+    receipt = tmp_path / 'receipts'
+    receipt.mkdir()
+    (receipt / 'launch.json').write_text('{"original": true}\n')
+    for name in run.CARDS:
+        arm, task_name, _ = name.split('_')
+        (receipt / f'smoke_{arm}_{task_name}.json').write_text('{"status": "passed"}')
+    monkeypatch.setattr(watcher, 'ROOT', tmp_path)
+    monkeypatch.setattr(watcher.protocol, 'ROOT', tmp_path)
+    monkeypatch.setattr(watcher.protocol, 'verify_registration', lambda: reg)
+    def output(command, **kwargs):
+        if command[:2] == ['git', 'rev-parse']:
+            return 'origin/main' if '--abbrev-ref' in command else 'commit123'
+        if command[:2] == ['git', 'ls-remote']:
+            return 'commit123\trefs/heads/main'
+        if command[:2] == ['bash', 'scripts/gpu_lease.sh']:
+            return '0,2,3\n'
+        pytest.fail(str(command))
+    monkeypatch.setattr(watcher.subprocess, 'check_output', output)
+    return reg
+
+
+def test_restart_launches_queued_b_only_and_preserves_a_receipts(tmp_path, monkeypatch):
+    mock_launch_gates(tmp_path, monkeypatch)
+    name_a, name_b = 'e97_graph_seed0', 'e97softplus_graph_seed0'
+    a = tmp_path / 'receipts' / name_a
+    a.mkdir()
+    (a / 'worker.json').write_text('{"original_arm_a": true}\n')
+    before = {p: p.read_bytes() for p in (tmp_path / 'receipts').rglob('*') if p.is_file()}
+    monkeypatch.setattr(watcher, 'configure_watcher', lambda: None)
+    monkeypatch.setattr(watcher.shutil, 'disk_usage', lambda path: SimpleNamespace(free=watcher.FREE_BYTES))
+    monkeypatch.setattr(watcher.protocol, 'rung_status', lambda name:
+                        'queued' if name == name_b else 'complete')
+    monkeypatch.setattr(watcher.protocol, 'alive', lambda record: True)
+    launches = []
+    def popen(command, **kwargs):
+        launches.append(command)
+        return SimpleNamespace(pid=123, poll=lambda: None)
+    monkeypatch.setattr(watcher.subprocess, 'Popen', popen)
+    monkeypatch.setattr(watcher.protocol, 'identity', lambda pid: {'pid': pid})
+    monkeypatch.setattr(watcher.time, 'sleep', lambda _: (_ for _ in ()).throw(StopIteration()))
+    with pytest.raises(StopIteration):
+        watcher.watch(initial=True)
+    assert launches == [['bash', 'scripts/launch_small_architecture_separators.sh',
+                         '--worker', 'e97softplus', 'graph', '0']]
+    assert all(p.read_bytes() == original for p, original in before.items())
+    launch = json.loads((tmp_path / 'receipts' / name_b / 'launch.json').read_text())
+    assert launch['card'] == launch['registered_card'] == 0
+    assert launch['commit'] == 'commit123'
+    with pytest.raises(FileExistsError):
+        watcher.spawn(name_b, 0)
+    assert len(launches) == 1
+
+
+def test_other_watchers_keep_one_shot_guard(tmp_path, monkeypatch):
+    mock_launch_gates(tmp_path, monkeypatch)
+    with pytest.raises(ValueError, match='launch already exists'):
+        watcher.protocol.launch()
+
+
+def test_restartable_launch_rejects_other_families(tmp_path, monkeypatch):
+    mock_launch_gates(tmp_path, monkeypatch, task='X25')
+    with pytest.raises(ValueError, match='X27-only'):
+        watcher.protocol.launch(restartable_x27=True)

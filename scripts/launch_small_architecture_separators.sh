@@ -9,7 +9,7 @@ if [[ "${1:-}" != --worker ]]; then
 fi
 arm="$2"; task="$3"; card="$4"; name="${arm}_${task}_seed0"
 case "$arm:$task:$card" in
-  e97:graph:6|e97softplus:graph:0|gdn2:graph:1) ;;
+  e97:graph:[0-7]|e97softplus:graph:[0-7]|gdn2:graph:[0-7]) ;;
   *) exit 64 ;;
 esac
 root="$PWD/experiments/expressivity_tasks/results_stage27_small_architectures"

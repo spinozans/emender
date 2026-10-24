@@ -432,7 +432,7 @@
   "source_sha256": {
     "experiments/expressivity_tasks/results_stage25_recipe_controlled/registration.json": "ec4107c5e3661e30617a4f156ab8ac3656a174b5ce4c0f34613a3585b21177f0",
     "experiments/expressivity_tasks/results_stage26_replication/registration.json": "e8b236cc273158a447e9cda04fb4246d384640611ed6b13d37626ec64c7e58d4",
-    "experiments/expressivity_tasks/results_stage27_small_architectures/REGISTRATION.md": "46153859d21e35904bd827186fca13ccfd13a269b0333582492cf23e5f8587c3",
+    "experiments/expressivity_tasks/results_stage27_small_architectures/REGISTRATION.md": "04231f82c58aba91d951bf68c7b2382a14d3c1f575b7bc58407f51a8a03b7ddf",
     "experiments/expressivity_tasks/results_stage27_small_architectures/TASK_DIRECTIVE.md": "3fa39a5f2507e693d5c3d4d1d8cf9286de95020e93abd613a116576d408cac6c",
     "experiments/expressivity_tasks/results_stage27_small_architectures/receipts/parameter_counts.json": "01dacdefe59806d88b4ce8e78eaa9e80ed16543afe3d7ee0ec7a82b12c1ef335",
     "experiments/expressivity_tasks/results_stage27_small_architectures/receipts/prelaunch_tests.txt": "4abd47876d28291bc016697c375dc6d7a18dff3cc03afa3ee4506366196e2884",
@@ -661,11 +661,11 @@
     "ndm/triton/unified_cell_backward.py": "663c4d0c553c16a0059e6178d5c30d323ca7414baeff2aecb5524c421eb2e41f",
     "ndm/triton/unified_cell_forward.py": "196c052a6f63d3c0b7737eecf2ab1ca5250b779be38ac5e24002b75129a55f11",
     "scripts/gpu_lease.sh": "553cd9ab764e137fc4e33b7c20eeeda1b2a13f47870f5f4b679f153c68feb27f",
-    "scripts/launch_small_architecture_separators.sh": "da03772a38a5eef3cbede33cfe8886f9b65de0421c6d6240bc96a22270769f9a",
+    "scripts/launch_small_architecture_separators.sh": "f59e214b814386d2c3181510665ddbfc68d091e97c218278d0a3d9878d3f3309",
     "scripts/register_small_architecture_separators.py": "80f12458b67d9588f90322cd9db96a046d8c3cf792c18d464eedd3563040d527",
-    "scripts/watch_merrill26_separators.py": "4e3ee8b3ea840cb41b8686e9e1ca551b76bc2aa963aaea9a37b1a361d7032313",
-    "scripts/watch_small_architecture_separators.py": "2bcf2d9c627145e03b1a1d22ef47bcdadd6cecfe6547f5a796209a790ca04b1c",
-    "tests/test_small_architecture_separators.py": "d0b22f699122aced7068496d616a1aa9345406304bac2df05a66c548343c666f"
+    "scripts/watch_merrill26_separators.py": "50eb7f0b6e2fc002793a3eb56ad7d80ef9bd59b7d612a62e175f04caec655095",
+    "scripts/watch_small_architecture_separators.py": "4aa152bd1f9ad9203fae5e3c0a39cbe42328359eb3be2747b6c21697534f3ee1",
+    "tests/test_small_architecture_separators.py": "6055b826a7eeeab3a8e45bc923564e2bf1d091689648e8d982e64123d7e6512b"
   },
   "dependency_sha256": {
     "/home/erikg/emender/.venv/lib/python3.12/site-packages/fla/__init__.py": "a2fd313c3e9c106e0a69df7c03f17558de6fb804ab90314c24e57deccb107bd0",
@@ -1057,5 +1057,40 @@
     "/home/erikg/emender/.venv/lib/python3.12/site-packages/fla/utils.py": "7cb5e04bc75bbed2369683cbc04eda151e9b2ac89da1cc8bf824ec0de89bb37c",
     "/home/erikg/emender/experiments/expressivity_tasks/results_stage23e_separators/datasets/graph/validation.json": "7cb3f076c94fdf8410350ccf7cf96226e718c01bee5c8a4cfeaa96a1c9ff6112",
     "/home/erikg/emender/experiments/expressivity_tasks/results_stage23e_separators/datasets/graph/train.json": "0ca6e2b6a3b4605f7c9700781196587a5ce04c55945126c2705e43a9ccfdd0d9"
-  }
+  },
+  "amendments": [
+    {
+      "id": "X27q-queuefix",
+      "dated_utc": "2026-10-24T12:19:47.327219+00:00",
+      "approved_by": "supervisor via attended X27q handoff",
+      "queue_rule": "registered card if free at launch time, else next-free card, with the actual card receipted in the per-arm launch receipt",
+      "next_free_order": "ascending physical card index, consume each card once per poll; no preemption; atomic gpu lease still required",
+      "scope": "existing three graph arms only; scientific models, recipe, datasets and smokes unchanged",
+      "original_registration": "receipts/queuefix/registration_before.json",
+      "original_registration_sha256": "83834d6517b00f1841fee92ec65d61d5e4efed44068b42b0b8cb460473f707ee",
+      "source_sha256_changes": {
+        "scripts/watch_small_architecture_separators.py": {
+          "before": "2bcf2d9c627145e03b1a1d22ef47bcdadd6cecfe6547f5a796209a790ca04b1c",
+          "after": "4aa152bd1f9ad9203fae5e3c0a39cbe42328359eb3be2747b6c21697534f3ee1"
+        },
+        "scripts/watch_merrill26_separators.py": {
+          "before": "4e3ee8b3ea840cb41b8686e9e1ca551b76bc2aa963aaea9a37b1a361d7032313",
+          "after": "50eb7f0b6e2fc002793a3eb56ad7d80ef9bd59b7d612a62e175f04caec655095"
+        },
+        "scripts/launch_small_architecture_separators.sh": {
+          "before": "da03772a38a5eef3cbede33cfe8886f9b65de0421c6d6240bc96a22270769f9a",
+          "after": "f59e214b814386d2c3181510665ddbfc68d091e97c218278d0a3d9878d3f3309"
+        },
+        "experiments/expressivity_tasks/results_stage27_small_architectures/REGISTRATION.md": {
+          "before": "46153859d21e35904bd827186fca13ccfd13a269b0333582492cf23e5f8587c3",
+          "after": "04231f82c58aba91d951bf68c7b2382a14d3c1f575b7bc58407f51a8a03b7ddf"
+        },
+        "tests/test_small_architecture_separators.py": {
+          "before": "d0b22f699122aced7068496d616a1aa9345406304bac2df05a66c548343c666f",
+          "after": "6055b826a7eeeab3a8e45bc923564e2bf1d091689648e8d982e64123d7e6512b"
+        }
+      },
+      "restart_guard": "restartable_x27=True accepted only for task X27; default launch remains one-shot for all other watchers; exclusive per-arm receipt directory prevents repeat mutations"
+    }
+  ]
 }
