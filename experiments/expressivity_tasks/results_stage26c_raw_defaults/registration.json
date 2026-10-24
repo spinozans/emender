@@ -1,0 +1,292 @@
+{
+  "task": "X26c",
+  "registered_utc": "2026-10-24T15:37:03.501384+00:00",
+  "base_commit": "ed238020d2548c47ed217d0913d2721970f01f6e",
+  "optimizer_updates_before_registration": 0,
+  "runs": [
+    "rnn_integer_seed0",
+    "delta_integer_seed0"
+  ],
+  "cards": {
+    "rnn_integer_seed0": 4,
+    "delta_integer_seed0": 5
+  },
+  "source_commit": "dbfa365ad680f425dfb79a9e78b5e0d7915757bb",
+  "protocol": "experiments/expressivity_tasks/results_stage26c_raw_defaults/REGISTRATION.md",
+  "predictions": {
+    "raw-succeeds": "Figure2-like ID and OOD with balanced accuracy decisively above chance: config/loop bundle divergence",
+    "raw-fails": "no Figure2-like result: environment/config fragility OR environment breaks assumptions; no impossibility claim",
+    "mixed": "ID-only learning or model disagreement: qualify OOD claims against matrix-length bins"
+  },
+  "data_receipt_sha256": "d674eeeb9cbf13db81bd4a75c7a85baf1729c0c4bd74868b7c8e2cbdbd8bda15",
+  "data_generation": [
+    "/home/erikg/emender/.venv/bin/python",
+    "/home/erikg/emender/experiments/expressivity_tasks/results_stage26_replication/sources/LinearRNN/imm_unbound/gen.py",
+    "--out_dir",
+    "experiments/expressivity_tasks/results_stage26b_native_control/datasets",
+    "--seed",
+    "0",
+    "--T_train",
+    "100",
+    "--T_gap",
+    "100",
+    "--n_train_per_len",
+    "700",
+    "--n_val_per_len",
+    "200",
+    "--n_test_per_len",
+    "100"
+  ],
+  "trigger": {
+    "26_replication/rnn_integer_seed0": {
+      "step": 60000,
+      "best_step": 35500,
+      "metrics": {
+        "test_id": {
+          "accuracy": 0.523
+        },
+        "test_ood1": {
+          "accuracy": 0.4999
+        },
+        "test_ood2": {
+          "accuracy": 0.5053
+        }
+      },
+      "disclosure": "X26 exact balanced pools: raw equals balanced accuracy; class recalls not logged",
+      "hashes": {
+        "experiments/expressivity_tasks/results_stage26_replication/rnn_integer_seed0/result.json": "6dc63cb2e2e3d63bb7a8ac3ce1ba303cd754531479cb449c022e4d8fdf05ded8",
+        "experiments/expressivity_tasks/results_stage26_replication/rnn_integer_seed0/validation.json": "90312cbd40aa406f99127202e395207cd76493511e8c34c57a6507a608f7ff96",
+        "experiments/expressivity_tasks/results_stage26_replication/receipts/rnn_integer_seed0/terminal.json": "2bc0bcc7afb57e989a3dbe1d156deec17b5b318d3c6424ed6a55b0d74d7482a7"
+      }
+    },
+    "26_replication/delta_integer_seed0": {
+      "step": 60000,
+      "best_step": 58000,
+      "metrics": {
+        "test_id": {
+          "accuracy": 0.5148
+        },
+        "test_ood1": {
+          "accuracy": 0.5105
+        },
+        "test_ood2": {
+          "accuracy": 0.5068
+        }
+      },
+      "disclosure": "X26 exact balanced pools: raw equals balanced accuracy; class recalls not logged",
+      "hashes": {
+        "experiments/expressivity_tasks/results_stage26_replication/delta_integer_seed0/result.json": "aa4612ffd897e91bc739a90a602b5c6b54151ab35e3ae0c834febf8148de3c50",
+        "experiments/expressivity_tasks/results_stage26_replication/delta_integer_seed0/validation.json": "ae9920eaf96250d3a6760f72275695f47ac397eae0862b07caeb9ccbd3c78834",
+        "experiments/expressivity_tasks/results_stage26_replication/receipts/delta_integer_seed0/terminal.json": "fea1c5f300d0925a3d08a073ce696140bd856b39d8de2a69cac5f3d0d83abea7"
+      }
+    },
+    "26b_native_control/rnn_integer_seed0": {
+      "step": 60000,
+      "best_step": 12500,
+      "metrics": {
+        "test_bin0": {
+          "accuracy": 0.6437,
+          "balanced_accuracy": 0.6437532190176318,
+          "class_recall": [
+            0.6429242623566999,
+            0.6445821756785638
+          ],
+          "confusion_true_by_pred": [
+            [
+              3421,
+              1900
+            ],
+            [
+              1663,
+              3016
+            ]
+          ]
+        },
+        "test_bin1": {
+          "accuracy": 0.7531,
+          "balanced_accuracy": 0.5113272322937196,
+          "class_recall": [
+            0.05583972719522592,
+            0.9668147373922132
+          ],
+          "confusion_true_by_pred": [
+            [
+              131,
+              2215
+            ],
+            [
+              254,
+              7400
+            ]
+          ]
+        },
+        "test_bin2": {
+          "accuracy": 0.8885,
+          "balanced_accuracy": 0.5008646171695356,
+          "class_recall": [
+            0.011549566891241578,
+            0.9901796674478295
+          ],
+          "confusion_true_by_pred": [
+            [
+              12,
+              1027
+            ],
+            [
+              88,
+              8873
+            ]
+          ]
+        }
+      },
+      "disclosure": "X26b learns partially ID; OOD near chance balanced despite high raw accuracy",
+      "hashes": {
+        "experiments/expressivity_tasks/results_stage26b_native_control/rnn_integer_seed0/result.json": "c9719d6eb580d6fb50ba4b840ab8c9b8cd2e825eb7ab8fafeefa04c8c14ffd7f",
+        "experiments/expressivity_tasks/results_stage26b_native_control/rnn_integer_seed0/validation.json": "d3c178ae3d670bee3f56dadd575c36ef593146f0aff117f1964facf120a8a99a",
+        "experiments/expressivity_tasks/results_stage26b_native_control/receipts/rnn_integer_seed0/terminal.json": "62f703909d8d71deda6b160889db2d05003534fdfe8d9c1f7091fb5ee740e08f"
+      }
+    },
+    "26b_native_control/delta_integer_seed0": {
+      "step": 60000,
+      "best_step": 51000,
+      "metrics": {
+        "test_bin0": {
+          "accuracy": 0.6212,
+          "balanced_accuracy": 0.6189231383640066,
+          "class_recall": [
+            0.6543882728810374,
+            0.5834580038469759
+          ],
+          "confusion_true_by_pred": [
+            [
+              3482,
+              1839
+            ],
+            [
+              1949,
+              2730
+            ]
+          ]
+        },
+        "test_bin1": {
+          "accuracy": 0.7466,
+          "balanced_accuracy": 0.5125498126449771,
+          "class_recall": [
+            0.07161125319693094,
+            0.9534883720930233
+          ],
+          "confusion_true_by_pred": [
+            [
+              168,
+              2178
+            ],
+            [
+              356,
+              7298
+            ]
+          ]
+        },
+        "test_bin2": {
+          "accuracy": 0.8921,
+          "balanced_accuracy": 0.5028733215552068,
+          "class_recall": [
+            0.011549566891241578,
+            0.994197076219172
+          ],
+          "confusion_true_by_pred": [
+            [
+              12,
+              1027
+            ],
+            [
+              52,
+              8909
+            ]
+          ]
+        }
+      },
+      "disclosure": "X26b learns partially ID; OOD near chance balanced despite high raw accuracy",
+      "hashes": {
+        "experiments/expressivity_tasks/results_stage26b_native_control/delta_integer_seed0/result.json": "77e9a3501c60e779b67aa5e975a7ac82a24dbba53b0a6198097d60817f7dae59",
+        "experiments/expressivity_tasks/results_stage26b_native_control/delta_integer_seed0/validation.json": "c64f4980ef9bb699063a80669296e74c243a1219e8d371e629f3575662c0f8c9",
+        "experiments/expressivity_tasks/results_stage26b_native_control/receipts/delta_integer_seed0/terminal.json": "0e631f3a7a2526d3fb5394719a5b5e84191cd302689e94df2f71d8b05f1f16f2"
+      }
+    }
+  },
+  "loss_correction": "Supervisor CE assertion was incorrect; shipped final BCE +0.3 auxiliary BCE retained",
+  "source_sha256": {
+    "/home/erikg/emender/experiments/expressivity_tasks/results_stage26_replication/sources/LinearRNN/dgc/delta.sh": "bc2961e4ad139561001aae5b0986d23e34724150e9eb42a0ff061b1102680389",
+    "/home/erikg/emender/experiments/expressivity_tasks/results_stage26_replication/sources/LinearRNN/dgc/generate_data.py": "0d098df408bb9b90dc3139a1cbf180463aa580ebb7a7540b00da3462b3425049",
+    "/home/erikg/emender/experiments/expressivity_tasks/results_stage26_replication/sources/LinearRNN/dgc/rnn.sh": "a5a9c8a96dc6aec7507c9d271513e8916eddb1c486643f0484f6dc35ab2d58dc",
+    "/home/erikg/emender/experiments/expressivity_tasks/results_stage26_replication/sources/LinearRNN/dgc/rwkv.sh": "dc5323a70982c8eec57801cb155848e28f8fef1bad378303145aaf6fe8e2dbff",
+    "/home/erikg/emender/experiments/expressivity_tasks/results_stage26_replication/sources/LinearRNN/dgc/train_deltanet.py": "9991f0123dc9f9a6ccebb36bb2b4a5e5d56fbd15617f28946f852f1e26a6acf1",
+    "/home/erikg/emender/experiments/expressivity_tasks/results_stage26_replication/sources/LinearRNN/dgc/train_rnn.py": "eb753845bb2ae89752172399c267aef2fd8151161502294df84d52695697bab7",
+    "/home/erikg/emender/experiments/expressivity_tasks/results_stage26_replication/sources/LinearRNN/dgc/train_rwkv7.py": "3f2e9bd98996b04e41d8b5312f77d444a78d7c2ac0c583e0de98ad022cb34314",
+    "/home/erikg/emender/experiments/expressivity_tasks/results_stage26_replication/sources/LinearRNN/imm_unbound/delta.sh": "5500ec6358d9473c3b68741892d392d46220eeb7c6523cef462e6d19826b34a8",
+    "/home/erikg/emender/experiments/expressivity_tasks/results_stage26_replication/sources/LinearRNN/imm_unbound/gen.py": "857e2a3da0f2076cf94c08a3e0bfa7049f199cf4877232c857334e475d6bb13a",
+    "/home/erikg/emender/experiments/expressivity_tasks/results_stage26_replication/sources/LinearRNN/imm_unbound/rnn.sh": "094b6d2aea178f2249cf93777616687b0c512f7d5c0fadc99ddceba6de7b05a9",
+    "/home/erikg/emender/experiments/expressivity_tasks/results_stage26_replication/sources/LinearRNN/imm_unbound/rwkv.sh": "d789dd013ae0e27042217fdea841c10582d6760857e73d1679ebd53099cd2412",
+    "/home/erikg/emender/experiments/expressivity_tasks/results_stage26_replication/sources/LinearRNN/imm_unbound/train_deltanet.py": "fdb911df34830d6b122db5cb53ee35509269ce3d24c57c0bf32445c835fabab9",
+    "/home/erikg/emender/experiments/expressivity_tasks/results_stage26_replication/sources/LinearRNN/imm_unbound/train_rnn.py": "9709da5ceb76623c7b9ae0296caa4ac9f029c04dc4f83395cd04f481fac459b5",
+    "/home/erikg/emender/experiments/expressivity_tasks/results_stage26_replication/sources/LinearRNN/imm_unbound/train_rwkv7.py": "1a2d2a1e683752c7693386fc44850b0f47545c6d7f5bfe842781d487d3252825",
+    "/home/erikg/emender/experiments/expressivity_tasks/results_stage26_replication/sources/manifest.json": "2ce5b96248ebee26d0a2a54dc3adb543a3f67a89bbbf8abdb228b7869ee9304c",
+    "experiments/expressivity_tasks/merrill26_replication_models.py": "2cb36725e0c647fb444a0c7e204a21653412bc95ddf5a959df16d111e25206be",
+    "experiments/expressivity_tasks/results_stage26b_native_control/receipts/data.json": "d674eeeb9cbf13db81bd4a75c7a85baf1729c0c4bd74868b7c8e2cbdbd8bda15",
+    "experiments/expressivity_tasks/results_stage26c_raw_defaults/COMPARISON.md": "60b028f1898a8a6aecbbd5dcc819bb80ca573da1e22e87790a02e633aee98191",
+    "experiments/expressivity_tasks/results_stage26c_raw_defaults/ENVIRONMENT.md": "528738fe2960aadccbe5b9acbb0f5bd27355ea3d92fd38433cc51b257ceb4bf7",
+    "experiments/expressivity_tasks/results_stage26c_raw_defaults/REGISTRATION.md": "ef6583cce2a37c7bf17cd47446b60d2dddffc007366d771e87dead192b14e64c",
+    "experiments/expressivity_tasks/results_stage26c_raw_defaults/VALIDATION.md": "45ce51a0e96caa245550b29021c5b2955d674d26b5314197c9249cd763d32d3e",
+    "experiments/expressivity_tasks/results_stage26c_raw_defaults/receipts/environment_pre_delta.json": "e82321c1434f4d8e72daac9b8a7a1b653241ba8ff43df5cd2682644f9e6ee7ff",
+    "experiments/expressivity_tasks/results_stage26c_raw_defaults/receipts/environment_pre_rnn.json": "bd476d5b45100df303e0b32cf3af9b15dc463734632a35ef3f265e2a78c44891",
+    "experiments/expressivity_tasks/results_stage26c_raw_defaults/receipts/environment_setup_delta.txt": "be3dd74e9540ff8ef3e2a28d4315421a7a3f06c19f8c4a11ebe1f601dc6313ca",
+    "experiments/expressivity_tasks/results_stage26c_raw_defaults/receipts/environment_setup_rnn.txt": "82a62e5bd86b0780d43ed9479f914393c47c31480e0453f73458254c0f250902",
+    "experiments/expressivity_tasks/results_stage26c_raw_defaults/receipts/evaluator_smoke_delta.json": "964bb812bc1cd76ff2bcf3316a6e95a1246c421fb6ea571af7534acc28662aed",
+    "experiments/expressivity_tasks/results_stage26c_raw_defaults/receipts/evaluator_smoke_rnn.json": "fcd3beb4203c3e657e8f8915fd8cd2d505923d70a3fb3658693badf30af83da5",
+    "experiments/expressivity_tasks/results_stage26c_raw_defaults/receipts/smoke_delta_console.txt": "351a3a168c9392ac48ec2dff34b2382fcb63b675da3d88fb87008e5a2855f26a",
+    "experiments/expressivity_tasks/results_stage26c_raw_defaults/receipts/smoke_delta_integer.json": "8732a3880e399763048d92405a136e92d47b70dd643cebd6bd0e44941afd59a3",
+    "experiments/expressivity_tasks/results_stage26c_raw_defaults/receipts/smoke_rnn_console.txt": "1a37ce17aa0ef25a758a9db9eb5e674b9721907441d44ae91cde1cf67aea9b6b",
+    "experiments/expressivity_tasks/results_stage26c_raw_defaults/receipts/smoke_rnn_integer.json": "61bb3de49a4b98f23a98ff0d5676fa969b8be2436e1d150b5f0636fcb505b1aa",
+    "experiments/expressivity_tasks/results_stage26c_raw_defaults/receipts/tests.txt": "719728a2a8b1dd0dac52079975a587a74b9ff0e77478756b9d82e5d05bc4b444",
+    "experiments/expressivity_tasks/results_stage26c_raw_defaults/receipts/tests_initial_path_error.txt": "1148dd19e7dce2240b0e80b3ac010a49fd8b3304589466da5588f3d392602b4c",
+    "experiments/expressivity_tasks/results_stage26c_raw_defaults/receipts/tests_second_path_error.txt": "be43410b1f0ba95ec36fec22983bbba68beb87a65c79ec084ab4a45f7c86c84c",
+    "experiments/expressivity_tasks/results_stage26c_raw_defaults/receipts/trigger.json": "8830b9cc177c9424c4f610fdd764b1797c91fdf52c2524ba71b7270f67da0e32",
+    "experiments/expressivity_tasks/run_merrill26_native_control.py": "f65617f152b2a2bbc866b243c4737bc06b1189b367c677846bfc38caab4735b5",
+    "experiments/expressivity_tasks/run_merrill26_raw_defaults.py": "44bd97e6157e05528e4c80d41392cb432d0044eae9c62db5dd7d6759f522906d",
+    "experiments/expressivity_tasks/run_merrill26_replication.py": "4c14de09ab0a40add9e903b0454912a56fb3bf61241ac3d39f297ec132bc0d7a",
+    "experiments/expressivity_tasks/run_merrill26_separators.py": "a54f23db55f28a3ef1880ea7175915c631be470c41e7d861554f15e1efee2eda",
+    "scripts/gpu_lease.sh": "553cd9ab764e137fc4e33b7c20eeeda1b2a13f47870f5f4b679f153c68feb27f",
+    "scripts/launch_merrill26_raw_defaults.sh": "cb328547f768bfc845d57f08a626733e3f9cf2d2f87f55fa9c168b2233205111",
+    "scripts/register_merrill26_raw_defaults.py": "344d595a3844c2c4433d72166b8ae36dddf6884a908415086762d241eebca1cc",
+    "scripts/watch_merrill26_raw_defaults.py": "7a812f06a247ef6d4d33209b6f773cb6c8c6175e5c4c6debb1307398f0b46606",
+    "scripts/watch_merrill26_separators.py": "50eb7f0b6e2fc002793a3eb56ad7d80ef9bd59b7d612a62e175f04caec655095",
+    "tests/test_merrill26_raw_defaults.py": "4fe6f1d203420f76d5ef72905350bcf4d4d7df7d1c67cd989821e7b68d864849"
+  },
+  "dependency_sha256": {
+    "/home/erikg/emender/experiments/expressivity_tasks/results_stage26_replication/rnn_integer_seed0/result.json": "6dc63cb2e2e3d63bb7a8ac3ce1ba303cd754531479cb449c022e4d8fdf05ded8",
+    "/home/erikg/emender/experiments/expressivity_tasks/results_stage26_replication/rnn_integer_seed0/validation.json": "90312cbd40aa406f99127202e395207cd76493511e8c34c57a6507a608f7ff96",
+    "/home/erikg/emender/experiments/expressivity_tasks/results_stage26_replication/receipts/rnn_integer_seed0/terminal.json": "2bc0bcc7afb57e989a3dbe1d156deec17b5b318d3c6424ed6a55b0d74d7482a7",
+    "/home/erikg/emender/experiments/expressivity_tasks/results_stage26_replication/delta_integer_seed0/result.json": "aa4612ffd897e91bc739a90a602b5c6b54151ab35e3ae0c834febf8148de3c50",
+    "/home/erikg/emender/experiments/expressivity_tasks/results_stage26_replication/delta_integer_seed0/validation.json": "ae9920eaf96250d3a6760f72275695f47ac397eae0862b07caeb9ccbd3c78834",
+    "/home/erikg/emender/experiments/expressivity_tasks/results_stage26_replication/receipts/delta_integer_seed0/terminal.json": "fea1c5f300d0925a3d08a073ce696140bd856b39d8de2a69cac5f3d0d83abea7",
+    "/home/erikg/emender/experiments/expressivity_tasks/results_stage26b_native_control/rnn_integer_seed0/result.json": "c9719d6eb580d6fb50ba4b840ab8c9b8cd2e825eb7ab8fafeefa04c8c14ffd7f",
+    "/home/erikg/emender/experiments/expressivity_tasks/results_stage26b_native_control/rnn_integer_seed0/validation.json": "d3c178ae3d670bee3f56dadd575c36ef593146f0aff117f1964facf120a8a99a",
+    "/home/erikg/emender/experiments/expressivity_tasks/results_stage26b_native_control/receipts/rnn_integer_seed0/terminal.json": "62f703909d8d71deda6b160889db2d05003534fdfe8d9c1f7091fb5ee740e08f",
+    "/home/erikg/emender/experiments/expressivity_tasks/results_stage26b_native_control/delta_integer_seed0/result.json": "77e9a3501c60e779b67aa5e975a7ac82a24dbba53b0a6198097d60817f7dae59",
+    "/home/erikg/emender/experiments/expressivity_tasks/results_stage26b_native_control/delta_integer_seed0/validation.json": "c64f4980ef9bb699063a80669296e74c243a1219e8d371e629f3575662c0f8c9",
+    "/home/erikg/emender/experiments/expressivity_tasks/results_stage26b_native_control/receipts/delta_integer_seed0/terminal.json": "0e631f3a7a2526d3fb5394719a5b5e84191cd302689e94df2f71d8b05f1f16f2",
+    "/home/erikg/emender/experiments/expressivity_tasks/results_stage26b_native_control/datasets/test_bin0_src.txt": "cccd929a69ea8598383095da4c3316d10852680b0b455899eed9adf123bc9e91",
+    "/home/erikg/emender/experiments/expressivity_tasks/results_stage26b_native_control/datasets/test_bin0_tgt.txt": "7ddc54041ed97aad0575ab1bffa349faac946d3493116b90db19d34acf560513",
+    "/home/erikg/emender/experiments/expressivity_tasks/results_stage26b_native_control/datasets/test_bin1_src.txt": "4774bd4627ccdedd40fa162bbf5e26b748bfc3a495b35d93957bdb3d98faf458",
+    "/home/erikg/emender/experiments/expressivity_tasks/results_stage26b_native_control/datasets/test_bin1_tgt.txt": "cec239c81584087dfa794835771a6c2ffcd758304d25897e827775f25dd0d0c2",
+    "/home/erikg/emender/experiments/expressivity_tasks/results_stage26b_native_control/datasets/test_bin2_src.txt": "93d18acdc43d919e96a1587608b4c0de573538c9958dc08a20e47d644e1af824",
+    "/home/erikg/emender/experiments/expressivity_tasks/results_stage26b_native_control/datasets/test_bin2_tgt.txt": "316558731f1d7744dfe517e22e3c994bd12b5f02b2ac9cc4038c69db8e0af223",
+    "/home/erikg/emender/experiments/expressivity_tasks/results_stage26b_native_control/datasets/train_src.txt": "a686ee7d6df4115400ecff1fdea2893216baa07ab34874f7076e50d9cddd965a",
+    "/home/erikg/emender/experiments/expressivity_tasks/results_stage26b_native_control/datasets/train_tgt.txt": "e4ef6809ffb8816d0bb67de9a3b6e3550fa49e1797a8f8eb838815701c66ea7e",
+    "/home/erikg/emender/experiments/expressivity_tasks/results_stage26b_native_control/datasets/val_bin0_src.txt": "030338d1e4d83b1dbe44739d94ac46a310bb480090c398f9c0528199209bcbca",
+    "/home/erikg/emender/experiments/expressivity_tasks/results_stage26b_native_control/datasets/val_bin0_tgt.txt": "65b0522ae4c90ae74003d2c843388e4cec2885e8f1625444d2cbfdb30f36625b",
+    "/tmp/x26c-rnn-venv/pyvenv.cfg": "e7d5c153f86bae190eda1e9784eec0dc8379c52e7bfa2a6e03515464baf42c6a",
+    "/tmp/x26c-rnn-venv/lib/python3.12/site-packages/x26c_cuda_reuse.pth": "f81550dd3f8eff57cd08ed30f0a0ea528dbfb0faeb3bd3f042f8465a2408b7c7",
+    "/tmp/x26c-delta-venv/pyvenv.cfg": "ab37f0ce550a63064853ce22adc174063dff56040f594dc498d7feab3ed21261",
+    "/tmp/x26c-delta-venv/lib/python3.12/site-packages/x26c_cuda_reuse.pth": "f81550dd3f8eff57cd08ed30f0a0ea528dbfb0faeb3bd3f042f8465a2408b7c7"
+  }
+}
