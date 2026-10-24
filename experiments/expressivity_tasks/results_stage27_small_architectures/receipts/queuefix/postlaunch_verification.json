@@ -1,0 +1,87 @@
+{
+  "at": 1792844513.4545677,
+  "commit": "50f9fe8dbe0ae45fb08ce7a7c41c4e0aff6b77e9",
+  "remote": "50f9fe8dbe0ae45fb08ce7a7c41c4e0aff6b77e9\trefs/heads/main",
+  "watcher": {
+    "pid": 1384720,
+    "starttime": "291042314",
+    "host": "lambda01"
+  },
+  "source_sha256_verified": 236,
+  "dependency_sha256_verified": 389,
+  "states": {
+    "e97_graph_seed0": "running",
+    "e97softplus_graph_seed0": "running",
+    "gdn2_graph_seed0": "running"
+  },
+  "arms": [
+    {
+      "name": "e97softplus_graph_seed0",
+      "card": 0,
+      "gpu_uuid": "GPU-5265d71b-3b75-00e3-d129-2ed12b9be786",
+      "worker": {
+        "pid": 1385276,
+        "starttime": "291042569",
+        "host": "lambda01",
+        "card": 0,
+        "command": [
+          "bash",
+          "scripts/launch_small_architecture_separators.sh",
+          "--worker",
+          "e97softplus",
+          "graph",
+          "0"
+        ],
+        "launched_at": 1792844437.4985952
+      },
+      "trainer": {
+        "pid": 1385490,
+        "starttime": "291042606",
+        "host": "lambda01"
+      },
+      "config_source_commit": "50f9fe8dbe0ae45fb08ce7a7c41c4e0aff6b77e9",
+      "launch_receipt_sha256": "f596a76d252d7a9053b8168747dcfe3c00e3426314e19fde8b01bd6da68ed52a",
+      "lease_sha256": "f197e9b46fe577e008e2ec1ec0e43e6920372c737a3aea4ca855cb59eaa92801"
+    },
+    {
+      "name": "gdn2_graph_seed0",
+      "card": 2,
+      "gpu_uuid": "GPU-d1b85657-fee1-7219-48a0-52b1b323f9c1",
+      "worker": {
+        "pid": 1385615,
+        "starttime": "291042641",
+        "host": "lambda01",
+        "card": 2,
+        "command": [
+          "bash",
+          "scripts/launch_small_architecture_separators.sh",
+          "--worker",
+          "gdn2",
+          "graph",
+          "2"
+        ],
+        "launched_at": 1792844438.2124667
+      },
+      "trainer": {
+        "pid": 1385724,
+        "starttime": "291042680",
+        "host": "lambda01"
+      },
+      "config_source_commit": "50f9fe8dbe0ae45fb08ce7a7c41c4e0aff6b77e9",
+      "launch_receipt_sha256": "5cea71394a2db81e5de9936e288eedb4bc0e78d1f69003da48c3a90f401b5322",
+      "lease_sha256": "ce4e1d6829b9e27b8d7e8407571d2e7e1ecf773343dae10ac69c9b5e4361b727"
+    }
+  ],
+  "original_shared_receipt_unchanged": true,
+  "supervisor_probe": [
+    "/home/erikg/emender/.venv/bin/python",
+    "-m",
+    "scripts.watch_small_architecture_separators",
+    "--once"
+  ],
+  "probe_exit_code": 2,
+  "probe_stdout": "{\"at\": 1792844513.4334228, \"states\": {\"e97_graph_seed0\": \"running\", \"e97softplus_graph_seed0\": \"running\", \"gdn2_graph_seed0\": \"running\"}, \"free_bytes\": 1451904327680, \"rung_bytes\": {\"e97_graph_seed0\": 25513551, \"e97softplus_graph_seed0\": 1422, \"gdn2_graph_seed0\": 2370701}}\n",
+  "gpu_apps": "GPU-5265d71b-3b75-00e3-d129-2ed12b9be786, 1385490, 590 MiB\nGPU-d6b2101f-63f1-60f6-563a-36f1d22ccf6f, 4176006, 3958 MiB\nGPU-d1b85657-fee1-7219-48a0-52b1b323f9c1, 1385724, 840 MiB\nGPU-76581993-9fdb-55b9-05b2-97621aac8629, 1369677, 698 MiB\nGPU-ed7c9f77-649d-1583-1fd9-a4e8b160d94f, 1369696, 686 MiB\nGPU-6d8d6161-e8e8-0b81-9abb-1a8f7d15e65d, 2038148, 834 MiB\nGPU-8f63894f-5b64-755c-060f-7022c603e7d2, 4175994, 2842 MiB\n",
+  "native_arming": "unchanged; supervisor verification requested separately",
+  "requirements": "R01\u2013R16/NDP01\u2013NDP17/V21S01\u2013V21S17/ISP01\u2013ISP07 not applicable: local nonresilient research, no Frontier/Slurm claim"
+}

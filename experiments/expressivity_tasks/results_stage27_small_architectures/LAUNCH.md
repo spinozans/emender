@@ -37,3 +37,32 @@ errors. Unrelated pre-existing/live watcher modifications and outputs were not
 staged or changed by this task. R01–R16/NDP01–NDP17/V21S01–V21S17/ISP01–ISP07
 are not applicable (local nonresilient research; no Frontier Slurm claim).
 Independent acceptance review remains required; no convergence claim.
+
+## X27q queue recovery — 2026-10-24 UTC
+
+Fix/amendment **50f9fe8dbe0ae45fb08ce7a7c41c4e0aff6b77e9** was pushed before
+restarting `bash scripts/launch_small_architecture_separators.sh` (`--launch`).
+Persistent launcher PID1384720/starttime291042314 on lambda01 now polls every60s.
+Softplus-small launched on preferred physical0, worker1385276/trainer1385490.
+GDN2-small launched on next-free physical2 (preferred1 busy),
+worker1385615/trainer1385724. Existing tanh worker was not relaunched.
+
+Each new arm has `receipts/<arm>/launch.json`, worker/trainer identity, lease
+and command receipts. `receipts/queuefix/postlaunch_verification.json` verifies
+pushed HEAD, all236 source/389 dependency hashes, matching config source commit,
+live processes, actual nvidia-smi GPU UUID/PID bindings, and unchanged original
+shared launch receipt. The existing native `--once` probe returns2, all running;
+no new notification arming was attempted. Supervisor-side native-wrapper
+verification requested separately; no scientific result is claimed.
+
+Parser tests cover single/multiple comma-separated cards, empty and whitespace,
+trailing newline and mixed separators. Restart regression exercises real per-arm
+receipt creation and shared launch gate: A unchanged, B launched once, duplicate
+B rejected. Default one-shot and non-X27 rejection tests cover scope isolation.
+24 X27 tests /62 five-family regression tests pass before and after launch.
+Shell syntax and code/amendment staged whitespace checks pass. Generated command
+receipts retain the wrapper's harmless trailing space verbatim. Global whitespace check
+found only unrelated live stage14/stage16 report EOF whitespace, left untouched.
+Other experiment registrations were not rewritten; a future relaunch of another
+family using the changed shared watcher must qualify its own source bindings.
+Partial spawn failures remain fail-closed. Independent acceptance review required.
