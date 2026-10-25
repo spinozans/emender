@@ -113,7 +113,7 @@ def _next_pow2(x: int, minimum: int = 16) -> int:
 # ---------------------------------------------------------------------------
 @triton.jit
 def tape_fwd_kernel(
-    K_ptr, Q_ptr, V_ptr, Beta_ptr, Pop_ptr, Alog_ptr, Aec_ptr,     # [B,T,NH,*], Aec [NH]
+    K_ptr, KM_ptr, Q_ptr, V_ptr, Beta_ptr, Pop_ptr, Alog_ptr, Aec_ptr,  # [B,T,NH,*], Aec [NH]
     S0K_ptr, S0V_ptr, S0S_ptr, S0L_ptr, S0A_ptr, S0U_ptr,          # init state [B,NH,S,*]
     Out_ptr,                                                        # [B,T,NH,V]
     FK_ptr, FV_ptr, FS_ptr, FL_ptr, FA_ptr, FU_ptr,                # final state
@@ -122,6 +122,7 @@ def tape_fwd_kernel(
     CK_K_ptr, CK_V_ptr, CK_S_ptr, CK_L_ptr, CK_A_ptr, CK_U_ptr,    # ckpts [nck,B,NH,S,*]
     XK_ptr, XV_ptr, XS_ptr, XL_ptr, XA_ptr, XU_ptr, XW_ptr,        # spilled scratch
     S, match_thr, eps_res, pop_thr, won_thr, free_thr, decay, usage_decay, scale,
+    match_scale,
     B: tl.constexpr, T: tl.constexpr, NH: tl.constexpr,
     K: tl.constexpr, V: tl.constexpr,
     BK: tl.constexpr, BV: tl.constexpr,
@@ -167,6 +168,7 @@ def tape_fwd_kernel(
             t64 = tl.full([1], t, tl.int64)
             tok = (b * T + t64) * NH + h
             k_t = tl.load(K_ptr + tok * K + kk, mask=k_m, other=0.0).to(tl.float32)
+            km_t = tl.load(KM_ptr + tok * K + kk, mask=k_m, other=0.0).to(tl.float32)
             q_t = tl.load(Q_ptr + tok * K + kk, mask=k_m, other=0.0).to(tl.float32)
             v_t = tl.load(V_ptr + tok * V + vv, mask=v_m, other=0.0).to(tl.float32)
             beta = tl.load(Beta_ptr + tok).to(tl.float32)
@@ -198,7 +200,9 @@ def tape_fwd_kernel(
 
             # ---- WRITE-ENABLE + five-case routing (G3/G5/G6) ----
             w_on = beta > won_thr
-            sc2 = tl.sum(keys * k_t[None, :], axis=1) * scale
+            # F12: the write-match score carries its OWN scale (match_scale),
+            # separate from the read softmax scale.
+            sc2 = tl.sum(keys * km_t[None, :], axis=1) * (scale * match_scale)
             scm2 = tl.where(live, sc2, NEG)
             bscore = tl.max(scm2, axis=0)
             is_c2 = scm2 == bscore
@@ -336,6 +340,7 @@ def tape_fwd_kernel(
             t64 = tl.full([1], t, tl.int64)
             tok = (b * T + t64) * NH + h
             k_t = tl.load(K_ptr + tok * K + kk, mask=k_m, other=0.0).to(tl.float32)
+            km_t = tl.load(KM_ptr + tok * K + kk, mask=k_m, other=0.0).to(tl.float32)
             q_t = tl.load(Q_ptr + tok * K + kk, mask=k_m, other=0.0).to(tl.float32)
             v_t = tl.load(V_ptr + tok * V + vv, mask=v_m, other=0.0).to(tl.float32)
             beta = tl.load(Beta_ptr + tok).to(tl.float32)
@@ -420,7 +425,7 @@ def tape_fwd_kernel(
                 kt = tl.load(XK_ptr + ((pS + sm[:, None]) * K + kk[None, :]),
                              mask=vm[:, None] & k_m[None, :], other=0.0).to(tl.float32)
                 lv = tl.load(XL_ptr + pS + sm, mask=vm, other=0) > 0
-                sc2 = tl.sum(kt * k_t[None, :], axis=1) * scale
+                sc2 = tl.sum(kt * km_t[None, :], axis=1) * (scale * match_scale)
                 scm2 = tl.where(lv, sc2, NEG)
                 c2 = tl.max(scm2, axis=0)
                 take2 = c2 > best2_sc
@@ -568,7 +573,7 @@ def tape_fwd_kernel(
 # ---------------------------------------------------------------------------
 @triton.jit
 def tape_bwd_kernel(
-    K_ptr, Q_ptr, V_ptr, Beta_ptr, Pop_ptr, Alog_ptr, Aec_ptr,
+    K_ptr, KM_ptr, Q_ptr, V_ptr, Beta_ptr, Pop_ptr, Alog_ptr, Aec_ptr,
     CK_K_ptr, CK_V_ptr, CK_S_ptr, CK_L_ptr, CK_A_ptr,          # sparse checkpoints
     TCcase_ptr, TCmatch_ptr, TCPopf_ptr, TCPopt_ptr, TCAlloc_ptr, TCFreed_ptr,
     dOut_ptr,                                                   # [B,T,NH,V]
@@ -581,7 +586,7 @@ def tape_bwd_kernel(
     RO_ptr,                                                      # replay outputs (gate)
     EB_case_ptr, EB_match_ptr, EB_popt_ptr, EB_alloc_ptr, EB_popf_ptr,  # echo (gate)
     BD_K_ptr, BD_V_ptr, BD_S_ptr, BD_L_ptr, BD_A_ptr,            # boundary dumps (gate)
-    S, free_thr, decay, scale,
+    S, free_thr, decay, scale, match_scale,
     B: tl.constexpr, T: tl.constexpr, NH: tl.constexpr,
     K: tl.constexpr, V: tl.constexpr,
     BK: tl.constexpr, BV: tl.constexpr, TS: tl.constexpr,
@@ -977,7 +982,7 @@ class FusedBuffers:
     num_ck: int
 
 
-def _fused_fwd_launch(k, q, v, beta, pop, alog, aec, s0, cfg: TapeHeadConfig,
+def _fused_fwd_launch(k, km, q, v, beta, pop, alog, aec, s0, cfg: TapeHeadConfig,
                       ckpt_interval: int, checkpoint_dtype: torch.dtype,
                       tile_s: int, max_resident: int, num_warps: int) -> FusedBuffers:
     B, T, NH, K = k.shape
@@ -1028,8 +1033,9 @@ def _fused_fwd_launch(k, q, v, beta, pop, alog, aec, s0, cfg: TapeHeadConfig,
     warps = num_warps if num_warps > 0 else (8 if resident else 4)
     import math
     scale = 1.0 / math.sqrt(K)
+    MATCH_SCALE = 1.0 / 3.0   # F12: write-match scores at 1/(3 sqrt(K))
     tape_fwd_kernel[(P,)](
-        k, q, v, beta, pop, alog, aec,
+        k, km, q, v, beta, pop, alog, aec,
         s0.keys, s0.values, s0.strength,
         s0.live.to(torch.int8), s0.age.to(torch.int32), s0.usage,
         buf.out,
@@ -1041,7 +1047,7 @@ def _fused_fwd_launch(k, q, v, beta, pop, alog, aec, s0, cfg: TapeHeadConfig,
         xk, xv, xs, xl, xa, xu, xw,
         S, cfg.match_threshold, cfg.eps_residual, cfg.pop_threshold,
         cfg.write_enable_threshold, cfg.free_threshold, cfg.decay_rate,
-        cfg.usage_decay, scale,
+        cfg.usage_decay, scale, MATCH_SCALE,
         B=B, T=T, NH=NH, K=K, V=V,
         BK=_next_pow2(K), BV=_next_pow2(V),
         RESIDENT=resident, TSR=tsr, TS=ts,
@@ -1050,7 +1056,7 @@ def _fused_fwd_launch(k, q, v, beta, pop, alog, aec, s0, cfg: TapeHeadConfig,
     return buf
 
 
-def _fused_bwd_launch(k, q, v, beta, pop, alog, aec, buf: FusedBuffers,
+def _fused_bwd_launch(k, km, q, v, beta, pop, alog, aec, buf: FusedBuffers,
                       cfg: TapeHeadConfig, ckpt_interval: int,
                       d_out: torch.Tensor, d_final: dict, tile_s: int,
                       num_warps: int, gate_mode: bool = False):
@@ -1121,8 +1127,9 @@ def _fused_bwd_launch(k, q, v, beta, pop, alog, aec, buf: FusedBuffers,
 
     import math
     scale = 1.0 / math.sqrt(K)
+    MATCH_SCALE = 1.0 / 3.0   # F12: write-match scores at 1/(3 sqrt(K))
     tape_bwd_kernel[(P,)](
-        k, q, v, beta, pop, alog, aec,
+        k, km, q, v, beta, pop, alog, aec,
         buf.ck_keys, buf.ck_values, buf.ck_strength, buf.ck_live, buf.ck_age,
         buf.t_case, buf.t_matched, buf.t_popf, buf.t_popt, buf.t_alloc, buf.t_freed,
         d_out, dfk, dfv, dfs,
@@ -1133,7 +1140,7 @@ def _fused_bwd_launch(k, q, v, beta, pop, alog, aec, buf: FusedBuffers,
         g_k, g_v, g_s, dp_scr,
         ro, eb_case, eb_match, eb_popt, eb_alloc, eb_popf,
         bd_k, bd_v, bd_s, bd_l, bd_a,
-        S, cfg.free_threshold, cfg.decay_rate, scale,
+        S, cfg.free_threshold, cfg.decay_rate, scale, MATCH_SCALE,
         B=B, T=T, NH=NH, K=K, V=V,
         BK=_next_pow2(K), BV=_next_pow2(V), TS=tile_s,
         CKPT=ckpt_interval,
@@ -1156,7 +1163,7 @@ def _fused_bwd_launch(k, q, v, beta, pop, alog, aec, buf: FusedBuffers,
 
 
 def fused_fwd_raw(k, q, v, write_strength, pop_strength, append_logit, state,
-                  cfg: TapeHeadConfig, append_err_coef=None,
+                  cfg: TapeHeadConfig, k_match=None, append_err_coef=None,
                   ckpt_interval: int = DEFAULT_CKPT_INTERVAL,
                   checkpoint_dtype: torch.dtype = torch.bfloat16,
                   tile_s: int = DEFAULT_TILE_S,
@@ -1177,7 +1184,9 @@ def fused_fwd_raw(k, q, v, write_strength, pop_strength, append_logit, state,
         aec = torch.zeros(NH, device=k.device, dtype=torch.float32)
     else:
         aec = append_err_coef.detach().contiguous().float()
-    return _fused_fwd_launch(k, q, v, beta, pop, alog, aec, state, cfg,
+    km = k if k_match is None else k_match
+    km = km.contiguous().float()
+    return _fused_fwd_launch(k, km, q, v, beta, pop, alog, aec, state, cfg,
                              ckpt_interval, checkpoint_dtype, tile_s,
                              max_resident, num_warps)
 
@@ -1199,7 +1208,7 @@ def fused_replay_raw(fwd: FusedBuffers, k, q, v, write_strength, pop_strength,
         aec = torch.zeros(NH, device=k.device, dtype=torch.float32)
     else:
         aec = append_err_coef.detach().contiguous().float()
-    return _fused_bwd_launch(k, q, v, beta, pop, alog, aec, fwd, cfg,
+    return _fused_bwd_launch(k, k, q, v, beta, pop, alog, aec, fwd, cfg,
                              ckpt_interval, None, None, tile_s, num_warps,
                              gate_mode=True)
 
@@ -1232,7 +1241,7 @@ class TapeFusedFunction(torch.autograd.Function):
     """Fused sequential tape-head scan: fwd + bwd are both @triton.jit kernels."""
 
     @staticmethod
-    def forward(ctx, k, q, v, beta, pop, alog, aec,
+    def forward(ctx, k, km, q, v, beta, pop, alog, aec,
                 s0_keys, s0_values, s0_strength, s0_live, s0_age, s0_usage,
                 cfg, ckpt_interval, checkpoint_dtype, tile_s, max_resident,
                 collect_trace):
@@ -1244,10 +1253,10 @@ class TapeFusedFunction(torch.autograd.Function):
         assert S == cfg.slots
         state0 = TapeState(keys=s0_keys, values=s0_values, strength=s0_strength,
                            live=s0_live > 0, age=s0_age.long(), usage=s0_usage)
-        buf = _fused_fwd_launch(k, q, v, beta, pop, alog, aec, state0, cfg,
+        buf = _fused_fwd_launch(k, km, q, v, beta, pop, alog, aec, state0, cfg,
                                ckpt_interval, checkpoint_dtype, tile_s,
                                max_resident, -1)
-        ctx.save_for_backward(k, q, v, beta, pop, alog, aec,
+        ctx.save_for_backward(k, km, q, v, beta, pop, alog, aec,
                               buf.ck_keys, buf.ck_values, buf.ck_strength,
                               buf.ck_live, buf.ck_age,
                               buf.t_case, buf.t_matched, buf.t_popf, buf.t_popt,
@@ -1263,7 +1272,7 @@ class TapeFusedFunction(torch.autograd.Function):
 
     @staticmethod
     def backward(ctx, dout, dfk, dfv, dfs, *rest):
-        (k, q, v, beta, pop, alog, aec,
+        (k, km, q, v, beta, pop, alog, aec,
          ck_keys, ck_values, ck_strength, ck_live, ck_age,
          t_case, t_matched, t_popf, t_popt, t_alloc, t_freed) = ctx.saved_tensors
         cfg = ctx.cfg
@@ -1296,19 +1305,21 @@ class TapeFusedFunction(torch.autograd.Function):
             ck_live=ck_live, ck_age=ck_age, ck_usage=ck_live,
             resident=False, num_ck=T // ctx.ckpt_interval + 1,
         )
-        grads = _fused_bwd_launch(k, q, v, beta, pop, alog, aec, buf, cfg,
+        grads = _fused_bwd_launch(k, km, q, v, beta, pop, alog, aec, buf, cfg,
                                   ctx.ckpt_interval, dout,
                                   {"keys": dfk, "values": dfv, "strength": dfs},
                                   ctx.tile_s, -1)
         daec = grads["daec_b"].sum(0) if ctx.needs_input_grad[6] else None
-        return (grads["dk"], grads["dq"], grads["dv"], grads["dbeta"],
+        # km (the windowed match key) is decision-only: replayed decisions are
+        # detached, so its gradient is None by construction (G10).
+        return (grads["dk"], None, grads["dq"], grads["dv"], grads["dbeta"],
                 grads["dpop"], grads["dalog"], daec,
                 grads["ds0_keys"], grads["ds0_values"], grads["ds0_strength"],
                 None, None, None, None, None, None, None, None, None)
 
 
 def fused_tape_scan(k, q, v, write_strength, pop_strength, append_logit, state,
-                    cfg: TapeHeadConfig, append_err_coef=None,
+                    cfg: TapeHeadConfig, k_match=None, append_err_coef=None,
                     ckpt_interval: int = DEFAULT_CKPT_INTERVAL,
                     checkpoint_dtype: torch.dtype = torch.bfloat16,
                     collect_trace: bool = True,
@@ -1344,8 +1355,10 @@ def fused_tape_scan(k, q, v, write_strength, pop_strength, append_logit, state,
     s0_live = state.live.to(torch.int8).contiguous()
     s0_age = state.age.to(torch.int32).contiguous()
     s0_usage = state.usage.contiguous().float()
+    km = k if k_match is None else k_match
+    km = km.contiguous().float()
     out, fk, fv, fs, flive, fage, fusage, trace = TapeFusedFunction.apply(
-        k, q, v, beta, pop, alog, aec,
+        k, km, q, v, beta, pop, alog, aec,
         s0_keys, s0_values, s0_strength, s0_live, s0_age, s0_usage,
         cfg, ckpt_interval, checkpoint_dtype, tile_s, max_resident, collect_trace)
     final_state = TapeState(keys=fk, values=fv, strength=fs,

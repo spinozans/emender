@@ -191,8 +191,12 @@ def _onehot(idx: torch.Tensor, size: int, fires: torch.Tensor, dtype: torch.dtyp
 # The eager sequential scan (the architectural reference; also the replay
 # engine when a trace is supplied).
 # ---------------------------------------------------------------------------
+MATCH_SCALE = 1.0 / 3.0   # F12: write-match scores at 1/(3 sqrt(K))
+
+
 def tape_scan(k, q, v, write_strength, pop_strength, append_logit, state: TapeState,
-              cfg: TapeHeadConfig, append_err_coef=None, trace: Optional[RoutingTrace] = None,
+              cfg: TapeHeadConfig, k_match=None, append_err_coef=None,
+              trace: Optional[RoutingTrace] = None,
               collect_trace: bool = True):
     """Sequential per-token tape-head scan (fp32 slot arithmetic).
 
@@ -222,6 +226,7 @@ def tape_scan(k, q, v, write_strength, pop_strength, append_logit, state: TapeSt
     content, and the strength updates.
     """
     B, T, NH = k.shape[0], k.shape[1], k.shape[2]
+    km = k if k_match is None else k_match
     K, V, S = k.shape[-1], v.shape[-1], state.live.shape[-1]
     assert K == cfg.key_dim and V == cfg.value_dim and NH == cfg.n_heads
     assert S == cfg.slots and S >= 1
@@ -294,7 +299,9 @@ def tape_scan(k, q, v, write_strength, pop_strength, append_logit, state: TapeSt
         if trace is None:
             beta_det = beta.detach()
             w_on = beta_det > cfg.write_enable_threshold
-            k_scores = torch.einsum('bhsk,bhk->bhs', keys, k_t) * scale
+            km_t = km[:, t]
+            k_scores = torch.einsum('bhsk,bhk->bhs', keys, km_t) * scale \
+                * MATCH_SCALE
             k_det = k_scores.detach().masked_fill(~live, NEG_MASK)
             write_best = k_det.argmax(-1)                           # [B, NH]
             best_score = k_scores.detach().gather(-1, write_best.unsqueeze(-1)).squeeze(-1)
@@ -440,25 +447,44 @@ class TapeHead(nn.Module):
         # magnitude enters the append gate ("the gate's input includes the
         # write-error magnitude against the best-matching live slot").
         self.append_err_coef = nn.Parameter(torch.zeros(NH))
+        # F12 ignition init: queries start as keys (retrieval finds the
+        # token's own slot from step 0), and the architectural write gate
+        # starts OPEN (sigmoid > threshold everywhere it is not masked).
+        with torch.no_grad():
+            self.W_q.weight.copy_(self.W_k.weight)
+            self.W_q.bias.copy_(self.W_k.bias)
+            self.W_write.bias.fill_(2.0)
 
     def forward(self, x: torch.Tensor, state: Optional[TapeState] = None,
                 trace_override: Optional[RoutingTrace] = None,
-                collect_trace: bool = True):
-        """x: [B, T, d_model]. Returns (read_out [B,T,NH,V], state, trace)."""
+                collect_trace: bool = True, w_mask: torch.Tensor = None):
+        """x: [B, T, d_model]. Returns (read_out [B,T,NH,V], state, trace).
+
+        F12 semantics (identical to the fused head): stored keys carry a
+        frozen random geometry (detached); the write searches with the
+        two-token windowed match key; the write gate is architectural
+        (detached sigmoid > threshold, masked for pad tokens); the
+        R-CONFLICT correction is the registered full overwrite."""
         B, T, D = x.shape
         cfg = self.cfg
         NH, K, V = cfg.n_heads, cfg.key_dim, cfg.value_dim
         assert D == self.W_q.in_features
-        k = self.W_k(x).view(B, T, NH, K)
+        x_prev = torch.cat([x[:, :1] * 0.0, x[:, :-1]], dim=1)
+        k = self.W_k(x).view(B, T, NH, K).detach()
+        k_match = (self.W_k(x) + self.W_k(x_prev)).view(B, T, NH, K).detach()
         q = self.W_q(x).view(B, T, NH, K)
         v = self.W_v(x).view(B, T, NH, V)
-        write_strength = torch.sigmoid(self.W_write(x))       # [B, T, NH]
+        write_strength = (torch.sigmoid(self.W_write(x))
+                          > cfg.write_enable_threshold).to(x.dtype).detach()
+        if w_mask is not None:
+            write_strength = write_strength * w_mask.to(x.dtype).unsqueeze(-1)
         pop_strength = torch.sigmoid(self.W_pop(x))           # [B, T, NH]
         append_logit = self.W_append(x)                      # [B, T, NH]
         if state is None:
             state = init_state(B, cfg, x.device, torch.float32)
         return tape_scan(k, q, v, write_strength, pop_strength, append_logit,
-                         state, cfg, append_err_coef=self.append_err_coef,
+                         state, cfg, k_match=k_match,
+                         append_err_coef=self.append_err_coef,
                          trace=trace_override, collect_trace=collect_trace)
 
 

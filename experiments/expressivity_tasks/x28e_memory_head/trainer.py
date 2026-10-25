@@ -340,15 +340,26 @@ def build_tape_model(arm_cfg: Dict):
         """``tape_appendonly`` wiring: pop strengths identically zero in the
         forward pass. Construction is inherited unchanged (F10)."""
 
-        def forward(self, x, state=None, collect_trace=True):
+        def forward(self, x, state=None, collect_trace=True, w_mask=None):
+            # F10+F12: construction inherited; the forward matches the
+            # FusedTapeHead semantics (frozen split keys, windowed match,
+            # architectural pad-masked gate, full-overwrite corrections)
+            # with pop_strength identically zero.
             B, T, _ = x.shape
             cfg = self.cfg
             head = self.head
             NH, K, V = cfg.n_heads, cfg.key_dim, cfg.value_dim
-            k = head.W_k(x).view(B, T, NH, K)
+            x_prev = torch.cat([x[:, :1] * 0.0, x[:, :-1]], dim=1)
+            k = head.W_k(x).view(B, T, NH, K).detach()
+            k_match = (head.W_k(x) + head.W_k(x_prev)).view(B, T, NH,
+                                                           K).detach()
             q = head.W_q(x).view(B, T, NH, K)
             v = head.W_v(x).view(B, T, NH, V)
-            write_strength = torch.sigmoid(head.W_write(x))
+            write_strength = (torch.sigmoid(head.W_write(x))
+                              > cfg.write_enable_threshold).to(x.dtype).detach()
+            if w_mask is not None:
+                write_strength = write_strength \
+                    * w_mask.to(x.dtype).unsqueeze(-1)
             pop_strength = torch.zeros(B, T, NH, device=x.device,
                                       dtype=torch.float32)   # pop OFF
             append_logit = head.W_append(x)
@@ -356,6 +367,7 @@ def build_tape_model(arm_cfg: Dict):
                 state = init_state(B, cfg, x.device, torch.float32)
             return fused_tape_scan(
                 k, q, v, write_strength, pop_strength, append_logit, state, cfg,
+                k_match=k_match,
                 append_err_coef=head.append_err_coef,
                 ckpt_interval=self.ckpt_interval,
                 checkpoint_dtype=self.checkpoint_dtype,
@@ -394,7 +406,11 @@ def build_tape_model(arm_cfg: Dict):
             self.embed = nn.Embedding(vocab_size, self.d_model)
 
         def forward(self, x, collect_trace=True):
-            return self.layer(self.embed(x), collect_trace=collect_trace)
+            # F12: the pad/gap token (id 0) never writes — the generator's
+            # own contract ("id 0 = pad / query-gap, never supervised").
+            w_mask = (x != 0).to(torch.float32)
+            return self.layer(self.embed(x), collect_trace=collect_trace,
+                              w_mask=w_mask)
 
         def binary_logits(self, x, lengths, collect_trace=False):
             """End-of-word two-logit margin reading the FINAL READ output:

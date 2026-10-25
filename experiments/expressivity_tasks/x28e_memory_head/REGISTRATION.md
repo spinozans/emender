@@ -600,3 +600,84 @@ at the 70,000-example pools) is DROPPED at each epoch boundary; every epoch
 re-permutes the full pool with the registered seed sequence, so the dropped
 remainder differs per epoch and no example is starved across epochs. The
 sampler is deterministic and unit-tested at 70,000 examples.
+
+---
+
+## Amendment F12 (post-M2-launch ignition correction; supervisor-delegated
+## "make this work"; append-only — the original terms above stand as written)
+
+### Receipted failure being amended
+
+The M2-frozen package launched; the tape arms halted at the stage-1 gate
+(tape_B0 and tape_B0x4: `halt_stage_gate_failed`, stage1 metric 0.0697,
+validation mean-per-class-recall 0.0155 = the 1/64 random floor for the
+64-way MQAR query). The natives were unaffected (gdn2_native completed at
+0.9915 balanced accuracy; e97_native in stage 3 at 0.99), proving the
+trainer loop, generators, sampler, and optimizer correct and isolating the
+defect to the tape head's ignition dynamics.
+
+### Diagnosis (probe trail, all receipts in the session log)
+
+1. Trained-checkpoint routing histogram: 96.8% NO_WRITE, 1.9% appends —
+   the tape was a closed library; reads returned noise.
+2. The write gate initialized AT its threshold (sigmoid(0) = 0.5 =
+   `write_enable_threshold`); early writes are noise; the gradient
+   through the correction magnitude closes the gate; a closed gate is an
+   ABSORBING state (no corrections fire -> no gradient to reopen).
+3. The pair binding (key->value) required a chance match of the value
+   token onto its key slot (~1/S) with detached argmax aiming: the
+   gradient is majority-noise. The architecture as originally wired is
+   depth-1 with stateless projections: MQAR cannot bootstrap.
+4. With a two-token windowed MATCH key, binding became deterministic —
+   but the read gradient then collapsed the stored-key geometry (key
+   appends decayed 3035->2547 while conflicts rose; accuracy decayed).
+5. Final recipe: stable 0.817 validation accuracy at 500 updates, stable
+   through 3000 (probe 11), gates passing, all numerics gates passing.
+
+### The five registered changes (F12a-F12e)
+
+- **F12a — split stored/match keys with a two-token window**: stored keys
+  are `W_k(x_t)` (single-token, unchanged storage semantics); the write
+  SEARCHES with `k_match = W_k(x_t) + W_k(x_{t-1})` (shared W_k, zero new
+  parameters). Value tokens align with their pair's key slot
+  deterministically at init; stored keys never contain windowed
+  components, so token repeats cannot create spurious matches. Ladder
+  note: consecutive identical `a` tokens produce `2*W_k(a)` match keys
+  with zero value residual -> R-ZERO-RESIDUAL appends: the registered
+  every-a-appends mechanism prediction now fires architecturally.
+- **F12b — separate match scale**: write-match scores carry their own
+  scale (1/3 of the read scale, i.e. 1/(3*sqrt(K))); the read softmax
+  keeps 1/sqrt(K). The registered `match_threshold` semantics become
+  reachable and meaningful (own-slot ~0.9, spurious ~4-sigma tail).
+- **F12c — architectural write gate + full-overwrite correction**: the
+  write gate is DETACHED (sigmoid > threshold, masked off for the pad/
+  gap token id 0 per the generator's own "never a supervised target"
+  contract, bias initialized +2 = open on content) — zero learned
+  management, per the registered spine. The R-CONFLICT correction is the
+  FULL overwrite the original registration text already specified
+  ("error-correcting overwrite of the matched slot's value"); the gate's
+  magnitude no longer appears in the attached path, eliminating the
+  absorbing collapse channel.
+- **F12d — frozen key geometry**: stored and match keys are DETACHED from
+  the read gradient. The read path cannot collapse the addressing space;
+  queries (W_q) and values (W_v) adapt to a frozen random geometry.
+  W_k's gradient is expected ABSENT (the F10 W_pop precedent).
+- **F12e — retrieval warm start**: W_q initialized equal to W_k, so a
+  query finds its own token's slot from step 0.
+
+### Unchanged
+
+All five routing cases and their order, thresholds, budget arithmetic
+(B0 = 736 slots), pop/decay/merge reductions, zero-learned-management
+spine, stage structure and budgets, gates, ladder, arms, outcome cells,
+natives (untouched construction), eval protocol, and every M2
+verification chain. The stage-1 mechanism ceiling (~0.85, from
+value-collision ties through single-token value appends) is a reportable
+mechanism finding, not a defect.
+
+### Disposition of pre-F12 runs
+
+The pre-F12 tape-arm results (2x halt receipts + 3 superseded crawls) are
+archived under `*_seed0_preF12` as the amendment's evidence; the natives
+re-run under the F12 freeze for one registration lineage. No pre-F12
+optimizer update counts toward any F12 arm.

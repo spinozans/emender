@@ -40,17 +40,19 @@ class TapeLayer(nn.Module):
 
     def forward(self, x: torch.Tensor, state: Optional[TapeState] = None,
                 trace_override: Optional[RoutingTrace] = None,
-                collect_trace: bool = True):
+                collect_trace: bool = True, w_mask: torch.Tensor = None):
         """x: [B, T, d_model] (fp32).
 
         Returns ``(y [B,T,d_model], read_out [B,T,NH,V], final_state, trace)``.
         ``y`` and ``read_out`` are the phase-2 parity-gate quantities
         (per-token output + the raw head read path); ``final_state`` carries
         the final slot store for the final-state parity check.
+        ``w_mask`` threads the F12 pad write-mask through to the head.
         """
         B, T, D = x.shape
         read_out, state, trace = self.head(
-            x, state=state, trace_override=trace_override, collect_trace=collect_trace)
+            x, state=state, trace_override=trace_override,
+            collect_trace=collect_trace, w_mask=w_mask)
         y = self.W_o(read_out.reshape(B, T, -1)) + x
         return y, read_out, state, trace
 

@@ -46,27 +46,48 @@ class FusedTapeHead(nn.Module):
         self.max_resident = max_resident
 
     def forward(self, x: torch.Tensor, state: Optional[TapeState] = None,
-                collect_trace: bool = True):
+                collect_trace: bool = True, w_mask: torch.Tensor = None):
         """x: [B, T, d_model] fp32 CUDA.
 
         Returns ``(read_out [B,T,NH,V], final_state, trace | None)``.
         FLAGGED: no ``trace_override`` on the fused forward — trace-following
         replay is a backward-kernel concern (see tape_kernels).
+
+        F12: the write key carries a two-token window (k_t = W_k x_t +
+        W_k x_{t-1}, shared W_k, zero new parameters) so pair binding is
+        deterministic at init; the write gate is ARCHITECTURAL (detached
+        sigmoid > threshold, masked off for pad tokens) and the R-CONFLICT
+        correction is the registered full overwrite.
         """
         B, T, D = x.shape
         cfg = self.cfg
         NH, K, V = cfg.n_heads, cfg.key_dim, cfg.value_dim
         head = self.head
-        k = head.W_k(x).view(B, T, NH, K)
+        # F12: split keys — slots are STORED keyed by current content
+        # (W_k(x_t), unchanged semantics); the write SEARCHES with the
+        # two-token window (W_k(x_t) + W_k(x_{t-1})). Value tokens align
+        # with their pair's key slot deterministically; stored keys never
+        # contain windowed components, so token repeats cannot create
+        # spurious matches.
+        x_prev = torch.cat([x[:, :1] * 0.0, x[:, :-1]], dim=1)
+        # F12: stored keys carry a FROZEN random geometry (detached from the
+        # read gradient) — the read path cannot collapse the addressing
+        # space; queries/values adapt to it.
+        k = head.W_k(x).view(B, T, NH, K).detach()
+        k_match = (head.W_k(x) + head.W_k(x_prev)).view(B, T, NH, K).detach()
         q = head.W_q(x).view(B, T, NH, K)
         v = head.W_v(x).view(B, T, NH, V)
-        write_strength = torch.sigmoid(head.W_write(x))       # [B, T, NH]
+        write_strength = (torch.sigmoid(head.W_write(x))
+                          > cfg.write_enable_threshold).to(x.dtype).detach()
+        if w_mask is not None:
+            write_strength = write_strength * w_mask.to(x.dtype).unsqueeze(-1)
         pop_strength = torch.sigmoid(head.W_pop(x))           # [B, T, NH]
         append_logit = head.W_append(x)                      # [B, T, NH]
         if state is None:
             state = init_state(B, cfg, x.device, torch.float32)
         return fused_tape_scan(
             k, q, v, write_strength, pop_strength, append_logit, state, cfg,
+            k_match=k_match,
             append_err_coef=head.append_err_coef,
             ckpt_interval=self.ckpt_interval,
             checkpoint_dtype=self.checkpoint_dtype,
@@ -93,10 +114,12 @@ class FusedTapeLayer(nn.Module):
         self.W_o = nn.Linear(cfg.n_heads * cfg.value_dim, d_model, bias=True)
 
     def forward(self, x: torch.Tensor, state: Optional[TapeState] = None,
-                collect_trace: bool = True):
+                collect_trace: bool = True, w_mask: torch.Tensor = None):
         """Returns ``(y [B,T,d_model], read_out [B,T,NH,V], final_state, trace)``."""
         B, T, D = x.shape
-        read_out, state, trace = self.head(x, state=state, collect_trace=collect_trace)
+        read_out, state, trace = self.head(x, state=state,
+                                           collect_trace=collect_trace,
+                                           w_mask=w_mask)
         y = self.W_o(read_out.reshape(B, T, -1)) + x
         return y, read_out, state, trace
 

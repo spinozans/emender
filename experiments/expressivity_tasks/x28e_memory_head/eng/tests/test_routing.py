@@ -504,9 +504,19 @@ def test_t1_b0_arithmetic_and_param_count():
     assert tr.case.shape == (2, 6, NH)
     assert int(st.live.shape[2]) == b0
     assert int(st.live_counts().sum()) > 0  # writes actually fired
-    # gradient flows to the learned projections (and nowhere else is learnable)
+    # gradient flows to the learned projections. F12 EXCEPTIONS: W_k is the
+    # FROZEN key geometry (stored and match keys detached — the read path
+    # cannot collapse the addressing space) and W_write is the ARCHITECTURAL
+    # write gate (detached; zero learned management) — both gradients are
+    # expected ABSENT, exactly like W_pop on the pop-disabled arm (F10).
     y.sum().backward()
     for pname, param in layer.named_parameters():
+        if pname.endswith(("W_k.weight", "W_k.bias",
+                           "W_write.weight", "W_write.bias")):
+            assert param.grad is None, \
+                f"F12 frozen/architectural parameter must not receive " \
+                f"gradient ({pname})"
+            continue
         assert param.grad is not None, f"no gradient reached {pname}"
         assert float(param.grad.abs().sum()) > 0.0, f"zero gradient at {pname}"
 
