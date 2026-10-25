@@ -1,0 +1,123 @@
+{
+  "smoke": "per-arm max-length 90,904-token zero-update fwd/bwd/eval (registration gate 4, discharged per arm; M2-review correction F5)",
+  "arm": "tape_B0x4",
+  "seed": 20260128,
+  "zero_updates": true,
+  "physical_card": 1,
+  "supervision": "end-of-word BCE on a two-logit margin reading the final READ output (G8); summed loss over all microbatches (the F5 effective-batch mechanism, zero optimizer steps)",
+  "total_tokens": 90904,
+  "split": {
+    "n_sequences": 4,
+    "length": 22726
+  },
+  "microbatch_binding": {
+    "token_budget": 32768,
+    "max_sequences": 32,
+    "rung_gib": 40.0
+  },
+  "model_parameters": 399378,
+  "dims": {
+    "d_model": 256,
+    "NH": 4,
+    "K": 64,
+    "V": 128,
+    "budget_slots": 2944,
+    "slots": 2944,
+    "CKPT_INTERVAL": 16,
+    "checkpoint_dtype": "bfloat16",
+    "pop_enabled": true
+  },
+  "microbatch_plan": [
+    {
+      "microbatch": 0,
+      "n_sequences": 1,
+      "t_pad": 22726,
+      "tokens": 22726
+    },
+    {
+      "microbatch": 1,
+      "n_sequences": 1,
+      "t_pad": 22726,
+      "tokens": 22726
+    },
+    {
+      "microbatch": 2,
+      "n_sequences": 1,
+      "t_pad": 22726,
+      "tokens": 22726
+    },
+    {
+      "microbatch": 3,
+      "n_sequences": 1,
+      "t_pad": 22726,
+      "tokens": 22726
+    }
+  ],
+  "microbatch_plan_predicted_peak_gib": [
+    6.578,
+    6.578,
+    6.578,
+    6.578
+  ],
+  "finite": {
+    "loss": true,
+    "eval_logits": true,
+    "grad::layer.head.head.append_err_coef": true,
+    "grad::layer.head.head.W_q.weight": true,
+    "grad::layer.head.head.W_q.bias": true,
+    "grad::layer.head.head.W_k.weight": true,
+    "grad::layer.head.head.W_k.bias": true,
+    "grad::layer.head.head.W_v.weight": true,
+    "grad::layer.head.head.W_v.bias": true,
+    "grad::layer.head.head.W_write.weight": true,
+    "grad::layer.head.head.W_write.bias": true,
+    "grad::layer.head.head.W_pop.weight": true,
+    "grad::layer.head.head.W_pop.bias": true,
+    "grad::layer.head.head.W_append.weight": true,
+    "grad::layer.head.head.W_append.bias": true,
+    "grad::layer.W_o.weight": true,
+    "grad::layer.W_o.bias": true,
+    "grad::head_binary.weight": true,
+    "grad::head_binary.bias": true,
+    "grad::embed.weight": true
+  },
+  "all_finite": true,
+  "summed_loss": 1.6822740733623505,
+  "peak_alloc_gib_per_microbatch": [
+    8.757,
+    8.766,
+    8.766,
+    8.766
+  ],
+  "peak_alloc_gib": 8.766271114349365,
+  "peak_reserved_gib": 8.859375,
+  "wall_seconds": {
+    "forward": 15.773,
+    "backward": 36.402,
+    "eval_forward": 15.123
+  },
+  "n_microbatches": 4,
+  "all_microbatches_within_rung": true,
+  "trace_case_counts": {
+    "NO-WRITE": 181808,
+    "R-EMPTY": 12,
+    "R-NOMATCH": 14638,
+    "R-ZERO-RESIDUAL": 27044,
+    "R-CONFLICT": 81755,
+    "R-CAP": 58359
+  },
+  "pop_fired_count": 136442,
+  "free_by_pop_count": 18142,
+  "free_by_decay_count": 0,
+  "final_live_slots": 5888,
+  "t2_fade_horizon": {
+    "decay_rate": 0.999995,
+    "free_threshold": 0.001,
+    "horizon_tokens": 1381547.6019068586,
+    "required_min": 909040,
+    "satisfies_10x": true
+  },
+  "eval_vs_train_output_max_abs": 0.0,
+  "allocation_model_within_rung": true,
+  "pass": true
+}

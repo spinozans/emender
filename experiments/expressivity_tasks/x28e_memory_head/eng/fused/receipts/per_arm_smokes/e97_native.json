@@ -1,0 +1,64 @@
+{
+  "smoke": "per-arm max-length 90,904-token zero-update fwd/bwd/eval (registration gate 4, discharged per arm; M2-review correction F5)",
+  "arm": "e97_native",
+  "seed": 20260128,
+  "zero_updates": true,
+  "physical_card": 1,
+  "supervision": "end-of-word BCE on a two-logit margin reading the final READ output (G8); summed loss over all microbatches (the F5 effective-batch mechanism, zero optimizer steps)",
+  "total_tokens": 90904,
+  "split": {
+    "n_sequences": 1,
+    "length": 90904
+  },
+  "microbatch_binding": {
+    "token_budget": 90904,
+    "max_sequences": 64,
+    "rung_gib": 40.0
+  },
+  "model_parameters": 569888,
+  "microbatch_plan": [
+    {
+      "microbatch": 0,
+      "n_sequences": 1,
+      "t_pad": 90904,
+      "tokens": 90904
+    }
+  ],
+  "finite": {
+    "loss": true,
+    "eval_logits": true,
+    "grad::embed.weight": true,
+    "grad::layer_norms.0.weight": true,
+    "grad::layers.0.A_log": true,
+    "grad::layers.0.dt_bias": true,
+    "grad::layers.0.qkv_proj.weight": true,
+    "grad::layers.0.a_proj.weight": true,
+    "grad::layers.0.g_proj.weight": true,
+    "grad::layers.0.erase_gate_proj.weight": true,
+    "grad::layers.0.value_write_gate_proj.weight": true,
+    "grad::layers.0.o_proj.weight": true,
+    "grad::mlp_norms.0.weight": true,
+    "grad::mlps.0.w1.weight": true,
+    "grad::mlps.0.w2.weight": true,
+    "grad::mlps.0.w3.weight": true,
+    "grad::out_norm.weight": true
+  },
+  "all_finite": true,
+  "grad_none_by_construction": [],
+  "summed_loss": 0.0,
+  "peak_alloc_gib_per_microbatch": [
+    5.526
+  ],
+  "peak_alloc_gib": 5.525582790374756,
+  "peak_reserved_gib": 6.099609375,
+  "wall_seconds": {
+    "forward": 45.961,
+    "backward": 209.457,
+    "eval_forward": 34.325
+  },
+  "n_microbatches": 1,
+  "all_microbatches_within_rung": true,
+  "eval_vs_train_output_max_abs": 0.0,
+  "eval_vs_train_exact": true,
+  "pass": true
+}

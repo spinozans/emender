@@ -1,0 +1,1175 @@
+{
+  "check": "generator determinism (frozen data contract, M2 freeze; M2-review correction F8: ALL pools)",
+  "rule": "same seed -> byte-identical pools (generate twice, hash-equal)",
+  "coverage": "union of the three bounded configs' fine-sweep windows (51 sweep points: 608..864, 2816..3072, 11648..11904) plus every other registered pool (stage-1 splits, stage-2 splits + occupancy grid, stage-3 train/validation and the four OOD bins)",
+  "sweep_points": [
+    608,
+    624,
+    640,
+    656,
+    672,
+    688,
+    704,
+    720,
+    736,
+    752,
+    768,
+    784,
+    800,
+    816,
+    832,
+    848,
+    864,
+    2816,
+    2832,
+    2848,
+    2864,
+    2880,
+    2896,
+    2912,
+    2928,
+    2944,
+    2960,
+    2976,
+    2992,
+    3008,
+    3024,
+    3040,
+    3056,
+    3072,
+    11648,
+    11664,
+    11680,
+    11696,
+    11712,
+    11728,
+    11744,
+    11760,
+    11776,
+    11792,
+    11808,
+    11824,
+    11840,
+    11856,
+    11872,
+    11888,
+    11904
+  ],
+  "n_pools_checked": 66,
+  "all_deterministic": true,
+  "pools": [
+    {
+      "pool": "stage1_mqar.train",
+      "hash": "7342e5b20e986e3d4e66340316ff9811c57c9c56cfe7d486c470ed471d49661b",
+      "deterministic": true
+    },
+    {
+      "pool": "stage1_mqar.validation",
+      "hash": "472cf6e37d6389ead2a1d93092a8c2c19c4e5c2f63abdcdc181c22215721e401",
+      "deterministic": true
+    },
+    {
+      "pool": "stage1_mqar.length_band_T256",
+      "hash": "6341a35ce087f5ac385cc22580aefd5363d93bd1976ec29345dff52911d4cd53",
+      "deterministic": true
+    },
+    {
+      "pool": "stage2_append_necessity.train",
+      "hash": "f6ce72d1805ed8e8a787c8ff0defec3a35405eea66b19dff7e3cda4a7fdbc026",
+      "deterministic": true
+    },
+    {
+      "pool": "stage2_append_necessity.validation",
+      "hash": "8e4960dca9259bcb699d9a53669db37c040928cdf6c1b6d3edf7c2d27247932e",
+      "deterministic": true
+    },
+    {
+      "pool": "stage2_append_necessity.occupancy_K2",
+      "hash": "06ad0666c08930b94e708d65555096b7b8ab78e6f79e57720b31450d832964e2",
+      "deterministic": true
+    },
+    {
+      "pool": "stage2_append_necessity.occupancy_K4",
+      "hash": "81fce62b55ab54cf5e69565caf3dd9adac164fc31a66205d8a7ebe7dd70c1dae",
+      "deterministic": true
+    },
+    {
+      "pool": "stage2_append_necessity.occupancy_K8",
+      "hash": "23dc8d8a97b99c82e803ec01af49040ba6f2222eb9edfa5971b0e9b38e646f9c",
+      "deterministic": true
+    },
+    {
+      "pool": "stage2_append_necessity.occupancy_K16",
+      "hash": "7909c4af254fc50e42d0e0f6bc12c284c088d17280db9490bfdb7604276fae8c",
+      "deterministic": true
+    },
+    {
+      "pool": "stage3_ladder.train",
+      "hash": "a309dfcea3762e6fe99c91a4bffcd37889ea41f2138ed279eb015ec1603df7a0",
+      "deterministic": true
+    },
+    {
+      "pool": "stage3_ladder.validation",
+      "hash": "cd9060171eaaea7bc0a5a24bdcac0c11343af81fbd058157af62236ef30730ff",
+      "deterministic": true
+    },
+    {
+      "pool": "stage3_ladder.bin_id",
+      "hash": "b8f1e6cc6df0aff221bff07e0ccb9354778836b22a6e1fa363a4d04cd89469f0",
+      "deterministic": true
+    },
+    {
+      "pool": "stage3_ladder.bin_2x",
+      "hash": "4474830238102e82282d3d865e98e2a5d0d9d702bf920881a8c8e9e53995c4c7",
+      "deterministic": true
+    },
+    {
+      "pool": "stage3_ladder.bin_4x",
+      "hash": "93edc3654177cee2ddcf2fe1ed03bf2618dbf53928bbeaa01d5ad0f98461fb3d",
+      "deterministic": true
+    },
+    {
+      "pool": "stage3_ladder.bin_9x",
+      "hash": "568a3f6ae66400d019574e6a3b0a701cce14928cd3edbf59311dc0831a2b1059",
+      "deterministic": true
+    },
+    {
+      "pool": "stage3_ladder.sweep_k608",
+      "hash": "a473b64c2b94ab6eb8aef8de087daa54ff15b2ebb2c289acf02c6df57f259a72",
+      "deterministic": true
+    },
+    {
+      "pool": "stage3_ladder.sweep_k624",
+      "hash": "fdfc4d28ddcdd8401c1b47f46331c14dce85a8e8cc09dafdd14b2b640f786407",
+      "deterministic": true
+    },
+    {
+      "pool": "stage3_ladder.sweep_k640",
+      "hash": "e04ba3e9fbff727e788dfbd18120951755bfc4332c3730d75f718c372a5c998c",
+      "deterministic": true
+    },
+    {
+      "pool": "stage3_ladder.sweep_k656",
+      "hash": "24c001e43d5e06fb599d4da25b7790b85e85428091702ce11506ebda67cdb85f",
+      "deterministic": true
+    },
+    {
+      "pool": "stage3_ladder.sweep_k672",
+      "hash": "95f60ed3fc7afb1ce96b676724b8be10bdcc0a206ff302886cb40e2ca069de97",
+      "deterministic": true
+    },
+    {
+      "pool": "stage3_ladder.sweep_k688",
+      "hash": "11c3aa8d7b71da2b6ad9b1e6e1f917eea7ffccbad2fa7be3c8eb66e3a57b4654",
+      "deterministic": true
+    },
+    {
+      "pool": "stage3_ladder.sweep_k704",
+      "hash": "d35ef922c93e3c22f0b6a2429bdeaa21973bcb574d18534e148747561da2280c",
+      "deterministic": true
+    },
+    {
+      "pool": "stage3_ladder.sweep_k720",
+      "hash": "1320e797af3ee2ffcc4ffa266ea8956de184e0f5376d296dc9b09637c3278ffc",
+      "deterministic": true
+    },
+    {
+      "pool": "stage3_ladder.sweep_k736",
+      "hash": "b37660af1025fb6bced1155e1de0e55d764e3eed4e211fab8f07c25f96bb756b",
+      "deterministic": true
+    },
+    {
+      "pool": "stage3_ladder.sweep_k752",
+      "hash": "91bd3a7a7a9c2ee20aaca16278605f2b3aedcb7c695aff0d45f1ce609a74dab7",
+      "deterministic": true
+    },
+    {
+      "pool": "stage3_ladder.sweep_k768",
+      "hash": "fc3ef7e5e7463b0c2b71b38710c0d6c947192d11f47055912108b91c21f74c39",
+      "deterministic": true
+    },
+    {
+      "pool": "stage3_ladder.sweep_k784",
+      "hash": "ebcd0e4d34190c334c361825c28f91176eea6ad3a27be924166dfe32e09f9bd7",
+      "deterministic": true
+    },
+    {
+      "pool": "stage3_ladder.sweep_k800",
+      "hash": "af3e8071193f886580eacd3c18d9179270038a4db49aee3fc55403e2aa1586a5",
+      "deterministic": true
+    },
+    {
+      "pool": "stage3_ladder.sweep_k816",
+      "hash": "55b7aa1bcf5c02b6fcfe3b49e7e6cb2e20297357d504f9592fe33556604a5e70",
+      "deterministic": true
+    },
+    {
+      "pool": "stage3_ladder.sweep_k832",
+      "hash": "1b4439a020f00ca860e4a265f678327ef9f91e55e243aa1022afe3da7a30a38d",
+      "deterministic": true
+    },
+    {
+      "pool": "stage3_ladder.sweep_k848",
+      "hash": "a4fc450985becb686e4aad83e724bfe638a9926198986f903148a005a4ca6366",
+      "deterministic": true
+    },
+    {
+      "pool": "stage3_ladder.sweep_k864",
+      "hash": "5d264310ad1eca3a785d6e6429704d1ebcb703fb4418f02d9e70b5fd3cc74be7",
+      "deterministic": true
+    },
+    {
+      "pool": "stage3_ladder.sweep_k2816",
+      "hash": "d4533c5191f425f203c4b541dc0f380ef99e987e36a2a8babb428f4214e13200",
+      "deterministic": true
+    },
+    {
+      "pool": "stage3_ladder.sweep_k2832",
+      "hash": "c435d66dbaf464fe3b2995f994643f8dc7a67d079f01cd7644a0176b7ca8109a",
+      "deterministic": true
+    },
+    {
+      "pool": "stage3_ladder.sweep_k2848",
+      "hash": "2eeb9888e78c6fa3d179b8608aea959d1d12643c97cead725c37850578c5e1ae",
+      "deterministic": true
+    },
+    {
+      "pool": "stage3_ladder.sweep_k2864",
+      "hash": "7402f4d67f7f93077b4525ecd6ce2aa1269c65e35d9889410c6018d4d247c3ad",
+      "deterministic": true
+    },
+    {
+      "pool": "stage3_ladder.sweep_k2880",
+      "hash": "1813c578fa650d74a77cb2c0be7a0784d865bce369c15e879843b5b974734e1a",
+      "deterministic": true
+    },
+    {
+      "pool": "stage3_ladder.sweep_k2896",
+      "hash": "fdc0f78f8c9736912a38e2888be5433a319c1b42dd3c568ac382145e8695bc98",
+      "deterministic": true
+    },
+    {
+      "pool": "stage3_ladder.sweep_k2912",
+      "hash": "1957cd29e4e7841c4bebe9e90c09bee4139a8f5e17f66e466a711333a7f375a7",
+      "deterministic": true
+    },
+    {
+      "pool": "stage3_ladder.sweep_k2928",
+      "hash": "dbd5201b89f555f69705ec418cecc8cd2ab3469a8d4727b6b2133a41c9e6c14b",
+      "deterministic": true
+    },
+    {
+      "pool": "stage3_ladder.sweep_k2944",
+      "hash": "132e4a34e2bdb9917c1ae5ba661bfe7c1b94d3bafbf42755afe0c12999ea5ee8",
+      "deterministic": true
+    },
+    {
+      "pool": "stage3_ladder.sweep_k2960",
+      "hash": "c0a966cc7eb8efc1f0f82b3140a76bee76871f51e21c57969dd4c89ca974ada2",
+      "deterministic": true
+    },
+    {
+      "pool": "stage3_ladder.sweep_k2976",
+      "hash": "fe4e3b7e34634555edebcfea3534990b679f6ae86ae0cc215bb04cabe8c05d67",
+      "deterministic": true
+    },
+    {
+      "pool": "stage3_ladder.sweep_k2992",
+      "hash": "a6a31dab578e0391f543c722786adbd203836e6ff98507fd4fcfc389ad10500a",
+      "deterministic": true
+    },
+    {
+      "pool": "stage3_ladder.sweep_k3008",
+      "hash": "9976a6afc03fb723b76fe5cf975dd295867dc4828d54f3e49566c5cef647d018",
+      "deterministic": true
+    },
+    {
+      "pool": "stage3_ladder.sweep_k3024",
+      "hash": "dd896301a71472511ee28933d6712fefaeb4840b2241b666fb4fa2425e5e1990",
+      "deterministic": true
+    },
+    {
+      "pool": "stage3_ladder.sweep_k3040",
+      "hash": "6f6b0188a7013b57385a6d045c72b78d1d782f09f04c8e33c873f279a7e7f40b",
+      "deterministic": true
+    },
+    {
+      "pool": "stage3_ladder.sweep_k3056",
+      "hash": "486d4d9f076bbc2452c2346d6b642ff4d0ad587a1a7ee8ed651c50bcf61b9525",
+      "deterministic": true
+    },
+    {
+      "pool": "stage3_ladder.sweep_k3072",
+      "hash": "ba9ea45d52cdc482b8b5d708a9d7aa40b479b3e1adee59d52d507207cdfe620f",
+      "deterministic": true
+    },
+    {
+      "pool": "stage3_ladder.sweep_k11648",
+      "hash": "6c425067033ac48005848d440de996780d2ca0700903c0096a48a1cdd5eeb966",
+      "deterministic": true
+    },
+    {
+      "pool": "stage3_ladder.sweep_k11664",
+      "hash": "7e7f7b1f0fecf31cf4678f2b6333e87420ce8079f0bbf9e087a2b3b8ab63e8ef",
+      "deterministic": true
+    },
+    {
+      "pool": "stage3_ladder.sweep_k11680",
+      "hash": "65843ab1f421f037684bd891ad74d79b6d6dbda832145003b1d12dfad6338191",
+      "deterministic": true
+    },
+    {
+      "pool": "stage3_ladder.sweep_k11696",
+      "hash": "79ffff5e6c29d645081c46e7dba8b2a275633aa8047252b051fd59abbe272484",
+      "deterministic": true
+    },
+    {
+      "pool": "stage3_ladder.sweep_k11712",
+      "hash": "c8b14d70c1892380fdb2770efc294c1903df33654eff7cfaf2065bd6881ba45a",
+      "deterministic": true
+    },
+    {
+      "pool": "stage3_ladder.sweep_k11728",
+      "hash": "de667bbf3ea2aadc80c5354c92e4fdeabdf4d78a2fbd8471edd555fae39a9122",
+      "deterministic": true
+    },
+    {
+      "pool": "stage3_ladder.sweep_k11744",
+      "hash": "cd1bf6b073079512500a1619f5ce17fa977f136b01c025cf4fcbd8dfe78bb848",
+      "deterministic": true
+    },
+    {
+      "pool": "stage3_ladder.sweep_k11760",
+      "hash": "ba7253054824c974fddd19379e0ab60f4a812599b53fdfbaa9d1d611aacb8b29",
+      "deterministic": true
+    },
+    {
+      "pool": "stage3_ladder.sweep_k11776",
+      "hash": "1d413200c973584106a3978e465aa5bef6e6cda3f58bd1ef66dcdee1f551d889",
+      "deterministic": true
+    },
+    {
+      "pool": "stage3_ladder.sweep_k11792",
+      "hash": "2cc8fcc43ea85e067f0def3cdf3961614f27868d2f90618d387196cc1796608d",
+      "deterministic": true
+    },
+    {
+      "pool": "stage3_ladder.sweep_k11808",
+      "hash": "406340f4bbac2d5204ff7f719c228dcbbe7c5feef46d5ecf80984dbf2805381c",
+      "deterministic": true
+    },
+    {
+      "pool": "stage3_ladder.sweep_k11824",
+      "hash": "c3d90799b2b18c0c11d49b86a6da7cdf21a0fb3b08bf5e837e13bb73ccf2de6e",
+      "deterministic": true
+    },
+    {
+      "pool": "stage3_ladder.sweep_k11840",
+      "hash": "7619144451d8346c67b2d77afc1d06e656d28bab0b9e88740604b1f3240a57b5",
+      "deterministic": true
+    },
+    {
+      "pool": "stage3_ladder.sweep_k11856",
+      "hash": "16c909fdeda0eb25da70c441ff9f2f38699d26a9c5e38fa92a7ace0886ca0243",
+      "deterministic": true
+    },
+    {
+      "pool": "stage3_ladder.sweep_k11872",
+      "hash": "fb76d7719d5788c3eb89f0837a09ece51d6227999facefac3ba749a44eced975",
+      "deterministic": true
+    },
+    {
+      "pool": "stage3_ladder.sweep_k11888",
+      "hash": "11d2e21d31eea19d921d08d8c579c6dcb09cbfbf2c4953e8990ea663fbc2fc26",
+      "deterministic": true
+    },
+    {
+      "pool": "stage3_ladder.sweep_k11904",
+      "hash": "983f5b39ffa19af630836ad6b6aae598f14f29b689f352fdc4b2a0c9943eb980",
+      "deterministic": true
+    }
+  ],
+  "seed_sensitivity": [
+    {
+      "pool": "stage1_mqar.train_seed+1",
+      "hash": "29ada5dd990bfe30e2a0d3616811671f4d89a3ccc1b46cbbaba95ab4cbee29e0",
+      "registered_hash": "7342e5b20e986e3d4e66340316ff9811c57c9c56cfe7d486c470ed471d49661b",
+      "differs_from_registered": true
+    },
+    {
+      "pool": "stage2_append_necessity.train_seed+1",
+      "hash": "6e7d18a644e5b596cb229f30a12601adbf1346a9dbefbbc4df117604567e174f",
+      "registered_hash": "f6ce72d1805ed8e8a787c8ff0defec3a35405eea66b19dff7e3cda4a7fdbc026",
+      "differs_from_registered": true
+    }
+  ],
+  "seed_sensitivity_rule": "computed by actual hash comparison against the registered pool (never hardcoded)",
+  "sweep_mismatch_rule_receipts": [
+    {
+      "k": 608,
+      "n_count_mismatch": 43,
+      "j_never_equals_k": true,
+      "j_in_k_plus_minus_1": true,
+      "j_alternates": true,
+      "k1_uses_k_plus_1": true,
+      "alternation_required": true,
+      "rule": "degenerate band (k_lo == k_hi): j = k+1 / max(k-1, 1) alternating across count-mismatch examples; j != k always; k = 1 uses j = k+1",
+      "pass": true
+    },
+    {
+      "k": 624,
+      "n_count_mismatch": 43,
+      "j_never_equals_k": true,
+      "j_in_k_plus_minus_1": true,
+      "j_alternates": true,
+      "k1_uses_k_plus_1": true,
+      "alternation_required": true,
+      "rule": "degenerate band (k_lo == k_hi): j = k+1 / max(k-1, 1) alternating across count-mismatch examples; j != k always; k = 1 uses j = k+1",
+      "pass": true
+    },
+    {
+      "k": 640,
+      "n_count_mismatch": 43,
+      "j_never_equals_k": true,
+      "j_in_k_plus_minus_1": true,
+      "j_alternates": true,
+      "k1_uses_k_plus_1": true,
+      "alternation_required": true,
+      "rule": "degenerate band (k_lo == k_hi): j = k+1 / max(k-1, 1) alternating across count-mismatch examples; j != k always; k = 1 uses j = k+1",
+      "pass": true
+    },
+    {
+      "k": 656,
+      "n_count_mismatch": 43,
+      "j_never_equals_k": true,
+      "j_in_k_plus_minus_1": true,
+      "j_alternates": true,
+      "k1_uses_k_plus_1": true,
+      "alternation_required": true,
+      "rule": "degenerate band (k_lo == k_hi): j = k+1 / max(k-1, 1) alternating across count-mismatch examples; j != k always; k = 1 uses j = k+1",
+      "pass": true
+    },
+    {
+      "k": 672,
+      "n_count_mismatch": 43,
+      "j_never_equals_k": true,
+      "j_in_k_plus_minus_1": true,
+      "j_alternates": true,
+      "k1_uses_k_plus_1": true,
+      "alternation_required": true,
+      "rule": "degenerate band (k_lo == k_hi): j = k+1 / max(k-1, 1) alternating across count-mismatch examples; j != k always; k = 1 uses j = k+1",
+      "pass": true
+    },
+    {
+      "k": 688,
+      "n_count_mismatch": 43,
+      "j_never_equals_k": true,
+      "j_in_k_plus_minus_1": true,
+      "j_alternates": true,
+      "k1_uses_k_plus_1": true,
+      "alternation_required": true,
+      "rule": "degenerate band (k_lo == k_hi): j = k+1 / max(k-1, 1) alternating across count-mismatch examples; j != k always; k = 1 uses j = k+1",
+      "pass": true
+    },
+    {
+      "k": 704,
+      "n_count_mismatch": 43,
+      "j_never_equals_k": true,
+      "j_in_k_plus_minus_1": true,
+      "j_alternates": true,
+      "k1_uses_k_plus_1": true,
+      "alternation_required": true,
+      "rule": "degenerate band (k_lo == k_hi): j = k+1 / max(k-1, 1) alternating across count-mismatch examples; j != k always; k = 1 uses j = k+1",
+      "pass": true
+    },
+    {
+      "k": 720,
+      "n_count_mismatch": 43,
+      "j_never_equals_k": true,
+      "j_in_k_plus_minus_1": true,
+      "j_alternates": true,
+      "k1_uses_k_plus_1": true,
+      "alternation_required": true,
+      "rule": "degenerate band (k_lo == k_hi): j = k+1 / max(k-1, 1) alternating across count-mismatch examples; j != k always; k = 1 uses j = k+1",
+      "pass": true
+    },
+    {
+      "k": 736,
+      "n_count_mismatch": 43,
+      "j_never_equals_k": true,
+      "j_in_k_plus_minus_1": true,
+      "j_alternates": true,
+      "k1_uses_k_plus_1": true,
+      "alternation_required": true,
+      "rule": "degenerate band (k_lo == k_hi): j = k+1 / max(k-1, 1) alternating across count-mismatch examples; j != k always; k = 1 uses j = k+1",
+      "pass": true
+    },
+    {
+      "k": 752,
+      "n_count_mismatch": 43,
+      "j_never_equals_k": true,
+      "j_in_k_plus_minus_1": true,
+      "j_alternates": true,
+      "k1_uses_k_plus_1": true,
+      "alternation_required": true,
+      "rule": "degenerate band (k_lo == k_hi): j = k+1 / max(k-1, 1) alternating across count-mismatch examples; j != k always; k = 1 uses j = k+1",
+      "pass": true
+    },
+    {
+      "k": 768,
+      "n_count_mismatch": 43,
+      "j_never_equals_k": true,
+      "j_in_k_plus_minus_1": true,
+      "j_alternates": true,
+      "k1_uses_k_plus_1": true,
+      "alternation_required": true,
+      "rule": "degenerate band (k_lo == k_hi): j = k+1 / max(k-1, 1) alternating across count-mismatch examples; j != k always; k = 1 uses j = k+1",
+      "pass": true
+    },
+    {
+      "k": 784,
+      "n_count_mismatch": 43,
+      "j_never_equals_k": true,
+      "j_in_k_plus_minus_1": true,
+      "j_alternates": true,
+      "k1_uses_k_plus_1": true,
+      "alternation_required": true,
+      "rule": "degenerate band (k_lo == k_hi): j = k+1 / max(k-1, 1) alternating across count-mismatch examples; j != k always; k = 1 uses j = k+1",
+      "pass": true
+    },
+    {
+      "k": 800,
+      "n_count_mismatch": 43,
+      "j_never_equals_k": true,
+      "j_in_k_plus_minus_1": true,
+      "j_alternates": true,
+      "k1_uses_k_plus_1": true,
+      "alternation_required": true,
+      "rule": "degenerate band (k_lo == k_hi): j = k+1 / max(k-1, 1) alternating across count-mismatch examples; j != k always; k = 1 uses j = k+1",
+      "pass": true
+    },
+    {
+      "k": 816,
+      "n_count_mismatch": 43,
+      "j_never_equals_k": true,
+      "j_in_k_plus_minus_1": true,
+      "j_alternates": true,
+      "k1_uses_k_plus_1": true,
+      "alternation_required": true,
+      "rule": "degenerate band (k_lo == k_hi): j = k+1 / max(k-1, 1) alternating across count-mismatch examples; j != k always; k = 1 uses j = k+1",
+      "pass": true
+    },
+    {
+      "k": 832,
+      "n_count_mismatch": 43,
+      "j_never_equals_k": true,
+      "j_in_k_plus_minus_1": true,
+      "j_alternates": true,
+      "k1_uses_k_plus_1": true,
+      "alternation_required": true,
+      "rule": "degenerate band (k_lo == k_hi): j = k+1 / max(k-1, 1) alternating across count-mismatch examples; j != k always; k = 1 uses j = k+1",
+      "pass": true
+    },
+    {
+      "k": 848,
+      "n_count_mismatch": 43,
+      "j_never_equals_k": true,
+      "j_in_k_plus_minus_1": true,
+      "j_alternates": true,
+      "k1_uses_k_plus_1": true,
+      "alternation_required": true,
+      "rule": "degenerate band (k_lo == k_hi): j = k+1 / max(k-1, 1) alternating across count-mismatch examples; j != k always; k = 1 uses j = k+1",
+      "pass": true
+    },
+    {
+      "k": 864,
+      "n_count_mismatch": 43,
+      "j_never_equals_k": true,
+      "j_in_k_plus_minus_1": true,
+      "j_alternates": true,
+      "k1_uses_k_plus_1": true,
+      "alternation_required": true,
+      "rule": "degenerate band (k_lo == k_hi): j = k+1 / max(k-1, 1) alternating across count-mismatch examples; j != k always; k = 1 uses j = k+1",
+      "pass": true
+    },
+    {
+      "k": 2816,
+      "n_count_mismatch": 43,
+      "j_never_equals_k": true,
+      "j_in_k_plus_minus_1": true,
+      "j_alternates": true,
+      "k1_uses_k_plus_1": true,
+      "alternation_required": true,
+      "rule": "degenerate band (k_lo == k_hi): j = k+1 / max(k-1, 1) alternating across count-mismatch examples; j != k always; k = 1 uses j = k+1",
+      "pass": true
+    },
+    {
+      "k": 2832,
+      "n_count_mismatch": 43,
+      "j_never_equals_k": true,
+      "j_in_k_plus_minus_1": true,
+      "j_alternates": true,
+      "k1_uses_k_plus_1": true,
+      "alternation_required": true,
+      "rule": "degenerate band (k_lo == k_hi): j = k+1 / max(k-1, 1) alternating across count-mismatch examples; j != k always; k = 1 uses j = k+1",
+      "pass": true
+    },
+    {
+      "k": 2848,
+      "n_count_mismatch": 43,
+      "j_never_equals_k": true,
+      "j_in_k_plus_minus_1": true,
+      "j_alternates": true,
+      "k1_uses_k_plus_1": true,
+      "alternation_required": true,
+      "rule": "degenerate band (k_lo == k_hi): j = k+1 / max(k-1, 1) alternating across count-mismatch examples; j != k always; k = 1 uses j = k+1",
+      "pass": true
+    },
+    {
+      "k": 2864,
+      "n_count_mismatch": 43,
+      "j_never_equals_k": true,
+      "j_in_k_plus_minus_1": true,
+      "j_alternates": true,
+      "k1_uses_k_plus_1": true,
+      "alternation_required": true,
+      "rule": "degenerate band (k_lo == k_hi): j = k+1 / max(k-1, 1) alternating across count-mismatch examples; j != k always; k = 1 uses j = k+1",
+      "pass": true
+    },
+    {
+      "k": 2880,
+      "n_count_mismatch": 43,
+      "j_never_equals_k": true,
+      "j_in_k_plus_minus_1": true,
+      "j_alternates": true,
+      "k1_uses_k_plus_1": true,
+      "alternation_required": true,
+      "rule": "degenerate band (k_lo == k_hi): j = k+1 / max(k-1, 1) alternating across count-mismatch examples; j != k always; k = 1 uses j = k+1",
+      "pass": true
+    },
+    {
+      "k": 2896,
+      "n_count_mismatch": 43,
+      "j_never_equals_k": true,
+      "j_in_k_plus_minus_1": true,
+      "j_alternates": true,
+      "k1_uses_k_plus_1": true,
+      "alternation_required": true,
+      "rule": "degenerate band (k_lo == k_hi): j = k+1 / max(k-1, 1) alternating across count-mismatch examples; j != k always; k = 1 uses j = k+1",
+      "pass": true
+    },
+    {
+      "k": 2912,
+      "n_count_mismatch": 43,
+      "j_never_equals_k": true,
+      "j_in_k_plus_minus_1": true,
+      "j_alternates": true,
+      "k1_uses_k_plus_1": true,
+      "alternation_required": true,
+      "rule": "degenerate band (k_lo == k_hi): j = k+1 / max(k-1, 1) alternating across count-mismatch examples; j != k always; k = 1 uses j = k+1",
+      "pass": true
+    },
+    {
+      "k": 2928,
+      "n_count_mismatch": 43,
+      "j_never_equals_k": true,
+      "j_in_k_plus_minus_1": true,
+      "j_alternates": true,
+      "k1_uses_k_plus_1": true,
+      "alternation_required": true,
+      "rule": "degenerate band (k_lo == k_hi): j = k+1 / max(k-1, 1) alternating across count-mismatch examples; j != k always; k = 1 uses j = k+1",
+      "pass": true
+    },
+    {
+      "k": 2944,
+      "n_count_mismatch": 43,
+      "j_never_equals_k": true,
+      "j_in_k_plus_minus_1": true,
+      "j_alternates": true,
+      "k1_uses_k_plus_1": true,
+      "alternation_required": true,
+      "rule": "degenerate band (k_lo == k_hi): j = k+1 / max(k-1, 1) alternating across count-mismatch examples; j != k always; k = 1 uses j = k+1",
+      "pass": true
+    },
+    {
+      "k": 2960,
+      "n_count_mismatch": 43,
+      "j_never_equals_k": true,
+      "j_in_k_plus_minus_1": true,
+      "j_alternates": true,
+      "k1_uses_k_plus_1": true,
+      "alternation_required": true,
+      "rule": "degenerate band (k_lo == k_hi): j = k+1 / max(k-1, 1) alternating across count-mismatch examples; j != k always; k = 1 uses j = k+1",
+      "pass": true
+    },
+    {
+      "k": 2976,
+      "n_count_mismatch": 43,
+      "j_never_equals_k": true,
+      "j_in_k_plus_minus_1": true,
+      "j_alternates": true,
+      "k1_uses_k_plus_1": true,
+      "alternation_required": true,
+      "rule": "degenerate band (k_lo == k_hi): j = k+1 / max(k-1, 1) alternating across count-mismatch examples; j != k always; k = 1 uses j = k+1",
+      "pass": true
+    },
+    {
+      "k": 2992,
+      "n_count_mismatch": 43,
+      "j_never_equals_k": true,
+      "j_in_k_plus_minus_1": true,
+      "j_alternates": true,
+      "k1_uses_k_plus_1": true,
+      "alternation_required": true,
+      "rule": "degenerate band (k_lo == k_hi): j = k+1 / max(k-1, 1) alternating across count-mismatch examples; j != k always; k = 1 uses j = k+1",
+      "pass": true
+    },
+    {
+      "k": 3008,
+      "n_count_mismatch": 43,
+      "j_never_equals_k": true,
+      "j_in_k_plus_minus_1": true,
+      "j_alternates": true,
+      "k1_uses_k_plus_1": true,
+      "alternation_required": true,
+      "rule": "degenerate band (k_lo == k_hi): j = k+1 / max(k-1, 1) alternating across count-mismatch examples; j != k always; k = 1 uses j = k+1",
+      "pass": true
+    },
+    {
+      "k": 3024,
+      "n_count_mismatch": 43,
+      "j_never_equals_k": true,
+      "j_in_k_plus_minus_1": true,
+      "j_alternates": true,
+      "k1_uses_k_plus_1": true,
+      "alternation_required": true,
+      "rule": "degenerate band (k_lo == k_hi): j = k+1 / max(k-1, 1) alternating across count-mismatch examples; j != k always; k = 1 uses j = k+1",
+      "pass": true
+    },
+    {
+      "k": 3040,
+      "n_count_mismatch": 43,
+      "j_never_equals_k": true,
+      "j_in_k_plus_minus_1": true,
+      "j_alternates": true,
+      "k1_uses_k_plus_1": true,
+      "alternation_required": true,
+      "rule": "degenerate band (k_lo == k_hi): j = k+1 / max(k-1, 1) alternating across count-mismatch examples; j != k always; k = 1 uses j = k+1",
+      "pass": true
+    },
+    {
+      "k": 3056,
+      "n_count_mismatch": 43,
+      "j_never_equals_k": true,
+      "j_in_k_plus_minus_1": true,
+      "j_alternates": true,
+      "k1_uses_k_plus_1": true,
+      "alternation_required": true,
+      "rule": "degenerate band (k_lo == k_hi): j = k+1 / max(k-1, 1) alternating across count-mismatch examples; j != k always; k = 1 uses j = k+1",
+      "pass": true
+    },
+    {
+      "k": 3072,
+      "n_count_mismatch": 43,
+      "j_never_equals_k": true,
+      "j_in_k_plus_minus_1": true,
+      "j_alternates": true,
+      "k1_uses_k_plus_1": true,
+      "alternation_required": true,
+      "rule": "degenerate band (k_lo == k_hi): j = k+1 / max(k-1, 1) alternating across count-mismatch examples; j != k always; k = 1 uses j = k+1",
+      "pass": true
+    },
+    {
+      "k": 11648,
+      "n_count_mismatch": 43,
+      "j_never_equals_k": true,
+      "j_in_k_plus_minus_1": true,
+      "j_alternates": true,
+      "k1_uses_k_plus_1": true,
+      "alternation_required": true,
+      "rule": "degenerate band (k_lo == k_hi): j = k+1 / max(k-1, 1) alternating across count-mismatch examples; j != k always; k = 1 uses j = k+1",
+      "pass": true
+    },
+    {
+      "k": 11664,
+      "n_count_mismatch": 43,
+      "j_never_equals_k": true,
+      "j_in_k_plus_minus_1": true,
+      "j_alternates": true,
+      "k1_uses_k_plus_1": true,
+      "alternation_required": true,
+      "rule": "degenerate band (k_lo == k_hi): j = k+1 / max(k-1, 1) alternating across count-mismatch examples; j != k always; k = 1 uses j = k+1",
+      "pass": true
+    },
+    {
+      "k": 11680,
+      "n_count_mismatch": 43,
+      "j_never_equals_k": true,
+      "j_in_k_plus_minus_1": true,
+      "j_alternates": true,
+      "k1_uses_k_plus_1": true,
+      "alternation_required": true,
+      "rule": "degenerate band (k_lo == k_hi): j = k+1 / max(k-1, 1) alternating across count-mismatch examples; j != k always; k = 1 uses j = k+1",
+      "pass": true
+    },
+    {
+      "k": 11696,
+      "n_count_mismatch": 43,
+      "j_never_equals_k": true,
+      "j_in_k_plus_minus_1": true,
+      "j_alternates": true,
+      "k1_uses_k_plus_1": true,
+      "alternation_required": true,
+      "rule": "degenerate band (k_lo == k_hi): j = k+1 / max(k-1, 1) alternating across count-mismatch examples; j != k always; k = 1 uses j = k+1",
+      "pass": true
+    },
+    {
+      "k": 11712,
+      "n_count_mismatch": 43,
+      "j_never_equals_k": true,
+      "j_in_k_plus_minus_1": true,
+      "j_alternates": true,
+      "k1_uses_k_plus_1": true,
+      "alternation_required": true,
+      "rule": "degenerate band (k_lo == k_hi): j = k+1 / max(k-1, 1) alternating across count-mismatch examples; j != k always; k = 1 uses j = k+1",
+      "pass": true
+    },
+    {
+      "k": 11728,
+      "n_count_mismatch": 43,
+      "j_never_equals_k": true,
+      "j_in_k_plus_minus_1": true,
+      "j_alternates": true,
+      "k1_uses_k_plus_1": true,
+      "alternation_required": true,
+      "rule": "degenerate band (k_lo == k_hi): j = k+1 / max(k-1, 1) alternating across count-mismatch examples; j != k always; k = 1 uses j = k+1",
+      "pass": true
+    },
+    {
+      "k": 11744,
+      "n_count_mismatch": 43,
+      "j_never_equals_k": true,
+      "j_in_k_plus_minus_1": true,
+      "j_alternates": true,
+      "k1_uses_k_plus_1": true,
+      "alternation_required": true,
+      "rule": "degenerate band (k_lo == k_hi): j = k+1 / max(k-1, 1) alternating across count-mismatch examples; j != k always; k = 1 uses j = k+1",
+      "pass": true
+    },
+    {
+      "k": 11760,
+      "n_count_mismatch": 43,
+      "j_never_equals_k": true,
+      "j_in_k_plus_minus_1": true,
+      "j_alternates": true,
+      "k1_uses_k_plus_1": true,
+      "alternation_required": true,
+      "rule": "degenerate band (k_lo == k_hi): j = k+1 / max(k-1, 1) alternating across count-mismatch examples; j != k always; k = 1 uses j = k+1",
+      "pass": true
+    },
+    {
+      "k": 11776,
+      "n_count_mismatch": 43,
+      "j_never_equals_k": true,
+      "j_in_k_plus_minus_1": true,
+      "j_alternates": true,
+      "k1_uses_k_plus_1": true,
+      "alternation_required": true,
+      "rule": "degenerate band (k_lo == k_hi): j = k+1 / max(k-1, 1) alternating across count-mismatch examples; j != k always; k = 1 uses j = k+1",
+      "pass": true
+    },
+    {
+      "k": 11792,
+      "n_count_mismatch": 43,
+      "j_never_equals_k": true,
+      "j_in_k_plus_minus_1": true,
+      "j_alternates": true,
+      "k1_uses_k_plus_1": true,
+      "alternation_required": true,
+      "rule": "degenerate band (k_lo == k_hi): j = k+1 / max(k-1, 1) alternating across count-mismatch examples; j != k always; k = 1 uses j = k+1",
+      "pass": true
+    },
+    {
+      "k": 11808,
+      "n_count_mismatch": 43,
+      "j_never_equals_k": true,
+      "j_in_k_plus_minus_1": true,
+      "j_alternates": true,
+      "k1_uses_k_plus_1": true,
+      "alternation_required": true,
+      "rule": "degenerate band (k_lo == k_hi): j = k+1 / max(k-1, 1) alternating across count-mismatch examples; j != k always; k = 1 uses j = k+1",
+      "pass": true
+    },
+    {
+      "k": 11824,
+      "n_count_mismatch": 43,
+      "j_never_equals_k": true,
+      "j_in_k_plus_minus_1": true,
+      "j_alternates": true,
+      "k1_uses_k_plus_1": true,
+      "alternation_required": true,
+      "rule": "degenerate band (k_lo == k_hi): j = k+1 / max(k-1, 1) alternating across count-mismatch examples; j != k always; k = 1 uses j = k+1",
+      "pass": true
+    },
+    {
+      "k": 11840,
+      "n_count_mismatch": 43,
+      "j_never_equals_k": true,
+      "j_in_k_plus_minus_1": true,
+      "j_alternates": true,
+      "k1_uses_k_plus_1": true,
+      "alternation_required": true,
+      "rule": "degenerate band (k_lo == k_hi): j = k+1 / max(k-1, 1) alternating across count-mismatch examples; j != k always; k = 1 uses j = k+1",
+      "pass": true
+    },
+    {
+      "k": 11856,
+      "n_count_mismatch": 43,
+      "j_never_equals_k": true,
+      "j_in_k_plus_minus_1": true,
+      "j_alternates": true,
+      "k1_uses_k_plus_1": true,
+      "alternation_required": true,
+      "rule": "degenerate band (k_lo == k_hi): j = k+1 / max(k-1, 1) alternating across count-mismatch examples; j != k always; k = 1 uses j = k+1",
+      "pass": true
+    },
+    {
+      "k": 11872,
+      "n_count_mismatch": 43,
+      "j_never_equals_k": true,
+      "j_in_k_plus_minus_1": true,
+      "j_alternates": true,
+      "k1_uses_k_plus_1": true,
+      "alternation_required": true,
+      "rule": "degenerate band (k_lo == k_hi): j = k+1 / max(k-1, 1) alternating across count-mismatch examples; j != k always; k = 1 uses j = k+1",
+      "pass": true
+    },
+    {
+      "k": 11888,
+      "n_count_mismatch": 43,
+      "j_never_equals_k": true,
+      "j_in_k_plus_minus_1": true,
+      "j_alternates": true,
+      "k1_uses_k_plus_1": true,
+      "alternation_required": true,
+      "rule": "degenerate band (k_lo == k_hi): j = k+1 / max(k-1, 1) alternating across count-mismatch examples; j != k always; k = 1 uses j = k+1",
+      "pass": true
+    },
+    {
+      "k": 11904,
+      "n_count_mismatch": 43,
+      "j_never_equals_k": true,
+      "j_in_k_plus_minus_1": true,
+      "j_alternates": true,
+      "k1_uses_k_plus_1": true,
+      "alternation_required": true,
+      "rule": "degenerate band (k_lo == k_hi): j = k+1 / max(k-1, 1) alternating across count-mismatch examples; j != k always; k = 1 uses j = k+1",
+      "pass": true
+    }
+  ],
+  "sweep_mismatch_rule": "degenerate band (k_lo == k_hi): j = k+1 / max(k-1, 1) alternating across count-mismatch examples; j != k always; k = 1 uses j = k+1",
+  "class_count_receipts": {
+    "stage1_validation_class_counts": {
+      "1": 2455,
+      "2": 2586,
+      "3": 2495,
+      "4": 2458,
+      "5": 2461,
+      "6": 2527,
+      "7": 2452,
+      "8": 2518,
+      "9": 2478,
+      "10": 2503,
+      "11": 2432,
+      "12": 2521,
+      "13": 2458,
+      "14": 2423,
+      "15": 2490,
+      "16": 2460,
+      "17": 2497,
+      "18": 2538,
+      "19": 2550,
+      "20": 2471,
+      "21": 2567,
+      "22": 2521,
+      "23": 2578,
+      "24": 2526,
+      "25": 2479,
+      "26": 2435,
+      "27": 2553,
+      "28": 2460,
+      "29": 2537,
+      "30": 2463,
+      "31": 2403,
+      "32": 2412,
+      "33": 2526,
+      "34": 2559,
+      "35": 2496,
+      "36": 2431,
+      "37": 2386,
+      "38": 2564,
+      "39": 2526,
+      "40": 2528,
+      "41": 2493,
+      "42": 2506,
+      "43": 2522,
+      "44": 2501,
+      "45": 2482,
+      "46": 2477,
+      "47": 2554,
+      "48": 2484,
+      "49": 2564,
+      "50": 2468,
+      "51": 2581,
+      "52": 2529,
+      "53": 2509,
+      "54": 2517,
+      "55": 2545,
+      "56": 2554,
+      "57": 2543,
+      "58": 2447,
+      "59": 2512,
+      "60": 2489,
+      "61": 2492,
+      "62": 2480,
+      "63": 2564,
+      "64": 2464
+    },
+    "stage2_validation_class_counts": {
+      "2": 5045,
+      "3": 5014,
+      "4": 5007,
+      "5": 4966,
+      "6": 5098,
+      "7": 4983,
+      "8": 5008,
+      "9": 4921,
+      "10": 4926,
+      "11": 5037,
+      "12": 4958,
+      "13": 5130,
+      "14": 4956,
+      "15": 4991,
+      "16": 4917,
+      "17": 5043
+    },
+    "stage3_train_meta": {
+      "band": [
+        1,
+        128
+      ],
+      "n_examples": 70000,
+      "seed": 28501,
+      "n_accept": 35000,
+      "n_reject": 35000,
+      "reject_shape_counts": {
+        "leading_b": 11667,
+        "count_mismatch": 11667,
+        "trailing_a": 11666
+      },
+      "majority_baseline": 0.5,
+      "depths": "[1..128, 70000 words]",
+      "count_mismatch_rule": "j resampled uniformly in [k_lo, k_hi] until j != k (always j != k)"
+    },
+    "stage3_bins_meta": {
+      "bin_id": {
+        "band": [
+          1,
+          128
+        ],
+        "n_examples": 512,
+        "seed": 28511,
+        "n_accept": 256,
+        "n_reject": 256,
+        "reject_shape_counts": {
+          "leading_b": 86,
+          "count_mismatch": 85,
+          "trailing_a": 85
+        },
+        "majority_baseline": 0.5,
+        "depths": "[1..128, 512 words]",
+        "count_mismatch_rule": "j resampled uniformly in [k_lo, k_hi] until j != k (always j != k)"
+      },
+      "bin_2x": {
+        "band": [
+          129,
+          256
+        ],
+        "n_examples": 512,
+        "seed": 28512,
+        "n_accept": 256,
+        "n_reject": 256,
+        "reject_shape_counts": {
+          "leading_b": 86,
+          "count_mismatch": 85,
+          "trailing_a": 85
+        },
+        "majority_baseline": 0.5,
+        "depths": "[129..256, 512 words]",
+        "count_mismatch_rule": "j resampled uniformly in [k_lo, k_hi] until j != k (always j != k)"
+      },
+      "bin_4x": {
+        "band": [
+          257,
+          512
+        ],
+        "n_examples": 512,
+        "seed": 28513,
+        "n_accept": 256,
+        "n_reject": 256,
+        "reject_shape_counts": {
+          "leading_b": 86,
+          "count_mismatch": 85,
+          "trailing_a": 85
+        },
+        "majority_baseline": 0.5,
+        "depths": "[258..512, 512 words]",
+        "count_mismatch_rule": "j resampled uniformly in [k_lo, k_hi] until j != k (always j != k)"
+      },
+      "bin_9x": {
+        "band": [
+          1025,
+          1152
+        ],
+        "n_examples": 512,
+        "seed": 28514,
+        "n_accept": 256,
+        "n_reject": 256,
+        "reject_shape_counts": {
+          "leading_b": 86,
+          "count_mismatch": 85,
+          "trailing_a": 85
+        },
+        "majority_baseline": 0.5,
+        "depths": "[1025..1152, 512 words]",
+        "count_mismatch_rule": "j resampled uniformly in [k_lo, k_hi] until j != k (always j != k)"
+      }
+    },
+    "stage3_bin_binary_report_zero_knowledge": {
+      "n": 512,
+      "balanced_accuracy": 1.0,
+      "raw_accuracy": 1.0,
+      "per_class_recall": {
+        "accept": 1.0,
+        "reject": 1.0
+      },
+      "confusion": {
+        "accept": {
+          "pred_accept": 256,
+          "pred_reject": 0
+        },
+        "reject": {
+          "pred_accept": 0,
+          "pred_reject": 256
+        }
+      },
+      "class_counts": {
+        "accept": 256,
+        "reject": 256
+      },
+      "majority_baseline": 0.5
+    }
+  },
+  "sweep_seed_rule": "seed(k) = 28600 + k",
+  "zero_updates": true
+}

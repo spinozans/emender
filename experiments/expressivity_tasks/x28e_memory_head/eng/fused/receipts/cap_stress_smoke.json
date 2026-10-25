@@ -1,0 +1,105 @@
+{
+  "smoke": "cap_stress (T5: unbounded-arm machine cap, 2^17 slots per (batch element, head)); per M2-review correction F5 run for BOTH cap arms at their actual arm wiring",
+  "seed": 20260128,
+  "zero_updates": true,
+  "physical_card": 1,
+  "cap_slots": 131072,
+  "dims": {
+    "T": 64,
+    "CKPT_INTERVAL": 16,
+    "checkpoint_dtype": "bfloat16"
+  },
+  "arms": {
+    "tape_unbounded": {
+      "arm": "tape_unbounded",
+      "pop_enabled": true,
+      "finite": {
+        "loss": true,
+        "eval_logits": true,
+        "grad::layer.head.head.append_err_coef": true,
+        "grad::layer.head.head.W_q.weight": true,
+        "grad::layer.head.head.W_q.bias": true,
+        "grad::layer.head.head.W_k.weight": true,
+        "grad::layer.head.head.W_k.bias": true,
+        "grad::layer.head.head.W_v.weight": true,
+        "grad::layer.head.head.W_v.bias": true,
+        "grad::layer.head.head.W_write.weight": true,
+        "grad::layer.head.head.W_write.bias": true,
+        "grad::layer.head.head.W_pop.weight": true,
+        "grad::layer.head.head.W_pop.bias": true,
+        "grad::layer.head.head.W_append.weight": true,
+        "grad::layer.head.head.W_append.bias": true,
+        "grad::layer.W_o.weight": true,
+        "grad::layer.W_o.bias": true,
+        "grad::head_binary.weight": true,
+        "grad::head_binary.bias": true,
+        "grad::embed.weight": true
+      },
+      "all_finite": true,
+      "trace_case_counts": {
+        "NO-WRITE": 683,
+        "R-EMPTY": 20,
+        "R-NOMATCH": 12,
+        "R-ZERO-RESIDUAL": 139,
+        "R-CONFLICT": 170
+      },
+      "max_alloc_target": 24,
+      "alloc_below_cap": true,
+      "pop_fired_count": 132,
+      "peak_alloc_gib": 34.31285381317139,
+      "peak_reserved_gib": 35.12890625,
+      "wall_seconds": {
+        "forward": 1.205,
+        "backward": 3.878
+      },
+      "final_live_slots": 154,
+      "pass": true
+    },
+    "tape_appendonly": {
+      "arm": "tape_appendonly",
+      "pop_enabled": false,
+      "finite": {
+        "loss": true,
+        "eval_logits": true,
+        "grad::layer.head.head.append_err_coef": true,
+        "grad::layer.head.head.W_q.weight": true,
+        "grad::layer.head.head.W_q.bias": true,
+        "grad::layer.head.head.W_k.weight": true,
+        "grad::layer.head.head.W_k.bias": true,
+        "grad::layer.head.head.W_v.weight": true,
+        "grad::layer.head.head.W_v.bias": true,
+        "grad::layer.head.head.W_write.weight": true,
+        "grad::layer.head.head.W_write.bias": true,
+        "grad::layer.head.head.W_pop.weight": true,
+        "grad::layer.head.head.W_pop.bias": true,
+        "grad::layer.head.head.W_append.weight": true,
+        "grad::layer.head.head.W_append.bias": true,
+        "grad::layer.W_o.weight": true,
+        "grad::layer.W_o.bias": true,
+        "grad::head_binary.weight": true,
+        "grad::head_binary.bias": true,
+        "grad::embed.weight": true
+      },
+      "all_finite": true,
+      "trace_case_counts": {
+        "NO-WRITE": 585,
+        "R-EMPTY": 16,
+        "R-NOMATCH": 12,
+        "R-ZERO-RESIDUAL": 303,
+        "R-CONFLICT": 108
+      },
+      "max_alloc_target": 32,
+      "alloc_below_cap": true,
+      "pop_fired_count": 0,
+      "peak_alloc_gib": 35.84605693817139,
+      "peak_reserved_gib": 36.12890625,
+      "wall_seconds": {
+        "forward": 0.642,
+        "backward": 1.19
+      },
+      "final_live_slots": 331,
+      "pass": true
+    }
+  },
+  "pass": true
+}

@@ -1,0 +1,75 @@
+{
+  "registration_name": "gdn2_native",
+  "architecture": "gdn2_native_control",
+  "arm_role": "native control (X27 small-GDN2, matched backbone band)",
+  "seed": 0,
+  "card_preference": 5,
+  "cards_allowed": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+  ],
+  "card_exclusion": "physical card 7 EXCLUDED (live X25 big-E97-softplus run); never used",
+  "queue_rule": "registered card if free at launch, else next-free ascending physical index; actual card receipted per-arm launch receipt; atomic idle/unleased shell leases only, no preemption",
+  "constructor_size": {
+    "dim": 128,
+    "depth": 1,
+    "n_heads": 16,
+    "n_state": 16,
+    "expansion": 8.625
+  },
+  "mlp_ratio": 2.0,
+  "mlp_hidden_dim": 256,
+  "vocab_size": 5,
+  "effective_recurrence": {
+    "heads": 1,
+    "key_head_dim": 128,
+    "value_head_dim": 1104,
+    "allow_neg_eigval": true,
+    "short_conv": true
+  },
+  "parameters": 562834,
+  "config_receipt": "results_stage27_small_architectures/gdn2_graph_seed0/config.json (values copied verbatim; parameter_counts.json receipts 563,218)",
+  "recipe": {
+    "optimizer": "AdamW",
+    "betas": [
+      0.9,
+      0.999
+    ],
+    "eps": 1e-08,
+    "weight_decay": 0.0001,
+    "lr": 0.0001,
+    "lr_schedule": "constant",
+    "batch_size": 64,
+    "grad_clip": 1.0,
+    "stage_budget_updates": [
+      15000,
+      15000,
+      30000
+    ],
+    "total_cap_updates": 60000,
+    "eval_cadence_updates": 500,
+    "seed": 0,
+    "checkpoint_selection": "validation-only; tie-break latest-best",
+    "supervision": "stage1/stage2: masked cross-entropy at supervised positions (mean-per-class-recall metric); stage3: end-of-word BCE on a two-logit margin reading the final READ output (G8)",
+    "right_censoring": "60,000-update cap; a stage may complete early on its receipt gate; unused budget does not carry forward; no retries"
+  },
+  "stages": {
+    "stage1": null,
+    "stage2": null,
+    "stage3": {
+      "data": "generators/stage3_ladder.py",
+      "gate": "none; standard adjudication; stages 1-2 are tape-ignition scaffolding with no native analogue (declared curriculum confound T6)"
+    }
+  },
+  "microbatch": {
+    "token_budget": 90904,
+    "max_sequences": 64,
+    "binding": "M2-review correction F5: registered effective-batch accumulation. One optimizer step consumes exactly 64 examples; length-aware microbatches are bounded by token_budget (n_mb * max length in the microbatch) and max_sequences, chosen so the predicted peak allocation (receipts/microbatch_allocation_model.json) fits a 40-GiB rung with margin; a single example exceeding the token budget forms its own microbatch (over-plan single, receipted). Updates are identical to a single batch-64 step (summed-loss accumulation)."
+  },
+  "parameters_note": "M2-review correction F11: ACTUAL constructor total at the frozen vocab-5 encoding (receipted by construction in receipts/native_parameter_totals.json). The inherited X27 label 563,218 was a whole-model count at vocab 8; the backbone dimensions are unchanged and the difference is exactly the shared tied embedding/output weight: (8-5)*128 = 384 = 563,218 - 562,834."
+}

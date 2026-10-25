@@ -1,0 +1,241 @@
+{
+  "gate": "replay_consistency (P1-6 + G10 free-by-decay extension)",
+  "seed": 20260128,
+  "zero_updates": true,
+  "all_cases_at_boundaries": {
+    "fp32_ckpts": {
+      "checkpoint_dtype": "fp32_ckpts",
+      "CKPT_INTERVAL": 2,
+      "T": 8,
+      "num_checkpoints": 5,
+      "echo_case_equal": true,
+      "echo_matched_equal": true,
+      "echo_popt_equal": true,
+      "echo_alloc_equal": true,
+      "echo_popf_equal": true,
+      "boundary_live_exact": true,
+      "boundary_age_exact": true,
+      "boundary_keys_max_rel": 0.0,
+      "boundary_values_max_rel": 0.0,
+      "boundary_strength_max_rel": 0.0,
+      "replay_output_max_rel": 1.4952810545310058e-08,
+      "case_coverage": {
+        "R-EMPTY": {
+          "tokens": [
+            0
+          ],
+          "nearest_boundary": [
+            0
+          ]
+        },
+        "R-NOMATCH": {
+          "tokens": [
+            2,
+            5
+          ],
+          "nearest_boundary": [
+            2
+          ]
+        },
+        "R-ZERO-RESIDUAL": {
+          "tokens": [
+            1
+          ],
+          "nearest_boundary": [
+            0
+          ]
+        },
+        "R-CONFLICT": {
+          "tokens": [
+            3
+          ],
+          "nearest_boundary": [
+            2
+          ]
+        },
+        "R-CAP": {
+          "tokens": [
+            4
+          ],
+          "nearest_boundary": [
+            4
+          ]
+        },
+        "NO-WRITE": {
+          "tokens": [
+            6,
+            7
+          ],
+          "nearest_boundary": [
+            6
+          ]
+        },
+        "POP": {
+          "tokens": [
+            5,
+            7
+          ]
+        },
+        "FREE-BY-POP": {
+          "count": 1,
+          "tokens": [
+            0,
+            5
+          ]
+        },
+        "FREE-BY-DECAY": {
+          "count": 2,
+          "tokens": [
+            0,
+            6,
+            0,
+            7
+          ]
+        }
+      },
+      "all_cases_fire": true,
+      "pop_fires": true,
+      "free_by_pop_fires": true,
+      "free_by_decay_fires": true,
+      "boundary_tolerance_pass": true,
+      "pass": true,
+      "replay_output_max_rel_note": "fp32 checkpoints: replay recomputation is exact to ~1e-6"
+    },
+    "eager_side_cross_check": {
+      "traces_equal": true,
+      "live_and_age_exact": true,
+      "output_max_rel": 0.0005203039618209004
+    },
+    "bf16_ckpts": {
+      "checkpoint_dtype": "bf16_ckpts",
+      "CKPT_INTERVAL": 2,
+      "T": 8,
+      "num_checkpoints": 5,
+      "echo_case_equal": true,
+      "echo_matched_equal": true,
+      "echo_popt_equal": true,
+      "echo_alloc_equal": true,
+      "echo_popf_equal": true,
+      "boundary_live_exact": true,
+      "boundary_age_exact": true,
+      "boundary_keys_max_rel": 0.0,
+      "boundary_values_max_rel": 0.0006249547004699707,
+      "boundary_strength_max_rel": 0.0009753715712577105,
+      "replay_output_max_rel": 1.3068756743450649e-05,
+      "case_coverage": {
+        "R-EMPTY": {
+          "tokens": [
+            0
+          ],
+          "nearest_boundary": [
+            0
+          ]
+        },
+        "R-NOMATCH": {
+          "tokens": [
+            2,
+            5
+          ],
+          "nearest_boundary": [
+            2
+          ]
+        },
+        "R-ZERO-RESIDUAL": {
+          "tokens": [
+            1
+          ],
+          "nearest_boundary": [
+            0
+          ]
+        },
+        "R-CONFLICT": {
+          "tokens": [
+            3
+          ],
+          "nearest_boundary": [
+            2
+          ]
+        },
+        "R-CAP": {
+          "tokens": [
+            4
+          ],
+          "nearest_boundary": [
+            4
+          ]
+        },
+        "NO-WRITE": {
+          "tokens": [
+            6,
+            7
+          ],
+          "nearest_boundary": [
+            6
+          ]
+        },
+        "POP": {
+          "tokens": [
+            5,
+            7
+          ]
+        },
+        "FREE-BY-POP": {
+          "count": 1,
+          "tokens": [
+            0,
+            5
+          ]
+        },
+        "FREE-BY-DECAY": {
+          "count": 2,
+          "tokens": [
+            0,
+            6,
+            0,
+            7
+          ]
+        }
+      },
+      "all_cases_fire": true,
+      "pop_fires": true,
+      "free_by_pop_fires": true,
+      "free_by_decay_fires": true,
+      "boundary_tolerance_pass": true,
+      "pass": true
+    }
+  },
+  "would_flip_free_by_decay": {
+    "construction": "slot strength 0.5009 (fp32 > free_threshold=0.5, survives the fp32 forward); bf16 rounds it to 0.5 <= free_threshold, so recomputing the death decision from the rounded checkpoint WOULD free it",
+    "fp32_strength": 0.5009,
+    "bf16_checkpoint_strength": 0.5,
+    "free_threshold": 0.5,
+    "recomputed_would_free": true,
+    "forward_live_at_boundary": true,
+    "replay_live_at_boundary": true,
+    "boundary_live_exact_all": true,
+    "replay_output_max_rel": 0.0011992411455139518,
+    "pass": true
+  },
+  "randomized_store_bf16": {
+    "config": {
+      "B": 2,
+      "T": 12,
+      "NH": 2,
+      "S": 130,
+      "decay": 0.97,
+      "free_threshold": 0.08,
+      "CKPT_INTERVAL": 3,
+      "checkpoint_dtype": "bfloat16"
+    },
+    "free_by_decay_count": 6,
+    "free_by_pop_count": 13,
+    "pop_fired_count": 20,
+    "boundary_live_exact": true,
+    "boundary_age_exact": true,
+    "replay_output_max_rel": 0.004621441476047039,
+    "boundary_values_max_rel": 0.0017859935760498047,
+    "boundary_strength_max_rel": 0.003533217590302229,
+    "pass": true
+  },
+  "pass": true
+}

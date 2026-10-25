@@ -1,0 +1,220 @@
+{
+  "receipt": "registered effective-batch accumulation: per-arm microbatch budgets vs the 40-GiB rung (M2-review correction F5)",
+  "amendment": "batch 64 = effective batch 64 via length-aware microbatch accumulation; per-arm token budgets are freeze-bound receipts; updates are identical to a single batch-64 step",
+  "allocation_model": "trainer.allocation_model_bytes: bf16 sparse checkpoints every 16 tokens + int8 free-trace + spilled fwd scratch + fp32 per-step backward replay cache + adjoints (the G7/G14 frozen constants); prediction is validated MEASURED against the per-arm smokes",
+  "rung_gib": 40.0,
+  "margin_rule": "every in-plan worst case keeps >= 8 GiB of rung margin",
+  "arms": {
+    "tape_B0": {
+      "token_budget": 90904,
+      "max_sequences": 64,
+      "slots": 736,
+      "rung_gib": 40.0,
+      "in_plan_worst": {
+        "n_sequences": 64,
+        "t_pad": 1420,
+        "predicted_peak_gib": 9.13
+      },
+      "in_plan_margin_gib": 30.87,
+      "over_plan_singles": {
+        "balanced_9x": {
+          "tokens": 2306,
+          "predicted_peak_gib_fwd_bwd": 0.21,
+          "predicted_peak_gib_fwd_only": 0.17,
+          "within_rung_fwd_bwd": true,
+          "within_rung_fwd_only": true,
+          "policy": "in-plan / within rung: normal zero-update measurement"
+        },
+        "count_mismatch_9x": {
+          "tokens": 2307,
+          "predicted_peak_gib_fwd_bwd": 0.21,
+          "predicted_peak_gib_fwd_only": 0.17,
+          "within_rung_fwd_bwd": true,
+          "within_rung_fwd_only": true,
+          "policy": "in-plan / within rung: normal zero-update measurement"
+        },
+        "trailing_a_9x": {
+          "tokens": 3458,
+          "predicted_peak_gib_fwd_bwd": 0.29,
+          "predicted_peak_gib_fwd_only": 0.25,
+          "within_rung_fwd_bwd": true,
+          "within_rung_fwd_only": true,
+          "policy": "in-plan / within rung: normal zero-update measurement"
+        }
+      },
+      "pass": true
+    },
+    "tape_B0x4": {
+      "token_budget": 32768,
+      "max_sequences": 32,
+      "slots": 2944,
+      "rung_gib": 40.0,
+      "in_plan_worst": {
+        "n_sequences": 32,
+        "t_pad": 1024,
+        "predicted_peak_gib": 14.52
+      },
+      "in_plan_margin_gib": 25.48,
+      "over_plan_singles": {
+        "balanced_9x": {
+          "tokens": 2306,
+          "predicted_peak_gib_fwd_bwd": 0.82,
+          "predicted_peak_gib_fwd_only": 0.66,
+          "within_rung_fwd_bwd": true,
+          "within_rung_fwd_only": true,
+          "policy": "in-plan / within rung: normal zero-update measurement"
+        },
+        "count_mismatch_9x": {
+          "tokens": 2307,
+          "predicted_peak_gib_fwd_bwd": 0.82,
+          "predicted_peak_gib_fwd_only": 0.66,
+          "within_rung_fwd_bwd": true,
+          "within_rung_fwd_only": true,
+          "policy": "in-plan / within rung: normal zero-update measurement"
+        },
+        "trailing_a_9x": {
+          "tokens": 3458,
+          "predicted_peak_gib_fwd_bwd": 1.14,
+          "predicted_peak_gib_fwd_only": 0.99,
+          "within_rung_fwd_bwd": true,
+          "within_rung_fwd_only": true,
+          "policy": "in-plan / within rung: normal zero-update measurement"
+        }
+      },
+      "pass": true
+    },
+    "tape_B0x16": {
+      "token_budget": 16384,
+      "max_sequences": 16,
+      "slots": 11776,
+      "rung_gib": 40.0,
+      "in_plan_worst": {
+        "n_sequences": 16,
+        "t_pad": 1024,
+        "predicted_peak_gib": 28.95
+      },
+      "in_plan_margin_gib": 11.05,
+      "over_plan_singles": {
+        "balanced_9x": {
+          "tokens": 2306,
+          "predicted_peak_gib_fwd_bwd": 3.25,
+          "predicted_peak_gib_fwd_only": 2.64,
+          "within_rung_fwd_bwd": true,
+          "within_rung_fwd_only": true,
+          "policy": "in-plan / within rung: normal zero-update measurement"
+        },
+        "count_mismatch_9x": {
+          "tokens": 2307,
+          "predicted_peak_gib_fwd_bwd": 3.25,
+          "predicted_peak_gib_fwd_only": 2.64,
+          "within_rung_fwd_bwd": true,
+          "within_rung_fwd_only": true,
+          "policy": "in-plan / within rung: normal zero-update measurement"
+        },
+        "trailing_a_9x": {
+          "tokens": 3458,
+          "predicted_peak_gib_fwd_bwd": 4.54,
+          "predicted_peak_gib_fwd_only": 3.93,
+          "within_rung_fwd_bwd": true,
+          "within_rung_fwd_only": true,
+          "policy": "in-plan / within rung: normal zero-update measurement"
+        }
+      },
+      "pass": true
+    },
+    "tape_unbounded": {
+      "token_budget": 1024,
+      "max_sequences": 2,
+      "slots": 131072,
+      "rung_gib": 40.0,
+      "in_plan_worst": {
+        "n_sequences": 2,
+        "t_pad": 512,
+        "predicted_peak_gib": 27.45
+      },
+      "in_plan_margin_gib": 12.55,
+      "over_plan_singles": {
+        "balanced_9x": {
+          "tokens": 2306,
+          "predicted_peak_gib_fwd_bwd": 36.1,
+          "predicted_peak_gib_fwd_only": 29.34,
+          "within_rung_fwd_bwd": true,
+          "within_rung_fwd_only": true,
+          "policy": "in-plan / within rung: normal zero-update measurement"
+        },
+        "count_mismatch_9x": {
+          "tokens": 2307,
+          "predicted_peak_gib_fwd_bwd": 36.1,
+          "predicted_peak_gib_fwd_only": 29.34,
+          "within_rung_fwd_bwd": true,
+          "within_rung_fwd_only": true,
+          "policy": "in-plan / within rung: normal zero-update measurement"
+        },
+        "trailing_a_9x": {
+          "tokens": 3458,
+          "predicted_peak_gib_fwd_bwd": 50.48,
+          "predicted_peak_gib_fwd_only": 43.72,
+          "within_rung_fwd_bwd": false,
+          "within_rung_fwd_only": false,
+          "policy": "ABOVE the 40-GiB rung: the trainer's fail-closed rung check writes a CENSORED receipt (right-censored infrastructure, never a scientific verdict) BEFORE any OOM; flagged in ENGINEERING_FREEZE.md"
+        }
+      },
+      "pass": true
+    },
+    "tape_appendonly": {
+      "token_budget": 1024,
+      "max_sequences": 2,
+      "slots": 131072,
+      "rung_gib": 40.0,
+      "in_plan_worst": {
+        "n_sequences": 2,
+        "t_pad": 512,
+        "predicted_peak_gib": 27.45
+      },
+      "in_plan_margin_gib": 12.55,
+      "over_plan_singles": {
+        "balanced_9x": {
+          "tokens": 2306,
+          "predicted_peak_gib_fwd_bwd": 36.1,
+          "predicted_peak_gib_fwd_only": 29.34,
+          "within_rung_fwd_bwd": true,
+          "within_rung_fwd_only": true,
+          "policy": "in-plan / within rung: normal zero-update measurement"
+        },
+        "count_mismatch_9x": {
+          "tokens": 2307,
+          "predicted_peak_gib_fwd_bwd": 36.1,
+          "predicted_peak_gib_fwd_only": 29.34,
+          "within_rung_fwd_bwd": true,
+          "within_rung_fwd_only": true,
+          "policy": "in-plan / within rung: normal zero-update measurement"
+        },
+        "trailing_a_9x": {
+          "tokens": 3458,
+          "predicted_peak_gib_fwd_bwd": 50.48,
+          "predicted_peak_gib_fwd_only": 43.72,
+          "within_rung_fwd_bwd": false,
+          "within_rung_fwd_only": false,
+          "policy": "ABOVE the 40-GiB rung: the trainer's fail-closed rung check writes a CENSORED receipt (right-censored infrastructure, never a scientific verdict) BEFORE any OOM; flagged in ENGINEERING_FREEZE.md"
+        }
+      },
+      "pass": true
+    },
+    "gdn2_native": {
+      "token_budget": 90904,
+      "max_sequences": 64,
+      "note": "native arms have no tape store; chunked native kernels; peak allocation is receipted MEASURED per arm in eng/fused/receipts/per_arm_smokes/",
+      "rung_gib": 40.0,
+      "pass": true
+    },
+    "e97_native": {
+      "token_budget": 90904,
+      "max_sequences": 64,
+      "note": "native arms have no tape store; chunked native kernels; peak allocation is receipted MEASURED per arm in eng/fused/receipts/per_arm_smokes/",
+      "rung_gib": 40.0,
+      "pass": true
+    }
+  },
+  "zero_updates": true,
+  "pass": true
+}

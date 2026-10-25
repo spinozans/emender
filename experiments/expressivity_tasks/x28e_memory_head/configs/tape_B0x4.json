@@ -1,0 +1,123 @@
+{
+  "registration_name": "tape_B0x4",
+  "architecture": "slot_store_tape_head",
+  "arm_role": "budget sweep (4x B0)",
+  "seed": 0,
+  "card_preference": 1,
+  "cards_allowed": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+  ],
+  "card_exclusion": "physical card 7 EXCLUDED (live X25 big-E97-softplus run); never used",
+  "queue_rule": "registered card if free at launch, else next-free ascending physical index; actual card receipted per-arm launch receipt; atomic idle/unleased shell leases only, no preemption",
+  "d_model": 256,
+  "head": {
+    "n_heads": 4,
+    "key_dim": 64,
+    "value_dim": 128
+  },
+  "budget_slots": 2944,
+  "pop_enabled": true,
+  "pop_disabled_wiring": null,
+  "constants": {
+    "match_threshold": 0.5,
+    "eps_residual": 1e-06,
+    "pop_threshold": 0.5,
+    "write_enable_threshold": 0.5,
+    "ckpt_interval": 16,
+    "decay_rate": 0.999995,
+    "free_threshold": 0.001,
+    "usage_decay": 0.999,
+    "max_resident_slots": 64,
+    "checkpoint_dtype": "bfloat16",
+    "tile_s": 64,
+    "unbounded_cap_slots": 131072
+  },
+  "state_cell_receipt": {
+    "b0_definition": "B0 = ceil(141312 / (K+V)) slots, X27 small-GDN2 state-cell equivalence (key128 x value1104 = 141312)",
+    "K_plus_V": 192,
+    "B0_exact": 736,
+    "rounding": "exact: 192 * 736 = 141312 (no ceiling remainder)",
+    "source": "results_stage27_small_architectures/receipts/parameter_counts.json"
+  },
+  "parameter_receipt": {
+    "fused_layer_parameters": 397584,
+    "receipt": "eng/fused/receipts/numerics_smoke_max_length.json:param_count_layer"
+  },
+  "recipe": {
+    "optimizer": "AdamW",
+    "betas": [
+      0.9,
+      0.999
+    ],
+    "eps": 1e-08,
+    "weight_decay": 0.0001,
+    "lr": 0.0001,
+    "lr_schedule": "constant",
+    "batch_size": 64,
+    "grad_clip": 1.0,
+    "stage_budget_updates": [
+      15000,
+      15000,
+      30000
+    ],
+    "total_cap_updates": 60000,
+    "eval_cadence_updates": 500,
+    "seed": 0,
+    "checkpoint_selection": "validation-only; tie-break latest-best",
+    "supervision": "stage1/stage2: masked cross-entropy at supervised positions (mean-per-class-recall metric); stage3: end-of-word BCE on a two-logit margin reading the final READ output (G8)",
+    "right_censoring": "60,000-update cap; a stage may complete early on its receipt gate; unused budget does not carry forward; no retries"
+  },
+  "stages": {
+    "stage1": {
+      "data": "generators/stage1_mqar.py",
+      "gate": ">=99% validation mean per-class recall"
+    },
+    "stage2": {
+      "data": "generators/stage2_append_necessity.py",
+      "gate": ">=99% validation mean per-class recall AND receipted slot-occupancy growth (strictly increasing mean peak live slots across the registered item-count grid K in {2,4,8,16})"
+    },
+    "stage3": {
+      "data": "generators/stage3_ladder.py",
+      "gate": "none; standard adjudication (registered outcome cells)"
+    }
+  },
+  "fine_sweep": {
+    "window": [
+      2816,
+      3072
+    ],
+    "step_slots": 16,
+    "points": [
+      2816,
+      2832,
+      2848,
+      2864,
+      2880,
+      2896,
+      2912,
+      2928,
+      2944,
+      2960,
+      2976,
+      2992,
+      3008,
+      3024,
+      3040,
+      3056,
+      3072
+    ],
+    "words_per_point": 256,
+    "rule": "bounded tape arms only; native arms have no B and no sweep"
+  },
+  "microbatch": {
+    "token_budget": 32768,
+    "max_sequences": 32,
+    "binding": "M2-review correction F5: registered effective-batch accumulation. One optimizer step consumes exactly 64 examples; length-aware microbatches are bounded by token_budget (n_mb * max length in the microbatch) and max_sequences, chosen so the predicted peak allocation (receipts/microbatch_allocation_model.json) fits a 40-GiB rung with margin; a single example exceeding the token budget forms its own microbatch (over-plan single, receipted). Updates are identical to a single batch-64 step (summed-loss accumulation)."
+  }
+}

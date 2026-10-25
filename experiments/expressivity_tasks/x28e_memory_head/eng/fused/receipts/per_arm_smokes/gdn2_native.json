@@ -1,0 +1,69 @@
+{
+  "smoke": "per-arm max-length 90,904-token zero-update fwd/bwd/eval (registration gate 4, discharged per arm; M2-review correction F5)",
+  "arm": "gdn2_native",
+  "seed": 20260128,
+  "zero_updates": true,
+  "physical_card": 0,
+  "supervision": "end-of-word BCE on a two-logit margin reading the final READ output (G8); summed loss over all microbatches (the F5 effective-batch mechanism, zero optimizer steps)",
+  "total_tokens": 90904,
+  "split": {
+    "n_sequences": 1,
+    "length": 90904
+  },
+  "microbatch_binding": {
+    "token_budget": 90904,
+    "max_sequences": 64,
+    "rung_gib": 40.0
+  },
+  "model_parameters": 562834,
+  "microbatch_plan": [
+    {
+      "microbatch": 0,
+      "n_sequences": 1,
+      "t_pad": 90904,
+      "tokens": 90904
+    }
+  ],
+  "finite": {
+    "loss": true,
+    "eval_logits": true,
+    "grad::embed.weight": true,
+    "grad::layer_norms.0.weight": true,
+    "grad::layers.0.gdn.A_log": true,
+    "grad::layers.0.gdn.dt_bias": true,
+    "grad::layers.0.gdn.q_proj.weight": true,
+    "grad::layers.0.gdn.k_proj.weight": true,
+    "grad::layers.0.gdn.v_proj.weight": true,
+    "grad::layers.0.gdn.a_proj.weight": true,
+    "grad::layers.0.gdn.b_proj.weight": true,
+    "grad::layers.0.gdn.q_conv1d.weight": true,
+    "grad::layers.0.gdn.k_conv1d.weight": true,
+    "grad::layers.0.gdn.v_conv1d.weight": true,
+    "grad::layers.0.gdn.g_proj.weight": true,
+    "grad::layers.0.gdn.o_norm.weight": true,
+    "grad::layers.0.gdn.o_proj.weight": true,
+    "grad::mlp_norms.0.weight": true,
+    "grad::mlps.0.w1.weight": true,
+    "grad::mlps.0.w2.weight": true,
+    "grad::mlps.0.w3.weight": true,
+    "grad::out_norm.weight": true
+  },
+  "all_finite": true,
+  "grad_none_by_construction": [],
+  "summed_loss": 3.493147175959166e-07,
+  "peak_alloc_gib_per_microbatch": [
+    4.722
+  ],
+  "peak_alloc_gib": 4.722468852996826,
+  "peak_reserved_gib": 5.333984375,
+  "wall_seconds": {
+    "forward": 0.576,
+    "backward": 3.896,
+    "eval_forward": 0.039
+  },
+  "n_microbatches": 1,
+  "all_microbatches_within_rung": true,
+  "eval_vs_train_output_max_abs": 0.0,
+  "eval_vs_train_exact": true,
+  "pass": true
+}

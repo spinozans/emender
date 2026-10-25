@@ -527,3 +527,76 @@ fade horizon >= 10x that length (at the 9x bin, a positive word is 2,304
 tokens; horizon >= 23,040 tokens). The calculation is a freeze receipt; a
 decay-driven deep-k failure is reported as cache-policy-binding, distinct
 from TAPE-LEARNS-IN-REGIME-ONLY.
+
+---
+
+## M2-review-driven amendments (APPEND-ONLY — every original section above is preserved verbatim)
+
+**Amendment F5 (M2-review finding 5 — registered effective-batch
+accumulation).** batch 64 = effective batch 64 via length-aware microbatch
+accumulation; per-arm token budgets are freeze-bound receipts; updates are
+identical to a single batch-64 step. Each optimizer step consumes exactly 64
+examples; the 64 examples are processed in length-aware microbatches bound
+per arm in `configs/<arm>.json` (`microbatch.token_budget` bound on the
+padded allocation product n_mb * max_length, plus
+`microbatch.max_sequences` for the fixed per-sequence backward-replay-cache
+cost of the unbounded arms' 2^17-slot stores), chosen so the predicted peak
+allocation fits a 40-GiB rung with margin and receipted in
+`receipts/microbatch_allocation_model.json`; the summed loss over the 64
+examples is accumulated across microbatches and ONE optimizer step fires per
+64 examples — mathematically the registered single batch-64 update (pure
+gradient-equivalence test in `eng/tests/test_trainer_wiring.py`). A single
+example exceeding the token budget forms its own microbatch (over-plan
+single, receipted); a projected above-rung single example is CENSORED
+infrastructure (fail-closed, never a scientific verdict). Registration gate
+4 is discharged PER ARM by the 90,904-token zero-update
+forward/backward/evaluation smokes at the bound budgets
+(`eng/fused/receipts/per_arm_smokes/<arm>.json`); the cap-stress smoke stays
+for the two cap arms (`eng/fused/receipts/cap_stress_smoke.json`).
+
+**Amendment (a) (M2-review adjudication (a) — precision-surface
+clarification, required before freeze).** The precision surface is bf16
+sparse checkpoints as the declared rounding surface with an fp32 per-step
+replay cache; trace-following replay makes the cache's precision
+non-decisional; the receipted bf16-path gradient parity (2.16e-3/2.12e-3
+<< 0.08) supports accepting the implementation as-is. This clarifies gate 3's
+"bf16 backward replay checkpoints/scratch" wording: the sparse checkpoints —
+the surface where rounding threatens decision consistency — are bf16 as
+registered; the per-step replay cache inside `tape_bwd_kernel` is fp32; the
+G10 trace-following replay consumes discrete routing/free decisions as
+inputs, so the cache's precision cannot flip any architectural decision.
+No bf16-cache rewrite is required by the current evidence.
+
+## M2-review-2-driven amendment (APPEND-ONLY — originals above preserved)
+
+**Gate 4 (numerics smoke) restated per the registered accumulation mechanism
+(M2-review-2 finding 4; the F5 effective-batch amendment made the split form
+the registered mechanism, and this amendment makes the gate's wording match
+what the mechanism implies — explicitly, not by relabeling receipts):**
+
+- The per-arm gate-4 obligation is: a zero-update forward/backward/eval
+  smoke covering the registered 90,904-token count THROUGH THE ARM'S FROZEN
+  MICROBATCH BUDGET (the effective-batch accumulation mechanism registered
+  above), finite throughout, within the 40-GiB rung, with per-arm receipts.
+- ARMS WHOSE FROZEN BUDGET ADMITS A LITERAL SINGLE 90,904-TOKEN TRAJECTORY
+  ADDITIONALLY RUN IT and receipt it as the literal max-length form:
+  `tape_B0`, `gdn2_native`, `e97_native` receipt literal single-trajectory
+  90,904-token smokes (n_microbatches = 1 in
+  `eng/fused/receipts/per_arm_smokes/*.json`).
+- ARMS THAT SPLIT (tape_B0x4, tape_B0x16, tape_unbounded,
+  tape_appendonly) receipt the aggregate-token form at their frozen budgets.
+  For the two cap arms a literal trajectory is INFEASIBLE within the rung:
+  the allocation-model receipts show a single 2,306-token over-plan at
+  36.1 GiB for a 131,072-slot store, scaling far past the 40-GiB rung at
+  90,904 tokens; the receipts in `receipts/microbatch_allocation_model.json`
+  are the infeasibility evidence, and the aggregate form is the ONLY
+  feasible registered discharge for those arms.
+- No receipt is labeled as a literal max-length trajectory unless its
+  n_microbatches is 1.
+
+**Amendment F5 epoch-boundary policy (M2-review-2 finding 5).** The
+exactly-64 rule binds the sampler: the trailing partial batch (48 examples
+at the 70,000-example pools) is DROPPED at each epoch boundary; every epoch
+re-permutes the full pool with the registered seed sequence, so the dropped
+remainder differs per epoch and no example is starved across epochs. The
+sampler is deterministic and unit-tested at 70,000 examples.
