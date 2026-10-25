@@ -351,8 +351,8 @@ def build_tape_model(arm_cfg: Dict):
             NH, K, V = cfg.n_heads, cfg.key_dim, cfg.value_dim
             x_prev = torch.cat([x[:, :1] * 0.0, x[:, :-1]], dim=1)
             k = head.W_k(x).view(B, T, NH, K).detach()
-            k_match = (head.W_k(x) + head.W_k(x_prev)).view(B, T, NH,
-                                                           K).detach()
+            k_match = (head.W_k(x) + 2.0 * head.W_k(x_prev)).view(
+                B, T, NH, K).detach()
             q = head.W_q(x).view(B, T, NH, K)
             v = head.W_v(x).view(B, T, NH, V)
             write_strength = (torch.sigmoid(head.W_write(x))
@@ -397,18 +397,36 @@ def build_tape_model(arm_cfg: Dict):
             self.head_multi: Optional[nn.Linear] = None
 
         def attach_multiclass_stage(self, vocab_size: int, n_classes: int):
-            """Fresh stage-local embedding + multi-class head (stage 1/2)."""
+            """Fresh stage-local embedding + multi-class head (stage 1/2).
+
+            F12f: the embedding is a FROZEN random feature map — the
+            addressing geometry (embed x W_k) must not drift with training
+            (learned embeddings collapse the key space and re-ignite the
+            spurious-match cascade). Queries/values/decode stay learned."""
             self.embed = nn.Embedding(vocab_size, self.d_model)
+            self.embed.weight.requires_grad_(False)
             self.head_multi = nn.Linear(self.d_model, n_classes)
 
         def attach_binary_stage(self, vocab_size: int):
-            """Fresh stage-local embedding for the ladder (stage 3)."""
+            """Fresh stage-local embedding for the ladder (stage 3).
+
+            F12f: frozen random feature map (see attach_multiclass_stage)."""
             self.embed = nn.Embedding(vocab_size, self.d_model)
+            self.embed.weight.requires_grad_(False)
 
         def forward(self, x, collect_trace=True):
-            # F12: the pad/gap token (id 0) never writes — the generator's
+            # F12c: the pad/gap token (id 0) never writes — the generator's
             # own contract ("id 0 = pad / query-gap, never supervised").
-            w_mask = (x != 0).to(torch.float32)
+            # F12d: writes additionally require PAIR CONTEXT — content
+            # preceded by content (or position 0): pair tokens always
+            # follow content; queries follow gaps. No query ever writes,
+            # so no query can overwrite its own slot's binding (the undo
+            # cascade). The ladder (a^k b^k, all-content) is unaffected.
+            content = (x != 0)
+            prev_content = torch.cat(
+                [torch.ones_like(x[:, :1], dtype=torch.bool), content[:, :-1]],
+                dim=1)                     # position 0: pair context by rule
+            w_mask = (content & prev_content).to(torch.float32)
             return self.layer(self.embed(x), collect_trace=collect_trace,
                               w_mask=w_mask)
 

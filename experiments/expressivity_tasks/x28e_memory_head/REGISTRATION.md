@@ -681,3 +681,51 @@ The pre-F12 tape-arm results (2x halt receipts + 3 superseded crawls) are
 archived under `*_seed0_preF12` as the amendment's evidence; the natives
 re-run under the F12 freeze for one registration lineage. No pre-F12
 optimizer update counts toward any F12 arm.
+
+---
+
+## Amendment F12g (post-F12-launch stage-1 ceiling correction; append-only)
+
+### Receipted failure being amended
+
+Under F12 the tape arms ignited (0.8186 stage-1 recall, stable over the
+full 15,000-update budget — vs the 1/64 floor pre-F12) but halted at the
+0.99 stage gate. Diagnosis (probe + trace-autopsy receipts in the session
+log): with split/windowed match keys the binding is deterministic at init,
+but ANY value token equal to an earlier key token (~44% of sequences)
+turns that key's slot into a magnet for the NEXT key token's windowed
+match — the next key fires R-CONFLICT instead of appending, its value
+appends as junk, and the cascade destroys every later pair. Score-based
+correction aiming cannot break this symmetry: the magnet match and the
+legitimate binding are structurally identical.
+
+### The registered change (F12g: adjacency-addressed correction)
+
+The delta-rule correction no longer aims by score argmax. **The
+correction addresses the slot written at the PREVIOUS token (age == 1)**
+— the pair structure's own address. Case routing for pair-context writes:
+age-1 slot exists -> R-ZERO-RESIDUAL (identical value) or R-CONFLICT
+(correction); no age-1 slot -> R-NOMATCH append (first token: R-EMPTY);
+append requested with budget full -> R-CAP merging onto the YOUNGEST live
+slot (previously best-match). The gate's error term uses the target only
+when one exists (zero otherwise — the backward kernel's convention).
+Score argmax aiming is GONE; spurious matches have no consumer. All five
+cases, thresholds, ops, budgets, arms, and eval protocol unchanged.
+
+### Receipts
+
+F12g probe: stage-1 validation accuracy 1.000 at 500 updates, stable
+through 3000 (loss 0.0003); routing histogram exactly R-EMPTY/R-NOMATCH/
+R-CONFLICT at their structural counts with ZERO spurious events. All
+numerics gates pass (eager/fused trace parity; gradient parity; spilled
+tie-break exactness). 71 tests updated to the adjacency contract.
+
+### Disposition
+
+Pre-F12g runs archived as *_seed0_preF12g (2 F12 halts + 3 F12 guards +
+2 native completions). The natives' F12 reruns REPLICATED the preF12
+finals byte-identically (e97 0.998/0.541/0.500/0.500; gdn2
+0.990/0.564/0.498/0.498; same selected updates): NATIVES-FAIL-OOD holds
+in two lineages. The stage-3 pop path starts CLOSED (W_pop bias -4,
+learnable) — whether the ladder's every-b-pops mechanism ignites in
+budget is a registered mechanism-prediction outcome, not a guarantee.

@@ -6,8 +6,8 @@
     "fp32_ckpts": {
       "checkpoint_dtype": "fp32_ckpts",
       "CKPT_INTERVAL": 2,
-      "T": 8,
-      "num_checkpoints": 5,
+      "T": 10,
+      "num_checkpoints": 6,
       "echo_case_equal": true,
       "echo_matched_equal": true,
       "echo_popt_equal": true,
@@ -18,7 +18,7 @@
       "boundary_keys_max_rel": 0.0,
       "boundary_values_max_rel": 0.0,
       "boundary_strength_max_rel": 0.0,
-      "replay_output_max_rel": 1.4952810545310058e-08,
+      "replay_output_max_rel": 0.0,
       "case_coverage": {
         "R-EMPTY": {
           "tokens": [
@@ -30,8 +30,8 @@
         },
         "R-NOMATCH": {
           "tokens": [
-            2,
-            5
+            3,
+            7
           ],
           "nearest_boundary": [
             2
@@ -47,40 +47,42 @@
         },
         "R-CONFLICT": {
           "tokens": [
-            3
+            4
           ],
           "nearest_boundary": [
-            2
+            4
           ]
         },
         "R-CAP": {
           "tokens": [
-            4
-          ],
-          "nearest_boundary": [
-            4
-          ]
-        },
-        "NO-WRITE": {
-          "tokens": [
-            6,
-            7
+            6
           ],
           "nearest_boundary": [
             6
           ]
         },
+        "NO-WRITE": {
+          "tokens": [
+            2,
+            5,
+            8,
+            9
+          ],
+          "nearest_boundary": [
+            2
+          ]
+        },
         "POP": {
           "tokens": [
-            5,
-            7
+            7,
+            9
           ]
         },
         "FREE-BY-POP": {
           "count": 1,
           "tokens": [
             0,
-            5
+            7
           ]
         },
         "FREE-BY-DECAY": {
@@ -104,13 +106,13 @@
     "eager_side_cross_check": {
       "traces_equal": true,
       "live_and_age_exact": true,
-      "output_max_rel": 0.0005203039618209004
+      "output_max_rel": 0.00014239942538551986
     },
     "bf16_ckpts": {
       "checkpoint_dtype": "bf16_ckpts",
       "CKPT_INTERVAL": 2,
-      "T": 8,
-      "num_checkpoints": 5,
+      "T": 10,
+      "num_checkpoints": 6,
       "echo_case_equal": true,
       "echo_matched_equal": true,
       "echo_popt_equal": true,
@@ -119,9 +121,9 @@
       "boundary_live_exact": true,
       "boundary_age_exact": true,
       "boundary_keys_max_rel": 0.0,
-      "boundary_values_max_rel": 0.0006249547004699707,
+      "boundary_values_max_rel": 0.0008789002895355225,
       "boundary_strength_max_rel": 0.0009753715712577105,
-      "replay_output_max_rel": 1.3068756743450649e-05,
+      "replay_output_max_rel": 3.255903720855713e-06,
       "case_coverage": {
         "R-EMPTY": {
           "tokens": [
@@ -133,8 +135,8 @@
         },
         "R-NOMATCH": {
           "tokens": [
-            2,
-            5
+            3,
+            7
           ],
           "nearest_boundary": [
             2
@@ -150,40 +152,42 @@
         },
         "R-CONFLICT": {
           "tokens": [
-            3
+            4
           ],
           "nearest_boundary": [
-            2
+            4
           ]
         },
         "R-CAP": {
           "tokens": [
-            4
-          ],
-          "nearest_boundary": [
-            4
-          ]
-        },
-        "NO-WRITE": {
-          "tokens": [
-            6,
-            7
+            6
           ],
           "nearest_boundary": [
             6
           ]
         },
+        "NO-WRITE": {
+          "tokens": [
+            2,
+            5,
+            8,
+            9
+          ],
+          "nearest_boundary": [
+            2
+          ]
+        },
         "POP": {
           "tokens": [
-            5,
-            7
+            7,
+            9
           ]
         },
         "FREE-BY-POP": {
           "count": 1,
           "tokens": [
             0,
-            5
+            7
           ]
         },
         "FREE-BY-DECAY": {
@@ -213,7 +217,7 @@
     "forward_live_at_boundary": true,
     "replay_live_at_boundary": true,
     "boundary_live_exact_all": true,
-    "replay_output_max_rel": 0.0011992411455139518,
+    "replay_output_max_rel": 0.0016992330783978105,
     "pass": true
   },
   "randomized_store_bf16": {
@@ -232,8 +236,8 @@
     "pop_fired_count": 20,
     "boundary_live_exact": true,
     "boundary_age_exact": true,
-    "replay_output_max_rel": 0.004621441476047039,
-    "boundary_values_max_rel": 0.0017859935760498047,
+    "replay_output_max_rel": 0.004691047128289938,
+    "boundary_values_max_rel": 0.0016565918922424316,
     "boundary_strength_max_rel": 0.003533217590302229,
     "pass": true
   },

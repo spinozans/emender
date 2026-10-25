@@ -74,7 +74,11 @@ class FusedTapeHead(nn.Module):
         # read gradient) — the read path cannot collapse the addressing
         # space; queries/values adapt to it.
         k = head.W_k(x).view(B, T, NH, K).detach()
-        k_match = (head.W_k(x) + head.W_k(x_prev)).view(B, T, NH, K).detach()
+        # F12e: the previous-token component carries DOUBLE weight — the
+        # own-slot binding (prev-component) deterministically beats the
+        # same-token key=value collision (current-component) 2:1.
+        k_match = (head.W_k(x) + 2.0 * head.W_k(x_prev)).view(B, T, NH,
+                                                             K).detach()
         q = head.W_q(x).view(B, T, NH, K)
         v = head.W_v(x).view(B, T, NH, V)
         write_strength = (torch.sigmoid(head.W_write(x))

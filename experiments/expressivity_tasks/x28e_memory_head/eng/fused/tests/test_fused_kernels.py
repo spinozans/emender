@@ -208,35 +208,32 @@ def test_fused_all_cases_and_cap():
     toks = [
         w(e(0), vv),                                   # t0: R-EMPTY  -> slot0
         w(e(0), vv),                                   # t1: R-ZERO-RESIDUAL -> slot1
-        w(e(1), 2 * vv),                               # t2: R-NOMATCH -> slot2
-        w(e(0), 0.9 * torch.ones(V)),                 # t3: R-CONFLICT (slot0)
-        w(e(2), 3 * vv),                              # t4: append requested, full -> R-CAP
+        r(e(0), beta=0.1),                             # t2: NO-WRITE (ages advance)
+        w(e(1), 2 * vv),                               # t3: R-NOMATCH -> slot2
+        w(e(1), 0.9 * torch.ones(V)),                  # t4: R-CONFLICT (adjacent slot2)
+        r(e(0), beta=0.1),                             # t5: NO-WRITE (ages advance)
+        w(e(2), 3 * vv),                               # t6: append requested, full -> R-CAP
         dict(k=e(1), q=e(1), v=4.0 * torch.ones(V), beta=0.9, pop=1.0,
-             alogit=ALOGIT_FULL),                      # t5: POP kills slot2 (G9:
-        #  pop frees BEFORE write routing); k=e(1) then finds no live match
-        #  (remaining keys e(0)) -> R-NOMATCH appending into the freed slot 2
-        r(e(0), beta=0.1),                             # t6: NO-WRITE
+             alogit=ALOGIT_FULL),                      # t7: POP kills slot2 (its key
+        #  is e(1)); no age-1 slot (t6 was a R-CAP merge, not an append) ->
+        #  R-NOMATCH appending into the freed slot 2
+        r(e(0), beta=0.1),                             # t8: NO-WRITE
     ]
     tr, st, out, _ = _fused_case_run(toks, cfg, ckpt=3)
-    cases = [int(tr.case[0, t, 0]) for t in range(7)]
-    assert cases == [R_EMPTY, R_ZERO_RESIDUAL, R_NOMATCH, R_CONFLICT, R_CAP,
-                     R_NOMATCH, NO_WRITE], cases
+    cases = [int(tr.case[0, t, 0]) for t in range(9)]
+    assert cases == [R_EMPTY, R_ZERO_RESIDUAL, NO_WRITE, R_NOMATCH,
+                     R_CONFLICT, NO_WRITE, R_CAP, R_NOMATCH, NO_WRITE], cases
     assert int(tr.alloc_target[0, 1, 0]) == 1
-    assert int(tr.alloc_target[0, 4, 0]) == NO_SLOT    # R-CAP never allocates
-    assert int(tr.pop_target[0, 5, 0]) == 2 and bool(tr.pop_fired[0, 5, 0])
-    assert int(tr.freed[0, 5, 0, 2]) == FREED_POP      # G10: pop-death traced
-    assert int(tr.alloc_target[0, 5, 0]) == 2          # G5: reuse of freed slot
+    assert int(tr.alloc_target[0, 6, 0]) == NO_SLOT    # R-CAP never allocates
+    assert int(tr.pop_target[0, 7, 0]) == 2 and bool(tr.pop_fired[0, 7, 0])
+    assert int(tr.freed[0, 7, 0, 2]) == FREED_POP      # G10: pop-death traced
+    assert int(tr.alloc_target[0, 7, 0]) == 2          # G5: reuse of freed slot
     # G5: no slot is ever allocated past B
     assert int(st.live.sum()) <= 3
     assert int(tr.alloc_target.max()) < 3
-    # the R-CAP merge is the delta-rule onto the best write match. With k=e(2)
-    # every live key scores 0 (tie) so the best match is slot0 (lowest index,
-    # matching torch.argmax): slot0 = 0.86 + 0.9*(1.5-0.86) = 1.436; slot1
-    # (key e(0), value 0.5) is untouched
+    # untouched slot0 keeps its appended value (gate ~ 1 at ALOGIT_FULL)
     assert torch.allclose(st.values[0, 0, 0],
-                          torch.full((V,), 1.436, device=DEV), atol=1e-5)
-    assert torch.allclose(st.values[0, 0, 1],
-                          torch.full((V,), 0.5, device=DEV), atol=1e-5)
+                          vv.to(DEV), atol=1e-4)
 
 
 def test_fused_pop_kills_then_reuses_freed_slot():
@@ -415,9 +412,11 @@ def test_final_token_write_is_gradient_dead_fused():
     gradient path from the per-token read outputs."""
     cfg = make_cfg()
     toks = [w(e(0), 0.5 * torch.ones(V), alogit=1.0),
-            w(e(1), 0.25 * torch.ones(V), alogit=1.0),
-            dict(k=e(0), q=e(0), v=0.9 * torch.ones(V), beta=0.9, pop=0.0,
-                 alogit=ALOGIT_FULL)]   # t2 is final: R-CONFLICT, unseen by reads
+            r(e(0)),                                   # W-OFF: ages advance
+            w(e(1), 0.25 * torch.ones(V), alogit=1.0),  # R-NOMATCH -> slot1
+            dict(k=e(1), q=e(1), v=0.9 * torch.ones(V), beta=0.9, pop=0.0,
+                 alogit=ALOGIT_FULL)]   # t3 is final: the ADJACENCY correction
+            # of slot1, unseen by reads
     k, q, v, beta, pop, alog = build_inputs(toks, requires_grad=True)
     k = k.to(DEV); q = q.to(DEV); v = v.to(DEV)
     beta = beta.to(DEV); pop = pop.to(DEV); alog = alog.to(DEV)
@@ -427,17 +426,18 @@ def test_final_token_write_is_gradient_dead_fused():
     out.sum().backward()
 
     def row(g):
-        return float("inf") if g is None else float(g[0, 2].abs().sum())
+        return float("inf") if g is None else float(g[0, 3].abs().sum())
 
     assert row(v.grad) in (float("inf"), 0.0)   # None (unused) or exact zero
     assert row(k.grad) in (float("inf"), 0.0)
     assert row(beta.grad) in (float("inf"), 0.0)
     assert row(alog.grad) in (float("inf"), 0.0)
     # ... but the final STATE carries the correction (a downstream loss sees
-    # it): slot0 = (1-beta)*gate*v0 + beta*v2 with gate = sigmoid(1.0)
+    # it): slot1 = v_best + beta*(v_t - v_best) with v_best = gate*0.25
     a = float(torch.sigmoid(torch.tensor(1.0)))
-    expected = (0.1 * (a * 0.5) + 0.9 * 0.9) * torch.ones(V, device=DEV)
-    assert torch.allclose(st.values[0, 0, 0], expected, atol=1e-5)
+    v_best = a * 0.25
+    expected = (v_best + 0.9 * (0.9 - v_best)) * torch.ones(V, device=DEV)
+    assert torch.allclose(st.values[0, 0, 1], expected, atol=1e-5)
 
 
 # ---------------------------------------------------------------------------
@@ -526,14 +526,16 @@ def test_bf16_replay_all_cases_at_boundaries():
     vv = 0.5 * torch.ones(V)
     toks = [
         w(e(0), vv),                                   # t0 R-EMPTY
-        w(e(0), vv),                                   # t1 R-ZERO-RESIDUAL
-        w(e(1), 2 * vv),                               # t2 R-NOMATCH
-        w(e(0), 0.9 * torch.ones(V)),                 # t3 R-CONFLICT
-        w(e(2), 3 * vv),                               # t4 R-CAP (full)
+        w(e(0), vv),                                   # t1 R-ZERO-RESIDUAL (adjacent)
+        r(e(0), beta=0.1),                             # t2 NO-WRITE (ages advance)
+        w(e(1), 2 * vv),                               # t3 R-NOMATCH
+        w(e(1), 0.9 * torch.ones(V)),                  # t4 R-CONFLICT (adjacent slot2)
+        r(e(0), beta=0.1),                             # t5 NO-WRITE (ages advance)
+        w(e(2), 3 * vv),                               # t6 R-CAP (full; merge slot2)
         dict(k=e(1), q=e(1), v=4.0 * torch.ones(V), beta=0.9, pop=1.0,
-             alogit=ALOGIT_FULL),                      # t5 POP kills slot2 -> R-NOMATCH
-        r(e(0), beta=0.1),                             # t6 NO-WRITE
-        r(e(1), beta=0.1),                             # t7 (post-pop read)
+             alogit=ALOGIT_FULL),                      # t7 POP kills slot2 -> R-NOMATCH
+        r(e(0), beta=0.1),                             # t8 NO-WRITE
+        r(e(1), beta=0.1),                             # t9 (post-pop read)
     ]
     k, q, v, beta, pop, alog = build_inputs(toks)
     k = k.to(DEV); q = q.to(DEV); v = v.to(DEV)
@@ -543,10 +545,10 @@ def test_bf16_replay_all_cases_at_boundaries():
         buf, rp = _replay_gate(k, q, v, beta, pop, alog, s0, cfg, ckpt=2,
                                ckpt_dtype=ckpt_dtype)
         tr = buffers_to_trace(buf)
-        cases = {int(tr.case[0, t, 0]) for t in range(8)}
+        cases = {int(tr.case[0, t, 0]) for t in range(10)}
         assert cases == {R_EMPTY, R_ZERO_RESIDUAL, R_NOMATCH, R_CONFLICT,
                          R_CAP, NO_WRITE}
-        assert bool(tr.pop_fired[0, 5, 0])
+        assert bool(tr.pop_fired[0, 7, 0])
         assert int((tr.freed == FREED_POP).sum()) > 0
         assert int((tr.freed == FREED_DECAY).sum()) > 0   # decay 0.5 kills slots
         for field_f, field_e in (("echo_case", buf.t_case),

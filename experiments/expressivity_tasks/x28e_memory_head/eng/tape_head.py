@@ -191,7 +191,7 @@ def _onehot(idx: torch.Tensor, size: int, fires: torch.Tensor, dtype: torch.dtyp
 # The eager sequential scan (the architectural reference; also the replay
 # engine when a trace is supplied).
 # ---------------------------------------------------------------------------
-MATCH_SCALE = 1.0 / 3.0   # F12: write-match scores at 1/(3 sqrt(K))
+MATCH_SCALE = 0.1   # own 1.07 / collision 0.53 / key-cross 3.7 sigma
 
 
 def tape_scan(k, q, v, write_strength, pop_strength, append_logit, state: TapeState,
@@ -238,7 +238,7 @@ def tape_scan(k, q, v, write_strength, pop_strength, append_logit, state: TapeSt
         append_err_coef = torch.zeros(NH, device=k.device)
     else:
         append_err_coef = append_err_coef.float()
-    scale = 1.0 / math.sqrt(K)
+    scale = 2.0 / math.sqrt(K)   # F12b: sharpened read softmax
     dev = k.device
 
     keys, values, strength, live = state.keys, state.values, state.strength, state.live
@@ -295,22 +295,33 @@ def tape_scan(k, q, v, write_strength, pop_strength, append_logit, state: TapeSt
         live = live & ~freed
         has_live = live.any(-1)                                     # post-pop
 
-        # ---------------- WRITE-ENABLE + five-case routing -------------------
+        # ------------- WRITE-ENABLE + five-case routing (F12g) --------------
+        # ADJACENCY-ADDRESSED correction: the delta-rule correction targets
+        # the slot written at the PREVIOUS token (age == 1) — the pair
+        # structure's own address. Score argmax aiming is GONE: spurious
+        # matches (value/key token collisions) can no longer attract
+        # corrections, and the cascade that capped stage 1 at ~0.82 has
+        # no consumer. Identical content still appends (R-ZERO-RESIDUAL).
         if trace is None:
             beta_det = beta.detach()
             w_on = beta_det > cfg.write_enable_threshold
-            km_t = km[:, t]
-            k_scores = torch.einsum('bhsk,bhk->bhs', keys, km_t) * scale \
-                * MATCH_SCALE
-            k_det = k_scores.detach().masked_fill(~live, NEG_MASK)
-            write_best = k_det.argmax(-1)                           # [B, NH]
-            best_score = k_scores.detach().gather(-1, write_best.unsqueeze(-1)).squeeze(-1)
-            matched_ok = has_live & w_on
-            nomatch = matched_ok & (best_score < cfg.match_threshold)
+            age_det = age.detach()
+            age1_ok = live & (age_det == 1)
+            has_age1 = age1_ok.any(-1)                             # [B, NH]
+            corr_target = age1_ok.to(torch.long).argmax(-1)        # [B, NH]
+            # youngest-live fallback (the R-CAP merge target when no
+            # adjacency slot exists) — mirrors the fused kernel.
+            big = torch.full_like(age_det, 2 ** 31)
+            amin = torch.where(live, age_det, big).amin(-1, keepdim=True)
+            young_ok = live & (age_det == amin)
+            corr_target = torch.where(
+                has_age1, corr_target,
+                young_ok.to(torch.long).argmax(-1))
+            matched_ok = has_age1 & w_on
+            nomatch = w_on & ~has_age1
             case = torch.full((B, NH), NO_WRITE, dtype=torch.int64, device=dev)
             case = torch.where(w_on & ~has_live, R_EMPTY, case)
-            case = torch.where(nomatch, R_NOMATCH, case)
-            corr_target = write_best  # R-CONFLICT/R-CAP correction target (recomputed below)
+            case = torch.where(nomatch & has_live, R_NOMATCH, case)
         else:
             # REPLAY MODE: routing decisions are INPUTS, never recomputed.
             case = trace.case[:, t]
@@ -319,10 +330,20 @@ def tape_scan(k, q, v, write_strength, pop_strength, append_logit, state: TapeSt
             matched_t = trace.matched[:, t]
             append_fires = alloc_target_t >= 0
             corr_target = matched_t.clamp(min=0)
-        # shared: squared value residual against the write-match target
+        # shared: squared value residual against the correction target.
+        # F12g harmonization: the residual/gate error term uses the target
+        # ONLY when one exists (age-1 slot in fresh mode; a traced matched
+        # slot in replay mode) and ZERO otherwise — exactly the backward
+        # kernel's convention (matched == NO_SLOT -> v_b = 0).
         gather_idx = corr_target.view(B, NH, 1, 1).expand(B, NH, 1, V)
         v_best = values.gather(2, gather_idx).squeeze(2)             # attached
-        residual = ((v_t - v_best) ** 2).sum(-1)
+        if trace is None:
+            v_resid = torch.where(has_age1.unsqueeze(-1), v_best,
+                                  torch.zeros_like(v_best))
+        else:
+            v_resid = torch.where((matched_t >= 0).unsqueeze(-1), v_best,
+                                  torch.zeros_like(v_best))
+        residual = ((v_t - v_resid) ** 2).sum(-1)
         residual_d = residual.detach()
         if trace is None:
             matched_ok_m = matched_ok & ~nomatch
@@ -336,7 +357,8 @@ def tape_scan(k, q, v, write_strength, pop_strength, append_logit, state: TapeSt
             append_fires = append_req & free_exists
             alloc_idx = (~live).to(torch.long).argmax(-1)          # first free slot
             alloc_target_t = torch.where(append_fires, alloc_idx, NO_SLOT)
-            matched_t = torch.where(has_live, write_best, NO_SLOT)
+            matched_t = torch.where(matched_ok | (case == R_CAP),
+                                    corr_target, NO_SLOT)
 
         # append-gate strength: input includes the DETACHED write-error magnitude
         err_mag = torch.where(has_live, residual_d.clamp_min(0.0).sqrt(),
@@ -448,12 +470,16 @@ class TapeHead(nn.Module):
         # write-error magnitude against the best-matching live slot").
         self.append_err_coef = nn.Parameter(torch.zeros(NH))
         # F12 ignition init: queries start as keys (retrieval finds the
-        # token's own slot from step 0), and the architectural write gate
-        # starts OPEN (sigmoid > threshold everywhere it is not masked).
+        # token's own slot from step 0), the architectural write gate
+        # starts OPEN (sigmoid > threshold everywhere it is not masked),
+        # and POP starts CLOSED (sigmoid far below threshold at init —
+        # pop is the ladder's consume mechanism; stage 1 must not chip
+        # its own bindings; pop_strength remains LEARNED and can rise).
         with torch.no_grad():
             self.W_q.weight.copy_(self.W_k.weight)
             self.W_q.bias.copy_(self.W_k.bias)
             self.W_write.bias.fill_(2.0)
+            self.W_pop.bias.fill_(-4.0)
 
     def forward(self, x: torch.Tensor, state: Optional[TapeState] = None,
                 trace_override: Optional[RoutingTrace] = None,
@@ -471,7 +497,8 @@ class TapeHead(nn.Module):
         assert D == self.W_q.in_features
         x_prev = torch.cat([x[:, :1] * 0.0, x[:, :-1]], dim=1)
         k = self.W_k(x).view(B, T, NH, K).detach()
-        k_match = (self.W_k(x) + self.W_k(x_prev)).view(B, T, NH, K).detach()
+        k_match = (self.W_k(x) + 2.0 * self.W_k(x_prev)).view(B, T, NH,
+                                                              K).detach()
         q = self.W_q(x).view(B, T, NH, K)
         v = self.W_v(x).view(B, T, NH, V)
         write_strength = (torch.sigmoid(self.W_write(x))

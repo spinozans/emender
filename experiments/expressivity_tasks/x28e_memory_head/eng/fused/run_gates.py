@@ -244,14 +244,16 @@ def _case_tokens(K: int, V: int):
     vv = 0.5 * torch.ones(V)
     toks = [
         w(e(0), vv),                                   # t0  R-EMPTY
-        w(e(0), vv),                                   # t1  R-ZERO-RESIDUAL
-        w(e(1), 2 * vv),                               # t2  R-NOMATCH
-        w(e(0), 0.9 * torch.ones(V)),                  # t3  R-CONFLICT
-        w(e(2), 3 * vv),                               # t4  append->R-CAP (full)
+        w(e(0), vv),                                   # t1  R-ZERO-RESIDUAL (adjacent)
+        r(e(0)),                                       # t2  NO-WRITE (ages advance)
+        w(e(1), 2 * vv),                               # t3  R-NOMATCH
+        w(e(1), 0.9 * torch.ones(V)),                  # t4  R-CONFLICT (adjacent slot2)
+        r(e(0)),                                       # t5  NO-WRITE (ages advance)
+        w(e(2), 3 * vv),                               # t6  append->R-CAP (full)
         dict(k=e(1), q=e(1), v=4.0 * torch.ones(V), beta=0.9, pop=1.0,
-             alogit=ALOGIT),                           # t5  POP kills slot2 -> R-NOMATCH
-        r(e(0)),                                       # t6  NO-WRITE
-        r(e(1), pop=0.9),                              # t7  NO-WRITE + partial pop
+             alogit=ALOGIT),                           # t7  POP kills slot2 -> R-NOMATCH
+        r(e(0)),                                       # t8  NO-WRITE
+        r(e(1), pop=0.9),                              # t9  NO-WRITE + partial pop
     ]
     return toks
 

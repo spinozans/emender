@@ -198,23 +198,28 @@ def tape_fwd_kernel(
             live = live & ~freed1
             has_live = tl.sum(live.to(tl.int32), axis=0) > 0
 
-            # ---- WRITE-ENABLE + five-case routing (G3/G5/G6) ----
+            # ---- WRITE-ENABLE + five-case routing (G3/G5/G6; F12g) ----
+            # ADJACENCY-ADDRESSED correction: the correction/merge target is
+            # the slot written at the PREVIOUS token (age == 1); with no
+            # age-1 slot the R-CAP merge falls back to the youngest live
+            # slot. Score argmax aiming is GONE (the value/key collision
+            # magnet has no consumer).
             w_on = beta > won_thr
-            # F12: the write-match score carries its OWN scale (match_scale),
-            # separate from the read softmax scale.
-            sc2 = tl.sum(keys * km_t[None, :], axis=1) * (scale * match_scale)
-            scm2 = tl.where(live, sc2, NEG)
-            bscore = tl.max(scm2, axis=0)
-            is_c2 = scm2 == bscore
-            wbest = tl.min(tl.where(is_c2, sr, TSR), axis=0)
+            a1 = live & (age == 1)
+            has_a1 = tl.sum(a1.to(tl.int32), axis=0) > 0
+            wbest = tl.min(tl.where(a1, sr, TSR), axis=0)
+            ymin = tl.min(tl.where(live, age, TSR), axis=0)
+            wfb = tl.min(tl.where(live & (age == ymin), sr, TSR), axis=0)
+            wbest = tl.where(has_a1, wbest, wfb)
             v_best = tl.sum(tl.where((sr == wbest)[:, None], values, 0.0), axis=0)
-            resid = tl.sum((v_t - v_best) * (v_t - v_best), axis=0)
-            matched_ok = has_live & w_on
-            nomatch = matched_ok & (bscore < match_thr)
-            mm = matched_ok & (~nomatch)
+            v_resid = tl.where(has_a1, v_best, 0.0)
+            resid = tl.sum((v_t - v_resid) * (v_t - v_resid), axis=0)
+            matched_ok = has_a1 & w_on
+            nomatch = w_on & (~has_a1)
+            mm = matched_ok
             zero_res = mm & (resid < eps_res)
             case = tl.where(w_on & (~has_live), K_R_EMPTY, K_NO_WRITE)
-            case = tl.where(nomatch, K_R_NOMATCH, case)
+            case = tl.where(nomatch & has_live, K_R_NOMATCH, case)
             case = tl.where(zero_res, K_R_ZERO_RESIDUAL, case)
             case = tl.where(mm & (~zero_res), K_R_CONFLICT, case)
             append_req = (case == K_R_EMPTY) | (case == K_R_NOMATCH) | (case == K_R_ZERO_RESIDUAL)
@@ -250,7 +255,8 @@ def tape_fwd_kernel(
             live = live & ~freed2
 
             # ---- trace record (incl. free-by-decay, G10) ----
-            matched_o = tl.where(has_live, wbest, K_NO_SLOT)
+            matched_o = tl.where(matched_ok | (case == K_R_CAP),
+                                 wbest, K_NO_SLOT)
             pop_target_o = tl.where(pop_f, rbest, K_NO_SLOT)
             freed_code = tl.where(freed2, K_FREED_DECAY,
                                   tl.where(freed1, K_FREED_POP, K_FREED_NONE)).to(tl.int8)
@@ -412,40 +418,59 @@ def tape_fwd_kernel(
             # post-pop live count: the pop target was live, freed1 kills exactly it
             has_live = (n_live - freed1.to(tl.int32)) > 0
 
-            # ---- write-routing pass (post-pop liveness) ----
+            # ---- write-routing pass (post-pop liveness; F12g) ----
+            # ADJACENCY-ADDRESSED correction (age == 1 target; youngest-live
+            # fallback for the R-CAP merge). Score argmax aiming is GONE.
             tl.debug_barrier()
             w_on = beta > won_thr
-            best2_sc = tl.full([1], NEG, tl.float32)
-            best2_idx = tl.full([1], 0, tl.int32)
+            a1_idx = tl.full([1], 1073741824, tl.int32)
+            a1_any = tl.full([1], 0, tl.int32)
+            fb_idx = tl.full([1], 1073741824, tl.int32)
+            age_min = tl.full([1], 1073741824, tl.int32)
             free_min = tl.full([1], S, tl.int32)
             free_any = tl.full([1], 0, tl.int32)
             for s0 in range(0, S, TS):
                 sm = s0 + tl.arange(0, TS)
                 vm = sm < S
-                kt = tl.load(XK_ptr + ((pS + sm[:, None]) * K + kk[None, :]),
-                             mask=vm[:, None] & k_m[None, :], other=0.0).to(tl.float32)
                 lv = tl.load(XL_ptr + pS + sm, mask=vm, other=0) > 0
-                sc2 = tl.sum(kt * km_t[None, :], axis=1) * (scale * match_scale)
-                scm2 = tl.where(lv, sc2, NEG)
-                c2 = tl.max(scm2, axis=0)
-                take2 = c2 > best2_sc
-                is_c2 = (scm2 == c2) & vm
-                loc2 = tl.min(tl.where(is_c2, tl.arange(0, TS), TS), axis=0)
-                best2_idx = tl.where(take2, s0 + loc2, best2_idx)
-                best2_sc = tl.where(take2, c2, best2_sc)
+                ag = tl.load(XA_ptr + pS + sm, mask=vm, other=0)
+                a1 = lv & (ag == 1)
+                # first age-1 slot: the FIRST tile containing one wins, and
+                # within it the lowest index (ties broken lowest, matching
+                # torch.argmax on bools)
+                cnt_a1 = tl.sum(a1.to(tl.int32), axis=0)
+                loc_a1 = tl.min(tl.where(a1, sm, 1073741824), axis=0)
+                a1_idx = tl.where((cnt_a1 > 0) & (a1_any == 0), loc_a1, a1_idx)
+                a1_any = tl.maximum(a1_any, cnt_a1)
+                # youngest live age (fallback target age)
+                ymin = tl.min(tl.where(lv, ag, 1073741824), axis=0)
+                age_min = tl.minimum(age_min, ymin)
                 nf = vm & (~lv)
                 free_any = tl.maximum(free_any, tl.sum(nf.to(tl.int32), axis=0))
                 free_min = tl.minimum(free_min,
                                       tl.min(tl.where(nf, sm, 1073741824), axis=0))
-            bscore = best2_sc
+            # second sweep: the lowest-index youngest-live slot ACROSS tiles
+            # (age ties span tiles; the minimum accumulator is exact)
+            for s0 in range(0, S, TS):
+                sm = s0 + tl.arange(0, TS)
+                vm = sm < S
+                lv = tl.load(XL_ptr + pS + sm, mask=vm, other=0) > 0
+                ag = tl.load(XA_ptr + pS + sm, mask=vm, other=0)
+                is_y = lv & (ag == age_min)
+                loc_y = tl.min(tl.where(is_y, sm, 1073741824), axis=0)
+                fb_idx = tl.minimum(fb_idx, loc_y)
+            has_a1 = a1_any > 0
+            best2_idx = tl.where(has_a1, a1_idx, fb_idx)
+            best2_idx = tl.where(best2_idx >= S, S - 1, best2_idx)
             v_best = tl.load(XV_ptr + (pS + best2_idx) * V + vv, mask=v_m, other=0.0).to(tl.float32)
-            resid = tl.sum((v_t - v_best) * (v_t - v_best), axis=0)
-            matched_ok = has_live & w_on
-            nomatch = matched_ok & (bscore < match_thr)
-            mm = matched_ok & (~nomatch)
+            v_resid = tl.where(has_a1, v_best, 0.0)
+            resid = tl.sum((v_t - v_resid) * (v_t - v_resid), axis=0)
+            matched_ok = has_a1 & w_on
+            nomatch = w_on & (~has_a1)
+            mm = matched_ok
             zero_res = mm & (resid < eps_res)
             case = tl.where(w_on & (~has_live), K_R_EMPTY, K_NO_WRITE)
-            case = tl.where(nomatch, K_R_NOMATCH, case)
+            case = tl.where(nomatch & has_live, K_R_NOMATCH, case)
             case = tl.where(zero_res, K_R_ZERO_RESIDUAL, case)
             case = tl.where(mm & (~zero_res), K_R_CONFLICT, case)
             append_req = (case == K_R_EMPTY) | (case == K_R_NOMATCH) | (case == K_R_ZERO_RESIDUAL)
@@ -482,7 +507,8 @@ def tape_fwd_kernel(
                      tl.where(cfire, v_corr, old_cv), mask=v_m & cfire)
 
             # ---- trace record (G10: freed row written in the decay pass) ----
-            matched_o = tl.where(has_live, best2_idx, K_NO_SLOT)
+            matched_o = tl.where(matched_ok | (case == K_R_CAP),
+                                 best2_idx, K_NO_SLOT)
             pop_target_o = tl.where(pop_f, best_idx, K_NO_SLOT)
             tl.store(TCcase_ptr + tok, case.to(tl.int32))
             tl.store(TCmatch_ptr + tok, matched_o.to(tl.int32))
@@ -1032,8 +1058,8 @@ def _fused_fwd_launch(k, km, q, v, beta, pop, alog, aec, s0, cfg: TapeHeadConfig
         xw = torch.empty((P, S), device=dev, dtype=torch.float32)
     warps = num_warps if num_warps > 0 else (8 if resident else 4)
     import math
-    scale = 1.0 / math.sqrt(K)
-    MATCH_SCALE = 1.0 / 3.0   # F12: write-match scores at 1/(3 sqrt(K))
+    scale = 2.0 / math.sqrt(K)   # F12b: sharpened read softmax
+    MATCH_SCALE = 0.1   # own 1.07 / collision 0.53 / key-cross 3.7 sigma
     tape_fwd_kernel[(P,)](
         k, km, q, v, beta, pop, alog, aec,
         s0.keys, s0.values, s0.strength,
@@ -1126,8 +1152,8 @@ def _fused_bwd_launch(k, km, q, v, beta, pop, alog, aec, buf: FusedBuffers,
         bd_l = buf.ck_live; bd_a = buf.ck_age
 
     import math
-    scale = 1.0 / math.sqrt(K)
-    MATCH_SCALE = 1.0 / 3.0   # F12: write-match scores at 1/(3 sqrt(K))
+    scale = 2.0 / math.sqrt(K)   # F12b: sharpened read softmax
+    MATCH_SCALE = 0.1   # own 1.07 / collision 0.53 / key-cross 3.7 sigma
     tape_bwd_kernel[(P,)](
         k, km, q, v, beta, pop, alog, aec,
         buf.ck_keys, buf.ck_values, buf.ck_strength, buf.ck_live, buf.ck_age,
