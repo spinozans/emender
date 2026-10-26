@@ -34,7 +34,8 @@ def journal_store(pointer, value, mask, J, Record: tl.constexpr, Base=None, Coun
             changed=mask
             ranks=tl.cumsum(changed.to(tl.int32),0)
             length=tl.sum(changed.to(tl.int32),0)
-            start=tl.atomic_add(Counts+n,length)
+            start=tl.load(Counts+n)
+            tl.store(Counts+n,start+length)
             tl.device_assert(start+length<=capacity,'all-field journal capacity exceeded')
             index=n*capacity+start+ranks-1
             active=changed & (start+ranks<=capacity)
@@ -53,7 +54,8 @@ def journal_store(pointer, value, mask, J, Record: tl.constexpr, Base=None, Coun
                 bits=old.to(tl.uint8).to(tl.uint64)
             ranks=tl.cumsum(mask.to(tl.int32),0)
             length=tl.sum(mask.to(tl.int32),0)
-            start=tl.atomic_add(Counts+n,length)
+            start=tl.load(Counts+n)
+            tl.store(Counts+n,start+length)
             tl.device_assert(start+length<=capacity,'all-field journal capacity exceeded')
             index=n*capacity+start+ranks-1
             active=mask & (start+ranks<=capacity)
@@ -73,17 +75,15 @@ def journal_store(pointer, value, mask, J, Record: tl.constexpr, Base=None, Coun
                 bits=old.to(tl.uint8).to(tl.uint64)
                 new_bits=new.to(tl.uint8).to(tl.uint64)
             changed=mask & (bits!=new_bits)
-            start=tl.atomic_add(Counts+n,changed.to(tl.int32))
+            start=tl.load(Counts+n)
+            tl.store(Counts+n,start+changed.to(tl.int32))
             tl.device_assert((~changed)|(start<capacity),'all-field journal capacity exceeded')
             active=changed & (start<capacity)
             index=n*capacity+start
             tl.store(Addresses+index,pointer.to(tl.uint64),active)
             tl.store(Before+index,bits,active)
             tl.store(Widths+index,width | (1<<8),active)
-        tl.debug_barrier()
     tl.store(pointer,value,mask)
-    if Record:
-        tl.debug_barrier()
 
 
 @triton.jit

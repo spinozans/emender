@@ -282,3 +282,60 @@ See REPORT.md for all failed/superseded run names, exact remaining structures
 and H1/H4/H16 tables. Final `summary_part7.json` records false for both blockers
 and `all_registered_targets_passed`. No learning rerun, .pt, WG, delegation,
 Frontier/Slurm or resilient-training change.
+
+
+### Part 8 final acceptance ledger — one gate remains failed
+
+Final source: **109 passed in 15.52 s**, all original 105 retained and four added
+regressions; no skips. Source/JUnit attestation preceded sequential collection
+on broker-leased physical GPU1, lambda01 RTX6000Ada. Python3.12.3, torch2.9.1+cu128,
+Triton3.5.1, fp32. Unchanged B64/T16/K64/V128/width256, five warmups/twenty samples,
+fresh-state allocations and synchronization included; no collection errors.
+
+| Gate | Part 8 result |
+|---|---|
+| S736 speedup >=1 | PASS 22.352x |
+| S11776 speedup >=10 | PASS 93.109x |
+| H16/H1 <=2 S736 | PASS 1.200x |
+| H16/H1 <=2 S11776 | FAIL 4.775x |
+| Checkpoint overhead <=5% | PASS +4.874%, narrow margin |
+| Append mutation >1 | PASS S736 1.079x / S11776 1.057x |
+| Equal-stream storage independence | PASS 855,040 entries each; capacity ratio1.227 |
+| All registered targets | FAIL: large-store head gate remains open |
+
+Final evidence is the unsuffixed `*_part8` set, including `structural_cost_part8`.
+REPORT.md contains the single convergence table for parts5–8 and all H1/H4/H16
+measurements. H4 absolute X31 time improves at both S; X30's S11776 denominator
+changes between collections, so its speedup ratio is lower despite faster X31.
+
+Large-S native init alone: H1 .042732 / H4 .159212 / H16 .631451 ms/token.
+Entire H16 allowance is .380859 ms/token (twice H1). This measures the limiting
+current dense zero-filled native representation; it is not a universal hardware
+floor or proof that compact/lazy backing cannot pass. Full native laziness is
+not delivered. Empty-origin expensive import vectors use a reachable prefix;
+unknown imports, native payload initialization, several metadata fills and dense
+diagnostics remain O(S). Heap depth is O(log live); arbitrary imports can still
+reach O(log S), and future/tied birth walks can remain O(S). No timer wheel.
+
+Capture uses single-writer counts without atomic/barrier groups. Final
+materialization also has one writer per store; two new multi-tile rollback cases
+cover the review-discovered invariant gap. Replay copies and rebasing occur at
+backward or freeze-before-continuation, not the fresh forward. Internal trace
+buffers are retained without copying; public traces remain independent. Forward
+replay-copy bytes=0, retained aliased owner address space=2,511,726,592. The raw
+cost field retains its legacy name; the summary separates copied/retained bytes.
+Public owner in-place edits now raise on backward. Continuation freezing and
+serial imported materialization can defer/add costs outside the registered fresh
+forward. Backward rebasing still scans capacity. No backward-speed claim.
+
+Matched projected scan capture delta +1.643%; no irreducible HBM floor claim.
+Base state2,523,785,216; journal113,444,864; checkpoint691,200 records. Equal-stream
+reservation92,473,344 /113,444,864. No total/peak-memory-independence claim.
+
+Superseded receipts are explicitly suffixed `_before_materialize_fix` (107-test
+source with an uncovered materialization race) and `_before_private_trace`
+(109 tests, checkpoint+5.036%). The final 109-test source fixes the race and removes
+the extra trace copy. Baseline/prototype receipts and prototype patch are retained.
+See REPORT.md for complete chronology and residual risks. No learning rerun, .pt,
+WG, delegation, GPU7, Frontier/Slurm or resilient-training change. Supervisor tool
+was unavailable. All edits are scoped to X31.

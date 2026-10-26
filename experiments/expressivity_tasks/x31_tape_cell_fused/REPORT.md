@@ -1,3 +1,169 @@
+# X31 part 8 — checkpoint gate passes; large-store head scaling remains open
+
+**Partial gate closure with a measured representation limit.** Final source passes
+**109 tests in 15.52 s**, retaining all original 105 and adding four regressions.
+Checkpoint overhead is **+4.874%, PASS**, versus part 7's +17.398%.
+H16/H1 at S11776 is **4.775x, FAIL**, versus 5.135x. All other registered
+throughput, small-store head, append and storage gates pass. The summary honestly
+retains `all_registered_targets_passed=false`.
+
+## Parts 5–8 convergence — unchanged gates and collection protocol
+
+| Registered measurement / gate | Part 5 | Part 6 | Part 7 | Part 8 |
+|---|---|---|---|---|
+| Parity tests | 95 | 97 | 105 | 109 |
+| X31 ms/token, S736 H4 | 0.450551 | 0.234388 | 0.213491 | 0.205282 |
+| X31 ms/token, S11776 H4 | 78.210305 | 1.262202 | 0.298316 | 0.267132 |
+| X30 speedup S736 (>=1) | 10.085x PASS | 20.735x PASS | 20.180x PASS | 22.352x PASS |
+| X30 speedup S11776 (>=10) | 0.319x FAIL | 21.472x PASS | 111.947x PASS | 93.109x PASS |
+| H16/H1 S736 (<=2) | 5.672x FAIL | 1.474x PASS | 1.271x PASS | 1.200x PASS |
+| H16/H1 S11776 (<=2) | 40.361x FAIL | 21.618x FAIL | 5.135x FAIL | 4.775x FAIL |
+| Checkpoint overhead (<=5%) | -0.315% PASS | +79.756% FAIL | +17.398% FAIL | +4.874% PASS |
+| Append S736 (>1) | 1.086x PASS | 1.062x PASS | 1.059x PASS | 1.079x PASS |
+| Append S11776 (>1) | 1.091x PASS | 1.063x PASS | 1.076x PASS | 1.057x PASS |
+| Equal-stream storage independence | FAIL | PASS | PASS | PASS |
+| All registered gates | FAIL | FAIL | FAIL | FAIL |
+
+These are each part's own matched references, not a reused X30 denominator.
+Part 8 H4 X31 time improves from 0.213491 to 0.205282 ms/token at S736 and
+0.298316 to 0.267132 at S11776. The large-S speedup ratio falls from 111.947x
+to 93.109x because its measured X30 baseline changes from 33.395531 to
+24.872228 ms/token. X31 itself is faster at both registered H4 points.
+Raw samples are retained; H1/S736 changes from 0.204663 to 0.209048 ms/token,
+so this is not a claim that every head configuration improves in every sample.
+Part 5 learning results remain historical; no learning rerun occurred.
+
+## Changes and boundaries of the lazy path
+
+Scoring is now a same-store fp32 key/query reduction inside `read_tiles`.
+There are no unused cross-head output rows and no separate scoring launch on
+the active cell path. Three stream-ordered launches per token serve all B*H
+stores, with no host loop over heads. The older `score_heads` helper is retained
+but unused. No tensor-core throughput claim is made for the new reduction.
+
+Fresh empty-origin import bounds its expensive vector initialization to the
+reachable prefix (rounded to a power of two). Inference continuation continues
+to reuse owned metadata, without reconstruction. Inverse heap positions initialize
+to -1 across the capacity so a newly reached row is safe in a later chunk.
+This is **not a fully lazy dense representation**: native zero initialization,
+several metadata fills/clones, free-bitmap setup and dense death diagnostics remain
+O(H*S). Arbitrary native imports still clone native fields, construct their birth
+index, and initialize against the full grid. Autograd continuation imports native
+state again; it does not reuse inference metadata.
+
+The heap audit finds O(log live) work, rather than a mandatory log(S) walk on
+empty-origin streams: with T16 it cannot contain more than 16 newly allocated
+live rows. Ordinary monotonic births insert at the head. Arbitrary imported
+future/tied births can still walk O(S), and heap operations can reach O(log S)
+when imported live count reaches S. No timer wheel or bounded birth-group
+replacement was delivered. Those are explicit remaining design gaps.
+
+## Why the S11776 head gate still fails
+
+| Slots | H1 ms/token | H4 ms/token | H16 ms/token | H16/H1 |
+|---|---|---|---|---|
+| 736 | 0.209048 | 0.205282 | 0.250929 | 1.200x |
+| 11776 | 0.190429 | 0.267132 | 0.909208 | 4.775x |
+
+`structural_cost_part8.json` uses the same five warmups, twenty samples,
+allocation/synchronization inclusion and T16 normalization to measure native
+`init_state` alone at S11776: H1 **0.042732**, H4 **0.159212**, H16
+**0.631451 ms/token**. The head gate allows the entire H16 call only
+2 * 0.190429 = **0.380859 ms/token**. Measured native initialization alone is
+**3.316x the entire H1 call**, before projections, scan or diagnostics.
+The H16 native payload contains 9,261,023,232 bytes of keys/values alone.
+
+This receipts a limiting component of the **current dense zero-filled public
+state representation**, not a universal lower bound or proof that lazy/compact
+backing could never pass. Slot-capacity-independent backing with explicit
+materialization at public native-state access would be a larger representation
+change; it is not delivered here. Replacing heap operations alone cannot remove
+this measured native-initialization cost. We do not slow H1 or exclude state
+initialization from the registered timing to manufacture a passing ratio.
+
+## Lean capture and deferred replay
+
+`journal_store` emits before-images at mutation sites and updates its device
+count with ordinary single-writer loads/stores. Journal-only atomics and barriers
+are removed. Event order is implicit in each store's program. Width/length tags
+still batch reverse undo of a vector; they impose no forward synchronization.
+Management-helper barriers and backward repeated-address ordering remain where
+needed for correctness.
+
+Review found that the old final materialization launch used parallel tiles per
+store, violating the new non-atomic count invariant. It now uses one writer per
+store and loops over its tiles. Two new decay=1, all-live, multi-tile import tests
+at S97/S736 require exact rollback of every age field. This fixes an uncovered
+race despite the original suite passing. Dense imported-state materialization
+performance was not measured and may suffer from the serial tile traversal.
+
+The training forward retains final owner references; it copies no replay owners
+and performs no address rebasing. Backward clones and rebases only when consumed.
+A consuming inference or training continuation freezes retained replay owners
+before mutation. This deliberately moves a dense copy onto that continuation
+when an earlier graph still needs it. Repeated backward remains isolated.
+Public PyTorch in-place edits to retained owners now raise a version-check error
+on backward instead of silently replaying edited data. This is an API restriction
+compared with the previous eager private copy. Snapshot branches remain separate.
+
+Backward retains the kernel's existing private routing/diagnostic tensors rather
+than cloning public traces. Public trace construction copies only if its layout
+would otherwise alias those tensors, including H1/singleton axes. The original
+public-trace-tampering gradient regression remains green. Capture therefore adds
+no private state-metadata or trace copies to the fresh forward path.
+
+The registered S11776/H4 checkpoint point is **0.280151 versus 0.267132 ms/token**:
+**+4.874%, PASS with a narrow margin**. The matched projected-input scan ablation
+measures capture off/on at **0.245162 / 0.249189 ms/token**, **+1.643%**.
+These are component experiments, not additive attribution or an irreducible
+HBM event-emission floor. Backward still scans fixed journal capacity to rebase;
+no backward-time gate or elimination of that scan is claimed.
+
+Base state is 2,523,785,216 bytes. Checkpoint retains 113,444,864 journal bytes and
+691,200 entries. Retained owner address space is 2,511,726,592 bytes, aliasing the
+forward state; actual forward replay-copy bytes are **zero**. The legacy raw
+`cost_part8.json` field `private_replay_copy_bytes` reports that retained address
+space; `summary_part8.json` explicitly separates it from actual copied bytes.
+Equal-stream storage still records 855,040 entries at both budgets and reserves
+92,473,344 / 113,444,864 bytes (ratio 1.227). There is no total-memory-independence,
+peak-memory, tight actual-event reservation, or arbitrary-import sparsity claim.
+
+## Validation, provenance and residual risks
+
+Final parity and all collection used broker-leased **physical GPU 1**, lambda01,
+RTX 6000 Ada, Python 3.12.3 at `/home/erikg/emender/.venv/bin/python`,
+torch 2.9.1+cu128 and Triton 3.5.1. Original B64/T16/K64/V128/width256,
+fp32, fresh-state end-to-end wall medians, five warmups and twenty samples are
+unchanged. Source/JUnit attestation precedes sequential timing/storage collection
+on a single lease. No collection errors. GPU7 was never requested or used.
+
+Final evidence: `validation_part8.txt/.xml`, `parity_part8.json`,
+`parity_attestation_part8.txt`, `performance_part8.txt`, `cost_part8.txt/.json`,
+`append_cost_part8.txt/.json`, `storage_part8.txt/.json`,
+`structural_cost_part8.txt/.json`, and `summary_part8.txt/.json`.
+The four added cases cover deferred replay across inference continuation and
+repeated backward, public owner in-place mutation detection, and two multi-tile
+exact-rollback fixtures. Full original forward, all ten first-order adjoints,
+import, continuation, snapshot, pressure and trace parity remain green.
+
+Chronology is retained rather than overwritten: the unchanged baseline passed
+105 tests in 15.53 s; the capture prototype passed 105 in 319.87 s and is recorded
+in `part8_lean_attempt.patch.json`. `_before_materialize_fix` passed 107 tests in
+83.45 s but its collection was invalidated by the review-discovered multi-tile
+race; collection had already completed before the attempted cancellation.
+`_before_private_trace` passed 109 tests in 27.60 s and measured +5.036%
+checkpoint overhead, motivating the final trace-copy removal. Only unsuffixed
+receipts attest final source. No unsuccessful or superseded receipt is counted
+as final validation. The narrow final checkpoint margin remains sensitive to
+timing variability; large-store head scaling remains the one failed gate.
+
+No .pt, WG, delegated agent, Frontier/Slurm or resilient-training change occurred.
+Resilient requirement IDs and Partition/QOS evidence are inapplicable. Tool
+catalog discovery found no callable `contact_supervisor`; no supervisor contact
+was possible. Only files under `x31_tape_cell_fused` were changed.
+
+---
+
 # X31 part 7 — scalar recurrent metadata; two timing gates remain failed
 
 **Partial delivery, not closure of the last two gates.** Final validation is

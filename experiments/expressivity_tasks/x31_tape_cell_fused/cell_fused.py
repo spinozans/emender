@@ -9,7 +9,7 @@ import torch
 import triton
 from ..x30_tape_cell.naive_reference import TapeHeadConfig, TapeState, init_state
 from ..x30_tape_cell.routing_trace import RoutingTrace
-from .kernels import scan_kernel, score_heads, read_tiles, reduce_read, initialize_free_words, materialize_state
+from .kernels import scan_kernel, read_tiles, reduce_read, initialize_free_words, materialize_state
 from .birth_index import initialize as initialize_birth_index
 from .write_journal import WriteJournal
 from .all_field_journal import AllFieldJournal
@@ -33,6 +33,8 @@ class FusedState:
 
     live_bound: int | None = None
     owns_import: bool = False
+    replay_storage: object = None
+    _replay_trace: tuple | None = None
 
     def snapshot(self):
         if self.consumed:
@@ -91,6 +93,8 @@ def tape_scan(k, q, v, write_strength, pop_strength, append_logit, state,
     elif isinstance(state, TapeState):
         state = FusedState(state,torch.zeros(b*h,128,device=k.device,dtype=torch.int32))
     native = state.native
+    if state.replay_storage is not None:
+        state.replay_storage.freeze()
     if state.consumed:
         raise ValueError('FusedState handle was already consumed; snapshot before branching')
     configuration = (cfg.slots,cfg.key_dim,cfg.value_dim,cfg.n_heads,
@@ -123,7 +127,7 @@ def tape_scan(k, q, v, write_strength, pop_strength, append_logit, state,
     history = state.history.clone() if fresh and not owns_native else state.history
     if fresh:
         heap = torch.full((b*h,cfg.slots),-1,device=k.device,dtype=torch.int32)
-        position = torch.empty_like(heap)
+        position = torch.full_like(heap,-1)
         due = torch.empty((b*h,cfg.slots),device=k.device,dtype=torch.int64)
         terminal = torch.empty((b*h,cfg.slots),device=k.device,dtype=torch.float32)
         births = torch.empty_like(due)
@@ -174,12 +178,10 @@ def tape_scan(k, q, v, write_strength, pop_strength, append_logit, state,
         initialize_free_words[(b*h,)](live,level0,level1,root,cfg.slots,
             triton.next_power_of_2(triton.cdiv(cfg.slots,64)),
             triton.next_power_of_2(triton.cdiv(triton.cdiv(cfg.slots,64),64)))
-    score_scratch=torch.empty_like(strength)
+    # All heads share this launch; direct same-store reductions avoid the
+    # off-diagonal cross-head MMA rows and a separate scoring launch.
+    score_scratch=scores  # unused compatibility pointer
     for token in range(t):
-        head_group=min(16,triton.next_power_of_2(h))
-        score_heads[(b,triton.cdiv(h,head_group),tile_count)](args[1],keys,live,score_scratch,
-            t,cfg.slots,dk,h,head_group,triton.next_power_of_2(max(32,dk)),
-            32*head_group,state.tokens,token,enable_fp_fusion=False,num_warps=4,num_stages=1)
         read_tiles[(b*h,tile_count)](args[1],keys,values,live,references,touches,score_scratch,
             read_max,read_denom,read_values,read_best,t,cfg.slots,dk,cfg.value_dim,tile_count,
             triton.next_power_of_2(max(32,dk)),triton.next_power_of_2(cfg.value_dim),
@@ -193,24 +195,32 @@ def tape_scan(k, q, v, write_strength, pop_strength, append_logit, state,
             births,touches,level0,level1,root,birth_next,birth_prev,birth_head,sizes,references,scores,read_max,read_denom,read_values,read_best,capture_scratch,
             *journal_args,record_payload,triton.next_power_of_2(max(dk,cfg.value_dim)),
             *all_args,fresh and token==0,state.tokens,token,
-            t,cfg.slots,dk,cfg.value_dim,tile_count,triton.next_power_of_2(cfg.slots),
+            t,cfg.slots,dk,cfg.value_dim,tile_count,triton.next_power_of_2(max(1,reachable)),
             triton.next_power_of_2(cfg.value_dim),triton.next_power_of_2(max(32,dk)),tile_block,
             struct.unpack('<f',struct.pack('<f',cfg.decay_rate))[0],cfg.free_threshold,
             cfg.write_enable_threshold,cfg.pop_threshold,cfg.eps_residual,
             enable_fp_fusion=False,debug=True,
             num_warps=4)
-    materialize_state[(b*h,tile_count)](references,touches,births,live,strength,age,
-        *all_args[:4],all_args[7],record_all,cfg.slots,state.tokens+t,
+    materialize_state[(b*h,)](references,touches,births,live,strength,age,
+        *all_args[:4],all_args[7],record_all,cfg.slots,tile_count,state.tokens+t,
         struct.unpack('<f',struct.pack('<f',cfg.decay_rate))[0],
         enable_fp_fusion=False,debug=True,num_warps=4)
     def unflat(x):
         return x.transpose(1,2).contiguous()
-    trace = RoutingTrace(*map(unflat,(case,matched,pops>=0,pops,alloc,
+    def public_trace(x):
+        result=unflat(x)
+        # For singleton axes contiguous() may alias. Replay keeps the internal
+        # trace, so only the public alias needs a copy in that case.
+        if record_all and result.data_ptr()==x.data_ptr():
+            result=result.clone()
+        return result
+    trace = RoutingTrace(*map(public_trace,(case,matched,pops>=0,pops,alloc,
                                      args[3]>cfg.write_enable_threshold,freed)))
     final = TapeState(keys,values,strength,live,age,native.usage)
     state.consumed = True
     return unflat(output),FusedState(final,history,state.tokens+t,metadata,configuration,
                                     write_journal=journal,all_field_journal=all_journal,
+                                    _replay_trace=(case,matched,alloc,pops,freed) if record_all else None,
                                     live_bound=min(cfg.slots,(cfg.slots if state.live_bound is None else state.live_bound)+t)),trace,unflat(pressure)
 
 

@@ -1,0 +1,165 @@
+{
+  "full_parity": true,
+  "parity_tests": 109,
+  "forward_scope": "forward only, fresh state per call; full cell projections plus state/scan; allocation and synchronization included",
+  "timing_gates": {
+    "s736_speedup_ge_1": true,
+    "s11776_speedup_ge_10": true,
+    "heads_ratio_le_2": false,
+    "checkpoint_overhead_le_5pct": true
+  },
+  "x30_speedups": {
+    "736": 22.351531708252097,
+    "11776": 93.108510495041
+  },
+  "heads_ratios": {
+    "736": 1.200344794605244,
+    "11776": 4.774517940765553
+  },
+  "head_measurements": [
+    {
+      "slots": 736,
+      "heads": 4,
+      "wall_ms_per_token": 0.20528188906610012
+    },
+    {
+      "slots": 736,
+      "heads": 1,
+      "wall_ms_per_token": 0.20904777920804918
+    },
+    {
+      "slots": 736,
+      "heads": 16,
+      "wall_ms_per_token": 0.25092941359616816
+    },
+    {
+      "slots": 11776,
+      "heads": 4,
+      "wall_ms_per_token": 0.26713163242675364
+    },
+    {
+      "slots": 11776,
+      "heads": 1,
+      "wall_ms_per_token": 0.19042931671719998
+    },
+    {
+      "slots": 11776,
+      "heads": 16,
+      "wall_ms_per_token": 0.9092081891139969
+    }
+  ],
+  "checkpoint": {
+    "observed_fractional_time_delta": 0.04873655196728288,
+    "timing_gate": true,
+    "base_state_bytes": 2523785216,
+    "reserved_bytes": 113444864,
+    "recorded_entries": 691200,
+    "private_forward_replay_copy_bytes": 0,
+    "retained_replay_address_space_bytes": 2511726592,
+    "private_replay_note": "Forward retains owners without copying or rebasing. A consuming continuation freezes replay owners before mutation; backward clones and rebases on consumption.",
+    "storage_independence_gate": true,
+    "budget_scaling": [
+      {
+        "slots": 736,
+        "stores": 256,
+        "tokens": 16,
+        "initial_live": 0,
+        "append_events": 4096,
+        "recorded_entries": 855040,
+        "retained_capacity_per_store": 18048,
+        "retained_reserved_bytes": 92473344,
+        "retained_storage_bytes": 92473344,
+        "capture_capacity_per_store": 18048,
+        "capture_reserved_bytes": 92473344,
+        "transient_capture_scratch_bytes": 0
+      },
+      {
+        "slots": 11776,
+        "stores": 256,
+        "tokens": 16,
+        "initial_live": 0,
+        "append_events": 4096,
+        "recorded_entries": 855040,
+        "retained_capacity_per_store": 22144,
+        "retained_reserved_bytes": 113444864,
+        "retained_storage_bytes": 113444864,
+        "capture_capacity_per_store": 22144,
+        "capture_reserved_bytes": 113444864,
+        "transient_capture_scratch_bytes": 0
+      }
+    ],
+    "storage_scope": "Component allocations, not measured peak or CUDA caching-allocator reservation. Fixed capacity bounds possible events using the host-known live upper bound and heap depth. There is no host sizing or compaction. Imported states without a bound reserve against S; base/replay state and scratch remain O(S)."
+  },
+  "append_phase_gates": {
+    "736": {
+      "speedup": 1.0785369427834983,
+      "gate": true
+    },
+    "11776": {
+      "speedup": 1.056885795853239,
+      "gate": true
+    }
+  },
+  "heads_ratio_le_2_by_slots": {
+    "736": true,
+    "11776": false
+  },
+  "head_scaling_floor": {
+    "native_h16_ms_per_token": 0.6314509082585573,
+    "allowed_total_h16_ms_per_token": 0.38085863343439996,
+    "native_component_to_h1_ratio": 3.3159332772080643,
+    "scope": "Measured current dense initialization component, not a universal hardware lower bound."
+  },
+  "structural_measurements": {
+    "receipt": "structural_cost_part8.json",
+    "measurements": [
+      {
+        "component": "native_zero_initialization",
+        "heads": 1,
+        "wall_ms_per_token": 0.042731931898742914,
+        "cuda_ms_per_token": 0.04186499863862991
+      },
+      {
+        "component": "native_zero_initialization",
+        "heads": 4,
+        "wall_ms_per_token": 0.15921150043141097,
+        "cuda_ms_per_token": 0.1582079976797104
+      },
+      {
+        "component": "native_zero_initialization",
+        "heads": 16,
+        "wall_ms_per_token": 0.6314509082585573,
+        "cuda_ms_per_token": 0.630424976348877
+      },
+      {
+        "component": "projected_scan",
+        "heads": 4,
+        "wall_ms_per_token": 0.24516222765669227,
+        "cuda_ms_per_token": 0.24407999962568283,
+        "capture": false
+      },
+      {
+        "component": "projected_scan",
+        "heads": 4,
+        "wall_ms_per_token": 0.24918910639826208,
+        "cuda_ms_per_token": 0.24806399643421173,
+        "capture": true
+      }
+    ],
+    "capture_fractional_delta": 0.01642536364618441,
+    "note": "Standalone component timings and matched capture ablations; not additive attribution or a hardware-independent lower bound."
+  },
+  "collection_errors": [],
+  "residual_risks": [
+    "Dense public native payload initialization and death diagnostics remain H*S. Same-store score reduction now skips cross-head outputs; empty-origin metadata imports initialize only a reachable prefix. See structural_cost_part8.json for measured native-initialization cost; this is a component cost, not proof that every alternative representation must fail.",
+    "The heap is O(log live), bounded by cumulative appends for empty-origin streams, but arbitrary imports can reach O(log S). Imported future/tied birth walks and birth-index construction retain O(S) work; no timer wheel or bounded birth-group replacement is delivered.",
+    "Fixed log capacity bounds potential events and is not guaranteed within twice the actual largest event count. Unknown imported live bounds conservatively reserve against S; empty-origin continuations carry a growing host upper bound without inspecting device values.",
+    "Base/replay address space and dense diagnostics remain O(S); no total-memory-independence or measured peak-memory claim.",
+    "Public in-place edits to retained replay owners raise on backward. Consuming continuations freeze them; this adds a deferred copy to that continuation. Backward still clones and scans journal capacity.",
+    "Final checkpoint timing passes narrowly; the superseded pre-private-trace collection measured +5.036%. Timing variability matters at this threshold.",
+    "Final materialization now serializes slot tiles within each store to preserve the single-writer invariant; arbitrary dense imported-state performance was not measured.",
+    "Learning was not rerun; part 5 remains historical learning evidence."
+  ],
+  "learning_reference": "summary_part5.json; not rerun in part 8",
+  "all_registered_targets_passed": false
+}

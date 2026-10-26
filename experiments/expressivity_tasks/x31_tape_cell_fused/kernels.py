@@ -287,7 +287,11 @@ def read_tiles(Q, Keys, Values, Live, References, Touch, Scores,
     header=n*tile_count+tile
     live=tl.load(Live+n*S+columns,columns<S,0).to(tl.int1)
     if tl.sum(live.to(tl.int32),0)>0:
-        scores=tl.load(Scores+n*S+columns,live,0.)
+        kd=tl.arange(0,BK)
+        query=tl.load(Q+(n*T+Token)*DK+kd,kd<DK,0.)
+        keys=tl.load(Keys+(n*S+columns[:,None])*DK+kd[None,:],
+                     live[:,None] & (kd[None,:]<DK),0.)
+        scores=tl.sum(keys*query[None,:],1)*(2.0/tl.sqrt(float(DK)))
         masked=tl.where(live,scores,-1.0e30)
         maximum=tl.max(masked,0)
         numer=tl.where(live,tl.exp(masked-maximum),0.)
@@ -359,20 +363,23 @@ def initialize_free_words(Live, L0, L1, Root, S: tl.constexpr,
 @triton.jit(do_not_specialize=["Clock", "Capacity"])
 def materialize_state(References, Touch, Birth, Live, Strength, Age,
                       Addresses, Before, Widths, Counts, Capacity,
-                      Record: tl.constexpr, S: tl.constexpr, Clock,
+                      Record: tl.constexpr, S: tl.constexpr, Tiles: tl.constexpr, Clock,
                       Decay: tl.constexpr):
     n=tl.program_id(0)
-    slots=tl.program_id(1)*32+tl.arange(0,32)
-    valid=slots<S
-    live=tl.load(Live+n*S+slots,valid,0).to(tl.int1)
-    if tl.sum(live.to(tl.int32),0)>0:
-        ref=tl.load(References+n*S+slots,valid,0.)
-        touch=tl.load(Touch+n*S+slots,valid,Clock)
-        born=tl.load(Birth+n*S+slots,valid,Clock)
-        strength=advance_exact(ref,tl.where(live,Clock-touch,0),Decay)
-        age=Clock-born
-        J=(Addresses,Before,Widths,Counts,n,Capacity)
-        # These independent <=32-lane groups capture directly in registers;
-        # no store-local staging scratch is shared across slot-tile programs.
-        journal_store(Strength+n*S+slots,strength,valid & live,J,Record)
-        journal_store(Age+n*S+slots,age,valid & live,J,Record)
+    # Capture count is store-local and non-atomic: one program must own all
+    # tiles of a store, including imported states with many live slot tiles.
+    for tile in range(Tiles):
+        slots=tile*32+tl.arange(0,32)
+        valid=slots<S
+        live=tl.load(Live+n*S+slots,valid,0).to(tl.int1)
+        if tl.sum(live.to(tl.int32),0)>0:
+            ref=tl.load(References+n*S+slots,valid,0.)
+            touch=tl.load(Touch+n*S+slots,valid,Clock)
+            born=tl.load(Birth+n*S+slots,valid,Clock)
+            strength=advance_exact(ref,tl.where(live,Clock-touch,0),Decay)
+            age=Clock-born
+            J=(Addresses,Before,Widths,Counts,n,Capacity)
+            # These independent <=32-lane groups capture directly in registers;
+            # no store-local staging scratch is shared across slot-tile programs.
+            journal_store(Strength+n*S+slots,strength,valid & live,J,Record)
+            journal_store(Age+n*S+slots,age,valid & live,J,Record)

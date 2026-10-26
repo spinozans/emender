@@ -173,6 +173,25 @@ def copy_allocated_payload(Keys, Values, ReplayKeys, ReplayValues, Alloc,
             tl.store(ReplayValues+(n*S+slot)*DV+v,value,v<DV)
 
 
+class ReplayStorage:
+    """Freeze only when a consuming continuation would overwrite saved state."""
+    def __init__(self, owners):
+        self.owners=owners
+        self.frozen=False
+        self.versions=tuple(x._version for x in owners)
+
+    def validate(self):
+        if any(x._version != version for x,version in zip(self.owners,self.versions)):
+            raise RuntimeError('retained replay state was modified in place')
+
+    def freeze(self):
+        self.validate()
+        if not self.frozen:
+            self.owners=tuple(x.clone() for x in self.owners)
+            self.frozen=True
+            self.versions=tuple(x._version for x in self.owners)
+
+
 class Replay(torch.autograd.Function):
     @staticmethod
     def forward(ctx,cfg,start_tokens,history,saved,k,q,v,beta,pop,logit,coef,
@@ -184,29 +203,18 @@ class Replay(torch.autograd.Function):
         out,final,trace,pressure=tape_scan(k,q,v,beta,pop,logit,initial,cfg,coef,
                                           record_all=True)
         journal=final.all_field_journal
-        # Private copies prevent backward from mutating returned native state.
-        # The log's owned addresses are rebased onto these buffers once below.
-        if saved["live_bound"] == 0:
-            # Empty imports have no readable payload outside allocation events.
-            # Keep address space for undo, but copy only rows ever allocated.
-            replay=tuple(torch.empty_like(x) if i<2 else x.clone()
-                         for i,x in enumerate(journal.owners))
-            copy_allocated_payload[(k.shape[0]*k.shape[2],)](
-                journal.owners[0],journal.owners[1],replay[0],replay[1],
-                trace.alloc_target.transpose(1,2).contiguous(),k.shape[1],
-                cfg.slots,cfg.key_dim,cfg.value_dim,
-                triton.next_power_of_2(cfg.key_dim),triton.next_power_of_2(cfg.value_dim))
-        else:
-            replay=tuple(x.clone() for x in journal.owners)
-        addresses=journal.addresses
-        rebase_owned(addresses,journal.counts,journal.owners,replay,journal.capacity)
+        # Keep the owned final buffers until replay is consumed. A subsequent
+        # consuming continuation freezes them before its first mutation.
+        ctx.storage=ReplayStorage(journal.owners)
+        final.replay_storage=ctx.storage
+        ctx.address_owners=journal.owners
+        ctx.replay=journal.owners  # address-space accounting; zero forward copies
         ctx.cfg=cfg
         ctx.start=start_tokens
         ctx.capacity=journal.capacity
-        ctx.replay=replay
-        ctx.trace=tuple(x.transpose(1,2).clone(memory_format=torch.contiguous_format) for x in
-                        (trace.case,trace.matched,trace.alloc_target,trace.pop_target,trace.freed))
-        ctx.log=(addresses,journal.before,journal.widths,journal.counts,
+        ctx.trace=final._replay_trace
+        final._replay_trace=None
+        ctx.log=(journal.addresses,journal.before,journal.widths,journal.counts,
                  journal.boundaries,journal.gates,journal.errors)
         ctx.save_for_backward(k,q,v,beta,pop,logit,coef)
         # Native imports are copied once per training chunk. This intentionally
@@ -225,7 +233,8 @@ class Replay(torch.autograd.Function):
         args=list(map(flat,(k,q,v,beta,pop)))
         def gradient(g,like):
             return torch.zeros_like(like) if g is None else g.contiguous().clone()
-        replay=tuple(x.clone() for x in ctx.replay)
+        ctx.storage.validate()
+        replay=tuple(x.clone() for x in ctx.storage.owners)
         keys,values,strength,live,age,history,*meta=replay
         gk=gradient(gkeys,keys);gv=gradient(gvalues,values);gs=gradient(gstrength,strength)
         go=torch.zeros(b,h,t,cfg.value_dim,device=k.device) if gout is None else flat(gout)
@@ -234,7 +243,7 @@ class Replay(torch.autograd.Function):
         dc=torch.empty(b*h,device=k.device)
         original_addresses,before,widths,counts,boundaries,gates,errors=ctx.log
         addresses=original_addresses.clone()
-        rebase_owned(addresses,counts,ctx.replay,replay,ctx.capacity)
+        rebase_owned(addresses,counts,ctx.address_owners,replay,ctx.capacity)
         reverse_kernel[(b*h,)](*args,keys,values,strength,live,meta[5],
             *ctx.trace,gates,errors,addresses,before,widths,counts,boundaries,
             go,gk,gv,gs,dkout,dqout,dvout,dbeta,dpop,dlogit,dc,
@@ -261,6 +270,7 @@ def autograd_scan(inputs,state,cfg,coef):
         tokens=0
     else:
         if state.consumed:raise ValueError('FusedState handle was already consumed')
+        if state.replay_storage is not None:state.replay_storage.freeze()
         native=state.native;history=state.history;tokens=state.tokens
     if coef is None:coef=k.new_zeros(h)
     saved={"live_bound": 0 if state is None else (state.live_bound if isinstance(state,FusedState) else None),
