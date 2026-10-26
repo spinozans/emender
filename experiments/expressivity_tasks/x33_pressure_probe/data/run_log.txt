@@ -1,0 +1,126 @@
+=== SMOKE (bin_id + sweep_k720 on B0) ===
+[tape_B0] freeze verified: 0b674c71b5d9ed56174e8839766206af2fd0ba14b9bcf3b95dfd91ac24aa11b4 (185 files)
+Traceback (most recent call last):
+  File "/home/erikg/emender/experiments/expressivity_tasks/x33_pressure_probe/probe.py", line 625, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x33_pressure_probe/probe.py", line 621, in main
+    return evaluate_arm(args.arm, args.device, args.limit_pools)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x33_pressure_probe/probe.py", line 405, in evaluate_arm
+    model.load_state_dict(state)               # strict: byte-identity gate
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 2629, in load_state_dict
+    raise RuntimeError(
+RuntimeError: Error(s) in loading state_dict for TapeWordModel:
+	Unexpected key(s) in state_dict: "head_multi.weight", "head_multi.bias". 
+SMOKE FAILED — aborting before the full run
+=== SMOKE (bin_id + sweep_k720 on B0) ===
+[tape_B0] freeze verified: 0b674c71b5d9ed56174e8839766206af2fd0ba14b9bcf3b95dfd91ac24aa11b4 (185 files)
+Traceback (most recent call last):
+  File "/home/erikg/emender/experiments/expressivity_tasks/x33_pressure_probe/probe.py", line 631, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x33_pressure_probe/probe.py", line 627, in main
+    return evaluate_arm(args.arm, args.device, args.limit_pools)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x33_pressure_probe/probe.py", line 445, in evaluate_arm
+    y, _, state_out, trace = model.forward(x, collect_trace=True)
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x28e_memory_head/trainer.py", line 427, in forward
+    return self.layer(self.embed(x), collect_trace=collect_trace,
+                      ^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/sparse.py", line 192, in forward
+    return F.embedding(
+           ^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/functional.py", line 2542, in embedding
+    return torch.embedding(weight, input, padding_idx, scale_grad_by_freq, sparse)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Expected all tensors to be on the same device, but got index is on cuda:0, different from other tensors on cpu (when checking argument in method wrapper_CUDA__index_select)
+SMOKE FAILED — aborting before the full run
+=== SMOKE (bin_id + sweep_k720 on B0) ===
+[tape_B0] freeze verified: 0b674c71b5d9ed56174e8839766206af2fd0ba14b9bcf3b95dfd91ac24aa11b4 (185 files)
+[tape_B0] bin_id: acc=0.9941 recalls={'accept': 1.0, 'reject': 0.9883} meanP_acc=0.0000 peak=69.5 (8 mb, 1.21s)
+[tape_B0] sweep_k720: acc=1.0000 recalls={'accept': 1.0, 'reject': 1.0} meanP_acc=0.0000 peak=723.5 (5 mb, 0.89s)
+[tape_B0] crosscheck bin_id: 0.9941 == receipt 0.9941 OK
+[tape_B0] DONE in 2.1s (example records: tape_B0_per_example.jsonl)
+=== FULL tape_B0 ===
+[tape_B0] freeze verified: 0b674c71b5d9ed56174e8839766206af2fd0ba14b9bcf3b95dfd91ac24aa11b4 (185 files)
+[tape_B0] bin_id: acc=0.9941 recalls={'accept': 1.0, 'reject': 0.9883} meanP_acc=0.0000 peak=69.5 (8 mb, 1.19s)
+[tape_B0] bin_2x: acc=0.9805 recalls={'accept': 1.0, 'reject': 0.9609} meanP_acc=0.0000 peak=202.3 (8 mb, 0.87s)
+[tape_B0] bin_4x: acc=0.9844 recalls={'accept': 1.0, 'reject': 0.9688} meanP_acc=0.0000 peak=401.2 (9 mb, 1.71s)
+[tape_B0] bin_9x: acc=0.5000 recalls={'accept': 0.0, 'reject': 1.0} meanP_acc=0.4887 peak=736.0 (16 mb, 2.12s)
+[tape_B0] sweep_k608: acc=1.0000 recalls={'accept': 1.0, 'reject': 1.0} meanP_acc=0.0000 peak=626.4 (5 mb, 0.94s)
+[tape_B0] sweep_k624: acc=1.0000 recalls={'accept': 1.0, 'reject': 1.0} meanP_acc=0.0000 peak=638.5 (5 mb, 0.87s)
+[tape_B0] sweep_k640: acc=1.0000 recalls={'accept': 1.0, 'reject': 1.0} meanP_acc=0.0000 peak=653.2 (5 mb, 0.94s)
+[tape_B0] sweep_k656: acc=1.0000 recalls={'accept': 1.0, 'reject': 1.0} meanP_acc=0.0000 peak=668.7 (5 mb, 0.88s)
+[tape_B0] sweep_k672: acc=1.0000 recalls={'accept': 1.0, 'reject': 1.0} meanP_acc=0.0000 peak=681.8 (5 mb, 0.87s)
+[tape_B0] sweep_k688: acc=1.0000 recalls={'accept': 1.0, 'reject': 1.0} meanP_acc=0.0000 peak=696.2 (5 mb, 0.88s)
+[tape_B0] sweep_k704: acc=1.0000 recalls={'accept': 1.0, 'reject': 1.0} meanP_acc=0.0000 peak=709.8 (5 mb, 0.91s)
+[tape_B0] sweep_k720: acc=1.0000 recalls={'accept': 1.0, 'reject': 1.0} meanP_acc=0.0000 peak=723.5 (5 mb, 0.89s)
+[tape_B0] sweep_k736: acc=0.5000 recalls={'accept': 0.0, 'reject': 1.0} meanP_acc=0.0027 peak=736.0 (5 mb, 0.97s)
+[tape_B0] sweep_k752: acc=0.5000 recalls={'accept': 0.0, 'reject': 1.0} meanP_acc=0.0442 peak=736.0 (6 mb, 1.01s)
+[tape_B0] sweep_k768: acc=0.5000 recalls={'accept': 0.0, 'reject': 1.0} meanP_acc=0.0823 peak=736.0 (6 mb, 1.05s)
+[tape_B0] sweep_k784: acc=0.5000 recalls={'accept': 0.0, 'reject': 1.0} meanP_acc=0.1175 peak=736.0 (6 mb, 1.06s)
+[tape_B0] sweep_k800: acc=0.5000 recalls={'accept': 0.0, 'reject': 1.0} meanP_acc=0.1501 peak=736.0 (6 mb, 1.04s)
+[tape_B0] sweep_k816: acc=0.5000 recalls={'accept': 0.0, 'reject': 1.0} meanP_acc=0.1804 peak=736.0 (6 mb, 1.05s)
+[tape_B0] sweep_k832: acc=0.5000 recalls={'accept': 0.0, 'reject': 1.0} meanP_acc=0.2086 peak=736.0 (6 mb, 1.03s)
+[tape_B0] sweep_k848: acc=0.5000 recalls={'accept': 0.0, 'reject': 1.0} meanP_acc=0.2349 peak=736.0 (6 mb, 1.01s)
+[tape_B0] sweep_k864: acc=0.5000 recalls={'accept': 0.0, 'reject': 1.0} meanP_acc=0.2596 peak=736.0 (6 mb, 0.98s)
+[tape_B0] crosscheck bin_id: 0.9941 == receipt 0.9941 OK
+[tape_B0] crosscheck bin_2x: 0.9805 == receipt 0.9805 OK
+[tape_B0] crosscheck bin_4x: 0.9844 == receipt 0.9844 OK
+[tape_B0] crosscheck bin_9x: 0.5000 == receipt 0.5000 OK
+[tape_B0] DONE in 22.6s (example records: tape_B0_per_example.jsonl)
+=== FULL tape_B0x4 ===
+[tape_B0x4] freeze verified: 0b674c71b5d9ed56174e8839766206af2fd0ba14b9bcf3b95dfd91ac24aa11b4 (185 files)
+[tape_B0x4] bin_id: acc=0.9902 recalls={'accept': 1.0, 'reject': 0.9805} meanP_acc=0.0000 peak=69.5 (16 mb, 2.64s)
+[tape_B0x4] bin_2x: acc=0.9805 recalls={'accept': 1.0, 'reject': 0.9609} meanP_acc=0.0000 peak=202.3 (16 mb, 3.53s)
+[tape_B0x4] bin_4x: acc=0.9707 recalls={'accept': 0.9805, 'reject': 0.9609} meanP_acc=0.0000 peak=401.2 (18 mb, 6.79s)
+[tape_B0x4] bin_9x: acc=0.9473 recalls={'accept': 1.0, 'reject': 0.8945} meanP_acc=0.0000 peak=1134.6 (42 mb, 19.0s)
+[tape_B0x4] sweep_k2816: acc=0.8320 recalls={'accept': 1.0, 'reject': 0.6641} meanP_acc=0.0000 peak=2836.9 (57 mb, 52.11s)
+[tape_B0x4] sweep_k2832: acc=0.8320 recalls={'accept': 1.0, 'reject': 0.6641} meanP_acc=0.0000 peak=2849.7 (57 mb, 52.39s)
+[tape_B0x4] sweep_k2848: acc=0.8320 recalls={'accept': 1.0, 'reject': 0.6641} meanP_acc=0.0000 peak=2863.7 (58 mb, 53.81s)
+[tape_B0x4] sweep_k2864: acc=0.8320 recalls={'accept': 1.0, 'reject': 0.6641} meanP_acc=0.0000 peak=2877.8 (58 mb, 53.63s)
+[tape_B0x4] sweep_k2880: acc=0.8320 recalls={'accept': 1.0, 'reject': 0.6641} meanP_acc=0.0000 peak=2891.3 (57 mb, 52.7s)
+[tape_B0x4] sweep_k2896: acc=0.8320 recalls={'accept': 1.0, 'reject': 0.6641} meanP_acc=0.0000 peak=2904.8 (57 mb, 52.96s)
+[tape_B0x4] sweep_k2912: acc=0.8320 recalls={'accept': 1.0, 'reject': 0.6641} meanP_acc=0.0000 peak=2918.1 (59 mb, 56.06s)
+[tape_B0x4] sweep_k2928: acc=0.8320 recalls={'accept': 1.0, 'reject': 0.6641} meanP_acc=0.0000 peak=2931.5 (58 mb, 55.29s)
+[tape_B0x4] sweep_k2944: acc=0.8320 recalls={'accept': 1.0, 'reject': 0.6641} meanP_acc=0.0007 peak=2944.0 (59 mb, 56.78s)
+[tape_B0x4] sweep_k2960: acc=0.8320 recalls={'accept': 1.0, 'reject': 0.6641} meanP_acc=0.0114 peak=2944.0 (60 mb, 57.02s)
+[tape_B0x4] sweep_k2976: acc=0.8320 recalls={'accept': 1.0, 'reject': 0.6641} meanP_acc=0.0219 peak=2944.0 (59 mb, 56.3s)
+[tape_B0x4] sweep_k2992: acc=0.8320 recalls={'accept': 1.0, 'reject': 0.6641} meanP_acc=0.0322 peak=2944.0 (57 mb, 54.56s)
+[tape_B0x4] sweep_k3008: acc=0.8320 recalls={'accept': 1.0, 'reject': 0.6641} meanP_acc=0.0423 peak=2944.0 (60 mb, 57.74s)
+[tape_B0x4] sweep_k3024: acc=0.8320 recalls={'accept': 1.0, 'reject': 0.6641} meanP_acc=0.0522 peak=2944.0 (59 mb, 57.65s)
+[tape_B0x4] sweep_k3040: acc=0.5000 recalls={'accept': 0.0, 'reject': 1.0} meanP_acc=0.0618 peak=2944.0 (59 mb, 57.68s)
+[tape_B0x4] sweep_k3056: acc=0.5000 recalls={'accept': 0.0, 'reject': 1.0} meanP_acc=0.0713 peak=2944.0 (60 mb, 59.71s)
+[tape_B0x4] sweep_k3072: acc=0.5000 recalls={'accept': 0.0, 'reject': 1.0} meanP_acc=0.0806 peak=2944.0 (59 mb, 58.42s)
+[tape_B0x4] sweep_k608: acc=0.5000 recalls={'accept': 0.0, 'reject': 1.0} meanP_acc=0.0000 peak=634.6 (12 mb, 17.44s)
+[tape_B0x4] sweep_k624: acc=0.5000 recalls={'accept': 0.0, 'reject': 1.0} meanP_acc=0.0000 peak=645.6 (12 mb, 17.7s)
+[tape_B0x4] sweep_k640: acc=0.5000 recalls={'accept': 0.0, 'reject': 1.0} meanP_acc=0.0000 peak=666.0 (12 mb, 17.92s)
+[tape_B0x4] sweep_k656: acc=0.5000 recalls={'accept': 0.0, 'reject': 1.0} meanP_acc=0.0000 peak=688.6 (13 mb, 18.22s)
+[tape_B0x4] sweep_k672: acc=0.5000 recalls={'accept': 0.0, 'reject': 1.0} meanP_acc=0.0000 peak=697.5 (13 mb, 18.2s)
+[tape_B0x4] sweep_k688: acc=0.5000 recalls={'accept': 0.0, 'reject': 1.0} meanP_acc=0.0000 peak=714.3 (13 mb, 16.84s)
+[tape_B0x4] sweep_k704: acc=0.5000 recalls={'accept': 0.0, 'reject': 1.0} meanP_acc=0.0000 peak=735.5 (13 mb, 18.77s)
+[tape_B0x4] sweep_k720: acc=0.5000 recalls={'accept': 0.0, 'reject': 1.0} meanP_acc=0.0000 peak=748.8 (14 mb, 18.93s)
+[tape_B0x4] sweep_k736: acc=0.5000 recalls={'accept': 0.0, 'reject': 1.0} meanP_acc=0.0000 peak=766.4 (14 mb, 20.93s)
+[tape_B0x4] sweep_k752: acc=0.5000 recalls={'accept': 0.0, 'reject': 1.0} meanP_acc=0.0000 peak=787.6 (14 mb, 19.1s)
+[tape_B0x4] sweep_k768: acc=0.5000 recalls={'accept': 0.0, 'reject': 1.0} meanP_acc=0.0000 peak=799.2 (14 mb, 19.21s)
+[tape_B0x4] sweep_k784: acc=0.5000 recalls={'accept': 0.0, 'reject': 1.0} meanP_acc=0.0000 peak=818.3 (15 mb, 21.19s)
+[tape_B0x4] sweep_k800: acc=0.5000 recalls={'accept': 0.0, 'reject': 1.0} meanP_acc=0.0000 peak=825.7 (15 mb, 21.33s)
+[tape_B0x4] sweep_k816: acc=0.5000 recalls={'accept': 0.0, 'reject': 1.0} meanP_acc=0.0000 peak=849.3 (15 mb, 19.7s)
+[tape_B0x4] sweep_k832: acc=1.0000 recalls={'accept': 1.0, 'reject': 1.0} meanP_acc=0.0000 peak=865.0 (16 mb, 22.01s)
+[tape_B0x4] sweep_k848: acc=1.0000 recalls={'accept': 1.0, 'reject': 1.0} meanP_acc=0.0000 peak=885.6 (16 mb, 18.72s)
+[tape_B0x4] sweep_k864: acc=1.0000 recalls={'accept': 1.0, 'reject': 1.0} meanP_acc=0.0000 peak=891.5 (17 mb, 24.04s)
+[tape_B0x4] crosscheck bin_id: 0.9902 == receipt 0.9902 OK
+[tape_B0x4] crosscheck bin_2x: 0.9805 == receipt 0.9805 OK
+[tape_B0x4] crosscheck bin_4x: 0.9707 == receipt 0.9707 OK
+[tape_B0x4] crosscheck bin_9x: 0.9473 == receipt 0.9473 OK
+[tape_B0x4] DONE in 1307.6s (example records: tape_B0x4_per_example.jsonl)
+X33 ALL_DONE at 2026-10-26T18:40:23+00:00

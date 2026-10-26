@@ -128,8 +128,86 @@ at the separation claim or a null outcome forces the honest null.
 
 ## Measured values (filled after the run — nothing below existed before it)
 
-*To be appended after the eval run; see `REPORT.md` for the full analysis.*
+Run identity: freeze manifest `0b674c71b5d9…aa11b4` re-verified by the probe
+(185 files); checkpoints loaded read-only, sha256s as bound above; all 8 bin
+balanced accuracies reproduce the X28E `final_eval.json` receipts
+**byte-identically** (B0: 0.9941/0.9805/0.9844/0.5000; B0x4:
+0.9902/0.9805/0.9707/0.9473). Extractor self-test vs brute-force oracle:
+24/24 PASS. Walls: B0 22.6 s, B0x4 1307.6 s on leased card 5 (cards 2/3/4
+at 99–100% util with other experiments during the run; card 7 excluded).
+
+**B0 (B=736):** zero pressure at every holding depth (k ≤ 720: cumP 0.0000,
+zero events, peak = k+1). Collapse (acc 0.50, accept recall 0.0) begins at
+**k=736 exactly**, where the first R-CAPs fire (8 per word — the final
+b-append and the EOS). Cumulative pressure then rises steeply and
+monotonically: 0.0027 (736), 0.0442 (752), 0.0823 (768), 0.1175 (784),
+0.1501 (800), 0.1804 (816), 0.2086 (832), 0.2349 (848), 0.2596 (864);
+bin_9x 0.4407 (k=1025) → 0.5312 (k=1152). **It never reaches 0.9.**
+Windowed W64 saturation fires on 100% of accept words at every k ≥ 768
+(median first_sat = 1524 = 2B+52) but NOT at k=736/752 (collapse without a
+windowed event; raw R-CAP does fire there). Word-level: any-R-CAP ⟺
+accept-incorrect, 1408/1408, PPV 1.000, sensitivity 1.000, zero false
+alarms on 1,792 correct accepts.
+
+**B0x4 (B=2944):** bins hold with pressure 0.0000 (9x: acc 0.9473, peak
+1134 ≪ 2944 — P4 supported). Own sweep: acc 0.832 for k=2816–3032 with
+cumP 0.0000 through k=2928 — the 0.832 is entirely count_mismatch
+(j=k±1) failures, off-by-one count blindness pressure cannot see. First
+R-CAP at **k=2944** (demand ~k+2 crosses the budget); W64 saturation from
+k=2976 (first_sat 5940 = 2B+52); accept-collapse (acc 0.50) at **k=3040** —
+pressure leads collapse by 96 depth, saturation by 64; every collapsing
+word is saturated. P5 supported.
+
+**The honest null fires (finding of record):** at the shared sweep points
+B0x4 **collapses at k=608–816 with pressure identically 0.0000** and peak
+live ≈ k+1 ≤ 849 (3.5× under budget), holding again at 832–864 — a
+non-capacity collapse band (confirmed by an independent minimal forward:
+near-flat accept margins −0.003 in the band, +0.000..0.001 above it).
+This refutes P3's accuracy clause (“B0x4 holds at B0's collapse depths”)
+and half of H1's implied contrast; the pressure clause of P3 holds (0.0000,
+zero events at all shared k). Additionally B0x4 k=2976–3024 shows windowed
+saturation at acc 0.832 (saturation without registered-criterion collapse).
+
+**Mechanism (single-word dump, B0 k=864):** all 4 heads in lockstep — SOS
+R-EMPTY, then alternating R-CONFLICT (no allocation) / R-NOMATCH (append)
+on every token through BOTH phases; POP never fires in any traced word of
+either arm; the store fills at fixed position ≈ 2B−2 (token 1470), after
+which every token on every head fires R-CAP. The word's append demand is
+~k+2 slots, so the budget binds at k ≈ B (measured cliffs: B0 k=736,
+B0x4 pressure onset k=2944). P6's registered form is refuted: saturation is
+mid-b-phase (lead_b < 0); it precedes the EOS verdict by 13–205 tokens
+(B0 sweep, deterministic 2k−1471), 527–781 tokens (B0 9x accepts),
+141–205 tokens (B0x4 collapsing words).
+
+Landmarks: B0 k_acc99 = k_acc75 = 736 = first R-CAP; k_p50 = 1103; k_psat =
+none (max cumP 0.531). B0x4 k_acc99 = 2816; k_acc75 = 3040; first R-CAP =
+2944; k_p50 = k_psat = none (max 0.081).
 
 ## Verdict
 
-*To be appended.*
+**H1: MIXED** — precisely the pre-registered mixed case: cumulative R-CAP
+fraction rises steeply at the budget (and k_p50 = 1103 lies inside the
+registered [736, 1152]) but never saturates ≥ 0.9 at any probed depth,
+while the windowed register saturates exactly across the collapse region
+(k ≥ 768 at B0). The honest null fires: accuracy collapses WITHOUT
+pressure (B0x4 hole band k∈[560,816], 1,792 accept words, pressure 0,
+occupancy ≤ 29% of budget), and pressure saturates without the registered
+collapse criterion at B0x4 k=2976–3024 (acc 0.832, saturation leading
+collapse by 64 depth).
+
+Per-prediction: P1 partial (holds at k ≥ 768; k=736/752 collapse without
+windowed events though raw R-CAP fires); P2 mixed (steep rise ✓, k_p50 ✓,
+cumulative ≥ 0.9 ✗ — max 0.53); P3 refuted as stated (pressure clause ✓,
+accuracy clause ✗ — B0x4 collapses at 608–816 with zero pressure); P4
+supported; P5 supported; P6 refuted as registered (saturation mid-b-phase),
+reformulated: the register precedes the EOS verdict by 13–781 tokens.
+
+**The defensible claim:** the pressure register is a *specific*
+(inference-time observable, one-directional) predictor of **capacity**
+collapse — at B0 it separates collapsing from holding words perfectly
+(PPV 1.000 / sensitivity 1.000 over 6,400 words) and the cliff coincides
+exactly with the first degraded append; at B0x4 it fires at the budget and
+leads accept-collapse by 96 depth. It is NOT a sensitive predictor of
+collapse in general: a large non-capacity collapse band exists that it
+correctly does not flag. Full analysis: REPORT.md; scatter data:
+data/*.jsonl, data/*.json.
