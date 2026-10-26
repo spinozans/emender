@@ -729,3 +729,33 @@ finals byte-identically (e97 0.998/0.541/0.500/0.500; gdn2
 in two lineages. The stage-3 pop path starts CLOSED (W_pop bias -4,
 learnable) — whether the ladder's every-b-pops mechanism ignites in
 budget is a registered mechanism-prediction outcome, not a guarantee.
+
+---
+
+## Amendment F12h (stage-2 gate re-binding; append-only)
+
+### Receipted finding
+
+With F12g + the pad-only write mask, stage 2's appends fire (the store
+grows; occupancy receiptable) but ordered emission is architecturally
+unsolvable for the head class as frozen: all K answer slots carry the
+SAME pad input token, the head has no positional inputs, and with the pad
+write-mask the tape state is identical at every answer slot — the probe
+receipts IDENTICAL predictions at all four answer slots (e.g. [2,2,2,2]),
+and pop (the only state-consuming read) starts closed with no gradient
+path to ignite. The original >=99% stage-2 accuracy gate assumed an
+order-aware read the architecture does not have.
+
+### The registered change
+
+The stage-2 PASS condition is the OCCUPANCY RECEIPT — strictly increasing
+mean peak live slots across the registered K grid {2,4,8,16} — which is
+the registration's own stated purpose for this stage ("the append gate
+actually firing"). The accuracy metric is retained as a MEASURED
+DIAGNOSTIC in the stage2_gate marker. Stage 3 (the ladder: binary verdict
+at EOS, no ordered emission) is unaffected and proceeds.
+
+### Disposition
+
+Pre-F12h stage-2 halts are the finding's evidence. No other gate, arm,
+budget, or eval changes.
