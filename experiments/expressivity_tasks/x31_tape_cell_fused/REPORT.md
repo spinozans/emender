@@ -6,6 +6,80 @@ It does not deliver the requested performance-first training implementation.
 Training calls fail explicitly rather than silently using the X30 engine.
 No training result, performance speedup or successful acceptance is claimed.
 
+## Part 3 implementation status — incomplete
+
+This continuation implements a device birth-order index, persistent chunk
+metadata and a tiled `tl.dot` scoring path. Mutation-time journaling, the
+custom autograd Function and fused reverse replay remain **NOT IMPLEMENTED**.
+The full forward-and-first-order-gradient gate therefore remains **UNMET**.
+MQAR, ladder (including per-class recalls) and every registered cost gate
+remain **NOT RUN / NOT MEASURED**. Preregistered targets are unchanged.
+
+`birth_index.py` stably sorts imported live slots by age then slot ID once,
+and maintains a doubly linked device order through appends, pop deaths and
+scheduled deaths. Target selection no longer reduces over the slot vector.
+Youngest fallback and lowest-slot birth ties are preserved. Ordinary appends
+prepend and removals take constant pointer work. This is not X30's complete
+birth-group index: imported age-zero ties or future births can require a
+linear pointer walk. No bounded-depth lookup or performance claim is made.
+
+`FusedState` owns its native buffers and metadata. Continuation reuses heap,
+inverse positions, due times, terminal strengths, birth/touch timestamps,
+free bitmap, birth links, heap size, lazy strength references and scoring
+scratch. Native TapeState import still copies once and initializes metadata;
+continuation does neither reconstruction nor full-state cloning. The kernel
+still loads/spills dense read metadata and emits dense death diagnostics.
+Lazy references remain unmaterialized internally across chunk boundaries.
+The absolute token clock is a runtime argument to avoid compiling a distinct
+kernel for every chunk position.
+
+**API change:** passing a returned FusedState consumes that handle and mutates
+its buffers in place. Reuse raises ValueError. Call `state.snapshot()` before
+continuation to retain an independent branch; snapshot explicitly costs O(S).
+Native TapeState imports remain unchanged. Historical native tensor aliases
+from a consumed handle are not immutable snapshots. Do not concurrently use
+the same owned state. This inference ownership model does not establish
+autograd safety or imported-state gradients.
+
+Scoring now tiles slot columns by 32 with `tl.dot`, using fp32 `tf32x3`
+precision. Each recurrent query pads to M=16 and K pads to at least 32;
+only its first output row is retained. Stores remain separate programs on
+the B*H grid; time remains sequential. Value weighting remains a reduction.
+The wasted query rows and scratch traffic may be costly. This establishes a
+tiled scoring implementation, not an efficient cross-head GEMM or any speedup.
+
+Final leased GPU receipt: **49 passed in 221.41 s**, including compilation,
+on lambda01 physical card 1, Python 3.12.3. Full output:
+`validation_part3.txt`. The existing 25 seeded imported-state cases at
+S={1,7,16,736,11776} still satisfy forward/state atol=rtol=1e-5 and exact
+discrete traces, including split continuation. Six added cases cover three
+birth-order fixtures (ties, pop deaths, low imported strengths, reuse and
+negative imported ages), persistent pointer identity and independent snapshot
+branches, and key dimensions 31/64 with nonmultiple-of-32 slot count 37.
+These are forward checks, not first-order-gradient validation.
+
+Validation chronology: an intermediate birth-only implementation completed
+43 tests in 251.79 s (terminal output); the first tiled build then failed
+compilation, with 15 passed / 1 failed, because tile-width computation ran
+inside JIT (`validation_part3_compile_failure.txt`). Moving the width to a
+host constexpr fixed it. The next implementation completed 47 tests in
+217.60 s (`validation_part3_intermediate.txt`). The final 49-test run includes
+the runtime absolute clock and the two additional key-dimension cases. None
+of these runs was interrupted. Pytest durations include compilation and
+are not cost receipts. Manual inspection of a newly cached scan PTX found
+`mma.sync.aligned.m16n8k8.row.col.f32.tf32.tf32.f32` instructions; this is
+code-generation evidence only. Scoped `git diff --check` passed.
+
+The implementation is a partial delivery of items 1–2, not completion of the
+part 3 task. Items 3–6 remain outstanding. No .pt artifacts, WG services,
+delegated agents, Frontier runs or resilient training changes are involved.
+
+## Historical parts 1–2 record
+
+The descriptions and ledger below record the state before part 3; the current
+implementation status above supersedes their missing birth-index/tiled-read
+and per-chunk-copy statements. Their training and gradient limitations remain.
+
 ## Built and checked
 
 `cell_fused.py` supplies F12g projections and a functional-state scan adapter.

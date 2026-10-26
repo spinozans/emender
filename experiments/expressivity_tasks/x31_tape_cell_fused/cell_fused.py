@@ -1,8 +1,8 @@
 """Experimental inference-only fused scan. Training fails closed.
 
-This baseline exposes the native functional state and routing trace to make
-comparison straightforward. It is not the requested sparse training cell:
-dense metadata/trace and entry-state copies remain explicit.
+This baseline exposes native state and routing traces for comparison. Native
+imports copy once; owned continuation buffers persist between chunks. It is
+not the requested sparse training cell: dense read metadata/traces remain.
 """
 from dataclasses import dataclass
 import struct
@@ -11,20 +11,40 @@ import triton
 from ..x30_tape_cell.naive_reference import TapeHeadConfig, TapeState, init_state
 from ..x30_tape_cell.routing_trace import RoutingTrace
 from .kernels import scan_kernel
+from .birth_index import initialize as initialize_birth_index
 
 
 @dataclass
 class FusedState:
+    """Owned continuation buffer. Passing it to scan consumes this handle.
+
+    Native TapeState imports remain immutable. Use snapshot() to branch a
+    continuation explicitly; ordinary continuation reuses device allocations.
+    """
     native: TapeState
     history: torch.Tensor
     tokens: int = 0
+    metadata: tuple | None = None
+    configuration: tuple | None = None
+    consumed: bool = False
+
+    def snapshot(self):
+        if self.consumed:
+            raise ValueError('FusedState handle was already consumed')
+        native = TapeState(*(getattr(self.native,n).clone() for n in
+                             ('keys','values','strength','live','age','usage')))
+        meta = None if self.metadata is None else tuple(x.clone() for x in self.metadata)
+        return FusedState(native,self.history.clone(),self.tokens,meta,self.configuration)
 
 
 def tape_scan(k, q, v, write_strength, pop_strength, append_logit, state,
               cfg: TapeHeadConfig, append_err_coef=None):
     """One scan launch per chunk; no Python token loop or scalar routing.
 
-    Inputs [batch,time,heads,dim]. No silent fallback to X30 autograd.
+    Inputs [batch,time,heads,dim]. Native TapeState imports are copied. Returned
+    FusedState buffers are consumed in place on continuation; snapshot first
+    when an independent branch or immutable historical state is needed.
+    No silent fallback to X30 autograd.
     Usage EMA instrumentation is excluded from this functional baseline.
     """
     tensors = (k, q, v, write_strength, pop_strength, append_logit)
@@ -47,6 +67,12 @@ def tape_scan(k, q, v, write_strength, pop_strength, append_logit, state,
     elif isinstance(state, TapeState):
         state = FusedState(state,torch.zeros(b*h,128,device=k.device,dtype=torch.int32))
     native = state.native
+    if state.consumed:
+        raise ValueError('FusedState handle was already consumed; snapshot before branching')
+    configuration = (cfg.slots,cfg.key_dim,cfg.value_dim,cfg.n_heads,
+                     cfg.decay_rate,cfg.free_threshold)
+    if state.metadata is not None and state.configuration != configuration:
+        raise ValueError('persistent metadata/config mismatch')
     if (native.live.shape != (b,h,cfg.slots)
         or native.keys.shape != (b,h,cfg.slots,dk)
         or native.values.shape != (b,h,cfg.slots,cfg.value_dim)
@@ -64,28 +90,42 @@ def tape_scan(k, q, v, write_strength, pop_strength, append_logit, state,
     args = list(map(flat,tensors))
     coef = (torch.zeros(h,device=k.device) if append_err_coef is None
             else append_err_coef).repeat(b).contiguous()
-    keys, values, strength, live, age = [getattr(native,name).clone().contiguous()
-                                        for name in ('keys','values','strength','live','age')]
+    fresh = state.metadata is None
+    keys, values, strength, live, age = [
+        getattr(native,name).clone().contiguous() if fresh else getattr(native,name)
+        for name in ('keys','values','strength','live','age')]
     output = torch.empty(b,h,t,cfg.value_dim,device=k.device)
     case, matched, alloc, pops = [torch.empty(b,h,t,device=k.device,dtype=torch.int64)
                                  for _ in range(4)]
     freed = torch.empty(b,h,t,cfg.slots,device=k.device,dtype=torch.int8)
     pressure = torch.empty(b,h,t,device=k.device)
-    history = state.history.clone()
-    heap = torch.empty((b*h,cfg.slots),device=k.device,dtype=torch.int32)
-    position = torch.empty_like(heap)
-    due = torch.empty((b*h,cfg.slots),device=k.device,dtype=torch.int64)
-    terminal = torch.empty((b*h,cfg.slots),device=k.device,dtype=torch.float32)
-    births = torch.empty_like(due)
-    touches = torch.empty_like(due)
-    level0 = torch.zeros((b*h,triton.cdiv(cfg.slots,64)),device=k.device,dtype=torch.uint64)
-    level1 = torch.zeros((b*h,triton.cdiv(triton.cdiv(cfg.slots,64),64)),device=k.device,dtype=torch.uint64)
-    root = torch.zeros(b*h,device=k.device,dtype=torch.uint64)
+    history = state.history.clone() if fresh else state.history
+    if fresh:
+        heap = torch.empty((b*h,cfg.slots),device=k.device,dtype=torch.int32)
+        position = torch.empty_like(heap)
+        due = torch.empty((b*h,cfg.slots),device=k.device,dtype=torch.int64)
+        terminal = torch.empty((b*h,cfg.slots),device=k.device,dtype=torch.float32)
+        births = torch.empty_like(due)
+        touches = torch.empty_like(due)
+        level0 = torch.zeros((b*h,triton.cdiv(cfg.slots,64)),device=k.device,dtype=torch.uint64)
+        level1 = torch.zeros((b*h,triton.cdiv(triton.cdiv(cfg.slots,64),64)),device=k.device,dtype=torch.uint64)
+        root = torch.zeros(b*h,device=k.device,dtype=torch.uint64)
+        birth_next, birth_prev, birth_head = initialize_birth_index(live, age)
+        sizes = torch.empty(b*h,device=k.device,dtype=torch.int32)
+        references = torch.empty_like(strength)
+        scores = torch.empty_like(strength)
+        metadata = (heap,position,due,terminal,births,touches,level0,level1,root,
+                    birth_next,birth_prev,birth_head,sizes,references,scores)
+    else:
+        metadata = state.metadata
+        (heap,position,due,terminal,births,touches,level0,level1,root,
+         birth_next,birth_prev,birth_head,sizes,references,scores) = metadata
     scan_kernel[(b*h,)](*args,coef,keys,values,strength,live,age,
         output,case,matched,alloc,pops,freed,pressure,history,heap,position,due,terminal,
-        births,touches,level0,level1,root,state.tokens,
+        births,touches,level0,level1,root,birth_next,birth_prev,birth_head,sizes,references,scores,
+        fresh,state.tokens,
         t,cfg.slots,dk,cfg.value_dim,triton.next_power_of_2(cfg.slots),
-        triton.next_power_of_2(cfg.value_dim),
+        triton.next_power_of_2(cfg.value_dim),triton.next_power_of_2(max(32,dk)),
         struct.unpack('<f',struct.pack('<f',cfg.decay_rate))[0],cfg.free_threshold,
         cfg.write_enable_threshold,cfg.pop_threshold,cfg.eps_residual,
         enable_fp_fusion=False,debug=True,num_warps=4)
@@ -94,7 +134,8 @@ def tape_scan(k, q, v, write_strength, pop_strength, append_logit, state,
     trace = RoutingTrace(*map(unflat,(case,matched,pops>=0,pops,alloc,
                                      args[3]>cfg.write_enable_threshold,freed)))
     final = TapeState(keys,values,strength,live,age,native.usage)
-    return unflat(output),FusedState(final,history,state.tokens+t),trace,unflat(pressure)
+    state.consumed = True
+    return unflat(output),FusedState(final,history,state.tokens+t,metadata,configuration),trace,unflat(pressure)
 
 
 class TapeCell(torch.nn.Module):

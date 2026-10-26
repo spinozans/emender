@@ -31,6 +31,35 @@ CPU interpreter checks are correctness diagnostics, never GPU performance.
 
 Pending. Unrun gates must remain explicitly unrun, never inferred from v1.
 
+### Part 3 current acceptance ledger (partial delivery)
+
+Targets above remain unchanged; this section records status, not registration.
+
+| Deliverable / registered gate | Current result |
+|---|---|
+| Sparse birth index | Device linked birth order implemented; not X30's bounded-depth birth-group structure; imported future/age-zero ties can walk O(S) |
+| Persistent metadata / no continuation clones | Implemented with consuming FusedState ownership and explicit snapshot branching; native import still copies/initializes once |
+| Tiled tensor-core scoring | `tl.dot` slot tiles, fp32 tf32x3; padded single-query rows, no batching efficiency or speedup claim |
+| Mutation-time captured O(events) journal | NOT IMPLEMENTED; standalone old rollback primitive is not integrated |
+| Fused backward / custom autograd / G10 | NOT IMPLEMENTED; training still fails closed |
+| Gate 1, complete forward + gradient parity | UNMET; forward checks cannot substitute for first-order gradients |
+| Gate 2, MQAR >=0.99 by 5000 | NOT RUN |
+| Gate 3, ladder >0.9 by 2500 | NOT RUN; accept/reject recalls unavailable |
+| Gate 4, >=1x at S736 / >=10x at S11776 / H16:H1 <=2 | NOT MEASURED |
+| Gate 5, checkpoint overhead <=5% | NOT MEASURED |
+| Gate 6, append-phase speedup >1x | NOT MEASURED |
+
+All training and timing remain withheld under gate 1. See REPORT.md for the
+ownership API change, remaining dense operations and validation chronology.
+
+Final part 3 forward-only validation: `run_leased.sh -q -x` completed
+**49 passed in 221.41 s**, including compilation, lambda01 physical GPU 1.
+Output: `validation_part3.txt`. Six new cases supplement the prior 43 tests;
+exact traces and 1e-5 forward/state checks pass in the tested cases.
+The earlier compilation failure and intermediate 47-test pass are retained
+separately. No interrupted run is counted as a pass. This receipt does not
+clear gate 1, establish gradients, or authorize a performance/training claim.
+
 ### Recorded validation (2026-10-26)
 
 The initial small-store GPU suite passed 20 tests. The final expanded suite

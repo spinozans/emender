@@ -1,0 +1,68 @@
+gpu_lease: granted GPUs: 1 (pid 638964)
+X31 physical card 1
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0
+rootdir: /home/erikg/emender
+configfile: pyproject.toml
+plugins: timeout-2.4.0, anyio-4.13.0
+collected 47 items
+
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_components.py . [  2%]
+..                                                                       [  6%]
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_device_free.py . [  8%]
+                                                                         [  8%]
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_lazy_decay.py . [ 10%]
+..........                                                               [ 31%]
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_parity.py F [ 34%]
+
+
+=================================== FAILURES ===================================
+_______________________ test_random_imported_store[1-0] ________________________
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:1089: in __call__
+    res = self.fn(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/__init__.py:74: in next_power_of_2
+    n -= 1
+.venv/lib/python3.12/site-packages/triton/language/core.py:41: in wrapper
+    raise ValueError("Did you forget to add @triton.jit ? "
+E   ValueError: Did you forget to add @triton.jit ? (`_semantic` argument must be provided outside of JIT functions.)
+
+The above exception was the direct cause of the following exception:
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_parity.py:36: in test_random_imported_store
+    actual,fs,trace,pressure = tape_scan(k,q,v,beta,pop,logit,state,cfg,coef)
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x31_tape_cell_fused/cell_fused.py:123: in tape_scan
+    scan_kernel[(b*h,)](*args,coef,keys,values,strength,live,age,
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:733: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:861: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:300: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:80: in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+E   triton.compiler.errors.CompilationError: at 64:26:
+E       else:
+E           size = tl.load(Sizes+n)
+E       for t in range(T):
+E           clock = Start+t
+E           tl.device_assert((size >= 0) & (size <= S), "invalid heap size")
+E           strength = advance_exact(reference, tl.where(live, clock-touch, 0), Decay)
+E           age = tl.where(live, clock-birth, age)
+E           inp = n*T+t
+E           # A single recurrent query is padded to the MMA minimum M=16. Keys
+E           # are tiled along slots; fp32 tf32x3 avoids the accuracy loss of tf32.
+E           # This establishes the dot path, not an efficient batching receipt.
+E           rk = tl.arange(0, triton.next_power_of_2(max(32, DK)))
+E                             ^
+E   Did you forget to add @triton.jit ? (`_semantic` argument must be provided outside of JIT functions.)
+=========================== short test summary info ============================
+FAILED experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_parity.py::test_random_imported_store[1-0]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+========================= 1 failed, 15 passed in 9.84s =========================

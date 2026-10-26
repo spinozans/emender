@@ -90,3 +90,82 @@ def test_zero_residual_and_age_tie():
     x = torch.ones(1,1,1,2,device=dev); g = torch.ones(1,1,1,device=dev)
     _,_,tr,_ = tape_scan(x,x,x,g,torch.zeros_like(g),g,state,cfg)
     assert tr.case.item() == 3 and tr.matched.item() == 0 and tr.alloc_target.item() == 2
+
+
+@pytest.mark.parametrize('ages', [[1,1,3,0,4], [-2,1,-1,1,4], [0,0,0,0,0]])
+def test_birth_order_pop_death_reuse_and_future_import(ages):
+    dev = device()
+    cfg = oracle.TapeHeadConfig(key_dim=2,value_dim=2,n_heads=1,budget=5,
+                               decay_rate=.8,free_threshold=.2)
+    state = oracle.init_state(1,cfg,dev)
+    state.live.fill_(True)
+    state.strength.fill_(1.)
+    state.strength[:,:,2] = .1  # removed after the first read
+    state.age.copy_(torch.tensor(ages,device=dev).reshape(1,1,5))
+    state.keys[:,:,0] = 10.  # pop removes the youngest/tied head
+    state.values.fill_(.25)
+    x = torch.ones(1,8,1,2,device=dev)
+    beta = torch.ones(1,8,1,device=dev)
+    pop = beta.clone(); pop[:,1::2] = 0
+    expected, final, trace = oracle.tape_scan(x,x,x,beta,pop,beta,state,cfg)
+    actual, fused, decisions, _ = tape_scan(x,x,x,beta,pop,beta,state,cfg)
+    torch.testing.assert_close(actual,expected,atol=1e-5,rtol=1e-5)
+    for name in ('keys','values','strength','live','age'):
+        torch.testing.assert_close(getattr(fused.native,name),getattr(final,name),
+                                   atol=1e-5,rtol=1e-5)
+    for name in ('case','matched','alloc_target','pop_target','freed'):
+        assert torch.equal(getattr(decisions,name),getattr(trace,name)), name
+
+
+def test_persistent_ownership_and_snapshot_branch():
+    dev = device()
+    cfg = oracle.TapeHeadConfig(key_dim=4,value_dim=3,n_heads=1,budget=7,
+                               decay_rate=.8,free_threshold=.2)
+    torch.manual_seed(37)
+    k,q = [torch.randn(1,6,1,4,device=dev) for _ in range(2)]
+    v = torch.randn(1,6,1,3,device=dev)
+    beta = torch.ones(1,6,1,device=dev)
+    pop = torch.rand_like(beta)
+    logit = torch.zeros_like(beta)
+    _, mid, _, _ = tape_scan(k[:,:2],q[:,:2],v[:,:2],beta[:,:2],pop[:,:2],logit[:,:2],None,cfg)
+    branch = mid.snapshot()
+    pointers = [x.data_ptr() for x in mid.metadata]
+    native_pointers = [getattr(mid.native,n).data_ptr() for n in
+                       ('keys','values','strength','live','age')]
+    suffix = (k[:,2:],q[:,2:],v[:,2:],beta[:,2:],pop[:,2:],logit[:,2:])
+    a, end, ta, _ = tape_scan(*suffix,mid,cfg)
+    z, other, tz, _ = tape_scan(*suffix,branch,cfg)
+    assert pointers == [x.data_ptr() for x in end.metadata]
+    assert native_pointers == [getattr(end.native,n).data_ptr() for n in
+                               ('keys','values','strength','live','age')]
+    torch.testing.assert_close(a,z,atol=0,rtol=0)
+    assert torch.equal(ta.case,tz.case)
+    for name in ('keys','values','strength','live','age'):
+        torch.testing.assert_close(getattr(end.native,name),getattr(other.native,name),atol=0,rtol=0)
+    with pytest.raises(ValueError,match='consumed'):
+        tape_scan(*suffix,mid,cfg)
+    with pytest.raises(ValueError,match='consumed'):
+        mid.snapshot()
+
+
+@pytest.mark.parametrize('dk',[31,64])
+def test_tiled_scoring_key_dimensions(dk):
+    dev = device()
+    torch.manual_seed(913)
+    cfg = oracle.TapeHeadConfig(key_dim=dk,value_dim=16,n_heads=2,budget=37,
+                               decay_rate=.99)
+    state = oracle.init_state(2,cfg,dev)
+    state.live.fill_(True); state.strength.uniform_(.3,1)
+    state.keys.normal_(); state.values.normal_(); state.age.fill_(1)
+    k,q = [torch.randn(2,5,2,dk,device=dev) for _ in range(2)]
+    v = torch.randn(2,5,2,16,device=dev)
+    beta = torch.ones(2,5,2,device=dev)
+    pop = torch.rand_like(beta)
+    logit = torch.zeros_like(beta)
+    expected, final, trace = oracle.tape_scan(k,q,v,beta,pop,logit,state,cfg)
+    actual, fused, decisions, _ = tape_scan(k,q,v,beta,pop,logit,state,cfg)
+    torch.testing.assert_close(actual,expected,atol=1e-5,rtol=1e-5)
+    for name in ('keys','values','strength','live','age'):
+        torch.testing.assert_close(getattr(fused.native,name),getattr(final,name),atol=1e-5,rtol=1e-5)
+    for name in ('case','matched','alloc_target','pop_target','freed'):
+        assert torch.equal(getattr(decisions,name),getattr(trace,name)), name
