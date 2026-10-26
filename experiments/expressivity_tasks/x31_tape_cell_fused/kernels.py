@@ -11,6 +11,7 @@ from .lazy_decay import advance_exact, death_exact
 from .device_schedule import schedule, cancel, next_due
 from .device_free import set_free, lowest_free
 from .birth_index import remove as birth_remove, insert as birth_insert, select as birth_select
+from .write_journal import capture_payload
 
 
 @triton.jit
@@ -18,6 +19,8 @@ def scan_kernel(K, Q, V, Beta, Pop, Logit, Coef, Keys, Values, Strength,
                 Live, Age, Output, Cases, Matched, Alloc, Pops, Freed,
                 Pressure, History, Heap, Position, Due, Terminal, BirthStore, TouchStore,
                 L0, L1, Root, BirthNext, BirthPrev, BirthHead, Sizes, References, Scores,
+                JournalSlots, JournalKeys, JournalValues,
+                RecordPayload: tl.constexpr, JournalBlock: tl.constexpr,
                 Fresh: tl.constexpr, Start,
                 T: tl.constexpr, S: tl.constexpr, DK: tl.constexpr,
                 DV: tl.constexpr, BS: tl.constexpr, BV: tl.constexpr, BK: tl.constexpr,
@@ -157,6 +160,9 @@ def scan_kernel(K, Q, V, Beta, Pop, Logit, Coef, Keys, Values, Strength,
         error = tl.where(count>0, tl.sqrt(residual), 0.)
         gate = tl.sigmoid(tl.load(Logit+inp)+tl.load(Coef+n)*error)
         if allocation >= 0:
+            if RecordPayload:
+                capture_payload(Keys,Values,JournalSlots,JournalKeys,JournalValues,
+                                t,allocation,n,S,T,DK,DV,JournalBlock)
             set_free(free0, free1, root, allocation, False)
             tl.store(BirthStore+n*S+allocation, clock)
             tl.debug_barrier()
@@ -165,6 +171,9 @@ def scan_kernel(K, Q, V, Beta, Pop, Logit, Coef, Keys, Values, Strength,
                 tl.store(Keys+(n*S+allocation)*DK+j, tl.load(K+inp*DK+j))
             tl.store(Values+(n*S+allocation)*DV+d, gate*content, d<DV)
         if (case == 4) | (case == 5):
+            if RecordPayload:
+                capture_payload(Keys,Values,JournalSlots,JournalKeys,JournalValues,
+                                t,safe_target,n,S,T,DK,DV,JournalBlock)
             tl.store(Values+(n*S+safe_target)*DV+d,
                      prev+beta*(content-prev), d<DV)
         reference = tl.where(s == allocation, 1., reference)

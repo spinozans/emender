@@ -12,6 +12,7 @@ from ..x30_tape_cell.naive_reference import TapeHeadConfig, TapeState, init_stat
 from ..x30_tape_cell.routing_trace import RoutingTrace
 from .kernels import scan_kernel
 from .birth_index import initialize as initialize_birth_index
+from .write_journal import WriteJournal
 
 
 @dataclass
@@ -27,6 +28,7 @@ class FusedState:
     metadata: tuple | None = None
     configuration: tuple | None = None
     consumed: bool = False
+    write_journal: WriteJournal | None = None
 
     def snapshot(self):
         if self.consumed:
@@ -34,11 +36,13 @@ class FusedState:
         native = TapeState(*(getattr(self.native,n).clone() for n in
                              ('keys','values','strength','live','age','usage')))
         meta = None if self.metadata is None else tuple(x.clone() for x in self.metadata)
-        return FusedState(native,self.history.clone(),self.tokens,meta,self.configuration)
+        return FusedState(native,self.history.clone(),self.tokens,meta,self.configuration,
+                          write_journal=(None if self.write_journal is None
+                                         else self.write_journal.snapshot()))
 
 
 def tape_scan(k, q, v, write_strength, pop_strength, append_logit, state,
-              cfg: TapeHeadConfig, append_err_coef=None):
+              cfg: TapeHeadConfig, append_err_coef=None, *, record_payload=False):
     """One scan launch per chunk; no Python token loop or scalar routing.
 
     Inputs [batch,time,heads,dim]. Native TapeState imports are copied. Returned
@@ -46,6 +50,8 @@ def tape_scan(k, q, v, write_strength, pop_strength, append_logit, state,
     when an independent branch or immutable historical state is needed.
     No silent fallback to X30 autograd.
     Usage EMA instrumentation is excluded from this functional baseline.
+    record_payload captures mutation-time key/value before-images in the
+    returned state's write_journal. It is not a complete training journal.
     """
     tensors = (k, q, v, write_strength, pop_strength, append_logit)
     if torch.is_grad_enabled() and any(x.requires_grad for x in tensors):
@@ -120,9 +126,14 @@ def tape_scan(k, q, v, write_strength, pop_strength, append_logit, state,
         metadata = state.metadata
         (heap,position,due,terminal,births,touches,level0,level1,root,
          birth_next,birth_prev,birth_head,sizes,references,scores) = metadata
+    journal = (WriteJournal.allocate(b*h,t,dk,cfg.value_dim,k.device)
+               if record_payload else None)
+    journal_args = ((journal.slots,journal.keys,journal.values) if journal is not None
+                    else (case,keys,values))  # unused pointers in the disabled specialization
     scan_kernel[(b*h,)](*args,coef,keys,values,strength,live,age,
         output,case,matched,alloc,pops,freed,pressure,history,heap,position,due,terminal,
         births,touches,level0,level1,root,birth_next,birth_prev,birth_head,sizes,references,scores,
+        *journal_args,record_payload,triton.next_power_of_2(max(dk,cfg.value_dim)),
         fresh,state.tokens,
         t,cfg.slots,dk,cfg.value_dim,triton.next_power_of_2(cfg.slots),
         triton.next_power_of_2(cfg.value_dim),triton.next_power_of_2(max(32,dk)),
@@ -135,7 +146,8 @@ def tape_scan(k, q, v, write_strength, pop_strength, append_logit, state,
                                      args[3]>cfg.write_enable_threshold,freed)))
     final = TapeState(keys,values,strength,live,age,native.usage)
     state.consumed = True
-    return unflat(output),FusedState(final,history,state.tokens+t,metadata,configuration),trace,unflat(pressure)
+    return unflat(output),FusedState(final,history,state.tokens+t,metadata,configuration,
+                                    write_journal=journal),trace,unflat(pressure)
 
 
 class TapeCell(torch.nn.Module):

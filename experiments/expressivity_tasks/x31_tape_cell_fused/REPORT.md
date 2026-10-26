@@ -6,6 +6,68 @@ It does not deliver the requested performance-first training implementation.
 Training calls fail explicitly rather than silently using the X30 engine.
 No training result, performance speedup or successful acceptance is claimed.
 
+## Part 4 continuation — partial, backward half not delivered
+
+This change adds an opt-in **key/value payload journal** to the live device
+scan, not the complete requested training journal. `tape_scan(...,
+record_payload=True)` returns it as `FusedState.write_journal`. The kernel
+loads each old key/value payload immediately before the append, correction
+or CAP write. It does not gather from a chunk boundary. Repeated writes to
+the same slot therefore retain their intermediate before-images.
+`WriteJournal.undo_payload_` reverses those writes exactly on detached owned
+payload tensors. It neither evaluates routing nor restores a usable full
+FusedState. Snapshot branching copies the journal as well as native metadata.
+Recording is disabled by default and the disabled kernel specialization
+does not allocate journal buffers.
+
+Storage reserves one record per token and store, with -1 padding for no
+write: B*H*T*(8+4*(K+V)) bytes, independent of slot budget. This is O(tokens),
+**not compact O(actual events)** for sparse writes. Strengths, lazy references,
+birth/touch times, liveness, ages, death heap, free bitmap, birth links and
+pressure history are **not journaled**. In particular POP, strength touches
+and deaths remain unjournaled. The payload journal cannot satisfy item 1 or
+serve as a training checkpoint. There is **no custom autograd Function or
+fused backward**, and training continues to fail explicitly. This is a
+partial engineering change, not completion of the part 4 contract.
+
+Seven new tests check before-images against successive one-token oracle
+boundaries with S={1,7,736,11776}, two batches/two heads, popped/dead imported
+rows and repeated writes, then verify bitwise payload rollback. A dedicated
+CAP fixture requires old values [2,8,9.5,9.875], demonstrating that a boundary
+gather would fail. Journal memory is checked against the formula above;
+snapshot isolation, invalid-slot rejection and rollback across two consuming
+continuation chunks are checked as well. The continuation test verifies that
+recording preserves native payload storage identity.
+
+Validation receipts: the first invocation incorrectly supplied an extra
+pytest path to a wrapper that already supplies the test directory. It
+exited 4 with zero tests collected (`validation_part4_attempt.txt`); it is
+not a validation pass. The corrected leased-card subset completed **6 passed,
+49 deselected in 83.26 s** including compilation, lambda01 physical card 1,
+Python 3.12.3 (`validation_part4_journal.txt`). The complete suite then
+completed **55 passed in 221.90 s**, including compilation, on the same
+leased physical card (`validation_part4.txt`). That suite collected before
+the final snapshot-isolation assertions and continuation test were added;
+the final payload subset is recorded separately below. These checks are
+forward and payload rollback checks only.
+
+Final payload subset: **7 passed, 49 deselected in 6.02 s**, broker-leased
+physical card 1, `validation_part4_final_journal.txt`. This run includes the
+final snapshot assertions and continuation test. Scoped `git diff --check`
+passed. There were no interrupted or compile-failure runs in this part;
+the retained exit-4 invocation is a command-line collection error.
+
+The full forward-and-first-order-gradient parity gate remains **UNMET**.
+MQAR, the 2500-update ladder (both class recalls), and all cost gates remain
+**NOT RUN / NOT MEASURED**. No timing or training claim is authorized by the
+new journal checks. The missing all-field journal, ownership-safe autograd
+and G10 reverse adjoints are residual blockers to the requested completion.
+No X30/X28E files were edited. No .pt artifact, WG, delegated agent, Frontier
+run or resilient-training change is involved. Tool discovery found no
+`contact_supervisor` or Intercom tool in this session, so no supervisor
+message could be sent. The historical sections below retain their original
+receipts; this section supersedes their journal implementation status only.
+
 ## Part 3 implementation status — incomplete
 
 This continuation implements a device birth-order index, persistent chunk

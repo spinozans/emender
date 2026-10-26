@@ -31,6 +31,44 @@ CPU interpreter checks are correctness diagnostics, never GPU performance.
 
 Pending. Unrun gates must remain explicitly unrun, never inferred from v1.
 
+### Part 4 current acceptance ledger (partial delivery)
+
+| Deliverable / registered gate | Current result |
+|---|---|
+| Mutation-time append/correction/CAP payload before-images | Implemented opt-in in live kernel; repeated writes retain intermediate values |
+| Full all-field O(events) mutation journal | NOT IMPLEMENTED; payload-only journal reserves O(tokens), not O(actual writes); POP/touches/deaths/management missing |
+| Exact rollback | Keys/values only; NOT a full-state rollback or usable continuation |
+| Fused backward / custom autograd / G10 adjoints | NOT IMPLEMENTED; training fails closed |
+| Gate 1, complete forward + first-order gradient parity | UNMET; no gradient evidence |
+| Gate 2, MQAR >=0.99 by 5000 | NOT RUN |
+| Gate 3, ladder >0.9 by 2500 | NOT RUN; accept/reject recalls unavailable |
+| Gate 4, >=1x at S736 / >=10x at S11776 / H16:H1 <=2 | NOT MEASURED |
+| Gate 5, checkpoint overhead <=5% | NOT MEASURED; payload byte counts are not timing evidence |
+| Gate 6, append-phase speedup >1x | NOT MEASURED |
+
+Validation chronology (lambda01, broker-leased physical GPU 1, Python 3.12.3):
+
+- `run_leased.sh -q -x tests/test_write_journal.py`: exit 4, zero tests;
+  extra path incorrect because the wrapper supplies its own test directory.
+  Receipt `validation_part4_attempt.txt`; **not a pass**.
+- `run_leased.sh -q -x -k 'payload or repeated_cap'`: **6 passed,
+  49 deselected in 83.26 s**, including compilation. Receipt
+  `validation_part4_journal.txt`. Checks before-images at oracle token
+  boundaries and bitwise key/value rollback, including repeated slot writes.
+- `run_leased.sh -q -x`: **55 passed in 221.90 s**, including compilation.
+  Receipt `validation_part4.txt`. Collection preceded final snapshot-isolation
+  assertions and the additional continuation case; their final subset is
+  recorded separately below. This includes all 49 preexisting tests.
+- Final `run_leased.sh -q -x -k 'payload or repeated_cap'`: **7 passed,
+  49 deselected in 6.02 s**, physical card 1. Receipt
+  `validation_part4_final_journal.txt`; includes final snapshot isolation and
+  two-chunk payload rollback with persistent storage pointers. Scoped
+  `git diff --check` passed. No interrupted/compile-failure run in this part.
+
+Reserved payload bytes: B*H*T*(8+4*(K+V)), unchanged across tested
+S={1,7,736,11776}. No O(actual events) compaction or training checkpoint
+overhead claim follows. Part 4 is incomplete; all gates above remain as stated.
+
 ### Part 3 current acceptance ledger (partial delivery)
 
 Targets above remain unchanged; this section records status, not registration.
