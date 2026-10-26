@@ -1,0 +1,84 @@
+{
+  "device": "cuda",
+  "torch": "2.9.1+cu128",
+  "host": "lambda01",
+  "physical_gpu": "0",
+  "maintenance": [
+    {
+      "slots": 736,
+      "native_us": 150.18569538369775,
+      "efficient_us": 0.2314811572432518,
+      "reduction": 648.8031128420324,
+      "native_minimum_element_ops_per_token": 5152,
+      "efficient_scalar_ops_per_token_upper_estimate": 20,
+      "scope": "inert full-store cap maintenance only; no content/read/snapshot/synchronization"
+    },
+    {
+      "slots": 11776,
+      "native_us": 151.10133588314056,
+      "efficient_us": 0.22329017519950867,
+      "reduction": 676.7039156475751,
+      "native_minimum_element_ops_per_token": 82432,
+      "efficient_scalar_ops_per_token_upper_estimate": 20,
+      "scope": "inert full-store cap maintenance only; no content/read/snapshot/synchronization"
+    }
+  ],
+  "full_cell": [
+    {
+      "heads": 1,
+      "slots": 736,
+      "batch": 1,
+      "tokens": 32,
+      "key": 16,
+      "value": 16,
+      "us_per_token": 1215.5790318502113,
+      "scope": "complete forward incl reads/host routing/chunk snapshots; empty initial store"
+    },
+    {
+      "heads": 4,
+      "slots": 736,
+      "batch": 1,
+      "tokens": 32,
+      "key": 16,
+      "value": 16,
+      "us_per_token": 1124.9390032996114,
+      "scope": "complete forward incl reads/host routing/chunk snapshots; empty initial store"
+    },
+    {
+      "heads": 16,
+      "slots": 736,
+      "batch": 1,
+      "tokens": 32,
+      "key": 16,
+      "value": 16,
+      "us_per_token": 1268.7254590370383,
+      "scope": "complete forward incl reads/host routing/chunk snapshots; empty initial store"
+    }
+  ],
+  "full_store": [
+    {
+      "slots": 736,
+      "heads": 1,
+      "batch": 1,
+      "tokens": 16,
+      "key": 16,
+      "value": 16,
+      "native_us_per_token": 1884.8749944784988,
+      "efficient_us_per_token": 959.2536662239581,
+      "ratio": 1.9649390571507441,
+      "scope": "complete forward from a full store, includes reads and snapshots; no backward"
+    },
+    {
+      "slots": 11776,
+      "heads": 1,
+      "batch": 1,
+      "tokens": 16,
+      "key": 16,
+      "value": 16,
+      "native_us_per_token": 1862.9283003974706,
+      "efficient_us_per_token": 1342.5679644569755,
+      "ratio": 1.3875858427405303,
+      "scope": "complete forward from a full store, includes reads and snapshots; no backward"
+    }
+  ]
+}

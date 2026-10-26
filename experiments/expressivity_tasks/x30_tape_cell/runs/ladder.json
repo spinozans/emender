@@ -1,0 +1,156 @@
+{
+  "config": {
+    "device": "cuda",
+    "heads": 1,
+    "budget": 736,
+    "updates": 500,
+    "eval_every": 500,
+    "seed": 0,
+    "stage1": "/home/erikg/emender/experiments/expressivity_tasks/x30_tape_cell/runs/stage1.pt",
+    "checkpoint": "/home/erikg/emender/experiments/expressivity_tasks/x30_tape_cell/runs/ladder.pt",
+    "output": "/home/erikg/emender/experiments/expressivity_tasks/x30_tape_cell/runs/ladder.json"
+  },
+  "validation": [
+    {
+      "update": 500,
+      "validation": {
+        "n": 2000,
+        "balanced_accuracy": 0.786,
+        "raw_accuracy": 0.786,
+        "per_class_recall": {
+          "accept": 1.0,
+          "reject": 0.572
+        },
+        "confusion": {
+          "accept": {
+            "pred_accept": 1000,
+            "pred_reject": 0
+          },
+          "reject": {
+            "pred_accept": 428,
+            "pred_reject": 572
+          }
+        },
+        "class_counts": {
+          "accept": 1000,
+          "reject": 1000
+        },
+        "majority_baseline": 0.5
+      },
+      "seconds": 2392.0532679948956
+    }
+  ],
+  "best": 0.786,
+  "best_update": 500,
+  "bins": {
+    "bin_id": {
+      "n": 512,
+      "balanced_accuracy": 0.791015625,
+      "raw_accuracy": 0.791015625,
+      "per_class_recall": {
+        "accept": 1.0,
+        "reject": 0.58203125
+      },
+      "confusion": {
+        "accept": {
+          "pred_accept": 256,
+          "pred_reject": 0
+        },
+        "reject": {
+          "pred_accept": 107,
+          "pred_reject": 149
+        }
+      },
+      "class_counts": {
+        "accept": 256,
+        "reject": 256
+      },
+      "majority_baseline": 0.5
+    },
+    "bin_2x": {
+      "n": 512,
+      "balanced_accuracy": 0.59765625,
+      "raw_accuracy": 0.59765625,
+      "per_class_recall": {
+        "accept": 1.0,
+        "reject": 0.1953125
+      },
+      "confusion": {
+        "accept": {
+          "pred_accept": 256,
+          "pred_reject": 0
+        },
+        "reject": {
+          "pred_accept": 206,
+          "pred_reject": 50
+        }
+      },
+      "class_counts": {
+        "accept": 256,
+        "reject": 256
+      },
+      "majority_baseline": 0.5
+    },
+    "bin_4x": {
+      "n": 512,
+      "balanced_accuracy": 0.556640625,
+      "raw_accuracy": 0.556640625,
+      "per_class_recall": {
+        "accept": 1.0,
+        "reject": 0.11328125
+      },
+      "confusion": {
+        "accept": {
+          "pred_accept": 256,
+          "pred_reject": 0
+        },
+        "reject": {
+          "pred_accept": 227,
+          "pred_reject": 29
+        }
+      },
+      "class_counts": {
+        "accept": 256,
+        "reject": 256
+      },
+      "majority_baseline": 0.5
+    },
+    "bin_9x": {
+      "n": 512,
+      "balanced_accuracy": 0.33203125,
+      "raw_accuracy": 0.33203125,
+      "per_class_recall": {
+        "accept": 0.0,
+        "reject": 0.6640625
+      },
+      "confusion": {
+        "accept": {
+          "pred_accept": 0,
+          "pred_reject": 256
+        },
+        "reject": {
+          "pred_accept": 86,
+          "pred_reject": 170
+        }
+      },
+      "class_counts": {
+        "accept": 256,
+        "reject": 256
+      },
+      "majority_baseline": 0.5
+    }
+  },
+  "pool_hashes": {
+    "bin_id": "b8f1e6cc6df0aff221bff07e0ccb9354778836b22a6e1fa363a4d04cd89469f0",
+    "bin_2x": "4474830238102e82282d3d865e98e2a5d0d9d702bf920881a8c8e9e53995c4c7",
+    "bin_4x": "93edc3654177cee2ddcf2fe1ed03bf2618dbf53928bbeaa01d5ad0f98461fb3d",
+    "bin_9x": "568a3f6ae66400d019574e6a3b0a701cce14928cd3edbf59311dc0831a2b1059"
+  },
+  "gate": false,
+  "physical_gpu": "0",
+  "recipe_deviations": [
+    "stage-2 occupancy curriculum omitted",
+    "H=1 default versus native H=4",
+    "random per-update batches versus epoch permutations"
+  ]
+}
