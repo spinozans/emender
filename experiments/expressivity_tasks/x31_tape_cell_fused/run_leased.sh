@@ -7,4 +7,10 @@ source scripts/gpu_lease.sh
 eval "$(scripts/gpu_lease.sh acquire 1 --wait --timeout 60)"
 [[ "$GPU_LEASE_HELD" =~ ^[0-6]$ ]] || exit 90
 printf 'X31 physical card %s\n' "$GPU_LEASE_HELD"
-.venv/bin/python -m pytest experiments/expressivity_tasks/x31_tape_cell_fused/tests "$@"
+if [[ "${1:-}" == "--module" ]]; then
+    shift
+    [[ "${1:-}" == experiments.expressivity_tasks.x31_tape_cell_fused.* ]] || exit 91
+    /home/erikg/emender/.venv/bin/python -m "$@"
+else
+    /home/erikg/emender/.venv/bin/python -m pytest experiments/expressivity_tasks/x31_tape_cell_fused/tests "$@"
+fi

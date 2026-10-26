@@ -1,4 +1,182 @@
-# X31 experimental implementation — acceptance not achieved
+# X31 part 5 — training works; large-store performance and sparse storage remain unmet
+
+## Implementation
+
+`record_all=True` captures mutation-time before-images of every owned persistent
+tensor the scan writes: key/value payloads, strengths/lazy references,
+liveness, ages, birth/touch times, heap/inverse positions/due times/terminal
+strengths/size, all free bitmap levels, birth links/head, pressure history and
+score scratch. This follows physical HBM mutations, including delayed register
+spills. `AllFieldJournal.undo_` consumes the final handle and restores a usable
+pre-chunk handle. Fresh rollback drops newly created metadata; persistent
+continuation restores all owned bytes. Snapshots rebase addresses onto independent
+storage; parent journals support rollback across continuation chunks.
+
+The log is **not compact logical-event storage**. Scalar writes skip unchanged
+bits; vector spills record every valid element, including unchanged values.
+Capture/undo uses ordered 128-element groups, preserving repeated-write
+before-images without a chunk-boundary gather. Each scalar entry reserves an
+8-byte address, 8-byte exact before-image and 4-byte width/group descriptor.
+For N=B*H and C=(6*T+8)*S + T*(K+V+64) + (S+3*T)*(16*bit_length(S)+32),
+reserved bytes are N*(20*C+16*T+8), O(T*S+(S+T)*log S). Dense age/score spills
+remain. Reservations exceeding the checked int32 element-index range fail before
+allocation. With gradients and both recording options disabled, no journal,
+address map or replay copy is allocated. The existing payload-only option and
+its mutation-time CAP fixture remain supported.
+
+`backward.py` provides a first-order custom `Replay` Function and one reverse
+kernel per batch/head store over the whole chunk. Case/target/allocation/pop and
+death decisions are replay inputs (G10); routing is never selected again.
+Physical writes are undone to each pre-token boundary. The kernel propagates
+read key/query/strength weighting, age-1 delta-rule, append-content,
+append-logit/error coefficient, pop and imported key/value/strength adjoints.
+The append error remains detached per F12g. Read probabilities are differentiable
+arithmetic on restored state. Usage instrumentation is unchanged and excluded
+from functional-state parity, matching X30.
+
+Autograd retains a private final-state copy and creates separate working storage
+for each backward traversal. One binary-search mapping kernel rebases undo
+addresses onto those copies. Retained first-order backward is repeatable and
+returned forward state is not mutated. Public traces are copied independently,
+including H=1 where a transpose can already be contiguous. Training continuation
+imports materialized native state and rebuilds metadata; the inference
+continuation path retains consuming zero-copy ownership. Private O(S) copies,
+dense diagnostics/spills and sequential time remain costs. Higher-order
+gradients are unsupported.
+
+## Full parity gate — PASS
+
+Final leased suite: **95 passed in 265.55 s**, lambda01 physical GPU 1,
+Python 3.12.3, torch 2.9.1+cu128, Triton 3.5.1. Receipt:
+`validation_part5.txt`, JUnit `validation_part5.xml`, and checked source/JUnit
+hashes in `parity_part5.json`. No tests skipped. Coverage includes:
+
+- 25 seeded imported-store forward/first-order cases: seeds 0..4,
+  S={1,7,16,736,11776}, B=2/H=2/T=9/K=4/V=5.
+- K64/V128 gradient cases at S37 (two seeds), S736 and S11776.
+- All ten differentiable input paths against `naive_reference` with independent
+  read and final-state cotangents, atol=rtol=1e-5; exact discrete traces.
+- Imported age ties/dead/low-strength rows, repeated writes and CAP merges,
+  mid-chunk pop/death, split continuation, retained-graph repeat backward and
+  mutation of the public H1 trace without changing backward decisions.
+- Exact byte rollback at S={1,7,37,736,11776}, snapshot/parent independence,
+  pressure-ring wrap at 130 tokens and fail-before-allocation index bounds.
+
+All numerical kernels used by the completed S736/H4 learning run are unchanged
+in the final source. Later ownership hardening affects the H1 trace-alias case;
+large-S forward launch geometry was subsequently matched at four warps for both
+recording modes and revalidated before final timing. Large-S backward retains
+its separately validated 16-warp configuration.
+
+## Learning gates — PASS
+
+MQAR achieved mean per-class recall **1.0 at update 500** on the registered
+20,000-example validation pool, S736/H4/batch64, AdamW lr=1e-4. Receipt:
+`mqar_part5.json`; full output `training_part5.txt`. This is an X31 run using the
+fused reverse kernel, not an inherited v1 result.
+
+The same process used an in-memory MQAR warm start and completed **all 2500
+ladder updates**, k<=128. Final balanced accuracy **0.915**, accept recall
+**1.000**, reject recall **0.830**; 1000 examples per class. The registered >0.9
+signal was also cleared at update 2000 (0.922). Receipt: `ladder_part5.json`.
+
+| Update | Balanced accuracy | Accept recall | Reject recall |
+|---|---|---|---|
+| 500 | 0.8975 | 1.000 | 0.795 |
+| 1000 | 0.8605 | 1.000 | 0.721 |
+| 1500 | 0.8575 | 1.000 | 0.715 |
+| 2000 | 0.9220 | 1.000 | 0.844 |
+| 2500 | 0.9150 | 1.000 | 0.830 |
+
+Both stages use the X28E generators and frozen embedding/F12g projections.
+Ladder stage 2 is omitted as in the v1 pilot. Execution retains right padding
+(T128 MQAR, T386 ladder) to avoid shape recompilation; only registered query/EOS
+positions are supervised. Ladder uses a physical batch64. These are single-seed,
+in-range validation results, not OOD certification or a controlled causal
+comparison with the operator-supplied v1 pilot. No model checkpoint was written.
+
+## Registered cost gates — partial failure
+
+Final receipt `cost_part5.json` / `cost_part5.txt`: physical card 1,
+NVIDIA RTX 6000 Ada, fp32, B64, H4 unless specified, K64/V128, width256, T16.
+Five warmups and 20 measured repetitions; memory accounting uses the fifth
+warmup, with no extra forward call. Tables show median **end-to-end wall
+milliseconds per token**, including cell projections, fresh-state allocation/
+initialization and synchronization. Raw wall and CUDA-event samples are retained.
+These are fresh-state forward measurements; training-step/steady continuation
+speed is not established.
+
+| Slots | X31 ms/token | X30 ms/token | X28E ms/token | X30/X31 | Registered target |
+|---|---|---|---|---|---|
+| 736 | 0.450551 | 4.544004 | 2.112711 | 10.085x | PASS |
+| 11776 | 78.210305 | 24.970704 | 17.173224 | 0.319x | FAIL |
+
+The large-store >=10x target **fails**. Head scaling at equal B64/per-head slot
+budget also **fails** the <=2x target:
+
+| Slots | H1 ms/token | H16 ms/token | H16/H1 | Target |
+|---|---|---|---|---|
+| 736 | 0.272476 | 1.545363 | 5.672x | FAIL |
+| 11776 | 8.474946 | 342.053454 | 40.361x | FAIL |
+
+Checkpoint forward is 77.964218
+ms/token against 78.210305 without recording,
+an observed delta of **-0.315%**. Both use
+four forward warps. This **passes the <=5% timing threshold**; the observed
+negative delta is not a claim that capture causally accelerates execution.
+Capture, private replay copy and address mapping are included.
+
+The sparse-storage/independence requirement **fails**. At this checkpoint point,
+base state is 2,523,785,216 bytes; journal reservation
+21,789,476,864; 253,904,384 entries use
+5,078,087,680 record bytes; the private forward replay copy adds
+2,511,726,592 bytes. These are component sizes,
+not a measured peak. `summary_part5.json` records derived reserved sizes at
+S736/S11776 and the guaranteed N*(5*T+4)*S dense-record lower bound. Actual
+physical event counts and reserved capacity depend on S. A small relative time
+delta against this slow forward does not establish compact checkpoints.
+
+Gate 6's certified append mutation prototype measures **S=736: 1.086x / S=11776: 1.091x**, both
+>1x and bitwise equal to its sequential mutation baseline. Receipt:
+`append_cost_part5.json`. B64/H4, T128, K64/V128, five warmups/20 measurements;
+launch/synchronization and a common live-mask reset are included. This excludes
+reads, state allocation, routing/management, API certification and exact-curve
+preparation; it is a mutation-phase result, not a full-scan speedup.
+
+## Validation chronology and residual blockers
+
+Intermediate completed suites (91/93/94 tests, and 95 before geometry matching)
+are retained separately. Early literal/constexpr/atomic-broadcast/tile-width
+compile failures and the 131072-byte shared-memory failure on 101376-byte
+hardware are retained as failures. Five interrupted compilation attempts have
+no completed-suite claim. The trial uniform 16-warp forward failed a checked
+int32 reduction (1 failed, 74 passed); it was discarded. The final four-warp
+forward passed all 95 tests. No failed or interrupted command is counted as a pass.
+
+The first learning attempt passed MQAR at 500, then was interrupted after
+ladder update160 was logged to replace 21 rebasing passes with one map and use
+physical batch64. Its receipts remain separate; no 2500-update result is inferred
+from it. The final completed learning run is reported above.
+
+Two preliminary cost collections are retained but superseded. The first used
+four forward warps without capture and sixteen with capture, confounding its
+checkpoint delta. The next had matched geometry but one extra untimed accounting
+forward. Final costs use matched four-warp geometry and exactly five warmups.
+They collected without errors. `summary_part5.json` separates timing thresholds
+from the failed storage-independence requirement.
+
+Remaining acceptance blockers are large-store throughput, head scaling and
+logical-event checkpoint compactness. Dense physical spills, conservative
+reservation, private copies, padded single-query tensor-core scoring and
+sequential time remain limitations. All source/artifacts are confined to X31;
+X30/X28E references remain read-only. No .pt, WG, delegated agent,
+Frontier/Slurm or resilient-training change is involved. Supervisor/Intercom
+tool discovery returned no callable tool, so no coordination messages were sent.
+
+## Historical parts 1–4
+
+The following reports describe earlier implementations. Part 5 above supersedes
+their missing-journal/backward/training statements.
 
 X31 currently provides a working device-only sequential **inference baseline**,
 a parallel append-mutation/rank-scan prototype, and a sparse rollback primitive.

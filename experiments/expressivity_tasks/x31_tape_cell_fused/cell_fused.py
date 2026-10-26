@@ -1,8 +1,7 @@
-"""Experimental inference-only fused scan. Training fails closed.
+"""Experimental fused forward and first-order reverse replay.
 
-This baseline exposes native state and routing traces for comparison. Native
-imports copy once; owned continuation buffers persist between chunks. It is
-not the requested sparse training cell: dense read metadata/traces remain.
+Inference continuation reuses owned buffers. Autograd retains private replay
+copies and a conservatively reserved typed undo log; see REPORT.md for gates.
 """
 from dataclasses import dataclass
 import struct
@@ -13,6 +12,7 @@ from ..x30_tape_cell.routing_trace import RoutingTrace
 from .kernels import scan_kernel
 from .birth_index import initialize as initialize_birth_index
 from .write_journal import WriteJournal
+from .all_field_journal import AllFieldJournal
 
 
 @dataclass
@@ -29,6 +29,7 @@ class FusedState:
     configuration: tuple | None = None
     consumed: bool = False
     write_journal: WriteJournal | None = None
+    all_field_journal: AllFieldJournal | None = None
 
     def snapshot(self):
         if self.consumed:
@@ -36,28 +37,41 @@ class FusedState:
         native = TapeState(*(getattr(self.native,n).clone() for n in
                              ('keys','values','strength','live','age','usage')))
         meta = None if self.metadata is None else tuple(x.clone() for x in self.metadata)
-        return FusedState(native,self.history.clone(),self.tokens,meta,self.configuration,
+        history=self.history.clone()
+        all_journal=(None if self.all_field_journal is None else
+                     self.all_field_journal.snapshot((native.keys,native.values,native.strength,
+                         native.live,native.age,history,*meta)))
+        return FusedState(native,history,self.tokens,meta,self.configuration,
+                          all_field_journal=all_journal,
                           write_journal=(None if self.write_journal is None
                                          else self.write_journal.snapshot()))
 
 
 def tape_scan(k, q, v, write_strength, pop_strength, append_logit, state,
-              cfg: TapeHeadConfig, append_err_coef=None, *, record_payload=False):
+              cfg: TapeHeadConfig, append_err_coef=None, *, record_payload=False, record_all=False):
     """One scan launch per chunk; no Python token loop or scalar routing.
 
     Inputs [batch,time,heads,dim]. Native TapeState imports are copied. Returned
     FusedState buffers are consumed in place on continuation; snapshot first
     when an independent branch or immutable historical state is needed.
-    No silent fallback to X30 autograd.
+    Gradients use the X31 custom Function and recorded-decision reverse kernel.
     Usage EMA instrumentation is excluded from this functional baseline.
-    record_payload captures mutation-time key/value before-images in the
-    returned state's write_journal. It is not a complete training journal.
+    record_payload captures only key/value before-images; record_all captures
+    all owned mutable storage with exact consuming rollback. Recording is
+    allocation-free when both options and gradients are disabled.
     """
     tensors = (k, q, v, write_strength, pop_strength, append_logit)
-    if torch.is_grad_enabled() and any(x.requires_grad for x in tensors):
-        raise NotImplementedError('X31 fused reverse replay is not implemented')
-    if append_err_coef is not None and torch.is_grad_enabled() and append_err_coef.requires_grad:
-        raise NotImplementedError('X31 fused reverse replay is not implemented')
+    native_input = state.native if isinstance(state,FusedState) else state
+    needs_grad = any(x.requires_grad for x in tensors)
+    needs_grad |= append_err_coef is not None and append_err_coef.requires_grad
+    if native_input is not None:
+        needs_grad |= any(getattr(native_input,name).requires_grad
+                          for name in ('keys','values','strength'))
+    if torch.is_grad_enabled() and needs_grad:
+        if record_payload or record_all:
+            raise ValueError('training manages its private journal automatically')
+        from .backward import autograd_scan
+        return autograd_scan(tensors,state,cfg,append_err_coef)
     if not (0 < cfg.decay_rate <= 1 and 0 <= cfg.free_threshold < 1 and 0 < cfg.slots <= 262144):
         raise ValueError("invalid decay, threshold or slot budget")
     b, t, h, dk = k.shape
@@ -88,9 +102,6 @@ def tape_scan(k, q, v, write_strength, pop_strength, append_logit, state,
         raise ValueError("state/input device mismatch")
     if append_err_coef is not None and (append_err_coef.shape != (h,) or append_err_coef.device != k.device):
         raise ValueError("append coefficient shape/device mismatch")
-    if torch.is_grad_enabled() and any(getattr(native,name).requires_grad
-                                     for name in ('keys','values','strength')):
-        raise NotImplementedError('X31 state adjoints are not implemented')
     def flat(x):
         return x.transpose(1,2).contiguous()
     args = list(map(flat,tensors))
@@ -130,16 +141,26 @@ def tape_scan(k, q, v, write_strength, pop_strength, append_logit, state,
                if record_payload else None)
     journal_args = ((journal.slots,journal.keys,journal.values) if journal is not None
                     else (case,keys,values))  # unused pointers in the disabled specialization
+    all_journal = (AllFieldJournal.allocate(b*h,t,cfg.slots,dk,cfg.value_dim,
+                   (keys,values,strength,live,age,history,*metadata),state.tokens,fresh)
+                   if record_all else None)
+    if all_journal is not None:
+        all_journal.parent=state.all_field_journal
+    all_args = ((all_journal.addresses,all_journal.before,all_journal.widths,
+                 all_journal.counts,all_journal.boundaries,all_journal.gates,
+                 all_journal.errors,all_journal.capacity,True)
+                if record_all else (case,case,case,case,case,case,case,0,False))
     scan_kernel[(b*h,)](*args,coef,keys,values,strength,live,age,
         output,case,matched,alloc,pops,freed,pressure,history,heap,position,due,terminal,
         births,touches,level0,level1,root,birth_next,birth_prev,birth_head,sizes,references,scores,
         *journal_args,record_payload,triton.next_power_of_2(max(dk,cfg.value_dim)),
-        fresh,state.tokens,
+        *all_args,fresh,state.tokens,
         t,cfg.slots,dk,cfg.value_dim,triton.next_power_of_2(cfg.slots),
         triton.next_power_of_2(cfg.value_dim),triton.next_power_of_2(max(32,dk)),
         struct.unpack('<f',struct.pack('<f',cfg.decay_rate))[0],cfg.free_threshold,
         cfg.write_enable_threshold,cfg.pop_threshold,cfg.eps_residual,
-        enable_fp_fusion=False,debug=True,num_warps=4)
+        enable_fp_fusion=False,debug=True,
+        num_warps=4)
     def unflat(x):
         return x.transpose(1,2).contiguous()
     trace = RoutingTrace(*map(unflat,(case,matched,pops>=0,pops,alloc,
@@ -147,11 +168,11 @@ def tape_scan(k, q, v, write_strength, pop_strength, append_logit, state,
     final = TapeState(keys,values,strength,live,age,native.usage)
     state.consumed = True
     return unflat(output),FusedState(final,history,state.tokens+t,metadata,configuration,
-                                    write_journal=journal),trace,unflat(pressure)
+                                    write_journal=journal,all_field_journal=all_journal),trace,unflat(pressure)
 
 
 class TapeCell(torch.nn.Module):
-    """F12g projection wrapper for inference; training is explicitly unsupported."""
+    """F12g projections with first-order reverse replay; see acceptance receipts."""
     def __init__(self, d_model, cfg=TapeHeadConfig()):
         super().__init__()
         self.cfg = cfg

@@ -8,9 +8,10 @@ order and scoring uses tiled tf32x3 MMA; neither is performance certified.
 import triton
 import triton.language as tl
 from .lazy_decay import advance_exact, death_exact
-from .device_schedule import schedule, cancel, next_due
-from .device_free import set_free, lowest_free
-from .birth_index import remove as birth_remove, insert as birth_insert, select as birth_select
+from .journal_mutations import schedule, cancel, next_due
+from .journal_mutations import set_free, lowest_free
+from .journal_mutations import remove as birth_remove, insert as birth_insert, select as birth_select
+from .all_field_journal import journal_store
 from .write_journal import capture_payload
 
 
@@ -21,6 +22,8 @@ def scan_kernel(K, Q, V, Beta, Pop, Logit, Coef, Keys, Values, Strength,
                 L0, L1, Root, BirthNext, BirthPrev, BirthHead, Sizes, References, Scores,
                 JournalSlots, JournalKeys, JournalValues,
                 RecordPayload: tl.constexpr, JournalBlock: tl.constexpr,
+                AllAddresses, AllBefore, AllWidths, AllCounts, AllBoundaries,
+                AllGates, AllErrors, AllCapacity: tl.constexpr, RecordAll: tl.constexpr,
                 Fresh: tl.constexpr, Start,
                 T: tl.constexpr, S: tl.constexpr, DK: tl.constexpr,
                 DV: tl.constexpr, BS: tl.constexpr, BV: tl.constexpr, BK: tl.constexpr,
@@ -28,6 +31,7 @@ def scan_kernel(K, Q, V, Beta, Pop, Logit, Coef, Keys, Values, Strength,
                 Enable: tl.constexpr, PopThreshold: tl.constexpr,
                 Eps: tl.constexpr):
     n = tl.program_id(0)
+    J = (AllAddresses,AllBefore,AllWidths,AllCounts,n,AllCapacity)
     s = tl.arange(0, BS)
     d = tl.arange(0, BV)
     valid = s < S
@@ -65,13 +69,15 @@ def scan_kernel(K, Q, V, Beta, Pop, Logit, Coef, Keys, Values, Strength,
         size = tl.full((), 0, tl.int32)
         for slot in range(S):
             if not tl.load(Live+n*S+slot):
-                set_free(free0, free1, root, slot, True)
+                set_free(free0, free1, root, slot, True, J, False)
             time = tl.load(due+slot)
             if time >= 0:
-                size = schedule(heap, position, due, size, slot, time)
+                size = schedule(heap, position, due, size, slot, time, J, False)
     else:
         size = tl.load(Sizes+n)
     for t in range(T):
+        if RecordAll:
+            tl.store(AllBoundaries+n*T+t, tl.load(AllCounts+n))
         clock = Start+t
         tl.device_assert((size >= 0) & (size <= S), "invalid heap size")
         strength = advance_exact(reference, tl.where(live, clock-touch, 0), Decay)
@@ -90,7 +96,7 @@ def scan_kernel(K, Q, V, Beta, Pop, Logit, Coef, Keys, Values, Strength,
             key_tile = tl.load(Keys+(n*S+columns[None,:])*DK+rk[:,None],
                                (columns[None,:]<S) & (rk[:,None]<DK), 0.)
             dot = tl.dot(query_tile,key_tile,input_precision='tf32x3')
-            tl.store(Scores+n*S+columns,tl.sum(dot,0),columns<S)
+            journal_store(Scores + n * S + columns, tl.sum(dot, 0), columns < S, J, RecordAll, Scores + n * S + tile * 32, tl.minimum(32, S - tile * 32))
         tl.debug_barrier()
         scores = tl.load(Scores+n*S+s, valid, 0.)
         scores = scores * (2.0 / tl.sqrt(float(DK)))
@@ -116,9 +122,8 @@ def scan_kernel(K, Q, V, Beta, Pop, Logit, Coef, Keys, Values, Strength,
             pop_horizon, pop_terminal = death_exact(tl.full((1,), 1., tl.float32)*tl.where(popped > Free, popped, 1.),
                                     tl.full((1,), Free, tl.float32), Decay)
             dt = tl.sum(pop_horizon, 0)
-            tl.store(terminal+pop_id, tl.sum(pop_terminal, 0))
-            size = schedule(heap, position, due, size, pop_id,
-                            tl.where((popped > Free) & (dt >= 0), clock+dt, -1))
+            journal_store(terminal + pop_id, tl.sum(pop_terminal, 0), True, J, RecordAll)
+            size = schedule(heap, position, due, size, pop_id, tl.where((popped > Free) & (dt >= 0), clock + dt, -1), J, RecordAll)
         freed_pop = live & (strength <= Free) & ((s == pop_id) | (Fresh & (t == 0)))
         # Import can contain already-under-threshold live rows; native kills
         # them after the first read. Freeze those references at that boundary.
@@ -130,17 +135,17 @@ def scan_kernel(K, Q, V, Beta, Pop, Logit, Coef, Keys, Values, Strength,
                 imported_live = tl.load(Live+n*S+slot)
                 imported_strength = tl.load(Strength+n*S+slot)
                 if imported_live & (imported_strength <= Free):
-                    set_free(free0, free1, root, slot, True)
-                    birth_remove(birth_next, birth_prev, birth_head, slot)
+                    set_free(free0, free1, root, slot, True, J, RecordAll)
+                    birth_remove(birth_next, birth_prev, birth_head, slot, J, RecordAll)
         if pop_id >= 0:
             if popped <= Free:
-                set_free(free0, free1, root, pop_id, True)
+                set_free(free0, free1, root, pop_id, True, J, RecordAll)
                 imported_low = Fresh & (t == 0) & (tl.load(Strength+n*S+pop_id) <= Free)
                 if not imported_low:
-                    birth_remove(birth_next, birth_prev, birth_head, pop_id)
+                    birth_remove(birth_next, birth_prev, birth_head, pop_id, J, RecordAll)
         live = live & ~freed_pop
         count = tl.sum(live.to(tl.int32), 0)
-        target, has_adjacent = birth_select(birth_next, birth_head, birth_store, clock-1)
+        target, has_adjacent = birth_select(birth_next, birth_head, birth_store, clock - 1, J, RecordAll)
         safe_target = tl.maximum(target, 0)
         prev = tl.load(Values+(n*S+safe_target)*DV+d, d<DV, 0)
         content = tl.load(V+inp*DV+d, d<DV, 0)
@@ -151,7 +156,7 @@ def scan_kernel(K, Q, V, Beta, Pop, Logit, Coef, Keys, Values, Strength,
         case = tl.where(count == 0, 1,
                         tl.where(~has_adjacent, 2, tl.where(residual<Eps, 3, 4)))
         case = tl.where(enabled, case, 0)
-        first_free = lowest_free(free0, free1, root)
+        first_free = lowest_free(free0, free1, root, J, RecordAll)
         tl.device_assert(first_free < S, "invalid free bitmap result")
         append = (case>0) & (case<4)
         case = tl.where(append & (first_free < 0), 5, case)
@@ -159,23 +164,25 @@ def scan_kernel(K, Q, V, Beta, Pop, Logit, Coef, Keys, Values, Strength,
         matched = tl.where((enabled & has_adjacent) | (case == 5), target, -1)
         error = tl.where(count>0, tl.sqrt(residual), 0.)
         gate = tl.sigmoid(tl.load(Logit+inp)+tl.load(Coef+n)*error)
+        if RecordAll:
+            tl.store(AllGates+inp, gate)
+            tl.store(AllErrors+inp, error)
         if allocation >= 0:
             if RecordPayload:
                 capture_payload(Keys,Values,JournalSlots,JournalKeys,JournalValues,
                                 t,allocation,n,S,T,DK,DV,JournalBlock)
-            set_free(free0, free1, root, allocation, False)
-            tl.store(BirthStore+n*S+allocation, clock)
+            set_free(free0, free1, root, allocation, False, J, RecordAll)
+            journal_store(BirthStore + n * S + allocation, clock, True, J, RecordAll)
             tl.debug_barrier()
-            birth_insert(birth_next, birth_prev, birth_head, birth_store, allocation, clock)
+            birth_insert(birth_next, birth_prev, birth_head, birth_store, allocation, clock, J, RecordAll)
             for j in range(DK):
-                tl.store(Keys+(n*S+allocation)*DK+j, tl.load(K+inp*DK+j))
-            tl.store(Values+(n*S+allocation)*DV+d, gate*content, d<DV)
+                journal_store(Keys + (n * S + allocation) * DK + j, tl.load(K + inp * DK + j), True, J, RecordAll)
+            journal_store(Values + (n * S + allocation) * DV + d, gate * content, d < DV, J, RecordAll, Values + (n * S + allocation) * DV + 0, DV)
         if (case == 4) | (case == 5):
             if RecordPayload:
                 capture_payload(Keys,Values,JournalSlots,JournalKeys,JournalValues,
                                 t,safe_target,n,S,T,DK,DV,JournalBlock)
-            tl.store(Values+(n*S+safe_target)*DV+d,
-                     prev+beta*(content-prev), d<DV)
+            journal_store(Values + (n * S + safe_target) * DV + d, prev + beta * (content - prev), d < DV, J, RecordAll, Values + (n * S + safe_target) * DV + 0, DV)
         reference = tl.where(s == allocation, 1., reference)
         touch = tl.where(s == allocation, clock, touch)
         live = live | (s == allocation)
@@ -184,29 +191,28 @@ def scan_kernel(K, Q, V, Beta, Pop, Logit, Coef, Keys, Values, Strength,
             append_horizon, append_terminal = death_exact(tl.full((1,), 1., tl.float32),
                                     tl.full((1,), Free, tl.float32), Decay)
             dt = tl.sum(append_horizon, 0)
-            tl.store(terminal+allocation, tl.sum(append_terminal, 0))
-            size = schedule(heap, position, due, size, allocation,
-                            tl.where(dt >= 0, clock+dt, -1))
+            journal_store(terminal + allocation, tl.sum(append_terminal, 0), True, J, RecordAll)
+            size = schedule(heap, position, due, size, allocation, tl.where(dt >= 0, clock + dt, -1), J, RecordAll)
         # Spill once at the read/mutation boundary. Each due event now edits
         # scalar metadata, rather than applying O(S) vector updates per death.
-        tl.store(Strength+n*S+s, reference, valid)
-        tl.store(Live+n*S+s, live, valid)
-        tl.store(Age+n*S+s, age, valid)
-        tl.store(TouchStore+n*S+s, touch, valid)
+        journal_store(Strength + n * S + s, reference, valid, J, RecordAll, Strength + n * S + 0, S)
+        journal_store(Live + n * S + s, live, valid, J, RecordAll, Live + n * S + 0, S)
+        journal_store(Age + n * S + s, age, valid, J, RecordAll, Age + n * S + 0, S)
+        journal_store(TouchStore + n * S + s, touch, valid, J, RecordAll, TouchStore + n * S + 0, S)
         tl.debug_barrier()
-        dead = next_due(heap, due, size, clock+1)
+        dead = next_due(heap, due, size, clock + 1, J, RecordAll)
         processed = 0
         while (dead >= 0) & (processed < S):
             processed += 1
             death_strength = tl.load(terminal+dead)
-            tl.store(Strength+n*S+dead, death_strength)
-            tl.store(TouchStore+n*S+dead, clock+1)
-            tl.store(Age+n*S+dead, clock+1-tl.load(BirthStore+n*S+dead))
-            tl.store(Live+n*S+dead, False)
-            birth_remove(birth_next, birth_prev, birth_head, dead)
-            set_free(free0, free1, root, dead, True)
-            size = cancel(heap, position, due, size, dead)
-            dead = next_due(heap, due, size, clock+1)
+            journal_store(Strength + n * S + dead, death_strength, True, J, RecordAll)
+            journal_store(TouchStore + n * S + dead, clock + 1, True, J, RecordAll)
+            journal_store(Age + n * S + dead, clock + 1 - tl.load(BirthStore + n * S + dead), True, J, RecordAll)
+            journal_store(Live + n * S + dead, False, True, J, RecordAll)
+            birth_remove(birth_next, birth_prev, birth_head, dead, J, RecordAll)
+            set_free(free0, free1, root, dead, True, J, RecordAll)
+            size = cancel(heap, position, due, size, dead, J, RecordAll)
+            dead = next_due(heap, due, size, clock + 1, J, RecordAll)
         tl.device_assert(dead < 0, "death heap did not drain within slot capacity")
         tl.debug_barrier()
         new_live = tl.load(Live+n*S+s, valid, 0).to(tl.int1)
@@ -221,19 +227,19 @@ def scan_kernel(K, Q, V, Beta, Pop, Logit, Coef, Keys, Values, Strength,
         tl.store(Alloc+inp, allocation)
         tl.store(Pops+inp, pop_id)
         ring = (Start+t) % 128
-        tl.store(History+n*128+ring, case)
+        journal_store(History + n * 128 + ring, case, True, J, RecordAll)
         hist_idx = tl.arange(0, 128)
         hist = tl.load(History+n*128+hist_idx)
         requests = tl.sum(((hist>0) & (hist!=4)).to(tl.int32), 0)
         caps = tl.sum((hist == 5).to(tl.int32), 0)
         tl.store(Pressure+inp, caps / tl.maximum(1, requests))
-    tl.store(References+n*S+s, reference, valid)
-    tl.store(Sizes+n, size)
+    journal_store(References + n * S + s, reference, valid, J, RecordAll, References + n * S + 0, S)
+    journal_store(Sizes + n, size, True, J, RecordAll)
     strength = advance_exact(reference, tl.where(live, Start+T-touch, 0), Decay)
     age = tl.where(live, Start+T-birth, age)
-    tl.store(Strength+n*S+s, strength, valid)
-    tl.store(Live+n*S+s, live, valid)
-    tl.store(Age+n*S+s, age, valid)
+    journal_store(Strength + n * S + s, strength, valid, J, RecordAll, Strength + n * S + 0, S)
+    journal_store(Live + n * S + s, live, valid, J, RecordAll, Live + n * S + 0, S)
+    journal_store(Age + n * S + s, age, valid, J, RecordAll, Age + n * S + 0, S)
 
 
 @triton.jit

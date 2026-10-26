@@ -1,0 +1,58 @@
+gpu_lease: granted GPUs: 1 (pid 738909)
+X31 physical card 1
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0
+rootdir: /home/erikg/emender
+configfile: pyproject.toml
+plugins: timeout-2.4.0, anyio-4.13.0
+collected 88 items
+
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_all_field_journal.py . [  1%]
+...                                                                      [  4%]
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_components.py . [  5%]
+..                                                                       [  7%]
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_device_free.py . [  9%]
+                                                                         [  9%]
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py . [ 10%]
+...F
+
+=================================== FAILURES ===================================
+____________________ test_full_first_order_parity[0-11776] _____________________
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:61: in test_full_first_order_parity
+    check_parity(slots,seed)
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:42: in check_parity
+    actual,atrace=run(actual_inputs,True)
+                  ^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:30: in run
+    out,final,trace,_=tape_scan(k,q,v,beta,pop,logit,state,cfg,coef)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x31_tape_cell_fused/cell_fused.py:74: in tape_scan
+    return autograd_scan(tensors,state,cfg,append_err_coef)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x31_tape_cell_fused/backward.py:210: in autograd_scan
+    out,keys,values,strength=Replay.apply(cfg,tokens,history,saved,*inputs,coef,
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:581: in apply
+    return super().apply(*args, **kwargs)  # type: ignore[misc]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x31_tape_cell_fused/backward.py:138: in forward
+    out,final,trace,pressure=tape_scan(k,q,v,beta,pop,logit,initial,cfg,coef,
+experiments/expressivity_tasks/x31_tape_cell_fused/cell_fused.py:153: in tape_scan
+    scan_kernel[(b*h,)](*args,coef,keys,values,strength,live,age,
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:756: in run
+    launch_metadata = kernel.launch_metadata(grid, stream, *bound_args.values())
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:490: in launch_metadata
+    self._init_handles()
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:464: in _init_handles
+    raise_(OutOfResources(self.metadata.shared, max_shared, "shared memory"))
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:456: in raise_
+    raise err
+E   triton.runtime.errors.OutOfResources: out of resource: shared memory, Required: 131072, Hardware limit: 101376. Reducing block sizes or `num_stages` may help.
+- generated xml file: /home/erikg/emender/experiments/expressivity_tasks/x31_tape_cell_fused/validation_part5.xml -
+=========================== short test summary info ============================
+FAILED experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py::test_full_first_order_parity[0-11776]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+======================== 1 failed, 12 passed in 35.02s =========================

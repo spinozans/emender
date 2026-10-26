@@ -1,0 +1,154 @@
+{
+  "physical_gpu": "1",
+  "torch": "2.9.1+cu128",
+  "seed": 0,
+  "budget": 736,
+  "heads": 4,
+  "batch": 64,
+  "lr": 0.0001,
+  "updates": 2500,
+  "validation": [
+    {
+      "update": 500,
+      "report": {
+        "n": 2000,
+        "balanced_accuracy": 0.8975,
+        "raw_accuracy": 0.8975,
+        "per_class_recall": {
+          "accept": 1.0,
+          "reject": 0.795
+        },
+        "confusion": {
+          "accept": {
+            "pred_accept": 1000,
+            "pred_reject": 0
+          },
+          "reject": {
+            "pred_accept": 205,
+            "pred_reject": 795
+          }
+        },
+        "class_counts": {
+          "accept": 1000,
+          "reject": 1000
+        },
+        "majority_baseline": 0.5
+      }
+    },
+    {
+      "update": 1000,
+      "report": {
+        "n": 2000,
+        "balanced_accuracy": 0.8605,
+        "raw_accuracy": 0.8605,
+        "per_class_recall": {
+          "accept": 1.0,
+          "reject": 0.721
+        },
+        "confusion": {
+          "accept": {
+            "pred_accept": 1000,
+            "pred_reject": 0
+          },
+          "reject": {
+            "pred_accept": 279,
+            "pred_reject": 721
+          }
+        },
+        "class_counts": {
+          "accept": 1000,
+          "reject": 1000
+        },
+        "majority_baseline": 0.5
+      }
+    },
+    {
+      "update": 1500,
+      "report": {
+        "n": 2000,
+        "balanced_accuracy": 0.8574999999999999,
+        "raw_accuracy": 0.8575,
+        "per_class_recall": {
+          "accept": 1.0,
+          "reject": 0.715
+        },
+        "confusion": {
+          "accept": {
+            "pred_accept": 1000,
+            "pred_reject": 0
+          },
+          "reject": {
+            "pred_accept": 285,
+            "pred_reject": 715
+          }
+        },
+        "class_counts": {
+          "accept": 1000,
+          "reject": 1000
+        },
+        "majority_baseline": 0.5
+      }
+    },
+    {
+      "update": 2000,
+      "report": {
+        "n": 2000,
+        "balanced_accuracy": 0.9219999999999999,
+        "raw_accuracy": 0.922,
+        "per_class_recall": {
+          "accept": 1.0,
+          "reject": 0.844
+        },
+        "confusion": {
+          "accept": {
+            "pred_accept": 1000,
+            "pred_reject": 0
+          },
+          "reject": {
+            "pred_accept": 156,
+            "pred_reject": 844
+          }
+        },
+        "class_counts": {
+          "accept": 1000,
+          "reject": 1000
+        },
+        "majority_baseline": 0.5
+      }
+    },
+    {
+      "update": 2500,
+      "report": {
+        "n": 2000,
+        "balanced_accuracy": 0.915,
+        "raw_accuracy": 0.915,
+        "per_class_recall": {
+          "accept": 1.0,
+          "reject": 0.83
+        },
+        "confusion": {
+          "accept": {
+            "pred_accept": 1000,
+            "pred_reject": 0
+          },
+          "reject": {
+            "pred_accept": 170,
+            "pred_reject": 830
+          }
+        },
+        "class_counts": {
+          "accept": 1000,
+          "reject": 1000
+        },
+        "majority_baseline": 0.5
+      }
+    }
+  ],
+  "gate": true,
+  "validation_hash": "cd9060171eaaea7bc0a5a24bdcac0c11343af81fbd058157af62236ef30730ff",
+  "deviations": [
+    "stage-2 occupancy curriculum omitted",
+    "full physical batch64",
+    "full right padding to 386; EOS supervision unchanged"
+  ]
+}

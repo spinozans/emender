@@ -1,0 +1,143 @@
+gpu_lease: granted GPUs: 1 (pid 692317)
+X31 physical card 1
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0
+rootdir: /home/erikg/emender
+configfile: pyproject.toml
+plugins: timeout-2.4.0, anyio-4.13.0
+collected 59 items / 56 deselected / 3 selected
+
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_all_field_journal.py F [ 33%]
+
+
+=================================== FAILURES ===================================
+_______________________ test_all_field_exact_rollback[1] _______________________
+triton.compiler.errors.CompilationError: at 12:23:
+def journal_store(pointer, value, mask, J, Record: tl.constexpr):
+    if Record:
+        Addresses, Before, Widths, Counts, n, capacity = J
+        old = tl.load(pointer, mask, 0)
+        dtype: tl.constexpr = pointer.dtype.element_ty
+        width: tl.constexpr = dtype.primitive_bitwidth
+        if width == 64:
+            bits = old.to(tl.uint64, bitcast=True)
+            new_bits = value.to(dtype).to(tl.uint64, bitcast=True)
+        elif width == 32:
+            bits = old.to(tl.uint32, bitcast=True).to(tl.uint64)
+            new_bits = value.to(dtype).to(tl.uint32, bitcast=True).to(tl.uint64)
+                       ^
+AttributeError("'int' object has no attribute 'to'")
+
+The above exception was the direct cause of the following exception:
+triton.compiler.errors.CompilationError: at 12:23:
+def journal_store(pointer, value, mask, J, Record: tl.constexpr):
+    if Record:
+        Addresses, Before, Widths, Counts, n, capacity = J
+        old = tl.load(pointer, mask, 0)
+        dtype: tl.constexpr = pointer.dtype.element_ty
+        width: tl.constexpr = dtype.primitive_bitwidth
+        if width == 64:
+            bits = old.to(tl.uint64, bitcast=True)
+            new_bits = value.to(dtype).to(tl.uint64, bitcast=True)
+        elif width == 32:
+            bits = old.to(tl.uint32, bitcast=True).to(tl.uint64)
+            new_bits = value.to(dtype).to(tl.uint32, bitcast=True).to(tl.uint64)
+                       ^
+AttributeError("'int' object has no attribute 'to'")
+
+The above exception was the direct cause of the following exception:
+
+triton.compiler.errors.CompilationError: at 14:8:
+    if index >= 0:
+        tl.device_assert(index < size, 'invalid heap inverse position')
+        size -= 1
+        if index < size:
+            replacement = tl.load(Heap + size)
+            journal_store(Heap + index, replacement, True, J, Record)
+            journal_store(Position + replacement, index, True, J, Record)
+            tl.debug_barrier()
+            _up(Heap, Position, Due, index, J, Record)
+            index = tl.load(Position + replacement)
+            _down(Heap, Position, Due, index, size, J, Record)
+        journal_store(Position + slot, -1, True, J, Record)
+        ^
+
+The above exception was the direct cause of the following exception:
+triton.compiler.errors.CompilationError: at 12:23:
+def journal_store(pointer, value, mask, J, Record: tl.constexpr):
+    if Record:
+        Addresses, Before, Widths, Counts, n, capacity = J
+        old = tl.load(pointer, mask, 0)
+        dtype: tl.constexpr = pointer.dtype.element_ty
+        width: tl.constexpr = dtype.primitive_bitwidth
+        if width == 64:
+            bits = old.to(tl.uint64, bitcast=True)
+            new_bits = value.to(dtype).to(tl.uint64, bitcast=True)
+        elif width == 32:
+            bits = old.to(tl.uint32, bitcast=True).to(tl.uint64)
+            new_bits = value.to(dtype).to(tl.uint32, bitcast=True).to(tl.uint64)
+                       ^
+AttributeError("'int' object has no attribute 'to'")
+
+The above exception was the direct cause of the following exception:
+
+triton.compiler.errors.CompilationError: at 14:8:
+    if index >= 0:
+        tl.device_assert(index < size, 'invalid heap inverse position')
+        size -= 1
+        if index < size:
+            replacement = tl.load(Heap + size)
+            journal_store(Heap + index, replacement, True, J, Record)
+            journal_store(Position + replacement, index, True, J, Record)
+            tl.debug_barrier()
+            _up(Heap, Position, Due, index, J, Record)
+            index = tl.load(Position + replacement)
+            _down(Heap, Position, Due, index, size, J, Record)
+        journal_store(Position + slot, -1, True, J, Record)
+        ^
+
+The above exception was the direct cause of the following exception:
+
+triton.compiler.errors.CompilationError: at 2:11:
+def schedule(Heap, Position, Due, size, slot, time, J, Record: tl.constexpr):
+    size = cancel(Heap, Position, Due, size, slot, J, Record)
+           ^
+
+The above exception was the direct cause of the following exception:
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_all_field_journal.py:28: in test_all_field_exact_rollback
+    _,fresh,_,_=tape_scan(*inputs,initial,cfg,record_all=True)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x31_tape_cell_fused/cell_fused.py:143: in tape_scan
+    scan_kernel[(b*h,)](*args,coef,keys,values,strength,live,age,
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:733: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:861: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:300: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:80: in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+E   triton.compiler.errors.CompilationError: at 86:19:
+E           pop = tl.load(Pop + inp)
+E           best = tl.min(tl.where(live & (masked == maximum), s, 2147483647), 0)
+E           pop_id = tl.where((pop > PopThreshold) & (tl.sum(live.to(tl.int32), 0) > 0), best, -1)
+E           strength = tl.where(s == pop_id, strength * (1.0 - pop), strength)
+E           reference = tl.where(s == pop_id, strength, reference)
+E           touch = tl.where(s == pop_id, clock, touch)
+E           popped = tl.sum(tl.where(s == pop_id, strength, 0.0), 0)
+E           if pop_id >= 0:
+E               pop_horizon, pop_terminal = death_exact(tl.full((1,), 1.0, tl.float32) * tl.where(popped > Free, popped, 1.0), tl.full((1,), Free, tl.float32), Decay)
+E               dt = tl.sum(pop_horizon, 0)
+E               journal_store(terminal + pop_id, tl.sum(pop_terminal, 0), True, J, RecordAll)
+E               size = schedule(heap, position, due, size, pop_id, tl.where((popped > Free) & (dt >= 0), clock + dt, -1), J, RecordAll)
+E                      ^
+=========================== short test summary info ============================
+FAILED experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_all_field_journal.py::test_all_field_exact_rollback[1]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+======================= 1 failed, 56 deselected in 2.42s =======================

@@ -29,7 +29,8 @@ CPU interpreter checks are correctness diagnostics, never GPU performance.
 
 ## Results
 
-Pending. Unrun gates must remain explicitly unrun, never inferred from v1.
+Current results are in the Part 5 ledger below. Older part 2–4 ledgers are
+historical; no v1 result is substituted for an X31 result.
 
 ### Part 4 current acceptance ledger (partial delivery)
 
@@ -139,3 +140,52 @@ are integrated; original forward/continuation checks remain passing. These
 are correctness receipts only. The birth index, tiled reads, mutation-time
 journal and fused backward remain incomplete, so all training and timing
 gates in the table above remain UNMET / NOT RUN / NOT MEASURED as recorded.
+
+
+### Part 5 current acceptance ledger
+
+| Deliverable / gate | Final result |
+|---|---|
+| All-field mutation-time before-images / exact chunk rollback | Implemented for owned physical writes; byte-exact persistent rollback, snapshot/parent checks pass |
+| Compact logical-event journal / S independence | FAIL: dense vector capture and conservative O(T*S+(S+T)*log S) reservation |
+| Fused backward / custom autograd / G10 | Implemented first-order reverse kernel; private replay and trace ownership; no routing reevaluation |
+| Gate 1: complete forward + first-order gradient parity | PASS: final 95 passed in 265.55 s; 1e-5 all adjoints/state and exact traces |
+| Gate 2: MQAR >=0.99 by 5000 | PASS: 1.0 at update500 on 20k validation, B736/H4/batch64/AdamW lr1e-4 |
+| Gate 3: ladder >0.9 by 2500 | PASS: 0.915 at2500, accept1.000/reject0.830; best0.922 at2000 |
+| Gate 4: >=1x X30 at S736 | PASS: 10.085x |
+| Gate 4: >=10x X30 at S11776 | FAIL: 0.319x |
+| Gate 4: H16/H1 <=2x | FAIL: 5.672x at S736; 40.361x at S11776 |
+| Gate 5: checkpoint time <=5% | PASS timing: -0.315% observed delta, matched four-warp forward geometry |
+| Gate 5: sparse/event storage independence from S | FAIL: 21,789,476,864 reserved bytes, 253,904,384 entries at S11776; dense-record lower bound grows with S |
+| Gate 6: append mutation prototype >1x | PASS scoped mutation phase: S=736: 1.086x / S=11776: 1.091x; includes common reset/launch/sync, excludes reads/management/certification/allocation |
+
+Current receipts: `validation_part5.txt/.xml`, `parity_part5.json`,
+`training_part5.txt`, `mqar_part5.json`, `ladder_part5.json`, `cost_part5.txt/.json`,
+`append_cost_part5.txt/.json`, and `summary_part5.json`. Source/JUnit hashes are
+checked before cost/learning collection. Final card: broker-leased physical1,
+lambda01 RTX6000 Ada; Python3.12.3, torch2.9.1+cu128, Triton3.5.1, fp32.
+
+Final forward costs (B64/H4/T16/K64/V128/width256, fresh state each call):
+
+| Slots | X31 ms/token | X30 ms/token | X28E ms/token | X30/X31 | Target |
+|---|---|---|---|---|---|
+| 736 | 0.450551 | 4.544004 | 2.112711 | 10.085x | PASS |
+| 11776 | 78.210305 | 24.970704 | 17.173224 | 0.319x | FAIL |
+
+Timing uses exactly five warmups and twenty measurements; component accounting
+uses warmup five. Raw CUDA-event and wall samples are retained. Checkpoint time
+includes the private forward replay copy and map. Base state bytes:
+2,523,785,216; journal reservation: 21,789,476,864;
+private replay copy: 2,511,726,592. These are
+component sizes, not peak-memory measurements. Storage independence fails even
+though the relative time threshold passes.
+
+All compile/runtime failures, five interrupted validation attempts and the
+interrupted initial ladder are retained separately and are not passes. The
+failed uniform16 forward and preliminary mixed-geometry/extra-accounting cost
+attempts are superseded by the final matched4/exact5 protocol. See REPORT.md
+for the complete chronology and scope limits. No v1 accuracy or speed result
+is substituted. The completed learning run uses unchanged S736/H4 numerical
+kernels; subsequent H1 trace-ownership and large-S geometry changes received
+the final parity check before costs. One seed, in-range ladder validation,
+stage2 omitted; no OOD certification. No .pt artifact or out-of-scope source edit.

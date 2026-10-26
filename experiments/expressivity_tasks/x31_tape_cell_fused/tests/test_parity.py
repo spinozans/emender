@@ -49,12 +49,14 @@ def test_random_imported_store(seed,slots):
         torch.testing.assert_close(getattr(end.native,name),getattr(fs.native,name))
 
 
-def test_training_fails_closed():
+def test_training_first_order_entry_point():
+    dev=device()
     cfg = oracle.TapeHeadConfig(key_dim=2,value_dim=2,n_heads=1,budget=2)
-    x = torch.ones(1,1,1,2,requires_grad=True)
-    g = torch.ones(1,1,1)
-    with pytest.raises(NotImplementedError,match='reverse replay'):
-        tape_scan(x,x,x,g,g,g,None,cfg)
+    x = torch.ones(1,2,1,2,device=dev,requires_grad=True)
+    g = torch.ones(1,2,1,device=dev)
+    out,_,_,_=tape_scan(x,x,x,g,g*0,g,None,cfg)
+    out.sum().backward()
+    assert x.grad is not None and x.grad.isfinite().all()
 
 
 def test_exact_death_boundary_and_pressure_window():

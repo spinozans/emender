@@ -1,0 +1,95 @@
+gpu_lease: granted GPUs: 1 (pid 700149)
+X31 physical card 1
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0
+rootdir: /home/erikg/emender
+configfile: pyproject.toml
+plugins: timeout-2.4.0, anyio-4.13.0
+collected 84 items / 56 deselected / 28 selected
+
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_all_field_journal.py . [  3%]
+..                                                                       [ 10%]
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py F [ 14%]
+
+
+=================================== FAILURES ===================================
+______________________ test_full_first_order_parity[0-1] _______________________
+.venv/lib/python3.12/site-packages/triton/language/core.py:43: in wrapper
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/language/core.py:1638: in arange
+    return _semantic.arange(start, end)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/language/semantic.py:574: in arange
+    raise ValueError("arange's arguments must be of type tl.constexpr")
+E   ValueError: arange's arguments must be of type tl.constexpr
+
+The above exception was the direct cause of the following exception:
+Traceback (most recent call last):
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/language/core.py", line 43, in wrapper
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/language/core.py", line 1638, in arange
+    return _semantic.arange(start, end)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/language/semantic.py", line 574, in arange
+    raise ValueError("arange's arguments must be of type tl.constexpr")
+ValueError: arange's arguments must be of type tl.constexpr
+
+The above exception was the direct cause of the following exception:
+
+triton.compiler.errors.CompilationError: at 3:8:
+def undo_to(J, start, stop, Block: tl.constexpr):
+    Addresses, Before, Widths, Counts, n, capacity = J
+    d = tl.arange(0,Block)
+        ^
+arange's arguments must be of type tl.constexpr
+
+The above exception was the direct cause of the following exception:
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:41: in test_full_first_order_parity
+    ga=torch.autograd.grad(actual,actual_inputs,weights,allow_unused=True)
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:503: in grad
+    result = _engine_run_backward(
+.venv/lib/python3.12/site-packages/torch/autograd/graph.py:841: in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:315: in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:608: in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x31_tape_cell_fused/backward.py:181: in backward
+    reverse_kernel[(b*h,)](*args,keys,values,strength,live,meta[5],
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:733: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:861: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:300: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:80: in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+E   triton.compiler.errors.CompilationError: at 20:8:
+E       n=tl.program_id(0)
+E       s=tl.arange(0,BS)
+E       d=tl.arange(0,BV)
+E       valid=s<S
+E       gs=tl.load(GStrength+n*S+s,valid,0.)
+E       stop=tl.load(Counts+n)
+E       coef_grad=tl.full((),0.,tl.float32)
+E       for reverse in range(T):
+E           t=T-1-reverse
+E           inp=n*T+t
+E           start=tl.load(Boundaries+inp)
+E           undo_to((Addresses,Before,Widths,Counts,n,Capacity),start,stop,max(BS,BV))
+E           ^
+=========================== short test summary info ============================
+FAILED experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py::test_full_first_order_parity[0-1]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+============ 1 failed, 3 passed, 56 deselected in 79.62s (0:01:19) =============

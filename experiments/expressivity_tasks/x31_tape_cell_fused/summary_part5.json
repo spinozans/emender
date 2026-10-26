@@ -1,0 +1,117 @@
+{
+  "parity_tests": 95,
+  "full_parity": true,
+  "mqar": {
+    "updates": 500,
+    "mean_per_class_recall": 1.0,
+    "gate": true
+  },
+  "ladder": {
+    "updates": 2500,
+    "final": {
+      "update": 2500,
+      "report": {
+        "n": 2000,
+        "balanced_accuracy": 0.915,
+        "raw_accuracy": 0.915,
+        "per_class_recall": {
+          "accept": 1.0,
+          "reject": 0.83
+        },
+        "confusion": {
+          "accept": {
+            "pred_accept": 1000,
+            "pred_reject": 0
+          },
+          "reject": {
+            "pred_accept": 170,
+            "pred_reject": 830
+          }
+        },
+        "class_counts": {
+          "accept": 1000,
+          "reject": 1000
+        },
+        "majority_baseline": 0.5
+      }
+    },
+    "best": {
+      "update": 2000,
+      "report": {
+        "n": 2000,
+        "balanced_accuracy": 0.9219999999999999,
+        "raw_accuracy": 0.922,
+        "per_class_recall": {
+          "accept": 1.0,
+          "reject": 0.844
+        },
+        "confusion": {
+          "accept": {
+            "pred_accept": 1000,
+            "pred_reject": 0
+          },
+          "reject": {
+            "pred_accept": 156,
+            "pred_reject": 844
+          }
+        },
+        "class_counts": {
+          "accept": 1000,
+          "reject": 1000
+        },
+        "majority_baseline": 0.5
+      }
+    },
+    "gate": true
+  },
+  "forward_scope": "forward only, fresh state per call; full cell projections plus state/scan; allocation and synchronization included",
+  "timing_gates": {
+    "s736_speedup_ge_1": true,
+    "s11776_speedup_ge_10": false,
+    "heads_ratio_le_2": false,
+    "checkpoint_overhead_le_5pct": true
+  },
+  "x30_speedups": {
+    "736": 10.085438894114892,
+    "11776": 0.3192763887473006
+  },
+  "heads_ratios": {
+    "736": 5.671550322226097,
+    "11776": 40.36054582223039
+  },
+  "checkpoint": {
+    "observed_fractional_time_delta": -0.0031464770288373023,
+    "timing_gate": true,
+    "base_state_bytes": 2523785216,
+    "reserved_bytes": 21789476864,
+    "recorded_entries": 253904384,
+    "used_record_bytes": 5078087680,
+    "private_forward_replay_copy_bytes": 2511726592,
+    "budget_scaling": [
+      {
+        "slots": 736,
+        "derived_reserved_bytes": 1183647744,
+        "derived_dense_record_lower_bound": 15826944
+      },
+      {
+        "slots": 11776,
+        "derived_reserved_bytes": 21789476864,
+        "derived_dense_record_lower_bound": 253231104
+      }
+    ],
+    "storage_independence_gate": false,
+    "note": "Dense physical vector spills and conservative capacity scale with S; not compact logical-event storage."
+  },
+  "append_phase_gates": {
+    "736": {
+      "speedup": 1.0858964572762786,
+      "gate": true
+    },
+    "11776": {
+      "speedup": 1.0910616795968855,
+      "gate": true
+    }
+  },
+  "collection_errors": [],
+  "all_registered_targets_passed": false
+}
