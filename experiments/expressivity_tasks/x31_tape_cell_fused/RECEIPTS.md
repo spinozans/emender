@@ -237,3 +237,48 @@ measurements have explicit `_scoring_only`, `_weighted_read` or
 `part6_*.patch.json`. Final deterministic empty heap metadata removes the
 allocator-dependent one-entry discrepancy seen in the metadata attempt.
 No .pt, WG, delegated agent, Frontier/Slurm or resilient-training change.
+
+
+### Part 7 final acceptance ledger — partial delivery
+
+Final parity: **105 passed in 338.18 s**, original 97 retained plus eight new checks,
+no skips. Final receipts are unsuffixed `*_part7` files; source/JUnit hashes were
+checked before sequential collection on broker-leased physical GPU1. Python3.12.3,
+torch2.9.1+cu128, Triton3.5.1, fp32, lambda01 RTX6000Ada. Five warmups, twenty
+measurements; same fresh-state B64/T16/K64/V128/width256 protocol.
+
+| Gate | Final result |
+|---|---|
+| S736 speedup >=1 | PASS 20.180x |
+| S11776 speedup >=10 | PASS 111.947x |
+| H16/H1 <=2, S736 | PASS 1.271x |
+| H16/H1 <=2, S11776 | FAIL 5.135x |
+| Checkpoint overhead <=5% | FAIL +17.398% |
+| Append-phase speedup >1 | PASS S736 1.059x / S11776 1.076x |
+| Equal-stream storage independence | PASS 855,040 entries at both S; reservation ratio1.227 |
+| All registered targets | FAIL: two timing gates still open |
+
+Steady metadata updates are scalar; POP tile reduction moved out of the core.
+Fresh import remains O(S), heap O(log S), imported birth walks O(S); strict
+O(1)-amortized maintenance is not delivered. Grouped 16-query/K32 GEMM retains
+only the same-store diagonal and wastes cross-head arithmetic. Dense H*S native
+initialization and diagnostics remain. Known empty-origin grids use an append
+upper bound; unknown imports still use full grids.
+
+Capture emits before-images at vector mutation sites and uses device counts,
+fixed capacities and pinned nonblocking rebase-map transfer. No live-count/final-
+sizing `.item()`/`.cpu()` read or capture staging remains in the training path.
+Empty private native imports avoid cloning, and private payload replay copies
+allocated rows only. Ordered atomic/barrier groups, capacity-wide rebasing,
+nonpayload replay clones and dense nonempty-import copies remain.
+
+Reservation is 92,473,344 / 113,444,864 bytes at S736/S11776, no longer part6's
+actual-count compaction; the <=2x largest-actual-event-count bound is not retained.
+Unknown imported bounds may reserve against S. Base/private replay address-space
+bytes remain 2,523,785,216 / 2,511,726,592 at S11776/H4; the latter is not bytes
+copied on the empty-origin forward path. No peak or total-memory claim.
+
+See REPORT.md for all failed/superseded run names, exact remaining structures
+and H1/H4/H16 tables. Final `summary_part7.json` records false for both blockers
+and `all_registered_targets_passed`. No learning rerun, .pt, WG, delegation,
+Frontier/Slurm or resilient-training change.

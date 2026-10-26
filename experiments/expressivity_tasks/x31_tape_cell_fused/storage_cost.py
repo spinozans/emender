@@ -12,6 +12,7 @@ from .train_gates import require_parity, save
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--parity-receipt',required=True)
+    parser.add_argument('--output',default='storage_part6.json')
     args=parser.parse_args()
     require_parity(args.parity_receipt)
     held=os.environ.get('GPU_LEASE_HELD')
@@ -36,7 +37,7 @@ def main():
                       journal.boundaries,journal.gates,journal.errors)),
                  capture_capacity_per_store=AllFieldJournal.capacity_for(b*h,t,s,dk,dv,0),
                  capture_reserved_bytes=b*h*(20*AllFieldJournal.capacity_for(b*h,t,s,dk,dv,0)+16*t+8),
-                 transient_capture_scratch_bytes=b*h*max(s,dv)*8)
+                 transient_capture_scratch_bytes=0)
         rows.append(row)
         print(row,flush=True)
         del state,journal,k,v,on,off
@@ -44,11 +45,11 @@ def main():
     ratio=rows[1]['retained_reserved_bytes']/rows[0]['retained_reserved_bytes']
     capture_ratio=rows[1]['capture_reserved_bytes']/rows[0]['capture_reserved_bytes']
     equal=rows[0]['recorded_entries']==rows[1]['recorded_entries']
-    save('storage_part6.json',dict(physical_gpu=held,gpu=torch.cuda.get_device_name(),
+    save(args.output,dict(physical_gpu=held,gpu=torch.cuda.get_device_name(),
         measurements=rows,equal_recorded_events=equal,retained_reservation_ratio=ratio,
         capture_reservation_ratio=capture_ratio,
         storage_independence_gate=equal and ratio<=1.5 and capture_ratio<=1.5,
-        note='Component allocations, not measured peak or CUDA caching-allocator reservation. Capture scratch and base/replay state remain O(S); retained logs use at most twice the largest store event count per store plus per-token routing records.'))
+        note='Component allocations, not measured peak or CUDA caching-allocator reservation. Fixed capacity bounds possible events using the host-known live upper bound and heap depth. There is no host sizing or compaction. Imported states without a bound reserve against S; base/replay state and scratch remain O(S).'))
 
 
 if __name__=='__main__':

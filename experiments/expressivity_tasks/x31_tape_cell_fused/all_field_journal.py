@@ -1,9 +1,9 @@
 """Typed mutation-time undo log for owned GPU storage.
 
-Scalar and vector stores skip unchanged bits at capture time. Ordered compact
+Scalars skip unchanged bits; vectors emit at their mutation sites. Ordered
 undo groups preserve repeated-write before-images. Reservation is bounded by
 initial live rows plus possible token appends, rather than the physical slot
-budget (apart from heap depth). Counting initial live rows synchronizes CUDA.
+budget (apart from heap depth). Capacity uses a host-known conservative live bound; valid lengths stay on device.
 Addresses are private to the owned state; callers cannot supply arbitrary undo
 pointers. Snapshots explicitly rebase addresses onto cloned storage.
 """
@@ -31,7 +31,7 @@ def journal_store(pointer, value, mask, J, Record: tl.constexpr, Base=None, Coun
             else:
                 bits=old.to(tl.uint8).to(tl.uint64)
                 proposed=new.to(tl.uint8).to(tl.uint64)
-            changed=mask & (bits!=proposed)
+            changed=mask
             ranks=tl.cumsum(changed.to(tl.int32),0)
             length=tl.sum(changed.to(tl.int32),0)
             start=tl.atomic_add(Counts+n,length)
@@ -42,44 +42,24 @@ def journal_store(pointer, value, mask, J, Record: tl.constexpr, Base=None, Coun
             tl.store(Before+index,bits,active)
             tl.store(Widths+index,width | (length<<8),active)
         elif len(pointer.shape)>0:
-            # Stage only the proposed values, never the before-images. The
-            # bounded capture loop reads each old value immediately before
-            # this mutation and packs changed lanes into ordered undo groups.
-            new=tl.cast(value,dtype)
-            scratch=Scratch.to(tl.pointer_type(dtype))
-            tl.store(scratch+tl.arange(0,pointer.numel),new,mask)
-            tl.debug_barrier()
-            base=Base.to(tl.uint64)
-            count=tl.cast(Count,tl.int32)
-            d=tl.arange(0,128)
-            for tile in range(tl.cdiv(count,128)):
-                lane=tile*128+d
-                active=lane<count
-                ptr=(base+lane*(width//8)).to(tl.pointer_type(dtype))
-                old=tl.load(ptr,active,0)
-                if width==64:
-                    bits=old.to(tl.uint64,bitcast=True)
-                elif width==32:
-                    bits=old.to(tl.uint32,bitcast=True).to(tl.uint64)
-                else:
-                    bits=old.to(tl.uint8).to(tl.uint64)
-                proposed=tl.load(scratch+lane,active,0)
-                if width==64:
-                    proposed_bits=proposed.to(tl.uint64,bitcast=True)
-                elif width==32:
-                    proposed_bits=proposed.to(tl.uint32,bitcast=True).to(tl.uint64)
-                else:
-                    proposed_bits=proposed.to(tl.uint8).to(tl.uint64)
-                changed=active & (bits!=proposed_bits)
-                ranks=tl.cumsum(changed.to(tl.int32),0)
-                length=tl.sum(changed.to(tl.int32),0)
-                start=tl.atomic_add(Counts+n,length)
-                tl.device_assert(start+length<=capacity,'all-field journal capacity exceeded')
-                index=n*capacity+start+ranks-1
-                active=changed & (start+ranks<=capacity)
-                tl.store(Addresses+index,ptr.to(tl.uint64),active)
-                tl.store(Before+index,bits,active)
-                tl.store(Widths+index,width | (length<<8),active)
+            # The caller identifies the mutated payload; emit its before-image
+            # directly, without staging proposed data or discovering changes.
+            old=tl.load(pointer,mask,0)
+            if width==64:
+                bits=old.to(tl.uint64,bitcast=True)
+            elif width==32:
+                bits=old.to(tl.uint32,bitcast=True).to(tl.uint64)
+            else:
+                bits=old.to(tl.uint8).to(tl.uint64)
+            ranks=tl.cumsum(mask.to(tl.int32),0)
+            length=tl.sum(mask.to(tl.int32),0)
+            start=tl.atomic_add(Counts+n,length)
+            tl.device_assert(start+length<=capacity,'all-field journal capacity exceeded')
+            index=n*capacity+start+ranks-1
+            active=mask & (start+ranks<=capacity)
+            tl.store(Addresses+index,pointer.to(tl.uint64),active)
+            tl.store(Before+index,bits,active)
+            tl.store(Widths+index,width | (length<<8),active)
         else:
             old=tl.load(pointer,mask,0)
             new=tl.cast(value,dtype)
@@ -165,14 +145,13 @@ class AllFieldJournal:
         return capacity
 
     @classmethod
-    def allocate(cls, stores, tokens, slots, dk, dv, owners, start_tokens, fresh):
+    def allocate(cls, stores, tokens, slots, dk, dv, owners, start_tokens, fresh, initial_live=None):
         # Fail before inspecting owners or allocating an oversized address space.
         cls.capacity_for(stores,tokens,slots,dk,dv,0)
         # A token can introduce at most one live row. Dead imported payloads
         # remain untouched; exact rollback still includes every changed bit.
-        live = owners[3].reshape(stores, slots)
         capacity = cls.capacity_for(stores,tokens,slots,dk,dv,
-                                    int(live.sum(1).max().item()))
+                                    slots if initial_live is None else initial_live)
         device = owners[0].device
         return cls(torch.empty(stores,capacity,device=device,dtype=torch.uint64),
                    torch.empty(stores,capacity,device=device,dtype=torch.uint64),
@@ -184,15 +163,7 @@ class AllFieldJournal:
                    tuple(owners),start_tokens,fresh,min(128,triton.next_power_of_2(max(slots,dk,dv))))
 
     def compact_(self):
-        """Release unused capture capacity, preserving ordered store-local IDs.
-
-        Retained rows reserve max(events/store), so imbalance can waste a
-        factor of stores. Capture capacity and scratch are reported separately.
-        """
-        capacity=min(self.capacity,triton.next_power_of_2(max(1,int(self.counts.max().item()))))
-        self.addresses=self.addresses[:,:capacity].clone(memory_format=torch.contiguous_format)
-        self.before=self.before[:,:capacity].clone(memory_format=torch.contiguous_format)
-        self.widths=self.widths[:,:capacity].clone(memory_format=torch.contiguous_format)
+        """Compatibility no-op: fixed capacity avoids host length reads."""
         return self
 
     @property

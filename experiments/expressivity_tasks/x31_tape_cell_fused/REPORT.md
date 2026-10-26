@@ -1,3 +1,138 @@
+# X31 part 7 — scalar recurrent metadata; two timing gates remain failed
+
+**Partial delivery, not closure of the last two gates.** Final validation is
+**105 passed in 338.18 s**, including all original 97 tests and eight new tests.
+S736 and S11776 throughput, append-phase and the registered equal-stream storage
+fixture pass. Large-store head scaling is **5.135x** (target <=2), and
+checkpoint overhead is **+17.398%** (target <=5%).
+`summary_part7.json` records `all_registered_targets_passed=false`.
+Part 6 and earlier records below remain historical evidence.
+
+## Implementation and precise limits
+
+The steady recurrent mutation program no longer loads/spills S-length strength,
+live, age, reference or touch vectors. POP uses a scalar winner produced by
+`reduce_read`; emptiness uses the birth-list head. POP, allocation and each
+scheduled death update their scalar metadata directly. Dense death traces are
+zero-initialized once and receive event-indexed writes. Live strengths and ages
+materialize once at chunk end. Fresh import still initializes O(S) metadata in
+the first core launch and walks imported low-strength rows after their first read.
+
+This is **not the full O(1)-amortized metadata design requested**: the existing
+cancellable min-heap remains O(log S), and ordered birth insertion/selection can
+walk O(S) with arbitrary imported future/tied births. No timer wheel or bounded
+birth-group replacement is delivered. The ordinary steady path is scalar, but
+those import and event-data-structure qualifications are acceptance limits.
+
+`score_heads` packs up to 16 head queries into the 16 MMA rows, with batch,
+head-group and slot-tile launch axes. K is processed in 32-wide tiles to fit the
+Ada shared-memory limit. Each head has its own keys, so the grouped GEMM forms
+cross-head scores and retains only each store's diagonal. This is a shared
+multi-query GEMM, **not a proof of H-independent useful arithmetic**: off-diagonal
+outputs are unused. Local weighting and parallel reduction follow scoring;
+time remains sequential with four launches per token. Known empty-origin states
+carry a conservative cumulative append bound, limiting score/read/materialization
+grids to reachable rows; unknown imports retain full grids. Empty birth indexes
+initialize directly, avoiding two unnecessary full-store sorts.
+
+Capture emits vector before-images directly at mutation sites, including one
+vector key-write group instead of DK scalar journal groups. There is no vector
+spill scan or proposed-value staging. Scalars still compare their own old/new
+bits in O(1), avoiding unchanged management records. Device atomics maintain
+counts. A host-known conservative live upper bound selects fixed capacities;
+there are **no `.item()`/`.cpu()` live-count or final-sizing reads in the training
+path**. `compact_` is a compatibility no-op. Address-map transfer uses pinned
+memory and a nonblocking device copy. This removes the identified sizing
+synchronizations; it does not certify an absence of every allocator/runtime stall.
+
+Internally created empty training imports consume their private native buffers,
+avoiding the former extra dense import clone. Private replay copies only allocated
+payload rows in this case; inactive replay payload reads are masked. Repeated
+backward remains isolated. Unknown/nonempty imported training states still copy
+dense payloads; nonpayload replay owners are cloned, and address rebasing scans
+the fixed capacity. Ordered capture groups still pay atomics and barriers.
+These retained structures, plus fresh H*S native allocation/initialization and
+dense diagnostics, are remaining costs, not isolated component-time attributions.
+
+## Final registered receipts
+
+All final GPU work used broker-leased physical **GPU 1**, lambda01, RTX 6000 Ada;
+Python 3.12.3 at `/home/erikg/emender/.venv/bin/python`, torch 2.9.1+cu128,
+Triton 3.5.1, fp32. The source/JUnit attestation preceded collection. Five warmups,
+twenty measurements, median end-to-end wall time per token and raw CUDA samples
+are retained. B64/T16/K64/V128/width256, fresh state, allocation and synchronization
+are included. H1, H4 and H16 were all measured at both budgets; no collection errors.
+
+| Slots | X31 ms/token | X30 ms/token | X28E ms/token | X30/X31 | Speed gate |
+|---|---|---|---|---|---|
+| 736 | 0.213491 | 4.308314 | 2.117148 | 20.180x | PASS |
+| 11776 | 0.298316 | 33.395531 | 17.175472 | 111.947x | PASS |
+
+| Slots | H1 ms/token | H4 ms/token | H16 ms/token | H16/H1 |
+|---|---|---|---|---|
+| 736 | 0.204663 | 0.213491 | 0.260184 | 1.271x |
+| 11776 | 0.204322 | 0.298316 | 1.049276 | 5.135x |
+
+H scaling passes at S736 and fails at S11776. At S11776/H4, checkpoint forward is
+0.350217 ms/token versus
+0.298316: **+17.398%, FAIL**.
+The two blockers remain open despite improvement from part 6's 21.618x head ratio
+and +79.756% checkpoint delta. Base/private replay address spaces remain dense.
+
+Append-phase speedups: S736 **1.059x**;
+S11776 **1.076x**, both PASS with bitwise equality.
+This remains the registered mutation-phase fixture, with common reset/launch/sync,
+not an end-to-end append scan or integrated rank-scan claim.
+
+The equal-append storage fixture records **855,040 entries** at either S and
+retains **92,473,344 / 113,444,864 bytes** (ratio 1.227), so the unchanged <=1.5
+independence fixture passes. Capture staging is zero. Fixed retained capacities
+are 18,048 / 22,144 entries per store. **This gives up part 6's tighter actual-count
+compaction:** reservation is not guaranteed <= twice the largest actual event
+count. Unknown imported states reserve against S. Explicit zero-valued payload
+mutations now emit records even when their bits were already zero.
+
+At the actual S11776/H4 checkpoint point: base 2,523,785,216 bytes; fixed journal
+113,444,864 bytes; 691,200 records (13,824,000 record bytes). Private replay reserves
+2,511,726,592 address-space bytes; this is no longer a count of bytes copied in
+empty-origin forward. Its payload copy visits at most B*H*T allocated rows.
+No peak-memory or total-memory-independence claim follows.
+
+Receipts: `validation_part7.txt/.xml`, `parity_part7.json`,
+`parity_attestation_part7.txt`, `performance_part7.txt`, `cost_part7.txt/.json`,
+`append_cost_part7.txt/.json`, `storage_part7.txt/.json`, `summary_part7.txt/.json`.
+The eight new checks cover empty-origin forward/first-order/repeated-backward
+parity at H1/H4/H16 and S736/S11776, plus production K64/V128 H16 forward/state/
+trace checks at both budgets. Original imported-state, all ten adjoints, exact
+rollback, snapshots, continuation and trace-ownership checks remain passing.
+
+## Chronology and residual work
+
+All unsuccessful/superseded receipts remain explicitly named and are not passes
+for final source. `_inprogress_source_attempt` failed after 13 passes because a
+lazy import observed an in-progress dataclass change; `_score_ownership_failure`
+failed byte-exact persistent score rollback after one pass. Scores now use
+separate ephemeral scratch. `_before_sparse_replay` passed 97 tests.
+`_stages_resource_attempt` passed 103 tests, but production H16 timing exceeded
+shared memory (131,072 requested, 101,376 available). Merely setting one pipeline
+stage still failed the added production H16 test after 96 passes; this is
+`_h16_resource_failure`. K32 score tiles fixed it. `_before_owned_import` then
+passed 105 tests and measured 8.597x / +91.478%; the final private-import ownership,
+empty birth initialization and reachable-grid changes received the complete
+105-test run before all final measurements above. No interrupted run is a pass.
+
+Remaining work includes dense native/replay representation costs, efficient
+same-store multi-head scoring without wasted cross pairs, ordered capture cost,
+fixed-capacity rebasing and metadata clones, a timer-wheel/bounded birth index,
+and a tighter device-only retained-capacity scheme. These are structural limits;
+the last two gates are **not closed**. Learning was not rerun; part 5 remains
+historical MQAR/ladder evidence. No .pt artifact, WG, delegated agent, Frontier,
+Slurm or resilient-training change occurred; resilient requirement IDs and
+Partition/QOS evidence are inapplicable. Tool discovery found no callable
+`contact_supervisor`, so no Intercom contact was possible.
+
+---
+
 # X31 part 6 — speed and compact-log gates pass; head scaling and checkpoint time fail
 
 This is a partial performance completion. **All 97 tests pass**, including

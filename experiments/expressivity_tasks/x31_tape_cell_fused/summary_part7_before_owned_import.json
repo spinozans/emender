@@ -1,0 +1,113 @@
+{
+  "full_parity": true,
+  "parity_tests": 105,
+  "forward_scope": "forward only, fresh state per call; full cell projections plus state/scan; allocation and synchronization included",
+  "timing_gates": {
+    "s736_speedup_ge_1": true,
+    "s11776_speedup_ge_10": true,
+    "heads_ratio_le_2": false,
+    "checkpoint_overhead_le_5pct": false
+  },
+  "x30_speedups": {
+    "736": 16.836507048049494,
+    "11776": 51.99450834040251
+  },
+  "heads_ratios": {
+    "736": 1.2955820333758854,
+    "11776": 8.597305194468218
+  },
+  "head_measurements": [
+    {
+      "slots": 736,
+      "heads": 4,
+      "wall_ms_per_token": 0.2503622090443969
+    },
+    {
+      "slots": 736,
+      "heads": 1,
+      "wall_ms_per_token": 0.21714500326197594
+    },
+    {
+      "slots": 736,
+      "heads": 16,
+      "wall_ms_per_token": 0.2813291648635641
+    },
+    {
+      "slots": 11776,
+      "heads": 4,
+      "wall_ms_per_token": 0.44244062155485153
+    },
+    {
+      "slots": 11776,
+      "heads": 1,
+      "wall_ms_per_token": 0.22292874928098172
+    },
+    {
+      "slots": 11776,
+      "heads": 16,
+      "wall_ms_per_token": 1.916586494189687
+    }
+  ],
+  "checkpoint": {
+    "observed_fractional_time_delta": 0.9147801783748397,
+    "timing_gate": false,
+    "base_state_bytes": 2523785216,
+    "reserved_bytes": 113444864,
+    "recorded_entries": 691200,
+    "private_forward_replay_copy_bytes": 2511726592,
+    "private_replay_note": "Address-space bytes, not bytes copied. Empty imports copy only allocated payload rows; other fields and nonempty imports clone densely.",
+    "storage_independence_gate": true,
+    "budget_scaling": [
+      {
+        "slots": 736,
+        "stores": 256,
+        "tokens": 16,
+        "initial_live": 0,
+        "append_events": 4096,
+        "recorded_entries": 855040,
+        "retained_capacity_per_store": 18048,
+        "retained_reserved_bytes": 92473344,
+        "retained_storage_bytes": 92473344,
+        "capture_capacity_per_store": 18048,
+        "capture_reserved_bytes": 92473344,
+        "transient_capture_scratch_bytes": 0
+      },
+      {
+        "slots": 11776,
+        "stores": 256,
+        "tokens": 16,
+        "initial_live": 0,
+        "append_events": 4096,
+        "recorded_entries": 855040,
+        "retained_capacity_per_store": 22144,
+        "retained_reserved_bytes": 113444864,
+        "retained_storage_bytes": 113444864,
+        "capture_capacity_per_store": 22144,
+        "capture_reserved_bytes": 113444864,
+        "transient_capture_scratch_bytes": 0
+      }
+    ],
+    "storage_scope": "Component allocations, not measured peak or CUDA caching-allocator reservation. Fixed capacity bounds possible events using the host-known live upper bound and heap depth. There is no host sizing or compaction. Imported states without a bound reserve against S; base/replay state and scratch remain O(S)."
+  },
+  "append_phase_gates": {
+    "736": {
+      "speedup": 1.1496787417982968,
+      "gate": true
+    },
+    "11776": {
+      "speedup": 1.0713184110708183,
+      "gate": true
+    }
+  },
+  "collection_errors": [],
+  "residual_risks": [
+    "Head scaling still includes dense H*S native state allocation/initialization, tiled reads and diagnostics. Grouped MMA computes cross-head scores and retains only the same-store diagonal because head stores have distinct keys; this does not remove off-diagonal arithmetic or H*S traffic. Four launches per token remain.",
+    "Capture still serializes ordered mutation groups with atomics/barriers, reserves a conservative fixed capacity, rebases addresses across that capacity, clones nonpayload metadata and copies private replay payload at allocated rows. Imported nonempty states retain dense replay copies. Final materialization captures live rows once per chunk.",
+    "The steady recurrent path holds scalar metadata, but the existing cancellable heap is O(log S), and imported future birth groups can walk O(S). Fresh import initializes O(S) metadata once per chunk. A timer-wheel/bounded birth-group replacement is not delivered.",
+    "Fixed log capacity bounds potential events and is not guaranteed within twice the actual largest event count. Unknown imported live bounds conservatively reserve against S; empty-origin continuations carry a growing host upper bound without inspecting device values.",
+    "Base/replay address space and dense diagnostics remain O(S); no total-memory-independence or measured peak-memory claim.",
+    "Learning was not rerun; part 5 remains historical learning evidence."
+  ],
+  "learning_reference": "summary_part5.json; not rerun in part 7",
+  "all_registered_targets_passed": false
+}

@@ -1,0 +1,44 @@
+gpu_lease: granted GPUs: 1 (pid 1204433)
+X31 physical card 1
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0
+rootdir: /home/erikg/emender
+configfile: pyproject.toml
+plugins: timeout-2.4.0, anyio-4.13.0
+collected 97 items
+
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_all_field_journal.py . [  1%]
+........                                                                 [  9%]
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_components.py . [ 10%]
+..                                                                       [ 12%]
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_device_free.py . [ 13%]
+                                                                         [ 13%]
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py F [ 14%]
+
+
+=================================== FAILURES ===================================
+______________________ test_full_first_order_parity[0-1] _______________________
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:67: in test_full_first_order_parity
+    check_parity(slots,seed)
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:42: in check_parity
+    actual,atrace=run(actual_inputs,True)
+                  ^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:30: in run
+    out,final,trace,_=tape_scan(k,q,v,beta,pop,logit,state,cfg,coef)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x31_tape_cell_fused/cell_fused.py:74: in tape_scan
+    raise ValueError('training manages its private journal automatically')
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x31_tape_cell_fused/backward.py:238: in autograd_scan
+    out,keys,values,strength=Replay.apply(cfg,tokens,history,saved,*inputs,coef,
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:581: in apply
+    return super().apply(*args, **kwargs)  # type: ignore[misc]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x31_tape_cell_fused/backward.py:164: in forward
+    initial=FusedState(TapeState(keys,values,strength,live,age,usage),
+E   TypeError: FusedState.__init__() got an unexpected keyword argument 'live_bound'
+- generated xml file: /home/erikg/emender/experiments/expressivity_tasks/x31_tape_cell_fused/validation_part7.xml -
+=========================== short test summary info ============================
+FAILED experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py::test_full_first_order_parity[0-1]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+=================== 1 failed, 13 passed in 127.49s (0:02:07) ===================

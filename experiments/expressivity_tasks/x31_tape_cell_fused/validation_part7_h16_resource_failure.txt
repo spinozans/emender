@@ -1,0 +1,49 @@
+gpu_lease: granted GPUs: 1 (pid 1248575)
+X31 physical card 1
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0
+rootdir: /home/erikg/emender
+configfile: pyproject.toml
+plugins: timeout-2.4.0, anyio-4.13.0
+collected 105 items
+
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_all_field_journal.py . [  0%]
+........                                                                 [  8%]
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_components.py . [  9%]
+..                                                                       [ 11%]
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_device_free.py . [ 12%]
+                                                                         [ 12%]
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py . [ 13%]
+...............................                                          [ 42%]
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_lazy_decay.py . [ 43%]
+..........                                                               [ 53%]
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_parity.py . [ 54%]
+.................................                                        [ 85%]
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_part7.py . [ 86%]
+.....F
+
+=================================== FAILURES ===================================
+___________________ test_production_h16_score_resources[736] ___________________
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_part7.py:47: in test_production_h16_score_resources
+    actual,final,trace,_=tape_scan(k,q,v,on,off,off,None,cfg)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x31_tape_cell_fused/cell_fused.py:171: in tape_scan
+    score_heads[(b,triton.cdiv(h,head_group),tile_count)](args[1],keys,live,score_scratch,
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:756: in run
+    launch_metadata = kernel.launch_metadata(grid, stream, *bound_args.values())
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:490: in launch_metadata
+    self._init_handles()
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:464: in _init_handles
+    raise_(OutOfResources(self.metadata.shared, max_shared, "shared memory"))
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:456: in raise_
+    raise err
+E   triton.runtime.errors.OutOfResources: out of resource: shared memory, Required: 131072, Hardware limit: 101376. Reducing block sizes or `num_stages` may help.
+- generated xml file: /home/erikg/emender/experiments/expressivity_tasks/x31_tape_cell_fused/validation_part7.xml -
+=========================== short test summary info ============================
+FAILED experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_part7.py::test_production_h16_score_resources[736]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+======================== 1 failed, 96 passed in 23.80s =========================

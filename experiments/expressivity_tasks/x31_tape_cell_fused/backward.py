@@ -47,7 +47,8 @@ def rebase_owned(addresses,counts,old_owners,new_owners,capacity):
         raise ValueError('rebase requires matching owned contiguous fields')
     rows=sorted((a.data_ptr(),b.data_ptr(),a.numel()*a.element_size())
                 for a,b in zip(old_owners,new_owners))
-    mapping=torch.tensor(rows,device=addresses.device,dtype=torch.int64)
+    mapping=torch.tensor(rows,dtype=torch.int64,pin_memory=True).to(
+        addresses.device,non_blocking=True)
     rebase[(len(counts),triton.cdiv(capacity,256))](
         addresses,counts,mapping,len(rows),capacity,256,debug=True)
 
@@ -127,7 +128,7 @@ def reverse_kernel(K,Q,V,Beta,Pop,Keys,Values,Strength,Live,Touch,
         score=tl.full((BS,),0.,tl.float32)
         scale=2./tl.sqrt(float(DK))
         for j in range(DK):
-            key=tl.load(Keys+(n*S+s)*DK+j,valid,0.)
+            key=tl.load(Keys+(n*S+s)*DK+j,valid & live,0.)
             query=tl.load(Q+inp*DK+j)
             score+=key*query
         masked=tl.where(live & valid,score*scale,-1.e30)
@@ -136,7 +137,7 @@ def reverse_kernel(K,Q,V,Beta,Pop,Keys,Values,Strength,Live,Touch,
         weight=prob*strength*live
         dw=tl.full((BS,),0.,tl.float32)
         for j in range(DV):
-            value=tl.load(Values+(n*S+s)*DV+j,valid,0.)
+            value=tl.load(Values+(n*S+s)*DV+j,valid & live,0.)
             gout=tl.load(GradOut+inp*DV+j)
             dw+=value*gout
             gv=tl.load(GValues+(n*S+s)*DV+j,valid,0.)
@@ -145,7 +146,7 @@ def reverse_kernel(K,Q,V,Beta,Pop,Keys,Values,Strength,Live,Touch,
         dp=dw*strength*live
         ds=prob*(dp-tl.sum(prob*dp,0))*live*scale
         for j in range(DK):
-            key=tl.load(Keys+(n*S+s)*DK+j,valid,0.)
+            key=tl.load(Keys+(n*S+s)*DK+j,valid & live,0.)
             query=tl.load(Q+inp*DK+j)
             gk=tl.load(GKeys+(n*S+s)*DK+j,valid,0.)
             tl.store(GKeys+(n*S+s)*DK+j,gk+ds*query,valid)
@@ -155,6 +156,23 @@ def reverse_kernel(K,Q,V,Beta,Pop,Keys,Values,Strength,Live,Touch,
     tl.store(DCoef+n,coef_grad)
 
 
+@triton.jit
+def copy_allocated_payload(Keys, Values, ReplayKeys, ReplayValues, Alloc,
+                           T:tl.constexpr,S:tl.constexpr,DK:tl.constexpr,
+                           DV:tl.constexpr,BK:tl.constexpr,BV:tl.constexpr):
+    n=tl.program_id(0)
+    # One program owns a store, so reused allocation IDs cannot race.
+    k=tl.arange(0,BK)
+    v=tl.arange(0,BV)
+    for token in range(T):
+        slot=tl.load(Alloc+n*T+token)
+        if slot>=0:
+            key=tl.load(Keys+(n*S+slot)*DK+k,k<DK,0.)
+            value=tl.load(Values+(n*S+slot)*DV+v,v<DV,0.)
+            tl.store(ReplayKeys+(n*S+slot)*DK+k,key,k<DK)
+            tl.store(ReplayValues+(n*S+slot)*DV+v,value,v<DV)
+
+
 class Replay(torch.autograd.Function):
     @staticmethod
     def forward(ctx,cfg,start_tokens,history,saved,k,q,v,beta,pop,logit,coef,
@@ -162,13 +180,24 @@ class Replay(torch.autograd.Function):
         from .cell_fused import FusedState,tape_scan
         from ..x30_tape_cell.naive_reference import TapeState
         initial=FusedState(TapeState(keys,values,strength,live,age,usage),
-                           history,start_tokens)
+                           history,start_tokens,live_bound=saved["live_bound"],owns_import=saved["owns_native"])
         out,final,trace,pressure=tape_scan(k,q,v,beta,pop,logit,initial,cfg,coef,
                                           record_all=True)
         journal=final.all_field_journal
         # Private copies prevent backward from mutating returned native state.
         # The log's owned addresses are rebased onto these buffers once below.
-        replay=tuple(x.clone() for x in journal.owners)
+        if saved["live_bound"] == 0:
+            # Empty imports have no readable payload outside allocation events.
+            # Keep address space for undo, but copy only rows ever allocated.
+            replay=tuple(torch.empty_like(x) if i<2 else x.clone()
+                         for i,x in enumerate(journal.owners))
+            copy_allocated_payload[(k.shape[0]*k.shape[2],)](
+                journal.owners[0],journal.owners[1],replay[0],replay[1],
+                trace.alloc_target.transpose(1,2).contiguous(),k.shape[1],
+                cfg.slots,cfg.key_dim,cfg.value_dim,
+                triton.next_power_of_2(cfg.key_dim),triton.next_power_of_2(cfg.value_dim))
+        else:
+            replay=tuple(x.clone() for x in journal.owners)
         addresses=journal.addresses
         rebase_owned(addresses,journal.counts,journal.owners,replay,journal.capacity)
         ctx.cfg=cfg
@@ -234,7 +263,8 @@ def autograd_scan(inputs,state,cfg,coef):
         if state.consumed:raise ValueError('FusedState handle was already consumed')
         native=state.native;history=state.history;tokens=state.tokens
     if coef is None:coef=k.new_zeros(h)
-    saved={}
+    saved={"live_bound": 0 if state is None else (state.live_bound if isinstance(state,FusedState) else None),
+           "owns_native": state is None}
     out,keys,values,strength=Replay.apply(cfg,tokens,history,saved,*inputs,coef,
         native.keys,native.values,native.strength,native.live,native.age,native.usage)
     final=saved['state']

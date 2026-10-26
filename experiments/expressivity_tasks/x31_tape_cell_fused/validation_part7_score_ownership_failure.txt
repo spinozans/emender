@@ -1,0 +1,27 @@
+gpu_lease: granted GPUs: 1 (pid 1211639)
+X31 physical card 1
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0
+rootdir: /home/erikg/emender
+configfile: pyproject.toml
+plugins: timeout-2.4.0, anyio-4.13.0
+collected 97 items
+
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_all_field_journal.py . [  1%]
+F
+
+=================================== FAILURES ===================================
+_______________________ test_all_field_exact_rollback[7] _______________________
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_all_field_journal.py:46: in test_all_field_exact_rollback
+    assert torch.equal(actual.view(torch.uint8),old)
+E   AssertionError: assert False
+E    +  where False = <built-in method equal of type object at 0x7dd600dd6c20>(tensor([[[ 16,  84,  57,  64, 232, 204, 211, 190, 218,  26,  66,  63,   0,   0,\n            0,   0,  26, 185,  96,  64...    221, 192, 119,   2, 148,  64, 248, 127, 116,  63, 237, 154, 191,  63]]],\n       device='cuda:0', dtype=torch.uint8), tensor([[[232, 204, 211, 190,  16,  84,  57,  64, 113, 167, 124,  64,   0,   0,\n            0,   0,  26, 185,  96,  64...    221, 192, 119,   2, 148,  64, 248, 127, 116,  63, 237, 154, 191,  63]]],\n       device='cuda:0', dtype=torch.uint8))
+E    +    where <built-in method equal of type object at 0x7dd600dd6c20> = torch.equal
+E    +    and   tensor([[[ 16,  84,  57,  64, 232, 204, 211, 190, 218,  26,  66,  63,   0,   0,\n            0,   0,  26, 185,  96,  64...    221, 192, 119,   2, 148,  64, 248, 127, 116,  63, 237, 154, 191,  63]]],\n       device='cuda:0', dtype=torch.uint8) = <built-in method view of Tensor object at 0x7dd4e5f40690>(torch.uint8)
+E    +      where <built-in method view of Tensor object at 0x7dd4e5f40690> = tensor([[[ 2.8958, -0.4137,  0.7582,  0.0000,  3.5113,  0.0000,  0.0000],\n         [ 0.4042,  0.7806,  0.3665, -0.0813... -0.9844,  1.4318],\n         [-1.5233, -0.4046, -0.8618, -6.9312,  4.6253,  0.9551,  1.4969]]],\n       device='cuda:0').view
+E    +      and   torch.uint8 = torch.uint8
+- generated xml file: /home/erikg/emender/experiments/expressivity_tasks/x31_tape_cell_fused/validation_part7.xml -
+=========================== short test summary info ============================
+FAILED experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_all_field_journal.py::test_all_field_exact_rollback[7]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+========================= 1 failed, 1 passed in 23.09s =========================
