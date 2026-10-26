@@ -36,7 +36,7 @@ def test_random_imported_store(seed,slots):
     actual,fs,trace,pressure = tape_scan(k,q,v,beta,pop,logit,state,cfg,coef)
     torch.testing.assert_close(actual,expected,atol=1e-5,rtol=1e-5)
     for name in ('keys','values','strength','live','age'):
-        torch.testing.assert_close(getattr(fs.native,name),getattr(final,name),atol=1e-5,rtol=1e-5)
+        torch.testing.assert_close(getattr(fs.native,name),getattr(final,name),atol=1e-5,rtol=1e-5,msg=lambda m: name+': '+m)
     for name in ('case','matched','alloc_target','pop_target','pop_fired','w_on','freed'):
         assert torch.equal(getattr(trace,name),getattr(tr,name)), name
     assert ((pressure>=0)&(pressure<=1)).all()

@@ -13,7 +13,8 @@ Acceptance gates, in order:
 3. Ladder a^k b^k, k<=128, 2500 updates, slots=736, heads=4.
    Success signal balanced accuracy >0.9; report both class recalls regardless.
 4. Full forward latency at batch=64, heads=4, slots in {736,11776},
-   against X30 and X28E eager. Target >=10x X30 at 11776.
+   against X30 and X28E eager. Numeric targets: >=1x X30 at 736 and
+   >=10x X30 at 11776, using end-to-end per-token wall time.
    Heads=16 / heads=1 latency ratio <=2 at equal batch and slot budget.
 5. Sparse checkpoint overhead <=5% of forward at slots=11776;
    demonstrate events scaling independently of S. Report base state separately.
@@ -61,3 +62,13 @@ rule. No v1 training result is substituted for X31 evidence.
 The first expanded 31-test run took 20.00 s including new large-budget kernel
 compilation; the final rerun after input-validation checks took 3.38 s with
 cached kernels. Neither number is a performance receipt.
+
+### Part 2 partial continuation (2026-10-26)
+
+`run_leased.sh -q -x`: **43 passed in 259.84 s**, including Triton compilation,
+lambda01 physical GPU 1. Output: `validation_part2.txt`. Exact lazy interval
+jumps, cancellable death scheduling and hierarchical lowest-free allocation
+are integrated; original forward/continuation checks remain passing. These
+are correctness receipts only. The birth index, tiled reads, mutation-time
+journal and fused backward remain incomplete, so all training and timing
+gates in the table above remain UNMET / NOT RUN / NOT MEASURED as recorded.

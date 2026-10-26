@@ -5,6 +5,7 @@ comparison straightforward. It is not the requested sparse training cell:
 dense metadata/trace and entry-state copies remain explicit.
 """
 from dataclasses import dataclass
+import struct
 import torch
 import triton
 from ..x30_tape_cell.naive_reference import TapeHeadConfig, TapeState, init_state
@@ -31,7 +32,7 @@ def tape_scan(k, q, v, write_strength, pop_strength, append_logit, state,
         raise NotImplementedError('X31 fused reverse replay is not implemented')
     if append_err_coef is not None and torch.is_grad_enabled() and append_err_coef.requires_grad:
         raise NotImplementedError('X31 fused reverse replay is not implemented')
-    if not (0 < cfg.decay_rate <= 1 and 0 <= cfg.free_threshold < 1 and cfg.slots > 0):
+    if not (0 < cfg.decay_rate <= 1 and 0 <= cfg.free_threshold < 1 and 0 < cfg.slots <= 262144):
         raise ValueError("invalid decay, threshold or slot budget")
     b, t, h, dk = k.shape
     if (t < 1 or dk != cfg.key_dim or h != cfg.n_heads or q.shape != k.shape
@@ -71,12 +72,23 @@ def tape_scan(k, q, v, write_strength, pop_strength, append_logit, state,
     freed = torch.empty(b,h,t,cfg.slots,device=k.device,dtype=torch.int8)
     pressure = torch.empty(b,h,t,device=k.device)
     history = state.history.clone()
+    heap = torch.empty((b*h,cfg.slots),device=k.device,dtype=torch.int32)
+    position = torch.empty_like(heap)
+    due = torch.empty((b*h,cfg.slots),device=k.device,dtype=torch.int64)
+    terminal = torch.empty((b*h,cfg.slots),device=k.device,dtype=torch.float32)
+    births = torch.empty_like(due)
+    touches = torch.empty_like(due)
+    level0 = torch.zeros((b*h,triton.cdiv(cfg.slots,64)),device=k.device,dtype=torch.uint64)
+    level1 = torch.zeros((b*h,triton.cdiv(triton.cdiv(cfg.slots,64),64)),device=k.device,dtype=torch.uint64)
+    root = torch.zeros(b*h,device=k.device,dtype=torch.uint64)
     scan_kernel[(b*h,)](*args,coef,keys,values,strength,live,age,
-        output,case,matched,alloc,pops,freed,pressure,history,state.tokens,
+        output,case,matched,alloc,pops,freed,pressure,history,heap,position,due,terminal,
+        births,touches,level0,level1,root,state.tokens,
         t,cfg.slots,dk,cfg.value_dim,triton.next_power_of_2(cfg.slots),
-        triton.next_power_of_2(cfg.value_dim),cfg.decay_rate,cfg.free_threshold,
+        triton.next_power_of_2(cfg.value_dim),
+        struct.unpack('<f',struct.pack('<f',cfg.decay_rate))[0],cfg.free_threshold,
         cfg.write_enable_threshold,cfg.pop_threshold,cfg.eps_residual,
-        enable_fp_fusion=False)
+        enable_fp_fusion=False,debug=True,num_warps=4)
     def unflat(x):
         return x.transpose(1,2).contiguous()
     trace = RoutingTrace(*map(unflat,(case,matched,pops>=0,pops,alloc,

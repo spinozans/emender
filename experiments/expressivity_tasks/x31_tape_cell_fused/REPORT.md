@@ -16,12 +16,23 @@ Allocation is lowest free index. Keys, values and strengths use fp32 HBM.
 The kernel emits discrete decisions, deaths and a rolling 128-token pressure
 register. The host contains no token loop or scalar token routing.
 
-Literal fp32 decay with fusion disabled preserves the native death boundaries,
-including imported/popped strengths. This is an exactness baseline, not the
-requested lazy scheduler port. Dense age/live/strength sweeps, dense death
-traces and full entry-state clones remain. The read uses dimension-wise
-reductions rather than tensor cores; head stores are independent programs,
-not a demonstrated GEMM-batched implementation.
+Part 2 ports X30's integer-mantissa interval jumps to Triton (`lazy_decay.py`).
+The scan keeps reference strengths, birth and touch timestamps; access jumps
+match sequential fp32 multiplication, including nonunit popped/imported
+references. A cancellable device min-heap (`device_schedule.py`) supplies death
+events and their exact terminal strengths. Inverse positions bound its storage
+to O(S), including repeated touches. Death processing visits scheduled events,
+with scalar metadata updates; it does not sweep for decay deaths. Already-low
+imported live strengths retain the oracle's first-read-then-pop-death behavior.
+
+Lowest-free allocation uses the three-level 64-bit GPU bitmap in
+`device_free.py`. Birth timestamps replace recurrent age increments, but
+birth-group target selection still reduces over the store: X30's sparse birth
+index is **not implemented**. Import reconstructs the heap and bitmap each
+chunk, so continuation still pays O(S) initialization and full state clones.
+Dense read metadata spills/reloads and dense diagnostic death traces remain.
+Read scoring still uses dimension-wise reductions rather than tensor cores;
+head stores are independent programs, not a demonstrated GEMM batch.
 
 Real GPU validation on lambda01, leased physical GPU 1 (RTX 6000 Ada),
 PyTorch 2.9.1+cu128, Triton 3.5.1, Python 3.12.3:
@@ -50,7 +61,7 @@ The first GPU subset passed 16 tests; the intermediate expanded GPU suite passed
 |---|---|
 | Device-side sequential chunk scan | Implemented baseline; exact forward cases pass |
 | Tensor-core-friendly batched scoring | Not implemented |
-| Lowest-free sparse allocator and lazy scheduler | Not implemented; dense reduction/recurrence baseline |
+| Lowest-free sparse allocator and lazy scheduler | Device bitmap and exact lazy heap implemented; sparse birth index and persistent chunk metadata missing |
 | Trace/state/first-order gradient parity | Partial: forward only; gradient gate unmet |
 | Sparse captured delta checkpoints + fused backward | Not implemented; standalone rollback primitive only |
 | MQAR >=99% by 5000 updates | Not run; training unsupported |
@@ -64,9 +75,9 @@ The first GPU subset passed 16 tests; the intermediate expanded GPU suite passed
 
 ## Limits and next engineering work
 
-The core mission remains incomplete. Implement the exact timestamp scheduler,
-GPU free/birth structures and tiled read path before treating this as a
-performance candidate. Forward must capture old event fields at mutation time;
+The core mission remains incomplete. Finish the sparse birth index and
+persistent metadata, then implement the tiled read path before treating this
+as a performance candidate. Forward must capture old event fields at mutation time;
 a boundary gather is wrong for repeated writes. Then implement reverse replay
 adjoints with fixed recorded decisions (G10), test learned content, pop, query,
 append and imported-state gradients, and remove per-chunk store copies.
@@ -80,3 +91,40 @@ read-only. No resilient DiLoCo behavior or Frontier job is involved; resilient
 requirement IDs and Slurm Partition/QOS evidence are not applicable. No WG
 service or agent delegation was used. The requested `contact_supervisor` tool
 was not present in the available tool catalog; no supervisor contact occurred.
+
+## Part 2 scope and validation
+
+This is a **partial continuation**, not completion of the part 2 contract.
+The tiled read, mutation-time captured journal, fused reverse replay and
+custom autograd Function remain absent. No first-order gradient parity is
+claimed. Consequently MQAR, ladder (including class recalls), and all cost
+measurements remain NOT RUN. The numeric S=736 target is now explicitly >=1x
+X30; the existing >=10x at S=11776, H16/H1 <=2x, and <=5% checkpoint targets
+remain registered before any measurement.
+
+New checks compare device jumps, exact horizons and terminal strengths
+bit-for-bit with X30 across 128 references for each of seven decay rates
+(.125, .5, .8, .99, .9995, 1-2^-24, 1), plus popped references and immediate
+threshold neighbors. Cancellable-heap tests exercise 180 events on each of
+two stores for three decay rates, including rescheduling, ties and no-death
+decay=1. A bitmap fixture exercises high bits at all three levels up to slot
+262143, full-store exhaustion, and reuse. These complement the original
+25 randomized forward/continuation cases, not the missing gradient gate.
+
+Development diagnostics initially found an int32 overflow in the interval
+normalization constant and a mismatch between raw Python decay constants
+and their fp32 ratios; both were corrected. Initial multiwarp integration
+also encountered illegal memory access. Device mutation helpers now include
+program barriers between dependent device metadata updates, and the
+death drain is capacity-bounded with enabled device assertions. Intermediate
+full-suite runs were interrupted while replacing implementations; they do
+not count as validation passes. Large-store compilation time is not a timing
+receipt. Final validation output is recorded separately in
+`validation_part2.txt`.
+
+Final leased GPU run on lambda01 physical card 1: **43 passed in 259.84 s**,
+including compilation. All 25 seeded randomized forward and continuation
+cases still pass at 1e-5, with exact routing/death traces. The 12 new checks
+pass. This validates the checked forward implementation and scheduler/
+allocator primitives; the complete forward-and-gradient acceptance gate is
+still **UNMET**. No performance or learning success is established.
