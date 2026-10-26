@@ -1,9 +1,9 @@
 """Typed mutation-time undo log for owned GPU storage.
 
-Scalar stores skip unchanged values; contiguous vector spills record each valid
-element, including unchanged elements. Capacity is conservatively reserved,
-not compacted: reserved memory is O(T*S + (T+S)*log S). This experimental
-reservation is unsuitable for the registered large training configurations.
+Scalar and vector stores skip unchanged bits at capture time. Ordered compact
+undo groups preserve repeated-write before-images. Reservation is bounded by
+initial live rows plus possible token appends, rather than the physical slot
+budget (apart from heap depth). Counting initial live rows synchronizes CUDA.
 Addresses are private to the owned state; callers cannot supply arbitrary undo
 pointers. Snapshots explicitly rebase addresses onto cloned storage.
 """
@@ -14,15 +14,41 @@ import triton.language as tl
 
 
 @triton.jit
-def journal_store(pointer, value, mask, J, Record: tl.constexpr, Base=None, Count=None):
+def journal_store(pointer, value, mask, J, Record: tl.constexpr, Base=None, Count=None, Scratch=None):
     if Record:
         Addresses, Before, Widths, Counts, n, capacity = J
         dtype: tl.constexpr = pointer.dtype.element_ty
         width: tl.constexpr = ((dtype.primitive_bitwidth+7)//8)*8
-        if len(pointer.shape)>0:
-            # Native spills are contiguous with a prefix mask. Capture in
-            # bounded tiles; full-store scattered 64-bit journal indices need
-            # an over-limit shared layout conversion on the leased Ada card.
+        if len(pointer.shape)>0 and pointer.numel<=128:
+            old=tl.load(pointer,mask,0)
+            new=tl.cast(value,dtype)
+            if width==64:
+                bits=old.to(tl.uint64,bitcast=True)
+                proposed=new.to(tl.uint64,bitcast=True)
+            elif width==32:
+                bits=old.to(tl.uint32,bitcast=True).to(tl.uint64)
+                proposed=new.to(tl.uint32,bitcast=True).to(tl.uint64)
+            else:
+                bits=old.to(tl.uint8).to(tl.uint64)
+                proposed=new.to(tl.uint8).to(tl.uint64)
+            changed=mask & (bits!=proposed)
+            ranks=tl.cumsum(changed.to(tl.int32),0)
+            length=tl.sum(changed.to(tl.int32),0)
+            start=tl.atomic_add(Counts+n,length)
+            tl.device_assert(start+length<=capacity,'all-field journal capacity exceeded')
+            index=n*capacity+start+ranks-1
+            active=changed & (start+ranks<=capacity)
+            tl.store(Addresses+index,pointer.to(tl.uint64),active)
+            tl.store(Before+index,bits,active)
+            tl.store(Widths+index,width | (length<<8),active)
+        elif len(pointer.shape)>0:
+            # Stage only the proposed values, never the before-images. The
+            # bounded capture loop reads each old value immediately before
+            # this mutation and packs changed lanes into ordered undo groups.
+            new=tl.cast(value,dtype)
+            scratch=Scratch.to(tl.pointer_type(dtype))
+            tl.store(scratch+tl.arange(0,pointer.numel),new,mask)
+            tl.debug_barrier()
             base=Base.to(tl.uint64)
             count=tl.cast(Count,tl.int32)
             d=tl.arange(0,128)
@@ -37,11 +63,20 @@ def journal_store(pointer, value, mask, J, Record: tl.constexpr, Base=None, Coun
                     bits=old.to(tl.uint32,bitcast=True).to(tl.uint64)
                 else:
                     bits=old.to(tl.uint8).to(tl.uint64)
-                length=tl.minimum(128,count-tile*128)
+                proposed=tl.load(scratch+lane,active,0)
+                if width==64:
+                    proposed_bits=proposed.to(tl.uint64,bitcast=True)
+                elif width==32:
+                    proposed_bits=proposed.to(tl.uint32,bitcast=True).to(tl.uint64)
+                else:
+                    proposed_bits=proposed.to(tl.uint8).to(tl.uint64)
+                changed=active & (bits!=proposed_bits)
+                ranks=tl.cumsum(changed.to(tl.int32),0)
+                length=tl.sum(changed.to(tl.int32),0)
                 start=tl.atomic_add(Counts+n,length)
                 tl.device_assert(start+length<=capacity,'all-field journal capacity exceeded')
-                index=n*capacity+start+d
-                active=active & (start+d<capacity)
+                index=n*capacity+start+ranks-1
+                active=changed & (start+ranks<=capacity)
                 tl.store(Addresses+index,ptr.to(tl.uint64),active)
                 tl.store(Before+index,bits,active)
                 tl.store(Widths+index,width | (length<<8),active)
@@ -97,7 +132,7 @@ def undo_to(J, start, stop, Block: tl.constexpr):
 
 
 @triton.jit
-def _undo(Addresses, Before, Widths, Counts, Capacity: tl.constexpr, Block: tl.constexpr):
+def _undo(Addresses, Before, Widths, Counts, Capacity, Block: tl.constexpr):
     n = tl.program_id(0)
     undo_to((Addresses,Before,Widths,Counts,n,Capacity), 0, tl.load(Counts+n),Block)
 
@@ -118,12 +153,26 @@ class AllFieldJournal:
     used: bool = False
     parent: object = None
 
-    @classmethod
-    def allocate(cls, stores, tokens, slots, dk, dv, owners, start_tokens, fresh):
-        capacity = ((6*tokens+8)*slots+tokens*(dk+dv+64)
-                    +(slots+3*tokens)*(16*slots.bit_length()+32))
+    @staticmethod
+    def capacity_for(stores, tokens, slots, dk, dv, initial_live):
+        if stores*slots*(dk+dv)>2**31:
+            raise ValueError('journal capacity exceeds checked int32 index range; split batch/chunk')
+        active = min(slots, triton.next_power_of_2(max(1,initial_live + tokens)))
+        capacity = ((6*tokens+8)*active+tokens*(dk+dv+64)
+                    +(active+3*tokens)*(16*slots.bit_length()+32))
         if stores*capacity>2**31:
             raise ValueError('journal capacity exceeds checked int32 index range; split batch/chunk')
+        return capacity
+
+    @classmethod
+    def allocate(cls, stores, tokens, slots, dk, dv, owners, start_tokens, fresh):
+        # Fail before inspecting owners or allocating an oversized address space.
+        cls.capacity_for(stores,tokens,slots,dk,dv,0)
+        # A token can introduce at most one live row. Dead imported payloads
+        # remain untouched; exact rollback still includes every changed bit.
+        live = owners[3].reshape(stores, slots)
+        capacity = cls.capacity_for(stores,tokens,slots,dk,dv,
+                                    int(live.sum(1).max().item()))
         device = owners[0].device
         return cls(torch.empty(stores,capacity,device=device,dtype=torch.uint64),
                    torch.empty(stores,capacity,device=device,dtype=torch.uint64),
@@ -133,6 +182,18 @@ class AllFieldJournal:
                    torch.empty(stores,tokens,device=device),
                    torch.empty(stores,tokens,device=device),
                    tuple(owners),start_tokens,fresh,min(128,triton.next_power_of_2(max(slots,dk,dv))))
+
+    def compact_(self):
+        """Release unused capture capacity, preserving ordered store-local IDs.
+
+        Retained rows reserve max(events/store), so imbalance can waste a
+        factor of stores. Capture capacity and scratch are reported separately.
+        """
+        capacity=min(self.capacity,triton.next_power_of_2(max(1,int(self.counts.max().item()))))
+        self.addresses=self.addresses[:,:capacity].clone(memory_format=torch.contiguous_format)
+        self.before=self.before[:,:capacity].clone(memory_format=torch.contiguous_format)
+        self.widths=self.widths[:,:capacity].clone(memory_format=torch.contiguous_format)
+        return self
 
     @property
     def capacity(self):

@@ -1,7 +1,7 @@
 """Experimental fused forward and first-order reverse replay.
 
 Inference continuation reuses owned buffers. Autograd retains private replay
-copies and a conservatively reserved typed undo log; see REPORT.md for gates.
+copies and a changed-bit undo log; see REPORT.md for measured gates.
 """
 from dataclasses import dataclass
 import struct
@@ -9,7 +9,7 @@ import torch
 import triton
 from ..x30_tape_cell.naive_reference import TapeHeadConfig, TapeState, init_state
 from ..x30_tape_cell.routing_trace import RoutingTrace
-from .kernels import scan_kernel
+from .kernels import scan_kernel, read_tiles, reduce_read, initialize_free_words, materialize_state
 from .birth_index import initialize as initialize_birth_index
 from .write_journal import WriteJournal
 from .all_field_journal import AllFieldJournal
@@ -49,7 +49,7 @@ class FusedState:
 
 def tape_scan(k, q, v, write_strength, pop_strength, append_logit, state,
               cfg: TapeHeadConfig, append_err_coef=None, *, record_payload=False, record_all=False):
-    """One scan launch per chunk; no Python token loop or scalar routing.
+    """Slot-tile scoring/value reads, parallel reduction and recurrent mutation.
 
     Inputs [batch,time,heads,dim]. Native TapeState imports are copied. Returned
     FusedState buffers are consumed in place on continuation; snapshot first
@@ -81,6 +81,7 @@ def tape_scan(k, q, v, write_strength, pop_strength, append_logit, state,
         raise ValueError('input shape/config mismatch')
     if any(x.device != k.device or x.dtype != torch.float32 for x in tensors):
         raise ValueError('inputs must share device and use fp32')
+    owns_native = state is None
     if state is None:
         state = FusedState(init_state(b,cfg,k.device),
                            torch.zeros(b*h,128,device=k.device,dtype=torch.int32))
@@ -109,28 +110,28 @@ def tape_scan(k, q, v, write_strength, pop_strength, append_logit, state,
             else append_err_coef).repeat(b).contiguous()
     fresh = state.metadata is None
     keys, values, strength, live, age = [
-        getattr(native,name).clone().contiguous() if fresh else getattr(native,name)
+        getattr(native,name).clone().contiguous() if fresh and not owns_native else getattr(native,name)
         for name in ('keys','values','strength','live','age')]
     output = torch.empty(b,h,t,cfg.value_dim,device=k.device)
     case, matched, alloc, pops = [torch.empty(b,h,t,device=k.device,dtype=torch.int64)
                                  for _ in range(4)]
     freed = torch.empty(b,h,t,cfg.slots,device=k.device,dtype=torch.int8)
     pressure = torch.empty(b,h,t,device=k.device)
-    history = state.history.clone() if fresh else state.history
+    history = state.history.clone() if fresh and not owns_native else state.history
     if fresh:
-        heap = torch.empty((b*h,cfg.slots),device=k.device,dtype=torch.int32)
+        heap = torch.full((b*h,cfg.slots),-1,device=k.device,dtype=torch.int32)
         position = torch.empty_like(heap)
         due = torch.empty((b*h,cfg.slots),device=k.device,dtype=torch.int64)
         terminal = torch.empty((b*h,cfg.slots),device=k.device,dtype=torch.float32)
         births = torch.empty_like(due)
-        touches = torch.empty_like(due)
+        touches = torch.full_like(due,state.tokens)
         level0 = torch.zeros((b*h,triton.cdiv(cfg.slots,64)),device=k.device,dtype=torch.uint64)
         level1 = torch.zeros((b*h,triton.cdiv(triton.cdiv(cfg.slots,64),64)),device=k.device,dtype=torch.uint64)
         root = torch.zeros(b*h,device=k.device,dtype=torch.uint64)
         birth_next, birth_prev, birth_head = initialize_birth_index(live, age)
-        sizes = torch.empty(b*h,device=k.device,dtype=torch.int32)
-        references = torch.empty_like(strength)
-        scores = torch.empty_like(strength)
+        sizes = torch.zeros(b*h,device=k.device,dtype=torch.int32)
+        references = strength.clone()
+        scores = torch.zeros_like(strength)
         metadata = (heap,position,due,terminal,births,touches,level0,level1,root,
                     birth_next,birth_prev,birth_head,sizes,references,scores)
     else:
@@ -150,17 +151,44 @@ def tape_scan(k, q, v, write_strength, pop_strength, append_logit, state,
                  all_journal.counts,all_journal.boundaries,all_journal.gates,
                  all_journal.errors,all_journal.capacity,True)
                 if record_all else (case,case,case,case,case,case,case,0,False))
-    scan_kernel[(b*h,)](*args,coef,keys,values,strength,live,age,
-        output,case,matched,alloc,pops,freed,pressure,history,heap,position,due,terminal,
-        births,touches,level0,level1,root,birth_next,birth_prev,birth_head,sizes,references,scores,
-        *journal_args,record_payload,triton.next_power_of_2(max(dk,cfg.value_dim)),
-        *all_args,fresh,state.tokens,
-        t,cfg.slots,dk,cfg.value_dim,triton.next_power_of_2(cfg.slots),
-        triton.next_power_of_2(cfg.value_dim),triton.next_power_of_2(max(32,dk)),
-        struct.unpack('<f',struct.pack('<f',cfg.decay_rate))[0],cfg.free_threshold,
-        cfg.write_enable_threshold,cfg.pop_threshold,cfg.eps_residual,
-        enable_fp_fusion=False,debug=True,
-        num_warps=4)
+    tile_count=triton.cdiv(cfg.slots,32)
+    tile_block=triton.next_power_of_2(tile_count)
+    read_max=torch.empty(b*h,tile_count,device=k.device)
+    read_denom=torch.empty_like(read_max)
+    read_best=torch.empty(b*h,tile_count,device=k.device,dtype=torch.int32)
+    read_values=torch.empty(b*h,tile_count,cfg.value_dim,device=k.device)
+    capture_scratch = (torch.empty(b*h,max(cfg.slots,cfg.value_dim),device=k.device,dtype=torch.uint64)
+                       if record_all else case)
+    if fresh:
+        initialize_free_words[(b*h,)](live,level0,level1,root,cfg.slots,
+            triton.next_power_of_2(triton.cdiv(cfg.slots,64)),
+            triton.next_power_of_2(triton.cdiv(triton.cdiv(cfg.slots,64),64)))
+    for token in range(t):
+        read_tiles[(b*h,tile_count)](args[1],keys,values,live,references,touches,
+            read_max,read_denom,read_values,read_best,t,cfg.slots,dk,cfg.value_dim,
+            triton.next_power_of_2(max(32,dk)),triton.next_power_of_2(cfg.value_dim),
+            state.tokens,token,struct.unpack('<f',struct.pack('<f',cfg.decay_rate))[0],
+            enable_fp_fusion=False,num_warps=4)
+        reduce_read[(b*h,triton.cdiv(cfg.value_dim,8))](read_max,read_denom,read_values,output,
+            t,cfg.slots,cfg.value_dim,tile_block,token,8,
+            enable_fp_fusion=False,num_warps=4)
+        scan_kernel[(b*h,)](*args,coef,keys,values,strength,live,age,
+            output,case,matched,alloc,pops,freed,pressure,history,heap,position,due,terminal,
+            births,touches,level0,level1,root,birth_next,birth_prev,birth_head,sizes,references,scores,read_max,read_denom,read_values,read_best,capture_scratch,
+            *journal_args,record_payload,triton.next_power_of_2(max(dk,cfg.value_dim)),
+            *all_args,fresh and token==0,state.tokens,token,
+            t,cfg.slots,dk,cfg.value_dim,triton.next_power_of_2(cfg.slots),
+            triton.next_power_of_2(cfg.value_dim),triton.next_power_of_2(max(32,dk)),tile_block,
+            struct.unpack('<f',struct.pack('<f',cfg.decay_rate))[0],cfg.free_threshold,
+            cfg.write_enable_threshold,cfg.pop_threshold,cfg.eps_residual,
+            enable_fp_fusion=False,debug=True,
+            num_warps=4)
+    materialize_state[(b*h,tile_count)](references,touches,births,live,strength,age,
+        *all_args[:4],all_args[7],record_all,cfg.slots,state.tokens+t,
+        struct.unpack('<f',struct.pack('<f',cfg.decay_rate))[0],
+        enable_fp_fusion=False,debug=True,num_warps=4)
+    if all_journal is not None:
+        all_journal.compact_()
     def unflat(x):
         return x.transpose(1,2).contiguous()
     trace = RoutingTrace(*map(unflat,(case,matched,pops>=0,pops,alloc,

@@ -84,3 +84,32 @@ def test_oversized_journal_fails_before_allocation():
     from experiments.expressivity_tasks.x31_tape_cell_fused.all_field_journal import AllFieldJournal
     with pytest.raises(ValueError,match='int32 index range'):
         AllFieldJournal.allocate(1024,16,11776,64,128,(torch.empty(0),),0,True)
+
+
+@pytest.mark.parametrize("write", [False, True])
+def test_compact_reservation_and_unchanged_capture(write):
+    from experiments.expressivity_tasks.x31_tape_cell_fused.all_field_journal import AllFieldJournal
+    dev=device()
+    reservations=[]
+    entries=[]
+    for slots in (736,11776):
+        cfg=oracle.TapeHeadConfig(key_dim=4,value_dim=5,n_heads=1,budget=slots,decay_rate=1.)
+        # Equal event streams with different physical backing capacity.
+        k=torch.zeros(1,4,1,4,device=dev)
+        v=torch.zeros(1,4,1,5,device=dev)
+        off=torch.zeros(1,4,1,device=dev)
+        beta=torch.ones_like(off) if write else off
+        _,state,_,_=tape_scan(k,k,v,beta,off,off,None,cfg,record_all=True)
+        journal=state.all_field_journal
+        for buffer in (journal.addresses,journal.before,journal.widths):
+            assert buffer.untyped_storage().nbytes()==buffer.numel()*buffer.element_size()
+        reservations.append(journal.nbytes)
+        entries.append(int(state.all_field_journal.counts.sum()))
+        state.all_field_journal.undo_(state)
+    assert max(reservations)/min(reservations)<1.5
+    # Newly initialized heap size can differ from its allocator before-image;
+    # native/metadata dense spills have no changed bits in this fixture.
+    if write:
+        assert entries[0]==entries[1] and entries[0]>1
+    else:
+        assert max(entries)<=1

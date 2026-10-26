@@ -15,7 +15,7 @@ from .lazy_decay import advance_exact
 
 @triton.jit
 def rebase(Addresses, Counts, Mapping, Fields:tl.constexpr,
-           Capacity:tl.constexpr, Block:tl.constexpr):
+           Capacity, Block:tl.constexpr):
     n=tl.program_id(0).to(tl.int64)
     x=tl.program_id(1)*Block+tl.arange(0,Block)
     active=x<tl.load(Counts+n)
@@ -59,7 +59,7 @@ def reverse_kernel(K,Q,V,Beta,Pop,Keys,Values,Strength,Live,Touch,
                    GradOut,GKeys,GValues,GStrength,DKout,DQout,DVout,
                    DBeta,DPop,DLogit,DCoef,
                    T:tl.constexpr,S:tl.constexpr,DK:tl.constexpr,DV:tl.constexpr,
-                   BS:tl.constexpr,BV:tl.constexpr,UB:tl.constexpr,Capacity:tl.constexpr,
+                   BS:tl.constexpr,BV:tl.constexpr,UB:tl.constexpr,Capacity,
                    Fresh:tl.constexpr,Start,Decay:tl.constexpr):
     n=tl.program_id(0)
     s=tl.arange(0,BS)

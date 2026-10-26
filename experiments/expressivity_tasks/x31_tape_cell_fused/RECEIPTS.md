@@ -29,8 +29,8 @@ CPU interpreter checks are correctness diagnostics, never GPU performance.
 
 ## Results
 
-Current results are in the Part 5 ledger below. Older part 2–4 ledgers are
-historical; no v1 result is substituted for an X31 result.
+Current results are in the Part 6 ledger below. Parts 2–5 are historical;
+no v1 result is substituted for an X31 result.
 
 ### Part 4 current acceptance ledger (partial delivery)
 
@@ -189,3 +189,51 @@ is substituted. The completed learning run uses unchanged S736/H4 numerical
 kernels; subsequent H1 trace-ownership and large-S geometry changes received
 the final parity check before costs. One seed, in-range ladder validation,
 stage2 omitted; no OOD certification. No .pt artifact or out-of-scope source edit.
+
+
+### Part 6 current acceptance ledger
+
+Part 6 supersedes part 5 implementation/cost status; targets above are unchanged.
+Learning remains historical part 5 evidence and was not rerun.
+
+| Deliverable / gate | Final part 6 result |
+|---|---|
+| Full parity / all-field exact rollback | PASS: 97 tests, including the original 95, no skips; all ten gradients at 1e-5 and exact traces through S11776 |
+| Slot-tile-parallel score and weighted read | Implemented `(B*H, ceil(S/32))` scoring/local weighting, parallel value reduction, scalar POP decay and final tiled materialization |
+| S736 >=1x X30 | PASS: 20.735x |
+| S11776 >=10x X30 | PASS: 21.472x |
+| H16/H1 <=2 | S736 PASS 1.474x; S11776 FAIL 21.618x |
+| Checkpoint time <=5% | FAIL: +79.756% |
+| Compact retained log / storage independence | PASS: equal 99,328 entries retain 2,689,024 bytes at both budgets; capture bounds ratio 1.227x |
+| Append mutation prototype >1x | PASS: S736 1.062x; S11776 1.063x; bitwise equality |
+| All registered targets | FAIL: large-store head scaling and checkpoint time remain blockers |
+
+Final receipts: `validation_part6.txt/.xml`, `parity_part6.json`,
+`parity_attestation_part6.txt`, `performance_part6.txt`, `cost_part6.txt/.json`,
+`append_cost_part6.txt/.json`, `storage_part6.txt/.json`, `summary_part6.txt/.json`.
+Final suite: 97 passed in 17.22 s with cached compilation. All timing/storage
+collection used one broker lease, physical GPU 1 on lambda01,
+NVIDIA RTX 6000 Ada Generation, Python 3.12.3, torch 2.9.1+cu128, Triton 3.5.1.
+Five warmups, twenty measurements, median end-to-end wall time and raw CUDA
+samples; fresh state/allocation/synchronization included. H1/H4/H16 are explicit.
+Source/JUnit hashes were checked before collection. No collection errors.
+
+Checkpoint component sizes: base 2,523,785,216; retained journal
+21,039,104; 707,584 entries / 14,151,680
+record bytes; private replay copy 2,511,726,592.
+The equal-append fixture's capture bounds are 92,473,344 /
+113,444,864 bytes at S736/S11776. Transient staging and
+base/replay state remain O(S); no peak or total-memory-independence claim.
+
+Remaining structure: O(S) recurrent metadata and spills, H*S dense allocation,
+single-query padded MMA, three launches per token, vector-spill journal
+comparison/staging/sizing and full replay copies/rebasing. No shared multi-query
+head GEMM, token-group amortization or integrated append rank-scan is delivered.
+See REPORT.md for precise scope, chronology and the two failed timing gates.
+
+Four interrupted attempts are not passes. Completed superseded suites and
+measurements have explicit `_scoring_only`, `_weighted_read` or
+`_metadata_attempt` names, with reconstructable source diffs in
+`part6_*.patch.json`. Final deterministic empty heap metadata removes the
+allocator-dependent one-entry discrepancy seen in the metadata attempt.
+No .pt, WG, delegated agent, Frontier/Slurm or resilient-training change.

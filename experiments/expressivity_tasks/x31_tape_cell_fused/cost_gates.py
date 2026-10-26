@@ -56,6 +56,7 @@ def measure(fn,tokens):
 @torch.no_grad()
 def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--parity-receipt',required=True)
+    p.add_argument('--output',default='cost_part5.json')
     args=p.parse_args();require_parity(args.parity_receipt)
     held=os.environ.get('GPU_LEASE_HELD')
     if held not in tuple(str(i) for i in range(7)) or os.environ.get('CUDA_VISIBLE_DEVICES')!=held:raise RuntimeError('lease required')
@@ -85,7 +86,7 @@ def main():
             except (RuntimeError,MemoryError,OutOfResources,CompilationError) as exc:
                 error=dict(slots=slots,heads=heads,engine=name,error_type=type(exc).__name__,error=str(exc))
                 receipt['errors'].append(error);print(json.dumps(error),flush=True)
-            save('cost_part5.json',receipt);gc.collect();torch.cuda.empty_cache()
+            save(args.output,receipt);gc.collect();torch.cuda.empty_cache()
         del x,ids,cell,old,eager,engines;gc.collect();torch.cuda.empty_cache()
     rows={(x['slots'],x['heads'],x['engine']):x['wall_ms_per_token'] for x in receipt['measurements']}
     def ratio(a,b):return None if a not in rows or b not in rows else rows[a]/rows[b]
@@ -99,7 +100,7 @@ def main():
         's11776_speedup_ge_10':None if receipt['x30_speedups']['11776'] is None else receipt['x30_speedups']['11776']>=10,
         'heads_ratio_le_2':None if receipt['heads16_to_1'] is None else receipt['heads16_to_1']<=2,
         'checkpoint_overhead_le_5pct':None if overhead is None else overhead<=1.05}
-    save('cost_part5.json',receipt)
+    save(args.output,receipt)
 
 
 if __name__=='__main__':main()

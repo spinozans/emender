@@ -1,3 +1,37 @@
+# Part 6 execution update
+
+Read scoring and local value weighting launch `(B*H, ceil(S/32))`
+Triton programs for each token, using tf32x3 MMA. Empty tiles skip key/value
+loads, MMA and partial payload writes. A second pass grids over stores and
+eight-value output blocks to combine tile maxima, denominators and weighted
+values with a stable softmax rescaling. A stream-ordered recurrent core then
+handles routing and mutation. Heads share the launch grid; each store still
+pads its query to 16 MMA rows.
+
+Exact decay for the selected POP row is scalar in the recurrent core; reads
+compute live-row strengths in their slot tiles. A final slot-tile pass
+materializes strengths and ages once per chunk and records independent undo
+groups. Small capture groups pack directly in registers, so concurrent slot
+tiles do not share staging scratch.
+
+This uses three launches per token plus final materialization once per chunk. Token groups, cooperative barriers and
+integration of certified append phases into the full scan remain absent.
+The core retains O(S) metadata vectors and register spills, but no longer
+performs the O(S*V) weighted-value reduction. Token, start clock and journal
+capacity do not specialize the core. Initialization builds free bitmap words
+in parallel, visits live birth links rather than a scalar physical-slot loop,
+and skips horizon calculation on inactive rows. Cold-state allocation is dense.
+
+All-field recording packs changed bits at capture time. Score scratch is
+now ephemeral and never mutates the persistent score buffer, so undo need
+not record disposable scores. Persistent metadata byte rollback is retained.
+Reservation uses initially live rows plus at most T new rows and heap depth;
+counting imported live rows introduces a host synchronization. Private replay
+copies and base state remain O(S). See REPORT.md for actual parity and gates.
+
+The following decomposition is historical context; its older baseline status
+is superseded by the part 5 and part 6 reports.
+
 # Dependency decomposition and prototype
 
 This is an analysis plus an unbenchmarked mutation prototype. Full

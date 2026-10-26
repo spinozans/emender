@@ -1,0 +1,80 @@
+{
+  "full_parity": true,
+  "parity_tests": 97,
+  "forward_scope": "forward only, fresh state per call; full cell projections plus state/scan; allocation and synchronization included",
+  "timing_gates": {
+    "s736_speedup_ge_1": true,
+    "s11776_speedup_ge_10": false,
+    "heads_ratio_le_2": false,
+    "checkpoint_overhead_le_5pct": true
+  },
+  "x30_speedups": {
+    "736": 16.696603676709927,
+    "11776": 1.3994515451864646
+  },
+  "heads_ratios": {
+    "736": 3.686333508442573,
+    "11776": 29.006116338414873
+  },
+  "checkpoint": {
+    "observed_fractional_time_delta": 0.04635110535811915,
+    "timing_gate": true,
+    "base_state_bytes": 2523785216,
+    "reserved_bytes": 21039104,
+    "recorded_entries": 703488,
+    "used_record_bytes": 14069760,
+    "private_forward_replay_copy_bytes": 2511726592,
+    "storage_independence_gate": false,
+    "budget_scaling": [
+      {
+        "slots": 736,
+        "stores": 256,
+        "tokens": 16,
+        "initial_live": 0,
+        "append_events": 4096,
+        "recorded_entries": 94975,
+        "retained_capacity_per_store": 512,
+        "retained_reserved_bytes": 2689024,
+        "retained_storage_bytes": 2689024,
+        "capture_capacity_per_store": 18048,
+        "capture_reserved_bytes": 92473344,
+        "transient_capture_scratch_bytes": 1507328
+      },
+      {
+        "slots": 11776,
+        "stores": 256,
+        "tokens": 16,
+        "initial_live": 0,
+        "append_events": 4096,
+        "recorded_entries": 94976,
+        "retained_capacity_per_store": 512,
+        "retained_reserved_bytes": 2689024,
+        "retained_storage_bytes": 2689024,
+        "capture_capacity_per_store": 22144,
+        "capture_reserved_bytes": 113444864,
+        "transient_capture_scratch_bytes": 24117248
+      }
+    ],
+    "storage_scope": "Component allocations, not measured peak or CUDA caching-allocator reservation. Capture scratch and base/replay state remain O(S); retained logs use at most twice the largest store event count per store plus per-token routing records."
+  },
+  "append_phase_gates": {
+    "736": {
+      "speedup": 1.0689578674930014,
+      "gate": true
+    },
+    "11776": {
+      "speedup": 1.0709390235285805,
+      "gate": true
+    }
+  },
+  "collection_errors": [],
+  "residual_risks": [
+    "Large-store throughput: weighted-value reductions and metadata remain inside a single program per store; two launches per token, dense state allocation and no token-group amortization remain.",
+    "Head scaling: scoring batches heads across the launch grid, but each query still pads 15 unused MMA rows; recurrent weighted reads, dense base-state allocation and memory traffic scale with heads. There is no shared multi-query GEMM.",
+    "Base/replay state, dense death diagnostics and transient capture staging remain O(S). Log storage independence does not assert total training memory independence.",
+    "Retained journal capacity is at most twice the largest store event count per store; unequal store activity can waste a factor of stores. Capture reservation bounds potential live events and is released after compaction.",
+    "Learning was not rerun in part 6; MQAR and ladder results remain historical part 5 measurements."
+  ],
+  "learning_reference": "summary_part5.json; not rerun in part 6",
+  "all_registered_targets_passed": false
+}

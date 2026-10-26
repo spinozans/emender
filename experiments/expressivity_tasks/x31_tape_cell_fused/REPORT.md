@@ -1,3 +1,155 @@
+# X31 part 6 — speed and compact-log gates pass; head scaling and checkpoint time fail
+
+This is a partial performance completion. **All 97 tests pass**, including
+all 95 part 5 tests and two new compact-storage checks. Both registered
+end-to-end speed targets and both append-phase targets pass. Large-store
+H16/H1 scaling and checkpoint time remain acceptance blockers.
+
+## Final implementation
+
+`read_tiles` grids over `(B*H, ceil(S/32))`: tf32x3 score MMA, exact lazy
+strength evaluation, local softmax statistics and weighted values run on slot
+tiles. Empty tiles skip payload loads and MMA. `reduce_read` grids over stores
+and eight-value output blocks to combine partials with stable softmax rescaling.
+The recurrent core uses tile maxima/argmax for POP and evaluates exact decay
+only for the selected POP row. A final slot-tile pass materializes live strengths
+and ages once per chunk. The per-store O(S*V) weighted read and per-token
+full-store exact-decay calculation are gone.
+
+Time remains sequential: three stream-ordered launches per token plus one final
+materialization launch. The core still holds O(S) metadata vectors and spills;
+it is not an O(1) metadata-only core. Heads batch across the launch grid, but
+each recurrent query still pads to 16 MMA rows. There is no shared multi-query
+head GEMM, cooperative barrier, token-group amortization or integrated append
+rank-scan path. Fresh owned inference state avoids an unnecessary native clone.
+Free bitmap words initialize in parallel; heap import visits live birth links.
+Inactive imports skip horizon work. Empty heap entries initialize to -1 and
+heap sizes to zero, removing allocator-dependent capture events.
+
+All-field capture compares exact bits and logs only changed elements, preserving
+mutation-time before-images and ordered undo groups. Small groups (<=128 lanes)
+pack directly in registers, including concurrent final-materialization tiles;
+large vector spills use bounded staging and compaction. Score/partial-read
+scratch is ephemeral; the persistent score owner remains unchanged and still
+participates in byte-exact rollback. Every existing owned-state field retains
+its rollback semantics. CAP before-images [2,8,9.5,9.875], repeated writes,
+parent/snapshot rollback and retained first-order backward remain covered.
+
+Capture reservation bounds initially live rows plus possible appends, with heap
+depth dependence. After capture, buffers clone into at most twice the largest
+store's actual event count per store, plus per-token routing records. Cloning
+also releases oversized backing storage for a single-store log; this is tested.
+All-unchanged vector elements reserve no retained records. Counting live rows
+and final sizing introduce host synchronization. Capture work still scans vector
+spills; compact retained storage does not imply O(events) execution time.
+
+## Final parity and registered timing receipts
+
+Final suite: **97 passed in 17.22 s**, no skips or failures, broker-leased physical
+GPU 1 on lambda01. The final run reused compiled kernels.
+The prior complete read/decay run passed 97 in 577.28 s including compilation;
+the final change only initialized fresh heap metadata deterministically.
+Receipts: `validation_part6.txt/.xml`, `parity_part6.json` and
+`parity_attestation_part6.txt`. The 25 seeded forward/gradient cases, four
+K64/V128 gradient cases, all ten differentiable paths, S through 11776, exact
+traces and consuming continuation still pass at atol=rtol=1e-5.
+
+All final performance/storage collection ran sequentially under one broker lease
+on physical GPU 1, NVIDIA RTX 6000 Ada Generation; Python 3.12.3, torch
+2.9.1+cu128, Triton 3.5.1, fp32. Every timing uses five warmups,
+twenty measurements, wall-clock medians and retained CUDA-event/raw samples.
+Allocation and synchronization are included. Dimensions remain B64/T16,
+K64/V128/width256. Forward and checkpoint use matched four-warp geometry.
+Checkpoint accounting uses warmup five; there is no extra accounting forward.
+
+| Slots | X31 ms/token | X30 ms/token | X28E ms/token | X30/X31 | Speed gate |
+|---|---|---|---|---|---|
+| 736 | 0.234388 | 4.860111 | 2.364095 | 20.735x | PASS |
+| 11776 | 1.262202 | 27.101754 | 17.227776 | 21.472x | PASS |
+
+| Slots | H1 ms/token | H4 ms/token | H16 ms/token | H16/H1 | <=2 gate |
+|---|---|---|---|---|---|
+| 736 | 0.219299 | 0.234388 | 0.323192 | 1.474x | PASS |
+| 11776 | 0.279248 | 1.262202 | 6.036703 | 21.618x | FAIL |
+
+At S11776/H4, checkpoint forward is
+**2.268884 ms/token** versus
+**1.262202** without capture:
+**+79.756%**, FAIL against <=5%.
+Head scaling at S11776 is **21.618x**, FAIL against <=2.
+S736 head scaling passes. No all-gates-passed claim is made.
+
+Append mutation-phase speedups are **1.062x**
+at S736 and **1.063x** at S11776:
+both PASS (>1x), with bitwise state equality. B64/H4/T128/K64/V128, five warmups
+and twenty measurements; common live-mask reset, launch and synchronization are
+included. Reads, allocation, routing, certification and curve preparation remain
+excluded. This is a mutation-phase result, not an end-to-end append scan claim.
+
+## Journal storage — PASS within the registered log scope
+
+The equal-stream fixture uses B64/H4/T16, initially empty stores, and 4096
+appends at either budget. Both runs capture exactly **99,328**
+changed-element entries and retain exactly **2,689,024 bytes**
+(including routing/count arrays). Actual underlying tensor storage matches those
+bytes; the reservation ratio is **1.000x**.
+Pre-compaction capture pools reserve 92,473,344 bytes at
+S736 and 113,444,864 at S11776: **1.227x**,
+reflecting heap-depth bounds rather than a T*S dense spill reservation.
+`storage_part6.json` records both retained and capture allocations explicitly.
+
+The actual S11776/H4 checkpoint timing point has:
+
+- Base owned state: **2,523,785,216 bytes**.
+- Retained journal: **21,039,104 bytes**, versus part 5's
+  21,789,476,864; 707,584 entries use 14,151,680 record bytes.
+- Private forward replay copy: **2,511,726,592 bytes**.
+- Capture pool bound: **113,444,864 bytes** before compaction;
+  transient capture staging: **24,117,248 bytes**.
+
+These are component sizes, not measured peak or CUDA caching-allocator reserved
+memory. Base/replay state, dense death diagnostics, read partials and transient
+capture staging still scale with S. Log storage independence does not assert
+total training-memory independence. Per-store capacity uses the largest store;
+uneven activity can waste a factor of stores. These limits remain explicit.
+
+## Residual blockers and chronology
+
+The failed head ratio retains dense H*S base allocation/traffic, per-store O(S)
+metadata vectors/spills and 15 padded query rows per MMA. Batching the grid is
+insufficient for the <=2 end-to-end requirement; token-row GEMM batching and a
+sparse metadata core remain absent. These are structural remaining costs,
+not an isolated component-time attribution.
+
+Checkpoint time still pays vector-spill comparison/staging, ordered group
+packing, live-count/compaction synchronization, full private replay copies and
+address rebasing. Faster reads expose those costs. Scalar logical mutation
+capture and avoiding dense replay work remain necessary performance work;
+the all-field exactness contract has not been relaxed to obtain compact logs.
+
+Four interrupted early compilation/revision attempts are retained separately
+and are not validation passes. A scoring-only iteration passed 97 in 2217.02 s
+but measured only 1.400x at S11776. Parallel weighted reads then passed 97 in
+1148.36 s without a timing claim. Scalar POP decay/final tiled materialization
+passed 97 in 577.28 s; its metadata-attempt storage fixture found a one-entry
+allocator-dependent count difference. Deterministic heap initialization fixed
+that difference, followed by the final 97-test suite and complete remeasurement.
+`*_scoring_only`, `*_weighted_read` and `*_metadata_attempt` receipts are
+historical, superseded by the unsuffixed part 6 receipts. Source diffs against
+base b0d0fb8 are retained as `part6_*.patch.json` for these intermediate versions.
+
+Learning was not rerun: MQAR 1.0 at update500 and ladder 0.915 at update2500
+remain part 5 measurements, not newly attested part 6 results. No .pt artifact,
+WG service, delegated agent, Frontier/Slurm or resilient-training change occurred.
+Resilient compute-pool requirement IDs and Partition/QOS evidence are not
+applicable. Intercom/contact_supervisor discovery found no callable tool.
+All implementation and receipt changes are confined to X31; unrelated attended
+workspace changes remain untouched.
+
+---
+
+# Historical part 5 report
+
 # X31 part 5 — training works; large-store performance and sparse storage remain unmet
 
 ## Implementation

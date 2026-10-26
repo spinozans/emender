@@ -52,6 +52,7 @@ def measure(fn,tokens):
 @torch.no_grad()
 def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--parity-receipt',required=True)
+    p.add_argument('--output',default='append_cost_part5.json')
     args=p.parse_args();require_parity(args.parity_receipt)
     held=os.environ.get('GPU_LEASE_HELD')
     if held not in tuple(str(i) for i in range(7)) or os.environ.get('CUDA_VISIBLE_DEVICES')!=held:
@@ -88,7 +89,7 @@ def main():
                  speedup=ratio,gate=ratio>1,bitwise_state_equal=True)
         rows.append(row);print(json.dumps(row),flush=True)
         del parallel,sequential;torch.cuda.empty_cache()
-    save('append_cost_part5.json',dict(physical_gpu=held,torch=torch.__version__,triton=triton.__version__,
+    save(args.output,dict(physical_gpu=held,torch=torch.__version__,triton=triton.__version__,
          dtype='fp32',warmups=5,repetitions=20,
          scope='certified append mutations plus common live-mask reset; excludes reads, allocation, routing, management and curve preparation',
          measurements=rows))

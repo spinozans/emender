@@ -32,7 +32,7 @@ def main():
     result=dict(full_parity=True,tests=len(cases),coverage=counts,junit=str(path.relative_to(ROOT)),
                 junit_sha256=hashlib.sha256(path.read_bytes()).hexdigest(),source_sha256=source_hashes(),
                 tolerance=dict(atol=1e-5,rtol=1e-5))
-    (ROOT/'parity_part5.json').write_text(json.dumps(result,indent=2)+'\n')
+    (ROOT/(sys.argv[2] if len(sys.argv)>2 else 'parity_part5.json')).write_text(json.dumps(result,indent=2)+'\n')
     print(json.dumps(result,indent=2))
 
 
