@@ -1,0 +1,189 @@
+{
+  "status": "blocked-before-training",
+  "training_runs": 0,
+  "gpu_runs": 0,
+  "preregistration_sha256": "7eff782a78dbf7df09a2ad1a37ea668e9b8b942800cafab138f216d2c5bc9ea2",
+  "source_sha256": {
+    "x30_tape_cell/naive_reference.py": "68fe25baa015031df86ee810beb2b41474b89612f74d3d51519589bd46d4e119",
+    "x31_tape_cell_fused/cell_fused.py": "839aa8de0dfc292a9b87b9363b36206c97981761485b9464ec01976550e1fd51",
+    "x34_lm_pilot/model.py": "43c12bcc1e37323b6f953b5027f1b65dc2124e061735a42453977100dd695a2a",
+    "x34_lm_pilot/cli.py": "98990be8d38ae7958eac6b970d80e0f52ee9412b1d883806e6eb0f34d42f8314",
+    "x36_tape_perf/cell_fused.py": "5e7bed3141547ca34a96242074a91ada67d5b0bbf9ae8b1571b77ffd80c558ac",
+    "x36_tape_perf/kernels.py": "479101d322bbc27b58c647e2314172c35af3155588f170b7bf8eaf12a18687a9",
+    "x37_head_differentiation/model.py": "1b8ad4771cc51f50e29abbc71cc6463a1930335ab5f3269ae441f3cc7aed0a84"
+  },
+  "decay": {
+    "free_threshold": 0.001,
+    "control_decay": 0.999995,
+    "control_horizon": 1381547.6019068586,
+    "requested_decay": 0.9474635256553754,
+    "effective_fp32_decay": 0.9474635124206543,
+    "effective_horizon": 127.9999668689515,
+    "caveat": "Untouched strength-1 slot lifetime; refresh and POP can change it."
+  },
+  "control": {
+    "source": "x34_lm_pilot/receipts/probe_pilot_tape_lm.json",
+    "sha256": "df7aae1cfd7a25e0721d6b65e5c134c05fc43f8ce995c8467fb0c8a83ee1fceb",
+    "tokens": 100003840,
+    "rows": [
+      {
+        "context": 512,
+        "windows": 2,
+        "peak_live_per_head": [
+          256,
+          256,
+          256,
+          256
+        ],
+        "mean_live_per_head": null,
+        "occupancy_profile": null,
+        "gate_strength": null,
+        "write_enabled_fraction": 1.0,
+        "successful_allocations_per_token_head": 0.5,
+        "append_requests_per_token_head": 0.5,
+        "pressure_fraction_per_window": [
+          0.0,
+          0.0
+        ],
+        "routing": {
+          "NO-WRITE": 0,
+          "R-EMPTY": 8,
+          "R-NOMATCH": 2040,
+          "R-ZERO-RESIDUAL": 0,
+          "R-CONFLICT": 2048,
+          "R-CAP": 0
+        },
+        "perplexity": 6.515234367849245
+      },
+      {
+        "context": 1024,
+        "windows": 2,
+        "peak_live_per_head": [
+          512,
+          512,
+          512,
+          512
+        ],
+        "mean_live_per_head": null,
+        "occupancy_profile": null,
+        "gate_strength": null,
+        "write_enabled_fraction": 1.0,
+        "successful_allocations_per_token_head": 0.5,
+        "append_requests_per_token_head": 0.5,
+        "pressure_fraction_per_window": [
+          0.0,
+          0.0
+        ],
+        "routing": {
+          "NO-WRITE": 0,
+          "R-EMPTY": 8,
+          "R-NOMATCH": 4088,
+          "R-ZERO-RESIDUAL": 0,
+          "R-CONFLICT": 4096,
+          "R-CAP": 0
+        },
+        "perplexity": 9.258624483977096
+      },
+      {
+        "context": 2048,
+        "windows": 2,
+        "peak_live_per_head": [
+          1024,
+          1024,
+          1024,
+          1024
+        ],
+        "mean_live_per_head": null,
+        "occupancy_profile": null,
+        "gate_strength": null,
+        "write_enabled_fraction": 1.0,
+        "successful_allocations_per_token_head": 0.5,
+        "append_requests_per_token_head": 0.5,
+        "pressure_fraction_per_window": [
+          0.0,
+          0.0
+        ],
+        "routing": {
+          "NO-WRITE": 0,
+          "R-EMPTY": 8,
+          "R-NOMATCH": 8184,
+          "R-ZERO-RESIDUAL": 0,
+          "R-CONFLICT": 8192,
+          "R-CAP": 0
+        },
+        "perplexity": 17.260088530580024
+      },
+      {
+        "context": 4096,
+        "windows": 2,
+        "peak_live_per_head": [
+          2048,
+          2048,
+          2048,
+          2048
+        ],
+        "mean_live_per_head": null,
+        "occupancy_profile": null,
+        "gate_strength": null,
+        "write_enabled_fraction": 1.0,
+        "successful_allocations_per_token_head": 0.5,
+        "append_requests_per_token_head": 0.5,
+        "pressure_fraction_per_window": [
+          0.0,
+          0.0
+        ],
+        "routing": {
+          "NO-WRITE": 0,
+          "R-EMPTY": 8,
+          "R-NOMATCH": 16376,
+          "R-ZERO-RESIDUAL": 0,
+          "R-CONFLICT": 16384,
+          "R-CAP": 0
+        },
+        "perplexity": 29.322487594043345
+      }
+    ],
+    "slope_per_head": [
+      1.0000000000000004,
+      1.0000000000000004,
+      1.0000000000000004,
+      1.0000000000000004
+    ],
+    "story_peak_median": 102.0,
+    "story_peak_max": 264,
+    "missing": [
+      "mean live occupancy",
+      "per-token occupancy profile",
+      "gate strength"
+    ],
+    "interpretation": "Transcript growth, already measured through T=4096; no retraining."
+  },
+  "mechanism": {
+    "status": "blocked",
+    "oracle": "x30 naive_reference, CPU; not X36 GPU parity",
+    "gate_extremes": [
+      -20.0,
+      20.0
+    ],
+    "gate_extremes_same_allocation_trace": true,
+    "allocation_rate_requires_grad": false,
+    "allocation_rate": 0.5,
+    "gate_logit_read_gradient_nonzero": true,
+    "repeated_vs_random_keys_same_routing": true,
+    "zero_residual_allocation_rate": 1.0,
+    "zero_residual_routing": {
+      "NO-WRITE": 0,
+      "R-EMPTY": 4,
+      "R-NOMATCH": 0,
+      "R-ZERO-RESIDUAL": 124,
+      "R-CONFLICT": 0,
+      "R-CAP": 0
+    },
+    "blockers": [
+      "Append gate is differentiable value amplitude, not allocation probability.",
+      "Write matching is age-1 adjacency; keys do not implement novelty routing.",
+      "R-ZERO-RESIDUAL appends instead of skipping allocation.",
+      "Requested batch 64 differs from receipted X34 effective batch 8."
+    ]
+  }
+}
