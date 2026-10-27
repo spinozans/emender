@@ -82,3 +82,47 @@ parameter receipts, fresh oracle parity, ReplayBackward assertions, sequential
 curves are all still required. Do not infer compression or acceptable quality
 from this preflight. Rich S=2944 control does not saturate by T=4096, so a
 zero-pressure result there would not demonstrate an improvement over control.
+
+## Part 2 — redesigned CPU mechanisms (incomplete)
+
+The operator superseded the earlier scope questions: use B64, penalize the
+continuous **write-enable** sigmoid (not append amplitude), keep certified ISA
+semantics, and combine semantic keys with that cost. The original preflight
+above remains historical evidence, not a veto of these redesigned paths.
+
+`redesigned.py` optimizes a learned scalar write bias initialized at +2, on
+fixed features in [-1,1]. The objective is exactly lambda times mean sigmoid;
+SGD uses learning rate 10 for 100 steps. The resulting sigmoid is thresholded
+and detached as in the imported cell before entering the unmodified CPU oracle.
+Costs 0/.001/.01/.1 yield physical allocation rates
+.5/.5/.3359375/0. This proves indirect control across a hard threshold, not a
+derivative of allocation count or language-model quality. The first nonzero
+cost leaves allocation unchanged; monotonicity is non-increasing, not strict.
+These artificial optimizer settings do not select a training lambda.
+
+The derived decay arm is exercised for 512 tokens with S=512, showing decay
+deaths and occupancy equilibrium without R-CAP. Full per-token/head occupancy
+is retained in `receipts/redesigned_mechanisms.json`. The tests also verify the
+strict .5 write-enable boundary. Eight CPU tests pass, including all five
+original binding counterexamples.
+
+**The requested training experiment is still incomplete.** No GPU lease, GPU
+parity, ReplayBackward assertion, parameter certification, lambda sweep, 100M
+training or trained-arm evaluation was performed. Poverty and semantic-repeat
+mechanism receipts remain unimplemented. Pressure is returned as telemetry in
+X34; its objective is cross entropy only. A poverty mechanism receipt must
+therefore demonstrate an effect through capacity-limited reads on loss, rather
+than treating pressure telemetry as an existing explicit loss penalty.
+No claim is made that this absence alone prevents scarcity learning.
+
+B64 rounds pilot/full runs to 611/3052 updates, 20,021,248/100,007,936 tokens.
+This resolves the requested training batch but does not magically supply a B64
+matched-exposure control for the 2% lambda decision: the original X34 checkpoint
+is B8 at 100,003,840 tokens. That comparison remains unperformed.
+
+Residual risks: synthetic gate closure can erase useful writes; the semantic
+read-confirms circuit has not been learned or demonstrated; budget saturation
+can produce misleading low occupancy slopes. X37's per-head W_in is not the
+requested shared W_in and must not be reused unchanged. No upstream source or
+ISA semantics was edited. No .pt files were added. Intercom supervisor tools
+remain unavailable in this session. This is partial mechanism evidence only.

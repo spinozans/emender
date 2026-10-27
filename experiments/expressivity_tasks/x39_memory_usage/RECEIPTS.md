@@ -105,3 +105,20 @@ The Intercom contact_supervisor tool was not exposed in this session; tool
 discovery found no supervisor or intercom tool. Pending decisions are recorded
 here rather than guessed: allocation gate semantics, semantic match/no-op
 semantics, and the batch/control mismatch. Training is not implemented or run.
+
+## Part 2 amendment — operator redesign
+
+The task instruction resolves batch policy to B64 and replaces arm 2's append
+amplitude cost with `lambda * mean(sigmoid(W_write(x)))`, before the certified
+detached write-enable threshold. Arm 4 combines a **single shared** learned
+W_in before frozen per-head geometry with arm 2's selected cost. Keys alone
+remain non-deduplicating; R-ZERO-RESIDUAL still appends. Earlier statements
+requiring new allocation/no-op semantics are superseded for these redesigned
+arms. No certified semantics change is authorized or needed for the gate cost.
+
+Original `receipts/preflight.json` is retained unchanged. New CPU controller
+and decay evidence is in `receipts/redesigned_mechanisms.json`; it contains no
+training or GPU certification. Mechanism acceptance remains incomplete until
+poverty loss and repeat-selective learned gating are demonstrated. No operating
+lambda has been chosen. All quality bands, honest nulls and trained-arm metrics
+above remain applicable, with arm 4 now using the combined objective.
