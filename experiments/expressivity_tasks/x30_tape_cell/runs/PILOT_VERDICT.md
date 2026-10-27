@@ -57,3 +57,30 @@ u 3500  0.9195  (1.00/0.84)      u 7000  0.9625  (1.00/0.93)   <- best
   stage-3 training at k<=128 (peak live ~132 << 736 budget; no merges fire).
   The bistability is an optimizer/loss-surface property, not a capacity
   phenomenon. Dissecting it is a separate registered task if wanted.
+
+## Addendum — process exit 2 and the final-checkpoint bin evaluation (parent)
+
+The watcher event "failed with exit code 2" is the script's REGISTERED GATE
+SIGNAL, not a crash: `train_ladder.py` returns `0 if gate else 2`, and all
+artifacts were written before exit (ladder_h4.json complete and valid;
+ladder.pt saved; no traceback in any log).
+
+Final-checkpoint (u7500, the oscillation-trough state) OOD bins:
+
+    bin_id 0.9746 | 2x 0.9160 | 4x 0.8906 | 9x 0.5000
+    (certified tape_B0: 0.9941 | 0.9805 | 0.9844 | 0.5000)
+
+1. **The 9x capacity wall replicates exactly**: 0.5000 at the 736-slot
+   boundary, identical to the certified instrument, from a non-best
+   checkpoint. The phase diagram's defining feature is checkpoint-robust.
+2. The under-budget bins are in-family but below gate thresholds
+   (bin_id 0.975 vs 0.99 required), consistent with (a) the final state
+   being an oscillation trough (best 0.9625 @ u7000 was not evaluated on
+   bins — the script evaluates bins only at the end), (b) the registered
+   recipe deviations this pilot carries ("stage-2 occupancy curriculum
+   omitted", "random per-update batches versus epoch permutations").
+3. Gate verdict as registered: FAIL (exit 2), honestly. Qualified verdict
+   unchanged: the efficient cell reproduces the wall exactly and the
+   near-budget structure approximately; a selected-best bin evaluation
+   (or a curriculum-faithful rerun under the registered recipe) is the
+   remaining step to a full phase-diagram replication receipt.
