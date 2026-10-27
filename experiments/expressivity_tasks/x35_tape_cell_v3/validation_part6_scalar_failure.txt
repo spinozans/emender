@@ -1,0 +1,74 @@
+gpu_lease: granted GPUs: 1 (pid 2010624)
+X35 physical card 1
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0
+rootdir: /home/erikg/emender
+configfile: pyproject.toml
+plugins: timeout-2.4.0, anyio-4.13.0
+collected 160 items
+
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_all_field_journal.py F [  0%]
+FFFF....                                                                 [  5%]
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_components.py . [  6%]
+..                                                                       [  7%]
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_device_free.py . [  8%]
+                                                                         [  8%]
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py . [  8%]
+...............................                                          [ 28%]
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_lazy_decay.py . [ 28%]
+..........                                                               [ 35%]
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_parity.py . [ 35%]
+.................................                                        [ 56%]
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_part7.py . [ 56%]
+.......                                                                  [ 61%]
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_part8.py . [ 61%]
+...                                                                      [ 63%]
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_write_journal.py . [ 64%]
+......                                                                   [ 68%]
+experiments/expressivity_tasks/x35_tape_cell_v3/tests/test_backing.py .. [ 69%]
+...............                                                          [ 78%]
+experiments/expressivity_tasks/x35_tape_cell_v3/tests/test_causal_read.py . [ 79%]
+......                                                                   [ 83%]
+experiments/expressivity_tasks/x35_tape_cell_v3/tests/test_dependencies.py . [ 83%]
+...........                                                              [ 90%]
+experiments/expressivity_tasks/x35_tape_cell_v3/tests/test_integrated.py . [ 91%]
+...                                                                      [ 93%]
+experiments/expressivity_tasks/x35_tape_cell_v3/tests/test_structural_cost.py . [ 93%]
+.                                                                        [ 94%]
+experiments/expressivity_tasks/x35_tape_cell_v3/tests/test_timer_wheel.py . [ 95%]
+........                                                                 [100%]
+
+=================================== FAILURES ===================================
+_______________________ test_all_field_exact_rollback[1] _______________________
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_all_field_journal.py:38: in test_all_field_exact_rollback
+    expected=[x.view(torch.uint8).clone() for x in tensors(mid)]
+              ^^^^^^^^^^^^^^^^^^^
+E   RuntimeError: self.dim() cannot be 0 to view Float as Byte (different element sizes)
+_______________________ test_all_field_exact_rollback[7] _______________________
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_all_field_journal.py:38: in test_all_field_exact_rollback
+    expected=[x.view(torch.uint8).clone() for x in tensors(mid)]
+              ^^^^^^^^^^^^^^^^^^^
+E   RuntimeError: self.dim() cannot be 0 to view Float as Byte (different element sizes)
+______________________ test_all_field_exact_rollback[37] _______________________
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_all_field_journal.py:38: in test_all_field_exact_rollback
+    expected=[x.view(torch.uint8).clone() for x in tensors(mid)]
+              ^^^^^^^^^^^^^^^^^^^
+E   RuntimeError: self.dim() cannot be 0 to view Float as Byte (different element sizes)
+______________________ test_all_field_exact_rollback[736] ______________________
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_all_field_journal.py:38: in test_all_field_exact_rollback
+    expected=[x.view(torch.uint8).clone() for x in tensors(mid)]
+              ^^^^^^^^^^^^^^^^^^^
+E   RuntimeError: self.dim() cannot be 0 to view Float as Byte (different element sizes)
+_____________________ test_all_field_exact_rollback[11776] _____________________
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_all_field_journal.py:38: in test_all_field_exact_rollback
+    expected=[x.view(torch.uint8).clone() for x in tensors(mid)]
+              ^^^^^^^^^^^^^^^^^^^
+E   RuntimeError: self.dim() cannot be 0 to view Float as Byte (different element sizes)
+- generated xml file: /home/erikg/emender/experiments/expressivity_tasks/x35_tape_cell_v3/validation_part6.xml -
+=========================== short test summary info ============================
+FAILED experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_all_field_journal.py::test_all_field_exact_rollback[1]
+FAILED experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_all_field_journal.py::test_all_field_exact_rollback[7]
+FAILED experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_all_field_journal.py::test_all_field_exact_rollback[37]
+FAILED experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_all_field_journal.py::test_all_field_exact_rollback[736]
+FAILED experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_all_field_journal.py::test_all_field_exact_rollback[11776]
+======================== 5 failed, 155 passed in 15.79s ========================

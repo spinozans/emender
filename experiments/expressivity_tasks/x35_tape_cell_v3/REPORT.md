@@ -440,3 +440,91 @@ workers, delegation, Frontier/Slurm or resilient training changes; scheduler
 Partition/QOS and resilient requirement IDs are inapplicable. Unrelated
 workspace edits are preserved. `contact_supervisor` was searched first in the
 callable catalog and is unavailable; no supervisor coordination was possible.
+
+## Part 6 — FAIL / partial: constant score scratch, active metadata still prefix-sized
+
+**The requested occupancy-proportional metadata implementation is not delivered.**
+The only production reduction landed here is the unused legacy score workspace:
+its independent owner is now a one-element tensor rather than one float per
+physical row per store. Public promotion leaves this owner constant-sized.
+This retains the metadata tuple layout and journal owner identity. One new
+regression checks promotion and snapshot ownership; the 160 existing tests
+(including all 109 unchanged X31 tests) pass unchanged: **161 passed**.
+
+The supplied diagnosis conflates aggregate base-state storage with per-store
+metadata. The historical 14,270,464 bytes covers **1024 stores**, native payload,
+metadata and history together: 13,936 bytes per store. In the ordinary fresh
+T16 path, metadata already follows physical S16, as part 5 documented; it is
+not allocated at architectural S11776. The core's 3.357x isolation therefore
+cannot be attributed to architectural-S metadata initialization from that
+receipt. This correction does not excuse the remaining live-memory failure.
+
+`metadata_part6.json` inventories every native and metadata tensor without
+forcing promotion. At B64/H16, the final zero-live probe measures:
+
+| T16 chunks | Physical rows/store | Metadata bytes, all 1024 stores | Metadata bytes/store | Native bytes/store |
+|---|---:|---:|---:|---:|
+| 1 | 16 | 819,204 | 800.004 | 12,560 |
+| 2 | 32 | 1,605,636 | 1,568.004 | 25,120 |
+| 3 | 48 | 2,392,068 | 2,336.004 | 37,680 |
+| 4 | 64 | 3,178,500 | 3,104.004 | 50,240 |
+
+History adds 512 bytes/store. The tiny fractional metadata term is the shared
+four-byte score placeholder divided by 1024 stores. Before this change the
+unused score owner alone occupied 65,536 bytes at prefix 16 and 262,144 at 64;
+now it occupies four bytes in either case. Active metadata and native storage
+still grow at zero occupancy. No occupancy or live-memory gate passes.
+
+### Remaining structures and exactness constraints
+
+- The free bitmap still uses eagerly initialized three-level prefix storage.
+  Its root and word strides use physical S; a lazy representation must keep
+  lowest-free results and distinguish physical growth from architectural
+  exhaustion. No replacement is landed.
+- The death heap, inverse positions, due and terminal vectors remain
+  prefix-sized. Part 2's wheel remains separate; its documented tie order
+  differs from sorted-slot heap order. No live-sized growth or wheel
+  integration is claimed. Standalone wheel tests do not prove cell parity.
+- Birth links and birth/touch vectors remain addressed by logical slot.
+  F12g selection depends on lowest-index birth ties, while typed journals
+  retain absolute mutation addresses and snapshots rebase their owners.
+  A sparse owner representation needs coordinated forward/replay changes.
+  No such change or impossibility proof is delivered here.
+- References remain prefix-sized; scores are the sole constant-sized owner
+  change. Dense imports/public promotion/snapshots and recorded replay retain
+  their existing representation.
+
+These are specific uncompleted dependencies, not evidence that a semantics-
+preserving sparse representation cannot be built. This session must not be
+accepted as closing any of the three requested active-metadata structures.
+
+### Final registered gates and parts 1–6 convergence
+
+The unchanged five-warmup/twenty-sample complete-cell protocol was rerun only
+after parity. Every sample is retained in `gates_part6.json`; no favorable
+rerun was selected. Final forward **1.940140x FAIL** and S11776 heads
+**2.246183x FAIL**. The forward >=2x target was not held. These are measurements
+of the small scratch change, not an implementation of the requested redesign.
+The different timing from part 5 alone does not establish causation.
+
+| Part | Integrated parity | C64/S2944/H4 forward >=2x | S11776/T16 heads <=2 | Occupancy / live-memory |
+|---|---|---|---|---|
+| 1 | Counterexamples only, 12 tests | NOT RUN | NOT RUN | NOT IMPLEMENTED |
+| 2 | Components; no changed representation | NOT RUN | NOT RUN | NOT IMPLEMENTED |
+| 3 | 141 passed | 1.879757x FAIL | 7.407990x FAIL | FAIL / FAIL |
+| 4 | 158 passed | 2.194722x PASS | 2.349044x FAIL | FAIL / FAIL |
+| 5 | 160 passed | 2.194987x PASS | 2.349795x FAIL | FAIL / FAIL |
+| 6 | 161 passed | 1.940140x FAIL | 2.246183x FAIL | FAIL / FAIL |
+
+The initial zero-dimensional placeholder failed five unchanged rollback tests
+because byte views require a dimension. The retained scalar-failure log/XML
+shows 155 passed / 5 failed; the final one-element owner fixes this without
+editing oracle tests. Final log/XML and `parity_part6.json` attest the passing
+source. `summary_part6.json` records incomplete scope and residual risks.
+
+Operationally: exact project Python, X35 broker, physical GPU1; no card7,
+.pt files, WG, delegation, Frontier/Slurm or resilient training changes.
+Scheduler Partition/QOS and resilient requirement IDs are inapplicable.
+`contact_supervisor` was searched first in the callable tool catalog and is
+unavailable; no decision or progress contact could be sent. Unrelated workspace
+changes were preserved. This result is partial and the engineering item remains open.

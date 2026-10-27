@@ -161,7 +161,10 @@ def _tape_scan(k, q, v, write_strength, pop_strength, append_logit, state,
             birth_next, birth_prev, birth_head = initialize_birth_index(live, age)
         sizes = torch.zeros(b*h,device=k.device,dtype=torch.int32)
         references = strength.clone()
-        scores = torch.zeros_like(strength)
+        # The causal-read path never reads or writes the legacy score scratch.
+        # Keep a distinct scalar owner for the stable metadata/journal layout;
+        # allocating one score per logical row served no purpose.
+        scores = torch.zeros((1,), device=k.device, dtype=strength.dtype)
         metadata = (heap,position,due,terminal,births,touches,level0,level1,root,
                     birth_next,birth_prev,birth_head,sizes,references,scores)
     else:

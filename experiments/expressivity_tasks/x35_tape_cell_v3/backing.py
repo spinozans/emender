@@ -86,7 +86,7 @@ def promote(state):
             fill = -1 if i in (0, 1, 9, 10) else (state.tokens if i == 5 else 0)
             tail = x.new_full((x.shape[0], cfg.slots - old), fill)
             meta[i] = torch.cat((x, tail), dim=1)
-        for i in (13, 14):
+        for i in (13,):
             meta[i] = pad_rows(meta[i], cfg.slots)
         stores = native.live.shape[0] * cfg.n_heads
         meta[6] = torch.empty((stores, triton.cdiv(cfg.slots, 64)), device=native.live.device, dtype=torch.uint64)

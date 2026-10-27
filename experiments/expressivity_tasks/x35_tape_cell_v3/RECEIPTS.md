@@ -264,3 +264,21 @@ Only X35 artifacts are changed; references and unrelated workspace edits are
 preserved. No GPU7, .pt output, WG service/workers/delegation, Frontier/Slurm or
 resilient training changes. `contact_supervisor` was searched first and is not
 available in the callable tool catalog.
+
+## Part 6 — incomplete / failed structural and timing gates
+
+- `validation_part6.txt`, `validation_part6.xml`, `parity_part6.json`: 161 passed,
+  including unchanged 160 tests and one new constant-score ownership regression.
+- `validation_part6_scalar_failure.txt/xml`: initial 155 passed / 5 failed;
+  zero-dimensional byte-view incompatibility fixed before final validation.
+- `gates_part6.py/json/txt`: unchanged registered timing loop, all samples;
+  forward 1.940140x FAIL, S11776 heads 2.246183x FAIL. Structural gates FAIL.
+- `metadata_part6.py/json/txt`: tensor-by-tensor native/metadata/per-store
+  accounting. Historical ~14 MB was aggregate base state across 1024 stores,
+  not metadata per store. Ordinary fresh metadata already uses prefix S16.
+- `summary_part6.json` and REPORT part 6: active metadata remains prefix-sized;
+  only unused legacy score scratch is now constant-sized. No closure claim.
+
+Commands used the X35 run_leased.sh --module entry point with modules
+validate_part6, gates_part6, metadata_part6, in that order, using only the
+mandated interpreter and broker physical GPU1. No card7 or .pt output.

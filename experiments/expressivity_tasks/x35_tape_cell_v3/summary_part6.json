@@ -1,0 +1,141 @@
+{
+  "task": "X35 v3 part 6: occupancy-proportional metadata",
+  "scope_complete": false,
+  "result": "FAIL / partial: legacy unused score scratch made constant-sized; requested active metadata structures remain prefix-sized. Per-store accounting corrects the supplied diagnosis.",
+  "validation": {
+    "tests": 161,
+    "unchanged_x31_tests": 109,
+    "unchanged_prior_x35_tests": 51,
+    "new_tests": 1,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "raw": "validation_part6.txt",
+    "junit": "validation_part6.xml",
+    "source_receipt": "parity_part6.json"
+  },
+  "source_sha256": {
+    "gates_part4.py": "644e7694696c7829aa40bc8e1393e54da93ee912e41c8ee9465df0793d286fdd",
+    "validate_part5.py": "fe946acf6c9d8a724eb13ab25c1f607af8f4eb7a0df7ee1249832646eb0f3184",
+    "kernels.py": "400530b546d34e96326f2d4463eb6b400cfa609886e584c6dabf615e0080abbd",
+    "all_field_journal.py": "b281e27a1278eb050df40032a3d129e3a3b0b79514020493c9b565256a64beb4",
+    "validate_part4.py": "4bd7afa9f27645fdcf4a59460ddde2bf27065886cb3ba9aaad009fee937f5985",
+    "classifier.py": "99282a7aea1811c3bb1c35f9d472c0395b2191fa1963bc477c6a66207307c8e5",
+    "structural_cost_part5.py": "b6455bf6c3d9ca4d0ba0712e78cf82ee2975f49a04abbe156d2592dc76a9c742",
+    "gates_part5.py": "f7489e65e36e848e488cec11c622b22fa887ed73fcc0b9f5f5f13d2aa6ad8e16",
+    "backing.py": "0ecdd4907136dba6ffcb1dece7a54f9d8b601f8104aed31ce8bc96b29ab79ddf",
+    "allocation.py": "a36fd4dfbb3e93c7047656f009a12b576bdd3d0c5c992bde9c28358be906a3e2",
+    "validate_part3.py": "00deff1b3a9b7855f978bc599f3133442a3b041f165061dae4d14d8785be4a36",
+    "__init__.py": "0fdb1008802a1136e4b7c10040fbf2edf8768dfafc71347738d7a2fc1eec0215",
+    "validate_part2.py": "e8be6730cbec95614e2d2f0d9adc57a889df9d0eadf4500d36a3989daf5a7e0f",
+    "gates_part6.py": "a2cff3a5660e47c0999858daeab143beee9e9a33db51ff13232488ada5e6a67d",
+    "gates_part3.py": "b11374f31f4821a336b7dd3bc8ddf5e8036566604a4aeb79a3fca56423e1ad27",
+    "causal_read.py": "9c6fa5822905b41750e77fec7b48cebf2a388cf01cc19a6752e112839707440c",
+    "density.py": "67c271dc13021fdc03d2e43b1511335fd7810e1b9b6b3288c2af543a536f8028",
+    "backward.py": "8c732dbb422b3b349b4d3b45373628b312692f33b03caa7627ec1683cd551658",
+    "metadata_part6.py": "ad446f7e8105acf0960d908d36f650b02ee8fe12abd831a239ac8d3e965d0bc3",
+    "summarize_part5.py": "15f5509d31f8b72e9d26c9b5da12ee852c8dfa704746f047a78122593ca77c2c",
+    "cell_fused.py": "73e92bf814aa8504d1a26ace8eab773eeb6707847597245a1e01ce1d836dec79",
+    "density_trained.py": "35196470318b1d07c9ab07fa8aa6de821ae7ff4941b35777a92c47f3f72d5959",
+    "timer_wheel.py": "a8634da6b80ec6b8df7821428263bdda44a122b8906a4e823a3cdc33e128f5ab",
+    "validate_part6.py": "e6fd1370f09895380492cc31cb4e979cc06226ecfcd99e8cbe63588eadedf013"
+  },
+  "physical_gpu": "1",
+  "registered_gates": {
+    "c64_s2944_h4_forward_ge_2x": false,
+    "s736_t16_heads_ratio_le_2": false,
+    "s11776_t16_heads_ratio_le_2": false,
+    "full_parity": true,
+    "occupancy_proportional_backing": false,
+    "live_proportional_memory": false
+  },
+  "forward_speedup": 1.9401395221743623,
+  "heads_ratio": 2.2461827392988156,
+  "heads_ratio_s736": 2.24871300821715,
+  "raw_gate_receipt": "gates_part6.json",
+  "metadata_receipt": "metadata_part6.json",
+  "diagnosis_correction": "Part-5 14,270,464 bytes is total native+metadata+history for B64/H16 = 1024 stores. It is not 14 MB metadata per store. All ordinary fresh metadata already uses physical S16, not architectural S11776. The store core ratio is therefore not evidence of architectural-S initialization.",
+  "metadata_zero_live": [
+    {
+      "chunk": 1,
+      "stores": 64,
+      "physical_slots": 16,
+      "live_rows": 0,
+      "metadata_bytes": 51204,
+      "metadata_bytes_per_store": 800.0625,
+      "native_bytes": 803840
+    },
+    {
+      "chunk": 2,
+      "stores": 64,
+      "physical_slots": 32,
+      "live_rows": 0,
+      "metadata_bytes": 100356,
+      "metadata_bytes_per_store": 1568.0625,
+      "native_bytes": 1607680
+    },
+    {
+      "chunk": 3,
+      "stores": 64,
+      "physical_slots": 48,
+      "live_rows": 0,
+      "metadata_bytes": 149508,
+      "metadata_bytes_per_store": 2336.0625,
+      "native_bytes": 2411520
+    },
+    {
+      "chunk": 4,
+      "stores": 64,
+      "physical_slots": 64,
+      "live_rows": 0,
+      "metadata_bytes": 198660,
+      "metadata_bytes_per_store": 3104.0625,
+      "native_bytes": 3215360
+    },
+    {
+      "chunk": 1,
+      "stores": 1024,
+      "physical_slots": 16,
+      "live_rows": 0,
+      "metadata_bytes": 819204,
+      "metadata_bytes_per_store": 800.00390625,
+      "native_bytes": 12861440
+    },
+    {
+      "chunk": 2,
+      "stores": 1024,
+      "physical_slots": 32,
+      "live_rows": 0,
+      "metadata_bytes": 1605636,
+      "metadata_bytes_per_store": 1568.00390625,
+      "native_bytes": 25722880
+    },
+    {
+      "chunk": 3,
+      "stores": 1024,
+      "physical_slots": 48,
+      "live_rows": 0,
+      "metadata_bytes": 2392068,
+      "metadata_bytes_per_store": 2336.00390625,
+      "native_bytes": 38584320
+    },
+    {
+      "chunk": 4,
+      "stores": 1024,
+      "physical_slots": 64,
+      "live_rows": 0,
+      "metadata_bytes": 3178500,
+      "metadata_bytes_per_store": 3104.00390625,
+      "native_bytes": 51445760
+    }
+  ],
+  "residual_risks": [
+    "Engineering scope incomplete: bitmap, heap/inverse map, due/terminal vectors, birth links, birth/touch vectors and references still follow the touched prefix, not live occupancy.",
+    "Timer wheel is a standalone component and remains unintegrated; no live-sized schedule with doubling was landed.",
+    "No occupancy-driven ownership map or journal-aware compaction was implemented; dense imports, promotion, snapshots and explicit replay retain dense metadata.",
+    "Both registered timing targets fail in the final run; no performance or completion claim is made.",
+    "Exact logical-slot birth tie selection and recorded absolute-address undo constrain a representation change; this is an implementation dependency, not proof that sparse representations are impossible."
+  ],
+  "retained_failure": "validation_part6_scalar_failure.txt/xml: 155 passed, 5 failed; zero-dimensional scratch could not be byte-viewed by unchanged oracle. Fixed to one-element tensor.",
+  "operational_notes": "Single threaded; exact requested Python; X35 lease broker physical GPU1, no GPU7, no .pt, WG, delegation, Frontier/Slurm or resilient training changes. contact_supervisor searched first and unavailable. Existing unrelated edits preserved."
+}
