@@ -1,0 +1,60 @@
+gpu_lease: granted GPUs: 0 (pid 2568842)
+X36 physical card 0
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0
+rootdir: /home/erikg/emender
+configfile: pyproject.toml
+plugins: timeout-2.4.0, anyio-4.13.0
+collected 113 items
+
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_all_field_journal.py . [  0%]
+........                                                                 [  7%]
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_components.py . [  8%]
+..                                                                       [ 10%]
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_device_free.py . [ 11%]
+                                                                         [ 11%]
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py . [ 12%]
+...............................                                          [ 39%]
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_lazy_decay.py . [ 40%]
+..........                                                               [ 49%]
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_parity.py . [ 50%]
+.................................                                        [ 79%]
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_part7.py . [ 80%]
+.......                                                                  [ 86%]
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_part8.py . [ 87%]
+...                                                                      [ 90%]
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_write_journal.py . [ 91%]
+......                                                                   [ 96%]
+experiments/expressivity_tasks/x36_tape_perf/tests/test_exact.py FFF.    [100%]
+
+=================================== FAILURES ===================================
+_________________________ test_fresh_exact[736-9-4-5] __________________________
+experiments/expressivity_tasks/x36_tape_perf/tests/test_exact.py:26: in test_fresh_exact
+    torch.testing.assert_close(x,y,atol=0,rtol=0)
+E   AssertionError: Tensor-likes are not equal!
+E
+E   Mismatched elements: 8 / 144 (5.6%)
+E   Greatest absolute difference: 5.960464477539062e-07 at index (0, 6, 0, 0)
+E   Greatest relative difference: 1.329769929725444e-06 at index (0, 6, 0, 0)
+_______________________ test_fresh_exact[2944-17-64-128] _______________________
+experiments/expressivity_tasks/x36_tape_perf/tests/test_exact.py:26: in test_fresh_exact
+    torch.testing.assert_close(x,y,atol=0,rtol=0)
+E   AssertionError: Tensor-likes are not equal!
+E
+E   Mismatched elements: 578 / 4352 (13.3%)
+E   Greatest absolute difference: 1.1920928955078125e-05 at index (1, 4, 0, 25)
+E   Greatest relative difference: 3.8682101148879156e-05 at index (1, 2, 0, 48)
+________________________ test_fresh_exact[11776-33-4-5] ________________________
+experiments/expressivity_tasks/x36_tape_perf/tests/test_exact.py:26: in test_fresh_exact
+    torch.testing.assert_close(x,y,atol=0,rtol=0)
+E   AssertionError: Tensor-likes are not equal!
+E
+E   Mismatched elements: 62 / 528 (11.7%)
+E   Greatest absolute difference: 1.9073486328125e-06 at index (1, 20, 0, 0)
+E   Greatest relative difference: 1.5835312296985649e-06 at index (0, 6, 0, 0)
+- generated xml file: /home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/receipts/x36_parity.xml -
+=========================== short test summary info ============================
+FAILED experiments/expressivity_tasks/x36_tape_perf/tests/test_exact.py::test_fresh_exact[736-9-4-5]
+FAILED experiments/expressivity_tasks/x36_tape_perf/tests/test_exact.py::test_fresh_exact[2944-17-64-128]
+FAILED experiments/expressivity_tasks/x36_tape_perf/tests/test_exact.py::test_fresh_exact[11776-33-4-5]
+======================== 3 failed, 110 passed in 52.38s ========================
