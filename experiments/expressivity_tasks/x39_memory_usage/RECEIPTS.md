@@ -1,3 +1,18 @@
+# Part 9 final receipt — all four trained arms
+
+| Arm | Registered PPL ratio / slope | Measured PPL / ratio | Per-head slope | Disposition |
+|---|---|---|---|---|
+| 1 decay horizon128 | ≤1.05 / ≤.5 | 6.92328267 / 1.00975219 | 0.0000/0.0000/0.0000/0.0000 | quality passes; strong slope screen passes |
+| 2 gate cost .01 | ≤1.02 / ≤.5 | 6.91114998 / 1.00798265 | 0.9575/0.9602/0.9294/0.9402 | quality passes; strong slope screen fails |
+| 3 poverty S128 | ≤1.02 / ≤.5 | 6.89398492 / 1.00547915 | 0.0000/0.0000/0.0000/0.0000 | capacity-capped; rich transfer fails |
+| 3 same weights S2944 | ≤1.02 / ≤.5 | 6.87446791 / 1.00263262 | 1.0000/1.0000/1.0000/1.0000 | quality passes; strong slope screen fails |
+| 4′ shared semantic + match + cost .01 | ≤1.02 / ≤.5 | 6.93538665 / 1.01151754 | 0.0945/0.0550/0.1275/0.1535 | quality passes; strong slope screen passes |
+
+Arm 4′ completed 3052 updates / 100,007,936 target tokens. strong occupancy compression screen passes with registered quality.
+Evidence: part9_adjudication.json, part9_semantic_full_evaluation.json, part9_semantic_parity.json, raw curve and checkpoint validation receipts. Historical provenance qualifications stand as receipted; no retrospective certification.
+
+---
+
 # X39 — memory-usage regularization: pre-registration
 
 ## Part 7 measured dispositions (post-run)
@@ -248,3 +263,49 @@ bands. Semantic failure is a hand-set construction counterexample, not proof
 that all learned contextual gates fail. No operating lambda was selected.
 Do not launch GPU work on the basis of the ten passing regression tests:
 the regression explicitly preserves the failed semantic mechanism status.
+
+## Part 8 audit — source identity remains unresolved
+
+`receipts/part8_provenance.json` records the six run receipts' X36 registered
+disk hashes without upgrading them to loaded-source attestations. The
+registration occurs before parity and the backward module is loaded lazily;
+all runs share cached imports. Original receipts remain unchanged.
+`part8_current_parity.{txt,xml}` records one passing broker-leased current
+B64 production-shape oracle comparison on card 1 (16.38 s). It supplies no
+historical-source or semantic-circuit attestation. The poor/rich checkpoint
+hash matches and recorded slopes remain approximately 0/1. Arm 4' remains
+untrained, and no four-arm success or source-gate repair is claimed.
+
+## Part 9 pre-training amendment — semantic arm 4′
+
+The operator closes historical disk-versus-loaded-code reconciliation: the
+three completed arms stand with their original qualifications and receipts.
+No retrospective loaded-code claim is added. Arm 4′ is executed first at
+lambda .01, B64, seed 3401, T512, 3052 updates / 100,007,936 tokens, using the
+matched control data order, AdamW and fixed validation windows.
+
+Implementation specification: one shared learned 256→64 W_in, initialized to
+the first 64 identity rows, adds contextual features to frozen head-seeded
+identity embeddings before frozen key/query geometry (seeds 3701–3704).
+Keys remain detached; queries train W_in through READ. The write-enable logit
+is W_write(x) plus a learned per-head match coefficient initialized at −1
+times detached pre-read maximum scaled query/key score, empty-store zero.
+Use certified READ scale 2/sqrt(K), correcting the historical witness's scale.
+Threshold detached sigmoid strictly above .5; padding never writes. The
+existing error coefficient stays exclusively in append amplitude; this arm
+adds no error-magnitude term to write-enable. READ/POP/WRITE/DECAY semantics
+are unchanged. Cost is .01 times the mean sigmoid of the actual wired logit,
+including padded positions consistently with the registered gate-cost arm.
+
+The single-threaded local dispatch temporarily redirects X36's no-grad
+forward target to X39-local copies of forward/kernel code; upstream files are
+read-only. The real decided beta is retained for unchanged ReplayBackward.
+Sequential X31 states independently certify recurrent evidence/decisions at
+B64/T512, followed by full-scan X31 values/state/trace/pressure/gradient parity.
+Training must stop if either certification fails. Parameter matching includes
+a widened base_lm receipt; this is not a newly trained quality comparator.
+The B64 control PPL 6.8564175640 remains the registered quality denominator;
+semantic acceptance requires ratio <=1.02 and strong compression slope <=.5.
+All four lengths, two windows, story profiles, depth probes, allocation and
+pressure receipts retain the existing evaluation protocol. Degenerate zero
+occupancy has undefined slope. Scientific nulls are valid results.
