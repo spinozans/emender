@@ -1,0 +1,58 @@
+gpu_lease: granted GPUs: 0 (pid 3440094)
+X37 pinned physical card 0
+Traceback (most recent call last):
+  File "/home/erikg/emender/experiments/expressivity_tasks/x37_head_differentiation/receipts/resume_pinned.py", line 72, in <module>
+    cli.main()
+  File "/home/erikg/emender/experiments/expressivity_tasks/x37_head_differentiation/cli.py", line 265, in main
+    model = train(arm,tok)
+            ^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x37_head_differentiation/cli.py", line 173, in train
+    loss.backward()
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_tensor.py", line 625, in backward
+    torch.autograd.backward(
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/__init__.py", line 354, in backward
+    _engine_run_backward(
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/graph.py", line 841, in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/function.py", line 315, in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/function.py", line 608, in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/backward.py", line 385, in backward
+    def backward(ctx,gout,gkeys,gvalues,gstrength):
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/replay_setup.py", line 90, in prepare
+    starts=[0]
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/runtime/jit.py", line 419, in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/runtime/jit.py", line 733, in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/runtime/jit.py", line 861, in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/compiler/compiler.py", line 300, in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/compiler/compiler.py", line 80, in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+triton.compiler.errors.CompilationError: at 24:41:
+                valid=(row[:,None]<S) & (col[None,:]<Dims[i])
+                value=tl.load(Sources[i]+(store*S+row[:,None])*Dims[i]+col[None,:],valid,0)
+                tl.store(Destinations[i]+(store*Dims[i]+col[None,:])*S+row[:,None],value,valid)
+            else:
+                x=block*256+tl.arange(0,256)
+                value=tl.load(Sources[i]+x,x<Numel[i],0)
+                tl.store(Destinations[i]+x,value,x<Numel[i])
+    for i in tl.static_range(3):
+        if (pid>=GStarts[i]) & (pid<GStarts[i+1]):
+            block=pid-GStarts[i]
+            if i<2 and SoA:
+                row=(block%tl.cdiv(PS if PS else S,32))*32+tl.arange(0,32)
+                                         ^
+NameError('PS is not defined')
