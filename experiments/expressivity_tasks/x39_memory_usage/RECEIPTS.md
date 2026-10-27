@@ -1,5 +1,38 @@
 # X39 — memory-usage regularization: pre-registration
 
+## Part 7 measured dispositions (post-run)
+
+| Arm | Pre-registered | Measured PPL / control ratio | Per-head slope | Disposition |
+|---|---|---|---|---|
+| 1 decay, horizon 128 | 100M; PPL ratio <= 1.05; slope <= .5 | 6.92328267 / 1.00975219 | 0.0000/0.0000/0.0000/0.0000 | provisional compression screen passes; source attestation fails |
+| 2 gate cost, lambda 0.01 | 100M; PPL ratio <= 1.02; slope <= .5 | 6.91114998 / 1.00798265 | 0.9575/0.9602/0.9294/0.9402 | quality passes; strong compression fails |
+| 3 poverty, S128 | 100M; PPL ratio <= 1.02; slope <= .5 | 6.89398492 / 1.00547915 | 0.0000/0.0000/0.0000/0.0000 | capacity-capped; rich transfer is the disposition test |
+| 3 same weights, S2944 | 100M; PPL ratio <= 1.02; slope <= .5 | 6.87446791 / 1.00263262 | 1.0000/1.0000/1.0000/1.0000 | quality passes; strong compression fails |
+| 4' semantic keys + match wire | Operating lambda; 100M; parity + ReplayBackward | Not run | Unmeasured | Optimized recurrent wire absent; incomplete, not a trained null |
+
+**Provisional measurements: unchanged-source attestation failed.** External X36 backward/replay_setup edits occurred during the single training process; `receipts/part7_integrity.json` retains the mismatches. These rows are not fully certified compression receipts.
+
+
+The operator part-7 instruction authorizes the ordered usage runs and exact B64 comparisons. Original pre-training registration bytes are retained in each run. The selection rule and quality bands were not changed after results. Full trained adjudication: `receipts/part7_adjudication.json`.
+
+| Lambda | PPL at 20,021,248 tokens | Ratio to control | Within 2% |
+|---|---|---|---|
+| 0.001 | 14.67135383 | 1.00008214 | True |
+| 0.01 | 14.78951122 | 1.00813641 | True |
+| 0.1 | 15.21379435 | 1.03705794 | False |
+
+### Part 7 structural-lessons ledger
+
+| Structural lesson | Trained evidence and limit |
+|---|---|
+| Decay bounds retained memory without reducing writes | Every registered length peaks at 64 slots/head; slope about zero, allocation .5/token/head, zero rich pressure; short-context PPL costs .975%. This is recent retention, not semantic deduplication. |
+| Write-enable cost reduces the allocation coefficient | Selected lambda .01 gives slopes .9294–.9602: fewer writes, but the <=.5 strong-compression criterion fails in all heads. PPL costs .798%. |
+| Capacity caps can mimic compression | S128 occupancy must be interpreted alongside pressure and the same trained weights at S2944; low capped slope alone is not learned compression. |
+| Semantic retrieval is not trained deduplication evidence | Prior constructive CPU wire passes its two ablations, but no optimized recurrent wire or trained semantic result exists. |
+
+No strong compression transfers to rich deployment.
+
+
 ## Part 6 amendment — B64 exact-exposure control (2026-10-27)
 
 Provenance: the operator's part-6 task explicitly resolves the part-5

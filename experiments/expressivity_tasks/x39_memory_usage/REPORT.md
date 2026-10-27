@@ -1,3 +1,138 @@
+# X39 part 7 — provisional three-arm measurements; source gate failed
+
+## Part 7 measured result — three trainings complete; provenance failed; fourth unrun
+
+**All new scientific measurements are provisional.** Final integrity checking
+detected external edits to X36 `backward.py` and `replay_setup.py` during the
+single Python training process. Initial decay registration matched the B64
+control's hashes for these modules, but later registrations saw changed disk
+bytes. Cached Python imports suggest that much loaded code stayed unchanged;
+this is not a complete loaded-source attestation. The unchanged-source gate
+**failed**. `receipts/part7_integrity.json` retains each registered/current hash
+mismatch. No training is claimed fully certified from this evidence. Upstream
+files were read-only for this task and were not restored or modified.
+
+Arms 1–3 completed sequentially at B64, seed 3401, context 512, each with
+100,007,936 target tokens. The three lambda pilots each completed 20,021,248
+tokens. Corrected runs held broker card 0 exclusively; certified cards 2/3/4
+and forbidden card 7 were excluded by the unchanged X39 wrapper.
+**The four-arm task is incomplete:** arm 4' was not trained. This is an
+implementation blocker, not a scientific null from a trained semantic model.
+
+| Arm | Pre-registered | Measured PPL / control ratio | Per-head slope | Disposition |
+|---|---|---|---|---|
+| 1 decay, horizon 128 | 100M; PPL ratio <= 1.05; slope <= .5 | 6.92328267 / 1.00975219 | 0.0000/0.0000/0.0000/0.0000 | provisional compression screen passes; source attestation fails |
+| 2 gate cost, lambda 0.01 | 100M; PPL ratio <= 1.02; slope <= .5 | 6.91114998 / 1.00798265 | 0.9575/0.9602/0.9294/0.9402 | quality passes; strong compression fails |
+| 3 poverty, S128 | 100M; PPL ratio <= 1.02; slope <= .5 | 6.89398492 / 1.00547915 | 0.0000/0.0000/0.0000/0.0000 | capacity-capped; rich transfer is the disposition test |
+| 3 same weights, S2944 | 100M; PPL ratio <= 1.02; slope <= .5 | 6.87446791 / 1.00263262 | 1.0000/1.0000/1.0000/1.0000 | quality passes; strong compression fails |
+| 4' semantic keys + match wire | Operating lambda; 100M; parity + ReplayBackward | Not run | Unmeasured | Optimized recurrent wire absent; incomplete, not a trained null |
+
+
+The control is 6.8564175640 at 100M and 14.6701488443 at the exact pilot
+exposure. The selected lambda is **0.01**, the largest swept value passing
+the registered threshold 14.96355182. The full run starts
+independently; it is not a continuation of its pilot.
+
+| Lambda | PPL at 20,021,248 tokens | Ratio to control | Within 2% |
+|---|---|---|---|
+| 0.001 | 14.67135383 | 1.00008214 | True |
+| 0.01 | 14.78951122 | 1.00813641 | True |
+| 0.1 | 15.21379435 | 1.03705794 | False |
+
+
+`receipts/part7_lambda_interpolation.json` records descriptive log-lambda/PPL
+boundary interpolation between bracketing pilots, with no extrapolation and
+no invented unswept operating point. Validation checkpoint receipts and every
+training loss/gate mean are retained as curves. The repeated .01 full-run
+20M validation is 14.7947889612, versus the pilot's 14.7895112197; both pass.
+Same-seed CUDA training is not claimed to be bit-identical across executions.
+
+### Synthesis and structural-lessons ledger
+
+The provisional decay measurements show non-capacity-limited sublinear retained memory at an acceptable
+short-context quality cost. Its unchanged .5 allocation rate distinguishes
+expiration from selective writing. Gate cost reduces writes substantially,
+but does not produce the registered strong sublinear scaling. No strong compression transfers to rich deployment.
+The poor/rich evaluations share the exact checkpoint hash, changing only the
+deployment budget. Pressure zero in a rich budget is not itself an improvement:
+the control also has zero pressure over these lengths.
+
+| Structural lesson | Trained evidence and limit |
+|---|---|
+| Decay bounds retained memory without reducing writes | Every registered length peaks at 64 slots/head; slope about zero, allocation .5/token/head, zero rich pressure; short-context PPL costs .975%. This is recent retention, not semantic deduplication. |
+| Write-enable cost reduces the allocation coefficient | Selected lambda .01 gives slopes .9294–.9602: fewer writes, but the <=.5 strong-compression criterion fails in all heads. PPL costs .798%. |
+| Capacity caps can mimic compression | S128 occupancy must be interpreted alongside pressure and the same trained weights at S2944; low capped slope alone is not learned compression. |
+| Semantic retrieval is not trained deduplication evidence | Prior constructive CPU wire passes its two ablations, but no optimized recurrent wire or trained semantic result exists. |
+
+
+| Arm | T | Allocation/token/head (two-window mean) | Pressure fraction/head | Context PPL / control |
+|---|---|---|---|---|
+| decay | 512 | 0.5000/0.5000/0.5000/0.5000 | 0.0000/0.0000/0.0000/0.0000 | 1.009874 |
+| decay | 1024 | 0.5000/0.5000/0.5000/0.5000 | 0.0000/0.0000/0.0000/0.0000 | 0.961139 |
+| decay | 2048 | 0.5000/0.5000/0.5000/0.5000 | 0.0000/0.0000/0.0000/0.0000 | 0.910427 |
+| decay | 4096 | 0.5000/0.5000/0.5000/0.5000 | 0.0000/0.0000/0.0000/0.0000 | 0.928291 |
+| gate_0.01_full | 512 | 0.3105/0.2236/0.1689/0.2314 | 0.0000/0.0000/0.0000/0.0000 | 1.033041 |
+| gate_0.01_full | 1024 | 0.3047/0.2134/0.1621/0.2280 | 0.0000/0.0000/0.0000/0.0000 | 1.008674 |
+| gate_0.01_full | 2048 | 0.3022/0.2131/0.1577/0.2229 | 0.0000/0.0000/0.0000/0.0000 | 0.975756 |
+| gate_0.01_full | 4096 | 0.2979/0.2124/0.1404/0.2119 | 0.0000/0.0000/0.0000/0.0000 | 0.990245 |
+| poverty | 512 | 0.2500/0.2500/0.2500/0.2500 | 0.5000/0.5000/0.5000/0.5000 | 1.013493 |
+| poverty | 1024 | 0.1250/0.1250/0.1250/0.1250 | 0.7500/0.7500/0.7500/0.7500 | 1.004890 |
+| poverty | 2048 | 0.0625/0.0625/0.0625/0.0625 | 0.8750/0.8750/0.8750/0.8750 | 0.991460 |
+| poverty | 4096 | 0.0312/0.0312/0.0312/0.0312 | 0.9375/0.9375/0.9375/0.9375 | 0.994263 |
+| poverty_rich | 512 | 0.5000/0.5000/0.5000/0.5000 | 0.0000/0.0000/0.0000/0.0000 | 1.010187 |
+| poverty_rich | 1024 | 0.5000/0.5000/0.5000/0.5000 | 0.0000/0.0000/0.0000/0.0000 | 1.001422 |
+| poverty_rich | 2048 | 0.5000/0.5000/0.5000/0.5000 | 0.0000/0.0000/0.0000/0.0000 | 0.980498 |
+| poverty_rich | 4096 | 0.5000/0.5000/0.5000/0.5000 | 0.0000/0.0000/0.0000/0.0000 | 0.983249 |
+
+
+Full occupancy profiles (mean, peak, final), allocation/request/enable/sigmoid
+rates, per-head pressure/R-CAP/W64 statistics, first 16 story profiles with
+truncation flags, seven depth probes and all per-position context NLL are in
+the per-arm `part7_*_evaluation.json` receipts. `part7_decay_shape.json` gives
+128-token NLL bins and matched context ratios; raw position curves remain in
+the evaluation receipts. The decay context ratios are about 1.0099/.9611/
+.9104/.9283 at T=512/1024/2048/4096: longer-context degradation relative to
+control is not observed on these registered windows.
+
+### Validation, provenance and remaining work
+
+Every invocation passed a fresh exact-configuration B64/H4/K64/V128/T512
+comparison against certified X31: forward values, final state, routing traces
+and gradients bitwise. This is the targeted production-shape gate, not a new
+claim that the entire adversarial suite was rerun. Parameter receipts match
+the B64 control's 21,913,872 total / 21,847,052 trainable tape parameters
+against base_lm's 21,914,119 total. Every accepted update asserts ReplayBackward
+and finite loss/gradient norm. All 11 existing X39 CPU tests pass.
+`part7_integrity.json` verifies uninterrupted step/exposure sequences but
+**fails unchanged-source provenance**. Each run retains the exact
+`registered_protocol.md` bytes used for its fingerprint.
+
+An initial implementation attempt was stopped after 460 updates / 15,073,280
+tokens because its RNG-consuming model-construction order differed from the
+control. It is archived under `receipts/part7_aborted_initialization`, excluded
+from all results, and replaced by fresh runs matching control construction
+order. Every gate run's first-step CE exactly equals the control's first CE.
+No checkpoint files are committed. Pre-existing upstream working-tree edits
+remain untouched; their source hashes identify the implementations used.
+
+Arm 4' still requires an optimized recurrent pre-read-match-to-write-enable
+lane and its exact oracle/replay certification. `part4_match.py` is explicitly
+a sequential CPU witness; its 1/sqrt(K) evidence scale differs from certified
+READ's 2/sqrt(K). The archived report also leaves error-term placement
+unresolved. No architecture was silently substituted. Discovery by tool name
+and description exposed no contact_supervisor/Intercom capability; no alternate
+orchestration service was started. `part7_semantic_blocker.json` records this
+remaining work. A title claiming four trained arms would misstate the result.
+
+Residual risks: failed source provenance from concurrent external changes,
+one training seed, small registered validation/probe samples,
+same-seed numerical variation, and no learned semantic-arm evidence. Capacity
+limits can destroy information while flattening slopes. Reported bands are
+fixed-window comparisons and do not establish general language quality or
+longer-than-4096 retention.
+
+## Historical reports (superseded where arms 1–3 are described as unrun)
+
 # X39 result — control trained; usage arms incomplete
 
 ## Part 6 — B64 control completed; four usage arms incomplete
