@@ -1,4 +1,122 @@
-# X39 result — blocked before training
+# X39 result — control trained; usage arms incomplete
+
+## Part 6 — B64 control completed; four usage arms incomplete
+
+The newly authorized B64 exact-exposure control **completed** 3052 updates,
+100,007,936 target tokens, on broker card 1 in **831.07 seconds**. Its final
+fixed-window validation perplexity is **6.8564175640**. At update 611 /
+20,021,248 tokens its perplexity is **14.6701488443**; this is the denominator
+for the registered 2% lambda decision. No X39 lambda pilot has been run, so
+there is neither a selected lambda nor evidence for a no-qualifier null.
+
+The amendment and its operator provenance are in RECEIPTS.md. Configuration
+and data/source hashes are in `runs/control_b64/registration.json` and
+`receipts/part6_control_training.json`. X36's optimized model preserves the
+X34 skeleton, initialized weights, policies, seed, data order and optimizer;
+only the registered batch change changes update grouping. Parameter totals
+are 21,913,872 (21,847,052 trainable), versus base_lm's 21,914,119. Every one
+of the 3052 loss graphs asserted ReplayBackward, and every gradient norm and
+loss passed finite checks. The raw training curve is `runs/control_b64/curve.jsonl`;
+validation checkpoints and `receipts/part6_control_curve.svg` retain its curve.
+Checkpoint weights remain local and ignored by git.
+`runs/control_b64/registered_protocol.md` preserves the exact pre-training
+registration bytes and verified hash before the final dispositions were appended.
+
+Before training, the fresh production-shape B64/H4/K64/V128/S2944/T512 X36
+versus X31 forward/backward test passed in 16.25 seconds, leased on card 6.
+Its XML and console are `receipts/part6_control_parity.{xml,txt}`. This test
+compares the optimized implementation with the certified X31 implementation;
+it is not an assertion that the entire adversarial suite was rerun. The
+existing CPU X39 suite also passed all 11 tests.
+
+`receipts/part6_control_evaluation.json` contains two windows at each registered
+length, full per-position NLL, occupancy profiles, successful allocations,
+requests, write-enable fractions, sigmoid strength, per-head pressure and
+R-CAP/W64 statistics, the first 16 validation stories, and seven depth probes.
+Evaluation verified that all training-recorded source hashes still matched.
+The measured per-head occupancy slopes are **1, 1, 1, .9997886161**. Rich-budget
+pressure is zero throughout the four packed-context evaluations. Allocation
+is .5/token/head in most windows, with small reductions in head 4 at longer
+contexts. Control context perplexities at T=512/1024/2048/4096 are
+7.164688392/8.817347908/12.383386623/18.992085553; these use different windows
+from the fixed short-context quality validation above.
+
+### Completion limit and remaining ordered work
+
+**The four usage trainings, X39 lambda sweep and all trained-arm adjudications
+remain unrun.** The requested part-5 directive and blocker receipt are not in
+the checkout or recent X39 history. Tool discovery by name and description
+found no contact_supervisor/Intercom capability, so the required decision
+channel cannot supply those inputs. No alternative service was started.
+The part-6 instruction supplies enough detail to complete the control; it
+does not supply the missing directive to execute the subsequent arms exactly.
+In particular, the part-4 report leaves the optimized match wire and placement
+of the error term unspecified. No architecture was silently substituted.
+
+An additional source-level discrepancy should be resolved with that directive:
+`part4_match.py` computes match evidence with scale 1/sqrt(K), while actual
+certified READ uses the sharpened 2/sqrt(K). Its comment equating these scales
+is inaccurate. The constructive repeat-suppression witness remains evidence
+for its recorded circuit; it does not certify the trained match wire. The
+historical receipt and its hashes are retained unchanged.
+
+X37/X38 remain read-only. `receipts/part6_family_comparability.json` rechecks
+recorded batch, seed, context, tokenizer, packed train/validation data hashes
+and exact evaluation exposure. X37 b/c at 100M have perplexity ratios
+.9844033740/.9761630030 to the new B64 control, both within the no-more-than-2%
+worse band. X37 d lacks a completed endpoint. X38 pilots at 20M have ratios
+.9973254272/.9989068527/1.0102315072/1.0222863909 for costs
+0/.001/.01/.1: the first three pass 2%, .1 fails. Its .01 full run has ratio
+.9821494932 at 100M and passes. These are family quality comparisons, **not
+X39 gate-cost lambda selection**. Archived model implementations were not
+recertified and upstream conclusions were not rewritten.
+
+The part-4 code, tests, receipts and documentation are included with this
+partial result. A success title claiming four trained usage arms would be
+false; the commit records the completed control and incomplete arms instead.
+No compression claim follows from this control. The ordered X39 arm runs and
+their registered poor/rich, decay, quality, story/depth/context and slope
+receipts are still required.
+
+## Part 4 partial result — two gates passed; training incomplete
+
+`receipts/part4_decay.json` records a broker lease on physical card 6 and the
+optimized X36 lane at fp32 decay **0.9474635124206543**. Against the CPU oracle,
+the entire `freed`, `alloc_target`, and `case` tensors and final live mask agree
+exactly, with nonzero decay deaths. This covers isolated births at B1, H4,
+K64, V128, S2944, T512. It does **not** certify B64 training configurations,
+gradients, ReplayBackward, or the full adversarial parity suite.
+
+`receipts/part4_match.json` establishes the requested constructive CPU circuit.
+With semantic keys and detached pre-read maximum scaled match evidence wired
+to write-enable, novel enable/allocation fractions are **1.0/1.0** and repeat
+fractions are **0.0/0.0**. Identity keys with the wire, and semantic keys without
+the wire, both retain repeat enable/allocation **1.0/1.0**. Empty-store evidence
+is zero; the hand-set construction uses write bias +2, match coefficient -1,
+zero error coefficient, no POP, and an unchanged sequential CPU oracle. No
+optimized read-to-gate implementation or learned behavior is claimed.
+
+The CPU suite passes **11 tests**. Initial receipt execution caught a Python
+scalar in the unwired ablation; replacing it with a shape-matched zero tensor
+fixed the error before the passing receipt was generated.
+
+**The requested training and evaluations remain unrun.** There is no lambda
+operating point, per-arm parameter receipt, B64 oracle certification,
+ReplayBackward attestation, trained slope, perplexity band, decay NLL curve,
+or poor/rich deployment result. The B8 100M X34 checkpoint cannot supply the
+registered exact-exposure control for B64 20M lambda selection. No supervisor
+tool was exposed after discovery by name and description. No alternative
+orchestration service was started. No success-titled commit or push was made
+because that would claim that the cleared arms were trained.
+
+Residual risks: hand-set score margins may not survive learned feature scales;
+the architectural term is not yet implemented in an optimized training lane;
+the existing error-magnitude coefficient belongs to the append-amplitude gate,
+so a future implementation must explicitly specify its placement in the new
+write-enable gate. Capacity-capped slopes can still conceal lost information.
+All upstream edits already present in the shared tree remain untouched. No
+`.pt` files were added. The sections below preserve earlier historical stops;
+the part-4 instruction supersedes their blanket semantic stop for arms 1–3.
 
 **The four-arm experiment is incomplete.** Pre-registration, CPU mechanism
 counterexamples, and analysis of the existing X34 control are complete. No X39
