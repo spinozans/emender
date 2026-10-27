@@ -1,0 +1,1 @@
+Initial telemetry was interrupted at optimizer step0 because the single-token shadow replay specialized the InitialBound kernel argument for every position. No training updates occurred. Use an unknown-bound evaluation hint to fix compile proliferation; the shadow read parity check remains mandatory. This is a failed launch, not a completed run.
