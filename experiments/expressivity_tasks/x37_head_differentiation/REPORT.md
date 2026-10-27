@@ -84,3 +84,37 @@ Additional prediction adjudication:
 - d routing-mix divergence: met.
 - c W_in movement, pairwise separation and sampled monotonic growth: met.
 - d W_in movement, pairwise separation and sampled monotonic growth: met.
+
+---
+
+## Parent adjudication — quality bands re-adjudicated against the matched-exposure control
+
+The registered quality comparison ("within ~2% of control") used the X34 tape_lm
+control, which trained at BATCH 8 (24,415 optimizer steps at 100M tokens) while
+all X37 arms trained at BATCH 64 (3,052 steps) — a batch/step confound the X39
+part-6 session receipted when it trained the protocol-matched B64 control
+(x39_memory_usage/receipts/part6_family_comparability.json; all protocol fields
+verified: batch, seed, context, tokenizer, train/valid data, tokens).
+
+Matched-exposure perplexities at 100,007,936 tokens (B64 control = 6.8564):
+
+| arm | perplexity | vs matched control | registered band (within ~2%) |
+|---|---:|---:|---|
+| b (seeds) | 6.7495 | **-1.6%** | PASSES (better than control) |
+| c (seeds + W_in) | 6.6930 | **-2.4%** | PASSES (better than control) |
+| d (+ policy hierarchy) | 6.6827 | **-2.5%** | PASSES (better than control) |
+| x38 λ=0.01 (diversity penalty, full) | 6.7340 | **-1.8%** | PASSES (see X38 report) |
+
+Adjudication: the "3/3 arms >5% worse" verdict is a BATCH CONFOUND, not a
+quality failure. Under matched exposure every intervention arm lands AT OR
+BETTER than the control — and the arm with the strongest, structured
+differentiation (d: 0/16, hierarchy-ordered occupancy) is also the best
+perplexity in the family. Differentiation does not cost quality here; the
+hierarchy arm is the family's best model on both axes.
+
+Honest scope: the B8 control remains the best ABSOLUTE model (6.045 at 100M
+tokens — 8x more optimizer steps); the matched-exposure statements are about
+arms within the B64 protocol family, not about the batch-size choice itself.
+The X37 agent's registered-comparison reporting was correct as written; this
+adjudication supplies the comparison the registration intended (and that
+X39 part 6 trained the control for, per its own amendment note).
