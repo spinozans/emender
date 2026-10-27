@@ -126,3 +126,55 @@ can produce misleading low occupancy slopes. X37's per-head W_in is not the
 requested shared W_in and must not be reused unchanged. No upstream source or
 ISA semantics was edited. No .pt files were added. Intercom supervisor tools
 remain unavailable in this session. This is partial mechanism evidence only.
+
+## Part 3 — poverty receipted; semantic gate failed, stopped before GPU
+
+The ordered CPU preflight ran in `part3_mechanisms.py`, with source hashes and
+full poverty occupancy traces in `receipts/part3_mechanisms.json`. **The semantic
+mechanism did not pass. The fail-closed instruction stops this experiment before
+GPU parity, training, or evaluation of any arm.** No GPU broker was invoked.
+
+Poverty uses 24 orthogonal bindings, one enabled write every other token, then
+24 read-only recall queries, identically across four heads. Only budget changes.
+The real X30 CPU cell's 128-token cap/request pressure register is recorded;
+its read outputs agree with the differentiable sequential oracle within 2e-5.
+Cross entropy is computed from 20 times the recalled value with the binding
+identity as target. Values receive nonzero loss gradients. There is no added
+pressure penalty and these are synthetic recall losses, not LM perplexities.
+
+| S/head | Peak live/head | R-CAP (all heads) | Pressure max | Recall CE | Recall accuracy |
+|---|---|---|---|---|---|
+| 8 | 8 | 64 | .666667 | 3.882920 | .333333 |
+| 16 | 16 | 32 | .333333 | 2.166516 | .666667 |
+| 32 (rich counterfactual) | 24 | 0 | 0 | 0 (fp32) | 1 |
+
+This receipts a scarcity teaching signal through capacity-limited reads and
+loss, not successful scarcity learning or transfer to S=2944.
+
+Semantic repeats use eight concepts, each presented twice with different alias
+identities. A single hand-set shared W_in folds the alias pairs to common
+content keys before identical per-head identity geometry. Mean target read on
+repeat tokens improves from .090664 (identity keys) to .999920 (semantic keys).
+However, repeat write-enable and allocation fractions are **1.0 in both cases**;
+allocation traces are exactly identical. Retrieval succeeds; gate closure fails.
+
+The inspected X36/X37 path computes `W_write(x)` before the tape scan and has no
+current tape-read input to that gate. Changing shared key/query features does
+not itself implement read-confirms-stored gating. This witness does not prove
+that transformer context cannot learn repetition indirectly; it records that
+the requested CPU circuit was not established by the hand-set construction.
+No read-to-gate architectural redesign was invented, and no trained semantic
+null is claimed. The arm requires redesign or disposition before GPU work.
+
+Validation: the full X39 CPU test suite passes **10 tests**, including two new
+mechanism regression tests. A passing regression asserts the semantic failure
+and stop condition; it does not turn the scientific gate green. The Intercom
+supervisor tool remains unavailable after discovery by name and description.
+Upstream directories and unrelated working-tree changes were left untouched.
+No .pt files were added. The requested success commit title would misstate the
+outcome; the part-3 commit records the mechanism failure instead.
+
+Residual work: decay GPU death-schedule parity, per-arm parameter receipts,
+ReplayBackward assertions, lambda operating-point selection with a valid
+matched-exposure control, all training, and every trained-arm evaluation remain
+unrun. The prior B8-control/B64-training comparison limitation remains.

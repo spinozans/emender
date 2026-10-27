@@ -122,3 +122,24 @@ training or GPU certification. Mechanism acceptance remains incomplete until
 poverty loss and repeat-selective learned gating are demonstrated. No operating
 lambda has been chosen. All quality bands, honest nulls and trained-arm metrics
 above remain applicable, with arm 4 now using the combined objective.
+
+## Part 3 measured mechanism disposition
+
+Source-hashed machine evidence: `receipts/part3_mechanisms.json`.
+
+| Pre-registered mechanism/prediction | Measured | Disposition |
+|---|---|---|
+| Decay deaths and equilibrium without saturation | Prior CPU receipt: deaths, equilibrium, no R-CAP | CPU passed; GPU parity unrun |
+| Write cost indirectly reduces allocation through detached threshold | Prior costs 0/.001/.01/.1: .5/.5/.3359375/0 | CPU passed; lambda quality unrun |
+| Poverty saturates, fires pressure, harms recall loss | S=8/16/32: peaks 8/16/24; R-CAP 64/32/0; recall CE 3.882920/2.166516/0 | CPU passed; no trained transfer result |
+| Semantic reads confirm stored content and gate closes only with semantic keys | Repeat target read .090664 -> .999920; repeat gate and allocation remain 1 -> 1 | **Failed; stop before GPU** |
+| Decay optimized-lane death timing matches CPU bit-for-bit | Not run after semantic failure | Uncertified |
+| Four arms trained with parameter match and ReplayBackward | Not run after semantic failure | Incomplete |
+| Occupancy slopes <=.5 with acceptable perplexity, allocation/pressure/profile and decay curves | No trained-arm measurements | Incomplete |
+| Poverty disposition at S=128 and S=2944 | No trained weights or evaluations | Incomplete |
+
+These CPU losses are synthetic binding recall cross entropy, not perplexity
+bands. Semantic failure is a hand-set construction counterexample, not proof
+that all learned contextual gates fail. No operating lambda was selected.
+Do not launch GPU work on the basis of the ten passing regression tests:
+the regression explicitly preserves the failed semantic mechanism status.
