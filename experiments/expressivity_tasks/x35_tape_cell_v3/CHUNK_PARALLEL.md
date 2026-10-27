@@ -130,3 +130,26 @@ materialize-on-access public views, and ownership/rollback support for every
 journal address. Measure total allocations and continuation copies, not just
 retained logs. Part-9 scoping correctly identifies a representation change;
 it cannot be replaced by dropping dead payloads.
+
+## Consequences (trained-density receipt)
+
+`density_trained.json` records exactly 0.5 event-token fraction in every
+registered trained ladder bin and distinct-k band, including all-a/all-b full
+windows. The case prefix is EMPTY, CONFLICT, NOMATCH, CONFLICT, ...: after
+the first empty-store append, subsequent appends are NOMATCH, not EMPTY.
+This is the trained F12g append-then-correct mechanism, with correction every
+two tokens; it is not initialization noise. The MQAR hybrid is a separate
+contrast and does not change this ladder result.
+
+For this instruction set, hard age-1 architectural addressing entails an
+irreducible sequential decision chain inside a chunk: each append creates the
+next token's age-1 target, whose payload determines residual/correction routing.
+Detaching that decision does not remove the dependency. Conversely, retaining
+this exact mechanism requires retaining those ordered decisions; the measured
+speculation depth is two tokens. This is a mechanism-specific trade-off, not
+an impossibility theorem for all hard addressing or all parallel algorithms.
+DeltaStack's soft-pointer/WY formulation gains parallel training by relaxing
+exactly this hard age-1 append/correct mechanism; it is a different recurrence,
+not an equivalent scheduling of F12g. Sequential routing remains authoritative.
+Batched READs still require causal masks and time-indexed payload versions,
+including mid-chunk appends/corrections, with recorded-decision replay adjoints.

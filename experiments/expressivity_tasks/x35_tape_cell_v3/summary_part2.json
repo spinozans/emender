@@ -1,0 +1,49 @@
+{
+  "delivery_status": "incomplete",
+  "all_registered_targets_passed": false,
+  "final_validation": {
+    "tests": 137,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "x31_unchanged_baseline_tests": 109,
+    "x35_tests": 28,
+    "receipt": "validation_part2_final.txt",
+    "xml": "validation_part2.xml"
+  },
+  "gates": {
+    "complete_c64_s2944_h4_forward_ge_2x": "not-run",
+    "occupancy_proportional_backing": "not-implemented",
+    "s11776_heads_ratio_le_2_original_t16": "not-run",
+    "timer_wheel_integrated_in_sequential_core": "not-integrated",
+    "read_adjoint_g10_composition": "not-established",
+    "v3_full_oracle_suite": "not-run"
+  },
+  "component_evidence": [
+    "Causal reads bit-exact against X31 independent pre-token stores for S1/S7/S33/S97 with append/correction/death/reuse views.",
+    "Differentiable specification shared-version adjoints agree at 1e-5 with a sequential PyTorch read specification; future versions have zero earlier-read gradients. This is not the GPU forward backward.",
+    "Wheel randomized deadline-model agreement, long-horizon retention, cancellation, link invariants, and exact typed-journal undo."
+  ],
+  "methodology": "No performance measurement; components do not substitute for complete-cell parity or end-to-end timing.",
+  "physical_gpu": "1",
+  "python": "/home/erikg/emender/.venv/bin/python",
+  "source_sha256": {
+    "experiments/expressivity_tasks/x35_tape_cell_v3/__init__.py": "231dca64a4d97ca4f76dd873d87486d9bce4e2cd3c94a096ce5cbadeb169f7ed",
+    "experiments/expressivity_tasks/x35_tape_cell_v3/allocation.py": "a36fd4dfbb3e93c7047656f009a12b576bdd3d0c5c992bde9c28358be906a3e2",
+    "experiments/expressivity_tasks/x35_tape_cell_v3/causal_read.py": "e764fa09cb4da7639b5649605f8614bbed00eb235064e96e5964daa76a2e762f",
+    "experiments/expressivity_tasks/x35_tape_cell_v3/classifier.py": "99282a7aea1811c3bb1c35f9d472c0395b2191fa1963bc477c6a66207307c8e5",
+    "experiments/expressivity_tasks/x35_tape_cell_v3/density.py": "67c271dc13021fdc03d2e43b1511335fd7810e1b9b6b3288c2af543a536f8028",
+    "experiments/expressivity_tasks/x35_tape_cell_v3/density_trained.py": "35196470318b1d07c9ab07fa8aa6de821ae7ff4941b35777a92c47f3f72d5959",
+    "experiments/expressivity_tasks/x35_tape_cell_v3/timer_wheel.py": "a8634da6b80ec6b8df7821428263bdda44a122b8906a4e823a3cdc33e128f5ab",
+    "experiments/expressivity_tasks/x35_tape_cell_v3/validate_part2.py": "e8be6730cbec95614e2d2f0d9adc57a889df9d0eadf4500d36a3989daf5a7e0f",
+    "experiments/expressivity_tasks/x35_tape_cell_v3/tests/test_causal_read.py": "d771cdea98fe10e9b250c4db2c4ddf40f8c6c22221cb2166a1836dc58acc1953",
+    "experiments/expressivity_tasks/x35_tape_cell_v3/tests/test_dependencies.py": "0ff56490baa36b04a4760166a404e0f013196c261c6b175054c737afabbcd146",
+    "experiments/expressivity_tasks/x35_tape_cell_v3/tests/test_timer_wheel.py": "a99642d2a5eee5f5c6e54932337da963d7f43b236ad8ce912fb49009fdabd7d3"
+  },
+  "residual_risks": [
+    "No live-row/cold-row backing implementation.",
+    "No production causal-version construction or recorded-replay read adjoints.",
+    "Wheel metadata ownership, journal capacity, snapshots, continuation, sorted tie ordering and replay rebasing are not integrated.",
+    "No end-to-end speed or head-scaling receipt."
+  ]
+}

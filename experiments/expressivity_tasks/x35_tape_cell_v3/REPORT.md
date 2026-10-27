@@ -90,3 +90,80 @@ classification does not predict routes; arbitrary imported states require
 additional time-projected age/liveness checks; general bitwise GEMM and replay
 accumulation equivalence is unproved; timer-wheel and compact ownership-aware
 backing are work orders. There is no speedup or learning-quality claim.
+
+## Part 2 — incomplete engineering delivery; acceptance targets not reached
+
+The requested Consequences section and structural-target preregistration are
+added. The trained receipt is cited precisely: the actual prefix is EMPTY,
+CONFLICT, NOMATCH, CONFLICT, ...; “EMPTY/CONFLICT alternation” is shorthand
+for append/correct, not the literal long-run case codes. Sequential routing
+remains settled. No X31 source defect is alleged or patched.
+
+Two independently usable GPU components are implemented:
+
+- `causal_read.py`: two launches for a complete chunk, using recorded
+  pre-token logical-slot-to-payload-version IDs and time-indexed rounded
+  strengths. It preserves X31's 32-slot tile/reduction arithmetic. Tested
+  views contain mid-chunk append, correction, death, reuse, holes and empty
+  stores. The same version can serve several tokens. Invalid IDs have device
+  assertions and safe load masks. Dead nonfinite payloads are excluded.
+- `timer_wheel.py`: eight radix-256 levels, intrusive cancellable links,
+  absolute int64 deadlines, and journal-aware mutation primitives. Scheduling
+  and cancellation do bounded work; each timer cascades at most seven times.
+  Advancing still costs O(elapsed tokens + cascaded/fired timers), and a single
+  crowded bucket can take linear time in its membership. No stale timer
+  accumulation. Tests exercise radix boundaries through 2^56, clocks near
+  INT64_MAX, long-future timers, rescheduling/cancellation, randomized
+  deadline-model agreement, link invariants and exact typed-journal undo.
+  The diagnostic driver rejects advancement through INT64_MAX to prevent
+  clock overflow. Death ties use deterministic list order, not the X31
+  heap's sorted-slot order; full scan integration must adjudicate this.
+
+**These are components, not an integrated v3 TapeCell.** The causal views
+must still be emitted by the sequential core without O(C*S*(K+V)) copies.
+The forward component deliberately rejects gradient-bearing calls; its
+separate differentiable specification has shared-version adjoint tests, but
+those do not establish composition with G10 recorded-decision replay.
+The timer wheel is not connected to the scan's metadata owners, journal
+capacity calculation, continuation/snapshot layout, or replay rebasing.
+Its journal test proves primitive undo only, not cell continuation/backward.
+Occupancy-proportional backing is **NOT IMPLEMENTED**. Dense public fields,
+cold dead payloads and every replay address still require a coordinated
+representation change; no change to that representation is landed here.
+
+### Gate ledger
+
+| Preregistered part-2 target | Verdict |
+|---|---|
+| Complete C64/S2944/H4 forward >=2x | NOT RUN; no integrated candidate |
+| Read first-order adjoints compose with G10 | NOT ESTABLISHED |
+| O(H*live) initialization/backing | NOT IMPLEMENTED |
+| S11776 H16/H1 <=2, original T16 protocol | NOT RUN; backing unchanged |
+| Timer wheel in sequential core, full replay/undo | NOT INTEGRATED |
+| 109-test X31 oracle suite against changed v3 representation | NOT RUN; no changed v3 representation |
+
+Unchanged-X31 baseline validation and new component parity are distinguished
+in `summary_part2.json`. No isolated kernel timing is substituted for an
+end-to-end gate, and no timing methodology was changed to report a pass.
+This delivery fails the requested integrated engineering scope.
+
+### Validation chronology and operational limits
+
+The first collection passed 127 tests (109 unchanged X31, 12 prior X35,
+6 new causal-read tests). Wheel development then exposed a Triton constexpr
+reassignment compile failure (7 failed/18 passed) and an expiry failure
+(6 failed/19 passed); both raw logs are retained. Moving cascade-level
+specialization into its own JIT function resolved the latter; the final
+source is validated separately in `validation_part2_final.txt` and XML.
+Earlier failures are not counted as final validation.
+
+All GPU execution used `run_leased.sh` and physical card 1, with the exact
+project interpreter. No card 7, .pt file, WG, delegation, Frontier/Slurm or
+resilient training change was used. Resilient requirement IDs and scheduler
+Partition/QOS evidence are inapplicable. Existing unrelated changes were
+preserved. `contact_supervisor` was searched first in the callable catalog
+and is unavailable, so no supervisor coordination call could be sent.
+
+Residual risks are the unimplemented backing, causal-view construction,
+recorded-replay read adjoints and complete timer-wheel integration; no
+throughput, memory-scaling, or full v3 parity claim is made.
