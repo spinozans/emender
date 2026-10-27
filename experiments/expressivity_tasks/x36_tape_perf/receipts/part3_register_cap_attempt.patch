@@ -1,0 +1,61 @@
+diff --git a/experiments/expressivity_tasks/x36_tape_perf/backward.py b/experiments/expressivity_tasks/x36_tape_perf/backward.py
+index 51f6f624..9101540c 100644
+--- a/experiments/expressivity_tasks/x36_tape_perf/backward.py
++++ b/experiments/expressivity_tasks/x36_tape_perf/backward.py
+@@ -90,6 +90,10 @@ def reverse_kernel(K,Q,V,Beta,Pop,Keys,Values,Strength,Live,Touch,
+     for reverse in range(T):
+         t=T-1-reverse
+         inp=n*T+t
++        # Every other input adjoint is unconditionally written below. Keys
++        # receive a gradient only on allocation; initialize those lanes here.
++        kd=tl.arange(0,triton.next_power_of_2(DK))
++        tl.store(DKout+inp*DK+kd,0.,kd<DK)
+         start=tl.load(Boundaries+inp)
+         undo_to((Addresses,Before,Widths,Counts,n,Capacity),start,stop,UB)
+         stop=start
+@@ -251,8 +255,13 @@ class Replay(torch.autograd.Function):
+         b,t,h,dk=k.shape
+         def flat(x): return x.transpose(1,2).contiguous()
+         args=list(map(flat,(k,q,v,beta,pop)))
+-        def gradient(g,like):
+-            return torch.zeros_like(like) if g is None else g.contiguous().clone()
++        def gradient(g,like,soa=False):
++            # Allocate directly in replay layout; avoid zeroing/copying AoS
++            # storage that would immediately be transposed into a new buffer.
++            source=like if g is None else g
++            if soa:source=source.transpose(-1,-2)
++            return (torch.zeros_like(source,memory_format=torch.contiguous_format) if g is None
++                    else source.clone(memory_format=torch.contiguous_format))
+         ctx.storage.validate()
+         # Keep the oracle AoS layout at large capacities: the transposed
+         # specialization hits a measured replay cliff at S11776.
+@@ -262,15 +271,12 @@ class Replay(torch.autograd.Function):
+         keys,values,strength,live,age,history,*meta=replay
+         # Replay payloads and adjoints use [store,dim,slot] backing; full-S
+         # reduction/accumulation expressions retain the oracle lane shapes.
+-        gk=gradient(gkeys,ctx.storage.owners[0])
+-        gv=gradient(gvalues,ctx.storage.owners[1])
+-        if payload_soa:
+-            gk=gk.transpose(-1,-2).contiguous()
+-            gv=gv.transpose(-1,-2).contiguous()
++        gk=gradient(gkeys,ctx.storage.owners[0],payload_soa)
++        gv=gradient(gvalues,ctx.storage.owners[1],payload_soa)
+         gs=gradient(gstrength,strength)
+         go=torch.zeros(b,h,t,cfg.value_dim,device=k.device) if gout is None else flat(gout)
+-        dkout,dqout,dvout,dbeta,dpop,dlogit=[torch.zeros_like(flat(x)) for x in
+-                                             (k,q,v,beta,pop,logit)]
++        dkout,dqout,dvout,dbeta,dpop=[torch.empty_like(x) for x in args]
++        dlogit=torch.empty((b,h,t),device=k.device,dtype=k.dtype)
+         dc=torch.empty(b*h,device=k.device)
+         original_addresses,before,widths,counts,boundaries,gates,errors=ctx.log
+         # The log is private to this autograd node. Rebase it in place and
+@@ -290,7 +296,8 @@ class Replay(torch.autograd.Function):
+                 t,cfg.slots,dk,cfg.value_dim,triton.next_power_of_2(cfg.slots),
+                 triton.next_power_of_2(cfg.value_dim),min(128,triton.next_power_of_2(max(cfg.slots,cfg.value_dim,dk))),ctx.capacity,payload_soa,True,ctx.start,
+                 struct.unpack('<f',struct.pack('<f',cfg.decay_rate))[0],
+-                enable_fp_fusion=False,debug=True,num_warps=16 if cfg.slots>=4096 else (8 if prefix8 else 4))
++                enable_fp_fusion=False,debug=True,num_warps=16 if cfg.slots>=4096 else (8 if prefix8 else 4),
++                maxnreg=128 if cfg.slots==2944 and t>512 else None)
+         finally:
+             rebase_owned(addresses,counts,replay,ctx.address_owners,ctx.capacity,
+                          payload_slots=cfg.slots if payload_soa else 0,reverse_payload=payload_soa)

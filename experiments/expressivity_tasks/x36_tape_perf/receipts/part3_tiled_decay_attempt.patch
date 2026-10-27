@@ -1,0 +1,163 @@
+diff --git a/experiments/expressivity_tasks/x36_tape_perf/backward.py b/experiments/expressivity_tasks/x36_tape_perf/backward.py
+index 51f6f624..52091144 100644
+--- a/experiments/expressivity_tasks/x36_tape_perf/backward.py
++++ b/experiments/expressivity_tasks/x36_tape_perf/backward.py
+@@ -75,7 +75,7 @@ def rebase_owned(addresses,counts,old_owners,new_owners,capacity,*,payload_slots
+ def reverse_kernel(K,Q,V,Beta,Pop,Keys,Values,Strength,Live,Touch,
+                    Cases,Matched,Alloc,Pops,Freed,Gates,Errors,
+                    Addresses,Before,Widths,Counts,Boundaries,
+-                   GradOut,GKeys,GValues,GStrength,DKout,DQout,DVout,
++                   GradOut,GKeys,GValues,GStrength,StrengthScratch,DKout,DQout,DVout,
+                    DBeta,DPop,DLogit,DCoef,
+                    T:tl.constexpr,S:tl.constexpr,DK:tl.constexpr,DV:tl.constexpr,
+                    BS:tl.constexpr,BV:tl.constexpr,UB:tl.constexpr,Capacity,SoA:tl.constexpr,
+@@ -90,17 +90,36 @@ def reverse_kernel(K,Q,V,Beta,Pop,Keys,Values,Strength,Live,Touch,
+     for reverse in range(T):
+         t=T-1-reverse
+         inp=n*T+t
++        # Every other input adjoint is unconditionally written below. Keys
++        # receive a gradient only on allocation; initialize those lanes here.
++        kd=tl.arange(0,triton.next_power_of_2(DK))
++        tl.store(DKout+inp*DK+kd,0.,kd<DK)
+         start=tl.load(Boundaries+inp)
+         undo_to((Addresses,Before,Widths,Counts,n,Capacity),start,stop,UB)
+         stop=start
+         tl.debug_barrier()
+-        live=tl.load(Live+n*S+s,valid,False).to(tl.int1)
+-        reference=tl.load(Strength+n*S+s,valid,0.)
+-        if Fresh and t==0:
+-            strength=reference
+-        else:
++        if Decay==1.0 or (Fresh and t==0):
++            strength=tl.load(Strength+n*S+s,valid,0.)
++        elif S<4096 and T<=512:
++            reference=tl.load(Strength+n*S+s,valid,0.)
++            decay_live=tl.load(Live+n*S+s,valid,False).to(tl.int1)
+             touch=tl.load(Touch+n*S+s,valid,0)
+-            strength=advance_exact(reference,tl.where(live,Start+t-touch,0),Decay)
++            strength=advance_exact(reference,tl.where(decay_live,Start+t-touch,0),Decay)
++        else:
++            # Exact decay has independent lane arithmetic but many int64
++            # temporaries. Evaluate bounded tiles before the full-S float
++            # adjoint/reduction vectors, rather than spilling a BS-wide jump.
++            for tile in range(tl.cdiv(S,512)):
++                row=tile*512+tl.arange(0,512)
++                active=row<S
++                tile_live=tl.load(Live+n*S+row,active,False).to(tl.int1)
++                reference=tl.load(Strength+n*S+row,active,0.)
++                touch=tl.load(Touch+n*S+row,active,0)
++                decayed=advance_exact(reference,tl.where(tile_live,Start+t-touch,0),Decay)
++                tl.store(StrengthScratch+n*S+row,decayed,active)
++            tl.debug_barrier()
++            strength=tl.load(StrengthScratch+n*S+s,valid,0.)
++        live=tl.load(Live+n*S+s,valid,False).to(tl.int1)
+         freed=tl.load(Freed+inp.to(tl.int64)*S+s,valid,0)
+         allocation=tl.load(Alloc+inp)
+         target=tl.load(Matched+inp)
+@@ -251,8 +270,13 @@ class Replay(torch.autograd.Function):
+         b,t,h,dk=k.shape
+         def flat(x): return x.transpose(1,2).contiguous()
+         args=list(map(flat,(k,q,v,beta,pop)))
+-        def gradient(g,like):
+-            return torch.zeros_like(like) if g is None else g.contiguous().clone()
++        def gradient(g,like,soa=False):
++            # Allocate directly in replay layout; avoid zeroing/copying AoS
++            # storage that would immediately be transposed into a new buffer.
++            source=like if g is None else g
++            if soa:source=source.transpose(-1,-2)
++            return (torch.zeros_like(source,memory_format=torch.contiguous_format) if g is None
++                    else source.clone(memory_format=torch.contiguous_format))
+         ctx.storage.validate()
+         # Keep the oracle AoS layout at large capacities: the transposed
+         # specialization hits a measured replay cliff at S11776.
+@@ -262,15 +286,13 @@ class Replay(torch.autograd.Function):
+         keys,values,strength,live,age,history,*meta=replay
+         # Replay payloads and adjoints use [store,dim,slot] backing; full-S
+         # reduction/accumulation expressions retain the oracle lane shapes.
+-        gk=gradient(gkeys,ctx.storage.owners[0])
+-        gv=gradient(gvalues,ctx.storage.owners[1])
+-        if payload_soa:
+-            gk=gk.transpose(-1,-2).contiguous()
+-            gv=gv.transpose(-1,-2).contiguous()
++        gk=gradient(gkeys,ctx.storage.owners[0],payload_soa)
++        gv=gradient(gvalues,ctx.storage.owners[1],payload_soa)
+         gs=gradient(gstrength,strength)
++        strength_scratch=torch.empty_like(strength)
+         go=torch.zeros(b,h,t,cfg.value_dim,device=k.device) if gout is None else flat(gout)
+-        dkout,dqout,dvout,dbeta,dpop,dlogit=[torch.zeros_like(flat(x)) for x in
+-                                             (k,q,v,beta,pop,logit)]
++        dkout,dqout,dvout,dbeta,dpop=[torch.empty_like(x) for x in args]
++        dlogit=torch.empty((b,h,t),device=k.device,dtype=k.dtype)
+         dc=torch.empty(b*h,device=k.device)
+         original_addresses,before,widths,counts,boundaries,gates,errors=ctx.log
+         # The log is private to this autograd node. Rebase it in place and
+@@ -286,7 +308,7 @@ class Replay(torch.autograd.Function):
+         try:
+             reverse_kernel[(b*h,)](*args,keys,values,strength,live,meta[5],
+                 *ctx.trace,gates,errors,addresses,before,widths,counts,boundaries,
+-                go,gk,gv,gs,dkout,dqout,dvout,dbeta,dpop,dlogit,dc,
++                go,gk,gv,gs,strength_scratch,dkout,dqout,dvout,dbeta,dpop,dlogit,dc,
+                 t,cfg.slots,dk,cfg.value_dim,triton.next_power_of_2(cfg.slots),
+                 triton.next_power_of_2(cfg.value_dim),min(128,triton.next_power_of_2(max(cfg.slots,cfg.value_dim,dk))),ctx.capacity,payload_soa,True,ctx.start,
+                 struct.unpack('<f',struct.pack('<f',cfg.decay_rate))[0],
+diff --git a/experiments/expressivity_tasks/x36_tape_perf/forward.py b/experiments/expressivity_tasks/x36_tape_perf/forward.py
+index cf3f7cda..5d8645ec 100644
+--- a/experiments/expressivity_tasks/x36_tape_perf/forward.py
++++ b/experiments/expressivity_tasks/x36_tape_perf/forward.py
+@@ -144,7 +144,7 @@ def tape_scan(k, q, v, write_strength, pop_strength, append_logit, state,
+         output,case,matched,alloc,pops,freed,pressure,history,heap,position,due,terminal,
+         births,touches,level0,level1,root,birth_next,birth_prev,birth_head,sizes,references,scores,read_max,read_denom,read_values,read_best,capture_scratch,
+         *journal_args,record_payload,triton.next_power_of_2(max(dk,cfg.value_dim)),
+-        *all_args,fresh,state.tokens,0,
++        *all_args,fresh,-1 if state.live_bound is None else state.live_bound,state.tokens,0,
+         t,cfg.slots,dk,cfg.value_dim,tile_count,triton.next_power_of_2(max(1,reachable)),
+         triton.next_power_of_2(cfg.value_dim),triton.next_power_of_2(max(32,dk)),tile_block,
+         struct.unpack('<f',struct.pack('<f',cfg.decay_rate))[0],cfg.free_threshold,
+diff --git a/experiments/expressivity_tasks/x36_tape_perf/kernels.py b/experiments/expressivity_tasks/x36_tape_perf/kernels.py
+index a921df5b..94aa3c79 100644
+--- a/experiments/expressivity_tasks/x36_tape_perf/kernels.py
++++ b/experiments/expressivity_tasks/x36_tape_perf/kernels.py
+@@ -22,7 +22,7 @@ def scan_kernel(K, Q, V, Beta, Pop, Logit, Coef, Keys, Values, Strength,
+                 RecordPayload: tl.constexpr, JournalBlock: tl.constexpr,
+                 AllAddresses, AllBefore, AllWidths, AllCounts, AllBoundaries,
+                 AllGates, AllErrors, AllCapacity, RecordAll: tl.constexpr,
+-                Fresh: tl.constexpr, Start, Token,
++                Fresh: tl.constexpr, InitialBound: tl.constexpr, Start, Token,
+                 T: tl.constexpr, S: tl.constexpr, DK: tl.constexpr,
+                 DV: tl.constexpr, RT: tl.constexpr, BS: tl.constexpr, BV: tl.constexpr, BK: tl.constexpr, BT: tl.constexpr,
+                 Decay: tl.constexpr, Free: tl.constexpr,
+@@ -67,8 +67,15 @@ def scan_kernel(K, Q, V, Beta, Pop, Logit, Coef, Keys, Values, Strength,
+             slot = tl.load(birth_next+slot)
+     else:
+         size = tl.load(Sizes+n)
++    reached=tl.full((),InitialBound if InitialBound>=0 else 0,tl.int32)
+     for t in range(T):
+-        for tile in range(RT):
++        # Track actual allocation reach on device. Keep the fixed reduction
++        # tree, but do not scan future empty tiles or read stale partials.
++        if InitialBound>=0:
++            active_tiles=tl.minimum(RT,tl.maximum(1,tl.cdiv(reached,32)))
++        else:
++            active_tiles=RT
++        for tile in range(active_tiles):
+             r_columns = tile*32 + tl.arange(0,32)
+             r_tile_count: tl.constexpr = RT
+             r_header=n*r_tile_count+tile
+@@ -105,7 +112,7 @@ def scan_kernel(K, Q, V, Beta, Pop, Logit, Coef, Keys, Values, Strength,
+             rr_tiles=tl.arange(0,BT)
+             rr_d=dim_tile*8+tl.arange(0,8)
+             rr_tile_count: tl.constexpr=RT
+-            rr_valid=rr_tiles<rr_tile_count
++            rr_valid=rr_tiles<active_tiles
+             rr_maximum=tl.load(ReadMax+n*rr_tile_count+rr_tiles,rr_valid,-1.0e30)
+             rr_denom=tl.load(ReadDenom+n*rr_tile_count+rr_tiles,rr_valid,0.)
+             if dim_tile==0:
+@@ -182,6 +189,8 @@ def scan_kernel(K, Q, V, Beta, Pop, Logit, Coef, Keys, Values, Strength,
+         append = (case>0) & (case<4)
+         case = tl.where(append & (first_free < 0), 5, case)
+         allocation = tl.where(append & (case != 5), first_free, -1)
++        if InitialBound>=0:
++            reached=tl.maximum(reached,allocation+1)
+         matched = tl.where((enabled & has_adjacent) | (case == 5), target, -1)
+         error = tl.where(count>0, tl.sqrt(residual), 0.)
+         gate = tl.sigmoid(tl.load(Logit+inp)+tl.load(Coef+n)*error)

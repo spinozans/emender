@@ -1,0 +1,184 @@
+{
+  "attempts": [
+    {
+      "name": "Explicit global strength-adjoint reload across typed undo",
+      "status": "reverted-performance-regression",
+      "parity": "123 original tests passed; two new production-width capacity fixtures passed",
+      "step_ms": 11436.762711033225,
+      "baseline_step_ms": 4078.6130549386144,
+      "regression": 2.8040813278879075,
+      "compiler": {
+        "warps": 16,
+        "registers_per_thread": 64,
+        "spills": 668,
+        "shared_bytes": 32768,
+        "layout": "oracle_aos"
+      },
+      "receipt": "part3_reload_s11776.json",
+      "mechanism": "Volatile coalesced stores/reloads did not relieve register allocation: compiler spills increased 626 to 668; replay 11281.64 ms. Not retained."
+    },
+    {
+      "name": "32 warps at large S",
+      "status": "reverted-exactness-failure",
+      "max_abs_error_s5888": 1.9073486328125e-05,
+      "max_abs_error_import": 1.8189894035458565e-12,
+      "performance": "not-run",
+      "receipt": "part3_warp_attempt_parity.txt"
+    },
+    {
+      "name": "Eight warps for fresh long contexts",
+      "status": "reverted-exactness-failure",
+      "random_t4096": "passed",
+      "dense_prefix_t4096": "failed",
+      "max_abs_error": 2.6941299438476562e-05,
+      "performance": "not-run",
+      "receipt": "part3_candidate_parity.txt"
+    },
+    {
+      "name": "128-register cap with unchanged four-warps long-T reduction",
+      "status": "reverted-performance-regression",
+      "parity": "128 passed",
+      "baseline_ms": 2202.8820109553635,
+      "tape_ms": 9977.13147290051,
+      "ratio": 4.529126582033119,
+      "compiler": {
+        "warps": 4,
+        "registers_per_thread": 128,
+        "spills": 506,
+        "shared_bytes": 2048,
+        "ptx_local_load_instructions": 0,
+        "ptx_local_store_instructions": 0,
+        "layout": "transposed"
+      },
+      "receipt": "part3_register_cap_t4096.json",
+      "mechanism": "Spills increased from part-2 204 to 506; replay 6563.62 ms. Lower register allocation did not improve the measured long-context cost."
+    },
+    {
+      "name": "Bounded decay tiles alone at large S",
+      "status": "rejected-capacity-regression; long-T bounded variant combined with other fixes",
+      "parity": "130 passed",
+      "step_ms": 15659.952991642058,
+      "compiler": {
+        "warps": 16,
+        "registers_per_thread": 64,
+        "spills": 670,
+        "shared_bytes": 32768,
+        "ptx_local_load_instructions": 0,
+        "ptx_local_store_instructions": 0,
+        "layout": "oracle_aos"
+      },
+      "receipt": "part3_tiled_s11776.json"
+    },
+    {
+      "name": "Streamed temporaries at large S",
+      "status": "reverted-at-T512; retained-only-for-T>512",
+      "parity": "132 passed",
+      "step_ms": 3710.4721278883517,
+      "compiler": {
+        "warps": 16,
+        "registers_per_thread": 128,
+        "spills": 706,
+        "shared_bytes": 32768,
+        "ptx_local_load_instructions": 0,
+        "ptx_local_store_instructions": 0,
+        "layout": "oracle_aos"
+      },
+      "receipt": "part3_shape_gates.json"
+    },
+    {
+      "name": "Wide reverse address arithmetic at every shape",
+      "status": "reverted-long/large; retained-bounded-fast-path",
+      "parity": "133 passed including B64/S11776",
+      "t4096_ms": 7920.135539956391,
+      "compiler": {
+        "warps": 4,
+        "registers_per_thread": 255,
+        "spills": 332,
+        "shared_bytes": 2048,
+        "sanitize_overflow": true,
+        "automatic_overflow_assert_sites": 13,
+        "ptx_assert_calls": 9,
+        "ptx_local_load_instructions": 0,
+        "ptx_local_store_instructions": 0,
+        "layout": "transposed"
+      },
+      "automatic_overflow_assert_sites_s11776": {
+        "narrow": 74,
+        "wide": 13
+      },
+      "ptx_assert_calls": {
+        "narrow": 21,
+        "wide": 11
+      },
+      "receipt": "part3_final_shape_gates.json",
+      "authority": "part3_sanitizer_authority.json",
+      "mechanism": "Fewer automatic overflow reductions traded against wider address-register footprints; long-T spills increased 68 to 332."
+    },
+    {
+      "name": "SoA replay with explicit 128-register large-S budget",
+      "status": "retained; capacity gate still failed",
+      "parity": "7 scale/import/B64 exact tests then 134 full-suite passes",
+      "s11776_step_ms": 1460.0781491026282,
+      "compiler": {
+        "warps": 16,
+        "registers_per_thread": 128,
+        "spills": 372,
+        "shared_bytes": 8192,
+        "sanitize_overflow": true,
+        "automatic_overflow_assert_sites": 76,
+        "ptx_assert_calls": 23,
+        "ptx_local_load_instructions": 0,
+        "ptx_local_store_instructions": 0,
+        "layout": "transposed"
+      },
+      "receipt": "part3_soa_capacity.json"
+    },
+    {
+      "name": "SoA fresh-prefix 32-warps",
+      "status": "reverted-exactness-failure",
+      "max_abs_error_s5888": 1.9073486328125e-05,
+      "performance": "not-run",
+      "receipt": "part3_soa_prefix32_parity.txt"
+    },
+    {
+      "name": "Omit key adjoints when no key input needs gradients",
+      "status": "retained",
+      "parity": "138 passed including frozen-key random/dense/import cases",
+      "s11776_step_ms": 1208.6220886558294,
+      "receipt": "part3_measurements.json",
+      "predicate": "ctx.needs_input_grad[4] or ctx.needs_input_grad[11]; required key gradients stay enabled"
+    },
+    {
+      "name": "Routing occupancy diagnostic via torch.count_nonzero",
+      "status": "failed-after-valid-timings; corrected-and-retried",
+      "error": "23 GiB temporary requested for a 3 GiB int8 trace",
+      "receipt": "part3_delivered_shape_gates.json",
+      "correction": "Bounded per-row Triton integer reduction; complete matched T4096 retry and occupancy reconstruction in part3_t4096_traffic.json"
+    },
+    {
+      "name": "Replay setup bootstrap compilation",
+      "status": "corrected-before-final-parity-and-performance",
+      "errors": [
+        "constexpr loop variable reassignment",
+        "tuple index inferred as tensor",
+        "indentation during correction"
+      ],
+      "receipts": [
+        "part3_setup_compile_failed.txt",
+        "part3_setup_index_compile_failed.txt",
+        "part3_setup_indent_failed.txt"
+      ]
+    }
+  ],
+  "oracle_fixture_infrastructure_failure": {
+    "receipt": "part3_scale_exact.txt",
+    "cause": "Historical dense-log rebase uses grid.y=ceil(capacity/256), exceeding CUDA grid.y limit at T4096. Test-only wider address-copy tile removes invalid launch without changing floating-point oracle arithmetic."
+  },
+  "floor_scope": "These are measured implementation constraints and rejected fixes, not an irreducible mathematical or hardware lower-bound proof.",
+  "final_validation": {
+    "parity_tests": 138,
+    "source": "part3_delivered_sources.json",
+    "gates": "summary.json",
+    "status": "partial; three performance gates failed with measured causes"
+  }
+}

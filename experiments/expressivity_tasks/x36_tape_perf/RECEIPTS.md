@@ -66,3 +66,15 @@ The zero-address journal publication failure was fixed with ordered emission;
 dense-loss/address-clone OOM attempts and the large-S SoA regression remain
 raw failed receipts. Final measurements use the ordered journal, restored
 private addresses, bounded-prefix warp guard and large-S AoS fallback.
+
+## Part 3 final receipts
+
+`part3_final_parity.txt/.xml`: 138 passed. `part3_measurements.json` indexes
+completed points, with the corrected matched T4096 pair from
+`part3_t4096_traffic.json`. `summary.json` reports B64/T512 2.202x PASS,
+B64/T4096 2.883x FAIL, inclusive 59-61 FAIL/custom 7 PASS, zero steady syncs
+PASS, capacity scaling FAIL and both 2M curves max 9.536743e-7 PASS.
+`part3_boundary_s8192.json` and `part3_boundary_s8224.json` expose the aligned
+padding cliff; `part3_fixed_live.json` separates fixed occupancy from T.
+`part3_attempts.json` preserves rejected parity/resource/layout attempts and
+the corrected post-profile occupancy-diagnostic OOM. No failed gate is waived.

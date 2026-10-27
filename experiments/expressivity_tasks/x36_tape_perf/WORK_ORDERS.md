@@ -1,35 +1,38 @@
-# Remaining X36 work after part 2
+# Remaining X36 work after part 3
 
-Part 2 delivers persistent forward, zero clipping sync, a passing matched B64
-ratio (2.655x), 123 tests and both 2M-token unchanged-loss curves.
-The registered target set remains **FAILED**.
+The registered target set remains FAILED. Final evidence is in REPORT.md and
+receipts/summary.json; completed measurements are indexed in
+receipts/part3_measurements.json. Part 2 is archived.
 
-1. **Inclusive launches <=10.** The recurrent forward is one launch and the
-   custom phase count is six, but scan/replay still contain 100 device
-   activities including setup/fills/transposes/copies. Fuse or remove the
-   native setup and tensor materializations; do not relabel six custom kernels
-   as the inclusive gate passing. Projections are already excluded here.
-2. **T4096 <=2x.** Matched B64 ratio is 3.311x. The bounded vocabulary
-   projection and in-place/restored private address log now fit memory. Reduce
-   the remaining persistent replay and forward cost without changing the
-   oracle reduction tree. Global 8-warps/imports and 16-warps/S2944 failed byte
-   comparisons; only the independently tested cumulative-prefix <=512
-   specialization may use eight warps.
-3. **Capacity performance.** S2944->11776 (4x capacity) costs 9.206x wall
-   and 16.426x replay. The AoS large-capacity fallback avoids the 9.58 s
-   transposed regression but still has compiler n_spills=626. Preserve exact
-   full-S reductions while fixing the layout/resource cliff. The remaining
-   cost is implementation debt; no irreducible read-GEMM FLOP floor is proved.
-4. **Asymptotic and attribution evidence.** Complete a fixed-occupancy T/S
-   study that separates reachability, occupancy and warp specialization. The
-   current T128/512/1024/4096 sweep is recorded, with bounded loss at T>=1024,
-   but does not certify flat per-token time. Independently calibrate host
-   launch overhead and capture-only cost; retain the distinction between
-   overlapping CPU API time, GPU busy time and additive wall ranges.
-5. **Preserve the journal and semantics gates.** Keep publication ordered
-   across warps, audit zero-initialized logs for holes, restore private
-   addresses after backward, and retain all mutation/rollback/retained-state
-   tests plus production-width imports and B64/T512 byte checks. Require the
-   matched 512-step/2,097,152-token-per-arm curve check before certification.
+1. **Remove the padded reverse register cliff with exact reduction trees.**
+   At B64/T512/live256, aligned S8192->8224 grows capacity 0.391% but doubles
+   BS8192->16384, costs 1.551x step / 1.755x replay and increases compiler
+   n_spills166->388. Shared memory stays 8 KiB. Per-double replay growth still
+   fails at both registered capacity doublings. Final SoA/128-register policy
+   improves S11776 step to 1208.622 ms from fresh 4078.613 ms, but the gate
+   remains failed. Replace padded register residency with an explicitly exact
+   tiled layout/reduction schedule. Naive large-S staged temporaries regressed;
+   the 32-warp SoA fresh-prefix variant failed bytes by 1.907e-5.
+2. **B64/T4096 <=2x.** Final matched ratio is 2.883x FAIL
+   (6170.573 / 2140.605 ms). Verified final live/head=2048 and 1,073,741,824
+   live-slot/token pairs demand 0.825 TB forward / 2.199 TB replay logical
+   payload accesses per step. Reduce repeated passes or improve reuse while
+   preserving oracle reductions. Logical volumes are not DRAM counters or a
+   hardware lower-bound proof. Constant-live64/four-warp control has
+   scan/token 1.071x and adjoint/token 0.595x across 8x T. Keep this distinct
+   from the growing-live production sweep. No nonsequential-T claim.
+   Extended eight-warps failed dense T4096 bytes and remains rejected.
+3. **Inclusive launches <=10.** Replay setup is fused; unused key adjoints
+   are removed. Narrow custom count 7 PASS; inclusive 59(T512)/61(T4096)
+   FAIL. Remaining 52-54 native activities are chiefly forward initialization,
+   input/output materialization and mapping transfers. Fuse/remove them
+   without hiding work outside the registered scan/replay ranges.
+4. **Preserve proof.** Require the 138-test exact suite, including frozen-key,
+   imported/retained/consuming state, dense long context, B64/large-S bytes,
+   zeroed typed-log ownership and address restoration. Required key gradients
+   remain enabled. Keep zero steady host syncs with pinned ingestion and the
+   two 512-step / 2,097,152-token historical-curve checks (max 9.536743e-7).
 
-No additional scientific LM pilot/report work is authorized by this slice.
+All GPU execution remains through run_leased.sh with project Python and
+physical cards 0/1/5/6. No scientific LM pilot is resumed by this engineering
+slice. No WG, dispatcher, worker, delegation or completion/review machinery.

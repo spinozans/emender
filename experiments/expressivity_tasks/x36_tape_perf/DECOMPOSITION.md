@@ -23,3 +23,13 @@ Replay already uses one reverse kernel per chunk, plus rebase/copies.
 
 This is partial attribution: no claim of direct in-kernel journal timing or
 independently isolated launch overhead. Those remain named work orders.
+
+## Part 3 measured scale floor
+
+The current decomposition is in [REPORT.md](REPORT.md) and
+[part3_decomposition.json](receipts/part3_decomposition.json). The aligned
+8192->8224 boundary isolates the BS8192->16384 register/spill cliff at fixed
+live=256; shared memory stays 8 KiB. T4096 logical payload traffic is measured
+from a separate routing trace, with a constant-live/four-warp control. CPU
+allocator self time and journal ablation estimates are not additive GPU rows.
+Capacity, long-context ratio and inclusive-launch gates remain FAILED.

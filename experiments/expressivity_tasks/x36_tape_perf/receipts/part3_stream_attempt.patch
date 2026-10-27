@@ -1,0 +1,272 @@
+diff --git a/experiments/expressivity_tasks/x36_tape_perf/backward.py b/experiments/expressivity_tasks/x36_tape_perf/backward.py
+index 51f6f624..78de80a9 100644
+--- a/experiments/expressivity_tasks/x36_tape_perf/backward.py
++++ b/experiments/expressivity_tasks/x36_tape_perf/backward.py
+@@ -75,7 +75,7 @@ def rebase_owned(addresses,counts,old_owners,new_owners,capacity,*,payload_slots
+ def reverse_kernel(K,Q,V,Beta,Pop,Keys,Values,Strength,Live,Touch,
+                    Cases,Matched,Alloc,Pops,Freed,Gates,Errors,
+                    Addresses,Before,Widths,Counts,Boundaries,
+-                   GradOut,GKeys,GValues,GStrength,DKout,DQout,DVout,
++                   GradOut,GKeys,GValues,GStrength,StrengthScratch,ProbabilityScratch,DKout,DQout,DVout,
+                    DBeta,DPop,DLogit,DCoef,
+                    T:tl.constexpr,S:tl.constexpr,DK:tl.constexpr,DV:tl.constexpr,
+                    BS:tl.constexpr,BV:tl.constexpr,UB:tl.constexpr,Capacity,SoA:tl.constexpr,
+@@ -84,23 +84,47 @@ def reverse_kernel(K,Q,V,Beta,Pop,Keys,Values,Strength,Live,Touch,
+     s=tl.arange(0,BS)
+     d=tl.arange(0,BV)
+     valid=s<S
+-    gs=tl.load(GStrength+n*S+s,valid,0.)
++    if S<4096 and T<=512:
++        gs=tl.load(GStrength+n*S+s,valid,0.)
+     stop=tl.load(Counts+n)
+     coef_grad=tl.full((),0.,tl.float32)
+     for reverse in range(T):
+         t=T-1-reverse
+         inp=n*T+t
++        # Every other input adjoint is unconditionally written below. Keys
++        # receive a gradient only on allocation; initialize those lanes here.
++        kd=tl.arange(0,triton.next_power_of_2(DK))
++        tl.store(DKout+inp*DK+kd,0.,kd<DK)
+         start=tl.load(Boundaries+inp)
+         undo_to((Addresses,Before,Widths,Counts,n,Capacity),start,stop,UB)
+         stop=start
+         tl.debug_barrier()
+-        live=tl.load(Live+n*S+s,valid,False).to(tl.int1)
+-        reference=tl.load(Strength+n*S+s,valid,0.)
+-        if Fresh and t==0:
+-            strength=reference
++        if S<4096 and T<=512:
++            live=tl.load(Live+n*S+s,valid,False).to(tl.int1)
++            reference=tl.load(Strength+n*S+s,valid,0.)
++            if Fresh and t==0:
++                strength=reference
++            else:
++                touch=tl.load(Touch+n*S+s,valid,0)
++                strength=advance_exact(reference,tl.where(live,Start+t-touch,0),Decay)
+         else:
+-            touch=tl.load(Touch+n*S+s,valid,0)
+-            strength=advance_exact(reference,tl.where(live,Start+t-touch,0),Decay)
++            # Exact decay has independent lane arithmetic but many int64
++            # temporaries. Evaluate bounded tiles before the full-S float
++            # adjoint/reduction vectors, rather than spilling a BS-wide jump.
++            for tile in range(tl.cdiv(S,512)):
++                row=tile*512+tl.arange(0,512)
++                active=row<S
++                tile_live=tl.load(Live+n*S+row,active,False).to(tl.int1)
++                reference=tl.load(Strength+n*S+row,active,0.)
++                touch=tl.load(Touch+n*S+row,active,0)
++                steps=tl.where(tile_live,Start+t-touch,0)
++                if Fresh:steps=tl.where(t==0,0,steps)
++                decayed=advance_exact(reference,steps,Decay)
++                tl.store(StrengthScratch+n*S+row,decayed,active)
++            tl.debug_barrier()
++            strength=tl.load(StrengthScratch+n*S+s,valid,0.)
++            live=tl.load(Live+n*S+s,valid,False).to(tl.int1)
++            gs=tl.load(GStrength+n*S+s,valid,0.,volatile=True)
+         freed=tl.load(Freed+inp.to(tl.int64)*S+s,valid,0)
+         allocation=tl.load(Alloc+inp)
+         target=tl.load(Matched+inp)
+@@ -141,6 +165,8 @@ def reverse_kernel(K,Q,V,Beta,Pop,Keys,Values,Strength,Live,Touch,
+         dpop=-tl.sum(tl.where(s==pop_id,gs*strength,0.),0)
+         gs=tl.where(s==pop_id,gs*(1.-pop),gs)
+         tl.store(DPop+inp,dpop)
++        if S>=4096 or T>512:
++            tl.store(GStrength+n*S+s,gs,valid)
+         tl.debug_barrier()
+         # Dense read adjoints, evaluated only on the restored pre-read store.
+         score=tl.full((BS,),0.,tl.float32)
+@@ -152,6 +178,9 @@ def reverse_kernel(K,Q,V,Beta,Pop,Keys,Values,Strength,Live,Touch,
+         masked=tl.where(live & valid,score*scale,-1.e30)
+         numer=tl.where(valid,tl.exp(masked-tl.max(masked,0)),0.)
+         prob=numer/tl.sum(numer,0)
++        if S>=4096 or T>512:
++            tl.store(ProbabilityScratch+n*S+s,prob,valid)
++            strength=tl.load(StrengthScratch+n*S+s,valid,0.,volatile=True)
+         weight=prob*strength*live
+         dw=tl.full((BS,),0.,tl.float32)
+         for j in range(DV):
+@@ -160,7 +189,14 @@ def reverse_kernel(K,Q,V,Beta,Pop,Keys,Values,Strength,Live,Touch,
+             dw+=value*gout
+             gv=tl.load(GValues+((n*DV+j)*S+s if SoA else (n*S+s)*DV+j),valid & live,0.)
+             tl.store(GValues+((n*DV+j)*S+s if SoA else (n*S+s)*DV+j),gv+weight*gout,valid & live)
++        if S>=4096 or T>512:
++            tl.debug_barrier()
++            gs=tl.load(GStrength+n*S+s,valid,0.,volatile=True)
++            prob=tl.load(ProbabilityScratch+n*S+s,valid,0.,volatile=True)
++            strength=tl.load(StrengthScratch+n*S+s,valid,0.,volatile=True)
+         gs+=prob*live*dw
++        if S>=4096 or T>512:
++            tl.store(GStrength+n*S+s,gs,valid)
+         dp=dw*strength*live
+         ds=prob*(dp-tl.sum(prob*dp,0))*live*scale
+         for j in range(DK):
+@@ -170,7 +206,8 @@ def reverse_kernel(K,Q,V,Beta,Pop,Keys,Values,Strength,Live,Touch,
+             tl.store(GKeys+((n*DK+j)*S+s if SoA else (n*S+s)*DK+j),gk+ds*query,valid & live)
+             tl.store(DQout+inp*DK+j,tl.sum(ds*key,0))
+         tl.debug_barrier()
+-    tl.store(GStrength+n*S+s,gs,valid)
++    if S<4096 and T<=512:
++        tl.store(GStrength+n*S+s,gs,valid)
+     tl.store(DCoef+n,coef_grad)
+ 
+ 
+@@ -251,26 +288,21 @@ class Replay(torch.autograd.Function):
+         b,t,h,dk=k.shape
+         def flat(x): return x.transpose(1,2).contiguous()
+         args=list(map(flat,(k,q,v,beta,pop)))
+-        def gradient(g,like):
+-            return torch.zeros_like(like) if g is None else g.contiguous().clone()
+         ctx.storage.validate()
+         # Keep the oracle AoS layout at large capacities: the transposed
+         # specialization hits a measured replay cliff at S11776.
+         payload_soa=cfg.slots<4096
+-        replay=tuple(x.transpose(-1,-2).clone(memory_format=torch.contiguous_format)
+-                     if payload_soa and i<2 else x.clone() for i,x in enumerate(ctx.storage.owners))
++        from .replay_setup import prepare
++        replay,(gk,gv,gs)=prepare(ctx.storage.owners,(gkeys,gvalues,gstrength),soa=payload_soa)
+         keys,values,strength,live,age,history,*meta=replay
+         # Replay payloads and adjoints use [store,dim,slot] backing; full-S
+         # reduction/accumulation expressions retain the oracle lane shapes.
+-        gk=gradient(gkeys,ctx.storage.owners[0])
+-        gv=gradient(gvalues,ctx.storage.owners[1])
+-        if payload_soa:
+-            gk=gk.transpose(-1,-2).contiguous()
+-            gv=gv.transpose(-1,-2).contiguous()
+-        gs=gradient(gstrength,strength)
++        streamed=cfg.slots>=4096 or t>512
++        strength_scratch=torch.empty_like(strength) if streamed else strength
++        probability_scratch=torch.empty_like(strength) if streamed else strength
+         go=torch.zeros(b,h,t,cfg.value_dim,device=k.device) if gout is None else flat(gout)
+-        dkout,dqout,dvout,dbeta,dpop,dlogit=[torch.zeros_like(flat(x)) for x in
+-                                             (k,q,v,beta,pop,logit)]
++        dkout,dqout,dvout,dbeta,dpop=[torch.empty_like(x) for x in args]
++        dlogit=torch.empty((b,h,t),device=k.device,dtype=k.dtype)
+         dc=torch.empty(b*h,device=k.device)
+         original_addresses,before,widths,counts,boundaries,gates,errors=ctx.log
+         # The log is private to this autograd node. Rebase it in place and
+@@ -286,18 +318,25 @@ class Replay(torch.autograd.Function):
+         try:
+             reverse_kernel[(b*h,)](*args,keys,values,strength,live,meta[5],
+                 *ctx.trace,gates,errors,addresses,before,widths,counts,boundaries,
+-                go,gk,gv,gs,dkout,dqout,dvout,dbeta,dpop,dlogit,dc,
++                go,gk,gv,gs,strength_scratch,probability_scratch,dkout,dqout,dvout,dbeta,dpop,dlogit,dc,
+                 t,cfg.slots,dk,cfg.value_dim,triton.next_power_of_2(cfg.slots),
+                 triton.next_power_of_2(cfg.value_dim),min(128,triton.next_power_of_2(max(cfg.slots,cfg.value_dim,dk))),ctx.capacity,payload_soa,True,ctx.start,
+                 struct.unpack('<f',struct.pack('<f',cfg.decay_rate))[0],
+-                enable_fp_fusion=False,debug=True,num_warps=16 if cfg.slots>=4096 else (8 if prefix8 else 4))
++                enable_fp_fusion=False,debug=True,num_warps=16 if cfg.slots>=4096 else (8 if prefix8 else 4),
++                maxnreg=128 if cfg.slots>=4096 else None)
+         finally:
+             rebase_owned(addresses,counts,replay,ctx.address_owners,ctx.capacity,
+                          payload_slots=cfg.slots if payload_soa else 0,reverse_payload=payload_soa)
+         def unflat(x):return x.transpose(1,2).contiguous()
+-        return (None,None,None,None,*map(unflat,(dkout,dqout,dvout,dbeta,dpop,dlogit)),
+-                dc.reshape(b,h).sum(0),gk.transpose(-1,-2).contiguous() if payload_soa else gk,
+-                gv.transpose(-1,-2).contiguous() if payload_soa else gv,gs,None,None,None)
++        input_grads=tuple(unflat(g) if ctx.needs_input_grad[4+i] else None
++                          for i,g in enumerate((dkout,dqout,dvout,dbeta,dpop,dlogit)))
++        def native_grad(g,index):
++            if not ctx.needs_input_grad[index]:return None
++            return g.transpose(-1,-2).contiguous() if payload_soa else g
++        return (None,None,None,None,*input_grads,
++                dc.reshape(b,h).sum(0) if ctx.needs_input_grad[10] else None,
++                native_grad(gk,11),native_grad(gv,12),gs if ctx.needs_input_grad[13] else None,
++                None,None,None)
+ 
+ 
+ def autograd_scan(inputs,state,cfg,coef):
+diff --git a/experiments/expressivity_tasks/x36_tape_perf/forward.py b/experiments/expressivity_tasks/x36_tape_perf/forward.py
+index cf3f7cda..5196b700 100644
+--- a/experiments/expressivity_tasks/x36_tape_perf/forward.py
++++ b/experiments/expressivity_tasks/x36_tape_perf/forward.py
+@@ -140,11 +140,12 @@ def tape_scan(k, q, v, write_strength, pop_strength, append_logit, state,
+     # All heads share this launch; direct same-store reductions avoid the
+     # off-diagonal cross-head MMA rows and a separate scoring launch.
+     score_scratch=scores  # unused compatibility pointer
++    read_strength_cache=torch.empty_like(strength) if t>512 else scores
+     scan_kernel[(b*h,)](*args,coef,keys,values,strength,live,age,
+         output,case,matched,alloc,pops,freed,pressure,history,heap,position,due,terminal,
+-        births,touches,level0,level1,root,birth_next,birth_prev,birth_head,sizes,references,scores,read_max,read_denom,read_values,read_best,capture_scratch,
++        births,touches,level0,level1,root,birth_next,birth_prev,birth_head,sizes,references,scores,read_max,read_denom,read_values,read_best,read_strength_cache,capture_scratch,
+         *journal_args,record_payload,triton.next_power_of_2(max(dk,cfg.value_dim)),
+-        *all_args,fresh,state.tokens,0,
++        *all_args,fresh,-1 if state.live_bound is None else state.live_bound,state.tokens,0,
+         t,cfg.slots,dk,cfg.value_dim,tile_count,triton.next_power_of_2(max(1,reachable)),
+         triton.next_power_of_2(cfg.value_dim),triton.next_power_of_2(max(32,dk)),tile_block,
+         struct.unpack('<f',struct.pack('<f',cfg.decay_rate))[0],cfg.free_threshold,
+diff --git a/experiments/expressivity_tasks/x36_tape_perf/kernels.py b/experiments/expressivity_tasks/x36_tape_perf/kernels.py
+index a921df5b..cca908b6 100644
+--- a/experiments/expressivity_tasks/x36_tape_perf/kernels.py
++++ b/experiments/expressivity_tasks/x36_tape_perf/kernels.py
+@@ -17,12 +17,12 @@ from ..x31_tape_cell_fused.write_journal import capture_payload
+ def scan_kernel(K, Q, V, Beta, Pop, Logit, Coef, Keys, Values, Strength,
+                 Live, Age, Output, Cases, Matched, Alloc, Pops, Freed,
+                 Pressure, History, Heap, Position, Due, Terminal, BirthStore, TouchStore,
+-                L0, L1, Root, BirthNext, BirthPrev, BirthHead, Sizes, References, Scores, ReadMax, ReadDenom, ReadValues, ReadBest, CaptureScratch,
++                L0, L1, Root, BirthNext, BirthPrev, BirthHead, Sizes, References, Scores, ReadMax, ReadDenom, ReadValues, ReadBest, ReadStrengthCache, CaptureScratch,
+                 JournalSlots, JournalKeys, JournalValues,
+                 RecordPayload: tl.constexpr, JournalBlock: tl.constexpr,
+                 AllAddresses, AllBefore, AllWidths, AllCounts, AllBoundaries,
+                 AllGates, AllErrors, AllCapacity, RecordAll: tl.constexpr,
+-                Fresh: tl.constexpr, Start, Token,
++                Fresh: tl.constexpr, InitialBound: tl.constexpr, Start, Token,
+                 T: tl.constexpr, S: tl.constexpr, DK: tl.constexpr,
+                 DV: tl.constexpr, RT: tl.constexpr, BS: tl.constexpr, BV: tl.constexpr, BK: tl.constexpr, BT: tl.constexpr,
+                 Decay: tl.constexpr, Free: tl.constexpr,
+@@ -67,8 +67,15 @@ def scan_kernel(K, Q, V, Beta, Pop, Logit, Coef, Keys, Values, Strength,
+             slot = tl.load(birth_next+slot)
+     else:
+         size = tl.load(Sizes+n)
++    reached=tl.full((),InitialBound if InitialBound>=0 else 0,tl.int32)
+     for t in range(T):
+-        for tile in range(RT):
++        # Track actual allocation reach on device. Keep the fixed reduction
++        # tree, but do not scan future empty tiles or read stale partials.
++        if InitialBound>=0:
++            active_tiles=tl.minimum(RT,tl.maximum(1,tl.cdiv(reached,32)))
++        else:
++            active_tiles=RT
++        for tile in range(active_tiles):
+             r_columns = tile*32 + tl.arange(0,32)
+             r_tile_count: tl.constexpr = RT
+             r_header=n*r_tile_count+tile
+@@ -84,7 +91,20 @@ def scan_kernel(K, Q, V, Beta, Pop, Logit, Coef, Keys, Values, Strength,
+                 r_numer=tl.where(r_live,tl.exp(r_masked-r_maximum),0.)
+                 r_reference=tl.load(References+n*S+r_columns,r_live,0.)
+                 r_touch=tl.load(TouchStore+n*S+r_columns,r_live,Start+t)
+-                r_strength=advance_exact(r_reference,tl.where(r_live,Start+t-r_touch,0),Decay)
++                if T>512:
++                    if t==0:
++                        r_strength=advance_exact(r_reference,tl.where(r_live,Start+t-r_touch,0),Decay)
++                    else:
++                        cached=tl.load(ReadStrengthCache+n*S+r_columns,r_live,0.)
++                        base=tl.where(r_touch>=Start+t-1,r_reference,cached)
++                        if Decay==1.0:
++                            next_strength=base
++                        else:
++                            next_strength=base*Decay
++                        r_strength=tl.where(r_touch>=Start+t,r_reference,next_strength)
++                    tl.store(ReadStrengthCache+n*S+r_columns,r_strength,r_live)
++                else:
++                    r_strength=advance_exact(r_reference,tl.where(r_live,Start+t-r_touch,0),Decay)
+                 r_weighted=r_numer*r_strength
+                 r_d=tl.arange(0,BV)
+                 r_values=tl.load(Values+(n*S+r_columns[:,None])*DV+r_d[None,:],
+@@ -105,7 +125,7 @@ def scan_kernel(K, Q, V, Beta, Pop, Logit, Coef, Keys, Values, Strength,
+             rr_tiles=tl.arange(0,BT)
+             rr_d=dim_tile*8+tl.arange(0,8)
+             rr_tile_count: tl.constexpr=RT
+-            rr_valid=rr_tiles<rr_tile_count
++            rr_valid=rr_tiles<active_tiles
+             rr_maximum=tl.load(ReadMax+n*rr_tile_count+rr_tiles,rr_valid,-1.0e30)
+             rr_denom=tl.load(ReadDenom+n*rr_tile_count+rr_tiles,rr_valid,0.)
+             if dim_tile==0:
+@@ -182,6 +202,8 @@ def scan_kernel(K, Q, V, Beta, Pop, Logit, Coef, Keys, Values, Strength,
+         append = (case>0) & (case<4)
+         case = tl.where(append & (first_free < 0), 5, case)
+         allocation = tl.where(append & (case != 5), first_free, -1)
++        if InitialBound>=0:
++            reached=tl.maximum(reached,allocation+1)
+         matched = tl.where((enabled & has_adjacent) | (case == 5), target, -1)
+         error = tl.where(count>0, tl.sqrt(residual), 0.)
+         gate = tl.sigmoid(tl.load(Logit+inp)+tl.load(Coef+n)*error)

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="14" time="2.666" timestamp="2026-10-27T14:58:55.875473+00:00" hostname="lambda01"><testcase classname="experiments.expressivity_tasks.x31_tape_cell_fused.tests.test_all_field_journal" name="test_all_field_exact_rollback[1]" time="1.052" /><testcase classname="experiments.expressivity_tasks.x31_tape_cell_fused.tests.test_all_field_journal" name="test_all_field_exact_rollback[7]" time="0.062" /><testcase classname="experiments.expressivity_tasks.x31_tape_cell_fused.tests.test_all_field_journal" name="test_all_field_exact_rollback[37]" time="0.040" /><testcase classname="experiments.expressivity_tasks.x31_tape_cell_fused.tests.test_all_field_journal" name="test_all_field_exact_rollback[736]" time="0.046" /><testcase classname="experiments.expressivity_tasks.x31_tape_cell_fused.tests.test_all_field_journal" name="test_all_field_exact_rollback[11776]" time="0.260" /><testcase classname="experiments.expressivity_tasks.x31_tape_cell_fused.tests.test_all_field_journal" name="test_all_field_snapshot_parent_and_pressure_expiry" time="0.034" /><testcase classname="experiments.expressivity_tasks.x31_tape_cell_fused.tests.test_all_field_journal" name="test_oversized_journal_fails_before_allocation" time="0.001" /><testcase classname="experiments.expressivity_tasks.x31_tape_cell_fused.tests.test_all_field_journal" name="test_compact_reservation_and_unchanged_capture[False]" time="0.039" /><testcase classname="experiments.expressivity_tasks.x31_tape_cell_fused.tests.test_all_field_journal" name="test_compact_reservation_and_unchanged_capture[True]" time="0.002" /><testcase classname="experiments.expressivity_tasks.x31_tape_cell_fused.tests.test_components" name="test_rank_scan_and_parallel_mutation" time="0.048" /><testcase classname="experiments.expressivity_tasks.x31_tape_cell_fused.tests.test_components" name="test_reverse_journal_repeated_slot_and_padding" time="0.005" /><testcase classname="experiments.expressivity_tasks.x31_tape_cell_fused.tests.test_components" name="test_rollback_invalid_slot_fails_before_launch" time="0.006" /><testcase classname="experiments.expressivity_tasks.x31_tape_cell_fused.tests.test_device_free" name="test_bitmap_high_bits_all_three_levels_and_reuse" time="0.004" /><testcase classname="experiments.expressivity_tasks.x31_tape_cell_fused.tests.test_gradients" name="test_full_first_order_parity[0-1]" time="0.740"><failure message="triton.compiler.errors.CompilationError: at 23:17:&#10;                col=((block//tl.cdiv(S,32))%tl.cdiv(dim,32))*32+tl.arange(0,32)&#10;                store=block//(tl.cdiv(S,32)*tl.cdiv(dim,32))&#10;                valid=(row[:,None]&lt;S) &amp; (col[None,:]&lt;dim)&#10;                value=tl.load(Sources[i]+(store*S+row[:,None])*dim+col[None,:],valid,0)&#10;                tl.store(Destinations[i]+(store*dim+col[None,:])*S+row[:,None],value,valid)&#10;            else:&#10;                x=block*256+tl.arange(0,256)&#10;                value=tl.load(Sources[i]+x,x&lt;Numel[i],0)&#10;                tl.store(Destinations[i]+x,value,x&lt;Numel[i])&#10;    for i in tl.static_range(3):&#10;        field=len(Sources)+i&#10;        if (pid&gt;=Starts[field]) &amp; (pid&lt;Starts[field+1]):&#10;                 ^&#10;tuple indices must be integers or slices, not tensor">.venv/lib/python3.12/site-packages/triton/language/core.py:340: in __getitem__
+    return self.value.__getitem__(*args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   TypeError: tuple indices must be integers or slices, not tensor
+
+The above exception was the direct cause of the following exception:
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:67: in test_full_first_order_parity
+    check_parity(slots,seed)
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:51: in check_parity
+    ga=torch.autograd.grad(actual,actual_inputs,weights,allow_unused=True,retain_graph=repeat)
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:503: in grad
+    result = _engine_run_backward(
+.venv/lib/python3.12/site-packages/torch/autograd/graph.py:841: in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:315: in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:608: in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/backward.py:278: in backward
+    replay,(gk,gv,gs)=prepare(ctx.storage.owners,(gkeys,gvalues,gstrength),soa=payload_soa)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/replay_setup.py:85: in prepare
+    setup_kernel[(starts[-1],)](owners,replay,sources,adjoints,tuple(starts),numel,
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in &lt;lambda&gt;
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:733: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:861: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:300: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:80: in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+E   triton.compiler.errors.CompilationError: at 23:17:
+E                   col=((block//tl.cdiv(S,32))%tl.cdiv(dim,32))*32+tl.arange(0,32)
+E                   store=block//(tl.cdiv(S,32)*tl.cdiv(dim,32))
+E                   valid=(row[:,None]&lt;S) &amp; (col[None,:]&lt;dim)
+E                   value=tl.load(Sources[i]+(store*S+row[:,None])*dim+col[None,:],valid,0)
+E                   tl.store(Destinations[i]+(store*dim+col[None,:])*S+row[:,None],value,valid)
+E               else:
+E                   x=block*256+tl.arange(0,256)
+E                   value=tl.load(Sources[i]+x,x&lt;Numel[i],0)
+E                   tl.store(Destinations[i]+x,value,x&lt;Numel[i])
+E       for i in tl.static_range(3):
+E           field=len(Sources)+i
+E           if (pid&gt;=Starts[field]) &amp; (pid&lt;Starts[field+1]):
+E                    ^
+E   tuple indices must be integers or slices, not tensor</failure></testcase></testsuite></testsuites>

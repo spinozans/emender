@@ -1,5 +1,6 @@
 """Checkpoint-free matched X34 2M-token cost/semantics validation."""
 import json
+import argparse
 import os
 from pathlib import Path
 import random
@@ -16,6 +17,11 @@ ROOT=Path(__file__).resolve().parent
 
 
 def main():
+    parser=argparse.ArgumentParser()
+    parser.add_argument('--output',default='part2_training_slice.json')
+    args=parser.parse_args()
+    if Path(args.output).name!=args.output:
+        raise ValueError('output must be a receipt filename')
     if os.environ.get('GPU_LEASE_HELD') not in ('0','1','5','6'):
         raise RuntimeError('broker lease required')
     torch.set_num_threads(1)
@@ -45,11 +51,11 @@ def main():
             median_step_ms=statistics.median(r['seconds'] for r in curve[2:])*1000,
             matched_reference_steps=len(errors),max_loss_error=max(errors),
             exact_loss_curve=all(e==0 for e in errors),loss_curve_gate=max(errors)<=1e-5)
-        (ROOT/'receipts/part2_training_slice.json').write_text(json.dumps(result,indent=2)+'\n')
+        (ROOT/'receipts'/args.output).write_text(json.dumps(result,indent=2)+'\n')
         del model,opt,logits,loss
         torch.cuda.empty_cache()
     result['step_ratio']=result['tape_lm']['median_step_ms']/result['base_lm']['median_step_ms']
-    (ROOT/'receipts/part2_training_slice.json').write_text(json.dumps(result,indent=2)+'\n')
+    (ROOT/'receipts'/args.output).write_text(json.dumps(result,indent=2)+'\n')
     print(json.dumps({a:{k:v for k,v in r.items() if k!='curve'} if isinstance(r,dict) else r for a,r in result.items()}),flush=True)
 
 if __name__=='__main__':main()

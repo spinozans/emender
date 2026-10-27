@@ -1,0 +1,46 @@
+--- a/experiments/expressivity_tasks/x36_tape_perf/backward.py
++++ b/experiments/expressivity_tasks/x36_tape_perf/backward.py
+@@ -84,7 +84,6 @@
+     s=tl.arange(0,BS)
+     d=tl.arange(0,BV)
+     valid=s<S
+-    gs=tl.load(GStrength+n*S+s,valid,0.)
+     stop=tl.load(Counts+n)
+     coef_grad=tl.full((),0.,tl.float32)
+     for reverse in range(T):
+@@ -94,6 +93,9 @@
+         undo_to((Addresses,Before,Widths,Counts,n,Capacity),start,stop,UB)
+         stop=start
+         tl.debug_barrier()
++        # Keep the full-S adjoint out of the undo helper's register lifetime.
++        # Volatile reload prevents loop-invariant promotion across typed undo.
++        gs=tl.load(GStrength+n*S+s,valid,0.,volatile=True)
+         live=tl.load(Live+n*S+s,valid,False).to(tl.int1)
+         reference=tl.load(Strength+n*S+s,valid,0.)
+         if Fresh and t==0:
+@@ -140,6 +142,7 @@
+         pop=tl.load(Pop+inp)
+         dpop=-tl.sum(tl.where(s==pop_id,gs*strength,0.),0)
+         gs=tl.where(s==pop_id,gs*(1.-pop),gs)
++        tl.store(GStrength+n*S+s,gs,valid)
+         tl.store(DPop+inp,dpop)
+         tl.debug_barrier()
+         # Dense read adjoints, evaluated only on the restored pre-read store.
+@@ -160,7 +163,8 @@
+             dw+=value*gout
+             gv=tl.load(GValues+((n*DV+j)*S+s if SoA else (n*S+s)*DV+j),valid & live,0.)
+             tl.store(GValues+((n*DV+j)*S+s if SoA else (n*S+s)*DV+j),gv+weight*gout,valid & live)
+-        gs+=prob*live*dw
++        gs=tl.load(GStrength+n*S+s,valid,0.,volatile=True)+prob*live*dw
++        tl.store(GStrength+n*S+s,gs,valid)
+         dp=dw*strength*live
+         ds=prob*(dp-tl.sum(prob*dp,0))*live*scale
+         for j in range(DK):
+@@ -170,7 +174,6 @@
+             tl.store(GKeys+((n*DK+j)*S+s if SoA else (n*S+s)*DK+j),gk+ds*query,valid & live)
+             tl.store(DQout+inp*DK+j,tl.sum(ds*key,0))
+         tl.debug_barrier()
+-    tl.store(GStrength+n*S+s,gs,valid)
+     tl.store(DCoef+n,coef_grad)
+ 
+ 

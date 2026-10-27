@@ -1,0 +1,42 @@
+--- a/experiments/expressivity_tasks/x36_tape_perf/backward.py
++++ b/experiments/expressivity_tasks/x36_tape_perf/backward.py
+@@ -90,6 +90,10 @@
+     for reverse in range(T):
+         t=T-1-reverse
+         inp=n*T+t
++        # Every other input adjoint is unconditionally written below. Keys
++        # receive a gradient only on allocation; initialize those lanes here.
++        kd=tl.arange(0,triton.next_power_of_2(DK))
++        tl.store(DKout+inp*DK+kd,0.,kd<DK)
+         start=tl.load(Boundaries+inp)
+         undo_to((Addresses,Before,Widths,Counts,n,Capacity),start,stop,UB)
+         stop=start
+@@ -269,8 +273,8 @@
+             gv=gv.transpose(-1,-2).contiguous()
+         gs=gradient(gstrength,strength)
+         go=torch.zeros(b,h,t,cfg.value_dim,device=k.device) if gout is None else flat(gout)
+-        dkout,dqout,dvout,dbeta,dpop,dlogit=[torch.zeros_like(flat(x)) for x in
+-                                             (k,q,v,beta,pop,logit)]
++        dkout,dqout,dvout,dbeta,dpop=[torch.empty_like(x) for x in args]
++        dlogit=torch.empty((b,h,t),device=k.device,dtype=k.dtype)
+         dc=torch.empty(b*h,device=k.device)
+         original_addresses,before,widths,counts,boundaries,gates,errors=ctx.log
+         # The log is private to this autograd node. Rebase it in place and
+@@ -282,7 +286,7 @@
+         # tested, empty-origin prefix specialization. Unknown imports and
+         # longer continuations keep the oracle's warp count.
+         prefix8=(cfg.slots==2944 and cfg.key_dim==64 and cfg.value_dim==128
+-                 and ctx.initial_bound is not None and ctx.initial_bound+t<=512)
++                 and ctx.initial_bound == 0 and t<=4096)
+         try:
+             reverse_kernel[(b*h,)](*args,keys,values,strength,live,meta[5],
+                 *ctx.trace,gates,errors,addresses,before,widths,counts,boundaries,
+@@ -290,7 +294,7 @@
+                 t,cfg.slots,dk,cfg.value_dim,triton.next_power_of_2(cfg.slots),
+                 triton.next_power_of_2(cfg.value_dim),min(128,triton.next_power_of_2(max(cfg.slots,cfg.value_dim,dk))),ctx.capacity,payload_soa,True,ctx.start,
+                 struct.unpack('<f',struct.pack('<f',cfg.decay_rate))[0],
+-                enable_fp_fusion=False,debug=True,num_warps=16 if cfg.slots>=4096 else (8 if prefix8 else 4))
++                enable_fp_fusion=False,debug=True,num_warps=32 if cfg.slots>=4096 else (8 if prefix8 else 4))
+         finally:
+             rebase_owned(addresses,counts,replay,ctx.address_owners,ctx.capacity,
+                          payload_slots=cfg.slots if payload_soa else 0,reverse_payload=payload_soa)

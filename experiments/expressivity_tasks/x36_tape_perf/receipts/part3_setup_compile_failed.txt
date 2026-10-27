@@ -1,0 +1,2355 @@
+gpu_lease: granted GPUs: 0 (pid 2962205)
+X36 physical card 0
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0
+rootdir: /home/erikg/emender
+configfile: pyproject.toml
+plugins: timeout-2.4.0, anyio-4.13.0
+collected 131 items
+
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_all_field_journal.py . [  0%]
+........                                                                 [  6%]
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_components.py . [  7%]
+..                                                                       [  9%]
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_device_free.py . [  9%]
+                                                                         [  9%]
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py F [ 10%]
+FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF                                          [ 34%]
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_lazy_decay.py . [ 35%]
+..........                                                               [ 42%]
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_parity.py . [ 43%]
+........................F........                                        [ 68%]
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_part7.py F [ 69%]
+FFFFF..                                                                  [ 74%]
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_part8.py F [ 75%]
+...                                                                      [ 77%]
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_write_journal.py . [ 78%]
+......                                                                   [ 83%]
+experiments/expressivity_tasks/x36_tape_perf/tests/test_exact.py FFFFFF
+
+=================================== FAILURES ===================================
+______________________ test_full_first_order_parity[0-1] _______________________
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:67: in test_full_first_order_parity
+    check_parity(slots,seed)
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:51: in check_parity
+    ga=torch.autograd.grad(actual,actual_inputs,weights,allow_unused=True,retain_graph=repeat)
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:503: in grad
+    result = _engine_run_backward(
+.venv/lib/python3.12/site-packages/torch/autograd/graph.py:841: in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:315: in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:608: in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/backward.py:278: in backward
+    replay,(gk,gv,gs)=prepare(ctx.storage.owners,(gkeys,gvalues,gstrength),soa=payload_soa)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/replay_setup.py:85: in prepare
+    setup_kernel[(starts[-1],)](owners,replay,sources,adjoints,tuple(starts),numel,
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:733: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:861: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:300: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:80: in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+E   triton.compiler.errors.CompilationError: at 22:8:
+E                   row=(block%tl.cdiv(S,32))*32+tl.arange(0,32)
+E                   col=((block//tl.cdiv(S,32))%tl.cdiv(dim,32))*32+tl.arange(0,32)
+E                   store=block//(tl.cdiv(S,32)*tl.cdiv(dim,32))
+E                   valid=(row[:,None]<S) & (col[None,:]<dim)
+E                   value=tl.load(Sources[i]+(store*S+row[:,None])*dim+col[None,:],valid,0)
+E                   tl.store(Destinations[i]+(store*dim+col[None,:])*S+row[:,None],value,valid)
+E               else:
+E                   x=block*256+tl.arange(0,256)
+E                   value=tl.load(Sources[i]+x,x<Numel[i],0)
+E                   tl.store(Destinations[i]+x,value,x<Numel[i])
+E       for i in tl.static_range(3):
+E           field:tl.constexpr=len(Sources)+i
+E           ^
+E   ValueError('field is already defined. constexpr cannot be reassigned.')
+______________________ test_full_first_order_parity[0-7] _______________________
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:67: in test_full_first_order_parity
+    check_parity(slots,seed)
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:51: in check_parity
+    ga=torch.autograd.grad(actual,actual_inputs,weights,allow_unused=True,retain_graph=repeat)
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:503: in grad
+    result = _engine_run_backward(
+.venv/lib/python3.12/site-packages/torch/autograd/graph.py:841: in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:315: in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:608: in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/backward.py:278: in backward
+    replay,(gk,gv,gs)=prepare(ctx.storage.owners,(gkeys,gvalues,gstrength),soa=payload_soa)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/replay_setup.py:85: in prepare
+    setup_kernel[(starts[-1],)](owners,replay,sources,adjoints,tuple(starts),numel,
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:733: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:861: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:300: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:80: in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+E   triton.compiler.errors.CompilationError: at 22:8:
+E                   row=(block%tl.cdiv(S,32))*32+tl.arange(0,32)
+E                   col=((block//tl.cdiv(S,32))%tl.cdiv(dim,32))*32+tl.arange(0,32)
+E                   store=block//(tl.cdiv(S,32)*tl.cdiv(dim,32))
+E                   valid=(row[:,None]<S) & (col[None,:]<dim)
+E                   value=tl.load(Sources[i]+(store*S+row[:,None])*dim+col[None,:],valid,0)
+E                   tl.store(Destinations[i]+(store*dim+col[None,:])*S+row[:,None],value,valid)
+E               else:
+E                   x=block*256+tl.arange(0,256)
+E                   value=tl.load(Sources[i]+x,x<Numel[i],0)
+E                   tl.store(Destinations[i]+x,value,x<Numel[i])
+E       for i in tl.static_range(3):
+E           field:tl.constexpr=len(Sources)+i
+E           ^
+E   ValueError('field is already defined. constexpr cannot be reassigned.')
+______________________ test_full_first_order_parity[0-16] ______________________
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:67: in test_full_first_order_parity
+    check_parity(slots,seed)
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:51: in check_parity
+    ga=torch.autograd.grad(actual,actual_inputs,weights,allow_unused=True,retain_graph=repeat)
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:503: in grad
+    result = _engine_run_backward(
+.venv/lib/python3.12/site-packages/torch/autograd/graph.py:841: in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:315: in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:608: in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/backward.py:278: in backward
+    replay,(gk,gv,gs)=prepare(ctx.storage.owners,(gkeys,gvalues,gstrength),soa=payload_soa)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/replay_setup.py:85: in prepare
+    setup_kernel[(starts[-1],)](owners,replay,sources,adjoints,tuple(starts),numel,
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:733: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:861: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:300: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:80: in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+E   triton.compiler.errors.CompilationError: at 22:8:
+E                   row=(block%tl.cdiv(S,32))*32+tl.arange(0,32)
+E                   col=((block//tl.cdiv(S,32))%tl.cdiv(dim,32))*32+tl.arange(0,32)
+E                   store=block//(tl.cdiv(S,32)*tl.cdiv(dim,32))
+E                   valid=(row[:,None]<S) & (col[None,:]<dim)
+E                   value=tl.load(Sources[i]+(store*S+row[:,None])*dim+col[None,:],valid,0)
+E                   tl.store(Destinations[i]+(store*dim+col[None,:])*S+row[:,None],value,valid)
+E               else:
+E                   x=block*256+tl.arange(0,256)
+E                   value=tl.load(Sources[i]+x,x<Numel[i],0)
+E                   tl.store(Destinations[i]+x,value,x<Numel[i])
+E       for i in tl.static_range(3):
+E           field:tl.constexpr=len(Sources)+i
+E           ^
+E   ValueError('field is already defined. constexpr cannot be reassigned.')
+_____________________ test_full_first_order_parity[0-736] ______________________
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:67: in test_full_first_order_parity
+    check_parity(slots,seed)
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:51: in check_parity
+    ga=torch.autograd.grad(actual,actual_inputs,weights,allow_unused=True,retain_graph=repeat)
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:503: in grad
+    result = _engine_run_backward(
+.venv/lib/python3.12/site-packages/torch/autograd/graph.py:841: in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:315: in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:608: in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/backward.py:278: in backward
+    replay,(gk,gv,gs)=prepare(ctx.storage.owners,(gkeys,gvalues,gstrength),soa=payload_soa)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/replay_setup.py:85: in prepare
+    setup_kernel[(starts[-1],)](owners,replay,sources,adjoints,tuple(starts),numel,
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:733: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:861: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:300: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:80: in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+E   triton.compiler.errors.CompilationError: at 22:8:
+E                   row=(block%tl.cdiv(S,32))*32+tl.arange(0,32)
+E                   col=((block//tl.cdiv(S,32))%tl.cdiv(dim,32))*32+tl.arange(0,32)
+E                   store=block//(tl.cdiv(S,32)*tl.cdiv(dim,32))
+E                   valid=(row[:,None]<S) & (col[None,:]<dim)
+E                   value=tl.load(Sources[i]+(store*S+row[:,None])*dim+col[None,:],valid,0)
+E                   tl.store(Destinations[i]+(store*dim+col[None,:])*S+row[:,None],value,valid)
+E               else:
+E                   x=block*256+tl.arange(0,256)
+E                   value=tl.load(Sources[i]+x,x<Numel[i],0)
+E                   tl.store(Destinations[i]+x,value,x<Numel[i])
+E       for i in tl.static_range(3):
+E           field:tl.constexpr=len(Sources)+i
+E           ^
+E   ValueError('field is already defined. constexpr cannot be reassigned.')
+____________________ test_full_first_order_parity[0-11776] _____________________
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:67: in test_full_first_order_parity
+    check_parity(slots,seed)
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:51: in check_parity
+    ga=torch.autograd.grad(actual,actual_inputs,weights,allow_unused=True,retain_graph=repeat)
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:503: in grad
+    result = _engine_run_backward(
+.venv/lib/python3.12/site-packages/torch/autograd/graph.py:841: in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:315: in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:608: in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/backward.py:278: in backward
+    replay,(gk,gv,gs)=prepare(ctx.storage.owners,(gkeys,gvalues,gstrength),soa=payload_soa)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/replay_setup.py:85: in prepare
+    setup_kernel[(starts[-1],)](owners,replay,sources,adjoints,tuple(starts),numel,
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:733: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:861: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:300: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:80: in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+E   triton.compiler.errors.CompilationError: at 22:8:
+E                   row=(block%tl.cdiv(S,32))*32+tl.arange(0,32)
+E                   col=((block//tl.cdiv(S,32))%tl.cdiv(dim,32))*32+tl.arange(0,32)
+E                   store=block//(tl.cdiv(S,32)*tl.cdiv(dim,32))
+E                   valid=(row[:,None]<S) & (col[None,:]<dim)
+E                   value=tl.load(Sources[i]+(store*S+row[:,None])*dim+col[None,:],valid,0)
+E                   tl.store(Destinations[i]+(store*dim+col[None,:])*S+row[:,None],value,valid)
+E               else:
+E                   x=block*256+tl.arange(0,256)
+E                   value=tl.load(Sources[i]+x,x<Numel[i],0)
+E                   tl.store(Destinations[i]+x,value,x<Numel[i])
+E       for i in tl.static_range(3):
+E           field:tl.constexpr=len(Sources)+i
+E           ^
+E   ValueError('field is already defined. constexpr cannot be reassigned.')
+______________________ test_full_first_order_parity[1-1] _______________________
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:67: in test_full_first_order_parity
+    check_parity(slots,seed)
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:51: in check_parity
+    ga=torch.autograd.grad(actual,actual_inputs,weights,allow_unused=True,retain_graph=repeat)
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:503: in grad
+    result = _engine_run_backward(
+.venv/lib/python3.12/site-packages/torch/autograd/graph.py:841: in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:315: in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:608: in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/backward.py:278: in backward
+    replay,(gk,gv,gs)=prepare(ctx.storage.owners,(gkeys,gvalues,gstrength),soa=payload_soa)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/replay_setup.py:85: in prepare
+    setup_kernel[(starts[-1],)](owners,replay,sources,adjoints,tuple(starts),numel,
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:733: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:861: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:300: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:80: in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+E   triton.compiler.errors.CompilationError: at 22:8:
+E                   row=(block%tl.cdiv(S,32))*32+tl.arange(0,32)
+E                   col=((block//tl.cdiv(S,32))%tl.cdiv(dim,32))*32+tl.arange(0,32)
+E                   store=block//(tl.cdiv(S,32)*tl.cdiv(dim,32))
+E                   valid=(row[:,None]<S) & (col[None,:]<dim)
+E                   value=tl.load(Sources[i]+(store*S+row[:,None])*dim+col[None,:],valid,0)
+E                   tl.store(Destinations[i]+(store*dim+col[None,:])*S+row[:,None],value,valid)
+E               else:
+E                   x=block*256+tl.arange(0,256)
+E                   value=tl.load(Sources[i]+x,x<Numel[i],0)
+E                   tl.store(Destinations[i]+x,value,x<Numel[i])
+E       for i in tl.static_range(3):
+E           field:tl.constexpr=len(Sources)+i
+E           ^
+E   ValueError('field is already defined. constexpr cannot be reassigned.')
+______________________ test_full_first_order_parity[1-7] _______________________
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:67: in test_full_first_order_parity
+    check_parity(slots,seed)
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:51: in check_parity
+    ga=torch.autograd.grad(actual,actual_inputs,weights,allow_unused=True,retain_graph=repeat)
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:503: in grad
+    result = _engine_run_backward(
+.venv/lib/python3.12/site-packages/torch/autograd/graph.py:841: in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:315: in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:608: in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/backward.py:278: in backward
+    replay,(gk,gv,gs)=prepare(ctx.storage.owners,(gkeys,gvalues,gstrength),soa=payload_soa)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/replay_setup.py:85: in prepare
+    setup_kernel[(starts[-1],)](owners,replay,sources,adjoints,tuple(starts),numel,
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:733: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:861: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:300: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:80: in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+E   triton.compiler.errors.CompilationError: at 22:8:
+E                   row=(block%tl.cdiv(S,32))*32+tl.arange(0,32)
+E                   col=((block//tl.cdiv(S,32))%tl.cdiv(dim,32))*32+tl.arange(0,32)
+E                   store=block//(tl.cdiv(S,32)*tl.cdiv(dim,32))
+E                   valid=(row[:,None]<S) & (col[None,:]<dim)
+E                   value=tl.load(Sources[i]+(store*S+row[:,None])*dim+col[None,:],valid,0)
+E                   tl.store(Destinations[i]+(store*dim+col[None,:])*S+row[:,None],value,valid)
+E               else:
+E                   x=block*256+tl.arange(0,256)
+E                   value=tl.load(Sources[i]+x,x<Numel[i],0)
+E                   tl.store(Destinations[i]+x,value,x<Numel[i])
+E       for i in tl.static_range(3):
+E           field:tl.constexpr=len(Sources)+i
+E           ^
+E   ValueError('field is already defined. constexpr cannot be reassigned.')
+______________________ test_full_first_order_parity[1-16] ______________________
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:67: in test_full_first_order_parity
+    check_parity(slots,seed)
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:51: in check_parity
+    ga=torch.autograd.grad(actual,actual_inputs,weights,allow_unused=True,retain_graph=repeat)
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:503: in grad
+    result = _engine_run_backward(
+.venv/lib/python3.12/site-packages/torch/autograd/graph.py:841: in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:315: in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:608: in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/backward.py:278: in backward
+    replay,(gk,gv,gs)=prepare(ctx.storage.owners,(gkeys,gvalues,gstrength),soa=payload_soa)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/replay_setup.py:85: in prepare
+    setup_kernel[(starts[-1],)](owners,replay,sources,adjoints,tuple(starts),numel,
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:733: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:861: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:300: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:80: in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+E   triton.compiler.errors.CompilationError: at 22:8:
+E                   row=(block%tl.cdiv(S,32))*32+tl.arange(0,32)
+E                   col=((block//tl.cdiv(S,32))%tl.cdiv(dim,32))*32+tl.arange(0,32)
+E                   store=block//(tl.cdiv(S,32)*tl.cdiv(dim,32))
+E                   valid=(row[:,None]<S) & (col[None,:]<dim)
+E                   value=tl.load(Sources[i]+(store*S+row[:,None])*dim+col[None,:],valid,0)
+E                   tl.store(Destinations[i]+(store*dim+col[None,:])*S+row[:,None],value,valid)
+E               else:
+E                   x=block*256+tl.arange(0,256)
+E                   value=tl.load(Sources[i]+x,x<Numel[i],0)
+E                   tl.store(Destinations[i]+x,value,x<Numel[i])
+E       for i in tl.static_range(3):
+E           field:tl.constexpr=len(Sources)+i
+E           ^
+E   ValueError('field is already defined. constexpr cannot be reassigned.')
+_____________________ test_full_first_order_parity[1-736] ______________________
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:67: in test_full_first_order_parity
+    check_parity(slots,seed)
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:51: in check_parity
+    ga=torch.autograd.grad(actual,actual_inputs,weights,allow_unused=True,retain_graph=repeat)
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:503: in grad
+    result = _engine_run_backward(
+.venv/lib/python3.12/site-packages/torch/autograd/graph.py:841: in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:315: in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:608: in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/backward.py:278: in backward
+    replay,(gk,gv,gs)=prepare(ctx.storage.owners,(gkeys,gvalues,gstrength),soa=payload_soa)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/replay_setup.py:85: in prepare
+    setup_kernel[(starts[-1],)](owners,replay,sources,adjoints,tuple(starts),numel,
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:733: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:861: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:300: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:80: in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+E   triton.compiler.errors.CompilationError: at 22:8:
+E                   row=(block%tl.cdiv(S,32))*32+tl.arange(0,32)
+E                   col=((block//tl.cdiv(S,32))%tl.cdiv(dim,32))*32+tl.arange(0,32)
+E                   store=block//(tl.cdiv(S,32)*tl.cdiv(dim,32))
+E                   valid=(row[:,None]<S) & (col[None,:]<dim)
+E                   value=tl.load(Sources[i]+(store*S+row[:,None])*dim+col[None,:],valid,0)
+E                   tl.store(Destinations[i]+(store*dim+col[None,:])*S+row[:,None],value,valid)
+E               else:
+E                   x=block*256+tl.arange(0,256)
+E                   value=tl.load(Sources[i]+x,x<Numel[i],0)
+E                   tl.store(Destinations[i]+x,value,x<Numel[i])
+E       for i in tl.static_range(3):
+E           field:tl.constexpr=len(Sources)+i
+E           ^
+E   ValueError('field is already defined. constexpr cannot be reassigned.')
+____________________ test_full_first_order_parity[1-11776] _____________________
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:67: in test_full_first_order_parity
+    check_parity(slots,seed)
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:51: in check_parity
+    ga=torch.autograd.grad(actual,actual_inputs,weights,allow_unused=True,retain_graph=repeat)
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:503: in grad
+    result = _engine_run_backward(
+.venv/lib/python3.12/site-packages/torch/autograd/graph.py:841: in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:315: in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:608: in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/backward.py:278: in backward
+    replay,(gk,gv,gs)=prepare(ctx.storage.owners,(gkeys,gvalues,gstrength),soa=payload_soa)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/replay_setup.py:85: in prepare
+    setup_kernel[(starts[-1],)](owners,replay,sources,adjoints,tuple(starts),numel,
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:733: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:861: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:300: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:80: in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+E   triton.compiler.errors.CompilationError: at 22:8:
+E                   row=(block%tl.cdiv(S,32))*32+tl.arange(0,32)
+E                   col=((block//tl.cdiv(S,32))%tl.cdiv(dim,32))*32+tl.arange(0,32)
+E                   store=block//(tl.cdiv(S,32)*tl.cdiv(dim,32))
+E                   valid=(row[:,None]<S) & (col[None,:]<dim)
+E                   value=tl.load(Sources[i]+(store*S+row[:,None])*dim+col[None,:],valid,0)
+E                   tl.store(Destinations[i]+(store*dim+col[None,:])*S+row[:,None],value,valid)
+E               else:
+E                   x=block*256+tl.arange(0,256)
+E                   value=tl.load(Sources[i]+x,x<Numel[i],0)
+E                   tl.store(Destinations[i]+x,value,x<Numel[i])
+E       for i in tl.static_range(3):
+E           field:tl.constexpr=len(Sources)+i
+E           ^
+E   ValueError('field is already defined. constexpr cannot be reassigned.')
+______________________ test_full_first_order_parity[2-1] _______________________
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:67: in test_full_first_order_parity
+    check_parity(slots,seed)
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:51: in check_parity
+    ga=torch.autograd.grad(actual,actual_inputs,weights,allow_unused=True,retain_graph=repeat)
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:503: in grad
+    result = _engine_run_backward(
+.venv/lib/python3.12/site-packages/torch/autograd/graph.py:841: in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:315: in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:608: in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/backward.py:278: in backward
+    replay,(gk,gv,gs)=prepare(ctx.storage.owners,(gkeys,gvalues,gstrength),soa=payload_soa)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/replay_setup.py:85: in prepare
+    setup_kernel[(starts[-1],)](owners,replay,sources,adjoints,tuple(starts),numel,
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:733: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:861: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:300: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:80: in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+E   triton.compiler.errors.CompilationError: at 22:8:
+E                   row=(block%tl.cdiv(S,32))*32+tl.arange(0,32)
+E                   col=((block//tl.cdiv(S,32))%tl.cdiv(dim,32))*32+tl.arange(0,32)
+E                   store=block//(tl.cdiv(S,32)*tl.cdiv(dim,32))
+E                   valid=(row[:,None]<S) & (col[None,:]<dim)
+E                   value=tl.load(Sources[i]+(store*S+row[:,None])*dim+col[None,:],valid,0)
+E                   tl.store(Destinations[i]+(store*dim+col[None,:])*S+row[:,None],value,valid)
+E               else:
+E                   x=block*256+tl.arange(0,256)
+E                   value=tl.load(Sources[i]+x,x<Numel[i],0)
+E                   tl.store(Destinations[i]+x,value,x<Numel[i])
+E       for i in tl.static_range(3):
+E           field:tl.constexpr=len(Sources)+i
+E           ^
+E   ValueError('field is already defined. constexpr cannot be reassigned.')
+______________________ test_full_first_order_parity[2-7] _______________________
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:67: in test_full_first_order_parity
+    check_parity(slots,seed)
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:51: in check_parity
+    ga=torch.autograd.grad(actual,actual_inputs,weights,allow_unused=True,retain_graph=repeat)
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:503: in grad
+    result = _engine_run_backward(
+.venv/lib/python3.12/site-packages/torch/autograd/graph.py:841: in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:315: in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:608: in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/backward.py:278: in backward
+    replay,(gk,gv,gs)=prepare(ctx.storage.owners,(gkeys,gvalues,gstrength),soa=payload_soa)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/replay_setup.py:85: in prepare
+    setup_kernel[(starts[-1],)](owners,replay,sources,adjoints,tuple(starts),numel,
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:733: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:861: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:300: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:80: in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+E   triton.compiler.errors.CompilationError: at 22:8:
+E                   row=(block%tl.cdiv(S,32))*32+tl.arange(0,32)
+E                   col=((block//tl.cdiv(S,32))%tl.cdiv(dim,32))*32+tl.arange(0,32)
+E                   store=block//(tl.cdiv(S,32)*tl.cdiv(dim,32))
+E                   valid=(row[:,None]<S) & (col[None,:]<dim)
+E                   value=tl.load(Sources[i]+(store*S+row[:,None])*dim+col[None,:],valid,0)
+E                   tl.store(Destinations[i]+(store*dim+col[None,:])*S+row[:,None],value,valid)
+E               else:
+E                   x=block*256+tl.arange(0,256)
+E                   value=tl.load(Sources[i]+x,x<Numel[i],0)
+E                   tl.store(Destinations[i]+x,value,x<Numel[i])
+E       for i in tl.static_range(3):
+E           field:tl.constexpr=len(Sources)+i
+E           ^
+E   ValueError('field is already defined. constexpr cannot be reassigned.')
+______________________ test_full_first_order_parity[2-16] ______________________
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:67: in test_full_first_order_parity
+    check_parity(slots,seed)
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:51: in check_parity
+    ga=torch.autograd.grad(actual,actual_inputs,weights,allow_unused=True,retain_graph=repeat)
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:503: in grad
+    result = _engine_run_backward(
+.venv/lib/python3.12/site-packages/torch/autograd/graph.py:841: in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:315: in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:608: in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/backward.py:278: in backward
+    replay,(gk,gv,gs)=prepare(ctx.storage.owners,(gkeys,gvalues,gstrength),soa=payload_soa)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/replay_setup.py:85: in prepare
+    setup_kernel[(starts[-1],)](owners,replay,sources,adjoints,tuple(starts),numel,
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:733: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:861: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:300: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:80: in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+E   triton.compiler.errors.CompilationError: at 22:8:
+E                   row=(block%tl.cdiv(S,32))*32+tl.arange(0,32)
+E                   col=((block//tl.cdiv(S,32))%tl.cdiv(dim,32))*32+tl.arange(0,32)
+E                   store=block//(tl.cdiv(S,32)*tl.cdiv(dim,32))
+E                   valid=(row[:,None]<S) & (col[None,:]<dim)
+E                   value=tl.load(Sources[i]+(store*S+row[:,None])*dim+col[None,:],valid,0)
+E                   tl.store(Destinations[i]+(store*dim+col[None,:])*S+row[:,None],value,valid)
+E               else:
+E                   x=block*256+tl.arange(0,256)
+E                   value=tl.load(Sources[i]+x,x<Numel[i],0)
+E                   tl.store(Destinations[i]+x,value,x<Numel[i])
+E       for i in tl.static_range(3):
+E           field:tl.constexpr=len(Sources)+i
+E           ^
+E   ValueError('field is already defined. constexpr cannot be reassigned.')
+_____________________ test_full_first_order_parity[2-736] ______________________
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:67: in test_full_first_order_parity
+    check_parity(slots,seed)
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:51: in check_parity
+    ga=torch.autograd.grad(actual,actual_inputs,weights,allow_unused=True,retain_graph=repeat)
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:503: in grad
+    result = _engine_run_backward(
+.venv/lib/python3.12/site-packages/torch/autograd/graph.py:841: in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:315: in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:608: in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/backward.py:278: in backward
+    replay,(gk,gv,gs)=prepare(ctx.storage.owners,(gkeys,gvalues,gstrength),soa=payload_soa)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/replay_setup.py:85: in prepare
+    setup_kernel[(starts[-1],)](owners,replay,sources,adjoints,tuple(starts),numel,
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:733: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:861: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:300: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:80: in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+E   triton.compiler.errors.CompilationError: at 22:8:
+E                   row=(block%tl.cdiv(S,32))*32+tl.arange(0,32)
+E                   col=((block//tl.cdiv(S,32))%tl.cdiv(dim,32))*32+tl.arange(0,32)
+E                   store=block//(tl.cdiv(S,32)*tl.cdiv(dim,32))
+E                   valid=(row[:,None]<S) & (col[None,:]<dim)
+E                   value=tl.load(Sources[i]+(store*S+row[:,None])*dim+col[None,:],valid,0)
+E                   tl.store(Destinations[i]+(store*dim+col[None,:])*S+row[:,None],value,valid)
+E               else:
+E                   x=block*256+tl.arange(0,256)
+E                   value=tl.load(Sources[i]+x,x<Numel[i],0)
+E                   tl.store(Destinations[i]+x,value,x<Numel[i])
+E       for i in tl.static_range(3):
+E           field:tl.constexpr=len(Sources)+i
+E           ^
+E   ValueError('field is already defined. constexpr cannot be reassigned.')
+____________________ test_full_first_order_parity[2-11776] _____________________
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:67: in test_full_first_order_parity
+    check_parity(slots,seed)
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:51: in check_parity
+    ga=torch.autograd.grad(actual,actual_inputs,weights,allow_unused=True,retain_graph=repeat)
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:503: in grad
+    result = _engine_run_backward(
+.venv/lib/python3.12/site-packages/torch/autograd/graph.py:841: in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:315: in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:608: in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/backward.py:278: in backward
+    replay,(gk,gv,gs)=prepare(ctx.storage.owners,(gkeys,gvalues,gstrength),soa=payload_soa)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/replay_setup.py:85: in prepare
+    setup_kernel[(starts[-1],)](owners,replay,sources,adjoints,tuple(starts),numel,
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:733: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:861: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:300: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:80: in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+E   triton.compiler.errors.CompilationError: at 22:8:
+E                   row=(block%tl.cdiv(S,32))*32+tl.arange(0,32)
+E                   col=((block//tl.cdiv(S,32))%tl.cdiv(dim,32))*32+tl.arange(0,32)
+E                   store=block//(tl.cdiv(S,32)*tl.cdiv(dim,32))
+E                   valid=(row[:,None]<S) & (col[None,:]<dim)
+E                   value=tl.load(Sources[i]+(store*S+row[:,None])*dim+col[None,:],valid,0)
+E                   tl.store(Destinations[i]+(store*dim+col[None,:])*S+row[:,None],value,valid)
+E               else:
+E                   x=block*256+tl.arange(0,256)
+E                   value=tl.load(Sources[i]+x,x<Numel[i],0)
+E                   tl.store(Destinations[i]+x,value,x<Numel[i])
+E       for i in tl.static_range(3):
+E           field:tl.constexpr=len(Sources)+i
+E           ^
+E   ValueError('field is already defined. constexpr cannot be reassigned.')
+______________________ test_full_first_order_parity[3-1] _______________________
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:67: in test_full_first_order_parity
+    check_parity(slots,seed)
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:51: in check_parity
+    ga=torch.autograd.grad(actual,actual_inputs,weights,allow_unused=True,retain_graph=repeat)
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:503: in grad
+    result = _engine_run_backward(
+.venv/lib/python3.12/site-packages/torch/autograd/graph.py:841: in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:315: in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:608: in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/backward.py:278: in backward
+    replay,(gk,gv,gs)=prepare(ctx.storage.owners,(gkeys,gvalues,gstrength),soa=payload_soa)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/replay_setup.py:85: in prepare
+    setup_kernel[(starts[-1],)](owners,replay,sources,adjoints,tuple(starts),numel,
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:733: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:861: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:300: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:80: in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+E   triton.compiler.errors.CompilationError: at 22:8:
+E                   row=(block%tl.cdiv(S,32))*32+tl.arange(0,32)
+E                   col=((block//tl.cdiv(S,32))%tl.cdiv(dim,32))*32+tl.arange(0,32)
+E                   store=block//(tl.cdiv(S,32)*tl.cdiv(dim,32))
+E                   valid=(row[:,None]<S) & (col[None,:]<dim)
+E                   value=tl.load(Sources[i]+(store*S+row[:,None])*dim+col[None,:],valid,0)
+E                   tl.store(Destinations[i]+(store*dim+col[None,:])*S+row[:,None],value,valid)
+E               else:
+E                   x=block*256+tl.arange(0,256)
+E                   value=tl.load(Sources[i]+x,x<Numel[i],0)
+E                   tl.store(Destinations[i]+x,value,x<Numel[i])
+E       for i in tl.static_range(3):
+E           field:tl.constexpr=len(Sources)+i
+E           ^
+E   ValueError('field is already defined. constexpr cannot be reassigned.')
+______________________ test_full_first_order_parity[3-7] _______________________
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:67: in test_full_first_order_parity
+    check_parity(slots,seed)
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:51: in check_parity
+    ga=torch.autograd.grad(actual,actual_inputs,weights,allow_unused=True,retain_graph=repeat)
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:503: in grad
+    result = _engine_run_backward(
+.venv/lib/python3.12/site-packages/torch/autograd/graph.py:841: in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:315: in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:608: in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/backward.py:278: in backward
+    replay,(gk,gv,gs)=prepare(ctx.storage.owners,(gkeys,gvalues,gstrength),soa=payload_soa)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/replay_setup.py:85: in prepare
+    setup_kernel[(starts[-1],)](owners,replay,sources,adjoints,tuple(starts),numel,
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:733: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:861: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:300: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:80: in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+E   triton.compiler.errors.CompilationError: at 22:8:
+E                   row=(block%tl.cdiv(S,32))*32+tl.arange(0,32)
+E                   col=((block//tl.cdiv(S,32))%tl.cdiv(dim,32))*32+tl.arange(0,32)
+E                   store=block//(tl.cdiv(S,32)*tl.cdiv(dim,32))
+E                   valid=(row[:,None]<S) & (col[None,:]<dim)
+E                   value=tl.load(Sources[i]+(store*S+row[:,None])*dim+col[None,:],valid,0)
+E                   tl.store(Destinations[i]+(store*dim+col[None,:])*S+row[:,None],value,valid)
+E               else:
+E                   x=block*256+tl.arange(0,256)
+E                   value=tl.load(Sources[i]+x,x<Numel[i],0)
+E                   tl.store(Destinations[i]+x,value,x<Numel[i])
+E       for i in tl.static_range(3):
+E           field:tl.constexpr=len(Sources)+i
+E           ^
+E   ValueError('field is already defined. constexpr cannot be reassigned.')
+______________________ test_full_first_order_parity[3-16] ______________________
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:67: in test_full_first_order_parity
+    check_parity(slots,seed)
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:51: in check_parity
+    ga=torch.autograd.grad(actual,actual_inputs,weights,allow_unused=True,retain_graph=repeat)
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:503: in grad
+    result = _engine_run_backward(
+.venv/lib/python3.12/site-packages/torch/autograd/graph.py:841: in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:315: in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:608: in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/backward.py:278: in backward
+    replay,(gk,gv,gs)=prepare(ctx.storage.owners,(gkeys,gvalues,gstrength),soa=payload_soa)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/replay_setup.py:85: in prepare
+    setup_kernel[(starts[-1],)](owners,replay,sources,adjoints,tuple(starts),numel,
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:733: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:861: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:300: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:80: in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+E   triton.compiler.errors.CompilationError: at 22:8:
+E                   row=(block%tl.cdiv(S,32))*32+tl.arange(0,32)
+E                   col=((block//tl.cdiv(S,32))%tl.cdiv(dim,32))*32+tl.arange(0,32)
+E                   store=block//(tl.cdiv(S,32)*tl.cdiv(dim,32))
+E                   valid=(row[:,None]<S) & (col[None,:]<dim)
+E                   value=tl.load(Sources[i]+(store*S+row[:,None])*dim+col[None,:],valid,0)
+E                   tl.store(Destinations[i]+(store*dim+col[None,:])*S+row[:,None],value,valid)
+E               else:
+E                   x=block*256+tl.arange(0,256)
+E                   value=tl.load(Sources[i]+x,x<Numel[i],0)
+E                   tl.store(Destinations[i]+x,value,x<Numel[i])
+E       for i in tl.static_range(3):
+E           field:tl.constexpr=len(Sources)+i
+E           ^
+E   ValueError('field is already defined. constexpr cannot be reassigned.')
+_____________________ test_full_first_order_parity[3-736] ______________________
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:67: in test_full_first_order_parity
+    check_parity(slots,seed)
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:51: in check_parity
+    ga=torch.autograd.grad(actual,actual_inputs,weights,allow_unused=True,retain_graph=repeat)
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:503: in grad
+    result = _engine_run_backward(
+.venv/lib/python3.12/site-packages/torch/autograd/graph.py:841: in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:315: in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:608: in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/backward.py:278: in backward
+    replay,(gk,gv,gs)=prepare(ctx.storage.owners,(gkeys,gvalues,gstrength),soa=payload_soa)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/replay_setup.py:85: in prepare
+    setup_kernel[(starts[-1],)](owners,replay,sources,adjoints,tuple(starts),numel,
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:733: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:861: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:300: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:80: in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+E   triton.compiler.errors.CompilationError: at 22:8:
+E                   row=(block%tl.cdiv(S,32))*32+tl.arange(0,32)
+E                   col=((block//tl.cdiv(S,32))%tl.cdiv(dim,32))*32+tl.arange(0,32)
+E                   store=block//(tl.cdiv(S,32)*tl.cdiv(dim,32))
+E                   valid=(row[:,None]<S) & (col[None,:]<dim)
+E                   value=tl.load(Sources[i]+(store*S+row[:,None])*dim+col[None,:],valid,0)
+E                   tl.store(Destinations[i]+(store*dim+col[None,:])*S+row[:,None],value,valid)
+E               else:
+E                   x=block*256+tl.arange(0,256)
+E                   value=tl.load(Sources[i]+x,x<Numel[i],0)
+E                   tl.store(Destinations[i]+x,value,x<Numel[i])
+E       for i in tl.static_range(3):
+E           field:tl.constexpr=len(Sources)+i
+E           ^
+E   ValueError('field is already defined. constexpr cannot be reassigned.')
+____________________ test_full_first_order_parity[3-11776] _____________________
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:67: in test_full_first_order_parity
+    check_parity(slots,seed)
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:51: in check_parity
+    ga=torch.autograd.grad(actual,actual_inputs,weights,allow_unused=True,retain_graph=repeat)
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:503: in grad
+    result = _engine_run_backward(
+.venv/lib/python3.12/site-packages/torch/autograd/graph.py:841: in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:315: in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:608: in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/backward.py:278: in backward
+    replay,(gk,gv,gs)=prepare(ctx.storage.owners,(gkeys,gvalues,gstrength),soa=payload_soa)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/replay_setup.py:85: in prepare
+    setup_kernel[(starts[-1],)](owners,replay,sources,adjoints,tuple(starts),numel,
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:733: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:861: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:300: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:80: in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+E   triton.compiler.errors.CompilationError: at 22:8:
+E                   row=(block%tl.cdiv(S,32))*32+tl.arange(0,32)
+E                   col=((block//tl.cdiv(S,32))%tl.cdiv(dim,32))*32+tl.arange(0,32)
+E                   store=block//(tl.cdiv(S,32)*tl.cdiv(dim,32))
+E                   valid=(row[:,None]<S) & (col[None,:]<dim)
+E                   value=tl.load(Sources[i]+(store*S+row[:,None])*dim+col[None,:],valid,0)
+E                   tl.store(Destinations[i]+(store*dim+col[None,:])*S+row[:,None],value,valid)
+E               else:
+E                   x=block*256+tl.arange(0,256)
+E                   value=tl.load(Sources[i]+x,x<Numel[i],0)
+E                   tl.store(Destinations[i]+x,value,x<Numel[i])
+E       for i in tl.static_range(3):
+E           field:tl.constexpr=len(Sources)+i
+E           ^
+E   ValueError('field is already defined. constexpr cannot be reassigned.')
+______________________ test_full_first_order_parity[4-1] _______________________
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:67: in test_full_first_order_parity
+    check_parity(slots,seed)
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:51: in check_parity
+    ga=torch.autograd.grad(actual,actual_inputs,weights,allow_unused=True,retain_graph=repeat)
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:503: in grad
+    result = _engine_run_backward(
+.venv/lib/python3.12/site-packages/torch/autograd/graph.py:841: in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:315: in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:608: in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/backward.py:278: in backward
+    replay,(gk,gv,gs)=prepare(ctx.storage.owners,(gkeys,gvalues,gstrength),soa=payload_soa)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/replay_setup.py:85: in prepare
+    setup_kernel[(starts[-1],)](owners,replay,sources,adjoints,tuple(starts),numel,
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:733: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:861: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:300: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:80: in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+E   triton.compiler.errors.CompilationError: at 22:8:
+E                   row=(block%tl.cdiv(S,32))*32+tl.arange(0,32)
+E                   col=((block//tl.cdiv(S,32))%tl.cdiv(dim,32))*32+tl.arange(0,32)
+E                   store=block//(tl.cdiv(S,32)*tl.cdiv(dim,32))
+E                   valid=(row[:,None]<S) & (col[None,:]<dim)
+E                   value=tl.load(Sources[i]+(store*S+row[:,None])*dim+col[None,:],valid,0)
+E                   tl.store(Destinations[i]+(store*dim+col[None,:])*S+row[:,None],value,valid)
+E               else:
+E                   x=block*256+tl.arange(0,256)
+E                   value=tl.load(Sources[i]+x,x<Numel[i],0)
+E                   tl.store(Destinations[i]+x,value,x<Numel[i])
+E       for i in tl.static_range(3):
+E           field:tl.constexpr=len(Sources)+i
+E           ^
+E   ValueError('field is already defined. constexpr cannot be reassigned.')
+______________________ test_full_first_order_parity[4-7] _______________________
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:67: in test_full_first_order_parity
+    check_parity(slots,seed)
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:51: in check_parity
+    ga=torch.autograd.grad(actual,actual_inputs,weights,allow_unused=True,retain_graph=repeat)
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:503: in grad
+    result = _engine_run_backward(
+.venv/lib/python3.12/site-packages/torch/autograd/graph.py:841: in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:315: in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:608: in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/backward.py:278: in backward
+    replay,(gk,gv,gs)=prepare(ctx.storage.owners,(gkeys,gvalues,gstrength),soa=payload_soa)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/replay_setup.py:85: in prepare
+    setup_kernel[(starts[-1],)](owners,replay,sources,adjoints,tuple(starts),numel,
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:733: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:861: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:300: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:80: in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+E   triton.compiler.errors.CompilationError: at 22:8:
+E                   row=(block%tl.cdiv(S,32))*32+tl.arange(0,32)
+E                   col=((block//tl.cdiv(S,32))%tl.cdiv(dim,32))*32+tl.arange(0,32)
+E                   store=block//(tl.cdiv(S,32)*tl.cdiv(dim,32))
+E                   valid=(row[:,None]<S) & (col[None,:]<dim)
+E                   value=tl.load(Sources[i]+(store*S+row[:,None])*dim+col[None,:],valid,0)
+E                   tl.store(Destinations[i]+(store*dim+col[None,:])*S+row[:,None],value,valid)
+E               else:
+E                   x=block*256+tl.arange(0,256)
+E                   value=tl.load(Sources[i]+x,x<Numel[i],0)
+E                   tl.store(Destinations[i]+x,value,x<Numel[i])
+E       for i in tl.static_range(3):
+E           field:tl.constexpr=len(Sources)+i
+E           ^
+E   ValueError('field is already defined. constexpr cannot be reassigned.')
+______________________ test_full_first_order_parity[4-16] ______________________
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:67: in test_full_first_order_parity
+    check_parity(slots,seed)
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:51: in check_parity
+    ga=torch.autograd.grad(actual,actual_inputs,weights,allow_unused=True,retain_graph=repeat)
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:503: in grad
+    result = _engine_run_backward(
+.venv/lib/python3.12/site-packages/torch/autograd/graph.py:841: in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:315: in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:608: in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/backward.py:278: in backward
+    replay,(gk,gv,gs)=prepare(ctx.storage.owners,(gkeys,gvalues,gstrength),soa=payload_soa)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/replay_setup.py:85: in prepare
+    setup_kernel[(starts[-1],)](owners,replay,sources,adjoints,tuple(starts),numel,
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:733: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:861: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:300: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:80: in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+E   triton.compiler.errors.CompilationError: at 22:8:
+E                   row=(block%tl.cdiv(S,32))*32+tl.arange(0,32)
+E                   col=((block//tl.cdiv(S,32))%tl.cdiv(dim,32))*32+tl.arange(0,32)
+E                   store=block//(tl.cdiv(S,32)*tl.cdiv(dim,32))
+E                   valid=(row[:,None]<S) & (col[None,:]<dim)
+E                   value=tl.load(Sources[i]+(store*S+row[:,None])*dim+col[None,:],valid,0)
+E                   tl.store(Destinations[i]+(store*dim+col[None,:])*S+row[:,None],value,valid)
+E               else:
+E                   x=block*256+tl.arange(0,256)
+E                   value=tl.load(Sources[i]+x,x<Numel[i],0)
+E                   tl.store(Destinations[i]+x,value,x<Numel[i])
+E       for i in tl.static_range(3):
+E           field:tl.constexpr=len(Sources)+i
+E           ^
+E   ValueError('field is already defined. constexpr cannot be reassigned.')
+_____________________ test_full_first_order_parity[4-736] ______________________
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:67: in test_full_first_order_parity
+    check_parity(slots,seed)
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:51: in check_parity
+    ga=torch.autograd.grad(actual,actual_inputs,weights,allow_unused=True,retain_graph=repeat)
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:503: in grad
+    result = _engine_run_backward(
+.venv/lib/python3.12/site-packages/torch/autograd/graph.py:841: in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:315: in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:608: in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/backward.py:278: in backward
+    replay,(gk,gv,gs)=prepare(ctx.storage.owners,(gkeys,gvalues,gstrength),soa=payload_soa)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/replay_setup.py:85: in prepare
+    setup_kernel[(starts[-1],)](owners,replay,sources,adjoints,tuple(starts),numel,
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:733: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:861: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:300: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:80: in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+E   triton.compiler.errors.CompilationError: at 22:8:
+E                   row=(block%tl.cdiv(S,32))*32+tl.arange(0,32)
+E                   col=((block//tl.cdiv(S,32))%tl.cdiv(dim,32))*32+tl.arange(0,32)
+E                   store=block//(tl.cdiv(S,32)*tl.cdiv(dim,32))
+E                   valid=(row[:,None]<S) & (col[None,:]<dim)
+E                   value=tl.load(Sources[i]+(store*S+row[:,None])*dim+col[None,:],valid,0)
+E                   tl.store(Destinations[i]+(store*dim+col[None,:])*S+row[:,None],value,valid)
+E               else:
+E                   x=block*256+tl.arange(0,256)
+E                   value=tl.load(Sources[i]+x,x<Numel[i],0)
+E                   tl.store(Destinations[i]+x,value,x<Numel[i])
+E       for i in tl.static_range(3):
+E           field:tl.constexpr=len(Sources)+i
+E           ^
+E   ValueError('field is already defined. constexpr cannot be reassigned.')
+____________________ test_full_first_order_parity[4-11776] _____________________
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:67: in test_full_first_order_parity
+    check_parity(slots,seed)
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:51: in check_parity
+    ga=torch.autograd.grad(actual,actual_inputs,weights,allow_unused=True,retain_graph=repeat)
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:503: in grad
+    result = _engine_run_backward(
+.venv/lib/python3.12/site-packages/torch/autograd/graph.py:841: in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:315: in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:608: in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/backward.py:278: in backward
+    replay,(gk,gv,gs)=prepare(ctx.storage.owners,(gkeys,gvalues,gstrength),soa=payload_soa)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/replay_setup.py:85: in prepare
+    setup_kernel[(starts[-1],)](owners,replay,sources,adjoints,tuple(starts),numel,
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:733: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:861: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:300: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:80: in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+E   triton.compiler.errors.CompilationError: at 22:8:
+E                   row=(block%tl.cdiv(S,32))*32+tl.arange(0,32)
+E                   col=((block//tl.cdiv(S,32))%tl.cdiv(dim,32))*32+tl.arange(0,32)
+E                   store=block//(tl.cdiv(S,32)*tl.cdiv(dim,32))
+E                   valid=(row[:,None]<S) & (col[None,:]<dim)
+E                   value=tl.load(Sources[i]+(store*S+row[:,None])*dim+col[None,:],valid,0)
+E                   tl.store(Destinations[i]+(store*dim+col[None,:])*S+row[:,None],value,valid)
+E               else:
+E                   x=block*256+tl.arange(0,256)
+E                   value=tl.load(Sources[i]+x,x<Numel[i],0)
+E                   tl.store(Destinations[i]+x,value,x<Numel[i])
+E       for i in tl.static_range(3):
+E           field:tl.constexpr=len(Sources)+i
+E           ^
+E   ValueError('field is already defined. constexpr cannot be reassigned.')
+_______________ test_production_dimension_gradient_parity[37-0] ________________
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:72: in test_production_dimension_gradient_parity
+    check_parity(slots,seed,64,128)
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:51: in check_parity
+    ga=torch.autograd.grad(actual,actual_inputs,weights,allow_unused=True,retain_graph=repeat)
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:503: in grad
+    result = _engine_run_backward(
+.venv/lib/python3.12/site-packages/torch/autograd/graph.py:841: in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:315: in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:608: in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/backward.py:278: in backward
+    replay,(gk,gv,gs)=prepare(ctx.storage.owners,(gkeys,gvalues,gstrength),soa=payload_soa)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/replay_setup.py:85: in prepare
+    setup_kernel[(starts[-1],)](owners,replay,sources,adjoints,tuple(starts),numel,
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:733: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:861: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:300: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:80: in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+E   triton.compiler.errors.CompilationError: at 22:8:
+E                   row=(block%tl.cdiv(S,32))*32+tl.arange(0,32)
+E                   col=((block//tl.cdiv(S,32))%tl.cdiv(dim,32))*32+tl.arange(0,32)
+E                   store=block//(tl.cdiv(S,32)*tl.cdiv(dim,32))
+E                   valid=(row[:,None]<S) & (col[None,:]<dim)
+E                   value=tl.load(Sources[i]+(store*S+row[:,None])*dim+col[None,:],valid,0)
+E                   tl.store(Destinations[i]+(store*dim+col[None,:])*S+row[:,None],value,valid)
+E               else:
+E                   x=block*256+tl.arange(0,256)
+E                   value=tl.load(Sources[i]+x,x<Numel[i],0)
+E                   tl.store(Destinations[i]+x,value,x<Numel[i])
+E       for i in tl.static_range(3):
+E           field:tl.constexpr=len(Sources)+i
+E           ^
+E   ValueError('field is already defined. constexpr cannot be reassigned.')
+_______________ test_production_dimension_gradient_parity[37-1] ________________
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:72: in test_production_dimension_gradient_parity
+    check_parity(slots,seed,64,128)
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:51: in check_parity
+    ga=torch.autograd.grad(actual,actual_inputs,weights,allow_unused=True,retain_graph=repeat)
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:503: in grad
+    result = _engine_run_backward(
+.venv/lib/python3.12/site-packages/torch/autograd/graph.py:841: in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:315: in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:608: in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/backward.py:278: in backward
+    replay,(gk,gv,gs)=prepare(ctx.storage.owners,(gkeys,gvalues,gstrength),soa=payload_soa)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/replay_setup.py:85: in prepare
+    setup_kernel[(starts[-1],)](owners,replay,sources,adjoints,tuple(starts),numel,
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:733: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:861: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:300: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:80: in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+E   triton.compiler.errors.CompilationError: at 22:8:
+E                   row=(block%tl.cdiv(S,32))*32+tl.arange(0,32)
+E                   col=((block//tl.cdiv(S,32))%tl.cdiv(dim,32))*32+tl.arange(0,32)
+E                   store=block//(tl.cdiv(S,32)*tl.cdiv(dim,32))
+E                   valid=(row[:,None]<S) & (col[None,:]<dim)
+E                   value=tl.load(Sources[i]+(store*S+row[:,None])*dim+col[None,:],valid,0)
+E                   tl.store(Destinations[i]+(store*dim+col[None,:])*S+row[:,None],value,valid)
+E               else:
+E                   x=block*256+tl.arange(0,256)
+E                   value=tl.load(Sources[i]+x,x<Numel[i],0)
+E                   tl.store(Destinations[i]+x,value,x<Numel[i])
+E       for i in tl.static_range(3):
+E           field:tl.constexpr=len(Sources)+i
+E           ^
+E   ValueError('field is already defined. constexpr cannot be reassigned.')
+_______________ test_production_dimension_gradient_parity[736-0] _______________
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:72: in test_production_dimension_gradient_parity
+    check_parity(slots,seed,64,128)
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:51: in check_parity
+    ga=torch.autograd.grad(actual,actual_inputs,weights,allow_unused=True,retain_graph=repeat)
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:503: in grad
+    result = _engine_run_backward(
+.venv/lib/python3.12/site-packages/torch/autograd/graph.py:841: in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:315: in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:608: in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/backward.py:278: in backward
+    replay,(gk,gv,gs)=prepare(ctx.storage.owners,(gkeys,gvalues,gstrength),soa=payload_soa)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/replay_setup.py:85: in prepare
+    setup_kernel[(starts[-1],)](owners,replay,sources,adjoints,tuple(starts),numel,
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:733: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:861: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:300: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:80: in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+E   triton.compiler.errors.CompilationError: at 22:8:
+E                   row=(block%tl.cdiv(S,32))*32+tl.arange(0,32)
+E                   col=((block//tl.cdiv(S,32))%tl.cdiv(dim,32))*32+tl.arange(0,32)
+E                   store=block//(tl.cdiv(S,32)*tl.cdiv(dim,32))
+E                   valid=(row[:,None]<S) & (col[None,:]<dim)
+E                   value=tl.load(Sources[i]+(store*S+row[:,None])*dim+col[None,:],valid,0)
+E                   tl.store(Destinations[i]+(store*dim+col[None,:])*S+row[:,None],value,valid)
+E               else:
+E                   x=block*256+tl.arange(0,256)
+E                   value=tl.load(Sources[i]+x,x<Numel[i],0)
+E                   tl.store(Destinations[i]+x,value,x<Numel[i])
+E       for i in tl.static_range(3):
+E           field:tl.constexpr=len(Sources)+i
+E           ^
+E   ValueError('field is already defined. constexpr cannot be reassigned.')
+______________ test_production_dimension_gradient_parity[11776-0] ______________
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:72: in test_production_dimension_gradient_parity
+    check_parity(slots,seed,64,128)
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:51: in check_parity
+    ga=torch.autograd.grad(actual,actual_inputs,weights,allow_unused=True,retain_graph=repeat)
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:503: in grad
+    result = _engine_run_backward(
+.venv/lib/python3.12/site-packages/torch/autograd/graph.py:841: in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:315: in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:608: in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/backward.py:278: in backward
+    replay,(gk,gv,gs)=prepare(ctx.storage.owners,(gkeys,gvalues,gstrength),soa=payload_soa)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/replay_setup.py:85: in prepare
+    setup_kernel[(starts[-1],)](owners,replay,sources,adjoints,tuple(starts),numel,
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:733: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:861: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:300: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:80: in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+E   triton.compiler.errors.CompilationError: at 22:8:
+E                   row=(block%tl.cdiv(S,32))*32+tl.arange(0,32)
+E                   col=((block//tl.cdiv(S,32))%tl.cdiv(dim,32))*32+tl.arange(0,32)
+E                   store=block//(tl.cdiv(S,32)*tl.cdiv(dim,32))
+E                   valid=(row[:,None]<S) & (col[None,:]<dim)
+E                   value=tl.load(Sources[i]+(store*S+row[:,None])*dim+col[None,:],valid,0)
+E                   tl.store(Destinations[i]+(store*dim+col[None,:])*S+row[:,None],value,valid)
+E               else:
+E                   x=block*256+tl.arange(0,256)
+E                   value=tl.load(Sources[i]+x,x<Numel[i],0)
+E                   tl.store(Destinations[i]+x,value,x<Numel[i])
+E       for i in tl.static_range(3):
+E           field:tl.constexpr=len(Sources)+i
+E           ^
+E   ValueError('field is already defined. constexpr cannot be reassigned.')
+______________________ test_gradient_continuation_parity _______________________
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:76: in test_gradient_continuation_parity
+    check_parity(7,72,split=4)
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:51: in check_parity
+    ga=torch.autograd.grad(actual,actual_inputs,weights,allow_unused=True,retain_graph=repeat)
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:503: in grad
+    result = _engine_run_backward(
+.venv/lib/python3.12/site-packages/torch/autograd/graph.py:841: in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:315: in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:608: in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/backward.py:278: in backward
+    replay,(gk,gv,gs)=prepare(ctx.storage.owners,(gkeys,gvalues,gstrength),soa=payload_soa)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/replay_setup.py:85: in prepare
+    setup_kernel[(starts[-1],)](owners,replay,sources,adjoints,tuple(starts),numel,
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:733: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:861: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:300: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:80: in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+E   triton.compiler.errors.CompilationError: at 22:8:
+E                   row=(block%tl.cdiv(S,32))*32+tl.arange(0,32)
+E                   col=((block//tl.cdiv(S,32))%tl.cdiv(dim,32))*32+tl.arange(0,32)
+E                   store=block//(tl.cdiv(S,32)*tl.cdiv(dim,32))
+E                   valid=(row[:,None]<S) & (col[None,:]<dim)
+E                   value=tl.load(Sources[i]+(store*S+row[:,None])*dim+col[None,:],valid,0)
+E                   tl.store(Destinations[i]+(store*dim+col[None,:])*S+row[:,None],value,valid)
+E               else:
+E                   x=block*256+tl.arange(0,256)
+E                   value=tl.load(Sources[i]+x,x<Numel[i],0)
+E                   tl.store(Destinations[i]+x,value,x<Numel[i])
+E       for i in tl.static_range(3):
+E           field:tl.constexpr=len(Sources)+i
+E           ^
+E   ValueError('field is already defined. constexpr cannot be reassigned.')
+______________________ test_retained_first_order_backward ______________________
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:80: in test_retained_first_order_backward
+    check_parity(7,72,repeat=True)
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:51: in check_parity
+    ga=torch.autograd.grad(actual,actual_inputs,weights,allow_unused=True,retain_graph=repeat)
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:503: in grad
+    result = _engine_run_backward(
+.venv/lib/python3.12/site-packages/torch/autograd/graph.py:841: in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:315: in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:608: in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/backward.py:278: in backward
+    replay,(gk,gv,gs)=prepare(ctx.storage.owners,(gkeys,gvalues,gstrength),soa=payload_soa)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/replay_setup.py:85: in prepare
+    setup_kernel[(starts[-1],)](owners,replay,sources,adjoints,tuple(starts),numel,
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:733: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:861: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:300: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:80: in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+E   triton.compiler.errors.CompilationError: at 22:8:
+E                   row=(block%tl.cdiv(S,32))*32+tl.arange(0,32)
+E                   col=((block//tl.cdiv(S,32))%tl.cdiv(dim,32))*32+tl.arange(0,32)
+E                   store=block//(tl.cdiv(S,32)*tl.cdiv(dim,32))
+E                   valid=(row[:,None]<S) & (col[None,:]<dim)
+E                   value=tl.load(Sources[i]+(store*S+row[:,None])*dim+col[None,:],valid,0)
+E                   tl.store(Destinations[i]+(store*dim+col[None,:])*S+row[:,None],value,valid)
+E               else:
+E                   x=block*256+tl.arange(0,256)
+E                   value=tl.load(Sources[i]+x,x<Numel[i],0)
+E                   tl.store(Destinations[i]+x,value,x<Numel[i])
+E       for i in tl.static_range(3):
+E           field:tl.constexpr=len(Sources)+i
+E           ^
+E   ValueError('field is already defined. constexpr cannot be reassigned.')
+_____________ test_mutating_public_trace_does_not_change_backward ______________
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:84: in test_mutating_public_trace_does_not_change_backward
+    check_parity(7,72,heads=1,tamper_trace=True)
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py:51: in check_parity
+    ga=torch.autograd.grad(actual,actual_inputs,weights,allow_unused=True,retain_graph=repeat)
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:503: in grad
+    result = _engine_run_backward(
+.venv/lib/python3.12/site-packages/torch/autograd/graph.py:841: in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:315: in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:608: in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/backward.py:278: in backward
+    replay,(gk,gv,gs)=prepare(ctx.storage.owners,(gkeys,gvalues,gstrength),soa=payload_soa)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/replay_setup.py:85: in prepare
+    setup_kernel[(starts[-1],)](owners,replay,sources,adjoints,tuple(starts),numel,
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:733: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:861: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:300: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:80: in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+E   triton.compiler.errors.CompilationError: at 22:8:
+E                   row=(block%tl.cdiv(S,32))*32+tl.arange(0,32)
+E                   col=((block//tl.cdiv(S,32))%tl.cdiv(dim,32))*32+tl.arange(0,32)
+E                   store=block//(tl.cdiv(S,32)*tl.cdiv(dim,32))
+E                   valid=(row[:,None]<S) & (col[None,:]<dim)
+E                   value=tl.load(Sources[i]+(store*S+row[:,None])*dim+col[None,:],valid,0)
+E                   tl.store(Destinations[i]+(store*dim+col[None,:])*S+row[:,None],value,valid)
+E               else:
+E                   x=block*256+tl.arange(0,256)
+E                   value=tl.load(Sources[i]+x,x<Numel[i],0)
+E                   tl.store(Destinations[i]+x,value,x<Numel[i])
+E       for i in tl.static_range(3):
+E           field:tl.constexpr=len(Sources)+i
+E           ^
+E   ValueError('field is already defined. constexpr cannot be reassigned.')
+____________________ test_training_first_order_entry_point _____________________
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_parity.py:58: in test_training_first_order_entry_point
+    out.sum().backward()
+.venv/lib/python3.12/site-packages/torch/_tensor.py:625: in backward
+    torch.autograd.backward(
+.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:354: in backward
+    _engine_run_backward(
+.venv/lib/python3.12/site-packages/torch/autograd/graph.py:841: in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:315: in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:608: in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/backward.py:278: in backward
+    replay,(gk,gv,gs)=prepare(ctx.storage.owners,(gkeys,gvalues,gstrength),soa=payload_soa)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/replay_setup.py:85: in prepare
+    setup_kernel[(starts[-1],)](owners,replay,sources,adjoints,tuple(starts),numel,
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:733: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:861: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:300: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:80: in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+E   triton.compiler.errors.CompilationError: at 22:8:
+E                   row=(block%tl.cdiv(S,32))*32+tl.arange(0,32)
+E                   col=((block//tl.cdiv(S,32))%tl.cdiv(dim,32))*32+tl.arange(0,32)
+E                   store=block//(tl.cdiv(S,32)*tl.cdiv(dim,32))
+E                   valid=(row[:,None]<S) & (col[None,:]<dim)
+E                   value=tl.load(Sources[i]+(store*S+row[:,None])*dim+col[None,:],valid,0)
+E                   tl.store(Destinations[i]+(store*dim+col[None,:])*S+row[:,None],value,valid)
+E               else:
+E                   x=block*256+tl.arange(0,256)
+E                   value=tl.load(Sources[i]+x,x<Numel[i],0)
+E                   tl.store(Destinations[i]+x,value,x<Numel[i])
+E       for i in tl.static_range(3):
+E           field:tl.constexpr=len(Sources)+i
+E           ^
+E   ValueError('field is already defined. constexpr cannot be reassigned.')
+____________________ test_empty_sparse_replay_heads[1-736] _____________________
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_part7.py:29: in test_empty_sparse_replay_heads
+    ga=torch.autograd.grad(actual,a,weights,allow_unused=True,retain_graph=True)
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:503: in grad
+    result = _engine_run_backward(
+.venv/lib/python3.12/site-packages/torch/autograd/graph.py:841: in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:315: in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:608: in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/backward.py:278: in backward
+    replay,(gk,gv,gs)=prepare(ctx.storage.owners,(gkeys,gvalues,gstrength),soa=payload_soa)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/replay_setup.py:85: in prepare
+    setup_kernel[(starts[-1],)](owners,replay,sources,adjoints,tuple(starts),numel,
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:733: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:861: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:300: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:80: in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+E   triton.compiler.errors.CompilationError: at 22:8:
+E                   row=(block%tl.cdiv(S,32))*32+tl.arange(0,32)
+E                   col=((block//tl.cdiv(S,32))%tl.cdiv(dim,32))*32+tl.arange(0,32)
+E                   store=block//(tl.cdiv(S,32)*tl.cdiv(dim,32))
+E                   valid=(row[:,None]<S) & (col[None,:]<dim)
+E                   value=tl.load(Sources[i]+(store*S+row[:,None])*dim+col[None,:],valid,0)
+E                   tl.store(Destinations[i]+(store*dim+col[None,:])*S+row[:,None],value,valid)
+E               else:
+E                   x=block*256+tl.arange(0,256)
+E                   value=tl.load(Sources[i]+x,x<Numel[i],0)
+E                   tl.store(Destinations[i]+x,value,x<Numel[i])
+E       for i in tl.static_range(3):
+E           field:tl.constexpr=len(Sources)+i
+E           ^
+E   ValueError('field is already defined. constexpr cannot be reassigned.')
+___________________ test_empty_sparse_replay_heads[1-11776] ____________________
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_part7.py:29: in test_empty_sparse_replay_heads
+    ga=torch.autograd.grad(actual,a,weights,allow_unused=True,retain_graph=True)
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:503: in grad
+    result = _engine_run_backward(
+.venv/lib/python3.12/site-packages/torch/autograd/graph.py:841: in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:315: in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:608: in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/backward.py:278: in backward
+    replay,(gk,gv,gs)=prepare(ctx.storage.owners,(gkeys,gvalues,gstrength),soa=payload_soa)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/replay_setup.py:85: in prepare
+    setup_kernel[(starts[-1],)](owners,replay,sources,adjoints,tuple(starts),numel,
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:733: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:861: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:300: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:80: in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+E   triton.compiler.errors.CompilationError: at 22:8:
+E                   row=(block%tl.cdiv(S,32))*32+tl.arange(0,32)
+E                   col=((block//tl.cdiv(S,32))%tl.cdiv(dim,32))*32+tl.arange(0,32)
+E                   store=block//(tl.cdiv(S,32)*tl.cdiv(dim,32))
+E                   valid=(row[:,None]<S) & (col[None,:]<dim)
+E                   value=tl.load(Sources[i]+(store*S+row[:,None])*dim+col[None,:],valid,0)
+E                   tl.store(Destinations[i]+(store*dim+col[None,:])*S+row[:,None],value,valid)
+E               else:
+E                   x=block*256+tl.arange(0,256)
+E                   value=tl.load(Sources[i]+x,x<Numel[i],0)
+E                   tl.store(Destinations[i]+x,value,x<Numel[i])
+E       for i in tl.static_range(3):
+E           field:tl.constexpr=len(Sources)+i
+E           ^
+E   ValueError('field is already defined. constexpr cannot be reassigned.')
+____________________ test_empty_sparse_replay_heads[4-736] _____________________
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_part7.py:29: in test_empty_sparse_replay_heads
+    ga=torch.autograd.grad(actual,a,weights,allow_unused=True,retain_graph=True)
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:503: in grad
+    result = _engine_run_backward(
+.venv/lib/python3.12/site-packages/torch/autograd/graph.py:841: in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:315: in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:608: in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/backward.py:278: in backward
+    replay,(gk,gv,gs)=prepare(ctx.storage.owners,(gkeys,gvalues,gstrength),soa=payload_soa)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/replay_setup.py:85: in prepare
+    setup_kernel[(starts[-1],)](owners,replay,sources,adjoints,tuple(starts),numel,
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:733: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:861: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:300: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:80: in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+E   triton.compiler.errors.CompilationError: at 22:8:
+E                   row=(block%tl.cdiv(S,32))*32+tl.arange(0,32)
+E                   col=((block//tl.cdiv(S,32))%tl.cdiv(dim,32))*32+tl.arange(0,32)
+E                   store=block//(tl.cdiv(S,32)*tl.cdiv(dim,32))
+E                   valid=(row[:,None]<S) & (col[None,:]<dim)
+E                   value=tl.load(Sources[i]+(store*S+row[:,None])*dim+col[None,:],valid,0)
+E                   tl.store(Destinations[i]+(store*dim+col[None,:])*S+row[:,None],value,valid)
+E               else:
+E                   x=block*256+tl.arange(0,256)
+E                   value=tl.load(Sources[i]+x,x<Numel[i],0)
+E                   tl.store(Destinations[i]+x,value,x<Numel[i])
+E       for i in tl.static_range(3):
+E           field:tl.constexpr=len(Sources)+i
+E           ^
+E   ValueError('field is already defined. constexpr cannot be reassigned.')
+___________________ test_empty_sparse_replay_heads[4-11776] ____________________
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_part7.py:29: in test_empty_sparse_replay_heads
+    ga=torch.autograd.grad(actual,a,weights,allow_unused=True,retain_graph=True)
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:503: in grad
+    result = _engine_run_backward(
+.venv/lib/python3.12/site-packages/torch/autograd/graph.py:841: in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:315: in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:608: in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/backward.py:278: in backward
+    replay,(gk,gv,gs)=prepare(ctx.storage.owners,(gkeys,gvalues,gstrength),soa=payload_soa)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/replay_setup.py:85: in prepare
+    setup_kernel[(starts[-1],)](owners,replay,sources,adjoints,tuple(starts),numel,
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:733: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:861: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:300: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:80: in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+E   triton.compiler.errors.CompilationError: at 22:8:
+E                   row=(block%tl.cdiv(S,32))*32+tl.arange(0,32)
+E                   col=((block//tl.cdiv(S,32))%tl.cdiv(dim,32))*32+tl.arange(0,32)
+E                   store=block//(tl.cdiv(S,32)*tl.cdiv(dim,32))
+E                   valid=(row[:,None]<S) & (col[None,:]<dim)
+E                   value=tl.load(Sources[i]+(store*S+row[:,None])*dim+col[None,:],valid,0)
+E                   tl.store(Destinations[i]+(store*dim+col[None,:])*S+row[:,None],value,valid)
+E               else:
+E                   x=block*256+tl.arange(0,256)
+E                   value=tl.load(Sources[i]+x,x<Numel[i],0)
+E                   tl.store(Destinations[i]+x,value,x<Numel[i])
+E       for i in tl.static_range(3):
+E           field:tl.constexpr=len(Sources)+i
+E           ^
+E   ValueError('field is already defined. constexpr cannot be reassigned.')
+____________________ test_empty_sparse_replay_heads[16-736] ____________________
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_part7.py:29: in test_empty_sparse_replay_heads
+    ga=torch.autograd.grad(actual,a,weights,allow_unused=True,retain_graph=True)
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:503: in grad
+    result = _engine_run_backward(
+.venv/lib/python3.12/site-packages/torch/autograd/graph.py:841: in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:315: in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:608: in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/backward.py:278: in backward
+    replay,(gk,gv,gs)=prepare(ctx.storage.owners,(gkeys,gvalues,gstrength),soa=payload_soa)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/replay_setup.py:85: in prepare
+    setup_kernel[(starts[-1],)](owners,replay,sources,adjoints,tuple(starts),numel,
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:733: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:861: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:300: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:80: in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+E   triton.compiler.errors.CompilationError: at 22:8:
+E                   row=(block%tl.cdiv(S,32))*32+tl.arange(0,32)
+E                   col=((block//tl.cdiv(S,32))%tl.cdiv(dim,32))*32+tl.arange(0,32)
+E                   store=block//(tl.cdiv(S,32)*tl.cdiv(dim,32))
+E                   valid=(row[:,None]<S) & (col[None,:]<dim)
+E                   value=tl.load(Sources[i]+(store*S+row[:,None])*dim+col[None,:],valid,0)
+E                   tl.store(Destinations[i]+(store*dim+col[None,:])*S+row[:,None],value,valid)
+E               else:
+E                   x=block*256+tl.arange(0,256)
+E                   value=tl.load(Sources[i]+x,x<Numel[i],0)
+E                   tl.store(Destinations[i]+x,value,x<Numel[i])
+E       for i in tl.static_range(3):
+E           field:tl.constexpr=len(Sources)+i
+E           ^
+E   ValueError('field is already defined. constexpr cannot be reassigned.')
+___________________ test_empty_sparse_replay_heads[16-11776] ___________________
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_part7.py:29: in test_empty_sparse_replay_heads
+    ga=torch.autograd.grad(actual,a,weights,allow_unused=True,retain_graph=True)
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:503: in grad
+    result = _engine_run_backward(
+.venv/lib/python3.12/site-packages/torch/autograd/graph.py:841: in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:315: in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:608: in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/backward.py:278: in backward
+    replay,(gk,gv,gs)=prepare(ctx.storage.owners,(gkeys,gvalues,gstrength),soa=payload_soa)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/replay_setup.py:85: in prepare
+    setup_kernel[(starts[-1],)](owners,replay,sources,adjoints,tuple(starts),numel,
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:733: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:861: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:300: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:80: in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+E   triton.compiler.errors.CompilationError: at 22:8:
+E                   row=(block%tl.cdiv(S,32))*32+tl.arange(0,32)
+E                   col=((block//tl.cdiv(S,32))%tl.cdiv(dim,32))*32+tl.arange(0,32)
+E                   store=block//(tl.cdiv(S,32)*tl.cdiv(dim,32))
+E                   valid=(row[:,None]<S) & (col[None,:]<dim)
+E                   value=tl.load(Sources[i]+(store*S+row[:,None])*dim+col[None,:],valid,0)
+E                   tl.store(Destinations[i]+(store*dim+col[None,:])*S+row[:,None],value,valid)
+E               else:
+E                   x=block*256+tl.arange(0,256)
+E                   value=tl.load(Sources[i]+x,x<Numel[i],0)
+E                   tl.store(Destinations[i]+x,value,x<Numel[i])
+E       for i in tl.static_range(3):
+E           field:tl.constexpr=len(Sources)+i
+E           ^
+E   ValueError('field is already defined. constexpr cannot be reassigned.')
+__________ test_deferred_replay_freezes_before_inference_continuation __________
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_part8.py:25: in test_deferred_replay_freezes_before_inference_continuation
+    actual=torch.autograd.grad(out.sum(),a,retain_graph=True,allow_unused=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:503: in grad
+    result = _engine_run_backward(
+.venv/lib/python3.12/site-packages/torch/autograd/graph.py:841: in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:315: in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:608: in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/backward.py:278: in backward
+    replay,(gk,gv,gs)=prepare(ctx.storage.owners,(gkeys,gvalues,gstrength),soa=payload_soa)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/replay_setup.py:85: in prepare
+    setup_kernel[(starts[-1],)](owners,replay,sources,adjoints,tuple(starts),numel,
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:733: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:861: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:300: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:80: in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+E   triton.compiler.errors.CompilationError: at 22:8:
+E                   row=(block%tl.cdiv(S,32))*32+tl.arange(0,32)
+E                   col=((block//tl.cdiv(S,32))%tl.cdiv(dim,32))*32+tl.arange(0,32)
+E                   store=block//(tl.cdiv(S,32)*tl.cdiv(dim,32))
+E                   valid=(row[:,None]<S) & (col[None,:]<dim)
+E                   value=tl.load(Sources[i]+(store*S+row[:,None])*dim+col[None,:],valid,0)
+E                   tl.store(Destinations[i]+(store*dim+col[None,:])*S+row[:,None],value,valid)
+E               else:
+E                   x=block*256+tl.arange(0,256)
+E                   value=tl.load(Sources[i]+x,x<Numel[i],0)
+E                   tl.store(Destinations[i]+x,value,x<Numel[i])
+E       for i in tl.static_range(3):
+E           field:tl.constexpr=len(Sources)+i
+E           ^
+E   ValueError('field is already defined. constexpr cannot be reassigned.')
+_____________________ test_fresh_exact[2-736-9-4-5-False] ______________________
+experiments/expressivity_tasks/x36_tape_perf/tests/test_exact.py:94: in test_fresh_exact
+    grads=torch.autograd.grad(loss,xs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:503: in grad
+    result = _engine_run_backward(
+.venv/lib/python3.12/site-packages/torch/autograd/graph.py:841: in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:315: in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:608: in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/backward.py:278: in backward
+    replay,(gk,gv,gs)=prepare(ctx.storage.owners,(gkeys,gvalues,gstrength),soa=payload_soa)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/replay_setup.py:85: in prepare
+    setup_kernel[(starts[-1],)](owners,replay,sources,adjoints,tuple(starts),numel,
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:733: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:861: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:300: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:80: in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+E   triton.compiler.errors.CompilationError: at 22:8:
+E                   row=(block%tl.cdiv(S,32))*32+tl.arange(0,32)
+E                   col=((block//tl.cdiv(S,32))%tl.cdiv(dim,32))*32+tl.arange(0,32)
+E                   store=block//(tl.cdiv(S,32)*tl.cdiv(dim,32))
+E                   valid=(row[:,None]<S) & (col[None,:]<dim)
+E                   value=tl.load(Sources[i]+(store*S+row[:,None])*dim+col[None,:],valid,0)
+E                   tl.store(Destinations[i]+(store*dim+col[None,:])*S+row[:,None],value,valid)
+E               else:
+E                   x=block*256+tl.arange(0,256)
+E                   value=tl.load(Sources[i]+x,x<Numel[i],0)
+E                   tl.store(Destinations[i]+x,value,x<Numel[i])
+E       for i in tl.static_range(3):
+E           field:tl.constexpr=len(Sources)+i
+E           ^
+E   ValueError('field is already defined. constexpr cannot be reassigned.')
+___________________ test_fresh_exact[2-2944-17-64-128-False] ___________________
+experiments/expressivity_tasks/x36_tape_perf/tests/test_exact.py:94: in test_fresh_exact
+    grads=torch.autograd.grad(loss,xs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:503: in grad
+    result = _engine_run_backward(
+.venv/lib/python3.12/site-packages/torch/autograd/graph.py:841: in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:315: in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:608: in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/backward.py:278: in backward
+    replay,(gk,gv,gs)=prepare(ctx.storage.owners,(gkeys,gvalues,gstrength),soa=payload_soa)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/replay_setup.py:85: in prepare
+    setup_kernel[(starts[-1],)](owners,replay,sources,adjoints,tuple(starts),numel,
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:733: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:861: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:300: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:80: in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+E   triton.compiler.errors.CompilationError: at 22:8:
+E                   row=(block%tl.cdiv(S,32))*32+tl.arange(0,32)
+E                   col=((block//tl.cdiv(S,32))%tl.cdiv(dim,32))*32+tl.arange(0,32)
+E                   store=block//(tl.cdiv(S,32)*tl.cdiv(dim,32))
+E                   valid=(row[:,None]<S) & (col[None,:]<dim)
+E                   value=tl.load(Sources[i]+(store*S+row[:,None])*dim+col[None,:],valid,0)
+E                   tl.store(Destinations[i]+(store*dim+col[None,:])*S+row[:,None],value,valid)
+E               else:
+E                   x=block*256+tl.arange(0,256)
+E                   value=tl.load(Sources[i]+x,x<Numel[i],0)
+E                   tl.store(Destinations[i]+x,value,x<Numel[i])
+E       for i in tl.static_range(3):
+E           field:tl.constexpr=len(Sources)+i
+E           ^
+E   ValueError('field is already defined. constexpr cannot be reassigned.')
+____________________ test_fresh_exact[2-11776-33-4-5-False] ____________________
+experiments/expressivity_tasks/x36_tape_perf/tests/test_exact.py:94: in test_fresh_exact
+    grads=torch.autograd.grad(loss,xs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:503: in grad
+    result = _engine_run_backward(
+.venv/lib/python3.12/site-packages/torch/autograd/graph.py:841: in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:315: in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:608: in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/backward.py:278: in backward
+    replay,(gk,gv,gs)=prepare(ctx.storage.owners,(gkeys,gvalues,gstrength),soa=payload_soa)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/replay_setup.py:85: in prepare
+    setup_kernel[(starts[-1],)](owners,replay,sources,adjoints,tuple(starts),numel,
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:733: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:861: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:300: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:80: in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+E   triton.compiler.errors.CompilationError: at 22:8:
+E                   row=(block%tl.cdiv(S,32))*32+tl.arange(0,32)
+E                   col=((block//tl.cdiv(S,32))%tl.cdiv(dim,32))*32+tl.arange(0,32)
+E                   store=block//(tl.cdiv(S,32)*tl.cdiv(dim,32))
+E                   valid=(row[:,None]<S) & (col[None,:]<dim)
+E                   value=tl.load(Sources[i]+(store*S+row[:,None])*dim+col[None,:],valid,0)
+E                   tl.store(Destinations[i]+(store*dim+col[None,:])*S+row[:,None],value,valid)
+E               else:
+E                   x=block*256+tl.arange(0,256)
+E                   value=tl.load(Sources[i]+x,x<Numel[i],0)
+E                   tl.store(Destinations[i]+x,value,x<Numel[i])
+E       for i in tl.static_range(3):
+E           field:tl.constexpr=len(Sources)+i
+E           ^
+E   ValueError('field is already defined. constexpr cannot be reassigned.')
+______________________ test_fresh_exact[2-7-17-4-5-False] ______________________
+experiments/expressivity_tasks/x36_tape_perf/tests/test_exact.py:94: in test_fresh_exact
+    grads=torch.autograd.grad(loss,xs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:503: in grad
+    result = _engine_run_backward(
+.venv/lib/python3.12/site-packages/torch/autograd/graph.py:841: in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:315: in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:608: in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/backward.py:278: in backward
+    replay,(gk,gv,gs)=prepare(ctx.storage.owners,(gkeys,gvalues,gstrength),soa=payload_soa)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/replay_setup.py:85: in prepare
+    setup_kernel[(starts[-1],)](owners,replay,sources,adjoints,tuple(starts),numel,
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:733: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:861: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:300: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:80: in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+E   triton.compiler.errors.CompilationError: at 22:8:
+E                   row=(block%tl.cdiv(S,32))*32+tl.arange(0,32)
+E                   col=((block//tl.cdiv(S,32))%tl.cdiv(dim,32))*32+tl.arange(0,32)
+E                   store=block//(tl.cdiv(S,32)*tl.cdiv(dim,32))
+E                   valid=(row[:,None]<S) & (col[None,:]<dim)
+E                   value=tl.load(Sources[i]+(store*S+row[:,None])*dim+col[None,:],valid,0)
+E                   tl.store(Destinations[i]+(store*dim+col[None,:])*S+row[:,None],value,valid)
+E               else:
+E                   x=block*256+tl.arange(0,256)
+E                   value=tl.load(Sources[i]+x,x<Numel[i],0)
+E                   tl.store(Destinations[i]+x,value,x<Numel[i])
+E       for i in tl.static_range(3):
+E           field:tl.constexpr=len(Sources)+i
+E           ^
+E   ValueError('field is already defined. constexpr cannot be reassigned.')
+__________________ test_fresh_exact[64-2944-512-64-128-False] __________________
+experiments/expressivity_tasks/x36_tape_perf/tests/test_exact.py:94: in test_fresh_exact
+    grads=torch.autograd.grad(loss,xs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:503: in grad
+    result = _engine_run_backward(
+.venv/lib/python3.12/site-packages/torch/autograd/graph.py:841: in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:315: in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:608: in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/backward.py:278: in backward
+    replay,(gk,gv,gs)=prepare(ctx.storage.owners,(gkeys,gvalues,gstrength),soa=payload_soa)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/replay_setup.py:85: in prepare
+    setup_kernel[(starts[-1],)](owners,replay,sources,adjoints,tuple(starts),numel,
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:733: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:861: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:300: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:80: in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+E   triton.compiler.errors.CompilationError: at 22:8:
+E                   row=(block%tl.cdiv(S,32))*32+tl.arange(0,32)
+E                   col=((block//tl.cdiv(S,32))%tl.cdiv(dim,32))*32+tl.arange(0,32)
+E                   store=block//(tl.cdiv(S,32)*tl.cdiv(dim,32))
+E                   valid=(row[:,None]<S) & (col[None,:]<dim)
+E                   value=tl.load(Sources[i]+(store*S+row[:,None])*dim+col[None,:],valid,0)
+E                   tl.store(Destinations[i]+(store*dim+col[None,:])*S+row[:,None],value,valid)
+E               else:
+E                   x=block*256+tl.arange(0,256)
+E                   value=tl.load(Sources[i]+x,x<Numel[i],0)
+E                   tl.store(Destinations[i]+x,value,x<Numel[i])
+E       for i in tl.static_range(3):
+E           field:tl.constexpr=len(Sources)+i
+E           ^
+E   ValueError('field is already defined. constexpr cannot be reassigned.')
+___________________ test_fresh_exact[2-2944-512-64-128-True] ___________________
+experiments/expressivity_tasks/x36_tape_perf/tests/test_exact.py:94: in test_fresh_exact
+    grads=torch.autograd.grad(loss,xs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:503: in grad
+    result = _engine_run_backward(
+.venv/lib/python3.12/site-packages/torch/autograd/graph.py:841: in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:315: in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:608: in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/backward.py:278: in backward
+    replay,(gk,gv,gs)=prepare(ctx.storage.owners,(gkeys,gvalues,gstrength),soa=payload_soa)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/replay_setup.py:85: in prepare
+    setup_kernel[(starts[-1],)](owners,replay,sources,adjoints,tuple(starts),numel,
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:733: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:861: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:300: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:80: in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+E   triton.compiler.errors.CompilationError: at 22:8:
+E                   row=(block%tl.cdiv(S,32))*32+tl.arange(0,32)
+E                   col=((block//tl.cdiv(S,32))%tl.cdiv(dim,32))*32+tl.arange(0,32)
+E                   store=block//(tl.cdiv(S,32)*tl.cdiv(dim,32))
+E                   valid=(row[:,None]<S) & (col[None,:]<dim)
+E                   value=tl.load(Sources[i]+(store*S+row[:,None])*dim+col[None,:],valid,0)
+E                   tl.store(Destinations[i]+(store*dim+col[None,:])*S+row[:,None],value,valid)
+E               else:
+E                   x=block*256+tl.arange(0,256)
+E                   value=tl.load(Sources[i]+x,x<Numel[i],0)
+E                   tl.store(Destinations[i]+x,value,x<Numel[i])
+E       for i in tl.static_range(3):
+E           field:tl.constexpr=len(Sources)+i
+E           ^
+E   ValueError('field is already defined. constexpr cannot be reassigned.')
+- generated xml file: /home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/receipts/part3_final_parity.xml -
+=========================== short test summary info ============================
+FAILED experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py::test_full_first_order_parity[0-1]
+FAILED experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py::test_full_first_order_parity[0-7]
+FAILED experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py::test_full_first_order_parity[0-16]
+FAILED experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py::test_full_first_order_parity[0-736]
+FAILED experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py::test_full_first_order_parity[0-11776]
+FAILED experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py::test_full_first_order_parity[1-1]
+FAILED experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py::test_full_first_order_parity[1-7]
+FAILED experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py::test_full_first_order_parity[1-16]
+FAILED experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py::test_full_first_order_parity[1-736]
+FAILED experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py::test_full_first_order_parity[1-11776]
+FAILED experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py::test_full_first_order_parity[2-1]
+FAILED experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py::test_full_first_order_parity[2-7]
+FAILED experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py::test_full_first_order_parity[2-16]
+FAILED experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py::test_full_first_order_parity[2-736]
+FAILED experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py::test_full_first_order_parity[2-11776]
+FAILED experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py::test_full_first_order_parity[3-1]
+FAILED experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py::test_full_first_order_parity[3-7]
+FAILED experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py::test_full_first_order_parity[3-16]
+FAILED experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py::test_full_first_order_parity[3-736]
+FAILED experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py::test_full_first_order_parity[3-11776]
+FAILED experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py::test_full_first_order_parity[4-1]
+FAILED experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py::test_full_first_order_parity[4-7]
+FAILED experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py::test_full_first_order_parity[4-16]
+FAILED experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py::test_full_first_order_parity[4-736]
+FAILED experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py::test_full_first_order_parity[4-11776]
+FAILED experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py::test_production_dimension_gradient_parity[37-0]
+FAILED experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py::test_production_dimension_gradient_parity[37-1]
+FAILED experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py::test_production_dimension_gradient_parity[736-0]
+FAILED experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py::test_production_dimension_gradient_parity[11776-0]
+FAILED experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py::test_gradient_continuation_parity
+FAILED experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py::test_retained_first_order_backward
+FAILED experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py::test_mutating_public_trace_does_not_change_backward
+FAILED experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_parity.py::test_training_first_order_entry_point
+FAILED experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_part7.py::test_empty_sparse_replay_heads[1-736]
+FAILED experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_part7.py::test_empty_sparse_replay_heads[1-11776]
+FAILED experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_part7.py::test_empty_sparse_replay_heads[4-736]
+FAILED experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_part7.py::test_empty_sparse_replay_heads[4-11776]
+FAILED experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_part7.py::test_empty_sparse_replay_heads[16-736]
+FAILED experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_part7.py::test_empty_sparse_replay_heads[16-11776]
+FAILED experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_part8.py::test_deferred_replay_freezes_before_inference_continuation
+FAILED experiments/expressivity_tasks/x36_tape_perf/tests/test_exact.py::test_fresh_exact[2-736-9-4-5-False]
+FAILED experiments/expressivity_tasks/x36_tape_perf/tests/test_exact.py::test_fresh_exact[2-2944-17-64-128-False]
+FAILED experiments/expressivity_tasks/x36_tape_perf/tests/test_exact.py::test_fresh_exact[2-11776-33-4-5-False]
+FAILED experiments/expressivity_tasks/x36_tape_perf/tests/test_exact.py::test_fresh_exact[2-7-17-4-5-False]
+FAILED experiments/expressivity_tasks/x36_tape_perf/tests/test_exact.py::test_fresh_exact[64-2944-512-64-128-False]
+FAILED experiments/expressivity_tasks/x36_tape_perf/tests/test_exact.py::test_fresh_exact[2-2944-512-64-128-True]
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! KeyboardInterrupt !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:473: KeyboardInterrupt
+(to show a full traceback on KeyboardInterrupt use --full-trace)
+======================== 46 failed, 69 passed in 34.39s ========================

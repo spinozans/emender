@@ -1,0 +1,44 @@
+{
+  "acceptance_level": "attested",
+  "status": "partial; failures are not waived",
+  "parity_tests": 138,
+  "manual_notes": "Reviewed full-S register live ranges, compiler resource/IR receipts, conditional key-adjoint targets, address-log restore/publication and profile correlation scopes. All GPU commands were single-threaded through run_leased.sh on physical card0 using /home/erikg/emender/.venv/bin/python. Historical Python sources are unchanged; AGENTS.md/CLAUDE.md match. No checkpoint writes or WG machinery used. No callable contact_supervisor tool was exposed.",
+  "evidence": [
+    "part3_final_parity.txt",
+    "part3_final_parity.xml",
+    "part3_measurements.json",
+    "part3_decomposition.json",
+    "part3_boundary_s8192.json",
+    "part3_boundary_s8224.json",
+    "part3_fixed_live.json",
+    "part3_t4096_traffic.json",
+    "part3_training_slice.json",
+    "part3_delivered_sources.json",
+    "part3_attempts.json",
+    "part3_trace_archive.json",
+    "part3_changed_files.json"
+  ],
+  "residual_risks": [
+    "B64/T4096 remains above 2x.",
+    "Capacity replay growth exceeds 1.5x at both doublings; aligned padding cliff persists.",
+    "Inclusive phase activity count remains above 10.",
+    "Logical bytes are not hardware DRAM counters; no irreducible hardware-floor claim."
+  ],
+  "failed_gates": [
+    "b64_t4096_ratio_le_2",
+    "lane_launches_le_10",
+    "capacity_scaling_le_1_5_per_double"
+  ],
+  "corrected_diagnostic": "The count_nonzero occupancy OOM occurred after timed/profiler evidence; bounded integer reduction and a complete matched T4096 retry replace that failed point in the canonical index.",
+  "checks": {
+    "source_syntax": "passed",
+    "source_manifest_hashes": "passed",
+    "historical_python_sources_unchanged": true,
+    "agents_claude_synchronized": true,
+    "all_registered_targets_passed": false,
+    "raw_trace_gzip_roundtrip": "passed",
+    "canonical_profile_reproduction": "passed",
+    "staged_scope": "X36 only; no .pt/.pth/.safetensors"
+  },
+  "base_commit": "cdbeb3ec454bf0dd9570eeee163d600c0cc4b809"
+}

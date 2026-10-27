@@ -17,18 +17,19 @@ from ..x31_tape_cell_fused.write_journal import capture_payload
 def scan_kernel(K, Q, V, Beta, Pop, Logit, Coef, Keys, Values, Strength,
                 Live, Age, Output, Cases, Matched, Alloc, Pops, Freed,
                 Pressure, History, Heap, Position, Due, Terminal, BirthStore, TouchStore,
-                L0, L1, Root, BirthNext, BirthPrev, BirthHead, Sizes, References, Scores, ReadMax, ReadDenom, ReadValues, ReadBest, CaptureScratch,
+                L0, L1, Root, BirthNext, BirthPrev, BirthHead, Sizes, References, Scores, ReadMax, ReadDenom, ReadValues, ReadBest, ReadStrengthCache, CaptureScratch,
                 JournalSlots, JournalKeys, JournalValues,
                 RecordPayload: tl.constexpr, JournalBlock: tl.constexpr,
                 AllAddresses, AllBefore, AllWidths, AllCounts, AllBoundaries,
                 AllGates, AllErrors, AllCapacity, RecordAll: tl.constexpr,
-                Fresh: tl.constexpr, Start, Token,
+                Fresh: tl.constexpr, InitialBound: tl.constexpr, Start, Token,
                 T: tl.constexpr, S: tl.constexpr, DK: tl.constexpr,
                 DV: tl.constexpr, RT: tl.constexpr, BS: tl.constexpr, BV: tl.constexpr, BK: tl.constexpr, BT: tl.constexpr,
                 Decay: tl.constexpr, Free: tl.constexpr,
                 Enable: tl.constexpr, PopThreshold: tl.constexpr,
                 Eps: tl.constexpr):
-    n = tl.program_id(0)
+    # Keep store-address arithmetic wide while retaining debug assertions.
+    n = tl.program_id(0).to(tl.int64)
     J = (AllAddresses,AllBefore,AllWidths,AllCounts,n,AllCapacity)
     d = tl.arange(0, BV)
     heap = Heap+n*S
@@ -67,8 +68,15 @@ def scan_kernel(K, Q, V, Beta, Pop, Logit, Coef, Keys, Values, Strength,
             slot = tl.load(birth_next+slot)
     else:
         size = tl.load(Sizes+n)
+    reached=tl.full((),InitialBound if InitialBound>=0 else 0,tl.int32)
     for t in range(T):
-        for tile in range(RT):
+        # Track actual allocation reach on device. Keep the fixed reduction
+        # tree, but do not scan future empty tiles or read stale partials.
+        if InitialBound>=0:
+            active_tiles=tl.minimum(RT,tl.maximum(1,tl.cdiv(reached,32)))
+        else:
+            active_tiles=RT
+        for tile in range(active_tiles):
             r_columns = tile*32 + tl.arange(0,32)
             r_tile_count: tl.constexpr = RT
             r_header=n*r_tile_count+tile
@@ -84,7 +92,20 @@ def scan_kernel(K, Q, V, Beta, Pop, Logit, Coef, Keys, Values, Strength,
                 r_numer=tl.where(r_live,tl.exp(r_masked-r_maximum),0.)
                 r_reference=tl.load(References+n*S+r_columns,r_live,0.)
                 r_touch=tl.load(TouchStore+n*S+r_columns,r_live,Start+t)
-                r_strength=advance_exact(r_reference,tl.where(r_live,Start+t-r_touch,0),Decay)
+                if T>512:
+                    if t==0:
+                        r_strength=advance_exact(r_reference,tl.where(r_live,Start+t-r_touch,0),Decay)
+                    else:
+                        cached=tl.load(ReadStrengthCache+n*S+r_columns,r_live,0.)
+                        base=tl.where(r_touch>=Start+t-1,r_reference,cached)
+                        if Decay==1.0:
+                            next_strength=base
+                        else:
+                            next_strength=base*Decay
+                        r_strength=tl.where(r_touch>=Start+t,r_reference,next_strength)
+                    tl.store(ReadStrengthCache+n*S+r_columns,r_strength,r_live)
+                else:
+                    r_strength=advance_exact(r_reference,tl.where(r_live,Start+t-r_touch,0),Decay)
                 r_weighted=r_numer*r_strength
                 r_d=tl.arange(0,BV)
                 r_values=tl.load(Values+(n*S+r_columns[:,None])*DV+r_d[None,:],
@@ -105,7 +126,7 @@ def scan_kernel(K, Q, V, Beta, Pop, Logit, Coef, Keys, Values, Strength,
             rr_tiles=tl.arange(0,BT)
             rr_d=dim_tile*8+tl.arange(0,8)
             rr_tile_count: tl.constexpr=RT
-            rr_valid=rr_tiles<rr_tile_count
+            rr_valid=rr_tiles<active_tiles
             rr_maximum=tl.load(ReadMax+n*rr_tile_count+rr_tiles,rr_valid,-1.0e30)
             rr_denom=tl.load(ReadDenom+n*rr_tile_count+rr_tiles,rr_valid,0.)
             if dim_tile==0:
@@ -182,6 +203,8 @@ def scan_kernel(K, Q, V, Beta, Pop, Logit, Coef, Keys, Values, Strength,
         append = (case>0) & (case<4)
         case = tl.where(append & (first_free < 0), 5, case)
         allocation = tl.where(append & (case != 5), first_free, -1)
+        if InitialBound>=0:
+            reached=tl.maximum(reached,allocation+1)
         matched = tl.where((enabled & has_adjacent) | (case == 5), target, -1)
         error = tl.where(count>0, tl.sqrt(residual), 0.)
         gate = tl.sigmoid(tl.load(Logit+inp)+tl.load(Coef+n)*error)

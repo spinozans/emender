@@ -1,0 +1,6 @@
+{
+  "source": "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/language/semantic.py",
+  "sha256": "3db4bee9427c7eb0e2105aff484bdacc819357d298e8f6e89c372ae9c3625bdf",
+  "lines": "206-222",
+  "excerpt": "    def binary_op_sanitize_overflow_impl(self, lhs: TensorTy, rhs: TensorTy, binary_op: callable):\n        if lhs.type.scalar.int_bitwidth >= 64 or not self.builder.options.sanitize_overflow:\n            return\n        lhs_sca_ty = lhs.type.scalar\n        rhs_sca_ty = rhs.type.scalar\n        assert lhs_sca_ty == rhs_sca_ty\n        assert lhs_sca_ty.is_int()\n        lhs = self.cast(lhs, tl.int64)\n        rhs = self.cast(rhs, tl.int64)\n        ret = binary_op(lhs, rhs, False)\n        max_value = lhs_sca_ty.get_int_max_value()\n        max_value = self.scalar_constant(max_value, tl.int64)\n        min_value = lhs_sca_ty.get_int_min_value()\n        min_value = self.scalar_constant(min_value, tl.int64)\n        cond = self.and_(self.less_equal(ret, max_value), self.greater_equal(ret, min_value))\n        msg = f\"int{lhs_sca_ty.int_bitwidth} overflow detected for operation {binary_op.__name__}\"\n        self.device_assert(cond, msg, None)"
+}

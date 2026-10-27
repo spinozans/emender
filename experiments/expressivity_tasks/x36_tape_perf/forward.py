@@ -140,11 +140,12 @@ def tape_scan(k, q, v, write_strength, pop_strength, append_logit, state,
     # All heads share this launch; direct same-store reductions avoid the
     # off-diagonal cross-head MMA rows and a separate scoring launch.
     score_scratch=scores  # unused compatibility pointer
+    read_strength_cache=torch.empty_like(strength) if t>512 else scores
     scan_kernel[(b*h,)](*args,coef,keys,values,strength,live,age,
         output,case,matched,alloc,pops,freed,pressure,history,heap,position,due,terminal,
-        births,touches,level0,level1,root,birth_next,birth_prev,birth_head,sizes,references,scores,read_max,read_denom,read_values,read_best,capture_scratch,
+        births,touches,level0,level1,root,birth_next,birth_prev,birth_head,sizes,references,scores,read_max,read_denom,read_values,read_best,read_strength_cache,capture_scratch,
         *journal_args,record_payload,triton.next_power_of_2(max(dk,cfg.value_dim)),
-        *all_args,fresh,state.tokens,0,
+        *all_args,fresh,-1 if state.live_bound is None else state.live_bound,state.tokens,0,
         t,cfg.slots,dk,cfg.value_dim,tile_count,triton.next_power_of_2(max(1,reachable)),
         triton.next_power_of_2(cfg.value_dim),triton.next_power_of_2(max(32,dk)),tile_block,
         struct.unpack('<f',struct.pack('<f',cfg.decay_rate))[0],cfg.free_threshold,
