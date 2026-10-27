@@ -1,0 +1,1788 @@
+{
+  "status": "FAILED: requested performance closure not achieved",
+  "implementation": "Device journal decisions suppress dead packed value-adjoint traffic; named dense scatter is absent from capacity workload",
+  "scatter": {
+    "native_gradient_requests": [
+      false,
+      false,
+      false
+    ],
+    "dense_unpack_calls_per_chunk": 0,
+    "dense_unpack_calls_per_token": 0,
+    "maximum_removable_scatter_ms": 0,
+    "event_path": "reverse_program: Cases/Matched/Alloc -> packed GValues/GKeys -> DVout/DKout",
+    "native_path": "native_grad: needs_input_grad guard before unpack; unpack, if requested, runs once per chunk",
+    "inactive_rows": "No native gradient tensor is requested in capacity measurements. For native-gradient consumers the existing unpack preserves output adjoints on untouched key/value rows and applies +0 to cold strength rows. Never zero arbitrary nonzero output adjoints."
+  },
+  "sources": {
+    "adjoint_pool.py": "7610d2190c1055c253128b0d872bc4f0dea8afb8f0dd6e1c16b4da92becf4954",
+    "backward.py": "8752bbd212d40eeb7ab7f1157c6a78a856559fe867c9b25a95843427b7c47718",
+    "replay_setup.py": "0bda5e7e253f8018db75f086415d210db74c50183d5f08fd82b57eb46ed05b57",
+    "forward.py": "a28d713cbba1c85038c530e0c59d61ac29d50b788191fba2b3e3b9cfdeb0539d",
+    "kernels.py": "479101d322bbc27b58c647e2314172c35af3155588f170b7bf8eaf12a18687a9"
+  },
+  "fixed_live_work": [
+    {
+      "slots": 2944,
+      "stores": 256,
+      "tokens": 512,
+      "forward_tile_probes": 12058624,
+      "forward_tile_formula": "N*T*ceil(S/32), saturated logical reach, even when only 17 rows are live",
+      "forward_nonempty_tiles": {
+        "17": 17,
+        "256": 92,
+        "1024": 92,
+        "2800": 92
+      },
+      "forward_padded_score_value_flops": {
+        "17": 27380416512,
+        "256": 148176371712,
+        "1024": 148176371712,
+        "2800": 148176371712
+      },
+      "tile_count_basis": "Uniform linspace entries in this protocol: when the row gap is below 32 every tile is populated; above 32 each row occupies a distinct tile. Source evaluates 32 float lanes per populated tile.",
+      "logical_reduction_width": 4096,
+      "semantic_full_reductions_per_store_token": 68,
+      "reduction_operand_lanes": 36507222016,
+      "reduction_note": "DPop, maximum, denominator, dp sum and DK query-gradient sums. Counts are semantic operand lanes, not executed ISA counts or measured bandwidth.",
+      "public_freed_bytes": 385875968,
+      "public_freed_note": "int8 zeros backing; public transpose may require another equally sized allocation/copy; not a gradient scatter",
+      "pool_float_bytes_live17": 2245632,
+      "pool_float_bytes_live256": 33816576,
+      "suppressed_value_adjoint_logical_bytes": {
+        "17": 2281701376,
+        "256": 34359738368,
+        "1024": 137438953472,
+        "2800": 375809638400
+      }
+    },
+    {
+      "slots": 5888,
+      "stores": 256,
+      "tokens": 512,
+      "forward_tile_probes": 24117248,
+      "forward_tile_formula": "N*T*ceil(S/32), saturated logical reach, even when only 17 rows are live",
+      "forward_nonempty_tiles": {
+        "17": 17,
+        "256": 184,
+        "1024": 184,
+        "2800": 184
+      },
+      "forward_padded_score_value_flops": {
+        "17": 27380416512,
+        "256": 296352743424,
+        "1024": 296352743424,
+        "2800": 296352743424
+      },
+      "tile_count_basis": "Uniform linspace entries in this protocol: when the row gap is below 32 every tile is populated; above 32 each row occupies a distinct tile. Source evaluates 32 float lanes per populated tile.",
+      "logical_reduction_width": 8192,
+      "semantic_full_reductions_per_store_token": 68,
+      "reduction_operand_lanes": 73014444032,
+      "reduction_note": "DPop, maximum, denominator, dp sum and DK query-gradient sums. Counts are semantic operand lanes, not executed ISA counts or measured bandwidth.",
+      "public_freed_bytes": 771751936,
+      "public_freed_note": "int8 zeros backing; public transpose may require another equally sized allocation/copy; not a gradient scatter",
+      "pool_float_bytes_live17": 2245632,
+      "pool_float_bytes_live256": 33816576,
+      "suppressed_value_adjoint_logical_bytes": {
+        "17": 2281701376,
+        "256": 34359738368,
+        "1024": 137438953472,
+        "2800": 375809638400
+      }
+    },
+    {
+      "slots": 11776,
+      "stores": 256,
+      "tokens": 512,
+      "forward_tile_probes": 48234496,
+      "forward_tile_formula": "N*T*ceil(S/32), saturated logical reach, even when only 17 rows are live",
+      "forward_nonempty_tiles": {
+        "17": 17,
+        "256": 256,
+        "1024": 368,
+        "2800": 368
+      },
+      "forward_padded_score_value_flops": {
+        "17": 27380416512,
+        "256": 412316860416,
+        "1024": 592705486848,
+        "2800": 592705486848
+      },
+      "tile_count_basis": "Uniform linspace entries in this protocol: when the row gap is below 32 every tile is populated; above 32 each row occupies a distinct tile. Source evaluates 32 float lanes per populated tile.",
+      "logical_reduction_width": 16384,
+      "semantic_full_reductions_per_store_token": 68,
+      "reduction_operand_lanes": 146028888064,
+      "reduction_note": "DPop, maximum, denominator, dp sum and DK query-gradient sums. Counts are semantic operand lanes, not executed ISA counts or measured bandwidth.",
+      "public_freed_bytes": 1543503872,
+      "public_freed_note": "int8 zeros backing; public transpose may require another equally sized allocation/copy; not a gradient scatter",
+      "pool_float_bytes_live17": 2245632,
+      "pool_float_bytes_live256": 33816576,
+      "suppressed_value_adjoint_logical_bytes": {
+        "17": 2281701376,
+        "256": 34359738368,
+        "1024": 137438953472,
+        "2800": 375809638400
+      }
+    },
+    {
+      "slots": 8192,
+      "stores": 256,
+      "tokens": 512,
+      "forward_tile_probes": 33554432,
+      "forward_tile_formula": "N*T*ceil(S/32), saturated logical reach, even when only 17 rows are live",
+      "forward_nonempty_tiles": {
+        "17": 17,
+        "256": 256,
+        "1024": 256,
+        "2800": 256
+      },
+      "forward_padded_score_value_flops": {
+        "17": 27380416512,
+        "256": 412316860416,
+        "1024": 412316860416,
+        "2800": 412316860416
+      },
+      "tile_count_basis": "Uniform linspace entries in this protocol: when the row gap is below 32 every tile is populated; above 32 each row occupies a distinct tile. Source evaluates 32 float lanes per populated tile.",
+      "logical_reduction_width": 8192,
+      "semantic_full_reductions_per_store_token": 68,
+      "reduction_operand_lanes": 73014444032,
+      "reduction_note": "DPop, maximum, denominator, dp sum and DK query-gradient sums. Counts are semantic operand lanes, not executed ISA counts or measured bandwidth.",
+      "public_freed_bytes": 1073741824,
+      "public_freed_note": "int8 zeros backing; public transpose may require another equally sized allocation/copy; not a gradient scatter",
+      "pool_float_bytes_live17": 2245632,
+      "pool_float_bytes_live256": 33816576,
+      "suppressed_value_adjoint_logical_bytes": {
+        "17": 2281701376,
+        "256": 34359738368,
+        "1024": 137438953472,
+        "2800": 375809638400
+      }
+    },
+    {
+      "slots": 8224,
+      "stores": 256,
+      "tokens": 512,
+      "forward_tile_probes": 33685504,
+      "forward_tile_formula": "N*T*ceil(S/32), saturated logical reach, even when only 17 rows are live",
+      "forward_nonempty_tiles": {
+        "17": 17,
+        "256": 256,
+        "1024": 257,
+        "2800": 257
+      },
+      "forward_padded_score_value_flops": {
+        "17": 27380416512,
+        "256": 412316860416,
+        "1024": 413927473152,
+        "2800": 413927473152
+      },
+      "tile_count_basis": "Uniform linspace entries in this protocol: when the row gap is below 32 every tile is populated; above 32 each row occupies a distinct tile. Source evaluates 32 float lanes per populated tile.",
+      "logical_reduction_width": 16384,
+      "semantic_full_reductions_per_store_token": 68,
+      "reduction_operand_lanes": 146028888064,
+      "reduction_note": "DPop, maximum, denominator, dp sum and DK query-gradient sums. Counts are semantic operand lanes, not executed ISA counts or measured bandwidth.",
+      "public_freed_bytes": 1077936128,
+      "public_freed_note": "int8 zeros backing; public transpose may require another equally sized allocation/copy; not a gradient scatter",
+      "pool_float_bytes_live17": 2245632,
+      "pool_float_bytes_live256": 33816576,
+      "suppressed_value_adjoint_logical_bytes": {
+        "17": 2281701376,
+        "256": 34359738368,
+        "1024": 137438953472,
+        "2800": 375809638400
+      }
+    }
+  ],
+  "capacity": [
+    {
+      "live": 17,
+      "mode": "imported",
+      "slots": [
+        2944,
+        5888
+      ],
+      "source": "part7_live17.json",
+      "status": "failed",
+      "ratios": {
+        "step_ms": 1.8852088447207551,
+        "replay_ms": 2.6881920897554696
+      },
+      "medians": [
+        {
+          "step_ms": 50.163702107965946,
+          "forward_ms": 29.080575942993164,
+          "replay_ms": 21.04649543762207,
+          "peak_allocated_bytes": 5202935808,
+          "peak_reserved_bytes": 5247074304
+        },
+        {
+          "step_ms": 94.5690548978746,
+          "forward_ms": 37.9607048034668,
+          "replay_ms": 56.577022552490234,
+          "peak_allocated_bytes": 8538118144,
+          "peak_reserved_bytes": 8585740288
+        }
+      ],
+      "versus_part6_ratios": [
+        {
+          "step_ms": 0.9857442987008714,
+          "replay_ms": 0.8961508093715215
+        },
+        {
+          "step_ms": 1.0007153334219736,
+          "replay_ms": 1.003450668371636
+        }
+      ],
+      "required_savings_ms": {
+        "step_ms": 19.323501735925674,
+        "replay_ms": 25.00727939605713
+      },
+      "device_delta_ms": {
+        "forward": 8.880128860473633,
+        "replay": 35.530527114868164
+      },
+      "attribution": "Native unpack accounts for exactly zero. Forward probes/metadata and full-logical reverse reductions remain capacity dependent. Timings of their subexpressions are not causally isolated; no irreducible-floor waiver."
+    },
+    {
+      "live": 17,
+      "mode": "imported",
+      "slots": [
+        5888,
+        11776
+      ],
+      "source": "part7_live17.json",
+      "status": "passed",
+      "ratios": {
+        "step_ms": 1.4229541814799884,
+        "replay_ms": 1.2637056684138916
+      },
+      "medians": [
+        {
+          "step_ms": 94.5690548978746,
+          "forward_ms": 37.9607048034668,
+          "replay_ms": 56.577022552490234,
+          "peak_allocated_bytes": 8538118144,
+          "peak_reserved_bytes": 8585740288
+        },
+        {
+          "step_ms": 134.56743210554123,
+          "forward_ms": 63.02822494506836,
+          "replay_ms": 71.4967041015625,
+          "peak_allocated_bytes": 15144865792,
+          "peak_reserved_bytes": 15216934912
+        }
+      ],
+      "versus_part6_ratios": [
+        {
+          "step_ms": 1.0007153334219736,
+          "replay_ms": 1.003450668371636
+        },
+        {
+          "step_ms": 0.9807455920880532,
+          "replay_ms": 0.9666214363038387
+        }
+      ],
+      "required_savings_ms": {
+        "step_ms": 0,
+        "replay_ms": 0
+      },
+      "device_delta_ms": {
+        "forward": 25.067520141601562,
+        "replay": 14.919681549072266
+      },
+      "attribution": "Native unpack accounts for exactly zero. Forward probes/metadata and full-logical reverse reductions remain capacity dependent. Timings of their subexpressions are not causally isolated; no irreducible-floor waiver."
+    },
+    {
+      "live": 17,
+      "mode": "imported",
+      "slots": [
+        8192,
+        8224
+      ],
+      "source": "part7_live17.json",
+      "status": "passed",
+      "ratios": {
+        "step_ms": 1.1555437470254963,
+        "replay_ms": 1.270441191499462
+      },
+      "medians": [
+        {
+          "step_ms": 102.89113689213991,
+          "forward_ms": 47.26988983154297,
+          "replay_ms": 55.54278564453125,
+          "peak_allocated_bytes": 11147130880,
+          "peak_reserved_bytes": 11209277440
+        },
+        {
+          "step_ms": 118.89520986005664,
+          "forward_ms": 48.33689498901367,
+          "replay_ms": 70.5638427734375,
+          "peak_allocated_bytes": 11182609408,
+          "peak_reserved_bytes": 11284774912
+        }
+      ],
+      "versus_part6_ratios": [
+        {
+          "step_ms": 0.980313587253282,
+          "replay_ms": 0.9627056084338154
+        },
+        {
+          "step_ms": 0.9784366227487568,
+          "replay_ms": 0.9596014574327181
+        }
+      ],
+      "required_savings_ms": {
+        "step_ms": 0,
+        "replay_ms": 0
+      },
+      "device_delta_ms": {
+        "forward": 1.0670051574707031,
+        "replay": 15.02105712890625
+      },
+      "attribution": "Native unpack accounts for exactly zero. Forward probes/metadata and full-logical reverse reductions remain capacity dependent. Timings of their subexpressions are not causally isolated; no irreducible-floor waiver."
+    },
+    {
+      "live": 17,
+      "mode": "continued",
+      "slots": [
+        2944,
+        5888
+      ],
+      "source": "part7_live17.json",
+      "status": "failed",
+      "ratios": {
+        "step_ms": 1.9501131130557547,
+        "replay_ms": 2.6917275077888934
+      },
+      "medians": [
+        {
+          "step_ms": 48.39374916628003,
+          "forward_ms": 27.277151107788086,
+          "replay_ms": 21.04319953918457,
+          "peak_allocated_bytes": 5202804736,
+          "peak_reserved_bytes": 5247074304
+        },
+        {
+          "step_ms": 94.37328483909369,
+          "forward_ms": 37.69446563720703,
+          "replay_ms": 56.64255905151367,
+          "peak_allocated_bytes": 8537987072,
+          "peak_reserved_bytes": 8585740288
+        }
+      ],
+      "versus_part6_ratios": [
+        {
+          "step_ms": 0.9625501146490557,
+          "replay_ms": 0.9141802085694009
+        },
+        {
+          "step_ms": 1.0004608293452193,
+          "replay_ms": 1.0035377417468125
+        }
+      ],
+      "required_savings_ms": {
+        "step_ms": 21.78266108967364,
+        "replay_ms": 25.077759742736816
+      },
+      "device_delta_ms": {
+        "forward": 10.417314529418945,
+        "replay": 35.5993595123291
+      },
+      "attribution": "Native unpack accounts for exactly zero. Forward probes/metadata and full-logical reverse reductions remain capacity dependent. Timings of their subexpressions are not causally isolated; no irreducible-floor waiver."
+    },
+    {
+      "live": 17,
+      "mode": "continued",
+      "slots": [
+        5888,
+        11776
+      ],
+      "source": "part7_live17.json",
+      "status": "passed",
+      "ratios": {
+        "step_ms": 1.4235065826779854,
+        "replay_ms": 1.2615203669971669
+      },
+      "medians": [
+        {
+          "step_ms": 94.37328483909369,
+          "forward_ms": 37.69446563720703,
+          "replay_ms": 56.64255905151367,
+          "peak_allocated_bytes": 8537987072,
+          "peak_reserved_bytes": 8585740288
+        },
+        {
+          "step_ms": 134.34099219739437,
+          "forward_ms": 62.65139389038086,
+          "replay_ms": 71.45574188232422,
+          "peak_allocated_bytes": 15144734720,
+          "peak_reserved_bytes": 15216934912
+        }
+      ],
+      "versus_part6_ratios": [
+        {
+          "step_ms": 1.0004608293452193,
+          "replay_ms": 1.0035377417468125
+        },
+        {
+          "step_ms": 0.9775525907011621,
+          "replay_ms": 0.9667904232301051
+        }
+      ],
+      "required_savings_ms": {
+        "step_ms": 0,
+        "replay_ms": 0
+      },
+      "device_delta_ms": {
+        "forward": 24.956928253173828,
+        "replay": 14.813182830810547
+      },
+      "attribution": "Native unpack accounts for exactly zero. Forward probes/metadata and full-logical reverse reductions remain capacity dependent. Timings of their subexpressions are not causally isolated; no irreducible-floor waiver."
+    },
+    {
+      "live": 17,
+      "mode": "continued",
+      "slots": [
+        8192,
+        8224
+      ],
+      "source": "part7_live17.json",
+      "status": "passed",
+      "ratios": {
+        "step_ms": 1.1572801386242926,
+        "replay_ms": 1.2736874791710944
+      },
+      "medians": [
+        {
+          "step_ms": 102.61940583586693,
+          "forward_ms": 47.23097610473633,
+          "replay_ms": 55.35539245605469,
+          "peak_allocated_bytes": 11146999808,
+          "peak_reserved_bytes": 11209277440
+        },
+        {
+          "step_ms": 118.75940021127462,
+          "forward_ms": 48.15871810913086,
+          "replay_ms": 70.5054702758789,
+          "peak_allocated_bytes": 11182478336,
+          "peak_reserved_bytes": 11284774912
+        }
+      ],
+      "versus_part6_ratios": [
+        {
+          "step_ms": 0.9826779330299359,
+          "replay_ms": 0.970956452477139
+        },
+        {
+          "step_ms": 0.9749160241456692,
+          "replay_ms": 0.9553504389500183
+        }
+      ],
+      "required_savings_ms": {
+        "step_ms": 0,
+        "replay_ms": 0
+      },
+      "device_delta_ms": {
+        "forward": 0.9277420043945312,
+        "replay": 15.150077819824219
+      },
+      "attribution": "Native unpack accounts for exactly zero. Forward probes/metadata and full-logical reverse reductions remain capacity dependent. Timings of their subexpressions are not causally isolated; no irreducible-floor waiver."
+    },
+    {
+      "live": 256,
+      "mode": "imported",
+      "slots": [
+        2944,
+        5888
+      ],
+      "source": "part7_live256.json",
+      "status": "failed",
+      "ratios": {
+        "step_ms": 2.0741175799044425,
+        "replay_ms": 2.3502453659830644
+      },
+      "medians": [
+        {
+          "step_ms": 111.37941898778081,
+          "forward_ms": 82.07462310791016,
+          "replay_ms": 29.248512268066406,
+          "peak_allocated_bytes": 5359568384,
+          "peak_reserved_bytes": 5398069248
+        },
+        {
+          "step_ms": 231.01401096209884,
+          "forward_ms": 162.27516174316406,
+          "replay_ms": 68.74118041992188,
+          "peak_allocated_bytes": 8704540160,
+          "peak_reserved_bytes": 8747220992
+        }
+      ],
+      "versus_part6_ratios": [
+        {
+          "step_ms": 0.93713236552636,
+          "replay_ms": 0.7936371337436156
+        },
+        {
+          "step_ms": 0.9890581989615335,
+          "replay_ms": 0.9679474522050079
+        }
+      ],
+      "required_savings_ms": {
+        "step_ms": 63.94488248042762,
+        "replay_ms": 24.868412017822266
+      },
+      "device_delta_ms": {
+        "forward": 80.2005386352539,
+        "replay": 39.49266815185547
+      },
+      "attribution": "Native unpack accounts for exactly zero. Forward probes/metadata and full-logical reverse reductions remain capacity dependent. Timings of their subexpressions are not causally isolated; no irreducible-floor waiver."
+    },
+    {
+      "live": 256,
+      "mode": "imported",
+      "slots": [
+        5888,
+        11776
+      ],
+      "source": "part7_live256.json",
+      "status": "passed",
+      "ratios": {
+        "step_ms": 1.4506799714946303,
+        "replay_ms": 1.2176214677752961
+      },
+      "medians": [
+        {
+          "step_ms": 231.01401096209884,
+          "forward_ms": 162.27516174316406,
+          "replay_ms": 68.74118041992188,
+          "peak_allocated_bytes": 8704540160,
+          "peak_reserved_bytes": 8747220992
+        },
+        {
+          "step_ms": 335.12739883735776,
+          "forward_ms": 251.36741638183594,
+          "replay_ms": 83.70073699951172,
+          "peak_allocated_bytes": 15321077248,
+          "peak_reserved_bytes": 15388901376
+        }
+      ],
+      "versus_part6_ratios": [
+        {
+          "step_ms": 0.9890581989615335,
+          "replay_ms": 0.9679474522050079
+        },
+        {
+          "step_ms": 0.9933171501134532,
+          "replay_ms": 0.9710141707868979
+        }
+      ],
+      "required_savings_ms": {
+        "step_ms": 0,
+        "replay_ms": 0
+      },
+      "device_delta_ms": {
+        "forward": 89.09225463867188,
+        "replay": 14.959556579589844
+      },
+      "attribution": "Native unpack accounts for exactly zero. Forward probes/metadata and full-logical reverse reductions remain capacity dependent. Timings of their subexpressions are not causally isolated; no irreducible-floor waiver."
+    },
+    {
+      "live": 256,
+      "mode": "imported",
+      "slots": [
+        8192,
+        8224
+      ],
+      "source": "part7_live256.json",
+      "status": "passed",
+      "ratios": {
+        "step_ms": 1.0499794595457728,
+        "replay_ms": 1.2170526424625072
+      },
+      "medians": [
+        {
+          "step_ms": 298.2365367934108,
+          "forward_ms": 229.56338500976562,
+          "replay_ms": 68.62438201904297,
+          "peak_allocated_bytes": 11323342336,
+          "peak_reserved_bytes": 11381243904
+        },
+        {
+          "step_ms": 313.1422377191484,
+          "forward_ms": 229.62176513671875,
+          "replay_ms": 83.51948547363281,
+          "peak_allocated_bytes": 11358820864,
+          "peak_reserved_bytes": 11456741376
+        }
+      ],
+      "versus_part6_ratios": [
+        {
+          "step_ms": 0.9964701100758915,
+          "replay_ms": 0.9624426583417294
+        },
+        {
+          "step_ms": 0.9969762317903977,
+          "replay_ms": 0.9779147324597038
+        }
+      ],
+      "required_savings_ms": {
+        "step_ms": 0,
+        "replay_ms": 0
+      },
+      "device_delta_ms": {
+        "forward": 0.058380126953125,
+        "replay": 14.895103454589844
+      },
+      "attribution": "Native unpack accounts for exactly zero. Forward probes/metadata and full-logical reverse reductions remain capacity dependent. Timings of their subexpressions are not causally isolated; no irreducible-floor waiver."
+    },
+    {
+      "live": 256,
+      "mode": "continued",
+      "slots": [
+        2944,
+        5888
+      ],
+      "source": "part7_live256.json",
+      "status": "failed",
+      "ratios": {
+        "step_ms": 2.0746883950703037,
+        "replay_ms": 2.352764133746151
+      },
+      "medians": [
+        {
+          "step_ms": 110.58895802125335,
+          "forward_ms": 81.36275482177734,
+          "replay_ms": 29.18191909790039,
+          "peak_allocated_bytes": 5359437312,
+          "peak_reserved_bytes": 5398069248
+        },
+        {
+          "step_ms": 229.4376278296113,
+          "forward_ms": 160.7136688232422,
+          "replay_ms": 68.65817260742188,
+          "peak_allocated_bytes": 8704409088,
+          "peak_reserved_bytes": 8747220992
+        }
+      ],
+      "versus_part6_ratios": [
+        {
+          "step_ms": 0.9329121047508976,
+          "replay_ms": 0.7882601164151936
+        },
+        {
+          "step_ms": 0.987472879263319,
+          "replay_ms": 0.966876150890957
+        }
+      ],
+      "required_savings_ms": {
+        "step_ms": 63.55419079773128,
+        "replay_ms": 24.88529396057129
+      },
+      "device_delta_ms": {
+        "forward": 79.35091400146484,
+        "replay": 39.476253509521484
+      },
+      "attribution": "Native unpack accounts for exactly zero. Forward probes/metadata and full-logical reverse reductions remain capacity dependent. Timings of their subexpressions are not causally isolated; no irreducible-floor waiver."
+    },
+    {
+      "live": 256,
+      "mode": "continued",
+      "slots": [
+        5888,
+        11776
+      ],
+      "source": "part7_live256.json",
+      "status": "passed",
+      "ratios": {
+        "step_ms": 1.4649502538345027,
+        "replay_ms": 1.2184969626067488
+      },
+      "medians": [
+        {
+          "step_ms": 229.4376278296113,
+          "forward_ms": 160.7136688232422,
+          "replay_ms": 68.65817260742188,
+          "peak_allocated_bytes": 8704409088,
+          "peak_reserved_bytes": 8747220992
+        },
+        {
+          "step_ms": 336.11471112817526,
+          "forward_ms": 252.15673828125,
+          "replay_ms": 83.65977478027344,
+          "peak_allocated_bytes": 15320946176,
+          "peak_reserved_bytes": 15388901376
+        }
+      ],
+      "versus_part6_ratios": [
+        {
+          "step_ms": 0.987472879263319,
+          "replay_ms": 0.966876150890957
+        },
+        {
+          "step_ms": 0.995366751095953,
+          "replay_ms": 0.9704121076221676
+        }
+      ],
+      "required_savings_ms": {
+        "step_ms": 0,
+        "replay_ms": 0
+      },
+      "device_delta_ms": {
+        "forward": 91.44306945800781,
+        "replay": 15.001602172851562
+      },
+      "attribution": "Native unpack accounts for exactly zero. Forward probes/metadata and full-logical reverse reductions remain capacity dependent. Timings of their subexpressions are not causally isolated; no irreducible-floor waiver."
+    },
+    {
+      "live": 256,
+      "mode": "continued",
+      "slots": [
+        8192,
+        8224
+      ],
+      "source": "part7_live256.json",
+      "status": "passed",
+      "ratios": {
+        "step_ms": 1.0506519835317831,
+        "replay_ms": 1.2197036165967219
+      },
+      "medians": [
+        {
+          "step_ms": 298.5472772270441,
+          "forward_ms": 229.94534301757812,
+          "replay_ms": 68.48614501953125,
+          "peak_allocated_bytes": 11323211264,
+          "peak_reserved_bytes": 11381243904
+        },
+        {
+          "step_ms": 313.66928899660707,
+          "forward_ms": 230.07437133789062,
+          "replay_ms": 83.53279876708984,
+          "peak_allocated_bytes": 11358689792,
+          "peak_reserved_bytes": 11456741376
+        }
+      ],
+      "versus_part6_ratios": [
+        {
+          "step_ms": 0.9969878676701017,
+          "replay_ms": 0.9657766695729787
+        },
+        {
+          "step_ms": 0.9913774141716827,
+          "replay_ms": 0.975170965143783
+        }
+      ],
+      "required_savings_ms": {
+        "step_ms": 0,
+        "replay_ms": 0
+      },
+      "device_delta_ms": {
+        "forward": 0.1290283203125,
+        "replay": 15.046653747558594
+      },
+      "attribution": "Native unpack accounts for exactly zero. Forward probes/metadata and full-logical reverse reductions remain capacity dependent. Timings of their subexpressions are not causally isolated; no irreducible-floor waiver."
+    },
+    {
+      "live": 1024,
+      "mode": "imported",
+      "slots": [
+        2944,
+        5888
+      ],
+      "source": "part7_live1024.json",
+      "status": "passed",
+      "ratios": {
+        "step_ms": 1.2585515206413334,
+        "replay_ms": 0.911106460116699
+      },
+      "medians": [
+        {
+          "step_ms": 260.3414817713201,
+          "forward_ms": 138.2039031982422,
+          "replay_ms": 122.11711883544922,
+          "peak_allocated_bytes": 6051291648,
+          "peak_reserved_bytes": 6488588288
+        },
+        {
+          "step_ms": 327.65316776931286,
+          "forward_ms": 216.6261749267578,
+          "replay_ms": 111.2616958618164,
+          "peak_allocated_bytes": 9239320064,
+          "peak_reserved_bytes": 9281994752
+        }
+      ],
+      "versus_part6_ratios": [
+        {
+          "step_ms": 0.6018368910860667,
+          "replay_ms": 0.41520910632065056
+        },
+        {
+          "step_ms": 0.6671764952174789,
+          "replay_ms": 0.40432554486506617
+        }
+      ],
+      "required_savings_ms": {
+        "step_ms": 0,
+        "replay_ms": 0
+      },
+      "device_delta_ms": {
+        "forward": 78.42227172851562,
+        "replay": -10.855422973632812
+      },
+      "attribution": "Native unpack accounts for exactly zero. Forward probes/metadata and full-logical reverse reductions remain capacity dependent. Timings of their subexpressions are not causally isolated; no irreducible-floor waiver."
+    },
+    {
+      "live": 1024,
+      "mode": "imported",
+      "slots": [
+        5888,
+        11776
+      ],
+      "source": "part7_live1024.json",
+      "status": "failed",
+      "ratios": {
+        "step_ms": 1.62944782954196,
+        "replay_ms": 1.2303642256930585
+      },
+      "medians": [
+        {
+          "step_ms": 327.65316776931286,
+          "forward_ms": 216.6261749267578,
+          "replay_ms": 111.2616958618164,
+          "peak_allocated_bytes": 9239320064,
+          "peak_reserved_bytes": 9281994752
+        },
+        {
+          "step_ms": 533.8937430642545,
+          "forward_ms": 397.0774230957031,
+          "replay_ms": 136.8924102783203,
+          "peak_allocated_bytes": 15887314432,
+          "peak_reserved_bytes": 15953035264
+        }
+      ],
+      "versus_part6_ratios": [
+        {
+          "step_ms": 0.6671764952174789,
+          "replay_ms": 0.40432554486506617
+        },
+        {
+          "step_ms": 0.7789012187022448,
+          "replay_ms": 0.47519755270146624
+        }
+      ],
+      "required_savings_ms": {
+        "step_ms": 42.413991410285234,
+        "replay_ms": 0
+      },
+      "device_delta_ms": {
+        "forward": 180.4512481689453,
+        "replay": 25.630714416503906
+      },
+      "attribution": "Native unpack accounts for exactly zero. Forward probes/metadata and full-logical reverse reductions remain capacity dependent. Timings of their subexpressions are not causally isolated; no irreducible-floor waiver."
+    },
+    {
+      "live": 1024,
+      "mode": "imported",
+      "slots": [
+        8192,
+        8224
+      ],
+      "source": "part7_live1024.json",
+      "status": "passed",
+      "ratios": {
+        "step_ms": 1.039170000678808,
+        "replay_ms": 1.1294456490103426
+      },
+      "medians": [
+        {
+          "step_ms": 394.72355507314205,
+          "forward_ms": 283.359130859375,
+          "replay_ms": 111.22380828857422,
+          "peak_allocated_bytes": 11889579520,
+          "peak_reserved_bytes": 11947474944
+        },
+        {
+          "step_ms": 410.18487699329853,
+          "forward_ms": 284.46295166015625,
+          "replay_ms": 125.62124633789062,
+          "peak_allocated_bytes": 11925058048,
+          "peak_reserved_bytes": 12022972416
+        }
+      ],
+      "versus_part6_ratios": [
+        {
+          "step_ms": 0.7008735744535611,
+          "replay_ms": 0.39718360150753107
+        },
+        {
+          "step_ms": 0.7152291145415179,
+          "replay_ms": 0.4369601632195524
+        }
+      ],
+      "required_savings_ms": {
+        "step_ms": 0,
+        "replay_ms": 0
+      },
+      "device_delta_ms": {
+        "forward": 1.10382080078125,
+        "replay": 14.397438049316406
+      },
+      "attribution": "Native unpack accounts for exactly zero. Forward probes/metadata and full-logical reverse reductions remain capacity dependent. Timings of their subexpressions are not causally isolated; no irreducible-floor waiver."
+    },
+    {
+      "live": 1024,
+      "mode": "continued",
+      "slots": [
+        2944,
+        5888
+      ],
+      "source": "part7_live1024.json",
+      "status": "passed",
+      "ratios": {
+        "step_ms": 1.2611722136207086,
+        "replay_ms": 0.9097194749388116
+      },
+      "medians": [
+        {
+          "step_ms": 259.6537210047245,
+          "forward_ms": 137.947998046875,
+          "replay_ms": 121.7474594116211,
+          "peak_allocated_bytes": 6051291648,
+          "peak_reserved_bytes": 6488588288
+        },
+        {
+          "step_ms": 327.4680580943823,
+          "forward_ms": 216.4541473388672,
+          "replay_ms": 110.75603485107422,
+          "peak_allocated_bytes": 9239188992,
+          "peak_reserved_bytes": 9281994752
+        }
+      ],
+      "versus_part6_ratios": [
+        {
+          "step_ms": 0.6014009469625896,
+          "replay_ms": 0.41438465797966767
+        },
+        {
+          "step_ms": 0.6653449673699945,
+          "replay_ms": 0.4014288662811051
+        }
+      ],
+      "required_savings_ms": {
+        "step_ms": 0,
+        "replay_ms": 0
+      },
+      "device_delta_ms": {
+        "forward": 78.50614929199219,
+        "replay": -10.991424560546875
+      },
+      "attribution": "Native unpack accounts for exactly zero. Forward probes/metadata and full-logical reverse reductions remain capacity dependent. Timings of their subexpressions are not causally isolated; no irreducible-floor waiver."
+    },
+    {
+      "live": 1024,
+      "mode": "continued",
+      "slots": [
+        5888,
+        11776
+      ],
+      "source": "part7_live1024.json",
+      "status": "failed",
+      "ratios": {
+        "step_ms": 1.6323426384140773,
+        "replay_ms": 1.2375717735360885
+      },
+      "medians": [
+        {
+          "step_ms": 327.4680580943823,
+          "forward_ms": 216.4541473388672,
+          "replay_ms": 110.75603485107422,
+          "peak_allocated_bytes": 9239188992,
+          "peak_reserved_bytes": 9281994752
+        },
+        {
+          "step_ms": 534.5400739461184,
+          "forward_ms": 397.28436279296875,
+          "replay_ms": 137.06854248046875,
+          "peak_allocated_bytes": 15887183360,
+          "peak_reserved_bytes": 15953035264
+        }
+      ],
+      "versus_part6_ratios": [
+        {
+          "step_ms": 0.6653449673699945,
+          "replay_ms": 0.4014288662811051
+        },
+        {
+          "step_ms": 0.7782055428899256,
+          "replay_ms": 0.4754945412680138
+        }
+      ],
+      "required_savings_ms": {
+        "step_ms": 43.337986804544926,
+        "replay_ms": 0
+      },
+      "device_delta_ms": {
+        "forward": 180.83021545410156,
+        "replay": 26.31250762939453
+      },
+      "attribution": "Native unpack accounts for exactly zero. Forward probes/metadata and full-logical reverse reductions remain capacity dependent. Timings of their subexpressions are not causally isolated; no irreducible-floor waiver."
+    },
+    {
+      "live": 1024,
+      "mode": "continued",
+      "slots": [
+        8192,
+        8224
+      ],
+      "source": "part7_live1024.json",
+      "status": "passed",
+      "ratios": {
+        "step_ms": 1.0214254463051111,
+        "replay_ms": 1.057004099884986
+      },
+      "medians": [
+        {
+          "step_ms": 403.15627586096525,
+          "forward_ms": 283.81695556640625,
+          "replay_ms": 119.1167984008789,
+          "peak_allocated_bytes": 11889448448,
+          "peak_reserved_bytes": 11947474944
+        },
+        {
+          "step_ms": 411.79407900199294,
+          "forward_ms": 286.1699523925781,
+          "replay_ms": 125.90694427490234,
+          "peak_allocated_bytes": 11924926976,
+          "peak_reserved_bytes": 12022972416
+        }
+      ],
+      "versus_part6_ratios": [
+        {
+          "step_ms": 0.7157288921069953,
+          "replay_ms": 0.425864908356903
+        },
+        {
+          "step_ms": 0.7161879389563988,
+          "replay_ms": 0.4381755223947808
+        }
+      ],
+      "required_savings_ms": {
+        "step_ms": 0,
+        "replay_ms": 0
+      },
+      "device_delta_ms": {
+        "forward": 2.352996826171875,
+        "replay": 6.7901458740234375
+      },
+      "attribution": "Native unpack accounts for exactly zero. Forward probes/metadata and full-logical reverse reductions remain capacity dependent. Timings of their subexpressions are not causally isolated; no irreducible-floor waiver."
+    },
+    {
+      "live": 2800,
+      "mode": "imported",
+      "slots": [
+        2944,
+        5888
+      ],
+      "source": "part7_live2800.json",
+      "status": "passed",
+      "ratios": {
+        "step_ms": 0.9860991565755812,
+        "replay_ms": 0.9125743993086173
+      },
+      "medians": [
+        {
+          "step_ms": 774.1159568540752,
+          "forward_ms": 330.4988098144531,
+          "replay_ms": 443.4472961425781,
+          "peak_allocated_bytes": 7801510400,
+          "peak_reserved_bytes": 7866417152
+        },
+        {
+          "step_ms": 763.3550921455026,
+          "forward_ms": 358.540283203125,
+          "replay_ms": 404.67864990234375,
+          "peak_allocated_bytes": 10905614848,
+          "peak_reserved_bytes": 10953424896
+        }
+      ],
+      "versus_part6_ratios": [
+        {
+          "step_ms": 0.656693517431343,
+          "replay_ms": 0.5228529372586449
+        },
+        {
+          "step_ms": 0.6414990813754566,
+          "replay_ms": 0.48683120830750276
+        }
+      ],
+      "required_savings_ms": {
+        "step_ms": 0,
+        "replay_ms": 0
+      },
+      "device_delta_ms": {
+        "forward": 28.041473388671875,
+        "replay": -38.768646240234375
+      },
+      "attribution": "Native unpack accounts for exactly zero. Forward probes/metadata and full-logical reverse reductions remain capacity dependent. Timings of their subexpressions are not causally isolated; no irreducible-floor waiver."
+    },
+    {
+      "live": 2800,
+      "mode": "imported",
+      "slots": [
+        5888,
+        11776
+      ],
+      "source": "part7_live2800.json",
+      "status": "passed",
+      "ratios": {
+        "step_ms": 1.1997967650165253,
+        "replay_ms": 1.1144071381869929
+      },
+      "medians": [
+        {
+          "step_ms": 763.3550921455026,
+          "forward_ms": 358.540283203125,
+          "replay_ms": 404.67864990234375,
+          "peak_allocated_bytes": 10905614848,
+          "peak_reserved_bytes": 10953424896
+        },
+        {
+          "step_ms": 915.8709701150656,
+          "forward_ms": 464.9942932128906,
+          "replay_ms": 450.9767761230469,
+          "peak_allocated_bytes": 17198048768,
+          "peak_reserved_bytes": 17263755264
+        }
+      ],
+      "versus_part6_ratios": [
+        {
+          "step_ms": 0.6414990813754566,
+          "replay_ms": 0.48683120830750276
+        },
+        {
+          "step_ms": 0.6886504394096306,
+          "replay_ms": 0.5220079280340407
+        }
+      ],
+      "required_savings_ms": {
+        "step_ms": 0,
+        "replay_ms": 0
+      },
+      "device_delta_ms": {
+        "forward": 106.45401000976562,
+        "replay": 46.298126220703125
+      },
+      "attribution": "Native unpack accounts for exactly zero. Forward probes/metadata and full-logical reverse reductions remain capacity dependent. Timings of their subexpressions are not causally isolated; no irreducible-floor waiver."
+    },
+    {
+      "live": 2800,
+      "mode": "imported",
+      "slots": [
+        8192,
+        8224
+      ],
+      "source": "part7_live2800.json",
+      "status": "passed",
+      "ratios": {
+        "step_ms": 1.0179943636913167,
+        "replay_ms": 1.0303341069636809
+      },
+      "medians": [
+        {
+          "step_ms": 809.9775779992342,
+          "forward_ms": 380.15692138671875,
+          "replay_ms": 430.00115966796875,
+          "peak_allocated_bytes": 13357316608,
+          "peak_reserved_bytes": 13459521536
+        },
+        {
+          "step_ms": 824.5526091195643,
+          "forward_ms": 382.02471923828125,
+          "replay_ms": 443.04486083984375,
+          "peak_allocated_bytes": 13389036032,
+          "peak_reserved_bytes": 13535019008
+        }
+      ],
+      "versus_part6_ratios": [
+        {
+          "step_ms": 0.66088912494553,
+          "replay_ms": 0.5088507956117053
+        },
+        {
+          "step_ms": 0.665133438066957,
+          "replay_ms": 0.5165965936074041
+        }
+      ],
+      "required_savings_ms": {
+        "step_ms": 0,
+        "replay_ms": 0
+      },
+      "device_delta_ms": {
+        "forward": 1.8677978515625,
+        "replay": 13.043701171875
+      },
+      "attribution": "Native unpack accounts for exactly zero. Forward probes/metadata and full-logical reverse reductions remain capacity dependent. Timings of their subexpressions are not causally isolated; no irreducible-floor waiver."
+    },
+    {
+      "live": 2800,
+      "mode": "continued",
+      "slots": [
+        2944,
+        5888
+      ],
+      "source": "part7_live2800.json",
+      "status": "passed",
+      "ratios": {
+        "step_ms": 0.9918191804712182,
+        "replay_ms": 0.9228685046273316
+      },
+      "medians": [
+        {
+          "step_ms": 773.5397159121931,
+          "forward_ms": 330.5850830078125,
+          "replay_ms": 442.9117431640625,
+          "peak_allocated_bytes": 7801510400,
+          "peak_reserved_bytes": 7866417152
+        },
+        {
+          "step_ms": 767.2115270979702,
+          "forward_ms": 358.5842590332031,
+          "replay_ms": 408.7492980957031,
+          "peak_allocated_bytes": 10905614848,
+          "peak_reserved_bytes": 10953424896
+        }
+      ],
+      "versus_part6_ratios": [
+        {
+          "step_ms": 0.6564653198938356,
+          "replay_ms": 0.5225003754946773
+        },
+        {
+          "step_ms": 0.6443797968128638,
+          "replay_ms": 0.4912478068994697
+        }
+      ],
+      "required_savings_ms": {
+        "step_ms": 0,
+        "replay_ms": 0
+      },
+      "device_delta_ms": {
+        "forward": 27.999176025390625,
+        "replay": -34.162445068359375
+      },
+      "attribution": "Native unpack accounts for exactly zero. Forward probes/metadata and full-logical reverse reductions remain capacity dependent. Timings of their subexpressions are not causally isolated; no irreducible-floor waiver."
+    },
+    {
+      "live": 2800,
+      "mode": "continued",
+      "slots": [
+        5888,
+        11776
+      ],
+      "source": "part7_live2800.json",
+      "status": "passed",
+      "ratios": {
+        "step_ms": 1.1943822124979622,
+        "replay_ms": 1.1022993532054188
+      },
+      "medians": [
+        {
+          "step_ms": 767.2115270979702,
+          "forward_ms": 358.5842590332031,
+          "replay_ms": 408.7492980957031,
+          "peak_allocated_bytes": 10905614848,
+          "peak_reserved_bytes": 10953424896
+        },
+        {
+          "step_ms": 916.343801189214,
+          "forward_ms": 465.15301513671875,
+          "replay_ms": 450.5640869140625,
+          "peak_allocated_bytes": 17197917696,
+          "peak_reserved_bytes": 17263755264
+        }
+      ],
+      "versus_part6_ratios": [
+        {
+          "step_ms": 0.6443797968128638,
+          "replay_ms": 0.4912478068994697
+        },
+        {
+          "step_ms": 0.6893420243207888,
+          "replay_ms": 0.5220709138282376
+        }
+      ],
+      "required_savings_ms": {
+        "step_ms": 0,
+        "replay_ms": 0
+      },
+      "device_delta_ms": {
+        "forward": 106.56875610351562,
+        "replay": 41.814788818359375
+      },
+      "attribution": "Native unpack accounts for exactly zero. Forward probes/metadata and full-logical reverse reductions remain capacity dependent. Timings of their subexpressions are not causally isolated; no irreducible-floor waiver."
+    },
+    {
+      "live": 2800,
+      "mode": "continued",
+      "slots": [
+        8192,
+        8224
+      ],
+      "source": "part7_live2800.json",
+      "status": "passed",
+      "ratios": {
+        "step_ms": 1.0178076955964577,
+        "replay_ms": 1.0298790937970264
+      },
+      "medians": [
+        {
+          "step_ms": 809.8054891452193,
+          "forward_ms": 380.4262390136719,
+          "replay_ms": 429.31915283203125,
+          "peak_allocated_bytes": 13357316608,
+          "peak_reserved_bytes": 13459521536
+        },
+        {
+          "step_ms": 824.2262587882578,
+          "forward_ms": 381.9335632324219,
+          "replay_ms": 442.1468200683594,
+          "peak_allocated_bytes": 13389036032,
+          "peak_reserved_bytes": 13535019008
+        }
+      ],
+      "versus_part6_ratios": [
+        {
+          "step_ms": 0.6608118818472548,
+          "replay_ms": 0.5081834633792894
+        },
+        {
+          "step_ms": 0.6642110621926972,
+          "replay_ms": 0.5150574747049512
+        }
+      ],
+      "required_savings_ms": {
+        "step_ms": 0,
+        "replay_ms": 0
+      },
+      "device_delta_ms": {
+        "forward": 1.50732421875,
+        "replay": 12.827667236328125
+      },
+      "attribution": "Native unpack accounts for exactly zero. Forward probes/metadata and full-logical reverse reductions remain capacity dependent. Timings of their subexpressions are not causally isolated; no irreducible-floor waiver."
+    }
+  ],
+  "long_context": {
+    "tokens": [
+      512,
+      4096
+    ],
+    "token_ratio": 8,
+    "occupied_pairs": [
+      16777216,
+      1073741824
+    ],
+    "occupied_pair_ratio": 64.0,
+    "mean_live": [
+      128.0,
+      1024.0
+    ],
+    "payload_read_flops": [
+      6442450944,
+      412316860416
+    ],
+    "read_flop_formula": "2*(DK+DV)*occupied_pairs: score dot + weighted value sum only; excludes exp, decay, backward, dense padding and scalar recurrence",
+    "flops_per_input_token": [
+      196608.0,
+      1572864.0
+    ],
+    "per_token_note": "Live occupancy grows 8x. Flat useful cost is per live-slot/token pair, not per token for this workload. Kernels use vector reductions; this is not a GEMM hardware-floor claim.",
+    "required_wall_savings_ms": 1460.0425795651972,
+    "native_unpack_savings_ms": 0,
+    "profile": {
+      "x36::scan_forward": {
+        "activity_count": 44,
+        "counts": {
+          "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)": 5,
+          "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<bool>, std::array<char*, 1ul> >(int, at::native::FillFunctor<bool>, std::array<char*, 1ul>)": 1,
+          "void at::native::vectorized_elementwise_kernel<2, at::native::FillFunctor<long>, std::array<char*, 1ul> >(int, at::native::FillFunctor<long>, std::array<char*, 1ul>)": 3,
+          "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<int>, std::array<char*, 1ul> >(int, at::native::FillFunctor<int>, std::array<char*, 1ul>)": 7,
+          "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1})": 9,
+          "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<signed char>, std::array<char*, 1ul> >(int, at::native::FillFunctor<signed char>, std::array<char*, 1ul>)": 2,
+          "void at::native::vectorized_elementwise_kernel<2, at::native::FillFunctor<unsigned long>, std::array<char*, 1ul> >(int, at::native::FillFunctor<unsigned long>, std::array<char*, 1ul>)": 3,
+          "Memcpy DtoD (Device -> Device)": 1,
+          "initialize_free_words": 1,
+          "scan_kernel": 1,
+          "materialize_state": 1,
+          "void at::native::vectorized_elementwise_kernel<4, at::native::compare_scalar_kernel<long>(at::TensorIteratorBase&, at::native::(anonymous namespace)::OpType, long)::{lambda(long)#1}, std::array<char*, 2ul> >(int, at::native::compare_scalar_kernel<long>(at::TensorIteratorBase&, at::native::(anonymous namespace)::OpType, long)::{lambda(long)#1}, std::array<char*, 2ul>)": 1,
+          "void at::native::vectorized_elementwise_kernel<4, at::native::compare_scalar_kernel<float>(at::TensorIteratorBase&, at::native::(anonymous namespace)::OpType, float)::{lambda(float)#1}, std::array<char*, 2ul> >(int, at::native::compare_scalar_kernel<float>(at::TensorIteratorBase&, at::native::(anonymous namespace)::OpType, float)::{lambda(float)#1}, std::array<char*, 2ul>)": 1,
+          "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1} const&)::{lambda(int)#1})": 4,
+          "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#11}::operator()() const::{lambda(bool)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#11}::operator()() const::{lambda(bool)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#11}::operator()() const::{lambda(bool)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#11}::operator()() const::{lambda(bool)#1} const&)::{lambda(int)#1})": 2,
+          "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#2}::operator()() const::{lambda(signed char)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#2}::operator()() const::{lambda(signed char)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#2}::operator()() const::{lambda(signed char)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#2}::operator()() const::{lambda(signed char)#1} const&)::{lambda(int)#1})": 2
+        },
+        "device_busy_ms": 1059.21205,
+        "component_device_busy_ms": {
+          "fills": 3.872935,
+          "copies_transposes_mapping": 11.653908000000001,
+          "initialize_free_words": 0.004736,
+          "scan_kernel": 1043.52258,
+          "materialize_state": 0.138787,
+          "other_setup_or_reduction": 0.019104
+        }
+      },
+      "x36::replay_backward": {
+        "activity_count": 17,
+        "counts": {
+          "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1})": 10,
+          "setup_kernel": 1,
+          "Memcpy HtoD (Pinned -> Device)": 2,
+          "rebase": 2,
+          "reverse_kernel": 1,
+          "void at::native::reduce_kernel<128, 4, at::native::ReduceOp<float, at::native::func_wrapper_t<float, at::native::sum_functor<float, float, float>::operator()(at::TensorIterator&)::{lambda(float, float)#1}>, unsigned int, float, 4, 4> >(at::native::ReduceOp<float, at::native::func_wrapper_t<float, at::native::sum_functor<float, float, float>::operator()(at::TensorIterator&)::{lambda(float, float)#1}>, unsigned int, float, 4, 4>)": 1
+        },
+        "device_busy_ms": 2770.12039,
+        "component_device_busy_ms": {
+          "copies_transposes_mapping": 5.62679,
+          "setup_kernel": 1.857666,
+          "rebase": 11.730773,
+          "reverse_kernel": 2750.898057,
+          "other_setup_or_reduction": 0.007104
+        }
+      },
+      "steady_sync_runtime": [
+        {
+          "name": "cudaDeviceSynchronize",
+          "ts": 2286593870359.895,
+          "dur_us": 3792244.654
+        },
+        {
+          "name": "cudaDeviceSynchronize",
+          "ts": 2286597662692.989,
+          "dur_us": 6.78
+        }
+      ],
+      "dtoh": [],
+      "kernel_busy_ms_by_name": {
+        "Memcpy DtoD (Device -> Device)": 0.628784,
+        "Memcpy HtoD (Pinned -> Device)": 0.725613,
+        "Memset (Device)": 0.304933,
+        "ampere_sgemm_128x128_nn": 29.095408,
+        "ampere_sgemm_128x128_tn": 502.408651,
+        "ampere_sgemm_128x64_nn": 9.585294,
+        "ampere_sgemm_32x32_sliced1x4_nt": 0.74475,
+        "ampere_sgemm_64x64_tn": 1.2333669999999999,
+        "fmha_cutlassB_f32_aligned_64x64_k64_sm80(PyTorchMemEffAttention::AttentionBackwardKernel<cutlass::arch::Sm80, float, true, false, false, 64, 64, 64, false>::Params)": 534.580725,
+        "fmha_cutlassF_f32_aligned_64x64_rf_sm80(PyTorchMemEffAttention::AttentionKernel<float, cutlass::arch::Sm80, true, 64, 64, 64, true, true>::Params)": 192.88965,
+        "initialize_free_words": 0.004736,
+        "materialize_state": 0.138787,
+        "rebase": 11.730773,
+        "reverse_kernel": 2750.898057,
+        "scan_kernel": 1043.52258,
+        "setup_kernel": 1.857666,
+        "void (anonymous namespace)::elementwise_kernel_with_index<int, at::native::arange_cuda_out(c10::Scalar const&, c10::Scalar const&, c10::Scalar const&, at::Tensor&)::{lambda()#1}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1}>(int, at::native::arange_cuda_out(c10::Scalar const&, c10::Scalar const&, c10::Scalar const&, at::Tensor&)::{lambda()#1}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1}, function_traits<at::native::arange_cuda_out(c10::Scalar const&, c10::Scalar const&, c10::Scalar const&, at::Tensor&)::{lambda()#1}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1}>::result_type*)": 0.042783999999999996,
+        "void at::native::(anonymous namespace)::CatArrayBatchedCopy<at::native::(anonymous namespace)::OpaqueType<4u>, unsigned int, 4, 64, 64>(at::native::(anonymous namespace)::OpaqueType<4u>*, at::native::(anonymous namespace)::CatArrInputTensorMetadata<at::native::(anonymous namespace)::OpaqueType<4u>, unsigned int, 64, 64>, at::native::(anonymous namespace)::TensorSizeStride<unsigned int, 4u>, int, unsigned int)": 12.515812,
+        "void at::native::(anonymous namespace)::CatArrayBatchedCopy_alignedK_contig<at::native::(anonymous namespace)::OpaqueType<4u>, unsigned int, 1, 128, 1, 16>(at::native::(anonymous namespace)::OpaqueType<4u>*, at::native::(anonymous namespace)::CatArrInputTensorMetadata<at::native::(anonymous namespace)::OpaqueType<4u>, unsigned int, 128, 1>, at::native::(anonymous namespace)::TensorSizeStride<unsigned int, 4u>, int, unsigned int)": 0.0019199999999999998,
+        "void at::native::(anonymous namespace)::GammaBetaBackwardCUDAKernelTemplate<float, float, 32u, 1u, 32u, true, true, false>(long, long, float const*, float const*, float const*, float const*, float*, float*)": 8.415161,
+        "void at::native::(anonymous namespace)::compute_grad_weight<float, long>(long const*, float const*, long const*, long, long, long const*, long const*, at::AccumulateType<float, true>::type*, long)": 0.39504700000000004,
+        "void at::native::(anonymous namespace)::compute_num_of_partial_segments<long>(long const*, long const*, long const*, long*)": 0.0013759999999999998,
+        "void at::native::(anonymous namespace)::cunn_SoftMaxBackward<4, float, float, float, at::native::(anonymous namespace)::LogSoftMaxBackwardEpilogue>(float*, float const*, float const*, long)": 143.33834299999998,
+        "void at::native::(anonymous namespace)::cunn_SoftMaxForward<4, float, float, float, at::native::(anonymous namespace)::LogSoftMaxForwardEpilogue>(float*, float const*, int)": 151.668155,
+        "void at::native::(anonymous namespace)::krn_partial_segment_offset<long>(long*, long const*, long const*, long const*, long const*)": 0.023681,
+        "void at::native::(anonymous namespace)::krn_partials_per_segment<long>(long*, long const*, long const*, long)": 0.001824,
+        "void at::native::(anonymous namespace)::layer_norm_grad_input_kernel_vectorized<float, float, false>(float const*, float const*, float const*, float const*, float const*, float*, int)": 11.541488,
+        "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<1>, at::native::(anonymous namespace)::BinaryOpScalarFunctor<float, 1, 1, 0>, std::multiplies<float>, float>(at::native::(anonymous namespace)::TensorListMetadata<1>, at::native::(anonymous namespace)::BinaryOpScalarFunctor<float, 1, 1, 0>, std::multiplies<float>, float)": 0.420137,
+        "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<1>, at::native::(anonymous namespace)::BinaryOpScalarFunctor<float, 1, 1, 0>, std::plus<float>, float>(at::native::(anonymous namespace)::TensorListMetadata<1>, at::native::(anonymous namespace)::BinaryOpScalarFunctor<float, 1, 1, 0>, std::plus<float>, float)": 0.08995399999999999,
+        "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<1>, at::native::(anonymous namespace)::BinaryOpScalarTensorFunctor<float, 1, 1, 0>, std::multiplies<float>, float*, float>(at::native::(anonymous namespace)::TensorListMetadata<1>, at::native::(anonymous namespace)::BinaryOpScalarTensorFunctor<float, 1, 1, 0>, std::multiplies<float>, float*, float)": 0.062018000000000004,
+        "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<1>, at::native::LpNormFunctor<float, (at::native::NormType)1, float, 1, 1, 0>, float*, int>(at::native::(anonymous namespace)::TensorListMetadata<1>, at::native::LpNormFunctor<float, (at::native::NormType)1, float, 1, 1, 0>, float*, int)": 0.10188999999999998,
+        "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::TernaryOpScalarFunctor<float, 2, 2, 0>, at::native::LerpFunctor<float>, float>(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::TernaryOpScalarFunctor<float, 2, 2, 0>, at::native::LerpFunctor<float>, float)": 0.322757,
+        "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Sqrt<float> >(at::native::(anonymous namespace)::TensorListMetadata<2>, at::native::(anonymous namespace)::UnaryOpFunctor<float, 2, 1, 1>, at::native::Sqrt<float>)": 0.21571600000000002,
+        "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListMetadata<3>, at::native::(anonymous namespace)::PointwiseOpScalarFunctor<float, 3, 3, 0>, std::multiplies<float>, float>(at::native::(anonymous namespace)::TensorListMetadata<3>, at::native::(anonymous namespace)::PointwiseOpScalarFunctor<float, 3, 3, 0>, std::multiplies<float>, float)": 0.25325200000000003,
+        "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListScalarListMetadata<float, 1>, at::native::(anonymous namespace)::BinaryOpScalarListFunctor<float, 1, 1, 0>, std::divides<float> >(at::native::(anonymous namespace)::TensorListScalarListMetadata<float, 1>, at::native::(anonymous namespace)::BinaryOpScalarListFunctor<float, 1, 1, 0>, std::divides<float>)": 0.145602,
+        "void at::native::(anonymous namespace)::multi_tensor_apply_kernel<at::native::(anonymous namespace)::TensorListScalarListMetadata<float, 3>, at::native::(anonymous namespace)::PointwiseOpScalarListFunctor<float, 3, 3, 0>, std::divides<float> >(at::native::(anonymous namespace)::TensorListScalarListMetadata<float, 3>, at::native::(anonymous namespace)::PointwiseOpScalarListFunctor<float, 3, 3, 0>, std::divides<float>)": 0.397544,
+        "void at::native::(anonymous namespace)::nll_loss_backward_reduce_cuda_kernel_2d<float, long>(float*, float const*, long const*, float const*, float const*, bool, int, int, long, long)": 2.766713,
+        "void at::native::(anonymous namespace)::nll_loss_forward_reduce_cuda_kernel_2d<float, float, long>(float*, float*, float const*, long const*, float const*, bool, long, long, long, long)": 8.852962,
+        "void at::native::(anonymous namespace)::sum_and_scatter<float, long>(long const*, float*, long, long const*, long const*, at::AccumulateType<float, true>::type const*, long const*, long const*, long, long)": 0.16781100000000002,
+        "void at::native::(anonymous namespace)::vectorized_layer_norm_kernel<float, float, false>(int, float, float const*, float const*, float const*, float*, float*, float*)": 8.780383,
+        "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > >(at::TensorIteratorBase&, at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > >(at::TensorIteratorBase&, at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > const&)::{lambda(int)#1})": 43.034576,
+        "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1} const&)::{lambda(int)#1})": 0.049249,
+        "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1})": 59.127663999999996,
+        "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::neg_kernel_cuda(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::neg_kernel_cuda(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::neg_kernel_cuda(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::neg_kernel_cuda(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1})": 5.641094,
+        "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl<at::native::(anonymous namespace)::pow_tensor_tensor_kernel(at::TensorIteratorBase&)::{lambda()#1}::operator()() const::{lambda()#7}::operator()() const::{lambda(float, float)#1}>(at::TensorIteratorBase&, at::native::(anonymous namespace)::pow_tensor_tensor_kernel(at::TensorIteratorBase&)::{lambda()#1}::operator()() const::{lambda()#7}::operator()() const::{lambda(float, float)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl<at::native::(anonymous namespace)::pow_tensor_tensor_kernel(at::TensorIteratorBase&)::{lambda()#1}::operator()() const::{lambda()#7}::operator()() const::{lambda(float, float)#1}>(at::TensorIteratorBase&, at::native::(anonymous namespace)::pow_tensor_tensor_kernel(at::TensorIteratorBase&)::{lambda()#1}::operator()() const::{lambda()#7}::operator()() const::{lambda(float, float)#1} const&)::{lambda(int)#1})": 0.046305,
+        "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<bool, bool, bool, at::native::BitwiseAndFunctor<bool> > >(at::TensorIteratorBase&, at::native::BinaryFunctor<bool, bool, bool, at::native::BitwiseAndFunctor<bool> > const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<bool, bool, bool, at::native::BitwiseAndFunctor<bool> > >(at::TensorIteratorBase&, at::native::BinaryFunctor<bool, bool, bool, at::native::BitwiseAndFunctor<bool> > const&)::{lambda(int)#1})": 0.006272000000000001,
+        "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#11}::operator()() const::{lambda(bool)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#11}::operator()() const::{lambda(bool)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#11}::operator()() const::{lambda(bool)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#11}::operator()() const::{lambda(bool)#1} const&)::{lambda(int)#1})": 0.0069759999999999996,
+        "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#2}::operator()() const::{lambda(signed char)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#2}::operator()() const::{lambda(signed char)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#2}::operator()() const::{lambda(signed char)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#2}::operator()() const::{lambda(signed char)#1} const&)::{lambda(int)#1})": 7.78123,
+        "void at::native::lpnorm_cleanup<float, (at::native::NormType)1, float, float>(float const*, at::native::TensorListAddresses, int)": 0.0019199999999999998,
+        "void at::native::reduce_kernel<128, 4, at::native::ReduceOp<float, at::native::func_wrapper_t<float, at::native::sum_functor<float, float, float>::operator()(at::TensorIterator&)::{lambda(float, float)#1}>, unsigned int, float, 4, 4> >(at::native::ReduceOp<float, at::native::func_wrapper_t<float, at::native::sum_functor<float, float, float>::operator()(at::TensorIterator&)::{lambda(float, float)#1}>, unsigned int, float, 4, 4>)": 18.130126,
+        "void at::native::reduce_kernel<512, 1, at::native::ReduceOp<float, at::native::NormTwoOps<float, float, float>, unsigned int, float, 4, 4> >(at::native::ReduceOp<float, at::native::NormTwoOps<float, float, float>, unsigned int, float, 4, 4>)": 0.002848,
+        "void at::native::reduce_kernel<512, 1, at::native::ReduceOp<float, at::native::func_wrapper_t<float, at::native::sum_functor<float, float, float>::operator()(at::TensorIterator&)::{lambda(float, float)#1}>, unsigned int, float, 4, 4> >(at::native::ReduceOp<float, at::native::func_wrapper_t<float, at::native::sum_functor<float, float, float>::operator()(at::TensorIterator&)::{lambda(float, float)#1}>, unsigned int, float, 4, 4>)": 2.5158540000000005,
+        "void at::native::unrolled_elementwise_kernel<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul>, 4, TrivialOffsetCalculator<1, unsigned int>, TrivialOffsetCalculator<1, unsigned int>, at::native::memory::LoadWithCast<1>, at::native::memory::StoreWithCast<1> >(int, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul>, TrivialOffsetCalculator<1, unsigned int>, TrivialOffsetCalculator<1, unsigned int>, at::native::memory::LoadWithCast<1>, at::native::memory::StoreWithCast<1>)": 0.075424,
+        "void at::native::vectorized_elementwise_kernel<2, at::native::FillFunctor<long>, std::array<char*, 1ul> >(int, at::native::FillFunctor<long>, std::array<char*, 1ul>)": 0.027936,
+        "void at::native::vectorized_elementwise_kernel<2, at::native::FillFunctor<unsigned long>, std::array<char*, 1ul> >(int, at::native::FillFunctor<unsigned long>, std::array<char*, 1ul>)": 0.0048319999999999995,
+        "void at::native::vectorized_elementwise_kernel<4, at::native::(anonymous namespace)::launch_clamp_scalar(at::TensorIteratorBase&, c10::Scalar, c10::Scalar, at::native::detail::ClampLimits)::{lambda()#1}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul> >(int, at::native::(anonymous namespace)::launch_clamp_scalar(at::TensorIteratorBase&, c10::Scalar, c10::Scalar, at::native::detail::ClampLimits)::{lambda()#1}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul>)": 0.001408,
+        "void at::native::vectorized_elementwise_kernel<4, at::native::AUnaryFunctor<float, float, bool, at::native::(anonymous namespace)::CompareEqFunctor<float> >, std::array<char*, 2ul> >(int, at::native::AUnaryFunctor<float, float, bool, at::native::(anonymous namespace)::CompareEqFunctor<float> >, std::array<char*, 2ul>)": 0.0013440000000000001,
+        "void at::native::vectorized_elementwise_kernel<4, at::native::AUnaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> >, std::array<char*, 2ul> >(int, at::native::AUnaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> >, std::array<char*, 2ul>)": 0.00128,
+        "void at::native::vectorized_elementwise_kernel<4, at::native::AUnaryFunctor<long, long, bool, at::native::(anonymous namespace)::CompareEqFunctor<long> >, std::array<char*, 2ul> >(int, at::native::AUnaryFunctor<long, long, bool, at::native::(anonymous namespace)::CompareEqFunctor<long> >, std::array<char*, 2ul>)": 0.004384000000000001,
+        "void at::native::vectorized_elementwise_kernel<4, at::native::AbsFunctor<float>, std::array<char*, 2ul> >(int, at::native::AbsFunctor<float>, std::array<char*, 2ul>)": 0.001248,
+        "void at::native::vectorized_elementwise_kernel<4, at::native::BUnaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> >, std::array<char*, 2ul> >(int, at::native::BUnaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> >, std::array<char*, 2ul>)": 0.024065,
+        "void at::native::vectorized_elementwise_kernel<4, at::native::BinaryFunctor<bool, bool, bool, at::native::binary_internal::MulFunctor<bool> >, std::array<char*, 3ul> >(int, at::native::BinaryFunctor<bool, bool, bool, at::native::binary_internal::MulFunctor<bool> >, std::array<char*, 3ul>)": 0.001472,
+        "void at::native::vectorized_elementwise_kernel<4, at::native::BinaryFunctor<bool, bool, bool, at::native::logical_and_kernel_cuda(at::TensorIterator&)::{lambda()#2}::operator()() const::{lambda()#9}::operator()() const::{lambda(bool, bool)#1}>, std::array<char*, 3ul> >(int, at::native::BinaryFunctor<bool, bool, bool, at::native::logical_and_kernel_cuda(at::TensorIterator&)::{lambda()#2}::operator()() const::{lambda()#9}::operator()() const::{lambda(bool, bool)#1}>, std::array<char*, 3ul>)": 0.001536,
+        "void at::native::vectorized_elementwise_kernel<4, at::native::BinaryFunctor<float, float, bool, at::native::(anonymous namespace)::CompareEqFunctor<float> >, std::array<char*, 3ul> >(int, at::native::BinaryFunctor<float, float, bool, at::native::(anonymous namespace)::CompareEqFunctor<float> >, std::array<char*, 3ul>)": 0.0013440000000000001,
+        "void at::native::vectorized_elementwise_kernel<4, at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> >, std::array<char*, 3ul> >(int, at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> >, std::array<char*, 3ul>)": 5.128125,
+        "void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char*, 2ul> >(int, at::native::CUDAFunctorOnSelf_add<float>, std::array<char*, 2ul>)": 0.001248,
+        "void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul> >(int, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul>)": 77.512731,
+        "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<bool>, std::array<char*, 1ul> >(int, at::native::FillFunctor<bool>, std::array<char*, 1ul>)": 0.002496,
+        "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)": 40.330147,
+        "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<int>, std::array<char*, 1ul> >(int, at::native::FillFunctor<int>, std::array<char*, 1ul>)": 0.017249,
+        "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<signed char>, std::array<char*, 1ul> >(int, at::native::FillFunctor<signed char>, std::array<char*, 1ul>)": 3.2681549999999997,
+        "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<unsigned char>, std::array<char*, 1ul> >(int, at::native::FillFunctor<unsigned char>, std::array<char*, 1ul>)": 1.4077680000000001,
+        "void at::native::vectorized_elementwise_kernel<4, at::native::GeluBackwardCUDAKernelImpl(at::TensorIteratorBase&, at::native::GeluType)::{lambda()#2}::operator()() const::{lambda()#2}::operator()() const::{lambda(float, float)#1}, std::array<char*, 3ul> >(int, at::native::GeluBackwardCUDAKernelImpl(at::TensorIteratorBase&, at::native::GeluType)::{lambda()#2}::operator()() const::{lambda()#2}::operator()() const::{lambda(float, float)#1}, std::array<char*, 3ul>)": 21.84827,
+        "void at::native::vectorized_elementwise_kernel<4, at::native::GeluCUDAKernelImpl(at::TensorIteratorBase&, at::native::GeluType)::{lambda()#2}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul> >(int, at::native::GeluCUDAKernelImpl(at::TensorIteratorBase&, at::native::GeluType)::{lambda()#2}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul>)": 15.130676,
+        "void at::native::vectorized_elementwise_kernel<4, at::native::compare_scalar_kernel<float>(at::TensorIteratorBase&, at::native::(anonymous namespace)::OpType, float)::{lambda(float)#1}, std::array<char*, 2ul> >(int, at::native::compare_scalar_kernel<float>(at::TensorIteratorBase&, at::native::(anonymous namespace)::OpType, float)::{lambda(float)#1}, std::array<char*, 2ul>)": 0.01008,
+        "void at::native::vectorized_elementwise_kernel<4, at::native::compare_scalar_kernel<long>(at::TensorIteratorBase&, at::native::(anonymous namespace)::OpType, long)::{lambda(long)#1}, std::array<char*, 2ul> >(int, at::native::compare_scalar_kernel<long>(at::TensorIteratorBase&, at::native::(anonymous namespace)::OpType, long)::{lambda(long)#1}, std::array<char*, 2ul>)": 0.012768,
+        "void at::native::vectorized_elementwise_kernel<4, at::native::cos_kernel_cuda(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul> >(int, at::native::cos_kernel_cuda(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul>)": 0.079488,
+        "void at::native::vectorized_elementwise_kernel<4, at::native::neg_kernel_cuda(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul> >(int, at::native::neg_kernel_cuda(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul>)": 0.019296,
+        "void at::native::vectorized_elementwise_kernel<4, at::native::reciprocal_kernel_cuda(at::TensorIteratorBase&)::{lambda()#1}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul> >(int, at::native::reciprocal_kernel_cuda(at::TensorIteratorBase&)::{lambda()#1}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul>)": 0.001472,
+        "void at::native::vectorized_elementwise_kernel<4, at::native::sigmoid_backward_kernel_cuda(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#2}::operator()() const::{lambda(float, float)#1}, std::array<char*, 3ul> >(int, at::native::sigmoid_backward_kernel_cuda(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#2}::operator()() const::{lambda(float, float)#1}, std::array<char*, 3ul>)": 0.010144,
+        "void at::native::vectorized_elementwise_kernel<4, at::native::sigmoid_kernel_cuda(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul> >(int, at::native::sigmoid_kernel_cuda(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul>)": 0.010816000000000001,
+        "void at::native::vectorized_elementwise_kernel<4, at::native::sin_kernel_cuda(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul> >(int, at::native::sin_kernel_cuda(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul>)": 0.09670699999999999,
+        "void at::native::vectorized_gather_kernel<16, long>(char*, char*, long*, int, long, long, long, long, bool)": 0.28330099999999997,
+        "void at_cuda_detail::cub::DeviceCompactInitKernel<at_cuda_detail::cub::ScanTileState<unsigned long long, true>, long*>(at_cuda_detail::cub::ScanTileState<unsigned long long, true>, int, long*)": 0.001312,
+        "void at_cuda_detail::cub::DeviceRadixSortExclusiveSumKernel<at_cuda_detail::cub::DeviceRadixSortPolicy<long, at::cuda::cub::detail::OpaqueType<8>, unsigned long long>::Policy900, unsigned long long>(unsigned long long*)": 0.001472,
+        "void at_cuda_detail::cub::DeviceRadixSortHistogramKernel<at_cuda_detail::cub::DeviceRadixSortPolicy<long, at::cuda::cub::detail::OpaqueType<8>, unsigned long long>::Policy900, false, long, unsigned long long, at_cuda_detail::cub::detail::identity_decomposer_t>(unsigned long long*, long const*, unsigned long long, int, int, at_cuda_detail::cub::detail::identity_decomposer_t)": 0.007552,
+        "void at_cuda_detail::cub::DeviceRadixSortOnesweepKernel<at_cuda_detail::cub::DeviceRadixSortPolicy<long, at::cuda::cub::detail::OpaqueType<8>, unsigned long long>::Policy900, false, long, at::cuda::cub::detail::OpaqueType<8>, unsigned long long, int, int, at_cuda_detail::cub::detail::identity_decomposer_t>(int*, int*, unsigned long long*, unsigned long long const*, long*, long const*, at::cuda::cub::detail::OpaqueType<8>*, at::cuda::cub::detail::OpaqueType<8> const*, int, int, int, at_cuda_detail::cub::detail::identity_decomposer_t)": 0.071329,
+        "void at_cuda_detail::cub::DeviceScanInitKernel<at_cuda_detail::cub::ScanTileState<long, true> >(at_cuda_detail::cub::ScanTileState<long, true>, int)": 0.001056,
+        "void at_cuda_detail::cub::DeviceScanKernel<at_cuda_detail::cub::DeviceScanPolicy<long, at::cuda::cub::(anonymous namespace)::SumOp<long> >::Policy900, long const*, long*, at_cuda_detail::cub::ScanTileState<long, true>, at::cuda::cub::(anonymous namespace)::SumOp<long>, at_cuda_detail::cub::detail::InputValue<long, long*>, unsigned int, long, false>(long const*, long*, at_cuda_detail::cub::ScanTileState<long, true>, int, at::cuda::cub::(anonymous namespace)::SumOp<long>, at_cuda_detail::cub::detail::InputValue<long, long*>, unsigned int)": 0.003424,
+        "void at_cuda_detail::cub::DeviceUniqueByKeySweepKernel<at_cuda_detail::cub::DeviceUniqueByKeyPolicy<long const*, thrust::THRUST_200700_700_750_800_860_900_1000_1200_NS::counting_iterator<int, thrust::THRUST_200700_700_750_800_860_900_1000_1200_NS::use_default, thrust::THRUST_200700_700_750_800_860_900_1000_1200_NS::use_default, thrust::THRUST_200700_700_750_800_860_900_1000_1200_NS::use_default> >::Policy900, long const*, thrust::THRUST_200700_700_750_800_860_900_1000_1200_NS::counting_iterator<int, thrust::THRUST_200700_700_750_800_860_900_1000_1200_NS::use_default, thrust::THRUST_200700_700_750_800_860_900_1000_1200_NS::use_default, thrust::THRUST_200700_700_750_800_860_900_1000_1200_NS::use_default>, long*, long*, long*, at_cuda_detail::cub::ScanTileState<unsigned long long, true>, cuda::std::__4::equal_to<void>, unsigned long long>(long const*, thrust::THRUST_200700_700_750_800_860_900_1000_1200_NS::counting_iterator<int, thrust::THRUST_200700_700_750_800_860_900_1000_1200_NS::use_default, thrust::THRUST_200700_700_750_800_860_900_1000_1200_NS::use_default, thrust::THRUST_200700_700_750_800_860_900_1000_1200_NS::use_default>, long*, long*, long*, at_cuda_detail::cub::ScanTileState<unsigned long long, true>, cuda::std::__4::equal_to<void>, unsigned long long, int, at_cuda_detail::cub::detail::vsmem_t)": 0.006816,
+        "void cublasLt::splitKreduce_kernel<32, 16, int, float, float, float, float, false, float, float, float, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, float const*, float*, float*, float const*, float const*, float const*, float const*, float*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)": 0.005056,
+        "void cutlass::Kernel2<cutlass_80_simt_sgemm_128x128_8x4_nt_align1>(cutlass_80_simt_sgemm_128x128_8x4_nt_align1::Params)": 34.826295,
+        "void cutlass::Kernel2<cutlass_80_simt_sgemm_128x256_8x4_nt_align1>(cutlass_80_simt_sgemm_128x256_8x4_nt_align1::Params)": 163.42069800000002,
+        "void cutlass::Kernel2<cutlass_80_simt_sgemm_128x64_8x5_nt_align1>(cutlass_80_simt_sgemm_128x64_8x5_nt_align1::Params)": 27.340400999999996,
+        "void cutlass::Kernel2<cutlass_80_simt_sgemm_256x128_8x4_nn_align1>(cutlass_80_simt_sgemm_256x128_8x4_nn_align1::Params)": 226.38491
+      }
+    },
+    "scan_kernel_busy_ms": [
+      41.095739,
+      1043.52258
+    ],
+    "reverse_kernel_busy_ms": [
+      61.13467,
+      2750.898057
+    ],
+    "scan_ns_per_occupied_pair": [
+      2.4494969248771667,
+      0.9718561358749868
+    ],
+    "reverse_ns_per_occupied_pair": [
+      3.64391028881073,
+      2.5619734609499574
+    ],
+    "non_scan_reverse_device_busy_ms": [
+      7.103427000000011,
+      34.91180300000042
+    ],
+    "timing_scope": "Separate profiles: GPU busy times are not additive wall samples. No causal wall savings attributed to launch count or telemetry.",
+    "status": "No calibrated compute/launch lower bound; residual remains failed if wall gate fails"
+  },
+  "fresh_gates": [
+    {
+      "tokens": 512,
+      "ratio": 1.5514799658162952,
+      "limit": 3,
+      "status": "passed",
+      "wall_ms": {
+        "base": 179.70016691833735,
+        "tape": 278.8012088276446
+      }
+    },
+    {
+      "tokens": 4096,
+      "ratio": 2.620844503664273,
+      "limit": 2,
+      "status": "failed",
+      "wall_ms": {
+        "base": 2351.7041238956153,
+        "tape": 6163.450827356428
+      }
+    }
+  ],
+  "residual_risks": [
+    "Targeted dense cold-gradient pass does not execute in this workload; the implemented event-consumer mask removes different, packed adjoint traffic.",
+    "Sync removal and launch fusion not implemented.",
+    "Remaining capacity costs identified by source/operation counts and forward/replay times, not isolated into causal subkernel timings.",
+    "No calibrated GEMM/launch/telemetry floor. Failed gates receive no floor waiver.",
+    "Fresh full capacity sweep and historical loss curves carried from part 6; fresh specializations do not execute the pooled event-consumer optimization.",
+    "contact_supervisor tool unavailable; the false named premise could not be escalated through Intercom."
+  ],
+  "continued_profile": {
+    "x36::scan_forward": {
+      "activity_count": 78,
+      "counts": {
+        "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)": 2,
+        "Memcpy DtoD (Device -> Device)": 10,
+        "void at::native::unrolled_elementwise_kernel<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1}, std::array<char*, 2ul>, 4, TrivialOffsetCalculator<1, unsigned int>, TrivialOffsetCalculator<1, unsigned int>, at::native::memory::LoadWithCast<1>, at::native::memory::StoreWithCast<1> >(int, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1}, std::array<char*, 2ul>, TrivialOffsetCalculator<1, unsigned int>, TrivialOffsetCalculator<1, unsigned int>, at::native::memory::LoadWithCast<1>, at::native::memory::StoreWithCast<1>)": 2,
+        "void at::native::reduce_kernel<512, 1, at::native::ReduceOp<long, at::native::func_wrapper_t<long, at::native::sum_functor<long, long, long>::operator()(at::TensorIterator&)::{lambda(long, long)#1}>, unsigned int, long, 4, 4> >(at::native::ReduceOp<long, at::native::func_wrapper_t<long, at::native::sum_functor<long, long, long>::operator()(at::TensorIterator&)::{lambda(long, long)#1}>, unsigned int, long, 4, 4>)": 1,
+        "void at::native::vectorized_elementwise_kernel<4, at::native::bitwise_not_kernel_cuda(at::TensorIteratorBase&)::{lambda(bool)#1}, std::array<char*, 2ul> >(int, at::native::bitwise_not_kernel_cuda(at::TensorIteratorBase&)::{lambda(bool)#1}, std::array<char*, 2ul>)": 2,
+        "void at::native::vectorized_elementwise_kernel<4, at::native::signbit_kernel_cuda(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul> >(int, at::native::signbit_kernel_cuda(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul>)": 1,
+        "void at::native::vectorized_elementwise_kernel<4, at::native::AbsFunctor<float>, std::array<char*, 2ul> >(int, at::native::AbsFunctor<float>, std::array<char*, 2ul>)": 1,
+        "void at::native::vectorized_elementwise_kernel<4, at::native::AUnaryFunctor<float, float, bool, at::native::(anonymous namespace)::CompareEqFunctor<float> >, std::array<char*, 2ul> >(int, at::native::AUnaryFunctor<float, float, bool, at::native::(anonymous namespace)::CompareEqFunctor<float> >, std::array<char*, 2ul>)": 1,
+        "void at::native::vectorized_elementwise_kernel<4, at::native::BinaryFunctor<float, float, bool, at::native::(anonymous namespace)::CompareEqFunctor<float> >, std::array<char*, 3ul> >(int, at::native::BinaryFunctor<float, float, bool, at::native::(anonymous namespace)::CompareEqFunctor<float> >, std::array<char*, 3ul>)": 1,
+        "void at::native::vectorized_elementwise_kernel<4, at::native::BinaryFunctor<bool, bool, bool, at::native::binary_internal::MulFunctor<bool> >, std::array<char*, 3ul> >(int, at::native::BinaryFunctor<bool, bool, bool, at::native::binary_internal::MulFunctor<bool> >, std::array<char*, 3ul>)": 1,
+        "void at::native::vectorized_elementwise_kernel<4, at::native::BinaryFunctor<bool, bool, bool, at::native::BitwiseOrFunctor<bool> >, std::array<char*, 3ul> >(int, at::native::BinaryFunctor<bool, bool, bool, at::native::BitwiseOrFunctor<bool> >, std::array<char*, 3ul>)": 1,
+        "void at::native::vectorized_elementwise_kernel<4, at::native::BinaryFunctor<bool, bool, bool, at::native::BitwiseAndFunctor<bool> >, std::array<char*, 3ul> >(int, at::native::BinaryFunctor<bool, bool, bool, at::native::BitwiseAndFunctor<bool> >, std::array<char*, 3ul>)": 1,
+        "void at::native::reduce_kernel<512, 1, at::native::ReduceOp<long, at::native::func_wrapper_t<long, at::native::MaxNanFunctor<long> >, unsigned int, long, 4, 4> >(at::native::ReduceOp<long, at::native::func_wrapper_t<long, at::native::MaxNanFunctor<long> >, unsigned int, long, 4, 4>)": 1,
+        "Memset (Device)": 1,
+        "void at::native::reduce_kernel<512, 1, at::native::ReduceOp<bool, at::native::func_wrapper_t<bool, at::native::or_kernel_cuda(at::TensorIterator&)::{lambda()#1}::operator()() const::{lambda()#12}::operator()() const::{lambda(bool, bool)#1}>, unsigned int, bool, 4, 4> >(at::native::ReduceOp<bool, at::native::func_wrapper_t<bool, at::native::or_kernel_cuda(at::TensorIterator&)::{lambda()#1}::operator()() const::{lambda()#12}::operator()() const::{lambda(bool, bool)#1}>, unsigned int, bool, 4, 4>)": 1,
+        "void at::native::(anonymous namespace)::CatArrayBatchedCopy_alignedK_contig<at::native::(anonymous namespace)::OpaqueType<8u>, unsigned int, 1, 128, 1, 16>(at::native::(anonymous namespace)::OpaqueType<8u>*, at::native::(anonymous namespace)::CatArrInputTensorMetadata<at::native::(anonymous namespace)::OpaqueType<8u>, unsigned int, 128, 1>, at::native::(anonymous namespace)::TensorSizeStride<unsigned int, 4u>, int, unsigned int)": 1,
+        "Memcpy DtoH (Device -> Pageable)": 1,
+        "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1})": 9,
+        "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<signed char>, std::array<char*, 1ul> >(int, at::native::FillFunctor<signed char>, std::array<char*, 1ul>)": 1,
+        "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<int>, std::array<char*, 1ul> >(int, at::native::FillFunctor<int>, std::array<char*, 1ul>)": 3,
+        "void at::native::vectorized_elementwise_kernel<2, at::native::FillFunctor<long>, std::array<char*, 1ul> >(int, at::native::FillFunctor<long>, std::array<char*, 1ul>)": 2,
+        "void at::native::vectorized_elementwise_kernel<2, at::native::FillFunctor<unsigned long>, std::array<char*, 1ul> >(int, at::native::FillFunctor<unsigned long>, std::array<char*, 1ul>)": 3,
+        "at::native::(anonymous namespace)::fill_reverse_indices_kernel(long*, int, at::cuda::detail::IntDivider<unsigned int>)": 2,
+        "void at_cuda_detail::cub::DeviceSegmentedRadixSortKernel<at_cuda_detail::cub::DeviceRadixSortPolicy<long, long, int>::Policy900, true, false, long, long, at::native::(anonymous namespace)::offset_t, at::native::(anonymous namespace)::offset_t, int, at_cuda_detail::cub::detail::identity_decomposer_t>(long const*, long*, long const*, long*, at::native::(anonymous namespace)::offset_t, at::native::(anonymous namespace)::offset_t, int, int, int, at_cuda_detail::cub::detail::identity_decomposer_t)": 2,
+        "void at_cuda_detail::cub::DeviceSegmentedRadixSortKernel<at_cuda_detail::cub::DeviceRadixSortPolicy<long, long, int>::Policy900, false, false, long, long, at::native::(anonymous namespace)::offset_t, at::native::(anonymous namespace)::offset_t, int, at_cuda_detail::cub::detail::identity_decomposer_t>(long const*, long*, long const*, long*, at::native::(anonymous namespace)::offset_t, at::native::(anonymous namespace)::offset_t, int, int, int, at_cuda_detail::cub::detail::identity_decomposer_t)": 9,
+        "void at::native::_scatter_gather_elementwise_kernel<128, 8, at::native::_cuda_scatter_gather_internal_kernel<false, at::native::OpaqueType<1>, long>::operator()<at::native::TensorAssign>(at::TensorIterator&, long, long, long, at::native::TensorAssign const&)::{lambda(int)#1}>(int, at::native::_cuda_scatter_gather_internal_kernel<false, at::native::OpaqueType<1>, long>::operator()<at::native::TensorAssign>(at::TensorIterator&, long, long, long, at::native::TensorAssign const&)::{lambda(int)#1})": 1,
+        "void at::native::unrolled_elementwise_kernel<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#2}::operator()() const::{lambda(signed char)#1}, std::array<char*, 2ul>, 4, TrivialOffsetCalculator<1, unsigned int>, TrivialOffsetCalculator<1, unsigned int>, at::native::memory::LoadWithCast<1>, at::native::memory::StoreWithCast<1> >(int, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#2}::operator()() const::{lambda(signed char)#1}, std::array<char*, 2ul>, TrivialOffsetCalculator<1, unsigned int>, TrivialOffsetCalculator<1, unsigned int>, at::native::memory::LoadWithCast<1>, at::native::memory::StoreWithCast<1>)": 1,
+        "void at_cuda_detail::cub::DeviceSegmentedRadixSortKernel<at_cuda_detail::cub::DeviceRadixSortPolicy<signed char, long, int>::Policy900, true, true, signed char, long, at::native::(anonymous namespace)::offset_t, at::native::(anonymous namespace)::offset_t, int, at_cuda_detail::cub::detail::identity_decomposer_t>(signed char const*, signed char*, long const*, long*, at::native::(anonymous namespace)::offset_t, at::native::(anonymous namespace)::offset_t, int, int, int, at_cuda_detail::cub::detail::identity_decomposer_t)": 2,
+        "void at::native::_scatter_gather_elementwise_kernel<128, 8, at::native::_cuda_scatter_gather_internal_kernel<false, at::native::OpaqueType<8>, long>::operator()<at::native::TensorAssign>(at::TensorIterator&, long, long, long, at::native::TensorAssign const&)::{lambda(int)#1}>(int, at::native::_cuda_scatter_gather_internal_kernel<false, at::native::OpaqueType<8>, long>::operator()<at::native::TensorAssign>(at::TensorIterator&, long, long, long, at::native::TensorAssign const&)::{lambda(int)#1})": 1,
+        "_initialize": 1,
+        "initialize_free_words": 1,
+        "scan_kernel": 1,
+        "materialize_state": 1,
+        "void at::native::vectorized_elementwise_kernel<4, at::native::compare_scalar_kernel<long>(at::TensorIteratorBase&, at::native::(anonymous namespace)::OpType, long)::{lambda(long)#1}, std::array<char*, 2ul> >(int, at::native::compare_scalar_kernel<long>(at::TensorIteratorBase&, at::native::(anonymous namespace)::OpType, long)::{lambda(long)#1}, std::array<char*, 2ul>)": 1,
+        "void at::native::vectorized_elementwise_kernel<4, at::native::compare_scalar_kernel<float>(at::TensorIteratorBase&, at::native::(anonymous namespace)::OpType, float)::{lambda(float)#1}, std::array<char*, 2ul> >(int, at::native::compare_scalar_kernel<float>(at::TensorIteratorBase&, at::native::(anonymous namespace)::OpType, float)::{lambda(float)#1}, std::array<char*, 2ul>)": 1,
+        "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1} const&)::{lambda(int)#1})": 4,
+        "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#11}::operator()() const::{lambda(bool)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#11}::operator()() const::{lambda(bool)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#11}::operator()() const::{lambda(bool)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#11}::operator()() const::{lambda(bool)#1} const&)::{lambda(int)#1})": 2,
+        "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#2}::operator()() const::{lambda(signed char)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#2}::operator()() const::{lambda(signed char)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#2}::operator()() const::{lambda(signed char)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#2}::operator()() const::{lambda(signed char)#1} const&)::{lambda(int)#1})": 1
+      },
+      "device_busy_ms": 252.000744,
+      "component_device_busy_ms": {
+        "fills": 1.6945270000000001,
+        "copies_transposes_mapping": 9.990616000000001,
+        "other_setup_or_reduction": 1.227256,
+        "initialize_free_words": 0.007679999999999999,
+        "scan_kernel": 238.809204,
+        "materialize_state": 0.271461
+      }
+    },
+    "x36::replay_backward": {
+      "activity_count": 28,
+      "counts": {
+        "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1})": 8,
+        "Memcpy DtoD (Device -> Device)": 1,
+        "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<bool>, std::array<char*, 1ul> >(int, at::native::FillFunctor<bool>, std::array<char*, 1ul>)": 1,
+        "void at::native::(anonymous namespace)::CatArrayBatchedCopy_contig<at::native::(anonymous namespace)::OpaqueType<1u>, unsigned int, 2, 128, 1>(at::native::(anonymous namespace)::OpaqueType<1u>*, at::native::(anonymous namespace)::CatArrInputTensorMetadata<at::native::(anonymous namespace)::OpaqueType<1u>, unsigned int, 128, 1>, at::native::(anonymous namespace)::TensorSizeStride<unsigned int, 4u>, int, unsigned int)": 1,
+        "void at::native::vectorized_elementwise_kernel<4, at::native::compare_scalar_kernel<long>(at::TensorIteratorBase&, at::native::(anonymous namespace)::OpType, long)::{lambda(long)#1}, std::array<char*, 2ul> >(int, at::native::compare_scalar_kernel<long>(at::TensorIteratorBase&, at::native::(anonymous namespace)::OpType, long)::{lambda(long)#1}, std::array<char*, 2ul>)": 1,
+        "void at::native::vectorized_elementwise_kernel<2, at::native::FillFunctor<long>, std::array<char*, 1ul> >(int, at::native::FillFunctor<long>, std::array<char*, 1ul>)": 1,
+        "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::(anonymous namespace)::where_kernel_impl(at::TensorIterator&)::{lambda()#1}::operator()() const::{lambda()#8}::operator()() const::{lambda(bool, long, long)#1}>(at::TensorIteratorBase&, at::native::(anonymous namespace)::where_kernel_impl(at::TensorIterator&)::{lambda()#1}::operator()() const::{lambda()#8}::operator()() const::{lambda(bool, long, long)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::(anonymous namespace)::where_kernel_impl(at::TensorIterator&)::{lambda()#1}::operator()() const::{lambda()#8}::operator()() const::{lambda(bool, long, long)#1}>(at::TensorIteratorBase&, at::native::(anonymous namespace)::where_kernel_impl(at::TensorIterator&)::{lambda()#1}::operator()() const::{lambda()#8}::operator()() const::{lambda(bool, long, long)#1} const&)::{lambda(int)#1})": 1,
+        "void at::native::_scatter_gather_elementwise_kernel<128, 8, at::native::_cuda_scatter_fill_internal_kernel<at::native::OpaqueType<1>, long>::operator()<at::native::TensorAssign>(at::TensorIterator&, at::native::OpaqueType<1>, long, long, long, at::native::TensorAssign const&)::{lambda(int)#1}>(int, at::native::_cuda_scatter_fill_internal_kernel<at::native::OpaqueType<1>, long>::operator()<at::native::TensorAssign>(at::TensorIterator&, at::native::OpaqueType<1>, long, long, long, at::native::TensorAssign const&)::{lambda(int)#1})": 1,
+        "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1} const&)::{lambda(int)#1})": 1,
+        "void at::native::reduce_kernel<512, 1, at::native::ReduceOp<long, at::native::func_wrapper_t<long, at::native::sum_functor<long, long, long>::operator()(at::TensorIterator&)::{lambda(long, long)#1}>, unsigned int, long, 4, 4> >(at::native::ReduceOp<long, at::native::func_wrapper_t<long, at::native::sum_functor<long, long, long>::operator()(at::TensorIterator&)::{lambda(long, long)#1}>, unsigned int, long, 4, 4>)": 1,
+        "void at::native::reduce_kernel<512, 1, at::native::ReduceOp<long, at::native::func_wrapper_t<long, at::native::MaxNanFunctor<long> >, unsigned int, long, 4, 4> >(at::native::ReduceOp<long, at::native::func_wrapper_t<long, at::native::MaxNanFunctor<long> >, unsigned int, long, 4, 4>)": 1,
+        "Memcpy DtoH (Device -> Pinned)": 1,
+        "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#11}::operator()() const::{lambda(bool)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#11}::operator()() const::{lambda(bool)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#11}::operator()() const::{lambda(bool)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#11}::operator()() const::{lambda(bool)#1} const&)::{lambda(int)#1})": 1,
+        "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<int>, std::array<char*, 1ul> >(int, at::native::FillFunctor<int>, std::array<char*, 1ul>)": 1,
+        "index_rows": 1,
+        "setup_kernel": 1,
+        "Memcpy HtoD (Pinned -> Device)": 2,
+        "rebase": 2,
+        "reverse_kernel": 1
+      },
+      "device_busy_ms": 83.267168,
+      "component_device_busy_ms": {
+        "copies_transposes_mapping": 0.5919779999999999,
+        "fills": 0.0034879999999999998,
+        "other_setup_or_reduction": 0.17417900000000003,
+        "setup_kernel": 0.582187,
+        "rebase": 0.9167529999999999,
+        "reverse_kernel": 80.998583
+      }
+    },
+    "steady_sync_runtime": [
+      {
+        "name": "cudaStreamSynchronize",
+        "ts": 2286481235716.431,
+        "dur_us": 4.39
+      },
+      {
+        "name": "cudaStreamSynchronize",
+        "ts": 2286481239614.267,
+        "dur_us": 248589.835
+      },
+      {
+        "name": "cudaDeviceSynchronize",
+        "ts": 2286481489762.474,
+        "dur_us": 81766.557
+      },
+      {
+        "name": "cudaDeviceSynchronize",
+        "ts": 2286481571560.141,
+        "dur_us": 1.72
+      }
+    ],
+    "dtoh": [
+      "Memcpy DtoH (Device -> Pageable)",
+      "Memcpy DtoH (Device -> Pinned)"
+    ],
+    "kernel_busy_ms_by_name": {
+      "Memcpy DtoD (Device -> Device)": 5.6867600000000005,
+      "Memcpy DtoH (Device -> Pageable)": 0.001088,
+      "Memcpy DtoH (Device -> Pinned)": 0.001088,
+      "Memcpy HtoD (Pinned -> Device)": 0.003552,
+      "Memset (Device)": 0.001088,
+      "_initialize": 0.374214,
+      "at::native::(anonymous namespace)::fill_reverse_indices_kernel(long*, int, at::cuda::detail::IntDivider<unsigned int>)": 0.034529,
+      "index_rows": 0.15529900000000002,
+      "initialize_free_words": 0.007679999999999999,
+      "materialize_state": 0.271461,
+      "rebase": 0.9167529999999999,
+      "reverse_kernel": 80.998583,
+      "scan_kernel": 238.809204,
+      "setup_kernel": 0.582187,
+      "void at::native::(anonymous namespace)::CatArrayBatchedCopy_alignedK_contig<at::native::(anonymous namespace)::OpaqueType<8u>, unsigned int, 1, 128, 1, 16>(at::native::(anonymous namespace)::OpaqueType<8u>*, at::native::(anonymous namespace)::CatArrInputTensorMetadata<at::native::(anonymous namespace)::OpaqueType<8u>, unsigned int, 128, 1>, at::native::(anonymous namespace)::TensorSizeStride<unsigned int, 4u>, int, unsigned int)": 0.001664,
+      "void at::native::(anonymous namespace)::CatArrayBatchedCopy_contig<at::native::(anonymous namespace)::OpaqueType<1u>, unsigned int, 2, 128, 1>(at::native::(anonymous namespace)::OpaqueType<1u>*, at::native::(anonymous namespace)::CatArrInputTensorMetadata<at::native::(anonymous namespace)::OpaqueType<1u>, unsigned int, 128, 1>, at::native::(anonymous namespace)::TensorSizeStride<unsigned int, 4u>, int, unsigned int)": 0.006593,
+      "void at::native::_scatter_gather_elementwise_kernel<128, 8, at::native::_cuda_scatter_fill_internal_kernel<at::native::OpaqueType<1>, long>::operator()<at::native::TensorAssign>(at::TensorIterator&, at::native::OpaqueType<1>, long, long, long, at::native::TensorAssign const&)::{lambda(int)#1}>(int, at::native::_cuda_scatter_fill_internal_kernel<at::native::OpaqueType<1>, long>::operator()<at::native::TensorAssign>(at::TensorIterator&, at::native::OpaqueType<1>, long, long, long, at::native::TensorAssign const&)::{lambda(int)#1})": 0.003232,
+      "void at::native::_scatter_gather_elementwise_kernel<128, 8, at::native::_cuda_scatter_gather_internal_kernel<false, at::native::OpaqueType<1>, long>::operator()<at::native::TensorAssign>(at::TensorIterator&, long, long, long, at::native::TensorAssign const&)::{lambda(int)#1}>(int, at::native::_cuda_scatter_gather_internal_kernel<false, at::native::OpaqueType<1>, long>::operator()<at::native::TensorAssign>(at::TensorIterator&, long, long, long, at::native::TensorAssign const&)::{lambda(int)#1})": 0.017248,
+      "void at::native::_scatter_gather_elementwise_kernel<128, 8, at::native::_cuda_scatter_gather_internal_kernel<false, at::native::OpaqueType<8>, long>::operator()<at::native::TensorAssign>(at::TensorIterator&, long, long, long, at::native::TensorAssign const&)::{lambda(int)#1}>(int, at::native::_cuda_scatter_gather_internal_kernel<false, at::native::OpaqueType<8>, long>::operator()<at::native::TensorAssign>(at::TensorIterator&, long, long, long, at::native::TensorAssign const&)::{lambda(int)#1})": 0.044128999999999995,
+      "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::(anonymous namespace)::where_kernel_impl(at::TensorIterator&)::{lambda()#1}::operator()() const::{lambda()#8}::operator()() const::{lambda(bool, long, long)#1}>(at::TensorIteratorBase&, at::native::(anonymous namespace)::where_kernel_impl(at::TensorIterator&)::{lambda()#1}::operator()() const::{lambda()#8}::operator()() const::{lambda(bool, long, long)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::(anonymous namespace)::where_kernel_impl(at::TensorIterator&)::{lambda()#1}::operator()() const::{lambda()#8}::operator()() const::{lambda(bool, long, long)#1}>(at::TensorIteratorBase&, at::native::(anonymous namespace)::where_kernel_impl(at::TensorIterator&)::{lambda()#1}::operator()() const::{lambda()#8}::operator()() const::{lambda(bool, long, long)#1} const&)::{lambda(int)#1})": 0.001856,
+      "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1} const&)::{lambda(int)#1})": 0.011583999999999999,
+      "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1})": 1.001682,
+      "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1} const&)::{lambda(int)#1})": 0.013472,
+      "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#11}::operator()() const::{lambda(bool)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#11}::operator()() const::{lambda(bool)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#11}::operator()() const::{lambda(bool)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#11}::operator()() const::{lambda(bool)#1} const&)::{lambda(int)#1})": 0.009408999999999999,
+      "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#2}::operator()() const::{lambda(signed char)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#2}::operator()() const::{lambda(signed char)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#2}::operator()() const::{lambda(signed char)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#2}::operator()() const::{lambda(signed char)#1} const&)::{lambda(int)#1})": 3.825702,
+      "void at::native::reduce_kernel<512, 1, at::native::ReduceOp<bool, at::native::func_wrapper_t<bool, at::native::or_kernel_cuda(at::TensorIterator&)::{lambda()#1}::operator()() const::{lambda()#12}::operator()() const::{lambda(bool, bool)#1}>, unsigned int, bool, 4, 4> >(at::native::ReduceOp<bool, at::native::func_wrapper_t<bool, at::native::or_kernel_cuda(at::TensorIterator&)::{lambda()#1}::operator()() const::{lambda()#12}::operator()() const::{lambda(bool, bool)#1}>, unsigned int, bool, 4, 4>)": 0.005473,
+      "void at::native::reduce_kernel<512, 1, at::native::ReduceOp<float, at::native::func_wrapper_t<float, at::native::sum_functor<float, float, float>::operator()(at::TensorIterator&)::{lambda(float, float)#1}>, unsigned int, float, 4, 4> >(at::native::ReduceOp<float, at::native::func_wrapper_t<float, at::native::sum_functor<float, float, float>::operator()(at::TensorIterator&)::{lambda(float, float)#1}>, unsigned int, float, 4, 4>)": 0.017953,
+      "void at::native::reduce_kernel<512, 1, at::native::ReduceOp<long, at::native::func_wrapper_t<long, at::native::MaxNanFunctor<long> >, unsigned int, long, 4, 4> >(at::native::ReduceOp<long, at::native::func_wrapper_t<long, at::native::MaxNanFunctor<long> >, unsigned int, long, 4, 4>)": 0.004897,
+      "void at::native::reduce_kernel<512, 1, at::native::ReduceOp<long, at::native::func_wrapper_t<long, at::native::sum_functor<long, long, long>::operator()(at::TensorIterator&)::{lambda(long, long)#1}>, unsigned int, long, 4, 4> >(at::native::ReduceOp<long, at::native::func_wrapper_t<long, at::native::sum_functor<long, long, long>::operator()(at::TensorIterator&)::{lambda(long, long)#1}>, unsigned int, long, 4, 4>)": 0.013857,
+      "void at::native::unrolled_elementwise_kernel<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#2}::operator()() const::{lambda(signed char)#1}, std::array<char*, 2ul>, 4, TrivialOffsetCalculator<1, unsigned int>, TrivialOffsetCalculator<1, unsigned int>, at::native::memory::LoadWithCast<1>, at::native::memory::StoreWithCast<1> >(int, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#2}::operator()() const::{lambda(signed char)#1}, std::array<char*, 2ul>, TrivialOffsetCalculator<1, unsigned int>, TrivialOffsetCalculator<1, unsigned int>, at::native::memory::LoadWithCast<1>, at::native::memory::StoreWithCast<1>)": 0.006432,
+      "void at::native::unrolled_elementwise_kernel<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1}, std::array<char*, 2ul>, 4, TrivialOffsetCalculator<1, unsigned int>, TrivialOffsetCalculator<1, unsigned int>, at::native::memory::LoadWithCast<1>, at::native::memory::StoreWithCast<1> >(int, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1}, std::array<char*, 2ul>, TrivialOffsetCalculator<1, unsigned int>, TrivialOffsetCalculator<1, unsigned int>, at::native::memory::LoadWithCast<1>, at::native::memory::StoreWithCast<1>)": 0.013568,
+      "void at::native::vectorized_elementwise_kernel<2, at::native::FillFunctor<long>, std::array<char*, 1ul> >(int, at::native::FillFunctor<long>, std::array<char*, 1ul>)": 0.028033,
+      "void at::native::vectorized_elementwise_kernel<2, at::native::FillFunctor<unsigned long>, std::array<char*, 1ul> >(int, at::native::FillFunctor<unsigned long>, std::array<char*, 1ul>)": 0.00272,
+      "void at::native::vectorized_elementwise_kernel<4, at::native::AUnaryFunctor<float, float, bool, at::native::(anonymous namespace)::CompareEqFunctor<float> >, std::array<char*, 2ul> >(int, at::native::AUnaryFunctor<float, float, bool, at::native::(anonymous namespace)::CompareEqFunctor<float> >, std::array<char*, 2ul>)": 0.003264,
+      "void at::native::vectorized_elementwise_kernel<4, at::native::AbsFunctor<float>, std::array<char*, 2ul> >(int, at::native::AbsFunctor<float>, std::array<char*, 2ul>)": 0.00592,
+      "void at::native::vectorized_elementwise_kernel<4, at::native::BinaryFunctor<bool, bool, bool, at::native::BitwiseAndFunctor<bool> >, std::array<char*, 3ul> >(int, at::native::BinaryFunctor<bool, bool, bool, at::native::BitwiseAndFunctor<bool> >, std::array<char*, 3ul>)": 0.002624,
+      "void at::native::vectorized_elementwise_kernel<4, at::native::BinaryFunctor<bool, bool, bool, at::native::BitwiseOrFunctor<bool> >, std::array<char*, 3ul> >(int, at::native::BinaryFunctor<bool, bool, bool, at::native::BitwiseOrFunctor<bool> >, std::array<char*, 3ul>)": 0.002592,
+      "void at::native::vectorized_elementwise_kernel<4, at::native::BinaryFunctor<bool, bool, bool, at::native::binary_internal::MulFunctor<bool> >, std::array<char*, 3ul> >(int, at::native::BinaryFunctor<bool, bool, bool, at::native::binary_internal::MulFunctor<bool> >, std::array<char*, 3ul>)": 0.002592,
+      "void at::native::vectorized_elementwise_kernel<4, at::native::BinaryFunctor<float, float, bool, at::native::(anonymous namespace)::CompareEqFunctor<float> >, std::array<char*, 3ul> >(int, at::native::BinaryFunctor<float, float, bool, at::native::(anonymous namespace)::CompareEqFunctor<float> >, std::array<char*, 3ul>)": 0.0033599999999999997,
+      "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<bool>, std::array<char*, 1ul> >(int, at::native::FillFunctor<bool>, std::array<char*, 1ul>)": 0.001728,
+      "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)": 0.006912,
+      "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<int>, std::array<char*, 1ul> >(int, at::native::FillFunctor<int>, std::array<char*, 1ul>)": 0.024032,
+      "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<signed char>, std::array<char*, 1ul> >(int, at::native::FillFunctor<signed char>, std::array<char*, 1ul>)": 1.635134,
+      "void at::native::vectorized_elementwise_kernel<4, at::native::bitwise_not_kernel_cuda(at::TensorIteratorBase&)::{lambda(bool)#1}, std::array<char*, 2ul> >(int, at::native::bitwise_not_kernel_cuda(at::TensorIteratorBase&)::{lambda(bool)#1}, std::array<char*, 2ul>)": 0.004992,
+      "void at::native::vectorized_elementwise_kernel<4, at::native::compare_scalar_kernel<float>(at::TensorIteratorBase&, at::native::(anonymous namespace)::OpType, float)::{lambda(float)#1}, std::array<char*, 2ul> >(int, at::native::compare_scalar_kernel<float>(at::TensorIteratorBase&, at::native::(anonymous namespace)::OpType, float)::{lambda(float)#1}, std::array<char*, 2ul>)": 0.0019199999999999998,
+      "void at::native::vectorized_elementwise_kernel<4, at::native::compare_scalar_kernel<long>(at::TensorIteratorBase&, at::native::(anonymous namespace)::OpType, long)::{lambda(long)#1}, std::array<char*, 2ul> >(int, at::native::compare_scalar_kernel<long>(at::TensorIteratorBase&, at::native::(anonymous namespace)::OpType, long)::{lambda(long)#1}, std::array<char*, 2ul>)": 0.006912,
+      "void at::native::vectorized_elementwise_kernel<4, at::native::signbit_kernel_cuda(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul> >(int, at::native::signbit_kernel_cuda(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul>)": 0.02016,
+      "void at_cuda_detail::cub::DeviceSegmentedRadixSortKernel<at_cuda_detail::cub::DeviceRadixSortPolicy<long, long, int>::Policy900, false, false, long, long, at::native::(anonymous namespace)::offset_t, at::native::(anonymous namespace)::offset_t, int, at_cuda_detail::cub::detail::identity_decomposer_t>(long const*, long*, long const*, long*, at::native::(anonymous namespace)::offset_t, at::native::(anonymous namespace)::offset_t, int, int, int, at_cuda_detail::cub::detail::identity_decomposer_t)": 0.50561,
+      "void at_cuda_detail::cub::DeviceSegmentedRadixSortKernel<at_cuda_detail::cub::DeviceRadixSortPolicy<long, long, int>::Policy900, true, false, long, long, at::native::(anonymous namespace)::offset_t, at::native::(anonymous namespace)::offset_t, int, at_cuda_detail::cub::detail::identity_decomposer_t>(long const*, long*, long const*, long*, at::native::(anonymous namespace)::offset_t, at::native::(anonymous namespace)::offset_t, int, int, int, at_cuda_detail::cub::detail::identity_decomposer_t)": 0.12061000000000001,
+      "void at_cuda_detail::cub::DeviceSegmentedRadixSortKernel<at_cuda_detail::cub::DeviceRadixSortPolicy<signed char, long, int>::Policy900, true, true, signed char, long, at::native::(anonymous namespace)::offset_t, at::native::(anonymous namespace)::offset_t, int, at_cuda_detail::cub::detail::identity_decomposer_t>(signed char const*, signed char*, long const*, long*, at::native::(anonymous namespace)::offset_t, at::native::(anonymous namespace)::offset_t, int, int, int, at_cuda_detail::cub::detail::identity_decomposer_t)": 0.06614500000000001
+    }
+  },
+  "peak_fixed_live_allocated_bytes": 17198048768,
+  "exact_host_sizing_constraint": {
+    "transfers": 2,
+    "first": "Forward host journal reservation and cold-tail specialization depend on device entry metadata",
+    "second": "Backward host torch.empty shapes depend on device union maximum after recorded allocations",
+    "arithmetic": "two serial host shape dependencies in the present eager exact-size implementation; 2 > required 0",
+    "scope": "Conditional implementation constraint, not a hardware lower bound. Removing transfers requires changing the exact-allocation/dispatch strategy; no fix implemented."
+  }
+}

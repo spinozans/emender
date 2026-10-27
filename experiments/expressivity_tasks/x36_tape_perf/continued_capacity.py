@@ -98,6 +98,9 @@ def main():
                     raise AssertionError('fixed live set changed')
                 if sample >= 2:
                     samples.append(measured)
+                native_gradient_requests=list(node.needs_input_grad[11:14])
+                if any(native_gradient_requests):
+                    raise AssertionError('capacity control unexpectedly requests native-state gradients')
                 pool_stats=getattr(node,'pool_stats',None)
                 if pool_stats is None:
                     raise AssertionError('capacity control bypassed the production sparse pool')
@@ -107,6 +110,11 @@ def main():
                     pool_stats['intra_chunk_event_bound']=pool_stats.pop('intra_chunk_events')
                     events=(node.trace[2]>=0).sum(-1).flatten().cpu().tolist()
                     pool_stats['allocation_events_per_store']=events
+                    correction_events=((node.trace[0]==4)|(node.trace[0]==5)).sum(-1).flatten().cpu().tolist()
+                    pool_stats['correction_events_per_store']=correction_events
+                    if any(correction_events):
+                        raise AssertionError('fixed-live control corrected a row')
+                    pool_stats['dead_value_adjoint_read_write_logical_bytes']=args.batch*4*args.tokens*live_count*cfg.value_dim*8
                     pool_stats['measured_union_bound_per_store']=[min(slots,n+e)
                                                                 for n,e in zip(pool_stats['entry_counts'],events)]
                     pool_stats['worst_case_rows_per_store']=[min(slots,n+args.tokens)
@@ -130,6 +138,9 @@ def main():
                                         spills=kernel.n_spills, shared_bytes=kernel.metadata.shared),
                           representation='exact-union adjoints and hot replay payloads; native cold backing and logical-S reductions retained',
                           pool=pool_stats,near_budget_stress=args.near_budget,
+                          native_gradient_requests=native_gradient_requests,
+                          dense_native_unpack_calls=0,
+                          dense_unpack_evidence='native_grad returns before unpack when needs_input_grad[11:14] are all false; byte fixtures forbid unpack with a raising mock',
                           allocated_after_samples_bytes=torch.cuda.memory_allocated())
             if args.profile and slots==11776 and mode=='continued':
                 for x in xs:

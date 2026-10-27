@@ -4,6 +4,8 @@ Short nonempty-entry chunks index the entry-live/allocation union in logical
 order. Native owners and cold native-gradient backing retain their addresses;
 reductions reconstruct the original logical-slot operand and arithmetic tree.
 Fresh prefixes and long chunks keep the independently validated paths.
+Recorded write decisions suppress packed value-adjoint traffic when neither
+a writing token nor a native-value input gradient can consume it.
 """
 import struct
 import torch
@@ -135,7 +137,7 @@ def reverse_program(K,Q,V,Beta,Pop,Keys,Values,Strength,Live,Touch,
                    DBeta,DPop,DLogit,DCoef,
                    T:tl.constexpr,S:tl.constexpr,DK:tl.constexpr,DV:tl.constexpr,
                    BS:tl.constexpr,BV:tl.constexpr,UB:tl.constexpr,Capacity,SoA:tl.constexpr,
-                   Fresh:tl.constexpr,Start,Decay:tl.constexpr,KeyGrad:tl.constexpr,GS:tl.constexpr,RS:tl.constexpr, PoolRows, PoolInverse, PS:tl.constexpr, ColdTail:tl.constexpr=False):
+                   Fresh:tl.constexpr,Start,Decay:tl.constexpr,KeyGrad:tl.constexpr,GS:tl.constexpr,RS:tl.constexpr, PoolRows, PoolInverse, PS:tl.constexpr, ColdTail:tl.constexpr=False, NativeValuesGrad:tl.constexpr=True):
     # Wide offsets help the bounded fast path; long/large vectors retain
     # checked int32 offsets to avoid doubling address-register footprints.
     n=tl.program_id(0).to(tl.int64 if S<4096 and T<=512 else tl.int32)
@@ -148,6 +150,17 @@ def reverse_program(K,Q,V,Beta,Pop,Keys,Values,Strength,Live,Touch,
     valid=(s>=0) & (s<S)
     if T<=512:
         gs=tl.load(GStrength+n*GS+a,valid & (a<GS),0.)
+    # The recorded decisions are the value-adjoint consumers. With no
+    # correction/allocation and no native-value gradient consumer, the read
+    # recurrence's value adjoints are dead: no later token can scatter them
+    # into a writing token. Keep DVout's exact zero stores, but skip the
+    # packed adjoint traffic. This decision stays on device.
+    value_adjoint_needed=tl.full((),True,tl.int1)
+    if PS>0 and not NativeValuesGrad:
+        token=tl.arange(0,triton.next_power_of_2(T))
+        cases=tl.load(Cases+n*T+token,token<T,0)
+        allocations=tl.load(Alloc+n*T+token,token<T,-1)
+        value_adjoint_needed=tl.sum(((cases==4)|(cases==5)|(allocations>=0)).to(tl.int32),0)>0
     stop=tl.load(Counts+n)
     coef_grad=tl.full((),0.,tl.float32)
     for reverse in range(T):
@@ -262,8 +275,8 @@ def reverse_program(K,Q,V,Beta,Pop,Keys,Values,Strength,Live,Touch,
             value=tl.load(Values+((n*DV+j)*NS+a if SoA else (n*NS+a)*DV+j),valid & live,0.)
             gout=tl.load(GradOut+inp*DV+j)
             dw+=value*gout
-            gv=tl.load(GValues+((n*DV+j)*AS+a if SoA else (n*AS+a)*DV+j),valid & live,0.)
-            tl.store(GValues+((n*DV+j)*AS+a if SoA else (n*AS+a)*DV+j),gv+weight*gout,valid & live)
+            gv=tl.load(GValues+((n*DV+j)*AS+a if SoA else (n*AS+a)*DV+j),valid & live & value_adjoint_needed,0.)
+            tl.store(GValues+((n*DV+j)*AS+a if SoA else (n*AS+a)*DV+j),gv+weight*gout,valid & live & value_adjoint_needed)
         if T>512:
             tl.debug_barrier()
             gs=tl.load(GStrength+n*GS+a,valid & (a<GS),0.,volatile=True)
@@ -306,7 +319,7 @@ def reverse_kernel(K,Q,V,Beta,Pop,Keys,Values,Strength,Live,Touch,
                    DBeta,DPop,DLogit,DCoef,
                    T:tl.constexpr,S:tl.constexpr,DK:tl.constexpr,DV:tl.constexpr,
                    BS:tl.constexpr,BV:tl.constexpr,UB:tl.constexpr,Capacity,SoA:tl.constexpr,
-                   Fresh:tl.constexpr,Start,Decay:tl.constexpr,KeyGrad:tl.constexpr,InitialBound:tl.constexpr,GS:tl.constexpr,RS:tl.constexpr, PoolRows, PoolInverse, PS:tl.constexpr, ColdTail:tl.constexpr=False):
+                   Fresh:tl.constexpr,Start,Decay:tl.constexpr,KeyGrad:tl.constexpr,InitialBound:tl.constexpr,GS:tl.constexpr,RS:tl.constexpr, PoolRows, PoolInverse, PS:tl.constexpr, ColdTail:tl.constexpr=False, NativeValuesGrad:tl.constexpr=True):
     # The allocation trace is integral and already resident. Its maximum,
     # together with the entry prefix bound, covers every row read or mutated.
     # Dispatch once per store; no host query or synchronization is introduced.
@@ -322,7 +335,7 @@ def reverse_kernel(K,Q,V,Beta,Pop,Keys,Values,Strength,Live,Touch,
                 Before,Widths,Counts,Boundaries,GradOut,GKeys,GValues,GStrength,StrengthScratch,
                 ProbabilityScratch,DKout,DQout,DVout,DBeta,DPop,DLogit,DCoef,
                 T,S,DK,DV,BS//2,BV,UB,Capacity,SoA,
-                Fresh,Start,Decay,KeyGrad,GS,RS,PoolRows,PoolInverse,PS,ColdTail)
+                Fresh,Start,Decay,KeyGrad,GS,RS,PoolRows,PoolInverse,PS,ColdTail,NativeValuesGrad)
         else:
             reverse_program(
                 K,Q,V,Beta,Pop,Keys,Values,Strength,Live,
@@ -330,7 +343,7 @@ def reverse_kernel(K,Q,V,Beta,Pop,Keys,Values,Strength,Live,Touch,
                 Before,Widths,Counts,Boundaries,GradOut,GKeys,GValues,GStrength,StrengthScratch,
                 ProbabilityScratch,DKout,DQout,DVout,DBeta,DPop,DLogit,DCoef,
                 T,S,DK,DV,BS,BV,UB,Capacity,SoA,
-                Fresh,Start,Decay,KeyGrad,GS,RS,PoolRows,PoolInverse,PS,ColdTail)
+                Fresh,Start,Decay,KeyGrad,GS,RS,PoolRows,PoolInverse,PS,ColdTail,NativeValuesGrad)
     else:
         reverse_program(
                 K,Q,V,Beta,Pop,Keys,Values,Strength,Live,
@@ -338,7 +351,7 @@ def reverse_kernel(K,Q,V,Beta,Pop,Keys,Values,Strength,Live,Touch,
                 Before,Widths,Counts,Boundaries,GradOut,GKeys,GValues,GStrength,StrengthScratch,
                 ProbabilityScratch,DKout,DQout,DVout,DBeta,DPop,DLogit,DCoef,
                 T,S,DK,DV,BS,BV,UB,Capacity,SoA,
-                Fresh,Start,Decay,KeyGrad,GS,RS,PoolRows,PoolInverse,PS,ColdTail)
+                Fresh,Start,Decay,KeyGrad,GS,RS,PoolRows,PoolInverse,PS,ColdTail,NativeValuesGrad)
 
 
 @triton.jit
@@ -493,6 +506,7 @@ class Replay(torch.autograd.Function):
                 -1 if ctx.initial_bound is None else ctx.initial_bound,gs.shape[-1],replay_rows,
                 live if pool_rows is None else pool_rows,live if pool_inverse is None else pool_inverse,0 if pool_rows is None else replay_rows,
                 ColdTail=pool_rows is not None and ctx.exceptional_cold_tail,
+                NativeValuesGrad=ctx.needs_input_grad[12],
                 enable_fp_fusion=False,debug=True,num_warps=8 if prefix8 else (16 if cfg.slots>=4096 else 4),
                 maxnreg=128 if cfg.slots>=4096 else None)
         finally:

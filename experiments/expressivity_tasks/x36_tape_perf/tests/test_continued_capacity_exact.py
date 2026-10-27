@@ -44,9 +44,18 @@ def test_fixed_live_capacity_bytes(slots,live):
                         _,state,_,_=scan(*(x[:,:1] for x in xs),state,cfg)
                 out,final,_,_=scan(*xs,state,cfg)
             from experiments.expressivity_tasks.x36_tape_perf.tests.test_exact import oracle_rebase_grid
-            with oracle_rebase_grid() if scan is original_scan else nullcontext():
-                gradients=torch.autograd.grad(out.square().sum(),xs[1:3])
+            # Discriminating negative control for the part-7 named suspect:
+            # the measured path has no native-state gradient consumers, so a
+            # dense native unpack must never execute, even at large capacity.
+            scatter_guard=(patch(
+                'experiments.expressivity_tasks.x36_tape_perf.replay_setup.unpack',
+                side_effect=AssertionError('capacity replay executed dense native unpack'))
+                if scan is tape_scan else nullcontext())
+            with scatter_guard:
+                with oracle_rebase_grid() if scan is original_scan else nullcontext():
+                    gradients=torch.autograd.grad(out.square().sum(),xs[1:3])
             if scan is tape_scan:
+                assert not any(out.grad_fn.needs_input_grad[11:14])
                 pool=out.grad_fn.pool_stats
                 assert pool['allocated_rows']==live
                 assert (pool['union_counts']==live).all()

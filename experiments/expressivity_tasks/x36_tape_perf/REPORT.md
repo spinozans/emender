@@ -1,189 +1,214 @@
-# X36 part 6 — sparse continued adjoints implemented; overall target FAILS
+# X36 part 7 — event-driven adjoint liveness; closure FAILS
 
-The final source passes **179 tests**, including the original 143, 25
-T512 capacity/entry byte fixtures in both imported and continued modes,
-and adversarial cold signed zeros. The 50-point production-allocation sweep
-completes without OOM, peaking at **26,478,391,808 allocated bytes**
-(24.660 GiB) and **26,937,917,440 reserved bytes**.
-Sparse adjoints and private replay payloads use the exact entry/touched union.
+The requested all-gates-green or established-floors closure is **not achieved**.
+The named dense-scatter hypothesis is disproved for the measured workload:
+**zero dense native-gradient unpack calls** execute at every fixed-live point.
+Replacing that absent operation cannot improve either capacity doubling or T4096.
+The implemented improvement uses journal decisions to suppress **unused packed
+value-adjoint traffic**. All **179 tests pass**, including cold signed zeros,
+continued-capacity byte fixtures and a new raising-unpack guard in all 25
+capacity cases (both imported and continued).
 
-**The requested <=1.5x continued capacity gate is still FAILED.** Small
-17-row and 256-row entries fail the first doubling. The old failing second
-live256 doubling is improved, and live1024/live2800 controls pass, but that does
-not close the expanded gate. Absolute improvements are reported alongside
-ratios; no baseline is deliberately slowed to manufacture a pass.
-B64/T512 is **1.541x PASS**;
-B64/T4096 is **2.624x FAIL**.
-Fresh inclusive launches remain **59/61: FAIL** (<=10).
-The continued profile has **106 inclusive activities** and
-**2 steady host syncs / 2 DtoH transfers**: FAIL.
-No irreducible structural or hardware floor is established.
+The two host sizing synchronizations remain; inclusive launches remain above
+10. Failed capacity/long-context gates retain their measured ratios and required
+savings in [part7_arithmetic.json](receipts/part7_arithmetic.json).
+**No hardware/irreducible floor waiver is claimed.** This is a failed performance
+closure with a narrower validated optimization and a corrected diagnosis.
 
-Canonical evidence: [machine ledger](receipts/summary.json),
-[attempt index](receipts/part6_attempts.json),
-[sizing arithmetic](receipts/part6_sizing_arithmetic.json),
-[gate arithmetic and decomposition](receipts/part6_failure_arithmetic.json).
-The unchanged historical evidence remains in [part 5](PART5_DIAGNOSTIC.md),
-[part 4](REPORT_PART4.md), [part 3](REPORT_PART3.md) and their archived ledgers.
+## What the journal actually routes
 
-## Representation, ownership and exactness
+`reverse_program` already reads `Cases`, `Matched` and `Alloc` and routes the
+packed value/key adjoint directly into the writing token's `DVout`/`DKout`.
+Corrections read only their matched row; allocation reads and clears only its
+allocated row. There is no dense cold-gradient pass in this token loop.
+Pop derivatives use strength adjoints and logical reductions, not a W_v/W_k
+payload scatter. Read adjoints still cover resident live rows because query
+gradients depend on their contents.
 
-For each store n, let E_n be its live rows at entry and A_n be the logical
-allocation IDs recorded by the chunk. The pool is U_n = E_n union A_n,
-ordered by logical slot. Writes, deaths, corrections and pops of existing rows
-are already covered by entry membership or an earlier allocation. PS is
-max(1, max_n |U_n|); actual float buffers have row pitch **PS**, never S or
-next_power_of_two(S). Triton lane padding is separate from allocation.
-Every store receipts entry count, allocation events, measured union, exact PS,
-and the conservative bound min(S, |E_n| + T). Duplicate allocations count once.
+`native_grad` calls `unpack` only if the corresponding native-state **input**
+requires a gradient. The capacity protocol requires query/value **projection
+input** gradients and no native-state input gradients: `[false,false,false]`.
+The new regression patches `unpack` to raise; all 25 shapes still match oracle
+bytes in both modes. Receipts assert those three flags at every sample.
+Even for native-gradient consumers, unpack runs once per chunk, outside the
+reverse token loop. T4096's empty-origin fallback does not use pooled unpack.
 
-Private key/value replay payloads also use PS. Full native owners remain
-immutable cold backing. Journal addresses are translated from native logical
-AoS rows to packed SoA rows through an inverse map; every payload target is
-device-asserted to belong to the union. A finally block reverses this mapping
-and restores the original journal address space. Required native gradients
-scatter packed hot adjoints into dense cold-gradient backing, retaining
-untouched output adjoints and inactive strength signed-zero arithmetic.
-Consuming continuations retain the existing freeze/version validation.
+The new device-only event-consumer mask scans recorded correction/allocation
+decisions once per pooled store. If no writing token can consume value adjoints
+and there is no native-value gradient consumer, it suppresses GValues loads and
+stores during read replay. It preserves the exact per-token DVout zero stores.
+Chunks with writes and native-value consumers keep the original recurrence.
+For live17/256/1024/2800 this removes logically
+2,281,701,376, 34,359,738,368, 137,438,953,472, 375,809,638,400 bytes
+of packed read/write accesses per chunk. These are logical accesses, **not
+measured DRAM bytes**. The branch remains on device and adds no launch or sync.
 
-The pool is selected for every nonempty-entry short chunk, including continued
-states whose logical reach has saturated at S. Reach and cardinality are
-separate quantities. T>512 keeps the previous dense/prefix fallback, and fresh
-empty origins keep the independently validated prefix specialization.
-Logical-S reduction operands reconstruct the oracle's original addition tree;
-full integer inverse maps, live/strength metadata and these reduction operands
-remain capacity dependent. This is not an O(live) end-to-end algorithm.
-Exceptional cold -0/nonfinite strength selects a full cold-tail expression;
-ordinary positive-zero cold rows keep the smaller resident expression.
-Two host metadata transfers are inside short nonempty-entry timings: packed
-entry maximum/exceptional flag in forward, union maximum in backward.
+Cold output-adjoint behavior is unchanged: when native gradients are requested,
+untouched key/value rows retain any supplied output adjoints, and cold strength
+rows execute the existing `+0` recurrence. They cannot universally be replaced
+by zero without losing nonzero output adjoints or signed-zero semantics.
+The full cold-signed-zero fixtures passed; no exactness break was observed.
 
-## OOM, sizing and allocation protocol
+## Capacity remeasurement
 
-The production journal reservation now uses measured entry cardinality,
-independently of logical reach:
+B64/H4/T512, entry live rows spread to S-1, frozen keys, zero writes/pops,
+decay=1, production allocation. Two warmups and five raw samples per point;
+construction/snapshots/GC remain outside samples. Imported controls and all
+medians, compiler statistics, pool counts, native-gradient flags and peaks are
+retained in `part7_live17/256/1024/2800.json`. All 40 points completed.
 
-`capacity/store = T*(DK+DV+64+16*h) + (entry_live_max+T)*(8*h+32)`
+Each cell below is **step/replay** ratio; limit <=1.5 for both.
 
-where `h = S.bit_length()`. Pool worst-case row count is
-`min(S, entry_live_max+T)`; exact allocation uses the measured union maximum.
-For N=256, T512, S11776, entry256, the journal reserves 356,352 entries/store
-and 1,824,522,240 bulk bytes, versus 10,317,987,840 bytes when entry is
-incorrectly replaced by capacity. Frozen-key packed value+strength adjoints
-use 33,816,576 bytes; private hot key/value payloads use 50,331,648 bytes.
-The full arithmetic table includes small, 1024, 2800 and S-32 entries.
-These figures are reservations, not a claim that journal bulk equals total peak.
+| Entry live | 2944→5888 | 5888→11776 | 8192→8224 |
+|---|---|---|---|
+| 17 | 1.950/2.692 FAILED | 1.424/1.262 PASSED | 1.157/1.274 PASSED |
+| 256 | 2.075/2.353 FAILED | 1.465/1.218 PASSED | 1.051/1.220 PASSED |
+| 1024 | 1.261/0.910 PASSED | 1.632/1.238 FAILED | 1.021/1.057 PASSED |
+| 2800 | 0.992/0.923 PASSED | 1.194/1.102 PASSED | 1.018/1.030 PASSED |
 
-A new public-output lifetime test reproduces a separate raw-owner cycle on the
-original implementation: **40,844,800 bytes retained per discarded chunk**,
-even with GC. Of that, the T9/N4/S2944 journal bulk accounts for 30,561,280
-bytes; other owners, traces and context account for the remaining 10,283,520.
-Detached replay-owner handles retain pointers and shared version counters
-without retaining autograd outputs through their own contexts. The candidate
-standalone allocation series is flat at **9,319,424 bytes** over seven samples.
-The complete suite's final lifetime series is also flat (a different reference
-harness baseline). See `part6_lifetime_original.txt`, `part6_matrix_parity.txt`
-and `part6_final_source_parity.txt`.
+Absolute continued **step/replay milliseconds** (no baseline slowing):
 
-The sweep uses the actual production tape_scan/prepare path. It never changes
-private candidate node references to force collection. Public outputs are
-dropped and GC runs outside samples. Two warmups and five samples per point
-retain wall, forward/replay stream events, and allocated/reserved peaks.
-The peak includes persistent seed/template and snapshot baseline; construction,
-validation, GC and separate profiling are excluded from timing. Each sample
-asserts unchanged live set, zero allocations and a nonmissing production pool.
-Near-budget entries use S-32; those comparisons also grow useful occupancy,
-so their literal <=1.5x failures are retained and labeled unmatched occupancy.
+| Entry live | S2944 | S5888 | S11776 |
+|---|---:|---:|---:|
+| 17 | 48.394/21.043 | 94.373/56.643 | 134.341/71.456 |
+| 256 | 110.589/29.182 | 229.438/68.658 | 336.115/83.660 |
+| 1024 | 259.654/121.747 | 327.468/110.756 | 534.540/137.069 |
+| 2800 | 773.540/442.912 | 767.212/408.749 | 916.344/450.564 |
 
-The enlarged byte harness separately hit an oracle-owner OOM: its error
-attributed 44.47 GiB to this process. Only discarded historical oracle nodes
-now release private handles after independent byte snapshots. Candidate nodes
-are never privately cleared. The raw OOM receipts are retained; no X37
-interference is asserted. Final sweeps have no OOM and no measured co-run
-corruption requiring a retry.
+Per-point ratios to the part-6 medians are also receipted in JSON; the
+removed logical traffic does not imply proportional wall savings.
 
-## Continued/imported capacity sweep
+Zero native unpack traffic contributes **0 ms** to every failed gate. The
+remaining capacity-dependent operations are concrete and separately counted:
 
-All points are B64/H4/T512, fixed live rows spread to S-1, frozen keys, zero
-writes/pops, decay=1. Event replay includes its actual production setup.
-The table reports continued medians; imported controls and all five raw samples
-are retained in `part6_hot_live*.json` and `part6_hot_near_budget.json`.
+| S | Forward tile probes/chunk | Full logical lane width | Public freed backing bytes |
+|---|---:|---:|---:|
+| 2944 | 12,058,624 | 4,096 | 385,875,968 |
+| 5888 | 24,117,248 | 8,192 | 771,751,936 |
+| 11776 | 48,234,496 | 16,384 | 1,543,503,872 |
+| 8192 | 33,554,432 | 8,192 | 1,073,741,824 |
+| 8224 | 33,685,504 | 16,384 | 1,077,936,128 |
 
-| Entry live | S2944 step/replay ms | S5888 step/replay ms | S11776 step/replay ms | First doubling step/replay | Second doubling step/replay | Aligned step/replay |
-|---|---:|---:|---:|---|---|---|
-| live17 | 50.277/23.019 | 94.330/56.443 | 137.426/73.910 | 1.876/2.452 FAILED | 1.457/1.309 PASSED | 1.166/1.294 PASSED |
-| live256 | 118.542/37.021 | 232.348/71.010 | 337.679/86.211 | 1.960/1.918 FAILED | 1.453/1.214 PASSED | 1.057/1.208 PASSED |
-| live1024 | 431.748/293.803 | 492.178/275.905 | 686.888/288.265 | 1.140/0.939 PASSED | 1.396/1.045 PASSED | 1.021/1.027 PASSED |
-| live2800 | 1178.341/847.677 | 1190.620/832.063 | 1329.302/863.032 | 1.010/0.982 PASSED | 1.116/1.037 PASSED | 1.013/1.016 PASSED |
-| near_budget | 1220.738/877.957 | 2502.386/1815.950 | 6333.839/4957.911 | 2.050/2.068 FAILED | 2.531/2.730 FAILED | 0.997/0.994 PASSED |
+The forward loops over `ceil(S/32)` tiles at saturated logical reach, including
+empty tiles. It evaluates 32 floating lanes per nonempty tile. Uniform live256
+entries populate all 92 then all 184 tiles on the first doubling: **2x padded
+read work at fixed live**. Uniform live1024 entries populate all 184 then all
+368 tiles on the second doubling: another **2x padded read work at fixed live**.
+Live17 occupies 17 tiles at every capacity but still probes the full tile grid.
+The JSON receipts these nonempty-tile counts and padded FLOP arithmetic for
+every capacity/live pair; they are source-level lane counts, not ISA counters. The reverse reconstructs full logical operands for DK+4=68
+reductions per store/token (64 query sums plus pop, maximum, denominator and
+dp sum). The first doubling changes the logical width 4096→8192 and the oracle
+warp policy 4→16, even when PS stays 17 or 256. `freed` is dense public int8
+telemetry initialized once per chunk; its public transpose can require another
+allocation/copy of the same size. Private metadata and inverse maps also retain
+logical-S shapes. None is a dense projection-gradient scatter.
 
-The first small-entry cliff coincides with the oracle's 4→16-warp layout and
-larger full logical reduction shape. Those are current implementation costs,
-not proof of a lower bound. A narrow eight-warp attempt failed exact bytes
-and was reverted before timing. The earlier full-S replay payload version
-passed live256 ratios but was much slower absolutely; the final hot backing
-retains absolute improvements even where a ratio worsens. Large-entry AoS
-was rejected because its apparent ratio pass slowed the S2944 baseline to
-20.6 seconds (276 compiler spills). It is not accepted as convergence.
+For every pair, the JSON retains `forward_delta`, `replay_delta` (under
+`device_delta_ms`) and `max(0,large-1.5*small)` separately for wall/replay.
+Those identify how much of the measured increment is forward versus backward;
+source counts identify the surviving O(S) mechanisms. For the continued misses:
 
-## Re-measured remaining gates and decomposition
+| Live | S pair | Forward delta ms | Replay delta ms | Wall savings required ms | Replay savings required ms |
+|---|---|---:|---:|---:|---:|
+| 17 | 2944→5888 | 10.417 | 35.599 | 21.783 | 25.078 |
+| 256 | 2944→5888 | 79.351 | 39.476 | 63.554 | 24.885 |
+| 1024 | 5888→11776 | 180.830 | 26.313 | 43.338 | 0.000 |
 
-The matched T4096 wall is 6188.075 / 2357.990
-= 2.624x. Reaching <=2 requires **1472.094 ms**
-of wall improvement. Whole-LM profiles retain pinned nonblocking ingestion in the
-registered ranges. Narrow custom launch counts remain seven for fresh and
-8 for the continued profile, but inclusive activities include all
-native setup, fill, copy, reduction and mapping work. Fresh zero steady
-host sync/DtoH remains PASS; the new continued sizing path FAILS that gate.
+Required savings are `max(0,large-1.5*small)`; a zero replay requirement
+means only the whole-step ratio fails. These are separately measured ranges. Their individual
+subexpression timings have **not** been causally isolated. These are current
+implementation costs, not an established irreducible floor. No failure is
+silently waived because its packed pool is small.
 
-| Profile | Scan kernel ms | Reverse kernel ms | Setup ms | Rebase ms | Other forward/replay activities ms | Inclusive/custom |
-|---|---:|---:|---:|---:|---:|---:|
-| fresh T512/S2944 | 43.150 | 60.739 | 1.870 | 1.873 | 3.252 | 59/7 |
-| fresh T4096/S2944 | 1043.835 | 2746.885 | 1.870 | 12.934 | 21.322 | 61/7 |
-| continued L256/T512/S11776 | 238.810 | 85.893 | 0.575 | 0.920 | 13.966 | 106/8 |
+## Long context: useful work is not constant per token here
 
-GPU component busy times are separately profiled and are not additive wall
-samples. The continued backward range wraps Replay.backward on the actual
-autograd thread; loss construction and leaf accumulation are outside it.
-An earlier outer-range profile missed that thread and is explicitly superseded.
-Journal ablation and allocator CPU time remain separately labeled in the
-machine ledger. Long occupied pairs grow 16,777,216→1,073,741,824, with no
-frees, and logical payload access counts grow 64x for 8x tokens. Those are
-algorithmic counts, **not DRAM measurements or a bandwidth/GEMM lower bound**.
-The arithmetic receipt decomposes failures and required savings without
-waiving any gate. No gate is declared to have hit an irreducible floor.
+The fresh matched T512/T4096 ratios are **1.551x** and
+**2.621x**. T4096 requires
+**1460.043 ms** of wall savings to meet <=2x.
+The proposed dense-unpack removal contributes exactly zero. The new pooled
+liveness specialization does not execute for this fresh long-context fallback.
 
-Both checkpoint-free 512-step/2,097,152-token curves pass against historical
-losses: base max error **9.53674316e-07**,
-tape **9.53674316e-07**. Median training step times
-are 24.045/86.335 ms
-(base/tape), ratio 3.591; this is separate from the B64 wall gates.
+The routing trace counts 16,777,216→1,073,741,824
+occupied slot-token pairs: **64x** for 8x tokens.
+Mean live occupancy is 128→1024. Just score-dot plus weighted-value read work is
+`2*(64+128)*pairs` = 6,442,450,944→412,316,860,416
+FLOPs. This is flat at 384 FLOPs **per live-slot/token pair**; per input token
+it rises 8x. Padding, nonlinearities, recurrence and backward are additional.
+These kernels use vector reductions; the count is not a calibrated GEMM floor.
 
-## Parts 1–6 convergence
+| Separate profile | T512 ms | T4096 ms |
+|---|---:|---:|
+| Scan kernel | 41.096 | 1043.523 |
+| Reverse kernel | 61.135 | 2750.898 |
+| Other scan/replay device activities | 7.103 | 34.912 |
 
-| Gate | Part 1 | Part 2 | Part 3 | Part 4 | Part 5 diagnostic | Part 6 final |
-|---|---|---|---|---|---|---|
-| B64/T512 <=3x | 3.823 FAIL | 2.655 PASS | 2.202 PASS | 1.558 PASS | Not rerun | 1.541 PASS |
-| B64/T4096 <=2x | Not run | 3.311 FAIL | 2.883 FAIL | 2.754 FAIL | Not rerun | 2.624 FAIL |
-| Fresh S doubling <=1.5x | Not validated | FAIL | FAIL | PASS | Not rerun | PASS |
-| Continued S doubling <=1.5x | Not validated | Not validated | Not validated | Not validated | 1.781/1.818 FAIL | Expanded sweep FAIL; 1024/2800 pass |
-| Inclusive launches <=10 | >=1536 FAIL | 100 FAIL | 59/61 FAIL | 59/61 FAIL | Not rerun | Fresh 59/61, continued 106 FAIL |
-| Narrow custom phases <=10 | — | — | 7 PASS | 7 PASS | Not rerun | Fresh 7 / continued 8 PASS |
-| Zero steady host syncs/DtoH | FAIL | PASS | PASS | PASS | Not rerun | Fresh PASS / continued FAIL |
-| Historical 2M curve match | PASS | PASS | PASS | PASS | Not rerun | PASS |
-| Exact fixtures | 114 | 123 | 138 | 141 | 143 PASS | 179 PASS |
-| Production-allocation continued sweep survives | — | — | — | — | OOM/GC failures | 50/50 points PASS; peak 24.660 GiB |
+Scan ns per occupied pair is 2.449→0.972;
+reverse is 3.644→2.562.
+Inclusive fresh activities are 59→61, not 8x as many.
+Most device busy time is inside scan/reverse; the full per-name launch ledger
+and other activity totals are in the JSON. Profile GPU busy times are not
+additive wall samples. Launch/telemetry wall costs are not independently
+calibrated, so this does not establish an honest compute lower bound or fully
+explain the wall residual. The long-context gate remains failed when above 2x.
 
-Reproduction uses only `/home/erikg/emender/.venv/bin/python` and
-`run_leased.sh`; physical cards 0/1/5/6 only. Final full-source parity command is in
-`part6_final_source_parity.txt`; `part6_hot_payload_parity.txt` is the preceding
-179-test gate passed before final performance; final sweeps/gates/curves are orchestrated by
-`receipts/part6_run_final.sh` (the live17 sweep ran immediately before it).
-Rebuild the ledger with `receipts/part6_analysis.py`, then the arithmetic and
-this report with the corresponding stdlib receipt scripts. Compressed Chrome
-traces retain content hashes and summary equivalence checks.
-No .pt checkpoints, card7, certified cards2/3/4, WG or subagents were used.
-One validation compiler tail briefly overlapped another validation after SIGINT
-failed to stop it promptly; it was terminated before performance. All timed
-runs were sequential. `contact_supervisor` was not exposed; coordination
-attempts and discoveries were recorded in `part6_coordination.txt`.
+## Sync and launch residuals
+
+The continued profile has **106 inclusive activities** versus <=10
+(excess 96), **2 steady stream syncs** and
+**2 DtoH transfers** versus zero. Their complete names/counts
+and busy-time decomposition are retained in `part7_profile.json` and the
+losslessly archived trace. Explicit terminal and profiler teardown device synchronizations are outside
+the registered ranges; no steady transfer is excluded.
+
+The current eager exact-allocation path has two serial shape dependencies:
+forward needs device entry maximum/cold-tail metadata before host journal
+reservation/dispatch; backward needs the post-scan union maximum before host
+`torch.empty` allocates exact PS. Arithmetic is **2 > 0**, independent of event
+scatter. This is a conditional constraint of the present host-sized allocation
+strategy, not a hardware floor: device allocation, bounded reservation or a
+changed specialization strategy could alter it. No such redesign or launch
+fusion was implemented here. The inclusive-launch gate has no irreducible-floor
+proof. Both requested improvements remain unmet.
+
+## Parts 1–7 convergence
+
+| Gate | Part 1 | Part 2 | Part 3 | Part 4 | Part 5 diagnostic | Part 6 final | Part 7 |
+|---|---|---|---|---|---|---|---|
+| B64/T512 <=3x | 3.823 FAIL | 2.655 PASS | 2.202 PASS | 1.558 PASS | Not rerun | 1.541 PASS | 1.551x PASSED |
+| B64/T4096 <=2x | Not run | 3.311 FAIL | 2.883 FAIL | 2.754 FAIL | Not rerun | 2.624 FAIL | 2.621x FAILED |
+| Fresh S doubling <=1.5x | Not validated | FAIL | FAIL | PASS | Not rerun | PASS | Part 6 PASS carried; not rerun |
+| Continued S doubling <=1.5x | Not validated | Not validated | Not validated | Not validated | 1.781/1.818 FAIL | Expanded sweep FAIL; 1024/2800 pass | See new matched-entry table; failed ratios remain FAIL |
+| Inclusive launches <=10 | >=1536 FAIL | 100 FAIL | 59/61 FAIL | 59/61 FAIL | Not rerun | Fresh 59/61, continued 106 FAIL | Fresh 59/61, continued 106 FAIL |
+| Narrow custom phases <=10 | — | — | 7 PASS | 7 PASS | Not rerun | Fresh 7 / continued 8 PASS | Fresh 7 / continued 8 PASS (unchanged phases) |
+| Zero steady host syncs/DtoH | FAIL | PASS | PASS | PASS | Not rerun | Fresh PASS / continued FAIL | Fresh PASS; continued 2 syncs/2 DtoH FAIL |
+| Historical 2M curve match | PASS | PASS | PASS | PASS | Not rerun | PASS | Part 6 PASS carried; fresh path unchanged by pooled optimization |
+| Exact fixtures | 114 | 123 | 138 | 141 | 143 PASS | 179 PASS | 179 PASS, including 25 raising-unpack byte controls |
+| Production-allocation continued sweep survives | — | — | — | — | OOM/GC failures | 50/50 points PASS; peak 24.660 GiB | 40/40 fixed-live points survive; no near-budget rerun |
+
+## Reproduction and remaining risk
+
+`receipts/part7_run.sh` runs the complete parity suite before all timed work,
+then the four fixed-live sweeps, continued profile and matched T512/T4096
+profiles/routing traces. Only `/home/erikg/emender/.venv/bin/python` and
+`run_leased.sh` were used for GPU work, on physical card 0, 1
+from the broker-approved 0/1/5/6 set.
+No .pt files, forbidden/certified cards, WG, workers or subagents were used.
+Run archival as `/home/erikg/emender/.venv/bin/python -m
+experiments.expressivity_tasks.x36_tape_perf.receipts.part7_archive` from the
+repository root. It verifies byte-identical gzip round trips and profile-summary
+equality; `part7_analysis.py` regenerates arithmetic, then `part7_report.py`
+regenerates this report. Part 6 is archived in [REPORT_PART6.md](REPORT_PART6.md).
+
+At S2944, live1024 replay improves 293.803→121.747 ms and live2800 replay
+847.677→442.912 ms versus part 6. These absolute gains do not close the small
+entry gates or justify a floor waiver.
+
+The delivered change removes unused packed adjoint traffic; it does not replace
+a dense scatter on the measured path because that operation is absent. Failed
+ratios, two sizing syncs and excess launches remain risks and unmet work. The
+historical curve and fresh capacity gates are explicitly carried from part 6;
+they were not rerun. Supervisor escalation was unavailable because no callable
+`contact_supervisor` tool was exposed; coordination attempts and discoveries
+are in `part7_coordination.txt`. This report must not be used to attest that
+X36 reached all-gates-green or a proven-floor closure.
