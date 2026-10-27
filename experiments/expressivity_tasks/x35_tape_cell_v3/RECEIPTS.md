@@ -120,3 +120,52 @@ backing or replay composition is delivered. All registered performance gates
 remain NOT RUN. Baseline-X31 and component results are separately identified
 in REPORT.md and summary_part2.json. No component timing substitutes for any
 gate. Earlier compile/expiry failures are retained as unsuccessful receipts.
+
+## Part 3 protocol and scope
+
+The part-2 structural preregistration is unchanged. `gates_part3.py` imports
+X31 part-8 `measure()` unchanged: B64, fp32, K64/V128, width256, fresh-state
+complete cell including projections/allocation/synchronization, five warmups,
+twenty samples, median wall milliseconds/token and CUDA-event samples. The
+C64/S2944/H4 speed denominator is a newly matched X31 run with the same
+weights and inputs; there is no S2944 number in historical summary_part8.json.
+The S11776 H16/H1 gate keeps the original T16 protocol without subtracting
+initialization or adding work to H1.
+
+Memory is measured separately from latency after dropping timing samples and
+clearing the CUDA cache: incremental allocated peak and retained allocation
+for one complete fresh-state call, live-row count and total logical rows. The
+B64/H16/S11776/T16 row explicitly reports sparse live occupancy. Dense base
+state bytes are also collected by X31's original accounting function. CUDA
+allocator reserved bytes are not mislabeled as occupied payload bytes.
+Standalone native initialization is measured with the same five/twenty T16
+procedure to receipt the remaining floor; it is not subtracted from any gate.
+
+The v3 implementation integrates causal view construction and G10 replay
+composition. Its backing is still dense, so the occupancy-proportional backing
+and live-proportional memory requirements FAIL by structure. The timing and
+memory receipts must say this even if a timing ratio passes. Timer-wheel cell
+integration remains open, with the reference heap retained. Validation first
+runs the unchanged 109-test X31 suite with only the public cell module redirected
+to v3, plus X35 tests. Reference component tests still exercise the shared
+reference primitives; passing the suite is not proof of a nonexistent storage
+representation. `validation_part3.txt` and XML describe the final source;
+compile-failure and intermediate logs are historical unsuccessful/intermediate
+receipts, not acceptance substitutes.
+
+### Part 3 measured outcome
+
+All registered gates FAIL: complete C64/S2944/H4 speedup 1.879757x (<2),
+S11776/T16 H16/H1 ratio 7.407990 (>2), occupancy backing not implemented,
+and sparse-occupancy memory still dense. H16 native-init floor is
+0.664066 ms/token. B64/H16/S11776 has 8,192 live of 12,058,624 logical rows,
+10,095,140,864 base-state bytes, 10,658,721,792 incremental peak bytes, and
+10,298,073,088 retained bytes. See gates_part3.json for all raw samples and
+REPORT.md for exact remaining structures. No threshold, protocol or sample
+selection was changed after observing these failures.
+
+Final integrated validation: 141 passed (109 unchanged X31 suite + 32 X35);
+separate no-redirection v3 integration validation: 4 passed. These establish
+causal-view/recorded-replay composition with the existing dense representation,
+not parity of unimplemented occupancy backing. Full engineering delivery is
+INCOMPLETE. The timer wheel is not integrated.

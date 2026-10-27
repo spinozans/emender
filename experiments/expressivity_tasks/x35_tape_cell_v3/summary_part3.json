@@ -1,0 +1,143 @@
+{
+  "delivery_status": "incomplete",
+  "all_registered_targets_passed": false,
+  "final_validation": {
+    "tests": 141,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "x31_unchanged_suite_tests": 109,
+    "x35_tests": 32,
+    "oracle_application": "Unmodified X31 tests, public cell module redirected to X35; reference component tests still cover shared reference primitives.",
+    "receipt": "validation_part3.txt",
+    "xml": "validation_part3.xml",
+    "standalone_public_module_tests": 4,
+    "standalone_receipt": "validation_part3_standalone.txt"
+  },
+  "implemented": [
+    "Single-launch sequential metadata core emits pre-token causal views from journaled decisions.",
+    "Two-launch production causal read for all chunk queries, immutable shared payload versions without per-token payload copies.",
+    "Recorded-decision first-order replay read adjoints at exact typed-journal rollback boundaries.",
+    "Local v3 journal snapshot/undo ownership; X31 sources and tests unchanged."
+  ],
+  "gates": {
+    "c64_s2944_h4_forward_ge_2x": false,
+    "s11776_t16_heads_ratio_le_2": false,
+    "occupancy_proportional_backing": false,
+    "live_proportional_memory": false
+  },
+  "forward_speedup": 1.8797567366611032,
+  "heads_ratio": 7.407989967715655,
+  "measurements": [
+    {
+      "engine": "x31",
+      "slots": 2944,
+      "heads": 4,
+      "tokens": 64,
+      "wall_ms_per_token": 0.16425367357442155,
+      "cuda_ms_per_token": 0.16395074874162674,
+      "base_state_bytes": 631048192,
+      "incremental_peak_bytes": 781296640,
+      "retained_bytes": 689866752,
+      "live_rows": 8192,
+      "logical_rows": 753664
+    },
+    {
+      "engine": "x35",
+      "slots": 2944,
+      "heads": 4,
+      "tokens": 64,
+      "wall_ms_per_token": 0.08738028191146441,
+      "cuda_ms_per_token": 0.08704600110650063,
+      "base_state_bytes": 631048192,
+      "incremental_peak_bytes": 824806400,
+      "retained_bytes": 689866752,
+      "live_rows": 8192,
+      "logical_rows": 753664
+    },
+    {
+      "engine": "x35",
+      "slots": 11776,
+      "heads": 1,
+      "tokens": 16,
+      "wall_ms_per_token": 0.12401268759276718,
+      "cuda_ms_per_token": 0.12275699898600578,
+      "base_state_bytes": 630946304,
+      "incremental_peak_bytes": 654532096,
+      "retained_bytes": 644617216,
+      "live_rows": 512,
+      "logical_rows": 753664
+    },
+    {
+      "engine": "x35",
+      "slots": 11776,
+      "heads": 16,
+      "tokens": 16,
+      "wall_ms_per_token": 0.9186847455566749,
+      "cuda_ms_per_token": 0.9173440039157867,
+      "base_state_bytes": 10095140864,
+      "incremental_peak_bytes": 10658721792,
+      "retained_bytes": 10298073088,
+      "live_rows": 8192,
+      "logical_rows": 12058624
+    }
+  ],
+  "native_initialization_floor": [
+    {
+      "heads": 1,
+      "wall_ms_per_token": 0.04308381176088005,
+      "cuda_ms_per_token": 0.04203600063920021
+    },
+    {
+      "heads": 16,
+      "wall_ms_per_token": 0.6640662613790482,
+      "cuda_ms_per_token": 0.6630080044269562
+    }
+  ],
+  "methodology": "X31 part8 measure() unchanged: full cell projections, fresh-state allocation, synchronized wall and CUDA events; medians per token.",
+  "performance_receipt": "gates_part3.json",
+  "physical_gpu": "1",
+  "gpu": "NVIDIA RTX 6000 Ada Generation",
+  "python": "/home/erikg/emender/.venv/bin/python",
+  "residual_risks": [
+    "Mandatory live-row pools, cold-row storage, logical-slot mapping and materialize-on-access public views are not implemented; full part-3 scope is incomplete.",
+    "Fresh initialization and base state remain O(B*H*S), including dead payloads; memory is not live-proportional.",
+    "Dense death trace is O(B*T*H*S), version-map initialization is O(B*H*S), and training replay retains dense owners.",
+    "The timer wheel remains a component; the integrated core retains the X31 heap and its tie order.",
+    "Backward applies read adjoints sequentially at exact rollback boundaries; no batched-backward or training-speed claim.",
+    "All registered timing/backing/memory targets fail; measurements are one broker-leased GPU session, not cross-device performance claims."
+  ],
+  "operational_notes": "No GPU7, .pt files, WG, delegation, Frontier/Slurm or resilient-training changes. contact_supervisor was searched first in ALL_TOOLS and is unavailable. Existing unrelated workspace changes preserved.",
+  "source_sha256": {
+    "experiments/expressivity_tasks/x35_tape_cell_v3/__init__.py": "0fdb1008802a1136e4b7c10040fbf2edf8768dfafc71347738d7a2fc1eec0215",
+    "experiments/expressivity_tasks/x35_tape_cell_v3/all_field_journal.py": "b281e27a1278eb050df40032a3d129e3a3b0b79514020493c9b565256a64beb4",
+    "experiments/expressivity_tasks/x35_tape_cell_v3/allocation.py": "a36fd4dfbb3e93c7047656f009a12b576bdd3d0c5c992bde9c28358be906a3e2",
+    "experiments/expressivity_tasks/x35_tape_cell_v3/backward.py": "3cc07a03696167e9cd8341b811fada92ff35365c4a7291a916258b8d4a21e220",
+    "experiments/expressivity_tasks/x35_tape_cell_v3/causal_read.py": "9c6fa5822905b41750e77fec7b48cebf2a388cf01cc19a6752e112839707440c",
+    "experiments/expressivity_tasks/x35_tape_cell_v3/cell_fused.py": "c80a74936dd72005e6320c891627adf04325505faf2c915beb9965445493272a",
+    "experiments/expressivity_tasks/x35_tape_cell_v3/classifier.py": "99282a7aea1811c3bb1c35f9d472c0395b2191fa1963bc477c6a66207307c8e5",
+    "experiments/expressivity_tasks/x35_tape_cell_v3/density.py": "67c271dc13021fdc03d2e43b1511335fd7810e1b9b6b3288c2af543a536f8028",
+    "experiments/expressivity_tasks/x35_tape_cell_v3/density_trained.py": "35196470318b1d07c9ab07fa8aa6de821ae7ff4941b35777a92c47f3f72d5959",
+    "experiments/expressivity_tasks/x35_tape_cell_v3/gates_part3.py": "b11374f31f4821a336b7dd3bc8ddf5e8036566604a4aeb79a3fca56423e1ad27",
+    "experiments/expressivity_tasks/x35_tape_cell_v3/kernels.py": "fbee90e11c218ea608fd38d85d8ac5110bd327d2aa202126303889276fa70dba",
+    "experiments/expressivity_tasks/x35_tape_cell_v3/tests/test_causal_read.py": "d771cdea98fe10e9b250c4db2c4ddf40f8c6c22221cb2166a1836dc58acc1953",
+    "experiments/expressivity_tasks/x35_tape_cell_v3/tests/test_dependencies.py": "0ff56490baa36b04a4760166a404e0f013196c261c6b175054c737afabbcd146",
+    "experiments/expressivity_tasks/x35_tape_cell_v3/tests/test_integrated.py": "f3a6553751697f6cb8b8566f8d048c34f4fce5311b5891faa5ff2b08abd9ccfe",
+    "experiments/expressivity_tasks/x35_tape_cell_v3/tests/test_timer_wheel.py": "a99642d2a5eee5f5c6e54932337da963d7f43b236ad8ce912fb49009fdabd7d3",
+    "experiments/expressivity_tasks/x35_tape_cell_v3/timer_wheel.py": "a8634da6b80ec6b8df7821428263bdda44a122b8906a4e823a3cdc33e128f5ab",
+    "experiments/expressivity_tasks/x35_tape_cell_v3/validate_part2.py": "e8be6730cbec95614e2d2f0d9adc57a889df9d0eadf4500d36a3989daf5a7e0f",
+    "experiments/expressivity_tasks/x35_tape_cell_v3/validate_part3.py": "00deff1b3a9b7855f978bc599f3133442a3b041f165061dae4d14d8785be4a36"
+  },
+  "oracle_test_sha256": {
+    "experiments/expressivity_tasks/x31_tape_cell_fused/tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_all_field_journal.py": "0acd8c04acec645f2177014a3295e7a97628a9737b785055f70fc2ae38323bee",
+    "experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_components.py": "05d9ccb30ce942462fb99ba9780dd1517d9a7ce0af3ba85da920f1935c8a8a80",
+    "experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_device_free.py": "969c7d7bf54c6aaf8f70e8985b1e7b0f4ae2a2a9f006324b42bf1dac0ed3a3f3",
+    "experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py": "7d8007dcf3c20650b2fee9a25f2b0120c90b85e3530d40d852fbe8a097031159",
+    "experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_lazy_decay.py": "40e5167a3c5cf7d6de41c2897d1e2462a17cdeee81087c1006d3eb2f07d3e234",
+    "experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_parity.py": "7367366e3cefc661894040f64b49f1f1c942f8deef989b99443a81bfbfcc563e",
+    "experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_part7.py": "86e464e9f7bcd6485dbb89c9be2edd4d296b7da0b659b2ed9ea3d30569623240",
+    "experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_part8.py": "9a8c8d8250ff6debb60010515e3ccae416ef7121306ce5bced0c8496a8d2fb46",
+    "experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_write_journal.py": "98aaadd8ee4d376bc5f73f6e9c61fa6d4c828dffe63f62e84a2d3f1a3fd68d0c"
+  }
+}

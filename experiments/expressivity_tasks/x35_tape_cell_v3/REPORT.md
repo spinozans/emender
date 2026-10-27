@@ -167,3 +167,90 @@ and is unavailable, so no supervisor coordination call could be sent.
 Residual risks are the unimplemented backing, causal-view construction,
 recorded-replay read adjoints and complete timer-wheel integration; no
 throughput, memory-scaling, or full v3 parity claim is made.
+
+## Part 3 — live causal reads delivered; backing scope incomplete
+
+The live v3 entry point is now `cell_fused.tape_scan` / `TapeCell`.
+Sequential routing runs inside one store-owning chunk kernel. The core emits
+pre-token version IDs and exact rounded strengths at the same boundaries
+recorded in the G10 journal. Each append/correction emits one immutable payload
+version; unchanged rows share versions. Two read launches then score every
+query in the chunk. POP query argmax remains sequential inside the core when
+its threshold is enabled. There are no per-token output-read launches.
+`INTEGRATION.md` documents the representation, complexity and replay ownership.
+
+Production backward composes the read adjoints with the typed journal's exact
+rollback: it restores the pre-read store at each recorded boundary, applies
+read adjoints there, and transfers write/allocation adjoints at their original
+mutation boundaries. It does not recompute routing or death decisions.
+Public trace mutation, replay-owner mutation, snapshots, consuming continuation
+and exact undo are exercised by the unchanged X31 oracle tests against the
+v3 public cell module. Standalone component differentiability is not used as
+proof of this composition.
+
+**The requested occupancy-proportional backing is not delivered.** Native
+payloads, slot metadata, public views and the death trace retain dense backing;
+training replay also retains dense owners. No live-row pool, cold-row store,
+logical-to-physical ownership map, lazy public materialization or O(H*live)
+initialization is claimed. Limiting read/version work to the reachable prefix
+is a read optimization, not a backing representation change. Thus the part-3
+engineering scope fails even if an individual timing gate passes.
+
+The integrated core keeps the X31 heap. The wheel's deterministic tie ordering,
+metadata ownership, journal capacity and replay layout have not been composed
+with the cell. X31 reference files are unchanged. A local v3 journal class
+constructs v3 continuation handles on undo and rebases snapshots in the v3
+address space; otherwise a reference journal would return a reference handle.
+
+Validation and gate numbers are recorded below and in `summary_part3.json`.
+The first attempted run exposed a Triton vector/scalar name collision while
+compiling a multi-slot core; `validation_part3_compile_failure.txt` retains
+that failed attempt. Its scalar POP temporary was separated from the causal
+view temporary before rerunning. Intermediate validation is not substituted
+for the final source validation.
+
+### Final part-3 validation and gate results
+
+Final source: **141 passed, zero failures/errors/skips in 494.13 s**: the
+unchanged 109-test X31 suite with public-cell redirection, plus 32 X35 tests.
+The 32 include four new live-cell integration regressions. A separate clean
+process without module redirection passed all four new regressions (3.71 s),
+including real v3 journal undo and reuse of the returned v3 handle. This avoids
+letting test redirection mask implementation ownership mistakes. The extreme
+negative-score POP fixture also checks argmax initialization below the read
+mask sentinel. The 109-pass intermediate receipt predates final source changes
+and is retained separately, not used as the final attestation.
+
+| Registered gate | Measurement | Verdict |
+|---|---|---|
+| B64/C64/S2944/H4 complete forward >=2x | X31 0.164254, v3 0.087380 ms/token; **1.879757x** | FAIL |
+| B64/T16/S11776 H16/H1 <=2 | H1 0.124013, H16 0.918685 ms/token; **7.407990x** | FAIL |
+| Occupancy-proportional backing / fresh init | Dense payload and metadata unchanged | FAIL, not implemented |
+| B64/H16/S11776 live-proportional memory | 8,192 live / 12,058,624 logical rows; 10,095,140,864 base-state bytes; 10,658,721,792 incremental peak bytes | FAIL |
+
+The H16 standalone native-zero initialization floor is **0.664066 ms/token**
+under the original T16/five-warmup/twenty-sample method. It did not approach
+zero. H16 retained allocation is 10,298,073,088 bytes despite only 0.06794%
+live occupancy. The dominant remaining structure is the dense public native
+payload and persistent logical-slot metadata; full death traces, dense version
+maps and training replay owners also remain. Read batching reduces per-token
+launches but does not remove these allocations. The small read/version working
+set is not a live-proportional memory receipt. Component floor measurements
+are not additive attribution of full-cell timing.
+
+All samples and accounting are in `gates_part3.json` and raw stdout in
+`gates_part3.txt`, measured on physical GPU 1 (NVIDIA RTX 6000 Ada Generation).
+No samples were dropped or initialization subtracted to reach a target. The
+new matched S2944 X31 denominator, not a nonexistent historical S2944 number,
+is used. No second timing run was selected to cross the 2x threshold.
+
+Only X35 files are included in this delivery. GPU7, .pt output, WG, delegation,
+Frontier/Slurm and resilient training were not used. Scheduler Partition/QOS
+and resilient requirement IDs are inapplicable. Reference sources/tests were
+not patched; unrelated pre-existing workspace changes are preserved.
+`contact_supervisor` was searched first in the callable catalog and was absent.
+
+**Overall delivery remains incomplete:** causal-read live-scan and first-order
+G10 composition are established by tests, but mandatory occupancy backing is
+missing and every registered performance/backing/memory gate fails. No complete
+part-3 acceptance or speed-target success is claimed.

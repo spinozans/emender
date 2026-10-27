@@ -1,1 +1,1 @@
-"""X35 chunk-dependency research; X31 remains the semantic oracle."""
+"""X35 causal chunk-read cell; dense backing remains an open requirement."""

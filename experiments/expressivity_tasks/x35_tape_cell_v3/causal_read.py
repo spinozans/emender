@@ -5,7 +5,9 @@ supply one version index per logical slot at every pre-token read boundary;
 -1 means dead. Version rows can be shared until a key/value mutation. Strengths
 must already contain X31's rounded, time-indexed decay (not analytic powers).
 Two launches read the complete chunk with X31's slot tiling/reduction tree.
-The differentiable reference is for component validation, not replay integration.
+The live v3 core emits these views; cell_fused/backward compose the read
+with recorded-decision rollback. The differentiable reference is only a
+component specification, not the production backward.
 """
 import torch
 import triton
@@ -103,14 +105,16 @@ def reference_read(q, keys, values, versions, strength):
 def chunk_read(q, keys, values, versions, strength):
     """Inference component. Version IDs are checked by a device assertion.
 
-    Differentiable callers must currently use reference_read: no G10 replay
-    composition is claimed by this primitive. This fails closed on grad inputs.
+    The production v3 tape_scan invokes this under its custom replay Function;
+    its backward restores each pre-read store before applying read adjoints.
+    Direct gradient-bearing primitive calls fail closed. reference_read remains
+    a differentiable component specification.
     """
     n,c,k,m,v,s = _validate(q,keys,values,versions,strength)
     if not q.is_cuda:
         raise ValueError('chunk_read requires CUDA')
     if torch.is_grad_enabled() and any(x.requires_grad for x in (q,keys,values,strength)):
-        raise ValueError('recorded-decision read adjoints are not integrated')
+        raise ValueError('direct chunk_read adjoints are not integrated; use v3 tape_scan recorded replay')
     r = triton.cdiv(s,32)
     maximum = torch.empty((n,c,r),device=q.device)
     denom = torch.empty_like(maximum)
