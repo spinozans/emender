@@ -8,7 +8,7 @@ import triton.language as tl
 def setup_kernel(Sources, Destinations, Gradients, GradDest,
                  Starts:tl.constexpr, Numel:tl.constexpr, GStarts:tl.constexpr, GNumel:tl.constexpr, Strides:tl.constexpr,
                  Missing:tl.constexpr, H:tl.constexpr, S:tl.constexpr,
-                 Dims:tl.constexpr, SoA:tl.constexpr):
+                 Dims:tl.constexpr, SoA:tl.constexpr, GS:tl.constexpr):
     pid=tl.program_id(0)
     for i in tl.static_range(len(Sources)):
         if (pid>=Starts[i]) & (pid<Starts[i+1]):
@@ -48,19 +48,21 @@ def setup_kernel(Sources, Destinations, Gradients, GradDest,
                     address=(store//H)*Strides[i][0]+(store%H)*Strides[i][1]+((x//Dims[i])%S)*Strides[i][2]+(x%Dims[i])*Strides[i][3]
                     value=tl.load(Gradients[i]+address,valid,0.)
                 else:
-                    store=x//S
-                    address=(store//H)*Strides[i][0]+(store%H)*Strides[i][1]+(x%S)*Strides[i][2]
+                    store=x//GS
+                    address=(store//H)*Strides[i][0]+(store%H)*Strides[i][1]+(x%GS)*Strides[i][2]
                     value=tl.load(Gradients[i]+address,valid,0.)
                 tl.store(GradDest[i]+x,value,valid)
 
 
-def prepare(owners,gradients,*,soa,key_grad=True):
+def prepare(owners,gradients,*,soa,key_grad=True,strength_rows=None):
     """Return independent contiguous owners and adjoints in replay layout.
 
     Native-output adjoints may be missing, expanded, or strided. Payload
     transpose tiles preserve bits; no arithmetic or reduction is changed.
     With key_grad=False the unused key-adjoint pointer aliases owned keys;
     its setup interval is empty and the caller disables every adjoint write.
+    strength_rows bounds private strength adjoints when no native-input
+    strength gradient is requested. Required native gradients keep cold rows.
     """
     if any(not x.is_contiguous() for x in owners):
         raise ValueError('replay requires contiguous owned fields')
@@ -69,10 +71,14 @@ def prepare(owners,gradients,*,soa,key_grad=True):
     replay=tuple(torch.empty_like(x.transpose(-1,-2) if soa and i<2 else x,
                                  memory_format=torch.contiguous_format)
                  for i,x in enumerate(owners))
-    adjoints=tuple(torch.empty_like(x) if i or key_grad else x for i,x in enumerate(replay[:3]))
+    adjoints=tuple(
+        torch.empty((b,h,strength_rows),device=x.device,dtype=x.dtype)
+        if i==2 and strength_rows is not None and strength_rows<s
+        else torch.empty_like(x) if i or key_grad else x
+        for i,x in enumerate(replay[:3]))
     missing=tuple(g is None for g in gradients)
     sources=tuple(owners[i] if g is None else g for i,g in enumerate(gradients))
-    numel=tuple(x.numel() for x in (*owners,*owners[:3]))
+    numel=tuple(x.numel() for x in (*owners,*adjoints))
     starts=[0]
     for i,n in enumerate(numel):
         payload=i in (0,1,len(owners),len(owners)+1)
@@ -83,6 +89,6 @@ def prepare(owners,gradients,*,soa,key_grad=True):
         starts.append(starts[-1]+blocks)
     setup_kernel[(starts[-1],)](owners,replay,sources,adjoints,tuple(starts[:len(owners)+1]),numel[:len(owners)],
                                tuple(starts[len(owners):]),numel[len(owners):],
-                               tuple(x.stride() for x in sources),missing,h,s,(dk,dv),soa,
+                               tuple(x.stride() for x in sources),missing,h,s,(dk,dv),soa,adjoints[2].shape[-1],
                                num_warps=4,enable_fp_fusion=False)
     return replay,adjoints

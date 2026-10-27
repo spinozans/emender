@@ -1,0 +1,107 @@
+--- a/backward.py
++++ b/backward.py
+@@ -72,10 +72,32 @@
+ 
+ 
+ @triton.jit
++def slot_sum(x, Scratch, FullLive, BS:tl.constexpr, FullBS:tl.constexpr, Tail=0.):
++    if BS<FullBS:
++        tl.store(Scratch+tl.arange(0,BS),x)
++        tl.debug_barrier()
++        lane=tl.arange(0,FullBS)
++        expanded=tl.load(Scratch+lane,lane<BS,0.,volatile=True)
++        return tl.sum(tl.where((lane<BS)|(~FullLive),tl.where(lane<BS,expanded,Tail),0.),0)
++    return tl.sum(x,0)
++
++
++@triton.jit
++def slot_max(x, Scratch, FullLive, BS:tl.constexpr, FullBS:tl.constexpr):
++    if BS<FullBS:
++        tl.store(Scratch+tl.arange(0,BS),x)
++        tl.debug_barrier()
++        lane=tl.arange(0,FullBS)
++        expanded=tl.load(Scratch+lane,lane<BS,-1.e30,volatile=True)
++        return tl.max(tl.where((lane<BS)|(~FullLive),tl.where(lane<BS,expanded,-1.e30),-1.e30),0)
++    return tl.max(x,0)
++
++
++@triton.jit
+ def reverse_kernel(K,Q,V,Beta,Pop,Keys,Values,Strength,Live,Touch,
+                    Cases,Matched,Alloc,Pops,Freed,Gates,Errors,
+                    Addresses,Before,Widths,Counts,Boundaries,
+-                   GradOut,GKeys,GValues,GStrength,StrengthScratch,ProbabilityScratch,DKout,DQout,DVout,
++                   GradOut,GKeys,GValues,GStrength,StrengthScratch,ProbabilityScratch,ReductionScratch,DKout,DQout,DVout,
+                    DBeta,DPop,DLogit,DCoef,
+                    T:tl.constexpr,S:tl.constexpr,DK:tl.constexpr,DV:tl.constexpr,
+                    BS:tl.constexpr,BV:tl.constexpr,UB:tl.constexpr,Capacity,SoA:tl.constexpr,
+@@ -102,6 +124,9 @@
+         undo_to((Addresses,Before,Widths,Counts,n,Capacity),start,stop,UB)
+         stop=start
+         tl.debug_barrier()
++        full_lane=tl.arange(0,triton.next_power_of_2(S))
++        full_live=tl.load(Live+n*S+full_lane,full_lane<S,False).to(tl.int1)
++        tl.device_assert((full_lane<BS)|(~full_live),'live row outside compact replay')
+         if T<=512:
+             live=tl.load(Live+n*S+s,valid,False).to(tl.int1)
+             reference=tl.load(Strength+n*S+s,valid,0.)
+@@ -166,7 +191,7 @@
+         tl.store(DBeta+inp,dbeta)
+         tl.store(DLogit+inp,dlogit)
+         pop=tl.load(Pop+inp)
+-        dpop=-tl.sum(tl.where(s==pop_id,gs*strength,0.),0)
++        dpop=-slot_sum(tl.where(s==pop_id,gs*strength,0.),ReductionScratch+n*(BS+S%16),full_live,BS,triton.next_power_of_2(S))
+         gs=tl.where(s==pop_id,gs*(1.-pop),gs)
+         tl.store(DPop+inp,dpop)
+         if T>512:
+@@ -180,8 +205,13 @@
+             query=tl.load(Q+inp*DK+j)
+             score+=key*query
+         masked=tl.where(live & valid,score*scale,-1.e30)
+-        numer=tl.where(valid,tl.exp(masked-tl.max(masked,0)),0.)
+-        prob=numer/tl.sum(numer,0)
++        maximum=slot_max(masked,ReductionScratch+n*(BS+S%16),full_live,BS,triton.next_power_of_2(S))
++        numer=tl.where(valid,tl.exp(masked-maximum),0.)
++        # No-live softmax includes every physical slot in the historical
++        # expression, even though the eventual read is multiplied by live.
++        tail=tl.where(tl.arange(0,triton.next_power_of_2(S))<S,tl.exp(-1.e30-maximum),0.)
++        denom=slot_sum(numer,ReductionScratch+n*(BS+S%16),full_live,BS,triton.next_power_of_2(S),tail)
++        prob=numer/denom
+         if T>512:
+             tl.store(ProbabilityScratch+n*S+s,prob,valid)
+             strength=tl.load(StrengthScratch+n*S+s,valid,0.,volatile=True)
+@@ -202,14 +232,16 @@
+         if T>512:
+             tl.store(GStrength+n*S+s,gs,valid)
+         dp=dw*strength*live
+-        ds=prob*(dp-tl.sum(prob*dp,0))*live*scale
++        dp_sum=slot_sum(prob*dp,ReductionScratch+n*(BS+S%16),full_live,BS,triton.next_power_of_2(S))
++        ds=prob*(dp-dp_sum)*live*scale
++        dq_tail=(tail/denom)*(0.-dp_sum)*0.*scale*0.
+         for j in range(DK):
+             key=tl.load(Keys+((n*DK+j)*S+s if SoA else (n*S+s)*DK+j),valid & live,0.)
+             if KeyGrad:
+                 query=tl.load(Q+inp*DK+j)
+                 gk=tl.load(GKeys+((n*DK+j)*S+s if SoA else (n*S+s)*DK+j),valid & live,0.)
+                 tl.store(GKeys+((n*DK+j)*S+s if SoA else (n*S+s)*DK+j),gk+ds*query,valid & live)
+-            tl.store(DQout+inp*DK+j,tl.sum(ds*key,0))
++            tl.store(DQout+inp*DK+j,slot_sum(ds*key,ReductionScratch+n*(BS+S%16),full_live,BS,triton.next_power_of_2(S),dq_tail))
+         tl.debug_barrier()
+     if T<=512:
+         tl.store(GStrength+n*S+s,gs,valid)
+@@ -327,11 +359,14 @@
+         # longer continuations keep the oracle's warp count.
+         prefix8=(cfg.slots==2944 and cfg.key_dim==64 and cfg.value_dim==128
+                  and ctx.initial_bound is not None and ctx.initial_bound+t<=512)
++        replay_rows=(cfg.slots if ctx.initial_bound is None else
++                     min(cfg.slots,ctx.initial_bound+t))
++        reduction_scratch=torch.empty((b*h,triton.next_power_of_2(max(1,replay_rows))+cfg.slots%16),device=k.device)
+         try:
+             reverse_kernel[(b*h,)](*args,keys,values,strength,live,meta[5],
+                 *ctx.trace,gates,errors,addresses,before,widths,counts,boundaries,
+-                go,gk,gv,gs,strength_scratch,probability_scratch,dkout,dqout,dvout,dbeta,dpop,dlogit,dc,
+-                t,cfg.slots,dk,cfg.value_dim,triton.next_power_of_2(cfg.slots),
++                go,gk,gv,gs,strength_scratch,probability_scratch,reduction_scratch,dkout,dqout,dvout,dbeta,dpop,dlogit,dc,
++                t,cfg.slots,dk,cfg.value_dim,triton.next_power_of_2(max(1,replay_rows)),
+                 triton.next_power_of_2(cfg.value_dim),min(128,triton.next_power_of_2(max(cfg.slots,cfg.value_dim,dk))),ctx.capacity,payload_soa,True,ctx.start,
+                 struct.unpack('<f',struct.pack('<f',cfg.decay_rate))[0],key_grad,
+                 enable_fp_fusion=False,debug=True,num_warps=16 if cfg.slots>=4096 else (8 if prefix8 else 4),

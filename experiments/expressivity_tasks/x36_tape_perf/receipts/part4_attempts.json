@@ -1,0 +1,180 @@
+[
+  {
+    "id": "direct",
+    "status": "rejected-exactness",
+    "test": "test_fresh_exact[2-736-9-4-5-False]",
+    "passed": 0,
+    "max_absolute_error": 5.960464477539062e-07,
+    "mismatched_elements": 8,
+    "total_elements": 144,
+    "patch": "part4_rejected_direct.patch",
+    "evidence": "Manual transcription of initial tool stdout; no raw file captured",
+    "performance_run": false
+  },
+  {
+    "id": "gather-unconstrained",
+    "status": "rejected-exactness",
+    "test": "test_fresh_exact[2-736-9-4-5-False]",
+    "passed": 0,
+    "max_absolute_error": 5.960464477539062e-07,
+    "patch": "part4_rejected_gather.patch",
+    "log": "part4_rejected_padded_parity.txt",
+    "performance_run": false
+  },
+  {
+    "id": "scratch",
+    "status": "rejected-exactness",
+    "test": "test_fresh_exact[2-736-9-4-5-False]",
+    "passed": 0,
+    "failure": "Numeric assert_close passed; byte assertion failed (signed zeros)",
+    "patch": "part4_rejected_scratch.patch",
+    "log": "part4_rejected_scratch_parity.txt",
+    "performance_run": false
+  },
+  {
+    "id": "signed-tail",
+    "status": "rejected-exactness",
+    "test": "test_fresh_exact[2-11776-33-4-5-False]",
+    "passed": 2,
+    "max_absolute_error": 1.9073486328125e-06,
+    "mismatched_elements": 45,
+    "total_elements": 528,
+    "patch": "part4_rejected_signed_tail.patch",
+    "log": "part4_rejected_signed_tail_parity.txt",
+    "performance_run": false
+  },
+  {
+    "id": "full-live",
+    "status": "rejected-exactness",
+    "test": "test_fresh_exact[2-8193-17-64-128-False]",
+    "passed": 12,
+    "max_absolute_error": 1.1920928955078125e-05,
+    "mismatched_elements": 578,
+    "total_elements": 4352,
+    "patch": "part4_rejected_live_mask.patch",
+    "log": "part4_rejected_live_mask_parity.txt",
+    "performance_run": false
+  },
+  {
+    "id": "aligned-scratch",
+    "status": "parity-passed-capacity-replay-failed",
+    "passed": 138,
+    "patch": "part4_capacity_candidate.patch",
+    "log": "part4_candidate_parity.txt",
+    "capacity_measurements": [
+      "part4_candidate_s2944.json",
+      "part4_candidate_s5888.json",
+      "part4_candidate_s11776.json",
+      "part4_candidate_s8192.json",
+      "part4_candidate_s8224.json"
+    ],
+    "first_double_replay_growth": 1.6862959892362723,
+    "performance_run": true
+  },
+  {
+    "id": "prefix-eight-warps",
+    "status": "selected-parity-passed",
+    "passed": 8,
+    "patch": "part4_prefix8.patch",
+    "log": "part4_prefix8_parity.txt",
+    "performance_run": false
+  },
+  {
+    "id": "long-single-program-dispatch",
+    "status": "selected-parity-passed",
+    "passed": 9,
+    "patch": "part4_long.patch",
+    "log": "part4_long_parity.txt",
+    "performance_run": false
+  },
+  {
+    "id": "compact-global-strength",
+    "status": "parity-passed-long-target-failed",
+    "passed": 138,
+    "log": "part4_compact_storage_parity.txt",
+    "capacity_measurements": [
+      "part4_final_s2944.json",
+      "part4_final_s5888.json",
+      "part4_final_s11776.json",
+      "part4_final_s8192.json",
+      "part4_final_s8224.json"
+    ],
+    "long_measurement": "part4_final_t4096.json",
+    "performance_run": true
+  },
+  {
+    "id": "split-long-fallback",
+    "status": "selected-parity-passed",
+    "passed": 9,
+    "log": "part4_split_parity.txt",
+    "performance_run": false
+  },
+  {
+    "id": "constrained-gather-split-fallback",
+    "status": "parity-passed",
+    "passed": 138,
+    "patch": "part4_gather_live_split.patch",
+    "log": "part4_gather_live_parity.txt",
+    "performance_run": true
+  },
+  {
+    "id": "long8",
+    "status": "parity-passed-long-target-failed",
+    "passed": 10,
+    "patch": "part4_long8.patch",
+    "log": "part4_long8_parity.txt",
+    "measurement": "part4_long8_gate.json",
+    "ratio": 2.699542615464118,
+    "compiler": {
+      "warps": 8,
+      "registers_per_thread": 255,
+      "spills": 0,
+      "shared_bytes": 8192,
+      "sanitize_overflow": true,
+      "automatic_overflow_assert_sites": 76,
+      "ptx_assert_calls": 24,
+      "ptx_local_load_instructions": 0,
+      "ptx_local_store_instructions": 0,
+      "layout": "transposed"
+    },
+    "performance_run": true
+  },
+  {
+    "id": "long8_cap128",
+    "status": "parity-passed-long-target-failed",
+    "passed": 10,
+    "patch": "part4_long8_cap128.patch",
+    "log": "part4_long8_cap128_parity.txt",
+    "measurement": "part4_long8_cap128_gate.json",
+    "ratio": 2.7625627857954345,
+    "compiler": {
+      "warps": 8,
+      "registers_per_thread": 128,
+      "spills": 24,
+      "shared_bytes": 8192,
+      "sanitize_overflow": true,
+      "automatic_overflow_assert_sites": 76,
+      "ptx_assert_calls": 24,
+      "ptx_local_load_instructions": 0,
+      "ptx_local_store_instructions": 0,
+      "layout": "transposed"
+    },
+    "performance_run": true
+  },
+  {
+    "id": "final-seven-phase",
+    "status": "parity-passed-capacity-passed-long-failed",
+    "passed": 141,
+    "patch": "part4_seven_phase.patch",
+    "log": "part4_seven_phase_parity.txt",
+    "capacity_measurements": [
+      "part4_seven_s2944.json",
+      "part4_seven_s5888.json",
+      "part4_seven_s11776.json",
+      "part4_seven_s8192.json",
+      "part4_seven_s8224.json"
+    ],
+    "long_measurement": "part4_seven_t4096.json",
+    "performance_run": true
+  }
+]

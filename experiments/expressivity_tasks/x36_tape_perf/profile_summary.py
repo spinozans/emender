@@ -24,7 +24,7 @@ def summarize(path):
         components={}
         for event in matched:
             kernel=event['name']
-            component=(kernel if kernel in ('scan_kernel','reverse_kernel','rebase','initialize_free_words','materialize_state','setup_kernel')
+            component=(kernel if kernel in ('scan_kernel','reverse_kernel','reverse_fallback_kernel','rebase','initialize_free_words','materialize_state','setup_kernel')
                        else 'fills' if 'FillFunctor' in kernel or event.get('cat')=='gpu_memset'
                        else 'copies_transposes_mapping' if event.get('cat')=='gpu_memcpy' or 'copy' in kernel.lower()
                        else 'other_setup_or_reduction')

@@ -1,178 +1,203 @@
-# X36 part 3 — S-cliff isolated and cost reduced; three gates remain failed
+# X36 part 4 — fresh-capacity spill cliff closed; delivery remains partial
 
-**Partial engineering delivery.** B64/T512 is **2.202x PASS**
-(365.153 / 165.821 ms; <=3). B64/T4096 is **2.883x FAIL**
-(6170.573 / 2140.605 ms; <=2). Inclusive launches are **59 at T512,
-61 at T4096: FAIL** against <=10; the custom phase count is **7: PASS**.
-Capacity growth also **FAILS** the requested <=1.5x step **and replay** per
-capacity doubling. Zero steady host synchronizations and the 2M-token curve
-match remain **PASS**. The complete final suite is **138 passed**.
+**Partial engineering delivery.** Both capacity doublings pass <=1.5x step
+and replay growth. The aligned S8192->S8224 pair is **1.022x step /
+1.092x replay**, versus part 3's 1.551x / 1.755x. The
+registered spill cliff is removed, with residual full-width reduction cost
+reported below. B64/T512 is **1.558x PASS**
+(260.955 / 167.543 ms).
+B64/T4096 remains **2.754x FAIL**
+(6121.207 / 2222.592 ms; <=2).
+Inclusive launches remain **59 / 61: FAIL** against <=10; the final path keeps
+**seven custom phases** at both lengths. All **141 tests pass** (138 existing
+plus three new byte fixtures), zero steady host synchronizations remain
+**PASS**, and both 2M-token curves retain max error **9.5367431640625e-7: PASS**.
 
-The canonical machine report is [summary.json](receipts/summary.json).
-[Part 2](REPORT_PART2.md) and its [summary](receipts/summary_part2.json) are archived.
-No failed target is waived by the improvements below.
+The complete arbitrary-slot touched/live pool and native launch fusion are
+**unfinished**. This implementation bounds fresh prefix adjoints independently
+of S, while unknown sparse imports, cold native owners, required native
+cold-row gradients and logical-S reductions retain dense representations.
+It does not establish a general O(live) replay algorithm. Long-context and
+inclusive-launch failures are not waived by the capacity result.
 
-## Capacity: decomposition before tuning
+The canonical machine ledger is [summary.json](receipts/summary.json).
+[Part 3](REPORT_PART3.md) and [its summary](receipts/summary_part3.json) are archived.
 
-Fixed B64/T512, two warmups and five raw wall samples per point. Component
-stream-event runs and profiles are separate from those samples. Fresh before
-measurements are in [part3_baseline_capacity.json](receipts/part3_baseline_capacity.json);
-final completed points and their source files are indexed in
-[part3_measurements.json](receipts/part3_measurements.json).
+## Representation and exactness mechanism
 
-| S | Before step ms | Delivered step ms | Before replay ms | Delivered replay ms | Warps / regs / compiler n_spills |
-|---|---:|---:|---:|---:|---|
-| 2944 | 436.084 | 365.153 | 237.484 | 164.920 | 8 / 255 / 32 |
-| 5888 | 837.549 | 528.386 | 638.848 | 329.601 | 16 / 128 / 78 |
-| 11776 | 4078.613 | 1208.622 | 3947.227 | 1012.803 | 16 / 128 / 392 |
+Lowest-free allocation from an empty origin bounds every read/written row by
+entry reach plus chunk writes. At all five fresh B64/T512 points the principal
+strength-adjoint, evaluated-strength, probability, weight and value-dot vectors
+now have **512 lanes**, covering measured live/head=256, rather than padded
+4096/8192/16384 lanes. This is a conservative prefix reservation, not an exact
+256-row journal-indexed pool. Corrections, pops, strength writes and deaths
+remain covered by the same stable logical-slot prefix.
 
-S2944->S5888 costs **1.447x step / 1.999x replay**; S5888->S11776
-costs **2.287x step / 3.073x replay**. Thus the first step doubling passes,
-both replay doublings and the second step doubling fail. Four times capacity
-costs **3.310x step / 6.141x replay**, improved from part 2's 9.206x / 16.426x,
-but still outside the new target.
+Private global strength adjoints use this bound when no native-input strength
+gradient is requested. Required native gradients retain cold rows. Long
+strength/probability scratch uses the reachable bound; read coverage is checked
+by a device assertion after every undo boundary. Native owner shapes and
+journal address ownership remain unchanged, including cold payloads.
 
-GPU busy times below come from correlation-attributed separate profiles.
-The allocator column is CPU self time and overlaps device work. The journal
-column is the matched no-grad cell ablation estimate, **not** an additive
-in-kernel timer; scan already includes journal capture. Full samples and
-scope definitions are in [part3_decomposition.json](receipts/part3_decomposition.json).
+Constrained gather reconstructs only the logical-slot reduction operands,
+retaining the historical reduction tree and inactive-lane signed-zero
+arithmetic. **Global reduction scratch is removed entirely.** Full logical-S
+operands and the byte occupancy vector remain; exactness is tied to the
+validated Triton layout. Unconstrained truncation/gather failed bytes.
+Eight warps apply only to the tested DK64/DV128 prefix at S>=2944 with entry
+reach + T <=512; smaller capacities, unknown imports and long replay retain
+historical warp counts.
 
-| S | Scan GPU ms | Journal estimate ms | Other forward GPU ms | Replay adjoint GPU ms | Fused replay setup ms | Rebase ms | Other replay GPU ms | Allocator CPU ms |
+The [X31 part-9 scoping](../x31_tape_cell_fused/REPORT.md) and
+[X35 backing work order](../x35_tape_cell_v3/CHUNK_PARALLEL.md) require cold-row
+storage, stable logical ordering and rollback ownership. The implementation
+reuses those ownership constraints through identity prefix indexing; the
+complete arbitrary-slot map remains future work. Historical X31/X35 sources
+and floating expressions were not edited.
+
+## Capacity sweep and decomposition
+
+Two warmups and five raw wall samples per point, with separate stream-event
+components and correlation-attributed profiles. Every point independently
+measures **16,777,216 occupied slot/token pairs, zero frees and live/head=256**.
+Sources are `receipts/part4_seven_s*.json`.
+
+| S | Step wall ms | Replay event ms | Warps / regs / compiler spills / shared bytes |
+|---|---:|---:|---|
+| 2944 | 260.955 | 62.376 | 8 / 101 / 0 / 2048 |
+| 5888 | 279.050 | 75.548 | 8 / 126 / 0 / 2048 |
+| 11776 | 283.666 | 76.310 | 8 / 126 / 0 / 2048 |
+| 8192 | 280.782 | 74.700 | 8 / 116 / 0 / 2048 |
+| 8224 | 286.980 | 81.546 | 8 / 128 / 2 / 2048 |
+
+S2944->S5888 is **1.069x step / 1.211x replay**;
+S5888->S11776 is **1.017x / 1.010x**.
+Both pass <=1.5x. At the aligned boundary, capacity grows 0.391% and registers
+grow 116->128; compiler spills are 0->2 instead of part 3's 166->388, and
+shared memory stays 2048 bytes. The old doubling of resident float adjoints is
+gone. The remaining **9.2% event-replay boundary cost** is reported
+explicitly; not every S-dependent instruction has disappeared.
+
+GPU busy times are separate profiles, not the wall/event samples above.
+Journal is a matched no-grad ablation estimate already included in scan;
+allocator is overlapping **scan/replay CPU self time**, not additive GPU time.
+See [part4_decomposition.json](receipts/part4_decomposition.json).
+
+| S | Scan GPU ms | Journal estimate ms | Other forward GPU ms | Replay adjoint GPU ms | Setup GPU ms | Rebase GPU ms | Other replay GPU ms | Allocator CPU ms |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
-| 2944 | 43.385 | 5.915 | 2.556 | 160.529 | 1.869 | 1.746 | 0.689 | 0.672 |
-| 5888 | 43.582 | 8.358 | 4.641 | 322.914 | 3.747 | 1.719 | 0.690 | 0.687 |
-| 11776 | 44.822 | 8.701 | 8.671 | 1000.665 | 7.506 | 1.758 | 0.695 | 0.436 |
+| 2944 | 41.511 | 10.025 | 2.544 | 58.445 | 1.865 | 1.901 | 0.689 | 0.551 |
+| 5888 | 41.018 | 8.924 | 4.602 | 69.188 | 3.751 | 1.781 | 0.688 | 0.536 |
+| 11776 | 40.504 | 9.590 | 8.640 | 68.582 | 7.504 | 1.851 | 0.700 | 0.507 |
+| 8192 | 41.017 | 10.759 | 6.161 | 72.167 | 5.205 | 1.839 | 0.694 | 0.513 |
+| 8224 | 39.988 | 7.545 | 6.201 | 74.641 | 5.233 | 1.920 | 0.687 | 0.608 |
 
-### Exact cliff mechanism and measured floor
+Replay adjoint GPU time across the requested doublings is **58.445 ->
+69.188 -> 68.582 ms**, versus part 3's
+160.529 -> 322.914 -> 1000.665 ms. Forward remains essentially flat.
 
-The reverse program keeps full-`BS` strength adjoints, evaluated strengths,
-probabilities, weights and value-dot adjoints, where `BS=next_power_of_two(S)`.
-The important boundary is **S8192->S8224**: both capacities stay 32-slot aligned,
-physical capacity grows only **0.391%**, but BS doubles. B64/T512 and final
-live/head=256 are fixed; warps=16, the explicit register budget=128/thread,
-and shared memory=8192 bytes stay fixed.
+## T4096 remains failed
 
-| S | BS | Step ms | Replay ms | Regs/thread | Compiler n_spills | Shared bytes |
-|---|---:|---:|---:|---:|---:|---:|
-| 8192 | 8192 | 797.527 | 588.731 | 128 | 166 | 8192 |
-| 8224 | 16384 | 1236.824 | 1033.313 | 128 | 388 | 8192 |
+Long replay computes maximum recorded allocation reach on device and combines
+it with entry reach. The registered fresh run selects 2048 resident rows;
+unknown imports and larger reach retain the full fallback in the same reverse
+launch. There is no host query or synchronization to select the branch.
 
-That small aligned capacity change costs **1.551x step / 1.755x replay**.
-Five BS-wide float temporaries describe 81,920 float lanes at BS16384,
-before index and exact-decay temporaries; the selected 16x32x128 register
-budget is 65,536 registers per program. The compiler's spill jump, unchanged
-shared memory, stable live count and replay-only time jump identify a
-**padded full-S register/spill layout cliff**, rather than a host-allocation
-or journal-copy bottleneck. Actual allocator self time stays below 0.7 ms;
-replay setup/rebase/other copies total about 10 ms at S11776 while its
-adjoint kernel takes about 1001 ms.
+The delivered long program still has **255 registers /
+26 compiler spills**. Its full-width fallback remains in the compiled
+program. Event replay is **2771.657 ms**; the profile attributes
+**2757.794 GPU ms to reverse** versus **1047.658 ms to scan**.
+This is still replay-dominated. It cannot honestly be called an established
+read-GEMM FLOP floor. The matched <=2 target needs **1676.024 ms** less whole-step
+time. The ratio has not approached T512's 1.558x.
 
-This is the **observed floor of the retained exact layout**, not a proof of
-an irreducible hardware lower bound. Avoiding padded register state while
-preserving the oracle's reduction tree remains implementation work. Naive
-streamed temporaries regressed large S, and 32-warps failed exact gradients
-(including the final SoA fresh-prefix trial: max error 1.9073486e-5).
+[part4_t4096_arithmetic.json](receipts/part4_t4096_arithmetic.json) records
+**1,073,741,824 occupied slot/token pairs**, 524,288 allocations, zero frees and
+final live/head=2048. Against measured T512 pairs this is **64x occupied pairs
+for 8x tokens**, hence 8x mean occupancy. These are growing-occupancy runs, not
+a fixed-live per-token control. Logical accesses are 0.825 TB forward / 2.199 TB
+replay. Active key scoring and query adjoints each require 137.439 GFLOPs;
+value-dot and value-adjoint updates each require 274.878 GFLOPs. These figures
+are not measured DRAM bytes, executed ISA counts or a hardware lower bound.
 
-## Long context: occupied payload and exactness constraints
+A split fallback removed compact-path spills but added an eighth custom phase
+and measured **2.726x FAIL**. Its eight-warp compact variant passed all ten
+affected exact fixtures but measured **2.700x FAIL**; capping it at 128 registers
+also passed those fixtures but regressed to **2.763x FAIL / 24 spills**. These
+variants were reverted: they missed <=2 and regressed the requested seven-phase
+shape. Their raw timings/profiles remain retained. No irreducibility claim is made.
 
-| T, S2944 | Base ms | Tape ms | Ratio | Capture ms/token | Replay ms/token | Final live/head |
-|---|---:|---:|---:|---:|---:|---:|
-| 128 | 40.396 | 87.658 | 2.170x | 0.0813 | 0.3478 | 64 |
-| 512 | 165.821 | 365.153 | 2.202x | 0.0906 | 0.3221 | 256 |
-| 1024 | 439.901 | 905.571 | 2.059x | 0.1124 | 0.3711 | 512 |
-| 4096 | 2140.605 | 6170.573 | 2.883x | 0.2602 | 0.7156 | 2048 |
+## Inclusive launches, semantic gates and evidence
 
-The T4096 profiler attributes about 1.06 s to capture and 2.93 s to replay;
-the remaining step is close to the matched base cost. An independent,
-unmeasured routing-trace reduction verifies **1,073,741,824 live-slot/token pairs**,
-**524,288 allocations, zero frees**, and final live/head=2048.
-The corresponding logical payload accesses are **0.825 TB forward +
-2.199 TB replay**. They include native values, value-adjoint read/write and
-two native-key reads; frozen key adjoints are omitted. These are logical
-access volumes, **not measured DRAM bytes**. The trace and per-token occupied
-curve are in [part3_t4096_traffic.json](receipts/part3_t4096_traffic.json).
+Final profiles contain **42 forward + 17 reverse = 59** activities at T512 and
+**44 + 17 = 61** at T4096. Seven custom kernels remain initialize-free, scan,
+materialize, replay setup, two rebase/restore launches and reverse. The narrow
+custom <=10 target and requested seven-phase shape pass. **Inclusive <=10 fails**:
+the remaining 52/54 native activities, chiefly initialization, fills,
+input/output copies/transposes and mapping transfers, have **not** been fused.
 
-A separate B2/H4 cell-only control holds live/head=64, disables writes/pops,
-and verifies four warps at T512 and T4096. Scan/token grows **1.071x**;
-adjoint/token is **0.595x**. See
-[part3_fixed_live.json](receipts/part3_fixed_live.json). The production memory
-schedules differ across T; this control is not a replacement B64 cost gate.
-It separates growing occupancy from an intrinsic long-T penalty. Production
-still performs per-token payload/adjoint streaming on the larger live set,
-and its measured ratio remains 2.883x. Four-warps retain the long-context
-oracle reduction; fresh eight-warps passed random T4096 but failed the new
-dense T4096 byte fixture (2.6941299e-5), so that switch was reverted.
-No nonsequential-device-T or flat-time-under-growing-occupancy claim is made.
+All six final registered profiles include nonblocking pinned ingestion and
+have zero stream/event synchronizations and zero DtoH. Each contains two
+explicit `cudaDeviceSynchronize` measurement/profiler boundaries. Traffic
+reductions and validation loss extraction occur outside those steady profiles.
+All **25** candidate/final Chrome traces are losslessly gzip archived;
+[part4_trace_archive.json](receipts/part4_trace_archive.json) records raw,
+decompressed and archive hashes. The current reader reproduces every retained
+receipt profile dictionary exactly, including reverted split-kernel profiles.
 
-## Delivered implementation and inclusive launches
+The final suite is **141 passed in 253.90 seconds**, including the original
+138 tests plus dense S736/T512 and both aligned S8192/S8224 T512 byte fixtures.
+B64/S2944 and S11776/T512 bytes, dense/random/frozen-key T4096, signed zeros,
+expanded/strided adjoints, imported/consuming/retained state, zeroed-log
+ownership and complete private address restoration remain green. No tolerance
+changed. See [part4_seven_phase_parity.txt](receipts/part4_seven_phase_parity.txt).
 
-* Replay setup fuses 21 owned-field copies/transposes and native-adjoint
-  initialization into one kernel, including strided/expanded gradient inputs.
-* Key adjoints are enabled when input keys or imported keys require gradients.
-  The LM already detaches keys, so its unused key-adjoint matrix and stores
-  are eliminated. Required key/native gradients retain the exact path.
-* SoA replay is re-enabled at large S with an explicit 128-register budget;
-  the old AoS fallback was slower with that resource policy. Small/short
-  reverse offsets use int64; long/large offsets retain checked int32 to avoid
-  the measured wide-address register regression. Debug, overflow sanitation,
-  journal bounds, ownership checks and publication fences remain enabled.
-* Long-T reverse uses bounded independent exact-decay tiles and streamed
-  float temporaries without changing the full-S reductions. Forward tracks
-  actual allocation reach, and long-T reads cache the previous exact strength.
-  A touched row selects its authoritative reference before the next single
-  rounded decay multiplication; chunk entry evaluates the original reference.
+Both checkpoint-free **512-step / 2,097,152-token** arms match every historical
+X34 loss sample, each with max error **9.5367431640625e-7**. B8 median base/tape
+steps are **27.253 / 87.805 ms**
+(3.222x); that curve-run ratio is distinct from the B64 gate.
+Raw curves: [part4_seven_training_slice.json](receipts/part4_seven_training_slice.json).
 
-The final model profiles contain **42 forward + 17 reverse = 59** activities
-at T512. T4096 has **44 + 17 = 61**; its >2^31-element freed trace splits
-native fills/copies. Seven custom kernels are initialize-free, scan,
-materialize, fused replay setup, two rebase/restore launches and reverse.
-The remaining **52–54 native activities** are chiefly forward state/metadata
-initialization and input/output materialization plus mapping transfers.
-Thus the narrow phase target passes and the inclusive <=10 target fails.
+## Rejected attempts and parts 1–4 convergence
 
-Whole-step profiles include nonblocking pinned ingestion: **zero stream/event
-synchronizations and zero DtoH** at every measured registered shape. Two
-`cudaDeviceSynchronize` events per profile are the explicit measurement and
-profiler-exit boundaries. CPU-local optimizer scalars are not GPU syncs.
-Profiles are linked from [summary.json](receipts/summary.json). Raw Chrome traces are losslessly gzip-archived;
-[part3_trace_archive.json](receipts/part3_trace_archive.json) maps the original
-stdout names and records verified raw/decompressed SHA256 values. The profile
-reader reproduces every canonical profile dictionary exactly from these archives.
+[part4_attempts.json](receipts/part4_attempts.json) indexes source patches, raw
+failure logs and parity-cleared performance failures. Direct truncation and
+unconstrained gather failed S736/T9 by 5.9604645e-7. Scratch expansion repaired
+numeric comparison but failed signed-zero bytes. Restoring tail signs then
+failed S11776/T33 by 1.9073486e-6; retaining the byte occupancy operand repaired
+aligned layouts but failed S8193/T17 by 1.1920929e-5. Correct scratch alignment
+passed 138 tests; final constrained gather removes that scratch and passes all
+141. The initial 8->16-warp capacity policy passed parity but still failed replay
+growth at 1.686x. **No exactness-failed prototype was performance-timed.** The
+first direct failure is a labeled manual transcription of tool stdout;
+subsequent raw failure logs are retained.
 
-## Exactness, curves and rejected experiments
+| Gate | Part 1 | Part 2 | Part 3 | Part 4 |
+|---|---|---|---|---|
+| B64/T512 <=3x | 3.823 FAIL | 2.655 PASS | 2.202 PASS | **1.558 PASS** |
+| B64/T4096 <=2x | not run | 3.311 FAIL | 2.883 FAIL | **2.754 FAIL** |
+| Step/replay <=1.5x per S doubling | not validated | FAIL | FAIL | **PASS** |
+| Aligned spill cliff, step/replay | not isolated | not isolated | 1.551 / 1.755 FAIL | **1.022 / 1.092** |
+| Inclusive activities <=10 | >=1536 FAIL | 100 FAIL | 59 / 61 FAIL | **59 / 61 FAIL** |
+| Zero steady host syncs | FAIL | PASS | PASS | **PASS** |
+| Historical 2M curve match | PASS | PASS | PASS | **PASS** |
+| Exact suite | 114 | 123 | 138 | **141** |
 
-The final suite has **138 passes**, including full B64/S11776/T512 bytes,
-dense/random T4096, long imported/consuming continuation, frozen-key gradients,
-strided/expanded native adjoints, aligned padding boundaries, zero-sign bytes,
-zeroed address-log ownership and complete private-log restoration. The
-historical X31 sources remain unchanged. A test-only wider address-rebase
-copy tile lets the historical dense T4096 oracle fit CUDA's grid.y limit;
-its floating-point expressions are unchanged.
+## Remaining work and operations
 
-Both checkpoint-free **512-step / 2,097,152-token** arms match all historical
-X34 loss samples with max error **9.5367431640625e-7**. Base/tape medians are
-**23.374 / 125.842 ms** at B8;
-that 5.384x curve-run ratio is distinct from the registered B64 gate.
-Raw curves: [part3_training_slice.json](receipts/part3_training_slice.json).
+The complete arbitrary-slot live pool, long-lived-hole compaction, native cold
+backing integration and exact reductions without full logical-S operands
+remain unfinished. T4096 and inclusive native launch fusion remain failed.
+[WORK_ORDERS.md](WORK_ORDERS.md) records those delivery blockers explicitly.
 
-[part3_attempts.json](receipts/part3_attempts.json) indexes parity failures,
-regressions and the corrected diagnostic OOM. Widening all reverse indices
-reduced automatic overflow-assert sites 74->13 but increased long-T spills
-68->332 and regressed its step to 7920 ms; only the measured bounded fast-path
-use remains. Compiler IR/PTX and the Triton sanitizer-source excerpt are
-retained. No failed prototype is timed after an exactness failure.
+All GPU execution used `run_leased.sh`, physical card **0**, exact project
+Python and whitelist 0/1/5/6. Certified 2/3/4 and forbidden 7 were excluded.
+There were no .pt files, WG machinery, workers, delegation, Frontier/Slurm or
+resilient training changes; scheduler and resilient requirement IDs do not apply.
+AGENTS.md and CLAUDE.md remain synchronized; unrelated workspace edits were
+preserved. No callable `contact_supervisor` tool was exposed; the search and
+progress limitations are in [part4_coordination.txt](receipts/part4_coordination.txt).
 
-The first separate occupancy diagnostic requested a 23 GiB temporary while
-counting a 3 GiB int8 trace and OOMed **after** valid timings/profiles. That
-failed record remains in `part3_delivered_shape_gates.json`; the corrected
-bounded integer reduction and complete retry are in `part3_t4096_traffic.json`.
-The canonical measurement index uses the retry's matched T4096 pair.
-
-All GPU work used the broker wrapper, physical card 0, exact project Python,
-and whitelist 0/1/5/6. Certified 2/3/4 and forbidden 7 were excluded from
-workloads. No .pt checkpoints, WG machinery, delegation, Frontier/Slurm or
-resilient-training work was used; scheduler and resilient requirement IDs are
-inapplicable. AGENTS.md and CLAUDE.md remain synchronized. No callable
-Intercom/contact_supervisor tool was exposed; coordination limitations and
-progress are recorded in `receipts/part3_coordination.txt`.
+Reproduce the numerical ledger using the exact project interpreter on
+[part4_analysis.py](receipts/part4_analysis.py), using retained JSON/XML inputs
+only. [part4_seven_source_sha256.json](receipts/part4_seven_source_sha256.json)
+identifies the final implementation and test sources.

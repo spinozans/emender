@@ -39,6 +39,7 @@ def oracle_rebase_grid():
 
 @pytest.mark.parametrize('b,slots,t,dk,dv,dense_prefix',[
     (2, 736, 9, 4, 5, False),
+    (2, 736, 512, 64, 128, True),
     (2, 2944, 17, 64, 128, False),
     (2, 11776, 33, 4, 5, False),
     (2, 7, 17, 4, 5, False),
@@ -50,8 +51,10 @@ def oracle_rebase_grid():
     (2, 2944, 4096, 64, 128, True),
     (2, 2944, 1024, 64, 128, False),
     (2, 8192, 17, 64, 128, False),
+    (2, 8192, 512, 64, 128, False),
     (2, 8193, 17, 64, 128, False),
     (2, 8224, 17, 64, 128, False),
+    (2, 8224, 512, 64, 128, False),
     (2, 37, 9, 4, 5, 'strided_grad'),
     (64, 11776, 512, 64, 128, False),
     (2, 2944, 4096, 64, 128, 'frozen_k'),

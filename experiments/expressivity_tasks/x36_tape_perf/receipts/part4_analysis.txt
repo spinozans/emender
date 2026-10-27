@@ -1,0 +1,154 @@
+{
+  "gates": {
+    "b64_t512_ratio_le_3": {
+      "status": "passed",
+      "actual": 1.5575435873083467,
+      "limit": 3
+    },
+    "b64_t4096_ratio_le_2": {
+      "status": "failed",
+      "actual": 2.7540852359388888,
+      "limit": 2
+    },
+    "capacity_doublings_and_boundary": [
+      {
+        "slots": [
+          2944,
+          5888
+        ],
+        "capacity_growth": 2.0,
+        "step": {
+          "status": "passed",
+          "actual": 1.0693384695412447,
+          "limit": 1.5
+        },
+        "replay": {
+          "status": "passed",
+          "actual": 1.2111665508871157,
+          "limit": 1.5
+        }
+      },
+      {
+        "slots": [
+          5888,
+          11776
+        ],
+        "capacity_growth": 2.0,
+        "step": {
+          "status": "passed",
+          "actual": 1.0165440006051787,
+          "limit": 1.5
+        },
+        "replay": {
+          "status": "passed",
+          "actual": 1.010084445032867,
+          "limit": 1.5
+        }
+      },
+      {
+        "slots": [
+          8192,
+          8224
+        ],
+        "capacity_growth": 1.00390625,
+        "step": {
+          "status": "passed",
+          "actual": 1.0220736042130234,
+          "limit": 1.5
+        },
+        "replay": {
+          "status": "passed",
+          "actual": 1.0916531007045311,
+          "limit": 1.5
+        }
+      }
+    ],
+    "inclusive_launches_le_10": {
+      "status": "failed",
+      "actual": 61,
+      "limit": 10
+    },
+    "inclusive_launches_by_shape": [
+      {
+        "slots": 2944,
+        "tokens": 512,
+        "activities": 59
+      },
+      {
+        "slots": 5888,
+        "tokens": 512,
+        "activities": 59
+      },
+      {
+        "slots": 11776,
+        "tokens": 512,
+        "activities": 59
+      },
+      {
+        "slots": 8192,
+        "tokens": 512,
+        "activities": 59
+      },
+      {
+        "slots": 8224,
+        "tokens": 512,
+        "activities": 59
+      },
+      {
+        "slots": 2944,
+        "tokens": 4096,
+        "activities": 61
+      }
+    ],
+    "narrow_custom_phases_le_10": {
+      "status": "passed",
+      "actual": 7,
+      "limit": 10
+    },
+    "custom_phases_t512": 7,
+    "custom_phases_t4096": 7,
+    "requested_seven_phases_at_long_context": {
+      "status": "passed",
+      "actual": 7,
+      "limit": 7
+    },
+    "zero_steady_host_syncs": {
+      "status": "passed",
+      "actual": 0,
+      "limit": 0
+    },
+    "profiler_boundary_device_sync_counts": [
+      2,
+      2,
+      2,
+      2,
+      2,
+      2
+    ],
+    "matched_2m_loss_curves": {
+      "status": "passed",
+      "actual": 9.5367431640625e-07,
+      "limit": 1e-05
+    }
+  },
+  "arithmetic": {
+    "scope": "Logical occupied accesses/FLOPs; not measured DRAM bytes, executed ISA counts, or a hardware lower bound.",
+    "live_slot_token_pairs_t512_measured": 16777216,
+    "t512_traffic_source": "part4_seven_s2944.json",
+    "live_slot_token_pairs_t4096_measured": 1073741824,
+    "pair_growth": 64.0,
+    "token_growth": 8,
+    "mean_occupancy_growth": 8.0,
+    "key_score_active_flops_t4096": 137438953472,
+    "replay_value_dot_active_flops_t4096": 274877906944,
+    "replay_value_adjoint_update_active_flops_t4096": 274877906944,
+    "query_adjoint_active_flops_t4096": 137438953472,
+    "forward_logical_bytes": 824633720832,
+    "replay_logical_bytes": 2199023255552,
+    "target_wall_ms": 4445.183239877224,
+    "actual_wall_ms": 6121.20676599443,
+    "target_wall_gap_ms": 1676.0235261172056,
+    "read_gemm_floor_claim": false,
+    "reason": "Replay remains dominant; the final long ratio still fails. Growing occupancy and retained logical-S reductions preclude attributing the residual just to an honest GEMM floor."
+  }
+}

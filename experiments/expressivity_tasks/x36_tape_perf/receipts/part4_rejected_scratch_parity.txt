@@ -1,0 +1,32 @@
+gpu_lease: granted GPUs: 0 (pid 3239903)
+X36 physical card 0
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0
+rootdir: /home/erikg/emender
+configfile: pyproject.toml
+plugins: timeout-2.4.0, anyio-4.13.0
+collected 138 items / 119 deselected / 19 selected
+
+experiments/expressivity_tasks/x36_tape_perf/tests/test_exact.py F
+
+=================================== FAILURES ===================================
+_____________________ test_fresh_exact[2-736-9-4-5-False] ______________________
+experiments/expressivity_tasks/x36_tape_perf/tests/test_exact.py:112: in test_fresh_exact
+    assert torch.equal(x.contiguous().view(torch.uint8),y.contiguous().view(torch.uint8))
+E   AssertionError: assert False
+E    +  where False = <built-in method equal of type object at 0x797d67fd6c20>(tensor([[[[  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,\n             0,   0],\n          [  0,...47, 188,  77, 133,  46,  61,  29, 249,  42,  61, 130, 204,\n            21, 189]]]], device='cuda:0', dtype=torch.uint8), tensor([[[[  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,\n             0,   0],\n          [  0,...47, 188,  77, 133,  46,  61,  29, 249,  42,  61, 130, 204,\n            21, 189]]]], device='cuda:0', dtype=torch.uint8))
+E    +    where <built-in method equal of type object at 0x797d67fd6c20> = torch.equal
+E    +    and   tensor([[[[  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,\n             0,   0],\n          [  0,...47, 188,  77, 133,  46,  61,  29, 249,  42,  61, 130, 204,\n            21, 189]]]], device='cuda:0', dtype=torch.uint8) = <built-in method view of Tensor object at 0x797c58eb4be0>(torch.uint8)
+E    +      where <built-in method view of Tensor object at 0x797c58eb4be0> = tensor([[[[ 0.0000e+00,  0.0000e+00,  0.0000e+00,  0.0000e+00],\n          [ 0.0000e+00,  0.0000e+00,  0.0000e+00,  0.0...,  4.8668e-01, -8.3053e-02],\n          [-1.8035e-02,  4.2608e-02,  4.1741e-02, -3.6572e-02]]]],\n       device='cuda:0').view
+E    +        where tensor([[[[ 0.0000e+00,  0.0000e+00,  0.0000e+00,  0.0000e+00],\n          [ 0.0000e+00,  0.0000e+00,  0.0000e+00,  0.0...,  4.8668e-01, -8.3053e-02],\n          [-1.8035e-02,  4.2608e-02,  4.1741e-02, -3.6572e-02]]]],\n       device='cuda:0') = <built-in method contiguous of Tensor object at 0x797c58eb4be0>()
+E    +          where <built-in method contiguous of Tensor object at 0x797c58eb4be0> = tensor([[[[ 0.0000e+00,  0.0000e+00,  0.0000e+00,  0.0000e+00],\n          [ 0.0000e+00,  0.0000e+00,  0.0000e+00,  0.0...,  4.8668e-01, -8.3053e-02],\n          [-1.8035e-02,  4.2608e-02,  4.1741e-02, -3.6572e-02]]]],\n       device='cuda:0').contiguous
+E    +      and   torch.uint8 = torch.uint8
+E    +    and   tensor([[[[  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,\n             0,   0],\n          [  0,...47, 188,  77, 133,  46,  61,  29, 249,  42,  61, 130, 204,\n            21, 189]]]], device='cuda:0', dtype=torch.uint8) = <built-in method view of Tensor object at 0x797c4cd4e990>(torch.uint8)
+E    +      where <built-in method view of Tensor object at 0x797c4cd4e990> = tensor([[[[ 0.0000e+00,  0.0000e+00,  0.0000e+00,  0.0000e+00],\n          [ 0.0000e+00,  0.0000e+00,  0.0000e+00,  0.0...,  4.8668e-01, -8.3053e-02],\n          [-1.8035e-02,  4.2608e-02,  4.1741e-02, -3.6572e-02]]]],\n       device='cuda:0').view
+E    +        where tensor([[[[ 0.0000e+00,  0.0000e+00,  0.0000e+00,  0.0000e+00],\n          [ 0.0000e+00,  0.0000e+00,  0.0000e+00,  0.0...,  4.8668e-01, -8.3053e-02],\n          [-1.8035e-02,  4.2608e-02,  4.1741e-02, -3.6572e-02]]]],\n       device='cuda:0') = <built-in method contiguous of Tensor object at 0x797c4cd4e990>()
+E    +          where <built-in method contiguous of Tensor object at 0x797c4cd4e990> = tensor([[[[ 0.0000e+00,  0.0000e+00,  0.0000e+00,  0.0000e+00],\n          [ 0.0000e+00,  0.0000e+00,  0.0000e+00,  0.0...,  4.8668e-01, -8.3053e-02],\n          [-1.8035e-02,  4.2608e-02,  4.1741e-02, -3.6572e-02]]]],\n       device='cuda:0').contiguous
+E    +      and   torch.uint8 = torch.uint8
+=========================== short test summary info ============================
+FAILED experiments/expressivity_tasks/x36_tape_perf/tests/test_exact.py::test_fresh_exact[2-736-9-4-5-False]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+====================== 1 failed, 119 deselected in 2.44s =======================

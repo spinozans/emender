@@ -1,0 +1,41 @@
+Attended, single-agent manual review; no WG or external review machinery.
+
+Reviewed final backward.py, replay_setup.py, diagnostic CLI changes, exact fixtures,
+and the report/summary against raw receipts.
+- Entry reach plus chunk writes bounds every row reachable from the empty-origin
+  lowest-free allocator. Unknown imports retain the complete fallback. A device
+  assertion checks restored live coverage before each read adjoint.
+- Private strength adjoints shrink only when native-input strength gradients are
+  not requested. Required native gradients keep full cold rows. Setup uses the
+  compact GS stride for destination indexing and original source strides for
+  expanded/strided gradients. Native owners and journal rebasing are unchanged.
+- Logical reduction padding includes physical cold slots for empty softmax and
+  preserves inactive-lane signs. All 141 exact/functional tests pass, including
+  three added T512 fixtures, B64 bytes and full address-log restoration.
+- Global reduction scratch is absent. Final reverse retains one launch, so
+  seven custom phases hold at both registered lengths. Reverted split-fallback
+  profiles remain classified and counted rather than hidden.
+- Final five-point capacity and T4096 sweeps, all six whole-step profiles, both
+  2M-token curve arms and separate traffic diagnostics were rerun after selecting
+  the seven-phase source. Every capacity point has identical measured occupancy.
+- All 25 lossless profile archives reproduce receipt dictionaries. Final source
+  SHA256 entries match. Archived part-3 report/summary match pre-change commit 661648ef byte-for-byte.
+  X31/X35 files and AGENTS.md/CLAUDE.md are unchanged.
+
+Delivery blockers, not waived:
+1. Arbitrary-slot touched/live pooling is incomplete; sparse imported states,
+   cold native backing and logical-S reduction operands remain dense.
+2. B64/T4096 is 2.754x, failing <=2x; reverse remains dominant. No GEMM/hardware
+   lower-bound claim is supported. Logical traffic is not measured DRAM traffic.
+3. Inclusive 59/61 activities fail <=10; native fills/copies/transposes/mapping
+   transfers have not been fused. Seven custom phases alone do not satisfy it.
+
+No additional correctness defect was found in the exercised implementation.
+Exactness remains sensitive to validated Triton layouts; this is demonstrated by
+retained failed prototypes, not a claim of layout-independent numerical proof.
+No .pt files were generated. GPU execution used only broker-leased physical 0.
+
+Whitespace validation: source, tests, Markdown and JSON pass staged diff --check.
+The unrestricted check flags preserved unified-diff context markers on blank
+lines and raw pytest `E   ` output; those receipt bytes are intentionally kept
+rather than normalized. This is not a source whitespace defect.

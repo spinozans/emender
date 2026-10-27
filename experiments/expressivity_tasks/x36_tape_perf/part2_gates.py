@@ -33,7 +33,7 @@ def main():
     parser.add_argument('--tokens',type=int)
     parser.add_argument('--slots',type=int)
     parser.add_argument('--profile',action='store_true',help='Separate diagnostic profile, excluded from wall samples')
-    parser.add_argument('--traffic',action='store_true',help='Separate unmeasured T4096 live-slot trace')
+    parser.add_argument('--traffic',action='store_true',help='Separate unmeasured routing/live-slot trace')
     parser.add_argument('--output',default='part2_shape_gates.json')
     args=parser.parse_args()
     if Path(args.output).name!=args.output:
@@ -177,7 +177,7 @@ def main():
                     record['pure_cell_forward_raw_ms']=pure
                     record['journal_increment_estimate_ms']=record['component_median_ms']['cell_capture']-statistics.median(pure)
                     record['journal_increment_method']='Matched no-grad cell ablation; not a direct in-kernel timer'
-                if args.traffic and arm=='tape_lm' and t==4096:
+                if args.traffic and arm=='tape_lm':
                     counters={}
                     def count_routes(module,inputs,output):
                         trace=output[2]

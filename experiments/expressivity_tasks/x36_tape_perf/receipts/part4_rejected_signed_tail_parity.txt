@@ -1,0 +1,24 @@
+gpu_lease: granted GPUs: 0 (pid 3240423)
+X36 physical card 0
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0
+rootdir: /home/erikg/emender
+configfile: pyproject.toml
+plugins: timeout-2.4.0, anyio-4.13.0
+collected 138 items / 119 deselected / 19 selected
+
+experiments/expressivity_tasks/x36_tape_perf/tests/test_exact.py ..F
+
+=================================== FAILURES ===================================
+____________________ test_fresh_exact[2-11776-33-4-5-False] ____________________
+experiments/expressivity_tasks/x36_tape_perf/tests/test_exact.py:111: in test_fresh_exact
+    torch.testing.assert_close(x,y,atol=0,rtol=0)
+E   AssertionError: Tensor-likes are not equal!
+E   
+E   Mismatched elements: 45 / 528 (8.5%)
+E   Greatest absolute difference: 1.9073486328125e-06 at index (1, 20, 0, 0)
+E   Greatest relative difference: 9.574507203069516e-06 at index (1, 14, 0, 3)
+=========================== short test summary info ============================
+FAILED experiments/expressivity_tasks/x36_tape_perf/tests/test_exact.py::test_fresh_exact[2-11776-33-4-5-False]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+================= 1 failed, 2 passed, 119 deselected in 3.77s ==================

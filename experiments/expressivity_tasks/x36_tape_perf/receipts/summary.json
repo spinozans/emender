@@ -1,205 +1,176 @@
 {
-  "status": "partial engineering delivery; B64/T512, zero-syncs and semantics pass; long-context cost, capacity growth and inclusive launches fail",
-  "parity_tests": 138,
-  "matched_b64_step_ratio": 2.2020874025274906,
-  "matched_b64_t4096_ratio": 2.8826305445196776,
+  "status": "partial; capacity spill cliff closed; long-context and inclusive-launch targets fail; arbitrary sparse imported-state pool incomplete",
+  "all_registered_targets_passed": false,
+  "parity_tests": 141,
+  "requested_original_tests": 138,
+  "added_exact_fixtures": 3,
+  "parity_receipt": "part4_seven_phase_parity.xml",
+  "source_sha256_receipt": "part4_seven_source_sha256.json",
+  "measurement_sources": [
+    "part4_seven_s2944.json",
+    "part4_seven_s5888.json",
+    "part4_seven_s11776.json",
+    "part4_seven_s8192.json",
+    "part4_seven_s8224.json",
+    "part4_seven_t4096.json",
+    "part4_seven_training_slice.json"
+  ],
   "gates": {
     "b64_t512_ratio_le_3": {
       "status": "passed",
-      "actual": 2.2020874025274906,
-      "base_ms": 165.82121700048447,
-      "tape_ms": 365.1528130285442
+      "actual": 1.5575435873083467,
+      "limit": 3
     },
     "b64_t4096_ratio_le_2": {
       "status": "failed",
-      "actual": 2.8826305445196776,
-      "base_ms": 2140.6047120690346,
-      "tape_ms": 6170.572526752949,
-      "reason": "Growing occupied set and per-token payload/adjoint traffic; four-warp exact variant retained. See measured fixed-live control and logical traffic receipt."
+      "actual": 2.7540852359388888,
+      "limit": 2
     },
-    "lane_launches_le_10": {
-      "status": "failed",
-      "inclusive_scan_and_replay_activities": 61,
-      "custom_phase_kernels": 7,
-      "scope": "Same scan_forward/replay_backward scope as part 2; includes native fills/copies/transposes/mapping transfers; excludes projections.",
-      "reason": "Independent forward state/metadata initialization and input/output tensor materializations remain; replay setup is fused."
-    },
-    "global_zero_host_syncs": {
-      "status": "passed",
-      "steady_stream_or_event_syncs": 0,
-      "steady_dtoh": 0,
-      "boundary_device_syncs_per_profile": [
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2
-      ],
-      "scope": "Whole steady training step including nonblocking pinned ingestion; measurement and profiler-exit device boundaries explicit."
-    },
-    "capacity_scaling_le_1_5_per_double": {
-      "status": "failed",
-      "threshold": 1.5,
-      "doublings": [
-        {
-          "from_slots": 2944,
-          "to_slots": 5888,
-          "step_growth": 1.4470259734530222,
-          "replay_growth": 1.9985505442860718,
-          "step_status": "passed",
-          "replay_status": "failed"
+    "capacity_doublings_and_boundary": [
+      {
+        "slots": [
+          2944,
+          5888
+        ],
+        "capacity_growth": 2.0,
+        "step": {
+          "status": "passed",
+          "actual": 1.0693384695412447,
+          "limit": 1.5
         },
-        {
-          "from_slots": 5888,
-          "to_slots": 11776,
-          "step_growth": 2.2873864803138364,
-          "replay_growth": 3.0728175592632914,
-          "step_status": "failed",
-          "replay_status": "failed"
+        "replay": {
+          "status": "passed",
+          "actual": 1.2111665508871157,
+          "limit": 1.5
         }
-      ],
-      "step_growth_s2944_to_s11776": 3.3099076483394114,
-      "replay_growth_s2944_to_s11776": 6.14118120555745,
-      "reason": "BS=next_power_of_two(S) expands five full-S float live ranges plus exact-decay/index temporaries; 16-warp/128-register phase spills. Aligned S8192->8224 crosses BS8192->16384 with fixed live=256 and shared=8192 bytes. Raising warp count breaks exact byte parity."
+      },
+      {
+        "slots": [
+          5888,
+          11776
+        ],
+        "capacity_growth": 2.0,
+        "step": {
+          "status": "passed",
+          "actual": 1.0165440006051787,
+          "limit": 1.5
+        },
+        "replay": {
+          "status": "passed",
+          "actual": 1.010084445032867,
+          "limit": 1.5
+        }
+      },
+      {
+        "slots": [
+          8192,
+          8224
+        ],
+        "capacity_growth": 1.00390625,
+        "step": {
+          "status": "passed",
+          "actual": 1.0220736042130234,
+          "limit": 1.5
+        },
+        "replay": {
+          "status": "passed",
+          "actual": 1.0916531007045311,
+          "limit": 1.5
+        }
+      }
+    ],
+    "inclusive_launches_le_10": {
+      "status": "failed",
+      "actual": 61,
+      "limit": 10
     },
+    "inclusive_launches_by_shape": [
+      {
+        "slots": 2944,
+        "tokens": 512,
+        "activities": 59
+      },
+      {
+        "slots": 5888,
+        "tokens": 512,
+        "activities": 59
+      },
+      {
+        "slots": 11776,
+        "tokens": 512,
+        "activities": 59
+      },
+      {
+        "slots": 8192,
+        "tokens": 512,
+        "activities": 59
+      },
+      {
+        "slots": 8224,
+        "tokens": 512,
+        "activities": 59
+      },
+      {
+        "slots": 2944,
+        "tokens": 4096,
+        "activities": 61
+      }
+    ],
+    "narrow_custom_phases_le_10": {
+      "status": "passed",
+      "actual": 7,
+      "limit": 10
+    },
+    "custom_phases_t512": 7,
+    "custom_phases_t4096": 7,
+    "requested_seven_phases_at_long_context": {
+      "status": "passed",
+      "actual": 7,
+      "limit": 7
+    },
+    "zero_steady_host_syncs": {
+      "status": "passed",
+      "actual": 0,
+      "limit": 0
+    },
+    "profiler_boundary_device_sync_counts": [
+      2,
+      2,
+      2,
+      2,
+      2,
+      2
+    ],
     "matched_2m_loss_curves": {
       "status": "passed",
-      "steps_per_arm": 512,
-      "tokens_per_arm": 2097152,
-      "max_abs_loss_error": 9.5367431640625e-07,
-      "registered_tolerance": 1e-05,
-      "previous_max_error_hold": 9.5367431640625e-07,
-      "reference": "X34 smoke curves, all 512 samples per arm"
+      "actual": 9.5367431640625e-07,
+      "limit": 1e-05
     }
   },
-  "all_registered_targets_passed": false,
-  "profiles": [
-    {
-      "tokens": 512,
-      "slots": 736,
-      "inclusive": 59,
-      "custom": 7,
-      "steady_stream_or_event_syncs": 0,
-      "boundary_device_syncs": 2,
-      "dtoh": 0,
-      "pinned_ingestion": true,
-      "trace": "part3_delivered_shape_gates_tape_lm_t512_s736_trace.json.gz"
-    },
-    {
-      "tokens": 512,
-      "slots": 2944,
-      "inclusive": 59,
-      "custom": 7,
-      "steady_stream_or_event_syncs": 0,
-      "boundary_device_syncs": 2,
-      "dtoh": 0,
-      "pinned_ingestion": true,
-      "trace": "part3_delivered_shape_gates_tape_lm_t512_s2944_trace.json.gz"
-    },
-    {
-      "tokens": 512,
-      "slots": 5888,
-      "inclusive": 59,
-      "custom": 7,
-      "steady_stream_or_event_syncs": 0,
-      "boundary_device_syncs": 2,
-      "dtoh": 0,
-      "pinned_ingestion": true,
-      "trace": "part3_delivered_shape_gates_tape_lm_t512_s5888_trace.json.gz"
-    },
-    {
-      "tokens": 512,
-      "slots": 11776,
-      "inclusive": 59,
-      "custom": 7,
-      "steady_stream_or_event_syncs": 0,
-      "boundary_device_syncs": 2,
-      "dtoh": 0,
-      "pinned_ingestion": true,
-      "trace": "part3_delivered_shape_gates_tape_lm_t512_s11776_trace.json.gz"
-    },
-    {
-      "tokens": 128,
-      "slots": 2944,
-      "inclusive": 59,
-      "custom": 7,
-      "steady_stream_or_event_syncs": 0,
-      "boundary_device_syncs": 2,
-      "dtoh": 0,
-      "pinned_ingestion": true,
-      "trace": "part3_delivered_shape_gates_tape_lm_t128_s2944_trace.json.gz"
-    },
-    {
-      "tokens": 1024,
-      "slots": 2944,
-      "inclusive": 59,
-      "custom": 7,
-      "steady_stream_or_event_syncs": 0,
-      "boundary_device_syncs": 2,
-      "dtoh": 0,
-      "pinned_ingestion": true,
-      "trace": "part3_delivered_shape_gates_tape_lm_t1024_s2944_trace.json.gz"
-    },
-    {
-      "tokens": 4096,
-      "slots": 2944,
-      "inclusive": 61,
-      "custom": 7,
-      "steady_stream_or_event_syncs": 0,
-      "boundary_device_syncs": 2,
-      "dtoh": 0,
-      "pinned_ingestion": true,
-      "trace": "part3_t4096_traffic_tape_lm_t4096_s2944_trace.json.gz"
-    }
-  ],
-  "measurement_receipt": "part3_measurements.json",
-  "failed_diagnostic_receipt": "part3_delivered_shape_gates.json (T4096 occupancy diagnostic OOM; superseded by part3_t4096_traffic.json)",
-  "capacity_floor": {
-    "scope": "Measured implementation floor, not a proven irreducible hardware lower bound",
-    "aligned_capacity_growth": 1.00390625,
-    "aligned_step_growth": 1.5508246431251804,
-    "aligned_replay_growth": 1.755152281698464,
-    "before_slots": 8192,
-    "after_slots": 8224,
-    "before_spills": 166,
-    "after_spills": 388
-  },
-  "long_context_logical_traffic": {
-    "scope": "Separate unmeasured post-profile step; logical accesses, not measured DRAM bytes",
-    "initial_live": 0,
-    "total_live_slot_tokens": 1073741824,
-    "final_live_min_max": [
-      2048,
-      2048
-    ],
-    "allocations": 524288,
-    "frees": 0,
-    "key_adjoint_tracked": false,
-    "forward_payload_logical_bytes": 824633720832,
-    "replay_payload_logical_bytes": 2199023255552,
-    "replay_payload_formula": "Native values read; value adjoints read/write; native keys read twice; key adjoints read/write only when tracked"
-  },
-  "fixed_live_control": {
-    "receipt": "part3_fixed_live.json",
-    "batch": 2,
-    "heads": 4,
-    "live": 64,
-    "warps": 4,
-    "scan_per_token_growth": 1.0708582492618781,
-    "adjoint_per_token_growth": 0.5946501609133417,
-    "scope": "Cell-only control; not a B64 cost gate; production memory schedules differ across T"
+  "representation": {
+    "private_row_bound_t512": 512,
+    "actual_live_rows_t512": 256,
+    "long_registered_dispatch_rows": 2048,
+    "unknown_imports": "dense fallback",
+    "native_cold_rows": "retained",
+    "full_logical_reductions": "retained",
+    "global_reduction_scratch": "removed"
   },
   "residual_risks": [
-    "B64/T4096 remains above 2x.",
-    "Capacity replay growth exceeds 1.5x at both doublings; aligned padding cliff persists.",
-    "Inclusive phase activity count remains above 10.",
-    "Logical bytes are not hardware DRAM counters; no irreducible hardware-floor claim."
+    "T4096 still exceeds 2x.",
+    "Inclusive activities exceed 10; native fills/copies/transposes/mapping transfers remain unfused.",
+    "Prefix reach is not a general arbitrary-slot live pool; sparse imports and cold native owners remain dense.",
+    "Exact reductions still depend on validated Triton layouts and logical-S expansion."
   ],
-  "claims": {
-    "nonsequential_device_T": false,
-    "flat_per_token_T_under_growing_occupancy": false,
-    "irreducible_hardware_floor_proven": false
+  "operational": {
+    "python": "/home/erikg/emender/.venv/bin/python",
+    "physical_gpus": [
+      "0"
+    ],
+    "broker": "run_leased.sh",
+    "no_pt_files": true,
+    "no_wg": true,
+    "no_delegation": true,
+    "resilient_requirement_ids": "not applicable"
   }
 }

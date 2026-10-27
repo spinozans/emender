@@ -1,38 +1,50 @@
-# Remaining X36 work after part 3
+# Remaining X36 work after part 4
 
-The registered target set remains FAILED. Final evidence is in REPORT.md and
-receipts/summary.json; completed measurements are indexed in
-receipts/part3_measurements.json. Part 2 is archived.
+The overall target set remains FAILED. REPORT.md and receipts/summary.json
+separate passed fresh-capacity gates from incomplete representation work and
+failed long-context/inclusive-launch gates. Parts 1–3 are archived.
 
-1. **Remove the padded reverse register cliff with exact reduction trees.**
-   At B64/T512/live256, aligned S8192->8224 grows capacity 0.391% but doubles
-   BS8192->16384, costs 1.551x step / 1.755x replay and increases compiler
-   n_spills166->388. Shared memory stays 8 KiB. Per-double replay growth still
-   fails at both registered capacity doublings. Final SoA/128-register policy
-   improves S11776 step to 1208.622 ms from fresh 4078.613 ms, but the gate
-   remains failed. Replace padded register residency with an explicitly exact
-   tiled layout/reduction schedule. Naive large-S staged temporaries regressed;
-   the 32-warp SoA fresh-prefix variant failed bytes by 1.907e-5.
-2. **B64/T4096 <=2x.** Final matched ratio is 2.883x FAIL
-   (6170.573 / 2140.605 ms). Verified final live/head=2048 and 1,073,741,824
-   live-slot/token pairs demand 0.825 TB forward / 2.199 TB replay logical
-   payload accesses per step. Reduce repeated passes or improve reuse while
-   preserving oracle reductions. Logical volumes are not DRAM counters or a
-   hardware lower-bound proof. Constant-live64/four-warp control has
-   scan/token 1.071x and adjoint/token 0.595x across 8x T. Keep this distinct
-   from the growing-live production sweep. No nonsequential-T claim.
-   Extended eight-warps failed dense T4096 bytes and remains rejected.
-3. **Inclusive launches <=10.** Replay setup is fused; unused key adjoints
-   are removed. Narrow custom count 7 PASS; inclusive 59(T512)/61(T4096)
-   FAIL. Remaining 52-54 native activities are chiefly forward initialization,
-   input/output materialization and mapping transfers. Fuse/remove them
-   without hiding work outside the registered scan/replay ranges.
-4. **Preserve proof.** Require the 138-test exact suite, including frozen-key,
-   imported/retained/consuming state, dense long context, B64/large-S bytes,
-   zeroed typed-log ownership and address restoration. Required key gradients
-   remain enabled. Keep zero steady host syncs with pinned ingestion and the
-   two 512-step / 2,097,152-token historical-curve checks (max 9.536743e-7).
+1. **Complete arbitrary-slot occupancy-proportional backing.** Fresh T512 now
+   bounds principal resident row adjoints at 512 lanes for every measured S
+   (live=256), with exact logical-S reductions. Both capacity doublings pass
+   <=1.5x step and replay. S8192->8224 is 1.022x step / 1.092x replay; compiler
+   spills 0->2, shared memory fixed at 2048 bytes. This closes the measured
+   spill cliff, not every S-dependent operation. Unknown sparse imports,
+   long-lived holes, native owners/cold rows and required native gradients
+   retain dense backing. Reuse X31 part-9/X35 pool scoping: stable logical
+   ordering, cold-row storage and ownership/rollback support for every journal
+   address. The identity-prefix bound is not the complete arbitrary-slot pool.
+   Full logical-S reduction operands remain, and exactness is layout-sensitive.
+2. **B64/T4096 <=2x.** Final seven-phase source measures 6121.207 / 2222.592 =
+   2.754x FAIL. Device-only allocation reach dispatch selects 2048 resident
+   rows, but the dense fallback remains in the compiled program (255 registers,
+   26 compiler spills). Reverse takes 2757.794 GPU ms; scan takes 1047.658 ms.
+   Measured occupied pairs grow 16,777,216->1,073,741,824 (64x for 8x tokens),
+   with zero frees and final live/head=2048. Logical 0.825/2.199 TB accesses are
+   not DRAM counters or a hardware/GEMM lower-bound proof. The matched <=2 wall
+   target needs 1676.024 ms improvement. Reduce repeated streaming and exact
+   reduction work without changing the oracle's arithmetic or waiving the gate.
+   Split fallback, eight-warps compact, and eight-warps/128-register variants
+   passed affected parity but still failed <=2 at 2.726x, 2.700x and 2.763x.
+   They were reverted to preserve the requested seven custom phases.
+3. **Inclusive launches <=10.** T512 has 42+17=59 activities; long has 44+17=61.
+   Both retain seven custom kernels. Narrow <=10 and seven-phase shape pass;
+   inclusive <=10 FAILS. Remaining 52/54 native activities include initialization,
+   fills, input/output copies/transposes and mapping transfers. Fuse them inside
+   the existing phases without moving work outside the registered ranges.
+   Global reduction scratch is already eliminated and is not this bottleneck.
+4. **Retain proof.** Require all 141 tests (138 existing plus dense S736/T512
+   and aligned S8192/S8224 T512 byte fixtures). Preserve B64/large-S bytes,
+   dense/random/frozen-key T4096, expanded/strided adjoints, imported/retained/
+   consuming state, signed zeros, zeroed-log ownership and full private address
+   restoration. Preserve required native cold-row gradients. Both checkpoint-free
+   512-step/2,097,152-token arms retain maximum historical loss error
+   9.5367431640625e-7. Keep zero steady host syncs/DtoH with pinned ingestion.
+   Do not performance-time exactness-failed variants. Source patches, failure
+   logs and parity-cleared performance failures are indexed in
+   receipts/part4_attempts.json. Reproduce the ledger with the exact project
+   interpreter on receipts/part4_analysis.py.
 
-All GPU execution remains through run_leased.sh with project Python and
-physical cards 0/1/5/6. No scientific LM pilot is resumed by this engineering
-slice. No WG, dispatcher, worker, delegation or completion/review machinery.
+All GPU work remains through run_leased.sh and the exact project interpreter,
+with physical whitelist 0/1/5/6. No card 7, certified 2/3/4, .pt checkpoints,
+WG service/dispatcher/workers, delegation or completion/review machinery.

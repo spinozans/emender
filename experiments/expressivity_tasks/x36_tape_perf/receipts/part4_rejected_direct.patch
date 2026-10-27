@@ -1,0 +1,17 @@
+--- a/backward.py
++++ b/backward.py
+@@ -327,11 +327,13 @@
+         # longer continuations keep the oracle's warp count.
+         prefix8=(cfg.slots==2944 and cfg.key_dim==64 and cfg.value_dim==128
+                  and ctx.initial_bound is not None and ctx.initial_bound+t<=512)
++        replay_rows=(cfg.slots if ctx.initial_bound is None else
++                     min(cfg.slots,ctx.initial_bound+t))
+         try:
+             reverse_kernel[(b*h,)](*args,keys,values,strength,live,meta[5],
+                 *ctx.trace,gates,errors,addresses,before,widths,counts,boundaries,
+                 go,gk,gv,gs,strength_scratch,probability_scratch,dkout,dqout,dvout,dbeta,dpop,dlogit,dc,
+-                t,cfg.slots,dk,cfg.value_dim,triton.next_power_of_2(cfg.slots),
++                t,cfg.slots,dk,cfg.value_dim,triton.next_power_of_2(max(1,replay_rows)),
+                 triton.next_power_of_2(cfg.value_dim),min(128,triton.next_power_of_2(max(cfg.slots,cfg.value_dim,dk))),ctx.capacity,payload_soa,True,ctx.start,
+                 struct.unpack('<f',struct.pack('<f',cfg.decay_rate))[0],key_grad,
+                 enable_fp_fusion=False,debug=True,num_warps=16 if cfg.slots>=4096 else (8 if prefix8 else 4),
