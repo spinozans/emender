@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="5" skipped="0" tests="9" time="68.066" timestamp="2026-10-27T20:07:51.056011+00:00" hostname="lambda01"><testcase classname="experiments.expressivity_tasks.x36_tape_perf.tests.test_continued_capacity_exact" name="test_fixed_live_capacity_bytes[2944-17]" time="21.481" /><testcase classname="experiments.expressivity_tasks.x36_tape_perf.tests.test_continued_capacity_exact" name="test_fixed_live_capacity_bytes[2944-256]" time="5.758" /><testcase classname="experiments.expressivity_tasks.x36_tape_perf.tests.test_continued_capacity_exact" name="test_fixed_live_capacity_bytes[5888-256]" time="8.126"><failure message="RuntimeError: Triton Error [CUDA]: invalid argument">experiments/expressivity_tasks/x36_tape_perf/tests/test_continued_capacity_exact.py:42: in test_fixed_live_capacity_bytes
+    gradients=torch.autograd.grad(out.square().sum(),xs[1:3])
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:503: in grad
+    result = _engine_run_backward(
+.venv/lib/python3.12/site-packages/torch/autograd/graph.py:841: in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:315: in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:608: in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x31_tape_cell_fused/backward.py:246: in backward
+    rebase_owned(addresses,counts,ctx.address_owners,replay,ctx.capacity)
+experiments/expressivity_tasks/x31_tape_cell_fused/backward.py:52: in rebase_owned
+    rebase[(len(counts),triton.cdiv(capacity,256))](
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in &lt;lambda&gt;
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:757: in run
+    kernel.run(grid_0, grid_1, grid_2, stream, kernel.function, kernel.packed_metadata, launch_metadata,
+.venv/lib/python3.12/site-packages/triton/backends/nvidia/driver.py:712: in __call__
+    self.launch(gridX, gridY, gridZ, stream, function, self.launch_cooperative_grid, self.launch_pdl,
+E   RuntimeError: Triton Error [CUDA]: invalid argument</failure></testcase><testcase classname="experiments.expressivity_tasks.x36_tape_perf.tests.test_continued_capacity_exact" name="test_fixed_live_capacity_bytes[11776-256]" time="8.206"><failure message="RuntimeError: Triton Error [CUDA]: invalid argument">experiments/expressivity_tasks/x36_tape_perf/tests/test_continued_capacity_exact.py:42: in test_fixed_live_capacity_bytes
+    gradients=torch.autograd.grad(out.square().sum(),xs[1:3])
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:503: in grad
+    result = _engine_run_backward(
+.venv/lib/python3.12/site-packages/torch/autograd/graph.py:841: in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:315: in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:608: in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x31_tape_cell_fused/backward.py:246: in backward
+    rebase_owned(addresses,counts,ctx.address_owners,replay,ctx.capacity)
+experiments/expressivity_tasks/x31_tape_cell_fused/backward.py:52: in rebase_owned
+    rebase[(len(counts),triton.cdiv(capacity,256))](
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in &lt;lambda&gt;
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:757: in run
+    kernel.run(grid_0, grid_1, grid_2, stream, kernel.function, kernel.packed_metadata, launch_metadata,
+.venv/lib/python3.12/site-packages/triton/backends/nvidia/driver.py:712: in __call__
+    self.launch(gridX, gridY, gridZ, stream, function, self.launch_cooperative_grid, self.launch_pdl,
+E   RuntimeError: Triton Error [CUDA]: invalid argument</failure></testcase><testcase classname="experiments.expressivity_tasks.x36_tape_perf.tests.test_continued_capacity_exact" name="test_fixed_live_capacity_bytes[8192-256]" time="8.262"><failure message="RuntimeError: Triton Error [CUDA]: invalid argument">experiments/expressivity_tasks/x36_tape_perf/tests/test_continued_capacity_exact.py:42: in test_fixed_live_capacity_bytes
+    gradients=torch.autograd.grad(out.square().sum(),xs[1:3])
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:503: in grad
+    result = _engine_run_backward(
+.venv/lib/python3.12/site-packages/torch/autograd/graph.py:841: in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:315: in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:608: in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x31_tape_cell_fused/backward.py:246: in backward
+    rebase_owned(addresses,counts,ctx.address_owners,replay,ctx.capacity)
+experiments/expressivity_tasks/x31_tape_cell_fused/backward.py:52: in rebase_owned
+    rebase[(len(counts),triton.cdiv(capacity,256))](
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in &lt;lambda&gt;
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:757: in run
+    kernel.run(grid_0, grid_1, grid_2, stream, kernel.function, kernel.packed_metadata, launch_metadata,
+.venv/lib/python3.12/site-packages/triton/backends/nvidia/driver.py:712: in __call__
+    self.launch(gridX, gridY, gridZ, stream, function, self.launch_cooperative_grid, self.launch_pdl,
+E   RuntimeError: Triton Error [CUDA]: invalid argument</failure></testcase><testcase classname="experiments.expressivity_tasks.x36_tape_perf.tests.test_continued_capacity_exact" name="test_fixed_live_capacity_bytes[8224-256]" time="8.408"><failure message="RuntimeError: Triton Error [CUDA]: invalid argument">experiments/expressivity_tasks/x36_tape_perf/tests/test_continued_capacity_exact.py:42: in test_fixed_live_capacity_bytes
+    gradients=torch.autograd.grad(out.square().sum(),xs[1:3])
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:503: in grad
+    result = _engine_run_backward(
+.venv/lib/python3.12/site-packages/torch/autograd/graph.py:841: in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:315: in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:608: in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x31_tape_cell_fused/backward.py:246: in backward
+    rebase_owned(addresses,counts,ctx.address_owners,replay,ctx.capacity)
+experiments/expressivity_tasks/x31_tape_cell_fused/backward.py:52: in rebase_owned
+    rebase[(len(counts),triton.cdiv(capacity,256))](
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in &lt;lambda&gt;
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:757: in run
+    kernel.run(grid_0, grid_1, grid_2, stream, kernel.function, kernel.packed_metadata, launch_metadata,
+.venv/lib/python3.12/site-packages/triton/backends/nvidia/driver.py:712: in __call__
+    self.launch(gridX, gridY, gridZ, stream, function, self.launch_cooperative_grid, self.launch_pdl,
+E   RuntimeError: Triton Error [CUDA]: invalid argument</failure></testcase><testcase classname="experiments.expressivity_tasks.x36_tape_perf.tests.test_continued_capacity_exact" name="test_fixed_live_capacity_bytes[11776-1024]" time="0.082"><failure message="RuntimeError: Triton Error [CUDA]: invalid argument">experiments/expressivity_tasks/x36_tape_perf/tests/test_continued_capacity_exact.py:42: in test_fixed_live_capacity_bytes
+    gradients=torch.autograd.grad(out.square().sum(),xs[1:3])
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:503: in grad
+    result = _engine_run_backward(
+.venv/lib/python3.12/site-packages/torch/autograd/graph.py:841: in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:315: in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:608: in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x31_tape_cell_fused/backward.py:246: in backward
+    rebase_owned(addresses,counts,ctx.address_owners,replay,ctx.capacity)
+experiments/expressivity_tasks/x31_tape_cell_fused/backward.py:52: in rebase_owned
+    rebase[(len(counts),triton.cdiv(capacity,256))](
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in &lt;lambda&gt;
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:757: in run
+    kernel.run(grid_0, grid_1, grid_2, stream, kernel.function, kernel.packed_metadata, launch_metadata,
+.venv/lib/python3.12/site-packages/triton/backends/nvidia/driver.py:712: in __call__
+    self.launch(gridX, gridY, gridZ, stream, function, self.launch_cooperative_grid, self.launch_pdl,
+E   RuntimeError: Triton Error [CUDA]: invalid argument</failure></testcase><testcase classname="experiments.expressivity_tasks.x36_tape_perf.tests.test_continued_capacity_exact" name="test_fixed_live_capacity_bytes[2944-2800]" time="6.738" /><testcase classname="experiments.expressivity_tasks.x36_tape_perf.tests.test_pool" name="test_discarded_replay_releases_allocator_storage" time="0.342" /></testsuite></testsuites>

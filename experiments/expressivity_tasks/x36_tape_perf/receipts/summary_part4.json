@@ -1,0 +1,182 @@
+{
+  "status": "partial; capacity spill cliff closed; long-context and inclusive-launch targets fail; arbitrary sparse imported-state pool incomplete",
+  "all_registered_targets_passed": false,
+  "parity_tests": 141,
+  "requested_original_tests": 138,
+  "added_exact_fixtures": 3,
+  "parity_receipt": "part4_seven_phase_parity.xml",
+  "source_sha256_receipt": "part4_seven_source_sha256.json",
+  "measurement_sources": [
+    "part4_seven_s2944.json",
+    "part4_seven_s5888.json",
+    "part4_seven_s11776.json",
+    "part4_seven_s8192.json",
+    "part4_seven_s8224.json",
+    "part4_seven_t4096.json",
+    "part4_seven_training_slice.json"
+  ],
+  "gates": {
+    "b64_t512_ratio_le_3": {
+      "status": "passed",
+      "actual": 1.5575435873083467,
+      "limit": 3
+    },
+    "b64_t4096_ratio_le_2": {
+      "status": "failed",
+      "actual": 2.7540852359388888,
+      "limit": 2
+    },
+    "capacity_doublings_and_boundary": [
+      {
+        "slots": [
+          2944,
+          5888
+        ],
+        "capacity_growth": 2.0,
+        "step": {
+          "status": "passed",
+          "actual": 1.0693384695412447,
+          "limit": 1.5
+        },
+        "replay": {
+          "status": "passed",
+          "actual": 1.2111665508871157,
+          "limit": 1.5
+        }
+      },
+      {
+        "slots": [
+          5888,
+          11776
+        ],
+        "capacity_growth": 2.0,
+        "step": {
+          "status": "passed",
+          "actual": 1.0165440006051787,
+          "limit": 1.5
+        },
+        "replay": {
+          "status": "passed",
+          "actual": 1.010084445032867,
+          "limit": 1.5
+        }
+      },
+      {
+        "slots": [
+          8192,
+          8224
+        ],
+        "capacity_growth": 1.00390625,
+        "step": {
+          "status": "passed",
+          "actual": 1.0220736042130234,
+          "limit": 1.5
+        },
+        "replay": {
+          "status": "passed",
+          "actual": 1.0916531007045311,
+          "limit": 1.5
+        }
+      }
+    ],
+    "inclusive_launches_le_10": {
+      "status": "failed",
+      "actual": 61,
+      "limit": 10
+    },
+    "inclusive_launches_by_shape": [
+      {
+        "slots": 2944,
+        "tokens": 512,
+        "activities": 59
+      },
+      {
+        "slots": 5888,
+        "tokens": 512,
+        "activities": 59
+      },
+      {
+        "slots": 11776,
+        "tokens": 512,
+        "activities": 59
+      },
+      {
+        "slots": 8192,
+        "tokens": 512,
+        "activities": 59
+      },
+      {
+        "slots": 8224,
+        "tokens": 512,
+        "activities": 59
+      },
+      {
+        "slots": 2944,
+        "tokens": 4096,
+        "activities": 61
+      }
+    ],
+    "narrow_custom_phases_le_10": {
+      "status": "passed",
+      "actual": 7,
+      "limit": 10
+    },
+    "custom_phases_t512": 7,
+    "custom_phases_t4096": 7,
+    "requested_seven_phases_at_long_context": {
+      "status": "passed",
+      "actual": 7,
+      "limit": 7
+    },
+    "zero_steady_host_syncs": {
+      "status": "passed",
+      "actual": 0,
+      "limit": 0
+    },
+    "profiler_boundary_device_sync_counts": [
+      2,
+      2,
+      2,
+      2,
+      2,
+      2
+    ],
+    "matched_2m_loss_curves": {
+      "status": "passed",
+      "actual": 9.5367431640625e-07,
+      "limit": 1e-05
+    }
+  },
+  "representation": {
+    "private_row_bound_t512": 512,
+    "actual_live_rows_t512": 256,
+    "long_registered_dispatch_rows": 2048,
+    "unknown_imports": "dense fallback",
+    "native_cold_rows": "retained",
+    "full_logical_reductions": "retained",
+    "global_reduction_scratch": "removed"
+  },
+  "residual_risks": [
+    "T4096 still exceeds 2x.",
+    "Inclusive activities exceed 10; native fills/copies/transposes/mapping transfers remain unfused.",
+    "Prefix reach is not a general arbitrary-slot live pool; sparse imports and cold native owners remain dense.",
+    "Exact reductions still depend on validated Triton layouts and logical-S expansion."
+  ],
+  "operational": {
+    "python": "/home/erikg/emender/.venv/bin/python",
+    "physical_gpus": [
+      "0"
+    ],
+    "broker": "run_leased.sh",
+    "no_pt_files": true,
+    "no_wg": true,
+    "no_delegation": true,
+    "resilient_requirement_ids": "not applicable"
+  },
+  "part5_diagnostic": {
+    "status": "incomplete; no general sparse pool, T4096 optimization or inclusive launch fusion delivered",
+    "report": "../PART5_DIAGNOSTIC.md",
+    "summary": "summary_part5_diagnostic.json",
+    "registered_part4_gates_rerun": false
+  }
+}

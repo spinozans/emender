@@ -1,0 +1,22 @@
+gpu_lease: granted GPUs: 1 (pid 3495898)
+X36 physical card 1
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0
+rootdir: /home/erikg/emender
+configfile: pyproject.toml
+plugins: timeout-2.4.0, anyio-4.13.0
+collected 150 items / 149 deselected / 1 selected
+
+experiments/expressivity_tasks/x36_tape_perf/tests/test_pool.py F        [100%]
+
+=================================== FAILURES ===================================
+_______________ test_discarded_replay_releases_allocator_storage _______________
+experiments/expressivity_tasks/x36_tape_perf/tests/test_pool.py:52: in test_discarded_replay_releases_allocator_storage
+    assert max(allocated[2:])-min(allocated[2:])<1024*1024,allocated
+E   AssertionError: [50522624, 91367424, 132212224, 173057024, 213901824, 254746624, ...]
+E   assert (295591424 - 132212224) < (1024 * 1024)
+E    +  where 295591424 = max([132212224, 173057024, 213901824, 254746624, 295591424])
+E    +  and   132212224 = min([132212224, 173057024, 213901824, 254746624, 295591424])
+=========================== short test summary info ============================
+FAILED experiments/expressivity_tasks/x36_tape_perf/tests/test_pool.py::test_discarded_replay_releases_allocator_storage
+====================== 1 failed, 149 deselected in 7.41s =======================

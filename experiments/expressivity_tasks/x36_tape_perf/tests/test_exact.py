@@ -144,19 +144,19 @@ def test_telemetry_train_eval_exact():
 
 
 @pytest.mark.parametrize('production',[False,True,'large','long','frozen_large',
-                                       'sparse_high','wide_sparse_entry'])
+                                       'sparse_high','wide_sparse_entry','sparse_pool','sparse_pool_fixed','wide_pool_fixed'])
 def test_import_and_consuming_continuation_exact(production):
     from experiments.expressivity_tasks.x30_tape_cell.naive_reference import init_state, TapeState
     torch.manual_seed(361)
-    cfg=TapeHeadConfig(n_heads=2,budget=11776 if production in ('large','frozen_large','sparse_high','wide_sparse_entry') else (2944 if production else 37),key_dim=64 if production else 4,value_dim=128 if production else 5,decay_rate=.8,free_threshold=.2)
+    cfg=TapeHeadConfig(n_heads=2,budget=11776 if production in ('large','frozen_large','sparse_high','wide_sparse_entry','sparse_pool','sparse_pool_fixed','wide_pool_fixed') else (2944 if production else 37),key_dim=64 if production else 4,value_dim=128 if production else 5,decay_rate=1. if production in ('sparse_pool_fixed','wide_pool_fixed') else .8,free_threshold=.2)
     initial=init_state(2,cfg,'cuda')
     initial.keys.normal_();initial.values.normal_();initial.strength.uniform_()
     initial.live.copy_(torch.rand_like(initial.strength)>.3)
-    if production in ('sparse_high','wide_sparse_entry'):
+    if production in ('sparse_high','wide_sparse_entry','sparse_pool','sparse_pool_fixed','wide_pool_fixed'):
         # Arbitrary sparse logical slots include the last physical row. The
         # wider entry deliberately has more live rows than the entire chunk,
         # exercising a pool bound based on entry union writes, not T alone.
-        count=17 if production=='sparse_high' else 1024
+        count=1024 if production in ('wide_sparse_entry','wide_pool_fixed') else 17
         rows=torch.linspace(0,cfg.slots-1,count,device='cuda').long()
         initial.live.zero_()
         initial.live[...,rows]=True
@@ -166,12 +166,14 @@ def test_import_and_consuming_continuation_exact(production):
     inputs=[torch.randn(shape,device='cuda') for shape in
             [(2,tokens,2,cfg.key_dim)]*2+[(2,tokens,2,cfg.value_dim)]+[(2,tokens,2)]*3+[(2,)]]
     inputs[3]=inputs[3].sigmoid();inputs[4]=inputs[4].sigmoid()
+    if production in ('sparse_pool_fixed','wide_pool_fixed'):
+        inputs[3].zero_();inputs[4].zero_()
     results=[]
     for scan in (original_scan,tape_scan):
         xs=[x.detach().clone().requires_grad_(not (production=='frozen_large' and i==0))
             for i,x in enumerate(inputs)]
         fields=[getattr(initial,n).clone() for n in ('keys','values','strength','live','age','usage')]
-        for i,x in enumerate(fields[:3]):x.requires_grad_(not (production=='frozen_large' and i==0))
+        for i,x in enumerate(fields[:3]):x.requires_grad_(production not in ('sparse_pool','sparse_pool_fixed','wide_pool_fixed') and not (production=='frozen_large' and i==0))
         state=TapeState(*fields)
         context=(patch('experiments.expressivity_tasks.x31_tape_cell_fused.cell_fused.tape_scan',original_scan)
                  if scan is original_scan else nullcontext())

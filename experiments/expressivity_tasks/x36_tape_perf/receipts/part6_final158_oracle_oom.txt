@@ -1,0 +1,110 @@
+gpu_lease: granted GPUs: 1 (pid 3536152)
+X36 physical card 1
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0
+rootdir: /home/erikg/emender
+configfile: pyproject.toml
+plugins: timeout-2.4.0, anyio-4.13.0
+collected 158 items
+
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_all_field_journal.py .........
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_components.py ...
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_device_free.py .
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py ................................
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_lazy_decay.py ...........
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_parity.py ..................................
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_part7.py ........
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_part8.py ....
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_write_journal.py .......
+experiments/expressivity_tasks/x36_tape_perf/tests/test_continued_capacity_exact.py ........
+experiments/expressivity_tasks/x36_tape_perf/tests/test_exact.py .....F...FF.......F.....
+
+=================================== FAILURES ===================================
+__________________ test_fresh_exact[64-2944-512-64-128-False] __________________
+experiments/expressivity_tasks/x36_tape_perf/tests/test_exact.py:105: in test_fresh_exact
+    grads=torch.autograd.grad(loss,watched)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:503: in grad
+    result = _engine_run_backward(
+.venv/lib/python3.12/site-packages/torch/autograd/graph.py:841: in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:315: in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:608: in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x31_tape_cell_fused/backward.py:245: in backward
+    addresses=original_addresses.clone()
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 4.13 GiB. GPU 0 has a total capacity of 47.38 GiB of which 2.51 GiB is free. Including non-PyTorch memory, this process has 44.87 GiB memory in use. Of the allocated memory 42.35 GiB is allocated by PyTorch, and 470.80 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
+__________________ test_fresh_exact[2-2944-4096-64-128-False] __________________
+experiments/expressivity_tasks/x36_tape_perf/tests/test_exact.py:86: in test_fresh_exact
+    out,st,tr,pressure=scan(*xs[:6],None,cfg,append_err_coef=xs[6])
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x31_tape_cell_fused/cell_fused.py:79: in tape_scan
+    return autograd_scan(tensors,state,cfg,append_err_coef)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x31_tape_cell_fused/backward.py:278: in autograd_scan
+    out,keys,values,strength=Replay.apply(cfg,tokens,history,saved,*inputs,coef,
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:581: in apply
+    return super().apply(*args, **kwargs)  # type: ignore[misc]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x31_tape_cell_fused/backward.py:203: in forward
+    out,final,trace,pressure=tape_scan(k,q,v,beta,pop,logit,initial,cfg,coef,
+experiments/expressivity_tasks/x31_tape_cell_fused/cell_fused.py:157: in tape_scan
+    all_journal = (AllFieldJournal.allocate(b*h,t,cfg.slots,dk,cfg.value_dim,
+experiments/expressivity_tasks/x31_tape_cell_fused/all_field_journal.py:157: in allocate
+    torch.empty(stores,capacity,device=device,dtype=torch.uint64),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 2.29 GiB. GPU 0 has a total capacity of 47.38 GiB of which 150.69 MiB is free. Including non-PyTorch memory, this process has 47.23 GiB memory in use. Of the allocated memory 44.82 GiB is allocated by PyTorch, and 366.92 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
+__________________ test_fresh_exact[2-2944-4096-64-128-True] ___________________
+experiments/expressivity_tasks/x36_tape_perf/tests/test_exact.py:86: in test_fresh_exact
+    out,st,tr,pressure=scan(*xs[:6],None,cfg,append_err_coef=xs[6])
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x31_tape_cell_fused/cell_fused.py:79: in tape_scan
+    return autograd_scan(tensors,state,cfg,append_err_coef)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x31_tape_cell_fused/backward.py:278: in autograd_scan
+    out,keys,values,strength=Replay.apply(cfg,tokens,history,saved,*inputs,coef,
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:581: in apply
+    return super().apply(*args, **kwargs)  # type: ignore[misc]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x31_tape_cell_fused/backward.py:203: in forward
+    out,final,trace,pressure=tape_scan(k,q,v,beta,pop,logit,initial,cfg,coef,
+experiments/expressivity_tasks/x31_tape_cell_fused/cell_fused.py:157: in tape_scan
+    all_journal = (AllFieldJournal.allocate(b*h,t,cfg.slots,dk,cfg.value_dim,
+experiments/expressivity_tasks/x31_tape_cell_fused/all_field_journal.py:157: in allocate
+    torch.empty(stores,capacity,device=device,dtype=torch.uint64),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 2.29 GiB. GPU 0 has a total capacity of 47.38 GiB of which 152.69 MiB is free. Including non-PyTorch memory, this process has 47.22 GiB memory in use. Of the allocated memory 44.86 GiB is allocated by PyTorch, and 317.89 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
+_________________ test_fresh_exact[64-11776-512-64-128-False] __________________
+experiments/expressivity_tasks/x36_tape_perf/tests/test_exact.py:86: in test_fresh_exact
+    out,st,tr,pressure=scan(*xs[:6],None,cfg,append_err_coef=xs[6])
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x31_tape_cell_fused/cell_fused.py:79: in tape_scan
+    return autograd_scan(tensors,state,cfg,append_err_coef)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x31_tape_cell_fused/backward.py:278: in autograd_scan
+    out,keys,values,strength=Replay.apply(cfg,tokens,history,saved,*inputs,coef,
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:581: in apply
+    return super().apply(*args, **kwargs)  # type: ignore[misc]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x31_tape_cell_fused/backward.py:203: in forward
+    out,final,trace,pressure=tape_scan(k,q,v,beta,pop,logit,initial,cfg,coef,
+experiments/expressivity_tasks/x31_tape_cell_fused/cell_fused.py:157: in tape_scan
+    all_journal = (AllFieldJournal.allocate(b*h,t,cfg.slots,dk,cfg.value_dim,
+experiments/expressivity_tasks/x31_tape_cell_fused/all_field_journal.py:157: in allocate
+    torch.empty(stores,capacity,device=device,dtype=torch.uint64),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 4.26 GiB. GPU 0 has a total capacity of 47.38 GiB of which 2.90 GiB is free. Including non-PyTorch memory, this process has 44.47 GiB memory in use. Of the allocated memory 36.83 GiB is allocated by PyTorch, and 5.58 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
+- generated xml file: /home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/receipts/part6_final158_parity.xml -
+=========================== short test summary info ============================
+FAILED experiments/expressivity_tasks/x36_tape_perf/tests/test_exact.py::test_fresh_exact[64-2944-512-64-128-False]
+FAILED experiments/expressivity_tasks/x36_tape_perf/tests/test_exact.py::test_fresh_exact[2-2944-4096-64-128-False]
+FAILED experiments/expressivity_tasks/x36_tape_perf/tests/test_exact.py::test_fresh_exact[2-2944-4096-64-128-True]
+FAILED experiments/expressivity_tasks/x36_tape_perf/tests/test_exact.py::test_fresh_exact[64-11776-512-64-128-False]
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! KeyboardInterrupt !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/graph.py:841: KeyboardInterrupt
+(to show a full traceback on KeyboardInterrupt use --full-trace)
+=================== 4 failed, 137 passed in 81.16s (0:01:21) ===================

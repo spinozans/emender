@@ -1,57 +1,69 @@
-# Remaining X36 work after part 4
+# Remaining X36 work after part 6
 
-Part-5 entry diagnostics are in [PART5_DIAGNOSTIC.md](PART5_DIAGNOSTIC.md).
-The arbitrary-slot continued B64/H4/T512 fixed-live control FAILS the
-S5888→S11776 gate at 1.781x step / 1.818x replay. Production replay remains
-unchanged. Two added exact fixtures cover sparse high slot IDs and 1,024 live
-entry rows across a nine-token imported/continued chunk. These diagnostics
-do not complete any of the implementation work below.
+The overall target set remains **FAILED**. [REPORT.md](REPORT.md) contains the
+parts 1–6 convergence table, the final measured gates and limitations.
+[summary.json](receipts/summary.json) is the machine ledger;
+[part6_failure_arithmetic.json](receipts/part6_failure_arithmetic.json) retains
+decomposition and required savings without asserting an irreducible floor.
+[PART5_DIAGNOSTIC.md](PART5_DIAGNOSTIC.md) is historical diagnostic evidence.
 
-The overall target set remains FAILED. REPORT.md and receipts/summary.json
-separate passed fresh-capacity gates from incomplete representation work and
-failed long-context/inclusive-launch gates. Parts 1–3 are archived.
+Part 6 implements exact-union sparse adjoints and hot private key/value replay
+payloads for short nonempty entries. It separates measured entry cardinality
+from logical reach in journal sizing and removes the reproduced raw-output
+owner cycle. The original 143 tests and 36 new regressions pass. Fifty
+production-path imported/continued capacity points survive without OOM,
+including S-32 occupancy stress. This is an implementation delivery with
+performance failures, not closure of X36.
 
-1. **Complete arbitrary-slot occupancy-proportional backing.** Fresh T512 now
-   bounds principal resident row adjoints at 512 lanes for every measured S
-   (live=256), with exact logical-S reductions. Both capacity doublings pass
-   <=1.5x step and replay. S8192->8224 is 1.022x step / 1.092x replay; compiler
-   spills 0->2, shared memory fixed at 2048 bytes. This closes the measured
-   spill cliff, not every S-dependent operation. Unknown sparse imports,
-   long-lived holes, native owners/cold rows and required native gradients
-   retain dense backing. Reuse X31 part-9/X35 pool scoping: stable logical
-   ordering, cold-row storage and ownership/rollback support for every journal
-   address. The identity-prefix bound is not the complete arbitrary-slot pool.
-   Full logical-S reduction operands remain, and exactness is layout-sensitive.
-2. **B64/T4096 <=2x.** Final seven-phase source measures 6121.207 / 2222.592 =
-   2.754x FAIL. Device-only allocation reach dispatch selects 2048 resident
-   rows, but the dense fallback remains in the compiled program (255 registers,
-   26 compiler spills). Reverse takes 2757.794 GPU ms; scan takes 1047.658 ms.
-   Measured occupied pairs grow 16,777,216->1,073,741,824 (64x for 8x tokens),
-   with zero frees and final live/head=2048. Logical 0.825/2.199 TB accesses are
-   not DRAM counters or a hardware/GEMM lower-bound proof. The matched <=2 wall
-   target needs 1676.024 ms improvement. Reduce repeated streaming and exact
-   reduction work without changing the oracle's arithmetic or waiving the gate.
-   Split fallback, eight-warps compact, and eight-warps/128-register variants
-   passed affected parity but still failed <=2 at 2.726x, 2.700x and 2.763x.
-   They were reverted to preserve the requested seven custom phases.
-3. **Inclusive launches <=10.** T512 has 42+17=59 activities; long has 44+17=61.
-   Both retain seven custom kernels. Narrow <=10 and seven-phase shape pass;
-   inclusive <=10 FAILS. Remaining 52/54 native activities include initialization,
-   fills, input/output copies/transposes and mapping transfers. Fuse them inside
-   the existing phases without moving work outside the registered ranges.
-   Global reduction scratch is already eliminated and is not this bottleneck.
-4. **Retain proof.** Require all 141 tests (138 existing plus dense S736/T512
-   and aligned S8192/S8224 T512 byte fixtures). Preserve B64/large-S bytes,
-   dense/random/frozen-key T4096, expanded/strided adjoints, imported/retained/
-   consuming state, signed zeros, zeroed-log ownership and full private address
-   restoration. Preserve required native cold-row gradients. Both checkpoint-free
-   512-step/2,097,152-token arms retain maximum historical loss error
-   9.5367431640625e-7. Keep zero steady host syncs/DtoH with pinned ingestion.
-   Do not performance-time exactness-failed variants. Source patches, failure
-   logs and parity-cleared performance failures are indexed in
-   receipts/part4_attempts.json. Reproduce the ledger with the exact project
-   interpreter on receipts/part4_analysis.py.
+1. **Close the expanded continued capacity gate without slowing a baseline.**
+   Live1024 and live2800 matched-entry doublings pass. Live17 and live256 still
+   fail the first S2944→S5888 doubling; the second doubling now passes. Full
+   logical-S operands, native forward traversal and the oracle's 4→16-warp
+   layout remain. A narrow eight-warp variant failed exact bytes and was
+   reverted before performance. AoS high-occupancy baseline inflation is
+   rejected explicitly. Preserve stable logical IDs, immutable cold backing,
+   all journal address targets/restoration, required cold native gradients and
+   exceptional signed-zero arithmetic. Measure both imported and continued
+   paths, every capacity and small through near-budget entry sets. Keep literal
+   S-32 growing-occupancy ratios labeled and reported; they are not matched
+   occupied-work controls. Production float row pitch must remain the exact
+   maximum entry/allocation-union cardinality, never capacity or padded BS.
+2. **Remove the new continued-state sizing synchronizations.** Forward obtains
+   entry cardinality and exceptional cold-tail flag in one host transfer;
+   backward obtains the union maximum in another. Both are inside measured
+   ranges. Continued zero steady sync/DtoH FAILS. Fresh remains device-only.
+   Preserve exact sizing and fail-closed overflow checks; do not move metadata
+   or allocations outside registered ranges to hide costs. Long nonempty
+   chunks >512 still use dense replay; extending this pool is unfinished.
+3. **B64/T4096 <=2x.** Re-measurements remain FAIL; see the current ratio and
+   wall shortfall in the ledger. Sparse short-entry replay does not remove the
+   long dense fallback, repeated occupied streaming or logical reductions.
+   Retain the matched whole-LM wall gate and pinned ingestion. Logical payload
+   counts and compiler spills are evidence, not DRAM counters or a hardware
+   floor. A floor claim needs measured decomposition and arithmetic proof;
+   none is established by part 6.
+4. **Inclusive launches <=10.** Fresh still has 59/61 inclusive activities;
+   the continued profile adds union construction and metadata work and also
+   FAILS. Narrow seven/eight custom counts do not satisfy the inclusive gate.
+   Fuse remaining initialization, fills, native copies, reductions and mapping
+   transfers within registered phases, then reprofile the actual autograd
+   thread. The prior outer backward range missed that thread; its attribution
+   is superseded by the direct Replay.backward wrapper profile.
+5. **Preserve the proof and memory discipline.** Require all 179 tests,
+   continued-state byte comparisons, expanded/strided and native adjoints,
+   retained/consuming state, signed zeros and complete journal restoration.
+   Keep both checkpoint-free 512-step/2,097,152-token curve comparisons. Retain
+   per-store union/event/worst-case sizing and peak allocated/reserved receipts.
+   Candidate performance nodes must be cleaned through public output lifetime,
+   without private-reference disposal. Historical oracle-only cleanup after
+   independent byte snapshots is documented, along with its raw OOM. The
+   original raw-owner negative control grows 40,844,800 bytes/chunk; the
+   candidate standalone lifetime series is flat. Do not infer all ownership
+   paths are closed from that one regression.
 
-All GPU work remains through run_leased.sh and the exact project interpreter,
-with physical whitelist 0/1/5/6. No card 7, certified 2/3/4, .pt checkpoints,
-WG service/dispatcher/workers, delegation or completion/review machinery.
+Reproduce final sweeps/gates with `receipts/part6_run_final.sh`, after the
+live17 sweep and parity command listed in REPORT.md. Rebuild reports using
+`receipts/part6_analysis.py`, `part6_failure_arithmetic.py`, and
+`part6_write_report.py` with `/home/erikg/emender/.venv/bin/python` only.
+All GPU work uses run_leased.sh and physical whitelist 0/1/5/6. No card7,
+certified 2/3/4, .pt checkpoints, WG, subagents or parallel debugging.

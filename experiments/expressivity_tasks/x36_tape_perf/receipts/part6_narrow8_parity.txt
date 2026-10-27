@@ -1,0 +1,37 @@
+gpu_lease: granted GPUs: 1 (pid 3796480)
+X36 physical card 1
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0
+rootdir: /home/erikg/emender
+configfile: pyproject.toml
+plugins: timeout-2.4.0, anyio-4.13.0
+collected 179 items / 154 deselected / 25 selected
+
+experiments/expressivity_tasks/x36_tape_perf/tests/test_continued_capacity_exact.py ....F
+
+=================================== FAILURES ===================================
+___________________ test_fixed_live_capacity_bytes[5888-17] ____________________
+experiments/expressivity_tasks/x36_tape_perf/tests/test_continued_capacity_exact.py:71: in test_fixed_live_capacity_bytes
+    assert torch.equal(expected.detach().contiguous().view(torch.uint8),
+E   AssertionError: ('imported', 5888, 17, 1)
+E   assert False
+E    +  where False = <built-in method equal of type object at 0x7069dbfd6c20>(tensor([[[[145,  65,  11,  ..., 198, 150, 191],\n          [116, 228,  33,  ..., 108,  52,  64]],\n\n         [[147,  75,...30,  ...,  25, 159,  64],\n          [  0,  36, 216,  ...,  27,  37, 193]]]], device='cuda:0',\n       dtype=torch.uint8), tensor([[[[144,  65,  11,  ..., 198, 150, 191],\n          [116, 228,  33,  ..., 108,  52,  64]],\n\n         [[147,  75,...30,  ...,  25, 159,  64],\n          [  0,  36, 216,  ...,  27,  37, 193]]]], device='cuda:0',\n       dtype=torch.uint8))
+E    +    where <built-in method equal of type object at 0x7069dbfd6c20> = torch.equal
+E    +    and   tensor([[[[145,  65,  11,  ..., 198, 150, 191],\n          [116, 228,  33,  ..., 108,  52,  64]],\n\n         [[147,  75,...30,  ...,  25, 159,  64],\n          [  0,  36, 216,  ...,  27,  37, 193]]]], device='cuda:0',\n       dtype=torch.uint8) = <built-in method view of Tensor object at 0x7068c0d85b30>(torch.uint8)
+E    +      where <built-in method view of Tensor object at 0x7068c0d85b30> = tensor([[[[-8.7035e+00, -1.3686e+01,  9.3452e+00,  ...,  1.7760e+01,\n           -4.2634e-03, -1.1779e+00],\n          [...   [ 6.7544e+00,  1.6293e+01, -1.4402e+00,  ...,  4.9964e+00,\n            7.2055e+00, -1.0319e+01]]]], device='cuda:0').view
+E    +        where tensor([[[[-8.7035e+00, -1.3686e+01,  9.3452e+00,  ...,  1.7760e+01,\n           -4.2634e-03, -1.1779e+00],\n          [...   [ 6.7544e+00,  1.6293e+01, -1.4402e+00,  ...,  4.9964e+00,\n            7.2055e+00, -1.0319e+01]]]], device='cuda:0') = <built-in method contiguous of Tensor object at 0x7068c0d85b30>()
+E    +          where <built-in method contiguous of Tensor object at 0x7068c0d85b30> = tensor([[[[-8.7035e+00, -1.3686e+01,  9.3452e+00,  ...,  1.7760e+01,\n           -4.2634e-03, -1.1779e+00],\n          [...   [ 6.7544e+00,  1.6293e+01, -1.4402e+00,  ...,  4.9964e+00,\n            7.2055e+00, -1.0319e+01]]]], device='cuda:0').contiguous
+E    +            where tensor([[[[-8.7035e+00, -1.3686e+01,  9.3452e+00,  ...,  1.7760e+01,\n           -4.2634e-03, -1.1779e+00],\n          [...   [ 6.7544e+00,  1.6293e+01, -1.4402e+00,  ...,  4.9964e+00,\n            7.2055e+00, -1.0319e+01]]]], device='cuda:0') = <built-in method detach of Tensor object at 0x7068c0d861c0>()
+E    +              where <built-in method detach of Tensor object at 0x7068c0d861c0> = tensor([[[[-8.7035e+00, -1.3686e+01,  9.3452e+00,  ...,  1.7760e+01,\n           -4.2634e-03, -1.1779e+00],\n          [...   [ 6.7544e+00,  1.6293e+01, -1.4402e+00,  ...,  4.9964e+00,\n            7.2055e+00, -1.0319e+01]]]], device='cuda:0').detach
+E    +      and   torch.uint8 = torch.uint8
+E    +    and   tensor([[[[144,  65,  11,  ..., 198, 150, 191],\n          [116, 228,  33,  ..., 108,  52,  64]],\n\n         [[147,  75,...30,  ...,  25, 159,  64],\n          [  0,  36, 216,  ...,  27,  37, 193]]]], device='cuda:0',\n       dtype=torch.uint8) = <built-in method view of Tensor object at 0x7068cd1ec7d0>(torch.uint8)
+E    +      where <built-in method view of Tensor object at 0x7068cd1ec7d0> = tensor([[[[-8.7035e+00, -1.3686e+01,  9.3452e+00,  ...,  1.7760e+01,\n           -4.2634e-03, -1.1779e+00],\n          [...   [ 6.7544e+00,  1.6293e+01, -1.4402e+00,  ...,  4.9964e+00,\n            7.2055e+00, -1.0319e+01]]]], device='cuda:0').view
+E    +        where tensor([[[[-8.7035e+00, -1.3686e+01,  9.3452e+00,  ...,  1.7760e+01,\n           -4.2634e-03, -1.1779e+00],\n          [...   [ 6.7544e+00,  1.6293e+01, -1.4402e+00,  ...,  4.9964e+00,\n            7.2055e+00, -1.0319e+01]]]], device='cuda:0') = <built-in method contiguous of Tensor object at 0x7068cd1ec7d0>()
+E    +          where <built-in method contiguous of Tensor object at 0x7068cd1ec7d0> = tensor([[[[-8.7035e+00, -1.3686e+01,  9.3452e+00,  ...,  1.7760e+01,\n           -4.2634e-03, -1.1779e+00],\n          [...   [ 6.7544e+00,  1.6293e+01, -1.4402e+00,  ...,  4.9964e+00,\n            7.2055e+00, -1.0319e+01]]]], device='cuda:0').contiguous
+E    +            where tensor([[[[-8.7035e+00, -1.3686e+01,  9.3452e+00,  ...,  1.7760e+01,\n           -4.2634e-03, -1.1779e+00],\n          [...   [ 6.7544e+00,  1.6293e+01, -1.4402e+00,  ...,  4.9964e+00,\n            7.2055e+00, -1.0319e+01]]]], device='cuda:0') = <built-in method detach of Tensor object at 0x7068ccf5ad50>()
+E    +              where <built-in method detach of Tensor object at 0x7068ccf5ad50> = tensor([[[[-8.7035e+00, -1.3686e+01,  9.3452e+00,  ...,  1.7760e+01,\n           -4.2634e-03, -1.1779e+00],\n          [...   [ 6.7544e+00,  1.6293e+01, -1.4402e+00,  ...,  4.9964e+00,\n            7.2055e+00, -1.0319e+01]]]], device='cuda:0').detach
+E    +      and   torch.uint8 = torch.uint8
+=========================== short test summary info ============================
+FAILED experiments/expressivity_tasks/x36_tape_perf/tests/test_continued_capacity_exact.py::test_fixed_live_capacity_bytes[5888-17]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+================= 1 failed, 4 passed, 154 deselected in 10.41s =================

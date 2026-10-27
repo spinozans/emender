@@ -1,0 +1,1018 @@
+{
+  "structural_floor_established": false,
+  "gate_waivers": [],
+  "long": {
+    "tape_wall_ms": 6188.074981793761,
+    "base_wall_ms": 2357.9904627986252,
+    "ratio": 2.6243002588099227,
+    "limit": 2,
+    "required_wall_savings_ms": 1472.0940561965108,
+    "event_components": {
+      "cell_capture": 1073.9456787109375,
+      "replay_backward": 2765.144287109375
+    },
+    "compiler": {
+      "warps": 4,
+      "registers_per_thread": 255,
+      "spills": 26,
+      "shared_bytes": 8192,
+      "sanitize_overflow": true,
+      "automatic_overflow_assert_sites": 152,
+      "ptx_assert_calls": 40,
+      "ptx_local_load_instructions": 0,
+      "ptx_local_store_instructions": 0,
+      "layout": "transposed"
+    }
+  },
+  "logical_traffic": {
+    "512": {
+      "scope": "Separate unmeasured post-profile step; logical accesses, not measured DRAM bytes",
+      "total_live_slot_tokens": 16777216,
+      "allocations": 65536,
+      "frees": 0,
+      "key_adjoint_tracked": false,
+      "forward_payload_logical_bytes": 12884901888,
+      "replay_payload_logical_bytes": 34359738368
+    },
+    "4096": {
+      "scope": "Separate unmeasured post-profile step; logical accesses, not measured DRAM bytes",
+      "total_live_slot_tokens": 1073741824,
+      "allocations": 524288,
+      "frees": 0,
+      "key_adjoint_tracked": false,
+      "forward_payload_logical_bytes": 824633720832,
+      "replay_payload_logical_bytes": 2199023255552
+    }
+  },
+  "traffic_interpretation": "Logical operations only; no DRAM counters, hardware bandwidth limit or GEMM lower-bound proof",
+  "continued_failed_pairs": [
+    {
+      "label": "live17",
+      "mode": "imported",
+      "slots": [
+        2944,
+        5888
+      ],
+      "occupancy_matched": true,
+      "medians": [
+        {
+          "step_ms": 50.88916281238198,
+          "forward_ms": 27.425472259521484,
+          "replay_ms": 23.48543930053711,
+          "peak_allocated_bytes": 5202935808,
+          "peak_reserved_bytes": 5247074304
+        },
+        {
+          "step_ms": 94.50145484879613,
+          "forward_ms": 38.07539367675781,
+          "replay_ms": 56.38246536254883,
+          "peak_allocated_bytes": 8538118144,
+          "peak_reserved_bytes": 8585740288
+        }
+      ],
+      "compiler": [
+        {
+          "warps": 4,
+          "registers": 116,
+          "spills": 0,
+          "shared_bytes": 128
+        },
+        {
+          "warps": 16,
+          "registers": 125,
+          "spills": 0,
+          "shared_bytes": 128
+        }
+      ],
+      "ratios": {
+        "step_ms": 1.8570054924504027,
+        "replay_ms": 2.400741354719278
+      },
+      "required_savings_ms": {
+        "step_ms": 18.167710630223155,
+        "replay_ms": 21.154306411743164
+      },
+      "row_pitch": [
+        17,
+        17
+      ],
+      "float_lane_width": [
+        32,
+        32
+      ],
+      "logical_reduction_lane_width": [
+        4096,
+        8192
+      ],
+      "interpretation": "Current full-logical reduction, native forward and layout cost; not an irreducible floor"
+    },
+    {
+      "label": "live17",
+      "mode": "continued",
+      "slots": [
+        2944,
+        5888
+      ],
+      "occupancy_matched": true,
+      "medians": [
+        {
+          "step_ms": 50.276602152734995,
+          "forward_ms": 27.218847274780273,
+          "replay_ms": 23.01865577697754,
+          "peak_allocated_bytes": 5202804736,
+          "peak_reserved_bytes": 5247074304
+        },
+        {
+          "step_ms": 94.32981489226222,
+          "forward_ms": 37.8419189453125,
+          "replay_ms": 56.44287872314453,
+          "peak_allocated_bytes": 8537987072,
+          "peak_reserved_bytes": 8585740288
+        }
+      ],
+      "compiler": [
+        {
+          "warps": 4,
+          "registers": 118,
+          "spills": 0,
+          "shared_bytes": 128
+        },
+        {
+          "warps": 16,
+          "registers": 125,
+          "spills": 0,
+          "shared_bytes": 128
+        }
+      ],
+      "ratios": {
+        "step_ms": 1.8762169847058923,
+        "replay_ms": 2.4520492973180796
+      },
+      "required_savings_ms": {
+        "step_ms": 18.914911663159728,
+        "replay_ms": 21.914895057678223
+      },
+      "row_pitch": [
+        17,
+        17
+      ],
+      "float_lane_width": [
+        32,
+        32
+      ],
+      "logical_reduction_lane_width": [
+        4096,
+        8192
+      ],
+      "interpretation": "Current full-logical reduction, native forward and layout cost; not an irreducible floor"
+    },
+    {
+      "label": "live256",
+      "mode": "imported",
+      "slots": [
+        2944,
+        5888
+      ],
+      "occupancy_matched": true,
+      "medians": [
+        {
+          "step_ms": 118.85132035240531,
+          "forward_ms": 81.95378875732422,
+          "replay_ms": 36.853759765625,
+          "peak_allocated_bytes": 5359568384,
+          "peak_reserved_bytes": 5398069248
+        },
+        {
+          "step_ms": 233.56968397274613,
+          "forward_ms": 162.40640258789062,
+          "replay_ms": 71.01747131347656,
+          "peak_allocated_bytes": 8704540160,
+          "peak_reserved_bytes": 8747220992
+        }
+      ],
+      "compiler": [
+        {
+          "warps": 4,
+          "registers": 142,
+          "spills": 0,
+          "shared_bytes": 1024
+        },
+        {
+          "warps": 16,
+          "registers": 124,
+          "spills": 0,
+          "shared_bytes": 1024
+        }
+      ],
+      "ratios": {
+        "step_ms": 1.9652258239974965,
+        "replay_ms": 1.9270074957105854
+      },
+      "required_savings_ms": {
+        "step_ms": 55.29270344413817,
+        "replay_ms": 15.736831665039062
+      },
+      "row_pitch": [
+        256,
+        256
+      ],
+      "float_lane_width": [
+        256,
+        256
+      ],
+      "logical_reduction_lane_width": [
+        4096,
+        8192
+      ],
+      "interpretation": "Current full-logical reduction, native forward and layout cost; not an irreducible floor"
+    },
+    {
+      "label": "live256",
+      "mode": "continued",
+      "slots": [
+        2944,
+        5888
+      ],
+      "occupancy_matched": true,
+      "medians": [
+        {
+          "step_ms": 118.541669100523,
+          "forward_ms": 81.44998168945312,
+          "replay_ms": 37.02067184448242,
+          "peak_allocated_bytes": 5359437312,
+          "peak_reserved_bytes": 5398069248
+        },
+        {
+          "step_ms": 232.34828282147646,
+          "forward_ms": 161.25645446777344,
+          "replay_ms": 71.01030731201172,
+          "peak_allocated_bytes": 8704409088,
+          "peak_reserved_bytes": 8747220992
+        }
+      ],
+      "compiler": [
+        {
+          "warps": 4,
+          "registers": 142,
+          "spills": 0,
+          "shared_bytes": 1024
+        },
+        {
+          "warps": 16,
+          "registers": 124,
+          "spills": 0,
+          "shared_bytes": 1024
+        }
+      ],
+      "ratios": {
+        "step_ms": 1.960055772662065,
+        "replay_ms": 1.9181258408900304
+      },
+      "required_savings_ms": {
+        "step_ms": 54.53577917069197,
+        "replay_ms": 15.479299545288086
+      },
+      "row_pitch": [
+        256,
+        256
+      ],
+      "float_lane_width": [
+        256,
+        256
+      ],
+      "logical_reduction_lane_width": [
+        4096,
+        8192
+      ],
+      "interpretation": "Current full-logical reduction, native forward and layout cost; not an irreducible floor"
+    },
+    {
+      "label": "near_budget",
+      "mode": "imported",
+      "slots": [
+        2944,
+        5888
+      ],
+      "occupancy_matched": false,
+      "medians": [
+        {
+          "step_ms": 1220.9188058041036,
+          "forward_ms": 342.1583251953125,
+          "replay_ms": 878.4476318359375,
+          "peak_allocated_bytes": 7911546368,
+          "peak_reserved_bytes": 8002732032
+        },
+        {
+          "step_ms": 2498.0516340583563,
+          "forward_ms": 686.244873046875,
+          "replay_ms": 1811.646484375,
+          "peak_allocated_bytes": 14041602560,
+          "peak_reserved_bytes": 14183038976
+        }
+      ],
+      "compiler": [
+        {
+          "warps": 4,
+          "registers": 255,
+          "spills": 90,
+          "shared_bytes": 16384
+        },
+        {
+          "warps": 16,
+          "registers": 128,
+          "spills": 162,
+          "shared_bytes": 32768
+        }
+      ],
+      "ratios": {
+        "step_ms": 2.046042392158196,
+        "replay_ms": 2.0623272449248864
+      },
+      "required_savings_ms": {
+        "step_ms": 666.6734253522009,
+        "replay_ms": 493.97503662109375
+      },
+      "row_pitch": [
+        2912,
+        5856
+      ],
+      "float_lane_width": [
+        4096,
+        8192
+      ],
+      "logical_reduction_lane_width": [
+        4096,
+        8192
+      ],
+      "interpretation": "Current full-logical reduction, native forward and layout cost; not an irreducible floor"
+    },
+    {
+      "label": "near_budget",
+      "mode": "imported",
+      "slots": [
+        5888,
+        11776
+      ],
+      "occupancy_matched": false,
+      "medians": [
+        {
+          "step_ms": 2498.0516340583563,
+          "forward_ms": 686.244873046875,
+          "replay_ms": 1811.646484375,
+          "peak_allocated_bytes": 14041602560,
+          "peak_reserved_bytes": 14183038976
+        },
+        {
+          "step_ms": 6316.341835074127,
+          "forward_ms": 1375.873046875,
+          "replay_ms": 4940.189453125,
+          "peak_allocated_bytes": 26478391808,
+          "peak_reserved_bytes": 26937917440
+        }
+      ],
+      "compiler": [
+        {
+          "warps": 16,
+          "registers": 128,
+          "spills": 162,
+          "shared_bytes": 32768
+        },
+        {
+          "warps": 16,
+          "registers": 128,
+          "spills": 482,
+          "shared_bytes": 65536
+        }
+      ],
+      "ratios": {
+        "step_ms": 2.528507317045542,
+        "replay_ms": 2.7269058813255813
+      },
+      "required_savings_ms": {
+        "step_ms": 2569.2643839865923,
+        "replay_ms": 2222.7197265625
+      },
+      "row_pitch": [
+        5856,
+        11744
+      ],
+      "float_lane_width": [
+        8192,
+        16384
+      ],
+      "logical_reduction_lane_width": [
+        8192,
+        16384
+      ],
+      "interpretation": "Current full-logical reduction, native forward and layout cost; not an irreducible floor"
+    },
+    {
+      "label": "near_budget",
+      "mode": "continued",
+      "slots": [
+        2944,
+        5888
+      ],
+      "occupancy_matched": false,
+      "medians": [
+        {
+          "step_ms": 1220.7384067587554,
+          "forward_ms": 342.6321716308594,
+          "replay_ms": 877.9570922851562,
+          "peak_allocated_bytes": 7911546368,
+          "peak_reserved_bytes": 8002732032
+        },
+        {
+          "step_ms": 2502.385760191828,
+          "forward_ms": 686.3175659179688,
+          "replay_ms": 1815.9503173828125,
+          "peak_allocated_bytes": 14041602560,
+          "peak_reserved_bytes": 14183038976
+        }
+      ],
+      "compiler": [
+        {
+          "warps": 4,
+          "registers": 255,
+          "spills": 90,
+          "shared_bytes": 16384
+        },
+        {
+          "warps": 16,
+          "registers": 128,
+          "spills": 162,
+          "shared_bytes": 32768
+        }
+      ],
+      "ratios": {
+        "step_ms": 2.0498951670047307,
+        "replay_ms": 2.068381625184253
+      },
+      "required_savings_ms": {
+        "step_ms": 671.2781500536948,
+        "replay_ms": 499.0146789550781
+      },
+      "row_pitch": [
+        2912,
+        5856
+      ],
+      "float_lane_width": [
+        4096,
+        8192
+      ],
+      "logical_reduction_lane_width": [
+        4096,
+        8192
+      ],
+      "interpretation": "Current full-logical reduction, native forward and layout cost; not an irreducible floor"
+    },
+    {
+      "label": "near_budget",
+      "mode": "continued",
+      "slots": [
+        5888,
+        11776
+      ],
+      "occupancy_matched": false,
+      "medians": [
+        {
+          "step_ms": 2502.385760191828,
+          "forward_ms": 686.3175659179688,
+          "replay_ms": 1815.9503173828125,
+          "peak_allocated_bytes": 14041602560,
+          "peak_reserved_bytes": 14183038976
+        },
+        {
+          "step_ms": 6333.839430008084,
+          "forward_ms": 1375.741943359375,
+          "replay_ms": 4957.9111328125,
+          "peak_allocated_bytes": 26478391808,
+          "peak_reserved_bytes": 26937917440
+        }
+      ],
+      "compiler": [
+        {
+          "warps": 16,
+          "registers": 128,
+          "spills": 162,
+          "shared_bytes": 32768
+        },
+        {
+          "warps": 16,
+          "registers": 128,
+          "spills": 482,
+          "shared_bytes": 65536
+        }
+      ],
+      "ratios": {
+        "step_ms": 2.5311203135692972,
+        "replay_ms": 2.7302019693787387
+      },
+      "required_savings_ms": {
+        "step_ms": 2580.2607897203416,
+        "replay_ms": 2233.9856567382812
+      },
+      "row_pitch": [
+        5856,
+        11744
+      ],
+      "float_lane_width": [
+        8192,
+        16384
+      ],
+      "logical_reduction_lane_width": [
+        8192,
+        16384
+      ],
+      "interpretation": "Current full-logical reduction, native forward and layout cost; not an irreducible floor"
+    }
+  ],
+  "profile_decomposition": [
+    {
+      "label": "fresh T512/S736",
+      "inclusive": 59,
+      "custom": 7,
+      "unexpected_syncs": [],
+      "dtoh": [],
+      "components": {
+        "x36::scan_forward": {
+          "fills": 0.23757200000000003,
+          "copies_transposes_mapping": 0.7673090000000001,
+          "initialize_free_words": 0.0023039999999999996,
+          "scan_kernel": 44.475997,
+          "materialize_state": 0.019167999999999998,
+          "other_setup_or_reduction": 0.005024
+        },
+        "x36::replay_backward": {
+          "copies_transposes_mapping": 0.685228,
+          "setup_kernel": 0.46276100000000003,
+          "rebase": 1.83741,
+          "reverse_kernel": 54.408629999999995,
+          "other_setup_or_reduction": 0.00848
+        }
+      },
+      "tokens": 512,
+      "slots": 736,
+      "allocator_cpu_ms": 0.6916219999999861,
+      "journal_ablation_ms": 14.479583740234375,
+      "compiler": {
+        "warps": 4,
+        "registers_per_thread": 152,
+        "spills": 0,
+        "shared_bytes": 2048,
+        "sanitize_overflow": true,
+        "automatic_overflow_assert_sites": 11,
+        "ptx_assert_calls": 10,
+        "ptx_local_load_instructions": 0,
+        "ptx_local_store_instructions": 0,
+        "layout": "transposed"
+      }
+    },
+    {
+      "label": "fresh T512/S2944",
+      "inclusive": 59,
+      "custom": 7,
+      "unexpected_syncs": [],
+      "dtoh": [],
+      "components": {
+        "x36::scan_forward": {
+          "fills": 1.0232510000000001,
+          "copies_transposes_mapping": 1.506651,
+          "initialize_free_words": 0.004128,
+          "scan_kernel": 43.149636,
+          "materialize_state": 0.019361,
+          "other_setup_or_reduction": 0.0054719999999999994
+        },
+        "x36::replay_backward": {
+          "copies_transposes_mapping": 0.6855800000000001,
+          "setup_kernel": 1.870115,
+          "rebase": 1.872675,
+          "reverse_kernel": 60.738955000000004,
+          "other_setup_or_reduction": 0.007679999999999999
+        }
+      },
+      "tokens": 512,
+      "slots": 2944,
+      "allocator_cpu_ms": 0.5543699999999836,
+      "journal_ablation_ms": 13.03366470336914,
+      "compiler": {
+        "warps": 8,
+        "registers_per_thread": 101,
+        "spills": 0,
+        "shared_bytes": 2048,
+        "sanitize_overflow": true,
+        "automatic_overflow_assert_sites": 11,
+        "ptx_assert_calls": 11,
+        "ptx_local_load_instructions": 0,
+        "ptx_local_store_instructions": 0,
+        "layout": "transposed"
+      }
+    },
+    {
+      "label": "fresh T512/S5888",
+      "inclusive": 59,
+      "custom": 7,
+      "unexpected_syncs": [],
+      "dtoh": [],
+      "components": {
+        "x36::scan_forward": {
+          "fills": 2.0854139999999988,
+          "copies_transposes_mapping": 2.523761,
+          "initialize_free_words": 0.006048,
+          "scan_kernel": 49.621854,
+          "materialize_state": 0.01968,
+          "other_setup_or_reduction": 0.005535999999999999
+        },
+        "x36::replay_backward": {
+          "copies_transposes_mapping": 0.6907030000000002,
+          "setup_kernel": 3.749445,
+          "rebase": 1.660798,
+          "reverse_kernel": 68.091991,
+          "other_setup_or_reduction": 0.00752
+        }
+      },
+      "tokens": 512,
+      "slots": 5888,
+      "allocator_cpu_ms": 0.4811009999999883,
+      "journal_ablation_ms": 12.920639038085938,
+      "compiler": {
+        "warps": 8,
+        "registers_per_thread": 126,
+        "spills": 0,
+        "shared_bytes": 2048,
+        "sanitize_overflow": true,
+        "automatic_overflow_assert_sites": 61,
+        "ptx_assert_calls": 23,
+        "ptx_local_load_instructions": 0,
+        "ptx_local_store_instructions": 0,
+        "layout": "transposed"
+      }
+    },
+    {
+      "label": "fresh T512/S11776",
+      "inclusive": 59,
+      "custom": 7,
+      "unexpected_syncs": [],
+      "dtoh": [],
+      "components": {
+        "x36::scan_forward": {
+          "fills": 4.204239,
+          "copies_transposes_mapping": 4.512212999999999,
+          "initialize_free_words": 0.00864,
+          "scan_kernel": 44.487097999999996,
+          "materialize_state": 0.01952,
+          "other_setup_or_reduction": 0.005312000000000001
+        },
+        "x36::replay_backward": {
+          "copies_transposes_mapping": 0.683437,
+          "setup_kernel": 7.497898,
+          "rebase": 1.7501120000000001,
+          "reverse_kernel": 72.205597,
+          "other_setup_or_reduction": 0.007488000000000001
+        }
+      },
+      "tokens": 512,
+      "slots": 11776,
+      "allocator_cpu_ms": 0.7492200000000186,
+      "journal_ablation_ms": 11.714431762695312,
+      "compiler": {
+        "warps": 8,
+        "registers_per_thread": 126,
+        "spills": 0,
+        "shared_bytes": 2048,
+        "sanitize_overflow": true,
+        "automatic_overflow_assert_sites": 61,
+        "ptx_assert_calls": 20,
+        "ptx_local_load_instructions": 0,
+        "ptx_local_store_instructions": 0,
+        "layout": "transposed"
+      }
+    },
+    {
+      "label": "fresh T128/S2944",
+      "inclusive": 59,
+      "custom": 7,
+      "unexpected_syncs": [],
+      "dtoh": [],
+      "components": {
+        "x36::scan_forward": {
+          "fills": 0.721869,
+          "copies_transposes_mapping": 0.421033,
+          "initialize_free_words": 0.00368,
+          "scan_kernel": 10.651814,
+          "materialize_state": 0.006112,
+          "other_setup_or_reduction": 0.003264
+        },
+        "x36::replay_backward": {
+          "copies_transposes_mapping": 0.158723,
+          "setup_kernel": 1.855875,
+          "rebase": 0.462184,
+          "reverse_kernel": 10.966476,
+          "other_setup_or_reduction": 0.009536
+        }
+      },
+      "tokens": 128,
+      "slots": 2944,
+      "allocator_cpu_ms": 0.7357510000000071,
+      "journal_ablation_ms": 3.644319534301758,
+      "compiler": {
+        "warps": 8,
+        "registers_per_thread": 102,
+        "spills": 0,
+        "shared_bytes": 512,
+        "sanitize_overflow": true,
+        "automatic_overflow_assert_sites": 11,
+        "ptx_assert_calls": 10,
+        "ptx_local_load_instructions": 0,
+        "ptx_local_store_instructions": 0,
+        "layout": "transposed"
+      }
+    },
+    {
+      "label": "fresh T1024/S2944",
+      "inclusive": 59,
+      "custom": 7,
+      "unexpected_syncs": [],
+      "dtoh": [],
+      "components": {
+        "x36::scan_forward": {
+          "fills": 1.414361,
+          "copies_transposes_mapping": 2.96415,
+          "initialize_free_words": 0.004256,
+          "scan_kernel": 109.003562,
+          "materialize_state": 0.036321,
+          "other_setup_or_reduction": 0.006912
+        },
+        "x36::replay_backward": {
+          "copies_transposes_mapping": 1.372698,
+          "setup_kernel": 1.868835,
+          "rebase": 3.330238,
+          "reverse_kernel": 168.072468,
+          "other_setup_or_reduction": 0.007488000000000001
+        }
+      },
+      "tokens": 1024,
+      "slots": 2944,
+      "allocator_cpu_ms": 0.4302299999999129,
+      "journal_ablation_ms": 24.228836059570312,
+      "compiler": {
+        "warps": 4,
+        "registers_per_thread": 255,
+        "spills": 0,
+        "shared_bytes": 4096,
+        "sanitize_overflow": true,
+        "automatic_overflow_assert_sites": 152,
+        "ptx_assert_calls": 43,
+        "ptx_local_load_instructions": 0,
+        "ptx_local_store_instructions": 0,
+        "layout": "transposed"
+      }
+    },
+    {
+      "label": "fresh T4096/S2944",
+      "inclusive": 61,
+      "custom": 7,
+      "unexpected_syncs": [],
+      "dtoh": [],
+      "components": {
+        "x36::scan_forward": {
+          "fills": 3.8775749999999998,
+          "copies_transposes_mapping": 11.652562999999999,
+          "initialize_free_words": 0.004993,
+          "scan_kernel": 1043.8353299999999,
+          "materialize_state": 0.14041900000000002,
+          "other_setup_or_reduction": 0.019232000000000003
+        },
+        "x36::replay_backward": {
+          "copies_transposes_mapping": 5.619623000000001,
+          "setup_kernel": 1.86957,
+          "rebase": 12.934314,
+          "reverse_kernel": 2746.885123,
+          "other_setup_or_reduction": 0.007232000000000001
+        }
+      },
+      "tokens": 4096,
+      "slots": 2944,
+      "allocator_cpu_ms": 0.46990100000236174,
+      "journal_ablation_ms": 39.7740478515625,
+      "compiler": {
+        "warps": 4,
+        "registers_per_thread": 255,
+        "spills": 26,
+        "shared_bytes": 8192,
+        "sanitize_overflow": true,
+        "automatic_overflow_assert_sites": 152,
+        "ptx_assert_calls": 40,
+        "ptx_local_load_instructions": 0,
+        "ptx_local_store_instructions": 0,
+        "layout": "transposed"
+      }
+    },
+    {
+      "label": "fresh T512/S8192",
+      "inclusive": 59,
+      "custom": 7,
+      "unexpected_syncs": [],
+      "dtoh": [],
+      "components": {
+        "x36::scan_forward": {
+          "fills": 2.9122139999999996,
+          "copies_transposes_mapping": 3.231867,
+          "initialize_free_words": 0.006432,
+          "scan_kernel": 41.321185,
+          "materialize_state": 0.018817,
+          "other_setup_or_reduction": 0.005184
+        },
+        "x36::replay_backward": {
+          "copies_transposes_mapping": 0.6868289999999999,
+          "setup_kernel": 5.208673,
+          "rebase": 1.805569,
+          "reverse_kernel": 70.04952800000001,
+          "other_setup_or_reduction": 0.007712
+        }
+      },
+      "tokens": 512,
+      "slots": 8192,
+      "allocator_cpu_ms": 0.46811099999999056,
+      "journal_ablation_ms": 10.791389465332031,
+      "compiler": {
+        "warps": 8,
+        "registers_per_thread": 116,
+        "spills": 0,
+        "shared_bytes": 2048,
+        "sanitize_overflow": true,
+        "automatic_overflow_assert_sites": 61,
+        "ptx_assert_calls": 20,
+        "ptx_local_load_instructions": 0,
+        "ptx_local_store_instructions": 0,
+        "layout": "transposed"
+      }
+    },
+    {
+      "label": "fresh T512/S8224",
+      "inclusive": 59,
+      "custom": 7,
+      "unexpected_syncs": [],
+      "dtoh": [],
+      "components": {
+        "x36::scan_forward": {
+          "fills": 2.929846,
+          "copies_transposes_mapping": 3.237661,
+          "initialize_free_words": 0.007008,
+          "scan_kernel": 39.483171999999996,
+          "materialize_state": 0.01856,
+          "other_setup_or_reduction": 0.004993
+        },
+        "x36::replay_backward": {
+          "copies_transposes_mapping": 0.6857729999999999,
+          "setup_kernel": 5.228098,
+          "rebase": 1.9105949999999998,
+          "reverse_kernel": 76.334999,
+          "other_setup_or_reduction": 0.007456000000000001
+        }
+      },
+      "tokens": 512,
+      "slots": 8224,
+      "allocator_cpu_ms": 0.4876110000000019,
+      "journal_ablation_ms": 10.772514343261719,
+      "compiler": {
+        "warps": 8,
+        "registers_per_thread": 128,
+        "spills": 2,
+        "shared_bytes": 2048,
+        "sanitize_overflow": true,
+        "automatic_overflow_assert_sites": 61,
+        "ptx_assert_calls": 23,
+        "ptx_local_load_instructions": 0,
+        "ptx_local_store_instructions": 0,
+        "layout": "transposed"
+      }
+    },
+    {
+      "label": "continued L256/T512/S11776",
+      "inclusive": 106,
+      "custom": 8,
+      "unexpected_syncs": [
+        {
+          "name": "cudaStreamSynchronize",
+          "ts": 2284602477830.623,
+          "dur_us": 3.08
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "ts": 2284602481865.099,
+          "dur_us": 248461.096
+        }
+      ],
+      "dtoh": [
+        "Memcpy DtoH (Device -> Pageable)",
+        "Memcpy DtoH (Device -> Pinned)"
+      ],
+      "components": {
+        "x36::scan_forward": {
+          "fills": 1.6956150000000003,
+          "copies_transposes_mapping": 9.971093000000002,
+          "other_setup_or_reduction": 1.2328540000000001,
+          "initialize_free_words": 0.007744,
+          "scan_kernel": 238.810163,
+          "materialize_state": 0.273157
+        },
+        "x36::replay_backward": {
+          "copies_transposes_mapping": 0.609516,
+          "fills": 0.00304,
+          "other_setup_or_reduction": 0.173283,
+          "setup_kernel": 0.574538,
+          "rebase": 0.9200809999999999,
+          "reverse_kernel": 85.89309200000001
+        }
+      }
+    }
+  ],
+  "inclusive_shortfall": [
+    {
+      "label": "fresh T512/S736",
+      "inclusive": 59,
+      "limit": 10,
+      "excess_activities": 49,
+      "custom": 7
+    },
+    {
+      "label": "fresh T512/S2944",
+      "inclusive": 59,
+      "limit": 10,
+      "excess_activities": 49,
+      "custom": 7
+    },
+    {
+      "label": "fresh T512/S5888",
+      "inclusive": 59,
+      "limit": 10,
+      "excess_activities": 49,
+      "custom": 7
+    },
+    {
+      "label": "fresh T512/S11776",
+      "inclusive": 59,
+      "limit": 10,
+      "excess_activities": 49,
+      "custom": 7
+    },
+    {
+      "label": "fresh T128/S2944",
+      "inclusive": 59,
+      "limit": 10,
+      "excess_activities": 49,
+      "custom": 7
+    },
+    {
+      "label": "fresh T1024/S2944",
+      "inclusive": 59,
+      "limit": 10,
+      "excess_activities": 49,
+      "custom": 7
+    },
+    {
+      "label": "fresh T4096/S2944",
+      "inclusive": 61,
+      "limit": 10,
+      "excess_activities": 51,
+      "custom": 7
+    },
+    {
+      "label": "fresh T512/S8192",
+      "inclusive": 59,
+      "limit": 10,
+      "excess_activities": 49,
+      "custom": 7
+    },
+    {
+      "label": "fresh T512/S8224",
+      "inclusive": 59,
+      "limit": 10,
+      "excess_activities": 49,
+      "custom": 7
+    },
+    {
+      "label": "continued L256/T512/S11776",
+      "inclusive": 106,
+      "limit": 10,
+      "excess_activities": 96,
+      "custom": 8
+    }
+  ],
+  "memory_bound": "Per-store |entry union allocations| <= min(S, entry_live + allocation_events) <= min(S, entry_live + T); exact row pitch max union, minimum one sentinel row",
+  "lifetime": {
+    "original_growth_bytes_per_chunk": 40844800,
+    "journal_bulk_bytes": 30561280,
+    "remaining_owner_trace_context_bytes": 10283520,
+    "candidate_standalone_allocated_series": [
+      9319424,
+      9319424,
+      9319424,
+      9319424,
+      9319424,
+      9319424,
+      9319424
+    ]
+  }
+}

@@ -1,0 +1,40 @@
+gpu_lease: granted GPUs: 1 (pid 3567543)
+X36 physical card 1
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0
+rootdir: /home/erikg/emender
+configfile: pyproject.toml
+plugins: timeout-2.4.0, anyio-4.13.0
+collected 177 items / 175 deselected / 2 selected
+
+experiments/expressivity_tasks/x36_tape_perf/tests/test_imported_zero_sign.py FF
+
+=================================== FAILURES ===================================
+____________ test_imported_negative_zero_cold_strength_bytes[False] ____________
+experiments/expressivity_tasks/x36_tape_perf/tests/test_imported_zero_sign.py:38: in test_imported_negative_zero_cold_strength_bytes
+    assert torch.equal(results[0].view(torch.uint8),results[1].view(torch.uint8))
+E   AssertionError: assert False
+E    +  where False = <built-in method equal of type object at 0x73ebff3d6c20>(tensor([[[[  0,   0,   0,  ...,   0,   0, 128]],\n\n         [[  0,   0,   0,  ...,   0,   0, 128]],\n\n         [[  0,   ...,  ...,   0,   0, 128]],\n\n         [[  0,   0,   0,  ...,   0,   0, 128]]]], device='cuda:0',\n       dtype=torch.uint8), tensor([[[[0, 0, 0,  ..., 0, 0, 0]],\n\n         [[0, 0, 0,  ..., 0, 0, 0]],\n\n         [[0, 0, 0,  ..., 0, 0, 0]],\n\n    ... 0]],\n\n         [[0, 0, 0,  ..., 0, 0, 0]],\n\n         [[0, 0, 0,  ..., 0, 0, 0]]]], device='cuda:0', dtype=torch.uint8))
+E    +    where <built-in method equal of type object at 0x73ebff3d6c20> = torch.equal
+E    +    and   tensor([[[[  0,   0,   0,  ...,   0,   0, 128]],\n\n         [[  0,   0,   0,  ...,   0,   0, 128]],\n\n         [[  0,   ...,  ...,   0,   0, 128]],\n\n         [[  0,   0,   0,  ...,   0,   0, 128]]]], device='cuda:0',\n       dtype=torch.uint8) = <built-in method view of Tensor object at 0x73eaf02a0aa0>(torch.uint8)
+E    +      where <built-in method view of Tensor object at 0x73eaf02a0aa0> = tensor([[[[-0., -0., -0., -0., -0., -0., -0., -0., -0., -0., -0., -0., -0., -0., -0., -0., -0., -0., -0., -0., -0., -0...  -0., -0., -0., -0., -0., -0., -0., -0., -0., -0., -0., -0., -0., -0., -0., -0., -0., -0.]]]],\n       device='cuda:0').view
+E    +      and   torch.uint8 = torch.uint8
+E    +    and   tensor([[[[0, 0, 0,  ..., 0, 0, 0]],\n\n         [[0, 0, 0,  ..., 0, 0, 0]],\n\n         [[0, 0, 0,  ..., 0, 0, 0]],\n\n    ... 0]],\n\n         [[0, 0, 0,  ..., 0, 0, 0]],\n\n         [[0, 0, 0,  ..., 0, 0, 0]]]], device='cuda:0', dtype=torch.uint8) = <built-in method view of Tensor object at 0x73eaf03d5450>(torch.uint8)
+E    +      where <built-in method view of Tensor object at 0x73eaf03d5450> = tensor([[[[0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,\n           0., ... 0., 0.,\n           0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.]]]],\n       device='cuda:0').view
+E    +      and   torch.uint8 = torch.uint8
+____________ test_imported_negative_zero_cold_strength_bytes[True] _____________
+experiments/expressivity_tasks/x36_tape_perf/tests/test_imported_zero_sign.py:38: in test_imported_negative_zero_cold_strength_bytes
+    assert torch.equal(results[0].view(torch.uint8),results[1].view(torch.uint8))
+E   AssertionError: assert False
+E    +  where False = <built-in method equal of type object at 0x73ebff3d6c20>(tensor([[[[  0,   0,   0,  ...,   0,   0, 128]],\n\n         [[  0,   0,   0,  ...,   0,   0, 128]],\n\n         [[  0,   ...,  ...,   0,   0, 128]],\n\n         [[  0,   0,   0,  ...,   0,   0, 128]]]], device='cuda:0',\n       dtype=torch.uint8), tensor([[[[0, 0, 0,  ..., 0, 0, 0]],\n\n         [[0, 0, 0,  ..., 0, 0, 0]],\n\n         [[0, 0, 0,  ..., 0, 0, 0]],\n\n    ... 0]],\n\n         [[0, 0, 0,  ..., 0, 0, 0]],\n\n         [[0, 0, 0,  ..., 0, 0, 0]]]], device='cuda:0', dtype=torch.uint8))
+E    +    where <built-in method equal of type object at 0x73ebff3d6c20> = torch.equal
+E    +    and   tensor([[[[  0,   0,   0,  ...,   0,   0, 128]],\n\n         [[  0,   0,   0,  ...,   0,   0, 128]],\n\n         [[  0,   ...,  ...,   0,   0, 128]],\n\n         [[  0,   0,   0,  ...,   0,   0, 128]]]], device='cuda:0',\n       dtype=torch.uint8) = <built-in method view of Tensor object at 0x73eaf06e5d60>(torch.uint8)
+E    +      where <built-in method view of Tensor object at 0x73eaf06e5d60> = tensor([[[[-0., -0., -0., -0., -0., -0., -0., -0., -0., -0., -0., -0., -0., -0., -0., -0., -0., -0., -0., -0., -0., -0...  -0., -0., -0., -0., -0., -0., -0., -0., -0., -0., -0., -0., -0., -0., -0., -0., -0., -0.]]]],\n       device='cuda:0').view
+E    +      and   torch.uint8 = torch.uint8
+E    +    and   tensor([[[[0, 0, 0,  ..., 0, 0, 0]],\n\n         [[0, 0, 0,  ..., 0, 0, 0]],\n\n         [[0, 0, 0,  ..., 0, 0, 0]],\n\n    ... 0]],\n\n         [[0, 0, 0,  ..., 0, 0, 0]],\n\n         [[0, 0, 0,  ..., 0, 0, 0]]]], device='cuda:0', dtype=torch.uint8) = <built-in method view of Tensor object at 0x73eaf02a13b0>(torch.uint8)
+E    +      where <built-in method view of Tensor object at 0x73eaf02a13b0> = tensor([[[[0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,\n           0., ... 0., 0.,\n           0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.]]]],\n       device='cuda:0').view
+E    +      and   torch.uint8 = torch.uint8
+=========================== short test summary info ============================
+FAILED experiments/expressivity_tasks/x36_tape_perf/tests/test_imported_zero_sign.py::test_imported_negative_zero_cold_strength_bytes[False]
+FAILED experiments/expressivity_tasks/x36_tape_perf/tests/test_imported_zero_sign.py::test_imported_negative_zero_cold_strength_bytes[True]
+====================== 2 failed, 175 deselected in 20.54s ======================

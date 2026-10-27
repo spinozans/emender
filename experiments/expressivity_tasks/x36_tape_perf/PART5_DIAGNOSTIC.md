@@ -2,8 +2,10 @@
 
 **X36 remains FAILED.** General sparse replay for imported/continued stores,
 T4096 <=2x and inclusive launches <=10 are not implemented by this change.
-No structural-floor claim is made. REPORT.md remains the part-4 implementation
-report; its numbers must not be presented as new part-5 measurements.
+No structural-floor claim is made. At the end of part 5, REPORT.md remained
+the part-4 implementation report; it is now archived as [REPORT_PART4.md](REPORT_PART4.md).
+The final part-6 implementation and parts 1–6 convergence table are in
+[REPORT.md](REPORT.md). The numbers below remain historical part-5 evidence.
 
 The retained production implementation is unchanged. Two added byte-parity
 fixtures exercise arbitrary high logical slots (including S-1) and a 1,024-row

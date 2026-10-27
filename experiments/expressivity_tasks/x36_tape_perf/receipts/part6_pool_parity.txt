@@ -1,0 +1,23 @@
+gpu_lease: granted GPUs: 1 (pid 3433230)
+X36 physical card 1
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0
+rootdir: /home/erikg/emender
+configfile: pyproject.toml
+plugins: timeout-2.4.0, anyio-4.13.0
+collected 144 items / 143 deselected / 1 selected
+
+experiments/expressivity_tasks/x36_tape_perf/tests/test_exact.py F       [100%]
+
+=================================== FAILURES ===================================
+__________ test_import_and_consuming_continuation_exact[sparse_pool] ___________
+experiments/expressivity_tasks/x36_tape_perf/tests/test_exact.py:187: in test_import_and_consuming_continuation_exact
+    torch.testing.assert_close(a,b,atol=0,rtol=0,msg=lambda msg:f'raw tensor {index}: '+msg)
+E   AssertionError: raw tensor 4: Tensor-likes are not equal!
+E   
+E   Mismatched elements: 1 / 2304 (0.0%)
+E   Greatest absolute difference: 0.20632871985435486 at index (0, 1, 1, 31)
+E   Greatest relative difference: 1.0 at index (0, 1, 1, 31)
+=========================== short test summary info ============================
+FAILED experiments/expressivity_tasks/x36_tape_perf/tests/test_exact.py::test_import_and_consuming_continuation_exact[sparse_pool]
+====================== 1 failed, 143 deselected in 6.84s =======================

@@ -1,0 +1,126 @@
+{
+  "discipline": "Exactness precedes performance. Numerical failures were reverted and receipted before repair; no failed arithmetic variant was performance-timed.",
+  "attempts": [
+    {
+      "variant": "initial sparse adjoints",
+      "status": "rejected",
+      "reason": "One value-adjoint vector address retained dense pitch; native key-gradient byte mismatch",
+      "receipts": [
+        "part6_pool_parity.txt",
+        "part6_rejected_pool_v1.patch",
+        "part6_rejected_pool_v1.py"
+      ]
+    },
+    {
+      "variant": "runtime pool pitch",
+      "status": "rejected",
+      "reason": "Compilation exceeded fourteen minutes and several GiB of host memory; stopped after 31 selected passes, no performance",
+      "receipts": [
+        "part6_runtime_stride_parity.txt",
+        "part6_rejected_runtime_stride.patch"
+      ]
+    },
+    {
+      "variant": "first enlarged matrix",
+      "status": "harness failure",
+      "reason": "Historical oracle rebase launch exceeded grid.y; existing oracle-only wider copy tile fixed launch without arithmetic changes",
+      "receipts": [
+        "part6_capacity_parity.xml",
+        "part6_rejected_capacity_bytes.patch",
+        "part6_matrix_parity.xml"
+      ]
+    },
+    {
+      "variant": "import-only dispatch",
+      "status": "rejected",
+      "reason": "Continued logical reach saturates at S despite sparse occupancy; continued mode bypassed pooling and failed capacity",
+      "receipts": [
+        "part6_continued_live256_import_only.json",
+        "part6_import_only_pool.patch"
+      ]
+    },
+    {
+      "variant": "combined large matrix",
+      "status": "harness OOM",
+      "reason": "Discarded historical oracle owner cycles retained about 30.4 GB; only discarded oracle nodes now release private handles after byte snapshots. Candidate and performance nodes use public disposal only",
+      "receipts": [
+        "part6_final158_oracle_oom.xml",
+        "part6_final158_oracle_oom.txt"
+      ]
+    },
+    {
+      "variant": "uniform positive cold tail",
+      "status": "rejected",
+      "reason": "Cold -0 strength caused reference -0 vs candidate +0 query gradients; repaired exceptional cold-tail arithmetic",
+      "receipts": [
+        "part6_cold_zero_parity.txt",
+        "part6_rejected_cold_zero.patch",
+        "part6_cold_zero_fixed_parity.txt"
+      ]
+    },
+    {
+      "variant": "SoA sparse adjoints, full-S replay payloads",
+      "status": "parity passed; expanded capacity failed",
+      "reason": "179 tests passed. Live256 passed but matched live17/1024/2800 gates failed",
+      "receipts": [
+        "part6_final179_parity.xml",
+        "part6_soa_baseline.patch",
+        "part6_continued_live17.json",
+        "part6_continued_live256.json",
+        "part6_continued_live1024.json",
+        "part6_continued_live2800.json",
+        "part6_continued_near_budget.json"
+      ]
+    },
+    {
+      "variant": "AoS replay payloads and packed adjoints",
+      "status": "rejected",
+      "reason": "179 tests passed but live2800 baseline ballooned to 20.6 seconds with 276 compiler spills. Ratio passes caused by slowing the baseline do not close gates",
+      "receipts": [
+        "part6_aos_parity.xml",
+        "part6_aos_all_rows.patch",
+        "part6_aos_continued_live2800.json"
+      ]
+    },
+    {
+      "variant": "hybrid sparse AoS layout",
+      "status": "superseded",
+      "reason": "179 tests passed; no final performance sweep accepted on this policy",
+      "receipts": [
+        "part6_final_parity_179.xml",
+        "part6_hybrid_baseline.patch"
+      ]
+    },
+    {
+      "variant": "narrow eight-warps",
+      "status": "rejected",
+      "reason": "Byte failure at S5888/live17; 1 failed, 4 passed. Immediately reverted; no performance",
+      "receipts": [
+        "part6_narrow8_parity.txt",
+        "part6_rejected_narrow8.patch"
+      ]
+    },
+    {
+      "variant": "exact-union hot replay payloads and sparse adjoints",
+      "status": "delivered; overall performance target failed",
+      "reason": "179 tests passed; stable logical IDs, native cold ownership and reversible journal rebasing retained. Final gates are in summary.json",
+      "receipts": [
+        "part6_final_source_parity.xml",
+        "part6_hot_payload_parity.xml",
+        "part6_hot_live17.json",
+        "part6_hot_live256.json",
+        "part6_hot_live1024.json",
+        "part6_hot_live2800.json",
+        "part6_hot_near_budget.json",
+        "summary.json"
+      ]
+    }
+  ],
+  "lifetime_control": {
+    "original": "part6_lifetime_original.txt",
+    "candidate": "part6_matrix_parity.txt",
+    "original_growth_bytes_per_chunk": 40844800,
+    "candidate_standalone_allocated_bytes_each_sample": 9319424
+  },
+  "coordination": "contact_supervisor is not exposed. Details and unexpected discoveries were recorded in part6_coordination.txt. One validation compiler tail briefly overlapped another validation after SIGINT did not terminate it; old process was terminated. No performance overlapped, no subagents or WG were used."
+}

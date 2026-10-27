@@ -1,182 +1,2798 @@
 {
-  "status": "partial; capacity spill cliff closed; long-context and inclusive-launch targets fail; arbitrary sparse imported-state pool incomplete",
-  "all_registered_targets_passed": false,
-  "parity_tests": 141,
-  "requested_original_tests": 138,
-  "added_exact_fixtures": 3,
-  "parity_receipt": "part4_seven_phase_parity.xml",
-  "source_sha256_receipt": "part4_seven_source_sha256.json",
-  "measurement_sources": [
-    "part4_seven_s2944.json",
-    "part4_seven_s5888.json",
-    "part4_seven_s11776.json",
-    "part4_seven_s8192.json",
-    "part4_seven_s8224.json",
-    "part4_seven_t4096.json",
-    "part4_seven_training_slice.json"
-  ],
-  "gates": {
-    "b64_t512_ratio_le_3": {
-      "status": "passed",
-      "actual": 1.5575435873083467,
-      "limit": 3
+  "part": 6,
+  "status": "failed",
+  "parity": {
+    "tests": 179,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "gates": [
+    {
+      "name": "exactness",
+      "value": 0,
+      "limit": 0,
+      "scope": "179 collected tests; original 143 plus 36 regressions",
+      "status": "passed"
     },
-    "b64_t4096_ratio_le_2": {
-      "status": "failed",
-      "actual": 2.7540852359388888,
-      "limit": 2
+    {
+      "name": "B64/T512",
+      "value": 1.5414265287977533,
+      "limit": 3.0,
+      "scope": "matched whole-LM wall",
+      "status": "passed"
     },
-    "capacity_doublings_and_boundary": [
-      {
-        "slots": [
-          2944,
-          5888
-        ],
-        "capacity_growth": 2.0,
-        "step": {
-          "status": "passed",
-          "actual": 1.0693384695412447,
-          "limit": 1.5
-        },
-        "replay": {
-          "status": "passed",
-          "actual": 1.2111665508871157,
-          "limit": 1.5
-        }
-      },
-      {
-        "slots": [
-          5888,
-          11776
-        ],
-        "capacity_growth": 2.0,
-        "step": {
-          "status": "passed",
-          "actual": 1.0165440006051787,
-          "limit": 1.5
-        },
-        "replay": {
-          "status": "passed",
-          "actual": 1.010084445032867,
-          "limit": 1.5
-        }
-      },
-      {
-        "slots": [
-          8192,
-          8224
-        ],
-        "capacity_growth": 1.00390625,
-        "step": {
-          "status": "passed",
-          "actual": 1.0220736042130234,
-          "limit": 1.5
-        },
-        "replay": {
-          "status": "passed",
-          "actual": 1.0916531007045311,
-          "limit": 1.5
-        }
-      }
-    ],
-    "inclusive_launches_le_10": {
-      "status": "failed",
-      "actual": 61,
-      "limit": 10
+    {
+      "name": "B64/T4096",
+      "value": 2.6243002588099227,
+      "limit": 2.0,
+      "scope": "matched whole-LM wall",
+      "status": "failed"
     },
-    "inclusive_launches_by_shape": [
-      {
-        "slots": 2944,
-        "tokens": 512,
-        "activities": 59
-      },
-      {
-        "slots": 5888,
-        "tokens": 512,
-        "activities": 59
-      },
-      {
-        "slots": 11776,
-        "tokens": 512,
-        "activities": 59
-      },
-      {
-        "slots": 8192,
-        "tokens": 512,
-        "activities": 59
-      },
-      {
-        "slots": 8224,
-        "tokens": 512,
-        "activities": 59
-      },
-      {
-        "slots": 2944,
-        "tokens": 4096,
-        "activities": 61
-      }
-    ],
-    "narrow_custom_phases_le_10": {
-      "status": "passed",
-      "actual": 7,
-      "limit": 10
+    {
+      "name": "fresh step 2944->5888",
+      "value": 1.05261476385877,
+      "limit": 1.5,
+      "scope": "B64/T512 fresh",
+      "status": "passed"
     },
-    "custom_phases_t512": 7,
-    "custom_phases_t4096": 7,
-    "requested_seven_phases_at_long_context": {
-      "status": "passed",
-      "actual": 7,
-      "limit": 7
+    {
+      "name": "fresh replay 2944->5888",
+      "value": 1.228967644710783,
+      "limit": 1.5,
+      "scope": "B64/T512 fresh",
+      "status": "passed"
     },
-    "zero_steady_host_syncs": {
-      "status": "passed",
-      "actual": 0,
-      "limit": 0
+    {
+      "name": "fresh step 5888->11776",
+      "value": 1.0145783619656212,
+      "limit": 1.5,
+      "scope": "B64/T512 fresh",
+      "status": "passed"
     },
-    "profiler_boundary_device_sync_counts": [
-      2,
-      2,
-      2,
-      2,
-      2,
-      2
-    ],
-    "matched_2m_loss_curves": {
-      "status": "passed",
-      "actual": 9.5367431640625e-07,
-      "limit": 1e-05
+    {
+      "name": "fresh replay 5888->11776",
+      "value": 1.0187745093637173,
+      "limit": 1.5,
+      "scope": "B64/T512 fresh",
+      "status": "passed"
+    },
+    {
+      "name": "fresh step 8192->8224",
+      "value": 1.0198958845083164,
+      "limit": 1.5,
+      "scope": "B64/T512 fresh",
+      "status": "passed"
+    },
+    {
+      "name": "fresh replay 8192->8224",
+      "value": 1.092624332562613,
+      "limit": 1.5,
+      "scope": "B64/T512 fresh",
+      "status": "passed"
+    },
+    {
+      "name": "inclusive fresh T512/S736",
+      "value": 59,
+      "limit": 10,
+      "scope": "inclusive scan/replay",
+      "status": "failed"
+    },
+    {
+      "name": "custom fresh T512/S736",
+      "value": 7,
+      "limit": 10,
+      "scope": "narrow custom kernels",
+      "status": "passed"
+    },
+    {
+      "name": "steady sync/DtoH fresh T512/S736",
+      "value": 0,
+      "limit": 0,
+      "scope": "two measurement boundaries excluded; metadata transfers retained",
+      "status": "passed"
+    },
+    {
+      "name": "inclusive fresh T512/S2944",
+      "value": 59,
+      "limit": 10,
+      "scope": "inclusive scan/replay",
+      "status": "failed"
+    },
+    {
+      "name": "custom fresh T512/S2944",
+      "value": 7,
+      "limit": 10,
+      "scope": "narrow custom kernels",
+      "status": "passed"
+    },
+    {
+      "name": "steady sync/DtoH fresh T512/S2944",
+      "value": 0,
+      "limit": 0,
+      "scope": "two measurement boundaries excluded; metadata transfers retained",
+      "status": "passed"
+    },
+    {
+      "name": "inclusive fresh T512/S5888",
+      "value": 59,
+      "limit": 10,
+      "scope": "inclusive scan/replay",
+      "status": "failed"
+    },
+    {
+      "name": "custom fresh T512/S5888",
+      "value": 7,
+      "limit": 10,
+      "scope": "narrow custom kernels",
+      "status": "passed"
+    },
+    {
+      "name": "steady sync/DtoH fresh T512/S5888",
+      "value": 0,
+      "limit": 0,
+      "scope": "two measurement boundaries excluded; metadata transfers retained",
+      "status": "passed"
+    },
+    {
+      "name": "inclusive fresh T512/S11776",
+      "value": 59,
+      "limit": 10,
+      "scope": "inclusive scan/replay",
+      "status": "failed"
+    },
+    {
+      "name": "custom fresh T512/S11776",
+      "value": 7,
+      "limit": 10,
+      "scope": "narrow custom kernels",
+      "status": "passed"
+    },
+    {
+      "name": "steady sync/DtoH fresh T512/S11776",
+      "value": 0,
+      "limit": 0,
+      "scope": "two measurement boundaries excluded; metadata transfers retained",
+      "status": "passed"
+    },
+    {
+      "name": "inclusive fresh T128/S2944",
+      "value": 59,
+      "limit": 10,
+      "scope": "inclusive scan/replay",
+      "status": "failed"
+    },
+    {
+      "name": "custom fresh T128/S2944",
+      "value": 7,
+      "limit": 10,
+      "scope": "narrow custom kernels",
+      "status": "passed"
+    },
+    {
+      "name": "steady sync/DtoH fresh T128/S2944",
+      "value": 0,
+      "limit": 0,
+      "scope": "two measurement boundaries excluded; metadata transfers retained",
+      "status": "passed"
+    },
+    {
+      "name": "inclusive fresh T1024/S2944",
+      "value": 59,
+      "limit": 10,
+      "scope": "inclusive scan/replay",
+      "status": "failed"
+    },
+    {
+      "name": "custom fresh T1024/S2944",
+      "value": 7,
+      "limit": 10,
+      "scope": "narrow custom kernels",
+      "status": "passed"
+    },
+    {
+      "name": "steady sync/DtoH fresh T1024/S2944",
+      "value": 0,
+      "limit": 0,
+      "scope": "two measurement boundaries excluded; metadata transfers retained",
+      "status": "passed"
+    },
+    {
+      "name": "inclusive fresh T4096/S2944",
+      "value": 61,
+      "limit": 10,
+      "scope": "inclusive scan/replay",
+      "status": "failed"
+    },
+    {
+      "name": "custom fresh T4096/S2944",
+      "value": 7,
+      "limit": 10,
+      "scope": "narrow custom kernels",
+      "status": "passed"
+    },
+    {
+      "name": "steady sync/DtoH fresh T4096/S2944",
+      "value": 0,
+      "limit": 0,
+      "scope": "two measurement boundaries excluded; metadata transfers retained",
+      "status": "passed"
+    },
+    {
+      "name": "inclusive fresh T512/S8192",
+      "value": 59,
+      "limit": 10,
+      "scope": "inclusive scan/replay",
+      "status": "failed"
+    },
+    {
+      "name": "custom fresh T512/S8192",
+      "value": 7,
+      "limit": 10,
+      "scope": "narrow custom kernels",
+      "status": "passed"
+    },
+    {
+      "name": "steady sync/DtoH fresh T512/S8192",
+      "value": 0,
+      "limit": 0,
+      "scope": "two measurement boundaries excluded; metadata transfers retained",
+      "status": "passed"
+    },
+    {
+      "name": "inclusive fresh T512/S8224",
+      "value": 59,
+      "limit": 10,
+      "scope": "inclusive scan/replay",
+      "status": "failed"
+    },
+    {
+      "name": "custom fresh T512/S8224",
+      "value": 7,
+      "limit": 10,
+      "scope": "narrow custom kernels",
+      "status": "passed"
+    },
+    {
+      "name": "steady sync/DtoH fresh T512/S8224",
+      "value": 0,
+      "limit": 0,
+      "scope": "two measurement boundaries excluded; metadata transfers retained",
+      "status": "passed"
+    },
+    {
+      "name": "live17/imported step_ms [2944, 5888]",
+      "value": 1.8570054924504027,
+      "limit": 1.5,
+      "scope": "fixed-live cell control",
+      "status": "failed"
+    },
+    {
+      "name": "live17/imported replay_ms [2944, 5888]",
+      "value": 2.400741354719278,
+      "limit": 1.5,
+      "scope": "fixed-live cell control",
+      "status": "failed"
+    },
+    {
+      "name": "live17/imported step_ms [5888, 11776]",
+      "value": 1.4519280837472182,
+      "limit": 1.5,
+      "scope": "fixed-live cell control",
+      "status": "passed"
+    },
+    {
+      "name": "live17/imported replay_ms [5888, 11776]",
+      "value": 1.311854103343465,
+      "limit": 1.5,
+      "scope": "fixed-live cell control",
+      "status": "passed"
+    },
+    {
+      "name": "live17/imported step_ms [8192, 8224]",
+      "value": 1.1577604614719565,
+      "limit": 1.5,
+      "scope": "fixed-live cell control",
+      "status": "passed"
+    },
+    {
+      "name": "live17/imported replay_ms [8192, 8224]",
+      "value": 1.2745508573048674,
+      "limit": 1.5,
+      "scope": "fixed-live cell control",
+      "status": "passed"
+    },
+    {
+      "name": "live17/continued step_ms [2944, 5888]",
+      "value": 1.8762169847058923,
+      "limit": 1.5,
+      "scope": "fixed-live cell control",
+      "status": "failed"
+    },
+    {
+      "name": "live17/continued replay_ms [2944, 5888]",
+      "value": 2.4520492973180796,
+      "limit": 1.5,
+      "scope": "fixed-live cell control",
+      "status": "failed"
+    },
+    {
+      "name": "live17/continued step_ms [5888, 11776]",
+      "value": 1.4568654309052544,
+      "limit": 1.5,
+      "scope": "fixed-live cell control",
+      "status": "passed"
+    },
+    {
+      "name": "live17/continued replay_ms [5888, 11776]",
+      "value": 1.3094702531643003,
+      "limit": 1.5,
+      "scope": "fixed-live cell control",
+      "status": "passed"
+    },
+    {
+      "name": "live17/continued step_ms [8192, 8224]",
+      "value": 1.1664939609095966,
+      "limit": 1.5,
+      "scope": "fixed-live cell control",
+      "status": "passed"
+    },
+    {
+      "name": "live17/continued replay_ms [8192, 8224]",
+      "value": 1.2944936495760764,
+      "limit": 1.5,
+      "scope": "fixed-live cell control",
+      "status": "passed"
+    },
+    {
+      "name": "live256/imported step_ms [2944, 5888]",
+      "value": 1.9652258239974965,
+      "limit": 1.5,
+      "scope": "fixed-live cell control",
+      "status": "failed"
+    },
+    {
+      "name": "live256/imported replay_ms [2944, 5888]",
+      "value": 1.9270074957105854,
+      "limit": 1.5,
+      "scope": "fixed-live cell control",
+      "status": "failed"
+    },
+    {
+      "name": "live256/imported step_ms [5888, 11776]",
+      "value": 1.4444600294197771,
+      "limit": 1.5,
+      "scope": "fixed-live cell control",
+      "status": "passed"
+    },
+    {
+      "name": "live256/imported replay_ms [5888, 11776]",
+      "value": 1.2137758983765419,
+      "limit": 1.5,
+      "scope": "fixed-live cell control",
+      "status": "passed"
+    },
+    {
+      "name": "live256/imported step_ms [8192, 8224]",
+      "value": 1.0494464303848794,
+      "limit": 1.5,
+      "scope": "fixed-live cell control",
+      "status": "passed"
+    },
+    {
+      "name": "live256/imported replay_ms [8192, 8224]",
+      "value": 1.197797048835961,
+      "limit": 1.5,
+      "scope": "fixed-live cell control",
+      "status": "passed"
+    },
+    {
+      "name": "live256/continued step_ms [2944, 5888]",
+      "value": 1.960055772662065,
+      "limit": 1.5,
+      "scope": "fixed-live cell control",
+      "status": "failed"
+    },
+    {
+      "name": "live256/continued replay_ms [2944, 5888]",
+      "value": 1.9181258408900304,
+      "limit": 1.5,
+      "scope": "fixed-live cell control",
+      "status": "failed"
+    },
+    {
+      "name": "live256/continued step_ms [5888, 11776]",
+      "value": 1.4533322953963477,
+      "limit": 1.5,
+      "scope": "fixed-live cell control",
+      "status": "passed"
+    },
+    {
+      "name": "live256/continued replay_ms [5888, 11776]",
+      "value": 1.2140570421821715,
+      "limit": 1.5,
+      "scope": "fixed-live cell control",
+      "status": "passed"
+    },
+    {
+      "name": "live256/continued step_ms [8192, 8224]",
+      "value": 1.0565978866887076,
+      "limit": 1.5,
+      "scope": "fixed-live cell control",
+      "status": "passed"
+    },
+    {
+      "name": "live256/continued replay_ms [8192, 8224]",
+      "value": 1.2079536192191862,
+      "limit": 1.5,
+      "scope": "fixed-live cell control",
+      "status": "passed"
+    },
+    {
+      "name": "live1024/imported step_ms [2944, 5888]",
+      "value": 1.135295892292367,
+      "limit": 1.5,
+      "scope": "fixed-live cell control",
+      "status": "passed"
+    },
+    {
+      "name": "live1024/imported replay_ms [2944, 5888]",
+      "value": 0.9356314580476839,
+      "limit": 1.5,
+      "scope": "fixed-live cell control",
+      "status": "passed"
+    },
+    {
+      "name": "live1024/imported step_ms [5888, 11776]",
+      "value": 1.3957216473031557,
+      "limit": 1.5,
+      "scope": "fixed-live cell control",
+      "status": "passed"
+    },
+    {
+      "name": "live1024/imported replay_ms [5888, 11776]",
+      "value": 1.0468649998464021,
+      "limit": 1.5,
+      "scope": "fixed-live cell control",
+      "status": "passed"
+    },
+    {
+      "name": "live1024/imported step_ms [8192, 8224]",
+      "value": 1.0183125631113938,
+      "limit": 1.5,
+      "scope": "fixed-live cell control",
+      "status": "passed"
+    },
+    {
+      "name": "live1024/imported replay_ms [8192, 8224]",
+      "value": 1.02663200982818,
+      "limit": 1.5,
+      "scope": "fixed-live cell control",
+      "status": "passed"
+    },
+    {
+      "name": "live1024/continued step_ms [2944, 5888]",
+      "value": 1.1399652822993678,
+      "limit": 1.5,
+      "scope": "fixed-live cell control",
+      "status": "passed"
+    },
+    {
+      "name": "live1024/continued replay_ms [2944, 5888]",
+      "value": 0.9390799345654982,
+      "limit": 1.5,
+      "scope": "fixed-live cell control",
+      "status": "passed"
+    },
+    {
+      "name": "live1024/continued step_ms [5888, 11776]",
+      "value": 1.3956093854832463,
+      "limit": 1.5,
+      "scope": "fixed-live cell control",
+      "status": "passed"
+    },
+    {
+      "name": "live1024/continued replay_ms [5888, 11776]",
+      "value": 1.0448007093146996,
+      "limit": 1.5,
+      "scope": "fixed-live cell control",
+      "status": "passed"
+    },
+    {
+      "name": "live1024/continued step_ms [8192, 8224]",
+      "value": 1.0207707548372402,
+      "limit": 1.5,
+      "scope": "fixed-live cell control",
+      "status": "passed"
+    },
+    {
+      "name": "live1024/continued replay_ms [8192, 8224]",
+      "value": 1.0273073942383049,
+      "limit": 1.5,
+      "scope": "fixed-live cell control",
+      "status": "passed"
+    },
+    {
+      "name": "live2800/imported step_ms [2944, 5888]",
+      "value": 1.0094557302860612,
+      "limit": 1.5,
+      "scope": "fixed-live cell control",
+      "status": "passed"
+    },
+    {
+      "name": "live2800/imported replay_ms [2944, 5888]",
+      "value": 0.9800978183061988,
+      "limit": 1.5,
+      "scope": "fixed-live cell control",
+      "status": "passed"
+    },
+    {
+      "name": "live2800/imported step_ms [5888, 11776]",
+      "value": 1.1176476170626866,
+      "limit": 1.5,
+      "scope": "fixed-live cell control",
+      "status": "passed"
+    },
+    {
+      "name": "live2800/imported replay_ms [5888, 11776]",
+      "value": 1.0393102182821659,
+      "limit": 1.5,
+      "scope": "fixed-live cell control",
+      "status": "passed"
+    },
+    {
+      "name": "live2800/imported step_ms [8192, 8224]",
+      "value": 1.0114983937278899,
+      "limit": 1.5,
+      "scope": "fixed-live cell control",
+      "status": "passed"
+    },
+    {
+      "name": "live2800/imported replay_ms [8192, 8224]",
+      "value": 1.0148853797374917,
+      "limit": 1.5,
+      "scope": "fixed-live cell control",
+      "status": "passed"
+    },
+    {
+      "name": "live2800/continued step_ms [2944, 5888]",
+      "value": 1.0104210262414022,
+      "limit": 1.5,
+      "scope": "fixed-live cell control",
+      "status": "passed"
+    },
+    {
+      "name": "live2800/continued replay_ms [2944, 5888]",
+      "value": 0.9815802400084215,
+      "limit": 1.5,
+      "scope": "fixed-live cell control",
+      "status": "passed"
+    },
+    {
+      "name": "live2800/continued step_ms [5888, 11776]",
+      "value": 1.1164788163969264,
+      "limit": 1.5,
+      "scope": "fixed-live cell control",
+      "status": "passed"
+    },
+    {
+      "name": "live2800/continued replay_ms [5888, 11776]",
+      "value": 1.0372195145639187,
+      "limit": 1.5,
+      "scope": "fixed-live cell control",
+      "status": "passed"
+    },
+    {
+      "name": "live2800/continued step_ms [8192, 8224]",
+      "value": 1.0125989417661763,
+      "limit": 1.5,
+      "scope": "fixed-live cell control",
+      "status": "passed"
+    },
+    {
+      "name": "live2800/continued replay_ms [8192, 8224]",
+      "value": 1.0161342188995628,
+      "limit": 1.5,
+      "scope": "fixed-live cell control",
+      "status": "passed"
+    },
+    {
+      "name": "near_budget/imported step_ms [2944, 5888]",
+      "value": 2.046042392158196,
+      "limit": 1.5,
+      "scope": "growing-occupancy stress; literal gate retained",
+      "status": "failed"
+    },
+    {
+      "name": "near_budget/imported replay_ms [2944, 5888]",
+      "value": 2.0623272449248864,
+      "limit": 1.5,
+      "scope": "growing-occupancy stress; literal gate retained",
+      "status": "failed"
+    },
+    {
+      "name": "near_budget/imported step_ms [5888, 11776]",
+      "value": 2.528507317045542,
+      "limit": 1.5,
+      "scope": "growing-occupancy stress; literal gate retained",
+      "status": "failed"
+    },
+    {
+      "name": "near_budget/imported replay_ms [5888, 11776]",
+      "value": 2.7269058813255813,
+      "limit": 1.5,
+      "scope": "growing-occupancy stress; literal gate retained",
+      "status": "failed"
+    },
+    {
+      "name": "near_budget/imported step_ms [8192, 8224]",
+      "value": 0.9933260538248804,
+      "limit": 1.5,
+      "scope": "growing-occupancy stress; literal gate retained",
+      "status": "passed"
+    },
+    {
+      "name": "near_budget/imported replay_ms [8192, 8224]",
+      "value": 0.9891229831812518,
+      "limit": 1.5,
+      "scope": "growing-occupancy stress; literal gate retained",
+      "status": "passed"
+    },
+    {
+      "name": "near_budget/continued step_ms [2944, 5888]",
+      "value": 2.0498951670047307,
+      "limit": 1.5,
+      "scope": "growing-occupancy stress; literal gate retained",
+      "status": "failed"
+    },
+    {
+      "name": "near_budget/continued replay_ms [2944, 5888]",
+      "value": 2.068381625184253,
+      "limit": 1.5,
+      "scope": "growing-occupancy stress; literal gate retained",
+      "status": "failed"
+    },
+    {
+      "name": "near_budget/continued step_ms [5888, 11776]",
+      "value": 2.5311203135692972,
+      "limit": 1.5,
+      "scope": "growing-occupancy stress; literal gate retained",
+      "status": "failed"
+    },
+    {
+      "name": "near_budget/continued replay_ms [5888, 11776]",
+      "value": 2.7302019693787387,
+      "limit": 1.5,
+      "scope": "growing-occupancy stress; literal gate retained",
+      "status": "failed"
+    },
+    {
+      "name": "near_budget/continued step_ms [8192, 8224]",
+      "value": 0.9969936125620382,
+      "limit": 1.5,
+      "scope": "growing-occupancy stress; literal gate retained",
+      "status": "passed"
+    },
+    {
+      "name": "near_budget/continued replay_ms [8192, 8224]",
+      "value": 0.9942236916917219,
+      "limit": 1.5,
+      "scope": "growing-occupancy stress; literal gate retained",
+      "status": "passed"
+    },
+    {
+      "name": "inclusive continued L256/T512/S11776",
+      "value": 106,
+      "limit": 10,
+      "scope": "inclusive scan/replay",
+      "status": "failed"
+    },
+    {
+      "name": "custom continued L256/T512/S11776",
+      "value": 8,
+      "limit": 10,
+      "scope": "narrow custom kernels",
+      "status": "passed"
+    },
+    {
+      "name": "steady sync/DtoH continued L256/T512/S11776",
+      "value": 4,
+      "limit": 0,
+      "scope": "two measurement boundaries excluded; metadata transfers retained",
+      "status": "failed"
+    },
+    {
+      "name": "2M curve base_lm",
+      "value": 9.5367431640625e-07,
+      "limit": 1e-05,
+      "scope": "512 steps / 2,097,152 tokens",
+      "status": "passed"
+    },
+    {
+      "name": "2M curve tape_lm",
+      "value": 9.5367431640625e-07,
+      "limit": 1e-05,
+      "scope": "512 steps / 2,097,152 tokens",
+      "status": "passed"
     }
-  },
-  "representation": {
-    "private_row_bound_t512": 512,
-    "actual_live_rows_t512": 256,
-    "long_registered_dispatch_rows": 2048,
-    "unknown_imports": "dense fallback",
-    "native_cold_rows": "retained",
-    "full_logical_reductions": "retained",
-    "global_reduction_scratch": "removed"
-  },
-  "residual_risks": [
-    "T4096 still exceeds 2x.",
-    "Inclusive activities exceed 10; native fills/copies/transposes/mapping transfers remain unfused.",
-    "Prefix reach is not a general arbitrary-slot live pool; sparse imports and cold native owners remain dense.",
-    "Exact reductions still depend on validated Triton layouts and logical-S expansion."
   ],
-  "operational": {
-    "python": "/home/erikg/emender/.venv/bin/python",
-    "physical_gpus": [
-      "0"
-    ],
-    "broker": "run_leased.sh",
-    "no_pt_files": true,
-    "no_wg": true,
-    "no_delegation": true,
-    "resilient_requirement_ids": "not applicable"
-  },
-  "part5_diagnostic": {
-    "status": "incomplete; no general sparse pool, T4096 optimization or inclusive launch fusion delivered",
-    "report": "../PART5_DIAGNOSTIC.md",
-    "summary": "summary_part5_diagnostic.json",
-    "registered_part4_gates_rerun": false
-  }
+  "continued": [
+    {
+      "label": "live17",
+      "gates": [
+        {
+          "mode": "imported",
+          "slots": [
+            2944,
+            5888
+          ],
+          "limit": 1.5,
+          "ratios": {
+            "step_ms": 1.8570054924504027,
+            "replay_ms": 2.400741354719278
+          },
+          "occupancy_matched": true,
+          "live_counts": [
+            17,
+            17
+          ],
+          "occupied_work_ratio": 1.0,
+          "status": "failed"
+        },
+        {
+          "mode": "imported",
+          "slots": [
+            5888,
+            11776
+          ],
+          "limit": 1.5,
+          "ratios": {
+            "step_ms": 1.4519280837472182,
+            "replay_ms": 1.311854103343465
+          },
+          "occupancy_matched": true,
+          "live_counts": [
+            17,
+            17
+          ],
+          "occupied_work_ratio": 1.0,
+          "status": "passed"
+        },
+        {
+          "mode": "imported",
+          "slots": [
+            8192,
+            8224
+          ],
+          "limit": 1.5,
+          "ratios": {
+            "step_ms": 1.1577604614719565,
+            "replay_ms": 1.2745508573048674
+          },
+          "occupancy_matched": true,
+          "live_counts": [
+            17,
+            17
+          ],
+          "occupied_work_ratio": 1.0,
+          "status": "passed"
+        },
+        {
+          "mode": "continued",
+          "slots": [
+            2944,
+            5888
+          ],
+          "limit": 1.5,
+          "ratios": {
+            "step_ms": 1.8762169847058923,
+            "replay_ms": 2.4520492973180796
+          },
+          "occupancy_matched": true,
+          "live_counts": [
+            17,
+            17
+          ],
+          "occupied_work_ratio": 1.0,
+          "status": "failed"
+        },
+        {
+          "mode": "continued",
+          "slots": [
+            5888,
+            11776
+          ],
+          "limit": 1.5,
+          "ratios": {
+            "step_ms": 1.4568654309052544,
+            "replay_ms": 1.3094702531643003
+          },
+          "occupancy_matched": true,
+          "live_counts": [
+            17,
+            17
+          ],
+          "occupied_work_ratio": 1.0,
+          "status": "passed"
+        },
+        {
+          "mode": "continued",
+          "slots": [
+            8192,
+            8224
+          ],
+          "limit": 1.5,
+          "ratios": {
+            "step_ms": 1.1664939609095966,
+            "replay_ms": 1.2944936495760764
+          },
+          "occupancy_matched": true,
+          "live_counts": [
+            17,
+            17
+          ],
+          "occupied_work_ratio": 1.0,
+          "status": "passed"
+        }
+      ],
+      "peak_allocated_bytes": 15144865792,
+      "peak_reserved_bytes": 15216934912,
+      "points": 10,
+      "rows": [
+        {
+          "mode": "imported",
+          "slots": 2944,
+          "live": 17,
+          "median_ms": {
+            "step_ms": 50.88916281238198,
+            "forward_ms": 27.425472259521484,
+            "replay_ms": 23.48543930053711,
+            "peak_allocated_bytes": 5202935808,
+            "peak_reserved_bytes": 5247074304
+          },
+          "compiler": {
+            "warps": 4,
+            "registers": 116,
+            "spills": 0,
+            "shared_bytes": 128
+          },
+          "allocated_rows": 17,
+          "adjoint_bytes": 2245632,
+          "hot_payload_bytes": 3342336
+        },
+        {
+          "mode": "continued",
+          "slots": 2944,
+          "live": 17,
+          "median_ms": {
+            "step_ms": 50.276602152734995,
+            "forward_ms": 27.218847274780273,
+            "replay_ms": 23.01865577697754,
+            "peak_allocated_bytes": 5202804736,
+            "peak_reserved_bytes": 5247074304
+          },
+          "compiler": {
+            "warps": 4,
+            "registers": 118,
+            "spills": 0,
+            "shared_bytes": 128
+          },
+          "allocated_rows": 17,
+          "adjoint_bytes": 2245632,
+          "hot_payload_bytes": 3342336
+        },
+        {
+          "mode": "imported",
+          "slots": 5888,
+          "live": 17,
+          "median_ms": {
+            "step_ms": 94.50145484879613,
+            "forward_ms": 38.07539367675781,
+            "replay_ms": 56.38246536254883,
+            "peak_allocated_bytes": 8538118144,
+            "peak_reserved_bytes": 8585740288
+          },
+          "compiler": {
+            "warps": 16,
+            "registers": 125,
+            "spills": 0,
+            "shared_bytes": 128
+          },
+          "allocated_rows": 17,
+          "adjoint_bytes": 2245632,
+          "hot_payload_bytes": 3342336
+        },
+        {
+          "mode": "continued",
+          "slots": 5888,
+          "live": 17,
+          "median_ms": {
+            "step_ms": 94.32981489226222,
+            "forward_ms": 37.8419189453125,
+            "replay_ms": 56.44287872314453,
+            "peak_allocated_bytes": 8537987072,
+            "peak_reserved_bytes": 8585740288
+          },
+          "compiler": {
+            "warps": 16,
+            "registers": 125,
+            "spills": 0,
+            "shared_bytes": 128
+          },
+          "allocated_rows": 17,
+          "adjoint_bytes": 2245632,
+          "hot_payload_bytes": 3342336
+        },
+        {
+          "mode": "imported",
+          "slots": 11776,
+          "live": 17,
+          "median_ms": {
+            "step_ms": 137.20931624993682,
+            "forward_ms": 63.201568603515625,
+            "replay_ms": 73.96556854248047,
+            "peak_allocated_bytes": 15144865792,
+            "peak_reserved_bytes": 15216934912
+          },
+          "compiler": {
+            "warps": 16,
+            "registers": 128,
+            "spills": 10,
+            "shared_bytes": 128
+          },
+          "allocated_rows": 17,
+          "adjoint_bytes": 2245632,
+          "hot_payload_bytes": 3342336
+        },
+        {
+          "mode": "continued",
+          "slots": 11776,
+          "live": 17,
+          "median_ms": {
+            "step_ms": 137.42584642022848,
+            "forward_ms": 63.40998458862305,
+            "replay_ms": 73.91027069091797,
+            "peak_allocated_bytes": 15144734720,
+            "peak_reserved_bytes": 15216934912
+          },
+          "compiler": {
+            "warps": 16,
+            "registers": 128,
+            "spills": 10,
+            "shared_bytes": 128
+          },
+          "allocated_rows": 17,
+          "adjoint_bytes": 2245632,
+          "hot_payload_bytes": 3342336
+        },
+        {
+          "mode": "imported",
+          "slots": 8192,
+          "live": 17,
+          "median_ms": {
+            "step_ms": 104.95737101882696,
+            "forward_ms": 47.234046936035156,
+            "replay_ms": 57.69446563720703,
+            "peak_allocated_bytes": 11147130880,
+            "peak_reserved_bytes": 11209277440
+          },
+          "compiler": {
+            "warps": 16,
+            "registers": 128,
+            "spills": 2,
+            "shared_bytes": 128
+          },
+          "allocated_rows": 17,
+          "adjoint_bytes": 2245632,
+          "hot_payload_bytes": 3342336
+        },
+        {
+          "mode": "continued",
+          "slots": 8192,
+          "live": 17,
+          "median_ms": {
+            "step_ms": 104.4283201918006,
+            "forward_ms": 47.38457489013672,
+            "replay_ms": 57.011199951171875,
+            "peak_allocated_bytes": 11146999808,
+            "peak_reserved_bytes": 11209277440
+          },
+          "compiler": {
+            "warps": 16,
+            "registers": 128,
+            "spills": 2,
+            "shared_bytes": 128
+          },
+          "allocated_rows": 17,
+          "adjoint_bytes": 2245632,
+          "hot_payload_bytes": 3342336
+        },
+        {
+          "mode": "imported",
+          "slots": 8224,
+          "live": 17,
+          "median_ms": {
+            "step_ms": 121.51549430564046,
+            "forward_ms": 47.9815673828125,
+            "replay_ms": 73.53453063964844,
+            "peak_allocated_bytes": 11182609408,
+            "peak_reserved_bytes": 11284774912
+          },
+          "compiler": {
+            "warps": 16,
+            "registers": 128,
+            "spills": 10,
+            "shared_bytes": 128
+          },
+          "allocated_rows": 17,
+          "adjoint_bytes": 2245632,
+          "hot_payload_bytes": 3342336
+        },
+        {
+          "mode": "continued",
+          "slots": 8224,
+          "live": 17,
+          "median_ms": {
+            "step_ms": 121.81500485166907,
+            "forward_ms": 48.040958404541016,
+            "replay_ms": 73.8006362915039,
+            "peak_allocated_bytes": 11182478336,
+            "peak_reserved_bytes": 11284774912
+          },
+          "compiler": {
+            "warps": 16,
+            "registers": 128,
+            "spills": 10,
+            "shared_bytes": 128
+          },
+          "allocated_rows": 17,
+          "adjoint_bytes": 2245632,
+          "hot_payload_bytes": 3342336
+        }
+      ]
+    },
+    {
+      "label": "live256",
+      "gates": [
+        {
+          "mode": "imported",
+          "slots": [
+            2944,
+            5888
+          ],
+          "limit": 1.5,
+          "ratios": {
+            "step_ms": 1.9652258239974965,
+            "replay_ms": 1.9270074957105854
+          },
+          "occupancy_matched": true,
+          "live_counts": [
+            256,
+            256
+          ],
+          "occupied_work_ratio": 1.0,
+          "status": "failed"
+        },
+        {
+          "mode": "imported",
+          "slots": [
+            5888,
+            11776
+          ],
+          "limit": 1.5,
+          "ratios": {
+            "step_ms": 1.4444600294197771,
+            "replay_ms": 1.2137758983765419
+          },
+          "occupancy_matched": true,
+          "live_counts": [
+            256,
+            256
+          ],
+          "occupied_work_ratio": 1.0,
+          "status": "passed"
+        },
+        {
+          "mode": "imported",
+          "slots": [
+            8192,
+            8224
+          ],
+          "limit": 1.5,
+          "ratios": {
+            "step_ms": 1.0494464303848794,
+            "replay_ms": 1.197797048835961
+          },
+          "occupancy_matched": true,
+          "live_counts": [
+            256,
+            256
+          ],
+          "occupied_work_ratio": 1.0,
+          "status": "passed"
+        },
+        {
+          "mode": "continued",
+          "slots": [
+            2944,
+            5888
+          ],
+          "limit": 1.5,
+          "ratios": {
+            "step_ms": 1.960055772662065,
+            "replay_ms": 1.9181258408900304
+          },
+          "occupancy_matched": true,
+          "live_counts": [
+            256,
+            256
+          ],
+          "occupied_work_ratio": 1.0,
+          "status": "failed"
+        },
+        {
+          "mode": "continued",
+          "slots": [
+            5888,
+            11776
+          ],
+          "limit": 1.5,
+          "ratios": {
+            "step_ms": 1.4533322953963477,
+            "replay_ms": 1.2140570421821715
+          },
+          "occupancy_matched": true,
+          "live_counts": [
+            256,
+            256
+          ],
+          "occupied_work_ratio": 1.0,
+          "status": "passed"
+        },
+        {
+          "mode": "continued",
+          "slots": [
+            8192,
+            8224
+          ],
+          "limit": 1.5,
+          "ratios": {
+            "step_ms": 1.0565978866887076,
+            "replay_ms": 1.2079536192191862
+          },
+          "occupancy_matched": true,
+          "live_counts": [
+            256,
+            256
+          ],
+          "occupied_work_ratio": 1.0,
+          "status": "passed"
+        }
+      ],
+      "peak_allocated_bytes": 15321077248,
+      "peak_reserved_bytes": 15388901376,
+      "points": 10,
+      "rows": [
+        {
+          "mode": "imported",
+          "slots": 2944,
+          "live": 256,
+          "median_ms": {
+            "step_ms": 118.85132035240531,
+            "forward_ms": 81.95378875732422,
+            "replay_ms": 36.853759765625,
+            "peak_allocated_bytes": 5359568384,
+            "peak_reserved_bytes": 5398069248
+          },
+          "compiler": {
+            "warps": 4,
+            "registers": 142,
+            "spills": 0,
+            "shared_bytes": 1024
+          },
+          "allocated_rows": 256,
+          "adjoint_bytes": 33816576,
+          "hot_payload_bytes": 50331648
+        },
+        {
+          "mode": "continued",
+          "slots": 2944,
+          "live": 256,
+          "median_ms": {
+            "step_ms": 118.541669100523,
+            "forward_ms": 81.44998168945312,
+            "replay_ms": 37.02067184448242,
+            "peak_allocated_bytes": 5359437312,
+            "peak_reserved_bytes": 5398069248
+          },
+          "compiler": {
+            "warps": 4,
+            "registers": 142,
+            "spills": 0,
+            "shared_bytes": 1024
+          },
+          "allocated_rows": 256,
+          "adjoint_bytes": 33816576,
+          "hot_payload_bytes": 50331648
+        },
+        {
+          "mode": "imported",
+          "slots": 5888,
+          "live": 256,
+          "median_ms": {
+            "step_ms": 233.56968397274613,
+            "forward_ms": 162.40640258789062,
+            "replay_ms": 71.01747131347656,
+            "peak_allocated_bytes": 8704540160,
+            "peak_reserved_bytes": 8747220992
+          },
+          "compiler": {
+            "warps": 16,
+            "registers": 124,
+            "spills": 0,
+            "shared_bytes": 1024
+          },
+          "allocated_rows": 256,
+          "adjoint_bytes": 33816576,
+          "hot_payload_bytes": 50331648
+        },
+        {
+          "mode": "continued",
+          "slots": 5888,
+          "live": 256,
+          "median_ms": {
+            "step_ms": 232.34828282147646,
+            "forward_ms": 161.25645446777344,
+            "replay_ms": 71.01030731201172,
+            "peak_allocated_bytes": 8704409088,
+            "peak_reserved_bytes": 8747220992
+          },
+          "compiler": {
+            "warps": 16,
+            "registers": 124,
+            "spills": 0,
+            "shared_bytes": 1024
+          },
+          "allocated_rows": 256,
+          "adjoint_bytes": 33816576,
+          "hot_payload_bytes": 50331648
+        },
+        {
+          "mode": "imported",
+          "slots": 11776,
+          "live": 256,
+          "median_ms": {
+            "step_ms": 337.3820725828409,
+            "forward_ms": 251.50770568847656,
+            "replay_ms": 86.19929504394531,
+            "peak_allocated_bytes": 15321077248,
+            "peak_reserved_bytes": 15388901376
+          },
+          "compiler": {
+            "warps": 16,
+            "registers": 128,
+            "spills": 12,
+            "shared_bytes": 1024
+          },
+          "allocated_rows": 256,
+          "adjoint_bytes": 33816576,
+          "hot_payload_bytes": 50331648
+        },
+        {
+          "mode": "continued",
+          "slots": 11776,
+          "live": 256,
+          "median_ms": {
+            "step_ms": 337.67926320433617,
+            "forward_ms": 251.36959838867188,
+            "replay_ms": 86.21056365966797,
+            "peak_allocated_bytes": 15320946176,
+            "peak_reserved_bytes": 15388901376
+          },
+          "compiler": {
+            "warps": 16,
+            "registers": 128,
+            "spills": 12,
+            "shared_bytes": 1024
+          },
+          "allocated_rows": 256,
+          "adjoint_bytes": 33816576,
+          "hot_payload_bytes": 50331648
+        },
+        {
+          "mode": "imported",
+          "slots": 8192,
+          "live": 256,
+          "median_ms": {
+            "step_ms": 299.29300816729665,
+            "forward_ms": 227.86349487304688,
+            "replay_ms": 71.30230712890625,
+            "peak_allocated_bytes": 11323342336,
+            "peak_reserved_bytes": 11381243904
+          },
+          "compiler": {
+            "warps": 16,
+            "registers": 128,
+            "spills": 2,
+            "shared_bytes": 1024
+          },
+          "allocated_rows": 256,
+          "adjoint_bytes": 33816576,
+          "hot_payload_bytes": 50331648
+        },
+        {
+          "mode": "continued",
+          "slots": 8192,
+          "live": 256,
+          "median_ms": {
+            "step_ms": 299.44925801828504,
+            "forward_ms": 228.55270385742188,
+            "replay_ms": 70.91302490234375,
+            "peak_allocated_bytes": 11323211264,
+            "peak_reserved_bytes": 11381243904
+          },
+          "compiler": {
+            "warps": 16,
+            "registers": 128,
+            "spills": 2,
+            "shared_bytes": 1024
+          },
+          "allocated_rows": 256,
+          "adjoint_bytes": 33816576,
+          "hot_payload_bytes": 50331648
+        },
+        {
+          "mode": "imported",
+          "slots": 8224,
+          "live": 256,
+          "median_ms": {
+            "step_ms": 314.09197906032205,
+            "forward_ms": 228.78515625,
+            "replay_ms": 85.40569305419922,
+            "peak_allocated_bytes": 11358820864,
+            "peak_reserved_bytes": 11456741376
+          },
+          "compiler": {
+            "warps": 16,
+            "registers": 128,
+            "spills": 12,
+            "shared_bytes": 1024
+          },
+          "allocated_rows": 256,
+          "adjoint_bytes": 33816576,
+          "hot_payload_bytes": 50331648
+        },
+        {
+          "mode": "continued",
+          "slots": 8224,
+          "live": 256,
+          "median_ms": {
+            "step_ms": 316.39745319262147,
+            "forward_ms": 230.62835693359375,
+            "replay_ms": 85.6596450805664,
+            "peak_allocated_bytes": 11358689792,
+            "peak_reserved_bytes": 11456741376
+          },
+          "compiler": {
+            "warps": 16,
+            "registers": 128,
+            "spills": 12,
+            "shared_bytes": 1024
+          },
+          "allocated_rows": 256,
+          "adjoint_bytes": 33816576,
+          "hot_payload_bytes": 50331648
+        }
+      ]
+    },
+    {
+      "label": "live1024",
+      "gates": [
+        {
+          "mode": "imported",
+          "slots": [
+            2944,
+            5888
+          ],
+          "limit": 1.5,
+          "ratios": {
+            "step_ms": 1.135295892292367,
+            "replay_ms": 0.9356314580476839
+          },
+          "occupancy_matched": true,
+          "live_counts": [
+            1024,
+            1024
+          ],
+          "occupied_work_ratio": 1.0,
+          "status": "passed"
+        },
+        {
+          "mode": "imported",
+          "slots": [
+            5888,
+            11776
+          ],
+          "limit": 1.5,
+          "ratios": {
+            "step_ms": 1.3957216473031557,
+            "replay_ms": 1.0468649998464021
+          },
+          "occupancy_matched": true,
+          "live_counts": [
+            1024,
+            1024
+          ],
+          "occupied_work_ratio": 1.0,
+          "status": "passed"
+        },
+        {
+          "mode": "imported",
+          "slots": [
+            8192,
+            8224
+          ],
+          "limit": 1.5,
+          "ratios": {
+            "step_ms": 1.0183125631113938,
+            "replay_ms": 1.02663200982818
+          },
+          "occupancy_matched": true,
+          "live_counts": [
+            1024,
+            1024
+          ],
+          "occupied_work_ratio": 1.0,
+          "status": "passed"
+        },
+        {
+          "mode": "continued",
+          "slots": [
+            2944,
+            5888
+          ],
+          "limit": 1.5,
+          "ratios": {
+            "step_ms": 1.1399652822993678,
+            "replay_ms": 0.9390799345654982
+          },
+          "occupancy_matched": true,
+          "live_counts": [
+            1024,
+            1024
+          ],
+          "occupied_work_ratio": 1.0,
+          "status": "passed"
+        },
+        {
+          "mode": "continued",
+          "slots": [
+            5888,
+            11776
+          ],
+          "limit": 1.5,
+          "ratios": {
+            "step_ms": 1.3956093854832463,
+            "replay_ms": 1.0448007093146996
+          },
+          "occupancy_matched": true,
+          "live_counts": [
+            1024,
+            1024
+          ],
+          "occupied_work_ratio": 1.0,
+          "status": "passed"
+        },
+        {
+          "mode": "continued",
+          "slots": [
+            8192,
+            8224
+          ],
+          "limit": 1.5,
+          "ratios": {
+            "step_ms": 1.0207707548372402,
+            "replay_ms": 1.0273073942383049
+          },
+          "occupancy_matched": true,
+          "live_counts": [
+            1024,
+            1024
+          ],
+          "occupied_work_ratio": 1.0,
+          "status": "passed"
+        }
+      ],
+      "peak_allocated_bytes": 15887314432,
+      "peak_reserved_bytes": 15953035264,
+      "points": 10,
+      "rows": [
+        {
+          "mode": "imported",
+          "slots": 2944,
+          "live": 1024,
+          "median_ms": {
+            "step_ms": 432.57813807576895,
+            "forward_ms": 138.0894775390625,
+            "replay_ms": 294.10992431640625,
+            "peak_allocated_bytes": 6051291648,
+            "peak_reserved_bytes": 6488588288
+          },
+          "compiler": {
+            "warps": 4,
+            "registers": 224,
+            "spills": 0,
+            "shared_bytes": 4096
+          },
+          "allocated_rows": 1024,
+          "adjoint_bytes": 135266304,
+          "hot_payload_bytes": 201326592
+        },
+        {
+          "mode": "continued",
+          "slots": 2944,
+          "live": 1024,
+          "median_ms": {
+            "step_ms": 431.7481080070138,
+            "forward_ms": 137.9368896484375,
+            "replay_ms": 293.8030090332031,
+            "peak_allocated_bytes": 6051291648,
+            "peak_reserved_bytes": 6488588288
+          },
+          "compiler": {
+            "warps": 4,
+            "registers": 224,
+            "spills": 0,
+            "shared_bytes": 4096
+          },
+          "allocated_rows": 1024,
+          "adjoint_bytes": 135266304,
+          "hot_payload_bytes": 201326592
+        },
+        {
+          "mode": "imported",
+          "slots": 5888,
+          "live": 1024,
+          "median_ms": {
+            "step_ms": 491.10418325290084,
+            "forward_ms": 216.17225646972656,
+            "replay_ms": 275.1784973144531,
+            "peak_allocated_bytes": 9239320064,
+            "peak_reserved_bytes": 9281994752
+          },
+          "compiler": {
+            "warps": 16,
+            "registers": 128,
+            "spills": 0,
+            "shared_bytes": 4096
+          },
+          "allocated_rows": 1024,
+          "adjoint_bytes": 135266304,
+          "hot_payload_bytes": 201326592
+        },
+        {
+          "mode": "continued",
+          "slots": 5888,
+          "live": 1024,
+          "median_ms": {
+            "step_ms": 492.1778538264334,
+            "forward_ms": 216.3240966796875,
+            "replay_ms": 275.9045104980469,
+            "peak_allocated_bytes": 9239188992,
+            "peak_reserved_bytes": 9281994752
+          },
+          "compiler": {
+            "warps": 16,
+            "registers": 128,
+            "spills": 0,
+            "shared_bytes": 4096
+          },
+          "allocated_rows": 1024,
+          "adjoint_bytes": 135266304,
+          "hot_payload_bytes": 201326592
+        },
+        {
+          "mode": "imported",
+          "slots": 11776,
+          "live": 1024,
+          "median_ms": {
+            "step_ms": 685.4447396472096,
+            "forward_ms": 397.4696960449219,
+            "replay_ms": 288.0747375488281,
+            "peak_allocated_bytes": 15887314432,
+            "peak_reserved_bytes": 15953035264
+          },
+          "compiler": {
+            "warps": 16,
+            "registers": 128,
+            "spills": 10,
+            "shared_bytes": 4096
+          },
+          "allocated_rows": 1024,
+          "adjoint_bytes": 135266304,
+          "hot_payload_bytes": 201326592
+        },
+        {
+          "mode": "continued",
+          "slots": 11776,
+          "live": 1024,
+          "median_ms": {
+            "step_ms": 686.8880321271718,
+            "forward_ms": 398.41790771484375,
+            "replay_ms": 288.2652282714844,
+            "peak_allocated_bytes": 15887183360,
+            "peak_reserved_bytes": 15953035264
+          },
+          "compiler": {
+            "warps": 16,
+            "registers": 128,
+            "spills": 10,
+            "shared_bytes": 4096
+          },
+          "allocated_rows": 1024,
+          "adjoint_bytes": 135266304,
+          "hot_payload_bytes": 201326592
+        },
+        {
+          "mode": "imported",
+          "slots": 8192,
+          "live": 1024,
+          "median_ms": {
+            "step_ms": 563.1879549473524,
+            "forward_ms": 282.54498291015625,
+            "replay_ms": 280.0312194824219,
+            "peak_allocated_bytes": 11889579520,
+            "peak_reserved_bytes": 11947474944
+          },
+          "compiler": {
+            "warps": 16,
+            "registers": 128,
+            "spills": 2,
+            "shared_bytes": 4096
+          },
+          "allocated_rows": 1024,
+          "adjoint_bytes": 135266304,
+          "hot_payload_bytes": 201326592
+        },
+        {
+          "mode": "continued",
+          "slots": 8192,
+          "live": 1024,
+          "median_ms": {
+            "step_ms": 563.2807062938809,
+            "forward_ms": 283.76904296875,
+            "replay_ms": 279.7055969238281,
+            "peak_allocated_bytes": 11889448448,
+            "peak_reserved_bytes": 11947474944
+          },
+          "compiler": {
+            "warps": 16,
+            "registers": 128,
+            "spills": 2,
+            "shared_bytes": 4096
+          },
+          "allocated_rows": 1024,
+          "adjoint_bytes": 135266304,
+          "hot_payload_bytes": 201326592
+        },
+        {
+          "mode": "imported",
+          "slots": 8224,
+          "live": 1024,
+          "median_ms": {
+            "step_ms": 573.5013699159026,
+            "forward_ms": 285.891357421875,
+            "replay_ms": 287.489013671875,
+            "peak_allocated_bytes": 11925058048,
+            "peak_reserved_bytes": 12022972416
+          },
+          "compiler": {
+            "warps": 16,
+            "registers": 128,
+            "spills": 10,
+            "shared_bytes": 4096
+          },
+          "allocated_rows": 1024,
+          "adjoint_bytes": 135266304,
+          "hot_payload_bytes": 201326592
+        },
+        {
+          "mode": "continued",
+          "slots": 8224,
+          "live": 1024,
+          "median_ms": {
+            "step_ms": 574.9804717488587,
+            "forward_ms": 287.6999816894531,
+            "replay_ms": 287.3436279296875,
+            "peak_allocated_bytes": 11924926976,
+            "peak_reserved_bytes": 12022972416
+          },
+          "compiler": {
+            "warps": 16,
+            "registers": 128,
+            "spills": 10,
+            "shared_bytes": 4096
+          },
+          "allocated_rows": 1024,
+          "adjoint_bytes": 135266304,
+          "hot_payload_bytes": 201326592
+        }
+      ]
+    },
+    {
+      "label": "live2800",
+      "gates": [
+        {
+          "mode": "imported",
+          "slots": [
+            2944,
+            5888
+          ],
+          "limit": 1.5,
+          "ratios": {
+            "step_ms": 1.0094557302860612,
+            "replay_ms": 0.9800978183061988
+          },
+          "occupancy_matched": true,
+          "live_counts": [
+            2800,
+            2800
+          ],
+          "occupied_work_ratio": 1.0,
+          "status": "passed"
+        },
+        {
+          "mode": "imported",
+          "slots": [
+            5888,
+            11776
+          ],
+          "limit": 1.5,
+          "ratios": {
+            "step_ms": 1.1176476170626866,
+            "replay_ms": 1.0393102182821659
+          },
+          "occupancy_matched": true,
+          "live_counts": [
+            2800,
+            2800
+          ],
+          "occupied_work_ratio": 1.0,
+          "status": "passed"
+        },
+        {
+          "mode": "imported",
+          "slots": [
+            8192,
+            8224
+          ],
+          "limit": 1.5,
+          "ratios": {
+            "step_ms": 1.0114983937278899,
+            "replay_ms": 1.0148853797374917
+          },
+          "occupancy_matched": true,
+          "live_counts": [
+            2800,
+            2800
+          ],
+          "occupied_work_ratio": 1.0,
+          "status": "passed"
+        },
+        {
+          "mode": "continued",
+          "slots": [
+            2944,
+            5888
+          ],
+          "limit": 1.5,
+          "ratios": {
+            "step_ms": 1.0104210262414022,
+            "replay_ms": 0.9815802400084215
+          },
+          "occupancy_matched": true,
+          "live_counts": [
+            2800,
+            2800
+          ],
+          "occupied_work_ratio": 1.0,
+          "status": "passed"
+        },
+        {
+          "mode": "continued",
+          "slots": [
+            5888,
+            11776
+          ],
+          "limit": 1.5,
+          "ratios": {
+            "step_ms": 1.1164788163969264,
+            "replay_ms": 1.0372195145639187
+          },
+          "occupancy_matched": true,
+          "live_counts": [
+            2800,
+            2800
+          ],
+          "occupied_work_ratio": 1.0,
+          "status": "passed"
+        },
+        {
+          "mode": "continued",
+          "slots": [
+            8192,
+            8224
+          ],
+          "limit": 1.5,
+          "ratios": {
+            "step_ms": 1.0125989417661763,
+            "replay_ms": 1.0161342188995628
+          },
+          "occupancy_matched": true,
+          "live_counts": [
+            2800,
+            2800
+          ],
+          "occupied_work_ratio": 1.0,
+          "status": "passed"
+        }
+      ],
+      "peak_allocated_bytes": 17198048768,
+      "peak_reserved_bytes": 17263755264,
+      "points": 10,
+      "rows": [
+        {
+          "mode": "imported",
+          "slots": 2944,
+          "live": 2800,
+          "median_ms": {
+            "step_ms": 1178.8085862062871,
+            "forward_ms": 330.5982971191406,
+            "replay_ms": 848.1300659179688,
+            "peak_allocated_bytes": 7801510400,
+            "peak_reserved_bytes": 7866417152
+          },
+          "compiler": {
+            "warps": 4,
+            "registers": 255,
+            "spills": 90,
+            "shared_bytes": 16384
+          },
+          "allocated_rows": 2800,
+          "adjoint_bytes": 369868800,
+          "hot_payload_bytes": 550502400
+        },
+        {
+          "mode": "continued",
+          "slots": 2944,
+          "live": 2800,
+          "median_ms": {
+            "step_ms": 1178.3405649475753,
+            "forward_ms": 330.6168212890625,
+            "replay_ms": 847.6773681640625,
+            "peak_allocated_bytes": 7801510400,
+            "peak_reserved_bytes": 7866417152
+          },
+          "compiler": {
+            "warps": 4,
+            "registers": 255,
+            "spills": 90,
+            "shared_bytes": 16384
+          },
+          "allocated_rows": 2800,
+          "adjoint_bytes": 369868800,
+          "hot_payload_bytes": 550502400
+        },
+        {
+          "mode": "imported",
+          "slots": 5888,
+          "live": 2800,
+          "median_ms": {
+            "step_ms": 1189.955082256347,
+            "forward_ms": 358.508544921875,
+            "replay_ms": 831.2504272460938,
+            "peak_allocated_bytes": 10905614848,
+            "peak_reserved_bytes": 10953424896
+          },
+          "compiler": {
+            "warps": 16,
+            "registers": 128,
+            "spills": 52,
+            "shared_bytes": 16384
+          },
+          "allocated_rows": 2800,
+          "adjoint_bytes": 369868800,
+          "hot_payload_bytes": 550502400
+        },
+        {
+          "mode": "continued",
+          "slots": 5888,
+          "live": 2800,
+          "median_ms": {
+            "step_ms": 1190.6200828962028,
+            "forward_ms": 358.5217590332031,
+            "replay_ms": 832.0633544921875,
+            "peak_allocated_bytes": 10905614848,
+            "peak_reserved_bytes": 10953424896
+          },
+          "compiler": {
+            "warps": 16,
+            "registers": 128,
+            "spills": 54,
+            "shared_bytes": 16384
+          },
+          "allocated_rows": 2800,
+          "adjoint_bytes": 369868800,
+          "hot_payload_bytes": 550502400
+        },
+        {
+          "mode": "imported",
+          "slots": 11776,
+          "live": 2800,
+          "median_ms": {
+            "step_ms": 1329.9504620954394,
+            "forward_ms": 465.9919738769531,
+            "replay_ms": 863.9270629882812,
+            "peak_allocated_bytes": 17198048768,
+            "peak_reserved_bytes": 17263755264
+          },
+          "compiler": {
+            "warps": 16,
+            "registers": 128,
+            "spills": 82,
+            "shared_bytes": 16384
+          },
+          "allocated_rows": 2800,
+          "adjoint_bytes": 369868800,
+          "hot_payload_bytes": 550502400
+        },
+        {
+          "mode": "continued",
+          "slots": 11776,
+          "live": 2800,
+          "median_ms": {
+            "step_ms": 1329.302100930363,
+            "forward_ms": 466.092041015625,
+            "replay_ms": 863.0323486328125,
+            "peak_allocated_bytes": 17197917696,
+            "peak_reserved_bytes": 17263755264
+          },
+          "compiler": {
+            "warps": 16,
+            "registers": 128,
+            "spills": 82,
+            "shared_bytes": 16384
+          },
+          "allocated_rows": 2800,
+          "adjoint_bytes": 369868800,
+          "hot_payload_bytes": 550502400
+        },
+        {
+          "mode": "imported",
+          "slots": 8192,
+          "live": 2800,
+          "median_ms": {
+            "step_ms": 1225.5876930430532,
+            "forward_ms": 380.19873046875,
+            "replay_ms": 845.043701171875,
+            "peak_allocated_bytes": 13357316608,
+            "peak_reserved_bytes": 13459521536
+          },
+          "compiler": {
+            "warps": 16,
+            "registers": 128,
+            "spills": 64,
+            "shared_bytes": 16384
+          },
+          "allocated_rows": 2800,
+          "adjoint_bytes": 369868800,
+          "hot_payload_bytes": 550502400
+        },
+        {
+          "mode": "continued",
+          "slots": 8192,
+          "live": 2800,
+          "median_ms": {
+            "step_ms": 1225.4705331288278,
+            "forward_ms": 380.579833984375,
+            "replay_ms": 844.8113403320312,
+            "peak_allocated_bytes": 13357316608,
+            "peak_reserved_bytes": 13459521536
+          },
+          "compiler": {
+            "warps": 16,
+            "registers": 128,
+            "spills": 64,
+            "shared_bytes": 16384
+          },
+          "allocated_rows": 2800,
+          "adjoint_bytes": 369868800,
+          "hot_payload_bytes": 550502400
+        },
+        {
+          "mode": "imported",
+          "slots": 8224,
+          "live": 2800,
+          "median_ms": {
+            "step_ms": 1239.6799828857183,
+            "forward_ms": 381.9253845214844,
+            "replay_ms": 857.6224975585938,
+            "peak_allocated_bytes": 13389036032,
+            "peak_reserved_bytes": 13535019008
+          },
+          "compiler": {
+            "warps": 16,
+            "registers": 128,
+            "spills": 82,
+            "shared_bytes": 16384
+          },
+          "allocated_rows": 2800,
+          "adjoint_bytes": 369868800,
+          "hot_payload_bytes": 550502400
+        },
+        {
+          "mode": "continued",
+          "slots": 8224,
+          "live": 2800,
+          "median_ms": {
+            "step_ms": 1240.9101650118828,
+            "forward_ms": 382.36260986328125,
+            "replay_ms": 858.4417114257812,
+            "peak_allocated_bytes": 13389036032,
+            "peak_reserved_bytes": 13535019008
+          },
+          "compiler": {
+            "warps": 16,
+            "registers": 128,
+            "spills": 82,
+            "shared_bytes": 16384
+          },
+          "allocated_rows": 2800,
+          "adjoint_bytes": 369868800,
+          "hot_payload_bytes": 550502400
+        }
+      ]
+    },
+    {
+      "label": "near_budget",
+      "gates": [
+        {
+          "mode": "imported",
+          "slots": [
+            2944,
+            5888
+          ],
+          "limit": 1.5,
+          "ratios": {
+            "step_ms": 2.046042392158196,
+            "replay_ms": 2.0623272449248864
+          },
+          "occupancy_matched": false,
+          "live_counts": [
+            2912,
+            5856
+          ],
+          "occupied_work_ratio": 2.010989010989011,
+          "status": "failed"
+        },
+        {
+          "mode": "imported",
+          "slots": [
+            5888,
+            11776
+          ],
+          "limit": 1.5,
+          "ratios": {
+            "step_ms": 2.528507317045542,
+            "replay_ms": 2.7269058813255813
+          },
+          "occupancy_matched": false,
+          "live_counts": [
+            5856,
+            11744
+          ],
+          "occupied_work_ratio": 2.0054644808743167,
+          "status": "failed"
+        },
+        {
+          "mode": "imported",
+          "slots": [
+            8192,
+            8224
+          ],
+          "limit": 1.5,
+          "ratios": {
+            "step_ms": 0.9933260538248804,
+            "replay_ms": 0.9891229831812518
+          },
+          "occupancy_matched": false,
+          "live_counts": [
+            8160,
+            8192
+          ],
+          "occupied_work_ratio": 1.003921568627451,
+          "status": "passed"
+        },
+        {
+          "mode": "continued",
+          "slots": [
+            2944,
+            5888
+          ],
+          "limit": 1.5,
+          "ratios": {
+            "step_ms": 2.0498951670047307,
+            "replay_ms": 2.068381625184253
+          },
+          "occupancy_matched": false,
+          "live_counts": [
+            2912,
+            5856
+          ],
+          "occupied_work_ratio": 2.010989010989011,
+          "status": "failed"
+        },
+        {
+          "mode": "continued",
+          "slots": [
+            5888,
+            11776
+          ],
+          "limit": 1.5,
+          "ratios": {
+            "step_ms": 2.5311203135692972,
+            "replay_ms": 2.7302019693787387
+          },
+          "occupancy_matched": false,
+          "live_counts": [
+            5856,
+            11744
+          ],
+          "occupied_work_ratio": 2.0054644808743167,
+          "status": "failed"
+        },
+        {
+          "mode": "continued",
+          "slots": [
+            8192,
+            8224
+          ],
+          "limit": 1.5,
+          "ratios": {
+            "step_ms": 0.9969936125620382,
+            "replay_ms": 0.9942236916917219
+          },
+          "occupancy_matched": false,
+          "live_counts": [
+            8160,
+            8192
+          ],
+          "occupied_work_ratio": 1.003921568627451,
+          "status": "passed"
+        }
+      ],
+      "peak_allocated_bytes": 26478391808,
+      "peak_reserved_bytes": 26937917440,
+      "points": 10,
+      "rows": [
+        {
+          "mode": "imported",
+          "slots": 2944,
+          "live": 2912,
+          "median_ms": {
+            "step_ms": 1220.9188058041036,
+            "forward_ms": 342.1583251953125,
+            "replay_ms": 878.4476318359375,
+            "peak_allocated_bytes": 7911546368,
+            "peak_reserved_bytes": 8002732032
+          },
+          "compiler": {
+            "warps": 4,
+            "registers": 255,
+            "spills": 90,
+            "shared_bytes": 16384
+          },
+          "allocated_rows": 2912,
+          "adjoint_bytes": 384663552,
+          "hot_payload_bytes": 572522496
+        },
+        {
+          "mode": "continued",
+          "slots": 2944,
+          "live": 2912,
+          "median_ms": {
+            "step_ms": 1220.7384067587554,
+            "forward_ms": 342.6321716308594,
+            "replay_ms": 877.9570922851562,
+            "peak_allocated_bytes": 7911546368,
+            "peak_reserved_bytes": 8002732032
+          },
+          "compiler": {
+            "warps": 4,
+            "registers": 255,
+            "spills": 90,
+            "shared_bytes": 16384
+          },
+          "allocated_rows": 2912,
+          "adjoint_bytes": 384663552,
+          "hot_payload_bytes": 572522496
+        },
+        {
+          "mode": "imported",
+          "slots": 5888,
+          "live": 5856,
+          "median_ms": {
+            "step_ms": 2498.0516340583563,
+            "forward_ms": 686.244873046875,
+            "replay_ms": 1811.646484375,
+            "peak_allocated_bytes": 14041602560,
+            "peak_reserved_bytes": 14183038976
+          },
+          "compiler": {
+            "warps": 16,
+            "registers": 128,
+            "spills": 162,
+            "shared_bytes": 32768
+          },
+          "allocated_rows": 5856,
+          "adjoint_bytes": 773554176,
+          "hot_payload_bytes": 1151336448
+        },
+        {
+          "mode": "continued",
+          "slots": 5888,
+          "live": 5856,
+          "median_ms": {
+            "step_ms": 2502.385760191828,
+            "forward_ms": 686.3175659179688,
+            "replay_ms": 1815.9503173828125,
+            "peak_allocated_bytes": 14041602560,
+            "peak_reserved_bytes": 14183038976
+          },
+          "compiler": {
+            "warps": 16,
+            "registers": 128,
+            "spills": 162,
+            "shared_bytes": 32768
+          },
+          "allocated_rows": 5856,
+          "adjoint_bytes": 773554176,
+          "hot_payload_bytes": 1151336448
+        },
+        {
+          "mode": "imported",
+          "slots": 11776,
+          "live": 11744,
+          "median_ms": {
+            "step_ms": 6316.341835074127,
+            "forward_ms": 1375.873046875,
+            "replay_ms": 4940.189453125,
+            "peak_allocated_bytes": 26478391808,
+            "peak_reserved_bytes": 26937917440
+          },
+          "compiler": {
+            "warps": 16,
+            "registers": 128,
+            "spills": 482,
+            "shared_bytes": 65536
+          },
+          "allocated_rows": 11744,
+          "adjoint_bytes": 1551335424,
+          "hot_payload_bytes": 2308964352
+        },
+        {
+          "mode": "continued",
+          "slots": 11776,
+          "live": 11744,
+          "median_ms": {
+            "step_ms": 6333.839430008084,
+            "forward_ms": 1375.741943359375,
+            "replay_ms": 4957.9111328125,
+            "peak_allocated_bytes": 26478391808,
+            "peak_reserved_bytes": 26937917440
+          },
+          "compiler": {
+            "warps": 16,
+            "registers": 128,
+            "spills": 482,
+            "shared_bytes": 65536
+          },
+          "allocated_rows": 11744,
+          "adjoint_bytes": 1551335424,
+          "hot_payload_bytes": 2308964352
+        },
+        {
+          "mode": "imported",
+          "slots": 8192,
+          "live": 8160,
+          "median_ms": {
+            "step_ms": 3488.212550058961,
+            "forward_ms": 954.7477416992188,
+            "replay_ms": 2533.47412109375,
+            "peak_allocated_bytes": 19077833216,
+            "peak_reserved_bytes": 19350421504
+          },
+          "compiler": {
+            "warps": 16,
+            "registers": 128,
+            "spills": 174,
+            "shared_bytes": 32768
+          },
+          "allocated_rows": 8160,
+          "adjoint_bytes": 1077903360,
+          "hot_payload_bytes": 1604321280
+        },
+        {
+          "mode": "continued",
+          "slots": 8192,
+          "live": 8160,
+          "median_ms": {
+            "step_ms": 3477.251595351845,
+            "forward_ms": 954.7110595703125,
+            "replay_ms": 2522.25732421875,
+            "peak_allocated_bytes": 19077833216,
+            "peak_reserved_bytes": 19350421504
+          },
+          "compiler": {
+            "warps": 16,
+            "registers": 128,
+            "spills": 174,
+            "shared_bytes": 32768
+          },
+          "allocated_rows": 8160,
+          "adjoint_bytes": 1077903360,
+          "hot_payload_bytes": 1604321280
+        },
+        {
+          "mode": "imported",
+          "slots": 8224,
+          "live": 8192,
+          "median_ms": {
+            "step_ms": 3464.9324072524905,
+            "forward_ms": 958.8026733398438,
+            "replay_ms": 2505.91748046875,
+            "peak_allocated_bytes": 19141075456,
+            "peak_reserved_bytes": 19455279104
+          },
+          "compiler": {
+            "warps": 16,
+            "registers": 128,
+            "spills": 168,
+            "shared_bytes": 32768
+          },
+          "allocated_rows": 8192,
+          "adjoint_bytes": 1082130432,
+          "hot_payload_bytes": 1610612736
+        },
+        {
+          "mode": "continued",
+          "slots": 8224,
+          "live": 8192,
+          "median_ms": {
+            "step_ms": 3466.7976298369467,
+            "forward_ms": 958.8521118164062,
+            "replay_ms": 2507.68798828125,
+            "peak_allocated_bytes": 19141075456,
+            "peak_reserved_bytes": 19455279104
+          },
+          "compiler": {
+            "warps": 16,
+            "registers": 128,
+            "spills": 170,
+            "shared_bytes": 32768
+          },
+          "allocated_rows": 8192,
+          "adjoint_bytes": 1082130432,
+          "hot_payload_bytes": 1610612736
+        }
+      ]
+    }
+  ],
+  "decomposition": [
+    {
+      "label": "fresh T512/S736",
+      "inclusive": 59,
+      "custom": 7,
+      "unexpected_syncs": [],
+      "dtoh": [],
+      "components": {
+        "x36::scan_forward": {
+          "fills": 0.23757200000000003,
+          "copies_transposes_mapping": 0.7673090000000001,
+          "initialize_free_words": 0.0023039999999999996,
+          "scan_kernel": 44.475997,
+          "materialize_state": 0.019167999999999998,
+          "other_setup_or_reduction": 0.005024
+        },
+        "x36::replay_backward": {
+          "copies_transposes_mapping": 0.685228,
+          "setup_kernel": 0.46276100000000003,
+          "rebase": 1.83741,
+          "reverse_kernel": 54.408629999999995,
+          "other_setup_or_reduction": 0.00848
+        }
+      },
+      "tokens": 512,
+      "slots": 736,
+      "allocator_cpu_ms": 0.6916219999999861,
+      "journal_ablation_ms": 14.479583740234375,
+      "compiler": {
+        "warps": 4,
+        "registers_per_thread": 152,
+        "spills": 0,
+        "shared_bytes": 2048,
+        "sanitize_overflow": true,
+        "automatic_overflow_assert_sites": 11,
+        "ptx_assert_calls": 10,
+        "ptx_local_load_instructions": 0,
+        "ptx_local_store_instructions": 0,
+        "layout": "transposed"
+      }
+    },
+    {
+      "label": "fresh T512/S2944",
+      "inclusive": 59,
+      "custom": 7,
+      "unexpected_syncs": [],
+      "dtoh": [],
+      "components": {
+        "x36::scan_forward": {
+          "fills": 1.0232510000000001,
+          "copies_transposes_mapping": 1.506651,
+          "initialize_free_words": 0.004128,
+          "scan_kernel": 43.149636,
+          "materialize_state": 0.019361,
+          "other_setup_or_reduction": 0.0054719999999999994
+        },
+        "x36::replay_backward": {
+          "copies_transposes_mapping": 0.6855800000000001,
+          "setup_kernel": 1.870115,
+          "rebase": 1.872675,
+          "reverse_kernel": 60.738955000000004,
+          "other_setup_or_reduction": 0.007679999999999999
+        }
+      },
+      "tokens": 512,
+      "slots": 2944,
+      "allocator_cpu_ms": 0.5543699999999836,
+      "journal_ablation_ms": 13.03366470336914,
+      "compiler": {
+        "warps": 8,
+        "registers_per_thread": 101,
+        "spills": 0,
+        "shared_bytes": 2048,
+        "sanitize_overflow": true,
+        "automatic_overflow_assert_sites": 11,
+        "ptx_assert_calls": 11,
+        "ptx_local_load_instructions": 0,
+        "ptx_local_store_instructions": 0,
+        "layout": "transposed"
+      }
+    },
+    {
+      "label": "fresh T512/S5888",
+      "inclusive": 59,
+      "custom": 7,
+      "unexpected_syncs": [],
+      "dtoh": [],
+      "components": {
+        "x36::scan_forward": {
+          "fills": 2.0854139999999988,
+          "copies_transposes_mapping": 2.523761,
+          "initialize_free_words": 0.006048,
+          "scan_kernel": 49.621854,
+          "materialize_state": 0.01968,
+          "other_setup_or_reduction": 0.005535999999999999
+        },
+        "x36::replay_backward": {
+          "copies_transposes_mapping": 0.6907030000000002,
+          "setup_kernel": 3.749445,
+          "rebase": 1.660798,
+          "reverse_kernel": 68.091991,
+          "other_setup_or_reduction": 0.00752
+        }
+      },
+      "tokens": 512,
+      "slots": 5888,
+      "allocator_cpu_ms": 0.4811009999999883,
+      "journal_ablation_ms": 12.920639038085938,
+      "compiler": {
+        "warps": 8,
+        "registers_per_thread": 126,
+        "spills": 0,
+        "shared_bytes": 2048,
+        "sanitize_overflow": true,
+        "automatic_overflow_assert_sites": 61,
+        "ptx_assert_calls": 23,
+        "ptx_local_load_instructions": 0,
+        "ptx_local_store_instructions": 0,
+        "layout": "transposed"
+      }
+    },
+    {
+      "label": "fresh T512/S11776",
+      "inclusive": 59,
+      "custom": 7,
+      "unexpected_syncs": [],
+      "dtoh": [],
+      "components": {
+        "x36::scan_forward": {
+          "fills": 4.204239,
+          "copies_transposes_mapping": 4.512212999999999,
+          "initialize_free_words": 0.00864,
+          "scan_kernel": 44.487097999999996,
+          "materialize_state": 0.01952,
+          "other_setup_or_reduction": 0.005312000000000001
+        },
+        "x36::replay_backward": {
+          "copies_transposes_mapping": 0.683437,
+          "setup_kernel": 7.497898,
+          "rebase": 1.7501120000000001,
+          "reverse_kernel": 72.205597,
+          "other_setup_or_reduction": 0.007488000000000001
+        }
+      },
+      "tokens": 512,
+      "slots": 11776,
+      "allocator_cpu_ms": 0.7492200000000186,
+      "journal_ablation_ms": 11.714431762695312,
+      "compiler": {
+        "warps": 8,
+        "registers_per_thread": 126,
+        "spills": 0,
+        "shared_bytes": 2048,
+        "sanitize_overflow": true,
+        "automatic_overflow_assert_sites": 61,
+        "ptx_assert_calls": 20,
+        "ptx_local_load_instructions": 0,
+        "ptx_local_store_instructions": 0,
+        "layout": "transposed"
+      }
+    },
+    {
+      "label": "fresh T128/S2944",
+      "inclusive": 59,
+      "custom": 7,
+      "unexpected_syncs": [],
+      "dtoh": [],
+      "components": {
+        "x36::scan_forward": {
+          "fills": 0.721869,
+          "copies_transposes_mapping": 0.421033,
+          "initialize_free_words": 0.00368,
+          "scan_kernel": 10.651814,
+          "materialize_state": 0.006112,
+          "other_setup_or_reduction": 0.003264
+        },
+        "x36::replay_backward": {
+          "copies_transposes_mapping": 0.158723,
+          "setup_kernel": 1.855875,
+          "rebase": 0.462184,
+          "reverse_kernel": 10.966476,
+          "other_setup_or_reduction": 0.009536
+        }
+      },
+      "tokens": 128,
+      "slots": 2944,
+      "allocator_cpu_ms": 0.7357510000000071,
+      "journal_ablation_ms": 3.644319534301758,
+      "compiler": {
+        "warps": 8,
+        "registers_per_thread": 102,
+        "spills": 0,
+        "shared_bytes": 512,
+        "sanitize_overflow": true,
+        "automatic_overflow_assert_sites": 11,
+        "ptx_assert_calls": 10,
+        "ptx_local_load_instructions": 0,
+        "ptx_local_store_instructions": 0,
+        "layout": "transposed"
+      }
+    },
+    {
+      "label": "fresh T1024/S2944",
+      "inclusive": 59,
+      "custom": 7,
+      "unexpected_syncs": [],
+      "dtoh": [],
+      "components": {
+        "x36::scan_forward": {
+          "fills": 1.414361,
+          "copies_transposes_mapping": 2.96415,
+          "initialize_free_words": 0.004256,
+          "scan_kernel": 109.003562,
+          "materialize_state": 0.036321,
+          "other_setup_or_reduction": 0.006912
+        },
+        "x36::replay_backward": {
+          "copies_transposes_mapping": 1.372698,
+          "setup_kernel": 1.868835,
+          "rebase": 3.330238,
+          "reverse_kernel": 168.072468,
+          "other_setup_or_reduction": 0.007488000000000001
+        }
+      },
+      "tokens": 1024,
+      "slots": 2944,
+      "allocator_cpu_ms": 0.4302299999999129,
+      "journal_ablation_ms": 24.228836059570312,
+      "compiler": {
+        "warps": 4,
+        "registers_per_thread": 255,
+        "spills": 0,
+        "shared_bytes": 4096,
+        "sanitize_overflow": true,
+        "automatic_overflow_assert_sites": 152,
+        "ptx_assert_calls": 43,
+        "ptx_local_load_instructions": 0,
+        "ptx_local_store_instructions": 0,
+        "layout": "transposed"
+      }
+    },
+    {
+      "label": "fresh T4096/S2944",
+      "inclusive": 61,
+      "custom": 7,
+      "unexpected_syncs": [],
+      "dtoh": [],
+      "components": {
+        "x36::scan_forward": {
+          "fills": 3.8775749999999998,
+          "copies_transposes_mapping": 11.652562999999999,
+          "initialize_free_words": 0.004993,
+          "scan_kernel": 1043.8353299999999,
+          "materialize_state": 0.14041900000000002,
+          "other_setup_or_reduction": 0.019232000000000003
+        },
+        "x36::replay_backward": {
+          "copies_transposes_mapping": 5.619623000000001,
+          "setup_kernel": 1.86957,
+          "rebase": 12.934314,
+          "reverse_kernel": 2746.885123,
+          "other_setup_or_reduction": 0.007232000000000001
+        }
+      },
+      "tokens": 4096,
+      "slots": 2944,
+      "allocator_cpu_ms": 0.46990100000236174,
+      "journal_ablation_ms": 39.7740478515625,
+      "compiler": {
+        "warps": 4,
+        "registers_per_thread": 255,
+        "spills": 26,
+        "shared_bytes": 8192,
+        "sanitize_overflow": true,
+        "automatic_overflow_assert_sites": 152,
+        "ptx_assert_calls": 40,
+        "ptx_local_load_instructions": 0,
+        "ptx_local_store_instructions": 0,
+        "layout": "transposed"
+      }
+    },
+    {
+      "label": "fresh T512/S8192",
+      "inclusive": 59,
+      "custom": 7,
+      "unexpected_syncs": [],
+      "dtoh": [],
+      "components": {
+        "x36::scan_forward": {
+          "fills": 2.9122139999999996,
+          "copies_transposes_mapping": 3.231867,
+          "initialize_free_words": 0.006432,
+          "scan_kernel": 41.321185,
+          "materialize_state": 0.018817,
+          "other_setup_or_reduction": 0.005184
+        },
+        "x36::replay_backward": {
+          "copies_transposes_mapping": 0.6868289999999999,
+          "setup_kernel": 5.208673,
+          "rebase": 1.805569,
+          "reverse_kernel": 70.04952800000001,
+          "other_setup_or_reduction": 0.007712
+        }
+      },
+      "tokens": 512,
+      "slots": 8192,
+      "allocator_cpu_ms": 0.46811099999999056,
+      "journal_ablation_ms": 10.791389465332031,
+      "compiler": {
+        "warps": 8,
+        "registers_per_thread": 116,
+        "spills": 0,
+        "shared_bytes": 2048,
+        "sanitize_overflow": true,
+        "automatic_overflow_assert_sites": 61,
+        "ptx_assert_calls": 20,
+        "ptx_local_load_instructions": 0,
+        "ptx_local_store_instructions": 0,
+        "layout": "transposed"
+      }
+    },
+    {
+      "label": "fresh T512/S8224",
+      "inclusive": 59,
+      "custom": 7,
+      "unexpected_syncs": [],
+      "dtoh": [],
+      "components": {
+        "x36::scan_forward": {
+          "fills": 2.929846,
+          "copies_transposes_mapping": 3.237661,
+          "initialize_free_words": 0.007008,
+          "scan_kernel": 39.483171999999996,
+          "materialize_state": 0.01856,
+          "other_setup_or_reduction": 0.004993
+        },
+        "x36::replay_backward": {
+          "copies_transposes_mapping": 0.6857729999999999,
+          "setup_kernel": 5.228098,
+          "rebase": 1.9105949999999998,
+          "reverse_kernel": 76.334999,
+          "other_setup_or_reduction": 0.007456000000000001
+        }
+      },
+      "tokens": 512,
+      "slots": 8224,
+      "allocator_cpu_ms": 0.4876110000000019,
+      "journal_ablation_ms": 10.772514343261719,
+      "compiler": {
+        "warps": 8,
+        "registers_per_thread": 128,
+        "spills": 2,
+        "shared_bytes": 2048,
+        "sanitize_overflow": true,
+        "automatic_overflow_assert_sites": 61,
+        "ptx_assert_calls": 23,
+        "ptx_local_load_instructions": 0,
+        "ptx_local_store_instructions": 0,
+        "layout": "transposed"
+      }
+    },
+    {
+      "label": "continued L256/T512/S11776",
+      "inclusive": 106,
+      "custom": 8,
+      "unexpected_syncs": [
+        {
+          "name": "cudaStreamSynchronize",
+          "ts": 2284602477830.623,
+          "dur_us": 3.08
+        },
+        {
+          "name": "cudaStreamSynchronize",
+          "ts": 2284602481865.099,
+          "dur_us": 248461.096
+        }
+      ],
+      "dtoh": [
+        "Memcpy DtoH (Device -> Pageable)",
+        "Memcpy DtoH (Device -> Pinned)"
+      ],
+      "components": {
+        "x36::scan_forward": {
+          "fills": 1.6956150000000003,
+          "copies_transposes_mapping": 9.971093000000002,
+          "other_setup_or_reduction": 1.2328540000000001,
+          "initialize_free_words": 0.007744,
+          "scan_kernel": 238.810163,
+          "materialize_state": 0.273157
+        },
+        "x36::replay_backward": {
+          "copies_transposes_mapping": 0.609516,
+          "fills": 0.00304,
+          "other_setup_or_reduction": 0.173283,
+          "setup_kernel": 0.574538,
+          "rebase": 0.9200809999999999,
+          "reverse_kernel": 85.89309200000001
+        }
+      }
+    }
+  ],
+  "limitations": [
+    "Nonempty-entry sizing uses two host metadata transfers per short chunk.",
+    "Nonempty-entry chunks longer than 512 retain dense replay.",
+    "Native cold backing, required native-gradient backing, integer maps and logical-S reductions remain dense.",
+    "No hardware or irreducible structural floor is established."
+  ]
 }

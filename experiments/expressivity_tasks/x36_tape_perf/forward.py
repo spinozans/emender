@@ -115,7 +115,7 @@ def tape_scan(k, q, v, write_strength, pop_strength, append_logit, state,
                     else (case,keys,values))  # unused pointers in the disabled specialization
     all_journal = (AllFieldJournal.allocate(b*h,t,cfg.slots,dk,cfg.value_dim,
                    (keys,values,strength,live,age,history,*metadata),state.tokens,fresh,
-                   initial_live=cfg.slots if state.live_bound is None else state.live_bound)
+                   initial_live=getattr(state,"_entry_live_max",cfg.slots if state.live_bound is None else state.live_bound))
                    if record_all else None)
     if all_journal is not None:
         all_journal.parent=state.all_field_journal

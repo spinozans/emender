@@ -1,0 +1,324 @@
+diff --git a/experiments/expressivity_tasks/x36_tape_perf/backward.py b/experiments/expressivity_tasks/x36_tape_perf/backward.py
+index 6bbc9c21..aa2836a0 100644
+--- a/experiments/expressivity_tasks/x36_tape_perf/backward.py
++++ b/experiments/expressivity_tasks/x36_tape_perf/backward.py
+@@ -74,7 +74,11 @@ def rebase_owned(addresses,counts,old_owners,new_owners,capacity,*,payload_slots
+ 
+ 
+ @triton.jit
+-def slot_sum(x, FullLive, BS:tl.constexpr, FullBS:tl.constexpr, Tail=0.):
++def slot_sum(x, FullLive, BS:tl.constexpr, FullBS:tl.constexpr, Tail=0., Inverse=None, Sparse:tl.constexpr=False):
++    if Sparse:
++        rank=Inverse
++        expanded=tl.gather(x,tl.maximum(rank,0),0)
++        return tl.sum(tl.where(rank>=0,expanded,Tail),0)
+     # Reconstruct only the reduction operand, not the resident adjoint state.
+     # Retain the byte occupancy operand in the reconstructed reduction;
+     # unconstrained gather-only padding changes the blocked floating order.
+@@ -86,7 +90,10 @@ def slot_sum(x, FullLive, BS:tl.constexpr, FullBS:tl.constexpr, Tail=0.):
+ 
+ 
+ @triton.jit
+-def slot_max(x, FullLive, BS:tl.constexpr, FullBS:tl.constexpr):
++def slot_max(x, FullLive, BS:tl.constexpr, FullBS:tl.constexpr, Inverse=None, Sparse:tl.constexpr=False):
++    if Sparse:
++        expanded=tl.gather(x,tl.maximum(Inverse,0),0)
++        return tl.max(tl.where(Inverse>=0,expanded,-1.e30),0)
+     if BS<FullBS:
+         lane=tl.arange(0,FullBS)
+         expanded=tl.gather(x,tl.minimum(lane,BS-1),0)
+@@ -102,15 +109,18 @@ def reverse_program(K,Q,V,Beta,Pop,Keys,Values,Strength,Live,Touch,
+                    DBeta,DPop,DLogit,DCoef,
+                    T:tl.constexpr,S:tl.constexpr,DK:tl.constexpr,DV:tl.constexpr,
+                    BS:tl.constexpr,BV:tl.constexpr,UB:tl.constexpr,Capacity,SoA:tl.constexpr,
+-                   Fresh:tl.constexpr,Start,Decay:tl.constexpr,KeyGrad:tl.constexpr,GS:tl.constexpr,RS:tl.constexpr):
++                   Fresh:tl.constexpr,Start,Decay:tl.constexpr,KeyGrad:tl.constexpr,GS:tl.constexpr,RS:tl.constexpr, PoolRows, PoolInverse, PS:tl.constexpr):
+     # Wide offsets help the bounded fast path; long/large vectors retain
+     # checked int32 offsets to avoid doubling address-register footprints.
+     n=tl.program_id(0).to(tl.int64 if S<4096 and T<=512 else tl.int32)
+-    s=tl.arange(0,BS)
++    p=tl.arange(0,BS)
++    s=tl.load(PoolRows+n*PS+p,p<PS,-1) if PS else p
++    a=p if PS else s
++    AS:tl.constexpr=PS if PS else S
+     d=tl.arange(0,BV)
+-    valid=s<S
++    valid=(s>=0) & (s<S)
+     if T<=512:
+-        gs=tl.load(GStrength+n*GS+s,valid & (s<GS),0.)
++        gs=tl.load(GStrength+n*GS+a,valid & (a<GS),0.)
+     stop=tl.load(Counts+n)
+     coef_grad=tl.full((),0.,tl.float32)
+     for reverse in range(T):
+@@ -127,7 +137,8 @@ def reverse_program(K,Q,V,Beta,Pop,Keys,Values,Strength,Live,Touch,
+         tl.debug_barrier()
+         full_lane=tl.arange(0,triton.next_power_of_2(S))
+         full_live=tl.load(Live+n*S+full_lane,full_lane<S,False).to(tl.int1)
+-        tl.device_assert((full_lane<BS)|(~full_live),'live row outside compact replay')
++        inverse=tl.load(PoolInverse+n*S+full_lane,full_lane<S,-1) if PS else full_lane
++        tl.device_assert((inverse>=0 if PS else full_lane<BS)|(~full_live),'live row outside compact replay')
+         if T<=512:
+             live=tl.load(Live+n*S+s,valid,False).to(tl.int1)
+             reference=tl.load(Strength+n*S+s,valid,0.)
+@@ -153,14 +164,14 @@ def reverse_program(K,Q,V,Beta,Pop,Keys,Values,Strength,Live,Touch,
+             tl.debug_barrier()
+             strength=tl.load(StrengthScratch+n*RS+s,valid & (s<RS),0.)
+             live=tl.load(Live+n*S+s,valid,False).to(tl.int1)
+-            gs=tl.load(GStrength+n*GS+s,valid & (s<GS),0.,volatile=True)
++            gs=tl.load(GStrength+n*GS+a,valid & (a<GS),0.,volatile=True)
+         freed=tl.load(Freed+inp.to(tl.int64)*S+s,valid,0)
+         allocation=tl.load(Alloc+inp)
+         target=tl.load(Matched+inp)
+         case=tl.load(Cases+inp)
+         pop_id=tl.load(Pops+inp)
+         postpop_live=live & (freed!=1)
+-        postwrite_live=postpop_live | (s==allocation)
++        postwrite_live=postpop_live | ((s==allocation) & valid)
+         # Death stops future decay but not the derivative of the multiplication
+         # that produced its terminal strength. Allocation replaces its adjoint.
+         gs=tl.where(postwrite_live,gs*Decay,gs)
+@@ -169,34 +180,36 @@ def reverse_program(K,Q,V,Beta,Pop,Keys,Values,Strength,Live,Touch,
+         dv=tl.full((BV,),0.,tl.float32)
+         dbeta=tl.full((),0.,tl.float32)
+         dlogit=tl.full((),0.,tl.float32)
++        atarget=tl.load(PoolInverse+n*S+target,target>=0,0) if PS else target
+         if (case==4)|(case==5):
+             before=tl.load(Values+((n*DV+d)*S+target if SoA else (n*S+target)*DV+d),d<DV,0.)
+-            gradient=tl.load(GValues+((n*DV+d)*S+target if SoA else (n*S+target)*DV+d),d<DV,0.)
++            gradient=tl.load(GValues+((n*DV+d)*AS+atarget if SoA else (n*AS+atarget)*DV+d),d<DV,0.)
+             dv=beta*gradient
+             dbeta=tl.sum(gradient*(content-before),0)
+-            tl.store(GValues+((n*DV+d)*S+target if SoA else (n*S+target)*DV+d),(1.-beta)*gradient,d<DV)
++            tl.store(GValues+((n*DV+d)*AS+atarget if SoA else (n*AS+atarget)*DV+d),(1.-beta)*gradient,d<DV)
++        aallocation=tl.load(PoolInverse+n*S+allocation,allocation>=0,0) if PS else allocation
+         if allocation>=0:
+-            gradient=tl.load(GValues+((n*DV+d)*S+allocation if SoA else (n*S+allocation)*DV+d),d<DV,0.)
++            gradient=tl.load(GValues+((n*DV+d)*AS+aallocation if SoA else (n*AS+aallocation)*DV+d),d<DV,0.)
+             gate=tl.load(Gates+inp)
+             dv=gate*gradient
+             dlogit=tl.sum(gradient*content,0)*gate*(1.-gate)
+             coef_grad+=dlogit*tl.load(Errors+inp)
+-            tl.store(GValues+((n*DV+d)*S+allocation if SoA else (n*S+allocation)*DV+d),0.,d<DV)
++            tl.store(GValues+((n*DV+d)*AS+aallocation if SoA else (n*AS+aallocation)*DV+d),0.,d<DV)
+             if KeyGrad:
+                 for j in range(DK):
+-                    gk=tl.load(GKeys+((n*DK+j)*S+allocation if SoA else (n*S+allocation)*DK+j))
++                    gk=tl.load(GKeys+((n*DK+j)*AS+aallocation if SoA else (n*AS+aallocation)*DK+j))
+                     tl.store(DKout+inp*DK+j,gk)
+-                    tl.store(GKeys+((n*DK+j)*S+allocation if SoA else (n*S+allocation)*DK+j),0.)
+-            gs=tl.where(s==allocation,0.,gs)
++                    tl.store(GKeys+((n*DK+j)*AS+aallocation if SoA else (n*AS+aallocation)*DK+j),0.)
++            gs=tl.where((s==allocation) & valid,0.,gs)
+         tl.store(DVout+inp*DV+d,dv,d<DV)
+         tl.store(DBeta+inp,dbeta)
+         tl.store(DLogit+inp,dlogit)
+         pop=tl.load(Pop+inp)
+-        dpop=-slot_sum(tl.where(s==pop_id,gs*strength,0.),full_live,BS,triton.next_power_of_2(S))
++        dpop=-slot_sum(tl.where(s==pop_id,gs*strength,0.),full_live,BS,triton.next_power_of_2(S),Inverse=inverse,Sparse=PS>0)
+         gs=tl.where(s==pop_id,gs*(1.-pop),gs)
+         tl.store(DPop+inp,dpop)
+         if T>512:
+-            tl.store(GStrength+n*GS+s,gs,valid & (s<GS))
++            tl.store(GStrength+n*GS+a,gs,valid & (a<GS))
+         tl.debug_barrier()
+         # Read adjoints cover the complete restored entry/write prefix.
+         score=tl.full((BS,),0.,tl.float32)
+@@ -206,12 +219,12 @@ def reverse_program(K,Q,V,Beta,Pop,Keys,Values,Strength,Live,Touch,
+             query=tl.load(Q+inp*DK+j)
+             score+=key*query
+         masked=tl.where(live & valid,score*scale,-1.e30)
+-        maximum=slot_max(masked,full_live,BS,triton.next_power_of_2(S))
++        maximum=slot_max(masked,full_live,BS,triton.next_power_of_2(S),Inverse=inverse,Sparse=PS>0)
+         numer=tl.where(valid,tl.exp(masked-maximum),0.)
+         # No-live softmax includes every physical slot in the historical
+         # expression, even though the eventual read is multiplied by live.
+         tail=tl.where(tl.arange(0,triton.next_power_of_2(S))<S,tl.exp(-1.e30-maximum),0.)
+-        denom=slot_sum(numer,full_live,BS,triton.next_power_of_2(S),tail)
++        denom=slot_sum(numer,full_live,BS,triton.next_power_of_2(S),tail,Inverse=inverse,Sparse=PS>0)
+         prob=numer/denom
+         if T>512:
+             tl.store(ProbabilityScratch+n*RS+s,prob,valid & (s<RS))
+@@ -226,26 +239,26 @@ def reverse_program(K,Q,V,Beta,Pop,Keys,Values,Strength,Live,Touch,
+             tl.store(GValues+((n*DV+j)*S+s if SoA else (n*S+s)*DV+j),gv+weight*gout,valid & live)
+         if T>512:
+             tl.debug_barrier()
+-            gs=tl.load(GStrength+n*GS+s,valid & (s<GS),0.,volatile=True)
++            gs=tl.load(GStrength+n*GS+a,valid & (a<GS),0.,volatile=True)
+             prob=tl.load(ProbabilityScratch+n*RS+s,valid & (s<RS),0.,volatile=True)
+             strength=tl.load(StrengthScratch+n*RS+s,valid & (s<RS),0.,volatile=True)
+         gs+=prob*live*dw
+         if T>512:
+-            tl.store(GStrength+n*GS+s,gs,valid & (s<GS))
++            tl.store(GStrength+n*GS+a,gs,valid & (a<GS))
+         dp=dw*strength*live
+-        dp_sum=slot_sum(prob*dp,full_live,BS,triton.next_power_of_2(S))
++        dp_sum=slot_sum(prob*dp,full_live,BS,triton.next_power_of_2(S),Inverse=inverse,Sparse=PS>0)
+         ds=prob*(dp-dp_sum)*live*scale
+         dq_tail=(tail/denom)*(0.-dp_sum)*0.*scale*0.
+         for j in range(DK):
+             key=tl.load(Keys+((n*DK+j)*S+s if SoA else (n*S+s)*DK+j),valid & live,0.)
+             if KeyGrad:
+                 query=tl.load(Q+inp*DK+j)
+-                gk=tl.load(GKeys+((n*DK+j)*S+s if SoA else (n*S+s)*DK+j),valid & live,0.)
+-                tl.store(GKeys+((n*DK+j)*S+s if SoA else (n*S+s)*DK+j),gk+ds*query,valid & live)
+-            tl.store(DQout+inp*DK+j,slot_sum(ds*key,full_live,BS,triton.next_power_of_2(S),dq_tail))
++                gk=tl.load(GKeys+((n*DK+j)*AS+a if SoA else (n*AS+a)*DK+j),valid & live,0.)
++                tl.store(GKeys+((n*DK+j)*AS+a if SoA else (n*AS+a)*DK+j),gk+ds*query,valid & live)
++            tl.store(DQout+inp*DK+j,slot_sum(ds*key,full_live,BS,triton.next_power_of_2(S),dq_tail,Inverse=inverse,Sparse=PS>0))
+         tl.debug_barrier()
+     if T<=512:
+-        tl.store(GStrength+n*GS+s,gs,valid & (s<GS))
++        tl.store(GStrength+n*GS+a,gs,valid & (a<GS))
+     tl.store(DCoef+n,coef_grad)
+ 
+ 
+@@ -257,7 +270,7 @@ def reverse_kernel(K,Q,V,Beta,Pop,Keys,Values,Strength,Live,Touch,
+                    DBeta,DPop,DLogit,DCoef,
+                    T:tl.constexpr,S:tl.constexpr,DK:tl.constexpr,DV:tl.constexpr,
+                    BS:tl.constexpr,BV:tl.constexpr,UB:tl.constexpr,Capacity,SoA:tl.constexpr,
+-                   Fresh:tl.constexpr,Start,Decay:tl.constexpr,KeyGrad:tl.constexpr,InitialBound:tl.constexpr,GS:tl.constexpr,RS:tl.constexpr):
++                   Fresh:tl.constexpr,Start,Decay:tl.constexpr,KeyGrad:tl.constexpr,InitialBound:tl.constexpr,GS:tl.constexpr,RS:tl.constexpr, PoolRows, PoolInverse, PS:tl.constexpr):
+     # The allocation trace is integral and already resident. Its maximum,
+     # together with the entry prefix bound, covers every row read or mutated.
+     # Dispatch once per store; no host query or synchronization is introduced.
+@@ -273,7 +286,7 @@ def reverse_kernel(K,Q,V,Beta,Pop,Keys,Values,Strength,Live,Touch,
+                 Before,Widths,Counts,Boundaries,GradOut,GKeys,GValues,GStrength,StrengthScratch,
+                 ProbabilityScratch,DKout,DQout,DVout,DBeta,DPop,DLogit,DCoef,
+                 T,S,DK,DV,BS//2,BV,UB,Capacity,SoA,
+-                Fresh,Start,Decay,KeyGrad,GS,RS)
++                Fresh,Start,Decay,KeyGrad,GS,RS,PoolRows,PoolInverse,PS)
+         else:
+             reverse_program(
+                 K,Q,V,Beta,Pop,Keys,Values,Strength,Live,
+@@ -281,7 +294,7 @@ def reverse_kernel(K,Q,V,Beta,Pop,Keys,Values,Strength,Live,Touch,
+                 Before,Widths,Counts,Boundaries,GradOut,GKeys,GValues,GStrength,StrengthScratch,
+                 ProbabilityScratch,DKout,DQout,DVout,DBeta,DPop,DLogit,DCoef,
+                 T,S,DK,DV,BS,BV,UB,Capacity,SoA,
+-                Fresh,Start,Decay,KeyGrad,GS,RS)
++                Fresh,Start,Decay,KeyGrad,GS,RS,PoolRows,PoolInverse,PS)
+     else:
+         reverse_program(
+                 K,Q,V,Beta,Pop,Keys,Values,Strength,Live,
+@@ -289,7 +302,7 @@ def reverse_kernel(K,Q,V,Beta,Pop,Keys,Values,Strength,Live,Touch,
+                 Before,Widths,Counts,Boundaries,GradOut,GKeys,GValues,GStrength,StrengthScratch,
+                 ProbabilityScratch,DKout,DQout,DVout,DBeta,DPop,DLogit,DCoef,
+                 T,S,DK,DV,BS,BV,UB,Capacity,SoA,
+-                Fresh,Start,Decay,KeyGrad,GS,RS)
++                Fresh,Start,Decay,KeyGrad,GS,RS,PoolRows,PoolInverse,PS)
+ 
+ 
+ @triton.jit
+@@ -342,6 +355,7 @@ class Replay(torch.autograd.Function):
+         from ..x30_tape_cell.naive_reference import TapeState
+         initial=FusedState(TapeState(keys,values,strength,live,age,usage),
+                            history,start_tokens,live_bound=saved["live_bound"],owns_import=saved["owns_native"])
++        ctx.entry_live=live.detach().reshape(-1,cfg.slots).clone() if saved["live_bound"] is None else None
+         out,final,trace,pressure=tape_scan(k,q,v,beta,pop,logit,initial,cfg,coef,
+                                           record_all=True)
+         journal=final.all_field_journal
+@@ -381,9 +395,14 @@ class Replay(torch.autograd.Function):
+         key_grad=ctx.needs_input_grad[4] or ctx.needs_input_grad[11]
+         replay_rows=(cfg.slots if ctx.initial_bound is None else
+                      min(cfg.slots,ctx.initial_bound+t))
++        pool_rows=pool_inverse=None
++        if ctx.entry_live is not None and t<=512 and not any(ctx.needs_input_grad[11:14]):
++            from .adjoint_pool import build
++            pool_rows,pool_inverse,_=build(ctx.entry_live,ctx.trace[2])
++            replay_rows=pool_rows.shape[-1]
+         from .replay_setup import prepare
+         replay,(gk,gv,gs)=prepare(ctx.storage.owners,(gkeys,gvalues,gstrength),soa=payload_soa,key_grad=key_grad,
+-            strength_rows=None if ctx.needs_input_grad[13] else replay_rows)
++            strength_rows=None if ctx.needs_input_grad[13] else replay_rows,pool_rows=pool_rows)
+         keys,values,strength,live,age,history,*meta=replay
+         # Replay payloads and adjoints use [store,dim,slot] backing; full-S
+         # reduction/accumulation expressions retain the oracle lane shapes.
+@@ -414,6 +433,7 @@ class Replay(torch.autograd.Function):
+                 triton.next_power_of_2(cfg.value_dim),min(128,triton.next_power_of_2(max(cfg.slots,cfg.value_dim,dk))),ctx.capacity,payload_soa,True,ctx.start,
+                 struct.unpack('<f',struct.pack('<f',cfg.decay_rate))[0],key_grad,
+                 -1 if ctx.initial_bound is None else ctx.initial_bound,gs.shape[-1],replay_rows,
++                live if pool_rows is None else pool_rows,live if pool_inverse is None else pool_inverse,0 if pool_rows is None else replay_rows,
+                 enable_fp_fusion=False,debug=True,num_warps=8 if prefix8 else (16 if cfg.slots>=4096 else 4),
+                 maxnreg=128 if cfg.slots>=4096 else None)
+         finally:
+diff --git a/experiments/expressivity_tasks/x36_tape_perf/replay_setup.py b/experiments/expressivity_tasks/x36_tape_perf/replay_setup.py
+index 83ade322..d97344dc 100644
+--- a/experiments/expressivity_tasks/x36_tape_perf/replay_setup.py
++++ b/experiments/expressivity_tasks/x36_tape_perf/replay_setup.py
+@@ -8,7 +8,7 @@ import triton.language as tl
+ def setup_kernel(Sources, Destinations, Gradients, GradDest,
+                  Starts:tl.constexpr, Numel:tl.constexpr, GStarts:tl.constexpr, GNumel:tl.constexpr, Strides:tl.constexpr,
+                  Missing:tl.constexpr, H:tl.constexpr, S:tl.constexpr,
+-                 Dims:tl.constexpr, SoA:tl.constexpr, GS:tl.constexpr):
++                 Dims:tl.constexpr, SoA:tl.constexpr, GS:tl.constexpr, PoolRows, PS:tl.constexpr):
+     pid=tl.program_id(0)
+     for i in tl.static_range(len(Sources)):
+         if (pid>=Starts[i]) & (pid<Starts[i+1]):
+@@ -28,16 +28,18 @@ def setup_kernel(Sources, Destinations, Gradients, GradDest,
+         if (pid>=GStarts[i]) & (pid<GStarts[i+1]):
+             block=pid-GStarts[i]
+             if i<2 and SoA:
+-                row=(block%tl.cdiv(S,32))*32+tl.arange(0,32)
+-                col=((block//tl.cdiv(S,32))%tl.cdiv(Dims[i],32))*32+tl.arange(0,32)
+-                store=block//(tl.cdiv(S,32)*tl.cdiv(Dims[i],32))
+-                valid=(row[:,None]<S) & (col[None,:]<Dims[i])
++                row=(block%tl.cdiv(PS if PS else S,32))*32+tl.arange(0,32)
++                col=((block//tl.cdiv(PS if PS else S,32))%tl.cdiv(Dims[i],32))*32+tl.arange(0,32)
++                store=block//(tl.cdiv(PS if PS else S,32)*tl.cdiv(Dims[i],32))
++                valid=(row[:,None]<(PS if PS else S)) & (col[None,:]<Dims[i])
++                logical=tl.load(PoolRows+store*PS+row,row<PS,-1) if PS else row
++                valid=valid & (logical[:,None]>=0)
+                 if Missing[i]:
+                     value=tl.full((32,32),0.,tl.float32)
+                 else:
+-                    address=(store//H)*Strides[i][0]+(store%H)*Strides[i][1]+row[:,None]*Strides[i][2]+col[None,:]*Strides[i][3]
++                    address=(store//H)*Strides[i][0]+(store%H)*Strides[i][1]+logical[:,None]*Strides[i][2]+col[None,:]*Strides[i][3]
+                     value=tl.load(Gradients[i]+address,valid,0.)
+-                tl.store(GradDest[i]+(store*Dims[i]+col[None,:])*S+row[:,None],value,valid)
++                tl.store(GradDest[i]+(store*Dims[i]+col[None,:])*(PS if PS else S)+row[:,None],value,row[:,None]<(PS if PS else S))
+             else:
+                 x=block*256+tl.arange(0,256)
+                 valid=x<GNumel[i]
+@@ -49,12 +51,15 @@ def setup_kernel(Sources, Destinations, Gradients, GradDest,
+                     value=tl.load(Gradients[i]+address,valid,0.)
+                 else:
+                     store=x//GS
+-                    address=(store//H)*Strides[i][0]+(store%H)*Strides[i][1]+(x%GS)*Strides[i][2]
++                    row=x%GS
++                    logical=tl.load(PoolRows+store*PS+row,valid,-1) if PS else row
++                    address=(store//H)*Strides[i][0]+(store%H)*Strides[i][1]+logical*Strides[i][2]
++                    valid=valid & (logical>=0)
+                     value=tl.load(Gradients[i]+address,valid,0.)
+                 tl.store(GradDest[i]+x,value,valid)
+ 
+ 
+-def prepare(owners,gradients,*,soa,key_grad=True,strength_rows=None):
++def prepare(owners,gradients,*,soa,key_grad=True,strength_rows=None,pool_rows=None):
+     """Return independent contiguous owners and adjoints in replay layout.
+ 
+     Native-output adjoints may be missing, expanded, or strided. Payload
+@@ -71,7 +76,10 @@ def prepare(owners,gradients,*,soa,key_grad=True,strength_rows=None):
+     replay=tuple(torch.empty_like(x.transpose(-1,-2) if soa and i<2 else x,
+                                  memory_format=torch.contiguous_format)
+                  for i,x in enumerate(owners))
++    ps=0 if pool_rows is None else pool_rows.shape[-1]
+     adjoints=tuple(
++        torch.empty((b,h,ps) if i==2 else ((b,h,x.shape[-2],ps) if soa else (b,h,ps,x.shape[-1])),device=x.device,dtype=x.dtype)
++        if ps and (i or key_grad) else
+         torch.empty((b,h,strength_rows),device=x.device,dtype=x.dtype)
+         if i==2 and strength_rows is not None and strength_rows<s
+         else torch.empty_like(x) if i or key_grad else x
+@@ -83,12 +91,12 @@ def prepare(owners,gradients,*,soa,key_grad=True,strength_rows=None):
+     for i,n in enumerate(numel):
+         payload=i in (0,1,len(owners),len(owners)+1)
+         dim=dk if i in (0,len(owners)) else dv
+-        blocks=(b*h*triton.cdiv(s,32)*triton.cdiv(dim,32) if soa and payload
++        blocks=(b*h*triton.cdiv(ps if ps and i>=len(owners) else s,32)*triton.cdiv(dim,32) if soa and payload
+                 else triton.cdiv(n,256))
+         if i==len(owners) and not key_grad:blocks=0
+         starts.append(starts[-1]+blocks)
+     setup_kernel[(starts[-1],)](owners,replay,sources,adjoints,tuple(starts[:len(owners)+1]),numel[:len(owners)],
+                                tuple(starts[len(owners):]),numel[len(owners):],
+-                               tuple(x.stride() for x in sources),missing,h,s,(dk,dv),soa,adjoints[2].shape[-1],
++                               tuple(x.stride() for x in sources),missing,h,s,(dk,dv),soa,adjoints[2].shape[-1],owners[3] if pool_rows is None else pool_rows,ps,
+                                num_warps=4,enable_fp_fusion=False)
+     return replay,adjoints
