@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="7.514" timestamp="2026-10-27T12:40:10.361780+00:00" hostname="lambda01"><testcase classname="experiments.expressivity_tasks.x36_tape_perf.tests.test_exact" name="test_fresh_exact[736-9-4-5]" time="7.230"><failure message="triton.compiler.errors.CompilationError: at 86:8:&#10;            key=tl.load(Keys+(n*S+s)*DK+j,valid &amp; live,0.)&#10;            query=tl.load(Q+inp*DK+j)&#10;            score+=key*query&#10;        masked=tl.where(live &amp; valid,score*scale,-1.e30)&#10;        numer=tl.where(valid,tl.exp(masked-tl.max(masked,0)),0.)&#10;        prob=numer/tl.sum(numer,0)&#10;        weight=prob*strength*live&#10;        dw=tl.full((BS,),0.,tl.float32)&#10;        # Coalesce eight adjacent value/adjoint columns, retaining the exact&#10;        # left-to-right per-value accumulation into dw (no prefix reduction).&#10;        vd=tl.arange(0,8)&#10;        for block in range(tl.cdiv(DV,8)):&#10;        ^&#10;AssertionError(&quot;Loop carried variable j changed type, was &lt;class 'triton.language.core.constexpr'&gt; but is now &lt;class 'triton.language.core.tensor'&gt;&quot;)">experiments/expressivity_tasks/x36_tape_perf/tests/test_exact.py:27: in test_fresh_exact
+    grads=torch.autograd.grad(loss,xs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:503: in grad
+    result = _engine_run_backward(
+.venv/lib/python3.12/site-packages/torch/autograd/graph.py:841: in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:315: in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:608: in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/backward.py:257: in backward
+    reverse_kernel[(b*h,)](*args,keys,values,strength,live,meta[5],
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in &lt;lambda&gt;
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:733: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:861: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:300: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:80: in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+E   triton.compiler.errors.CompilationError: at 86:8:
+E               key=tl.load(Keys+(n*S+s)*DK+j,valid &amp; live,0.)
+E               query=tl.load(Q+inp*DK+j)
+E               score+=key*query
+E           masked=tl.where(live &amp; valid,score*scale,-1.e30)
+E           numer=tl.where(valid,tl.exp(masked-tl.max(masked,0)),0.)
+E           prob=numer/tl.sum(numer,0)
+E           weight=prob*strength*live
+E           dw=tl.full((BS,),0.,tl.float32)
+E           # Coalesce eight adjacent value/adjoint columns, retaining the exact
+E           # left-to-right per-value accumulation into dw (no prefix reduction).
+E           vd=tl.arange(0,8)
+E           for block in range(tl.cdiv(DV,8)):
+E           ^
+E   AssertionError("Loop carried variable j changed type, was &lt;class 'triton.language.core.constexpr'&gt; but is now &lt;class 'triton.language.core.tensor'&gt;")</failure></testcase></testsuite></testsuites>

@@ -1,8 +1,9 @@
-"""X31 forward, with a dead-row gradient traffic masked in X36 only."""
+"""Persistent exact X31 forward and first-order replay for X36."""
 import torch
 from ..x31_tape_cell_fused.cell_fused import FusedState, TapeHeadConfig
 from ..x31_tape_cell_fused.cell_fused import TapeCell as OriginalCell
 from ..x31_tape_cell_fused.cell_fused import tape_scan as original_scan
+from .forward import tape_scan as persistent_scan
 
 
 def tape_scan(k,q,v,beta,pop,logit,state,cfg,append_err_coef=None,*,record_payload=False,record_all=False):
@@ -17,7 +18,7 @@ def tape_scan(k,q,v,beta,pop,logit,state,cfg,append_err_coef=None,*,record_paylo
             raise ValueError('training manages its private journal automatically')
         from .backward import autograd_scan
         return autograd_scan((k,q,v,beta,pop,logit),state,cfg,coef)
-    return original_scan(k,q,v,beta,pop,logit,state,cfg,coef,
+    return persistent_scan(k,q,v,beta,pop,logit,state,cfg,coef,
                          record_payload=record_payload,record_all=record_all)
 
 

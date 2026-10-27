@@ -1,32 +1,48 @@
 {
-  "status": "partial; registered performance targets not achieved",
-  "parity_tests": 114,
+  "status": "partial; B64 cost, persistent core, zero-sync and semantics pass; long-context cost, inclusive launches and capacity scaling fail",
+  "parity_tests": 123,
   "baseline_b64_step_ms": 13489.507487043738,
-  "optimized_b64_instrumented_step_ms": 628.5130493342876,
-  "replay_speedup": 32.4967879778085,
-  "matched_b64_step_ratio": 3.8232415926573617,
+  "part1_b64_instrumented_step_ms": 628.5130493342876,
+  "optimized_b64_instrumented_step_ms": 443.7813749536872,
+  "replay_speedup_vs_part1": 1.667431217408231,
+  "matched_b64_step_ratio": 2.6552662355086145,
+  "matched_b64_t4096_ratio": 3.311028879821732,
   "gates": {
     "b64_t512_ratio_le_3": {
-      "status": "failed",
-      "actual": 3.8232415926573617
+      "status": "passed",
+      "actual": 2.6552662355086145
     },
     "b64_t4096_ratio_le_2": {
-      "status": "not-run"
+      "status": "failed",
+      "actual": 3.311028879821732
     },
     "lane_launches_le_10": {
       "status": "failed",
-      "token_kernels": 1536
+      "inclusive_scan_and_replay_activities": 100,
+      "custom_phase_kernels": 6,
+      "recurrent_forward_kernels": 1,
+      "scope": "Includes fills, transposes, copies and mapping transfers inside scan/replay; excludes projections. Six custom phase launches alone meet the narrower <=10 target."
     },
     "global_zero_host_syncs": {
-      "status": "failed",
-      "steady_clip_norm_dtoh": 1
+      "status": "passed",
+      "steady_stream_or_event_syncs": 0,
+      "steady_dtoh": 0,
+      "boundary_device_syncs": 2,
+      "cpu_local_scalar_events": 174
     },
     "linear_s_and_nonsequential_t_claim": {
-      "status": "not-validated"
+      "status": "failed",
+      "capacity_growth": 4,
+      "step_growth_s2944_to_s11776": 9.206374320219556,
+      "replay_growth_s2944_to_s11776": 16.42572109435782,
+      "reason": "Capacity sweep has a spill/layout cliff. T sweep changes occupancy and the exactness-preserving warp specialization; no flat per-token or nonsequential-device-T claim."
     },
     "matched_2m_loss_curves": {
       "status": "passed",
-      "max_abs_loss_error": 9.5367431640625e-07
+      "steps_per_arm": 512,
+      "tokens_per_arm": 2097152,
+      "max_abs_loss_error": 9.5367431640625e-07,
+      "threshold": 1e-05
     }
   },
   "all_registered_targets_passed": false

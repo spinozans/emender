@@ -1,0 +1,68 @@
+gpu_lease: granted GPUs: 0 (pid 2689598)
+X36 physical card 0
+Traceback (most recent call last):
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/language/core.py", line 43, in wrapper
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+TypeError: device_print() got an unexpected keyword argument 'mask'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/measure.py", line 196, in <module>
+    main()
+  File "/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/measure.py", line 193, in main
+    measure(args.batch, args.samples, args.variant)
+  File "/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/measure.py", line 94, in measure
+    step(model, opt, x, y)
+  File "/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/measure.py", line 81, in step
+    loss.backward()
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_tensor.py", line 625, in backward
+    torch.autograd.backward(
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/__init__.py", line 354, in backward
+    _engine_run_backward(
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/graph.py", line 841, in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/function.py", line 315, in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/function.py", line 608, in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/backward.py", line 264, in backward
+    rebase_owned(addresses,counts,ctx.address_owners,replay,ctx.capacity,payload_slots=cfg.slots)
+  File "/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/backward.py", line 65, in rebase_owned
+    rebase[(len(counts),triton.cdiv(capacity,256))](
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/runtime/jit.py", line 419, in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/runtime/jit.py", line 733, in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/runtime/jit.py", line 861, in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/compiler/compiler.py", line 300, in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/compiler/compiler.py", line 80, in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+triton.compiler.errors.CompilationError: at 22:4:
+        mid=(lo+hi)//2
+        base=tl.load(Mapping+4*mid,searching,0)
+        right=address>=base
+        lo=tl.where(searching & right,mid+1,lo)
+        hi=tl.where(searching & ~right,mid,hi)
+    slot=lo-1
+    valid=active & (slot>=0)
+    old=tl.load(Mapping+4*slot,valid,0)
+    new=tl.load(Mapping+4*slot+1,valid,0)
+    size=tl.load(Mapping+4*slot+2,valid,0)
+    matched=valid & (address>=old) & (address<old+size)
+    tl.device_print("unowned undo",address,old,size,slot,mask=active & ~matched)
+    ^
+device_print() got an unexpected keyword argument 'mask'

@@ -49,3 +49,20 @@ These do not establish the <=3x model/base gate. Separate matched model/base
 capacity sweep and 512-step/2,097,152-token per-arm slice follow this record.
 Original clipping/AdamW loop is retained for matched semantics; global zero
 host-sync gate remains FAILED. T4096 and persistent forward remain NOT RUN.
+
+## Part 2 final receipts
+
+The registered thresholds are unchanged. `part2_final_parity.txt/.xml`: 123
+passed, including independent B64/T512 and production-import byte comparisons.
+`part2_shape_gates.json`: B64/T512 2.655x PASS; B64/T4096
+3.311x FAIL. `part2_profile_b64.json` and
+`part2_optimized_b64.json`: six custom phases but 100 inclusive scan/replay
+activities FAIL; no steady stream sync or DtoH PASS (two boundary device syncs).
+Capacity scaling FAIL. `part2_training_slice.json`: 2,097,152 tokens per arm,
+all 512 historical loss samples checked, max error 9.53674316e-07 PASS.
+
+Rejected tiled-adjoint, 16-warp and global-8-warp parity attempts are retained.
+The zero-address journal publication failure was fixed with ordered emission;
+dense-loss/address-clone OOM attempts and the large-S SoA regression remain
+raw failed receipts. Final measurements use the ordered journal, restored
+private addresses, bounded-prefix warp guard and large-S AoS fallback.

@@ -1,0 +1,85 @@
+[
+  {
+    "arm": "tape_lm",
+    "batch": 64,
+    "tokens": 512,
+    "heads": 4,
+    "slots": 736,
+    "loss_projection": "dense",
+    "warmups": 2,
+    "samples": 5,
+    "status": "completed",
+    "raw_ms": [
+      280.9849721379578,
+      279.6892998740077,
+      284.9803282879293,
+      286.66992019861937,
+      286.6702298633754
+    ],
+    "median_ms": 284.9803282879293,
+    "peak_allocated_bytes": 23008501248,
+    "component_raw_ms": [
+      {
+        "cell_capture": 50.49446487426758,
+        "replay_backward": 83.56147003173828
+      },
+      {
+        "cell_capture": 52.16563034057617,
+        "replay_backward": 83.4170913696289
+      },
+      {
+        "cell_capture": 51.60550308227539,
+        "replay_backward": 83.08428955078125
+      },
+      {
+        "cell_capture": 52.03148651123047,
+        "replay_backward": 81.75923156738281
+      },
+      {
+        "cell_capture": 52.30796813964844,
+        "replay_backward": 84.39910125732422
+      }
+    ],
+    "component_median_ms": {
+      "cell_capture": 52.03148651123047,
+      "replay_backward": 83.4170913696289
+    },
+    "final_live_min_mean_max": [
+      256.0,
+      256.0,
+      256.0
+    ]
+  },
+  {
+    "arm": "base_lm",
+    "batch": 64,
+    "tokens": 512,
+    "heads": 4,
+    "slots": 2944,
+    "loss_projection": "dense",
+    "warmups": 2,
+    "samples": 5,
+    "status": "completed",
+    "raw_ms": [
+      165.5032760463655,
+      174.9380500987172,
+      153.57044013217092,
+      166.1513173021376,
+      164.54900614917278
+    ],
+    "median_ms": 165.5032760463655,
+    "peak_allocated_bytes": 21365303296
+  },
+  {
+    "arm": "tape_lm",
+    "batch": 64,
+    "tokens": 512,
+    "heads": 4,
+    "slots": 2944,
+    "loss_projection": "dense",
+    "warmups": 2,
+    "samples": 5,
+    "status": "failed",
+    "error": "RuntimeError('Triton Error [CUDA]: device-side assert triggered')"
+  }
+]

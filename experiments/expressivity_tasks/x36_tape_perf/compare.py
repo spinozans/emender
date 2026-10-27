@@ -38,7 +38,7 @@ def main():
         except torch.cuda.OutOfMemoryError as exc:
             record.update(status='failed',error=repr(exc))
         results.append(record)
-        (ROOT/'receipts/shape_gates.json').write_text(json.dumps(results,indent=2)+'\n')
+        (ROOT/'receipts/part2_capacity_compare.json').write_text(json.dumps(results,indent=2)+'\n')
         del model,opt,x,y
         gc.collect();torch.cuda.empty_cache()
     print(json.dumps(results),flush=True)

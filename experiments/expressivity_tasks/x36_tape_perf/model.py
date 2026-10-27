@@ -1,4 +1,4 @@
-"""X34-compatible LM: telemetry eval-only; optional sparse replay traffic."""
+"""X34-compatible LM with eval-only telemetry and X36 persistent tape."""
 import torch
 from ..x34_lm_pilot import model as original
 from .cell_fused import TapeCell

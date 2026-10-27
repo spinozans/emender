@@ -1,0 +1,5 @@
+{
+  "status": "REJECTED outside the known-prefix fast path",
+  "reason": "Production-width imported-state continuation fails raw-byte parity with global warps=8; restoring warps=4 passes both imported fixtures.",
+  "patch": "--- warps4/backward.py\n+++ rejected_global_warps8/backward.py\n@@ -267,7 +267,7 @@\n             t,cfg.slots,dk,cfg.value_dim,triton.next_power_of_2(cfg.slots),\n             triton.next_power_of_2(cfg.value_dim),min(128,triton.next_power_of_2(max(cfg.slots,cfg.value_dim,dk))),ctx.capacity,True,ctx.start,\n             struct.unpack('<f',struct.pack('<f',cfg.decay_rate))[0],\n-            enable_fp_fusion=False,debug=True,num_warps=16 if cfg.slots>=4096 else 4)\n+            enable_fp_fusion=False,debug=True,num_warps=16 if cfg.slots>=4096 else (8 if cfg.slots==2944 else 4))\n         def unflat(x):return x.transpose(1,2).contiguous()\n         return (None,None,None,None,*map(unflat,(dkout,dqout,dvout,dbeta,dpop,dlogit)),\n                 dc.reshape(b,h).sum(0),gk.transpose(-1,-2).contiguous(),\n"
+}

@@ -15,7 +15,7 @@ from ..x31_tape_cell_fused.lazy_decay import advance_exact
 
 @triton.jit
 def rebase(Addresses, Counts, Mapping, Fields:tl.constexpr,
-           Capacity, Block:tl.constexpr):
+           Capacity, Block:tl.constexpr, PayloadS:tl.constexpr=0, ReversePayload:tl.constexpr=False):
     n=tl.program_id(0).to(tl.int64)
     x=tl.program_id(1)*Block+tl.arange(0,Block)
     active=x<tl.load(Counts+n)
@@ -25,32 +25,50 @@ def rebase(Addresses, Counts, Mapping, Fields:tl.constexpr,
     while tl.sum((lo<hi).to(tl.int32),0)>0:
         searching=lo<hi
         mid=(lo+hi)//2
-        base=tl.load(Mapping+3*mid,searching,0)
+        base=tl.load(Mapping+4*mid,searching,0)
         right=address>=base
         lo=tl.where(searching & right,mid+1,lo)
         hi=tl.where(searching & ~right,mid,hi)
     slot=lo-1
     valid=active & (slot>=0)
-    old=tl.load(Mapping+3*slot,valid,0)
-    new=tl.load(Mapping+3*slot+1,valid,0)
-    size=tl.load(Mapping+3*slot+2,valid,0)
+    old=tl.load(Mapping+4*slot,valid,0)
+    new=tl.load(Mapping+4*slot+1,valid,0)
+    size=tl.load(Mapping+4*slot+2,valid,0)
     matched=valid & (address>=old) & (address<old+size)
     tl.device_assert((~active)|matched,'undo address has no owning field')
-    tl.store(Addresses+n*Capacity+x,address-old+new,matched)
+    offset=address-old
+    dim=tl.load(Mapping+4*slot+3,valid,0)
+    if PayloadS>0:
+        # Float32 payload offsets are permuted from [store,S,D] to [store,D,S].
+        element=offset//4
+        safe_dim=tl.maximum(dim,1)
+        store=element//(PayloadS*safe_dim)
+        if ReversePayload:
+            row=element%PayloadS
+            col=(element//PayloadS)%safe_dim
+            permuted=((store*PayloadS+row)*safe_dim+col)*4
+        else:
+            row=(element//safe_dim)%PayloadS
+            col=element%safe_dim
+            permuted=((store*safe_dim+col)*PayloadS+row)*4
+        offset=tl.where(dim>0,permuted,offset)
+    tl.store(Addresses+n*Capacity+x,offset+new,matched)
 
 
-def rebase_owned(addresses,counts,old_owners,new_owners,capacity):
+def rebase_owned(addresses,counts,old_owners,new_owners,capacity,*,payload_slots=0,reverse_payload=False):
     if len(old_owners)!=len(new_owners) or any(
-            a.shape!=b.shape or a.dtype!=b.dtype or a.device!=b.device
+            (a.shape!=b.shape and not (payload_slots and i<2 and a.transpose(-1,-2).shape==b.shape))
+            or a.dtype!=b.dtype or a.device!=b.device
             or not a.is_contiguous() or not b.is_contiguous()
-            for a,b in zip(old_owners,new_owners)):
+            for i,(a,b) in enumerate(zip(old_owners,new_owners))):
         raise ValueError('rebase requires matching owned contiguous fields')
-    rows=sorted((a.data_ptr(),b.data_ptr(),a.numel()*a.element_size())
-                for a,b in zip(old_owners,new_owners))
+    rows=sorted((a.data_ptr(),b.data_ptr(),a.numel()*a.element_size(),
+                 (a.shape[-2] if reverse_payload else a.shape[-1]) if payload_slots and i<2 else 0)
+                for i,(a,b) in enumerate(zip(old_owners,new_owners)))
     mapping=torch.tensor(rows,dtype=torch.int64,pin_memory=True).to(
         addresses.device,non_blocking=True)
     rebase[(len(counts),triton.cdiv(capacity,256))](
-        addresses,counts,mapping,len(rows),capacity,256,debug=True)
+        addresses,counts,mapping,len(rows),capacity,256,payload_slots,reverse_payload,debug=True)
 
 
 @triton.jit
@@ -60,7 +78,7 @@ def reverse_kernel(K,Q,V,Beta,Pop,Keys,Values,Strength,Live,Touch,
                    GradOut,GKeys,GValues,GStrength,DKout,DQout,DVout,
                    DBeta,DPop,DLogit,DCoef,
                    T:tl.constexpr,S:tl.constexpr,DK:tl.constexpr,DV:tl.constexpr,
-                   BS:tl.constexpr,BV:tl.constexpr,UB:tl.constexpr,Capacity,
+                   BS:tl.constexpr,BV:tl.constexpr,UB:tl.constexpr,Capacity,SoA:tl.constexpr,
                    Fresh:tl.constexpr,Start,Decay:tl.constexpr):
     n=tl.program_id(0)
     s=tl.arange(0,BS)
@@ -83,7 +101,7 @@ def reverse_kernel(K,Q,V,Beta,Pop,Keys,Values,Strength,Live,Touch,
         else:
             touch=tl.load(Touch+n*S+s,valid,0)
             strength=advance_exact(reference,tl.where(live,Start+t-touch,0),Decay)
-        freed=tl.load(Freed+inp*S+s,valid,0)
+        freed=tl.load(Freed+inp.to(tl.int64)*S+s,valid,0)
         allocation=tl.load(Alloc+inp)
         target=tl.load(Matched+inp)
         case=tl.load(Cases+inp)
@@ -99,22 +117,22 @@ def reverse_kernel(K,Q,V,Beta,Pop,Keys,Values,Strength,Live,Touch,
         dbeta=tl.full((),0.,tl.float32)
         dlogit=tl.full((),0.,tl.float32)
         if (case==4)|(case==5):
-            before=tl.load(Values+(n*S+target)*DV+d,d<DV,0.)
-            gradient=tl.load(GValues+(n*S+target)*DV+d,d<DV,0.)
+            before=tl.load(Values+((n*DV+d)*S+target if SoA else (n*S+target)*DV+d),d<DV,0.)
+            gradient=tl.load(GValues+((n*DV+d)*S+target if SoA else (n*S+target)*DV+d),d<DV,0.)
             dv=beta*gradient
             dbeta=tl.sum(gradient*(content-before),0)
-            tl.store(GValues+(n*S+target)*DV+d,(1.-beta)*gradient,d<DV)
+            tl.store(GValues+((n*DV+d)*S+target if SoA else (n*S+target)*DV+d),(1.-beta)*gradient,d<DV)
         if allocation>=0:
-            gradient=tl.load(GValues+(n*S+allocation)*DV+d,d<DV,0.)
+            gradient=tl.load(GValues+((n*DV+d)*S+allocation if SoA else (n*S+allocation)*DV+d),d<DV,0.)
             gate=tl.load(Gates+inp)
             dv=gate*gradient
             dlogit=tl.sum(gradient*content,0)*gate*(1.-gate)
             coef_grad+=dlogit*tl.load(Errors+inp)
-            tl.store(GValues+(n*S+allocation)*DV+d,0.,d<DV)
+            tl.store(GValues+((n*DV+d)*S+allocation if SoA else (n*S+allocation)*DV+d),0.,d<DV)
             for j in range(DK):
-                gk=tl.load(GKeys+(n*S+allocation)*DK+j)
+                gk=tl.load(GKeys+((n*DK+j)*S+allocation if SoA else (n*S+allocation)*DK+j))
                 tl.store(DKout+inp*DK+j,gk)
-                tl.store(GKeys+(n*S+allocation)*DK+j,0.)
+                tl.store(GKeys+((n*DK+j)*S+allocation if SoA else (n*S+allocation)*DK+j),0.)
             gs=tl.where(s==allocation,0.,gs)
         tl.store(DVout+inp*DV+d,dv,d<DV)
         tl.store(DBeta+inp,dbeta)
@@ -128,7 +146,7 @@ def reverse_kernel(K,Q,V,Beta,Pop,Keys,Values,Strength,Live,Touch,
         score=tl.full((BS,),0.,tl.float32)
         scale=2./tl.sqrt(float(DK))
         for j in range(DK):
-            key=tl.load(Keys+(n*S+s)*DK+j,valid & live,0.)
+            key=tl.load(Keys+((n*DK+j)*S+s if SoA else (n*S+s)*DK+j),valid & live,0.)
             query=tl.load(Q+inp*DK+j)
             score+=key*query
         masked=tl.where(live & valid,score*scale,-1.e30)
@@ -137,19 +155,19 @@ def reverse_kernel(K,Q,V,Beta,Pop,Keys,Values,Strength,Live,Touch,
         weight=prob*strength*live
         dw=tl.full((BS,),0.,tl.float32)
         for j in range(DV):
-            value=tl.load(Values+(n*S+s)*DV+j,valid & live,0.)
+            value=tl.load(Values+((n*DV+j)*S+s if SoA else (n*S+s)*DV+j),valid & live,0.)
             gout=tl.load(GradOut+inp*DV+j)
             dw+=value*gout
-            gv=tl.load(GValues+(n*S+s)*DV+j,valid & live,0.)
-            tl.store(GValues+(n*S+s)*DV+j,gv+weight*gout,valid & live)
+            gv=tl.load(GValues+((n*DV+j)*S+s if SoA else (n*S+s)*DV+j),valid & live,0.)
+            tl.store(GValues+((n*DV+j)*S+s if SoA else (n*S+s)*DV+j),gv+weight*gout,valid & live)
         gs+=prob*live*dw
         dp=dw*strength*live
         ds=prob*(dp-tl.sum(prob*dp,0))*live*scale
         for j in range(DK):
-            key=tl.load(Keys+(n*S+s)*DK+j,valid & live,0.)
+            key=tl.load(Keys+((n*DK+j)*S+s if SoA else (n*S+s)*DK+j),valid & live,0.)
             query=tl.load(Q+inp*DK+j)
-            gk=tl.load(GKeys+(n*S+s)*DK+j,valid & live,0.)
-            tl.store(GKeys+(n*S+s)*DK+j,gk+ds*query,valid & live)
+            gk=tl.load(GKeys+((n*DK+j)*S+s if SoA else (n*S+s)*DK+j),valid & live,0.)
+            tl.store(GKeys+((n*DK+j)*S+s if SoA else (n*S+s)*DK+j),gk+ds*query,valid & live)
             tl.store(DQout+inp*DK+j,tl.sum(ds*key,0))
         tl.debug_barrier()
     tl.store(GStrength+n*S+s,gs,valid)
@@ -196,6 +214,7 @@ class Replay(torch.autograd.Function):
     @staticmethod
     def forward(ctx,cfg,start_tokens,history,saved,k,q,v,beta,pop,logit,coef,
                 keys,values,strength,live,age,usage):
+        ctx.set_materialize_grads(False)
         from .cell_fused import FusedState,tape_scan
         from ..x30_tape_cell.naive_reference import TapeState
         initial=FusedState(TapeState(keys,values,strength,live,age,usage),
@@ -210,6 +229,7 @@ class Replay(torch.autograd.Function):
         ctx.address_owners=journal.owners
         ctx.replay=journal.owners  # address-space accounting; zero forward copies
         ctx.cfg=cfg
+        ctx.initial_bound=saved["live_bound"]
         ctx.start=start_tokens
         ctx.capacity=journal.capacity
         ctx.trace=final._replay_trace
@@ -234,26 +254,50 @@ class Replay(torch.autograd.Function):
         def gradient(g,like):
             return torch.zeros_like(like) if g is None else g.contiguous().clone()
         ctx.storage.validate()
-        replay=tuple(x.clone() for x in ctx.storage.owners)
+        # Keep the oracle AoS layout at large capacities: the transposed
+        # specialization hits a measured replay cliff at S11776.
+        payload_soa=cfg.slots<4096
+        replay=tuple(x.transpose(-1,-2).clone(memory_format=torch.contiguous_format)
+                     if payload_soa and i<2 else x.clone() for i,x in enumerate(ctx.storage.owners))
         keys,values,strength,live,age,history,*meta=replay
-        gk=gradient(gkeys,keys);gv=gradient(gvalues,values);gs=gradient(gstrength,strength)
+        # Replay payloads and adjoints use [store,dim,slot] backing; full-S
+        # reduction/accumulation expressions retain the oracle lane shapes.
+        gk=gradient(gkeys,ctx.storage.owners[0])
+        gv=gradient(gvalues,ctx.storage.owners[1])
+        if payload_soa:
+            gk=gk.transpose(-1,-2).contiguous()
+            gv=gv.transpose(-1,-2).contiguous()
+        gs=gradient(gstrength,strength)
         go=torch.zeros(b,h,t,cfg.value_dim,device=k.device) if gout is None else flat(gout)
         dkout,dqout,dvout,dbeta,dpop,dlogit=[torch.zeros_like(flat(x)) for x in
                                              (k,q,v,beta,pop,logit)]
         dc=torch.empty(b*h,device=k.device)
         original_addresses,before,widths,counts,boundaries,gates,errors=ctx.log
-        addresses=original_addresses.clone()
-        rebase_owned(addresses,counts,ctx.address_owners,replay,ctx.capacity)
-        reverse_kernel[(b*h,)](*args,keys,values,strength,live,meta[5],
-            *ctx.trace,gates,errors,addresses,before,widths,counts,boundaries,
-            go,gk,gv,gs,dkout,dqout,dvout,dbeta,dpop,dlogit,dc,
-            t,cfg.slots,dk,cfg.value_dim,triton.next_power_of_2(cfg.slots),
-            triton.next_power_of_2(cfg.value_dim),min(128,triton.next_power_of_2(max(cfg.slots,cfg.value_dim,dk))),ctx.capacity,True,ctx.start,
-            struct.unpack('<f',struct.pack('<f',cfg.decay_rate))[0],
-            enable_fp_fusion=False,debug=True,num_warps=16 if cfg.slots>=4096 else 4)
+        # The log is private to this autograd node. Rebase it in place and
+        # restore it on this stream before returning, retaining repeat-backward
+        # semantics without a capacity-sized address clone (4.5 GiB at T4096).
+        addresses=original_addresses
+        rebase_owned(addresses,counts,ctx.address_owners,replay,ctx.capacity,payload_slots=cfg.slots if payload_soa else 0)
+        # Eight warps retain exact reduction trees only in the independently
+        # tested, empty-origin prefix specialization. Unknown imports and
+        # longer continuations keep the oracle's warp count.
+        prefix8=(cfg.slots==2944 and cfg.key_dim==64 and cfg.value_dim==128
+                 and ctx.initial_bound is not None and ctx.initial_bound+t<=512)
+        try:
+            reverse_kernel[(b*h,)](*args,keys,values,strength,live,meta[5],
+                *ctx.trace,gates,errors,addresses,before,widths,counts,boundaries,
+                go,gk,gv,gs,dkout,dqout,dvout,dbeta,dpop,dlogit,dc,
+                t,cfg.slots,dk,cfg.value_dim,triton.next_power_of_2(cfg.slots),
+                triton.next_power_of_2(cfg.value_dim),min(128,triton.next_power_of_2(max(cfg.slots,cfg.value_dim,dk))),ctx.capacity,payload_soa,True,ctx.start,
+                struct.unpack('<f',struct.pack('<f',cfg.decay_rate))[0],
+                enable_fp_fusion=False,debug=True,num_warps=16 if cfg.slots>=4096 else (8 if prefix8 else 4))
+        finally:
+            rebase_owned(addresses,counts,replay,ctx.address_owners,ctx.capacity,
+                         payload_slots=cfg.slots if payload_soa else 0,reverse_payload=payload_soa)
         def unflat(x):return x.transpose(1,2).contiguous()
         return (None,None,None,None,*map(unflat,(dkout,dqout,dvout,dbeta,dpop,dlogit)),
-                dc.reshape(b,h).sum(0),gk,gv,gs,None,None,None)
+                dc.reshape(b,h).sum(0),gk.transpose(-1,-2).contiguous() if payload_soa else gk,
+                gv.transpose(-1,-2).contiguous() if payload_soa else gv,gs,None,None,None)
 
 
 def autograd_scan(inputs,state,cfg,coef):

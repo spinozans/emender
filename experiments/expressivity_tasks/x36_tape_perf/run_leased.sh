@@ -6,6 +6,11 @@ source scripts/gpu_lease.sh
 eval "$(scripts/gpu_lease.sh acquire 1 --wait --timeout 60)"
 [[ "$GPU_LEASE_HELD" =~ ^[0156]$ ]] || exit 90
 printf 'X36 physical card %s\n' "$GPU_LEASE_HELD"
+if [[ "${1:-}" == part2-gates ]]; then
+  shift
+  /home/erikg/emender/.venv/bin/python -m experiments.expressivity_tasks.x36_tape_perf.part2_gates "$@"
+  exit
+fi
 if [[ "${1:-}" == compare ]]; then
   /home/erikg/emender/.venv/bin/python -m experiments.expressivity_tasks.x36_tape_perf.compare
   exit

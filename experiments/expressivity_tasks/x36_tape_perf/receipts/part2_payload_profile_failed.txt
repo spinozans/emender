@@ -1,0 +1,97 @@
+gpu_lease: granted GPUs: 0 (pid 2686008)
+X36 physical card 0
+/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/backward.py:38: unknown: block: [15,32,0], thread: [64,0,0] Assertion `undo address has no owning field` failed.
+/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/backward.py:38: unknown: block: [15,32,0], thread: [65,0,0] Assertion `undo address has no owning field` failed.
+/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/backward.py:38: unknown: block: [15,32,0], thread: [66,0,0] Assertion `undo address has no owning field` failed.
+/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/backward.py:38: unknown: block: [15,32,0], thread: [67,0,0] Assertion `undo address has no owning field` failed.
+/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/backward.py:38: unknown: block: [15,32,0], thread: [68,0,0] Assertion `undo address has no owning field` failed.
+/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/backward.py:38: unknown: block: [15,32,0], thread: [69,0,0] Assertion `undo address has no owning field` failed.
+/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/backward.py:38: unknown: block: [15,32,0], thread: [53,0,0] Assertion `undo address has no owning field` failed.
+/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/backward.py:38: unknown: block: [15,32,0], thread: [54,0,0] Assertion `undo address has no owning field` failed.
+/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/backward.py:38: unknown: block: [15,32,0], thread: [55,0,0] Assertion `undo address has no owning field` failed.
+/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/backward.py:38: unknown: block: [15,32,0], thread: [56,0,0] Assertion `undo address has no owning field` failed.
+/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/backward.py:38: unknown: block: [15,32,0], thread: [57,0,0] Assertion `undo address has no owning field` failed.
+/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/backward.py:38: unknown: block: [15,32,0], thread: [58,0,0] Assertion `undo address has no owning field` failed.
+/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/backward.py:38: unknown: block: [15,32,0], thread: [59,0,0] Assertion `undo address has no owning field` failed.
+/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/backward.py:38: unknown: block: [15,32,0], thread: [60,0,0] Assertion `undo address has no owning field` failed.
+/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/backward.py:38: unknown: block: [15,32,0], thread: [61,0,0] Assertion `undo address has no owning field` failed.
+/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/backward.py:38: unknown: block: [15,32,0], thread: [62,0,0] Assertion `undo address has no owning field` failed.
+/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/backward.py:38: unknown: block: [15,32,0], thread: [63,0,0] Assertion `undo address has no owning field` failed.
+Traceback (most recent call last):
+  File "/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/measure.py", line 148, in measure
+    torch.cuda.synchronize()
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/cuda/__init__.py", line 1083, in synchronize
+    return torch._C._cuda_synchronize()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+torch.AcceleratorError: CUDA error: device-side assert triggered
+Search for `cudaErrorAssert' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
+
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/measure.py", line 196, in <module>
+    main()
+  File "/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/measure.py", line 193, in main
+    measure(args.batch, args.samples, args.variant)
+  File "/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/measure.py", line 144, in measure
+    with torch.profiler.profile(activities=[torch.profiler.ProfilerActivity.CPU, torch.profiler.ProfilerActivity.CUDA]) as prof:
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/profiler/profiler.py", line 810, in __exit__
+    self.stop()
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/profiler/profiler.py", line 826, in stop
+    self._transit_action(self.current_action, None)
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/profiler/profiler.py", line 872, in _transit_action
+    action()
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/profiler/profiler.py", line 255, in stop_trace
+    self.profiler.__exit__(None, None, None)
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/profiler.py", line 385, in __exit__
+    device_module.synchronize()
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/cuda/__init__.py", line 1083, in synchronize
+    return torch._C._cuda_synchronize()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+torch.AcceleratorError: CUDA error: device-side assert triggered
+Search for `cudaErrorAssert' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
+
+terminate called after throwing an instance of 'c10::AcceleratorError'
+  what():  CUDA error: device-side assert triggered
+Search for `cudaErrorAssert' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
+
+Exception raised from c10_cuda_check_implementation at /pytorch/c10/cuda/CUDAException.cpp:44 (most recent call first):
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x80 (0x74241a37cb80 in /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/lib/libc10.so)
+frame #1: <unknown function> + 0x11fb7 (0x74241a789fb7 in /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/lib/libc10_cuda.so)
+frame #2: <unknown function> + 0xc77c29 (0x7423bb677c29 in /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/lib/libtorch_cuda.so)
+frame #3: <unknown function> + 0xc72b53 (0x7423bb672b53 in /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/lib/libtorch_cuda.so)
+frame #4: <unknown function> + 0xc7a685 (0x7423bb67a685 in /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/lib/libtorch_cuda.so)
+frame #5: <unknown function> + 0x4827af (0x74240bc827af in /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/lib/libtorch_python.so)
+frame #6: c10::TensorImpl::~TensorImpl() + 0x9 (0x74241a359d69 in /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/lib/libc10.so)
+frame #7: <unknown function> + 0x7cb658 (0x74240bfcb658 in /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/lib/libtorch_python.so)
+frame #8: <unknown function> + 0x7cb9c5 (0x74240bfcb9c5 in /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/lib/libtorch_python.so)
+frame #9: /home/erikg/emender/.venv/bin/python() [0x558e11]
+frame #10: /home/erikg/emender/.venv/bin/python() [0x610885]
+frame #11: /home/erikg/emender/.venv/bin/python() [0x610895]
+frame #12: /home/erikg/emender/.venv/bin/python() [0x610895]
+frame #13: /home/erikg/emender/.venv/bin/python() [0x610895]
+frame #14: /home/erikg/emender/.venv/bin/python() [0x610895]
+frame #15: /home/erikg/emender/.venv/bin/python() [0x573556]
+frame #16: PyDict_SetItemString + 0x94 (0x5749a4 in /home/erikg/emender/.venv/bin/python)
+frame #17: /home/erikg/emender/.venv/bin/python() [0x6b83a5]
+frame #18: /home/erikg/emender/.venv/bin/python() [0x6b1b02]
+frame #19: Py_FinalizeEx + 0xad (0x6b11ed in /home/erikg/emender/.venv/bin/python)
+frame #20: Py_RunMain + 0x281 (0x6bcba1 in /home/erikg/emender/.venv/bin/python)
+frame #21: Py_BytesMain + 0x2d (0x6bc7bd in /home/erikg/emender/.venv/bin/python)
+frame #22: <unknown function> + 0x2a1ca (0x74241b42a1ca in /lib/x86_64-linux-gnu/libc.so.6)
+frame #23: __libc_start_main + 0x8b (0x74241b42a28b in /lib/x86_64-linux-gnu/libc.so.6)
+frame #24: _start + 0x25 (0x657a05 in /home/erikg/emender/.venv/bin/python)
+
+experiments/expressivity_tasks/x36_tape_perf/run_leased.sh: line 31: 2686091 Aborted                 (core dumped) /home/erikg/emender/.venv/bin/python -m experiments.expressivity_tasks.x36_tape_perf.measure "$@"

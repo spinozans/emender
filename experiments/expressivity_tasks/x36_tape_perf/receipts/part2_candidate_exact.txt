@@ -1,0 +1,62 @@
+gpu_lease: granted GPUs: 0 (pid 2627063)
+X36 physical card 0
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0
+rootdir: /home/erikg/emender
+configfile: pyproject.toml
+plugins: timeout-2.4.0, anyio-4.13.0
+collected 118 items / 109 deselected / 9 selected
+
+experiments/expressivity_tasks/x36_tape_perf/tests/test_exact.py F
+
+=================================== FAILURES ===================================
+_________________________ test_fresh_exact[736-9-4-5] __________________________
+experiments/expressivity_tasks/x36_tape_perf/tests/test_exact.py:27: in test_fresh_exact
+    grads=torch.autograd.grad(loss,xs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:503: in grad
+    result = _engine_run_backward(
+.venv/lib/python3.12/site-packages/torch/autograd/graph.py:841: in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:315: in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:608: in wrapper
+    outputs = fn(ctx, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x36_tape_perf/backward.py:257: in backward
+    reverse_kernel[(b*h,)](*args,keys,values,strength,live,meta[5],
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:733: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:861: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:300: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:80: in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+E   triton.compiler.errors.CompilationError: at 86:8:
+E               key=tl.load(Keys+(n*S+s)*DK+j,valid & live,0.)
+E               query=tl.load(Q+inp*DK+j)
+E               score+=key*query
+E           masked=tl.where(live & valid,score*scale,-1.e30)
+E           numer=tl.where(valid,tl.exp(masked-tl.max(masked,0)),0.)
+E           prob=numer/tl.sum(numer,0)
+E           weight=prob*strength*live
+E           dw=tl.full((BS,),0.,tl.float32)
+E           # Coalesce eight adjacent value/adjoint columns, retaining the exact
+E           # left-to-right per-value accumulation into dw (no prefix reduction).
+E           vd=tl.arange(0,8)
+E           for block in range(tl.cdiv(DV,8)):
+E           ^
+E   AssertionError("Loop carried variable j changed type, was <class 'triton.language.core.constexpr'> but is now <class 'triton.language.core.tensor'>")
+- generated xml file: /home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/receipts/part2_candidate_exact.xml -
+=========================== short test summary info ============================
+FAILED experiments/expressivity_tasks/x36_tape_perf/tests/test_exact.py::test_fresh_exact[736-9-4-5]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+====================== 1 failed, 109 deselected in 7.52s =======================
