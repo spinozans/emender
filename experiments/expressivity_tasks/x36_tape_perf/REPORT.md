@@ -1,5 +1,10 @@
 # X36 part 4 — fresh-capacity spill cliff closed; delivery remains partial
 
+Part-5 entry diagnostics and the parts 1–5 convergence table are in
+[PART5_DIAGNOSTIC.md](PART5_DIAGNOSTIC.md). Continued-state capacity still
+fails; the requested part-5 implementation is unfinished. The measurements
+below are retained part-4 evidence, not refreshed part-5 gates.
+
 **Partial engineering delivery.** Both capacity doublings pass <=1.5x step
 and replay growth. The aligned S8192->S8224 pair is **1.022x step /
 1.092x replay**, versus part 3's 1.551x / 1.755x. The

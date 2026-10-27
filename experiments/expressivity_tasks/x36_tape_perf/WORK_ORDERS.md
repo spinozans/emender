@@ -1,5 +1,12 @@
 # Remaining X36 work after part 4
 
+Part-5 entry diagnostics are in [PART5_DIAGNOSTIC.md](PART5_DIAGNOSTIC.md).
+The arbitrary-slot continued B64/H4/T512 fixed-live control FAILS the
+S5888→S11776 gate at 1.781x step / 1.818x replay. Production replay remains
+unchanged. Two added exact fixtures cover sparse high slot IDs and 1,024 live
+entry rows across a nine-token imported/continued chunk. These diagnostics
+do not complete any of the implementation work below.
+
 The overall target set remains FAILED. REPORT.md and receipts/summary.json
 separate passed fresh-capacity gates from incomplete representation work and
 failed long-context/inclusive-launch gates. Parts 1–3 are archived.

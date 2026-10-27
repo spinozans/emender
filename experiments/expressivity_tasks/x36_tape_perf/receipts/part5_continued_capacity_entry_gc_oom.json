@@ -1,0 +1,59 @@
+{
+  "scope": "Cell-only diagnostic; not the registered whole-model ratio gate",
+  "purpose": "Fixed live count with holes and live rows at the highest logical slot",
+  "python": "/home/erikg/emender/.venv/bin/python",
+  "physical_gpu": "1",
+  "warmups": 2,
+  "samples": 5,
+  "results": [
+    {
+      "mode": "imported",
+      "slots": 2944,
+      "batch": 64,
+      "heads": 4,
+      "tokens": 512,
+      "live": 256,
+      "maximum_live_slot": 2943,
+      "raw_ms": [
+        {
+          "step_ms": 798.4669329598546,
+          "forward_ms": 82.14822387695312,
+          "replay_ms": 716.241943359375
+        },
+        {
+          "step_ms": 796.6161901131272,
+          "forward_ms": 82.32841491699219,
+          "replay_ms": 714.1754760742188
+        },
+        {
+          "step_ms": 796.9777099788189,
+          "forward_ms": 82.2456283569336,
+          "replay_ms": 714.6270751953125
+        },
+        {
+          "step_ms": 797.2605000250041,
+          "forward_ms": 83.00032043457031,
+          "replay_ms": 714.1326904296875
+        },
+        {
+          "step_ms": 796.0437489673495,
+          "forward_ms": 81.83296203613281,
+          "replay_ms": 714.1038208007812
+        }
+      ],
+      "median_ms": {
+        "step_ms": 796.9777099788189,
+        "forward_ms": 82.2456283569336,
+        "replay_ms": 714.1754760742188
+      },
+      "compiler": {
+        "warps": 4,
+        "registers": 255,
+        "spills": 228,
+        "shared_bytes": 2048
+      },
+      "representation": "entry baseline: dense unknown-import replay, logical-S reductions"
+    }
+  ],
+  "gates": []
+}

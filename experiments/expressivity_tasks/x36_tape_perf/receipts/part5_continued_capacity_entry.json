@@ -1,0 +1,573 @@
+{
+  "scope": "Cell-only diagnostic; not the registered whole-model ratio gate",
+  "purpose": "Fixed live count with holes and live rows at the highest logical slot",
+  "sample_cleanup": "After timing, explicitly release discarded replay node owner references; no retained/repeated backward is measured",
+  "python": "/home/erikg/emender/.venv/bin/python",
+  "physical_gpu": "1",
+  "warmups": 2,
+  "samples": 5,
+  "results": [
+    {
+      "mode": "imported",
+      "slots": 2944,
+      "batch": 64,
+      "heads": 4,
+      "tokens": 512,
+      "live": 256,
+      "maximum_live_slot": 2943,
+      "raw_ms": [
+        {
+          "step_ms": 794.5420267060399,
+          "forward_ms": 82.07154846191406,
+          "replay_ms": 712.3486938476562
+        },
+        {
+          "step_ms": 794.9366779066622,
+          "forward_ms": 81.62598419189453,
+          "replay_ms": 713.0347290039062
+        },
+        {
+          "step_ms": 795.4055778682232,
+          "forward_ms": 81.7080307006836,
+          "replay_ms": 713.5580444335938
+        },
+        {
+          "step_ms": 795.4327980987728,
+          "forward_ms": 82.15241241455078,
+          "replay_ms": 713.162841796875
+        },
+        {
+          "step_ms": 795.6126979552209,
+          "forward_ms": 82.0479965209961,
+          "replay_ms": 713.4432983398438
+        }
+      ],
+      "median_ms": {
+        "step_ms": 795.4055778682232,
+        "forward_ms": 82.0479965209961,
+        "replay_ms": 713.162841796875
+      },
+      "compiler": {
+        "warps": 4,
+        "registers": 255,
+        "spills": 228,
+        "shared_bytes": 2048
+      },
+      "representation": "entry baseline: dense unknown-import replay, logical-S reductions"
+    },
+    {
+      "mode": "continued",
+      "slots": 2944,
+      "batch": 64,
+      "heads": 4,
+      "tokens": 512,
+      "live": 256,
+      "maximum_live_slot": 2943,
+      "raw_ms": [
+        {
+          "step_ms": 794.3961760029197,
+          "forward_ms": 81.52268981933594,
+          "replay_ms": 712.7664794921875
+        },
+        {
+          "step_ms": 794.5155370980501,
+          "forward_ms": 81.6363525390625,
+          "replay_ms": 712.8115234375
+        },
+        {
+          "step_ms": 794.0128059126437,
+          "forward_ms": 81.54112243652344,
+          "replay_ms": 712.3547973632812
+        },
+        {
+          "step_ms": 793.7074746005237,
+          "forward_ms": 81.5604476928711,
+          "replay_ms": 712.0803833007812
+        },
+        {
+          "step_ms": 794.9746469967067,
+          "forward_ms": 81.5288314819336,
+          "replay_ms": 713.3368530273438
+        }
+      ],
+      "median_ms": {
+        "step_ms": 794.3961760029197,
+        "forward_ms": 81.54112243652344,
+        "replay_ms": 712.7664794921875
+      },
+      "compiler": {
+        "warps": 4,
+        "registers": 255,
+        "spills": 228,
+        "shared_bytes": 2048
+      },
+      "representation": "entry baseline: dense unknown-import replay, logical-S reductions"
+    },
+    {
+      "mode": "imported",
+      "slots": 5888,
+      "batch": 64,
+      "heads": 4,
+      "tokens": 512,
+      "live": 256,
+      "maximum_live_slot": 5887,
+      "raw_ms": [
+        {
+          "step_ms": 924.5071830227971,
+          "forward_ms": 159.88633728027344,
+          "replay_ms": 764.5562744140625
+        },
+        {
+          "step_ms": 924.159562215209,
+          "forward_ms": 159.93344116210938,
+          "replay_ms": 764.1221313476562
+        },
+        {
+          "step_ms": 919.3178960122168,
+          "forward_ms": 159.89756774902344,
+          "replay_ms": 759.3482055664062
+        },
+        {
+          "step_ms": 923.2110301963985,
+          "forward_ms": 159.9078369140625,
+          "replay_ms": 763.2476196289062
+        },
+        {
+          "step_ms": 922.6572490297258,
+          "forward_ms": 159.92115783691406,
+          "replay_ms": 762.6578369140625
+        }
+      ],
+      "median_ms": {
+        "step_ms": 923.2110301963985,
+        "forward_ms": 159.9078369140625,
+        "replay_ms": 763.2476196289062
+      },
+      "compiler": {
+        "warps": 16,
+        "registers": 128,
+        "spills": 58,
+        "shared_bytes": 8192
+      },
+      "representation": "entry baseline: dense unknown-import replay, logical-S reductions"
+    },
+    {
+      "mode": "continued",
+      "slots": 5888,
+      "batch": 64,
+      "heads": 4,
+      "tokens": 512,
+      "live": 256,
+      "maximum_live_slot": 5887,
+      "raw_ms": [
+        {
+          "step_ms": 922.5479890592396,
+          "forward_ms": 158.25509643554688,
+          "replay_ms": 764.205078125
+        },
+        {
+          "step_ms": 925.244262907654,
+          "forward_ms": 158.3278045654297,
+          "replay_ms": 766.835693359375
+        },
+        {
+          "step_ms": 924.7355833649635,
+          "forward_ms": 158.27352905273438,
+          "replay_ms": 766.3974609375
+        },
+        {
+          "step_ms": 924.4243921712041,
+          "forward_ms": 158.08816528320312,
+          "replay_ms": 766.2776489257812
+        },
+        {
+          "step_ms": 926.1028240434825,
+          "forward_ms": 158.2458953857422,
+          "replay_ms": 767.8023681640625
+        }
+      ],
+      "median_ms": {
+        "step_ms": 924.7355833649635,
+        "forward_ms": 158.25509643554688,
+        "replay_ms": 766.3974609375
+      },
+      "compiler": {
+        "warps": 16,
+        "registers": 128,
+        "spills": 58,
+        "shared_bytes": 8192
+      },
+      "representation": "entry baseline: dense unknown-import replay, logical-S reductions"
+    },
+    {
+      "mode": "imported",
+      "slots": 11776,
+      "batch": 64,
+      "heads": 4,
+      "tokens": 512,
+      "live": 256,
+      "maximum_live_slot": 11775,
+      "raw_ms": [
+        {
+          "step_ms": 1639.0404049307108,
+          "forward_ms": 251.72377014160156,
+          "replay_ms": 1387.2529296875
+        },
+        {
+          "step_ms": 1642.8730497136712,
+          "forward_ms": 251.27084350585938,
+          "replay_ms": 1391.5291748046875
+        },
+        {
+          "step_ms": 1647.1307859756052,
+          "forward_ms": 252.93516540527344,
+          "replay_ms": 1394.1309814453125
+        },
+        {
+          "step_ms": 1646.5521259233356,
+          "forward_ms": 251.1624298095703,
+          "replay_ms": 1395.3231201171875
+        },
+        {
+          "step_ms": 1650.3643612377346,
+          "forward_ms": 253.7533416748047,
+          "replay_ms": 1396.54345703125
+        }
+      ],
+      "median_ms": {
+        "step_ms": 1646.5521259233356,
+        "forward_ms": 251.72377014160156,
+        "replay_ms": 1394.1309814453125
+      },
+      "compiler": {
+        "warps": 16,
+        "registers": 128,
+        "spills": 294,
+        "shared_bytes": 8192
+      },
+      "representation": "entry baseline: dense unknown-import replay, logical-S reductions"
+    },
+    {
+      "mode": "continued",
+      "slots": 11776,
+      "batch": 64,
+      "heads": 4,
+      "tokens": 512,
+      "live": 256,
+      "maximum_live_slot": 11775,
+      "raw_ms": [
+        {
+          "step_ms": 1647.0150058157742,
+          "forward_ms": 251.9603271484375,
+          "replay_ms": 1394.988037109375
+        },
+        {
+          "step_ms": 1643.4449409134686,
+          "forward_ms": 253.31082153320312,
+          "replay_ms": 1390.066650390625
+        },
+        {
+          "step_ms": 1642.738539725542,
+          "forward_ms": 252.01869201660156,
+          "replay_ms": 1390.6544189453125
+        },
+        {
+          "step_ms": 1646.7668861150742,
+          "forward_ms": 253.3693389892578,
+          "replay_ms": 1393.329345703125
+        },
+        {
+          "step_ms": 1651.2705720961094,
+          "forward_ms": 251.9726104736328,
+          "replay_ms": 1399.2325439453125
+        }
+      ],
+      "median_ms": {
+        "step_ms": 1646.7668861150742,
+        "forward_ms": 252.01869201660156,
+        "replay_ms": 1393.329345703125
+      },
+      "compiler": {
+        "warps": 16,
+        "registers": 128,
+        "spills": 294,
+        "shared_bytes": 8192
+      },
+      "representation": "entry baseline: dense unknown-import replay, logical-S reductions"
+    },
+    {
+      "mode": "imported",
+      "slots": 8192,
+      "batch": 64,
+      "heads": 4,
+      "tokens": 512,
+      "live": 256,
+      "maximum_live_slot": 8191,
+      "raw_ms": [
+        {
+          "step_ms": 1076.0383089073002,
+          "forward_ms": 229.52960205078125,
+          "replay_ms": 846.4425048828125
+        },
+        {
+          "step_ms": 1076.0784591548145,
+          "forward_ms": 229.61459350585938,
+          "replay_ms": 846.3994750976562
+        },
+        {
+          "step_ms": 1076.4059601351619,
+          "forward_ms": 229.57232666015625,
+          "replay_ms": 846.7681274414062
+        },
+        {
+          "step_ms": 1075.409049168229,
+          "forward_ms": 229.5723876953125,
+          "replay_ms": 845.77587890625
+        },
+        {
+          "step_ms": 1076.4798200689256,
+          "forward_ms": 229.5109100341797,
+          "replay_ms": 846.9055786132812
+        }
+      ],
+      "median_ms": {
+        "step_ms": 1076.0784591548145,
+        "forward_ms": 229.57232666015625,
+        "replay_ms": 846.4425048828125
+      },
+      "compiler": {
+        "warps": 16,
+        "registers": 128,
+        "spills": 150,
+        "shared_bytes": 8192
+      },
+      "representation": "entry baseline: dense unknown-import replay, logical-S reductions"
+    },
+    {
+      "mode": "continued",
+      "slots": 8192,
+      "batch": 64,
+      "heads": 4,
+      "tokens": 512,
+      "live": 256,
+      "maximum_live_slot": 8191,
+      "raw_ms": [
+        {
+          "step_ms": 1075.778747908771,
+          "forward_ms": 229.48439025878906,
+          "replay_ms": 846.1957397460938
+        },
+        {
+          "step_ms": 1074.6402172371745,
+          "forward_ms": 229.42105102539062,
+          "replay_ms": 845.1256103515625
+        },
+        {
+          "step_ms": 1073.8189169205725,
+          "forward_ms": 229.42002868652344,
+          "replay_ms": 844.3207397460938
+        },
+        {
+          "step_ms": 1075.2742779441178,
+          "forward_ms": 229.391357421875,
+          "replay_ms": 845.8270874023438
+        },
+        {
+          "step_ms": 1075.942579191178,
+          "forward_ms": 229.40570068359375,
+          "replay_ms": 846.4804077148438
+        }
+      ],
+      "median_ms": {
+        "step_ms": 1075.2742779441178,
+        "forward_ms": 229.42002868652344,
+        "replay_ms": 845.8270874023438
+      },
+      "compiler": {
+        "warps": 16,
+        "registers": 128,
+        "spills": 152,
+        "shared_bytes": 8192
+      },
+      "representation": "entry baseline: dense unknown-import replay, logical-S reductions"
+    },
+    {
+      "mode": "imported",
+      "slots": 8224,
+      "batch": 64,
+      "heads": 4,
+      "tokens": 512,
+      "live": 256,
+      "maximum_live_slot": 8223,
+      "raw_ms": [
+        {
+          "step_ms": 1221.1452065967023,
+          "forward_ms": 230.70509338378906,
+          "replay_ms": 990.3698120117188
+        },
+        {
+          "step_ms": 1221.6549371369183,
+          "forward_ms": 231.01724243164062,
+          "replay_ms": 990.576904296875
+        },
+        {
+          "step_ms": 1222.2011680714786,
+          "forward_ms": 230.5894012451172,
+          "replay_ms": 991.5526123046875
+        },
+        {
+          "step_ms": 1225.2449528314173,
+          "forward_ms": 231.05532836914062,
+          "replay_ms": 994.1319580078125
+        },
+        {
+          "step_ms": 1222.8137790225446,
+          "forward_ms": 230.67750549316406,
+          "replay_ms": 992.0758666992188
+        }
+      ],
+      "median_ms": {
+        "step_ms": 1222.2011680714786,
+        "forward_ms": 230.70509338378906,
+        "replay_ms": 991.5526123046875
+      },
+      "compiler": {
+        "warps": 16,
+        "registers": 128,
+        "spills": 296,
+        "shared_bytes": 8192
+      },
+      "representation": "entry baseline: dense unknown-import replay, logical-S reductions"
+    },
+    {
+      "mode": "continued",
+      "slots": 8224,
+      "batch": 64,
+      "heads": 4,
+      "tokens": 512,
+      "live": 256,
+      "maximum_live_slot": 8223,
+      "raw_ms": [
+        {
+          "step_ms": 1227.3830058984458,
+          "forward_ms": 231.72483825683594,
+          "replay_ms": 995.578857421875
+        },
+        {
+          "step_ms": 1223.0227789841592,
+          "forward_ms": 231.6276092529297,
+          "replay_ms": 991.33642578125
+        },
+        {
+          "step_ms": 1228.4509069286287,
+          "forward_ms": 231.5878143310547,
+          "replay_ms": 996.801513671875
+        },
+        {
+          "step_ms": 1227.9110471718013,
+          "forward_ms": 231.70457458496094,
+          "replay_ms": 996.1431274414062
+        },
+        {
+          "step_ms": 1224.391670897603,
+          "forward_ms": 231.60211181640625,
+          "replay_ms": 992.7301025390625
+        }
+      ],
+      "median_ms": {
+        "step_ms": 1227.3830058984458,
+        "forward_ms": 231.6276092529297,
+        "replay_ms": 995.578857421875
+      },
+      "compiler": {
+        "warps": 16,
+        "registers": 128,
+        "spills": 296,
+        "shared_bytes": 8192
+      },
+      "representation": "entry baseline: dense unknown-import replay, logical-S reductions"
+    }
+  ],
+  "gates": [
+    {
+      "mode": "imported",
+      "slots": [
+        2944,
+        5888
+      ],
+      "limit": 1.5,
+      "ratios": {
+        "step_ms": 1.1606796028143382,
+        "replay_ms": 1.0702290906041014
+      },
+      "status": "passed"
+    },
+    {
+      "mode": "imported",
+      "slots": [
+        5888,
+        11776
+      ],
+      "limit": 1.5,
+      "ratios": {
+        "step_ms": 1.7835056905386601,
+        "replay_ms": 1.826577568788415
+      },
+      "status": "failed"
+    },
+    {
+      "mode": "imported",
+      "slots": [
+        8192,
+        8224
+      ],
+      "limit": 1.5,
+      "ratios": {
+        "step_ms": 1.135791872491745,
+        "replay_ms": 1.1714352795196232
+      },
+      "status": "passed"
+    },
+    {
+      "mode": "continued",
+      "slots": [
+        2944,
+        5888
+      ],
+      "limit": 1.5,
+      "ratios": {
+        "step_ms": 1.1640735583822408,
+        "replay_ms": 1.0752434113954434
+      },
+      "status": "passed"
+    },
+    {
+      "mode": "continued",
+      "slots": [
+        5888,
+        11776
+      ],
+      "limit": 1.5,
+      "ratios": {
+        "step_ms": 1.7807975768843622,
+        "replay_ms": 1.8180244804030627
+      },
+      "status": "failed"
+    },
+    {
+      "mode": "continued",
+      "slots": [
+        8192,
+        8224
+      ],
+      "limit": 1.5,
+      "ratios": {
+        "step_ms": 1.1414603985925842,
+        "replay_ms": 1.1770477349920778
+      },
+      "status": "passed"
+    }
+  ],
+  "retention_cause_established": false,
+  "metadata_note": "Cleanup label corrected after the rejected ownership-cycle hypothesis; raw samples and compiler counts unchanged"
+}

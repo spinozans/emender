@@ -1,0 +1,107 @@
+{
+  "status": "incomplete diagnostic delivery; general sparse pooling, T4096 and inclusive launch fusion unimplemented",
+  "all_registered_targets_passed": false,
+  "production_kernel_changes": false,
+  "entry_parity_tests": 141,
+  "added_sparse_entry_cases_passed": 2,
+  "entry_parity_receipt": "part5_entry_parity.xml",
+  "sparse_entry_parity_receipt": "part5_sparse_entry_parity.xml",
+  "combined_parity_receipt": "part5_final_parity.xml",
+  "capacity_scope": "Cell-only diagnostic; not the registered whole-model ratio gate",
+  "capacity_gates": [
+    {
+      "mode": "imported",
+      "slots": [
+        2944,
+        5888
+      ],
+      "limit": 1.5,
+      "ratios": {
+        "step_ms": 1.1606796028143382,
+        "replay_ms": 1.0702290906041014
+      },
+      "status": "passed"
+    },
+    {
+      "mode": "imported",
+      "slots": [
+        5888,
+        11776
+      ],
+      "limit": 1.5,
+      "ratios": {
+        "step_ms": 1.7835056905386601,
+        "replay_ms": 1.826577568788415
+      },
+      "status": "failed"
+    },
+    {
+      "mode": "imported",
+      "slots": [
+        8192,
+        8224
+      ],
+      "limit": 1.5,
+      "ratios": {
+        "step_ms": 1.135791872491745,
+        "replay_ms": 1.1714352795196232
+      },
+      "status": "passed"
+    },
+    {
+      "mode": "continued",
+      "slots": [
+        2944,
+        5888
+      ],
+      "limit": 1.5,
+      "ratios": {
+        "step_ms": 1.1640735583822408,
+        "replay_ms": 1.0752434113954434
+      },
+      "status": "passed"
+    },
+    {
+      "mode": "continued",
+      "slots": [
+        5888,
+        11776
+      ],
+      "limit": 1.5,
+      "ratios": {
+        "step_ms": 1.7807975768843622,
+        "replay_ms": 1.8180244804030627
+      },
+      "status": "failed"
+    },
+    {
+      "mode": "continued",
+      "slots": [
+        8192,
+        8224
+      ],
+      "limit": 1.5,
+      "ratios": {
+        "step_ms": 1.1414603985925842,
+        "replay_ms": 1.1770477349920778
+      },
+      "status": "passed"
+    }
+  ],
+  "capacity_receipt": "part5_continued_capacity_entry.json",
+  "registered_part4_gates_rerun": false,
+  "structural_floor_established": false,
+  "diagnostic_failures": [
+    "Two OOM attempts retained; retention cause not established"
+  ],
+  "residual_risks": [
+    "Arbitrary-slot imported/continued replay remains dense",
+    "Continued S5888 to S11776 doubling fails",
+    "T4096 and inclusive launch gates retain part4 failures and were not rerun",
+    "Fresh capacity, zero-sync and curve gates were not rerun",
+    "Diagnostic manually disposes discarded node references outside timing; no production memory-lifetime fix established"
+  ],
+  "combined_parity_tests": 143,
+  "combined_parity_status": "passed",
+  "combined_parity_seconds": 202.15
+}

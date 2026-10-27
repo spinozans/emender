@@ -143,14 +143,24 @@ def test_telemetry_train_eval_exact():
     assert ta==tc
 
 
-@pytest.mark.parametrize('production',[False,True,'large','long','frozen_large'])
+@pytest.mark.parametrize('production',[False,True,'large','long','frozen_large',
+                                       'sparse_high','wide_sparse_entry'])
 def test_import_and_consuming_continuation_exact(production):
     from experiments.expressivity_tasks.x30_tape_cell.naive_reference import init_state, TapeState
     torch.manual_seed(361)
-    cfg=TapeHeadConfig(n_heads=2,budget=11776 if production in ('large','frozen_large') else (2944 if production else 37),key_dim=64 if production else 4,value_dim=128 if production else 5,decay_rate=.8,free_threshold=.2)
+    cfg=TapeHeadConfig(n_heads=2,budget=11776 if production in ('large','frozen_large','sparse_high','wide_sparse_entry') else (2944 if production else 37),key_dim=64 if production else 4,value_dim=128 if production else 5,decay_rate=.8,free_threshold=.2)
     initial=init_state(2,cfg,'cuda')
     initial.keys.normal_();initial.values.normal_();initial.strength.uniform_()
     initial.live.copy_(torch.rand_like(initial.strength)>.3)
+    if production in ('sparse_high','wide_sparse_entry'):
+        # Arbitrary sparse logical slots include the last physical row. The
+        # wider entry deliberately has more live rows than the entire chunk,
+        # exercising a pool bound based on entry union writes, not T alone.
+        count=17 if production=='sparse_high' else 1024
+        rows=torch.linspace(0,cfg.slots-1,count,device='cuda').long()
+        initial.live.zero_()
+        initial.live[...,rows]=True
+        initial.strength[...,rows]=1.
     initial.age.copy_(torch.randint(0,4,initial.age.shape,device='cuda'))
     tokens=1024 if production=='long' else 9
     inputs=[torch.randn(shape,device='cuda') for shape in

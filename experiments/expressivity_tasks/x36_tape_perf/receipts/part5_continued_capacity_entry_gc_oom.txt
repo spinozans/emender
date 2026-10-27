@@ -1,0 +1,33 @@
+gpu_lease: granted GPUs: 1 (pid 3408791)
+X36 physical card 1
+{"mode": "imported", "slots": 2944, "batch": 64, "heads": 4, "tokens": 512, "live": 256, "maximum_live_slot": 2943, "raw_ms": [{"step_ms": 798.4669329598546, "forward_ms": 82.14822387695312, "replay_ms": 716.241943359375}, {"step_ms": 796.6161901131272, "forward_ms": 82.32841491699219, "replay_ms": 714.1754760742188}, {"step_ms": 796.9777099788189, "forward_ms": 82.2456283569336, "replay_ms": 714.6270751953125}, {"step_ms": 797.2605000250041, "forward_ms": 83.00032043457031, "replay_ms": 714.1326904296875}, {"step_ms": 796.0437489673495, "forward_ms": 81.83296203613281, "replay_ms": 714.1038208007812}], "median_ms": {"step_ms": 796.9777099788189, "forward_ms": 82.2456283569336, "replay_ms": 714.1754760742188}, "compiler": {"warps": 4, "registers": 255, "spills": 228, "shared_bytes": 2048}, "representation": "entry baseline: dense unknown-import replay, logical-S reductions"}
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/continued_capacity.py", line 120, in <module>
+    main()
+  File "/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/continued_capacity.py", line 74, in main
+    out, final, _, _ = tape_scan(*xs, state, cfg)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/cell_fused.py", line 20, in tape_scan
+    return autograd_scan((k,q,v,beta,pop,logit),state,cfg,coef)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/backward.py", line 453, in autograd_scan
+    out,keys,values,strength=Replay.apply(cfg,tokens,history,saved,*inputs,coef,
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/function.py", line 581, in apply
+    return super().apply(*args, **kwargs)  # type: ignore[misc]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/backward.py", line 345, in forward
+    out,final,trace,pressure=tape_scan(k,q,v,beta,pop,logit,initial,cfg,coef,
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/cell_fused.py", line 21, in tape_scan
+    return persistent_scan(k,q,v,beta,pop,logit,state,cfg,coef,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/forward.py", line 116, in tape_scan
+    all_journal = (AllFieldJournal.allocate(b*h,t,cfg.slots,dk,cfg.value_dim,
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x31_tape_cell_fused/all_field_journal.py", line 157, in allocate
+    torch.empty(stores,capacity,device=device,dtype=torch.uint64),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 1.28 GiB. GPU 0 has a total capacity of 47.38 GiB of which 1.06 GiB is free. Including non-PyTorch memory, this process has 46.32 GiB memory in use. Of the allocated memory 45.81 GiB is allocated by PyTorch, and 31.42 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
