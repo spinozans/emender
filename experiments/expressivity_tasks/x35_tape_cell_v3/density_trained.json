@@ -1,0 +1,3858 @@
+{
+  "seed": 0,
+  "physical_gpu": "1",
+  "torch": "2.9.1+cu128",
+  "slots": 2944,
+  "model": "trained X28E tape_B0x4 FusedTapeLayer (d_model=256, K64 V128 H4), best.pt update 7000, validation 0.983, eval mode, read-only",
+  "scope": "8 exact positive ladder words per bin (ID k=128, 2x k=256, 4x k=512, 9x k=1152), a secondary 8-distinct-k band probe per bin, and 8 MQAR validation-prefix words; store-chunks (C=64), not whole-batch certificates; part-1 classifier",
+  "trained_checkpoint": {
+    "arm": "tape_B0x4",
+    "path": "results_x28e_memory_head/tape_B0x4_seed0/best.pt",
+    "sha256": "ced743eb7da4657a5cae837e4d78a3d950fbd6629af249e25a32f9cd17e744e1",
+    "update": 7000,
+    "validation_metric": 0.983,
+    "selected_by": "validation-only; tie-break latest-best"
+  },
+  "freeze_manifest": {
+    "hash": "0b674c71b5d9ed56174e8839766206af2fd0ba14b9bcf3b95dfd91ac24aa11b4",
+    "files": 185
+  },
+  "stage1_embedding": {
+    "reconstruction": "replayed frozen construction sequence: torch.manual_seed(0) -> trainer.build_tape_model -> attach_multiclass_stage(65, 64); deterministic-replay asserted bitwise",
+    "role": "frozen random feature map (F12f), never trained; the stage-1 draw is not persisted in best.pt \u2014 hybrid: trained stage-3 layer weights + training-time stage-1 addressing geometry; no MQAR accuracy receipt possible (the stage-1 64-class head is not persisted)"
+  },
+  "ladder_bins": {
+    "id_k128": {
+      "buckets": {
+        "all": {
+          "chunks": 128,
+          "mutation_candidate": 0,
+          "entry_pure": 0,
+          "intra_match": 4096,
+          "intra_pop": 0,
+          "event_tokens": 4096,
+          "reasons": {
+            "correction_or_cap": 128,
+            "write_after_append": 128
+          },
+          "event_token_fraction": 0.5,
+          "mutation_candidate_fraction": 0.0,
+          "entry_pure_fraction": 0.0
+        },
+        "all_a": {
+          "chunks": 32,
+          "mutation_candidate": 0,
+          "entry_pure": 0,
+          "intra_match": 1024,
+          "intra_pop": 0,
+          "event_tokens": 1024,
+          "reasons": {
+            "correction_or_cap": 32,
+            "write_after_append": 32
+          },
+          "event_token_fraction": 0.5,
+          "mutation_candidate_fraction": 0.0,
+          "entry_pure_fraction": 0.0
+        },
+        "all_b": {
+          "chunks": 32,
+          "mutation_candidate": 0,
+          "entry_pure": 0,
+          "intra_match": 1024,
+          "intra_pop": 0,
+          "event_tokens": 1024,
+          "reasons": {
+            "correction_or_cap": 32,
+            "write_after_append": 32
+          },
+          "event_token_fraction": 0.5,
+          "mutation_candidate_fraction": 0.0,
+          "entry_pure_fraction": 0.0
+        },
+        "all_pad": {
+          "chunks": 0,
+          "mutation_candidate": 0,
+          "entry_pure": 0,
+          "intra_match": 0,
+          "intra_pop": 0,
+          "event_tokens": 0,
+          "reasons": {},
+          "event_token_fraction": null,
+          "mutation_candidate_fraction": null,
+          "entry_pure_fraction": null
+        },
+        "other": {
+          "chunks": 64,
+          "mutation_candidate": 0,
+          "entry_pure": 0,
+          "intra_match": 2048,
+          "intra_pop": 0,
+          "event_tokens": 2048,
+          "reasons": {
+            "correction_or_cap": 64,
+            "write_after_append": 64
+          },
+          "event_token_fraction": 0.5,
+          "mutation_candidate_fraction": 0.0,
+          "entry_pure_fraction": 0.0
+        }
+      },
+      "counts": {
+        "NO-WRITE": 0,
+        "R-EMPTY": 32,
+        "R-NOMATCH": 4096,
+        "R-ZERO-RESIDUAL": 0,
+        "R-CONFLICT": 4128,
+        "R-CAP": 0
+      },
+      "excluded_tail_tokens_per_store": 2,
+      "tokens": 258,
+      "batch": 8,
+      "heads": 4,
+      "chunk": 64,
+      "token_sha256": "99b202fc53282328ae9be7e7ffd254ca505b362f56eeed0b73b804dc73a4aa81",
+      "k": 128,
+      "predictions_accept": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "case_prefix_word0_head0": [
+        1,
+        4,
+        2,
+        4,
+        2,
+        4,
+        2,
+        4,
+        2,
+        4,
+        2,
+        4,
+        2,
+        4,
+        2,
+        4
+      ]
+    },
+    "2x_k256": {
+      "buckets": {
+        "all": {
+          "chunks": 256,
+          "mutation_candidate": 0,
+          "entry_pure": 0,
+          "intra_match": 8192,
+          "intra_pop": 0,
+          "event_tokens": 8192,
+          "reasons": {
+            "correction_or_cap": 256,
+            "write_after_append": 256
+          },
+          "event_token_fraction": 0.5,
+          "mutation_candidate_fraction": 0.0,
+          "entry_pure_fraction": 0.0
+        },
+        "all_a": {
+          "chunks": 96,
+          "mutation_candidate": 0,
+          "entry_pure": 0,
+          "intra_match": 3072,
+          "intra_pop": 0,
+          "event_tokens": 3072,
+          "reasons": {
+            "correction_or_cap": 96,
+            "write_after_append": 96
+          },
+          "event_token_fraction": 0.5,
+          "mutation_candidate_fraction": 0.0,
+          "entry_pure_fraction": 0.0
+        },
+        "all_b": {
+          "chunks": 96,
+          "mutation_candidate": 0,
+          "entry_pure": 0,
+          "intra_match": 3072,
+          "intra_pop": 0,
+          "event_tokens": 3072,
+          "reasons": {
+            "correction_or_cap": 96,
+            "write_after_append": 96
+          },
+          "event_token_fraction": 0.5,
+          "mutation_candidate_fraction": 0.0,
+          "entry_pure_fraction": 0.0
+        },
+        "all_pad": {
+          "chunks": 0,
+          "mutation_candidate": 0,
+          "entry_pure": 0,
+          "intra_match": 0,
+          "intra_pop": 0,
+          "event_tokens": 0,
+          "reasons": {},
+          "event_token_fraction": null,
+          "mutation_candidate_fraction": null,
+          "entry_pure_fraction": null
+        },
+        "other": {
+          "chunks": 64,
+          "mutation_candidate": 0,
+          "entry_pure": 0,
+          "intra_match": 2048,
+          "intra_pop": 0,
+          "event_tokens": 2048,
+          "reasons": {
+            "correction_or_cap": 64,
+            "write_after_append": 64
+          },
+          "event_token_fraction": 0.5,
+          "mutation_candidate_fraction": 0.0,
+          "entry_pure_fraction": 0.0
+        }
+      },
+      "counts": {
+        "NO-WRITE": 0,
+        "R-EMPTY": 32,
+        "R-NOMATCH": 8192,
+        "R-ZERO-RESIDUAL": 0,
+        "R-CONFLICT": 8224,
+        "R-CAP": 0
+      },
+      "excluded_tail_tokens_per_store": 2,
+      "tokens": 514,
+      "batch": 8,
+      "heads": 4,
+      "chunk": 64,
+      "token_sha256": "59d4aaaa701d519e5050ce2ef06026c8f2e66f10e0dc0b1530b12c724446df58",
+      "k": 256,
+      "predictions_accept": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "case_prefix_word0_head0": [
+        1,
+        4,
+        2,
+        4,
+        2,
+        4,
+        2,
+        4,
+        2,
+        4,
+        2,
+        4,
+        2,
+        4,
+        2,
+        4
+      ]
+    },
+    "4x_k512": {
+      "buckets": {
+        "all": {
+          "chunks": 512,
+          "mutation_candidate": 0,
+          "entry_pure": 0,
+          "intra_match": 16384,
+          "intra_pop": 0,
+          "event_tokens": 16384,
+          "reasons": {
+            "correction_or_cap": 512,
+            "write_after_append": 512
+          },
+          "event_token_fraction": 0.5,
+          "mutation_candidate_fraction": 0.0,
+          "entry_pure_fraction": 0.0
+        },
+        "all_a": {
+          "chunks": 224,
+          "mutation_candidate": 0,
+          "entry_pure": 0,
+          "intra_match": 7168,
+          "intra_pop": 0,
+          "event_tokens": 7168,
+          "reasons": {
+            "correction_or_cap": 224,
+            "write_after_append": 224
+          },
+          "event_token_fraction": 0.5,
+          "mutation_candidate_fraction": 0.0,
+          "entry_pure_fraction": 0.0
+        },
+        "all_b": {
+          "chunks": 224,
+          "mutation_candidate": 0,
+          "entry_pure": 0,
+          "intra_match": 7168,
+          "intra_pop": 0,
+          "event_tokens": 7168,
+          "reasons": {
+            "correction_or_cap": 224,
+            "write_after_append": 224
+          },
+          "event_token_fraction": 0.5,
+          "mutation_candidate_fraction": 0.0,
+          "entry_pure_fraction": 0.0
+        },
+        "all_pad": {
+          "chunks": 0,
+          "mutation_candidate": 0,
+          "entry_pure": 0,
+          "intra_match": 0,
+          "intra_pop": 0,
+          "event_tokens": 0,
+          "reasons": {},
+          "event_token_fraction": null,
+          "mutation_candidate_fraction": null,
+          "entry_pure_fraction": null
+        },
+        "other": {
+          "chunks": 64,
+          "mutation_candidate": 0,
+          "entry_pure": 0,
+          "intra_match": 2048,
+          "intra_pop": 0,
+          "event_tokens": 2048,
+          "reasons": {
+            "correction_or_cap": 64,
+            "write_after_append": 64
+          },
+          "event_token_fraction": 0.5,
+          "mutation_candidate_fraction": 0.0,
+          "entry_pure_fraction": 0.0
+        }
+      },
+      "counts": {
+        "NO-WRITE": 0,
+        "R-EMPTY": 32,
+        "R-NOMATCH": 16384,
+        "R-ZERO-RESIDUAL": 0,
+        "R-CONFLICT": 16416,
+        "R-CAP": 0
+      },
+      "excluded_tail_tokens_per_store": 2,
+      "tokens": 1026,
+      "batch": 8,
+      "heads": 4,
+      "chunk": 64,
+      "token_sha256": "92691b28f6591329a50e84c74906d7e1f1f7d346621bffc9262ed1d9c790d990",
+      "k": 512,
+      "predictions_accept": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "case_prefix_word0_head0": [
+        1,
+        4,
+        2,
+        4,
+        2,
+        4,
+        2,
+        4,
+        2,
+        4,
+        2,
+        4,
+        2,
+        4,
+        2,
+        4
+      ]
+    },
+    "9x_k1152": {
+      "buckets": {
+        "all": {
+          "chunks": 1152,
+          "mutation_candidate": 0,
+          "entry_pure": 0,
+          "intra_match": 36864,
+          "intra_pop": 0,
+          "event_tokens": 36864,
+          "reasons": {
+            "correction_or_cap": 1152,
+            "write_after_append": 1152
+          },
+          "event_token_fraction": 0.5,
+          "mutation_candidate_fraction": 0.0,
+          "entry_pure_fraction": 0.0
+        },
+        "all_a": {
+          "chunks": 544,
+          "mutation_candidate": 0,
+          "entry_pure": 0,
+          "intra_match": 17408,
+          "intra_pop": 0,
+          "event_tokens": 17408,
+          "reasons": {
+            "correction_or_cap": 544,
+            "write_after_append": 544
+          },
+          "event_token_fraction": 0.5,
+          "mutation_candidate_fraction": 0.0,
+          "entry_pure_fraction": 0.0
+        },
+        "all_b": {
+          "chunks": 544,
+          "mutation_candidate": 0,
+          "entry_pure": 0,
+          "intra_match": 17408,
+          "intra_pop": 0,
+          "event_tokens": 17408,
+          "reasons": {
+            "correction_or_cap": 544,
+            "write_after_append": 544
+          },
+          "event_token_fraction": 0.5,
+          "mutation_candidate_fraction": 0.0,
+          "entry_pure_fraction": 0.0
+        },
+        "all_pad": {
+          "chunks": 0,
+          "mutation_candidate": 0,
+          "entry_pure": 0,
+          "intra_match": 0,
+          "intra_pop": 0,
+          "event_tokens": 0,
+          "reasons": {},
+          "event_token_fraction": null,
+          "mutation_candidate_fraction": null,
+          "entry_pure_fraction": null
+        },
+        "other": {
+          "chunks": 64,
+          "mutation_candidate": 0,
+          "entry_pure": 0,
+          "intra_match": 2048,
+          "intra_pop": 0,
+          "event_tokens": 2048,
+          "reasons": {
+            "correction_or_cap": 64,
+            "write_after_append": 64
+          },
+          "event_token_fraction": 0.5,
+          "mutation_candidate_fraction": 0.0,
+          "entry_pure_fraction": 0.0
+        }
+      },
+      "counts": {
+        "NO-WRITE": 0,
+        "R-EMPTY": 32,
+        "R-NOMATCH": 36864,
+        "R-ZERO-RESIDUAL": 0,
+        "R-CONFLICT": 36896,
+        "R-CAP": 0
+      },
+      "excluded_tail_tokens_per_store": 2,
+      "tokens": 2306,
+      "batch": 8,
+      "heads": 4,
+      "chunk": 64,
+      "token_sha256": "5edb8c09b4a5463ddd8df550b34e65916cd56d0a2ec32b58d85ab0825cf8b3da",
+      "k": 1152,
+      "predictions_accept": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "case_prefix_word0_head0": [
+        1,
+        4,
+        2,
+        4,
+        2,
+        4,
+        2,
+        4,
+        2,
+        4,
+        2,
+        4,
+        2,
+        4,
+        2,
+        4
+      ]
+    }
+  },
+  "ladder_bands": {
+    "id": {
+      "band": [
+        1,
+        128
+      ],
+      "ks": [
+        31,
+        45,
+        59,
+        73,
+        86,
+        100,
+        114,
+        128
+      ],
+      "words": [
+        {
+          "buckets": {
+            "all": {
+              "chunks": 4,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 128,
+              "intra_pop": 0,
+              "event_tokens": 128,
+              "reasons": {
+                "correction_or_cap": 4,
+                "write_after_append": 4
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_a": {
+              "chunks": 0,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 0,
+              "intra_pop": 0,
+              "event_tokens": 0,
+              "reasons": {},
+              "event_token_fraction": null,
+              "mutation_candidate_fraction": null,
+              "entry_pure_fraction": null
+            },
+            "all_b": {
+              "chunks": 0,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 0,
+              "intra_pop": 0,
+              "event_tokens": 0,
+              "reasons": {},
+              "event_token_fraction": null,
+              "mutation_candidate_fraction": null,
+              "entry_pure_fraction": null
+            },
+            "all_pad": {
+              "chunks": 0,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 0,
+              "intra_pop": 0,
+              "event_tokens": 0,
+              "reasons": {},
+              "event_token_fraction": null,
+              "mutation_candidate_fraction": null,
+              "entry_pure_fraction": null
+            },
+            "other": {
+              "chunks": 4,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 128,
+              "intra_pop": 0,
+              "event_tokens": 128,
+              "reasons": {
+                "correction_or_cap": 4,
+                "write_after_append": 4
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            }
+          },
+          "counts": {
+            "NO-WRITE": 0,
+            "R-EMPTY": 4,
+            "R-NOMATCH": 124,
+            "R-ZERO-RESIDUAL": 0,
+            "R-CONFLICT": 128,
+            "R-CAP": 0
+          },
+          "excluded_tail_tokens_per_store": 0,
+          "tokens": 64,
+          "batch": 1,
+          "heads": 4,
+          "chunk": 64,
+          "token_sha256": "fceccc7170b7661ac78ef27efaba701c507f0ec9a44c7b739469096adf925d1b",
+          "k": 31,
+          "predictions_accept": [
+            1
+          ]
+        },
+        {
+          "buckets": {
+            "all": {
+              "chunks": 4,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 128,
+              "intra_pop": 0,
+              "event_tokens": 128,
+              "reasons": {
+                "correction_or_cap": 4,
+                "write_after_append": 4
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_a": {
+              "chunks": 0,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 0,
+              "intra_pop": 0,
+              "event_tokens": 0,
+              "reasons": {},
+              "event_token_fraction": null,
+              "mutation_candidate_fraction": null,
+              "entry_pure_fraction": null
+            },
+            "all_b": {
+              "chunks": 0,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 0,
+              "intra_pop": 0,
+              "event_tokens": 0,
+              "reasons": {},
+              "event_token_fraction": null,
+              "mutation_candidate_fraction": null,
+              "entry_pure_fraction": null
+            },
+            "all_pad": {
+              "chunks": 0,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 0,
+              "intra_pop": 0,
+              "event_tokens": 0,
+              "reasons": {},
+              "event_token_fraction": null,
+              "mutation_candidate_fraction": null,
+              "entry_pure_fraction": null
+            },
+            "other": {
+              "chunks": 4,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 128,
+              "intra_pop": 0,
+              "event_tokens": 128,
+              "reasons": {
+                "correction_or_cap": 4,
+                "write_after_append": 4
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            }
+          },
+          "counts": {
+            "NO-WRITE": 0,
+            "R-EMPTY": 4,
+            "R-NOMATCH": 180,
+            "R-ZERO-RESIDUAL": 0,
+            "R-CONFLICT": 184,
+            "R-CAP": 0
+          },
+          "excluded_tail_tokens_per_store": 28,
+          "tokens": 92,
+          "batch": 1,
+          "heads": 4,
+          "chunk": 64,
+          "token_sha256": "b467687175399240d1614459832343f84c31ca7a1971bf42a0fadfcecbb8b347",
+          "k": 45,
+          "predictions_accept": [
+            1
+          ]
+        },
+        {
+          "buckets": {
+            "all": {
+              "chunks": 4,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 128,
+              "intra_pop": 0,
+              "event_tokens": 128,
+              "reasons": {
+                "correction_or_cap": 4,
+                "write_after_append": 4
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_a": {
+              "chunks": 0,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 0,
+              "intra_pop": 0,
+              "event_tokens": 0,
+              "reasons": {},
+              "event_token_fraction": null,
+              "mutation_candidate_fraction": null,
+              "entry_pure_fraction": null
+            },
+            "all_b": {
+              "chunks": 0,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 0,
+              "intra_pop": 0,
+              "event_tokens": 0,
+              "reasons": {},
+              "event_token_fraction": null,
+              "mutation_candidate_fraction": null,
+              "entry_pure_fraction": null
+            },
+            "all_pad": {
+              "chunks": 0,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 0,
+              "intra_pop": 0,
+              "event_tokens": 0,
+              "reasons": {},
+              "event_token_fraction": null,
+              "mutation_candidate_fraction": null,
+              "entry_pure_fraction": null
+            },
+            "other": {
+              "chunks": 4,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 128,
+              "intra_pop": 0,
+              "event_tokens": 128,
+              "reasons": {
+                "correction_or_cap": 4,
+                "write_after_append": 4
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            }
+          },
+          "counts": {
+            "NO-WRITE": 0,
+            "R-EMPTY": 4,
+            "R-NOMATCH": 236,
+            "R-ZERO-RESIDUAL": 0,
+            "R-CONFLICT": 240,
+            "R-CAP": 0
+          },
+          "excluded_tail_tokens_per_store": 56,
+          "tokens": 120,
+          "batch": 1,
+          "heads": 4,
+          "chunk": 64,
+          "token_sha256": "c6f4cc0f510122ab0acbae941a042d39174e370b554fd8f250a603cf25c6c79c",
+          "k": 59,
+          "predictions_accept": [
+            1
+          ]
+        },
+        {
+          "buckets": {
+            "all": {
+              "chunks": 8,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 256,
+              "intra_pop": 0,
+              "event_tokens": 256,
+              "reasons": {
+                "correction_or_cap": 8,
+                "write_after_append": 8
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_a": {
+              "chunks": 0,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 0,
+              "intra_pop": 0,
+              "event_tokens": 0,
+              "reasons": {},
+              "event_token_fraction": null,
+              "mutation_candidate_fraction": null,
+              "entry_pure_fraction": null
+            },
+            "all_b": {
+              "chunks": 0,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 0,
+              "intra_pop": 0,
+              "event_tokens": 0,
+              "reasons": {},
+              "event_token_fraction": null,
+              "mutation_candidate_fraction": null,
+              "entry_pure_fraction": null
+            },
+            "all_pad": {
+              "chunks": 0,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 0,
+              "intra_pop": 0,
+              "event_tokens": 0,
+              "reasons": {},
+              "event_token_fraction": null,
+              "mutation_candidate_fraction": null,
+              "entry_pure_fraction": null
+            },
+            "other": {
+              "chunks": 8,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 256,
+              "intra_pop": 0,
+              "event_tokens": 256,
+              "reasons": {
+                "correction_or_cap": 8,
+                "write_after_append": 8
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            }
+          },
+          "counts": {
+            "NO-WRITE": 0,
+            "R-EMPTY": 4,
+            "R-NOMATCH": 292,
+            "R-ZERO-RESIDUAL": 0,
+            "R-CONFLICT": 296,
+            "R-CAP": 0
+          },
+          "excluded_tail_tokens_per_store": 20,
+          "tokens": 148,
+          "batch": 1,
+          "heads": 4,
+          "chunk": 64,
+          "token_sha256": "600d9977201010f39fc5c18855b1d39171b4022e77b27defa8c8863abd984b36",
+          "k": 73,
+          "predictions_accept": [
+            1
+          ]
+        },
+        {
+          "buckets": {
+            "all": {
+              "chunks": 8,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 256,
+              "intra_pop": 0,
+              "event_tokens": 256,
+              "reasons": {
+                "correction_or_cap": 8,
+                "write_after_append": 8
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_a": {
+              "chunks": 0,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 0,
+              "intra_pop": 0,
+              "event_tokens": 0,
+              "reasons": {},
+              "event_token_fraction": null,
+              "mutation_candidate_fraction": null,
+              "entry_pure_fraction": null
+            },
+            "all_b": {
+              "chunks": 0,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 0,
+              "intra_pop": 0,
+              "event_tokens": 0,
+              "reasons": {},
+              "event_token_fraction": null,
+              "mutation_candidate_fraction": null,
+              "entry_pure_fraction": null
+            },
+            "all_pad": {
+              "chunks": 0,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 0,
+              "intra_pop": 0,
+              "event_tokens": 0,
+              "reasons": {},
+              "event_token_fraction": null,
+              "mutation_candidate_fraction": null,
+              "entry_pure_fraction": null
+            },
+            "other": {
+              "chunks": 8,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 256,
+              "intra_pop": 0,
+              "event_tokens": 256,
+              "reasons": {
+                "correction_or_cap": 8,
+                "write_after_append": 8
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            }
+          },
+          "counts": {
+            "NO-WRITE": 0,
+            "R-EMPTY": 4,
+            "R-NOMATCH": 344,
+            "R-ZERO-RESIDUAL": 0,
+            "R-CONFLICT": 348,
+            "R-CAP": 0
+          },
+          "excluded_tail_tokens_per_store": 46,
+          "tokens": 174,
+          "batch": 1,
+          "heads": 4,
+          "chunk": 64,
+          "token_sha256": "d2dfef7b2b91a7864efc19b72ccae7fb578300edcd71a24570aa09471fd51253",
+          "k": 86,
+          "predictions_accept": [
+            1
+          ]
+        },
+        {
+          "buckets": {
+            "all": {
+              "chunks": 12,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 384,
+              "intra_pop": 0,
+              "event_tokens": 384,
+              "reasons": {
+                "correction_or_cap": 12,
+                "write_after_append": 12
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_a": {
+              "chunks": 0,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 0,
+              "intra_pop": 0,
+              "event_tokens": 0,
+              "reasons": {},
+              "event_token_fraction": null,
+              "mutation_candidate_fraction": null,
+              "entry_pure_fraction": null
+            },
+            "all_b": {
+              "chunks": 4,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 128,
+              "intra_pop": 0,
+              "event_tokens": 128,
+              "reasons": {
+                "correction_or_cap": 4,
+                "write_after_append": 4
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_pad": {
+              "chunks": 0,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 0,
+              "intra_pop": 0,
+              "event_tokens": 0,
+              "reasons": {},
+              "event_token_fraction": null,
+              "mutation_candidate_fraction": null,
+              "entry_pure_fraction": null
+            },
+            "other": {
+              "chunks": 8,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 256,
+              "intra_pop": 0,
+              "event_tokens": 256,
+              "reasons": {
+                "correction_or_cap": 8,
+                "write_after_append": 8
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            }
+          },
+          "counts": {
+            "NO-WRITE": 0,
+            "R-EMPTY": 4,
+            "R-NOMATCH": 400,
+            "R-ZERO-RESIDUAL": 0,
+            "R-CONFLICT": 404,
+            "R-CAP": 0
+          },
+          "excluded_tail_tokens_per_store": 10,
+          "tokens": 202,
+          "batch": 1,
+          "heads": 4,
+          "chunk": 64,
+          "token_sha256": "1e205b64043a7931745c1179c4bfdc0cd6bb90e097239d20fb59d944a039e774",
+          "k": 100,
+          "predictions_accept": [
+            1
+          ]
+        },
+        {
+          "buckets": {
+            "all": {
+              "chunks": 12,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 384,
+              "intra_pop": 0,
+              "event_tokens": 384,
+              "reasons": {
+                "correction_or_cap": 12,
+                "write_after_append": 12
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_a": {
+              "chunks": 0,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 0,
+              "intra_pop": 0,
+              "event_tokens": 0,
+              "reasons": {},
+              "event_token_fraction": null,
+              "mutation_candidate_fraction": null,
+              "entry_pure_fraction": null
+            },
+            "all_b": {
+              "chunks": 4,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 128,
+              "intra_pop": 0,
+              "event_tokens": 128,
+              "reasons": {
+                "correction_or_cap": 4,
+                "write_after_append": 4
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_pad": {
+              "chunks": 0,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 0,
+              "intra_pop": 0,
+              "event_tokens": 0,
+              "reasons": {},
+              "event_token_fraction": null,
+              "mutation_candidate_fraction": null,
+              "entry_pure_fraction": null
+            },
+            "other": {
+              "chunks": 8,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 256,
+              "intra_pop": 0,
+              "event_tokens": 256,
+              "reasons": {
+                "correction_or_cap": 8,
+                "write_after_append": 8
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            }
+          },
+          "counts": {
+            "NO-WRITE": 0,
+            "R-EMPTY": 4,
+            "R-NOMATCH": 456,
+            "R-ZERO-RESIDUAL": 0,
+            "R-CONFLICT": 460,
+            "R-CAP": 0
+          },
+          "excluded_tail_tokens_per_store": 38,
+          "tokens": 230,
+          "batch": 1,
+          "heads": 4,
+          "chunk": 64,
+          "token_sha256": "20f7bd59edf407b7c233c7ed3dc0699d01ef8c0306449f8f341c9169e5c33f1b",
+          "k": 114,
+          "predictions_accept": [
+            1
+          ]
+        },
+        {
+          "buckets": {
+            "all": {
+              "chunks": 16,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 512,
+              "intra_pop": 0,
+              "event_tokens": 512,
+              "reasons": {
+                "correction_or_cap": 16,
+                "write_after_append": 16
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_a": {
+              "chunks": 4,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 128,
+              "intra_pop": 0,
+              "event_tokens": 128,
+              "reasons": {
+                "correction_or_cap": 4,
+                "write_after_append": 4
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_b": {
+              "chunks": 4,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 128,
+              "intra_pop": 0,
+              "event_tokens": 128,
+              "reasons": {
+                "correction_or_cap": 4,
+                "write_after_append": 4
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_pad": {
+              "chunks": 0,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 0,
+              "intra_pop": 0,
+              "event_tokens": 0,
+              "reasons": {},
+              "event_token_fraction": null,
+              "mutation_candidate_fraction": null,
+              "entry_pure_fraction": null
+            },
+            "other": {
+              "chunks": 8,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 256,
+              "intra_pop": 0,
+              "event_tokens": 256,
+              "reasons": {
+                "correction_or_cap": 8,
+                "write_after_append": 8
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            }
+          },
+          "counts": {
+            "NO-WRITE": 0,
+            "R-EMPTY": 4,
+            "R-NOMATCH": 512,
+            "R-ZERO-RESIDUAL": 0,
+            "R-CONFLICT": 516,
+            "R-CAP": 0
+          },
+          "excluded_tail_tokens_per_store": 2,
+          "tokens": 258,
+          "batch": 1,
+          "heads": 4,
+          "chunk": 64,
+          "token_sha256": "a94dadbecd6180d0567bf896de8fcf7d6f1af7a2c5521c9e93aa66d14f38f2a4",
+          "k": 128,
+          "predictions_accept": [
+            1
+          ]
+        }
+      ],
+      "aggregated_event_token_fraction": 0.5,
+      "event_tokens": 2176,
+      "event_token_denominator": 4352,
+      "predictions_accept": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ]
+    },
+    "2x": {
+      "band": [
+        129,
+        256
+      ],
+      "ks": [
+        129,
+        147,
+        165,
+        183,
+        202,
+        220,
+        238,
+        256
+      ],
+      "words": [
+        {
+          "buckets": {
+            "all": {
+              "chunks": 16,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 512,
+              "intra_pop": 0,
+              "event_tokens": 512,
+              "reasons": {
+                "correction_or_cap": 16,
+                "write_after_append": 16
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_a": {
+              "chunks": 4,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 128,
+              "intra_pop": 0,
+              "event_tokens": 128,
+              "reasons": {
+                "correction_or_cap": 4,
+                "write_after_append": 4
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_b": {
+              "chunks": 4,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 128,
+              "intra_pop": 0,
+              "event_tokens": 128,
+              "reasons": {
+                "correction_or_cap": 4,
+                "write_after_append": 4
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_pad": {
+              "chunks": 0,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 0,
+              "intra_pop": 0,
+              "event_tokens": 0,
+              "reasons": {},
+              "event_token_fraction": null,
+              "mutation_candidate_fraction": null,
+              "entry_pure_fraction": null
+            },
+            "other": {
+              "chunks": 8,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 256,
+              "intra_pop": 0,
+              "event_tokens": 256,
+              "reasons": {
+                "correction_or_cap": 8,
+                "write_after_append": 8
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            }
+          },
+          "counts": {
+            "NO-WRITE": 0,
+            "R-EMPTY": 4,
+            "R-NOMATCH": 516,
+            "R-ZERO-RESIDUAL": 0,
+            "R-CONFLICT": 520,
+            "R-CAP": 0
+          },
+          "excluded_tail_tokens_per_store": 4,
+          "tokens": 260,
+          "batch": 1,
+          "heads": 4,
+          "chunk": 64,
+          "token_sha256": "0f8c2b374390d9763166927330a599796da442d8784f932f7114723507ca73ba",
+          "k": 129,
+          "predictions_accept": [
+            1
+          ]
+        },
+        {
+          "buckets": {
+            "all": {
+              "chunks": 16,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 512,
+              "intra_pop": 0,
+              "event_tokens": 512,
+              "reasons": {
+                "correction_or_cap": 16,
+                "write_after_append": 16
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_a": {
+              "chunks": 4,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 128,
+              "intra_pop": 0,
+              "event_tokens": 128,
+              "reasons": {
+                "correction_or_cap": 4,
+                "write_after_append": 4
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_b": {
+              "chunks": 4,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 128,
+              "intra_pop": 0,
+              "event_tokens": 128,
+              "reasons": {
+                "correction_or_cap": 4,
+                "write_after_append": 4
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_pad": {
+              "chunks": 0,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 0,
+              "intra_pop": 0,
+              "event_tokens": 0,
+              "reasons": {},
+              "event_token_fraction": null,
+              "mutation_candidate_fraction": null,
+              "entry_pure_fraction": null
+            },
+            "other": {
+              "chunks": 8,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 256,
+              "intra_pop": 0,
+              "event_tokens": 256,
+              "reasons": {
+                "correction_or_cap": 8,
+                "write_after_append": 8
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            }
+          },
+          "counts": {
+            "NO-WRITE": 0,
+            "R-EMPTY": 4,
+            "R-NOMATCH": 588,
+            "R-ZERO-RESIDUAL": 0,
+            "R-CONFLICT": 592,
+            "R-CAP": 0
+          },
+          "excluded_tail_tokens_per_store": 40,
+          "tokens": 296,
+          "batch": 1,
+          "heads": 4,
+          "chunk": 64,
+          "token_sha256": "14819a6ea9a38b95723c26241d2293974d29834790c9cf36addc2645bd8627b8",
+          "k": 147,
+          "predictions_accept": [
+            1
+          ]
+        },
+        {
+          "buckets": {
+            "all": {
+              "chunks": 20,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 640,
+              "intra_pop": 0,
+              "event_tokens": 640,
+              "reasons": {
+                "correction_or_cap": 20,
+                "write_after_append": 20
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_a": {
+              "chunks": 4,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 128,
+              "intra_pop": 0,
+              "event_tokens": 128,
+              "reasons": {
+                "correction_or_cap": 4,
+                "write_after_append": 4
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_b": {
+              "chunks": 8,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 256,
+              "intra_pop": 0,
+              "event_tokens": 256,
+              "reasons": {
+                "correction_or_cap": 8,
+                "write_after_append": 8
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_pad": {
+              "chunks": 0,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 0,
+              "intra_pop": 0,
+              "event_tokens": 0,
+              "reasons": {},
+              "event_token_fraction": null,
+              "mutation_candidate_fraction": null,
+              "entry_pure_fraction": null
+            },
+            "other": {
+              "chunks": 8,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 256,
+              "intra_pop": 0,
+              "event_tokens": 256,
+              "reasons": {
+                "correction_or_cap": 8,
+                "write_after_append": 8
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            }
+          },
+          "counts": {
+            "NO-WRITE": 0,
+            "R-EMPTY": 4,
+            "R-NOMATCH": 660,
+            "R-ZERO-RESIDUAL": 0,
+            "R-CONFLICT": 664,
+            "R-CAP": 0
+          },
+          "excluded_tail_tokens_per_store": 12,
+          "tokens": 332,
+          "batch": 1,
+          "heads": 4,
+          "chunk": 64,
+          "token_sha256": "8fb1b04a76fd02c746de5733e4d9c06f7b53fd0442c02ed4e8715faf7325fb98",
+          "k": 165,
+          "predictions_accept": [
+            1
+          ]
+        },
+        {
+          "buckets": {
+            "all": {
+              "chunks": 20,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 640,
+              "intra_pop": 0,
+              "event_tokens": 640,
+              "reasons": {
+                "correction_or_cap": 20,
+                "write_after_append": 20
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_a": {
+              "chunks": 4,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 128,
+              "intra_pop": 0,
+              "event_tokens": 128,
+              "reasons": {
+                "correction_or_cap": 4,
+                "write_after_append": 4
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_b": {
+              "chunks": 8,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 256,
+              "intra_pop": 0,
+              "event_tokens": 256,
+              "reasons": {
+                "correction_or_cap": 8,
+                "write_after_append": 8
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_pad": {
+              "chunks": 0,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 0,
+              "intra_pop": 0,
+              "event_tokens": 0,
+              "reasons": {},
+              "event_token_fraction": null,
+              "mutation_candidate_fraction": null,
+              "entry_pure_fraction": null
+            },
+            "other": {
+              "chunks": 8,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 256,
+              "intra_pop": 0,
+              "event_tokens": 256,
+              "reasons": {
+                "correction_or_cap": 8,
+                "write_after_append": 8
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            }
+          },
+          "counts": {
+            "NO-WRITE": 0,
+            "R-EMPTY": 4,
+            "R-NOMATCH": 732,
+            "R-ZERO-RESIDUAL": 0,
+            "R-CONFLICT": 736,
+            "R-CAP": 0
+          },
+          "excluded_tail_tokens_per_store": 48,
+          "tokens": 368,
+          "batch": 1,
+          "heads": 4,
+          "chunk": 64,
+          "token_sha256": "52e55ccd12b11c55093602be774bf1a54b79641d287da752c292a6e1f2db74ee",
+          "k": 183,
+          "predictions_accept": [
+            1
+          ]
+        },
+        {
+          "buckets": {
+            "all": {
+              "chunks": 24,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 768,
+              "intra_pop": 0,
+              "event_tokens": 768,
+              "reasons": {
+                "correction_or_cap": 24,
+                "write_after_append": 24
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_a": {
+              "chunks": 8,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 256,
+              "intra_pop": 0,
+              "event_tokens": 256,
+              "reasons": {
+                "correction_or_cap": 8,
+                "write_after_append": 8
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_b": {
+              "chunks": 8,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 256,
+              "intra_pop": 0,
+              "event_tokens": 256,
+              "reasons": {
+                "correction_or_cap": 8,
+                "write_after_append": 8
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_pad": {
+              "chunks": 0,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 0,
+              "intra_pop": 0,
+              "event_tokens": 0,
+              "reasons": {},
+              "event_token_fraction": null,
+              "mutation_candidate_fraction": null,
+              "entry_pure_fraction": null
+            },
+            "other": {
+              "chunks": 8,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 256,
+              "intra_pop": 0,
+              "event_tokens": 256,
+              "reasons": {
+                "correction_or_cap": 8,
+                "write_after_append": 8
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            }
+          },
+          "counts": {
+            "NO-WRITE": 0,
+            "R-EMPTY": 4,
+            "R-NOMATCH": 808,
+            "R-ZERO-RESIDUAL": 0,
+            "R-CONFLICT": 812,
+            "R-CAP": 0
+          },
+          "excluded_tail_tokens_per_store": 22,
+          "tokens": 406,
+          "batch": 1,
+          "heads": 4,
+          "chunk": 64,
+          "token_sha256": "6fa72fb4f0e2bdc9a5ee5bbe6583ae3e011110ac633b2c6b600b16d280b13186",
+          "k": 202,
+          "predictions_accept": [
+            1
+          ]
+        },
+        {
+          "buckets": {
+            "all": {
+              "chunks": 24,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 768,
+              "intra_pop": 0,
+              "event_tokens": 768,
+              "reasons": {
+                "correction_or_cap": 24,
+                "write_after_append": 24
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_a": {
+              "chunks": 8,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 256,
+              "intra_pop": 0,
+              "event_tokens": 256,
+              "reasons": {
+                "correction_or_cap": 8,
+                "write_after_append": 8
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_b": {
+              "chunks": 8,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 256,
+              "intra_pop": 0,
+              "event_tokens": 256,
+              "reasons": {
+                "correction_or_cap": 8,
+                "write_after_append": 8
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_pad": {
+              "chunks": 0,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 0,
+              "intra_pop": 0,
+              "event_tokens": 0,
+              "reasons": {},
+              "event_token_fraction": null,
+              "mutation_candidate_fraction": null,
+              "entry_pure_fraction": null
+            },
+            "other": {
+              "chunks": 8,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 256,
+              "intra_pop": 0,
+              "event_tokens": 256,
+              "reasons": {
+                "correction_or_cap": 8,
+                "write_after_append": 8
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            }
+          },
+          "counts": {
+            "NO-WRITE": 0,
+            "R-EMPTY": 4,
+            "R-NOMATCH": 880,
+            "R-ZERO-RESIDUAL": 0,
+            "R-CONFLICT": 884,
+            "R-CAP": 0
+          },
+          "excluded_tail_tokens_per_store": 58,
+          "tokens": 442,
+          "batch": 1,
+          "heads": 4,
+          "chunk": 64,
+          "token_sha256": "244fda4d669151d27e3e3d1545d514a7acbcc4bc79cb69d8f989dba470087076",
+          "k": 220,
+          "predictions_accept": [
+            1
+          ]
+        },
+        {
+          "buckets": {
+            "all": {
+              "chunks": 28,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 896,
+              "intra_pop": 0,
+              "event_tokens": 896,
+              "reasons": {
+                "correction_or_cap": 28,
+                "write_after_append": 28
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_a": {
+              "chunks": 8,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 256,
+              "intra_pop": 0,
+              "event_tokens": 256,
+              "reasons": {
+                "correction_or_cap": 8,
+                "write_after_append": 8
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_b": {
+              "chunks": 12,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 384,
+              "intra_pop": 0,
+              "event_tokens": 384,
+              "reasons": {
+                "correction_or_cap": 12,
+                "write_after_append": 12
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_pad": {
+              "chunks": 0,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 0,
+              "intra_pop": 0,
+              "event_tokens": 0,
+              "reasons": {},
+              "event_token_fraction": null,
+              "mutation_candidate_fraction": null,
+              "entry_pure_fraction": null
+            },
+            "other": {
+              "chunks": 8,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 256,
+              "intra_pop": 0,
+              "event_tokens": 256,
+              "reasons": {
+                "correction_or_cap": 8,
+                "write_after_append": 8
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            }
+          },
+          "counts": {
+            "NO-WRITE": 0,
+            "R-EMPTY": 4,
+            "R-NOMATCH": 952,
+            "R-ZERO-RESIDUAL": 0,
+            "R-CONFLICT": 956,
+            "R-CAP": 0
+          },
+          "excluded_tail_tokens_per_store": 30,
+          "tokens": 478,
+          "batch": 1,
+          "heads": 4,
+          "chunk": 64,
+          "token_sha256": "0bc92e6f63dc6f12e7b6b326dc012d4f908b5cd9cd4bc42575a1249accdbb992",
+          "k": 238,
+          "predictions_accept": [
+            1
+          ]
+        },
+        {
+          "buckets": {
+            "all": {
+              "chunks": 32,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 1024,
+              "intra_pop": 0,
+              "event_tokens": 1024,
+              "reasons": {
+                "correction_or_cap": 32,
+                "write_after_append": 32
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_a": {
+              "chunks": 12,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 384,
+              "intra_pop": 0,
+              "event_tokens": 384,
+              "reasons": {
+                "correction_or_cap": 12,
+                "write_after_append": 12
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_b": {
+              "chunks": 12,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 384,
+              "intra_pop": 0,
+              "event_tokens": 384,
+              "reasons": {
+                "correction_or_cap": 12,
+                "write_after_append": 12
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_pad": {
+              "chunks": 0,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 0,
+              "intra_pop": 0,
+              "event_tokens": 0,
+              "reasons": {},
+              "event_token_fraction": null,
+              "mutation_candidate_fraction": null,
+              "entry_pure_fraction": null
+            },
+            "other": {
+              "chunks": 8,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 256,
+              "intra_pop": 0,
+              "event_tokens": 256,
+              "reasons": {
+                "correction_or_cap": 8,
+                "write_after_append": 8
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            }
+          },
+          "counts": {
+            "NO-WRITE": 0,
+            "R-EMPTY": 4,
+            "R-NOMATCH": 1024,
+            "R-ZERO-RESIDUAL": 0,
+            "R-CONFLICT": 1028,
+            "R-CAP": 0
+          },
+          "excluded_tail_tokens_per_store": 2,
+          "tokens": 514,
+          "batch": 1,
+          "heads": 4,
+          "chunk": 64,
+          "token_sha256": "badeda169ced099f5ea41c56ec5bfec22f2af4dfbb66212cf09c497399038946",
+          "k": 256,
+          "predictions_accept": [
+            1
+          ]
+        }
+      ],
+      "aggregated_event_token_fraction": 0.5,
+      "event_tokens": 5760,
+      "event_token_denominator": 11520,
+      "predictions_accept": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ]
+    },
+    "4x": {
+      "band": [
+        257,
+        512
+      ],
+      "ks": [
+        257,
+        293,
+        330,
+        366,
+        403,
+        439,
+        476,
+        512
+      ],
+      "words": [
+        {
+          "buckets": {
+            "all": {
+              "chunks": 32,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 1024,
+              "intra_pop": 0,
+              "event_tokens": 1024,
+              "reasons": {
+                "correction_or_cap": 32,
+                "write_after_append": 32
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_a": {
+              "chunks": 12,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 384,
+              "intra_pop": 0,
+              "event_tokens": 384,
+              "reasons": {
+                "correction_or_cap": 12,
+                "write_after_append": 12
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_b": {
+              "chunks": 12,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 384,
+              "intra_pop": 0,
+              "event_tokens": 384,
+              "reasons": {
+                "correction_or_cap": 12,
+                "write_after_append": 12
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_pad": {
+              "chunks": 0,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 0,
+              "intra_pop": 0,
+              "event_tokens": 0,
+              "reasons": {},
+              "event_token_fraction": null,
+              "mutation_candidate_fraction": null,
+              "entry_pure_fraction": null
+            },
+            "other": {
+              "chunks": 8,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 256,
+              "intra_pop": 0,
+              "event_tokens": 256,
+              "reasons": {
+                "correction_or_cap": 8,
+                "write_after_append": 8
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            }
+          },
+          "counts": {
+            "NO-WRITE": 0,
+            "R-EMPTY": 4,
+            "R-NOMATCH": 1028,
+            "R-ZERO-RESIDUAL": 0,
+            "R-CONFLICT": 1032,
+            "R-CAP": 0
+          },
+          "excluded_tail_tokens_per_store": 4,
+          "tokens": 516,
+          "batch": 1,
+          "heads": 4,
+          "chunk": 64,
+          "token_sha256": "cc6fbb970d23931ffc4379a4220375f7d3f726324ba3f35ee29e1d95bc9df26d",
+          "k": 257,
+          "predictions_accept": [
+            1
+          ]
+        },
+        {
+          "buckets": {
+            "all": {
+              "chunks": 36,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 1152,
+              "intra_pop": 0,
+              "event_tokens": 1152,
+              "reasons": {
+                "correction_or_cap": 36,
+                "write_after_append": 36
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_a": {
+              "chunks": 12,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 384,
+              "intra_pop": 0,
+              "event_tokens": 384,
+              "reasons": {
+                "correction_or_cap": 12,
+                "write_after_append": 12
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_b": {
+              "chunks": 16,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 512,
+              "intra_pop": 0,
+              "event_tokens": 512,
+              "reasons": {
+                "correction_or_cap": 16,
+                "write_after_append": 16
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_pad": {
+              "chunks": 0,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 0,
+              "intra_pop": 0,
+              "event_tokens": 0,
+              "reasons": {},
+              "event_token_fraction": null,
+              "mutation_candidate_fraction": null,
+              "entry_pure_fraction": null
+            },
+            "other": {
+              "chunks": 8,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 256,
+              "intra_pop": 0,
+              "event_tokens": 256,
+              "reasons": {
+                "correction_or_cap": 8,
+                "write_after_append": 8
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            }
+          },
+          "counts": {
+            "NO-WRITE": 0,
+            "R-EMPTY": 4,
+            "R-NOMATCH": 1172,
+            "R-ZERO-RESIDUAL": 0,
+            "R-CONFLICT": 1176,
+            "R-CAP": 0
+          },
+          "excluded_tail_tokens_per_store": 12,
+          "tokens": 588,
+          "batch": 1,
+          "heads": 4,
+          "chunk": 64,
+          "token_sha256": "c0daffe9eca4e0b5799a81df663a7e1a7e3f420fcc18be27eeecfa26c22361c9",
+          "k": 293,
+          "predictions_accept": [
+            1
+          ]
+        },
+        {
+          "buckets": {
+            "all": {
+              "chunks": 40,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 1280,
+              "intra_pop": 0,
+              "event_tokens": 1280,
+              "reasons": {
+                "correction_or_cap": 40,
+                "write_after_append": 40
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_a": {
+              "chunks": 16,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 512,
+              "intra_pop": 0,
+              "event_tokens": 512,
+              "reasons": {
+                "correction_or_cap": 16,
+                "write_after_append": 16
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_b": {
+              "chunks": 16,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 512,
+              "intra_pop": 0,
+              "event_tokens": 512,
+              "reasons": {
+                "correction_or_cap": 16,
+                "write_after_append": 16
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_pad": {
+              "chunks": 0,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 0,
+              "intra_pop": 0,
+              "event_tokens": 0,
+              "reasons": {},
+              "event_token_fraction": null,
+              "mutation_candidate_fraction": null,
+              "entry_pure_fraction": null
+            },
+            "other": {
+              "chunks": 8,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 256,
+              "intra_pop": 0,
+              "event_tokens": 256,
+              "reasons": {
+                "correction_or_cap": 8,
+                "write_after_append": 8
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            }
+          },
+          "counts": {
+            "NO-WRITE": 0,
+            "R-EMPTY": 4,
+            "R-NOMATCH": 1320,
+            "R-ZERO-RESIDUAL": 0,
+            "R-CONFLICT": 1324,
+            "R-CAP": 0
+          },
+          "excluded_tail_tokens_per_store": 22,
+          "tokens": 662,
+          "batch": 1,
+          "heads": 4,
+          "chunk": 64,
+          "token_sha256": "15e7c0ad0b43d1f21d616ceef2659a9b762b5050edad1d6b0a6a0679a16db07d",
+          "k": 330,
+          "predictions_accept": [
+            1
+          ]
+        },
+        {
+          "buckets": {
+            "all": {
+              "chunks": 44,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 1408,
+              "intra_pop": 0,
+              "event_tokens": 1408,
+              "reasons": {
+                "correction_or_cap": 44,
+                "write_after_append": 44
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_a": {
+              "chunks": 16,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 512,
+              "intra_pop": 0,
+              "event_tokens": 512,
+              "reasons": {
+                "correction_or_cap": 16,
+                "write_after_append": 16
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_b": {
+              "chunks": 20,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 640,
+              "intra_pop": 0,
+              "event_tokens": 640,
+              "reasons": {
+                "correction_or_cap": 20,
+                "write_after_append": 20
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_pad": {
+              "chunks": 0,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 0,
+              "intra_pop": 0,
+              "event_tokens": 0,
+              "reasons": {},
+              "event_token_fraction": null,
+              "mutation_candidate_fraction": null,
+              "entry_pure_fraction": null
+            },
+            "other": {
+              "chunks": 8,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 256,
+              "intra_pop": 0,
+              "event_tokens": 256,
+              "reasons": {
+                "correction_or_cap": 8,
+                "write_after_append": 8
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            }
+          },
+          "counts": {
+            "NO-WRITE": 0,
+            "R-EMPTY": 4,
+            "R-NOMATCH": 1464,
+            "R-ZERO-RESIDUAL": 0,
+            "R-CONFLICT": 1468,
+            "R-CAP": 0
+          },
+          "excluded_tail_tokens_per_store": 30,
+          "tokens": 734,
+          "batch": 1,
+          "heads": 4,
+          "chunk": 64,
+          "token_sha256": "5ec42f1e61fb7a39702ec993a5669e77c436e0f1c4942558e169d905e96ae604",
+          "k": 366,
+          "predictions_accept": [
+            1
+          ]
+        },
+        {
+          "buckets": {
+            "all": {
+              "chunks": 48,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 1536,
+              "intra_pop": 0,
+              "event_tokens": 1536,
+              "reasons": {
+                "correction_or_cap": 48,
+                "write_after_append": 48
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_a": {
+              "chunks": 20,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 640,
+              "intra_pop": 0,
+              "event_tokens": 640,
+              "reasons": {
+                "correction_or_cap": 20,
+                "write_after_append": 20
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_b": {
+              "chunks": 20,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 640,
+              "intra_pop": 0,
+              "event_tokens": 640,
+              "reasons": {
+                "correction_or_cap": 20,
+                "write_after_append": 20
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_pad": {
+              "chunks": 0,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 0,
+              "intra_pop": 0,
+              "event_tokens": 0,
+              "reasons": {},
+              "event_token_fraction": null,
+              "mutation_candidate_fraction": null,
+              "entry_pure_fraction": null
+            },
+            "other": {
+              "chunks": 8,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 256,
+              "intra_pop": 0,
+              "event_tokens": 256,
+              "reasons": {
+                "correction_or_cap": 8,
+                "write_after_append": 8
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            }
+          },
+          "counts": {
+            "NO-WRITE": 0,
+            "R-EMPTY": 4,
+            "R-NOMATCH": 1612,
+            "R-ZERO-RESIDUAL": 0,
+            "R-CONFLICT": 1616,
+            "R-CAP": 0
+          },
+          "excluded_tail_tokens_per_store": 40,
+          "tokens": 808,
+          "batch": 1,
+          "heads": 4,
+          "chunk": 64,
+          "token_sha256": "ffbcb37d0fcf59533ba5e851863558580d5c404dc07bcb343edd501e2c2e9e67",
+          "k": 403,
+          "predictions_accept": [
+            1
+          ]
+        },
+        {
+          "buckets": {
+            "all": {
+              "chunks": 52,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 1664,
+              "intra_pop": 0,
+              "event_tokens": 1664,
+              "reasons": {
+                "correction_or_cap": 52,
+                "write_after_append": 52
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_a": {
+              "chunks": 20,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 640,
+              "intra_pop": 0,
+              "event_tokens": 640,
+              "reasons": {
+                "correction_or_cap": 20,
+                "write_after_append": 20
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_b": {
+              "chunks": 24,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 768,
+              "intra_pop": 0,
+              "event_tokens": 768,
+              "reasons": {
+                "correction_or_cap": 24,
+                "write_after_append": 24
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_pad": {
+              "chunks": 0,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 0,
+              "intra_pop": 0,
+              "event_tokens": 0,
+              "reasons": {},
+              "event_token_fraction": null,
+              "mutation_candidate_fraction": null,
+              "entry_pure_fraction": null
+            },
+            "other": {
+              "chunks": 8,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 256,
+              "intra_pop": 0,
+              "event_tokens": 256,
+              "reasons": {
+                "correction_or_cap": 8,
+                "write_after_append": 8
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            }
+          },
+          "counts": {
+            "NO-WRITE": 0,
+            "R-EMPTY": 4,
+            "R-NOMATCH": 1756,
+            "R-ZERO-RESIDUAL": 0,
+            "R-CONFLICT": 1760,
+            "R-CAP": 0
+          },
+          "excluded_tail_tokens_per_store": 48,
+          "tokens": 880,
+          "batch": 1,
+          "heads": 4,
+          "chunk": 64,
+          "token_sha256": "ee97c6d6838c287b7afa7d43922f879c5c68d45b0c49d006d23f643e0cd2ce7c",
+          "k": 439,
+          "predictions_accept": [
+            1
+          ]
+        },
+        {
+          "buckets": {
+            "all": {
+              "chunks": 56,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 1792,
+              "intra_pop": 0,
+              "event_tokens": 1792,
+              "reasons": {
+                "correction_or_cap": 56,
+                "write_after_append": 56
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_a": {
+              "chunks": 24,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 768,
+              "intra_pop": 0,
+              "event_tokens": 768,
+              "reasons": {
+                "correction_or_cap": 24,
+                "write_after_append": 24
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_b": {
+              "chunks": 24,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 768,
+              "intra_pop": 0,
+              "event_tokens": 768,
+              "reasons": {
+                "correction_or_cap": 24,
+                "write_after_append": 24
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_pad": {
+              "chunks": 0,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 0,
+              "intra_pop": 0,
+              "event_tokens": 0,
+              "reasons": {},
+              "event_token_fraction": null,
+              "mutation_candidate_fraction": null,
+              "entry_pure_fraction": null
+            },
+            "other": {
+              "chunks": 8,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 256,
+              "intra_pop": 0,
+              "event_tokens": 256,
+              "reasons": {
+                "correction_or_cap": 8,
+                "write_after_append": 8
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            }
+          },
+          "counts": {
+            "NO-WRITE": 0,
+            "R-EMPTY": 4,
+            "R-NOMATCH": 1904,
+            "R-ZERO-RESIDUAL": 0,
+            "R-CONFLICT": 1908,
+            "R-CAP": 0
+          },
+          "excluded_tail_tokens_per_store": 58,
+          "tokens": 954,
+          "batch": 1,
+          "heads": 4,
+          "chunk": 64,
+          "token_sha256": "e101e2a42a68a654e877df8d0fdb0b4d7f227a63834ef03c6f151727a9771e04",
+          "k": 476,
+          "predictions_accept": [
+            1
+          ]
+        },
+        {
+          "buckets": {
+            "all": {
+              "chunks": 64,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 2048,
+              "intra_pop": 0,
+              "event_tokens": 2048,
+              "reasons": {
+                "correction_or_cap": 64,
+                "write_after_append": 64
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_a": {
+              "chunks": 28,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 896,
+              "intra_pop": 0,
+              "event_tokens": 896,
+              "reasons": {
+                "correction_or_cap": 28,
+                "write_after_append": 28
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_b": {
+              "chunks": 28,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 896,
+              "intra_pop": 0,
+              "event_tokens": 896,
+              "reasons": {
+                "correction_or_cap": 28,
+                "write_after_append": 28
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_pad": {
+              "chunks": 0,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 0,
+              "intra_pop": 0,
+              "event_tokens": 0,
+              "reasons": {},
+              "event_token_fraction": null,
+              "mutation_candidate_fraction": null,
+              "entry_pure_fraction": null
+            },
+            "other": {
+              "chunks": 8,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 256,
+              "intra_pop": 0,
+              "event_tokens": 256,
+              "reasons": {
+                "correction_or_cap": 8,
+                "write_after_append": 8
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            }
+          },
+          "counts": {
+            "NO-WRITE": 0,
+            "R-EMPTY": 4,
+            "R-NOMATCH": 2048,
+            "R-ZERO-RESIDUAL": 0,
+            "R-CONFLICT": 2052,
+            "R-CAP": 0
+          },
+          "excluded_tail_tokens_per_store": 2,
+          "tokens": 1026,
+          "batch": 1,
+          "heads": 4,
+          "chunk": 64,
+          "token_sha256": "18a37f3e755443bc72fcb8cf18b8cb38f25397832c46632dba387709684d8c1f",
+          "k": 512,
+          "predictions_accept": [
+            0
+          ]
+        }
+      ],
+      "aggregated_event_token_fraction": 0.5,
+      "event_tokens": 11904,
+      "event_token_denominator": 23808,
+      "predictions_accept": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0
+      ]
+    },
+    "9x": {
+      "band": [
+        1025,
+        1152
+      ],
+      "ks": [
+        1025,
+        1043,
+        1061,
+        1079,
+        1098,
+        1116,
+        1134,
+        1152
+      ],
+      "words": [
+        {
+          "buckets": {
+            "all": {
+              "chunks": 128,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 4096,
+              "intra_pop": 0,
+              "event_tokens": 4096,
+              "reasons": {
+                "correction_or_cap": 128,
+                "write_after_append": 128
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_a": {
+              "chunks": 60,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 1920,
+              "intra_pop": 0,
+              "event_tokens": 1920,
+              "reasons": {
+                "correction_or_cap": 60,
+                "write_after_append": 60
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_b": {
+              "chunks": 60,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 1920,
+              "intra_pop": 0,
+              "event_tokens": 1920,
+              "reasons": {
+                "correction_or_cap": 60,
+                "write_after_append": 60
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_pad": {
+              "chunks": 0,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 0,
+              "intra_pop": 0,
+              "event_tokens": 0,
+              "reasons": {},
+              "event_token_fraction": null,
+              "mutation_candidate_fraction": null,
+              "entry_pure_fraction": null
+            },
+            "other": {
+              "chunks": 8,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 256,
+              "intra_pop": 0,
+              "event_tokens": 256,
+              "reasons": {
+                "correction_or_cap": 8,
+                "write_after_append": 8
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            }
+          },
+          "counts": {
+            "NO-WRITE": 0,
+            "R-EMPTY": 4,
+            "R-NOMATCH": 4100,
+            "R-ZERO-RESIDUAL": 0,
+            "R-CONFLICT": 4104,
+            "R-CAP": 0
+          },
+          "excluded_tail_tokens_per_store": 4,
+          "tokens": 2052,
+          "batch": 1,
+          "heads": 4,
+          "chunk": 64,
+          "token_sha256": "0d6fad1d5231687fd596955bd8c33cd1104b2df0e75c0b28fb65b64b7f877cbc",
+          "k": 1025,
+          "predictions_accept": [
+            1
+          ]
+        },
+        {
+          "buckets": {
+            "all": {
+              "chunks": 128,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 4096,
+              "intra_pop": 0,
+              "event_tokens": 4096,
+              "reasons": {
+                "correction_or_cap": 128,
+                "write_after_append": 128
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_a": {
+              "chunks": 60,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 1920,
+              "intra_pop": 0,
+              "event_tokens": 1920,
+              "reasons": {
+                "correction_or_cap": 60,
+                "write_after_append": 60
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_b": {
+              "chunks": 60,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 1920,
+              "intra_pop": 0,
+              "event_tokens": 1920,
+              "reasons": {
+                "correction_or_cap": 60,
+                "write_after_append": 60
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_pad": {
+              "chunks": 0,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 0,
+              "intra_pop": 0,
+              "event_tokens": 0,
+              "reasons": {},
+              "event_token_fraction": null,
+              "mutation_candidate_fraction": null,
+              "entry_pure_fraction": null
+            },
+            "other": {
+              "chunks": 8,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 256,
+              "intra_pop": 0,
+              "event_tokens": 256,
+              "reasons": {
+                "correction_or_cap": 8,
+                "write_after_append": 8
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            }
+          },
+          "counts": {
+            "NO-WRITE": 0,
+            "R-EMPTY": 4,
+            "R-NOMATCH": 4172,
+            "R-ZERO-RESIDUAL": 0,
+            "R-CONFLICT": 4176,
+            "R-CAP": 0
+          },
+          "excluded_tail_tokens_per_store": 40,
+          "tokens": 2088,
+          "batch": 1,
+          "heads": 4,
+          "chunk": 64,
+          "token_sha256": "92cbce0da85e707edab0ff8a4291ba05b4f0a2a7920d05c73778b69095e94699",
+          "k": 1043,
+          "predictions_accept": [
+            1
+          ]
+        },
+        {
+          "buckets": {
+            "all": {
+              "chunks": 132,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 4224,
+              "intra_pop": 0,
+              "event_tokens": 4224,
+              "reasons": {
+                "correction_or_cap": 132,
+                "write_after_append": 132
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_a": {
+              "chunks": 60,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 1920,
+              "intra_pop": 0,
+              "event_tokens": 1920,
+              "reasons": {
+                "correction_or_cap": 60,
+                "write_after_append": 60
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_b": {
+              "chunks": 64,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 2048,
+              "intra_pop": 0,
+              "event_tokens": 2048,
+              "reasons": {
+                "correction_or_cap": 64,
+                "write_after_append": 64
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_pad": {
+              "chunks": 0,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 0,
+              "intra_pop": 0,
+              "event_tokens": 0,
+              "reasons": {},
+              "event_token_fraction": null,
+              "mutation_candidate_fraction": null,
+              "entry_pure_fraction": null
+            },
+            "other": {
+              "chunks": 8,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 256,
+              "intra_pop": 0,
+              "event_tokens": 256,
+              "reasons": {
+                "correction_or_cap": 8,
+                "write_after_append": 8
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            }
+          },
+          "counts": {
+            "NO-WRITE": 0,
+            "R-EMPTY": 4,
+            "R-NOMATCH": 4244,
+            "R-ZERO-RESIDUAL": 0,
+            "R-CONFLICT": 4248,
+            "R-CAP": 0
+          },
+          "excluded_tail_tokens_per_store": 12,
+          "tokens": 2124,
+          "batch": 1,
+          "heads": 4,
+          "chunk": 64,
+          "token_sha256": "02974f23b3305c14846c90425dbfd957eef19d68134ac350992cfd9fc25aa2ca",
+          "k": 1061,
+          "predictions_accept": [
+            1
+          ]
+        },
+        {
+          "buckets": {
+            "all": {
+              "chunks": 132,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 4224,
+              "intra_pop": 0,
+              "event_tokens": 4224,
+              "reasons": {
+                "correction_or_cap": 132,
+                "write_after_append": 132
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_a": {
+              "chunks": 60,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 1920,
+              "intra_pop": 0,
+              "event_tokens": 1920,
+              "reasons": {
+                "correction_or_cap": 60,
+                "write_after_append": 60
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_b": {
+              "chunks": 64,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 2048,
+              "intra_pop": 0,
+              "event_tokens": 2048,
+              "reasons": {
+                "correction_or_cap": 64,
+                "write_after_append": 64
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_pad": {
+              "chunks": 0,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 0,
+              "intra_pop": 0,
+              "event_tokens": 0,
+              "reasons": {},
+              "event_token_fraction": null,
+              "mutation_candidate_fraction": null,
+              "entry_pure_fraction": null
+            },
+            "other": {
+              "chunks": 8,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 256,
+              "intra_pop": 0,
+              "event_tokens": 256,
+              "reasons": {
+                "correction_or_cap": 8,
+                "write_after_append": 8
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            }
+          },
+          "counts": {
+            "NO-WRITE": 0,
+            "R-EMPTY": 4,
+            "R-NOMATCH": 4316,
+            "R-ZERO-RESIDUAL": 0,
+            "R-CONFLICT": 4320,
+            "R-CAP": 0
+          },
+          "excluded_tail_tokens_per_store": 48,
+          "tokens": 2160,
+          "batch": 1,
+          "heads": 4,
+          "chunk": 64,
+          "token_sha256": "251795534b0c203c9718b6853f6e62db60ff15d8347b041485d85fbf0c5ba89f",
+          "k": 1079,
+          "predictions_accept": [
+            1
+          ]
+        },
+        {
+          "buckets": {
+            "all": {
+              "chunks": 136,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 4352,
+              "intra_pop": 0,
+              "event_tokens": 4352,
+              "reasons": {
+                "correction_or_cap": 136,
+                "write_after_append": 136
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_a": {
+              "chunks": 64,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 2048,
+              "intra_pop": 0,
+              "event_tokens": 2048,
+              "reasons": {
+                "correction_or_cap": 64,
+                "write_after_append": 64
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_b": {
+              "chunks": 64,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 2048,
+              "intra_pop": 0,
+              "event_tokens": 2048,
+              "reasons": {
+                "correction_or_cap": 64,
+                "write_after_append": 64
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_pad": {
+              "chunks": 0,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 0,
+              "intra_pop": 0,
+              "event_tokens": 0,
+              "reasons": {},
+              "event_token_fraction": null,
+              "mutation_candidate_fraction": null,
+              "entry_pure_fraction": null
+            },
+            "other": {
+              "chunks": 8,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 256,
+              "intra_pop": 0,
+              "event_tokens": 256,
+              "reasons": {
+                "correction_or_cap": 8,
+                "write_after_append": 8
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            }
+          },
+          "counts": {
+            "NO-WRITE": 0,
+            "R-EMPTY": 4,
+            "R-NOMATCH": 4392,
+            "R-ZERO-RESIDUAL": 0,
+            "R-CONFLICT": 4396,
+            "R-CAP": 0
+          },
+          "excluded_tail_tokens_per_store": 22,
+          "tokens": 2198,
+          "batch": 1,
+          "heads": 4,
+          "chunk": 64,
+          "token_sha256": "4b582c74f7fd156467e0ea745e3ddc38111692388999d1c15a6175e732324a29",
+          "k": 1098,
+          "predictions_accept": [
+            1
+          ]
+        },
+        {
+          "buckets": {
+            "all": {
+              "chunks": 136,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 4352,
+              "intra_pop": 0,
+              "event_tokens": 4352,
+              "reasons": {
+                "correction_or_cap": 136,
+                "write_after_append": 136
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_a": {
+              "chunks": 64,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 2048,
+              "intra_pop": 0,
+              "event_tokens": 2048,
+              "reasons": {
+                "correction_or_cap": 64,
+                "write_after_append": 64
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_b": {
+              "chunks": 64,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 2048,
+              "intra_pop": 0,
+              "event_tokens": 2048,
+              "reasons": {
+                "correction_or_cap": 64,
+                "write_after_append": 64
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_pad": {
+              "chunks": 0,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 0,
+              "intra_pop": 0,
+              "event_tokens": 0,
+              "reasons": {},
+              "event_token_fraction": null,
+              "mutation_candidate_fraction": null,
+              "entry_pure_fraction": null
+            },
+            "other": {
+              "chunks": 8,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 256,
+              "intra_pop": 0,
+              "event_tokens": 256,
+              "reasons": {
+                "correction_or_cap": 8,
+                "write_after_append": 8
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            }
+          },
+          "counts": {
+            "NO-WRITE": 0,
+            "R-EMPTY": 4,
+            "R-NOMATCH": 4464,
+            "R-ZERO-RESIDUAL": 0,
+            "R-CONFLICT": 4468,
+            "R-CAP": 0
+          },
+          "excluded_tail_tokens_per_store": 58,
+          "tokens": 2234,
+          "batch": 1,
+          "heads": 4,
+          "chunk": 64,
+          "token_sha256": "1be32cc2590b2748ae744306c0e321dc658c424cf51ce215dedaf376d0feff6f",
+          "k": 1116,
+          "predictions_accept": [
+            1
+          ]
+        },
+        {
+          "buckets": {
+            "all": {
+              "chunks": 140,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 4480,
+              "intra_pop": 0,
+              "event_tokens": 4480,
+              "reasons": {
+                "correction_or_cap": 140,
+                "write_after_append": 140
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_a": {
+              "chunks": 64,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 2048,
+              "intra_pop": 0,
+              "event_tokens": 2048,
+              "reasons": {
+                "correction_or_cap": 64,
+                "write_after_append": 64
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_b": {
+              "chunks": 68,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 2176,
+              "intra_pop": 0,
+              "event_tokens": 2176,
+              "reasons": {
+                "correction_or_cap": 68,
+                "write_after_append": 68
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_pad": {
+              "chunks": 0,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 0,
+              "intra_pop": 0,
+              "event_tokens": 0,
+              "reasons": {},
+              "event_token_fraction": null,
+              "mutation_candidate_fraction": null,
+              "entry_pure_fraction": null
+            },
+            "other": {
+              "chunks": 8,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 256,
+              "intra_pop": 0,
+              "event_tokens": 256,
+              "reasons": {
+                "correction_or_cap": 8,
+                "write_after_append": 8
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            }
+          },
+          "counts": {
+            "NO-WRITE": 0,
+            "R-EMPTY": 4,
+            "R-NOMATCH": 4536,
+            "R-ZERO-RESIDUAL": 0,
+            "R-CONFLICT": 4540,
+            "R-CAP": 0
+          },
+          "excluded_tail_tokens_per_store": 30,
+          "tokens": 2270,
+          "batch": 1,
+          "heads": 4,
+          "chunk": 64,
+          "token_sha256": "2109b6f3d4a1d6920ef8ff7357fc3d1d10402d10f8128f75dbf578cd4d4182f4",
+          "k": 1134,
+          "predictions_accept": [
+            1
+          ]
+        },
+        {
+          "buckets": {
+            "all": {
+              "chunks": 144,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 4608,
+              "intra_pop": 0,
+              "event_tokens": 4608,
+              "reasons": {
+                "correction_or_cap": 144,
+                "write_after_append": 144
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_a": {
+              "chunks": 68,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 2176,
+              "intra_pop": 0,
+              "event_tokens": 2176,
+              "reasons": {
+                "correction_or_cap": 68,
+                "write_after_append": 68
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_b": {
+              "chunks": 68,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 2176,
+              "intra_pop": 0,
+              "event_tokens": 2176,
+              "reasons": {
+                "correction_or_cap": 68,
+                "write_after_append": 68
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            },
+            "all_pad": {
+              "chunks": 0,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 0,
+              "intra_pop": 0,
+              "event_tokens": 0,
+              "reasons": {},
+              "event_token_fraction": null,
+              "mutation_candidate_fraction": null,
+              "entry_pure_fraction": null
+            },
+            "other": {
+              "chunks": 8,
+              "mutation_candidate": 0,
+              "entry_pure": 0,
+              "intra_match": 256,
+              "intra_pop": 0,
+              "event_tokens": 256,
+              "reasons": {
+                "correction_or_cap": 8,
+                "write_after_append": 8
+              },
+              "event_token_fraction": 0.5,
+              "mutation_candidate_fraction": 0.0,
+              "entry_pure_fraction": 0.0
+            }
+          },
+          "counts": {
+            "NO-WRITE": 0,
+            "R-EMPTY": 4,
+            "R-NOMATCH": 4608,
+            "R-ZERO-RESIDUAL": 0,
+            "R-CONFLICT": 4612,
+            "R-CAP": 0
+          },
+          "excluded_tail_tokens_per_store": 2,
+          "tokens": 2306,
+          "batch": 1,
+          "heads": 4,
+          "chunk": 64,
+          "token_sha256": "a192f383312169d0ad826d3629460c3da1232980dba76720548135c19fe05b19",
+          "k": 1152,
+          "predictions_accept": [
+            1
+          ]
+        }
+      ],
+      "aggregated_event_token_fraction": 0.5,
+      "event_tokens": 34432,
+      "event_token_denominator": 68864,
+      "predictions_accept": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ]
+    }
+  },
+  "mqar": {
+    "buckets": {
+      "all": {
+        "chunks": 64,
+        "mutation_candidate": 32,
+        "entry_pure": 32,
+        "intra_match": 256,
+        "intra_pop": 0,
+        "event_tokens": 256,
+        "reasons": {
+          "correction_or_cap": 32,
+          "write_after_append": 32
+        },
+        "event_token_fraction": 0.0625,
+        "mutation_candidate_fraction": 0.5,
+        "entry_pure_fraction": 0.5
+      },
+      "all_pad": {
+        "chunks": 32,
+        "mutation_candidate": 32,
+        "entry_pure": 32,
+        "intra_match": 0,
+        "intra_pop": 0,
+        "event_tokens": 0,
+        "reasons": {},
+        "event_token_fraction": 0.0,
+        "mutation_candidate_fraction": 1.0,
+        "entry_pure_fraction": 1.0
+      },
+      "other": {
+        "chunks": 32,
+        "mutation_candidate": 0,
+        "entry_pure": 0,
+        "intra_match": 256,
+        "intra_pop": 0,
+        "event_tokens": 256,
+        "reasons": {
+          "correction_or_cap": 32,
+          "write_after_append": 32
+        },
+        "event_token_fraction": 0.125,
+        "mutation_candidate_fraction": 0.0,
+        "entry_pure_fraction": 0.0
+      }
+    },
+    "counts": {
+      "NO-WRITE": 3328,
+      "R-EMPTY": 32,
+      "R-NOMATCH": 480,
+      "R-ZERO-RESIDUAL": 0,
+      "R-CONFLICT": 256,
+      "R-CAP": 0
+    },
+    "excluded_tail_tokens_per_store": 0,
+    "tokens": 128,
+    "batch": 8,
+    "heads": 4,
+    "chunk": 64,
+    "token_sha256": "c69ec53e7e3fbf0f3901dc391a069c2708baa2a85e3ace141ffb2679280f2a34",
+    "prediction_head": "none (stage-1 64-class head not persisted)",
+    "correction_positions_word0_per_head": [
+      [
+        1,
+        3,
+        5,
+        7,
+        9,
+        11,
+        13,
+        15
+      ],
+      [
+        1,
+        3,
+        5,
+        7,
+        9,
+        11,
+        13,
+        15
+      ],
+      [
+        1,
+        3,
+        5,
+        7,
+        9,
+        11,
+        13,
+        15
+      ],
+      [
+        1,
+        3,
+        5,
+        7,
+        9,
+        11,
+        13,
+        15
+      ]
+    ],
+    "word0_tokens": [
+      37,
+      25,
+      7,
+      40,
+      24,
+      46,
+      63,
+      12,
+      49,
+      64,
+      45,
+      26,
+      52,
+      1,
+      23,
+      64,
+      52,
+      0,
+      7,
+      0,
+      24,
+      0,
+      63,
+      0,
+      49,
+      0,
+      45,
+      0,
+      23,
+      0,
+      37,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "walls": {
+    "build_and_load_s": 1.019,
+    "ladder_bin_id_k128_s": 0.937,
+    "ladder_bin_2x_k256_s": 0.67,
+    "ladder_bin_4x_k512_s": 1.285,
+    "ladder_bin_9x_k1152_s": 2.873,
+    "ladder_band_id_s": 0.384,
+    "ladder_band_2x_s": 0.824,
+    "ladder_band_4x_s": 1.655,
+    "ladder_band_9x_s": 4.805,
+    "mqar_s": 0.166
+  },
+  "walls_note": "single-tenant walls for this eval process only; other cards may serve other agents concurrently",
+  "source_sha256": {
+    "experiments/expressivity_tasks/x35_tape_cell_v3/density_trained.py": "35196470318b1d07c9ab07fa8aa6de821ae7ff4941b35777a92c47f3f72d5959",
+    "experiments/expressivity_tasks/x35_tape_cell_v3/classifier.py": "99282a7aea1811c3bb1c35f9d472c0395b2191fa1963bc477c6a66207307c8e5",
+    "experiments/expressivity_tasks/x35_tape_cell_v3/density.py": "67c271dc13021fdc03d2e43b1511335fd7810e1b9b6b3288c2af543a536f8028",
+    "experiments/expressivity_tasks/x35_tape_cell_v3/CHUNK_PARALLEL.md": "1f38b842aa1170bbf421361160e41fd6cae5e5683188f09b28c5f9d5b83c55af",
+    "experiments/expressivity_tasks/x35_tape_cell_v3/RECEIPTS.md": "b2c01ab626f48c04fc793995e733c29c71e41488e6bd21a3a66164b59891f2ea",
+    "experiments/expressivity_tasks/x28e_memory_head/freeze_manifest.json": "f8ef9b33d7edf4f8666efebc5d0494403caba357dd475a907a04d8f7d3707f4d",
+    "experiments/expressivity_tasks/x28e_memory_head/configs/tape_B0x4.json": "ac8614f986301e24c6786a68933913a3dc3f3e61cdebdef70cea0de9aff5929c",
+    "experiments/expressivity_tasks/x28e_memory_head/trainer.py": "ac740668ca3dc4db478369b33a01dd9b70f80d075162ef268aed6dba34a5c453",
+    "experiments/expressivity_tasks/x28e_memory_head/generators/stage1_mqar.py": "83396bf12828d0a098d895e62b75e0021ce2ad087faf5f4105538e89add83417",
+    "experiments/expressivity_tasks/x28e_memory_head/generators/stage3_ladder.py": "c20b589d8315d5c7d4d011ea12903af78667692009083acb84e3b3b0b2705a63"
+  }
+}

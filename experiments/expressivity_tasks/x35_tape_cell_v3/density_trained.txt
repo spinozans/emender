@@ -1,0 +1,101 @@
+gpu_lease: granted GPUs: 1 (pid 1796363)
+X35 physical card 1
+freeze verified: 0b674c71b5d9ed56174e8839766206af2fd0ba14b9bcf3b95dfd91ac24aa11b4 (185 files)
+ladder_bin id_k128 k=128 event_fraction=0.5 a=0.5 b=0.5 preds=[1, 1, 1, 1, 1, 1, 1, 1] counts={"NO-WRITE": 0, "R-EMPTY": 32, "R-NOMATCH": 4096, "R-ZERO-RESIDUAL": 0, "R-CONFLICT": 4128, "R-CAP": 0}
+ladder_bin 2x_k256 k=256 event_fraction=0.5 a=0.5 b=0.5 preds=[1, 1, 1, 1, 1, 1, 1, 1] counts={"NO-WRITE": 0, "R-EMPTY": 32, "R-NOMATCH": 8192, "R-ZERO-RESIDUAL": 0, "R-CONFLICT": 8224, "R-CAP": 0}
+ladder_bin 4x_k512 k=512 event_fraction=0.5 a=0.5 b=0.5 preds=[0, 0, 0, 0, 0, 0, 0, 0] counts={"NO-WRITE": 0, "R-EMPTY": 32, "R-NOMATCH": 16384, "R-ZERO-RESIDUAL": 0, "R-CONFLICT": 16416, "R-CAP": 0}
+ladder_bin 9x_k1152 k=1152 event_fraction=0.5 a=0.5 b=0.5 preds=[1, 1, 1, 1, 1, 1, 1, 1] counts={"NO-WRITE": 0, "R-EMPTY": 32, "R-NOMATCH": 36864, "R-ZERO-RESIDUAL": 0, "R-CONFLICT": 36896, "R-CAP": 0}
+ladder_band id ks=[31, 45, 59, 73, 86, 100, 114, 128] aggregated_event_fraction=0.5 preds=[1, 1, 1, 1, 1, 1, 1, 1]
+ladder_band 2x ks=[129, 147, 165, 183, 202, 220, 238, 256] aggregated_event_fraction=0.5 preds=[1, 1, 1, 1, 1, 1, 1, 1]
+ladder_band 4x ks=[257, 293, 330, 366, 403, 439, 476, 512] aggregated_event_fraction=0.5 preds=[1, 1, 1, 1, 1, 1, 1, 0]
+ladder_band 9x ks=[1025, 1043, 1061, 1079, 1098, 1116, 1134, 1152] aggregated_event_fraction=0.5 preds=[1, 1, 1, 1, 1, 1, 1, 1]
+mqar event_fraction=0.0625 counts={"NO-WRITE": 3328, "R-EMPTY": 32, "R-NOMATCH": 480, "R-ZERO-RESIDUAL": 0, "R-CONFLICT": 256, "R-CAP": 0}
+wrote density_trained.json
+
+Provenance: trained X28E tape_B0x4 FusedTapeLayer, best.pt update 7000
+(validation 0.983, sha256 ced743eb7da4657a...), read-only, eval mode;
+freeze manifest 0b674c71... verified at start (185 files); the MQAR stream
+uses the reconstructed stage-1 frozen feature map (see RECEIPTS.md addendum).
+Walls (s): build/load 1.0; bins 2.5/2.5/2.9/4.5; bands 13.2/13.5/14.7/17.8;
+MQAR 1.7. Single-tenant walls for this eval process only; other cards may
+serve other agents concurrently (the LM-pilot agent was also leasing at task
+time). Card 7 not requested or used.
+
+# ANALYSIS — trained-model event density (the v3 fork datum)
+
+## Per-bin ladder event density (8 exact positive words per bin, C=64)
+
+| Bin (k) | Store chunks | Event-token fraction | a-phase | b-phase | MUTATION_CANDIDATE | ENTRY_PURE | Instrument verdict |
+|---|---:|---:|---:|---:|---:|---:|---|
+| ID (128)   | 128  | 0.5 | 0.5 | 0.5 | 0% | 0% | accept 8/8 |
+| 2x (256)   | 256  | 0.5 | 0.5 | 0.5 | 0% | 0% | accept 8/8 |
+| 4x (512)   | 512  | 0.5 | 0.5 | 0.5 | 0% | 0% | REJECT 8/8 (known checkpoint depth-noise cell; x33 bin_4x k512 receipt: balanced accuracy 0.5, its one accept word also misclassified) |
+| 9x (1152)  | 1152 | 0.5 | 0.5 | 0.5 | 0% | 0% | accept 8/8 |
+
+Band probe (8 distinct-k positive words per bin, one word per forward):
+every one of the 32 words measures event-token fraction exactly 0.5
+(aggregates 0.5 per band; denominators 4352/11520/23808/68864 tokens). The
+density is uniform in depth, not a boundary artifact. Excluded tail tokens:
+2 per store (SOS+EOS), as in part 1. No POP, no death, no R-CAP anywhere:
+events are exactly the R-CONFLICT corrections.
+
+## a-phase vs b-phase
+
+The phases do NOT differ: both are exactly 0.5 in every bin and every band
+word. The recorded trace alternates strictly per token in every head — the
+case prefix (word 0, head 0) is [R-EMPTY, R-CONFLICT, R-NOMATCH, R-CONFLICT,
+R-NOMATCH, ...] in every bin: SOS appends, the first phase token CORRECTS the
+SOS row, the next token appends (no age-1 row exists after a correction —
+corrections do not renew birth), the next corrects that fresh append, and so
+on through BOTH phases unbroken; EOS corrects the last append. Per word/head
+at k=128: 129 appends (1 R-EMPTY + 128 R-NOMATCH) and 129 corrections (128
+phase tokens + EOS). This is the F12g adjacency-addressed mechanism operating
+exactly as trained; the alternation IS the counting semantics, not noise.
+Every 64-token chunk therefore contains ~32 correction events and 64
+intra-chunk matched-value references; the reasons histogram is
+correction_or_cap + write_after_append on 100% of chunks, and
+MUTATION_CANDIDATE is 0% everywhere — even the weaker append-only
+certificate never fires at C=64. Maximal entry-pure segments are 1-2 tokens
+long.
+
+## Verdict (registered bands, RECEIPTS.md addendum)
+
+The trained ladder event-token fraction is 0.5 on every bin, every phase,
+every depth — the HIGH band (>= 40%), indistinguishable from the initialized
+cell's 50% (part 1). The answer to the open question is: NO, the untrained
+50% was not initialization noise. Correction-every-other-token IS the
+trained counting semantics on the curriculum's target task; the sequential
+core is intrinsic to the trained instrument. Speculative chunk-parallel
+execution would hit its first event after 1-2 tokens of speculation on
+average — journal overhead with no usable speculation runs.
+
+VERDICT (b): the sequential correction core is confirmed intrinsic to the
+trained semantics; v3 pivots to read-GEMM batching + occupancy backing only.
+
+Contrast stream (registered as a contrast, NOT a substitute): the MQAR
+validation-prefix words measure 6.25% event tokens overall (12.5% in
+content/query windows, 0% in pure-padding windows; 50% of chunks
+MUTATION_CANDIDATE and ENTRY_PURE) — the LOW band. The positional receipt
+(word 0, all four heads identical): each pair token sequence is
+key->R-EMPTY/R-NOMATCH append, value->R-CONFLICT correction at token
+positions 1,3,5,...,15 — the adjacent correction writes the value into its
+key's row (the recall mechanism); query tokens make harmless junk appends
+(R-NOMATCH, read-before-write — the frozen trainer's own F12g comment); gaps
+and pads never write. Caveats: hybrid instrument (trained stage-3 layer
+weights + reconstructed stage-1 frozen feature map; the stage-1 embedding
+and 64-class head are not persisted in best.pt), so no MQAR accuracy
+receipt is possible, and its case histogram is bit-identical to part 1's
+untrained MQAR histogram — the word structure dominates the case pattern in
+both instruments. A low-MQAR stream does not rescue speculative parallelism
+for the ladder semantics.
+
+## Residual risks
+
+Single checkpoint (tape_B0x4, seed 0, update 7000), one arm, 8-word samples
+per bin; retrospective classification, not a predictive certificate (part-1
+scope unchanged). The k=512 positive word is misclassified by this
+checkpoint (corroborated by x33 receipts) yet still measures 0.5, so the
+verdict does not hinge on it, but a checkpoint that decides the 4x bin
+correctly everywhere was not measured. The MQAR stream is a hybrid whose
+stage-1-era behavior cannot be reconstructed from best.pt. Padding/empty
+payload preservation remains excluded (X31 scope). No throughput claim.
