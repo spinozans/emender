@@ -528,3 +528,32 @@ Scheduler Partition/QOS and resilient requirement IDs are inapplicable.
 `contact_supervisor` was searched first in the callable tool catalog and is
 unavailable; no decision or progress contact could be sent. Unrelated workspace
 changes were preserved. This result is partial and the engineering item remains open.
+
+---
+
+## Parent adjudication — X35 v3 CLOSED (parts 1-6)
+
+Engineering delivered and verified: the chunk-parallel question CLOSED with a
+theorem-grade negative result (detached routing depends on intra-chunk
+appends; the trained model's 0.5 event density IS the F12g append-then-correct
+mechanism — speculative parallelism dead at speculation depth 2, trade-off
+formalized vs DeltaStack's soft-pointer design); causal chunk-batched reads
+INTEGRATED with G10 replay (forward 1.94-2.20x vs x31 across parts, 161
+tests green, X31's 109 unchanged); timer-wheel component landed; payload
+backing occupancy-proportional (fresh T16 scans materialize physical S ~=
+tokens); score scratch constant-sized.
+
+Gates at close: forward 1.940x (registered >=2x: FAIL, floor-band 1.94-2.20
+across parts — the score-scratch change traded forward for memory); heads
+@S11776 2.246x (registered <=2x: FAIL; floor isolated to active metadata
+still sized to the reachable prefix — the full live/cold pooling was scoped
+in x31 part 9 and attempted across parts 4-6 without landing; the ~14 MB
+zero-live footprint is aggregate across 1,024 stores incl. payload, corrected
+from the part-5 per-store reading); occupancy-proportional-metadata gates
+open.
+
+Disposition: CLOSED with preserved work orders. No downstream consumer needs
+the two open gates at current scale (the X34 LM pilot runs at S=2944/H=4 where
+dense metadata is 631 MB total at B=64); the live/cold pooling work order is
+preserved for deployment-scale memory (B*H*S payloads at H16/S11776+). The
+scientific yield of v3 is the closed negative result plus the read batching.
