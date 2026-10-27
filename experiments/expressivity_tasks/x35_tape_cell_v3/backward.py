@@ -178,9 +178,16 @@ class ReplayStorage:
     def __init__(self, owners):
         self.owners=owners
         self.frozen=False
+        self.watched=()
         self.versions=tuple(x._version for x in owners)
 
+    def watch(self, tensors):
+        if not self.frozen:
+            self.watched = tuple((x, x._version) for x in tensors)
+
     def validate(self):
+        if any(x._version != version for x, version in self.watched):
+            raise RuntimeError("retained replay state was modified in place")
         if any(x._version != version for x,version in zip(self.owners,self.versions)):
             raise RuntimeError('retained replay state was modified in place')
 
@@ -189,6 +196,7 @@ class ReplayStorage:
         if not self.frozen:
             self.owners=tuple(x.clone() for x in self.owners)
             self.frozen=True
+            self.watched=()
             self.versions=tuple(x._version for x in self.owners)
 
 

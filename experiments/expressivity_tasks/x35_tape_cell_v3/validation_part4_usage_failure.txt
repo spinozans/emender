@@ -1,0 +1,50 @@
+gpu_lease: granted GPUs: 1 (pid 1906272)
+X35 physical card 1
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0
+rootdir: /home/erikg/emender
+configfile: pyproject.toml
+plugins: timeout-2.4.0, anyio-4.13.0
+collected 38 items
+
+experiments/expressivity_tasks/x35_tape_cell_v3/tests/test_backing.py FF [  5%]
+F...                                                                     [ 15%]
+experiments/expressivity_tasks/x35_tape_cell_v3/tests/test_causal_read.py . [ 18%]
+......                                                                   [ 34%]
+experiments/expressivity_tasks/x35_tape_cell_v3/tests/test_dependencies.py . [ 36%]
+...........                                                              [ 65%]
+experiments/expressivity_tasks/x35_tape_cell_v3/tests/test_integrated.py . [ 68%]
+...                                                                      [ 76%]
+experiments/expressivity_tasks/x35_tape_cell_v3/tests/test_timer_wheel.py . [ 78%]
+........                                                                 [100%]
+
+=================================== FAILURES ===================================
+________ test_lazy_continuation_preserves_cap_pressure_and_dead_rows[3] ________
+experiments/expressivity_tasks/x35_tape_cell_v3/tests/test_backing.py:41: in test_lazy_continuation_preserves_cap_pressure_and_dead_rows
+    torch.testing.assert_close(getattr(state.native,name),getattr(expected,name),atol=1e-5,rtol=1e-5)
+E   AssertionError: Tensor-likes are not close!
+E   
+E   Mismatched elements: 6 / 6 (100.0%)
+E   Greatest absolute difference: 2.477098226547241 at index (0, 1, 0) (up to 1e-05 allowed)
+E   Greatest relative difference: 1.0 at index (0, 0, 0) (up to 1e-05 allowed)
+_______ test_lazy_continuation_preserves_cap_pressure_and_dead_rows[33] ________
+experiments/expressivity_tasks/x35_tape_cell_v3/tests/test_backing.py:41: in test_lazy_continuation_preserves_cap_pressure_and_dead_rows
+    torch.testing.assert_close(getattr(state.native,name),getattr(expected,name),atol=1e-5,rtol=1e-5)
+E   AssertionError: Tensor-likes are not close!
+E   
+E   Mismatched elements: 6 / 66 (9.1%)
+E   Greatest absolute difference: 2.477098226547241 at index (0, 1, 0) (up to 1e-05 allowed)
+E   Greatest relative difference: 1.0 at index (0, 0, 0) (up to 1e-05 allowed)
+______ test_lazy_continuation_preserves_cap_pressure_and_dead_rows[11776] ______
+experiments/expressivity_tasks/x35_tape_cell_v3/tests/test_backing.py:41: in test_lazy_continuation_preserves_cap_pressure_and_dead_rows
+    torch.testing.assert_close(getattr(state.native,name),getattr(expected,name),atol=1e-5,rtol=1e-5)
+E   AssertionError: Tensor-likes are not close!
+E   
+E   Mismatched elements: 6 / 23552 (0.0%)
+E   Greatest absolute difference: 2.477098226547241 at index (0, 1, 0) (up to 1e-05 allowed)
+E   Greatest relative difference: 1.0 at index (0, 0, 0) (up to 1e-05 allowed)
+=========================== short test summary info ============================
+FAILED experiments/expressivity_tasks/x35_tape_cell_v3/tests/test_backing.py::test_lazy_continuation_preserves_cap_pressure_and_dead_rows[3]
+FAILED experiments/expressivity_tasks/x35_tape_cell_v3/tests/test_backing.py::test_lazy_continuation_preserves_cap_pressure_and_dead_rows[33]
+FAILED experiments/expressivity_tasks/x35_tape_cell_v3/tests/test_backing.py::test_lazy_continuation_preserves_cap_pressure_and_dead_rows[11776]
+======================== 3 failed, 35 passed in 45.26s =========================

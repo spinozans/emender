@@ -254,3 +254,98 @@ not patched; unrelated pre-existing workspace changes are preserved.
 G10 composition are established by tests, but mandatory occupancy backing is
 missing and every registered performance/backing/memory gate fails. No complete
 part-3 acceptance or speed-target success is claimed.
+
+## Part 4 — incomplete: prefix backing and causal emission, not live/cold pools
+
+The requested last structural item remains **UNMET**. The implemented change
+removes architectural-S zero-fill for empty-origin ordinary inference/training
+by allocating a proven append horizon and deferring public dense tensors.
+It does not implement the full part-9 live-row/cold-row/logical-map design.
+Dead rows retain their exact bits in the prefix. Crucially, the prefix grows
+with cumulative chunk lengths even when live occupancy is zero. The backing
+and live-proportional-memory gates remain false; sparse fresh-start memory
+numbers cannot establish either structural gate.
+
+`INTEGRATION.md` records promotion, continuation, replay-version checks,
+snapshots and recording behavior. Existing X31 and X35 tests are unchanged;
+new tests cover lazy continuation, exhaustion/pressure, exact dead-row/native
+parity against the dense scan, final-state adjoints across training chunks,
+public native/metadata mutation detection, snapshot/undo after promotion,
+orphan public views and RoutingTrace compatibility. Five additional fixtures
+compare incremental fp32 causal strengths against timestamp-jump emission
+bit-for-bit over five decay rates, imports, POP, death, reuse and continuation.
+The timer wheel was not integrated; sequential routing still uses the heap.
+
+The final parity and performance results are in summary_part4.json and the
+raw validation/gate receipts. gates_part4.py retains X31 part-8's five-warmup,
+twenty-sample synchronized timing loop and all samples, including outliers.
+Physical-state accounting is performed outside timings without forcing public
+dense materialization. No initialization is subtracted from registered timings.
+Component structural_cost rows are independent floors, not additive attribution.
+The pre-emission-change run is retained as gates_part4_before_emission.json/txt;
+any final remeasurement follows changed source and renewed parity validation.
+
+Earlier failures are preserved: an imported TapeState eligibility mistake
+caused the interrupted initial validation; it was corrected before subsequent
+complete runs. Three new fixture failures compared the intentionally excluded
+usage EMA against the eager oracle; the fixture now compares usage bitwise to
+the unchanged dense scan and compares the five functional fields to eager.
+No existing oracle assertion was changed. Intermediate passes are not used
+as final-source attestation; parity_part4.json binds final validation to source
+hashes and gates refuse stale or failing receipts.
+
+Operationally, contact_supervisor was searched first in the callable tool
+catalog and was unavailable. No supervisor coordination call could be sent.
+Only X35 changes are included. GPU work uses run_leased.sh, cards 0–6 only,
+and the exact requested project Python. No .pt files, WG/dispatcher/workers,
+agent delegation, Frontier/Slurm submissions, or resilient training changes
+are involved. Partition/QOS and resilient requirement IDs are inapplicable.
+Existing unrelated workspace edits are preserved.
+
+Residual risks/blockers: no live/cold pools or occupancy-driven compaction;
+capacity growth and continuation reconstruction depend on chunk history;
+public views/snapshots/explicit journals deliberately become dense; no
+occupancy-proportional undo representation; timer wheel still unintegrated.
+The whole part-4 work order must not be accepted from these improvements alone.
+
+### Final part-4 validation and registered verdicts
+
+Final source: **158 passed, zero failures/errors/skips** on physical GPU
+1, lambda01. The unchanged 109 X31 and prior 32 X35 tests pass,
+with 17 new backing/emission tests. `parity_part4.json` binds the source hashes
+to that validation. Frozen replay tolerates later mutation of a consumed
+promoted handle, matching existing private-copy ownership. Public TapeState
+field replacement also updates the owning materialized continuation.
+The exhaustion fixture starts with a physical two-row prefix under S=3, then
+observes logical slot 2 followed by five R-CAP events and pressure exactly 5/8.
+
+| Registered gate | Measurement | Verdict |
+|---|---|---|
+| C64/S2944/H4 complete forward >=2x | X31 0.166433, v3 0.075833 ms/token; **2.194722x** | PASS |
+| S11776/T16 H16/H1 <=2 | H1 0.110748, H16 0.260153 ms/token; **2.349044x** | FAIL |
+| Occupancy-proportional backing | Prefix grows with chunk history, including at zero live occupancy | FAIL |
+| Live-proportional memory | No live/cold pools; sparse fresh memory alone is insufficient | FAIL |
+
+B64/H16/S11776 with 8,192 live rows out of 12,058,624 logical rows
+now uses 14,270,464 physical base-state bytes,
+23,543,808 retained allocation bytes and 102,813,696
+incremental peak bytes. This receipts sparse-start improvement, not a live-
+proportional backing claim. With **zero live rows**, two successive T16 no-write
+chunks grow base state from 14,270,464 to 27,983,872 bytes: a direct counterexample
+to the remaining structural target.
+
+The actual T16 prefix-native initialization floor is H1
+0.005169, H16 0.005191 ms/token.
+The standalone scan without projections is H1
+0.088993, H16 0.238227 ms/token.
+Projection-only floors and every sample are also retained. These independent
+component measurements are not additive and were not subtracted from either
+registered gate. Dense fresh-init cost is removed for ordinary empty-origin
+inference/training, but the registered head-scaling target remains unmet.
+
+All different-source measurements are retained in the chronological
+`benchmark_timeline` of summary_part4.json. Final remeasurement follows public
+field-assignment support and renewed parity; gates_part4_pre_public_assignment
+retains the previous source (2.171054x forward, 2.351331x heads). The registered
+verdict above uses final source, not the most favorable run.
+**Overall: incomplete.** The last structural work item remains undelivered.

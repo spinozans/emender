@@ -30,7 +30,7 @@ def scan_kernel(K, Q, V, Beta, Pop, Logit, Coef, Keys, Values, Strength,
                 DV: tl.constexpr, RT: tl.constexpr, BS: tl.constexpr, BV: tl.constexpr, BK: tl.constexpr, BT: tl.constexpr,
                 Decay: tl.constexpr, Free: tl.constexpr,
                 Enable: tl.constexpr, PopThreshold: tl.constexpr,
-                Eps: tl.constexpr):
+                Eps: tl.constexpr, IncrementalViews: tl.constexpr = True):
     n = tl.program_id(0)
     J = (AllAddresses,AllBefore,AllWidths,AllCounts,n,AllCapacity)
     d = tl.arange(0, BV)
@@ -70,6 +70,12 @@ def scan_kernel(K, Q, V, Beta, Pop, Logit, Coef, Keys, Values, Strength,
             slot = tl.load(birth_next+slot)
     else:
         size = tl.load(Sizes+n)
+    slots = tl.arange(0, BS)
+    if IncrementalViews:
+        initial_live = (slots < VS) & tl.load(Live+n*S+slots, slots<VS, 0).to(tl.int1)
+        initial_refs = tl.load(References+n*S+slots, initial_live, 0.)
+        initial_touch = tl.load(TouchStore+n*S+slots, initial_live, Start)
+        running_strength = advance_exact(initial_refs, tl.where(initial_live,Start-initial_touch,0),Decay)
     for t in range(T):
         if RecordAll:
             tl.store(AllBoundaries+n*T+t, tl.load(AllCounts+n))
@@ -82,9 +88,12 @@ def scan_kernel(K, Q, V, Beta, Pop, Logit, Coef, Keys, Values, Strength,
         active = (slots < VS) & tl.load(Live+n*S+slots, slots<VS, 0).to(tl.int1)
         ids = tl.load(VersionMap+n*S+slots, slots<VS, -1)
         tl.store(Views+(n*T+t)*VS+slots, tl.where(active,ids,-1), slots<VS)
-        refs = tl.load(References+n*S+slots, active, 0.)
-        touched = tl.load(TouchStore+n*S+slots, active, clock)
-        view_exact = advance_exact(refs,tl.where(active,clock-touched,0),Decay)
+        if IncrementalViews:
+            view_exact = tl.where(active,running_strength,0.)
+        else:
+            refs = tl.load(References+n*S+slots, active, 0.)
+            touched = tl.load(TouchStore+n*S+slots, active, clock)
+            view_exact = advance_exact(refs,tl.where(active,clock-touched,0),Decay)
         tl.store(ViewStrength+(n*T+t)*VS+slots,view_exact,slots<VS)
         pop = tl.load(Pop+inp)
         best = tl.full((),S,tl.int32)
@@ -204,6 +213,12 @@ def scan_kernel(K, Q, V, Beta, Pop, Logit, Coef, Keys, Values, Strength,
             set_free(free0, free1, root, dead, True, J, RecordAll)
             size = cancel(heap, position, due, size, dead, J, RecordAll)
             dead = next_due(heap, due, size, clock + 1, J, RecordAll)
+        if IncrementalViews:
+            # Exact native fp32 boundaries: pre-read -> POP -> allocation -> decay.
+            # Dead lanes are masked at emission; reuse resets the lane to one.
+            running_strength = tl.where(slots==pop_id,running_strength*(1.0-pop),running_strength)
+            running_strength = tl.where(slots==allocation,1.,running_strength)
+            running_strength = running_strength*Decay
         tl.device_assert(dead < 0, "death heap did not drain within slot capacity")
         tl.debug_barrier()
         # Each token writes at most one payload row. Shared versions are

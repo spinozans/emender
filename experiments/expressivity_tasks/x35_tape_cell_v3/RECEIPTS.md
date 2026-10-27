@@ -169,3 +169,34 @@ separate no-redirection v3 integration validation: 4 passed. These establish
 causal-view/recorded-replay composition with the existing dense representation,
 not parity of unimplemented occupancy backing. Full engineering delivery is
 INCOMPLETE. The timer wheel is not integrated.
+
+## Part 4 continuation receipt
+
+The >=2x C64/S2944/H4 and <=2 H16/H1 S11776/T16 thresholds are unchanged.
+The final driver asserts AST equality of its timing loop with read-only X31
+part-8 measure(): five warmups, twenty samples, synchronized wall/CUDA events,
+medians per token, fresh complete cell calls and no initialization subtraction.
+Only accounting understands deferred native tensors, outside timed samples.
+All raw samples, memory measurements and component floors are retained.
+
+- `validation_part4.txt` / `.xml`: complete unchanged 109-test X31 plus prior
+  32-test X35 suites and added backing/emission tests.
+- `parity_part4.json`: source hashes bound to a successful complete validation;
+  gate execution rejects stale hashes, failures, errors, skips or short suites.
+- `gates_part4.json` / `.txt`: final registered verdicts, physical-state bytes,
+  incremental peak/retained bytes, initialization/projection/scan floors and
+  the zero-live continuation counterexample.
+- `summary_part4.json`: concise final status and explicit residual blockers.
+- `gates_part4_before_emission.json` / `.txt`: earlier different-source run,
+  retained rather than replaced to select a threshold-crossing sample.
+- `validation_part4_import_failure.txt`, `validation_part4_usage_failure.txt`,
+  `validation_part4_emission_interrupted.txt`: interrupted/failed development
+  attempts; none is counted as final parity evidence. Intermediate inference
+  and combined parity runs are labeled separately.
+
+The last structural target is not delivered by an allocation-horizon prefix.
+Live-row pools, separate exact cold-row storage, a journal-aware nonidentity
+logical map, and live-proportional continuation/backward/undo ownership remain
+open. Fresh sparse footprint is not substituted for that structural contract.
+The timer wheel remains separate from the heap-based live scan. No benchmark
+floor is subtracted or used to relabel a failed registered target as a pass.

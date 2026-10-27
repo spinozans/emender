@@ -40,6 +40,8 @@ class FusedState:
     def snapshot(self):
         if self.consumed:
             raise ValueError('FusedState handle was already consumed')
+        from .backing import promote
+        promote(self)
         native = TapeState(*(getattr(self.native,n).clone() for n in
                              ('keys','values','strength','live','age','usage')))
         meta = None if self.metadata is None else tuple(x.clone() for x in self.metadata)
@@ -54,6 +56,21 @@ class FusedState:
 
 
 def tape_scan(k, q, v, write_strength, pop_strength, append_logit, state,
+              cfg: TapeHeadConfig, append_err_coef=None, *, record_payload=False, record_all=False):
+    from .backing import PrefixNative, eligible, promote, scan
+    inputs = (k, q, v, write_strength, pop_strength, append_logit)
+    # Validate the architectural budget before deriving a physical horizon.
+    if not (0 < cfg.decay_rate <= 1 and 0 <= cfg.free_threshold < 1 and 0 < cfg.slots <= 262144):
+        raise ValueError('invalid decay, threshold or slot budget')
+    if eligible(inputs, state, append_err_coef, record_payload, record_all):
+        return scan(_tape_scan, inputs, state, cfg, append_err_coef)
+    if isinstance(state, FusedState) and isinstance(state.native, PrefixNative):
+        promote(state)
+    return _tape_scan(*inputs, state, cfg, append_err_coef,
+                      record_payload=record_payload, record_all=record_all)
+
+
+def _tape_scan(k, q, v, write_strength, pop_strength, append_logit, state,
               cfg: TapeHeadConfig, append_err_coef=None, *, record_payload=False, record_all=False):
     """Sequential routing followed by two-launch causal chunk reads.
 
@@ -199,7 +216,7 @@ def tape_scan(k, q, v, write_strength, pop_strength, append_logit, state,
         struct.unpack('<f',struct.pack('<f',cfg.decay_rate))[0],cfg.free_threshold,
         cfg.write_enable_threshold,cfg.pop_threshold,cfg.eps_residual,
         enable_fp_fusion=False,debug=True,
-        num_warps=4)
+        IncrementalViews=reachable<=256,num_warps=4)
     output=chunk_read(args[1].reshape(b*h,t,dk),version_keys,version_values,views,view_strength).reshape(b,h,t,cfg.value_dim)
     materialize_state[(b*h,)](references,touches,births,live,strength,age,
         *all_args[:4],all_args[7],record_all,cfg.slots,tile_count,state.tokens+t,

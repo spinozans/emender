@@ -52,3 +52,51 @@ dense owners. These structures remain even if causal reads improve latency.
 The timer wheel stays a tested component. The integrated core retains X31's
 heap and its sorted-slot tie order. Wheel ownership and journal-capacity,
 continuation and replay changes are not silently substituted into the cell.
+
+## Part 4: elastic prefix and deferred public tensors (partial scope)
+
+`backing.py` adds an empty-origin allocation horizon for inference and training.
+The native tensor prefix and all scan metadata use a physical capacity bounded
+by cumulative chunk lengths, capped at architectural S. At most T appends can
+occur in a T-token chunk; starting from a complete previous prefix, no smaller
+physical capacity can exhaust before the last possible append unless it is S.
+Logical IDs remain unchanged. R-CAP, free ordering and pressure therefore retain
+the architectural meaning. Sparse training runs the same recorded G10 replay
+with prefix-sized owners, then differentiably pads public tensors on access.
+
+The public native facade subclasses TapeState. Accessing a tensor promotes the
+entire handle to its exact dense public representation, including dead payloads,
+terminal strengths, ages and untouched zero rows. It expands the heap/birth/decay
+owners and rebuilds free words at the same boundary. Once materialized, the
+existing dense continuation preserves public buffer addresses. Snapshots also
+promote before copying/rebasing. Explicit payload/all-field recording promotes
+before entering the existing dense journal path. Replay watches the versions
+of promoted public native and metadata tensors, so promotion cannot bypass
+in-place mutation detection. Weak ownership avoids retaining timed samples
+until cyclic collection; orphan public native facades remain materializable.
+The public RoutingTrace subclass similarly defers only its zero death-trace
+tail; its slicing and concatenation API still materializes the exact shape.
+
+Within a chunk, causal read strengths can advance by one native fp32 multiply
+at each token boundary rather than repeating a timestamp jump at every emission.
+POP multiplication precedes allocation reset, which precedes decay. Dead lanes
+are masked and reuse resets strength to one. Reference/touch/death metadata and
+the recorded replay remain authoritative and unchanged. The diagnostic
+`IncrementalViews=False` specialization retains timestamp-jump emission for
+bitwise comparison across imports, continuation, POP, death and reuse.
+
+**This is not the requested occupancy-proportional representation.** The prefix
+retains dead touched rows, and even no-write chunks increase its conservative
+capacity. There is no live-row pool, separate cold-row store, or nonidentity
+logical-to-physical mapping. Growth reconstructs metadata from the complete
+previous native prefix. Snapshot/public materialization and explicit recordings
+still allocate dense S-sized owners. An O(live) persistent/backward/undo memory
+claim is therefore false. The zero-live continuation probe in gates_part4.json
+provides an executable counterexample, independent of any fresh-start timing.
+The timer wheel is still a standalone component; the live core keeps the heap.
+
+The carried causal-strength vector is enabled only for reachable prefixes of
+at most 256 slots. Wide imported states retain timestamp-jump emission to bound
+register lifetime across the token loop. The attempted unrestricted variant's
+validation was interrupted during compilation, not counted as a pass; its raw
+log is retained as validation_part4_emission_interrupted.txt.
