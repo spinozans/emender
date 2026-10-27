@@ -349,3 +349,94 @@ field-assignment support and renewed parity; gates_part4_pre_public_assignment
 retains the previous source (2.171054x forward, 2.351331x heads). The registered
 verdict above uses final source, not the most favorable run.
 **Overall: incomplete.** The last structural work item remains undelivered.
+
+## Part 5 — FAIL: diagnostic adjudication, pooling still unimplemented
+
+**This does not complete the work order or close v3.** No production cell,
+backing, kernel, or replay implementation was changed. The delivered work is
+an exact fresh-preparation/store-core isolation diagnostic and a six-gate
+remeasurement, with a successful final parity receipt. The required live/cold
+pools and nonidentity logical map remain unimplemented. This is an incomplete
+delivery, not the permitted adjudication of a floor after pooling completion.
+
+Final validation: **160 passed**, zero failures/errors/skips;
+the unchanged 109 X31 tests and 49 existing X35 tests, plus two diagnostic
+regressions. The regressions compare captured production-core decisions and
+payloads with the complete scan and exercise diagnostic accounting without
+collecting timings during parity. The initial diagnostic fixture indexing
+failure and two subsequent accounting failures are preserved with their
+intermediate validation/hash receipts. They are not final-source attestation.
+
+| Registered gate | Final measurement | Verdict |
+|---|---|---|
+| C64/S2944/H4 forward >=2x | 2.194987x | PASS |
+| S736/T16 H16/H1 <=2 | 2.348039x | FAIL |
+| S11776/T16 H16/H1 <=2 | 2.349795x | FAIL |
+| Occupancy-proportional backing | Prefix backing unchanged | FAIL |
+| Live-proportional memory | No live/cold pools | FAIL |
+| Full oracle parity | 160 tests, zero failures/errors/skips | PASS |
+
+### Residual cost isolation
+
+The premise that an O(architectural S) fresh-state allocation explains the
+remaining heads ratio is not supported by the existing implementation. In an
+ordinary empty-origin T16 call, `backing.scan` passes `budget=min(S,16)` to
+`_tape_scan`: native payloads, metadata, free words, death diagnostics and
+version maps all have physical S=16. Both architectural S736 and S11776 share
+that same physical horizon. This says nothing about long continuations,
+imports, explicit journals or public promotion, which still have residuals.
+
+`structural_cost_part5.py` builds its preparation function directly from the
+production `_tape_scan` AST, stopping immediately before the core launch. It
+runs the actual native initialization, metadata setup, layout copies, trace
+allocation, free-word initialization and causal-version preparation. The
+independent core measurement prepares a NEW exact state before every timed
+interval and times just the real core dispatch. Its preparation is explicitly
+outside that diagnostic timing, never outside registered whole-cell timing.
+The diagnostic uses independent random K=Q/V inputs, writes enabled, POP and
+append logits zero; it is not a matched additive attribution of registered
+whole-cell samples. A separate writes-disabled scan is an ablation, not a gate.
+
+Exact fresh preparation: H1 **0.031334**, H16 **0.035144 ms/token**.
+Sequential store core: H1 **0.056782**, H16 **0.190631 ms/token**,
+ratio **3.357267x**. The core launches one
+program per store: 64 programs at H1 versus 1024 at H16, each running the
+sequential T16 routing/scheduling loop. All allocations in this fresh diagnostic
+use 16 physical rows. Every sample is retained. These are measured component
+costs, not an irreducible hardware floor; they are neither added nor subtracted
+to relabel a failed registered gate. Further kernel work could change them.
+
+At **zero live rows**, 4 successive T16 chunks grow base-state
+bytes from **14,270,464** to **55,410,688**,
+and physical rows from 16 to 64.
+This remains a direct counterexample to occupancy-proportional backing.
+No favorable fresh-start footprint overrides either structural failure.
+
+### Parts 1–5 convergence
+
+| Part | Integrated parity | C64/S2944/H4 forward >=2x | S11776/T16 heads <=2 | Live/cold pools / memory |
+|---|---|---|---|---|
+| 1 | Counterexamples only, 12 tests | NOT RUN | NOT RUN | NOT IMPLEMENTED |
+| 2 | Components; no changed representation | NOT RUN | NOT RUN | NOT IMPLEMENTED |
+| 3 | 141 passed | 1.879757x, FAIL | 7.407990x, FAIL | FAIL / FAIL |
+| 4 | 158 passed | 2.194722x, PASS | 2.349044x, FAIL | FAIL / FAIL |
+| 5 | 160 passed; production unchanged | 2.194987x, PASS | 2.349795x, FAIL | FAIL / FAIL |
+
+Part 1's original pure-chunk >=3x and mixed-training >=2x targets were not run;
+this table tracks the later structural-forward preregistration without
+retroactively changing those original verdicts. Part-5 timing differences are
+remeasurements, not speedups from a new production implementation.
+
+Residual risks: no live/cold row pools, no occupancy-driven compaction or
+journal-aware nonidentity map; history-dependent continuation capacity;
+dense imports/public materialization/snapshots/explicit replay; separate,
+unintegrated timer wheel. No closure, new pooling parity, or universal
+impossibility claim is made. Summary and raw receipts remain authoritative.
+
+Operational scope: only X35 artifacts changed. Exact project Python and X35
+broker, physical GPU 1; no card 7 or .pt output. The LM and
+certified-arm reservations were respected by the broker. No WG service,
+workers, delegation, Frontier/Slurm or resilient training changes; scheduler
+Partition/QOS and resilient requirement IDs are inapplicable. Unrelated
+workspace edits are preserved. `contact_supervisor` was searched first in the
+callable catalog and is unavailable; no supervisor coordination was possible.

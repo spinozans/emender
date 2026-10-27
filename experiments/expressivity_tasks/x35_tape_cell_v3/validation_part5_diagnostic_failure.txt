@@ -1,0 +1,54 @@
+gpu_lease: granted GPUs: 1 (pid 1986624)
+X35 physical card 1
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0
+rootdir: /home/erikg/emender
+configfile: pyproject.toml
+plugins: timeout-2.4.0, anyio-4.13.0
+collected 159 items
+
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_all_field_journal.py . [  0%]
+........                                                                 [  5%]
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_components.py . [  6%]
+..                                                                       [  7%]
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_device_free.py . [  8%]
+                                                                         [  8%]
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py . [  8%]
+...............................                                          [ 28%]
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_lazy_decay.py . [ 28%]
+..........                                                               [ 35%]
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_parity.py . [ 35%]
+.................................                                        [ 56%]
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_part7.py . [ 57%]
+.......                                                                  [ 61%]
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_part8.py . [ 62%]
+...                                                                      [ 64%]
+experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_write_journal.py . [ 64%]
+......                                                                   [ 68%]
+experiments/expressivity_tasks/x35_tape_cell_v3/tests/test_backing.py .. [ 69%]
+...............                                                          [ 79%]
+experiments/expressivity_tasks/x35_tape_cell_v3/tests/test_causal_read.py . [ 79%]
+......                                                                   [ 83%]
+experiments/expressivity_tasks/x35_tape_cell_v3/tests/test_dependencies.py . [ 84%]
+...........                                                              [ 91%]
+experiments/expressivity_tasks/x35_tape_cell_v3/tests/test_integrated.py . [ 91%]
+...                                                                      [ 93%]
+experiments/expressivity_tasks/x35_tape_cell_v3/tests/test_structural_cost.py F [ 94%]
+                                                                         [ 94%]
+experiments/expressivity_tasks/x35_tape_cell_v3/tests/test_timer_wheel.py . [ 94%]
+........                                                                 [100%]
+
+=================================== FAILURES ===================================
+_______________ test_prepared_core_matches_complete_scan_routes ________________
+experiments/expressivity_tasks/x35_tape_cell_v3/tests/test_structural_cost.py:22: in test_prepared_core_matches_complete_scan_routes
+    assert torch.equal(args[index].transpose(1,2),getattr(trace,name))
+E   AssertionError: assert False
+E    +  where False = <built-in method equal of type object at 0x70eedfdd6c20>(tensor([[[[ 0.0000e+00,  0.0000e+00, -6.0387e-05, -1.1155e+00,  6.5059e-01],\n          [ 8.8408e-01,  8.8674e-01, -1.2..., -9.5864e-01],\n          [ 1.2222e-01, -6.3858e-01,  7.6471e-01, -3.0708e-01, -1.5307e+00]]]],\n       device='cuda:0'), tensor([[[1, 1],\n         [4, 4],\n         [2, 2],\n         [4, 4],\n         [2, 2],\n         [4, 4],\n         [2, 2],\n         [4, 4]]], device='cuda:0'))
+E    +    where <built-in method equal of type object at 0x70eedfdd6c20> = torch.equal
+E    +    and   tensor([[[[ 0.0000e+00,  0.0000e+00, -6.0387e-05, -1.1155e+00,  6.5059e-01],\n          [ 8.8408e-01,  8.8674e-01, -1.2..., -9.5864e-01],\n          [ 1.2222e-01, -6.3858e-01,  7.6471e-01, -3.0708e-01, -1.5307e+00]]]],\n       device='cuda:0') = <built-in method transpose of Tensor object at 0x70ec9302aee0>(1, 2)
+E    +      where <built-in method transpose of Tensor object at 0x70ec9302aee0> = tensor([[[[ 0.0000e+00,  0.0000e+00, -6.0387e-05, -1.1155e+00,  6.5059e-01],\n          [ 1.6140e+00, -9.1614e-01,  1.3..., -1.0586e-01],\n          [ 1.2222e-01, -6.3858e-01,  7.6471e-01, -3.0708e-01, -1.5307e+00]]]],\n       device='cuda:0').transpose
+E    +    and   tensor([[[1, 1],\n         [4, 4],\n         [2, 2],\n         [4, 4],\n         [2, 2],\n         [4, 4],\n         [2, 2],\n         [4, 4]]], device='cuda:0') = getattr(RoutingTrace(case=tensor([[[1, 1],\n         [4, 4],\n         [2, 2],\n         [4, 4],\n         [2, 2],\n         [4, 4]...0, 0]],\n\n         [[0, 0, 0, 0, 0, 0, 0, 0],\n          [0, 0, 0, 0, 0, 0, 0, 0]]]], device='cuda:0', dtype=torch.int8)), 'case')
+- generated xml file: /home/erikg/emender/experiments/expressivity_tasks/x35_tape_cell_v3/validation_part5.xml -
+=========================== short test summary info ============================
+FAILED experiments/expressivity_tasks/x35_tape_cell_v3/tests/test_structural_cost.py::test_prepared_core_matches_complete_scan_routes
+======================== 1 failed, 158 passed in 20.32s ========================

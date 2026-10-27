@@ -1,0 +1,91 @@
+{
+  "task": "X35 v3 part 5",
+  "scope_complete": false,
+  "v3_closed": false,
+  "result": "FAIL: live/cold pooling is not implemented. Diagnostic isolation and six-gate remeasurement only; production representation is unchanged from part 4.",
+  "validation": {
+    "tests": 160,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "unchanged_x31_tests": 109,
+    "unchanged_prior_x35_tests": 49,
+    "new_diagnostic_tests": 2,
+    "raw": "validation_part5.txt",
+    "junit": "validation_part5.xml",
+    "source_receipt": "parity_part5.json"
+  },
+  "registered_gates": {
+    "c64_s2944_h4_forward_ge_2x": true,
+    "s736_t16_heads_ratio_le_2": false,
+    "s11776_t16_heads_ratio_le_2": false,
+    "full_parity": true,
+    "occupancy_proportional_backing": false,
+    "live_proportional_memory": false
+  },
+  "forward_speedup": 2.194987091227182,
+  "heads_ratio": 2.3497954963580656,
+  "heads_ratio_s736": 2.348038770661033,
+  "component_h16_h1_ratios": {
+    "prefix_native_initialization": 1.0051559822131642,
+    "exact_fresh_preparation": 1.1216051724866585,
+    "sequential_store_core": 3.357266749461687,
+    "fresh_scan_writes_disabled": 1.1914338772246345
+  },
+  "residual_cost_adjudication": "Ordinary fresh T16 scans have physical S=16 for either architectural budget, not S=11776. Exact production fresh preparation and the sequential store kernel are isolated independently. The core grid grows from 64 to 1024 store-owning programs with H1 to H16. These measurements do not establish an irreducible hardware floor, an additive decomposition, or a completed pooling design.",
+  "zero_live_continuation_probe": [
+    {
+      "chunks": 1,
+      "tokens_per_chunk": 16,
+      "live_rows": 0,
+      "base_state_bytes": 14270464,
+      "journal_reserved_bytes": 0,
+      "journal_recorded_entries": 0,
+      "physical_slots": 16
+    },
+    {
+      "chunks": 2,
+      "tokens_per_chunk": 16,
+      "live_rows": 0,
+      "base_state_bytes": 27983872,
+      "journal_reserved_bytes": 0,
+      "journal_recorded_entries": 0,
+      "physical_slots": 32
+    },
+    {
+      "chunks": 3,
+      "tokens_per_chunk": 16,
+      "live_rows": 0,
+      "base_state_bytes": 41697280,
+      "journal_reserved_bytes": 0,
+      "journal_recorded_entries": 0,
+      "physical_slots": 48
+    },
+    {
+      "chunks": 4,
+      "tokens_per_chunk": 16,
+      "live_rows": 0,
+      "base_state_bytes": 55410688,
+      "journal_reserved_bytes": 0,
+      "journal_recorded_entries": 0,
+      "physical_slots": 64
+    }
+  ],
+  "residual_risks": [
+    "Mandatory live/cold row pools, stable nonidentity logical ownership, and occupancy-proportional continuation/replay are unimplemented.",
+    "Touched dead rows and prefix metadata remain resident; the prefix grows with chunk history at zero occupancy.",
+    "Public promotion, imports, snapshots, and explicit journals remain dense.",
+    "Heads timing failures remain failures; pooling alone cannot be assumed to remove store-core scaling.",
+    "Timer wheel remains separate from the live heap-based scan."
+  ],
+  "operational_notes": "Single-threaded attended execution, exact project Python, X35 GPU broker only, cards 0-6. No GPU7, .pt output, WG machinery, delegation, Frontier/Slurm or resilient training changes. X28E/X30/X31/X33 sources and tests were not edited. Existing unrelated workspace changes preserved. contact_supervisor was searched first and is unavailable.",
+  "retained_unsuccessful_attempts": [
+    "validation_part5_diagnostic_failure.txt: 158 passed, one new diagnostic fixture failed because its argument index was wrong.",
+    "gates_part5_accounting_failure.json/txt: complete-cell samples retained; diagnostic output accounting failed before completion.",
+    "gates_part5_duplicate_accounting_failure.json/txt: complete-cell samples retained; duplicate physical_slots field in diagnostic accounting failed before completion."
+  ],
+  "raw_gate_receipt": "gates_part5.json",
+  "raw_gate_stdout": "gates_part5.txt",
+  "structural_cost_receipt": "structural_cost_part5.json",
+  "measurement_note": "Only the final completed run determines the part-5 verdict. Earlier incomplete runs are retained, not selected for favorable thresholds. No initialization subtraction or H1 slowdown. Independent diagnostic samples are not registered cell samples."
+}

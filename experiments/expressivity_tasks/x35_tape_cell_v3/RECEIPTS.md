@@ -200,3 +200,67 @@ logical map, and live-proportional continuation/backward/undo ownership remain
 open. Fresh sparse footprint is not substituted for that structural contract.
 The timer wheel remains separate from the heap-based live scan. No benchmark
 floor is subtracted or used to relabel a failed registered target as a pass.
+
+## Part 5 — incomplete delivery and residual-cost adjudication
+
+The original protocols and thresholds are unchanged. `gates_part5.py` asserts
+AST identity of its full-cell timing loop with X31 part 8, requires a current
+successful source-bound parity receipt, retains all five-warmup/twenty-sample
+wall/CUDA timings, and adds the omitted S736 head pair. Its six verdicts include
+full parity, forward, both head budgets, backing and memory. No initialization
+subtraction or H1 slowdown is allowed. Gates are measured before diagnostics;
+only the final complete run determines the part-5 result.
+
+`structural_cost_part5.py` extracts the production `_tape_scan` allocation prefix
+via AST, capturing its real scan arguments. Preparation timing includes that
+prefix; core-only timing prepares a NEW state before each timed interval and
+runs the captured real kernel. These independent diagnostics use B64/T16,
+K=Q/V random inputs, writes on, POP/logits zero and physical S16. They do not
+replace or decompose registered complete-cell samples. Core timing excludes
+preparation explicitly, unlike every registered gate. Two regression tests
+check production decisions/payloads and compatibility with registered memory
+accounting without collecting timings during parity.
+
+Final evidence:
+
+- `validation_part5.txt/xml`, `parity_part5.json`: **160 passed**, no failures,
+  errors or skips; unchanged 109 X31 and 49 existing X35, plus two diagnostic
+  tests. Source hashes cover implementation, diagnostics, gate driver and
+  validation runner. Parity ran before final performance collection.
+- `gates_part5.json/txt`: forward **2.194987x PASS**; head ratio S736
+  **2.348039 FAIL**, S11776 **2.349795 FAIL**; backing and memory **FAIL**;
+  full parity **PASS**. Physical GPU 1 through the X35 broker.
+- `structural_cost_part5.json`: exact fresh preparation H1/H16
+  **0.031334/0.035144 ms/token**; sequential store core
+  **0.056782/0.190631 ms/token**. All samples retained. The measured component
+  ratio is not an irreducible hardware floor.
+- `summary_part5.json`: `scope_complete=false`, `v3_closed=false`, explicit
+  residual risks and failed/unfinished attempt chronology.
+- `REPORT.md`: six-gate verdicts and parts 1–5 convergence table.
+
+The fresh T16 path already allocates physical S16, independently of either
+architectural budget. An O(architectural S) fresh initialization residual was
+not found. The core still runs 64 versus 1024 sequential store-owning programs
+at H1 versus H16. At zero live occupancy four T16 continuations grow physical
+rows 16 -> 64 and base state 14,270,464 -> 55,410,688 bytes. This continues to
+falsify occupancy-proportional backing; no fresh-start memory figure overrides
+that structural result.
+
+Unsuccessful/intermediate attempts are preserved: the initial new diagnostic
+fixture used the wrong argument index (158 existing tests passed, one new test
+failed); one diagnostic sample had the wrong accounting output type; another
+duplicated `physical_slots` returned by accounting. The raw failures and the
+successful pre-accounting/pre-duplicate-accounting validation/hash receipts
+remain separately named. None counts as final-source acceptance or a favorable
+benchmark selection. Final complete collection follows corrected diagnostic
+accounting and renewed full parity.
+
+**No live/cold pooling was implemented and no production representation was
+changed in part 5. This fails the requested engineering work order.** Pooling,
+nonidentity logical ownership, occupancy-proportional continuation/replay and
+the heads gates remain open. The diagnostic result is not the permitted floor
+adjudication after completed pooling. No universal impossibility is claimed.
+Only X35 artifacts are changed; references and unrelated workspace edits are
+preserved. No GPU7, .pt output, WG service/workers/delegation, Frontier/Slurm or
+resilient training changes. `contact_supervisor` was searched first and is not
+available in the callable tool catalog.
