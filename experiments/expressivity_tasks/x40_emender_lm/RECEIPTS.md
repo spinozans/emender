@@ -63,3 +63,30 @@ checks all24 ReplayBackward nodes. Source/config/data hashes bound to run.
 No .pt committed. DiLoCo/Frontier requirement IDs: N/A (single local GPU).
 Contact-supervisor tool discovery returned no tool; no substitute service used.
 Code-corpus arm deferred until items1–4 complete. Failures stay failures.
+
+## Part 2 preregistration — 2026-10-28, before v1 execution
+
+PURE STACK v0 is a completed ignition failure, not evidence for an operating
+memory architecture. Preserve every v0 receipt in place. CPU term audit is
+`receipts/part2_diagnosis.json`: +2 bias was present; initial gates can open.
+Thus “never ignited” describes sustained utilization, not proven zero writes
+from initialization. No saved weights permit terminal causal reconstruction.
+
+Pre-register one diagnostic rescue, **ignition-v1 (always-enable baseline)**:
+freeze W_write weights at zero and bias at +2, freeze match_coef/error_coef
+at zero, set gate-cost lambda to zero. Preserve key/query/content paths,
+POP, append, budgets, horizons, ISA and thresholds. All nonpadding tokens
+must have sigmoid(2) > .5 in every block throughout optimization. This
+intentionally removes learned selective enable; it tests whether guaranteed
+write opportunities rescue the pure stack, not semantic gate compression.
+No lambda sweep or quality-driven variant selection. Same seed/exposure and
+quality/context/depth protocols. Prediction: nonzero live stores in every
+block and held-out PPL improves over 36.8497193; original <=5% family band
+remains a separate, stronger test. Failure to improve is a failure.
+
+Before parent launches 100M training: CPU novel-content construction must
+open and retain slots with all four actual policies; GPU short six-block
+forward/backward must show every lane enabled, nonzero stores, 24 replay
+nodes and finite gradients; fresh oracle/parity preflight must pass. The
+runner performs that preflight before training. Use a new receipt directory;
+never overwrite v0 or train into an existing curve. No long run in this task.

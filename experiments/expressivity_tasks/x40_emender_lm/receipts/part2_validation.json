@@ -1,0 +1,53 @@
+{
+  "status": "attested",
+  "timestamp_utc": "2026-10-28T08:30:53.165459+00:00",
+  "manual_notes": "Inspected completed run, per-block telemetry, quality/context/depth failures and read-only X39 zero-gate signature. No long training launched. contact_supervisor tool absent from available metadata.",
+  "commands": [
+    {
+      "command": "/home/erikg/emender/.venv/bin/python -m experiments.expressivity_tasks.x40_emender_lm.diagnose",
+      "result": "passed"
+    },
+    {
+      "command": "/home/erikg/emender/.venv/bin/python -m experiments.expressivity_tasks.x40_emender_lm.ignition_check",
+      "result": "passed"
+    },
+    {
+      "command": "experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.ignition_check --gpu",
+      "result": "passed"
+    },
+    {
+      "command": "/home/erikg/emender/.venv/bin/python -m pytest -q experiments/expressivity_tasks/x40_emender_lm/tests",
+      "result": "passed",
+      "summary": "4 passed"
+    },
+    {
+      "command": "parent full training command in REPORT.md",
+      "result": "not-run"
+    }
+  ],
+  "failed_attempts": [
+    "Initial CPU setup: omitted explicit eager state (AttributeError); GPU wrapper attempt failed in same CPU setup before GPU scan.",
+    "Second CPU setup: expected four eager return values instead of three (ValueError). Corrected; subsequent CPU and GPU receipts pass."
+  ],
+  "residual_risks": [
+    "Always-enable is a diagnostic joint intervention; selective memory management remains unresolved.",
+    "B1/T32 GPU ignition and B2/T16 parity are bounded checks; mandatory B64/T512 preflight precedes parent training.",
+    "v0 terminal weights unavailable; causal attribution cannot be uniquely reconstructed.",
+    "No checkpoint/resume, no new v1 quality or depth outcome."
+  ],
+  "source_hashes_at_attestation": {
+    "experiments/expressivity_tasks/x40_emender_lm/model.py": "ed3824dc9a49fac175a1a4bd3bbfa4ff59a322a06a407c0719f01e8770804259",
+    "experiments/expressivity_tasks/x40_emender_lm/forward.py": "dc16e8705b3e8a50aab16b93bee19c549b2f6f495125ad7b5f507a26f938d8cc",
+    "experiments/expressivity_tasks/x40_emender_lm/kernels.py": "19acba24260f9c042188e940ad98a3d2631e5ef1be796c7ac99a10e77078fbf1",
+    "experiments/expressivity_tasks/x40_emender_lm/ignition_check.py": "e40f0203ddf73baa05f2d77e150b8be9184d94443c88bdf21e4c335094455c3d",
+    "experiments/expressivity_tasks/x40_emender_lm/diagnose.py": "8007dae0918a2a23af77975aaa362911e783b58e2accefb2b74f1697c75f0fd4",
+    "experiments/expressivity_tasks/x40_emender_lm/runner.py": "8af5f3455d2b2a30b06c2c7004918f8ba423a71d77585836e11c541ae1a71af4",
+    "experiments/expressivity_tasks/x40_emender_lm/RECEIPTS.md": "7270cfd67b265a15ca27dbf693dd464852dbdd492840ac929eb8546673c807dc"
+  },
+  "receipt_hashes": {
+    "part2_diagnosis.json": "7b1e280195e63017b780d2a51e8ea2d3768647e176dc6652e6b14c4ee794291f",
+    "part2_cpu_ignition.json": "7de95d32d37874ffa770d813c7a9a358f8c7db46d0143d817e1f627699ad4e15",
+    "part2_v0_summary.json": "8c618d2376ec8e0bbef0d2faa6596b8772a9293878a6b342ab1c4beae9599d82",
+    "part2_gpu_ignition.json": "dad8c0436451c8db84349447406e6ee4ea3da4f3fa80e1b730f74177fa0f28a4"
+  }
+}

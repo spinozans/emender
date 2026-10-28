@@ -110,7 +110,7 @@ class Block(nn.Module):
 
 
 class LM(nn.Module):
-    def __init__(self,vocab=32768):
+    def __init__(self,vocab=32768, *, ignition=False):
         super().__init__()
         self.embed=nn.Embedding(vocab,256)
         blocks=[]
@@ -119,6 +119,14 @@ class LM(nn.Module):
                 torch.manual_seed(3401+i)
                 blocks.append(Block(vocab))
         self.blocks=nn.ModuleList(blocks)
+        if ignition:
+            for block in self.blocks:
+                cell=block.cell
+                with torch.no_grad():
+                    cell.W_write.weight.zero_();cell.W_write.bias.fill_(2.)
+                    cell.match_coef.zero_();cell.error_coef.zero_()
+                cell.W_write.requires_grad_(False)
+                cell.match_coef.requires_grad_(False);cell.error_coef.requires_grad_(False)
         self.norm=nn.LayerNorm(256)
         self.head=nn.Linear(256,vocab,bias=False)
 
