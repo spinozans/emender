@@ -11,6 +11,7 @@ import torch
 from torch.nn import functional as F
 from .data import Stream, digest
 from .model import make_model, memory
+from .checkpoint import save as save_checkpoint, restore as restore_checkpoint
 
 
 def gate(path, cfg):
@@ -26,13 +27,15 @@ def gate(path, cfg):
         raise RuntimeError('X40 source attestation mismatch')
 
 
-def train(cfg, data, output, verdict):
+def train(cfg, data, output, verdict, resume=False):
+    os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
+    torch.use_deterministic_algorithms(True)
     started = time.monotonic()
     gate(verdict,cfg)
-    if os.environ.get('GPU_LEASE_HELD') not in ('0','1','5','6'):
+    if os.environ.get('GPU_LEASE_HELD') not in ('1','5','6'):
         raise RuntimeError('run via run_leased.sh')
     out = Path(output)
-    out.mkdir(parents=True,exist_ok=False)
+    out.mkdir(parents=True,exist_ok=resume)
     manifest = json.loads((Path(data)/'manifest.json').read_text())
     for split in ('train','valid'):
         if digest(Path(data)/(split+'.bin')) != manifest['split_sha256'][split]:
@@ -58,14 +61,31 @@ def train(cfg, data, output, verdict):
     registration = dict(config=cfg,memory=memory_receipt,data=manifest,
                         verdict=json.loads(Path(verdict).read_text()),lease=os.environ['GPU_LEASE_HELD'],
                         target_tokens=steps*unit,steps=steps)
-    (out/'registration.json').write_text(json.dumps(registration,indent=2))
+    # Lease can change across resume; scientific registration cannot.
+    checkpoint_registration={k:v for k,v in registration.items() if k!='lease'}
     start = started
-    cursor = 0
+    cursor = first_step = 0
+    rows=[]
+    if resume:
+        previous=json.loads((out/'registration.json').read_text())
+        if {k:v for k,v in previous.items() if k!='lease'} != checkpoint_registration:
+            raise ValueError('resume registration mismatch')
+        state=restore_checkpoint(out/'latest.ckpt',model,optimizer,checkpoint_registration)
+        cursor,first_step,rows=state['cursor'],state['step'],state['rows']
+        if first_step != len(rows) or cursor != first_step*cfg['accumulation']*cfg['microbatch'] or not 0 <= first_step <= steps:
+            raise ValueError('checkpoint step/cursor mismatch')
+        (out/'resume.json').write_text(json.dumps(dict(checkpoint_sha256=digest(out/'latest.ckpt'),
+                         step=first_step,cursor=cursor,lease=os.environ['GPU_LEASE_HELD']),indent=2))
+        start-=state['elapsed']
+    else:
+        (out/'registration.json').write_text(json.dumps(registration,indent=2))
     def batch(s, index):
         z = torch.from_numpy(np.stack([s.window(index+i) for i in range(cfg['microbatch'])])).cuda()
         return z[:,:-1],z[:,1:]
     with open(out/'curve.jsonl','w',buffering=1) as log:
-        for step in range(steps):
+        for row in rows:
+            log.write(json.dumps(row)+'\n')
+        for step in range(first_step,steps):
             if time.monotonic()-start >= cfg['wall_seconds']:
                 raise RuntimeError('wall budget exhausted before completion')
             optimizer.zero_grad(set_to_none=True)
@@ -95,6 +115,11 @@ def train(cfg, data, output, verdict):
                 row['valid_nll'] = sum(losses)/len(losses)
                 row['perplexity'] = math.exp(row['valid_nll'])
             log.write(json.dumps(row)+'\n')
+            rows.append(row)
+            if (step+1)%cfg.get('checkpoint_every',cfg['eval_every'])==0 or step+1==steps:
+                save_checkpoint(out/'latest.ckpt',model,optimizer,checkpoint_registration,
+                                step+1,cursor,rows,time.monotonic()-start)
+    row=rows[-1]
     result = dict(status='completed',**row,peak_allocated=torch.cuda.max_memory_allocated())
     if cfg.get('search_constants'):
         if not hasattr(model, 'occupancy_profile'):
@@ -106,6 +131,7 @@ def train(cfg, data, output, verdict):
         if not profile['rich_capacity']:
             raise RuntimeError('capacity-capped profile cannot score compression')
         result.update(profile)
+    (out/'failure.json').unlink(missing_ok=True)
     (out/'result.json').write_text(json.dumps(result,indent=2))
     return result
 
@@ -113,11 +139,12 @@ if __name__ == '__main__':
     p=argparse.ArgumentParser()
     for name in ('config','data','output','verdict'):
         p.add_argument('--'+name,required=True)
+    p.add_argument('--resume',action='store_true')
     a=p.parse_args()
-    if Path(a.output).exists():
+    if Path(a.output).exists() and not a.resume:
         p.error('output must be a new directory')
     try:
-        train(json.loads(Path(a.config).read_text()),a.data,a.output,a.verdict)
+        train(json.loads(Path(a.config).read_text()),a.data,a.output,a.verdict,resume=a.resume)
     except Exception as exc:
         out=Path(a.output)
         if out.exists():

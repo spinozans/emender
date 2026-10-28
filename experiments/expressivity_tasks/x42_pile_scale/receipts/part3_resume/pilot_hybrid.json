@@ -1,0 +1,80 @@
+{
+  "status": "passed",
+  "config": {
+    "width": 768,
+    "layers": 8,
+    "heads": 12,
+    "architecture": "hybrid",
+    "lane_positions": [
+      4
+    ],
+    "activation_checkpointing": true,
+    "microbatch": 1,
+    "context": 1024,
+    "accumulation": 256,
+    "tokens": 1000000000,
+    "seed": 3401,
+    "lr": 0.0003,
+    "warmup_steps": 1000,
+    "eval_every": 100,
+    "eval_batches": 8,
+    "wall_seconds": 86400,
+    "model_factory": "experiments.expressivity_tasks.x42_pile_scale.emender:factory"
+  },
+  "device": "cuda",
+  "kill_signal": "SIGKILL",
+  "kill_exit_code": -9,
+  "killed_checkpoint": {
+    "pid": 813503,
+    "step": 1,
+    "cursor": 2
+  },
+  "bit_identical": true,
+  "compared": "losses, model, optimizer, torch/CUDA RNG, Python/NumPy samples, cursor at every update",
+  "measured_accumulation": 2,
+  "updates": [
+    {
+      "step": 1,
+      "cursor": 2,
+      "losses": [
+        10.968307495117188,
+        10.96483039855957
+      ],
+      "python_sample": 0.8623494019698077,
+      "numpy_sample": 0.3112808916860842,
+      "model": "c24386f6ee854961b67bd6708ae3e916a08beb76ca23cd8e4ff16d94c59e4143",
+      "optimizer": "9fbe209cabc38f7ffcccb4fd2558e6ba646dc82b7ce4c89dfec7c4478bf3c245",
+      "torch_rng": "a024f5fc98575a340dd4ecebf2cbf9aae720c74e79df14c7f4bd5b9067ff0547",
+      "cuda_rng": "3d5c7f7e8bb09fb62d9167e1ceb406c7bcc783fa06e15c4d71e2789b29954bc6"
+    },
+    {
+      "step": 2,
+      "cursor": 4,
+      "losses": [
+        10.976287841796875,
+        10.991767883300781
+      ],
+      "python_sample": 0.7891142309359522,
+      "numpy_sample": 0.5813647352568226,
+      "model": "1b615f09713ef33cbfb0a8c1e4c1c81dc7dd6ea151e8c3db219d923c3f0b1b6c",
+      "optimizer": "ebafee8f017219d1d4e98bb4ff17476ece89082f220bde3627d0e7d38d01544f",
+      "torch_rng": "a024f5fc98575a340dd4ecebf2cbf9aae720c74e79df14c7f4bd5b9067ff0547",
+      "cuda_rng": "ad5836f3263f7e5f1044d3783c516213735dafc5c6356bbc6de2d2d2881466fc"
+    },
+    {
+      "step": 3,
+      "cursor": 6,
+      "losses": [
+        10.989527702331543,
+        11.006324768066406
+      ],
+      "python_sample": 0.8241715317525994,
+      "numpy_sample": 0.041442370601601275,
+      "model": "8a89142c285f8e360f5b2fbf3d639fbead7a4fd7446c60284618513a02b2a4fe",
+      "optimizer": "fb7c318e36de100f3c26e298ac84fbab9bc3cd7f8edcbf9cc1d38ddb4bcbcfbc",
+      "torch_rng": "a024f5fc98575a340dd4ecebf2cbf9aae720c74e79df14c7f4bd5b9067ff0547",
+      "cuda_rng": "e8eb9d520a657425f3b3d01d4749ff1a46c3df4df49506a177345d24a7a206dd"
+    }
+  ],
+  "checkpoint_files": "temporary .ckpt files removed after comparison"
+}

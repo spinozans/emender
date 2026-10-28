@@ -1,0 +1,63 @@
+{
+  "status": "passed",
+  "config": {
+    "width": 768,
+    "layers": 8,
+    "heads": 12,
+    "architecture": "pure",
+    "lane_positions": [
+      4
+    ],
+    "activation_checkpointing": true,
+    "microbatch": 1,
+    "context": 1024,
+    "accumulation": 256,
+    "tokens": 1000000000,
+    "seed": 3401,
+    "lr": 0.0003,
+    "warmup_steps": 1000,
+    "eval_every": 100,
+    "eval_batches": 8,
+    "wall_seconds": 86400,
+    "model_factory": "experiments.expressivity_tasks.x42_pile_scale.emender:factory"
+  },
+  "measured_accumulation": 2,
+  "registered_accumulation": 256,
+  "analytical": {
+    "parameters": 147519764,
+    "bf16_weights": 295039528,
+    "fp32_master": 590079056,
+    "fp32_gradients": 590079056,
+    "adam_moments": 1180158112,
+    "activation_workspace": 2328834048,
+    "cuda_reserve": 6442450944,
+    "total_bytes": 11426640744,
+    "headroom_48GiB": 40112966808,
+    "analytical_only": true,
+    "checkpointing": true
+  },
+  "updates": [
+    {
+      "update": 1,
+      "loss": 10.955816268920898,
+      "grad_norm": 1.4824566841125488,
+      "replay_nodes": 4,
+      "seconds": 2.521695317234844,
+      "tokens_per_second": 812.1520415264629,
+      "peak_allocated_bytes": 2562104320,
+      "peak_reserved_bytes": 2743074816
+    },
+    {
+      "update": 2,
+      "loss": 8.95053482055664,
+      "grad_norm": 1.4122415781021118,
+      "replay_nodes": 4,
+      "seconds": 1.9339869068935513,
+      "tokens_per_second": 1058.9523603805474,
+      "peak_allocated_bytes": 3116649984,
+      "peak_reserved_bytes": 3577741312
+    }
+  ],
+  "device": "NVIDIA RTX 6000 Ada Generation",
+  "physical_card": "1"
+}

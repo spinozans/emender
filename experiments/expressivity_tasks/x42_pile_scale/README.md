@@ -63,3 +63,53 @@ runs. No checkpoint/resume or crash recovery is claimed by this initial harness.
 For matched arm pairs, run `paired` through run_leased.sh with `--configs A.json B.json --data DATA --output NEW_PAIR_DIR --verdict VERDICT.json`.
 It writes matched_protocol.json and rejects differences in seed, context,
 microbatch, accumulation, token budget or evaluation schedule before training.
+
+## Part 3 engineering validation and resume
+
+Run synthetic scale checks (no X40 performance verdict or corpus needed):
+
+```bash
+X42_LAUNCH_RECEIPTS=experiments/expressivity_tasks/x42_pile_scale/receipts/part3_gpu_launch_accum2 \
+  bash experiments/expressivity_tasks/x42_pile_scale/run_leased.sh \
+  -m experiments.expressivity_tasks.x42_pile_scale.validate_gpu --accumulation 2 \
+  --output experiments/expressivity_tasks/x42_pile_scale/receipts/part3_gpu
+```
+
+This checks all six registered baseline/pure/hybrid pilot/final configurations.
+It uses synthetic repeated input, two optimizer updates, bf16 autocast and
+activation checkpointing. The first update warms kernels and allocates moments;
+the second reports steady throughput, including validation overhead. It checks
+finite logits, loss, all trainable gradients and updated weights, and asserts
+four X36 ReplayBackward nodes per lane. These are engineering receipts, not
+training quality or upstream numerical parity claims.
+
+Training writes atomic `latest.ckpt` at `checkpoint_every` updates (default:
+`eval_every`) and at the last update. Add `--resume` to the original training
+command, using the same config/data/verdict/output. Registration changes fail
+closed. Model, optimizer, CPU/CUDA/Python/NumPy RNG, completed update, sampler
+cursor, curve prefix and elapsed budget are restored. Partial updates after the
+latest checkpoint are replayed; time spent offline is excluded. Checkpoints
+are trusted local pickle files, ignored by Git; never load untrusted files.
+CUDA resume uses deterministic algorithms and `CUBLAS_WORKSPACE_CONFIG=:4096:8`.
+
+The process-level regression uses production save/restore helpers at each pilot
+architecture's full width, depth and context, with accumulation 2 to bound its
+cost. It SIGKILLs a worker after update 1 of 3, starts a fresh resume process,
+and compares update losses and model/optimizer/RNG/cursor hashes with a fresh
+uninterrupted reference. Temporary `.ckpt` files are removed. It does not run
+the corpus/verdict-gated scientific training entry point.
+
+```bash
+X42_LAUNCH_RECEIPTS=experiments/expressivity_tasks/x42_pile_scale/receipts/part3_resume_launch \
+  bash experiments/expressivity_tasks/x42_pile_scale/run_leased.sh \
+  -m experiments.expressivity_tasks.x42_pile_scale.resume_probe \
+  --output experiments/expressivity_tasks/x42_pile_scale/receipts/part3_resume
+
+/home/erikg/emender/.venv/bin/python -m experiments.expressivity_tasks.x42_pile_scale.attest_corpus \
+  --data experiments/expressivity_tasks/x42_pile_scale/data/pile24 \
+  --output experiments/expressivity_tasks/x42_pile_scale/receipts/part3_corpus.json
+```
+
+The attestor reads the existing builder output without restarting or modifying
+it. `not_complete` records a monitoring snapshot; only `attested` verifies final
+hashes, counts, source order, boundaries and contiguous per-split token offsets.

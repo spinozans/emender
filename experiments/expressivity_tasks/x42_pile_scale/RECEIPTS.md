@@ -130,3 +130,44 @@ boundaries and per-split document counts are now retained; no stored shuffle was
 introduced. The pinned dataset/tokenizer, exact dedup, hash split, character cap
 and token budget are unchanged. No CMA-ES protocol amendment, pilot/search,
 adapter GPU validation or training checkpoint/resume is claimed here.
+
+## Part 3 GPU checks, checkpoint/resume and corpus monitoring
+
+REPORT.md and README.md describe the implementation, commands and limits.
+All six scale/config combinations passed finite forward/backward/optimizer checks
+on broker-leased card 1. Adapter graphs assert four X36 replay nodes; baseline
+asserts zero. At the ~1.328B shape, allocated/reserved peaks are
+22.68/23.41 GiB, below the 31.66 GiB analytical estimate. Steady synthetic adapter
+throughput is ~900 tokens/s. These adapter measurements use accumulation 2;
+the registered 256-way protocol is retained in configs and is not silently
+claimed as measured. The pilot baseline separately passed accumulation 256.
+
+GPU receipts: `receipts/part3_gpu/`, completed launch
+`receipts/part3_gpu_launch_accum2/`. The initial filename error (exit 1) and
+terminated accumulation-256 adapter check (exit 143) are retained in
+`part3_gpu_launch/` and `part3_gpu_launch_full/`; neither is a successful adapter
+run. No scientific pilot/search or upstream scaled-parity claim is made.
+
+Atomic periodic checkpoints and `train --resume` now restore model, optimizer,
+all relevant RNGs, update/cursor, curve prefix and elapsed budget with registered
+identity checks. The SIGKILL regression uses the production checkpoint helpers,
+three full pilot architecture shapes, accumulation 2 and three updates; receipt
+files under `receipts/part3_resume/` state their actual comparison outcomes.
+The killed/resumed process is compared to an uninterrupted reference by losses,
+model/optimizer/RNG hashes, Python/NumPy samples and cursor at every update.
+Temporary checkpoints are removed and no `.pt` artifacts are emitted.
+
+`receipts/part3_tests.txt`: 15 CPU tests passed; the final corpus-attestor edit
+was additionally checked with its targeted passing test. The original 12 tests
+remain, with kill/resume, registration-mismatch and final-hash attestation tests
+added. No resilient DiLoCo behavior changed (gap-matrix requirements N/A).
+
+The corpus is **still running, not finally attested**. See
+`receipts/part3_corpus.json` and `part3_corpus_process.txt` for the advancing
+original PID 793830. `attest_corpus.py` records incomplete monitoring snapshots
+and, only after completion, verifies split/tokenizer/index hashes, final counts,
+source order, boundaries and contiguous per-split offsets. The exact read-only
+monitor/attest command is in REPORT.md. Do not restart the existing builder.
+Pilot command preparation remains gated on corpus readiness and X40 v1's
+completed verdict. This update supersedes earlier statements that checkpointing
+and adapter GPU validation were absent; it does not claim corpus completion.
