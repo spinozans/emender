@@ -1,0 +1,28 @@
+{
+  "status": "infrastructure_built_with_pending_scale_validation",
+  "tests": "11 passed",
+  "gpu_runs": "not run: X40 gate",
+  "data": "256 documents, 355316 train and 1257 validation tokens; incomplete access sample only; full 24 GiB corpus NOT built",
+  "memory": "148.1M control / 147.5M adapters; 1.314B control / 1.328B adapters; largest analytical footprint 31.656 GiB on one 48 GiB card",
+  "cma": "Sphere and rotated condition100 quadratic both below 1e-10; no scientific search run",
+  "source_sha256": {
+    "__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "cmaes.py": "10b54d1fa2dd907ac51255389814b71d57bf299f3ca5353cdad1b2ceea4e5215",
+    "data.py": "847ac6b77c17a66c8c7a5cd9316ef6baf77849865129025234a9aeaeccefc02b",
+    "emender.py": "5c1afd1a81d9af2739f4e652f00aea647f21e1aed696c19e8fc8d8038de78b5f",
+    "evaluator.py": "959b9597bffdc6637d8756e649473d7d7d1dcc72fc8c2b490704f22ea3b8f00f",
+    "model.py": "b8202f3b3567f6c069f8eb8d775b5caf992feaec542777fd03ccf8a41a70c26d",
+    "paired.py": "0cd8e833a7b83da3d1fd15859da601c9bf90777aac00a896c33d45ec3ffdc7c2",
+    "search.py": "33aae0c3ee3951e2ebcf71dddaed1c2a4fce703ce42e57dc3358441b9ecb4e3b",
+    "train.py": "5229722ebd7bc1b58b3c6886b26a0de69123b351ff2cf6c6bd9d25f11259861c"
+  },
+  "residual_risks": [
+    "Full 20-50GB token dataset remains unbuilt despite successful access sample download.",
+    "New width projection adapter has meta construction validation only; GPU replay/gradient/numerical parity and measured peak memory remain pending X40.",
+    "Proxy-to-1.3B constant transfer is unproven; head policies are shared across inserted memory blocks.",
+    "No checkpoint/resume; interrupted or budget-censored runs fail.",
+    "CMA 96-hour registration may be insufficient for full fixed exposure; fail rather than score partial candidates."
+  ],
+  "review": "No observed blocker for gated infrastructure; scientific readiness is not attested.",
+  "diloco": "Not applicable: no resilient training/DiLoCo changes or runs."
+}
