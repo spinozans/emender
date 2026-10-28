@@ -1,0 +1,83 @@
+{
+  "status": "failed: 100k program incomplete; X42 pressure parity blocked",
+  "gate": {
+    "training_tokens_per_second": 100000,
+    "context": [
+      512,
+      2048
+    ],
+    "minimum_batch": 64,
+    "matched_curve_tokens": 2000000,
+    "status": "not-run"
+  },
+  "production_policy_parity": "passed",
+  "scale_policy_parity": {
+    "status": "failed",
+    "error": "AssertionError({'head': 0, 'batch': 1, 'context': 512, 'component': 'pressure', 'mismatches': 142, 'oracle_vs_independent_max': 0.01666666567325592, 'wired_vs_independent_max': 5.960464477539063e-08, 'maximum_error': 0.016666673123836517, 'indices': [[0, 161, 0], [0, 162, 0], [0, 163, 0], [0, 164, 0], [0, 167, 0], [0, 168, 0], [0, 169, 0], [0, 173, 0]], 'oracle': [0.0833333358168602, 0.10000000894069672, 0.1147541031241417, 0.13114754855632782, 0.14516128599643707, 0.16129031777381897, 0.1746031790971756, 0.19354838132858276], 'wired': [0.10000000894069672, 0.1147541031241417, 0.13114754855632782, 0.14516128599643707, 0.16129031777381897, 0.1746031790971756, 0.17741934955120087, 0.20967741310596466]})"
+  },
+  "pressure_self_consistency": {
+    "unchanged_x31_semantic_mismatches": [
+      102,
+      103,
+      104,
+      103,
+      105,
+      109
+    ],
+    "unchanged_x31_repeat_pressure_mismatches": [
+      75,
+      73,
+      60,
+      42
+    ],
+    "diagnostic_semantic_mismatches": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "diagnostic_repeat_pressure_mismatches": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "other_fields_controls": [
+      {
+        "grad": false,
+        "other_fields_bitwise_equal": true
+      },
+      {
+        "grad": true,
+        "other_fields_bitwise_equal": true
+      }
+    ]
+  },
+  "not_run": [
+    "scale throughput matrix",
+    "X40 chunk-batched read port",
+    "new backward optimization/profile",
+    "occupancy matrix",
+    "launch fusion",
+    "2M matched curve"
+  ],
+  "sources": {
+    "pressure_probe.py": "65326312f3ade00576062b8009fc159c8c065bed389b34a50e709930a8eb6a9c",
+    "run_leased.sh": "80728c7328f6a180f8da70b5aa7623480d28b23c66d01b7b80288aa9a2ea0b14",
+    "RECEIPTS.md": "d07f09c6ec66fd2c58aac19d4974bf5241f1962429051b269ac2bc337c37a925",
+    "forward.py": "a6c950e3e39a9e45afd7a563a3be4d17339699fbebd37f4f1eaae99115f19337",
+    "kernels.py": "593396dd4c29efce0c4af4d67244a0acbb23ac8bcb4464daa4494db04aa0e7c8",
+    "backward.py": "970a7dbd68201dad07b3ef3783c2e582f98a20e094034344796db4bc3f052347",
+    "parity.py": "0ef8c0eaeb4bf1bcd94ce1cf414e11d9170f3eeb50f67f82b82ad70acd9b2146",
+    "scale_probe.py": "e85c19dad4301bc4d3582b92802738cf380c5c6fae2c3e834fa24555d711b8a6"
+  },
+  "upstream_oracle_source_sha256": "261838682446312e18aedb13d27d6b1b3e9172816450375580138e00952cbd04",
+  "physical_gpu": "1",
+  "residual_risks": [
+    "Unchanged X31 pressure is not repeatable at the exercised scale policy.",
+    "Temporary barrier fork is diagnostic only; full oracle repair/certification remains.",
+    "No new throughput or curve acceptance evidence."
+  ]
+}

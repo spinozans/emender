@@ -1,0 +1,16 @@
+contact_supervisor was searched first in ALL_TOOLS; zero matches. A second
+search for supervisor/intercom also returned zero matches. No callable
+supervisor contact exists, and no replacement service was started.
+
+UPDATE: The pressure mismatch is reproducible within unchanged X31 without
+any X40 wire or X42 adapter. Repeated identical inputs produce different
+pressure with identical values/state/routing. A temporary diagnostic-only
+X31 fork inserting tl.debug_barrier between the history scalar store and
+128-lane reload removes semantic errors and repeated-run differences.
+The production oracle and production certification have not been changed.
+
+Decision needed: authorize an upstream X31 synchronization repair and define
+certification against that corrected oracle. The current unchanged-oracle
+bitwise pressure requirement cannot be satisfied reliably while its own
+repeated results differ. This is not an engineering floor or a request to
+waive pressure parity. No scale throughput is measured under a failed gate.

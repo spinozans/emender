@@ -1,0 +1,10 @@
+--- X31 original (unchanged)
++++ temporary diagnostic fork
+@@ -187,6 +187,7 @@
+         tl.store(Pops+inp, pop_id)
+         ring = (Start+t) % 128
+         journal_store(History + n * 128 + ring, case, True, J, RecordAll)
++        tl.debug_barrier()
+         hist_idx = tl.arange(0, 128)
+         hist = tl.load(History+n*128+hist_idx)
+         requests = tl.sum(((hist>0) & (hist!=4)).to(tl.int32), 0)

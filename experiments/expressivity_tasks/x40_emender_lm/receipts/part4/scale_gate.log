@@ -1,0 +1,14 @@
+gpu_lease: granted GPUs: 1 (pid 1583500)
+X40 physical card 1
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/scale_probe.py", line 94, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/scale_probe.py", line 73, in main
+    try:receipt=certify(batch=1,context=t,policies=policies)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/parity.py", line 77, in certify
+    raise AssertionError(dict(head=head,batch=b,context=t,component='pressure',mismatches=int(bad.sum()),
+AssertionError: {'head': 0, 'batch': 1, 'context': 512, 'component': 'pressure', 'mismatches': 142, 'oracle_vs_independent_max': 0.01666666567325592, 'wired_vs_independent_max': 5.960464477539063e-08, 'maximum_error': 0.016666673123836517, 'indices': [[0, 161, 0], [0, 162, 0], [0, 163, 0], [0, 164, 0], [0, 167, 0], [0, 168, 0], [0, 169, 0], [0, 173, 0]], 'oracle': [0.0833333358168602, 0.10000000894069672, 0.1147541031241417, 0.13114754855632782, 0.14516128599643707, 0.16129031777381897, 0.1746031790971756, 0.19354838132858276], 'wired': [0.10000000894069672, 0.1147541031241417, 0.13114754855632782, 0.14516128599643707, 0.16129031777381897, 0.1746031790971756, 0.17741934955120087, 0.20967741310596466]}

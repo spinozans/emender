@@ -1,0 +1,32 @@
+[
+  {
+    "command": "experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.pressure_probe",
+    "result": "passed",
+    "summary": "12 X31/fork diagnostic runs; all fork invariants passed"
+  },
+  {
+    "command": "experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -c 'import json; from pathlib import Path; from experiments.expressivity_tasks.x40_emender_lm.parity import certify; p=Path(\"experiments/expressivity_tasks/x40_emender_lm/receipts/part4/production_parity.json\"); r=certify(); p.write_text(json.dumps(r,indent=2)+\"\\n\"); print(r)'",
+    "result": "passed",
+    "summary": "B64/T512 all four production policies bitwise certified; see production_parity.log for invocation result"
+  },
+  {
+    "command": "experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.scale_probe --output experiments/expressivity_tasks/x40_emender_lm/receipts/part4/scale_gate",
+    "result": "failed",
+    "summary": "Exit 1: pressure gate failed before throughput; 142 mismatches"
+  },
+  {
+    "command": "/home/erikg/emender/.venv/bin/python -m pytest -q experiments/expressivity_tasks/x40_emender_lm/tests --junitxml=experiments/expressivity_tasks/x40_emender_lm/receipts/part4/local_tests.xml",
+    "result": "passed",
+    "summary": "5 passed in 1.65s"
+  },
+  {
+    "command": "bash -n experiments/expressivity_tasks/x40_emender_lm/run_leased.sh",
+    "result": "passed",
+    "summary": "Shell syntax valid"
+  },
+  {
+    "command": "git diff --check -- experiments/expressivity_tasks/x40_emender_lm/RECEIPTS.md experiments/expressivity_tasks/x40_emender_lm/run_leased.sh",
+    "result": "passed",
+    "summary": "No whitespace errors"
+  }
+]

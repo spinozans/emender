@@ -113,3 +113,23 @@ journal capacity/bytes and fill/copy activities. No .pt artifacts.
 
 Coordination: tool metadata discovery found no contact_supervisor/intercom
 callable. No alternative service or worker machinery is used.
+
+## Part 4 — 100,000 tokens/s program (2026-10-28; before measurement)
+
+Acceptance requires >=100,000 tokens/s sustained TRAINING (forward, backward,
+clipping and optimizer) on one leased RTX 6000 Ada at T512 or T2048, B>=64.
+Production certification must pass bitwise values, state, traces, pressure and
+input gradients versus unchanged X31. A >=2M-token curve must match ignition-v1
+at matched steps (loss tolerance 1e-5). Interim targets are >=60k after reads
+and >=85k after backward work. Kernel-only timings cannot satisfy these gates.
+
+Order: resolve X42-policy pressure parity; measure 150M/1.3B pure shapes at
+T512/T2048 B64/B128; measure and certify chunk-batched causal reads; measure
+and certify sparse pooled replay and journal event suppression; occupancy at
+B128/B256 and both contexts; then remaining launch fusion. Decomposition
+precedes each lever, and each lever is measured before the next. OOM and
+exactness failures are retained as failures; no floor declaration before
+reads and backward work are exhausted. No .pt artifacts. Only broker GPUs
+1/5/6; GPU0 depth probe and certified arms 2/3/4 are protected, GPU7 forbidden.
+No WG, workers or delegation. contact_supervisor was searched first in callable
+tool metadata and is unavailable in this session; no substitute service used.
