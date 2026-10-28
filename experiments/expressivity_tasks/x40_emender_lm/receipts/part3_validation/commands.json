@@ -1,0 +1,77 @@
+[
+  {
+    "command": [
+      "/home/erikg/emender/.venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/tests"
+    ],
+    "exit_code": 0,
+    "expected_exit": 0,
+    "result": "passed"
+  },
+  {
+    "command": [
+      "/home/erikg/emender/.venv/bin/python",
+      "-m",
+      "experiments.expressivity_tasks.x40_emender_lm.scale_probe",
+      "--output",
+      "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/receipts/part3_scale_final"
+    ],
+    "exit_code": 1,
+    "expected_exit": 1,
+    "result": "failed"
+  },
+  {
+    "command": [
+      "/home/erikg/emender/.venv/bin/python",
+      "-m",
+      "experiments.expressivity_tasks.x40_emender_lm.scale_probe",
+      "--arm",
+      "transformer",
+      "--output",
+      "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/receipts/part3_transformer_scale"
+    ],
+    "exit_code": 0,
+    "expected_exit": 0,
+    "result": "passed"
+  },
+  {
+    "command": [
+      "/home/erikg/emender/.venv/bin/python",
+      "-m",
+      "experiments.expressivity_tasks.x40_emender_lm.bf16_gate",
+      "--output",
+      "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/receipts/part3_bf16"
+    ],
+    "exit_code": 1,
+    "expected_exit": 1,
+    "result": "failed"
+  },
+  {
+    "command": [
+      "/home/erikg/emender/.venv/bin/python",
+      "-m",
+      "experiments.expressivity_tasks.x40_emender_lm.train_slice",
+      "--graph",
+      "--output",
+      "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/receipts/part3_slice"
+    ],
+    "exit_code": 0,
+    "expected_exit": 0,
+    "result": "passed"
+  },
+  {
+    "command": [
+      "/home/erikg/emender/.venv/bin/python",
+      "-m",
+      "experiments.expressivity_tasks.x40_emender_lm.graph_probe",
+      "--output",
+      "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/receipts/part3_graph_final"
+    ],
+    "exit_code": 0,
+    "expected_exit": 0,
+    "result": "passed"
+  }
+]

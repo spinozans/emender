@@ -65,7 +65,20 @@ def certify(batch=64,context=512,policies=POLICIES):
             for x,y in zip(a[group],z[group]):torch.testing.assert_close(x,y,rtol=0,atol=0)
         for name in ('case','matched','alloc_target','pop_target','pop_fired','freed','w_on'):
             assert torch.equal(getattr(a[2],name),getattr(z[2],name)),name
-        assert torch.equal(a[3],z[3])
+        if not torch.equal(a[3],z[3]):
+            bad=(a[3]!=z[3]);indices=bad.nonzero()[:8]
+            cases=a[2].case.cpu()
+            expected=torch.empty_like(cases,dtype=torch.float32)
+            for token in range(t):
+                history=cases[:,max(0,token-127):token+1]
+                caps=(history==5).sum(1);requests=((history>0)&(history!=4)).sum(1).clamp_min(1)
+                expected[:,token]=caps.float()/requests.float()
+            expected=expected.to(a[3].device)
+            raise AssertionError(dict(head=head,batch=b,context=t,component='pressure',mismatches=int(bad.sum()),
+                oracle_vs_independent_max=float((a[3]-expected).abs().max()),
+                wired_vs_independent_max=float((z[3]-expected).abs().max()),
+                maximum_error=float((a[3]-z[3]).abs().max()),indices=indices.tolist(),
+                oracle=a[3][bad][:8].tolist(),wired=z[3][bad][:8].tolist()))
         rows.append(dict(head=head,status='passed',batch=b,context=t))
     return dict(status='passed',policies=rows,evidence_tolerance='rtol2e-5 atol2e-6',
         operations='bitwise values/state/trace/pressure/gradients versus X31 with independently computed beta')

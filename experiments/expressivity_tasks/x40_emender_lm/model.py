@@ -36,7 +36,11 @@ def scan(k,q,v,mask,pop,append,cfg,append_coef,logits,match_coef,error_coef):
         match_coef=match_coef.detach(),error_coef=error_coef.detach(),
         evidence=evidence,error_evidence=errors)
     with patch.object(upstream,'persistent_scan',forward):
-        result=upstream.tape_scan(k,q,v,beta,pop,append,None,cfg,append_coef)
+        if torch.is_grad_enabled() and any(a.requires_grad for a in (k,q,v,beta,pop,append,append_coef)):
+            from .backward import autograd_scan
+            result=autograd_scan((k,q,v,beta,pop,append),None,cfg,append_coef)
+        else:
+            result=forward(k,q,v,beta,pop,append,None,cfg,append_coef)
     evidence=evidence.transpose(1,2).contiguous().detach()
     errors=errors.transpose(1,2).contiguous().detach()
     sigmoid=(logits+match_coef*evidence+error_coef*errors).sigmoid()
@@ -68,6 +72,8 @@ class Cell(upstream.TapeCell):
         self.configs=POLICIES
         self.telemetry=None
         self.gate_mean=None
+        self.use_chunk_graphs=False
+        self.chunk_graphs=[None]*4
 
     def forward(self,x,ids):
         b,t=ids.shape
@@ -80,10 +86,16 @@ class Cell(upstream.TapeCell):
             k=self.geometry[h]['key'](features).detach().unsqueeze(2)
             q=self.geometry[h]['query'](features).unsqueeze(2)
             sl=slice(h,h+1)
-            (r,state,trace,pressure),e,err,sig=scan(k,q,values[:,:,sl].contiguous(),
-                (ids!=0).float().unsqueeze(-1),pop[:,:,sl].contiguous(),
-                append[:,:,sl].contiguous(),cfg,self.append_err_coef[sl].contiguous(),
-                logits[:,:,sl].contiguous(),self.match_coef[sl],self.error_coef[sl])
+            inputs=(k,q,values[:,:,sl].contiguous(),(ids!=0).float().unsqueeze(-1),
+                pop[:,:,sl].contiguous(),append[:,:,sl].contiguous(),
+                self.append_err_coef[sl].contiguous(),logits[:,:,sl].contiguous(),
+                self.match_coef[sl],self.error_coef[sl])
+            if self.use_chunk_graphs and self.training and torch.is_grad_enabled():
+                from .graphs import capture_scan
+                if self.chunk_graphs[h] is None:self.chunk_graphs[h]=capture_scan(cfg,inputs)
+                r,sig=self.chunk_graphs[h](*inputs)
+            else:
+                (r,state,trace,pressure),e,err,sig=scan(*inputs[:6],cfg,*inputs[6:])
             reads.append(r);gates.append(sig.mean())
             if not self.training:
                 m=profile(state,trace,pressure)
@@ -110,8 +122,11 @@ class Block(nn.Module):
 
 
 class LM(nn.Module):
-    def __init__(self,vocab=32768, *, ignition=False):
+    def __init__(self,vocab=32768, *, ignition=False, store_dtype="fp32"):
         super().__init__()
+        if store_dtype!="fp32":
+            raise ValueError("bf16 store is disabled until bitwise production parity passes")
+        self.store_dtype=store_dtype
         self.embed=nn.Embedding(vocab,256)
         blocks=[]
         for i in range(6):

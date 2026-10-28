@@ -11,6 +11,7 @@ from ..x36_tape_perf.mutations import set_free, lowest_free
 from ..x36_tape_perf.mutations import remove as birth_remove, insert as birth_insert, select as birth_select
 from ..x36_tape_perf.journal import journal_store
 from ..x31_tape_cell_fused.write_journal import capture_payload
+from .exact_decay import advance_unit
 
 
 @triton.jit(do_not_specialize=["Token", "Start", "AllCapacity"])
@@ -27,7 +28,7 @@ def scan_kernel(K, Q, V, Beta, Pop, Logit, Coef, WireLogit, MatchCoef, ErrorCoef
                 DV: tl.constexpr, RT: tl.constexpr, BS: tl.constexpr, BV: tl.constexpr, BK: tl.constexpr, BT: tl.constexpr,
                 Decay: tl.constexpr, Free: tl.constexpr,
                 Enable: tl.constexpr, PopThreshold: tl.constexpr,
-                Eps: tl.constexpr):
+                Eps: tl.constexpr, DecayTable, UnitHorizon:tl.constexpr, UnitTerminal:tl.constexpr):
     # Keep store-address arithmetic wide while retaining debug assertions.
     n = tl.program_id(0).to(tl.int64)
     J = (AllAddresses,AllBefore,AllWidths,AllCounts,n,AllCapacity)
@@ -92,20 +93,19 @@ def scan_kernel(K, Q, V, Beta, Pop, Logit, Coef, WireLogit, MatchCoef, ErrorCoef
                 r_numer=tl.where(r_live,tl.exp(r_masked-r_maximum),0.)
                 r_reference=tl.load(References+n*S+r_columns,r_live,0.)
                 r_touch=tl.load(TouchStore+n*S+r_columns,r_live,Start+t)
-                if T>512:
-                    if t==0:
-                        r_strength=advance_exact(r_reference,tl.where(r_live,Start+t-r_touch,0),Decay)
-                    else:
-                        cached=tl.load(ReadStrengthCache+n*S+r_columns,r_live,0.)
-                        base=tl.where(r_touch>=Start+t-1,r_reference,cached)
-                        if Decay==1.0:
-                            next_strength=base
-                        else:
-                            next_strength=base*Decay
-                        r_strength=tl.where(r_touch>=Start+t,r_reference,next_strength)
-                    tl.store(ReadStrengthCache+n*S+r_columns,r_strength,r_live)
+                # One rounded multiply per subsequent read; mutation timestamps
+                # select a fresh reference after POP or allocation.
+                if t==0:
+                    r_strength=advance_unit(r_reference,tl.where(r_live,Start+t-r_touch,0),Decay,DecayTable,T)
                 else:
-                    r_strength=advance_exact(r_reference,tl.where(r_live,Start+t-r_touch,0),Decay)
+                    cached=tl.load(ReadStrengthCache+n*S+r_columns,r_live,0.)
+                    base=tl.where(r_touch>=Start+t-1,r_reference,cached)
+                    if Decay==1.0:
+                        next_strength=base
+                    else:
+                        next_strength=base*Decay
+                    r_strength=tl.where(r_touch>=Start+t,r_reference,next_strength)
+                tl.store(ReadStrengthCache+n*S+r_columns,r_strength,r_live)
                 r_weighted=r_numer*r_strength
                 r_d=tl.arange(0,BV)
                 r_values=tl.load(Values+(n*S+r_columns[:,None])*DV+r_d[None,:],
@@ -241,10 +241,8 @@ def scan_kernel(K, Q, V, Beta, Pop, Logit, Coef, WireLogit, MatchCoef, ErrorCoef
             journal_store(Strength+n*S+allocation, 1., True, J, RecordAll)
             journal_store(TouchStore+n*S+allocation, clock, True, J, RecordAll)
             journal_store(Live+n*S+allocation, True, True, J, RecordAll)
-            append_horizon, append_terminal = death_exact(tl.full((1,), 1., tl.float32),
-                                    tl.full((1,), Free, tl.float32), Decay)
-            dt = tl.sum(append_horizon, 0)
-            journal_store(terminal + allocation, tl.sum(append_terminal, 0), True, J, RecordAll)
+            dt = UnitHorizon
+            journal_store(terminal + allocation, UnitTerminal, True, J, RecordAll)
             size = schedule(heap, position, due, size, allocation, tl.where(dt >= 0, clock + dt, -1), J, RecordAll)
         dead = next_due(heap, due, size, clock + 1, J, RecordAll)
         processed = 0

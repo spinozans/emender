@@ -90,3 +90,26 @@ forward/backward must show every lane enabled, nonzero stores, 24 replay
 nodes and finite gradients; fresh oracle/parity preflight must pass. The
 runner performs that preflight before training. Use a new receipt directory;
 never overwrite v0 or train into an existing curve. No long run in this task.
+
+## Part 3 performance registration (2026-10-28, before measurement)
+
+Ordered gates: baseline X31/X40 parity, unchanged-v1 decomposition, optimization
+parity, timing, graph parity/timing, scale probes, bf16 parity, matched training.
+B64/T512 target: <=2.5 s/update including AdamW and clipping (aspiration ~2s).
+T2048 target: >=2x T512 tokens/s at the same scale shape and microbatch.
+Scale: X42 pilot_pure/final_pure widths/layers/heads and microbatch=1,
+T512 and T2048, 200 measured updates each after 3 warmups; same-shape X42
+transformer controls; pure target >=0.5x control tokens/s. Report peak allocated
+and reserved CUDA memory, actual parameters and lane count. No inference from
+analytical memory to measured headroom. Training slice: 153 B64/T512 updates
+(5,013,504 tokens), seed3401, batches/optimizer identical to ignition-v1;
+per-step loss tolerance 1e-5, failures remain failures. bf16 native store must
+pass the unchanged bitwise production parity gate before timing/enabling.
+No claim that X36 standalone scan timings predict heterogeneous four-policy
+lanes: measure the actual composition before changing it. Profile GPU busy
+activities separately from synchronized unprofiled update wall times; these
+quantities are not additive. Retain full launch ledger, sync/DtoH counts,
+journal capacity/bytes and fill/copy activities. No .pt artifacts.
+
+Coordination: tool metadata discovery found no contact_supervisor/intercom
+callable. No alternative service or worker machinery is used.

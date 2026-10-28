@@ -113,3 +113,11 @@ No WG machinery, Slurm or Frontier execution was used; resilient DiLoCo
 requirement IDs do not apply to this single local GPU task. AGENTS.md and
 CLAUDE.md are unchanged. Tool metadata discovery found no contact_supervisor,
 supervisor or intercom tool; no substitute orchestration was started.
+
+## Part 3 performance follow-up
+
+[REPORT_PART3.md](REPORT_PART3.md) receipts the v1 decomposition and exact-decay
+repair: B64/T512 improves from8.030 to1.065s eager /1.085s with chunk graphs;
+5,013,504 training tokens match v1 losses exactly. Pure scale probes remain
+blocked by X42-policy pressure parity; transformer controls completed, bf16
+store parity failed and stays disabled. This is partial performance closure.

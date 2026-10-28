@@ -39,6 +39,8 @@ def fingerprint():
 def main():
     p=argparse.ArgumentParser()
     p.add_argument('--train',action='store_true')
+    p.add_argument('--cuda-graphs',action='store_true')
+    p.add_argument('--store-dtype',choices=('fp32','bf16'),default='fp32')
     p.add_argument('--ignition-v1',action='store_true')
     p.add_argument('--receipt-dir',type=Path)
 
@@ -57,7 +59,8 @@ def main():
     torch.set_num_threads(1)
     fp=fingerprint()
     registration=dict(sources=fp,physical_gpu=held,ignition_v1=args.ignition_v1,gate_cost=gate_cost,policies=policy_receipt(),
-        preregistration_sha256=data.sha(ROOT/'RECEIPTS.md'),torch=torch.__version__)
+        preregistration_sha256=data.sha(ROOT/'RECEIPTS.md'),torch=torch.__version__,
+        cuda_graphs=args.cuda_graphs,store_dtype=args.store_dtype)
     write('registration.json',registration)
     try:
         command=[sys.executable,"-m","pytest","-q","-p",
@@ -73,7 +76,7 @@ def main():
         raise
     tok=Tokenizer.from_file(str(data.RUNS/'tokenizer.json'))
     torch.manual_seed(3401);np.random.seed(3401)
-    model=LM(tok.get_vocab_size(),ignition=args.ignition_v1)
+    model=LM(tok.get_vocab_size(),ignition=args.ignition_v1,store_dtype=args.store_dtype)
     write('parameters.json',parameter_receipt(model,tok.get_vocab_size()))
     model=model.cuda().train()
     x,y=(a.cuda() for a in data.batch('train',0,batch_size=64))
@@ -88,20 +91,29 @@ def main():
     # Reset initialization after smoke: the smoke is never counted as exposure.
     del model
     torch.manual_seed(3401);np.random.seed(3401)
-    model=LM(tok.get_vocab_size(),ignition=args.ignition_v1).cuda().train()
+    model=LM(tok.get_vocab_size(),ignition=args.ignition_v1,store_dtype=args.store_dtype).cuda().train()
     opt=torch.optim.AdamW(model.parameters(),lr=3e-4,betas=(.9,.95),weight_decay=.1)
     registration['data']={name:data.sha(data.RUNS/name) for name in ('train.bin','valid.bin','tokenizer.json')}
     write('registration.json',registration)
+    graph=None
+    if args.cuda_graphs:
+        from .graphs import certify_training_graph
+        x,y=(a.cuda() for a in data.batch('train',0,batch_size=64))
+        graph,receipt=certify_training_graph(model,x,y,gate_cost=gate_cost)
+        write('graph_parity.json',receipt)
     begin=time.monotonic();step=0
     try:
         with (RECEIPT_ROOT/'curve.jsonl').open('x',buffering=1) as log:
             for step in range(1,3053):
                 opt.zero_grad(set_to_none=True)
                 x,y=(a.cuda() for a in data.batch('train',step-1,batch_size=64))
-                logits,_=model(x)
-                ce=F.cross_entropy(logits.flatten(0,1),y.flatten())
-                loss=ce+gate_cost*torch.stack([b.cell.gate_mean for b in model.blocks]).mean()
-                require_replays(loss);loss.backward()
+                if graph is None:
+                    logits,_=model(x)
+                    ce=F.cross_entropy(logits.flatten(0,1),y.flatten())
+                    loss=ce+gate_cost*torch.stack([b.cell.gate_mean for b in model.blocks]).mean()
+                    require_replays(loss);loss.backward()
+                else:
+                    loss=graph.replay(x,y);ce=graph.ce
                 norm=torch.nn.utils.clip_grad_norm_(model.parameters(),1.,error_if_nonfinite=True)
                 opt.step()
                 value=float(loss.detach())
@@ -109,12 +121,17 @@ def main():
                 if args.ignition_v1 and any(g<=.5 for g in gates):
                     raise AssertionError('ignition-v1 enable invariant failed')
                 if not math.isfinite(value):raise FloatingPointError('nonfinite loss')
-                log.write(json.dumps(dict(step=step,tokens=step*32768,loss=value,ce=float(ce.detach()),gate_per_block=gates,grad_norm=float(norm),replay_nodes=24))+'\n')
-                del logits,loss,ce
+                log.write(json.dumps(dict(step=step,tokens=step*32768,loss=value,ce=float(ce.detach()),gate_per_block=gates,grad_norm=float(norm),replay_nodes=24 if graph is None else None,chunk_graphs=48 if graph is not None else 0))+'\n')
+                if graph is None:del logits
+                del loss,ce
                 if step%256==0 or step in (611,3052):
                     if fingerprint()!=fp:raise RuntimeError('source changed during training')
                     write(f'quality_{step}.json',dict(step=step,tokens=step*32768,validation=validate(model,'cuda')))
                     print(json.dumps(dict(step=step,seconds=time.monotonic()-begin)),flush=True)
+        if graph is not None:
+            from .graphs import disable_chunk_graphs
+            disable_chunk_graphs(model)
+            graph=None
         from .evaluate import evaluate
         evaluate(model)
         from .depth import fine_tune

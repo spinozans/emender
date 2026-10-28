@@ -10,6 +10,7 @@ from ..x31_tape_cell_fused.birth_index import initialize as initialize_birth_ind
 from ..x31_tape_cell_fused.write_journal import WriteJournal
 from ..x36_tape_perf.journal import AllFieldJournal
 from .kernels import scan_kernel, materialize_state
+from .exact_decay import table
 
 def tape_scan(k, q, v, write_strength, pop_strength, append_logit, state,
               cfg: TapeHeadConfig, append_err_coef=None, *, record_payload=False, record_all=False, wire_logits=None, match_coef=None, error_coef=None, evidence=None, error_evidence=None):
@@ -34,7 +35,7 @@ def tape_scan(k, q, v, write_strength, pop_strength, append_logit, state,
     if torch.is_grad_enabled() and needs_grad:
         if record_payload or record_all:
             raise ValueError('training manages its private journal automatically')
-        from ..x36_tape_perf.backward import autograd_scan
+        from .backward import autograd_scan
         return autograd_scan(tensors,state,cfg,append_err_coef)
     if not (0 < cfg.decay_rate <= 1 and 0 <= cfg.free_threshold < 1 and 0 < cfg.slots <= 262144):
         raise ValueError("invalid decay, threshold or slot budget")
@@ -140,7 +141,8 @@ def tape_scan(k, q, v, write_strength, pop_strength, append_logit, state,
     # All heads share this launch; direct same-store reductions avoid the
     # off-diagonal cross-head MMA rows and a separate scoring launch.
     score_scratch=scores  # unused compatibility pointer
-    read_strength_cache=torch.empty_like(strength) if t>512 else scores
+    read_strength_cache=torch.empty_like(strength)
+    decay_table,unit_horizon,unit_terminal=table(cfg.decay_rate,cfg.free_threshold,t,k.device)
     scan_kernel[(b*h,)](*args,coef,flat(wire_logits),match_coef.repeat(b).contiguous(),error_coef.repeat(b).contiguous(),evidence,error_evidence,keys,values,strength,live,age,
         output,case,matched,alloc,pops,freed,pressure,history,heap,position,due,terminal,
         births,touches,level0,level1,root,birth_next,birth_prev,birth_head,sizes,references,scores,read_max,read_denom,read_values,read_best,read_strength_cache,capture_scratch,
@@ -149,7 +151,7 @@ def tape_scan(k, q, v, write_strength, pop_strength, append_logit, state,
         t,cfg.slots,dk,cfg.value_dim,tile_count,triton.next_power_of_2(max(1,reachable)),
         triton.next_power_of_2(cfg.value_dim),triton.next_power_of_2(max(32,dk)),tile_block,
         struct.unpack('<f',struct.pack('<f',cfg.decay_rate))[0],cfg.free_threshold,
-        cfg.write_enable_threshold,cfg.pop_threshold,cfg.eps_residual,
+        cfg.write_enable_threshold,cfg.pop_threshold,cfg.eps_residual,decay_table,unit_horizon,unit_terminal,
         enable_fp_fusion=False,debug=True,
         num_warps=4)
     materialize_state[(b*h,)](references,touches,births,live,strength,age,
