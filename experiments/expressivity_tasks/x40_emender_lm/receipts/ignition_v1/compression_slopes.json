@@ -1,0 +1,173 @@
+{
+  "status": "completed",
+  "receipt": "six_lane_compression_slopes",
+  "model": "ignition-v1 final weights (in-memory, step 3052, 100007936 tokens)",
+  "source": {
+    "path": "x40_emender_lm/receipts/ignition_v1/evaluation.json",
+    "sha256": "f2c04ff3f22f5400cb25382c1891945ca8fa6556772be70be9b12e54822c895f"
+  },
+  "registered_predictions": {
+    "mean_slope": {
+      "text": "Predict mean slope <= .5 (undefined for zero occupancy, no pseudocount).",
+      "measured": 0.2539159908219952,
+      "limit": 0.5,
+      "verdict": "pass"
+    },
+    "hierarchy": {
+      "text": "Hierarchy should produce unequal head peaks.",
+      "peaks_per_length": {
+        "512": [
+          64,
+          256,
+          256,
+          256
+        ],
+        "1024": [
+          64,
+          256,
+          512,
+          512
+        ],
+        "2048": [
+          64,
+          256,
+          736,
+          1024
+        ],
+        "4096": [
+          64,
+          256,
+          736,
+          1472
+        ],
+        "8192": [
+          64,
+          256,
+          736,
+          1472
+        ]
+      },
+      "peaks_at_8192": [
+        64,
+        256,
+        736,
+        1472
+      ],
+      "ordered_by_horizon": true,
+      "equal_four_head_peak_stories_per_block": [
+        2,
+        1,
+        1,
+        0,
+        0,
+        0
+      ],
+      "verdict": "unequal at and past 2048; at T512 heads 1-3 tie at 256"
+    }
+  },
+  "budgets": [
+    64,
+    256,
+    736,
+    1472
+  ],
+  "horizons": [
+    128,
+    512,
+    2048,
+    8192
+  ],
+  "slopes_per_block_head": [
+    [
+      8.563813560115138e-17,
+      5.275429780393049e-16,
+      0.3570685868171054,
+      0.6570685868171039
+    ],
+    [
+      8.563813560115138e-17,
+      5.275429780393049e-16,
+      0.3570685868171054,
+      0.6570685868171039
+    ],
+    [
+      8.563813560115138e-17,
+      5.275429780393049e-16,
+      0.3570685868171054,
+      0.6570685868171039
+    ],
+    [
+      8.563813560115138e-17,
+      5.275429780393049e-16,
+      0.3570685868171054,
+      0.6570685868171039
+    ],
+    [
+      0.00461672262260853,
+      5.275429780393049e-16,
+      0.3570685868171054,
+      0.6570685868171039
+    ],
+    [
+      0.004544015300016879,
+      5.275429780393049e-16,
+      0.3570685868171054,
+      0.6570685868171039
+    ]
+  ],
+  "slopes_block_invariance": "heads 1-3 slopes are identical across all six blocks; head 0 slope is 8.6e-17 in blocks 0-3 and 0.0046/0.0045 in blocks 4-5 (peak 62-64 of 64 everywhere).",
+  "capacity_and_pressure": {
+    "peak_over_budget": {
+      "512": [
+        1.0,
+        1.0,
+        0.34782608695652173,
+        0.17391304347826086
+      ],
+      "1024": [
+        1.0,
+        1.0,
+        0.6956521739130435,
+        0.34782608695652173
+      ],
+      "2048": [
+        1.0,
+        1.0,
+        1.0,
+        0.6956521739130435
+      ],
+      "4096": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "8192": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    "rcap_fraction_at_8192": [
+      0.0,
+      0.0018,
+      0.2812,
+      0.6406
+    ],
+    "caveat": "Registered caveat: budget-capped occupancy alone is not evidence of semantic compression. Heads 2/3 reach their budgets and refuse writes (R-CAP) by T2048/T4096; the sublinear slopes are substantially capacity-forced."
+  },
+  "x39_semantic_reference": {
+    "path": "x39_memory_usage/receipts/part9_semantic_full_evaluation.json",
+    "sha256": "5cc33cc71598b748ec3bd7c9fc93cdad482d9a33e290b996f7e6cdf5e1917ea3",
+    "single_lane_slopes": [
+      0.0945416719847831,
+      0.05500140949997421,
+      0.12745300446716226,
+      0.1534619115031515
+    ],
+    "single_lane_mean": 0.10761449936376777,
+    "note": "X39 semantic arm: one four-head lane, slope mean 0.108. The v1 pure six-block stack is deeper-sloped (0.254) but the deep lanes are budget-capped, unlike the uncapped semantic arm."
+  },
+  "compression_answer": "The six-lane stack compresses in the occupancy-vs-length sense: mean log-log slope 0.2539 (16x tokens -> 5.75x peak on the deepest lane), every lane sublinear, fast lane flat at its 64-slot budget from T512 on. Ordering follows the horizon constants past training length: peaks at T8192 are [64, 256, 736, 1472] = strictly increasing with horizon. This is capacity+decay ordering, not learned semantic compression; the always-enable diagnostic removes selective-write evidence."
+}

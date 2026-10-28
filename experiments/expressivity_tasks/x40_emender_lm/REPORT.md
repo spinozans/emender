@@ -121,3 +121,104 @@ repair: B64/T512 improves from8.030 to1.065s eager /1.085s with chunk graphs;
 5,013,504 training tokens match v1 losses exactly. Pure scale probes remain
 blocked by X42-policy pressure parity; transformer controls completed, bf16
 store parity failed and stays disabled. This is partial performance closure.
+
+## X40 v1 (ignition-v1) — completed 100M-token run receipts
+
+The always-enable diagnostic baseline completed 3052 updates =
+100,007,936 tokens. All six block gates held open at sigmoid(2)=0.8807971
+every update: `receipts/ignition_v1/curve.jsonl` gate minimum and maximum are
+both 0.8807971477508545; the v1 enable invariant never failed. Final training
+loss 2.2746. Held-out quality trajectory (`quality_256..3052.json`):
+38.0834 @ 8.4M, 27.9923 @ 16.8M, 22.4253 @ 25.2M, 18.9392 @ 33.6M,
+16.5786 @ 41.9M, 14.9374 @ 50.3M, 13.6429 @ 58.7M, 12.6878 @ 67.1M,
+12.0683 @ 75.4M, 11.4495 @ 83.9M, 10.8761 @ 92.3M, **10.3745 @ 100M** —
+the final 8M-token span still improves 0.50 PPL with no plateau. The
+registered ignition-v1 prediction (held-out PPL improves over v0's
+36.8497193) passes decisively. The stronger original family band does not:
+10.3745 is 1.513x the B64 hybrid reference 6.8564176, an honest 51%
+capacity gap — a rescue of utilization, not parity.
+
+### Receipt 1 — long context, the no-KV-cache thesis
+
+`receipts/ignition_v1/long_context.json` (sha-bound digest of the run's
+`evaluation.json`, written against the final in-memory model; two fixed
+held-out windows per length, store reset per window, 128-token NLL bins,
+all 24 head profiles). Held-out PPL at T512/1024/2048/4096/8192:
+**10.5736 / 11.9883 / 13.4787 / 15.5788 / 17.0459**; endpoint ratio
+**1.6121 < 2: the registered graceful-decay prediction passes.** The decay
+is graceful, not cliff-like: X34's B8 base transformer cliffed 6.381 ->
+29.738 (4.66x) and the tape hybrid 6.515 -> 29.322 (4.50x) by T4096; X34
+arms were never measured at 8192 (missing lengths stay missing; X34
+receipts are B8, not B64-matched). The store is the pure model's context:
+at 8x training length every lane is pinned — peak live [64, 256, 736, 1472]
+= all four budgets full, the archival lane refusing 64% of write requests
+(R-CAP route fraction 0.6406, mean pressure 0.635, max 1.0) — while
+per-position NLL grows only from 2.54 to ~3.2-3.5 (T8192 max 128-token bin
+3.483). Occupancy is block-invariant for heads 1-3 (identical peaks in all
+six blocks at every length) and near-invariant for head 0: the frozen
+always-open gate plus shared head geometry, not learned per-block
+selectivity, sets occupancy. Absolute T512 PPL stays 1.51x the hybrid
+control's.
+
+### Receipt 2 — six-lane compression slopes
+
+`receipts/ignition_v1/compression_slopes.json`. Log-log peak-occupancy-vs-
+length slopes per block/head are [~0, ~0, 0.357, 0.657] — identical in all
+six blocks for heads 1-3 (head 0: peak 62-64 of 64 everywhere; slope 0 in
+blocks 0-3, 0.0046/0.0045 in blocks 4/5). **Mean slope 0.2539 <= 0.5: the
+registered compression prediction passes.** The hierarchy orders the lanes
+exactly as registered, but only past training length: peaks at T8192
+[64, 256, 736, 1472] strictly increase with horizon (128/512/2048/8192);
+the fast lane is capped at its 64-slot budget from T512 on (turning over
+~192 decay-frees per 512 tokens), head 2 reaches its 736 budget at T2048,
+head 3 its 1472 at T4096. At T512 heads 1-3 tie at 256 (the horizons do
+not separate within training length). Equal four-head-peak stories on the
+first 16 validation stories: [2, 1, 1, 0, 0, 0]. The X39 semantic single
+lane receipted 0.108 (mean of [0.0945, 0.0550, 0.1275, 0.1535]); the pure
+six-lane stack is deeper at 0.2539. The registered caveat binds: heads 2/3
+are budget-capped with R-CAP fractions 0.2812/0.6406 at T8192, so the
+sublinear slopes are substantially capacity+decay-forced ordering — not
+learned semantic compression, for which always-enable removes the
+selective-write evidence.
+
+### Receipt 3 — curriculum depth probe (head-to-head control arm complete,
+pure arm in flight)
+
+The registered X28E stage-3 protocol (30000 updates, AdamW 1e-4/1e-4, B64
+permutation epochs dropping the short remainder, seed 0, validation every
+500 with latest-best selection, final-only binary margin BCE, S=2944
+budgets) is executed by the run process itself; there is no X40 checkpoint
+(the runner has no save path — the final weights exist only in that
+process). At commit time the pure arm is at update 1500/30000 with
+validation balanced accuracy 0.982/0.949/0.980; `depth_validation.json`
+keeps evolving after this commit and is snapshotted here. At the observed
+pace (~40 min per 500 updates, ~8x slower than v0's memoryless probe) the
+final ID/2x/4x/9x bins (`depth.json`) land roughly 40h after probe start.
+
+The matched transformer control arm is complete
+(`receipts/ignition_v1/depth_control.json`, preregistered in
+`depth_control_registration.json` written before the run; identical
+protocol; X39 exact-exposure B64 hybrid checkpoint, sha256
+73f9600154df00ecef14fe26a96395e233ce78536e34fde7fdf795e7ad60218b, 3052
+steps, held-out PPL 6.8564176, identity-verified against the X39
+`part6_control_training.json` fingerprint; broker card 1): balanced
+accuracy **ID 1.0, 2x 1.0, 4x 0.707, 9x 0.5**, per-class accept recall
+**1.0 / 1.0 / 0.418 / 0.0** — selected update 30000 (validation 1.0).
+The identified X28E fine-tuned transformer baseline (e97_native,
+final_eval sha256 4339f44bfe2dfdab90d099fd4db1f64c4a2b43191eacef42f2b36df
+c193d4e16, selected update 27000) receipted 0.998 / 0.541 / 0.5 / 0.5. The
+matched hybrid control thus clears 2x where e97 collapsed, partially
+discriminates at 4x, and fully collapses at 9x (all-accept recall 0).
+The registered prediction — pure model > 0.6 at 4x and 9x where the
+fine-tuned transformer is <= 0.55 — is decided when the pure arm's bins
+land; the honest null (no separation, chance OOD accuracy, or collapse
+despite in-range learning) remains a publishable outcome. No pure-arm
+claim is made in this commit.
+
+### Process facts
+
+`long_context.json` and `compression_slopes.json` are CPU digests of the
+run's `evaluation.json` (source sha-bound inside both receipts); no model
+or checkpoint was loaded for them. The control arm ran under the
+run_leased.sh broker (lease PID 1358440, card 1). No .pt files are
+committed; upstream x28e/x31/x34/x36/x37/x39 imports are read-only.

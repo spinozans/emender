@@ -1,0 +1,53 @@
+{
+  "status": "registered_before_control_fine_tune",
+  "purpose": "Matched-transformer head-to-head arm for the registered X40 v1 depth probe (the paper depth-comparability receipt).",
+  "physical_gpu": "1",
+  "registered_prediction": {
+    "text": "Predict pure model balanced accuracy>.6 at4x and9x where the fine-tuned transformer <=.55. Honest null: no separation, chance OOD accuracy, or collapse despite in-range learning.",
+    "source": "x40_emender_lm/RECEIPTS.md depth-probe paragraph, registered before v1 execution; sha256=086ec7e18b24dc6f3f237dea8cf67e76d1f498d274d6aa2c2ba1080f438e97b3",
+    "subject": "the ignition-v1 pure model arm (depth.json, produced by the v1 run process; not retrained here)"
+  },
+  "control_arm_role": "No new score prediction is registered for the control arm itself; it exists to satisfy the registration requirement of an identified fine-tuned transformer receipt under the exact update protocol. The X28E precedent for attention-native arms is OOD collapse (e97_native 4x/9x = .5/.5, accept recall 0).",
+  "protocol": {
+    "updates": 30000,
+    "batch": 64,
+    "optimizer": "AdamW lr 1e-4 weight_decay 1e-4",
+    "permutations": "epoch permutations dropping short remainder, rng np.random.default_rng(0), torch.manual_seed(0)",
+    "supervision": "final-only binary margin BCE at the EOS position",
+    "head": "new Embedding(5,256) replacing the LM embed; Linear(256,2) on the final hidden state; whole model fine-tuned",
+    "slot_budgets": "S=2944 per head, native to the control tape cell (matched to the pure probe)",
+    "validation": "every 500 updates on the fixed validation pool, latest-best (>=) selection",
+    "deviations": [
+      "matched model is the X39 exact-exposure B64 hybrid control (tape_lm: five attention blocks + one X31 tape cell at block 2), not an X40 pure stack",
+      "replay check is X31 replay_present, not the pure stack 24-node count"
+    ]
+  },
+  "checkpoint_identity": {
+    "path": "expressivity_tasks/x39_memory_usage/runs/control_b64/latest.pt",
+    "sha256": "73f9600154df00ecef14fe26a96395e233ce78536e34fde7fdf795e7ad60218b",
+    "step": 3052,
+    "tokens": 100007936,
+    "held_out_ppl": 6.856417564,
+    "x39_training_receipt": "x39_memory_usage/receipts/part6_control_training.json (status completed)"
+  },
+  "comparators": {
+    "x28e_e97_native": {
+      "path": "expressivity_tasks/results_x28e_memory_head/e97_native_seed0/final_eval.json",
+      "sha256": "4339f44bfe2dfdab90d099fd4db1f64c4a2b43191eacef42f2b36dfc193d4e16",
+      "selected_update": 27000,
+      "bins": {
+        "bin_id": 0.998046875,
+        "bin_2x": 0.541015625,
+        "bin_4x": 0.5,
+        "bin_9x": 0.5
+      }
+    },
+    "pure_arm": "experiments/expressivity_tasks/x40_emender_lm/receipts/ignition_v1/depth.json (in progress in the v1 run process)"
+  },
+  "sources": {
+    "expressivity_tasks/x40_emender_lm/depth_control.py": "30e7243f1561a5348c5f8b830eaf8418b5ae994e9b66a5bfa484bdabf6ccb53b",
+    "expressivity_tasks/x40_emender_lm/depth.py": "e384d97245d2547465f265a9faa507e16f440d8cd5799bfbbba53c8e99585c59",
+    "expressivity_tasks/x28e_memory_head/generators/stage3_ladder.py": "c20b589d8315d5c7d4d011ea12903af78667692009083acb84e3b3b0b2705a63",
+    "expressivity_tasks/x36_tape_perf/model.py": "dab24b4fab1ae569f786ad637edfbe99e392e7b57f800e5edf4995bc3aefd2f9"
+  }
+}

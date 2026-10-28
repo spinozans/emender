@@ -1,0 +1,118 @@
+{
+  "status": "completed",
+  "updates": 30000,
+  "selected_update": 30000,
+  "bins": {
+    "bin_id": {
+      "n": 512,
+      "balanced_accuracy": 1.0,
+      "raw_accuracy": 1.0,
+      "per_class_recall": {
+        "accept": 1.0,
+        "reject": 1.0
+      },
+      "confusion": {
+        "accept": {
+          "pred_accept": 256,
+          "pred_reject": 0
+        },
+        "reject": {
+          "pred_accept": 0,
+          "pred_reject": 256
+        }
+      },
+      "class_counts": {
+        "accept": 256,
+        "reject": 256
+      },
+      "majority_baseline": 0.5
+    },
+    "bin_2x": {
+      "n": 512,
+      "balanced_accuracy": 1.0,
+      "raw_accuracy": 1.0,
+      "per_class_recall": {
+        "accept": 1.0,
+        "reject": 1.0
+      },
+      "confusion": {
+        "accept": {
+          "pred_accept": 256,
+          "pred_reject": 0
+        },
+        "reject": {
+          "pred_accept": 0,
+          "pred_reject": 256
+        }
+      },
+      "class_counts": {
+        "accept": 256,
+        "reject": 256
+      },
+      "majority_baseline": 0.5
+    },
+    "bin_4x": {
+      "n": 512,
+      "balanced_accuracy": 0.70703125,
+      "raw_accuracy": 0.70703125,
+      "per_class_recall": {
+        "accept": 0.41796875,
+        "reject": 0.99609375
+      },
+      "confusion": {
+        "accept": {
+          "pred_accept": 107,
+          "pred_reject": 149
+        },
+        "reject": {
+          "pred_accept": 1,
+          "pred_reject": 255
+        }
+      },
+      "class_counts": {
+        "accept": 256,
+        "reject": 256
+      },
+      "majority_baseline": 0.5
+    },
+    "bin_9x": {
+      "n": 512,
+      "balanced_accuracy": 0.5,
+      "raw_accuracy": 0.5,
+      "per_class_recall": {
+        "accept": 0.0,
+        "reject": 1.0
+      },
+      "confusion": {
+        "accept": {
+          "pred_accept": 0,
+          "pred_reject": 256
+        },
+        "reject": {
+          "pred_accept": 0,
+          "pred_reject": 256
+        }
+      },
+      "class_counts": {
+        "accept": 256,
+        "reject": 256
+      },
+      "majority_baseline": 0.5
+    }
+  },
+  "supervision": "final EOS binary margin BCE",
+  "budget": 2944,
+  "model": "X39 exact-exposure B64 hybrid control (tape_lm), checkpoint sha256=73f9600154df00ecef14fe26a96395e233ce78536e34fde7fdf795e7ad60218b",
+  "train_hash": "a309dfcea3762e6fe99c91a4bffcd37889ea41f2138ed279eb015ec1603df7a0",
+  "validation_trajectory_best": 1.0,
+  "comparison": {
+    "x28e_e97_native_fine_tuned_baseline": {
+      "bin_id": 0.998046875,
+      "bin_2x": 0.541015625,
+      "bin_4x": 0.5,
+      "bin_9x": 0.5
+    },
+    "pure_ignition_v1_arm": "pending: depth.json is written by the still-running v1 process; this control receipt is complete and the head-to-head completes when that file lands"
+  },
+  "honest_null_note": "Nulls are publishable: if the pure arm shows no separation, chance OOD accuracy, or collapse despite in-range learning, the registered prediction fails and stays failed."
+}
