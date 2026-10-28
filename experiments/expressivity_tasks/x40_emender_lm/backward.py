@@ -12,6 +12,7 @@ Recorded write decisions suppress packed value-adjoint traffic when neither
 a writing token nor a native-value input gradient can consume it.
 """
 import struct
+import os
 import torch
 import triton
 import triton.language as tl
@@ -91,6 +92,17 @@ def mapping_kernel(Old,New,Mapping,Sizes:tl.constexpr,Dims:tl.constexpr):
         tl.store(Mapping+4*i+3,Dims[i])
 
 
+@triton.jit
+def mapping_runtime(Old,New,Mapping,Sizes,Dims):
+    # Byte pointers and runtime sizes avoid specializing on allocator address
+    # order, while retaining exactly the same sorted integral address table.
+    for i in tl.static_range(len(Old)):
+        tl.store(Mapping+4*i,Old[i].to(tl.uint64))
+        tl.store(Mapping+4*i+1,New[i].to(tl.uint64))
+        tl.store(Mapping+4*i+2,Sizes[i])
+        tl.store(Mapping+4*i+3,Dims[i])
+
+
 def rebase_owned(addresses,counts,old_owners,new_owners,capacity,*,payload_slots=0,reverse_payload=False,
                  pool_rows=None,pool_inverse=None):
     ps=0 if pool_rows is None else pool_rows.shape[-1]
@@ -113,7 +125,11 @@ def rebase_owned(addresses,counts,old_owners,new_owners,capacity,*,payload_slots
     dims=tuple((old_owners[i].shape[-2] if reverse_payload else old_owners[i].shape[-1])
                if payload_slots and i<2 else 0 for i in order)
     mapping=torch.empty((len(order),4),dtype=torch.int64,device=addresses.device)
-    mapping_kernel[(1,)](old,new,mapping,sizes,dims)
+    if os.environ.get('X40_STABLE_MAPPING','0')=='1':
+        mapping_runtime[(1,)](tuple(x.view(torch.uint8) for x in old),
+                              tuple(x.view(torch.uint8) for x in new),mapping,sizes,dims)
+    else:
+        mapping_kernel[(1,)](old,new,mapping,sizes,dims)
     rebase[(len(counts),triton.cdiv(capacity,256))](
         addresses,counts,mapping,len(order),capacity,256,payload_slots,reverse_payload,
         mapping if pool_rows is None else pool_rows,mapping if pool_inverse is None else pool_inverse,ps,debug=True)
@@ -427,8 +443,13 @@ class Replay(torch.autograd.Function):
         # A continued state's reach may be the saturated capacity bound even
         # when its occupancy is small. Reach is not an adjoint cardinality.
         ctx.entry_live=live.detach().reshape(-1,cfg.slots).clone() if saved["live_bound"] != 0 else None
+        fresh_pool=saved['live_bound']==0 and k.shape[1]<=512 and os.environ.get('X40_FRESH_POOL','0')=='1'
+        if fresh_pool:ctx.entry_live=live.detach().reshape(-1,cfg.slots).clone()
         ctx.exceptional_cold_tail=False
-        if ctx.entry_live is not None:
+        if fresh_pool:
+            ctx.entry_counts=torch.zeros(k.shape[0]*cfg.n_heads,device=k.device,dtype=torch.int64)
+            initial._entry_live_max=0
+        elif ctx.entry_live is not None:
             ctx.entry_counts=ctx.entry_live.sum(1)
             unusual=(~live) & (torch.signbit(strength) | ~torch.isfinite(strength))
             metadata=torch.stack((ctx.entry_counts.max(),unusual.any().to(torch.int64))).cpu().tolist()
@@ -554,8 +575,12 @@ def autograd_scan(inputs,state,cfg,coef):
     from ..x30_tape_cell.naive_reference import TapeState,init_state
     k=inputs[0];b,t,h=k.shape[:3]
     if state is None:
-        native=init_state(b,cfg,k.device)
-        history=torch.zeros(b*h,128,device=k.device,dtype=torch.int32)
+        if os.environ.get('X40_FUSED_INIT','0')=='1':
+            from .fused_init import fresh_state
+            native,history=fresh_state(b,cfg,k.device)
+        else:
+            native=init_state(b,cfg,k.device)
+            history=torch.zeros(b*h,128,device=k.device,dtype=torch.int32)
         tokens=0
     elif isinstance(state,TapeState):
         native=state

@@ -133,3 +133,27 @@ reads and backward work are exhausted. No .pt artifacts. Only broker GPUs
 1/5/6; GPU0 depth probe and certified arms 2/3/4 are protected, GPU7 forbidden.
 No WG, workers or delegation. contact_supervisor was searched first in callable
 tool metadata and is unavailable in this session; no substitute service used.
+
+## Part 5 execution receipt — acceptance FAIL
+
+`REPORT_PART5.md` and `receipts/part5/summary.json` are the measured ledger.
+The scale probe scopes out only nondeterministic pressure telemetry, under the
+operator's explicit option (b); production certification defaults still check
+pressure exactly, with unchanged value/state/trace/gradient thresholds. Both
+contexts also have independent production-policy gates. Failed initial long
+attempts are archived and repeated after the long gate.
+
+Causal reads, fresh-origin exact union pooling, stable address-map generation
+and seven-owner initialization fusion are opt-in through X40_BATCHED_READS,
+X40_FRESH_POOL, X40_STABLE_MAPPING and X40_FUSED_INIT (all default off).
+Batched reads currently support **recorded training only**: nonrecording use
+fails closed after the rejected checkpoint experiment's heap assertion. The
+checkpoint prototype is reverted; its patch and failed run remain evidence.
+Default inference keeps its original path.
+
+The existing X36 bounded projection is selected with `--bounded-loss` in the
+pilot and matched-slice tools. It retains native zero-tolerance certification
+and has its own >=2M-token comparison with v1 at the registered 1e-5 curve
+threshold. Eight-warp trials fail exact gradients and are restored before any
+performance measurement. No 100k or scale-curve acceptance pass is claimed,
+and no hardware/algorithmic floor is established.

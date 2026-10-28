@@ -1,5 +1,6 @@
 """Persistent store-owner forward preserving the X31 tiled reduction trees."""
 import struct
+import os
 import torch
 import triton
 from ..x31_tape_cell_fused.cell_fused import FusedState, TapeHeadConfig
@@ -37,6 +38,8 @@ def tape_scan(k, q, v, write_strength, pop_strength, append_logit, state,
             raise ValueError('training manages its private journal automatically')
         from .backward import autograd_scan
         return autograd_scan(tensors,state,cfg,append_err_coef)
+    if os.environ.get('X40_BATCHED_READS','0')=='1' and not record_all:
+        raise ValueError('experimental batched nonrecording reads are disabled after the checkpoint heap assertion; recorded training only')
     if not (0 < cfg.decay_rate <= 1 and 0 <= cfg.free_threshold < 1 and 0 < cfg.slots <= 262144):
         raise ValueError("invalid decay, threshold or slot budget")
     b, t, h, dk = k.shape
@@ -143,9 +146,23 @@ def tape_scan(k, q, v, write_strength, pop_strength, append_logit, state,
     score_scratch=scores  # unused compatibility pointer
     read_strength_cache=torch.empty_like(strength)
     decay_table,unit_horizon,unit_terminal=table(cfg.decay_rate,cfg.free_threshold,t,k.device)
+    batched=os.environ.get('X40_BATCHED_READS','0')=='1'
+    if batched:
+        from ..x35_tape_cell_v3.causal_read import chunk_read
+        vs=max(1,reachable);vm=vs+t
+        vk=torch.empty((b*h,vm,dk),device=k.device)
+        vv=torch.empty((b*h,vm,cfg.value_dim),device=k.device)
+        vk[:,:vs].copy_(keys.reshape(b*h,cfg.slots,dk)[:,:vs])
+        vv[:,:vs].copy_(values.reshape(b*h,cfg.slots,cfg.value_dim)[:,:vs])
+        version_map=torch.arange(cfg.slots,device=k.device,dtype=torch.int64).expand(b*h,-1).contiguous()
+        views=torch.full((b*h,t,vs),-1,device=k.device,dtype=torch.int64)
+        view_strength=torch.zeros((b*h,t,vs),device=k.device)
+    else:
+        vk=vv=version_map=views=view_strength=case;vs=vm=1
     scan_kernel[(b*h,)](*args,coef,flat(wire_logits),match_coef.repeat(b).contiguous(),error_coef.repeat(b).contiguous(),evidence,error_evidence,keys,values,strength,live,age,
         output,case,matched,alloc,pops,freed,pressure,history,heap,position,due,terminal,
         births,touches,level0,level1,root,birth_next,birth_prev,birth_head,sizes,references,scores,read_max,read_denom,read_values,read_best,read_strength_cache,capture_scratch,
+        vk,vv,version_map,views,view_strength,vs,vm,batched,
         *journal_args,record_payload,triton.next_power_of_2(max(dk,cfg.value_dim)),
         *all_args,fresh,-1 if state.live_bound is None else state.live_bound,state.tokens,0,
         t,cfg.slots,dk,cfg.value_dim,tile_count,triton.next_power_of_2(max(1,reachable)),
@@ -154,6 +171,8 @@ def tape_scan(k, q, v, write_strength, pop_strength, append_logit, state,
         cfg.write_enable_threshold,cfg.pop_threshold,cfg.eps_residual,decay_table,unit_horizon,unit_terminal,
         enable_fp_fusion=False,debug=True,
         num_warps=4)
+    if batched:
+        output=chunk_read(args[1].reshape(b*h,t,dk),vk,vv,views,view_strength).reshape(b,h,t,cfg.value_dim)
     materialize_state[(b*h,)](references,touches,births,live,strength,age,
         *all_args[:4],all_args[7],record_all,cfg.slots,tile_count,state.tokens+t,
         struct.unpack('<f',struct.pack('<f',cfg.decay_rate))[0],

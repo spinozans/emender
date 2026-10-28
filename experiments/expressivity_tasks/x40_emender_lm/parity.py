@@ -4,7 +4,7 @@ from ..x31_tape_cell_fused.cell_fused import tape_scan as oracle
 from .model import POLICIES, scan
 
 
-def certify(batch=64,context=512,policies=POLICIES):
+def certify(batch=64,context=512,policies=POLICIES, *, certify_pressure=True):
     torch.manual_seed(4001)
     rows=[]
     for head,cfg in enumerate(policies):
@@ -58,14 +58,16 @@ def certify(batch=64,context=512,policies=POLICIES):
             values=(out,st.native.keys,st.native.values,st.native.strength)
             loss=sum(a.square().sum() for a in values)
             grads=torch.autograd.grad(loss,xs)
-            results.append((tuple(a.detach().clone() for a in values),grads,tr,p.detach().clone()))
+            results.append((tuple(a.detach().clone() for a in values),grads,tr,p.detach().clone(),
+                (st.native.live.detach().clone(),st.native.age.detach().clone())))
             del out,st,values,loss,grads,xs
         a,z=results
+        for x,y in zip(a[4],z[4]):assert torch.equal(x,y),'native live/age'
         for group in (0,1):
             for x,y in zip(a[group],z[group]):torch.testing.assert_close(x,y,rtol=0,atol=0)
         for name in ('case','matched','alloc_target','pop_target','pop_fired','freed','w_on'):
             assert torch.equal(getattr(a[2],name),getattr(z[2],name)),name
-        if not torch.equal(a[3],z[3]):
+        if certify_pressure and not torch.equal(a[3],z[3]):
             bad=(a[3]!=z[3]);indices=bad.nonzero()[:8]
             cases=a[2].case.cpu()
             expected=torch.empty_like(cases,dtype=torch.float32)
@@ -81,4 +83,5 @@ def certify(batch=64,context=512,policies=POLICIES):
                 oracle=a[3][bad][:8].tolist(),wired=z[3][bad][:8].tolist()))
         rows.append(dict(head=head,status='passed',batch=b,context=t))
     return dict(status='passed',policies=rows,evidence_tolerance='rtol2e-5 atol2e-6',
-        operations='bitwise values/state/trace/pressure/gradients versus X31 with independently computed beta')
+        pressure_gate=certify_pressure,
+        operations='bitwise values/state/trace/gradients versus X31 with independently computed beta; pressure '+('included' if certify_pressure else 'excluded from scale probe only'))

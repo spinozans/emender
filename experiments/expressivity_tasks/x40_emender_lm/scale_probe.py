@@ -16,6 +16,8 @@ from ..x31_tape_cell_fused.cell_fused import TapeHeadConfig
 from .model import scan
 from .parity import certify
 from .performance import write
+from ..x31_tape_cell_fused import backward as oracle_backward
+from .probe_rebase import TransposedLaunch,validate as validate_rebase
 
 ROOT=Path(__file__).resolve().parent
 
@@ -62,19 +64,24 @@ def probe(cfg,steps):
 
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument('--output',type=Path,required=True);p.add_argument('--steps',type=int,default=200);p.add_argument('--arm',choices=('both','transformer'),default='both');a=p.parse_args()
-    if os.environ.get('GPU_LEASE_HELD') not in ('0','1','5','6'):raise RuntimeError('lease required')
+    p=argparse.ArgumentParser();p.add_argument('--output',type=Path,required=True);p.add_argument('--steps',type=int,default=200);p.add_argument('--gate-only',action='store_true');p.add_argument('--arm',choices=('both','transformer'),default='both');a=p.parse_args()
+    if os.environ.get('GPU_LEASE_HELD') not in ('1','5','6') or os.environ.get('CUDA_VISIBLE_DEVICES')!=os.environ.get('GPU_LEASE_HELD'):raise RuntimeError('approved lease required')
     a.output.mkdir(parents=True,exist_ok=False);torch.set_num_threads(1)
     if a.arm=='both':
+        write(a.output/'oracle_launch_adapter.json',validate_rebase())
         policies=tuple(TapeHeadConfig(n_heads=1,budget=b,decay_rate=math.exp(-1/h),pop_threshold=.1)
             for b,h in zip((64,256,736,1472),(1000,10000,100000,1000000)))
         # Every measured context is independently gated against unchanged X31.
         for t in (512,2048):
-            try:receipt=certify(batch=1,context=t,policies=policies)
+            try:
+                with patch.object(oracle_backward,'rebase',TransposedLaunch()):
+                    receipt=certify(batch=1,context=t,policies=policies,certify_pressure=False)
+                receipt['oracle_launch_adapter']='rebase grid axes transposed; identical integral address mapping'
             except BaseException as exc:
                 write(a.output/f'parity_T{t}.json',dict(status='failed',error=repr(exc)))
                 raise
             write(a.output/f'parity_T{t}.json',receipt)
+    if a.gate_only:return
     for scale in ('pilot','final'):
         for t in (512,2048):
             for arm in (('pure','transformer') if a.arm=='both' else ('transformer',)):

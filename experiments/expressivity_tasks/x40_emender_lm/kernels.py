@@ -19,6 +19,7 @@ def scan_kernel(K, Q, V, Beta, Pop, Logit, Coef, WireLogit, MatchCoef, ErrorCoef
                 Live, Age, Output, Cases, Matched, Alloc, Pops, Freed,
                 Pressure, History, Heap, Position, Due, Terminal, BirthStore, TouchStore,
                 L0, L1, Root, BirthNext, BirthPrev, BirthHead, Sizes, References, Scores, ReadMax, ReadDenom, ReadValues, ReadBest, ReadStrengthCache, CaptureScratch,
+                VersionKeys, VersionValues, VersionMap, Views, ViewStrength, VS:tl.constexpr, VM:tl.constexpr, BatchedReads:tl.constexpr,
                 JournalSlots, JournalKeys, JournalValues,
                 RecordPayload: tl.constexpr, JournalBlock: tl.constexpr,
                 AllAddresses, AllBefore, AllWidths, AllCounts, AllBoundaries,
@@ -106,23 +107,28 @@ def scan_kernel(K, Q, V, Beta, Pop, Logit, Coef, WireLogit, MatchCoef, ErrorCoef
                         next_strength=base*Decay
                     r_strength=tl.where(r_touch>=Start+t,r_reference,next_strength)
                 tl.store(ReadStrengthCache+n*S+r_columns,r_strength,r_live)
-                r_weighted=r_numer*r_strength
-                r_d=tl.arange(0,BV)
-                r_values=tl.load(Values+(n*S+r_columns[:,None])*DV+r_d[None,:],
-                               r_live[:,None] & (r_d[None,:]<DV),0.)
-                r_partial=tl.sum(r_weighted[:,None]*r_values,0)
+                if BatchedReads:
+                    ids=tl.load(VersionMap+n*S+r_columns,r_columns<VS,-1)
+                    tl.store(Views+(n*T+t)*VS+r_columns,tl.where(r_live,ids,-1),r_columns<VS)
+                    tl.store(ViewStrength+(n*T+t)*VS+r_columns,r_strength,r_columns<VS)
+                else:
+                    r_weighted=r_numer*r_strength
+                    r_d=tl.arange(0,BV)
+                    r_values=tl.load(Values+(n*S+r_columns[:,None])*DV+r_d[None,:],
+                                   r_live[:,None] & (r_d[None,:]<DV),0.)
+                    r_partial=tl.sum(r_weighted[:,None]*r_values,0)
+                    tl.store(ReadValues+r_header*DV+r_d,r_partial,r_d<DV)
                 r_best=tl.min(tl.where(r_live & (r_masked==r_maximum),r_columns,S),0)
                 tl.store(ReadMax+r_header,r_maximum)
                 tl.store(ReadDenom+r_header,tl.sum(r_numer,0))
                 tl.store(ReadBest+r_header,r_best)
-                tl.store(ReadValues+r_header*DV+r_d,r_partial,r_d<DV)
             else:
                 tl.store(ReadMax+r_header,-1.0e30)
                 tl.store(ReadDenom+r_header,0.)
                 tl.store(ReadBest+r_header,S)
                 # Empty r_partial payloads are never loaded by the reduction pass.
         tl.debug_barrier()
-        for dim_tile in range(tl.cdiv(DV,8)):
+        for dim_tile in range(1 if BatchedReads else tl.cdiv(DV,8)):
             rr_tiles=tl.arange(0,BT)
             rr_d=dim_tile*8+tl.arange(0,8)
             rr_tile_count: tl.constexpr=RT
@@ -136,12 +142,13 @@ def scan_kernel(K, Q, V, Beta, Pop, Logit, Coef, WireLogit, MatchCoef, ErrorCoef
                 match_evidence=tl.where(rr_best<S,tl.max(rr_maximum,0),0.)
                 tl.store(Evidence+n*T+t,match_evidence)
 
-            rr_scale=tl.exp(rr_maximum-tl.max(rr_maximum,0))
-            rr_total=tl.sum(rr_denom*rr_scale,0)
-            rr_payload=tl.load(ReadValues+(n*rr_tile_count+rr_tiles[:,None])*DV+rr_d[None,:],
-                            rr_valid[:,None] & (rr_denom[:,None]>0) & (rr_d[None,:]<DV),0.)
-            rr_read=tl.sum(rr_payload*rr_scale[:,None],0)/tl.maximum(rr_total,1.0e-30)
-            tl.store(Output+(n*T+t)*DV+rr_d,rr_read,rr_d<DV)
+            if not BatchedReads:
+                rr_scale=tl.exp(rr_maximum-tl.max(rr_maximum,0))
+                rr_total=tl.sum(rr_denom*rr_scale,0)
+                rr_payload=tl.load(ReadValues+(n*rr_tile_count+rr_tiles[:,None])*DV+rr_d[None,:],
+                                rr_valid[:,None] & (rr_denom[:,None]>0) & (rr_d[None,:]<DV),0.)
+                rr_read=tl.sum(rr_payload*rr_scale[:,None],0)/tl.maximum(rr_total,1.0e-30)
+                tl.store(Output+(n*T+t)*DV+rr_d,rr_read,rr_d<DV)
         tl.debug_barrier()
         if RecordAll:
             tl.store(AllBoundaries+n*T+t, tl.load(AllCounts+n))
@@ -261,6 +268,17 @@ def scan_kernel(K, Q, V, Beta, Pop, Logit, Coef, WireLogit, MatchCoef, ErrorCoef
             dead = next_due(heap, due, size, clock + 1, J, RecordAll)
         tl.device_assert(dead < 0, "death heap did not drain within slot capacity")
         tl.debug_barrier()
+        if BatchedReads:
+            changed=tl.where(allocation>=0,allocation,tl.where((case==4)|(case==5),safe_target,-1))
+            if changed>=0:
+                version=VS+t
+                kd=tl.arange(0,BK)
+                payload_key=tl.load(Keys+(n*S+changed)*DK+kd,kd<DK,0.)
+                payload_value=tl.load(Values+(n*S+changed)*DV+d,d<DV,0.)
+                tl.store(VersionKeys+(n*VM+version)*DK+kd,payload_key,kd<DK)
+                tl.store(VersionValues+(n*VM+version)*DV+d,payload_value,d<DV)
+                tl.store(VersionMap+n*S+changed,version)
+            tl.debug_barrier()
         tl.store(Cases+inp, case)
         tl.store(Matched+inp, matched)
         tl.store(Alloc+inp, allocation)

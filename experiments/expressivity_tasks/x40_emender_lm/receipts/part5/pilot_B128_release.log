@@ -1,0 +1,22 @@
+gpu_lease: granted GPUs: 1 (pid 1678729)
+X40 physical card 1
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/part5_pilot.py", line 97, in <module>
+    try:main()
+        ^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/part5_pilot.py", line 54, in main
+    torch.cuda.synchronize();start=time.perf_counter();value=step();torch.cuda.synchronize()
+                                                             ^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/part5_pilot.py", line 47, in step
+    with torch.profiler.record_function('x40::backward'):loss.backward()
+                                                         ^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_tensor.py", line 625, in backward
+    torch.autograd.backward(
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/__init__.py", line 354, in backward
+    _engine_run_backward(
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/graph.py", line 841, in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 8.00 GiB. GPU 0 has a total capacity of 47.38 GiB of which 5.01 GiB is free. Including non-PyTorch memory, this process has 42.36 GiB memory in use. Of the allocated memory 41.02 GiB is allocated by PyTorch, and 869.69 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)

@@ -1,0 +1,16 @@
+--- pilot original lifetime
++++ unsuccessful early-release attempt
+@@ -42,11 +42,12 @@
+         with torch.profiler.record_function('x40::forward'):
+             logits,_=model(x);loss=F.cross_entropy(logits.flatten(0,1),y.flatten())
+             loss=loss+0.*torch.stack([b.cell.gate_mean for b in model.blocks]).mean()
++        del logits  # Linear backward retains inputs/weights; CE retains its own log probabilities.
+         require_replays(loss)
+         with torch.profiler.record_function('x40::backward'):loss.backward()
+         with torch.profiler.record_function('x40::optimizer'):
+             torch.nn.utils.clip_grad_norm_(model.parameters(),1.,error_if_nonfinite=True);opt.step()
+-        value=float(loss.detach());del logits,loss
++        value=float(loss.detach());del loss
+         return value
+     samples=[];losses=[]
+     for it in range(a.steps+3):

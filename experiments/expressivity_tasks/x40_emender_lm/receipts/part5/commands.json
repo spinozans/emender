@@ -1,0 +1,327 @@
+[
+  {
+    "command": "ps -p 634691 -o pid,args; nvidia-smi --query-gpu=index,memory.used,utilization.gpu --format=csv",
+    "result": "passed",
+    "summary": "Depth process active on physical 0; wrapper excludes 0/2/3/4/7. See depth_process.txt and gpu_inventory.csv."
+  },
+  {
+    "command": "experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.scale_probe --output experiments/expressivity_tasks/x40_emender_lm/receipts/part5/scale_initial --steps 5",
+    "result": "failed",
+    "summary": "T512 functional probe passed after pressure-only exclusion; T2048 oracle rebase grid.y exceeded CUDA launch limit. No timing accepted."
+  },
+  {
+    "command": "experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.scale_probe --gate-only --output experiments/expressivity_tasks/x40_emender_lm/receipts/part5/scale_gate_rebased",
+    "result": "passed",
+    "summary": "Both retention-policy contexts pass; integer axis-transpose control passes small exact mapping and 65537 log blocks."
+  },
+  {
+    "command": "experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.part5_gate",
+    "result": "passed",
+    "summary": "Exact native production gate including pressure; production_parity.json"
+  },
+  {
+    "command": "experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.part5_gate --batch 1 --context 2048 --receipt production_T2048.json",
+    "result": "passed",
+    "summary": "Exact native production gate including pressure; production_T2048.json"
+  },
+  {
+    "command": "X40_BATCHED_READS=1 experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.part5_gate",
+    "result": "passed",
+    "summary": "Exact native production gate including pressure; reads_parity.json"
+  },
+  {
+    "command": "X40_BATCHED_READS=1 X40_FRESH_POOL=1 X40_STABLE_MAPPING=1 experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.part5_gate",
+    "result": "passed",
+    "summary": "Exact native production gate including pressure; backward_parity.json"
+  },
+  {
+    "command": "X40_BATCHED_READS=1 X40_FRESH_POOL=1 X40_FUSED_INIT=1 X40_STABLE_MAPPING=1 experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.part5_gate",
+    "result": "passed",
+    "summary": "Exact native production gate including pressure; fused_parity.json"
+  },
+  {
+    "command": "X40_BATCHED_READS=1 X40_FRESH_POOL=1 X40_FUSED_INIT=1 X40_STABLE_MAPPING=1 experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.part5_gate --receipt fused_parity_after_guard.json",
+    "result": "passed",
+    "summary": "Exact native production gate including pressure; fused_parity_after_guard.json"
+  },
+  {
+    "command": "experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.scale_surface --scale 1.3B --arm pure --batch 128 --context 2048 --steps 20",
+    "result": "failed",
+    "summary": "qualified final surface: OutOfMemoryError('CUDA out of memory. Tried to allocate 5.58 GiB. GPU 0 has a total capacity of 47.38 GiB of which 2.80 GiB is free. Including non-PyTorch memory, this process has 44.58 GiB memory in use. Of the allocated memory 41.61 GiB is allocated by PyTorch, and 2.47 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)')"
+  },
+  {
+    "command": "experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.scale_surface --scale 1.3B --arm pure --batch 128 --context 512 --steps 20",
+    "result": "failed",
+    "summary": "qualified final surface: OutOfMemoryError('CUDA out of memory. Tried to allocate 1.40 GiB. GPU 0 has a total capacity of 47.38 GiB of which 210.69 MiB is free. Including non-PyTorch memory, this process has 47.17 GiB memory in use. Of the allocated memory 45.45 GiB is allocated by PyTorch, and 1.22 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)')"
+  },
+  {
+    "command": "experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.scale_surface --scale 1.3B --arm pure --batch 64 --context 2048 --steps 20",
+    "result": "failed",
+    "summary": "qualified final surface: OutOfMemoryError('CUDA out of memory. Tried to allocate 2.79 GiB. GPU 0 has a total capacity of 47.38 GiB of which 1.12 GiB is free. Including non-PyTorch memory, this process has 46.25 GiB memory in use. Of the allocated memory 43.28 GiB is allocated by PyTorch, and 2.48 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)')"
+  },
+  {
+    "command": "experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.scale_surface --scale 1.3B --arm pure --batch 64 --context 512 --steps 20",
+    "result": "failed",
+    "summary": "qualified final surface: OutOfMemoryError('CUDA out of memory. Tried to allocate 716.00 MiB. GPU 0 has a total capacity of 47.38 GiB of which 50.69 MiB is free. Including non-PyTorch memory, this process has 47.32 GiB memory in use. Of the allocated memory 45.76 GiB is allocated by PyTorch, and 1.07 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)')"
+  },
+  {
+    "command": "experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.scale_surface --scale 1.3B --arm transformer --batch 128 --context 2048 --steps 20",
+    "result": "failed",
+    "summary": "qualified final surface: OutOfMemoryError('CUDA out of memory. Tried to allocate 4.79 GiB. GPU 0 has a total capacity of 47.38 GiB of which 438.69 MiB is free. Including non-PyTorch memory, this process has 46.95 GiB memory in use. Of the allocated memory 38.42 GiB is allocated by PyTorch, and 8.03 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)')"
+  },
+  {
+    "command": "experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.scale_surface --scale 1.3B --arm transformer --batch 128 --context 512 --steps 20",
+    "result": "failed",
+    "summary": "qualified final surface: OutOfMemoryError('CUDA out of memory. Tried to allocate 8.00 GiB. GPU 0 has a total capacity of 47.38 GiB of which 5.31 GiB is free. Including non-PyTorch memory, this process has 42.07 GiB memory in use. Of the allocated memory 38.48 GiB is allocated by PyTorch, and 3.09 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)')"
+  },
+  {
+    "command": "experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.scale_surface --scale 1.3B --arm transformer --batch 64 --context 2048 --steps 20",
+    "result": "failed",
+    "summary": "qualified final surface: OutOfMemoryError('CUDA out of memory. Tried to allocate 16.00 GiB. GPU 0 has a total capacity of 47.38 GiB of which 1.41 GiB is free. Including non-PyTorch memory, this process has 45.96 GiB memory in use. Of the allocated memory 41.78 GiB is allocated by PyTorch, and 3.68 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)')"
+  },
+  {
+    "command": "experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.scale_surface --scale 1.3B --arm transformer --batch 64 --context 512 --steps 20",
+    "result": "passed",
+    "summary": "qualified final surface: 6903.663 tok/s; 20 full training updates"
+  },
+  {
+    "command": "experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.scale_surface --scale 150M --arm pure --batch 128 --context 2048 --steps 20",
+    "result": "failed",
+    "summary": "qualified final surface: OutOfMemoryError('CUDA out of memory. Tried to allocate 528.00 MiB. GPU 0 has a total capacity of 47.38 GiB of which 320.69 MiB is free. Including non-PyTorch memory, this process has 47.06 GiB memory in use. Of the allocated memory 45.36 GiB is allocated by PyTorch, and 1.20 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)')"
+  },
+  {
+    "command": "experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.scale_surface --scale 150M --arm pure --batch 128 --context 512 --steps 20",
+    "result": "failed",
+    "summary": "qualified final surface: OutOfMemoryError('CUDA out of memory. Tried to allocate 8.00 GiB. GPU 0 has a total capacity of 47.38 GiB of which 3.71 GiB is free. Including non-PyTorch memory, this process has 43.66 GiB memory in use. Of the allocated memory 42.61 GiB is allocated by PyTorch, and 570.03 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)')"
+  },
+  {
+    "command": "experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.scale_surface --scale 150M --arm pure --batch 64 --context 2048 --steps 20",
+    "result": "failed",
+    "summary": "qualified final surface: OutOfMemoryError('CUDA out of memory. Tried to allocate 528.00 MiB. GPU 0 has a total capacity of 47.38 GiB of which 302.69 MiB is free. Including non-PyTorch memory, this process has 47.08 GiB memory in use. Of the allocated memory 45.98 GiB is allocated by PyTorch, and 616.31 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)')"
+  },
+  {
+    "command": "experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.scale_surface --scale 150M --arm pure --batch 64 --context 512 --steps 20",
+    "result": "failed",
+    "summary": "qualified final surface: OutOfMemoryError('CUDA out of memory. Tried to allocate 4.00 GiB. GPU 0 has a total capacity of 47.38 GiB of which 1.14 GiB is free. Including non-PyTorch memory, this process has 46.23 GiB memory in use. Of the allocated memory 30.84 GiB is allocated by PyTorch, and 14.88 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)')"
+  },
+  {
+    "command": "experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.scale_surface --scale 150M --arm transformer --batch 128 --context 2048 --steps 20",
+    "result": "failed",
+    "summary": "qualified final surface: OutOfMemoryError('CUDA out of memory. Tried to allocate 32.00 GiB. GPU 0 has a total capacity of 47.38 GiB of which 18.52 GiB is free. Including non-PyTorch memory, this process has 28.85 GiB memory in use. Of the allocated memory 27.52 GiB is allocated by PyTorch, and 858.53 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)')"
+  },
+  {
+    "command": "experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.scale_surface --scale 150M --arm transformer --batch 128 --context 512 --steps 20",
+    "result": "passed",
+    "summary": "qualified final surface: 38053.508 tok/s; 20 full training updates"
+  },
+  {
+    "command": "experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.scale_surface --scale 150M --arm transformer --batch 64 --context 2048 --steps 20",
+    "result": "failed",
+    "summary": "qualified final surface: OutOfMemoryError('CUDA out of memory. Tried to allocate 16.00 GiB. GPU 0 has a total capacity of 47.38 GiB of which 15.83 GiB is free. Including non-PyTorch memory, this process has 31.54 GiB memory in use. Of the allocated memory 30.45 GiB is allocated by PyTorch, and 607.73 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)')"
+  },
+  {
+    "command": "experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.scale_surface --scale 150M --arm transformer --batch 64 --context 512 --steps 20",
+    "result": "passed",
+    "summary": "qualified final surface: 41734.071 tok/s; 20 full training updates"
+  },
+  {
+    "command": "experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.scale_surface --scale 22M --arm pure --batch 128 --context 2048 --steps 20",
+    "result": "failed",
+    "summary": "qualified final surface: OutOfMemoryError('CUDA out of memory. Tried to allocate 552.00 MiB. GPU 0 has a total capacity of 47.38 GiB of which 534.69 MiB is free. Including non-PyTorch memory, this process has 46.85 GiB memory in use. Of the allocated memory 46.09 GiB is allocated by PyTorch, and 268.78 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)')"
+  },
+  {
+    "command": "experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.scale_surface --scale 22M --arm pure --batch 128 --context 512 --steps 20",
+    "result": "failed",
+    "summary": "qualified final surface: OutOfMemoryError('CUDA out of memory. Tried to allocate 8.00 GiB. GPU 0 has a total capacity of 47.38 GiB of which 5.83 GiB is free. Including non-PyTorch memory, this process has 41.54 GiB memory in use. Of the allocated memory 38.39 GiB is allocated by PyTorch, and 2.64 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)')"
+  },
+  {
+    "command": "experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.scale_surface --scale 22M --arm pure --batch 64 --context 2048 --steps 20",
+    "result": "failed",
+    "summary": "qualified final surface: OutOfMemoryError('CUDA out of memory. Tried to allocate 16.00 GiB. GPU 0 has a total capacity of 47.38 GiB of which 4.63 GiB is free. Including non-PyTorch memory, this process has 42.74 GiB memory in use. Of the allocated memory 41.88 GiB is allocated by PyTorch, and 372.36 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)')"
+  },
+  {
+    "command": "experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.scale_surface --scale 22M --arm pure --batch 64 --context 512 --steps 20",
+    "result": "passed",
+    "summary": "qualified final surface: 7095.267 tok/s; 20 full training updates"
+  },
+  {
+    "command": "experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.scale_surface --scale 22M --arm transformer --batch 128 --context 2048 --steps 20",
+    "result": "failed",
+    "summary": "qualified final surface: OutOfMemoryError('CUDA out of memory. Tried to allocate 32.00 GiB. GPU 0 has a total capacity of 47.38 GiB of which 21.24 GiB is free. Including non-PyTorch memory, this process has 26.13 GiB memory in use. Of the allocated memory 18.29 GiB is allocated by PyTorch, and 7.35 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)')"
+  },
+  {
+    "command": "experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.scale_surface --scale 22M --arm transformer --batch 128 --context 512 --steps 20",
+    "result": "passed",
+    "summary": "qualified final surface: 111871.104 tok/s; 20 full training updates"
+  },
+  {
+    "command": "experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.scale_surface --scale 22M --arm transformer --batch 64 --context 2048 --steps 20",
+    "result": "failed",
+    "summary": "qualified final surface: OutOfMemoryError('CUDA out of memory. Tried to allocate 16.00 GiB. GPU 0 has a total capacity of 47.38 GiB of which 1.97 GiB is free. Including non-PyTorch memory, this process has 45.40 GiB memory in use. Of the allocated memory 41.24 GiB is allocated by PyTorch, and 3.66 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)')"
+  },
+  {
+    "command": "experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.scale_surface --scale 22M --arm transformer --batch 64 --context 512 --steps 20",
+    "result": "passed",
+    "summary": "qualified final surface: 117277.913 tok/s; 20 full training updates"
+  },
+  {
+    "command": "experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.scale_surface --scale 1.3B --arm pure --batch 128 --context 2048 --steps 20",
+    "result": "failed",
+    "summary": "earlier OOM diagnostic before independent long gate: OutOfMemoryError('CUDA out of memory. Tried to allocate 5.58 GiB. GPU 0 has a total capacity of 47.38 GiB of which 2.80 GiB is free. Including non-PyTorch memory, this process has 44.58 GiB memory in use. Of the allocated memory 41.61 GiB is allocated by PyTorch, and 2.47 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)')"
+  },
+  {
+    "command": "experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.scale_surface --scale 1.3B --arm pure --batch 64 --context 2048 --steps 20",
+    "result": "failed",
+    "summary": "earlier OOM diagnostic before independent long gate: OutOfMemoryError('CUDA out of memory. Tried to allocate 2.79 GiB. GPU 0 has a total capacity of 47.38 GiB of which 1.12 GiB is free. Including non-PyTorch memory, this process has 46.25 GiB memory in use. Of the allocated memory 43.28 GiB is allocated by PyTorch, and 2.48 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)')"
+  },
+  {
+    "command": "experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.scale_surface --scale 1.3B --arm transformer --batch 128 --context 2048 --steps 20",
+    "result": "failed",
+    "summary": "earlier OOM diagnostic before independent long gate: OutOfMemoryError('CUDA out of memory. Tried to allocate 4.79 GiB. GPU 0 has a total capacity of 47.38 GiB of which 438.69 MiB is free. Including non-PyTorch memory, this process has 46.95 GiB memory in use. Of the allocated memory 38.42 GiB is allocated by PyTorch, and 8.03 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)')"
+  },
+  {
+    "command": "experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.scale_surface --scale 1.3B --arm transformer --batch 64 --context 2048 --steps 20",
+    "result": "failed",
+    "summary": "earlier OOM diagnostic before independent long gate: OutOfMemoryError('CUDA out of memory. Tried to allocate 16.00 GiB. GPU 0 has a total capacity of 47.38 GiB of which 1.41 GiB is free. Including non-PyTorch memory, this process has 45.96 GiB memory in use. Of the allocated memory 41.78 GiB is allocated by PyTorch, and 3.68 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)')"
+  },
+  {
+    "command": "experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.scale_surface --scale 150M --arm pure --batch 128 --context 2048 --steps 20",
+    "result": "failed",
+    "summary": "earlier OOM diagnostic before independent long gate: OutOfMemoryError('CUDA out of memory. Tried to allocate 528.00 MiB. GPU 0 has a total capacity of 47.38 GiB of which 320.69 MiB is free. Including non-PyTorch memory, this process has 47.06 GiB memory in use. Of the allocated memory 45.36 GiB is allocated by PyTorch, and 1.20 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)')"
+  },
+  {
+    "command": "experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.scale_surface --scale 150M --arm pure --batch 64 --context 2048 --steps 20",
+    "result": "failed",
+    "summary": "earlier OOM diagnostic before independent long gate: OutOfMemoryError('CUDA out of memory. Tried to allocate 528.00 MiB. GPU 0 has a total capacity of 47.38 GiB of which 302.69 MiB is free. Including non-PyTorch memory, this process has 47.08 GiB memory in use. Of the allocated memory 45.98 GiB is allocated by PyTorch, and 616.31 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)')"
+  },
+  {
+    "command": "experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.scale_surface --scale 150M --arm transformer --batch 128 --context 2048 --steps 20",
+    "result": "failed",
+    "summary": "earlier OOM diagnostic before independent long gate: OutOfMemoryError('CUDA out of memory. Tried to allocate 32.00 GiB. GPU 0 has a total capacity of 47.38 GiB of which 18.52 GiB is free. Including non-PyTorch memory, this process has 28.85 GiB memory in use. Of the allocated memory 27.52 GiB is allocated by PyTorch, and 858.53 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)')"
+  },
+  {
+    "command": "experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.scale_surface --scale 150M --arm transformer --batch 64 --context 2048 --steps 20",
+    "result": "failed",
+    "summary": "earlier OOM diagnostic before independent long gate: OutOfMemoryError('CUDA out of memory. Tried to allocate 16.00 GiB. GPU 0 has a total capacity of 47.38 GiB of which 15.83 GiB is free. Including non-PyTorch memory, this process has 31.54 GiB memory in use. Of the allocated memory 30.45 GiB is allocated by PyTorch, and 607.73 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)')"
+  },
+  {
+    "command": "experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.scale_surface --scale 22M --arm pure --batch 128 --context 2048 --steps 20",
+    "result": "failed",
+    "summary": "earlier OOM diagnostic before independent long gate: OutOfMemoryError('CUDA out of memory. Tried to allocate 552.00 MiB. GPU 0 has a total capacity of 47.38 GiB of which 534.69 MiB is free. Including non-PyTorch memory, this process has 46.85 GiB memory in use. Of the allocated memory 46.09 GiB is allocated by PyTorch, and 268.78 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)')"
+  },
+  {
+    "command": "experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.scale_surface --scale 22M --arm pure --batch 64 --context 2048 --steps 20",
+    "result": "failed",
+    "summary": "earlier OOM diagnostic before independent long gate: OutOfMemoryError('CUDA out of memory. Tried to allocate 16.00 GiB. GPU 0 has a total capacity of 47.38 GiB of which 4.63 GiB is free. Including non-PyTorch memory, this process has 42.74 GiB memory in use. Of the allocated memory 41.88 GiB is allocated by PyTorch, and 372.36 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)')"
+  },
+  {
+    "command": "experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.scale_surface --scale 22M --arm transformer --batch 128 --context 2048 --steps 20",
+    "result": "failed",
+    "summary": "earlier OOM diagnostic before independent long gate: OutOfMemoryError('CUDA out of memory. Tried to allocate 32.00 GiB. GPU 0 has a total capacity of 47.38 GiB of which 21.24 GiB is free. Including non-PyTorch memory, this process has 26.13 GiB memory in use. Of the allocated memory 18.29 GiB is allocated by PyTorch, and 7.35 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)')"
+  },
+  {
+    "command": "experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.scale_surface --scale 22M --arm transformer --batch 64 --context 2048 --steps 20",
+    "result": "failed",
+    "summary": "earlier OOM diagnostic before independent long gate: OutOfMemoryError('CUDA out of memory. Tried to allocate 16.00 GiB. GPU 0 has a total capacity of 47.38 GiB of which 1.97 GiB is free. Including non-PyTorch memory, this process has 45.40 GiB memory in use. Of the allocated memory 41.24 GiB is allocated by PyTorch, and 3.66 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)')"
+  },
+  {
+    "command": "X40_BATCHED_READS=1 X40_FRESH_POOL=1 X40_STABLE_MAPPING=1 X40_FUSED_INIT=1 experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.part5_pilot --label pilot_B128 --batch 128",
+    "result": "failed",
+    "summary": "OutOfMemoryError('CUDA out of memory. Tried to allocate 8.00 GiB. GPU 0 has a total capacity of 47.38 GiB of which 5.01 GiB is free. Including non-PyTorch memory, this process has 42.36 GiB memory in use. Of the allocated memory 41.02 GiB is allocated by PyTorch, and 869.68 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)')"
+  },
+  {
+    "command": "X40_BATCHED_READS=1 X40_FRESH_POOL=1 X40_FUSED_INIT=1 X40_STABLE_MAPPING=1 experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.part5_pilot --label pilot_B128_bounded --batch 128 --steps 20 --bounded-loss --gate fused_parity_after_guard.json",
+    "result": "passed",
+    "summary": "54812.603 tok/s; 20 measured updates"
+  },
+  {
+    "command": "X40_BATCHED_READS=1 X40_FRESH_POOL=1 X40_FUSED_INIT=1 X40_STABLE_MAPPING=1 experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.part5_pilot --label pilot_B128_bounded --batch 128 --steps 20 --bounded-loss",
+    "result": "passed",
+    "summary": "55658.459 tok/s; 20 measured updates; historical artifact archived after adding the guard, not eligible for final best"
+  },
+  {
+    "command": "X40_BATCHED_READS=1 X40_FRESH_POOL=1 X40_STABLE_MAPPING=1 X40_FUSED_INIT=1 experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.part5_pilot --label pilot_B128_release --batch 128",
+    "result": "failed",
+    "summary": "OutOfMemoryError('CUDA out of memory. Tried to allocate 8.00 GiB. GPU 0 has a total capacity of 47.38 GiB of which 5.01 GiB is free. Including non-PyTorch memory, this process has 42.36 GiB memory in use. Of the allocated memory 41.02 GiB is allocated by PyTorch, and 869.69 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)'); ineffective early-release change reverted and patch retained"
+  },
+  {
+    "command": "X40_BATCHED_READS=1 X40_FRESH_POOL=1 X40_STABLE_MAPPING=1 X40_FUSED_INIT=1 experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.part5_pilot --label pilot_B256 --batch 256",
+    "result": "failed",
+    "summary": "OutOfMemoryError('CUDA out of memory. Tried to allocate 528.00 MiB. GPU 0 has a total capacity of 47.38 GiB of which 466.69 MiB is free. Including non-PyTorch memory, this process has 46.92 GiB memory in use. Of the allocated memory 45.76 GiB is allocated by PyTorch, and 685.50 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)')"
+  },
+  {
+    "command": "X40_BATCHED_READS=1 X40_FRESH_POOL=1 X40_STABLE_MAPPING=1 X40_FUSED_INIT=1 experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.part5_pilot --label pilot_B256_checkpoint --batch 256 --bounded-loss --checkpoint",
+    "result": "failed",
+    "summary": "AcceleratorError(\"CUDA error: device-side assert triggered\\nSearch for `cudaErrorAssert' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.\\nCUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.\\nFor debugging consider passing CUDA_LAUNCH_BLOCKING=1\\nCompile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.\\n\"); rejected checkpoint prototype reverted and patch retained"
+  },
+  {
+    "command": "X40_BATCHED_READS=1 X40_FRESH_POOL=1 X40_STABLE_MAPPING=1 experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.part5_pilot --label pilot_backward --batch 64 --steps 20",
+    "result": "passed",
+    "summary": "36126.579 tok/s; 20 measured updates"
+  },
+  {
+    "command": "experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.part5_pilot --label pilot_baseline --batch 64 --steps 20",
+    "result": "passed",
+    "summary": "6793.133 tok/s; 20 measured updates"
+  },
+  {
+    "command": "X40_BATCHED_READS=1 X40_FRESH_POOL=1 X40_FUSED_INIT=1 X40_STABLE_MAPPING=1 experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.part5_pilot --label pilot_fused --batch 64 --steps 20",
+    "result": "passed",
+    "summary": "36063.910 tok/s; 20 measured updates"
+  },
+  {
+    "command": "X40_BATCHED_READS=1 experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.part5_pilot --label pilot_reads --batch 64 --steps 20",
+    "result": "passed",
+    "summary": "6524.253 tok/s; 20 measured updates"
+  },
+  {
+    "command": "X40_BATCHED_READS=1 experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.part5_pilot --label pilot_reads_cpu --batch 64 --steps 1",
+    "result": "passed",
+    "summary": "30443.126 tok/s; 1 measured updates; one-sample CPU diagnostic, not sustained acceptance"
+  },
+  {
+    "command": "X40_BATCHED_READS=1 X40_FRESH_POOL=1 X40_STABLE_MAPPING=1 X40_FUSED_INIT=1 experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.part5_warp_probe --warps 8 --min-slots 736",
+    "result": "failed",
+    "summary": "AssertionError('Tensor-likes are not equal!\\n\\nMismatched elements: 1513715 / 2097152 (72.2%)\\nGreatest absolute difference: 5.960464477539062e-07 at index (50, 14, 0, 9)\\nGreatest relative difference: inf at index (26, 466, 0, 3)'); original launch restored, no timing"
+  },
+  {
+    "command": "X40_BATCHED_READS=1 X40_FRESH_POOL=1 X40_STABLE_MAPPING=1 X40_FUSED_INIT=1 experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.part5_warp_probe --warps 8",
+    "result": "failed",
+    "summary": "AssertionError('Tensor-likes are not equal!\\n\\nMismatched elements: 1522248 / 2097152 (72.6%)\\nGreatest absolute difference: 9.5367431640625e-07 at index (5, 6, 0, 14)\\nGreatest relative difference: 0.13636364042758942 at index (44, 245, 0, 29)'); original launch restored, no timing"
+  },
+  {
+    "command": "X40_BATCHED_READS=1 X40_FRESH_POOL=1 X40_STABLE_MAPPING=1 X40_FUSED_INIT=1 experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.train_slice --output experiments/expressivity_tasks/x40_emender_lm/receipts/part5/curve",
+    "result": "passed",
+    "summary": "5013504 matched v1 tokens; max loss difference 0; tolerance 1e-5"
+  },
+  {
+    "command": "X40_BATCHED_READS=1 X40_FRESH_POOL=1 X40_STABLE_MAPPING=1 X40_FUSED_INIT=1 experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.train_slice --output experiments/expressivity_tasks/x40_emender_lm/receipts/part5/curve_bounded --bounded-loss --steps 64",
+    "result": "passed",
+    "summary": "2097152 matched v1 tokens; max loss difference 2.86102295e-06; tolerance 1e-5"
+  },
+  {
+    "command": "X40_BATCHED_READS=1 X40_FRESH_POOL=1 X40_STABLE_MAPPING=1 X40_FUSED_INIT=1 experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.train_slice --output experiments/expressivity_tasks/x40_emender_lm/receipts/part5/curve_bounded_pre_guard --bounded-loss --steps 64",
+    "result": "passed",
+    "summary": "2097152 matched v1 tokens; max loss difference 2.86102295e-06; tolerance 1e-5; archived pre-guard run"
+  },
+  {
+    "command": "X40_BATCHED_READS=1 X40_FRESH_POOL=1 X40_STABLE_MAPPING=1 X40_FUSED_INIT=1 experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m pytest -q -p experiments.expressivity_tasks.x40_emender_lm.oracle_adapter experiments/expressivity_tasks/x31_tape_cell_fused/tests --junitxml=experiments/expressivity_tasks/x40_emender_lm/receipts/part5/oracle.xml",
+    "result": "passed",
+    "summary": "109 native fixtures passed"
+  },
+  {
+    "command": "X40_BATCHED_READS=1 X40_FRESH_POOL=1 X40_STABLE_MAPPING=1 X40_FUSED_INIT=1 experiments/expressivity_tasks/x40_emender_lm/run_leased.sh -m pytest -q -p experiments.expressivity_tasks.x40_emender_lm.oracle_adapter experiments/expressivity_tasks/x36_tape_perf/tests --junitxml=experiments/expressivity_tasks/x40_emender_lm/receipts/part5/replay.xml",
+    "result": "passed",
+    "summary": "70 native fixtures passed"
+  },
+  {
+    "command": "/home/erikg/emender/.venv/bin/python -m pytest -q experiments/expressivity_tasks/x40_emender_lm/tests",
+    "result": "passed",
+    "summary": "9 local tests passed, including full-stack capacity matching and fail-closed nonrecording reads"
+  },
+  {
+    "command": "git diff --cached --check",
+    "result": "passed",
+    "summary": "Code/structured artifacts pass; narrow .gitattributes preserves raw log, patch-context and profiler formatting"
+  }
+]
