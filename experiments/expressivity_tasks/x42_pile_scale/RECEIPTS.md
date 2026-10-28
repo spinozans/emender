@@ -119,3 +119,14 @@ parameter scale without claiming matched compute. The per-head policy vector
 is shared across inserted memory blocks; it does not independently tune every
 layer/head combination. Full 24 GiB token construction remains NOT RUN; the
 256-document access sample is incomplete and rejected by the training guard.
+
+## Part 2 construction update
+
+The full 24 GiB build has now been launched as a detached CPU/network process.
+It is **in progress**, superseding the earlier NOT RUN status but not establishing
+completion. See REPORT.md, receipts/part2_corpus_launch.json and
+receipts/part2_tests.txt (12 passed). Source order, document indices, split
+boundaries and per-split document counts are now retained; no stored shuffle was
+introduced. The pinned dataset/tokenizer, exact dedup, hash split, character cap
+and token budget are unchanged. No CMA-ES protocol amendment, pilot/search,
+adapter GPU validation or training checkpoint/resume is claimed here.

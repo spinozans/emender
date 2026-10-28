@@ -68,6 +68,32 @@ def test_pipeline_dedup_and_budget(tmp_path):
     assert receipt['complete']
     assert sum(receipt['tokens'].values())*2 <=4096
     assert receipt['split_sha256']['train']==receipt['split_sha256']['valid'] # equal fixture tokens, distinct documents
+    index=[json.loads(line) for line in (tmp_path/'corpus'/'documents.jsonl').read_text().splitlines()]
+    assert len(index)==receipt['documents']==sum(receipt['split_documents'].values())
+    assert [row['source_index'] for row in index]==sorted(row['source_index'] for row in index)
+    assert receipt['source_interval']['first_source_index']==0
+    assert receipt['source_interval']['last_source_index']>=index[-1]['source_index']
+    for split in ('train','valid'):
+        rows=[row for row in index if row['split']==split]
+        assert len(rows)==receipt['split_documents'][split]
+        cursor=0
+        for row in rows:
+            assert row['token_start']==cursor
+            cursor+=row['tokens']
+        assert cursor==receipt['tokens'][split]
+        assert receipt['split_boundaries'][split]==dict(first_source_index=rows[0]['source_index'],last_source_index=rows[-1]['source_index'])
+    assert json.loads((tmp_path/'corpus'/'progress.json').read_text())['status']=='complete'
+
+
+def test_corpus_failure_is_not_completion(tmp_path):
+    class BrokenTokenizer:
+        def encode(self,text):
+            raise RuntimeError('tokenizer failed')
+    out=tmp_path/'failed'
+    with pytest.raises(RuntimeError,match='tokenizer failed'):
+        build([dict(text='first document')],BrokenTokenizer(),out,4096,{'fixture':True})
+    assert not (out/'manifest.json').exists()
+    assert json.loads((out/'progress.json').read_text())['status']=='failed'
 
 
 def test_pure_cannot_silently_use_attention():

@@ -5,6 +5,7 @@ import json
 import math
 import shutil
 import sqlite3
+import time
 from pathlib import Path
 import numpy as np
 
@@ -29,9 +30,23 @@ def build(records, tokenizer, output, max_bytes, provenance, valid_fraction=.01)
     counts = dict(train=0, valid=0)
     caps = dict(valid=int(max_bytes*valid_fraction)//2, train=int(max_bytes*(1-valid_fraction))//2)
     files = {k: open(output / (k+'.bin'), 'wb') for k in counts}
-    duplicates = documents = 0
+    duplicates = documents = scanned = 0
+    split_documents = dict(train=0, valid=0)
+    boundaries = dict(train=None, valid=None)
+    started = time.time()
+    def progress(status):
+        payload = dict(status=status, pid=__import__('os').getpid(), started=started,
+                       updated=time.time(), source_documents_scanned=scanned,
+                       documents=documents, tokens=counts, target_tokens=caps,
+                       split_documents=split_documents, boundaries=boundaries)
+        temporary = output/'progress.tmp'
+        temporary.write_text(json.dumps(payload, indent=2)+'\n')
+        temporary.replace(output/'progress.json')
+    progress('running')
+    index = open(output/'documents.jsonl', 'w')
     try:
-        for record in records:
+        for source_index, record in enumerate(records):
+            scanned = source_index + 1
             # Bound pathological documents before tokenization or SQLite growth.
             text = record['text'][:1_000_000]
             key = hashlib.sha256(text.encode()).digest()
@@ -42,19 +57,37 @@ def build(records, tokenizer, output, max_bytes, provenance, valid_fraction=.01)
             if counts[split] >= caps[split]:
                 continue
             ids = tokenizer.encode(text).ids + [50256]
+            original_tokens = len(ids)
             ids = ids[:caps[split]-counts[split]]
             if ids and max(ids) >= 50257:
                 raise ValueError('not GPT-2 vocabulary')
             np.asarray(ids, dtype='<u2').tofile(files[split])
+            index.write(json.dumps(dict(source_index=source_index, sha256=key.hex(),
+                             split=split, token_start=counts[split], tokens=len(ids),
+                             truncated=len(ids)<original_tokens))+'\n')
+            if boundaries[split] is None:
+                boundaries[split] = dict(first_source_index=source_index)
+            boundaries[split]['last_source_index'] = source_index
+            split_documents[split] += 1
             counts[split] += len(ids)
             documents += 1
             if documents % 1000 == 0:
                 db.commit()
+                index.flush()
+                progress('running')
                 if db.execute('pragma page_count').fetchone()[0]*4096 > (2 << 30):
                     raise RuntimeError('dedup metadata exceeds 2 GiB guard')
+                if shutil.disk_usage(output).free < (10 << 30):
+                    raise RuntimeError('disk guard: free space below 10 GiB')
+                if sum(p.stat().st_size for p in output.iterdir() if p.is_file()) > (90 << 30):
+                    raise RuntimeError('package build exceeds 90 GiB guard')
             if all(counts[k] >= caps[k] for k in caps):
                 break
+    except BaseException:
+        progress('failed')
+        raise
     finally:
+        index.close()
         for f in files.values():
             f.close()
         db.commit()
@@ -66,7 +99,13 @@ def build(records, tokenizer, output, max_bytes, provenance, valid_fraction=.01)
                    dedup='exact SHA256 after 1M-character cap; document-hash split before packing; no fuzzy dedup',
                    split_sha256={k:digest(output/(k+'.bin')) for k in counts},
                    complete=all(counts[k] >= caps[k] for k in caps), max_bytes=max_bytes)
+    receipt.update(source_documents_scanned=scanned, split_documents=split_documents,
+                   source_interval=dict(first_source_index=0, last_source_index=scanned-1),
+                   split_boundaries=boundaries,
+                   stored_order='source document order; no shuffle before packing; exact duplicates removed; hash split; 1M-character cap; final split document may be truncated',
+                   document_index_sha256=digest(output/'documents.jsonl'))
     (output/'manifest.json').write_text(json.dumps(receipt, indent=2)+'\n')
+    progress('complete' if receipt['complete'] else 'incomplete')
     return receipt
 
 

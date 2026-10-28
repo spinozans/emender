@@ -5,6 +5,12 @@ No pilot/search has run. Current local corpus is an access sample, explicitly
 incomplete; scientific training rejects it. Full corpus construction is CPU/network
 work and does not depend on X40. For a 24 GiB token budget:
 
+Part 2 has started a detached build at `data/pile24`; see `REPORT.md` and
+`receipts/part2_corpus_launch.json` before launching another build. Monitor
+`data/pile24/progress.json`. The build is incomplete until its final manifest
+attests completion. `documents.jsonl` records source-order boundaries and split
+token offsets; shuffling remains in the batch sampler.
+
 ```bash
 /home/erikg/emender/.venv/bin/python -m experiments.expressivity_tasks.x42_pile_scale.data --output experiments/expressivity_tasks/x42_pile_scale/data/pile24 --gib 24
 ```
