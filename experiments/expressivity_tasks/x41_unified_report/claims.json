@@ -102,7 +102,7 @@
           "path": "experiments/expressivity_tasks/x41_unified_report/VALIDATION.md",
           "line": 5,
           "needle": "The task instruction received",
-          "sha256": "072628136d0851ce36282b58e8417c98fc3190bb287cfe0b63b36ec44b6a4d68"
+          "sha256": "fef6108fab8cb68360cc0692553efa0292a1cb638cabb3e14861872f7693a474"
         },
         {
           "path": "experiments/expressivity_tasks/x32_comparables/REPORT.md",
@@ -3609,6 +3609,399 @@
           "sha256": "5c54babaf36e5011d1688f091e88fe0ba920c8c1718375b818031312c6f75b49",
           "pointer": "/tests/test_ood2/accuracy",
           "value": 0.4979
+        }
+      ]
+    },
+    {
+      "id": "C31",
+      "text": "The 1.3B fixed-state long pairing is a matched-token training-loss null with window-dependent sign; single-seed training logs do not establish held-out equivalence.",
+      "sources": [
+        {
+          "path": "experiments/expressivity_tasks/x41_unified_report/receipts/matched_pair.json",
+          "line": 26,
+          "needle": "\"tokens\": 150793420800",
+          "sha256": "176633e25f33d869989b07d4f351f2860425f336dfd67c629f62432d0561f4d6",
+          "pointer": "/comparison/cutoff/tokens",
+          "value": 150793420800
+        },
+        {
+          "path": "experiments/expressivity_tasks/x41_unified_report/receipts/matched_pair.json",
+          "line": 7,
+          "needle": "\"alignment\"",
+          "sha256": "176633e25f33d869989b07d4f351f2860425f336dfd67c629f62432d0561f4d6",
+          "pointer": "/comparison/alignment",
+          "value": {
+            "aligned_record_count": 92037,
+            "common_step_range": [
+              25,
+              2300925
+            ],
+            "common_token_range": [
+              1638400,
+              150793420800
+            ],
+            "missing_or_nonoverlapping": {
+              "e97_only_count": 0,
+              "e97_only_steps_through_cutoff": [],
+              "gdn2_only_count": 0,
+              "gdn2_only_steps_through_cutoff": []
+            }
+          }
+        },
+        {
+          "path": "experiments/expressivity_tasks/x41_unified_report/receipts/matched_pair.json",
+          "line": 29,
+          "needle": "\"cutoff_raw\"",
+          "sha256": "176633e25f33d869989b07d4f351f2860425f336dfd67c629f62432d0561f4d6",
+          "pointer": "/comparison/cutoff_raw",
+          "value": {
+            "delta_gdn2_minus_e97": -0.04459999999999997,
+            "e97_loss": 2.477,
+            "gdn2_loss": 2.4324,
+            "step": 2300925,
+            "token": 150793420800
+          }
+        },
+        {
+          "path": "experiments/expressivity_tasks/x41_unified_report/receipts/matched_pair.json",
+          "line": 36,
+          "needle": "\"cutoff_smoothed\"",
+          "sha256": "176633e25f33d869989b07d4f351f2860425f336dfd67c629f62432d0561f4d6",
+          "pointer": "/comparison/cutoff_smoothed",
+          "value": {
+            "delta_gdn2_minus_e97": -0.010340000000000682,
+            "e97_loss": 2.4370450000000003,
+            "gdn2_loss": 2.4267049999999997,
+            "step": 2300925,
+            "token": 150793420800,
+            "window_aligned_records": 80
+          }
+        },
+        {
+          "path": "experiments/expressivity_tasks/x41_unified_report/receipts/matched_pair.json",
+          "line": 44,
+          "needle": "\"intervals\"",
+          "sha256": "176633e25f33d869989b07d4f351f2860425f336dfd67c629f62432d0561f4d6",
+          "pointer": "/comparison/intervals",
+          "value": {
+            "last_1000_optimizer_steps": {
+              "bounds": [
+                2299926,
+                2300925
+              ],
+              "delta_gdn2_minus_e97": -0.00850250000000008,
+              "e97": {
+                "bounds": [
+                  2299926,
+                  2300925
+                ],
+                "cadence_optimizer_steps": "25",
+                "every_optimizer_step_represented": false,
+                "first_observed_step": 2299950,
+                "first_observed_token": 150729523200,
+                "last_observed_step": 2300925,
+                "last_observed_token": 150793420800,
+                "mean_loss_observed_records": 2.43582,
+                "note": "Arithmetic mean over logged observations inside the optimizer-step interval; no interpolation.",
+                "observation_count": 40,
+                "token_bounds": [
+                  150727950336,
+                  150793420800
+                ],
+                "width_optimizer_steps": 1000
+              },
+              "gdn2": {
+                "bounds": [
+                  2299926,
+                  2300925
+                ],
+                "cadence_optimizer_steps": "25",
+                "every_optimizer_step_represented": false,
+                "first_observed_step": 2299950,
+                "first_observed_token": 150729523200,
+                "last_observed_step": 2300925,
+                "last_observed_token": 150793420800,
+                "mean_loss_observed_records": 2.4273175,
+                "note": "Arithmetic mean over logged observations inside the optimizer-step interval; no interpolation.",
+                "observation_count": 40,
+                "token_bounds": [
+                  150727950336,
+                  150793420800
+                ],
+                "width_optimizer_steps": 1000
+              }
+            },
+            "last_100_optimizer_steps": {
+              "bounds": [
+                2300826,
+                2300925
+              ],
+              "delta_gdn2_minus_e97": 0.013949999999999907,
+              "e97": {
+                "bounds": [
+                  2300826,
+                  2300925
+                ],
+                "cadence_optimizer_steps": "25",
+                "every_optimizer_step_represented": false,
+                "first_observed_step": 2300850,
+                "first_observed_token": 150788505600,
+                "last_observed_step": 2300925,
+                "last_observed_token": 150793420800,
+                "mean_loss_observed_records": 2.42835,
+                "note": "Arithmetic mean over logged observations inside the optimizer-step interval; no interpolation.",
+                "observation_count": 4,
+                "token_bounds": [
+                  150786932736,
+                  150793420800
+                ],
+                "width_optimizer_steps": 100
+              },
+              "gdn2": {
+                "bounds": [
+                  2300826,
+                  2300925
+                ],
+                "cadence_optimizer_steps": "25",
+                "every_optimizer_step_represented": false,
+                "first_observed_step": 2300850,
+                "first_observed_token": 150788505600,
+                "last_observed_step": 2300925,
+                "last_observed_token": 150793420800,
+                "mean_loss_observed_records": 2.4423,
+                "note": "Arithmetic mean over logged observations inside the optimizer-step interval; no interpolation.",
+                "observation_count": 4,
+                "token_bounds": [
+                  150786932736,
+                  150793420800
+                ],
+                "width_optimizer_steps": 100
+              }
+            }
+          }
+        },
+        {
+          "path": "docs/GDN2_OPS_SNAPSHOT_20260728.md",
+          "line": 17,
+          "needle": "## Matched E97 Comparison",
+          "sha256": "38addfa75ed2d92ecfe1f98eb90ad03db91a628a0d79324435a34a5b363e5b4a"
+        },
+        {
+          "path": "paper/figures/e97_recorded_loss.receipt.json",
+          "line": 169,
+          "needle": "\"tokens\": 150793748480",
+          "sha256": "1cc78dade427cfaebd64d86cd9d49c212db5e116bb910e45a878e28e4ba8797c",
+          "pointer": "/workstation/27/tokens",
+          "value": 150793748480
+        }
+      ]
+    },
+    {
+      "id": "C32",
+      "text": "Five CMA-best short-budget 1.3B families occupy a .0887-bpb non-averaged held-out band; this is separate from the long pairing and supplies no significance estimate.",
+      "sources": [
+        {
+          "path": "experiments/lb_compare_20260613/bpb_results.json",
+          "line": 24,
+          "needle": "\"heldout_bpb_nonavg\": \"2.0126\"",
+          "sha256": "e5f6e79b8b7b26282fa7f7bfda95ddd900c2a7497ab36a2b99a177d2ccd65a9c",
+          "pointer": "/0/heldout_bpb_nonavg",
+          "value": "2.0126"
+        },
+        {
+          "path": "experiments/lb_compare_20260613/bpb_results.json",
+          "line": 84,
+          "needle": "\"heldout_bpb_nonavg\": \"2.1013\"",
+          "sha256": "e5f6e79b8b7b26282fa7f7bfda95ddd900c2a7497ab36a2b99a177d2ccd65a9c",
+          "pointer": "/2/heldout_bpb_nonavg",
+          "value": "2.1013"
+        },
+        {
+          "path": "experiments/lb_compare_20260613/bpb_results.json",
+          "line": 121,
+          "needle": "\"label\": \"emender-mlp\"",
+          "sha256": "e5f6e79b8b7b26282fa7f7bfda95ddd900c2a7497ab36a2b99a177d2ccd65a9c",
+          "pointer": "/4",
+          "value": {
+            "label": "emender-mlp",
+            "model_type": "e97-raw",
+            "gpu": "0",
+            "params": {
+              "dim": 1792,
+              "n_heads": 216,
+              "n_state": 32,
+              "depth": 11,
+              "lr": 0.0010071509461604343,
+              "batch_size": 4
+            },
+            "extra": [
+              "--mlp_ratio",
+              "2.262336203876648",
+              "--mlp_multiple",
+              "64"
+            ],
+            "est_params": 958488560,
+            "search_avg_loss": 5.8606,
+            "returncode": 0,
+            "wall_s": 1011.6,
+            "n_params": "1,286,589,072",
+            "final_loss_last100": "6.2945",
+            "heldout_ce": "5.8555",
+            "heldout_bpb": "2.1783",
+            "heldout_ce_nonavg": "5.6211",
+            "heldout_bpb_nonavg": "2.0911",
+            "heldout_tokens": "131072",
+            "heldout_bpt": "3.8781",
+            "steps": "892",
+            "peak_mem_mb": "26533",
+            "nonfinite": false
+          }
+        },
+        {
+          "path": "experiments/lb_compare_20260613/LEADERBOARD.md",
+          "line": 3,
+          "needle": "**CORRECTIONS",
+          "sha256": "0abd55410d62c09816ef704ca5d27c0e6b9441604d5c43866ef1e7ab3af93178"
+        },
+        {
+          "path": "docs/repro/lb_gdn2_mlp_20260612/best.json",
+          "line": 17,
+          "needle": "\"total_evals\": 104",
+          "sha256": "866bd81066140c25e827da0da4ebbf76c7b980f59084f371c61f4d814bbd4ee3",
+          "pointer": "/total_evals",
+          "value": 104
+        }
+      ]
+    },
+    {
+      "id": "C33",
+      "text": "Predecessor CMA FLOPs-per-bit convergence is a four-family single-seed measured trend, with estimated FLOPs and distinct endpoints, not a universal loss law.",
+      "sources": [
+        {
+          "path": "experiments/expressivity_tasks/x41_unified_report/receipts/cma_e1.json",
+          "line": 4,
+          "needle": "\"best_loss\": 1.3393950000000001",
+          "sha256": "e719b6954b176d27d881d143ddf53413093fd3e5eac81b9514d8e9e36c5c670e",
+          "pointer": "/best_loss",
+          "value": 1.3393950000000001
+        },
+        {
+          "path": "experiments/expressivity_tasks/x41_unified_report/receipts/cma_e88.json",
+          "line": 4,
+          "needle": "\"best_loss\": 1.245139",
+          "sha256": "7cf434214020753f25067c61fe5789d5294bce6fe0f6dda16e68908b34a0f858",
+          "pointer": "/best_loss",
+          "value": 1.245139
+        },
+        {
+          "path": "experiments/expressivity_tasks/x41_unified_report/receipts/cma_fla-gdn.json",
+          "line": 4,
+          "needle": "\"best_loss\": 1.140342",
+          "sha256": "eb34cfa08881069500215517f094caef6360e82d744e31aa332f55c169e81efe",
+          "pointer": "/best_loss",
+          "value": 1.140342
+        },
+        {
+          "path": "experiments/expressivity_tasks/x41_unified_report/receipts/cma_mamba2.json",
+          "line": 4,
+          "needle": "\"best_loss\": 1.155474",
+          "sha256": "f69372e16e3dafdbfa3f8c1520d184b36f134da25f5fbbcc24b1863e31c32b0c",
+          "pointer": "/best_loss",
+          "value": 1.155474
+        },
+        {
+          "path": "paper/results/cma_flop_rate/thresholds.csv",
+          "line": 4,
+          "needle": "e1,1.8,False",
+          "sha256": "9d175b8553bf6160df12318fe02ee2df54c5750610de77fa30d23be18ed3f81b"
+        },
+        {
+          "path": "paper/results/cma_flop_rate/summary.csv",
+          "line": 1,
+          "needle": "model,label",
+          "sha256": "8b868022028cf5659155611867c82568e45f9179a8433d6a6651a55bbb66955c"
+        },
+        {
+          "path": "paper/results/cma_flop_rate/overlay.csv",
+          "line": 1,
+          "needle": "model,",
+          "sha256": "412158bbc60e3cbcb6e17f7cead4e73a01ac8acc2e73374764df9b6fa1e10533"
+        },
+        {
+          "path": "paper/results/cma_flop_rate/SOURCES.md",
+          "line": 89,
+          "needle": "## FLOPs convention",
+          "sha256": "6e4bd691c5fe53d7479ac212ecd1628ec52a3d7c705cf360a3de0a892bab40e3"
+        }
+      ]
+    },
+    {
+      "id": "C34",
+      "text": "CMA selection, matched-arm Pile training and immutable release discipline are INHERITED methodology; the planned 1.3B slot-memory run is a proposal using the old pairing as baseline.",
+      "sources": [
+        {
+          "path": "experiments/expressivity_tasks/x41_unified_report/receipts/matched_pair.json",
+          "line": 663,
+          "needle": "\"token_semantics\"",
+          "sha256": "176633e25f33d869989b07d4f351f2860425f336dfd67c629f62432d0561f4d6",
+          "pointer": "/token_semantics",
+          "value": {
+            "batch_size": 4,
+            "chunk_size": 2048,
+            "formula": "8 * 4 * 2048 * 1",
+            "grad_accum": 1,
+            "log_every": 25,
+            "path": "/mnt/nvme1n1/erikg/diloco_8gpu/gdn2_mlp/runs/gdn2_gdn2-mlp_1.3B_20260722_083444/args.json",
+            "tokens_per_step": 65536,
+            "world_size": 8
+          }
+        },
+        {
+          "path": "experiments/expressivity_tasks/x41_unified_report/receipts/matched_pair.json",
+          "line": 265,
+          "needle": "\"e97_token_semantics\"",
+          "sha256": "176633e25f33d869989b07d4f351f2860425f336dfd67c629f62432d0561f4d6",
+          "pointer": "/e97_token_semantics",
+          "value": {
+            "batch_size": 4,
+            "chunk_size": 2048,
+            "formula": "8 * 4 * 2048 * 1",
+            "grad_accum": 1,
+            "log_every": 25,
+            "path": "/mnt/nvme1n1/erikg/diloco_8gpu/emender/runs/emender_E97_1.3B_20260722_055730/args.json",
+            "tokens_per_step": 65536,
+            "world_size": 8
+          }
+        },
+        {
+          "path": "scripts/launch_emender_8gpu_diloco.sh",
+          "line": 66,
+          "needle": "--optimizer schedulefree",
+          "sha256": "40d60b3ad1e1f5348f300cd5917ca47f30653218c5066c468a7647e610cbb0ba"
+        },
+        {
+          "path": "scripts/launch_gdn2_mlp_8gpu_diloco.sh",
+          "line": 60,
+          "needle": "--optimizer schedulefree",
+          "sha256": "e54f8eafc8da1ffdc92ec086b1e7f409655f336608869a414efde38d1b1a8cff"
+        },
+        {
+          "path": "docs/validation/e97-huggingface-dense-base-and-cli-agent-release.md",
+          "line": 1,
+          "needle": "#",
+          "sha256": "07dce5ff8f186818c29f2213cd868b9cfb7840ade9ed353d932ed8deeb0dc287"
+        },
+        {
+          "path": "docs/validation/gdn2-huggingface-152b-control-release.md",
+          "line": 1,
+          "needle": "#",
+          "sha256": "624330099ecebcc9af50d18e9bf0dd1f3d30f72cdbc2df0d34902ce10040fb74"
+        },
+        {
+          "path": "paper/COHERENCE_PASS_NOTES.md",
+          "line": 9,
+          "needle": "## The spine",
+          "sha256": "0fb0da34e800e1c4fa2c1a06760b91ccab859a4edb8a9312c16462c6c3e8e436"
         }
       ]
     }

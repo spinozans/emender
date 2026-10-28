@@ -8,6 +8,20 @@ const get=(x,p)=>p.split('/').slice(1).reduce((v,k)=>v[k.replace(/~1/g,'/').repl
 const read=p=>JSON.parse(fs.readFileSync(base+p));
 const ledger=JSON.parse(fs.readFileSync(dir+'claims.json'));
 const paper=fs.readFileSync(dir+'PAPER.md','utf8');
+const claimsMarkdown=fs.readFileSync(dir+'CLAIMS.md','utf8');
+const reconciliation=fs.readFileSync('paper/RECONCILIATION.md','utf8');
+assert.deepEqual([...paper.matchAll(/^## (\d+)\. (.*)$/gm)].map(m=>m[2]),[
+ 'The mechanism: emendation as a write program',
+ 'Motivation measured at full scale: the 1.3B null',
+ 'The certified boundary',
+ 'The cost account: ordered state and sequentiality',
+ 'LM pilots: lane activity and architectural design science',
+ 'Open: scale, replication and the pure model',
+]);
+for(const c of ledger.claims)assert(claimsMarkdown.includes(`id="${c.id.toLowerCase()}"`),`Missing claim anchor ${c.id}`);
+for(const disposition of ['stands (with pointer)','MIXED (X26c)','refuted-sign-reversed (X27)','subsumed-by (the Emender results)','still-valid-methodology'])assert(reconciliation.includes(disposition));
+const provenance=JSON.parse(fs.readFileSync(dir+'receipts/provenance.json'));
+for(const s of provenance.files)assert.equal(hash(fs.readFileSync(s.snapshot)),s.sha256,s.snapshot);
 let pointers=0,sources=0;
 for(const c of ledger.claims){assert(paper.includes(`CLAIMS.md#${c.id.toLowerCase()}`),`Unused ${c.id}`);for(const s of c.sources){const raw=fs.readFileSync(s.path,'utf8');assert.equal(hash(raw),s.sha256,s.path+' changed');assert(raw.split('\n')[s.line-1].includes(s.needle),s.path+':'+s.line);if(s.pointer){assert.deepEqual(get(JSON.parse(raw),s.pointer),s.value);pointers++}sources++}}
 for(const ref of paper.matchAll(/CLAIMS.md#(c\d+)/g))assert(ledger.claims.some(c=>c.id.toLowerCase()===ref[1]));
@@ -45,6 +59,29 @@ assert(derivations.x34.tape_lm.loss<derivations.x34.base_lm.loss);assert(derivat
 const pre=read('x39_memory_usage/receipts/preflight.json');
 derivations.x34_occupancy=pre.control.rows.map(r=>({T:r.context,peak:r.peak_live_per_head}));
 assert(derivations.x34_occupancy.every(r=>r.peak.every(n=>n===r.T/2)));
+const pair=read('x41_unified_report/receipts/matched_pair.json');
+const comparison=pair.comparison;
+assert.equal(comparison.cutoff.tokens,150793420800);
+assert.equal(comparison.alignment.aligned_record_count,92037);
+assert.equal(comparison.alignment.missing_or_nonoverlapping.e97_only_count,0);
+assert.equal(comparison.alignment.missing_or_nonoverlapping.gdn2_only_count,0);
+assert.equal(pair.token_semantics.tokens_per_step,pair.e97_token_semantics.tokens_per_step);
+assert.equal(comparison.cutoff.tokens,comparison.cutoff.step*pair.token_semantics.tokens_per_step);
+const windows=comparison.intervals;
+assert(windows.last_100_optimizer_steps.delta_gdn2_minus_e97>0);
+assert(windows.last_1000_optimizer_steps.delta_gdn2_minus_e97<0);
+derivations.inherited_pair={cutoff:comparison.cutoff,alignment:comparison.alignment,
+ raw:comparison.cutoff_raw,smoothed:comparison.cutoff_smoothed,
+ intervals:Object.fromEntries(Object.entries(windows).map(([k,r])=>[k,{delta:r.delta_gdn2_minus_e97,e97:r.e97.mean_loss_observed_records,gdn2:r.gdn2.mean_loss_observed_records,observations:r.e97.observation_count}]))};
+const bpb=JSON.parse(fs.readFileSync('experiments/lb_compare_20260613/bpb_results.json'));
+assert.equal(bpb.length,5);
+const bpbs=bpb.map(r=>Number(r.heldout_bpb_nonavg));
+derivations.inherited_band={families:bpb.length,min:Math.min(...bpbs),max:Math.max(...bpbs),width:Math.max(...bpbs)-Math.min(...bpbs),tokens:bpb.map(r=>Number(r.heldout_tokens))};
+assert.equal(derivations.inherited_band.width.toFixed(4),'0.0887');
+assert(derivations.inherited_band.tokens.every(n=>n===131072));
+assert(Number(bpb.find(r=>r.label==='emender-mlp').heldout_bpb_nonavg)<Number(bpb.find(r=>r.label==='gdn2-mlp').heldout_bpb_nonavg));
+derivations.inherited_cma=Object.fromEntries(['e1','e88','fla-gdn','mamba2'].map(n=>{const r=read('x41_unified_report/receipts/cma_'+n+'.json');return[n,{best_loss:r.best_loss,target_params:r.target_params,total_evals:r.total_evals}]}));
+for(const n of Object.keys(derivations.inherited_cma))assert.equal(derivations.inherited_cma[n].target_params,480000000);
 const report={status:'passed',claims:ledger.claims.length,source_pointers:sources,json_pointers:pointers,derivations,scope:'Read-only receipt audit; no model reruns, Lean rebuild, GPU, Python, Slurm or resilient DiLoCo behavior. Semantic entailment requires manual review.'};
 if(process.argv.includes('--write'))fs.writeFileSync(dir+'verification.json',JSON.stringify(report,null,2)+'\n');
 else assert.deepEqual(JSON.parse(fs.readFileSync(dir+'verification.json')),report,'Verification derivations differ');
