@@ -1,0 +1,108 @@
+{
+  "configs": [
+    {
+      "scale": "22M",
+      "pure_parameters": {
+        "total": 72449214,
+        "trainable": 21999150
+      },
+      "gdn2_parameters": {
+        "total": 72438492,
+        "trainable": 72438492
+      },
+      "gdn2_width": 448,
+      "gdn2_depth": 14,
+      "gdn2_mlp_hidden": 1200,
+      "gdn2_mlp_ratio": 2.6785714285714284,
+      "gdn2_heads": 2,
+      "gdn2_key_head_dim": 128,
+      "gdn2_expand_v": 2.0
+    },
+    {
+      "scale": "150M",
+      "pure_parameters": {
+        "total": 250904904,
+        "trainable": 150004776
+      },
+      "gdn2_parameters": {
+        "total": 251137312,
+        "trainable": 251137312
+      },
+      "gdn2_width": 1280,
+      "gdn2_depth": 8,
+      "gdn2_mlp_hidden": 3632,
+      "gdn2_mlp_ratio": 2.8375,
+      "gdn2_heads": 4,
+      "gdn2_key_head_dim": 128,
+      "gdn2_expand_v": 2.0
+    },
+    {
+      "scale": "1.3B",
+      "pure_parameters": {
+        "total": 1501813176,
+        "trainable": 1300012920
+      },
+      "gdn2_parameters": {
+        "total": 1502529768,
+        "trainable": 1502529768
+      },
+      "gdn2_width": 2112,
+      "gdn2_depth": 24,
+      "gdn2_mlp_hidden": 6000,
+      "gdn2_mlp_ratio": 2.840909090909091,
+      "gdn2_heads": 7,
+      "gdn2_key_head_dim": 128,
+      "gdn2_expand_v": 2.0
+    }
+  ],
+  "recipe_sources": {
+    "ndm/models/external_gdn2.py": "316ddf8658a55da4a4159f77881c92e9a067570da55d0aa2592b7b11c51aa3d8",
+    "configs/frontier/e97_gdn2_paper/gdn2_mlp.json": "440c9393deeb9b0adf22e936c87dfd4750d622075366022c0950a012950ed296",
+    "ndm/models/ladder_lm.py": "d1e40ac3baa7978cfcfcc634d8b0e72f9efb37e713aae0c89d14c07fdf932145"
+  },
+  "backend": {
+    "gdn2_path": "/home/erikg/GatedDeltaNet-2",
+    "gdn2_file": "/home/erikg/GatedDeltaNet-2/lit_gpt/gdn2.py",
+    "gdn2_file_exists": true,
+    "bound_source_required": false,
+    "torch_version": "2.9.1+cu128",
+    "torch_version_hip": null,
+    "torch_cuda_is_available": true,
+    "torch_cuda_device_count": 8,
+    "torch_backend": "cuda",
+    "fla_module": "/home/erikg/emender/.venv/lib/python3.12/site-packages/fla/__init__.py",
+    "fla_version": "0.5.1",
+    "external_module": "_external_gdn2_lit_gpt.gdn2",
+    "external_class": "GatedDeltaNet2",
+    "chunk_ops_module": "/home/erikg/GatedDeltaNet-2/lit_gpt/gdn2_ops/chunk_gdn2.py",
+    "chunk_symbols": [
+      "chunk_gated_delta_rule_bwd_dhu",
+      "chunk_gated_delta_rule_fwd_h",
+      "chunk_gdn2",
+      "chunk_gdn2_bwd",
+      "chunk_gdn2_bwd_intra",
+      "chunk_gdn2_bwd_kernel_intra",
+      "chunk_gdn2_bwd_kernel_wy_dqkg_fused",
+      "chunk_gdn2_bwd_wy_dqkg_fused",
+      "chunk_gdn2_fwd",
+      "chunk_gdn2_fwd_intra",
+      "chunk_gdn2_fwd_intra_token_parallel",
+      "chunk_gdn2_fwd_kernel_inter_solve_fused",
+      "chunk_gdn2_fwd_kernel_intra_sub_chunk",
+      "chunk_gdn2_fwd_kernel_intra_token_parallel",
+      "chunk_gla_fwd_o_gk",
+      "chunk_kda_bwd_dAv",
+      "chunk_local_cumsum"
+    ],
+    "required_symbols": [
+      "chunk_gla_fwd_o_gk"
+    ],
+    "missing_required_symbols": [],
+    "ok": true
+  },
+  "external_tree_sha256": "b7c52304b525b1d48e88e26a42a02e427c4ed4899da6c8109ff415d9e6348774",
+  "lineage": "registered gdn2-mlp: capacity-matched width/depth search with 16-aligned SwiGLU width nearest registered paper ratio 2.85422075; head count scales from paper 2304/8 at head_dim128, expand_v2; external native GDN2 chunk Triton kernels with FLA 0.5.1 helpers",
+  "external_commit": "95709fc250357c2dd109361c353192f2aa5913f9",
+  "registered_recipe_external_commit": "95709fc250357c2dd109361c353192f2aa5913f9",
+  "external_source_tree_unchanged_after_measurements": true
+}
