@@ -1,0 +1,13 @@
+gpu_lease: granted GPUs: 1 (pid 3882948)
+X40 physical card 1
+Traceback (most recent call last):
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/part11_support_gate.py", line 54, in main
+    out, state, trace, pressure = tape_scan(
+                                  ^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/forward.py", line 162, in tape_scan
+    scan_kernel[(b*h,)](*args,coef,flat(wire_logits),match_coef.repeat(b).contiguous(),error_coef.repeat(b).contiguous(),evidence,error_evidence,keys,values,strength,live,age,
+                                   ^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/forward.py", line 77, in flat
+    return x.transpose(1,2).contiguous()
+           ^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'transpose'

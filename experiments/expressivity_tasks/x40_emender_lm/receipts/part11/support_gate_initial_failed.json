@@ -1,0 +1,18 @@
+{
+  "status": "error",
+  "physical_gpu": "1",
+  "python": "/home/erikg/emender/.venv/bin/python",
+  "batch": 32,
+  "rows": [],
+  "scope": "Fail-closed prerequisite probe; never enables a sparse optimization.\n\nB32, native 1.3B head geometry, fresh state. Counterexamples are native state\nwitnesses, not evidence that entry/allocation-union pooling itself is incorrect.\n",
+  "production_changed": false,
+  "sources": {
+    "part11_support_gate.py": "0f8f7a7ab518d181e707241ee7251652816995bd9bcc4f154cdeb06c16b51bee",
+    "forward.py": "ff3791425de2af352f4e06a281cfa6b4a82ab4340ccb0d2906518ac2bae1edde",
+    "backward.py": "f6648bd7d4f67317c0a00dbb2940c7951204cf34a906fd804783cbb6f5fdc063",
+    "kernels.py": "956beee6d257b52bd43074f0fdeafdeffdf45253fb146e6885d9a0951204c85f",
+    "model.py": "8e0f9d8f5c305d2d19a3aa27488d894f89288264bcd3f1190ec85b0be16b9ccd"
+  },
+  "error": "AttributeError(\"'NoneType' object has no attribute 'transpose'\")",
+  "traceback": "Traceback (most recent call last):\n  File \"/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/part11_support_gate.py\", line 54, in main\n    out, state, trace, pressure = tape_scan(\n                                  ^^^^^^^^^^\n  File \"/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/forward.py\", line 162, in tape_scan\n    scan_kernel[(b*h,)](*args,coef,flat(wire_logits),match_coef.repeat(b).contiguous(),error_coef.repeat(b).contiguous(),evidence,error_evidence,keys,values,strength,live,age,\n                                   ^^^^^^^^^^^^^^^^^\n  File \"/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/forward.py\", line 77, in flat\n    return x.transpose(1,2).contiguous()\n           ^^^^^^^^^^^\nAttributeError: 'NoneType' object has no attribute 'transpose'\n"
+}

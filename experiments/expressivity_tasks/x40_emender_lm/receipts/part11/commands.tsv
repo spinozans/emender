@@ -1,0 +1,10 @@
+command	result	summary
+ps -p 634691 -o pid,args	passed	Protected depth probe alive; inspected only
+nvidia-smi --query-gpu=index,utilization.gpu,memory.used --format=csv,noheader	passed	Read-only inventory before lease
+X40_BATCHED_READS=0 run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.part11_support_gate (initial)	failed	Missing wire_logits; preserved initial failure JSON/log
+X40_BATCHED_READS=0 run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.part11_support_gate (second)	failed	Missing evidence output pointer; preserved second failure JSON/log
+X40_BATCHED_READS=0 run_leased.sh -m experiments.expressivity_tasks.x40_emender_lm.part11_support_gate (final)	failed	Completed 24 fixtures on GPU1; 11 counterexample fixtures; exit1 is required failed gate
+/home/erikg/emender/.venv/bin/python receipt assertions	passed	24 fixtures, 8 popped-payload failures, 3 decay-strength failures, zero never-written failures
+/home/erikg/emender/.venv/bin/python -m py_compile experiments/expressivity_tasks/x40_emender_lm/part11_support_gate.py	passed	Probe parses
+git diff --check	failed	Unrelated existing report trailing blank lines; left untouched
+git diff --cached --check	passed	Part11 files only; initial error-log EOF blank lines normalized
