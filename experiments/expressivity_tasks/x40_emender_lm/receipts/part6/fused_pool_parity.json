@@ -1,0 +1,39 @@
+{
+  "status": "passed",
+  "physical_gpu": "1",
+  "scope": "Integer-only union/index launch fusion; native reverse arithmetic and four-warp layout unchanged; measured max sizing and host synchronization retained.",
+  "sources": {
+    "part6_pool_fusion.py": "8780991e13a03fd9262ff23c73458fecb8dced4374026e14daca4b48342b548a"
+  },
+  "integer_components_equal": true,
+  "policies": [
+    {
+      "head": 0,
+      "status": "passed",
+      "batch": 64,
+      "context": 512
+    },
+    {
+      "head": 1,
+      "status": "passed",
+      "batch": 64,
+      "context": 512
+    },
+    {
+      "head": 2,
+      "status": "passed",
+      "batch": 64,
+      "context": 512
+    },
+    {
+      "head": 3,
+      "status": "passed",
+      "batch": 64,
+      "context": 512
+    }
+  ],
+  "evidence_tolerance": "rtol2e-5 atol2e-6",
+  "pressure_gate": true,
+  "operations": "bitwise values/state/trace/gradients versus X31 with independently computed beta; pressure included",
+  "original_pool_restored": true
+}

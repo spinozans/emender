@@ -1,0 +1,17 @@
+gpu_lease: granted GPUs: 1 (pid 1843630)
+X40 physical card 1
+150M_pure_B64_T512 0 12.326592642813921
+150M_pure_B64_T512 1 9.527452639304101
+Traceback (most recent call last):
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/scale_surface.py", line 94, in main
+    loss.backward();torch.nn.utils.clip_grad_norm_(model.parameters(),1.,error_if_nonfinite=True);opt.step();torch.cuda.synchronize()
+    ^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_tensor.py", line 625, in backward
+    torch.autograd.backward(
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/__init__.py", line 354, in backward
+    _engine_run_backward(
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/graph.py", line 841, in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 4.00 GiB. GPU 0 has a total capacity of 47.38 GiB of which 1.14 GiB is free. Including non-PyTorch memory, this process has 46.23 GiB memory in use. Of the allocated memory 30.84 GiB is allocated by PyTorch, and 14.88 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
+

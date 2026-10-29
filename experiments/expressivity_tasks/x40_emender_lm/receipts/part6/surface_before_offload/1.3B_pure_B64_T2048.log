@@ -1,0 +1,45 @@
+gpu_lease: granted GPUs: 1 (pid 2043541)
+X40 physical card 1
+1.3B_pure_B64_T2048 0 71.5043953768909 10.572327136993408 192
+1.3B_pure_B64_T2048 1 71.25157013582066 10.128117561340332 192
+1.3B_pure_B64_T2048 2 71.5129320602864 9.299165725708008 192
+1.3B_pure_B64_T2048 3 71.5359385930933 9.276771545410156 192
+1.3B_pure_B64_T2048 4 71.92204788513482 9.017112255096436 192
+1.3B_pure_B64_T2048 5 71.9870007680729 8.80868911743164 192
+1.3B_pure_B64_T2048 6 71.80250978376716 8.64323616027832 192
+1.3B_pure_B64_T2048 7 71.61162896081805 8.45124864578247 192
+1.3B_pure_B64_T2048 8 71.8239289750345 8.046810150146484 192
+1.3B_pure_B64_T2048 9 71.9744314411655 7.93099570274353 192
+1.3B_pure_B64_T2048 10 72.16335677960888 7.710877418518066 192
+1.3B_pure_B64_T2048 11 72.094813242089 7.44670033454895 192
+1.3B_pure_B64_T2048 12 72.03229457186535 7.159950017929077 192
+1.3B_pure_B64_T2048 13 72.19163658004254 6.985058307647705 192
+1.3B_pure_B64_T2048 14 72.0619301260449 6.688948154449463 192
+1.3B_pure_B64_T2048 15 72.1944107748568 6.402198791503906 192
+1.3B_pure_B64_T2048 16 71.93833247805014 6.191730737686157 192
+1.3B_pure_B64_T2048 17 71.98915136186406 5.825999736785889 192
+1.3B_pure_B64_T2048 18 72.09823263669387 5.611847400665283 192
+1.3B_pure_B64_T2048 19 72.01342489616945 5.3586225509643555 192
+Traceback (most recent call last):
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/part6_surface.py", line 104, in main
+    with packed_journals(journal_records) if a.packed else nullcontext(), patch.object(backward.Replay,'backward',staticmethod(replay)):loss.backward()
+                                                                                                                                        ^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_tensor.py", line 625, in backward
+    torch.autograd.backward(
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/__init__.py", line 354, in backward
+    _engine_run_backward(
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/graph.py", line 841, in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/function.py", line 315, in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/utils/checkpoint.py", line 319, in backward
+    torch.autograd.backward(outputs_with_grad, args_with_grad)
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/__init__.py", line 354, in backward
+    _engine_run_backward(
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/graph.py", line 841, in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 1.40 GiB. GPU 0 has a total capacity of 47.38 GiB of which 978.69 MiB is free. Including non-PyTorch memory, this process has 46.42 GiB memory in use. Of the allocated memory 39.60 GiB is allocated by PyTorch, and 6.31 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
+

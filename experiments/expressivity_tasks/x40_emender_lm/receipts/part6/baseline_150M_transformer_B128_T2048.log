@@ -1,0 +1,8 @@
+gpu_lease: granted GPUs: 1 (pid 2270066)
+X40 physical card 1
+Traceback (most recent call last):
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/scale_surface.py", line 92, in main
+    logits=model(ids[:,:-1]);loss=F.cross_entropy(logits.flatten(0,1).float(),ids[:,1:].flatten())
+                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 32.00 GiB. GPU 0 has a total capacity of 47.38 GiB of which 18.52 GiB is free. Including non-PyTorch memory, this process has 28.85 GiB memory in use. Of the allocated memory 27.52 GiB is allocated by PyTorch, and 858.53 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
+

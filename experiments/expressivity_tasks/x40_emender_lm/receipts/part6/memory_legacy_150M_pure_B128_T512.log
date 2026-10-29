@@ -1,0 +1,60 @@
+gpu_lease: granted GPUs: 1 (pid 2276729)
+X40 physical card 1
+150M_pure_B128_T512 0 4.322559124324471 10.57405948638916 48
+Traceback (most recent call last):
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/part6_surface.py", line 114, in main
+    hidden,gates=features(model,tokens[:,:-1],a.arm,not a.no_checkpoint,a.legacy_checkpoint,a.offload_checkpoint)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/part6_surface.py", line 32, in features
+    x=checkpoint(block,x,ids,use_reentrant=False);gate=block.cell.gate_mean
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_compile.py", line 53, in inner
+    return disable_fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py", line 1044, in _fn
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/utils/checkpoint.py", line 503, in checkpoint
+    ret = function(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/scale_surface.py", line 38, in forward
+    read=self.cell(self.input(self.norm1(x)).float(),ids).flatten(2)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/model.py", line 98, in forward
+    (r,state,trace,pressure),e,err,sig=scan(*inputs[:6],cfg,*inputs[6:])
+                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/model.py", line 41, in scan
+    result=autograd_scan((k,q,v,beta,pop,append),None,cfg,append_coef)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/backward.py", line 596, in autograd_scan
+    out,keys,values,strength=Replay.apply(cfg,tokens,history,saved,*inputs,coef,
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/function.py", line 581, in apply
+    return super().apply(*args, **kwargs)  # type: ignore[misc]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/backward.py", line 459, in forward
+    out,final,trace,pressure=tape_scan(k,q,v,beta,pop,logit,initial,cfg,coef,
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/cell_fused.py", line 21, in tape_scan
+    return persistent_scan(k,q,v,beta,pop,logit,state,cfg,coef,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/forward.py", line 120, in tape_scan
+    all_journal = (AllFieldJournal.allocate(b*h,t,cfg.slots,dk,cfg.value_dim,
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x31_tape_cell_fused/all_field_journal.py", line 158, in allocate
+    torch.empty(stores,capacity,device=device,dtype=torch.int32),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 132.00 MiB. GPU 0 has a total capacity of 47.38 GiB of which 64.69 MiB is free. Including non-PyTorch memory, this process has 47.31 GiB memory in use. Of the allocated memory 46.49 GiB is allocated by PyTorch, and 317.97 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
+

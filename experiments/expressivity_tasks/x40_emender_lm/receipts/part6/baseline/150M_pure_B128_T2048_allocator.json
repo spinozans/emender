@@ -1,0 +1,1582 @@
+{
+  "devices": [
+    {
+      "device": 0,
+      "peak_allocated_bytes_from_history": 48702573144,
+      "categories": {
+        "weights": 1003619616,
+        "activations_and_other": 4512551720,
+        "native_stores": 864231424,
+        "native_trace_and_forward_scratch": 2929252880,
+        "journals": 39392917504
+      },
+      "oom_events": [
+        {
+          "action": "oom",
+          "device_free": 336265216,
+          "size": 553648128,
+          "stream": 0,
+          "time_us": 1793238645124809,
+          "compile_context": "N/A",
+          "logical_allocated_bytes": 48702573144,
+          "logical_categories": {
+            "weights": 1003619616,
+            "activations_and_other": 4512551720,
+            "native_stores": 864231424,
+            "native_trace_and_forward_scratch": 2929252880,
+            "journals": 39392917504
+          },
+          "physical_categories": {
+            "weights": 1003619616,
+            "activations_and_other": 4512551720,
+            "native_stores": 864231424,
+            "native_trace_and_forward_scratch": 2929252880,
+            "journals": 39392917504
+          },
+          "pending_free_bytes": 0,
+          "dominant_logical_term": "journals",
+          "reconstructed_reserved_bytes": 49998200832,
+          "reconstructed_physical_allocated_bytes": 48702573144,
+          "reconstructed_inactive_bytes": 1295627688,
+          "largest_reconstructed_inactive_block_bytes": 461373440,
+          "reconstruction_scope": "Default allocator segment_alloc/free and alloc/free_completed events; not valid for expandable segment_map traces."
+        }
+      ],
+      "largest_peak_allocations": [
+        {
+          "bytes": 1157627904,
+          "category": "journals",
+          "frames": [
+            {
+              "name": "allocate",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x31_tape_cell_fused/all_field_journal.py",
+              "line": 156
+            },
+            {
+              "name": "tape_scan",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/forward.py",
+              "line": 120
+            },
+            {
+              "name": "tape_scan",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/cell_fused.py",
+              "line": 21
+            },
+            {
+              "name": "forward",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/backward.py",
+              "line": 459
+            },
+            {
+              "name": "apply",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/function.py",
+              "line": 581
+            },
+            {
+              "name": "autograd_scan",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/backward.py",
+              "line": 596
+            },
+            {
+              "name": "scan",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/model.py",
+              "line": 41
+            },
+            {
+              "name": "forward",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/model.py",
+              "line": 98
+            },
+            {
+              "name": "_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1786
+            },
+            {
+              "name": "_wrapped_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1775
+            },
+            {
+              "name": "forward",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/scale_surface.py",
+              "line": 38
+            },
+            {
+              "name": "_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1786
+            },
+            {
+              "name": "_wrapped_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1775
+            },
+            {
+              "name": "checkpoint",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/utils/checkpoint.py",
+              "line": 503
+            },
+            {
+              "name": "_fn",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py",
+              "line": 1044
+            },
+            {
+              "name": "inner",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_compile.py",
+              "line": 53
+            },
+            {
+              "name": "forward",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/scale_surface.py",
+              "line": 57
+            },
+            {
+              "name": "_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1786
+            },
+            {
+              "name": "_wrapped_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1775
+            },
+            {
+              "name": "main",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/scale_surface.py",
+              "line": 92
+            },
+            {
+              "name": "main",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/part6_baseline.py",
+              "line": 22
+            },
+            {
+              "name": "<module>",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/part6_baseline.py",
+              "line": 36
+            },
+            {
+              "name": "_run_code",
+              "filename": "<frozen runpy>",
+              "line": 88
+            },
+            {
+              "name": "_run_module_as_main",
+              "filename": "<frozen runpy>",
+              "line": 198
+            }
+          ]
+        },
+        {
+          "bytes": 1157627904,
+          "category": "journals",
+          "frames": [
+            {
+              "name": "allocate",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x31_tape_cell_fused/all_field_journal.py",
+              "line": 157
+            },
+            {
+              "name": "tape_scan",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/forward.py",
+              "line": 120
+            },
+            {
+              "name": "tape_scan",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/cell_fused.py",
+              "line": 21
+            },
+            {
+              "name": "forward",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/backward.py",
+              "line": 459
+            },
+            {
+              "name": "apply",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/function.py",
+              "line": 581
+            },
+            {
+              "name": "autograd_scan",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/backward.py",
+              "line": 596
+            },
+            {
+              "name": "scan",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/model.py",
+              "line": 41
+            },
+            {
+              "name": "forward",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/model.py",
+              "line": 98
+            },
+            {
+              "name": "_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1786
+            },
+            {
+              "name": "_wrapped_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1775
+            },
+            {
+              "name": "forward",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/scale_surface.py",
+              "line": 38
+            },
+            {
+              "name": "_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1786
+            },
+            {
+              "name": "_wrapped_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1775
+            },
+            {
+              "name": "checkpoint",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/utils/checkpoint.py",
+              "line": 503
+            },
+            {
+              "name": "_fn",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py",
+              "line": 1044
+            },
+            {
+              "name": "inner",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_compile.py",
+              "line": 53
+            },
+            {
+              "name": "forward",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/scale_surface.py",
+              "line": 57
+            },
+            {
+              "name": "_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1786
+            },
+            {
+              "name": "_wrapped_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1775
+            },
+            {
+              "name": "main",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/scale_surface.py",
+              "line": 92
+            },
+            {
+              "name": "main",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/part6_baseline.py",
+              "line": 22
+            },
+            {
+              "name": "<module>",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/part6_baseline.py",
+              "line": 36
+            },
+            {
+              "name": "_run_code",
+              "filename": "<frozen runpy>",
+              "line": 88
+            },
+            {
+              "name": "_run_module_as_main",
+              "filename": "<frozen runpy>",
+              "line": 198
+            }
+          ]
+        },
+        {
+          "bytes": 1157627904,
+          "category": "journals",
+          "frames": [
+            {
+              "name": "allocate",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x31_tape_cell_fused/all_field_journal.py",
+              "line": 156
+            },
+            {
+              "name": "tape_scan",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/forward.py",
+              "line": 120
+            },
+            {
+              "name": "tape_scan",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/cell_fused.py",
+              "line": 21
+            },
+            {
+              "name": "forward",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/backward.py",
+              "line": 459
+            },
+            {
+              "name": "apply",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/function.py",
+              "line": 581
+            },
+            {
+              "name": "autograd_scan",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/backward.py",
+              "line": 596
+            },
+            {
+              "name": "scan",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/model.py",
+              "line": 41
+            },
+            {
+              "name": "forward",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/model.py",
+              "line": 98
+            },
+            {
+              "name": "_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1786
+            },
+            {
+              "name": "_wrapped_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1775
+            },
+            {
+              "name": "forward",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/scale_surface.py",
+              "line": 38
+            },
+            {
+              "name": "_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1786
+            },
+            {
+              "name": "_wrapped_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1775
+            },
+            {
+              "name": "checkpoint",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/utils/checkpoint.py",
+              "line": 503
+            },
+            {
+              "name": "_fn",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py",
+              "line": 1044
+            },
+            {
+              "name": "inner",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_compile.py",
+              "line": 53
+            },
+            {
+              "name": "forward",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/scale_surface.py",
+              "line": 57
+            },
+            {
+              "name": "_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1786
+            },
+            {
+              "name": "_wrapped_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1775
+            },
+            {
+              "name": "main",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/scale_surface.py",
+              "line": 92
+            },
+            {
+              "name": "main",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/part6_baseline.py",
+              "line": 22
+            },
+            {
+              "name": "<module>",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/part6_baseline.py",
+              "line": 36
+            },
+            {
+              "name": "_run_code",
+              "filename": "<frozen runpy>",
+              "line": 88
+            },
+            {
+              "name": "_run_module_as_main",
+              "filename": "<frozen runpy>",
+              "line": 198
+            }
+          ]
+        },
+        {
+          "bytes": 1157627904,
+          "category": "journals",
+          "frames": [
+            {
+              "name": "allocate",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x31_tape_cell_fused/all_field_journal.py",
+              "line": 157
+            },
+            {
+              "name": "tape_scan",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/forward.py",
+              "line": 120
+            },
+            {
+              "name": "tape_scan",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/cell_fused.py",
+              "line": 21
+            },
+            {
+              "name": "forward",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/backward.py",
+              "line": 459
+            },
+            {
+              "name": "apply",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/function.py",
+              "line": 581
+            },
+            {
+              "name": "autograd_scan",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/backward.py",
+              "line": 596
+            },
+            {
+              "name": "scan",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/model.py",
+              "line": 41
+            },
+            {
+              "name": "forward",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/model.py",
+              "line": 98
+            },
+            {
+              "name": "_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1786
+            },
+            {
+              "name": "_wrapped_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1775
+            },
+            {
+              "name": "forward",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/scale_surface.py",
+              "line": 38
+            },
+            {
+              "name": "_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1786
+            },
+            {
+              "name": "_wrapped_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1775
+            },
+            {
+              "name": "checkpoint",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/utils/checkpoint.py",
+              "line": 503
+            },
+            {
+              "name": "_fn",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py",
+              "line": 1044
+            },
+            {
+              "name": "inner",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_compile.py",
+              "line": 53
+            },
+            {
+              "name": "forward",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/scale_surface.py",
+              "line": 57
+            },
+            {
+              "name": "_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1786
+            },
+            {
+              "name": "_wrapped_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1775
+            },
+            {
+              "name": "main",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/scale_surface.py",
+              "line": 92
+            },
+            {
+              "name": "main",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/part6_baseline.py",
+              "line": 22
+            },
+            {
+              "name": "<module>",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/part6_baseline.py",
+              "line": 36
+            },
+            {
+              "name": "_run_code",
+              "filename": "<frozen runpy>",
+              "line": 88
+            },
+            {
+              "name": "_run_module_as_main",
+              "filename": "<frozen runpy>",
+              "line": 198
+            }
+          ]
+        },
+        {
+          "bytes": 1157627904,
+          "category": "journals",
+          "frames": [
+            {
+              "name": "allocate",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x31_tape_cell_fused/all_field_journal.py",
+              "line": 156
+            },
+            {
+              "name": "tape_scan",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/forward.py",
+              "line": 120
+            },
+            {
+              "name": "tape_scan",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/cell_fused.py",
+              "line": 21
+            },
+            {
+              "name": "forward",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/backward.py",
+              "line": 459
+            },
+            {
+              "name": "apply",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/function.py",
+              "line": 581
+            },
+            {
+              "name": "autograd_scan",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/backward.py",
+              "line": 596
+            },
+            {
+              "name": "scan",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/model.py",
+              "line": 41
+            },
+            {
+              "name": "forward",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/model.py",
+              "line": 98
+            },
+            {
+              "name": "_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1786
+            },
+            {
+              "name": "_wrapped_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1775
+            },
+            {
+              "name": "forward",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/scale_surface.py",
+              "line": 38
+            },
+            {
+              "name": "_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1786
+            },
+            {
+              "name": "_wrapped_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1775
+            },
+            {
+              "name": "checkpoint",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/utils/checkpoint.py",
+              "line": 503
+            },
+            {
+              "name": "_fn",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py",
+              "line": 1044
+            },
+            {
+              "name": "inner",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_compile.py",
+              "line": 53
+            },
+            {
+              "name": "forward",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/scale_surface.py",
+              "line": 57
+            },
+            {
+              "name": "_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1786
+            },
+            {
+              "name": "_wrapped_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1775
+            },
+            {
+              "name": "main",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/scale_surface.py",
+              "line": 92
+            },
+            {
+              "name": "main",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/part6_baseline.py",
+              "line": 22
+            },
+            {
+              "name": "<module>",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/part6_baseline.py",
+              "line": 36
+            },
+            {
+              "name": "_run_code",
+              "filename": "<frozen runpy>",
+              "line": 88
+            },
+            {
+              "name": "_run_module_as_main",
+              "filename": "<frozen runpy>",
+              "line": 198
+            }
+          ]
+        },
+        {
+          "bytes": 1157627904,
+          "category": "journals",
+          "frames": [
+            {
+              "name": "allocate",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x31_tape_cell_fused/all_field_journal.py",
+              "line": 157
+            },
+            {
+              "name": "tape_scan",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/forward.py",
+              "line": 120
+            },
+            {
+              "name": "tape_scan",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/cell_fused.py",
+              "line": 21
+            },
+            {
+              "name": "forward",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/backward.py",
+              "line": 459
+            },
+            {
+              "name": "apply",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/function.py",
+              "line": 581
+            },
+            {
+              "name": "autograd_scan",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/backward.py",
+              "line": 596
+            },
+            {
+              "name": "scan",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/model.py",
+              "line": 41
+            },
+            {
+              "name": "forward",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/model.py",
+              "line": 98
+            },
+            {
+              "name": "_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1786
+            },
+            {
+              "name": "_wrapped_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1775
+            },
+            {
+              "name": "forward",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/scale_surface.py",
+              "line": 38
+            },
+            {
+              "name": "_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1786
+            },
+            {
+              "name": "_wrapped_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1775
+            },
+            {
+              "name": "checkpoint",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/utils/checkpoint.py",
+              "line": 503
+            },
+            {
+              "name": "_fn",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py",
+              "line": 1044
+            },
+            {
+              "name": "inner",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_compile.py",
+              "line": 53
+            },
+            {
+              "name": "forward",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/scale_surface.py",
+              "line": 57
+            },
+            {
+              "name": "_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1786
+            },
+            {
+              "name": "_wrapped_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1775
+            },
+            {
+              "name": "main",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/scale_surface.py",
+              "line": 92
+            },
+            {
+              "name": "main",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/part6_baseline.py",
+              "line": 22
+            },
+            {
+              "name": "<module>",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/part6_baseline.py",
+              "line": 36
+            },
+            {
+              "name": "_run_code",
+              "filename": "<frozen runpy>",
+              "line": 88
+            },
+            {
+              "name": "_run_module_as_main",
+              "filename": "<frozen runpy>",
+              "line": 198
+            }
+          ]
+        },
+        {
+          "bytes": 1107296256,
+          "category": "journals",
+          "frames": [
+            {
+              "name": "allocate",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x31_tape_cell_fused/all_field_journal.py",
+              "line": 156
+            },
+            {
+              "name": "tape_scan",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/forward.py",
+              "line": 120
+            },
+            {
+              "name": "tape_scan",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/cell_fused.py",
+              "line": 21
+            },
+            {
+              "name": "forward",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/backward.py",
+              "line": 459
+            },
+            {
+              "name": "apply",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/function.py",
+              "line": 581
+            },
+            {
+              "name": "autograd_scan",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/backward.py",
+              "line": 596
+            },
+            {
+              "name": "scan",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/model.py",
+              "line": 41
+            },
+            {
+              "name": "forward",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/model.py",
+              "line": 98
+            },
+            {
+              "name": "_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1786
+            },
+            {
+              "name": "_wrapped_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1775
+            },
+            {
+              "name": "forward",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/scale_surface.py",
+              "line": 38
+            },
+            {
+              "name": "_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1786
+            },
+            {
+              "name": "_wrapped_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1775
+            },
+            {
+              "name": "checkpoint",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/utils/checkpoint.py",
+              "line": 503
+            },
+            {
+              "name": "_fn",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py",
+              "line": 1044
+            },
+            {
+              "name": "inner",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_compile.py",
+              "line": 53
+            },
+            {
+              "name": "forward",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/scale_surface.py",
+              "line": 57
+            },
+            {
+              "name": "_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1786
+            },
+            {
+              "name": "_wrapped_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1775
+            },
+            {
+              "name": "main",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/scale_surface.py",
+              "line": 92
+            },
+            {
+              "name": "main",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/part6_baseline.py",
+              "line": 22
+            },
+            {
+              "name": "<module>",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/part6_baseline.py",
+              "line": 36
+            },
+            {
+              "name": "_run_code",
+              "filename": "<frozen runpy>",
+              "line": 88
+            },
+            {
+              "name": "_run_module_as_main",
+              "filename": "<frozen runpy>",
+              "line": 198
+            }
+          ]
+        },
+        {
+          "bytes": 1107296256,
+          "category": "journals",
+          "frames": [
+            {
+              "name": "allocate",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x31_tape_cell_fused/all_field_journal.py",
+              "line": 157
+            },
+            {
+              "name": "tape_scan",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/forward.py",
+              "line": 120
+            },
+            {
+              "name": "tape_scan",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/cell_fused.py",
+              "line": 21
+            },
+            {
+              "name": "forward",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/backward.py",
+              "line": 459
+            },
+            {
+              "name": "apply",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/function.py",
+              "line": 581
+            },
+            {
+              "name": "autograd_scan",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/backward.py",
+              "line": 596
+            },
+            {
+              "name": "scan",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/model.py",
+              "line": 41
+            },
+            {
+              "name": "forward",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/model.py",
+              "line": 98
+            },
+            {
+              "name": "_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1786
+            },
+            {
+              "name": "_wrapped_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1775
+            },
+            {
+              "name": "forward",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/scale_surface.py",
+              "line": 38
+            },
+            {
+              "name": "_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1786
+            },
+            {
+              "name": "_wrapped_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1775
+            },
+            {
+              "name": "checkpoint",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/utils/checkpoint.py",
+              "line": 503
+            },
+            {
+              "name": "_fn",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py",
+              "line": 1044
+            },
+            {
+              "name": "inner",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_compile.py",
+              "line": 53
+            },
+            {
+              "name": "forward",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/scale_surface.py",
+              "line": 57
+            },
+            {
+              "name": "_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1786
+            },
+            {
+              "name": "_wrapped_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1775
+            },
+            {
+              "name": "main",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/scale_surface.py",
+              "line": 92
+            },
+            {
+              "name": "main",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/part6_baseline.py",
+              "line": 22
+            },
+            {
+              "name": "<module>",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/part6_baseline.py",
+              "line": 36
+            },
+            {
+              "name": "_run_code",
+              "filename": "<frozen runpy>",
+              "line": 88
+            },
+            {
+              "name": "_run_module_as_main",
+              "filename": "<frozen runpy>",
+              "line": 198
+            }
+          ]
+        },
+        {
+          "bytes": 1107296256,
+          "category": "journals",
+          "frames": [
+            {
+              "name": "allocate",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x31_tape_cell_fused/all_field_journal.py",
+              "line": 156
+            },
+            {
+              "name": "tape_scan",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/forward.py",
+              "line": 120
+            },
+            {
+              "name": "tape_scan",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/cell_fused.py",
+              "line": 21
+            },
+            {
+              "name": "forward",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/backward.py",
+              "line": 459
+            },
+            {
+              "name": "apply",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/function.py",
+              "line": 581
+            },
+            {
+              "name": "autograd_scan",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/backward.py",
+              "line": 596
+            },
+            {
+              "name": "scan",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/model.py",
+              "line": 41
+            },
+            {
+              "name": "forward",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/model.py",
+              "line": 98
+            },
+            {
+              "name": "_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1786
+            },
+            {
+              "name": "_wrapped_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1775
+            },
+            {
+              "name": "forward",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/scale_surface.py",
+              "line": 38
+            },
+            {
+              "name": "_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1786
+            },
+            {
+              "name": "_wrapped_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1775
+            },
+            {
+              "name": "checkpoint",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/utils/checkpoint.py",
+              "line": 503
+            },
+            {
+              "name": "_fn",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py",
+              "line": 1044
+            },
+            {
+              "name": "inner",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_compile.py",
+              "line": 53
+            },
+            {
+              "name": "forward",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/scale_surface.py",
+              "line": 57
+            },
+            {
+              "name": "_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1786
+            },
+            {
+              "name": "_wrapped_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1775
+            },
+            {
+              "name": "main",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/scale_surface.py",
+              "line": 92
+            },
+            {
+              "name": "main",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/part6_baseline.py",
+              "line": 22
+            },
+            {
+              "name": "<module>",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/part6_baseline.py",
+              "line": 36
+            },
+            {
+              "name": "_run_code",
+              "filename": "<frozen runpy>",
+              "line": 88
+            },
+            {
+              "name": "_run_module_as_main",
+              "filename": "<frozen runpy>",
+              "line": 198
+            }
+          ]
+        },
+        {
+          "bytes": 1107296256,
+          "category": "journals",
+          "frames": [
+            {
+              "name": "allocate",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x31_tape_cell_fused/all_field_journal.py",
+              "line": 157
+            },
+            {
+              "name": "tape_scan",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/forward.py",
+              "line": 120
+            },
+            {
+              "name": "tape_scan",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/cell_fused.py",
+              "line": 21
+            },
+            {
+              "name": "forward",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/backward.py",
+              "line": 459
+            },
+            {
+              "name": "apply",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/function.py",
+              "line": 581
+            },
+            {
+              "name": "autograd_scan",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/backward.py",
+              "line": 596
+            },
+            {
+              "name": "scan",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/model.py",
+              "line": 41
+            },
+            {
+              "name": "forward",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/model.py",
+              "line": 98
+            },
+            {
+              "name": "_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1786
+            },
+            {
+              "name": "_wrapped_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1775
+            },
+            {
+              "name": "forward",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/scale_surface.py",
+              "line": 38
+            },
+            {
+              "name": "_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1786
+            },
+            {
+              "name": "_wrapped_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1775
+            },
+            {
+              "name": "checkpoint",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/utils/checkpoint.py",
+              "line": 503
+            },
+            {
+              "name": "_fn",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py",
+              "line": 1044
+            },
+            {
+              "name": "inner",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_compile.py",
+              "line": 53
+            },
+            {
+              "name": "forward",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/scale_surface.py",
+              "line": 57
+            },
+            {
+              "name": "_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1786
+            },
+            {
+              "name": "_wrapped_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1775
+            },
+            {
+              "name": "main",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/scale_surface.py",
+              "line": 92
+            },
+            {
+              "name": "main",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/part6_baseline.py",
+              "line": 22
+            },
+            {
+              "name": "<module>",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/part6_baseline.py",
+              "line": 36
+            },
+            {
+              "name": "_run_code",
+              "filename": "<frozen runpy>",
+              "line": 88
+            },
+            {
+              "name": "_run_module_as_main",
+              "filename": "<frozen runpy>",
+              "line": 198
+            }
+          ]
+        },
+        {
+          "bytes": 1107296256,
+          "category": "journals",
+          "frames": [
+            {
+              "name": "allocate",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x31_tape_cell_fused/all_field_journal.py",
+              "line": 156
+            },
+            {
+              "name": "tape_scan",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/forward.py",
+              "line": 120
+            },
+            {
+              "name": "tape_scan",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/cell_fused.py",
+              "line": 21
+            },
+            {
+              "name": "forward",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/backward.py",
+              "line": 459
+            },
+            {
+              "name": "apply",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/function.py",
+              "line": 581
+            },
+            {
+              "name": "autograd_scan",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/backward.py",
+              "line": 596
+            },
+            {
+              "name": "scan",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/model.py",
+              "line": 41
+            },
+            {
+              "name": "forward",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/model.py",
+              "line": 98
+            },
+            {
+              "name": "_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1786
+            },
+            {
+              "name": "_wrapped_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1775
+            },
+            {
+              "name": "forward",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/scale_surface.py",
+              "line": 38
+            },
+            {
+              "name": "_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1786
+            },
+            {
+              "name": "_wrapped_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1775
+            },
+            {
+              "name": "checkpoint",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/utils/checkpoint.py",
+              "line": 503
+            },
+            {
+              "name": "_fn",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py",
+              "line": 1044
+            },
+            {
+              "name": "inner",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_compile.py",
+              "line": 53
+            },
+            {
+              "name": "forward",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/scale_surface.py",
+              "line": 57
+            },
+            {
+              "name": "_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1786
+            },
+            {
+              "name": "_wrapped_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1775
+            },
+            {
+              "name": "main",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/scale_surface.py",
+              "line": 92
+            },
+            {
+              "name": "main",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/part6_baseline.py",
+              "line": 22
+            },
+            {
+              "name": "<module>",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/part6_baseline.py",
+              "line": 36
+            },
+            {
+              "name": "_run_code",
+              "filename": "<frozen runpy>",
+              "line": 88
+            },
+            {
+              "name": "_run_module_as_main",
+              "filename": "<frozen runpy>",
+              "line": 198
+            }
+          ]
+        },
+        {
+          "bytes": 1107296256,
+          "category": "journals",
+          "frames": [
+            {
+              "name": "allocate",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x31_tape_cell_fused/all_field_journal.py",
+              "line": 157
+            },
+            {
+              "name": "tape_scan",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/forward.py",
+              "line": 120
+            },
+            {
+              "name": "tape_scan",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/cell_fused.py",
+              "line": 21
+            },
+            {
+              "name": "forward",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/backward.py",
+              "line": 459
+            },
+            {
+              "name": "apply",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/function.py",
+              "line": 581
+            },
+            {
+              "name": "autograd_scan",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/backward.py",
+              "line": 596
+            },
+            {
+              "name": "scan",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/model.py",
+              "line": 41
+            },
+            {
+              "name": "forward",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/model.py",
+              "line": 98
+            },
+            {
+              "name": "_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1786
+            },
+            {
+              "name": "_wrapped_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1775
+            },
+            {
+              "name": "forward",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/scale_surface.py",
+              "line": 38
+            },
+            {
+              "name": "_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1786
+            },
+            {
+              "name": "_wrapped_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1775
+            },
+            {
+              "name": "checkpoint",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/utils/checkpoint.py",
+              "line": 503
+            },
+            {
+              "name": "_fn",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py",
+              "line": 1044
+            },
+            {
+              "name": "inner",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_compile.py",
+              "line": 53
+            },
+            {
+              "name": "forward",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/scale_surface.py",
+              "line": 57
+            },
+            {
+              "name": "_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1786
+            },
+            {
+              "name": "_wrapped_call_impl",
+              "filename": "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py",
+              "line": 1775
+            },
+            {
+              "name": "main",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/scale_surface.py",
+              "line": 92
+            },
+            {
+              "name": "main",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/part6_baseline.py",
+              "line": 22
+            },
+            {
+              "name": "<module>",
+              "filename": "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/part6_baseline.py",
+              "line": 36
+            },
+            {
+              "name": "_run_code",
+              "filename": "<frozen runpy>",
+              "line": 88
+            },
+            {
+              "name": "_run_module_as_main",
+              "filename": "<frozen runpy>",
+              "line": 198
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "terminal_inactive_bytes": 23206808064,
+  "terminal_largest_inactive_block_bytes": 2575302656,
+  "scope": "Allocated-byte logical-lifetime high water reconstructed from alloc/free_requested history; trace sizes may include allocator rounding. Physical pending frees are retained separately in the OOM reconstruction. Categories use Python allocation stacks; activations_and_other is not a pure activation attribution. Inactive blocks are allocator slack, not an asserted fragmentation cause.",
+  "peak_allocated": 48710119424,
+  "peak_reserved": 49998200832,
+  "physical_gpu": "5",
+  "python": "/home/erikg/emender/.venv/bin/python",
+  "command": [
+    "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/part6_baseline.py",
+    "--scale",
+    "150M",
+    "--arm",
+    "pure",
+    "--context",
+    "2048",
+    "--batch",
+    "128",
+    "--steps",
+    "1"
+  ],
+  "analyzer_sha256": "5efd300ce6274d85852b946906cf5146f12a12dd7d4a46936516fc06388dc98b"
+}

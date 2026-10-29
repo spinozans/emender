@@ -1,0 +1,29 @@
+gpu_lease: granted GPUs: 1 (pid 2107148)
+X40 physical card 1
+1.3B_pure_B128_T2048 0 142.28171986481175 10.571205139160156 384
+1.3B_pure_B128_T2048 1 143.02306524617597 10.280351638793945 384
+1.3B_pure_B128_T2048 2 142.77512696105987 9.670908451080322 384
+1.3B_pure_B128_T2048 3 143.28002092288807 9.675652503967285 384
+Traceback (most recent call last):
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/part6_surface.py", line 104, in main
+    with packed_journals(journal_records) if a.packed else nullcontext(), patch.object(backward.Replay,'backward',staticmethod(replay)):loss.backward()
+                                                                                                                                        ^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_tensor.py", line 625, in backward
+    torch.autograd.backward(
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/__init__.py", line 354, in backward
+    _engine_run_backward(
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/graph.py", line 841, in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/function.py", line 315, in apply
+    return user_fn(self, *args)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/utils/checkpoint.py", line 319, in backward
+    torch.autograd.backward(outputs_with_grad, args_with_grad)
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/__init__.py", line 354, in backward
+    _engine_run_backward(
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/graph.py", line 841, in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 1.40 GiB. GPU 0 has a total capacity of 47.38 GiB of which 944.69 MiB is free. Including non-PyTorch memory, this process has 46.45 GiB memory in use. Of the allocated memory 39.60 GiB is allocated by PyTorch, and 6.34 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
+
