@@ -1,0 +1,113 @@
+{
+  "arm": "tape_B0x16",
+  "slots": 11776,
+  "freeze_manifest_hash": "0b674c71b5d9ed56174e8839766206af2fd0ba14b9bcf3b95dfd91ac24aa11b4",
+  "launch": {
+    "path": "experiments/expressivity_tasks/results_x28e_memory_head/receipts/tape_B0x16_seed0/launch.json",
+    "sha256": "be1fdf27d650e303cad18b0a6441af00c8225d945cfadd867db1501111e2ce7f",
+    "bytes": 673,
+    "payload": {
+      "arm": "tape_B0x16",
+      "registered_card": 2,
+      "card": 2,
+      "queue_rule": "registered card if free at launch, else next-free ascending physical index, actual card receipted per-arm; cards 0-6 only, card 7 excluded (live X25 run); atomic idle/unleased shell leases only, no preemption, no WorksGood",
+      "launched_at": 1792977179.9731681,
+      "commit": "df6338b5ba40da9cce3b9f1a2caee2a66e4b6893",
+      "freeze_manifest_hash": "0b674c71b5d9ed56174e8839766206af2fd0ba14b9bcf3b95dfd91ac24aa11b4",
+      "watcher": {
+        "pid": 3720714,
+        "starttime": "304316529",
+        "host": "lambda01"
+      },
+      "payload_sha256": "530818c5d7eb362272bbc4ea9f20d9e680be8632161e471b1d0060404cadc178"
+    },
+    "payload_hash_valid": true
+  },
+  "checkpoint": {
+    "path": "experiments/expressivity_tasks/results_x28e_memory_head/tape_B0x16_seed0/checkpoint.json",
+    "sha256": "48202b5bf1301ed9f0d0decb4d1708ceb272536c9817f54600db329aea618a12",
+    "bytes": 241,
+    "payload": {
+      "arm": "tape_B0x16",
+      "stage": "stage3",
+      "update": 9000,
+      "validation_metric": 0.98,
+      "selected_by": "validation-only; tie-break latest-best",
+      "payload_sha256": "1d4cb041a4b3c33b9928a1202945f506d3e6ead1387c8b29ef1dbaa69ecdb7fe"
+    },
+    "payload_hash_valid": true
+  },
+  "last_training_record": {
+    "stage": "stage3",
+    "update": 30000,
+    "validation_balanced_accuracy": 0.892
+  },
+  "training_source": {
+    "path": "experiments/expressivity_tasks/results_x28e_memory_head/tape_B0x16_seed0/training.jsonl",
+    "sha256": "511812eb134c3a05ca4088911c1341d337f5f4be7c1a453a2d596ed4a08c335c",
+    "bytes": 7597
+  },
+  "guard": {
+    "path": "experiments/expressivity_tasks/results_x28e_memory_head/receipts/tape_B0x16_seed0/guard.json",
+    "sha256": "f3b1d7ce015f3e8186891c86a740ba3f03e627c9ed2b041bb6e9daeecf1e7163",
+    "bytes": 1201,
+    "payload": {
+      "free_bytes": 428719493120,
+      "run_bytes": 1629581,
+      "wall_seconds": 309467.7458086014,
+      "arm": "tape_B0x16",
+      "at": 1793286647.7235126,
+      "decision": "infrastructure censoring (right-censored, never a scientific verdict); TERM then KILL own process group after 30s on an independent schedule",
+      "term_sent_at": 1793286647.834411,
+      "term_mode": "killpg TERM (identity-verified leader)",
+      "group_members": [
+        {
+          "pid": 3722199,
+          "starttime": "304316817"
+        },
+        {
+          "pid": 3722487,
+          "starttime": "304316849"
+        },
+        {
+          "pid": 4092743,
+          "starttime": "335263160"
+        }
+      ],
+      "kill_grace_seconds": 30,
+      "escalated_at": 1793286677.9483762,
+      "escalation_kills": [
+        {
+          "pid": 3722199,
+          "starttime": "304316817",
+          "basis": "recorded owned-group member (starttime verified)",
+          "signal": "SIGKILL"
+        },
+        {
+          "pid": 3722199,
+          "starttime": "304316817",
+          "basis": "identity-verified leader: killpg SIGKILL",
+          "signal": "SIGKILL"
+        }
+      ],
+      "escalation_note": "scheduled independently of the poll cycle (30s after TERM; F9)",
+      "payload_sha256": "92d25539aa05b71d5a20a739ad69ea4585ebf006d581f978109e4705b4162134"
+    },
+    "payload_hash_valid": true
+  },
+  "status": "infrastructure right-censored; disk policy gate fired correctly",
+  "gate": {
+    "source": "launcher.py:632-634",
+    "condition": "size > RUN_BYTES or wall > WALL_SECONDS or free < FREE_BYTES",
+    "fired_clause": "free < FREE_BYTES",
+    "free_bytes": 428719493120,
+    "FREE_BYTES": 429496729600,
+    "deficit_bytes": 777236480,
+    "run_bytes_clause": false,
+    "wall_seconds_clause": false,
+    "classification_source": "launcher.py:210-220; validated identity-bound guard => censored"
+  },
+  "resume_disposition": "Unavailable: launcher main only accepts --launch/--once/--terminal/--exit-code; watch only launches queued arms, and guard keeps this arm censored. Trainer has no resume CLI or optimizer-state reload. No receipts deleted or gate bypassed. Stage-2 impossibility is NOT established by this infrastructure censor.",
+  "eval_disposition": "u9000 metric 0.98 selected; final evaluation missing; unsupported launcher eval CLI (exit 2), not a scientific gate",
+  "payload_sha256": "d71aebc489b9d19f8b1d20d6e91bc764a777516c79b48dbbf1079e541dabb364"
+}

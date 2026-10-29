@@ -1,0 +1,198 @@
+{
+  "corners": [
+    {
+      "arm": "tape_B0",
+      "slots": 736,
+      "status": "complete; existing final evaluation",
+      "receipt": "61454ba27fb5e739c7124064a372e7181faddda752d73c7edac1a49f8b221b52"
+    },
+    {
+      "arm": "tape_B0x4",
+      "slots": 2944,
+      "status": "complete; existing final evaluation",
+      "receipt": "bb52b674182fa7a18f11c941ca81352b5d2ddc847619659a19a41f545255be4e"
+    },
+    {
+      "arm": "tape_B0x16",
+      "slots": 11776,
+      "status": "infrastructure right-censored; disk policy gate fired correctly",
+      "receipt": "e8195a51fe1ff62ad49004ad6c4e302cc1cd5cdc9c056bd1825092180de03a0c"
+    },
+    {
+      "arm": "tape_unbounded",
+      "slots": null,
+      "status": "infrastructure right-censored; disk policy gate fired correctly",
+      "receipt": "cfa8dfec78f0852f38f1344e934a277a6d96ef03037a78a4efc9821f825043d1"
+    },
+    {
+      "arm": "tape_appendonly",
+      "slots": null,
+      "status": "infrastructure right-censored; disk policy gate fired correctly",
+      "receipt": "985e7e2e86a22b543a6eab3924df269825fa80d5e582f770cc3840b1256a1660"
+    }
+  ],
+  "certification": "INCOMPLETE: only B0 and B0x4 have final evaluations among the five requested corners",
+  "watcher_terminal": {
+    "path": "experiments/expressivity_tasks/results_x28e_memory_head/receipts/watcher_terminal.json",
+    "sha256": "26c6d66b29ea535d33bdf937352831b8d1af8240caeac01499cb698b03a09cc2",
+    "bytes": 599,
+    "payload": {
+      "at": 1793286708.0610473,
+      "states": {
+        "tape_B0": "complete",
+        "tape_B0x4": "complete",
+        "tape_B0x16": "censored",
+        "tape_unbounded": "censored",
+        "tape_appendonly": "censored",
+        "gdn2_native": "complete",
+        "e97_native": "complete"
+      },
+      "free_bytes": 426224160768,
+      "run_bytes": {
+        "tape_B0": 1890948,
+        "tape_B0x4": 1896116,
+        "tape_B0x16": 1629581,
+        "tape_unbounded": 1634730,
+        "tape_appendonly": 1634732,
+        "gdn2_native": 2294392,
+        "e97_native": 2321155
+      },
+      "payload_sha256": "67b1bb1af381a0d02810cf11e4ba0f91dc6b7740f0e1e4ceebffb904c2fa4d26"
+    },
+    "payload_hash_valid": true
+  },
+  "watcher_status": {
+    "path": "experiments/expressivity_tasks/results_x28e_memory_head/receipts/watcher_status.json",
+    "sha256": "26c6d66b29ea535d33bdf937352831b8d1af8240caeac01499cb698b03a09cc2",
+    "bytes": 599,
+    "payload": {
+      "at": 1793286708.0610473,
+      "states": {
+        "tape_B0": "complete",
+        "tape_B0x4": "complete",
+        "tape_B0x16": "censored",
+        "tape_unbounded": "censored",
+        "tape_appendonly": "censored",
+        "gdn2_native": "complete",
+        "e97_native": "complete"
+      },
+      "free_bytes": 426224160768,
+      "run_bytes": {
+        "tape_B0": 1890948,
+        "tape_B0x4": 1896116,
+        "tape_B0x16": 1629581,
+        "tape_unbounded": 1634730,
+        "tape_appendonly": 1634732,
+        "gdn2_native": 2294392,
+        "e97_native": 2321155
+      },
+      "payload_sha256": "67b1bb1af381a0d02810cf11e4ba0f91dc6b7740f0e1e4ceebffb904c2fa4d26"
+    },
+    "payload_hash_valid": true
+  },
+  "watcher_wiring": {
+    "path": "experiments/expressivity_tasks/results_x28e_memory_head/receipts/watcher_wiring.json",
+    "sha256": "2f3d7d6d1a039ce5884f108215c04d749d90f9d4169c3df6cca666a21fb0101c",
+    "bytes": 1287,
+    "payload": {
+      "watcher": {
+        "pid": 3720714,
+        "starttime": "304316529",
+        "host": "lambda01"
+      },
+      "freeze_manifest_hash": "0b674c71b5d9ed56174e8839766206af2fd0ba14b9bcf3b95dfd91ac24aa11b4",
+      "results_root": "/home/erikg/emender/experiments/expressivity_tasks/results_x28e_memory_head",
+      "status_path": "/home/erikg/emender/experiments/expressivity_tasks/results_x28e_memory_head/receipts/watcher_status.json",
+      "terminal_path": "/home/erikg/emender/experiments/expressivity_tasks/results_x28e_memory_head/receipts/watcher_terminal.json",
+      "poll_seconds": 60,
+      "kill_grace_seconds": 30,
+      "guard_escalation": "independent of the poll cycle: a timer fires 30s after TERM and KILLs any surviving owned-group process even if the worker identity vanished (F9)",
+      "receipt_hashing": "terminal/result/marker receipts carry payload_sha256 and are validated on read; a tampered receipt is error, never complete",
+      "supervisor_probe": [
+        "/home/erikg/emender/.venv/bin/python",
+        "/home/erikg/emender/experiments/expressivity_tasks/x28e_memory_head/launcher.py",
+        "--once"
+      ],
+      "native_arming": "supervisor-owned; this launcher claims only its independent resource guard and exposed wiring",
+      "payload_sha256": "ba2ceeffc8e388ef5993c267efba96b4c6e16f4e2ab6792c519a7a764138de42"
+    },
+    "payload_hash_valid": true
+  },
+  "watcher_polls": {
+    "path": "experiments/expressivity_tasks/results_x28e_memory_head/receipts/watcher_polls.jsonl",
+    "sha256": "41094e7c37da0dc75051f46ea41046661a072b80eb655c46697461ecd7abe929",
+    "bytes": 2232563
+  },
+  "last_two_polls": [
+    {
+      "at": 1793286648.0571501,
+      "states": {
+        "tape_B0": "complete",
+        "tape_B0x4": "complete",
+        "tape_B0x16": "running",
+        "tape_unbounded": "running",
+        "tape_appendonly": "running",
+        "gdn2_native": "complete",
+        "e97_native": "complete"
+      },
+      "free_bytes": 428719493120,
+      "run_bytes": {
+        "tape_B0": 1890948,
+        "tape_B0x4": 1896116,
+        "tape_B0x16": 1629581,
+        "tape_unbounded": 1634730,
+        "tape_appendonly": 1634732,
+        "gdn2_native": 2294392,
+        "e97_native": 2321155
+      }
+    },
+    {
+      "at": 1793286708.0610473,
+      "states": {
+        "tape_B0": "complete",
+        "tape_B0x4": "complete",
+        "tape_B0x16": "censored",
+        "tape_unbounded": "censored",
+        "tape_appendonly": "censored",
+        "gdn2_native": "complete",
+        "e97_native": "complete"
+      },
+      "free_bytes": 426224160768,
+      "run_bytes": {
+        "tape_B0": 1890948,
+        "tape_B0x4": 1896116,
+        "tape_B0x16": 1629581,
+        "tape_unbounded": 1634730,
+        "tape_appendonly": 1634732,
+        "gdn2_native": 2294392,
+        "e97_native": 2321155
+      }
+    }
+  ],
+  "launcher_stdout": {
+    "path": "/tmp/pi-processes-8OXa9B/proc_3b2b-stdout.log",
+    "sha256": "41094e7c37da0dc75051f46ea41046661a072b80eb655c46697461ecd7abe929",
+    "bytes": 2232563
+  },
+  "launcher_stdout_tail": [
+    "{\"at\": 1793286648.0571501, \"states\": {\"tape_B0\": \"complete\", \"tape_B0x4\": \"complete\", \"tape_B0x16\": \"running\", \"tape_unbounded\": \"running\", \"tape_appendonly\": \"running\", \"gdn2_native\": \"complete\", \"e97_native\": \"complete\"}, \"free_bytes\": 428719493120, \"run_bytes\": {\"tape_B0\": 1890948, \"tape_B0x4\": 1896116, \"tape_B0x16\": 1629581, \"tape_unbounded\": 1634730, \"tape_appendonly\": 1634732, \"gdn2_native\": 2294392, \"e97_native\": 2321155}}",
+    "{\"at\": 1793286708.0610473, \"states\": {\"tape_B0\": \"complete\", \"tape_B0x4\": \"complete\", \"tape_B0x16\": \"censored\", \"tape_unbounded\": \"censored\", \"tape_appendonly\": \"censored\", \"gdn2_native\": \"complete\", \"e97_native\": \"complete\"}, \"free_bytes\": 426224160768, \"run_bytes\": {\"tape_B0\": 1890948, \"tape_B0x4\": 1896116, \"tape_B0x16\": 1629581, \"tape_unbounded\": 1634730, \"tape_appendonly\": 1634732, \"gdn2_native\": 2294392, \"e97_native\": 2321155}}"
+  ],
+  "launcher_source": {
+    "path": "experiments/expressivity_tasks/x28e_memory_head/launcher.py",
+    "sha256": "d95150fea4f0e9be6404d57ab857f71eac463a8b2087517cdcfad35dc0399761",
+    "bytes": 31255
+  },
+  "trainer_source": {
+    "path": "experiments/expressivity_tasks/x28e_memory_head/trainer.py",
+    "sha256": "ac740668ca3dc4db478369b33a01dd9b70f80d075162ef268aed6dba34a5c453",
+    "bytes": 63049
+  },
+  "residual_risks": [
+    "No B0x16 final evaluation; selected validation score is not ID/OOD certification.",
+    "No supported launcher eval/resume paths in frozen package; three corners remain unresolved.",
+    "Infrastructure censoring cannot establish a scientific stage-2 boundary.",
+    "contact_supervisor tool unavailable in this session; no supervisor decision could be requested."
+  ],
+  "payload_sha256": "a215c84ed8cafd948b9a56c5b0f9b4253efee92b17c47c3c3d20fa27c1d311fe"
+}

@@ -1,0 +1,4978 @@
+{
+  "arm": "tape_B0",
+  "slots": 736,
+  "freeze_manifest_hash": "0b674c71b5d9ed56174e8839766206af2fd0ba14b9bcf3b95dfd91ac24aa11b4",
+  "launch": {
+    "path": "experiments/expressivity_tasks/results_x28e_memory_head/receipts/tape_B0_seed0/launch.json",
+    "sha256": "e4e14f64b48a6af547e35d89e5456ba4d27d89fd9a4940675e107a3bb9772eef",
+    "bytes": 670,
+    "payload": {
+      "arm": "tape_B0",
+      "registered_card": 0,
+      "card": 0,
+      "queue_rule": "registered card if free at launch, else next-free ascending physical index, actual card receipted per-arm; cards 0-6 only, card 7 excluded (live X25 run); atomic idle/unleased shell leases only, no preemption, no WorksGood",
+      "launched_at": 1792977178.6909893,
+      "commit": "df6338b5ba40da9cce3b9f1a2caee2a66e4b6893",
+      "freeze_manifest_hash": "0b674c71b5d9ed56174e8839766206af2fd0ba14b9bcf3b95dfd91ac24aa11b4",
+      "watcher": {
+        "pid": 3720714,
+        "starttime": "304316529",
+        "host": "lambda01"
+      },
+      "payload_sha256": "3ac28fc58e1493ac76a16fa76420dbab23957035a417222e4475feede6e4db35"
+    },
+    "payload_hash_valid": true
+  },
+  "checkpoint": {
+    "path": "experiments/expressivity_tasks/results_x28e_memory_head/tape_B0_seed0/checkpoint.json",
+    "sha256": "6ba6a88a16bd141bf581a31db25581c50436f6e8bd6c0e67a3bdb1aebb8dfd47",
+    "bytes": 252,
+    "payload": {
+      "arm": "tape_B0",
+      "stage": "stage3",
+      "update": 5000,
+      "validation_metric": 0.9864999999999999,
+      "selected_by": "validation-only; tie-break latest-best",
+      "payload_sha256": "be7958cdf66ec143bdc60fe7c6d28878804a1acbe558f81d3ca14b2272fa5760"
+    },
+    "payload_hash_valid": true
+  },
+  "last_training_record": {
+    "stage": "stage3",
+    "update": 30000,
+    "validation_balanced_accuracy": 0.9784999999999999
+  },
+  "training_source": {
+    "path": "experiments/expressivity_tasks/results_x28e_memory_head/tape_B0_seed0/training.jsonl",
+    "sha256": "c8509b118b042659292c8e2adaa38586927d13626dbba38562e690d89d94fc88",
+    "bytes": 7649
+  },
+  "final_eval_source": {
+    "path": "experiments/expressivity_tasks/results_x28e_memory_head/tape_B0_seed0/final_eval.json",
+    "sha256": "1e7721752845400fa6b8c37219a1b3cbdca9f9b60ac2e98e3ee1d4d2247a311f",
+    "bytes": 260977,
+    "payload_hash_valid": true
+  },
+  "bins": {
+    "bin_id": {
+      "report": {
+        "n": 512,
+        "balanced_accuracy": 0.994140625,
+        "raw_accuracy": 0.994140625,
+        "per_class_recall": {
+          "accept": 1.0,
+          "reject": 0.98828125
+        },
+        "confusion": {
+          "accept": {
+            "pred_accept": 256,
+            "pred_reject": 0
+          },
+          "reject": {
+            "pred_accept": 3,
+            "pred_reject": 253
+          }
+        },
+        "class_counts": {
+          "accept": 256,
+          "reject": 256
+        },
+        "majority_baseline": 0.5
+      },
+      "occupancy_receipt": {
+        "measurement": "peak live slots within each word's length (to its EOS; PAD-region behavior excluded) and end-of-word live slots at the EOS token (F7)",
+        "mean_peak_live_slots_within_word": 69.517578125,
+        "mean_end_of_word_live_slots_on_accepts": 68.19140625,
+        "per_k": {
+          "k1": {
+            "k": 1,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 2.25,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 2.0
+          },
+          "k2": {
+            "k": 2,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 26.25,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 3.0
+          },
+          "k3": {
+            "k": 3,
+            "n": 6,
+            "mean_peak_live_slots_within_word": 4.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 5,
+            "mean_eos_live_slots_on_accepts": 4.0
+          },
+          "k4": {
+            "k": 4,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 67.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k5": {
+            "k": 5,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 7.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 6.0
+          },
+          "k6": {
+            "k": 6,
+            "n": 7,
+            "mean_peak_live_slots_within_word": 26.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 7.0
+          },
+          "k7": {
+            "k": 7,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 19.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k8": {
+            "k": 8,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 10.5,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 9.0
+          },
+          "k9": {
+            "k": 9,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 10.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 10.0
+          },
+          "k10": {
+            "k": 10,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 15.666666666666666,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k11": {
+            "k": 11,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 12.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 12.0
+          },
+          "k12": {
+            "k": 12,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 28.666666666666668,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 13.0
+          },
+          "k13": {
+            "k": 13,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 17.666666666666668,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 14.0
+          },
+          "k14": {
+            "k": 14,
+            "n": 7,
+            "mean_peak_live_slots_within_word": 15.714285714285714,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 5,
+            "mean_eos_live_slots_on_accepts": 15.0
+          },
+          "k15": {
+            "k": 15,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 16.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 16.0
+          },
+          "k16": {
+            "k": 16,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 21.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k17": {
+            "k": 17,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 18.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 18.0
+          },
+          "k18": {
+            "k": 18,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 42.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 19.0
+          },
+          "k19": {
+            "k": 19,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 26.75,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 20.0
+          },
+          "k20": {
+            "k": 20,
+            "n": 11,
+            "mean_peak_live_slots_within_word": 30.545454545454547,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 21.0
+          },
+          "k21": {
+            "k": 21,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 36.5,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 22.0
+          },
+          "k22": {
+            "k": 22,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 24.5,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 23.0
+          },
+          "k23": {
+            "k": 23,
+            "n": 6,
+            "mean_peak_live_slots_within_word": 22.666666666666668,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 4,
+            "mean_eos_live_slots_on_accepts": 24.0
+          },
+          "k24": {
+            "k": 24,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 34.6,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 4,
+            "mean_eos_live_slots_on_accepts": 25.0
+          },
+          "k25": {
+            "k": 25,
+            "n": 6,
+            "mean_peak_live_slots_within_word": 29.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 26.0
+          },
+          "k26": {
+            "k": 26,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 44.5,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k27": {
+            "k": 27,
+            "n": 10,
+            "mean_peak_live_slots_within_word": 33.7,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 28.0
+          },
+          "k28": {
+            "k": 28,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 40.75,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 29.0
+          },
+          "k29": {
+            "k": 29,
+            "n": 6,
+            "mean_peak_live_slots_within_word": 41.5,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 30.0
+          },
+          "k30": {
+            "k": 30,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 54.333333333333336,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 31.0
+          },
+          "k31": {
+            "k": 31,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 40.75,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 32.0
+          },
+          "k32": {
+            "k": 32,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 44.5,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 33.0
+          },
+          "k33": {
+            "k": 33,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 36.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 34.0
+          },
+          "k34": {
+            "k": 34,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 35.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 35.0
+          },
+          "k35": {
+            "k": 35,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 36.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 36.0
+          },
+          "k36": {
+            "k": 36,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 38.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k37": {
+            "k": 37,
+            "n": 7,
+            "mean_peak_live_slots_within_word": 47.142857142857146,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 38.0
+          },
+          "k38": {
+            "k": 38,
+            "n": 6,
+            "mean_peak_live_slots_within_word": 42.333333333333336,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 39.0
+          },
+          "k39": {
+            "k": 39,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 44.333333333333336,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 40.0
+          },
+          "k40": {
+            "k": 40,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 41.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 41.0
+          },
+          "k41": {
+            "k": 41,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 40.8,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 42.0
+          },
+          "k42": {
+            "k": 42,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 50.5,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 43.0
+          },
+          "k43": {
+            "k": 43,
+            "n": 7,
+            "mean_peak_live_slots_within_word": 45.142857142857146,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 44.0
+          },
+          "k44": {
+            "k": 44,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 67.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k45": {
+            "k": 45,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 51.25,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 46.0
+          },
+          "k46": {
+            "k": 46,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 51.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 47.0
+          },
+          "k48": {
+            "k": 48,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 63.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k49": {
+            "k": 49,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 50.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 50.0
+          },
+          "k50": {
+            "k": 50,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 49.6,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 51.0
+          },
+          "k51": {
+            "k": 51,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 52.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 52.0
+          },
+          "k52": {
+            "k": 52,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 65.66666666666667,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 53.0
+          },
+          "k53": {
+            "k": 53,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 48.666666666666664,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k54": {
+            "k": 54,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 55.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 55.0
+          },
+          "k55": {
+            "k": 55,
+            "n": 7,
+            "mean_peak_live_slots_within_word": 63.142857142857146,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 56.0
+          },
+          "k56": {
+            "k": 56,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 56.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 57.0
+          },
+          "k57": {
+            "k": 57,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 70.75,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 58.0
+          },
+          "k58": {
+            "k": 58,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 61.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 59.0
+          },
+          "k59": {
+            "k": 59,
+            "n": 6,
+            "mean_peak_live_slots_within_word": 66.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 4,
+            "mean_eos_live_slots_on_accepts": 60.0
+          },
+          "k60": {
+            "k": 60,
+            "n": 8,
+            "mean_peak_live_slots_within_word": 64.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 4,
+            "mean_eos_live_slots_on_accepts": 61.0
+          },
+          "k61": {
+            "k": 61,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 62.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 62.0
+          },
+          "k62": {
+            "k": 62,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 63.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 5,
+            "mean_eos_live_slots_on_accepts": 63.0
+          },
+          "k63": {
+            "k": 63,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 66.5,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 64.0
+          },
+          "k64": {
+            "k": 64,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 56.666666666666664,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 65.0
+          },
+          "k65": {
+            "k": 65,
+            "n": 9,
+            "mean_peak_live_slots_within_word": 71.77777777777777,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 4,
+            "mean_eos_live_slots_on_accepts": 66.0
+          },
+          "k66": {
+            "k": 66,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 68.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 67.0
+          },
+          "k67": {
+            "k": 67,
+            "n": 6,
+            "mean_peak_live_slots_within_word": 71.66666666666667,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 5,
+            "mean_eos_live_slots_on_accepts": 68.0
+          },
+          "k68": {
+            "k": 68,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 62.666666666666664,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 69.0
+          },
+          "k69": {
+            "k": 69,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 70.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 70.0
+          },
+          "k70": {
+            "k": 70,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 85.5,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k71": {
+            "k": 71,
+            "n": 6,
+            "mean_peak_live_slots_within_word": 72.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 72.0
+          },
+          "k72": {
+            "k": 72,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 85.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 73.0
+          },
+          "k74": {
+            "k": 74,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 77.33333333333333,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 75.0
+          },
+          "k75": {
+            "k": 75,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 76.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 76.0
+          },
+          "k76": {
+            "k": 76,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 84.2,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 77.0
+          },
+          "k77": {
+            "k": 77,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 78.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k78": {
+            "k": 78,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 79.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 79.0
+          },
+          "k79": {
+            "k": 79,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 80.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 5,
+            "mean_eos_live_slots_on_accepts": 80.0
+          },
+          "k80": {
+            "k": 80,
+            "n": 6,
+            "mean_peak_live_slots_within_word": 82.16666666666667,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 4,
+            "mean_eos_live_slots_on_accepts": 81.0
+          },
+          "k81": {
+            "k": 81,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 87.2,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 82.0
+          },
+          "k82": {
+            "k": 82,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 93.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 83.0
+          },
+          "k83": {
+            "k": 83,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 85.25,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 84.0
+          },
+          "k84": {
+            "k": 84,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 92.33333333333333,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 85.0
+          },
+          "k85": {
+            "k": 85,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 86.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 86.0
+          },
+          "k86": {
+            "k": 86,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 87.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 87.0
+          },
+          "k87": {
+            "k": 87,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 79.5,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 88.0
+          },
+          "k88": {
+            "k": 88,
+            "n": 7,
+            "mean_peak_live_slots_within_word": 96.71428571428571,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 5,
+            "mean_eos_live_slots_on_accepts": 89.0
+          },
+          "k89": {
+            "k": 89,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 95.5,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k90": {
+            "k": 90,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 87.6,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 91.0
+          },
+          "k91": {
+            "k": 91,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 95.75,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 92.0
+          },
+          "k92": {
+            "k": 92,
+            "n": 6,
+            "mean_peak_live_slots_within_word": 95.16666666666667,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 4,
+            "mean_eos_live_slots_on_accepts": 93.0
+          },
+          "k93": {
+            "k": 93,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 113.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 94.0
+          },
+          "k94": {
+            "k": 94,
+            "n": 6,
+            "mean_peak_live_slots_within_word": 107.66666666666667,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 95.0
+          },
+          "k95": {
+            "k": 95,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 85.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 96.0
+          },
+          "k96": {
+            "k": 96,
+            "n": 6,
+            "mean_peak_live_slots_within_word": 92.16666666666667,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 4,
+            "mean_eos_live_slots_on_accepts": 97.0
+          },
+          "k97": {
+            "k": 97,
+            "n": 6,
+            "mean_peak_live_slots_within_word": 94.33333333333333,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 4,
+            "mean_eos_live_slots_on_accepts": 98.0
+          },
+          "k98": {
+            "k": 98,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 100.5,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 99.0
+          },
+          "k99": {
+            "k": 99,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 97.75,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 100.0
+          },
+          "k100": {
+            "k": 100,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 105.5,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 101.0
+          },
+          "k101": {
+            "k": 101,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 88.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 102.0
+          },
+          "k102": {
+            "k": 102,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 103.5,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k103": {
+            "k": 103,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 96.2,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 4,
+            "mean_eos_live_slots_on_accepts": 104.0
+          },
+          "k104": {
+            "k": 104,
+            "n": 7,
+            "mean_peak_live_slots_within_word": 118.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 5,
+            "mean_eos_live_slots_on_accepts": 105.0
+          },
+          "k105": {
+            "k": 105,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 106.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 106.0
+          },
+          "k106": {
+            "k": 106,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 156.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k107": {
+            "k": 107,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 108.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 5,
+            "mean_eos_live_slots_on_accepts": 108.0
+          },
+          "k108": {
+            "k": 108,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 114.33333333333333,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 109.0
+          },
+          "k109": {
+            "k": 109,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 110.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 110.0
+          },
+          "k110": {
+            "k": 110,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 111.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 111.0
+          },
+          "k111": {
+            "k": 111,
+            "n": 6,
+            "mean_peak_live_slots_within_word": 112.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 4,
+            "mean_eos_live_slots_on_accepts": 112.0
+          },
+          "k112": {
+            "k": 112,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 155.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k113": {
+            "k": 113,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 105.75,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k114": {
+            "k": 114,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 114.5,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 115.0
+          },
+          "k116": {
+            "k": 116,
+            "n": 8,
+            "mean_peak_live_slots_within_word": 119.75,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 4,
+            "mean_eos_live_slots_on_accepts": 117.0
+          },
+          "k117": {
+            "k": 117,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 118.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 118.0
+          },
+          "k118": {
+            "k": 118,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 129.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 119.0
+          },
+          "k119": {
+            "k": 119,
+            "n": 7,
+            "mean_peak_live_slots_within_word": 130.42857142857142,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 120.0
+          },
+          "k120": {
+            "k": 120,
+            "n": 6,
+            "mean_peak_live_slots_within_word": 123.5,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 121.0
+          },
+          "k121": {
+            "k": 121,
+            "n": 8,
+            "mean_peak_live_slots_within_word": 122.625,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 5,
+            "mean_eos_live_slots_on_accepts": 122.0
+          },
+          "k122": {
+            "k": 122,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 123.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 123.0
+          },
+          "k123": {
+            "k": 123,
+            "n": 8,
+            "mean_peak_live_slots_within_word": 138.75,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 124.0
+          },
+          "k124": {
+            "k": 124,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 111.66666666666667,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 125.0
+          },
+          "k125": {
+            "k": 125,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 139.5,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 126.0
+          },
+          "k126": {
+            "k": 126,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 121.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k127": {
+            "k": 127,
+            "n": 6,
+            "mean_peak_live_slots_within_word": 126.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 128.0
+          },
+          "k128": {
+            "k": 128,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 115.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 129.0
+          }
+        }
+      }
+    },
+    "bin_2x": {
+      "report": {
+        "n": 512,
+        "balanced_accuracy": 0.98046875,
+        "raw_accuracy": 0.98046875,
+        "per_class_recall": {
+          "accept": 1.0,
+          "reject": 0.9609375
+        },
+        "confusion": {
+          "accept": {
+            "pred_accept": 256,
+            "pred_reject": 0
+          },
+          "reject": {
+            "pred_accept": 10,
+            "pred_reject": 246
+          }
+        },
+        "class_counts": {
+          "accept": 256,
+          "reject": 256
+        },
+        "majority_baseline": 0.5
+      },
+      "occupancy_receipt": {
+        "measurement": "peak live slots within each word's length (to its EOS; PAD-region behavior excluded) and end-of-word live slots at the EOS token (F7)",
+        "mean_peak_live_slots_within_word": 202.3125,
+        "mean_end_of_word_live_slots_on_accepts": 191.3828125,
+        "per_k": {
+          "k129": {
+            "k": 129,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 135.33333333333334,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 130.0
+          },
+          "k130": {
+            "k": 130,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 131.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 131.0
+          },
+          "k131": {
+            "k": 131,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 132.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 132.0
+          },
+          "k132": {
+            "k": 132,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 133.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 4,
+            "mean_eos_live_slots_on_accepts": 133.0
+          },
+          "k133": {
+            "k": 133,
+            "n": 8,
+            "mean_peak_live_slots_within_word": 140.25,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 4,
+            "mean_eos_live_slots_on_accepts": 134.0
+          },
+          "k134": {
+            "k": 134,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 135.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 135.0
+          },
+          "k135": {
+            "k": 135,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 136.5,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 136.0
+          },
+          "k136": {
+            "k": 136,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 138.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 137.0
+          },
+          "k137": {
+            "k": 137,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 149.66666666666666,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 138.0
+          },
+          "k138": {
+            "k": 138,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 139.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 139.0
+          },
+          "k139": {
+            "k": 139,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 147.66666666666666,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 140.0
+          },
+          "k140": {
+            "k": 140,
+            "n": 7,
+            "mean_peak_live_slots_within_word": 145.85714285714286,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 4,
+            "mean_eos_live_slots_on_accepts": 141.0
+          },
+          "k141": {
+            "k": 141,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 142.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 142.0
+          },
+          "k142": {
+            "k": 142,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 143.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 143.0
+          },
+          "k143": {
+            "k": 143,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 152.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 144.0
+          },
+          "k144": {
+            "k": 144,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 149.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 145.0
+          },
+          "k145": {
+            "k": 145,
+            "n": 6,
+            "mean_peak_live_slots_within_word": 156.5,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 146.0
+          },
+          "k146": {
+            "k": 146,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 147.33333333333334,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 147.0
+          },
+          "k147": {
+            "k": 147,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 151.6,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 4,
+            "mean_eos_live_slots_on_accepts": 148.0
+          },
+          "k148": {
+            "k": 148,
+            "n": 6,
+            "mean_peak_live_slots_within_word": 149.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 5,
+            "mean_eos_live_slots_on_accepts": 149.0
+          },
+          "k149": {
+            "k": 149,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 183.5,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 150.0
+          },
+          "k150": {
+            "k": 150,
+            "n": 6,
+            "mean_peak_live_slots_within_word": 152.5,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 5,
+            "mean_eos_live_slots_on_accepts": 151.0
+          },
+          "k151": {
+            "k": 151,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 170.2,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 152.0
+          },
+          "k152": {
+            "k": 152,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 153.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 153.0
+          },
+          "k153": {
+            "k": 153,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 157.66666666666666,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 154.0
+          },
+          "k154": {
+            "k": 154,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 161.5,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 155.0
+          },
+          "k156": {
+            "k": 156,
+            "n": 6,
+            "mean_peak_live_slots_within_word": 163.5,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 157.0
+          },
+          "k157": {
+            "k": 157,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 171.5,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 158.0
+          },
+          "k158": {
+            "k": 158,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 159.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k159": {
+            "k": 159,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 193.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k160": {
+            "k": 160,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 182.5,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 161.0
+          },
+          "k161": {
+            "k": 161,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 155.5,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k162": {
+            "k": 162,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 194.5,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 163.0
+          },
+          "k163": {
+            "k": 163,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 180.25,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 164.0
+          },
+          "k164": {
+            "k": 164,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 165.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 165.0
+          },
+          "k165": {
+            "k": 165,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 222.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k166": {
+            "k": 166,
+            "n": 8,
+            "mean_peak_live_slots_within_word": 166.75,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 4,
+            "mean_eos_live_slots_on_accepts": 167.0
+          },
+          "k167": {
+            "k": 167,
+            "n": 8,
+            "mean_peak_live_slots_within_word": 177.75,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 4,
+            "mean_eos_live_slots_on_accepts": 168.0
+          },
+          "k168": {
+            "k": 168,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 172.75,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 169.0
+          },
+          "k169": {
+            "k": 169,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 185.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k170": {
+            "k": 170,
+            "n": 7,
+            "mean_peak_live_slots_within_word": 176.57142857142858,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 5,
+            "mean_eos_live_slots_on_accepts": 171.0
+          },
+          "k171": {
+            "k": 171,
+            "n": 6,
+            "mean_peak_live_slots_within_word": 174.66666666666666,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 172.0
+          },
+          "k172": {
+            "k": 172,
+            "n": 10,
+            "mean_peak_live_slots_within_word": 179.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 7,
+            "mean_eos_live_slots_on_accepts": 173.0
+          },
+          "k173": {
+            "k": 173,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 174.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 174.0
+          },
+          "k174": {
+            "k": 174,
+            "n": 7,
+            "mean_peak_live_slots_within_word": 183.28571428571428,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 5,
+            "mean_eos_live_slots_on_accepts": 175.0
+          },
+          "k175": {
+            "k": 175,
+            "n": 6,
+            "mean_peak_live_slots_within_word": 183.83333333333334,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 176.0
+          },
+          "k176": {
+            "k": 176,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 184.75,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 177.0
+          },
+          "k177": {
+            "k": 177,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 182.2,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 178.0
+          },
+          "k178": {
+            "k": 178,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 175.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 179.0
+          },
+          "k179": {
+            "k": 179,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 191.5,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k180": {
+            "k": 180,
+            "n": 6,
+            "mean_peak_live_slots_within_word": 183.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 181.0
+          },
+          "k181": {
+            "k": 181,
+            "n": 7,
+            "mean_peak_live_slots_within_word": 209.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 182.0
+          },
+          "k182": {
+            "k": 182,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 183.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 183.0
+          },
+          "k183": {
+            "k": 183,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 180.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 184.0
+          },
+          "k184": {
+            "k": 184,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 188.4,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 4,
+            "mean_eos_live_slots_on_accepts": 185.0
+          },
+          "k185": {
+            "k": 185,
+            "n": 6,
+            "mean_peak_live_slots_within_word": 192.16666666666666,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 4,
+            "mean_eos_live_slots_on_accepts": 186.0
+          },
+          "k186": {
+            "k": 186,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 187.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 187.0
+          },
+          "k187": {
+            "k": 187,
+            "n": 6,
+            "mean_peak_live_slots_within_word": 189.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 188.0
+          },
+          "k188": {
+            "k": 188,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 228.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 189.0
+          },
+          "k189": {
+            "k": 189,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 235.5,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k190": {
+            "k": 190,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 191.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 191.0
+          },
+          "k191": {
+            "k": 191,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 192.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 192.0
+          },
+          "k192": {
+            "k": 192,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 194.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 4,
+            "mean_eos_live_slots_on_accepts": 193.0
+          },
+          "k193": {
+            "k": 193,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 255.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k194": {
+            "k": 194,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 195.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 195.0
+          },
+          "k195": {
+            "k": 195,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 196.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 4,
+            "mean_eos_live_slots_on_accepts": 196.0
+          },
+          "k196": {
+            "k": 196,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 211.25,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 197.0
+          },
+          "k197": {
+            "k": 197,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 198.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 198.0
+          },
+          "k198": {
+            "k": 198,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 199.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 199.0
+          },
+          "k199": {
+            "k": 199,
+            "n": 6,
+            "mean_peak_live_slots_within_word": 196.83333333333334,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 200.0
+          },
+          "k200": {
+            "k": 200,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 214.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k201": {
+            "k": 201,
+            "n": 8,
+            "mean_peak_live_slots_within_word": 213.875,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 202.0
+          },
+          "k202": {
+            "k": 202,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 203.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 203.0
+          },
+          "k203": {
+            "k": 203,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 208.66666666666666,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 204.0
+          },
+          "k204": {
+            "k": 204,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 210.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 205.0
+          },
+          "k205": {
+            "k": 205,
+            "n": 6,
+            "mean_peak_live_slots_within_word": 209.33333333333334,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 4,
+            "mean_eos_live_slots_on_accepts": 206.0
+          },
+          "k206": {
+            "k": 206,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 216.5,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 207.0
+          },
+          "k207": {
+            "k": 207,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 208.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 208.0
+          },
+          "k208": {
+            "k": 208,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 209.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 209.0
+          },
+          "k209": {
+            "k": 209,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 210.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 4,
+            "mean_eos_live_slots_on_accepts": 210.0
+          },
+          "k210": {
+            "k": 210,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 213.6,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 211.0
+          },
+          "k211": {
+            "k": 211,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 213.2,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 212.0
+          },
+          "k212": {
+            "k": 212,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 258.5,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 213.0
+          },
+          "k213": {
+            "k": 213,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 233.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 214.0
+          },
+          "k214": {
+            "k": 214,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 215.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k215": {
+            "k": 215,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 228.6,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 216.0
+          },
+          "k216": {
+            "k": 216,
+            "n": 6,
+            "mean_peak_live_slots_within_word": 230.16666666666666,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 217.0
+          },
+          "k217": {
+            "k": 217,
+            "n": 7,
+            "mean_peak_live_slots_within_word": 231.14285714285714,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 218.0
+          },
+          "k218": {
+            "k": 218,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 219.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 219.0
+          },
+          "k219": {
+            "k": 219,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 226.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 4,
+            "mean_eos_live_slots_on_accepts": 220.0
+          },
+          "k220": {
+            "k": 220,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 216.66666666666666,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 221.0
+          },
+          "k221": {
+            "k": 221,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 249.25,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 222.0
+          },
+          "k222": {
+            "k": 222,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 261.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k223": {
+            "k": 223,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 224.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 224.0
+          },
+          "k224": {
+            "k": 224,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 225.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 225.0
+          },
+          "k225": {
+            "k": 225,
+            "n": 9,
+            "mean_peak_live_slots_within_word": 259.3333333333333,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 226.0
+          },
+          "k226": {
+            "k": 226,
+            "n": 6,
+            "mean_peak_live_slots_within_word": 239.16666666666666,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 227.0
+          },
+          "k227": {
+            "k": 227,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 233.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 228.0
+          },
+          "k228": {
+            "k": 228,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 218.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 229.0
+          },
+          "k229": {
+            "k": 229,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 259.5,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 230.0
+          },
+          "k230": {
+            "k": 230,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 231.25,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 231.0
+          },
+          "k231": {
+            "k": 231,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 225.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 232.0
+          },
+          "k232": {
+            "k": 232,
+            "n": 6,
+            "mean_peak_live_slots_within_word": 228.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 5,
+            "mean_eos_live_slots_on_accepts": 233.0
+          },
+          "k233": {
+            "k": 233,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 263.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k234": {
+            "k": 234,
+            "n": 8,
+            "mean_peak_live_slots_within_word": 229.625,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 7,
+            "mean_eos_live_slots_on_accepts": 235.0
+          },
+          "k235": {
+            "k": 235,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 247.5,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k236": {
+            "k": 236,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 262.6,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 237.0
+          },
+          "k237": {
+            "k": 237,
+            "n": 7,
+            "mean_peak_live_slots_within_word": 236.42857142857142,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 4,
+            "mean_eos_live_slots_on_accepts": 238.0
+          },
+          "k238": {
+            "k": 238,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 222.66666666666666,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 239.0
+          },
+          "k239": {
+            "k": 239,
+            "n": 7,
+            "mean_peak_live_slots_within_word": 246.71428571428572,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 240.0
+          },
+          "k240": {
+            "k": 240,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 251.5,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k241": {
+            "k": 241,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 236.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k242": {
+            "k": 242,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 243.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k243": {
+            "k": 243,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 233.6,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 4,
+            "mean_eos_live_slots_on_accepts": 244.0
+          },
+          "k244": {
+            "k": 244,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 260.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 245.0
+          },
+          "k245": {
+            "k": 245,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 228.66666666666666,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 246.0
+          },
+          "k246": {
+            "k": 246,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 310.5,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 247.0
+          },
+          "k247": {
+            "k": 247,
+            "n": 6,
+            "mean_peak_live_slots_within_word": 265.5,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 248.0
+          },
+          "k248": {
+            "k": 248,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 249.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k249": {
+            "k": 249,
+            "n": 8,
+            "mean_peak_live_slots_within_word": 262.75,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 250.0
+          },
+          "k250": {
+            "k": 250,
+            "n": 6,
+            "mean_peak_live_slots_within_word": 257.8333333333333,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 251.0
+          },
+          "k251": {
+            "k": 251,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 256.2,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 252.0
+          },
+          "k252": {
+            "k": 252,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 267.75,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 253.0
+          },
+          "k253": {
+            "k": 253,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 294.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k254": {
+            "k": 254,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 267.5,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 255.0
+          },
+          "k255": {
+            "k": 255,
+            "n": 7,
+            "mean_peak_live_slots_within_word": 271.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 4,
+            "mean_eos_live_slots_on_accepts": 256.0
+          },
+          "k256": {
+            "k": 256,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 257.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          }
+        }
+      }
+    },
+    "bin_4x": {
+      "report": {
+        "n": 512,
+        "balanced_accuracy": 0.984375,
+        "raw_accuracy": 0.984375,
+        "per_class_recall": {
+          "accept": 1.0,
+          "reject": 0.96875
+        },
+        "confusion": {
+          "accept": {
+            "pred_accept": 256,
+            "pred_reject": 0
+          },
+          "reject": {
+            "pred_accept": 8,
+            "pred_reject": 248
+          }
+        },
+        "class_counts": {
+          "accept": 256,
+          "reject": 256
+        },
+        "majority_baseline": 0.5
+      },
+      "occupancy_receipt": {
+        "measurement": "peak live slots within each word's length (to its EOS; PAD-region behavior excluded) and end-of-word live slots at the EOS token (F7)",
+        "mean_peak_live_slots_within_word": 401.197265625,
+        "mean_end_of_word_live_slots_on_accepts": 384.8203125,
+        "per_k": {
+          "k258": {
+            "k": 258,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 290.25,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 259.0
+          },
+          "k259": {
+            "k": 259,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 260.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 260.0
+          },
+          "k260": {
+            "k": 260,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 305.75,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 261.0
+          },
+          "k261": {
+            "k": 261,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 291.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 262.0
+          },
+          "k262": {
+            "k": 262,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 343.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k263": {
+            "k": 263,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 264.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 264.0
+          },
+          "k264": {
+            "k": 264,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 265.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k265": {
+            "k": 265,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 343.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k266": {
+            "k": 266,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 397.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k267": {
+            "k": 267,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 268.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 268.0
+          },
+          "k268": {
+            "k": 268,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 269.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 269.0
+          },
+          "k269": {
+            "k": 269,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 318.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k270": {
+            "k": 270,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 294.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 271.0
+          },
+          "k271": {
+            "k": 271,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 378.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k272": {
+            "k": 272,
+            "n": 7,
+            "mean_peak_live_slots_within_word": 283.7142857142857,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 4,
+            "mean_eos_live_slots_on_accepts": 273.0
+          },
+          "k274": {
+            "k": 274,
+            "n": 7,
+            "mean_peak_live_slots_within_word": 288.85714285714283,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 4,
+            "mean_eos_live_slots_on_accepts": 275.0
+          },
+          "k275": {
+            "k": 275,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 276.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 276.0
+          },
+          "k276": {
+            "k": 276,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 277.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k277": {
+            "k": 277,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 295.5,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k278": {
+            "k": 278,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 279.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k279": {
+            "k": 279,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 280.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 280.0
+          },
+          "k283": {
+            "k": 283,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 313.5,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 284.0
+          },
+          "k284": {
+            "k": 284,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 385.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k285": {
+            "k": 285,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 286.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k286": {
+            "k": 286,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 287.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 287.0
+          },
+          "k287": {
+            "k": 287,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 323.3333333333333,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 288.0
+          },
+          "k288": {
+            "k": 288,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 289.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 289.0
+          },
+          "k289": {
+            "k": 289,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 290.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 290.0
+          },
+          "k290": {
+            "k": 290,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 337.5,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 291.0
+          },
+          "k291": {
+            "k": 291,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 292.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 292.0
+          },
+          "k292": {
+            "k": 292,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 309.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k293": {
+            "k": 293,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 338.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 294.0
+          },
+          "k294": {
+            "k": 294,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 316.25,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 295.0
+          },
+          "k295": {
+            "k": 295,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 296.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k296": {
+            "k": 296,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 384.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k297": {
+            "k": 297,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 298.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 298.0
+          },
+          "k298": {
+            "k": 298,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 401.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k299": {
+            "k": 299,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 325.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 300.0
+          },
+          "k301": {
+            "k": 301,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 302.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 302.0
+          },
+          "k304": {
+            "k": 304,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 305.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 305.0
+          },
+          "k305": {
+            "k": 305,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 333.5,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 306.0
+          },
+          "k306": {
+            "k": 306,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 365.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k307": {
+            "k": 307,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 308.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 308.0
+          },
+          "k309": {
+            "k": 309,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 310.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 310.0
+          },
+          "k310": {
+            "k": 310,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 326.5,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k311": {
+            "k": 311,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 336.25,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 312.0
+          },
+          "k313": {
+            "k": 313,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 314.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 314.0
+          },
+          "k314": {
+            "k": 314,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 352.75,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 315.0
+          },
+          "k316": {
+            "k": 316,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 342.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 317.0
+          },
+          "k317": {
+            "k": 317,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 320.6666666666667,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 318.0
+          },
+          "k318": {
+            "k": 318,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 324.6666666666667,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 319.0
+          },
+          "k319": {
+            "k": 319,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 321.5,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 320.0
+          },
+          "k322": {
+            "k": 322,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 323.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 323.0
+          },
+          "k323": {
+            "k": 323,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 359.75,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 324.0
+          },
+          "k324": {
+            "k": 324,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 380.5,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 325.0
+          },
+          "k325": {
+            "k": 325,
+            "n": 6,
+            "mean_peak_live_slots_within_word": 344.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 326.0
+          },
+          "k326": {
+            "k": 326,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 368.5,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 327.0
+          },
+          "k327": {
+            "k": 327,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 328.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 328.0
+          },
+          "k328": {
+            "k": 328,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 329.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 329.0
+          },
+          "k329": {
+            "k": 329,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 368.25,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 330.0
+          },
+          "k330": {
+            "k": 330,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 363.6666666666667,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 331.0
+          },
+          "k331": {
+            "k": 331,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 332.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 332.0
+          },
+          "k332": {
+            "k": 332,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 333.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 333.0
+          },
+          "k333": {
+            "k": 333,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 355.6,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 334.0
+          },
+          "k334": {
+            "k": 334,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 319.5,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 335.0
+          },
+          "k335": {
+            "k": 335,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 316.3333333333333,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 336.0
+          },
+          "k336": {
+            "k": 336,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 337.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 337.0
+          },
+          "k337": {
+            "k": 337,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 338.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 338.0
+          },
+          "k338": {
+            "k": 338,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 495.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k339": {
+            "k": 339,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 340.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 340.0
+          },
+          "k340": {
+            "k": 340,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 393.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k341": {
+            "k": 341,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 341.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 342.0
+          },
+          "k342": {
+            "k": 342,
+            "n": 6,
+            "mean_peak_live_slots_within_word": 347.3333333333333,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 4,
+            "mean_eos_live_slots_on_accepts": 343.0
+          },
+          "k343": {
+            "k": 343,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 364.25,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 344.0
+          },
+          "k344": {
+            "k": 344,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 346.6666666666667,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 345.0
+          },
+          "k346": {
+            "k": 346,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 375.75,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 347.0
+          },
+          "k347": {
+            "k": 347,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 348.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 348.0
+          },
+          "k348": {
+            "k": 348,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 404.5,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 349.0
+          },
+          "k349": {
+            "k": 349,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 356.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k350": {
+            "k": 350,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 351.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 351.0
+          },
+          "k351": {
+            "k": 351,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 525.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k352": {
+            "k": 352,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 353.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 353.0
+          },
+          "k353": {
+            "k": 353,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 414.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k354": {
+            "k": 354,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 355.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 355.0
+          },
+          "k355": {
+            "k": 355,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 373.25,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 356.0
+          },
+          "k356": {
+            "k": 356,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 413.5,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k357": {
+            "k": 357,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 358.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 358.0
+          },
+          "k358": {
+            "k": 358,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 359.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 359.0
+          },
+          "k359": {
+            "k": 359,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 360.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 360.0
+          },
+          "k360": {
+            "k": 360,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 539.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k361": {
+            "k": 361,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 414.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k362": {
+            "k": 362,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 413.3333333333333,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 363.0
+          },
+          "k363": {
+            "k": 363,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 364.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k364": {
+            "k": 364,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 384.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 365.0
+          },
+          "k366": {
+            "k": 366,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 325.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k367": {
+            "k": 367,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 355.5,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 368.0
+          },
+          "k368": {
+            "k": 368,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 369.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k369": {
+            "k": 369,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 370.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 370.0
+          },
+          "k370": {
+            "k": 370,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 406.3333333333333,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 371.0
+          },
+          "k371": {
+            "k": 371,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 368.5,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 372.0
+          },
+          "k372": {
+            "k": 372,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 415.3333333333333,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 373.0
+          },
+          "k373": {
+            "k": 373,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 364.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 374.0
+          },
+          "k374": {
+            "k": 374,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 375.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 375.0
+          },
+          "k375": {
+            "k": 375,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 376.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 376.0
+          },
+          "k376": {
+            "k": 376,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 345.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k377": {
+            "k": 377,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 378.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 378.0
+          },
+          "k378": {
+            "k": 378,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 379.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 379.0
+          },
+          "k379": {
+            "k": 379,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 435.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 380.0
+          },
+          "k380": {
+            "k": 380,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 398.8,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 381.0
+          },
+          "k382": {
+            "k": 382,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 362.5,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 383.0
+          },
+          "k384": {
+            "k": 384,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 385.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 385.0
+          },
+          "k385": {
+            "k": 385,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 386.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k386": {
+            "k": 386,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 363.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k388": {
+            "k": 388,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 401.4,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 389.0
+          },
+          "k389": {
+            "k": 389,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 390.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 390.0
+          },
+          "k391": {
+            "k": 391,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 407.3333333333333,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 392.0
+          },
+          "k392": {
+            "k": 392,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 393.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k393": {
+            "k": 393,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 413.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 394.0
+          },
+          "k394": {
+            "k": 394,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 395.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 395.0
+          },
+          "k395": {
+            "k": 395,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 404.3333333333333,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k396": {
+            "k": 396,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 397.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 397.0
+          },
+          "k398": {
+            "k": 398,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 457.6666666666667,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 399.0
+          },
+          "k399": {
+            "k": 399,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 400.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 400.0
+          },
+          "k400": {
+            "k": 400,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 393.25,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 401.0
+          },
+          "k401": {
+            "k": 401,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 388.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 402.0
+          },
+          "k402": {
+            "k": 402,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 426.3333333333333,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k405": {
+            "k": 405,
+            "n": 6,
+            "mean_peak_live_slots_within_word": 401.5,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 406.0
+          },
+          "k406": {
+            "k": 406,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 396.3333333333333,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 407.0
+          },
+          "k407": {
+            "k": 407,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 408.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 408.0
+          },
+          "k408": {
+            "k": 408,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 551.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k409": {
+            "k": 409,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 410.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 410.0
+          },
+          "k410": {
+            "k": 410,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 411.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 411.0
+          },
+          "k411": {
+            "k": 411,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 432.5,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k413": {
+            "k": 413,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 423.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k414": {
+            "k": 414,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 445.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k415": {
+            "k": 415,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 396.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k416": {
+            "k": 416,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 417.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 417.0
+          },
+          "k418": {
+            "k": 418,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 425.3333333333333,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k419": {
+            "k": 419,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 420.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k420": {
+            "k": 420,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 500.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 421.0
+          },
+          "k421": {
+            "k": 421,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 373.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k422": {
+            "k": 422,
+            "n": 6,
+            "mean_peak_live_slots_within_word": 433.5,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 423.0
+          },
+          "k423": {
+            "k": 423,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 404.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 424.0
+          },
+          "k424": {
+            "k": 424,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 425.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 425.0
+          },
+          "k425": {
+            "k": 425,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 426.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 426.0
+          },
+          "k426": {
+            "k": 426,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 427.5,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k428": {
+            "k": 428,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 429.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 429.0
+          },
+          "k429": {
+            "k": 429,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 430.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 430.0
+          },
+          "k431": {
+            "k": 431,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 432.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 432.0
+          },
+          "k435": {
+            "k": 435,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 436.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 436.0
+          },
+          "k436": {
+            "k": 436,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 432.75,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 437.0
+          },
+          "k437": {
+            "k": 437,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 502.75,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 438.0
+          },
+          "k439": {
+            "k": 439,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 490.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k440": {
+            "k": 440,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 441.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 441.0
+          },
+          "k441": {
+            "k": 441,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 485.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k442": {
+            "k": 442,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 429.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 443.0
+          },
+          "k443": {
+            "k": 443,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 444.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 444.0
+          },
+          "k444": {
+            "k": 444,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 432.25,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 445.0
+          },
+          "k445": {
+            "k": 445,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 446.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 446.0
+          },
+          "k446": {
+            "k": 446,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 447.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 447.0
+          },
+          "k449": {
+            "k": 449,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 450.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 450.0
+          },
+          "k450": {
+            "k": 450,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 449.4,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 451.0
+          },
+          "k451": {
+            "k": 451,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 436.3333333333333,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k452": {
+            "k": 452,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 453.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k453": {
+            "k": 453,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 454.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k454": {
+            "k": 454,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 454.4,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 4,
+            "mean_eos_live_slots_on_accepts": 455.0
+          },
+          "k456": {
+            "k": 456,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 516.6666666666666,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 457.0
+          },
+          "k457": {
+            "k": 457,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 458.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 458.0
+          },
+          "k458": {
+            "k": 458,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 500.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k459": {
+            "k": 459,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 422.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 460.0
+          },
+          "k460": {
+            "k": 460,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 474.3333333333333,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 461.0
+          },
+          "k461": {
+            "k": 461,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 462.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 462.0
+          },
+          "k462": {
+            "k": 462,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 463.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 463.0
+          },
+          "k463": {
+            "k": 463,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 510.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 464.0
+          },
+          "k464": {
+            "k": 464,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 465.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 465.0
+          },
+          "k465": {
+            "k": 465,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 466.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 466.0
+          },
+          "k466": {
+            "k": 466,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 481.75,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 467.0
+          },
+          "k467": {
+            "k": 467,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 397.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k468": {
+            "k": 468,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 469.5,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 469.0
+          },
+          "k469": {
+            "k": 469,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 470.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 470.0
+          },
+          "k470": {
+            "k": 470,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 471.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 471.0
+          },
+          "k471": {
+            "k": 471,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 472.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 472.0
+          },
+          "k472": {
+            "k": 472,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 539.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k473": {
+            "k": 473,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 474.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 474.0
+          },
+          "k474": {
+            "k": 474,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 475.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 475.0
+          },
+          "k475": {
+            "k": 475,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 474.25,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 476.0
+          },
+          "k476": {
+            "k": 476,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 448.6666666666667,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k477": {
+            "k": 477,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 496.6666666666667,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 478.0
+          },
+          "k478": {
+            "k": 478,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 542.5,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 479.0
+          },
+          "k479": {
+            "k": 479,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 473.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 480.0
+          },
+          "k480": {
+            "k": 480,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 559.5,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 481.0
+          },
+          "k481": {
+            "k": 481,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 482.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 482.0
+          },
+          "k483": {
+            "k": 483,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 546.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 484.0
+          },
+          "k485": {
+            "k": 485,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 483.3333333333333,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 486.0
+          },
+          "k486": {
+            "k": 486,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 487.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 487.0
+          },
+          "k488": {
+            "k": 488,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 465.6666666666667,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 489.0
+          },
+          "k489": {
+            "k": 489,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 490.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k490": {
+            "k": 490,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 491.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k492": {
+            "k": 492,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 517.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 493.0
+          },
+          "k493": {
+            "k": 493,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 494.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 494.0
+          },
+          "k494": {
+            "k": 494,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 548.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k495": {
+            "k": 495,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 496.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 496.0
+          },
+          "k496": {
+            "k": 496,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 630.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 497.0
+          },
+          "k497": {
+            "k": 497,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 575.6666666666666,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 498.0
+          },
+          "k498": {
+            "k": 498,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 499.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 499.0
+          },
+          "k499": {
+            "k": 499,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 535.3333333333334,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k500": {
+            "k": 500,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 501.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 501.0
+          },
+          "k501": {
+            "k": 501,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 502.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k502": {
+            "k": 502,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 503.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k504": {
+            "k": 504,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 535.75,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k505": {
+            "k": 505,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 506.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 506.0
+          },
+          "k507": {
+            "k": 507,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 508.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k508": {
+            "k": 508,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 530.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k509": {
+            "k": 509,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 490.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 510.0
+          },
+          "k510": {
+            "k": 510,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 511.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 511.0
+          },
+          "k511": {
+            "k": 511,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 483.0,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 512.0
+          },
+          "k512": {
+            "k": 512,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 480.6666666666667,
+            "mean_peak_within_0.9k_1.1k": true,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 513.0
+          }
+        }
+      }
+    },
+    "bin_9x": {
+      "report": {
+        "n": 512,
+        "balanced_accuracy": 0.5,
+        "raw_accuracy": 0.5,
+        "per_class_recall": {
+          "accept": 0.0,
+          "reject": 1.0
+        },
+        "confusion": {
+          "accept": {
+            "pred_accept": 0,
+            "pred_reject": 256
+          },
+          "reject": {
+            "pred_accept": 0,
+            "pred_reject": 256
+          }
+        },
+        "class_counts": {
+          "accept": 256,
+          "reject": 256
+        },
+        "majority_baseline": 0.5
+      },
+      "occupancy_receipt": {
+        "measurement": "peak live slots within each word's length (to its EOS; PAD-region behavior excluded) and end-of-word live slots at the EOS token (F7)",
+        "mean_peak_live_slots_within_word": 736.0,
+        "mean_end_of_word_live_slots_on_accepts": 736.0,
+        "per_k": {
+          "k1025": {
+            "k": 1025,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1026": {
+            "k": 1026,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1027": {
+            "k": 1027,
+            "n": 6,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1028": {
+            "k": 1028,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1029": {
+            "k": 1029,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1030": {
+            "k": 1030,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1031": {
+            "k": 1031,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1032": {
+            "k": 1032,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1033": {
+            "k": 1033,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1034": {
+            "k": 1034,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k1036": {
+            "k": 1036,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1037": {
+            "k": 1037,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1038": {
+            "k": 1038,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1039": {
+            "k": 1039,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1040": {
+            "k": 1040,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1041": {
+            "k": 1041,
+            "n": 6,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1042": {
+            "k": 1042,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1043": {
+            "k": 1043,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 4,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1044": {
+            "k": 1044,
+            "n": 6,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1045": {
+            "k": 1045,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1046": {
+            "k": 1046,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1047": {
+            "k": 1047,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1048": {
+            "k": 1048,
+            "n": 7,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1049": {
+            "k": 1049,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1050": {
+            "k": 1050,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1051": {
+            "k": 1051,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1052": {
+            "k": 1052,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1053": {
+            "k": 1053,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1054": {
+            "k": 1054,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1055": {
+            "k": 1055,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1056": {
+            "k": 1056,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1057": {
+            "k": 1057,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1058": {
+            "k": 1058,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1059": {
+            "k": 1059,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1060": {
+            "k": 1060,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1061": {
+            "k": 1061,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k1062": {
+            "k": 1062,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k1063": {
+            "k": 1063,
+            "n": 7,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 5,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1064": {
+            "k": 1064,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1065": {
+            "k": 1065,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1066": {
+            "k": 1066,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1067": {
+            "k": 1067,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1068": {
+            "k": 1068,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1069": {
+            "k": 1069,
+            "n": 6,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1070": {
+            "k": 1070,
+            "n": 7,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 4,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1071": {
+            "k": 1071,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1072": {
+            "k": 1072,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1073": {
+            "k": 1073,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1074": {
+            "k": 1074,
+            "n": 6,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 5,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1075": {
+            "k": 1075,
+            "n": 6,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1076": {
+            "k": 1076,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1077": {
+            "k": 1077,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1078": {
+            "k": 1078,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k1079": {
+            "k": 1079,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1080": {
+            "k": 1080,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1081": {
+            "k": 1081,
+            "n": 7,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 4,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1082": {
+            "k": 1082,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1083": {
+            "k": 1083,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1084": {
+            "k": 1084,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1085": {
+            "k": 1085,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k1086": {
+            "k": 1086,
+            "n": 6,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 4,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1087": {
+            "k": 1087,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1088": {
+            "k": 1088,
+            "n": 8,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 6,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1089": {
+            "k": 1089,
+            "n": 6,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 4,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1090": {
+            "k": 1090,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1091": {
+            "k": 1091,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1092": {
+            "k": 1092,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 4,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1093": {
+            "k": 1093,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1094": {
+            "k": 1094,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 5,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1095": {
+            "k": 1095,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1096": {
+            "k": 1096,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1097": {
+            "k": 1097,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1098": {
+            "k": 1098,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k1099": {
+            "k": 1099,
+            "n": 9,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 6,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1100": {
+            "k": 1100,
+            "n": 6,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1101": {
+            "k": 1101,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1102": {
+            "k": 1102,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1103": {
+            "k": 1103,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 4,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1104": {
+            "k": 1104,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1105": {
+            "k": 1105,
+            "n": 7,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1106": {
+            "k": 1106,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1107": {
+            "k": 1107,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 4,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1108": {
+            "k": 1108,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1109": {
+            "k": 1109,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1110": {
+            "k": 1110,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1111": {
+            "k": 1111,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 4,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1112": {
+            "k": 1112,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1113": {
+            "k": 1113,
+            "n": 6,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1114": {
+            "k": 1114,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1115": {
+            "k": 1115,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1116": {
+            "k": 1116,
+            "n": 6,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1117": {
+            "k": 1117,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 4,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1118": {
+            "k": 1118,
+            "n": 10,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1119": {
+            "k": 1119,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1120": {
+            "k": 1120,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1121": {
+            "k": 1121,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1122": {
+            "k": 1122,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k1123": {
+            "k": 1123,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1124": {
+            "k": 1124,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1125": {
+            "k": 1125,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k1126": {
+            "k": 1126,
+            "n": 6,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k1127": {
+            "k": 1127,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1128": {
+            "k": 1128,
+            "n": 8,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1129": {
+            "k": 1129,
+            "n": 1,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k1130": {
+            "k": 1130,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k1131": {
+            "k": 1131,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1132": {
+            "k": 1132,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1133": {
+            "k": 1133,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1134": {
+            "k": 1134,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1135": {
+            "k": 1135,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1136": {
+            "k": 1136,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1137": {
+            "k": 1137,
+            "n": 6,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1138": {
+            "k": 1138,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1139": {
+            "k": 1139,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k1140": {
+            "k": 1140,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1141": {
+            "k": 1141,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1142": {
+            "k": 1142,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1143": {
+            "k": 1143,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1144": {
+            "k": 1144,
+            "n": 4,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1145": {
+            "k": 1145,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 1,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1146": {
+            "k": 1146,
+            "n": 5,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1147": {
+            "k": 1147,
+            "n": 7,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1148": {
+            "k": 1148,
+            "n": 8,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 5,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1149": {
+            "k": 1149,
+            "n": 2,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k1150": {
+            "k": 1150,
+            "n": 6,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 3,
+            "mean_eos_live_slots_on_accepts": 736.0
+          },
+          "k1151": {
+            "k": 1151,
+            "n": 3,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 0,
+            "mean_eos_live_slots_on_accepts": null
+          },
+          "k1152": {
+            "k": 1152,
+            "n": 6,
+            "mean_peak_live_slots_within_word": 736.0,
+            "mean_peak_within_0.9k_1.1k": false,
+            "n_accepts": 2,
+            "mean_eos_live_slots_on_accepts": 736.0
+          }
+        }
+      }
+    }
+  },
+  "result": {
+    "path": "experiments/expressivity_tasks/results_x28e_memory_head/tape_B0_seed0/result.json",
+    "sha256": "5b92cdb2dc94f6717d9d3c6f2cf23656fc920b11eca1e83439fafe896e61a4d5",
+    "bytes": 330,
+    "payload": {
+      "arm": "tape_B0",
+      "status": "complete",
+      "stage3_validation_balanced_accuracy": 0.9864999999999999,
+      "selected_checkpoint": {
+        "metric": 0.9864999999999999,
+        "update": 5000,
+        "stage": "stage3"
+      },
+      "total_updates": 45500,
+      "payload_sha256": "19a5a54369aaf3ec6f35fbc0ca636d55b7053d0479929cdfbf2f93b8d76a5ad3"
+    },
+    "payload_hash_valid": true
+  },
+  "status": "complete; existing final evaluation",
+  "payload_sha256": "a3162331c0542fa214d1da94e5436f69b28c83bc731765b6ce2edbeee33b9701"
+}
