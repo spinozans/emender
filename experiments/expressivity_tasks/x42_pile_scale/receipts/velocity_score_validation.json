@@ -1,0 +1,39 @@
+{
+  "status": "incomplete_before_pure_stack_integration",
+  "timestamp_unix": 1793310590.4420822,
+  "objective_decision_required": false,
+  "objective": "score = NLL_heldout + w_occ * occ_frac + degeneracy_penalties, MINIMIZED.",
+  "w_occ": 0.01,
+  "train_seconds": 2700,
+  "eval_context": 2048,
+  "implemented": "Standalone score arithmetic and input validation only; not wired into search.py.",
+  "validation": {
+    "command": "/home/erikg/emender/.venv/bin/python -m pytest -q experiments/expressivity_tasks/x42_pile_scale/tests/test_velocity_score.py",
+    "result": "passed",
+    "tests": 15
+  },
+  "source_sha256": {
+    "experiments/expressivity_tasks/x42_pile_scale/velocity_score.py": "20da5b3647c03008b26b08a918e538783ad14c03c37103bd057a58dfdd248e84",
+    "experiments/expressivity_tasks/x42_pile_scale/tests/test_velocity_score.py": "cab60a52a2d9f264637a78ce11a165c43e2221a812d69accc99d5a7bca9058b4"
+  },
+  "coordination": {
+    "contact_supervisor_available": false,
+    "discovery": "ALL_TOOLS filtered for contact_supervisor, supervisor, intercom: no matches"
+  },
+  "remaining_work": [
+    "Replace projected X42 candidate adapter with checkpointed pure stack; preserve source-bound parity gates.",
+    "Implement and validate variable head spectrum and policy-constant fill barrier in x42_pile_scale.",
+    "Integrate fixed contiguous train/eval windows, active-training clock, per-head occupancy/touch/R-CAP/slope telemetry and durable restart accounting.",
+    "Bind and commit the complete registration and all implementation/corpus hashes before scoring.",
+    "Run one complete 2700-second candidate and pure-stack SIGKILL/resume validation.",
+    "Launch and observe generation 1 under parent process management with failure watchers.",
+    "Commit and push the verified launch."
+  ],
+  "search_registered": false,
+  "candidates_launched": 0,
+  "commit_created": false,
+  "pushed": false,
+  "protected_workloads": "Read-only nvidia-smi and ps inspection only; no GPU lease, process signal, checkpoint, or training process created. PID 634691 alive at inspection; card 0 busy. Cards 2/3/4/7 untouched.",
+  "limitations": "Score utility tests do not validate telemetry, pure-stack training, wall-clock accounting, reproducibility, or launch management.",
+  "diloco_requirement_ids": "N/A: no resilient training behavior changed or run"
+}
