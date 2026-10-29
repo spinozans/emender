@@ -51,7 +51,7 @@ def launch(policy,path,registration):
     while (path/f'attempt{attempt}').exists():attempt+=1
     output=path/f'attempt{attempt}'
     atomic_json(path/'policy.json',asdict(policy))
-    env=dict(os.environ,X42_LAUNCH_RECEIPTS=str(path/f'launch{attempt}'))
+    env=dict(os.environ,X42_LAUNCH_RECEIPTS=str(path/f'launch{attempt}'),PYTORCH_CUDA_ALLOC_CONF='expandable_segments:True',PYTORCH_ALLOC_CONF='expandable_segments:True')
     log=(path/f'parent_console{attempt}.txt').open('w')
     command=['bash',str(ROOT/'run_leased.sh'),'-m','experiments.expressivity_tasks.x42_pile_scale.velocity_train',
         '--policy',str(path/'policy.json'),'--registration',str(registration),'--output',str(output)]
@@ -113,6 +113,11 @@ def run(registration,output):
                 raise
             atomic_json(out/'smoke.json',result)
             atomic_json(out/'active.json',{})
+        smoke=json.loads((out/'smoke.json').read_text())
+        if smoke.get('batch')!=64 or smoke.get('context')!=2048 or smoke.get('regime_sha256')!=sha(ROOT/'velocity_regime.json'):
+            raise RuntimeError('smoke regime mismatch; rerun production smoke')
+        if smoke.get('tokens_per_second',0)<12000:
+            raise RuntimeError('production throughput below 15k class; decompose before generation')
         state=out/'generation.json'
         if state.exists():es,completed=restore_generation(state,digest)
         else:

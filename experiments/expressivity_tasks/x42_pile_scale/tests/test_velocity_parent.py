@@ -14,7 +14,7 @@ def test_parent_owns_one_population_and_resumes_completed_generation(tmp_path,mo
         return Child(),path
     monkeypatch.setattr(parent,'verify_registration',lambda _: {})
     monkeypatch.setattr(parent,'launch',launch)
-    monkeypatch.setattr(parent,'wait_result',lambda *args:dict(score=2.,status='completed',score_eligible=True,train_seconds=2700))
+    monkeypatch.setattr(parent,'wait_result',lambda *args:dict(score=2.,status='completed',score_eligible=True,train_seconds=2700,batch=64,context=2048,tokens_per_second=15800,regime_sha256=parent.sha(parent.ROOT/'velocity_regime.json')))
     monkeypatch.setattr(parent,'process_receipt',lambda c,p:dict(pid=-1,output=str(p),start_ticks='0'))
     monkeypatch.setattr(parent.time,'sleep',lambda _:None)
     parent.run(registration,output)

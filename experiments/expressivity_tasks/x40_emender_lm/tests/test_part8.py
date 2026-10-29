@@ -37,8 +37,26 @@ def test_registered_gdn2_family_matches_total_capacity(scale):
 
 
 @pytest.mark.parametrize('context',(512,2048))
-def test_checkpoint_preflight_uses_existing_strict_b32_receipt(context,monkeypatch):
+def test_checkpoint_preflight_uses_existing_strict_b32_receipt(context,monkeypatch,tmp_path):
+    import subprocess
+    from pathlib import Path
+    from experiments.expressivity_tasks.x40_emender_lm import part8_surface as surface
     from experiments.expressivity_tasks.x40_emender_lm.part8_surface import validate_parity,FLAGS
+    root=surface.ROOT
+    # Historical evidence binds to the source at its receipt commit, never HEAD.
+    paths=[root/f'receipts/part8/production_T{context}.json',
+           root/f'receipts/part6/checkpoint_gate_B32_T{context}_packed_expandable.json']
+    repo=Path(subprocess.check_output(['git','rev-parse','--show-toplevel'],text=True).strip())
+    for receipt in paths:
+        rel=receipt.relative_to(repo)
+        commit=subprocess.check_output(['git','log','-1','--format=%H','--',str(rel)],text=True).strip()
+        payload=subprocess.check_output(['git','show',f'{commit}:{rel}'])
+        saved=tmp_path/receipt.relative_to(root);saved.parent.mkdir(parents=True,exist_ok=True);saved.write_bytes(payload)
+        names=('model.py','forward.py','backward.py','kernels.py','scale_surface.py') if 'part8' in str(rel) else ('part6_checkpoint.py','part6_journal.py')
+        for name in names:
+            (tmp_path/name).write_bytes(subprocess.check_output(['git','show',f'{commit}:{root.relative_to(repo)/name}']))
+    monkeypatch.setattr(surface,'ROOT',tmp_path)
+    monkeypatch.setattr(surface,'OUT',tmp_path/'receipts/part8')
     for key in FLAGS:monkeypatch.setenv(key,'1')
     validate_parity(context,dict(checkpoint=True,packed=False,offload=False))
 
