@@ -1,0 +1,74 @@
+{
+  "status": "passed",
+  "physical_gpu": "1",
+  "python": "/home/erikg/emender/.venv/bin/python",
+  "scope": "B1 single-block structural audit; no sustained throughput claim",
+  "sources": {
+    "model.py": "8e0f9d8f5c305d2d19a3aa27488d894f89288264bcd3f1190ec85b0be16b9ccd",
+    "backward.py": "f6648bd7d4f67317c0a00dbb2940c7951204cf34a906fd804783cbb6f5fdc063",
+    "forward.py": "ff3791425de2af352f4e06a281cfa6b4a82ab4340ccb0d2906518ac2bae1edde",
+    "part6_checkpoint.py": "d5e25dfaa7b7ccb90f840bc31542afd06147eaf0d9ca8bab5730041fb99955b2",
+    "part9_call_audit.py": "1240dfe535736cc878281db8f0c6c63263994dedb5b389af87fb134364d8415f"
+  },
+  "flags": {
+    "X40_BATCHED_READS": "1",
+    "X40_FRESH_POOL": "1",
+    "X40_FUSED_INIT": "1",
+    "X40_STABLE_MAPPING": "1"
+  },
+  "rows": [
+    {
+      "scale": "22M",
+      "width": 256,
+      "ff_hidden": 1117,
+      "batch": 1,
+      "context": 512,
+      "counts": {
+        "forward:native_forward": 4,
+        "checkpoint_recompute:native_forward": 4,
+        "backward:reverse": 4
+      },
+      "native_forwards_inside_reverse": 0
+    },
+    {
+      "scale": "1.3B",
+      "width": 2048,
+      "ff_hidden": 11429,
+      "batch": 1,
+      "context": 512,
+      "counts": {
+        "forward:native_forward": 4,
+        "checkpoint_recompute:native_forward": 4,
+        "backward:reverse": 4
+      },
+      "native_forwards_inside_reverse": 0
+    },
+    {
+      "scale": "22M",
+      "width": 256,
+      "ff_hidden": 1117,
+      "batch": 1,
+      "context": 2048,
+      "counts": {
+        "forward:native_forward": 4,
+        "checkpoint_recompute:native_forward": 4,
+        "backward:reverse": 4
+      },
+      "native_forwards_inside_reverse": 0
+    },
+    {
+      "scale": "1.3B",
+      "width": 2048,
+      "ff_hidden": 11429,
+      "batch": 1,
+      "context": 2048,
+      "counts": {
+        "forward:native_forward": 4,
+        "checkpoint_recompute:native_forward": 4,
+        "backward:reverse": 4
+      },
+      "native_forwards_inside_reverse": 0
+    }
+  ],
+  "conclusion": "Checkpoint recomputation already records the journal used by the reverse. Reverse launches no second native forward."
+}
