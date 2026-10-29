@@ -1,0 +1,91 @@
+{
+  "criteriaSatisfied": [
+    {
+      "id": "criterion-1",
+      "status": "satisfied",
+      "evidence": "Hash-bound preregistration e0ec61ac preceded the full smoke; exact score 8.140112850969016 after 2701.123262612615 training seconds; generation 1 population 12 launched under parent 974815 on cards 1/5/6. Concise result and residual risks recorded."
+    }
+  ],
+  "changedFiles": [
+    "experiments/expressivity_tasks/x42_pile_scale/VELOCITY_PROTOCOL.md",
+    "experiments/expressivity_tasks/x42_pile_scale/VELOCITY_STATUS.md",
+    "experiments/expressivity_tasks/x42_pile_scale/receipts/velocity_acceptance.json",
+    "experiments/expressivity_tasks/x42_pile_scale/receipts/velocity_corpus_attestation.json",
+    "experiments/expressivity_tasks/x42_pile_scale/receipts/velocity_corpus_policy.json",
+    "experiments/expressivity_tasks/x42_pile_scale/receipts/velocity_generation1_initial.json",
+    "experiments/expressivity_tasks/x42_pile_scale/receipts/velocity_integration_gate.json",
+    "experiments/expressivity_tasks/x42_pile_scale/receipts/velocity_launch.json",
+    "experiments/expressivity_tasks/x42_pile_scale/receipts/velocity_policy_parity_v3.json",
+    "experiments/expressivity_tasks/x42_pile_scale/receipts/velocity_search_status.json",
+    "experiments/expressivity_tasks/x42_pile_scale/receipts/velocity_smoke.json",
+    "experiments/expressivity_tasks/x42_pile_scale/receipts/velocity_validation_part2d.json",
+    "experiments/expressivity_tasks/x42_pile_scale/tests/test_velocity_candidate.py",
+    "experiments/expressivity_tasks/x42_pile_scale/tests/test_velocity_parent.py",
+    "experiments/expressivity_tasks/x42_pile_scale/tests/test_velocity_state.py",
+    "experiments/expressivity_tasks/x42_pile_scale/velocity_candidate.py",
+    "experiments/expressivity_tasks/x42_pile_scale/velocity_forward.py",
+    "experiments/expressivity_tasks/x42_pile_scale/velocity_integration.py",
+    "experiments/expressivity_tasks/x42_pile_scale/velocity_kernels.py",
+    "experiments/expressivity_tasks/x42_pile_scale/velocity_parent.py",
+    "experiments/expressivity_tasks/x42_pile_scale/velocity_registration.json",
+    "experiments/expressivity_tasks/x42_pile_scale/velocity_state.py",
+    "experiments/expressivity_tasks/x42_pile_scale/velocity_train.py",
+    "experiments/expressivity_tasks/x42_pile_scale/velocity_validate.py"
+  ],
+  "testsAddedOrUpdated": [
+    "experiments/expressivity_tasks/x42_pile_scale/tests/test_velocity_candidate.py",
+    "experiments/expressivity_tasks/x42_pile_scale/tests/test_velocity_state.py",
+    "experiments/expressivity_tasks/x42_pile_scale/tests/test_velocity_parent.py"
+  ],
+  "commandsRun": [
+    {
+      "command": "/home/erikg/emender/.venv/bin/python -m pytest -q <four test_velocity modules>",
+      "result": "passed",
+      "summary": "30 tests; includes independent head policies, generation SIGKILL/resume and parent population management"
+    },
+    {
+      "command": "/home/erikg/emender/.venv/bin/python -m pytest -q <X40 suite and three velocity modules>",
+      "result": "failed",
+      "summary": "52 passed, 2 historical stale backward.py receipt-hash failures at T512/T2048"
+    },
+    {
+      "command": "run_leased.sh -m experiments.expressivity_tasks.x42_pile_scale.velocity_validate --output <v3 receipt>",
+      "result": "passed",
+      "summary": "Neutral/match-wire/pressure: exact trace/state/output/adjoints and independently reconstructed occupancy"
+    },
+    {
+      "command": "run_leased.sh -m experiments.expressivity_tasks.x42_pile_scale.velocity_integration --output <v3 receipt>",
+      "result": "passed",
+      "summary": "Full 150M trainable, N1/3/4/5, GPT-2 vocab, train512/eval2048"
+    },
+    {
+      "command": "/home/erikg/emender/.venv/bin/python -m experiments.expressivity_tasks.x42_pile_scale.velocity_parent --registration experiments/expressivity_tasks/x42_pile_scale/velocity_registration.json --output experiments/expressivity_tasks/x42_pile_scale/runs/velocity_v1",
+      "result": "passed",
+      "summary": "Detached parent completed smoke and launched generation 1; all first three candidates have finite completed updates"
+    },
+    {
+      "command": "git push origin HEAD",
+      "result": "passed",
+      "summary": "Preregistration and initial launch commits pushed; final attestation push follows"
+    }
+  ],
+  "validationOutput": [
+    "Smoke: 138240 tokens, 270 updates, 2701.123262612615 active train seconds; 66.4628937849775 eval seconds excluded.",
+    "Score recomputed exactly: 8.140112850969016; NLL 8.1380096077919; occupancy 0.2103243177116383; no degeneracy flags.",
+    "51.178708470449344 tokens/s; peak allocated 3481367552 bytes; all 48 layer/head operating points retained.",
+    "Generation snapshot contains 12 population vectors, 36 dimensions, mean/covariance/paths/RNG and completion map; direct parent 974815 active."
+  ],
+  "residualRisks": [
+    "Generation 1 is running; no completed population or winning policy is claimed.",
+    "Two historical X40 part8 preflight tests fail on stale receipt hashes; certified sources and parity gates were left unchanged.",
+    "Gate-cost coordinate has no trainable-gradient effect under frozen management; batch1 is not throughput tuned; scale transfer remains unproven.",
+    "On exact score ties the parent winner label follows completion order; CMA ranking is stable by index. Apply the preregistered stable-index promotion rule when reviewing ties."
+  ],
+  "noStagedFiles": true,
+  "diffSummary": "Pure variable-head candidate, per-head policy gates, active training clock, telemetry/scoring, durable generation state, detached parent, preregistration and launch evidence.",
+  "reviewFindings": [
+    "Known nonblocking report-label tie issue in velocity_parent.py; scientific score and CMA ranking unaffected.",
+    "Two stale historical receipt-hash test failures retained as failures."
+  ],
+  "manualNotes": "Preregistration SHA256 f394fc0680f86ac806976a3162d321561087e92c0837da0677303c6a8c51a131 committed in e0ec61ac before scoring. PID 634691 remained alive and untouched. Cards 0/2/3/4/7 excluded; no .pt files committed. Supervisor/intercom discovery found no tool. No resilient DiLoCo behavior changed; requirement IDs not applicable."
+}
