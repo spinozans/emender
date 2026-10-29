@@ -1,0 +1,18 @@
+profile_pure_T512	0	-m experiments.expressivity_tasks.x40_emender_lm.part10_profile --context 512 --arm pure
+profile_transformer_T512	0	-m experiments.expressivity_tasks.x40_emender_lm.part10_profile --context 512 --arm transformer
+profile_pure_T2048	0	-m experiments.expressivity_tasks.x40_emender_lm.part10_profile --context 2048 --arm pure
+profile_transformer_T2048	0	-m experiments.expressivity_tasks.x40_emender_lm.part10_profile --context 2048 --arm transformer
+read_probe	0	-m experiments.expressivity_tasks.x40_emender_lm.part10_read_probe
+cache_probe	0	-m experiments.expressivity_tasks.x40_emender_lm.part10_cache_probe
+curve_fp32	0	-m experiments.expressivity_tasks.x40_emender_lm.part10_curve --arm fp32
+curve_bf16	0	-m experiments.expressivity_tasks.x40_emender_lm.part10_curve --arm bf16
+sustained_pure_T512	0	-m experiments.expressivity_tasks.x40_emender_lm.part10_sustained --scale 1.3B --arm pure --batch 64 --context 512 --steps 20
+sustained_transformer_T512	0	-m experiments.expressivity_tasks.x40_emender_lm.part10_sustained --scale 1.3B --arm transformer --batch 64 --context 512 --steps 20
+sustained_pure_T2048	0	-m experiments.expressivity_tasks.x40_emender_lm.part10_sustained --scale 1.3B --arm pure --batch 64 --context 2048 --steps 20
+sustained_transformer_T2048	0	-m experiments.expressivity_tasks.x40_emender_lm.part10_sustained --scale 1.3B --arm transformer --batch 64 --context 2048 --steps 20
+pilot	0	-m experiments.expressivity_tasks.x40_emender_lm.part10_pilot
+rate_probe	0	-m experiments.expressivity_tasks.x40_emender_lm.part10_rate_probe
+store_probe	0	-m experiments.expressivity_tasks.x40_emender_lm.part10_store_probe
+batch_read_probe	0	-m experiments.expressivity_tasks.x40_emender_lm.part10_batch_read_probe
+reverse_clock_T512	0	-m experiments.expressivity_tasks.x40_emender_lm.part10_reverse_clock --context 512 --arm pure
+reverse_clock_T2048	0	-m experiments.expressivity_tasks.x40_emender_lm.part10_reverse_clock --context 2048 --arm pure

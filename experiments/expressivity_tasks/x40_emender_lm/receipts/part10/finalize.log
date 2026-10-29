@@ -1,0 +1,226 @@
+{
+  "status": "failed",
+  "production_changes": false,
+  "production_speedup_accepted": false,
+  "acceptance_targets": {
+    "one_x": "not verified",
+    "pilot_100k": "failed"
+  },
+  "profiles": [
+    {
+      "context": 512,
+      "pure_status": "passed",
+      "transformer_status": "passed",
+      "pure_seconds": 12.00040091574192,
+      "transformer_seconds": 5.019637580960989,
+      "diagnostic_step_ratio": 2.390690706687333,
+      "exclusive_seconds": {
+        "zero_grad": 0.0010051210410892963,
+        "sequential_forward_core": 2.2473693937063217,
+        "forward_read_elementwise_tiles": 0.23717734357342124,
+        "initial_checkpoint_dense_and_native_setup": 1.0579893831163645,
+        "forward_dense_loss_and_native_setup": 0.18386280350387096,
+        "checkpoint_recompute_dense_and_native_setup": 1.0626859236508608,
+        "reverse_fused_read_math_and_adjoints": 4.926609044428915,
+        "reverse_setup_and_teardown": 0.26235735416412354,
+        "backward_dense_loss_and_replay_setup": 1.9373528179712594,
+        "clip": 0.023325094021856785,
+        "optimizer": 0.05893388390541077
+      },
+      "scope": "synchronized diagnostic only; not sustained ratio"
+    },
+    {
+      "context": 2048,
+      "pure_status": "passed",
+      "transformer_status": "passed",
+      "pure_seconds": 72.37773140706122,
+      "transformer_seconds": 21.11943995114416,
+      "diagnostic_step_ratio": 3.4270667960179555,
+      "exclusive_seconds": {
+        "zero_grad": 0.0010517719201743603,
+        "sequential_forward_core": 15.467662387061864,
+        "forward_read_elementwise_tiles": 1.8546349918469787,
+        "initial_checkpoint_dense_and_native_setup": 4.058949573431164,
+        "forward_dense_loss_and_native_setup": 0.8662410057149827,
+        "checkpoint_recompute_dense_and_native_setup": 3.959087260533124,
+        "reverse_fused_read_math_and_adjoints": 36.9143771128729,
+        "reverse_setup_and_teardown": 0.3221317334100604,
+        "backward_dense_loss_and_replay_setup": 8.848907789681107,
+        "clip": 0.023959673941135406,
+        "optimizer": 0.05882210424169898
+      },
+      "scope": "synchronized diagnostic only; not sustained ratio"
+    }
+  ],
+  "cache_analysis": [
+    {
+      "context": 512,
+      "heads": [
+        2,
+        3
+      ],
+      "layers": 24,
+      "physical_batch": 32,
+      "effective_batch": 64,
+      "probability_cache_bytes": 1610612736,
+      "probability_cache_GiB": 1.5,
+      "output_only_cache_bytes": 402653184,
+      "output_only_cache_GiB": 0.375,
+      "interpretation": "Outputs alone cannot replace score/probability replay. Probability cache sizes are storage accounting, not measured full-model peak or speedup. Requires recording during initial checkpoint pass; one microbatch live at a time."
+    },
+    {
+      "context": 2048,
+      "heads": [
+        2,
+        3
+      ],
+      "layers": 24,
+      "physical_batch": 32,
+      "effective_batch": 64,
+      "probability_cache_bytes": 13891534848,
+      "probability_cache_GiB": 12.9375,
+      "output_only_cache_bytes": 1610612736,
+      "output_only_cache_GiB": 1.5,
+      "interpretation": "Outputs alone cannot replace score/probability replay. Probability cache sizes are storage accounting, not measured full-model peak or speedup. Requires recording during initial checkpoint pass; one microbatch live at a time."
+    }
+  ],
+  "read_probe": "passed",
+  "cache_probe": "passed",
+  "curve_status": [
+    "passed",
+    "passed"
+  ],
+  "sustained_ratios": [
+    {
+      "context": 512,
+      "batch": 64,
+      "microbatch": 32,
+      "pure_tok_s": 2761.3162160668126,
+      "transformer_tok_s": 6110.272257095982,
+      "pure_time_over_transformer": 2.2128114924118996,
+      "physical_gpus": [
+        "1",
+        "5"
+      ],
+      "scope": "unchanged production, fixed shared envelope, 3 warmups/20 updates; not an optimization before/after"
+    },
+    {
+      "context": 2048,
+      "batch": 64,
+      "microbatch": 32,
+      "pure_tok_s": 1808.827926926165,
+      "transformer_tok_s": 5801.365127364485,
+      "pure_time_over_transformer": 3.207250972303952,
+      "physical_gpus": [
+        "1",
+        "5"
+      ],
+      "scope": "unchanged production, fixed shared envelope, 3 warmups/20 updates; not an optimization before/after"
+    }
+  ],
+  "pilot": {
+    "measurement_status": "passed",
+    "tokens_per_second": 55429.54096070663,
+    "gate": "failed",
+    "curve": "inherited unchanged part8 B128 matched curve"
+  },
+  "curve_comparison": {
+    "tokens": 5013504,
+    "steps": 153,
+    "max_abs_loss_difference": 2.8014183044433594e-05,
+    "mean_abs_loss_difference": 6.300171995474622e-06,
+    "final_fp32_loss": 3.8989999294281006,
+    "final_bf16_loss": 3.8989923000335693,
+    "final_absolute_loss_difference": 7.62939453125e-06,
+    "matched_data": true,
+    "scope": "pilot; candidate BF16 forward with FP32 surrogate replay; does not certify correctly redefined BF16 adjoints or scale quality"
+  },
+  "missing_acceptance": [
+    "Separate wall attribution of reverse read mathematics versus sparse adjoints within the fused kernel.",
+    "BF16 candidate CPU/native bitwise parity and explicitly redefined adjoint certification; current experiment uses FP32 surrogate replay.",
+    "No production optimization landed; no after-optimization speedup or 1x claim. Fresh unchanged sustained measurements are listed separately.",
+    "Full-step 1.3B hybrid caching implementation and measured memory/step time; component experiment only.",
+    "Trained-density event suppression exactness and sustained speedup."
+  ],
+  "rate_class_probe": "passed",
+  "store_probe": "passed",
+  "batch_read_probe": "passed",
+  "reverse_cycle_diagnostics": [
+    {
+      "context": 512,
+      "status": "passed",
+      "cycle_fractions": {
+        "undo_and_input_init": 0.08684845744489074,
+        "strength_restore_and_store_adjoints": 0.16366585162078376,
+        "read_score_softmax_recompute": 0.04067297522104113,
+        "read_adjoints": 0.7088127157132844
+      },
+      "cycle_weighted_device_ms_estimates": {
+        "undo_and_input_init": 410.97291627722217,
+        "strength_restore_and_store_adjoints": 760.8980330401141,
+        "read_score_softmax_recompute": 197.44847813653973,
+        "read_adjoints": 3479.793724096416
+      },
+      "scope": "instrumented occupancy-weighted diagnostic; not additive wall phases"
+    },
+    {
+      "context": 2048,
+      "status": "passed",
+      "cycle_fractions": {
+        "undo_and_input_init": 0.048729755165040176,
+        "strength_restore_and_store_adjoints": 0.18801551027311866,
+        "read_score_softmax_recompute": 0.11790807872154774,
+        "read_adjoints": 0.6453466558402934
+      },
+      "cycle_weighted_device_ms_estimates": {
+        "undo_and_input_init": 1760.0854011847025,
+        "strength_restore_and_store_adjoints": 6713.6163998330885,
+        "read_score_softmax_recompute": 4363.977230335606,
+        "read_adjoints": 23927.26992799716
+      },
+      "scope": "instrumented occupancy-weighted diagnostic; not additive wall phases"
+    }
+  ],
+  "production_bindings": [
+    {
+      "context": 512,
+      "pressure_gate": true,
+      "source": "part8 source-bound certification plus part9 fresh pressure gate",
+      "source_receipt_sha256": "d3fbc94ca094fe7cc0fde7d3f9aa84ce901cfa94ccbff5a82cd426bfb0279b49",
+      "part9_receipt_sha256": "6e820f3e11aabe5a3288fcad2e70ef6b90a8b6196cb14180ce27092196a08f43"
+    },
+    {
+      "context": 2048,
+      "pressure_gate": true,
+      "source": "part8 source-bound certification plus part9 fresh pressure gate",
+      "source_receipt_sha256": "92fc0878736f5158875ce230563b9552e87797bca1913c97eafbbb9735508c6a",
+      "part9_receipt_sha256": "f9c705f89cbb255713784a76af527dc5069fafef4e9701a1281be54c7976032a"
+    }
+  ],
+  "bf16_certification": {
+    "status": "failed",
+    "cpu_native_prefix_bitwise_failures": 8,
+    "prefix_cases": 8,
+    "adjoint_certification": "not run; FP32 surrogate replay retained",
+    "production_adoption": false
+  },
+  "source_hashes": {
+    "part10_ieee_read.py": "debf7e17e7f0d091d22d2a2050836c5a90087c1025b595254c585df91093de1d",
+    "part10_read_probe.py": "e6db07998bbaab92a06381a1184eff33ea6d69d5761ec5524fa0d1267dac279b",
+    "part10_profile.py": "3800f4e5bb277c35e53d3ca3beacd1eb8da2f8f300f1d2b1bc0c7cb45980c852",
+    "part10_clock_kernel_generated.py": "466e765b4ee65d45dd9d8ed6c481474e04196f5b4c4be8eca2822e70cb53c935",
+    "part10_rate_probe.py": "7b9ec9268684d145d8b63d0b55ecf6ef38c1e11c49b3a87647ba86d973a2719f",
+    "part10_plot.py": "f303678ed3af6b2c7f29e4dd91afbaf7361140fb52ecd57b9ac1374ecdd5aff6",
+    "part10_batch_read_probe.py": "33906a6e4ad563eb6a6e7333187dfe9da87cf3926a653187e6643191d3fd62e4",
+    "part10_validate.py": "e602c502e1558b5bbe2ef7124000845864d0e5886fe55c4453c1bd3b54e61999",
+    "part10_sustained.py": "ed9b20d9a0748d1e0c2f5a8aaa446147bcddb199d16448a6f7f617bdbd3fde1c",
+    "part10_store_probe.py": "3ad67a7a160d997ed2c21a2589f66a4678ad18d117645fa0e9e8d171f99ab3ae",
+    "part10_bf16_read.py": "bbb82ed3d188709579b428dd122ba75cbf5febdbe727e5e545d07d121e0ee9a4",
+    "part10_reverse_clock.py": "bba5628f300cca72b68a023ba9d10c88bcd456006718d844fd10da4bf642ccb9",
+    "part10_finalize.py": "90b128de0513662be475dc80f7ebec539f884934e5b4012293ba785936125212",
+    "part10_cache_probe.py": "e31ccb2565dc2b3df84a75b4248f398de10b704245f277bdd9aa585f0477d3cc",
+    "part10_curve.py": "0de02fe27c268cf4401ca5280d9228f4d676eba1b5445e88312bc25ea9ceb63e",
+    "part10_pilot.py": "9b0412604863d851c98ab4eb655ca49a63ca2594e582fb852eb17762fff211e6",
+    "part10_report.py": "978327d85c45ad642feefd2e27ac6a7fc7b7155ae8711e04917846b634e07c6f"
+  }
+}
