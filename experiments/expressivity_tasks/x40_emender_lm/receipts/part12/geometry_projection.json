@@ -1,0 +1,30 @@
+{
+  "scope": "Geometry arithmetic only, NOT measured allocation support; pop/reuse and corrections alter actual unions",
+  "rows": [
+    {
+      "context": 512,
+      "assumed_appends_per_head": 256.0,
+      "slots_per_head": [
+        64,
+        256,
+        736,
+        1472
+      ],
+      "no_reuse_capacity_capped_union_fraction": 0.3291139240506329,
+      "one_head_2944_denominator_fraction": 0.08695652173913043
+    },
+    {
+      "context": 2048,
+      "assumed_appends_per_head": 1024.0,
+      "slots_per_head": [
+        64,
+        256,
+        736,
+        1472
+      ],
+      "no_reuse_capacity_capped_union_fraction": 0.8227848101265823,
+      "one_head_2944_denominator_fraction": 0.34782608695652173
+    }
+  ],
+  "observation": "9%/35% is 0.5*T divided by 2944 for one head. Actual native head capacities are 64/256/736/1472, not 2944 each. Empirical full-stack union receipts remain required; production capacities are not changed."
+}

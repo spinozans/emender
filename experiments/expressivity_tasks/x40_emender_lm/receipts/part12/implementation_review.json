@@ -1,0 +1,19 @@
+{
+  "status": "passed",
+  "scope": "Single-threaded manual review of production diff; complete measurements retained and pilot 100k performance gate failed",
+  "backward_sha256": "24fd3ffcee4384e78371ced11f9cba83e78925b742be52dc2f25ef7786b62863",
+  "checks": [
+    "Long pooling requires fresh zero origin, X40_FRESH_POOL=1, X40_LONG_POOL=1, T<=2048; continued long states retain previous dispatch.",
+    "Long scratch computes native logical indices from PoolRows but stores and reloads strength/probability scratch with packed indices.",
+    "Pooled replay disables the prefix-width shortcut; full logical-S reduction operands and original compact-replay device assertion remain.",
+    "Journal address rebasing and cold gradient backing use existing X36 prepare/unpack machinery; finally restores private journal addresses.",
+    "No production forward, BF16 branch, model architecture, initializer, AGENTS.md or CLAUDE.md edits.",
+    "80 zero/journal fixtures, 40 native byte cases and the paired full 1.3B 2M-token gradient/parameter hash gate passed.",
+    "Diagnostic split failures were scoped and archived; restoring the original byte occupancy assertion passed all eight shapes."
+  ],
+  "code_blockers": [],
+  "limitations": [
+    "Native empirical certification covers requested B32 policy shapes at T512/T2048 and one paired real-data 2M-token slice.",
+    "Opt-in long pooling is not a validation of arbitrary imported states or other geometries."
+  ]
+}

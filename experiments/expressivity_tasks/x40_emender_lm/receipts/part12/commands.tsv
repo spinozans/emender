@@ -1,0 +1,32 @@
+support_gate	0	part12_support_gate
+parity_harness_error	1	part12_parity (initial byte-view reader)
+parity	0	part12_parity
+parity_empty	0	part12_parity --fixture empty
+parity_popped	0	part12_parity --fixture popped
+parity_decay	0	part12_parity --fixture decay
+parity_correction	0	part12_parity --fixture correction
+cpu_tests	0	pytest test_part10.py test_model.py (CUDA_VISIBLE_DEVICES empty)
+curve_base_T2048	0	part12_curve --arm base --context 2048
+curve_candidate_T2048	0	-m experiments.expressivity_tasks.x40_emender_lm.part12_curve --arm candidate --context 2048
+parity_fused_forward_random	0	-m experiments.expressivity_tasks.x40_emender_lm.part12_parity --fused-forward
+parity_split_random_attempt0	1	-m experiments.expressivity_tasks.x40_emender_lm.part12_parity --split
+parity_split_random_attempt1	1	part12_parity --split (runtime-phase experiment)
+parity_split_random_attempt2	1	part12_parity --split (shared tail-probability experiment)
+parity_split_random	0	part12_parity --split (restored byte occupancy assertion)
+profile_pure_T512	0	-m experiments.expressivity_tasks.x40_emender_lm.part12_measure profile --context 512 --arm pure
+sustained_pure_T512	0	-m experiments.expressivity_tasks.x40_emender_lm.part12_measure sustained --context 512 --arm pure
+profile_transformer_T512	0	-m experiments.expressivity_tasks.x40_emender_lm.part12_measure profile --context 512 --arm transformer
+sustained_transformer_T512	0	-m experiments.expressivity_tasks.x40_emender_lm.part12_measure sustained --context 512 --arm transformer
+fused_forward_T512	0	-m experiments.expressivity_tasks.x40_emender_lm.part12_measure fused-forward --context 512
+split_T512	0	-m experiments.expressivity_tasks.x40_emender_lm.part12_measure split --context 512
+profile_pure_T2048	0	-m experiments.expressivity_tasks.x40_emender_lm.part12_measure profile --context 2048 --arm pure
+sustained_pure_T2048	0	-m experiments.expressivity_tasks.x40_emender_lm.part12_measure sustained --context 2048 --arm pure
+profile_transformer_T2048	0	-m experiments.expressivity_tasks.x40_emender_lm.part12_measure profile --context 2048 --arm transformer
+sustained_transformer_T2048	0	-m experiments.expressivity_tasks.x40_emender_lm.part12_measure sustained --context 2048 --arm transformer
+fused_forward_T2048	0	-m experiments.expressivity_tasks.x40_emender_lm.part12_measure fused-forward --context 2048
+split_T2048	0	-m experiments.expressivity_tasks.x40_emender_lm.part12_measure split --context 2048
+pilot	0	-m experiments.expressivity_tasks.x40_emender_lm.part12_pilot
+report	0	part12_report (complete evidence; performance gate failed)
+validation	0	part12_validate
+manifest_initial_error	1	artifact manifest path normalization (fixed)
+manifest	0	artifact manifest with resolved paths

@@ -1,0 +1,75 @@
+diff --git a/experiments/expressivity_tasks/x40_emender_lm/backward.py b/experiments/expressivity_tasks/x40_emender_lm/backward.py
+index 0173d7d9..8f82a77e 100644
+--- a/experiments/expressivity_tasks/x40_emender_lm/backward.py
++++ b/experiments/expressivity_tasks/x40_emender_lm/backward.py
+@@ -228,15 +228,17 @@ def reverse_program(K,Q,V,Beta,Pop,Keys,Values,Strength,Live,Touch,
+             for tile in range(tl.cdiv(min(S,BS,RS),512)):
+                 row=tile*512+tl.arange(0,512)
+                 active=row<min(S,BS,RS)
+-                tile_live=tl.load(Live+n*S+row,active,False).to(tl.int1)
+-                reference=tl.load(Strength+n*S+row,active,0.)
+-                touch=tl.load(Touch+n*S+row,active,0)
++                logical=tl.load(PoolRows+n*PS+row,active & (row<PS),-1) if PS else row
++                active=active & (logical>=0)
++                tile_live=tl.load(Live+n*S+logical,active,False).to(tl.int1)
++                reference=tl.load(Strength+n*S+logical,active,0.)
++                touch=tl.load(Touch+n*S+logical,active,0)
+                 steps=tl.where(tile_live,Start+t-touch,0)
+                 if Fresh:steps=tl.where(t==0,0,steps)
+                 decayed=advance_unit(reference,steps,Decay,DecayTable,T)
+                 tl.store(StrengthScratch+n*RS+row,decayed,active)
+             tl.debug_barrier()
+-            strength=tl.load(StrengthScratch+n*RS+s,valid & (s<RS),0.)
++            strength=tl.load(StrengthScratch+n*RS+a,valid & (a<RS),0.)
+             live=tl.load(Live+n*S+s,valid,False).to(tl.int1)
+             gs=tl.load(GStrength+n*GS+a,valid & (a<GS),0.,volatile=True)
+         freed=tl.load(Freed+inp.to(tl.int64)*S+s,valid,0)
+@@ -301,8 +303,8 @@ def reverse_program(K,Q,V,Beta,Pop,Keys,Values,Strength,Live,Touch,
+         denom=slot_sum(numer,full_live,BS,triton.next_power_of_2(S),tail,Inverse=inverse,Sparse=PS>0)
+         prob=numer/denom
+         if T>512:
+-            tl.store(ProbabilityScratch+n*RS+s,prob,valid & (s<RS))
+-            strength=tl.load(StrengthScratch+n*RS+s,valid & (s<RS),0.,volatile=True)
++            tl.store(ProbabilityScratch+n*RS+a,prob,valid & (a<RS))
++            strength=tl.load(StrengthScratch+n*RS+a,valid & (a<RS),0.,volatile=True)
+         weight=prob*strength*live
+         dw=tl.full((BS,),0.,tl.float32)
+         for j in range(DV):
+@@ -314,8 +316,8 @@ def reverse_program(K,Q,V,Beta,Pop,Keys,Values,Strength,Live,Touch,
+         if T>512:
+             tl.debug_barrier()
+             gs=tl.load(GStrength+n*GS+a,valid & (a<GS),0.,volatile=True)
+-            prob=tl.load(ProbabilityScratch+n*RS+s,valid & (s<RS),0.,volatile=True)
+-            strength=tl.load(StrengthScratch+n*RS+s,valid & (s<RS),0.,volatile=True)
++            prob=tl.load(ProbabilityScratch+n*RS+a,valid & (a<RS),0.,volatile=True)
++            strength=tl.load(StrengthScratch+n*RS+a,valid & (a<RS),0.,volatile=True)
+         gs+=prob*live*dw
+         if T>512:
+             tl.store(GStrength+n*GS+a,gs,valid & (a<GS))
+@@ -357,7 +359,7 @@ def reverse_kernel(K,Q,V,Beta,Pop,Keys,Values,Strength,Live,Touch,
+     # The allocation trace is integral and already resident. Its maximum,
+     # together with the entry prefix bound, covers every row read or mutated.
+     # Dispatch once per store; no host query or synchronization is introduced.
+-    if T>512 and InitialBound>=0 and BS>1:
++    if T>512 and PS==0 and InitialBound>=0 and BS>1:
+         n=tl.program_id(0).to(tl.int64)
+         token=tl.arange(0,triton.next_power_of_2(T))
+         allocated=tl.load(Alloc+n*T+token,token<T,-1)
+@@ -443,7 +445,7 @@ class Replay(torch.autograd.Function):
+         # A continued state's reach may be the saturated capacity bound even
+         # when its occupancy is small. Reach is not an adjoint cardinality.
+         ctx.entry_live=live.detach().reshape(-1,cfg.slots).clone() if saved["live_bound"] != 0 else None
+-        fresh_pool=saved['live_bound']==0 and k.shape[1]<=512 and os.environ.get('X40_FRESH_POOL','0')=='1'
++        fresh_pool=saved['live_bound']==0 and (k.shape[1]<=512 or (k.shape[1]<=2048 and os.environ.get('X40_LONG_POOL','0')=='1')) and os.environ.get('X40_FRESH_POOL','0')=='1'
+         if fresh_pool:ctx.entry_live=live.detach().reshape(-1,cfg.slots).clone()
+         ctx.exceptional_cold_tail=False
+         if fresh_pool:
+@@ -496,7 +498,7 @@ class Replay(torch.autograd.Function):
+         replay_rows=(cfg.slots if ctx.initial_bound is None else
+                      min(cfg.slots,ctx.initial_bound+t))
+         pool_rows=pool_inverse=None
+-        if ctx.entry_live is not None and t<=512:
++        if ctx.entry_live is not None and (t<=512 or (ctx.initial_bound==0 and t<=2048 and os.environ.get('X40_LONG_POOL','0')=='1')):
+             from ..x36_tape_perf.adjoint_pool import build
+             pool_rows,pool_inverse,pool_counts=build(ctx.entry_live,ctx.trace[2])
+             ctx.pool_stats=dict(union_counts=pool_counts,allocated_rows=pool_rows.shape[-1],

@@ -1,0 +1,13 @@
+{
+  "status": "failed",
+  "rows": [],
+  "physical_gpu": "1",
+  "scope": "B32 fresh native 1.3B head geometry, FP32 replay; not a full-model curve",
+  "sources": {
+    "backward.py": "24fd3ffcee4384e78371ced11f9cba83e78925b742be52dc2f25ef7786b62863",
+    "forward.py": "ff3791425de2af352f4e06a281cfa6b4a82ab4340ccb0d2906518ac2bae1edde",
+    "part12_parity.py": "241629d77e32d0ddbcb30a5a919841f7407a54ff373efd2597c11de29c539c8f"
+  },
+  "error": "RuntimeError('self.stride(-1) must be 1 to view Float as Byte (different element sizes), but got 512')",
+  "traceback": "Traceback (most recent call last):\n  File \"/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/part12_parity.py\", line 66, in main\n    a = baseline[name].contiguous().view(torch.uint8)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nRuntimeError: self.stride(-1) must be 1 to view Float as Byte (different element sizes), but got 512\n"
+}

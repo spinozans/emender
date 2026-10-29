@@ -1,0 +1,427 @@
+{
+  "status": "failed",
+  "task_complete": false,
+  "implementation_and_measurements_complete": true,
+  "production_speedup_accepted": false,
+  "support_status": "passed",
+  "support_fixtures": 80,
+  "parity": {
+    "": "passed",
+    "_empty": "passed",
+    "_popped": "passed",
+    "_decay": "passed",
+    "_correction": "passed"
+  },
+  "curve_status": {
+    "base_T2048": "passed",
+    "candidate_T2048": "passed"
+  },
+  "support_shapes": [
+    {
+      "context": 512,
+      "slots": 64,
+      "mean_touched": 64.0,
+      "union_fraction": 1.0,
+      "mean_reserved_rows": 64.0,
+      "calls": 48
+    },
+    {
+      "context": 512,
+      "slots": 256,
+      "mean_touched": 256.0,
+      "union_fraction": 1.0,
+      "mean_reserved_rows": 256.0,
+      "calls": 48
+    },
+    {
+      "context": 512,
+      "slots": 736,
+      "mean_touched": 256.0,
+      "union_fraction": 0.34782608695652173,
+      "mean_reserved_rows": 256.0,
+      "calls": 48
+    },
+    {
+      "context": 512,
+      "slots": 1472,
+      "mean_touched": 256.0,
+      "union_fraction": 0.17391304347826086,
+      "mean_reserved_rows": 256.0,
+      "calls": 48
+    },
+    {
+      "context": 2048,
+      "slots": 64,
+      "mean_touched": 64.0,
+      "union_fraction": 1.0,
+      "mean_reserved_rows": 64.0,
+      "calls": 48
+    },
+    {
+      "context": 2048,
+      "slots": 256,
+      "mean_touched": 256.0,
+      "union_fraction": 1.0,
+      "mean_reserved_rows": 256.0,
+      "calls": 48
+    },
+    {
+      "context": 2048,
+      "slots": 736,
+      "mean_touched": 736.0,
+      "union_fraction": 1.0,
+      "mean_reserved_rows": 736.0,
+      "calls": 48
+    },
+    {
+      "context": 2048,
+      "slots": 1472,
+      "mean_touched": 1024.0,
+      "union_fraction": 0.6956521739130435,
+      "mean_reserved_rows": 1024.0,
+      "calls": 48
+    }
+  ],
+  "support_totals": [
+    {
+      "context": 512,
+      "touched_fraction": 0.3291139240506329
+    },
+    {
+      "context": 2048,
+      "touched_fraction": 0.8227848101265823
+    }
+  ],
+  "ratios": [
+    {
+      "context": 512,
+      "mode": "profile",
+      "status": "passed",
+      "pure_over_transformer_seconds": 2.5334616478836454,
+      "physical_gpu_pair": [
+        "1",
+        "1"
+      ]
+    },
+    {
+      "context": 512,
+      "mode": "sustained",
+      "status": "passed",
+      "pure_over_transformer_seconds": 2.2084955266755775,
+      "physical_gpu_pair": [
+        "5",
+        "5"
+      ]
+    },
+    {
+      "context": 2048,
+      "mode": "profile",
+      "status": "passed",
+      "pure_over_transformer_seconds": 3.5544368147112064,
+      "physical_gpu_pair": [
+        "1",
+        "1"
+      ]
+    },
+    {
+      "context": 2048,
+      "mode": "sustained",
+      "status": "passed",
+      "pure_over_transformer_seconds": 3.156447665911088,
+      "physical_gpu_pair": [
+        "5",
+        "5"
+      ]
+    }
+  ],
+  "split_decomposition": [
+    {
+      "context": 512,
+      "regions": {
+        "undo": 8.527273898944259,
+        "strength_restore_and_store_event_adjoints": 8.775189220439643,
+        "score_softmax_recompute": 8.31094644824043,
+        "read_adjoints": 11.63780816970393
+      },
+      "overhead_seconds": 2.4770798687823117,
+      "split_update_wall_seconds": 47.229907331988215,
+      "limitation": "Split-kernel synchronized wall, includes spill/reload and extra launches; not a decomposition of the unchanged fused binary."
+    },
+    {
+      "context": 2048,
+      "regions": {
+        "undo": 33.6979994866997,
+        "strength_restore_and_store_event_adjoints": 40.502053453586996,
+        "score_softmax_recompute": 34.94792232196778,
+        "read_adjoints": 57.653938790317625
+      },
+      "overhead_seconds": 9.523138474207371,
+      "split_update_wall_seconds": 212.65783505886793,
+      "limitation": "Split-kernel synchronized wall, includes spill/reload and extra launches; not a decomposition of the unchanged fused binary."
+    }
+  ],
+  "core_fusion": [
+    {
+      "context": 512,
+      "normal_wall_seconds": 11.79185662791133,
+      "fused_wall_seconds": 13.10253125289455,
+      "full_model_profile_loss_equal": true,
+      "normal_calls": {
+        "zero_grad": 1,
+        "sequential_forward_core": 384,
+        "forward_read_elementwise_tiles": 384,
+        "initial_checkpoint_dense_and_native_setup": 48,
+        "forward_dense_loss_and_native_setup": 2,
+        "checkpoint_recompute_dense_and_native_setup": 48,
+        "reverse_fused_read_math_and_adjoints": 192,
+        "reverse_setup_and_teardown": 192,
+        "backward_dense_loss_and_replay_setup": 2,
+        "clip": 1,
+        "optimizer": 1
+      },
+      "fused_calls": {
+        "zero_grad": 1,
+        "sequential_forward_core": 384,
+        "initial_checkpoint_dense_and_native_setup": 48,
+        "forward_dense_loss_and_native_setup": 2,
+        "checkpoint_recompute_dense_and_native_setup": 48,
+        "reverse_fused_read_math_and_adjoints": 192,
+        "reverse_setup_and_teardown": 192,
+        "backward_dense_loss_and_replay_setup": 2,
+        "clip": 1,
+        "optimizer": 1
+      },
+      "fused_over_normal_seconds": 1.111150827756916
+    },
+    {
+      "context": 2048,
+      "normal_wall_seconds": 69.19261834071949,
+      "fused_wall_seconds": 75.90379859087989,
+      "full_model_profile_loss_equal": true,
+      "normal_calls": {
+        "zero_grad": 1,
+        "sequential_forward_core": 384,
+        "forward_read_elementwise_tiles": 384,
+        "initial_checkpoint_dense_and_native_setup": 48,
+        "forward_dense_loss_and_native_setup": 2,
+        "checkpoint_recompute_dense_and_native_setup": 48,
+        "reverse_fused_read_math_and_adjoints": 192,
+        "reverse_setup_and_teardown": 192,
+        "backward_dense_loss_and_replay_setup": 2,
+        "clip": 1,
+        "optimizer": 1
+      },
+      "fused_calls": {
+        "zero_grad": 1,
+        "sequential_forward_core": 384,
+        "initial_checkpoint_dense_and_native_setup": 48,
+        "forward_dense_loss_and_native_setup": 2,
+        "checkpoint_recompute_dense_and_native_setup": 48,
+        "reverse_fused_read_math_and_adjoints": 192,
+        "reverse_setup_and_teardown": 192,
+        "backward_dense_loss_and_replay_setup": 2,
+        "clip": 1,
+        "optimizer": 1
+      },
+      "fused_over_normal_seconds": 1.0969927199042113
+    }
+  ],
+  "launch_resources": [
+    {
+      "context": 512,
+      "region": "sequential_forward_core",
+      "slots": 64,
+      "registers": 168,
+      "n_spills": 32,
+      "grid": [
+        32
+      ],
+      "multiprocessors": 142
+    },
+    {
+      "context": 512,
+      "region": "sequential_forward_core",
+      "slots": 256,
+      "registers": 168,
+      "n_spills": 28,
+      "grid": [
+        32
+      ],
+      "multiprocessors": 142
+    },
+    {
+      "context": 512,
+      "region": "sequential_forward_core",
+      "slots": 736,
+      "registers": 168,
+      "n_spills": 20,
+      "grid": [
+        32
+      ],
+      "multiprocessors": 142
+    },
+    {
+      "context": 512,
+      "region": "sequential_forward_core",
+      "slots": 1472,
+      "registers": 168,
+      "n_spills": 20,
+      "grid": [
+        32
+      ],
+      "multiprocessors": 142
+    },
+    {
+      "context": 512,
+      "region": "reverse_fused_read_math_and_adjoints",
+      "slots": 1472,
+      "registers": 147,
+      "n_spills": 0,
+      "grid": [
+        32
+      ],
+      "multiprocessors": 142
+    },
+    {
+      "context": 512,
+      "region": "reverse_fused_read_math_and_adjoints",
+      "slots": 736,
+      "registers": 142,
+      "n_spills": 0,
+      "grid": [
+        32
+      ],
+      "multiprocessors": 142
+    },
+    {
+      "context": 512,
+      "region": "reverse_fused_read_math_and_adjoints",
+      "slots": 256,
+      "registers": 107,
+      "n_spills": 0,
+      "grid": [
+        32
+      ],
+      "multiprocessors": 142
+    },
+    {
+      "context": 512,
+      "region": "reverse_fused_read_math_and_adjoints",
+      "slots": 64,
+      "registers": 93,
+      "n_spills": 0,
+      "grid": [
+        32
+      ],
+      "multiprocessors": 142
+    },
+    {
+      "context": 2048,
+      "region": "sequential_forward_core",
+      "slots": 64,
+      "registers": 168,
+      "n_spills": 32,
+      "grid": [
+        32
+      ],
+      "multiprocessors": 142
+    },
+    {
+      "context": 2048,
+      "region": "sequential_forward_core",
+      "slots": 256,
+      "registers": 168,
+      "n_spills": 28,
+      "grid": [
+        32
+      ],
+      "multiprocessors": 142
+    },
+    {
+      "context": 2048,
+      "region": "sequential_forward_core",
+      "slots": 736,
+      "registers": 168,
+      "n_spills": 26,
+      "grid": [
+        32
+      ],
+      "multiprocessors": 142
+    },
+    {
+      "context": 2048,
+      "region": "sequential_forward_core",
+      "slots": 1472,
+      "registers": 255,
+      "n_spills": 24,
+      "grid": [
+        32
+      ],
+      "multiprocessors": 142
+    },
+    {
+      "context": 2048,
+      "region": "reverse_fused_read_math_and_adjoints",
+      "slots": 1472,
+      "registers": 202,
+      "n_spills": 0,
+      "grid": [
+        32
+      ],
+      "multiprocessors": 142
+    },
+    {
+      "context": 2048,
+      "region": "reverse_fused_read_math_and_adjoints",
+      "slots": 736,
+      "registers": 220,
+      "n_spills": 0,
+      "grid": [
+        32
+      ],
+      "multiprocessors": 142
+    },
+    {
+      "context": 2048,
+      "region": "reverse_fused_read_math_and_adjoints",
+      "slots": 256,
+      "registers": 138,
+      "n_spills": 0,
+      "grid": [
+        32
+      ],
+      "multiprocessors": 142
+    },
+    {
+      "context": 2048,
+      "region": "reverse_fused_read_math_and_adjoints",
+      "slots": 64,
+      "registers": 111,
+      "n_spills": 0,
+      "grid": [
+        32
+      ],
+      "multiprocessors": 142
+    }
+  ],
+  "pilot_tokens_per_second": 55380.14035777515,
+  "pilot_100k_gate": "failed",
+  "residual_risks": [
+    "The pilot 100k gate remains open/failed.",
+    "Synchronized split-kernel times include spill/reload and extra launches; they cannot be presented as exclusive intervals inside the production fused binary."
+  ],
+  "production_default_changed": false,
+  "scope": "Opt-in fresh-origin T2048 union replay; continued/imported long states retain existing path.",
+  "source_hashes": {
+    "part12_curve.py": "2cf266fc83d203914cf7592f533fe08b807481102ca8cc9a49d39c31ca77adf9",
+    "part12_report.py": "354f2e48e113e84f8fb0af85633ad971dd8b51e2d1cf699f7eeb9cfe3c7dadba",
+    "part12_support_gate.py": "7c7d4a061b5e7f81078075ca6c3228bbe522e5622880418fc99d15987ae0a1f7",
+    "part12_split_generated.py": "f8c8d56e5a3aaacd4ba2a1e1d3a7c1481f1ba754fa0d4446ffcbeb4efae7714d",
+    "part12_pilot.py": "64b77a48bfe1990ccc02d977ebc440f2f143043889184d2060d9d22fc28f020a",
+    "part12_validate.py": "9a24914b16894153d5f85067900bcd84ebea572e837f7979eeeb32cb105d2b55",
+    "part12_decompose.py": "b8cc97c9ea3fdcb1cb76533977cdc61c62a7f946d6434b904c7230381c4d9e64",
+    "part12_measure.py": "7079e0926a0dc9dd53337bd4b6f8b1e24b562deb4530ed238ec99c3a29f3646c",
+    "part12_parity.py": "6fb95d77f5e3dd2858cb8f34dd38e674d135190e7d6010ba26f8385999ed4661"
+  },
+  "manual_notes": "Single attended session; approved Python and run_leased.sh only, physical cards 1 and 5. PID 634691 was alive before and after work and was not disturbed. Supervisor contact tool was not exposed. No WG service, subagents, Frontier/Slurm, resilient DiLoCo work, or .pt artifacts. Production BF16 and unrelated workspace changes are untouched."
+}

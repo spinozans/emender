@@ -1,0 +1,45 @@
+{
+  "status": "passed",
+  "scope": "Manual source audit of recorded training native key/value/strength mutation paths; source-bound, not a general static analyzer",
+  "source_sha256": "956beee6d257b52bd43074f0fdeafdeffdf45253fb146e6885d9a0951204c85f",
+  "mutation_sites": [
+    {
+      "line": 189,
+      "source": "journal_store(Strength+n*S+pop_id, popped, True, J, RecordAll)"
+    },
+    {
+      "line": 239,
+      "source": "journal_store(Keys+(n*S+allocation)*DK+key_lanes,key_payload,key_lanes<DK,J,RecordAll)"
+    },
+    {
+      "line": 240,
+      "source": "journal_store(Values + (n * S + allocation) * DV + d, gate * content, d < DV, J, RecordAll, Values + (n * S + allocation) * DV + 0, DV, CaptureScratch+n*tl.maximum(S,DV))"
+    },
+    {
+      "line": 245,
+      "source": "journal_store(Values + (n * S + safe_target) * DV + d, prev + beta * (content - prev), d < DV, J, RecordAll, Values + (n * S + safe_target) * DV + 0, DV, CaptureScratch+n*tl.maximum(S,DV))"
+    },
+    {
+      "line": 248,
+      "source": "journal_store(Strength+n*S+allocation, 1., True, J, RecordAll)"
+    },
+    {
+      "line": 259,
+      "source": "journal_store(Strength + n * S + dead, death_strength, True, J, RecordAll)"
+    },
+    {
+      "line": 318,
+      "source": "journal_store(Strength+n*S+slots,strength,valid & live,J,Record)"
+    }
+  ],
+  "notes": [
+    "Allocation key/value, correction value, pop/allocation/death/final-materialization strength use journal_store at all seven mutation sites.",
+    "No direct tl.store of native Keys/Values/Strength in scan_kernel or materialize_state; metadata initialization and read/version scratch are separate buffers.",
+    "Training Replay.forward always calls record_all=True. Inference with recording disabled intentionally has no all-field journal and is excluded.",
+    "Fresh torch/fused initialization sets payload/strength to +0; imported states are outside the new long-pool branch.",
+    "Fresh corrections target adjacent live rows already in the allocation union. Current live occupancy is never substituted for this union.",
+    "Scalar journal_store omits bit-identical writes, which cannot introduce a nonzero value into an untouched zero slot.",
+    "The union is a conservative support envelope, not equality with current live occupancy or numerically nonzero adjoints.",
+    "80 B32 fixtures verify actual journal-address coverage and complete payload/strength rollback."
+  ]
+}
