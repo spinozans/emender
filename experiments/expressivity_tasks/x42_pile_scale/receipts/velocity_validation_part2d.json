@@ -1,0 +1,15 @@
+{
+  "status": "partial_validation_with_historical_failures",
+  "coordination": "ALL_TOOLS discovery returned no contact_supervisor, supervisor or intercom tool; no semantic decision was requested or invented as an unresolved blocker.",
+  "local_tests": "Velocity candidate, score, generation-state and parent tests passed; includes SIGKILL after durable generation save, exact population/covariance/RNG continuation, invalid killed endpoint rejection, and parent-owned population simulation.",
+  "historical_suite": {
+    "command": "/home/erikg/emender/.venv/bin/python -m pytest -q experiments/expressivity_tasks/x40_emender_lm/tests experiments/expressivity_tasks/x42_pile_scale/tests/test_velocity_candidate.py experiments/expressivity_tasks/x42_pile_scale/tests/test_velocity_state.py experiments/expressivity_tasks/x42_pile_scale/tests/test_velocity_score.py",
+    "passed": 52,
+    "failed": 2,
+    "failures": ["test_part8.py::test_checkpoint_preflight_uses_existing_strict_b32_receipt[512]: stale backward.py hash", "test_part8.py::test_checkpoint_preflight_uses_existing_strict_b32_receipt[2048]: stale backward.py hash"],
+    "certified_source_edits": false,
+    "receipt_gates_modified": false
+  },
+  "gpu_validation": "New isolated scan compared with unchanged X40 reference, including independent occupancy reconstructed from trace, exact state/routing/output/adjoints, neutral and changed match-wire/pressure cases. Full 150M trainable proxy train512/eval2048 checks for N1/3/4/5. Separate hash-bound receipts are authoritative.",
+  "limitations": ["No 2700-second endpoint is implied by engineering checks.", "SIGKILL state validation covers generation state; no candidate model checkpoint is used or claimed.", "No frontier, Slurm or resilient DiLoCo behavior changed; no applicable DiLoCo requirement IDs."]
+}
