@@ -39,22 +39,22 @@
   ],
   "commandsRun": [
     {
-      "command": "/home/erikg/emender/.venv/bin/python -m pytest -q <four test_velocity modules>",
+      "command": "/home/erikg/emender/.venv/bin/python -m pytest -q experiments/expressivity_tasks/x42_pile_scale/tests/test_velocity_candidate.py experiments/expressivity_tasks/x42_pile_scale/tests/test_velocity_state.py experiments/expressivity_tasks/x42_pile_scale/tests/test_velocity_score.py experiments/expressivity_tasks/x42_pile_scale/tests/test_velocity_parent.py",
       "result": "passed",
       "summary": "30 tests; includes independent head policies, generation SIGKILL/resume and parent population management"
     },
     {
-      "command": "/home/erikg/emender/.venv/bin/python -m pytest -q <X40 suite and three velocity modules>",
+      "command": "/home/erikg/emender/.venv/bin/python -m pytest -q experiments/expressivity_tasks/x40_emender_lm/tests experiments/expressivity_tasks/x42_pile_scale/tests/test_velocity_candidate.py experiments/expressivity_tasks/x42_pile_scale/tests/test_velocity_state.py experiments/expressivity_tasks/x42_pile_scale/tests/test_velocity_score.py",
       "result": "failed",
       "summary": "52 passed, 2 historical stale backward.py receipt-hash failures at T512/T2048"
     },
     {
-      "command": "run_leased.sh -m experiments.expressivity_tasks.x42_pile_scale.velocity_validate --output <v3 receipt>",
+      "command": "X42_LAUNCH_RECEIPTS=experiments/expressivity_tasks/x42_pile_scale/receipts/velocity_policy_launch_v3 bash experiments/expressivity_tasks/x42_pile_scale/run_leased.sh -m experiments.expressivity_tasks.x42_pile_scale.velocity_validate --output experiments/expressivity_tasks/x42_pile_scale/receipts/velocity_policy_parity_v3.json",
       "result": "passed",
       "summary": "Neutral/match-wire/pressure: exact trace/state/output/adjoints and independently reconstructed occupancy"
     },
     {
-      "command": "run_leased.sh -m experiments.expressivity_tasks.x42_pile_scale.velocity_integration --output <v3 receipt>",
+      "command": "X42_LAUNCH_RECEIPTS=experiments/expressivity_tasks/x42_pile_scale/receipts/velocity_integration_launch_v3 bash experiments/expressivity_tasks/x42_pile_scale/run_leased.sh -m experiments.expressivity_tasks.x42_pile_scale.velocity_integration --output experiments/expressivity_tasks/x42_pile_scale/receipts/velocity_integration_v3.json",
       "result": "passed",
       "summary": "Full 150M trainable, N1/3/4/5, GPT-2 vocab, train512/eval2048"
     },
@@ -66,7 +66,7 @@
     {
       "command": "git push origin HEAD",
       "result": "passed",
-      "summary": "Preregistration and initial launch commits pushed; final attestation push follows"
+      "summary": "Preregistration, launch and completed-smoke/generation-launch attestation commits pushed to origin/main."
     }
   ],
   "validationOutput": [
