@@ -70,8 +70,10 @@ def test_smoke_reuse_allows_only_orchestration_changes(tmp_path,monkeypatch):
     old=dict(batch=64,context=2048,train_seconds=2700,flags={'test':'1'},allocator='expandable_segments:True',registration_sha256='registration',sources={'velocity_parent.py':'old','velocity_train.py':'train'})
     raw=json.dumps(old).encode();new=json.loads(raw);new['compute_compatible_previous_commit']='old_commit';new['sources']['velocity_parent.py']='new'
     regime=tmp_path/'velocity_regime.json';regime.write_text(json.dumps(new))
+    registration=json.dumps(dict(sources={},protocol='fixture')).encode()
+    (tmp_path/'velocity_registration.json').write_bytes(registration)
     out=tmp_path/'run';out.mkdir();(out/'smoke.json').write_text(json.dumps(dict(batch=64,context=2048,regime_sha256=hashlib.sha256(raw).hexdigest(),tokens_per_second=15000)))
-    monkeypatch.setattr(velocity_train,'subprocess_bytes',lambda c,p:raw)
+    monkeypatch.setattr(velocity_train,'subprocess_bytes',lambda c,p:registration if str(p).endswith('velocity_registration.json') else raw)
     parent.validate_smoke(out)
     assert (out/'smoke_compatibility.json').exists()
     new['sources']['velocity_train.py']='changed';regime.write_text(json.dumps(new))
