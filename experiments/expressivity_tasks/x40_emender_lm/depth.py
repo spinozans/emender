@@ -19,6 +19,7 @@ from torch import nn
 from torch.nn import functional as F
 from ..x28e_memory_head.generators import stage3_ladder as ladder
 from .model import require_replays
+from . import model as memory_model
 from .runner import write
 
 
@@ -37,7 +38,19 @@ class Probe(nn.Module):
         return self.binary(features[torch.arange(len(ids),device=ids.device),lengths-1])
 
 
+def depth_profile(state,trace,pressure):
+    """Token event density, without X39's zero-entry cumulative live ledger.
+
+    Live occupancy is not reconstructed from events here. The cell also emits
+    its X40 gate, match and error means and existing routing metrics.
+    """
+    return dict(telemetry_contract='x40-depth-token-events-v1',
+        allocation_rate_per_token_head=(trace.alloc_target>=0).float().mean((0,1)).tolist(),
+        write_enabled_fraction_per_head=trace.w_on.float().mean((0,1)).tolist())
+
+
 @torch.no_grad()
+@patch.object(memory_model,'profile',depth_profile)
 @patch.dict(os.environ, X40_BATCHED_READS='0')
 def evaluate(probe,pool):
     probe.eval();pred=[]
