@@ -38,3 +38,17 @@ It captures original post-checkpoint traces before truncation and compares loss,
 model, optimizer, all RNGs and sampler hashes after crash continuation, failing
 closed on divergence. The existing deliberate SIGKILL test at updates 14977/14978
 and final publication of depth.json remain required.
+
+Resume evidence: emender-part13-resume acquired physical GPU 6 exclusively,
+leaving the anchor on card 0 and searches on cards 1/5 untouched. Cards 2/3/4/7
+were not used. The runner's preflight passed 109 oracle tests and production
+parity. Crash continuation updates 8993/8994 matched the original traces exactly
+across loss, weights, optimizer, RNG and sampler hashes; the stable receipt is
+crash_resume_roundtrip_8992.json. Resumed validation at update 9000 passed:
+2000 examples, balanced accuracy 0.997 (depth_validation_at_resume.json).
+
+The run remains active. The 30000-update finish, four final bins and deliberate
+mid-depth SIGKILL acceptance are pending. resume_status.json is a dated snapshot,
+not a completion claim. The existing parent publishes ignition_v1/depth.json only
+after successful training and verified deliberate kill roundtrip. No weights
+are included in this commit.
