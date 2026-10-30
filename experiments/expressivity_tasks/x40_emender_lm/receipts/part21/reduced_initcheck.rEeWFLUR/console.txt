@@ -1,0 +1,34 @@
+gpu_lease: granted GPUs: 2 (pid 2236730)
+========= COMPUTE-SANITIZER
+{"candidate_sources": {"/home/erikg/emender/experiments/expressivity_tasks/x31_tape_cell_fused/cell_fused.py": {"production": "839aa8de0dfc292a9b87b9363b36206c97981761485b9464ec01976550e1fd51", "candidate": "b946a41d116328af6f9f0207446683a34c1a6b0e7f217c5b6c70ed7bc340fd8f"}, "/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/forward.py": {"production": "a28d713cbba1c85038c530e0c59d61ac29d50b788191fba2b3e3b9cfdeb0539d", "candidate": "6dfb2eacc5471b0e4d050feaf0e36f69f894dada0f19f9be79244a4cf3762a16"}, "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/forward.py": {"production": "ff3791425de2af352f4e06a281cfa6b4a82ab4340ccb0d2906518ac2bae1edde", "candidate": "7a88644da957e8812ca83c77ae33c0edc26da28e08e936412dbcea07389f2e31"}}}
+Traceback (most recent call last):
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/receipts/part21/candidate.py", line 80, in <module>
+    print(json.dumps(certify(batch=1,context=8)),flush=True)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/parity.py", line 52, in certify
+    (out,st,tr,p),e,err,_=scan(k,xs[0],xs[1],mask,xs[2],xs[3],cfg,xs[4],logits,mc,ec)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/model.py", line 41, in scan
+    result=autograd_scan((k,q,v,beta,pop,append),None,cfg,append_coef)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/backward.py", line 598, in autograd_scan
+    out,keys,values,strength=Replay.apply(cfg,tokens,history,saved,*inputs,coef,
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/function.py", line 581, in apply
+    return super().apply(*args, **kwargs)  # type: ignore[misc]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/backward.py", line 461, in forward
+    out,final,trace,pressure=tape_scan(k,q,v,beta,pop,logit,initial,cfg,coef,
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/cell_fused.py", line 21, in tape_scan
+    return persistent_scan(k,q,v,beta,pop,logit,state,cfg,coef,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/forward.py", line 34, in tape_scan
+    needs_grad |= any(getattr(native_input,name).requires_grad
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/forward.py", line 34, in <genexpr>
+    needs_grad |= any(getattr(native_input,name).requires_grad
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'FusedState' object has no attribute 'keys'
+========= Target application returned an error
+========= ERROR SUMMARY: 0 errors
