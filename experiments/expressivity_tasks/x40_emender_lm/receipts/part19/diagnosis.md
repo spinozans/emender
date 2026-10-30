@@ -78,11 +78,21 @@ run enables all-field recording and checks journal counts as well as outputs;
 it also passes with zero initcheck errors. These are isolated kernel tests,
 not the full lifecycle or certification gates. No source candidate is promoted.
 
+The identical Birth load pattern also exists in X40's own materialization.
+An additional 15 recorded fixtures apply the same process-local operand mask
+there and pass initcheck with zero errors. This extends isolated coverage to
+45 passing fixtures across X31/X40; it does not attribute any of the 33,070
+reference-side accesses to X40 or establish a whole-program pass.
+
 The first new masked harness run failed: PyTorch's masked scalar assignment
 to partially uninitialized Birth itself reads uninitialized lanes. It was
 deliberately terminated (143), and its compressed raw output is retained.
 The retry uses a tiny Triton masked store to initialize live Birth lanes without
 reading dead lanes. This correction changes fixture construction only.
+An audit enhancement initially asserted that all historical source hashes
+matched current files; it failed because backward.py changed in part 12.
+The corrected audit retains the mismatch explicitly and does not assert a
+historical-to-current certification.
 The standing part-18 lifecycle byte-comparison correction is already committed
 in 868ab9a2: `numpy().tobytes()` is present. No second source correction is needed.
 

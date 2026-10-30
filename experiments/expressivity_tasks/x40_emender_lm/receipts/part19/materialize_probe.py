@@ -15,7 +15,10 @@ p = argparse.ArgumentParser()
 p.add_argument('--masked', action='store_true')
 p.add_argument('--control', action='store_true')
 p.add_argument('--record', action='store_true')
+p.add_argument('--target', choices=('x31', 'x40'), default='x31')
 a = p.parse_args()
+if a.target == 'x40':
+    from experiments.expressivity_tasks.x40_emender_lm import kernels
 
 @triton.jit
 def initialize_birth(Birth, Live, N: tl.constexpr, Block: tl.constexpr):
@@ -70,9 +73,11 @@ for batch, slots in ((8, 2944), (64, 64), (64, 256), (64, 736), (128, 1472)):
         if a.record:
             assert torch.equal(counts, 2*live.sum(1))
         rows.append(dict(batch=batch, slots=slots, mode=tile_mode, status='passed'))
-result = dict(status='passed', masked=a.masked, record=a.record, fixtures=rows,
+result = dict(status='passed', target=a.target, masked=a.masked, record=a.record, fixtures=rows,
               scope='isolated materialization; not full certification')
 tag = ('masked' if a.masked else 'original') + ('_record' if a.record else '')
+if a.target == 'x40':
+    tag = 'x40_' + tag
 out = Path(__file__).with_name(f'materialize_{tag}.json')
 out.write_text(json.dumps(result, indent=2)+'\n')
 print(json.dumps(result))
