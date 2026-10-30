@@ -22,13 +22,16 @@ resume, evaluation environment restoration, smoke fixture, and search resume.
 The first expanded pytest command named a nonexistent test file and collected
 nothing; its failure is preserved in `test_collection_failure.txt`.
 
-All four velocity services were verified active after recovery; GPUs 0/1/5/6
-were at 100% utilization. The eval service remains failed, exit 1, as terminal
-evidence. Three unbanked pure-search attempts were intentionally interrupted
-for eval priority. Restart initially encountered broker lease timeout, then
-was restored after eval exit. Banked candidates were verified unchanged.
-Cards 2/3/4/7 and certified arms were not operated on. Existing unrelated
-workspace changes were left untouched. No checkpoint or .pt file is committed.
+The final board has transformer/gdn2/anchors active, and velocity-loop plus
+part13-resume failed. GPUs 0/5/6 are at 100%; GPU 1 is idle. The eval-priority
+preemption allowed baseline queues to acquire GPUs 5/6. Subsequent pure-search
+restarts launch three candidates into one available card; waiting candidates
+hit the existing 60-second lease timeout and the parent terminates the active
+population. Restart attempts stopped after this scheduling cause was confirmed.
+Banked candidates remain unchanged. This preemption did not achieve the intended
+healthy final service board. Cards 2/3/4/7 and certified arms were not operated on.
+Existing unrelated workspace changes were left untouched. No checkpoint or .pt
+file is committed.
 
 The smoke fixture fix is committed with a source-only regime amendment.
 The existing production registration and smoke compatibility were verified.
@@ -36,4 +39,4 @@ No resilient DiLoCo behavior was changed or tested; requirement IDs from the
 resilient gap matrix do not apply. The supervisor contact tool was unavailable.
 
 Residual risks: missing 9x metric, unresolved reduction overflow, failed eval
-service, and an incomplete v1 report card. Recovery is not closed.
+service, failed pure search from broker queue saturation, and an incomplete v1 report card. Recovery is not closed.

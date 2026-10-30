@@ -10,7 +10,7 @@
   "failed_bin": "bin_9x",
   "failure": "Triton debug runtime detected int32 overflow in operation add; block [4,0,0], threads [0..3,0,0]. CUDA_LAUNCH_BLOCKING=1 localizes failing launch to x40_emender_lm/forward.py:162 scan_kernel, reached through model.py:43 nonrecording forward. Batched reads disabled by depth.evaluate. Not the former experimental batched-read failure or LM registration failure.",
   "root_cause_limit": "Exact overflowing expression, failing example/batch, layer/head, and triggering state are not established. scan_kernel debug line resolves to triton/language/standard.py:261, not a precise project expression. No unsupported claim of a kernel fix.",
-  "actions": "Stopped after the first final-eval failure. No eval retry, kernel change, training update, checkpoint rewrite, or fabricated 9x metric. Preserved partial bins and complete trace. Pure search lease-timeout failure after priority restart was restored after eval released GPU.",
+  "actions": "No final-eval retry. Pure-search priority preemption allowed baseline queues to acquire GPUs 5/6; later pure-search restarts launched three candidates into a one-card available pool. Queued candidates hit the existing 60-second lease timeout, causing the parent to terminate its active population. Stopped restart attempts after confirming the scheduling cause. Pure service is failed, not restored healthy. No scheduler/kernel source changed.",
   "tests": "18 targeted tests passed. Earlier collection command failed due to a nonexistent anchor test filename; preserved separately.",
   "banked_pure_results_unchanged": true,
   "protected_cards": "No leases or operations on cards 2/3/4/7",
@@ -31,7 +31,7 @@
         "MainPID"
       ],
       "returncode": 0,
-      "stdout": "MainPID=1987034\nExecMainStatus=0\nActiveState=active\nSubState=running\n",
+      "stdout": "MainPID=0\nExecMainStatus=1\nActiveState=failed\nSubState=failed\n",
       "stderr": ""
     },
     {
@@ -117,7 +117,7 @@
         "--format=csv"
       ],
       "returncode": 0,
-      "stdout": "index, utilization.gpu [%], memory.used [MiB]\n0, 100 %, 15758 MiB\n1, 99 %, 19354 MiB\n2, 0 %, 2 MiB\n3, 0 %, 2 MiB\n4, 0 %, 2 MiB\n5, 100 %, 16016 MiB\n6, 100 %, 6374 MiB\n7, 0 %, 2 MiB\n",
+      "stdout": "index, utilization.gpu [%], memory.used [MiB]\n0, 100 %, 15758 MiB\n1, 0 %, 2 MiB\n2, 0 %, 2 MiB\n3, 0 %, 2 MiB\n4, 0 %, 2 MiB\n5, 100 %, 16016 MiB\n6, 100 %, 6374 MiB\n7, 0 %, 2 MiB\n",
       "stderr": ""
     }
   ],
@@ -134,7 +134,8 @@
     "9x bin remains unavailable; v1 report card and recovery are incomplete.",
     "part13 eval service remains failed with exit 1 as honest terminal evidence.",
     "Three unbanked pure-search attempts were interrupted for priority eval; subsequent restart had a broker timeout and was restored. Completed candidates are unchanged.",
-    "Other pre-existing workspace changes are left untouched."
+    "Other pre-existing workspace changes are left untouched.",
+    "Final board: velocity-loop and part13-resume failed; transformer/gdn2/anchors active. GPU 1 idle. Pure launcher hardcodes three concurrent candidates and a 60-second lease timeout; scheduler needs a deliberate queue/concurrency correction before reliable restart."
   ],
   "additional_static_evidence": {
     "triton_standard_py_261": "_sum_combine(a,b) returns a+b; the observed debug location is an integer sum reduction, not necessarily address arithmetic. The exact caller remains unproven.",
@@ -159,5 +160,12 @@
     "budget": 2944,
     "evaluation_batch": 8,
     "first_failing_batch": "not instrumented; unknown"
-  }
+  },
+  "final_board_time_utc": "2026-10-30T19:28:00.252957+00:00",
+  "pure_parent_failure": {
+    "status": "failed",
+    "traceback": "Traceback (most recent call last):\n  File \"/home/erikg/emender/experiments/expressivity_tasks/x42_pile_scale/velocity_parent.py\", line 215, in <module>\n    try:run(Path(a.registration),a.output,a.generations)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/erikg/emender/experiments/expressivity_tasks/x42_pile_scale/velocity_parent.py\", line 191, in run\n    result=wait_result(child,endpoint);completed[str(i)]=result\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/erikg/emender/experiments/expressivity_tasks/x42_pile_scale/velocity_parent.py\", line 64, in wait_result\n    if status:raise RuntimeError(f'candidate failed: pid={child.pid} exit={status} output={output}')\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nRuntimeError: candidate failed: pid=1991382 exit=1 output=experiments/expressivity_tasks/x42_pile_scale/runs/velocity_production_v1/g2_c08/attempt4\n",
+    "updated": 1793388451.8881564
+  },
+  "pure_queue_timeout_console": "gpu_lease: waiting for 1 free GPUs (queued)... retry in 5s\ngpu_lease: waiting for 1 free GPUs (queued)... retry in 5s\ngpu_lease: waiting for 1 free GPUs (queued)... retry in 5s\ngpu_lease: waiting for 1 free GPUs (queued)... retry in 5s\ngpu_lease: waiting for 1 free GPUs (queued)... retry in 5s\ngpu_lease: waiting for 1 free GPUs (queued)... retry in 5s\ngpu_lease: waiting for 1 free GPUs (queued)... retry in 5s\ngpu_lease: waiting for 1 free GPUs (queued)... retry in 5s\ngpu_lease: waiting for 1 free GPUs (queued)... retry in 5s\ngpu_lease: waiting for 1 free GPUs (queued)... retry in 5s\ngpu_lease: waiting for 1 free GPUs (queued)... retry in 5s\ngpu_lease: waiting for 1 free GPUs (queued)... retry in 5s\ngpu_lease: ERROR: timed out after 60s waiting for 1 GPUs\n"
 }
