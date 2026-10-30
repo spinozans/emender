@@ -1,0 +1,51 @@
+/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/language/standard.py:261: unknown: block: [0,0,0], thread: [1,0,0] Assertion `int32 overflow detected for operation add` failed.
+/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/language/standard.py:261: unknown: block: [0,0,0], thread: [3,0,0] Assertion `int32 overflow detected for operation add` failed.
+Traceback (most recent call last):
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/receipts/part22/nine_x_once.py", line 31, in <module>
+    out=probe(ids,lengths);torch.cuda.synchronize()
+        ^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/depth.py", line 37, in forward
+    features=self.lm.features(ids)
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/model.py", line 150, in features
+    for block in self.blocks: x=block(x,ids)
+                                ^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/model.py", line 120, in forward
+    x=x+self.read_out(self.cell(self.norm1(x).float(),ids).flatten(2))
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/model.py", line 98, in forward
+    (r,state,trace,pressure),e,err,sig=scan(*inputs[:6],cfg,*inputs[6:])
+                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/model.py", line 43, in scan
+    result=forward(k,q,v,beta,pop,append,None,cfg,append_coef)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/forward.py", line 162, in tape_scan
+    scan_kernel[(b*h,)](*args,coef,flat(wire_logits),match_coef.repeat(b).contiguous(),error_coef.repeat(b).contiguous(),evidence,error_evidence,keys,values,strength,live,age,
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/runtime/jit.py", line 419, in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/runtime/jit.py", line 757, in run
+    kernel.run(grid_0, grid_1, grid_2, stream, kernel.function, kernel.packed_metadata, launch_metadata,
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/backends/nvidia/driver.py", line 712, in __call__
+    self.launch(gridX, gridY, gridZ, stream, function, self.launch_cooperative_grid, self.launch_pdl,
+RuntimeError: Triton Error [CUDA]: device-side assert triggered
+{"repeat": 0, "status": "failed", "error": "RuntimeError('Triton Error [CUDA]: device-side assert triggered')"}
+{"checkpoint_sha256": "a64b5bf3c5cd4970c6e6a371f065f99eff62ccc4b4c7cadbc94387c971eca47c", "input_sha256": "8a6f66445e57cd682c5631e454a8e69767fd8cb1a2c7a0ca4ffd9b3164b214c3", "lengths": [2190, 2222, 2286, 2246, 2142, 2244, 2216, 2254], "start": 80, "scope": "full depth.Probe 9x reproduction batch 80:88, one isolated attempt; successful outputs also compared as byte hashes", "status": "failed", "repeats": 1}

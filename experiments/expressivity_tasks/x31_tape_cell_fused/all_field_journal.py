@@ -9,6 +9,7 @@ pointers. Snapshots explicitly rebase addresses onto cloned storage.
 """
 from dataclasses import dataclass
 import torch
+from .counted_copy import counted_clone
 import triton
 import triton.language as tl
 
@@ -177,9 +178,9 @@ class AllFieldJournal:
 
     def snapshot(self, owners):
         from .backward import rebase_owned
-        addresses=self.addresses.clone()
+        addresses=counted_clone(self.addresses,self.counts)
         rebase_owned(addresses,self.counts,self.owners,owners,self.capacity)
-        return AllFieldJournal(addresses,self.before.clone(),self.widths.clone(),
+        return AllFieldJournal(addresses,counted_clone(self.before,self.counts),counted_clone(self.widths,self.counts),
             self.counts.clone(),self.boundaries.clone(),self.gates.clone(),self.errors.clone(),
             tuple(owners),self.start_tokens,self.fresh,self.block,False,
             None if self.parent is None else self.parent.snapshot(owners))

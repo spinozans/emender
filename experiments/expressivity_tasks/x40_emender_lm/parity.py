@@ -1,11 +1,11 @@
 """Fresh policy/wire certification against sequential unchanged X31 state."""
+from dataclasses import fields, replace
 import torch
 from ..x31_tape_cell_fused.cell_fused import tape_scan as oracle
 from .model import POLICIES, scan
 
 
-def certify(batch=64,context=512,policies=POLICIES, *, certify_pressure=True):
-    torch.manual_seed(4001)
+def _certify_policy(batch,context,policies, *, certify_pressure=True):
     rows=[]
     for head,cfg in enumerate(policies):
         b,t,h=batch,context,1
@@ -58,9 +58,11 @@ def certify(batch=64,context=512,policies=POLICIES, *, certify_pressure=True):
             values=(out,st.native.keys,st.native.values,st.native.strength)
             loss=sum(a.square().sum() for a in values)
             grads=torch.autograd.grad(loss,xs)
-            results.append((tuple(a.detach().clone() for a in values),grads,tr,p.detach().clone(),
-                (st.native.live.detach().clone(),st.native.age.detach().clone())))
-            del out,st,values,loss,grads,xs
+            results.append((tuple(a.detach().cpu() for a in values),
+                tuple(a.detach().cpu() for a in grads),
+                replace(tr, **{f.name:getattr(tr,f.name).detach().cpu() for f in fields(tr)}),
+                p.detach().cpu(), (st.native.live.detach().cpu(),st.native.age.detach().cpu())))
+            del out,st,values,loss,grads,xs,tr,p
         a,z=results
         for x,y in zip(a[4],z[4]):assert torch.equal(x,y),'native live/age'
         for group in (0,1):
@@ -85,3 +87,20 @@ def certify(batch=64,context=512,policies=POLICIES, *, certify_pressure=True):
     return dict(status='passed',policies=rows,evidence_tolerance='rtol2e-5 atol2e-6',
         pressure_gate=certify_pressure,
         operations='bitwise values/state/trace/gradients versus X31 with independently computed beta; pressure '+('included' if certify_pressure else 'excluded from scale probe only'))
+
+
+def certify(batch=64,context=512,policies=POLICIES, *, certify_pressure=True):
+    """Compare complete production envelopes, keeping reference results on CPU.
+
+    Each policy has its own scope so the previous policy's backward graph and
+    state cannot survive into the next sequential reference. No batch or time
+    partitioning changes RNG, operations, or bitwise comparisons.
+    """
+    torch.manual_seed(4001)
+    rows=[]
+    result=_certify_policy(batch,context,(),certify_pressure=certify_pressure)
+    for head,cfg in enumerate(policies):
+        result=_certify_policy(batch,context,(cfg,),certify_pressure=certify_pressure)
+        rows.append(dict(result['policies'][0],head=head))
+        torch.cuda.empty_cache()
+    return dict(result,policies=rows)

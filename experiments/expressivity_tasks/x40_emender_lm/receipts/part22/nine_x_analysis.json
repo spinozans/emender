@@ -1,0 +1,22 @@
+{
+  "status": "failed",
+  "attempts": 100,
+  "outcomes": {
+    "nonfinite_logits": 2,
+    "finite_exit": 56,
+    "int32_add_assert": 39,
+    "timeout": 1,
+    "attended_stalled_attempt_termination": 2
+  },
+  "distinct_finite_logit_hashes": 47,
+  "matches_first_finite_hash": 1,
+  "checkpoint_sha256": "a64b5bf3c5cd4970c6e6a371f065f99eff62ccc4b4c7cadbc94387c971eca47c",
+  "input_sha256": "8a6f66445e57cd682c5631e454a8e69767fd8cb1a2c7a0ca4ffd9b3164b214c3",
+  "missing_terminal_metadata": [
+    50,
+    51,
+    92
+  ],
+  "interpretation": "FAIL: 9x remains blocked. Finite hashes are repeat-consistency checks against the first finite result, not an accuracy oracle. Device assertions/nonfinite outputs and hash variation coexist with the unresolved race inventory; no causal repair or race-free claim is made.",
+  "scope_decision": "Operator part22 work order steps 3\u20134 explicitly places the existing races and post-promotion 9x work outside the uninitialized-access promotion blockers."
+}

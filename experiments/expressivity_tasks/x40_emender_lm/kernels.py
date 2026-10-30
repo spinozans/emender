@@ -99,7 +99,7 @@ def scan_kernel(K, Q, V, Beta, Pop, Logit, Coef, WireLogit, MatchCoef, ErrorCoef
                 if t==0:
                     r_strength=advance_unit(r_reference,tl.where(r_live,Start+t-r_touch,0),Decay,DecayTable,T)
                 else:
-                    cached=tl.load(ReadStrengthCache+n*S+r_columns,r_live,0.)
+                    cached=tl.load(ReadStrengthCache+n*S+r_columns,r_live & (r_touch<Start+t-1),0.)
                     base=tl.where(r_touch>=Start+t-1,r_reference,cached)
                     if Decay==1.0:
                         next_strength=base
@@ -309,7 +309,7 @@ def materialize_state(References, Touch, Birth, Live, Strength, Age,
         if tl.sum(live.to(tl.int32),0)>0:
             ref=tl.load(References+n*S+slots,valid,0.)
             touch=tl.load(Touch+n*S+slots,valid,Clock)
-            born=tl.load(Birth+n*S+slots,valid,Clock)
+            born=tl.load(Birth+n*S+slots,valid & live,Clock)
             strength=advance_exact(ref,tl.where(live,Clock-touch,0),Decay)
             age=Clock-born
             J=(Addresses,Before,Widths,Counts,n,Capacity)

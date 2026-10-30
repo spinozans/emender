@@ -1,0 +1,19 @@
+# Rebind this lease to THIS shell (3117794) so liveness/release track the real holder.
+GPU_LEASE_DIR='/home/erikg/emender/.wg/gpu_leases' '/home/erikg/emender/scripts/gpu_lease.sh' adopt "3" "$$" >/dev/null 2>&1 || true
+# ACCUMULATE into the shell-global held set so a SECOND acquire in the same shell
+# does not clobber the first lease's release/heartbeat. Trap installed once and
+# releases the FULL accumulated set on exit.
+if [ -n "${GPU_LEASE_HELD:-}" ]; then GPU_LEASE_HELD="${GPU_LEASE_HELD},3"; else GPU_LEASE_HELD="3"; fi
+export GPU_LEASE_HELD
+export CUDA_VISIBLE_DEVICES="$GPU_LEASE_HELD"
+gpu_lease_release() { [ -n "${GPU_LEASE_HELD:-}" ] && GPU_LEASE_DIR='/home/erikg/emender/.wg/gpu_leases' GPU_LEASE_PID="$$" '/home/erikg/emender/scripts/gpu_lease.sh' release "$GPU_LEASE_HELD" >/dev/null 2>&1; return 0; }
+if [ -z "${_GPU_LEASE_TRAP_SET:-}" ]; then trap gpu_lease_release EXIT INT TERM; export _GPU_LEASE_TRAP_SET=1; fi
+# One background heartbeat keeper per acquire, refreshing its own ids, living as
+# long as THIS holder shell ($$) is alive.
+( while kill -0 $$ 2>/dev/null; do
+    GPU_LEASE_DIR='/home/erikg/emender/.wg/gpu_leases' GPU_LEASE_PID="$$" '/home/erikg/emender/scripts/gpu_lease.sh' heartbeat "3" >/dev/null 2>&1 || true
+    sleep 60
+  done ) >/dev/null 2>&1 &
+export GPU_LEASE_HB_PID=$!
+export GPU_LEASE_HB_PIDS="${GPU_LEASE_HB_PIDS:-} $!"
+disown $GPU_LEASE_HB_PID 2>/dev/null || true

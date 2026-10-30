@@ -375,7 +375,7 @@ def materialize_state(References, Touch, Birth, Live, Strength, Age,
         if tl.sum(live.to(tl.int32),0)>0:
             ref=tl.load(References+n*S+slots,valid,0.)
             touch=tl.load(Touch+n*S+slots,valid,Clock)
-            born=tl.load(Birth+n*S+slots,valid,Clock)
+            born=tl.load(Birth+n*S+slots,valid & live,Clock)
             strength=advance_exact(ref,tl.where(live,Clock-touch,0),Decay)
             age=Clock-born
             J=(Addresses,Before,Widths,Counts,n,Capacity)

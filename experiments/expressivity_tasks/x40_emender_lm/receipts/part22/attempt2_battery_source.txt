@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# One installation, sequential broker leases, fail closed on every required gate.
+set -euo pipefail
+cd /home/erikg/emender
+root=experiments/expressivity_tasks/x40_emender_lm/receipts/part22
+py=/home/erikg/emender/.venv/bin/python
+san=/usr/local/cuda/bin/compute-sanitizer
+"$py" -c 'import json; from pathlib import Path; assert json.loads(Path("experiments/expressivity_tasks/x40_emender_lm/receipts/part22/curve_base.json").read_text())["status"]=="passed"'
+"$py" "$root/promote.py" apply > "$root/promotion_sources.json"
+rollback() {
+    local rc=$?
+    if [[ $rc != 0 ]]; then
+        "$py" "$root/promote.py" revert > "$root/revert.txt"
+        printf 'reverted_required_gate_failed\n' > "$root/disposition.txt"
+    fi
+}
+trap rollback EXIT
+bash "$root/run.sh" production_B64_T512_initcheck gpu 900 "$san" --tool initcheck --print-limit 0 --error-exitcode 86 "$py" "$root/production_checks.py" certify 64 512
+bash "$root/run.sh" production_B32_T2048_initcheck gpu 900 "$san" --tool initcheck --print-limit 0 --error-exitcode 86 "$py" "$root/production_checks.py" certify 32 2048
+bash "$root/run.sh" production_oracles gpu 600 "$py" "$root/production_checks.py" oracles
+bash "$root/run.sh" production_x36_oracles gpu 1800 "$py" -m pytest -vv experiments/expressivity_tasks/x36_tape_perf/tests
+bash "$root/run.sh" production_counted_initcheck gpu 180 "$san" --tool initcheck --print-limit 0 --error-exitcode 86 "$py" "$root/production_checks.py" counted
+bash "$root/run.sh" production_snapshot_initcheck gpu 180 "$san" --tool initcheck --print-limit 0 --error-exitcode 86 "$py" "$root/production_checks.py" snapshot
+bash "$root/run.sh" production_lifecycle gpu 600 "$py" "$root/production_checks.py" lifecycle
+bash "$root/run.sh" production_backward_lifecycle gpu 1800 "$py" "$root/backward_lifecycle.py"
+bash "$root/run.sh" production_graph gpu 600 "$py" "$root/graph.py"
+bash "$root/run.sh" curve_promoted gpu 1200 "$py" "$root/curve.py" promoted
+bash "$root/run.sh" production_9x_initcheck gpu 180 "$san" --tool initcheck --print-limit 0 --error-exitcode 86 "$py" "$root/production_checks.py" isolated
+printf 'promoted_required_battery_passed\n' > "$root/disposition.txt"
+trap - EXIT
+# Operator-scoped remaining defects: diagnostic failures do not undo a green uninit promotion.
+set +e
+bash "$root/run.sh" production_9x_100_repeats gpu 1200 "$py" "$root/nine_x.py"
+printf '%s\n' "$?" > "$root/nine_x_exit.txt"
+bash "$root/run.sh" production_9x_racecheck gpu 300 "$san" --tool racecheck --print-limit 0 --error-exitcode 86 "$py" "$root/production_checks.py" isolated
+printf '%s\n' "$?" > "$root/racecheck_exit.txt"

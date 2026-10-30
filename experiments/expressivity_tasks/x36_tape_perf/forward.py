@@ -87,9 +87,9 @@ def tape_scan(k, q, v, write_strength, pop_strength, append_logit, state,
     if fresh:
         heap = torch.full((b*h,cfg.slots),-1,device=k.device,dtype=torch.int32)
         position = torch.full_like(heap,-1)
-        due = torch.empty((b*h,cfg.slots),device=k.device,dtype=torch.int64)
-        terminal = torch.empty((b*h,cfg.slots),device=k.device,dtype=torch.float32)
-        births = torch.empty_like(due)
+        due = torch.zeros((b*h,cfg.slots),device=k.device,dtype=torch.int64)
+        terminal = torch.zeros((b*h,cfg.slots),device=k.device,dtype=torch.float32)
+        births = torch.zeros_like(due)
         touches = torch.full_like(due,state.tokens)
         level0 = torch.zeros((b*h,triton.cdiv(cfg.slots,64)),device=k.device,dtype=torch.uint64)
         level1 = torch.zeros((b*h,triton.cdiv(triton.cdiv(cfg.slots,64),64)),device=k.device,dtype=torch.uint64)

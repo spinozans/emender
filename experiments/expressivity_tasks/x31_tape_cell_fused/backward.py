@@ -10,6 +10,7 @@ import triton
 import triton.language as tl
 from torch.autograd.function import once_differentiable
 from .all_field_journal import undo_to
+from .counted_copy import counted_clone
 from .lazy_decay import advance_exact
 
 
@@ -242,7 +243,7 @@ class Replay(torch.autograd.Function):
                                              (k,q,v,beta,pop,logit)]
         dc=torch.empty(b*h,device=k.device)
         original_addresses,before,widths,counts,boundaries,gates,errors=ctx.log
-        addresses=original_addresses.clone()
+        addresses=counted_clone(original_addresses,counts)
         rebase_owned(addresses,counts,ctx.address_owners,replay,ctx.capacity)
         reverse_kernel[(b*h,)](*args,keys,values,strength,live,meta[5],
             *ctx.trace,gates,errors,addresses,before,widths,counts,boundaries,

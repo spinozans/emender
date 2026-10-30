@@ -1,0 +1,39 @@
+"""Install exactly the part21 candidate, retaining reversible source backups."""
+import ast
+import hashlib
+import json
+from pathlib import Path
+import sys
+root=Path(__file__).resolve().parent
+base=Path('experiments/expressivity_tasks')
+paths={
+    'x31_tape_cell_fused/kernels.py': [('born=tl.load(Birth+n*S+slots,valid,Clock)','born=tl.load(Birth+n*S+slots,valid & live,Clock)')],
+    'x40_emender_lm/kernels.py': [('born=tl.load(Birth+n*S+slots,valid,Clock)','born=tl.load(Birth+n*S+slots,valid & live,Clock)'),('cached=tl.load(ReadStrengthCache+n*S+r_columns,r_live,0.)','cached=tl.load(ReadStrengthCache+n*S+r_columns,r_live & (r_touch<Start+t-1),0.)')],
+    'x31_tape_cell_fused/backward.py': [('from .all_field_journal import undo_to','from .all_field_journal import undo_to\nfrom .counted_copy import counted_clone'),('addresses=original_addresses.clone()','addresses=counted_clone(original_addresses,counts)')],
+    'x31_tape_cell_fused/all_field_journal.py': [('import torch','import torch\nfrom .counted_copy import counted_clone')]+[(f'self.{field}.clone()',f'counted_clone(self.{field},self.counts)') for field in ('addresses','before','widths')],
+}
+for name in ('x31_tape_cell_fused/cell_fused.py','x36_tape_perf/forward.py','x40_emender_lm/forward.py'):
+    paths[name]=[(f'{field} = torch.empty(',f'{field} = torch.zeros(') for field in ('due','terminal')]+[('births = torch.empty_like(due)','births = torch.zeros_like(due)')]
+backup=root/'production_before.json'
+helper=base/'x31_tape_cell_fused/counted_copy.py'
+if sys.argv[1]=='revert':
+    for name,source in json.loads(backup.read_text()).items():(base/name).write_text(source)
+    helper.unlink(missing_ok=True)
+    print('Reverted all production mask changes; harness/receipts retained.')
+else:
+    originals={name:(base/name).read_text() for name in paths}
+    if backup.exists():assert json.loads(backup.read_text())==originals,'production differs from retained baseline'
+    changed={}
+    for name,replacements in paths.items():
+        source=originals[name]
+        for old,new in replacements:
+            assert source.count(old)==1,(name,old,source.count(old))
+            source=source.replace(old,new)
+        ast.parse(source);changed[name]=source
+    backup.write_text(json.dumps(originals,indent=2)+'\n')
+    candidate=(root.parent/'part21/candidate.py').read_text()
+    helper_source='"""Copy counted journal prefixes without reading undefined capacity tails."""\nimport torch\nimport triton\nimport triton.language as tl\n\n'+candidate[candidate.index('@triton.jit'):candidate.index('\ndef install():')]
+    assert not helper.exists()
+    helper.write_text(helper_source)
+    for name,source in changed.items():(base/name).write_text(source)
+    print(json.dumps({name:hashlib.sha256(source.encode()).hexdigest() for name,source in changed.items()}))
