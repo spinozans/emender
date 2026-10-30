@@ -111,8 +111,16 @@ def validate_smoke(out):
         raw=subprocess_bytes(previous,rel);old=json.loads(raw)
         if hashlib.sha256(raw).hexdigest()!=smoke.get('regime_sha256'):
             raise RuntimeError('previous smoke regime mismatch')
-        for key in ('batch','context','train_seconds','flags','allocator','registration_sha256'):
+        for key in ('batch','context','train_seconds','flags','allocator'):
             if old[key]!=regime[key]:raise RuntimeError('smoke compute regime changed')
+        registration_path=ROOT.relative_to(Path.cwd())/'velocity_registration.json'
+        previous_registration=json.loads(subprocess_bytes(previous,registration_path))
+        current_registration=json.loads(registration_path.read_text())
+        # Source-only re-binding cannot change any protocol or evidence field.
+        previous_registration.pop('sources')
+        current_registration.pop('sources')
+        if previous_registration != current_registration:
+            raise RuntimeError('smoke registration protocol changed')
         orchestration=str(ROOT.relative_to(Path.cwd())/'velocity_parent.py')
         for name in old['sources'].keys()|regime['sources'].keys():
             if name==orchestration or '/tests/' in name or name in {
