@@ -14,8 +14,8 @@ import triton.language as tl
 
 @triton.jit
 def copy_counted(Source, Destination, Counts, Capacity: tl.constexpr, Block: tl.constexpr):
-    n=tl.program_id(0).to(tl.int64)
-    x=tl.program_id(1)*Block+tl.arange(0,Block)
+    n=tl.program_id(1).to(tl.int64)
+    x=tl.program_id(0)*Block+tl.arange(0,Block)
     active=(x<Capacity) & (x<tl.load(Counts+n))
     value=tl.load(Source+n*Capacity+x,active,0)
     tl.store(Destination+n*Capacity+x,value,x<Capacity)
@@ -23,7 +23,7 @@ def copy_counted(Source, Destination, Counts, Capacity: tl.constexpr, Block: tl.
 
 def counted_clone(source, counts):
     destination=torch.empty_like(source)
-    copy_counted[(len(counts),triton.cdiv(source.shape[1],256))](
+    copy_counted[(triton.cdiv(source.shape[1],256),len(counts))](
         source,destination,counts,source.shape[1],256)
     return destination
 
@@ -70,6 +70,21 @@ def install():
     source=source.replace(old,'addresses=counted_clone(original_addresses,counts)')
     backward.counted_clone=counted_clone
     exec(compile(source,backward.__file__,'exec'),backward.__dict__)
+    # Explicit snapshot APIs have the same counted-tail contract for all
+    # three journal fields. Preserve the class identity used by X36's subclass.
+    from experiments.expressivity_tasks.x31_tape_cell_fused import all_field_journal as journal
+    source=Path(journal.__file__).read_text()
+    tree=ast.parse(source,journal.__file__)
+    cls=next(node for node in tree.body if isinstance(node,ast.ClassDef) and node.name=='AllFieldJournal')
+    method=next(node for node in cls.body if isinstance(node,ast.FunctionDef) and node.name=='snapshot')
+    text=ast.unparse(method)
+    for field in ('addresses','before','widths'):
+        old=f'self.{field}.clone()'
+        assert text.count(old)==1
+        text=text.replace(old,f'counted_clone(self.{field},self.counts)')
+    journal.counted_clone=counted_clone
+    exec(compile(text,journal.__file__,'exec'),journal.__dict__)
+    journal.AllFieldJournal.snapshot=journal.snapshot
     return hashes
 
 

@@ -12,9 +12,9 @@ main() {
     printf '%s\n' "$run"
     # Append on a unique reserved path, including setup and error diagnostics.
     exec >> "$run/console.txt" 2>&1
-    printf '%q ' "$@" > "$run/command.txt"
-    printf '\n' >> "$run/command.txt"
-    sha256sum "$root/run.sh" "$root/candidate.py" > "$run/sources.txt"
+    printf '%q\n' "$@" > "$run/command.txt"
+    sha256sum "$root/run.sh" "$root"/*.py > "$run/sources.txt"
+    git rev-parse HEAD > "$run/revision.txt"
     if [[ $mode != host ]]; then
         export GPU_LEASE_VISIBLE=2,3,4
         bash scripts/gpu_lease.sh status > "$run/broker_before.txt"

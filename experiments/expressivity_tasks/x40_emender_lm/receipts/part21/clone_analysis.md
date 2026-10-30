@@ -51,16 +51,17 @@ reductions, tolerances or race fixes are included.
 
 ## Additional sites and limits
 
-AllFieldJournal.snapshot still clones capacity-wide address/before/width
-arrays. That separate explicit snapshot API needs counted copies before a
-claim of universally clean snapshot sanitizer coverage. The current candidate
-repairs the backward clone population and does not claim that coverage.
+The first candidate (6285bd43) left AllFieldJournal.snapshot's capacity-wide
+address/before/width clones unchanged. The follow-up candidate uses the same
+counted-copy helper for all three. Snapshot sanitization requires its own
+terminal test evidence; the earlier reduced pass alone does not establish it.
 
-The counted copy currently uses the existing (stores, capacity-blocks) grid;
-like X31 rebase, it needs transposed launch axes for capacities exceeding CUDA
-grid.y. B64/T2048 policy 3 exceeds this limit. The original direct B128/T2048
-X31 int32 reservation guard also remains authoritative. No large-shape waiver
-or promotion is licensed by the reduced diagnostic.
+The first counted copy used the existing (stores, capacity-blocks) grid.
+The follow-up transposes those axes and tests 65537 blocks. At context>512,
+the certification harness also validates and installs the existing part5 X31
+rebase launch adapter. The original direct B128/T2048 X31 int32 reservation
+guard remains authoritative. No large-shape waiver or promotion is licensed
+by the reduced diagnostic.
 
 The 18 surviving race groups are explicitly outside the uninitialized-access
 promotion blocker set by operator instruction. They remain defects; there is

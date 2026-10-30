@@ -1,0 +1,14 @@
+gpu_lease: granted GPUs: 2 (pid 2299734)
+========= COMPUTE-SANITIZER
+{"candidate_sources": {"/home/erikg/emender/experiments/expressivity_tasks/x31_tape_cell_fused/cell_fused.py": {"production": "839aa8de0dfc292a9b87b9363b36206c97981761485b9464ec01976550e1fd51", "candidate": "b946a41d116328af6f9f0207446683a34c1a6b0e7f217c5b6c70ed7bc340fd8f"}, "/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/forward.py": {"production": "a28d713cbba1c85038c530e0c59d61ac29d50b788191fba2b3e3b9cfdeb0539d", "candidate": "6dfb2eacc5471b0e4d050feaf0e36f69f894dada0f19f9be79244a4cf3762a16"}, "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/forward.py": {"production": "ff3791425de2af352f4e06a281cfa6b4a82ab4340ccb0d2906518ac2bae1edde", "candidate": "7a88644da957e8812ca83c77ae33c0edc26da28e08e936412dbcea07389f2e31"}}}
+{"transposed_rebase": {"status": "passed", "small_mapping_bitwise": true, "large_log_blocks": 65537}}
+Traceback (most recent call last):
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/receipts/part21/checks.py", line 44, in <module>
+    print(json.dumps(certify(batch=int(sys.argv[2]),context=int(sys.argv[3]))),flush=True)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/parity.py", line 35, in certify
+    onehot=torch.nn.functional.one_hot(best,cfg.slots)*fired[...,None]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 2.00 MiB. GPU 0 has a total capacity of 47.38 GiB of which 704.00 KiB is free. Including non-PyTorch memory, this process has 47.37 GiB memory in use. Of the allocated memory 41.53 GiB is allocated by PyTorch, and 111.82 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
+========= Target application returned an error
+========= ERROR SUMMARY: 0 errors

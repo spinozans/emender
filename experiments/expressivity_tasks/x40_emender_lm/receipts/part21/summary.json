@@ -1,0 +1,284 @@
+{
+  "status": "failed_incomplete_no_production_promotion",
+  "base_revision": "4051a48f",
+  "production_unchanged": true,
+  "production_sha256": {
+    "experiments/expressivity_tasks/x31_tape_cell_fused/kernels.py": "261838682446312e18aedb13d27d6b1b3e9172816450375580138e00952cbd04",
+    "experiments/expressivity_tasks/x31_tape_cell_fused/cell_fused.py": "839aa8de0dfc292a9b87b9363b36206c97981761485b9464ec01976550e1fd51",
+    "experiments/expressivity_tasks/x31_tape_cell_fused/backward.py": "76bffea6e1026eb47e105181bd69cc43258032b44b7173ce048add69d403b9b1",
+    "experiments/expressivity_tasks/x31_tape_cell_fused/all_field_journal.py": "b281e27a1278eb050df40032a3d129e3a3b0b79514020493c9b565256a64beb4",
+    "experiments/expressivity_tasks/x36_tape_perf/forward.py": "a28d713cbba1c85038c530e0c59d61ac29d50b788191fba2b3e3b9cfdeb0539d",
+    "experiments/expressivity_tasks/x36_tape_perf/backward.py": "8752bbd212d40eeb7ab7f1157c6a78a856559fe867c9b25a95843427b7c47718",
+    "experiments/expressivity_tasks/x36_tape_perf/replay_setup.py": "0bda5e7e253f8018db75f086415d210db74c50183d5f08fd82b57eb46ed05b57",
+    "experiments/expressivity_tasks/x36_tape_perf/journal.py": "1a263df5bf04afe17a050d6063028e7f4f371fe0090024ff019a8465d67dbebd",
+    "experiments/expressivity_tasks/x40_emender_lm/kernels.py": "956beee6d257b52bd43074f0fdeafdeffdf45253fb146e6885d9a0951204c85f",
+    "experiments/expressivity_tasks/x40_emender_lm/forward.py": "ff3791425de2af352f4e06a281cfa6b4a82ab4340ccb0d2906518ac2bae1edde",
+    "experiments/expressivity_tasks/x40_emender_lm/backward.py": "24fd3ffcee4384e78371ced11f9cba83e78925b742be52dc2f25ef7786b62863"
+  },
+  "runs": [
+    {
+      "name": "B128_T2048_preflight.vE3q8LXE",
+      "exit_code": 1,
+      "command": "/home/erikg/emender/.venv/bin/python -c from\\ experiments.expressivity_tasks.x31_tape_cell_fused.all_field_journal\\ import\\ AllFieldJournal\\;\\ print\\(AllFieldJournal.capacity_for\\(128\\,2048\\,1472\\,64\\,128\\,0\\)\\)",
+      "result": "failed_or_incomplete",
+      "terminal_sanitizer_errors": [],
+      "application_pass": false,
+      "printed_host_errors": 0,
+      "completed_backward_rows": 0,
+      "raw_sha256": "463f370d0c425be696fc5cdef26d3c20ce51ba460054dd57eb6eebe17ffc8cda",
+      "raw_bytes": 378
+    },
+    {
+      "name": "backward_lifecycle.kqTiyW7m",
+      "exit_code": 143,
+      "command": "/home/erikg/emender/.venv/bin/python experiments/expressivity_tasks/x40_emender_lm/receipts/part21/backward_lifecycle.py",
+      "result": "failed_or_incomplete",
+      "terminal_sanitizer_errors": [],
+      "application_pass": false,
+      "printed_host_errors": 0,
+      "completed_backward_rows": 9,
+      "raw_sha256": "c563bead9716fd1a5b7a3f9fe6d8bd9f3b87e6df6ca0e79cadec66eda5775d7f",
+      "raw_bytes": 2293
+    },
+    {
+      "name": "backward_lifecycle_small_dims.VVej0HAq",
+      "exit_code": 143,
+      "command": "/home/erikg/emender/.venv/bin/python experiments/expressivity_tasks/x40_emender_lm/receipts/part21/backward_lifecycle.py",
+      "result": "failed_or_incomplete",
+      "terminal_sanitizer_errors": [],
+      "application_pass": false,
+      "printed_host_errors": 0,
+      "completed_backward_rows": 5,
+      "raw_sha256": "5bf5a29d6c05f4e086c7ff343ec50089c01d110d0338cc5779ffbb5bcb5d5766",
+      "raw_bytes": 1641
+    },
+    {
+      "name": "counted_initcheck.iNAlLoyq",
+      "exit_code": 0,
+      "command": "/usr/local/cuda/bin/compute-sanitizer --tool initcheck --print-limit 0 --error-exitcode 86 /home/erikg/emender/.venv/bin/python experiments/expressivity_tasks/x40_emender_lm/receipts/part21/checks.py counted",
+      "result": "passed",
+      "terminal_sanitizer_errors": [
+        "0"
+      ],
+      "application_pass": true,
+      "printed_host_errors": 0,
+      "completed_backward_rows": 0,
+      "raw_sha256": "439a8bd0b9c8694c5fdfdc0a83e937742181775256935c7126d593f6f8d71021",
+      "raw_bytes": 943
+    },
+    {
+      "name": "full_B64_T2048_initcheck.NF8WbrUe",
+      "exit_code": 1,
+      "command": "/usr/local/cuda/bin/compute-sanitizer\n--tool\ninitcheck\n--print-limit\n0\n--error-exitcode\n86\n/home/erikg/emender/.venv/bin/python\nexperiments/expressivity_tasks/x40_emender_lm/receipts/part21/checks.py\ncertify\n64\n2048",
+      "result": "failed_or_incomplete",
+      "terminal_sanitizer_errors": [
+        "0"
+      ],
+      "application_pass": false,
+      "printed_host_errors": 0,
+      "completed_backward_rows": 0,
+      "raw_sha256": "4b2080418f2f2cd327c9d51aaf1f2bc2c0d73e8f5ebf5df235595e2c2d12a4ed",
+      "raw_bytes": 2163
+    },
+    {
+      "name": "full_B64_T512_initcheck.lr2sYmCk",
+      "exit_code": 0,
+      "command": "/usr/local/cuda/bin/compute-sanitizer\n--tool\ninitcheck\n--print-limit\n0\n--error-exitcode\n86\n/home/erikg/emender/.venv/bin/python\nexperiments/expressivity_tasks/x40_emender_lm/receipts/part21/checks.py\ncertify\n64\n512",
+      "result": "passed",
+      "terminal_sanitizer_errors": [
+        "0"
+      ],
+      "application_pass": true,
+      "printed_host_errors": 0,
+      "completed_backward_rows": 0,
+      "raw_sha256": "f09714621212e4f781f7768a7ad4114d54ed9397f3343ab8e436ed7672594fd3",
+      "raw_bytes": 1335
+    },
+    {
+      "name": "isolated_9x_initcheck.oqMUmSQn",
+      "exit_code": 0,
+      "command": "/usr/local/cuda/bin/compute-sanitizer\n--tool\ninitcheck\n--print-limit\n0\n--error-exitcode\n86\n/home/erikg/emender/.venv/bin/python\nexperiments/expressivity_tasks/x40_emender_lm/receipts/part21/checks.py\nisolated",
+      "result": "passed",
+      "terminal_sanitizer_errors": [
+        "0"
+      ],
+      "application_pass": true,
+      "printed_host_errors": 0,
+      "completed_backward_rows": 0,
+      "raw_sha256": "9f41f4d1b42c22b6f652739c8536fbc29b3d57aa017ceeda67eb429c42e14bb2",
+      "raw_bytes": 1264
+    },
+    {
+      "name": "lifecycle.nJ9Ash8h",
+      "exit_code": 0,
+      "command": "/home/erikg/emender/.venv/bin/python experiments/expressivity_tasks/x40_emender_lm/receipts/part21/checks.py lifecycle",
+      "result": "passed",
+      "terminal_sanitizer_errors": [],
+      "application_pass": true,
+      "printed_host_errors": 0,
+      "completed_backward_rows": 0,
+      "raw_sha256": "a11909eeb3c8a2dceff9208bd18faed1355e41572fe2c18b38e3df65e5d1c170",
+      "raw_bytes": 13835
+    },
+    {
+      "name": "metadata_lifecycle.qqHFMjIh",
+      "exit_code": 0,
+      "command": "/home/erikg/emender/.venv/bin/python\nexperiments/expressivity_tasks/x40_emender_lm/receipts/part21/metadata_lifecycle.py",
+      "result": "passed",
+      "terminal_sanitizer_errors": [],
+      "application_pass": true,
+      "printed_host_errors": 0,
+      "completed_backward_rows": 0,
+      "raw_sha256": "76c195a5ae5937b454517e300209fc3c390cfaf1df44f0b358acddb5027df836",
+      "raw_bytes": 14026
+    },
+    {
+      "name": "oracles.sZ93WvXL",
+      "exit_code": 0,
+      "command": "/home/erikg/emender/.venv/bin/python experiments/expressivity_tasks/x40_emender_lm/receipts/part21/checks.py oracles",
+      "result": "passed",
+      "terminal_sanitizer_errors": [],
+      "application_pass": true,
+      "printed_host_errors": 0,
+      "completed_backward_rows": 0,
+      "raw_sha256": "2698d3ce8f8ba9c61cb81e6e8c5f801c7dc86aae6b68d8d5a53c70f7d2220a96",
+      "raw_bytes": 2625
+    },
+    {
+      "name": "oracles_v2.kAxCvWOo",
+      "exit_code": 0,
+      "command": "/home/erikg/emender/.venv/bin/python\nexperiments/expressivity_tasks/x40_emender_lm/receipts/part21/checks.py\noracles",
+      "result": "passed",
+      "terminal_sanitizer_errors": [],
+      "application_pass": true,
+      "printed_host_errors": 0,
+      "completed_backward_rows": 0,
+      "raw_sha256": "f95882ef20f68e5d60c4209a55a8a1b391f706a760aaf0aedeaceee50b16f989",
+      "raw_bytes": 2625
+    },
+    {
+      "name": "reduced_initcheck.rEeWFLUR",
+      "exit_code": 1,
+      "command": "/usr/local/cuda/bin/compute-sanitizer --tool initcheck --print-limit 100 --error-exitcode 86 /home/erikg/emender/.venv/bin/python experiments/expressivity_tasks/x40_emender_lm/receipts/part21/candidate.py",
+      "result": "failed_or_incomplete",
+      "terminal_sanitizer_errors": [
+        "0"
+      ],
+      "application_pass": false,
+      "printed_host_errors": 0,
+      "completed_backward_rows": 0,
+      "raw_sha256": "e1bf96eac2d215665c07a998bf6849b20f44f69fbb35c8ea2bb9606ef046a8b7",
+      "raw_bytes": 3222
+    },
+    {
+      "name": "reduced_initcheck.sXxGzJPn",
+      "exit_code": 0,
+      "command": "/usr/local/cuda/bin/compute-sanitizer --tool initcheck --print-limit 100 --error-exitcode 86 /home/erikg/emender/.venv/bin/python experiments/expressivity_tasks/x40_emender_lm/receipts/part21/candidate.py",
+      "result": "passed",
+      "terminal_sanitizer_errors": [
+        "0"
+      ],
+      "application_pass": true,
+      "printed_host_errors": 0,
+      "completed_backward_rows": 0,
+      "raw_sha256": "7358e4f31292e21b6c00a2f7adccd08d3ef6325f24351cc313485aaa89084c6a",
+      "raw_bytes": 1323
+    },
+    {
+      "name": "runner_failure.1FKNPYof",
+      "exit_code": 1,
+      "command": "/home/erikg/emender/.venv/bin/python -c print\\(\\'ORIGINAL-EVIDENCE\\'\\,flush=True\\)\\;\\ raise\\ RuntimeError\\(\\'EXPECTED-FAILURE\\'\\)",
+      "result": "failed_or_incomplete",
+      "terminal_sanitizer_errors": [],
+      "application_pass": false,
+      "printed_host_errors": 0,
+      "completed_backward_rows": 0,
+      "raw_sha256": "3170235edd35b2a3cd54cf3f9cfa532d2c42ef572b28e2f26f4f25e0353c0a8f",
+      "raw_bytes": 123
+    },
+    {
+      "name": "runner_failure.Aygl6djh",
+      "exit_code": 9,
+      "command": "/home/erikg/emender/.venv/bin/python -c print\\(\\'SECOND-RUN\\'\\,flush=True\\)\\;\\ raise\\ SystemExit\\(9\\)",
+      "result": "failed_or_incomplete",
+      "terminal_sanitizer_errors": [],
+      "application_pass": false,
+      "printed_host_errors": 0,
+      "completed_backward_rows": 0,
+      "raw_sha256": "45dbaa7d0a2c465762ea57b586f028fe404c004989c31ea1bcd6d60a33b2373c",
+      "raw_bytes": 11
+    },
+    {
+      "name": "runner_failure.PmScRfrg",
+      "exit_code": 1,
+      "command": "/home/erikg/emender/.venv/bin/python\n-c\nprint\\(\\'ORIGINAL-EVIDENCE\\'\\,flush=True\\)\\;\\ raise\\ RuntimeError\\(\\'EXPECTED-FAILURE\\'\\)",
+      "result": "failed_or_incomplete",
+      "terminal_sanitizer_errors": [],
+      "application_pass": false,
+      "printed_host_errors": 0,
+      "completed_backward_rows": 0,
+      "raw_sha256": "3170235edd35b2a3cd54cf3f9cfa532d2c42ef572b28e2f26f4f25e0353c0a8f",
+      "raw_bytes": 123
+    },
+    {
+      "name": "runner_failure.VvxEKp1j",
+      "exit_code": 9,
+      "command": "/home/erikg/emender/.venv/bin/python\n-c\nprint\\(\\'SECOND-RUN\\'\\,flush=True\\)\\;\\ raise\\ SystemExit\\(9\\)",
+      "result": "failed_or_incomplete",
+      "terminal_sanitizer_errors": [],
+      "application_pass": false,
+      "printed_host_errors": 0,
+      "completed_backward_rows": 0,
+      "raw_sha256": "45dbaa7d0a2c465762ea57b586f028fe404c004989c31ea1bcd6d60a33b2373c",
+      "raw_bytes": 11
+    },
+    {
+      "name": "runner_timeout.ZoSmQ4cd",
+      "exit_code": 124,
+      "command": "/home/erikg/emender/.venv/bin/python -c import\\ time\\;\\ print\\(\\'BEFORE-TIMEOUT\\'\\,flush=True\\)\\;\\ time.sleep\\(30\\)",
+      "result": "failed_or_incomplete",
+      "terminal_sanitizer_errors": [],
+      "application_pass": false,
+      "printed_host_errors": 0,
+      "completed_backward_rows": 0,
+      "raw_sha256": "b90e7cdebc949a826de95e777c04ed628d33e00ae9f5003458b2836bae7b5a51",
+      "raw_bytes": 15
+    },
+    {
+      "name": "runner_timeout.cR4nsjNo",
+      "exit_code": 124,
+      "command": "/home/erikg/emender/.venv/bin/python\n-c\nimport\\ time\\;\\ print\\(\\'BEFORE-TIMEOUT\\'\\,flush=True\\)\\;\\ time.sleep\\(30\\)",
+      "result": "failed_or_incomplete",
+      "terminal_sanitizer_errors": [],
+      "application_pass": false,
+      "printed_host_errors": 0,
+      "completed_backward_rows": 0,
+      "raw_sha256": "b90e7cdebc949a826de95e777c04ed628d33e00ae9f5003458b2836bae7b5a51",
+      "raw_bytes": 15
+    },
+    {
+      "name": "snapshot_initcheck.zH9PS0VO",
+      "exit_code": 0,
+      "command": "/usr/local/cuda/bin/compute-sanitizer\n--tool\ninitcheck\n--print-limit\n0\n--error-exitcode\n86\n/home/erikg/emender/.venv/bin/python\nexperiments/expressivity_tasks/x40_emender_lm/receipts/part21/checks.py\nsnapshot",
+      "result": "passed",
+      "terminal_sanitizer_errors": [
+        "0"
+      ],
+      "application_pass": true,
+      "printed_host_errors": 0,
+      "completed_backward_rows": 0,
+      "raw_sha256": "0abe05c77e056304cd12207d57d2d5e89a10e9b4efe57058cb784e4cecae7cab",
+      "raw_bytes": 1295
+    }
+  ],
+  "race_inventory_groups_remaining": 18,
+  "race_scope": "Operator explicitly scopes the 18 race groups outside the uninit promotion blockers; no race fix or race-freedom claim.",
+  "residual_risks": [
+    "B64/T2048 full-harness initcheck fails with CUDA OOM in parity.py:35; terminal tool zero is not application success or a completed sweep.",
+    "B128/T2048 unchanged X31 int32 journal reservation preflight fails; no all-shape promotion.",
+    "The retained-gradient lifecycle matrix was deliberately stopped, not passed; complete X36/X40 imported/continued backward coverage remains required.",
+    "Graph/eager and bit-matched 2M curve gates remain unrun in part21.",
+    "18 race groups, 100-repeat 9x bin, depth probe, part-4 connection and final depth verdict remain pending."
+  ],
+  "manual_notes": "contact_supervisor was searched first and again by name/description; no callable intercom tool is available. Single-threaded attended work; only the approved .venv interpreter and broker allowlist 2/3/4, actual leases on card 2. No WG service, agents, Slurm, or .pt commits. Deliberate fixture stops and the corrected initial harness error are retained as failures, not passes."
+}
