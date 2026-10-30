@@ -1,0 +1,384 @@
+========= COMPUTE-SANITIZER
+{"start": 80, "lengths": [2190, 2222, 2286, 2246, 2142, 2244, 2216, 2254], "gpu": "2"}
+SCAN 1 shape (8, 2286, 1, 64) config TapeHeadConfig(key_dim=64, value_dim=128, n_heads=1, budget=2944, unbounded_cap=131072, match_threshold=0.5, eps_residual=1e-06, pop_threshold=0.01, write_enable_threshold=0.5, free_threshold=0.001, decay_rate=0.9474635256553754, usage_decay=0.999)
+========= Error: Race reported between Write access at scan_kernel+0x1c420 in kernels.py:150
+=========     and Write access at scan_kernel+0x1c090 in standard.py:189 [120 hazards]
+=========     and Read access at scan_kernel+0x1c120 in standard.py:189 [120 hazards]
+=========     and Read access at scan_kernel+0x1c320 in standard.py:291 [124 hazards]
+=========     and Read access at scan_kernel+0x1c360 in kernels.py:149 [4672 hazards]
+=========     and Read access at scan_kernel+0x1c370 in kernels.py:149 [10240 hazards]
+=========     and Read access at scan_kernel+0x1c440 in kernels.py:150 [6016 hazards]
+=========     and Read access at scan_kernel+0x1c450 in kernels.py:150 [8768 hazards]
+=========     and Read access at scan_kernel+0x1c8c0 in standard.py:291 [128 hazards]
+=========     and Read access at scan_kernel+0x1c8e0 in standard.py:291 [128 hazards]
+=========     and Read access at scan_kernel+0x1c8f0 in standard.py:291 [128 hazards]
+=========     and Read access at scan_kernel+0x1c900 in standard.py:291 [128 hazards]
+=========     and Write access at scan_kernel+0x1ca50 in kernels.py:151 [32 hazards]
+=========     and Read access at scan_kernel+0x1f6e0 in standard.py:291 [8 hazards]
+========= 
+========= Error: Race reported between Write access at scan_kernel+0x1c340 in kernels.py:149
+=========     and Write access at scan_kernel+0x1c090 in standard.py:189 [120 hazards]
+=========     and Read access at scan_kernel+0x1c120 in standard.py:189 [64 hazards]
+=========     and Write access at scan_kernel+0x1c270 in standard.py:291 [112 hazards]
+=========     and Read access at scan_kernel+0x1c360 in kernels.py:149 [6080 hazards]
+=========     and Read access at scan_kernel+0x1c370 in kernels.py:149 [8704 hazards]
+=========     and Read access at scan_kernel+0x1c440 in kernels.py:150 [3072 hazards]
+=========     and Read access at scan_kernel+0x1c450 in kernels.py:150 [1024 hazards]
+=========     and Read access at scan_kernel+0x1ca70 in kernels.py:151 [1084 hazards]
+=========     and Write access at scan_kernel+0x1f650 in standard.py:291 [8 hazards]
+========= 
+========= Error: Race reported between Write access at scan_kernel+0x1ca50 in kernels.py:151
+=========     and Write access at scan_kernel+0x1c090 in standard.py:189 [296 hazards]
+=========     and Read access at scan_kernel+0x1c0b0 in standard.py:189 [180 hazards]
+=========     and Write access at scan_kernel+0x1c100 in standard.py:189 [56 hazards]
+=========     and Read access at scan_kernel+0x1c120 in standard.py:189 [120 hazards]
+=========     and Write access at scan_kernel+0x1c270 in standard.py:291 [388 hazards]
+=========     and Read access at scan_kernel+0x1c2b0 in standard.py:291 [388 hazards]
+=========     and Write access at scan_kernel+0x1c300 in standard.py:291 [91 hazards]
+=========     and Read access at scan_kernel+0x1c320 in standard.py:291 [252 hazards]
+=========     and Read access at scan_kernel+0x1c450 in kernels.py:150 [512 hazards]
+=========     and Write access at scan_kernel+0x1c730 in standard.py:291 [123 hazards]
+=========     and Write access at scan_kernel+0x1c740 in standard.py:291 [87 hazards]
+=========     and Read access at scan_kernel+0x1c810 in standard.py:291 [5252 hazards]
+=========     and Write access at scan_kernel+0x1c870 in standard.py:291 [95 hazards]
+=========     and Read access at scan_kernel+0x1c8c0 in standard.py:291 [604 hazards]
+=========     and Read access at scan_kernel+0x1c8e0 in standard.py:291 [564 hazards]
+=========     and Write access at scan_kernel+0x1ca50 in kernels.py:151 [78 hazards]
+=========     and Read access at scan_kernel+0x1ca70 in kernels.py:151 [4448 hazards]
+=========     and Write access at scan_kernel+0x1f650 in standard.py:291 [44 hazards]
+=========     and Read access at scan_kernel+0x1f670 in standard.py:291 [24 hazards]
+=========     and Write access at scan_kernel+0x1f6c0 in standard.py:291 [4 hazards]
+=========     and Read access at scan_kernel+0x1f6e0 in standard.py:291 [8 hazards]
+=========     and Write access at scan_kernel+0x22850 in standard.py:291 [8 hazards]
+=========     and Write access at scan_kernel+0x22a30 in standard.py:291 [4 hazards]
+========= 
+========= Error: Race reported between Write access at scan_kernel+0x1b680 in kernels.py:120
+=========     and Write access at scan_kernel+0x19d60 in standard.py:189 [24 hazards]
+=========     and Read access at scan_kernel+0x19d80 in standard.py:189 [32 hazards]
+=========     and Read access at scan_kernel+0x19e40 in standard.py:189 [8 hazards]
+=========     and Read access at scan_kernel+0x1ad80 in kernels.py:99 [32 hazards]
+=========     and Write access at scan_kernel+0x1aef0 in kernels.py:119 [32 hazards]
+=========     and Read access at scan_kernel+0x1af10 in kernels.py:119 [64 hazards]
+=========     and Read access at scan_kernel+0x1af20 in kernels.py:119 [64 hazards]
+=========     and Write access at scan_kernel+0x1b300 in standard.py:291 [126 hazards]
+=========     and Write access at scan_kernel+0x1b310 in standard.py:291 [127 hazards]
+=========     and Write access at scan_kernel+0x1b320 in standard.py:291 [125 hazards]
+=========     and Write access at scan_kernel+0x1b330 in standard.py:291 [123 hazards]
+=========     and Read access at scan_kernel+0x1b350 in standard.py:291 [4592 hazards]
+=========     and Write access at scan_kernel+0x1b460 in standard.py:291 [899 hazards]
+=========     and Read access at scan_kernel+0x1b5a0 in standard.py:291 [376 hazards]
+=========     and Read access at scan_kernel+0x1b5d0 in standard.py:291 [288 hazards]
+=========     and Read access at scan_kernel+0x1b600 in standard.py:291 [288 hazards]
+=========     and Read access at scan_kernel+0x1b620 in standard.py:291 [288 hazards]
+=========     and Write access at scan_kernel+0x1b680 in kernels.py:120 [93 hazards]
+=========     and Read access at scan_kernel+0x1b6f0 in kernels.py:120 [1408 hazards]
+=========     and Write access at scan_kernel+0x1b740 in standard.py:248 [80 hazards]
+=========     and Read access at scan_kernel+0x1b760 in standard.py:248 [32 hazards]
+=========     and Read access at scan_kernel+0x1b7e0 in standard.py:248 [12 hazards]
+=========     and Write access at scan_kernel+0x1b830 in standard.py:291 [8 hazards]
+=========     and Write access at scan_kernel+0x1bdb0 in standard.py:189 [16 hazards]
+=========     and Read access at scan_kernel+0x1be40 in standard.py:189 [4 hazards]
+========= 
+========= Error: Race reported between Write access at scan_kernel+0x1c870 in standard.py:291
+=========     and Read access at scan_kernel+0x1c320 in standard.py:291 [4 hazards]
+=========     and Read access at scan_kernel+0x1c8c0 in standard.py:291 [40 hazards]
+=========     and Read access at scan_kernel+0x1c8e0 in standard.py:291 [1104 hazards]
+=========     and Read access at scan_kernel+0x1c8f0 in standard.py:291 [1104 hazards]
+=========     and Read access at scan_kernel+0x1c900 in standard.py:291 [1104 hazards]
+========= 
+========= Error: Race reported between Read access at scan_kernel+0x1c450 in kernels.py:150
+=========     and Write access at scan_kernel+0x1c270 in standard.py:291 [112 hazards]
+=========     and Write access at scan_kernel+0x1c730 in standard.py:291 [784 hazards]
+=========     and Write access at scan_kernel+0x1c740 in standard.py:291 [784 hazards]
+=========     and Write access at scan_kernel+0x1c7a0 in standard.py:291 [784 hazards]
+=========     and Write access at scan_kernel+0x1c7b0 in standard.py:291 [784 hazards]
+========= 
+========= Error: Race reported between Write access at scan_kernel+0x1b310 in standard.py:291
+=========     and Write access at scan_kernel+0x1a860 in kernels.py:99 [24 hazards]
+=========     and Read access at scan_kernel+0x1ad80 in kernels.py:99 [8 hazards]
+=========     and Write access at scan_kernel+0x1aef0 in kernels.py:119 [120 hazards]
+=========     and Read access at scan_kernel+0x1af10 in kernels.py:119 [16 hazards]
+=========     and Read access at scan_kernel+0x1af20 in kernels.py:119 [16 hazards]
+=========     and Read access at scan_kernel+0x1b350 in standard.py:291 [216 hazards]
+=========     and Read access at scan_kernel+0x1b360 in standard.py:291 [200 hazards]
+=========     and Read access at scan_kernel+0x1b370 in standard.py:291 [216 hazards]
+=========     and Read access at scan_kernel+0x1b380 in standard.py:291 [216 hazards]
+=========     and Write access at scan_kernel+0x1b460 in standard.py:291 [68 hazards]
+=========     and Write access at scan_kernel+0x1b4b0 in standard.py:291 [8 hazards]
+=========     and Read access at scan_kernel+0x1b5d0 in standard.py:291 [1408 hazards]
+=========     and Read access at scan_kernel+0x1b6f0 in kernels.py:120 [32 hazards]
+========= 
+========= Error: Race reported between Write access at scan_kernel+0x1b320 in standard.py:291
+=========     and Write access at scan_kernel+0x1a860 in kernels.py:99 [24 hazards]
+=========     and Read access at scan_kernel+0x1ad80 in kernels.py:99 [8 hazards]
+=========     and Write access at scan_kernel+0x1aef0 in kernels.py:119 [44 hazards]
+=========     and Read access at scan_kernel+0x1af10 in kernels.py:119 [32 hazards]
+=========     and Read access at scan_kernel+0x1af20 in kernels.py:119 [32 hazards]
+=========     and Read access at scan_kernel+0x1b350 in standard.py:291 [216 hazards]
+=========     and Read access at scan_kernel+0x1b360 in standard.py:291 [88 hazards]
+=========     and Read access at scan_kernel+0x1b370 in standard.py:291 [200 hazards]
+=========     and Read access at scan_kernel+0x1b380 in standard.py:291 [216 hazards]
+=========     and Write access at scan_kernel+0x1b460 in standard.py:291 [70 hazards]
+=========     and Write access at scan_kernel+0x1b490 in standard.py:291 [6 hazards]
+=========     and Write access at scan_kernel+0x1b4b0 in standard.py:291 [69 hazards]
+=========     and Read access at scan_kernel+0x1b600 in standard.py:291 [1408 hazards]
+=========     and Read access at scan_kernel+0x1b6f0 in kernels.py:120 [32 hazards]
+========= 
+========= Error: Race reported between Write access at scan_kernel+0x1b330 in standard.py:291
+=========     and Write access at scan_kernel+0x1a860 in kernels.py:99 [24 hazards]
+=========     and Read access at scan_kernel+0x1ad80 in kernels.py:99 [8 hazards]
+=========     and Write access at scan_kernel+0x1aef0 in kernels.py:119 [44 hazards]
+=========     and Read access at scan_kernel+0x1af10 in kernels.py:119 [20 hazards]
+=========     and Read access at scan_kernel+0x1af20 in kernels.py:119 [24 hazards]
+=========     and Read access at scan_kernel+0x1b350 in standard.py:291 [216 hazards]
+=========     and Read access at scan_kernel+0x1b360 in standard.py:291 [84 hazards]
+=========     and Read access at scan_kernel+0x1b370 in standard.py:291 [88 hazards]
+=========     and Read access at scan_kernel+0x1b380 in standard.py:291 [200 hazards]
+=========     and Write access at scan_kernel+0x1b460 in standard.py:291 [69 hazards]
+=========     and Write access at scan_kernel+0x1b490 in standard.py:291 [69 hazards]
+=========     and Write access at scan_kernel+0x1b4b0 in standard.py:291 [71 hazards]
+=========     and Write access at scan_kernel+0x1b4d0 in standard.py:291 [7 hazards]
+=========     and Read access at scan_kernel+0x1b620 in standard.py:291 [1408 hazards]
+=========     and Read access at scan_kernel+0x1b6f0 in kernels.py:120 [36 hazards]
+========= 
+========= Error: Race reported between Write access at scan_kernel+0x1c090 in standard.py:189
+=========     and Read access at scan_kernel+0x1bdd0 in standard.py:189 [8 hazards]
+=========     and Read access at scan_kernel+0x1c120 in standard.py:189 [592 hazards]
+=========     and Read access at scan_kernel+0x1c2b0 in standard.py:291 [60 hazards]
+=========     and Read access at scan_kernel+0x1c320 in standard.py:291 [128 hazards]
+=========     and Read access at scan_kernel+0x1c370 in kernels.py:149 [120 hazards]
+=========     and Read access at scan_kernel+0x1c810 in standard.py:291 [120 hazards]
+=========     and Read access at scan_kernel+0x1c8c0 in standard.py:291 [60 hazards]
+=========     and Read access at scan_kernel+0x1ca70 in kernels.py:151 [1216 hazards]
+========= 
+========= Error: Race reported between Write access at scan_kernel+0x1b300 in standard.py:291
+=========     and Write access at scan_kernel+0x1a860 in kernels.py:99 [23 hazards]
+=========     and Read access at scan_kernel+0x1ad80 in kernels.py:99 [8 hazards]
+=========     and Write access at scan_kernel+0x1aef0 in kernels.py:119 [119 hazards]
+=========     and Read access at scan_kernel+0x1af10 in kernels.py:119 [36 hazards]
+=========     and Read access at scan_kernel+0x1af20 in kernels.py:119 [36 hazards]
+=========     and Read access at scan_kernel+0x1b350 in standard.py:291 [216 hazards]
+=========     and Read access at scan_kernel+0x1b360 in standard.py:291 [216 hazards]
+=========     and Read access at scan_kernel+0x1b370 in standard.py:291 [216 hazards]
+=========     and Read access at scan_kernel+0x1b380 in standard.py:291 [216 hazards]
+=========     and Write access at scan_kernel+0x1b460 in standard.py:291 [6 hazards]
+=========     and Read access at scan_kernel+0x1b5a0 in standard.py:291 [1152 hazards]
+=========     and Read access at scan_kernel+0x1b6f0 in kernels.py:120 [40 hazards]
+=========     and Read access at scan_kernel+0x1b8d0 in standard.py:291 [8 hazards]
+========= 
+========= Error: Race reported between Write access at scan_kernel+0x1c730 in standard.py:291
+=========     and Read access at scan_kernel+0x1c0b0 in standard.py:189 [64 hazards]
+=========     and Read access at scan_kernel+0x1c120 in standard.py:189 [124 hazards]
+=========     and Read access at scan_kernel+0x1c370 in kernels.py:149 [64 hazards]
+=========     and Read access at scan_kernel+0x1c8c0 in standard.py:291 [1344 hazards]
+=========     and Read access at scan_kernel+0x1ca70 in kernels.py:151 [376 hazards]
+========= 
+========= Error: Race reported between Write access at scan_kernel+0x1c270 in standard.py:291
+=========     and Read access at scan_kernel+0x1bdd0 in standard.py:189 [8 hazards]
+=========     and Read access at scan_kernel+0x1bed0 in standard.py:248 [8 hazards]
+=========     and Read access at scan_kernel+0x1c0b0 in standard.py:189 [664 hazards]
+=========     and Read access at scan_kernel+0x1c320 in standard.py:291 [656 hazards]
+=========     and Read access at scan_kernel+0x1c370 in kernels.py:149 [60 hazards]
+=========     and Read access at scan_kernel+0x1c810 in standard.py:291 [116 hazards]
+=========     and Read access at scan_kernel+0x1c8c0 in standard.py:291 [128 hazards]
+=========     and Read access at scan_kernel+0x1ca70 in kernels.py:151 [120 hazards]
+========= 
+========= Error: Race reported between Write access at scan_kernel+0x1c740 in standard.py:291
+=========     and Read access at scan_kernel+0x1c370 in kernels.py:149 [64 hazards]
+=========     and Read access at scan_kernel+0x1c8e0 in standard.py:291 [1344 hazards]
+=========     and Read access at scan_kernel+0x1ca70 in kernels.py:151 [316 hazards]
+========= 
+========= Error: Race reported between Write access at scan_kernel+0x1c7a0 in standard.py:291
+=========     and Read access at scan_kernel+0x1c370 in kernels.py:149 [64 hazards]
+=========     and Read access at scan_kernel+0x1c8f0 in standard.py:291 [1328 hazards]
+========= 
+========= Error: Race reported between Write access at scan_kernel+0x1c7b0 in standard.py:291
+=========     and Read access at scan_kernel+0x1c370 in kernels.py:149 [64 hazards]
+=========     and Read access at scan_kernel+0x1c900 in standard.py:291 [1328 hazards]
+========= 
+========= Error: Race reported between Write access at scan_kernel+0x1a860 in kernels.py:99
+=========     and Write access at scan_kernel+0x19d60 in standard.py:189 [16 hazards]
+=========     and Read access at scan_kernel+0x19d80 in standard.py:189 [176 hazards]
+=========     and Write access at scan_kernel+0x19dd0 in standard.py:189 [36 hazards]
+=========     and Read access at scan_kernel+0x19e40 in standard.py:189 [72 hazards]
+=========     and Read access at scan_kernel+0x1ad80 in kernels.py:99 [480 hazards]
+=========     and Write access at scan_kernel+0x1aef0 in kernels.py:119 [109 hazards]
+=========     and Read access at scan_kernel+0x1af10 in kernels.py:119 [92 hazards]
+=========     and Read access at scan_kernel+0x1af20 in kernels.py:119 [76 hazards]
+=========     and Read access at scan_kernel+0x1b5a0 in standard.py:291 [4 hazards]
+=========     and Read access at scan_kernel+0x1b5d0 in standard.py:291 [8 hazards]
+=========     and Read access at scan_kernel+0x1b620 in standard.py:291 [8 hazards]
+=========     and Write access at scan_kernel+0x1b740 in standard.py:248 [8 hazards]
+=========     and Write access at scan_kernel+0x1b830 in standard.py:291 [4 hazards]
+=========     and Write access at scan_kernel+0x22850 in standard.py:291 [8 hazards]
+=========     and Read access at scan_kernel+0x22870 in standard.py:291 [32 hazards]
+=========     and Read access at scan_kernel+0x229e0 in standard.py:291 [8 hazards]
+=========     and Write access at scan_kernel+0x22a30 in standard.py:291 [8 hazards]
+=========     and Read access at scan_kernel+0x22c30 in standard.py:291 [8 hazards]
+========= 
+========= Error: Race reported between Write access at scan_kernel+0x1b460 in standard.py:291
+=========     and Read access at scan_kernel+0x1af10 in kernels.py:119 [4 hazards]
+=========     and Read access at scan_kernel+0x1af20 in kernels.py:119 [12 hazards]
+=========     and Read access at scan_kernel+0x1b5a0 in standard.py:291 [216 hazards]
+=========     and Read access at scan_kernel+0x1b5d0 in standard.py:291 [216 hazards]
+=========     and Read access at scan_kernel+0x1b600 in standard.py:291 [216 hazards]
+=========     and Read access at scan_kernel+0x1b620 in standard.py:291 [216 hazards]
+========= 
+========= Error: Race reported between Read access at scan_kernel+0x1b620 in standard.py:291
+=========     and Write access at scan_kernel+0x1aef0 in kernels.py:119 [12 hazards]
+=========     and Write access at scan_kernel+0x1b490 in standard.py:291 [216 hazards]
+=========     and Write access at scan_kernel+0x1b4b0 in standard.py:291 [216 hazards]
+=========     and Write access at scan_kernel+0x1b4d0 in standard.py:291 [208 hazards]
+========= 
+========= Error: Race reported between Read access at scan_kernel+0x1b600 in standard.py:291
+=========     and Write access at scan_kernel+0x1aef0 in kernels.py:119 [12 hazards]
+=========     and Write access at scan_kernel+0x1b490 in standard.py:291 [208 hazards]
+=========     and Write access at scan_kernel+0x1b4b0 in standard.py:291 [216 hazards]
+========= 
+========= Error: Race reported between Write access at scan_kernel+0x1aef0 in kernels.py:119
+=========     and Read access at scan_kernel+0x19e40 in standard.py:189 [4 hazards]
+=========     and Read access at scan_kernel+0x1af10 in kernels.py:119 [144 hazards]
+=========     and Read access at scan_kernel+0x1af20 in kernels.py:119 [96 hazards]
+=========     and Read access at scan_kernel+0x1b350 in standard.py:291 [64 hazards]
+=========     and Read access at scan_kernel+0x1b5a0 in standard.py:291 [4 hazards]
+=========     and Read access at scan_kernel+0x1b5d0 in standard.py:291 [4 hazards]
+=========     and Read access at scan_kernel+0x1b7e0 in standard.py:248 [8 hazards]
+========= 
+========= Error: Race reported between Read access at scan_kernel+0x1ca70 in kernels.py:151
+=========     and Write access at scan_kernel+0x1c100 in standard.py:189 [112 hazards]
+=========     and Write access at scan_kernel+0x1c300 in standard.py:291 [124 hazards]
+=========     and Write access at scan_kernel+0x1f650 in standard.py:291 [12 hazards]
+=========     and Write access at scan_kernel+0x1f6c0 in standard.py:291 [4 hazards]
+=========     and Write access at scan_kernel+0x22850 in standard.py:291 [8 hazards]
+========= 
+========= Error: Race reported between Write access at scan_kernel+0x1b4b0 in standard.py:291
+=========     and Read access at scan_kernel+0x1b5d0 in standard.py:291 [216 hazards]
+========= 
+========= Error: Race reported between Write access at scan_kernel+0x1b740 in standard.py:248
+=========     and Read access at scan_kernel+0x1ad80 in kernels.py:99 [8 hazards]
+=========     and Read access at scan_kernel+0x1b350 in standard.py:291 [4 hazards]
+=========     and Read access at scan_kernel+0x1b5a0 in standard.py:291 [8 hazards]
+=========     and Read access at scan_kernel+0x1b6f0 in kernels.py:120 [36 hazards]
+=========     and Read access at scan_kernel+0x1b7e0 in standard.py:248 [44 hazards]
+=========     and Read access at scan_kernel+0x1b850 in standard.py:291 [4 hazards]
+=========     and Read access at scan_kernel+0x1b8d0 in standard.py:291 [8 hazards]
+=========     and Read access at scan_kernel+0x1be40 in standard.py:189 [8 hazards]
+========= 
+========= Error: Race reported between Write access at scan_kernel+0x1beb0 in standard.py:248
+=========     and Read access at scan_kernel+0x1b760 in standard.py:248 [8 hazards]
+=========     and Read access at scan_kernel+0x1bdd0 in standard.py:189 [44 hazards]
+=========     and Read access at scan_kernel+0x1bf50 in standard.py:248 [44 hazards]
+=========     and Read access at scan_kernel+0x1c0b0 in standard.py:189 [4 hazards]
+=========     and Read access at scan_kernel+0x1c120 in standard.py:189 [8 hazards]
+=========     and Read access at scan_kernel+0x1c320 in standard.py:291 [8 hazards]
+========= 
+========= Error: Race reported between Write access at scan_kernel+0x1b830 in standard.py:291
+=========     and Read access at scan_kernel+0x1af10 in kernels.py:119 [8 hazards]
+=========     and Read access at scan_kernel+0x1b6f0 in kernels.py:120 [4 hazards]
+=========     and Read access at scan_kernel+0x1b760 in standard.py:248 [44 hazards]
+=========     and Read access at scan_kernel+0x1b8d0 in standard.py:291 [44 hazards]
+=========     and Read access at scan_kernel+0x1bf50 in standard.py:248 [8 hazards]
+========= 
+========= Error: Race reported between Write access at scan_kernel+0x22850 in standard.py:291
+=========     and Read access at scan_kernel+0x19e40 in standard.py:189 [8 hazards]
+=========     and Read access at scan_kernel+0x1f670 in standard.py:291 [36 hazards]
+=========     and Read access at scan_kernel+0x229e0 in standard.py:291 [44 hazards]
+=========     and Read access at scan_kernel+0x22a70 in standard.py:291 [4 hazards]
+========= 
+========= Error: Race reported between Write access at scan_kernel+0x1bdb0 in standard.py:189
+=========     and Read access at scan_kernel+0x1b6f0 in kernels.py:120 [8 hazards]
+=========     and Read access at scan_kernel+0x1b850 in standard.py:291 [4 hazards]
+=========     and Read access at scan_kernel+0x1b8d0 in standard.py:291 [8 hazards]
+=========     and Read access at scan_kernel+0x1be40 in standard.py:189 [44 hazards]
+=========     and Read access at scan_kernel+0x1bed0 in standard.py:248 [4 hazards]
+=========     and Read access at scan_kernel+0x1bf50 in standard.py:248 [8 hazards]
+=========     and Read access at scan_kernel+0x1c120 in standard.py:189 [8 hazards]
+========= 
+========= Error: Race reported between Write access at scan_kernel+0x1f650 in standard.py:291
+=========     and Read access at scan_kernel+0x1c370 in kernels.py:149 [12 hazards]
+=========     and Read access at scan_kernel+0x1c810 in standard.py:291 [4 hazards]
+=========     and Read access at scan_kernel+0x1c8c0 in standard.py:291 [8 hazards]
+=========     and Read access at scan_kernel+0x1f6e0 in standard.py:291 [36 hazards]
+=========     and Read access at scan_kernel+0x22870 in standard.py:291 [4 hazards]
+=========     and Read access at scan_kernel+0x229e0 in standard.py:291 [16 hazards]
+========= 
+========= Error: Race reported between Write access at scan_kernel+0x19d60 in standard.py:189
+=========     and Read access at scan_kernel+0x19e40 in standard.py:189 [44 hazards]
+=========     and Read access at scan_kernel+0x1ad80 in kernels.py:99 [4 hazards]
+=========     and Read access at scan_kernel+0x1b5a0 in standard.py:291 [8 hazards]
+=========     and Read access at scan_kernel+0x1f670 in standard.py:291 [8 hazards]
+=========     and Read access at scan_kernel+0x22a70 in standard.py:291 [4 hazards]
+========= 
+========= Error: Race reported between Write access at scan_kernel+0x22a30 in standard.py:291
+=========     and Read access at scan_kernel+0x1f670 in standard.py:291 [16 hazards]
+=========     and Read access at scan_kernel+0x22870 in standard.py:291 [44 hazards]
+========= 
+========= Error: Race reported between Write access at scan_kernel+0x22990 in standard.py:291
+=========     and Read access at scan_kernel+0x229e0 in standard.py:291 [28 hazards]
+========= 
+========= Error: Race reported between Read access at scan_kernel+0x1c120 in standard.py:189
+=========     and Write access at scan_kernel+0x1c100 in standard.py:189 [20 hazards]
+=========     and Write access at scan_kernel+0x1c300 in standard.py:291 [4 hazards]
+========= 
+========= Error: Race reported between Write access at scan_kernel+0x19dd0 in standard.py:189
+=========     and Read access at scan_kernel+0x19e40 in standard.py:189 [8 hazards]
+=========     and Read access at scan_kernel+0x1b5a0 in standard.py:291 [8 hazards]
+========= 
+========= Error: Race reported between Write access at scan_kernel+0x1c300 in standard.py:291
+=========     and Read access at scan_kernel+0x1c320 in standard.py:291 [12 hazards]
+=========     and Read access at scan_kernel+0x1c8c0 in standard.py:291 [4 hazards]
+========= 
+/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/language/standard.py:261: unknown: block: [7,0,0], thread: [1,0,0] Assertion `int32 overflow detected for operation add` failed.
+/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/language/standard.py:261: unknown: block: [7,0,0], thread: [3,0,0] Assertion `int32 overflow detected for operation add` failed.
+Traceback (most recent call last):
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/receipts/part15/single.py", line 25, in <module>
+    out=probe(ids,torch.from_numpy(ln).cuda());torch.cuda.synchronize()
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/depth.py", line 37, in forward
+    features=self.lm.features(ids)
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/model.py", line 150, in features
+    for block in self.blocks: x=block(x,ids)
+                                ^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/model.py", line 120, in forward
+    x=x+self.read_out(self.cell(self.norm1(x).float(),ids).flatten(2))
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/model.py", line 98, in forward
+    (r,state,trace,pressure),e,err,sig=scan(*inputs[:6],cfg,*inputs[6:])
+                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/receipts/part15/single.py", line 12, in logged_scan
+    return original_scan(*args,**kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/model.py", line 43, in scan
+    result=forward(k,q,v,beta,pop,append,None,cfg,append_coef)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/forward.py", line 162, in tape_scan
+    scan_kernel[(b*h,)](*args,coef,flat(wire_logits),match_coef.repeat(b).contiguous(),error_coef.repeat(b).contiguous(),evidence,error_evidence,keys,values,strength,live,age,
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/runtime/jit.py", line 419, in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/runtime/jit.py", line 757, in run
+    kernel.run(grid_0, grid_1, grid_2, stream, kernel.function, kernel.packed_metadata, launch_metadata,
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/backends/nvidia/driver.py", line 712, in __call__
+    self.launch(gridX, gridY, gridZ, stream, function, self.launch_cooperative_grid, self.launch_pdl,
+RuntimeError: Triton Error [CUDA]: device-side assert triggered
+========= Target application returned an error
+========= RACECHECK SUMMARY: 35 hazards displayed (35 errors, 0 warnings)

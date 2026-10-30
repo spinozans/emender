@@ -1,0 +1,61 @@
+{
+  "status": "bounded_unknown_no_fix",
+  "production_sources_changed": false,
+  "physical_gpu": 2,
+  "python": "/home/erikg/emender/.venv/bin/python",
+  "sanitizers": {
+    "full_memcheck_errors": 0,
+    "full_racecheck_error_groups": 35,
+    "full_initcheck": "terminated_143_during_scan4_uninitialized_reads_reported",
+    "filtered_memcheck_errors": 0,
+    "filtered_racecheck": "failed_before_target_internal_tool_error",
+    "filtered_initcheck": "timeout_124_scan10_completed_filtered_tracking_inconclusive",
+    "isolated_memcheck_errors": 0,
+    "isolated_racecheck_error_groups": 29,
+    "isolated_initcheck_errors": 8224
+  },
+  "exact_reproduction": {
+    "processes": 10,
+    "passed": 6,
+    "failed": 4,
+    "failing_calls": [
+      10,
+      10,
+      22,
+      18
+    ],
+    "failing_cuda_blocks": [
+      5,
+      6,
+      2,
+      1
+    ]
+  },
+  "isolated": {
+    "logged_replays_passed": 100,
+    "plain_replays_passed": 100,
+    "processes": 2,
+    "racecheck_replay_failed": true
+  },
+  "layout": {
+    "processes": 30,
+    "passed": 19,
+    "failed": 11,
+    "stable_0_failures": 4,
+    "stable_1_failures": 7,
+    "all_failing_inputs_256_aligned": true,
+    "input_tensors_per_launch": 62,
+    "matched_relative_layout_control": [
+      "layout_0_0.txt call14 passed",
+      "layout_0_0_r3.txt call14 failed"
+    ]
+  },
+  "root_cause": "Unresolved causal reduction; shared-memory hazards observed, race-class signature established.",
+  "residual_risks": [
+    "Production 9x depth remains unaccepted.",
+    "Shared-memory hazards and uninitialized cache reads remain.",
+    "No causal minimal fix or full recertification.",
+    "Initial full initcheck incomplete; filtered checks have coverage/tracking limits.",
+    "Absolute-address sensitivity remains open."
+  ]
+}
