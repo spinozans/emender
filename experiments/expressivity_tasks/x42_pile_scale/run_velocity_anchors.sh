@@ -16,6 +16,10 @@ printf 'acquired card 0 at %s\n' "$(date -u +%FT%TZ)"
 sha256sum -c "$out/sources.sha256"
 failed=0
 for arm in transformer gdn2 pure; do
+  status=0
+  /home/erikg/emender/.venv/bin/python -m experiments.expressivity_tasks.x42_pile_scale.velocity_anchor_resume "$arm" "$out" || status=$?
+  if [[ "$status" == 0 ]]; then continue; fi
+  if [[ "$status" != 10 ]]; then exit "$status"; fi
   if ! /home/erikg/emender/.venv/bin/python -m experiments.expressivity_tasks.x42_pile_scale.velocity_baselines --arm "$arm" --output "$out/$arm" --length-sweep; then
     failed=1
   fi
