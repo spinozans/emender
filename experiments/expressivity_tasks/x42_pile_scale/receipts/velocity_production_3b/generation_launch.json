@@ -1,0 +1,87 @@
+{
+  "status": "generation1_relaunched",
+  "captured_unix": 1793320183.0102234,
+  "source_commit": "aa50a24dcdc51c8b7d8c65a3c6d9effac20c7856",
+  "parent": {
+    "pid": 1599083,
+    "status": "generation1",
+    "registration_sha256": "f394fc0680f86ac806976a3162d321561087e92c0837da0677303c6a8c51a131",
+    "updated": 1793320053.5049653
+  },
+  "children": [
+    {
+      "index": 0,
+      "pid": 1599187,
+      "output": "experiments/expressivity_tasks/x42_pile_scale/runs/velocity_production_v1/g1_c00/attempt1",
+      "start_ticks": "338604170",
+      "physical_gpu": "5",
+      "start_receipt": "experiments/expressivity_tasks/x42_pile_scale/receipts/velocity_production_3b/g1_c00/start.json",
+      "last_step": null,
+      "status": "running; first step/JIT pending"
+    },
+    {
+      "index": 1,
+      "pid": 1599188,
+      "output": "experiments/expressivity_tasks/x42_pile_scale/runs/velocity_production_v1/g1_c01/attempt1",
+      "start_ticks": "338604170",
+      "physical_gpu": "1",
+      "start_receipt": "experiments/expressivity_tasks/x42_pile_scale/receipts/velocity_production_3b/g1_c01/start.json",
+      "last_step": null,
+      "status": "running; first step/JIT pending"
+    },
+    {
+      "index": 2,
+      "pid": 1599190,
+      "output": "experiments/expressivity_tasks/x42_pile_scale/runs/velocity_production_v1/g1_c02/attempt1",
+      "start_ticks": "338604171",
+      "physical_gpu": "6",
+      "start_receipt": "experiments/expressivity_tasks/x42_pile_scale/receipts/velocity_production_3b/g1_c02/start.json",
+      "last_step": {
+        "step": 8,
+        "tokens": 1048576,
+        "train_seconds": 117.29177947621793,
+        "step_seconds": 12.410743503831327,
+        "loss": 9.89357852935791,
+        "grad_norm": 2.4974985122680664,
+        "tokens_per_second": 8939.893355549348
+      },
+      "status": "training"
+    }
+  ],
+  "population": 12,
+  "completed": 0,
+  "generation_checkpoint_sha256": "04f7802ff5351c806c3127ed053c9672f11d55641a23ff1331b4d9f92c7d098f",
+  "preserved_population": true,
+  "depth_probe": {
+    "pid": 634691,
+    "alive": true,
+    "untouched": true,
+    "cmdline": "/home/erikg/emender/.venv/bin/python -m experiments.expressivity_tasks.x40_emender_lm.runner --train --ignition-v1 --receipt-dir /home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/receipts/ignition_v1 "
+  },
+  "excluded_cards": [
+    0,
+    2,
+    3,
+    4,
+    7
+  ],
+  "smoke_summary": {
+    "score": 6.0823864822320886,
+    "nll_heldout": 6.080204745133718,
+    "occ_frac": 0.21817370983707307,
+    "tokens_consumed": 20709376,
+    "train_seconds": 2709.2376179494895,
+    "tokens_per_second": 7643.986582348607,
+    "degeneracy_flags": {
+      "dead_store": false,
+      "pressure_runaway": false,
+      "slope_one": false
+    }
+  },
+  "manual_notes": "No 15k-throughput attestation: measured 7643.987 tok/s. Lower rate decomposed and exact-smoke/committed decision required before resume. No supervisor/intercom tool was exposed. No resilient DiLoCo changes; requirement IDs not applicable.",
+  "residual_risks": [
+    "Generation 1 is running; completion/winner unverified.",
+    "15k-class throughput expectation failed; startup/cache/device effects not fully isolated.",
+    "Higher-head candidates are still compiling their first step at capture."
+  ]
+}

@@ -20,3 +20,5 @@ Residual risks:
 - Full-budget smoke is below the requested 15k class; short cached probes do not certify full-budget performance.
 - Exact cold-cache versus card/sequence-dependent slowdown remains unisolated.
 - Generation 1 will be running at handoff; no winner or completed-generation claim.
+
+Generation 1 relaunched under parent PID 1599083, population 12, preserving the original generation population. Children hold physical cards 1/5/6. Depth probe PID 634691 remains alive and untouched; cards 0/2/3/4/7 excluded. See generation_launch.json for process identities, initial telemetry, and residual risks. All 75 X40/X42 tests passed after final code changes.
