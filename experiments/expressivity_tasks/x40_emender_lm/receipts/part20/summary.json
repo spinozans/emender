@@ -1,0 +1,47 @@
+{
+  "status": "failed_incomplete_production_restored",
+  "lifecycle_fixtures": 32,
+  "isolated_9x_initcheck_errors": 0,
+  "certified_B64_T512_initcheck": "failed; deliberately terminated; original raw log lost to edited-shell redirection; outer shell exit 2",
+  "reduced_clone": {
+    "status": "failed_incomplete",
+    "exit_code": 124,
+    "timeout_seconds": 180,
+    "terminal_sanitizer_summary": false,
+    "print_limit": 100,
+    "printed_host_api_errors": 100,
+    "printed_python_frames": [
+      "Host Frame: <genexpr> in backward.py:237",
+      "Host Frame: apply in function.py:315",
+      "Host Frame: backward in backward.py:237",
+      "Host Frame: backward in backward.py:245",
+      "Host Frame: wrapper in function.py:608"
+    ],
+    "raw_sha256": "802baafec500eacd8734b0001d402806e10e4029ddfd8ca716927ee97d6b7626",
+    "raw_bytes": 476157,
+    "scope": "B1/T8 process-local candidate after production rollback; sampled reports, not certified-shape evidence"
+  },
+  "production_restored": true,
+  "race_inventory_groups_remaining": 18,
+  "not_run": [
+    "remaining all-shape parity",
+    "109 oracle tests",
+    "graph/eager",
+    "bit-matched 2M curve",
+    "remaining certified-shape initcheck sweep",
+    "racecheck at both scales",
+    "certification adapter port",
+    "race repairs",
+    "9x 100-repeat bin",
+    "hash-bound depth probe",
+    "pressure connection test",
+    "final depth verdict"
+  ],
+  "residual_risks": [
+    "Host API clones copy undefined owner/journal lanes; no repair or waiver accepted.",
+    "Original certified-shape raw log was overwritten; no complete error inventory.",
+    "Reduced diagnostic timed out; no terminal sanitizer summary or complete parity result.",
+    "All-shape production promotion battery remains incomplete; both masks reverted.",
+    "18 race groups unresolved."
+  ]
+}

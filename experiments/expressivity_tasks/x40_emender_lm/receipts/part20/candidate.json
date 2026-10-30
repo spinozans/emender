@@ -1,0 +1,26 @@
+{
+  "experiments/expressivity_tasks/x40_emender_lm/kernels.py": {
+    "before_sha256": "956beee6d257b52bd43074f0fdeafdeffdf45253fb146e6885d9a0951204c85f",
+    "candidate_sha256": "5fb76400f65832ef4dfdfd842b486acc7b17e3ca2e174c1a27e1b53c3dd71740",
+    "replacements": [
+      [
+        "cached=tl.load(ReadStrengthCache+n*S+r_columns,r_live,0.)",
+        "cached=tl.load(ReadStrengthCache+n*S+r_columns,r_live & (r_touch<Start+t-1),0.)"
+      ],
+      [
+        "born=tl.load(Birth+n*S+slots,valid,Clock)",
+        "born=tl.load(Birth+n*S+slots,valid & live,Clock)"
+      ]
+    ]
+  },
+  "experiments/expressivity_tasks/x31_tape_cell_fused/kernels.py": {
+    "before_sha256": "261838682446312e18aedb13d27d6b1b3e9172816450375580138e00952cbd04",
+    "candidate_sha256": "65afd825742992de6175c4254a850abaa57b9f3a4661a16342d488d66ac04331",
+    "replacements": [
+      [
+        "born=tl.load(Birth+n*S+slots,valid,Clock)",
+        "born=tl.load(Birth+n*S+slots,valid & live,Clock)"
+      ]
+    ]
+  }
+}

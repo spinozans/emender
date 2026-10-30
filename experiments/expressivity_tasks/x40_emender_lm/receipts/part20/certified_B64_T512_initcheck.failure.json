@@ -1,0 +1,22 @@
+{
+  "status": "failed",
+  "run": "certified_B64_T512_initcheck",
+  "manual_termination": true,
+  "terminal_sanitizer_summary": false,
+  "reason": "Nonzero host API uninitialized-source reports violate zero-initcheck gate; stopped after failure was established.",
+  "raw_bytes": 102,
+  "raw_sha256": "abd9361eed242abd2348e65d9f249a01a05f9de5a59ea27df241bbf0cb15560b",
+  "printed_host_api_errors": 0,
+  "printed_uninitialized_accesses": 0,
+  "python_backtraces": [],
+  "source_access_sizes": [],
+  "runner_failure": "run.sh was edited to add provenance while its shell was active; after manual termination the shell resumed at shifted offsets (command not found and syntax error), returned 2, and did not append normal status. This is a runner bookkeeping defect, separate from prior sanitizer reports.",
+  "timeout_pid": 2221275,
+  "termination_signal": "SIGTERM",
+  "outer_shell_exit": 2,
+  "all_shape_acceptance": false,
+  "raw_log_lost": true,
+  "retained_file_scope": "Only the 102-byte runner error survives in .txt.gz; the original sanitizer log was overwritten by the resumed, edited shell. Counts below refer only to this surviving runner-error file, NOT the original sanitizer output.",
+  "observed_before_loss": "A tool read showed 11,122 lines, host API cudaMemcpy-source uninitialized reports on a 285999104-byte copy, and backward.py:245. These observations are not a retained raw certified-shape log.",
+  "disposition": "FAIL/incomplete. Do not claim a complete sanitizer inventory or terminal exit 86 for the certified-shape invocation. Retain separate reduced_clone diagnostic for independent terminal evidence."
+}
