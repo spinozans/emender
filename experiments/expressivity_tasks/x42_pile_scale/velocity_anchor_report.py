@@ -7,11 +7,38 @@ from .velocity_state import atomic_json
 ROOT=Path(__file__).resolve().parent
 OUT=ROOT/'receipts/velocity_baseline_anchors'
 
+def length_report(output):
+    from .velocity_length_sweep import SCOPE
+    rows=[]
+    for arm in ('transformer','gdn2','pure'):
+        path=output/arm/'length_sweep.json'
+        failure=output/(arm+'_failure.json')
+        receipt=json.loads(path.read_text()) if path.exists() else {}
+        rows.append(dict(arm=arm,status=receipt.get('status','failed' if failure.exists() else 'queued'),
+                         source=str(path),measurements=receipt.get('rows',[])))
+    complete=all(r['status']=='completed' for r in rows)
+    atomic_json(output/'length_table.json',dict(status='completed' if complete else 'incomplete',
+        scope=SCOPE,protocol='B64/T2048 seed3401, 2700 active train seconds; c06 optimizer; two reset windows per eval length',
+        rows=rows,registered_score_unchanged=True))
+    lines=['# Three-family LM length generalization','',SCOPE,'',
+        '| family | status | T | NLL | perplexity | PPL / own T512 |',
+        '|---|---|---:|---:|---:|---:|']
+    for row in rows:
+        if not row['measurements']:lines.append(f"| {row['arm']} | {row['status']} | pending | pending | pending | pending |")
+        for m in row['measurements']:
+            lines.append(f"| {row['arm']} | {row['status']} | {m['context']} | {m['nll']} | {m['perplexity']} | {m['ppl_ratio_vs_T512']} |")
+    lines+=['','Incomplete/failed rows are not measurements. No three-family result is claimed until all arms complete.',
+            'X40 window discipline: two reset contiguous batch-1 windows starting i*T; coverage differs by T.',
+            'No resilient DiLoCo behavior changed; requirement IDs not applicable.']
+    (output/'LENGTH_TABLE.md').write_text('\n'.join(lines)+'\n')
+
+
 def report(output=OUT):
     output=Path(output);output.mkdir(parents=True,exist_ok=True)
-    reference=output/'c06_result.json'
+    length_report(output)
+    reference=output/'pure/result.json'
     rows=[]
-    for arm,path in [('pure emender c06 (receipted)',reference),
+    for arm,path in [('pure emender c06 (fresh anchor)',reference),
                      ('transformer',output/'transformer/result.json'),
                      ('gdn2',output/'gdn2/result.json')]:
         failure=path.parent.parent/(path.parent.name+'_failure.json')
@@ -25,7 +52,7 @@ def report(output=OUT):
     atomic_json(output/'anchor.json',dict(rows=rows,protocol='B64/T2048, seed3401, contiguous pile24 train prefix, 2700 active train seconds; 24 reset held-out T2048 windows',
         score_asymmetry='Baselines score=NLL only; emender adds 0.01*occ_frac and degeneracy penalties. Compare NLL column.',
         capacity='Baselines match c06 150003984 trainable parameters within 0.1%; c06 total 227317104 includes frozen geometry. GPT2 vocabulary 50257.',
-        fresh_emender='Not rerun: existing full-budget c06 receipt under identical registered regime used.'))
+        fresh_emender='Fresh c06 policy rerun on card 0, including additional length sweep.'))
     lines=['# X42 velocity baseline anchors','',
         '45 minutes of active training per arm; evaluation and setup excluded. Whole updates may overshoot.',
         'Baselines match c06 trainable capacity (150,003,984); c06 also has 77,313,120 frozen parameters.',

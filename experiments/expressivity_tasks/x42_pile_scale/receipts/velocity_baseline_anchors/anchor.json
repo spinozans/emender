@@ -1,20 +1,9 @@
 {
   "rows": [
     {
-      "arm": "pure emender c06 (receipted)",
-      "status": "completed",
-      "score": 5.3733475944725795,
-      "nll": 5.314661979675293,
-      "tokens": 54919168,
-      "tokens_per_second": 20330.817428968025,
-      "train_seconds": 2701.2769256266765,
-      "source": "/home/erikg/emender/experiments/expressivity_tasks/x42_pile_scale/receipts/velocity_baseline_anchors/c06_result.json",
-      "occ_frac": 0.8685614797286689,
-      "degeneracy_flags": {
-        "dead_store": false,
-        "pressure_runaway": true,
-        "slope_one": false
-      }
+      "arm": "pure emender c06 (fresh anchor)",
+      "status": "queued",
+      "source": "/home/erikg/emender/experiments/expressivity_tasks/x42_pile_scale/receipts/velocity_baseline_anchors/pure/result.json"
     },
     {
       "arm": "transformer",
@@ -30,5 +19,5 @@
   "protocol": "B64/T2048, seed3401, contiguous pile24 train prefix, 2700 active train seconds; 24 reset held-out T2048 windows",
   "score_asymmetry": "Baselines score=NLL only; emender adds 0.01*occ_frac and degeneracy penalties. Compare NLL column.",
   "capacity": "Baselines match c06 150003984 trainable parameters within 0.1%; c06 total 227317104 includes frozen geometry. GPT2 vocabulary 50257.",
-  "fresh_emender": "Not rerun: existing full-budget c06 receipt under identical registered regime used."
+  "fresh_emender": "Fresh c06 policy rerun on card 0, including additional length sweep."
 }

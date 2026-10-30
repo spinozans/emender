@@ -8,7 +8,7 @@ Baseline score = NLL; emender adds 0.01*occ_frac plus degeneracy penalties. Raw 
 
 | arm | status | score | raw NLL | tokens seen | tok/s |
 |---|---|---:|---:|---:|---:|
-| pure emender c06 (receipted) | completed | 5.3733475944725795 | 5.314661979675293 | 54919168 | 20330.817428968025 |
+| pure emender c06 (fresh anchor) | queued | pending | pending | pending | pending |
 | transformer | queued | pending | pending | pending | pending |
 | gdn2 | queued | pending | pending | pending | pending |
 

@@ -15,10 +15,10 @@ from unittest.mock import patch
 import numpy as np
 import torch
 from torch import nn
-from .velocity_candidate import Policy
+from .velocity_candidate import Policy,Candidate
 from .velocity_score import TRAIN_SECONDS,EVAL_CONTEXT
 from .velocity_state import atomic_json
-from .velocity_train import window,sha,verify_registration,configure_production,PRODUCTION_FLAGS
+from .velocity_train import window,sha,verify_registration,configure_production,PRODUCTION_FLAGS,evaluate
 from ..x40_emender_lm import scale_surface,part8_surface
 from ..x40_emender_lm.part6_surface import features
 from ..x40_emender_lm.scale_surface import counts
@@ -62,18 +62,18 @@ def evaluate_baseline(model,valid,windows):
             losses.append(float(model.loss(x,y)))
     return baseline_metrics(float(np.mean(losses)),windows)
 
-def train(arm,policy,registration,output,*,seconds=TRAIN_SECONDS,context=2048,batch=64,eval_windows=24):
+def train(arm,policy,registration,output,*,seconds=TRAIN_SECONDS,context=2048,batch=64,eval_windows=24,length_sweep=False):
     out=Path(output);out.mkdir(parents=True,exist_ok=False)
     torch.set_num_threads(1);torch.manual_seed(3401);torch.cuda.manual_seed_all(3401)
     if os.environ.get('GPU_LEASE_HELD') != '0':raise RuntimeError('approved leased card required')
     if os.environ.get('CUDA_VISIBLE_DEVICES')!=os.environ['GPU_LEASE_HELD']:raise RuntimeError('device binding mismatch')
     configure_production()
-    model=Baseline(arm).cuda().train()
+    model=(Candidate(policy) if arm=='pure' else Baseline(arm)).cuda().train()
     optimizer=torch.optim.AdamW((p for p in model.parameters() if p.requires_grad),lr=policy.lr,betas=(.9,.95),weight_decay=.1,fused=True)
     corpus=ROOT/'data/pile24'
     train_stream=np.memmap(corpus/'train.bin',mode='r',dtype='<u2');valid=np.memmap(corpus/'valid.bin',mode='r',dtype='<u2')
     cursor=step=0;elapsed=0.
-    atomic_json(out/'start.json',dict(policy=asdict(policy),arm=arm,parameters=counts(model),capacity_target=CAPACITY,precision='bf16 compute / fp32 master parameters; fused linear CE',physical_gpu=os.environ['GPU_LEASE_HELD'],train_seconds_requested=seconds,registration_sha256=sha(registration),context=context,batch=batch,flags={k:os.environ[k] for k in PRODUCTION_FLAGS},seed=3401))
+    atomic_json(out/'start.json',dict(policy=asdict(policy),arm=arm,parameters=counts(model),capacity_target=CAPACITY,precision=('certified FP32 store/loss' if arm=='pure' else 'bf16 compute / fp32 master parameters; fused linear CE'),physical_gpu=os.environ['GPU_LEASE_HELD'],train_seconds_requested=seconds,registration_sha256=sha(registration),context=context,batch=batch,flags={k:os.environ[k] for k in PRODUCTION_FLAGS},seed=3401))
     with (out/'training.jsonl').open('w',buffering=1) as log:
         # Clock starts at data load, after setup; whole updates may overshoot.
         while elapsed<seconds:
@@ -82,6 +82,7 @@ def train(arm,policy,registration,output,*,seconds=TRAIN_SECONDS,context=2048,ba
             optimizer.zero_grad(set_to_none=True)
             for group in optimizer.param_groups:group['lr']=policy.lr*min(1.,(step+1)/policy.warmup_steps)
             loss=model.loss(x,y)
+            loss=loss+(policy.gate_cost_lambda*model.gate_mean if arm=='pure' else 0)
             # Gate mean is detached architectural evidence; this term changes
             # the objective value without introducing management gradients.
             # Baselines have no gate objective.
@@ -92,27 +93,40 @@ def train(arm,policy,registration,output,*,seconds=TRAIN_SECONDS,context=2048,ba
             print(json.dumps(dict(step=step,tokens=cursor,train_seconds=elapsed)),flush=True)
     evaluation_start=time.monotonic()
     os.environ['X40_BATCHED_READS']='0'  # Certified evaluation uses the fused read.
-    result=evaluate_baseline(model,valid,eval_windows)
+    result=(evaluate(model,valid,eval_windows) if arm=='pure' else evaluate_baseline(model,valid,eval_windows))
     result.update(arm=arm,status='completed',tokens_consumed=cursor,train_seconds=elapsed,train_budget_seconds=seconds,
         tokens_per_second=cursor/elapsed,steps=step,eval_seconds=time.monotonic()-evaluation_start,
         batch=batch,context=context,regime_sha256=sha(ROOT/'velocity_regime.json'),policy=asdict(policy),registration_sha256=sha(registration),peak_allocated_bytes=torch.cuda.max_memory_allocated())
     if seconds!=TRAIN_SECONDS:result.update(status='engineering_only',score_eligible=False)
     else:result['score_eligible']=(batch==64 and context==2048)
-    atomic_json(out/'result.json',result);return result
+    atomic_json(out/'result.json',result)
+    if length_sweep:
+        from .velocity_length_sweep import sweep
+        try:
+            receipt=sweep(model,valid,pure=arm=='pure')
+            receipt.update(arm=arm,train_result_sha256=sha(out/'result.json'),
+                valid_sha256=sha(corpus/'valid.bin'),regime_sha256=result['regime_sha256'])
+            atomic_json(out/'length_sweep.json',receipt)
+        except Exception:
+            atomic_json(out/'length_sweep.json',dict(status='failed',arm=arm,traceback=traceback.format_exc()))
+            raise
+    return result
 
 
 def main():
     p=argparse.ArgumentParser()
-    p.add_argument('--arm',choices=('transformer','gdn2'),required=True)
-    p.add_argument('--registration',default=str(ROOT/'velocity_registration.json'))
+    p.add_argument('--arm',choices=('transformer','gdn2','pure'),required=True)
+    p.add_argument('--registration',default='experiments/expressivity_tasks/x42_pile_scale/velocity_registration.json')
     p.add_argument('--output',required=True)
+    p.add_argument('--length-sweep',action='store_true')
     a=p.parse_args()
     if os.sys.executable!='/home/erikg/emender/.venv/bin/python':raise RuntimeError('approved interpreter required')
     try:
         verify_registration(a.registration)
         # Fix optimizer to c06 LR/warmup so architecture is the varying factor.
         policy=Policy(lr=0.00025180085693680385,warmup_steps=122)
-        train(a.arm,policy,a.registration,a.output)
+        if a.arm=='pure':policy=Policy(**json.loads((ROOT/'receipts/velocity_baseline_anchors/c06_policy.json').read_text()))
+        train(a.arm,policy,a.registration,a.output,length_sweep=a.length_sweep)
     except Exception:
         atomic_json(Path(a.output).parent/(Path(a.output).name+'_failure.json'),
                     dict(status='failed',arm=a.arm,traceback=traceback.format_exc()))

@@ -15,8 +15,8 @@ cp .wg/gpu_leases/0 "$out/lease.txt"
 printf 'acquired card 0 at %s\n' "$(date -u +%FT%TZ)"
 sha256sum -c "$out/sources.sha256"
 failed=0
-for arm in transformer gdn2; do
-  if ! /home/erikg/emender/.venv/bin/python -m experiments.expressivity_tasks.x42_pile_scale.velocity_baselines --arm "$arm" --output "$out/$arm"; then
+for arm in transformer gdn2 pure; do
+  if ! /home/erikg/emender/.venv/bin/python -m experiments.expressivity_tasks.x42_pile_scale.velocity_baselines --arm "$arm" --output "$out/$arm" --length-sweep; then
     failed=1
   fi
   /home/erikg/emender/.venv/bin/python -m experiments.expressivity_tasks.x42_pile_scale.velocity_anchor_report
