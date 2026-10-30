@@ -1,0 +1,114 @@
+{
+  "status": "blocked_new_checkpoint_registration_mismatch",
+  "time_utc": "2026-10-30T19:14:53.814826+00:00",
+  "head": "6d451f2d97e1b8b74586be504a0cf938f627c545",
+  "failure": "Depth restart passed source compatibility with changed_sources=[] but checkpoint.restore rejected checkpoint registration mismatch. No checkpoint or restore guard modified. Recovery is incomplete.",
+  "tests": "targeted pytest: 10 passed, 1 failed; new source-only smoke compatibility requires fixture update in test_smoke_reuse_allows_only_orchestration_changes (missing velocity_registration.json fixture).",
+  "coordination": "contact_supervisor is absent from enabled tool catalog; cannot request decision through Intercom.",
+  "named_work_orders": [
+    "Investigate and receipt depth checkpoint binding mismatch before retry",
+    "Repair smoke reuse test fixture and add anchor skip corruption coverage",
+    "Stale registration detector: distinguish committed needs re-bind from unexplained working-tree drift"
+  ],
+  "requirements": "No resilient DiLoCo changes; requirement IDs not applicable.",
+  "actions": "Stopped recovery on new unexplained mismatch; existing valid search/anchor services left running. No .pt files staged; cards 2/3/4/7 not leased.",
+  "services": {
+    "exit_code": 0,
+    "output": "  UNIT                                 LOAD   ACTIVE SUB     DESCRIPTION\n\u25cf emender-part13-resume.service        loaded failed failed  /bin/bash -c \"export GPU_LEASE_VISIBLE=6 OMP_NUM_THREADS=1; source scripts/gpu_lease.sh; lease_exports=\\\"\\$(scripts/gpu_lease.sh acquire 1 --wait --timeout 60)\\\"; eval \\\"\\$lease_exports\\\"; /home/erikg/emender/.venv/bin/python -m experiments.expressivity_tasks.x40_emender_lm.part12_parent --output experiments/expressivity_tasks/x40_emender_lm/receipts/part12_checkpoint_managed --resume --resume-source-commit 94c969aa1b98ff263359307d573d77ccf0e01e47\"\n  emender-velocity-anchors.service     loaded active running /bin/bash /home/erikg/emender/experiments/expressivity_tasks/x42_pile_scale/run_velocity_anchors.sh\n  emender-velocity-gdn2.service        loaded active running /home/erikg/emender/.venv/bin/python -m experiments.expressivity_tasks.x42_pile_scale.velocity_baseline_parent --arm gdn2 --registration experiments/expressivity_tasks/x42_pile_scale/velocity_gdn2_registration.json --output experiments/expressivity_tasks/x42_pile_scale/runs/velocity_gdn2_v1 --generations 12\n  emender-velocity-loop.service        loaded active running /home/erikg/emender/.venv/bin/python -m experiments.expressivity_tasks.x42_pile_scale.velocity_parent --registration experiments/expressivity_tasks/x42_pile_scale/velocity_registration.json --output experiments/expressivity_tasks/x42_pile_scale/runs/velocity_production_v1 --generations 12\n  emender-velocity-transformer.service loaded active running /home/erikg/emender/.venv/bin/python -m experiments.expressivity_tasks.x42_pile_scale.velocity_baseline_parent --arm transformer --registration experiments/expressivity_tasks/x42_pile_scale/velocity_transformer_registration.json --output experiments/expressivity_tasks/x42_pile_scale/runs/velocity_transformer_v1 --generations 12\n\nLegend: LOAD   \u2192 Reflects whether the unit definition was properly loaded.\n        ACTIVE \u2192 The high-level unit activation state, i.e. generalization of SUB.\n        SUB    \u2192 The low-level unit activation state, values depend on unit type.\n\n5 loaded units listed.\nTo show all installed unit files use 'systemctl list-unit-files'.\n"
+  },
+  "gpu": {
+    "exit_code": 0,
+    "output": "index, utilization.gpu [%], memory.used [MiB]\n0, 100 %, 15758 MiB\n1, 100 %, 17256 MiB\n2, 0 %, 2 MiB\n3, 0 %, 2 MiB\n4, 0 %, 2 MiB\n5, 100 %, 15534 MiB\n6, 100 %, 19354 MiB\n7, 0 %, 2 MiB\n"
+  },
+  "depth_exec": {
+    "exit_code": 0,
+    "output": "ExecStart={ path=/bin/bash ; argv[]=/bin/bash -c export GPU_LEASE_VISIBLE=6 OMP_NUM_THREADS=1; source scripts/gpu_lease.sh; lease_exports=\"$(scripts/gpu_lease.sh acquire 1 --wait --timeout 60)\"; eval \"$lease_exports\"; /home/erikg/emender/.venv/bin/python -m experiments.expressivity_tasks.x40_emender_lm.part12_parent --output experiments/expressivity_tasks/x40_emender_lm/receipts/part12_checkpoint_managed --resume --resume-source-commit fe7b70047afebad27048a6a69c79658d229204d5 ; ignore_errors=no ; start_time=[Fri 2026-10-30 19:13:32 UTC] ; stop_time=[Fri 2026-10-30 19:14:16 UTC] ; pid=1947010 ; code=exited ; status=1 }\n"
+  },
+  "part12_mask": {
+    "exit_code": 1,
+    "output": "masked\n"
+  },
+  "depth_resume_compatibility": {
+    "source_commit": "fe7b70047afebad27048a6a69c79658d229204d5",
+    "changed_sources": [],
+    "reason": "parent environment/resume management and depth evaluation nonrecording read guard; training compute unchanged"
+  },
+  "depth_console_tail": "      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/depth.py\", line 48, in depth_profile\n    allocation_rate_per_token_head=(trace.alloc_target>=0).float().mean((0,1)).tolist(),\n                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntorch.AcceleratorError: CUDA error: device-side assert triggered\nSearch for `cudaErrorAssert' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.\nCUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.\nFor debugging consider passing CUDA_LAUNCH_BLOCKING=1\nCompile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.\n\nTraceback (most recent call last):\n  File \"<frozen runpy>\", line 198, in _run_module_as_main\n  File \"<frozen runpy>\", line 88, in _run_code\n  File \"/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/runner.py\", line 185, in <module>\n    if __name__=='__main__':main()\n                            ^^^^^^\n  File \"/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/runner.py\", line 132, in main\n    state=restore(checkpoint_dir/'lm.ckpt',model,opt,binding)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/erikg/emender/experiments/expressivity_tasks/x42_pile_scale/checkpoint.py\", line 36, in restore\n    raise ValueError('checkpoint registration mismatch')\nValueError: checkpoint registration mismatch",
+  "current_bindings": {
+    "velocity_registration.json": "5ae3b190f0dfaff670fdcd2e9f9a26e82e67e370e27bc3eea1ba94ded8932806",
+    "velocity_gdn2_registration.json": "0740ecc3f028b5bd5afc494d9fec546333f6f297d7e3b5a2e32893861c47f048",
+    "velocity_transformer_registration.json": "bcad124020e4986c8ee494ff058a7ee669c4efdc0309d56dceba3e46a90c536d"
+  },
+  "searches": {
+    "velocity_production_v1": {
+      "parent": {
+        "pid": 1948382,
+        "status": "running",
+        "generation": 2,
+        "generations": 12,
+        "registration_sha256": "5ae3b190f0dfaff670fdcd2e9f9a26e82e67e370e27bc3eea1ba94ded8932806",
+        "updated": 1793387642.735773,
+        "cards": [
+          1,
+          5,
+          6
+        ]
+      },
+      "banked": 7,
+      "best_banked": 4.84781185189883,
+      "active": {
+        "7": {
+          "pid": 1948624,
+          "output": "experiments/expressivity_tasks/x42_pile_scale/runs/velocity_production_v1/g2_c07/attempt2",
+          "start_ticks": "345363093"
+        },
+        "8": {
+          "pid": 1948626,
+          "output": "experiments/expressivity_tasks/x42_pile_scale/runs/velocity_production_v1/g2_c08/attempt2",
+          "start_ticks": "345363093"
+        },
+        "9": {
+          "pid": 1948629,
+          "output": "experiments/expressivity_tasks/x42_pile_scale/runs/velocity_production_v1/g2_c09/attempt1",
+          "start_ticks": "345363094"
+        }
+      }
+    },
+    "velocity_transformer_v1": {
+      "parent": {
+        "pid": 1948384,
+        "arm": "transformer",
+        "status": "running",
+        "generation": 1,
+        "generations": 12,
+        "registration_sha256": "bcad124020e4986c8ee494ff058a7ee669c4efdc0309d56dceba3e46a90c536d",
+        "updated": 1793387642.8539195
+      },
+      "banked": 1,
+      "best_banked": 4.27531886100769,
+      "active": {
+        "pid": 1948684,
+        "output": "experiments/expressivity_tasks/x42_pile_scale/runs/velocity_transformer_v1/g1_c01/attempt3",
+        "start_ticks": "345363105"
+      }
+    },
+    "velocity_gdn2_v1": {
+      "parent": {
+        "pid": 1948383,
+        "arm": "gdn2",
+        "status": "running",
+        "generation": 1,
+        "generations": 12,
+        "registration_sha256": "0740ecc3f028b5bd5afc494d9fec546333f6f297d7e3b5a2e32893861c47f048",
+        "updated": 1793387642.9183948
+      },
+      "banked": 1,
+      "best_banked": 3.3352518578370414,
+      "active": {
+        "pid": 1948738,
+        "output": "experiments/expressivity_tasks/x42_pile_scale/runs/velocity_gdn2_v1/g1_c01/attempt3",
+        "start_ticks": "345363112"
+      }
+    }
+  }
+}
