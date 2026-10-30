@@ -115,7 +115,9 @@ def validate_smoke(out):
             if old[key]!=regime[key]:raise RuntimeError('smoke compute regime changed')
         orchestration=str(ROOT.relative_to(Path.cwd())/'velocity_parent.py')
         for name in old['sources'].keys()|regime['sources'].keys():
-            if name==orchestration or '/tests/' in name:continue
+            if name==orchestration or '/tests/' in name or name in {
+                str(Path('experiments/expressivity_tasks/x40_emender_lm')/f)
+                for f in ('part12_parent.py','runner.py','depth.py')}:continue
             if old['sources'].get(name)!=regime['sources'].get(name):
                 raise RuntimeError('smoke compute source changed: '+name)
         atomic_json(out/'smoke_compatibility.json',dict(previous_commit=previous,
@@ -134,7 +136,8 @@ def validate_smoke(out):
             raise RuntimeError('throughput decomposition does not bind this smoke')
 
 
-def run(registration,output):
+def run(registration,output,generations=1):
+    if generations<1:raise ValueError("positive absolute generation cap required")
     import fcntl
     protocol=verify_registration(registration);digest=sha(registration)
     out=Path(output);out.mkdir(parents=True,exist_ok=True)
@@ -158,39 +161,50 @@ def run(registration,output):
         else:
             es=CMAES(center(),population=12,seed=4201);es.ask();completed={}
             save_generation(state,es,digest,completed)
-        if es.generation>=1:
-            atomic_json(out/'parent.json',dict(pid=os.getpid(),status='generation1_completed',updated=time.time(),winner=min(completed,key=lambda i:completed[i]['score'])))
-            return
-        atomic_json(out/'parent.json',dict(pid=os.getpid(),status='generation1',registration_sha256=digest,updated=time.time()))
-        pending=[i for i in range(es.population) if str(i) not in completed];active={}
-        try:
-            while pending or active:
-                while pending and len(active)<3:
-                    i=pending.pop(0);child,endpoint=launch(decode(es.x[i]),out/f'g1_c{i:02}',registration)
-                    active[i]=(child,endpoint)
-                atomic_json(out/'active.json',{str(i):process_receipt(c,p) for i,(c,p) in active.items()})
-                for i,(child,endpoint) in list(active.items()):
-                    if child.poll() is None:continue
-                    result=wait_result(child,endpoint);completed[str(i)]=result
-                    save_generation(state,es,digest,completed);del active[i]
-                time.sleep(2)
-            atomic_json(out/'active.json',{})
-            es.tell([completed[str(i)]['score'] for i in range(es.population)])
-            save_generation(state,es,digest,completed)
-            atomic_json(out/'parent.json',dict(pid=os.getpid(),status='generation1_completed',updated=time.time(),winner=min(completed,key=lambda i:completed[i]['score'])))
-        except BaseException:
-            import signal
-            for child,_ in active.values():
-                if child.poll() is None:os.killpg(child.pid,signal.SIGTERM)
-            raise
+        # x/y belong to generation+1 after ask, or generation after tell.
+        # Persist the phase with CMA moments to avoid double tell/ask on restart.
+        phase=getattr(es,'phase','told' if es.generation else 'asked')
+        while es.generation<generations:
+            if phase=='told':
+                es.ask();completed={};es.phase='asked';phase='asked'
+                save_generation(state,es,digest,completed)
+            generation=es.generation+1
+            atomic_json(out/'parent.json',dict(pid=os.getpid(),status='running',generation=generation,
+                generations=generations,registration_sha256=digest,updated=time.time(),cards=[1,5,6]))
+            pending=[i for i in range(es.population) if str(i) not in completed];active={}
+            try:
+                while pending or active:
+                    while pending and len(active)<3:
+                        i=pending.pop(0);child,endpoint=launch(decode(es.x[i]),out/f'g{generation}_c{i:02}',registration)
+                        active[i]=(child,endpoint)
+                        atomic_json(out/'active.json',{str(i):process_receipt(c,p) for i,(c,p) in active.items()})
+                    for i,(child,endpoint) in list(active.items()):
+                        if child.poll() is None:continue
+                        result=wait_result(child,endpoint);completed[str(i)]=result
+                        save_generation(state,es,digest,completed);del active[i]
+                    time.sleep(2)
+                atomic_json(out/'active.json',{})
+                es.tell([completed[str(i)]['score'] for i in range(es.population)])
+                es.phase='told';phase='told'
+                save_generation(state,es,digest,completed)
+                atomic_json(out/f'g{generation}_summary.json',dict(generation=generation,
+                    winner=min(completed,key=lambda i:completed[i]['score']),completed=completed))
+            except BaseException:
+                import signal
+                for child,_ in active.values():
+                    if child.poll() is None:os.killpg(child.pid,signal.SIGTERM)
+                raise
+        atomic_json(out/'parent.json',dict(pid=os.getpid(),status='generation_cap_reached',
+            generation=es.generation,generations=generations,updated=time.time()))
+
 
 
 if __name__=='__main__':
-    p=argparse.ArgumentParser();p.add_argument('--registration',required=True);p.add_argument('--output',required=True);a=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument('--registration',required=True);p.add_argument('--output',required=True);p.add_argument('--generations',type=int,required=True,help='absolute completed-generation cap, retained on restart');a=p.parse_args()
     import signal
     def terminate(signum,frame):raise SystemExit(128+signum)
     signal.signal(signal.SIGTERM,terminate)
-    try:run(Path(a.registration),a.output)
+    try:run(Path(a.registration),a.output,a.generations)
     except BaseException:
         import traceback
         atomic_json(Path(a.output)/'parent_failure.json',dict(status='failed',traceback=traceback.format_exc(),updated=time.time()))

@@ -24,6 +24,14 @@ def test_parent_owns_one_population_and_resumes_completed_generation(tmp_path,mo
     assert len(launched)==13
     parent.run(registration,output)
     assert len(launched)==13
+    parent.run(registration,output,generations=3)
+    saved=json.loads((output/'generation.json').read_text())
+    assert saved['cma']['generation']==3
+    assert saved['cma']['phase']=='told'
+    assert len(launched)==37
+    assert launched[1]!=launched[13]
+    parent.run(registration,output,generations=3)
+    assert len(launched)==37
 
 
 def test_killed_candidate_is_not_a_valid_endpoint(tmp_path):

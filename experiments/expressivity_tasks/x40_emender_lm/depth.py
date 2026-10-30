@@ -38,6 +38,7 @@ class Probe(nn.Module):
 
 
 @torch.no_grad()
+@patch.dict(os.environ, X40_BATCHED_READS='0')
 def evaluate(probe,pool):
     probe.eval();pred=[]
     xs,ys,lengths=pool[:3]

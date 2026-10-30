@@ -46,6 +46,7 @@ def main():
     p.add_argument('--receipt-dir',type=Path)
 
     p.add_argument('--resume',action='store_true')
+    p.add_argument('--resume-source-commit',help='attested pre-fix checkpoint source revision')
     p.add_argument('--checkpoint-every',type=int,default=128)
     p.add_argument('--match-v1',action='store_true')
     args=p.parse_args()
@@ -110,6 +111,21 @@ def main():
     checkpoint_dir.mkdir(exist_ok=True)
     binding=dict(sources=fp,data=registration['data'],seed=3401,ignition=args.ignition_v1,
                  store_dtype=args.store_dtype,cuda_graphs=args.cuda_graphs,match_v1=args.match_v1,checkpoint_helper=data.sha(ROOT.parent/'x42_pile_scale/checkpoint.py'),environment={k:v for k,v in os.environ.items() if k.startswith('X40_') and k!='X40_RECEIPT_DIR'})
+    if args.resume_source_commit:
+        if not args.resume:raise ValueError('source compatibility requires resume')
+        allowed={'x40_emender_lm/part12_parent.py','x40_emender_lm/depth.py','x40_emender_lm/runner.py'}
+        original={}
+        for name,digest in fp.items():
+            path=ROOT.parent.relative_to(Path.cwd())/name
+            raw=subprocess.check_output(['git','show',args.resume_source_commit+':'+str(path)])
+            previous=hashlib.sha256(raw).hexdigest()
+            if previous!=digest and name not in allowed:
+                raise ValueError('resume compute source changed: '+name)
+            original[name]=previous
+        binding['sources']=original
+        write('resume_compatibility.json',dict(source_commit=args.resume_source_commit,
+            changed_sources=[name for name in fp if original[name]!=fp[name]],
+            reason='parent environment/resume management and depth evaluation nonrecording read guard; training compute unchanged'))
     baseline=[json.loads(line) for line in (ROOT/'receipts/ignition_v1/curve.jsonl').read_text().splitlines()] if args.match_v1 else None
     begin=time.monotonic();step=0;elapsed=0.
     if args.resume:

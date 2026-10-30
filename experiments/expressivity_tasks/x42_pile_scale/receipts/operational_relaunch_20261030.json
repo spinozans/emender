@@ -1,0 +1,45 @@
+{
+  "status": "relaunched_validation_in_progress",
+  "architecture_scope": "No resilient DiLoCo changes; requirement IDs not applicable.",
+  "manual_notes": [
+    "Actual persisted state contradicts the task premise: v1 LM completed all 3052 steps with bitwise_loss=true; failure occurred in depth validation at update 500, with depth checkpoint 480.",
+    "All 3052 LM losses were independently compared with ignition_v1/curve.jsonl and matched exactly. Original lm.ckpt identity matches the original registration and an EMPTY X40 environment. Original ignition-v1 registration does not record environment; original revision dacd468f forward has no X40 feature-flag references.",
+    "Parent removes all inherited X40 flags. Depth recorded training retains its checkpoint-bound flags; depth no-grad evaluation locally sets X40_BATCHED_READS=0, as the search evaluator already does. The fail-closed guard is unchanged.",
+    "Resume compatibility is explicit: --resume-source-commit 94c969aa1b98ff263359307d573d77ccf0e01e47. Only runner, depth and launch-parent source differences are allowed; checkpoint identity itself remains checked.",
+    "Both services were launched with systemd user process management and KillMode=control-group. Search resumes generation 2 using generation 1 CMA state, absolute cap --generations 12.",
+    "Historical failed terminal/training receipts remain as failure evidence; use live watcher and service status for the new invocation."
+  ],
+  "services": {
+    "retrain": {
+      "unit": "emender-part12-resume.service",
+      "parent_pid": 2113651,
+      "child_pid": 2113660,
+      "card": 0,
+      "launch_X40_environment": {}
+    },
+    "search": {
+      "unit": "emender-velocity-loop.service",
+      "parent_pid": 2113845,
+      "generation": 2,
+      "generation_cap": 12,
+      "cards": [
+        1,
+        5,
+        6
+      ]
+    }
+  },
+  "validation": {
+    "targeted_tests": "9 passed in 3.80s",
+    "gpu_worker_oracle": "109 passed in 14.52s",
+    "lm_matched_loss_steps": 3052,
+    "original_lm_checkpoint_empty_environment_identity_matches": true,
+    "protected_cards": "No process launched on 2/3/4/7"
+  },
+  "residual_risks": [
+    "GPU depth SIGKILL round-trip at updates 14977/14978 and final ID/2x/4x/9x bins remain pending during the long run. CPU sampler/optimizer crash-resume test passed.",
+    "No new LM updates follow checkpoint step 3052, so this launch cannot provide a new LM matched-step crash-resume boundary; do not claim that acceptance evidence.",
+    "Search generation 2 endpoints and subsequent generations have not completed; failed/killed candidates remain ineligible and require parent restart.",
+    "contact_supervisor is not exposed in this tool environment; supervisor coordination could not be sent."
+  ]
+}
