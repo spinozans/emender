@@ -1,0 +1,15 @@
+{
+  "status": "failed",
+  "candidate": {
+    "before": "f3914eecd2c41cc7ae23b25150eb3ac4fa0b1a2c9a4df287a56bc0f2cf8f458e",
+    "after": "59e74d76ca1c8539a4ecf839339253823966d5d40c92b335a92a7d2e94b0269b",
+    "mask_only": true,
+    "store_layout": false,
+    "barriers_added": 0,
+    "production_changed": false
+  },
+  "mode": "certify",
+  "physical_gpu": "2",
+  "error": "RuntimeError('Triton Error [CUDA]: invalid argument')",
+  "traceback": "Traceback (most recent call last):\n  File \"/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/receipts/part18/probe.py\", line 46, in main\n    result['certification'] = certify(batch=a.batch, context=a.context)\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/parity.py\", line 60, in certify\n    grads=torch.autograd.grad(loss,xs)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/__init__.py\", line 503, in grad\n    result = _engine_run_backward(\n             ^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/graph.py\", line 841, in _engine_run_backward\n    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/function.py\", line 315, in apply\n    return user_fn(self, *args)\n           ^^^^^^^^^^^^^^^^^^^^\n  File \"/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/function.py\", line 608, in wrapper\n    outputs = fn(ctx, *args, **kwargs)\n              ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/erikg/emender/experiments/expressivity_tasks/x31_tape_cell_fused/backward.py\", line 246, in backward\n    rebase_owned(addresses,counts,ctx.address_owners,replay,ctx.capacity)\n  File \"/home/erikg/emender/experiments/expressivity_tasks/x31_tape_cell_fused/backward.py\", line 52, in rebase_owned\n    rebase[(len(counts),triton.cdiv(capacity,256))](\n  File \"/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/runtime/jit.py\", line 419, in <lambda>\n    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)\n                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/runtime/jit.py\", line 757, in run\n    kernel.run(grid_0, grid_1, grid_2, stream, kernel.function, kernel.packed_metadata, launch_metadata,\n  File \"/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/backends/nvidia/driver.py\", line 712, in __call__\n    self.launch(gridX, gridY, gridZ, stream, function, self.launch_cooperative_grid, self.launch_pdl,\nRuntimeError: Triton Error [CUDA]: invalid argument\n"
+}

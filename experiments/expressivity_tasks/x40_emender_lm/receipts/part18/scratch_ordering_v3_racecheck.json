@@ -1,0 +1,16 @@
+{
+  "status": "failed",
+  "candidate": {
+    "before": "f3914eecd2c41cc7ae23b25150eb3ac4fa0b1a2c9a4df287a56bc0f2cf8f458e",
+    "after": "59e74d76ca1c8539a4ecf839339253823966d5d40c92b335a92a7d2e94b0269b",
+    "mask_only": true,
+    "store_layout": false,
+    "barriers_added": 0,
+    "production_changed": false
+  },
+  "mode": "isolated",
+  "physical_gpu": "2",
+  "scratch_barriers": "diagnostic PTX only; control-flow legality unproved",
+  "error": "AssertionError()",
+  "traceback": "Traceback (most recent call last):\n  File \"/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/receipts/part18/probe.py\", line 44, in main\n    runpy.run_path(str(OUT.parent / 'part15/isolated.py'), run_name='__main__')\n  File \"<frozen runpy>\", line 286, in run_path\n  File \"<frozen runpy>\", line 98, in _run_module_code\n  File \"<frozen runpy>\", line 88, in _run_code\n  File \"/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/receipts/part15/isolated.py\", line 19, in <module>\n    with torch.no_grad():out=model.scan(*args,**kwargs);torch.cuda.synchronize()\n                             ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/model.py\", line 43, in scan\n    result=forward(k,q,v,beta,pop,append,None,cfg,append_coef)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/forward.py\", line 162, in tape_scan\n    scan_kernel[(b*h,)](*args,coef,flat(wire_logits),match_coef.repeat(b).contiguous(),error_coef.repeat(b).contiguous(),evidence,error_evidence,keys,values,strength,live,age,\n  File \"/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/receipts/part18/scratch_ordering.py\", line 38, in launch\n    assert count == 1\n           ^^^^^^^^^^\nAssertionError\n"
+}

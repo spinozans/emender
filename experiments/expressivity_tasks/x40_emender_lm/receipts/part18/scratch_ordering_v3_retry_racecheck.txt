@@ -1,0 +1,48 @@
+========= COMPUTE-SANITIZER
+{"status": "failed", "candidate": {"before": "f3914eecd2c41cc7ae23b25150eb3ac4fa0b1a2c9a4df287a56bc0f2cf8f458e", "after": "59e74d76ca1c8539a4ecf839339253823966d5d40c92b335a92a7d2e94b0269b", "mask_only": true, "store_layout": false, "barriers_added": 0, "production_changed": false}, "mode": "isolated", "physical_gpu": "2"}
+mode original shape torch.Size([8, 2286, 1, 64]) cfg TapeHeadConfig(key_dim=64, value_dim=128, n_heads=1, budget=2944, unbounded_cap=131072, match_threshold=0.5, eps_residual=1e-06, pop_threshold=0.1, write_enable_threshold=0.5, free_threshold=0.001, decay_rate=0.9865988956531019, usage_decay=0.999)
+{"kernel_hash": "22a46aabb514a48bceb10e187711929083d5a6f3ffab1b6ff22903c8ca97228e", "inserted_barriers": 330, "original_ptx_sha256": "e6ec7da79ae4a299657f2f062438d811ad453c614fbee9a118c3922c5c3c9070", "ordered_ptx_sha256": "8e8e572b5a1eee58198c295b63b442dbbcb222c5c956077517639271d4b4e694", "cubin_sha256": "d3dba3d8158b8b15572cba169f669e5f56c4c60ae9a9a443669935467f28577f", "scheduling_only_text_proof": false, "unique_writers": true, "production": false, "control_flow_legality": "unproved; diagnostic only", "arch": "sm_89"}
+/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/mutations.py:58: unknown: block: [5,0,0], thread: [64,0,0] Assertion `invalid heap inverse position` failed.
+/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/mutations.py:58: unknown: block: [5,0,0], thread: [65,0,0] Assertion `invalid heap inverse position` failed.
+/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/mutations.py:58: unknown: block: [5,0,0], thread: [66,0,0] Assertion `invalid heap inverse position` failed.
+/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/mutations.py:58: unknown: block: [5,0,0], thread: [67,0,0] Assertion `invalid heap inverse position` failed.
+/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/mutations.py:58: unknown: block: [5,0,0], thread: [68,0,0] Assertion `invalid heap inverse position` failed.
+/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/mutations.py:58: unknown: block: [5,0,0], thread: [69,0,0] Assertion `invalid heap inverse position` failed.
+/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/mutations.py:58: unknown: block: [5,0,0], thread: [70,0,0] Assertion `invalid heap inverse position` failed.
+/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/mutations.py:58: unknown: block: [5,0,0], thread: [71,0,0] Assertion `invalid heap inverse position` failed.
+/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/mutations.py:58: unknown: block: [5,0,0], thread: [72,0,0] Assertion `invalid heap inverse position` failed.
+/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/mutations.py:58: unknown: block: [5,0,0], thread: [73,0,0] Assertion `invalid heap inverse position` failed.
+/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/mutations.py:58: unknown: block: [5,0,0], thread: [74,0,0] Assertion `invalid heap inverse position` failed.
+/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/mutations.py:58: unknown: block: [5,0,0], thread: [75,0,0] Assertion `invalid heap inverse position` failed.
+/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/mutations.py:58: unknown: block: [5,0,0], thread: [76,0,0] Assertion `invalid heap inverse position` failed.
+/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/mutations.py:58: unknown: block: [5,0,0], thread: [77,0,0] Assertion `invalid heap inverse position` failed.
+/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/mutations.py:58: unknown: block: [5,0,0], thread: [78,0,0] Assertion `invalid heap inverse position` failed.
+/home/erikg/emender/experiments/expressivity_tasks/x36_tape_perf/mutations.py:58: unknown: block: [5,0,0], thread: [79,0,0] Assertion `invalid heap inverse position` failed.
+Traceback (most recent call last):
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/receipts/part18/probe.py", line 44, in main
+    runpy.run_path(str(OUT.parent / 'part15/isolated.py'), run_name='__main__')
+  File "<frozen runpy>", line 286, in run_path
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/receipts/part15/isolated.py", line 19, in <module>
+    with torch.no_grad():out=model.scan(*args,**kwargs);torch.cuda.synchronize()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/model.py", line 43, in scan
+    result=forward(k,q,v,beta,pop,append,None,cfg,append_coef)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/forward.py", line 162, in tape_scan
+    scan_kernel[(b*h,)](*args,coef,flat(wire_logits),match_coef.repeat(b).contiguous(),error_coef.repeat(b).contiguous(),evidence,error_evidence,keys,values,strength,live,age,
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/receipts/part18/scratch_ordering.py", line 86, in launch
+    return original[grid](*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/runtime/jit.py", line 419, in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/runtime/jit.py", line 757, in run
+    kernel.run(grid_0, grid_1, grid_2, stream, kernel.function, kernel.packed_metadata, launch_metadata,
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/backends/nvidia/driver.py", line 712, in __call__
+    self.launch(gridX, gridY, gridZ, stream, function, self.launch_cooperative_grid, self.launch_pdl,
+RuntimeError: Triton Error [CUDA]: device-side assert triggered
+
+========= Target application returned an error
+========= RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)
