@@ -1,0 +1,42 @@
+{
+  "status": "blocked_unexpected_source_delta",
+  "time_utc": "2026-10-30T19:01:40.277460+00:00",
+  "head": "fe7b70047afebad27048a6a69c79658d229204d5",
+  "cause_expected": [
+    "0f8483f6",
+    "fe7b7004"
+  ],
+  "unexpected_deltas": [
+    {
+      "registration": "velocity_transformer_registration.json",
+      "source": "experiments/expressivity_tasks/x42_pile_scale/velocity_baselines.py",
+      "pinned_sha256": "3273b85edfdae0c674fdab02c3d8f51272eced224d9c49014a10c98860c390a3",
+      "current_sha256": "2809dc400ddcdeb78c5365fd267b03efe150dd20294c6f4f6372c8e1c25a1a04",
+      "pre_part13_sha256": "2809dc400ddcdeb78c5365fd267b03efe150dd20294c6f4f6372c8e1c25a1a04",
+      "already_stale_before_part13": true,
+      "last_change": "a3d17771778738b4b36669fa8c8d3e8e9946783f X42: three-family LM length sweeps on the anchor arms"
+    },
+    {
+      "registration": "velocity_gdn2_registration.json",
+      "source": "experiments/expressivity_tasks/x42_pile_scale/velocity_baselines.py",
+      "pinned_sha256": "3273b85edfdae0c674fdab02c3d8f51272eced224d9c49014a10c98860c390a3",
+      "current_sha256": "2809dc400ddcdeb78c5365fd267b03efe150dd20294c6f4f6372c8e1c25a1a04",
+      "pre_part13_sha256": "2809dc400ddcdeb78c5365fd267b03efe150dd20294c6f4f6372c8e1c25a1a04",
+      "already_stale_before_part13": true,
+      "last_change": "a3d17771778738b4b36669fa8c8d3e8e9946783f X42: three-family LM length sweeps on the anchor arms"
+    }
+  ],
+  "actions": "Stopped under work-order step 1. No registrations, persisted state, service definitions, or GPU leases modified.",
+  "additional_findings": [
+    "Anchor launcher has no completed-row skip: loops transformer/gdn2/pure unconditionally. Restart would retrain completed rows.",
+    "part12-resume and part13-resume target the identical persisted output; parent.lock prevents simultaneous ownership.",
+    "Actual anchor unit is emender-velocity-anchors.service.",
+    "All GPU utilization readings were zero; no restart attempted.",
+    "contact_supervisor is unavailable in the enabled tool catalog."
+  ],
+  "residual_risks": [
+    "All six services remain failed.",
+    "Family registrations were already stale after a3d17771, independently of part-13.",
+    "Recovery needs explicit scope decision for the additional source delta and safe anchor resume logic."
+  ]
+}
