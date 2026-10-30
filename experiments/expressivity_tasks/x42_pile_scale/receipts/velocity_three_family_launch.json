@@ -1,0 +1,151 @@
+{
+  "status": "generation1_dispatched_waiting_for_broker",
+  "timestamp": 1793365562.321061,
+  "preregistration_commit": "417fdfd0",
+  "tests": {
+    "command": "/home/erikg/emender/.venv/bin/python -m pytest -q experiments/expressivity_tasks/x42_pile_scale/tests/test_velocity_baseline_search.py experiments/expressivity_tasks/x42_pile_scale/tests/test_velocity_baselines.py experiments/expressivity_tasks/x42_pile_scale/tests/test_velocity_loop_resume.py experiments/expressivity_tasks/x42_pile_scale/tests/test_velocity_state.py",
+    "passed": 16,
+    "failed": 0
+  },
+  "families": {
+    "transformer": {
+      "registration_sha256": "92d225d3d708b45f09f9f8ced18639956c7dca6bc896c910b9d95701b0a2a931",
+      "service": "MainPID=2492844\nExecStart={ path=/home/erikg/emender/.venv/bin/python ; argv[]=/home/erikg/emender/.venv/bin/python -m experiments.expressivity_tasks.x42_pile_scale.velocity_baseline_parent --arm transformer --registration experiments/expressivity_tasks/x42_pile_scale/velocity_transformer_registration.json --output experiments/expressivity_tasks/x42_pile_scale/runs/velocity_transformer_v1 --generations 12 ; ignore_errors=no ; start_time=[Fri 2026-10-30 13:00:44 UTC] ; stop_time=[n/a] ; pid=2492844 ; code=(null) ; status=0/0 }\nKillMode=control-group\nActiveState=active\nSubState=running\n",
+      "parent": {
+        "pid": 2492844,
+        "arm": "transformer",
+        "status": "running",
+        "generation": 1,
+        "generations": 12,
+        "registration_sha256": "92d225d3d708b45f09f9f8ced18639956c7dca6bc896c910b9d95701b0a2a931",
+        "updated": 1793365246.551833
+      },
+      "state_path": "experiments/expressivity_tasks/x42_pile_scale/runs/velocity_transformer_v1/generation.json",
+      "state_sha256": "f70475bae7bff6403f76dc1400d4f920ef866373fcc16b5faddb1a50da6c00f4",
+      "cma_generation": 0,
+      "phase": "asked",
+      "population": 12,
+      "completed_count": 0,
+      "first_policy": {
+        "lr": 0.0002204578728752128,
+        "warmup_steps": 444,
+        "weight_decay": 0.038524248057056454,
+        "microbatch": 16,
+        "init_scale": 1.1046523063270126,
+        "beta2": 0.9369971645052757,
+        "decay_rate_scale": 1.0,
+        "dt_bias_shift": 0.0,
+        "expansion": 2.0
+      },
+      "dispatch": {
+        "arm": "transformer",
+        "command": [
+          "bash",
+          "/home/erikg/emender/experiments/expressivity_tasks/x42_pile_scale/baseline_search/run_leased.sh",
+          "-m",
+          "experiments.expressivity_tasks.x42_pile_scale.velocity_baseline_train",
+          "--arm",
+          "transformer",
+          "--policy",
+          "experiments/expressivity_tasks/x42_pile_scale/runs/velocity_transformer_v1/g1_c00/policy.json",
+          "--registration",
+          "experiments/expressivity_tasks/x42_pile_scale/velocity_transformer_registration.json",
+          "--output",
+          "experiments/expressivity_tasks/x42_pile_scale/runs/velocity_transformer_v1/g1_c00/attempt1"
+        ],
+        "registration_sha256": "92d225d3d708b45f09f9f8ced18639956c7dca6bc896c910b9d95701b0a2a931",
+        "queued": 1793365246.5536244,
+        "status": "waiting_for_broker",
+        "eligible_cards": [
+          1,
+          5,
+          6
+        ],
+        "conditional_card": 0
+      },
+      "lease_acquired": false,
+      "training_started": false,
+      "score_completed": false,
+      "generation0": {
+        "status": "pending",
+        "source": "/home/erikg/emender/experiments/expressivity_tasks/x42_pile_scale/receipts/velocity_baseline_anchors/transformer/result.json"
+      }
+    },
+    "gdn2": {
+      "registration_sha256": "e3bc1db47d2a21378fa1f619000c1b76c584af6d8f836fc65e34f568326772fe",
+      "service": "MainPID=2492850\nExecStart={ path=/home/erikg/emender/.venv/bin/python ; argv[]=/home/erikg/emender/.venv/bin/python -m experiments.expressivity_tasks.x42_pile_scale.velocity_baseline_parent --arm gdn2 --registration experiments/expressivity_tasks/x42_pile_scale/velocity_gdn2_registration.json --output experiments/expressivity_tasks/x42_pile_scale/runs/velocity_gdn2_v1 --generations 12 ; ignore_errors=no ; start_time=[Fri 2026-10-30 13:00:44 UTC] ; stop_time=[n/a] ; pid=2492850 ; code=(null) ; status=0/0 }\nKillMode=control-group\nActiveState=active\nSubState=running\n",
+      "parent": {
+        "pid": 2492850,
+        "arm": "gdn2",
+        "status": "running",
+        "generation": 1,
+        "generations": 12,
+        "registration_sha256": "e3bc1db47d2a21378fa1f619000c1b76c584af6d8f836fc65e34f568326772fe",
+        "updated": 1793365246.6380148
+      },
+      "state_path": "experiments/expressivity_tasks/x42_pile_scale/runs/velocity_gdn2_v1/generation.json",
+      "state_sha256": "001f55c3cfd43a60af954a5fafd964eee7f185dadc018330f57bce7d6100abcd",
+      "cma_generation": 0,
+      "phase": "asked",
+      "population": 12,
+      "completed_count": 0,
+      "first_policy": {
+        "lr": 0.0003713683425820754,
+        "warmup_steps": 231,
+        "weight_decay": 0.09946876385425918,
+        "microbatch": 32,
+        "init_scale": 1.0499716954384934,
+        "beta2": 0.9522581360348149,
+        "decay_rate_scale": 1.0041008470873372,
+        "dt_bias_shift": -0.08618375727937178,
+        "expansion": 2.0
+      },
+      "dispatch": {
+        "arm": "gdn2",
+        "command": [
+          "bash",
+          "/home/erikg/emender/experiments/expressivity_tasks/x42_pile_scale/baseline_search/run_leased.sh",
+          "-m",
+          "experiments.expressivity_tasks.x42_pile_scale.velocity_baseline_train",
+          "--arm",
+          "gdn2",
+          "--policy",
+          "experiments/expressivity_tasks/x42_pile_scale/runs/velocity_gdn2_v1/g1_c00/policy.json",
+          "--registration",
+          "experiments/expressivity_tasks/x42_pile_scale/velocity_gdn2_registration.json",
+          "--output",
+          "experiments/expressivity_tasks/x42_pile_scale/runs/velocity_gdn2_v1/g1_c00/attempt1"
+        ],
+        "registration_sha256": "e3bc1db47d2a21378fa1f619000c1b76c584af6d8f836fc65e34f568326772fe",
+        "queued": 1793365246.6397812,
+        "status": "waiting_for_broker",
+        "eligible_cards": [
+          1,
+          5,
+          6
+        ],
+        "conditional_card": 0
+      },
+      "lease_acquired": false,
+      "training_started": false,
+      "score_completed": false,
+      "generation0": {
+        "status": "pending",
+        "source": "/home/erikg/emender/experiments/expressivity_tasks/x42_pile_scale/receipts/velocity_baseline_anchors/gdn2/result.json"
+      }
+    }
+  },
+  "manual_notes": "Single-threaded implementation in the attended session. No WorksGood service, dispatcher, workers, or completion machinery. Existing broker only. No M2RNN implementation. No .pt files committed. Pure parent PID 2113845 preserved; no existing training process stopped. No resilient DiLoCo changes; requirement IDs not applicable.",
+  "failures": [
+    "Initial boundary tests: 2 failed due to floating-point decode endpoints; clamped and rerun successfully.",
+    "Initial managed launches failed before dispatch on absolute inherited registration Git path; corrected caller and re-registered in commit 417fdfd0 before any scored candidate. Failures retained in run directories."
+  ],
+  "residual_risks": [
+    "Both families are dispatched, but first GPU training and full 2700-second scores remain pending; queued is not scored.",
+    "Polling preference favors pure but the shared broker does not guarantee strict priority or fairness; baselines can wait while the pool is saturated.",
+    "Card 0 stays excluded until depth and anchor services finish and both anchor endpoints exist; generation-0 references are pending.",
+    "GPU numerical stability, memory envelopes and throughput across the new search space remain unvalidated on live candidates; any failure stops only that family and remains unscored.",
+    "Managed units are transient; after reboot recreate them with the same arguments to resume persisted states."
+  ],
+  "existing_services": "MainPID=2113845\nId=emender-velocity-loop.service\nActiveState=active\n\nMainPID=2292597\nId=emender-velocity-anchors.service\nActiveState=active\n\nMainPID=2113605\nId=emender-part12-resume.service\nActiveState=active\n"
+}
