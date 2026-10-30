@@ -104,7 +104,7 @@ def verify_search(path, arm):
         raise ValueError('family/search space mismatch')
     if registration['score'] != 'held-out NLL only' or registration['train_seconds'] != 2700:
         raise ValueError('protocol mismatch')
-    verify_registration(ROOT/'velocity_registration.json')
+    verify_registration((ROOT/'velocity_registration.json').relative_to(Path.cwd()))
     for name, digest in registration['sources'].items():
         if sha(name) != digest: raise ValueError('search source changed: '+name)
     import importlib.metadata
