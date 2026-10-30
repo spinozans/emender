@@ -32,3 +32,39 @@ def test_killed_candidate_is_not_a_valid_endpoint(tmp_path):
         pid=-1
         def wait(self):return -9
     with pytest.raises(RuntimeError,match='exit=-9'):parent.wait_result(Killed(),tmp_path)
+
+
+def test_slow_smoke_requires_bound_committed_decomposition(tmp_path,monkeypatch):
+    import pytest
+    from experiments.expressivity_tasks.x42_pile_scale import velocity_train
+    monkeypatch.chdir(tmp_path);monkeypatch.setattr(parent,'ROOT',tmp_path)
+    regime=tmp_path/'velocity_regime.json';regime.write_text('{}')
+    out=tmp_path/'run';out.mkdir()
+    smoke=out/'smoke.json'
+    smoke.write_text(json.dumps(dict(batch=64,context=2048,regime_sha256=parent.sha(regime),tokens_per_second=8000)))
+    with pytest.raises(RuntimeError,match='decompose before generation'):parent.validate_smoke(out)
+    path=tmp_path/'receipts/velocity_production_3b/throughput_decision.json';path.parent.mkdir(parents=True)
+    decision=dict(status='decomposed_proceed',smoke_sha256=parent.sha(smoke),regime_sha256=parent.sha(regime),analysis=['Measured backward cost'],residual_risks=['Below target'])
+    path.write_text(json.dumps(decision))
+    monkeypatch.setattr(velocity_train,'subprocess_bytes',lambda c,p:Path(p).read_bytes())
+    parent.validate_smoke(out)
+    decision['smoke_sha256']='wrong';path.write_text(json.dumps(decision))
+    with pytest.raises(RuntimeError,match='does not bind'):parent.validate_smoke(out)
+    monkeypatch.setattr(velocity_train,'subprocess_bytes',lambda c,p:b'{}')
+    with pytest.raises(RuntimeError,match='must be committed'):parent.validate_smoke(out)
+
+
+def test_smoke_reuse_allows_only_orchestration_changes(tmp_path,monkeypatch):
+    import hashlib
+    import pytest
+    from experiments.expressivity_tasks.x42_pile_scale import velocity_train
+    monkeypatch.chdir(tmp_path);monkeypatch.setattr(parent,'ROOT',tmp_path)
+    old=dict(batch=64,context=2048,train_seconds=2700,flags={'test':'1'},allocator='expandable_segments:True',registration_sha256='registration',sources={'velocity_parent.py':'old','velocity_train.py':'train'})
+    raw=json.dumps(old).encode();new=json.loads(raw);new['compute_compatible_previous_commit']='old_commit';new['sources']['velocity_parent.py']='new'
+    regime=tmp_path/'velocity_regime.json';regime.write_text(json.dumps(new))
+    out=tmp_path/'run';out.mkdir();(out/'smoke.json').write_text(json.dumps(dict(batch=64,context=2048,regime_sha256=hashlib.sha256(raw).hexdigest(),tokens_per_second=15000)))
+    monkeypatch.setattr(velocity_train,'subprocess_bytes',lambda c,p:raw)
+    parent.validate_smoke(out)
+    assert (out/'smoke_compatibility.json').exists()
+    new['sources']['velocity_train.py']='changed';regime.write_text(json.dumps(new))
+    with pytest.raises(RuntimeError,match='compute source changed'):parent.validate_smoke(out)

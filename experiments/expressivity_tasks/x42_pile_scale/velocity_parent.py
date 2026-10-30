@@ -95,6 +95,45 @@ def cleanup_previous(out):
     atomic_json(path,{})
 
 
+def validate_smoke(out):
+    """Require exact compute identity and a committed low-throughput analysis."""
+    import hashlib
+    from .velocity_train import subprocess_bytes
+    smoke=json.loads((out/'smoke.json').read_text())
+    regime=json.loads((ROOT/'velocity_regime.json').read_text())
+    if smoke.get('batch')!=64 or smoke.get('context')!=2048:
+        raise RuntimeError('smoke regime mismatch; rerun production smoke')
+    if smoke.get('regime_sha256')!=sha(ROOT/'velocity_regime.json'):
+        # Only orchestration/test changes may reuse a completed compute receipt.
+        previous=regime.get('compute_compatible_previous_commit')
+        if not previous:raise RuntimeError('smoke regime mismatch')
+        rel=ROOT.relative_to(Path.cwd())/'velocity_regime.json'
+        raw=subprocess_bytes(previous,rel);old=json.loads(raw)
+        if hashlib.sha256(raw).hexdigest()!=smoke.get('regime_sha256'):
+            raise RuntimeError('previous smoke regime mismatch')
+        for key in ('batch','context','train_seconds','flags','allocator','registration_sha256'):
+            if old[key]!=regime[key]:raise RuntimeError('smoke compute regime changed')
+        orchestration=str(ROOT.relative_to(Path.cwd())/'velocity_parent.py')
+        for name in old['sources'].keys()|regime['sources'].keys():
+            if name==orchestration or '/tests/' in name:continue
+            if old['sources'].get(name)!=regime['sources'].get(name):
+                raise RuntimeError('smoke compute source changed: '+name)
+        atomic_json(out/'smoke_compatibility.json',dict(previous_commit=previous,
+            original_regime_sha256=smoke['regime_sha256'],current_regime_sha256=sha(ROOT/'velocity_regime.json'),
+            reason='Compute sources and flags identical; only orchestration/tests may differ'))
+    if smoke.get('tokens_per_second',0)<12000:
+        path=ROOT/'receipts/velocity_production_3b/throughput_decision.json'
+        if not path.exists():raise RuntimeError('production throughput below 15k class; decompose before generation')
+        raw=subprocess_bytes('HEAD',path.relative_to(Path.cwd()))
+        if hashlib.sha256(raw).hexdigest()!=sha(path):raise RuntimeError('throughput decomposition must be committed')
+        decision=json.loads(raw)
+        if (decision.get('status')!='decomposed_proceed' or
+            decision.get('smoke_sha256')!=sha(out/'smoke.json') or
+            decision.get('regime_sha256')!=smoke.get('regime_sha256') or
+            not decision.get('analysis') or not decision.get('residual_risks')):
+            raise RuntimeError('throughput decomposition does not bind this smoke')
+
+
 def run(registration,output):
     import fcntl
     protocol=verify_registration(registration);digest=sha(registration)
@@ -113,11 +152,7 @@ def run(registration,output):
                 raise
             atomic_json(out/'smoke.json',result)
             atomic_json(out/'active.json',{})
-        smoke=json.loads((out/'smoke.json').read_text())
-        if smoke.get('batch')!=64 or smoke.get('context')!=2048 or smoke.get('regime_sha256')!=sha(ROOT/'velocity_regime.json'):
-            raise RuntimeError('smoke regime mismatch; rerun production smoke')
-        if smoke.get('tokens_per_second',0)<12000:
-            raise RuntimeError('production throughput below 15k class; decompose before generation')
+        validate_smoke(out)
         state=out/'generation.json'
         if state.exists():es,completed=restore_generation(state,digest)
         else:

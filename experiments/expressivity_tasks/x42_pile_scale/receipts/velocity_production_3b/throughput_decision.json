@@ -1,0 +1,41 @@
+{
+  "status": "decomposed_proceed",
+  "smoke_sha256": "b4543b9a06c282cb109dca39f6a20f46636f6624fed0fcd80ae05aaad568306c",
+  "regime_sha256": "afb333ea3bbb52573c1c1be0548fc8b928d17303fa43ad335b9ef6d039479648",
+  "analysis": [
+    "The 15,822.358 tok/s historical 150M/B64 receipt is T512, bare. The matching historical T2048/B64 receipt is 7,479.019 tok/s with checkpointing (x40 receipts/part8/surface/150M_pure_B64_T{512,2048}.json). Neither is identical to this variable-head proxy.",
+    "Full-budget production smoke: 20709376 tokens / 2709.237618s = 7643.987 tok/s; the 15k-class expectation FAILED. No replacement of the measured rate or exclusion of startup steps.",
+    "Cached uninstrumented B64/T2048 engineering rerun on card5: 13288.367 tok/s across 13 steps; synchronized component probe on card5: 12208.168 tok/s. Both are engineering-only, 120s requested, two eval windows.",
+    "Component probe: loss forward 22.860s, backward (including checkpoint replay) 105.692s, AdamW 0.115s. Head-scan time 24.541s is nested in forward/backward and must not be added again.",
+    "First 13 steps of full smoke took 504.206s vs cached probe 128.228s. Cache/startup and card differences are confounded; this is evidence of early-run overhead, not proof of its sole cause.",
+    "Proceed with the explicitly requested generation after decomposition; retain lower measured throughput and all scores/degeneracy flags. Do not attest 15k throughput."
+  ],
+  "residual_risks": [
+    "Full-budget smoke is below the requested 15k class; short cached probes do not certify full-budget performance.",
+    "Exact cold-cache versus card/sequence-dependent slowdown remains unisolated.",
+    "Generation 1 will be running at handoff; no winner or completed-generation claim."
+  ],
+  "component_timings": {
+    "loss_forward": {
+      "count": 12,
+      "total_seconds": 22.85956868948415,
+      "mean_seconds": 1.9049640574570124
+    },
+    "backward": {
+      "count": 12,
+      "total_seconds": 105.69172837305814,
+      "mean_seconds": 8.807644031088179
+    },
+    "optimizer": {
+      "count": 12,
+      "total_seconds": 0.11480598524212837,
+      "mean_seconds": 0.00956716543684403
+    },
+    "head_scan_forward": {
+      "count": 1152,
+      "total_seconds": 24.54112414084375,
+      "mean_seconds": 0.021303059150037978
+    }
+  },
+  "requirement_ids": "Not applicable: no resilient DiLoCo behavior changed"
+}
