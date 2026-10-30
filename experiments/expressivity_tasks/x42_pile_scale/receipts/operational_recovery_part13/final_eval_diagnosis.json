@@ -1,0 +1,163 @@
+{
+  "status": "failed_not_closed",
+  "time_utc": "2026-10-30T19:24:58.649620+00:00",
+  "checkpoint_sha256": "a64b5bf3c5cd4970c6e6a371f065f99eff62ccc4b4c7cadbc94387c971eca47c",
+  "completed_bins": {
+    "bin_id": 1.0,
+    "bin_2x": 0.634765625,
+    "bin_4x": 0.494140625
+  },
+  "failed_bin": "bin_9x",
+  "failure": "Triton debug runtime detected int32 overflow in operation add; block [4,0,0], threads [0..3,0,0]. CUDA_LAUNCH_BLOCKING=1 localizes failing launch to x40_emender_lm/forward.py:162 scan_kernel, reached through model.py:43 nonrecording forward. Batched reads disabled by depth.evaluate. Not the former experimental batched-read failure or LM registration failure.",
+  "root_cause_limit": "Exact overflowing expression, failing example/batch, layer/head, and triggering state are not established. scan_kernel debug line resolves to triton/language/standard.py:261, not a precise project expression. No unsupported claim of a kernel fix.",
+  "actions": "Stopped after the first final-eval failure. No eval retry, kernel change, training update, checkpoint rewrite, or fabricated 9x metric. Preserved partial bins and complete trace. Pure search lease-timeout failure after priority restart was restored after eval released GPU.",
+  "tests": "18 targeted tests passed. Earlier collection command failed due to a nonexistent anchor test filename; preserved separately.",
+  "banked_pure_results_unchanged": true,
+  "protected_cards": "No leases or operations on cards 2/3/4/7",
+  "services": [
+    {
+      "command": [
+        "systemctl",
+        "--user",
+        "show",
+        "emender-velocity-loop",
+        "-p",
+        "ActiveState",
+        "-p",
+        "SubState",
+        "-p",
+        "ExecMainStatus",
+        "-p",
+        "MainPID"
+      ],
+      "returncode": 0,
+      "stdout": "MainPID=1987034\nExecMainStatus=0\nActiveState=active\nSubState=running\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "systemctl",
+        "--user",
+        "show",
+        "emender-velocity-transformer",
+        "-p",
+        "ActiveState",
+        "-p",
+        "SubState",
+        "-p",
+        "ExecMainStatus",
+        "-p",
+        "MainPID"
+      ],
+      "returncode": 0,
+      "stdout": "MainPID=1948384\nExecMainStatus=0\nActiveState=active\nSubState=running\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "systemctl",
+        "--user",
+        "show",
+        "emender-velocity-gdn2",
+        "-p",
+        "ActiveState",
+        "-p",
+        "SubState",
+        "-p",
+        "ExecMainStatus",
+        "-p",
+        "MainPID"
+      ],
+      "returncode": 0,
+      "stdout": "MainPID=1948383\nExecMainStatus=0\nActiveState=active\nSubState=running\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "systemctl",
+        "--user",
+        "show",
+        "emender-velocity-anchors",
+        "-p",
+        "ActiveState",
+        "-p",
+        "SubState",
+        "-p",
+        "ExecMainStatus",
+        "-p",
+        "MainPID"
+      ],
+      "returncode": 0,
+      "stdout": "MainPID=1947009\nExecMainStatus=0\nActiveState=active\nSubState=running\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "systemctl",
+        "--user",
+        "show",
+        "emender-part13-resume",
+        "-p",
+        "ActiveState",
+        "-p",
+        "SubState",
+        "-p",
+        "ExecMainStatus",
+        "-p",
+        "MainPID"
+      ],
+      "returncode": 0,
+      "stdout": "MainPID=0\nExecMainStatus=1\nActiveState=failed\nSubState=failed\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "nvidia-smi",
+        "--query-gpu=index,utilization.gpu,memory.used",
+        "--format=csv"
+      ],
+      "returncode": 0,
+      "stdout": "index, utilization.gpu [%], memory.used [MiB]\n0, 100 %, 15758 MiB\n1, 99 %, 19354 MiB\n2, 0 %, 2 MiB\n3, 0 %, 2 MiB\n4, 0 %, 2 MiB\n5, 100 %, 16016 MiB\n6, 100 %, 6374 MiB\n7, 0 %, 2 MiB\n",
+      "stderr": ""
+    }
+  ],
+  "artifacts": {
+    "experiments/expressivity_tasks/x42_pile_scale/receipts/operational_recovery_part13/final_eval_launch/console.txt": "2e6fb117c00e5e37901436963f5ec9004b3c51e47ef08e3dd432aab77248a50c",
+    "experiments/expressivity_tasks/x40_emender_lm/receipts/ignition_v1/depth_eval_failure.json": "abffafb421a885f0d7fa30b5e36ff1def2c423b73c0ff0b259bc04eeabbf4641",
+    "experiments/expressivity_tasks/x40_emender_lm/receipts/ignition_v1/depth_partial.json": "67fb6b7afde4aed9357fae7d14e07c2814e7135db85ef873810e1d5913522346",
+    "experiments/expressivity_tasks/x42_pile_scale/receipts/operational_recovery_part13/fine_tune_completion.json": "f11ba5deaa8e2db72838f231f5258aa8b27c35f188a48cc205879b412148be90",
+    "experiments/expressivity_tasks/x42_pile_scale/receipts/operational_recovery_part13/depth_checkpoint_rebind_amendment.json": "dbfac6cb150b7e3c304f3e6a7b2b39e5893ccef52c98cbad323732ae82f47e1f",
+    "experiments/expressivity_tasks/x42_pile_scale/receipts/operational_recovery_part13/final_tests.txt": "66d0a7fc461ca2e6af9d5f38fed6ca9910a436b1b017330a744267c65f05fc8a"
+  },
+  "requirements": "No resilient DiLoCo behavior changed or tested; gap-matrix requirement IDs not applicable.",
+  "residual_risks": [
+    "9x bin remains unavailable; v1 report card and recovery are incomplete.",
+    "part13 eval service remains failed with exit 1 as honest terminal evidence.",
+    "Three unbanked pure-search attempts were interrupted for priority eval; subsequent restart had a broker timeout and was restored. Completed candidates are unchanged.",
+    "Other pre-existing workspace changes are left untouched."
+  ],
+  "additional_static_evidence": {
+    "triton_standard_py_261": "_sum_combine(a,b) returns a+b; the observed debug location is an integer sum reduction, not necessarily address arithmetic. The exact caller remains unproven.",
+    "bin_lengths": {
+      "bin_id": [
+        4,
+        359
+      ],
+      "bin_2x": [
+        260,
+        740
+      ],
+      "bin_4x": [
+        518,
+        1462
+      ],
+      "bin_9x": [
+        2052,
+        3457
+      ]
+    },
+    "budget": 2944,
+    "evaluation_batch": 8,
+    "first_failing_batch": "not instrumented; unknown"
+  }
+}

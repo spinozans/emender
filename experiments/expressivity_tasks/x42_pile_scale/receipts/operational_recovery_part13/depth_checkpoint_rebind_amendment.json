@@ -1,0 +1,34 @@
+{
+  "checkpoint_sha256": "a64b5bf3c5cd4970c6e6a371f065f99eff62ccc4b4c7cadbc94387c971eca47c",
+  "checkpoint_update": 30000,
+  "recorded_identity": "5e4b5b4b8005e1c82993f5f276cc482ecf7005402243a4f7249d72805e1ae848",
+  "recorded_registration": {
+    "environment": {
+      "X40_STABLE_MAPPING": "1",
+      "X40_FRESH_POOL": "1",
+      "X40_FUSED_INIT": "1",
+      "X40_BATCHED_READS": "1"
+    },
+    "stage": "depth",
+    "updates": 30000,
+    "seed": 0,
+    "checkpoint_every": 32,
+    "validation_every": 500,
+    "train_hash": "a309dfcea3762e6fe99c91a4bffcd37889ea41f2138ed279eb015ec1603df7a0"
+  },
+  "rebound_identity": "413a5a77715b04ba01075eb64f9a1dcc530afaf44f6e54f3abeb89c59c706f67",
+  "rebound_registration_sha256": "6ed447afc1d347403e169bfb1c55f44040e30c9e7de2bc1dd002cd3fdcc4a316",
+  "cause_chain": [
+    "Original managed fine-tune completed 30000 updates under systemd; depth trace is periodic and ends at 29986, not an incomplete training boundary.",
+    "Original final eval failed with CUDA device assert in batched nonrecording reads; 0f8483f6614f4f2769ab8eb5871708d61a529846 adds certified nonrecording evaluation guard.",
+    "Source registrations were rebound in f6c5db73 and smoke compatibility corrected in 6d451f2d.",
+    "Restart failed in LM restore before reaching depth: sources were pinned to fe7b7004 rather than the original checkpoint source identity. No depth checkpoint mismatch is established.",
+    "Operator final recovery order explicitly authorizes binding the completed hash-bound checkpoint to the rebound registration.",
+    "Dedicated eval restores the full depth model best weights directly; avoids unnecessary LM restore and performs zero training updates."
+  ],
+  "prior_receipts": {
+    "experiments/expressivity_tasks/x42_pile_scale/receipts/operational_recovery_part13/checkpoint_boundary_mismatch.json": "3a580be62f6da08cf0ec125bc68da9e1d0aa6d4e1943509a5cb01c136bf64663",
+    "experiments/expressivity_tasks/x42_pile_scale/receipts/operational_recovery_part13/rebind_amendment.json": "a97dcbb4ef8b8102fd774e1a480340c68c8ef254cb777db6c112543052596816",
+    "experiments/expressivity_tasks/x42_pile_scale/receipts/operational_recovery_part13/recovery_incomplete.json": "4b37cb4b96a5cbe2f553c8c3d91a1809859e765e39f53d907522aa5458acd2c1"
+  }
+}
