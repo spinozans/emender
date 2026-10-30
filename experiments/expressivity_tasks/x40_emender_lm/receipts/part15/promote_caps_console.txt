@@ -1,0 +1,67 @@
+{"start": 80, "lengths": [2190, 2222, 2286, 2246, 2142, 2244, 2216, 2254], "gpu": "1"}
+SCAN 1 shape (8, 2286, 1, 64) config TapeHeadConfig(key_dim=64, value_dim=128, n_heads=1, budget=2944, unbounded_cap=131072, match_threshold=0.5, eps_residual=1e-06, pop_threshold=0.01, write_enable_threshold=0.5, free_threshold=0.001, decay_rate=0.9474635256553754, usage_decay=0.999)
+SCAN 2 shape (8, 2286, 1, 64) config TapeHeadConfig(key_dim=64, value_dim=128, n_heads=1, budget=2944, unbounded_cap=131072, match_threshold=0.5, eps_residual=1e-06, pop_threshold=0.1, write_enable_threshold=0.5, free_threshold=0.001, decay_rate=0.9865988956531019, usage_decay=0.999)
+SCAN 3 shape (8, 2286, 1, 64) config TapeHeadConfig(key_dim=64, value_dim=128, n_heads=1, budget=2944, unbounded_cap=131072, match_threshold=0.5, eps_residual=1e-06, pop_threshold=0.5, write_enable_threshold=0.5, free_threshold=0.001, decay_rate=0.9966327545472072, usage_decay=0.999)
+SCAN 4 shape (8, 2286, 1, 64) config TapeHeadConfig(key_dim=64, value_dim=128, n_heads=1, budget=2944, unbounded_cap=131072, match_threshold=0.5, eps_residual=1e-06, pop_threshold=0.9, write_enable_threshold=0.5, free_threshold=0.001, decay_rate=0.9991571235744863, usage_decay=0.999)
+SCAN 5 shape (8, 2286, 1, 64) config TapeHeadConfig(key_dim=64, value_dim=128, n_heads=1, budget=2944, unbounded_cap=131072, match_threshold=0.5, eps_residual=1e-06, pop_threshold=0.01, write_enable_threshold=0.5, free_threshold=0.001, decay_rate=0.9474635256553754, usage_decay=0.999)
+SCAN 6 shape (8, 2286, 1, 64) config TapeHeadConfig(key_dim=64, value_dim=128, n_heads=1, budget=2944, unbounded_cap=131072, match_threshold=0.5, eps_residual=1e-06, pop_threshold=0.1, write_enable_threshold=0.5, free_threshold=0.001, decay_rate=0.9865988956531019, usage_decay=0.999)
+SCAN 7 shape (8, 2286, 1, 64) config TapeHeadConfig(key_dim=64, value_dim=128, n_heads=1, budget=2944, unbounded_cap=131072, match_threshold=0.5, eps_residual=1e-06, pop_threshold=0.5, write_enable_threshold=0.5, free_threshold=0.001, decay_rate=0.9966327545472072, usage_decay=0.999)
+SCAN 8 shape (8, 2286, 1, 64) config TapeHeadConfig(key_dim=64, value_dim=128, n_heads=1, budget=2944, unbounded_cap=131072, match_threshold=0.5, eps_residual=1e-06, pop_threshold=0.9, write_enable_threshold=0.5, free_threshold=0.001, decay_rate=0.9991571235744863, usage_decay=0.999)
+SCAN 9 shape (8, 2286, 1, 64) config TapeHeadConfig(key_dim=64, value_dim=128, n_heads=1, budget=2944, unbounded_cap=131072, match_threshold=0.5, eps_residual=1e-06, pop_threshold=0.01, write_enable_threshold=0.5, free_threshold=0.001, decay_rate=0.9474635256553754, usage_decay=0.999)
+SCAN 10 shape (8, 2286, 1, 64) config TapeHeadConfig(key_dim=64, value_dim=128, n_heads=1, budget=2944, unbounded_cap=131072, match_threshold=0.5, eps_residual=1e-06, pop_threshold=0.1, write_enable_threshold=0.5, free_threshold=0.001, decay_rate=0.9865988956531019, usage_decay=0.999)
+SCAN 11 shape (8, 2286, 1, 64) config TapeHeadConfig(key_dim=64, value_dim=128, n_heads=1, budget=2944, unbounded_cap=131072, match_threshold=0.5, eps_residual=1e-06, pop_threshold=0.5, write_enable_threshold=0.5, free_threshold=0.001, decay_rate=0.9966327545472072, usage_decay=0.999)
+SCAN 12 shape (8, 2286, 1, 64) config TapeHeadConfig(key_dim=64, value_dim=128, n_heads=1, budget=2944, unbounded_cap=131072, match_threshold=0.5, eps_residual=1e-06, pop_threshold=0.9, write_enable_threshold=0.5, free_threshold=0.001, decay_rate=0.9991571235744863, usage_decay=0.999)
+SCAN 13 shape (8, 2286, 1, 64) config TapeHeadConfig(key_dim=64, value_dim=128, n_heads=1, budget=2944, unbounded_cap=131072, match_threshold=0.5, eps_residual=1e-06, pop_threshold=0.01, write_enable_threshold=0.5, free_threshold=0.001, decay_rate=0.9474635256553754, usage_decay=0.999)
+SCAN 14 shape (8, 2286, 1, 64) config TapeHeadConfig(key_dim=64, value_dim=128, n_heads=1, budget=2944, unbounded_cap=131072, match_threshold=0.5, eps_residual=1e-06, pop_threshold=0.1, write_enable_threshold=0.5, free_threshold=0.001, decay_rate=0.9865988956531019, usage_decay=0.999)
+/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/language/standard.py:261: unknown: block: [3,0,0], thread: [1,0,0] Assertion `int32 overflow detected for operation add` failed.
+/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/language/standard.py:261: unknown: block: [3,0,0], thread: [3,0,0] Assertion `int32 overflow detected for operation add` failed.
+Traceback (most recent call last):
+  File "/tmp/x40_part15_candidate.py", line 30, in <module>
+    out=probe(ids,torch.from_numpy(ln).cuda());torch.cuda.synchronize()
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/depth.py", line 37, in forward
+    features=self.lm.features(ids)
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/model.py", line 150, in features
+    for block in self.blocks: x=block(x,ids)
+                                ^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/model.py", line 120, in forward
+    x=x+self.read_out(self.cell(self.norm1(x).float(),ids).flatten(2))
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/model.py", line 98, in forward
+    (r,state,trace,pressure),e,err,sig=scan(*inputs[:6],cfg,*inputs[6:])
+                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/x40_part15_candidate.py", line 17, in logged_scan
+    return original_scan(*args,**kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/model.py", line 43, in scan
+    result=forward(k,q,v,beta,pop,append,None,cfg,append_coef)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/forward.py", line 162, in tape_scan
+    scan_kernel[(b*h,)](*args,coef,flat(wire_logits),match_coef.repeat(b).contiguous(),error_coef.repeat(b).contiguous(),evidence,error_evidence,keys,values,strength,live,age,
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/runtime/jit.py", line 419, in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/runtime/jit.py", line 757, in run
+    kernel.run(grid_0, grid_1, grid_2, stream, kernel.function, kernel.packed_metadata, launch_metadata,
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/backends/nvidia/driver.py", line 712, in __call__
+    self.launch(gridX, gridY, gridZ, stream, function, self.launch_cooperative_grid, self.launch_pdl,
+RuntimeError: Triton Error [CUDA]: device-side assert triggered

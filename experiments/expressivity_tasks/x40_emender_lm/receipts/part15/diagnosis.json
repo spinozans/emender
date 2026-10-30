@@ -1,0 +1,106 @@
+{
+  "status": "incomplete_localization_not_certified",
+  "time_utc": "2026-10-30T19:45:25.660827+00:00",
+  "base_commit": "4ff85f4f4b8a0802a16b8bfc96983fdd3ec4ba29",
+  "coordination": "contact_supervisor unavailable: no matching tool in ALL_TOOLS (searched names and descriptions before work); no supervisor decision requested through another channel.",
+  "production_sources_unchanged": {
+    "experiments/expressivity_tasks/x40_emender_lm/kernels.py": "956beee6d257b52bd43074f0fdeafdeffdf45253fb146e6885d9a0951204c85f",
+    "experiments/expressivity_tasks/x40_emender_lm/forward.py": "ff3791425de2af352f4e06a281cfa6b4a82ab4340ccb0d2906518ac2bae1edde",
+    "experiments/expressivity_tasks/x40_emender_lm/depth.py": "6305d0cd27cadc19e2a1c52466468f6a50b85d22e6f6aee2ecaf2a22e8e74915",
+    "experiments/expressivity_tasks/x40_emender_lm/final_depth_eval.py": "86aa95da42e6fd0403fbc3e11494da036ce7c1499e3e10d0f0d3f4b2f0a7b93d"
+  },
+  "checkpoint": {
+    "path": "experiments/expressivity_tasks/x40_emender_lm/receipts/part12_checkpoint_managed/training/runs/depth.ckpt",
+    "sha256": "a64b5bf3c5cd4970c6e6a371f065f99eff62ccc4b4c7cadbc94387c971eca47c"
+  },
+  "reproduction": {
+    "cuda_launch_blocking": 1,
+    "physical_gpu": "1",
+    "python": "/home/erikg/emender/.venv/bin/python",
+    "bin": "bin_9x",
+    "first_failing_batch_start": 80,
+    "previous_batches": "0 through 72 passed, stride 8",
+    "lengths": [
+      2190,
+      2222,
+      2286,
+      2246,
+      2142,
+      2244,
+      2216,
+      2254
+    ],
+    "shape": [
+      8,
+      2286,
+      1,
+      64
+    ],
+    "slots": 2944,
+    "call_1_based": 10,
+    "block_0_based": 2,
+    "head_0_based": 1,
+    "device_assert_block": 1,
+    "error": "int32 overflow detected for operation add at triton/language/standard.py:261",
+    "standalone_full_batch_repeat": "failed at scan call 10",
+    "captured_scan10_in_isolation": "passed with unchanged production kernel"
+  },
+  "arithmetic": {
+    "depth_freed_elements": 53839872,
+    "long_context_max_freed_elements": 12058624,
+    "depth_key_elements": 1507328,
+    "depth_value_elements": 3014656,
+    "int32_max": 2147483647,
+    "journal": "RecordAll=False in failing evaluation; event journal capacity/count arithmetic disabled",
+    "direct_int32_sum_bounds": {
+      "live_tile": 32,
+      "history_requests": 128,
+      "history_caps": 128
+    },
+    "helper_int32_sum_bounds": "Boolean reductions bounded by vector extent, at most 4096 for this shape",
+    "finding": "No observed shape product crosses int32 in the allocated production tensors. A product multiplying freed elements by value_dim and element bytes would describe no tensor allocated here. Numeric-overflow explanation is not established."
+  },
+  "long_context": {
+    "receipt": "receipts/ignition_v1/long_context.json",
+    "status": "completed",
+    "max_context": 8192,
+    "batch": 1,
+    "slots": [
+      64,
+      256,
+      736,
+      1472
+    ],
+    "evidence": "x34_lm_pilot/probes.py context_probe constructs a single-row input per window; X40 Cell invokes each head separately.",
+    "interpretation": "Success verified. It cannot be explained by a demonstrated 2^31 boundary because neither the failing depth allocation products nor these long-context products cross it."
+  },
+  "diagnostic_variants": {
+    "scope": "Process-local JIT source substitutions or labeled PTX only; never written to production sources.",
+    "tagged_reducers_with_extra_checks": "Full failing batch passed; not certification.",
+    "tagged_pure_combiners": "Captured scan10 passed; not certification.",
+    "promote_live_only": "Failed later at call 18.",
+    "promote_requests_only": "Full failing batch passed; not certification or proof of exact site.",
+    "promote_caps_only": "Failed at call 14.",
+    "ptx_assert_function_labels_only": "Full failing batch passed after changing only same-size assertion function-name strings and reassembling. Normalized PTX instruction text identical. This prevents using a passing instrumented run as proof of numeric overflow.",
+    "conclusion": "Allocator/code-layout or sanitizer/codegen sensitivity is a hypothesis, not an established root cause. Exact overflowing expression remains unlocalized."
+  },
+  "gates": {
+    "production_fix": "not_applied",
+    "x31_all_shape_bitwise_values_state_traces_pressure": "not_run",
+    "oracle_109": "not_run",
+    "graph_vs_eager": "not_run",
+    "curve_2m_bitmatch": "not_run",
+    "final_9x": "not_completed",
+    "budget_scaled_preregistration": "not_executed",
+    "budget_scaled_training_evaluation": "not_run"
+  },
+  "protected_resources": "Broker-exclusive card 1 only; no velocity service operations, no preemption, no operations on cards 0/2/3/4/5/6/7; no WorksGood service or workers.",
+  "residual_risks": [
+    "Work order incomplete: exact failing reduction not identified.",
+    "No production fix or new certification claim.",
+    "9x pure accuracy remains unavailable.",
+    "Budget-scaled experiment and causal budget-depth verdict remain unrun.",
+    "Instrumented single-batch passes are insufficient evidence for a fix."
+  ],
+  "requirements": "No resilient DiLoCo behavior changed or tested; normative requirement IDs not applicable."
+}

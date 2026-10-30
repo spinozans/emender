@@ -1,0 +1,72 @@
+{"start": 0, "lengths": [2264, 2076, 2052, 2100, 2170, 2162, 2156, 2210], "gpu": "1"}
+passed 0
+{"start": 8, "lengths": [2224, 2196, 2164, 2164, 2178, 2238, 2082, 2300], "gpu": "1"}
+passed 8
+{"start": 16, "lengths": [2180, 2142, 2232, 2168, 2284, 2124, 2222, 2178], "gpu": "1"}
+passed 16
+{"start": 24, "lengths": [2166, 2296, 2236, 2242, 2200, 2080, 2092, 2132], "gpu": "1"}
+passed 24
+{"start": 32, "lengths": [2150, 2202, 2082, 2222, 2302, 2166, 2178, 2074], "gpu": "1"}
+passed 32
+{"start": 40, "lengths": [2060, 2128, 2090, 2146, 2256, 2236, 2116, 2140], "gpu": "1"}
+passed 40
+{"start": 48, "lengths": [2120, 2290, 2180, 2070, 2272, 2160, 2058, 2136], "gpu": "1"}
+passed 48
+{"start": 56, "lengths": [2224, 2266, 2140, 2288, 2108, 2094, 2256, 2180], "gpu": "1"}
+passed 56
+{"start": 64, "lengths": [2136, 2084, 2176, 2090, 2236, 2158, 2200, 2214], "gpu": "1"}
+passed 64
+{"start": 72, "lengths": [2176, 2164, 2090, 2276, 2212, 2094, 2174, 2254], "gpu": "1"}
+passed 72
+{"start": 80, "lengths": [2190, 2222, 2286, 2246, 2142, 2244, 2216, 2254], "gpu": "1"}
+/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/language/standard.py:261: unknown: block: [1,0,0], thread: [0,0,0] Assertion `int32 overflow detected for operation add` failed.
+/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/language/standard.py:261: unknown: block: [1,0,0], thread: [1,0,0] Assertion `int32 overflow detected for operation add` failed.
+/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/language/standard.py:261: unknown: block: [1,0,0], thread: [2,0,0] Assertion `int32 overflow detected for operation add` failed.
+/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/language/standard.py:261: unknown: block: [1,0,0], thread: [3,0,0] Assertion `int32 overflow detected for operation add` failed.
+Traceback (most recent call last):
+  File "/tmp/x40_part15_localize.py", line 17, in <module>
+    out=probe(ids,torch.from_numpy(ln).cuda());torch.cuda.synchronize()
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/depth.py", line 37, in forward
+    features=self.lm.features(ids)
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/model.py", line 150, in features
+    for block in self.blocks: x=block(x,ids)
+                                ^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/model.py", line 120, in forward
+    x=x+self.read_out(self.cell(self.norm1(x).float(),ids).flatten(2))
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/model.py", line 98, in forward
+    (r,state,trace,pressure),e,err,sig=scan(*inputs[:6],cfg,*inputs[6:])
+                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/model.py", line 43, in scan
+    result=forward(k,q,v,beta,pop,append,None,cfg,append_coef)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/forward.py", line 162, in tape_scan
+    scan_kernel[(b*h,)](*args,coef,flat(wire_logits),match_coef.repeat(b).contiguous(),error_coef.repeat(b).contiguous(),evidence,error_evidence,keys,values,strength,live,age,
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/runtime/jit.py", line 419, in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/runtime/jit.py", line 757, in run
+    kernel.run(grid_0, grid_1, grid_2, stream, kernel.function, kernel.packed_metadata, launch_metadata,
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/backends/nvidia/driver.py", line 712, in __call__
+    self.launch(gridX, gridY, gridZ, stream, function, self.launch_cooperative_grid, self.launch_pdl,
+RuntimeError: Triton Error [CUDA]: device-side assert triggered
