@@ -5,6 +5,14 @@ An identified matched transformer receipt is required for comparative claims.
 """
 from dataclasses import replace
 import copy
+import os
+import hashlib
+import random
+import time
+from unittest.mock import patch
+from ..x42_pile_scale.resume_probe import state_hash
+from pathlib import Path
+from ..x42_pile_scale.checkpoint import save,restore
 import numpy as np
 import torch
 from torch import nn
@@ -41,7 +49,8 @@ def evaluate(probe,pool):
     return ladder.binary_report(ys,np.asarray(pred))
 
 
-def fine_tune(lm):
+@patch.dict(os.environ, X40_STABLE_MAPPING='1', X40_FRESH_POOL='1', X40_FUSED_INIT='1', X40_BATCHED_READS='1')
+def fine_tune(lm,checkpoint_dir=None,resume=False,*,updates=30000,checkpoint_every=32,validation_every=500):
     from .model import POLICIES
     from .parity import certify
     policies=tuple(replace(c,budget=2944) for c in POLICIES)
@@ -52,10 +61,24 @@ def fine_tune(lm):
     rng=np.random.default_rng(0)
     opt=torch.optim.AdamW(probe.parameters(),lr=1e-4,weight_decay=1e-4)
     best=-1.;weights=None;selected=None;rows=[];update=0
+    binding=dict(environment={k:os.environ[k] for k in ('X40_STABLE_MAPPING','X40_FRESH_POOL','X40_FUSED_INIT','X40_BATCHED_READS')},stage='depth',updates=updates,seed=0,checkpoint_every=checkpoint_every,validation_every=validation_every,train_hash=ladder.ladder_hash('train',*train[:3]))
+    permutation=None;start=0
+    checkpoint=Path(checkpoint_dir)/'depth.ckpt' if checkpoint_dir else None
+    if resume and checkpoint is not None and checkpoint.exists():
+        state=restore(checkpoint,probe,opt,binding)
+        update=state['step'];rows=state['rows'];cursor=state['cursor']
+        rng.bit_generator.state=cursor['rng'];permutation=cursor['permutation'];start=cursor['start']
+        best=cursor['best'];weights=cursor['weights'];selected=cursor['selected']
+    trace_path=Path(os.environ.get('X40_RECEIPT_DIR','.'))/'depth_trace.jsonl'
+    if trace_path.exists():
+        import json
+        retained=[line for line in trace_path.read_text().splitlines() if json.loads(line)['update']<=update]
+        trace_path.write_text(''.join(line+'\n' for line in retained))
+    started=time.monotonic();initial_update=update
     # X28E epoch permutations, B64, final-only summed BCE normalized per batch.
-    while update<30000:
-        permutation=rng.permutation(len(train[0]))
-        for start in range(0,len(permutation)-63,64):
+    while update<updates:
+        if permutation is None:permutation=rng.permutation(len(train[0]))
+        for start in range(start,len(permutation)-63,64):
             idx=permutation[start:start+64]
             ln=train[2][idx]
             ids=torch.from_numpy(train[0][idx,:int(ln.max())].copy()).cuda()
@@ -66,17 +89,29 @@ def fine_tune(lm):
             require_replays(loss);loss.backward()
             torch.nn.utils.clip_grad_norm_(probe.parameters(),1.,error_if_nonfinite=True)
             opt.step();update+=1
-            if update%500==0:
+            if update%validation_every==0:
                 report=evaluate(probe,val);metric=report['balanced_accuracy']
                 rows.append(dict(update=update,report=report))
                 if metric>=best:
                     best=metric;selected=update
                     weights={k:v.detach().cpu().clone() for k,v in probe.state_dict().items()}
                 write('depth_validation.json',dict(updates=update,validation=rows))
-            if update>=30000:break
+            # Persist sampler position and best-validation weights at update boundaries.
+            if checkpoint is not None and (update%checkpoint_every==0 or update==updates):
+                cursor=dict(rng=rng.bit_generator.state,permutation=permutation,start=start+64,
+                            best=best,weights=weights,selected=selected)
+                save(checkpoint,probe,opt,binding,update,cursor,rows,0.)
+                write('depth_checkpoint.json',dict(update=update,path=str(checkpoint),sha256=hashlib.sha256(checkpoint.read_bytes()).hexdigest(),seconds_per_update=(time.monotonic()-started)/(update-initial_update),environment=binding['environment']))
+            if update%checkpoint_every in (1,2):
+                import json
+                digest=hashlib.sha256()
+                for value in probe.state_dict().values():digest.update(value.detach().cpu().numpy().tobytes())
+                with trace_path.open('a') as trace:trace.write(json.dumps(dict(update=update,loss=float(loss.detach()),model_sha256=digest.hexdigest(),optimizer_sha256=state_hash(opt.state_dict()),torch_rng_sha256=state_hash(torch.get_rng_state()),cuda_rng_sha256=state_hash(torch.cuda.get_rng_state() if torch.cuda.is_available() else None),numpy_rng_sha256=state_hash(rng.bit_generator.state),python_rng_sha256=state_hash(random.getstate()),sampler_sha256=state_hash((permutation,start+64))))+'\n')
+            if update>=updates:break
+        permutation=None;start=0
     probe.load_state_dict(weights)
     bins={name:evaluate(probe,ladder.ladder_bin_pool(name)) for name in ladder.BIN_ORDER}
-    write('depth.json',dict(status='completed',updates=30000,selected_update=selected,
+    write('depth.json',dict(status='completed',updates=updates,selected_update=selected,
         bins=bins,supervision='final EOS binary margin BCE',budget=2944,
         train_hash=ladder.ladder_hash('train',*train[:3]),
         comparison_status='not established: no matched fine-tuned transformer receipt identified',

@@ -16,6 +16,7 @@ from ..x34_lm_pilot import data
 from ..x34_lm_pilot.cli import validate
 from .model import LM, policy_receipt, parameter_receipt, require_replays
 from .parity import certify
+from ..x42_pile_scale.checkpoint import save, restore
 
 ROOT=Path(__file__).resolve().parent
 RECEIPT_ROOT=ROOT/'receipts'
@@ -44,13 +45,17 @@ def main():
     p.add_argument('--ignition-v1',action='store_true')
     p.add_argument('--receipt-dir',type=Path)
 
+    p.add_argument('--resume',action='store_true')
+    p.add_argument('--checkpoint-every',type=int,default=128)
+    p.add_argument('--match-v1',action='store_true')
     args=p.parse_args()
+    if args.checkpoint_every<1:p.error('positive checkpoint interval required')
     global RECEIPT_ROOT
     if args.ignition_v1 and args.receipt_dir is None:
         p.error('--ignition-v1 requires a fresh --receipt-dir')
     if args.receipt_dir is not None:
         RECEIPT_ROOT=args.receipt_dir.resolve()
-        RECEIPT_ROOT.mkdir(parents=True,exist_ok=False)
+        RECEIPT_ROOT.mkdir(parents=True,exist_ok=args.resume)
     os.environ['X40_RECEIPT_DIR']=str(RECEIPT_ROOT)
     gate_cost=0. if args.ignition_v1 else .01
     held=os.environ.get('GPU_LEASE_HELD')
@@ -101,10 +106,22 @@ def main():
         x,y=(a.cuda() for a in data.batch('train',0,batch_size=64))
         graph,receipt=certify_training_graph(model,x,y,gate_cost=gate_cost)
         write('graph_parity.json',receipt)
-    begin=time.monotonic();step=0
+    checkpoint_dir=RECEIPT_ROOT/'runs'
+    checkpoint_dir.mkdir(exist_ok=True)
+    binding=dict(sources=fp,data=registration['data'],seed=3401,ignition=args.ignition_v1,
+                 store_dtype=args.store_dtype,cuda_graphs=args.cuda_graphs,match_v1=args.match_v1,checkpoint_helper=data.sha(ROOT.parent/'x42_pile_scale/checkpoint.py'),environment={k:v for k,v in os.environ.items() if k.startswith('X40_') and k!='X40_RECEIPT_DIR'})
+    baseline=[json.loads(line) for line in (ROOT/'receipts/ignition_v1/curve.jsonl').read_text().splitlines()] if args.match_v1 else None
+    begin=time.monotonic();step=0;elapsed=0.
+    if args.resume:
+        state=restore(checkpoint_dir/'lm.ckpt',model,opt,binding)
+        step=state['step'];elapsed=state['elapsed']
+        # Truncate uncheckpointed observations before replaying their updates.
+        curve=RECEIPT_ROOT/'curve.jsonl'
+        curve.write_text(''.join(curve.read_text().splitlines(keepends=True)[:step]))
+    first_step=step+1
     try:
-        with (RECEIPT_ROOT/'curve.jsonl').open('x',buffering=1) as log:
-            for step in range(1,3053):
+        with (RECEIPT_ROOT/'curve.jsonl').open('a' if args.resume else 'x',buffering=1) as log:
+            for step in range(first_step,3053):
                 opt.zero_grad(set_to_none=True)
                 x,y=(a.cuda() for a in data.batch('train',step-1,batch_size=64))
                 if graph is None:
@@ -117,11 +134,17 @@ def main():
                 norm=torch.nn.utils.clip_grad_norm_(model.parameters(),1.,error_if_nonfinite=True)
                 opt.step()
                 value=float(loss.detach())
+                if baseline is not None and value != baseline[step-1]['loss']:
+                    write('v1_divergence.json',dict(status='failed',step=step,expected=baseline[step-1]['loss'],actual=value,requirement='bitwise loss equality; depth prohibited'))
+                    raise AssertionError('v1 bitwise trajectory divergence')
                 gates=[float(b.cell.gate_mean.detach()) for b in model.blocks]
                 if args.ignition_v1 and any(g<=.5 for g in gates):
                     raise AssertionError('ignition-v1 enable invariant failed')
                 if not math.isfinite(value):raise FloatingPointError('nonfinite loss')
                 log.write(json.dumps(dict(step=step,tokens=step*32768,loss=value,ce=float(ce.detach()),gate_per_block=gates,grad_norm=float(norm),replay_nodes=24 if graph is None else None,chunk_graphs=48 if graph is not None else 0))+'\n')
+                if step%args.checkpoint_every==0 or step==3052:
+                    save(checkpoint_dir/'lm.ckpt',model,opt,binding,step,step*32768,[],elapsed+time.monotonic()-begin)
+                    write('checkpoint.json',dict(step=step,path=str(checkpoint_dir/'lm.ckpt'),sha256=data.sha(checkpoint_dir/'lm.ckpt')))
                 if graph is None:del logits
                 del loss,ce
                 if step%256==0 or step in (611,3052):
@@ -132,10 +155,12 @@ def main():
             from .graphs import disable_chunk_graphs
             disable_chunk_graphs(model)
             graph=None
-        from .evaluate import evaluate
-        evaluate(model)
+        if baseline is not None:write('v1_reproduction.json',dict(status='passed',steps=3052,bitwise_loss=True,baseline_sha256=data.sha(ROOT/'receipts/ignition_v1/curve.jsonl'),checkpoint_sha256=data.sha(checkpoint_dir/'lm.ckpt')))
+        if not args.match_v1:
+            from .evaluate import evaluate
+            evaluate(model)
         from .depth import fine_tune
-        fine_tune(model)
+        fine_tune(model,checkpoint_dir=checkpoint_dir,resume=args.resume)
         write('training.json',dict(status='completed',steps=3052,tokens=100007936,seconds=time.monotonic()-begin))
     except BaseException as exc:
         write('training.json',dict(status='failed',last_attempted_step=step,error=repr(exc),seconds=time.monotonic()-begin))
