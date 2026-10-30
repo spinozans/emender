@@ -1,0 +1,1488 @@
+{
+  "source_hashes": {
+    "racecheck.txt": "c74f08a88667dafeea3c02f847d717f365be960b4ee72ce2bfefd46eb4e83a1e",
+    "initcheck_isolated.txt": "b96bedadc6df9979b47c234db4f9c232cfc82c9a92ba085a25a91e8394dba8fa"
+  },
+  "race_groups": [
+    {
+      "id": "R01",
+      "accesses": [
+        "Write access at scan_kernel+0x1c420 in kernels.py:150",
+        "Write access at scan_kernel+0x1c090 in standard.py:189 [120 hazards]",
+        "Read access at scan_kernel+0x1c120 in standard.py:189 [120 hazards]",
+        "Read access at scan_kernel+0x1c320 in standard.py:291 [124 hazards]",
+        "Read access at scan_kernel+0x1c360 in kernels.py:149 [4672 hazards]",
+        "Read access at scan_kernel+0x1c370 in kernels.py:149 [10240 hazards]",
+        "Read access at scan_kernel+0x1c440 in kernels.py:150 [6016 hazards]",
+        "Read access at scan_kernel+0x1c450 in kernels.py:150 [8768 hazards]",
+        "Read access at scan_kernel+0x1c8c0 in standard.py:291 [128 hazards]",
+        "Read access at scan_kernel+0x1c8e0 in standard.py:291 [128 hazards]",
+        "Read access at scan_kernel+0x1c8f0 in standard.py:291 [128 hazards]",
+        "Read access at scan_kernel+0x1c900 in standard.py:291 [128 hazards]",
+        "Write access at scan_kernel+0x1ca50 in kernels.py:151 [32 hazards]",
+        "Read access at scan_kernel+0x1f6e0 in standard.py:291 [8 hazards]"
+      ],
+      "classification": "REAL (conservative; not certified benign)",
+      "rationale": "Reported unordered shared scratch accesses include writes and reads or multiple writes. Reduction operands vary across lanes and loop iterations; neither identical writer values nor thread-private ownership is established. Treat as a real repair obligation until instruction-level ordering/ownership proves otherwise.",
+      "proof_status": "Sanitizer evidence; exact scratch lifetime and causal link to assertion unresolved"
+    },
+    {
+      "id": "R02",
+      "accesses": [
+        "Write access at scan_kernel+0x1c340 in kernels.py:149",
+        "Write access at scan_kernel+0x1c090 in standard.py:189 [120 hazards]",
+        "Read access at scan_kernel+0x1c120 in standard.py:189 [64 hazards]",
+        "Write access at scan_kernel+0x1c270 in standard.py:291 [112 hazards]",
+        "Read access at scan_kernel+0x1c360 in kernels.py:149 [6080 hazards]",
+        "Read access at scan_kernel+0x1c370 in kernels.py:149 [8704 hazards]",
+        "Read access at scan_kernel+0x1c440 in kernels.py:150 [3072 hazards]",
+        "Read access at scan_kernel+0x1c450 in kernels.py:150 [1024 hazards]",
+        "Read access at scan_kernel+0x1ca70 in kernels.py:151 [1084 hazards]",
+        "Write access at scan_kernel+0x1f650 in standard.py:291 [8 hazards]"
+      ],
+      "classification": "REAL (conservative; not certified benign)",
+      "rationale": "Reported unordered shared scratch accesses include writes and reads or multiple writes. Reduction operands vary across lanes and loop iterations; neither identical writer values nor thread-private ownership is established. Treat as a real repair obligation until instruction-level ordering/ownership proves otherwise.",
+      "proof_status": "Sanitizer evidence; exact scratch lifetime and causal link to assertion unresolved"
+    },
+    {
+      "id": "R03",
+      "accesses": [
+        "Write access at scan_kernel+0x1ca50 in kernels.py:151",
+        "Write access at scan_kernel+0x1c090 in standard.py:189 [296 hazards]",
+        "Read access at scan_kernel+0x1c0b0 in standard.py:189 [180 hazards]",
+        "Write access at scan_kernel+0x1c100 in standard.py:189 [56 hazards]",
+        "Read access at scan_kernel+0x1c120 in standard.py:189 [120 hazards]",
+        "Write access at scan_kernel+0x1c270 in standard.py:291 [388 hazards]",
+        "Read access at scan_kernel+0x1c2b0 in standard.py:291 [388 hazards]",
+        "Write access at scan_kernel+0x1c300 in standard.py:291 [91 hazards]",
+        "Read access at scan_kernel+0x1c320 in standard.py:291 [252 hazards]",
+        "Read access at scan_kernel+0x1c450 in kernels.py:150 [512 hazards]",
+        "Write access at scan_kernel+0x1c730 in standard.py:291 [123 hazards]",
+        "Write access at scan_kernel+0x1c740 in standard.py:291 [87 hazards]",
+        "Read access at scan_kernel+0x1c810 in standard.py:291 [5252 hazards]",
+        "Write access at scan_kernel+0x1c870 in standard.py:291 [95 hazards]",
+        "Read access at scan_kernel+0x1c8c0 in standard.py:291 [604 hazards]",
+        "Read access at scan_kernel+0x1c8e0 in standard.py:291 [564 hazards]",
+        "Write access at scan_kernel+0x1ca50 in kernels.py:151 [78 hazards]",
+        "Read access at scan_kernel+0x1ca70 in kernels.py:151 [4448 hazards]",
+        "Write access at scan_kernel+0x1f650 in standard.py:291 [44 hazards]",
+        "Read access at scan_kernel+0x1f670 in standard.py:291 [24 hazards]",
+        "Write access at scan_kernel+0x1f6c0 in standard.py:291 [4 hazards]",
+        "Read access at scan_kernel+0x1f6e0 in standard.py:291 [8 hazards]",
+        "Write access at scan_kernel+0x22850 in standard.py:291 [8 hazards]",
+        "Write access at scan_kernel+0x22a30 in standard.py:291 [4 hazards]"
+      ],
+      "classification": "REAL (conservative; not certified benign)",
+      "rationale": "Reported unordered shared scratch accesses include writes and reads or multiple writes. Reduction operands vary across lanes and loop iterations; neither identical writer values nor thread-private ownership is established. Treat as a real repair obligation until instruction-level ordering/ownership proves otherwise.",
+      "proof_status": "Sanitizer evidence; exact scratch lifetime and causal link to assertion unresolved"
+    },
+    {
+      "id": "R04",
+      "accesses": [
+        "Write access at scan_kernel+0x1b680 in kernels.py:120",
+        "Write access at scan_kernel+0x19d60 in standard.py:189 [24 hazards]",
+        "Read access at scan_kernel+0x19d80 in standard.py:189 [32 hazards]",
+        "Read access at scan_kernel+0x19e40 in standard.py:189 [8 hazards]",
+        "Read access at scan_kernel+0x1ad80 in kernels.py:99 [32 hazards]",
+        "Write access at scan_kernel+0x1aef0 in kernels.py:119 [32 hazards]",
+        "Read access at scan_kernel+0x1af10 in kernels.py:119 [64 hazards]",
+        "Read access at scan_kernel+0x1af20 in kernels.py:119 [64 hazards]",
+        "Write access at scan_kernel+0x1b300 in standard.py:291 [126 hazards]",
+        "Write access at scan_kernel+0x1b310 in standard.py:291 [127 hazards]",
+        "Write access at scan_kernel+0x1b320 in standard.py:291 [125 hazards]",
+        "Write access at scan_kernel+0x1b330 in standard.py:291 [123 hazards]",
+        "Read access at scan_kernel+0x1b350 in standard.py:291 [4592 hazards]",
+        "Write access at scan_kernel+0x1b460 in standard.py:291 [899 hazards]",
+        "Read access at scan_kernel+0x1b5a0 in standard.py:291 [376 hazards]",
+        "Read access at scan_kernel+0x1b5d0 in standard.py:291 [288 hazards]",
+        "Read access at scan_kernel+0x1b600 in standard.py:291 [288 hazards]",
+        "Read access at scan_kernel+0x1b620 in standard.py:291 [288 hazards]",
+        "Write access at scan_kernel+0x1b680 in kernels.py:120 [93 hazards]",
+        "Read access at scan_kernel+0x1b6f0 in kernels.py:120 [1408 hazards]",
+        "Write access at scan_kernel+0x1b740 in standard.py:248 [80 hazards]",
+        "Read access at scan_kernel+0x1b760 in standard.py:248 [32 hazards]",
+        "Read access at scan_kernel+0x1b7e0 in standard.py:248 [12 hazards]",
+        "Write access at scan_kernel+0x1b830 in standard.py:291 [8 hazards]",
+        "Write access at scan_kernel+0x1bdb0 in standard.py:189 [16 hazards]",
+        "Read access at scan_kernel+0x1be40 in standard.py:189 [4 hazards]"
+      ],
+      "classification": "REAL (conservative; not certified benign)",
+      "rationale": "Reported unordered shared scratch accesses include writes and reads or multiple writes. Reduction operands vary across lanes and loop iterations; neither identical writer values nor thread-private ownership is established. Treat as a real repair obligation until instruction-level ordering/ownership proves otherwise.",
+      "proof_status": "Sanitizer evidence; exact scratch lifetime and causal link to assertion unresolved"
+    },
+    {
+      "id": "R05",
+      "accesses": [
+        "Write access at scan_kernel+0x1c870 in standard.py:291",
+        "Read access at scan_kernel+0x1c320 in standard.py:291 [4 hazards]",
+        "Read access at scan_kernel+0x1c8c0 in standard.py:291 [40 hazards]",
+        "Read access at scan_kernel+0x1c8e0 in standard.py:291 [1104 hazards]",
+        "Read access at scan_kernel+0x1c8f0 in standard.py:291 [1104 hazards]",
+        "Read access at scan_kernel+0x1c900 in standard.py:291 [1104 hazards]"
+      ],
+      "classification": "REAL (conservative; not certified benign)",
+      "rationale": "Reported unordered shared scratch accesses include writes and reads or multiple writes. Reduction operands vary across lanes and loop iterations; neither identical writer values nor thread-private ownership is established. Treat as a real repair obligation until instruction-level ordering/ownership proves otherwise.",
+      "proof_status": "Sanitizer evidence; exact scratch lifetime and causal link to assertion unresolved"
+    },
+    {
+      "id": "R06",
+      "accesses": [
+        "Read access at scan_kernel+0x1c450 in kernels.py:150",
+        "Write access at scan_kernel+0x1c270 in standard.py:291 [112 hazards]",
+        "Write access at scan_kernel+0x1c730 in standard.py:291 [784 hazards]",
+        "Write access at scan_kernel+0x1c740 in standard.py:291 [784 hazards]",
+        "Write access at scan_kernel+0x1c7a0 in standard.py:291 [784 hazards]",
+        "Write access at scan_kernel+0x1c7b0 in standard.py:291 [784 hazards]"
+      ],
+      "classification": "REAL (conservative; not certified benign)",
+      "rationale": "Reported unordered shared scratch accesses include writes and reads or multiple writes. Reduction operands vary across lanes and loop iterations; neither identical writer values nor thread-private ownership is established. Treat as a real repair obligation until instruction-level ordering/ownership proves otherwise.",
+      "proof_status": "Sanitizer evidence; exact scratch lifetime and causal link to assertion unresolved"
+    },
+    {
+      "id": "R07",
+      "accesses": [
+        "Write access at scan_kernel+0x1b310 in standard.py:291",
+        "Write access at scan_kernel+0x1a860 in kernels.py:99 [24 hazards]",
+        "Read access at scan_kernel+0x1ad80 in kernels.py:99 [8 hazards]",
+        "Write access at scan_kernel+0x1aef0 in kernels.py:119 [120 hazards]",
+        "Read access at scan_kernel+0x1af10 in kernels.py:119 [16 hazards]",
+        "Read access at scan_kernel+0x1af20 in kernels.py:119 [16 hazards]",
+        "Read access at scan_kernel+0x1b350 in standard.py:291 [216 hazards]",
+        "Read access at scan_kernel+0x1b360 in standard.py:291 [200 hazards]",
+        "Read access at scan_kernel+0x1b370 in standard.py:291 [216 hazards]",
+        "Read access at scan_kernel+0x1b380 in standard.py:291 [216 hazards]",
+        "Write access at scan_kernel+0x1b460 in standard.py:291 [68 hazards]",
+        "Write access at scan_kernel+0x1b4b0 in standard.py:291 [8 hazards]",
+        "Read access at scan_kernel+0x1b5d0 in standard.py:291 [1408 hazards]",
+        "Read access at scan_kernel+0x1b6f0 in kernels.py:120 [32 hazards]"
+      ],
+      "classification": "REAL (conservative; not certified benign)",
+      "rationale": "Reported unordered shared scratch accesses include writes and reads or multiple writes. Reduction operands vary across lanes and loop iterations; neither identical writer values nor thread-private ownership is established. Treat as a real repair obligation until instruction-level ordering/ownership proves otherwise.",
+      "proof_status": "Sanitizer evidence; exact scratch lifetime and causal link to assertion unresolved"
+    },
+    {
+      "id": "R08",
+      "accesses": [
+        "Write access at scan_kernel+0x1b320 in standard.py:291",
+        "Write access at scan_kernel+0x1a860 in kernels.py:99 [24 hazards]",
+        "Read access at scan_kernel+0x1ad80 in kernels.py:99 [8 hazards]",
+        "Write access at scan_kernel+0x1aef0 in kernels.py:119 [44 hazards]",
+        "Read access at scan_kernel+0x1af10 in kernels.py:119 [32 hazards]",
+        "Read access at scan_kernel+0x1af20 in kernels.py:119 [32 hazards]",
+        "Read access at scan_kernel+0x1b350 in standard.py:291 [216 hazards]",
+        "Read access at scan_kernel+0x1b360 in standard.py:291 [88 hazards]",
+        "Read access at scan_kernel+0x1b370 in standard.py:291 [200 hazards]",
+        "Read access at scan_kernel+0x1b380 in standard.py:291 [216 hazards]",
+        "Write access at scan_kernel+0x1b460 in standard.py:291 [70 hazards]",
+        "Write access at scan_kernel+0x1b490 in standard.py:291 [6 hazards]",
+        "Write access at scan_kernel+0x1b4b0 in standard.py:291 [69 hazards]",
+        "Read access at scan_kernel+0x1b600 in standard.py:291 [1408 hazards]",
+        "Read access at scan_kernel+0x1b6f0 in kernels.py:120 [32 hazards]"
+      ],
+      "classification": "REAL (conservative; not certified benign)",
+      "rationale": "Reported unordered shared scratch accesses include writes and reads or multiple writes. Reduction operands vary across lanes and loop iterations; neither identical writer values nor thread-private ownership is established. Treat as a real repair obligation until instruction-level ordering/ownership proves otherwise.",
+      "proof_status": "Sanitizer evidence; exact scratch lifetime and causal link to assertion unresolved"
+    },
+    {
+      "id": "R09",
+      "accesses": [
+        "Write access at scan_kernel+0x1b330 in standard.py:291",
+        "Write access at scan_kernel+0x1a860 in kernels.py:99 [24 hazards]",
+        "Read access at scan_kernel+0x1ad80 in kernels.py:99 [8 hazards]",
+        "Write access at scan_kernel+0x1aef0 in kernels.py:119 [44 hazards]",
+        "Read access at scan_kernel+0x1af10 in kernels.py:119 [20 hazards]",
+        "Read access at scan_kernel+0x1af20 in kernels.py:119 [24 hazards]",
+        "Read access at scan_kernel+0x1b350 in standard.py:291 [216 hazards]",
+        "Read access at scan_kernel+0x1b360 in standard.py:291 [84 hazards]",
+        "Read access at scan_kernel+0x1b370 in standard.py:291 [88 hazards]",
+        "Read access at scan_kernel+0x1b380 in standard.py:291 [200 hazards]",
+        "Write access at scan_kernel+0x1b460 in standard.py:291 [69 hazards]",
+        "Write access at scan_kernel+0x1b490 in standard.py:291 [69 hazards]",
+        "Write access at scan_kernel+0x1b4b0 in standard.py:291 [71 hazards]",
+        "Write access at scan_kernel+0x1b4d0 in standard.py:291 [7 hazards]",
+        "Read access at scan_kernel+0x1b620 in standard.py:291 [1408 hazards]",
+        "Read access at scan_kernel+0x1b6f0 in kernels.py:120 [36 hazards]"
+      ],
+      "classification": "REAL (conservative; not certified benign)",
+      "rationale": "Reported unordered shared scratch accesses include writes and reads or multiple writes. Reduction operands vary across lanes and loop iterations; neither identical writer values nor thread-private ownership is established. Treat as a real repair obligation until instruction-level ordering/ownership proves otherwise.",
+      "proof_status": "Sanitizer evidence; exact scratch lifetime and causal link to assertion unresolved"
+    },
+    {
+      "id": "R10",
+      "accesses": [
+        "Write access at scan_kernel+0x1c090 in standard.py:189",
+        "Read access at scan_kernel+0x1bdd0 in standard.py:189 [8 hazards]",
+        "Read access at scan_kernel+0x1c120 in standard.py:189 [592 hazards]",
+        "Read access at scan_kernel+0x1c2b0 in standard.py:291 [60 hazards]",
+        "Read access at scan_kernel+0x1c320 in standard.py:291 [128 hazards]",
+        "Read access at scan_kernel+0x1c370 in kernels.py:149 [120 hazards]",
+        "Read access at scan_kernel+0x1c810 in standard.py:291 [120 hazards]",
+        "Read access at scan_kernel+0x1c8c0 in standard.py:291 [60 hazards]",
+        "Read access at scan_kernel+0x1ca70 in kernels.py:151 [1216 hazards]"
+      ],
+      "classification": "REAL (conservative; not certified benign)",
+      "rationale": "Reported unordered shared scratch accesses include writes and reads or multiple writes. Reduction operands vary across lanes and loop iterations; neither identical writer values nor thread-private ownership is established. Treat as a real repair obligation until instruction-level ordering/ownership proves otherwise.",
+      "proof_status": "Sanitizer evidence; exact scratch lifetime and causal link to assertion unresolved"
+    },
+    {
+      "id": "R11",
+      "accesses": [
+        "Write access at scan_kernel+0x1b300 in standard.py:291",
+        "Write access at scan_kernel+0x1a860 in kernels.py:99 [23 hazards]",
+        "Read access at scan_kernel+0x1ad80 in kernels.py:99 [8 hazards]",
+        "Write access at scan_kernel+0x1aef0 in kernels.py:119 [119 hazards]",
+        "Read access at scan_kernel+0x1af10 in kernels.py:119 [36 hazards]",
+        "Read access at scan_kernel+0x1af20 in kernels.py:119 [36 hazards]",
+        "Read access at scan_kernel+0x1b350 in standard.py:291 [216 hazards]",
+        "Read access at scan_kernel+0x1b360 in standard.py:291 [216 hazards]",
+        "Read access at scan_kernel+0x1b370 in standard.py:291 [216 hazards]",
+        "Read access at scan_kernel+0x1b380 in standard.py:291 [216 hazards]",
+        "Write access at scan_kernel+0x1b460 in standard.py:291 [6 hazards]",
+        "Read access at scan_kernel+0x1b5a0 in standard.py:291 [1152 hazards]",
+        "Read access at scan_kernel+0x1b6f0 in kernels.py:120 [40 hazards]",
+        "Read access at scan_kernel+0x1b8d0 in standard.py:291 [8 hazards]"
+      ],
+      "classification": "REAL (conservative; not certified benign)",
+      "rationale": "Reported unordered shared scratch accesses include writes and reads or multiple writes. Reduction operands vary across lanes and loop iterations; neither identical writer values nor thread-private ownership is established. Treat as a real repair obligation until instruction-level ordering/ownership proves otherwise.",
+      "proof_status": "Sanitizer evidence; exact scratch lifetime and causal link to assertion unresolved"
+    },
+    {
+      "id": "R12",
+      "accesses": [
+        "Write access at scan_kernel+0x1c730 in standard.py:291",
+        "Read access at scan_kernel+0x1c0b0 in standard.py:189 [64 hazards]",
+        "Read access at scan_kernel+0x1c120 in standard.py:189 [124 hazards]",
+        "Read access at scan_kernel+0x1c370 in kernels.py:149 [64 hazards]",
+        "Read access at scan_kernel+0x1c8c0 in standard.py:291 [1344 hazards]",
+        "Read access at scan_kernel+0x1ca70 in kernels.py:151 [376 hazards]"
+      ],
+      "classification": "REAL (conservative; not certified benign)",
+      "rationale": "Reported unordered shared scratch accesses include writes and reads or multiple writes. Reduction operands vary across lanes and loop iterations; neither identical writer values nor thread-private ownership is established. Treat as a real repair obligation until instruction-level ordering/ownership proves otherwise.",
+      "proof_status": "Sanitizer evidence; exact scratch lifetime and causal link to assertion unresolved"
+    },
+    {
+      "id": "R13",
+      "accesses": [
+        "Write access at scan_kernel+0x1c270 in standard.py:291",
+        "Read access at scan_kernel+0x1bdd0 in standard.py:189 [8 hazards]",
+        "Read access at scan_kernel+0x1bed0 in standard.py:248 [8 hazards]",
+        "Read access at scan_kernel+0x1c0b0 in standard.py:189 [664 hazards]",
+        "Read access at scan_kernel+0x1c320 in standard.py:291 [656 hazards]",
+        "Read access at scan_kernel+0x1c370 in kernels.py:149 [60 hazards]",
+        "Read access at scan_kernel+0x1c810 in standard.py:291 [116 hazards]",
+        "Read access at scan_kernel+0x1c8c0 in standard.py:291 [128 hazards]",
+        "Read access at scan_kernel+0x1ca70 in kernels.py:151 [120 hazards]"
+      ],
+      "classification": "REAL (conservative; not certified benign)",
+      "rationale": "Reported unordered shared scratch accesses include writes and reads or multiple writes. Reduction operands vary across lanes and loop iterations; neither identical writer values nor thread-private ownership is established. Treat as a real repair obligation until instruction-level ordering/ownership proves otherwise.",
+      "proof_status": "Sanitizer evidence; exact scratch lifetime and causal link to assertion unresolved"
+    },
+    {
+      "id": "R14",
+      "accesses": [
+        "Write access at scan_kernel+0x1c740 in standard.py:291",
+        "Read access at scan_kernel+0x1c370 in kernels.py:149 [64 hazards]",
+        "Read access at scan_kernel+0x1c8e0 in standard.py:291 [1344 hazards]",
+        "Read access at scan_kernel+0x1ca70 in kernels.py:151 [316 hazards]"
+      ],
+      "classification": "REAL (conservative; not certified benign)",
+      "rationale": "Reported unordered shared scratch accesses include writes and reads or multiple writes. Reduction operands vary across lanes and loop iterations; neither identical writer values nor thread-private ownership is established. Treat as a real repair obligation until instruction-level ordering/ownership proves otherwise.",
+      "proof_status": "Sanitizer evidence; exact scratch lifetime and causal link to assertion unresolved"
+    },
+    {
+      "id": "R15",
+      "accesses": [
+        "Write access at scan_kernel+0x1c7a0 in standard.py:291",
+        "Read access at scan_kernel+0x1c370 in kernels.py:149 [64 hazards]",
+        "Read access at scan_kernel+0x1c8f0 in standard.py:291 [1328 hazards]"
+      ],
+      "classification": "REAL (conservative; not certified benign)",
+      "rationale": "Reported unordered shared scratch accesses include writes and reads or multiple writes. Reduction operands vary across lanes and loop iterations; neither identical writer values nor thread-private ownership is established. Treat as a real repair obligation until instruction-level ordering/ownership proves otherwise.",
+      "proof_status": "Sanitizer evidence; exact scratch lifetime and causal link to assertion unresolved"
+    },
+    {
+      "id": "R16",
+      "accesses": [
+        "Write access at scan_kernel+0x1c7b0 in standard.py:291",
+        "Read access at scan_kernel+0x1c370 in kernels.py:149 [64 hazards]",
+        "Read access at scan_kernel+0x1c900 in standard.py:291 [1328 hazards]"
+      ],
+      "classification": "REAL (conservative; not certified benign)",
+      "rationale": "Reported unordered shared scratch accesses include writes and reads or multiple writes. Reduction operands vary across lanes and loop iterations; neither identical writer values nor thread-private ownership is established. Treat as a real repair obligation until instruction-level ordering/ownership proves otherwise.",
+      "proof_status": "Sanitizer evidence; exact scratch lifetime and causal link to assertion unresolved"
+    },
+    {
+      "id": "R17",
+      "accesses": [
+        "Write access at scan_kernel+0x1a860 in kernels.py:99",
+        "Write access at scan_kernel+0x19d60 in standard.py:189 [16 hazards]",
+        "Read access at scan_kernel+0x19d80 in standard.py:189 [176 hazards]",
+        "Write access at scan_kernel+0x19dd0 in standard.py:189 [36 hazards]",
+        "Read access at scan_kernel+0x19e40 in standard.py:189 [72 hazards]",
+        "Read access at scan_kernel+0x1ad80 in kernels.py:99 [480 hazards]",
+        "Write access at scan_kernel+0x1aef0 in kernels.py:119 [109 hazards]",
+        "Read access at scan_kernel+0x1af10 in kernels.py:119 [92 hazards]",
+        "Read access at scan_kernel+0x1af20 in kernels.py:119 [76 hazards]",
+        "Read access at scan_kernel+0x1b5a0 in standard.py:291 [4 hazards]",
+        "Read access at scan_kernel+0x1b5d0 in standard.py:291 [8 hazards]",
+        "Read access at scan_kernel+0x1b620 in standard.py:291 [8 hazards]",
+        "Write access at scan_kernel+0x1b740 in standard.py:248 [8 hazards]",
+        "Write access at scan_kernel+0x1b830 in standard.py:291 [4 hazards]",
+        "Write access at scan_kernel+0x22850 in standard.py:291 [8 hazards]",
+        "Read access at scan_kernel+0x22870 in standard.py:291 [32 hazards]",
+        "Read access at scan_kernel+0x229e0 in standard.py:291 [8 hazards]",
+        "Write access at scan_kernel+0x22a30 in standard.py:291 [8 hazards]",
+        "Read access at scan_kernel+0x22c30 in standard.py:291 [8 hazards]"
+      ],
+      "classification": "REAL (conservative; not certified benign)",
+      "rationale": "Reported unordered shared scratch accesses include writes and reads or multiple writes. Reduction operands vary across lanes and loop iterations; neither identical writer values nor thread-private ownership is established. Treat as a real repair obligation until instruction-level ordering/ownership proves otherwise.",
+      "proof_status": "Sanitizer evidence; exact scratch lifetime and causal link to assertion unresolved"
+    },
+    {
+      "id": "R18",
+      "accesses": [
+        "Write access at scan_kernel+0x1b460 in standard.py:291",
+        "Read access at scan_kernel+0x1af10 in kernels.py:119 [4 hazards]",
+        "Read access at scan_kernel+0x1af20 in kernels.py:119 [12 hazards]",
+        "Read access at scan_kernel+0x1b5a0 in standard.py:291 [216 hazards]",
+        "Read access at scan_kernel+0x1b5d0 in standard.py:291 [216 hazards]",
+        "Read access at scan_kernel+0x1b600 in standard.py:291 [216 hazards]",
+        "Read access at scan_kernel+0x1b620 in standard.py:291 [216 hazards]"
+      ],
+      "classification": "REAL (conservative; not certified benign)",
+      "rationale": "Reported unordered shared scratch accesses include writes and reads or multiple writes. Reduction operands vary across lanes and loop iterations; neither identical writer values nor thread-private ownership is established. Treat as a real repair obligation until instruction-level ordering/ownership proves otherwise.",
+      "proof_status": "Sanitizer evidence; exact scratch lifetime and causal link to assertion unresolved"
+    },
+    {
+      "id": "R19",
+      "accesses": [
+        "Read access at scan_kernel+0x1b620 in standard.py:291",
+        "Write access at scan_kernel+0x1aef0 in kernels.py:119 [12 hazards]",
+        "Write access at scan_kernel+0x1b490 in standard.py:291 [216 hazards]",
+        "Write access at scan_kernel+0x1b4b0 in standard.py:291 [216 hazards]",
+        "Write access at scan_kernel+0x1b4d0 in standard.py:291 [208 hazards]"
+      ],
+      "classification": "REAL (conservative; not certified benign)",
+      "rationale": "Reported unordered shared scratch accesses include writes and reads or multiple writes. Reduction operands vary across lanes and loop iterations; neither identical writer values nor thread-private ownership is established. Treat as a real repair obligation until instruction-level ordering/ownership proves otherwise.",
+      "proof_status": "Sanitizer evidence; exact scratch lifetime and causal link to assertion unresolved"
+    },
+    {
+      "id": "R20",
+      "accesses": [
+        "Read access at scan_kernel+0x1b600 in standard.py:291",
+        "Write access at scan_kernel+0x1aef0 in kernels.py:119 [12 hazards]",
+        "Write access at scan_kernel+0x1b490 in standard.py:291 [208 hazards]",
+        "Write access at scan_kernel+0x1b4b0 in standard.py:291 [216 hazards]"
+      ],
+      "classification": "REAL (conservative; not certified benign)",
+      "rationale": "Reported unordered shared scratch accesses include writes and reads or multiple writes. Reduction operands vary across lanes and loop iterations; neither identical writer values nor thread-private ownership is established. Treat as a real repair obligation until instruction-level ordering/ownership proves otherwise.",
+      "proof_status": "Sanitizer evidence; exact scratch lifetime and causal link to assertion unresolved"
+    },
+    {
+      "id": "R21",
+      "accesses": [
+        "Write access at scan_kernel+0x1aef0 in kernels.py:119",
+        "Read access at scan_kernel+0x19e40 in standard.py:189 [4 hazards]",
+        "Read access at scan_kernel+0x1af10 in kernels.py:119 [144 hazards]",
+        "Read access at scan_kernel+0x1af20 in kernels.py:119 [96 hazards]",
+        "Read access at scan_kernel+0x1b350 in standard.py:291 [64 hazards]",
+        "Read access at scan_kernel+0x1b5a0 in standard.py:291 [4 hazards]",
+        "Read access at scan_kernel+0x1b5d0 in standard.py:291 [4 hazards]",
+        "Read access at scan_kernel+0x1b7e0 in standard.py:248 [8 hazards]"
+      ],
+      "classification": "REAL (conservative; not certified benign)",
+      "rationale": "Reported unordered shared scratch accesses include writes and reads or multiple writes. Reduction operands vary across lanes and loop iterations; neither identical writer values nor thread-private ownership is established. Treat as a real repair obligation until instruction-level ordering/ownership proves otherwise.",
+      "proof_status": "Sanitizer evidence; exact scratch lifetime and causal link to assertion unresolved"
+    },
+    {
+      "id": "R22",
+      "accesses": [
+        "Read access at scan_kernel+0x1ca70 in kernels.py:151",
+        "Write access at scan_kernel+0x1c100 in standard.py:189 [112 hazards]",
+        "Write access at scan_kernel+0x1c300 in standard.py:291 [124 hazards]",
+        "Write access at scan_kernel+0x1f650 in standard.py:291 [12 hazards]",
+        "Write access at scan_kernel+0x1f6c0 in standard.py:291 [4 hazards]",
+        "Write access at scan_kernel+0x22850 in standard.py:291 [8 hazards]"
+      ],
+      "classification": "REAL (conservative; not certified benign)",
+      "rationale": "Reported unordered shared scratch accesses include writes and reads or multiple writes. Reduction operands vary across lanes and loop iterations; neither identical writer values nor thread-private ownership is established. Treat as a real repair obligation until instruction-level ordering/ownership proves otherwise.",
+      "proof_status": "Sanitizer evidence; exact scratch lifetime and causal link to assertion unresolved"
+    },
+    {
+      "id": "R23",
+      "accesses": [
+        "Write access at scan_kernel+0x1b4b0 in standard.py:291",
+        "Read access at scan_kernel+0x1b5d0 in standard.py:291 [216 hazards]"
+      ],
+      "classification": "REAL (conservative; not certified benign)",
+      "rationale": "Reported unordered shared scratch accesses include writes and reads or multiple writes. Reduction operands vary across lanes and loop iterations; neither identical writer values nor thread-private ownership is established. Treat as a real repair obligation until instruction-level ordering/ownership proves otherwise.",
+      "proof_status": "Sanitizer evidence; exact scratch lifetime and causal link to assertion unresolved"
+    },
+    {
+      "id": "R24",
+      "accesses": [
+        "Write access at scan_kernel+0x1b740 in standard.py:248",
+        "Read access at scan_kernel+0x1ad80 in kernels.py:99 [8 hazards]",
+        "Read access at scan_kernel+0x1b350 in standard.py:291 [4 hazards]",
+        "Read access at scan_kernel+0x1b5a0 in standard.py:291 [8 hazards]",
+        "Read access at scan_kernel+0x1b6f0 in kernels.py:120 [36 hazards]",
+        "Read access at scan_kernel+0x1b7e0 in standard.py:248 [44 hazards]",
+        "Read access at scan_kernel+0x1b850 in standard.py:291 [4 hazards]",
+        "Read access at scan_kernel+0x1b8d0 in standard.py:291 [8 hazards]",
+        "Read access at scan_kernel+0x1be40 in standard.py:189 [8 hazards]"
+      ],
+      "classification": "REAL (conservative; not certified benign)",
+      "rationale": "Reported unordered shared scratch accesses include writes and reads or multiple writes. Reduction operands vary across lanes and loop iterations; neither identical writer values nor thread-private ownership is established. Treat as a real repair obligation until instruction-level ordering/ownership proves otherwise.",
+      "proof_status": "Sanitizer evidence; exact scratch lifetime and causal link to assertion unresolved"
+    },
+    {
+      "id": "R25",
+      "accesses": [
+        "Write access at scan_kernel+0x1beb0 in standard.py:248",
+        "Read access at scan_kernel+0x1b760 in standard.py:248 [8 hazards]",
+        "Read access at scan_kernel+0x1bdd0 in standard.py:189 [44 hazards]",
+        "Read access at scan_kernel+0x1bf50 in standard.py:248 [44 hazards]",
+        "Read access at scan_kernel+0x1c0b0 in standard.py:189 [4 hazards]",
+        "Read access at scan_kernel+0x1c120 in standard.py:189 [8 hazards]",
+        "Read access at scan_kernel+0x1c320 in standard.py:291 [8 hazards]"
+      ],
+      "classification": "REAL (conservative; not certified benign)",
+      "rationale": "Reported unordered shared scratch accesses include writes and reads or multiple writes. Reduction operands vary across lanes and loop iterations; neither identical writer values nor thread-private ownership is established. Treat as a real repair obligation until instruction-level ordering/ownership proves otherwise.",
+      "proof_status": "Sanitizer evidence; exact scratch lifetime and causal link to assertion unresolved"
+    },
+    {
+      "id": "R26",
+      "accesses": [
+        "Write access at scan_kernel+0x1b830 in standard.py:291",
+        "Read access at scan_kernel+0x1af10 in kernels.py:119 [8 hazards]",
+        "Read access at scan_kernel+0x1b6f0 in kernels.py:120 [4 hazards]",
+        "Read access at scan_kernel+0x1b760 in standard.py:248 [44 hazards]",
+        "Read access at scan_kernel+0x1b8d0 in standard.py:291 [44 hazards]",
+        "Read access at scan_kernel+0x1bf50 in standard.py:248 [8 hazards]"
+      ],
+      "classification": "REAL (conservative; not certified benign)",
+      "rationale": "Reported unordered shared scratch accesses include writes and reads or multiple writes. Reduction operands vary across lanes and loop iterations; neither identical writer values nor thread-private ownership is established. Treat as a real repair obligation until instruction-level ordering/ownership proves otherwise.",
+      "proof_status": "Sanitizer evidence; exact scratch lifetime and causal link to assertion unresolved"
+    },
+    {
+      "id": "R27",
+      "accesses": [
+        "Write access at scan_kernel+0x22850 in standard.py:291",
+        "Read access at scan_kernel+0x19e40 in standard.py:189 [8 hazards]",
+        "Read access at scan_kernel+0x1f670 in standard.py:291 [36 hazards]",
+        "Read access at scan_kernel+0x229e0 in standard.py:291 [44 hazards]",
+        "Read access at scan_kernel+0x22a70 in standard.py:291 [4 hazards]"
+      ],
+      "classification": "REAL (conservative; not certified benign)",
+      "rationale": "Reported unordered shared scratch accesses include writes and reads or multiple writes. Reduction operands vary across lanes and loop iterations; neither identical writer values nor thread-private ownership is established. Treat as a real repair obligation until instruction-level ordering/ownership proves otherwise.",
+      "proof_status": "Sanitizer evidence; exact scratch lifetime and causal link to assertion unresolved"
+    },
+    {
+      "id": "R28",
+      "accesses": [
+        "Write access at scan_kernel+0x1bdb0 in standard.py:189",
+        "Read access at scan_kernel+0x1b6f0 in kernels.py:120 [8 hazards]",
+        "Read access at scan_kernel+0x1b850 in standard.py:291 [4 hazards]",
+        "Read access at scan_kernel+0x1b8d0 in standard.py:291 [8 hazards]",
+        "Read access at scan_kernel+0x1be40 in standard.py:189 [44 hazards]",
+        "Read access at scan_kernel+0x1bed0 in standard.py:248 [4 hazards]",
+        "Read access at scan_kernel+0x1bf50 in standard.py:248 [8 hazards]",
+        "Read access at scan_kernel+0x1c120 in standard.py:189 [8 hazards]"
+      ],
+      "classification": "REAL (conservative; not certified benign)",
+      "rationale": "Reported unordered shared scratch accesses include writes and reads or multiple writes. Reduction operands vary across lanes and loop iterations; neither identical writer values nor thread-private ownership is established. Treat as a real repair obligation until instruction-level ordering/ownership proves otherwise.",
+      "proof_status": "Sanitizer evidence; exact scratch lifetime and causal link to assertion unresolved"
+    },
+    {
+      "id": "R29",
+      "accesses": [
+        "Write access at scan_kernel+0x1f650 in standard.py:291",
+        "Read access at scan_kernel+0x1c370 in kernels.py:149 [12 hazards]",
+        "Read access at scan_kernel+0x1c810 in standard.py:291 [4 hazards]",
+        "Read access at scan_kernel+0x1c8c0 in standard.py:291 [8 hazards]",
+        "Read access at scan_kernel+0x1f6e0 in standard.py:291 [36 hazards]",
+        "Read access at scan_kernel+0x22870 in standard.py:291 [4 hazards]",
+        "Read access at scan_kernel+0x229e0 in standard.py:291 [16 hazards]"
+      ],
+      "classification": "REAL (conservative; not certified benign)",
+      "rationale": "Reported unordered shared scratch accesses include writes and reads or multiple writes. Reduction operands vary across lanes and loop iterations; neither identical writer values nor thread-private ownership is established. Treat as a real repair obligation until instruction-level ordering/ownership proves otherwise.",
+      "proof_status": "Sanitizer evidence; exact scratch lifetime and causal link to assertion unresolved"
+    },
+    {
+      "id": "R30",
+      "accesses": [
+        "Write access at scan_kernel+0x19d60 in standard.py:189",
+        "Read access at scan_kernel+0x19e40 in standard.py:189 [44 hazards]",
+        "Read access at scan_kernel+0x1ad80 in kernels.py:99 [4 hazards]",
+        "Read access at scan_kernel+0x1b5a0 in standard.py:291 [8 hazards]",
+        "Read access at scan_kernel+0x1f670 in standard.py:291 [8 hazards]",
+        "Read access at scan_kernel+0x22a70 in standard.py:291 [4 hazards]"
+      ],
+      "classification": "REAL (conservative; not certified benign)",
+      "rationale": "Reported unordered shared scratch accesses include writes and reads or multiple writes. Reduction operands vary across lanes and loop iterations; neither identical writer values nor thread-private ownership is established. Treat as a real repair obligation until instruction-level ordering/ownership proves otherwise.",
+      "proof_status": "Sanitizer evidence; exact scratch lifetime and causal link to assertion unresolved"
+    },
+    {
+      "id": "R31",
+      "accesses": [
+        "Write access at scan_kernel+0x22a30 in standard.py:291",
+        "Read access at scan_kernel+0x1f670 in standard.py:291 [16 hazards]",
+        "Read access at scan_kernel+0x22870 in standard.py:291 [44 hazards]"
+      ],
+      "classification": "REAL (conservative; not certified benign)",
+      "rationale": "Reported unordered shared scratch accesses include writes and reads or multiple writes. Reduction operands vary across lanes and loop iterations; neither identical writer values nor thread-private ownership is established. Treat as a real repair obligation until instruction-level ordering/ownership proves otherwise.",
+      "proof_status": "Sanitizer evidence; exact scratch lifetime and causal link to assertion unresolved"
+    },
+    {
+      "id": "R32",
+      "accesses": [
+        "Write access at scan_kernel+0x22990 in standard.py:291",
+        "Read access at scan_kernel+0x229e0 in standard.py:291 [28 hazards]"
+      ],
+      "classification": "REAL (conservative; not certified benign)",
+      "rationale": "Reported unordered shared scratch accesses include writes and reads or multiple writes. Reduction operands vary across lanes and loop iterations; neither identical writer values nor thread-private ownership is established. Treat as a real repair obligation until instruction-level ordering/ownership proves otherwise.",
+      "proof_status": "Sanitizer evidence; exact scratch lifetime and causal link to assertion unresolved"
+    },
+    {
+      "id": "R33",
+      "accesses": [
+        "Read access at scan_kernel+0x1c120 in standard.py:189",
+        "Write access at scan_kernel+0x1c100 in standard.py:189 [20 hazards]",
+        "Write access at scan_kernel+0x1c300 in standard.py:291 [4 hazards]"
+      ],
+      "classification": "REAL (conservative; not certified benign)",
+      "rationale": "Reported unordered shared scratch accesses include writes and reads or multiple writes. Reduction operands vary across lanes and loop iterations; neither identical writer values nor thread-private ownership is established. Treat as a real repair obligation until instruction-level ordering/ownership proves otherwise.",
+      "proof_status": "Sanitizer evidence; exact scratch lifetime and causal link to assertion unresolved"
+    },
+    {
+      "id": "R34",
+      "accesses": [
+        "Write access at scan_kernel+0x19dd0 in standard.py:189",
+        "Read access at scan_kernel+0x19e40 in standard.py:189 [8 hazards]",
+        "Read access at scan_kernel+0x1b5a0 in standard.py:291 [8 hazards]"
+      ],
+      "classification": "REAL (conservative; not certified benign)",
+      "rationale": "Reported unordered shared scratch accesses include writes and reads or multiple writes. Reduction operands vary across lanes and loop iterations; neither identical writer values nor thread-private ownership is established. Treat as a real repair obligation until instruction-level ordering/ownership proves otherwise.",
+      "proof_status": "Sanitizer evidence; exact scratch lifetime and causal link to assertion unresolved"
+    },
+    {
+      "id": "R35",
+      "accesses": [
+        "Write access at scan_kernel+0x1c300 in standard.py:291",
+        "Read access at scan_kernel+0x1c320 in standard.py:291 [12 hazards]",
+        "Read access at scan_kernel+0x1c8c0 in standard.py:291 [4 hazards]"
+      ],
+      "classification": "REAL (conservative; not certified benign)",
+      "rationale": "Reported unordered shared scratch accesses include writes and reads or multiple writes. Reduction operands vary across lanes and loop iterations; neither identical writer values nor thread-private ownership is established. Treat as a real repair obligation until instruction-level ordering/ownership proves otherwise.",
+      "proof_status": "Sanitizer evidence; exact scratch lifetime and causal link to assertion unresolved"
+    }
+  ],
+  "init_sites": [
+    {
+      "id": "U001",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (96,0,0) in block (0,0,0)",
+      "address": "0x7d1e6f300000",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U002",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (0,0,0) in block (0,0,0)",
+      "address": "0x7d1e6f300000",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U003",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (32,0,0) in block (0,0,0)",
+      "address": "0x7d1e6f300000",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U004",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (64,0,0) in block (0,0,0)",
+      "address": "0x7d1e6f300000",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U005",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (32,0,0) in block (1,0,0)",
+      "address": "0x7d1e6f302e00",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U006",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (64,0,0) in block (1,0,0)",
+      "address": "0x7d1e6f302e00",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U007",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (96,0,0) in block (1,0,0)",
+      "address": "0x7d1e6f302e00",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U008",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (0,0,0) in block (1,0,0)",
+      "address": "0x7d1e6f302e00",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U009",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (64,0,0) in block (2,0,0)",
+      "address": "0x7d1e6f305c00",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U010",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (96,0,0) in block (2,0,0)",
+      "address": "0x7d1e6f305c00",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U011",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (0,0,0) in block (2,0,0)",
+      "address": "0x7d1e6f305c00",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U012",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (32,0,0) in block (2,0,0)",
+      "address": "0x7d1e6f305c00",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U013",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (32,0,0) in block (3,0,0)",
+      "address": "0x7d1e6f308a00",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U014",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (64,0,0) in block (3,0,0)",
+      "address": "0x7d1e6f308a00",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U015",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (96,0,0) in block (3,0,0)",
+      "address": "0x7d1e6f308a00",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U016",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (0,0,0) in block (3,0,0)",
+      "address": "0x7d1e6f308a00",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U017",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (64,0,0) in block (4,0,0)",
+      "address": "0x7d1e6f30b800",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U018",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (96,0,0) in block (4,0,0)",
+      "address": "0x7d1e6f30b800",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U019",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (0,0,0) in block (4,0,0)",
+      "address": "0x7d1e6f30b800",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U020",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (32,0,0) in block (4,0,0)",
+      "address": "0x7d1e6f30b800",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U021",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (32,0,0) in block (5,0,0)",
+      "address": "0x7d1e6f30e600",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U022",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (64,0,0) in block (5,0,0)",
+      "address": "0x7d1e6f30e600",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U023",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (96,0,0) in block (5,0,0)",
+      "address": "0x7d1e6f30e600",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U024",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (0,0,0) in block (5,0,0)",
+      "address": "0x7d1e6f30e600",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U025",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (32,0,0) in block (6,0,0)",
+      "address": "0x7d1e6f311400",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U026",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (64,0,0) in block (6,0,0)",
+      "address": "0x7d1e6f311400",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U027",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (96,0,0) in block (6,0,0)",
+      "address": "0x7d1e6f311400",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U028",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (0,0,0) in block (6,0,0)",
+      "address": "0x7d1e6f311400",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U029",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (96,0,0) in block (7,0,0)",
+      "address": "0x7d1e6f314200",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U030",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (0,0,0) in block (7,0,0)",
+      "address": "0x7d1e6f314200",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U031",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (32,0,0) in block (7,0,0)",
+      "address": "0x7d1e6f314200",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U032",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (64,0,0) in block (7,0,0)",
+      "address": "0x7d1e6f314200",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U033",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (97,0,0) in block (0,0,0)",
+      "address": "0x7d1e6f300004",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U034",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (1,0,0) in block (0,0,0)",
+      "address": "0x7d1e6f300004",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U035",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (33,0,0) in block (0,0,0)",
+      "address": "0x7d1e6f300004",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U036",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (65,0,0) in block (0,0,0)",
+      "address": "0x7d1e6f300004",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U037",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (33,0,0) in block (1,0,0)",
+      "address": "0x7d1e6f302e04",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U038",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (65,0,0) in block (1,0,0)",
+      "address": "0x7d1e6f302e04",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U039",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (97,0,0) in block (1,0,0)",
+      "address": "0x7d1e6f302e04",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U040",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (1,0,0) in block (1,0,0)",
+      "address": "0x7d1e6f302e04",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U041",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (65,0,0) in block (2,0,0)",
+      "address": "0x7d1e6f305c04",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U042",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (97,0,0) in block (2,0,0)",
+      "address": "0x7d1e6f305c04",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U043",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (1,0,0) in block (2,0,0)",
+      "address": "0x7d1e6f305c04",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U044",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (33,0,0) in block (2,0,0)",
+      "address": "0x7d1e6f305c04",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U045",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (33,0,0) in block (3,0,0)",
+      "address": "0x7d1e6f308a04",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U046",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (65,0,0) in block (3,0,0)",
+      "address": "0x7d1e6f308a04",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U047",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (97,0,0) in block (3,0,0)",
+      "address": "0x7d1e6f308a04",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U048",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (1,0,0) in block (3,0,0)",
+      "address": "0x7d1e6f308a04",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U049",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (65,0,0) in block (4,0,0)",
+      "address": "0x7d1e6f30b804",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U050",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (97,0,0) in block (4,0,0)",
+      "address": "0x7d1e6f30b804",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U051",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (1,0,0) in block (4,0,0)",
+      "address": "0x7d1e6f30b804",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U052",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (33,0,0) in block (4,0,0)",
+      "address": "0x7d1e6f30b804",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U053",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (33,0,0) in block (5,0,0)",
+      "address": "0x7d1e6f30e604",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U054",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (65,0,0) in block (5,0,0)",
+      "address": "0x7d1e6f30e604",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U055",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (97,0,0) in block (5,0,0)",
+      "address": "0x7d1e6f30e604",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U056",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (1,0,0) in block (5,0,0)",
+      "address": "0x7d1e6f30e604",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U057",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (33,0,0) in block (6,0,0)",
+      "address": "0x7d1e6f311404",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U058",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (65,0,0) in block (6,0,0)",
+      "address": "0x7d1e6f311404",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U059",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (97,0,0) in block (6,0,0)",
+      "address": "0x7d1e6f311404",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U060",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (1,0,0) in block (6,0,0)",
+      "address": "0x7d1e6f311404",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U061",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (97,0,0) in block (7,0,0)",
+      "address": "0x7d1e6f314204",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U062",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (1,0,0) in block (7,0,0)",
+      "address": "0x7d1e6f314204",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U063",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (33,0,0) in block (7,0,0)",
+      "address": "0x7d1e6f314204",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U064",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (65,0,0) in block (7,0,0)",
+      "address": "0x7d1e6f314204",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U065",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (98,0,0) in block (0,0,0)",
+      "address": "0x7d1e6f300008",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U066",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (2,0,0) in block (0,0,0)",
+      "address": "0x7d1e6f300008",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U067",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (34,0,0) in block (0,0,0)",
+      "address": "0x7d1e6f300008",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U068",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (66,0,0) in block (0,0,0)",
+      "address": "0x7d1e6f300008",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U069",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (34,0,0) in block (1,0,0)",
+      "address": "0x7d1e6f302e08",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U070",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (66,0,0) in block (1,0,0)",
+      "address": "0x7d1e6f302e08",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U071",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (98,0,0) in block (1,0,0)",
+      "address": "0x7d1e6f302e08",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U072",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (2,0,0) in block (1,0,0)",
+      "address": "0x7d1e6f302e08",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U073",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (66,0,0) in block (2,0,0)",
+      "address": "0x7d1e6f305c08",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U074",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (98,0,0) in block (2,0,0)",
+      "address": "0x7d1e6f305c08",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U075",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (2,0,0) in block (2,0,0)",
+      "address": "0x7d1e6f305c08",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U076",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (34,0,0) in block (2,0,0)",
+      "address": "0x7d1e6f305c08",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U077",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (34,0,0) in block (3,0,0)",
+      "address": "0x7d1e6f308a08",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U078",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (66,0,0) in block (3,0,0)",
+      "address": "0x7d1e6f308a08",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U079",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (98,0,0) in block (3,0,0)",
+      "address": "0x7d1e6f308a08",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U080",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (2,0,0) in block (3,0,0)",
+      "address": "0x7d1e6f308a08",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U081",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (66,0,0) in block (4,0,0)",
+      "address": "0x7d1e6f30b808",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U082",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (98,0,0) in block (4,0,0)",
+      "address": "0x7d1e6f30b808",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U083",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (2,0,0) in block (4,0,0)",
+      "address": "0x7d1e6f30b808",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U084",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (34,0,0) in block (4,0,0)",
+      "address": "0x7d1e6f30b808",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U085",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (34,0,0) in block (5,0,0)",
+      "address": "0x7d1e6f30e608",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U086",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (66,0,0) in block (5,0,0)",
+      "address": "0x7d1e6f30e608",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U087",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (98,0,0) in block (5,0,0)",
+      "address": "0x7d1e6f30e608",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U088",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (2,0,0) in block (5,0,0)",
+      "address": "0x7d1e6f30e608",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U089",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (34,0,0) in block (6,0,0)",
+      "address": "0x7d1e6f311408",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U090",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (66,0,0) in block (6,0,0)",
+      "address": "0x7d1e6f311408",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U091",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (98,0,0) in block (6,0,0)",
+      "address": "0x7d1e6f311408",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U092",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (2,0,0) in block (6,0,0)",
+      "address": "0x7d1e6f311408",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U093",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (98,0,0) in block (7,0,0)",
+      "address": "0x7d1e6f314208",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U094",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (2,0,0) in block (7,0,0)",
+      "address": "0x7d1e6f314208",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U095",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (34,0,0) in block (7,0,0)",
+      "address": "0x7d1e6f314208",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U096",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (66,0,0) in block (7,0,0)",
+      "address": "0x7d1e6f314208",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U097",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (99,0,0) in block (0,0,0)",
+      "address": "0x7d1e6f30000c",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U098",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (3,0,0) in block (0,0,0)",
+      "address": "0x7d1e6f30000c",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U099",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (35,0,0) in block (0,0,0)",
+      "address": "0x7d1e6f30000c",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    },
+    {
+      "id": "U100",
+      "bytes": 4,
+      "instruction": "scan_kernel+0x1baf0 in kernels.py:102",
+      "thread_block": "thread (67,0,0) in block (0,0,0)",
+      "address": "0x7d1e6f30000c",
+      "classification": "REAL uninitialized read; arithmetic influence unproven",
+      "rationale": "empty_like cache has no initialization for newly allocated live slots. tl.where selects after the load, so it cannot prevent the read."
+    }
+  ],
+  "init_coverage": {
+    "total_reported_errors": 8224,
+    "printed_sites": 100,
+    "suppressed": 8124,
+    "limitation": "Suppressed accesses cannot be individually classified from the retained log. Unlimited-print rerun required; no complete 8224-site inventory claimed."
+  }
+}
