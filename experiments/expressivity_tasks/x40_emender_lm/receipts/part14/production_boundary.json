@@ -1,0 +1,176 @@
+{
+  "status": "stopped_production_kernel_certification_boundary",
+  "time_utc": "2026-10-30T19:32:48.202451+00:00",
+  "work_order": "X40 part 14",
+  "stop_rule": "If the overflow is in the PRODUCTION scan kernel rather than the eval harness, STOP and receipt.",
+  "evidence": {
+    "experiments/expressivity_tasks/x40_emender_lm/final_depth_eval.py": "86aa95da42e6fd0403fbc3e11494da036ce7c1499e3e10d0f0d3f4b2f0a7b93d",
+    "experiments/expressivity_tasks/x40_emender_lm/depth.py": "6305d0cd27cadc19e2a1c52466468f6a50b85d22e6f6aee2ecaf2a22e8e74915",
+    "experiments/expressivity_tasks/x40_emender_lm/forward.py": "ff3791425de2af352f4e06a281cfa6b4a82ab4340ccb0d2906518ac2bae1edde",
+    "experiments/expressivity_tasks/x40_emender_lm/kernels.py": "956beee6d257b52bd43074f0fdeafdeffdf45253fb146e6885d9a0951204c85f",
+    "experiments/expressivity_tasks/x40_emender_lm/receipts/ignition_v1/depth_partial.json": "67fb6b7afde4aed9357fae7d14e07c2814e7135db85ef873810e1d5913522346",
+    "experiments/expressivity_tasks/x40_emender_lm/receipts/ignition_v1/depth_control.json": "218bcaf1ca0f9dfaa62c242bdafa8c34d867a6ee19a73f257aafcde8005430b2",
+    "experiments/expressivity_tasks/x40_emender_lm/receipts/ignition_v1/depth_eval_failure.json": "abffafb421a885f0d7fa30b5e36ff1def2c423b73c0ff0b259bc04eeabbf4641",
+    "experiments/expressivity_tasks/x42_pile_scale/receipts/operational_recovery_part13/final_eval_diagnosis.json": "48618b635bc9dc338f9eab9c1b49c7721b532b84673e78749032a9f4dceb123d"
+  },
+  "finding": "Existing CUDA_LAUNCH_BLOCKING diagnosis localizes the failing launch to forward.py:162 scan_kernel. Exact overflowing expression is not established. final_depth_eval.py has no Triton reduction to promote. No production kernel edits are authorized by this work order.",
+  "pure_bins": {
+    "ID": 1.0,
+    "2x": 0.634765625,
+    "4x": 0.494140625,
+    "9x": {
+      "status": "failed",
+      "accuracy": null
+    }
+  },
+  "control_bins": {
+    "ID": 1.0,
+    "2x": 1.0,
+    "4x": 0.70703125,
+    "9x": 0.5
+  },
+  "verdict": {
+    "observed": "Control generalizes better than pure arm in the measured regime; pure 4x is at chance and 9x is unavailable.",
+    "mechanism_interpretation": "Parent adjudication: growing transformer KV cache versus capped v1 store is consistent with a budget boundary near 2x; this is a hypothesis about the mechanism, not a demonstrated causal transfer.",
+    "budget_caution": "depth.Probe overrides all per-head budgets to 2944. Scaled variants must explicitly change this override and fine_tune parity policies, not only LM construction config.",
+    "transfer": "Unsettled. Requires preregistered budget-scaled experiment; no unconditional property-transfer claim."
+  },
+  "budget_probe": {
+    "status": "not_run_stop_rule",
+    "prediction_candidate": "If transfer holds, increasing per-head budget 1x -> 4x -> 16x moves the depth-generalization wall outward, with 4x holding 4x depth and 16x holding 9x depth.",
+    "preregistration_status": "Not an executed preregistration. Training protocol, pass threshold, parameter counts, dataset/source/checkpoint hashes and budget allocation must be fixed and hash-bound before first evaluation after certification clearance."
+  },
+  "actions": {
+    "kernel_modified": false,
+    "gpu_jobs_launched": false,
+    "services_touched": false,
+    "pt_files_added": false
+  },
+  "coordination": {
+    "contact_supervisor": "Unavailable: no matching tool exposed in ALL_TOOLS; no decision reply can be requested through the specified channel."
+  },
+  "residual_risks": [
+    "9x pure bin remains failed.",
+    "Budget-scaled fine-tunes and evaluations remain unrun.",
+    "Production kernel certification needed before retry/scaling.",
+    "Existing long-context R-CAP receipts are supporting context, not causal proof for this depth probe."
+  ],
+  "control_receipt": {
+    "status": "completed",
+    "updates": 30000,
+    "selected_update": 30000,
+    "bins": {
+      "bin_id": {
+        "n": 512,
+        "balanced_accuracy": 1.0,
+        "raw_accuracy": 1.0,
+        "per_class_recall": {
+          "accept": 1.0,
+          "reject": 1.0
+        },
+        "confusion": {
+          "accept": {
+            "pred_accept": 256,
+            "pred_reject": 0
+          },
+          "reject": {
+            "pred_accept": 0,
+            "pred_reject": 256
+          }
+        },
+        "class_counts": {
+          "accept": 256,
+          "reject": 256
+        },
+        "majority_baseline": 0.5
+      },
+      "bin_2x": {
+        "n": 512,
+        "balanced_accuracy": 1.0,
+        "raw_accuracy": 1.0,
+        "per_class_recall": {
+          "accept": 1.0,
+          "reject": 1.0
+        },
+        "confusion": {
+          "accept": {
+            "pred_accept": 256,
+            "pred_reject": 0
+          },
+          "reject": {
+            "pred_accept": 0,
+            "pred_reject": 256
+          }
+        },
+        "class_counts": {
+          "accept": 256,
+          "reject": 256
+        },
+        "majority_baseline": 0.5
+      },
+      "bin_4x": {
+        "n": 512,
+        "balanced_accuracy": 0.70703125,
+        "raw_accuracy": 0.70703125,
+        "per_class_recall": {
+          "accept": 0.41796875,
+          "reject": 0.99609375
+        },
+        "confusion": {
+          "accept": {
+            "pred_accept": 107,
+            "pred_reject": 149
+          },
+          "reject": {
+            "pred_accept": 1,
+            "pred_reject": 255
+          }
+        },
+        "class_counts": {
+          "accept": 256,
+          "reject": 256
+        },
+        "majority_baseline": 0.5
+      },
+      "bin_9x": {
+        "n": 512,
+        "balanced_accuracy": 0.5,
+        "raw_accuracy": 0.5,
+        "per_class_recall": {
+          "accept": 0.0,
+          "reject": 1.0
+        },
+        "confusion": {
+          "accept": {
+            "pred_accept": 0,
+            "pred_reject": 256
+          },
+          "reject": {
+            "pred_accept": 0,
+            "pred_reject": 256
+          }
+        },
+        "class_counts": {
+          "accept": 256,
+          "reject": 256
+        },
+        "majority_baseline": 0.5
+      }
+    },
+    "supervision": "final EOS binary margin BCE",
+    "budget": 2944,
+    "model": "X39 exact-exposure B64 hybrid control (tape_lm), checkpoint sha256=73f9600154df00ecef14fe26a96395e233ce78536e34fde7fdf795e7ad60218b",
+    "train_hash": "a309dfcea3762e6fe99c91a4bffcd37889ea41f2138ed279eb015ec1603df7a0",
+    "validation_trajectory_best": 1.0,
+    "comparison": {
+      "x28e_e97_native_fine_tuned_baseline": {
+        "bin_id": 0.998046875,
+        "bin_2x": 0.541015625,
+        "bin_4x": 0.5,
+        "bin_9x": 0.5
+      },
+      "pure_ignition_v1_arm": "pending: depth.json is written by the still-running v1 process; this control receipt is complete and the head-to-head completes when that file lands"
+    },
+    "honest_null_note": "Nulls are publishable: if the pure arm shows no separation, chance OOD accuracy, or collapse despite in-range learning, the registered prediction fails and stays failed."
+  }
+}
