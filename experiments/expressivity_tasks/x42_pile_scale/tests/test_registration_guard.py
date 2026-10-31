@@ -86,3 +86,20 @@ def test_anchor_preserves_transformer_and_rejects_historical_pure(tmp_path):
     result.write_text('{}')
     with pytest.raises(ValueError, match='receipt changed'):
         complete('transformer', tmp_path)
+
+
+def test_external_repository_source(repo, tmp_path):
+    external = tmp_path/'external'
+    external.mkdir()
+    git(external, 'init', '-q')
+    git(external, 'config', 'user.email', 'test@example.org')
+    git(external, 'config', 'user.name', 'Test')
+    source = external/'kernel.py'
+    source.write_text('external\n')
+    git(external, 'add', '.')
+    git(external, 'commit', '-qm', 'upstream kernel')
+    (repo/'registration.json').write_text(json.dumps({'sources': {str(source): digest(source.read_bytes())}}))
+    assert diagnose('registration.json', repo)['matches']
+    source.write_text('external promoted\n')
+    git(external, 'commit', '-qam', 'external promotion')
+    assert diagnose('registration.json', repo)['sources'][0]['status']=='REGISTRATION STALE vs HEAD'

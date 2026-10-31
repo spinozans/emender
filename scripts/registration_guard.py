@@ -30,7 +30,7 @@ def bindings(raw):
 
 def recipe(path):
     return (f'{PYTHON} scripts/registration_guard.py rebind {shlex.quote(str(path))} '
-            '--receipt <new-amendment.json> --cause <commit-or-reason>')
+            f"--receipt {shlex.quote(str(path)+'.rebind-')}$(git rev-parse --short HEAD).json --cause HEAD")
 
 
 def diagnose(path, root='.'):
@@ -40,8 +40,12 @@ def diagnose(path, root='.'):
         path = path.relative_to(root)
     rows = []
     for name, expected in bindings((root/path).read_bytes()).items():
+        history_root, history_name = root, name
+        if Path(name).is_absolute():
+            history_root = Path(git(Path(name).parent, 'rev-parse', '--show-toplevel').decode().strip())
+            history_name = str(Path(name).relative_to(history_root))
         try:
-            head = digest(git(root, 'show', f'HEAD:{name}'))
+            head = digest(git(history_root, 'show', f'HEAD:{history_name}'))
         except subprocess.CalledProcessError:
             head = None
         file = root/name
@@ -49,15 +53,15 @@ def diagnose(path, root='.'):
         commits = []
         known = expected == head
         if not known:
-            for commit in git(root, 'rev-list', 'HEAD', '--', name).decode().splitlines():
+            for commit in git(history_root, 'rev-list', 'HEAD', '--', history_name).decode().splitlines():
                 try:
-                    historical = digest(git(root, 'show', f'{commit}:{name}'))
+                    historical = digest(git(history_root, 'show', f'{commit}:{history_name}'))
                 except subprocess.CalledProcessError:
                     historical = None
                 if historical == expected:
                     known = True
                     break
-                commits.append(git(root, 'show', '-s', '--format=%h %s', commit).decode().strip())
+                commits.append(git(history_root, 'show', '-s', '--format=%h %s', commit).decode().strip())
         if not known or (work != head and expected != head and work != expected):
             status = 'TAMPER SUSPECT'
         elif work != head:
