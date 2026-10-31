@@ -39,7 +39,7 @@ def test_transplant_preserves_frozen_and_unrelated_parameters(tmp_path, monkeypa
 
 def test_diagnostic_removes_only_key_detach():
     forward=experiment.diagnostic_forward()
-    # Execute the compiled forward with a minimal differentiable scan stub.
+    # The GPU engineering preflight separately verifies actual native gradients.
     assert forward.__code__.co_names.count('detach')==0
     original=ast.parse(textwrap.dedent(inspect.getsource(experiment.Cell.forward)))
     assert 'detach' in ast.unparse(original)

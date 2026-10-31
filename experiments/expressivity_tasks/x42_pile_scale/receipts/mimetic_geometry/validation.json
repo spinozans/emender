@@ -1,0 +1,47 @@
+{
+  "status": "passed",
+  "manual_notes": "Attended single-GPU execution through broker card 2. Fresh 2700s donor fallback; no supervisor/service/worker use. Protected cards untouched. Donor weights ignored by Git.",
+  "checks": [
+    "All registered compute-source hashes unchanged",
+    "All three full-budget runs completed last crossing update with contiguous B64/T2048 prefix",
+    "24 held-out reset windows at T2048 per full run",
+    "Exact score recomputation passed for both candidate arms",
+    "All 144 mimetic tensor initializations receipted; every frozen parameter unchanged",
+    "72 unfrozen parameter gradients present and finite; key and semantic groups nonzero",
+    "Unfrozen score ineligible for certified promotion; engineering preflight excluded",
+    "17 targeted tests passed"
+  ],
+  "arms": {
+    "donor": {
+      "score": 3.7636347015698752,
+      "nll_heldout": 3.7636347015698752,
+      "train_seconds": 2702.2037868518382,
+      "overshoot_seconds": 2.203786851838231,
+      "tokens_consumed": 146800640
+    },
+    "mimetic": {
+      "score": 4.530723427561008,
+      "nll_heldout": 4.471388171116511,
+      "train_seconds": 2707.0171230072156,
+      "overshoot_seconds": 7.0171230072155595,
+      "tokens_consumed": 43909120
+    },
+    "unfrozen": {
+      "score": 4.893405740101718,
+      "nll_heldout": 4.834070056676865,
+      "train_seconds": 2705.2405692460015,
+      "overshoot_seconds": 5.240569246001542,
+      "tokens_consumed": 47448064
+    }
+  },
+  "residual_risks": [
+    "One seed, one 2700s horizon; wall-clock comparisons consume different token counts.",
+    "Mimetic arm receives an extra 2700s of donor pretraining; this is not equal end-to-end training compute.",
+    "Partial transplant leaves token embeddings, vocabulary head, queries, norms and frozen semantic basis at baseline initialization; representation mismatch and lossy geometry limit any null conclusion.",
+    "Unfreezing adds trainable semantic/key parameters without shrinking MLP; capacity and throughput confound a pure frozen-basis-price estimate.",
+    "The diagnostic inherits baseline LR/warmup; a null or negative result does not exclude benefits after geometry-specific tuning or longer training.",
+    "No shuffled or scale-matched random donor control was run; a mimetic gain does not isolate semantic transfer from weight scale or conditioning.",
+    "The requested 2x2 is an interpretation matrix, not a completed factorial experiment: joint mimicry+unfreezing was not run.",
+    "No proxy result establishes scale transfer or authorizes 1.3B production training; diagnostic is never production."
+  ]
+}
