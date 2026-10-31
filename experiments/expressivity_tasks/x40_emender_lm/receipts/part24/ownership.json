@@ -1,0 +1,3544 @@
+{
+  "status": "ownership_prerequisite_incomplete",
+  "production_changes": false,
+  "input_revision": "b44020f2",
+  "input_audit_sha256": "70d64cd39a801c65099a582b5fff19b4605628c57c3a2418380310fc7554e037",
+  "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+  "sass_sha256": "e996d3394c37b81b0fad8bfee607439237ba03cba7677baf45e10795dcb5a0f9",
+  "assumptions": [
+    "128 threads in one CTA/program; t in [0,127]",
+    "address sets conditional on all stated threads reaching this dynamic site",
+    "scalar-reduction predicates checked against PTX p254/p265 and local SASS",
+    "no inter-CTA alias is implied by reuse of shared offsets"
+  ],
+  "endpoint_count": 175,
+  "site_count": 73,
+  "sites": [
+    {
+      "pc": "0x1b180",
+      "instruction": "@!P0 STS [R154.X4], R17",
+      "locations": [
+        "standard.py:189"
+      ],
+      "occurrences": 2,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "4*(t >> 5) + 0",
+      "access_width_bytes": 4,
+      "participation": "lane == 0",
+      "ownership": "injective writes under stated participation",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G04",
+        "P23-baseline_9x.MKG9f1PB-G18"
+      ]
+    },
+    {
+      "pc": "0x1b1a0",
+      "instruction": "@!P5 LDS R166, [R15.X4]",
+      "locations": [
+        "standard.py:189"
+      ],
+      "occurrences": 4,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "4*(t) + 0",
+      "access_width_bytes": 4,
+      "participation": "see enclosing path and instruction predicate",
+      "ownership": "reader address; producer/lifetime must be paired by dynamic epoch",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G04",
+        "P23-baseline_9x.MKG9f1PB-G17",
+        "P23-baseline_9x.MKG9f1PB-G18",
+        "P23-baseline_9x.MKG9f1PB-G26"
+      ]
+    },
+    {
+      "pc": "0x1b260",
+      "instruction": "LDS R192, [RZ]",
+      "locations": [
+        "standard.py:189"
+      ],
+      "occurrences": 3,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "1*(0) + 0",
+      "access_width_bytes": 4,
+      "participation": "see enclosing path and instruction predicate",
+      "ownership": "reader address; producer/lifetime must be paired by dynamic epoch",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G04",
+        "P23-baseline_9x.MKG9f1PB-G06",
+        "P23-baseline_9x.MKG9f1PB-G17"
+      ]
+    },
+    {
+      "pc": "0x1bc40",
+      "instruction": "STS [R163], R18",
+      "locations": [
+        "kernels.py:99"
+      ],
+      "occurrences": 1,
+      "phase": "query broadcast to key-row layout",
+      "address_bytes": "1*(16*(t & 7) + ((t & 24) >> 1)) + 0",
+      "access_width_bytes": 4,
+      "participation": "see enclosing path; no additional store predicate",
+      "ownership": "conditional nonunique-writer witness",
+      "duplicate_byte_count": 128,
+      "duplicate_example": [
+        "0",
+        [
+          0,
+          32,
+          64,
+          96
+        ]
+      ],
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G06"
+      ]
+    },
+    {
+      "pc": "0x1c1c0",
+      "instruction": "LDS.128 R44, [R161]",
+      "locations": [
+        "kernels.py:99"
+      ],
+      "occurrences": 3,
+      "phase": "query broadcast to key-row layout",
+      "address_bytes": "1*(t & 112) + 0",
+      "access_width_bytes": 16,
+      "participation": "see enclosing path and instruction predicate",
+      "ownership": "reader address; producer/lifetime must be paired by dynamic epoch",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G06",
+        "P23-baseline_9x.MKG9f1PB-G19",
+        "P23-baseline_9x.MKG9f1PB-G23"
+      ]
+    },
+    {
+      "pc": "0x1c320",
+      "instruction": "STS.128 [R161], R52",
+      "locations": [
+        "kernels.py:119"
+      ],
+      "occurrences": 4,
+      "phase": "tile weighted-value broadcast / reduction / output layout",
+      "address_bytes": "1*(t & 112) + 0",
+      "access_width_bytes": 16,
+      "participation": "see enclosing path; no additional store predicate",
+      "ownership": "conditional nonunique-writer witness",
+      "duplicate_byte_count": 128,
+      "duplicate_example": [
+        "0",
+        [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15
+        ]
+      ],
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G06",
+        "P23-baseline_9x.MKG9f1PB-G09",
+        "P23-baseline_9x.MKG9f1PB-G10",
+        "P23-baseline_9x.MKG9f1PB-G15"
+      ]
+    },
+    {
+      "pc": "0x1c350",
+      "instruction": "LDS.128 R44, [R159]",
+      "locations": [
+        "kernels.py:119"
+      ],
+      "occurrences": 4,
+      "phase": "tile weighted-value broadcast / reduction / output layout",
+      "address_bytes": "1*((t & 96) >> 1) + 0",
+      "access_width_bytes": 16,
+      "participation": "see enclosing path and instruction predicate",
+      "ownership": "reader address; producer/lifetime must be paired by dynamic epoch",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G11",
+        "P23-baseline_9x.MKG9f1PB-G15",
+        "P23-baseline_9x.MKG9f1PB-G19",
+        "P23-baseline_9x.MKG9f1PB-G23"
+      ]
+    },
+    {
+      "pc": "0x1c360",
+      "instruction": "LDS.128 R48, [R159+0x40]",
+      "locations": [
+        "kernels.py:119"
+      ],
+      "occurrences": 2,
+      "phase": "tile weighted-value broadcast / reduction / output layout",
+      "address_bytes": "1*((t & 96) >> 1) + 64",
+      "access_width_bytes": 16,
+      "participation": "see enclosing path and instruction predicate",
+      "ownership": "reader address; producer/lifetime must be paired by dynamic epoch",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G11",
+        "P23-baseline_9x.MKG9f1PB-G16"
+      ]
+    },
+    {
+      "pc": "0x1c740",
+      "instruction": "STS [R137], R40",
+      "locations": [
+        "standard.py:291"
+      ],
+      "occurrences": 1,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "1*(4*(t >> 5) + 64*(t & 31)) + 0",
+      "access_width_bytes": 4,
+      "participation": "see enclosing path; no additional store predicate",
+      "ownership": "injective writes under stated participation",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G13"
+      ]
+    },
+    {
+      "pc": "0x1c750",
+      "instruction": "STS [R137+0x10], R44",
+      "locations": [
+        "standard.py:291"
+      ],
+      "occurrences": 1,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "1*(4*(t >> 5) + 64*(t & 31)) + 16",
+      "access_width_bytes": 4,
+      "participation": "see enclosing path; no additional store predicate",
+      "ownership": "injective writes under stated participation",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G11"
+      ]
+    },
+    {
+      "pc": "0x1c760",
+      "instruction": "STS [R137+0x20], R42",
+      "locations": [
+        "standard.py:291"
+      ],
+      "occurrences": 1,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "1*(4*(t >> 5) + 64*(t & 31)) + 32",
+      "access_width_bytes": 4,
+      "participation": "see enclosing path; no additional store predicate",
+      "ownership": "injective writes under stated participation",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G09"
+      ]
+    },
+    {
+      "pc": "0x1c770",
+      "instruction": "STS [R137+0x30], R48",
+      "locations": [
+        "standard.py:291"
+      ],
+      "occurrences": 1,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "1*(4*(t >> 5) + 64*(t & 31)) + 48",
+      "access_width_bytes": 4,
+      "participation": "see enclosing path; no additional store predicate",
+      "ownership": "injective writes under stated participation",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G10"
+      ]
+    },
+    {
+      "pc": "0x1c790",
+      "instruction": "LDS R4, [R15.X4]",
+      "locations": [
+        "standard.py:291"
+      ],
+      "occurrences": 6,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "4*(t) + 0",
+      "access_width_bytes": 4,
+      "participation": "see enclosing path and instruction predicate",
+      "ownership": "reader address; producer/lifetime must be paired by dynamic epoch",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G04",
+        "P23-baseline_9x.MKG9f1PB-G09",
+        "P23-baseline_9x.MKG9f1PB-G10",
+        "P23-baseline_9x.MKG9f1PB-G11",
+        "P23-baseline_9x.MKG9f1PB-G13",
+        "P23-baseline_9x.MKG9f1PB-G18"
+      ]
+    },
+    {
+      "pc": "0x1c7a0",
+      "instruction": "LDS R7, [R15.X4+0x200]",
+      "locations": [
+        "standard.py:291"
+      ],
+      "occurrences": 2,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "4*(t) + 512",
+      "access_width_bytes": 4,
+      "participation": "see enclosing path and instruction predicate",
+      "ownership": "reader address; producer/lifetime must be paired by dynamic epoch",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G11",
+        "P23-baseline_9x.MKG9f1PB-G13"
+      ]
+    },
+    {
+      "pc": "0x1c7b0",
+      "instruction": "LDS R19, [R15.X4+0x400]",
+      "locations": [
+        "standard.py:291"
+      ],
+      "occurrences": 4,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "4*(t) + 1024",
+      "access_width_bytes": 4,
+      "participation": "see enclosing path and instruction predicate",
+      "ownership": "reader address; producer/lifetime must be paired by dynamic epoch",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G09",
+        "P23-baseline_9x.MKG9f1PB-G10",
+        "P23-baseline_9x.MKG9f1PB-G11",
+        "P23-baseline_9x.MKG9f1PB-G13"
+      ]
+    },
+    {
+      "pc": "0x1c7c0",
+      "instruction": "LDS R22, [R15.X4+0x600]",
+      "locations": [
+        "standard.py:291"
+      ],
+      "occurrences": 4,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "4*(t) + 1536",
+      "access_width_bytes": 4,
+      "participation": "see enclosing path and instruction predicate",
+      "ownership": "reader address; producer/lifetime must be paired by dynamic epoch",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G09",
+        "P23-baseline_9x.MKG9f1PB-G10",
+        "P23-baseline_9x.MKG9f1PB-G11",
+        "P23-baseline_9x.MKG9f1PB-G13"
+      ]
+    },
+    {
+      "pc": "0x1c8b0",
+      "instruction": "@!P2 STS [R15.X4], R16",
+      "locations": [
+        "standard.py:291"
+      ],
+      "occurrences": 2,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "4*(t) + 0",
+      "access_width_bytes": 4,
+      "participation": "(t & 3) == 0",
+      "ownership": "injective writes under stated participation",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G04",
+        "P23-baseline_9x.MKG9f1PB-G16"
+      ]
+    },
+    {
+      "pc": "0x1c8d0",
+      "instruction": "@!P2 STS [R15.X4+0x200], R18",
+      "locations": [
+        "standard.py:291"
+      ],
+      "occurrences": 1,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "4*(t) + 512",
+      "access_width_bytes": 4,
+      "participation": "(t & 3) == 0",
+      "ownership": "injective writes under stated participation",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G21"
+      ]
+    },
+    {
+      "pc": "0x1c8f0",
+      "instruction": "@!P2 STS [R15.X4+0x400], R22",
+      "locations": [
+        "standard.py:291"
+      ],
+      "occurrences": 1,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "4*(t) + 1024",
+      "access_width_bytes": 4,
+      "participation": "(t & 3) == 0",
+      "ownership": "injective writes under stated participation",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G24"
+      ]
+    },
+    {
+      "pc": "0x1c900",
+      "instruction": "@!P2 STS [R15.X4+0x600], R24",
+      "locations": [
+        "standard.py:291"
+      ],
+      "occurrences": 1,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "4*(t) + 1536",
+      "access_width_bytes": 4,
+      "participation": "(t & 3) == 0",
+      "ownership": "injective writes under stated participation",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G27"
+      ]
+    },
+    {
+      "pc": "0x1c9d0",
+      "instruction": "LDS R4, [R149]",
+      "locations": [
+        "standard.py:291"
+      ],
+      "occurrences": 3,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "1*(64*(t & 31)) + 0",
+      "access_width_bytes": 4,
+      "participation": "see enclosing path and instruction predicate",
+      "ownership": "reader address; producer/lifetime must be paired by dynamic epoch",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G04",
+        "P23-baseline_9x.MKG9f1PB-G16",
+        "P23-baseline_9x.MKG9f1PB-G18"
+      ]
+    },
+    {
+      "pc": "0x1ca00",
+      "instruction": "LDS R5, [R149+0x10]",
+      "locations": [
+        "standard.py:291"
+      ],
+      "occurrences": 3,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "1*(64*(t & 31)) + 16",
+      "access_width_bytes": 4,
+      "participation": "see enclosing path and instruction predicate",
+      "ownership": "reader address; producer/lifetime must be paired by dynamic epoch",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G04",
+        "P23-baseline_9x.MKG9f1PB-G16",
+        "P23-baseline_9x.MKG9f1PB-G21"
+      ]
+    },
+    {
+      "pc": "0x1ca30",
+      "instruction": "LDS R6, [R149+0x20]",
+      "locations": [
+        "standard.py:291"
+      ],
+      "occurrences": 4,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "1*(64*(t & 31)) + 32",
+      "access_width_bytes": 4,
+      "participation": "see enclosing path and instruction predicate",
+      "ownership": "reader address; producer/lifetime must be paired by dynamic epoch",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G04",
+        "P23-baseline_9x.MKG9f1PB-G16",
+        "P23-baseline_9x.MKG9f1PB-G21",
+        "P23-baseline_9x.MKG9f1PB-G24"
+      ]
+    },
+    {
+      "pc": "0x1ca50",
+      "instruction": "LDS R7, [R149+0x30]",
+      "locations": [
+        "standard.py:291"
+      ],
+      "occurrences": 5,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "1*(64*(t & 31)) + 48",
+      "access_width_bytes": 4,
+      "participation": "see enclosing path and instruction predicate",
+      "ownership": "reader address; producer/lifetime must be paired by dynamic epoch",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G04",
+        "P23-baseline_9x.MKG9f1PB-G16",
+        "P23-baseline_9x.MKG9f1PB-G21",
+        "P23-baseline_9x.MKG9f1PB-G24",
+        "P23-baseline_9x.MKG9f1PB-G27"
+      ]
+    },
+    {
+      "pc": "0x1caa0",
+      "instruction": "STS.128 [R162.X16], R4",
+      "locations": [
+        "kernels.py:120"
+      ],
+      "occurrences": 1,
+      "phase": "tile weighted-value broadcast / reduction / output layout",
+      "address_bytes": "16*(t & 31) + 0",
+      "access_width_bytes": 16,
+      "participation": "see enclosing path; no additional store predicate",
+      "ownership": "conditional nonunique-writer witness",
+      "duplicate_byte_count": 512,
+      "duplicate_example": [
+        "0",
+        [
+          0,
+          32,
+          64,
+          96
+        ]
+      ],
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G04"
+      ]
+    },
+    {
+      "pc": "0x1cb00",
+      "instruction": "LDSM.16.M88 R17, [R156]",
+      "locations": [
+        "kernels.py:120"
+      ],
+      "occurrences": 2,
+      "phase": "tile weighted-value broadcast / reduction / output layout",
+      "address_bytes": "1*(((128*(t >> 5)) | (16*t)) & 496) + 0",
+      "access_width_bytes": null,
+      "participation": "see enclosing path and instruction predicate",
+      "ownership": "collective matrix read; address operand is not the per-thread footprint",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G04",
+        "P23-baseline_9x.MKG9f1PB-G06"
+      ]
+    },
+    {
+      "pc": "0x1cb60",
+      "instruction": "@!P0 STS [R154.X4], R19",
+      "locations": [
+        "standard.py:248"
+      ],
+      "occurrences": 3,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "4*(t >> 5) + 0",
+      "access_width_bytes": 4,
+      "participation": "lane == 0",
+      "ownership": "injective writes under stated participation",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G04",
+        "P23-baseline_9x.MKG9f1PB-G06",
+        "P23-baseline_9x.MKG9f1PB-G17"
+      ]
+    },
+    {
+      "pc": "0x1cb90",
+      "instruction": "@!P3 LDS R168, [R15.X4]",
+      "locations": [
+        "standard.py:248"
+      ],
+      "occurrences": 2,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "4*(t) + 0",
+      "access_width_bytes": 4,
+      "participation": "see enclosing path and instruction predicate",
+      "ownership": "reader address; producer/lifetime must be paired by dynamic epoch",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G06",
+        "P23-baseline_9x.MKG9f1PB-G17"
+      ]
+    },
+    {
+      "pc": "0x1cc10",
+      "instruction": "LDS R11, [RZ]",
+      "locations": [
+        "standard.py:248"
+      ],
+      "occurrences": 4,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "1*(0) + 0",
+      "access_width_bytes": 4,
+      "participation": "see enclosing path and instruction predicate",
+      "ownership": "reader address; producer/lifetime must be paired by dynamic epoch",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G06",
+        "P23-baseline_9x.MKG9f1PB-G15",
+        "P23-baseline_9x.MKG9f1PB-G19",
+        "P23-baseline_9x.MKG9f1PB-G22"
+      ]
+    },
+    {
+      "pc": "0x1cc60",
+      "instruction": "@!P0 STS [R154.X4], R19",
+      "locations": [
+        "standard.py:291"
+      ],
+      "occurrences": 2,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "4*(t >> 5) + 0",
+      "access_width_bytes": 4,
+      "participation": "lane == 0",
+      "ownership": "injective writes under stated participation",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G15",
+        "P23-baseline_9x.MKG9f1PB-G19"
+      ]
+    },
+    {
+      "pc": "0x1cc80",
+      "instruction": "@!P3 LDS R170, [R15.X4]",
+      "locations": [
+        "standard.py:291"
+      ],
+      "occurrences": 1,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "4*(t) + 0",
+      "access_width_bytes": 4,
+      "participation": "see enclosing path and instruction predicate",
+      "ownership": "reader address; producer/lifetime must be paired by dynamic epoch",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G19"
+      ]
+    },
+    {
+      "pc": "0x1cd00",
+      "instruction": "LDS R13, [RZ]",
+      "locations": [
+        "standard.py:291"
+      ],
+      "occurrences": 4,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "1*(0) + 0",
+      "access_width_bytes": 4,
+      "participation": "see enclosing path and instruction predicate",
+      "ownership": "reader address; producer/lifetime must be paired by dynamic epoch",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G07",
+        "P23-baseline_9x.MKG9f1PB-G13",
+        "P23-baseline_9x.MKG9f1PB-G16",
+        "P23-baseline_9x.MKG9f1PB-G18"
+      ]
+    },
+    {
+      "pc": "0x1d1f0",
+      "instruction": "@!P0 STS [R154.X4], R19",
+      "locations": [
+        "standard.py:189"
+      ],
+      "occurrences": 3,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "4*(t >> 5) + 0",
+      "access_width_bytes": 4,
+      "participation": "lane == 0",
+      "ownership": "injective writes under stated participation",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G04",
+        "P23-baseline_9x.MKG9f1PB-G14",
+        "P23-baseline_9x.MKG9f1PB-G29"
+      ]
+    },
+    {
+      "pc": "0x1d210",
+      "instruction": "@!P3 LDS R172, [R15.X4]",
+      "locations": [
+        "standard.py:189"
+      ],
+      "occurrences": 2,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "4*(t) + 0",
+      "access_width_bytes": 4,
+      "participation": "see enclosing path and instruction predicate",
+      "ownership": "reader address; producer/lifetime must be paired by dynamic epoch",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G17",
+        "P23-baseline_9x.MKG9f1PB-G29"
+      ]
+    },
+    {
+      "pc": "0x1d280",
+      "instruction": "LDS R6, [RZ]",
+      "locations": [
+        "standard.py:189"
+      ],
+      "occurrences": 2,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "1*(0) + 0",
+      "access_width_bytes": 4,
+      "participation": "see enclosing path and instruction predicate",
+      "ownership": "reader address; producer/lifetime must be paired by dynamic epoch",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G02",
+        "P23-baseline_9x.MKG9f1PB-G22"
+      ]
+    },
+    {
+      "pc": "0x1d2f0",
+      "instruction": "@!P0 STS [R154.X4], R21",
+      "locations": [
+        "standard.py:248"
+      ],
+      "occurrences": 2,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "4*(t >> 5) + 0",
+      "access_width_bytes": 4,
+      "participation": "lane == 0",
+      "ownership": "injective writes under stated participation",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G02",
+        "P23-baseline_9x.MKG9f1PB-G22"
+      ]
+    },
+    {
+      "pc": "0x1d310",
+      "instruction": "@!P3 LDS R174, [R15.X4]",
+      "locations": [
+        "standard.py:248"
+      ],
+      "occurrences": 2,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "4*(t) + 0",
+      "access_width_bytes": 4,
+      "participation": "see enclosing path and instruction predicate",
+      "ownership": "reader address; producer/lifetime must be paired by dynamic epoch",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G19",
+        "P23-baseline_9x.MKG9f1PB-G22"
+      ]
+    },
+    {
+      "pc": "0x1d390",
+      "instruction": "LDS R19, [RZ]",
+      "locations": [
+        "standard.py:248"
+      ],
+      "occurrences": 2,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "1*(0) + 0",
+      "access_width_bytes": 4,
+      "participation": "see enclosing path and instruction predicate",
+      "ownership": "reader address; producer/lifetime must be paired by dynamic epoch",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G01",
+        "P23-baseline_9x.MKG9f1PB-G07"
+      ]
+    },
+    {
+      "pc": "0x1d4e0",
+      "instruction": "@!P0 STS [R154.X4], R7",
+      "locations": [
+        "standard.py:189"
+      ],
+      "occurrences": 3,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "4*(t >> 5) + 0",
+      "access_width_bytes": 4,
+      "participation": "lane == 0",
+      "ownership": "injective writes under stated participation",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G01",
+        "P23-baseline_9x.MKG9f1PB-G05",
+        "P23-baseline_9x.MKG9f1PB-G07"
+      ]
+    },
+    {
+      "pc": "0x1d510",
+      "instruction": "@!P3 LDS R175, [R15.X4]",
+      "locations": [
+        "standard.py:189"
+      ],
+      "occurrences": 1,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "4*(t) + 0",
+      "access_width_bytes": 4,
+      "participation": "see enclosing path and instruction predicate",
+      "ownership": "reader address; producer/lifetime must be paired by dynamic epoch",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G07"
+      ]
+    },
+    {
+      "pc": "0x1d580",
+      "instruction": "LDS R12, [RZ]",
+      "locations": [
+        "standard.py:189"
+      ],
+      "occurrences": 1,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "1*(0) + 0",
+      "access_width_bytes": 4,
+      "participation": "see enclosing path and instruction predicate",
+      "ownership": "reader address; producer/lifetime must be paired by dynamic epoch",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G12"
+      ]
+    },
+    {
+      "pc": "0x1d6c0",
+      "instruction": "@!P0 STS [R154.X4], R17",
+      "locations": [
+        "standard.py:291"
+      ],
+      "occurrences": 4,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "4*(t >> 5) + 0",
+      "access_width_bytes": 4,
+      "participation": "lane == 0",
+      "ownership": "injective writes under stated participation",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G03",
+        "P23-baseline_9x.MKG9f1PB-G08",
+        "P23-baseline_9x.MKG9f1PB-G12",
+        "P23-baseline_9x.MKG9f1PB-G14"
+      ]
+    },
+    {
+      "pc": "0x1d6e0",
+      "instruction": "@!P3 LDS R176, [R15.X4]",
+      "locations": [
+        "standard.py:291"
+      ],
+      "occurrences": 1,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "4*(t) + 0",
+      "access_width_bytes": 4,
+      "participation": "see enclosing path and instruction predicate",
+      "ownership": "reader address; producer/lifetime must be paired by dynamic epoch",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G14"
+      ]
+    },
+    {
+      "pc": "0x1d730",
+      "instruction": "@!P1 STS [R15.X4], R4",
+      "locations": [
+        "standard.py:291"
+      ],
+      "occurrences": 1,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "4*(t) + 0",
+      "access_width_bytes": 4,
+      "participation": "t == 0",
+      "ownership": "injective writes under stated participation",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G30"
+      ]
+    },
+    {
+      "pc": "0x1d760",
+      "instruction": "LDS R12, [RZ]",
+      "locations": [
+        "standard.py:291"
+      ],
+      "occurrences": 3,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "1*(0) + 0",
+      "access_width_bytes": 4,
+      "participation": "see enclosing path and instruction predicate",
+      "ownership": "reader address; producer/lifetime must be paired by dynamic epoch",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G02",
+        "P23-baseline_9x.MKG9f1PB-G03",
+        "P23-baseline_9x.MKG9f1PB-G25"
+      ]
+    },
+    {
+      "pc": "0x1d780",
+      "instruction": "STS [R2.X4], R16",
+      "locations": [
+        "kernels.py:149"
+      ],
+      "occurrences": 1,
+      "phase": "read-pass denom/scale broadcast / output layout",
+      "address_bytes": "4*(t & 127) + 0",
+      "access_width_bytes": 4,
+      "participation": "see enclosing path; no additional store predicate",
+      "ownership": "injective writes under stated participation",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G02"
+      ]
+    },
+    {
+      "pc": "0x1d7b0",
+      "instruction": "LDS R7, [R151+0x100]",
+      "locations": [
+        "kernels.py:149"
+      ],
+      "occurrences": 4,
+      "phase": "read-pass denom/scale broadcast / output layout",
+      "address_bytes": "1*(4*(t & 126)) + 256",
+      "access_width_bytes": 4,
+      "participation": "see enclosing path and instruction predicate",
+      "ownership": "reader address; producer/lifetime must be paired by dynamic epoch",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G01",
+        "P23-baseline_9x.MKG9f1PB-G09",
+        "P23-baseline_9x.MKG9f1PB-G10",
+        "P23-baseline_9x.MKG9f1PB-G11"
+      ]
+    },
+    {
+      "pc": "0x1d7c0",
+      "instruction": "LDS R6, [R151]",
+      "locations": [
+        "kernels.py:149"
+      ],
+      "occurrences": 7,
+      "phase": "read-pass denom/scale broadcast / output layout",
+      "address_bytes": "1*(4*(t & 126)) + 0",
+      "access_width_bytes": 4,
+      "participation": "see enclosing path and instruction predicate",
+      "ownership": "reader address; producer/lifetime must be paired by dynamic epoch",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G01",
+        "P23-baseline_9x.MKG9f1PB-G02",
+        "P23-baseline_9x.MKG9f1PB-G03",
+        "P23-baseline_9x.MKG9f1PB-G09",
+        "P23-baseline_9x.MKG9f1PB-G10",
+        "P23-baseline_9x.MKG9f1PB-G11",
+        "P23-baseline_9x.MKG9f1PB-G22"
+      ]
+    },
+    {
+      "pc": "0x1d860",
+      "instruction": "STS [R2.X4], R23",
+      "locations": [
+        "kernels.py:150"
+      ],
+      "occurrences": 1,
+      "phase": "read-pass denom/scale broadcast / output layout",
+      "address_bytes": "4*(t & 127) + 0",
+      "access_width_bytes": 4,
+      "participation": "see enclosing path; no additional store predicate",
+      "ownership": "injective writes under stated participation",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G01"
+      ]
+    },
+    {
+      "pc": "0x1d890",
+      "instruction": "LDS R22, [R151]",
+      "locations": [
+        "kernels.py:150"
+      ],
+      "occurrences": 2,
+      "phase": "read-pass denom/scale broadcast / output layout",
+      "address_bytes": "1*(4*(t & 126)) + 0",
+      "access_width_bytes": 4,
+      "participation": "see enclosing path and instruction predicate",
+      "ownership": "reader address; producer/lifetime must be paired by dynamic epoch",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G01",
+        "P23-baseline_9x.MKG9f1PB-G05"
+      ]
+    },
+    {
+      "pc": "0x1db70",
+      "instruction": "STS [R138], R21",
+      "locations": [
+        "standard.py:291"
+      ],
+      "occurrences": 4,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "1*(4*(t >> 5) + 64*(t & 1)) + 0",
+      "access_width_bytes": 4,
+      "participation": "lane < 2",
+      "ownership": "injective writes under stated participation",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G05",
+        "P23-baseline_9x.MKG9f1PB-G08",
+        "P23-baseline_9x.MKG9f1PB-G12",
+        "P23-baseline_9x.MKG9f1PB-G14"
+      ]
+    },
+    {
+      "pc": "0x1db80",
+      "instruction": "STS [R138+0x10], R23",
+      "locations": [
+        "standard.py:291"
+      ],
+      "occurrences": 2,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "1*(4*(t >> 5) + 64*(t & 1)) + 16",
+      "access_width_bytes": 4,
+      "participation": "lane < 2",
+      "ownership": "injective writes under stated participation",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G05",
+        "P23-baseline_9x.MKG9f1PB-G08"
+      ]
+    },
+    {
+      "pc": "0x1dbe0",
+      "instruction": "STS [R138+0x20], R17",
+      "locations": [
+        "standard.py:291"
+      ],
+      "occurrences": 2,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "1*(4*(t >> 5) + 64*(t & 1)) + 32",
+      "access_width_bytes": 4,
+      "participation": "lane < 2",
+      "ownership": "injective writes under stated participation",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G05",
+        "P23-baseline_9x.MKG9f1PB-G08"
+      ]
+    },
+    {
+      "pc": "0x1dbf0",
+      "instruction": "@!P4 STS [R138+0x30], R19",
+      "locations": [
+        "standard.py:291"
+      ],
+      "occurrences": 2,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "1*(4*(t >> 5) + 64*(t & 1)) + 48",
+      "access_width_bytes": 4,
+      "participation": "lane < 2",
+      "ownership": "injective writes under stated participation",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G05",
+        "P23-baseline_9x.MKG9f1PB-G08"
+      ]
+    },
+    {
+      "pc": "0x1dc50",
+      "instruction": "@!P2 LDS R177, [R15.X4]",
+      "locations": [
+        "standard.py:291"
+      ],
+      "occurrences": 1,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "4*(t) + 0",
+      "access_width_bytes": 4,
+      "participation": "see enclosing path and instruction predicate",
+      "ownership": "reader address; producer/lifetime must be paired by dynamic epoch",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G08"
+      ]
+    },
+    {
+      "pc": "0x1dcb0",
+      "instruction": "@!P2 STS [R15.X4], R6",
+      "locations": [
+        "standard.py:291"
+      ],
+      "occurrences": 1,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "4*(t) + 0",
+      "access_width_bytes": 4,
+      "participation": "t < 32",
+      "ownership": "injective writes under stated participation",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G05"
+      ]
+    },
+    {
+      "pc": "0x1dd00",
+      "instruction": "LDS R5, [R150]",
+      "locations": [
+        "standard.py:291"
+      ],
+      "occurrences": 4,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "1*(64*(t & 1)) + 0",
+      "access_width_bytes": 4,
+      "participation": "see enclosing path and instruction predicate",
+      "ownership": "reader address; producer/lifetime must be paired by dynamic epoch",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G02",
+        "P23-baseline_9x.MKG9f1PB-G03",
+        "P23-baseline_9x.MKG9f1PB-G23",
+        "P23-baseline_9x.MKG9f1PB-G30"
+      ]
+    },
+    {
+      "pc": "0x1dd20",
+      "instruction": "LDS R7, [R150+0x10]",
+      "locations": [
+        "standard.py:291"
+      ],
+      "occurrences": 2,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "1*(64*(t & 1)) + 16",
+      "access_width_bytes": 4,
+      "participation": "see enclosing path and instruction predicate",
+      "ownership": "reader address; producer/lifetime must be paired by dynamic epoch",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G02",
+        "P23-baseline_9x.MKG9f1PB-G03"
+      ]
+    },
+    {
+      "pc": "0x1dd30",
+      "instruction": "LDS R16, [R150+0x20]",
+      "locations": [
+        "standard.py:291"
+      ],
+      "occurrences": 1,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "1*(64*(t & 1)) + 32",
+      "access_width_bytes": 4,
+      "participation": "see enclosing path and instruction predicate",
+      "ownership": "reader address; producer/lifetime must be paired by dynamic epoch",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G02"
+      ]
+    },
+    {
+      "pc": "0x1dd40",
+      "instruction": "LDS R17, [R150+0x30]",
+      "locations": [
+        "standard.py:291"
+      ],
+      "occurrences": 1,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "1*(64*(t & 1)) + 48",
+      "access_width_bytes": 4,
+      "participation": "see enclosing path and instruction predicate",
+      "ownership": "reader address; producer/lifetime must be paired by dynamic epoch",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G02"
+      ]
+    },
+    {
+      "pc": "0x1de90",
+      "instruction": "STS.128 [R146], R4",
+      "locations": [
+        "kernels.py:151"
+      ],
+      "occurrences": 3,
+      "phase": "read-pass denom/scale broadcast / output layout",
+      "address_bytes": "1*(16*(t & 1)) + 0",
+      "access_width_bytes": 16,
+      "participation": "see enclosing path; no additional store predicate",
+      "ownership": "conditional nonunique-writer witness",
+      "duplicate_byte_count": 32,
+      "duplicate_example": [
+        "0",
+        [
+          0,
+          2,
+          4,
+          6,
+          8,
+          10,
+          12,
+          14,
+          16,
+          18,
+          20,
+          22,
+          24,
+          26,
+          28,
+          30,
+          32,
+          34,
+          36,
+          38,
+          40,
+          42,
+          44,
+          46,
+          48,
+          50,
+          52,
+          54,
+          56,
+          58,
+          60,
+          62,
+          64,
+          66,
+          68,
+          70,
+          72,
+          74,
+          76,
+          78,
+          80,
+          82,
+          84,
+          86,
+          88,
+          90,
+          92,
+          94,
+          96,
+          98,
+          100,
+          102,
+          104,
+          106,
+          108,
+          110,
+          112,
+          114,
+          116,
+          118,
+          120,
+          122,
+          124,
+          126
+        ]
+      ],
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G02",
+        "P23-baseline_9x.MKG9f1PB-G03"
+      ]
+    },
+    {
+      "pc": "0x1deb0",
+      "instruction": "LDSM.16.M88 R19, [R155]",
+      "locations": [
+        "kernels.py:151"
+      ],
+      "occurrences": 5,
+      "phase": "read-pass denom/scale broadcast / output layout",
+      "address_bytes": "1*(16*(t & 1)) + 0",
+      "access_width_bytes": null,
+      "participation": "see enclosing path and instruction predicate",
+      "ownership": "collective matrix read; address operand is not the per-thread footprint",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G01",
+        "P23-baseline_9x.MKG9f1PB-G02",
+        "P23-baseline_9x.MKG9f1PB-G03",
+        "P23-baseline_9x.MKG9f1PB-G07",
+        "P23-baseline_9x.MKG9f1PB-G20"
+      ]
+    },
+    {
+      "pc": "0x20ad0",
+      "instruction": "@!P0 STS [R154.X4], R37",
+      "locations": [
+        "standard.py:291"
+      ],
+      "occurrences": 3,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "4*(t >> 5) + 0",
+      "access_width_bytes": 4,
+      "participation": "lane == 0",
+      "ownership": "injective writes under stated participation",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G03",
+        "P23-baseline_9x.MKG9f1PB-G20",
+        "P23-baseline_9x.MKG9f1PB-G25"
+      ]
+    },
+    {
+      "pc": "0x20af0",
+      "instruction": "@!P5 LDS R178, [R15.X4]",
+      "locations": [
+        "standard.py:291"
+      ],
+      "occurrences": 1,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "4*(t) + 0",
+      "access_width_bytes": 4,
+      "participation": "see enclosing path and instruction predicate",
+      "ownership": "reader address; producer/lifetime must be paired by dynamic epoch",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G25"
+      ]
+    },
+    {
+      "pc": "0x20b40",
+      "instruction": "@!P1 STS [R15.X4], R38",
+      "locations": [
+        "standard.py:291"
+      ],
+      "occurrences": 1,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "4*(t) + 0",
+      "access_width_bytes": 4,
+      "participation": "t == 0",
+      "ownership": "injective writes under stated participation",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G20"
+      ]
+    },
+    {
+      "pc": "0x20b60",
+      "instruction": "LDS R36, [RZ]",
+      "locations": [
+        "standard.py:291"
+      ],
+      "occurrences": 2,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "1*(0) + 0",
+      "access_width_bytes": 4,
+      "participation": "see enclosing path and instruction predicate",
+      "ownership": "reader address; producer/lifetime must be paired by dynamic epoch",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G23",
+        "P23-baseline_9x.MKG9f1PB-G26"
+      ]
+    },
+    {
+      "pc": "0x23cd0",
+      "instruction": "@!P0 STS [R154.X4], R23",
+      "locations": [
+        "standard.py:291"
+      ],
+      "occurrences": 4,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "4*(t >> 5) + 0",
+      "access_width_bytes": 4,
+      "participation": "lane == 0",
+      "ownership": "injective writes under stated participation",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G03",
+        "P23-baseline_9x.MKG9f1PB-G06",
+        "P23-baseline_9x.MKG9f1PB-G20",
+        "P23-baseline_9x.MKG9f1PB-G26"
+      ]
+    },
+    {
+      "pc": "0x23cf0",
+      "instruction": "@!P5 LDS R179, [R15.X4]",
+      "locations": [
+        "standard.py:291"
+      ],
+      "occurrences": 2,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "4*(t) + 0",
+      "access_width_bytes": 4,
+      "participation": "see enclosing path and instruction predicate",
+      "ownership": "reader address; producer/lifetime must be paired by dynamic epoch",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G25",
+        "P23-baseline_9x.MKG9f1PB-G26"
+      ]
+    },
+    {
+      "pc": "0x23e60",
+      "instruction": "LDS R16, [RZ]",
+      "locations": [
+        "standard.py:291"
+      ],
+      "occurrences": 4,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "1*(0) + 0",
+      "access_width_bytes": 4,
+      "participation": "see enclosing path and instruction predicate",
+      "ownership": "reader address; producer/lifetime must be paired by dynamic epoch",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G06",
+        "P23-baseline_9x.MKG9f1PB-G15",
+        "P23-baseline_9x.MKG9f1PB-G23",
+        "P23-baseline_9x.MKG9f1PB-G28"
+      ]
+    },
+    {
+      "pc": "0x23eb0",
+      "instruction": "@!P0 STS [R154.X4], R5",
+      "locations": [
+        "standard.py:291"
+      ],
+      "occurrences": 2,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "4*(t >> 5) + 0",
+      "access_width_bytes": 4,
+      "participation": "lane == 0",
+      "ownership": "injective writes under stated participation",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G15",
+        "P23-baseline_9x.MKG9f1PB-G23"
+      ]
+    },
+    {
+      "pc": "0x23ef0",
+      "instruction": "@!P2 LDS R182, [R15.X4]",
+      "locations": [
+        "standard.py:291"
+      ],
+      "occurrences": 1,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "4*(t) + 0",
+      "access_width_bytes": 4,
+      "participation": "see enclosing path and instruction predicate",
+      "ownership": "reader address; producer/lifetime must be paired by dynamic epoch",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G03"
+      ]
+    },
+    {
+      "pc": "0x24010",
+      "instruction": "@!P1 STS [R15.X4], R184",
+      "locations": [
+        "standard.py:291"
+      ],
+      "occurrences": 2,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "4*(t) + 0",
+      "access_width_bytes": 4,
+      "participation": "t == 0",
+      "ownership": "injective writes under stated participation",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G03",
+        "P23-baseline_9x.MKG9f1PB-G28"
+      ]
+    },
+    {
+      "pc": "0x240b0",
+      "instruction": "LDS R4, [RZ]",
+      "locations": [
+        "standard.py:291"
+      ],
+      "occurrences": 1,
+      "phase": "reduction exchange (operation/callsite needs PTX location context)",
+      "address_bytes": "1*(0) + 0",
+      "access_width_bytes": 4,
+      "participation": "see enclosing path and instruction predicate",
+      "ownership": "reader address; producer/lifetime must be paired by dynamic epoch",
+      "duplicate_byte_count": 0,
+      "duplicate_example": null,
+      "lifetime_status": "not globally proved; no repair authorized by this ledger",
+      "groups": [
+        "P23-baseline_9x.MKG9f1PB-G03"
+      ]
+    }
+  ],
+  "endpoints": [
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G01",
+      "occurrence": 0,
+      "access": "Write",
+      "pc": "0x1d860",
+      "location": "kernels.py:150",
+      "sass": "STS [R2.X4], R23",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G01",
+      "occurrence": 1,
+      "access": "Read",
+      "pc": "0x1d390",
+      "location": "standard.py:248 [4 hazards]",
+      "sass": "LDS R19, [RZ]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G01",
+      "occurrence": 2,
+      "access": "Write",
+      "pc": "0x1d4e0",
+      "location": "standard.py:189 [64 hazards]",
+      "sass": "@!P0 STS [R154.X4], R7",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G01",
+      "occurrence": 3,
+      "access": "Read",
+      "pc": "0x1d7b0",
+      "location": "kernels.py:149 [1024 hazards]",
+      "sass": "LDS R7, [R151+0x100]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G01",
+      "occurrence": 4,
+      "access": "Read",
+      "pc": "0x1d7c0",
+      "location": "kernels.py:149 [1024 hazards]",
+      "sass": "LDS R6, [R151]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G01",
+      "occurrence": 5,
+      "access": "Read",
+      "pc": "0x1d890",
+      "location": "kernels.py:150 [2048 hazards]",
+      "sass": "LDS R22, [R151]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G01",
+      "occurrence": 6,
+      "access": "Read",
+      "pc": "0x1deb0",
+      "location": "kernels.py:151 [928 hazards]",
+      "sass": "LDSM.16.M88 R19, [R155]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G02",
+      "occurrence": 0,
+      "access": "Write",
+      "pc": "0x1d780",
+      "location": "kernels.py:149",
+      "sass": "STS [R2.X4], R16",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G02",
+      "occurrence": 1,
+      "access": "Read",
+      "pc": "0x1d280",
+      "location": "standard.py:189 [8 hazards]",
+      "sass": "LDS R6, [RZ]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G02",
+      "occurrence": 2,
+      "access": "Write",
+      "pc": "0x1d2f0",
+      "location": "standard.py:248 [6 hazards]",
+      "sass": "@!P0 STS [R154.X4], R21",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G02",
+      "occurrence": 3,
+      "access": "Read",
+      "pc": "0x1d760",
+      "location": "standard.py:291 [60 hazards]",
+      "sass": "LDS R12, [RZ]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G02",
+      "occurrence": 4,
+      "access": "Read",
+      "pc": "0x1d7c0",
+      "location": "kernels.py:149 [2048 hazards]",
+      "sass": "LDS R6, [R151]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G02",
+      "occurrence": 5,
+      "access": "Read",
+      "pc": "0x1dd00",
+      "location": "standard.py:291 [248 hazards]",
+      "sass": "LDS R5, [R150]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G02",
+      "occurrence": 6,
+      "access": "Read",
+      "pc": "0x1dd20",
+      "location": "standard.py:291 [240 hazards]",
+      "sass": "LDS R7, [R150+0x10]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G02",
+      "occurrence": 7,
+      "access": "Read",
+      "pc": "0x1dd30",
+      "location": "standard.py:291 [240 hazards]",
+      "sass": "LDS R16, [R150+0x20]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G02",
+      "occurrence": 8,
+      "access": "Read",
+      "pc": "0x1dd40",
+      "location": "standard.py:291 [240 hazards]",
+      "sass": "LDS R17, [R150+0x30]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G02",
+      "occurrence": 9,
+      "access": "Write",
+      "pc": "0x1de90",
+      "location": "kernels.py:151 [456 hazards]",
+      "sass": "STS.128 [R146], R4",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G02",
+      "occurrence": 10,
+      "access": "Read",
+      "pc": "0x1deb0",
+      "location": "kernels.py:151 [480 hazards]",
+      "sass": "LDSM.16.M88 R19, [R155]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G03",
+      "occurrence": 0,
+      "access": "Write",
+      "pc": "0x1de90",
+      "location": "kernels.py:151",
+      "sass": "STS.128 [R146], R4",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G03",
+      "occurrence": 1,
+      "access": "Write",
+      "pc": "0x1d6c0",
+      "location": "standard.py:291 [108 hazards]",
+      "sass": "@!P0 STS [R154.X4], R17",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G03",
+      "occurrence": 2,
+      "access": "Read",
+      "pc": "0x1d760",
+      "location": "standard.py:291 [124 hazards]",
+      "sass": "LDS R12, [RZ]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G03",
+      "occurrence": 3,
+      "access": "Read",
+      "pc": "0x1d7c0",
+      "location": "kernels.py:149 [960 hazards]",
+      "sass": "LDS R6, [R151]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G03",
+      "occurrence": 4,
+      "access": "Read",
+      "pc": "0x1dd00",
+      "location": "standard.py:291 [68 hazards]",
+      "sass": "LDS R5, [R150]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G03",
+      "occurrence": 5,
+      "access": "Read",
+      "pc": "0x1dd20",
+      "location": "standard.py:291 [64 hazards]",
+      "sass": "LDS R7, [R150+0x10]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G03",
+      "occurrence": 6,
+      "access": "Write",
+      "pc": "0x1de90",
+      "location": "kernels.py:151 [32 hazards]",
+      "sass": "STS.128 [R146], R4",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G03",
+      "occurrence": 7,
+      "access": "Read",
+      "pc": "0x1deb0",
+      "location": "kernels.py:151 [544 hazards]",
+      "sass": "LDSM.16.M88 R19, [R155]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G03",
+      "occurrence": 8,
+      "access": "Write",
+      "pc": "0x20ad0",
+      "location": "standard.py:291 [36 hazards]",
+      "sass": "@!P0 STS [R154.X4], R37",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G03",
+      "occurrence": 9,
+      "access": "Write",
+      "pc": "0x23cd0",
+      "location": "standard.py:291 [12 hazards]",
+      "sass": "@!P0 STS [R154.X4], R23",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G03",
+      "occurrence": 10,
+      "access": "Read",
+      "pc": "0x23ef0",
+      "location": "standard.py:291 [12 hazards]",
+      "sass": "@!P2 LDS R182, [R15.X4]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G03",
+      "occurrence": 11,
+      "access": "Write",
+      "pc": "0x24010",
+      "location": "standard.py:291 [4 hazards]",
+      "sass": "@!P1 STS [R15.X4], R184",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G03",
+      "occurrence": 12,
+      "access": "Read",
+      "pc": "0x240b0",
+      "location": "standard.py:291 [4 hazards]",
+      "sass": "LDS R4, [RZ]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G04",
+      "occurrence": 0,
+      "access": "Write",
+      "pc": "0x1caa0",
+      "location": "kernels.py:120",
+      "sass": "STS.128 [R162.X16], R4",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G04",
+      "occurrence": 1,
+      "access": "Write",
+      "pc": "0x1b180",
+      "location": "standard.py:189 [39 hazards]",
+      "sass": "@!P0 STS [R154.X4], R17",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G04",
+      "occurrence": 2,
+      "access": "Read",
+      "pc": "0x1b1a0",
+      "location": "standard.py:189 [32 hazards]",
+      "sass": "@!P5 LDS R166, [R15.X4]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G04",
+      "occurrence": 3,
+      "access": "Read",
+      "pc": "0x1b260",
+      "location": "standard.py:189 [8 hazards]",
+      "sass": "LDS R192, [RZ]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G04",
+      "occurrence": 4,
+      "access": "Read",
+      "pc": "0x1c790",
+      "location": "standard.py:291 [1024 hazards]",
+      "sass": "LDS R4, [R15.X4]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G04",
+      "occurrence": 5,
+      "access": "Write",
+      "pc": "0x1c8b0",
+      "location": "standard.py:291 [107 hazards]",
+      "sass": "@!P2 STS [R15.X4], R16",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G04",
+      "occurrence": 6,
+      "access": "Read",
+      "pc": "0x1c9d0",
+      "location": "standard.py:291 [32 hazards]",
+      "sass": "LDS R4, [R149]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G04",
+      "occurrence": 7,
+      "access": "Read",
+      "pc": "0x1ca00",
+      "location": "standard.py:291 [32 hazards]",
+      "sass": "LDS R5, [R149+0x10]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G04",
+      "occurrence": 8,
+      "access": "Read",
+      "pc": "0x1ca30",
+      "location": "standard.py:291 [32 hazards]",
+      "sass": "LDS R6, [R149+0x20]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G04",
+      "occurrence": 9,
+      "access": "Read",
+      "pc": "0x1ca50",
+      "location": "standard.py:291 [32 hazards]",
+      "sass": "LDS R7, [R149+0x30]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G04",
+      "occurrence": 10,
+      "access": "Read",
+      "pc": "0x1cb00",
+      "location": "kernels.py:120 [384 hazards]",
+      "sass": "LDSM.16.M88 R17, [R156]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G04",
+      "occurrence": 11,
+      "access": "Write",
+      "pc": "0x1cb60",
+      "location": "standard.py:248 [36 hazards]",
+      "sass": "@!P0 STS [R154.X4], R19",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G04",
+      "occurrence": 12,
+      "access": "Write",
+      "pc": "0x1d1f0",
+      "location": "standard.py:189 [24 hazards]",
+      "sass": "@!P0 STS [R154.X4], R19",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G05",
+      "occurrence": 0,
+      "access": "Read",
+      "pc": "0x1d890",
+      "location": "kernels.py:150",
+      "sass": "LDS R22, [R151]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G05",
+      "occurrence": 1,
+      "access": "Write",
+      "pc": "0x1d4e0",
+      "location": "standard.py:189 [128 hazards]",
+      "sass": "@!P0 STS [R154.X4], R7",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G05",
+      "occurrence": 2,
+      "access": "Write",
+      "pc": "0x1db70",
+      "location": "standard.py:291 [192 hazards]",
+      "sass": "STS [R138], R21",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G05",
+      "occurrence": 3,
+      "access": "Write",
+      "pc": "0x1db80",
+      "location": "standard.py:291 [192 hazards]",
+      "sass": "STS [R138+0x10], R23",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G05",
+      "occurrence": 4,
+      "access": "Write",
+      "pc": "0x1dbe0",
+      "location": "standard.py:291 [192 hazards]",
+      "sass": "STS [R138+0x20], R17",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G05",
+      "occurrence": 5,
+      "access": "Write",
+      "pc": "0x1dbf0",
+      "location": "standard.py:291 [192 hazards]",
+      "sass": "@!P4 STS [R138+0x30], R19",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G05",
+      "occurrence": 6,
+      "access": "Write",
+      "pc": "0x1dcb0",
+      "location": "standard.py:291 [768 hazards]",
+      "sass": "@!P2 STS [R15.X4], R6",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G06",
+      "occurrence": 0,
+      "access": "Write",
+      "pc": "0x1bc40",
+      "location": "kernels.py:99",
+      "sass": "STS [R163], R18",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G06",
+      "occurrence": 1,
+      "access": "Read",
+      "pc": "0x1b260",
+      "location": "standard.py:189 [4 hazards]",
+      "sass": "LDS R192, [RZ]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G06",
+      "occurrence": 2,
+      "access": "Read",
+      "pc": "0x1c1c0",
+      "location": "kernels.py:99 [96 hazards]",
+      "sass": "LDS.128 R44, [R161]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G06",
+      "occurrence": 3,
+      "access": "Write",
+      "pc": "0x1c320",
+      "location": "kernels.py:119 [175 hazards]",
+      "sass": "STS.128 [R161], R52",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G06",
+      "occurrence": 4,
+      "access": "Read",
+      "pc": "0x1cb00",
+      "location": "kernels.py:120 [256 hazards]",
+      "sass": "LDSM.16.M88 R17, [R156]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G06",
+      "occurrence": 5,
+      "access": "Write",
+      "pc": "0x1cb60",
+      "location": "standard.py:248 [48 hazards]",
+      "sass": "@!P0 STS [R154.X4], R19",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G06",
+      "occurrence": 6,
+      "access": "Read",
+      "pc": "0x1cb90",
+      "location": "standard.py:248 [64 hazards]",
+      "sass": "@!P3 LDS R168, [R15.X4]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G06",
+      "occurrence": 7,
+      "access": "Read",
+      "pc": "0x1cc10",
+      "location": "standard.py:248 [4 hazards]",
+      "sass": "LDS R11, [RZ]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G06",
+      "occurrence": 8,
+      "access": "Write",
+      "pc": "0x23cd0",
+      "location": "standard.py:291 [12 hazards]",
+      "sass": "@!P0 STS [R154.X4], R23",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G06",
+      "occurrence": 9,
+      "access": "Read",
+      "pc": "0x23e60",
+      "location": "standard.py:291 [4 hazards]",
+      "sass": "LDS R16, [RZ]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G07",
+      "occurrence": 0,
+      "access": "Write",
+      "pc": "0x1d4e0",
+      "location": "standard.py:189",
+      "sass": "@!P0 STS [R154.X4], R7",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G07",
+      "occurrence": 1,
+      "access": "Read",
+      "pc": "0x1cd00",
+      "location": "standard.py:291 [8 hazards]",
+      "sass": "LDS R13, [RZ]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G07",
+      "occurrence": 2,
+      "access": "Read",
+      "pc": "0x1d390",
+      "location": "standard.py:248 [4 hazards]",
+      "sass": "LDS R19, [RZ]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G07",
+      "occurrence": 3,
+      "access": "Read",
+      "pc": "0x1d510",
+      "location": "standard.py:189 [60 hazards]",
+      "sass": "@!P3 LDS R175, [R15.X4]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G07",
+      "occurrence": 4,
+      "access": "Read",
+      "pc": "0x1deb0",
+      "location": "kernels.py:151 [532 hazards]",
+      "sass": "LDSM.16.M88 R19, [R155]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G08",
+      "occurrence": 0,
+      "access": "Read",
+      "pc": "0x1dc50",
+      "location": "standard.py:291",
+      "sass": "@!P2 LDS R177, [R15.X4]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G08",
+      "occurrence": 1,
+      "access": "Write",
+      "pc": "0x1d6c0",
+      "location": "standard.py:291 [64 hazards]",
+      "sass": "@!P0 STS [R154.X4], R17",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G08",
+      "occurrence": 2,
+      "access": "Write",
+      "pc": "0x1db70",
+      "location": "standard.py:291 [128 hazards]",
+      "sass": "STS [R138], R21",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G08",
+      "occurrence": 3,
+      "access": "Write",
+      "pc": "0x1db80",
+      "location": "standard.py:291 [128 hazards]",
+      "sass": "STS [R138+0x10], R23",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G08",
+      "occurrence": 4,
+      "access": "Write",
+      "pc": "0x1dbe0",
+      "location": "standard.py:291 [128 hazards]",
+      "sass": "STS [R138+0x20], R17",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G08",
+      "occurrence": 5,
+      "access": "Write",
+      "pc": "0x1dbf0",
+      "location": "standard.py:291 [128 hazards]",
+      "sass": "@!P4 STS [R138+0x30], R19",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G09",
+      "occurrence": 0,
+      "access": "Write",
+      "pc": "0x1c760",
+      "location": "standard.py:291",
+      "sass": "STS [R137+0x20], R42",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G09",
+      "occurrence": 1,
+      "access": "Write",
+      "pc": "0x1c320",
+      "location": "kernels.py:119 [24 hazards]",
+      "sass": "STS.128 [R161], R52",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G09",
+      "occurrence": 2,
+      "access": "Read",
+      "pc": "0x1c790",
+      "location": "standard.py:291 [24 hazards]",
+      "sass": "LDS R4, [R15.X4]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G09",
+      "occurrence": 3,
+      "access": "Read",
+      "pc": "0x1c7b0",
+      "location": "standard.py:291 [24 hazards]",
+      "sass": "LDS R19, [R15.X4+0x400]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G09",
+      "occurrence": 4,
+      "access": "Read",
+      "pc": "0x1c7c0",
+      "location": "standard.py:291 [24 hazards]",
+      "sass": "LDS R22, [R15.X4+0x600]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G09",
+      "occurrence": 5,
+      "access": "Read",
+      "pc": "0x1d7b0",
+      "location": "kernels.py:149 [64 hazards]",
+      "sass": "LDS R7, [R151+0x100]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G09",
+      "occurrence": 6,
+      "access": "Read",
+      "pc": "0x1d7c0",
+      "location": "kernels.py:149 [48 hazards]",
+      "sass": "LDS R6, [R151]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G10",
+      "occurrence": 0,
+      "access": "Write",
+      "pc": "0x1c770",
+      "location": "standard.py:291",
+      "sass": "STS [R137+0x30], R48",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G10",
+      "occurrence": 1,
+      "access": "Write",
+      "pc": "0x1c320",
+      "location": "kernels.py:119 [23 hazards]",
+      "sass": "STS.128 [R161], R52",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G10",
+      "occurrence": 2,
+      "access": "Read",
+      "pc": "0x1c790",
+      "location": "standard.py:291 [24 hazards]",
+      "sass": "LDS R4, [R15.X4]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G10",
+      "occurrence": 3,
+      "access": "Read",
+      "pc": "0x1c7b0",
+      "location": "standard.py:291 [24 hazards]",
+      "sass": "LDS R19, [R15.X4+0x400]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G10",
+      "occurrence": 4,
+      "access": "Read",
+      "pc": "0x1c7c0",
+      "location": "standard.py:291 [24 hazards]",
+      "sass": "LDS R22, [R15.X4+0x600]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G10",
+      "occurrence": 5,
+      "access": "Read",
+      "pc": "0x1d7b0",
+      "location": "kernels.py:149 [64 hazards]",
+      "sass": "LDS R7, [R151+0x100]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G10",
+      "occurrence": 6,
+      "access": "Read",
+      "pc": "0x1d7c0",
+      "location": "kernels.py:149 [48 hazards]",
+      "sass": "LDS R6, [R151]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G11",
+      "occurrence": 0,
+      "access": "Write",
+      "pc": "0x1c750",
+      "location": "standard.py:291",
+      "sass": "STS [R137+0x10], R44",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G11",
+      "occurrence": 1,
+      "access": "Read",
+      "pc": "0x1c350",
+      "location": "kernels.py:119 [12 hazards]",
+      "sass": "LDS.128 R44, [R159]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G11",
+      "occurrence": 2,
+      "access": "Read",
+      "pc": "0x1c360",
+      "location": "kernels.py:119 [12 hazards]",
+      "sass": "LDS.128 R48, [R159+0x40]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G11",
+      "occurrence": 3,
+      "access": "Read",
+      "pc": "0x1c790",
+      "location": "standard.py:291 [24 hazards]",
+      "sass": "LDS R4, [R15.X4]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G11",
+      "occurrence": 4,
+      "access": "Read",
+      "pc": "0x1c7a0",
+      "location": "standard.py:291 [24 hazards]",
+      "sass": "LDS R7, [R15.X4+0x200]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G11",
+      "occurrence": 5,
+      "access": "Read",
+      "pc": "0x1c7b0",
+      "location": "standard.py:291 [24 hazards]",
+      "sass": "LDS R19, [R15.X4+0x400]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G11",
+      "occurrence": 6,
+      "access": "Read",
+      "pc": "0x1c7c0",
+      "location": "standard.py:291 [24 hazards]",
+      "sass": "LDS R22, [R15.X4+0x600]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G11",
+      "occurrence": 7,
+      "access": "Read",
+      "pc": "0x1d7b0",
+      "location": "kernels.py:149 [16 hazards]",
+      "sass": "LDS R7, [R151+0x100]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G11",
+      "occurrence": 8,
+      "access": "Read",
+      "pc": "0x1d7c0",
+      "location": "kernels.py:149 [12 hazards]",
+      "sass": "LDS R6, [R151]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G12",
+      "occurrence": 0,
+      "access": "Read",
+      "pc": "0x1d580",
+      "location": "standard.py:189",
+      "sass": "LDS R12, [RZ]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G12",
+      "occurrence": 1,
+      "access": "Write",
+      "pc": "0x1d6c0",
+      "location": "standard.py:291 [60 hazards]",
+      "sass": "@!P0 STS [R154.X4], R17",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G12",
+      "occurrence": 2,
+      "access": "Write",
+      "pc": "0x1db70",
+      "location": "standard.py:291 [64 hazards]",
+      "sass": "STS [R138], R21",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G13",
+      "occurrence": 0,
+      "access": "Write",
+      "pc": "0x1c740",
+      "location": "standard.py:291",
+      "sass": "STS [R137], R40",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G13",
+      "occurrence": 1,
+      "access": "Read",
+      "pc": "0x1c790",
+      "location": "standard.py:291 [24 hazards]",
+      "sass": "LDS R4, [R15.X4]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G13",
+      "occurrence": 2,
+      "access": "Read",
+      "pc": "0x1c7a0",
+      "location": "standard.py:291 [24 hazards]",
+      "sass": "LDS R7, [R15.X4+0x200]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G13",
+      "occurrence": 3,
+      "access": "Read",
+      "pc": "0x1c7b0",
+      "location": "standard.py:291 [24 hazards]",
+      "sass": "LDS R19, [R15.X4+0x400]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G13",
+      "occurrence": 4,
+      "access": "Read",
+      "pc": "0x1c7c0",
+      "location": "standard.py:291 [24 hazards]",
+      "sass": "LDS R22, [R15.X4+0x600]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G13",
+      "occurrence": 5,
+      "access": "Read",
+      "pc": "0x1cd00",
+      "location": "standard.py:291 [8 hazards]",
+      "sass": "LDS R13, [RZ]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G14",
+      "occurrence": 0,
+      "access": "Read",
+      "pc": "0x1d6e0",
+      "location": "standard.py:291",
+      "sass": "@!P3 LDS R176, [R15.X4]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G14",
+      "occurrence": 1,
+      "access": "Write",
+      "pc": "0x1d1f0",
+      "location": "standard.py:189 [4 hazards]",
+      "sass": "@!P0 STS [R154.X4], R19",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G14",
+      "occurrence": 2,
+      "access": "Write",
+      "pc": "0x1d6c0",
+      "location": "standard.py:291 [64 hazards]",
+      "sass": "@!P0 STS [R154.X4], R17",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G14",
+      "occurrence": 3,
+      "access": "Write",
+      "pc": "0x1db70",
+      "location": "standard.py:291 [4 hazards]",
+      "sass": "STS [R138], R21",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G15",
+      "occurrence": 0,
+      "access": "Write",
+      "pc": "0x1c320",
+      "location": "kernels.py:119",
+      "sass": "STS.128 [R161], R52",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G15",
+      "occurrence": 1,
+      "access": "Read",
+      "pc": "0x1c350",
+      "location": "kernels.py:119 [32 hazards]",
+      "sass": "LDS.128 R44, [R159]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G15",
+      "occurrence": 2,
+      "access": "Read",
+      "pc": "0x1cc10",
+      "location": "standard.py:248 [8 hazards]",
+      "sass": "LDS R11, [RZ]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G15",
+      "occurrence": 3,
+      "access": "Write",
+      "pc": "0x1cc60",
+      "location": "standard.py:291 [8 hazards]",
+      "sass": "@!P0 STS [R154.X4], R19",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G15",
+      "occurrence": 4,
+      "access": "Read",
+      "pc": "0x23e60",
+      "location": "standard.py:291 [8 hazards]",
+      "sass": "LDS R16, [RZ]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G15",
+      "occurrence": 5,
+      "access": "Write",
+      "pc": "0x23eb0",
+      "location": "standard.py:291 [8 hazards]",
+      "sass": "@!P0 STS [R154.X4], R5",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G16",
+      "occurrence": 0,
+      "access": "Write",
+      "pc": "0x1c8b0",
+      "location": "standard.py:291",
+      "sass": "@!P2 STS [R15.X4], R16",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G16",
+      "occurrence": 1,
+      "access": "Read",
+      "pc": "0x1c360",
+      "location": "kernels.py:119 [16 hazards]",
+      "sass": "LDS.128 R48, [R159+0x40]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G16",
+      "occurrence": 2,
+      "access": "Read",
+      "pc": "0x1c9d0",
+      "location": "standard.py:291 [8 hazards]",
+      "sass": "LDS R4, [R149]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G16",
+      "occurrence": 3,
+      "access": "Read",
+      "pc": "0x1ca00",
+      "location": "standard.py:291 [8 hazards]",
+      "sass": "LDS R5, [R149+0x10]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G16",
+      "occurrence": 4,
+      "access": "Read",
+      "pc": "0x1ca30",
+      "location": "standard.py:291 [8 hazards]",
+      "sass": "LDS R6, [R149+0x20]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G16",
+      "occurrence": 5,
+      "access": "Read",
+      "pc": "0x1ca50",
+      "location": "standard.py:291 [8 hazards]",
+      "sass": "LDS R7, [R149+0x30]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G16",
+      "occurrence": 6,
+      "access": "Read",
+      "pc": "0x1cd00",
+      "location": "standard.py:291 [4 hazards]",
+      "sass": "LDS R13, [RZ]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G17",
+      "occurrence": 0,
+      "access": "Write",
+      "pc": "0x1cb60",
+      "location": "standard.py:248",
+      "sass": "@!P0 STS [R154.X4], R19",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G17",
+      "occurrence": 1,
+      "access": "Read",
+      "pc": "0x1b1a0",
+      "location": "standard.py:189 [4 hazards]",
+      "sass": "@!P5 LDS R166, [R15.X4]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G17",
+      "occurrence": 2,
+      "access": "Read",
+      "pc": "0x1b260",
+      "location": "standard.py:189 [16 hazards]",
+      "sass": "LDS R192, [RZ]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G17",
+      "occurrence": 3,
+      "access": "Read",
+      "pc": "0x1cb90",
+      "location": "standard.py:248 [4 hazards]",
+      "sass": "@!P3 LDS R168, [R15.X4]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G17",
+      "occurrence": 4,
+      "access": "Read",
+      "pc": "0x1d210",
+      "location": "standard.py:189 [8 hazards]",
+      "sass": "@!P3 LDS R172, [R15.X4]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G18",
+      "occurrence": 0,
+      "access": "Write",
+      "pc": "0x1b180",
+      "location": "standard.py:189",
+      "sass": "@!P0 STS [R154.X4], R17",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G18",
+      "occurrence": 1,
+      "access": "Read",
+      "pc": "0x1b1a0",
+      "location": "standard.py:189 [4 hazards]",
+      "sass": "@!P5 LDS R166, [R15.X4]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G18",
+      "occurrence": 2,
+      "access": "Read",
+      "pc": "0x1c790",
+      "location": "standard.py:291 [8 hazards]",
+      "sass": "LDS R4, [R15.X4]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G18",
+      "occurrence": 3,
+      "access": "Read",
+      "pc": "0x1c9d0",
+      "location": "standard.py:291 [8 hazards]",
+      "sass": "LDS R4, [R149]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G18",
+      "occurrence": 4,
+      "access": "Read",
+      "pc": "0x1cd00",
+      "location": "standard.py:291 [8 hazards]",
+      "sass": "LDS R13, [RZ]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G19",
+      "occurrence": 0,
+      "access": "Write",
+      "pc": "0x1cc60",
+      "location": "standard.py:291",
+      "sass": "@!P0 STS [R154.X4], R19",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G19",
+      "occurrence": 1,
+      "access": "Read",
+      "pc": "0x1c1c0",
+      "location": "kernels.py:99 [4 hazards]",
+      "sass": "LDS.128 R44, [R161]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G19",
+      "occurrence": 2,
+      "access": "Read",
+      "pc": "0x1c350",
+      "location": "kernels.py:119 [8 hazards]",
+      "sass": "LDS.128 R44, [R159]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G19",
+      "occurrence": 3,
+      "access": "Read",
+      "pc": "0x1cc10",
+      "location": "standard.py:248 [4 hazards]",
+      "sass": "LDS R11, [RZ]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G19",
+      "occurrence": 4,
+      "access": "Read",
+      "pc": "0x1cc80",
+      "location": "standard.py:291 [4 hazards]",
+      "sass": "@!P3 LDS R170, [R15.X4]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G19",
+      "occurrence": 5,
+      "access": "Read",
+      "pc": "0x1d310",
+      "location": "standard.py:248 [8 hazards]",
+      "sass": "@!P3 LDS R174, [R15.X4]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G20",
+      "occurrence": 0,
+      "access": "Read",
+      "pc": "0x1deb0",
+      "location": "kernels.py:151",
+      "sass": "LDSM.16.M88 R19, [R155]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G20",
+      "occurrence": 1,
+      "access": "Write",
+      "pc": "0x20ad0",
+      "location": "standard.py:291 [12 hazards]",
+      "sass": "@!P0 STS [R154.X4], R37",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G20",
+      "occurrence": 2,
+      "access": "Write",
+      "pc": "0x20b40",
+      "location": "standard.py:291 [4 hazards]",
+      "sass": "@!P1 STS [R15.X4], R38",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G20",
+      "occurrence": 3,
+      "access": "Write",
+      "pc": "0x23cd0",
+      "location": "standard.py:291 [12 hazards]",
+      "sass": "@!P0 STS [R154.X4], R23",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G21",
+      "occurrence": 0,
+      "access": "Write",
+      "pc": "0x1c8d0",
+      "location": "standard.py:291",
+      "sass": "@!P2 STS [R15.X4+0x200], R18",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G21",
+      "occurrence": 1,
+      "access": "Read",
+      "pc": "0x1ca00",
+      "location": "standard.py:291 [8 hazards]",
+      "sass": "LDS R5, [R149+0x10]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G21",
+      "occurrence": 2,
+      "access": "Read",
+      "pc": "0x1ca30",
+      "location": "standard.py:291 [8 hazards]",
+      "sass": "LDS R6, [R149+0x20]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G21",
+      "occurrence": 3,
+      "access": "Read",
+      "pc": "0x1ca50",
+      "location": "standard.py:291 [8 hazards]",
+      "sass": "LDS R7, [R149+0x30]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G22",
+      "occurrence": 0,
+      "access": "Write",
+      "pc": "0x1d2f0",
+      "location": "standard.py:248",
+      "sass": "@!P0 STS [R154.X4], R21",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G22",
+      "occurrence": 1,
+      "access": "Read",
+      "pc": "0x1cc10",
+      "location": "standard.py:248 [8 hazards]",
+      "sass": "LDS R11, [RZ]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G22",
+      "occurrence": 2,
+      "access": "Read",
+      "pc": "0x1d280",
+      "location": "standard.py:189 [4 hazards]",
+      "sass": "LDS R6, [RZ]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G22",
+      "occurrence": 3,
+      "access": "Read",
+      "pc": "0x1d310",
+      "location": "standard.py:248 [4 hazards]",
+      "sass": "@!P3 LDS R174, [R15.X4]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G22",
+      "occurrence": 4,
+      "access": "Read",
+      "pc": "0x1d7c0",
+      "location": "kernels.py:149 [8 hazards]",
+      "sass": "LDS R6, [R151]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G23",
+      "occurrence": 0,
+      "access": "Write",
+      "pc": "0x23eb0",
+      "location": "standard.py:291",
+      "sass": "@!P0 STS [R154.X4], R5",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G23",
+      "occurrence": 1,
+      "access": "Read",
+      "pc": "0x1c1c0",
+      "location": "kernels.py:99 [4 hazards]",
+      "sass": "LDS.128 R44, [R161]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G23",
+      "occurrence": 2,
+      "access": "Read",
+      "pc": "0x1c350",
+      "location": "kernels.py:119 [8 hazards]",
+      "sass": "LDS.128 R44, [R159]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G23",
+      "occurrence": 3,
+      "access": "Read",
+      "pc": "0x1dd00",
+      "location": "standard.py:291 [4 hazards]",
+      "sass": "LDS R5, [R150]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G23",
+      "occurrence": 4,
+      "access": "Read",
+      "pc": "0x20b60",
+      "location": "standard.py:291 [4 hazards]",
+      "sass": "LDS R36, [RZ]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G23",
+      "occurrence": 5,
+      "access": "Read",
+      "pc": "0x23e60",
+      "location": "standard.py:291 [4 hazards]",
+      "sass": "LDS R16, [RZ]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G24",
+      "occurrence": 0,
+      "access": "Write",
+      "pc": "0x1c8f0",
+      "location": "standard.py:291",
+      "sass": "@!P2 STS [R15.X4+0x400], R22",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G24",
+      "occurrence": 1,
+      "access": "Read",
+      "pc": "0x1ca30",
+      "location": "standard.py:291 [8 hazards]",
+      "sass": "LDS R6, [R149+0x20]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G24",
+      "occurrence": 2,
+      "access": "Read",
+      "pc": "0x1ca50",
+      "location": "standard.py:291 [8 hazards]",
+      "sass": "LDS R7, [R149+0x30]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G25",
+      "occurrence": 0,
+      "access": "Write",
+      "pc": "0x20ad0",
+      "location": "standard.py:291",
+      "sass": "@!P0 STS [R154.X4], R37",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G25",
+      "occurrence": 1,
+      "access": "Read",
+      "pc": "0x1d760",
+      "location": "standard.py:291 [8 hazards]",
+      "sass": "LDS R12, [RZ]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G25",
+      "occurrence": 2,
+      "access": "Read",
+      "pc": "0x20af0",
+      "location": "standard.py:291 [4 hazards]",
+      "sass": "@!P5 LDS R178, [R15.X4]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G25",
+      "occurrence": 3,
+      "access": "Read",
+      "pc": "0x23cf0",
+      "location": "standard.py:291 [4 hazards]",
+      "sass": "@!P5 LDS R179, [R15.X4]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G26",
+      "occurrence": 0,
+      "access": "Write",
+      "pc": "0x23cd0",
+      "location": "standard.py:291",
+      "sass": "@!P0 STS [R154.X4], R23",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G26",
+      "occurrence": 1,
+      "access": "Read",
+      "pc": "0x1b1a0",
+      "location": "standard.py:189 [4 hazards]",
+      "sass": "@!P5 LDS R166, [R15.X4]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G26",
+      "occurrence": 2,
+      "access": "Read",
+      "pc": "0x20b60",
+      "location": "standard.py:291 [4 hazards]",
+      "sass": "LDS R36, [RZ]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G26",
+      "occurrence": 3,
+      "access": "Read",
+      "pc": "0x23cf0",
+      "location": "standard.py:291 [4 hazards]",
+      "sass": "@!P5 LDS R179, [R15.X4]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G27",
+      "occurrence": 0,
+      "access": "Write",
+      "pc": "0x1c900",
+      "location": "standard.py:291",
+      "sass": "@!P2 STS [R15.X4+0x600], R24",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G27",
+      "occurrence": 1,
+      "access": "Read",
+      "pc": "0x1ca50",
+      "location": "standard.py:291 [8 hazards]",
+      "sass": "LDS R7, [R149+0x30]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G28",
+      "occurrence": 0,
+      "access": "Read",
+      "pc": "0x23e60",
+      "location": "standard.py:291",
+      "sass": "LDS R16, [RZ]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G28",
+      "occurrence": 1,
+      "access": "Write",
+      "pc": "0x24010",
+      "location": "standard.py:291 [8 hazards]",
+      "sass": "@!P1 STS [R15.X4], R184",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G29",
+      "occurrence": 0,
+      "access": "Write",
+      "pc": "0x1d1f0",
+      "location": "standard.py:189",
+      "sass": "@!P0 STS [R154.X4], R19",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G29",
+      "occurrence": 1,
+      "access": "Read",
+      "pc": "0x1d210",
+      "location": "standard.py:189 [4 hazards]",
+      "sass": "@!P3 LDS R172, [R15.X4]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G30",
+      "occurrence": 0,
+      "access": "Write",
+      "pc": "0x1d730",
+      "location": "standard.py:291",
+      "sass": "@!P1 STS [R15.X4], R4",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    },
+    {
+      "group": "P23-baseline_9x.MKG9f1PB-G30",
+      "occurrence": 1,
+      "access": "Read",
+      "pc": "0x1dd00",
+      "location": "standard.py:291 [4 hazards]",
+      "sass": "LDS R5, [R150]",
+      "cubin_sha256": "b56321d915657d514b10855033c4e44e5813ac3ccf201aff75850ce3586bd142",
+      "ownership": "unproved",
+      "lifetime": "unproved"
+    }
+  ],
+  "not_claimed": [
+    "full control-flow lifetime proof",
+    "certified-shape ownership proof",
+    "accepted race repairs",
+    "battery green",
+    "9x acceptance"
+  ]
+}
