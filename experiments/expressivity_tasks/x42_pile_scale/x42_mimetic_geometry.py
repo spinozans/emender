@@ -138,7 +138,7 @@ def diagnostic_forward():
 
 
 def main():
-    parser=argparse.ArgumentParser();parser.add_argument('arm',choices=['donor','mimetic','unfrozen'])
+    parser=argparse.ArgumentParser();parser.add_argument('arm',choices=['donor','mimetic','unfrozen','preflight'])
     a=parser.parse_args();OUT.mkdir(parents=True,exist_ok=True)
     assert os.sys.executable=='/home/erikg/emender/.venv/bin/python'
     try:
@@ -163,6 +163,8 @@ def main():
         else:
             run,namespace=amended(pure.train,pure)
             if a.arm=='mimetic':
+                import subprocess
+                subprocess.run([os.sys.executable,'-m',__spec__.name,'preflight'],check=True)
                 checkpoint=torch.load(DONOR,map_location='cpu',weights_only=True)
                 def factory(p):
                     model=Candidate(p);transplant(model,checkpoint);return model
@@ -194,9 +196,10 @@ def main():
                         audited=True
                     return original_step(optimizer,*args,**kwargs)
                 with patch.object(Cell,'forward',diagnostic_forward()), patch.object(torch.optim.AdamW,'step',audited_step):
-                    result=run(policy,REG,OUT/a.arm)
+                    result=run(policy,REG,OUT/a.arm,**(
+                        dict(seconds=.01,context=512,batch=1,eval_windows=1) if a.arm=='preflight' else {}))
                 result.update(experiment_arm='unfrozen_basis_diagnostic',score_eligible=False,
-                    comparison_protocol_complete=True,production_eligible=False,
+                    comparison_protocol_complete=a.arm=='unfrozen',production_eligible=False,
                     scope='outside certified spine; parity gates do not apply; never production',
                     protocol_sha256=pure.sha(OUT/'protocol.json'))
                 atomic_json(OUT/a.arm/'result.json',result)
