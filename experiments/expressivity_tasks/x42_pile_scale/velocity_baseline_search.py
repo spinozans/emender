@@ -96,6 +96,10 @@ class SearchBaseline(anchors.Baseline):
 
 
 def verify_search(path, arm):
+    from scripts.registration_guard import diagnose
+    report = diagnose(path)
+    if not report['matches']:
+        raise ValueError(json.dumps(report, indent=2))
     path = Path(path)
     registration = json.loads(path.read_text())
     if subprocess.check_output(['git', 'show', 'HEAD:'+str(path.relative_to(Path.cwd()) if path.is_absolute() else path)]) != path.read_bytes():

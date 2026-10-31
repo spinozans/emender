@@ -22,6 +22,14 @@ def complete(arm, root):
             and row['eval_windows'] == 24 and math.isfinite(row['score'])
             and row.get('arm', 'pure') == arm):
         raise ValueError('invalid completed anchor: '+arm)
+    # A historical c06 reference cannot stand in for a fresh length-sweep row.
+    if path.resolve() != (Path(root)/arm/'result.json').resolve():
+        if (Path(root)/arm/'result.json').exists():
+            raise ValueError('unregistered fresh completed row requires review')
+        return False
+    sweep = Path(root)/arm/'length_sweep.json'
+    if not sweep.exists() or json.loads(sweep.read_text()).get('status') != 'completed':
+        raise ValueError('completed training row missing length sweep: '+arm)
     return True
 
 

@@ -35,6 +35,10 @@ def subprocess_bytes(commit,path):
 
 
 def verify_registration(path):
+    from scripts.registration_guard import diagnose
+    report=diagnose(path)
+    if not report['matches']:
+        raise ValueError(json.dumps(report, indent=2))
     registration=json.loads(Path(path).read_text())
     regime_path=ROOT/'velocity_regime.json'
     regime=json.loads(regime_path.read_text())

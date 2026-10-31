@@ -13,6 +13,7 @@ eval "$lease_exports"
 [[ "$GPU_LEASE_HELD" == 0 && "$CUDA_VISIBLE_DEVICES" == 0 ]]
 cp .wg/gpu_leases/0 "$out/lease.txt"
 printf 'acquired card 0 at %s\n' "$(date -u +%FT%TZ)"
+/home/erikg/emender/.venv/bin/python scripts/registration_guard.py check "$out/sources.sha256"
 sha256sum -c "$out/sources.sha256"
 failed=0
 for arm in transformer gdn2 pure; do
