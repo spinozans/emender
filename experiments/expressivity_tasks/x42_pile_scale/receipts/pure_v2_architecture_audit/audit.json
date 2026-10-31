@@ -1,0 +1,87 @@
+{
+  "status": "blocked_by_contradicted_architecture_premise",
+  "created_unix": 1793454657.968724,
+  "supervisor_contact": "contact_supervisor unavailable in ALL_TOOLS",
+  "pure_service_after": "MainPID=0\nActiveState=failed\n",
+  "generation_index": 3,
+  "generation_label": 4,
+  "eligible_result_files": 41,
+  "reported_at_dispatch_candidates": 39,
+  "best_score": 4.802025388578573,
+  "best_result": "experiments/expressivity_tasks/x42_pile_scale/runs/velocity_production_v1/g3_c10/attempt1/result.json",
+  "best_result_sha256": "6472e3f1bf7ab6c88ad8e9a6702c1b1502b63289538e72a78605bbe17976610d",
+  "best_policy": {
+    "h_min": 157.8772423123269,
+    "ratio": 3.5733556202097896,
+    "N": 2,
+    "budget_min": 69,
+    "budget_ratio": 2.7434312195127295,
+    "write_gate_bias": 1.376111043445139,
+    "match_coef": 0.963210554853605,
+    "match_wire": [
+      0.36820012420610415,
+      0.9284832743476178,
+      1.3717208693387577,
+      0.6620870236511074,
+      1.166174237223525,
+      2.640956846965894,
+      1.3557085076450277,
+      1.1022988331145551
+    ],
+    "occ_onset": [
+      0.5271078534479361,
+      0.7253023258407272,
+      0.7190024039599952,
+      0.47880196778259254,
+      0.5507491834643807,
+      0.6832898159580428,
+      0.6512511185717316,
+      0.8743874106642993
+    ],
+    "occ_slope": [
+      0.23454839683252052,
+      0.8885603689857369,
+      0.31054292015064106,
+      0.2591031059675214,
+      0.7480809122314495,
+      1.2108252639040054,
+      0.9772103308941162,
+      0.6374176693268813
+    ],
+    "pop_threshold": 0.23068321371641223,
+    "w_in_width": 58,
+    "gate_cost_lambda": 0.04761126729083697,
+    "lr": 0.0008264633617156854,
+    "warmup_steps": 147
+  },
+  "best_recipe_capacity": {
+    "total": 227313264,
+    "trainable": 150000144
+  },
+  "width": 768,
+  "layers": 12,
+  "hidden": 3628,
+  "mlp_trainable": 66924048,
+  "candidate_source_sha256": "703fa38457deda9e4dab6bffb2eb5649f86f8c1e33edfc557ed3a1003fe6f586",
+  "source_matches_registration_and_regime": true,
+  "architecture": "x += read_out(cell(input(norm1(x)))); x += Linear(GELU(Linear(norm2(x))))",
+  "baseline_recipe": "scale_surface.SurfaceLM installs Linear(d,hidden), GELU(), Linear(hidden,d), with LayerNorm norm2, identically to Candidate",
+  "checks": [
+    "150M trainable +/-0.1% passed for best recipe",
+    "CPU actual Block.forward matches two-residual reference; all MLP parameter gradients finite and present; memory scan stubbed",
+    "Registered and regime candidate hashes exactly match current source"
+  ],
+  "preserved_state_sha256": {
+    "generation.json": "d8f93b0791a8fa43af3874d2bb199eddaee6fb9eb94848d78daf3be8c6b6787e",
+    "active.json": "e44951006a506248c9c5ecb95084b68b3af0fb41289950b309b3b91c7e8ae540"
+  },
+  "decision_needed": "The registered old search already has the requested MLP. Do not mislabel its scores as memory-only or add a third sub-block. Clarify revised experiment before fresh registration/ablation/restart.",
+  "remaining": [
+    "v2 architecture amendment",
+    "new searchable MLP ratio and capacity solver",
+    "new registration",
+    "full-budget multi-seed ablation",
+    "v2 search restart"
+  ],
+  "resilient_diloco": "No resilient training behavior changed; requirement IDs not applicable."
+}
