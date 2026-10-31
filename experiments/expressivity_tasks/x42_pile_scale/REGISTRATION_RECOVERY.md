@@ -18,7 +18,9 @@ The source-only helper intentionally does not migrate training state.
 
 Install the advisory hook with `git config core.hooksPath .githooks`.
 It checks indexed bytes, so an unstaged registration update cannot silence a
-warning. It never silently authorizes an amendment or disables runtime checks.
+warning. Its recipe uses `rebind --index` to bind reviewed staged source bytes
+and requires working source bytes to match the index, allowing source and
+registration updates in the same commit. It never silently authorizes an amendment or disables runtime checks.
 
 An attended source promotion can retain a historical smoke only through a
 committed, explicitly scoped resume amendment binding the smoke, new regime,

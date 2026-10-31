@@ -28,9 +28,11 @@ def bindings(raw):
             for line in raw.decode().splitlines() if line.strip()}
 
 
-def recipe(path):
+def recipe(path, *, index=False):
+    receipt_prefix = shlex.quote(str(path)+'.rebind-')
     return (f'{PYTHON} scripts/registration_guard.py rebind {shlex.quote(str(path))} '
-            f"--receipt {shlex.quote(str(path)+'.rebind-')}$(git rev-parse --short HEAD).json --cause HEAD")
+            f'--receipt {receipt_prefix}$(date -u +%Y%m%dT%H%M%S).json --cause HEAD'
+            + (' --index' if index else ''))
 
 
 def diagnose(path, root='.'):
@@ -100,17 +102,27 @@ def precommit(root='.'):
             except subprocess.CalledProcessError:
                 actual = None
             if actual != sources[source]:
-                warnings.append(f'WARNING: {source}: committing without registration re-bind: {name}\n{recipe(name)}')
+                warnings.append(f'WARNING: {source}: committing without registration re-bind: {name}\n{recipe(name, index=True)}')
     return warnings
 
 
-def rebind(path, receipt, cause, root='.'):
+def rebind(path, receipt, cause, root='.', *, index=False):
     report = diagnose(path, root)
-    if any(r['status'] in ('TAMPER SUSPECT', 'WORKING TREE DIRTY vs HEAD') for r in report['sources']):
+    forbidden = ('TAMPER SUSPECT',) if index else ('TAMPER SUSPECT', 'WORKING TREE DIRTY vs HEAD')
+    if any(r['status'] in forbidden for r in report['sources']):
         raise ValueError('refusing rebind: dirty or unproven source identity')
     target = Path(root)/path
     before = target.read_bytes()
     sources = {r['source']: r['head'] for r in report['sources']}
+    if index:
+        for row in report['sources']:
+            name = row['source']
+            # External repositories are independently bound, never staged here.
+            value = row['head'] if Path(name).is_absolute() else digest(git(root, 'show', f':{name}'))
+            if value != row['working']:
+                raise ValueError('refusing index rebind: unstaged source bytes differ: '+name)
+            sources[name] = value
+        report['binding_snapshot'] = 'index'
     if before.lstrip().startswith(b'{'):
         data = json.loads(before)
         data['sources'] = sources
@@ -130,6 +142,7 @@ def main():
     parser.add_argument('registration', nargs='?')
     parser.add_argument('--receipt')
     parser.add_argument('--cause')
+    parser.add_argument('--index', action='store_true', help='bind reviewed staged source bytes, requiring identical working bytes')
     args = parser.parse_args()
     root = Path(git('.', 'rev-parse', '--show-toplevel').decode().strip())
     if args.action == 'pre-commit':
@@ -138,7 +151,7 @@ def main():
     if not args.registration: parser.error('registration required')
     if args.action == 'rebind':
         if not args.receipt or not args.cause: parser.error('--receipt and --cause required')
-        rebind(args.registration, args.receipt, args.cause, root)
+        rebind(args.registration, args.receipt, args.cause, root, index=args.index)
         return 0
     report = diagnose(args.registration, root)
     print(json.dumps(report, indent=2))

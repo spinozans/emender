@@ -136,3 +136,20 @@ def test_missing_external_history_is_suspect(repo):
     source='/nonexistent-registration-test-repo/source.py'
     (repo/'registration.json').write_text(json.dumps({'sources': {source: '0'*64}}))
     assert diagnose('registration.json', repo)['sources'][0]['status']=='TAMPER SUSPECT'
+
+
+def test_index_rebind_can_accompany_source_commit(repo):
+    (repo/'source.py').write_text('reviewed staged change\n')
+    git(repo, 'add', 'source.py')
+    assert '--index' in precommit(repo)[0]
+    rebind('registration.json', repo/'index_receipt.json', 'reviewed change', repo, index=True)
+    git(repo, 'add', 'registration.json')
+    assert precommit(repo)==[]
+    git(repo, 'commit', '-qm', 'source and registration together')
+    assert diagnose('registration.json', repo)['matches']
+
+
+def test_index_rebind_rejects_unstaged_source(repo):
+    (repo/'source.py').write_text('unstaged change\n')
+    with pytest.raises(ValueError, match='unstaged source bytes differ'):
+        rebind('registration.json', repo/'index_receipt.json', 'bad', repo, index=True)
