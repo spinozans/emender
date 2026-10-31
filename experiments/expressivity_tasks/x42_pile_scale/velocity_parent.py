@@ -103,6 +103,30 @@ def validate_smoke(out):
     regime=json.loads((ROOT/'velocity_regime.json').read_text())
     if smoke.get('batch')!=64 or smoke.get('context')!=2048:
         raise RuntimeError('smoke regime mismatch; rerun production smoke')
+    if smoke.get('regime_sha256')!=sha(ROOT/'velocity_regime.json') and (out/'resume_amendment.json').exists():
+        # An attended source rebind may preserve banked generations and the
+        # historical smoke. It does not certify throughput of the new sources.
+        amendment_path=out/'resume_amendment.json'
+        amendment=json.loads(amendment_path.read_text())
+        relative=amendment_path.relative_to(Path.cwd()) if amendment_path.is_absolute() else amendment_path
+        if subprocess_bytes('HEAD',relative)!=amendment_path.read_bytes():
+            raise RuntimeError('resume amendment must be committed')
+        state=json.loads((out/'generation.json').read_text())
+        if not (amendment['status']=='attended_source_rebind'
+                and amendment['smoke_sha256']==sha(out/'smoke.json')
+                and amendment['regime_sha256']==sha(ROOT/'velocity_regime.json')
+                and amendment['registration_sha256']==sha(ROOT/'velocity_registration.json')
+                and state['registration_hash']==amendment['registration_sha256']
+                and amendment['retained_banked_candidates']>0
+                and amendment['cause_commit'] and amendment['residual_risks']):
+            raise RuntimeError('resume amendment identity mismatch')
+        for name, expected in amendment['evidence'].items():
+            if hashlib.sha256(subprocess_bytes('HEAD',name)).hexdigest()!=expected:
+                raise RuntimeError('resume amendment evidence changed: '+name)
+        atomic_json(out/'smoke_compatibility.json',dict(status='historical_smoke_retained_by_attended_amendment',
+            amendment_sha256=sha(amendment_path),current_regime_sha256=sha(ROOT/'velocity_regime.json'),
+            current_throughput_certified=False,residual_risks=amendment['residual_risks']))
+        return
     if smoke.get('regime_sha256')!=sha(ROOT/'velocity_regime.json'):
         # Only orchestration/test changes may reuse a completed compute receipt.
         previous=regime.get('compute_compatible_previous_commit')

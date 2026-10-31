@@ -103,3 +103,30 @@ def test_external_repository_source(repo, tmp_path):
     source.write_text('external promoted\n')
     git(external, 'commit', '-qam', 'external promotion')
     assert diagnose('registration.json', repo)['sources'][0]['status']=='REGISTRATION STALE vs HEAD'
+
+
+def test_resume_amendment_rejects_identity_change(tmp_path, monkeypatch):
+    from experiments.expressivity_tasks.x42_pile_scale import velocity_parent as mod
+    root = tmp_path/'root'
+    root.mkdir()
+    out = tmp_path/'run'
+    out.mkdir()
+    (root/'velocity_regime.json').write_text('{}')
+    (root/'velocity_registration.json').write_text('{}')
+    (out/'smoke.json').write_text(json.dumps(dict(batch=64, context=2048, regime_sha256='old')))
+    (out/'generation.json').write_text(json.dumps(dict(registration_hash=digest(b'{}'))))
+    amendment = dict(status='attended_source_rebind', smoke_sha256=digest((out/'smoke.json').read_bytes()),
+                     regime_sha256=digest(b'{}'), registration_sha256=digest(b'{}'),
+                     retained_banked_candidates=7, cause_commit='promotion', residual_risks=['historical throughput'], evidence={})
+    path=out/'resume_amendment.json'
+    path.write_text(json.dumps(amendment))
+    monkeypatch.setattr(mod, 'ROOT', root)
+    monkeypatch.chdir(tmp_path)
+    import experiments.expressivity_tasks.x42_pile_scale.velocity_train as train
+    monkeypatch.setattr(train, 'subprocess_bytes', lambda commit, name: (tmp_path/name).read_bytes())
+    mod.validate_smoke(out)
+    assert not json.loads((out/'smoke_compatibility.json').read_text())['current_throughput_certified']
+    amendment['registration_sha256']='wrong'
+    path.write_text(json.dumps(amendment))
+    with pytest.raises(RuntimeError, match='identity mismatch'):
+        mod.validate_smoke(out)

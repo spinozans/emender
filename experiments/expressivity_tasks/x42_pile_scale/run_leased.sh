@@ -3,7 +3,7 @@ set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/../../.."
 export PYTHONDONTWRITEBYTECODE=1 OMP_NUM_THREADS=1 GPU_LEASE_VISIBLE=1,5,6
 source scripts/gpu_lease.sh
-lease_exports="$(scripts/gpu_lease.sh acquire 1 --wait --timeout 60)"
+lease_exports="$(scripts/gpu_lease.sh acquire 1 --wait)"
 eval "$lease_exports"
 [[ "${GPU_LEASE_HELD:-}" =~ ^[156]$ ]] || exit 90
 # Broker installs release traps and starts its existing heartbeat keeper.
