@@ -1,0 +1,311 @@
+{
+  "x34_training_fingerprint": {
+    "path": "experiments/expressivity_tasks/x34_lm_pilot/runs/pilot_tape_lm/preregistration.json",
+    "sha256": "9d5c5b22b488e1ed0a90662dfc497eff455c89b1996b6eaf60ac8fe6067e6066",
+    "model_sha256": "43c12bcc1e37323b6f953b5027f1b65dc2124e061735a42453977100dd695a2a",
+    "matches": true
+  },
+  "historical_registered_v1": {
+    "commit": "173858ac",
+    "path": "experiments/expressivity_tasks/x40_emender_lm/model.py",
+    "sha256": "ed3824dc9a49fac175a1a4bd3bbfa4ff59a322a06a407c0719f01e8770804259",
+    "matches_ignition_registration": true,
+    "full_block": "class Block(nn.Module):\n    def __init__(self,vocab):\n        super().__init__()\n        self.norm1,self.norm2=nn.LayerNorm(256),nn.LayerNorm(256)\n        self.cell=Cell(vocab)\n        self.read_out=nn.Linear(512,256)\n        self.ff=nn.Sequential(nn.Linear(256,1024),nn.GELU(),nn.Linear(1024,256))\n\n    def forward(self,x,ids):\n        x=x+self.read_out(self.cell(self.norm1(x).float(),ids).flatten(2))\n        return x+self.ff(self.norm2(x))\n\n\n",
+    "conclusion": "Historical registered v1 already has memory + MLP; current source hash differs because of later performance changes, not missing branch."
+  },
+  "method": "Static full-class and constructor audit plus registered hashes; no GPU touched",
+  "conclusion": "No audited pure LM lacks its MLP. The two lineage families are pure memory+MLP versus hybrid attention+MLP+tape, not one-branch versus two-branch pure.",
+  "models": [
+    {
+      "model": "X40 v1 22M",
+      "source": "experiments/expressivity_tasks/x40_emender_lm/model.py",
+      "source_sha256": "8e0f9d8f5c305d2d19a3aa27488d894f89288264bcd3f1190ec85b0be16b9ccd",
+      "composition": "memory read residual -> LayerNorm/Linear/GELU/Linear residual",
+      "full_class": "class Block(nn.Module):\n    def __init__(self,vocab):\n        super().__init__()\n        self.norm1,self.norm2=nn.LayerNorm(256),nn.LayerNorm(256)\n        self.cell=Cell(vocab)\n        self.read_out=nn.Linear(512,256)\n        self.ff=nn.Sequential(nn.Linear(256,1024),nn.GELU(),nn.Linear(1024,256))\n\n    def forward(self,x,ids):\n        x=x+self.read_out(self.cell(self.norm1(x).float(),ids).flatten(2))\n        return x+self.ff(self.norm2(x))",
+      "registered_bindings": [
+        {
+          "registration": "experiments/expressivity_tasks/x42_pile_scale/velocity_registration.json",
+          "registered_sha256": "8e0f9d8f5c305d2d19a3aa27488d894f89288264bcd3f1190ec85b0be16b9ccd",
+          "matches": true
+        },
+        {
+          "registration": "experiments/expressivity_tasks/x42_pile_scale/velocity_regime.json",
+          "registered_sha256": "8e0f9d8f5c305d2d19a3aa27488d894f89288264bcd3f1190ec85b0be16b9ccd",
+          "matches": true
+        },
+        {
+          "registration": "experiments/expressivity_tasks/x40_emender_lm/receipts/ignition_v1/registration.json",
+          "registered_sha256": "ed3824dc9a49fac175a1a4bd3bbfa4ff59a322a06a407c0719f01e8770804259",
+          "matches": false,
+          "historical_resolution": "Exact registered blob at 173858ac verified; full Block includes MLP"
+        },
+        {
+          "registration": "experiments/expressivity_tasks/x40_emender_lm/receipts/part25_budget/source_manifest.json",
+          "registered_sha256": "8e0f9d8f5c305d2d19a3aa27488d894f89288264bcd3f1190ec85b0be16b9ccd",
+          "matches": true
+        },
+        {
+          "registration": "experiments/expressivity_tasks/x40_emender_lm/receipts/part8/production_T512_expandable.json",
+          "registered_sha256": "8e0f9d8f5c305d2d19a3aa27488d894f89288264bcd3f1190ec85b0be16b9ccd",
+          "matches": true
+        }
+      ],
+      "dependent_receipts": [
+        {
+          "path": "experiments/expressivity_tasks/x40_emender_lm/receipts/ignition_v1/long_context.json",
+          "sha256": "7319385c91add9c48b13c47c8e016efb13c1971ba0d5f0e299636ef87fd705a9"
+        },
+        {
+          "path": "experiments/expressivity_tasks/x40_emender_lm/receipts/ignition_v1/compression_slopes.json",
+          "sha256": "f6b845f0dfc096a656a1740fa20d610cca3995c0a7ab88e003069baf3024a4a4"
+        },
+        {
+          "path": "experiments/expressivity_tasks/x40_emender_lm/receipts/ignition_v1/depth_partial.json",
+          "sha256": "67fb6b7afde4aed9357fae7d14e07c2814e7135db85ef873810e1d5913522346"
+        }
+      ]
+    },
+    {
+      "model": "Part25 budget-scaled probe",
+      "source": "experiments/expressivity_tasks/x40_emender_lm/part25_budget.py",
+      "source_sha256": "3ba0cea20430ebb6d02c7ed7d90792a9a49da2f5db093727fe0bb1d3293efe48",
+      "composition": "imports X40 LM; same memory + MLP blocks; budget policy changed by part25_depth",
+      "full_class": "",
+      "registered_bindings": [
+        {
+          "registration": "experiments/expressivity_tasks/x40_emender_lm/receipts/part25_budget/source_manifest.json",
+          "registered_sha256": "3ba0cea20430ebb6d02c7ed7d90792a9a49da2f5db093727fe0bb1d3293efe48",
+          "matches": true
+        }
+      ],
+      "dependent_receipts": [
+        {
+          "path": "experiments/expressivity_tasks/x40_emender_lm/receipts/part25_budget/preregistration.json",
+          "sha256": "60d253d382c74f32287e0dddb284564e2756daa68b50d5db8544dee77e9c3c95"
+        },
+        {
+          "path": "experiments/expressivity_tasks/x40_emender_lm/receipts/part25_budget/verdict.json",
+          "sha256": "c430254620d9bb98002d5e91986fc570a5097541214c35d6c2f1cc71c41d2f22"
+        }
+      ]
+    },
+    {
+      "model": "X34 tape arm",
+      "source": "experiments/expressivity_tasks/x34_lm_pilot/model.py",
+      "source_sha256": "43c12bcc1e37323b6f953b5027f1b65dc2124e061735a42453977100dd695a2a",
+      "composition": "all six blocks: attention + MLP; block index 2 adds tape residual using same pre-MLP norm2 state",
+      "full_class": "class Block(nn.Module):\n    def __init__(self, lane=None, width=1):\n        super().__init__()\n        self.norm1, self.norm2 = nn.LayerNorm(256), nn.LayerNorm(256)\n        self.qkv, self.out = nn.Linear(256, 768), nn.Linear(256, 256)\n        self.ff = nn.Sequential(nn.Linear(256, 1024), nn.GELU(), nn.Linear(1024, 256))\n        self.lane = lane\n        if lane == 'tape_lm':\n            self.cell = TapeCell(256, TapeHeadConfig(n_heads=4, budget=2944))\n            self.read_out = nn.Linear(512, 256)\n        elif lane == 'base_lm':\n            self.extra = nn.Sequential(nn.Linear(256, width), nn.GELU(), nn.Linear(width, 256))\n\n    def forward(self, x, ids):\n        b, t, _ = x.shape\n        q, k, v = self.qkv(self.norm1(x)).reshape(b,t,3,4,64).permute(2,0,3,1,4)\n        a = F.scaled_dot_product_attention(rope(q), rope(k), v, is_causal=True)\n        x = x+self.out(a.transpose(1,2).reshape(b,t,256))\n        h = self.norm2(x)\n        x = x+self.ff(h)\n        metrics = None\n        if self.lane == 'tape_lm':\n            read, state, trace, pressure = self.cell(h.float(), ids)\n            metrics = trace_metrics(state, trace, pressure)\n            x = x+self.read_out(read.flatten(2))\n        elif self.lane == 'base_lm':\n            x = x+self.extra(h)\n        return x, metrics",
+      "registered_bindings": [
+        {
+          "registration": "experiments/expressivity_tasks/x42_pile_scale/velocity_registration.json",
+          "registered_sha256": "43c12bcc1e37323b6f953b5027f1b65dc2124e061735a42453977100dd695a2a",
+          "matches": true
+        },
+        {
+          "registration": "experiments/expressivity_tasks/x42_pile_scale/velocity_regime.json",
+          "registered_sha256": "43c12bcc1e37323b6f953b5027f1b65dc2124e061735a42453977100dd695a2a",
+          "matches": true
+        },
+        {
+          "registration": "experiments/expressivity_tasks/x40_emender_lm/receipts/ignition_v1/registration.json",
+          "registered_sha256": "43c12bcc1e37323b6f953b5027f1b65dc2124e061735a42453977100dd695a2a",
+          "matches": true
+        },
+        {
+          "registration": "experiments/expressivity_tasks/x40_emender_lm/receipts/part25_budget/source_manifest.json",
+          "registered_sha256": "43c12bcc1e37323b6f953b5027f1b65dc2124e061735a42453977100dd695a2a",
+          "matches": true
+        }
+      ],
+      "dependent_receipts": [
+        {
+          "path": "experiments/expressivity_tasks/x34_lm_pilot/receipts/preregistration.json",
+          "sha256": "fa3dec069c7be1ba3f2171003eb31567a701ecd302233a220897a880c9b3f990"
+        },
+        {
+          "path": "experiments/expressivity_tasks/x34_lm_pilot/receipts/validation_sources.json",
+          "sha256": "219fcfbe27405785848a588db162cc3b67677323e3f076e7295afa1044dc7fec"
+        },
+        {
+          "path": "experiments/expressivity_tasks/x34_lm_pilot/RECEIPTS.md",
+          "sha256": "13f7f13529751af8ca5a01410177931692a14d5fe83afac8a312fa81b8bbc974"
+        }
+      ]
+    },
+    {
+      "model": "Part8/Part6 pure surface",
+      "source": "experiments/expressivity_tasks/x40_emender_lm/scale_surface.py",
+      "source_sha256": "74fcebec3aeb433b1af80e3f5c6184d9c8205af4966e7e94f66b94dd00fb648b",
+      "composition": "memory residual + LayerNorm/Linear/GELU/Linear residual; SurfaceLM replaces ff Identity during construction",
+      "full_class": "class MemoryBlock(nn.Module):\n    def __init__(self,d):\n        super().__init__()\n        self.norm1=nn.LayerNorm(d);self.norm2=nn.LayerNorm(d)\n        self.input=nn.Identity() if d==256 else nn.Linear(d,256)\n        self.cell=Cell(VOCAB)\n        self.read_out=nn.Linear(512,d)\n        self.ff=nn.Identity()\n        # Pilot-family ignition v1: all policies actively write.\n        with torch.no_grad():\n            self.cell.W_write.weight.zero_();self.cell.W_write.bias.fill_(2.)\n            self.cell.match_coef.zero_();self.cell.error_coef.zero_()\n        self.cell.W_write.requires_grad_(False)\n        self.cell.match_coef.requires_grad_(False);self.cell.error_coef.requires_grad_(False)\n    def forward(self,x,ids):\n        with torch.autocast('cuda',enabled=False):\n            read=self.cell(self.input(self.norm1(x)).float(),ids).flatten(2)\n        x=x+self.read_out(read)\n        return x+self.ff(self.norm2(x))",
+      "registered_bindings": [
+        {
+          "registration": "experiments/expressivity_tasks/x42_pile_scale/velocity_registration.json",
+          "registered_sha256": "74fcebec3aeb433b1af80e3f5c6184d9c8205af4966e7e94f66b94dd00fb648b",
+          "matches": true
+        },
+        {
+          "registration": "experiments/expressivity_tasks/x42_pile_scale/velocity_regime.json",
+          "registered_sha256": "74fcebec3aeb433b1af80e3f5c6184d9c8205af4966e7e94f66b94dd00fb648b",
+          "matches": true
+        },
+        {
+          "registration": "experiments/expressivity_tasks/x40_emender_lm/receipts/part25_budget/source_manifest.json",
+          "registered_sha256": "74fcebec3aeb433b1af80e3f5c6184d9c8205af4966e7e94f66b94dd00fb648b",
+          "matches": true
+        },
+        {
+          "registration": "experiments/expressivity_tasks/x40_emender_lm/receipts/part8/production_T512_expandable.json",
+          "registered_sha256": "74fcebec3aeb433b1af80e3f5c6184d9c8205af4966e7e94f66b94dd00fb648b",
+          "matches": true
+        }
+      ],
+      "dependent_receipts": [
+        {
+          "path": "experiments/expressivity_tasks/x40_emender_lm/receipts/part8/summary.json",
+          "sha256": "42f290d8c591b23366bd4876b3b6ff9c7824556ceb52490eaf6ac005f666e2c9"
+        },
+        {
+          "path": "experiments/expressivity_tasks/x40_emender_lm/receipts/part6/summary.json",
+          "sha256": "c9af49ca4a46b3afcfeeafee0f1eaf46b49d08dc7441376a15497f9ce47bc9e8"
+        },
+        {
+          "path": "experiments/expressivity_tasks/x40_emender_lm/receipts/part8/surface/1.3B_pure_B64_T2048.json",
+          "sha256": "2df6adbc74ceaae7b8b3c00ce33eaf0229b7043d63fe99c5a24f5534bbc7e28b"
+        },
+        {
+          "path": "experiments/expressivity_tasks/x40_emender_lm/receipts/part6/baseline/surface/1.3B_pure_B64_T2048.json",
+          "sha256": "95012fb4b0010359b4a6a5863badc5cfb3caa449213501376df8a67459c8700d"
+        }
+      ]
+    },
+    {
+      "model": "X37 differentiated heads",
+      "source": "experiments/expressivity_tasks/x37_head_differentiation/model.py",
+      "source_sha256": "1b8ad4771cc51f50e29abbc71cc6463a1930335ab5f3269ae441f3cc7aed0a84",
+      "composition": "X34 attention + MLP + tape residual at block index 2; other blocks attention + MLP",
+      "full_class": "class Block(OriginalBlock):\n    def forward(self,x,ids):\n        b,t,_ = x.shape\n        q,k,v = self.qkv(self.norm1(x)).reshape(b,t,3,4,64).permute(2,0,3,1,4)\n        a = torch.nn.functional.scaled_dot_product_attention(rope(q),rope(k),v,is_causal=True)\n        x = x+self.out(a.transpose(1,2).reshape(b,t,256))\n        h = self.norm2(x)\n        x = x+self.ff(h)\n        read = self.cell(h.float(),ids)\n        return x+self.read_out(read.flatten(2)), self.cell.telemetry",
+      "registered_bindings": [
+        {
+          "registration": "experiments/expressivity_tasks/x42_pile_scale/velocity_registration.json",
+          "registered_sha256": "1b8ad4771cc51f50e29abbc71cc6463a1930335ab5f3269ae441f3cc7aed0a84",
+          "matches": true
+        },
+        {
+          "registration": "experiments/expressivity_tasks/x42_pile_scale/velocity_regime.json",
+          "registered_sha256": "1b8ad4771cc51f50e29abbc71cc6463a1930335ab5f3269ae441f3cc7aed0a84",
+          "matches": true
+        },
+        {
+          "registration": "experiments/expressivity_tasks/x40_emender_lm/receipts/ignition_v1/registration.json",
+          "registered_sha256": "1b8ad4771cc51f50e29abbc71cc6463a1930335ab5f3269ae441f3cc7aed0a84",
+          "matches": true
+        },
+        {
+          "registration": "experiments/expressivity_tasks/x40_emender_lm/receipts/part25_budget/source_manifest.json",
+          "registered_sha256": "1b8ad4771cc51f50e29abbc71cc6463a1930335ab5f3269ae441f3cc7aed0a84",
+          "matches": true
+        }
+      ],
+      "dependent_receipts": [
+        {
+          "path": "experiments/expressivity_tasks/x37_head_differentiation/cli.py",
+          "sha256": "e06fc8dd3f57a05aa3f892380b11499eaa0757ddd2f40f3ed2e5b583b097da26"
+        }
+      ]
+    },
+    {
+      "model": "X38 diversity",
+      "source": "experiments/expressivity_tasks/x38_diversity_objective/model.py",
+      "source_sha256": "f146b38711ee5c75c2c692d3da2ee6e545053be582259ddb7ba77934396207ad",
+      "composition": "inherits X37 composition; hook and diversity objective change training, not branches",
+      "full_class": "class LM(GeometryLM):\n    def __init__(self, arm='0.01', vocab=32768):\n        if arm not in ARMS:\n            raise ValueError(arm)\n        super().__init__('c', vocab)\n        self.diversity_lambda = float(arm)\n        self.read = None\n        self.blocks[2].cell.register_forward_hook(self._capture)\n\n    def _capture(self, module, inputs, output):\n        self.read = output\n        if not self.training:\n            _, pairs, coverage = read_diversity(output)\n            module.telemetry['read_cosine_pairs'] = pairs.tolist()\n            module.telemetry['read_cosine_mean'] = float(pairs.mean())\n            module.telemetry['read_nonzero_pair_coverage'] = coverage.tolist()\n            module.telemetry['slot_usage_js'] = None\n            module.telemetry['slot_usage_status'] = 'disabled outside story evaluation'\n            if getattr(self,'measure_slots',False):\n                module.telemetry.update(slot_usage(module,*inputs,output))\n\n    def objective(self, logits, targets):\n        ce = F.cross_entropy(logits.flatten(0, 1), targets.flatten())\n        penalty, _, _ = read_diversity(self.read)\n        self.read = None  # do not retain a training graph between steps\n        return ce + self.diversity_lambda*penalty",
+      "registered_bindings": [],
+      "dependent_receipts": [
+        {
+          "path": "experiments/expressivity_tasks/x38_diversity_objective/model.py",
+          "sha256": "f146b38711ee5c75c2c692d3da2ee6e545053be582259ddb7ba77934396207ad"
+        }
+      ]
+    },
+    {
+      "model": "X39 usage/control/part9",
+      "source": "experiments/expressivity_tasks/x36_tape_perf/model.py",
+      "source_sha256": "dab24b4fab1ae569f786ad637edfbe99e392e7b57f800e5edf4995bc3aefd2f9",
+      "composition": "inherits X34 attention + MLP; integrated persistent tape at block index 2",
+      "full_class": "class Block(original.Block):\n    def forward(self,x,ids):\n        b,t,_=x.shape\n        q,k,v=self.qkv(self.norm1(x)).reshape(b,t,3,4,64).permute(2,0,3,1,4)\n        a=original.F.scaled_dot_product_attention(original.rope(q),original.rope(k),v,is_causal=True)\n        x=x+self.out(a.transpose(1,2).reshape(b,t,256))\n        h=self.norm2(x)\n        x=x+self.ff(h)\n        metrics=None\n        if self.lane=='tape_lm':\n            read,state,trace,pressure=self.cell(h.float(),ids)\n            if not self.training:\n                metrics=original.trace_metrics(state,trace,pressure)\n            x=x+self.read_out(read.flatten(2))\n        elif self.lane=='base_lm':\n            x=x+self.extra(h)\n        return x,metrics",
+      "registered_bindings": [
+        {
+          "registration": "experiments/expressivity_tasks/x42_pile_scale/velocity_registration.json",
+          "registered_sha256": "dab24b4fab1ae569f786ad637edfbe99e392e7b57f800e5edf4995bc3aefd2f9",
+          "matches": true
+        },
+        {
+          "registration": "experiments/expressivity_tasks/x42_pile_scale/velocity_regime.json",
+          "registered_sha256": "dab24b4fab1ae569f786ad637edfbe99e392e7b57f800e5edf4995bc3aefd2f9",
+          "matches": true
+        },
+        {
+          "registration": "experiments/expressivity_tasks/x40_emender_lm/receipts/ignition_v1/registration.json",
+          "registered_sha256": "dab24b4fab1ae569f786ad637edfbe99e392e7b57f800e5edf4995bc3aefd2f9",
+          "matches": true
+        },
+        {
+          "registration": "experiments/expressivity_tasks/x40_emender_lm/receipts/part25_budget/source_manifest.json",
+          "registered_sha256": "dab24b4fab1ae569f786ad637edfbe99e392e7b57f800e5edf4995bc3aefd2f9",
+          "matches": true
+        }
+      ],
+      "dependent_receipts": [
+        {
+          "path": "experiments/expressivity_tasks/x39_memory_usage/receipts/part6_control_evaluation.json",
+          "sha256": "68f4f8a522a977d29863de5943d4ce3556ac14cd2ce1de46909ea9369cbfb06a"
+        },
+        {
+          "path": "experiments/expressivity_tasks/x40_emender_lm/receipts/ignition_v1/depth_control.json",
+          "sha256": "218bcaf1ca0f9dfaa62c242bdafa8c34d867a6ee19a73f257aafcde8005430b2"
+        },
+        {
+          "path": "experiments/expressivity_tasks/x40_emender_lm/depth_control.py",
+          "sha256": "30e7243f1561a5348c5f8b830eaf8418b5ae994e9b66a5bfa484bdabf6ccb53b"
+        }
+      ]
+    },
+    {
+      "model": "X42 velocity pure 150M",
+      "source": "experiments/expressivity_tasks/x42_pile_scale/velocity_candidate.py",
+      "source_sha256": "703fa38457deda9e4dab6bffb2eb5649f86f8c1e33edfc557ed3a1003fe6f586",
+      "composition": "memory residual + LayerNorm/Linear/GELU/Linear residual; Candidate replaces ff Identity with capacity-matched MLP",
+      "full_class": "class Block(nn.Module):\n    def __init__(self,vocab,policy,d):\n        super().__init__();self.norm1=nn.LayerNorm(d);self.norm2=nn.LayerNorm(d)\n        self.input=nn.Linear(d,256);self.cell=Cell(vocab,policy)\n        self.read_out=nn.Linear(128*policy.N,d);self.ff=nn.Identity()\n    def forward(self,x,ids):\n        with torch.autocast('cuda',enabled=False):\n            read=self.cell(self.input(self.norm1(x)).float(),ids).flatten(2)\n        x=x+self.read_out(read)\n        return x+self.ff(self.norm2(x))",
+      "registered_bindings": [
+        {
+          "registration": "experiments/expressivity_tasks/x42_pile_scale/velocity_registration.json",
+          "registered_sha256": "703fa38457deda9e4dab6bffb2eb5649f86f8c1e33edfc557ed3a1003fe6f586",
+          "matches": true
+        },
+        {
+          "registration": "experiments/expressivity_tasks/x42_pile_scale/velocity_regime.json",
+          "registered_sha256": "703fa38457deda9e4dab6bffb2eb5649f86f8c1e33edfc557ed3a1003fe6f586",
+          "matches": true
+        },
+        {
+          "registration": "experiments/expressivity_tasks/x40_emender_lm/receipts/part25_budget/source_manifest.json",
+          "registered_sha256": "703fa38457deda9e4dab6bffb2eb5649f86f8c1e33edfc557ed3a1003fe6f586",
+          "matches": true
+        }
+      ],
+      "dependent_receipts": [
+        {
+          "path": "experiments/expressivity_tasks/x42_pile_scale/receipts/pure_v2_architecture_audit/audit.json",
+          "sha256": "600f8e71af3d1ddbb8cf6881ec31cc87f3d2a7f3227154aff713c91de29036ba"
+        },
+        {
+          "path": "experiments/expressivity_tasks/x42_pile_scale/runs/velocity_production_v1/g3_c10/attempt1/result.json",
+          "sha256": "6472e3f1bf7ab6c88ad8e9a6702c1b1502b63289538e72a78605bbe17976610d"
+        }
+      ]
+    }
+  ],
+  "supervisor_channel": "contact_supervisor not present in ALL_TOOLS; unavailable",
+  "resilient_diloco": "No resilient training behavior changed; requirement IDs not applicable"
+}

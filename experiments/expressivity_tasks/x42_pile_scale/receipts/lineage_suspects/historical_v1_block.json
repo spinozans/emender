@@ -1,0 +1,8 @@
+{
+  "commit": "173858ac",
+  "path": "experiments/expressivity_tasks/x40_emender_lm/model.py",
+  "sha256": "ed3824dc9a49fac175a1a4bd3bbfa4ff59a322a06a407c0719f01e8770804259",
+  "matches_ignition_registration": true,
+  "full_block": "class Block(nn.Module):\n    def __init__(self,vocab):\n        super().__init__()\n        self.norm1,self.norm2=nn.LayerNorm(256),nn.LayerNorm(256)\n        self.cell=Cell(vocab)\n        self.read_out=nn.Linear(512,256)\n        self.ff=nn.Sequential(nn.Linear(256,1024),nn.GELU(),nn.Linear(1024,256))\n\n    def forward(self,x,ids):\n        x=x+self.read_out(self.cell(self.norm1(x).float(),ids).flatten(2))\n        return x+self.ff(self.norm2(x))\n\n\n",
+  "conclusion": "Historical registered v1 already has memory + MLP; current source hash differs because of later performance changes, not missing branch."
+}
