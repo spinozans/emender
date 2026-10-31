@@ -42,8 +42,14 @@ def diagnose(path, root='.'):
     for name, expected in bindings((root/path).read_bytes()).items():
         history_root, history_name = root, name
         if Path(name).is_absolute():
-            history_root = Path(git(Path(name).parent, 'rev-parse', '--show-toplevel').decode().strip())
-            history_name = str(Path(name).relative_to(history_root))
+            try:
+                history_root = Path(git(Path(name).parent, 'rev-parse', '--show-toplevel').decode().strip())
+                history_name = str(Path(name).relative_to(history_root))
+            except (subprocess.CalledProcessError, ValueError):
+                rows.append(dict(source=name, status='TAMPER SUSPECT', registered=expected,
+                                 head=None, working=digest(Path(name).read_bytes()) if Path(name).is_file() else None,
+                                 commits=[], reason='external repository history unavailable'))
+                continue
         try:
             head = digest(git(history_root, 'show', f'HEAD:{history_name}'))
         except subprocess.CalledProcessError:

@@ -130,3 +130,9 @@ def test_resume_amendment_rejects_identity_change(tmp_path, monkeypatch):
     path.write_text(json.dumps(amendment))
     with pytest.raises(RuntimeError, match='identity mismatch'):
         mod.validate_smoke(out)
+
+
+def test_missing_external_history_is_suspect(repo):
+    source='/nonexistent-registration-test-repo/source.py'
+    (repo/'registration.json').write_text(json.dumps({'sources': {source: '0'*64}}))
+    assert diagnose('registration.json', repo)['sources'][0]['status']=='TAMPER SUSPECT'

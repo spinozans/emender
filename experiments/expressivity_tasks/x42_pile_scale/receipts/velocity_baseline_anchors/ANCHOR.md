@@ -9,8 +9,8 @@ Baseline score = NLL; emender adds 0.01*occ_frac plus degeneracy penalties. Raw 
 | arm | status | score | raw NLL | tokens seen | tok/s |
 |---|---|---:|---:|---:|---:|
 | pure emender c06 (fresh anchor) | queued | pending | pending | pending | pending |
-| transformer | queued | pending | pending | pending | pending |
-| gdn2 | queued | pending | pending | pending | pending |
+| transformer | completed | 4.304507613182068 | 4.304507613182068 | 140771328 | 52115.51934923979 |
+| gdn2 | completed | 3.553440898656845 | 3.553440898656845 | 159907840 | 59200.83529439894 |
 
 Queued/failed rows are not measurements. Results are not yet evidence that 5.37 is strong.
 No resilient DiLoCo behavior is changed; resilient requirement IDs are not applicable.

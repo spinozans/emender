@@ -1,0 +1,284 @@
+{
+  "services": {
+    "anchors": "MainPID=871238\nExecMainStartTimestamp=Sat 2026-10-31 03:01:21 UTC\nActiveState=active\nSubState=running\n",
+    "loop": "MainPID=873399\nExecMainStartTimestamp=Sat 2026-10-31 03:01:38 UTC\nActiveState=active\nSubState=running\n",
+    "transformer": "MainPID=871245\nExecMainStartTimestamp=Sat 2026-10-31 03:01:21 UTC\nActiveState=active\nSubState=running\n",
+    "gdn2": "MainPID=871247\nExecMainStartTimestamp=Sat 2026-10-31 03:01:21 UTC\nActiveState=active\nSubState=running\n"
+  },
+  "registrations": {
+    "velocity_registration.json": "MATCH",
+    "velocity_transformer_registration.json": "MATCH",
+    "velocity_gdn2_registration.json": "MATCH",
+    "velocity_regime.json": "MATCH",
+    "receipts/velocity_baseline_anchors/sources.sha256": "MATCH"
+  },
+  "candidates": {
+    "production": [
+      {
+        "output": "experiments/expressivity_tasks/x42_pile_scale/runs/velocity_production_v1/g2_c07/attempt6",
+        "start": {
+          "policy": {
+            "h_min": 104.82279816562267,
+            "ratio": 2.683986494101096,
+            "N": 3,
+            "budget_min": 80,
+            "budget_ratio": 2.5650927312572294,
+            "write_gate_bias": 1.8105604113584963,
+            "match_coef": -0.16559817450970726,
+            "match_wire": [
+              0.5071156770761455,
+              1.0386711159935638,
+              0.7965970139376898,
+              0.7242938237327475,
+              0.5046343867700195,
+              1.5850078820381805,
+              1.97816128268608,
+              0.8398225611276807
+            ],
+            "occ_onset": [
+              0.680585716857887,
+              0.7060160132255147,
+              0.4013107215527879,
+              0.6521256182933344,
+              0.49542331102508896,
+              0.5745811024679136,
+              0.5505951485311505,
+              0.6160302953024683
+            ],
+            "occ_slope": [
+              0.39023209429473454,
+              0.18911529654447978,
+              0.45196228791656384,
+              0.37736437636503967,
+              0.3861075603975431,
+              0.7845619353493003,
+              1.5273042070117393,
+              0.411795336175012
+            ],
+            "pop_threshold": 0.4424901981114488,
+            "w_in_width": 93,
+            "gate_cost_lambda": 0.0027833626697555294,
+            "lr": 0.00012857031319214943,
+            "warmup_steps": 218
+          },
+          "parameters": {
+            "total": 265976364,
+            "trainable": 150006684
+          },
+          "physical_gpu": "6",
+          "train_seconds_requested": 2700,
+          "registration_sha256": "aefc7180058a3e18cc0cae9158674e7cbf5f087eef9fc2fa21926b1646c6d94b",
+          "context": 2048,
+          "batch": 64,
+          "flags": {
+            "X40_BATCHED_READS": "1",
+            "X40_FRESH_POOL": "1",
+            "X40_LONG_POOL": "1",
+            "X40_FUSED_INIT": "1",
+            "X40_STABLE_MAPPING": "1"
+          },
+          "seed": 3401
+        },
+        "last_step": {
+          "step": 2,
+          "tokens": 262144,
+          "train_seconds": 22.223009140230715,
+          "step_seconds": 9.246633676812053,
+          "loss": 10.978271484375,
+          "grad_norm": 2.7748260498046875,
+          "tokens_per_second": 11796.062285977103
+        }
+      },
+      {
+        "output": "experiments/expressivity_tasks/x42_pile_scale/runs/velocity_production_v1/g2_c08/attempt5",
+        "start": null,
+        "last_step": null
+      },
+      {
+        "output": "experiments/expressivity_tasks/x42_pile_scale/runs/velocity_production_v1/g2_c09/attempt3",
+        "start": null,
+        "last_step": null
+      }
+    ],
+    "transformer": [
+      {
+        "output": "experiments/expressivity_tasks/x42_pile_scale/runs/velocity_transformer_v1/g1_c04/attempt3",
+        "start": {
+          "policy": {
+            "lr": 0.00028232241307814493,
+            "warmup_steps": 118,
+            "weight_decay": 0.1303179300608331,
+            "microbatch": 16,
+            "init_scale": 0.9636841236853704,
+            "beta2": 0.9615312364647004,
+            "decay_rate_scale": 1.0,
+            "dt_bias_shift": 0.0,
+            "expansion": 2.0
+          },
+          "arm": "transformer",
+          "parameters": {
+            "total": 150003936,
+            "trainable": 150003936
+          },
+          "capacity_target": 150003984,
+          "precision": "bf16 compute / fp32 master parameters; fused linear CE",
+          "physical_gpu": "5",
+          "train_seconds_requested": 2700,
+          "registration_sha256": "1e3b8fbf84dd54e577a0247d2d28b6fd053a2c65884066557d6b1df8268f1a23",
+          "context": 2048,
+          "batch": 64,
+          "flags": {
+            "X40_BATCHED_READS": "1",
+            "X40_FRESH_POOL": "1",
+            "X40_LONG_POOL": "1",
+            "X40_FUSED_INIT": "1",
+            "X40_STABLE_MAPPING": "1"
+          },
+          "seed": 3401
+        },
+        "last_step": {
+          "step": 15,
+          "tokens": 1966080,
+          "train_seconds": 33.69141779374331,
+          "step_seconds": 2.2560608768835664,
+          "loss": 9.801780700683594,
+          "grad_norm": 1.7211092710494995,
+          "tokens_per_second": 58355.51391859538
+        }
+      }
+    ],
+    "gdn2": [
+      {
+        "output": "experiments/expressivity_tasks/x42_pile_scale/runs/velocity_gdn2_v1/g1_c04/attempt3",
+        "start": {
+          "policy": {
+            "lr": 0.0008824181484580497,
+            "warmup_steps": 71,
+            "weight_decay": 0.0878282521749757,
+            "microbatch": 64,
+            "init_scale": 1.1748169971111173,
+            "beta2": 0.9302884787018197,
+            "decay_rate_scale": 1.0084170069588658,
+            "dt_bias_shift": -0.12111439189770978,
+            "expansion": 2.0
+          },
+          "arm": "gdn2",
+          "parameters": {
+            "total": 149961173,
+            "trainable": 149961173
+          },
+          "capacity_target": 150003984,
+          "precision": "bf16 compute / fp32 master parameters; fused linear CE",
+          "physical_gpu": "1",
+          "train_seconds_requested": 2700,
+          "registration_sha256": "95ef65a9b369dbea2a3cc08593d6d07e9ae87763ef1b6234443762c4fa0f5d55",
+          "context": 2048,
+          "batch": 64,
+          "flags": {
+            "X40_BATCHED_READS": "1",
+            "X40_FRESH_POOL": "1",
+            "X40_LONG_POOL": "1",
+            "X40_FUSED_INIT": "1",
+            "X40_STABLE_MAPPING": "1"
+          },
+          "seed": 3401
+        },
+        "last_step": {
+          "step": 18,
+          "tokens": 2359296,
+          "train_seconds": 34.8834165353328,
+          "step_seconds": 1.924663064070046,
+          "loss": 10.153547286987305,
+          "grad_norm": 1.3968642950057983,
+          "tokens_per_second": 67633.7421711635
+        }
+      }
+    ]
+  },
+  "anchor_pure": {
+    "start": {
+      "policy": {
+        "h_min": 160.7011981990123,
+        "ratio": 3.8240622675025255,
+        "N": 2,
+        "budget_min": 52,
+        "budget_ratio": 2.5356882631899675,
+        "write_gate_bias": 2.9682360447268534,
+        "match_coef": -0.6721602382122236,
+        "match_wire": [
+          0.7299244384903537,
+          1.0086801523095044,
+          0.8462962186518866,
+          0.5887296056566842,
+          1.3151806760044344,
+          2.8182393846481815,
+          0.7302994281753674,
+          0.5808661347488224
+        ],
+        "occ_onset": [
+          0.6012725756486508,
+          0.6251249830782932,
+          0.44975496731176445,
+          0.6892628584120871,
+          0.6871456002105829,
+          0.577229851451561,
+          0.7600756887848223,
+          0.7172020968209267
+        ],
+        "occ_slope": [
+          0.42462695385431554,
+          0.4644406025198781,
+          0.6652598038556163,
+          1.2058136545920495,
+          0.6877022300673203,
+          0.7500639172871457,
+          1.144893333198313,
+          0.6295449856893186
+        ],
+        "pop_threshold": 0.18857238322708755,
+        "w_in_width": 59,
+        "gate_cost_lambda": 0.002772162218769392,
+        "lr": 0.00025180085693680385,
+        "warmup_steps": 122
+      },
+      "arm": "pure",
+      "parameters": {
+        "total": 227317104,
+        "trainable": 150003984
+      },
+      "capacity_target": 150003984,
+      "precision": "certified FP32 store/loss",
+      "physical_gpu": "0",
+      "train_seconds_requested": 2700,
+      "registration_sha256": "aefc7180058a3e18cc0cae9158674e7cbf5f087eef9fc2fa21926b1646c6d94b",
+      "context": 2048,
+      "batch": 64,
+      "flags": {
+        "X40_BATCHED_READS": "1",
+        "X40_FRESH_POOL": "1",
+        "X40_LONG_POOL": "1",
+        "X40_FUSED_INIT": "1",
+        "X40_STABLE_MAPPING": "1"
+      },
+      "seed": 3401
+    },
+    "last_step": {
+      "step": 6,
+      "tokens": 786432,
+      "train_seconds": 40.31074077403173,
+      "step_seconds": 6.156940687913448,
+      "loss": 6.566854000091553,
+      "grad_norm": 42.80592346191406,
+      "tokens_per_second": 19509.24207541781
+    }
+  },
+  "completed_transformer_and_gdn2_unchanged": true,
+  "gpu_snapshot": "index, utilization.gpu [%], memory.used [MiB]\n0, 100 %, 15574 MiB\n1, 100 %, 15758 MiB\n2, 0 %, 2 MiB\n3, 0 %, 2 MiB\n4, 0 %, 2 MiB\n5, 100 %, 6354 MiB\n6, 100 %, 17256 MiB\n7, 0 %, 2 MiB\n",
+  "residual_risks": [
+    "Fresh pure anchor and length sweep are in progress; no completed three-family length-table claim.",
+    "Historical smoke is retained by a committed attended source amendment; promoted-source throughput is not certified.",
+    "Part22 unresolved race inventory and 9x stability/liveness remain unresolved.",
+    "Detector covers explicitly bound paths; it does not discover new import dependencies.",
+    "Pre-commit warning is advisory and local core.hooksPath must be configured on other checkouts."
+  ]
+}
