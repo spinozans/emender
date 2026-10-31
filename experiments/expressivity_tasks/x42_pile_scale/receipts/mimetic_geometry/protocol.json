@@ -1,0 +1,83 @@
+{
+  "status": "preregistered",
+  "budget_seconds": 2700,
+  "batch": 64,
+  "context": 2048,
+  "eval_windows": 24,
+  "seed": 3401,
+  "baseline_score": 4.802025388578573,
+  "baseline_result": "experiments/expressivity_tasks/x42_pile_scale/runs/velocity_production_v1/g3_c10/attempt1/result.json",
+  "policy": {
+    "h_min": 157.8772423123269,
+    "ratio": 3.5733556202097896,
+    "N": 2,
+    "budget_min": 69,
+    "budget_ratio": 2.7434312195127295,
+    "write_gate_bias": 1.376111043445139,
+    "match_coef": 0.963210554853605,
+    "match_wire": [
+      0.36820012420610415,
+      0.9284832743476178,
+      1.3717208693387577,
+      0.6620870236511074,
+      1.166174237223525,
+      2.640956846965894,
+      1.3557085076450277,
+      1.1022988331145551
+    ],
+    "occ_onset": [
+      0.5271078534479361,
+      0.7253023258407272,
+      0.7190024039599952,
+      0.47880196778259254,
+      0.5507491834643807,
+      0.6832898159580428,
+      0.6512511185717316,
+      0.8743874106642993
+    ],
+    "occ_slope": [
+      0.23454839683252052,
+      0.8885603689857369,
+      0.31054292015064106,
+      0.2591031059675214,
+      0.7480809122314495,
+      1.2108252639040054,
+      0.9772103308941162,
+      0.6374176693268813
+    ],
+    "pop_threshold": 0.23068321371641223,
+    "w_in_width": 58,
+    "gate_cost_lambda": 0.04761126729083697,
+    "lr": 0.0008264633617156854,
+    "warmup_steps": 147
+  },
+  "arms": [
+    "mimetic read-path transplant, frozen spine unchanged",
+    "unfrozen semantic/key basis, detach removed, diagnostic only"
+  ],
+  "mapping": "donor K/V SVD input rank256; rank min(w_in_width,64) shared content factorization; evenly spaced donor value heads; corresponding output columns; MLP neuron replication",
+  "untouched_mimetic": [
+    "management",
+    "semantic embeddings",
+    "key projections",
+    "query projections",
+    "token embedding",
+    "vocabulary head",
+    "layer norms"
+  ],
+  "interpretation": "single-seed wall-clock comparisons; partial transplant does not preserve transformer function; unfreezing adds trainable capacity; no interaction arm; neither null result identifies selectivity cost causally",
+  "decision_threshold": "report continuous score/NLL deltas; material NLL improvement >=0.1 as in lineage study",
+  "gpu_allowlist": [
+    2,
+    4
+  ],
+  "forbidden_gpu": 7,
+  "resilient_diloco": "No resilient behavior changed; requirement IDs not applicable",
+  "sources": {
+    "experiments/expressivity_tasks/x42_pile_scale/x42_mimetic_geometry.py": "861a00dcf0f868181fe3e01bd3d999b605ffd2f4c03746105ad6c9f3fc1995fe",
+    "experiments/expressivity_tasks/x42_pile_scale/x42_mimetic_leased.sh": "9fb264cbb58c444d65afd2827229b0ae9d6c6aee6372c907d4e977e43e1a7fba",
+    "experiments/expressivity_tasks/x42_pile_scale/velocity_candidate.py": "703fa38457deda9e4dab6bffb2eb5649f86f8c1e33edfc557ed3a1003fe6f586",
+    "experiments/expressivity_tasks/x42_pile_scale/velocity_train.py": "548862ecd9d80647d5fe1d729638da8b635fa950e59be8ca672902a2b30a1322",
+    "experiments/expressivity_tasks/x42_pile_scale/velocity_score.py": "20da5b3647c03008b26b08a918e538783ad14c03c37103bd057a58dfdd248e84"
+  }
+}
