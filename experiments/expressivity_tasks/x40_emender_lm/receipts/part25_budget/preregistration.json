@@ -1,0 +1,17 @@
+{
+  "experiment": "X40 part 25 budget-scaled safe-depth transfer",
+  "status": "preregistered-before-any-part25-evaluation",
+  "prediction": {"budget4_bin2_balanced_accuracy_min": 0.85, "budget16_bin4_balanced_accuracy_min": 0.85, "budget4_bin2_gain_over_receipted_v1_min": 0.215234375},
+  "baseline": {"bin2": 0.634765625, "bin4": 0.494140625},
+  "budget_definition": "Scale actual v1 depth-finetune policies: depth.Probe and fine_tune replace each head budget with 2944. Native LM pretraining budgets (64,256,736,1472) are not the evaluated baseline. All nonbudget policy fields and parameters remain unchanged.",
+  "per_head_budgets": {"1": 2944, "4": 11776, "16": 47104},
+  "initial_checkpoint": "experiments/expressivity_tasks/x40_emender_lm/receipts/part12_checkpoint_managed/training/runs/lm.ckpt",
+  "initial_checkpoint_sha256": "745ad42946f8926d11b3d3d9666dd887e6b84ac46a1fdc0a20a7022516fa542f",
+  "protocol": "All variants independently initialize from identical pretrained v1 weights; seed 0, new 5-token embedding and binary head, 30000 updates, B64 epoch permutation, AdamW lr 1e-4 wd 1e-4, clip 1, validation every 500, latest best-validation checkpoint selected; checkpoint every 32. Same ladder pools and EOS BCE as depth.py. Sequential variants under one parent and broker on cards 3/4 only.",
+  "eval_bins": ["bin_id", "bin_2x", "bin_4x"],
+  "forbidden_bin": "bin_9x",
+  "telemetry": "Per evaluation batch, block and head: final live occupancy, R-CAP event/refusal fraction and conditional refusal per append request, gate mean. Occupancy is final native live slots, not inaccurate cumulative event reconstruction.",
+  "verdict": "Both thresholds passing supports budget-bound generalization within measured range; either miss falsifies the registered conjunction. Infrastructure failure remains incomplete, not a scientific miss. No 9x conclusion.",
+  "x28e_caveat": "Read phase_diagram.json: B0x16 final evaluation is infrastructure-censored there, so user-supplied 0.95 at 9x is motivation, not independently verified by that receipt.",
+  "coordination": "contact_supervisor tool discovery returned no matching callable tool; implementation stays single-threaded."
+}
