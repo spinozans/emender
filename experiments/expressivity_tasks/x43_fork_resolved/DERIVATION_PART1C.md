@@ -17,7 +17,7 @@ its longest repeated left suffix C(i,L_i) is right-maximal. This is a
 per-occurrence statistic, not the number of distinct right-maximal strings.
 A suffixient set covers the right extensions of right-maximal strings by
 selected occurrence endpoints. Formally, for every right-maximal C and every
-byte a with O(Ca) nonempty, a suffixient endpoint set S must contain an
+byte a for which some j in O(C) has T[j]=a, a suffixient endpoint set S must contain an
 endpoint of some occurrence of Ca (equivalently Ca is a suffix of the corpus
 prefix ending at that endpoint). With our target indexing those endpoints
 are {j in O(C): T[j]=a}. Such coverage motivates keeping fork extensions,
