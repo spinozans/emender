@@ -1,5 +1,10 @@
 # X43 part 1 result: model legs passed; index/decomposition blocked
 
+Part 1b retried the correct crate path: the release build passed, but exact-corpus
+index construction failed at endpoint cyclic seam repair. See
+[RESULT_PART1B.md](RESULT_PART1B.md) and `receipts/part1b/` for the new receipts.
+The decomposition remains blocked.
+
 | Arm | Trainable parameters | Steps / 180 seconds | NLL nats/byte | Accuracy | Fork NLL share | Fork accuracy |
 |---|---:|---:|---:|---:|---|---|
 | emender | 2,000,324 | 5,552 | 2.201701 | 35.199% | blocked | blocked |

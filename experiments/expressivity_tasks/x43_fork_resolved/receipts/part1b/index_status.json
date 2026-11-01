@@ -1,0 +1,30 @@
+{
+  "status": "blocked",
+  "release_build": {
+    "command": "cd /home/erikg/sxgc/xsa && cargo build --release",
+    "exit_code": 0,
+    "log": "xsa_build.log",
+    "warnings": 26
+  },
+  "index_build": {
+    "command": "PATH=/home/erikg/emender/.venv/bin:$PATH /home/erikg/sxgc/xsa/target/release/xsa build --text /home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/input.txt -o /home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1b/shakespeare.sxi --threads 1 --mode text --verify-text-sample 1000 --scratch /home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1b/scratch --verbose",
+    "exit_code": 1,
+    "failed_stage": "endpoints",
+    "log": "index_build.log",
+    "error": "FATAL: cyclic seam repair exceeds compressed-work policy; no O(n) fallback",
+    "class_size": 40000,
+    "limit": 1000,
+    "sxi_published": false
+  },
+  "xsa_commit": "24f48f032ec1b6024dea09703e4076f206d6d31b",
+  "xsa_binary_sha256": "92dee5acb6f598d5e42ea37ff8ae5eb0d6a714bb66732cac64dcdc373899af52",
+  "corpus_sha256": "86c4e6aa9db7c042ec79f339dcb96d42b0075e16b8fc2e86bf0ca57e2dc565ed",
+  "source_edits": "none",
+  "gpu_use": "none",
+  "retraining": "unnecessary; retained checkpoints match prior manifest",
+  "fork_positions": null,
+  "fork_density": null,
+  "decomposition": null,
+  "baselines": null,
+  "stop_reason": "Index build failed; stop without patching operator project or substituting corpus/labels."
+}
