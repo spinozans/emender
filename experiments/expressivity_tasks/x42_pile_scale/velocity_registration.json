@@ -1,7 +1,7 @@
 {
   "version": 1,
   "status": "registered",
-  "created_unix": 1793311431.1355317,
+  "created_unix": 1793502944.4893713,
   "score_spec_verbatim": "\"\"\"Exact X42 velocity objective, independent of the legacy search evaluator.\n\nThis module only scores already validated metrics. It does not attest training\nduration, corpus identity, telemetry provenance, or pure-stack parity.\n\"\"\"\nimport math\nfrom numbers import Real\n\nTRAIN_SECONDS = 2700\nEVAL_CONTEXT = 2048\nW_OCC = 0.01\n\n\ndef _finite(name, value, lower=None, upper=None):\n    if isinstance(value, bool) or not isinstance(value, Real):\n        raise ValueError(f'{name} must be a finite real number')\n    value = float(value)\n    if not math.isfinite(value):\n        raise ValueError(f'{name} must be finite')\n    if lower is not None and value < lower:\n        raise ValueError(f'{name} must be >= {lower}')\n    if upper is not None and value > upper:\n        raise ValueError(f'{name} must be <= {upper}')\n    return value\n\n\ndef score_metrics(*, nll_heldout, occ_frac, ever_touched_fractions,\n                  r_cap_fire_rate, occupancy_slope):\n    \"\"\"Return additive score components and quantized degeneracy flags.\n\n    ever_touched_fractions must contain every evaluated layer/head. Aggregation\n    of per-token live occupancy belongs to the evaluator, before this function.\n    R-CAP rate is deliberately not clipped: multiple heads can fire per token.\n    \"\"\"\n    nll = _finite('nll_heldout', nll_heldout, 0)\n    occ = _finite('occ_frac', occ_frac, 0, 1)\n    touched = [_finite('ever_touched_fraction', x, 0, 1)\n               for x in ever_touched_fractions]\n    if not touched:\n        raise ValueError('ever_touched_fractions must include every head')\n    rate = _finite('r_cap_fire_rate', r_cap_fire_rate, 0)\n    slope = _finite('occupancy_slope', occupancy_slope)\n    flags = dict(dead_store=any(x < .01 for x in touched),\n                 pressure_runaway=rate > .05, slope_one=slope >= .9)\n    penalties = {name: amount if flags[name] else 0.\n                 for name, amount in [('dead_store', .05),\n                                      ('pressure_runaway', .05),\n                                      ('slope_one', .02)]}\n    total_penalty = sum(penalties.values())\n    return dict(score=nll + W_OCC * occ + total_penalty,\n                nll_heldout=nll, occ_frac=occ, w_occ=W_OCC,\n                occupancy_penalty=W_OCC * occ,\n                degeneracy_flags=flags, degeneracy_penalties=penalties,\n                degeneracy_penalty=total_penalty,\n                ever_touched_fractions=touched, r_cap_fire_rate=rate,\n                occupancy_slope=slope, minimized=True)\n",
   "sources": {
     "experiments/expressivity_tasks/x30_tape_cell/__init__.py": "e8e74c974357c232ab2c4c6416330906095d1df13478f2c47eb5cd1d122a2247",
@@ -198,9 +198,10 @@
     "experiments/expressivity_tasks/x42_pile_scale/velocity_parent.py": "90b3e6041946e47b7aa31a91d23878d1ef325a52c070273a3114674d661a51e4",
     "experiments/expressivity_tasks/x42_pile_scale/velocity_score.py": "20da5b3647c03008b26b08a918e538783ad14c03c37103bd057a58dfdd248e84",
     "experiments/expressivity_tasks/x42_pile_scale/velocity_state.py": "2b0bafc87a9e8d3862ab65c70fd3354a4d7972f1d8bedd2d3a9d639fd3d9208d",
-    "experiments/expressivity_tasks/x42_pile_scale/velocity_train.py": "548862ecd9d80647d5fe1d729638da8b635fa950e59be8ca672902a2b30a1322",
+    "experiments/expressivity_tasks/x42_pile_scale/velocity_train.py": "811a7dd6769ec8e76a6bbac4a1d1ecb2431f0c0fb9e3cf030a0b4a76c9bd1aaf",
     "experiments/expressivity_tasks/x42_pile_scale/velocity_validate.py": "622f140d0a183dfd26074fb2af873b342ca899a23d84e0816220d2abcd9c9cb9",
-    "scripts/gpu_lease.sh": "553cd9ab764e137fc4e33b7c20eeeda1b2a13f47870f5f4b679f153c68feb27f"
+    "scripts/gpu_lease.sh": "553cd9ab764e137fc4e33b7c20eeeda1b2a13f47870f5f4b679f153c68feb27f",
+    "experiments/expressivity_tasks/x42_pile_scale/mimetic_init.py": "7747e81647f27e297e640ab4d950bf8b2e78f790dab12bf9dfd6e2676621ae66"
   },
   "evidence": {
     "experiments/expressivity_tasks/x42_pile_scale/data/pile24/manifest.json": "1c66ff33c9d8662acaddd331b599791fc3c4bb49fd5493372820d1013dd8943b",
@@ -503,5 +504,16 @@
     "Historical X40 part8 tests fail against stale backward.py receipt hashes (two failures), retained honestly; certified core sources unchanged. New isolated kernel parity and full-proxy integration passed.",
     "Gate-cost coordinate only offsets objective under frozen management and has no trainable-gradient effect.",
     "Initial implementation is batch1 without throughput-tuned accumulation."
-  ]
+  ],
+  "search_id": "velocity_mimetic_v1",
+  "supersedes": "velocity_production_v1; non-mimetic; archived, never resumed",
+  "initialization": {
+    "recipe": "partial transformer donor read-path transplant; frozen geometry preserved",
+    "donor_sha256": "d5e0fa40ba32f8b7616cc70440d15834c906e142b30ec2f6fa9dced276c91289",
+    "donor_path": "experiments/expressivity_tasks/x42_pile_scale/receipts/mimetic_geometry/donor_weights.pt",
+    "provenance": "experiments/expressivity_tasks/x42_pile_scale/receipts/mimetic_geometry/donor_provenance.json",
+    "mapping": "experiments/expressivity_tasks/x42_pile_scale/receipts/mimetic_geometry/mapping.json",
+    "donor_pretraining_seconds": 2700,
+    "initialization_time": "excluded from candidate training clock; donor pretraining extra compute"
+  }
 }

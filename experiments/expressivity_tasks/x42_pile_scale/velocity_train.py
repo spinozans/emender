@@ -106,7 +106,13 @@ def train(policy,registration,output,*,seconds=TRAIN_SECONDS,context=2048,batch=
     if os.environ.get('GPU_LEASE_HELD') not in ('1','5','6'):raise RuntimeError('approved leased card required')
     if os.environ.get('CUDA_VISIBLE_DEVICES')!=os.environ['GPU_LEASE_HELD']:raise RuntimeError('device binding mismatch')
     configure_production()
-    model=Candidate(policy).cuda().train()
+    model=Candidate(policy)
+    recipe=json.loads(Path(registration).read_text()).get('initialization')
+    if recipe:
+        from .mimetic_init import DONOR, transplant
+        if sha(DONOR)!=recipe['donor_sha256']:raise ValueError('donor identity changed')
+        transplant(model,torch.load(DONOR,map_location='cpu',weights_only=True),out/'initialization.json')
+    model=model.cuda().train()
     optimizer=torch.optim.AdamW((p for p in model.parameters() if p.requires_grad),lr=policy.lr,betas=(.9,.95),weight_decay=.1,fused=True)
     corpus=ROOT/'data/pile24'
     train_stream=np.memmap(corpus/'train.bin',mode='r',dtype='<u2');valid=np.memmap(corpus/'valid.bin',mode='r',dtype='<u2')
