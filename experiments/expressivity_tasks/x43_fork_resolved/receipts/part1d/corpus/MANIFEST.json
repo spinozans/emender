@@ -1,0 +1,42 @@
+{
+  "content_separator_bytes": 0,
+  "corpus_bytes": 1115411,
+  "decompressor": "bzip2 -dc /home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/shakespeare.xml.bz2",
+  "doc_count": 1,
+  "documents_with_content_separator": 0,
+  "dump_bytes_compressed": 328884,
+  "dump_path": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/shakespeare.xml.bz2",
+  "dump_sha256": "99f9f29a55913711f86589044d30bce203001fbd988dd978949acff491d40679",
+  "finished_at": "2026-11-01T23:15:42Z",
+  "layout": {
+    "corpus.bin": "<title>\\n<body bytes>\\x1E per document; the 0x1E is omitted with --separator none",
+    "seps.bin": "48B header: b\"XSEP\", u32 version=1, u32 flags(bit0=0x1E emitted), u32 anchor_stride=64, u64 doc_count, u64 corpus_bytes, u64 anchor_count, u64 base; then doc_count*u32 LE deltas (d[0]=start[0]-base, d[i]=start[i]-start[i-1]); then anchor_count*u64 LE absolute start offsets of every 64th document. rank_1E(pos): document i with start[i] <= pos; with 0x1e framing the separator of doc i is at start[i+1]-1",
+    "titles.bin": "20B header: b\"XTIT\", u32 version=1, u32 doc_count, u64 payload_bytes; then the concatenated titles; then doc_count*u32 LE offsets relative to payload start; then doc_count*u16 LE lengths"
+  },
+  "manifest_version": 1,
+  "namespace_filter": "none: every <page> is indexed regardless of namespace prefix",
+  "pages_parsed": 1,
+  "pages_with_multiple_revisions": 0,
+  "separator": "0x1e",
+  "separator_byte": 30,
+  "separator_count": 1,
+  "separator_count_meaning": "number of 0x1E bytes in corpus.bin (emitted separators + any 0x1E inside content); rule 1 requires it to equal doc_count when --separator is 0x1e",
+  "sidecars": {
+    "corpus.bin": {
+      "bytes": 1115411,
+      "sha256": "09361d34d17be1882e28b4bb30025303779c88f0cd751285bb95e05ea7447a8e"
+    },
+    "seps.bin": {
+      "anchor_count": 1,
+      "anchor_stride": 64,
+      "bytes": 60,
+      "sha256": "352d5e8f63174f2a512bdea732b89ee24f64610cf8173866ccb4c6ea78abfcc3"
+    },
+    "titles.bin": {
+      "bytes": 41,
+      "sha256": "f585e6a4f4419b9539806b8bdb59a3b85c9d55fc133623929b5b5261cb879fe7"
+    }
+  },
+  "tool": "xsa corpus --wikipedia",
+  "xml_entities": "not decoded: title and <text> bytes are copied verbatim from the XML"
+}

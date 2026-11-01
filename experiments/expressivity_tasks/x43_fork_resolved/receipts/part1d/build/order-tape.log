@@ -1,0 +1,202 @@
+PHASE_CAP_KB=2097152
+SS_TAPE_FDS soft=1048576 hard=1048576 wanted=98 soft0=1048576 fd_ceiling=1048576 rule=raise to wanted, bounded by min(hard,1048576) bands_per_wave_max=32 threads=1
+SS_LCP_ARM lcp_source=sorter-bands slices=1
+END_SYMBOL mode=virtual position=1115411 multiplicity=1 rank=0
+END_FORMAT k=66 ends_in_sentinel=1 end_code=none
+TAIL_GROUP rows=24
+SS_TAPE_ARENA bytes=5960430 mechanism=anon fallback=0 role=reservation-probe
+SS_START n=1115412 row_bytes=32 sort_row_bytes=90 cap_bytes=2230824 (2.00n) rows_per_wave=66227 waves=17 ram_gb=1.00 rows_per_band=66227 par_bands=1 threads=1 in_band_arena_bytes=5960430 (5.344n)
+SS_TAPE_BUDGET memory_gb=2.00 budget_bytes=1073741824 bytes_per_row=90 bpr_terms=rows:32+pingpong:32+lcp:16+slice:1+stage:9 safety=0.85 bands_in_flight=1 rows_per_band=66227 rows_per_band_budget=9224690 rows_per_band_window=66227 binding=scratch-window bands=1 waves=17 rows_per_wave=66227 arena_bytes=830222115 arena_planned_rows=66227 cap_rows=9224690 fixed_bytes=29900976 stage_bytes=67108864 source=operator --budget-bytes k_source=thread count (P = --threads; K=--pending-bands is the tape window) fd_soft=1048576 fd_hard=1048576 parallel_bands=1 live_rows=66227 budget_rows=11930464 ratio=0.0056
+ (rows_per_band = arena/(bpr x parallel_bands): the work unit is derived from the envelope, n is in NO numerator; parallel_bands is the count of bands LIVE at once - the tape window K (--pending-bands) bounds band FILES, never live arenas; live_rows = parallel_bands x rows_per_band, budget_rows = envelope/bpr, ratio = live_rows x bpr / envelope)
+SS_WAVES count=23 (byte-range waves)
+SS_SAMPLE samples=1115388 stride=1 wall=0.01
+SS_TAPE K=8 packed_row_bytes=8 wave_cap=2230824
+SS_TAPE_CREDIT sa_window=8 lcp_window0=9 lcp_credit_rows0=524296 rows_per_band=66227 wait_timeout_s=1800 grow_s=30
+TAPE_DEPTH_HISTOGRAM wave=0 depth24=1 depth48=0 depth72=0 depth96=0 depth120=0 depth144=0 depth168=0 depth192=0 max_estimated_rows=40000 target=66227 plan_target=52981
+TAPE_ROW_BOUND wave=0 band=0 rows=40003 target=66227 ok=1
+SS_BAND band=0 rows=40003 read_s=0.000149 sort_s=0.006117 write_s=0.000775
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_0.consumed wall_s=0.010
+SS_WAVE w=1/23 bands=1 wall=0.04 scan=0.02 | band_sum read=0.00 sort=0.01 write=0.00 | band_max read=0.00 sort=0.01 write=0.00 | fd_live=7 fd_peak=8
+TAPE_DEPTH_HISTOGRAM wave=1 depth24=2 depth48=0 depth72=0 depth96=0 depth120=0 depth144=0 depth168=0 depth192=0 max_estimated_rows=52981 target=66227 plan_target=52981
+TAPE_ROW_BOUND wave=1 band=0 rows=52982 target=66227 ok=1
+TAPE_ROW_BOUND wave=1 band=1 rows=5480 target=66227 ok=1
+SS_BAND band=1 rows=52982 read_s=0.000169 sort_s=0.006558 write_s=0.000758
+SS_BAND band=2 rows=5480 read_s=0.000035 sort_s=0.000842 write_s=0.000216
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_1.consumed wall_s=0.000
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_2.consumed wall_s=0.010
+SS_WAVE w=2/23 bands=2 wall=0.05 scan=0.03 | band_sum read=0.00 sort=0.01 write=0.00 | band_max read=0.00 sort=0.01 write=0.00 | fd_live=7 fd_peak=8
+TAPE_DEPTH_HISTOGRAM wave=2 depth24=2 depth48=0 depth72=0 depth96=0 depth120=0 depth144=0 depth168=0 depth192=0 max_estimated_rows=52981 target=66227 plan_target=52981
+TAPE_ROW_BOUND wave=2 band=0 rows=52981 target=66227 ok=1
+TAPE_ROW_BOUND wave=2 band=1 rows=3872 target=66227 ok=1
+SS_BAND band=3 rows=52981 read_s=0.000163 sort_s=0.006351 write_s=0.000801
+SS_BAND band=4 rows=3872 read_s=0.000024 sort_s=0.000609 write_s=0.000186
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_3.consumed wall_s=0.010
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_4.consumed wall_s=0.000
+SS_WAVE w=3/23 bands=2 wall=0.05 scan=0.03 | band_sum read=0.00 sort=0.01 write=0.00 | band_max read=0.00 sort=0.01 write=0.00 | fd_live=7 fd_peak=8
+TAPE_DEPTH_HISTOGRAM wave=3 depth24=2 depth48=0 depth72=0 depth96=0 depth120=0 depth144=0 depth168=0 depth192=0 max_estimated_rows=52981 target=66227 plan_target=52981
+TAPE_ROW_BOUND wave=3 band=0 rows=52983 target=66227 ok=1
+TAPE_ROW_BOUND wave=3 band=1 rows=1594 target=66227 ok=1
+SS_BAND band=5 rows=52983 read_s=0.000163 sort_s=0.006549 write_s=0.000760
+SS_BAND band=6 rows=1594 read_s=0.000017 sort_s=0.000405 write_s=0.000163
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_5.consumed wall_s=0.010
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_6.consumed wall_s=0.000
+SS_WAVE w=4/23 bands=2 wall=0.05 scan=0.03 | band_sum read=0.00 sort=0.01 write=0.00 | band_max read=0.00 sort=0.01 write=0.00 | fd_live=7 fd_peak=8
+TAPE_DEPTH_HISTOGRAM wave=4 depth24=2 depth48=0 depth72=0 depth96=0 depth120=0 depth144=0 depth168=0 depth192=0 max_estimated_rows=52981 target=66227 plan_target=52981
+TAPE_ROW_BOUND wave=4 band=0 rows=52982 target=66227 ok=1
+TAPE_ROW_BOUND wave=4 band=1 rows=12022 target=66227 ok=1
+SS_BAND band=7 rows=52982 read_s=0.000164 sort_s=0.006515 write_s=0.000790
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_0.consumed wall_s=0.000
+SS_BAND band=8 rows=12022 read_s=0.000050 sort_s=0.001440 write_s=0.000276
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_7.consumed wall_s=0.010
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_8.consumed wall_s=0.000
+SS_WAVE w=5/23 bands=2 wall=0.05 scan=0.03 | band_sum read=0.00 sort=0.01 write=0.00 | band_max read=0.00 sort=0.01 write=0.00 | fd_live=7 fd_peak=8
+TAPE_DEPTH_HISTOGRAM wave=5 depth24=2 depth48=0 depth72=0 depth96=0 depth120=0 depth144=0 depth168=0 depth192=0 max_estimated_rows=52981 target=66227 plan_target=52981
+TAPE_ROW_BOUND wave=5 band=0 rows=52981 target=66227 ok=1
+TAPE_ROW_BOUND wave=5 band=1 rows=8510 target=66227 ok=1
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_1.consumed wall_s=0.000
+SS_BAND band=9 rows=52981 read_s=0.000158 sort_s=0.005944 write_s=0.000815
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_2.consumed wall_s=0.000
+SS_BAND band=10 rows=8510 read_s=0.000038 sort_s=0.001262 write_s=0.000254
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_9.consumed wall_s=0.010
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_10.consumed wall_s=0.000
+SS_WAVE w=6/23 bands=2 wall=0.05 scan=0.03 | band_sum read=0.00 sort=0.01 write=0.00 | band_max read=0.00 sort=0.01 write=0.00 | fd_live=7 fd_peak=8
+TAPE_DEPTH_HISTOGRAM wave=6 depth24=1 depth48=0 depth72=0 depth96=0 depth120=0 depth144=0 depth168=0 depth192=0 max_estimated_rows=16685 target=66227 plan_target=52981
+TAPE_ROW_BOUND wave=6 band=0 rows=16685 target=66227 ok=1
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_3.consumed wall_s=0.000
+SS_BAND band=11 rows=16685 read_s=0.000056 sort_s=0.002061 write_s=0.000350
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_11.consumed wall_s=0.010
+SS_WAVE w=7/23 bands=1 wall=0.03 scan=0.01 | band_sum read=0.00 sort=0.00 write=0.00 | band_max read=0.00 sort=0.00 write=0.00 | fd_live=7 fd_peak=8
+TAPE_DEPTH_HISTOGRAM wave=7 depth24=2 depth48=0 depth72=0 depth96=0 depth120=0 depth144=0 depth168=0 depth192=0 max_estimated_rows=52981 target=66227 plan_target=52981
+TAPE_ROW_BOUND wave=7 band=0 rows=52983 target=66227 ok=1
+TAPE_ROW_BOUND wave=7 band=1 rows=2526 target=66227 ok=1
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_4.consumed wall_s=0.000
+SS_BAND band=12 rows=52983 read_s=0.000159 sort_s=0.006442 write_s=0.000924
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_5.consumed wall_s=0.000
+SS_BAND band=13 rows=2526 read_s=0.000022 sort_s=0.000511 write_s=0.000192
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_12.consumed wall_s=0.010
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_13.consumed wall_s=0.000
+SS_WAVE w=8/23 bands=2 wall=0.05 scan=0.03 | band_sum read=0.00 sort=0.01 write=0.00 | band_max read=0.00 sort=0.01 write=0.00 | fd_live=7 fd_peak=8
+TAPE_DEPTH_HISTOGRAM wave=8 depth24=2 depth48=0 depth72=0 depth96=0 depth120=0 depth144=0 depth168=0 depth192=0 max_estimated_rows=52981 target=66227 plan_target=52981
+TAPE_ROW_BOUND wave=8 band=0 rows=52981 target=66227 ok=1
+TAPE_ROW_BOUND wave=8 band=1 rows=5321 target=66227 ok=1
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_6.consumed wall_s=0.000
+SS_BAND band=14 rows=52981 read_s=0.000160 sort_s=0.006272 write_s=0.000798
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_7.consumed wall_s=0.000
+SS_BAND band=15 rows=5321 read_s=0.000032 sort_s=0.000787 write_s=0.000225
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_14.consumed wall_s=0.010
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_15.consumed wall_s=0.000
+SS_WAVE w=9/23 bands=2 wall=0.05 scan=0.03 | band_sum read=0.00 sort=0.01 write=0.00 | band_max read=0.00 sort=0.01 write=0.00 | fd_live=7 fd_peak=8
+TAPE_DEPTH_HISTOGRAM wave=9 depth24=2 depth48=0 depth72=0 depth96=0 depth120=0 depth144=0 depth168=0 depth192=0 max_estimated_rows=52981 target=66227 plan_target=52981
+TAPE_ROW_BOUND wave=9 band=0 rows=52981 target=66227 ok=1
+TAPE_ROW_BOUND wave=9 band=1 rows=8212 target=66227 ok=1
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_8.consumed wall_s=0.000
+SS_BAND band=16 rows=52981 read_s=0.000161 sort_s=0.006353 write_s=0.000829
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_9.consumed wall_s=0.000
+SS_BAND band=17 rows=8212 read_s=0.000036 sort_s=0.001109 write_s=0.000260
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_16.consumed wall_s=0.000
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_17.consumed wall_s=0.010
+SS_WAVE w=10/23 bands=2 wall=0.05 scan=0.03 | band_sum read=0.00 sort=0.01 write=0.00 | band_max read=0.00 sort=0.01 write=0.00 | fd_live=7 fd_peak=8
+TAPE_DEPTH_HISTOGRAM wave=10 depth24=1 depth48=0 depth72=0 depth96=0 depth120=0 depth144=0 depth168=0 depth192=0 max_estimated_rows=33420 target=66227 plan_target=52981
+TAPE_ROW_BOUND wave=10 band=0 rows=33421 target=66227 ok=1
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_10.consumed wall_s=0.000
+SS_BAND band=18 rows=33421 read_s=0.000103 sort_s=0.004124 write_s=0.000545
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_18.consumed wall_s=0.010
+SS_WAVE w=11/23 bands=1 wall=0.04 scan=0.02 | band_sum read=0.00 sort=0.00 write=0.00 | band_max read=0.00 sort=0.00 write=0.00 | fd_live=7 fd_peak=8
+TAPE_DEPTH_HISTOGRAM wave=11 depth24=1 depth48=0 depth72=0 depth96=0 depth120=0 depth144=0 depth168=0 depth192=0 max_estimated_rows=29125 target=66227 plan_target=52981
+TAPE_ROW_BOUND wave=11 band=0 rows=29126 target=66227 ok=1
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_11.consumed wall_s=0.000
+SS_BAND band=19 rows=29126 read_s=0.000092 sort_s=0.003559 write_s=0.000488
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_19.consumed wall_s=0.010
+SS_WAVE w=12/23 bands=1 wall=0.04 scan=0.02 | band_sum read=0.00 sort=0.00 write=0.00 | band_max read=0.00 sort=0.00 write=0.00 | fd_live=7 fd_peak=8
+TAPE_DEPTH_HISTOGRAM wave=12 depth24=1 depth48=0 depth72=0 depth96=0 depth120=0 depth144=0 depth168=0 depth192=0 max_estimated_rows=51310 target=66227 plan_target=52981
+TAPE_ROW_BOUND wave=12 band=0 rows=51311 target=66227 ok=1
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_12.consumed wall_s=0.000
+SS_BAND band=20 rows=51311 read_s=0.000164 sort_s=0.006320 write_s=0.000825
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_20.consumed wall_s=0.010
+SS_WAVE w=13/23 bands=1 wall=0.05 scan=0.03 | band_sum read=0.00 sort=0.01 write=0.00 | band_max read=0.00 sort=0.01 write=0.00 | fd_live=7 fd_peak=8
+TAPE_DEPTH_HISTOGRAM wave=13 depth24=2 depth48=0 depth72=0 depth96=0 depth120=0 depth144=0 depth168=0 depth192=0 max_estimated_rows=52981 target=66227 plan_target=52981
+TAPE_ROW_BOUND wave=13 band=0 rows=52984 target=66227 ok=1
+TAPE_ROW_BOUND wave=13 band=1 rows=271 target=66227 ok=1
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_13.consumed wall_s=0.000
+SS_BAND band=21 rows=52984 read_s=0.000169 sort_s=0.006470 write_s=0.000821
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_14.consumed wall_s=0.000
+SS_BAND band=22 rows=271 read_s=0.000015 sort_s=0.000467 write_s=0.000169
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_21.consumed wall_s=0.000
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_22.consumed wall_s=0.010
+SS_WAVE w=14/23 bands=2 wall=0.05 scan=0.03 | band_sum read=0.00 sort=0.01 write=0.00 | band_max read=0.00 sort=0.01 write=0.00 | fd_live=7 fd_peak=8
+TAPE_DEPTH_HISTOGRAM wave=14 depth24=2 depth48=0 depth72=0 depth96=0 depth120=0 depth144=0 depth168=0 depth192=0 max_estimated_rows=52981 target=66227 plan_target=52981
+TAPE_ROW_BOUND wave=14 band=0 rows=52982 target=66227 ok=1
+TAPE_ROW_BOUND wave=14 band=1 rows=2600 target=66227 ok=1
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_15.consumed wall_s=0.000
+SS_BAND band=23 rows=52982 read_s=0.000176 sort_s=0.006473 write_s=0.000809
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_16.consumed wall_s=0.000
+SS_BAND band=24 rows=2600 read_s=0.000026 sort_s=0.000655 write_s=0.000202
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_23.consumed wall_s=0.010
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_24.consumed wall_s=0.000
+SS_WAVE w=15/23 bands=2 wall=0.05 scan=0.03 | band_sum read=0.00 sort=0.01 write=0.00 | band_max read=0.00 sort=0.01 write=0.00 | fd_live=7 fd_peak=8
+TAPE_DEPTH_HISTOGRAM wave=15 depth24=1 depth48=0 depth72=0 depth96=0 depth120=0 depth144=0 depth168=0 depth192=0 max_estimated_rows=48529 target=66227 plan_target=52981
+TAPE_ROW_BOUND wave=15 band=0 rows=48530 target=66227 ok=1
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_17.consumed wall_s=0.000
+SS_BAND band=25 rows=48530 read_s=0.000156 sort_s=0.005884 write_s=0.000749
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_25.consumed wall_s=0.010
+SS_WAVE w=16/23 bands=1 wall=0.04 scan=0.03 | band_sum read=0.00 sort=0.01 write=0.00 | band_max read=0.00 sort=0.01 write=0.00 | fd_live=7 fd_peak=8
+TAPE_DEPTH_HISTOGRAM wave=16 depth24=2 depth48=0 depth72=0 depth96=0 depth120=0 depth144=0 depth168=0 depth192=0 max_estimated_rows=52981 target=66227 plan_target=52981
+TAPE_ROW_BOUND wave=16 band=0 rows=52982 target=66227 ok=1
+TAPE_ROW_BOUND wave=16 band=1 rows=12816 target=66227 ok=1
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_18.consumed wall_s=0.000
+SS_BAND band=26 rows=52982 read_s=0.000175 sort_s=0.006430 write_s=0.000835
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_19.consumed wall_s=0.000
+SS_BAND band=27 rows=12816 read_s=0.000089 sort_s=0.001613 write_s=0.000320
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_26.consumed wall_s=0.010
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_27.consumed wall_s=0.000
+SS_WAVE w=17/23 bands=2 wall=0.05 scan=0.03 | band_sum read=0.00 sort=0.01 write=0.00 | band_max read=0.00 sort=0.01 write=0.00 | fd_live=7 fd_peak=8
+TAPE_DEPTH_HISTOGRAM wave=17 depth24=2 depth48=0 depth72=0 depth96=0 depth120=0 depth144=0 depth168=0 depth192=0 max_estimated_rows=52981 target=66227 plan_target=52981
+TAPE_ROW_BOUND wave=17 band=0 rows=52981 target=66227 ok=1
+TAPE_ROW_BOUND wave=17 band=1 rows=7327 target=66227 ok=1
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_20.consumed wall_s=0.000
+SS_BAND band=28 rows=52981 read_s=0.000172 sort_s=0.006264 write_s=0.000838
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_21.consumed wall_s=0.000
+SS_BAND band=29 rows=7327 read_s=0.000035 sort_s=0.001069 write_s=0.000312
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_28.consumed wall_s=0.000
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_29.consumed wall_s=0.010
+SS_WAVE w=18/23 bands=2 wall=0.05 scan=0.03 | band_sum read=0.00 sort=0.01 write=0.00 | band_max read=0.00 sort=0.01 write=0.00 | fd_live=7 fd_peak=8
+TAPE_DEPTH_HISTOGRAM wave=18 depth24=1 depth48=0 depth72=0 depth96=0 depth120=0 depth144=0 depth168=0 depth192=0 max_estimated_rows=49696 target=66227 plan_target=52981
+TAPE_ROW_BOUND wave=18 band=0 rows=49697 target=66227 ok=1
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_22.consumed wall_s=0.000
+SS_BAND band=30 rows=49697 read_s=0.000153 sort_s=0.006066 write_s=0.000746
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_30.consumed wall_s=0.010
+SS_WAVE w=19/23 bands=1 wall=0.04 scan=0.02 | band_sum read=0.00 sort=0.01 write=0.00 | band_max read=0.00 sort=0.01 write=0.00 | fd_live=7 fd_peak=8
+TAPE_DEPTH_HISTOGRAM wave=19 depth24=2 depth48=0 depth72=0 depth96=0 depth120=0 depth144=0 depth168=0 depth192=0 max_estimated_rows=52981 target=66227 plan_target=52981
+TAPE_ROW_BOUND wave=19 band=0 rows=52983 target=66227 ok=1
+TAPE_ROW_BOUND wave=19 band=1 rows=13070 target=66227 ok=1
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_23.consumed wall_s=0.000
+SS_BAND band=31 rows=52983 read_s=0.000165 sort_s=0.006529 write_s=0.000818
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_24.consumed wall_s=0.000
+SS_BAND band=32 rows=13070 read_s=0.000066 sort_s=0.001636 write_s=0.000313
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_31.consumed wall_s=0.010
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_32.consumed wall_s=0.000
+SS_WAVE w=20/23 bands=2 wall=0.05 scan=0.03 | band_sum read=0.00 sort=0.01 write=0.00 | band_max read=0.00 sort=0.01 write=0.00 | fd_live=7 fd_peak=8
+TAPE_DEPTH_HISTOGRAM wave=20 depth24=1 depth48=0 depth72=0 depth96=0 depth120=0 depth144=0 depth168=0 depth192=0 max_estimated_rows=956 target=66227 plan_target=52981
+TAPE_ROW_BOUND wave=20 band=0 rows=956 target=66227 ok=1
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_25.consumed wall_s=0.000
+SS_BAND band=33 rows=956 read_s=0.000015 sort_s=0.000385 write_s=0.000166
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_33.consumed wall_s=0.010
+SS_WAVE w=21/23 bands=1 wall=0.02 scan=0.01 | band_sum read=0.00 sort=0.00 write=0.00 | band_max read=0.00 sort=0.00 write=0.00 | fd_live=7 fd_peak=8
+TAPE_DEPTH_HISTOGRAM wave=21 depth24=1 depth48=0 depth72=0 depth96=0 depth120=0 depth144=0 depth168=0 depth192=0 max_estimated_rows=52489 target=66227 plan_target=52981
+TAPE_ROW_BOUND wave=21 band=0 rows=52491 target=66227 ok=1
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_26.consumed wall_s=0.000
+SS_BAND band=34 rows=52491 read_s=0.000172 sort_s=0.006386 write_s=0.000788
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_34.consumed wall_s=0.010
+SS_WAVE w=22/23 bands=1 wall=0.04 scan=0.02 | band_sum read=0.00 sort=0.01 write=0.00 | band_max read=0.00 sort=0.01 write=0.00 | fd_live=7 fd_peak=8
+TAPE_DEPTH_HISTOGRAM wave=22 depth24=1 depth48=0 depth72=0 depth96=0 depth120=0 depth144=0 depth168=0 depth192=0 max_estimated_rows=20805 target=66227 plan_target=52981
+TAPE_ROW_BOUND wave=22 band=0 rows=20805 target=66227 ok=1
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_27.consumed wall_s=0.000
+SS_BAND band=35 rows=20805 read_s=0.000070 sort_s=0.002559 write_s=0.000406
+SS_WAIT_DONE path=/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/part1d/build/bands-tape/band_35.consumed wall_s=0.010
+SS_WAVE w=23/23 bands=1 wall=0.02 scan=0.01 | band_sum read=0.00 sort=0.00 write=0.00 | band_max read=0.00 sort=0.00 write=0.00 | fd_live=7 fd_peak=8
+SS_LCP_STREAM mode=sorter-bands slices=36 rows=1115412 escapes=0 bytes=1115412 max_live_lcp_slice_bytes=52984 slice_bytes_per_row=1.000000 K=8
+LCP_SLICE max_live_bytes=332898 slices=36 peak_over_n=0.298453 live_slices_peak=9 slice_bytes_total=1115412 rows=1115412 escapes=0 rows_per_run=2.0612 lcp_window_final=9 max_slice_bytes=52984
+SS_TAPE_FD_PEAK live_fds_peak=8 fd_soft=1048576 fd_hard=1048576 fd_wanted=98 bands_in_flight=1 threads=1 (peak of /proc/self/fd: one open part file per scan thread, one band at a time per worker, no descriptor held for a band already read)
+SS_TAPE_PEAK peak_rss_kb=24584 budget_ratio=0.0231 budget_bytes=1073741824 peak_anon_kb=24264 peak_file_kb=5052 peak_total_kb=29316 total_ratio=0.0234 arena_peak_rows=52984 arena_peak_bytes=4768560 arena_model_bytes=830222115 cap_rows=9224690 rows_per_band=66227 arena_planned_bytes=5960430 bands_in_flight=1 waves_actual=23 gate_waits=0 memory_gb=2.00 (budget_ratio = peak OWNED RSS / envelope, asserted <= 0.90; peak_file_kb is the CLEAN reclaimable corpus mapping, reported, never counted)
+SS_TAPE_PARALLEL parallel_bands=1 rows_per_band=66227 live_rows=66227 budget_rows=11930464 ratio=0.0056 bound=0.90
+SS_DONE n=1115412 waves=23 ties=3898 sample_s=0.01 waves_s=1.07 total_s=1.09
