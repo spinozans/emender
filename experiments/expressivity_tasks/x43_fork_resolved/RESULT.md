@@ -1,3 +1,5 @@
+> Part 1c now completes the direct-SA decomposition; see [RESULT_PART1C.md](RESULT_PART1C.md). The historical xsa failure below remains unresolved.
+
 # X43 part 1 result: model legs passed; index/decomposition blocked
 
 Part 1b retried the correct crate path: the release build passed, but exact-corpus
