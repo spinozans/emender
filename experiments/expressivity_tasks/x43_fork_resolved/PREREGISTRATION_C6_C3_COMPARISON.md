@@ -1,0 +1,5 @@
+# C6 additive C3 comparison clarification
+
+Registered before the first head finishes training or any held-out predictions exist. The primary C6 comparison remains exactly PREREGISTRATION_C6.md: corpus-label forced walk at all forced positions. This is a stronger transductive diagnostic than C3 because 6,340 final-test forced positions have empty train support (determined from structural counts only, without model losses).
+
+To honor the requested C3 protocol comparison, also report a separately named `c3_protocol_fusion`: use calibrated train-count mixture at forks, and exact forced walk only where train support is nonempty; otherwise retain the head probability. Thus empty support abstains at forced positions as well. Report `c3_protocol_standalone` using the same covered forced walk and head probabilities at every fork. These rows must be compared directly with the historical C3 1.673012/1.746996 numbers. Do not silently equate all-forced corpus diagnostics with C3. No change to the primary prediction, training, normalization, calibration fitting, or test denominator. The difference between these rows is structural, not selected from observed test losses.
