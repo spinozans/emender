@@ -14,6 +14,9 @@ def main():
     assert train['protocol_sha256']==result['protocol_sha256']==digest(ROOT/'PREREGISTRATION_C7a.md')
     assert train['code_sha256']==digest(ROOT/'c7a.py')
     assert train['index_sha256']==digest(ROOT/'receipts/c6/index.npz')
+    deps=json.loads((OUT/'dependencies.json').read_text())
+    for path,entry in deps['files'].items():
+        assert entry['matches_c6_execution'] and digest(ROOT.parents[2]/path)==entry['sha256']
     assert train['physical_gpu'] in ('2','4') and not train['failures']
     assert json.loads((OUT/'terminal.json').read_text())['exit_code']==0
     for row in train['models']:
