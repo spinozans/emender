@@ -9,7 +9,7 @@ def main():
     for v in corpora.values():
         if isinstance(v,dict):assert digest(ROOT/v['path'])==v['sha256']
     x=(OUT/'corpus_x.txt').read_bytes();y=(ROOT/'input.txt').read_bytes()
-    z=np.load(ROOT/'receipts/c6/index.npz');d=np.load(OUT/'disjoint.npz');dev=json.loads((OUT/'device.json').read_text())
+    z=dict(np.load(ROOT/'receipts/c6/index.npz'));d=dict(np.load(OUT/'disjoint.npz'));dev=json.loads((OUT/'device.json').read_text())
     assert dev['index_sha256']==digest(OUT/'disjoint.npz')
     assert dev['corpora_sha256']==digest(OUT/'corpora.json')
     assert dev['source_sha256']==digest(ROOT/'c12.py')
@@ -44,6 +44,10 @@ def main():
         ood_self=z['support'][positions]==0,x_fork=d['support'][positions]>1,
         x_nonempty_zero_target=(d['support'][positions]>0)&~d['target_supported'][positions],
         self_nonempty_zero_target=(z['support'][positions]>0)&(z['q'][positions]==0))
+    copy=results['disjoint_copy_diagnostic']
+    assert copy['empty_support']==int((d['support'][positions]==0).sum())
+    assert copy['target_zero']==int((~d['target_supported'][positions]).sum())
+    assert copy['exact_copy_nll']=='infinity' and copy['target_zero']>0
     checks=0
     for name,input in results['inputs'].items():
         path=ROOT/input['path'];assert digest(path)==input['sha256'];ev=np.load(path)
@@ -62,7 +66,15 @@ def main():
                 if mask.any():assert abs(want['nll']-float(loss[len(allpos)//2:][mask].sum()/mask.sum()))<1e-12
                 else:assert want['nll'] is None
                 checks+=1
+    for arm in ('emender','transformer'):
+        models=results['models'];dense=models[arm+'_dense']['without'];dis=models[arm+'_disjoint']['with'];old=models[arm+'_c11']['with']
+        decisive=results['decisive'][arm]
+        assert decisive['P1']==(dis['fork']['nll']<dense['fork']['nll'])
+        assert decisive['P2']==(dis['ood_x']['nll']<=dense['ood_x']['nll'])
+        for mode in ('with','without'):
+            assert decisive['P3'][mode]==(models[arm+'_masked'][mode]['ood_self']['nll']<old['ood_self']['nll'])
     replay=json.loads((OUT/'control_replay.json').read_text())
+    assert len(replay['models'])==2
     assert replay['protocol_sha256']==digest(ROOT/'PREREGISTRATION_C12_CONTROL_REPLAY.md')
     assert replay['source_sha256']==digest(ROOT/'c12_control_replay.py')
     assert json.loads((OUT/'replay_terminal.json').read_text())['exit_code']==0

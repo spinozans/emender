@@ -13,9 +13,15 @@ def main():
     def summary(nll):
         nll=nll[-len(pos):];assert np.isfinite(nll).all()
         return {k:dict(n=int(v.sum()),nll=float(nll[v].mean()) if v.any() else None) for k,v in masks.items()}
+    raw=np.frombuffer((ROOT/'input.txt').read_bytes(),dtype=np.uint8)
+    copy_q=d['features'][d['ids'][pos],raw[pos]]
     replay=json.loads((OUT/'control_replay.json').read_text())
     report=dict(protocol_sha256=digest(ROOT/'PREREGISTRATION_C12.md'),models={},inputs={},decisive={},
         final_position_first=int(pos[0]),final_position_last=int(pos[-1]),final_targets=len(pos),
+        disjoint_copy_diagnostic=dict(empty_support=int((xs==0).sum()),target_zero=int((copy_q==0).sum()),
+            nonempty_zero_target=int(((xs>0)&(copy_q==0)).sum()),
+            exact_copy_nll='infinity' if (copy_q==0).any() else float(-np.log(copy_q).mean()),
+            positive_target_nll=float(-np.log(copy_q[copy_q>0]).mean())),
         c11_without_features='adopt only exact-step recovered weights passing whole-vector reference parity; see control_replay.json')
     for arm in ('emender','transformer'):
         for recipe in ('dense','c11','disjoint','masked'):
