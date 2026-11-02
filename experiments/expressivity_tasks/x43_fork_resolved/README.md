@@ -1,3 +1,7 @@
+> Current program, claim statuses and exact receipt bindings: [PROGRAM.md](PROGRAM.md).
+> Run `/home/erikg/emender/.venv/bin/python experiments/expressivity_tasks/x43_fork_resolved/validate_program.py`
+> before calling a result documented. The part-1 account below is historical.
+
 # X43 part 1: byte-level fork shakedown
 
 The index leg is **blocked**, not passed. The prescribed build in `~/sxgc`
