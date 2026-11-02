@@ -1428,3 +1428,12 @@ Paths are repository-relative. `emender` is this repository; `sxgc` is the exter
   ]
 }
 ```
+
+## Pending operator-authorized dense and generation rungs
+
+Before new measurements, PREREGISTRATION_C14_DENSE.md authorizes dense-only
+launch without the blocked consultation bridge, retaining the full selected
+raw-corpus prerequisite. Source preflight is in progress; no dense training
+outcome is claimed. PREREGISTRATION_C9.md freezes the C9 prediction, prompts,
+byte budgets, overlap measures, checkpoint choice and causal re-entry policy
+before generation. C9 stays registered until committed outcome receipts land.
