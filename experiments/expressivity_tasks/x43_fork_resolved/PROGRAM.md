@@ -56,13 +56,19 @@ Transformer joint neural weight collapses to about 2.4e-6 on one-branch position
 
 Registration preceded training in a07a8eea: [PREREGISTRATION_C7a.md](PREREGISTRATION_C7a.md), SHA256 `2a2b5fa7003c86facd81e5081bfd5b82260e573d22ad8d1c71d4768e64668978`. Primary common calibration gate and secondary uncalibrated joint gate were frozen in this protocol; dense and C6 controls were reused, not retrained. Seventy independent loss/denominator checks and six CPU tests pass.
 
-### C7b — registered: constrained routing residual comparison
+### C7b — refuted: primary Emender loses; secondary transformer fixed-blend wins
 
-Fixed .5 true-target plus .5 exact-count teacher loss (empty support pure true-target),
-and secondary neural gate floor .3; reuse dense/C7a controls. Separate decisive
-fused total, fork and empty-support deltas; C3 inference unchanged.
-[PREREGISTRATION_C7b.md](PREREGISTRATION_C7b.md), SHA256 `3c685cd6e59555e031379daa5c841f1a74cf85667b2a52a758876b8b65472949`.
-No training or outcomes at registration.
+emender C3-fused total/fork/empty-support NLL: fixed 1.711331/2.476626/2.523966; floor 4.552704/5.956247/9.051871; dense 1.673012/2.424886/2.444723; starved 3.718402/4.902387/7.269978;
+
+transformer C3-fused total/fork/empty-support NLL: fixed 1.655556/2.435391/2.288062; floor 5.281165/7.443949/8.962798; dense 1.746996/2.558332/2.466627; starved 14.647364/19.057854/30.744151;
+
+The primary Emender fixed arm loses all three columns; secondary transformer wins all three. The gate-floor arm loses for both. This mixed receipt does not settle training integration globally at inference.
+
+Fixed training has no learned routing and retains .5 direct true-target CE on covered positions; empty support is pure true-target. Secondary gate-floor .3 prevents probability-weight collapse, but does not bound gradient responsibility. Gates are calibrated/frozen under unchanged C3 inference. Controls reused; four sequential 180-second arms. Signed decisive deltas are separate for total, fork and empty-support columns, with full OOD-fork/forced denominators and calibration trust telemetry. [RESULT_C7b.md](RESULT_C7b.md), bindings C7b.
+
+Registration committed before training in 00f39a22; [PREREGISTRATION_C7b.md](PREREGISTRATION_C7b.md), SHA256 `3c685cd6e59555e031379daa5c841f1a74cf85667b2a52a758876b8b65472949`.
+
+One seed/corpus, transductive selector and no zero-target training exposure; equal wall clocks, unequal steps and cold/warm kernel costs. No universal residual-learning or scale-up claim. Six tests and independent receipt replay pass.
 
 ### C8 — registered: redundancy ladder
 
@@ -627,8 +633,159 @@ Paths are repository-relative. `emender` is this repository; `sxgc` is the exter
     },
     {
       "id": "C7b",
-      "status": "registered",
-      "receipts": []
+      "status": "refuted",
+      "receipts": [
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/RESULT_C7b.md",
+          "commit": "e702c80337d40de162e6dd923a0e75c6dbc24ec5",
+          "sha256": "afad80f815bfa0cc03ebab90b14e33f5834a3d2d714ce52acee4c03a9b7036c6"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/PREREGISTRATION_C7b.md",
+          "commit": "e702c80337d40de162e6dd923a0e75c6dbc24ec5",
+          "sha256": "3c685cd6e59555e031379daa5c841f1a74cf85667b2a52a758876b8b65472949"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/c7b.py",
+          "commit": "e702c80337d40de162e6dd923a0e75c6dbc24ec5",
+          "sha256": "69eeb9112b02669c5c5b2157a8a6330aa5d6bc5f4dcfb4be5f890735a152c707"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/c7b_score.py",
+          "commit": "e702c80337d40de162e6dd923a0e75c6dbc24ec5",
+          "sha256": "939d0e748e91f8b92d6773517a4c7b227e22d4fc824c2b72a02fd1e14f9260ba"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/validate_c7b.py",
+          "commit": "e702c80337d40de162e6dd923a0e75c6dbc24ec5",
+          "sha256": "e1b4a86754b579d969eac964f1c9977eceab60be74ce28ea969a9e993cac59dc"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/test_c7b.py",
+          "commit": "e702c80337d40de162e6dd923a0e75c6dbc24ec5",
+          "sha256": "7fae58e570d18d29bd3a3aa983cfffecff8bcf0ef4c820989ef7a305212ec47b"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/run_c7b_leased.sh",
+          "commit": "e702c80337d40de162e6dd923a0e75c6dbc24ec5",
+          "sha256": "520850b64ca91be4022d942f991f17315e7a206c7cfae228c088a7c66c90bd00"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c7b/calibration_freeze.json",
+          "commit": "e702c80337d40de162e6dd923a0e75c6dbc24ec5",
+          "sha256": "c4853c7b93a5e43f15b56a7839c546866747c85cd6b9f50b20bac2beaefdd7af"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c7b/console.txt",
+          "commit": "e702c80337d40de162e6dd923a0e75c6dbc24ec5",
+          "sha256": "72939f7267c88b492909e9d3cf21cf6a1264c5b9e599faa97e97641ce032de4b"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c7b/dependencies.json",
+          "commit": "e702c80337d40de162e6dd923a0e75c6dbc24ec5",
+          "sha256": "e749a43a6965056f5603687be35d5c23543917573ff27a5e22aed81e194f25c3"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c7b/emender_fixed_prediction.npz",
+          "commit": "e702c80337d40de162e6dd923a0e75c6dbc24ec5",
+          "sha256": "de9419124afcdd9d06d0728418f221fb839f970d8a8518c6ecadcc4072900bbe"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c7b/emender_floor_prediction.npz",
+          "commit": "e702c80337d40de162e6dd923a0e75c6dbc24ec5",
+          "sha256": "d7337a123ed80387088417d9f9c2ea3179d7c1aea5c2907ea5c62e3d68fb0cc1"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c7b/frozen_gates.json",
+          "commit": "e702c80337d40de162e6dd923a0e75c6dbc24ec5",
+          "sha256": "910d316365941cc34c1db89d89f0c5200a6081cfe1658846a39dd85b6eaba0d8"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c7b/gpu.csv",
+          "commit": "e702c80337d40de162e6dd923a0e75c6dbc24ec5",
+          "sha256": "c2cb3d9381da5240ec503d3371e5531fa8bf04ec2111cbb30ec7b2b8307cc2d4"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c7b/lease.txt",
+          "commit": "e702c80337d40de162e6dd923a0e75c6dbc24ec5",
+          "sha256": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c7b/manual_notes.json",
+          "commit": "e702c80337d40de162e6dd923a0e75c6dbc24ec5",
+          "sha256": "765891f8fe8ab9cbdd35651139884eed88f1f1221f59f6d8b0a0f0d0913e5b18"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c7b/results.json",
+          "commit": "e702c80337d40de162e6dd923a0e75c6dbc24ec5",
+          "sha256": "2d44bfe2dbe45388269ce9ca8672915ae116b61fe1f7c18ce6abcc51ad0c014b"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c7b/scoring.txt",
+          "commit": "e702c80337d40de162e6dd923a0e75c6dbc24ec5",
+          "sha256": "f008cc7868c308f9a32b0b5e3610f55ead44f2f24bd0e9ad926d785725e322e1"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c7b/teacher.json",
+          "commit": "e702c80337d40de162e6dd923a0e75c6dbc24ec5",
+          "sha256": "dcefe7bed1449a0237a32c22ac176de150b0211823ef46d762c71a5688d8655c"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c7b/terminal.json",
+          "commit": "e702c80337d40de162e6dd923a0e75c6dbc24ec5",
+          "sha256": "d24219f6de94b955cf36d25bd2aca88e2d35eef45b9317b7083f55ec8fe9653c"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c7b/tests.txt",
+          "commit": "e702c80337d40de162e6dd923a0e75c6dbc24ec5",
+          "sha256": "bd58bc1df5241f5a4c7004cf6c39eb1539541ba9a4e36a5c58e28ba6e40396d5"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c7b/training.json",
+          "commit": "e702c80337d40de162e6dd923a0e75c6dbc24ec5",
+          "sha256": "c0dd6ceb4a9a34da30a2c3a5575e9c0be694c286a4fe6eb0361f1d2ad3c11b32"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c7b/transformer_fixed_prediction.npz",
+          "commit": "e702c80337d40de162e6dd923a0e75c6dbc24ec5",
+          "sha256": "516c645de5dae8c12204da7a548a6c494e95ae77c2724f7fd22e7dee0bf8a1c3"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c7b/transformer_floor_prediction.npz",
+          "commit": "e702c80337d40de162e6dd923a0e75c6dbc24ec5",
+          "sha256": "e3e36a2246c31f6eed947af7da710708d98adafb08e9c58891641063694886de"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c7b/validation.txt",
+          "commit": "e702c80337d40de162e6dd923a0e75c6dbc24ec5",
+          "sha256": "fd3257b7fda81ab096f8f6f97b4d77537f8f41e137c00465f6079bee8d8b2068"
+        }
+      ]
     },
     {
       "id": "C8",
