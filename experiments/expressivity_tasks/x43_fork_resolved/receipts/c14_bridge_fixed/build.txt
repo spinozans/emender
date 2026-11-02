@@ -1,0 +1,226 @@
+warning: unnecessary `unsafe` block
+    --> src/qlite.rs:1416:30
+     |
+1416 |         let run_next = match unsafe { idx.dir.get(j + 1) } {
+     |                              ^^^^^^ unnecessary `unsafe` block
+     |
+     = note: `#[warn(unused_unsafe)]` (part of `#[warn(unused)]`) on by default
+
+warning: variable does not need to be mutable
+    --> src/qlite.rs:2421:9
+     |
+2421 |     let mut clamped_hits = 0u64;
+     |         ----^^^^^^^^^^^^
+     |         |
+     |         help: remove this `mut`
+     |
+     = note: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `clamped_hits`
+    --> src/qlite.rs:2421:9
+     |
+2421 |     let mut clamped_hits = 0u64;
+     |         ^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_clamped_hits`
+     |
+     = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `window_file_mb`
+    --> src/plan.rs:1150:9
+     |
+1150 |     let window_file_mb = window_file_gb * 1024.0;
+     |         ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_window_file_mb`
+
+warning: variable does not need to be mutable
+  --> src/forks.rs:75:14
+   |
+75 |         let (mut phi_u, mut phi_v);
+   |              ----^^^^^
+   |              |
+   |              help: remove this `mut`
+
+warning: variable does not need to be mutable
+  --> src/forks.rs:75:25
+   |
+75 |         let (mut phi_u, mut phi_v);
+   |                         ----^^^^^
+   |                         |
+   |                         help: remove this `mut`
+
+warning: value assigned to `phi_ok` is never read
+   --> src/forks.rs:76:26
+    |
+ 76 |         let mut phi_ok = false;
+    |                          ^^^^^ this value is reassigned later and never used
+...
+146 |         phi_ok = g == 1 || r == 1;
+    |         ------------------------- `phi_ok` is overwritten here before the previous value is read
+    |
+    = note: `#[warn(unused_assignments)]` (part of `#[warn(unused)]`) on by default
+
+warning: variable does not need to be mutable
+   --> src/main.rs:694:9
+    |
+694 |     let mut next_rng = |mut x: u64| -> u64 {
+    |         ----^^^^^^^^
+    |         |
+    |         help: remove this `mut`
+
+warning: value assigned to `tanchor` is never read
+   --> src/main.rs:747:31
+    |
+747 |             let mut tanchor = 0u64;
+    |                               ^^^^ this value is reassigned later and never used
+...
+755 |                         tanchor = r;
+    |                         ----------- `tanchor` is overwritten here before the previous value is read
+
+warning: value assigned to `tsample` is never read
+   --> src/main.rs:748:31
+    |
+748 |             let mut tsample = 0u64;
+    |                               ^^^^ this value is reassigned later and never used
+...
+756 |                         tsample = idx.tail_sample(r);
+    |                         ---------------------------- `tsample` is overwritten here before the previous value is read
+
+warning: variable does not need to be mutable
+   --> src/main.rs:907:9
+    |
+907 |     let mut read_flat = |flatf: &mut File, pos: u64, want: usize| -> Vec<u8> {
+    |         ----^^^^^^^^^
+    |         |
+    |         help: remove this `mut`
+
+warning: field `bits` is never read
+   --> src/main.rs:156:5
+    |
+155 | struct PackedSa {
+    |        -------- field in this struct
+156 |     bits: u64,          // total size IN BITS
+    |     ^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: method `s_at` is never used
+   --> src/main.rs:444:8
+    |
+250 | impl Ri4 {
+    | -------- method in this implementation
+...
+444 |     fn s_at(&self, j: u64) -> u64 {
+    |        ^^^^
+
+warning: method `count` is never used
+   --> src/sxi2.rs:562:12
+    |
+535 | impl LiteAnchors {
+    | ---------------- method in this implementation
+...
+562 |     pub fn count(&self) -> u64 { self.values.len() as u64 }
+    |            ^^^^^
+
+warning: constant `BLOCK_CACHE` is never used
+  --> src/qlite.rs:79:7
+   |
+79 | const BLOCK_CACHE: usize = 4096;
+   |       ^^^^^^^^^^^
+
+warning: constant `M1_AUDIT_BLOCKS` is never used
+  --> src/qlite.rs:82:7
+   |
+82 | const M1_AUDIT_BLOCKS: u64 = 1024;
+   |       ^^^^^^^^^^^^^^^
+
+warning: constant `BLOCK_BYTES_EST` is never used
+  --> src/qlite.rs:86:7
+   |
+86 | const BLOCK_BYTES_EST: u64 = 192;
+   |       ^^^^^^^^^^^^^^^
+
+warning: field `short_codes` is never read
+   --> src/qlite.rs:187:5
+    |
+181 | struct Huff {
+    |        ---- field in this struct
+...
+187 |     short_codes: u64,
+    |     ^^^^^^^^^^^
+
+warning: method `locate` is never used
+    --> src/qlite.rs:1589:12
+     |
+1383 | impl<'a> Ctx<'a> {
+     | ---------------- method in this implementation
+...
+1589 |     pub fn locate(&mut self, row: u64) -> u64 {
+     |            ^^^^^^
+
+warning: constant `DISC_MAX_USED_PERCENT` is never used
+  --> src/chain.rs:69:7
+   |
+69 | const DISC_MAX_USED_PERCENT: u32 = 85;
+   |       ^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `disc_allows_used_percent` is never used
+   --> src/chain.rs:634:4
+    |
+634 | fn disc_allows_used_percent(used: u32) -> bool {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `disc_used_bytes` is never used
+   --> src/chain.rs:669:4
+    |
+669 | fn disc_used_bytes(path: &Path) -> Result<u64, String> {
+    |    ^^^^^^^^^^^^^^^
+
+warning: field `merge_load_derive_s_per_mb` is never read
+  --> src/plan.rs:32:9
+   |
+29 | pub struct Rates {
+   |            ----- field in this struct
+...
+32 |     pub merge_load_derive_s_per_mb: f64, // walk-derivation fallback (legacy chunk sets)
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: constant `DISC_MAX_USED_PERCENT` is never used
+  --> src/plan.rs:74:11
+   |
+74 | pub const DISC_MAX_USED_PERCENT: u32 = 85;
+   |           ^^^^^^^^^^^^^^^^^^^^^
+
+warning: field `limit` is never read
+   --> src/plan.rs:633:9
+    |
+632 | pub struct BinCapTerms {
+    |            ----------- field in this struct
+633 |     pub limit: u64,   // --memory-gb in bytes (the phase's RLIMIT_AS)
+    |         ^^^^^
+
+warning: field `cap_rows` is never read
+   --> src/plan.rs:732:9
+    |
+724 | pub struct TapeBandPlan {
+    |            ------------ field in this struct
+...
+732 |     pub cap_rows: u64,
+    |         ^^^^^^^^
+    |
+    = note: `TapeBandPlan` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: constant `BIN_TARGET_ROWS` is never used
+   --> src/plan.rs:916:11
+    |
+916 | pub const BIN_TARGET_ROWS: u64 = 1 << 20;
+    |           ^^^^^^^^^^^^^^^
+
+warning: method `hit` is never used
+   --> src/product.rs:178:8
+    |
+ 67 | impl Engine {
+    | ----------- method in this implementation
+...
+178 |     fn hit(
+    |        ^^^
+
+warning: `xsa` (bin "xsa") generated 28 warnings (run `cargo fix --bin "xsa" -p xsa` to apply 7 suggestions)
+    Finished `release` profile [optimized] target(s) in 0.06s
