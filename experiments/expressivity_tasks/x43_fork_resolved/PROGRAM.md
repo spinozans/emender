@@ -74,9 +74,9 @@ One seed/corpus, transductive selector and no zero-target training exposure; equ
 
 Prediction: controlled duplication 2x/10x/50x reduces per-position decision density and increases forced-walk gains; test whether crossover changes monotonically with redundancy rather than assuming it. Generate synthetic corpora from the same base distribution, separate duplicated training material from independently sampled held-out material, and report both per-position forks and suffixient chi separately. This tier-1 curve is intended to predict Wikipedia/Pile behavior; those transfers remain unmeasured. Freeze generator, sizes, splits and seeds before execution.
 
-### C9 — registered: generation character
+### C9 — measured: increased overlap; full-context OOD recovery failed
 
-Prediction: the walk/fork alternation loop increases corpus n-gram overlap versus neural-only arms, while an explicit OOD channel permits drift and re-entry. At fixed prompts, sampling settings and generated-byte budgets, report n-gram overlap, longest copied spans, OOD run lengths, re-entry rates and walk/fork proportions; separate novelty from plagiarism judgments. Freeze n values, prompts and re-entry policy before execution. No generation receipt exists.
+The precommitted prediction holds for the retained dense transformer: walk/fork generation has greater training-corpus overlap at every n=4..32 than neural-only generation. At n=16, novel rates are 93.090% versus 96.259%; longest copied spans are 21–50 versus 20–28 bytes. Four fixed prompts per mode generate 4096 bytes each in total. Forced walks account for 1676/4096 steps. Active-interval OOD departures fall from 963 to 724; full 128-byte context remains unsupported for 4082/4096 walk/fork steps, with **zero full-context re-entries**. Every empty full context obtains a shorter supported suffix immediately; this is backoff recovery only. Self NLL worsens from .930636 to 1.036002 nats/byte; no independent quality claim. [RESULT_C9.md](RESULT_C9.md) retains all n-gram rates, samples, run lengths, and limitations. Protocol committed in 644bff97 before generation; outcomes in 0d9b8bce; bindings C9. One dense head, four prompts, transferred frozen C3 gate, and no escape from forced singleton support limit inference.
 
 ### C10 — registered: index as teacher
 
@@ -134,13 +134,13 @@ Scope: unchanged C11 training-prefix counts and device geometry, not future-cont
 
 The independent audit **failed** on two UINT64_MAX right-extension counts. Both affected feature rows are explicitly rejected; raw failures and a minimal upstream reproducer are preserved. The remaining receipt audit passes after quarantine, including 73 direct byte checks and 100 independent decoder checks; this does not certify query-engine correctness. No sxgc changes. AGC FFI has no SXI2 query API; the persistent-interface request is a handoff only. Host batch branch throughput is 326.22 successful features/s including process overhead: a repeated-batch 40M extrapolation is 34.06 hours before context search/transfer. Kernel-only throughput uses the default many-core Rayon pool despite `-j 1`; **no single-core budget is established**. [RESULT_C14_PHASE1.md](RESULT_C14_PHASE1.md), [C14_FEATURE_BRIDGE.md](C14_FEATURE_BRIDGE.md); bindings C14a. Training remains blocked on upstream query repair, a complete causal token geometry/cache, and an honest production budget.
 
-### C14 — registered: byte-level Pile training within documents; Wikipedia consultation and stacking
+### C14 — measured: dense raw-source preflight failed; training predictions untested
 
 The operator's byte pivot supersedes the earlier GPT-2/150M proposal. Binding protocol: [PREREGISTRATION_C14_BYTE.md](PREREGISTRATION_C14_BYTE.md), SHA256 `bec77a0412639b7b6c92cc615e281b1d3b0941cf40fa32d078c71a69d4af1fd1`; machine registration [registration.json](receipts/c14_byte/registration.json), SHA256 `7b1372363fe828313b241151b465e90a4d415989fcc39f0d08845b5fe1b2f957`; both committed in `6239a768026aeb536d726861a5ad6223e3094a26`. No C14 training or held-out inference has run. **No training across document boundaries, for all C14+ work.** Inputs, shifted byte targets, causal consultation context and eval sequences stay inside one document; reset state between windows. Calibration/final-test split is by document.
 
 Natural Pile JSONL was located and the whole compressed shard hash-bound. The first 4,096 selected documents match the pipeline's document hashes in strict order; 176,677 windows / 22,351,133 targets have zero cross-document windows. Four boundary tests pass. This is source discovery and boundary preflight, not a full corpus attestation. The native Wikipedia index is independently whole-file SHA256-bound alongside its corpus MANIFEST. Exact CPU shapes: 256-byte vocabulary, tier-1 2M heads (Emender 2,133,700; transformer 2,133,748 trainable parameters), matched dense zero-input versus Wikipedia consultation, whole-input keep=.5 feature dropout and 2700 active seconds/arm. Dense byte CE retains all real targets; no BPE/token projection or target masks.
 
-Phase-1 receipts are consumed from committed `6ff620c5`, including content strata and the native branch-count failure. Predictions are directional, calibrated to sparse long nonwhitespace overlap; no numeric C12 gain extrapolation. Predict consultation reduces byte NLL per head, device-off stays within .02 nats/byte of dense, and frozen C13-style stacking improves both separate recipes. Register coverage-subset cache hashes before frozen coverage-scaling inference, and freeze calibration fits before final-test scoring. **Launch blocked:** full selected raw-byte corpus/offset attestation, repaired native branch queries, complete 256-byte causal features (byte 30 included), and full cache/cost receipts remain prerequisites. Query failures are failures; the receipt audit passing is not query-health acceptance. [RESULT_C14_BYTE_REGISTRATION.md](RESULT_C14_BYTE_REGISTRATION.md) retains validation scope and residual risks. Registered status has no outcome bindings.
+Phase-1 receipts are consumed from committed `6ff620c5`, including content strata and the native branch-count failure. Predictions are directional, calibrated to sparse long nonwhitespace overlap; no numeric C12 gain extrapolation. Predict consultation reduces byte NLL per head, device-off stays within .02 nats/byte of dense, and frozen C13-style stacking improves both separate recipes. Register coverage-subset cache hashes before frozen coverage-scaling inference, and freeze calibration fits before final-test scoring. **Launch blocked:** full selected raw-byte corpus/offset attestation, repaired native branch queries, complete 256-byte causal features (byte 30 included), and full cache/cost receipts remain prerequisites. Query failures are failures; the receipt audit passing is not query-health acceptance. [RESULT_C14_BYTE_REGISTRATION.md](RESULT_C14_BYTE_REGISTRATION.md) retains validation scope and residual risks. The operator-authorized dense-only amendment removes consultation prerequisites for the dense baseline, but the exact bound raw shard fails the full selected-corpus prerequisite: 7,021,438 raw rows yield only 5,800,191/7,831,213 required documents. The next missing selected source index is 5899215. No prefix substitution, GPU training, held-out NLL or completed paired eval set is claimed. [RESULT_C14_DENSE.md](RESULT_C14_DENSE.md) binds the exhaustive failure and diagnostic partial corpus. Measured status covers this failed preflight only; all training predictions remain untested.
 
 ## Growing design memo
 
@@ -854,8 +854,153 @@ Paths are repository-relative. `emender` is this repository; `sxgc` is the exter
     },
     {
       "id": "C9",
-      "status": "registered",
-      "receipts": []
+      "status": "measured",
+      "receipts": [
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/RESULT_C9.md",
+          "commit": "0d9b8bced36cb09be85d0228cb006e14972dbcbb",
+          "sha256": "198d1aa8afed11cc99b9ab0e4989b02d9cb1c162cbfa71f8c17bf876e194357d"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/PREREGISTRATION_C9.md",
+          "commit": "644bff97eb6f64fe6148d768f931fdea181a7f6d",
+          "sha256": "68deea733b11b7dee6c73581c88e03bf89f55560142b68873c0f2c397b15aaac"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/c9.py",
+          "commit": "a8b536e063baed1fe6a20474d5a706851116b4f0",
+          "sha256": "5e7ae5dfcf732cd75d3ab79495177f765f36a847fad0c22a51f3166bdc052ba9"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/test_c9.py",
+          "commit": "a8b536e063baed1fe6a20474d5a706851116b4f0",
+          "sha256": "32c28d3bd5889df3dd37034092d24c9da810f4701d35fa662118785869f366b5"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/validate_c9.py",
+          "commit": "a8b536e063baed1fe6a20474d5a706851116b4f0",
+          "sha256": "88361f1899db5e62065cea172098db3f7b683e85fdd86d3b09940cfaeebfd8ad"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/run_c9_leased.sh",
+          "commit": "a8b536e063baed1fe6a20474d5a706851116b4f0",
+          "sha256": "4f84ab8be6447d301a5d8e8891c6b285b238ced635782f571ee6c3a69aff0f9e"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c9/binding.json",
+          "commit": "0d9b8bced36cb09be85d0228cb006e14972dbcbb",
+          "sha256": "ccd743018b770ed14694148ae6e436065fb223e2e73be214ed3cf96421577d68"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c9/console.txt",
+          "commit": "0d9b8bced36cb09be85d0228cb006e14972dbcbb",
+          "sha256": "fbfaa6d56d0766d94964c800383e548a92668e40280a42eefc5916ed5d9ae04b"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c9/gpu.csv",
+          "commit": "0d9b8bced36cb09be85d0228cb006e14972dbcbb",
+          "sha256": "d6c64825b01e5fc039f91f1eca6ee86cdd247ad6a6d36a7ecfc3f807374c0432"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c9/lease.txt",
+          "commit": "0d9b8bced36cb09be85d0228cb006e14972dbcbb",
+          "sha256": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c9/manifest.json",
+          "commit": "0d9b8bced36cb09be85d0228cb006e14972dbcbb",
+          "sha256": "a3db6b54dca51481449254d109d69b4760fa1ce5b08c4ec501cb0ee6fcee6071"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c9/neural_only_0_steps.json",
+          "commit": "0d9b8bced36cb09be85d0228cb006e14972dbcbb",
+          "sha256": "6c2e34bb7061d08af6e7da668035d8dcf6cf8df786aa0ded0256b121ab4b301f"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c9/neural_only_1_steps.json",
+          "commit": "0d9b8bced36cb09be85d0228cb006e14972dbcbb",
+          "sha256": "3735a16c628cc2981e25f3368b33469ee6ac21155fe00a54ac7d070721130754"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c9/neural_only_2_steps.json",
+          "commit": "0d9b8bced36cb09be85d0228cb006e14972dbcbb",
+          "sha256": "4fa75d4832338e6b06d3c70f472e6fc158cb338d644e2c0a5fc5283af466c18b"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c9/neural_only_3_steps.json",
+          "commit": "0d9b8bced36cb09be85d0228cb006e14972dbcbb",
+          "sha256": "02d95237f5b5f1ec1f4a924f5d204a621256611bb1366530da2fba99d0ef36f2"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c9/results.json",
+          "commit": "0d9b8bced36cb09be85d0228cb006e14972dbcbb",
+          "sha256": "b520945c00827d9d3fb7ad5304a3ecd0d5d044dc49f420d3b7621387e1a26f70"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c9/samples.json",
+          "commit": "0d9b8bced36cb09be85d0228cb006e14972dbcbb",
+          "sha256": "3745e293ad9d2736d30ab196aa224172d6dc5e1fa79869d716f1ab3c9efcdef2"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c9/terminal.json",
+          "commit": "0d9b8bced36cb09be85d0228cb006e14972dbcbb",
+          "sha256": "d24219f6de94b955cf36d25bd2aca88e2d35eef45b9317b7083f55ec8fe9653c"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c9/tests.json",
+          "commit": "0d9b8bced36cb09be85d0228cb006e14972dbcbb",
+          "sha256": "0cb04c97574c86bb0f71ca9c70f4c66d44793de1061b9c84b78dea1639ca7c38"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c9/validation.txt",
+          "commit": "0d9b8bced36cb09be85d0228cb006e14972dbcbb",
+          "sha256": "1345bad3a3c75d812cc1758aa46a84740d9abce1ab6ce65b547e0b14b686a413"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c9/walk_fork_0_steps.json",
+          "commit": "0d9b8bced36cb09be85d0228cb006e14972dbcbb",
+          "sha256": "18d63d0bd23e502533eeaddbe2a275f3953c2382165f8e818be1b4c834a37114"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c9/walk_fork_1_steps.json",
+          "commit": "0d9b8bced36cb09be85d0228cb006e14972dbcbb",
+          "sha256": "a807d45a885f270cf33695da9b8e5183dc187ba4cd6439a9273421d94560bb5f"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c9/walk_fork_2_steps.json",
+          "commit": "0d9b8bced36cb09be85d0228cb006e14972dbcbb",
+          "sha256": "36548fff4dc128219410230c0c95a38ebfd91dba32723f8c74e7a6762eb3c2ab"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c9/walk_fork_3_steps.json",
+          "commit": "0d9b8bced36cb09be85d0228cb006e14972dbcbb",
+          "sha256": "a6efd2e5e866e7b5194d77c4ed3a359cd89a3e218f22e75b037181529506d026"
+        }
+      ]
     },
     {
       "id": "C10",
@@ -1422,18 +1567,53 @@ Paths are repository-relative. `emender` is this repository; `sxgc` is the exter
     },
     {
       "id": "C14",
-      "status": "registered",
-      "receipts": []
+      "status": "measured",
+      "receipts": [
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/RESULT_C14_DENSE.md",
+          "commit": "8b54a9b2b1733a45f8e7d35053bd9a4ab07ef2de",
+          "sha256": "254658dced3446a69af7a05be1ff321e4c94f11eaa4de36580abb26df6302412"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/PREREGISTRATION_C14_DENSE.md",
+          "commit": "644bff97eb6f64fe6148d768f931fdea181a7f6d",
+          "sha256": "98624e59eea25a8c07cad16e7ae18a06c684ad199f0242ee348ff42e3dc612e3"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/c14_dense_source.py",
+          "commit": "644bff97eb6f64fe6148d768f931fdea181a7f6d",
+          "sha256": "a70726fe80a85b5972310c17ae9bc79e40c31dba7eb7e86559d3dc92475154eb"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/c14_dense_train.py",
+          "commit": "a8b536e063baed1fe6a20474d5a706851116b4f0",
+          "sha256": "30c1ff5db89e81d407f4e00f75fe3e12eeea5907f8dbbbc01d3c7ee0b2b028e0"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_dense/source_preflight.json",
+          "commit": "8b54a9b2b1733a45f8e7d35053bd9a4ab07ef2de",
+          "sha256": "e828937cea6ba0c6ef913c036124cb19d3166fe25be6b30b35e1603064f37319"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_dense_source_console.txt",
+          "commit": "8b54a9b2b1733a45f8e7d35053bd9a4ab07ef2de",
+          "sha256": "e6b751cd730f8d122bd8ed3ca8c8c7056504a6c051dfe250dcd0483a59740990"
+        }
+      ]
     }
   ]
 }
 ```
 
-## Pending operator-authorized dense and generation rungs
+## Operator-authorized dense and generation rungs
 
-Before new measurements, PREREGISTRATION_C14_DENSE.md authorizes dense-only
-launch without the blocked consultation bridge, retaining the full selected
-raw-corpus prerequisite. Source preflight is in progress; no dense training
-outcome is claimed. PREREGISTRATION_C9.md freezes the C9 prediction, prompts,
-byte budgets, overlap measures, checkpoint choice and causal re-entry policy
-before generation. C9 stays registered until committed outcome receipts land.
+PREREGISTRATION_C14_DENSE.md permits dense-only launch without the consultation
+bridge; its independent complete-source preflight failed and no training ran.
+PREREGISTRATION_C9.md froze prediction, prompts, budgets, measures and re-entry
+before generation; the C9 result and raw sample/step receipts are now bound above.
