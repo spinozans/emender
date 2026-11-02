@@ -78,6 +78,7 @@ def train():
     split = int(.9*len(data))
     meta = json.loads((OUT/'training.json').read_text())
     meta['gdn2_code_sha256'] = digest(Path(__file__))
+    meta['gdn2_physical_gpu'] = os.environ['GPU_LEASE_HELD']
     meta['gdn2_protocol_sha256'] = digest(ROOT/'PREREGISTRATION_C6_GDN2.md')
     assert meta['gdn2_protocol_sha256'] in (ROOT/'PROGRAM.md').read_text()
     write('training.json',meta)
