@@ -88,9 +88,15 @@ P1 raw fork, P2 empty-support preservation and P3 fused-total improvement all fa
 
 [RESULT_C11.md](RESULT_C11.md) contains both heads' fused/unfused total/fork/OOD tables and steps. P4/P5 swap and 100/200-step adaptation remain registered and unexecuted; no swappability result. One seed, corpus-wide transductive context selection, self-containing train distributions, reused historical dense controls and unequal step counts limit interpretation. Registration cc137968, [PREREGISTRATION_C11.md](PREREGISTRATION_C11.md), SHA256 `e682a17d36ec33630096bfbafa89724974eb8282df7d9d175265c46e0424f8e6` preceded training. Four CPU tests and independent 56-pair loss replay pass.
 
-### C12 — registered: disjoint device and masked self-index inputs
+### C12 — measured: disjoint gains pass; masking does not rescue enabled self-index
 
-P1: disjoint-X device inputs improve raw Y-fork NLL over dense; P2: empty-X-support NLL preserved; P3: 50% masked self-index training improves OOD against C11. Primary Emender, secondary transformer; four matched 180-second arms. Corpora constructed and hash-bound before training. [PREREGISTRATION_C12.md](PREREGISTRATION_C12.md), SHA256 `3a7b1e86f6fc7836025cf2c2527416efca7f27a38e1baca3d83f43862483837b`. Shared English contexts limit a positive result's operator-skill interpretation; a miss closes this tested tier. No outcomes yet. Additive unchanged-C11 fixed-step replay for missing without-feature controls is pre-registered in [PREREGISTRATION_C12_CONTROL_REPLAY.md](PREREGISTRATION_C12_CONTROL_REPLAY.md), SHA256 `1ee68ea51f96ed32a6bb124bf4095ea291180d907de8b6ab061e9f12699547cc`; adoption requires whole-vector probability parity against original C11.
+P1/P2 pass for both heads: disjoint-X training improves raw Y-fork NLL Emender **2.529165 → 2.434766** (−0.094399), transformer **2.634117 → 2.470846** (−0.163271). Empty-X-support NLL is preserved: dense/disjoint **2.216768/2.214777**, **1.901476/1.810907**. Both heads completed both 180-second arms. X Darwin scientific prose (950,692 bytes) and unchanged Y Shakespeare drama (1,115,394) were constructed/hash-bound before training. X has no Y bytes; 74.3662% of training positions are empty-support and 84.6791% zero-target. Whole-task direct copying has infinite final-test NLL.
+
+This is a positive scoped result beyond self-containing copy training, not an isolated operator-skill proof. Shared English branch distributions can still predict some Y targets, and corpus-wide Y context lengths remain transductive. Reused historical dense controls differ in steps/precision and active parameters. Therefore the requested negative closure condition was not met, but “any gain can only be operator semantics” does not follow. Whole-device removal worsens the disjoint heads; empty support retains context-length metadata, so P2 does not establish unplugged robustness.
+
+P3 passes in both eval modes for both heads versus C11, yet enabled self-index remains harmful: masked/dense OOD-self is Emender **4.858708/2.444723**, transformer **3.390723/2.466627**. With all device inputs removed, masked OOD is **2.425617/2.075162**, restoring an independent mode. Shortcut prevention preserves the unplugged head; it does not rescue the enabled self-index interface at this tier. [RESULT_C12.md](RESULT_C12.md) has the complete disjoint and masking tables, recovered C11 feature-removal controls, costs and residual risks. Original C11 with-feature predictions remain unchanged; exact-step recovery passes whole-vector probability parity for both heads.
+
+Preregistered in de8e342e before feature construction/training: [PREREGISTRATION_C12.md](PREREGISTRATION_C12.md), SHA256 `3a7b1e86f6fc7836025cf2c2527416efca7f27a38e1baca3d83f43862483837b`. Missing-control recovery preregistered in d1744b2e before replay/scoring: [PREREGISTRATION_C12_CONTROL_REPLAY.md](PREREGISTRATION_C12_CONTROL_REPLAY.md), SHA256 `1ee68ea51f96ed32a6bb124bf4095ea291180d907de8b6ab061e9f12699547cc`. Six CPU tests, 2,049 independent substring feature checks, 98 loss/denominator checks and both runner exits pass. One seed/pair; no uncertainty, matched-step causal device ablation or isolated semantic-operator claim. No self-index scale-up recommendation. Bindings C12.
 
 ## Growing design memo
 
@@ -940,8 +946,243 @@ Paths are repository-relative. `emender` is this repository; `sxgc` is the exter
     },
     {
       "id": "C12",
-      "status": "registered",
-      "receipts": []
+      "status": "measured",
+      "receipts": [
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/RESULT_C12.md",
+          "commit": "6c06d27d448642edaf6bad10b96527f2113dfe8a",
+          "sha256": "6db6b9693cac175719ced853d0b420e3a3965eeb5263b31d9e166e1fea6346e9"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/PREREGISTRATION_C12.md",
+          "commit": "6c06d27d448642edaf6bad10b96527f2113dfe8a",
+          "sha256": "3a7b1e86f6fc7836025cf2c2527416efca7f27a38e1baca3d83f43862483837b"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/PREREGISTRATION_C12_CONTROL_REPLAY.md",
+          "commit": "6c06d27d448642edaf6bad10b96527f2113dfe8a",
+          "sha256": "1ee68ea51f96ed32a6bb124bf4095ea291180d907de8b6ab061e9f12699547cc"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/c12.py",
+          "commit": "6c06d27d448642edaf6bad10b96527f2113dfe8a",
+          "sha256": "c2d95d2d47489bb1d114fc069a811e56acb7dca00742cfd2234fb3b0198cb842"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/c12_score.py",
+          "commit": "6c06d27d448642edaf6bad10b96527f2113dfe8a",
+          "sha256": "7204289336657cbfb7008eb00075f35d9e8c04bfcf50a6e542a458d8a667b499"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/c12_control_replay.py",
+          "commit": "6c06d27d448642edaf6bad10b96527f2113dfe8a",
+          "sha256": "33938c72a40e5a3375ca71ef6a3d637cd794cb51597f47d72dbe6e0114fedaf5"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/validate_c12.py",
+          "commit": "6c06d27d448642edaf6bad10b96527f2113dfe8a",
+          "sha256": "005f1435bf2aa7453cd2d6acc58a080d8e21a52ad02b9ca9aae5313229854632"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/test_c12.py",
+          "commit": "6c06d27d448642edaf6bad10b96527f2113dfe8a",
+          "sha256": "51f7b738254078bb0fb36e992990b89d64e26a64e11194b12a79fe31d78305d6"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/run_c12_leased.sh",
+          "commit": "6c06d27d448642edaf6bad10b96527f2113dfe8a",
+          "sha256": "a9c24b3c2312c050d87fc0cf05dd73a44c79cace41841635721f7132606c5988"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/run_c12_control_replay_leased.sh",
+          "commit": "6c06d27d448642edaf6bad10b96527f2113dfe8a",
+          "sha256": "5a39579c56a9c9415ea197319c696d5ab3124ab204bd3925bd1cef5ea12d9540"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/validate_program.py",
+          "commit": "6c06d27d448642edaf6bad10b96527f2113dfe8a",
+          "sha256": "41e4b6c187f6093ee75fad2210275856f0bee987f605fd525a4b938c5966533b"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c12/console.txt",
+          "commit": "6c06d27d448642edaf6bad10b96527f2113dfe8a",
+          "sha256": "af89acfbaf7f766a5e9ca9e84d4d819ea84b7064409063db8370c74340300b46"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c12/control_replay.json",
+          "commit": "6c06d27d448642edaf6bad10b96527f2113dfe8a",
+          "sha256": "57e7ace3e148285cfa1983b19d0cb91402b3bd9353471f7a540026a77b28fdac"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c12/corpora.json",
+          "commit": "6c06d27d448642edaf6bad10b96527f2113dfe8a",
+          "sha256": "825f6dd80229142e8d813c2003855468977e07934be9213b29823bdfe66e6cab"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c12/corpus_x.txt",
+          "commit": "6c06d27d448642edaf6bad10b96527f2113dfe8a",
+          "sha256": "7124fc713f7da52adf8a10fda02eaa9a9a3e1f16cd622e4abe85f9d6e3d97686"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c12/dependencies.json",
+          "commit": "6c06d27d448642edaf6bad10b96527f2113dfe8a",
+          "sha256": "f46d52aad013eb9d6cf99e0ef9a32010f359af90d20237544a7124e4c8c65e2c"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c12/device.json",
+          "commit": "6c06d27d448642edaf6bad10b96527f2113dfe8a",
+          "sha256": "1f13701b243c0f916a84b30cdabc222b23dfd9032d83ac266bceb9596edc9cef"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c12/disjoint.npz",
+          "commit": "6c06d27d448642edaf6bad10b96527f2113dfe8a",
+          "sha256": "1ef70ce4d3d00781864b197e89dbf81182ee120e788573dd38b1400585a054cb"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c12/emender_c11_replay_prediction.npz",
+          "commit": "6c06d27d448642edaf6bad10b96527f2113dfe8a",
+          "sha256": "1626ddabb2b155a7a1e5683748c0f729d1b57b3ba7ddb80853dbeac44823e756"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c12/emender_disjoint_prediction.npz",
+          "commit": "6c06d27d448642edaf6bad10b96527f2113dfe8a",
+          "sha256": "f47eddbffc69d0646c4db89ad04440a12e1fd52fabe96ffe92d23d72778460fe"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c12/emender_masked_prediction.npz",
+          "commit": "6c06d27d448642edaf6bad10b96527f2113dfe8a",
+          "sha256": "ce86dd9d14778ca1d02b1e864987852626df3c921651c8551c52bfe1db1ce55a"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c12/gpu.csv",
+          "commit": "6c06d27d448642edaf6bad10b96527f2113dfe8a",
+          "sha256": "282c222785b263b14ae3fddf10c44283dc11689badf8ec778bd33a23b101ce77"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c12/lease.txt",
+          "commit": "6c06d27d448642edaf6bad10b96527f2113dfe8a",
+          "sha256": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c12/manual_notes.json",
+          "commit": "6c06d27d448642edaf6bad10b96527f2113dfe8a",
+          "sha256": "c914260632f54805aa70a8a688414078542e5b0f16232f1cf61b582c018cdae8"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c12/prepare.txt",
+          "commit": "6c06d27d448642edaf6bad10b96527f2113dfe8a",
+          "sha256": "0b06b2e3a330bb91bb2a413c9cdb053dd7d154cb92f87f9e4ef0361381e24566"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c12/replay_console.txt",
+          "commit": "6c06d27d448642edaf6bad10b96527f2113dfe8a",
+          "sha256": "9afe18b427eead43e406c2dbf0e502ab694b06a8c09236a36ed6f24da29b2ef7"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c12/replay_gpu.csv",
+          "commit": "6c06d27d448642edaf6bad10b96527f2113dfe8a",
+          "sha256": "7c9af04ebe18687b914176c8347a6e54e52decbd27d4e0718c74f71a30a14567"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c12/replay_lease.txt",
+          "commit": "6c06d27d448642edaf6bad10b96527f2113dfe8a",
+          "sha256": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c12/replay_terminal.json",
+          "commit": "6c06d27d448642edaf6bad10b96527f2113dfe8a",
+          "sha256": "d24219f6de94b955cf36d25bd2aca88e2d35eef45b9317b7083f55ec8fe9653c"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c12/results.json",
+          "commit": "6c06d27d448642edaf6bad10b96527f2113dfe8a",
+          "sha256": "a85895e0041fffdb37cc69a8a1d8368ce2a35430410c6ac5dacc4a9da61c68b2"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c12/scoring.txt",
+          "commit": "6c06d27d448642edaf6bad10b96527f2113dfe8a",
+          "sha256": "f9bd324c12c48c7d21034143463d2c5f068c300c82e0f06547c4fad5d0f7a036"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c12/terminal.json",
+          "commit": "6c06d27d448642edaf6bad10b96527f2113dfe8a",
+          "sha256": "d24219f6de94b955cf36d25bd2aca88e2d35eef45b9317b7083f55ec8fe9653c"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c12/tests.txt",
+          "commit": "6c06d27d448642edaf6bad10b96527f2113dfe8a",
+          "sha256": "2eb452dacbf8dabb8764b982e8852984d8ec0f97c12671806cdc494d8a024537"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c12/tests_initial_import_failure.txt",
+          "commit": "6c06d27d448642edaf6bad10b96527f2113dfe8a",
+          "sha256": "77a3ad175e044932aae668734ece1b1f4573922dfd40c76a65ba3d827465fd0e"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c12/training.json",
+          "commit": "6c06d27d448642edaf6bad10b96527f2113dfe8a",
+          "sha256": "2f34aded82b64da09acdb69b1e7b8c448bdfc25ac346d4e27edd863ba3ae8116"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c12/transformer_c11_replay_prediction.npz",
+          "commit": "6c06d27d448642edaf6bad10b96527f2113dfe8a",
+          "sha256": "eb66ee0cb209a0cbda8a37bdc1f8a461a52180adc60ea8f997be1a1c51c55acc"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c12/transformer_disjoint_prediction.npz",
+          "commit": "6c06d27d448642edaf6bad10b96527f2113dfe8a",
+          "sha256": "8cb59b73ca45fac3b5df88c1c73c35d5529b494266f5e2c20f69a21edcc47f7d"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c12/transformer_masked_prediction.npz",
+          "commit": "6c06d27d448642edaf6bad10b96527f2113dfe8a",
+          "sha256": "b763bd4d411c96e056d41e04265b5b889cea46a23d57c728a33b06f221054561"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c12/validation.txt",
+          "commit": "6c06d27d448642edaf6bad10b96527f2113dfe8a",
+          "sha256": "86a3b0631384c7b6adeddd53de4923b5641ce1c6d53390609bacb8017e034956"
+        }
+      ]
     }
   ]
 }
