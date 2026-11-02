@@ -44,3 +44,15 @@ validation reports. Older async design notes and the current harness are
 evidence and scaffolding, not competing design authorities.
 
 Keep `AGENTS.md` and `CLAUDE.md` synchronized.
+
+## X43 C14+ byte training boundaries
+
+For C14 and all subsequent training, model inputs, shifted targets, consultation
+contexts, and held-out sequences must stay within one document. Never pack
+across Pile document boundaries or carry model state across windows/documents.
+Use natural raw text bytes (vocabulary 256) and hash-match the corpus pipeline's
+`documents.jsonl` receipts; token IDs are not raw text. Truncate windows at the
+boundary; any padding must be masked from loss. Split calibration/final-test by
+document. `experiments/expressivity_tasks/x43_fork_resolved/c14_documents.py`
+provides the checked windowing and document-disjoint evaluation split. Retain
+boundary tests and source/index hash receipts before training.
