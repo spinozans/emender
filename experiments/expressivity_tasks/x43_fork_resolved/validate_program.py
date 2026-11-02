@@ -21,9 +21,9 @@ def validate(program, repos):
     if ledger['schema'] != 1:
         raise ValueError('unsupported schema')
     claims = ledger['claims']
-    expected = [f'C{i}' for i in range(1, 8)] + ['C7a'] + [f'C{i}' for i in range(8, 11)]
+    expected = [f'C{i}' for i in range(1, 8)] + ['C7a', 'C7b'] + [f'C{i}' for i in range(8, 11)]
     if [c['id'] for c in claims] != expected:
-        raise ValueError('require C1..C7, C7a, C8..C10 exactly once in order')
+        raise ValueError('require C1..C7, C7a, C7b, C8..C10 exactly once in order')
     headings = re.findall(r'^### (C\d+[a-z]?) — (registered|measured|refuted):', text, re.M)
     if headings != [(c['id'], c['status']) for c in claims]:
         raise ValueError('claim headings and binding statuses disagree')

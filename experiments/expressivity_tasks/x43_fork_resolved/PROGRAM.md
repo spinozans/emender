@@ -56,6 +56,14 @@ Transformer joint neural weight collapses to about 2.4e-6 on one-branch position
 
 Registration preceded training in a07a8eea: [PREREGISTRATION_C7a.md](PREREGISTRATION_C7a.md), SHA256 `2a2b5fa7003c86facd81e5081bfd5b82260e573d22ad8d1c71d4768e64668978`. Primary common calibration gate and secondary uncalibrated joint gate were frozen in this protocol; dense and C6 controls were reused, not retrained. Seventy independent loss/denominator checks and six CPU tests pass.
 
+### C7b — registered: constrained routing residual comparison
+
+Fixed .5 true-target plus .5 exact-count teacher loss (empty support pure true-target),
+and secondary neural gate floor .3; reuse dense/C7a controls. Separate decisive
+fused total, fork and empty-support deltas; C3 inference unchanged.
+[PREREGISTRATION_C7b.md](PREREGISTRATION_C7b.md), SHA256 `3c685cd6e59555e031379daa5c841f1a74cf85667b2a52a758876b8b65472949`.
+No training or outcomes at registration.
+
 ### C8 — registered: redundancy ladder
 
 Prediction: controlled duplication 2x/10x/50x reduces per-position decision density and increases forced-walk gains; test whether crossover changes monotonically with redundancy rather than assuming it. Generate synthetic corpora from the same base distribution, separate duplicated training material from independently sampled held-out material, and report both per-position forks and suffixient chi separately. This tier-1 curve is intended to predict Wikipedia/Pile behavior; those transfers remain unmeasured. Freeze generator, sizes, splits and seeds before execution.
@@ -616,6 +624,11 @@ Paths are repository-relative. `emender` is this repository; `sxgc` is the exter
           "sha256": "926d436a77c32b825f1e9601b3b4a93d3c30693907810ad116e1b82a6259e6e5"
         }
       ]
+    },
+    {
+      "id": "C7b",
+      "status": "registered",
+      "receipts": []
     },
     {
       "id": "C8",
