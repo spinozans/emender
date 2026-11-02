@@ -48,6 +48,10 @@ C6 optional-arm correction: [PREREGISTRATION_C6_GDN2.md](PREREGISTRATION_C6_GDN2
 
 Prediction: fork-masked loss, branch-set conditioning plus an OOD channel, interval features in the gate and exact-count teachers reduce final-test NLL below C3's 1.673012 Emender result. Report gap closure (1.673012 − designed NLL)/(1.673012 − 0.570865), while explicitly distinguishing the causal/train-count system from that transductive diagnostic denominator. No numeric closure is assumed. Ablate each ingredient with matched budgets; evaluation rules and causal index must be frozen before execution.
 
+### C7a — registered: joint dense residual training
+
+Prediction: boosted training beats dense in total and fork NLL under identical C3 calibrated fusion plus forced walk. Joint-gate inference is separately reported. Protocol: [PREREGISTRATION_C7a.md](PREREGISTRATION_C7a.md), SHA256 `2a2b5fa7003c86facd81e5081bfd5b82260e573d22ad8d1c71d4768e64668978`. Registered before any C7a training; C6 compound masked/normalized controls are reused with their limitations.
+
 ### C8 — registered: redundancy ladder
 
 Prediction: controlled duplication 2x/10x/50x reduces per-position decision density and increases forced-walk gains; test whether crossover changes monotonically with redundancy rather than assuming it. Generate synthetic corpora from the same base distribution, separate duplicated training material from independently sampled held-out material, and report both per-position forks and suffixient chi separately. This tier-1 curve is intended to predict Wikipedia/Pile behavior; those transfers remain unmeasured. Freeze generator, sizes, splits and seeds before execution.
@@ -464,6 +468,11 @@ Paths are repository-relative. `emender` is this repository; `sxgc` is the exter
     },
     {
       "id": "C7",
+      "status": "registered",
+      "receipts": []
+    },
+    {
+      "id": "C7a",
       "status": "registered",
       "receipts": []
     },
