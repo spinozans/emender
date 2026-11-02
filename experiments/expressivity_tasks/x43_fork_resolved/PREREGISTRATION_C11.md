@@ -1,0 +1,9 @@
+# C11 — device inputs with untouched dense loss
+
+Registered before training or evaluation. Primary Emender, secondary transformer; seed 4301, batch 16, context 128, AdamW .0003/.01, clip 1, BF16, 180 seconds per head including kernel startup. Reuse historical C1 dense predictions, C3 calibration halves and inference protocol. No loss masking, teachers, learned training gates or branch-normalized output. Project 260 device features into the input residual: exact 256-byte train-prefix branch distribution, log1p occurrence support size, branch entropy, corpus forced/fork bit, log1p maximal context length. Index uses the receipted direct-SA corpus-wide selector, so this remains transductive diagnostic evidence, not causal retrieval. Internal memory and its five ops unchanged. Empty distributions are zero.
+
+P1: raw fork NLL strictly improves against C1 dense. P2: raw empty-support NLL does not increase against C1 dense (also report nonempty zero-target forks). P3: C3-fused total NLL strictly improves against C1 fused. Judge separately by head. Dense CE prevents gate-mediated gradient routing, but does not mathematically guarantee OOD quality; a P2 miss is a mechanism receipt.
+
+P4: train on A, zero-shot B with B index beats same ops weights on B with zero device inputs. P5: fine-tune improves B NLL at 100 and 200 steps relative to zero steps. Arm 2 remains registered if time is insufficient: A Shakespeare training prefix, B similarly sized disjoint public-domain prose; source bytes, hashes, split and index must be frozen in an additive registration before execution. Compare dense A-trained no-index weights on B. No swap success is inferred from arm 1.
+
+All GPU execution through broker physical 2/4 only; interpreter /home/erikg/emender/.venv/bin/python. No checkpoints committed. Freeze calibration before scoring final targets; report all strata and failures. No resilient DiLoCo behavior involved.

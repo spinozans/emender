@@ -82,6 +82,10 @@ Prediction: the walk/fork alternation loop increases corpus n-gram overlap versu
 
 Prediction: mimetic initialization from exact training-only branch distributions lowers fork NLL or time to a preregistered loss threshold against random initialization at equal total training budget, including teacher cost. Keep held-out bytes out of teacher targets and distinguish support from OOD. Freeze distillation objective, temperature, smoothing/zero-support policy and initialization duration before execution. No teacher-training receipt exists.
 
+### C11 — registered: device inputs with dense loss
+
+P1 raw fork improves; P2 empty-support NLL does not degrade; P3 C3-fused total improves, separately for Emender and transformer. P4 zero-shot corpus-index swap helps; P5 100/200-step adaptation improves further. Arm 1 prioritized; arm 2 remains registered pending frozen corpus B. [PREREGISTRATION_C11.md](PREREGISTRATION_C11.md), SHA256 `e682a17d36ec33630096bfbafa89724974eb8282df7d9d175265c46e0424f8e6`. Input conditioning precludes mixture-gate gradient starvation but does not guarantee OOD generalization.
+
 ## Growing design memo
 
 ### Dense mode — selected direction; implementation registered
@@ -799,6 +803,11 @@ Paths are repository-relative. `emender` is this repository; `sxgc` is the exter
     },
     {
       "id": "C10",
+      "status": "registered",
+      "receipts": []
+    },
+    {
+      "id": "C11",
       "status": "registered",
       "receipts": []
     }
