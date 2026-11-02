@@ -81,8 +81,14 @@ def validate():
     delta=a['standalone']['overall']['nll']-b['standalone']['overall']['nll']
     assert result['decisive_emender_minus_transformer']==delta
     assert result['verdict']==('survives' if delta<0 else 'refuted')
+    interruption=json.loads((OUT/'interruption.json').read_text())
+    assert interruption['exit_code']==143 and interruption['gdn_training_steps_recorded']==0
+    required={'emender_aware','emender_control','transformer_aware','transformer_control'}
+    assert required.issubset(result['models'])
+    baseline=training['models'][0]['trainable_parameters']
+    assert all(abs(m['trainable_parameters']-baseline)/baseline<.05 for m in training['models'])
     return dict(status='green',scoring_checks=checks,successful_models=len(training['models']),
-                retained_failures=len(training['failures']),calibration_targets=half,
+                retained_training_failures=len(training['failures']),execution_interruptions=1,calibration_targets=half,
                 final_targets=int(test.sum()),verdict=result['verdict'])
 
 
