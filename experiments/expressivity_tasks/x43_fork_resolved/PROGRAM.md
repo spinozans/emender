@@ -82,9 +82,11 @@ Prediction: the walk/fork alternation loop increases corpus n-gram overlap versu
 
 Prediction: mimetic initialization from exact training-only branch distributions lowers fork NLL or time to a preregistered loss threshold against random initialization at equal total training budget, including teacher cost. Keep held-out bytes out of teacher targets and distinguish support from OOD. Freeze distillation objective, temperature, smoothing/zero-support policy and initialization duration before execution. No teacher-training receipt exists.
 
-### C11 — registered: device inputs with dense loss
+### C11 — refuted: dense device inputs fail both heads; swap untested
 
-P1 raw fork improves; P2 empty-support NLL does not degrade; P3 C3-fused total improves, separately for Emender and transformer. P4 zero-shot corpus-index swap helps; P5 100/200-step adaptation improves further. Arm 1 prioritized; arm 2 remains registered pending frozen corpus B. [PREREGISTRATION_C11.md](PREREGISTRATION_C11.md), SHA256 `e682a17d36ec33630096bfbafa89724974eb8282df7d9d175265c46e0424f8e6`. Input conditioning precludes mixture-gate gradient starvation but does not guarantee OOD generalization.
+P1 raw fork, P2 empty-support preservation and P3 fused-total improvement all fail for both Emender and transformer under 180-second budgets. Exact distributions and interval features entered the residual stream; full dense CE and the internal memory stayed unchanged. This closes the tested input-channel/dense-loss cell negatively. Dense head gradients cannot bypass a learned mixture gate here, yet shortcut conditioning still does not preserve OOD quality. Do not equate routing-free training with an empirical OOD guarantee.
+
+[RESULT_C11.md](RESULT_C11.md) contains both heads' fused/unfused total/fork/OOD tables and steps. P4/P5 swap and 100/200-step adaptation remain registered and unexecuted; no swappability result. One seed, corpus-wide transductive context selection, self-containing train distributions, reused historical dense controls and unequal step counts limit interpretation. Registration cc137968, [PREREGISTRATION_C11.md](PREREGISTRATION_C11.md), SHA256 `e682a17d36ec33630096bfbafa89724974eb8282df7d9d175265c46e0424f8e6` preceded training. Four CPU tests and independent 56-pair loss replay pass.
 
 ## Growing design memo
 
@@ -808,8 +810,129 @@ Paths are repository-relative. `emender` is this repository; `sxgc` is the exter
     },
     {
       "id": "C11",
-      "status": "registered",
-      "receipts": []
+      "status": "refuted",
+      "receipts": [
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/RESULT_C11.md",
+          "commit": "70d5faa2f551d4371c4af287ddea8e5363dc2564",
+          "sha256": "7331f6950c0622cabad40d3e5b367f985d867b9b928053b59329618b1e76a700"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/PREREGISTRATION_C11.md",
+          "commit": "70d5faa2f551d4371c4af287ddea8e5363dc2564",
+          "sha256": "e682a17d36ec33630096bfbafa89724974eb8282df7d9d175265c46e0424f8e6"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/c11.py",
+          "commit": "70d5faa2f551d4371c4af287ddea8e5363dc2564",
+          "sha256": "0be42152ea88ed9979ea2c1e106fadbad8db6fd8108b4c9a8f8360177597fac3"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/c11_score.py",
+          "commit": "70d5faa2f551d4371c4af287ddea8e5363dc2564",
+          "sha256": "7fd212ab928418ee6e2dbeafd2ad12449e17a2e2eaa542ef0c9d11708cd862eb"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/validate_c11.py",
+          "commit": "70d5faa2f551d4371c4af287ddea8e5363dc2564",
+          "sha256": "40e3ba3bb27722a7e9b334ee290c95cef03739f8e056640c103d61e5a3123f37"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/test_c11.py",
+          "commit": "70d5faa2f551d4371c4af287ddea8e5363dc2564",
+          "sha256": "d889a9aa7b2c1e1baec87b1ad7b4506c6b9139c5e4c59da18bcb14e663793a3d"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c11/calibration_freeze.json",
+          "commit": "70d5faa2f551d4371c4af287ddea8e5363dc2564",
+          "sha256": "5010177035bc57d97dfe010521890b66db9c0742842a58d798e7dcfa91c20a65"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c11/console.txt",
+          "commit": "70d5faa2f551d4371c4af287ddea8e5363dc2564",
+          "sha256": "49f28d17a680749b2981fcecb2a8bf745a4d6ea38b0f41f133d512a06d47a6d8"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c11/device.json",
+          "commit": "70d5faa2f551d4371c4af287ddea8e5363dc2564",
+          "sha256": "43abf401305855286476f97e5b590ace6a7b16ac18ae9b3d4a432b1b759eac8d"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c11/device.npz",
+          "commit": "70d5faa2f551d4371c4af287ddea8e5363dc2564",
+          "sha256": "02cd2fde202d95bece52de3a7a21bd02739856a864bbd4a1e67156f1bf8c2c9e"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c11/emender_ops_prediction.npz",
+          "commit": "70d5faa2f551d4371c4af287ddea8e5363dc2564",
+          "sha256": "1c6e3aed49114b583824c094d962b40d176891603fb1f2193e3e081da32ba90a"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c11/frozen_gates.json",
+          "commit": "70d5faa2f551d4371c4af287ddea8e5363dc2564",
+          "sha256": "7f23cc794f03a676f98d006bb78dff32f32351e63d7c064213a0b1ccc9f50bee"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c11/gpu.csv",
+          "commit": "70d5faa2f551d4371c4af287ddea8e5363dc2564",
+          "sha256": "f98073353f895f8074c5c9c06d700ada1f22782fc4d6e9f409ba27a4a80d2456"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c11/lease.txt",
+          "commit": "70d5faa2f551d4371c4af287ddea8e5363dc2564",
+          "sha256": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c11/manual_notes.json",
+          "commit": "70d5faa2f551d4371c4af287ddea8e5363dc2564",
+          "sha256": "26badec12de7a01dac6c095709e813ae0f650247e5fc8ee84aa65289200d8c5d"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c11/results.json",
+          "commit": "70d5faa2f551d4371c4af287ddea8e5363dc2564",
+          "sha256": "fb3d5224fc2f425df8c6e6c62d20af7983c204b1dde6f56f04f12def4dd97580"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c11/teacher.json",
+          "commit": "70d5faa2f551d4371c4af287ddea8e5363dc2564",
+          "sha256": "dcefe7bed1449a0237a32c22ac176de150b0211823ef46d762c71a5688d8655c"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c11/terminal.json",
+          "commit": "70d5faa2f551d4371c4af287ddea8e5363dc2564",
+          "sha256": "d24219f6de94b955cf36d25bd2aca88e2d35eef45b9317b7083f55ec8fe9653c"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c11/training.json",
+          "commit": "70d5faa2f551d4371c4af287ddea8e5363dc2564",
+          "sha256": "730219d2efd593655eaeef02bc871f0011a52bb68620963af676cfc55975c0f8"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c11/transformer_ops_prediction.npz",
+          "commit": "70d5faa2f551d4371c4af287ddea8e5363dc2564",
+          "sha256": "cf8e80fde6c3870cc97a755f91594a14dc356fdcf36a1b5a04a999a073450283"
+        }
+      ]
     }
   ]
 }
