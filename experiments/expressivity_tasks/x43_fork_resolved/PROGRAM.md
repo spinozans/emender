@@ -90,7 +90,7 @@ P1 raw fork, P2 empty-support preservation and P3 fused-total improvement all fa
 
 ### C12 — registered: disjoint device and masked self-index inputs
 
-P1: disjoint-X device inputs improve raw Y-fork NLL over dense; P2: empty-X-support NLL preserved; P3: 50% masked self-index training improves OOD against C11. Primary Emender, secondary transformer; four matched 180-second arms. Corpora constructed and hash-bound before training. [PREREGISTRATION_C12.md](PREREGISTRATION_C12.md), SHA256 `3a7b1e86f6fc7836025cf2c2527416efca7f27a38e1baca3d83f43862483837b`. Shared English contexts limit a positive result's operator-skill interpretation; a miss closes this tested tier. No outcomes yet.
+P1: disjoint-X device inputs improve raw Y-fork NLL over dense; P2: empty-X-support NLL preserved; P3: 50% masked self-index training improves OOD against C11. Primary Emender, secondary transformer; four matched 180-second arms. Corpora constructed and hash-bound before training. [PREREGISTRATION_C12.md](PREREGISTRATION_C12.md), SHA256 `3a7b1e86f6fc7836025cf2c2527416efca7f27a38e1baca3d83f43862483837b`. Shared English contexts limit a positive result's operator-skill interpretation; a miss closes this tested tier. No outcomes yet. Additive unchanged-C11 fixed-step replay for missing without-feature controls is pre-registered in [PREREGISTRATION_C12_CONTROL_REPLAY.md](PREREGISTRATION_C12_CONTROL_REPLAY.md), SHA256 `1ee68ea51f96ed32a6bb124bf4095ea291180d907de8b6ab061e9f12699547cc`; adoption requires whole-vector probability parity against original C11.
 
 ## Growing design memo
 
