@@ -88,6 +88,10 @@ P1 raw fork, P2 empty-support preservation and P3 fused-total improvement all fa
 
 [RESULT_C11.md](RESULT_C11.md) contains both heads' fused/unfused total/fork/OOD tables and steps. P4/P5 swap and 100/200-step adaptation remain registered and unexecuted; no swappability result. One seed, corpus-wide transductive context selection, self-containing train distributions, reused historical dense controls and unequal step counts limit interpretation. Registration cc137968, [PREREGISTRATION_C11.md](PREREGISTRATION_C11.md), SHA256 `e682a17d36ec33630096bfbafa89724974eb8282df7d9d175265c46e0424f8e6` preceded training. Four CPU tests and independent 56-pair loss replay pass.
 
+### C12 — registered: disjoint device and masked self-index inputs
+
+P1: disjoint-X device inputs improve raw Y-fork NLL over dense; P2: empty-X-support NLL preserved; P3: 50% masked self-index training improves OOD against C11. Primary Emender, secondary transformer; four matched 180-second arms. Corpora constructed and hash-bound before training. [PREREGISTRATION_C12.md](PREREGISTRATION_C12.md), SHA256 `3a7b1e86f6fc7836025cf2c2527416efca7f27a38e1baca3d83f43862483837b`. Shared English contexts limit a positive result's operator-skill interpretation; a miss closes this tested tier. No outcomes yet.
+
 ## Growing design memo
 
 ### Dense mode — selected direction; implementation registered
@@ -933,6 +937,11 @@ Paths are repository-relative. `emender` is this repository; `sxgc` is the exter
           "sha256": "cf8e80fde6c3870cc97a755f91594a14dc356fdcf36a1b5a04a999a073450283"
         }
       ]
+    },
+    {
+      "id": "C12",
+      "status": "registered",
+      "receipts": []
     }
   ]
 }
