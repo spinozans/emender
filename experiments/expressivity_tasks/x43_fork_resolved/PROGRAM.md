@@ -36,6 +36,8 @@ C6 execution preregistration (2026-11-02): [PREREGISTRATION_C6.md](PREREGISTRATI
 
 C6 additive C3 comparison clarification: [PREREGISTRATION_C6_C3_COMPARISON.md](PREREGISTRATION_C6_C3_COMPARISON.md), SHA256 `46fbbd048d6a2c6ee3cc110b36b7851233081ebd9c7d209d35617f50d85d6973`. Registered while the first arm is still training, before any held-out inference: C3-compatible rows abstain at empty-support forced positions; primary all-forced diagnostic remains unchanged.
 
+C6 optional-arm correction: [PREREGISTRATION_C6_GDN2.md](PREREGISTRATION_C6_GDN2.md), SHA256 `72debb3246ed183bc1dbee2becb1602ec4cb42d2e8bcb65b50e659d072ffa167`. Before optional-arm training, the initial GDN-1 constructor was identified and its runner terminated (exit 143); four Emender/transformer receipts were retained. Actual GDN-2 uses the existing external NVIDIA loader with FLA 0.5.1. No final-test loss has been inspected or scored.
+
 ### C7 — registered: designed dense two-system prototype
 
 Prediction: fork-masked loss, branch-set conditioning plus an OOD channel, interval features in the gate and exact-count teachers reduce final-test NLL below C3's 1.673012 Emender result. Report gap closure (1.673012 − designed NLL)/(1.673012 − 0.570865), while explicitly distinguishing the causal/train-count system from that transductive diagnostic denominator. No numeric closure is assumed. Ablate each ingredient with matched budgets; evaluation rules and causal index must be frozen before execution.
