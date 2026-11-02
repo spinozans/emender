@@ -57,7 +57,7 @@ class LedgerAuditTests(unittest.TestCase):
                 elif mutation == 'missing':
                     receipt['path'] = 'missing-receipt.json'
                 elif mutation == 'registered_receipt':
-                    ledger['claims'][5]['receipts'] = [receipt]
+                    next(c for c in ledger['claims'] if c['status'] == 'registered')['receipts'] = [receipt]
                 elif mutation == 'measured_empty':
                     ledger['claims'][0]['receipts'] = []
                 elif mutation == 'refuted_empty':
