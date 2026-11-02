@@ -9,7 +9,7 @@ eval "$lease_exports"
 receipt=experiments/expressivity_tasks/x43_fork_resolved/receipts/c6
 printf '%s\n' "$GPU_LEASE_HELD" > "$receipt/lease.txt"
 set +e
-/home/erikg/emender/.venv/bin/python -m experiments.expressivity_tasks.x43_fork_resolved.c6 train > "$receipt/console.txt" 2>&1
+/home/erikg/emender/.venv/bin/python -m experiments.expressivity_tasks.x43_fork_resolved.c6_entry > "$receipt/console.txt" 2>&1
 status=$?
 set -e
 printf '{"exit_code":%d}\n' "$status" > "$receipt/terminal.json"

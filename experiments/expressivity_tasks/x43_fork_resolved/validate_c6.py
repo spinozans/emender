@@ -24,6 +24,13 @@ def validate():
         assert sha(ROOT.parents[2]/path)==receipt['sha256']
         assert receipt['matches_execution_source_commit']
     assert training['code_sha256']==sha(ROOT/'c6.py')
+    assert training['gdn2_code_sha256']==sha(ROOT/'c6_gdn2.py')
+    assert training['gdn2_protocol_sha256']==sha(ROOT/'PREREGISTRATION_C6_GDN2.md')
+    assert training['gdn2_physical_gpu'] in ('2','4')
+    gdn2=json.loads((OUT/'gdn2_source.json').read_text())
+    assert gdn2['architecture'].endswith('.GatedDeltaNet2')
+    for path, digest in gdn2['files'].items():
+        assert sha(Path(path))==digest
     assert training['protocol_sha256']==sha(ROOT/'PREREGISTRATION_C6.md')
     assert training['protocol_sha256'] in (ROOT/'PROGRAM.md').read_text()
     assert index['index_sha256']==sha(OUT/'index.npz')
