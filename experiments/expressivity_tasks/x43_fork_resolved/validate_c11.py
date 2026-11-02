@@ -14,6 +14,11 @@ def main():
     assert device['index_sha256']==digest(ROOT/'receipts/c6/index.npz')
     x=np.load(OUT/'device.npz')['features']; z=np.load(ROOT/'receipts/c6/index.npz')
     assert np.allclose(x[:,:256].sum(-1),(z['support']>0).astype(float))
+    data=np.frombuffer((ROOT/'input.txt').read_bytes(),dtype=np.uint8)
+    assert np.array_equal(x[np.arange(len(data)),data],z['q'])
+    assert np.array_equal((x[:,:256]>0).sum(-1),z['support'])
+    assert np.allclose(x[:,256],z['features'][z['ids'],257])
+    assert np.allclose(x[:,257],z['features'][z['ids'],259])
     assert np.array_equal(x[:,258],z['fork'])
     assert np.allclose(x[:,259],np.log1p(z['context_length']))
     split=int(.9*len(z['fork'])); pos=np.arange(split+1,len(z['fork'])); half=len(pos)//2
