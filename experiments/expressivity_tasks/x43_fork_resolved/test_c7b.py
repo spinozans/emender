@@ -24,3 +24,20 @@ def test_fixed_true_gradient_survives_perfect_index():
     loss.backward()
     assert logits.grad[0,0]<-.49
     assert logits.grad[1,0]<-.99
+
+
+def test_fixed_has_no_trainable_routing():
+    from unittest.mock import patch
+    class Head(torch.nn.Module):
+        def __init__(self,*args):
+            super().__init__()
+            self.logits=torch.nn.Parameter(torch.zeros(256))
+        def forward(self,ids,features,aware):
+            return self.logits.log_softmax(-1).expand(*ids.shape,256)
+    with patch('experiments.expressivity_tasks.x43_fork_resolved.c7b.Head',Head):
+        m=Boosted('emender',2_000_000,'fixed')
+    assert m.gate is None
+    lp,g=m(torch.zeros(1,2,dtype=torch.long),torch.ones(1,2,260),torch.ones(1,2))
+    assert torch.equal(g,torch.ones_like(g))
+    (-lp[...,0].mean()).backward()
+    assert m.head.logits.grad[0]<-.99
