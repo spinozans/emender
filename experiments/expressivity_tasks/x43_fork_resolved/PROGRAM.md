@@ -128,6 +128,18 @@ Predictions were hash-bound before recovery/inference in `67c26772`, [PREREGISTR
 
 Scope: unchanged C11 training-prefix counts and device geometry, not future-containing full-corpus counts. “Full coverage” still has empty self support. Metadata changes with the requested geometry, so this measures coverage plus an interface shift. One seed/pair, transductive selectors, historical unmatched controls and no uncertainty estimate. Device-off degradation proves live dependence, not that nothing is encoded in weights; shared English distributions leave partial copying possible. No isolated semantic-operator or causal coverage-only claim.
 
+### C14a — measured: provisional Pile/Wikipedia coverage; branch integrity gate failed
+
+10,000 eligible interior Pile token boundaries against the 100 GB Wikipedia array give 16/64/256/1024-byte support **36.59% / 2.36% / 0.59% / 0.09%**. Median maximal supported context is 12 bytes (p90 26, p99 150; cap 1024, nine censored). Conditional observed-next-token first-byte agreement is **69.3333%** over 9,900 nonempty contexts. Centered 256-byte spans match at 5/1000, **all whitespace only**; no Wikipedia document-component fraction is established. Supplemental locate checks all 59 supported 256-byte contexts and nine 1024-byte contexts against corpus bytes. One long non-whitespace match is a statistics table; overlap is sparse and length/complexity dependent, not guaranteed disjointness.
+
+The independent audit **failed** on two UINT64_MAX right-extension counts. Both affected feature rows are explicitly rejected; raw failures and a minimal upstream reproducer are preserved. The remaining receipt audit passes after quarantine, including 73 direct byte checks and 100 independent decoder checks; this does not certify query-engine correctness. No sxgc changes. AGC FFI has no SXI2 query API; the persistent-interface request is a handoff only. Host batch branch throughput is 326.22 successful features/s including process overhead: a repeated-batch 40M extrapolation is 34.06 hours before context search/transfer. Kernel-only throughput uses the default many-core Rayon pool despite `-j 1`; **no single-core budget is established**. [RESULT_C14_PHASE1.md](RESULT_C14_PHASE1.md), [C14_FEATURE_BRIDGE.md](C14_FEATURE_BRIDGE.md); bindings C14a. Training remains blocked on upstream query repair, a complete causal token geometry/cache, and an honest production budget.
+
+### C14 — registered: Pile-trained 150M dense versus Wikipedia consultation, then stacking
+
+Coverage receipts and their failure gate precede this registration; no C14 training or held-out inference has run. [PREREGISTRATION_C14.md](PREREGISTRATION_C14.md), SHA256 `d32f132b7e7641b008f8cba72c48a984b5b84a264bb58ea7a1bc4ca68036c0be`, receipt commit `6ff620c5ffe8b531a10ea5352bb7f8f7ba5c3f81`. Predict a raw token-NLL improvement for each matched head from mainly short-context lexical consultation; independent whole-input keep=.5 dropout preserves device-off NLL within 0.02 nats/token of dense. Compare dense/consultation with dense full-vocabulary loss, 150M matched trainable capacity, GPT-2 BPE and 2700 active seconds. C13-style calibration stacking is the second half, fit/frozen on a separate calibration half; byte-forced continuations cannot silently become forced BPE tokens. Predictions are calibrated to the measured sparse non-whitespace long overlap, not to an assumed Wikipedia component. **Do not launch** until the explicit query-integrity, feature-geometry/cache and budget gates pass. Registered status has no outcome bindings.
+
+Boundary/grain gate observed before launch: concurrently updated local `AGENTS.md`/`CLAUDE.md` now require natural raw-byte training (vocabulary 256), document-contained windows and document-disjoint calibration/final-test, referring to `c14_documents.py`. The original work-order preregistration above uses GPT-2 BPE; preserve it as historical scope, but **do not execute it as a current training authorization**. Before training, bind an explicit raw-byte/document-boundary amendment and its source/index hashes and tests. Phase-1 token-boundary coverage remains a measurement of decoded bytes, not a raw-byte-uniform sample. No boundary implementation or training was performed by this phase.
+
 ## Growing design memo
 
 ### Dense mode — selected direction; implementation registered
@@ -156,7 +168,7 @@ Exact branch distributions are proposed teachers for mimetic initialization (C10
 
 ## Session discipline: green means documented
 
-Run `/home/erikg/emender/.venv/bin/python experiments/expressivity_tasks/x43_fork_resolved/validate_program.py` before a result is called documented and before committing a status transition. The validator checks exact committed bytes and current receipt bytes, hashes, claim order and statuses. The audit implementation binding is updated to its C13-capable commit; historical validator versions remain available in their original commits. It audits bindings, not scientific entailment or fresh model execution. The sxgc repository defaults to the sibling checkout; `--sxgc-repo` can point to another checkout containing the pinned commit. Missing evidence fails closed.
+Run `/home/erikg/emender/.venv/bin/python experiments/expressivity_tasks/x43_fork_resolved/validate_program.py` before a result is called documented and before committing a status transition. The validator checks exact committed bytes and current receipt bytes, hashes, claim order and statuses. The audit implementation binding is updated to its C14-capable commit; historical validator versions remain available in their original commits. It audits bindings, not scientific entailment or fresh model execution. The sxgc repository defaults to the sibling checkout; `--sxgc-repo` can point to another checkout containing the pinned commit. Missing evidence fails closed.
 
 As results land, update this ledger immediately: record the protocol before execution, then bind every adopted outcome by path + commit + hash and change status only when its receipt is available. No orphan outcome receipts: every newly adopted result must belong to a claim; older run artifacts remain under their existing manifests. Commit the receipt first before promoting a registered claim, so its exact commit can be pinned without self-reference. Registered claims must have no outcome bindings; design motivations may refer to measured claims. Do not commit .pt files. Keep failures and limitations visible. The earlier no-training session left C6 registered. The subsequent C6 execution is now receipted above, including its failed absolute recipe and interrupted optional-arm setup.
 
@@ -1041,8 +1053,8 @@ Paths are repository-relative. `emender` is this repository; `sxgc` is the exter
         {
           "repo": "emender",
           "path": "experiments/expressivity_tasks/x43_fork_resolved/validate_program.py",
-          "commit": "d76d93215203f6f4fd28baf21b11452c331605ff",
-          "sha256": "730baaef15f76be76b95533750155abf7e9be5050c8ef1e3908a729541b3567e"
+          "commit": "6ff620c5ffe8b531a10ea5352bb7f8f7ba5c3f81",
+          "sha256": "9835ed73b212a0f7b26d30d9eb7fde85c5d5d45f8016e81904a2d4c6401391a2"
         },
         {
           "repo": "emender",
@@ -1341,8 +1353,8 @@ Paths are repository-relative. `emender` is this repository; `sxgc` is the exter
         {
           "repo": "emender",
           "path": "experiments/expressivity_tasks/x43_fork_resolved/validate_program.py",
-          "commit": "d76d93215203f6f4fd28baf21b11452c331605ff",
-          "sha256": "730baaef15f76be76b95533750155abf7e9be5050c8ef1e3908a729541b3567e"
+          "commit": "6ff620c5ffe8b531a10ea5352bb7f8f7ba5c3f81",
+          "sha256": "9835ed73b212a0f7b26d30d9eb7fde85c5d5d45f8016e81904a2d4c6401391a2"
         },
         {
           "repo": "emender",
@@ -1351,6 +1363,65 @@ Paths are repository-relative. `emender` is this repository; `sxgc` is the exter
           "sha256": "396af148e050b9d15dc3a1589e1f4257400fa21b7e2a4d92deb3d6e83b3b57bb"
         }
       ]
+    },
+    {
+      "id": "C14a",
+      "status": "measured",
+      "receipts": [
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14/MANIFEST.json",
+          "commit": "6ff620c5ffe8b531a10ea5352bb7f8f7ba5c3f81",
+          "sha256": "377c3457b68e1936b8fa623c5861cc71d30f8a663e812f33acb049033d6e8fbf"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14/coverage.json",
+          "commit": "6ff620c5ffe8b531a10ea5352bb7f8f7ba5c3f81",
+          "sha256": "b692b6bf2503c533bacea9e03b5de811a170c9b9b88a4d3ca39e152b885d40fa"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14/validation.json",
+          "commit": "6ff620c5ffe8b531a10ea5352bb7f8f7ba5c3f81",
+          "sha256": "f31d71655b6af1da5db1bb2ac784790cb7ca53b666ec6b63fe2f988aaeb89c04"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14/count_range_failures.json",
+          "commit": "6ff620c5ffe8b531a10ea5352bb7f8f7ba5c3f81",
+          "sha256": "87bb18655f3e6c7c772c75f634e5e14f05548af337de47829be7daf2cbf7439f"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14/initial_validation_failure.txt",
+          "commit": "6ff620c5ffe8b531a10ea5352bb7f8f7ba5c3f81",
+          "sha256": "e7db0b9da65219a20cc3355a10c0ba6e35e9c0ad3be35262b7ea6f728be7d8c7"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14/budget.json",
+          "commit": "6ff620c5ffe8b531a10ea5352bb7f8f7ba5c3f81",
+          "sha256": "37be33d58f1d866dd490e75a71463f10544131ee5ab011f129edba71746aba69"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/RESULT_C14_PHASE1.md",
+          "commit": "6ff620c5ffe8b531a10ea5352bb7f8f7ba5c3f81",
+          "sha256": "8539962e9f43983580fde72d0818f9a686d348597f01136955576328db991b06"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/C14_FEATURE_BRIDGE.md",
+          "commit": "6ff620c5ffe8b531a10ea5352bb7f8f7ba5c3f81",
+          "sha256": "323f146143846cf8aefa61272a058d0db5f48900adad11d3b6a71f20d4bdc089"
+        }
+      ]
+    },
+    {
+      "id": "C14",
+      "status": "registered",
+      "receipts": []
     }
   ]
 }
