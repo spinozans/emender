@@ -48,9 +48,13 @@ C6 optional-arm correction: [PREREGISTRATION_C6_GDN2.md](PREREGISTRATION_C6_GDN2
 
 Prediction: fork-masked loss, branch-set conditioning plus an OOD channel, interval features in the gate and exact-count teachers reduce final-test NLL below C3's 1.673012 Emender result. Report gap closure (1.673012 − designed NLL)/(1.673012 − 0.570865), while explicitly distinguishing the causal/train-count system from that transductive diagnostic denominator. No numeric closure is assumed. Ablate each ingredient with matched budgets; evaluation rules and causal index must be frozen before execution.
 
-### C7a — registered: joint dense residual training
+### C7a — refuted: unconstrained joint residual training fails dense comparison
 
-Prediction: boosted training beats dense in total and fork NLL under identical C3 calibrated fusion plus forced walk. Joint-gate inference is separately reported. Protocol: [PREREGISTRATION_C7a.md](PREREGISTRATION_C7a.md), SHA256 `2a2b5fa7003c86facd81e5081bfd5b82260e573d22ad8d1c71d4768e64668978`. Registered before any C7a training; C6 compound masked/normalized controls are reused with their limitations.
+Both 180-second boosted heads lose under identical C3 calibration-feature fusion plus forced walk. Total/fork NLL: Emender boosted **3.718402/4.902387**, dense **1.673012/2.424886**, C6 compound masked **6.694321/10.433005**; transformer boosted **14.647364/19.057854**, dense **1.746996/2.558332**, compound masked **7.312338/11.496303**. The separately deployed uncalibrated joint gate is worse still: total/fork **3.860648/5.147120** and **18.651658/25.947240**. No training positions were deleted, and both neural softmax and gate received backprop through the mixture.
+
+Transformer joint neural weight collapses to about 2.4e-6 on one-branch positions versus C3 dense .965; self-containing counts provide no zero-target training events. This refutes the scoped prediction that this unconstrained objective preserves anchors and improves both losses, not residual training in general. Emender processed only 229 steps (unexplained throughput loss); transformer 26,380. Wall clocks matched, steps did not. C6 controls remain compound conditioning/normalization/masking arms, not isolated masking evidence. One seed, corpus-wide selectors, no causal generalization claim; GDN2 deferred. [RESULT_C7a.md](RESULT_C7a.md), bindings C7a.
+
+Registration preceded training in a07a8eea: [PREREGISTRATION_C7a.md](PREREGISTRATION_C7a.md), SHA256 `2a2b5fa7003c86facd81e5081bfd5b82260e573d22ad8d1c71d4768e64668978`. Primary common calibration gate and secondary uncalibrated joint gate were frozen in this protocol; dense and C6 controls were reused, not retrained. Seventy independent loss/denominator checks and six CPU tests pass.
 
 ### C8 — registered: redundancy ladder
 
@@ -81,6 +85,10 @@ Consider context length, interval/support size and uncertainty in the gate (C7).
 ### OOD channel — normalized prototype tested; training exposure failed
 
 C3 and C6 retain 2,709 empty-support forks and 17,066 nonempty-support zero-target forks. C6 normalized supported-byte logits with one aggregate OOD logit and routed OOD mass uniformly outside support; empty support abstained uniformly. Probability arithmetic passed, but self-containing training counts supplied zero OOD target events and the recipe failed badly on held-out zero-target forks. Before C7, register leave-one-out/prefix-only exposure or another justified OOD objective and isolate normalization. Do not scale the C6 recipe or claim OOD benefit. Walk exit/re-entry remains undecided (C9). Decision receipts: C3/C6 bindings.
+
+### Joint residual learning — tested; unconstrained recipe failed
+
+C7a retained every dense position in a jointly differentiated model/index mixture. It still failed the dense comparison for both heads, with transformer index-gate collapse and poor held-out neural predictions. Self-containing exact counts can attenuate neural gradients at forks too, so merely retaining positions is insufficient to guarantee useful anchors. No constrained-gate, causal-selector, leave-one-out, or dense auxiliary-loss variant was tested. Do not scale this recipe as established integrated learning. Decision receipts: C7a; C6 remains a compound failed recipe rather than an isolated masking ablation.
 
 ### Exact index teachers — registered placeholder
 
@@ -473,8 +481,141 @@ Paths are repository-relative. `emender` is this repository; `sxgc` is the exter
     },
     {
       "id": "C7a",
-      "status": "registered",
-      "receipts": []
+      "status": "refuted",
+      "receipts": [
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/RESULT_C7a.md",
+          "commit": "370cd773a62fde8ad3b2925539c0227986e91018",
+          "sha256": "e2b72f2845f678cfef28c59696a9575f33835a541b842a871cd0e12ec2e3f10c"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/PREREGISTRATION_C7a.md",
+          "commit": "370cd773a62fde8ad3b2925539c0227986e91018",
+          "sha256": "2a2b5fa7003c86facd81e5081bfd5b82260e573d22ad8d1c71d4768e64668978"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/c7a.py",
+          "commit": "370cd773a62fde8ad3b2925539c0227986e91018",
+          "sha256": "26c70aa7c67560f981cd324869a0330698859f05ba6e246bfde0ee98fbbad0d2"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/c7a_score.py",
+          "commit": "370cd773a62fde8ad3b2925539c0227986e91018",
+          "sha256": "0bc2570192e83b644578fa0eb809874ec0349bb50e8785cfd32c06a2b333cc94"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/validate_c7a.py",
+          "commit": "370cd773a62fde8ad3b2925539c0227986e91018",
+          "sha256": "b74c4c2044cd7583978d0dbb39186f5c38fae5d55440b53ac34bb010b266caec"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/test_c7a.py",
+          "commit": "370cd773a62fde8ad3b2925539c0227986e91018",
+          "sha256": "114de3d72b7348acaf0bc8788c22c4cd7454d04260dbef21ff4d5297fffdf7fa"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/run_c7a_leased.sh",
+          "commit": "370cd773a62fde8ad3b2925539c0227986e91018",
+          "sha256": "5efc12a2bd13b24c88175de6a8685a64d49a38a69692c117d21fe8e7bbf33d4f"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c7a/calibration_freeze.json",
+          "commit": "370cd773a62fde8ad3b2925539c0227986e91018",
+          "sha256": "e5f27894e79b6036e21dcf9e21cbbd8fb7960d5a457926c49a64e64896d3546d"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c7a/console.txt",
+          "commit": "370cd773a62fde8ad3b2925539c0227986e91018",
+          "sha256": "b63d5e29d5294fe37e623a9c0d13d963d288aad623cc85e7589c0f59bd5de61e"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c7a/dependencies.json",
+          "commit": "370cd773a62fde8ad3b2925539c0227986e91018",
+          "sha256": "0310b38633f20b452b5284180fa215965809b837f1e3c1ebb838639031a18be6"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c7a/emender_boosted_prediction.npz",
+          "commit": "370cd773a62fde8ad3b2925539c0227986e91018",
+          "sha256": "52c753beb9ca0d146d36060812e7ac54250e421bd3a84ccc887e6d52df4a9542"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c7a/frozen_gates.json",
+          "commit": "370cd773a62fde8ad3b2925539c0227986e91018",
+          "sha256": "19bad95715cf91578dfba73900aff1d971848daaecdb13bfc355e5e1a2ee2259"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c7a/gpu.csv",
+          "commit": "370cd773a62fde8ad3b2925539c0227986e91018",
+          "sha256": "c49ee0ec3d8bfd0b64339ad73910f18c46254fc593f0fe2cbaa4c14c810f2bef"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c7a/lease.txt",
+          "commit": "370cd773a62fde8ad3b2925539c0227986e91018",
+          "sha256": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c7a/manual_notes.json",
+          "commit": "370cd773a62fde8ad3b2925539c0227986e91018",
+          "sha256": "1da7302b21c338372a9156678b11d2f3068bce227465a492beb60115888bec5c"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c7a/results.json",
+          "commit": "370cd773a62fde8ad3b2925539c0227986e91018",
+          "sha256": "cefa54e889214ee015f6715d2ad9fcca40cd5822b0c84d604c906a290bbcedc7"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c7a/scoring.txt",
+          "commit": "370cd773a62fde8ad3b2925539c0227986e91018",
+          "sha256": "d2658b458edf9e68587b0d58b970c9b66345e1faeeed03ebd82f2563dac8569d"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c7a/terminal.json",
+          "commit": "370cd773a62fde8ad3b2925539c0227986e91018",
+          "sha256": "d24219f6de94b955cf36d25bd2aca88e2d35eef45b9317b7083f55ec8fe9653c"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c7a/tests.txt",
+          "commit": "370cd773a62fde8ad3b2925539c0227986e91018",
+          "sha256": "5dd52afefc03d5d25a95b116c9ceb3cbd05173e45d9c94059ce9e4f3d3af751e"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c7a/training.json",
+          "commit": "370cd773a62fde8ad3b2925539c0227986e91018",
+          "sha256": "81b5e68a0ca72472c2143c6547b3a024ad6d7cd4af97fd2e4512119944de6a42"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c7a/transformer_boosted_prediction.npz",
+          "commit": "370cd773a62fde8ad3b2925539c0227986e91018",
+          "sha256": "da27f88e45aaca57636b879f2b6f61d472a82cbe4bad0de586017419f88af040"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c7a/validation.txt",
+          "commit": "370cd773a62fde8ad3b2925539c0227986e91018",
+          "sha256": "926d436a77c32b825f1e9601b3b4a93d3c30693907810ad116e1b82a6259e6e5"
+        }
+      ]
     },
     {
       "id": "C8",
