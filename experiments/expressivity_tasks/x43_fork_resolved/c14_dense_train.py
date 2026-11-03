@@ -10,7 +10,8 @@ from .c6 import count
 from .c14_documents import sha, evaluation_halves
 ROOT=Path(__file__).resolve().parent
 OUT=ROOT/'receipts/c14_dense'
-DATA=Path('/mnt/nvme2n1/erikg/c14_dense_bytes')
+DATA=Path('/home/erikg/c14_dense_bytes')
+OFFSETS=DATA/'pile_offsets.jsonl'
 
 def write(name,obj):
     (OUT/name).write_text(json.dumps(obj,indent=2,allow_nan=False)+'\n')
@@ -18,7 +19,7 @@ def write(name,obj):
 def batches(raw, split):
     """Source order, right padding masked; each row resets model state."""
     rows=[]
-    with (DATA/'offsets.jsonl').open() as f:
+    with OFFSETS.open() as f:
         for line in f:
             doc=json.loads(line)
             if doc['split'] != split: continue
@@ -40,27 +41,50 @@ def tensors(rows):
     return [torch.as_tensor(a,device='cuda') for a in (x,y,mask)]
 
 def main():
+    import argparse
+    parser=argparse.ArgumentParser()
+    parser.add_argument("--continue-take4", action="store_true")
+    resume=parser.parse_args().continue_take4
     assert os.environ.get('GPU_LEASE_HELD') in ('2','4')
-    preflight=json.loads((OUT/'source_preflight.json').read_text())
+    preflight=json.loads((OUT/'pile_span.json').read_text())
     assert preflight['status']=='passed', 'full selected corpus required'
-    assert sha(DATA/'bytes.bin')==preflight['corpus_sha256']
-    assert sha(DATA/'offsets.jsonl')==preflight['offsets_sha256']
-    raw=np.memmap(DATA/'bytes.bin',dtype=np.uint8,mode='r')
+    assert preflight['matched_documents']==7831213 and preflight['materialized_bytes']==0
+    assert sha(OFFSETS)==preflight['offsets_sha256']
+    source=Path(preflight['source'])
+    stat=source.stat()
+    assert (stat.st_size,stat.st_ino,stat.st_mtime_ns)==(preflight['source_size'],preflight['source_inode'],preflight['source_mtime_ns'])
+    raw=np.memmap(source,dtype=np.uint8,mode='r')
+    shapes=json.loads((ROOT/'receipts/c14_byte/model_shapes.json').read_text())
+    for path,digest in shapes['sources'].items():
+        assert sha(ROOT.parents[2]/path)==digest, f'model dependency changed: {path}'
+    write('continuation_launch.json' if resume else 'launch.json',dict(source_span_sha256=sha(OUT/'pile_span.json'),
+        code_sha256=sha(__file__), model_shapes_sha256=sha(ROOT/'receipts/c14_byte/model_shapes.json'),
+        protocol_sha256=sha(ROOT/'PREREGISTRATION_C14_BYTE.md'),
+        dense_amendment_sha256=sha(ROOT/'PREREGISTRATION_C14_DENSE.md'),
+        interpreter=__import__('sys').executable,physical_gpu=os.environ['GPU_LEASE_HELD'],
+        seed=3401,batch=16,context=128,budget_seconds_per_head=2700,
+        source=str(source),materialized_bytes=0,features='all-zero',
+        model_dependencies=shapes['sources']))
     valid=[]
-    with (DATA/'offsets.jsonl').open() as f:
+    with OFFSETS.open() as f:
         for line in f:
             d=json.loads(line)
             if d['split']=='valid': valid.append(d['source_index'])
     halves=evaluation_halves(valid)
     # This immutable construction is shared across heads and future consultation.
-    with (OUT/'eval_windows.jsonl').open('w') as f:
-        for batch in batches(raw,'valid'):
-            for doc,start,b in batch:
-                f.write(json.dumps(dict(document=doc,start=start,targets=len(b)-1,half=halves[doc]))+'\n')
-    write('eval_construction.json',dict(windows_sha256=sha(OUT/'eval_windows.jsonl'),
-        offsets_sha256=preflight['offsets_sha256'],valid_documents=len(valid),
-        policy='all real targets, source-order 128-byte independent resets; same positions for consultation',
-        support_strata='pending validated causal features; never inferred from absent counts'))
+    if resume:
+        construction=json.loads((OUT/'eval_construction.json').read_text())
+        assert sha(DATA/'eval_windows.jsonl') == construction['windows_sha256']
+    else:
+        with (DATA/'eval_windows.jsonl').open('w') as f:
+            for batch in batches(raw,'valid'):
+                for doc,start,b in batch:
+                    f.write(json.dumps(dict(document=doc,start=start,targets=len(b)-1,half=halves[doc]))+'\n')
+        write('eval_construction.json',dict(windows_path=str(DATA/'eval_windows.jsonl'),windows_sha256=sha(DATA/'eval_windows.jsonl'),
+            offsets_sha256=preflight['offsets_sha256'],valid_documents=len(valid),
+            source_span_sha256=sha(OUT/'pile_span.json'),
+            policy='all real targets, source-order 128-byte independent resets; same positions for consultation',
+            support_strata='pending validated causal features; never inferred from absent counts'))
     torch.set_num_threads(1)
     target=2000000; results=[]
     for arm,expected in [('emender',2133700),('transformer',2133748)]:
@@ -68,31 +92,41 @@ def main():
         model=Boosted(arm,target).cuda().train()
         if arm=='emender': target=count(model.head.base)
         assert count(model)==expected
-        opt=torch.optim.AdamW(model.parameters(),lr=3e-4,weight_decay=.01)
         zeros=torch.zeros((16,128,260),device='cuda')
         lengths=torch.zeros((16,128),device='cuda')
-        curve=[]; steps=targets=epochs=0
-        torch.cuda.synchronize(); start=time.monotonic()
-        while time.monotonic()-start < 2700:
-            for rows in batches(raw,'train'):
-                x,y,mask=tensors(rows)
-                opt.zero_grad(set_to_none=True)
-                with torch.autocast('cuda',dtype=torch.bfloat16):
-                    lp,_=model(x,zeros[:len(rows)],lengths[:len(rows)])
-                    loss=-lp.gather(-1,y[...,None])[...,0][mask].mean()
-                assert torch.isfinite(loss)
-                loss.backward(); torch.nn.utils.clip_grad_norm_(model.parameters(),1.,error_if_nonfinite=True)
-                opt.step(); steps+=1; targets+=int(mask.sum())
-                if steps==1 or steps%100==0:
-                    curve.append(dict(step=steps,seconds=time.monotonic()-start,nll=float(loss.detach()),targets=targets))
-                    print(arm,curve[-1],flush=True)
-                if time.monotonic()-start >= 2700: break
-            epochs+=1
-        torch.cuda.synchronize(); elapsed=time.monotonic()-start
-        model.eval()
-        torch.save(model.state_dict(),DATA/f'{arm}_dense.pt')
-        sums={}; eval_start=time.monotonic()
-        with (OUT/f'{arm}_eval.jsonl').open('w') as f, torch.no_grad():
+        if resume and arm=='emender':
+            inventory=json.loads((OUT/'inventory_take4.json').read_text())
+            assert sha(DATA/'emender_dense.pt') == inventory['arms']['emender']['checkpoint_sha256']
+            model.load_state_dict(torch.load(DATA/'emender_dense.pt',weights_only=True))
+            completed=json.loads((OUT/'emender_curve.json').read_text())
+            curve=completed['curve']; steps=completed['steps']; targets=completed['targets']
+            elapsed=completed['active_seconds']; epochs=1
+            model.eval()
+        else:
+            opt=torch.optim.AdamW(model.parameters(),lr=3e-4,weight_decay=.01)
+            curve=[]; steps=targets=epochs=0
+            torch.cuda.synchronize(); start=time.monotonic()
+            while time.monotonic()-start < 2700:
+                for rows in batches(raw,'train'):
+                    x,y,mask=tensors(rows)
+                    opt.zero_grad(set_to_none=True)
+                    with torch.autocast('cuda',dtype=torch.bfloat16):
+                        lp,_=model(x,zeros[:len(rows)],lengths[:len(rows)])
+                        loss=-lp.gather(-1,y[...,None])[...,0][mask].mean()
+                    assert torch.isfinite(loss)
+                    loss.backward(); torch.nn.utils.clip_grad_norm_(model.parameters(),1.,error_if_nonfinite=True)
+                    opt.step(); steps+=1; targets+=int(mask.sum())
+                    if steps==1 or steps%100==0:
+                        curve.append(dict(step=steps,seconds=time.monotonic()-start,nll=float(loss.detach()),targets=targets))
+                        print(arm,curve[-1],flush=True)
+                    if time.monotonic()-start >= 2700: break
+                epochs+=1
+            torch.cuda.synchronize(); elapsed=time.monotonic()-start
+            write(f'{arm}_curve.json',dict(arm=arm,curve=curve,steps=steps,targets=targets,active_seconds=elapsed))
+            model.eval()
+            torch.save(model.state_dict(),DATA/f'{arm}_dense.pt')
+        sums={}; strata={}; eval_start=time.monotonic()
+        with (DATA/f'{arm}_eval.jsonl').open('w') as f, torch.no_grad():
             for rows in batches(raw,'valid'):
                 x,y,mask=tensors(rows)
                 with torch.autocast('cuda',dtype=torch.bfloat16):
@@ -101,17 +135,26 @@ def main():
                 for j,(doc,at,b) in enumerate(rows):
                     losses=nll[j,:len(b)-1]
                     f.write(json.dumps(dict(document=doc,start=at,nll=losses.tolist()))+'\n')
+                    for stratum, selected in [('window_reset_1_16', losses[:16]), ('window_interior_17_128', losses[16:])]:
+                        key_s=halves[doc]+'/'+stratum
+                        total_s,count_s=strata.get(key_s,(0.,0))
+                        strata[key_s]=(total_s+float(selected.astype(np.float64).sum()),count_s+len(selected))
                     key=halves[doc]
                     total,counted=sums.get(key,(0.,0))
                     sums[key]=(total+float(losses.astype(np.float64).sum()),counted+len(losses))
+                if time.monotonic()-eval_start > 0 and len(sums) and sum(v[1] for v in sums.values())//1000000 != getattr(main,'last_eval_million',-1):
+                    main.last_eval_million=sum(v[1] for v in sums.values())//1000000
+                    print(arm,'eval_targets',sum(v[1] for v in sums.values()),flush=True)
         row=dict(arm=arm,parameters=expected,steps=steps,targets=targets,epochs_started=epochs,
             active_seconds=elapsed,curve=curve,heldout={k:dict(targets=n,nll=s/n) for k,(s,n) in sums.items()},
+            within_document_strata={k:dict(targets=n,nll=s/n if n else None) for k,(s,n) in strata.items()},
             eval_seconds=time.monotonic()-eval_start,checkpoint_sha256=sha(DATA/f'{arm}_dense.pt'),
-            eval_sha256=sha(OUT/f'{arm}_eval.jsonl'),cross_document_windows=0,
+            eval_sha256=sha(DATA/f'{arm}_eval.jsonl'),cross_document_windows=0,
             boundary_evidence='every row sliced from one hash-verified document; right-pad loss masked; fresh forward per batch',
             support_strata='unavailable pending validated consultation feature bridge')
         results.append(row); write('training.json',dict(models=results,seed=3401,precision='BF16',
             protocol_sha256=sha(ROOT/'PREREGISTRATION_C14_BYTE.md'),dense_amendment_sha256=sha(ROOT/'PREREGISTRATION_C14_DENSE.md'),
-            physical_gpu=os.environ['GPU_LEASE_HELD'],code_sha256=sha(__file__)))
+            physical_gpu=os.environ['GPU_LEASE_HELD'],code_sha256=sha(__file__),
+            continuation=resume, original_launch_sha256=sha(OUT/'launch.json')))
         del model; torch.cuda.empty_cache()
 if __name__=='__main__': main()
