@@ -86,3 +86,8 @@ The survey flagged the unread DeltaStack PDF as the single largest evidence gap.
 ## Items still excluded from claim-bearing use
 
 X32's unverified Grefenstette, kNN-LM, Strobl and Sarrof references remain verification leads, not verified claim support here. Unidentified “Differentiable Pushdown (Du et al.)” and “MOVES (Sander et al.)” are not silently replaced with invented citations. Third-party AI DeltaStack summaries remain excluded. Broad causal explanations for DNC's historical adoption are interpretations, not established causal evidence.
+
+
+## Paper 2 (fork-resolved program) positioning
+
+See `../x43_fork_resolved/POSITIONING.md` — the exact decision structure as the spine of an LM; neighbors (infini-gram, REST, kNN-LM, Memorizing Transformers, constrained decoding, suffixient arrays, SSM hybrids) and the unoccupied intersection. Sweep-level as of Nov 2026.
