@@ -1,0 +1,69 @@
+{
+  "status": "incomplete",
+  "completed": [
+    "isolated xsa 88d4e07 release build and ff-only synchronization",
+    "former-sentinel and common-context native probes",
+    "independent all-256-query-byte native fixture",
+    "bounded causal training-prefix cache extraction"
+  ],
+  "not_run": [
+    "full registered training cache",
+    "complete frozen-window validation cache",
+    "consultation training for either head",
+    "device-off and paired support-stratified evaluation",
+    "C14 P1/P2/P3 verdicts",
+    "Pile-scale C13 coverage subsets and stacking"
+  ],
+  "benchmark_cache_path": "/home/erikg/c14_consultation_features/serving_benchmark_8192/features.jsonl.gz",
+  "features_per_second": 3972.441951550839,
+  "compressed_bytes_per_position": 47.91353079523739,
+  "linear_scenarios": {
+    "train": {
+      "targets": 43052359095,
+      "seconds": 10837756.629317738,
+      "days": 125.43699802451086,
+      "compressed_bytes": 2062790533305.9011
+    },
+    "valid": {
+      "targets": 434204084,
+      "seconds": 109304.07273301677,
+      "days": 1.2650934344099163,
+      "compressed_bytes": 20804250750.151844
+    }
+  },
+  "full_float32_cache_bytes": 45226025706160,
+  "free_bytes_at_preflight": 807647387648,
+  "forecast_warning": "Prefix-only linear scenarios for this bounded implementation and representation; not measured full-stream rates, a lower bound, or proof that other cache formats cannot fit. Cross-chunk deduplication and denser storage remain unimplemented.",
+  "coverage_comparison": {
+    "16": {
+      "eligible": 911371,
+      "supported": 436838,
+      "rate": 0.4793196184649281,
+      "phase1_rate": 0.3659
+    },
+    "64": {
+      "eligible": 521609,
+      "supported": 4275,
+      "rate": 0.008195794167661984,
+      "phase1_rate": 0.0236
+    },
+    "256": {
+      "eligible": 0,
+      "supported": 0,
+      "rate": null,
+      "phase1_rate": 0.0059
+    },
+    "1024": {
+      "eligible": 0,
+      "supported": 0,
+      "rate": null,
+      "phase1_rate": 0.0009
+    }
+  },
+  "launch_gate": "Complete validated train/valid caches required by PREREGISTRATION_C14_BYTE.md; not satisfied. No training or GPU lease launched.",
+  "native_query_contexts_per_second": 31530.865,
+  "queries_per_feature": 6.802295040113882,
+  "sampling_caveat": "8,192 first source-order training windows. Not the phase-1 random token-boundary sample, not held-out coverage, not full feature distribution.",
+  "no_model_or_eval_window_changes": true,
+  "no_prediction_verdict": true
+}
