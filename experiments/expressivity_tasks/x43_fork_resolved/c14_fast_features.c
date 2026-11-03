@@ -38,7 +38,7 @@ int c14_decode(const unsigned char *p, size_t n, float *out,
                         correction += fabs(entropy)>=fabs(term) ? (entropy-combined)+term : (term-combined)+entropy;
                         entropy=combined; }
                 }
-                f[256]=(float)log1p((double)total); 
+                f[256]=(float)log1p((double)total);
                 double corrected=correction && isfinite(correction) ? entropy+correction : entropy;
 #ifdef C14_REQUIRE_IDENTICAL
                 float sequential=(float)(-entropy), compensated=(float)(-corrected);

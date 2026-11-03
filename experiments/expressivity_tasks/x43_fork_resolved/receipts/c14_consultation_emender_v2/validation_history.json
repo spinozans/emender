@@ -19,6 +19,16 @@
       "command": "pytest test_c14_*.py after compensated-sum hardening and isolated profiling flag",
       "result": "passed",
       "summary": "35 passed"
+    },
+    {
+      "command": "git diff --cached --check, primary-result commit preparation",
+      "result": "failed",
+      "summary": "One C source line had trailing whitespace. Removed after benchmark; retained exact audited source as JSON and verified linewise-rstrip equivalence."
+    },
+    {
+      "command": "pytest test_c14_*.py and release source/library hash validation",
+      "result": "passed",
+      "summary": "35 passed; normalized and audited compiled libraries byte-identical; both hardened profile checkpoint/code hashes valid"
     }
   ]
 }

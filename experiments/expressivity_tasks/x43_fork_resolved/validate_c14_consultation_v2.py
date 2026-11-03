@@ -21,7 +21,9 @@ def validate():
     assert config['feature_decoder_sha256']==sha(OUT/'training_decoder.c')
     audit=json.loads((OUT/'full_sum_audit.json').read_text())
     assert audit['status']=='passed' and audit['full_cache_float32_identity']
-    assert audit['check_source_sha256']==sha(ROOT/'c14_fast_features.c')
+    audited=json.loads((OUT/'audited_decoder_source.json').read_text())['source']
+    assert hashlib.sha256(audited.encode()).hexdigest()==audit['check_source_sha256']
+    assert [line.rstrip() for line in audited.splitlines()]==[line.rstrip() for line in (ROOT/'c14_fast_features.c').read_text().splitlines()]
     assert (audit['windows'],audit['positions'])==(1785536,225880702)
     for path,digest in json.loads((OUT/'frozen_evidence_hashes.json').read_text()).items():
         assert sha(Path(path))==digest,path

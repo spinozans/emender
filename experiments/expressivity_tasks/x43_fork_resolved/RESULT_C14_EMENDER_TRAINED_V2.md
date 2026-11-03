@@ -80,4 +80,12 @@ behavior was changed, tested or run; gap-matrix requirements do not apply.
 The hardened-path 1,024-step benchmark measured 25.391 steps/s including startup,
 and 29.940 steps/s over steps 100–1000. Both rates are retained; the full-budget
 primary run above used the archived decoder with identical cached input bytes.
-A bounded 4,096-step sustained benchmark is in progress at this commit.
+The bounded 4,096-step hardened-path benchmark completed in 144.611 active
+seconds at 28.324 steps/s including startup and all delays, within 1.458x of
+dense. Its reported losses/targets match the primary run at every logged step.
+The exact audited C source is retained in audited_decoder_source.json; the final
+production source differs only by removal of trailing whitespace. This
+source-equivalence check is included in validation.
+
+Release proof also confirms the normalized and audited compiled shared libraries
+are byte-identical. Final validation and all 35 C14 tests pass.
