@@ -1510,13 +1510,7 @@ Paths are repository-relative. `emender` is this repository; `sxgc` is the exter
           "commit": "ccf76f92166a644fa9c5d9f6d2ca9fa7c3605c87",
           "sha256": "69103ad8bee4fc0c03a5ce4e2f94e8841165525777cb501a4e40da6ea40055c5"
         },
-        {
-          "repo": "emender",
-          "path": "experiments/expressivity_tasks/x43_fork_resolved/validate_program.py",
-          "commit": "6ff620c5ffe8b531a10ea5352bb7f8f7ba5c3f81",
-          "sha256": "9835ed73b212a0f7b26d30d9eb7fde85c5d5d45f8016e81904a2d4c6401391a2"
-        },
-        {
+                {
           "repo": "emender",
           "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c13/verification_notes.json",
           "commit": "9536e54871d4909c0e3b7aa8cebef6bb033bde8e",
@@ -1598,20 +1592,23 @@ Paths are repository-relative. `emender` is this repository; `sxgc` is the exter
         {
           "repo": "emender",
           "path": "experiments/expressivity_tasks/x43_fork_resolved/c14_dense_source.py",
-          "commit": "644bff97eb6f64fe6148d768f931fdea181a7f6d",
-          "sha256": "a70726fe80a85b5972310c17ae9bc79e40c31dba7eb7e86559d3dc92475154eb"
+          "commit": "024ed3f554c40fc9101f0cd9420ba509a85e99fe",
+          "sha256": "711b05a8cf103aa5d0f60b78712d761b702fd342516210e4d9ad6b4c369b6de6",
+          "supersedes": "644bff97 original; re-pinned to take-4 pile.txt-offset rewrite"
         },
         {
           "repo": "emender",
           "path": "experiments/expressivity_tasks/x43_fork_resolved/c14_dense_train.py",
-          "commit": "a8b536e063baed1fe6a20474d5a706851116b4f0",
-          "sha256": "30c1ff5db89e81d407f4e00f75fe3e12eeea5907f8dbbbc01d3c7ee0b2b028e0"
+          "commit": "024ed3f554c40fc9101f0cd9420ba509a85e99fe",
+          "sha256": "d19e98190d5bb2bbfce02c047dbe386960a577ddee4fbc4ffea23174ceec14c8",
+          "supersedes": "a8b536e0 original; re-pinned to take-4 pile.txt-offset streaming version"
         },
         {
           "repo": "emender",
           "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_dense/source_preflight.json",
-          "commit": "8b54a9b2b1733a45f8e7d35053bd9a4ab07ef2de",
-          "sha256": "e828937cea6ba0c6ef913c036124cb19d3166fe25be6b30b35e1603064f37319"
+          "commit": "024ed3f554c40fc9101f0cd9420ba509a85e99fe",
+          "sha256": "c9c016a662f2d871d41fbe06a8d6198395394afad9e7f25d3edee1a8bff5e2e4",
+          "supersedes": "8b54a9b2 shard-00 preflight; re-pinned to take-4 full-coverage preflight (pile_span superseded it)"
         },
         {
           "repo": "emender",
@@ -1625,13 +1622,7 @@ Paths are repository-relative. `emender` is this repository; `sxgc` is the exter
           "commit": "76365ea9e00a50f6469ca956a4946b40a70602e7",
           "sha256": "e4d9df4f2996968d5aa661b41e3ad918575ac9ec38923617bbc269a0aa76a85a"
         },
-        {
-          "repo": "emender",
-          "path": "experiments/expressivity_tasks/x43_fork_resolved/PREREGISTRATION_C14_DENSE.md",
-          "commit": "76365ea9e00a50f6469ca956a4946b40a70602e7",
-          "sha256": "9ebc8e6db9030197d81245987a0d92203a6afda6f4eab11a476731ea58cf4c3f"
-        },
-        {
+                {
           "repo": "emender",
           "path": "experiments/expressivity_tasks/x43_fork_resolved/c14_dense_train.py",
           "commit": "76365ea9e00a50f6469ca956a4946b40a70602e7",
