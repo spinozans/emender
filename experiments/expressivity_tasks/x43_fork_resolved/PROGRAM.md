@@ -163,6 +163,8 @@ The bounded extractor measured **1,034,056 positions / 8,192 training windows / 
 
 **Full-size consultation work remains incomplete.** The frozen stream has 43,052,359,095 training and 434,204,084 validation targets. Linear scenarios for this implementation are 125.44/1.27 days and 2.0836 TB combined compressed cache, versus 807.65 GB free at preflight; float32 inputs would occupy 45.226 TB. These are prefix extrapolations, not scaling guarantees or impossibility claims for better caching. No exhaustive cache job or GPU training was launched. Complete caches, transfer costs, both consultation arms, paired support-stratified losses, device-off P2, P1/P3 verdicts, and Pile-scale coverage swaps/stacking remain unexecuted. No dense model, evaluation window, budget or protocol was changed. [Serving preflight result](RESULT_C14_SERVING_PREFLIGHT.md), [work status](receipts/c14_serving/work_status.json); additional bindings C14 below retain failed fixture attempts as well as the accepted native oracle and benchmark.
 
+Cache scaling continuation (2026-11-03): unchanged causal selector with exact cross-chunk LRU reuse, sparse binary gzip and native `-j128` re-extracted the **same 1,034,056-position prefix in 169.832325 seconds (6,088.688/s)**. Exact row replay and every coverage/histogram diagnostic match preflight. Fourteen tests pass; dense checkpoints, offsets, evaluation-window and model dependency hashes are unchanged. Storage is 34,266,350 bytes (33.137809 bytes/position); the combined pipeline is 1.53 times faster with 31% less storage. These jointly changed settings do not isolate a cause. Prefix-specific scenarios still project to **81.84 training days, 0.83 validation days and 1.441 TB**, versus 807.20 GB free. No new unique positions, complete cache, consultation arm, paired table or prediction verdict resulted. The full-cache gate remains unsatisfied and no full-size job remains running. [Scaling result](RESULT_C14_CACHE_SCALE.md), [remainder receipt](receipts/c14_cache_scale/scale_comparison.json); additional bindings C14.
+
 ## Growing design memo
 
 ### Dense mode — selected direction; implementation registered
@@ -1803,6 +1805,90 @@ Paths are repository-relative. `emender` is this repository; `sxgc` is the exter
           "path": "xsa/src/branches.inc.rs",
           "commit": "88d4e0744a05359614d28db5f0ed160a677d8ef5",
           "sha256": "badad614b0a245bfdf10c771d7a873da1434f8858827e48d0c4cfeaa0ef17778"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/RESULT_C14_CACHE_SCALE.md",
+          "commit": "92f7544fe67ef962de9a790aa3b2ea92d3018016",
+          "sha256": "dbeb7d204d93df8953e7b8d81ba3dc3e87c8310e35f0847988dd3e7cedad085c"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/c14_cache_scale.py",
+          "commit": "92f7544fe67ef962de9a790aa3b2ea92d3018016",
+          "sha256": "1f5feecebf57f93dd150a46ac38a1cba416055a6e75fb0b36f7359db305662ce"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_cache_scale/MANIFEST.json",
+          "commit": "92f7544fe67ef962de9a790aa3b2ea92d3018016",
+          "sha256": "384f0c46d1bf659a5ac5ad659e5f81476b73f4bd20f6eb1170822e71772219bb"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_cache_scale/benchmark_summary.json",
+          "commit": "92f7544fe67ef962de9a790aa3b2ea92d3018016",
+          "sha256": "de61c6f3bd3c4e810dcc6f257badb21d480d73e28b48e3c6f2ae3c70c17f2f54"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_cache_scale/extraction_console.txt",
+          "commit": "92f7544fe67ef962de9a790aa3b2ea92d3018016",
+          "sha256": "b92e6b2b531e30718a6ba15b4358b5ac35b3cd2e3dbd9f90a94e1375e41d15db"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_cache_scale/frozen_identity.json",
+          "commit": "92f7544fe67ef962de9a790aa3b2ea92d3018016",
+          "sha256": "9f4a8eea2745d497d7fd3a7b585cce3e17de36f98a54c22b04c2bb908622afc4"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_cache_scale/manual_notes.json",
+          "commit": "92f7544fe67ef962de9a790aa3b2ea92d3018016",
+          "sha256": "ea5f9c8718b7e66498b1063bf96426e853fd9d4b95a8f78aa0bbd3a03a1b5d64"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_cache_scale/native.stderr",
+          "commit": "92f7544fe67ef962de9a790aa3b2ea92d3018016",
+          "sha256": "e60f3bb9e2c041798a4e887f6d2a3f9035d1275afda25b90820958c002a8cfdf"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_cache_scale/parity.json",
+          "commit": "92f7544fe67ef962de9a790aa3b2ea92d3018016",
+          "sha256": "df5668d02702b57fdb5b150216be05c9a5c6174658fa70971ef3ab43dcff7664"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_cache_scale/parity_console.txt",
+          "commit": "92f7544fe67ef962de9a790aa3b2ea92d3018016",
+          "sha256": "6134606fe15c1d4d6ed734bb936e6847a39ccc73ec7625691f9bdc0fe3df556c"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_cache_scale/program_validation_before_binding.json",
+          "commit": "92f7544fe67ef962de9a790aa3b2ea92d3018016",
+          "sha256": "1a67b9a7d74d526e017b560f2fe6a9a3e2768b839db3703f58b97f66f8830719"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_cache_scale/scale_comparison.json",
+          "commit": "92f7544fe67ef962de9a790aa3b2ea92d3018016",
+          "sha256": "1b2894268234ad694725aa48608cabe80fd4a24c53b00931c3f6bfe028e79c7d"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_cache_scale/tests.txt",
+          "commit": "92f7544fe67ef962de9a790aa3b2ea92d3018016",
+          "sha256": "11cbd5b9e997fb4afed7c63e6e392881ac3c76abe4f66736712fa82e12d8c854"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/test_c14_cache_scale.py",
+          "commit": "92f7544fe67ef962de9a790aa3b2ea92d3018016",
+          "sha256": "6a2970db7f57b6a74d5184d30d61caab731ba098e9d777c6dd3b8aceaf9cc5a5"
         }
       ]
     }
