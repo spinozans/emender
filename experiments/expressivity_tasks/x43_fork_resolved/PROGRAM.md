@@ -1981,3 +1981,76 @@ The complete 42,352,061,848-byte source index was also rehashed against the
 frozen byte registration: SHA-256
 `9f2b3194b1c270c77886622dd528d7f8df142c761ae79417efa175ba1ead0462`
 (`receipts/c14_registered_resume/index_sha256.txt`). It matches exactly.
+
+## C14 managed union extraction (2026-11-03; running, science pending)
+
+The operator accepted the banked **5,884.18 targets/s end-to-end** rate and
+closed optimization work. `scripts/systemd/emender-velocity-c14-union.service`
+is enabled and running under the lingering user manager (`Linger=yes`), outside
+the attended shell. It uses only `/home/erikg/emender/.venv/bin/python`, CPU
+queries, and an empty CUDA device list; no GPU lease was acquired. Extraction
+order is the exact Emender prefix, immutable paired evaluation, then only the
+transformer continuation. The transformer cache reuses the identical Emender
+prefix, yielding the audited 1,406,579,817-position union. At the accepted rate,
+the arithmetic is **66.4 hours** for the complete union; the earlier ~64-hour
+projection used 6,088.69/s. This correction does not reopen optimization.
+
+`c14_union_service.py` retains the proven legacy Emender extraction identity and
+resumed at window 11,264. A managed stop/start subsequently resumed exactly at
+window 13,952. Committed shards remain immutable and hash checked; an interrupted
+uncommitted shard with a durable write intent is retained outside the committed
+namespace and replayed. Torn final journal bytes are also retained. Unexpected
+orphans or committed corruption fail closed. Every shard retains complete compact
+row parity and three exhaustive suffix checks with context/feature hashes. The
+150,000,000,000-byte floor includes the pending allocation; exceptions stop the
+unit with a failure receipt, whereas abnormal process death is restarted with a
+bounded retry limit. Bytes are journaled per shard and summed at each phase
+boundary. An exclusive process lock prevents concurrent union writers.
+
+The launch snapshot at **06:29:09 UTC** records **16,896 windows / 2,138,614
+positions / 355,314,089 cache bytes**, with **803,231,301,632 bytes free**.
+The latest shard hash was independently rechecked. The post-restart startup
+slice measured **3,521.45 targets/s over 106.62 seconds**, below the accepted
+baseline: rate matching and first-hours acceptance are **not yet verified**.
+The service remains running, without further optimization. The baseline scenario
+projects the Emender boundary at **2026-11-03 17:02:53 UTC**, paired evaluation at
+**2026-11-04 13:32:45 UTC**, and union completion at **2026-11-06 00:47:10 UTC**.
+These are projections conditional on the banked rate, not completion promises.
+Document-dependent branch density, host contention and disk usage can change them.
+
+`receipts/c14_union_service/` retains launch state, exact resume index, journal
+snapshot and hashes, console, systemd state and refreshed parity. The complete
+1,034,056-position banked oracle again matches feature-bit-for-feature-bit
+(SHA-256 `70971034f5cf8ddf79e0f91c8bb578d09ced536e1f0a3d8a0a89557dc93b4c73`);
+261 independent native fixture patterns pass. This verifier captured the original
+11,264-window prefix while the managed service started; its journal digest is
+live-time evidence, not an atomic complete-cache certification. The separate
+launch journal snapshot defines the exact committed prefix above. The service
+rehashes the entire native source index at each start. Frozen paired-window and
+offset hashes plus the first three document-bounded eval windows were checked;
+unit tests cover cross-document reset prevention and frozen identity rejection.
+All 21 targeted tests pass; the program ledger remains green at 17 claims and
+264 historical bindings. The initial new-test collection failed on relative
+imports and was corrected before the successful run.
+
+No phase boundary has arrived in this session. The service receipts boundaries
+and continues extraction; it does not launch unattended training. At the Emender
+boundary, the next attended session must apply the registered consultation
+protocol, features as inputs, tier-1 feature dropout, and broker cards 2/4.
+Paired evaluation requires its completed frozen cache. No dense artifact was
+changed, no checkpoint was committed, and no consultation result, paired table,
+P1/P2/P3 verdict, or C13 coverage/stacking result is claimed. First-hours monitoring
+and rate acceptance remain outstanding. The enabled tool catalog has no
+`contact_supervisor`; no supervisor reply is implied. Operational and recovery
+commands are in `scripts/systemd/README.c14-union.md`.
+
+The final launch receipt (`launch.json`) supersedes the startup snapshot
+(`startup.json`) for resume state: 19968 windows / 2524696
+positions, next window 19968, 390170471 cache bytes at
+2026-11-03T06:31:44.669784+00:00. A final managed restart resumed at window
+18304 after binding the native executable to the frozen oracle and
+requiring a full index rehash at every phase. Its short slice measured
+4473.92 targets/s; baseline rate acceptance remains pending. The current
+Emender boundary scenario is 2026-11-03T17:04:23.408194+00:00.
+Manual start-limit counters were reset after installation checks; the service
+was left enabled and running.
