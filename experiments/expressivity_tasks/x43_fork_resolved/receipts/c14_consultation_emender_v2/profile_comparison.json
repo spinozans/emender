@@ -1,13 +1,16 @@
 {
   "status": "passed",
+  "primary_reference": "c14_consultation_emender_v1_step_profile: exact original per-batch loop with phase timers",
   "steps": 304,
-  "oracle_active_seconds": 66.01014706911519,
+  "oracle_active_seconds": 29.786206500139087,
   "native_active_seconds": 12.983024511951953,
   "oracle_breakdown": {
-    "shard_read_decode": 16.02927952259779,
-    "sampling_transfer": 0.1171446037478745,
-    "feature_transfer_dropout": 0.22034955536946654,
-    "training": 49.640857874415815
+    "sparse_decode": 9.89494835678488,
+    "sampling": 0.02303066337481141,
+    "python_assembly": 7.248273313045502,
+    "source_transfer": 0.10975522734224796,
+    "feature_transfer_dropout": 0.2503529954701662,
+    "training": 12.252301048487425
   },
   "native_breakdown": {
     "shard_read_decode": 0.3027479057200253,
@@ -19,5 +22,7 @@
   "native_steps_100_to_300_per_second": 32.996370003513476,
   "reported_nll_and_target_counts_exact": true,
   "dropout_keep_fraction_exact": true,
-  "note": "Different first-100 training costs; no claim that full-profile speedup solely measures decoder improvement. CPU-isolated and later-step rates retained separately. See oracle instrumentation note."
+  "model_optimizer_and_rng_tensors_exact": true,
+  "tensors_compared": 215,
+  "note": "Earlier shard-buffered oracle profile remains exploratory evidence with its instrumentation limitation note. Exact-loop reference supersedes it for profiling conclusions. Long registered run is the primary throughput measurement."
 }

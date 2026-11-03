@@ -8,12 +8,15 @@ import hashlib
 from pathlib import Path
 import shutil
 import subprocess
+import sys
 import numpy as np
 
 ROOT = Path(__file__).resolve().parent
 
 
 def load_decoder():
+    if sys.version_info[:2] != (3, 12):
+        raise RuntimeError('decoder arithmetic requires CPython 3.12 parity validation')
     source = ROOT/'c14_fast_features.c'
     digest = hashlib.sha256(source.read_bytes()).hexdigest()
     directory = Path('/home/erikg/c14_consultation_features/native_decode')

@@ -9,6 +9,14 @@ eval "$lease_exports"
 receipt=experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_consultation_emender_v2
 if [[ "${1:-}" == --profile-steps ]]; then receipt="${receipt}_profile"; fi
 if [[ " $* " == *" --oracle-profile "* ]]; then receipt=experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_consultation_emender_v2_oracle_profile; fi
+args=("$@")
+for ((i=0; i<${#args[@]}; i++)); do
+  if [[ "${args[i]}" == --profile-label ]]; then
+    label="${args[i+1]:-}"
+    [[ "$label" =~ ^[a-zA-Z0-9_]+$ ]] || exit 91
+    receipt="${receipt}_${label}"
+  fi
+done
 mkdir -p "$receipt"
 printf '%s\n' "$GPU_LEASE_HELD" > "$receipt/lease.txt"
 nvidia-smi --query-gpu=index,name,memory.used --format=csv > "$receipt/gpu.csv"

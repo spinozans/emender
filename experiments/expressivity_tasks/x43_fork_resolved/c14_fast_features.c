@@ -1,3 +1,4 @@
+/* CPython 3.12 Neumaier float summation; see official v3.12.3 bltinmodule.c. */
 /* Sparse C14 decoding. Preserve branch order and Python double arithmetic. */
 #include <stdint.h>
 #include <string.h>
@@ -29,12 +30,21 @@ int c14_decode(const unsigned char *p, size_t n, float *out,
             if(total>9007199254740992ULL) return -8;
             float *f=out+(w*128+j)*260;
             if(total) {
-                double entropy=0.;
+                double entropy=0., correction=0.;
                 for(unsigned b=0;b<size;b++) {
                     unsigned byte=p[at+9*b]; uint64_t count=u64(p+at+9*b+1);
-                    if(byte!=30) { double prob=(double)count/(double)total; f[byte]=(float)prob; entropy+=prob*log(prob); }
+                    if(byte!=30) { double prob=(double)count/(double)total; f[byte]=(float)prob; double term=prob*log(prob);
+                        double combined=entropy+term;
+                        correction += fabs(entropy)>=fabs(term) ? (entropy-combined)+term : (term-combined)+entropy;
+                        entropy=combined; }
                 }
-                f[256]=(float)log1p((double)total); f[257]=(float)(-entropy);
+                f[256]=(float)log1p((double)total); 
+                double corrected=correction && isfinite(correction) ? entropy+correction : entropy;
+#ifdef C14_REQUIRE_IDENTICAL
+                float sequential=(float)(-entropy), compensated=(float)(-corrected);
+                if(memcmp(&sequential,&compensated,sizeof(float))) return -9;
+#endif
+                f[257]=(float)(-corrected);
                 f[258]=(float)(distinct>1); f[259]=(float)log1p((double)k);
             }
             at+=9*size;

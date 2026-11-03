@@ -38,11 +38,17 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--profile-steps', type=int, default=0)
     parser.add_argument('--oracle-profile', action='store_true')
+    parser.add_argument('--profile-label', default='')
     args = parser.parse_args()
     if args.profile_steps:
         OUT = ROOT/'receipts/c14_consultation_emender_v2_profile'
     if args.profile_steps:
         CHECKPOINT = CHECKPOINT.with_name('emender_consultation_v2_profile.pt')
+    if args.profile_label:
+        assert args.profile_steps and not args.oracle_profile
+        assert args.profile_label.replace('_', '').isalnum()
+        OUT = ROOT/('receipts/c14_consultation_emender_v2_profile_'+args.profile_label)
+        CHECKPOINT = CHECKPOINT.with_name('emender_consultation_v2_profile_'+args.profile_label+'.pt')
     if args.oracle_profile:
         CHECKPOINT = CHECKPOINT.with_name('emender_consultation_v2_oracle_profile.pt')
         assert args.profile_steps > 0
