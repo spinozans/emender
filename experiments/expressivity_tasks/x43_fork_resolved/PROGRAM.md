@@ -1904,3 +1904,28 @@ single-shard failure: both dense heads are trained and completely evaluated, and
 independent validation is green. Consultation predictions remain untested.
 PREREGISTRATION_C9.md froze prediction, prompts, budgets, measures and re-entry
 before generation; the C9 result and raw sample/step receipts are now bound above.
+
+## C14 registered-scale stream audit (2026-11-03; blocked)
+
+The frozen dense receipts contradict the requested approximate 19M-position
+stream. Replaying the source-order document-offset sampler through each recorded
+step count reproduces exactly 225,880,702 training targets for Emender
+(1,785,536 windows), and 972,375,733 for transformer (7,685,648 windows).
+Both start at document 0/start 0; the last windows are document 41993/start
+112512 and document 179298/start 17792 respectively. Seed 3401 initializes the
+models; the sampler does not shuffle. The shared paired evaluation contains
+434,204,084 targets in 3,431,242 frozen windows. These are receipt counts,
+not new inference or coverage measurements.
+
+The bounded union of the two nested training prefixes and evaluation therefore
+contains 1,406,579,817 positions, rather than 19M or the full corpus. Neither
+training prefix nor evaluation was shortened. A fixed time budget can produce
+different prefix lengths once consultation processing is added; imposing both
+exact frozen prefix lengths and 2700 seconds needs an explicit protocol decision
+before training. Per the stop-on-change instruction, extraction and training
+were not launched. No caches were allocated and no dense artifacts changed.
+P1/P2/P3 and C13 remain untested. The exact replay, identities, source hashes,
+limits and unavailable supervisor channel are recorded in
+`receipts/c14_registered_scale/stream_audit.json`. Uncommitted assembly work
+was left untouched. This audit does not waive any launch gate or claim the
+requested paired table is complete.

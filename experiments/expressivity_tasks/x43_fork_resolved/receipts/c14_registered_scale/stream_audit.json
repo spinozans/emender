@@ -1,0 +1,69 @@
+{
+  "status": "blocked_scope_conflict",
+  "reason": "Frozen dense receipts do not contain the assumed ~19M-position training stream. Matching both frozen prefixes and a fixed 2700-second consultation budget requires a decision if feature processing changes throughput. No stream or eval amendment made.",
+  "seed": 3401,
+  "batch": 16,
+  "context": 128,
+  "sampler": "source-order train documents, start=0,128,..., truncated document tails, batches of 16, no shuffle, independent resets; seed controls model initialization",
+  "source": "/mnt/nvme2n1/erikg/pile.txt",
+  "span_start": 0,
+  "span_end_exclusive": 59187954937,
+  "offsets_sha256": "bb3a2b506ac4d7c1b2ae36e274331ee5ff1855e618d15df84780c5c42987bbe8",
+  "arms": [
+    {
+      "arm": "emender",
+      "steps": 111596,
+      "windows": 1785536,
+      "targets": 225880702,
+      "first_window": {
+        "document": 0,
+        "start": 0
+      },
+      "last_window": {
+        "document": 41993,
+        "start": 112512,
+        "targets": 128
+      },
+      "active_seconds": 2700.0225282083265,
+      "prefix_replay": "passed"
+    },
+    {
+      "arm": "transformer",
+      "steps": 480353,
+      "windows": 7685648,
+      "targets": 972375733,
+      "first_window": {
+        "document": 0,
+        "start": 0
+      },
+      "last_window": {
+        "document": 179298,
+        "start": 17792,
+        "targets": 128
+      },
+      "active_seconds": 2700.0009508272633,
+      "prefix_replay": "passed"
+    }
+  ],
+  "eval": {
+    "windows_sha256": "2ab51ce59ad94010d78f6817f29fa06fc5ee64feea766376ff0e35347f196d4d",
+    "targets": 434204084,
+    "windows": 3431242
+  },
+  "receipt_hashes": {
+    "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_dense/training.json": "b07127aca785b0a4dda337c3b5168d20a6c4f89d2fdaecaa371b366743dd68a7",
+    "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_dense/eval_construction.json": "4b3ff2605e876c726720e8bd28e43417339c5b5f4859e67f35c63cfc1455ec11",
+    "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_dense/pile_span.json": "c02e7882f19f2b3841c1fbd1899d7affca5d4f793742cf74307ecf8d55650668",
+    "experiments/expressivity_tasks/x43_fork_resolved/c14_dense_train.py": "d19e98190d5bb2bbfce02c047dbe386960a577ddee4fbc4ffea23174ceec14c8"
+  },
+  "new_feature_positions": 0,
+  "new_cache_bytes": 0,
+  "gpu_used": false,
+  "full_corpus_cache_allocated": false,
+  "supervisor_contact": "Unavailable: no contact_supervisor or intercom tool in enabled catalog",
+  "assembly": "Uncommitted c14_assembly.py and receipts present; not adopted or modified",
+  "residual_risks": [
+    "Consultation training, paired table, P1/P2/P3 and C13 remain unmeasured.",
+    "Prefix replay checks offset metadata and recorded counts; does not repeat corpus digest validation or model inference."
+  ]
+}
