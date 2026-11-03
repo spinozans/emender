@@ -1591,8 +1591,9 @@ Paths are repository-relative. `emender` is this repository; `sxgc` is the exter
         {
           "repo": "emender",
           "path": "experiments/expressivity_tasks/x43_fork_resolved/PREREGISTRATION_C14_DENSE.md",
-          "commit": "644bff97eb6f64fe6148d768f931fdea181a7f6d",
-          "sha256": "98624e59eea25a8c07cad16e7ae18a06c684ad199f0242ee348ff42e3dc612e3"
+          "commit": "76365ea9e00a50f6469ca956a4946b40a70602e7",
+          "sha256": "9ebc8e6db9030197d81245987a0d92203a6afda6f4eab11a476731ea58cf4c3f",
+          "supersedes": "644bff97eb6f64fe6148d768f931fdea181a7f6d (the original dense-only registration; amended by take-4's recovery inventory commit 024ed3f5, results committed 76365ea9)"
         },
         {
           "repo": "emender",
