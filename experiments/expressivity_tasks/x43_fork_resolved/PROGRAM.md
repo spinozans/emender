@@ -1929,3 +1929,55 @@ limits and unavailable supervisor channel are recorded in
 `receipts/c14_registered_scale/stream_audit.json`. Uncommitted assembly work
 was left untouched. This audit does not waive any launch gate or claim the
 requested paired table is complete.
+
+## C14 registered-stream resumption (2026-11-03; incomplete)
+
+The operator resolved the preceding stream-count conflict in favor of the frozen
+dense receipts. Exact training prefixes, paired evaluation windows, seed and
+registered budgets remain binding. The earlier ~19M estimate is superseded;
+the audit's 1,406,579,817-position union stands. No dense model was retrained.
+
+A separate timing premise needs correction: the banked 121,430 features/s is
+**assembly-only**, explicitly excluding native extraction. The existing complete
+selector/cache benchmark measured 6,088.69 selected features/s. Linear projection
+at that prefix-specific rate is about 64.2 hours for the union and 10.3 hours for
+the Emender prefix, rather than 3.5 hours for the union. These are scenarios,
+not full-stream measurements. See `receipts/c14_registered_resume/resolution.json`.
+
+`c14_registered_cache.py` starts the exact Emender prefix in bounded attended
+slices, retaining immutable sparse binary shards outside git. Each write records
+its exact size before allocation, uses exclusive creation and `posix_fallocate`,
+and checks the 150 GB free-space floor before and after writing. No files are
+deleted. Resume verifies every completed shard's SHA-256 and extraction identities;
+unreceipted shards fail closed for inspection. Every chunk checks all compact
+rows exactly and independently exhausts all suffix lengths at three hash-bound
+sample contexts. Source windows use the existing per-document hash checks.
+Completed chunks are progress, not complete arm caches or training acceptance.
+
+The paired table, coverage-calibrated P1/P2/P3 verdicts, consultation training,
+and C13 coverage-scaling/stacking remain outstanding. The runner currently covers
+only the Emender training prefix; evaluation and transformer continuation need
+phase runners before their extraction. Full caches and launch validation remain
+required. No GPU lease was acquired. The enabled catalog contains no
+`contact_supervisor` channel; no supervisor reply or approval is claimed.
+
+The first attended extraction slice completed **1,424,203 positions in 11,264
+windows**, in 242.04 seconds including per-chunk parity and write guards
+(5,884.18 positions/s). Its 88 immutable shards occupy 134,849,956 bytes.
+All 1,034,056 banked oracle positions match row-for-row and feature-bit-for-bit
+(SHA-256 `70971034f5cf8ddf79e0f91c8bb578d09ced536e1f0a3d8a0a89557dc93b4c73`).
+The 261 native fixture patterns and independent selected feature bits pass again;
+17 targeted unit tests pass. The ledger validator remains green (17 claims,
+264 historical bindings); this does not certify the incomplete consultation arm.
+
+`receipts/c14_registered_resume/resume.json` records **224,456,499 remaining
+Emender targets**, the exact next window index **11,264**, cache hashes, free
+space and resume command. `extraction_journal.jsonl` receipts each completed
+shard and its sample checks. `parity.json` contains the new verification result.
+The extraction process has exited; no training or background extraction remains.
+The full work order is incomplete and no completed-arm or paired-table verdict
+is claimed.
+The complete 42,352,061,848-byte source index was also rehashed against the
+frozen byte registration: SHA-256
+`9f2b3194b1c270c77886622dd528d7f8df142c761ae79417efa175ba1ead0462`
+(`receipts/c14_registered_resume/index_sha256.txt`). It matches exactly.
