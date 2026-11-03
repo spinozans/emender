@@ -23,6 +23,7 @@ def validate():
     assert launch['interpreter'] == '/home/erikg/emender/.venv/bin/python'
     assert (launch['seed'], launch['batch'], launch['context'], launch['budget_seconds_per_head']) == (3401,16,128,2700)
     if training.get('continuation'):
+        assert sha(OUT/'training_code_take3.py.txt') == launch['code_sha256']
         continuation=json.loads((OUT/'continuation_launch.json').read_text())
         assert training['original_launch_sha256'] == sha(OUT/'launch.json')
         assert continuation['code_sha256'] == sha(ROOT/'c14_dense_train.py') == training['code_sha256']
@@ -53,7 +54,7 @@ def validate():
     valid = []
     count = total_bytes = 0
     previous_end = 0
-    with offsets.open() as f, index.open() as receipts:
+    with offsets.open() as f, index.open() as receipts, source.open('rb') as text:
         for line in receipts:
             expected = json.loads(line)
             if expected['truncated']:
@@ -61,6 +62,8 @@ def validate():
             d = json.loads(next(f))
             assert all(d[k] == v for k,v in expected.items())
             assert not d['truncated'] and d['byte_offset'] >= previous_end
+            text.seek(d['byte_offset'])
+            assert hashlib.sha256(text.read(d['byte_length'])).hexdigest() == d['sha256']
             previous_end = d['byte_offset']+d['byte_length']
             assert previous_end <= span['span_end_exclusive']
             count += 1
@@ -126,7 +129,7 @@ def validate():
     assert json.loads((OUT/'terminal.json').read_text())['exit_code'] == 0
     return dict(status='passed',documents=count,selected_bytes=total_bytes,
                 eval_windows=window_count,models=summaries,source_materialized_bytes=0,
-                notes='Independent per-target loss/stratum replay; source samples and end hashes rechecked. Consultation predictions remain untested.')
+                notes='Independent aggregation of every recorded target loss and stratum (not model inference replay); every admitted document digest and span end hashes rechecked. Consultation predictions remain untested.')
 
 
 if __name__ == '__main__':
