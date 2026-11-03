@@ -135,7 +135,10 @@ def validate():
         summaries.append(dict(arm=arm,windows=window_count,targets=counts,max_nll_replay_error=max(replay_errors),nll={k:sums[k]/n for k,n in counts.items()}))
         print(arm,'loss replay passed',flush=True)
     assert json.loads((OUT/'terminal.json').read_text())['exit_code'] == 0
-    return dict(status='passed',documents=count,selected_bytes=total_bytes,
+    final_stat=source.stat()
+    assert (final_stat.st_size,final_stat.st_ino,final_stat.st_mtime_ns) == (stat.st_size,stat.st_ino,stat.st_mtime_ns)
+    return dict(status='passed',validator_code_sha256=sha(__file__),replay_tolerance=1e-8,
+                documents=count,selected_bytes=total_bytes,
                 eval_windows=window_count,models=summaries,source_materialized_bytes=0,
                 notes='Independent aggregation of every recorded target loss and stratum (not model inference replay); every admitted document digest and span end hashes rechecked. Consultation predictions remain untested.')
 
