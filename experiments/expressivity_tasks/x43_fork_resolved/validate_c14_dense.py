@@ -117,14 +117,22 @@ def validate():
                     strata[key] = s+sum(part),n+len(part)
             assert next(actual,None) is None
         assert counts == expected_counts
+        replay_errors=[]
         for half,n in counts.items():
             assert model['heldout'][half]['targets'] == n
-            assert abs(sums[half]/n-model['heldout'][half]['nll']) < 1e-8
+            error=abs(sums[half]/n-model['heldout'][half]['nll'])
+            replay_errors.append(error)
+            assert error < 1e-8
         for key,(s,n) in strata.items():
             reported = model['within_document_strata'][key]
             assert reported['targets'] == n
-            assert abs(s/n-reported['nll']) < 1e-8 if n else reported['nll'] is None
-        summaries.append(dict(arm=arm,windows=window_count,targets=counts,nll={k:sums[k]/n for k,n in counts.items()}))
+            if n:
+                error=abs(s/n-reported['nll'])
+                replay_errors.append(error)
+                assert error < 1e-8
+            else:
+                assert reported['nll'] is None
+        summaries.append(dict(arm=arm,windows=window_count,targets=counts,max_nll_replay_error=max(replay_errors),nll={k:sums[k]/n for k,n in counts.items()}))
         print(arm,'loss replay passed',flush=True)
     assert json.loads((OUT/'terminal.json').read_text())['exit_code'] == 0
     return dict(status='passed',documents=count,selected_bytes=total_bytes,
