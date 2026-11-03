@@ -157,6 +157,12 @@ The initial single-shard preflight failure remains historical evidence in RESULT
 
 This is a single-seed, fixed-time dense reference; the arms saw different target counts. Consultation P1/P2/P3, support/fork strata, device-off robustness, calibration stacking and significance remain untested. Native consultation feature prerequisites remain separate and unresolved; no consultation gain follows from these dense results.
 
+Native consultation preflight (2026-11-03): xsa `88d4e0744a05359614d28db5f0ed160a677d8ef5` was built in an isolated clean clone and synchronized ff-only; ~/sxgc was not edited. Former-sentinel counts are 0/0; “the ” has 313,603,799 occurrences and 137 branches. An independent native fixture passes 261 patterns covering every query byte, exact branch counts, EOF and closure. This resolves the former universal-transport/native-query preflight blocker; it does not supply complete train/valid caches.
+
+The bounded extractor measured **1,034,056 positions / 8,192 training windows / 219 documents in 260.307391 seconds (3,972.442 features/s)**, including maximal causal suffix selection, complete 256-byte branch distributions and gzip output. Native throughput is 31,530.865 queries/s, with 6.802295 queries per emitted position. Prefix 16/64-byte support is 47.931962%/0.819579%; no 256/1024-byte contexts are eligible under 128-byte resets. These source-order raw-byte prefix rates are not the phase-1 token-boundary sampling population or full-stream/held-out coverage. Cache replay passes every row and rechecks the unchanged dense eval-window hash and checkpoint hashes. Eleven tests pass.
+
+**Full-size consultation work remains incomplete.** The frozen stream has 43,052,359,095 training and 434,204,084 validation targets. Linear scenarios for this implementation are 125.44/1.27 days and 2.0836 TB combined compressed cache, versus 807.65 GB free at preflight; float32 inputs would occupy 45.226 TB. These are prefix extrapolations, not scaling guarantees or impossibility claims for better caching. No exhaustive cache job or GPU training was launched. Complete caches, transfer costs, both consultation arms, paired support-stratified losses, device-off P2, P1/P3 verdicts, and Pile-scale coverage swaps/stacking remain unexecuted. No dense model, evaluation window, budget or protocol was changed. [Serving preflight result](RESULT_C14_SERVING_PREFLIGHT.md), [work status](receipts/c14_serving/work_status.json); additional bindings C14 below retain failed fixture attempts as well as the accepted native oracle and benchmark.
+
 ## Growing design memo
 
 ### Dense mode — selected direction; implementation registered
@@ -1512,7 +1518,7 @@ Paths are repository-relative. `emender` is this repository; `sxgc` is the exter
           "commit": "ccf76f92166a644fa9c5d9f6d2ca9fa7c3605c87",
           "sha256": "69103ad8bee4fc0c03a5ce4e2f94e8841165525777cb501a4e40da6ea40055c5"
         },
-                {
+        {
           "repo": "emender",
           "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c13/verification_notes.json",
           "commit": "9536e54871d4909c0e3b7aa8cebef6bb033bde8e",
@@ -1624,7 +1630,7 @@ Paths are repository-relative. `emender` is this repository; `sxgc` is the exter
           "commit": "76365ea9e00a50f6469ca956a4946b40a70602e7",
           "sha256": "e4d9df4f2996968d5aa661b41e3ad918575ac9ec38923617bbc269a0aa76a85a"
         },
-                {
+        {
           "repo": "emender",
           "path": "experiments/expressivity_tasks/x43_fork_resolved/c14_dense_train.py",
           "commit": "76365ea9e00a50f6469ca956a4946b40a70602e7",
@@ -1713,6 +1719,90 @@ Paths are repository-relative. `emender` is this repository; `sxgc` is the exter
           "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_dense/training_code_take3.py.txt",
           "commit": "76365ea9e00a50f6469ca956a4946b40a70602e7",
           "sha256": "6b74a86356850fcccb0aa61b8a844a18717e82d302610e307f3b41c2a9f5cffc"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/RESULT_C14_SERVING_PREFLIGHT.md",
+          "commit": "e437d7a2b0856950b6e762746f99e15463f30830",
+          "sha256": "a2e73360b4452ae4ea5c5b6523d26b1c9a061415b035f3fce12338e7abec29b6"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/c14_branch_serve.py",
+          "commit": "e437d7a2b0856950b6e762746f99e15463f30830",
+          "sha256": "23c48b72b9b5506121c142294b6c6de221d7cef2863d869960daea40d468a0e1"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/c14_serving_verify.py",
+          "commit": "e437d7a2b0856950b6e762746f99e15463f30830",
+          "sha256": "ef20cd6c2d5c67dfdc93e5beac02b5c568278cd21a7e6e3e6b6232fafd1015c7"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/validate_c14_serving.py",
+          "commit": "e437d7a2b0856950b6e762746f99e15463f30830",
+          "sha256": "eb67d306ac2746de0978025238ddd702e1da96dbdee2a5632e8a95331003a4b1"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/test_c14_branch_serve.py",
+          "commit": "e437d7a2b0856950b6e762746f99e15463f30830",
+          "sha256": "053798d42ad09bea20c1f36f0401437e7c8ee75212f5475efae686b4b06f9ae0"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_serving/MANIFEST.json",
+          "commit": "e437d7a2b0856950b6e762746f99e15463f30830",
+          "sha256": "3761064a408d61421b604e3da08345a05b9f4464e4330f865a1377984840310a"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_serving/benchmark_summary.json",
+          "commit": "e437d7a2b0856950b6e762746f99e15463f30830",
+          "sha256": "55d357e8fc85fa8c8ea7e0f6e5ff142e2e2fd16669a01c21a5f82cdbf9d82ef1"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_serving/benchmark_validation.json",
+          "commit": "e437d7a2b0856950b6e762746f99e15463f30830",
+          "sha256": "65c1bf2b92bd561c14eb5d8f4f3c611ad5ce177a96c67fd8b0a44f098c616750"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_serving/fixture_random/fixture.json",
+          "commit": "e437d7a2b0856950b6e762746f99e15463f30830",
+          "sha256": "94056881452de6009764079fa33b6b7e3f74c89f384e20dcd2ea99ce75a38e4c"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_serving/provenance.json",
+          "commit": "e437d7a2b0856950b6e762746f99e15463f30830",
+          "sha256": "a371bdd4953059be6a08ff8b1b8dd8d4b107408824c378344ee625ba4fe07427"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_serving/scope.json",
+          "commit": "e437d7a2b0856950b6e762746f99e15463f30830",
+          "sha256": "a31f45deb59b330d617e98c1f0582104ae67c8e1cd34d62bb07221c80f6c91f2"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_serving/work_status.json",
+          "commit": "e437d7a2b0856950b6e762746f99e15463f30830",
+          "sha256": "0be7207c03a8f74b03ed14b3549ebfcc7f1cd063570e9f8a4335736cec8f2e13"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_serving/tests.txt",
+          "commit": "e437d7a2b0856950b6e762746f99e15463f30830",
+          "sha256": "36b08a93f1957176ff11c4c03f47d90aff7719b9d896e276a6291fc2d9e0ad67"
+        },
+        {
+          "repo": "sxgc",
+          "path": "xsa/src/branches.inc.rs",
+          "commit": "88d4e0744a05359614d28db5f0ed160a677d8ef5",
+          "sha256": "badad614b0a245bfdf10c771d7a873da1434f8858827e48d0c4cfeaa0ef17778"
         }
       ]
     }
