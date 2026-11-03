@@ -1,0 +1,21 @@
+{
+  "task_status": "incomplete",
+  "manual_notes": "Only bounded extraction engineering completed. No new unique positions beyond serving preflight. Complete-cache launch gate preserved. All work single-threaded in attended session; native CPU -j128 parallelism only. No WorksGood or GPU lease; no edits to ~/sxgc or read-only corpus mounts. No .pt commits. contact_supervisor is unavailable in the enabled catalog.",
+  "retained_failures": [
+    {
+      "command": "/home/erikg/emender/.venv/bin/python -m pytest -q experiments/expressivity_tasks/x43_fork_resolved/test_c14_cache_scale.py experiments/expressivity_tasks/x43_fork_resolved/test_c14_branch_serve.py experiments/expressivity_tasks/x43_fork_resolved/test_c14_documents.py",
+      "exit_code": 2,
+      "error": "Initial new test collection used relative imports without package collection. Corrected to absolute imports; final 14 tests pass."
+    }
+  ],
+  "residual_risks": [
+    "Full stream feature distribution remains unmeasured; prefix parity is not full-cache validation.",
+    "Measured implementation still projects to 81.84 training days and 1.441 TB combined, exceeding 807.20 GB free. Projections do not rule out better implementations.",
+    "Sparse encoding is a storage prototype, without GPU transfer measurements or training integration.",
+    "Consultation arms, paired loss table, device-off evaluation, coverage swaps, stacking and P1/P2/P3 verdicts are unrun."
+  ],
+  "commands": [
+    "/home/erikg/emender/.venv/bin/python -m experiments.expressivity_tasks.x43_fork_resolved.c14_cache_scale --output /home/erikg/c14_consultation_features/reuse_j128_8192 --windows 8192 --jobs 128 --capacity 250000",
+    "/home/erikg/emender/.venv/bin/python -m experiments.expressivity_tasks.x43_fork_resolved.c14_cache_scale --output /home/erikg/c14_consultation_features/reuse_j128_8192 --compare /home/erikg/c14_consultation_features/serving_benchmark_8192/features.jsonl.gz"
+  ]
+}
