@@ -1,0 +1,17 @@
+All commands ran on lambda01, using the repository Python 3.12 venv. No Frontier operation, Slurm submission, training, native rebuild or throughput optimization.
+
+Tool discovery: searched ALL_TOOLS for contact_supervisor, supervisor and intercom. None available.
+Service/host evidence: systemctl --user show emender-velocity-c14-union.service; journalctl --user -u emender-velocity-c14-union.service --since '2026-11-03 06:30:19' --no-pager; df -B1; uptime; free -b; ps; /proc/pressure/{cpu,memory,io}.
+Initial before snapshot and parity attempt: .venv/bin/python receipts/c14_union_first_hours/verify.py (initial version took the before snapshot then loaded a one-worker oracle). Canceled before query results; see operational_notes.txt.
+Successful parity: .venv/bin/python experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_union_first_hours/verify.py parity
+Final snapshot: .venv/bin/python experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_union_first_hours/verify.py after
+Accounting replay: .venv/bin/python experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_union_first_hours/analyze.py
+Committed shard/manifest validation: .venv/bin/python experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_union_first_hours/verify.py integrity
+Frozen bindings: inline Python verifies native hash against frozen fixture, index stat against frozen resume receipt and stream_audit receipt hashes. Passed; bindings.json.
+.venv/bin/python -m pytest -q experiments/expressivity_tasks/x43_fork_resolved/test_c14_union_service.py experiments/expressivity_tasks/x43_fork_resolved/test_c14_documents.py
+Result: 8 passed; tests.txt.
+.venv/bin/python -m experiments.expressivity_tasks.x43_fork_resolved.validate_program
+Result: green, 17 claims / 264 bindings; validator.json. Repeated after PROGRAM update.
+git diff --check -- experiments/expressivity_tasks/x43_fork_resolved/PROGRAM.md experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_union_first_hours
+Result: passed. A broad working-tree diff check found only pre-existing blank lines in unrelated stage14/stage16 reports; these were left unchanged.
+Post-staging git diff --cached --check: one whitespace warning in after_host.txt:164, caused by the deliberately bounded raw ps capture ending mid-line. Original snapshot bytes and their hashes were preserved. This is a receipt-format warning, not a service/parity failure. Code/document/JSON whitespace checks pass.

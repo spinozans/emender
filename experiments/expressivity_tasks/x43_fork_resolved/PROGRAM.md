@@ -2054,3 +2054,33 @@ requiring a full index rehash at every phase. Its short slice measured
 Emender boundary scenario is 2026-11-03T17:04:23.408194+00:00.
 Manual start-limit counters were reset after installation checks; the service
 was left enabled and running.
+
+## C14 union extraction first-hours verification (2026-11-03; early snapshot)
+
+`receipts/c14_union_first_hours/REPORT.md` supersedes the startup rate/projection
+observation above. At 06:48:12 UTC, the service remains active/running, PID 1821314,
+NRestarts=0, with **57,600 windows / 7,284,742 positions**.
+All 450 committed shards in that snapshot were rehashed; three newly extracted
+document-bounded windows and nine positions match the exhaustive native suffix
+oracle in exact rows and feature bits. Eight targeted tests pass; validator green
+(17 claims, 264 bindings). No extraction failure, service stop or rate optimization.
+
+The original 4,473.92/s slice includes startup; the same slice after its first
+completed shard is **6,609.01/s**. The longest interval outside the verifier's
+extra native process measures **5,612.91/s over 303.20s**,
+4.61% below baseline. Earlier slower blocks overlap external benchmarking and
+memory pressure. The full invocation including startup/diagnostic contention is
+4,814.02/s. This supports a startup/contention/content explanation for the
+short-slice loss, not a demonstrated persistent implementation regression; the
+remaining stream's baseline rate is not certified. The clean-rate Emender scenario
+is **Nov 3 17:37 UTC**, versus 19:25 including diagnostic contention and 17:07 at
+the accepted baseline. These are conditional projections.
+
+Free space is **802.69 GB**, above the 150 GB STOP line. Cache bytes are
+856,216,169; recent-tail and cumulative-prefix union scenarios are
+137.86 GB and 165.32 GB, respectively, around the approximate 159 GB plan.
+That plan is not a guaranteed bound. The diagnostic probe's loading interval was
+excluded from clean rate accounting and its temporary host contention retained
+in receipts. Observation covers the first ~18 minutes, not a full hour; ongoing
+health and rate remain operational risks. All caches and consultation science
+remain incomplete; no boundary or training acceptance is claimed.
