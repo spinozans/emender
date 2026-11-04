@@ -1,0 +1,683 @@
+{
+  "config": {
+    "interpreter": "/home/erikg/emender/.venv/bin/python",
+    "code_sha256": "58558611c2cd382eee6db7c55429b7d573eae149c6c07c51ae5a0c74b8f3be0a",
+    "decoder_sha256": "0c8d9fa1e59937f88eef7ba9b405901d993ade2a04552e3336b786747522fada",
+    "journal_sha256": "00e5c17a75180a367162cef6be5046a721b3d9d58ec273ef2e4a90f68522ea3b",
+    "windows_sha256": "2ab51ce59ad94010d78f6817f29fa06fc5ee64feea766376ff0e35347f196d4d",
+    "precision": "BF16 autocast; losses float32; sums float64",
+    "batch": "one immutable shard, at most 128 independent windows",
+    "checkpoint_hashes": {
+      "dense": "7a2598c8c1e77f349be6be7af1d59ece7300a5345cb3dab1420e0274d2523019",
+      "v1": "5499d02420774829fa23ee17b232f06789d292ab815f12ae039e671793485261",
+      "v2": "6b12a443249f0464808ba3d52274d373902ad43ea40913ce347cdf1c1af9811b"
+    },
+    "training": {
+      "v1": {
+        "steps": 27401,
+        "actual_bytes_targets": 55447993,
+        "active_seconds": 2700.021958189085
+      },
+      "v2": {
+        "steps": 88520,
+        "actual_bytes_targets": 179162804,
+        "active_seconds": 2700.0192603864707
+      },
+      "dense": {
+        "steps": 111596,
+        "targets": 225880702,
+        "active_seconds": 2700.0225282083265
+      }
+    },
+    "modes": [
+      "dense",
+      "v1_on",
+      "v1_off",
+      "v2_on",
+      "v2_off"
+    ],
+    "dropout": "disabled during eval; off zeros all 260 scalars at every position",
+    "reset": "independent forward per 128-byte window; tails loss-masked",
+    "primary": "v2_on; final_test half; calibration and all targets reported separately",
+    "strata": "support=nonterminal Wikipedia outgoing count>0; supported_target=q(target)>0; zero_target=q(target)==0 includes empty; agreement=target equals smallest argmax byte",
+    "gpu": "2",
+    "torch_version": "2.9.1+cu128"
+  },
+  "next_shard": 9,
+  "windows": 1152,
+  "targets": 146153,
+  "sums": {
+    "dense/all/total": [
+      354111.8325906611,
+      146153
+    ],
+    "dense/all/window_reset_1_16": [
+      45172.41746248491,
+      18401
+    ],
+    "dense/all/window_interior_17_128": [
+      308939.4151281762,
+      127752
+    ],
+    "dense/all/wikipedia_support": [
+      345663.0892819754,
+      143446
+    ],
+    "dense/all/empty_support": [
+      8448.74330868572,
+      2707
+    ],
+    "dense/all/supported_target": [
+      225045.7771679376,
+      106953
+    ],
+    "dense/all/nonempty_zero_target": [
+      120617.3121140378,
+      36493
+    ],
+    "dense/all/zero_target": [
+      129066.05542272353,
+      39200
+    ],
+    "dense/all/fork": [
+      192739.78278399352,
+      71586
+    ],
+    "dense/all/agreement": [
+      146053.41511869093,
+      80618
+    ],
+    "dense/calibration/total": [
+      354111.8325906611,
+      146153
+    ],
+    "dense/calibration/window_reset_1_16": [
+      45172.41746248491,
+      18401
+    ],
+    "dense/calibration/window_interior_17_128": [
+      308939.4151281762,
+      127752
+    ],
+    "dense/calibration/wikipedia_support": [
+      345663.0892819754,
+      143446
+    ],
+    "dense/calibration/empty_support": [
+      8448.74330868572,
+      2707
+    ],
+    "dense/calibration/supported_target": [
+      225045.7771679376,
+      106953
+    ],
+    "dense/calibration/nonempty_zero_target": [
+      120617.3121140378,
+      36493
+    ],
+    "dense/calibration/zero_target": [
+      129066.05542272353,
+      39200
+    ],
+    "dense/calibration/fork": [
+      192739.78278399352,
+      71586
+    ],
+    "dense/calibration/agreement": [
+      146053.41511869093,
+      80618
+    ],
+    "dense/final_test/total": [
+      0.0,
+      0
+    ],
+    "dense/final_test/window_reset_1_16": [
+      0.0,
+      0
+    ],
+    "dense/final_test/window_interior_17_128": [
+      0.0,
+      0
+    ],
+    "dense/final_test/wikipedia_support": [
+      0.0,
+      0
+    ],
+    "dense/final_test/empty_support": [
+      0.0,
+      0
+    ],
+    "dense/final_test/supported_target": [
+      0.0,
+      0
+    ],
+    "dense/final_test/nonempty_zero_target": [
+      0.0,
+      0
+    ],
+    "dense/final_test/zero_target": [
+      0.0,
+      0
+    ],
+    "dense/final_test/fork": [
+      0.0,
+      0
+    ],
+    "dense/final_test/agreement": [
+      0.0,
+      0
+    ],
+    "v1_on/all/total": [
+      258241.7936402919,
+      146153
+    ],
+    "v1_on/all/window_reset_1_16": [
+      37025.5752925236,
+      18401
+    ],
+    "v1_on/all/window_interior_17_128": [
+      221216.2183477683,
+      127752
+    ],
+    "v1_on/all/wikipedia_support": [
+      248625.91085351876,
+      143446
+    ],
+    "v1_on/all/empty_support": [
+      9615.882786773145,
+      2707
+    ],
+    "v1_on/all/supported_target": [
+      107402.02740811522,
+      106953
+    ],
+    "v1_on/all/nonempty_zero_target": [
+      141223.88344540354,
+      36493
+    ],
+    "v1_on/all/zero_target": [
+      150839.76623217668,
+      39200
+    ],
+    "v1_on/all/fork": [
+      165124.75116486475,
+      71586
+    ],
+    "v1_on/all/agreement": [
+      29972.159066808992,
+      80618
+    ],
+    "v1_on/calibration/total": [
+      258241.7936402919,
+      146153
+    ],
+    "v1_on/calibration/window_reset_1_16": [
+      37025.5752925236,
+      18401
+    ],
+    "v1_on/calibration/window_interior_17_128": [
+      221216.2183477683,
+      127752
+    ],
+    "v1_on/calibration/wikipedia_support": [
+      248625.91085351876,
+      143446
+    ],
+    "v1_on/calibration/empty_support": [
+      9615.882786773145,
+      2707
+    ],
+    "v1_on/calibration/supported_target": [
+      107402.02740811522,
+      106953
+    ],
+    "v1_on/calibration/nonempty_zero_target": [
+      141223.88344540354,
+      36493
+    ],
+    "v1_on/calibration/zero_target": [
+      150839.76623217668,
+      39200
+    ],
+    "v1_on/calibration/fork": [
+      165124.75116486475,
+      71586
+    ],
+    "v1_on/calibration/agreement": [
+      29972.159066808992,
+      80618
+    ],
+    "v1_on/final_test/total": [
+      0.0,
+      0
+    ],
+    "v1_on/final_test/window_reset_1_16": [
+      0.0,
+      0
+    ],
+    "v1_on/final_test/window_interior_17_128": [
+      0.0,
+      0
+    ],
+    "v1_on/final_test/wikipedia_support": [
+      0.0,
+      0
+    ],
+    "v1_on/final_test/empty_support": [
+      0.0,
+      0
+    ],
+    "v1_on/final_test/supported_target": [
+      0.0,
+      0
+    ],
+    "v1_on/final_test/nonempty_zero_target": [
+      0.0,
+      0
+    ],
+    "v1_on/final_test/zero_target": [
+      0.0,
+      0
+    ],
+    "v1_on/final_test/fork": [
+      0.0,
+      0
+    ],
+    "v1_on/final_test/agreement": [
+      0.0,
+      0
+    ],
+    "v1_off/all/total": [
+      395321.8282993017,
+      146153
+    ],
+    "v1_off/all/window_reset_1_16": [
+      49860.308079632465,
+      18401
+    ],
+    "v1_off/all/window_interior_17_128": [
+      345461.5202196692,
+      127752
+    ],
+    "v1_off/all/wikipedia_support": [
+      385970.4228620557,
+      143446
+    ],
+    "v1_off/all/empty_support": [
+      9351.405437245965,
+      2707
+    ],
+    "v1_off/all/supported_target": [
+      254557.24139632005,
+      106953
+    ],
+    "v1_off/all/nonempty_zero_target": [
+      131413.18146573566,
+      36493
+    ],
+    "v1_off/all/zero_target": [
+      140764.58690298162,
+      39200
+    ],
+    "v1_off/all/fork": [
+      212740.2478377493,
+      71586
+    ],
+    "v1_off/all/agreement": [
+      170098.19323358405,
+      80618
+    ],
+    "v1_off/calibration/total": [
+      395321.8282993017,
+      146153
+    ],
+    "v1_off/calibration/window_reset_1_16": [
+      49860.308079632465,
+      18401
+    ],
+    "v1_off/calibration/window_interior_17_128": [
+      345461.5202196692,
+      127752
+    ],
+    "v1_off/calibration/wikipedia_support": [
+      385970.4228620557,
+      143446
+    ],
+    "v1_off/calibration/empty_support": [
+      9351.405437245965,
+      2707
+    ],
+    "v1_off/calibration/supported_target": [
+      254557.24139632005,
+      106953
+    ],
+    "v1_off/calibration/nonempty_zero_target": [
+      131413.18146573566,
+      36493
+    ],
+    "v1_off/calibration/zero_target": [
+      140764.58690298162,
+      39200
+    ],
+    "v1_off/calibration/fork": [
+      212740.2478377493,
+      71586
+    ],
+    "v1_off/calibration/agreement": [
+      170098.19323358405,
+      80618
+    ],
+    "v1_off/final_test/total": [
+      0.0,
+      0
+    ],
+    "v1_off/final_test/window_reset_1_16": [
+      0.0,
+      0
+    ],
+    "v1_off/final_test/window_interior_17_128": [
+      0.0,
+      0
+    ],
+    "v1_off/final_test/wikipedia_support": [
+      0.0,
+      0
+    ],
+    "v1_off/final_test/empty_support": [
+      0.0,
+      0
+    ],
+    "v1_off/final_test/supported_target": [
+      0.0,
+      0
+    ],
+    "v1_off/final_test/nonempty_zero_target": [
+      0.0,
+      0
+    ],
+    "v1_off/final_test/zero_target": [
+      0.0,
+      0
+    ],
+    "v1_off/final_test/fork": [
+      0.0,
+      0
+    ],
+    "v1_off/final_test/agreement": [
+      0.0,
+      0
+    ],
+    "v2_on/all/total": [
+      236008.51661647594,
+      146153
+    ],
+    "v2_on/all/window_reset_1_16": [
+      34890.770205844194,
+      18401
+    ],
+    "v2_on/all/window_interior_17_128": [
+      201117.74641063175,
+      127752
+    ],
+    "v2_on/all/wikipedia_support": [
+      228249.37927645928,
+      143446
+    ],
+    "v2_on/all/empty_support": [
+      7759.137340016663,
+      2707
+    ],
+    "v2_on/all/supported_target": [
+      100686.80318546965,
+      106953
+    ],
+    "v2_on/all/nonempty_zero_target": [
+      127562.57609098963,
+      36493
+    ],
+    "v2_on/all/zero_target": [
+      135321.7134310063,
+      39200
+    ],
+    "v2_on/all/fork": [
+      151261.7323269614,
+      71586
+    ],
+    "v2_on/all/agreement": [
+      29771.166167219344,
+      80618
+    ],
+    "v2_on/calibration/total": [
+      236008.51661647594,
+      146153
+    ],
+    "v2_on/calibration/window_reset_1_16": [
+      34890.770205844194,
+      18401
+    ],
+    "v2_on/calibration/window_interior_17_128": [
+      201117.74641063175,
+      127752
+    ],
+    "v2_on/calibration/wikipedia_support": [
+      228249.37927645928,
+      143446
+    ],
+    "v2_on/calibration/empty_support": [
+      7759.137340016663,
+      2707
+    ],
+    "v2_on/calibration/supported_target": [
+      100686.80318546965,
+      106953
+    ],
+    "v2_on/calibration/nonempty_zero_target": [
+      127562.57609098963,
+      36493
+    ],
+    "v2_on/calibration/zero_target": [
+      135321.7134310063,
+      39200
+    ],
+    "v2_on/calibration/fork": [
+      151261.7323269614,
+      71586
+    ],
+    "v2_on/calibration/agreement": [
+      29771.166167219344,
+      80618
+    ],
+    "v2_on/final_test/total": [
+      0.0,
+      0
+    ],
+    "v2_on/final_test/window_reset_1_16": [
+      0.0,
+      0
+    ],
+    "v2_on/final_test/window_interior_17_128": [
+      0.0,
+      0
+    ],
+    "v2_on/final_test/wikipedia_support": [
+      0.0,
+      0
+    ],
+    "v2_on/final_test/empty_support": [
+      0.0,
+      0
+    ],
+    "v2_on/final_test/supported_target": [
+      0.0,
+      0
+    ],
+    "v2_on/final_test/nonempty_zero_target": [
+      0.0,
+      0
+    ],
+    "v2_on/final_test/zero_target": [
+      0.0,
+      0
+    ],
+    "v2_on/final_test/fork": [
+      0.0,
+      0
+    ],
+    "v2_on/final_test/agreement": [
+      0.0,
+      0
+    ],
+    "v2_off/all/total": [
+      362474.6857920487,
+      146153
+    ],
+    "v2_off/all/window_reset_1_16": [
+      46042.79284493835,
+      18401
+    ],
+    "v2_off/all/window_interior_17_128": [
+      316431.89294711035,
+      127752
+    ],
+    "v2_off/all/wikipedia_support": [
+      354311.1478861694,
+      143446
+    ],
+    "v2_off/all/empty_support": [
+      8163.537905879319,
+      2707
+    ],
+    "v2_off/all/supported_target": [
+      232370.02064362238,
+      106953
+    ],
+    "v2_off/all/nonempty_zero_target": [
+      121941.127242547,
+      36493
+    ],
+    "v2_off/all/zero_target": [
+      130104.66514842631,
+      39200
+    ],
+    "v2_off/all/fork": [
+      196874.78808014002,
+      71586
+    ],
+    "v2_off/all/agreement": [
+      153252.45111395116,
+      80618
+    ],
+    "v2_off/calibration/total": [
+      362474.6857920487,
+      146153
+    ],
+    "v2_off/calibration/window_reset_1_16": [
+      46042.79284493835,
+      18401
+    ],
+    "v2_off/calibration/window_interior_17_128": [
+      316431.89294711035,
+      127752
+    ],
+    "v2_off/calibration/wikipedia_support": [
+      354311.1478861694,
+      143446
+    ],
+    "v2_off/calibration/empty_support": [
+      8163.537905879319,
+      2707
+    ],
+    "v2_off/calibration/supported_target": [
+      232370.02064362238,
+      106953
+    ],
+    "v2_off/calibration/nonempty_zero_target": [
+      121941.127242547,
+      36493
+    ],
+    "v2_off/calibration/zero_target": [
+      130104.66514842631,
+      39200
+    ],
+    "v2_off/calibration/fork": [
+      196874.78808014002,
+      71586
+    ],
+    "v2_off/calibration/agreement": [
+      153252.45111395116,
+      80618
+    ],
+    "v2_off/final_test/total": [
+      0.0,
+      0
+    ],
+    "v2_off/final_test/window_reset_1_16": [
+      0.0,
+      0
+    ],
+    "v2_off/final_test/window_interior_17_128": [
+      0.0,
+      0
+    ],
+    "v2_off/final_test/wikipedia_support": [
+      0.0,
+      0
+    ],
+    "v2_off/final_test/empty_support": [
+      0.0,
+      0
+    ],
+    "v2_off/final_test/supported_target": [
+      0.0,
+      0
+    ],
+    "v2_off/final_test/nonempty_zero_target": [
+      0.0,
+      0
+    ],
+    "v2_off/final_test/zero_target": [
+      0.0,
+      0
+    ],
+    "v2_off/final_test/fork": [
+      0.0,
+      0
+    ],
+    "v2_off/final_test/agreement": [
+      0.0,
+      0
+    ]
+  },
+  "curve": [
+    {
+      "shard": 1,
+      "windows": 128,
+      "targets": 16005,
+      "seconds": 1.3535415772348642,
+      "final_nll": {
+        "dense": null,
+        "v1_on": null,
+        "v1_off": null,
+        "v2_on": null,
+        "v2_off": null
+      }
+    },
+    {
+      "shard": 9,
+      "windows": 1152,
+      "targets": 146153,
+      "seconds": 4.204856256023049,
+      "final_nll": {
+        "dense": null,
+        "v1_on": null,
+        "v1_off": null,
+        "v2_on": null,
+        "v2_off": null
+      }
+    }
+  ],
+  "elapsed_seconds": 4.2064261683262885,
+  "status": "paused",
+  "started_utc": "2026-11-04T13:54:22.166595+00:00",
+  "updated_utc": "2026-11-04T13:54:27.157904+00:00"
+}

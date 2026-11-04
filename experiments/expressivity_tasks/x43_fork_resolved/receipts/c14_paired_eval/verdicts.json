@@ -1,0 +1,58 @@
+{
+  "final_test_only": true,
+  "positive_gain": "dense NLL minus device-on NLL",
+  "P1_rule": "directional total gain AND larger gains on nonempty Wikipedia support and supported-target/branch-agreement than all zero-target positions; separate support/empty and nonempty-zero-target comparisons retained",
+  "P2_rule": "absolute device-off minus dense final-test NLL <=.02 nats/byte",
+  "arms": {
+    "v1": {
+      "primary": false,
+      "gain_dense_minus_device_on": {
+        "total": 0.6747065030900634,
+        "wikipedia_support": 0.6792251935743774,
+        "empty_support": -0.37294761527233034,
+        "supported_target": 1.0827623386163758,
+        "nonempty_zero_target": -0.5018911225909313,
+        "zero_target": -0.4997435357350275,
+        "agreement": 1.0827623386163758,
+        "fork": 0.39795964153400076
+      },
+      "P1_clauses": {
+        "total_gain_positive": true,
+        "wikipedia_support_gain_exceeds_zero_target": true,
+        "supported_target_gain_exceeds_zero_target": true,
+        "agreement_gain_exceeds_zero_target": true
+      },
+      "P1": "PASS",
+      "coverage_support_minus_empty_gain": 1.0521728088467077,
+      "supported_target_minus_nonempty_zero_target_gain": 1.584653461207307,
+      "P2_device_off_minus_dense": 0.19130875366745093,
+      "P2_absolute_difference": 0.19130875366745093,
+      "P2": "FAIL"
+    },
+    "v2": {
+      "primary": true,
+      "gain_dense_minus_device_on": {
+        "total": 0.7668735386974901,
+        "wikipedia_support": 0.7697539208043049,
+        "empty_support": 0.09905966936011312,
+        "supported_target": 1.1163695111699155,
+        "nonempty_zero_target": -0.24475821084959914,
+        "zero_target": -0.23903183675200834,
+        "agreement": 1.1163695111699155,
+        "fork": 0.5157429363271611
+      },
+      "P1_clauses": {
+        "total_gain_positive": true,
+        "wikipedia_support_gain_exceeds_zero_target": true,
+        "supported_target_gain_exceeds_zero_target": true,
+        "agreement_gain_exceeds_zero_target": true
+      },
+      "P1": "PASS",
+      "coverage_support_minus_empty_gain": 0.6706942514441918,
+      "supported_target_minus_nonempty_zero_target_gain": 1.3611277220195146,
+      "P2_device_off_minus_dense": 0.03379182652770707,
+      "P2_absolute_difference": 0.03379182652770707,
+      "P2": "FAIL"
+    }
+  }
+}
