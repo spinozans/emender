@@ -1,0 +1,172 @@
+{
+  "status": "nominated_pending_scale_validation",
+  "family": "gdn2",
+  "selection": "Lowest eligible score across all 12 complete generations; stable generation then candidate index on ties",
+  "winner": {
+    "generation": 1,
+    "candidate": 4,
+    "score": 3.1674960454305015,
+    "full_result": {
+      "score": 3.1674960454305015,
+      "nll_heldout": 3.1674960454305015,
+      "occ_frac": null,
+      "degeneracy_flags": null,
+      "occupancy_penalty": null,
+      "degeneracy_penalty": null,
+      "minimized": true,
+      "score_asymmetry": "Baseline score=NLL only; occupancy/degeneracy not applicable. Emender score=NLL+0.01*occ_frac+degeneracy penalties; compare raw NLL separately.",
+      "eval_windows": 24,
+      "eval_context": 2048,
+      "arm": "gdn2",
+      "status": "completed",
+      "tokens_consumed": 175112192,
+      "train_seconds": 2700.325531715993,
+      "train_budget_seconds": 2700,
+      "tokens_per_second": 64848.5487928266,
+      "steps": 1336,
+      "eval_seconds": 0.8433315469883382,
+      "batch": 64,
+      "context": 2048,
+      "regime_sha256": "f874965afdd7d378c6dfb3fac28c799c2813d606d1505d49078dc7ae4e677587",
+      "policy": {
+        "lr": 0.0008824181484580497,
+        "warmup_steps": 71,
+        "weight_decay": 0.0878282521749757,
+        "microbatch": 64,
+        "init_scale": 1.1748169971111173,
+        "beta2": 0.9302884787018197,
+        "decay_rate_scale": 1.0084170069588658,
+        "dt_bias_shift": -0.12111439189770978,
+        "expansion": 2.0
+      },
+      "registration_sha256": "95ef65a9b369dbea2a3cc08593d6d07e9ae87763ef1b6234443762c4fa0f5d55",
+      "physical_gpu": "1",
+      "peak_allocated_bytes": 15009655296,
+      "score_eligible": true
+    }
+  },
+  "g12_winner": {
+    "candidate": 9,
+    "score": 3.1769307255744934,
+    "full_result": {
+      "score": 3.1769307255744934,
+      "nll_heldout": 3.1769307255744934,
+      "occ_frac": null,
+      "degeneracy_flags": null,
+      "occupancy_penalty": null,
+      "degeneracy_penalty": null,
+      "minimized": true,
+      "score_asymmetry": "Baseline score=NLL only; occupancy/degeneracy not applicable. Emender score=NLL+0.01*occ_frac+degeneracy penalties; compare raw NLL separately.",
+      "eval_windows": 24,
+      "eval_context": 2048,
+      "arm": "gdn2",
+      "status": "completed",
+      "tokens_consumed": 174456832,
+      "train_seconds": 2700.4883563322946,
+      "train_budget_seconds": 2700,
+      "tokens_per_second": 64601.95675012683,
+      "steps": 1331,
+      "eval_seconds": 0.836730676703155,
+      "batch": 64,
+      "context": 2048,
+      "regime_sha256": "a61a9c10967477992d56d01a3535d2de8c6134fd794686e30875967b336a8037",
+      "policy": {
+        "lr": 0.0008451780062371048,
+        "warmup_steps": 248,
+        "weight_decay": 0.09979298490660443,
+        "microbatch": 16,
+        "init_scale": 0.9161841383092316,
+        "beta2": 0.9234613565353393,
+        "decay_rate_scale": 0.7718272728391101,
+        "dt_bias_shift": -1.4009386849011625,
+        "expansion": 2.0
+      },
+      "registration_sha256": "95ef65a9b369dbea2a3cc08593d6d07e9ae87763ef1b6234443762c4fa0f5d55",
+      "physical_gpu": "1",
+      "peak_allocated_bytes": 5684631040,
+      "score_eligible": true
+    }
+  },
+  "scale_config": {
+    "architecture": {
+      "builder": "part8_surface.GDNModel",
+      "scale": "1.3B",
+      "vocabulary": 50257,
+      "width": 1792,
+      "layers": 27,
+      "ff_hidden": 5120,
+      "parameters": {
+        "total": 1298927010,
+        "trainable": 1298927010
+      },
+      "capacity_target": 1300000000,
+      "expansion": 2.0,
+      "head_dim": 128,
+      "num_heads": 6,
+      "use_conv": true,
+      "d_conv": 4,
+      "norm": "RMSNorm eps=1e-5"
+    },
+    "policy": {
+      "lr": 0.0008824181484580497,
+      "warmup_steps": 71,
+      "weight_decay": 0.0878282521749757,
+      "microbatch": 64,
+      "init_scale": 1.1748169971111173,
+      "beta2": 0.9302884787018197,
+      "decay_rate_scale": 1.0084170069588658,
+      "dt_bias_shift": -0.12111439189770978,
+      "expansion": 2.0
+    },
+    "optimizer": {
+      "name": "AdamW",
+      "fused": true,
+      "betas": [
+        0.9,
+        0.9302884787018197
+      ],
+      "lr": 0.0008824181484580497,
+      "weight_decay": 0.0878282521749757
+    },
+    "batch": 64,
+    "context": 2048,
+    "microbatch": 64,
+    "gradient_accumulation": 1,
+    "precision": "bf16 compute; fp32 parameters",
+    "eval_context": 2048,
+    "eval_windows": 24,
+    "train_seed": 3401
+  },
+  "provenance": {
+    "commit": "2b4f4ae6d9d978595ddc9b03d400e69e7919a85f",
+    "registration_path": "experiments/expressivity_tasks/x42_pile_scale/velocity_gdn2_registration.json",
+    "registration_sha256": "95ef65a9b369dbea2a3cc08593d6d07e9ae87763ef1b6234443762c4fa0f5d55",
+    "winner_registration_sha256": "95ef65a9b369dbea2a3cc08593d6d07e9ae87763ef1b6234443762c4fa0f5d55",
+    "parent_path": "experiments/expressivity_tasks/x42_pile_scale/runs/velocity_gdn2_v1/parent.json",
+    "parent_sha256": "772615998fcc1369673622c0362a0f5297eadce5c0a1bca4fcdaf6541f88583b",
+    "generation_summaries": {
+      "experiments/expressivity_tasks/x42_pile_scale/runs/velocity_gdn2_v1/g1_summary.json": "d519936feb9c24e91fb2c1ada5157fabc67ed7f152e2ade3faf991475e71843f",
+      "experiments/expressivity_tasks/x42_pile_scale/runs/velocity_gdn2_v1/g2_summary.json": "ba8fcc42c29555cfb62f2e1286e90469690f2c8f806f80680adb2f901d258c58",
+      "experiments/expressivity_tasks/x42_pile_scale/runs/velocity_gdn2_v1/g3_summary.json": "df6f25a9cc6058b2e94fa96438a4688342fd1c62fbc2d0aa625c45f93373f03f",
+      "experiments/expressivity_tasks/x42_pile_scale/runs/velocity_gdn2_v1/g4_summary.json": "28f8c490a79b61dc0e7cacfce78e99922956c90ab793915e84c6281046c9e514",
+      "experiments/expressivity_tasks/x42_pile_scale/runs/velocity_gdn2_v1/g5_summary.json": "455832ed5bdc0b62d427dcea73781b559933a98de6113a29d7a4b6c1f54c7098",
+      "experiments/expressivity_tasks/x42_pile_scale/runs/velocity_gdn2_v1/g6_summary.json": "f59a7c716d51b3eb5971c3e4af000023771c4a2972107323d4233bb6128c3f5e",
+      "experiments/expressivity_tasks/x42_pile_scale/runs/velocity_gdn2_v1/g7_summary.json": "8cce06149a504af87d0588ba785b508698fb093523688076efc86c97d1ee1792",
+      "experiments/expressivity_tasks/x42_pile_scale/runs/velocity_gdn2_v1/g8_summary.json": "7061bea056a539887104bb713b98f847ee0fae76037152bfd6d08fa2adf315c0",
+      "experiments/expressivity_tasks/x42_pile_scale/runs/velocity_gdn2_v1/g9_summary.json": "9a59ad2779b3867247ed3b42d90320be0c9687dad087b139486564c216acef49",
+      "experiments/expressivity_tasks/x42_pile_scale/runs/velocity_gdn2_v1/g10_summary.json": "460cd7afec89dd80ff71ddf9d7794b3b1a2a2ce1081a2bfc1981b7b368d43b6e",
+      "experiments/expressivity_tasks/x42_pile_scale/runs/velocity_gdn2_v1/g11_summary.json": "176e6f71c833003fbb53a412d51b1aceb7155a3348344e999cfa26dc97ba7e6b",
+      "experiments/expressivity_tasks/x42_pile_scale/runs/velocity_gdn2_v1/g12_summary.json": "6df5e36cc2167bec9864c9a1baf3b04a74b753766668f4390b16ee6ca8dc1d66"
+    },
+    "sources": {
+      "experiments/expressivity_tasks/x42_pile_scale/velocity_baseline_search.py": "8c5c5b7c1c2c2c5f7458c3d61b601b02ff6afa34f97598520ffcf8245cd8af9a",
+      "experiments/expressivity_tasks/x42_pile_scale/velocity_baselines.py": "2809dc400ddcdeb78c5365fd267b03efe150dd20294c6f4f6372c8e1c25a1a04",
+      "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/scale_surface.py": "74fcebec3aeb433b1af80e3f5c6184d9c8205af4966e7e94f66b94dd00fb648b",
+      "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/part8_surface.py": "6434f1134244f43b34cd3de3662e063fb8b0c7e2bf156163877eb330a5a64a90"
+    }
+  },
+  "residual_risks": [
+    "Nomination only: no terminal training, scale-transfer validation, memory or throughput qualification performed.",
+    "The registered 2700-second proxy objective selects the policy; terminal training duration and corpus binding must be registered before launch."
+  ]
+}

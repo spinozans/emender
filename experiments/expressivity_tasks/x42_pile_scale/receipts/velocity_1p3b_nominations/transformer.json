@@ -1,0 +1,167 @@
+{
+  "status": "nominated_pending_scale_validation",
+  "family": "transformer",
+  "selection": "Lowest eligible score across all 12 complete generations; stable generation then candidate index on ties",
+  "winner": {
+    "generation": 12,
+    "candidate": 7,
+    "score": 3.190717468659083,
+    "full_result": {
+      "score": 3.190717468659083,
+      "nll_heldout": 3.190717468659083,
+      "occ_frac": null,
+      "degeneracy_flags": null,
+      "occupancy_penalty": null,
+      "degeneracy_penalty": null,
+      "minimized": true,
+      "score_asymmetry": "Baseline score=NLL only; occupancy/degeneracy not applicable. Emender score=NLL+0.01*occ_frac+degeneracy penalties; compare raw NLL separately.",
+      "eval_windows": 24,
+      "eval_context": 2048,
+      "arm": "transformer",
+      "status": "completed",
+      "tokens_consumed": 173801472,
+      "train_seconds": 2700.5781819596887,
+      "train_budget_seconds": 2700,
+      "tokens_per_second": 64357.13402449251,
+      "steps": 1326,
+      "eval_seconds": 0.6089388811960816,
+      "batch": 64,
+      "context": 2048,
+      "regime_sha256": "a61a9c10967477992d56d01a3535d2de8c6134fd794686e30875967b336a8037",
+      "policy": {
+        "lr": 0.0009918484946285057,
+        "warmup_steps": 68,
+        "weight_decay": 0.043324036703003874,
+        "microbatch": 4,
+        "init_scale": 1.1486572289458117,
+        "beta2": 0.9236927202707559,
+        "decay_rate_scale": 1.0,
+        "dt_bias_shift": 0.0,
+        "expansion": 2.0
+      },
+      "registration_sha256": "1e3b8fbf84dd54e577a0247d2d28b6fd053a2c65884066557d6b1df8268f1a23",
+      "physical_gpu": "1",
+      "peak_allocated_bytes": 3486974464,
+      "score_eligible": true
+    }
+  },
+  "g12_winner": {
+    "candidate": 7,
+    "score": 3.190717468659083,
+    "full_result": {
+      "score": 3.190717468659083,
+      "nll_heldout": 3.190717468659083,
+      "occ_frac": null,
+      "degeneracy_flags": null,
+      "occupancy_penalty": null,
+      "degeneracy_penalty": null,
+      "minimized": true,
+      "score_asymmetry": "Baseline score=NLL only; occupancy/degeneracy not applicable. Emender score=NLL+0.01*occ_frac+degeneracy penalties; compare raw NLL separately.",
+      "eval_windows": 24,
+      "eval_context": 2048,
+      "arm": "transformer",
+      "status": "completed",
+      "tokens_consumed": 173801472,
+      "train_seconds": 2700.5781819596887,
+      "train_budget_seconds": 2700,
+      "tokens_per_second": 64357.13402449251,
+      "steps": 1326,
+      "eval_seconds": 0.6089388811960816,
+      "batch": 64,
+      "context": 2048,
+      "regime_sha256": "a61a9c10967477992d56d01a3535d2de8c6134fd794686e30875967b336a8037",
+      "policy": {
+        "lr": 0.0009918484946285057,
+        "warmup_steps": 68,
+        "weight_decay": 0.043324036703003874,
+        "microbatch": 4,
+        "init_scale": 1.1486572289458117,
+        "beta2": 0.9236927202707559,
+        "decay_rate_scale": 1.0,
+        "dt_bias_shift": 0.0,
+        "expansion": 2.0
+      },
+      "registration_sha256": "1e3b8fbf84dd54e577a0247d2d28b6fd053a2c65884066557d6b1df8268f1a23",
+      "physical_gpu": "1",
+      "peak_allocated_bytes": 3486974464,
+      "score_eligible": true
+    }
+  },
+  "scale_config": {
+    "architecture": {
+      "builder": "scale_surface.SurfaceLM",
+      "scale": "1.3B",
+      "vocabulary": 50257,
+      "width": 2048,
+      "layers": 24,
+      "ff_hidden": 7028,
+      "parameters": {
+        "total": 1300001504,
+        "trainable": 1300001504
+      },
+      "capacity_target": 1300000000,
+      "attention_heads": 16
+    },
+    "policy": {
+      "lr": 0.0009918484946285057,
+      "warmup_steps": 68,
+      "weight_decay": 0.043324036703003874,
+      "microbatch": 4,
+      "init_scale": 1.1486572289458117,
+      "beta2": 0.9236927202707559,
+      "decay_rate_scale": 1.0,
+      "dt_bias_shift": 0.0,
+      "expansion": 2.0
+    },
+    "optimizer": {
+      "name": "AdamW",
+      "fused": true,
+      "betas": [
+        0.9,
+        0.9236927202707559
+      ],
+      "lr": 0.0009918484946285057,
+      "weight_decay": 0.043324036703003874
+    },
+    "batch": 64,
+    "context": 2048,
+    "microbatch": 4,
+    "gradient_accumulation": 16,
+    "precision": "bf16 compute; fp32 parameters",
+    "eval_context": 2048,
+    "eval_windows": 24,
+    "train_seed": 3401
+  },
+  "provenance": {
+    "commit": "2b4f4ae6d9d978595ddc9b03d400e69e7919a85f",
+    "registration_path": "experiments/expressivity_tasks/x42_pile_scale/velocity_transformer_registration.json",
+    "registration_sha256": "1e3b8fbf84dd54e577a0247d2d28b6fd053a2c65884066557d6b1df8268f1a23",
+    "winner_registration_sha256": "1e3b8fbf84dd54e577a0247d2d28b6fd053a2c65884066557d6b1df8268f1a23",
+    "parent_path": "experiments/expressivity_tasks/x42_pile_scale/runs/velocity_transformer_v1/parent.json",
+    "parent_sha256": "9b9241341971ca9c3981fd0f080d69463d8afe112ea050af90d1bc2e12bebfc9",
+    "generation_summaries": {
+      "experiments/expressivity_tasks/x42_pile_scale/runs/velocity_transformer_v1/g1_summary.json": "629f5b3c9e09923176919e77cffbf6d103ab8015b9eb6238efaaa41b393fe7dd",
+      "experiments/expressivity_tasks/x42_pile_scale/runs/velocity_transformer_v1/g2_summary.json": "e180175c931284679085b0677f046d6e00521541ebeaf28487b552514f509f6c",
+      "experiments/expressivity_tasks/x42_pile_scale/runs/velocity_transformer_v1/g3_summary.json": "4d86ea71ca7cdfb5d98fa73136ad73517a7ad39d167db77d2a4e9658055f63a5",
+      "experiments/expressivity_tasks/x42_pile_scale/runs/velocity_transformer_v1/g4_summary.json": "1a19d4b910990dc994a0e54c29895a849bb1cf859e88b4a4ece96d804d01e688",
+      "experiments/expressivity_tasks/x42_pile_scale/runs/velocity_transformer_v1/g5_summary.json": "fe9dd305f04a4deb938f134f956b421c75535e027a1a4ae1bf9452a908182c9f",
+      "experiments/expressivity_tasks/x42_pile_scale/runs/velocity_transformer_v1/g6_summary.json": "4e40895c1b4a2aa043559c1adf2f08114b3440364241f151c8bf4378b9053a7b",
+      "experiments/expressivity_tasks/x42_pile_scale/runs/velocity_transformer_v1/g7_summary.json": "a3f910e24f2b7b7181b12cc73939c39fd37d81eb09042fc09fff0a29ce05b024",
+      "experiments/expressivity_tasks/x42_pile_scale/runs/velocity_transformer_v1/g8_summary.json": "f0ff00f03fe5ca57acf3e309510a10f777029a19384d51fa66ff4e63296c2aad",
+      "experiments/expressivity_tasks/x42_pile_scale/runs/velocity_transformer_v1/g9_summary.json": "dc52894c188186d20a92b86a751a6daae1c286e4051cd29425fdd68a12c853dc",
+      "experiments/expressivity_tasks/x42_pile_scale/runs/velocity_transformer_v1/g10_summary.json": "3e379ddb524d30b6321b8375bc93d15118186c47f234a15e52f003759759d715",
+      "experiments/expressivity_tasks/x42_pile_scale/runs/velocity_transformer_v1/g11_summary.json": "be4c54905c9c76c5cc24cd646d431b849b05180360cf70c2b7d764901d7710e0",
+      "experiments/expressivity_tasks/x42_pile_scale/runs/velocity_transformer_v1/g12_summary.json": "d8c23d534023c45265f486023964012168f06b459d2d94a592417ed9a4ae9b34"
+    },
+    "sources": {
+      "experiments/expressivity_tasks/x42_pile_scale/velocity_baseline_search.py": "8c5c5b7c1c2c2c5f7458c3d61b601b02ff6afa34f97598520ffcf8245cd8af9a",
+      "experiments/expressivity_tasks/x42_pile_scale/velocity_baselines.py": "2809dc400ddcdeb78c5365fd267b03efe150dd20294c6f4f6372c8e1c25a1a04",
+      "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/scale_surface.py": "74fcebec3aeb433b1af80e3f5c6184d9c8205af4966e7e94f66b94dd00fb648b",
+      "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/part8_surface.py": "6434f1134244f43b34cd3de3662e063fb8b0c7e2bf156163877eb330a5a64a90"
+    }
+  },
+  "residual_risks": [
+    "Nomination only: no terminal training, scale-transfer validation, memory or throughput qualification performed.",
+    "The registered 2700-second proxy objective selects the policy; terminal training duration and corpus binding must be registered before launch."
+  ]
+}
