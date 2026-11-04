@@ -2438,3 +2438,10 @@ operator's ~45-hour scenario (**Nov 6 10:38:19 UTC**) is retained separately;
 both are conditional projections, not completion promises. Native extractor
 parity uses frozen attestations, with no fresh extractor query rerun. No resilient
 DiLoCo behavior was changed, tested or run; its gap-matrix IDs do not apply.
+
+C14-B1 continuation component (not a result): `c14_b_suffix.py` reconstructs
+queried suffix identities from observed raw bytes and fails closed on lengths
+crossing a window reset. Eight component tests plus the three registration
+audit tests pass. This component is not wired into native store forward or
+replay; launch readiness remains false, training exposure remains zero, and
+PB1–PB4 remain unmeasured. No B1 implementation-complete claim is made.
