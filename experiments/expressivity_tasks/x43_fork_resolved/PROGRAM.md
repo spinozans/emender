@@ -136,7 +136,7 @@ Scope: unchanged C11 training-prefix counts and device geometry, not future-cont
 
 The independent audit **failed** on two UINT64_MAX right-extension counts. Both affected feature rows are explicitly rejected; raw failures and a minimal upstream reproducer are preserved. The remaining receipt audit passes after quarantine, including 73 direct byte checks and 100 independent decoder checks; this does not certify query-engine correctness. No sxgc changes. AGC FFI has no SXI2 query API; the persistent-interface request is a handoff only. Host batch branch throughput is 326.22 successful features/s including process overhead: a repeated-batch 40M extrapolation is 34.06 hours before context search/transfer. Kernel-only throughput uses the default many-core Rayon pool despite `-j 1`; **no single-core budget is established**. [RESULT_C14_PHASE1.md](RESULT_C14_PHASE1.md), [C14_FEATURE_BRIDGE.md](C14_FEATURE_BRIDGE.md); bindings C14a. Training remains blocked on upstream query repair, a complete causal token geometry/cache, and an honest production budget.
 
-### C14 — measured: dense byte baselines and Emender paired eval; P1 passes, P2 fails
+### C14 — measured: paired consultation, P3 stacking, and gain decomposition
 
 **Emender paired evaluation completed 2026-11-04. V2 is primary. P1 passes for
 both v1 and v2; P2 fails for both.** The complete frozen cache passes 26,807 shard
@@ -168,8 +168,9 @@ P2 device-off minus dense is **+0.191308754 (v1)** and **+0.033791827 (v2)**;
 both exceed the registered .02 nats/byte allowance. These are failures, including
 for the primary arm. Equal 2700-second active training budgets consumed
 225,880,702 / 55,447,993 / 179,162,804 targets for dense/v1/v2. One seed, unequal
-exposure and no uncertainty or matched-step causal claim. P3, C13 stacking/swaps
-and transformer consultation quality remain pending.
+exposure and no uncertainty or matched-step causal claim. P3 stacking and the
+array baseline are measured below; coverage swaps and transformer consultation
+quality remain pending.
 
 Inference used deterministic algorithms, a fixed cuBLAS workspace, the shared v2
 feature decoder, independent window resets and masked tails. First-shard loss
@@ -181,6 +182,48 @@ from the historical batch-16 final average by -0.000001069 nats/byte; no histori
 prediction byte parity is claimed. Independent validation passes 75 partition-sum
 checks, frozen-window denominators, journal coverage and checkpoint hashes; all
 11 targeted tests pass. Full receipts/curves and source bindings belong to C14.
+
+
+**P3 stacking at Pile scale: no-walk comparisons PASS; exact walks FAIL.**
+Literal C13 calibration plus exact single-branch walks give infinite total NLL
+for both dense and v2 stacking:
+30,751,940 real final targets contradict the foreign array's
+single-byte continuation. These targets are retained, with no smoothing or
+target-conditioned escape. The same frozen gates without forced walks yield
+**1.505908651** for v2 and
+**1.695958394** for dense; the no-walk conjunctive P3
+comparison is **PASS** (beats v2 alone:
+True; beats dense+calibration:
+True). Against the frozen dense transformer
+**1.404434206**, v2+soft gate changes NLL by
+**+0.101474445**.
+Both gates use the registered document-disjoint calibration half only, with
+unchanged C13 features, optimizer and bounds; no weights are retrained.
+93.981% of the small soft-fusion gain comes from reset positions 1–16;
+zero-target and nonfork NLLs worsen.
+
+Of the supported-target consultation gain (v2 minus dense, about
+**-1.116369511** nats/byte), lengths 1–12 supply
+**32.703%** and 65+ supply
+**1.721%**. The dominant 13–64 bin supplies
+**65.576%**; singleton/nonfork positions supply
+**70.897%** across lengths. Full 1–3/4–12/13–64/65+ and fork/nonfork
+counts, signed gains and weighted contributions are retained. This is descriptive
+suffix transfer, not proof of a semantic or structural mechanism. The array
+alone has supported-target NLL **0.663434002**,
+versus v2 **0.811639725**. Its nonempty-support and total
+NLLs are infinite because true targets can have zero array probability; its
+supported-target score is conditional, not a standalone total-LM ceiling.
+
+The requested “dense+calibration 2.277” anchor is corrected: 2.277418521 is raw
+dense calibration-half NLL, not a fused final-test result. Actual dense fusion
+rows above and the [full tables](RESULT_C14_STACKING.md) retain that distinction.
+Historical transformer position losses were identity-joined to all frozen
+windows and newly stratified without inference or touching the live union
+service. V2 replay sums are exact; dense has at most 3.783e-9 nats/byte stratum
+mean drift (reported, no byte parity claim). Independent full-position CPU
+replay and eight targeted tests pass. No extraction, .pt commits, service
+changes, or resilient DiLoCo work. Receipts are bound under C14.
 
 
 The byte registration and operator-authorized dense amendment bind this result. Take 3 superseded shard materialization with read-only pile.txt offsets: all 7,831,213 selected document receipts matched, with two token-truncated documents excluded. Independent validation rehashed every admitted document slice: 7,831,211 documents / 43,494,394,389 selected bytes. No corpus text was materialized for this binding or take 4. Gaps, omitted documents and capped suffixes never enter model inputs.
@@ -200,7 +243,7 @@ Losses are nats/byte. Strata describe positions 1–16 and 17–128 within indep
 
 The initial single-shard preflight failure remains historical evidence in RESULT_C14_DENSE.md. The take-4 inventory found Emender training complete, its evaluation partial at 52,289,140 targets, and transformer absent. The original Emender checkpoint had no earlier hash receipt; its take-4 inventory hash matches the final checkpoint. **Retained failure:** optional byte-exact parity against the old partial prediction file failed. The partial file had already been overwritten by the authorized full reevaluation, so numerical differences cannot be quantified; no historical byte parity is claimed. [Recovery failure receipt](receipts/c14_dense/emender_recovery_parity.json).
 
-This is a single-seed, fixed-time dense reference; the arms saw different target counts. Consultation P1/P2/P3, support/fork strata, device-off robustness, calibration stacking and significance remain untested. Native consultation feature prerequisites remain separate and unresolved; no consultation gain follows from these dense results.
+These historical dense receipts are single-seed, fixed-time controls with unequal exposure. The later paired and stacking results above supply consultation P1/P2/P3, support/fork and device-off evidence; significance and transformer consultation remain untested. No consultation gain follows from dense-only results.
 
 Native consultation preflight (2026-11-03): xsa `88d4e0744a05359614d28db5f0ed160a677d8ef5` was built in an isolated clean clone and synchronized ff-only; ~/sxgc was not edited. Former-sentinel counts are 0/0; “the ” has 313,603,799 occurrences and 137 branches. An independent native fixture passes 261 patterns covering every query byte, exact branch counts, EOF and closure. This resolves the former universal-transport/native-query preflight blocker; it does not supply complete train/valid caches.
 
@@ -2228,6 +2271,186 @@ Paths are repository-relative. `emender` is this repository; `sxgc` is the exter
           "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_registered_scale/stream_audit.json",
           "commit": "8cd819720381ccbdb90f7553dcbf0bee70452b4d",
           "sha256": "cd4049f4dc3505152aa8c0869c8ad4fceb6e063d1a84c2eb9d4f23454fb8d3ff"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/RESULT_C14_STACKING.md",
+          "commit": "83e2a0697344cb9ed089971a24023e27c3cf88d1",
+          "sha256": "41b61be8fcd4896b75b57dc42a63f4448799a2136227c8310e841d37299fe267"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/c14_stacking_predict.py",
+          "commit": "83e2a0697344cb9ed089971a24023e27c3cf88d1",
+          "sha256": "0d1f6df1fa47ea16876d815e98e265407dc5f33da8a67d2e2bf1ae69b4dc5c41"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/c14_stacking_score.py",
+          "commit": "83e2a0697344cb9ed089971a24023e27c3cf88d1",
+          "sha256": "680e92472a8a76c47bcba7d2fd85d0c65e1b56ef7cc011a63f2a3c796812368f"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/c14_stacking_transformer.py",
+          "commit": "83e2a0697344cb9ed089971a24023e27c3cf88d1",
+          "sha256": "a5b7d478de89377fe7316287ace7b71dc3396568147e897b7a2bceb99e150b23"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/c14_stacking_report.py",
+          "commit": "83e2a0697344cb9ed089971a24023e27c3cf88d1",
+          "sha256": "064fcf4bda3a6cf54b21da0cbd43493090a982054db27c4fb96d8f0bc31903ca"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/validate_c14_stacking.py",
+          "commit": "83e2a0697344cb9ed089971a24023e27c3cf88d1",
+          "sha256": "c1617d7c7c71b35232b07446b4162dd09a51e39697928fd69b3cd0f5df971bfe"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/test_c14_stacking.py",
+          "commit": "83e2a0697344cb9ed089971a24023e27c3cf88d1",
+          "sha256": "62b3c2e782b7bb6aba0b7b6b28e7c6327c7bc9a46f0857fa9c54984fbc1b18f9"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/run_c14_stacking_leased.sh",
+          "commit": "83e2a0697344cb9ed089971a24023e27c3cf88d1",
+          "sha256": "5e46bc81150a297883943d9af5df909e9a9510fc363f690b84d20b73e93edf9f"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_stacking/MANUAL_NOTES.md",
+          "commit": "83e2a0697344cb9ed089971a24023e27c3cf88d1",
+          "sha256": "9d42c405876acd2d2e928ec71f04cb4f0fdffa74b5d9d4e4d2fb8ad93e36e85e"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_stacking/analysis_plan.json",
+          "commit": "83e2a0697344cb9ed089971a24023e27c3cf88d1",
+          "sha256": "84ea150669aafde3889a4b5528f5ca363191359f95bef9a7316b000bffec703a"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_stacking/calibration_freeze.json",
+          "commit": "83e2a0697344cb9ed089971a24023e27c3cf88d1",
+          "sha256": "d097ac1bfd2357acc90fe084d5805f0aa95e227edb3bc15189dd4f62edaaf04a"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_stacking/evidence_manifest.json",
+          "commit": "83e2a0697344cb9ed089971a24023e27c3cf88d1",
+          "sha256": "32f84adbaaf6158d87ca15b829994193fad011fa1a1510a140f70853ed8fead6"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_stacking/frozen_gates.json",
+          "commit": "83e2a0697344cb9ed089971a24023e27c3cf88d1",
+          "sha256": "fc391be659ac0bdcebd03b6f1be63cb040b92493f558aa930cb6f56286d1a06b"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_stacking/gain_decomposition.json",
+          "commit": "83e2a0697344cb9ed089971a24023e27c3cf88d1",
+          "sha256": "1bf5db332deefc8d080ca3c1e435c17fd7342dfdb0be6d86b5cae7ae7f00989c"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_stacking/lease.txt",
+          "commit": "83e2a0697344cb9ed089971a24023e27c3cf88d1",
+          "sha256": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_stacking/prediction_console.txt",
+          "commit": "83e2a0697344cb9ed089971a24023e27c3cf88d1",
+          "sha256": "1cc44e6b48ca2c26e9c28ca5cd2ad913753585e33aa675f924b99aef49b0c73c"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_stacking/prediction_identity.json",
+          "commit": "83e2a0697344cb9ed089971a24023e27c3cf88d1",
+          "sha256": "46707c902b4d0b86f1476b9ce12dfe091814c927b0d5b595cbada39e7efca0dd"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_stacking/protocol_inputs.json",
+          "commit": "83e2a0697344cb9ed089971a24023e27c3cf88d1",
+          "sha256": "37f6963be0ee499c171c0c9397d7095a66522f9bd68d3379e47714afd14befb3"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_stacking/replay_difference.json",
+          "commit": "83e2a0697344cb9ed089971a24023e27c3cf88d1",
+          "sha256": "79299cafed573f6a5ba18a387f4258e195a634856d9623b9de7ff331aafaade1"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_stacking/resume.json",
+          "commit": "83e2a0697344cb9ed089971a24023e27c3cf88d1",
+          "sha256": "f7000c815ee76cabed0557e1285e4230f6d50de715bbe5c7f34d3f5e7a5b2387"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_stacking/scoring_console.txt",
+          "commit": "83e2a0697344cb9ed089971a24023e27c3cf88d1",
+          "sha256": "08c779844d86f2fff75943d95ea13ec63afdde05fafb2ac4890db0d21d6e9ab2"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_stacking/scoring_validation.json",
+          "commit": "83e2a0697344cb9ed089971a24023e27c3cf88d1",
+          "sha256": "85b02bc4a7b8df6851d6d05e4ffff7aeb039fff42d5c83773d99bfbd3b77bbde"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_stacking/table.json",
+          "commit": "83e2a0697344cb9ed089971a24023e27c3cf88d1",
+          "sha256": "88cef56a43c3fce6d313668a74e56c4537b616ec8ca82d156c8af85f1ea051e0"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_stacking/terminal.json",
+          "commit": "83e2a0697344cb9ed089971a24023e27c3cf88d1",
+          "sha256": "d24219f6de94b955cf36d25bd2aca88e2d35eef45b9317b7083f55ec8fe9653c"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_stacking/tests.txt",
+          "commit": "83e2a0697344cb9ed089971a24023e27c3cf88d1",
+          "sha256": "6b3368a00c3315d1a9f6bb2eb93235f116bedcb060a700cd710e1492a020b565"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_stacking/transformer_identity.json",
+          "commit": "83e2a0697344cb9ed089971a24023e27c3cf88d1",
+          "sha256": "a5b010561da31b96f0f59cda69372c5ac2cdc941673b43ff656f50971f802654"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_stacking/transformer_join_console.txt",
+          "commit": "83e2a0697344cb9ed089971a24023e27c3cf88d1",
+          "sha256": "2f07899117a80285926d254ea82686398386eeff809c82690e37db4c3919b3bb"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_stacking/validation.json",
+          "commit": "83e2a0697344cb9ed089971a24023e27c3cf88d1",
+          "sha256": "192efce5a9e936996cedb3c1b48c01140d149355081ccd2a3fa7495dda01ab88"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_stacking/validation_console.txt",
+          "commit": "83e2a0697344cb9ed089971a24023e27c3cf88d1",
+          "sha256": "dd62560e6a2b19184071da562f5c1a5e7377ad829f66c792e0f594e4b9a910db"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_stacking/verdicts.json",
+          "commit": "83e2a0697344cb9ed089971a24023e27c3cf88d1",
+          "sha256": "3baace13652b5d2265bd971f06daecfd5ea22c82ce0ae12af34808e22b3976b9"
         }
       ]
     }
