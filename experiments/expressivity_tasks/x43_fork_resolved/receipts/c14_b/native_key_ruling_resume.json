@@ -1,0 +1,70 @@
+{
+  "status": "partial_native_key_handoff_component_not_launch_ready",
+  "key_amendment_commit": "189a031a",
+  "supersedes": [
+    "060445bc",
+    "ca2e775a",
+    "receipts/c14_b/key_ruling_resume.json"
+  ],
+  "provenance": {
+    "date": "2026-11-04",
+    "authority": "supervisor decision",
+    "channel": "attended Intercom task message: X43 C14-B1 \u2014 SUPERVISOR KEY RULING AMENDMENT #2"
+  },
+  "supervisor_tool_available": false,
+  "supervisor_contact_attempt": "Searched ALL_TOOLS by contact_supervisor, supervisor and intercom; no matching tool is exposed. No contact or reply claimed.",
+  "flaw_owned": "The previous padded-literal implementation was invalid: zero is a real byte, and short suffix padding broke native same-position key consistency. It has been removed, not integrated.",
+  "native_rule": {
+    "construction": "velocity_candidate.Cell.forward: z=W_in(x); features=z+features[h](ids); k=geometry[h][key](features).detach().unsqueeze(2)",
+    "write": "velocity_kernels.scan_kernel loads K+inp*DK+key_lanes and journal-stores that exact key_payload into Keys at allocation",
+    "reads": "native scaled dot product: sum(Keys*Q) * (2/sqrt(DK)), softmax over live slots; strength multiplies value contributions",
+    "normalization": "No suffix encoding, padding, truncation or additional key normalization; native stream key reused by reference",
+    "source_sha256": {
+      "experiments/expressivity_tasks/x42_pile_scale/velocity_candidate.py": "703fa38457deda9e4dab6bffb2eb5649f86f8c1e33edfc557ed3a1003fe6f586",
+      "experiments/expressivity_tasks/x42_pile_scale/velocity_kernels.py": "78f8b9d7afb81a20aeedc0a2d6ad54f758409276f7dbf6d9a12ef343f313befb"
+    }
+  },
+  "implemented": [
+    "Registration amendment #2 committed alone before any training",
+    "Removed obsolete padded-literal constructor and tests; replaced with native key handoff and full raw SuffixOwner metadata",
+    "Audit pinned to replacement amendment while preserving original immutable bindings",
+    "Test intercepts actual standing Cell.forward scan inputs for both heads and verifies exact same-position tensor reuse for distinct suffix lengths, including a real zero byte and 512-byte metadata"
+  ],
+  "validation": {
+    "result": "28 passed in 2.71s",
+    "scope": "Registration, native-key handoff, suffix ownership, document boundaries, registered cache, pile batches and paired evaluator unit tests; not enabled B1 or full launch-gate certification",
+    "trainable_parameters": 2133700,
+    "shape_parity": true,
+    "frozen_bindings": "passed registration audit",
+    "gpu_used": false
+  },
+  "resume": {
+    "phase": 2,
+    "training_started": false,
+    "steps": 0,
+    "targets": 0,
+    "bytes": 0,
+    "active_seconds": 0,
+    "stream_cursor": 0,
+    "checkpoint": null,
+    "optimizer": null,
+    "rng_state": null,
+    "lease": null,
+    "next": "Implement B-only shared native store events and metadata tracking together with all-field journal and reverse replay/checkpoint; reuse current native stream K for insertion and project answer content separately. array_append currently has test callers only. Validate every registered launch gate before obtaining a GPU lease."
+  },
+  "remaining_gates": [
+    "Enabled B1 head with one physical store, metadata CORRECT/MERGE and ownership retirement",
+    "Force-disabled dense exact forward and enabled oracle bit parity",
+    "Finite native and checkpoint/replay backward with consultation projection gradients and unchanged parameter inventory",
+    "Shared capacity/lifecycle/causality tests and array read found/hit-rate telemetry; complete relevant enabled battery",
+    "2700 active-second seed-3401 training on leased card 2 or 4 with exact cursor and checkpoint resume state",
+    "Paired frozen-window PB1\u2013PB4 verdicts and conditional ablations only if PB1 moves"
+  ],
+  "residual_risks": [
+    "Work order remains incomplete. No enabled B1 head, training, evaluation or PB verdict is claimed.",
+    "Key handoff helper has no production caller. Passing component tests establishes no array-slot findability or addressing usefulness.",
+    "Native keys contain trainable contextual W_in features, detached for writes. No frozen contextual-key or monotonic staleness theorem is asserted.",
+    "Supervisor coordination tool is unavailable in this runtime; the explicit amendment itself resolves the prior key decision and no additional decision is requested."
+  ],
+  "manual_notes": "Single-threaded attended work only. No wg, GPU lease, training, .pt artifact or /mnt/nvme2n1 write. Existing unrelated dirty/untracked files left untouched. Resilient DiLoCo not modified or tested; gap matrix IDs inapplicable."
+}

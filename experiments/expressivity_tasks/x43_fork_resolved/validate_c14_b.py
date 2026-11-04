@@ -9,7 +9,8 @@ ROOT = Path(__file__).resolve().parent
 REPO = ROOT.parents[2]
 REGISTRATION = ROOT/'receipts/c14_b/registration.json'
 PROTOCOL = ROOT/'PREREGISTRATION_C14_B.md'
-KEY_AMENDMENT_COMMIT = '060445bc'
+KEY_AMENDMENT_COMMIT = '189a031a'
+SUPERSEDED_KEY_AMENDMENT_COMMIT = '060445bc'
 
 
 def sha(path):
@@ -63,8 +64,17 @@ def audit():
             amendment_paths = subprocess.check_output(
                 ['git', 'diff-tree', '--no-commit-id', '--name-only', '-r',
                  KEY_AMENDMENT_COMMIT], cwd=REPO, text=True).splitlines()
-            if amendment_paths != [relative] or not amended.startswith(committed):
-                raise ValueError('key amendment must append to original registration alone')
+            if amendment_paths != [relative]:
+                raise ValueError('key amendment must change registration alone')
+            # Amendment #2 replaces the superseded section. Preserve all other
+            # original requirements except the explicitly amended APPEND clause.
+            original_body = committed.decode().replace(
+                'APPEND inserts the answer as a slot keyed by that queried suffix through the\nstanding frozen key geometry.',
+                "APPEND inserts the answer using the store's native APPEND key at the query\nposition, exactly as a stream slot at that position (amendment #2 below).\nThe full raw queried suffix is slot metadata, not an addressing input.")
+            if not amended.decode().startswith(original_body):
+                raise ValueError('non-key original registration requirement changed')
+            if '## Supervisor key ruling amendment #2' not in amended.decode():
+                raise ValueError('missing native APPEND amendment')
             if amended != path.read_bytes():
                 raise ValueError('preregistration changed after key amendment')
         elif committed != path.read_bytes():
@@ -87,6 +97,7 @@ def audit():
         raise ValueError('standing physical budget changed')
     return dict(status='passed_registration_audit', registration_commit=commit,
                 key_amendment_commit=KEY_AMENDMENT_COMMIT,
+                superseded_key_amendment_commit=SUPERSEDED_KEY_AMENDMENT_COMMIT,
                 preregistration_sha256=sha(PROTOCOL), frozen_bindings=len(registration['files']),
                 trainable_parameters=count(model), standing_shape_parity=True,
                 layer_policies=policies, gpu_used=False, training_started=False,

@@ -1,62 +1,62 @@
-"""Coordinate component tests only; these do not certify enabled B1."""
+"""Native key handoff component tests; no enabled B1 certification."""
+from unittest.mock import patch
 import pytest
 import torch
-from experiments.expressivity_tasks.x43_fork_resolved.c14_b_keys import array_key, frozen_tail_key, tail_coordinates
+from experiments.expressivity_tasks.x43_fork_resolved.c14_b_keys import array_append
+from experiments.expressivity_tasks.x43_fork_resolved.c14_b_suffix import queried_suffix
+from experiments.expressivity_tasks.x42_pile_scale.velocity_candidate import Cell, Policy
 
 
-def geometry():
-    with torch.random.fork_rng(devices=[]):
-        torch.manual_seed(3701)
-        torch.nn.Embedding(256, 64)  # Match standing constructor RNG order.
-        result = torch.nn.Linear(64, 64)
-    return result.requires_grad_(False)
+def test_actual_cell_native_keys_are_reused_without_suffix_encoding():
+    torch.manual_seed(3401)
+    cell = Cell(256, Policy(N=2, budget_min=32, budget_ratio=2., h_min=128.))
+    cell.train()
+    ids = torch.tensor([[97, 0, 98]])
+    x = torch.randn(1, 3, 256, requires_grad=True)
+    captures = []
+
+    def capture(k, q, v, *args):
+        h = len(captures)
+        expected = cell.geometry[h]['key'](cell.W_in(x) + cell.features[h](ids)).detach().unsqueeze(2)
+        assert torch.equal(k, expected)
+        assert not k.requires_grad
+        captures.append(k)
+        return (v, None, None, None), torch.zeros(1, 1, 3), torch.zeros(1, 1, 3)
+
+    with patch('experiments.expressivity_tasks.x42_pile_scale.velocity_candidate.scan', capture):
+        cell(x, ids)
+    for keys in captures:
+        key = keys[0, 2, 0]
+        # Same query position: all suffix lengths share exactly the stream key.
+        for suffix_length in (1, 2, 3):
+            owner = queried_suffix((7, 0), b'a\x00b', suffix_length)
+            payload = array_append(key, owner)
+            assert payload.key is key
+            assert payload.key.data_ptr() == key.data_ptr()
+            assert payload.owner.suffix == b'a\x00b'[-suffix_length:]
+    assert array_append(captures[0][0, 0, 0], queried_suffix((7, 0), b'a', 0)) is None
 
 
-def test_tail_is_raw_right_aligned_and_truncated():
-    assert torch.equal(tail_coordinates(b'\x00\x80\xff')[-3:],
-                       torch.tensor([0., 128., 255.]))
-    assert tail_coordinates(b'\x00\x80\xff')[:-3].count_nonzero() == 0
-    raw = bytes(range(256))
-    assert torch.equal(tail_coordinates(raw), torch.arange(192., 256.))
-    assert tail_coordinates(b'').count_nonzero() == 0
+def test_long_metadata_is_complete_and_parameter_free():
+    suffix = bytes(range(256)) * 2
+    owner = queried_suffix((2, 10), suffix, len(suffix))
+    key = torch.randn(64)
+    payload = array_append(key, owner)
+    assert payload.key is key
+    assert payload.owner.suffix == suffix
+    assert len(payload.owner.suffix) == 512
+    assert not isinstance(payload, torch.nn.Module)
 
 
-def test_empty_skips_even_with_nonzero_geometry_bias():
-    assert geometry().bias.count_nonzero() > 0
-    assert array_key(b'', geometry()) is None
+def test_zero_byte_is_real_metadata_and_distinct_identity():
+    key = torch.randn(64)
+    one = array_append(key, queried_suffix((0, 0), b'b', 1))
+    two = array_append(key, queried_suffix((0, 0), b'\x00b', 2))
+    assert one.owner != two.owner
+    assert one.key is two.key
 
 
-def test_same_tail_same_frozen_key_and_long_collision():
-    frozen = geometry()
-    tail = bytes(range(64))
-    first, second = b'first'+tail, b'second'+tail
-    assert first != second
-    assert torch.equal(array_key(first, frozen), frozen_tail_key(second, frozen))
-    assert not array_key(first, frozen).requires_grad
-
-
-def test_short_suffix_is_not_identical_to_longer_context_tail():
-    # The ruling's universal equality claim cannot follow from zero padding:
-    # preceding context bytes occupy the suffix's zero-padded coordinates.
-    frozen = geometry()
-    assert not torch.equal(array_key(b'b', frozen),
-                           frozen_tail_key(b'ab', frozen))
-
-
-def test_tail_similarity_can_recover_as_context_advances():
-    frozen = geometry()
-    suffix = bytes(range(64))
-    intervening = suffix[::-1]
-    stored = array_key(suffix, frozen)
-    away = torch.nn.functional.cosine_similarity(
-        stored, frozen_tail_key(suffix+intervening, frozen), dim=0)
-    recovered = torch.nn.functional.cosine_similarity(
-        stored, frozen_tail_key(suffix+intervening+suffix, frozen), dim=0)
-    assert recovered > away
-
-
-def test_reject_learned_geometry_and_nonbytes():
-    with pytest.raises(ValueError, match='frozen'):
-        frozen_tail_key(b'a', torch.nn.Linear(64, 64))
-    with pytest.raises(TypeError, match='raw bytes'):
-        tail_coordinates([1, 2])
+@pytest.mark.parametrize('key', [torch.randn(64, requires_grad=True), torch.randn(63), torch.zeros(64, dtype=torch.long), torch.full((64,), float('nan'))])
+def test_reject_invalid_native_key(key):
+    with pytest.raises(ValueError):
+        array_append(key, queried_suffix((0, 0), b'b', 1))

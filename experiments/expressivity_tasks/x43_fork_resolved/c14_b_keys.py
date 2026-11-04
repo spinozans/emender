@@ -1,35 +1,38 @@
-"""Parameter-free tail coordinates for B1 (not a shared-store implementation).
+"""B1 native key handoff and raw suffix metadata; not a store implementation.
 
-Both stream and suffix callers must use this constructor. Full suffix identity
-is retained separately for ownership; truncated coordinates cannot own slots.
+No suffix-to-vector map exists. The caller must pass the actual native stream
+key computed at the query position, before adding consultation content. This
+module neither changes the dense Cell nor installs a production B1 caller.
 """
+from dataclasses import dataclass
 import torch
+from .c14_b_suffix import SuffixOwner
 
 
-def tail_coordinates(observed: bytes, *, device=None):
-    """Raw byte magnitudes in right-aligned float32 coordinates, reset locally."""
-    if not isinstance(observed, bytes):
-        raise TypeError('key context must be raw bytes')
-    tail = observed[-64:]
-    coordinates = torch.zeros(64, dtype=torch.float32, device=device)
-    if tail:
-        coordinates[-len(tail):] = torch.tensor(list(tail), dtype=torch.float32,
-                                              device=device)
-    return coordinates
+@dataclass(frozen=True)
+class ArrayAppend:
+    key: torch.Tensor
+    owner: SuffixOwner
 
 
-def frozen_tail_key(observed: bytes, geometry):
-    """Apply the standing frozen map, without trainable contextual input."""
-    if any(parameter.requires_grad for parameter in geometry.parameters()):
-        raise ValueError('key geometry must be frozen')
-    parameter = next(geometry.parameters())
-    with torch.no_grad(), torch.autocast(device_type=parameter.device.type,
-                                        enabled=False):
-        return geometry(tail_coordinates(observed, device=parameter.device))
+def array_append(native_key: torch.Tensor, owner: SuffixOwner):
+    """Reuse native addressing; full suffix bytes serve only slot identity.
 
-
-def array_key(suffix: bytes, geometry):
-    """None means skip APPEND, including for a frozen map with nonzero bias."""
-    if not isinstance(suffix, bytes):
-        raise TypeError('key suffix must be raw bytes')
-    return frozen_tail_key(suffix, geometry) if suffix else None
+    One invocation describes one slot. Keep native shape/dtype/device and
+    storage without copying, normalizing, padding or recomputing its key.
+    Native keys are detached at construction, so reject a trainable input
+    rather than silently hiding a wrongly wired consultation key path.
+    """
+    if not isinstance(owner, SuffixOwner) or not isinstance(owner.suffix, bytes):
+        raise TypeError('slot owner must contain raw suffix bytes')
+    if not owner.suffix:
+        return None
+    if not isinstance(native_key, torch.Tensor):
+        raise TypeError('native key must be a tensor')
+    if native_key.requires_grad:
+        raise ValueError('native APPEND key must already be detached')
+    if native_key.shape != (64,) or not native_key.is_floating_point():
+        raise ValueError('one native 64-dimensional key required')
+    if not bool(torch.isfinite(native_key).all()):
+        raise ValueError('nonfinite native key')
+    return ArrayAppend(native_key, owner)
