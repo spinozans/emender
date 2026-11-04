@@ -1,0 +1,66 @@
+-------------------------------------------------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------
+                                                   Name    Self CPU %      Self CPU   CPU total %     CPU total  CPU time avg     Self CUDA   Self CUDA %    CUDA total  CUDA time avg    # of Calls
+-------------------------------------------------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------
+                                   NativeReplayBackward         1.61%       1.282ms        41.04%      32.629ms       8.157ms      16.028ms        65.76%      16.254ms       4.064ms             4
+                                                 kernel         0.00%       0.000us         0.00%       0.000us       0.000us       6.431ms        26.39%       6.431ms     803.901us             8
+                                           NativeReplay         1.12%     890.711us         2.06%       1.641ms     410.286us       3.219ms        13.21%       3.254ms     813.606us             4
+                                     CheckpointFunction        11.75%       9.342ms        24.82%      19.735ms       9.868ms       3.212ms        13.18%       3.647ms       1.824ms             2
+triton_red_fused__to_copy_add_any_bitwise_and_bitwis...         0.00%       0.000us         0.00%       0.000us       0.000us       2.067ms         8.48%       2.067ms       4.038us           512
+triton_per_fused_add_mul_neg_scalar_tensor_sum_unsqu...         0.00%       0.000us         0.00%       0.000us       0.000us       1.482ms         6.08%       1.482ms       2.895us           512
+triton_per_fused__to_copy_any_bitwise_and_bitwise_no...         0.00%       0.000us         0.00%       0.000us       0.000us       1.008ms         4.14%       1.008ms       1.969us           512
+triton_per_fused__to_copy_bitwise_and_bitwise_or_cla...         0.00%       0.000us         0.00%       0.000us       0.000us     988.010us         4.05%     988.010us       1.930us           512
+triton_per_fused__softmax__to_copy_any_argmax_bitwis...         0.00%       0.000us         0.00%       0.000us       0.000us     972.167us         3.99%     972.167us       1.899us           512
+triton_per_fused__softmax_backward_data_bitwise_and_...         0.00%       0.000us         0.00%       0.000us       0.000us     850.088us         3.49%     850.088us       1.660us           512
+void at::native::elementwise_kernel<128, 2, at::nati...         0.00%       0.000us         0.00%       0.000us       0.000us     785.893us         3.22%     785.893us       1.337us           588
+triton_red_fused_add_expand_mul_scalar_tensor_sigmoi...         0.00%       0.000us         0.00%       0.000us       0.000us     783.270us         3.21%     783.270us       1.530us           512
+triton_per_fused_add_bitwise_and_bitwise_not_bitwise...         0.00%       0.000us         0.00%       0.000us       0.000us     776.260us         3.19%     776.260us       1.516us           512
+triton_per_fused__to_copy_bitwise_and_eq_ge_lt_mul_s...         0.00%       0.000us         0.00%       0.000us       0.000us     750.726us         3.08%     750.726us       1.466us           512
+triton_per_fused_add_clamp_max_ge_index_pow_scalar_t...         0.00%       0.000us         0.00%       0.000us       0.000us     721.860us         2.96%     721.860us       1.410us           512
+triton_poi_fused__to_copy_add_bitwise_and_eq_ge_lt_m...         0.00%       0.000us         0.00%       0.000us       0.000us     600.131us         2.46%     600.131us       1.172us           512
+triton_per_fused__softmax_backward_data_add_bitwise_...         0.00%       0.000us         0.00%       0.000us       0.000us     599.624us         2.46%     599.624us       1.171us           512
+triton_poi_fused_add_bitwise_and_expand_mul_neg_scal...         0.00%       0.000us         0.00%       0.000us       0.000us     598.308us         2.45%     598.308us       1.169us           512
+         triton_poi_fused_add_mul_sub_unsqueeze_where_8         0.00%       0.000us         0.00%       0.000us       0.000us     563.363us         2.31%     563.363us       1.100us           512
+triton_poi_fused__to_copy_bitwise_and_eq_ge_lt_unsqu...         0.00%       0.000us         0.00%       0.000us       0.000us     550.659us         2.26%     550.659us       1.076us           512
+triton_red_fused_add_mul_sigmoid_squeeze_sum_unsquee...         0.00%       0.000us         0.00%       0.000us       0.000us     518.848us         2.13%     518.848us       1.013us           512
+void at::native::vectorized_elementwise_kernel<4, at...         0.00%       0.000us         0.00%       0.000us       0.000us     513.507us         2.11%     513.507us       0.949us           541
+                                               aten::mm         5.32%       4.232ms         6.29%       5.002ms      84.784us     504.546us         2.07%     504.546us       8.552us            59
+                   triton_per_fused_mul_sum_unsqueeze_5         0.00%       0.000us         0.00%       0.000us       0.000us     500.486us         2.05%     500.486us       0.978us           512
+                                            aten::addmm         7.76%       6.172ms         8.59%       6.834ms     131.417us     493.604us         2.03%     493.604us       9.492us            52
+triton_per_fused_add_mul_sigmoid_sigmoid_backward_sq...         0.00%       0.000us         0.00%       0.000us       0.000us     481.924us         1.98%     481.924us       0.941us           512
+                                            aten::copy_         1.63%       1.295ms         7.99%       6.352ms      29.005us     346.145us         1.42%     346.145us       1.581us           219
+                                 ampere_sgemm_32x128_tn         0.00%       0.000us         0.00%       0.000us       0.000us     242.112us         0.99%     242.112us      15.132us            16
+                        ampere_sgemm_32x32_sliced1x4_tn         0.00%       0.000us         0.00%       0.000us       0.000us     182.145us         0.75%     182.145us       5.060us            36
+                                              aten::sum         0.44%     352.821us         0.75%     597.341us      35.138us      91.201us         0.37%      91.201us       5.365us            17
+                                 ampere_sgemm_32x128_nn         0.00%       0.000us         0.00%       0.000us       0.000us      86.944us         0.36%      86.944us      10.868us             8
+                         Memcpy DtoD (Device -> Device)         0.00%       0.000us         0.00%       0.000us       0.000us      72.288us         0.30%      72.288us       1.112us            65
+                        ampere_sgemm_64x32_sliced1x4_nt         0.00%       0.000us         0.00%       0.000us       0.000us      69.664us         0.29%      69.664us      11.611us             6
+void cutlass::Kernel2<cutlass_80_tensorop_bf16_s1681...         0.00%       0.000us         0.00%       0.000us       0.000us      65.186us         0.27%      65.186us      16.297us             4
+                       aten::native_layer_norm_backward         0.09%      74.190us         0.28%     221.811us      44.362us      61.057us         0.25%      61.057us      12.211us             5
+                                              aten::add         0.54%     432.300us         0.87%     694.080us      23.136us      56.098us         0.23%      56.098us       1.870us            30
+void cutlass::Kernel2<cutlass_80_tensorop_bf16_s1681...         0.00%       0.000us         0.00%       0.000us       0.000us      55.169us         0.23%      55.169us      13.792us             4
+void at::native::vectorized_elementwise_kernel<4, at...         0.00%       0.000us         0.00%       0.000us       0.000us      52.992us         0.22%      52.992us       1.359us            39
+void at::native::reduce_kernel<128, 4, at::native::R...         0.00%       0.000us         0.00%       0.000us       0.000us      50.464us         0.21%      50.464us       5.046us            10
+void at::native::(anonymous namespace)::GammaBetaBac...         0.00%       0.000us         0.00%       0.000us       0.000us      41.824us         0.17%      41.824us       8.365us             5
+void cutlass::Kernel2<cutlass_80_tensorop_bf16_s1681...         0.00%       0.000us         0.00%       0.000us       0.000us      41.729us         0.17%      41.729us      10.432us             4
+                                aten::native_layer_norm         0.26%     204.681us         0.59%     473.031us      52.559us      41.472us         0.17%      41.472us       4.608us             9
+void at::native::(anonymous namespace)::vectorized_l...         0.00%       0.000us         0.00%       0.000us       0.000us      41.472us         0.17%      41.472us       4.608us             9
+void at::native::vectorized_elementwise_kernel<4, at...         0.00%       0.000us         0.00%       0.000us       0.000us      41.472us         0.17%      41.472us       1.012us            41
+void at::native::unrolled_elementwise_kernel<at::nat...         0.00%       0.000us         0.00%       0.000us       0.000us      38.944us         0.16%      38.944us       2.050us            19
+                       Memcpy DtoH (Device -> Pageable)         0.00%       0.000us         0.00%       0.000us       0.000us      37.984us         0.16%      37.984us       4.748us             8
+                         aten::embedding_dense_backward         0.02%      11.930us         0.07%      51.890us      51.890us      34.432us         0.14%      35.296us      35.296us             1
+void at::native::(anonymous namespace)::embedding_ba...         0.00%       0.000us         0.00%       0.000us       0.000us      34.432us         0.14%      34.432us      34.432us             1
+                                            aten::fill_         0.32%     257.191us         0.76%     601.652us      17.696us      33.728us         0.14%      33.728us       0.992us            34
+void at::native::(anonymous namespace)::CatArrayBatc...         0.00%       0.000us         0.00%       0.000us       0.000us      33.280us         0.14%      33.280us       1.387us            24
+void cutlass::Kernel2<cutlass_80_tensorop_bf16_s1681...         0.00%       0.000us         0.00%       0.000us       0.000us      31.361us         0.13%      31.361us      15.681us             2
+void cublasLt::splitKreduce_kernel<32, 16, int, floa...         0.00%       0.000us         0.00%       0.000us       0.000us      27.712us         0.11%      27.712us       1.732us            16
+                                             aten::add_         0.14%     108.930us         0.24%     190.520us      15.877us      27.296us         0.11%      27.296us       2.275us            12
+void cutlass::Kernel2<cutlass_80_tensorop_bf16_s1681...         0.00%       0.000us         0.00%       0.000us       0.000us      26.176us         0.11%      26.176us      13.088us             2
+                        ampere_sgemm_32x32_sliced1x4_nt         0.00%       0.000us         0.00%       0.000us       0.000us      24.672us         0.10%      24.672us      12.336us             2
+                                          memcpy32_post         0.00%       0.000us         0.00%       0.000us       0.000us      24.384us         0.10%      24.384us       1.016us            24
+void cutlass::Kernel2<cutlass_80_simt_sgemm_64x64_8x...         0.00%       0.000us         0.00%       0.000us       0.000us      23.872us         0.10%      23.872us       3.979us             6
+void at::native::unrolled_elementwise_kernel<at::nat...         0.00%       0.000us         0.00%       0.000us       0.000us      23.712us         0.10%      23.712us       2.964us             8
+                                           aten::gather         0.20%     157.550us         0.37%     297.691us      29.769us      23.648us         0.10%      23.648us       2.365us            10
+void at::native::reduce_kernel<128, 4, at::native::R...         0.00%       0.000us         0.00%       0.000us       0.000us      22.753us         0.09%      22.753us       5.688us             4
+-------------------------------------------------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------
+Self CPU time total: 79.509ms
+Self CUDA time total: 24.371ms

@@ -1,0 +1,47 @@
+{
+  "status": "verified_wrapper_optimization",
+  "reference_mode": "original slice-per-token replay, reconstructed read-only from current function",
+  "original_reference_fingerprint_exact": true,
+  "optimized_fingerprint_exact": true,
+  "reference_forward_backward_ms": [
+    20.69574943743646,
+    40.09168269112706
+  ],
+  "optimized_forward_backward_ms": [
+    21.881866035982966,
+    30.377863440662622
+  ],
+  "reference_update_median_ms": 1.828781794756651,
+  "optimized_update_median_ms": 1.4309519901871681,
+  "reference_compute_steps_per_second": 14.731519995007922,
+  "optimized_compute_steps_per_second": 17.287591977113323,
+  "compute_rate_gain_fraction": 0.17351040374459514,
+  "reference_split_replay_ms": {
+    "median_forward_ms": 9.387199878692627,
+    "median_backward_ms": 14.203968048095703
+  },
+  "optimized_split_replay_ms": {
+    "median_forward_ms": 9.186511874198914,
+    "median_backward_ms": 6.76366400718689
+  },
+  "passive_reference_forward_backward_ms": [
+    13.139659073203802,
+    25.09969612583518
+  ],
+  "passive_optimized_forward_backward_ms": [
+    11.66379707865417,
+    23.141547804698348
+  ],
+  "throughput_scope": "50 repeated fixed real document batches; synchronized compute only, disposable optimizer, weights restored outside timing; source/cache assembly and serialization excluded; no retraining",
+  "failures": [
+    "Fingerprint unit-test initial collection failed on relative import; corrected absolute import; two tests then passed.",
+    "First split capture failed because retain_graph=True conflicts with AOT donated buffers; retained failure.log; removed retain_graph on the single capture-time autograd traversal; split captures then byte-matched combined graphs."
+  ],
+  "residual_risks": [
+    "First frozen real 16x128 batch only; strict identity does not establish determinism for every device/software/version/window.",
+    "Individual native read/addressing/store-primitive timings are unavailable inside the fused unmodified kernel; no invented additive attribution.",
+    "Host timing has GC/scheduling outliers. Optimized passive backward mean is 53.71ms versus 23.14ms median; raw samples retained, no sustained passive ratio asserted.",
+    "Existing trained launch-gate hashes remain frozen and intentionally do not authorize retraining with the changed replay; independent new validation manifest is retained.",
+    "No intrinsic 2.5x store ceiling established. Replay reconstruction, full-budget kernels, checkpoint recomputation and metadata/telemetry remain."
+  ]
+}

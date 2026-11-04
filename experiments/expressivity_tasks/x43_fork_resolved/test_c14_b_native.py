@@ -7,7 +7,7 @@ from experiments.expressivity_tasks.x43_fork_resolved.c14_b_native import native
 from experiments.expressivity_tasks.x43_fork_resolved.c14_b_suffix import queried_suffix
 from experiments.expressivity_tasks.x42_pile_scale.velocity_candidate import Policy
 
-pytestmark=pytest.mark.skipif(os.environ.get('GPU_LEASE_HELD') not in ('2','4'),reason='requires real GPU lease')
+pytestmark=pytest.mark.skipif(os.environ.get('GPU_LEASE_HELD') not in ('2','3','4','5','6'),reason='requires real GPU lease')
 
 
 @pytest.mark.parametrize('budget',[1,32,64])

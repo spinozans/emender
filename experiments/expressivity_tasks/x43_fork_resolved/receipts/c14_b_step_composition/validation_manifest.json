@@ -1,0 +1,28 @@
+{
+  "status": "passed",
+  "physical_gpu": "3",
+  "baseline_battery": "92 passed in 35.60s",
+  "candidate_battery": "92 passed in 35.53s",
+  "source_sha256": {
+    "c14_b_batched_replay.py": "19885c372cc467daf3e09a171434cb777ccd9a05537f89a99634f65c5d8a9a40",
+    "c14_b_step_composition.py": "ac5629bc81a88d8909b5050e074d5809c0f29ae08a954fb9c2095317ca2fc036",
+    "test_c14_b_step_composition.py": "420c3b1349b6f3731989ce482c72aa59813dcca09b6a3f2a6ba8ecb952e7bd78",
+    "test_c14_b_native.py": "da19df8581910be9814d11d3026ae44aa7637868836cbf16456f54199859c01b",
+    "test_c14_b_batched_replay.py": "e5df9d37a92e83537e5ad3ac8491dae84b95087a3f9d7b57c9c62a77095baaab",
+    "test_c14_b_ablation.py": "b9f1a63d1d421e410bc73fcefa500f3c662779f168013a75b63b3416abf01d93",
+    "test_c14_b_controls.py": "ba0a1a4caad36aa245fe75a8e103a99046f0bfbdf99650535a4d1f0f9ac33c5f"
+  },
+  "validation_groups": [
+    "Model law: exact disabled dense parity and unchanged 2133700 parameter inventory.",
+    "Answer contract: first/middle/last shard full-row decoder identity, contexts and cache hashes.",
+    "Store semantics: native/eager lifecycle, capacity, operation counters, stream law, causality and ownership.",
+    "Autograd: native/eager gradient parity, registered BF16 finite backward and checkpoint forward/gradient identity.",
+    "Document contract: raw byte receipts, masked padding, boundary resets and document-disjoint evaluation tests.",
+    "Optimization identity: strict repeated loss/slot states/traces/replay/model gradients, original-to-unbind and separate-process comparison; production kernel hash audit."
+  ],
+  "scope": "Six explicit validation groups backed by the complete existing C14 battery and fresh strict manifests. Not an X31 re-certification, training or evaluation verdict.",
+  "battery_sha256": {
+    "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_b_step_composition/baseline_battery.txt": "ab23aaf2a5062a871c7e27897e78d30658abc258ac1d01b1b7a37344400bb985",
+    "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_b_step_composition_verified/candidate_battery.txt": "b637cfbc4a10130a8ed714b3ae12609dbfe480a5ad6300dc51ac65aa673ae4e4"
+  }
+}

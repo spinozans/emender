@@ -10,7 +10,7 @@ from experiments.expressivity_tasks.x43_fork_resolved.c14_b_control_model import
 from experiments.expressivity_tasks.x43_fork_resolved.c14_b_suffix import queried_suffix
 from experiments.expressivity_tasks.x42_pile_scale.velocity_candidate import Policy
 from experiments.expressivity_tasks.x43_fork_resolved.c6 import count
-pytestmark=pytest.mark.skipif(os.environ.get('GPU_LEASE_HELD') not in ('2','4'),reason='requires real lease')
+pytestmark=pytest.mark.skipif(os.environ.get('GPU_LEASE_HELD') not in ('2','3','4','5','6'),reason='requires real lease')
 
 @pytest.mark.parametrize('append_only',[False,True])
 @pytest.mark.parametrize('budget',[1,32,257])

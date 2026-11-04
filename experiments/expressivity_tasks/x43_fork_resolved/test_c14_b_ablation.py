@@ -5,7 +5,7 @@ import torch
 from experiments.expressivity_tasks.x43_fork_resolved.c14_b_ablation_model import StoreIntegrated
 from experiments.expressivity_tasks.x43_fork_resolved.c6 import count
 
-pytestmark=pytest.mark.skipif(os.environ.get('GPU_LEASE_HELD') not in ('2','4'),reason='real lease required')
+pytestmark=pytest.mark.skipif(os.environ.get('GPU_LEASE_HELD') not in ('2','3','4','5','6'),reason='real lease required')
 
 
 @pytest.mark.parametrize('control',['append_only','unbudgeted'])

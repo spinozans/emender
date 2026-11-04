@@ -34,7 +34,7 @@ def test_batched_replay_values_and_gradients(budget,write):
             assert a is None and b is None
         else:torch.testing.assert_close(a,b,atol=2e-6,rtol=2e-5)
 
-@pytest.mark.skipif(__import__('os').environ.get('GPU_LEASE_HELD') not in ('2','4'),reason='requires real GPU lease')
+@pytest.mark.skipif(__import__('os').environ.get('GPU_LEASE_HELD') not in ('2','3','4','5','6'),reason='requires real GPU lease')
 def test_graph_reuse_updates_values_ownership_padding_and_upstream_gradient():
     from experiments.expressivity_tasks.x43_fork_resolved.c14_b_native import NativeReplay
     torch.manual_seed(3401)
