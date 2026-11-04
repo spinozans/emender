@@ -1,0 +1,45 @@
+{
+  "status": "conflict_stop_before_implementation",
+  "launch_ready": false,
+  "registration_commit": "8196246b",
+  "audit_commit": "6864a20d",
+  "component_commit": "51088af4",
+  "protocol_amended": false,
+  "supervisor_tool_available": false,
+  "supervisor_contact_attempt": "Tool catalog searched for contact_supervisor and intercom/supervisor capabilities; none available. No contact or reply claimed.",
+  "decision_needed": {
+    "subject": "Exact frozen mapping from an arbitrary queried byte suffix to each head's 64-dimensional array key",
+    "registration_requirement": "APPEND inserts the answer as a slot keyed by that queried suffix through the standing frozen key geometry.",
+    "implementation_evidence": [
+      "velocity_candidate.Cell.forward computes per-position features = W_in(x) + features[h](ids), then geometry[h]['key'](features).detach().",
+      "features[h] is a frozen vocab-by-64 embedding and geometry[h]['key'] is a frozen 64-to-64 linear map. Neither accepts a variable-length byte sequence.",
+      "W_in is trainable; detaching its output key prevents key gradients but does not make the contextual key invariant under optimizer updates.",
+      "c14_b_suffix.queried_suffix supplies exact suffix identity and ownership, with no numeric sequence-to-key map. The preregistration does not specify a suffix pooling, recurrent reduction, or empty-suffix key."
+    ],
+    "question": "Specify the deterministic suffix-to-64-coordinate mapping, including empty suffix handling and whether contextual W_in(x) participates. Reusing the current position's stream key, pooling frozen byte embeddings, and introducing a sequence fold produce different addressing experiments; no choice was silently installed.",
+    "scope": "This is a numeric-key specification issue, not a claim that shared-store insertion, native replay, or checkpoint integration is impossible."
+  },
+  "validation": {
+    "command": "/home/erikg/emender/.venv/bin/python -m pytest -q experiments/expressivity_tasks/x43_fork_resolved/test_c14_b.py experiments/expressivity_tasks/x43_fork_resolved/test_c14_b_suffix.py",
+    "result": "11 passed in 2.44s",
+    "scope": "Existing registration and causal suffix component tests only. No enabled integration or full-battery claim."
+  },
+  "resume": {
+    "phase": 2,
+    "next": "Resolve frozen suffix numeric-key mapping; extend native forward, decision journal and replay/checkpoint backward together, then run every registered parity gate before training.",
+    "training_started": false,
+    "steps": 0,
+    "targets": 0,
+    "active_seconds": 0,
+    "stream_cursor": 0,
+    "checkpoint": null,
+    "optimizer": null,
+    "rng_state": null,
+    "lease": null
+  },
+  "residual_risks": [
+    "Store-integrated head, enabled backward and all six parity gates remain outstanding.",
+    "No training, paired evaluation, PB1-PB4 or conditional ablations performed.",
+    "A specification decision cannot be received through the requested supervisor tool in this runtime."
+  ]
+}
