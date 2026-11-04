@@ -55,6 +55,26 @@ def launch(policy,path,registration):
     log=(path/f'parent_console{attempt}.txt').open('w')
     command=['bash',str(ROOT/'run_leased.sh'),'-m','experiments.expressivity_tasks.x42_pile_scale.velocity_train',
         '--policy',str(path/'policy.json'),'--registration',str(registration),'--output',str(output)]
+    card=os.environ.get('X42_VELOCITY_CARD')
+    if card is not None:
+        if card not in ('1','5','6'):raise ValueError('single-card search requires card 1, 5 or 6')
+        # Same broker and interpreter as run_leased.sh, with one-card admission.
+        env['GPU_LEASE_VISIBLE']=card
+        command=['bash','-c','''set -euo pipefail
+source scripts/gpu_lease.sh
+lease_exports="$(scripts/gpu_lease.sh acquire 1 --wait)"
+eval "$lease_exports"
+[[ "$GPU_LEASE_HELD" == "$X42_VELOCITY_CARD" ]]
+mkdir -p "$X42_LAUNCH_RECEIPTS"
+printf '%s\n' "$GPU_LEASE_HELD" > "$X42_LAUNCH_RECEIPTS/lease.txt"
+git rev-parse HEAD > "$X42_LAUNCH_RECEIPTS/base_commit.txt"
+printf '%q ' "$@" > "$X42_LAUNCH_RECEIPTS/command.txt"
+set +e
+"$@"
+status=$?
+printf '{"exit_code":%d}\n' "$status" > "$X42_LAUNCH_RECEIPTS/terminal.json"
+exit "$status"
+''','x42-single-card',PYTHON,*command[2:]]
     child=subprocess.Popen(command,env=env,stdout=log,stderr=subprocess.STDOUT,start_new_session=True)
     log.close();return child,output
 
@@ -82,7 +102,7 @@ def cleanup_previous(out):
         if 'start_ticks' not in entry or (proc/'stat').read_text().split()[21]!=entry['start_ticks']:
             raise RuntimeError('refusing unverified old process')
         command=(proc/'cmdline').read_bytes()
-        if b'run_leased.sh' not in command or str(out).encode() not in command:
+        if (b'run_leased.sh' not in command and b'x42-single-card' not in command) or str(out).encode() not in command:
             raise RuntimeError('old child identity does not match this run')
         os.killpg(pid,signal.SIGTERM)
         # Give the old group time to release its lease before a scratch retry.
@@ -202,11 +222,11 @@ def run(registration,output,generations=1):
                 save_generation(state,es,digest,completed)
             generation=es.generation+1
             atomic_json(out/'parent.json',dict(pid=os.getpid(),status='running',generation=generation,
-                generations=generations,registration_sha256=digest,updated=time.time(),cards=[1,5,6]))
+                generations=generations,registration_sha256=digest,updated=time.time(),cards=[int(os.environ['X42_VELOCITY_CARD'])] if os.environ.get('X42_VELOCITY_CARD') else [1,5,6]))
             pending=[i for i in range(es.population) if str(i) not in completed];active={}
             try:
                 while pending or active:
-                    while pending and len(active)<3:
+                    while pending and len(active)<(1 if os.environ.get('X42_VELOCITY_CARD') else 3):
                         i=pending.pop(0);child,endpoint=launch(decode(es.x[i]),out/f'g{generation}_c{i:02}',registration)
                         active[i]=(child,endpoint)
                         atomic_json(out/'active.json',{str(i):process_receipt(c,p) for i,(c,p) in active.items()})

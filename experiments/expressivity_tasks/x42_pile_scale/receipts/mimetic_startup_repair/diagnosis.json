@@ -1,0 +1,14 @@
+{
+  "status": "diagnosed",
+  "cause": "validate_smoke hardcodes a committed non-mimetic throughput decision. Mimetic B64/T2048 smoke passes production shape and regime checks, but both exact smoke and regime hashes differ from the historical decision. Source registration guard already matches; this is evidence binding drift, not stale source hashes.",
+  "old_decision_smoke": "b4543b9a06c282cb109dca39f6a20f46636f6624fed0fcd80ae05aaad568306c",
+  "actual_smoke": "cfb95074b96e7e8b0591679ef6ab9ab092c776f6a06771eee0a02c1be76ff9c3",
+  "old_decision_regime": "afb333ea3bbb52573c1c1be0548fc8b928d17303fa43ad335b9ef6d039479648",
+  "actual_regime": "a61a9c10967477992d56d01a3535d2de8c6134fd794686e30875967b336a8037",
+  "failure": {
+    "status": "failed",
+    "traceback": "Traceback (most recent call last):\n  File \"/home/erikg/emender/experiments/expressivity_tasks/x42_pile_scale/velocity_parent.py\", line 239, in <module>\n    try:run(Path(a.registration),a.output,a.generations)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/erikg/emender/experiments/expressivity_tasks/x42_pile_scale/velocity_parent.py\", line 190, in run\n    validate_smoke(out)\n  File \"/home/erikg/emender/experiments/expressivity_tasks/x42_pile_scale/velocity_parent.py\", line 168, in validate_smoke\n    raise RuntimeError('throughput decomposition does not bind this smoke')\nRuntimeError: throughput decomposition does not bind this smoke\n",
+    "updated": 1793511168.520218
+  },
+  "requirement_ids": "Not applicable; no resilient DiLoCo behavior changed"
+}

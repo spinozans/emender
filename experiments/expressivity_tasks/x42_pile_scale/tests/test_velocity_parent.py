@@ -78,3 +78,21 @@ def test_smoke_reuse_allows_only_orchestration_changes(tmp_path,monkeypatch):
     assert (out/'smoke_compatibility.json').exists()
     new['sources']['velocity_train.py']='changed';regime.write_text(json.dumps(new))
     with pytest.raises(RuntimeError,match='compute source changed'):parent.validate_smoke(out)
+
+
+def test_single_card_launch_uses_broker_and_receipts(tmp_path,monkeypatch):
+    captured={}
+    def popen(command,**kwargs):
+        captured.update(command=command,**kwargs)
+        return object()
+    monkeypatch.setenv('X42_VELOCITY_CARD','5')
+    monkeypatch.setattr(parent.subprocess,'Popen',popen)
+    parent.launch(parent.Policy(),tmp_path/'candidate',tmp_path/'registration.json')
+    assert captured['env']['GPU_LEASE_VISIBLE']=='5'
+    assert captured['command'][4]==parent.PYTHON
+    script=captured['command'][2]
+    assert 'scripts/gpu_lease.sh acquire 1 --wait' in script
+    assert 'lease.txt' in script and 'terminal.json' in script
+    # Parse shell syntax without executing the broker or touching a GPU.
+    import os
+    assert os.spawnlp(os.P_WAIT,'bash','bash','-n','-c',script)==0
