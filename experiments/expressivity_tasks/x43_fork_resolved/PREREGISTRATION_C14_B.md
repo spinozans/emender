@@ -25,8 +25,9 @@ never reconstruct answers from target bytes. Reconstruct the queried suffix
 from the already observed raw bytes and cached context length, checking its
 bounds. No final target or future byte can enter a key or an answer.
 
-APPEND inserts the answer as a slot keyed by that queried suffix through the
-standing frozen key geometry. Content is all 260 scalars through the shared
+APPEND inserts the answer using the store's native APPEND key at the query
+position, exactly as a stream slot at that position (amendment #2 below).
+The full raw queried suffix is slot metadata, not an addressing input. Content is all 260 scalars through the shared
 trainable projection and the standing content/value maps. Reads use ordinary
 content-addressed addressing, with the standing learned query coordinates.
 Array and stream slots share the SAME addressing normalization and physical
@@ -145,37 +146,52 @@ RESULT_C12.md, RESULT_C13.md, their hash-bound receipts, c11/c6 head constructio
 x42 velocity_candidate and x40 store forward/backward plus the eager five-op
 reference. Resilient DiLoCo is not changed/tested; gap-matrix IDs inapplicable.
 
-## Supervisor key-specification amendment — 2026-11-04
+## Supervisor key ruling amendment #2 — 2026-11-04
 
 Provenance: supervisor decision delivered in the attended Intercom task channel,
-“X43 C14-B1 — SUPERVISOR KEY-SPECIFICATION RULING”, resolving the
-`484d4e57` phase2 integration stop. This completes the specification; none of
-PB1–PB4, the training budget, frozen controls or evaluation windows changes.
+“X43 C14-B1 — SUPERVISOR KEY RULING AMENDMENT #2”. This supersedes the
+2026-11-04 tail-64/zero-padding ruling in commit 060445bc and the qualifications
+in ca2e775a / receipts/c14_b/key_ruling_resume.json. Those commits remain
+historical evidence, not active addressing requirements. No PB1–PB4 denominator,
+training budget, frozen arm, oracle or evaluation window changes.
 
-A queried suffix uses its LAST 64 raw bytes as the frozen geometry's
-64-coordinate input, right-aligned with its final byte at coordinate 63 and
-zero-filled on the left when shorter. The same input construction and frozen
-key map MUST be used for stream context tails and array suffixes. No learned
-reduction, adapter, new parameters or trainable contextual contribution enters
-these keys. Learned query coordinates remain standing query coordinates.
+The prior padded-literal construction was flawed: 0x00 is a real byte, not a
+padding sentinel; literal suffix b'b' and context b'ab' yielded different keys.
+With the reported median suffix of 12 bytes, this was a majority-case filing
+inconsistency, not a rare long-suffix collision. The prior implementation and
+receipt own this flaw; their tests did not establish shared native addressing.
 
-This identity is load-bearing: when the queried suffix and context tail have
-the same coordinate bytes, their keys are identical. For a suffix shorter than
-the context tail, its left padding differs from preceding context bytes; the
-shared geometry permits natural comparison without asserting equality in that
-case. As context advances, similarity changes through geometry itself; the
-addressing similarity supplies soft staleness weighting and explicit ownership
-POP/DECAY supplies hard cleanup. No monotonic decay theorem is asserted for
-arbitrary bytes, repeated tails or a frozen linear geometry.
+Array slots use the store's NATIVE APPEND key at the query position, identical
+to a stream write at that position. Existing velocity_candidate.Cell.forward
+computes z = W_in(x), features = z + features[h](ids), then
+k = geometry[h]['key'](features).detach().unsqueeze(2). W_in is trainable;
+features[h] is a frozen byte embedding; the key geometry is frozen. Detaching
+keys prevents key gradients but does not freeze contextual features over
+optimizer steps. velocity_kernels.scan_kernel writes the supplied K payload
+into Keys on allocation. Preserve this complete rule, including contextual
+W_in(x), dtype, detach and ordinary native read normalization. Do not replace
+stream keys or add a suffix fold, byte padding, tail truncation or learned key
+adapter. Reuse the actual stream key tensor for an array APPEND at that query
+position; no recomputation with projected consultation content as key input.
 
-An empty suffix creates NO APPEND. Its registered all-zero answer would waste
-physical budget; the existing head blank-input path covers it under C14's
-device-off convention. This is the budget-honest reading of the registration's
-empty-context clause.
+Content is all 260 answer scalars through the shared trainable device_input
+projection and standing content/value maps. Each array slot additionally owns
+the full raw queried suffix bytes as stored metadata: no embedding, padding or
+parameters. Numeric addressing and reads use the ordinary shared similarity
+machinery. Metadata supplies identity for CORRECT (same suffix, wrong/stale
+answer) and MERGE (same-suffix duplicate consolidation). Preserve delayed causal
+correction and the tested window-local suffix ownership DECAY/POP component.
+Array and stream slots share physical capacity and native addressing.
 
-Suffixes longer than 64 bytes may collide when their last 64 bytes agree.
-These collisions are expected: similarity addressing, CORRECT for contradictions
-and MERGE for near-duplicates remain in force. Report observed tail collisions
-in PB3 telemetry, preserving distinct full suffix ownership identities. The
-supervisor reports median suffix length 12 bytes; this is context for the
-ruling, not a substitute for measured collision counts.
+Empty suffix creates no APPEND. Suffixes longer than 64 bytes use the native
+rule unchanged; there is no tail-truncation question. Similarity and operations
+handle addressing collisions. Native contextual similarity supplies staleness
+weighting with explicit ownership cleanup; no universal monotonic-similarity
+theorem is asserted for arbitrary or repeated contexts.
+
+PB3 must include array-slot read opportunities, slots found/read, and hit-rate
+with explicit denominators, alongside ownership and lifecycle telemetry. A run
+whose array slots are never read must expose zero hits. Bounded occupancy or
+successful insertion is not a findability receipt. All enabled native forward,
+replay/checkpoint backward, finite-gradient and frozen-control parity gates
+remain mandatory before any training.
