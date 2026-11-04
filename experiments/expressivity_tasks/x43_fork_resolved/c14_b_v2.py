@@ -8,7 +8,10 @@ from . import c14_b_train as train
 def configure():
     train.OUT=train.ROOT/'receipts/c14_b_v2'
     train.CHECKPOINT=Path('/home/erikg/c14_dense_bytes/emender_c14_b1_v2_resume.pt')
-    train.CODE=(*train.CODE,'c14_b_batched_replay.py','c14_b_replay_graph.py','c14_b_v2.py')
+    from .c14_b_train_decode import decode
+    train.oracle_shard=decode
+    train.CODE=(*train.CODE,'c14_b_batched_replay.py','c14_b_replay_graph.py','c14_b_v2.py',
+        'c14_b_train_decode.py','c14_b_eval_decode.py','c14_b_contexts.c','c14_fast_features.py','c14_fast_features.c')
 
 
 def main():
@@ -19,6 +22,7 @@ def main():
         validator.OUT=train.OUT;validator.CODE=train.CODE
         validator.main()
         gate=json.loads((train.OUT/'launch_gates.json').read_text())
+        gate['gates'].append('Native training feature/context decode is bit-identical to independent Python oracle on frozen first/middle/last shards; every training shard remains hash-checked')
         gate['implementation']='Unchanged B-only Triton forward; batched PyTorch autograd replay with fused tensor orchestration and CUDA graph launch capture; reentrant block checkpoint'
         gate['limitations']=['No production store kernel or X40 reverse-kernel changes; scalar eager store remains independent oracle.',
             'Native/replay output agreement is checked on every backward at the standing 2e-5 tolerance; cache answer bits and disabled dense outputs remain exact.',
