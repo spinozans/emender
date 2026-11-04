@@ -2451,6 +2451,36 @@ Paths are repository-relative. `emender` is this repository; `sxgc` is the exter
           "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_stacking/verdicts.json",
           "commit": "83e2a0697344cb9ed089971a24023e27c3cf88d1",
           "sha256": "3baace13652b5d2265bd971f06daecfd5ea22c82ce0ae12af34808e22b3976b9"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/RESULT_C14_B1.md",
+          "commit": "c6454d8807e896ef6dc32989f9d2346f9aa1625f",
+          "sha256": "40c31d9045d5a5558bf13f4804a0d70352fd6e7f78a5b275580c7447b5c7f65a"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_b_v2/pb_harvest_validation.json",
+          "commit": "c6454d8807e896ef6dc32989f9d2346f9aa1625f",
+          "sha256": "ed3a9f377d677269b8522f284a74bc4a2ea21b779aa68abe0c508ef25667dfc0"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_b_v2/verdict_summary.json",
+          "commit": "4ad7630c98fbe072fb7481038e9542d96756bbc4",
+          "sha256": "91b794ed2668cbf13256d6acac66a4d7c4b480225347b0fabf120ce0d89df041"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_b_v2/eval_table.json",
+          "commit": "4ad7630c98fbe072fb7481038e9542d96756bbc4",
+          "sha256": "d05b159976931dd4f4b1fcd7a63b1e2054c9428eae5bba814499a77304ad7c66"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_b/FIRST_ATTEMPT_HARVEST.json",
+          "commit": "8b770c3bafbcf22d2181fa64cf55eda564d04e53",
+          "sha256": "1febccb46df49a5e9da427f8626db4330a8d578c38ba74d519015aaed21dd5e8"
         }
       ]
     }
@@ -2662,9 +2692,20 @@ both are conditional projections, not completion promises. Native extractor
 parity uses frozen attestations, with no fresh extractor query rerun. No resilient
 DiLoCo behavior was changed, tested or run; its gap-matrix IDs do not apply.
 
-C14-B1 continuation component (not a result): `c14_b_suffix.py` reconstructs
-queried suffix identities from observed raw bytes and fails closed on lengths
-crossing a window reset. Eight component tests plus the three registration
-audit tests pass. This component is not wired into native store forward or
-replay; launch readiness remains false, training exposure remains zero, and
-PB1–PB4 remain unmeasured. No B1 implementation-complete claim is made.
+C14-B1 measured extension: the complete primary B1-v2 final-test NLL is
+**1.584700014**, +0.075440004 versus passive v2 1.509260010. PB2 supported,
+zero-target and fork NLL are 0.856875769 / 3.679494742 / 2.085738874, all worse
+than passive. PB3 shared occupancy is bounded at 32/64, with nonzero stale
+retirement, CORRECT, MERGE and numerically nonzero array reads in every head;
+findability is not evidence of causal benefit. PB4 unplugged NLL 2.430144516
+fails the .02 graceful-degradation margin against dense 2.276133549, although
+synthetic native decay empties populated stores. B1-v2 used 35,419 steps /
+71,677,042 targets in 2700.032370 active seconds; passive saw 2.499584x as many
+targets. The 17.351% byte-identical compute optimization is a separate profile,
+not a new trained result or intrinsic ceiling. The first 237-step attempt's
+complete NLL is 2.206163868, not the approximately 2.2046 progress printout;
+its 479,328 targets are 0.212204% of the stream and do not determine primary PB1.
+Full strata and lifecycle telemetry: [RESULT_C14_B1.md](RESULT_C14_B1.md), pinned
+under C14. Append-only is adopted in its existing source-bound worktree;
+conditional ablation completion is separately receipted, and unbudgeted remains
+pending. One seed and unequal exposure limit interpretation.
