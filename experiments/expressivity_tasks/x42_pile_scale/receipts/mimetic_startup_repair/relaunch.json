@@ -1,0 +1,39 @@
+{
+  "status": "running_generation1_awaiting_first_banked_endpoint",
+  "checked_utc": "2026-11-04T21:19:54Z",
+  "repair_commit": "2b4f4ae6",
+  "nomination_commit": "4c134610",
+  "service": "emender-velocity-loop.service",
+  "service_state": "MainPID=3442279\nEnvironment=X42_VELOCITY_CARD=1 OMP_NUM_THREADS=1 PYTHONDONTWRITEBYTECODE=1\nKillMode=control-group\nActiveState=active\nSubState=running\n",
+  "lease_path": "experiments/expressivity_tasks/x42_pile_scale/runs/velocity_mimetic_v1/g1_c00/launch1/lease.txt",
+  "leased_card": "1",
+  "service_dropin": "[Service]\nEnvironment=X42_VELOCITY_CARD=1\nEnvironment=OMP_NUM_THREADS=1\nEnvironment=PYTHONDONTWRITEBYTECODE=1\n",
+  "parent": {
+    "pid": 3442279,
+    "status": "running",
+    "generation": 1,
+    "generations": 12,
+    "registration_sha256": "ece5f3473aac97ee0a518e8032e498e3f8515b0ae173cdc82f0773861f2f5cbc",
+    "updated": 1793827087.0697875,
+    "cards": [
+      1
+    ]
+  },
+  "smoke_gate": "PASS: verify_registration and validate_smoke returned successfully against committed repair",
+  "tests": "19 passed: test_velocity_parent.py, test_velocity_state.py, test_registration_guard.py",
+  "registration_guard_matches": true,
+  "regime_guard_matches": true,
+  "resume_command": "/home/erikg/emender/.venv/bin/python -m experiments.expressivity_tasks.x42_pile_scale.velocity_parent --registration experiments/expressivity_tasks/x42_pile_scale/velocity_registration.json --output experiments/expressivity_tasks/x42_pile_scale/runs/velocity_mimetic_v1 --generations 12",
+  "resume_environment": {
+    "X42_VELOCITY_CARD": "1",
+    "OMP_NUM_THREADS": "1",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "residual_risks": [
+    "First scored generation endpoint pending at this check.",
+    "Transient systemd unit must be recreated after reboot; persisted generation state resumes exact population.",
+    "Archived non-mimetic registration generates advisory pre-commit warnings; preserved as historical evidence. Active mimetic registration and regime guards pass.",
+    "Scale nominations do not establish transfer or authorize terminal training."
+  ],
+  "manual_notes": "No contact_supervisor tool is exposed in this runtime (tool discovery returned no matches). No supervisor question or normal-text handoff sent. No WorksGood service or workers used; only existing GPU lease broker. Completed transformer/gdn2 runs read only. GDN2 global best is g1 c04 (3.167496), better than g12 c09 (3.176931); both full results retained in nomination. Cards 2/4 and C14 union untouched; no use of card7, /mnt/nvme2n1 writes or ~/sxgc."
+}
