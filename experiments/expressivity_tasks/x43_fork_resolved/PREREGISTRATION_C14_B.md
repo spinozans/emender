@@ -144,3 +144,38 @@ Read authorities: PREREGISTRATION_C14_BYTE.md, RESULT_C14_PAIRED_EVAL.md,
 RESULT_C12.md, RESULT_C13.md, their hash-bound receipts, c11/c6 head construction,
 x42 velocity_candidate and x40 store forward/backward plus the eager five-op
 reference. Resilient DiLoCo is not changed/tested; gap-matrix IDs inapplicable.
+
+## Supervisor key-specification amendment — 2026-11-04
+
+Provenance: supervisor decision delivered in the attended Intercom task channel,
+“X43 C14-B1 — SUPERVISOR KEY-SPECIFICATION RULING”, resolving the
+`484d4e57` phase2 integration stop. This completes the specification; none of
+PB1–PB4, the training budget, frozen controls or evaluation windows changes.
+
+A queried suffix uses its LAST 64 raw bytes as the frozen geometry's
+64-coordinate input, right-aligned with its final byte at coordinate 63 and
+zero-filled on the left when shorter. The same input construction and frozen
+key map MUST be used for stream context tails and array suffixes. No learned
+reduction, adapter, new parameters or trainable contextual contribution enters
+these keys. Learned query coordinates remain standing query coordinates.
+
+This identity is load-bearing: when the queried suffix and context tail have
+the same coordinate bytes, their keys are identical. For a suffix shorter than
+the context tail, its left padding differs from preceding context bytes; the
+shared geometry permits natural comparison without asserting equality in that
+case. As context advances, similarity changes through geometry itself; the
+addressing similarity supplies soft staleness weighting and explicit ownership
+POP/DECAY supplies hard cleanup. No monotonic decay theorem is asserted for
+arbitrary bytes, repeated tails or a frozen linear geometry.
+
+An empty suffix creates NO APPEND. Its registered all-zero answer would waste
+physical budget; the existing head blank-input path covers it under C14's
+device-off convention. This is the budget-honest reading of the registration's
+empty-context clause.
+
+Suffixes longer than 64 bytes may collide when their last 64 bytes agree.
+These collisions are expected: similarity addressing, CORRECT for contradictions
+and MERGE for near-duplicates remain in force. Report observed tail collisions
+in PB3 telemetry, preserving distinct full suffix ownership identities. The
+supervisor reports median suffix length 12 bytes; this is context for the
+ruling, not a substitute for measured collision counts.
