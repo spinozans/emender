@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parent
 REPO = ROOT.parents[2]
 REGISTRATION = ROOT/'receipts/c14_b/registration.json'
 PROTOCOL = ROOT/'PREREGISTRATION_C14_B.md'
+KEY_AMENDMENT_COMMIT = '060445bc'
 
 
 def sha(path):
@@ -31,8 +32,6 @@ def audit():
     if sys.executable != '/home/erikg/emender/.venv/bin/python':
         raise RuntimeError('project interpreter required')
     registration = json.loads(REGISTRATION.read_text())
-    if sha(PROTOCOL) != registration['preregistration_sha256']:
-        raise ValueError('preregistration changed')
     check_bindings(registration)
     # Locate the first commit containing the registration, rather than relying
     # on a mutable receipt's assertion about whether it was committed.
@@ -54,7 +53,21 @@ def audit():
     for path in (PROTOCOL, REGISTRATION):
         committed = subprocess.check_output(
             ['git', 'show', commit+':'+str(path.relative_to(REPO))], cwd=REPO)
-        if committed != path.read_bytes():
+        if path == PROTOCOL:
+            if hashlib.sha256(committed).hexdigest() != registration['preregistration_sha256']:
+                raise ValueError('original preregistration hash mismatch')
+            subprocess.run(['git', 'merge-base', '--is-ancestor',
+                            KEY_AMENDMENT_COMMIT, 'HEAD'], cwd=REPO, check=True)
+            amended = subprocess.check_output(
+                ['git', 'show', KEY_AMENDMENT_COMMIT+':'+relative], cwd=REPO)
+            amendment_paths = subprocess.check_output(
+                ['git', 'diff-tree', '--no-commit-id', '--name-only', '-r',
+                 KEY_AMENDMENT_COMMIT], cwd=REPO, text=True).splitlines()
+            if amendment_paths != [relative] or not amended.startswith(committed):
+                raise ValueError('key amendment must append to original registration alone')
+            if amended != path.read_bytes():
+                raise ValueError('preregistration changed after key amendment')
+        elif committed != path.read_bytes():
             raise ValueError(f'registration commit mismatch: {path.name}')
     import torch
     from .c11 import Boosted
@@ -73,6 +86,7 @@ def audit():
     if [p['slots'] for p in policies[0]] != [32, 64] or len(policies) != 2:
         raise ValueError('standing physical budget changed')
     return dict(status='passed_registration_audit', registration_commit=commit,
+                key_amendment_commit=KEY_AMENDMENT_COMMIT,
                 preregistration_sha256=sha(PROTOCOL), frozen_bindings=len(registration['files']),
                 trainable_parameters=count(model), standing_shape_parity=True,
                 layer_policies=policies, gpu_used=False, training_started=False,
