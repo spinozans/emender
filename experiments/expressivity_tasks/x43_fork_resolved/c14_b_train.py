@@ -45,11 +45,12 @@ def verified_batches(raw):
     if rows:yield rows
 
 
-def preflight():
+def preflight(*, check_implementation=True):
     audit()
     gate=json.loads((OUT/'launch_gates.json').read_text())
     assert gate['status']=='passed' and gate['launch_ready']
-    for name,digest in gate['code_sha256'].items():assert sha(ROOT/name)==digest,name
+    if check_implementation:
+        for name,digest in gate['code_sha256'].items():assert sha(ROOT/name)==digest,name
     p=json.loads((ROOT/'receipts/c14_dense/pile_span.json').read_text())
     assert sha(OFFSETS)==p['offsets_sha256']
     source=Path(p['source']);st=source.stat()

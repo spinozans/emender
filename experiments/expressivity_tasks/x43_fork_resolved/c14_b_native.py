@@ -1,10 +1,12 @@
 """B-only native shared-store forward. Frozen velocity kernels are untouched.
 
-The backward replays the differentiable eager store from independent empty
-window state and checks native/replay output agreement before differentiating.
+The backward batches the differentiable PyTorch store orchestration from
+independent empty window state, captures its launch schedule, and checks
+native/replay output agreement on every backward.
 This does not reuse or claim certification of the standing X40 reverse kernel.
 """
 import math
+import numpy as np
 import torch
 import triton
 import triton.language as tl
@@ -207,24 +209,29 @@ def native_forward(inputs,cfg,policy,metadata):
     k,q,v,av,pop,append,logits,coef,mc,ec=inputs
     owners,raw,windows,valid,keep,predictions=metadata
     b,t,_=k.shape
-    owner_ids=[];expiry=[]
-    for j in range(b):
-        canonical={}; ids=[]; ends=[]
-        for i in range(t):
-            o=owners[j][i]
-            ids.append(canonical.setdefault(o,len(canonical)) if o is not None and o.suffix else -1)
-            end=valid[j]
-            if o is not None:
-                end=next((n for n in range(i+1,valid[j]) if not o.is_current(windows[j],raw[j][:n+1])),valid[j])
-            ends.append(end)
-        owner_ids.append(ids);expiry.append(ends)
-    def ints(x,dtype=torch.int32):return torch.tensor(x,device=k.device,dtype=dtype)
+    cache=getattr(metadata,'encodings',{})
+    cache_key=('native',k.device)
+    encoded=cache.get(cache_key)
+    if encoded is None:
+        owner_ids=[];expiry=[]
+        for j in range(b):
+            canonical={}; ids=[]; ends=[]
+            for i in range(t):
+                o=owners[j][i]
+                ids.append(canonical.setdefault(o,len(canonical)) if o is not None and o.suffix else -1)
+                end=valid[j]
+                if o is not None:
+                    end=next((n for n in range(i+1,valid[j]) if not o.is_current(windows[j],raw[j][:n+1])),valid[j])
+                ends.append(end)
+            owner_ids.append(ids);expiry.append(ends)
+        def ints(x,dtype=torch.int32):return torch.tensor(x,device=k.device,dtype=dtype)
+        encoded=(ints(owner_ids),ints(predictions),ints(expiry),ints(keep),ints([list(r) for r in raw]),ints(valid))
+        cache[cache_key]=encoded
     output=torch.empty_like(v)
     state=(torch.empty(b,cfg.slots,64,device=k.device),torch.empty(b,cfg.slots,128,device=k.device),
            torch.empty(b,cfg.slots,device=k.device),torch.empty(b,7,cfg.slots,device=k.device,dtype=torch.int32))
     trace=torch.zeros(b,t,18,device=k.device,dtype=torch.int32)
-    kernel[(b,)](*(x.contiguous() for x in inputs),ints(owner_ids),ints(predictions),ints(expiry),ints(keep),
-        ints([list(r) for r in raw]),ints(valid),output,*state,trace,T=t,S=cfg.slots,BS=triton.next_power_of_2(cfg.slots),
+    kernel[(b,)](*(x.contiguous() for x in inputs),*encoded,output,*state,trace,T=t,S=cfg.slots,BS=triton.next_power_of_2(cfg.slots),
         Decay=cfg.decay_rate,Free=cfg.free_threshold,PopThreshold=cfg.pop_threshold,Enable=cfg.write_enable_threshold,
         Eps=cfg.eps_residual,MatchWire=policy.match_wire,OccSlope=policy.occ_slope,OccOnset=policy.occ_onset,
         enable_fp_fusion=False,num_warps=8)
@@ -243,24 +250,22 @@ class NativeReplay(torch.autograd.Function):
     @staticmethod
     def backward(ctx,grad,grad_trace):
         *inputs,out=ctx.saved_tensors
-        # Private immutable replay graph, rebuilt from the exact window reset;
-        # nothing is written back to the forward store or another window.
-        replay_inputs=[x.detach().requires_grad_(i in (1,2,3,4,5,6,7)) for i,x in enumerate(inputs)]
-        with torch.enable_grad():
-            replay,_=eager(*replay_inputs,ctx.cfg,ctx.policy,ctx.store_metadata)
-            torch.testing.assert_close(replay,out,atol=2e-5,rtol=2e-5,msg='native/replay divergence; fail closed')
-            active=[x for x in replay_inputs if x.requires_grad]
-            grads=torch.autograd.grad(replay,active,grad,allow_unused=True)
-        it=iter(grads)
-        return (None,None,None,*(next(it) if x.requires_grad else None for x in replay_inputs))
+        # The captured schedule resets every slot on each invocation; no
+        # state is written back to the forward store or another window.
+        from .c14_b_replay_graph import backward as replay_backward
+        replay,grads=replay_backward(inputs,grad,ctx.cfg,ctx.policy,ctx.store_metadata)
+        torch.testing.assert_close(replay,out,atol=2e-5,rtol=2e-5,msg='native/replay divergence; fail closed')
+        return (None,None,None,*grads)
 
 
 def native_reports(trace,cfg,valid):
     reports=[]
-    for j,row in enumerate(trace.cpu().tolist()):
+    for j,row in enumerate(trace.detach().cpu().numpy()):
         row=row[:valid[j]]
-        def total(n):return sum(r[n] for r in row)
-        def peak(n):return max((r[n] for r in row),default=0)
+        totals=row.sum(axis=0,dtype=np.int64)
+        peaks=row.max(axis=0,initial=0)
+        def total(n):return int(totals[n])
+        def peak(n):return int(peaks[n])
         denom=total(5)
         reports.append(dict(APPEND=total(2)+total(8),POP=total(1)+total(7)+total(12),
             DECAY=total(11),CORRECT=total(0)+total(9),MERGE=total(3)+total(4)+total(10),
@@ -270,6 +275,6 @@ def native_reports(trace,cfg,valid):
             array_read_opportunities=denom,array_slots_found=denom,array_slots_read=total(6),
             array_read_hit_rate=total(6)/denom if denom else None,reads=len(row),
             peak_occupancy=peak(16),peak_array=peak(13),peak_stream=peak(17),
-            final_array=row[-1][14] if row else 0,final_stream=row[-1][15] if row else 0,
-            occupancy=[(r[15],r[14]) for r in row],budget=cfg.slots,telemetry_source='native_event_trace'))
+            final_array=int(row[-1,14]) if len(row) else 0,final_stream=int(row[-1,15]) if len(row) else 0,
+            occupancy=[tuple(r) for r in row[:,(15,14)].tolist()],budget=cfg.slots,telemetry_source='native_event_trace'))
     return reports

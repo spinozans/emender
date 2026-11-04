@@ -11,6 +11,13 @@ from .c14_b_suffix import queried_suffix
 from .c14_b_store import SharedStore
 
 
+class StoreMetadata(tuple):
+    """Window-local immutable metadata with reusable integer encodings."""
+    def __new__(cls,values):
+        obj=super().__new__(cls,values);obj.encodings={}
+        return obj
+
+
 class StoreIntegrated(Boosted):
     def __init__(self):
         super().__init__('emender', 2000000)
@@ -39,6 +46,7 @@ class StoreIntegrated(Boosted):
                    if i < valid_lengths[j] else None for i in range(t)] for j in range(b)]
         keep = answers.detach().abs().sum(-1).ne(0).cpu().tolist()
         predictions = answers[...,:256].detach().argmax(-1).cpu().tolist()
+        metadata = StoreMetadata((owners,raw,windows,valid_lengths,keep,predictions))
         x = self.head.base.embed(ids)
         rows = []
         for block in self.head.base.blocks:
@@ -63,7 +71,6 @@ class StoreIntegrated(Boosted):
                         keys = cell.geometry[h]['key'](features).detach()
                         queries = cell.geometry[h]['query'](features)
                         from .c14_b_native import eager, native_forward, NativeReplay, native_reports
-                        metadata = (owners,raw,windows,valid_lengths,keep,predictions)
                         inputs = (keys,queries,native_values[:,:,h],array_values[:,:,h],
                                   pop[:,:,h],append[:,:,h],logits[:,:,h],
                                   cell.append_err_coef[h],cell.match_coef[h],cell.error_coef[h])
@@ -72,7 +79,10 @@ class StoreIntegrated(Boosted):
                                 output,trace = NativeReplay.apply(cfg,cell.gate_policies[h],metadata,*inputs)
                             else:
                                 output,(_,trace) = native_forward(inputs,cfg,cell.gate_policies[h],metadata)
-                            head_reports = native_reports(trace,cfg,valid_lengths)
+                            # The initial checkpoint forward already owns the
+                            # complete telemetry; do not serialize it a second
+                            # time during the discarded backward recomputation.
+                            head_reports = [] if checkpointed and self.training and torch.is_grad_enabled() else native_reports(trace,cfg,valid_lengths)
                         else:
                             output,head_reports = eager(*inputs,cfg,cell.gate_policies[h],metadata)
                         for j,report in enumerate(head_reports):
