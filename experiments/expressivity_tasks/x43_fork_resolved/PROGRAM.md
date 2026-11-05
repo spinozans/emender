@@ -2493,6 +2493,42 @@ Paths are repository-relative. `emender` is this repository; `sxgc` is the exter
           "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_b_v2_append_only/eval_table.json",
           "commit": "af4d9c4523462eb943bf1f5c2edeb4afdc76af21",
           "sha256": "4d90e7ba72ecd5daad55cffc4916e20d00e93650341dbd17cd42cd8a30ae75ed"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_b_v2_unbudgeted/source_binding.json",
+          "commit": "b4d276d068fb2ef0ae6f13353b65e7f0be0da1ca",
+          "sha256": "e25cb8cfc57c9f2a0c10ca42ce3c252ebe731009164c2ce294f99bb8e94b9f13"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_b_v2_unbudgeted/training_summary.json",
+          "commit": "b4d276d068fb2ef0ae6f13353b65e7f0be0da1ca",
+          "sha256": "6a4fe0d4c176114b5dc02412143fb87de8bf81f92c9cfb913a20117562345baa"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_b_v2_unbudgeted/training.json.gz",
+          "commit": "b4d276d068fb2ef0ae6f13353b65e7f0be0da1ca",
+          "sha256": "e69ded598300edb4022b4ffcca1358a3c67dfa3593377fdf1e1efea8ce901c81"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_b_v2_unbudgeted/RESUME_STATE.json",
+          "commit": "0fc30e0a4e731e1430d4616a80a9f34d229c2251",
+          "sha256": "d7f0241e16262b993c0045c02ac7e509298d59046b4266e031f7445f36fa4941"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_b_v2_unbudgeted/eval_resume.json.gz",
+          "commit": "0fc30e0a4e731e1430d4616a80a9f34d229c2251",
+          "sha256": "392ef984aa6078c9dbeb5ce6e5aaa13b5ca221b0fe514d95a29b7dab43a603d5"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/RESULT_C14_UNBUDGETED_PROGRESS.md",
+          "commit": "0fc30e0a4e731e1430d4616a80a9f34d229c2251",
+          "sha256": "3571607926cdcb3ef3d7d05799dbea9fc059b61b6e6b8ef64c92d9eda3842be7"
         }
       ]
     }
@@ -2722,3 +2758,23 @@ under C14. Append-only completed in its existing source-bound worktree: final on
 NLL 2.246020115 / 2.710095493, with on +0.661320101 versus B1-v2, after
 37,254 steps / 75,394,452 targets. All frozen denominators and exit 0 are
 harvested and pinned; unbudgeted remains pending. One seed and unequal exposure limit interpretation.
+
+
+C14-B1 unbudgeted continuation: source-identical training completed at commit
+`c190956d3f970efe18e4377d6d80ac2fab83e5ba` (replay SHA256 `58a8acb8...`),
+using the unchanged 2/4 lease guard on card 2. It processed 7,142 steps /
+14,455,380 byte targets in 2700.288256 active seconds. All four heads kept the
+finite 257-slot cap nonbinding: peaks 81/110/81/96, zero capacity merges.
+Full operations and document resets remain enabled; full training telemetry is
+losslessly retained. Training receipts are committed separately from evaluation.
+
+Paired evaluation is **paused and incomplete** after 80/26,807 shards,
+10,240 windows / 1,294,694 targets, 156.714530 seconds. Frozen evaluator
+throughput projects roughly 14.27 hours overall; this is a conditional estimate.
+No final unbudgeted NLL or three-arm budget-pressure verdict exists. The table
+remains full-ops-budgeted 1.584700014, append-only 2.246020115, unbudgeted pending.
+The selected checkpoints and frozen arms remain unchanged. Exact resume/archive
+hashes and commands are in `receipts/c14_b_v2_unbudgeted/RESUME_STATE.json` and
+`resume_eval.sh`. One seed and sharply unequal realized exposure still limit
+causal interpretation. Cleanup follows the paused run; the archive restores its
+source-bound receipts before resuming.
