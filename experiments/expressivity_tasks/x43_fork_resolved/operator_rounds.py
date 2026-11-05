@@ -118,7 +118,8 @@ class IterativeForward:
                                         torch.ones(1,1,1,device=ids.device),pop[:,:,h:h+1].contiguous(),append[:,:,h:h+1].contiguous(),
                                         old,cfg,cell.append_err_coef[h:h+1],wire_logits=logits[:,:,h:h+1].contiguous(),
                                         match_coef=cell.match_coef[h:h+1],error_coef=cell.error_coef[h:h+1],
-                                        match_wire=policy.match_wire,occ_onset=policy.occ_onset,occ_slope=policy.occ_slope,evidence=evidence)
+                                        match_wire=policy.match_wire,occ_onset=policy.occ_onset,occ_slope=policy.occ_slope,evidence=evidence,error_evidence=torch.empty_like(evidence),
+                                        occupancy=torch.empty_like(evidence),gate_values=torch.empty_like(evidence))
                                     states[h]=state
                                     # R-CONFLICT is the native residual correction route.
                                     from ..x30_tape_cell.routing_trace import CASE_NAMES

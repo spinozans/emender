@@ -37,3 +37,19 @@ def test_invalid_round_budget_fails_closed():
     model,x,a,c=fixture();model.eval()
     with pytest.raises(ValueError):
         IterativeForward(model,store_arm=True)(x,a,c,windows=[(0,0),(1,0)],valid_lengths=[4,4],forks=x.bool(),k=3)
+
+
+def test_actual_store_objects_survive_round_and_position(monkeypatch):
+    from experiments.expressivity_tasks.x43_fork_resolved.c14_b_store import SharedStore
+    model,x,a,c=fixture();model.eval()
+    observed={};original=SharedStore.stream
+    def record(self,*args,**kwargs):
+        # Last positional argument is the input-position clock. Persistent
+        # store identity must see 0,0,1,1: rounds do not advance input time.
+        observed.setdefault(self,[]).append(args[-1])
+        return original(self,*args,**kwargs)
+    monkeypatch.setattr(SharedStore,'stream',record)
+    run=IterativeForward(model,store_arm=True,epsilon=0.)
+    run(x[:1,:2],a[:1,:2],c[:1,:2],windows=[(0,0)],valid_lengths=[2],forks=torch.ones(1,2,dtype=torch.bool),k=2)
+    assert len(observed)==sum(block.cell.policy.N for block in model.head.base.blocks)
+    assert all(clocks==[0,0,1,1] for clocks in observed.values())

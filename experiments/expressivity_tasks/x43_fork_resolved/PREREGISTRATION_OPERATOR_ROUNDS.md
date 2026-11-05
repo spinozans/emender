@@ -44,3 +44,12 @@ it does not prove byte parity of a different scalar execution schedule. Record
 that precision/scheduling confound explicitly for k>1. Existing C14 tests must
 remain green; retained reference tests cover deterministic reset, causal prefix,
 masked padding, invalid budgets, checkpoint immutability, and k=1 fingerprints.
+
+Implementation correction before the valid dense sweep: dense receives zero
+consultation features (as in its training and standing paired evaluation), while
+fork labels/entropy still come from the cache. An initial invalid dense k=1
+attempt passed nonzero features to its untrained projection; exclude that
+attempt from every quality claim. Native continuation also requires all four
+telemetry scratch buffers; an omitted scratch buffer caused compilation failure
+before dense k=2 output. Retain both failed attempt receipts. No sample,
+threshold, checkpoint, prediction, or B1 interface changes.
