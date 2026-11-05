@@ -75,3 +75,8 @@ retrieval, claim verification against the actual text, and passage-level
 citations per the X32 comparables discipline (see
 x32_comparables/ and x41_unified_report/RELATED.md). The empty cell is real;
 the exact boundaries of each neighbor's territory are not yet verified.
+
+
+## The formal spine
+
+See [THEORY_INTERVAL_OPERATORS.md](THEORY_INTERVAL_OPERATORS.md) — the LM as dynamics of a weighted interval set over the corpus (the operator algebra), the emender five-ops realization, and LLM families as lossy in-weights approximations of that algebra. Recorded Nov 5 2026.

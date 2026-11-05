@@ -5,6 +5,7 @@ The fork-resolved LM uses the corpus's exact combinatorial structure (xsa/chi) a
 The theoretical bridge is still open: DERIVATION_PART1C.md defines finite-body per-position forks, not minimum suffixient cardinality chi. There are 636,727 fork positions but 425,221 xsa witnesses in the historical container. Do not substitute either for the other or assert an unproved bound. Formal two-sided inequalities, their constants, boundary convention and application to decision cost remain a registered derivation task; no theorem receipt is claimed here.
 
 Positioning and related work: [POSITIONING.md](POSITIONING.md) (sweep-level; full-claim verification pending).
+Theory spine: [THEORY_INTERVAL_OPERATORS.md](THEORY_INTERVAL_OPERATORS.md) — the interval-operator algebra; LLMs as its approximations (recorded Nov 5 2026; candidate predictions unbound).
 
 ## Claim ladder
 
