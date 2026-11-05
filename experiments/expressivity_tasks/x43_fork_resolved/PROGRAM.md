@@ -2454,12 +2454,6 @@ Paths are repository-relative. `emender` is this repository; `sxgc` is the exter
         },
         {
           "repo": "emender",
-          "path": "experiments/expressivity_tasks/x43_fork_resolved/RESULT_C14_B1.md",
-          "commit": "c6454d8807e896ef6dc32989f9d2346f9aa1625f",
-          "sha256": "40c31d9045d5a5558bf13f4804a0d70352fd6e7f78a5b275580c7447b5c7f65a"
-        },
-        {
-          "repo": "emender",
           "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_b_v2/pb_harvest_validation.json",
           "commit": "c6454d8807e896ef6dc32989f9d2346f9aa1625f",
           "sha256": "ed3a9f377d677269b8522f284a74bc4a2ea21b779aa68abe0c508ef25667dfc0"
@@ -2481,6 +2475,24 @@ Paths are repository-relative. `emender` is this repository; `sxgc` is the exter
           "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_b/FIRST_ATTEMPT_HARVEST.json",
           "commit": "8b770c3bafbcf22d2181fa64cf55eda564d04e53",
           "sha256": "1febccb46df49a5e9da427f8626db4330a8d578c38ba74d519015aaed21dd5e8"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/RESULT_C14_B1.md",
+          "commit": "af4d9c4523462eb943bf1f5c2edeb4afdc76af21",
+          "sha256": "b051b86eeb772f0a4085c86c8a85f7cf01631775292f9207a275d9cdb6a6160a"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_b_v2_append_only/HARVEST.json",
+          "commit": "af4d9c4523462eb943bf1f5c2edeb4afdc76af21",
+          "sha256": "07758ddee9d51a937d319bbaa342dc505a595fae50920121d36cd7cf2c5a976a"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_b_v2_append_only/eval_table.json",
+          "commit": "af4d9c4523462eb943bf1f5c2edeb4afdc76af21",
+          "sha256": "4d90e7ba72ecd5daad55cffc4916e20d00e93650341dbd17cd42cd8a30ae75ed"
         }
       ]
     }
@@ -2706,6 +2718,7 @@ not a new trained result or intrinsic ceiling. The first 237-step attempt's
 complete NLL is 2.206163868, not the approximately 2.2046 progress printout;
 its 479,328 targets are 0.212204% of the stream and do not determine primary PB1.
 Full strata and lifecycle telemetry: [RESULT_C14_B1.md](RESULT_C14_B1.md), pinned
-under C14. Append-only is adopted in its existing source-bound worktree;
-conditional ablation completion is separately receipted, and unbudgeted remains
-pending. One seed and unequal exposure limit interpretation.
+under C14. Append-only completed in its existing source-bound worktree: final on/off
+NLL 2.246020115 / 2.710095493, with on +0.661320101 versus B1-v2, after
+37,254 steps / 75,394,452 targets. All frozen denominators and exit 0 are
+harvested and pinned; unbudgeted remains pending. One seed and unequal exposure limit interpretation.
