@@ -44,13 +44,14 @@ def replay(k,q,v,av,pop,append,logits,coef,mc,ec,cfg,policy,metadata,*,encoded=N
     value_deps=slots.new_zeros((b,s));strength_deps=value_deps.clone()
     used=slots.new_zeros(())
     state=(keys,values,strength,live,birth,order,owner,prediction,pred_at,expires,value_deps,strength_deps,used)
+    token_columns=tuple(x.unbind(1) for x in (k,q,v,av,pop,append,logits))
     clocks=torch.arange(t,device=device)
     step=compiled_transition if k.is_cuda else transition
     # The gate battery intentionally exercises multiple budgets and batch
     # shapes; scope the compiler cache allowance to this B-only adapter.
     with torch._dynamo.config.patch(recompile_limit=64):
         for i in range(t):
-            token_inputs=tuple(x[:,i] for x in (k,q,v,av,pop,append,logits))+(coef,mc,ec)
+            token_inputs=tuple(column[i] for column in token_columns)+(coef,mc,ec)
             token_metadata=tuple(x[:,i] for x in (own_at,expiry_at,keep,predictions,raw))+(valid,)
             state,read=step(state,token_inputs,token_metadata,slots,batch,clocks[i],cfg,policy)
             outputs.append(read)

@@ -80,6 +80,12 @@ cannot be separated cleanly from lifecycle value, exposure, capacity and traject
 a matched-exposure unbudgeted arm is specified but not run. Full strata and
 limits: [RESULT_C14_ABLATION_TRIANGLE.md](RESULT_C14_ABLATION_TRIANGLE.md).
 
+Single-seed exposure accounting: [data-efficiency receipt](RESULT_C14_DATA_EFFICIENCY.md)
+reports all six endpoints. Unbudgeted has 9.045x the passive dense-anchor NLL
+improvement per training target; this endpoint statistic is not matched-loss
+sample complexity. Heavy trained compute and budget-pressure causality remain
+confounded.
+
 ## Part II — LLMs of other types as approximations of the algebra
 
 ### The general claim
@@ -273,3 +279,22 @@ model round. Failed attempts remain failures in the receipts.
 
 The separate training experiment with fixed micro-steps k={1,2,4}, matched
 protocol and actual steps/bytes, remains unbound and unexecuted.
+
+Single-seed trained-heavy-compute counterpoint: unbudgeted reaches 1.716496444
+on 14,455,380 targets with about 4.96x budgeted active time per position.
+Unlike the frozen-policy inference-round intervention, its weights were trained
+throughout that expensive computation. This does not establish useful serial
+depth or trained-round benefits; implementation overhead and capacity remain
+confounded. See [data-efficiency receipt](RESULT_C14_DATA_EFFICIENCY.md).
+
+C14-B occupancy-heavy profile reaches the production-kernel boundary. The
+257-slot control launches a padded 512-slot native tile with compiler-reported
+n_spills=4078; eight native launches account for 84.86% of measured self CUDA
+time, including checkpoint recomputation. A wrapper-only token-unbind change
+is byte-exact on the real trained batch and a synthetic 128-live-slot probe;
+replay work falls, but whole-step compute throughput does not improve in the
+samples. This is implementation evidence, not intrinsic cost or a live-slot
+scaling law. No matched-exposure twin was run, so the single-seed efficiency
+receipt still cannot isolate budget pressure, capacity, exposure or trajectory.
+See [occupancy-heavy profile](RESULT_C14_UNBUDGETED_PROFILE.md), including the
+X31 re-certification bill and the untouched exact original resume state.

@@ -2540,8 +2540,8 @@ Paths are repository-relative. `emender` is this repository; `sxgc` is the exter
         {
           "repo": "emender",
           "path": "experiments/expressivity_tasks/x43_fork_resolved/THEORY_INTERVAL_OPERATORS.md",
-          "commit": "a2470d3059f4ea30c406f41a2c27042d53b511d1",
-          "sha256": "3be9ad4c93af51b89507ba8982dffcb16ac5bef9638bdb99a00d7a9bafa20854"
+          "commit": "9bb105081d997465971400751d3c53d0bea1358a",
+          "sha256": "c16ca8f1f14f79fabd683980f50076c0625bc70243ba0bf2bfa9c6d6ec373a01"
         },
         {
           "repo": "emender",
@@ -2590,6 +2590,24 @@ Paths are repository-relative. `emender` is this repository; `sxgc` is the exter
           "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_b_v2_unbudgeted/occupancy_scaling.json.gz",
           "commit": "a2470d3059f4ea30c406f41a2c27042d53b511d1",
           "sha256": "db28f6fc432f235e2903f599ce5a838be181e06e60cc6f7f66b3a50e9cbe7d6b"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/RESULT_C14_DATA_EFFICIENCY.md",
+          "commit": "beafbd1bf01fb662f8bc40ad54788f74facc11a9",
+          "sha256": "074267e4c00d1e927d525532e6ccb6e78341877009c627bfebf2be614eabcf2c"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/RESULT_C14_UNBUDGETED_PROFILE.md",
+          "commit": "9bb105081d997465971400751d3c53d0bea1358a",
+          "sha256": "03a94a53c64c1caf7c97c354688f6d37be2c002c250f3946094ad051b14bc777"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_b_unbudgeted_profile/validation_manifest.json",
+          "commit": "9bb105081d997465971400751d3c53d0bea1358a",
+          "sha256": "75717b7589e731199eb3c87353256757d4920839f2f179264cd445a9266c2612"
         }
       ]
     }
@@ -2856,3 +2874,19 @@ inference rounds hurt, so these interventions must remain distinct. Next ladder
 rung: profile high allocated/live occupancy, verify wrapper-only byte identity,
 then register the matched-exposure twin if sustained speed permits. Triangle
 causality remains unresolved; no new arm or speed is claimed here.
+
+C14-B occupancy-heavy rung: **correctness green, whole-step speed gate not
+passed; STOP at the production-kernel boundary**. Native padded 512-slot work
+at logical cap 257 consumes 84.86% of self CUDA time, with compiler-reported
+n_spills=4078. Wrapper token-unbind reduces synchronized replay work from
+49.914 to 42.466 ms/step and matches complete fingerprints, including a
+synthetic 128-live-slot probe. Repeated real-batch compute throughput is
+2.685948 reference versus 2.597539 candidate steps/s; this is not a training
+speed improvement. All 99 C14/operator-round tests pass, including k=1 byte
+identity. The matched-exposure twin remains NOT RUN; no causal pressure verdict
+is claimed. Exact original resume state and the X31 bill are retained in
+[RESULT_C14_UNBUDGETED_PROFILE.md](RESULT_C14_UNBUDGETED_PROFILE.md). A full
+71.7M-target run would cost about 13.6k compute seconds at this sampled rate,
+not an assumed 5400 seconds. Frozen launch gates remain frozen and do not
+authorize a new runner. Theory evidence is pinned through a dedicated immutable
+git evidence ref so its new bytes and the ledger can be committed together.
