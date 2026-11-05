@@ -53,3 +53,10 @@ attempt from every quality claim. Native continuation also requires all four
 telemetry scratch buffers; an omitted scratch buffer caused compilation failure
 before dense k=2 output. Retain both failed attempt receipts. No sample,
 threshold, checkpoint, prediction, or B1 interface changes.
+
+Execution correction: an attempt was terminated before dense k=2 output because
+native continuation specializes on every increasing live-bound estimate. The
+inference wrapper now uses the conservative full-slot bound for continuation
+handles (live_bound=None); physical store, budgets, clock, equations, and
+halting are unchanged. This avoids per-bound JIT compilation, without editing
+any production kernel. Retain terminated attempt as exit143.

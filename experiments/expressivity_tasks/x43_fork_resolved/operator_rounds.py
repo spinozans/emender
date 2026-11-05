@@ -113,6 +113,10 @@ class IterativeForward:
                                     policy=cell.gate_policies[h]
                                     evidence=torch.empty(1,1,1,device=ids.device)
                                     old=states[h]
+                                    if old is not None:
+                                        # Conservative full-budget bound avoids one JIT
+                                        # specialization per initial occupancy limit.
+                                        old.live_bound=None
                                     before=None if old is None else old.native.strength.clone()
                                     read,state,trace,_=tape_scan(key.unsqueeze(2),query.unsqueeze(2),vs[:,:,h:h+1].contiguous(),
                                         torch.ones(1,1,1,device=ids.device),pop[:,:,h:h+1].contiguous(),append[:,:,h:h+1].contiguous(),
