@@ -79,9 +79,11 @@ Training never gives a model the algebra — only the corpus as a linear
 stream. The only place the corpus's exact interval structure can accumulate
 is the weights. Therefore: **trained LLM weights are compressed, lossy
 approximations of the suffix-array operator algebra over the corpus they
-trained on, learned without access to it.** The approximation is exact where
-the algebra is trivial (single-branch / forced spans) and lossy where it is
-fork-dense.
+trained on, learned without access to it.** The proposed representational
+limit is exactness where the algebra is trivial (single-branch / forced spans)
+and approximation where it is fork-dense. Finite training need not attain
+that limit: bound experiment B below refutes near-perfect forced recall at
+its registered budget, while retaining an entropy-dependent accuracy ordering.
 
 ### Family-by-family mapping
 
@@ -123,8 +125,8 @@ alignment between the two is measurable (kernel-alignment probe).
 - C11 copy law: trained on a stream inside its own index, the model's
   globally optimal solution is to BE the interval structure (verbatim recall).
   Memorization/dedup literature (Carlini et al.; Lee et al.) reframed:
-  verbatim learning is exactness on forced spans — the approximation is exact
-  where the algebra is trivial.
+  verbatim learning motivates the hypothesis of exactness on forced spans.
+  C11 alone does not establish that finite training attains this limit.
 - The 12-byte-median support regime at Pile scale: the shared short-suffix
   structure is what cross-corpus consultation transfers (74% supported
   targets) — the shallow rungs of the ladder are the corpus-independent part
@@ -132,11 +134,17 @@ alignment between the two is measurable (kernel-alignment probe).
 - P2/PB4 device-off penalties: the weights' approximation of "features
   present" vs "features informative."
 
-### Candidate predictions (NOT pre-registered; bind per-experiment when run)
+### Predictions (binding status recorded per item)
 
-1. **Forced-span verbatim law**: verbatim recall accuracy is near-perfect on
-   single-branch (forced) spans and degrades monotonically with branch
-   entropy. Testable at our scales against any self-indexed training corpus.
+1. **Forced-span verbatim law — bound experiment B**: registered in
+   `5da0c320`; see [RESULT_FORCED_SPAN.md](RESULT_FORCED_SPAN.md). The prediction
+   is **refuted** on a 16-document, finite4-byte-context self index with
+   a tier-1 neural emender trained for180 seconds. Final-panel byte accuracies
+   forced/low/high are 0.809874/0.791501/0.689320; whole forced-run
+   exact accuracy is 0.476804, against
+   the registered .99 threshold. Both document-disjoint recall panels were
+   in training; no unseen-document claim. This bounds the finite-budget
+   prediction and does not establish maximal-suffix or asymptotic exactness.
 2. **Interpolation-residual scale**: the NLL gain from fusing exact branch
    counts into a trained LM predicts the LM's approximation error on branch
    structure (the fusion receipts give the first points of this curve).
