@@ -1,0 +1,26 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/theory_rounds_sweep.py", line 117, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/theory_rounds_sweep.py", line 84, in main
+    reference,_=model(x,a,c,windows=windows,valid_lengths=lengths,checkpointed=False) if arm=='B1_v2' else model(x,a,c)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/c14_b_model.py", line 99, in forward
+    x = run(x,answers)
+        ^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/c14_b_model.py", line 81, in run
+    output,(_,trace) = native_forward(inputs,cfg,cell.gate_policies[h],metadata)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/c14_b_native.py", line 221, in native_forward
+    ids.append(canonical.setdefault(o,len(canonical)) if o is not None and o.suffix else -1)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<string>", line 3, in __hash__
+TypeError: unhashable type: 'list'

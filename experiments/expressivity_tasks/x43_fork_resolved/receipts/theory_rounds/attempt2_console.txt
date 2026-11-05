@@ -1,0 +1,51 @@
+{'arm': 'B1_v2', 'k': 1, 'checkpoint_sha256': '9c87a6a306b708608d7f466dbd62c70c53263c5322f24963b91b94afc8f4def8', 'fork_targets': 169, 'fork_nll': 1.9120215272872583, 'total_targets': 512, 'total_nll': 1.2843143593127024, 'logical_branch_reads': 1024, 'seconds': 0.9053081753663719, 'halting': {'low': {'n': 0, 'mean_rounds': None, 'histogram': {'1': 0}}, 'high': {'n': 0, 'mean_rounds': None, 'histogram': {'1': 0}}}}
+{'arm': 'B1_v2', 'k': 2, 'checkpoint_sha256': '9c87a6a306b708608d7f466dbd62c70c53263c5322f24963b91b94afc8f4def8', 'fork_targets': 169, 'fork_nll': 2.012622617196137, 'total_targets': 512, 'total_nll': 1.311142976782321, 'logical_branch_reads': 1360, 'seconds': 9.541057498194277, 'halting': {'low': {'n': 112, 'mean_rounds': 1.9821428571428572, 'histogram': {'1': 2, '2': 110}}, 'high': {'n': 226, 'mean_rounds': 2.0, 'histogram': {'1': 0, '2': 226}}}}
+{'arm': 'B1_v2', 'k': 4, 'checkpoint_sha256': '9c87a6a306b708608d7f466dbd62c70c53263c5322f24963b91b94afc8f4def8', 'fork_targets': 169, 'fork_nll': 2.165865681216826, 'total_targets': 512, 'total_nll': 1.3795269126130734, 'logical_branch_reads': 2038, 'seconds': 15.29684925172478, 'halting': {'low': {'n': 112, 'mean_rounds': 4.0, 'histogram': {'1': 0, '2': 0, '3': 0, '4': 112}}, 'high': {'n': 226, 'mean_rounds': 4.0, 'histogram': {'1': 0, '2': 0, '3': 0, '4': 226}}}}
+{'arm': 'dense', 'k': 1, 'checkpoint_sha256': '7a2598c8c1e77f349be6be7af1d59ece7300a5345cb3dab1420e0274d2523019', 'fork_targets': 169, 'fork_nll': 2.4167750794771155, 'total_targets': 512, 'total_nll': 2.1272857027652208, 'logical_branch_reads': 1024, 'seconds': 0.1673831888474524, 'halting': {'low': {'n': 0, 'mean_rounds': None, 'histogram': {'1': 0}}, 'high': {'n': 0, 'mean_rounds': None, 'histogram': {'1': 0}}}}
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/theory_rounds_sweep.py", line 117, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/theory_rounds_sweep.py", line 85, in main
+    lp,_=runner(x,a,c,windows=windows,valid_lengths=lengths,forks=forks,k=k)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 120, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/operator_rounds.py", line 117, in __call__
+    read,state,trace,_=tape_scan(key.unsqueeze(2),query.unsqueeze(2),vs[:,:,h:h+1].contiguous(),
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x42_pile_scale/velocity_forward.py", line 162, in tape_scan
+    scan_kernel[(b*h,)](*args,coef,flat(wire_logits),match_coef.repeat(b).contiguous(),error_coef.repeat(b).contiguous(),evidence,error_evidence,keys,values,strength,live,age,
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/runtime/jit.py", line 419, in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/runtime/jit.py", line 733, in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/runtime/jit.py", line 861, in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/compiler/compiler.py", line 300, in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/compiler/compiler.py", line 80, in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+triton.compiler.errors.CompilationError: at 193:17:
+                    birth_remove(birth_next, birth_prev, birth_head, pop_id, J, RecordAll)
+        count = (tl.load(birth_head) >= 0).to(tl.int32)
+        target, has_adjacent = birth_select(birth_next, birth_head, birth_store, clock - 1, J, RecordAll)
+        safe_target = tl.maximum(target, 0)
+        prev = tl.load(Values+(n*S+safe_target)*DV+d, d<DV, 0)
+        content = tl.load(V+inp*DV+d, d<DV, 0)
+        diff = content-tl.where(has_adjacent,prev,0.)
+        residual = tl.sum(tl.where(d<DV, diff*diff, 0.), 0)
+        nonpad = tl.load(Beta+inp)>0
+        evidence = tl.load(Evidence+inp)
+        error = tl.where(count>0, tl.sqrt(residual), 0.)
+        tl.store(ErrorEvidence+inp,error)
+                 ^
+AttributeError("'NoneType' object has no attribute 'type'")

@@ -238,7 +238,21 @@ theorems bound; thinking is what rounds buy.
 
 Cost: k rounds at decisions only (~46% of positions), forced spans free:
 k=3 rounds-at-decisions ~ 1.9x total compute for 3x serial depth at every
-decision. Candidate experiments (unbound): (a) frozen-arm generation with
-bounded operator rounds per fork swept 1..k (no retraining); (b) registered
-training arm with fixed micro-steps per position, k in {1,2,4}, matched
-protocol, actual steps/bytes reported.
+decision. This remains a proposed accounting envelope, not a measured speedup.
+
+**Bound experiment A:** registered in `2c939baf`, inference-only store-carrying
+machinery, frozen B1-v2 and dense emender, k={1,2,4}. See
+[RESULT_OPERATOR_ROUNDS.md](RESULT_OPERATOR_ROUNDS.md) and the hashed receipts
+in `receipts/theory_rounds/results.json`. The k=1 interface reproduces standard
+outputs and losses byte-exact. On 169 forks in 512 calibration targets, B1 fork
+NLL is 1.912022 / 2.012623 / 2.165866; dense is
+2.451763 / 2.923047 / 3.554979. PA1's negative curve sign is refuted here.
+PA2 is indistinguishable at the k=4 bound; PA3 shows increasing query volume,
+without collapse. Extra serial depth with the existing frozen policy is not
+automatically useful. These are teacher-forced positions with cached BRANCH
+reads, scalar execution for k>1, layer-local halting, and no free-running or
+state-conditioned branch search claim. Forced positions still receive one
+model round. Failed attempts remain failures in the receipts.
+
+The separate training experiment with fixed micro-steps k={1,2,4}, matched
+protocol and actual steps/bytes, remains unbound and unexecuted.
