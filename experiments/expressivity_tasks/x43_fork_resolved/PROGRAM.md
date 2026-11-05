@@ -2480,8 +2480,8 @@ Paths are repository-relative. `emender` is this repository; `sxgc` is the exter
         {
           "repo": "emender",
           "path": "experiments/expressivity_tasks/x43_fork_resolved/RESULT_C14_B1.md",
-          "commit": "af4d9c4523462eb943bf1f5c2edeb4afdc76af21",
-          "sha256": "b051b86eeb772f0a4085c86c8a85f7cf01631775292f9207a275d9cdb6a6160a"
+          "commit": "a2470d3059f4ea30c406f41a2c27042d53b511d1",
+          "sha256": "65230127185911bb5372aeb8e4b052684d7e8d7368de7aa056495c9074fd9b0c"
         },
         {
           "repo": "emender",
@@ -2530,6 +2530,66 @@ Paths are repository-relative. `emender` is this repository; `sxgc` is the exter
           "path": "experiments/expressivity_tasks/x43_fork_resolved/RESULT_C14_UNBUDGETED_PROGRESS.md",
           "commit": "0fc30e0a4e731e1430d4616a80a9f34d229c2251",
           "sha256": "3571607926cdcb3ef3d7d05799dbea9fc059b61b6e6b8ef64c92d9eda3842be7"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/RESULT_C14_ABLATION_TRIANGLE.md",
+          "commit": "a2470d3059f4ea30c406f41a2c27042d53b511d1",
+          "sha256": "c4ca780637f3a35b58a569d0a4a3018933982f4a6ad886bf43714d29daa83ab3"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/THEORY_INTERVAL_OPERATORS.md",
+          "commit": "a2470d3059f4ea30c406f41a2c27042d53b511d1",
+          "sha256": "3be9ad4c93af51b89507ba8982dffcb16ac5bef9638bdb99a00d7a9bafa20854"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/RESULT_C14_OCCUPANCY_SCALING.md",
+          "commit": "a2470d3059f4ea30c406f41a2c27042d53b511d1",
+          "sha256": "4134206ead7450136a55286f1650ecbcc0ed1a4047ec49c2027b67f9e09d66ba"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_b_v2_unbudgeted/HARVEST.json",
+          "commit": "a2470d3059f4ea30c406f41a2c27042d53b511d1",
+          "sha256": "856b937aa99f831210a055c5082efc07dada36d04bf5a930580b82010c0512b5"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_b_v2_unbudgeted/eval_resume_complete.json.gz",
+          "commit": "a2470d3059f4ea30c406f41a2c27042d53b511d1",
+          "sha256": "b7bb9003b49fb1c857405ddcdf2998e822b551905636fa65f48d8babd4a2dbb4"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_b_v2_unbudgeted/verdicts_complete.json.gz",
+          "commit": "a2470d3059f4ea30c406f41a2c27042d53b511d1",
+          "sha256": "bb39798eaaff68e2b9a7c68fd3453713e2f40f42f64a9b95cf29ce6d6e2823c8"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_b_v2_unbudgeted/eval_table.json",
+          "commit": "a2470d3059f4ea30c406f41a2c27042d53b511d1",
+          "sha256": "b07d816a9cde86beeb6eadb21f0b578c4870d65fca277389f3e6f5f8bb118e3c"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_b_v2_unbudgeted/triangle_tables.json",
+          "commit": "a2470d3059f4ea30c406f41a2c27042d53b511d1",
+          "sha256": "0918cf75061ca5cb39e59a6e291fd03e5f318f67f191ac9d8c0c7f3f097ab178"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_b_v2_unbudgeted/eval_terminal.json",
+          "commit": "a2470d3059f4ea30c406f41a2c27042d53b511d1",
+          "sha256": "d24219f6de94b955cf36d25bd2aca88e2d35eef45b9317b7083f55ec8fe9653c"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_b_v2_unbudgeted/occupancy_scaling.json.gz",
+          "commit": "a2470d3059f4ea30c406f41a2c27042d53b511d1",
+          "sha256": "db28f6fc432f235e2903f599ce5a838be181e06e60cc6f7f66b3a50e9cbe7d6b"
         }
       ]
     }
@@ -2758,7 +2818,7 @@ Full strata and lifecycle telemetry: [RESULT_C14_B1.md](RESULT_C14_B1.md), pinne
 under C14. Append-only completed in its existing source-bound worktree: final on/off
 NLL 2.246020115 / 2.710095493, with on +0.661320101 versus B1-v2, after
 37,254 steps / 75,394,452 targets. All frozen denominators and exit 0 are
-harvested and pinned; unbudgeted remains pending. One seed and unequal exposure limit interpretation.
+harvested and pinned; unbudgeted is complete at 1.716496444. One seed and unequal exposure limit interpretation.
 
 
 C14-B1 unbudgeted continuation: source-identical training completed at commit
@@ -2769,13 +2829,19 @@ finite 257-slot cap nonbinding: peaks 81/110/81/96, zero capacity merges.
 Full operations and document resets remain enabled; full training telemetry is
 losslessly retained. Training receipts are committed separately from evaluation.
 
-Paired evaluation is **paused and incomplete** after 80/26,807 shards,
-10,240 windows / 1,294,694 targets, 156.714530 seconds. Frozen evaluator
-throughput projects roughly 14.27 hours overall; this is a conditional estimate.
-No final unbudgeted NLL or three-arm budget-pressure verdict exists. The table
-remains full-ops-budgeted 1.584700014, append-only 2.246020115, unbudgeted pending.
-The selected checkpoints and frozen arms remain unchanged. Exact resume/archive
-hashes and commands are in `receipts/c14_b_v2_unbudgeted/RESUME_STATE.json` and
-`resume_eval.sh`. One seed and sharply unequal realized exposure still limit
-causal interpretation. Cleanup follows the paused run; the archive restores its
-source-bound receipts before resuming.
+Paired evaluation is **complete**: 26,807 shards, 3,431,242 windows /
+434,204,084 targets, exit 0, all 66 strata/mode rows verified against complete
+resume sums and frozen-arm denominators. Final-test on NLL is **1.716496444**.
+The measured triangle is budgeted 1.584700014 < unbudgeted 1.716496444 <
+append-only 2.246020115. Unbudgeted achieved this with 4.9585x fewer training
+targets than budgeted and 5.2157x fewer than append-only. That exposure confound
+cuts in its favor as data-efficiency evidence; the 0.131796431 budgeted advantage
+does not isolate pressure from lifecycle value, exposure, capacity or trajectory.
+The registered budget-pressure causal verdict is unresolved. A matched-exposure
+unbudgeted arm at 71,677,042 targets is specified, **not run**. Full 66-row
+three-arm tables and honest limits: [RESULT_C14_ABLATION_TRIANGLE.md](RESULT_C14_ABLATION_TRIANGLE.md).
+Historical paused RESUME_STATE/progress receipts remain immutable; terminal
+HARVEST.json supersedes their operational status. Complete source/checkpoint
+hashes verified, source-worktree receipts archived before removal, processes
+terminated and card-2 lease absent; no card acquired. No selected checkpoint
+or frozen arm changed. One seed and unequal exposure limit inference.
