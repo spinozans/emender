@@ -57,8 +57,14 @@ on leased card 2: 3,431,242 windows / 434,204,084 targets, exit 0. Final-test
 on/off NLL is 2.246020115 / 2.710095493; on is +0.661320101 worse than B1-v2.
 It trained 37,254 steps / 75,394,452 targets in 2700.045113 active seconds,
 so exposure remains unequal. All strata, lifecycle telemetry and terminal
-evidence are harvested under `receipts/c14_b_v2_append_only/`. Unbudgeted
-remains pending. No ablation replaces the selected B1-v2.
-One seed, unequal exposure and unfinished conditional controls limit inference.
+evidence are harvested under `receipts/c14_b_v2_append_only/`. Unbudgeted completed at **1.716496444** after only 14,455,380 training targets,
+with full terminal coverage and all 66 rows verified. No ablation replaces the selected B1-v2.
+The triangle is complete: budgeted < unbudgeted < append-only. The roughly 5x
+exposure deficit cuts in favor of unbudgeted data efficiency; budget pressure
+itself cannot be cleanly separated from lifecycle value and exposure. The
+registered causal budget-pressure comparison remains unresolved. See
+[RESULT_C14_ABLATION_TRIANGLE.md](RESULT_C14_ABLATION_TRIANGLE.md) for all
+strata, limits, and a specified matched-exposure arm (not run).
+One seed and unequal exposure limit inference.
 No frozen dense/passive arm, production kernel, checkpoint, union service,
 card-1 search, sxgc or read-only corpus was modified by this harvest.

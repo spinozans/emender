@@ -59,8 +59,10 @@ The five memory ops realize the algebra's set dynamics:
 | MERGE | consolidation of indistinguishable hypothesis classes |
 
 The physical slot budget is the beam width k (the frontier size). PB3's
-occupancy telemetry measured frontier size; the unbudgeted 4.96x cost receipt
-measured frontier bloat. Learning lives only in the weights (frozen basis,
+occupancy telemetry measured sampled frontier size; removing the budget cost
+4.96x per step, with peaks 81/110/81/96 and nonbinding cap 257. Nearly identical
+early sampled means do not establish frontier bloat as the cause of that cost
+or a live-occupancy scaling law. Learning lives only in the weights (frozen basis,
 learned coordinates; routing detached) — which the algebra identifies as
 SELECT's policy and EMIT's readout. The zero-learned-management spine (F12)
 is the theory's natural shape, not a constraint.
@@ -68,8 +70,15 @@ is the theory's natural shape, not a constraint.
 Receipt supports: C9 tier-1 (suffix backoff = SUBSUME, succeeds where
 full-context re-entry fails); the exact-walk failure (14% forced continuations
 = EMIT without UPDATE); PB4 coupling (weights that cannot distinguish
-"interval present" from "interval informative"); C14-B ablation (the ops carry
-0.66 nats causally — the set dynamics are load-bearing, not decorative).
+"interval present" from "interval informative"); C14-B measured triangle: budgeted 1.584700014, unbudgeted 1.716496444,
+append-only 2.246020115, trained on 71,677,042 / 14,455,380 / 75,394,452
+byte targets respectively. The 0.661320101 budgeted advantage over append-only
+supports lifecycle value in this fixed-time recipe, without isolating operations.
+Unbudgeted achieves 1.716496444 with roughly fivefold less data: the exposure
+confound cuts in its favor as data-efficiency evidence. Budget pressure itself
+cannot be separated cleanly from lifecycle value, exposure, capacity and trajectory;
+a matched-exposure unbudgeted arm is specified but not run. Full strata and
+limits: [RESULT_C14_ABLATION_TRIANGLE.md](RESULT_C14_ABLATION_TRIANGLE.md).
 
 ## Part II — LLMs of other types as approximations of the algebra
 
