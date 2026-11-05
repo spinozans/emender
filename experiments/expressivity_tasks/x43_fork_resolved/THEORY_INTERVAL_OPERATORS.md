@@ -209,3 +209,36 @@ on the rounds-vs-quality curve: single-round EMIT fails (the exact-walk's
 14% forced-byte wrongness = EMIT without UPDATE); iteration helps (C9
 suffix backoff). Candidate experiment (unbound): sweep bounded operator
 rounds per fork at generation on frozen arms; receipt rounds and quality.
+
+## Part IV — Multi-step before emit (recorded Nov 5, same discussion)
+
+Three mechanisms: (1) micro-steps — run the block k times per input byte
+with the store evolving across rounds, emit after round k (mechanically an
+inner loop; the store is the inter-round accumulator); (2) operator rounds
+at decisions only — BRANCH/UPDATE/SELECT per round at forks, forced spans
+free between (C9 backoff is already a 2-round example: fail, re-query
+shorter, succeed); (3) the inverse — one step, multiple emissions (forced
+spans, 54% of positions). Architectural distinction: a transformer's only
+inter-round state is its residual stream (CoT externalizes because there
+is no other scratch); the emender's store IS the per-decision working
+memory — thoughts land in slots as APPEND/CORRECT, EMIT is the conclusion.
+
+Halting: learned halting (ACT/PonderNet) is a learned management decision
+(F12 tension) and a gate subject to the receipted collapse law ("gates
+that can abstain will abstain"). The deterministic alternative: iterate
+until the store stops changing (no CORRECT fires, weight delta < epsilon),
+bounded by k_max — the ops' event telemetry (already receipted in PB3)
+is the halting signal itself.
+
+Expressivity: rounds add compute, not state — the budget does not grow
+with k, so the boundary theorems (Paper 1) are untouched; pondering in a
+fixed-budget store buys serial depth without buying state. The transformer
+alternative (growing KV) is the receipted unbounded arm. State is what the
+theorems bound; thinking is what rounds buy.
+
+Cost: k rounds at decisions only (~46% of positions), forced spans free:
+k=3 rounds-at-decisions ~ 1.9x total compute for 3x serial depth at every
+decision. Candidate experiments (unbound): (a) frozen-arm generation with
+bounded operator rounds per fork swept 1..k (no retraining); (b) registered
+training arm with fixed micro-steps per position, k in {1,2,4}, matched
+protocol, actual steps/bytes reported.
