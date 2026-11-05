@@ -1,4 +1,4 @@
-# C14-B matched-exposure twin: registered and training, verdict pending
+# C14-B matched-exposure twin: detached relaunch, verdict pending
 
 Registration commit **8ad08f70** preceded training. All 23 original HARVEST
 source hashes bind in `/home/erikg/emender_c14_matched_bound` at c190956d,
@@ -7,7 +7,7 @@ substituted. No frozen arm was changed. New independent checkpoint, receipts,
 explicit exposure stopping rule and all original training hyperparameters are
 registered in PREREGISTRATION_C14_B_MATCHED.md.
 
-Training launched through the shared broker on physical card 2. Launcher PID
+Historical first launch (subsequently killed with its session): training launched through the shared broker on physical card 2. Launcher PID
 4099459, trainer PID 4099514, tool session 45901; these are observations, not
 permanent liveness guarantees. No worker/service orchestration was used.
 The live checkpoint saves every 120 active seconds and on SIGTERM/SIGINT.
@@ -69,3 +69,55 @@ validation to turn red because THEORY_INTERVAL_OPERATORS.md is hash-pinned.
 That provisional edit was removed; the measured theory remains frozen pending
 the actual verdict and coordinated binding update. Final validation is green
 (17 claims / 369 bindings). The failed check is not counted as a pass.
+
+
+## Session-kill recovery, 2026-11-05
+
+The original console stopped at step 876 / 1,771,107 targets. Fresh process
+inspection found neither original PID nor any matched trainer; the broker
+listed only the unrelated card-1 lease, with cards 2/3/4 idle. The prior
+"training remains active" observation did not survive the session ceiling.
+The last complete atomic checkpoint loads at **625 steps / 1,262,440 targets**,
+next window 10,000, active seconds 240.9313050354831. It supersedes step303.
+Immutable external copy: `/home/erikg/c14_dense_bytes/emender_c14_b_matched_attested_step625.pt`,
+SHA256 `da285ab343b19240e6e01c8f5f49cea5af3312a3f26eb24943299beae7fd7a4e`.
+Exactly **251 updates / 508,667 targets** seen in the old console were unsaved
+and must be replayed; they are not credited toward the final exposure.
+The old console is retained as `receipts/c14_b_matched/session_killed_console.txt`.
+
+Relaunch uses the unchanged registered `--resume` machinery, original frozen
+source and broker wrapper, through `c14_b_matched_detached.py` with Popen,
+new session, DEVNULL stdin and retained file descriptors. No training source,
+frozen arm, union service or card-1 workload was changed. All checkpoint files
+remain outside git. This is the second session-child loss; the mandatory
+session survival playbook is synchronized in AGENTS.md and CLAUDE.md.
+
+## Harvest state and completion requirements
+
+Do not wait in an attended session. Monitor `train_console.txt`, the live
+broker lease, and `training.json` under `receipts/c14_b_matched/`.
+`train_terminal.json` must report exit_code 0; training.json must say
+`completed_matched_exposure`, exactly 35,419 steps / 71,677,042 targets.
+Verify the external checkpoint hash and final PB3 peaks <257 / capacity merges
+zero; a terminal marker alone is insufficient. RESUME_STATE.json holds the
+recovery checkpoint; train_detached_launch.json and relaunch_verified.json
+hold the new launch and liveness evidence. No final training/eval success is
+claimed by this relaunch receipt.
+
+Prepared detached evaluation command (NOT started):
+`/home/erikg/emender/.venv/bin/python experiments/expressivity_tasks/x43_fork_resolved/c14_b_matched_detached.py eval`
+Use `--resume` only when eval_resume.json already exists. The launcher and
+registered evaluator both reject incomplete training. Evaluation writes
+`eval_resume.json`, `eval_table.json`, `verdicts.json`, `eval_console.txt`, and
+`eval_terminal.json`; require completed state and exit_code 0, all 66 paired
+rows and exact frozen denominators. Commit PT1 sign versus budgeted
+**1.584700014**, PT2 strata, PT3 efficiency extrapolation/saturation with
+measured evidence, final report and coordinated theory/PROGRAM.md bindings,
+then run validate_program.py green. No interpolated score or relabeled
+append-only exposure. Full evaluation previously cost ~52,111 seconds.
+Residual risks: host failure or future process death, one seed, capacity and
+implementation confounding, training/evaluation still incomplete. Session
+survival is attested by process ancestry and progress, not future completion.
+No resilient DiLoCo behavior changed; gap-matrix requirements inapplicable.
+
+Verified 2026-11-05T21:24:00.781911+00:00: detached wrapper PID 2490350, PPID=1, SID=2490350; trainer 2490415; card-2 lease starttime matched and heartbeat renewed across 1793913611 → 1793913791. Console advanced from resumed step625 through step664 to **step922 / 1,865,315 targets**, past the old step876 ceiling. Full evidence: relaunch_verified.json. Validator green (17 claims / 369 bindings); wrapper syntax and launcher parse passed. Intentional early eval launch probe failed closed on incomplete training, before spawning any evaluator.

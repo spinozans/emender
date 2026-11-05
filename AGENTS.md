@@ -56,3 +56,16 @@ boundary; any padding must be masked from loss. Split calibration/final-test by
 document. `experiments/expressivity_tasks/x43_fork_resolved/c14_documents.py`
 provides the checked windowing and document-disjoint evaluation split. Retain
 boundary tests and source/index hash receipts before training.
+
+## Long training session survival playbook
+
+All long trainings must use a detached launcher: `subprocess.Popen` with
+`start_new_session=True`, stdin DEVNULL, and stdout/stderr to retained files.
+Run the broker-leased wrapper inside that detached process so its lease owner
+and heartbeat keeper survive the attended session. Before exiting, verify
+PPID=1, the live lease owner/starttime, at least one heartbeat renewal, and
+advancing training steps. A tool session or shell background job is not proof
+of detachment. Session-child trainings have died at session ceilings twice;
+never report "training remains active" without fresh process and progress
+checks. On recovery, verify death and broker state, load the last complete
+atomic checkpoint, retain its hash/state, and receipt the unsaved span honestly.
