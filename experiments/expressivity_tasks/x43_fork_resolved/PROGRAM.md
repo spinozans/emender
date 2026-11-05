@@ -2890,3 +2890,11 @@ is claimed. Exact original resume state and the X31 bill are retained in
 not an assumed 5400 seconds. Frozen launch gates remain frozen and do not
 authorize a new runner. Theory evidence is pinned through a dedicated immutable
 git evidence ref so its new bytes and the ledger can be committed together.
+
+C14-B matched-exposure resolver registered: PREREGISTRATION_C14_B_MATCHED.md.
+Fresh unbudgeted seed 3401, cap 257, 35,419 steps / 71,677,042 real targets;
+explicit ~13,600s training budget amendment. Original c190956d source, all
+23 HARVEST hashes verified (58a8acb8 replay); original frozen arms untouched.
+The kernel bill is not prerequisite. Paired evaluation and measured causality
+verdict remain pending. Append-only's retained endpoint has 75,394,452 targets,
+so it must not be labeled exactly matched exposure.
