@@ -52,9 +52,13 @@ resume generations are preserved, with hashes in
 `receipts/c14_b/FIRST_ATTEMPT_HARVEST.json`.
 
 PB1 is nonzero, so append-only and unbudgeted conditional ablations remain
-required. The existing append-only evaluation is adopted in its source-bound
-worktree; its harvest receipt records completion or an exact resumable partial
-state. Unbudgeted remains pending. No ablation replaces the selected B1-v2.
+required. The existing append-only evaluation completed in its source-bound worktree
+on leased card 2: 3,431,242 windows / 434,204,084 targets, exit 0. Final-test
+on/off NLL is 2.246020115 / 2.710095493; on is +0.661320101 worse than B1-v2.
+It trained 37,254 steps / 75,394,452 targets in 2700.045113 active seconds,
+so exposure remains unequal. All strata, lifecycle telemetry and terminal
+evidence are harvested under `receipts/c14_b_v2_append_only/`. Unbudgeted
+remains pending. No ablation replaces the selected B1-v2.
 One seed, unequal exposure and unfinished conditional controls limit inference.
 No frozen dense/passive arm, production kernel, checkpoint, union service,
 card-1 search, sxgc or read-only corpus was modified by this harvest.
