@@ -1,0 +1,57 @@
+{
+  "status": "incomplete_paired_eval_paused",
+  "training_complete": true,
+  "checkpoint": "/home/erikg/c14_dense_bytes/emender_c14_b1_v2_unbudgeted_resume.pt",
+  "checkpoint_sha256": "056b876cec5f5aae0b9bcea24544e9e3efccc2791fe9bb91654ca192cfb3eb06",
+  "source_commit": "c190956d3f970efe18e4377d6d80ac2fab83e5ba",
+  "source_worktree": "/home/erikg/emender_c14_unbudgeted_bound",
+  "resume": {
+    "status": "paused",
+    "next_shard": 80,
+    "windows": 10240,
+    "targets": 1294694,
+    "elapsed_seconds": 156.71453021187335
+  },
+  "eval_resume_sha256": "3a1a981cefd36a9e44dd7b69d7feab9c118249d30865efde3e66ce132d28c479",
+  "archive": "/home/erikg/c14_dense_bytes/c14_b_v2_unbudgeted_source_receipts.tar.gz",
+  "archive_sha256": "59d08eef8711099df83471a39112780e2bc16991922503f9e134bd7dde6ab3f5",
+  "reason": "Frozen 257-slot evaluator measured about 1.92 seconds/shard over shards 1\u201365; full 26,807-shard evaluation projects about 14.27 hours. Paused cleanly rather than claiming completion. No numerical failure; wrapper exit 0 denotes successful pause, not complete eval.",
+  "remaining_shards": 26727,
+  "unbudgeted_final_test_nll": null,
+  "ablation_verdict": "pending; no budget-pressure value conclusion",
+  "training_cap_validation": {
+    "0/0": {
+      "budget": 257,
+      "peak": 81,
+      "capacity_merges": 0
+    },
+    "0/1": {
+      "budget": 257,
+      "peak": 110,
+      "capacity_merges": 0
+    },
+    "1/0": {
+      "budget": 257,
+      "peak": 81,
+      "capacity_merges": 0
+    },
+    "1/1": {
+      "budget": 257,
+      "peak": 96,
+      "capacity_merges": 0
+    }
+  },
+  "evaluation_cap_validation": "Mathematical 256-allocation/window bound proves 257 nonbinding everywhere; sampled telemetry also below cap with zero capacity merges. Full evaluation remains incomplete.",
+  "manual_notes": "contact_supervisor unavailable in enabled tools; no supervisor message delivered. No DiLoCo behavior changed/tested; gap IDs inapplicable. All other arms untouched.",
+  "residual_risks": [
+    "Unbudgeted paired evaluation and three-arm verdict incomplete.",
+    "Single seed and unequal exposure: unbudgeted 14,455,380 targets versus B1-v2 71,677,042 and append-only 75,394,452. Fixed time comparisons cannot isolate intrinsic lifecycle/budget effects.",
+    "Runtime projection is conditional; no final NLL is reported."
+  ],
+  "cleanup": {
+    "worktree_removed": true,
+    "lease_released": true,
+    "source_receipts_archived": true,
+    "resume_command": "bash /home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_b_v2_unbudgeted/resume_eval.sh"
+  }
+}
