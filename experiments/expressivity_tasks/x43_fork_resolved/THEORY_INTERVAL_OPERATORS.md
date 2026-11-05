@@ -171,3 +171,41 @@ operators; realize in emender, learnable only where the weights are);
 (iii) the generalization to other LM families as approximations of
 string-kernel / suffix-array kernel algebra over their training corpora.
 Recorded by the assistant from that discussion; git is the binding.
+
+## Part III — Tokenization, and compute per decision (recorded Nov 5, from the same discussion)
+
+### Tokenization is the static approximation of the suffixient structure
+
+A tokenizer (BPE/unigram) is a fixed, corpus-derived collapse of byte runs
+into units — in algebra terms, a frozen SUBSUME/EMIT policy pre-baked from
+corpus-average statistics: a "token" is the merge table's bet that a byte run
+is usually forced (single-branch), so the model need not decide within it.
+The suffixient structure gives exactly this per-context and exactly: the
+chi-positions are where decisions exist; all other spans are forced. Byte
+level + xsa therefore REPLACES tokenization with its exact, adaptive form:
+free emission through forced spans (54% of Pile eval positions are forced —
+114,751,649/214,097,022), decisions only at forks, "vocabulary" = the
+corpus's local chi-structure instead of a merge table's guess. Tokenizer
+pathologies read as approximation error: glitch tokens and arithmetic/
+spelling failures are contexts where the frozen forced-span bet collides
+with a live fork. The program's standing byte-level constraint is thereby
+theoretically explained, not merely imposed: byte-level + xsa is the exact
+system; a tokenizer is its lossy pre-compression.
+
+### Thinking per decision, not per token
+
+The algebra separates thinking from writing. The unit of compute is the
+fork (where the loss mass lives: 66-82% of NLL); forced spans emit at zero
+model cost. TEST-TIME COMPUTE = operator rounds over the interval set
+between emissions: each round a BRANCH query (44us, exact counts), a
+SELECT/UPDATE pass over the store (2.5ms/step measured), a hypothesis
+extension. Thoughts live in the weighted interval set (the store is the
+scratch space), not in emitted tokens — standard CoT externalizes its
+working because a standard LM has no other state to think in. Accounting:
+total compute ~ decisions x rounds-per-decision; with ~46% of positions
+being decisions, several operator rounds per decision fit the same
+envelope a token model spends single-passing every unit. Receipts already
+on the rounds-vs-quality curve: single-round EMIT fails (the exact-walk's
+14% forced-byte wrongness = EMIT without UPDATE); iteration helps (C9
+suffix backoff). Candidate experiment (unbound): sweep bounded operator
+rounds per fork at generation on frozen arms; receipt rounds and quality.
