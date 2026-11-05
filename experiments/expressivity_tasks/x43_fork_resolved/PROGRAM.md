@@ -2845,3 +2845,14 @@ HARVEST.json supersedes their operational status. Complete source/checkpoint
 hashes verified, source-worktree receipts archived before removal, processes
 terminated and card-2 lease absent; no card acquired. No selected checkpoint
 or frozen arm changed. One seed and unequal exposure limit inference.
+
+C14-B data-efficiency receipt (single seed): all six frozen endpoint NLL/exposure
+pairs and dense-anchor improvement per million targets are retained in
+[RESULT_C14_DATA_EFFICIENCY.md](RESULT_C14_DATA_EFFICIENCY.md). Unbudgeted's
+roughly 9x passive improvement per exposure is a descriptive normalization,
+not a matched-loss data-efficiency measurement. Its roughly fivefold active
+time per position is trained-heavy-compute evidence; additional frozen-policy
+inference rounds hurt, so these interventions must remain distinct. Next ladder
+rung: profile high allocated/live occupancy, verify wrapper-only byte identity,
+then register the matched-exposure twin if sustained speed permits. Triangle
+causality remains unresolved; no new arm or speed is claimed here.
