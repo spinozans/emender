@@ -150,8 +150,9 @@ def main():
     for s in span_stats.values():s['accuracy']=s['exact']/s['spans'] if s['spans'] else None
     acc=[tables['final_test/'+name]['accuracy'] for name in ('forced','low','high')]
     result.update(status='complete',table=tables,forced_runs=span_stats,predictions=predictions,
-        PB_L1='supported' if all(a is not None for a in acc) and span_stats['final_test']['accuracy'] is not None
-                and span_stats['final_test']['accuracy']>=.99 and acc[0]>=acc[1]>=acc[2] else 'refuted_or_unresolved_empty_stratum')
+        PB_L1=('unresolved_empty_stratum' if any(a is None for a in acc) or span_stats['final_test']['accuracy'] is None
+               else 'supported' if span_stats['final_test']['accuracy']>=.99 and acc[0]>=acc[1]>=acc[2]
+               else 'refuted'))
     write('results.json',result)
     print(json.dumps({k:result[k] for k in ('steps','actual_targets','active_seconds','PB_L1','table','forced_runs')}),flush=True)
 
