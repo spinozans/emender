@@ -122,6 +122,15 @@ its registered budget, while retaining an entropy-dependent accuracy ordering.
   heads (Olsson et al. 2022) = learned match-then-continue circuits =
   approximate backward search. Our C13 receipt — the transformer re-copies as
   coverage rises — is the approximation preferring retrieval.
+  C14's registered Pile-scale consultation datum gives transformer device-on
+  **1.266063829** versus dense **1.404428829** nats/byte: gain
+  **+0.138364999**, compared with Emender's **+0.766873539**. Transformer P1
+  **PASS**, P2 **FAIL** (device-off minus dense
+  **+0.058468789**). The Emender supported-target advantage
+  **does not hold** against a consulted transformer (0.717143862 versus
+  0.811639725). This is a single-seed, equal-active-time comparison with unequal
+  exposure, not an architecture-only causal claim. Full signs and strata:
+  [C14 head-asymmetry verdict](RESULT_C14_TRANSFORMER.md).
 - **SSM / RNN / fixed-state**: the state is a fixed-budget compression of
   the interval set. Paper 1's theorem (fixed-state models of any size are
   automata in the finite-precision regime) reads here as: the approximation

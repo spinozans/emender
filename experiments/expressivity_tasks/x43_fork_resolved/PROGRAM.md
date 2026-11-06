@@ -139,6 +139,19 @@ The independent audit **failed** on two UINT64_MAX right-extension counts. Both 
 
 ### C14 — measured: paired consultation, P3 stacking, and gain decomposition
 
+**Transformer head-asymmetry arm completed 2026-11-06.** On the same frozen
+214,097,022 final-test targets, transformer dense/on/off NLL is
+**1.404428829 / 1.266063829 / 1.462897618**. P1 **PASS**, P2 **FAIL**;
+gain **+0.138364999**, versus Emender v2 **+0.766873539**. Transformer minus
+Emender gain is **-0.628508539**. Emender's
+supported-target advantage **does not hold** against consultation: transformer
+**0.717143862** versus Emender **0.811639725**. All signs, reset/interior,
+support/zero-target/fork strata and equal denominators are in the
+[head-asymmetry verdict](RESULT_C14_TRANSFORMER.md). Training consumed
+570,344,976 targets versus the frozen transformer's 972,375,733 at the same
+2700-active-second stopping rule; one seed and unequal exposure do not isolate
+architecture causally. This supersedes transformer-quality-pending statements.
+
 **Emender paired evaluation completed 2026-11-04. V2 is primary. P1 passes for
 both v1 and v2; P2 fails for both.** The complete frozen cache passes 26,807 shard
 hashes, contiguity, recorded extraction parity and the exhaustive c14_verify_sum
@@ -170,8 +183,8 @@ both exceed the registered .02 nats/byte allowance. These are failures, includin
 for the primary arm. Equal 2700-second active training budgets consumed
 225,880,702 / 55,447,993 / 179,162,804 targets for dense/v1/v2. One seed, unequal
 exposure and no uncertainty or matched-step causal claim. P3 stacking and the
-array baseline are measured below; coverage swaps and transformer consultation
-quality remain pending.
+array baseline are measured below; coverage swaps remain pending. Transformer
+consultation quality is measured in RESULT_C14_TRANSFORMER.md.
 
 Inference used deterministic algorithms, a fixed cuBLAS workspace, the shared v2
 feature decoder, independent window resets and masked tails. First-shard loss
@@ -2540,8 +2553,8 @@ Paths are repository-relative. `emender` is this repository; `sxgc` is the exter
         {
           "repo": "emender",
           "path": "experiments/expressivity_tasks/x43_fork_resolved/THEORY_INTERVAL_OPERATORS.md",
-          "commit": "54117a192fdb58ac87b3cd4adb9cfb807e57923c",
-          "sha256": "a1249793d02353755e82e6db496488a5996f4f23857a1928d29960530b949879"
+          "commit": "ebb0f165dec2df0b7d36c4b0dc5565fdf7576a77",
+          "sha256": "8b374152be2676b437f05c47504de48396480c57da32d349adeea5a8eb6b5b1c"
         },
         {
           "repo": "emender",
@@ -2830,6 +2843,120 @@ Paths are repository-relative. `emender` is this repository; `sxgc` is the exter
           "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer/validation.json",
           "commit": "22606e9e93dc41055c25a5e134f14889e75ccc2f",
           "sha256": "e3af10a40ecb3fbabad6d59febf244014c27c32ec405bec822f3e976e6bc4c38"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/c14_transformer_eval.py",
+          "commit": "ebb0f165dec2df0b7d36c4b0dc5565fdf7576a77",
+          "sha256": "dd1f625222eb8423f32f1b45bc0caff7d8ffb40f676487c40825dca6b66b0859"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/c14_transformer_report.py",
+          "commit": "ebb0f165dec2df0b7d36c4b0dc5565fdf7576a77",
+          "sha256": "82ca6ee15202ae579b7e2f05299ece86e1b5bba87b5789d15d2cf241250dd46f"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/RESULT_C14_TRANSFORMER.md",
+          "commit": "ebb0f165dec2df0b7d36c4b0dc5565fdf7576a77",
+          "sha256": "713e4c4a76f351823ff66477077d35ad23e8dff186f0cf230841c529ba27e887"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer_eval/audit_reuse.json",
+          "commit": "ebb0f165dec2df0b7d36c4b0dc5565fdf7576a77",
+          "sha256": "fa4aaf9aad308836c46f6fd9a38507bd79026c29336d905ae04cc56ab8e1512f"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer_eval/cache_validation.json",
+          "commit": "ebb0f165dec2df0b7d36c4b0dc5565fdf7576a77",
+          "sha256": "a652742e388146e853819dbaa776071d969d0b6bec4c8e1d225f1e4d7092ad6e"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer_eval/eval_console.txt",
+          "commit": "ebb0f165dec2df0b7d36c4b0dc5565fdf7576a77",
+          "sha256": "bac5bbba8711be001cc42c7dc50a7cca7e2124509eba86bd861f560b51b94ca2"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer_eval/eval_detached_launch.json",
+          "commit": "ebb0f165dec2df0b7d36c4b0dc5565fdf7576a77",
+          "sha256": "c7795d2d3c7a384929389136ac3a9b471559810c9784e7a87df29a5c43cedaf8"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer_eval/eval_detached_launcher_console.txt",
+          "commit": "ebb0f165dec2df0b7d36c4b0dc5565fdf7576a77",
+          "sha256": "0501fd7496a85f7de559b91c0d3949b12d1315e8a58eb9fadbafe2f9f97d1339"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer_eval/eval_initial_launch_failure.json",
+          "commit": "ebb0f165dec2df0b7d36c4b0dc5565fdf7576a77",
+          "sha256": "1c556f563654af62aef91353e20e2de081523e839884237c7515c254e2b2700e"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer_eval/eval_survival.json",
+          "commit": "ebb0f165dec2df0b7d36c4b0dc5565fdf7576a77",
+          "sha256": "706369359268e9e5f0fa79bb7d61d51fdeea50651a7b8162bbe49865f1ada419"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer_eval/lease.txt",
+          "commit": "ebb0f165dec2df0b7d36c4b0dc5565fdf7576a77",
+          "sha256": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer_eval/lease_initial.txt",
+          "commit": "ebb0f165dec2df0b7d36c4b0dc5565fdf7576a77",
+          "sha256": "c091623b148aad7e3aa31d94d565d771fb0e7f1418be502c820548da13f0a6ee"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer_eval/lease_terminal.txt",
+          "commit": "ebb0f165dec2df0b7d36c4b0dc5565fdf7576a77",
+          "sha256": "0026326346873ae00d3241181b82c48e6c9240ad42c174180777dcc8281d88ea"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer_eval/owner_initial.txt",
+          "commit": "ebb0f165dec2df0b7d36c4b0dc5565fdf7576a77",
+          "sha256": "dec91c92f0a0e9972304987df90ab97a150a046d662a8ea4e0b310a8d59e6ce3"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer_eval/resume.json",
+          "commit": "ebb0f165dec2df0b7d36c4b0dc5565fdf7576a77",
+          "sha256": "8151c49848572ffcbca9f1443e31039b0039b24ba28d164ad79038c12a01b445"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer_eval/table.json",
+          "commit": "ebb0f165dec2df0b7d36c4b0dc5565fdf7576a77",
+          "sha256": "6f801b397e4c1c2cf5acc4d86f6733bfed1fc5dd8047ae9b8a7721b57d3c91f8"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer_eval/terminal.json",
+          "commit": "ebb0f165dec2df0b7d36c4b0dc5565fdf7576a77",
+          "sha256": "d24219f6de94b955cf36d25bd2aca88e2d35eef45b9317b7083f55ec8fe9653c"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer_eval/verdicts.json",
+          "commit": "ebb0f165dec2df0b7d36c4b0dc5565fdf7576a77",
+          "sha256": "448d9d25bba3df7ad9780b55d049a35c81254a54d6568c47ef86bdca170d49dc"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer/validation_eval.json",
+          "commit": "ebb0f165dec2df0b7d36c4b0dc5565fdf7576a77",
+          "sha256": "f35f64f998ea5a55f45b86fddf85092dcae079594c401e7949fa64c6a89fb8de"
         }
       ]
     }
@@ -3149,3 +3276,18 @@ with the registered seed/protocol and shared v2 decoder. Detached broker card 2;
 atomic checkpoint/RNG/accounting validation passes. Dense and frozen-arm receipts
 remain unchanged. Paired evaluation and P1/P2/head asymmetry are pending at this
 training phase. [Training receipt](RESULT_C14_TRANSFORMER_TRAINED.md).
+
+## C14 head-asymmetry verdict completed (2026-11-06)
+
+**Transformer head-asymmetry arm completed 2026-11-06.** On the same frozen
+214,097,022 final-test targets, transformer dense/on/off NLL is
+**1.404428829 / 1.266063829 / 1.462897618**. P1 **PASS**, P2 **FAIL**;
+gain **+0.138364999**, versus Emender v2 **+0.766873539**. Transformer minus
+Emender gain is **-0.628508539**. Emender's
+supported-target advantage **does not hold** against consultation: transformer
+**0.717143862** versus Emender **0.811639725**. All signs, reset/interior,
+support/zero-target/fork strata and equal denominators are in the
+[head-asymmetry verdict](RESULT_C14_TRANSFORMER.md). Training consumed
+570,344,976 targets versus the frozen transformer's 972,375,733 at the same
+2700-active-second stopping rule; one seed and unequal exposure do not isolate
+architecture causally. This supersedes transformer-quality-pending statements.
