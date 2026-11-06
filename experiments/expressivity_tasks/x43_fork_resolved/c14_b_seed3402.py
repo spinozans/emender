@@ -53,7 +53,10 @@ def main():
     assert (training['steps'],training['actual_bytes_targets'])==(35419,71677042)
     if arm=='unbudgeted':
         for v in training['telemetry'].values():assert v['peak_occupancy']<257 and v['counts']['capacity_merges']==0
-    from experiments.expressivity_tasks.x43_fork_resolved import c14_b_control_eval as ev
+    if arm=='budgeted':
+        from experiments.expressivity_tasks.x43_fork_resolved import c14_b_eval as ev
+    else:
+        from experiments.expressivity_tasks.x43_fork_resolved import c14_b_control_eval as ev
     ev.OUT=train.OUT;ev.StoreIntegrated=train.StoreIntegrated
     if arm=='unbudgeted':
         ev.synthetic_decay=lambda model:[]

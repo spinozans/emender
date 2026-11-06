@@ -43,7 +43,7 @@ def main():
                 cfg = SimpleNamespace(**(vars(policy.configs()[0]) | dict(budget=cap,slots=cap,array_append_only=False,decay_rate=1.)))
                 xs = [torch.randn(b,t,d,device='cuda') for d in (64,64)]
                 xs += [torch.zeros(b,t,d,device='cuda') for d in (128,128)]
-                xs += [torch.zeros(b,t,device='cuda'),torch.zeros(b,t,device='cuda'),torch.full((1,t),20.,device='cuda')]
+                xs += [torch.zeros(b,t,device='cuda'),torch.zeros(b,t,device='cuda'),torch.full((b,t),20.,device='cuda')]
                 xs[6][:,257:] = -20.
                 xs += [torch.zeros((),device='cuda') for _ in range(3)]
                 metadata = ([[None]*t for _ in range(b)],[b'a'*t]*b,[(j,0) for j in range(b)],[t]*b,[[False]*t for _ in range(b)],[[97]*t for _ in range(b)])
