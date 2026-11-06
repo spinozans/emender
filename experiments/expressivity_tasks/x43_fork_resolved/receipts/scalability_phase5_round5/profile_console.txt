@@ -1,0 +1,30 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/c14_phase5r5_profile.py", line 53, in <module>
+    probe.main()
+  File "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/c14_phase5r4_probe.py", line 72, in main
+    repeated=bits(run())
+                  ^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/c14_phase5r4_probe.py", line 63, in run
+    return native.native_forward(xs,cfg,policy.gate_policy(0),metadata)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/c14_launch_shape.py", line 24, in forward
+    result = bounded(inputs, cfg, policy, metadata)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<reach-bounded native wrapper>", line 27, in native_forward
+  File "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/c14_launch_shape.py", line 18, in launch
+    return native.kernel[grid](*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/c14_phase5r4_probe.py", line 43, in launch
+    self.compiled = selected[grid](*a, **kw)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/c14_phase5r5_profile.py", line 32, in launch
+    result=original[grid](*a,**kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/c14_phase5r4_stream_pages.py", line 31, in launch
+    normalize[grid](score,a[19],a[20],product,scalars,a[15],t,S=s,BS=bs,**opts)
+  File "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/c14_phase5r5_profile.py", line 18, in launch
+    if self.name=='normalize' and a[7] in (256,512,1023):
+                                  ~^^^
+IndexError: tuple index out of range
