@@ -2674,6 +2674,162 @@ Paths are repository-relative. `emender` is this repository; `sxgc` is the exter
           "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_b_matched/verify_harvest.py",
           "commit": "54117a192fdb58ac87b3cd4adb9cfb807e57923c",
           "sha256": "920382ce7bfd4521d854beb3f22415ba7125911c24c6ca88a9ac4829eaaf60ce"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/c14_transformer_reconcile.py",
+          "commit": "22606e9e93dc41055c25a5e134f14889e75ccc2f",
+          "sha256": "ce40a06a2328a38a9c442cf9d4450a80706ee953768954a079af9f1164b80cd6"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/c14_transformer_train.py",
+          "commit": "22606e9e93dc41055c25a5e134f14889e75ccc2f",
+          "sha256": "55bc150b310fd7e431b2cb2fd3a4376656b9863581dbaf0727a514d7ee35953e"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/c14_transformer_detached.py",
+          "commit": "22606e9e93dc41055c25a5e134f14889e75ccc2f",
+          "sha256": "b9e7689f80fae79f616e7d8420bf08ef5df2828109ed26f04a65ed4e58c3ef30"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/run_c14_transformer_leased.sh",
+          "commit": "22606e9e93dc41055c25a5e134f14889e75ccc2f",
+          "sha256": "d8842976cdc7006bffff234785012d999b2474819c3948628f9fac303d4d1b4f"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/validate_c14_transformer.py",
+          "commit": "22606e9e93dc41055c25a5e134f14889e75ccc2f",
+          "sha256": "a1e1c5d6f3c5c9f9222ed21a31c7d34563d42108956e60b56e8bcf932cbe799f"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/RESULT_C14_TRANSFORMER_TRAINED.md",
+          "commit": "22606e9e93dc41055c25a5e134f14889e75ccc2f",
+          "sha256": "c5e984d0fa467aea727dbd01bea2f6e7b0cead5013fdd1338fcbc07751a81aa2"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer/cache_reconciliation.json",
+          "commit": "22606e9e93dc41055c25a5e134f14889e75ccc2f",
+          "sha256": "a5fdab3d79ff9ab50c4afd00ac511b60c9652ca52af3a631d56a728e7311ddc7"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer/config.json",
+          "commit": "22606e9e93dc41055c25a5e134f14889e75ccc2f",
+          "sha256": "ec19ce68f4f980fffd485a11977fbcd5a768c833abf192ffa94a9a68320007d9"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer/frozen_evidence_hashes.json",
+          "commit": "22606e9e93dc41055c25a5e134f14889e75ccc2f",
+          "sha256": "79b29103dd84fc3a06b53cb506942d98297dbd4223269b566c120aeaa562d9fb"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer/lease.txt",
+          "commit": "22606e9e93dc41055c25a5e134f14889e75ccc2f",
+          "sha256": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer/lease_initial.txt",
+          "commit": "22606e9e93dc41055c25a5e134f14889e75ccc2f",
+          "sha256": "a4952288b629f760abf4e63ff778d149361af32e5f93c77b08e2c80d0bc6201e"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer/lease_terminal.txt",
+          "commit": "22606e9e93dc41055c25a5e134f14889e75ccc2f",
+          "sha256": "86bcabf52db3d40cce4a05d9c3658c2ab6f11b0af5abd866da2bf9b0bf311d4e"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer/owner_initial.txt",
+          "commit": "22606e9e93dc41055c25a5e134f14889e75ccc2f",
+          "sha256": "47dd668f06a0f9d13b9168485c5f1ffcb8c85a41a271c39214cf1138212b04d0"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer/reconciliation_console.txt",
+          "commit": "22606e9e93dc41055c25a5e134f14889e75ccc2f",
+          "sha256": "5390fec624fc64b12c9c15fa41d0dcff6607e45924c2a1a175a8857ef964eee3"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer/reconciliation_initial_console.txt",
+          "commit": "22606e9e93dc41055c25a5e134f14889e75ccc2f",
+          "sha256": "1a77e1f2270ddeae31faceed6ba7543625bfa1f59adb93dfb6c6f6c6582129e1"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer/reconciliation_initial_historical_binding_failure.json",
+          "commit": "22606e9e93dc41055c25a5e134f14889e75ccc2f",
+          "sha256": "305f4c1313363a66fba3a4bf62f7330120a9904f2793705b32304a414eda1fba"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer/terminal.json",
+          "commit": "22606e9e93dc41055c25a5e134f14889e75ccc2f",
+          "sha256": "d24219f6de94b955cf36d25bd2aca88e2d35eef45b9317b7083f55ec8fe9653c"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer/tests.txt",
+          "commit": "22606e9e93dc41055c25a5e134f14889e75ccc2f",
+          "sha256": "269717fb690742725a779cc6c8acd3a440e4f7d0c5edf73658fbfb9057420c8f"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer/train_console.txt",
+          "commit": "22606e9e93dc41055c25a5e134f14889e75ccc2f",
+          "sha256": "cd526b0caecba734bd3d83a1737c0cfe1a0f905ecc11b7f374ca45a9734051f8"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer/train_detached_launch.json",
+          "commit": "22606e9e93dc41055c25a5e134f14889e75ccc2f",
+          "sha256": "5ce3197ba43d6a15e7b5e021d2af4e1fda075330ceed9568c691caa6e9f04c6f"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer/train_detached_launcher_console.txt",
+          "commit": "22606e9e93dc41055c25a5e134f14889e75ccc2f",
+          "sha256": "ee559981584c8b69974096a9777ce012f5808e7b915a96714cad2107fcbea8d0"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer/training.json",
+          "commit": "22606e9e93dc41055c25a5e134f14889e75ccc2f",
+          "sha256": "e7f5defc1cc8b98a0f2dc8036b1c15b3a5882c60092a3108a179e703d5f927c0"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer/training_decoder.c",
+          "commit": "22606e9e93dc41055c25a5e134f14889e75ccc2f",
+          "sha256": "0c8d9fa1e59937f88eef7ba9b405901d993ade2a04552e3336b786747522fada"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer/training_runner.py",
+          "commit": "22606e9e93dc41055c25a5e134f14889e75ccc2f",
+          "sha256": "55bc150b310fd7e431b2cb2fd3a4376656b9863581dbaf0727a514d7ee35953e"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer/training_survival.json",
+          "commit": "22606e9e93dc41055c25a5e134f14889e75ccc2f",
+          "sha256": "71430560e588c607d00de62de5611a9c60a6dca6180cf0d2dc431e4095ae82ee"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer/validation.json",
+          "commit": "22606e9e93dc41055c25a5e134f14889e75ccc2f",
+          "sha256": "e3af10a40ecb3fbabad6d59febf244014c27c32ec405bec822f3e976e6bc4c38"
         }
       ]
     }
@@ -2978,3 +3134,18 @@ pending/not-run statements for this twin; original frozen-time endpoints stand.
 Lifecycle value's .661320101 fixed-time contrast remains; append-only exposure
 is not exactly matched. This is evidence for the operator's launch call, not a
 launch decision. No resilient DiLoCo behavior changed; gap IDs inapplicable.
+
+## C14 transformer consultation training completed (2026-11-06)
+
+Full union reconciliation passed: 1,785,536 shared-prefix + 5,900,112 continuation
+windows = 7,685,648; 225,880,702 + 746,495,031 = 972,375,733 targets. The 746.5M
+console counter was continuation-only. Every shard hash, source-order window
+identity and decoder entropy parity check passed against the frozen stream and
+phase-boundary receipts. No short-cache workaround or service restart occurred.
+
+The transformer consultation arm completed 281,741 steps /
+570,344,976 real targets in 2700.010381 active seconds,
+with the registered seed/protocol and shared v2 decoder. Detached broker card 2;
+atomic checkpoint/RNG/accounting validation passes. Dense and frozen-arm receipts
+remain unchanged. Paired evaluation and P1/P2/head asymmetry are pending at this
+training phase. [Training receipt](RESULT_C14_TRANSFORMER_TRAINED.md).
