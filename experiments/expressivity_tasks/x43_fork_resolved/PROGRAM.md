@@ -2534,14 +2534,14 @@ Paths are repository-relative. `emender` is this repository; `sxgc` is the exter
         {
           "repo": "emender",
           "path": "experiments/expressivity_tasks/x43_fork_resolved/RESULT_C14_ABLATION_TRIANGLE.md",
-          "commit": "a2470d3059f4ea30c406f41a2c27042d53b511d1",
-          "sha256": "c4ca780637f3a35b58a569d0a4a3018933982f4a6ad886bf43714d29daa83ab3"
+          "commit": "54117a192fdb58ac87b3cd4adb9cfb807e57923c",
+          "sha256": "3f320a445cf53f2ff771fdd80ffc2f8ec9d8ce70d107255b4aad6cb1b65d84ce"
         },
         {
           "repo": "emender",
           "path": "experiments/expressivity_tasks/x43_fork_resolved/THEORY_INTERVAL_OPERATORS.md",
-          "commit": "9bb105081d997465971400751d3c53d0bea1358a",
-          "sha256": "c16ca8f1f14f79fabd683980f50076c0625bc70243ba0bf2bfa9c6d6ec373a01"
+          "commit": "54117a192fdb58ac87b3cd4adb9cfb807e57923c",
+          "sha256": "a1249793d02353755e82e6db496488a5996f4f23857a1928d29960530b949879"
         },
         {
           "repo": "emender",
@@ -2594,8 +2594,8 @@ Paths are repository-relative. `emender` is this repository; `sxgc` is the exter
         {
           "repo": "emender",
           "path": "experiments/expressivity_tasks/x43_fork_resolved/RESULT_C14_DATA_EFFICIENCY.md",
-          "commit": "beafbd1bf01fb662f8bc40ad54788f74facc11a9",
-          "sha256": "074267e4c00d1e927d525532e6ccb6e78341877009c627bfebf2be614eabcf2c"
+          "commit": "54117a192fdb58ac87b3cd4adb9cfb807e57923c",
+          "sha256": "1d2faabc4d55a158f3ada2cf592b1e617be767aa850ed32aa4a0b69a87af567e"
         },
         {
           "repo": "emender",
@@ -2608,6 +2608,72 @@ Paths are repository-relative. `emender` is this repository; `sxgc` is the exter
           "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_b_unbudgeted_profile/validation_manifest.json",
           "commit": "9bb105081d997465971400751d3c53d0bea1358a",
           "sha256": "75717b7589e731199eb3c87353256757d4920839f2f179264cd445a9266c2612"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/RESULT_C14_B_MATCHED.md",
+          "commit": "54117a192fdb58ac87b3cd4adb9cfb807e57923c",
+          "sha256": "c1af717f9545c5e351c659bbd9b116cc52d363c6589b3a8f50c5ab27ecb18de3"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_b_matched/HARVEST_COMPLETE.json",
+          "commit": "54117a192fdb58ac87b3cd4adb9cfb807e57923c",
+          "sha256": "8c8ce6c0aa6c1e9bdc0adf630a522fd7feb087a508640c92570c9fa607364276"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_b_matched/harvest_process_broker.txt",
+          "commit": "54117a192fdb58ac87b3cd4adb9cfb807e57923c",
+          "sha256": "d1f28476ea9e6720d57e4c82c0413970534b9fcba160e3c846b5781846e17f24"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_b_matched/eval_table.json",
+          "commit": "54117a192fdb58ac87b3cd4adb9cfb807e57923c",
+          "sha256": "da813b55faa2f5027dd1a9d0569960b55652987b3a1443b1fa12ca424717c807"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_b_matched/eval_resume.json.gz",
+          "commit": "54117a192fdb58ac87b3cd4adb9cfb807e57923c",
+          "sha256": "ad2e331b1606613765adbeed3116a796b5f276b2dd8751b0ea42a893c83820ce"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_b_matched/training.json.gz",
+          "commit": "54117a192fdb58ac87b3cd4adb9cfb807e57923c",
+          "sha256": "12ad038f30f40b420cba26eacf6b773e7c47485f1243ffd75b88a31b93a463e6"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_b_matched/eval_terminal.json",
+          "commit": "54117a192fdb58ac87b3cd4adb9cfb807e57923c",
+          "sha256": "d24219f6de94b955cf36d25bd2aca88e2d35eef45b9317b7083f55ec8fe9653c"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_b_matched/native_populated_decay.json",
+          "commit": "54117a192fdb58ac87b3cd4adb9cfb807e57923c",
+          "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_b_matched/training_config.json",
+          "commit": "54117a192fdb58ac87b3cd4adb9cfb807e57923c",
+          "sha256": "0bfd6b25a16b10f71e0bf3f0afc72be03baf365ebc3ac70394f42e6797cac85e"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_b_matched/verdicts.json.gz",
+          "commit": "54117a192fdb58ac87b3cd4adb9cfb807e57923c",
+          "sha256": "6326e8160bb09f6a70d8733e126485013b63cebcc15d9ff14f793206ccb5a64f"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_b_matched/verify_harvest.py",
+          "commit": "54117a192fdb58ac87b3cd4adb9cfb807e57923c",
+          "sha256": "920382ce7bfd4521d854beb3f22415ba7125911c24c6ca88a9ac4829eaaf60ce"
         }
       ]
     }
@@ -2898,3 +2964,17 @@ explicit ~13,600s training budget amendment. Original c190956d source, all
 The kernel bill is not prerequisite. Paired evaluation and measured causality
 verdict remain pending. Append-only's retained endpoint has 75,394,452 targets,
 so it must not be labeled exactly matched exposure.
+
+C14-B matched resolver — measured terminal PT1–PT3: all 26,807 shards /
+3,431,242 windows / 434,204,084 real targets, 66 frozen-identity rows verified.
+Single-seed final-test twin **1.565270853**, delta **−0.019429161** versus
+budgeted at equal 71,677,042 targets: registered negative sign favors compute
+shaping in this recipe, with a small margin and no uncertainty estimate.
+Capacity/implementation/trajectory and active compute remain confounded.
+PT2 and the corrected fork baseline, complete four-arm table and PT3's
+9.045x-to-2.3170x efficiency-normalization saturation are bound in
+[RESULT_C14_B_MATCHED.md](RESULT_C14_B_MATCHED.md). This supersedes all earlier
+pending/not-run statements for this twin; original frozen-time endpoints stand.
+Lifecycle value's .661320101 fixed-time contrast remains; append-only exposure
+is not exactly matched. This is evidence for the operator's launch call, not a
+launch decision. No resilient DiLoCo behavior changed; gap IDs inapplicable.

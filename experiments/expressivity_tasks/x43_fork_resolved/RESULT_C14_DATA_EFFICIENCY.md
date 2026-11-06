@@ -1,5 +1,11 @@
 # C14-B data-efficiency receipt
 
+## Matched-exposure terminal re-closure (supersedes pending causal status below)
+
+The single-seed matched twin is **1.565270853** at 71,677,042 targets, versus budgeted **1.584700014** at the same exposure: delta **−0.019429161** nats/byte. PT1's registered negative sign supports compute shaping in this recipe; the small margin has no uncertainty estimate. Capacity, implementation, compute and trajectory remain confounded. Original rows below remain historical fixed-time endpoints. Append-only has 75,394,452 targets, so the original triangle is not exactly exposure matched. The aggregate lifecycle advantage over append-only remains 0.661320101, without isolating individual operations. [Terminal PT1–PT3 and all 66 four-arm rows](RESULT_C14_B_MATCHED.md) bind the final comparison.
+
+Matched twin dense-anchor improvement is .009917579 per million targets (2.3170x passive). The early 9.045x endpoint normalization saturates in magnitude while translating to a small matched-exposure gain; it is not a sample-complexity estimate.
+
 Single-seed endpoint comparison from existing receipts; no new training or evaluation.
 Loss is final-test nats per raw byte. Exposure counts real training targets,
 excluding padding. These are endpoints, not measured learning curves or a

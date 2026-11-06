@@ -77,7 +77,7 @@ supports lifecycle value in this fixed-time recipe, without isolating operations
 Unbudgeted achieves 1.716496444 with roughly fivefold less data: the exposure
 confound cuts in its favor as data-efficiency evidence. Budget pressure itself
 cannot be separated cleanly from lifecycle value, exposure, capacity and trajectory;
-a matched-exposure unbudgeted arm is specified but not run. Full strata and
+that historical unresolved status is superseded by the matched twin below. Full strata and
 limits: [RESULT_C14_ABLATION_TRIANGLE.md](RESULT_C14_ABLATION_TRIANGLE.md).
 
 Single-seed exposure accounting: [data-efficiency receipt](RESULT_C14_DATA_EFFICIENCY.md)
@@ -85,6 +85,20 @@ reports all six endpoints. Unbudgeted has 9.045x the passive dense-anchor NLL
 improvement per training target; this endpoint statistic is not matched-loss
 sample complexity. Heavy trained compute and budget-pressure causality remain
 confounded.
+
+Measured budget/beam-width verdict (PT1–PT3): the single-seed matched twin
+reaches **1.565270853**, **−0.019429161** nats/byte versus budgeted at exactly
+71,677,042 targets. The registered negative sign favors compute shaping rather
+than additional curation value from pressure in this recipe. This is a small
+margin without uncertainty, not a general result about optimal beam width.
+Allocated capacity, implementation, trajectory and 5.96x active training time
+remain confounded. Early 9.045x dense-anchor improvement per target saturates
+to 2.3170x passive's endpoint normalization, while translating to slightly better
+matched-exposure loss; no sample-complexity law follows. Aggregate lifecycle
+value versus append-only (0.661320101) remains supported in the fixed-time
+recipe; append-only's exposure is not exactly matched. All 66 rows, reset/interior
+and support/fork breakdowns, kernel equivalence and terminal coverage are in
+[the matched harvest](RESULT_C14_B_MATCHED.md).
 
 ## Part II — LLMs of other types as approximations of the algebra
 
@@ -294,7 +308,7 @@ time, including checkpoint recomputation. A wrapper-only token-unbind change
 is byte-exact on the real trained batch and a synthetic 128-live-slot probe;
 replay work falls, but whole-step compute throughput does not improve in the
 samples. This is implementation evidence, not intrinsic cost or a live-slot
-scaling law. No matched-exposure twin was run, so the single-seed efficiency
-receipt still cannot isolate budget pressure, capacity, exposure or trajectory.
+scaling law. The matched-exposure twin now supplies the registered sign, with capacity,
+implementation, compute and trajectory still confounded; see Part I.
 See [occupancy-heavy profile](RESULT_C14_UNBUDGETED_PROFILE.md), including the
 X31 re-certification bill and the untouched exact original resume state.

@@ -1,5 +1,10 @@
 # C14-B1 measured ablation triangle
 
+## Matched-exposure terminal re-closure (supersedes pending causal status below)
+
+The single-seed matched twin is **1.565270853** at 71,677,042 targets, versus budgeted **1.584700014** at the same exposure: delta **−0.019429161** nats/byte. PT1's registered negative sign supports compute shaping in this recipe; the small margin has no uncertainty estimate. Capacity, implementation, compute and trajectory remain confounded. Original rows below remain historical fixed-time endpoints. Append-only has 75,394,452 targets, so the original triangle is not exactly exposure matched. The aggregate lifecycle advantage over append-only remains 0.661320101, without isolating individual operations. [Terminal PT1–PT3 and all 66 four-arm rows](RESULT_C14_B_MATCHED.md) bind the final comparison.
+
+
 | Arm | Final-test on NLL | Training steps | Training byte targets |
 |---|---:|---:|---:|
 | c14_b_v2 | 1.584700014 | 35,419 | 71,677,042 |
