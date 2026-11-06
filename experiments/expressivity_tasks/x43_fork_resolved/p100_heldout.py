@@ -16,6 +16,9 @@ DATA=Path('/home/erikg/c14_p100_heldout')
 def write(name,value):
     p=OUT/name;t=p.with_suffix(p.suffix+'.tmp');t.write_text(json.dumps(value,indent=2,allow_nan=False)+'\n');t.replace(p)
 def gate():
+    reg=json.loads((OUT/'registration.json').read_text())
+    for name,h in reg['sources'].items():assert digest(ROOT.parents[2]/name)==h,name
+    assert digest(ROOT/'receipts/c14_registered_scale/stream_audit.json')==reg['stream_audit_sha256']
     v=json.loads((VERIFY/'verdict.json').read_text());assert v['status']=='passed' and v['region_bytes_scanned']==LIMIT
     r=json.loads((VERIFY/'registration.json').read_text());assert identity(RAW)==r['raw'] and identity(INDEX)==r['index']
     assert digest(serving.XSA)==r['binary_sha256']
