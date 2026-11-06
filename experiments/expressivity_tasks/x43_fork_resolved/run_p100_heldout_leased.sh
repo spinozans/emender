@@ -4,12 +4,13 @@ cd /home/erikg/emender
 r=experiments/expressivity_tasks/x43_fork_resolved/receipts/p100_heldout
 v=experiments/expressivity_tasks/x43_fork_resolved/receipts/p100_query_verification
 # Verification must terminate successfully before selection or extraction.
-while [[ ! -f "$v/verdict.json" ]]; do
-  [[ -r /proc/502753/stat ]] || { printf '{"phase":"verification","exit_code":91}\n' > "$r/terminal.json"; exit 91; }
-  state=$(ps -o stat= -p 502753)
+while [[ ! -f "$v/delivery.json" ]]; do
+  [[ -r /proc/502753/stat || -f "$v/verdict.json" ]] || { printf '{"phase":"verification","exit_code":91}\n' > "$r/terminal.json"; exit 91; }
+  state=$(ps -o stat= -p 502753 || true)
   [[ "$state" != Z* ]] || { printf '{"phase":"verification","exit_code":92}\n' > "$r/terminal.json"; exit 92; }
   sleep 10
 done
+/home/erikg/emender/.venv/bin/python -c 'import json,sys;assert json.load(open(sys.argv[1]))["status"]=="pushed"' "$v/delivery.json"
 for phase in select extract; do
   rc=0
   /home/erikg/emender/.venv/bin/python -m experiments.expressivity_tasks.x43_fork_resolved.p100_heldout "$phase" > "$r/$phase.console.txt" 2>&1 || rc=$?
