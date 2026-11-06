@@ -1,0 +1,62 @@
+{
+  "gpu": "3",
+  "rows": [
+    {
+      "batch": 1,
+      "tokens": 257,
+      "cap": 257,
+      "peak_live": 257,
+      "scope": "native forward only, zero-value controlled append schedule; repeat test only, no reference/gradient qualification",
+      "status": "timed_repeat_exact_not_certified",
+      "samples_ms": [
+        45.79733498394489,
+        43.67194231599569,
+        46.32721608504653,
+        43.212441727519035,
+        42.854052037000656,
+        43.18214114755392,
+        43.301322031766176,
+        43.11624122783542,
+        43.22527116164565,
+        42.782971169799566
+      ],
+      "median_ms": 43.21885644458234,
+      "registers": 40,
+      "spills": 3204,
+      "metadata": "KernelMetadata(allowed_dot_input_precisions=['tf32', 'tf32x3', 'ieee'], arch='sm89', backend_name='cuda', cluster_dims=(1, 1, 1), debug=False, default_dot_input_precision='tf32', deprecated_fp8_dot_operand_dtypes=[], enable_fp_fusion=False, extern_libs=[['libdevice', '/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/backends/nvidia/lib/libdevice.10.bc']], global_scratch_align=1, global_scratch_size=0, hash='810a6c9ca76b816c76fc0a46c5181f2d4ed936eacb2a2fc9fca2eb19c75ea10e', instrumentation_mode='', ir_override=None, launch_cooperative_grid=False, launch_pdl=False, max_num_imprecise_acc_default=0, maxnreg=None, name='kernel', num_ctas=1, num_stages=3, num_warps=8, profile_scratch_align=1, profile_scratch_size=0, ptx_options=None, ptx_version=None, sanitize_overflow=True, shared=4096, supported_fp8_dtypes=['fp8e4b15', 'fp8e4nv', 'fp8e5'], target=GPUTarget(backend='cuda', arch=89, warp_size=32), tensordesc_meta=[], tmem_size=0, triton_version='3.5.1', warp_size=32)"
+    },
+    {
+      "batch": 1,
+      "tokens": 512,
+      "cap": 1025,
+      "peak_live": 257,
+      "scope": "native forward only, zero-value controlled append schedule; repeat test only, no reference/gradient qualification",
+      "status": "timed_repeat_exact_not_certified",
+      "samples_ms": [
+        146.1807987652719,
+        146.73702977597713,
+        146.62030013278127,
+        146.5910100378096,
+        146.5792590752244,
+        146.5330896899104,
+        146.96011040359735,
+        146.91649097949266,
+        146.70794922858477,
+        147.17634068802
+      ],
+      "median_ms": 146.66412468068302,
+      "registers": 40,
+      "spills": 7696,
+      "metadata": "KernelMetadata(allowed_dot_input_precisions=['tf32', 'tf32x3', 'ieee'], arch='sm89', backend_name='cuda', cluster_dims=(1, 1, 1), debug=False, default_dot_input_precision='tf32', deprecated_fp8_dot_operand_dtypes=[], enable_fp_fusion=False, extern_libs=[['libdevice', '/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/backends/nvidia/lib/libdevice.10.bc']], global_scratch_align=1, global_scratch_size=0, hash='6d0bbb2cdd6b14b0deb86aaeb68b3cddfbba8fcb4496ad248df2b3c5e9e84ade', instrumentation_mode='', ir_override=None, launch_cooperative_grid=False, launch_pdl=False, max_num_imprecise_acc_default=0, maxnreg=None, name='kernel', num_ctas=1, num_stages=3, num_warps=8, profile_scratch_align=1, profile_scratch_size=0, ptx_options=None, ptx_version=None, sanitize_overflow=True, shared=8192, supported_fp8_dtypes=['fp8e4b15', 'fp8e4nv', 'fp8e5'], target=GPUTarget(backend='cuda', arch=89, warp_size=32), tensordesc_meta=[], tmem_size=0, triton_version='3.5.1', warp_size=32)"
+    },
+    {
+      "batch": 1,
+      "tokens": 1024,
+      "cap": 2049,
+      "peak_live": 257,
+      "scope": "native forward only, zero-value controlled append schedule; repeat test only, no reference/gradient qualification",
+      "status": "failed",
+      "error": "PTXASError('`ptxas` failed with error code -15\\n`ptxas` stderr:\\n\\nRepro command: /home/erikg/emender/.venv/lib/python3.12/site-packages/triton/backends/nvidia/bin/ptxas -lineinfo --fmad=false -v --gpu-name=sm_89 /tmp/tmp50cxfsmh.ptx -o /tmp/tmp50cxfsmh.ptx.o\\n')"
+    }
+  ]
+}
