@@ -1,0 +1,100 @@
+def main():
+    assert sys.executable=='/home/erikg/emender/.venv/bin/python'
+    assert os.environ.get('GPU_LEASE_HELD') in ('2','4')
+    assert os.environ.get('CUBLAS_WORKSPACE_CONFIG')==':4096:8'
+    parser=argparse.ArgumentParser();parser.add_argument('--resume',action='store_true');args=parser.parse_args()
+    torch.set_num_threads(1);torch.use_deterministic_algorithms(True)
+    training=json.loads((OUT/'training.json').read_text())
+    assert training['status']=='completed_matched_exposure'
+    for name,digest in training['config']['code_sha256'].items():assert sha(ROOT/name)==digest,name
+    checkpoint=Path(training['checkpoint']);assert sha(checkpoint)==training['checkpoint_sha256']
+    assert sha(CACHE/'journal.jsonl')==JOURNAL
+    checked=json.loads((ROOT/'receipts/c14_paired_eval/cache_validation.json').read_text())
+    assert checked['status']=='passed' and checked['journal_sha256']==JOURNAL and checked['all_eval_entropy_float32_identity']
+    construction=json.loads((ROOT/'receipts/c14_dense/eval_construction.json').read_text())
+    assert sha(Path(construction['windows_path']))==WINDOWS
+    p=json.loads((ROOT/'receipts/c14_dense/pile_span.json').read_text())
+    assert sha(DATA/'pile_offsets.jsonl')==p['offsets_sha256']
+    source=Path(p['source']);stat=source.stat()
+    assert (stat.st_size,stat.st_ino,stat.st_mtime_ns)==(p['source_size'],p['source_inode'],p['source_mtime_ns'])
+    raw=np.memmap(source,dtype=np.uint8,mode='r')
+    docs={d['source_index']:d for line in (DATA/'pile_offsets.jsonl').open() if (d:=json.loads(line))['split']=='valid'}
+    saved=torch.load(checkpoint,map_location='cpu',weights_only=False)
+    model=StoreIntegrated().cuda().eval();model.load_state_dict(saved['model'])
+    assert all(torch.isfinite(p).all() for p in model.parameters())
+    decoder=load_decoder();context_decoder=load_context_decoder()
+    config=dict(checkpoint_sha256=training['checkpoint_sha256'],eval_code_sha256=sha(__file__),
+        code_sha256=training['config']['code_sha256'],journal_sha256=JOURNAL,windows_sha256=WINDOWS,
+        metadata_reuse_sha256=sha(ROOT/'c14_b_control_fast.py'),
+        metadata_decoder_sha256=sha(ROOT/'c14_b_contexts.c'),metadata_wrapper_sha256=sha(ROOT/'c14_b_eval_decode.py'),
+        precision='BF16 autocast; per-target CE float32; sums float64',deterministic=True,
+        modes=['B1_on','B1_off'],reset='independent window; document tails loss masked')
+    if args.resume:
+        state=json.loads((OUT/'eval_resume.json').read_text());assert state['config']==config
+    else:
+        assert not (OUT/'eval_resume.json').exists(),'use --resume'
+        state=dict(config=config,next_shard=0,windows=0,targets=0,sums={},telemetry={},elapsed_seconds=0.,status='running')
+    decay=synthetic_decay(model);write('native_populated_decay.json',decay)
+    shards=[r for s in (CACHE/'journal.jsonl').read_text().splitlines() if (r:=json.loads(s))['event']=='shard_complete']
+    stopped=False
+    def stop(*_):
+        nonlocal stopped
+        stopped=True
+    signal.signal(signal.SIGTERM,stop);signal.signal(signal.SIGINT,stop)
+    fast.install()
+    start=time.monotonic();prior=state['elapsed_seconds'];verified=set()
+    def save(status):
+        state['elapsed_seconds']=prior+time.monotonic()-start;state['status']=status;write('eval_resume.json',state)
+    with Path(construction['windows_path']).open() as frozen,torch.inference_mode():
+        for _ in range(state['windows']):next(frozen)
+        for index in range(state['next_shard'],len(shards)):
+            r=shards[index];data=(CACHE/r['file']).read_bytes()
+            assert hashlib.sha256(data).hexdigest()==r['sha256']
+            ids,lengths,features,contexts=eval_shard(data,r['windows'],decoder,context_decoder)
+            if index in (0,len(shards)//2,len(shards)-1):
+                reference=oracle_shard(data,r['windows'],decoder)
+                for actual,expected in zip((ids,lengths,features,contexts),reference[:4]):
+                    assert np.array_equal(actual,expected),'eval oracle/raw metadata mismatch'
+            assert r['first_window_index']==state['windows']
+            xx=np.zeros((len(ids),128),np.int64);yy=np.zeros_like(xx);halves=[]
+            for j,((doc,at),length) in enumerate(zip(ids.tolist(),lengths.tolist())):
+                expected=json.loads(next(frozen))
+                assert (doc,at,length)==(expected['document'],expected['start'],expected['targets'])
+                d=docs[doc]
+                if doc not in verified:
+                    assert hashlib.sha256(raw[d['byte_offset']:d['byte_offset']+d['byte_length']]).hexdigest()==d['sha256']
+                    verified.add(doc)
+                assert at+length<d['byte_length']
+                begin=d['byte_offset']+at;bb=raw[begin:begin+length+1]
+                xx[j,:length]=bb[:-1];yy[j,:length]=bb[1:];halves.append(expected['half'])
+            masks=strata(features,yy,lengths);halves=np.array(halves)
+            x=torch.as_tensor(xx,device='cuda');y=torch.as_tensor(yy,device='cuda')
+            answers=torch.as_tensor(features,device='cuda');ll=torch.as_tensor(contexts,device='cuda')
+            for mode in config['modes']:
+                fast.full_telemetry=(index%64==0 and mode=='B1_on')
+                ff=answers if mode=='B1_on' else torch.zeros_like(answers)
+                with torch.autocast('cuda',dtype=torch.bfloat16):
+                    lp,_=model(x,ff,ll,windows=[tuple(row) for row in ids.tolist()],valid_lengths=lengths.tolist())
+                if index==0:
+                    fast.restore()
+                    with torch.autocast('cuda',dtype=torch.bfloat16):
+                        reference,_=model(x,ff,ll,windows=[tuple(row) for row in ids.tolist()],valid_lengths=lengths.tolist())
+                    assert torch.equal(lp,reference),'eval metadata/telemetry optimization changed logits'
+                    fast.install()
+                losses=(-lp.gather(-1,y[...,None])[...,0]).float().cpu().numpy()
+                assert np.isfinite(losses).all(),(mode,index)
+                if mode=='B1_on' and index%64==0:accumulate(state['telemetry'],model.telemetry)
+                if mode=='B1_off':assert sum(row['array_requests'] for layer in model.telemetry for row in layer)==0
+                for half in ('all','calibration','final_test'):
+                    selection=np.ones(len(ids),bool) if half=='all' else halves==half
+                    add_sums(state['sums'],mode,half,losses,masks,selection)
+            state['next_shard']=index+1;state['windows']+=len(ids);state['targets']+=int(lengths.sum())
+            if index%64==0 or stopped:
+                save('running');print(json.dumps(dict(shard=index+1,windows=state['windows'],seconds=state['elapsed_seconds'],
+                    final_nll=mean(state['sums'].get('B1_on/final_test/total',[0.,0])))),flush=True)
+            if stopped:save('paused');return
+        assert frozen.read()==''
+    assert (state['windows'],state['targets'])==EXPECTED[:2]
+    save('complete')
+    write('eval_table.json',{k:dict(total_nll=s,targets=n,nll=s/n if n else None) for k,(s,n) in state['sums'].items()})
+    write('verdicts.json',verdict(state,training,decay))
