@@ -1,0 +1,40 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/c14_phase5r5_reduction_probe.py", line 72, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/c14_phase5r5_reduction_probe.py", line 67, in main
+    candidate[(1,)](v,w,h,scratch,*outs[2:],BS=bs,num_warps=8,enable_fp_fusion=False)
+  File "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/c14_phase5r5_reduction_probe.py", line 43, in launch
+    read_page[grid](v,product,carry,out,valid,0,page,T=1,S=bs,BS=bs,PAGE=self.page_size,**opts)
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/runtime/jit.py", line 419, in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/runtime/jit.py", line 733, in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/runtime/jit.py", line 861, in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/compiler/compiler.py", line 300, in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/experimental/gluon/_runtime.py", line 40, in make_ir
+    module = ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+triton.compiler.errors.CompilationError: at 37:20:
+            n4_0,n4_8=tl.split(n3_0)
+            n4_4,n4_12=tl.split(n3_4)
+            n4_2,n4_10=tl.split(n3_2)
+            n4_6,n4_14=tl.split(n3_6)
+            n4_1,n4_9=tl.split(n3_1)
+            n4_5,n4_13=tl.split(n3_5)
+            n4_3,n4_11=tl.split(n3_3)
+            n4_7,n4_15=tl.split(n3_7)
+            if (page==0) & (tile==0):
+                acc=n4_0
+            else:
+                acc=acc+n4_0
+                    ^
+ValueError('Layout mismatch in broadcast: BlockedLayout(size_per_thread=(1 ,1), threads_per_warp=(1 ,32), warps_per_cta=(2 ,4), order=(1 ,0), ctas_per_cga=[1, 1], cta_split_num=[1, 1], cta_order=[1, 0]) vs SliceLayout(dim=2, parent=SliceLayout(dim=3, parent=SliceLayout(dim=4, parent=SliceLayout(dim=5, parent=BlockedLayout(size_per_thread=[1, 1, 2, 2, 2, 2], threads_per_warp=[1, 32, 1, 1, 1, 1], warps_per_cta=[2, 4, 1, 1, 1, 1], order=[1, 0, 5, 4, 3, 2], ctas_per_cga=[1, 1, 1, 1, 1, 1], cta_split_num=[1, 1, 1, 1, 1, 1], cta_order=[5, 4, 3, 2, 1, 0])))))')
