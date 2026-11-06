@@ -1,0 +1,181 @@
+{
+  "utc": "2026-11-06T17:07:48.195843+00:00",
+  "decision": "NO-GO for production/1.3B24h",
+  "design_commit": "f37f356c",
+  "implementation_commit": "b281035b",
+  "selected_page": 1024,
+  "terminals": {
+    "long_1024_terminal.json": {
+      "exit_code": 0
+    },
+    "reduction_256_terminal.json": {
+      "exit_code": 0
+    },
+    "reduction_512_terminal.json": {
+      "exit_code": 0
+    },
+    "gradient_terminal.json": {
+      "exit_code": 0
+    },
+    "tune_1024_terminal.json": {
+      "exit_code": 0
+    },
+    "long_512_terminal.json": {
+      "exit_code": 0
+    },
+    "oracle_terminal.json": {
+      "exit_code": 0
+    },
+    "long_2048_terminal.json": {
+      "exit_code": 0
+    },
+    "battery_terminal.json": {
+      "exit_code": 0
+    },
+    "tune_256_terminal.json": {
+      "exit_code": 0
+    },
+    "sweep_terminal.json": {
+      "exit_code": 0
+    },
+    "tune_512_terminal.json": {
+      "exit_code": 0
+    },
+    "reduction_1024_terminal.json": {
+      "exit_code": 0
+    },
+    "shape_terminal.json": {
+      "exit_code": 0
+    }
+  },
+  "ten_pairs": {
+    "count": 10,
+    "all_exact": true,
+    "repeat_exact": true
+  },
+  "primitive_pairs": {
+    "count": 72,
+    "all_exact": true
+  },
+  "long_gates": {
+    "512": {
+      "tokens": 512,
+      "cap": 1025,
+      "peak": 257,
+      "masked_tail": 7,
+      "exact": true,
+      "reset_exact": true,
+      "reference_kind": "unchanged monolithic"
+    },
+    "1024": {
+      "tokens": 1024,
+      "cap": 2049,
+      "peak": 257,
+      "masked_tail": 7,
+      "exact": true,
+      "reset_exact": true,
+      "reference_kind": "unchanged monolithic"
+    },
+    "2048": {
+      "tokens": 2048,
+      "cap": 4097,
+      "peak": 257,
+      "masked_tail": 7,
+      "exact": true,
+      "reset_exact": true,
+      "reference_kind": "PAGE256 decomposition + T1024 monolithic anchor + carry proof"
+    }
+  },
+  "projection": {
+    "timing_receipt": "tune_1024.json",
+    "layers": 22,
+    "heads": 2,
+    "native_passes": 2,
+    "tokens": 1024,
+    "scenario_targets": 2000000000,
+    "ms_per_head": 256.5914881415665,
+    "seconds_per_target": 0.022050831012165872,
+    "targets_per_second": 45.34976479790175,
+    "native_only_days": 510.43590305939523,
+    "required_ms_per_head": 0.5026909090909091,
+    "scope": "Native-only hypothetical raw-byte scenario; dense/replay/optimizer/source/checkpoint excluded; not measured1.3B training."
+  },
+  "source_sha256": {
+    "experiments/expressivity_tasks/x31_tape_cell_fused/tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_all_field_journal.py": "0acd8c04acec645f2177014a3295e7a97628a9737b785055f70fc2ae38323bee",
+    "experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_components.py": "05d9ccb30ce942462fb99ba9780dd1517d9a7ce0af3ba85da920f1935c8a8a80",
+    "experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_device_free.py": "969c7d7bf54c6aaf8f70e8985b1e7b0f4ae2a2a9f006324b42bf1dac0ed3a3f3",
+    "experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_gradients.py": "7d8007dcf3c20650b2fee9a25f2b0120c90b85e3530d40d852fbe8a097031159",
+    "experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_lazy_decay.py": "40e5167a3c5cf7d6de41c2897d1e2462a17cdeee81087c1006d3eb2f07d3e234",
+    "experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_parity.py": "7367366e3cefc661894040f64b49f1f1c942f8deef989b99443a81bfbfcc563e",
+    "experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_part7.py": "86e464e9f7bcd6485dbb89c9be2edd4d296b7da0b659b2ed9ea3d30569623240",
+    "experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_part8.py": "9a8c8d8250ff6debb60010515e3ccae416ef7121306ce5bced0c8496a8d2fb46",
+    "experiments/expressivity_tasks/x31_tape_cell_fused/tests/test_write_journal.py": "98aaadd8ee4d376bc5f73f6e9c61fa6d4c828dffe63f62e84a2d3f1a3fd68d0c",
+    "experiments/expressivity_tasks/x43_fork_resolved/c14_b_control_native.py": "250a93e3a686c2816a5784833c32bd32064b1348875ff973e80af77a6a4ae372",
+    "experiments/expressivity_tasks/x43_fork_resolved/c14_launch_shape.py": "be10bc34fdbaacb3c4b5cbf7cc75a0b19a117646cdb32815d0de5650b0d8d8ed",
+    "experiments/expressivity_tasks/x43_fork_resolved/c14_phase2_gluon_rowkeys_kernel.py": "27edef6191fcd138556a81e4fd014f3081161107b87b8392c2f5804630d37a9f",
+    "experiments/expressivity_tasks/x43_fork_resolved/c14_phase2_gradient_parity.py": "3d1bcef4152ba2ed3ed63b13001153b931ec603417c95b40273d48db1406ca87",
+    "experiments/expressivity_tasks/x43_fork_resolved/c14_phase2_shape_parity.py": "3e6c194da19ceb6122c915a452e6e51ee8ec48f75832b379032a0ee4b90616ea",
+    "experiments/expressivity_tasks/x43_fork_resolved/c14_phase5r2_selected_kernel.py": "75df26bb87b518231bf11fd0c165fd4db2383d9e4033b6d1944e837d77119592",
+    "experiments/expressivity_tasks/x43_fork_resolved/c14_phase5r3_axis_profile.py": "72abbaf4928fcbf910027800ce48d4ab293a92057652004b4c82cfc37b278f8c",
+    "experiments/expressivity_tasks/x43_fork_resolved/c14_phase5r3_compile2048_probe.py": "1f3a063fb06a22668e51f215a9b20a290fabcf6da84815fc8a1e99f42bd5bf6e",
+    "experiments/expressivity_tasks/x43_fork_resolved/c14_phase5r3_long_parity.py": "f160161fa5a20aaff8315c08cf5a81e6b75d5c73b76440d779571896d6644800",
+    "experiments/expressivity_tasks/x43_fork_resolved/c14_phase5r3_matched_r2_probe.py": "db4b16d435aff5937eaef3a720bb1d9372c23cad61107eff0797292b055a4bb4",
+    "experiments/expressivity_tasks/x43_fork_resolved/c14_phase5r3_probe.py": "9554a968fc3f1235fead30006c361c7fdcd76ea1bb143be8a37026dc4e10a591",
+    "experiments/expressivity_tasks/x43_fork_resolved/c14_phase5r3_reduction_probe.py": "586254024be377f0f5242b44fc35f2546878222ceb49892e39bb1abe617619f1",
+    "experiments/expressivity_tasks/x43_fork_resolved/c14_phase5r3_split_kernel.py": "6a6076bea7e568b2ce2b2b93aa81cb57096bf3fa998ecfe658d635244f3877f7",
+    "experiments/expressivity_tasks/x43_fork_resolved/c14_phase5r3_validate.py": "f02853a618794cb2e13942377fa064790332486e3fcfbbd4ae65a4e40952cba9",
+    "experiments/expressivity_tasks/x43_fork_resolved/c14_phase5r4_long_parity.py": "2c143fef4ca37a4b6a45c2b66c52f58fff6a0df368881b7fee41c9c79ef6e30b",
+    "experiments/expressivity_tasks/x43_fork_resolved/c14_phase5r4_probe.py": "143864e4f53dca39fe5f2754c944d08503920369a53874e89376649f7a3d8688",
+    "experiments/expressivity_tasks/x43_fork_resolved/c14_phase5r4_reduction_probe.py": "017bc234787f488f59e27dfdd525e9034033abfbacf8c1c3e60b3de34e156f6e",
+    "experiments/expressivity_tasks/x43_fork_resolved/c14_phase5r4_stream_pages.py": "8c3b70da6fee524a9543448a8608170c1aee3482f370b8c4c78a1b4bf07280f4",
+    "experiments/expressivity_tasks/x43_fork_resolved/c14_phase5r4_validate.py": "43224079aa47a3fc07531ac0ab85cc6a2d686c2ade7aba99231c75b3e44a2796",
+    "experiments/expressivity_tasks/x43_fork_resolved/run_c14_phase5r3_followups_leased.sh": "f842a336788802a0fdf7050066393d94febe602b151a72cf4c1ae814a3c9d6f2",
+    "experiments/expressivity_tasks/x43_fork_resolved/run_c14_phase5r3_probe_leased.sh": "1dd73e36f354544f6249abc88648892698be3cd9fc8bd5f532abec2cc02eb74c",
+    "experiments/expressivity_tasks/x43_fork_resolved/run_c14_phase5r3_validation_leased.sh": "9e2637738db9c8ece1aa301b56d14697697bc3579997b73b6e6104b6d6beef91",
+    "experiments/expressivity_tasks/x43_fork_resolved/run_c14_phase5r4_tune_leased.sh": "cced6227979bd0d73530e7448c43e775af83908726154446257a788ce5b54906",
+    "experiments/expressivity_tasks/x43_fork_resolved/run_c14_phase5r4_validation_leased.sh": "a2d7a925388cc8836a39c4e6d447ae8c597af236ad9751c1938e9e88a9da8872",
+    "experiments/expressivity_tasks/x43_fork_resolved/test_c14_assembly.py": "9aa1c05563c342aeaa33b2e83ce7fcb9ff506e66b9cf6b1a38e570b1b7e23b09",
+    "experiments/expressivity_tasks/x43_fork_resolved/test_c14_b.py": "bced71bd5da581fbc799fef4478128bb9bf485636fd232b9a0fc65ecb4abd485",
+    "experiments/expressivity_tasks/x43_fork_resolved/test_c14_b_ablation.py": "b9f1a63d1d421e410bc73fcefa500f3c662779f168013a75b63b3416abf01d93",
+    "experiments/expressivity_tasks/x43_fork_resolved/test_c14_b_batched_replay.py": "e5df9d37a92e83537e5ad3ac8491dae84b95087a3f9d7b57c9c62a77095baaab",
+    "experiments/expressivity_tasks/x43_fork_resolved/test_c14_b_controls.py": "ba0a1a4caad36aa245fe75a8e103a99046f0bfbdf99650535a4d1f0f9ac33c5f",
+    "experiments/expressivity_tasks/x43_fork_resolved/test_c14_b_enabled.py": "931ecd5c8d724f1803366a381e63babdf6bded88b1c89c526e8c70d29c1562b1",
+    "experiments/expressivity_tasks/x43_fork_resolved/test_c14_b_eval.py": "c4acf9e488a4957abcdf1830b2fbc8dcd0278b85d2cea86e6d11ec8241f36356",
+    "experiments/expressivity_tasks/x43_fork_resolved/test_c14_b_keys.py": "3806c3408f623bda176b1628ecc22c57ba6803955640bcfaf05526f88eefa6e2",
+    "experiments/expressivity_tasks/x43_fork_resolved/test_c14_b_native.py": "da19df8581910be9814d11d3026ae44aa7637868836cbf16456f54199859c01b",
+    "experiments/expressivity_tasks/x43_fork_resolved/test_c14_b_step_composition.py": "420c3b1349b6f3731989ce482c72aa59813dcca09b6a3f2a6ba8ecb952e7bd78",
+    "experiments/expressivity_tasks/x43_fork_resolved/test_c14_b_suffix.py": "d0f8facc441380e24469ee697ca56ed3252177e2f7119c57dc007b9ac2e7edfa",
+    "experiments/expressivity_tasks/x43_fork_resolved/test_c14_b_train_decode.py": "1669970c084501a2ef8dcf05f52813d12d45caead929d6b65d6a345b1b216caf",
+    "experiments/expressivity_tasks/x43_fork_resolved/test_c14_branch_serve.py": "053798d42ad09bea20c1f36f0401437e7c8ee75212f5475efae686b4b06f9ae0",
+    "experiments/expressivity_tasks/x43_fork_resolved/test_c14_cache_scale.py": "6a2970db7f57b6a74d5184d30d61caab731ba098e9d777c6dd3b8aceaf9cc5a5",
+    "experiments/expressivity_tasks/x43_fork_resolved/test_c14_documents.py": "8531550fdb6f493712b94d2844160e57b8e55fd55ea5fbb2757ad72a6099dad1",
+    "experiments/expressivity_tasks/x43_fork_resolved/test_c14_fast_features.py": "4a03485a156d1c85411c9ea630e4ecd1c580971132d9def3fe64404617879f55",
+    "experiments/expressivity_tasks/x43_fork_resolved/test_c14_feature_extract.py": "8c403336a41eb572175ac2005cc1c011ac74097858f48f0a34f9bf6a2ad17728",
+    "experiments/expressivity_tasks/x43_fork_resolved/test_c14_launch_shape.py": "bcbef9a4f48675a9c30156fe8c215af4edb76135afe9e32d6a60f534d22bcb67",
+    "experiments/expressivity_tasks/x43_fork_resolved/test_c14_paired_eval.py": "4737e5ed1df197ec651b62ee1cd576a3c6e7cc613412319e0a4e984d461eac24",
+    "experiments/expressivity_tasks/x43_fork_resolved/test_c14_pile_batches.py": "63980bef3f3e5a35dc4bace9f7f4b6d9098949ff47c1bc161ff6ceb89888b8fe",
+    "experiments/expressivity_tasks/x43_fork_resolved/test_c14_registered_cache.py": "4680b25acb45ccd6ef361b2c35950e7de33a4c326ee55b09523f5ed5eb5d5fcb",
+    "experiments/expressivity_tasks/x43_fork_resolved/test_c14_stacking.py": "62b3c2e782b7bb6aba0b7b6b28e7c6327c7bc9a46f0857fa9c54984fbc1b18f9",
+    "experiments/expressivity_tasks/x43_fork_resolved/test_c14_transformer_stacking.py": "b81a8cd74878f5cf3f0d8a6bdcb6bc199ee9201c6a720f87d1a7839b2cfced78",
+    "experiments/expressivity_tasks/x43_fork_resolved/test_c14_union_service.py": "a37f8305185a8c6ff5b30539d1b54501229abf565311b0445a1625080661cdf3",
+    "experiments/expressivity_tasks/x43_fork_resolved/test_operator_rounds.py": "0d3d567995de332dcbcafc697f9d9e1f08a3fa7bc5a59f3eeb518e83b4782606"
+  },
+  "twins_verdict": {
+    "seed": 3402,
+    "delta": -0.01850458970931501,
+    "verdict": "holds negative sign",
+    "prior_seed3401_delta": -0.01942916080979984,
+    "denominators_match_all66_rows": true
+  },
+  "historical_guards": {
+    "phase2": true,
+    "phase5r2": true
+  },
+  "residual_risks": [
+    "Native-only projection remains510.44days;24h real1.3B class NO-GO.",
+    "T2048 is operator-authorized compositional validation, not unchanged monolithic compilation/parity.",
+    "BS-wide scalar control/normalization and one-sequence occupancy remain; short shapes regress strongly with split launches.",
+    "Maximum-live operation-rich long cases, full trained models, >=2M real-target optimizer/RNG/cursor/checkpoint-resume and measured150M/1.3B throughput/memory remain unqualified."
+  ]
+}
