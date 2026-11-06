@@ -22,15 +22,25 @@ its role at the decision points. This program does that, with receipts:
    receipted with a named mechanism: loss-masking starves representations
    (C6); learned gates route around the head (C7a); fixed residual blends
    distill only the memory-less head (C7b); self-covering inputs collapse
-   into the copy (C11); consultation against a non-covering index is the one
-   coupling that works, with the gain flowing live through the array and
-   nothing absorbed into weights (C12, the feature-off decomposition).
-3. The head-choice question with an asymmetry finding: a memory-architecture
-   head consults without copying at every coverage tested; a weight-based
-   head re-copies as coverage rises (C13).
-4. The swappable-array property: skills in weights, corpus in the replaceable
-   index (C12-C13: unplug the features and the gain vanishes — nothing
-   memorized).
+   into the copy (C11); consultation against a non-covering index yields
+   live feature-dependent gain in C12's tested setup. At C14 scale both
+   consulted heads fail P2 and hurt zero-target positions; the C12
+   feature-off decomposition is not a universal no-absorption claim.
+3. The head-choice question has a measured reversal. C13's tier-1 finding
+   (Emender consults cleanly, transformer re-copies as coverage rises) does
+   **not** generalize to Pile scale. The consulted transformer is the better
+   array-reader: total 1.266063829 versus Emender 1.509260010; supported
+   0.717143862 versus 0.811639725. Its distance above the conditional array
+   baseline 0.663434002 is +0.053709860, versus Emender +0.148205723.
+   Both heads hurt zero-target positions; transformer P1 passes and P2 fails.
+   The larger Emender consultation gain reflects its weaker dense starting
+   point and does not establish a better reader. Equal active time gives
+   unequal exposure, so this is a measured budget verdict, not an isolated
+   architecture effect. See [C14 verdict](RESULT_C14_TRANSFORMER.md) and
+   [the complete first-pass table](RESULT_C14_FIRST_PASS.md).
+4. Swappability is scoped evidence from C12–C13. C14 feature-off losses and
+   transformer P2 failure prohibit asserting globally that nothing is
+   absorbed into weights. Live array dependence remains measured.
 5. The stacked system — consultation plus fusion — as the tier-1 record
    (C13: emender 1.650, beating its own fusion baseline and the transformer's
    best), with generation-character receipts (C9: walk/fork alternation,
@@ -54,7 +64,7 @@ its role at the decision points. This program does that, with receipts:
 Nobody (a) uses the fork/forced decomposition as the organizing principle of
 a language model; (b) holds the systematic integration lattice with named
 mechanisms per cell; (c) asks which architecture class should be the fork
-head — with the memory-based-vs-weight-based asymmetry receipted; (d)
+head — with the tier-1 asymmetry reversed at Pile scale; (d)
 demonstrates the swappable-array property by unplugging the features and
 showing the gain flows live. Each neighbor misses a different essential
 piece.
@@ -80,3 +90,23 @@ the exact boundaries of each neighbor's territory are not yet verified.
 ## The formal spine
 
 See [THEORY_INTERVAL_OPERATORS.md](THEORY_INTERVAL_OPERATORS.md) — the LM as dynamics of a weighted interval set over the corpus (the operator algebra), the emender five-ops realization, and LLM families as lossy in-weights approximations of that algebra. Recorded Nov 5 2026.
+
+## What survives the Pile-scale verdict
+
+The Emender claims retained here are the receipted operator causality,
+unbounded-store data-efficiency, and bounded-state theory. They do not imply
+superior array reading. Operator ablations and matched-exposure evidence are
+separate interventions: [ablation triangle](RESULT_C14_ABLATION_TRIANGLE.md),
+[data-efficiency](RESULT_C14_DATA_EFFICIENCY.md), and
+[matched resolver](RESULT_C14_B_MATCHED.md). The finite-precision bounded-state
+claim retains its stated assumptions in the theory document. C13's stacked
+win remains a tier-1 receipt, not the current Pile-scale head verdict.
+
+C14 transformer soft stacking passes both comparisons: **1.263566972** vs
+consulted **1.266063829** and dense+calibration **1.299507807**. The residual
+is only **−0.002496858** nats/byte (about 0.20%); the small post-consultation
+fusion finding replicates on the better reader. This is consistent with
+consultation capturing most of this gate recipe's benefit, not proof of a
+causal absorption mechanism. Literal C13 exact walks still fail with infinite
+total loss on 30,751,940 forced-zero targets. Every sign and the distance
+ladder are retained in [the first-pass table](RESULT_C14_FIRST_PASS.md).

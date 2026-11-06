@@ -120,8 +120,9 @@ its registered budget, while retaining an entropy-dependent accuracy ordering.
   exactly at inference but unbounded (the program's receipted unbounded arm);
   learned attention keys = fuzzy matching = approximate intervals; induction
   heads (Olsson et al. 2022) = learned match-then-continue circuits =
-  approximate backward search. Our C13 receipt — the transformer re-copies as
-  coverage rises — is the approximation preferring retrieval.
+  approximate backward search. C13's tier-1 re-copying observation is a
+  scoped receipt, not an architecture law: **the head asymmetry inverts at
+  Pile scale; the transformer is the better array-reader.**
   C14's registered Pile-scale consultation datum gives transformer device-on
   **1.266063829** versus dense **1.404428829** nats/byte: gain
   **+0.138364999**, compared with Emender's **+0.766873539**. Transformer P1
@@ -130,7 +131,26 @@ its registered budget, while retaining an entropy-dependent accuracy ordering.
   **does not hold** against a consulted transformer (0.717143862 versus
   0.811639725). This is a single-seed, equal-active-time comparison with unequal
   exposure, not an architecture-only causal claim. Full signs and strata:
-  [C14 head-asymmetry verdict](RESULT_C14_TRANSFORMER.md).
+  [C14 head-asymmetry verdict](RESULT_C14_TRANSFORMER.md) and
+  [complete first-pass ladder](RESULT_C14_FIRST_PASS.md). The conditional
+  array baseline is 0.663434002: supported-target distances are transformer
+  +0.053709860, Emender +0.148205723. The array's total is infinite, so these
+  are conditional distances, not distances to a total-LM oracle or a bound.
+  Transformer soft stacking reaches **1.263566972** vs consulted alone
+  **1.266063829** and dense+calibration **1.299507807**: soft P3 **PASS**,
+  but the residual is only **−0.002496858** nats/byte (about 0.20%). The
+  small residual after consultation replicates on the better reader. This
+  is descriptive evidence consistent with most of this fusion recipe's
+  benefit already captured by consultation; absorption into weights remains
+  a causal interpretation, not a measured mechanism. Literal exact-walk P3
+  still **FAILS**: 30,751,940 forced-zero targets give infinite total loss.
+- **Emender with an explicit store and array**: the retained evidence is
+  operator causality, unbounded-store data-efficiency, and bounded-state
+  theory, with the scopes and matched-exposure receipts above. None of these
+  entails being the best array-reader. A larger gain over a worse dense head
+  does not rescue that claim. The linked frozen stacking comparison measures
+  the residual after consultation; it cannot by itself identify what training
+  absorbed or establish an architecture-only mechanism.
 - **SSM / RNN / fixed-state**: the state is a fixed-budget compression of
   the interval set. Paper 1's theorem (fixed-state models of any size are
   automata in the finite-precision regime) reads here as: the approximation
