@@ -222,4 +222,3 @@ def kernel(K,Q,V,A,Pop,Append,Logit,Coef,Match,Error,Own,Pred,Expiry,Keep,Ids,Va
         if field==5: value=pred_at
         if field==6: value=expires
         tl.store(FinalMeta+(b*7+field)*S+ss,value,ss<S)
-
