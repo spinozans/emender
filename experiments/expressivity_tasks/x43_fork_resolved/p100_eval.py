@@ -60,6 +60,7 @@ def main():
         for lo in range(0,len(features),16):
             hi=min(lo+16,len(features));xx=torch.as_tensor(windows['x'][lo:hi].astype(np.int64),device='cuda');yy=torch.as_tensor(windows['y'][lo:hi].astype(np.int64),device='cuda');ff=torch.as_tensor(np.array(features[lo:hi]),device='cuda');kk=torch.as_tensor(np.array(contexts[lo:hi]),device='cuda');lengths=windows['lengths'][lo:hi]
             masks=strata(np.array(features[lo:hi]),windows['y'][lo:hi],lengths)
+            masks['array_support']=masks.pop('wikipedia_support')
             kval=contexts[lo:hi]
             for name,low,high in [('1_3',1,3),('4_12',4,12),('13_64',13,64),('65_plus',65,1024)]:masks['length_'+name]=masks['total']&(kval>=low)&(kval<=high)
             outputs={};confidence={}
