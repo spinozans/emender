@@ -1,0 +1,181 @@
+{
+  "input": "experiments/expressivity_tasks/x43_fork_resolved/receipts/scalability_phase5/t1024_compiler_input.ptx.gz",
+  "scope": "Static compiler-input instruction attribution, not hardware counters or physical register liveness",
+  "rows": [
+    {
+      "line": 73,
+      "source": "        values = tl.load(FinalV+(b*S+as_rows(ss))*128+as_cols(cd),as_rows(ss)<S,0.)",
+      "instructions": 21507,
+      "float_adds": 0,
+      "add_samples": []
+    },
+    {
+      "line": 47,
+      "source": "    return tl.convert_layout(x, tl.SliceLayout(1, tl.BlockedLayout([1,1], [1,32], [2,4], [1,0])))[:,None]",
+      "instructions": 20571,
+      "float_adds": 0,
+      "add_samples": []
+    },
+    {
+      "line": 60,
+      "source": "        values = tl.load(FinalV+(b*S+as_rows(ss))*128+as_cols(cd),as_rows(ss)<S,0.)",
+      "instructions": 14342,
+      "float_adds": 0,
+      "add_samples": []
+    },
+    {
+      "line": 74,
+      "source": "        values = tl.where(as_rows(changed),tl.where(alloc,gate*as_cols(piece),values+(as_cols(piece)-values)),values)",
+      "instructions": 11266,
+      "float_adds": 0,
+      "add_samples": []
+    },
+    {
+      "line": 153,
+      "source": "                tl.store(FinalK+(b*S+as_rows(ss))*64+as_cols(kd),tl.where(as_rows(ss)>=0,as_cols(k),0.),as_rows(changed & alloc) & (as_rows(ss)<S))",
+      "instructions": 9224,
+      "float_adds": 0,
+      "add_samples": []
+    },
+    {
+      "line": 212,
+      "source": "                    tl.store(FinalK+(b*S+as_rows(ss))*64+as_cols(kd),tl.where(as_rows(ss)>=0,as_cols(k),0.),as_rows(changed & alloc) & (as_rows(ss)<S))",
+      "instructions": 9224,
+      "float_adds": 0,
+      "add_samples": []
+    },
+    {
+      "line": 177,
+      "source": "                values = tl.load(FinalV+(b*S+as_rows(ss))*128+as_cols(cd),as_rows(ss)<S,0.)",
+      "instructions": 7195,
+      "float_adds": 0,
+      "add_samples": []
+    },
+    {
+      "line": 107,
+      "source": "        tl.store(FinalV+(b*S+as_rows(ss))*128+as_cols(cd),tl.full((BS,16),0.,tl.float32,layout=tl.BlockedLayout([1,1],[1,32],[2,4],[1,0])),as_rows(ss)<S)",
+      "instructions": 7172,
+      "float_adds": 0,
+      "add_samples": []
+    },
+    {
+      "line": 75,
+      "source": "        tl.store(FinalV+(b*S+as_rows(ss))*128+as_cols(cd),values,as_rows(ss)<S)",
+      "instructions": 6144,
+      "float_adds": 0,
+      "add_samples": []
+    },
+    {
+      "line": 261,
+      "source": "        tl.store(FinalMeta+(b*7+field)*S+ss,value,ss<S)",
+      "instructions": 3554,
+      "float_adds": 0,
+      "add_samples": []
+    },
+    {
+      "line": 178,
+      "source": "                read = fixed_sum(as_rows(weights)*as_rows(strength)*values,0)",
+      "instructions": 2054,
+      "float_adds": 0,
+      "add_samples": []
+    },
+    {
+      "line": 61,
+      "source": "        part = fixed_sum(tl.where(as_rows(selected),values,0.),0)",
+      "instructions": 2048,
+      "float_adds": 0,
+      "add_samples": []
+    },
+    {
+      "line": 166,
+      "source": "                keys = tl.load(FinalK+(b*S+as_rows(rs))*64+as_cols(kd),as_rows(rs)<S,0.)",
+      "instructions": 513,
+      "float_adds": 0,
+      "add_samples": []
+    },
+    {
+      "line": 291,
+      "source": "",
+      "instructions": 449,
+      "float_adds": 0,
+      "add_samples": []
+    },
+    {
+      "line": 104,
+      "source": "        tl.store(FinalK+(b*S+as_rows(rs))*64+as_cols(kd),tl.full((128,64),0.,tl.float32,layout=tl.BlockedLayout([1,1],[1,32],[2,4],[1,0])),as_rows(rs)<S)",
+      "instructions": 384,
+      "float_adds": 0,
+      "add_samples": []
+    },
+    {
+      "line": 109,
+      "source": "    for t in range(T):",
+      "instructions": 188,
+      "float_adds": 0,
+      "add_samples": []
+    },
+    {
+      "line": 248,
+      "source": "                tl.store(Trace+(b*T+t)*18+field,stat)",
+      "instructions": 125,
+      "float_adds": 0,
+      "add_samples": []
+    },
+    {
+      "line": 227,
+      "source": "            deaths=fixed_sum((live & (strength<=Free)).to(tl.int32),0)",
+      "instructions": 119,
+      "float_adds": 0,
+      "add_samples": []
+    },
+    {
+      "line": 167,
+      "source": "                partial = fixed_sum(keys*as_cols(q),1)*(2./tl.sqrt(64.))",
+      "instructions": 103,
+      "float_adds": 0,
+      "add_samples": []
+    },
+    {
+      "line": 189,
+      "source": "            youngest = fixed_min(tl.where(live & (order==best_order),ss,S),0)",
+      "instructions": 82,
+      "float_adds": 0,
+      "add_samples": []
+    },
+    {
+      "line": 142,
+      "source": "                prev = previous_value(FinalV,FinalMeta,b,S,BS,live & (ss==target) & adjacent,ss,vd)",
+      "instructions": 60,
+      "float_adds": 0,
+      "add_samples": []
+    },
+    {
+      "line": 168,
+      "source": "                tl.store(FinalS+b*S+rs,partial,rs<S)",
+      "instructions": 56,
+      "float_adds": 0,
+      "add_samples": []
+    },
+    {
+      "line": 125,
+      "source": "            correct = live & (owner>=0) & (pred_at==t-1) & (prediction!=byte)",
+      "instructions": 49,
+      "float_adds": 0,
+      "add_samples": []
+    },
+    {
+      "line": 180,
+      "source": "            hits=fixed_sum((live & (owner>=0) & (weights*strength>0)).to(tl.int32),0)",
+      "instructions": 49,
+      "float_adds": 0,
+      "add_samples": []
+    },
+    {
+      "line": 186,
+      "source": "            live = live & ~(popped & (strength<=Free))",
+      "instructions": 49,
+      "float_adds": 0,
+      "add_samples": []
+    }
+  ]
+}
