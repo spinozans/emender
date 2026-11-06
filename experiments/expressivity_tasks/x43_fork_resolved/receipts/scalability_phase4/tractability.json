@@ -1,0 +1,36 @@
+{
+  "status": "not_qualified_named_kernel_internal_blocker",
+  "measured_native_head_seconds": 0.718648853013292,
+  "assumptions": {
+    "layers": 22,
+    "heads": 2,
+    "native_passes": 2,
+    "context": 1024,
+    "targets": 2000000000,
+    "wall_budget_seconds": 86400,
+    "controlled_peak_live": 257
+  },
+  "native_seconds_per_byte": 0.06175888580582978,
+  "native_scenario_targets_per_second": 16.19200195975045,
+  "native_scenario_days_for_2B": 1429.6038380979116,
+  "required_targets_per_second": 23148.14814814815,
+  "required_scenario_speedup": 1429.6038380979116,
+  "fp32_parameter_gradient_adam_minimum_bytes": 20800000000,
+  "full_model_measured": false,
+  "omissions": [
+    "backward/replay",
+    "dense/FFN/projection",
+    "decode and feature assembly",
+    "telemetry",
+    "optimizer",
+    "checkpoint/setup/eval",
+    "full-scale memory and natural occupancy"
+  ],
+  "scope": "Native-only controlled forward + recomputation scenario, not a certified training bound. No1.3B training steps measured.",
+  "sources": {
+    "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/scalability_phase4/profile.json": "14214b96a1ebbc9f4c165ecd1d61b7d82f4273b885fb85e23275fd2837ed341c",
+    "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/scalability_phase4/boundary.json": "4da51fbbdaa1d1a16d66f39432d821580466e757ae2ac3ade7fbb8f9e694ace1",
+    "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/scalability_phase4/registration.json": "5b49447cf4ffb4236ddfacab3ce11710a7be5ddc2f63f1725f92f15227f8946b",
+    "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/scalability_phase4/boundary_registration.json": "360c09469e6e2f37469797825ce7cfa43b9382b56e1647a462586b3694022813"
+  }
+}
