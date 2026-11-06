@@ -1,0 +1,44 @@
+{
+  "shape": {
+    "batch": 1,
+    "T": 1024,
+    "S": 2049,
+    "BS": 2048
+  },
+  "kernels": {
+    "initialize": {
+      "calls": 1,
+      "device_us": 2.3359999999997854
+    },
+    "pre_control": {
+      "calls": 1024,
+      "device_us": 40533.59499999997
+    },
+    "score_pages": {
+      "calls": 1024,
+      "device_us": 3728.770999999282
+    },
+    "normalize": {
+      "calls": 1024,
+      "device_us": 1855.6320000001606
+    },
+    "read_page": {
+      "calls": 2048,
+      "device_us": 27862.962000000196
+    },
+    "post_control": {
+      "calls": 1024,
+      "device_us": 16094.445000000054
+    }
+  },
+  "observed_live_slot_visits": 230015,
+  "observed_peak": 257,
+  "kernel_sum_us": 90077.74099999966,
+  "kernel_span_us": 229594.22400000002,
+  "cpu_launch_names": [
+    "cuLaunchKernelEx"
+  ],
+  "cpu_launch_calls": 6145,
+  "cpu_launch_total_us": 26219.161000000782,
+  "scope": "One warmed, CUPTI-instrumented forward store call. Inputs are preprojected. No projection or backward occurs. Pre/post include value updates and metadata; READ includes gather/carries, not separately resolved. Span-minus-sum is device idle time inside this instrumented span, not uninstrumented launch overhead. No physical traffic measurement."
+}
