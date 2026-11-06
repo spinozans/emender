@@ -12,7 +12,10 @@ Proxy scale: 150M trainable parameters, 45-minute active training, Pile slice; N
 | gdn2 | completed | 1024 | 4.037253022193909 | 56.67045630937872 | 0.34027979447858603 |
 | gdn2 | completed | 2048 | 4.261444807052612 | 70.91236416013992 | 0.42579584273454385 |
 | gdn2 | completed | 4096 | 4.2801525592803955 | 72.25146179758515 | 0.4338365026926888 |
-| pure | queued | pending | pending | pending | pending |
+| pure | completed | 512 | 6.44365668296814 | 628.7015639429407 | 1.0 |
+| pure | completed | 1024 | 5.426229238510132 | 227.2905689848753 | 0.3615237849249308 |
+| pure | completed | 2048 | 5.625276803970337 | 277.3490452156965 | 0.4411457854125332 |
+| pure | completed | 4096 | 5.69212532043457 | 296.52315814638524 | 0.47164374188402197 |
 
 Incomplete/failed rows are not measurements. No three-family result is claimed until all arms complete.
 X40 window discipline: two reset contiguous batch-1 windows starting i*T; coverage differs by T.

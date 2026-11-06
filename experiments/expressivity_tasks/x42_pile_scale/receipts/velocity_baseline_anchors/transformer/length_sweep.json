@@ -1,0 +1,52 @@
+{
+  "status": "completed",
+  "score_eligible": false,
+  "scope": "Proxy scale: 150M trainable parameters, 45-minute active training, Pile slice; NOT TinyStories and NOT the terminal 1.3B comparison. First apples-to-apples GDN2-vs-emender LM length receipt only when all arms complete.",
+  "rows": [
+    {
+      "context": 512,
+      "windows": 2,
+      "tokens_evaluated": 1024,
+      "nll": 5.597676038742065,
+      "perplexity": 269.7986766257226,
+      "telemetry": [],
+      "nll_delta_vs_T512": 0.0,
+      "ppl_ratio_vs_T512": 1.0
+    },
+    {
+      "context": 1024,
+      "windows": 2,
+      "tokens_evaluated": 2048,
+      "nll": 4.534669876098633,
+      "perplexity": 93.19274507312625,
+      "telemetry": [],
+      "nll_delta_vs_T512": -1.0630061626434326,
+      "ppl_ratio_vs_T512": 0.34541587171091875
+    },
+    {
+      "context": 2048,
+      "windows": 2,
+      "tokens_evaluated": 4096,
+      "nll": 4.751263618469238,
+      "perplexity": 115.73043128129233,
+      "telemetry": [],
+      "nll_delta_vs_T512": -0.8464124202728271,
+      "ppl_ratio_vs_T512": 0.4289510709566564
+    },
+    {
+      "context": 4096,
+      "windows": 2,
+      "tokens_evaluated": 8192,
+      "nll": 4.8190507888793945,
+      "perplexity": 123.84747756580498,
+      "telemetry": [],
+      "nll_delta_vs_T512": -0.7786252498626709,
+      "ppl_ratio_vs_T512": 0.459036638410247
+    }
+  ],
+  "methodology": "X40 context_probe: two reset batch-1 contiguous windows per length, starts i*T on the same held-out prefix; all next-token positions scored. Token coverage differs by length. No recurrent state carried between windows.",
+  "arm": "transformer",
+  "train_result_sha256": "12425fc51555a58056e9405c5648b26f67460c8468f27a24a6a305f0513ebf58",
+  "valid_sha256": "f4185cbbdadac2cb598b184a398fb91adc120f20b56162c5d71b8b4cba9545e7",
+  "regime_sha256": "5e74a8e0aeb4f68038cc1edc6d4d26d6011be25227e0473c4681fbf1cb7d800f"
+}
