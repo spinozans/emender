@@ -1,0 +1,1431 @@
+{
+  "gpu": "3",
+  "rows": [
+    {
+      "cap": 48,
+      "peak_live": 48,
+      "batch": 16,
+      "tokens": 257,
+      "warps": 8,
+      "repeat_exact": true,
+      "reference_exact": true,
+      "native_ms": [
+        4.280426073819399,
+        4.2367358691990376,
+        4.2281257919967175,
+        4.250425845384598,
+        4.207246005535126,
+        4.204165656119585,
+        4.20933635905385,
+        4.202516283839941,
+        4.207015968859196,
+        4.197265952825546,
+        4.192516207695007,
+        4.204175900667906,
+        4.22442564740777,
+        4.211056046187878,
+        4.228086210787296,
+        4.246885888278484,
+        4.219566006213427,
+        4.2273057624697685,
+        4.234527237713337,
+        4.23395587131381
+      ],
+      "median_ms": 4.221995826810598,
+      "n_regs": 255,
+      "n_spills": 58,
+      "metadata": "KernelMetadata(allowed_dot_input_precisions=['tf32', 'tf32x3', 'ieee'], arch='sm89', backend_name='cuda', cluster_dims=(1, 1, 1), debug=False, default_dot_input_precision='tf32', deprecated_fp8_dot_operand_dtypes=[], enable_fp_fusion=False, extern_libs=[['libdevice', '/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/backends/nvidia/lib/libdevice.10.bc']], global_scratch_align=1, global_scratch_size=0, hash='347b8c7a95c25a0c4c376dcb41f01d12b1302fa1f29579445dc5eb3aad9695d4', instrumentation_mode='', ir_override=None, launch_cooperative_grid=False, launch_pdl=False, max_num_imprecise_acc_default=0, maxnreg=None, name='kernel', num_ctas=1, num_stages=3, num_warps=8, profile_scratch_align=1, profile_scratch_size=0, ptx_options=None, ptx_version=None, sanitize_overflow=True, shared=16384, supported_fp8_dtypes=['fp8e4b15', 'fp8e4nv', 'fp8e5'], target=GPUTarget(backend='cuda', arch=89, warp_size=32), tensordesc_meta=[], tmem_size=0, triton_version='3.5.1', warp_size=32)",
+      "fingerprint": [
+        {
+          "shape": [
+            16,
+            257,
+            128
+          ],
+          "dtype": "torch.float32",
+          "sha256": "5d28f45a9b501cda80b93c49155497f7c46cac44abc97585645258e2ef9ed5bf"
+        },
+        [
+          [
+            {
+              "shape": [
+                16,
+                48,
+                64
+              ],
+              "dtype": "torch.float32",
+              "sha256": "a1a1d15b7d1e97e11d18bfe1e24d86dac04f9661b85baa7a443f3d71af314708"
+            },
+            {
+              "shape": [
+                16,
+                48,
+                128
+              ],
+              "dtype": "torch.float32",
+              "sha256": "a6619f482fee91a315f76cdcd8705d39b6ce11077c435ccc696142e130c27762"
+            },
+            {
+              "shape": [
+                16,
+                48
+              ],
+              "dtype": "torch.float32",
+              "sha256": "9107f3ba55602154349710bf6dfd7b861c4c17f8b61b9f542e5d3301ef6f9a5a"
+            },
+            {
+              "shape": [
+                16,
+                7,
+                48
+              ],
+              "dtype": "torch.int32",
+              "sha256": "60bce372b668e85815cbb1a5feca7ae27ed6df17648b89e8ef4aba352f5d610a"
+            }
+          ],
+          {
+            "shape": [
+              16,
+              257,
+              18
+            ],
+            "dtype": "torch.int32",
+            "sha256": "fa4eaad498d3ddac8a43a83e71babf956d43031794c404d451c7e581552f5f36"
+          }
+        ]
+      ],
+      "scope": "native-only fixed 16x257 zero-value append probe, decay=1 intervention; not training steps/s"
+    },
+    {
+      "cap": 48,
+      "peak_live": 48,
+      "batch": 16,
+      "tokens": 257,
+      "warps": 16,
+      "repeat_exact": true,
+      "reference_exact": true,
+      "native_ms": [
+        4.250116180628538,
+        4.269225988537073,
+        4.243175964802504,
+        4.278737120330334,
+        4.280086141079664,
+        4.273845814168453,
+        4.249636083841324,
+        4.270636010915041,
+        4.272736143320799,
+        4.420396406203508,
+        4.220795817673206,
+        4.2597162537276745,
+        4.260815680027008,
+        4.2502558790147305,
+        4.249235615134239,
+        4.248505923897028,
+        4.250525962561369,
+        4.254805855453014,
+        4.23047598451376,
+        4.263525828719139
+      ],
+      "median_ms": 4.257261054590344,
+      "n_regs": 128,
+      "n_spills": 54,
+      "metadata": "KernelMetadata(allowed_dot_input_precisions=['tf32', 'tf32x3', 'ieee'], arch='sm89', backend_name='cuda', cluster_dims=(1, 1, 1), debug=False, default_dot_input_precision='tf32', deprecated_fp8_dot_operand_dtypes=[], enable_fp_fusion=False, extern_libs=[['libdevice', '/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/backends/nvidia/lib/libdevice.10.bc']], global_scratch_align=1, global_scratch_size=0, hash='d887a0579f266a926bf7943ef9d0fdd5a28ba92d6270f7814efb4fb2c6802c88', instrumentation_mode='', ir_override=None, launch_cooperative_grid=False, launch_pdl=False, max_num_imprecise_acc_default=0, maxnreg=None, name='kernel', num_ctas=1, num_stages=3, num_warps=16, profile_scratch_align=1, profile_scratch_size=0, ptx_options=None, ptx_version=None, sanitize_overflow=True, shared=32768, supported_fp8_dtypes=['fp8e4b15', 'fp8e4nv', 'fp8e5'], target=GPUTarget(backend='cuda', arch=89, warp_size=32), tensordesc_meta=[], tmem_size=0, triton_version='3.5.1', warp_size=32)",
+      "fingerprint": [
+        {
+          "shape": [
+            16,
+            257,
+            128
+          ],
+          "dtype": "torch.float32",
+          "sha256": "5d28f45a9b501cda80b93c49155497f7c46cac44abc97585645258e2ef9ed5bf"
+        },
+        [
+          [
+            {
+              "shape": [
+                16,
+                48,
+                64
+              ],
+              "dtype": "torch.float32",
+              "sha256": "a1a1d15b7d1e97e11d18bfe1e24d86dac04f9661b85baa7a443f3d71af314708"
+            },
+            {
+              "shape": [
+                16,
+                48,
+                128
+              ],
+              "dtype": "torch.float32",
+              "sha256": "a6619f482fee91a315f76cdcd8705d39b6ce11077c435ccc696142e130c27762"
+            },
+            {
+              "shape": [
+                16,
+                48
+              ],
+              "dtype": "torch.float32",
+              "sha256": "9107f3ba55602154349710bf6dfd7b861c4c17f8b61b9f542e5d3301ef6f9a5a"
+            },
+            {
+              "shape": [
+                16,
+                7,
+                48
+              ],
+              "dtype": "torch.int32",
+              "sha256": "60bce372b668e85815cbb1a5feca7ae27ed6df17648b89e8ef4aba352f5d610a"
+            }
+          ],
+          {
+            "shape": [
+              16,
+              257,
+              18
+            ],
+            "dtype": "torch.int32",
+            "sha256": "fa4eaad498d3ddac8a43a83e71babf956d43031794c404d451c7e581552f5f36"
+          }
+        ]
+      ],
+      "scope": "native-only fixed 16x257 zero-value append probe, decay=1 intervention; not training steps/s"
+    },
+    {
+      "cap": 48,
+      "peak_live": 48,
+      "batch": 16,
+      "tokens": 257,
+      "warps": 32,
+      "repeat_exact": true,
+      "reference_exact": true,
+      "native_ms": [
+        5.083296913653612,
+        5.053237080574036,
+        5.045706871896982,
+        5.060867872089148,
+        5.033357068896294,
+        5.031866952776909,
+        5.072757136076689,
+        5.075098015367985,
+        5.072376690804958,
+        5.0673470832407475,
+        5.1101273857057095,
+        5.061307922005653,
+        5.05334697663784,
+        5.012386944144964,
+        5.004136823117733,
+        5.020617973059416,
+        5.013276822865009,
+        5.011957138776779,
+        5.067696794867516,
+        5.071166902780533
+      ],
+      "median_ms": 5.057107424363494,
+      "n_regs": 64,
+      "n_spills": 52,
+      "metadata": "KernelMetadata(allowed_dot_input_precisions=['tf32', 'tf32x3', 'ieee'], arch='sm89', backend_name='cuda', cluster_dims=(1, 1, 1), debug=False, default_dot_input_precision='tf32', deprecated_fp8_dot_operand_dtypes=[], enable_fp_fusion=False, extern_libs=[['libdevice', '/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/backends/nvidia/lib/libdevice.10.bc']], global_scratch_align=1, global_scratch_size=0, hash='298dcacc33f90e48100ae0a27414f273fcf451877346b97cdf228dd45e2c7f11', instrumentation_mode='', ir_override=None, launch_cooperative_grid=False, launch_pdl=False, max_num_imprecise_acc_default=0, maxnreg=None, name='kernel', num_ctas=1, num_stages=3, num_warps=32, profile_scratch_align=1, profile_scratch_size=0, ptx_options=None, ptx_version=None, sanitize_overflow=True, shared=32768, supported_fp8_dtypes=['fp8e4b15', 'fp8e4nv', 'fp8e5'], target=GPUTarget(backend='cuda', arch=89, warp_size=32), tensordesc_meta=[], tmem_size=0, triton_version='3.5.1', warp_size=32)",
+      "fingerprint": [
+        {
+          "shape": [
+            16,
+            257,
+            128
+          ],
+          "dtype": "torch.float32",
+          "sha256": "5d28f45a9b501cda80b93c49155497f7c46cac44abc97585645258e2ef9ed5bf"
+        },
+        [
+          [
+            {
+              "shape": [
+                16,
+                48,
+                64
+              ],
+              "dtype": "torch.float32",
+              "sha256": "a1a1d15b7d1e97e11d18bfe1e24d86dac04f9661b85baa7a443f3d71af314708"
+            },
+            {
+              "shape": [
+                16,
+                48,
+                128
+              ],
+              "dtype": "torch.float32",
+              "sha256": "a6619f482fee91a315f76cdcd8705d39b6ce11077c435ccc696142e130c27762"
+            },
+            {
+              "shape": [
+                16,
+                48
+              ],
+              "dtype": "torch.float32",
+              "sha256": "9107f3ba55602154349710bf6dfd7b861c4c17f8b61b9f542e5d3301ef6f9a5a"
+            },
+            {
+              "shape": [
+                16,
+                7,
+                48
+              ],
+              "dtype": "torch.int32",
+              "sha256": "60bce372b668e85815cbb1a5feca7ae27ed6df17648b89e8ef4aba352f5d610a"
+            }
+          ],
+          {
+            "shape": [
+              16,
+              257,
+              18
+            ],
+            "dtype": "torch.int32",
+            "sha256": "fa4eaad498d3ddac8a43a83e71babf956d43031794c404d451c7e581552f5f36"
+          }
+        ]
+      ],
+      "scope": "native-only fixed 16x257 zero-value append probe, decay=1 intervention; not training steps/s"
+    },
+    {
+      "cap": 110,
+      "peak_live": 110,
+      "batch": 16,
+      "tokens": 257,
+      "warps": 8,
+      "repeat_exact": true,
+      "reference_exact": true,
+      "native_ms": [
+        7.606781087815762,
+        7.544341031461954,
+        7.560539990663528,
+        7.527071051299572,
+        7.591790985316038,
+        7.544520776718855,
+        7.570181041955948,
+        7.540879771113396,
+        7.5487010180950165,
+        7.511320989578962,
+        7.060850039124489,
+        7.029559928923845,
+        7.046170067042112,
+        7.033720146864653,
+        7.055971305817366,
+        7.028830237686634,
+        7.04935984686017,
+        7.061840035021305,
+        7.05580972135067,
+        7.012750022113323
+      ],
+      "median_ms": 7.286580512300134,
+      "n_regs": 255,
+      "n_spills": 456,
+      "metadata": "KernelMetadata(allowed_dot_input_precisions=['tf32', 'tf32x3', 'ieee'], arch='sm89', backend_name='cuda', cluster_dims=(1, 1, 1), debug=False, default_dot_input_precision='tf32', deprecated_fp8_dot_operand_dtypes=[], enable_fp_fusion=False, extern_libs=[['libdevice', '/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/backends/nvidia/lib/libdevice.10.bc']], global_scratch_align=1, global_scratch_size=0, hash='4d22b4bc58a62d6d3a51d5cd85180906e9da3daa2d3131ae9f6f65cae89897da', instrumentation_mode='', ir_override=None, launch_cooperative_grid=False, launch_pdl=False, max_num_imprecise_acc_default=0, maxnreg=None, name='kernel', num_ctas=1, num_stages=3, num_warps=8, profile_scratch_align=1, profile_scratch_size=0, ptx_options=None, ptx_version=None, sanitize_overflow=True, shared=16384, supported_fp8_dtypes=['fp8e4b15', 'fp8e4nv', 'fp8e5'], target=GPUTarget(backend='cuda', arch=89, warp_size=32), tensordesc_meta=[], tmem_size=0, triton_version='3.5.1', warp_size=32)",
+      "fingerprint": [
+        {
+          "shape": [
+            16,
+            257,
+            128
+          ],
+          "dtype": "torch.float32",
+          "sha256": "5d28f45a9b501cda80b93c49155497f7c46cac44abc97585645258e2ef9ed5bf"
+        },
+        [
+          [
+            {
+              "shape": [
+                16,
+                110,
+                64
+              ],
+              "dtype": "torch.float32",
+              "sha256": "d859faba3f1e3f064e5c8eec0caa49308132e53ec3534a26b92e354a708ac5ad"
+            },
+            {
+              "shape": [
+                16,
+                110,
+                128
+              ],
+              "dtype": "torch.float32",
+              "sha256": "df62f37da18a38aea318c9312b32b445901c0f16934f25259f758a50277bf7f0"
+            },
+            {
+              "shape": [
+                16,
+                110
+              ],
+              "dtype": "torch.float32",
+              "sha256": "3d16b42f04e44da5affb9093282070f8e8b6251c4403872d8fd58baeabdbf09e"
+            },
+            {
+              "shape": [
+                16,
+                7,
+                110
+              ],
+              "dtype": "torch.int32",
+              "sha256": "3005f3a7046f5c0a80d3bd31bca5e42dcb1921c9dd636bfe40e5c5fed398d2de"
+            }
+          ],
+          {
+            "shape": [
+              16,
+              257,
+              18
+            ],
+            "dtype": "torch.int32",
+            "sha256": "0d82a54c1840c6fd1c849551e7b760f1b4c7da4be3b03dafa11543c00ab92027"
+          }
+        ]
+      ],
+      "scope": "native-only fixed 16x257 zero-value append probe, decay=1 intervention; not training steps/s"
+    },
+    {
+      "cap": 110,
+      "peak_live": 110,
+      "batch": 16,
+      "tokens": 257,
+      "warps": 16,
+      "repeat_exact": true,
+      "reference_exact": true,
+      "native_ms": [
+        6.699749268591404,
+        6.663300096988678,
+        6.650119088590145,
+        6.658810190856457,
+        6.658778991550207,
+        6.61769974976778,
+        6.656258832663298,
+        6.65205018594861,
+        6.665988825261593,
+        6.638709921389818,
+        6.635729223489761,
+        6.635449361056089,
+        6.638839840888977,
+        6.687839049845934,
+        6.684779655188322,
+        6.633258890360594,
+        6.64466992020607,
+        6.634869147092104,
+        6.654169876128435,
+        6.642729043960571
+      ],
+      "median_ms": 6.651084637269378,
+      "n_regs": 128,
+      "n_spills": 216,
+      "metadata": "KernelMetadata(allowed_dot_input_precisions=['tf32', 'tf32x3', 'ieee'], arch='sm89', backend_name='cuda', cluster_dims=(1, 1, 1), debug=False, default_dot_input_precision='tf32', deprecated_fp8_dot_operand_dtypes=[], enable_fp_fusion=False, extern_libs=[['libdevice', '/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/backends/nvidia/lib/libdevice.10.bc']], global_scratch_align=1, global_scratch_size=0, hash='fd1eec09201b3aa35ab7332123ab018571c94a40abb2f3f6c3aa7daa884eb782', instrumentation_mode='', ir_override=None, launch_cooperative_grid=False, launch_pdl=False, max_num_imprecise_acc_default=0, maxnreg=None, name='kernel', num_ctas=1, num_stages=3, num_warps=16, profile_scratch_align=1, profile_scratch_size=0, ptx_options=None, ptx_version=None, sanitize_overflow=True, shared=32768, supported_fp8_dtypes=['fp8e4b15', 'fp8e4nv', 'fp8e5'], target=GPUTarget(backend='cuda', arch=89, warp_size=32), tensordesc_meta=[], tmem_size=0, triton_version='3.5.1', warp_size=32)",
+      "fingerprint": [
+        {
+          "shape": [
+            16,
+            257,
+            128
+          ],
+          "dtype": "torch.float32",
+          "sha256": "5d28f45a9b501cda80b93c49155497f7c46cac44abc97585645258e2ef9ed5bf"
+        },
+        [
+          [
+            {
+              "shape": [
+                16,
+                110,
+                64
+              ],
+              "dtype": "torch.float32",
+              "sha256": "d859faba3f1e3f064e5c8eec0caa49308132e53ec3534a26b92e354a708ac5ad"
+            },
+            {
+              "shape": [
+                16,
+                110,
+                128
+              ],
+              "dtype": "torch.float32",
+              "sha256": "df62f37da18a38aea318c9312b32b445901c0f16934f25259f758a50277bf7f0"
+            },
+            {
+              "shape": [
+                16,
+                110
+              ],
+              "dtype": "torch.float32",
+              "sha256": "3d16b42f04e44da5affb9093282070f8e8b6251c4403872d8fd58baeabdbf09e"
+            },
+            {
+              "shape": [
+                16,
+                7,
+                110
+              ],
+              "dtype": "torch.int32",
+              "sha256": "3005f3a7046f5c0a80d3bd31bca5e42dcb1921c9dd636bfe40e5c5fed398d2de"
+            }
+          ],
+          {
+            "shape": [
+              16,
+              257,
+              18
+            ],
+            "dtype": "torch.int32",
+            "sha256": "0d82a54c1840c6fd1c849551e7b760f1b4c7da4be3b03dafa11543c00ab92027"
+          }
+        ]
+      ],
+      "scope": "native-only fixed 16x257 zero-value append probe, decay=1 intervention; not training steps/s"
+    },
+    {
+      "cap": 110,
+      "peak_live": 110,
+      "batch": 16,
+      "tokens": 257,
+      "warps": 32,
+      "repeat_exact": true,
+      "reference_exact": true,
+      "native_ms": [
+        7.301771081984043,
+        7.292279973626137,
+        7.266801316291094,
+        7.252140436321497,
+        7.2502801194787025,
+        7.247320841997862,
+        7.253690157085657,
+        7.243421394377947,
+        7.233330048620701,
+        7.265769876539707,
+        7.24173104390502,
+        7.250869646668434,
+        7.257161196321249,
+        7.247010245919228,
+        7.237839978188276,
+        7.230920717120171,
+        7.2479997761547565,
+        7.2455499321222305,
+        7.241111248731613,
+        7.240599952638149
+      ],
+      "median_ms": 7.247660309076309,
+      "n_regs": 64,
+      "n_spills": 132,
+      "metadata": "KernelMetadata(allowed_dot_input_precisions=['tf32', 'tf32x3', 'ieee'], arch='sm89', backend_name='cuda', cluster_dims=(1, 1, 1), debug=False, default_dot_input_precision='tf32', deprecated_fp8_dot_operand_dtypes=[], enable_fp_fusion=False, extern_libs=[['libdevice', '/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/backends/nvidia/lib/libdevice.10.bc']], global_scratch_align=1, global_scratch_size=0, hash='164c5ab003e526675ff7606de5f7fd6e11a99b50affa41af276f24c643d5d5ad', instrumentation_mode='', ir_override=None, launch_cooperative_grid=False, launch_pdl=False, max_num_imprecise_acc_default=0, maxnreg=None, name='kernel', num_ctas=1, num_stages=3, num_warps=32, profile_scratch_align=1, profile_scratch_size=0, ptx_options=None, ptx_version=None, sanitize_overflow=True, shared=65536, supported_fp8_dtypes=['fp8e4b15', 'fp8e4nv', 'fp8e5'], target=GPUTarget(backend='cuda', arch=89, warp_size=32), tensordesc_meta=[], tmem_size=0, triton_version='3.5.1', warp_size=32)",
+      "fingerprint": [
+        {
+          "shape": [
+            16,
+            257,
+            128
+          ],
+          "dtype": "torch.float32",
+          "sha256": "5d28f45a9b501cda80b93c49155497f7c46cac44abc97585645258e2ef9ed5bf"
+        },
+        [
+          [
+            {
+              "shape": [
+                16,
+                110,
+                64
+              ],
+              "dtype": "torch.float32",
+              "sha256": "d859faba3f1e3f064e5c8eec0caa49308132e53ec3534a26b92e354a708ac5ad"
+            },
+            {
+              "shape": [
+                16,
+                110,
+                128
+              ],
+              "dtype": "torch.float32",
+              "sha256": "df62f37da18a38aea318c9312b32b445901c0f16934f25259f758a50277bf7f0"
+            },
+            {
+              "shape": [
+                16,
+                110
+              ],
+              "dtype": "torch.float32",
+              "sha256": "3d16b42f04e44da5affb9093282070f8e8b6251c4403872d8fd58baeabdbf09e"
+            },
+            {
+              "shape": [
+                16,
+                7,
+                110
+              ],
+              "dtype": "torch.int32",
+              "sha256": "3005f3a7046f5c0a80d3bd31bca5e42dcb1921c9dd636bfe40e5c5fed398d2de"
+            }
+          ],
+          {
+            "shape": [
+              16,
+              257,
+              18
+            ],
+            "dtype": "torch.int32",
+            "sha256": "0d82a54c1840c6fd1c849551e7b760f1b4c7da4be3b03dafa11543c00ab92027"
+          }
+        ]
+      ],
+      "scope": "native-only fixed 16x257 zero-value append probe, decay=1 intervention; not training steps/s"
+    },
+    {
+      "cap": 257,
+      "peak_live": 48,
+      "batch": 16,
+      "tokens": 257,
+      "warps": 8,
+      "repeat_exact": true,
+      "reference_exact": true,
+      "native_ms": [
+        56.421239860355854,
+        56.4978108741343,
+        56.53457110747695,
+        56.37368094176054,
+        56.520850863307714,
+        56.385590229183435,
+        56.468660943210125,
+        56.401730980724096,
+        56.30559008568525,
+        56.30161100998521,
+        56.349480990320444,
+        56.3166500069201,
+        56.32999073714018,
+        56.26484006643295,
+        56.26601120457053,
+        56.41803005710244,
+        56.31667096167803,
+        56.47426098585129,
+        56.402630638331175,
+        56.49049999192357
+      ],
+      "median_ms": 56.393660604953766,
+      "n_regs": 40,
+      "n_spills": 4276,
+      "metadata": "KernelMetadata(allowed_dot_input_precisions=['tf32', 'tf32x3', 'ieee'], arch='sm89', backend_name='cuda', cluster_dims=(1, 1, 1), debug=False, default_dot_input_precision='tf32', deprecated_fp8_dot_operand_dtypes=[], enable_fp_fusion=False, extern_libs=[['libdevice', '/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/backends/nvidia/lib/libdevice.10.bc']], global_scratch_align=1, global_scratch_size=0, hash='2e479904c798981e2f0d5747ce96f229489ac5b5f2d78350496d2403a263fd5c', instrumentation_mode='', ir_override=None, launch_cooperative_grid=False, launch_pdl=False, max_num_imprecise_acc_default=0, maxnreg=None, name='kernel', num_ctas=1, num_stages=3, num_warps=8, profile_scratch_align=1, profile_scratch_size=0, ptx_options=None, ptx_version=None, sanitize_overflow=True, shared=16384, supported_fp8_dtypes=['fp8e4b15', 'fp8e4nv', 'fp8e5'], target=GPUTarget(backend='cuda', arch=89, warp_size=32), tensordesc_meta=[], tmem_size=0, triton_version='3.5.1', warp_size=32)",
+      "fingerprint": [
+        {
+          "shape": [
+            16,
+            257,
+            128
+          ],
+          "dtype": "torch.float32",
+          "sha256": "5d28f45a9b501cda80b93c49155497f7c46cac44abc97585645258e2ef9ed5bf"
+        },
+        [
+          [
+            {
+              "shape": [
+                16,
+                257,
+                64
+              ],
+              "dtype": "torch.float32",
+              "sha256": "6062b2ada4da692cbfa29105c674b590b82a303e8e3f0f5ef5ba37b6970fc89e"
+            },
+            {
+              "shape": [
+                16,
+                257,
+                128
+              ],
+              "dtype": "torch.float32",
+              "sha256": "5d28f45a9b501cda80b93c49155497f7c46cac44abc97585645258e2ef9ed5bf"
+            },
+            {
+              "shape": [
+                16,
+                257
+              ],
+              "dtype": "torch.float32",
+              "sha256": "24442ba447ef5511c584a0bc833d804a39b5dd4614e1779828a069843f9a5633"
+            },
+            {
+              "shape": [
+                16,
+                7,
+                257
+              ],
+              "dtype": "torch.int32",
+              "sha256": "336b50de9d37f0ba13fca3c1bca0b2415b6342abdad0103322aece7100c42ca7"
+            }
+          ],
+          {
+            "shape": [
+              16,
+              257,
+              18
+            ],
+            "dtype": "torch.int32",
+            "sha256": "fa4eaad498d3ddac8a43a83e71babf956d43031794c404d451c7e581552f5f36"
+          }
+        ]
+      ],
+      "scope": "native-only fixed 16x257 zero-value append probe, decay=1 intervention; not training steps/s"
+    },
+    {
+      "cap": 257,
+      "peak_live": 48,
+      "batch": 16,
+      "tokens": 257,
+      "warps": 16,
+      "repeat_exact": true,
+      "reference_exact": true,
+      "native_ms": [
+        32.03202597796917,
+        29.968273360282183,
+        29.934403020888567,
+        29.833892360329628,
+        29.944502748548985,
+        29.91121308878064,
+        29.954403173178434,
+        29.99930316582322,
+        30.08464304730296,
+        29.933752957731485,
+        29.887283220887184,
+        29.82884179800749,
+        29.949652962386608,
+        30.03689320757985,
+        30.372294131666422,
+        30.37033276632428,
+        30.10441269725561,
+        30.39604425430298,
+        30.499164015054703,
+        30.46546271070838
+      ],
+      "median_ms": 29.983788263052702,
+      "n_regs": 64,
+      "n_spills": 2128,
+      "metadata": "KernelMetadata(allowed_dot_input_precisions=['tf32', 'tf32x3', 'ieee'], arch='sm89', backend_name='cuda', cluster_dims=(1, 1, 1), debug=False, default_dot_input_precision='tf32', deprecated_fp8_dot_operand_dtypes=[], enable_fp_fusion=False, extern_libs=[['libdevice', '/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/backends/nvidia/lib/libdevice.10.bc']], global_scratch_align=1, global_scratch_size=0, hash='4f051718d1f024057988ab471c398a0637abf15db8a628c5d929ddc5395df955', instrumentation_mode='', ir_override=None, launch_cooperative_grid=False, launch_pdl=False, max_num_imprecise_acc_default=0, maxnreg=None, name='kernel', num_ctas=1, num_stages=3, num_warps=16, profile_scratch_align=1, profile_scratch_size=0, ptx_options=None, ptx_version=None, sanitize_overflow=True, shared=32768, supported_fp8_dtypes=['fp8e4b15', 'fp8e4nv', 'fp8e5'], target=GPUTarget(backend='cuda', arch=89, warp_size=32), tensordesc_meta=[], tmem_size=0, triton_version='3.5.1', warp_size=32)",
+      "fingerprint": [
+        {
+          "shape": [
+            16,
+            257,
+            128
+          ],
+          "dtype": "torch.float32",
+          "sha256": "5d28f45a9b501cda80b93c49155497f7c46cac44abc97585645258e2ef9ed5bf"
+        },
+        [
+          [
+            {
+              "shape": [
+                16,
+                257,
+                64
+              ],
+              "dtype": "torch.float32",
+              "sha256": "6062b2ada4da692cbfa29105c674b590b82a303e8e3f0f5ef5ba37b6970fc89e"
+            },
+            {
+              "shape": [
+                16,
+                257,
+                128
+              ],
+              "dtype": "torch.float32",
+              "sha256": "5d28f45a9b501cda80b93c49155497f7c46cac44abc97585645258e2ef9ed5bf"
+            },
+            {
+              "shape": [
+                16,
+                257
+              ],
+              "dtype": "torch.float32",
+              "sha256": "24442ba447ef5511c584a0bc833d804a39b5dd4614e1779828a069843f9a5633"
+            },
+            {
+              "shape": [
+                16,
+                7,
+                257
+              ],
+              "dtype": "torch.int32",
+              "sha256": "336b50de9d37f0ba13fca3c1bca0b2415b6342abdad0103322aece7100c42ca7"
+            }
+          ],
+          {
+            "shape": [
+              16,
+              257,
+              18
+            ],
+            "dtype": "torch.int32",
+            "sha256": "fa4eaad498d3ddac8a43a83e71babf956d43031794c404d451c7e581552f5f36"
+          }
+        ]
+      ],
+      "scope": "native-only fixed 16x257 zero-value append probe, decay=1 intervention; not training steps/s"
+    },
+    {
+      "cap": 257,
+      "peak_live": 48,
+      "batch": 16,
+      "tokens": 257,
+      "warps": 32,
+      "repeat_exact": true,
+      "reference_exact": true,
+      "native_ms": [
+        30.37780337035656,
+        29.781003016978502,
+        27.567549142986536,
+        27.598570100963116,
+        27.77348877862096,
+        27.78451982885599,
+        27.749330271035433,
+        27.786009944975376,
+        27.727779000997543,
+        27.619809843599796,
+        27.61934930458665,
+        27.686119079589844,
+        27.686210349202156,
+        27.68765902146697,
+        27.61611994355917,
+        27.598099317401648,
+        27.631159871816635,
+        27.923769783228636,
+        27.652330230921507,
+        27.698128949850798
+      ],
+      "median_ms": 27.686934685334563,
+      "n_regs": 64,
+      "n_spills": 1004,
+      "metadata": "KernelMetadata(allowed_dot_input_precisions=['tf32', 'tf32x3', 'ieee'], arch='sm89', backend_name='cuda', cluster_dims=(1, 1, 1), debug=False, default_dot_input_precision='tf32', deprecated_fp8_dot_operand_dtypes=[], enable_fp_fusion=False, extern_libs=[['libdevice', '/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/backends/nvidia/lib/libdevice.10.bc']], global_scratch_align=1, global_scratch_size=0, hash='cc004f636ba8a10f4025ff825824242a3d3d0ce318c10c1e44fb8a0e211260b5', instrumentation_mode='', ir_override=None, launch_cooperative_grid=False, launch_pdl=False, max_num_imprecise_acc_default=0, maxnreg=None, name='kernel', num_ctas=1, num_stages=3, num_warps=32, profile_scratch_align=1, profile_scratch_size=0, ptx_options=None, ptx_version=None, sanitize_overflow=True, shared=65536, supported_fp8_dtypes=['fp8e4b15', 'fp8e4nv', 'fp8e5'], target=GPUTarget(backend='cuda', arch=89, warp_size=32), tensordesc_meta=[], tmem_size=0, triton_version='3.5.1', warp_size=32)",
+      "fingerprint": [
+        {
+          "shape": [
+            16,
+            257,
+            128
+          ],
+          "dtype": "torch.float32",
+          "sha256": "5d28f45a9b501cda80b93c49155497f7c46cac44abc97585645258e2ef9ed5bf"
+        },
+        [
+          [
+            {
+              "shape": [
+                16,
+                257,
+                64
+              ],
+              "dtype": "torch.float32",
+              "sha256": "6062b2ada4da692cbfa29105c674b590b82a303e8e3f0f5ef5ba37b6970fc89e"
+            },
+            {
+              "shape": [
+                16,
+                257,
+                128
+              ],
+              "dtype": "torch.float32",
+              "sha256": "5d28f45a9b501cda80b93c49155497f7c46cac44abc97585645258e2ef9ed5bf"
+            },
+            {
+              "shape": [
+                16,
+                257
+              ],
+              "dtype": "torch.float32",
+              "sha256": "24442ba447ef5511c584a0bc833d804a39b5dd4614e1779828a069843f9a5633"
+            },
+            {
+              "shape": [
+                16,
+                7,
+                257
+              ],
+              "dtype": "torch.int32",
+              "sha256": "336b50de9d37f0ba13fca3c1bca0b2415b6342abdad0103322aece7100c42ca7"
+            }
+          ],
+          {
+            "shape": [
+              16,
+              257,
+              18
+            ],
+            "dtype": "torch.int32",
+            "sha256": "fa4eaad498d3ddac8a43a83e71babf956d43031794c404d451c7e581552f5f36"
+          }
+        ]
+      ],
+      "scope": "native-only fixed 16x257 zero-value append probe, decay=1 intervention; not training steps/s"
+    },
+    {
+      "cap": 257,
+      "peak_live": 110,
+      "batch": 16,
+      "tokens": 257,
+      "warps": 8,
+      "repeat_exact": true,
+      "reference_exact": true,
+      "native_ms": [
+        62.16667825356126,
+        62.188627663999796,
+        62.14997824281454,
+        62.13272921741009,
+        62.14664876461029,
+        62.4036299996078,
+        62.37677903845906,
+        62.36531911417842,
+        62.179559376090765,
+        62.428198754787445,
+        62.47693998739123,
+        62.41608923301101,
+        62.442610040307045,
+        62.561208847910166,
+        63.24337096884847,
+        62.4730191193521,
+        62.54608975723386,
+        62.66146898269653,
+        62.42745975032449,
+        62.42999900132418
+      ],
+      "median_ms": 62.42177449166775,
+      "n_regs": 40,
+      "n_spills": 4276,
+      "metadata": "KernelMetadata(allowed_dot_input_precisions=['tf32', 'tf32x3', 'ieee'], arch='sm89', backend_name='cuda', cluster_dims=(1, 1, 1), debug=False, default_dot_input_precision='tf32', deprecated_fp8_dot_operand_dtypes=[], enable_fp_fusion=False, extern_libs=[['libdevice', '/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/backends/nvidia/lib/libdevice.10.bc']], global_scratch_align=1, global_scratch_size=0, hash='2e479904c798981e2f0d5747ce96f229489ac5b5f2d78350496d2403a263fd5c', instrumentation_mode='', ir_override=None, launch_cooperative_grid=False, launch_pdl=False, max_num_imprecise_acc_default=0, maxnreg=None, name='kernel', num_ctas=1, num_stages=3, num_warps=8, profile_scratch_align=1, profile_scratch_size=0, ptx_options=None, ptx_version=None, sanitize_overflow=True, shared=16384, supported_fp8_dtypes=['fp8e4b15', 'fp8e4nv', 'fp8e5'], target=GPUTarget(backend='cuda', arch=89, warp_size=32), tensordesc_meta=[], tmem_size=0, triton_version='3.5.1', warp_size=32)",
+      "fingerprint": [
+        {
+          "shape": [
+            16,
+            257,
+            128
+          ],
+          "dtype": "torch.float32",
+          "sha256": "5d28f45a9b501cda80b93c49155497f7c46cac44abc97585645258e2ef9ed5bf"
+        },
+        [
+          [
+            {
+              "shape": [
+                16,
+                257,
+                64
+              ],
+              "dtype": "torch.float32",
+              "sha256": "0a1cf974676f18449da56d10f61c6561c6b2a21322eca7be4d75166c178dcabe"
+            },
+            {
+              "shape": [
+                16,
+                257,
+                128
+              ],
+              "dtype": "torch.float32",
+              "sha256": "5d28f45a9b501cda80b93c49155497f7c46cac44abc97585645258e2ef9ed5bf"
+            },
+            {
+              "shape": [
+                16,
+                257
+              ],
+              "dtype": "torch.float32",
+              "sha256": "21f225ed9f21b9ed785b33f6d5a7c662da4d4338c4bdc8cd78edc3855d180d27"
+            },
+            {
+              "shape": [
+                16,
+                7,
+                257
+              ],
+              "dtype": "torch.int32",
+              "sha256": "cb81a606983e71956d93603877e857f5a86e924a415744b07a37931a3dcb4bd8"
+            }
+          ],
+          {
+            "shape": [
+              16,
+              257,
+              18
+            ],
+            "dtype": "torch.int32",
+            "sha256": "0d82a54c1840c6fd1c849551e7b760f1b4c7da4be3b03dafa11543c00ab92027"
+          }
+        ]
+      ],
+      "scope": "native-only fixed 16x257 zero-value append probe, decay=1 intervention; not training steps/s"
+    },
+    {
+      "cap": 257,
+      "peak_live": 110,
+      "batch": 16,
+      "tokens": 257,
+      "warps": 16,
+      "repeat_exact": true,
+      "reference_exact": true,
+      "native_ms": [
+        33.30514673143625,
+        33.29000808298588,
+        33.31962786614895,
+        33.304326701909304,
+        33.2687278278172,
+        33.24322681874037,
+        33.28879829496145,
+        33.262067940086126,
+        33.23706705123186,
+        33.27122796326876,
+        33.245416823774576,
+        33.20962795987725,
+        33.250618260353804,
+        33.23696693405509,
+        33.23246818035841,
+        33.20853691548109,
+        33.22697803378105,
+        33.241746947169304,
+        33.226397819817066,
+        33.26049679890275
+      ],
+      "median_ms": 33.24801754206419,
+      "n_regs": 64,
+      "n_spills": 2128,
+      "metadata": "KernelMetadata(allowed_dot_input_precisions=['tf32', 'tf32x3', 'ieee'], arch='sm89', backend_name='cuda', cluster_dims=(1, 1, 1), debug=False, default_dot_input_precision='tf32', deprecated_fp8_dot_operand_dtypes=[], enable_fp_fusion=False, extern_libs=[['libdevice', '/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/backends/nvidia/lib/libdevice.10.bc']], global_scratch_align=1, global_scratch_size=0, hash='4f051718d1f024057988ab471c398a0637abf15db8a628c5d929ddc5395df955', instrumentation_mode='', ir_override=None, launch_cooperative_grid=False, launch_pdl=False, max_num_imprecise_acc_default=0, maxnreg=None, name='kernel', num_ctas=1, num_stages=3, num_warps=16, profile_scratch_align=1, profile_scratch_size=0, ptx_options=None, ptx_version=None, sanitize_overflow=True, shared=32768, supported_fp8_dtypes=['fp8e4b15', 'fp8e4nv', 'fp8e5'], target=GPUTarget(backend='cuda', arch=89, warp_size=32), tensordesc_meta=[], tmem_size=0, triton_version='3.5.1', warp_size=32)",
+      "fingerprint": [
+        {
+          "shape": [
+            16,
+            257,
+            128
+          ],
+          "dtype": "torch.float32",
+          "sha256": "5d28f45a9b501cda80b93c49155497f7c46cac44abc97585645258e2ef9ed5bf"
+        },
+        [
+          [
+            {
+              "shape": [
+                16,
+                257,
+                64
+              ],
+              "dtype": "torch.float32",
+              "sha256": "0a1cf974676f18449da56d10f61c6561c6b2a21322eca7be4d75166c178dcabe"
+            },
+            {
+              "shape": [
+                16,
+                257,
+                128
+              ],
+              "dtype": "torch.float32",
+              "sha256": "5d28f45a9b501cda80b93c49155497f7c46cac44abc97585645258e2ef9ed5bf"
+            },
+            {
+              "shape": [
+                16,
+                257
+              ],
+              "dtype": "torch.float32",
+              "sha256": "21f225ed9f21b9ed785b33f6d5a7c662da4d4338c4bdc8cd78edc3855d180d27"
+            },
+            {
+              "shape": [
+                16,
+                7,
+                257
+              ],
+              "dtype": "torch.int32",
+              "sha256": "cb81a606983e71956d93603877e857f5a86e924a415744b07a37931a3dcb4bd8"
+            }
+          ],
+          {
+            "shape": [
+              16,
+              257,
+              18
+            ],
+            "dtype": "torch.int32",
+            "sha256": "0d82a54c1840c6fd1c849551e7b760f1b4c7da4be3b03dafa11543c00ab92027"
+          }
+        ]
+      ],
+      "scope": "native-only fixed 16x257 zero-value append probe, decay=1 intervention; not training steps/s"
+    },
+    {
+      "cap": 257,
+      "peak_live": 110,
+      "batch": 16,
+      "tokens": 257,
+      "warps": 32,
+      "repeat_exact": true,
+      "reference_exact": true,
+      "native_ms": [
+        31.077105086296797,
+        30.986273661255836,
+        30.917963944375515,
+        30.937534756958485,
+        30.98282404243946,
+        30.98927391692996,
+        31.012544874101877,
+        30.99838364869356,
+        30.919604003429413,
+        31.082594767212868,
+        30.99697409197688,
+        31.14002523943782,
+        31.061594374477863,
+        30.95600474625826,
+        30.912764370441437,
+        30.954733956605196,
+        31.07159538194537,
+        30.98461404442787,
+        31.00296389311552,
+        31.092755030840635
+      ],
+      "median_ms": 30.99312400445342,
+      "n_regs": 64,
+      "n_spills": 1004,
+      "metadata": "KernelMetadata(allowed_dot_input_precisions=['tf32', 'tf32x3', 'ieee'], arch='sm89', backend_name='cuda', cluster_dims=(1, 1, 1), debug=False, default_dot_input_precision='tf32', deprecated_fp8_dot_operand_dtypes=[], enable_fp_fusion=False, extern_libs=[['libdevice', '/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/backends/nvidia/lib/libdevice.10.bc']], global_scratch_align=1, global_scratch_size=0, hash='cc004f636ba8a10f4025ff825824242a3d3d0ce318c10c1e44fb8a0e211260b5', instrumentation_mode='', ir_override=None, launch_cooperative_grid=False, launch_pdl=False, max_num_imprecise_acc_default=0, maxnreg=None, name='kernel', num_ctas=1, num_stages=3, num_warps=32, profile_scratch_align=1, profile_scratch_size=0, ptx_options=None, ptx_version=None, sanitize_overflow=True, shared=65536, supported_fp8_dtypes=['fp8e4b15', 'fp8e4nv', 'fp8e5'], target=GPUTarget(backend='cuda', arch=89, warp_size=32), tensordesc_meta=[], tmem_size=0, triton_version='3.5.1', warp_size=32)",
+      "fingerprint": [
+        {
+          "shape": [
+            16,
+            257,
+            128
+          ],
+          "dtype": "torch.float32",
+          "sha256": "5d28f45a9b501cda80b93c49155497f7c46cac44abc97585645258e2ef9ed5bf"
+        },
+        [
+          [
+            {
+              "shape": [
+                16,
+                257,
+                64
+              ],
+              "dtype": "torch.float32",
+              "sha256": "0a1cf974676f18449da56d10f61c6561c6b2a21322eca7be4d75166c178dcabe"
+            },
+            {
+              "shape": [
+                16,
+                257,
+                128
+              ],
+              "dtype": "torch.float32",
+              "sha256": "5d28f45a9b501cda80b93c49155497f7c46cac44abc97585645258e2ef9ed5bf"
+            },
+            {
+              "shape": [
+                16,
+                257
+              ],
+              "dtype": "torch.float32",
+              "sha256": "21f225ed9f21b9ed785b33f6d5a7c662da4d4338c4bdc8cd78edc3855d180d27"
+            },
+            {
+              "shape": [
+                16,
+                7,
+                257
+              ],
+              "dtype": "torch.int32",
+              "sha256": "cb81a606983e71956d93603877e857f5a86e924a415744b07a37931a3dcb4bd8"
+            }
+          ],
+          {
+            "shape": [
+              16,
+              257,
+              18
+            ],
+            "dtype": "torch.int32",
+            "sha256": "0d82a54c1840c6fd1c849551e7b760f1b4c7da4be3b03dafa11543c00ab92027"
+          }
+        ]
+      ],
+      "scope": "native-only fixed 16x257 zero-value append probe, decay=1 intervention; not training steps/s"
+    },
+    {
+      "cap": 257,
+      "peak_live": 257,
+      "batch": 16,
+      "tokens": 257,
+      "warps": 8,
+      "repeat_exact": true,
+      "reference_exact": true,
+      "native_ms": [
+        76.1492089368403,
+        76.17560913786292,
+        76.20044890791178,
+        76.4332702383399,
+        76.25819882377982,
+        76.4878592453897,
+        76.39794982969761,
+        76.40353869646788,
+        76.45412907004356,
+        76.72270014882088,
+        76.40900975093246,
+        76.39106875285506,
+        76.38237904757261,
+        76.36513886973262,
+        76.3676087372005,
+        76.23308897018433,
+        76.28527889028192,
+        76.19691919535398,
+        76.14419888705015,
+        76.1644090525806
+      ],
+      "median_ms": 76.36637380346656,
+      "n_regs": 40,
+      "n_spills": 4276,
+      "metadata": "KernelMetadata(allowed_dot_input_precisions=['tf32', 'tf32x3', 'ieee'], arch='sm89', backend_name='cuda', cluster_dims=(1, 1, 1), debug=False, default_dot_input_precision='tf32', deprecated_fp8_dot_operand_dtypes=[], enable_fp_fusion=False, extern_libs=[['libdevice', '/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/backends/nvidia/lib/libdevice.10.bc']], global_scratch_align=1, global_scratch_size=0, hash='2e479904c798981e2f0d5747ce96f229489ac5b5f2d78350496d2403a263fd5c', instrumentation_mode='', ir_override=None, launch_cooperative_grid=False, launch_pdl=False, max_num_imprecise_acc_default=0, maxnreg=None, name='kernel', num_ctas=1, num_stages=3, num_warps=8, profile_scratch_align=1, profile_scratch_size=0, ptx_options=None, ptx_version=None, sanitize_overflow=True, shared=16384, supported_fp8_dtypes=['fp8e4b15', 'fp8e4nv', 'fp8e5'], target=GPUTarget(backend='cuda', arch=89, warp_size=32), tensordesc_meta=[], tmem_size=0, triton_version='3.5.1', warp_size=32)",
+      "fingerprint": [
+        {
+          "shape": [
+            16,
+            257,
+            128
+          ],
+          "dtype": "torch.float32",
+          "sha256": "5d28f45a9b501cda80b93c49155497f7c46cac44abc97585645258e2ef9ed5bf"
+        },
+        [
+          [
+            {
+              "shape": [
+                16,
+                257,
+                64
+              ],
+              "dtype": "torch.float32",
+              "sha256": "f7e4a21e5e66b0a0b5480a89a7953ef2c5c880f71fcac083b6e93d9d7efba297"
+            },
+            {
+              "shape": [
+                16,
+                257,
+                128
+              ],
+              "dtype": "torch.float32",
+              "sha256": "5d28f45a9b501cda80b93c49155497f7c46cac44abc97585645258e2ef9ed5bf"
+            },
+            {
+              "shape": [
+                16,
+                257
+              ],
+              "dtype": "torch.float32",
+              "sha256": "df61bc75659512eefcfa8d11a2bdd8457ef9020ca7443b16f5b26af75e1539aa"
+            },
+            {
+              "shape": [
+                16,
+                7,
+                257
+              ],
+              "dtype": "torch.int32",
+              "sha256": "719161e6375c393fd80e7380a53f91dddc55caeb48e95e7dadb30d8ebdeea33a"
+            }
+          ],
+          {
+            "shape": [
+              16,
+              257,
+              18
+            ],
+            "dtype": "torch.int32",
+            "sha256": "c8016d1f6b15cb81bdc7c8b782a1b4ff939bd7dca618851a79e1579523a88a21"
+          }
+        ]
+      ],
+      "scope": "native-only fixed 16x257 zero-value append probe, decay=1 intervention; not training steps/s"
+    },
+    {
+      "cap": 257,
+      "peak_live": 257,
+      "batch": 16,
+      "tokens": 257,
+      "warps": 16,
+      "repeat_exact": true,
+      "reference_exact": true,
+      "native_ms": [
+        41.93898010998964,
+        41.91350005567074,
+        42.22825076431036,
+        42.1525901183486,
+        42.295170947909355,
+        41.954690124839544,
+        41.91164020448923,
+        41.972179897129536,
+        41.96066968142986,
+        41.94486979395151,
+        41.94622999057174,
+        41.99483012780547,
+        41.96343990042806,
+        42.038670275360346,
+        41.99525993317366,
+        42.071540374308825,
+        41.99453070759773,
+        41.999869979918,
+        42.114430107176304,
+        42.090950068086386
+      ],
+      "median_ms": 41.9946804177016,
+      "n_regs": 64,
+      "n_spills": 2128,
+      "metadata": "KernelMetadata(allowed_dot_input_precisions=['tf32', 'tf32x3', 'ieee'], arch='sm89', backend_name='cuda', cluster_dims=(1, 1, 1), debug=False, default_dot_input_precision='tf32', deprecated_fp8_dot_operand_dtypes=[], enable_fp_fusion=False, extern_libs=[['libdevice', '/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/backends/nvidia/lib/libdevice.10.bc']], global_scratch_align=1, global_scratch_size=0, hash='4f051718d1f024057988ab471c398a0637abf15db8a628c5d929ddc5395df955', instrumentation_mode='', ir_override=None, launch_cooperative_grid=False, launch_pdl=False, max_num_imprecise_acc_default=0, maxnreg=None, name='kernel', num_ctas=1, num_stages=3, num_warps=16, profile_scratch_align=1, profile_scratch_size=0, ptx_options=None, ptx_version=None, sanitize_overflow=True, shared=32768, supported_fp8_dtypes=['fp8e4b15', 'fp8e4nv', 'fp8e5'], target=GPUTarget(backend='cuda', arch=89, warp_size=32), tensordesc_meta=[], tmem_size=0, triton_version='3.5.1', warp_size=32)",
+      "fingerprint": [
+        {
+          "shape": [
+            16,
+            257,
+            128
+          ],
+          "dtype": "torch.float32",
+          "sha256": "5d28f45a9b501cda80b93c49155497f7c46cac44abc97585645258e2ef9ed5bf"
+        },
+        [
+          [
+            {
+              "shape": [
+                16,
+                257,
+                64
+              ],
+              "dtype": "torch.float32",
+              "sha256": "f7e4a21e5e66b0a0b5480a89a7953ef2c5c880f71fcac083b6e93d9d7efba297"
+            },
+            {
+              "shape": [
+                16,
+                257,
+                128
+              ],
+              "dtype": "torch.float32",
+              "sha256": "5d28f45a9b501cda80b93c49155497f7c46cac44abc97585645258e2ef9ed5bf"
+            },
+            {
+              "shape": [
+                16,
+                257
+              ],
+              "dtype": "torch.float32",
+              "sha256": "df61bc75659512eefcfa8d11a2bdd8457ef9020ca7443b16f5b26af75e1539aa"
+            },
+            {
+              "shape": [
+                16,
+                7,
+                257
+              ],
+              "dtype": "torch.int32",
+              "sha256": "719161e6375c393fd80e7380a53f91dddc55caeb48e95e7dadb30d8ebdeea33a"
+            }
+          ],
+          {
+            "shape": [
+              16,
+              257,
+              18
+            ],
+            "dtype": "torch.int32",
+            "sha256": "c8016d1f6b15cb81bdc7c8b782a1b4ff939bd7dca618851a79e1579523a88a21"
+          }
+        ]
+      ],
+      "scope": "native-only fixed 16x257 zero-value append probe, decay=1 intervention; not training steps/s"
+    },
+    {
+      "cap": 257,
+      "peak_live": 257,
+      "batch": 16,
+      "tokens": 257,
+      "warps": 32,
+      "repeat_exact": true,
+      "reference_exact": true,
+      "native_ms": [
+        39.05338607728481,
+        39.016036316752434,
+        39.011085871607065,
+        38.79331471398473,
+        38.955175783485174,
+        38.838756270706654,
+        38.922425359487534,
+        38.777036126703024,
+        38.80133479833603,
+        38.760915864259005,
+        38.852964993566275,
+        38.78676611930132,
+        38.76997483894229,
+        39.04072614386678,
+        39.057436399161816,
+        39.006106089800596,
+        38.85146602988243,
+        38.80120487883687,
+        38.83730620145798,
+        39.00054609403014
+      ],
+      "median_ms": 38.85221551172435,
+      "n_regs": 64,
+      "n_spills": 1004,
+      "metadata": "KernelMetadata(allowed_dot_input_precisions=['tf32', 'tf32x3', 'ieee'], arch='sm89', backend_name='cuda', cluster_dims=(1, 1, 1), debug=False, default_dot_input_precision='tf32', deprecated_fp8_dot_operand_dtypes=[], enable_fp_fusion=False, extern_libs=[['libdevice', '/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/backends/nvidia/lib/libdevice.10.bc']], global_scratch_align=1, global_scratch_size=0, hash='cc004f636ba8a10f4025ff825824242a3d3d0ce318c10c1e44fb8a0e211260b5', instrumentation_mode='', ir_override=None, launch_cooperative_grid=False, launch_pdl=False, max_num_imprecise_acc_default=0, maxnreg=None, name='kernel', num_ctas=1, num_stages=3, num_warps=32, profile_scratch_align=1, profile_scratch_size=0, ptx_options=None, ptx_version=None, sanitize_overflow=True, shared=65536, supported_fp8_dtypes=['fp8e4b15', 'fp8e4nv', 'fp8e5'], target=GPUTarget(backend='cuda', arch=89, warp_size=32), tensordesc_meta=[], tmem_size=0, triton_version='3.5.1', warp_size=32)",
+      "fingerprint": [
+        {
+          "shape": [
+            16,
+            257,
+            128
+          ],
+          "dtype": "torch.float32",
+          "sha256": "5d28f45a9b501cda80b93c49155497f7c46cac44abc97585645258e2ef9ed5bf"
+        },
+        [
+          [
+            {
+              "shape": [
+                16,
+                257,
+                64
+              ],
+              "dtype": "torch.float32",
+              "sha256": "f7e4a21e5e66b0a0b5480a89a7953ef2c5c880f71fcac083b6e93d9d7efba297"
+            },
+            {
+              "shape": [
+                16,
+                257,
+                128
+              ],
+              "dtype": "torch.float32",
+              "sha256": "5d28f45a9b501cda80b93c49155497f7c46cac44abc97585645258e2ef9ed5bf"
+            },
+            {
+              "shape": [
+                16,
+                257
+              ],
+              "dtype": "torch.float32",
+              "sha256": "df61bc75659512eefcfa8d11a2bdd8457ef9020ca7443b16f5b26af75e1539aa"
+            },
+            {
+              "shape": [
+                16,
+                7,
+                257
+              ],
+              "dtype": "torch.int32",
+              "sha256": "719161e6375c393fd80e7380a53f91dddc55caeb48e95e7dadb30d8ebdeea33a"
+            }
+          ],
+          {
+            "shape": [
+              16,
+              257,
+              18
+            ],
+            "dtype": "torch.int32",
+            "sha256": "c8016d1f6b15cb81bdc7c8b782a1b4ff939bd7dca618851a79e1579523a88a21"
+          }
+        ]
+      ],
+      "scope": "native-only fixed 16x257 zero-value append probe, decay=1 intervention; not training steps/s"
+    }
+  ],
+  "source_sha256": "250a93e3a686c2816a5784833c32bd32064b1348875ff973e80af77a6a4ae372"
+}
