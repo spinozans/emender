@@ -22,6 +22,7 @@ def main():
     parser.add_argument('--quick', action='store_true')
     parser.add_argument('--page-size', type=int, choices=(256,512,1024), default=1024)
     parser.add_argument('--only1024', action='store_true')
+    parser.add_argument('--batch', type=int, choices=(1,16), default=1)
     parser.add_argument('--matched-r2', action='store_true')
     parser.add_argument('--matched-r4', action='store_true')
     args = parser.parse_args()
@@ -49,7 +50,7 @@ def main():
     observer = Observer()
     shapes = ((1,32),(1,64),(1,96),(1,128),(16,128),(1,129),(1,257),(1,512),(16,512),(1,1024))
     if args.only1024:
-        shapes=((1,1024),)
+        shapes=((args.batch,1024),)
     if args.quick:
         shapes = ((1,32),)
     try:
