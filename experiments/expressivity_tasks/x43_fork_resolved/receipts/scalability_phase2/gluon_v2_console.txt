@@ -1,0 +1,72 @@
+{"staged": false, "mode": "reference", "cap": 257, "peak_live": 48, "batch": 16, "tokens": 128, "warps": 8, "repeat_exact": true, "reference_exact": true, "median_ms": 30.571799026802182, "n_regs": 40, "n_spills": 4276, "resource_ctas_per_sm": 6, "sm_count": 142, "grid_ctas": 16, "grid_warp_occupancy_upper_bound": 0.018779342723004695, "resource_warp_occupancy_ceiling": 1.0, "scope": "native-only controlled zero-value append probe, fixed T within each pair, decay=1; not training steps/s"}
+Traceback (most recent call last):
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/experimental/gluon/language/_core.py", line 91, in wrapper
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/language/core.py", line 43, in wrapper
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/language/core.py", line 2192, in store
+    return _semantic.store(pointer, value, mask, boundary_check, cache_modifier, eviction_policy)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/language/semantic.py", line 1297, in store
+    return self._store_legacy(ptr, val, mask, boundary_check, cache, eviction)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/language/semantic.py", line 1259, in _store_legacy
+    val = self.broadcast_impl_shape(val, ptr.type.get_block_shapes())
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/experimental/gluon/language/_semantic.py", line 98, in broadcast_impl_shape
+    _check(isinstance(input.type, ttgl.distributed_type),
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/experimental/gluon/language/_semantic.py", line 14, in _check
+    raise category(msg_fn())
+ValueError: expected expand_dims input to be a distributed_type but got: triton.language.float32
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/c14_phase2_profile.py", line 70, in main
+    run()
+  File "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/c14_phase2_profile.py", line 68, in run
+    return native.native_forward(xs,cfg,policy.gate_policy(0),metadata)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/c14_launch_shape.py", line 24, in forward
+    result = bounded(inputs, cfg, policy, metadata)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<reach-bounded native wrapper>", line 27, in native_forward
+  File "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/c14_launch_shape.py", line 18, in launch
+    return native.kernel[grid](*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/c14_phase2_profile.py", line 42, in launch
+    self.compiled = target[grid](*args, **kw)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/runtime/jit.py", line 419, in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/runtime/jit.py", line 733, in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/runtime/jit.py", line 861, in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/compiler/compiler.py", line 300, in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/experimental/gluon/_runtime.py", line 40, in make_ir
+    module = ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+triton.compiler.errors.CompilationError: at 160:12:
+                if field==9: stat=s_correct
+                if field==10: stat=s_cap
+                if field==11: stat=decayed
+                if field==12: stat=deaths
+                if field==13: stat=tl.maximum(pre_array,post_array)
+                if field==14: stat=fixed_sum((live & (owner>=0)).to(tl.int32),0)
+                if field==15: stat=fixed_sum((live & (owner<0)).to(tl.int32),0)
+                if field==16: stat=tl.maximum(pre_array+pre_stream,post_array+post_stream)
+                if field==17: stat=tl.maximum(pre_stream,post_stream)
+                tl.store(Trace+(b*T+t)*18+field,stat)
+        else:
+            tl.store(Out+(b*T+t)*128+vd,0.)
+            ^
+expected expand_dims input to be a distributed_type but got: triton.language.float32

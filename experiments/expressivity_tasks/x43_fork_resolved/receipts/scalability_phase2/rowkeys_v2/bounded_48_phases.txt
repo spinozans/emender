@@ -1,0 +1,46 @@
+-------------------------------------------------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  
+                                                   Name    Self CPU %      Self CPU   CPU total %     CPU total  CPU time avg     Self CUDA   Self CUDA %    CUDA total  CUDA time avg    # of Calls  
+-------------------------------------------------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  
+                                                 kernel         0.00%       0.000us         0.00%       0.000us       0.000us      11.069ms        99.26%      11.069ms       3.690ms             3  
+                                            aten::fill_         0.95%     115.121us         2.32%     281.091us      13.385us      22.624us         0.20%      22.624us       1.077us            21  
+                                            aten::copy_         1.35%     163.111us        87.09%      10.550ms     390.726us      22.496us         0.20%      23.200us       0.859us            27  
+void at::native::elementwise_kernel<128, 2, at::nati...         0.00%       0.000us         0.00%       0.000us       0.000us      17.696us         0.16%      17.696us       1.475us            12  
+                       Memcpy HtoD (Pageable -> Device)         0.00%       0.000us         0.00%       0.000us       0.000us      11.936us         0.11%      11.936us       0.568us            21  
+void at::native::elementwise_kernel<128, 2, at::nati...         0.00%       0.000us         0.00%       0.000us       0.000us      10.784us         0.10%      10.784us       1.198us             9  
+                                              aten::add         0.50%      60.890us         0.85%     102.660us      17.110us       8.832us         0.08%       8.832us       1.472us             6  
+void at::native::elementwise_kernel<128, 2, at::nati...         0.00%       0.000us         0.00%       0.000us       0.000us       6.592us         0.06%       6.592us       1.099us             6  
+void at::native::unrolled_elementwise_kernel<at::nat...         0.00%       0.000us         0.00%       0.000us       0.000us       6.176us         0.06%       6.176us       2.059us             3  
+                                      aten::bitwise_and         0.36%      43.970us         0.62%      74.710us      12.452us       5.952us         0.05%       5.952us       0.992us             6  
+void at::native::vectorized_elementwise_kernel<4, at...         0.00%       0.000us         0.00%       0.000us       0.000us       5.952us         0.05%       5.952us       0.992us             6  
+void at::native::vectorized_elementwise_kernel<4, at...         0.00%       0.000us         0.00%       0.000us       0.000us       5.248us         0.05%       5.248us       0.875us             6  
+                                               aten::lt         0.30%      36.560us         0.55%      66.260us      22.087us       4.928us         0.04%       4.928us       1.643us             3  
+void at::native::elementwise_kernel<128, 4, at::nati...         0.00%       0.000us         0.00%       0.000us       0.000us       4.928us         0.04%       4.928us       1.643us             3  
+                                             aten::add_         0.20%      24.510us         0.34%      40.650us      13.550us       4.608us         0.04%       4.608us       1.536us             3  
+void at::native::elementwise_kernel<128, 2, at::nati...         0.00%       0.000us         0.00%       0.000us       0.000us       4.384us         0.04%       4.384us       1.461us             3  
+                                              aten::sub         0.28%      33.550us         0.46%      55.370us      18.457us       4.256us         0.04%       4.256us       1.419us             3  
+                                               aten::gt         0.25%      30.480us         0.40%      48.800us      16.267us       3.201us         0.03%       3.201us       1.067us             3  
+void at::native::vectorized_elementwise_kernel<4, at...         0.00%       0.000us         0.00%       0.000us       0.000us       3.201us         0.03%       3.201us       1.067us             3  
+                                               aten::eq         0.32%      39.150us         0.51%      61.860us      20.620us       3.136us         0.03%       3.136us       1.045us             3  
+void at::native::vectorized_elementwise_kernel<4, at...         0.00%       0.000us         0.00%       0.000us       0.000us       3.136us         0.03%       3.136us       1.045us             3  
+                                           aten::arange         0.29%      34.850us         1.05%     127.530us      21.255us       2.656us         0.02%       5.312us       0.885us             6  
+void (anonymous namespace)::elementwise_kernel_with_...         0.00%       0.000us         0.00%       0.000us       0.000us       2.656us         0.02%       2.656us       0.885us             3  
+                                Activity Buffer Request         2.83%     342.301us         2.83%     342.301us     342.301us       0.704us         0.01%       0.704us       0.704us             1  
+                                            aten::empty         1.10%     133.060us         1.10%     133.060us       3.412us       0.000us         0.00%       0.000us       0.000us            39  
+                                               aten::to         0.26%      31.430us        88.57%      10.728ms     447.018us       0.000us         0.00%      18.816us       0.784us            24  
+                                         aten::_to_copy         0.55%      67.170us        88.31%      10.697ms     445.708us       0.000us         0.00%      18.816us       0.784us            24  
+                                    aten::empty_strided         1.29%     155.691us         1.29%     155.691us       5.190us       0.000us         0.00%       0.000us       0.000us            30  
+                                        cudaMemcpyAsync         1.27%     154.360us         1.27%     154.360us       7.350us       0.000us         0.00%       0.000us       0.000us            21  
+                                  cudaStreamSynchronize        81.31%       9.849ms        81.31%       9.849ms     469.019us       0.000us         0.00%       0.000us       0.000us            21  
+                                       aten::lift_fresh         0.10%      12.180us         0.10%      12.180us       0.580us       0.000us         0.00%       0.000us       0.000us            21  
+                                          aten::detach_         0.15%      17.710us         0.25%      30.430us       1.691us       0.000us         0.00%       0.000us       0.000us            18  
+                                                detach_         0.11%      12.720us         0.11%      12.720us       0.707us       0.000us         0.00%       0.000us       0.000us            18  
+                                       aten::empty_like         0.09%      10.750us         0.34%      41.341us       6.890us       0.000us         0.00%       0.000us       0.000us             6  
+                                            aten::zeros         0.07%       8.650us         0.70%      84.340us      28.113us       0.000us         0.00%       2.624us       0.875us             3  
+                                            aten::zero_         0.37%      44.720us         2.40%     290.551us      16.142us       0.000us         0.00%      19.136us       1.063us            18  
+                                       cudaLaunchKernel         3.36%     407.590us         3.36%     407.590us       7.151us       0.000us         0.00%       0.000us       0.000us            57  
+                                       cuLaunchKernelEx         0.18%      21.970us         0.18%      21.970us       7.323us       0.000us         0.00%       0.000us       0.000us             3  
+                                            aten::slice         0.79%      95.680us         1.01%     122.820us       5.117us       0.000us         0.00%       0.000us       0.000us            24  
+                                       aten::as_strided         0.44%      53.190us         0.44%      53.190us       1.043us       0.000us         0.00%       0.000us       0.000us            51  
+-------------------------------------------------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  
+Self CPU time total: 12.114ms
+Self CUDA time total: 11.152ms

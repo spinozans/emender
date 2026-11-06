@@ -1,0 +1,108 @@
+{
+  "gpu": "3",
+  "rows": [
+    {
+      "staged": false,
+      "mode": "reference",
+      "cap": 257,
+      "peak_live": 48,
+      "batch": 16,
+      "tokens": 128,
+      "warps": 8,
+      "repeat_exact": true,
+      "reference_exact": true,
+      "native_ms": [
+        30.989544931799173,
+        30.582592822611332,
+        30.524594243615866,
+        30.494363978505135,
+        30.48218321055174,
+        30.506093986332417,
+        30.71104409173131,
+        30.535614117980003,
+        30.47983255237341,
+        30.488553922623396,
+        30.477704014629126,
+        30.482863076031208,
+        30.56001430377364,
+        30.517074279487133,
+        30.528622679412365,
+        30.50547419115901,
+        30.497103929519653,
+        30.53231304511428,
+        30.52491368725896,
+        30.54236387833953
+      ],
+      "median_ms": 30.5208342615515,
+      "n_regs": 40,
+      "n_spills": 4276,
+      "metadata": "KernelMetadata(allowed_dot_input_precisions=['tf32', 'tf32x3', 'ieee'], arch='sm89', backend_name='cuda', cluster_dims=(1, 1, 1), debug=False, default_dot_input_precision='tf32', deprecated_fp8_dot_operand_dtypes=[], enable_fp_fusion=False, extern_libs=[['libdevice', '/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/backends/nvidia/lib/libdevice.10.bc']], global_scratch_align=1, global_scratch_size=0, hash='893ff5fbcbb2398dbfcc58c4d701189c2ac01083154021c2ff1cd99e22eaa1e6', instrumentation_mode='', ir_override=None, launch_cooperative_grid=False, launch_pdl=False, max_num_imprecise_acc_default=0, maxnreg=None, name='kernel', num_ctas=1, num_stages=3, num_warps=8, profile_scratch_align=1, profile_scratch_size=0, ptx_options=None, ptx_version=None, sanitize_overflow=True, shared=16384, supported_fp8_dtypes=['fp8e4b15', 'fp8e4nv', 'fp8e5'], target=GPUTarget(backend='cuda', arch=89, warp_size=32), tensordesc_meta=[], tmem_size=0, triton_version='3.5.1', warp_size=32)",
+      "resource_ctas_per_sm": 6,
+      "sm_count": 142,
+      "grid_ctas": 16,
+      "grid_warp_occupancy_upper_bound": 0.018779342723004695,
+      "resource_warp_occupancy_ceiling": 1.0,
+      "fingerprint": [
+        {
+          "shape": [
+            16,
+            128,
+            128
+          ],
+          "dtype": "torch.float32",
+          "sha256": "30e14955ebf1352266dc2ff8067e68104607e750abb9d3b36582b8af909fcb58"
+        },
+        [
+          [
+            {
+              "shape": [
+                16,
+                257,
+                64
+              ],
+              "dtype": "torch.float32",
+              "sha256": "fb36053d228e1e258c8aeecd8b953b979b049a127714f6edb27c6b57119813cb"
+            },
+            {
+              "shape": [
+                16,
+                257,
+                128
+              ],
+              "dtype": "torch.float32",
+              "sha256": "5d28f45a9b501cda80b93c49155497f7c46cac44abc97585645258e2ef9ed5bf"
+            },
+            {
+              "shape": [
+                16,
+                257
+              ],
+              "dtype": "torch.float32",
+              "sha256": "24442ba447ef5511c584a0bc833d804a39b5dd4614e1779828a069843f9a5633"
+            },
+            {
+              "shape": [
+                16,
+                7,
+                257
+              ],
+              "dtype": "torch.int32",
+              "sha256": "336b50de9d37f0ba13fca3c1bca0b2415b6342abdad0103322aece7100c42ca7"
+            }
+          ],
+          {
+            "shape": [
+              16,
+              128,
+              18
+            ],
+            "dtype": "torch.int32",
+            "sha256": "6944b56fa7786642f45adda13d1dd1a26227285773c0d0a9ab5db49c2eb26e0c"
+          }
+        ]
+      ],
+      "scope": "native-only controlled zero-value append probe, fixed T within each pair, decay=1; not training steps/s"
+    }
+  ],
+  "source_sha256": "250a93e3a686c2816a5784833c32bd32064b1348875ff973e80af77a6a4ae372"
+}

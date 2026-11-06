@@ -1,0 +1,51 @@
+{"staged": false, "mode": "reference", "cap": 257, "peak_live": 48, "batch": 16, "tokens": 128, "warps": 8, "repeat_exact": true, "reference_exact": true, "median_ms": 30.387108912691474, "n_regs": 40, "n_spills": 4276, "resource_ctas_per_sm": 6, "sm_count": 142, "grid_ctas": 16, "grid_warp_occupancy_upper_bound": 0.018779342723004695, "resource_warp_occupancy_ceiling": 1.0, "scope": "native-only controlled zero-value append probe, fixed T within each pair, decay=1; not training steps/s"}
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/c14_phase2_profile.py", line 130, in <module>
+    main()
+  File "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/c14_phase2_profile.py", line 84, in main
+    run()
+  File "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/c14_phase2_profile.py", line 82, in run
+    return native.native_forward(xs,cfg,policy.gate_policy(0),metadata)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/c14_launch_shape.py", line 24, in forward
+    result = bounded(inputs, cfg, policy, metadata)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<reach-bounded native wrapper>", line 27, in native_forward
+  File "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/c14_launch_shape.py", line 18, in launch
+    return native.kernel[grid](*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/c14_phase2_profile.py", line 56, in launch
+    self.compiled = target[grid](*args, **kw)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/runtime/jit.py", line 419, in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/runtime/jit.py", line 733, in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/runtime/jit.py", line 861, in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/compiler/compiler.py", line 300, in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/experimental/gluon/_runtime.py", line 40, in make_ir
+    module = ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+triton.compiler.errors.CompilationError: at 71:65:
+                prev = fixed_sum(tl.where(as_rows(live & (ss==target) & adjacent),values,0.),0)
+                diff = av-prev
+                err = tl.where(has,tl.sqrt(fixed_sum(diff*diff,0)),0.)
+                gate = sigmoid(append+coef*err)
+                alloc = (dup==S) & (free<S)
+                dst = tl.where(dup<S,dup,tl.where(free<S,free,target))
+                a_alloc=alloc.to(tl.int32)
+                a_dup=(dup<S).to(tl.int32)
+                a_cap=((dup==S)&(free==S)).to(tl.int32)
+                changed = ss==dst
+                values = tl.where(as_rows(changed),tl.where(alloc,gate*as_cols(av),values+(as_cols(av)-values)),values)
+                tl.store(FinalK+(b*S+as_rows(ss))*64+as_cols(kd),tl.broadcast_to(as_cols(k),(BS,64)),as_rows(changed & alloc) & (as_rows(ss)<S))
+                                                                 ^
+AttributeError("module 'triton.experimental.gluon.language' has no attribute 'broadcast_to'")

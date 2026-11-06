@@ -1,0 +1,58 @@
+{"staged": false, "mode": "reference", "cap": 257, "peak_live": 48, "batch": 16, "tokens": 128, "warps": 8, "repeat_exact": true, "reference_exact": true, "median_ms": 30.5208342615515, "n_regs": 40, "n_spills": 4276, "resource_ctas_per_sm": 6, "sm_count": 142, "grid_ctas": 16, "grid_warp_occupancy_upper_bound": 0.018779342723004695, "resource_warp_occupancy_ceiling": 1.0, "scope": "native-only controlled zero-value append probe, fixed T within each pair, decay=1; not training steps/s"}
+triton.compiler.errors.CompilationError: at 5:4:
+def fixed_sum(x, axis: tl.constexpr):
+    result = tl.sum(reduction_input(x, axis), axis)
+    if len(x.shape) == 2:
+        return tl.convert_layout(result, tl.BlockedLayout([1], [32], [8], [0]))
+    return result
+    ^
+TypeError("Inconsistent return types: <['128'], fp32, BlockedLayout(size_per_thread=(1), threads_per_warp=(32), warps_per_cta=(8), order=(0), ctas_per_cga=[1], cta_split_num=[1], cta_order=[0])> and <['128'], fp32, SliceLayout(dim=0, parent=BlockedLayout(size_per_thread=[1, 1], threads_per_warp=[1, 32], warps_per_cta=[2, 4], order=[1, 0], ctas_per_cga=[1, 1], cta_split_num=[1, 1], cta_order=[1, 0]))>")
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/c14_phase2_profile.py", line 70, in main
+    run()
+  File "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/c14_phase2_profile.py", line 68, in run
+    return native.native_forward(xs,cfg,policy.gate_policy(0),metadata)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/c14_launch_shape.py", line 24, in forward
+    result = bounded(inputs, cfg, policy, metadata)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<reach-bounded native wrapper>", line 27, in native_forward
+  File "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/c14_launch_shape.py", line 18, in launch
+    return native.kernel[grid](*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/c14_phase2_profile.py", line 42, in launch
+    self.compiled = target[grid](*args, **kw)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/runtime/jit.py", line 419, in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/runtime/jit.py", line 733, in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/runtime/jit.py", line 861, in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/compiler/compiler.py", line 300, in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/experimental/gluon/_runtime.py", line 40, in make_ir
+    module = ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+triton.compiler.errors.CompilationError: at 61:23:
+            own = tl.load(Own+b*T+t)
+            keep = tl.load(Keep+b*T+t)
+            if (own>=0) & keep:
+                dup = fixed_min(tl.where(live & (owner==own),ss,S),0)
+                free = fixed_min(tl.where((ss<S)&~live,ss,S),0)
+                has = fixed_sum(live.to(tl.int32),0)>0
+                best_order = fixed_max(tl.where(live,order,-1),0)
+                youngest = fixed_min(tl.where(live & (order==best_order),ss,S),0)
+                adjacent_order = fixed_max(tl.where(live & (birth==t-1),order,-1),0)
+                adjacent = adjacent_order>=0
+                target = tl.where(adjacent,fixed_min(tl.where(live & (order==adjacent_order),ss,S),0),youngest)
+                prev = fixed_sum(tl.where(as_rows(live & (ss==target) & adjacent),values,0.),0)
+                       ^
