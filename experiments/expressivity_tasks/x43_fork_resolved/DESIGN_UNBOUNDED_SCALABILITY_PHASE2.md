@@ -68,3 +68,13 @@ At 128 controlled live slots the fused kernel accounts for99.85% of CUDA
 operator time; individual READ/APPEND/DECAY timings cannot be separated by
 an ordinary operator profiler. Nsight Compute is not installed; measured
 hardware achieved occupancy and additive internal-phase timing are not claimed.
+
+Final evidence supersedes the initial PATH-only profiler discovery: installed
+Nsight Compute2025.1.1 is at `/usr/local/cuda-12.8/bin/ncu`. Its explicit card3
+counter attempt fails with ERR_NVGPUCTRPERM (RmProfilingAdminOnly=1), and also
+conflicts with torch.profiler's CUPTI subscriber. Do not use that probe's timing
+or claim achieved hardware occupancy. Driver settings remain unchanged.
+The final row-key variant passes the complete scoped C14 battery and988 paired
+real-document updates (2,000,483 masked targets), including atomic checkpoint
+and optimizer/RNG restoration. No high-live full-model >=8 rate, approximately
+linear cost,1.3B certification or production training authorization is claimed.

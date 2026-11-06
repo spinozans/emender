@@ -11,8 +11,9 @@ The first global-staging candidate fails full-model byte identity despite
 Retain this failure; it is not a qualifying speedup. Explicit-layout Gluon
 restores the standard full-model fingerprint: 6.90254 diagnostic steps/s,
 105 C14/operator tests and 109 X31 oracle tests pass, and all four nonzero
-occupancy state/replay/gradient fingerprint pairs pass. These gates do not
-substitute for the 2M-target curve or fresh training-runner certification.
+occupancy state/replay/gradient fingerprint pairs pass. The final row-key variant subsequently passes its own complete scoped battery,
+988 paired updates / 2,000,483 targets, and atomic checkpoint/RNG roundtrips.
+These are disposable certification gates; no production training is authorized.
 
 Gluon construction attempts v1-v6 fail compilation and are retained as failed
 experiments. A stray preliminary shell probe failed with IndentationError
@@ -27,7 +28,7 @@ was run. The final row-key certification runs only after both earlier
 launchers exit, on leased card3, with a complete source snapshot.
 
 GPU occupancy values in the baseline are analytic bounds from grid/compiler
-resources, not Nsight achieved occupancy. ncu is unavailable. Internal native
+resources, not Nsight achieved occupancy. ncu was initially absent from PATH; a later explicit-path probe fails with ERR_NVGPUCTRPERM. Internal native
 phases are fused; per-operator timing cannot isolate them. Global spill count
 is compiler metadata and differs between synthetic and trained configurations.
 257 live physical slots require BS512; BS256 cannot cover that state.
@@ -36,3 +37,11 @@ No resilient DiLoCo behavior changes: gap-matrix requirement IDs inapplicable.
 Existing unrelated workspace changes are preserved. AGENTS.md/CLAUDE.md are
 unchanged. Phase-1 registration matches committed/working source bytes before
 experimentation. No existing source-bound production file is edited.
+
+The installed ncu was discovered late. Its probe (physical card3 / visible
+device0) fails with ERR_NVGPUCTRPERM and a torch.profiler/CUPTI subscriber
+conflict; its timings are excluded. No privilege or driver changes attempted.
+The first staged whitespace check failed on raw profiler log padding and three
+extra EOF blank lines. Logs/source snapshots were compressed losslessly, and
+the EOF-only normalization is AST-audited, registered and followed by the
+complete 2M-target slice. The final scoped whitespace check passes.
