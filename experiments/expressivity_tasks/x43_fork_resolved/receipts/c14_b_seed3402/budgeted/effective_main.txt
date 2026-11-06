@@ -1,0 +1,93 @@
+def main():
+    assert sys.executable=='/home/erikg/emender/.venv/bin/python'
+    assert os.environ.get('GPU_LEASE_HELD') in ('2','4')
+    parser=argparse.ArgumentParser();parser.add_argument('--resume',action='store_true');args=parser.parse_args()
+    wall=time.monotonic();source,shards,gate=preflight()
+    torch.set_num_threads(1);torch.manual_seed(3402)
+    model=StoreIntegrated().cuda().train()
+    optimizer=torch.optim.AdamW(model.parameters(),lr=3e-4,weight_decay=.01)
+    rng=torch.Generator(device='cuda').manual_seed(3402)
+    decoder=load_decoder();raw=np.memmap(source,dtype=np.uint8,mode='r')
+    steps=targets=cursor=kept=seen=0;prior=0.;telemetry={};curve=[]
+    config=dict(seed=3402,batch=16,context=128,budget_active_seconds=None, matched_steps=35419, matched_targets=71677042,precision='BF16',
+        optimizer='AdamW lr=3e-4 decay=.01 clip=1',code_sha256={n:sha(ROOT/n) for n in CODE},
+        gate_sha256=sha(OUT/'launch_gates.json'),physical_gpu=os.environ['GPU_LEASE_HELD'],
+        cache_journal_sha256=sha(CACHE/'journal.jsonl'),source_receipt_sha256=sha(ROOT/'receipts/c14_dense/pile_span.json'),
+        checkpoint=str(CHECKPOINT),dropout='independent keep=.5 over all 260 scalars, no rescaling',
+        timer='source/cache read, decode, assembly, transfer, forward, backward and update included; checkpoint save/hash excluded')
+    if args.resume:
+        saved=torch.load(CHECKPOINT,map_location='cpu',weights_only=False)
+        assert saved['config']['code_sha256']==config['code_sha256']
+        model.load_state_dict(saved['model']);optimizer.load_state_dict(saved['optimizer'])
+        rng.set_state(saved['dropout_rng']);torch.set_rng_state(saved['torch_rng']);torch.cuda.set_rng_state(saved['cuda_rng'])
+        steps=saved['steps'];targets=saved['targets'];cursor=saved['next_window'];prior=saved['active_seconds']
+        telemetry=saved['telemetry'];curve=saved['curve'];kept=saved['kept'];seen=saved['seen']
+    else:
+        assert not CHECKPOINT.exists() and not (OUT/'training.json').exists(),'refuse overwrite; use --resume'
+    row_iter=iter(verified_batches(raw))
+    for _ in range(cursor//16):next(row_iter)
+    stopped=False
+    def stop(*_):
+        nonlocal stopped
+        stopped=True
+    signal.signal(signal.SIGTERM,stop);signal.signal(signal.SIGINT,stop)
+    write('training_config.json',config)
+    initialization=time.monotonic()-wall;excluded=[];excluded_seconds=0.
+    torch.cuda.synchronize();start=time.monotonic()
+    def active():return prior+time.monotonic()-start-excluded_seconds
+    def save(status):
+        nonlocal excluded_seconds
+        torch.cuda.synchronize();elapsed=active();at=time.monotonic()
+        saved=dict(model=model.state_dict(),optimizer=optimizer.state_dict(),dropout_rng=rng.get_state(),
+            torch_rng=torch.get_rng_state(),cuda_rng=torch.cuda.get_rng_state(),next_window=cursor,steps=steps,
+            targets=targets,active_seconds=elapsed,telemetry=telemetry,curve=curve,kept=kept,seen=seen,config=config)
+        temporary=CHECKPOINT.with_suffix('.tmp.pt');torch.save(saved,temporary);temporary.replace(CHECKPOINT)
+        digest=sha(CHECKPOINT);duration=time.monotonic()-at;excluded_seconds+=duration
+        excluded.append(dict(after_step=steps,seconds=duration))
+        result=dict(status=status,steps=steps,actual_bytes_targets=targets,next_window_index=cursor,
+            active_seconds=elapsed,wall_seconds=time.monotonic()-wall,initialization_seconds=initialization,
+            excluded_checkpoint_stalls=excluded,lease_wait_seconds=float(os.environ.get('C14_B_LEASE_WAIT_SECONDS','0')),
+            checkpoint=str(CHECKPOINT),checkpoint_sha256=digest,telemetry=telemetry,curve=curve,
+            keep_fraction=kept/seen if seen else None,config=config,eval='not yet run')
+        write('training.json',result);print(json.dumps({k:v for k,v in result.items() if k not in ('telemetry','curve','config')}),flush=True)
+    status='source_exhausted_protocol_limitation'
+    try:
+        last_save=prior
+        for r in shards:
+            if r['first_window_index']+r['windows']<=cursor:continue
+            data=(CACHE/r['file']).read_bytes()
+            assert hashlib.sha256(data).hexdigest()==r['sha256']
+            identities,lengths,values,contexts,_=oracle_shard(data,r['windows'],decoder)
+            for begin in range(0,len(values),16):
+                index=r['first_window_index']+begin
+                if index<cursor:continue
+                if stopped or steps>=35419:
+                    status='interrupted' if stopped else 'completed_matched_exposure';break
+                assert index==cursor
+                rows=next(row_iter);n=len(rows)
+                assert n==16
+                for j,(doc,offset,bb) in enumerate(rows):assert (doc,offset,len(bb)-1)==(*identities[begin+j],lengths[begin+j])
+                xx,yy,mask=tensors(rows)
+                ff=torch.as_tensor(values[begin:begin+n],device='cuda').clone()
+                keep=torch.rand((n,128),device='cuda',generator=rng)>=.5
+                ff*=keep[...,None];kept+=int((keep&mask).sum());seen+=int(mask.sum())
+                ll=torch.as_tensor(contexts[begin:begin+n],device='cuda')
+                optimizer.zero_grad(set_to_none=True)
+                with torch.autocast('cuda',dtype=torch.bfloat16):
+                    lp,_=model(xx,ff,ll,windows=[(doc,offset) for doc,offset,_ in rows],valid_lengths=lengths[begin:begin+n].tolist())
+                    loss=-lp.gather(-1,yy[...,None])[...,0][mask].mean()
+                assert torch.isfinite(loss)
+                loss.backward();torch.nn.utils.clip_grad_norm_(model.parameters(),1.,error_if_nonfinite=True);optimizer.step()
+                accumulate(telemetry,model.telemetry)
+                steps+=1;cursor+=n;targets+=int(mask.sum());torch.cuda.synchronize()
+                curve.append(dict(step=steps,active_seconds=active(),targets=targets,nll=float(loss.detach())))
+                print(json.dumps(curve[-1]),flush=True)
+                if active()-last_save>=120:save('running');last_save=active()
+            else:continue
+            break
+        if status == 'completed_matched_exposure':
+            assert steps == 35419 and targets == 71677042
+        save(status)
+    except BaseException as error:
+        write('training_failure.json',dict(error=repr(error),steps=steps,targets=targets,next_window=cursor))
+        save('failed');raise
