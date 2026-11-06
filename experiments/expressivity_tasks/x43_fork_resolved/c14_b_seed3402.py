@@ -31,6 +31,13 @@ def main():
     if arm=='unbudgeted':
         from experiments.expressivity_tasks.x43_fork_resolved.c14_b_control_model import StoreIntegrated
         train.StoreIntegrated=lambda:StoreIntegrated('unbudgeted')
+        # Freeze lazy backward/fast-path dependencies before exposing installers.
+        # Otherwise the current optimized replay could be imported accidentally.
+        import importlib
+        for name in reg['code_sha256']:
+            if name.endswith('.py'):
+                mod=importlib.import_module('experiments.expressivity_tasks.x43_fork_resolved.'+name[:-3])
+                assert Path(mod.__file__).resolve().is_relative_to(BOUND),name
         import experiments.expressivity_tasks.x43_fork_resolved as package
         package.__path__=[str(ROOT/REL),*package.__path__]
         binding=json.loads((ROOT/REL/'receipts/scalability_phase2/registration.json').read_text())
