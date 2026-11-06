@@ -1,0 +1,25 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/c14_gap_receipts.py", line 284, in <module>
+    else:full_step(args.output,int(args.mode[6:]),stress=True)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/c14_gap_receipts.py", line 171, in full_step
+    optimizer.step();torch.cuda.synchronize();done=time.perf_counter()
+    ^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/optim/optimizer.py", line 517, in wrapper
+    out = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/optim/optimizer.py", line 82, in _use_grad
+    ret = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/optim/adam.py", line 237, in step
+    has_complex = self._init_group(
+                  ^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py", line 1044, in _fn
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/optim/adam.py", line 181, in _init_group
+    state["exp_avg_sq"] = torch.zeros_like(
+                          ^^^^^^^^^^^^^^^^^
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 112.00 MiB. GPU 0 has a total capacity of 47.38 GiB of which 28.69 MiB is free. Including non-PyTorch memory, this process has 47.35 GiB memory in use. Of the allocated memory 45.30 GiB is allocated by PyTorch, with 28.49 GiB allocated in private pools (e.g., CUDA Graphs), and 1.24 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)

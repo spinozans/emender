@@ -1,0 +1,51 @@
+{
+  "status": "analytic_only_no_bf16_implemented",
+  "shape": {
+    "B": 16,
+    "T": 1024
+  },
+  "fp32_bytes_per_head_sequence": {
+    "unbounded": 180075776,
+    "budgeted": 40269824
+  },
+  "bf16_bytes_per_head_sequence": {
+    "unbounded": 90037888.0,
+    "budgeted": 20134912.0
+  },
+  "bf16_bytes_per_head_batch": {
+    "unbounded": 1440606208.0,
+    "budgeted": 322158592.0
+  },
+  "traffic_only_projected_unbounded_budgeted_ratio": 4.471729898794691,
+  "fp32_traffic_ratio": 4.471729898794691,
+  "full_step_projected_ratio": null,
+  "full_step_model": "(C + A*M_U/2)/(C + A*M_B/2); common nontraffic C and seconds per logical payload byte A are uncalibrated.",
+  "sensitivity": [
+    {
+      "C_over_budgeted_fp32_traffic_cost": 0,
+      "fp32_ratio": 4.471729898794691,
+      "bf16_ratio": 4.471729898794691
+    },
+    {
+      "C_over_budgeted_fp32_traffic_cost": 1,
+      "fp32_ratio": 2.7358649493973455,
+      "bf16_ratio": 2.1572432995982305
+    },
+    {
+      "C_over_budgeted_fp32_traffic_cost": 4,
+      "fp32_ratio": 1.6943459797589384,
+      "bf16_ratio": 1.3857477665327436
+    },
+    {
+      "C_over_budgeted_fp32_traffic_cost": 9,
+      "fp32_ratio": 1.347172989879469,
+      "bf16_ratio": 1.1827226262523522
+    }
+  ],
+  "limitations": [
+    "Conditional R6 one-pass logical fast-tier payload model, not measured DRAM traffic.",
+    "Both arms halve their modeled payload, so their traffic-only ratio does not halve.",
+    "FP32 accumulation, metadata, dense, backward, launch and optimizer costs need not halve.",
+    "Sensitivity examples are assumptions, not fitted full-step forecasts."
+  ]
+}

@@ -1,0 +1,79 @@
+{
+  "status": "measured",
+  "slots": 48,
+  "B": 16,
+  "T": 1024,
+  "layers": 22,
+  "width": 2048,
+  "target_parameters": 1300000000,
+  "source_sha256": "edb9c602db9059ad1997ac4331fbda7bda720774a0480171abe5d6cdb419c3be",
+  "scope": "Disposable random-initialized 1.3B byte model; existing integrated forward/backward/AdamW. Natural document windows, zero consultation (not an existing trained 1.3B checkpoint). R5 forward graph capture; existing PyTorch replay backward. No saved updates.",
+  "stress_fixture": true,
+  "fixture": "R5: first-token value repeated, pop=0, append=20, write=20 for first257 positions then -20, decay=1. Natural byte backbone inputs; controlled store routing, not a trained workload.",
+  "inputs": {
+    "shard_sha256": "ee5650e196a8c850933eab75c43ba39f2facf0a13e6d32bcff27928206500b6c",
+    "documents": [
+      {
+        "source_index": 0,
+        "sha256": "abd0a56569c3d574474ef6ce4583ffa136fd60a9e4addffe59a7de407ff2136b",
+        "split": "train",
+        "token_start": 0,
+        "tokens": 3181,
+        "truncated": false,
+        "byte_offset": 0,
+        "byte_length": 13424
+      },
+      {
+        "source_index": 1,
+        "sha256": "bd05fad63f0ae1746bd6cd36d26d8a092a13b146888188091ad518668d14697a",
+        "split": "train",
+        "token_start": 3181,
+        "tokens": 2290,
+        "truncated": false,
+        "byte_offset": 13424,
+        "byte_length": 4278
+      }
+    ],
+    "documents_index_prefix_matched": [
+      0,
+      1
+    ],
+    "local_index_sha256": "075f1bd416f272845942b584b9b46827a376cd0c395918e4bb5e958aee8223d2"
+  },
+  "actual_parameters": 1301052902,
+  "rows": [
+    {
+      "forward_ms": 4901.663281954825,
+      "backward_ms": 9839.529774617404,
+      "update_ms": 251.78575003519654,
+      "total_ms": 14992.978806607425
+    },
+    {
+      "forward_ms": 1525.0178221613169,
+      "backward_ms": 5602.795404847711,
+      "update_ms": 144.30200634524226,
+      "total_ms": 7272.1152333542705
+    },
+    {
+      "forward_ms": 1546.065631788224,
+      "backward_ms": 5531.6556030884385,
+      "update_ms": 144.4598170928657,
+      "total_ms": 7222.181051969528
+    },
+    {
+      "forward_ms": 1563.4802170097828,
+      "backward_ms": 6229.92149181664,
+      "update_ms": 147.8302008472383,
+      "total_ms": 7941.231909673661
+    },
+    {
+      "forward_ms": 1568.5139740817249,
+      "backward_ms": 5917.459414806217,
+      "update_ms": 145.62832796946168,
+      "total_ms": 7631.6017168574035
+    }
+  ],
+  "peak_occupancy": 48,
+  "median_ms": 7631.6017168574035,
+  "max_memory_bytes": 26166388224
+}

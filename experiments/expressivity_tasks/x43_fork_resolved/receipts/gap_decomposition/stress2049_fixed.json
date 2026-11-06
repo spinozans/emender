@@ -1,0 +1,49 @@
+{
+  "status": "failed",
+  "slots": 2049,
+  "B": 16,
+  "T": 1024,
+  "layers": 22,
+  "width": 2048,
+  "target_parameters": 1300000000,
+  "source_sha256": "0543003915864fbcb074d86b7ecee94cdf164c3460254f511b836c70baf3f1c0",
+  "scope": "Disposable random-initialized 1.3B byte model; existing integrated forward/backward/AdamW. Natural document windows, zero consultation (not an existing trained 1.3B checkpoint). R5 forward graph capture; existing PyTorch replay backward. No saved updates.",
+  "stress_fixture": true,
+  "fixture": "R5: first-token value repeated, pop=0, append=20, write=20 for first257 positions then -20, decay=1. Natural byte backbone inputs; controlled store routing, not a trained workload.",
+  "inputs": {
+    "shard_sha256": "ee5650e196a8c850933eab75c43ba39f2facf0a13e6d32bcff27928206500b6c",
+    "documents": [
+      {
+        "source_index": 0,
+        "sha256": "abd0a56569c3d574474ef6ce4583ffa136fd60a9e4addffe59a7de407ff2136b",
+        "split": "train",
+        "token_start": 0,
+        "tokens": 3181,
+        "truncated": false,
+        "byte_offset": 0,
+        "byte_length": 13424
+      },
+      {
+        "source_index": 1,
+        "sha256": "bd05fad63f0ae1746bd6cd36d26d8a092a13b146888188091ad518668d14697a",
+        "split": "train",
+        "token_start": 3181,
+        "tokens": 2290,
+        "truncated": false,
+        "byte_offset": 13424,
+        "byte_length": 4278
+      }
+    ],
+    "documents_index_prefix_matched": [
+      0,
+      1
+    ],
+    "local_index_sha256": "075f1bd416f272845942b584b9b46827a376cd0c395918e4bb5e958aee8223d2"
+  },
+  "actual_parameters": 1301052902,
+  "forward_graph_read_trace_byte_exact": true,
+  "stage": "update 0",
+  "error": "OutOfMemoryError('CUDA out of memory. Tried to allocate 112.00 MiB. GPU 0 has a total capacity of 47.38 GiB of which 28.69 MiB is free. Including non-PyTorch memory, this process has 47.35 GiB memory in use. Of the allocated memory 45.30 GiB is allocated by PyTorch, with 28.49 GiB allocated in private pools (e.g., CUDA Graphs), and 1.24 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)')",
+  "max_memory_bytes": 35584067584,
+  "peak_occupancy": 257
+}
