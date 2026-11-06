@@ -5,6 +5,8 @@ The fork-resolved LM uses the corpus's exact combinatorial structure (xsa/chi) a
 The theoretical bridge is still open: DERIVATION_PART1C.md defines finite-body per-position forks, not minimum suffixient cardinality chi. There are 636,727 fork positions but 425,221 xsa witnesses in the historical container. Do not substitute either for the other or assert an unproved bound. Formal two-sided inequalities, their constants, boundary convention and application to decision cost remain a registered derivation task; no theorem receipt is claimed here.
 
 Positioning and related work: [POSITIONING.md](POSITIONING.md) (sweep-level; full-claim verification pending).
+The C14 head verdict revises the opening architecture hypothesis: at the registered Pile-scale budget the transformer is the better array-reader. Emender’s retained claims are operator causality, unbounded-store data-efficiency and bounded-state theory, not superior consulted NLL. The complete first-pass four-family ladder is [RESULT_C14_FIRST_PASS.md](RESULT_C14_FIRST_PASS.md).
+
 Theory spine: [THEORY_INTERVAL_OPERATORS.md](THEORY_INTERVAL_OPERATORS.md) — the interval-operator algebra; LLMs as its approximations (recorded Nov 5 2026; candidate predictions unbound).
 
 ## Claim ladder
@@ -137,7 +139,7 @@ Scope: unchanged C11 training-prefix counts and device geometry, not future-cont
 
 The independent audit **failed** on two UINT64_MAX right-extension counts. Both affected feature rows are explicitly rejected; raw failures and a minimal upstream reproducer are preserved. The remaining receipt audit passes after quarantine, including 73 direct byte checks and 100 independent decoder checks; this does not certify query-engine correctness. No sxgc changes. AGC FFI has no SXI2 query API; the persistent-interface request is a handoff only. Host batch branch throughput is 326.22 successful features/s including process overhead: a repeated-batch 40M extrapolation is 34.06 hours before context search/transfer. Kernel-only throughput uses the default many-core Rayon pool despite `-j 1`; **no single-core budget is established**. [RESULT_C14_PHASE1.md](RESULT_C14_PHASE1.md), [C14_FEATURE_BRIDGE.md](C14_FEATURE_BRIDGE.md); bindings C14a. Training remains blocked on upstream query repair, a complete causal token geometry/cache, and an honest production budget.
 
-### C14 — measured: paired consultation, P3 stacking, and gain decomposition
+### C14 — measured: four-family first pass, consultation, and stacking
 
 **Transformer head-asymmetry arm completed 2026-11-06.** On the same frozen
 214,097,022 final-test targets, transformer dense/on/off NLL is
@@ -257,7 +259,7 @@ Losses are nats/byte. Strata describe positions 1–16 and 17–128 within indep
 
 The initial single-shard preflight failure remains historical evidence in RESULT_C14_DENSE.md. The take-4 inventory found Emender training complete, its evaluation partial at 52,289,140 targets, and transformer absent. The original Emender checkpoint had no earlier hash receipt; its take-4 inventory hash matches the final checkpoint. **Retained failure:** optional byte-exact parity against the old partial prediction file failed. The partial file had already been overwritten by the authorized full reevaluation, so numerical differences cannot be quantified; no historical byte parity is claimed. [Recovery failure receipt](receipts/c14_dense/emender_recovery_parity.json).
 
-These historical dense receipts are single-seed, fixed-time controls with unequal exposure. The later paired and stacking results above supply consultation P1/P2/P3, support/fork and device-off evidence; significance and transformer consultation remain untested. No consultation gain follows from dense-only results.
+These historical dense receipts are single-seed, fixed-time controls with unequal exposure. The later paired and stacking results above supply consultation P1/P2/P3, support/fork and device-off evidence; significance remains untested. Transformer consultation is measured in RESULT_C14_TRANSFORMER.md and the first-pass table. No consultation gain follows from dense-only results.
 
 Native consultation preflight (2026-11-03): xsa `88d4e0744a05359614d28db5f0ed160a677d8ef5` was built in an isolated clean clone and synchronized ff-only; ~/sxgc was not edited. Former-sentinel counts are 0/0; “the ” has 313,603,799 occurrences and 137 branches. An independent native fixture passes 261 patterns covering every query byte, exact branch counts, EOF and closure. This resolves the former universal-transport/native-query preflight blocker; it does not supply complete train/valid caches.
 
@@ -2553,8 +2555,8 @@ Paths are repository-relative. `emender` is this repository; `sxgc` is the exter
         {
           "repo": "emender",
           "path": "experiments/expressivity_tasks/x43_fork_resolved/THEORY_INTERVAL_OPERATORS.md",
-          "commit": "ebb0f165dec2df0b7d36c4b0dc5565fdf7576a77",
-          "sha256": "8b374152be2676b437f05c47504de48396480c57da32d349adeea5a8eb6b5b1c"
+          "commit": "fd43f34c15d06d96e8116dd094c22bc68c82d3cd",
+          "sha256": "dd8b40d144e59dadc17d814ee9c9666b1ebd1ea0f9de3908a0309dbc636e611e"
         },
         {
           "repo": "emender",
@@ -2957,6 +2959,210 @@ Paths are repository-relative. `emender` is this repository; `sxgc` is the exter
           "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer/validation_eval.json",
           "commit": "ebb0f165dec2df0b7d36c4b0dc5565fdf7576a77",
           "sha256": "f35f64f998ea5a55f45b86fddf85092dcae079594c401e7949fa64c6a89fb8de"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/c14_transformer_stacking_predict.py",
+          "commit": "fd43f34c15d06d96e8116dd094c22bc68c82d3cd",
+          "sha256": "61a819d6d5f6478091606711d28368b9d6cd954ac51e1938f84aeee825d0f529"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/c14_transformer_stacking_score.py",
+          "commit": "fd43f34c15d06d96e8116dd094c22bc68c82d3cd",
+          "sha256": "7977d34b0602801d613818fa9033a956a6e0491d088d3af076c7f0a0d5139fed"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/validate_c14_transformer_stacking.py",
+          "commit": "fd43f34c15d06d96e8116dd094c22bc68c82d3cd",
+          "sha256": "fcce2e93c4da22ebb09c1f3999849594cac293bb9443f7c6ab6c5832b5e8a3df"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/test_c14_transformer_stacking.py",
+          "commit": "fd43f34c15d06d96e8116dd094c22bc68c82d3cd",
+          "sha256": "b81a8cd74878f5cf3f0d8a6bdcb6bc199ee9201c6a720f87d1a7839b2cfced78"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/run_c14_transformer_stacking_leased.sh",
+          "commit": "fd43f34c15d06d96e8116dd094c22bc68c82d3cd",
+          "sha256": "6c101b32b46aedc5e46884e23b1d0c6bfffe646cae324beffc184e31b7369ac5"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/c14_first_pass_report.py",
+          "commit": "fd43f34c15d06d96e8116dd094c22bc68c82d3cd",
+          "sha256": "312df9a1a989332de2ab7108bbff12e79cb833df36417956ab91f50d35eaa8cd"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/RESULT_C14_FIRST_PASS.md",
+          "commit": "fd43f34c15d06d96e8116dd094c22bc68c82d3cd",
+          "sha256": "549b861792f466bf5e9ac1fb2f0b7d2b0216eebe2f36de5f706ef375e4c0a24a"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/C14_FIRST_PASS_LADDER.svg",
+          "commit": "fd43f34c15d06d96e8116dd094c22bc68c82d3cd",
+          "sha256": "3e694ed0d7f1b1de77f35750c9749cabb1e38cf5e9d6ef9135c8f458e9b2396e"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/POSITIONING.md",
+          "commit": "fd43f34c15d06d96e8116dd094c22bc68c82d3cd",
+          "sha256": "74c9a1dec3ea3587b0e1c0ecf70207b01c3399d88e36b7d7b797cb9808e69a24"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer_stacking/MANUAL_NOTES.md",
+          "commit": "fd43f34c15d06d96e8116dd094c22bc68c82d3cd",
+          "sha256": "73a24d7e239b25509b3f1b4fadf05d17e0a49fa4893422079199d94647f855df"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer_stacking/analysis_plan.json",
+          "commit": "fd43f34c15d06d96e8116dd094c22bc68c82d3cd",
+          "sha256": "cd3339712cb27a5f05345d6101dc6cbeb1f3a32b1069d7460fd206185f366f9f"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer_stacking/calibration_freeze.json",
+          "commit": "fd43f34c15d06d96e8116dd094c22bc68c82d3cd",
+          "sha256": "598750994f28a6eb1a026f8107905019830c655f45a335525404ba204b2c2eff"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer_stacking/continuation.py",
+          "commit": "fd43f34c15d06d96e8116dd094c22bc68c82d3cd",
+          "sha256": "a7907dd295a0af2df75d79cb4a3149bda67233ce2fbb6dad3745ce533e22fbfb"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer_stacking/continuation_terminal.json",
+          "commit": "fd43f34c15d06d96e8116dd094c22bc68c82d3cd",
+          "sha256": "d24219f6de94b955cf36d25bd2aca88e2d35eef45b9317b7083f55ec8fe9653c"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer_stacking/detachment.json",
+          "commit": "fd43f34c15d06d96e8116dd094c22bc68c82d3cd",
+          "sha256": "27f93f4ee1da1f731bba88733bafd30a2247a8b02e9c2a997863f9d1dc4d7b6f"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer_stacking/first_pass.json",
+          "commit": "fd43f34c15d06d96e8116dd094c22bc68c82d3cd",
+          "sha256": "dce0613abdfc36962859611cf145c05abd50fb0b6b989dcc0bbf41688171091a"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer_stacking/frozen_gates.json",
+          "commit": "fd43f34c15d06d96e8116dd094c22bc68c82d3cd",
+          "sha256": "5489edcce63fbe9d55158565b4bf3e71cc14e93a148457d5daf80a305427b788"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer_stacking/launcher_console.txt",
+          "commit": "fd43f34c15d06d96e8116dd094c22bc68c82d3cd",
+          "sha256": "89c4e4284ddb2c9242c2a90edddb92092f7544ef6a8876bfe3a914506ca6d7e8"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer_stacking/lease.txt",
+          "commit": "fd43f34c15d06d96e8116dd094c22bc68c82d3cd",
+          "sha256": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer_stacking/prediction_console.txt",
+          "commit": "fd43f34c15d06d96e8116dd094c22bc68c82d3cd",
+          "sha256": "8a7e4d0f48ac56e2a4d3857bbd605cb1052f7831921bad870a5c4cda02bbfea0"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer_stacking/prediction_identity.json",
+          "commit": "fd43f34c15d06d96e8116dd094c22bc68c82d3cd",
+          "sha256": "36366a747194dce817b7a383a701f1d6ca6868ee060ad78b4c15a309b924be98"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer_stacking/program_validation_before_repin.json",
+          "commit": "fd43f34c15d06d96e8116dd094c22bc68c82d3cd",
+          "sha256": "defefb52603d6efcfdba922ca122d79c890925dffe3fb9effb1f8f29e5368bb5"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer_stacking/protocol_inputs.json",
+          "commit": "fd43f34c15d06d96e8116dd094c22bc68c82d3cd",
+          "sha256": "eacbf8275d673d8a80a9e8c8cee42506bcd633078458318985ba553eacd810c4"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer_stacking/resume.json",
+          "commit": "fd43f34c15d06d96e8116dd094c22bc68c82d3cd",
+          "sha256": "8915141697eb3610ad03cbd3c9d89da5adb3a39ae86481be02e19a37a3279832"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer_stacking/scoring_console.txt",
+          "commit": "fd43f34c15d06d96e8116dd094c22bc68c82d3cd",
+          "sha256": "c531938d238d8a8cde4e4959363fd8dbcdce67fe66e8fb8d183df53a43633bb9"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer_stacking/scoring_validation.json",
+          "commit": "fd43f34c15d06d96e8116dd094c22bc68c82d3cd",
+          "sha256": "e71a1bdb85993658f9ae084c8cf3790d835c8877111fedd0012f26d54fdf7259"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer_stacking/table.json",
+          "commit": "fd43f34c15d06d96e8116dd094c22bc68c82d3cd",
+          "sha256": "7ba1a60a86eb51c996f6b0e95358e66ce5614b2d82b44f195f730d83d00a2e97"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer_stacking/terminal.json",
+          "commit": "fd43f34c15d06d96e8116dd094c22bc68c82d3cd",
+          "sha256": "d24219f6de94b955cf36d25bd2aca88e2d35eef45b9317b7083f55ec8fe9653c"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer_stacking/tests.txt",
+          "commit": "fd43f34c15d06d96e8116dd094c22bc68c82d3cd",
+          "sha256": "c8d2bfb0fbc73aa5397ba9ee8632faf073145d21ac087396775c25a59c47a90b"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer_stacking/tests_initial_collection_failure.txt",
+          "commit": "fd43f34c15d06d96e8116dd094c22bc68c82d3cd",
+          "sha256": "dd69b42a94713f0b6609a98c48715a375183c3cab1d28372da39cce37a3c4a51"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer_stacking/validation.json",
+          "commit": "fd43f34c15d06d96e8116dd094c22bc68c82d3cd",
+          "sha256": "0d324f24d6e034ce3e0743f58d5d8550402927ec0bbbdcc4265bbeb1037cfb5d"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer_stacking/validation_console.txt",
+          "commit": "fd43f34c15d06d96e8116dd094c22bc68c82d3cd",
+          "sha256": "667487471813cb5416f1a1f67966660ffe4cc3f1ee1d4f30f41191561b918e5a"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer_stacking/verdicts.json",
+          "commit": "fd43f34c15d06d96e8116dd094c22bc68c82d3cd",
+          "sha256": "80fc45ba7882a43cc54d0f34cd8d0796b71e02f97deb74787efc22a121beb808"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer_stacking/evidence_manifest.json",
+          "commit": "fd43f34c15d06d96e8116dd094c22bc68c82d3cd",
+          "sha256": "f3b8b3ec0eed16f2786786b5649257b82217544e69ce2e5bf1f0e658f6c0a213"
         }
       ]
     }
@@ -3291,3 +3497,44 @@ support/zero-target/fork strata and equal denominators are in the
 570,344,976 targets versus the frozen transformer's 972,375,733 at the same
 2700-active-second stopping rule; one seed and unequal exposure do not isolate
 architecture causally. This supersedes transformer-quality-pending statements.
+
+
+## C14 transformer stacking and the complete first-pass ladder (2026-11-06)
+
+Soft P3 **PASS**: frozen consulted transformer + calibration reaches
+**1.263566972**, versus consulted alone **1.266063829** and
+frozen dense transformer + calibration **1.299507807**. Changes are
+**−0.002496858** and **−0.035940836** nats/byte respectively. The small
+post-consultation fusion residual replicates on the better reader (about
+0.20% relative improvement); this is consistent with consultation capturing
+most of this gate recipe's benefit, not a causal proof of absorption into
+weights. The residual is 2.380% of the dense transformer's fusion gain.
+
+Reset positions supply **58.452%** of the net gain, versus Emender's
+93.981%; interior NLL improves by **−0.001187310**. Supported-target NLL
+improves **0.717143862 → 0.688473811**; zero-target worsens by
+**+0.072833786**, nonfork by **+0.002130560**. All signs remain explicit.
+Literal C13 forced-walk stacking still **FAILS** on **30,751,940** forced-zero
+final targets, giving infinite total loss for both dense and consulted heads.
+No smoothing, abstention based on the target, final-test fitting or frozen-arm
+changes. The two gates use only the registered 101,006,646 calibration fork
+targets and freeze before scoring the 214,097,022 final-test targets.
+
+[The complete four-family first-pass table](RESULT_C14_FIRST_PASS.md) and
+[the approximation-distance ladder](C14_FIRST_PASS_LADDER.svg) retain every
+primary dense/consulted/stacked rung and the conditional array-alone oracle
+(**0.663434002** supported; total ∞). After soft stacking, transformer supported
+distance is **+0.025039809**; Emender is **+0.104671625**. Before stacking the
+distances were **+0.053709860 / +0.148205723**. These are conditional empirical
+distances, not total-LM bounds.
+
+The C13 tier-1 head-asymmetry claim inverts at Pile scale: the transformer is
+the better array-reader. POSITIONING.md and THEORY_INTERVAL_OPERATORS.md Part
+II now say so directly. Emender retains the separately scoped operator
+causality, unbounded-store data-efficiency and bounded-state theory claims.
+One seed, fixed time, unequal training exposure and no uncertainty estimate
+remain explicit limits. Seven numerical/document-boundary tests pass;
+full-position independent CPU replay checks gates, frozen identities,
+denominators, partitions and verdict signs. No resilient DiLoCo requirements
+apply. The exact-walk, initial test-collection and intermediate ledger-pinning
+failures remain retained evidence. Scientific receipts are bound under C14.
