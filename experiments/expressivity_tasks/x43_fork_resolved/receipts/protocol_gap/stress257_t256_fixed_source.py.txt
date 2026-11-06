@@ -1,0 +1,291 @@
+"""Read-only redundancy probe; disposable timings. Never a training launcher."""
+import argparse
+import hashlib
+import itertools
+import json
+import os
+from pathlib import Path
+import statistics
+import time
+import numpy as np
+import torch
+
+ROOT = Path(__file__).resolve().parent
+DATA = Path('/home/erikg/c14_dense_bytes')
+
+
+def sha(p):
+    return hashlib.sha256(Path(p).read_bytes()).hexdigest()
+
+
+def write(p, obj):
+    p.write_text(json.dumps(obj, indent=2, allow_nan=False)+'\n')
+
+
+def batch(context=128):
+    """Use local materialized bytes, never the original NVMe source."""
+    from .c14_documents import DocumentWindows
+    from .c14_b_train_decode import decode
+    from .c14_fast_features import load_decoder
+    cache = Path('/home/erikg/c14_consultation_features/registered_emender')
+    row = next(json.loads(s) for s in (cache/'journal.jsonl').read_text().splitlines()
+               if json.loads(s)['event'] == 'shard_complete')
+    payload = (cache/row['file']).read_bytes()
+    assert hashlib.sha256(payload).hexdigest() == row['sha256']
+    identities, lengths, values, contexts, _ = decode(payload, row['windows'], load_decoder())
+    docs = []
+    windows = []
+    with (DATA/'bytes.bin').open('rb') as f, (DATA/'offsets.jsonl').open() as index:
+        for line in index:
+            d = json.loads(line)
+            if d['split'] != 'train':
+                continue
+            f.seek(d['byte_offset']); raw = f.read(d['byte_length'])
+            ws = list(DocumentWindows(context).windows(raw, d, 'train'))
+            docs.append(d)
+            windows.extend(ws)
+            if len(windows) >= 16:
+                break
+    windows = windows[:16]
+    authority=ROOT.parent/'x42_pile_scale/data/pile24/documents.jsonl'
+    wanted={d['source_index']:d for d in docs}
+    matched=[]
+    with authority.open() as index:
+        for line in index:
+            d=json.loads(line)
+            if d['source_index'] in wanted:
+                assert all(wanted[d['source_index']][k] == v for k,v in d.items())
+                matched.append(d['source_index'])
+            if len(matched)==len(wanted):break
+    assert len(matched)==len(wanted)
+    x = torch.zeros(16, context, dtype=torch.long)
+    y = torch.zeros_like(x)
+    for j,w in enumerate(windows):
+        n = len(w.inputs)
+        if context == 128:
+            assert (w.document, w.start, n) == (*identities[j], int(lengths[j]))
+        x[j,:n] = torch.tensor(list(w.inputs)); y[j,:n] = torch.tensor(list(w.targets))
+    f = torch.as_tensor(values[:16]).clone() if context == 128 else torch.zeros(16,context,260)
+    if context == 128:
+        f *= (torch.rand(16,128,generator=torch.Generator().manual_seed(3401)) >= .5)[...,None]
+    else:
+        contexts = np.zeros((16,context),dtype=np.int64)
+        lengths = np.array([len(w.inputs) for w in windows])
+    return x, y, f, torch.as_tensor(contexts[:16]), windows, lengths[:16].tolist(), dict(
+        shard_sha256=row['sha256'], documents=docs, documents_index_prefix_matched=matched,
+        local_index_sha256=sha(DATA/'offsets.jsonl'))
+
+
+def full_step(output, slots, stress=False, context=1024):
+    """Whole existing model step, disposable scale fixture, no saved weights."""
+    from types import SimpleNamespace
+    from .c14_b_control_model import StoreIntegrated
+    from . import c14_b_control_native as native
+    from .c14_phase2_staged import install_rowkeys
+    from .c14_phase5r5_tiled_pages import kernel
+    from ..x42_pile_scale.velocity_candidate import Candidate, Policy
+    result = dict(status='started',slots=slots,B=16,T=context,layers=22,width=2048,
+                  target_parameters=1300000000,source_sha256=sha(__file__),
+                  scope='Disposable random-initialized 1.3B byte model; existing integrated forward/backward/AdamW. Natural document windows (not an existing trained 1.3B checkpoint); consultation mode is recorded separately. R5 forward graph capture; existing PyTorch replay backward. No saved updates.')
+    result['stress_fixture']=stress
+    result['reachable_fixture_peak']=min(slots,257,context) if stress else None
+    result['launch_BS']=2**(min(slots,2*context)-1).bit_length()
+    result['consultation']='zero for matched R5 fixture' if stress else ('cached registered features with fixed keep mask' if context==128 else 'zero')
+    result['peak_note']='Empty-state R5 fixture adds at most one stream slot per position; peak 257 is unreachable at T128/T256. No state carried across windows.'
+    if stress:
+        result['fixture']='R5: first-token value repeated, pop=0, append=20, write=20 for first257 positions then -20, decay=1. Natural byte backbone inputs; controlled store routing, not a trained workload.'
+    write(output,result)
+    stage='inputs'
+    try:
+        x,y,f,c,windows,lengths,receipt=batch(context)
+        if stress:
+            f.zero_();c.zero_()
+        x,y,f,c=[z.cuda() for z in (x,y,f,c)]
+        mask=torch.arange(context,device='cuda')[None,:] < torch.tensor(lengths,device='cuda')[:,None]
+        result['inputs']=receipt
+        stage='model allocation'
+        model=StoreIntegrated('unbudgeted')
+        policy=Policy(N=2,budget_min=32,budget_ratio=2.,h_min=128.)
+        model.head.base=Candidate(policy,vocab=256,d=2048,layers=22,target=1300000000)
+        for block in model.head.base.blocks:
+            overrides=dict(slots=slots,budget=slots,array_append_only=False)
+            if stress:overrides['decay_rate']=1.
+            block.cell.configs=tuple(SimpleNamespace(**(vars(cfg)|overrides)) for cfg in block.cell.configs)
+        model=model.cuda().train()
+        result['actual_parameters']=sum(p.numel() for p in model.parameters())
+        optimizer=torch.optim.AdamW(model.parameters(),lr=3e-4,weight_decay=.01)
+        install_rowkeys();native.kernel=kernel
+        if stress:
+            original_apply=native.NativeReplay.apply
+            def modify(inputs):
+                k,q,v,av,pop,append,logits,coef,mc,ec=inputs
+                schedule=torch.where(torch.arange(v.shape[1],device=v.device)<257,20.,-20.)
+                return (k,q,v[:,:1].expand_as(v).contiguous(),av*0,pop*0,append*0+20,
+                        logits*0+schedule,coef*0,mc*0,ec*0)
+            def fixture(cfg,policy,metadata,*inputs):
+                return original_apply(cfg,policy,metadata,*modify(inputs))
+            native.NativeReplay.apply=staticmethod(fixture)
+        original=native.native_forward;cache={}
+        def captured(inputs,cfg,policy,metadata):
+            # Checkpoint's initial no-grad forward bypasses NativeReplay.apply.
+            # Apply the same fixture there and on recomputation, idempotently.
+            if stress:inputs=modify(inputs)
+            key=(repr(cfg),repr(policy))
+            # Encode each window once using existing native machinery.
+            # All measured calls use these fixed windows/metadata.
+            if key not in cache:
+                static=tuple(z.detach().clone() for z in inputs)
+                stream=torch.cuda.Stream();stream.wait_stream(torch.cuda.current_stream())
+                with torch.cuda.stream(stream):
+                    warm_out,warm_state=original(static,cfg,policy,metadata)
+                    expected=(warm_out.clone(),warm_state[1].clone())
+                torch.cuda.current_stream().wait_stream(stream)
+                # The reach-bounded wrapper's padded-tail correction makes a
+                # host valid-length tensor. Prestage that immutable vector;
+                # all owner encodings were already populated by warmup.
+                from .c14_b_control_model import StoreMetadata
+                fields=list(metadata);fields[3]=torch.as_tensor(metadata[3],device='cuda')
+                capture_metadata=StoreMetadata(fields)
+                capture_metadata.encodings=metadata.encodings
+                graph=torch.cuda.CUDAGraph()
+                with torch.cuda.graph(graph,stream=stream):
+                    out,state=original(static,cfg,policy,capture_metadata)
+                graph.replay();torch.cuda.synchronize()
+                assert all(torch.equal(a.view(torch.uint8),b.view(torch.uint8)) for a,b in zip((out,state[1]),expected)), 'forward graph changed read/trace bits'
+                result['forward_graph_read_trace_byte_exact']=True
+                cache[key]=(static,graph,out,state)
+            static,graph,out,state=cache[key]
+            for dst,src in zip(static,inputs):dst.copy_(src)
+            graph.replay()
+            return out.clone(),(state[0],state[1].clone())
+        native.native_forward=captured
+        # Restore from host memory outside timing; avoid charging the device
+        # for a second copy of all 1.3B parameters merely for this experiment.
+        saved={n:z.detach().cpu().clone() for n,z in model.state_dict().items()}
+        rows=[]
+        for repeat in range(5):
+            model.load_state_dict(saved)
+            optimizer.zero_grad(set_to_none=True)
+            torch.cuda.synchronize();start=time.perf_counter();stage=f'forward {repeat}'
+            with torch.autocast('cuda',dtype=torch.bfloat16):
+                lp,_=model(x,f,c,windows=[(w.document,w.start) for w in windows],valid_lengths=lengths)
+                loss=-lp.gather(-1,y[...,None])[...,0][mask].mean()
+            torch.cuda.synchronize();middle=time.perf_counter();stage=f'backward {repeat}'
+            loss.backward()
+            torch.cuda.synchronize();end=time.perf_counter();stage=f'update {repeat}'
+            torch.nn.utils.clip_grad_norm_(model.parameters(),1.,error_if_nonfinite=True)
+            optimizer.step();torch.cuda.synchronize();done=time.perf_counter()
+            assert torch.isfinite(loss)
+            row=dict(forward_ms=(middle-start)*1000,backward_ms=(end-middle)*1000,update_ms=(done-end)*1000,total_ms=(done-start)*1000)
+            rows.append(row);result['rows']=rows
+            result['peak_occupancy']=max(r['peak_occupancy'] for layer in model.telemetry for r in layer)
+            if stress:assert result['peak_occupancy']==min(slots,257,context), 'stress fixture failed to reach required peak'
+            write(output,result);print(json.dumps(row),flush=True)
+        result.update(status='measured',median_ms=statistics.median(r['total_ms'] for r in rows[2:]),max_memory_bytes=torch.cuda.max_memory_allocated(),max_reserved_bytes=torch.cuda.max_memory_reserved(),device_total_bytes=torch.cuda.get_device_properties(0).total_memory)
+    except Exception as e:
+        result.update(status='failed',stage=stage,error=repr(e),max_memory_bytes=torch.cuda.max_memory_allocated(),max_reserved_bytes=torch.cuda.max_memory_reserved(),device_total_bytes=torch.cuda.get_device_properties(0).total_memory)
+        if 'model' in locals() and model.telemetry:
+            result['peak_occupancy']=max(r['peak_occupancy'] for layer in model.telemetry for r in layer)
+        write(output,result)
+        raise
+    write(output,result)
+
+
+def distribution(xs):
+    return dict(n=len(xs), mean=float(np.mean(xs)), quantiles=dict(zip(
+        ('min','p10','p50','p90','max'), map(float, np.quantile(xs,[0,.1,.5,.9,1]))))) if xs else dict(n=0)
+
+
+def sharing_counts(key_sets):
+    """Separate within-head repetition from cross-head sharing."""
+    sets=[set(ks) for ks in key_sets]
+    return sum(map(len,key_sets)),sum(map(len,sets)),len(set().union(*sets))
+
+
+def redundancy(output):
+    from .c14_b_model import StoreIntegrated
+    from . import c14_b_native as native
+    from .c14_b_store import SharedStore
+    x,y,f,c,windows,lengths,receipt = batch()
+    checkpoint = DATA/'frozen_c14_b_v2_9c87a6a306b70860.pt'
+    saved = torch.load(checkpoint, map_location='cpu', weights_only=False)
+    model = StoreIntegrated().cuda().eval(); model.load_state_dict(saved['model'])
+    samples = []
+    original = native.native_forward
+    def observe(inputs,cfg,policy,metadata):
+        samples.append((tuple(z.detach().cpu() for z in inputs),cfg,policy,metadata))
+        return original(inputs,cfg,policy,metadata)
+    native.native_forward = observe
+    try:
+        with torch.no_grad(), torch.autocast('cuda',dtype=torch.bfloat16):
+            model(x.cuda(),f.cuda(),c.cuda(),windows=[(w.document,w.start) for w in windows],valid_lengths=lengths)
+    finally:
+        native.native_forward = original
+    assert len(samples) == 4
+    stores = []; deltas=[]
+    read = SharedStore.read
+    for h,(inputs,cfg,policy,metadata) in enumerate(samples):
+        snapshots = []
+        def snapshot(self,query,zero):
+            live = self.live()
+            keys = torch.stack([self.slots[i].key for i in live]) if live else torch.empty(0,64)
+            weights = ((keys*query).sum(-1)*(2/query.numel()**.5)).softmax(0)
+            snapshots.append((keys.numpy().copy(), weights.numpy().copy()))
+            return read(self,query,zero)
+        SharedStore.read = snapshot
+        try:
+            with torch.no_grad():
+                eager,_ = native.eager(*inputs,cfg,policy,metadata)
+        finally:
+            SharedStore.read = read
+        # CPU scalar arithmetic is diagnostic; validate output numerically.
+        with torch.no_grad():
+            gpu,_ = original(tuple(z.cuda() for z in inputs),cfg,policy,metadata)
+        delta = float((gpu.cpu()-eager).abs().max())
+        deltas.append(delta)
+        print(json.dumps(dict(head=h,snapshots=len(snapshots),cpu_native_max_abs=delta)),flush=True)
+        stores.append(snapshots)
+    pairs = {}
+    for a,b in itertools.combinations(range(4),2):
+        metrics = {k:[] for k in ('exact_jaccard','top8_exact_jaccard','nearest_cosine','mass_exact_a','mass_exact_b','mass_cos95_a','mass_cos95_b')}
+        for (ka,wa),(kb,wb) in zip(stores[a],stores[b]):
+            if not len(ka) or not len(kb):
+                continue
+            ha = [v.tobytes() for v in ka]; hb = [v.tobytes() for v in kb]
+            sa,sb = set(ha),set(hb)
+            ta = {ha[i] for i in np.argsort(wa)[-8:]}; tb = {hb[i] for i in np.argsort(wb)[-8:]}
+            sim = ka@kb.T/np.maximum(np.linalg.norm(ka,axis=1)[:,None]*np.linalg.norm(kb,axis=1)[None,:],1e-30)
+            metrics['exact_jaccard'].append(len(sa&sb)/len(sa|sb))
+            metrics['top8_exact_jaccard'].append(len(ta&tb)/len(ta|tb))
+            metrics['nearest_cosine'].extend(sim.max(1).tolist())
+            metrics['mass_exact_a'].append(float(wa[[h in sb for h in ha]].sum()))
+            metrics['mass_exact_b'].append(float(wb[[h in sa for h in hb]].sum()))
+            metrics['mass_cos95_a'].append(float(wa[sim.max(1)>=.95].sum()))
+            metrics['mass_cos95_b'].append(float(wb[sim.max(0)>=.95].sum()))
+        pairs[f'{a//2}/{a%2}--{b//2}/{b%2}'] = dict(kind='cross_head' if a//2==b//2 else 'cross_layer', **{k:distribution(v) for k,v in metrics.items()})
+    factors=[]; total=unique=within_unique=0
+    for position in zip(*stores):
+        keys = [v.tobytes() for kk,_ in position for v in kk]
+        if keys:
+            count,local_unique,union=sharing_counts([[v.tobytes() for v in kk] for kk,_ in position])
+            total += count; unique += union; within_unique += local_unique
+            factors.append(local_unique/union)
+    write(output,dict(status='measured',scope='Four trained heads (two per layer), first 16 committed 128-byte windows. GPU trained projections, CPU scalar store snapshots at every pre-read position. No checkpoint writes or optimizer.',
+        checkpoint=str(checkpoint),checkpoint_sha256=sha(checkpoint),source_sha256=sha(__file__),inputs=receipt,
+        pairs=pairs,cpu_native_max_abs=deltas,exact_cross_head_layer_sharing_factor=within_unique/unique,
+        within_head_and_cross_head_dedup_factor=total/unique,sharing_factor_distribution=distribution(factors),
+        caveats=['Distinct head/layer coordinate systems: raw cosine is not invariant to a learned alignment.',
+                 'Read weights are softmax addressing weights before strength, not value contribution.',
+                 'Exact key deduplication measures storage only; different queries still need separate dot products. It is an optimistic addressing reduction upper bound, not a speedup.',
+                 'Small training-distribution sample; not a long-context or quality study.']))
+
+
+if __name__ == '__main__':
+    p=argparse.ArgumentParser();p.add_argument('mode',choices=['redundancy','full48','full257','stress48','stress257','stress2049']);p.add_argument('--output',type=Path,required=True)
+    p.add_argument('--context',type=int,default=1024,choices=[128,256,1024])
+    args=p.parse_args();assert not args.output.exists()
+    assert os.environ.get('GPU_LEASE_HELD') in ('3','4','5','6')
+    torch.set_num_threads(1);torch.manual_seed(3401)
+    if args.mode=='redundancy':redundancy(args.output)
+    elif args.mode.startswith('full'):full_step(args.output,int(args.mode[4:]),context=args.context)
+    else:full_step(args.output,int(args.mode[6:]),stress=True,context=args.context)

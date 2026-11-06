@@ -76,7 +76,7 @@ def batch(context=128):
         local_index_sha256=sha(DATA/'offsets.jsonl'))
 
 
-def full_step(output, slots, stress=False):
+def full_step(output, slots, stress=False, context=1024):
     """Whole existing model step, disposable scale fixture, no saved weights."""
     from types import SimpleNamespace
     from .c14_b_control_model import StoreIntegrated
@@ -84,18 +84,24 @@ def full_step(output, slots, stress=False):
     from .c14_phase2_staged import install_rowkeys
     from .c14_phase5r5_tiled_pages import kernel
     from ..x42_pile_scale.velocity_candidate import Candidate, Policy
-    result = dict(status='started',slots=slots,B=16,T=1024,layers=22,width=2048,
+    result = dict(status='started',slots=slots,B=16,T=context,layers=22,width=2048,
                   target_parameters=1300000000,source_sha256=sha(__file__),
-                  scope='Disposable random-initialized 1.3B byte model; existing integrated forward/backward/AdamW. Natural document windows, zero consultation (not an existing trained 1.3B checkpoint). R5 forward graph capture; existing PyTorch replay backward. No saved updates.')
+                  scope='Disposable random-initialized 1.3B byte model; existing integrated forward/backward/AdamW. Natural document windows (not an existing trained 1.3B checkpoint); consultation mode is recorded separately. R5 forward graph capture; existing PyTorch replay backward. No saved updates.')
     result['stress_fixture']=stress
+    result['reachable_fixture_peak']=min(slots,257,context) if stress else None
+    result['launch_BS']=2**(min(slots,2*context)-1).bit_length()
+    result['consultation']='zero for matched R5 fixture' if stress else ('cached registered features with fixed keep mask' if context==128 else 'zero')
+    result['peak_note']='Empty-state R5 fixture adds at most one stream slot per position; peak 257 is unreachable at T128/T256. No state carried across windows.'
     if stress:
         result['fixture']='R5: first-token value repeated, pop=0, append=20, write=20 for first257 positions then -20, decay=1. Natural byte backbone inputs; controlled store routing, not a trained workload.'
     write(output,result)
     stage='inputs'
     try:
-        x,y,f,c,windows,lengths,receipt=batch(1024)
+        x,y,f,c,windows,lengths,receipt=batch(context)
+        if stress:
+            f.zero_();c.zero_()
         x,y,f,c=[z.cuda() for z in (x,y,f,c)]
-        mask=torch.arange(1024,device='cuda')[None,:] < torch.tensor(lengths,device='cuda')[:,None]
+        mask=torch.arange(context,device='cuda')[None,:] < torch.tensor(lengths,device='cuda')[:,None]
         result['inputs']=receipt
         stage='model allocation'
         model=StoreIntegrated('unbudgeted')
@@ -173,11 +179,11 @@ def full_step(output, slots, stress=False):
             row=dict(forward_ms=(middle-start)*1000,backward_ms=(end-middle)*1000,update_ms=(done-end)*1000,total_ms=(done-start)*1000)
             rows.append(row);result['rows']=rows
             result['peak_occupancy']=max(r['peak_occupancy'] for layer in model.telemetry for r in layer)
-            if stress:assert result['peak_occupancy']==min(slots,257), 'stress fixture failed to reach required peak'
+            if stress:assert result['peak_occupancy']==min(slots,257,context), 'stress fixture failed to reach required peak'
             write(output,result);print(json.dumps(row),flush=True)
-        result.update(status='measured',median_ms=statistics.median(r['total_ms'] for r in rows[2:]),max_memory_bytes=torch.cuda.max_memory_allocated())
+        result.update(status='measured',median_ms=statistics.median(r['total_ms'] for r in rows[2:]),max_memory_bytes=torch.cuda.max_memory_allocated(),max_reserved_bytes=torch.cuda.max_memory_reserved(),device_total_bytes=torch.cuda.get_device_properties(0).total_memory)
     except Exception as e:
-        result.update(status='failed',stage=stage,error=repr(e),max_memory_bytes=torch.cuda.max_memory_allocated())
+        result.update(status='failed',stage=stage,error=repr(e),max_memory_bytes=torch.cuda.max_memory_allocated(),max_reserved_bytes=torch.cuda.max_memory_reserved(),device_total_bytes=torch.cuda.get_device_properties(0).total_memory)
         if 'model' in locals() and model.telemetry:
             result['peak_occupancy']=max(r['peak_occupancy'] for layer in model.telemetry for r in layer)
         write(output,result)
@@ -275,10 +281,11 @@ def redundancy(output):
 
 
 if __name__ == '__main__':
-    p=argparse.ArgumentParser();p.add_argument('mode',choices=['redundancy','full48','full257','stress48','stress2049']);p.add_argument('--output',type=Path,required=True)
+    p=argparse.ArgumentParser();p.add_argument('mode',choices=['redundancy','full48','full257','stress48','stress257','stress2049']);p.add_argument('--output',type=Path,required=True)
+    p.add_argument('--context',type=int,default=1024,choices=[128,256,1024])
     args=p.parse_args();assert not args.output.exists()
     assert os.environ.get('GPU_LEASE_HELD') in ('3','4','5','6')
     torch.set_num_threads(1);torch.manual_seed(3401)
     if args.mode=='redundancy':redundancy(args.output)
-    elif args.mode.startswith('full'):full_step(args.output,int(args.mode[4:]))
-    else:full_step(args.output,int(args.mode[6:]),stress=True)
+    elif args.mode.startswith('full'):full_step(args.output,int(args.mode[4:]),context=args.context)
+    else:full_step(args.output,int(args.mode[6:]),stress=True,context=args.context)

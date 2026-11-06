@@ -1,0 +1,52 @@
+{
+  "status": "failed",
+  "slots": 2049,
+  "B": 16,
+  "T": 128,
+  "layers": 22,
+  "width": 2048,
+  "target_parameters": 1300000000,
+  "source_sha256": "d0305facca8d114a49789052b3a1e68fcaaf184f73ded6741d62efb453e35c89",
+  "scope": "Disposable random-initialized 1.3B byte model; existing integrated forward/backward/AdamW. Natural document windows, zero consultation (not an existing trained 1.3B checkpoint). R5 forward graph capture; existing PyTorch replay backward. No saved updates.",
+  "stress_fixture": true,
+  "reachable_fixture_peak": 128,
+  "launch_BS": 256,
+  "consultation": "cached registered features with fixed keep mask",
+  "peak_note": "Empty-state R5 fixture adds at most one stream slot per position; peak 257 is unreachable at T128/T256. No state carried across windows.",
+  "fixture": "R5: first-token value repeated, pop=0, append=20, write=20 for first257 positions then -20, decay=1. Natural byte backbone inputs; controlled store routing, not a trained workload.",
+  "inputs": {
+    "shard_sha256": "ee5650e196a8c850933eab75c43ba39f2facf0a13e6d32bcff27928206500b6c",
+    "documents": [
+      {
+        "source_index": 0,
+        "sha256": "abd0a56569c3d574474ef6ce4583ffa136fd60a9e4addffe59a7de407ff2136b",
+        "split": "train",
+        "token_start": 0,
+        "tokens": 3181,
+        "truncated": false,
+        "byte_offset": 0,
+        "byte_length": 13424
+      }
+    ],
+    "documents_index_prefix_matched": [
+      0
+    ],
+    "local_index_sha256": "075f1bd416f272845942b584b9b46827a376cd0c395918e4bb5e958aee8223d2"
+  },
+  "actual_parameters": 1301052902,
+  "forward_graph_read_trace_byte_exact": true,
+  "rows": [
+    {
+      "forward_ms": 7761.915293056518,
+      "backward_ms": 41105.74775189161,
+      "update_ms": 259.57042211666703,
+      "total_ms": 49127.2334670648
+    }
+  ],
+  "peak_occupancy": 129,
+  "stage": "update 0",
+  "error": "AssertionError('stress fixture failed to reach required peak')",
+  "max_memory_bytes": 26067223040,
+  "max_reserved_bytes": 30828134400,
+  "device_total_bytes": 50876841984
+}

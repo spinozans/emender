@@ -1,0 +1,21 @@
+{
+  "excluded": [
+    "stress48_t128",
+    "stress2049_t128",
+    "stress48_t256"
+  ],
+  "reason": "T128 cached consultation metadata allocated an extra array slot; unbounded update 0 completed at peak 129 then occupancy assertion failed. Both preliminary arms excluded from matched pair.",
+  "correction": "Zero feature and consultation-context tensors before metadata construction for all controlled shapes; _fixed T128 pair.",
+  "scheduler_admission_failure": {
+    "command": "bash experiments/expressivity_tasks/x43_fork_resolved/run_c14_protocol_gap_leased.sh stress48 256",
+    "exit_code": 1,
+    "message": "could not acquire 1 GPUs right now (--no-wait); GPU_LEASE_HELD unbound variable",
+    "resolution": "No GPU work was started; read-only lease/GPU check showed card free afterward; serial retry acquired card4."
+  },
+  "wrapper_failure": {
+    "exit_code": 2,
+    "error": "unexpected EOF while looking for matching quote",
+    "cause": "Wrapper was edited to improve failed lease acquisition while its shell was still executing the measurement command; changed file offsets affected subsequent parsing.",
+    "outcome": "Python wrote a complete measured JSON, but shell failed before terminal receipt. Excluded; rerun with unchanged stable wrapper as stress48_t256_fixed."
+  }
+}

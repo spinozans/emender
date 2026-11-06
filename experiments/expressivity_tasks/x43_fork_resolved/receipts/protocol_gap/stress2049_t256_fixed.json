@@ -1,0 +1,75 @@
+{
+  "status": "measured",
+  "slots": 2049,
+  "B": 16,
+  "T": 256,
+  "layers": 22,
+  "width": 2048,
+  "target_parameters": 1300000000,
+  "source_sha256": "b04d540f32ba38d17141461e8fd9652b454bfca17cb6fe46f5826e0338026051",
+  "scope": "Disposable random-initialized 1.3B byte model; existing integrated forward/backward/AdamW. Natural document windows (not an existing trained 1.3B checkpoint); consultation mode is recorded separately. R5 forward graph capture; existing PyTorch replay backward. No saved updates.",
+  "stress_fixture": true,
+  "reachable_fixture_peak": 256,
+  "launch_BS": 512,
+  "consultation": "zero for matched R5 fixture",
+  "peak_note": "Empty-state R5 fixture adds at most one stream slot per position; peak 257 is unreachable at T128/T256. No state carried across windows.",
+  "fixture": "R5: first-token value repeated, pop=0, append=20, write=20 for first257 positions then -20, decay=1. Natural byte backbone inputs; controlled store routing, not a trained workload.",
+  "inputs": {
+    "shard_sha256": "ee5650e196a8c850933eab75c43ba39f2facf0a13e6d32bcff27928206500b6c",
+    "documents": [
+      {
+        "source_index": 0,
+        "sha256": "abd0a56569c3d574474ef6ce4583ffa136fd60a9e4addffe59a7de407ff2136b",
+        "split": "train",
+        "token_start": 0,
+        "tokens": 3181,
+        "truncated": false,
+        "byte_offset": 0,
+        "byte_length": 13424
+      }
+    ],
+    "documents_index_prefix_matched": [
+      0
+    ],
+    "local_index_sha256": "075f1bd416f272845942b584b9b46827a376cd0c395918e4bb5e958aee8223d2"
+  },
+  "actual_parameters": 1301052902,
+  "forward_graph_read_trace_byte_exact": true,
+  "rows": [
+    {
+      "forward_ms": 9007.360064890236,
+      "backward_ms": 45278.43157108873,
+      "update_ms": 273.3465009368956,
+      "total_ms": 54559.13813691586
+    },
+    {
+      "forward_ms": 619.2352157086134,
+      "backward_ms": 2751.5423260629177,
+      "update_ms": 143.9632261171937,
+      "total_ms": 3514.740767888725
+    },
+    {
+      "forward_ms": 594.4809801876545,
+      "backward_ms": 2789.3008198589087,
+      "update_ms": 145.0643981806934,
+      "total_ms": 3528.8461982272565
+    },
+    {
+      "forward_ms": 1107.9227849841118,
+      "backward_ms": 2825.9393330663443,
+      "update_ms": 146.61434898152947,
+      "total_ms": 4080.4764670319855
+    },
+    {
+      "forward_ms": 659.2824929393828,
+      "backward_ms": 2836.640807799995,
+      "update_ms": 146.87207015231252,
+      "total_ms": 3642.7953708916903
+    }
+  ],
+  "peak_occupancy": 256,
+  "median_ms": 3642.7953708916903,
+  "max_memory_bytes": 26085472768,
+  "max_reserved_bytes": 34630270976,
+  "device_total_bytes": 50876841984
+}
