@@ -1,0 +1,80 @@
+{"reference_samples_ms": [1.7373431473970413, 0.8765710517764091, 0.8511906489729881, 0.8581420406699181, 0.8260407485067844], "reference_median_ms": 0.8581420406699181, "batch": 1, "tokens": 32, "cap": 65, "exact": true, "repeat_exact": true, "registers": 255, "spills": 32, "samples_ms": [0.8661211468279362, 0.8567022159695625, 0.8284109644591808, 0.8509410545229912, 0.8389106951653957], "median_ms": 0.8509410545229912}
+{"reference_samples_ms": [1.577081624418497, 1.579582691192627, 1.538631971925497, 1.5499619767069817, 1.56845198944211], "reference_median_ms": 1.56845198944211, "batch": 1, "tokens": 64, "cap": 129, "exact": true, "repeat_exact": true, "registers": 255, "spills": 298, "samples_ms": [1.5761121176183224, 1.5766122378408909, 1.5476918779313564, 1.5610717236995697, 1.5371022745966911], "median_ms": 1.5610717236995697}
+{"reference_samples_ms": [3.5964548587799072, 3.587665967643261, 3.570165019482374, 3.5837548784911633, 3.563965205103159], "reference_median_ms": 3.5837548784911633, "batch": 1, "tokens": 96, "cap": 193, "exact": true, "repeat_exact": true, "registers": 255, "spills": 858, "samples_ms": [3.5745548084378242, 3.605844918638468, 193.7693771906197, 4.593166988343, 3.644815180450678], "median_ms": 3.644815180450678}
+{"reference_samples_ms": [4.9676671624183655, 4.9295867793262005, 4.90711722522974, 4.876247141510248, 4.8791468143463135], "reference_median_ms": 4.90711722522974, "batch": 1, "tokens": 128, "cap": 257, "exact": true, "repeat_exact": true, "registers": 255, "spills": 862, "samples_ms": [5.14674698933959, 5.379318259656429, 5.408137105405331, 5.104687996208668, 4.951066803187132], "median_ms": 5.14674698933959}
+{"reference_samples_ms": [6.338899023830891, 6.377468816936016, 6.245769094675779, 6.222729105502367, 6.232338957488537], "reference_median_ms": 6.245769094675779, "batch": 16, "tokens": 128, "cap": 257, "exact": true, "repeat_exact": true, "registers": 255, "spills": 862, "samples_ms": [6.257928907871246, 6.203528959304094, 6.3892691396176815, 6.320138927549124, 6.4096287824213505], "median_ms": 6.320138927549124}
+Traceback (most recent call last):
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/experimental/gluon/language/_core.py", line 91, in wrapper
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/language/core.py", line 43, in wrapper
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/language/core.py", line 2192, in store
+    return _semantic.store(pointer, value, mask, boundary_check, cache_modifier, eviction_policy)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/language/semantic.py", line 1297, in store
+    return self._store_legacy(ptr, val, mask, boundary_check, cache, eviction)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/language/semantic.py", line 1261, in _store_legacy
+    mask = self.broadcast_impl_shape(mask, ptr.type.get_block_shapes())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/experimental/gluon/language/_semantic.py", line 98, in broadcast_impl_shape
+    _check(isinstance(input.type, ttgl.distributed_type),
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/experimental/gluon/language/_semantic.py", line 14, in _check
+    raise category(msg_fn())
+ValueError: expected expand_dims input to be a distributed_type but got: triton.language.int1
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/c14_phase5r2_selected_probe.py", line 80, in <module>
+    main()
+  File "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/c14_phase5r2_selected_probe.py", line 63, in main
+    actual=bits(run())
+                ^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/c14_phase5r2_selected_probe.py", line 55, in run
+    return native.native_forward(xs,cfg,policy.gate_policy(0),metadata)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/c14_launch_shape.py", line 24, in forward
+    result = bounded(inputs, cfg, policy, metadata)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<reach-bounded native wrapper>", line 27, in native_forward
+  File "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/c14_launch_shape.py", line 18, in launch
+    return native.kernel[grid](*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/c14_phase5r2_selected_probe.py", line 37, in launch
+    self.compiled = selected[grid](*a, **kw)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/runtime/jit.py", line 419, in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/runtime/jit.py", line 733, in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/runtime/jit.py", line 861, in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/compiler/compiler.py", line 300, in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/experimental/gluon/_runtime.py", line 40, in make_ir
+    module = ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+triton.compiler.errors.CompilationError: at 75:16:
+                prev = previous_value(FinalV,FinalMeta,b,S,BS,live & (ss==target) & adjacent,ss,vd)
+                diff = av-prev
+                err = tl.where(has,tl.sqrt(fixed_sum(diff*diff,0)),0.)
+                gate = sigmoid(append+coef*err)
+                alloc = (dup==S) & (free<S)
+                dst = tl.where(dup<S,dup,tl.where(free<S,free,target))
+                a_alloc=alloc.to(tl.int32)
+                a_dup=(dup<S).to(tl.int32)
+                a_cap=((dup==S)&(free==S)).to(tl.int32)
+                changed = ss==dst
+                update_value(FinalV,FinalS,A+(b*T+t)*128,b,S,BS,ss,changed,alloc,gate)
+                tl.store(FinalK+(b*S+dst)*64+kd,k,alloc & (dst<S))
+                ^
+expected expand_dims input to be a distributed_type but got: triton.language.int1

@@ -1,61 +1,101 @@
-# Phase5 round2: bounded value live ranges
+# Phase5 round2: structural live-range reduction, no promotion
 
-The first streaming candidate improves long-context speed, but the registered
-1.3B/24h scenario remains **NO-GO**. No production kernel is promoted. The
-unchanged historical reference and rejected round1 kernel remain available.
+**T1024 improves from719.876410 to280.137051ms/head (2.569729x), with68
+compiler spills. The1.3B/24h class remains NO-GO. The mandatory T2048 byte gate
+is incomplete because the unchanged reference stalls in LLVM O3 compilation.
+No production kernel is changed or promoted.**
 
-The static compiler-input profile and candidate decision were committed and
-pushed before implementation (c3318bb1). Whole-context value loads, updates and
-layout conversions dominate expanded code. Streaming replaces context-sized
-value temporaries with 128-row update pages, a directly selected previous-value
-load, and two ascending row-parity READ accumulators. Metadata remains
-context-sized, so this is bounded value state, not an O(1) complete kernel.
-These are static/compiler observations, not hardware register-liveness counters.
+## Profile and decisions
 
-Five synchronized wall samples per arm on the same nonzero inputs, broker
-physical card4. Full native read/state/raw trace and repeat fingerprints match
-for all ten rows. Timings include the native wrapper and output allocation.
+Static compiler-input instruction attribution and the first decision were
+committed/pushed before implementation (c3318bb1). Whole-context value loads,
+updates and layout conversions dominate expanded code. This is a static
+compiler/source profile, not measured physical register liveness or hardware
+spill counters; Nsight permission limitations are not represented as resolved.
 
-| B | T | reference ms/head | streaming ms/head | registers | compiler spills |
+Candidate1, streaming v1, replaces context-sized value temporaries with128-row
+update pages, directly selected previous-value loads and two ascending row-
+parity READ accumulators. All ten native/repeat byte pairs pass. T1024 drops
+from718.757878 to638.255253ms (1.126129x), compiler spills1524. Short rows
+regress, so v1 is NO-GO as an unconditional replacement. Its retained projection
+is1269.677333 native-only days. Sources and receipts were checkpointed/pushed
+in c64e3197 with the then-pending T2048 status stated explicitly.
+
+The separately receipted follow-up also removes both context-sized key-store
+address tensors: an allocating write addresses only scalar dst and64 columns.
+Reference is retained for BS<=256; the streaming specialization is selected for
+BS>=512. This removes register intermediates rather than introducing more state
+passes. An initial Gluon scalar-mask compile failure is retained with its source
+snapshot; explicitly broadcasting the mask to64 columns fixes it. Failed sweep
+receipts do not qualify. Only selected/sweep_fixed.json is the final sweep.
+
+## Matched measurements
+
+Five synchronized wall samples per arm on identical nonzero inputs, broker
+physical card4; native wrapper and output allocation included. All ten complete
+read/final-state/raw-trace fingerprints and repeats match. Small shapes execute
+the same reference specialization; their observed timing differences are
+sampling variation, not a different implementation or a certified speedup.
+
+| B | T | reference ms/head | selected ms/head | registers | compiler spills |
 |---:|---:|---:|---:|---:|---:|
-|1|32|0.633221|0.866712|255|16|
-|1|64|1.408122|1.650462|255|18|
-|1|96|3.450835|4.424777|255|22|
-|1|128|4.782257|6.298429|255|20|
-|16|128|5.704218|7.110240|255|20|
-|1|129|21.407941|11.424216|255|122|
-|1|257|79.459854|43.133461|255|492|
-|1|512|147.976652|82.343598|255|504|
-|16|512|189.858091|86.988135|255|504|
-|1|1024|718.757878|638.255253|40|1524|
+|1|32|0.796321|0.783971|255|32|
+|1|64|1.529242|1.527942|255|298|
+|1|96|3.538495|3.546715|255|858|
+|1|128|4.899547|4.895257|255|862|
+|16|128|6.321279|5.978018|255|862|
+|1|129|21.555531|10.262885|255|26|
+|1|257|80.357275|37.402683|255|42|
+|1|512|150.408075|73.987806|255|44|
+|16|512|189.995121|80.166195|255|44|
+|1|1024|719.876410|280.137051|255|68|
 
-T1024 is 1.126129x faster than the matched reference, with1524 compiler spills
-rather than round1's6154 or historical baseline13802. Spill reductions alone
-are not acceptance: the short rows regress and this raw candidate is **NO-GO
-as an unconditional replacement**, while its long class is an internal speed
-improvement. A small/long shape dispatch is the next concrete specialization.
+Round1's rejected T1024 cost was6937.956855ms with6154 spills, historical
+baseline718.648853ms with13802 spills. Matched round2 timing, rather than spill
+reduction alone, supports an internal long-class speed improvement. Final
+candidate is **NO-GO for promotion** because T2048 and full training gates are
+unqualified. No eventual performance or engineering-cost estimate is invented.
 
-At22 layers, two heads, two native passes and T1024, the measured candidate
-projects to0.054850061 seconds/target,18.231520 targets/s and1269.677333 native-
-only days for2B raw-byte scenario targets. The24h target still requires
-23148.148148 targets/s and<=0.502691ms/head even with all other work free.
-This excludes dense/replay/optimizer/data cost and is not a training benchmark.
+## Projection and gates
 
-Fresh broker card5 validation:109 X31 tests pass in13.93s;108 C14/operator tests
-pass in54.73s. Eight short shape and four native/state/replay/gradient pairs
-pass, including repeats. T512 and T1024 peak257 masked-tail/fresh-document
-state/replay/gradient fixtures pass. T2048 is pending at this work checkpoint.
-The inherited task's T2048-green claim was not supported by round1 receipts;
-this round runs it explicitly.
+At22 layers, two heads, two native passes and T1024, the selected cost projects
+to0.024074278seconds/target,41.538110targets/s and**557.274949 native-only days**
+for2B raw-byte scenario targets. The24h requirement is23148.148148targets/s and
+<=0.502691ms/head even if all other work were free. This excludes dense,
+replay, optimizer, source, and checkpoint cost; it is not sustained training.
 
-Residual risks: the selected-value shortcut and READ order still need the
-adversarial primitive gate; full trained-model and>=2M paired-target exact
-optimizer/RNG/checkpoint-resume gates, maximum-live operation-rich long cases,
-and150M/1.3B-width throughput/memory remain unqualified. One CTA per sequence
-still leaves severe global underutilization. No eventual speed or engineering
-cost is estimated. No training is started for this unqualified scenario.
+V1:109 X31 tests pass in13.93s;108 C14/operator pass in54.73s; eight shape
+pairs and four native/state/replay/gradient pairs pass with repeats. T512 and
+T1024 peak257 masked-tail/fresh-document complete fingerprints pass. All24
+primitive pairs (BS128..4096, random/cancellation/signed-zero/NaN inputs) pass
+READ and selected-previous-value byte equality.
 
-No resilient DiLoCo change; gap-matrix IDs inapplicable. No WG, delegation,
-protected-card workload, sxgc, /mnt/nvme2n1 or .pt commit. AGENTS.md and
-CLAUDE.md unchanged. Supervisor/intercom tool discovery returned no transport;
-no supervisor contact is claimed. Exact final status follows in round2 receipts.
+Final selected path: fresh109 X31 and108 C14/operator tests pass; eight shape
+and four replay/gradient pairs pass; T512/T1024 masked-tail/fresh-document
+fixtures pass. Terminal receipts retain exact counts, timings and exits.
+The final primitive check and T2048 terminal status are recorded in
+receipts/scalability_phase5_round2/validation_summary.json.
+
+T2048 is not green. Round1 receipts explicitly say unrun, contrary to the
+inherited task description. First round2 attempt was stopped with143 after
+>15min of CPU work without a result, under an agent-selected diagnostic budget
+(not an operator/runtime ceiling). A separate180s faulthandler retry exits124:
+stack traces locate the unchanged reference in Triton make_llir's
+llvm.optimize_module(OPTIMIZE_O3), before candidate execution. The final
+selected fixture adds stage logging and an explicit180s bound. Missing results
+are failed/incomplete gates, not passes and not proven native byte mismatches.
+The original source and compiler options are retained rather than silently
+weakening reference arithmetic or reducing the required context shape.
+
+Residual risks: scalar metadata still scales with BS/256, so only dominant
+value/key-store intermediates are bounded. Severe one-CTA-per-sequence global
+underutilization remains. Maximum-live operation-rich long cases, trained-model
+fingerprints,>=2M real masked targets with optimizer/RNG/cursor/checkpoint-resume
+identity, and150M/1.3B-width training throughput/memory remain unqualified.
+No training was started for this rejected/unqualified scenario.
+
+No resilient DiLoCo behavior change; gap-matrix IDs inapplicable. No WG,
+delegation, protected-card workload, sxgc, /mnt/nvme2n1 or .pt commit. AGENTS.md
+and CLAUDE.md unchanged. Supervisor/intercom discovery exposed no transport;
+no supervisor contact is claimed. Source bindings, failures, resume commands
+and final process/lease checks are retained in the round2 receipts.
