@@ -8,9 +8,10 @@ write, no ~/sxgc access, no .pt committed. Python exclusively the project .venv.
 
 Registration chain pushed before each corresponding attempt trained:
 217b7263 scale-board amendment; 011ad929 byte protocol and source/stream identity;
-e4350cba detached broker amendment; 2a3cbabd fixed-shape masked padding amendment.
+e4350cba detached broker amendment; 2a3cbabd fixed-shape masked padding amendment; b9aeb960 common-document
+occupancy-length probe amendment. All preceded their corresponding training.
 Current registration SHA256:
-`7bc84527b9e335cb770eca2ddb87aaf6d7f18451a17837afb946269d344d0328`.
+`98aa0b6844f04bce78cc612a6f64f547882e054b468c71db24c50d636161fd9e`.
 It binds 228 dependencies plus source stat, offsets/document index digests and
 C14 binding receipt. Every consumed document slice is rehashed at read-by-offset.
 Two token-truncated documents stay excluded. No token nominations transfer.
@@ -18,8 +19,8 @@ Two token-truncated documents stay excluded. No token nominations transfer.
 The initial user services reparented broker wrappers to the systemd user manager,
 violating literal PPID=1. Those attempts were interrupted, retained and unscored.
 User scope units now preserve service cgroup management while allowing init-owned
-Popen launchers/wrappers: `emender-byte-search-transformer-masked.scope`,
-`emender-byte-search-gdn2-masked.scope`, `emender-byte-search-pure-masked.scope`.
+Popen launchers/wrappers: `emender-byte-search-transformer-common-prefix.scope`,
+`emender-byte-search-gdn2-common-prefix.scope`, `emender-byte-search-pure-common-prefix.scope`.
 All use DEVNULL stdin, new sessions and retained logs. The wrappers and parent
 search processes have PPID=1. Broker ownership/starttime and at least one
 heartbeat renewal were checked against the initial lease snapshots.
@@ -34,7 +35,7 @@ keep padded positions out of occupancy telemetry. Loss/gradient equivalence is
 tested, including raw byte IDs 0/255 and zero gradient at padded positions.
 
 `live_process_checks_all_advancing.json` attests advancing steps/real bytes in
-all three current attempts, PPID=1, owner/starttime and heartbeat renewal. Actual
+all three current common-prefix attempts, PPID=1, owner/starttime and heartbeat renewal. Actual
 parameter totals: transformer 150,003,216; GDN2 149,855,670; pure 150,005,952
 (148,982,784 trainable). All meet the registered total-capacity tolerance 0.1%.
 The first pure full update took 207 active seconds including first-use kernels;
@@ -78,7 +79,23 @@ nonbinding proof, Wikipedia spine bindings, precision/operation checks and signe
 compute/extraction/storage budgets gate the six-arm BYTE flagship. No 1.3B training
 is launched here. Token velocity nominations complete separately on their own board.
 
-Validation: 22 focused tests passed (byte boundary/tamper checks, vocabulary/capacity,
-search endpoint ranges, masked loss/gradient normalization, CMA state and score
+Validation: 23 focused tests passed (byte boundary/tamper checks, vocabulary/capacity,
+search endpoint ranges, masked loss/gradient normalization, same-document length probes, CMA state and score
 penalties); Python compilation and shell syntax checks passed. No resilient DiLoCo
 behavior changed: compute-pool gap-matrix requirement IDs are not applicable.
+
+## Common-document scoring correction
+
+A third engineering interruption corrected occupancy length probes that selected
+different documents at different lengths. The current registered probes all use
+source document 289, start 0, at lengths 512/1024/2048/4096. No completed score
+existed before this correction. Entire attempts were discarded, retaining their
+last completed counters and failure reason. The active initial vectors/RNG are
+unchanged; there was no selection using held-out scores. The current live checks
+above were refreshed under the new registration after fresh steps and lease
+renewals in all three families. Earlier checks remain archived.
+
+The discarded engineering attempts consumed at least 1.749 active
+card-hours in completed updates across three cards. Additional in-flight partial
+updates and setup/execution overhead were lost and are not quantified as saved
+progress. No checkpoint recovery or zero-cost retry is claimed.
