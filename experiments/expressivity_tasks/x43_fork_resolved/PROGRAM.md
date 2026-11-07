@@ -2555,8 +2555,8 @@ Paths are repository-relative. `emender` is this repository; `sxgc` is the exter
         {
           "repo": "emender",
           "path": "experiments/expressivity_tasks/x43_fork_resolved/THEORY_INTERVAL_OPERATORS.md",
-          "commit": "fd43f34c15d06d96e8116dd094c22bc68c82d3cd",
-          "sha256": "dd8b40d144e59dadc17d814ee9c9666b1ebd1ea0f9de3908a0309dbc636e611e"
+          "commit": "8e4681188ad5ca2d7ebb10162d4c93c295212425",
+          "sha256": "939f32890e9065bd817624757bc403014c8c35e5d36580ba0d5b0f4a4c714f50"
         },
         {
           "repo": "emender",
