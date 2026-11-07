@@ -3163,6 +3163,30 @@ Paths are repository-relative. `emender` is this repository; `sxgc` is the exter
           "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_transformer_stacking/evidence_manifest.json",
           "commit": "fd43f34c15d06d96e8116dd094c22bc68c82d3cd",
           "sha256": "f3b8b3ec0eed16f2786786b5649257b82217544e69ce2e5bf1f0e658f6c0a213"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/PREREGISTRATION_1P3B.md",
+          "commit": "c999f57b4c604f3661aab6eec14b7d6b49400f31",
+          "sha256": "7d5f264348851e39b4a3e8546b94ad81eb398f74024ece14f8e1bcb240dcd551"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/RESULT_SPINE_DECISION.md",
+          "commit": "c999f57b4c604f3661aab6eec14b7d6b49400f31",
+          "sha256": "0fa61bc8d14d6065dbb75b9e7b205fbef80ccabf2195ba89584346cdbc981ba8"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/spine_geometry.py",
+          "commit": "c999f57b4c604f3661aab6eec14b7d6b49400f31",
+          "sha256": "8bcae71039a7c5f49e513da9d4be943fc1364c2e5c8ffee615af8e2b2b97c548"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/spine_decision/geometry.json",
+          "commit": "c999f57b4c604f3661aab6eec14b7d6b49400f31",
+          "sha256": "be07d571bcad1ce7bcf0dfbe3013e098cf59bab7430f971ad2daf9d5df0a90e5"
         }
       ]
     }
@@ -3538,3 +3562,39 @@ full-position independent CPU replay checks gates, frozen identities,
 denominators, partitions and verdict signs. No resilient DiLoCo requirements
 apply. The exact-walk, initial test-collection and intermediate ledger-pinning
 failures remain retained evidence. Scientific receipts are bound under C14.
+
+
+## X42/X43 flagship spine decision — pile-head100 (2026-11-07)
+
+Operator amended the [six-arm byte registration](PREREGISTRATION_1P3B.md):
+pile-head100 is the base; ALL SIX arms share one registered whole-document
+stream fully beyond byte 100,000,000,000, with document-disjoint training,
+calibration and final-test. Wikipedia is the frozen-head cross-corpus follow-up.
+This is a design decision and geometry qualification, not a trained ladder rung
+or launch authorization. Historical C14 Wikipedia results remain unchanged.
+
+[E3 transfer](RESULT_P100_OUT_OF_INDEX.md), survival 1.34–1.99× with out-of-index
+gains larger than in-region, motivates the choice; its coverage decomposition
+remains not causally identified. The new paired consultation comparison holds
+stream/index/documents fixed, addressing that confound without claiming a pure
+coverage effect. C11 copy-law discipline is satisfied by span geometry, while
+repeated substrings can remain. [Readiness receipt](RESULT_SPINE_DECISION.md)
+records our 17/17 verification, exercised serving path and fresh geometry audit.
+
+Hash-bound search offsets contain 7,831,211 documents entirely below 59.19GB:
+**zero beyond-boundary documents**. Dense searches use no consultation; their
+hyperparameters must transfer across this stream change as well as model scale.
+Fresh read-only 1.5GB beyond-boundary sampling finds 243,401 full documents:
+238,461 prospective training documents / 1,466,137,768 n−1 targets, with 2,478
+calibration and 2,462 final-test documents under a content-hash split. This proves
+sample density and 1.3-billion-byte split feasibility, not the full 24-hour exposure
+or a frozen launch manifest; existing documents.jsonl does not cover this region.
+
+Both consultation arms extract against pile-head100; rebenchmark stream-scoped
+query/cache geometry before adopting the informal ~8–16 CPU-day estimate. The
+standing external deployment gate is the sxgc Pile-data search certificate
+(sampled stream checks, closure-0, T3, brute-force positions). Operator-reported
+pending upstream status was not freshly audited; our 17/17 training-use verification
+does not substitute for it. Scale configs, nominations, manifest/hash reconciliation,
+extraction budget and final launch approval remain gates. Bindings added under C14;
+no historical claim status promoted. No training, lease or DiLoCo behavior change.
