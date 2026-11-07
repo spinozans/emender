@@ -1,0 +1,83 @@
+[
+  {
+    "arm": "transformer",
+    "command": [
+      "systemd-run",
+      "--user",
+      "--unit=emender-byte-velocity-transformer",
+      "--property=WorkingDirectory=/home/erikg/emender",
+      "--property=Restart=no",
+      "--property=KillMode=control-group",
+      "--property=StandardOutput=append:/home/erikg/emender/experiments/expressivity_tasks/x42_pile_scale/receipts/byte_velocity_launch/transformer_service.log",
+      "--property=StandardError=append:/home/erikg/emender/experiments/expressivity_tasks/x42_pile_scale/receipts/byte_velocity_launch/transformer_service.log",
+      "/home/erikg/emender/.venv/bin/python",
+      "-m",
+      "experiments.expressivity_tasks.x42_pile_scale.byte_velocity",
+      "parent",
+      "--arm",
+      "transformer"
+    ],
+    "exit_code": 0,
+    "time_ns": 1794011853250443942
+  },
+  {
+    "arm": "gdn2",
+    "command": [
+      "systemd-run",
+      "--user",
+      "--unit=emender-byte-velocity-gdn2",
+      "--property=WorkingDirectory=/home/erikg/emender",
+      "--property=Restart=no",
+      "--property=KillMode=control-group",
+      "--property=StandardOutput=append:/home/erikg/emender/experiments/expressivity_tasks/x42_pile_scale/receipts/byte_velocity_launch/gdn2_service.log",
+      "--property=StandardError=append:/home/erikg/emender/experiments/expressivity_tasks/x42_pile_scale/receipts/byte_velocity_launch/gdn2_service.log",
+      "/home/erikg/emender/.venv/bin/python",
+      "-m",
+      "experiments.expressivity_tasks.x42_pile_scale.byte_velocity",
+      "parent",
+      "--arm",
+      "gdn2"
+    ],
+    "exit_code": 0,
+    "time_ns": 1794011853262302749
+  },
+  {
+    "arm": "pure",
+    "command": [
+      "systemd-run",
+      "--user",
+      "--unit=emender-byte-velocity-pure",
+      "--property=WorkingDirectory=/home/erikg/emender",
+      "--property=Restart=no",
+      "--property=KillMode=control-group",
+      "--property=StandardOutput=append:/home/erikg/emender/experiments/expressivity_tasks/x42_pile_scale/receipts/byte_velocity_launch/pure_service.log",
+      "--property=StandardError=append:/home/erikg/emender/experiments/expressivity_tasks/x42_pile_scale/receipts/byte_velocity_launch/pure_service.log",
+      "/home/erikg/emender/.venv/bin/python",
+      "-m",
+      "experiments.expressivity_tasks.x42_pile_scale.byte_velocity",
+      "parent",
+      "--arm",
+      "pure"
+    ],
+    "exit_code": 0,
+    "time_ns": 1794011853273820046
+  },
+  {
+    "arm": "heartbeat",
+    "command": [
+      "systemd-run",
+      "--user",
+      "--unit=emender-byte-velocity-heartbeat",
+      "--property=WorkingDirectory=/home/erikg/emender",
+      "--property=Restart=no",
+      "--property=KillMode=control-group",
+      "--property=StandardOutput=append:/home/erikg/emender/experiments/expressivity_tasks/x42_pile_scale/receipts/byte_velocity_launch/heartbeat_service.log",
+      "--property=StandardError=append:/home/erikg/emender/experiments/expressivity_tasks/x42_pile_scale/receipts/byte_velocity_launch/heartbeat_service.log",
+      "/home/erikg/emender/.venv/bin/python",
+      "-m",
+      "experiments.expressivity_tasks.x42_pile_scale.byte_velocity_watch"
+    ],
+    "exit_code": 0,
+    "time_ns": 1794011853284820071
+  }
+]
