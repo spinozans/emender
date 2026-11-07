@@ -217,10 +217,28 @@ def parent(arm):
             while (candidate/f'attempt{attempt}').exists(): attempt+=1
             output=candidate/f'attempt{attempt}'
             env=dict(os.environ,GPU_LEASE_VISIBLE=CARDS[arm],GPU_LEASE_HB_INTERVAL='30',PYTORCH_CUDA_ALLOC_CONF='expandable_segments:True',PYTORCH_ALLOC_CONF='expandable_segments:True')
+            # A short launcher exits after Popen; the broker wrapper becomes an
+            # init child, while the durable service monitors artifacts and PID.
+            launcher = """import json,os,subprocess,sys
+from pathlib import Path
+command=json.loads(sys.argv[1]); receipt=Path(sys.argv[2])
+child=subprocess.Popen(command,stdin=subprocess.DEVNULL,start_new_session=True)
+receipt.write_text(json.dumps(dict(pid=child.pid,start_ticks=Path(f'/proc/{child.pid}/stat').read_text().split()[21])))
+"""
+            launched=candidate/f'launched{attempt}.json'
+            command=['bash',str(ROOT/'run_byte_velocity_leased.sh'),arm,str(policy),str(output)]
             with (candidate/f'console{attempt}.txt').open('w') as log:
-                child=subprocess.Popen(['bash',str(ROOT/'run_byte_velocity_leased.sh'),arm,str(policy),str(output)],cwd=REPO,env=env,stdin=subprocess.DEVNULL,stdout=log,stderr=subprocess.STDOUT,start_new_session=True)
-            atomic_json(out/'active.json',dict(pid=child.pid,start_ticks=Path(f'/proc/{child.pid}/stat').read_text().split()[21],output=str(output)))
-            status=child.wait()
+                subprocess.run([PYTHON,'-c',launcher,json.dumps(command),str(launched)],cwd=REPO,env=env,stdin=subprocess.DEVNULL,stdout=log,stderr=subprocess.STDOUT,check=True,start_new_session=True)
+            owner=json.loads(launched.read_text())
+            atomic_json(out/'active.json',dict(**owner,output=str(output)))
+            terminal=Path(str(output)+'_launch')/'terminal.json'
+            while not terminal.exists():
+                proc=Path(f"/proc/{owner['pid']}/stat")
+                fields=proc.read_text().split() if proc.exists() else []
+                if not fields or fields[21]!=owner['start_ticks'] or fields[2]=='Z':
+                    raise RuntimeError('detached broker died without terminal receipt')
+                time.sleep(5)
+            status=json.loads(terminal.read_text())['exit_code']
             if status:
                 raise RuntimeError(f'candidate failure exit={status}: {output}')
             result=json.loads((output/'result.json').read_text())
