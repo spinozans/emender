@@ -72,8 +72,8 @@ This amendment authorizes registration and search preparation, not 1.3B training
 | byte-GDN2 | Byte CMA-ES GDN2 winner, scaled and qualified | nats/byte, actual bytes, fixed state |
 | byte-pure-bounded | Byte CMA-ES pure winner, certified FP32 store | raw nats/byte and search penalty components |
 | byte-pure-unbounded | Same pure winner, cap released and proven nonbinding | matched time primary; matched compute/exposure secondary |
-| byte-transformer+XSA | Byte transformer backbone, Wikipedia spine, C14 dropout | consultation alone and calibration-only soft fusion; on/off |
-| byte-emender-unbounded+XSA | Pure winner with nonbinding cap and enabled store door, Wikipedia spine | ownership/operation traces; on/off; matched compute/exposure |
+| byte-transformer+XSA | Byte transformer backbone, pile-head100 spine, C14 dropout | consultation alone and calibration-only soft fusion; on/off |
+| byte-emender-unbounded+XSA | Pure winner with nonbinding cap and enabled store door, pile-head100 spine | ownership/operation traces; on/off; matched compute/exposure |
 
 Arm 6 follows RESULT_C14_B1.md: array-derived memories can be amended by
 lifecycle operations. Passive features alone do not qualify this mechanism.
@@ -95,10 +95,27 @@ held-out NLL / actual real byte targets (nats/byte). Every input, shifted target
 consultation context and evaluation sequence stays inside one document. Reset
 state per window, truncate tails or mask all padding; split calibration/final-test
 by document. Hash-match documents.jsonl via the checked c14_documents.py discipline.
-Use the C14 pile.txt read-by-offset binding: 7,831,213 matched document receipts;
-exclude the two token-truncated documents, admitting 7,831,211 documents and
-43,494,394,389 selected bytes. Never materialize the corpus or treat token IDs as
-raw bytes. Fresh search stream identity is registered before candidate 1 trains.
+Use pile.txt read-only by offset. **ALL SIX arms use the same registered source-order
+stream of whole documents fully beyond byte 100,000,000,000**, including the
+unconsulted controls. All evaluation documents are also fully beyond that mark
+and document-disjoint from training; calibration and final-test are document-disjoint
+from one another. Freeze document identities, source/index hashes, split manifests
+and byte windows before launch; reject content-hash duplicates across splits.
+The old C14 binding (7,831,211 documents / 43,494,394,389 selected bytes) lies wholly
+below 59,187,954,937 and cannot serve as the new stream manifest. The
+[geometry receipt](RESULT_SPINE_DECISION.md) qualifies a fresh beyond-boundary
+sample and records this limitation. No corpus materialization or token IDs.
+
+This span-disjoint paired design satisfies the C11 copy-law/train-disjoint doctrine
+by geometry: the array contains exactly [0,100,000,000,000), while every training
+and evaluation document starts beyond it. Repeated substrings may still occur;
+span exclusion is not a claim of global substring uniqueness. Consulted and
+unconsulted arms share stream, held-out windows and backbone nominations; on/off
+interventions retain frozen weights/gates. This fixes E3's joint index/document
+change for the flagship consultation comparison. It does not retroactively identify
+E3's pure coverage effect or identify one without a matched inclusion intervention.
+The dense byte searches retain their original below-boundary stream; their
+hyperparameters require transfer to this new stream as well as to 1.3B capacity.
 
 Proposed flagship allocation remains 24 synchronized active hours per arm/seed,
 seeds 3401 and 3402. Include data assembly/transfer, forward/backward/replay,
@@ -122,16 +139,30 @@ in ../x42_pile_scale/BYTE_VELOCITY_PROTOCOL.md.
 
 ## Array and extraction operations — DRAFT DECISIONS
 
-Propose the immutable **Wikipedia 100GB spine** as primary, with its existing
-[coverage/query receipt](RESULT_C14_PHASE1.md) and repaired C14 serving bindings.
-The [C14 registration](PREREGISTRATION_C14.md) receipts support at byte lengths
-16/64/256/1024 of **36.5900% / 2.3600% / 0.5900% / 0.0900%**; this is sampled
-training-interior coverage, not a held-out content-component estimate. Freeze
-executable/index/source hashes and fresh sampled independent branch checks before
-use. Registered deployment follow-up: swap the same frozen heads to Pile-head100,
-with no weight or gate refitting, separate inclusion/exclusion and repeated-content
-checks as in the transfer receipt. The follow-up has a separate budget; it cannot
-replace the primary Wikipedia endpoint post hoc.
+**Operator spine decision, 2026-11-07: immutable pile-head100 is the base.**
+Serving path `/mnt/nvme2n1/erikg/P100c/pile-head100.sxi2`, exactly the first
+100,000,000,000 pile.txt bytes, container 63,163,489,696 bytes (63.16 GB),
+χ=24.19G and χ/n=0.242; build certificate sxgc ee2561c. Our
+[17/17 independent full-region brute-force query verification](RESULT_P100_QUERY_VERIFICATION.md)
+and [E3 transfer/decomposition](RESULT_P100_OUT_OF_INDEX.md) motivate this choice:
+out-of-index gains exceed in-region gains, survival **1.34–1.99×**. E3 remains
+honestly not causally identified because corpus/index and documents changed together.
+The paired protocol above removes that confound for its consultation contrast.
+
+**Wikipedia remains the registered cross-corpus generalization follow-up**:
+swap the same frozen heads from Pile to Wikipedia with no weight/gate refitting,
+same held-out beyond-100GB windows, separate inclusion/exclusion and repeated-content
+checks. Its [historical coverage receipt](RESULT_C14_PHASE1.md) is historical,
+not Pile coverage. Separate follow-up budget; it cannot replace the primary endpoint.
+Freeze executable/index/source hashes and verify bindings before either use.
+
+[Readiness and geometry receipt](RESULT_SPINE_DECISION.md): our verification,
+span geometry and exercised serving path are receipted for training use. The
+sxgc-side `RESULTS_PILE_100GB.md` search certificate (sampled stream checks,
+closure-0, T3 and brute-force query positions **on Pile data**) is a standing
+external gate for deployment claims. Our sampled 17/17 branch/EOF verification
+does not discharge that exhaustive upstream gate. Exact launch manifests,
+scale qualification, measured extraction envelope and final approval remain open.
 
 The [union-service precedent](PROGRAM.md#c14-managed-union-extraction-2026-11-03-running-science-pending)
 banks **5,884.18 raw targets/s**, **1,406,579,817 union positions**, about **66.4
@@ -160,8 +191,15 @@ prefix may be shorter, but cannot be costed until throughput and byte spans are
 measured. Validation/eval queries add cost. The historical **150GB reserve floor**
 (first-hours receipt) is not permission to allocate terabytes. Freeze a measured
 R, storage reservation, CPU-day ceiling and extraction stop line before launch.
+Both consultation arms now query pile-head100 through the verified serving
+path, retaining causal within-document contexts and shared immutable prefix caches.
+The informal ~8–16 CPU-day stream-scoped estimate is an unqualified planning prior,
+not measured consumption: index composition, support/suffix reuse, longer T2048
+resets and the new stream can change query counts, throughput and cache density.
+Neither χ/n nor container-size ratios justify scaling that estimate. Benchmark the
+new geometry and bind R plus measured user+system seconds before extraction.
 Feature extraction is prepaid in the training-time column and fully charged in
-the end-to-end column. Pile-head100 follow-up extraction is additional.
+the end-to-end column. Wikipedia follow-up extraction is additional.
 
 ## Cards, phase order and precision — DRAFT DECISIONS
 
@@ -196,6 +234,7 @@ training and requires an amended receipt rather than an invented score.
   **1.474241x / 1.660072x** are insurance scenarios, not a delivered speedup or
   residency proof. Do not halve reported total memory or assume affordability.
 - [ ] All three byte nominations committed and scale config/source hashes bound.
+- [x] Operator selected pile-head100 base, beyond-100GB paired stream and Wikipedia follow-up.
 - [x] Operator selected BYTE flagship; token board is secondary and separate.
 - [ ] Exact per-arm configs, physical slots, lengths, dropout/fusion and capacity approved.
 - [ ] Active/elapsed/compute budgets, R, storage, CPU-days and card-hours approved.

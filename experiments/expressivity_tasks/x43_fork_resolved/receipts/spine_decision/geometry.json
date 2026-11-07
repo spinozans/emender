@@ -1,0 +1,47 @@
+{
+  "status": "passed_geometry_feasibility_not_launch_manifest",
+  "search_offsets": {
+    "path": "/home/erikg/c14_dense_bytes/pile_offsets.jsonl",
+    "sha256": "bb3a2b506ac4d7c1b2ae36e274331ee5ff1855e618d15df84780c5c42987bbe8",
+    "documents": 7831211,
+    "min_start": 0,
+    "max_end_exclusive": 59187935118,
+    "documents_fully_beyond_100GB": 0
+  },
+  "prospective_beyond_sample": {
+    "source_stat": {
+      "size": 1307910802540,
+      "inode": 30065036677,
+      "mtime_ns": 1752244499274497590
+    },
+    "read_start": 100000000000,
+    "read_stop_exclusive": 101500000000,
+    "first_full_document": 100000000071,
+    "full_documents_end_exclusive": 101499998463,
+    "split_rule": "sha256 integer mod 100: 0 calibration, 1 final_test, otherwise train; identical contents always same split",
+    "document_identity_stream_sha256": "886a50d5bee4a44a6d33364da6d3cec978d5d6097c498bad213d6f8b24d00b7b",
+    "splits": {
+      "train": {
+        "documents": 238461,
+        "bytes": 1466376229,
+        "T2048_targets": 1466137768
+      },
+      "calibration": {
+        "documents": 2478,
+        "bytes": 16675615,
+        "T2048_targets": 16673137
+      },
+      "final_test": {
+        "documents": 2462,
+        "bytes": 16703140,
+        "T2048_targets": 16700678
+      }
+    },
+    "trailing_partial_bytes_excluded": 1537
+  },
+  "limitations": [
+    "Existing hash-bound C14 offsets contain ZERO beyond-boundary documents. This fresh by-offset hashed sample establishes density and split feasibility, not a frozen flagship manifest.",
+    "No raw text materialized. No training or extraction. Full-stream selected-document identities and split manifests must be retained before launch.",
+    "T2048_targets counts n-1 per document; exact windows and masked tails remain launch gates."
+  ]
+}
