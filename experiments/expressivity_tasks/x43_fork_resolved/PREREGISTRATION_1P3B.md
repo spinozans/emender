@@ -2,10 +2,10 @@
 
 **DRAFT; operator amendment and sign-off required. No launch authorization.**
 Recorded 2026-11-07. The pure mimetic search's nomination is pending (operator
-planning estimate November 8–9, not an observed completion date). Both that
-committed nomination AND explicit operator approval of the completed registration
-are mandatory before any training. A date passing does not release either gate.
-This work creates no lease, training, extraction, or corpus-read request.
+planning estimate November 8–9, not an observed completion date). All three committed BYTE nominations AND explicit operator approval of the completed
+scale registration are mandatory before flagship training. Byte search launch is
+separately authorized by the operator work order after protocol commitment. A date passing does not release either gate.
+This scale registration itself creates no 1.3B training or extraction request.
 
 ## Evidence and interpretation
 
@@ -55,81 +55,70 @@ This work creates no lease, training, extraction, or corpus-read request.
   gains exceed in-region. Index and documents change together (Wikipedia versus
   Pile-head100); this does not identify a pure coverage effect.
 
-## Six-arm matrix — DRAFT DECISION: approve or amend each arm
+## Two boards — operator amendment 2026-11-07: do byte level
 
-| Arm | Configuration and scientific role | Required paired reporting |
+The BYTE flagship is the primary 1.3B experiment. The TOKEN velocity board
+completes separately as a secondary comparison; its nominations stay on that
+board. Token nominations do not transfer as tuned byte baselines. Approximate
+transfer violates the matched-best-practice standard: fresh byte-level CMA-ES
+searches at the 150M class for transformer, GDN2 and bounded pure Emender are the
+honest route. Their committed byte nominations gate the flagship scale configs.
+The prior token proposal and token-fusion qualification gate are superseded.
+This amendment authorizes registration and search preparation, not 1.3B training.
+
+| BYTE flagship arm | Configuration | Reporting |
 |---|---|---|
-| 1 Transformer | Nominated 3.1907 policy; unbounded per-window KV baseline | Raw NLL, actual exposure, KV memory versus length |
-| 2 GDN2 | Nominated 3.1675 policy; fixed-state baseline | Raw NLL, actual exposure, fixed state size |
-| 3 Pure Emender, bounded | Pending pure nomination; certified replay architecture | Nomination score versus raw NLL, budgets/horizons, certification scope |
-| 4 Pure Emender, unbounded | Same searched pure configuration as arm 3, cap released | Matched-time primary; matched-compute and matched-exposure secondary |
-| 5 Transformer + XSA | Arm 1 backbone; passive causal consultation and C14 all-feature dropout | Device on/off; calibration-only soft fusion; zero-feature control |
-| 6 Emender + XSA, unbounded | Searched pure backbone; enabled store door, lifecycle ops active, cap nonbinding; XSA-derived memories can be amended | On/off, operation/ownership traces, matched-compute and exposure secondary |
+| byte-transformer | Byte CMA-ES transformer winner, scaled and qualified | nats/byte, actual bytes, KV memory |
+| byte-GDN2 | Byte CMA-ES GDN2 winner, scaled and qualified | nats/byte, actual bytes, fixed state |
+| byte-pure-bounded | Byte CMA-ES pure winner, certified FP32 store | raw nats/byte and search penalty components |
+| byte-pure-unbounded | Same pure winner, cap released and proven nonbinding | matched time primary; matched compute/exposure secondary |
+| byte-transformer+XSA | Byte transformer backbone, Wikipedia spine, C14 dropout | consultation alone and calibration-only soft fusion; on/off |
+| byte-emender-unbounded+XSA | Pure winner with nonbinding cap and enabled store door, Wikipedia spine | ownership/operation traces; on/off; matched compute/exposure |
 
-Arm 6 uses the mechanism in [enabled store-door receipt](RESULT_C14_B1.md),
-not merely passive features relabeled as memory operations. Porting its byte
-mechanism to the searched token backbone remains unqualified. Arm 5's flagship
-score includes soft fusion: report consultation alone and consultation+soft
-separately. Do not silently credit its stacked score to passive consultation alone.
-**DRAFT DECISION:** retain matched zero-feature projections in dense controls and
-match total parameters within the X40 tolerance; disclose trainable/frozen counts,
-embedding/projection overhead and any unavoidable mismatch before approval.
+Arm 6 follows RESULT_C14_B1.md: array-derived memories can be amended by
+lifecycle operations. Passive features alone do not qualify this mechanism.
+Unbounded means bounded with the cap nonbinding; no independent unbounded search.
+Total capacity including frozen geometry must match within 0.1%; disclose total,
+trainable and frozen counts and embedding/projection overhead before scale launch.
 
-## Units and document boundaries — DRAFT DECISION / unresolved approval gate
+The TOKEN secondary board retains the transformer/GDN2 nomination receipts linked
+above verbatim and receives the pure velocity nomination when it arrives (planning
+November 8–9, not an observed completion). It reports token NLL, actual tokens and
+raw-byte denominators where attested. It cannot nominate BYTE flagship baselines.
+Existing token search services and results remain separate. Any new token training
+requires its own explicit exception to the standing C14+ byte constraint.
 
-Propose token-level modeling across all six arms on the attested velocity corpus.
-Report full-vocabulary token NLL, summed NLL / actual raw-text byte count, actual
-tokens, real bytes, windows and optimizer steps. A byte-derived feature distribution
-is not a normalized GPT-2 token distribution. No next-byte probability may be used
-as a token probability, and forced bytes cannot force tokens. Freeze a causal
-byte-to-token boundary map and either validate normalized full-token fusion or
-mark soft fusion unavailable; that would amend arm 5's flagship endpoint.
+## Units, document boundaries and matched budgets
 
-**Standing instruction conflict:** AGENTS.md requires C14 and subsequent training
-to use natural raw bytes/vocabulary 256, never token IDs as raw text. Therefore
-the proposed token-level terminal protocol requires an explicit operator amendment
-of that rule before launch. Approval of a draft title is not that amendment.
-Alternatively the operator can choose all-byte arms, but proxy policies then need
-fresh transfer qualification and cannot be described as already matched token
-nominations. No token/byte compromise is implemented by this document.
+All six flagship arms use natural raw text bytes, vocabulary 256, scored as summed
+held-out NLL / actual real byte targets (nats/byte). Every input, shifted target,
+consultation context and evaluation sequence stays inside one document. Reset
+state per window, truncate tails or mask all padding; split calibration/final-test
+by document. Hash-match documents.jsonl via the checked c14_documents.py discipline.
+Use the C14 pile.txt read-by-offset binding: 7,831,213 matched document receipts;
+exclude the two token-truncated documents, admitting 7,831,211 documents and
+43,494,394,389 selected bytes. Never materialize the corpus or treat token IDs as
+raw bytes. Fresh search stream identity is registered before candidate 1 trains.
 
-In either approved unit system, every input, shifted target, consultation prefix
-and held-out sequence stays inside one document; truncate/mask tails and reset all
-model state at each window. Never feed a target or future suffix into consultation.
-Reconcile raw text to documents.jsonl hashes using the checked
-[c14_documents.py](c14_documents.py) windowing/split discipline. Do not reuse packed
-velocity windows across document boundaries. Re-windowing changes proxy exposure;
-record it. Calibration and final test split by document, frozen before fitting.
+Proposed flagship allocation remains 24 synchronized active hours per arm/seed,
+seeds 3401 and 3402. Include data assembly/transfer, forward/backward/replay,
+clipping and optimizer; record complete-step overshoot. Separately report elapsed
+time, extraction and evaluation costs, actual bytes/windows/steps and byte rates.
+Unequal byte exposure at equal time is a result. Same hardware envelope and
+source document order apply across arms.
 
-## Budget and length columns — DRAFT DECISIONS
+Matched-compute secondary columns apply to every arm: measured FLOPs when
+available, otherwise explicitly labeled card-time with matched-FLOP loss
+unavailable. GPU-hours are not FLOPs. Retain common-prefix exposure checkpoints;
+additional continuation requires a separately approved budget. No extrapolated
+loss substitutes for an observed checkpoint.
 
-Propose **24 synchronized active training hours per arm per seed**, seeds **3401
-and 3402** (seed precedent: the twin receipt above). These hours are a proposed
-allocation, not a measured completion forecast. Include data assembly/transfer,
-forward/backward/replay, clipping, optimizer and last completed step; report
-overshoot. Separately retain elapsed wall time including setup, checkpointing,
-extraction and evaluation. Use the same hardware envelope, document order and
-initialization convention; unequal bytes/steps at matched time are results.
-
-Primary column: loss after equal active wall-clock budget. Secondary for arms 4/6:
-loss at the common cumulative measured compute envelope with their bounded/pure
-reference, with compute accounting method frozen before launch. GPU-hours alone
-are not FLOPs. Report measured FLOPs when available, otherwise explicitly label
-card-time and leave matched-FLOP comparison unavailable. Also retain common-prefix
-matched-exposure checkpoints; extra continuation costs additional card-hours and
-must be separately approved. No monotone learning extrapolation substitutes for
-an observed checkpoint.
-
-**DRAFT DECISION:** token train context T2048 and effective B64 follow nomination
-receipts; choose feasible microbatch/accumulation after scale-transfer preflight.
-Eval reset sweeps T512/1024/2048/4096 follow velocity length accounting; include
-T128/256 byte-window diagnostic columns to connect to C14/protocol-shape evidence.
-These are different unit columns, not equivalent context lengths. Report raw-byte
-context spans for token windows. Preflight every length for all arms, retaining
-OOM/errors as failures. Cap released means no capacity eviction at any registered
-length: bind physical allocation, per-head maximum reachable writes including
-array writes, observed live peaks and R-CAP counts. S257 from the byte fixture
-cannot be copied blindly to T2048 token training. No cross-window carried state.
+Proposed flagship train context is T2048 bytes, effective B64; qualification must
+bind feasible accumulation and all exact scale shapes. Eval resets at byte lengths
+128/256/512/1024/2048/4096. Register physical allocation, maximum reachable writes
+including XSA writes, live peaks and R-CAP counts: released cap must never bind.
+No cross-window or cross-document state. Search protocol is separately registered
+in ../x42_pile_scale/BYTE_VELOCITY_PROTOCOL.md.
 
 ## Array and extraction operations — DRAFT DECISIONS
 
@@ -160,8 +149,8 @@ logical-core-day ceiling is host-days times 256, not measured consumed CPU-days.
 **DRAFT DECISION:** reserve that full host envelope and require measured user+system
 CPU seconds in the extraction completion receipt. No CPU-day precision is invented.
 
-For the full attested training stream, **DRAFT DECISION planning assumption** of
-4 raw bytes/token gives R=51,024,211,476 before evaluation: **100.36–122.67 host-days**,
+Historical token-based extraction cost scenario (not the byte allocation):
+R=51,024,211,476 queried positions before evaluation: **100.36–122.67 host-days**,
 up to **25,693–31,405 logical-core-days** at full-host reservation, and about
 **5.00 TB** cache at the observed density (derived arithmetic, not corpus measurement).
 At one queried byte per token the floor scenario is already **25.09–30.67 host-days**.
@@ -176,7 +165,9 @@ the end-to-end column. Pile-head100 follow-up extraction is additional.
 
 ## Cards, phase order and precision — DRAFT DECISIONS
 
-Propose physical card **4**, serially, for qualification and then every arm, with
+Byte search cards are **2/3/4**, one family each; card **1** stays untouched,
+and **0/5/6** are reserved for fork/eval. After searches, propose card **4**
+serially for flagship qualification and every arm, with
 no preemption; leave search card **1** untouched (protocol-shape precedent).
 Use card UUID/model and measured memory envelope, not index alone, in final approval.
 If that card is unavailable, wait or seek an amended allocation. No lease now.
@@ -187,7 +178,7 @@ any matched-exposure extensions or follow-up. This is a spending proposal, not
 an assurance all six arms fit or finish; report failure if the ceiling is exhausted.
 CPU extraction above is additional and may dominate calendar time.
 
-Phase order: (a) receive pure nomination; (b) operator resolves units, precision,
+Phase order: (a) receive all three byte nominations; (b) operator resolves units, precision,
 configs, budget and signs; (c) approve a concrete hash-bound launch amendment;
 (d) serial scale-transfer, arithmetic/gradient/operation and memory qualification;
 (e) determine exposure envelope and extract/verify immutable union caches;
@@ -204,8 +195,8 @@ training and requires an amended receipt rather than an invented score.
   conditional store-BF16 full-step ratios **1.405064x / 1.406169x** versus measured
   **1.474241x / 1.660072x** are insurance scenarios, not a delivered speedup or
   residency proof. Do not halve reported total memory or assume affordability.
-- [ ] Pure nomination committed and scale config/source hashes bound.
-- [ ] Units rule explicitly resolved; byte/token feature bridge certified.
+- [ ] All three byte nominations committed and scale config/source hashes bound.
+- [x] Operator selected BYTE flagship; token board is secondary and separate.
 - [ ] Exact per-arm configs, physical slots, lengths, dropout/fusion and capacity approved.
 - [ ] Active/elapsed/compute budgets, R, storage, CPU-days and card-hours approved.
 - [ ] **Operator signs final launch amendment:** name/date/commit pending.
