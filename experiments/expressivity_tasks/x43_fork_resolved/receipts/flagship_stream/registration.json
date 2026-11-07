@@ -1,0 +1,90 @@
+{
+  "status": "registered_before_extraction",
+  "source": {
+    "path": "/mnt/nvme2n1/erikg/pile.txt",
+    "size": 1307910802540,
+    "inode": 30065036677,
+    "mtime_ns": 1752244499274497590
+  },
+  "index": {
+    "path": "/mnt/nvme2n1/erikg/P100c/pile-head100.sxi2",
+    "size": 63163489696,
+    "inode": 8647923428,
+    "mtime_ns": 1793892068043317202,
+    "sha256": "6e410974ae736669c8ef2ae81305f0129cd0a84607ce7c61edc78295dc5f85e0"
+  },
+  "binary": {
+    "path": "/home/erikg/emender-scratch/c14-xsa-serving/xsa/target/release/xsa",
+    "size": 52257464,
+    "inode": 257055903,
+    "mtime_ns": 1793684899196713505
+  },
+  "binary_sha256": "6416a892a551c8cd1590ee1ffd645384e1fa229076dde656ce0e9a838db1f74c",
+  "query_verdict_sha256": "38c2c0848b95eaaa671f8cb8209a6c847a3b4414ce0fc7b803346a44706b3f65",
+  "raw_index_region_sha256": "de79fe96057b604a71513770111f246ab0e936d3cf56415bcc5a43bba60bbbfd",
+  "manifest": "experiments/expressivity_tasks/x43_fork_resolved/receipts/flagship_stream/documents.jsonl.gz",
+  "manifest_sha256": "48b9095eeccb023ff1cb2a4f6da899a8b3e4eb3b76b2804e730f1d6ad031c414",
+  "identity_stream_sha256": "886a50d5bee4a44a6d33364da6d3cec978d5d6097c498bad213d6f8b24d00b7b",
+  "splits": {
+    "train": {
+      "documents": 238461,
+      "bytes": 1466376229,
+      "targets": 1466137768,
+      "windows": 841983
+    },
+    "calibration": {
+      "documents": 2478,
+      "bytes": 16675615,
+      "targets": 16673137,
+      "windows": 9447
+    },
+    "final_test": {
+      "documents": 2462,
+      "bytes": 16703140,
+      "targets": 16700678,
+      "windows": 9455
+    }
+  },
+  "context": 2048,
+  "consultation_cap": 1024,
+  "features": 260,
+  "order": "source byte offset ascending within each split; all six arms consume the same training prefix, no wrap; stop before exhaustion pending amendment",
+  "split_rule": "sha256 integer mod 100: 0 calibration, 1 final_test, otherwise train; identical contents always same split",
+  "window_rule": "start=0,2048,... < length-1; targets=min(2048,length-1-start); reset state each window; no padding targets; causal context raw[max(start,target-1024):target]",
+  "exposure_precedent": {
+    "path": "experiments/expressivity_tasks/x40_emender_lm/REPORT_PART8.md",
+    "sha256": "b5ab2c897206bfdc8e3b26fbe6ac7c3bdfe2e5320faf4fe30f1f10e1a5d905cb",
+    "scope": "historical token throughput planning only, not byte throughput guarantee",
+    "T2048_B64_rates": {
+      "transformer": 6233.1,
+      "gdn2": 6363.6,
+      "pure": 1823.2
+    },
+    "seconds": 86400,
+    "max_projected_targets": 549815040.0,
+    "training_margin_factor": 2.6666017866662943
+  },
+  "extraction": {
+    "positions": 1499511583,
+    "cache_bytes_at_113": 169444808879,
+    "floor_bytes": 150000000000,
+    "baseline_rates": [
+      5884.18,
+      4814.02
+    ],
+    "projected_host_days": [
+      2.9495117648634257,
+      3.6051902851616884
+    ],
+    "not_measured_cpu_days": true,
+    "stop_line": "exact registered stream only; disk floor failure; no automatic extension",
+    "storage_reservation_bytes": 200000000000,
+    "logical_core_day_planning_ceiling": 922.9287130013922
+  },
+  "limitations": [
+    "Training still gated on nominations, qualification and approval.",
+    "Primary T2048 caches only; alternative-reset length sweeps need distinct extraction.",
+    "Historical throughput is a sizing prior; stop before stream exhaustion if scale throughput exceeds margin.",
+    "Span disjointness does not prove substring uniqueness."
+  ]
+}

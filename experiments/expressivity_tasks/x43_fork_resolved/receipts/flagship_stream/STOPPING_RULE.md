@@ -1,0 +1,19 @@
+# Flagship stream registration, 2026-11-07
+
+Operator work order authorizes this nomination-independent stream registration and CPU extraction. It does not release flagship training gates.
+
+Register all 243,401 full documents in the geometry sample, in increasing source offset, fully outside [0,100e9). Content SHA256 modulo 100 assigns calibration (0), final test (1), otherwise training. Identical document contents necessarily have the same split. Compressed documents.jsonl.gz contains identities, offsets, lengths, hashes, split assignments; registration.json hashes its exact bytes and the identity stream matches the prior geometry receipt.
+
+All six arms and both seeds consume prefixes of the same 238,461-document training stream. No wrap, reordering, or cross-document packing. T2048 windows advance by 2048 within each document, keep the final real tail, and reset model and consultation state. Shifted targets total 1,466,137,768. Calibration and test are complete separate document streams (16,673,137 and 16,700,678 targets). Consultation has its registered 1024-byte causal suffix cap. Primary T2048 reset geometry only: length-sweep reset geometries need separate caches.
+
+X40 REPORT_PART8.md T2048/B64 historical rates imply 538,539,840 transformer, 549,815,040 GDN2, and 157,524,480 pure positions per 24 active hours. The full registered span is 2.6666 times the largest precedent (166.66% extra). These token-era rates size an envelope; they do not establish byte-scale throughput. Equal-time arms consume unequal prefixes, with complete-update overshoot recorded. Stop before exhausting the registered stream and amend prospectively if the margin proves insufficient. No post-test selection or automatic continuation. Training remains separately gated on the three byte nominations, qualified configs, and approval.
+
+Extract each position once, shared immutably by arms 5–6 and seeds when feature/reset identities match. Dense arms require no features. Exact extraction stop line: 1,499,511,583 positions including held-out streams. Versioned FLAGSHIPSPARSE2 storage widens context lengths to 16 bits and permits T2048 windows (legacy C14SPARSE1 only permits T128). Sparse storage represents the entire registered 260-scalar feature vector, retaining full decode parity; it is not a reduced feature set. At 113 bytes/position the reservation is 169.45GB. Disk guard retains 150GB free and fails rather than deleting anything. The historical end-to-end rates project 2.95–3.61 host days; this is not measured CPU time or a guarantee for new content. Systemd CPUAccounting records cumulative service CPU consumption; completion must retain it. Reserve at most 3.61×256=923 logical-core-days as a planning ceiling, not measured CPU-days. No work outside this finite registration is authorized.
+
+Heartbeat paths under /home/erikg/flagship_consultation_features:
+- union_console.jsonl: committed windows/positions, seconds, timestamp per shard.
+- union_service.jsonl: service starts, phase boundaries, failures and union_complete.
+- {calibration,final_test,train}/journal.jsonl: fsynced write intents, shard hashes, full row parity, exhaustive suffix parity samples.
+- union_stderr.txt: retained errors.
+
+Service emender-flagship-union.service uses 128 CPU threads and empty CUDA_VISIBLE_DEVICES; no GPU leases. It inherits the union service's intent-bound crash recovery and fail-closed corruption/disk behavior. Phases calibration, final_test, train. Every native server start compares all 17 oracle contexts to the independent full-region verified answers. A service exit alone is not completion: require union_complete and all target counts. A unit killed abnormally restarts; ordinary exceptions remain failed for inspection. No existing search/service or lease holder is changed.

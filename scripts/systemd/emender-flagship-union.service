@@ -1,0 +1,20 @@
+[Unit]
+Description=X42/X43 registered beyond-boundary flagship extraction (CPU only)
+StartLimitIntervalSec=3600
+StartLimitBurst=3
+[Service]
+Type=simple
+WorkingDirectory=/home/erikg/emender
+ExecStart=/home/erikg/emender/.venv/bin/python -m experiments.expressivity_tasks.x43_fork_resolved.flagship_union_service
+Environment=CUDA_VISIBLE_DEVICES=
+Environment=PYTHONUNBUFFERED=1
+Restart=on-abnormal
+RestartSec=15
+KillMode=control-group
+TimeoutStopSec=90
+CPUAccounting=yes
+UMask=0077
+StandardOutput=append:/home/erikg/flagship_consultation_features/union_console.jsonl
+StandardError=append:/home/erikg/flagship_consultation_features/union_stderr.txt
+[Install]
+WantedBy=default.target
