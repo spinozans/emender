@@ -48,3 +48,18 @@ def test_masked_chunked_loss_has_real_byte_normalization():
     reference=torch.autograd.grad(expected,(hidden,weight))
     for a,b in zip(gradients,reference): torch.testing.assert_close(a,b)
     assert gradients[0][labels.eq(-100)].eq(0).all()
+
+
+def test_occupancy_slopes_use_one_document_prefix(tmp_path):
+    source=tmp_path/'pile'; index=tmp_path/'offsets'
+    texts=[b'a'*700,b'b'*1200,bytes(range(256))*20]
+    source.write_bytes(b''.join(texts)); offset=0; rows=[]
+    for i,text in enumerate(texts):
+        rows.append(dict(source_index=i,split='valid',byte_offset=offset,byte_length=len(text),sha256=hashlib.sha256(text).hexdigest())); offset+=len(text)
+    index.write_text(''.join(json.dumps(r)+'\n' for r in rows))
+    probes=ByteStream(source,index).slope_windows()
+    assert [len(r[2]) for r in probes]==[512,1024,2048,4096]
+    assert all(r[0]==2 and r[1]==0 for r in probes)
+    for row in probes:
+        assert row[2].tobytes()==probes[-1][2][:len(row[2])].tobytes()
+        assert row[3].tobytes()==probes[-1][3][:len(row[3])].tobytes()

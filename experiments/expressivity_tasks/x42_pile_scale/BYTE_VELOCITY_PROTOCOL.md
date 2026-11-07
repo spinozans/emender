@@ -33,8 +33,9 @@ T2048; incomplete tails are excluded from proxy validation for every family.
 Training tails remain retained. This prevents padded positions from entering
 occupancy/degeneracy telemetry and fixes evaluation shapes. NLL is weighted by
 actual target bytes. This is proxy search
-validation, not the flagship final test. Pure occupancy slopes use the first
-full valid-document window at each of 512/1024/2048/4096 bytes. No cross-document
+validation, not the flagship final test. Pure occupancy slopes use 512/1024/2048/4096-byte prefixes of the SAME first
+full 4096-byte valid-document window (source_index 289, start 0). Every probe
+therefore holds document content/start fixed while changing only length. No cross-document
 window is allowed. Final 1.3B calibration/final-test must be document-disjoint,
 frozen separately with every proxy-validation document excluded from final test;
 proxy scores cannot be reported as final-test outcomes. The first proxy documents
@@ -88,3 +89,8 @@ were interrupted and discarded, with retained spans, because varying tail shapes
 caused native kernel compilation to dominate the pure first update. Fixed-shape
 masked padding and full-window proxy validation supersede exact-tail grouping.
 All candidates restart from initialization under the new hash-bound registration.
+
+Common-prefix scoring amendment before any completed score: the length probes
+now share source document 289, start 0, preserving the standing length-only
+occupancy intervention. Prior per-length document selection is superseded.
+All unscored attempts are retained and discarded; populations remain unchanged.

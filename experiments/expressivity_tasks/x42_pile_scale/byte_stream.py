@@ -41,3 +41,9 @@ class ByteStream:
                 rows = []
         if rows:
             yield rows
+
+    def slope_windows(self):
+        """Length-only intervention: identical document/start for every probe."""
+        anchor = next(row for row in self.windows('valid', 4096) if len(row[2]) == 4096)
+        return [(anchor[0], anchor[1], anchor[2][:length], anchor[3][:length])
+                for length in (512, 1024, 2048, 4096)]

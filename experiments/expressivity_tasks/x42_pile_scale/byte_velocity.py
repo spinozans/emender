@@ -143,8 +143,8 @@ def evaluate(model, stream, arm):
         if arm != 'pure':
             return dict(score=nll, nll_heldout=nll, eval_targets=targets)
         peaks = []
-        for length in (512,1024,2048,4096):
-            row = next(r for r in stream.windows('valid', length) if len(r[2]) == length)
+        for row in stream.slope_windows():
+            length = len(row[2])
             x,y,_ = next(grouped([row],1,length)); model.loss(x,y)
             peaks.append([r['peak_live_per_head'][0] for r in telemetry(model)])
         count = len(samples[0])
