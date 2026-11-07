@@ -274,3 +274,19 @@ Never discard impossible targets or reinterpret the conditional array as a bound
 Historical X40-era 1.3B arms are context only: different corpus, optimizer/kernel,
 precision, lengths and exposure prohibit calling them matched controls. This
 DRAFT's numerical priors are evidence for decisions, not terminal acceptance.
+
+## Operator work order — flagship stream and CPU extraction, 2026-11-07
+
+The operator separately authorized nomination-independent stream registration and
+CPU extraction now. [Frozen registration](receipts/flagship_stream/registration.json)
+and [stopping rule](receipts/flagship_stream/STOPPING_RULE.md) bind all six arms to
+the same beyond-100GB source-order training prefix, document-disjoint calibration
+and test, and primary T2048 windows. This authorization supersedes the extraction
+phase-order dependency above for this finite stream only. Training nomination,
+qualification, config and approval gates remain pending. The index/executable,
+manifest, ordering, split and source identities are frozen in that registration.
+The 1,499,511,583-position extraction has a 200GB storage reservation with a 150GB
+free floor; historical end-to-end rates project 2.95–3.61 host days. These are
+planning estimates, not measurements of this new stream. The managed service is
+`emender-flagship-union.service`; heartbeat paths and failure policy are in the
+stopping rule. Alternative evaluation reset lengths require distinct extraction.

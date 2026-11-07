@@ -1,0 +1,49 @@
+{
+  "status": "attested_launch_first_hour_sample_not_extraction_completion",
+  "timestamp": 1794077262.408606,
+  "registration_commit": "2e022242",
+  "runner_commit": "37ad8c3d",
+  "registration_pushed_before_service_start": true,
+  "service": "emender-flagship-union.service",
+  "linger": "Linger=yes",
+  "oracle_contexts_passed": 17,
+  "shards": 19,
+  "committed_windows": 304,
+  "committed_positions": 486429,
+  "sample_interval_seconds": 101.31804943084717,
+  "sample_targets_per_second": 4573.2029248771705,
+  "first_phase_startup_inclusive_targets_per_second": 1312.1192845445948,
+  "projected_remaining_host_days_at_sample_rate": 3.7938023867074055,
+  "cache_density_bytes_per_position": 28.255054694518623,
+  "disk_free_bytes": 1068304437248,
+  "floor_bytes": 150000000000,
+  "parity": "all committed shards full row roundtrip plus three exhaustive suffix samples per shard; 17 independent brute-force oracle contexts passed",
+  "independent_saved_shard_checks": [
+    {
+      "file": "00000000.sparse",
+      "sha256": "8f48e80de01406bcd34eac9bad4415f122e6b09acaf353d130386990c83413f5",
+      "positions": 23081,
+      "decoded_260_scalar_features": true
+    },
+    {
+      "file": "00000144.sparse",
+      "sha256": "fcb04711a664bae3c914c8a2c6b8dfcce8af6e943dded71bfc724eb2a56498b4",
+      "positions": 29098,
+      "decoded_260_scalar_features": true
+    },
+    {
+      "file": "00000288.sparse",
+      "sha256": "134ba6eb3c7bc34bef7f1437a99c95e1cfa3e001901bfd7070e2dae6a8961ba1",
+      "positions": 24665,
+      "decoded_260_scalar_features": true
+    }
+  ],
+  "crash_proof": "11 passing tests include torn journal, intent-bound orphan replay, corruption fail closed, pending-write disk floor, new T2048/1024-byte codec; no live production crash injected",
+  "cpu_accounting": "systemd CPUUsageNSec includes live native process; console cpu_seconds includes Python and reaped children only",
+  "residual_risks": [
+    "Short calibration sample is not sustained whole-stream throughput.",
+    "Index initialization took about four minutes and service memory is about 419GB; restart repeats initialization.",
+    "Training gates remain pending; alternate reset length sweeps require separate caches.",
+    "contact_supervisor tool is unavailable in this runtime; no intercom coordination was possible."
+  ]
+}
