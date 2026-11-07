@@ -3011,8 +3011,8 @@ Paths are repository-relative. `emender` is this repository; `sxgc` is the exter
         {
           "repo": "emender",
           "path": "experiments/expressivity_tasks/x43_fork_resolved/POSITIONING.md",
-          "commit": "fd43f34c15d06d96e8116dd094c22bc68c82d3cd",
-          "sha256": "74c9a1dec3ea3587b0e1c0ecf70207b01c3399d88e36b7d7b797cb9808e69a24"
+          "commit": "8e4681188ad5ca2d7ebb10162d4c93c295212425",
+          "sha256": "9a9ea62f6f63f3ad692cad6045483299ace955639f16b4e79af8ec567ff42f4d"
         },
         {
           "repo": "emender",
