@@ -30,7 +30,7 @@ def oracle_check(server):
     reg=json.loads((ROOT/'receipts/p100_query_verification/registration.json').read_text())
     oracle=json.loads((ROOT/'receipts/p100_query_verification/native.json').read_text())
     got=server.query([bytes.fromhex(p['hex']) for p in reg['patterns']])
-    assert got==oracle, '17-context brute-force oracle parity failed'
+    assert json.loads(json.dumps(got))==oracle, '17-context brute-force oracle parity failed'
 
 
 def phase_windows(audit, phase):

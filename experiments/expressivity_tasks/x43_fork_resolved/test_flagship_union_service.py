@@ -33,3 +33,17 @@ class CodecTests(unittest.TestCase):
         decoded=list(read_windows(BytesIO(out.getvalue())))
         self.assertEqual(decoded,[(100000000071,2048,rows)])
         self.assertEqual([features(r) for r in decoded[0][2]],[features(r) for r in rows])
+
+class OracleTests(unittest.TestCase):
+    def test_verified_oracle_accepts_native_tuple_branches(self):
+        from unittest.mock import patch
+        from experiments.expressivity_tasks.x43_fork_resolved.flagship_union_service import oracle_check, ROOT
+        oracle=json.loads((ROOT/'receipts/p100_query_verification/native.json').read_text())
+        native=[dict(row,branches=[tuple(p) for p in row['branches']]) for row in oracle]
+        class Server:
+            def query(self, patterns):
+                assert len(patterns)==17
+                return native
+        oracle_check(Server())
+        native[0]['width']+=1
+        with self.assertRaises(AssertionError):oracle_check(Server())
