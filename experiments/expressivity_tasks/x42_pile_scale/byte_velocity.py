@@ -110,24 +110,30 @@ def model_for(arm, policy):
     return model
 
 
-def grouped(rows, microbatch):
-    # Equal-length subgroups need no padding; each row remains a separate reset.
+def grouped(rows, microbatch, context=2048):
+    # Causal right padding cannot affect preceding real targets; no carried state.
     for at in range(0, len(rows), microbatch):
         chunk = rows[at:at+microbatch]
-        for length in sorted(set(len(r[2]) for r in chunk)):
-            selected = [r for r in chunk if len(r[2]) == length]
-            yield (torch.as_tensor(np.stack([r[2] for r in selected]), device='cuda'),
-                   torch.as_tensor(np.stack([r[3] for r in selected]), device='cuda'))
+        x = np.zeros((len(chunk), context), dtype=np.int64)
+        y = np.full_like(x, -100)
+        valid = 0
+        for j, row in enumerate(chunk):
+            length = len(row[2])
+            if not 0 < length <= context:
+                raise ValueError('window length exceeds context')
+            x[j,:length] = row[2]; y[j,:length] = row[3]; valid += length
+        yield torch.as_tensor(x,device='cuda'), torch.as_tensor(y,device='cuda'), valid
 
 
 def evaluate(model, stream, arm):
     model.eval()
     losses = []; samples = []; targets = 0
     with torch.no_grad():
-        for i, row in enumerate(stream.windows('valid')):
+        full_windows = (r for r in stream.windows('valid') if len(r[2]) == 2048)
+        for i, row in enumerate(full_windows):
             if i == 24:
                 break
-            x, y = next(grouped([row], 1))
+            x, y, _ = next(grouped([row], 1))
             losses.append(float(model.loss(x,y))*y.numel()); targets += y.numel()
             if arm == 'pure':
                 samples.append(telemetry(model))
@@ -139,7 +145,7 @@ def evaluate(model, stream, arm):
         peaks = []
         for length in (512,1024,2048,4096):
             row = next(r for r in stream.windows('valid', length) if len(r[2]) == length)
-            x,y = next(grouped([row],1)); model.loss(x,y)
+            x,y,_ = next(grouped([row],1,length)); model.loss(x,y)
             peaks.append([r['peak_live_per_head'][0] for r in telemetry(model)])
         count = len(samples[0])
         slopes = [0. if min(p[h] for p in peaks)<=0 else float(np.polyfit(np.log([512,1024,2048,4096]),np.log([p[h] for p in peaks]),1)[0]) for h in range(count)]
@@ -178,13 +184,14 @@ def train(arm, policy_path, output):
             for group in optimizer.param_groups:
                 group['lr'] = policy.lr*min(1., (step+1)/policy.warmup_steps)
             loss_sum = 0.
-            for x,y in grouped(rows, 8 if arm == 'pure' else policy.microbatch):
+            for x,y,valid in grouped(rows, 8 if arm == 'pure' else policy.microbatch):
                 loss = model.loss(x,y)
                 if arm == 'pure':
-                    loss = loss + policy.gate_cost_lambda*model.gate_mean
+                    # ChunkedLoss sums ignore_index=-100 but divides by all positions.
+                    loss = loss*(y.numel()/valid) + policy.gate_cost_lambda*model.gate_mean
                 if not torch.isfinite(loss):
                     raise FloatingPointError('nonfinite loss')
-                (loss*(y.numel()/n)).backward(); loss_sum += float(loss.detach())*y.numel()/n
+                (loss*(valid/n)).backward(); loss_sum += float(loss.detach())*valid/n
             torch.nn.utils.clip_grad_norm_(model.parameters(),1.,error_if_nonfinite=True); optimizer.step()
             torch.cuda.synchronize(); elapsed += time.monotonic()-start; step+=1; targets+=n
             log.write(json.dumps(dict(step=step, active_seconds=elapsed, bytes=targets, loss=loss_sum, time_ns=time.time_ns()))+'\n')

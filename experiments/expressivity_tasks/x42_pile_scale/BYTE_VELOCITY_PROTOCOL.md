@@ -23,15 +23,22 @@ C14 take-4 mapping: 7,831,213 matched receipts, two token-truncated exclusions,
 all consumed document slices are SHA256-checked against the registered mapping.
 No text is materialized. Omitted documents/gaps never enter inputs. Exhaustion
 fails, never wraps. Each shifted input/target row stays within one document;
-short tails are retained and grouped by exact length, without padding. Every
+short tails are retained with causal right padding; all padded targets are -100
+and excluded from loss and real-byte denominators. Pure ChunkedLoss is explicitly
+rescaled from total-position normalization to valid-byte normalization. Every
 row starts fresh model state. Training uses source-order train documents.
 
-Search validation uses the first 24 source-order valid-document windows at
-T2048 (tails retained), weighted by actual target bytes. This is proxy search
+Search validation uses the first 24 full source-order valid-document windows at
+T2048; incomplete tails are excluded from proxy validation for every family.
+Training tails remain retained. This prevents padded positions from entering
+occupancy/degeneracy telemetry and fixes evaluation shapes. NLL is weighted by
+actual target bytes. This is proxy search
 validation, not the flagship final test. Pure occupancy slopes use the first
 full valid-document window at each of 512/1024/2048/4096 bytes. No cross-document
 window is allowed. Final 1.3B calibration/final-test must be document-disjoint,
-frozen separately; proxy scores cannot be reported as final-test outcomes.
+frozen separately with every proxy-validation document excluded from final test;
+proxy scores cannot be reported as final-test outcomes. The first proxy documents
+belong to the existing C14 calibration half, never its final-test half.
 
 Baselines score held-out raw byte NLL only. Pure scores raw byte NLL +
 0.01 * mean live occupancy fraction + standing degeneracy penalties: dead store
@@ -75,3 +82,9 @@ optimistic pace is 72h/3 days but requires fewer charged seconds than this seria
 population budget. Honest planning horizon is about 4.5–5+ days, not a guaranteed
 3-day completion. Three cards run concurrently. No DiLoCo behavior changes;
 resilient-compute-pool requirement IDs are inapplicable.
+
+Engineering amendment before any scored endpoint: the first unscored attempts
+were interrupted and discarded, with retained spans, because varying tail shapes
+caused native kernel compilation to dominate the pure first update. Fixed-shape
+masked padding and full-window proxy validation supersede exact-tail grouping.
+All candidates restart from initialization under the new hash-bound registration.

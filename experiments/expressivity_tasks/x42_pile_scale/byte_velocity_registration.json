@@ -391,7 +391,7 @@
     "documents_index_sha256": "28945dc112cf643b583de82db7673ef17aa1cd20aeb2c01e53685b94137a0c7f",
     "binding_receipt": "experiments/expressivity_tasks/x43_fork_resolved/receipts/c14_dense/pile_span.json",
     "binding_receipt_sha256": "c02e7882f19f2b3841c1fbd1899d7affca5d4f793742cf74307ecf8d55650668",
-    "policy": "source-order train/valid; all admitted documents; per-document SHA checked at consumption; no wrap; tails grouped without padding"
+    "policy": "source-order train/valid; all admitted train tails retained; per-document SHA at consumption; no wrap; fixed T2048 causal right padding, -100 targets masked; first24 full valid windows for every family"
   },
   "sources": {
     "/home/erikg/GatedDeltaNet-2/lit_gpt/__init__.py": "9c729171bafbebd058f1430d473afa96e41ff1680a95264a2c7de429079953d7",
@@ -591,17 +591,17 @@
     "experiments/expressivity_tasks/x40_emender_lm/v1_receipts.py": "7a242290a33d5e8ce896442619e7d36cb58ed0aa54c393cafd87e1112616b20f",
     "experiments/expressivity_tasks/x40_emender_lm/validate_receipts.py": "d9063c4354a398c2575c006b308cf889311b2807218c9a8b1bfeb8a6212164b3",
     "experiments/expressivity_tasks/x40_emender_lm/validation_tail.py": "897bdcb0e99785939736581e52bbafcc6a426e09bb9aa294adb209305a122562",
-    "experiments/expressivity_tasks/x42_pile_scale/BYTE_VELOCITY_PROTOCOL.md": "e9ba2f3afdceed55898961f11b3c6bd59ba2f62adbf4b05e9f37d9edb0196021",
+    "experiments/expressivity_tasks/x42_pile_scale/BYTE_VELOCITY_PROTOCOL.md": "32a20e10f494d7eae0abe33458c03329d97c009b74f859c8998af0e1401a1a59",
     "experiments/expressivity_tasks/x42_pile_scale/VELOCITY_PROTOCOL.md": "29855dfd300a65e0d5bfcdd036ab21d9ed112cc15661fa818fe7f121945c0444",
     "experiments/expressivity_tasks/x42_pile_scale/baseline_search/run_leased.sh": "846d6385e3694a3d694c357f04e77be87c1ee594663c77294da2278e539e85a2",
     "experiments/expressivity_tasks/x42_pile_scale/byte_stream.py": "103b83b6a8749613b0f155d1c3f22574eee321db13161d1ac8f2a28ee588b795",
-    "experiments/expressivity_tasks/x42_pile_scale/byte_velocity.py": "dd4cd56bebb42b66cc1d53762c18f4df4f488b14861eb672b6cd4f95b3df71bb",
+    "experiments/expressivity_tasks/x42_pile_scale/byte_velocity.py": "d2e0fa8891f0a9bc20b855b2b6666bcf8dc30aab4e0967e5443074f3c58f4dda",
     "experiments/expressivity_tasks/x42_pile_scale/byte_velocity_watch.py": "bd2de6a69cf32832bceee39b3aad0921f54d32c2005e3d621f00df8db0602253",
     "experiments/expressivity_tasks/x42_pile_scale/cmaes.py": "10b54d1fa2dd907ac51255389814b71d57bf299f3ca5353cdad1b2ceea4e5215",
     "experiments/expressivity_tasks/x42_pile_scale/mimetic_init.py": "7747e81647f27e297e640ab4d950bf8b2e78f790dab12bf9dfd6e2676621ae66",
     "experiments/expressivity_tasks/x42_pile_scale/run_byte_velocity_leased.sh": "a26270752f1b672b30be54d3f25713cfe654eb581133c7f7ed8e45a32b8890d5",
     "experiments/expressivity_tasks/x42_pile_scale/run_leased.sh": "05b5ef58d68f88e4bc401b316daf956e13073d960b30d2c734429f6b71ce3167",
-    "experiments/expressivity_tasks/x42_pile_scale/tests/test_byte_velocity.py": "3d9589a5c409a3210c3953845946d24d1059e0cef0871f7d0652032eaa408da1",
+    "experiments/expressivity_tasks/x42_pile_scale/tests/test_byte_velocity.py": "4b1e90c1881f70c6e8143297f12c15fa3e6d6bd2a63f08c94019a7b591d34e7b",
     "experiments/expressivity_tasks/x42_pile_scale/tests/test_velocity_baseline_search.py": "8f9255dc761196ff8e62557356b6fd8e92fb035612af0836e47ecb50b5110872",
     "experiments/expressivity_tasks/x42_pile_scale/tests/test_velocity_candidate.py": "1499a5f1ab8eabf390b67c9d23851d3ce63303fb47c158d0e00939e25e4562d0",
     "experiments/expressivity_tasks/x42_pile_scale/tests/test_velocity_parent.py": "418adcae67a9a329cf9e7f343379569bf86825063d0efaa081e0a63bae96e2d8",
@@ -632,5 +632,6 @@
     "transformer": 2,
     "gdn2": 3,
     "pure": 4
-  }
+  },
+  "engineering_amendment": "No score banked under preceding registration; exact-tail engineering attempts discarded and retained in launch receipts; restart same CMA population with fixed-shape masked training and full-window proxy evaluation"
 }

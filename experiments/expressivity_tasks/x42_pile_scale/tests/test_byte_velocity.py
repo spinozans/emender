@@ -31,3 +31,20 @@ def test_byte_capacity_and_space(arm):
     assert abs(sum(p.numel() for p in model.parameters())/CAPACITY-1)<.001
     embedding=model.embed if arm=='pure' else model.model.embed
     assert embedding.num_embeddings==256
+
+
+def test_masked_chunked_loss_has_real_byte_normalization():
+    import torch
+    from experiments.expressivity_tasks.x36_tape_perf.loss import ChunkedLoss
+    torch.manual_seed(3)
+    hidden=torch.randn(2,4,3,requires_grad=True)
+    weight=torch.randn(256,3,requires_grad=True)
+    labels=torch.tensor([[0,255,-100,-100],[4,2,8,-100]])
+    valid=labels.ne(-100).sum()
+    actual=ChunkedLoss.apply(hidden,weight,labels,4)*labels.numel()/valid
+    expected=torch.nn.functional.cross_entropy(torch.nn.functional.linear(hidden,weight).reshape(-1,256),labels.reshape(-1))
+    torch.testing.assert_close(actual,expected)
+    gradients=torch.autograd.grad(actual,(hidden,weight))
+    reference=torch.autograd.grad(expected,(hidden,weight))
+    for a,b in zip(gradients,reference): torch.testing.assert_close(a,b)
+    assert gradients[0][labels.eq(-100)].eq(0).all()
