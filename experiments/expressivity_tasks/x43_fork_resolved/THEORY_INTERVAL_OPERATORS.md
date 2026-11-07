@@ -116,6 +116,11 @@ its registered budget, while retaining an entropy-dependent accuracy ordering.
 
 ### Family-by-family mapping
 
+The terminal comparison of these families is proposed in the
+[six-arm 1.3B registration DRAFT](PREREGISTRATION_1P3B.md). It is awaiting the pure
+nomination and operator sign-off; this pointer records no scale result or launch
+authorization.
+
 - **Transformer (dense)**: KV cache = a per-document dynamic index, built
   exactly at inference but unbounded (the program's receipted unbounded arm);
   learned attention keys = fuzzy matching = approximate intervals; induction

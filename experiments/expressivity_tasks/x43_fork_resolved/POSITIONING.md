@@ -110,3 +110,10 @@ consultation capturing most of this gate recipe's benefit, not proof of a
 causal absorption mechanism. Literal C13 exact walks still fail with infinite
 total loss on 30,751,940 forced-zero targets. Every sign and the distance
 ladder are retained in [the first-pass table](RESULT_C14_FIRST_PASS.md).
+
+## Next step
+
+The [six-arm terminal 1.3B registration DRAFT](PREREGISTRATION_1P3B.md) is the next
+operator review artifact. Training remains gated on the pure-search nomination
+and explicit operator sign-off, including resolution of the token/byte rule and
+extraction, precision and card-hour budgets.
