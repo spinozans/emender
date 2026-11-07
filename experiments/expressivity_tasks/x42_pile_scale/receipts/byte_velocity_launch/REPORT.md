@@ -43,9 +43,25 @@ this is measured overhead, not a claimed pure throughput advantage.
 
 Generation 1's 12 sampled candidate vectors and complete CMA/RNG state per family
 are persisted in runs/byte_velocity_{transformer,gdn2,pure}_v1/generation.json.
-At the all-advancing launch snapshot no completed score had yet been banked.
-A policy/start receipt is not a scored candidate. First-endpoint verification is
-pending; do not infer it from the running scope units.
+All three first candidates completed and their scores were banked in the atomic
+generation states. `first_banked_scores.json` retains complete results, policies,
+result/state hashes, measured byte counts and registration identities. Every
+result is eligible, has at least 2700 active seconds and evaluates 49,152 real byte
+targets. These are generation-1 candidate-0 proxy results, not nominations or
+final-test comparisons.
+
+| Family | Active seconds | Real training byte targets | Proxy NLL (nats/byte) | Search score |
+|---|---:|---:|---:|---:|
+| transformer | 2701.100 | 100,300,090 | 1.633290842 | 1.633290842 |
+| gdn2 | 2701.021 | 84,833,095 | 1.478350341 | 1.478350341 |
+| pure | 2702.710 | 5,944,489 | 3.275108536 | 3.347923984 |
+
+The derived evaluation wall times were 0.390s / 2.675s / 77.879s for
+transformer / GDN2 / pure. Pure's score includes the registered penalties;
+compare raw NLL separately. Both baseline evaluations emitted checkpoint warnings
+under no_grad; their completed finite scores and banked generation states are
+retained. These warnings are not training failures.
+
 
 ## Artifact heartbeat for the parent
 
@@ -99,3 +115,18 @@ The discarded engineering attempts consumed at least 1.749 active
 card-hours in completed updates across three cards. Additional in-flight partial
 updates and setup/execution overhead were lost and are not quantified as saved
 progress. No checkpoint recovery or zero-cost retry is claimed.
+
+## Final fresh progress checks
+
+`post_bank_progress_before.json` and `post_bank_progress_final.json` prove fresh
+step/real-byte/log growth in each family's next candidate under the same live
+wrapper PID/starttime. All wrappers still have PPID=1, matching live broker
+ownership and renewed heartbeats. Each family has one banked score and is
+continuing generation 1. `artifact_heartbeat_final.json` independently records
+current growth and banked scores, with no stale/failure flags. Source stat identity
+still matches the registration; token service and reserved-card evidence are
+refreshed separately.
+
+Latest next-candidate counters: transformer step 295 / 32,266,763 real byte targets, gdn2 step 231 / 25,234,177 real byte targets, pure step 1 / 96,023 real byte targets.
+
+Pure's second candidate completed its first update in 481.990 active seconds, including cold native compilation. This observed overhead is retained inside its 2700-second budget; setup/compilation is not represented as completed optimizer steps. Future overhead/failures can extend the horizon.
