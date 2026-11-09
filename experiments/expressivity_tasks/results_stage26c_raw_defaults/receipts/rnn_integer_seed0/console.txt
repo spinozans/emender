@@ -1,0 +1,294 @@
+[1/8] Prepare /tmp directories: /tmp/x26c-rnn-pipeline
+[2/8] Create or reuse venv: /tmp/x26c-rnn-venv
+  [reuse] venv exists
+[3/8] Configure pip cache/temp to /tmp
+[4/8] Upgrade pip tooling
+Requirement already satisfied: pip in /tmp/x26c-rnn-venv/lib/python3.12/site-packages (26.2.2)
+Requirement already satisfied: setuptools in /tmp/x26c-rnn-venv/lib/python3.12/site-packages (84.2.1)
+Requirement already satisfied: wheel in /tmp/x26c-rnn-venv/lib/python3.12/site-packages (0.48.0)
+Requirement already satisfied: packaging>=24.0 in /home/erikg/emender/.venv/lib/python3.12/site-packages (from wheel) (26.2)
+[5/8] Ensure torch installed (CUDA wheels: cu126)
+  [skip] torch already installed
+[6/8] Install deps
+Requirement already satisfied: numpy in /tmp/x26c-rnn-venv/lib/python3.12/site-packages (2.5.4)
+Requirement already satisfied: tqdm in /tmp/x26c-rnn-venv/lib/python3.12/site-packages (4.70.1)
+
+====================
+[7/8] Environment
+====================
+Python: 3.12.3
+Torch : 2.9.1+cu128
+CUDA  : 12.8
+CUDA avail: True
+GPU: NVIDIA RTX 6000 Ada Generation
+NumPy : 2.5.4
+
+====================
+[8/8] Run training
+====================
+Command: python3 -u /home/erikg/emender/experiments/expressivity_tasks/results_stage26_replication/sources/LinearRNN/imm_unbound/train_rnn.py --data_dir /home/erikg/emender/experiments/expressivity_tasks/results_stage26b_native_control/datasets --alphabet pm1 --rnn_type gru --d_model 256 --hidden 256 --layers 2 --dropout 0.3 --cuda --amp --amp_dtype bf16 --batch_size 256 --lr 3e-4 --weight_decay 1e-2 --grad_clip 1.0 --warmup_steps 1000 --aux_loss_weight 0.3 --curriculum_min_T 5 --curriculum_epochs 150 --epochs 500 --max_steps 30000 --eval_every 2 --patience 100 --early_stop finalAcc --num_workers 2 --prefetch_factor 4 --persistent_workers --save_path /home/erikg/emender/experiments/expressivity_tasks/results_stage26c_raw_defaults/rnn_integer_seed0/checkpoint.pt
+[Auto] inferred max_T(all splits)=300 => max_len=301
+[Device] cuda
+[Task] NO-MOD final binary | input-only (no teacher forcing) | y at final MAT
+[Data] /home/erikg/emender/experiments/expressivity_tasks/results_stage26b_native_control/datasets alphabet=pm1
+[Model] GRU max_len=301 d_model=256 hidden=256 layers=2 dropout=0.3
+[Perf] batch_size=256 workers=2 bucket_size=4096 amp=True bf16
+[Train] hard cap max_steps=30000
+[Preload] train_src.txt n=70000
+[Curriculum] train T: 5 -> 100 over 150 epochs
+[Params] 0.79M
+[LR schedule] warmup=1000 steps, cosine decay to 10% of --lr by step 30000
+[Step 000001/30000] loss=0.8648
+Epoch 001 | steps=17 | train loss=0.8385 finalAcc=66.11% | (val skipped)
+Epoch 002 | steps=34 | train loss=0.8237 finalAcc=68.43% | val loss=0.9846 finalAcc=52.52% | best(finalAcc)=0.525218 bad=0/100 [saved]
+Epoch 003 | steps=54 | train loss=0.8115 finalAcc=69.69% | (val skipped)
+Epoch 004 | steps=76 | train loss=0.8072 finalAcc=69.56% | val loss=1.0262 finalAcc=52.52% | best(finalAcc)=0.525218 bad=1/100
+Epoch 005 | steps=98 | train loss=0.8076 finalAcc=69.65% | (val skipped)
+Epoch 006 | steps=123 | train loss=0.8007 finalAcc=70.20% | val loss=1.0476 finalAcc=52.52% | best(finalAcc)=0.525218 bad=2/100
+Epoch 007 | steps=148 | train loss=0.7994 finalAcc=70.23% | (val skipped)
+Epoch 008 | steps=176 | train loss=0.7968 finalAcc=70.24% | val loss=1.0249 finalAcc=52.52% | best(finalAcc)=0.525218 bad=3/100
+Epoch 009 | steps=207 | train loss=0.7981 finalAcc=70.31% | (val skipped)
+Epoch 010 | steps=238 | train loss=0.7912 finalAcc=70.85% | val loss=1.0261 finalAcc=52.52% | best(finalAcc)=0.525218 bad=4/100
+Epoch 011 | steps=271 | train loss=0.7902 finalAcc=70.67% | (val skipped)
+Epoch 012 | steps=307 | train loss=0.7880 finalAcc=70.82% | val loss=0.9897 finalAcc=52.52% | best(finalAcc)=0.525218 bad=5/100
+Epoch 013 | steps=343 | train loss=0.7895 finalAcc=70.76% | (val skipped)
+Epoch 014 | steps=382 | train loss=0.7853 finalAcc=71.07% | val loss=1.0440 finalAcc=52.52% | best(finalAcc)=0.525218 bad=6/100
+Epoch 015 | steps=421 | train loss=0.7871 finalAcc=71.03% | (val skipped)
+Epoch 016 | steps=463 | train loss=0.7884 finalAcc=70.91% | val loss=0.9763 finalAcc=52.52% | best(finalAcc)=0.525218 bad=7/100
+[Step 000500/30000] loss=0.7719
+Epoch 017 | steps=507 | train loss=0.7890 finalAcc=70.64% | (val skipped)
+Epoch 018 | steps=551 | train loss=0.7888 finalAcc=70.65% | val loss=0.9065 finalAcc=52.52% | best(finalAcc)=0.525218 bad=8/100
+Epoch 019 | steps=598 | train loss=0.7922 finalAcc=70.49% | (val skipped)
+Epoch 020 | steps=648 | train loss=0.7930 finalAcc=70.00% | val loss=0.9441 finalAcc=52.52% | best(finalAcc)=0.525218 bad=9/100
+Epoch 021 | steps=698 | train loss=0.7956 finalAcc=69.94% | (val skipped)
+Epoch 022 | steps=750 | train loss=0.7895 finalAcc=70.03% | val loss=0.9372 finalAcc=52.52% | best(finalAcc)=0.525218 bad=10/100
+Epoch 023 | steps=805 | train loss=0.7916 finalAcc=70.00% | (val skipped)
+Epoch 024 | steps=860 | train loss=0.7757 finalAcc=70.42% | val loss=0.9101 finalAcc=52.80% | best(finalAcc)=0.527987 bad=0/100 [saved]
+Epoch 025 | steps=918 | train loss=0.7546 finalAcc=71.03% | (val skipped)
+Epoch 026 | steps=976 | train loss=0.7434 finalAcc=71.07% | val loss=0.9098 finalAcc=52.79% | best(finalAcc)=0.527987 bad=1/100
+[Step 001000/30000] loss=0.7571
+Epoch 027 | steps=1037 | train loss=0.7384 finalAcc=70.96% | (val skipped)
+Epoch 028 | steps=1100 | train loss=0.7386 finalAcc=70.82% | val loss=0.8858 finalAcc=52.76% | best(finalAcc)=0.527987 bad=2/100
+Epoch 029 | steps=1163 | train loss=0.7352 finalAcc=70.64% | (val skipped)
+Epoch 030 | steps=1229 | train loss=0.7378 finalAcc=70.47% | val loss=0.8826 finalAcc=53.58% | best(finalAcc)=0.535799 bad=0/100 [saved]
+Epoch 031 | steps=1298 | train loss=0.7403 finalAcc=70.03% | (val skipped)
+Epoch 032 | steps=1367 | train loss=0.7403 finalAcc=70.25% | val loss=0.8787 finalAcc=54.43% | best(finalAcc)=0.544304 bad=0/100 [saved]
+Epoch 033 | steps=1439 | train loss=0.7433 finalAcc=69.80% | (val skipped)
+[Step 001500/30000] loss=0.7543
+Epoch 034 | steps=1513 | train loss=0.7463 finalAcc=69.57% | val loss=0.8805 finalAcc=54.46% | best(finalAcc)=0.544650 bad=0/100 [saved]
+Epoch 035 | steps=1587 | train loss=0.7449 finalAcc=69.56% | (val skipped)
+Epoch 036 | steps=1664 | train loss=0.7451 finalAcc=69.52% | val loss=0.8731 finalAcc=54.88% | best(finalAcc)=0.548754 bad=0/100 [saved]
+Epoch 037 | steps=1741 | train loss=0.7452 finalAcc=69.48% | (val skipped)
+Epoch 038 | steps=1821 | train loss=0.7449 finalAcc=69.51% | val loss=0.8905 finalAcc=54.21% | best(finalAcc)=0.548754 bad=1/100
+Epoch 039 | steps=1904 | train loss=0.7444 finalAcc=69.55% | (val skipped)
+Epoch 040 | steps=1987 | train loss=0.7421 finalAcc=69.96% | val loss=0.8479 finalAcc=57.87% | best(finalAcc)=0.578669 bad=0/100 [saved]
+[Step 002000/30000] loss=0.7406
+Epoch 041 | steps=2072 | train loss=0.7377 finalAcc=70.57% | (val skipped)
+Epoch 042 | steps=2160 | train loss=0.7394 finalAcc=70.50% | val loss=0.8426 finalAcc=58.57% | best(finalAcc)=0.585740 bad=0/100 [saved]
+Epoch 043 | steps=2248 | train loss=0.7333 finalAcc=71.11% | (val skipped)
+Epoch 044 | steps=2339 | train loss=0.7289 finalAcc=71.34% | val loss=0.8514 finalAcc=58.30% | best(finalAcc)=0.585740 bad=1/100
+Epoch 045 | steps=2432 | train loss=0.7236 finalAcc=71.80% | (val skipped)
+[Step 002500/30000] loss=0.5617
+Epoch 046 | steps=2525 | train loss=0.7121 finalAcc=72.84% | val loss=0.8207 finalAcc=60.17% | best(finalAcc)=0.601661 bad=0/100 [saved]
+Epoch 047 | steps=2621 | train loss=0.6983 finalAcc=73.36% | (val skipped)
+Epoch 048 | steps=2717 | train loss=0.6884 finalAcc=73.86% | val loss=0.8210 finalAcc=60.07% | best(finalAcc)=0.601661 bad=1/100
+Epoch 049 | steps=2816 | train loss=0.6811 finalAcc=73.70% | (val skipped)
+Epoch 050 | steps=2918 | train loss=0.6814 finalAcc=73.58% | val loss=0.7717 finalAcc=63.15% | best(finalAcc)=0.631477 bad=0/100 [saved]
+[Step 003000/30000] loss=0.7932
+Epoch 051 | steps=3020 | train loss=0.6799 finalAcc=73.49% | (val skipped)
+Epoch 052 | steps=3124 | train loss=0.6753 finalAcc=73.63% | val loss=0.7883 finalAcc=60.20% | best(finalAcc)=0.631477 bad=1/100
+Epoch 053 | steps=3231 | train loss=0.6763 finalAcc=73.44% | (val skipped)
+Epoch 054 | steps=3338 | train loss=0.6736 finalAcc=73.64% | val loss=0.7762 finalAcc=60.72% | best(finalAcc)=0.631477 bad=2/100
+Epoch 055 | steps=3448 | train loss=0.6768 finalAcc=73.19% | (val skipped)
+[Step 003500/30000] loss=0.5185
+Epoch 056 | steps=3558 | train loss=0.6716 finalAcc=73.51% | val loss=0.7596 finalAcc=62.78% | best(finalAcc)=0.631477 bad=3/100
+Epoch 057 | steps=3671 | train loss=0.6743 finalAcc=73.26% | (val skipped)
+Epoch 058 | steps=3786 | train loss=0.6749 finalAcc=73.16% | val loss=0.7616 finalAcc=62.98% | best(finalAcc)=0.631477 bad=4/100
+Epoch 059 | steps=3901 | train loss=0.6720 finalAcc=73.34% | (val skipped)
+[Step 004000/30000] loss=0.8201
+Epoch 060 | steps=4019 | train loss=0.6738 finalAcc=72.81% | val loss=0.7636 finalAcc=62.13% | best(finalAcc)=0.631477 bad=5/100
+Epoch 061 | steps=4140 | train loss=0.6741 finalAcc=72.73% | (val skipped)
+Epoch 062 | steps=4261 | train loss=0.6701 finalAcc=73.02% | val loss=0.7630 finalAcc=63.10% | best(finalAcc)=0.631477 bad=6/100
+Epoch 063 | steps=4385 | train loss=0.6710 finalAcc=73.02% | (val skipped)
+[Step 004500/30000] loss=0.4384
+Epoch 064 | steps=4511 | train loss=0.6711 finalAcc=72.68% | val loss=0.7687 finalAcc=62.44% | best(finalAcc)=0.631477 bad=7/100
+Epoch 065 | steps=4637 | train loss=0.6679 finalAcc=73.17% | (val skipped)
+Epoch 066 | steps=4766 | train loss=0.6651 finalAcc=73.30% | val loss=0.7726 finalAcc=62.27% | best(finalAcc)=0.631477 bad=8/100
+Epoch 067 | steps=4895 | train loss=0.6617 finalAcc=73.36% | (val skipped)
+[Step 005000/30000] loss=0.5687
+Epoch 068 | steps=5027 | train loss=0.6606 finalAcc=73.40% | val loss=0.7732 finalAcc=62.05% | best(finalAcc)=0.631477 bad=9/100
+Epoch 069 | steps=5161 | train loss=0.6588 finalAcc=73.58% | (val skipped)
+Epoch 070 | steps=5295 | train loss=0.6554 finalAcc=73.74% | val loss=0.7989 finalAcc=61.45% | best(finalAcc)=0.631477 bad=10/100
+Epoch 071 | steps=5432 | train loss=0.6495 finalAcc=74.00% | (val skipped)
+[Step 005500/30000] loss=0.7756
+Epoch 072 | steps=5572 | train loss=0.6492 finalAcc=74.08% | val loss=0.8049 finalAcc=61.50% | best(finalAcc)=0.631477 bad=11/100
+Epoch 073 | steps=5712 | train loss=0.6410 finalAcc=74.72% | (val skipped)
+Epoch 074 | steps=5855 | train loss=0.6363 finalAcc=75.19% | val loss=0.7915 finalAcc=61.74% | best(finalAcc)=0.631477 bad=12/100
+Epoch 075 | steps=5998 | train loss=0.6264 finalAcc=75.86% | (val skipped)
+[Step 006000/30000] loss=0.5495
+Epoch 076 | steps=6143 | train loss=0.6220 finalAcc=76.27% | val loss=1.0174 finalAcc=60.61% | best(finalAcc)=0.631477 bad=13/100
+Epoch 077 | steps=6291 | train loss=0.6198 finalAcc=76.74% | (val skipped)
+Epoch 078 | steps=6439 | train loss=0.6108 finalAcc=77.61% | val loss=0.8485 finalAcc=61.45% | best(finalAcc)=0.631477 bad=14/100
+[Step 006500/30000] loss=0.5830
+Epoch 079 | steps=6590 | train loss=0.6002 finalAcc=77.94% | (val skipped)
+Epoch 080 | steps=6744 | train loss=0.5991 finalAcc=78.23% | val loss=0.8689 finalAcc=61.59% | best(finalAcc)=0.631477 bad=15/100
+Epoch 081 | steps=6898 | train loss=0.5876 finalAcc=79.16% | (val skipped)
+[Step 007000/30000] loss=0.6036
+Epoch 082 | steps=7054 | train loss=0.5820 finalAcc=79.73% | val loss=0.9244 finalAcc=61.49% | best(finalAcc)=0.631477 bad=16/100
+Epoch 083 | steps=7213 | train loss=0.5828 finalAcc=79.46% | (val skipped)
+Epoch 084 | steps=7372 | train loss=0.5679 finalAcc=80.87% | val loss=0.8826 finalAcc=60.88% | best(finalAcc)=0.631477 bad=17/100
+[Step 007500/30000] loss=0.4570
+Epoch 085 | steps=7534 | train loss=0.5585 finalAcc=81.14% | (val skipped)
+Epoch 086 | steps=7696 | train loss=0.5468 finalAcc=81.95% | val loss=0.9238 finalAcc=61.02% | best(finalAcc)=0.631477 bad=18/100
+Epoch 087 | steps=7861 | train loss=0.5475 finalAcc=82.20% | (val skipped)
+[Step 008000/30000] loss=0.4442
+Epoch 088 | steps=8028 | train loss=0.5383 finalAcc=82.99% | val loss=0.9073 finalAcc=61.39% | best(finalAcc)=0.631477 bad=19/100
+Epoch 089 | steps=8195 | train loss=0.5293 finalAcc=83.45% | (val skipped)
+Epoch 090 | steps=8365 | train loss=0.5242 finalAcc=83.99% | val loss=0.9871 finalAcc=61.84% | best(finalAcc)=0.631477 bad=20/100
+[Step 008500/30000] loss=0.3428
+Epoch 091 | steps=8538 | train loss=0.5214 finalAcc=83.95% | (val skipped)
+Epoch 092 | steps=8711 | train loss=0.5046 finalAcc=85.07% | val loss=1.1355 finalAcc=60.81% | best(finalAcc)=0.631477 bad=21/100
+Epoch 093 | steps=8886 | train loss=0.5098 finalAcc=84.66% | (val skipped)
+[Step 009000/30000] loss=0.4092
+Epoch 094 | steps=9064 | train loss=0.5083 finalAcc=85.31% | val loss=0.9648 finalAcc=60.90% | best(finalAcc)=0.631477 bad=22/100
+Epoch 095 | steps=9242 | train loss=0.4923 finalAcc=85.69% | (val skipped)
+Epoch 096 | steps=9423 | train loss=0.4914 finalAcc=85.99% | val loss=1.0005 finalAcc=60.43% | best(finalAcc)=0.631477 bad=23/100
+[Step 009500/30000] loss=0.5652
+Epoch 097 | steps=9604 | train loss=0.4774 finalAcc=87.14% | (val skipped)
+Epoch 098 | steps=9788 | train loss=0.4713 finalAcc=86.80% | val loss=0.9274 finalAcc=59.80% | best(finalAcc)=0.631477 bad=24/100
+Epoch 099 | steps=9974 | train loss=0.4893 finalAcc=86.29% | (val skipped)
+[Step 010000/30000] loss=0.4686
+Epoch 100 | steps=10160 | train loss=0.4653 finalAcc=87.62% | val loss=0.9690 finalAcc=59.82% | best(finalAcc)=0.631477 bad=25/100
+Epoch 101 | steps=10349 | train loss=0.4675 finalAcc=87.73% | (val skipped)
+[Step 010500/30000] loss=0.3244
+Epoch 102 | steps=10541 | train loss=0.4631 finalAcc=88.01% | val loss=1.0592 finalAcc=61.10% | best(finalAcc)=0.631477 bad=26/100
+Epoch 103 | steps=10733 | train loss=0.4492 finalAcc=88.54% | (val skipped)
+Epoch 104 | steps=10928 | train loss=0.4615 finalAcc=87.98% | val loss=1.0136 finalAcc=60.76% | best(finalAcc)=0.631477 bad=27/100
+[Step 011000/30000] loss=0.5854
+Epoch 105 | steps=11125 | train loss=0.4486 finalAcc=88.38% | (val skipped)
+Epoch 106 | steps=11322 | train loss=0.4516 finalAcc=88.56% | val loss=1.0808 finalAcc=60.98% | best(finalAcc)=0.631477 bad=28/100
+[Step 011500/30000] loss=0.4090
+Epoch 107 | steps=11522 | train loss=0.4565 finalAcc=88.46% | (val skipped)
+Epoch 108 | steps=11722 | train loss=0.4428 finalAcc=89.23% | val loss=1.0381 finalAcc=60.64% | best(finalAcc)=0.631477 bad=29/100
+Epoch 109 | steps=11925 | train loss=0.4396 finalAcc=89.25% | (val skipped)
+[Step 012000/30000] loss=0.7308
+Epoch 110 | steps=12131 | train loss=0.4414 finalAcc=89.39% | val loss=1.1038 finalAcc=61.27% | best(finalAcc)=0.631477 bad=30/100
+Epoch 111 | steps=12337 | train loss=0.4342 finalAcc=89.26% | (val skipped)
+[Step 012500/30000] loss=0.3931
+Epoch 112 | steps=12545 | train loss=0.4342 finalAcc=89.36% | val loss=1.0879 finalAcc=60.96% | best(finalAcc)=0.631477 bad=31/100
+Epoch 113 | steps=12756 | train loss=0.4347 finalAcc=89.48% | (val skipped)
+Epoch 114 | steps=12967 | train loss=0.4334 finalAcc=89.81% | val loss=1.1083 finalAcc=60.65% | best(finalAcc)=0.631477 bad=32/100
+[Step 013000/30000] loss=0.3239
+Epoch 115 | steps=13181 | train loss=0.4283 finalAcc=89.86% | (val skipped)
+Epoch 116 | steps=13395 | train loss=0.4132 finalAcc=90.66% | val loss=1.0065 finalAcc=61.88% | best(finalAcc)=0.631477 bad=33/100
+[Step 013500/30000] loss=0.3640
+Epoch 117 | steps=13612 | train loss=0.4235 finalAcc=90.28% | (val skipped)
+Epoch 118 | steps=13831 | train loss=0.4256 finalAcc=89.92% | val loss=1.1741 finalAcc=61.58% | best(finalAcc)=0.631477 bad=34/100
+[Step 014000/30000] loss=0.3196
+Epoch 119 | steps=14050 | train loss=0.4203 finalAcc=90.50% | (val skipped)
+Epoch 120 | steps=14272 | train loss=0.4196 finalAcc=90.51% | val loss=1.0971 finalAcc=60.91% | best(finalAcc)=0.631477 bad=35/100
+Epoch 121 | steps=14497 | train loss=0.4318 finalAcc=89.85% | (val skipped)
+[Step 014500/30000] loss=0.3652
+Epoch 122 | steps=14722 | train loss=0.4148 finalAcc=90.69% | val loss=1.1145 finalAcc=61.11% | best(finalAcc)=0.631477 bad=36/100
+Epoch 123 | steps=14949 | train loss=0.4259 finalAcc=90.42% | (val skipped)
+[Step 015000/30000] loss=0.5201
+Epoch 124 | steps=15179 | train loss=0.4172 finalAcc=90.71% | val loss=1.1109 finalAcc=60.41% | best(finalAcc)=0.631477 bad=37/100
+Epoch 125 | steps=15409 | train loss=0.4125 finalAcc=90.50% | (val skipped)
+[Step 015500/30000] loss=0.9311
+Epoch 126 | steps=15642 | train loss=0.4155 finalAcc=90.93% | val loss=1.1449 finalAcc=61.84% | best(finalAcc)=0.631477 bad=38/100
+Epoch 127 | steps=15875 | train loss=0.4054 finalAcc=91.02% | (val skipped)
+[Step 016000/30000] loss=0.3820
+Epoch 128 | steps=16111 | train loss=0.4128 finalAcc=91.05% | val loss=1.1570 finalAcc=60.12% | best(finalAcc)=0.631477 bad=39/100
+Epoch 129 | steps=16349 | train loss=0.4131 finalAcc=90.79% | (val skipped)
+[Step 016500/30000] loss=0.2603
+Epoch 130 | steps=16587 | train loss=0.3978 finalAcc=91.18% | val loss=1.1584 finalAcc=60.93% | best(finalAcc)=0.631477 bad=40/100
+Epoch 131 | steps=16828 | train loss=0.4100 finalAcc=90.86% | (val skipped)
+[Step 017000/30000] loss=0.2813
+Epoch 132 | steps=17072 | train loss=0.4107 finalAcc=90.62% | val loss=1.0387 finalAcc=62.13% | best(finalAcc)=0.631477 bad=41/100
+Epoch 133 | steps=17316 | train loss=0.4028 finalAcc=91.23% | (val skipped)
+[Step 017500/30000] loss=0.5103
+Epoch 134 | steps=17563 | train loss=0.4120 finalAcc=90.77% | val loss=1.1240 finalAcc=61.95% | best(finalAcc)=0.631477 bad=42/100
+Epoch 135 | steps=17810 | train loss=0.3991 finalAcc=91.26% | (val skipped)
+[Step 018000/30000] loss=0.2326
+Epoch 136 | steps=18059 | train loss=0.4031 finalAcc=91.12% | val loss=1.0944 finalAcc=61.96% | best(finalAcc)=0.631477 bad=43/100
+Epoch 137 | steps=18311 | train loss=0.4030 finalAcc=91.25% | (val skipped)
+[Step 018500/30000] loss=0.2575
+Epoch 138 | steps=18563 | train loss=0.3926 finalAcc=91.39% | val loss=1.2691 finalAcc=61.91% | best(finalAcc)=0.631477 bad=44/100
+Epoch 139 | steps=18818 | train loss=0.3997 finalAcc=91.43% | (val skipped)
+[Step 019000/30000] loss=0.2411
+Epoch 140 | steps=19076 | train loss=0.4034 finalAcc=91.05% | val loss=1.4372 finalAcc=60.66% | best(finalAcc)=0.631477 bad=45/100
+Epoch 141 | steps=19334 | train loss=0.4057 finalAcc=91.22% | (val skipped)
+[Step 019500/30000] loss=0.2238
+Epoch 142 | steps=19594 | train loss=0.3999 finalAcc=91.36% | val loss=1.2109 finalAcc=61.29% | best(finalAcc)=0.631477 bad=46/100
+Epoch 143 | steps=19857 | train loss=0.4044 finalAcc=91.06% | (val skipped)
+[Step 020000/30000] loss=0.2397
+Epoch 144 | steps=20120 | train loss=0.4057 finalAcc=91.02% | val loss=1.1196 finalAcc=62.32% | best(finalAcc)=0.631477 bad=47/100
+Epoch 145 | steps=20386 | train loss=0.4024 finalAcc=91.26% | (val skipped)
+[Step 020500/30000] loss=0.2918
+Epoch 146 | steps=20652 | train loss=0.3974 finalAcc=91.57% | val loss=1.1900 finalAcc=61.64% | best(finalAcc)=0.631477 bad=48/100
+Epoch 147 | steps=20920 | train loss=0.4030 finalAcc=91.12% | (val skipped)
+[Step 021000/30000] loss=0.2205
+Epoch 148 | steps=21191 | train loss=0.4020 finalAcc=91.23% | val loss=1.1818 finalAcc=61.77% | best(finalAcc)=0.631477 bad=49/100
+Epoch 149 | steps=21462 | train loss=0.3992 finalAcc=91.21% | (val skipped)
+[Step 021500/30000] loss=0.2153
+Epoch 150 | steps=21736 | train loss=0.4063 finalAcc=90.92% | val loss=1.1124 finalAcc=60.90% | best(finalAcc)=0.631477 bad=50/100
+[Step 022000/30000] loss=0.1979
+Epoch 151 | steps=22010 | train loss=0.3995 finalAcc=91.20% | (val skipped)
+Epoch 152 | steps=22284 | train loss=0.3957 finalAcc=91.58% | val loss=1.2115 finalAcc=62.02% | best(finalAcc)=0.631477 bad=51/100
+[Step 022500/30000] loss=0.2285
+Epoch 153 | steps=22558 | train loss=0.3935 finalAcc=91.70% | (val skipped)
+Epoch 154 | steps=22832 | train loss=0.3869 finalAcc=91.72% | val loss=1.2426 finalAcc=62.45% | best(finalAcc)=0.631477 bad=52/100
+[Step 023000/30000] loss=0.8768
+Epoch 155 | steps=23106 | train loss=0.3877 finalAcc=91.97% | (val skipped)
+Epoch 156 | steps=23380 | train loss=0.3857 finalAcc=91.83% | val loss=1.2027 finalAcc=61.55% | best(finalAcc)=0.631477 bad=53/100
+[Step 023500/30000] loss=0.2127
+Epoch 157 | steps=23654 | train loss=0.3815 finalAcc=92.20% | (val skipped)
+Epoch 158 | steps=23928 | train loss=0.3780 finalAcc=92.44% | val loss=1.2579 finalAcc=61.96% | best(finalAcc)=0.631477 bad=54/100
+[Step 024000/30000] loss=0.2332
+Epoch 159 | steps=24202 | train loss=0.3761 finalAcc=92.33% | (val skipped)
+Epoch 160 | steps=24476 | train loss=0.3737 finalAcc=92.59% | val loss=1.2356 finalAcc=62.13% | best(finalAcc)=0.631477 bad=55/100
+[Step 024500/30000] loss=0.2239
+Epoch 161 | steps=24750 | train loss=0.3708 finalAcc=92.74% | (val skipped)
+[Step 025000/30000] loss=0.2303
+Epoch 162 | steps=25024 | train loss=0.3674 finalAcc=92.76% | val loss=1.2725 finalAcc=62.02% | best(finalAcc)=0.631477 bad=56/100
+Epoch 163 | steps=25298 | train loss=0.3677 finalAcc=92.89% | (val skipped)
+[Step 025500/30000] loss=0.2162
+Epoch 164 | steps=25572 | train loss=0.3655 finalAcc=93.07% | val loss=1.2414 finalAcc=61.55% | best(finalAcc)=0.631477 bad=57/100
+Epoch 165 | steps=25846 | train loss=0.3612 finalAcc=93.10% | (val skipped)
+[Step 026000/30000] loss=0.4233
+Epoch 166 | steps=26120 | train loss=0.3614 finalAcc=93.15% | val loss=1.2780 finalAcc=61.75% | best(finalAcc)=0.631477 bad=58/100
+Epoch 167 | steps=26394 | train loss=0.3590 finalAcc=93.31% | (val skipped)
+[Step 026500/30000] loss=0.2261
+Epoch 168 | steps=26668 | train loss=0.3587 finalAcc=93.27% | val loss=1.2319 finalAcc=61.82% | best(finalAcc)=0.631477 bad=59/100
+Epoch 169 | steps=26942 | train loss=0.3561 finalAcc=93.36% | (val skipped)
+[Step 027000/30000] loss=0.3721
+Epoch 170 | steps=27216 | train loss=0.3543 finalAcc=93.54% | val loss=1.2272 finalAcc=61.95% | best(finalAcc)=0.631477 bad=60/100
+Epoch 171 | steps=27490 | train loss=0.3533 finalAcc=93.45% | (val skipped)
+[Step 027500/30000] loss=0.2368
+Epoch 172 | steps=27764 | train loss=0.3533 finalAcc=93.57% | val loss=1.2768 finalAcc=62.15% | best(finalAcc)=0.631477 bad=61/100
+[Step 028000/30000] loss=0.2494
+Epoch 173 | steps=28038 | train loss=0.3503 finalAcc=93.64% | (val skipped)
+Epoch 174 | steps=28312 | train loss=0.3480 finalAcc=93.76% | val loss=1.2613 finalAcc=62.00% | best(finalAcc)=0.631477 bad=62/100
+[Step 028500/30000] loss=0.8894
+Epoch 175 | steps=28586 | train loss=0.3509 finalAcc=93.70% | (val skipped)
+Epoch 176 | steps=28860 | train loss=0.3454 finalAcc=93.85% | val loss=1.2614 finalAcc=61.87% | best(finalAcc)=0.631477 bad=63/100
+[Step 029000/30000] loss=0.4116
+Epoch 177 | steps=29134 | train loss=0.3456 finalAcc=93.87% | (val skipped)
+Epoch 178 | steps=29408 | train loss=0.3467 finalAcc=93.88% | val loss=1.2356 finalAcc=61.83% | best(finalAcc)=0.631477 bad=64/100
+[Step 029500/30000] loss=0.5652
+Epoch 179 | steps=29682 | train loss=0.3444 finalAcc=93.89% | (val skipped)
+Epoch 180 | steps=29956 | train loss=0.3447 finalAcc=93.98% | val loss=1.2723 finalAcc=61.98% | best(finalAcc)=0.631477 bad=65/100
+[Step 030000/30000] loss=0.3480
+Epoch 181 | steps=30000 | train loss=0.2746 finalAcc=97.04% | val loss=1.2859 finalAcc=62.11% | best(finalAcc)=0.631477 bad=66/100
+Reached max_steps=30000. Stopping training.
+
+[Eval best checkpoint]
+test_bin0 | loss=0.6113 finalAcc=62.51%
+test_bin1 | loss=0.6036 finalAcc=75.11%
+test_bin2 | loss=0.5725 finalAcc=88.26%
+
+Saved: /home/erikg/emender/experiments/expressivity_tasks/results_stage26c_raw_defaults/rnn_integer_seed0/checkpoint.pt
+
+Done.
+Venv: /tmp/x26c-rnn-venv
+Checkpoint: /home/erikg/emender/experiments/expressivity_tasks/results_stage26c_raw_defaults/rnn_integer_seed0/checkpoint.pt

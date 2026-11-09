@@ -1,0 +1,212 @@
+{"step": 256, "seconds": 291.839572659228}
+{"step": 512, "seconds": 599.5248652463779}
+{"step": 611, "seconds": 716.1383812231943}
+{"step": 768, "seconds": 901.4616124490276}
+{"step": 1024, "seconds": 1196.7194382380694}
+{"step": 1280, "seconds": 1485.1656239833683}
+{"step": 1536, "seconds": 1769.0727993552573}
+{"step": 1792, "seconds": 2051.7670235722326}
+{"step": 2048, "seconds": 2333.5802812990732}
+{"step": 2304, "seconds": 2615.602420723997}
+{"step": 2560, "seconds": 2895.894949715119}
+{"step": 2816, "seconds": 3175.895288708154}
+{"step": 3052, "seconds": 3431.796891198028}
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/runner.py", line 169, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/runner.py", line 163, in main
+    fine_tune(model,checkpoint_dir=checkpoint_dir,resume=args.resume)
+  File "/usr/lib/python3.12/unittest/mock.py", line 1843, in _inner
+    return f(*args, **kw)
+           ^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/depth.py", line 93, in fine_tune
+    report=evaluate(probe,val);metric=report['balanced_accuracy']
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 120, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/depth.py", line 47, in evaluate
+    logits=probe(ids,torch.from_numpy(ln).cuda())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/depth.py", line 36, in forward
+    features=self.lm.features(ids)
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/model.py", line 150, in features
+    for block in self.blocks: x=block(x,ids)
+                                ^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/model.py", line 120, in forward
+    x=x+self.read_out(self.cell(self.norm1(x).float(),ids).flatten(2))
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/model.py", line 98, in forward
+    (r,state,trace,pressure),e,err,sig=scan(*inputs[:6],cfg,*inputs[6:])
+                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/model.py", line 43, in scan
+    result=forward(k,q,v,beta,pop,append,None,cfg,append_coef)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/forward.py", line 42, in tape_scan
+    raise ValueError('experimental batched nonrecording reads are disabled after the checkpoint heap assertion; recorded training only')
+ValueError: experimental batched nonrecording reads are disabled after the checkpoint heap assertion; recorded training only
+/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/language/standard.py:261: unknown: block: [6,0,0], thread: [1,0,0] Assertion `int32 overflow detected for operation add` failed.
+/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/language/standard.py:261: unknown: block: [6,0,0], thread: [3,0,0] Assertion `int32 overflow detected for operation add` failed.
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/runner.py", line 185, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/runner.py", line 179, in main
+    fine_tune(model,checkpoint_dir=checkpoint_dir,resume=args.resume)
+  File "/usr/lib/python3.12/unittest/mock.py", line 1843, in _inner
+    return f(*args, **kw)
+           ^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/depth.py", line 94, in fine_tune
+    report=evaluate(probe,val);metric=report['balanced_accuracy']
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 120, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/unittest/mock.py", line 1843, in _inner
+    return f(*args, **kw)
+           ^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/depth.py", line 48, in evaluate
+    logits=probe(ids,torch.from_numpy(ln).cuda())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/depth.py", line 36, in forward
+    features=self.lm.features(ids)
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/model.py", line 150, in features
+    for block in self.blocks: x=block(x,ids)
+                                ^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/model.py", line 120, in forward
+    x=x+self.read_out(self.cell(self.norm1(x).float(),ids).flatten(2))
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/model.py", line 101, in forward
+    m=profile(state,trace,pressure)
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x39_memory_usage/control_evaluate.py", line 25, in profile
+    assert torch.equal(live[:, -1], state.native.live.sum(-1))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+torch.AcceleratorError: CUDA error: device-side assert triggered
+Search for `cudaErrorAssert' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
+
+/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/language/standard.py:261: unknown: block: [3,0,0], thread: [1,0,0] Assertion `int32 overflow detected for operation add` failed.
+/home/erikg/emender/.venv/lib/python3.12/site-packages/triton/language/standard.py:261: unknown: block: [3,0,0], thread: [3,0,0] Assertion `int32 overflow detected for operation add` failed.
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/runner.py", line 185, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/runner.py", line 179, in main
+    fine_tune(model,checkpoint_dir=checkpoint_dir,resume=args.resume)
+  File "/usr/lib/python3.12/unittest/mock.py", line 1843, in _inner
+    return f(*args, **kw)
+           ^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/depth.py", line 127, in fine_tune
+    bins={name:evaluate(probe,ladder.ladder_bin_pool(name)) for name in ladder.BIN_ORDER}
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 120, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/unittest/mock.py", line 1390, in patched
+    return func(*newargs, **newkeywargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/unittest/mock.py", line 1843, in _inner
+    return f(*args, **kw)
+           ^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/depth.py", line 61, in evaluate
+    logits=probe(ids,torch.from_numpy(ln).cuda())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/depth.py", line 37, in forward
+    features=self.lm.features(ids)
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/model.py", line 150, in features
+    for block in self.blocks: x=block(x,ids)
+                                ^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/model.py", line 120, in forward
+    x=x+self.read_out(self.cell(self.norm1(x).float(),ids).flatten(2))
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/model.py", line 101, in forward
+    m=profile(state,trace,pressure)
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/depth.py", line 48, in depth_profile
+    allocation_rate_per_token_head=(trace.alloc_target>=0).float().mean((0,1)).tolist(),
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+torch.AcceleratorError: CUDA error: device-side assert triggered
+Search for `cudaErrorAssert' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
+
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/runner.py", line 185, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x40_emender_lm/runner.py", line 132, in main
+    state=restore(checkpoint_dir/'lm.ckpt',model,opt,binding)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x42_pile_scale/checkpoint.py", line 36, in restore
+    raise ValueError('checkpoint registration mismatch')
+ValueError: checkpoint registration mismatch

@@ -1,0 +1,49 @@
+Traceback (most recent call last):
+  File "/home/erikg/emender/experiments/expressivity_tasks/x28e_memory_head/trainer.py", line 1227, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x28e_memory_head/trainer.py", line 1223, in main
+    return trainer.run()
+           ^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x28e_memory_head/trainer.py", line 1078, in run
+    self._final_evaluation()
+  File "/home/erikg/emender/experiments/expressivity_tasks/x28e_memory_head/trainer.py", line 1121, in _final_evaluation
+    logits, st, trace = self._forward_binary(
+                        ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x28e_memory_head/trainer.py", line 909, in _forward_binary
+    y, _, state, trace = self.model.forward(
+                         ^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x28e_memory_head/trainer.py", line 427, in forward
+    return self.layer(self.embed(x), collect_trace=collect_trace,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x28e_memory_head/eng/fused/fused_layer.py", line 124, in forward
+    read_out, state, trace = self.head(x, state=state,
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x28e_memory_head/eng/fused/fused_layer.py", line 92, in forward
+    return fused_tape_scan(
+           ^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x28e_memory_head/eng/fused/tape_kernels.py", line 1386, in fused_tape_scan
+    out, fk, fv, fs, flive, fage, fusage, trace = TapeFusedFunction.apply(
+                                                  ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/function.py", line 581, in apply
+    return super().apply(*args, **kwargs)  # type: ignore[misc]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x28e_memory_head/eng/fused/tape_kernels.py", line 1282, in forward
+    buf = _fused_fwd_launch(k, km, q, v, beta, pop, alog, aec, state0, cfg,
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x28e_memory_head/eng/fused/tape_kernels.py", line 1040, in _fused_fwd_launch
+    ck_values=torch.empty((nck, B, NH, S, V), device=dev, dtype=checkpoint_dtype),
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 23.70 GiB. GPU 0 has a total capacity of 47.38 GiB of which 15.01 GiB is free. Including non-PyTorch memory, this process has 32.37 GiB memory in use. Of the allocated memory 14.78 GiB is allocated by PyTorch, and 17.06 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)

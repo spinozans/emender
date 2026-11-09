@@ -1,0 +1,22 @@
+{
+  "watcher": {
+    "pid": 2868354,
+    "starttime": "299632019",
+    "host": "lambda01"
+  },
+  "freeze_manifest_hash": "0b2d50399d81bf61ce1f590c20823dcd94b17ed35dd08d18522e3bff3e1f7dc8",
+  "results_root": "/home/erikg/emender/experiments/expressivity_tasks/results_x28e_memory_head",
+  "status_path": "/home/erikg/emender/experiments/expressivity_tasks/results_x28e_memory_head/receipts/watcher_status.json",
+  "terminal_path": "/home/erikg/emender/experiments/expressivity_tasks/results_x28e_memory_head/receipts/watcher_terminal.json",
+  "poll_seconds": 60,
+  "kill_grace_seconds": 30,
+  "guard_escalation": "independent of the poll cycle: a timer fires 30s after TERM and KILLs any surviving owned-group process even if the worker identity vanished (F9)",
+  "receipt_hashing": "terminal/result/marker receipts carry payload_sha256 and are validated on read; a tampered receipt is error, never complete",
+  "supervisor_probe": [
+    "/home/erikg/emender/.venv/bin/python",
+    "/home/erikg/emender/experiments/expressivity_tasks/x28e_memory_head/launcher.py",
+    "--once"
+  ],
+  "native_arming": "supervisor-owned; this launcher claims only its independent resource guard and exposed wiring",
+  "payload_sha256": "bc347e304b71a6dbc1e1c847aa5b6999c4cf2fd23eb012764240f648cfb93f80"
+}

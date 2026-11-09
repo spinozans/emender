@@ -1,0 +1,139 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0
+rootdir: /home/erikg/emender
+configfile: pyproject.toml
+plugins: timeout-2.4.0, anyio-4.13.0
+collected 2 items
+
+experiments/expressivity_tasks/x43_fork_resolved/test_c14_b_ablation.py F [ 50%]
+F                                                                        [100%]
+
+=================================== FAILURES ===================================
+_________ test_conditional_control_backward_and_capacity[append_only] __________
+experiments/expressivity_tasks/x43_fork_resolved/test_c14_b_ablation.py:20: in test_conditional_control_backward_and_capacity
+    lp,_=model(ids,answers,lengths)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/nn/modules/module.py:1775: in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/nn/modules/module.py:1786: in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x43_fork_resolved/c14_b_ablation_model.py:98: in forward
+    x = checkpoint(run,x,answers,use_reentrant=True,preserve_rng_state=True)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/_compile.py:53: in inner
+    return disable_fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py:1044: in _fn
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/utils/checkpoint.py:496: in checkpoint
+    return CheckpointFunction.apply(function, preserve, *args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:581: in apply
+    return super().apply(*args, **kwargs)  # type: ignore[misc]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/utils/checkpoint.py:262: in forward
+    outputs = run_function(*args)
+              ^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x43_fork_resolved/c14_b_ablation_model.py:85: in run
+    output,(_,trace) = native_forward(inputs,cfg,cell.gate_policies[h],metadata)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x43_fork_resolved/c14_b_ablation_native.py:228: in native_forward
+    kernel[(b,)](*(x.contiguous() for x in inputs),ints(owner_ids),ints(predictions),ints(expiry),ints(keep),
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:733: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:861: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:300: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:80: in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+E   triton.compiler.errors.CompilationError: at 32:8:
+E       valid = tl.load(Valid+b)
+E       coef = tl.load(Coef)
+E       mc = tl.load(Match)
+E       ec = tl.load(Error)
+E       for t in range(T):
+E           k = tl.load(K+(b*T+t)*64+kd)
+E           q = tl.load(Q+(b*T+t)*64+kd)
+E           v = tl.load(V+(b*T+t)*128+vd)
+E           av = tl.load(A+(b*T+t)*128+vd)
+E           append = tl.load(Append+b*T+t)
+E           logit = tl.load(Logit+b*T+t)
+E           if t < valid:
+E           ^
+E   AssertionError('initial value for `live` is of type int1[constexpr[32]], but the then block redefines it as int32[constexpr[32]]')
+__________ test_conditional_control_backward_and_capacity[unbudgeted] __________
+experiments/expressivity_tasks/x43_fork_resolved/test_c14_b_ablation.py:20: in test_conditional_control_backward_and_capacity
+    lp,_=model(ids,answers,lengths)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/nn/modules/module.py:1775: in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/nn/modules/module.py:1786: in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x43_fork_resolved/c14_b_ablation_model.py:98: in forward
+    x = checkpoint(run,x,answers,use_reentrant=True,preserve_rng_state=True)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/_compile.py:53: in inner
+    return disable_fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py:1044: in _fn
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/utils/checkpoint.py:496: in checkpoint
+    return CheckpointFunction.apply(function, preserve, *args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/autograd/function.py:581: in apply
+    return super().apply(*args, **kwargs)  # type: ignore[misc]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/torch/utils/checkpoint.py:262: in forward
+    outputs = run_function(*args)
+              ^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x43_fork_resolved/c14_b_ablation_model.py:85: in run
+    output,(_,trace) = native_forward(inputs,cfg,cell.gate_policies[h],metadata)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+experiments/expressivity_tasks/x43_fork_resolved/c14_b_ablation_native.py:228: in native_forward
+    kernel[(b,)](*(x.contiguous() for x in inputs),ints(owner_ids),ints(predictions),ints(expiry),ints(keep),
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:419: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:733: in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/runtime/jit.py:861: in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:300: in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/triton/compiler/compiler.py:80: in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+E   triton.compiler.errors.CompilationError: at 32:8:
+E       valid = tl.load(Valid+b)
+E       coef = tl.load(Coef)
+E       mc = tl.load(Match)
+E       ec = tl.load(Error)
+E       for t in range(T):
+E           k = tl.load(K+(b*T+t)*64+kd)
+E           q = tl.load(Q+(b*T+t)*64+kd)
+E           v = tl.load(V+(b*T+t)*128+vd)
+E           av = tl.load(A+(b*T+t)*128+vd)
+E           append = tl.load(Append+b*T+t)
+E           logit = tl.load(Logit+b*T+t)
+E           if t < valid:
+E           ^
+E   AssertionError('initial value for `live` is of type int1[constexpr[512]], but the then block redefines it as int32[constexpr[512]]')
+=========================== short test summary info ============================
+FAILED experiments/expressivity_tasks/x43_fork_resolved/test_c14_b_ablation.py::test_conditional_control_backward_and_capacity[append_only]
+FAILED experiments/expressivity_tasks/x43_fork_resolved/test_c14_b_ablation.py::test_conditional_control_backward_and_capacity[unbudgeted]
+============================== 2 failed in 5.86s ===============================

@@ -1,0 +1,21 @@
+{
+  "status": "passed",
+  "code_sha256": {
+    "c14_b_ablation_store.py": "dbc2bd5e82b853d384aa6ff2300e707dc59bba4fee8d7d980e903b97dfa9dd34",
+    "c14_b_ablation_native.py": "16465092f0c6cb1a7dfb2b380c02617941db872b15831165eb65efbd55033852",
+    "c14_b_ablation_model.py": "c391b721ad00957767c9a2565263b9c5f5e69e095fc3cadf2e2e5d234eb45f05",
+    "c14_b_ablation.py": "053a154034e101cc6cdb83a544f532ffed70d8e8b03716834764fe5fc7d58b64",
+    "c14_b_ablation_fast.py": "711cfe7a11f1aa73a6bc67bd190490f92a013eb9aad98eff197476bb756dba38"
+  },
+  "trigger": {
+    "primary_final_nll": 2.206163868216956,
+    "delta": 0.6969038582169562,
+    "verdict_sha256": "763852235f373baed3361cd1388f413c589e2ab5b2ad3a66400579039c2ad4c3"
+  },
+  "tests": "2 real-GPU BF16 2x128 native/checkpoint/replay finite-gradient tests passed, count 2133700, stale retirement off in append-only, unbudgeted cap and no capacity merges verified",
+  "append_only": "Array observed corrections, stale retirement and decay disabled; native POP and capacity/duplicate MERGE retained. Stream conflict correction cannot overwrite array ownership; capacity MERGE may do so.",
+  "unbudgeted": "One shared store per head with finite cap 257, unchanged key geometry and all operations. At most two allocations per input and 128 inputs: at most 256 live slots, hence cap cannot bind. Observed capacity merges must remain zero.",
+  "matched_protocol": "seed 3401, batch16, context128, BF16, lr3e-4, wd.01, clip1, independent keep=.5, source-order registered cache, 2700 active seconds; actual exposure reported",
+  "eval": "Same frozen windows/denominators and on/off modes; first-shard full logit parity against unoptimized control scan. The inherited metadata_reuse_sha256 describes the B1 template; actual control fast-source hash is separately bound in code_sha256.",
+  "protocol_amendment": false
+}

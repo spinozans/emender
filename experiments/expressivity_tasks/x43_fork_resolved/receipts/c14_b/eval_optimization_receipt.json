@@ -1,0 +1,15 @@
+{
+  "reason": "CPU metadata preparation repeated per head and unused telemetry conversion dominated inference at ~0.7 seconds/shard, GPU ~3% utilized",
+  "previous_attempt": {
+    "windows": 22528,
+    "targets": 2851611,
+    "elapsed_seconds": 127.368708552327,
+    "status": "paused"
+  },
+  "changes": "Reuse identical metadata tensors across the four heads; omit unused per-position Python telemetry on non-sampled shards",
+  "protocol_changes": false,
+  "checkpoint_changed": false,
+  "all_windows_retained": true,
+  "restart_from_window": 0,
+  "gate": "Full first-shard logits must be bit-identical against the original implementation in both on/off modes"
+}

@@ -1,0 +1,316 @@
+[1/8] Prepare /tmp: /tmp/x26c-delta-pipeline
+[2/8] Create/reuse venv: /tmp/x26c-delta-venv
+[3/8] Pip cache/tmp -> /tmp
+[4/8] Upgrade pip tooling
+Requirement already satisfied: pip in /tmp/x26c-delta-venv/lib/python3.12/site-packages (26.2.2)
+Requirement already satisfied: setuptools in /tmp/x26c-delta-venv/lib/python3.12/site-packages (84.2.1)
+Requirement already satisfied: wheel in /tmp/x26c-delta-venv/lib/python3.12/site-packages (0.48.0)
+Requirement already satisfied: packaging>=24.0 in /home/erikg/emender/.venv/lib/python3.12/site-packages (from wheel) (26.2)
+[5/8] Install torch if missing (CUDA wheels: cu126)
+  [skip] torch already installed
+[6/8] Install deps
+Requirement already satisfied: numpy in /tmp/x26c-delta-venv/lib/python3.12/site-packages (2.5.4)
+Requirement already satisfied: tqdm in /tmp/x26c-delta-venv/lib/python3.12/site-packages (4.70.1)
+[6.5/8] Install flash-linear-attention (fla)
+Requirement already satisfied: flash-linear-attention in /tmp/x26c-delta-venv/lib/python3.12/site-packages (0.6.0)
+Requirement already satisfied: fla-core==0.6.0 in /tmp/x26c-delta-venv/lib/python3.12/site-packages (from flash-linear-attention) (0.6.0)
+Requirement already satisfied: transformers<6,>=5.6.2 in /home/erikg/emender/.venv/lib/python3.12/site-packages (from flash-linear-attention) (5.9.0)
+Requirement already satisfied: einops in /home/erikg/emender/.venv/lib/python3.12/site-packages (from fla-core==0.6.0->flash-linear-attention) (0.8.2)
+Requirement already satisfied: huggingface-hub<2.0,>=1.5.0 in /home/erikg/emender/.venv/lib/python3.12/site-packages (from transformers<6,>=5.6.2->flash-linear-attention) (1.16.4)
+Requirement already satisfied: numpy>=1.17 in /tmp/x26c-delta-venv/lib/python3.12/site-packages (from transformers<6,>=5.6.2->flash-linear-attention) (2.5.4)
+Requirement already satisfied: packaging>=20.0 in /home/erikg/emender/.venv/lib/python3.12/site-packages (from transformers<6,>=5.6.2->flash-linear-attention) (26.2)
+Requirement already satisfied: pyyaml>=5.1 in /home/erikg/emender/.venv/lib/python3.12/site-packages (from transformers<6,>=5.6.2->flash-linear-attention) (6.0.3)
+Requirement already satisfied: regex>=2025.10.22 in /home/erikg/emender/.venv/lib/python3.12/site-packages (from transformers<6,>=5.6.2->flash-linear-attention) (2026.5.9)
+Requirement already satisfied: tokenizers<=0.23.0,>=0.22.0 in /home/erikg/emender/.venv/lib/python3.12/site-packages (from transformers<6,>=5.6.2->flash-linear-attention) (0.22.2)
+Requirement already satisfied: typer in /home/erikg/emender/.venv/lib/python3.12/site-packages (from transformers<6,>=5.6.2->flash-linear-attention) (0.25.1)
+Requirement already satisfied: safetensors>=0.4.3 in /home/erikg/emender/.venv/lib/python3.12/site-packages (from transformers<6,>=5.6.2->flash-linear-attention) (0.7.0)
+Requirement already satisfied: tqdm>=4.27 in /tmp/x26c-delta-venv/lib/python3.12/site-packages (from transformers<6,>=5.6.2->flash-linear-attention) (4.70.1)
+Requirement already satisfied: click>=8.4.0 in /home/erikg/emender/.venv/lib/python3.12/site-packages (from huggingface-hub<2.0,>=1.5.0->transformers<6,>=5.6.2->flash-linear-attention) (8.4.1)
+Requirement already satisfied: filelock>=3.10.0 in /home/erikg/emender/.venv/lib/python3.12/site-packages (from huggingface-hub<2.0,>=1.5.0->transformers<6,>=5.6.2->flash-linear-attention) (3.29.0)
+Requirement already satisfied: fsspec>=2023.5.0 in /home/erikg/emender/.venv/lib/python3.12/site-packages (from huggingface-hub<2.0,>=1.5.0->transformers<6,>=5.6.2->flash-linear-attention) (2026.2.0)
+Requirement already satisfied: hf-xet<2.0.0,>=1.4.3 in /home/erikg/emender/.venv/lib/python3.12/site-packages (from huggingface-hub<2.0,>=1.5.0->transformers<6,>=5.6.2->flash-linear-attention) (1.5.0)
+Requirement already satisfied: httpx<1,>=0.23.0 in /home/erikg/emender/.venv/lib/python3.12/site-packages (from huggingface-hub<2.0,>=1.5.0->transformers<6,>=5.6.2->flash-linear-attention) (0.28.1)
+Requirement already satisfied: typing-extensions>=4.1.0 in /home/erikg/emender/.venv/lib/python3.12/site-packages (from huggingface-hub<2.0,>=1.5.0->transformers<6,>=5.6.2->flash-linear-attention) (4.15.0)
+Requirement already satisfied: anyio in /home/erikg/emender/.venv/lib/python3.12/site-packages (from httpx<1,>=0.23.0->huggingface-hub<2.0,>=1.5.0->transformers<6,>=5.6.2->flash-linear-attention) (4.13.0)
+Requirement already satisfied: certifi in /home/erikg/emender/.venv/lib/python3.12/site-packages (from httpx<1,>=0.23.0->huggingface-hub<2.0,>=1.5.0->transformers<6,>=5.6.2->flash-linear-attention) (2026.5.20)
+Requirement already satisfied: httpcore==1.* in /home/erikg/emender/.venv/lib/python3.12/site-packages (from httpx<1,>=0.23.0->huggingface-hub<2.0,>=1.5.0->transformers<6,>=5.6.2->flash-linear-attention) (1.0.9)
+Requirement already satisfied: idna in /home/erikg/emender/.venv/lib/python3.12/site-packages (from httpx<1,>=0.23.0->huggingface-hub<2.0,>=1.5.0->transformers<6,>=5.6.2->flash-linear-attention) (3.17)
+Requirement already satisfied: h11>=0.16 in /home/erikg/emender/.venv/lib/python3.12/site-packages (from httpcore==1.*->httpx<1,>=0.23.0->huggingface-hub<2.0,>=1.5.0->transformers<6,>=5.6.2->flash-linear-attention) (0.16.0)
+Requirement already satisfied: shellingham>=1.3.0 in /home/erikg/emender/.venv/lib/python3.12/site-packages (from typer->transformers<6,>=5.6.2->flash-linear-attention) (1.5.4)
+Requirement already satisfied: rich>=13.8.0 in /home/erikg/emender/.venv/lib/python3.12/site-packages (from typer->transformers<6,>=5.6.2->flash-linear-attention) (15.0.0)
+Requirement already satisfied: annotated-doc>=0.0.2 in /home/erikg/emender/.venv/lib/python3.12/site-packages (from typer->transformers<6,>=5.6.2->flash-linear-attention) (0.0.4)
+Requirement already satisfied: markdown-it-py>=2.2.0 in /home/erikg/emender/.venv/lib/python3.12/site-packages (from rich>=13.8.0->typer->transformers<6,>=5.6.2->flash-linear-attention) (4.2.0)
+Requirement already satisfied: pygments<3.0.0,>=2.13.0 in /home/erikg/emender/.venv/lib/python3.12/site-packages (from rich>=13.8.0->typer->transformers<6,>=5.6.2->flash-linear-attention) (2.20.0)
+Requirement already satisfied: mdurl~=0.1 in /home/erikg/emender/.venv/lib/python3.12/site-packages (from markdown-it-py>=2.2.0->rich>=13.8.0->typer->transformers<6,>=5.6.2->flash-linear-attention) (0.1.2)
+[7/8] Environment
+Python: 3.12.3
+Torch : 2.9.1+cu128
+CUDA  : 12.8
+CUDA avail: True
+GPU: NVIDIA RTX 6000 Ada Generation
+NumPy : 2.5.4
+fla   : 0.6.0
+[8/8] Run training
+Command: python3 -u /home/erikg/emender/experiments/expressivity_tasks/results_stage26_replication/sources/LinearRNN/imm_unbound/train_deltanet.py --data_dir /home/erikg/emender/experiments/expressivity_tasks/results_stage26b_native_control/datasets --alphabet pm1 --cuda --d_model 256 --layers 1 --heads 4 --dropout 0.2 --chunk_size 64 --batch_size 256 --lr 3e-4 --weight_decay 0.005 --grad_clip 1.0 --warmup_steps 1000 --aux_loss_weight 0.3 --curriculum_min_T 5 --curriculum_epochs 150 --epochs 500 --max_steps 30000 --eval_every 2 --patience 60 --early_stop finalAcc --num_workers 2 --prefetch_factor 4 --persistent_workers --save_path /home/erikg/emender/experiments/expressivity_tasks/results_stage26c_raw_defaults/delta_integer_seed0/checkpoint.pt --amp --amp_dtype bf16
+[Auto] inferred max_T(all splits)=300 => max_len=301
+[Device] cuda
+[Task] NO-MOD final binary | input-only (no teacher forcing) | y at final MAT
+[Data] /home/erikg/emender/experiments/expressivity_tasks/results_stage26b_native_control/datasets alphabet=pm1
+[Model] DeltaNet max_len=301 d_model=256 layers=1 heads=4 dropout=0.2
+[Perf] batch_size=256 workers=2 bucket_size=4096 amp=True bf16
+[Train] hard cap max_steps=30000
+[Preload] train_src.txt n=70000
+[Curriculum] train T: 5 -> 100 over 150 epochs
+[Params] 0.27M
+[LR schedule] warmup=1000 steps, cosine decay to 10% of --lr by step 30000
+[Step 000001/30000] loss=0.8795
+Epoch 001 | steps=17 | train loss=0.9072 finalAcc=55.67% | (val skipped)
+Epoch 002 | steps=34 | train loss=0.8648 finalAcc=61.68% | val loss=0.9297 finalAcc=52.70% | best(finalAcc)=0.526998 bad=0/60 [saved]
+Epoch 003 | steps=54 | train loss=0.8270 finalAcc=68.35% | (val skipped)
+Epoch 004 | steps=76 | train loss=0.8211 finalAcc=69.04% | val loss=0.9492 finalAcc=52.52% | best(finalAcc)=0.526998 bad=1/60
+Epoch 005 | steps=98 | train loss=0.8211 finalAcc=68.93% | (val skipped)
+Epoch 006 | steps=123 | train loss=0.8061 finalAcc=70.02% | val loss=0.9698 finalAcc=52.52% | best(finalAcc)=0.526998 bad=2/60
+Epoch 007 | steps=148 | train loss=0.8129 finalAcc=69.70% | (val skipped)
+Epoch 008 | steps=176 | train loss=0.8078 finalAcc=70.04% | val loss=0.9700 finalAcc=52.52% | best(finalAcc)=0.526998 bad=3/60
+Epoch 009 | steps=207 | train loss=0.8053 finalAcc=70.18% | (val skipped)
+Epoch 010 | steps=238 | train loss=0.7965 finalAcc=70.72% | val loss=1.0276 finalAcc=52.52% | best(finalAcc)=0.526998 bad=4/60
+Epoch 011 | steps=271 | train loss=0.7978 finalAcc=70.54% | (val skipped)
+Epoch 012 | steps=307 | train loss=0.7923 finalAcc=70.81% | val loss=0.9961 finalAcc=52.52% | best(finalAcc)=0.526998 bad=5/60
+Epoch 013 | steps=343 | train loss=0.7938 finalAcc=70.74% | (val skipped)
+Epoch 014 | steps=382 | train loss=0.7884 finalAcc=71.09% | val loss=1.0473 finalAcc=52.52% | best(finalAcc)=0.526998 bad=6/60
+Epoch 015 | steps=421 | train loss=0.7905 finalAcc=71.00% | (val skipped)
+Epoch 016 | steps=463 | train loss=0.7880 finalAcc=70.90% | val loss=1.0212 finalAcc=52.52% | best(finalAcc)=0.526998 bad=7/60
+[Step 000500/30000] loss=0.7709
+Epoch 017 | steps=507 | train loss=0.7917 finalAcc=70.63% | (val skipped)
+Epoch 018 | steps=551 | train loss=0.7902 finalAcc=70.65% | val loss=0.9883 finalAcc=52.52% | best(finalAcc)=0.526998 bad=8/60
+Epoch 019 | steps=598 | train loss=0.7898 finalAcc=70.50% | (val skipped)
+Epoch 020 | steps=648 | train loss=0.7950 finalAcc=70.00% | val loss=1.0166 finalAcc=52.54% | best(finalAcc)=0.526998 bad=9/60
+Epoch 021 | steps=698 | train loss=0.7944 finalAcc=69.98% | (val skipped)
+Epoch 022 | steps=750 | train loss=0.7767 finalAcc=70.84% | val loss=1.0668 finalAcc=52.81% | best(finalAcc)=0.528135 bad=0/60 [saved]
+Epoch 023 | steps=805 | train loss=0.7547 finalAcc=71.32% | (val skipped)
+Epoch 024 | steps=860 | train loss=0.7342 finalAcc=71.65% | val loss=0.9434 finalAcc=52.69% | best(finalAcc)=0.528135 bad=1/60
+Epoch 025 | steps=918 | train loss=0.7363 finalAcc=71.30% | (val skipped)
+Epoch 026 | steps=976 | train loss=0.7331 finalAcc=71.21% | val loss=1.0006 finalAcc=52.88% | best(finalAcc)=0.528778 bad=0/60 [saved]
+[Step 001000/30000] loss=0.7530
+Epoch 027 | steps=1037 | train loss=0.7337 finalAcc=71.00% | (val skipped)
+Epoch 028 | steps=1100 | train loss=0.7361 finalAcc=70.71% | val loss=0.9942 finalAcc=52.79% | best(finalAcc)=0.528778 bad=1/60
+Epoch 029 | steps=1163 | train loss=0.7340 finalAcc=70.72% | (val skipped)
+Epoch 030 | steps=1229 | train loss=0.7360 finalAcc=70.38% | val loss=0.9483 finalAcc=52.80% | best(finalAcc)=0.528778 bad=2/60
+Epoch 031 | steps=1298 | train loss=0.7386 finalAcc=70.24% | (val skipped)
+Epoch 032 | steps=1367 | train loss=0.7389 finalAcc=70.19% | val loss=0.9175 finalAcc=52.99% | best(finalAcc)=0.529915 bad=0/60 [saved]
+Epoch 033 | steps=1439 | train loss=0.7451 finalAcc=69.66% | (val skipped)
+[Step 001500/30000] loss=0.7438
+Epoch 034 | steps=1513 | train loss=0.7453 finalAcc=69.69% | val loss=0.9137 finalAcc=53.62% | best(finalAcc)=0.536195 bad=0/60 [saved]
+Epoch 035 | steps=1587 | train loss=0.7424 finalAcc=69.72% | (val skipped)
+Epoch 036 | steps=1664 | train loss=0.7428 finalAcc=69.78% | val loss=0.9127 finalAcc=54.04% | best(finalAcc)=0.540398 bad=0/60 [saved]
+Epoch 037 | steps=1741 | train loss=0.7427 finalAcc=69.49% | (val skipped)
+Epoch 038 | steps=1821 | train loss=0.7423 finalAcc=69.70% | val loss=0.9530 finalAcc=52.85% | best(finalAcc)=0.540398 bad=1/60
+Epoch 039 | steps=1904 | train loss=0.7436 finalAcc=69.42% | (val skipped)
+Epoch 040 | steps=1987 | train loss=0.7426 finalAcc=69.42% | val loss=0.8971 finalAcc=53.53% | best(finalAcc)=0.540398 bad=2/60
+[Step 002000/30000] loss=0.7281
+Epoch 041 | steps=2072 | train loss=0.7410 finalAcc=69.77% | (val skipped)
+Epoch 042 | steps=2160 | train loss=0.7446 finalAcc=69.60% | val loss=0.8646 finalAcc=56.57% | best(finalAcc)=0.565714 bad=0/60 [saved]
+Epoch 043 | steps=2248 | train loss=0.7388 finalAcc=69.84% | (val skipped)
+Epoch 044 | steps=2339 | train loss=0.7444 finalAcc=69.30% | val loss=0.9387 finalAcc=53.98% | best(finalAcc)=0.565714 bad=1/60
+Epoch 045 | steps=2432 | train loss=0.7413 finalAcc=69.50% | (val skipped)
+[Step 002500/30000] loss=0.5966
+Epoch 046 | steps=2525 | train loss=0.7368 finalAcc=69.88% | val loss=0.9315 finalAcc=54.44% | best(finalAcc)=0.565714 bad=2/60
+Epoch 047 | steps=2621 | train loss=0.7416 finalAcc=69.48% | (val skipped)
+Epoch 048 | steps=2717 | train loss=0.7353 finalAcc=70.10% | val loss=0.9750 finalAcc=54.02% | best(finalAcc)=0.565714 bad=3/60
+Epoch 049 | steps=2816 | train loss=0.7358 finalAcc=69.96% | (val skipped)
+Epoch 050 | steps=2918 | train loss=0.7418 finalAcc=69.54% | val loss=0.8710 finalAcc=57.34% | best(finalAcc)=0.573428 bad=0/60 [saved]
+[Step 003000/30000] loss=0.9406
+Epoch 051 | steps=3020 | train loss=0.7369 finalAcc=70.30% | (val skipped)
+Epoch 052 | steps=3124 | train loss=0.7380 finalAcc=69.98% | val loss=0.8762 finalAcc=56.17% | best(finalAcc)=0.573428 bad=1/60
+Epoch 053 | steps=3231 | train loss=0.7375 finalAcc=69.94% | (val skipped)
+Epoch 054 | steps=3338 | train loss=0.7297 finalAcc=70.56% | val loss=0.9241 finalAcc=55.50% | best(finalAcc)=0.573428 bad=2/60
+Epoch 055 | steps=3448 | train loss=0.7364 finalAcc=69.91% | (val skipped)
+[Step 003500/30000] loss=0.5824
+Epoch 056 | steps=3558 | train loss=0.7268 finalAcc=70.90% | val loss=0.9050 finalAcc=55.94% | best(finalAcc)=0.573428 bad=3/60
+Epoch 057 | steps=3671 | train loss=0.7285 finalAcc=70.62% | (val skipped)
+Epoch 058 | steps=3786 | train loss=0.7338 finalAcc=70.55% | val loss=0.8964 finalAcc=55.94% | best(finalAcc)=0.573428 bad=4/60
+Epoch 059 | steps=3901 | train loss=0.7249 finalAcc=70.94% | (val skipped)
+[Step 004000/30000] loss=0.8421
+Epoch 060 | steps=4019 | train loss=0.7268 finalAcc=71.15% | val loss=0.8832 finalAcc=56.70% | best(finalAcc)=0.573428 bad=5/60
+Epoch 061 | steps=4140 | train loss=0.7277 finalAcc=70.63% | (val skipped)
+Epoch 062 | steps=4261 | train loss=0.7282 finalAcc=71.00% | val loss=0.8855 finalAcc=56.54% | best(finalAcc)=0.573428 bad=6/60
+Epoch 063 | steps=4385 | train loss=0.7240 finalAcc=70.95% | (val skipped)
+[Step 004500/30000] loss=0.5520
+Epoch 064 | steps=4511 | train loss=0.7249 finalAcc=71.03% | val loss=0.8772 finalAcc=56.25% | best(finalAcc)=0.573428 bad=7/60
+Epoch 065 | steps=4637 | train loss=0.7198 finalAcc=71.69% | (val skipped)
+Epoch 066 | steps=4766 | train loss=0.7204 finalAcc=71.46% | val loss=0.9005 finalAcc=56.69% | best(finalAcc)=0.573428 bad=8/60
+Epoch 067 | steps=4895 | train loss=0.7160 finalAcc=72.16% | (val skipped)
+[Step 005000/30000] loss=0.5822
+Epoch 068 | steps=5027 | train loss=0.7170 finalAcc=71.83% | val loss=0.8677 finalAcc=57.59% | best(finalAcc)=0.575949 bad=0/60 [saved]
+Epoch 069 | steps=5161 | train loss=0.7168 finalAcc=71.73% | (val skipped)
+Epoch 070 | steps=5295 | train loss=0.7135 finalAcc=72.10% | val loss=0.8625 finalAcc=57.75% | best(finalAcc)=0.577482 bad=0/60 [saved]
+Epoch 071 | steps=5432 | train loss=0.7132 finalAcc=72.22% | (val skipped)
+[Step 005500/30000] loss=0.8505
+Epoch 072 | steps=5572 | train loss=0.7083 finalAcc=72.44% | val loss=0.8581 finalAcc=58.20% | best(finalAcc)=0.582031 bad=0/60 [saved]
+Epoch 073 | steps=5712 | train loss=0.7027 finalAcc=72.57% | (val skipped)
+Epoch 074 | steps=5855 | train loss=0.7022 finalAcc=72.34% | val loss=0.8598 finalAcc=59.86% | best(finalAcc)=0.598596 bad=0/60 [saved]
+Epoch 075 | steps=5998 | train loss=0.6949 finalAcc=72.81% | (val skipped)
+[Step 006000/30000] loss=0.6326
+Epoch 076 | steps=6143 | train loss=0.6953 finalAcc=72.74% | val loss=0.8511 finalAcc=59.49% | best(finalAcc)=0.598596 bad=1/60
+Epoch 077 | steps=6291 | train loss=0.6932 finalAcc=72.32% | (val skipped)
+Epoch 078 | steps=6439 | train loss=0.6845 finalAcc=72.81% | val loss=0.8596 finalAcc=59.79% | best(finalAcc)=0.598596 bad=2/60
+[Step 006500/30000] loss=0.6804
+Epoch 079 | steps=6590 | train loss=0.6806 finalAcc=72.83% | (val skipped)
+Epoch 080 | steps=6744 | train loss=0.6824 finalAcc=72.37% | val loss=0.8615 finalAcc=59.98% | best(finalAcc)=0.599782 bad=0/60 [saved]
+Epoch 081 | steps=6898 | train loss=0.6797 finalAcc=72.58% | (val skipped)
+[Step 007000/30000] loss=0.7322
+Epoch 082 | steps=7054 | train loss=0.6783 finalAcc=72.73% | val loss=0.8778 finalAcc=60.36% | best(finalAcc)=0.603590 bad=0/60 [saved]
+Epoch 083 | steps=7213 | train loss=0.6796 finalAcc=72.28% | (val skipped)
+Epoch 084 | steps=7372 | train loss=0.6780 finalAcc=72.77% | val loss=0.8185 finalAcc=60.35% | best(finalAcc)=0.603590 bad=1/60
+[Step 007500/30000] loss=0.5671
+Epoch 085 | steps=7534 | train loss=0.6759 finalAcc=72.87% | (val skipped)
+Epoch 086 | steps=7696 | train loss=0.6758 finalAcc=73.05% | val loss=0.8333 finalAcc=60.54% | best(finalAcc)=0.605419 bad=0/60 [saved]
+Epoch 087 | steps=7861 | train loss=0.6761 finalAcc=72.97% | (val skipped)
+[Step 008000/30000] loss=0.6604
+Epoch 088 | steps=8028 | train loss=0.6773 finalAcc=72.94% | val loss=0.8052 finalAcc=60.81% | best(finalAcc)=0.608139 bad=0/60 [saved]
+Epoch 089 | steps=8195 | train loss=0.6749 finalAcc=73.17% | (val skipped)
+Epoch 090 | steps=8365 | train loss=0.6786 finalAcc=72.59% | val loss=0.8543 finalAcc=60.36% | best(finalAcc)=0.608139 bad=1/60
+[Step 008500/30000] loss=0.5565
+Epoch 091 | steps=8538 | train loss=0.6799 finalAcc=72.58% | (val skipped)
+Epoch 092 | steps=8711 | train loss=0.6752 finalAcc=73.08% | val loss=0.8303 finalAcc=60.16% | best(finalAcc)=0.608139 bad=2/60
+Epoch 093 | steps=8886 | train loss=0.6775 finalAcc=72.88% | (val skipped)
+[Step 009000/30000] loss=0.6381
+Epoch 094 | steps=9064 | train loss=0.6796 finalAcc=72.47% | val loss=0.8414 finalAcc=59.91% | best(finalAcc)=0.608139 bad=3/60
+Epoch 095 | steps=9242 | train loss=0.6775 finalAcc=72.58% | (val skipped)
+Epoch 096 | steps=9423 | train loss=0.6804 finalAcc=72.54% | val loss=0.8628 finalAcc=60.05% | best(finalAcc)=0.608139 bad=4/60
+[Step 009500/30000] loss=0.7573
+Epoch 097 | steps=9604 | train loss=0.6764 finalAcc=73.19% | (val skipped)
+Epoch 098 | steps=9788 | train loss=0.6791 finalAcc=72.71% | val loss=0.8077 finalAcc=60.60% | best(finalAcc)=0.608139 bad=5/60
+Epoch 099 | steps=9974 | train loss=0.6788 finalAcc=72.82% | (val skipped)
+[Step 010000/30000] loss=0.7656
+Epoch 100 | steps=10160 | train loss=0.6759 finalAcc=73.25% | val loss=0.8085 finalAcc=60.23% | best(finalAcc)=0.608139 bad=6/60
+Epoch 101 | steps=10349 | train loss=0.6809 finalAcc=72.61% | (val skipped)
+[Step 010500/30000] loss=0.5042
+Epoch 102 | steps=10541 | train loss=0.6825 finalAcc=72.75% | val loss=0.8358 finalAcc=60.77% | best(finalAcc)=0.608139 bad=7/60
+Epoch 103 | steps=10733 | train loss=0.6781 finalAcc=72.73% | (val skipped)
+Epoch 104 | steps=10928 | train loss=0.6794 finalAcc=72.88% | val loss=0.8079 finalAcc=60.71% | best(finalAcc)=0.608139 bad=8/60
+[Step 011000/30000] loss=0.7938
+Epoch 105 | steps=11125 | train loss=0.6800 finalAcc=72.92% | (val skipped)
+Epoch 106 | steps=11322 | train loss=0.6798 finalAcc=73.07% | val loss=0.8282 finalAcc=60.83% | best(finalAcc)=0.608287 bad=0/60 [saved]
+[Step 011500/30000] loss=0.6865
+Epoch 107 | steps=11522 | train loss=0.6795 finalAcc=72.85% | (val skipped)
+Epoch 108 | steps=11722 | train loss=0.6818 finalAcc=72.81% | val loss=0.8118 finalAcc=61.15% | best(finalAcc)=0.611452 bad=0/60 [saved]
+Epoch 109 | steps=11925 | train loss=0.6815 finalAcc=72.72% | (val skipped)
+[Step 012000/30000] loss=0.8106
+Epoch 110 | steps=12131 | train loss=0.6852 finalAcc=72.72% | val loss=0.8130 finalAcc=61.22% | best(finalAcc)=0.612243 bad=0/60 [saved]
+Epoch 111 | steps=12337 | train loss=0.6821 finalAcc=72.88% | (val skipped)
+[Step 012500/30000] loss=0.6704
+Epoch 112 | steps=12545 | train loss=0.6822 finalAcc=72.69% | val loss=0.8138 finalAcc=60.75% | best(finalAcc)=0.612243 bad=1/60
+Epoch 113 | steps=12756 | train loss=0.6855 finalAcc=72.51% | (val skipped)
+Epoch 114 | steps=12967 | train loss=0.6845 finalAcc=72.64% | val loss=0.8150 finalAcc=61.24% | best(finalAcc)=0.612441 bad=0/60 [saved]
+[Step 013000/30000] loss=0.6883
+Epoch 115 | steps=13181 | train loss=0.6844 finalAcc=72.71% | (val skipped)
+Epoch 116 | steps=13395 | train loss=0.6782 finalAcc=73.20% | val loss=0.7940 finalAcc=61.80% | best(finalAcc)=0.618028 bad=0/60 [saved]
+[Step 013500/30000] loss=0.7240
+Epoch 117 | steps=13612 | train loss=0.6851 finalAcc=72.62% | (val skipped)
+Epoch 118 | steps=13831 | train loss=0.6854 finalAcc=72.87% | val loss=0.8347 finalAcc=60.86% | best(finalAcc)=0.618028 bad=1/60
+[Step 014000/30000] loss=0.7101
+Epoch 119 | steps=14050 | train loss=0.6848 finalAcc=73.00% | (val skipped)
+Epoch 120 | steps=14272 | train loss=0.6846 finalAcc=72.87% | val loss=0.8103 finalAcc=61.00% | best(finalAcc)=0.618028 bad=2/60
+Epoch 121 | steps=14497 | train loss=0.6860 finalAcc=72.96% | (val skipped)
+[Step 014500/30000] loss=0.7284
+Epoch 122 | steps=14722 | train loss=0.6863 finalAcc=72.79% | val loss=0.8121 finalAcc=61.79% | best(finalAcc)=0.618028 bad=3/60
+Epoch 123 | steps=14949 | train loss=0.6869 finalAcc=72.73% | (val skipped)
+[Step 015000/30000] loss=0.7635
+Epoch 124 | steps=15179 | train loss=0.6846 finalAcc=72.90% | val loss=0.8193 finalAcc=60.37% | best(finalAcc)=0.618028 bad=4/60
+Epoch 125 | steps=15409 | train loss=0.6862 finalAcc=72.64% | (val skipped)
+[Step 015500/30000] loss=0.8762
+Epoch 126 | steps=15642 | train loss=0.6879 finalAcc=72.80% | val loss=0.8212 finalAcc=61.69% | best(finalAcc)=0.618028 bad=5/60
+Epoch 127 | steps=15875 | train loss=0.6846 finalAcc=72.77% | (val skipped)
+[Step 016000/30000] loss=0.7377
+Epoch 128 | steps=16111 | train loss=0.6874 finalAcc=72.84% | val loss=0.8229 finalAcc=60.89% | best(finalAcc)=0.618028 bad=6/60
+Epoch 129 | steps=16349 | train loss=0.6904 finalAcc=72.49% | (val skipped)
+[Step 016500/30000] loss=0.5635
+Epoch 130 | steps=16587 | train loss=0.6853 finalAcc=72.81% | val loss=0.8282 finalAcc=60.63% | best(finalAcc)=0.618028 bad=7/60
+Epoch 131 | steps=16828 | train loss=0.6904 finalAcc=72.56% | (val skipped)
+[Step 017000/30000] loss=0.6722
+Epoch 132 | steps=17072 | train loss=0.6869 finalAcc=72.64% | val loss=0.7912 finalAcc=61.83% | best(finalAcc)=0.618325 bad=0/60 [saved]
+Epoch 133 | steps=17316 | train loss=0.6891 finalAcc=72.46% | (val skipped)
+[Step 017500/30000] loss=0.7757
+Epoch 134 | steps=17563 | train loss=0.6899 finalAcc=72.62% | val loss=0.8027 finalAcc=61.30% | best(finalAcc)=0.618325 bad=1/60
+Epoch 135 | steps=17810 | train loss=0.6889 finalAcc=72.63% | (val skipped)
+[Step 018000/30000] loss=0.5253
+Epoch 136 | steps=18059 | train loss=0.6894 finalAcc=72.59% | val loss=0.7952 finalAcc=61.84% | best(finalAcc)=0.618374 bad=0/60 [saved]
+Epoch 137 | steps=18311 | train loss=0.6922 finalAcc=72.30% | (val skipped)
+[Step 018500/30000] loss=0.6554
+Epoch 138 | steps=18563 | train loss=0.6883 finalAcc=72.70% | val loss=0.8595 finalAcc=60.88% | best(finalAcc)=0.618374 bad=1/60
+Epoch 139 | steps=18818 | train loss=0.6926 finalAcc=72.47% | (val skipped)
+[Step 019000/30000] loss=0.5549
+Epoch 140 | steps=19076 | train loss=0.6934 finalAcc=72.42% | val loss=0.8389 finalAcc=60.86% | best(finalAcc)=0.618374 bad=2/60
+Epoch 141 | steps=19334 | train loss=0.6917 finalAcc=72.69% | (val skipped)
+[Step 019500/30000] loss=0.5994
+Epoch 142 | steps=19594 | train loss=0.6937 finalAcc=72.37% | val loss=0.8217 finalAcc=61.74% | best(finalAcc)=0.618374 bad=3/60
+Epoch 143 | steps=19857 | train loss=0.6944 finalAcc=72.35% | (val skipped)
+[Step 020000/30000] loss=0.6407
+Epoch 144 | steps=20120 | train loss=0.6941 finalAcc=72.47% | val loss=0.8078 finalAcc=61.93% | best(finalAcc)=0.619314 bad=0/60 [saved]
+Epoch 145 | steps=20386 | train loss=0.6940 finalAcc=72.22% | (val skipped)
+[Step 020500/30000] loss=0.7250
+Epoch 146 | steps=20652 | train loss=0.6937 finalAcc=72.59% | val loss=0.8268 finalAcc=61.63% | best(finalAcc)=0.619314 bad=1/60
+Epoch 147 | steps=20920 | train loss=0.6943 finalAcc=72.36% | (val skipped)
+[Step 021000/30000] loss=0.6046
+Epoch 148 | steps=21191 | train loss=0.6938 finalAcc=72.53% | val loss=0.8119 finalAcc=61.97% | best(finalAcc)=0.619660 bad=0/60 [saved]
+Epoch 149 | steps=21462 | train loss=0.6946 finalAcc=72.42% | (val skipped)
+[Step 021500/30000] loss=0.5847
+Epoch 150 | steps=21736 | train loss=0.6956 finalAcc=72.51% | val loss=0.8137 finalAcc=61.48% | best(finalAcc)=0.619660 bad=1/60
+[Step 022000/30000] loss=0.6075
+Epoch 151 | steps=22010 | train loss=0.6952 finalAcc=72.40% | (val skipped)
+Epoch 152 | steps=22284 | train loss=0.6940 finalAcc=72.71% | val loss=0.8239 finalAcc=62.08% | best(finalAcc)=0.620797 bad=0/60 [saved]
+[Step 022500/30000] loss=0.6148
+Epoch 153 | steps=22558 | train loss=0.6937 finalAcc=72.54% | (val skipped)
+Epoch 154 | steps=22832 | train loss=0.6929 finalAcc=72.74% | val loss=0.8289 finalAcc=62.17% | best(finalAcc)=0.621737 bad=0/60 [saved]
+[Step 023000/30000] loss=0.7890
+Epoch 155 | steps=23106 | train loss=0.6926 finalAcc=72.71% | (val skipped)
+Epoch 156 | steps=23380 | train loss=0.6919 finalAcc=72.71% | val loss=0.8162 finalAcc=61.80% | best(finalAcc)=0.621737 bad=1/60
+[Step 023500/30000] loss=0.6393
+Epoch 157 | steps=23654 | train loss=0.6921 finalAcc=72.80% | (val skipped)
+Epoch 158 | steps=23928 | train loss=0.6912 finalAcc=72.71% | val loss=0.8363 finalAcc=61.94% | best(finalAcc)=0.621737 bad=2/60
+[Step 024000/30000] loss=0.5230
+Epoch 159 | steps=24202 | train loss=0.6898 finalAcc=73.15% | (val skipped)
+Epoch 160 | steps=24476 | train loss=0.6900 finalAcc=72.81% | val loss=0.8335 finalAcc=61.86% | best(finalAcc)=0.621737 bad=3/60
+[Step 024500/30000] loss=0.6981
+Epoch 161 | steps=24750 | train loss=0.6893 finalAcc=73.13% | (val skipped)
+[Step 025000/30000] loss=0.6637
+Epoch 162 | steps=25024 | train loss=0.6888 finalAcc=72.87% | val loss=0.8330 finalAcc=61.74% | best(finalAcc)=0.621737 bad=4/60
+Epoch 163 | steps=25298 | train loss=0.6886 finalAcc=73.17% | (val skipped)
+[Step 025500/30000] loss=0.6998
+Epoch 164 | steps=25572 | train loss=0.6879 finalAcc=73.10% | val loss=0.8393 finalAcc=61.66% | best(finalAcc)=0.621737 bad=5/60
+Epoch 165 | steps=25846 | train loss=0.6876 finalAcc=73.29% | (val skipped)
+[Step 026000/30000] loss=0.7585
+Epoch 166 | steps=26120 | train loss=0.6877 finalAcc=73.22% | val loss=0.8321 finalAcc=61.74% | best(finalAcc)=0.621737 bad=6/60
+Epoch 167 | steps=26394 | train loss=0.6878 finalAcc=73.45% | (val skipped)
+[Step 026500/30000] loss=0.6957
+Epoch 168 | steps=26668 | train loss=0.6876 finalAcc=73.14% | val loss=0.8262 finalAcc=61.61% | best(finalAcc)=0.621737 bad=7/60
+Epoch 169 | steps=26942 | train loss=0.6874 finalAcc=73.39% | (val skipped)
+[Step 027000/30000] loss=0.7669
+Epoch 170 | steps=27216 | train loss=0.6861 finalAcc=73.36% | val loss=0.8267 finalAcc=61.86% | best(finalAcc)=0.621737 bad=8/60
+Epoch 171 | steps=27490 | train loss=0.6854 finalAcc=73.41% | (val skipped)
+[Step 027500/30000] loss=0.7209
+Epoch 172 | steps=27764 | train loss=0.6858 finalAcc=73.20% | val loss=0.8308 finalAcc=61.71% | best(finalAcc)=0.621737 bad=9/60
+[Step 028000/30000] loss=0.7067
+Epoch 173 | steps=28038 | train loss=0.6859 finalAcc=73.37% | (val skipped)
+Epoch 174 | steps=28312 | train loss=0.6854 finalAcc=73.34% | val loss=0.8268 finalAcc=61.89% | best(finalAcc)=0.621737 bad=10/60
+[Step 028500/30000] loss=0.7608
+Epoch 175 | steps=28586 | train loss=0.6848 finalAcc=73.38% | (val skipped)
+Epoch 176 | steps=28860 | train loss=0.6841 finalAcc=73.47% | val loss=0.8341 finalAcc=61.83% | best(finalAcc)=0.621737 bad=11/60
+[Step 029000/30000] loss=0.7762
+Epoch 177 | steps=29134 | train loss=0.6847 finalAcc=73.52% | (val skipped)
+Epoch 178 | steps=29408 | train loss=0.6848 finalAcc=73.37% | val loss=0.8189 finalAcc=61.65% | best(finalAcc)=0.621737 bad=12/60
+[Step 029500/30000] loss=0.7763
+Epoch 179 | steps=29682 | train loss=0.6852 finalAcc=73.51% | (val skipped)
+Epoch 180 | steps=29956 | train loss=0.6841 finalAcc=73.49% | val loss=0.8325 finalAcc=61.57% | best(finalAcc)=0.621737 bad=13/60
+[Step 030000/30000] loss=0.7475
+Epoch 181 | steps=30000 | train loss=0.6465 finalAcc=76.16% | val loss=0.8331 finalAcc=61.69% | best(finalAcc)=0.621737 bad=14/60
+Reached max_steps=30000. Stopping training.
+
+[Eval best checkpoint]
+test_bin0 | loss=0.6593 finalAcc=61.27%
+test_bin1 | loss=0.5641 finalAcc=71.57%
+test_bin2 | loss=0.4134 finalAcc=87.83%
+
+Saved: /home/erikg/emender/experiments/expressivity_tasks/results_stage26c_raw_defaults/delta_integer_seed0/checkpoint.pt
+Done. Saved: /home/erikg/emender/experiments/expressivity_tasks/results_stage26c_raw_defaults/delta_integer_seed0/checkpoint.pt

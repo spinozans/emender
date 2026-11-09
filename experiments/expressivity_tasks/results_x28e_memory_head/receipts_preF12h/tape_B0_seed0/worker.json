@@ -1,0 +1,16 @@
+{
+  "pid": 3507665,
+  "starttime": "303033189",
+  "host": "lambda01",
+  "arm": "tape_B0",
+  "freeze_manifest_hash": "d48aceeafd500cdb1d5a63b8ad5b4b42c602b23f7f8aa3d41e3fe984260a4e39",
+  "card": 0,
+  "command": [
+    "bash",
+    "-c",
+    "set -euo pipefail\ncd /home/erikg/emender\nexport GPU_LEASE_VISIBLE=0\nlease_code=\"$(bash /home/erikg/emender/scripts/gpu_lease.sh acquire 1 --no-wait)\"\neval \"$lease_code\"\ncp \"${GPU_LEASE_DIR:-$PWD/.wg/gpu_leases}/$CUDA_VISIBLE_DEVICES\" /home/erikg/emender/experiments/expressivity_tasks/results_x28e_memory_head/receipts/tape_B0_seed0/lease.txt\nexport X28E_LAUNCHER_LAUNCH_JSON='/home/erikg/emender/experiments/expressivity_tasks/results_x28e_memory_head/receipts/tape_B0_seed0/launch.json'\ncmd=('/home/erikg/emender/.venv/bin/python' /home/erikg/emender/experiments/expressivity_tasks/x28e_memory_head/trainer.py --arm tape_B0 --frozen-freeze-hash <hash>)\nprintf 'CUDA_VISIBLE_DEVICES=%q ' \"$CUDA_VISIBLE_DEVICES\" > /home/erikg/emender/experiments/expressivity_tasks/results_x28e_memory_head/receipts/tape_B0_seed0/command.txt\nprintf '%q ' \"${cmd[@]}\" >> /home/erikg/emender/experiments/expressivity_tasks/results_x28e_memory_head/receipts/tape_B0_seed0/command.txt\nprintf '\\n' >> /home/erikg/emender/experiments/expressivity_tasks/results_x28e_memory_head/receipts/tape_B0_seed0/command.txt\n\"${cmd[@]}\" > /home/erikg/emender/experiments/expressivity_tasks/results_x28e_memory_head/receipts/tape_B0_seed0/console.txt 2>&1 &\ntrain_pid=$!\n'/home/erikg/emender/.venv/bin/python' - \"$train_pid\" /home/erikg/emender/experiments/expressivity_tasks/results_x28e_memory_head/receipts/tape_B0_seed0/trainer.json <<'RECEIPT_HELPER'\nimport json, pathlib, socket, sys\npid = int(sys.argv[1])\nstat = pathlib.Path('/proc/' + str(pid) + '/stat').read_text().rsplit(') ', 1)[1].split()\npathlib.Path(sys.argv[2]).write_text(json.dumps(\n    {'pid': pid, 'starttime': stat[19], 'host': socket.gethostname()}))\nRECEIPT_HELPER\nset +e\nwait \"$train_pid\"\nrc=$?\ntrain_pid=\"\"\n'/home/erikg/emender/.venv/bin/python' /home/erikg/emender/experiments/expressivity_tasks/x28e_memory_head/launcher.py --terminal tape_B0 --exit-code \"$rc\"\nexit \"$rc\"\n"
+  ],
+  "launched_at": 1792964343.6984293,
+  "pgid_note": "start_new_session: the worker pid IS the owned process-group id (the F9 escalation target)",
+  "payload_sha256": "eaf7c34000d53e33a8b34ce09472433c3d685ffaf2ff13f3e65707453b074ae7"
+}
