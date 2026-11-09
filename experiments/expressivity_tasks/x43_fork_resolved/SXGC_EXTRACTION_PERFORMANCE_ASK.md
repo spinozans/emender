@@ -87,3 +87,45 @@ the `C14_*` receipt series for the rate-chain history (15.7 → 3,972 → 121,43
 5,884 end-to-end). We're happy to do a live session with profiling artifacts.
 
 — the emender side (via the operator's attended session)
+
+---
+
+## ADDENDUM (same day): the algorithmic shape that hits the target — maintained match-state ladders
+
+We checked our cache format: each position needs exactly **one query** — the next-byte
+branch histogram of the spine after the last ≤1024 bytes (one context length, no
+backoff; absent context = empty histogram). That makes consecutive positions
+*incrementally related*:
+
+- **Ramp phase** (context growing 1→1024): position t+1's context is position t's
+  context **plus one byte**. A maintained match-state takes one extension step.
+- **Steady phase** (rolling 1024-byte context): maintain the **ladder** — match
+  states M_j for all context lengths j = 1..1024. Since the length-j context at
+  t+1 is the length-(j−1) context at t plus the new byte, each position advances
+  the ladder with 1024 extension steps (M'_j = extend(M_{j−1}, byte_t)), and the
+  position's answer is the branch summary at M'_1024.
+
+Per position this is ~1–3 µs of pointer/rank steps instead of a ~200 µs fresh
+search + IPC — **300k–1M positions/s per core**, and memory is O(1024) states,
+bounded by construction (the ~490 B/position accumulation that took our service
+to 400 GB RSS is structurally impossible here, not merely patched).
+
+**The subtlety we flag for you:** the ladder extends contexts on the *right* —
+the natural downward step in suffix-tree / suffix-automaton navigation (and if
+`xsa branches` already keeps per-node branch summaries, each rung's answer is a
+lookup, not a scan). It is the *adversarial* direction for a plain FM/BWT
+backward search (which prepends). Whether χSA's internals support cheap
+right-extension (forward links, Weiner links, bidirectional BWT, or
+automaton-style transitions) is your call — the recurrence is the ask:
+
+```
+M'_j = right_extend(M_{j-1}, new_byte)     for j = 2..1024
+M'_1 = state_of(new_byte)
+answer(t) = branch_summary(M'_1024)        # or the empty-histogram path
+```
+
+**The API shape that would integrate on our side:** a streaming process or socket
+where we push document bytes and receive per-position branch histograms
+(windowed, resumable by byte offset). Our reader adapts once; parity receipts
+(the 17-context brute-force oracle + full row parity) stay our acceptance gate.
+Continuations are then literally "keep pushing bytes" — no re-search of anything.
