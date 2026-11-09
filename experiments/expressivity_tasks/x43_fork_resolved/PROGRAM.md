@@ -3167,8 +3167,8 @@ Paths are repository-relative. `emender` is this repository; `sxgc` is the exter
         {
           "repo": "emender",
           "path": "experiments/expressivity_tasks/x43_fork_resolved/PREREGISTRATION_1P3B.md",
-          "commit": "c999f57b4c604f3661aab6eec14b7d6b49400f31",
-          "sha256": "7d5f264348851e39b4a3e8546b94ad81eb398f74024ece14f8e1bcb240dcd551"
+          "commit": "9b9c3abceb19e021ff64be317025018d6dc9acd5",
+          "sha256": "c5d4b5471ddfd0abb4f35719e7e7f6b021187c1fd82a29ec8b4cabedbb9faf42"
         },
         {
           "repo": "emender",
@@ -3612,3 +3612,6 @@ historical; its pending-token-nomination sentence is superseded by this entry.
 The secondary board awaits its own registration decision; no launch is authorized
 or performed here. The byte flagship remains priority. Existing claim statuses
 and bindings are unchanged: this harvest is no new scale measurement.
+
+Harvest audit also refreshed the registration draft binding to its already committed
+flagship-spine amendment; the previous pin was stale. No registration text changed.
