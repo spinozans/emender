@@ -290,3 +290,15 @@ free floor; historical end-to-end rates project 2.95–3.61 host days. These are
 planning estimates, not measurements of this new stream. The managed service is
 `emender-flagship-union.service`; heartbeat paths and failure policy are in the
 stopping rule. Alternative evaluation reset lengths require distinct extraction.
+
+---
+
+**Dated annotation (2026-11-09, post-launch pivot):** the consultation-feature
+delivery mechanism for arms 5–6 changes from the pre-extracted cache to **live
+emender-xsa consultation** (operator direction; see
+receipts/flagship_stream/REMOVAL_RECEIPT.md). The extracted cache was removed at
+56.1% of the train phase with full evidence retention. Live consultation must
+pass the standing parity oracles and sustain training-consumption rates
+(receipts/flagship_stream/../SXGC_EXTRACTION_PERFORMANCE_ASK.md defines the
+interface ask). Stream, splits, windows, spine, stopping rules, and all claims
+are unchanged.

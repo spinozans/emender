@@ -166,3 +166,11 @@ the standing detached broker-wrapper survival and checkpoint discipline.
 
 Hash-bind this document in PROGRAM's C14 receipt registry after committing its
 bytes; C-A through C-D are registered questions, not new measured outcomes.
+
+---
+
+**Dated annotation (2026-11-09):** consulted arms (5, 6) of this lattice switch
+feature delivery from the pre-extracted cache to **live emender-xsa
+consultation** per the same pivot recorded in PREREGISTRATION_1P3B.md and
+receipts/flagship_stream/REMOVAL_RECEIPT.md. Dense arms (1–4) and the
+append-only control (7) are unaffected.
