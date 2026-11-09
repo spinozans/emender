@@ -3167,8 +3167,9 @@ Paths are repository-relative. `emender` is this repository; `sxgc` is the exter
         {
           "repo": "emender",
           "path": "experiments/expressivity_tasks/x43_fork_resolved/PREREGISTRATION_1P3B.md",
-          "commit": "9b9c3abceb19e021ff64be317025018d6dc9acd5",
-          "sha256": "c5d4b5471ddfd0abb4f35719e7e7f6b021187c1fd82a29ec8b4cabedbb9faf42"
+          "commit": "0bb7b59f2df078a82cc9bc1d531fe8b85dca2eee",
+          "sha256": "ce12d1c30469e144f4acaefacf468d8b27e3a7b6bd2ab13f7bad018b5d4350ce",
+          "supersedes": "9b9c3abc/c5d4b547 — re-pinned 2026-11-09 for the dated live-consultation annotation (receipts/flagship_stream/REMOVAL_RECEIPT.md); claims, stream, splits and stopping rules unchanged"
         },
         {
           "repo": "emender",
@@ -3191,8 +3192,9 @@ Paths are repository-relative. `emender` is this repository; `sxgc` is the exter
         {
           "repo": "emender",
           "path": "experiments/expressivity_tasks/x43_fork_resolved/PREREGISTRATION_150M_LATTICE.md",
-          "commit": "12fd6fbb0436f97d822152957129747caa7c9c27",
-          "sha256": "35081592ca4f8d24fc4690a7f060338d9e44e96b4ae91b4f8aa12adb4023e414"
+          "commit": "0bb7b59f2df078a82cc9bc1d531fe8b85dca2eee",
+          "sha256": "99bed43706538c553ac57b279b1ce28fa78dfefe6a4808dbcedd973af6e1797c",
+          "supersedes": "12fd6fbb/35081592 — re-pinned 2026-11-09 for the same dated annotation; dense arms and the append-only control unchanged"
         }
       ]
     }
