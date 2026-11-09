@@ -1,3 +1,27 @@
+# Token pure nomination harvested — 2026-11-09
+
+The mimetic token search terminated cleanly at generation_cap_reached, 12/12.
+All 144 candidate results were inspected. Following the transformer/GDN2 receipt
+selection rule, pure nominates generation 10 candidate 10: score
+**4.369714790304295**, raw held-out NLL **4.362655063470204**, no degeneracy flags.
+The generation 12 winner (candidate 0, score **4.444690410769026**) is retained
+separately; it does not supersede the better global candidate.
+
+The secondary token board's configuration set is complete:
+transformer **3.190717468659083**, GDN2 **3.1674960454305015**,
+pure **4.369714790304295**. Baseline scores are NLL; pure includes occupancy
+and degeneracy penalties. See [pure nomination](receipts/velocity_1p3b_nominations/pure.json)
+and [harvest validation](receipts/velocity_1p3b_nominations/pure_harvest_validation.json).
+Card 1 has no lease, no live parent PID, empty active state, and 2 MiB/0% GPU
+use at verification. No service was stopped or started.
+
+This set awaits its own operator registration decision. No scale training is
+launched; the flagship remains the priority. Exact pure scale capacity, policy
+transfer, donor calibration, memory and throughput remain unqualified.
+Byte searches on cards 2/3/4 and the extraction service were untouched.
+
+---
+
 # X42 lineage audit and suspect ablations — 2026-10-31
 
 The full block audit confirms that both historical registered X40 v1 and

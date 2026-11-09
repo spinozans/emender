@@ -3598,3 +3598,17 @@ pending upstream status was not freshly audited; our 17/17 training-use verifica
 does not substitute for it. Scale configs, nominations, manifest/hash reconciliation,
 extraction budget and final launch approval remain gates. Bindings added under C14;
 no historical claim status promoted. No training, lease or DiLoCo behavior change.
+
+## 2026-11-09 — secondary token board nominations complete
+
+X42's token mimetic search reached generation_cap_reached (12/12). The
+[pure nomination](../x42_pile_scale/receipts/velocity_1p3b_nominations/pure.json)
+selects global generation 10 candidate 10, score 4.369714790304295, raw NLL
+4.362655063470204, no degeneracy flags. The g12 winner is recorded separately.
+Transformer 3.190717468659083 and GDN2 3.1674960454305015 complete the token set.
+The [harvest validation](../x42_pile_scale/receipts/velocity_1p3b_nominations/pure_harvest_validation.json)
+confirms card 1 released. The pinned November 7 registration draft remains
+historical; its pending-token-nomination sentence is superseded by this entry.
+The secondary board awaits its own registration decision; no launch is authorized
+or performed here. The byte flagship remains priority. Existing claim statuses
+and bindings are unchanged: this harvest is no new scale measurement.
