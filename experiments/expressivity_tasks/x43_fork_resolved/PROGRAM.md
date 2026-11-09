@@ -3187,6 +3187,12 @@ Paths are repository-relative. `emender` is this repository; `sxgc` is the exter
           "path": "experiments/expressivity_tasks/x43_fork_resolved/receipts/spine_decision/geometry.json",
           "commit": "c999f57b4c604f3661aab6eec14b7d6b49400f31",
           "sha256": "be07d571bcad1ce7bcf0dfbe3013e098cf59bab7430f971ad2daf9d5df0a90e5"
+        },
+        {
+          "repo": "emender",
+          "path": "experiments/expressivity_tasks/x43_fork_resolved/PREREGISTRATION_150M_LATTICE.md",
+          "commit": "12fd6fbb0436f97d822152957129747caa7c9c27",
+          "sha256": "35081592ca4f8d24fc4690a7f060338d9e44e96b4ae91b4f8aa12adb4023e414"
         }
       ]
     }
@@ -3615,3 +3621,20 @@ and bindings are unchanged: this harvest is no new scale measurement.
 
 Harvest audit also refreshed the registration draft binding to its already committed
 flagship-spine amendment; the previous pin was stale. No registration text changed.
+
+## 150M mini-lattice — registered 2026-11-09
+
+Operator approved “do the 150M point — the next natural point.”
+[PREREGISTRATION_150M_LATTICE.md](PREREGISTRATION_150M_LATTICE.md),
+SHA256 `35081592ca4f8d24fc4690a7f060338d9e44e96b4ae91b4f8aa12adb4023e414`, committed in `12fd6fbb0436f97d822152957129747caa7c9c27`,
+is bound under C14 as a protocol, with no new outcome or status promotion.
+Seven byte arms use the flagship 2e022242 stream and its same 260-scalar
+extraction cache: transformer, GDN2, bounded pure, unbounded pure,
+transformer+XSA, unbounded Emender+XSA and its APPEND-only twin.
+2700 active seconds per arm governs; frozen prefixes record consumption.
+C-A ops causality, C-B unbounded efficiency, C-C spine scale trajectory and
+C-D pilot coverage admit honest nulls. Actual bytes/steps and matched-exposure
+columns remain mandatory; stream-transfer and single-seed caveats are explicit.
+Both byte nominations and completed extraction gate execution on free cards;
+finish before the 1.3B launch with zero contention and attach all receipts to
+flagship sign-off. This task launches no training and changes no live service.
