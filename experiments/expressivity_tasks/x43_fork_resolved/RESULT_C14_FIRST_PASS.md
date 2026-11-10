@@ -56,3 +56,15 @@ This is a first-pass single-seed, equal-active-time comparison with unequal trai
 Evidence: [transformer verdict](RESULT_C14_TRANSFORMER.md), [Emender stacking](RESULT_C14_STACKING.md), transformer [gates](receipts/c14_transformer_stacking/frozen_gates.json), [freeze](receipts/c14_transformer_stacking/calibration_freeze.json), [full calibration and final table](receipts/c14_transformer_stacking/table.json), [independent replay](receipts/c14_transformer_stacking/validation.json). Calibration has 220,107,062 targets, with 101,006,646 nonempty fork fitting targets; document split, windows, checkpoint, prediction and code hashes are retained.
 
 No resilient DiLoCo behavior was changed or run; requirement IDs from RESILIENT_DILOCO_GAP_MATRIX.md are inapplicable. No Frontier/Slurm, WorksGood, subagents, new training, frozen-arm edits, or .pt commits. Only broker cards 2/4 are eligible; card 1, ~/sxgc and /mnt/nvme2n1 remain unchanged.
+
+---
+
+**Dated annotation (2026-11-10) — in-region source leakage.** Every consulted and
+array-alone number in this file is optimistically biased: the branch query did not
+exclude the evaluated position's own occurrence from the index's counts, and the index
+was built over the same corpus the evaluated documents come from. See
+[RESULT_C14_IN_INDEX_LEAKAGE.md](RESULT_C14_IN_INDEX_LEAKAGE.md). The numbers stand as
+measured; they are not held-out clean. The transfer conclusion (out-of-index gains
+exceed in-region gains) is unaffected and is now better explained. The flagship and
+150 M boards are leakage-free by span geometry (spine `[0,100GB)`, all train and eval
+documents beyond it).
