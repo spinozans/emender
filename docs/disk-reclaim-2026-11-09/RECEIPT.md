@@ -139,3 +139,36 @@ itself (1,307.9 GB, read-only canonical) is untouched, so no query capability wa
 ## Running total
 
 Stage 1 ≈1.6 TB · Stage 2 3.9 TB · Stage 3 ≈6.8 TB · **Stage 4 ≈1.6 TB** → **≈13.9 TB**
+
+---
+
+## Stage 5 — the flagged corpora removed (with a measurement correction)
+
+Operator: "the flagged 2.6T can be removed." Removed:
+
+`se-plan/n-pile.txt`, `se-plan/n-100gb.txt`, `pwf-pileplan/pile-sparse.txt`,
+`fineweb-edu/fineweb-{16kx1m,0kx10m}.txt`, `sxgc-pilot/k10/{h10.fa,h10_rl.txt,h10ss.txt}`,
+`sxgc-k10sep/k10sep.txt`. (Derived k10 structures verified present first: `h10.walk.agg` 59.5 GB,
+`h10.slim.head.agg` 59.5 GB, `h10rt.lcp_index` 51.1 GB, and the two `k10*.sxi` containers.)
+
+### Correction: these were largely SPARSE placeholders, not 2.6 TB of data
+
+Real space reclaimed was **~0.26 TB** (nvme2 +140 GB, nvme3 +121 GB), not the ~2.9 TB of
+apparent size. Cause, measured after the fact:
+
+- `se-plan` remaining files show **apparent 12 GB / real 0 blocks** — `du` reports zero
+  allocated blocks for `n-10gb.txt`, `n-1gb.txt`, `n1g.txt`.
+- `pwf-pileplan/pile-sparse.txt` was **exactly** 1,310,000,000,000 bytes, alone in a directory
+  with no script/manifest/log — the signature of a `truncate`-style size reservation that was
+  never filled.
+
+So the earlier "2.6 TB" figure was **apparent size**; the honest reclaim is ~0.26 TB. This
+receipt is corrected rather than the original claim left standing.
+
+### Consequence worth flagging (not yet investigated)
+
+If those normalized corpora were hole-filled reservations, then **any experiment that read
+`n-pile.txt` or `pile-sparse.txt` was reading zeros for the un-written extents.** That is a
+data-integrity question about the *se-plan / pwf-pileplan* workstreams, not about the
+emender program (which reads `pile.txt` and the `P100c` spine only, both untouched and
+verified). It should be checked on that side before those results are trusted.
