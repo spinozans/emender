@@ -51,3 +51,45 @@ Total reclaimed: **≈ 5.2 TB**.
   against the PROGRAM ledger (C14 frozen checkpoints are still referenced).
 - `diloco_8gpu` (2.1 TB) and `commapile.txt.zst` (545 GB): operator calls.
 - All genomics / sxgc data on nvme3n1 and nvme2n1.
+
+---
+
+## Stage 3 (operator-authorized, same session): all E97 and September-DiLoCo weights
+
+Operator ruling: "all the E97 stuff can go… September DiLoCo checkpoints, those can go too."
+Rule applied uniformly (identical to Stage 2): **keep every file under 50 MB** — receipts,
+STATUS/README, summaries, metrics, logs, terminal.json, eval JSON — **remove files ≥ 50 MB**
+(weights and bulk data). No evidence file was deleted.
+
+| Target | Before | After |
+|---|---:|---:|
+| `~/emender/experiments` — 49 `results_*` trees + `local/`, checkpoint binaries (`.pt/.npz/.bin/.pstats`) | 701 GB | 32 GB (all under the live/current dirs) |
+| `/mnt/nvme2n1/erikg/e97_systematic_posttraining` (excl. live `e97-lake-expansion-v1`) | 6.9 TB | **157 GB** |
+| `/mnt/nvme1n1/erikg/diloco_8gpu` (Sept DiLoCo) | 2.21 TB | 35 GB |
+| `/mnt/nvme2n1/erikg/diloco_8gpu` | 0.42 TB | 11 GB |
+| `/mnt/nvme1n1/erikg/seed_maturity_threshold` | 0.52 TB | 0 |
+| `/mnt/nvme1n1/erikg/ref_emender_mlp` | 0.09 TB | 0 |
+| `/mnt/nvme1n1/erikg/ref_gdn2_mlp` | 0.08 TB | 0 |
+| `/mnt/nvme1n1/erikg/race` | 0.06 TB | 0 |
+| `/mnt/nvme1n1/erikg/invertible_stage4_13b` (E97 1.3B headline weights) | 0.67 TB | 0 |
+
+**E97 1.3B null result — receipts survive independently of the deleted weights:**
+`paper/results/expressivity_1p3b/capacity/`, `paper/figures/e97_recorded_loss.json`,
+`configs/frontier/e97_*.json`, `REGIME-extraction.json`. The published numbers never
+depended on retaining the `.pt` files; they remain re-derivable only by retraining, which
+is stated here explicitly as the cost of the reclaim.
+
+Read-only checkpoint dirs (mode `r-x`) required `chmod -R u+w` before removal; 14 initial
+`Permission denied` errors were resolved this way, no file was left behind.
+
+## Final disk state
+
+| Disk | Start | End |
+|---|---|---|
+| `/mnt/nvme1n1` | 11.9 T used, **2.9 T free (80 %)** | **8.0 T free (44 %)** |
+| `/mnt/nvme2n1` | 12.6 T used, **1.4 T free (91 %)** | **8.2 T free (42 %)** |
+| `/` (nvme0n1p2) | **968 G free (93 %)** | **1.8 T free (88 %)** |
+
+**Total reclaimed: ≈ 12.3 TB.** Live work verified intact throughout: the three byte
+searches on cards 2/3/4 (100/100/98 % utilisation), `e97-lake-expansion-v1` (live daemon),
+x42/x43 current-program artifacts, pile.txt and the pile-head100 spine (read-only, untouched).
