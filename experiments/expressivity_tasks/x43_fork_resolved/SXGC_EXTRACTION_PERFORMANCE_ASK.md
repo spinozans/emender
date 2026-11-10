@@ -147,3 +147,23 @@ Consequence for the API we are asking for: the streaming interface should accept
 is cheap and random-access by sample), so that habitat- and corpus-scale indexing never
 requires a 1.4 TB staging copy. This composes exactly with the ladder design above: bytes
 flow in, per-position features flow out, nothing is materialized in between.
+
+---
+
+## The path we build is the deployment path (operator, 2026-11-10)
+
+This is no longer framed as an offline extraction convenience. **The dynamic consult
+path is the mode we deploy**, so it is also the mode our consulted arms train in.
+Train/serve identity is the requirement — see `LIVE_CONSULT_IDENTITY.md`.
+
+That imposes four things on the interface, beyond raw speed:
+
+- **Determinism:** identical (document, offset, spine) → byte-identical rows, across
+  restarts and across concurrent arms; no cache-warming or ordering dependence.
+- **Parity:** the 17-context brute-force oracle and full compact-row parity against
+  the retired extraction's semantics, as an acceptance gate (we run these).
+- **Per-arm replay receipts:** counts, rate, error rate, stream/spine hashes, so any
+  arm's consultation is exactly re-executable.
+- **Fail-closed behaviour:** on error, rate shortfall or hash mismatch the consumer
+  stops rather than continuing on suspect features; the consult process itself may
+  restart independently of training.
