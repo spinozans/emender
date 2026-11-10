@@ -93,3 +93,49 @@ Read-only checkpoint dirs (mode `r-x`) required `chmod -R u+w` before removal; 1
 **Total reclaimed: ≈ 12.3 TB.** Live work verified intact throughout: the three byte
 searches on cards 2/3/4 (100/100/98 % utilisation), `e97-lake-expansion-v1` (live daemon),
 x42/x43 current-program artifacts, pile.txt and the pile-head100 spine (read-only, untouched).
+
+---
+
+## Stage 4 — materialized sequence text (operator directive: "raw DNA text should never have been materialized")
+
+Operator ruling: the raw DNA text must be read from the AGC archive, never materialized on disk.
+
+### 4a. `sxgc-pilot/k466/h466_rl.txt` — 1.4 TB, REMOVED
+
+The 1,403,221,068,481-byte text (38,790 sequences) that was fed to the BWT builder
+(`grl.log`: BCR-exact BWT over 1,403,221,068,481 symbols; `chi.log`: n=1,403,221,068,481,
+runs=2,739,735,806, χ=2,249,968,075). It is a *materialization* of the HPRC release-2
+assembly set:
+
+- **Source archive (present on the box):** `/moosefs/laurap/hprc/HPRC_r2_assemblies_0.6.1.agc`,
+  second copy `/moosefs/garrisonlab-s3-aws/tracepoints/HPRC_r2_assemblies_0.6.1.agc`
+- **Tool:** `/home/erikg/agc/bin/agc`
+- **All derived structures retained** (the expensive artifacts, all still valid without the
+  text): `chi_h466.sA` 18.0 GB (suffix array), `h466rt.lcp_index.lcp_index` 82.5 GB,
+  `h466_rl.rl_bwt` 16.4 GB, `h466rl_pfp.parse` 62.1 GB, `h466rl_pfp.dict` 18.6 GB,
+  `h466.ri4` 27.7 GB, `h466rt.bwt.{len,heads}` 16.4 GB, `h466r.{len,syms}` 13.7 GB,
+  `h466_rl.txt.names.tsv` (sequence-name sidecar, 1.9 MB), plus all logs and scripts.
+
+Nothing was deleted except the derived text. k466 directory: 1.7 TB → 260 GB.
+
+### 4b. Verified pure duplicates of `pile.txt` — 207.4 GB, REMOVED
+
+`pile-head100.txt` (100.0 GB) and `pile-100gb-snap.txt` (107.4 GB) were verified
+prefix-identical to `pile.txt` (`cmp` over the first 2 GB, plus a 1 GB check) — i.e.
+unannotated copies of a slice of the canonical corpus. The pile-head100 **spine container**
+`P100c/pile-head100.sxi2` (63.2 GB, χ=24.19 G) is retained untouched, and `pile.txt`
+itself (1,307.9 GB, read-only canonical) is untouched, so no query capability was lost.
+
+### 4c. Flagged, NOT deleted — awaiting a ruling
+
+| Path | Size | Why it is flagged |
+|---|---:|---|
+| `se-plan/n-pile.txt` | 1310.0 GB | **normalized** full corpus (differs from pile.txt at byte 1) — regenerable from pile.txt via the `se-plan` tooling |
+| `se-plan/n-100gb.txt` | 100.0 GB | normalized head-100 GB slice of the same |
+| `pwf-pileplan/pile-sparse.txt` | 1310.0 GB | **no derivation script, manifest, README or log in its directory** — 1.31 TB of unattributed materialization (exactly 1,310,000,000,000 bytes) |
+| `sxgc-pilot/k10/{h10.fa,h10_rl.txt,h10ss.txt}`, `sxgc-k10sep/k10sep.txt` | ~121 GB | k=10 DNA materializations whose derived `.sxi`/sA structures exist |
+| `fineweb-edu/fineweb-{16kx1m,0kx10m}.txt` | 82 GB | public sample corpora |
+
+## Running total
+
+Stage 1 ≈1.6 TB · Stage 2 3.9 TB · Stage 3 ≈6.8 TB · **Stage 4 ≈1.6 TB** → **≈13.9 TB**
