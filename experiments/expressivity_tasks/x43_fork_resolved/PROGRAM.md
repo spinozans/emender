@@ -2999,8 +2999,9 @@ Paths are repository-relative. `emender` is this repository; `sxgc` is the exter
         {
           "repo": "emender",
           "path": "experiments/expressivity_tasks/x43_fork_resolved/RESULT_C14_FIRST_PASS.md",
-          "commit": "fd43f34c15d06d96e8116dd094c22bc68c82d3cd",
-          "sha256": "549b861792f466bf5e9ac1fb2f0b7d2b0216eebe2f36de5f706ef375e4c0a24a"
+          "commit": "3e6f204ebf0cf51de04e06cd8fef790b01495a03",
+          "sha256": "6e7814168f9c21e7311675faad07cdd21442c502f41f689d4e09283e8db428bc",
+          "supersedes": "fd43f34c/549b8617 — re-pinned 2026-11-11 after appending the dated in-region source-leakage annotation (RESULT_C14_IN_INDEX_LEAKAGE.md); measured numbers unchanged, now scoped as not held-out clean"
         },
         {
           "repo": "emender",
