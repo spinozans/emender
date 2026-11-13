@@ -8,6 +8,9 @@ the X30 slot store has its own semantic signature.
 
 ## Validation and reproducibility
 
+- Validated implementation commit:
+  **`ada11d67c5b2b80672709093d8836245f5caa86b`**. A follow-up documentation commit
+  records this identifier; it does not change the validated proof or memo bytes.
 - Baseline verified at `5cdb2f12668802096e11b2a040c30f3169e0c55e`:
   `lake build` exited 0, `Build completed successfully (2198 jobs).`
   The taxonomy and its definitional scan labels, the P1 gap, and all five
