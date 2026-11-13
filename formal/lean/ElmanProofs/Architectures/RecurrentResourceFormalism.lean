@@ -140,6 +140,9 @@ structure ArchitectureSignature where
   headsPerLayer : Nat
   stateScalarsPerHead : Nat
   pureRecurrentStack : Bool
+  /-- Legacy unconditioned taxonomy label. For a semantic, schedule-indexed
+  claim use `SemanticArchitectureSignature.scanCompatibleRelativeTo` in
+  `Architectures/ConditionalScan.lean`; this Boolean is not a scan proof. -/
   scanCompatible : Bool
   deriving Repr, DecidableEq
 

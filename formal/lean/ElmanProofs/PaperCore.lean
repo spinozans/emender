@@ -3,6 +3,8 @@ Copyright (c) 2026 Elman-Proofs Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import ElmanProofs.Architectures.EmenderLatching
+import ElmanProofs.Architectures.ConditionalScan
+import ElmanProofs.Architectures.LiftedMemory
 import ElmanProofs.Architectures.M2RNNComparison
 import ElmanProofs.Architectures.MultiStepSeparation
 import ElmanProofs.Architectures.OnlineMemory
@@ -10,6 +12,7 @@ import ElmanProofs.Architectures.RecurrentResourceFormalism
 import ElmanProofs.Architectures.S5Inseparability
 import ElmanProofs.Architectures.SplitGatedDelta
 import ElmanProofs.Expressivity.CompositionalDepthDuality
+import ElmanProofs.Expressivity.MemoryScan
 import ElmanProofs.Expressivity.E88ExceedsE1HCapacity
 import ElmanProofs.Expressivity.NDMRealizesS5
 import ElmanProofs.Expressivity.S5GDNBridge
@@ -31,6 +34,16 @@ Terminology:
 
 This root intentionally imports only the checked chain needed for the current
 paper-space claims:
+
+* Memory updates have a semantic affine-operator interface parameterized by
+  update family. GDN2 and the X30 Emender slot store instantiate it, the latter
+  conditional on fixed gates, selections, and live/death masks. Ordered folds,
+  chunks, scan trees, and prefix injection propagation agree. Hard gate and
+  state-dependent death obstructions forbid an unconditional compact affine
+  claim. Content injections touch at most one slot per token; full age
+  injections can touch all slots. Arbitrary updates also have a free-space
+  embedding, without a compactness or performance claim. See
+  `OPERATOR_ALGEBRA_STATUS.md` and `EMENDER_OPERATOR_ALGEBRA.typ`.
 
 * M2RNN and Emender/E88 are distinct one-step transition families.
 * M2RNN's raw outer write is separated from the delta-correcting write shared

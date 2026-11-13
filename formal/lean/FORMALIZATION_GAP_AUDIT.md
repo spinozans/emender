@@ -1,5 +1,14 @@
 # Lean Formalization Gap Audit — Against Revised Paper Claims
 
+**2026-11-13 addendum:** The P1 update-family predicate identified below now has
+a semantic implementation: `MemoryAlgebra.IsMultiProgrammedRecurrentStack`,
+`every_update_family_multiProgrammed`, and `independent_fold_projection`, with
+GDN2 and X30 slot-store instances. Conditional affine scan proofs, hard-decision
+obstructions, and the limits of this result are documented in
+[`OPERATOR_ALGEBRA_STATUS.md`](OPERATOR_ALGEBRA_STATUS.md). The table below is
+retained as the historical starting audit; empirical training/scaling claims
+remain outside the new proofs.
+
 **Generated:** 2026-05-24
 **Branch:** wg/agent-46/lean-formalization-gap-audit
 **Task:** lean-formalization-gap-audit
